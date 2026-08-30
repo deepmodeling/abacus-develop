@@ -1493,6 +1493,217 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     return result;
 }
 
+std::vector<SternheimerDeltaLinearResponse> solve_delta_sternheimer_linear_response_batch(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const SternheimerDeltaFixedSubspace& fixed_subspace,
+    const double reference_eigenvalue,
+    const SternheimerFDHamiltonian::Matrix& rhs,
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const std::vector<std::vector<SternheimerFDHamiltonian::Complex>>& perturbation_matrix_elements,
+    const double omega,
+    const double volume_element,
+    const SternheimerRPA::SolverOptions& options)
+{
+    using Matrix = SternheimerFDHamiltonian::Matrix;
+    if (rhs.empty())
+    {
+        return {};
+    }
+    if (rhs.size() != perturbation_matrix_elements.size())
+    {
+        throw std::invalid_argument(
+            "Sternheimer delta batch response requires one perturbation-element vector per rhs.");
+    }
+    const int grid_size = hamiltonian.grid().size();
+    for (std::size_t column = 0; column != rhs.size(); ++column)
+    {
+        check_vector_size(rhs[column], static_cast<std::size_t>(grid_size), "Sternheimer delta batch rhs");
+        if (virtual_states.size() != perturbation_matrix_elements[column].size())
+        {
+            throw std::invalid_argument(
+                "Sternheimer delta batch response requires one perturbation matrix element per virtual state.");
+        }
+    }
+    if (volume_element <= 0.0)
+    {
+        throw std::invalid_argument("Sternheimer delta batch response requires a positive grid volume element.");
+    }
+    for (const Vector& function: fixed_subspace.functions)
+    {
+        check_vector_size(function,
+                          static_cast<std::size_t>(grid_size),
+                          "Sternheimer delta batch fixed-subspace state");
+    }
+    validate_virtual_states(virtual_states, static_cast<std::size_t>(grid_size));
+
+    const auto dot = [volume_element](const Vector& lhs, const Vector& rhs_vec) {
+        return sternheimer_fd_grid_dot(lhs, rhs_vec, volume_element);
+    };
+    const std::vector<Vector>& fixed_functions = fixed_subspace.functions;
+    const SternheimerSubspaceProjector fixed_projector(fixed_functions, dot);
+
+    std::vector<Complex> denominators(virtual_states.size(), Complex(0.0, 0.0));
+    for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
+    {
+        denominators[ia] = Complex(reference_eigenvalue - virtual_states[ia].eigenvalue, -omega);
+        if (std::abs(denominators[ia]) < 1.0e-30)
+        {
+            throw std::runtime_error(
+                "Sternheimer delta batch response found a singular virtual-state denominator.");
+        }
+    }
+
+    Matrix projected_rhs = rhs;
+    fixed_projector.project_batch(projected_rhs);
+    for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
+    {
+        for (std::size_t column = 0; column != rhs.size(); ++column)
+        {
+            axpy(-perturbation_matrix_elements[column][ia] / denominators[ia],
+                 virtual_states[ia].residual,
+                 projected_rhs[column]);
+        }
+    }
+
+    SternheimerRPA::BatchLinearProblem problem;
+    problem.dot = dot;
+    problem.apply = [&hamiltonian,
+                     &fixed_projector,
+                     &virtual_states,
+                     &denominators,
+                     reference_eigenvalue,
+                     omega,
+                     dot](const Matrix& input, Matrix& output) {
+        Matrix q_input = input;
+        fixed_projector.project_batch(q_input);
+        hamiltonian.apply_batch(q_input, output);
+        const Complex shift(-reference_eigenvalue, omega);
+        for (std::size_t column = 0; column != output.size(); ++column)
+        {
+#pragma omp parallel for schedule(static)
+            for (std::size_t ir = 0; ir != output[column].size(); ++ir)
+            {
+                output[column][ir] += shift * q_input[column][ir];
+            }
+        }
+        fixed_projector.project_batch(output);
+        for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
+        {
+            for (std::size_t column = 0; column != output.size(); ++column)
+            {
+                const Complex coupling = dot(virtual_states[ia].residual, q_input[column]) / denominators[ia];
+                axpy(coupling, virtual_states[ia].residual, output[column]);
+            }
+        }
+    };
+    std::shared_ptr<SternheimerFDSpectralPreconditioner> spectral_preconditioner;
+    if (options.use_fd_spectral_preconditioner)
+    {
+        spectral_preconditioner = get_thread_local_sternheimer_fd_spectral_preconditioner(
+            hamiltonian,
+            reference_eigenvalue,
+            omega,
+            options.fd_spectral_preconditioner_regularization);
+        problem.precondition = [spectral_preconditioner, &fixed_projector](const Matrix& input, Matrix& output) {
+            spectral_preconditioner->apply_batch(input, output);
+            fixed_projector.project_batch(output);
+        };
+    }
+
+    std::vector<SternheimerDeltaLinearResponse> results(rhs.size());
+    Matrix out_wavefunctions(rhs.size(), Vector(static_cast<std::size_t>(grid_size), Complex(0.0, 0.0)));
+    if (fixed_functions.size() >= static_cast<std::size_t>(grid_size))
+    {
+        for (std::size_t column = 0; column != rhs.size(); ++column)
+        {
+            const double projected_rhs_norm = sternheimer_fd_grid_norm(projected_rhs[column], volume_element);
+            const double rhs_norm = sternheimer_fd_grid_norm(rhs[column], volume_element);
+            const double zero_tolerance
+                = std::max(options.breakdown_tol, options.residual_tol) * std::max(1.0, rhs_norm);
+            if (projected_rhs_norm > zero_tolerance)
+            {
+                throw std::runtime_error(
+                    "Sternheimer delta batch fixed subspace fills the grid but leaves a nonzero Q-space rhs.");
+            }
+            results[column].solver.converged = true;
+            results[column].solver.absolute_residual = projected_rhs_norm;
+            results[column].solver.relative_residual = projected_rhs_norm / std::max(1.0, rhs_norm);
+        }
+    }
+    else
+    {
+        const std::vector<SternheimerRPA::SolverResult> solver_results
+            = SternheimerRPA::solve_gmres_batch(problem, projected_rhs, out_wavefunctions, options);
+        for (std::size_t column = 0; column != rhs.size(); ++column)
+        {
+            results[column].solver = solver_results[column];
+        }
+    }
+    fixed_projector.project_batch(out_wavefunctions);
+    for (std::size_t column = 0; column != rhs.size(); ++column)
+    {
+        results[column].response.out_wavefunction = out_wavefunctions[column];
+        const SternheimerDeltaCoefficientComponents components
+            = compute_delta_coefficient_components(virtual_states,
+                                                   perturbation_matrix_elements[column],
+                                                   results[column].response.out_wavefunction,
+                                                   reference_eigenvalue,
+                                                   omega,
+                                                   volume_element);
+        results[column].response.sos_coefficients = components.sos;
+        results[column].response.pulay_coefficients = components.pulay;
+        results[column].response.coefficients = components.total;
+        assemble_delta_wavefunction_components(virtual_states, results[column].response);
+        results[column].response.out_norm
+            = sternheimer_fd_grid_norm(results[column].response.out_wavefunction, volume_element);
+    }
+
+    Matrix q_residual;
+    hamiltonian.apply_batch(out_wavefunctions, q_residual);
+    const Complex shift(-reference_eigenvalue, omega);
+    for (std::size_t column = 0; column != q_residual.size(); ++column)
+    {
+#pragma omp parallel for schedule(static)
+        for (std::size_t ir = 0; ir != q_residual[column].size(); ++ir)
+        {
+            q_residual[column][ir] += shift * out_wavefunctions[column][ir];
+        }
+    }
+    fixed_projector.project_batch(q_residual);
+    for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
+    {
+        for (std::size_t column = 0; column != q_residual.size(); ++column)
+        {
+            axpy(results[column].response.coefficients[ia], virtual_states[ia].residual, q_residual[column]);
+        }
+    }
+
+    Matrix q_rhs = rhs;
+    fixed_projector.project_batch(q_rhs);
+    for (std::size_t column = 0; column != rhs.size(); ++column)
+    {
+#pragma omp parallel for schedule(static)
+        for (std::size_t ir = 0; ir != q_residual[column].size(); ++ir)
+        {
+            q_residual[column][ir] -= q_rhs[column][ir];
+        }
+        const double q_residual_norm = sternheimer_fd_grid_norm(q_residual[column], volume_element);
+        double residual_norm_squared = q_residual_norm * q_residual_norm;
+        for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
+        {
+            const Complex delta_block(virtual_states[ia].eigenvalue - reference_eigenvalue, omega);
+            const Complex eta_residual
+                = delta_block * results[column].response.coefficients[ia]
+                  + dot(virtual_states[ia].residual, results[column].response.out_wavefunction)
+                  - dot(virtual_states[ia].orbital, rhs[column]);
+            residual_norm_squared += std::norm(eta_residual);
+        }
+        results[column].residual_norm = std::sqrt(residual_norm_squared);
+        results[column].response.reconstruction_error = results[column].residual_norm;
+    }
+    return results;
+}
+
 SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,

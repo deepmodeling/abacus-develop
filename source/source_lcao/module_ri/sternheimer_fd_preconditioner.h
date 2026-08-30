@@ -22,6 +22,8 @@ class SternheimerFDSpectralPreconditioner
 
     void apply(const SternheimerFDHamiltonian::Vector& input,
                SternheimerFDHamiltonian::Vector& output) const;
+    void apply_batch(const SternheimerFDHamiltonian::Matrix& input,
+                     SternheimerFDHamiltonian::Matrix& output) const;
 
     bool is_compatible(const SternheimerFDHamiltonian& hamiltonian,
                        double reference_eigenvalue,

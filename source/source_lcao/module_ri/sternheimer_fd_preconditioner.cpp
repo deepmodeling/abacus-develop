@@ -336,6 +336,16 @@ void SternheimerFDSpectralPreconditioner::apply(const SternheimerFDHamiltonian::
     }
 }
 
+void SternheimerFDSpectralPreconditioner::apply_batch(const SternheimerFDHamiltonian::Matrix& input,
+                                                       SternheimerFDHamiltonian::Matrix& output) const
+{
+    output.resize(input.size());
+    for (std::size_t column = 0; column != input.size(); ++column)
+    {
+        apply(input[column], output[column]);
+    }
+}
+
 bool SternheimerFDSpectralPreconditioner::is_compatible(
     const SternheimerFDHamiltonian& hamiltonian,
     const double reference_eigenvalue,

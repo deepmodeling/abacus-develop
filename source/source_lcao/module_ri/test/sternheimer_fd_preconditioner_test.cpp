@@ -68,6 +68,43 @@ TEST(SternheimerFDPreconditioner, RejectsNegativeRegularization)
                  std::invalid_argument);
 }
 
+TEST(SternheimerFDPreconditioner, BatchMatchesIndependentScalarApplications)
+{
+    using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
+    using Complex = Hamiltonian::Complex;
+    using Vector = Hamiltonian::Vector;
+    using Matrix = Hamiltonian::Matrix;
+    Hamiltonian::Grid grid{8, 6, 4, 0.41, 0.53, 0.67, true};
+    grid.kpoint = {0.17, -0.11, 0.08};
+    const Hamiltonian hamiltonian(grid, std::vector<double>(grid.size(), 0.0), 1.0, nullptr, 8);
+    const ModuleRI::SternheimerFDSpectralPreconditioner preconditioner(hamiltonian, -0.83, 0.37, 0.02);
+
+    Matrix input(4, Vector(static_cast<std::size_t>(grid.size())));
+    for (std::size_t column = 0; column != input.size(); ++column)
+    {
+        for (int ir = 0; ir != grid.size(); ++ir)
+        {
+            input[column][static_cast<std::size_t>(ir)]
+                = Complex(0.01 * static_cast<double>((ir + 2 * column) % 17),
+                          -0.02 * static_cast<double>((3 * ir + column) % 13));
+        }
+    }
+    Matrix expected(input.size());
+    for (std::size_t column = 0; column != input.size(); ++column)
+    {
+        preconditioner.apply(input[column], expected[column]);
+    }
+
+    Matrix actual;
+    preconditioner.apply_batch(input, actual);
+
+    EXPECT_EQ(actual, expected);
+    preconditioner.apply_batch({}, actual);
+    EXPECT_TRUE(actual.empty());
+    input[1].pop_back();
+    EXPECT_THROW(preconditioner.apply_batch(input, actual), std::invalid_argument);
+}
+
 TEST(SternheimerFDPreconditioner, ReusesCompatibleThreadLocalWorkspace)
 {
     using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;

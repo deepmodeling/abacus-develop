@@ -1134,6 +1134,118 @@ TEST(SternheimerDelta, SharedFixedSubspaceMatchesCompatibilitySolver)
                        1.0e-14);
 }
 
+TEST(SternheimerDelta, BatchLinearResponseMatchesIndependentFD8Channels)
+{
+    using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
+    using Matrix = Hamiltonian::Matrix;
+    Hamiltonian::Grid grid{9, 1, 1, 0.55, 1.0, 1.0, true};
+    constexpr double volume_element = 0.55;
+    std::vector<double> local_potential(static_cast<std::size_t>(grid.size()));
+    for (int ir = 0; ir != grid.size(); ++ir)
+    {
+        local_potential[static_cast<std::size_t>(ir)] = 0.08 * (ir % 4) - 0.03 * (ir % 7);
+    }
+    const Hamiltonian hamiltonian(grid, local_potential, 1.0, nullptr, 8);
+    const auto states = ModuleRI::solve_sternheimer_fd_zero_order_dense(
+        hamiltonian, grid.size(), volume_element);
+
+    Vector candidate = states.wavefunctions[2];
+    for (std::size_t ir = 0; ir != candidate.size(); ++ir)
+    {
+        candidate[ir] += Complex(0.2, -0.15) * states.wavefunctions[3][ir];
+    }
+    ModuleRI::SternheimerDeltaSubspaceOptions subspace_options;
+    subspace_options.max_virtual_states = 1;
+    const auto subspace = ModuleRI::build_delta_sternheimer_subspace(hamiltonian,
+                                                                     {states.wavefunctions[0]},
+                                                                     {candidate},
+                                                                     volume_element,
+                                                                     subspace_options);
+    ASSERT_EQ(subspace.virtual_states.size(), 1U);
+    const auto fixed_subspace = ModuleRI::build_delta_sternheimer_fixed_subspace(
+        {states.wavefunctions[0]}, subspace.virtual_states);
+
+    const std::vector<std::vector<double>> perturbations
+        = {{0.7, -0.3, 0.2, 0.5, -0.4, 0.1, 0.6, -0.2, 0.35},
+           {-0.2, 0.4, 0.8, -0.1, 0.3, -0.6, 0.25, 0.15, -0.45}};
+    Matrix rhs(perturbations.size());
+    std::vector<std::vector<Complex>> perturbation_matrix_elements(perturbations.size());
+    for (std::size_t column = 0; column != perturbations.size(); ++column)
+    {
+        ModuleRI::SternheimerRPA::build_rhs_from_hartree_perturbation(
+            perturbations[column], states.wavefunctions[0], rhs[column]);
+        perturbation_matrix_elements[column]
+            = ModuleRI::delta_sternheimer_perturbation_matrix_elements(subspace.virtual_states,
+                                                                       perturbations[column],
+                                                                       states.wavefunctions[0],
+                                                                       volume_element);
+    }
+
+    ModuleRI::SternheimerRPA::SolverOptions solver_options;
+    solver_options.max_iter = 120;
+    solver_options.residual_tol = 1.0e-11;
+    constexpr double omega = 0.45;
+    std::vector<ModuleRI::SternheimerDeltaLinearResponse> scalar;
+    for (std::size_t column = 0; column != rhs.size(); ++column)
+    {
+        scalar.push_back(ModuleRI::solve_delta_sternheimer_linear_response(hamiltonian,
+                                                                           fixed_subspace,
+                                                                           states.eigenvalues[0],
+                                                                           rhs[column],
+                                                                           subspace.virtual_states,
+                                                                           perturbation_matrix_elements[column],
+                                                                           omega,
+                                                                           volume_element,
+                                                                           solver_options));
+    }
+
+    const auto batch = ModuleRI::solve_delta_sternheimer_linear_response_batch(hamiltonian,
+                                                                                fixed_subspace,
+                                                                                states.eigenvalues[0],
+                                                                                rhs,
+                                                                                subspace.virtual_states,
+                                                                                perturbation_matrix_elements,
+                                                                                omega,
+                                                                                volume_element,
+                                                                                solver_options);
+
+    ASSERT_EQ(batch.size(), scalar.size());
+    for (std::size_t column = 0; column != scalar.size(); ++column)
+    {
+        EXPECT_EQ(batch[column].solver.converged, scalar[column].solver.converged);
+        EXPECT_EQ(batch[column].solver.iterations, scalar[column].solver.iterations);
+        EXPECT_NEAR(batch[column].solver.absolute_residual,
+                    scalar[column].solver.absolute_residual,
+                    1.0e-12);
+        EXPECT_NEAR(batch[column].solver.relative_residual,
+                    scalar[column].solver.relative_residual,
+                    1.0e-12);
+        EXPECT_NEAR(batch[column].residual_norm, scalar[column].residual_norm, 1.0e-11);
+        expect_vector_near(batch[column].response.out_wavefunction,
+                           scalar[column].response.out_wavefunction,
+                           1.0e-11);
+        expect_vector_near(batch[column].response.in_sos_wavefunction,
+                           scalar[column].response.in_sos_wavefunction,
+                           1.0e-11);
+        expect_vector_near(batch[column].response.in_pulay_wavefunction,
+                           scalar[column].response.in_pulay_wavefunction,
+                           1.0e-11);
+        expect_vector_near(batch[column].response.reconstructed_wavefunction,
+                           scalar[column].response.reconstructed_wavefunction,
+                           1.0e-11);
+        ASSERT_EQ(batch[column].response.coefficients.size(), scalar[column].response.coefficients.size());
+        for (std::size_t ia = 0; ia != scalar[column].response.coefficients.size(); ++ia)
+        {
+            EXPECT_NEAR(batch[column].response.coefficients[ia].real(),
+                        scalar[column].response.coefficients[ia].real(),
+                        1.0e-11);
+            EXPECT_NEAR(batch[column].response.coefficients[ia].imag(),
+                        scalar[column].response.coefficients[ia].imag(),
+                        1.0e-11);
+        }
+    }
+}
+
 TEST(SternheimerDelta, StrictIndependentDeltaHamiltonianMatchesExplicitHybridBlockEquation)
 {
     ModuleRI::SternheimerFDHamiltonian::Grid grid{5, 1, 1, 0.6, 1.0, 1.0, true};
