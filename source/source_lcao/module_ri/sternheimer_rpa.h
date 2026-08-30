@@ -10,6 +10,23 @@
 namespace ModuleRI
 {
 
+class SternheimerSubspaceProjector
+{
+  public:
+    using Complex = std::complex<double>;
+    using Vector = std::vector<Complex>;
+    using Dot = std::function<Complex(const Vector&, const Vector&)>;
+
+    SternheimerSubspaceProjector(const std::vector<Vector>& subspace, Dot dot);
+
+    void project(Vector& vec) const;
+
+  private:
+    const std::vector<Vector>* subspace_ = nullptr;
+    Dot dot_;
+    std::vector<Complex> basis_norms_;
+};
+
 class SternheimerRPA
 {
   public:

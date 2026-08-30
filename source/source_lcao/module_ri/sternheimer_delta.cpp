@@ -1362,6 +1362,7 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
         return sternheimer_fd_grid_dot(lhs, rhs_vec, volume_element);
     };
     const std::vector<Vector>& fixed_functions = fixed_subspace.functions;
+    const SternheimerSubspaceProjector fixed_projector(fixed_functions, dot);
 
     std::vector<Complex> denominators(virtual_states.size(), Complex(0.0, 0.0));
     for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
@@ -1374,7 +1375,7 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     }
 
     Vector projected_rhs = rhs;
-    SternheimerRPA::project_out_subspace(fixed_functions, dot, projected_rhs);
+    fixed_projector.project(projected_rhs);
     for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
     {
         axpy(-perturbation_matrix_elements[ia] / denominators[ia], virtual_states[ia].residual, projected_rhs);
@@ -1382,11 +1383,11 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
 
     SternheimerRPA::LinearProblem problem;
     problem.dot = dot;
-    problem.apply = [&hamiltonian, &fixed_functions, &virtual_states, &denominators, reference_eigenvalue, omega, dot](
+    problem.apply = [&hamiltonian, &fixed_projector, &virtual_states, &denominators, reference_eigenvalue, omega, dot](
                         const Vector& input,
                         Vector& output) {
         Vector q_input = input;
-        SternheimerRPA::project_out_subspace(fixed_functions, dot, q_input);
+        fixed_projector.project(q_input);
 
         hamiltonian.apply(q_input, output);
         const Complex shift(-reference_eigenvalue, omega);
@@ -1395,7 +1396,7 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
         {
             output[ir] += shift * q_input[ir];
         }
-        SternheimerRPA::project_out_subspace(fixed_functions, dot, output);
+        fixed_projector.project(output);
         for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
         {
             const Complex coupling = dot(virtual_states[ia].residual, q_input) / denominators[ia];
@@ -1410,11 +1411,11 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
             reference_eigenvalue,
             omega,
             options.fd_spectral_preconditioner_regularization);
-        problem.precondition = [spectral_preconditioner, &fixed_functions, dot](
+        problem.precondition = [spectral_preconditioner, &fixed_projector](
                                    const Vector& input,
                                    Vector& output) {
             spectral_preconditioner->apply(input, output);
-            SternheimerRPA::project_out_subspace(fixed_functions, dot, output);
+            fixed_projector.project(output);
         };
     }
 
@@ -1440,7 +1441,7 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
         result.solver
             = SternheimerRPA::solve_gmres(problem, projected_rhs, result.response.out_wavefunction, options);
     }
-    SternheimerRPA::project_out_subspace(fixed_functions, dot, result.response.out_wavefunction);
+    fixed_projector.project(result.response.out_wavefunction);
 
     const SternheimerDeltaCoefficientComponents components
         = compute_delta_coefficient_components(virtual_states,
@@ -1463,14 +1464,14 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     {
         q_residual[ir] += shift * result.response.out_wavefunction[ir];
     }
-    SternheimerRPA::project_out_subspace(fixed_functions, dot, q_residual);
+    fixed_projector.project(q_residual);
     for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
     {
         axpy(result.response.coefficients[ia], virtual_states[ia].residual, q_residual);
     }
 
     Vector q_rhs = rhs;
-    SternheimerRPA::project_out_subspace(fixed_functions, dot, q_rhs);
+    fixed_projector.project(q_rhs);
 #pragma omp parallel for schedule(static)
     for (std::size_t ir = 0; ir != q_residual.size(); ++ir)
     {

@@ -1395,29 +1395,45 @@ SternheimerRPA::Complex SternheimerRPA::local_grid_dot(const Vector& lhs, const 
     return grid_weight * Complex(real_part, imag_part);
 }
 
-void SternheimerRPA::project_out_subspace(const std::vector<Vector>& subspace,
-                                          const std::function<Complex(const Vector&, const Vector&)>& dot,
-                                          Vector& vec)
+SternheimerSubspaceProjector::SternheimerSubspaceProjector(const std::vector<Vector>& subspace, Dot dot)
+    : subspace_(&subspace), dot_(std::move(dot))
 {
-    if (!dot)
+    if (!dot_)
     {
-        throw std::invalid_argument("SternheimerRPA::project_out_subspace requires a dot callback.");
+        throw std::invalid_argument("SternheimerSubspaceProjector requires a dot callback.");
     }
+    basis_norms_.reserve(subspace.size());
     for (const Vector& basis_vec: subspace)
     {
-        assert_same_size(basis_vec, vec, "SternheimerRPA::project_out_subspace");
-        const Complex norm = dot(basis_vec, basis_vec);
+        basis_norms_.push_back(dot_(basis_vec, basis_vec));
+    }
+}
+
+void SternheimerSubspaceProjector::project(Vector& vec) const
+{
+    for (std::size_t index = 0; index != subspace_->size(); ++index)
+    {
+        const Vector& basis_vec = (*subspace_)[index];
+        assert_same_size(basis_vec, vec, "SternheimerSubspaceProjector::project");
+        const Complex norm = basis_norms_[index];
         if (std::abs(norm) == 0.0)
         {
             continue;
         }
-        const Complex coeff = dot(basis_vec, vec) / norm;
+        const Complex coeff = dot_(basis_vec, vec) / norm;
 #pragma omp parallel for schedule(static)
         for (std::size_t i = 0; i != vec.size(); ++i)
         {
             vec[i] -= coeff * basis_vec[i];
         }
     }
+}
+
+void SternheimerRPA::project_out_subspace(const std::vector<Vector>& subspace,
+                                          const std::function<Complex(const Vector&, const Vector&)>& dot,
+                                          Vector& vec)
+{
+    SternheimerSubspaceProjector(subspace, dot).project(vec);
 }
 
 void SternheimerRPA::apply_kinetic_preconditioner(const std::vector<double>& kinetic_energy,
