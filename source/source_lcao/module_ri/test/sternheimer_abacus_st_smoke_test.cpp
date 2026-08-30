@@ -294,6 +294,28 @@ TEST(SternheimerABACUSSTSmoke, UnlimitedDiagnosticChannelsReuseRvalueStorage)
     EXPECT_EQ(unlimited[0].potential_r.data(), original_storage);
 }
 
+TEST(SternheimerABACUSSTSmoke, SamplesOnlyRequestedPeriodicKSUnoccupiedStates)
+{
+    EXPECT_EQ(ModuleRI::sternheimer_sampled_unoccupied_count(false, 676, 32), 0);
+    EXPECT_EQ(ModuleRI::sternheimer_sampled_unoccupied_count(true, 676, 0), 676);
+    EXPECT_EQ(ModuleRI::sternheimer_sampled_unoccupied_count(true, 676, 32), 32);
+    EXPECT_EQ(ModuleRI::sternheimer_sampled_unoccupied_count(true, 12, 32), 12);
+    EXPECT_THROW(ModuleRI::sternheimer_sampled_unoccupied_count(true, 676, -1), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, GathersRequestedPeriodicKSUnoccupiedStatesForDelta)
+{
+    EXPECT_EQ(ModuleRI::sternheimer_lcao_virtual_state_gather_count(676, false, "ks_bands", 32), 0);
+    EXPECT_EQ(ModuleRI::sternheimer_lcao_virtual_state_gather_count(676, true, "projected_ao", 32), 0);
+    EXPECT_EQ(ModuleRI::sternheimer_lcao_virtual_state_gather_count(676, true, "ks_bands", 0), 676);
+    EXPECT_EQ(ModuleRI::sternheimer_lcao_virtual_state_gather_count(676, true, "ks_bands", 32), 32);
+    EXPECT_EQ(ModuleRI::sternheimer_lcao_virtual_state_gather_count(12, true, "ks_bands", 32), 12);
+    EXPECT_THROW(ModuleRI::sternheimer_lcao_virtual_state_gather_count(-1, true, "ks_bands", 32),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_lcao_virtual_state_gather_count(676, true, "ks_bands", -1),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerABACUSSTSmoke, DistinguishesTwoKPointsFromTwoSpinChannels)
 {
     const auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 0.5);

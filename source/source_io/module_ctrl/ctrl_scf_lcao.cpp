@@ -93,9 +93,47 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
                           MPI_COMM_WORLD);
 #endif
         }
-        if (channel.coefficients.empty())
+        const int available_unoccupied_count = elec_state.ekb.nc - occupied_count;
+        const int unoccupied_count = ModuleRI::sternheimer_lcao_virtual_state_gather_count(
+            available_unoccupied_count,
+            PARAM.inp.sternheimer_delta,
+            PARAM.inp.sternheimer_delta_virtual_source,
+            PARAM.inp.sternheimer_delta_max_states);
+        if (unoccupied_count > 0)
         {
-            continue;
+            record.unoccupied_eigenvalues.reserve(static_cast<std::size_t>(unoccupied_count));
+            record.unoccupied_coefficients.assign(
+                static_cast<std::size_t>(unoccupied_count),
+                std::vector<std::complex<double>>(static_cast<std::size_t>(PARAM.globalv.nlocal),
+                                                  std::complex<double>(0.0, 0.0)));
+            for (int ib = occupied_count; ib != occupied_count + unoccupied_count; ++ib)
+            {
+                const std::size_t virtual_index = static_cast<std::size_t>(ib - occupied_count);
+                record.unoccupied_eigenvalues.push_back(elec_state.ekb(local_k_index, ib));
+                const int local_band = parallel_orbitals.global2local_col(ib);
+                if (local_band >= 0)
+                {
+                    for (int local_basis = 0; local_basis != psi.get_nbasis(); ++local_basis)
+                    {
+                        const int global_basis = parallel_orbitals.local2global_row(local_basis);
+                        if (global_basis < 0 || global_basis >= PARAM.globalv.nlocal)
+                        {
+                            throw std::runtime_error(
+                                "Sternheimer solid LCAO global unoccupied basis index is out of range.");
+                        }
+                        record.unoccupied_coefficients[virtual_index][static_cast<std::size_t>(global_basis)]
+                            = std::complex<double>(psi(local_k_index, local_band, local_basis));
+                    }
+                }
+#ifdef __MPI
+                MPI_Allreduce(MPI_IN_PLACE,
+                              record.unoccupied_coefficients[virtual_index].data(),
+                              PARAM.globalv.nlocal,
+                              MPI_DOUBLE_COMPLEX,
+                              MPI_SUM,
+                              MPI_COMM_WORLD);
+#endif
+            }
         }
         channels.push_back(std::move(channel));
     }

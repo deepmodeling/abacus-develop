@@ -675,7 +675,7 @@ struct Input_para
     int sternheimer_fd_order = 2; ///< Cartesian finite-difference Laplacian order: 2, 4, 6, or 8
     std::string sternheimer_delta_virtual_source
         = "ks_bands"; ///< fixed virtual source: complete unoccupied KS bands by default
-    int sternheimer_delta_max_states = 0; ///< maximum fixed AO virtual states; 0 means all accepted candidates
+    int sternheimer_delta_max_states = 0; ///< maximum fixed KS/AO virtual states; 0 means all accepted candidates
     double sternheimer_delta_norm_tol = 1.0e-10; ///< norm threshold for fixed AO virtual-state orthogonalization
     bool exx_coul_moment = false;                 ///< whether to use moment method for Coulomb calculation
     bool exx_rotate_abfs = false;                 ///< whether to rotate auxiliary basis for Coulomb calculation

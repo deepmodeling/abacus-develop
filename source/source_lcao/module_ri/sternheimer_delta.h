@@ -65,6 +65,8 @@ struct SternheimerDeltaSubspaceOptions
 {
     int max_virtual_states = 0;
     double norm_tolerance = 1.0e-10;
+    bool retain_grid_functions = true;
+    bool evaluate_full_grid_difference = true;
 };
 
 enum class SternheimerDeltaABlockMode
@@ -198,7 +200,7 @@ SternheimerDeltaCoefficientComponents solve_delta_sternheimer_subspace_coefficie
 SternheimerDeltaSubspace build_delta_sternheimer_subspace(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
-    const std::vector<SternheimerFDHamiltonian::Vector>& candidate_orbitals,
+    std::vector<SternheimerFDHamiltonian::Vector> candidate_orbitals,
     double volume_element,
     const SternheimerDeltaSubspaceOptions& options = SternheimerDeltaSubspaceOptions());
 
@@ -215,14 +217,14 @@ SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices(
 SternheimerDeltaSubspace build_reference_delta_sternheimer_subspace(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerDeltaGridFunction>& occupied_functions,
-    const std::vector<SternheimerDeltaGridFunction>& candidate_functions,
+    std::vector<SternheimerDeltaGridFunction> candidate_functions,
     double volume_element,
     const SternheimerDeltaSubspaceOptions& options = SternheimerDeltaSubspaceOptions());
 
 SternheimerDeltaSubspace build_delta_sternheimer_subspace_by_mode(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerDeltaGridFunction>& occupied_functions,
-    const std::vector<SternheimerDeltaGridFunction>& candidate_functions,
+    std::vector<SternheimerDeltaGridFunction> candidate_functions,
     double volume_element,
     const SternheimerDeltaSubspaceOptions& options,
     SternheimerDeltaABlockMode mode);

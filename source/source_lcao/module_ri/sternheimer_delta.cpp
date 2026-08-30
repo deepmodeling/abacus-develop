@@ -961,7 +961,7 @@ SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices(
 SternheimerDeltaSubspace build_reference_delta_sternheimer_subspace(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerDeltaGridFunction>& occupied_functions,
-    const std::vector<SternheimerDeltaGridFunction>& candidate_functions,
+    std::vector<SternheimerDeltaGridFunction> candidate_functions,
     const double volume_element,
     const SternheimerDeltaSubspaceOptions& options)
 {
@@ -991,9 +991,9 @@ SternheimerDeltaSubspace build_reference_delta_sternheimer_subspace(
     auto dot = [volume_element](const Vector& lhs, const Vector& rhs) {
         return sternheimer_fd_grid_dot(lhs, rhs, volume_element);
     };
-    std::vector<SternheimerDeltaGridFunction> residual_candidates;
-    residual_candidates.reserve(candidate_functions.size());
-    for (SternheimerDeltaGridFunction candidate: candidate_functions)
+    const int input_candidate_count = static_cast<int>(candidate_functions.size());
+    std::vector<SternheimerDeltaGridFunction> residual_candidates = std::move(candidate_functions);
+    for (SternheimerDeltaGridFunction& candidate: residual_candidates)
     {
         for (int pass = 0; pass != 2; ++pass)
         {
@@ -1002,7 +1002,6 @@ SternheimerDeltaSubspace build_reference_delta_sternheimer_subspace(
                 axpy_grid_function(-dot(occupied.values, candidate.values), occupied, candidate);
             }
         }
-        residual_candidates.push_back(std::move(candidate));
     }
 
     const int candidate_limit = options.max_virtual_states > 0
@@ -1058,7 +1057,7 @@ SternheimerDeltaSubspace build_reference_delta_sternheimer_subspace(
     SternheimerDeltaSubspace subspace;
     subspace.accepted_candidates = static_cast<int>(orthonormal_candidates.size());
     subspace.discarded_candidates
-        = static_cast<int>(candidate_functions.size()) - subspace.accepted_candidates;
+        = input_candidate_count - subspace.accepted_candidates;
     if (orthonormal_candidates.empty())
     {
         return subspace;
@@ -1091,13 +1090,25 @@ SternheimerDeltaSubspace build_reference_delta_sternheimer_subspace(
         }
 
         SternheimerDeltaVirtualState state;
-        state.orbital = eigenfunction.values;
+        state.orbital = options.retain_grid_functions ? eigenfunction.values
+                                                      : std::move(eigenfunction.values);
         state.eigenvalue = eigenvalues[static_cast<std::size_t>(ia)];
-        subspace.grid_functions.push_back(std::move(eigenfunction));
+        if (options.retain_grid_functions)
+        {
+            subspace.grid_functions.push_back(std::move(eigenfunction));
+        }
         subspace.virtual_states.push_back(std::move(state));
     }
 
-    evaluate_full_grid_delta_hamiltonian_difference(hamiltonian, volume_element, subspace);
+    if (options.evaluate_full_grid_difference)
+    {
+        evaluate_full_grid_delta_hamiltonian_difference(hamiltonian, volume_element, subspace);
+    }
+    else
+    {
+        subspace.full_grid_hamiltonian_relative_difference = -1.0;
+        subspace.full_grid_hamiltonian_max_abs_difference = -1.0;
+    }
 
     std::vector<Vector> residual_projector;
     residual_projector.reserve(occupied_functions.size() + subspace.virtual_states.size());
@@ -1124,7 +1135,7 @@ SternheimerDeltaSubspace build_reference_delta_sternheimer_subspace(
 SternheimerDeltaSubspace build_delta_sternheimer_subspace(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
-    const std::vector<SternheimerFDHamiltonian::Vector>& candidate_orbitals,
+    std::vector<SternheimerFDHamiltonian::Vector> candidate_orbitals,
     const double volume_element,
     const SternheimerDeltaSubspaceOptions& options)
 {
@@ -1151,18 +1162,18 @@ SternheimerDeltaSubspace build_delta_sternheimer_subspace(
     };
 
     std::vector<Vector> orthonormal_candidates;
-    std::vector<Vector> projection_subspace = occupied_wavefunctions;
-    for (Vector candidate: candidate_orbitals)
+    const int input_candidate_count = static_cast<int>(candidate_orbitals.size());
+    for (Vector& candidate: candidate_orbitals)
     {
         check_vector_size(candidate, static_cast<std::size_t>(grid_size), "Sternheimer delta candidate orbital");
-        SternheimerRPA::project_out_subspace(projection_subspace, dot, candidate);
+        SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, candidate);
+        SternheimerRPA::project_out_subspace(orthonormal_candidates, dot, candidate);
         const double norm = sternheimer_fd_grid_norm(candidate, volume_element);
         if (norm <= options.norm_tolerance)
         {
             continue;
         }
         scale_vector(candidate, Complex(1.0 / norm, 0.0));
-        projection_subspace.push_back(candidate);
         orthonormal_candidates.push_back(std::move(candidate));
         if (options.max_virtual_states > 0
             && static_cast<int>(orthonormal_candidates.size()) >= options.max_virtual_states)
@@ -1174,7 +1185,7 @@ SternheimerDeltaSubspace build_delta_sternheimer_subspace(
     SternheimerDeltaSubspace subspace;
     subspace.accepted_candidates = static_cast<int>(orthonormal_candidates.size());
     subspace.discarded_candidates
-        = static_cast<int>(candidate_orbitals.size()) - subspace.accepted_candidates;
+        = input_candidate_count - subspace.accepted_candidates;
     if (orthonormal_candidates.empty())
     {
         return subspace;
@@ -1232,7 +1243,15 @@ SternheimerDeltaSubspace build_delta_sternheimer_subspace(
         subspace.virtual_states.push_back(std::move(state));
     }
 
-    evaluate_full_grid_delta_hamiltonian_difference(hamiltonian, volume_element, subspace);
+    if (options.evaluate_full_grid_difference)
+    {
+        evaluate_full_grid_delta_hamiltonian_difference(hamiltonian, volume_element, subspace);
+    }
+    else
+    {
+        subspace.full_grid_hamiltonian_relative_difference = -1.0;
+        subspace.full_grid_hamiltonian_max_abs_difference = -1.0;
+    }
 
     const std::vector<Vector> virtual_orbitals = collect_virtual_orbitals(subspace.virtual_states);
     std::vector<Vector> residual_projector = occupied_wavefunctions;
@@ -1252,7 +1271,7 @@ SternheimerDeltaSubspace build_delta_sternheimer_subspace(
 SternheimerDeltaSubspace build_delta_sternheimer_subspace_by_mode(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerDeltaGridFunction>& occupied_functions,
-    const std::vector<SternheimerDeltaGridFunction>& candidate_functions,
+    std::vector<SternheimerDeltaGridFunction> candidate_functions,
     const double volume_element,
     const SternheimerDeltaSubspaceOptions& options,
     const SternheimerDeltaABlockMode mode)
@@ -1260,7 +1279,7 @@ SternheimerDeltaSubspace build_delta_sternheimer_subspace_by_mode(
     if (mode == SternheimerDeltaABlockMode::ReferenceValueGradient)
     {
         return build_reference_delta_sternheimer_subspace(
-            hamiltonian, occupied_functions, candidate_functions, volume_element, options);
+            hamiltonian, occupied_functions, std::move(candidate_functions), volume_element, options);
     }
     if (mode == SternheimerDeltaABlockMode::FullGrid)
     {
@@ -1272,12 +1291,12 @@ SternheimerDeltaSubspace build_delta_sternheimer_subspace_by_mode(
         }
         std::vector<Vector> candidate_values;
         candidate_values.reserve(candidate_functions.size());
-        for (const SternheimerDeltaGridFunction& function: candidate_functions)
+        for (SternheimerDeltaGridFunction& function: candidate_functions)
         {
-            candidate_values.push_back(function.values);
+            candidate_values.push_back(std::move(function.values));
         }
         return build_delta_sternheimer_subspace(
-            hamiltonian, occupied_values, candidate_values, volume_element, options);
+            hamiltonian, occupied_values, std::move(candidate_values), volume_element, options);
     }
     throw std::invalid_argument("Invalid Sternheimer Delta A-block mode.");
 }

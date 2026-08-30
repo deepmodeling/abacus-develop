@@ -572,6 +572,50 @@ TEST(SternheimerDelta, ReferenceSubspaceTransformsValuesAndGradientsTogether)
                 1.0e-13);
 }
 
+TEST(SternheimerDelta, ProductionOptionsDropGridDiagnosticsWithoutChangingVirtualState)
+{
+    ModuleRI::SternheimerFDHamiltonian::Grid grid{2, 1, 1, 1.0, 1.0, 1.0, false};
+    constexpr double volume_element = 1.0;
+    ModuleRI::SternheimerFDHamiltonian hamiltonian(grid, {0.0, 0.0}, 0.5);
+
+    ModuleRI::SternheimerDeltaGridFunction occupied;
+    occupied.values = {Complex(1.0, 0.0), Complex(0.0, 0.0)};
+    occupied.gradients[0] = occupied.values;
+    occupied.gradients[1] = Vector(2, Complex(0.0, 0.0));
+    occupied.gradients[2] = Vector(2, Complex(0.0, 0.0));
+
+    ModuleRI::SternheimerDeltaGridFunction candidate;
+    candidate.values = {Complex(0.0, 0.0), Complex(1.0, 0.0)};
+    candidate.gradients[0] = {Complex(0.0, 0.0), Complex(3.0, 0.0)};
+    candidate.gradients[1] = Vector(2, Complex(0.0, 0.0));
+    candidate.gradients[2] = Vector(2, Complex(0.0, 0.0));
+
+    ModuleRI::SternheimerDeltaSubspaceOptions reference_options;
+    reference_options.max_virtual_states = 1;
+    const auto reference = ModuleRI::build_reference_delta_sternheimer_subspace(
+        hamiltonian, {occupied}, {candidate}, volume_element, reference_options);
+
+    ModuleRI::SternheimerDeltaSubspaceOptions production_options = reference_options;
+    production_options.retain_grid_functions = false;
+    production_options.evaluate_full_grid_difference = false;
+    const auto production = ModuleRI::build_reference_delta_sternheimer_subspace(
+        hamiltonian, {occupied}, {candidate}, volume_element, production_options);
+
+    ASSERT_EQ(production.virtual_states.size(), 1);
+    EXPECT_TRUE(production.grid_functions.empty());
+    expect_vector_near(production.virtual_states[0].orbital,
+                       reference.virtual_states[0].orbital,
+                       1.0e-14);
+    expect_vector_near(production.virtual_states[0].residual,
+                       reference.virtual_states[0].residual,
+                       1.0e-14);
+    EXPECT_NEAR(production.virtual_states[0].eigenvalue,
+                reference.virtual_states[0].eigenvalue,
+                1.0e-14);
+    EXPECT_EQ(production.full_grid_hamiltonian_relative_difference, -1.0);
+    EXPECT_EQ(production.full_grid_hamiltonian_max_abs_difference, -1.0);
+}
+
 TEST(SternheimerDelta, ReferenceSubspacePivotsPastNearDependentCandidates)
 {
     ModuleRI::SternheimerFDHamiltonian::Grid grid{4, 1, 1, 1.0, 1.0, 1.0, false};

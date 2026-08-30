@@ -295,10 +295,25 @@ inline bool sternheimer_supercell_translation_sector_enabled()
     return raw != nullptr && raw[0] != '\0';
 }
 
-inline bool sternheimer_lcao_virtual_state_gathering_enabled()
+inline int sternheimer_lcao_virtual_state_gather_count(const int available_states,
+                                                       const bool use_delta_sternheimer,
+                                                       const std::string& virtual_source,
+                                                       const int requested_states)
 {
-    return sternheimer_lcao_sos_diagnostic_enabled()
-           || sternheimer_supercell_translation_sector_enabled();
+    if (available_states < 0 || requested_states < 0)
+    {
+        throw std::invalid_argument("Sternheimer LCAO virtual-state gather count must be non-negative.");
+    }
+    if (sternheimer_lcao_sos_diagnostic_enabled()
+        || sternheimer_supercell_translation_sector_enabled())
+    {
+        return available_states;
+    }
+    if (!use_delta_sternheimer || virtual_source != "ks_bands")
+    {
+        return 0;
+    }
+    return requested_states == 0 ? available_states : std::min(available_states, requested_states);
 }
 
 struct SternheimerPeriodicResponsePlan
@@ -1162,6 +1177,23 @@ inline SternheimerLCAOSamplingPlan sternheimer_lcao_sampling_plan(
 inline bool can_reuse_sternheimer_target_lcao_sampling(const bool same_record, const SternheimerLCAOSamplingPlan& plan)
 {
     return same_record && (!plan.sample_source_unoccupied || plan.sample_target_unoccupied);
+}
+
+inline std::size_t sternheimer_sampled_unoccupied_count(const bool include_unoccupied,
+                                                        const std::size_t available_states,
+                                                        const int requested_states)
+{
+    if (requested_states < 0)
+    {
+        throw std::invalid_argument("Sternheimer sampled unoccupied-state count must be non-negative.");
+    }
+    if (!include_unoccupied)
+    {
+        return 0;
+    }
+    return requested_states == 0
+               ? available_states
+               : std::min(available_states, static_cast<std::size_t>(requested_states));
 }
 
 inline void validate_sternheimer_supercell_sector_occupations(

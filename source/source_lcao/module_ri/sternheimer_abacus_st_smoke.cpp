@@ -41,6 +41,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cctype>
 #include <chrono>
 #include <cmath>
@@ -53,6 +54,7 @@
 #include <map>
 #include <memory>
 #include <limits>
+#include <mutex>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -403,6 +405,8 @@ void append_chi0_progress_event(const std::string& event,
                                 const double elapsed_seconds,
                                 const std::string& note)
 {
+    static std::mutex progress_mutex;
+    const std::lock_guard<std::mutex> lock(progress_mutex);
     std::ofstream out(chi0_progress_filename().c_str(), std::ios::app);
     out << std::setprecision(16);
     out << event << ' ' << GlobalV::MY_RANK << ' ' << ifrequency << ' ' << owner_rank << ' ' << band << ' ' << channel
@@ -1918,24 +1922,28 @@ SternheimerSampledLCAOKPoint sample_sternheimer_lcao_kpoint(
     const LCAO_Orbitals& orbitals,
     const SternheimerLCAOOccupiedKPoint& record,
     const bool include_unoccupied,
+    const int requested_unoccupied_states,
     const double volume_element,
     const double norm_tolerance)
 {
     SternheimerSampledLCAOKPoint sampled;
+    const std::size_t sampled_unoccupied_count
+        = sternheimer_sampled_unoccupied_count(include_unoccupied,
+                                                record.unoccupied_coefficients.size(),
+                                                requested_unoccupied_states);
     std::vector<std::vector<SternheimerFDHamiltonian::Complex>> all_coefficients = record.coefficients;
-    if (include_unoccupied)
+    if (sampled_unoccupied_count > 0)
     {
         all_coefficients.insert(all_coefficients.end(),
                                 record.unoccupied_coefficients.begin(),
-                                record.unoccupied_coefficients.end());
+                                record.unoccupied_coefficients.begin()
+                                    + static_cast<std::ptrdiff_t>(sampled_unoccupied_count));
     }
     std::vector<SternheimerDeltaGridFunction> all_functions
         = build_lcao_grid_functions_from_coefficients(
             ucell, grid, orbitals, sternheimer_lcao_grid_kpoint(record), all_coefficients);
 
     const std::size_t occupied_count = record.coefficients.size();
-    const std::size_t sampled_unoccupied_count
-        = include_unoccupied ? record.unoccupied_coefficients.size() : 0;
     if (all_functions.size() != occupied_count + sampled_unoccupied_count)
     {
         throw std::runtime_error("Sternheimer periodic direct LCAO sampling lost selected KS states.");
@@ -2769,7 +2777,7 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
     const int num_channels = static_cast<int>(periodic_abfs.potentials.size());
     const int channel_batch_width = use_delta_sternheimer ? sternheimer_channel_batch_width() : 1;
     const SternheimerMemorySnapshot channel_memory = detect_sternheimer_memory_snapshot();
-    const SternheimerChannelWorkerPlan channel_worker_plan
+    SternheimerChannelWorkerPlan channel_worker_plan
         = plan_sternheimer_channel_workers(num_channels,
                                             sternheimer_channel_openmp_threads(),
                                             grid_data.grid.size(),
@@ -3136,15 +3144,17 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                                orbitals,
                                                source_record,
                                                sampling_plan.sample_source_unoccupied,
+                                               write_lcao_sos ? 0 : delta_options.max_virtual_states,
                                                grid_data.volume_element,
                                                PARAM.inp.sternheimer_delta_norm_tol));
         }
-        const SternheimerSampledLCAOKPoint target
+        SternheimerSampledLCAOKPoint target
             = sample_sternheimer_lcao_kpoint(ucell,
                                              grid_data.grid,
                                              orbitals,
                                              target_record,
                                              sampling_plan.sample_target_unoccupied,
+                                             write_lcao_sos ? 0 : delta_options.max_virtual_states,
                                              grid_data.volume_element,
                                              PARAM.inp.sternheimer_delta_norm_tol);
         const SternheimerSampledLCAOKPoint& source = reuse_target_sampling ? target : *sampled_source;
@@ -3157,7 +3167,9 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                    nullptr,
                                    -1.0,
                                    elapsed_seconds_since(chi0_start_time),
-                                   std::string("source_reused=") + (reuse_target_sampling ? "yes" : "no"));
+                                   std::string("source_reused=") + (reuse_target_sampling ? "yes" : "no")
+                                       + " target_unoccupied="
+                                       + std::to_string(target.unoccupied_functions.size()));
         const SternheimerFDHamiltonian hamiltonian = [&]() {
             if (use_kpoint_mpi)
             {
@@ -3197,31 +3209,39 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
             target_occupied_projector.push_back(function.values);
         }
         SternheimerDeltaSubspace delta_subspace;
+        SternheimerChannelWorkerPlan pair_channel_worker_plan = channel_worker_plan;
         target_projector_dimensions[pair_index] = static_cast<int>(target_occupied_projector.size());
         if (use_delta_sternheimer)
         {
-            std::vector<SternheimerDeltaGridFunction> target_ao_candidates;
-            const std::vector<SternheimerDeltaGridFunction>* delta_candidates
-                = &target.unoccupied_functions;
+            std::vector<SternheimerDeltaGridFunction> delta_candidates;
             int candidate_occupied_count = 0;
             if (sampling_plan.build_target_ao_candidates)
             {
-                target_ao_candidates = build_lcao_candidate_grid_functions(
+                delta_candidates = build_lcao_candidate_grid_functions(
                     ucell,
                     grid_data.grid,
                     &orbitals,
                     sternheimer_lcao_grid_kpoint(target_record));
-                delta_candidates = &target_ao_candidates;
                 candidate_occupied_count = static_cast<int>(target_occupied_projector.size());
+            }
+            else if (write_lcao_sos)
+            {
+                delta_candidates = target.unoccupied_functions;
+            }
+            else
+            {
+                delta_candidates = std::move(target.unoccupied_functions);
             }
             SternheimerDeltaSubspaceOptions pair_delta_options = delta_options;
             pair_delta_options.max_virtual_states = sternheimer_delta_virtual_state_limit(
                 delta_options.max_virtual_states,
-                static_cast<int>(delta_candidates->size()),
+                static_cast<int>(delta_candidates.size()),
                 candidate_occupied_count);
+            pair_delta_options.retain_grid_functions = false;
+            pair_delta_options.evaluate_full_grid_difference = false;
             delta_subspace = build_delta_sternheimer_subspace_by_mode(hamiltonian,
                                                                       target.occupied_projector_functions,
-                                                                      *delta_candidates,
+                                                                      std::move(delta_candidates),
                                                                       grid_data.volume_element,
                                                                       pair_delta_options,
                                                                       delta_a_block_mode);
@@ -3242,6 +3262,48 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                 = delta_subspace.full_grid_hamiltonian_relative_difference;
             target_delta_grid_hamiltonian_max_abs_difference[pair_index]
                 = delta_subspace.full_grid_hamiltonian_max_abs_difference;
+
+            append_chi0_progress_event("delta_subspace_ready",
+                                       0,
+                                       -1,
+                                       -1,
+                                       -1,
+                                       solved_equations,
+                                       nullptr,
+                                       -1.0,
+                                       elapsed_seconds_since(chi0_start_time),
+                                       "nvirtual="
+                                           + std::to_string(delta_subspace.virtual_states.size()));
+
+            std::vector<SternheimerDeltaGridFunction>().swap(target.occupied_functions);
+            std::vector<SternheimerDeltaGridFunction>().swap(target.occupied_projector_functions);
+            if (!write_lcao_sos)
+            {
+                target.unoccupied_states = SternheimerFDZeroOrderStates();
+            }
+            const SternheimerMemorySnapshot pair_channel_memory = detect_sternheimer_memory_snapshot();
+            pair_channel_worker_plan
+                = plan_sternheimer_channel_workers(num_channels,
+                                                    sternheimer_channel_openmp_threads(),
+                                                    grid_data.grid.size(),
+                                                    channel_threads,
+                                                    pair_channel_memory,
+                                                    channel_batch_width);
+            channel_worker_plan = pair_channel_worker_plan;
+            append_chi0_progress_event(
+                "equation_workers_ready",
+                0,
+                -1,
+                -1,
+                -1,
+                solved_equations,
+                nullptr,
+                -1.0,
+                elapsed_seconds_since(chi0_start_time),
+                format_sternheimer_channel_worker_diagnostic(pair_channel_memory,
+                                                             pair_channel_worker_plan,
+                                                             grid_data.grid.size(),
+                                                             channel_threads));
         }
 
         if (!target_record.unoccupied_eigenvalues.empty())
@@ -3339,6 +3401,8 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                 };
                 const std::vector<SternheimerChannelBatch> channel_batches
                     = make_sternheimer_channel_batches(num_channels, channel_batch_width);
+                const int solved_equations_before_band = solved_equations;
+                std::atomic<int> completed_batch_equations{0};
                 std::vector<std::vector<PeriodicChannelEquationResult>> grouped_channel_results
                     = run_sternheimer_channel_tasks<std::vector<PeriodicChannelEquationResult>>(
                         static_cast<int>(channel_batches.size()),
@@ -3577,9 +3641,40 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                 }
                                     batch_results.push_back(std::move(result));
                             }
+                            SternheimerRPA::SolverResult batch_solver;
+                            batch_solver.converged = true;
+                            double batch_equation_residual_norm = 0.0;
+                            for (const PeriodicChannelEquationResult& result: batch_results)
+                            {
+                                batch_solver.converged = batch_solver.converged && result.solver.converged;
+                                batch_solver.iterations = std::max(batch_solver.iterations,
+                                                                   result.solver.iterations);
+                                batch_solver.relative_residual = std::max(batch_solver.relative_residual,
+                                                                          result.solver.relative_residual);
+                                batch_solver.absolute_residual = std::max(batch_solver.absolute_residual,
+                                                                          result.solver.absolute_residual);
+                                batch_equation_residual_norm
+                                    = std::max(batch_equation_residual_norm,
+                                               result.equation_residual_norm);
+                            }
+                            const int batch_completed
+                                = completed_batch_equations.fetch_add(batch.size) + batch.size;
+                            append_chi0_progress_event(
+                                "equation_batch",
+                                ifrequency + 1,
+                                owner_rank,
+                                ib,
+                                batch.begin,
+                                solved_equations_before_band + batch_completed,
+                                &batch_solver,
+                                batch_equation_residual_norm,
+                                elapsed_seconds_since(chi0_start_time),
+                                "batch_size=" + std::to_string(batch.size)
+                                    + ",source_k=" + std::to_string(pair.source_index + 1)
+                                    + ",target_k=" + std::to_string(pair.target_index + 1));
                             return batch_results;
                         },
-                        channel_worker_plan.effective_workers);
+                        pair_channel_worker_plan.effective_workers);
                 std::vector<PeriodicChannelEquationResult> channel_results;
                 channel_results.reserve(static_cast<std::size_t>(num_channels));
                 for (std::vector<PeriodicChannelEquationResult>& group: grouped_channel_results)
