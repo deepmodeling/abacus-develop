@@ -27,26 +27,6 @@ namespace MD_func
  */
 double gaussrand();
 
-/**
- * @brief initialize the atomic velocities
- *
- * @param unit_in unitcell information
- * @param my_rank MPI rank of the processor
- * @param restart whether restart the md
- * @param temperature ion temperature
- * @param allmass atomic mass
- * @param frozen_freedom the fixed freedom
- * @param ionmbl determine whether the atomic freedom is fixed
- * @param vel the genarated atomic velocities
- */
-void init_vel(const UnitCell& unit_in,
-              const int& my_rank,
-              const bool& restart,
-              double& temperature,
-              double* allmass,
-              int& frozen_freedom,
-              ModuleBase::Vector3<int>* ionmbl,
-              ModuleBase::Vector3<double>* vel);
 void init_vel(MDCell& mdcell,
               const bool& init_vel,
               const bool& restart,

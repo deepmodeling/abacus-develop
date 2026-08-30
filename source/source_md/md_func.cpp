@@ -227,67 +227,6 @@ void rand_vel(const int& natom,
     return;
 }
 
-void init_vel(const UnitCell& unit_in,
-              const int& my_rank,
-              const bool& restart,
-              double& temperature,
-              double* allmass,
-              int& frozen_freedom,
-              ModuleBase::Vector3<int>* ionmbl,
-              ModuleBase::Vector3<double>* vel)
-{
-    ModuleBase::Vector3<int> frozen;
-    get_mass_mbl(unit_in, allmass, frozen, ionmbl);
-    frozen_freedom = frozen.x + frozen.y + frozen.z;
-    if (frozen.x == 0)
-    {
-        ++frozen_freedom;
-    }
-    if (frozen.y == 0)
-    {
-        ++frozen_freedom;
-    }
-    if (frozen.z == 0)
-    {
-        ++frozen_freedom;
-    }
-
-    if (unit_in.init_vel)
-    {
-        std::cout << " Reading velocities from STRU file" << std::endl;
-        read_vel(unit_in, vel);
-        double kinetic = 0.0;
-        double t_current = MD_func::current_temp(kinetic, unit_in.nat, frozen_freedom, allmass, vel);
-        if (restart)
-        {
-            std::cout << " Restart MD, current temperature is " << t_current * ModuleBase::Hartree_to_K << " K"
-                      << std::endl;
-        }
-        else if (temperature < 0)
-        {
-            std::cout << " Autoset the initial tempearture to " << t_current * ModuleBase::Hartree_to_K << " K"
-                      << std::endl;
-            temperature = t_current;
-        }
-        else
-        {
-            std::cout << " Initial temeprature from INPUT is " << temperature * ModuleBase::Hartree_to_K << " K"
-                      << std::endl;
-            std::cout << " Reading temperature from STRU is " << t_current * ModuleBase::Hartree_to_K << " K"
-                      << std::endl;
-            std::cout << " Rescale velocties to initial temperature" << std::endl;
-            rescale_vel(unit_in.nat, temperature, allmass, frozen_freedom, vel);
-        }
-    }
-    else
-    {
-        std::cout << " Random velocities according to initial temperature " 
-                  << temperature * ModuleBase::Hartree_to_K << " K"
-                  << std::endl;
-        rand_vel(unit_in.nat, temperature, allmass, frozen_freedom, frozen, ionmbl, my_rank, vel);
-    }
-}
-
 void init_vel(MDCell& mdcell,
               const bool& init_vel,
               const bool& restart,
