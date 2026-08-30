@@ -251,6 +251,52 @@ TEST(SternheimerABFSPerturbation, PeriodicPoissonAppliesShiftedFullCoulombKernel
     }
 }
 
+TEST(SternheimerABFSPerturbation, PeriodicPoissonInPlaceMatchesCopyingInterface)
+{
+    ModuleRI::SternheimerFDHamiltonian::Grid grid;
+    grid.nx = 4;
+    grid.ny = 2;
+    grid.nz = 2;
+    grid.hx = 0.5 * M_PI;
+    grid.hy = M_PI;
+    grid.hz = M_PI;
+    grid.periodic = true;
+
+    ModuleRI::SternheimerABFBlochGridChannel density;
+    density.channel_index = 7;
+    density.atom_index = 2;
+    density.label = "in_place_plane_wave";
+    density.potential_r.resize(static_cast<std::size_t>(grid.nx * grid.ny * grid.nz));
+    for (int ix = 0; ix != grid.nx; ++ix)
+    {
+        const double x = ix * grid.hx;
+        for (int iy = 0; iy != grid.ny; ++iy)
+        {
+            for (int iz = 0; iz != grid.nz; ++iz)
+            {
+                const std::size_t ir = static_cast<std::size_t>((ix * grid.ny + iy) * grid.nz + iz);
+                density.potential_r[ir] = std::exp(std::complex<double>(0.0, 1.5 * x));
+            }
+        }
+    }
+
+    const ModuleRI::SternheimerReducedKPoint qpoint{0.5, 0.0, 0.0};
+    const auto expected = ModuleRI::solve_sternheimer_abf_periodic_full_coulomb({density}, grid, qpoint, 0.0);
+    std::vector<ModuleRI::SternheimerABFBlochGridChannel> in_place{density};
+    ModuleRI::solve_sternheimer_abf_periodic_full_coulomb_in_place(in_place, grid, qpoint, 0.0);
+
+    ASSERT_EQ(in_place.size(), expected.size());
+    EXPECT_EQ(in_place[0].channel_index, density.channel_index);
+    EXPECT_EQ(in_place[0].atom_index, density.atom_index);
+    EXPECT_EQ(in_place[0].label, density.label);
+    ASSERT_EQ(in_place[0].potential_r.size(), expected[0].potential_r.size());
+    for (std::size_t ir = 0; ir != expected[0].potential_r.size(); ++ir)
+    {
+        EXPECT_NEAR(in_place[0].potential_r[ir].real(), expected[0].potential_r[ir].real(), 1.0e-12);
+        EXPECT_NEAR(in_place[0].potential_r[ir].imag(), expected[0].potential_r[ir].imag(), 1.0e-12);
+    }
+}
+
 TEST(SternheimerABFSPerturbation, NonOrthogonalSamplingUsesCartesianLatticeCombination)
 {
     ModuleRI::SternheimerRadialPerturbation radial;

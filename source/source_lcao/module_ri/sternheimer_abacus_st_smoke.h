@@ -1427,17 +1427,17 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                                         const elecstate::ElecState& elec_state,
                                         const std::string& output_dir);
 
-void run_sternheimer_abacus_lcao_chi0_output(
-    const elecstate::Potential& potential,
-    const ModulePW::PW_Basis& pw_basis,
-    const UnitCell& ucell,
-    const elecstate::ElecState& elec_state,
-    const LCAO_Orbitals& orbitals,
-    const std::vector<SternheimerLCAOOccupiedKPoint>& occupied_kpoints,
-    const std::array<int, 3>& kmesh,
-    const ModulePW::PW_Basis_K* pw_wfc,
-    const Structure_Factor* structure_factor,
-    const std::string& output_dir);
+void run_sternheimer_abacus_lcao_chi0_output(const elecstate::Potential& potential,
+                                             const ModulePW::PW_Basis& pw_basis,
+                                             const UnitCell& ucell,
+                                             const elecstate::ElecState& elec_state,
+                                             const LCAO_Orbitals& orbitals,
+                                             const std::vector<SternheimerLCAOOccupiedKPoint>& occupied_kpoints,
+                                             const std::array<int, 3>& kmesh,
+                                             const ModulePW::PW_Basis_K* pw_wfc,
+                                             const Structure_Factor* structure_factor,
+                                             const std::string& output_dir,
+                                             const SternheimerOrbitalSet* reusable_rpa_abfs = nullptr);
 
 } // namespace ModuleRI
 

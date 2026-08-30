@@ -837,12 +837,18 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 16) Write RPA information in LCAO basis
     //------------------------------------------------------------------
+    ModuleRI::SternheimerOrbitalSet sternheimer_rpa_abfs;
     if (inp.rpa)
     {
-        RPA_LRI<TK, double> rpa_lri_double(exx_info.info_ri);
-        rpa_lri_double.postSCF(ucell, MPI_COMM_WORLD, *dm, pelec, kv, orb, pv, *psi);
-        if (inp.rpa_out_vel)
-            rpa_lri_double.out_velocity(ucell, gd, two_center_bundle, pv, *psi, pelec);
+        {
+            RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
+            rpa_lri_double.postSCF(ucell, MPI_COMM_WORLD, *dm, pelec, kv, orb, pv, *psi);
+            if (inp.out_sternheimer_librpa || inp.out_sternheimer_siab)
+            {
+                sternheimer_rpa_abfs = rpa_lri_double.take_sternheimer_abfs();
+            }
+        }
+        RPA_LRI<TK, double>::trim_process_heap();
     }
 
     if (inp.out_sternheimer_librpa || inp.out_sternheimer_siab)
@@ -862,7 +868,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                           {kv.nmp[0], kv.nmp[1], kv.nmp[2]},
                                                           pw_wfc,
                                                           &sf,
-                                                          global_out_dir);
+                                                          global_out_dir,
+                                                          sternheimer_rpa_abfs.empty() ? nullptr
+                                                                                       : &sternheimer_rpa_abfs);
     }
 #endif
 

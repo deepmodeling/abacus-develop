@@ -1,6 +1,8 @@
 #ifndef STERNHEIMER_RPA_H
 #define STERNHEIMER_RPA_H
 
+#include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
+
 #include <complex>
 #include <cstdint>
 #include <functional>
@@ -172,6 +174,22 @@ class SternheimerRPA
                                               double occupation,
                                               int column_index,
                                               std::vector<Complex>& branch_matrix);
+
+    static void accumulate_chi0_branch_column(const std::vector<SternheimerABFBlochGridChannel>& channels,
+                                              const Vector& psi_r,
+                                              const Vector& delta_psi_r,
+                                              double grid_weight,
+                                              double occupation,
+                                              int column_index,
+                                              std::vector<Complex>& branch_matrix);
+
+    static void accumulate_chi0_branch_columns(const std::vector<SternheimerABFBlochGridChannel>& channels,
+                                               const Vector& psi_r,
+                                               const std::vector<const Vector*>& delta_psi_batch,
+                                               double grid_weight,
+                                               double occupation,
+                                               int column_begin,
+                                               std::vector<Complex>& branch_matrix);
 
     static std::vector<Complex> symmetrize_chi0_imaginary_frequency(const std::vector<Complex>& branch_matrix,
                                                                     int num_channels);

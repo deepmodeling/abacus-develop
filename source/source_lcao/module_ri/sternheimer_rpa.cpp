@@ -1118,6 +1118,125 @@ void SternheimerRPA::accumulate_chi0_branch_column(const std::vector<Vector>& ha
     }
 }
 
+void SternheimerRPA::accumulate_chi0_branch_column(const std::vector<SternheimerABFBlochGridChannel>& channels,
+                                                   const Vector& psi_r,
+                                                   const Vector& delta_psi_r,
+                                                   const double grid_weight,
+                                                   const double occupation,
+                                                   const int column_index,
+                                                   std::vector<Complex>& branch_matrix)
+{
+    const int num_channels = static_cast<int>(channels.size());
+    if (num_channels <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column requires at least one channel.");
+    }
+    if (column_index < 0 || column_index >= num_channels)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column column index is out of range.");
+    }
+    if (branch_matrix.size()
+        != checked_mul_size(static_cast<std::size_t>(num_channels),
+                            static_cast<std::size_t>(num_channels),
+                            "Sternheimer chi0 branch matrix size"))
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column matrix size mismatch.");
+    }
+    for (int row = 0; row != num_channels; ++row)
+    {
+        branch_matrix[static_cast<std::size_t>(row) * static_cast<std::size_t>(num_channels)
+                      + static_cast<std::size_t>(column_index)]
+            += occupation
+               * accumulate_polarizability_grid_element(channels[static_cast<std::size_t>(row)].potential_r,
+                                                        psi_r,
+                                                        delta_psi_r,
+                                                        grid_weight);
+    }
+}
+
+void SternheimerRPA::accumulate_chi0_branch_columns(const std::vector<SternheimerABFBlochGridChannel>& channels,
+                                                    const Vector& psi_r,
+                                                    const std::vector<const Vector*>& delta_psi_batch,
+                                                    const double grid_weight,
+                                                    const double occupation,
+                                                    const int column_begin,
+                                                    std::vector<Complex>& branch_matrix)
+{
+    const int num_channels = static_cast<int>(channels.size());
+    const int batch_size = static_cast<int>(delta_psi_batch.size());
+    if (num_channels <= 0 || batch_size <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_columns requires channels and responses.");
+    }
+    if (column_begin < 0 || column_begin + batch_size > num_channels)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_columns column range is out of bounds.");
+    }
+    if (branch_matrix.size()
+        != checked_mul_size(static_cast<std::size_t>(num_channels),
+                            static_cast<std::size_t>(num_channels),
+                            "Sternheimer chi0 branch matrix size"))
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_columns matrix size mismatch.");
+    }
+    for (const Vector* delta_psi_r: delta_psi_batch)
+    {
+        if (delta_psi_r == nullptr)
+        {
+            throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_columns received a null response.");
+        }
+        assert_same_size(psi_r, *delta_psi_r, "SternheimerRPA::accumulate_chi0_branch_columns");
+    }
+    for (const auto& channel: channels)
+    {
+        assert_same_size(channel.potential_r, psi_r, "SternheimerRPA::accumulate_chi0_branch_columns");
+    }
+
+#pragma omp parallel
+    {
+        std::vector<Complex> values(static_cast<std::size_t>(batch_size));
+#pragma omp for schedule(static)
+        for (int row = 0; row != num_channels; ++row)
+        {
+            std::fill(values.begin(), values.end(), Complex(0.0, 0.0));
+            const Vector& potential_r = channels[static_cast<std::size_t>(row)].potential_r;
+            if (batch_size == 2)
+            {
+                Complex first(0.0, 0.0);
+                Complex second(0.0, 0.0);
+                const Vector& first_response = *delta_psi_batch[0];
+                const Vector& second_response = *delta_psi_batch[1];
+                for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
+                {
+                    const Complex probe = std::conj(psi_r[ir]) * std::conj(potential_r[ir]);
+                    first += probe * first_response[ir];
+                    second += probe * second_response[ir];
+                }
+                values[0] = first;
+                values[1] = second;
+            }
+            else
+            {
+                for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
+                {
+                    const Complex probe = std::conj(psi_r[ir]) * std::conj(potential_r[ir]);
+                    for (int offset = 0; offset != batch_size; ++offset)
+                    {
+                        values[static_cast<std::size_t>(offset)]
+                            += probe * (*delta_psi_batch[static_cast<std::size_t>(offset)])[ir];
+                    }
+                }
+            }
+            for (int offset = 0; offset != batch_size; ++offset)
+            {
+                branch_matrix[static_cast<std::size_t>(row) * static_cast<std::size_t>(num_channels)
+                              + static_cast<std::size_t>(column_begin + offset)]
+                    += occupation * (grid_weight * values[static_cast<std::size_t>(offset)]);
+            }
+        }
+    }
+}
+
 std::vector<SternheimerRPA::Complex> SternheimerRPA::symmetrize_chi0_imaginary_frequency(
     const std::vector<Complex>& branch_matrix,
     const int num_channels)

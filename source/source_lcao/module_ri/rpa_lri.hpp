@@ -493,6 +493,22 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
 }
 
 template <typename T, typename Tdata>
+ModuleRI::SternheimerOrbitalSet RPA_LRI<T, Tdata>::take_sternheimer_abfs()
+{
+    if (this->info.shrink_abfs_pca_thr >= 0.0)
+    {
+        return {};
+    }
+    return std::move(this->abfs);
+}
+
+template <typename T, typename Tdata>
+void RPA_LRI<T, Tdata>::trim_process_heap()
+{
+    RpaLriDetail::trim_malloc_cache();
+}
+
+template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in, const std::vector<double>& orb_cutoff)
 {
     ModuleBase::TITLE("RPA_LRI", "init");

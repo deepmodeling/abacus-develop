@@ -181,6 +181,77 @@ TEST(SternheimerRPA, CollinearSpinBranchesAddBeforeConjugateSymmetrization)
     }
 }
 
+TEST(SternheimerRPA, AccumulateComplexQChi0BranchColumnReadsChannelStorageDirectly)
+{
+    std::vector<ModuleRI::SternheimerABFBlochGridChannel> channels(2);
+    channels[0].potential_r = {Complex(2.0, 1.0), Complex(-1.0, 0.5)};
+    channels[1].potential_r = {Complex(0.5, -0.25), Complex(3.0, 2.0)};
+    const Vector psi_k = {Complex(1.0, 1.0), Complex(2.0, -0.5)};
+    const Vector delta_psi_kq = {Complex(0.5, -0.25), Complex(-0.75, 1.0)};
+    constexpr double grid_weight = 0.25;
+    constexpr double occupation = 1.5;
+
+    std::vector<Complex> direct(4, Complex(0.0, 0.0));
+    ModuleRI::SternheimerRPA::accumulate_chi0_branch_column(channels,
+                                                            psi_k,
+                                                            delta_psi_kq,
+                                                            grid_weight,
+                                                            occupation,
+                                                            0,
+                                                            direct);
+
+    const std::vector<Vector> copied = {channels[0].potential_r, channels[1].potential_r};
+    std::vector<Complex> expected(4, Complex(0.0, 0.0));
+    ModuleRI::SternheimerRPA::accumulate_chi0_branch_column(copied,
+                                                            psi_k,
+                                                            delta_psi_kq,
+                                                            grid_weight,
+                                                            occupation,
+                                                            0,
+                                                            expected);
+    EXPECT_EQ(direct, expected);
+}
+
+TEST(SternheimerRPA, AccumulateComplexQChi0BranchColumnsMatchScalarColumns)
+{
+    std::vector<ModuleRI::SternheimerABFBlochGridChannel> channels(3);
+    channels[0].potential_r = {Complex(2.0, 1.0), Complex(-1.0, 0.5)};
+    channels[1].potential_r = {Complex(0.5, -0.25), Complex(3.0, 2.0)};
+    channels[2].potential_r = {Complex(-0.75, 0.25), Complex(1.5, -2.0)};
+    const Vector psi_k = {Complex(1.0, 1.0), Complex(2.0, -0.5)};
+    const std::vector<Vector> delta_psi_batch{{Complex(0.5, -0.25), Complex(-0.75, 1.0)},
+                                              {Complex(-0.25, 0.75), Complex(1.25, 0.5)}};
+    const std::vector<const Vector*> delta_psi_batch_views{&delta_psi_batch[0], &delta_psi_batch[1]};
+    constexpr double grid_weight = 0.25;
+    constexpr double occupation = 1.5;
+
+    std::vector<Complex> batched(9, Complex(0.0, 0.0));
+    ModuleRI::SternheimerRPA::accumulate_chi0_branch_columns(channels,
+                                                             psi_k,
+                                                             delta_psi_batch_views,
+                                                             grid_weight,
+                                                             occupation,
+                                                             1,
+                                                             batched);
+
+    std::vector<Complex> scalar(9, Complex(0.0, 0.0));
+    for (std::size_t offset = 0; offset != delta_psi_batch.size(); ++offset)
+    {
+        ModuleRI::SternheimerRPA::accumulate_chi0_branch_column(channels,
+                                                                psi_k,
+                                                                delta_psi_batch[offset],
+                                                                grid_weight,
+                                                                occupation,
+                                                                static_cast<int>(offset) + 1,
+                                                                scalar);
+    }
+    for (std::size_t index = 0; index != batched.size(); ++index)
+    {
+        EXPECT_NEAR(batched[index].real(), scalar[index].real(), 1.0e-14);
+        EXPECT_NEAR(batched[index].imag(), scalar[index].imag(), 1.0e-14);
+    }
+}
+
 TEST(SternheimerRPA, SymmetrizeImaginaryFrequencyChi0AddsAdjointBranch)
 {
     const std::vector<Complex> branch = {Complex(1.0, 2.0), Complex(3.0, -4.0), Complex(5.0, 6.0), Complex(-7.0, 8.0)};

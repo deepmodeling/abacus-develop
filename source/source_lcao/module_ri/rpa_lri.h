@@ -6,9 +6,10 @@
 #ifndef RPA_LRI_H
 #define RPA_LRI_H
 
-#include "source_esolver/esolver_ks_lcao.h"
 #include "LRI_CV.h"
+#include "source_esolver/esolver_ks_lcao.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
+#include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
 // #include "module_xc/exx_info.h"
 // #include "source_basis/module_ao/orb_atomic_lm.h"
 #include "source_base/matrix.h"
@@ -82,12 +83,10 @@ template <typename T, typename Tdata> class RPA_LRI
     void out_struc(const UnitCell& ucell);
     void out_bz_sampling();
     void out_bands(const elecstate::ElecState *pelec);
-    void out_velocity(const UnitCell& ucell,
-        const Grid_Driver& gd,
-        const TwoCenterBundle& two_center_bundle,
-        const Parallel_Orbitals& parav,/*nbasis×nbasis*/
-        const psi::Psi<T>& psi,
-        const elecstate::ElecState* pelec);
+
+    ModuleRI::SternheimerOrbitalSet take_sternheimer_abfs();
+    static void trim_process_heap();
+
     void output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<double>* exx_lri_rpa);
     void out_Cs(const UnitCell& ucell, std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in, std::string filename);
     void out_Cs_v1(const UnitCell& ucell, std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in, std::string filename);
