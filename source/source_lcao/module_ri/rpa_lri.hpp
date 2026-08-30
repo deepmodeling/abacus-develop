@@ -23,6 +23,7 @@
 
 #include "RPA_LRI.h"
 #include "librpa_2d_coulomb_head.h"
+#include "librpa_bz_sampling.h"
 #include "librpa_stru_units.h"
 #include "rpa_abfs_preorthogonalization.h"
 #include "source_basis/module_ao/element_basis_index-ORB.h"
@@ -2226,11 +2227,7 @@ void RPA_LRI<T, Tdata>::out_bz_sampling()
     ModuleBase::TITLE("DFT_RPA_interface", "out_bz_sampling");
     const double TWOPI_Bohr2A = ModuleBase::TWO_PI * ModuleBase::BOHR_TO_A;
     const int nks_tot = PARAM.inp.nspin == 2 ? static_cast<int>(p_kv->get_nks()) / 2 : p_kv->get_nks();
-    int n_coulomb_irreducible = nks_tot;
-    if (ModuleSymmetry::Symmetry::symm_flag == 1 && !p_kv->kstars.empty())
-    {
-        n_coulomb_irreducible = static_cast<int>(p_kv->kstars.size());
-    }
+    const int n_coulomb_irreducible = RpaLriDetail::librpa_stored_coulomb_q_count(nks_tot);
 
     std::ofstream ofs("bz_sampling_out", std::ios::out | std::ios::trunc);
     if (!ofs.good())
@@ -2250,15 +2247,7 @@ void RPA_LRI<T, Tdata>::out_bz_sampling()
     }
     for (int ik = 0; ik < nks_tot; ++ik)
     {
-        int coulomb_irreducible_index = ik + 1;
-        int representative_scf_index = ik + 1;
-        if (ModuleSymmetry::Symmetry::symm_flag == 1
-            && ik < static_cast<int>(p_kv->ibz_index.size())
-            && p_kv->ibz_index[ik] >= 0)
-        {
-            coulomb_irreducible_index = p_kv->ibz_index[ik] + 1;
-            representative_scf_index = coulomb_irreducible_index;
-        }
+        const auto stored_q_index = RpaLriDetail::librpa_stored_q_index(ik, nks_tot);
         ofs << std::setw(8) << ik + 1
             << std::setw(24) << std::scientific << std::setprecision(15)
             << (p_kv->wk[ik] / weight_sum)
@@ -2268,8 +2257,8 @@ void RPA_LRI<T, Tdata>::out_bz_sampling()
             << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_c[ik].x * TWOPI_Bohr2A
             << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_c[ik].y * TWOPI_Bohr2A
             << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_c[ik].z * TWOPI_Bohr2A
-            << std::setw(8) << coulomb_irreducible_index
-            << std::setw(8) << representative_scf_index
+            << std::setw(8) << stored_q_index.coulomb_irreducible_index
+            << std::setw(8) << stored_q_index.representative_scf_index
             << std::endl;
     }
     ofs.close();

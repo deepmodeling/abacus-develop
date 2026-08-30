@@ -46,6 +46,13 @@ add_test(
   COMMAND ./MODULE_RI_librpa_stru_units_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+add_executable(MODULE_RI_librpa_bz_sampling_test librpa_bz_sampling_test.cpp)
+install(TARGETS MODULE_RI_librpa_bz_sampling_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
+add_test(
+  NAME MODULE_RI_librpa_bz_sampling_test
+  COMMAND ./MODULE_RI_librpa_bz_sampling_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 add_executable(MODULE_RI_librpa_2d_coulomb_head_test librpa_2d_coulomb_head_test.cpp)
 install(TARGETS MODULE_RI_librpa_2d_coulomb_head_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
 add_test(
