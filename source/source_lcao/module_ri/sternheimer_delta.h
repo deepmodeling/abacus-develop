@@ -158,6 +158,7 @@ struct SternheimerDeltaSubspace
     std::vector<SternheimerDeltaGridFunction> grid_functions;
     int accepted_candidates = 0;
     int discarded_candidates = 0;
+    bool used_block_generalized_eigensolver = false;
     double full_grid_hamiltonian_relative_difference = 0.0;
     double full_grid_hamiltonian_max_abs_difference = 0.0;
 };

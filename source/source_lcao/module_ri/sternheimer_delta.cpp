@@ -871,6 +871,7 @@ SternheimerDeltaSubspace build_complete_reference_delta_sternheimer_subspace_blo
     SternheimerDeltaSubspace subspace;
     subspace.accepted_candidates = basis_size;
     subspace.discarded_candidates = 0;
+    subspace.used_block_generalized_eigensolver = true;
     transform_grid_functions_blocked(candidate_functions,
                                      matrices.hamiltonian,
                                      basis_size,
@@ -1635,7 +1636,7 @@ SternheimerDeltaSubspace build_reference_delta_sternheimer_subspace(
 
     const int input_candidate_count = static_cast<int>(candidate_functions.size());
     const bool complete_requested_space
-        = options.max_virtual_states > 0 && options.max_virtual_states >= input_candidate_count;
+        = options.max_virtual_states == 0 || options.max_virtual_states >= input_candidate_count;
     if (options.use_block_generalized_eigensolver && complete_requested_space
         && input_candidate_count > 0)
     {

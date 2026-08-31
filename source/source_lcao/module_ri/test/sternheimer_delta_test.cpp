@@ -654,7 +654,7 @@ TEST(SternheimerDelta, ReferenceSubspacePivotsPastNearDependentCandidates)
     EXPECT_NEAR(subspace.virtual_states[1].eigenvalue, 3.0, 1.0e-13);
 }
 
-TEST(SternheimerDelta, BlockCompleteReferenceSubspaceMatchesLegacyPath)
+TEST(SternheimerDelta, DefaultFullReferenceSubspaceUsesBlockPathAndMatchesLegacy)
 {
     ModuleRI::SternheimerFDHamiltonian::Grid grid{5, 1, 1, 1.0, 1.0, 1.0, false};
     constexpr double volume_element = 1.0;
@@ -690,7 +690,8 @@ TEST(SternheimerDelta, BlockCompleteReferenceSubspaceMatchesLegacyPath)
     };
 
     ModuleRI::SternheimerDeltaSubspaceOptions block_options;
-    block_options.max_virtual_states = static_cast<int>(candidates.size());
+    // Zero is the production spelling for the complete virtual space.
+    block_options.max_virtual_states = 0;
     block_options.evaluate_full_grid_difference = false;
     ModuleRI::SternheimerDeltaSubspaceOptions legacy_options = block_options;
     legacy_options.use_block_generalized_eigensolver = false;
@@ -700,6 +701,8 @@ TEST(SternheimerDelta, BlockCompleteReferenceSubspaceMatchesLegacyPath)
     const auto legacy = ModuleRI::build_reference_delta_sternheimer_subspace(
         hamiltonian, {occupied}, candidates, volume_element, legacy_options);
 
+    EXPECT_TRUE(block.used_block_generalized_eigensolver);
+    EXPECT_FALSE(legacy.used_block_generalized_eigensolver);
     ASSERT_EQ(block.virtual_states.size(), legacy.virtual_states.size());
     EXPECT_EQ(block.accepted_candidates, legacy.accepted_candidates);
     EXPECT_EQ(block.discarded_candidates, legacy.discarded_candidates);
