@@ -11,7 +11,7 @@ concurrency:
 jobs:
   test:
     name: Test on CUDA Build
-    runs-on: nvidia
+    runs-on: gpu
     if: github.repository_owner == 'deepmodeling'
     container:
       image: ghcr.io/deepmodeling/abacus-cuda
