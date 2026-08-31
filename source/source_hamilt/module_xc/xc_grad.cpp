@@ -17,6 +17,10 @@
 #include "xc_grad_internal.h"
 #include "source_base/timer.h"
 
+#ifdef __LIBXC
+#include <xc_funcs.h>
+#endif
+
 void XC_Functional::gradcorr(
     double &etxc,
     double &vtxc,
