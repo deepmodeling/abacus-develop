@@ -115,7 +115,6 @@ private:
 
     // Inner product <x|y> (real part only).
     Real gamma_dot(const T* x, const T* y) const;
-    T complex_dot(const T* x, const T* y) const;
 
     // Gram matrix: out[i, j] = <a_i | b_j>.
     void gram(const T* mat_a, const T* mat_b,
@@ -177,10 +176,6 @@ private:
                           const std::vector<int>& cols,
                           int l,
                           SmallSubspace& subspace);
-
-    bool is_s_orthonormal(const T* psi, const T* spsi, int ncol) const;
-
-    void s_gram_schmidt(T* psi, T* hpsi, T* spsi, int ncol) const;
 
     void rayleigh_ritz(T* psi, Real* eigenvalue,
                        std::vector<int>& active_cols,

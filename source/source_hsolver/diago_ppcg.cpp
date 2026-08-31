@@ -6,7 +6,6 @@
 #include <ATen/kernels/lapack.h>
 #include <stdexcept>
 #include "source_base/kernels/math_kernel_op.h"
-#include <limits>
 #include <cstdlib>
 #include <fstream>
 #include <numeric>
@@ -21,21 +20,8 @@ const double ppcg_preconditioner_threshold = 1.0e-12;
 const double ppcg_numerical_threshold = 1.0e-30;
 const double ppcg_scaling_threshold = 1.0e-15;
 
-// Increasing diagonal shifts used to regularize an ill-conditioned Gram matrix
-// when a Cholesky factorization or a small projected generalized eigenproblem
-// fails numerically. The ladder is tried from no shift up to a unit shift.
-const double ppcg_cholesky_shifts[] = {0.0,   1.0e-12, 1.0e-10, 1.0e-8, 1.0e-6,
-                                       1.0e-4, 1.0e-3,  1.0e-2,  1.0e-1, 1.0};
-// Subset of the shift ladder used by the small projected eigensolve fallback.
+// Diagonal shifts used by the small projected eigensolve fallback.
 const double ppcg_subspace_shifts[] = {0.0, 1.0e-10, 1.0e-8, 1.0e-6};
-
-// Orthogonality check tolerance expressed as a multiple of machine epsilon.
-const double ppcg_orthogonality_tolerance_factor = 10.0;
-// Line-search root-selection tolerance expressed as a multiple of machine epsilon.
-const double ppcg_line_search_tolerance_factor = 100.0;
-// Quadratic-formula coefficients in the line-search root solve (b^2 - 4ac and 2a).
-const double ppcg_quadratic_discriminant_coefficient = 4.0;
-const double ppcg_quadratic_root_denominator_coefficient = 2.0;
 
 } // namespace
 } // namespace hsolver
@@ -140,43 +126,6 @@ struct HermitianLapack
         container::kernels::lapack_hegvd<Scalar, Device>()(
             n, n, a, b, w, eigenvectors.data());
         std::copy(eigenvectors.begin(), eigenvectors.end(), a);
-    }
-
-    static void potrf(int n, Scalar* a)
-    {
-        Real diag_max = 0;
-        for (int i = 0; i < n; ++i)
-        {
-            diag_max = std::max(diag_max, std::abs(a[i + i * n]));
-        }
-        std::vector<Scalar> a0(a, a + n * n);
-
-        for (const double shift : ppcg_cholesky_shifts)
-        {
-            std::copy(a0.begin(), a0.end(), a);
-            if (shift > 0.0)
-            {
-                for (int i = 0; i < n; ++i)
-                {
-                    a[i + i * n] += Scalar(Real(shift) * std::max(diag_max, Real(1.0)), 0.0);
-                }
-            }
-            try
-            {
-                container::kernels::lapack_potrf<Scalar, Device>()('U', n, a, n);
-                return;
-            }
-            catch (const std::runtime_error&)
-            {
-                // Try the next diagonal shift.
-            }
-        }
-        throw std::runtime_error("PPCG: potrf failed.");
-    }
-
-    static void trtri(int n, Scalar* a)
-    {
-        container::kernels::lapack_trtri<Scalar, Device>()('U', 'N', n, a, n);
     }
 };
 
@@ -342,18 +291,6 @@ DiagoPPCG<T, Device>::gamma_dot(const T* x, const T* y) const
     Real result = ModuleBase::dot_real_op<T, Device>()(n_dim_, x, y, false);
     reduce_pool_if_mpi_ready(result);
     return result;
-}
-
-template <typename T, typename Device>
-T DiagoPPCG<T, Device>::complex_dot(const T* x, const T* y) const
-{
-    T acc = T(0);
-    for (int i = 0; i < n_dim_; ++i)
-    {
-        acc += std::conj(x[i]) * y[i];
-    }
-    reduce_pool_if_mpi_ready(&acc, 1);
-    return acc;
 }
 
 // =============================================================================
@@ -857,81 +794,6 @@ void DiagoPPCG<T, Device>::update_one_block(
     scatter_cols(psi, cols, subspace.psi_new);
     scatter_cols(spsi_.data(), cols, subspace.spsi_new);
     scatter_cols(hpsi_.data(), cols, subspace.hpsi_new);
-}
-
-} // namespace hsolver
-
-
-namespace hsolver {
-
-// ---------------------------------------------------------------------------
-// Check S-orthonormality of a column block.
-// ---------------------------------------------------------------------------
-template <typename T, typename Device>
-bool DiagoPPCG<T, Device>::is_s_orthonormal(
-    const T* psi, const T* spsi, int ncol) const
-{
-    const Real orth_tol = Real(ppcg_orthogonality_tolerance_factor)
-                        * std::sqrt(std::numeric_limits<Real>::epsilon());
-    std::vector<T> gram_s;
-    gram(psi, spsi, ncol, ncol, gram_s, ncol);
-    for (int j = 0; j < ncol; ++j)
-    {
-        for (int i = 0; i < ncol; ++i)
-        {
-            const T sij = gram_s[i + j * ncol];
-            const T target = (i == j) ? T(1) : T(0);
-            if (std::abs(sij - target) > orth_tol)
-            {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-// ---------------------------------------------------------------------------
-// Iterative S-Gram-Schmidt fallback with one reorthogonalization pass.
-// ---------------------------------------------------------------------------
-template <typename T, typename Device>
-void DiagoPPCG<T, Device>::s_gram_schmidt(
-    T* psi, T* hpsi, T* spsi, int ncol) const
-{
-    for (int j = 0; j < ncol; ++j)
-    {
-        for (int pass = 0; pass < 2; ++pass)
-        {
-            apply_s_current(psi + j * ld_psi_, spsi + j * ld_psi_, 1);
-            for (int k = 0; k < j; ++k)
-            {
-                T coeff = complex_dot(psi + k * ld_psi_,
-                                      spsi + j * ld_psi_);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ > ppcg_openmp_work_threshold)
-#endif
-                for (int ig = 0; ig < n_dim_; ++ig)
-                {
-                    psi [idx(ig, j, ld_psi_)] -= coeff * psi [idx(ig, k, ld_psi_)];
-                    hpsi[idx(ig, j, ld_psi_)] -= coeff * hpsi[idx(ig, k, ld_psi_)];
-                    spsi[idx(ig, j, ld_psi_)] -= coeff * spsi[idx(ig, k, ld_psi_)];
-                }
-            }
-        }
-        apply_s_current(psi + j * ld_psi_, spsi + j * ld_psi_, 1);
-        Real nrm = std::sqrt(std::max(
-            gamma_dot(psi + j * ld_psi_, spsi + j * ld_psi_),
-            Real(ppcg_numerical_threshold)));
-        Real inv_nrm = Real(1) / nrm;
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ > ppcg_openmp_work_threshold)
-#endif
-        for (int ig = 0; ig < n_dim_; ++ig)
-        {
-            psi [idx(ig, j, ld_psi_)] *= inv_nrm;
-            hpsi[idx(ig, j, ld_psi_)] *= inv_nrm;
-            spsi[idx(ig, j, ld_psi_)] *= inv_nrm;
-        }
-    }
 }
 
 // ---------------------------------------------------------------------------
