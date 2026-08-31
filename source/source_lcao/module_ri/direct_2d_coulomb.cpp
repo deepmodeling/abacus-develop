@@ -603,6 +603,9 @@ Result build_coulomb_matrix(const std::vector<BasisFunction>& basis,
             throw std::overflow_error("Direct G-sum matrix dimensions exceed the BLAS integer range.");
         }
         std::vector<std::complex<double>> gram_rows(dimension * ng, {0.0, 0.0});
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
         for (std::size_t ig = 0; ig < ng; ++ig)
         {
             const ReciprocalPoint& point = *regular_points[ig];
