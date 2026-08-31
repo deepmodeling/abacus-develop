@@ -168,6 +168,8 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
 
         // reset local pseudopotentials
         this->locpp.init_vloc(ucell, this->pw_rhod);
+        this->locpp.print_vloc(ucell, this->pw_rhod,
+                               this->inp_->out_element_info, PARAM.globalv.global_out_dir);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
         // perform symmetry analysis

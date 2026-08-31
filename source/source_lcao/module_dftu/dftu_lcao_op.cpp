@@ -4,11 +4,7 @@
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_io/module_parameter/parameter.h"
-#ifdef _OPENMP
-#include <unordered_set>
-#endif
 #include "source_base/parallel_reduce.h"
 
 template <typename TK, typename TR>
@@ -89,13 +85,13 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver
 }
 
 template <typename TK, typename TR>
-void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbitals* paraV)
+void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbitals* pv)
 {
     ModuleBase::TITLE("DFTU", "cal_nlm_all");
-	if (this->precal_nlm_done) 
-	{
-		return;
-	}
+    if (this->precal_nlm_done) 
+    {
+        return;
+    }
 
     ModuleBase::timer::start("DFTU", "cal_nlm_all");
     nlm_tot.resize(this->ucell->nat);
@@ -126,8 +122,8 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
             const Atom* atom1 = &ucell->atoms[T1];
 
-            auto all_indexes = paraV->get_indexes_row(iat1);
-            auto col_indexes = paraV->get_indexes_col(iat1);
+            auto all_indexes = pv->get_indexes_row(iat1);
+            auto col_indexes = pv->get_indexes_col(iat1);
             // insert col_indexes into all_indexes to get universal set with no repeat elements
             all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
             std::sort(all_indexes.begin(), all_indexes.end());
@@ -186,14 +182,14 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
  *     * Uses get_dmr(current_spin) to get real-space density matrix
  *     * Accumulates contributions from all atom pairs via cal_occ()
  *     * Performs MPI reduction to sum occ across processes
- *     * Stores result via set_occ_mat_flat() for use in VU calculation
+ *     * Stores result via set_occ_mat_flat() for use in pot_onsite calculation
  *     * For nspin=1: occ is scaled by 0.5 (since only one spin channel computed)
  *   - Subsequent iterations: occ_mat is computed fresh each iteration from updated DMR
  * 
  * Case 2: Occ_mat IS initialized (is_occ_mat_initialized, i.e., read from dm_onsite.txt file)
  *   - First electronic iteration: uses pre-read occ_mat directly without DMR calculation
  *     * Skips DMR-based occ calculation entirely
- *     * Reads locale from stored data via get_occ_mat()
+ *     * Reads occ_mat from stored data via get_occ_mat()
  *     * Different indexing for nspin=4 vs nspin=1/2 (see below)
  *   - After first iteration: mark_occ_mat_dirty() is called to force recomputation
  * 
@@ -242,18 +238,18 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         // Reset DFT+U energy at start of each spin cycle
         // For nspin=2: reset when current_spin==0 (start of spin-up calculation)
         // For nspin=1/4: reset once (current_spin always 0)
-		if (this->current_spin == 0) 
-		{
+        if (this->current_spin == 0) 
+        {
             this->dftu->set_energy(0.0);
-		}
-	}
+        }
+    }
     ModuleBase::timer::start("DFTU", "contributeHR");
 
-    const Parallel_Orbitals* paraV = this->hR->get_atom_pair(0).get_paraV();
+    const Parallel_Orbitals* pv = this->hR->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
     // 1. Calculate <psi|alpha> two-center integrals for all atom pairs
     //    This is reused in both occ and HR calculations
-    this->cal_nlm_all(paraV);
+    this->cal_nlm_all(pv);
 
     // 2. Loop over all Hubbard-projector center atoms (iat0)
     int atom_index = 0;
@@ -310,7 +306,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                         = dmR_current->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
                     if (tmp != nullptr)
                     {
-                        this->cal_occ(iat1, iat2, paraV, nlm1, nlm2, tmp->get_pointer(), occ);
+                        this->cal_occ(iat1, iat2, pv, nlm1, nlm2, tmp->get_pointer(), occ);
                     }
                 }
             }
@@ -365,26 +361,26 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         }
         ModuleBase::timer::end("DFTU", "cal_occ");
 
-        // 3. Calculate Hubbard potential VU from occupation matrix
-        // VU = U * (1/2 * delta(m,m') - occ(m,m')) for each spin channel
+        // 3. Calculate Hubbard potential pot_onsite from occupation matrix
+        // pot_onsite = U * (1/2 * delta(m,m') - occ(m,m')) for each spin channel
         // Energy: EU = U * 1/2 * occ(m,m') * occ(m',m)
-        ModuleBase::timer::start("DFTU", "cal_vu");
-        const double u_value = this->dftu->u_current[T0];
-        std::vector<double> VU_tmp(occ.size());
+        ModuleBase::timer::start("DFTU", "cal_pot_onsite");
+        const double u_value = this->dftu->get_u_current(T0);
+        std::vector<double> pot_onsite_tmp(occ.size());
 
         // mohan update 2025-11: get_energy/set_energy are now instance methods
         // via this->dftu pointer, no longer global static state.
         double u_energy = this->dftu->get_energy();
-        this->cal_v_of_u(occ, tlp1, u_value, VU_tmp.data(), u_energy);
+        this->cal_pot_onsite(occ, tlp1, u_value, pot_onsite_tmp.data(), u_energy);
         this->dftu->set_energy(u_energy);
 
-        // 4. Convert VU to appropriate data type (real or complex)
-        // For nspin=4 with complex Hamiltonian, VU needs Pauli matrix transformation
-        std::vector<TR> VU(occ.size());
-        this->transfer_vu(VU_tmp, VU);
+        // 4. Convert pot_onsite to appropriate data type (real or complex)
+        // For nspin=4 with complex Hamiltonian, pot_onsite needs Pauli matrix transformation
+        std::vector<TR> pot_onsite(occ.size());
+        this->transfer_pot_onsite(pot_onsite_tmp, pot_onsite);
 
         // 5. Second iteration: Calculate Hamiltonian matrix contribution
-        // HR += <psi_I|beta_m> * VU(m,m') * <beta_m'|psi_{J,R}>
+        // HR += <psi_I|beta_m> * pot_onsite(m,m') * <beta_m'|psi_{J,R}>
         // for all atom pairs <I,J,R> within cutoff
         // Note: different iat0 may contribute to the same HR(iat1, iat2, R), so we need to protect the update
         // to avoid race conditions in multithreading. Reference: nonlocal.cpp for the atom_row_list pattern.
@@ -419,22 +415,22 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 #pragma omp critical(dftu_hr_update)
 #endif
                     {
-                        this->cal_HR_IJR(iat1, iat2, paraV, nlm1, nlm2, VU, tmp->get_pointer());
+                        this->cal_HR_IJR(iat1, iat2, pv, nlm1, nlm2, pot_onsite, tmp->get_pointer());
                     }
                 }
             }
         }
-        ModuleBase::timer::end("DFTU", "cal_vu");
+        ModuleBase::timer::end("DFTU", "cal_pot_onsite");
     }
 
     // 6. Post-processing: Energy correction and occ_mat state management
     // For nspin=1: DFT+U energy computed for single spin channel, but should count both spins
     // set_double_energy() doubles the energy to account for degenerate spin-up/down
-	if (this->nspin == 1) 
-	{
+    if (this->nspin == 1) 
+    {
         this->dftu->set_double_energy();
-	}
-	
+    }
+    
     // 7. Mark occ_mat as dirty to force recomputation in next iteration
     // This is called when:
     // - nspin=4: Always (all spins handled simultaneously, current_spin==0==nspin-1)
@@ -444,10 +440,10 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     // Purpose: Ensure occ_mat is recomputed from updated DMR in next SCF iteration,
     // rather than using stale pre-read data from file.
     // TODO: This logic is confusing. Consider explicit variable like `is_last_spin_channel`.
-	if (this->current_spin == this->nspin - 1 || this->nspin == 4) 
-	{
-		this->dftu->mark_occ_mat_dirty();
-	}
+    if (this->current_spin == this->nspin - 1 || this->nspin == 4) 
+    {
+        this->dftu->mark_occ_mat_dirty();
+    }
 
     // 8. Spin channel toggling for nspin=2
     // nspin=2 requires separate HR updates for spin-up (current_spin=0) and spin-down (current_spin=1)
@@ -458,10 +454,10 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     // TODO: UNSAFE - This assumes contributeHR() is called in strict alternating order.
     // If called out of order (e.g., due to parallel k-point distribution), current_spin may be wrong.
     // TODO: Consider deriving current_spin from ik or explicit parameter instead of toggling.
-	if (this->nspin == 2) 
-	{
-		this->current_spin = 1 - this->current_spin;
-	}
+    if (this->nspin == 2) 
+    {
+        this->current_spin = 1 - this->current_spin;
+    }
 
     ModuleBase::timer::end("DFTU", "contributeHR");
 }
@@ -471,10 +467,10 @@ template <typename TK, typename TR>
 void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     const int& iat1,
     const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const Parallel_Orbitals* pv,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
-    const std::vector<TR>& VU,
+    const std::vector<TR>& pot_onsite,
     TR* data_pointer)
 {
 
@@ -485,16 +481,16 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
-    const int m_size = int(sqrt(VU.size()) / npol);
+    auto row_indexes = pv->get_indexes_row(iat1);
+    auto col_indexes = pv->get_indexes_col(iat2);
+    const int m_size = int(sqrt(pot_onsite.size()) / npol);
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol * npol, 0);
     for (int is = 0; is < npol; is++)
     {
         for (int is2 = 0; is2 < npol; is2++)
         {
-            step_trace[is * npol + is2] = paraV->get_ncol_atom(iat2) * is + is2;
+            step_trace[is * npol + is2] = pv->get_ncol_atom(iat2) * is + is2;
         }
     }
     // calculate the local matrix
@@ -516,7 +512,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
                 {
                     for (int m2 = 0; m2 < m_size; m2++)
                     {
-                        nlm_tmp += nlm1[m1] * nlm2[m2] * VU[m1 * m_size + m2 + start];
+                        nlm_tmp += nlm1[m1] * nlm2[m2] * pot_onsite[m1 * m_size + m2 + start];
                     }
                 }
                 data_pointer[step_trace[is]] += nlm_tmp;
@@ -530,7 +526,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
 template <typename TK, typename TR>
 void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_occ(const int& iat1,
                                                          const int& iat2,
-                                                         const Parallel_Orbitals* paraV,
+                                                         const Parallel_Orbitals* pv,
                                                          const std::unordered_map<int, std::vector<double>>& nlm1_all,
                                                          const std::unordered_map<int, std::vector<double>>& nlm2_all,
                                                          const double* dm_pointer,
@@ -544,8 +540,8 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_occ(const int& iat1,
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    auto row_indexes = pv->get_indexes_row(iat1);
+    auto col_indexes = pv->get_indexes_col(iat2);
     const int m_size = int(sqrt(occ.size()) / npol);
     const int m_size2 = m_size * m_size;
 #ifdef __DEBUG
@@ -557,7 +553,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_occ(const int& iat1,
     {
         for (int is2 = 0; is2 < npol; is2++)
         {
-            step_trace[is * npol + is2] = paraV->get_ncol_atom(iat2) * is + is2;
+            step_trace[is * npol + is2] = pv->get_ncol_atom(iat2) * is + is2;
         }
     }
     // calculate the local matrix
@@ -591,24 +587,24 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_occ(const int& iat1,
 }
 
 template <typename TK, typename TR>
-void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::transfer_vu(std::vector<double>& vu_tmp, std::vector<TR>& vu)
+void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::transfer_pot_onsite(std::vector<double>& pot_onsite_tmp, std::vector<TR>& pot_onsite)
 {
 #ifdef __DEBUG
-    assert(vu.size() == vu_tmp.size());
+    assert(pot_onsite.size() == pot_onsite_tmp.size());
 #endif
-    for (int i = 0; i < vu_tmp.size(); i++)
+    for (int i = 0; i < pot_onsite_tmp.size(); i++)
     {
-        vu[i] = vu_tmp[i];
+        pot_onsite[i] = pot_onsite_tmp[i];
     }
 }
 
 template <>
-void hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>::transfer_vu(
-    std::vector<double>& vu_tmp,
-    std::vector<std::complex<double>>& vu)
+void hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>::transfer_pot_onsite(
+    std::vector<double>& pot_onsite_tmp,
+    std::vector<std::complex<double>>& pot_onsite)
 {
 #ifdef __DEBUG
-    assert(vu.size() == vu_tmp.size());
+    assert(pot_onsite.size() == pot_onsite_tmp.size());
 #endif
 
     // Pauli-to-spinor conversion for DFT+U potential:
@@ -619,9 +615,9 @@ void hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double
     //   V_{up,down}  = 0.5*(V_x - i*V_y)  <- note: minus sign from sigma_y
     //   V_{down,up}  = 0.5*(V_x + i*V_y)  <- note: plus sign from sigma_y
     // This is consistent with the convention in gint_common.cpp merge_hr_part_to_hR().
-    const int m_size = int(sqrt(vu.size()) / 2);
+    const int m_size = int(sqrt(pot_onsite.size()) / 2);
     const int m_size2 = m_size * m_size;
-    vu.resize(vu_tmp.size());
+    pot_onsite.resize(pot_onsite_tmp.size());
     for (int m1 = 0; m1 < m_size; m1++)
     {
         for (int m2 = 0; m2 < m_size; m2++)
@@ -631,19 +627,19 @@ void hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double
             index[1] = m1 * m_size + m2 + m_size2;
             index[2] = m2 * m_size + m1 + m_size2 * 2;
             index[3] = m2 * m_size + m1 + m_size2 * 3;
-            vu[index[0]] = 0.5 * (vu_tmp[index[0]] + vu_tmp[index[3]]);
-            vu[index[3]] = 0.5 * (vu_tmp[index[0]] - vu_tmp[index[3]]);
-            vu[index[1]] = 0.5 * (vu_tmp[index[1]] - std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
-            vu[index[2]] = 0.5 * (vu_tmp[index[1]] + std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
+            pot_onsite[index[0]] = 0.5 * (pot_onsite_tmp[index[0]] + pot_onsite_tmp[index[3]]);
+            pot_onsite[index[3]] = 0.5 * (pot_onsite_tmp[index[0]] - pot_onsite_tmp[index[3]]);
+            pot_onsite[index[1]] = 0.5 * (pot_onsite_tmp[index[1]] - std::complex<double>(0.0, 1.0) * pot_onsite_tmp[index[2]]);
+            pot_onsite[index[2]] = 0.5 * (pot_onsite_tmp[index[1]] + std::complex<double>(0.0, 1.0) * pot_onsite_tmp[index[2]]);
         }
     }
 }
 
 template <typename TK, typename TR>
-void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(const std::vector<double>& occ,
+void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_pot_onsite(const std::vector<double>& occ,
                                                             const int m_size,
                                                             const double u_value,
-                                                            double* vu,
+                                                            double* pot_onsite,
                                                             double& eu)
 {
     // calculate the local matrix
@@ -656,7 +652,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(const std::vector<do
             {
                 for (int m2 = 0; m2 < m_size; m2++)
                 {
-                    vu[start + m1 * m_size + m2] = u_value * (0.5 * (m1 == m2) - occ[start + m2 * m_size + m1]);
+                    pot_onsite[start + m1 * m_size + m2] = u_value * (0.5 * (m1 == m2) - occ[start + m2 * m_size + m1]);
                     eu += u_value * 0.5 * occ[start + m2 * m_size + m1] * occ[start + m1 * m_size + m2];
                 }
             }
@@ -667,7 +663,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(const std::vector<do
         {
             for (int m2 = 0; m2 < m_size; m2++)
             {
-                vu[m1 * m_size + m2] = u_value * (1.0 * (m1 == m2) - occ[m2 * m_size + m1]);
+                pot_onsite[m1 * m_size + m2] = u_value * (1.0 * (m1 == m2) - occ[m2 * m_size + m1]);
                 eu += u_value * 0.25 * occ[m2 * m_size + m1] * occ[m1 * m_size + m2];
             }
         }
@@ -678,7 +674,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(const std::vector<do
             {
                 for (int m2 = 0; m2 < m_size; m2++)
                 {
-                    vu[start + m1 * m_size + m2] = u_value * (0 - occ[start + m2 * m_size + m1]);
+                    pot_onsite[start + m1 * m_size + m2] = u_value * (0 - occ[start + m2 * m_size + m1]);
                     eu += u_value * 0.25 * occ[start + m2 * m_size + m1] * occ[start + m1 * m_size + m2];
                 }
             }

@@ -43,8 +43,8 @@ OnsiteProj<OperatorPW<T, Device>>::~OnsiteProj() {
         }
         delmem_int_op()(this->orb_l_iat);
         delmem_int_op()(this->ip_m);
-        delmem_int_op()(this->vu_begin_iat);
-        delmem_complex_op()(this->vu_device);
+        delmem_int_op()(this->pot_onsite_begin_iat);
+        delmem_complex_op()(this->pot_onsite_device);
     }
 }
 
@@ -181,21 +181,21 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_delta_spin(const int npol, const 
         this->ps, becp);
 }
 
-// cal_ps_dftu — compute ps = VU * becp for DFT+U Hamiltonian contribution
+// cal_ps_dftu — compute ps = pot_onsite * becp for DFT+U Hamiltonian contribution
 //
-// eff_pot_pw layout by nspin:
+// pot_uterm_pw layout by nspin:
 //   nspin=1: [iat0_tlp1^2 | iat1_tlp1^2 | ...]
 //            single spin channel, full array uploaded
 //   nspin=2: [iat0_up | iat1_up | ... | iat0_dn | iat1_dn | ...]
 //            split layout — first half is spin-up, second half spin-down.
 //            For isk==1 (spin-down k-point), only the second half is
-//            uploaded to vu_device so that vu_begin_iat[iat] indexes
+//            uploaded to pot_onsite_device so that pot_onsite_begin_iat[iat] indexes
 //            correctly into the spin-down block.
 //   nspin=4: [iat0_Pauli_4blocks | iat1_Pauli_4blocks | ...]
 //            4*(2l+1)^2 entries per atom; kernel uses npol=2 spinor
 //            structure with 2x2 Pauli matrix coefficients.
 //
-// vu_begin_iat is computed as tlp1^2 * npol^2 per atom at init time,
+// pot_onsite_begin_iat is computed as tlp1^2 * npol^2 per atom at init time,
 // which gives the correct offset for each nspin case:
 //   nspin=1: tlp1^2 * 1 = tlp1^2
 //   nspin=2: tlp1^2 * 1 = tlp1^2 (per spin channel, selected by isk)
@@ -209,15 +209,15 @@ void OnsiteProj<OperatorPW<T, Device>>::setup_pw_dftu_indices() const
 
     resmem_int_op()(this->orb_l_iat, this->ucell->nat);
     resmem_int_op()(this->ip_m, onsite_p->get_tot_nproj());
-    resmem_int_op()(this->vu_begin_iat, this->ucell->nat);
+    resmem_int_op()(this->pot_onsite_begin_iat, this->ucell->nat);
     resmem_int_op()(this->ip_iat, onsite_p->get_tot_nproj());
 
     std::vector<int> ip_iat0(onsite_p->get_tot_nproj());
     std::vector<int> ip_m0(onsite_p->get_tot_nproj());
-    std::vector<int> vu_begin_iat0(this->ucell->nat);
+    std::vector<int> pot_onsite_begin_iat0(this->ucell->nat);
     std::vector<int> orb_l_iat0(this->ucell->nat);
     int ip0 = 0;
-    int vu_begin = 0;
+    int pot_onsite_begin = 0;
     for(int iat=0;iat<this->ucell->nat;iat++)
     {
         const int it = this->ucell->iat2it[iat];
@@ -231,14 +231,14 @@ void OnsiteProj<OperatorPW<T, Device>>::setup_pw_dftu_indices() const
                 ip_iat0[ip0] = iat;
                 ip_m0[ip0++] = -1;
             }
-            vu_begin_iat0[iat] = 0;
+            pot_onsite_begin_iat0[iat] = 0;
             continue;
         }
         else
         {
             const int tlp1 = 2 * target_l + 1;
-            vu_begin_iat0[iat] = vu_begin;
-            vu_begin += tlp1 * tlp1 * npol * npol;
+            pot_onsite_begin_iat0[iat] = pot_onsite_begin;
+            pot_onsite_begin += tlp1 * tlp1 * npol * npol;
             const int m_begin = target_l * target_l;
             const int m_end  = (target_l + 1) * (target_l + 1);
             for(int ip=0;ip<nproj;ip++)
@@ -258,9 +258,9 @@ void OnsiteProj<OperatorPW<T, Device>>::setup_pw_dftu_indices() const
     syncmem_int_h2d_op()(this->orb_l_iat, orb_l_iat0.data(), this->ucell->nat);
     syncmem_int_h2d_op()(this->ip_iat, ip_iat0.data(), onsite_p->get_tot_nproj());
     syncmem_int_h2d_op()(this->ip_m, ip_m0.data(), onsite_p->get_tot_nproj());
-    syncmem_int_h2d_op()(this->vu_begin_iat, vu_begin_iat0.data(), this->ucell->nat);
+    syncmem_int_h2d_op()(this->pot_onsite_begin_iat, pot_onsite_begin_iat0.data(), this->ucell->nat);
 
-    resmem_complex_op()(this->vu_device, dftu->get_size_eff_pot_pw());
+    resmem_complex_op()(this->pot_onsite_device, dftu->get_size_pot_uterm_pw());
 }
 
 template<typename T, typename Device>
@@ -291,9 +291,9 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_dftu(
     }
 
     const int isk_val = (PARAM.inp.nspin == 2) ? this->isk[this->ik] : 0;
-    const std::complex<double>* vu_host = dftu->get_eff_pot_pw_spin(isk_val);
-    const int vu_size = dftu->get_size_eff_pot_pw_spin();
-    syncmem_complex_h2d_op()(this->vu_device, vu_host, vu_size);
+    const std::complex<double>* pot_onsite_host = dftu->get_pot_uterm_pw_spin(isk_val);
+    const int pot_onsite_size = dftu->get_size_pot_uterm_pw_spin();
+    syncmem_complex_h2d_op()(this->pot_onsite_device, pot_onsite_host, pot_onsite_size);
     hamilt::onsite_ps_op<Real, Device>()(
         this->ctx,
         m,
@@ -301,9 +301,9 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_dftu(
         this->orb_l_iat,
         this->ip_iat,
         this->ip_m,
-        this->vu_begin_iat,
+        this->pot_onsite_begin_iat,
         tnp,
-        this->vu_device,
+        this->pot_onsite_device,
         this->ps, becp);
 }
 
@@ -375,7 +375,7 @@ void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>::cal_p
 //
 // nspin handling in cal_ps_dftu:
 //   nspin=1 (npol=1): single spin channel, no spin selection needed
-//   nspin=2 (npol=1): eff_pot_pw uses split layout [all_up | all_dn];
+//   nspin=2 (npol=1): pot_uterm_pw uses split layout [all_up | all_dn];
 //     spin-up  k-points (isk=0) read from the first  half;
 //     spin-down k-points (isk=1) read from the second half.
 //   nspin=4 (npol=2): all 4 Pauli blocks stored per-atom; kernel uses

@@ -14,7 +14,8 @@ list(APPEND objects
     op_pw_exx_pot.cpp
     dftu_base.cpp
     dftu_output.cpp
-    dftu_pw.cpp
+    dftu_tools_pw.cpp
+    dftu_cal_occ_pw.cpp
     setup_pot.cpp
     setup_pwrho.cpp
     setup_pwwfc.cpp
@@ -42,7 +43,12 @@ list(APPEND objects
     stress_pw.cpp
     vl_pw.cpp
     vnl_pw.cpp
+    vnl_pw_alpha.cpp
+    vnl_pw_deeq.cpp
+    vnl_pw_getvnl.cpp
     vnl_pw_grad.cpp
+    vnl_pw_init_vnl.cpp
+    vnl_pw_qrad.cpp
     stru_fac.cpp
     stru_fac_k.cpp
     soc.cpp

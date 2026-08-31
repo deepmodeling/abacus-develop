@@ -226,10 +226,11 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
             {
                 plus_u = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               this->kv->kvec_d,
-															  this->hR,
-															  p_dftu,
-															  this->kv->isk,
-															  PARAM.globalv.npol);
+																  this->hR,
+																  ucell,
+																  p_dftu,
+                                                              this->kv->isk,
+                                                              PARAM.globalv.npol);
             }
             else
             {
@@ -383,8 +384,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
             {
                 plus_u = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               this->kv->kvec_d,
-															  this->hR,
-															  p_dftu,
+																  this->hR,
+																  ucell,
+																  p_dftu,
                                                               this->kv->isk,
                                                               PARAM.globalv.npol);
             }
@@ -422,35 +424,20 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         // Peize Lin add 2016-12-03
         // set xc type before the first cal of xc in pelec->init_scf
         // and calculate Cs, Vs
-        Operator<TK>* exx;
-        if (PARAM.inp.esolver_type == "tddft")
-        {
-            exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
-                                                        this->hR,
-                                                        ucell,
-                                                        *this->kv,
-                                                        exx_nao.exd.get(),
-                                                        exx_nao.exc.get(),
-                                                        exx_info,
-                                                        Add_Hexx_Type::k,
-                                                        istep,
-                                                        !GlobalC::restart.info_load.restart_exx
-                                                            && GlobalC::restart.info_load.load_H);
-        }
-        else
-        {
-            exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
-                                                        this->hR,
-                                                        ucell,
-                                                        *kv,
-                                                        exx_nao.exd.get(),
-                                                        exx_nao.exc.get(),
-                                                        exx_info,
-                                                        Add_Hexx_Type::R,
-                                                        istep,
-                                                        !GlobalC::restart.info_load.restart_exx
-                                                            && GlobalC::restart.info_load.load_H);
-        }
+        // Keep exact exchange in H(R) for every workflow. For RT-TDDFT the
+        // factory selects complex H(R) when EXX is active, so the operator
+        // chain folds the complete Hamiltonian with one common TD phase.
+        Operator<TK>* exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
+                                                                  this->hR,
+                                                                  ucell,
+                                                                  *this->kv,
+                                                                  exx_nao.exd.get(),
+                                                                  exx_nao.exc.get(),
+                                                                  exx_info,
+                                                                  Add_Hexx_Type::R,
+                                                                  istep,
+                                                                  !GlobalC::restart.info_load.restart_exx
+                                                                      && GlobalC::restart.info_load.load_H);
         this->getOperator()->add(exx);
     }
 #endif

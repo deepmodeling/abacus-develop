@@ -62,6 +62,8 @@ class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         const Exx_Info* exx_info,
         Add_Hexx_Type add_hexx_type_in);
 
+    // Retained for the one-shot Add_Hexx_Type::k path used by write_Vxc/RDMFT;
+    // the main LCAO path uses contributeHR().
     virtual void contributeHk(int ik) override;
     virtual void contributeHR() override;
 

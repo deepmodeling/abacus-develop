@@ -24,9 +24,9 @@ struct onsite_ps_op {
       const int* orb_l_iat,
       const int* ip_iat,
       const int* ip_m,
-      const int* vu_begin_iat,
+      const int* pot_onsite_begin_iat,
       const int& tnp,
-      const std::complex<FPTYPE>* vu,
+      const std::complex<FPTYPE>* pot_onsite,
       std::complex<FPTYPE>* ps,
       const std::complex<FPTYPE>* becp);
 };
@@ -52,9 +52,9 @@ struct onsite_ps_op<FPTYPE, base_device::DEVICE_GPU> {
       const int* orb_l_iat,
       const int* ip_iat,
       const int* ip_m,
-      const int* vu_begin_iat,
+      const int* pot_onsite_begin_iat,
       const int& tnp,
-      const std::complex<FPTYPE>* vu,
+      const std::complex<FPTYPE>* pot_onsite,
       std::complex<FPTYPE>* ps,
       const std::complex<FPTYPE>* becp);
 };

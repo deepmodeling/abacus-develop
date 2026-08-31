@@ -6,11 +6,8 @@
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 
-#include <cmath>
-#include <complex>
 #include <cstring>
 #include <fstream>
-#include <iomanip>
 #include <sstream>
 #include <vector>
 
@@ -54,7 +51,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
 
     this->nspin = nspin;
     this->orbital_corr = orbital_corr;
-    this->use_yukawa = yukawa_potential;
+    this->use_yukawa_ = yukawa_potential;
     this->uramping = uramping;
     this->occ_mat_ctrl = occ_mat_ctrl;
     this->mixing_dftu = mixing_dftu;
@@ -73,7 +70,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
 
     this->occ_mat.resize(cell.nat);
     this->occ_mat_save.resize(cell.nat);
-    this->eff_pot_pw_index.resize(cell.nat);
+    this->pot_uterm_pw_index.resize(cell.nat);
     int pot_index = 0;
 
     this->iatlnmipol2iwt.resize(cell.nat);
@@ -100,12 +97,12 @@ void Plus_U_Base::init_base(UnitCell& cell,
             const int elem_size = tlp1 * tlp1;
             if(nspin == 4)
             {
-                this->eff_pot_pw_index[iat] = pot_index;
+                this->pot_uterm_pw_index[iat] = pot_index;
                 pot_index += tlp1_npol * tlp1_npol;
             }
             else
             {
-                this->eff_pot_pw_index[iat] = pot_index;
+                this->pot_uterm_pw_index[iat] = pot_index;
                 pot_index += elem_size;
             }
 
@@ -174,11 +171,11 @@ void Plus_U_Base::init_base(UnitCell& cell,
 
     if (nspin == 2) pot_index *= 2;
 
-    this->eff_pot_pw.resize(pot_index, 0.0);
+    this->pot_uterm_pw.resize(pot_index, 0.0);
     this->uom_array.resize(pot_index, 0.0);
     this->uom_save.resize(pot_index, 0.0);
 
-    if (use_yukawa)
+    if (use_yukawa_)
     {
         this->Fk.resize(cell.ntype);
 
@@ -247,7 +244,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
 void Plus_U_Base::uramping_update()
 {
     // Yukawa calculates U directly every iteration, no need for ramping
-    if (use_yukawa) {
+    if (use_yukawa_) {
         return;
     }
     // if uramping < 0.1, use the original U
@@ -272,7 +269,7 @@ void Plus_U_Base::uramping_update()
 bool Plus_U_Base::u_converged()
 {
     // Yukawa calculates U directly every iteration, always considered converged
-    if (use_yukawa) {
+    if (use_yukawa_) {
         return true;
     }
     for (int i = 0; i < static_cast<int>(this->u_target.size()); i++)
@@ -310,7 +307,7 @@ void Plus_U_Base::copy_occ_mat(const UnitCell& ucell)
                     const int size = occ_mat[iat][target_l][0][0].nr * occ_mat[iat][target_l][0][0].nc;
                     for(int mm=0; mm<size; mm++)
                     {
-                        this->uom_save[eff_pot_pw_index[iat]+mm] = occ_mat[iat][target_l][0][0].c[mm];
+                        this->uom_save[pot_uterm_pw_index[iat]+mm] = occ_mat[iat][target_l][0][0].c[mm];
                     }
                 }
             }
@@ -324,8 +321,8 @@ void Plus_U_Base::copy_occ_mat(const UnitCell& ucell)
                     const int half_size = this->uom_save.size() / 2;
                     for(int mm=0; mm<size; mm++)
                     {
-                        this->uom_save[eff_pot_pw_index[iat]+mm] = occ_mat[iat][target_l][0][0].c[mm];
-                        this->uom_save[half_size + eff_pot_pw_index[iat]+mm] = occ_mat[iat][target_l][0][1].c[mm];
+                        this->uom_save[pot_uterm_pw_index[iat]+mm] = occ_mat[iat][target_l][0][0].c[mm];
+                        this->uom_save[half_size + pot_uterm_pw_index[iat]+mm] = occ_mat[iat][target_l][0][1].c[mm];
                     }
                 }
             }
@@ -403,7 +400,7 @@ void Plus_U_Base::mix_occ_mat(const UnitCell& ucell,
                 {
                     for (int mm = 0; mm < size; mm++)
                     {
-                        this->uom_save[eff_pot_pw_index[iat] + mm] = occ_mat[iat][target_l][0][0].c[mm];
+                        this->uom_save[pot_uterm_pw_index[iat] + mm] = occ_mat[iat][target_l][0][0].c[mm];
                     }
                 }
             }
@@ -420,8 +417,8 @@ void Plus_U_Base::mix_occ_mat(const UnitCell& ucell,
                 {
                     for (int mm = 0; mm < size; mm++)
                     {
-                        this->uom_save[eff_pot_pw_index[iat] + mm] = occ_mat[iat][target_l][0][0].c[mm];
-                        this->uom_save[half_size + eff_pot_pw_index[iat] + mm] = occ_mat[iat][target_l][0][1].c[mm];
+                        this->uom_save[pot_uterm_pw_index[iat] + mm] = occ_mat[iat][target_l][0][0].c[mm];
+                        this->uom_save[half_size + pot_uterm_pw_index[iat] + mm] = occ_mat[iat][target_l][0][1].c[mm];
                     }
                 }
             }
@@ -446,17 +443,17 @@ void Plus_U_Base::set_occ_mat(const UnitCell& ucell)
             if (this->nspin == 4)
             {
                 for(int mm = 0; mm < occ_mat[iat][l][0][0].nr * occ_mat[iat][l][0][0].nc; mm++)
-                    occ_mat[iat][l][0][0].c[mm] = this->uom_array[eff_pot_pw_index[iat] + mm];
+                    occ_mat[iat][l][0][0].c[mm] = this->uom_array[pot_uterm_pw_index[iat] + mm];
             }
             else if (this->nspin == 1 || this->nspin == 2)
             {
                 const int half_size = this->uom_array.size() / 2;
                 for(int mm = 0; mm < occ_mat[iat][l][0][0].nr * occ_mat[iat][l][0][0].nc; mm++)
                 {
-                    occ_mat[iat][l][0][0].c[mm] = this->uom_array[eff_pot_pw_index[iat] + mm];
+                    occ_mat[iat][l][0][0].c[mm] = this->uom_array[pot_uterm_pw_index[iat] + mm];
                     if (this->nspin == 2)
                     {
-                        occ_mat[iat][l][0][1].c[mm] = this->uom_array[half_size + eff_pot_pw_index[iat] + mm];
+                        occ_mat[iat][l][0][1].c[mm] = this->uom_array[half_size + pot_uterm_pw_index[iat] + mm];
                     }
                 }
             }
@@ -733,6 +730,6 @@ void Plus_U_Base::local_occup_bcast(const UnitCell& ucell,
 }
 
 
-// cal_occ_pw() is implemented in source_lcao/module_dftu/dftu_pw.cpp
-// as a Plus_U_Base method. It will be relocated to this directory
-// in Phase 5 of the class-split refactor.
+// cal_occ_pw() is implemented in source_pw/module_pwdft/dftu_cal_occ_pw.cpp
+// as a Plus_U_Base method. Pure per-atom kernels live in dftu_tools_pw.{h,cpp}
+// as free functions in namespace dftu_pw.

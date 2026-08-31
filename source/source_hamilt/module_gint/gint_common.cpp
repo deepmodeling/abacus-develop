@@ -3,6 +3,7 @@
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/tool_quit.h"
+#include <cassert>
 #include <type_traits>
 
 #ifdef __MPI
@@ -409,6 +410,7 @@ void wfc_2d_to_gint(const T* wfc_2d,
     nbands = pv.desc_wfc[3];
 
     const std::vector<int>& trace_lo = gint_info.get_trace_lo();
+    const int lgd = gint_info.get_lgd();
 
     // MPI and memory related
     const int mem_stride = 1;
@@ -467,7 +469,8 @@ void wfc_2d_to_gint(const T* wfc_2d,
                     int mu_local = trace_lo[igrow];
                     if (wfc_gint && mu_local >= 0)
                     {
-                        wfc_gint[igcol * nlocal + mu_local] = wfc_block[j * naroc[0] + i];
+                        assert(mu_local < lgd);
+                        wfc_gint[igcol * lgd + mu_local] = wfc_block[j * naroc[0] + i];
                     }
                 }
             }

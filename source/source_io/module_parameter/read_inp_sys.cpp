@@ -443,18 +443,23 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
                           "'atomic+random', 'random' or";
         item.category = "System variables";
         item.type = "String";
-        item.description = R"(The type of the starting wave functions.
+        item.description = R"(The method used to initialize wavefunction coefficients. The available options and behavior depend on `basis_type`.
 
-Available options are:
-* atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
-* atomic+random: add small random numbers on atomic pseudo-wavefunctions
-* file: from binary files wf*.dat, which are output by setting out_wfc_pw to 2.
-* random: random numbers
-* nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
-* nao+random: add small random numbers on numerical atomic orbitals
+For `basis_type=pw`, the available options are:
+* `atomic`: Use atomic pseudo wavefunctions from `PP_PSWFC`. If no `PP_PSWFC` states are available, all bands are initialized randomly. If the number of atomic states is smaller than `nbands`, the remaining bands are initialized randomly.
+* `atomic+random`: If there are at least `nbands` atomic states, apply an approximately 5% multiplicative random perturbation to the atomic initialization. If there are fewer atomic states than `nbands`, use the atomic states and initialize the remaining bands randomly, as for `atomic`.
+* `random`: Initialize all bands with random coefficients.
+* `nao`: Use numerical atomic orbitals. If the number of NAO states is smaller than `nbands`, the remaining bands are initialized randomly.
+* `nao+random`: Apply an approximately 5% multiplicative random perturbation to the NAO initialization; any bands not covered by NAO states are first initialized randomly.
+* `file`: Read binary `wf*_pw.dat` files generated with `out_wfc_pw=2` from `read_file_dir`. The files must match the current k points, `nbands`, plane-wave layout, and lattice.
 
-[NOTE] Only the file option is useful for the lcao basis set, which is mostly used when calculation is set to get_wf and get_pchg.)";
+For `basis_type=lcao`, only `file` triggers reading existing wavefunctions. It reads text `wf*_nao.txt` files generated with `out_wfc_lcao=1` from `read_file_dir`; binary files generated with `out_wfc_lcao=2` are not supported. The files must use a compatible NAO basis, match the current k-point and spin setup, and contain enough bands. Normal `init_wfc=file` reading matches files written with the default `out_app_flag=true`, which have no geometry-step index. Files written under `WFC/` with a `g*` geometry-step index when `out_app_flag=false` are not matched automatically.
+
+For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
+
+[NOTE] For `calculation=get_wf` or `calculation=get_pchg`, `init_wfc` is automatically set to `file`. If `basis_type=lcao_in_pw` is also used, the final value is `nao`.)";
         item.default_value = "atomic";
+        item.unit = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
             {

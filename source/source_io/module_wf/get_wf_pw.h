@@ -1,6 +1,7 @@
 #ifndef GET_WF_PW_H
 #define GET_WF_PW_H
 
+#include "source_base/constants.h"
 #include "source_base/module_container/ATen/core/tensor.h"
 #include "source_base/parallel_comm.h"
 #include "source_io/module_output/band_parallel_output.h"
@@ -195,8 +196,7 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                     = transform_global_band(ib, npwx, ik, wfcr_down_smooth, wfcr_down_smooth_host, wfcr_down_dense_host, wfcr_down_global);
             }
 
-            const double spin_degeneracy = nspin == 1 ? 2.0 : 1.0;
-            const double scale = std::sqrt(spin_degeneracy / ucell->omega);
+            const double scale = std::sqrt(1.0 / ucell->omega);
             for (int ir = 0; ir < dense_nrxx; ++ir)
             {
                 const double norm = is_spinor ? std::sqrt(std::norm(wfcr_up_host_data[ir]) + std::norm(wfcr_down_host_data[ir]))
@@ -225,6 +225,7 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
     // This path deliberately reuses the same ownership rule as the norm path.
     std::vector<std::vector<double>> rho_band_re(nspin, std::vector<double>(dense_nrxx));
     std::vector<std::vector<double>> rho_band_im(nspin, std::vector<double>(dense_nrxx));
+    std::vector<std::complex<double>> bloch_phase(dense_nrxx);
     for (int ib = 0; ib < global_nbands; ++ib)
     {
         if (!bands_picked_re_im[ib])
@@ -252,8 +253,21 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                     = transform_global_band(ib, npwx, ik, wfcr_down_smooth, wfcr_down_smooth_host, wfcr_down_dense_host, wfcr_down_global);
             }
 
-            const double spin_degeneracy = nspin == 1 ? 2.0 : 1.0;
-            const double scale = std::sqrt(spin_degeneracy / ucell->omega);
+            const double scale = std::sqrt(1.0 / ucell->omega);
+            // The FFT returns the lattice-periodic part. Complete the Bloch state on the
+            // rank-local dense-grid slab, whose layout is [x][y][local_z].
+            for (int ir = 0; ir < dense_nrxx; ++ir)
+            {
+                const int ix = ir / (pw_rhod->ny * pw_rhod->nplane);
+                const int iy = ir / pw_rhod->nplane % pw_rhod->ny;
+                const int iz = ir % pw_rhod->nplane + pw_rhod->startz_current;
+                const double phase_argument
+                    = ModuleBase::TWO_PI
+                      * (kv.kvec_d[ik].x * static_cast<double>(ix) / pw_rhod->nx
+                       + kv.kvec_d[ik].y * static_cast<double>(iy) / pw_rhod->ny
+                       + kv.kvec_d[ik].z * static_cast<double>(iz) / pw_rhod->nz);
+                bloch_phase[ir] = std::exp(std::complex<double>(0.0, phase_argument));
+            }
             // For scalar/collinear states, select kv.isk[ik]; for spinors, emit both up and down.
             const int component_begin = is_spinor ? 0 : spin_index;
             const int component_end = is_spinor ? 2 : spin_index + 1;
@@ -262,8 +276,9 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                 const std::complex<double>* component_data = is_spinor && component == 1 ? wfcr_down_host_data : wfcr_up_host_data;
                 for (int ir = 0; ir < dense_nrxx; ++ir)
                 {
-                    rho_band_re[component][ir] = std::real(component_data[ir]) * scale;
-                    rho_band_im[component][ir] = std::imag(component_data[ir]) * scale;
+                    const std::complex<double> bloch_wfc = component_data[ir] * bloch_phase[ir];
+                    rho_band_re[component][ir] = std::real(bloch_wfc) * scale;
+                    rho_band_im[component][ir] = std::imag(bloch_wfc) * scale;
                 }
 
                 std::stringstream ss_real;

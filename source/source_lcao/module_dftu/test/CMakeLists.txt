@@ -4,6 +4,7 @@ AddTest(
   TARGET dftu_pw_test
   LIBS base device parameter
   SOURCES dftu_pw_test.cpp
+                ../../../source_pw/module_pwdft/dftu_tools_pw.cpp
 )
 
 AddTest(

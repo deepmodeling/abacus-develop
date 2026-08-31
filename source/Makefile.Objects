@@ -723,7 +723,12 @@ OBJS_SRCPW=h_ewald_pw.o\
     dnrm2.o\
     vl_pw.o\
     vnl_pw.o\
+    vnl_pw_alpha.o\
+    vnl_pw_deeq.o\
+    vnl_pw_getvnl.o\
     vnl_pw_grad.o\
+    vnl_pw_init_vnl.o\
+    vnl_pw_qrad.o\
     chgmixing.o\
     charge.o\
     charge_init.o\
@@ -742,7 +747,8 @@ OBJS_SRCPW=h_ewald_pw.o\
     update_cell_pw.o\
     dftu_base.o\
     dftu_output.o\
-    dftu_pw.o\
+    dftu_tools_pw.o\
+    dftu_cal_occ_pw.o\
     setup_dftu_pw.o\
     deltaspin_pw.o\
     force_pw.o\
@@ -812,7 +818,7 @@ OBJS_DFTU=dftu.o\
       dftu_yukawa.o\
       dftu_folding.o\
       dftu_tools.o\
-      dftu_occup.o\
+      dftu_lcao_occ.o\
       dftu_hamilt.o\
       setup_dftu_pw.o
 

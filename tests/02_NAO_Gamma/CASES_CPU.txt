@@ -35,5 +35,6 @@ scf_out_wf
 scf_solvation
 scf_u_spin2
 scf_u_spin2_old
+#scf_u_yukawa
 scf_upf100
 test.sum

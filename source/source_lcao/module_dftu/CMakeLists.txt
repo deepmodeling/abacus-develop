@@ -3,8 +3,9 @@ list(APPEND objects
       dftu_force.cpp
       dftu_yukawa.cpp
       dftu_folding.cpp
-      dftu_tools.cpp
-      dftu_occup.cpp
+      dftu_lcao_pots.cpp
+      dftu_lcao_occ.cpp
+      dftu_lcao_energy.cpp
       dftu_hamilt.cpp
 )
 

@@ -11,7 +11,7 @@
 namespace hsolver
 {
 
-template <typename TK, typename Device = base_device::DEVICE_CPU>
+template <typename TK>
 class HSolverLCAO
 {
   public:

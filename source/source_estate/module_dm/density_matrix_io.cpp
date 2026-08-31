@@ -7,6 +7,9 @@
 #include "source_base/tool_title.h"
 #include "source_cell/klist.h"
 
+#include <cstddef>
+#include <stdexcept>
+
 namespace elecstate
 {
 
@@ -185,9 +188,14 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
 template <typename TK, typename TR>
 hamilt::HContainer<TR>* DensityMatrix<TK, TR>::get_DMR_pointer(const int ispin) const
 {
-#ifdef __DEBUG
-    assert(ispin > 0 && ispin <= this->_nspin);
-#endif
+    if (ispin <= 0 || ispin > this->_nspin)
+    {
+        throw std::out_of_range("DensityMatrix::get_DMR_pointer: DMR spin index is out of range");
+    }
+    if (this->_DMR.size() != static_cast<std::size_t>(this->_nspin))
+    {
+        throw std::logic_error("DensityMatrix::get_DMR_pointer: DMR has not been initialized");
+    }
     return this->_DMR[ispin - 1];
 }
 

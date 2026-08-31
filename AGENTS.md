@@ -8,7 +8,7 @@ rules. Read the complete governance document before making or reviewing changes:
 
 ## Required Baseline
 
-- Follow the seven ABACUS coding rules summarized from the project governance:
+- Follow the nine ABACUS coding rules summarized from the project governance:
   1. Do not increase cross-layer control through `GlobalV`, `GlobalC`, or
      `PARAM`; pass dependencies explicitly where practical. Migration-neutral
      moves must keep the PR-level global dependency budget non-increasing and
@@ -23,6 +23,9 @@ rules. Read the complete governance document before making or reviewing changes:
   6. Add focused tests for key features, bug fixes, INPUT behavior changes,
      heterogeneous kernels, and core-module refactors.
   7. Keep code compatible with the repository C++11 baseline.
+  8. Declare one variable per line; do not use comma-separated declarations.
+  9. Do not call MPI routines directly; use the internally-guarded wrappers
+     (e.g., `Parallel_Reduce::reduce_*`, `Parallel_Common::bcast_*`) instead.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.
@@ -31,6 +34,10 @@ rules. Read the complete governance document before making or reviewing changes:
   is required.
 - Report the exact verification performed. Do not claim completion without
   fresh test or check output.
+- Prefer `std::vector` over raw `new`/`delete` for dynamic arrays; before
+  converting class members, confirm no external code consumes them as raw
+  pointers (e.g., `std::vector<bool>` has no `.data()`), and use
+  `std::fill`/`std::copy` instead of `ZEROS`/`COPYARRAY` on vector buffers.
 
 ## Repository Map
 
@@ -83,6 +90,15 @@ rules. Read the complete governance document before making or reviewing changes:
   test sufficiency, and exception approval require human review.
 - Exceptions must be recorded in the PR with reason, scope, risk, and a follow-up
   cleanup plan.
+- After a refactor, propose brief lessons worth recording in this file, then
+  ask the developer whether to write them in; be cautious and skip unclear
+  or unverified lessons.
+
+## Refactoring Patterns
+
+- Member -> free function: inventory `this->` reads; pass as params (const
+  for config, ref for mutable state); move only when body is `this`-free;
+  keep thin wrapper; compile each step.
 
 ## Local Commands
 

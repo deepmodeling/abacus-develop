@@ -809,26 +809,26 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dftu(int ik,
                                                        int npm,
                                                        FPTYPE* force,
                                                        const int* orbital_corr,
-                                                       const std::complex<FPTYPE>* vu,
-                                                       const int size_vu,
+                                                       const std::complex<FPTYPE>* pot_onsite,
+                                                       const int size_pot_onsite,
                                                        const FPTYPE* h_wg)
 {
     int* orbital_corr_tmp = nullptr;
-    std::complex<FPTYPE>* vu_tmp = nullptr;
+    std::complex<FPTYPE>* pot_onsite_tmp = nullptr;
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == base_device::GpuDevice)
     {
         resmem_int_op()(orbital_corr_tmp, this->ucell_->ntype);
         syncmem_int_h2d_op()(orbital_corr_tmp, orbital_corr, this->ucell_->ntype);
-        resmem_complex_op()(vu_tmp, size_vu);
-        syncmem_complex_h2d_op()(vu_tmp, vu, size_vu);
+        resmem_complex_op()(pot_onsite_tmp, size_pot_onsite);
+        syncmem_complex_h2d_op()(pot_onsite_tmp, pot_onsite, size_pot_onsite);
         syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik+1));
     }
     else
 #endif
     {
         orbital_corr_tmp = const_cast<int*>(orbital_corr);
-        vu_tmp = const_cast<std::complex<FPTYPE>*>(vu);
+        pot_onsite_tmp = const_cast<std::complex<FPTYPE>*>(pot_onsite);
         d_wg = const_cast<FPTYPE*>(h_wg);
     }
     const int force_nc = 3;
@@ -846,7 +846,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dftu(int ik,
                                       atom_na,
                                       this->ucell_->tpiba,
                                       d_wg,
-                                      vu_tmp,
+                                      pot_onsite_tmp,
                                       orbital_corr_tmp,
                                       becp,
                                       dbecp,
@@ -854,7 +854,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dftu(int ik,
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == base_device::GpuDevice)
     {
-        delmem_complex_op()(vu_tmp);
+        delmem_complex_op()(pot_onsite_tmp);
         delmem_int_op()(orbital_corr_tmp);
     }
 #endif
@@ -921,15 +921,15 @@ template <typename FPTYPE, typename Device>
 double Onsite_Proj_tools<FPTYPE, Device>::cal_stress_dftu(int ik,
                                                           int npm,
                                                           const int* orb_corr,
-                                                          const std::complex<FPTYPE>* vu,
-                                                          const int size_vu,
+                                                          const std::complex<FPTYPE>* pot_onsite,
+                                                          const int size_pot_onsite,
                                                           const FPTYPE* h_wg)
 {
     double stress_out = 0.0;
     const int npol = this->ucell_->get_npol();
     
     int* orb_corr_tmp = nullptr;
-    std::complex<FPTYPE>* vu_tmp = nullptr;
+    std::complex<FPTYPE>* pot_onsite_tmp = nullptr;
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == base_device::GpuDevice)
     {
@@ -937,9 +937,9 @@ double Onsite_Proj_tools<FPTYPE, Device>::cal_stress_dftu(int ik,
         resmem_int_op()(orb_corr_tmp, this->ucell_->ntype);
         syncmem_int_h2d_op()(orb_corr_tmp, orb_corr, this->ucell_->ntype);
 
-	// vu_tmp
-        resmem_complex_op()(vu_tmp, size_vu);
-        syncmem_complex_h2d_op()(vu_tmp, vu, size_vu);
+	// pot_onsite_tmp
+        resmem_complex_op()(pot_onsite_tmp, size_pot_onsite);
+        syncmem_complex_h2d_op()(pot_onsite_tmp, pot_onsite, size_pot_onsite);
 
 	// transfer data from from host to device
         syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik+1));
@@ -959,7 +959,7 @@ double Onsite_Proj_tools<FPTYPE, Device>::cal_stress_dftu(int ik,
                            atom_nh,
                            atom_na,
                            d_wg,
-                           vu_tmp,
+                           pot_onsite_tmp,
                            orb_corr_tmp,
                            becp,
                            dbecp,
@@ -968,14 +968,14 @@ double Onsite_Proj_tools<FPTYPE, Device>::cal_stress_dftu(int ik,
         // Transfer stress from device to host
         syncmem_var_d2h_op()(&stress_out, stress_device, 1);
         delmem_var_op()(stress_device);
-        delmem_complex_op()(vu_tmp);
+        delmem_complex_op()(pot_onsite_tmp);
         delmem_int_op()(orb_corr_tmp);
     }
     else
 #endif
     {
         orb_corr_tmp = const_cast<int*>(orb_corr);
-        vu_tmp = const_cast<std::complex<FPTYPE>*>(vu);
+        pot_onsite_tmp = const_cast<std::complex<FPTYPE>*>(pot_onsite);
         d_wg = const_cast<FPTYPE*>(h_wg);
         
         cal_stress_nl_op()(this->ctx,
@@ -988,7 +988,7 @@ double Onsite_Proj_tools<FPTYPE, Device>::cal_stress_dftu(int ik,
                            atom_nh,
                            atom_na,
                            d_wg,
-                           vu_tmp,
+                           pot_onsite_tmp,
                            orb_corr_tmp,
                            becp,
                            dbecp,

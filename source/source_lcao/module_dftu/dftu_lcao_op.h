@@ -4,7 +4,6 @@
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
-#include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_dftu/dftu_lcao.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
@@ -86,34 +85,34 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @brief calculate the <phi|alpha^I> overlap values and save them in this->nlm_tot
      * it will be reused in the calculation of calculate_HR()
      */
-    void cal_nlm_all(const Parallel_Orbitals* paraV);
+    void cal_nlm_all(const Parallel_Orbitals* pv);
 
     /**
      * @brief calculate the occ_mm' = \sum_R DMR*<phi_0|alpha^I_m'><alpha^I_m'|phi_R> matrix for each atom to add U
      */
     void cal_occ(const int& iat1,
                  const int& iat2,
-                 const Parallel_Orbitals* paraV,
+                 const Parallel_Orbitals* pv,
                  const std::unordered_map<int, std::vector<double>>& nlm1_all,
                  const std::unordered_map<int, std::vector<double>>& nlm2_all,
                  const double* data_pointer,
                  std::vector<double>& occupations);
 
-    /// transfer VU format from pauli matrix to normal for non-collinear spin case
-    void transfer_vu(std::vector<double>& vu_tmp, std::vector<TR>& vu);
-    /// VU_{m, m'} = sum_{m,m'} (1/2*delta_{m, m'} - occ_{m, m'}) * U
+    /// transfer pot_onsite format from pauli matrix to normal for non-collinear spin case
+    void transfer_pot_onsite(std::vector<double>& pot_onsite_tmp, std::vector<TR>& pot_onsite);
+    /// pot_onsite_{m, m'} = sum_{m,m'} (1/2*delta_{m, m'} - occ_{m, m'}) * U
     /// EU = sum_{m,m'} 1/2 * U * occ_{m, m'} * occ_{m', m}
-    void cal_v_of_u(const std::vector<double>& occ, const int m_size, const double u_value, double* vu, double& eu);
+    void cal_pot_onsite(const std::vector<double>& occ, const int m_size, const double u_value, double* pot_onsite, double& eu);
 
     /**
      * @brief calculate the HR local matrix of <I,J,R> atom pair
      */
     void cal_HR_IJR(const int& iat1,
                     const int& iat2,
-                    const Parallel_Orbitals* paraV,
+                    const Parallel_Orbitals* pv,
                     const std::unordered_map<int, std::vector<double>>& nlm1_all,
                     const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                    const std::vector<TR>& vu_in,
+                    const std::vector<TR>& pot_onsite_in,
                     TR* data_pointer);
 
     /**
@@ -121,10 +120,10 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_force_IJR(const int& iat1,
                        const int& iat2,
-                       const Parallel_Orbitals* paraV,
+                       const Parallel_Orbitals* pv,
                        const std::unordered_map<int, std::vector<double>>& nlm1_all,
                        const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                       const std::vector<double>& vu_in,
+                       const std::vector<double>& pot_onsite_in,
                        const hamilt::BaseMatrix<double>** dmR_pointer,
                        const int nspin,
                        double* force1,
@@ -134,10 +133,10 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_stress_IJR(const int& iat1,
                         const int& iat2,
-                        const Parallel_Orbitals* paraV,
+                        const Parallel_Orbitals* pv,
                         const std::unordered_map<int, std::vector<double>>& nlm1_all,
                         const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                        const std::vector<double>& vu_in,
+                        const std::vector<double>& pot_onsite_in,
                         const hamilt::BaseMatrix<double>** dmR_pointer,
                         const int nspin,
                         const ModuleBase::Vector3<double>& dis1,

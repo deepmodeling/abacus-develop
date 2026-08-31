@@ -209,7 +209,7 @@ void write_Vxc(const int nspin,
         &vxcs_R_ao[0],ucell,/*for paraV*/ kv, Hexxd, Hexxc, &exx_info, hamilt::Add_Hexx_Type::k);
     std::vector<std::vector<double>> e_orb_exx; // orbital energy (EXX)
 #endif
-    hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, nullptr, kv.isk, PARAM.globalv.npol);
+    hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, ucell, nullptr, kv.isk, PARAM.globalv.npol);
 
     // 4. calculate and write the MO-matrix Exc
     Parallel_2D p2d;

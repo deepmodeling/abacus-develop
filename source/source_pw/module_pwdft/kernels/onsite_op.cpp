@@ -61,9 +61,9 @@ struct onsite_ps_op<FPTYPE, base_device::DEVICE_CPU>
       const int* orb_l_iat,
       const int* ip_iat,
       const int* ip_m,
-      const int* vu_begin_iat,
+      const int* pot_onsite_begin_iat,
       const int& tnp,
-      const std::complex<FPTYPE>* vu,
+      const std::complex<FPTYPE>* pot_onsite,
       std::complex<FPTYPE>* ps,
       const std::complex<FPTYPE>* becp)
   {
@@ -80,7 +80,7 @@ struct onsite_ps_op<FPTYPE, base_device::DEVICE_CPU>
                 if(m1 < 0) continue;
                 int ib2 = ib * npol;
                 int iat = ip_iat[ip];
-                const std::complex<FPTYPE>* vu_iat = vu + vu_begin_iat[iat];
+                const std::complex<FPTYPE>* pot_onsite_iat = pot_onsite + pot_onsite_begin_iat[iat];
                 int orb_l = orb_l_iat[iat];
                 int tlp1 = 2 * orb_l + 1;
                 int tlp1_2 = tlp1 * tlp1;
@@ -92,10 +92,10 @@ struct onsite_ps_op<FPTYPE, base_device::DEVICE_CPU>
                     const int becpind = ib2 * tnp + ip2;
                     int m2 = ip_m[ip2];
                     const int index_mm = m1 * tlp1 + m2;
-                    ps[psind] += vu_iat[index_mm] * becp[becpind]
-                                + vu_iat[index_mm + tlp1_2 * 2] * becp[becpind + tnp];
-                    ps[psind + 1] += vu_iat[index_mm + tlp1_2 * 1] * becp[becpind]
-                                + vu_iat[index_mm + tlp1_2 * 3] * becp[becpind + tnp];
+                    ps[psind] += pot_onsite_iat[index_mm] * becp[becpind]
+                                + pot_onsite_iat[index_mm + tlp1_2 * 2] * becp[becpind + tnp];
+                    ps[psind + 1] += pot_onsite_iat[index_mm + tlp1_2 * 1] * becp[becpind]
+                                + pot_onsite_iat[index_mm + tlp1_2 * 3] * becp[becpind + tnp];
                 }
             } // end ip
         } // end ib
@@ -112,7 +112,7 @@ struct onsite_ps_op<FPTYPE, base_device::DEVICE_CPU>
                 int m1 = ip_m[ip];
                 if(m1 < 0) continue;
                 int iat = ip_iat[ip];
-                const std::complex<FPTYPE>* vu_iat = vu + vu_begin_iat[iat];
+                const std::complex<FPTYPE>* pot_onsite_iat = pot_onsite + pot_onsite_begin_iat[iat];
                 int orb_l = orb_l_iat[iat];
                 int tlp1 = 2 * orb_l + 1;
                 int ip2_begin = ip - m1;
@@ -123,7 +123,7 @@ struct onsite_ps_op<FPTYPE, base_device::DEVICE_CPU>
                     const int becpind = ib * tnp + ip2;
                     int m2 = ip_m[ip2];
                     const int index_mm = m1 * tlp1 + m2;
-                    ps[psind] += vu_iat[index_mm] * becp[becpind];
+                    ps[psind] += pot_onsite_iat[index_mm] * becp[becpind];
                 }
             } // end ip
         } // end ib

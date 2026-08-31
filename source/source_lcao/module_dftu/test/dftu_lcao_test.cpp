@@ -111,6 +111,15 @@ class DFTUTest : public ::testing::Test
         delete[] ucell.atoms;
     }
 
+    // Helper for TEST_F bodies: gtest-derived classes do not inherit
+    // the friend declaration, so direct dftu.occ_mat[...] access from
+    // TestBody would fail to compile. This wrapper runs inside
+    // DFTUTest, which is a friend of Plus_U_Base.
+    double occ_mat_c(int iat, int spin, int icc) const
+    {
+        return dftu.occ_mat[iat][2][0][spin].c[icc];
+    }
+
 #ifdef __MPI
     void init_parav()
     {
@@ -172,7 +181,7 @@ TEST_F(DFTUTest, constructHRd2d)
     {
         for (int icc = 0; icc < 25; icc++)
         {
-            EXPECT_NEAR(dftu.occ_mat[iat][2][0][0].c[icc], 0.5, 1e-10);
+            EXPECT_NEAR(occ_mat_c(iat, 0, icc), 0.5, 1e-10);
         }
     }
     // check the value of HR
@@ -230,7 +239,7 @@ TEST_F(DFTUTest, constructHRd2cd)
     {
         for (int icc = 0; icc < 25; icc++)
         {
-            EXPECT_NEAR(dftu.occ_mat[iat][2][0][0].c[icc], 0.5, 1e-10);
+            EXPECT_NEAR(occ_mat_c(iat, 0, icc), 0.5, 1e-10);
         }
     }
     // check the value of HR
@@ -263,7 +272,7 @@ TEST_F(DFTUTest, constructHRd2cd)
     {
         for (int icc = 0; icc < 25; icc++)
         {
-            EXPECT_NEAR(dftu.occ_mat[iat][2][0][1].c[icc], 0.5, 1e-10);
+            EXPECT_NEAR(occ_mat_c(iat, 1, icc), 0.5, 1e-10);
         }
     }
 }
