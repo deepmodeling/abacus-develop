@@ -765,7 +765,13 @@ void ModuleIO::save_sparse(
             }
         }
 
-        output_single_R(ofs, smat.at(R_coor), sparse_thr, binary, pv, reduce);
+        // nonzero_num is reduced across all MPI ranks, but a given rank may
+        // not own local sparse data for this R block. It still has to enter
+        // output_single_R so the row-wise reductions remain matched.
+        const std::map<size_t, std::map<size_t, Tdata>> empty_smat;
+        auto iter = smat.find(R_coor);
+        const auto& local_smat = (iter == smat.end()) ? empty_smat : iter->second;
+        output_single_R(ofs, local_smat, sparse_thr, binary, pv, reduce);
         ++count;
     }
     if (!reduce || GlobalV::DRANK == 0) {
