@@ -87,6 +87,23 @@ TEST(SternheimerChannelResources, BatchColumnsDoNotCountAsOuterWorkerThreads)
     EXPECT_EQ(plan.effective_workers, 1);
 }
 
+TEST(SternheimerChannelResources, DownshiftsRequestedBatchWidthToDetectedMemoryBudget)
+{
+    const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::node_aggregate,
+                                                     100000,
+                                                     50000,
+                                                     1,
+                                                     "cgroup_v1"};
+    const auto plan = ModuleRI::plan_sternheimer_channel_workers(40, 30, 1, 0, memory, 16);
+
+    EXPECT_EQ(plan.channel_batch_width, 13);
+    EXPECT_EQ(plan.batch_tasks, 4);
+    EXPECT_EQ(plan.memory_per_worker_bytes, 13 * 120 * sizeof(std::complex<double>));
+    EXPECT_LE(plan.memory_per_worker_bytes, plan.increment_bytes_per_rank);
+    EXPECT_EQ(plan.automatic_workers, 1);
+    EXPECT_EQ(plan.effective_workers, 1);
+}
+
 TEST(SternheimerChannelResources, KeepsOuterParallelismWhenMostThreadsCanWork)
 {
     const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::available,

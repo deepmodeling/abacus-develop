@@ -3373,6 +3373,7 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                                              grid_data.grid.size(),
                                                              channel_threads));
         }
+        const int pair_channel_batch_width = pair_channel_worker_plan.channel_batch_width;
 
         if (!target_record.unoccupied_eigenvalues.empty())
         {
@@ -3469,7 +3470,7 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                     SternheimerWavefunctionDiagnostic::Record wavefunction_diagnostic;
                 };
                 const std::vector<SternheimerChannelBatch> all_channel_batches
-                    = make_sternheimer_channel_batches(num_channels, channel_batch_width);
+                    = make_sternheimer_channel_batches(num_channels, pair_channel_batch_width);
                 std::vector<SternheimerChannelBatch> channel_batches;
                 channel_batches.reserve(all_channel_batches.size());
                 for (std::size_t batch_index = 0;
@@ -3524,7 +3525,7 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                 }
                             }
                             std::vector<SternheimerPeriodicLinearResponse> responses;
-                            if (channel_batch_width == 1 || !use_delta_sternheimer)
+                            if (pair_channel_batch_width == 1 || !use_delta_sternheimer)
                             {
                                 responses.push_back(solve_sternheimer_periodic_linear_response(
                                     use_delta_sternheimer,
@@ -5563,6 +5564,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                                                 channel_worker_user_cap,
                                                                 channel_memory,
                                                                 channel_batch_width);
+                    const int local_channel_batch_width = local_channel_worker_plan.channel_batch_width;
                     if (!channel_worker_plan_reported)
                     {
                         channel_worker_plan = local_channel_worker_plan;
@@ -5654,7 +5656,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                     };
 
                     std::vector<ChannelEquationResult> channel_results;
-                    if (channel_batch_width == 1 || !use_delta_sternheimer)
+                    if (local_channel_batch_width == 1 || !use_delta_sternheimer)
                     {
                         channel_results = run_sternheimer_channel_tasks<ChannelEquationResult>(
                             static_cast<int>(owned_channels.size()),
@@ -5709,7 +5711,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                     {
                         const std::vector<SternheimerChannelBatch> channel_batches
                             = make_sternheimer_channel_batches(static_cast<int>(owned_channels.size()),
-                                                               channel_batch_width);
+                                                               local_channel_batch_width);
                         std::vector<std::vector<ChannelEquationResult>> grouped_results
                             = run_sternheimer_channel_tasks<std::vector<ChannelEquationResult>>(
                                 static_cast<int>(channel_batches.size()),

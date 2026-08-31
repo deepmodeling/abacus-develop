@@ -279,10 +279,11 @@ SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(const int num_chan
     }
 
     SternheimerChannelWorkerPlan plan;
+    const std::uint64_t base_worker_bytes = estimate_sternheimer_channel_worker_bytes(grid_size);
     plan.channel_batch_width = channel_batch_width;
     plan.batch_tasks = (num_channels + channel_batch_width - 1) / channel_batch_width;
-    plan.memory_per_worker_bytes = checked_multiply(estimate_sternheimer_channel_worker_bytes(grid_size),
-                                                    static_cast<std::uint64_t>(channel_batch_width));
+    plan.memory_per_worker_bytes
+        = checked_multiply(base_worker_bytes, static_cast<std::uint64_t>(channel_batch_width));
     if (memory.mode == SternheimerMemoryAccountingMode::fallback_one)
     {
         return plan;
@@ -313,12 +314,20 @@ SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(const int num_chan
         break;
     }
 
-    const std::uint64_t memory_worker_count = plan.increment_bytes_per_rank / plan.memory_per_worker_bytes;
-    if (memory_worker_count == 0)
+    const std::uint64_t memory_batch_width = plan.increment_bytes_per_rank / base_worker_bytes;
+    if (memory_batch_width == 0)
     {
         throw std::runtime_error(
             "Sternheimer channel memory budget cannot accommodate one worker within the 75 percent target.");
     }
+    plan.channel_batch_width = std::min(
+        channel_batch_width,
+        static_cast<int>(std::min(memory_batch_width,
+                                  static_cast<std::uint64_t>(std::numeric_limits<int>::max()))));
+    plan.batch_tasks = (num_channels + plan.channel_batch_width - 1) / plan.channel_batch_width;
+    plan.memory_per_worker_bytes
+        = checked_multiply(base_worker_bytes, static_cast<std::uint64_t>(plan.channel_batch_width));
+    const std::uint64_t memory_worker_count = plan.increment_bytes_per_rank / plan.memory_per_worker_bytes;
     const std::uint64_t bounded_memory_workers
         = std::min(memory_worker_count, static_cast<std::uint64_t>(std::numeric_limits<int>::max()));
     plan.automatic_workers
