@@ -1002,4 +1002,24 @@ std::string format_method_metadata(const MethodMetadata& metadata)
     return output.str();
 }
 
+std::string format_3d_method_metadata(const MethodMetadata3D& metadata)
+{
+    if (metadata.method.empty() || !std::isfinite(metadata.ecut_ry)
+        || metadata.ecut_ry <= 0.0 || metadata.nq <= 0
+        || metadata.naux == 0 || metadata.source_revision.empty())
+    {
+        throw std::invalid_argument("invalid direct 3D Coulomb method metadata");
+    }
+    std::ostringstream output;
+    output << "# ABACUS reader-v1 3D Coulomb method\n"
+           << "version = 1\n"
+           << "method = " << metadata.method << '\n'
+           << std::setprecision(17)
+           << "ecut_ry = " << metadata.ecut_ry << '\n'
+           << "nq = " << metadata.nq << '\n'
+           << "naux = " << metadata.naux << '\n'
+           << "source_revision = " << metadata.source_revision << '\n';
+    return output.str();
+}
+
 } // namespace Direct2dCoulomb

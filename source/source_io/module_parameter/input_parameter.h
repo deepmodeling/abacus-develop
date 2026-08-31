@@ -663,6 +663,8 @@ struct Input_para
     double out_librpa_2d_direct_ecut = 0.0; ///< reciprocal cutoff in Ry for direct mixed-Fourier 2D Coulomb
     int out_librpa_2d_direct_kz_order = 0; ///< positive kz quadrature order for direct mixed-Fourier 2D Coulomb
     int out_librpa_2d_direct_gamma_order = 8; ///< positive even Gamma-plane quadrature order
+    std::string out_librpa_3d_coulomb_method = "ewald"; ///< ewald or direct_reciprocal for reader-v1 full V
+    double out_librpa_3d_direct_ecut = 0.0; ///< reciprocal cutoff in Ry for direct 3D Coulomb
     bool out_sternheimer_librpa = false; ///< whether to output Sternheimer chi0 files for LibRPA
     bool out_sternheimer_siab = false; ///< whether to output Sternheimer first-order-wavefunction targets for SIAB
     int sternheimer_siab_lmax = -1; ///< maximum angular momentum of SIAB target primitives; -1 uses orbital lmax

@@ -97,6 +97,15 @@ struct MethodMetadata
     std::string source_revision;
 };
 
+struct MethodMetadata3D
+{
+    std::string method = "ewald";
+    double ecut_ry = 0.0;
+    int nq = 0;
+    std::size_t naux = 0;
+    std::string source_revision;
+};
+
 struct Metadata
 {
     int iq = 0;
@@ -177,6 +186,7 @@ void write_reader_v1(const DenseMatrix& matrix,
                      int mpi_rank,
                      const std::string& prefix);
 std::string format_method_metadata(const MethodMetadata& metadata);
+std::string format_3d_method_metadata(const MethodMetadata3D& metadata);
 void write_metadata(const Result& result, const Metadata& metadata, const std::string& path);
 } // namespace Direct2dCoulomb
 

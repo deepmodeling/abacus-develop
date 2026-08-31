@@ -801,23 +801,26 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
 
     const bool use_direct_2d_coulomb
         = PARAM.inp.out_librpa_2d_coulomb_method == "direct_mixed_fourier";
-    if (use_direct_2d_coulomb)
+    const bool use_direct_3d_coulomb
+        = PARAM.inp.out_librpa_3d_coulomb_method == "direct_reciprocal";
+    if (use_direct_2d_coulomb || use_direct_3d_coulomb)
     {
         if (PARAM.inp.out_librpa_reader_version != 1)
         {
             throw std::invalid_argument(
-                "Direct mixed-Fourier Coulomb requires out_librpa_reader_version=1.");
+                "Direct Coulomb output requires out_librpa_reader_version=1.");
         }
-        if (GlobalC::exx_info.info_ri.ewald_dimension != 2)
+        const int required_dimension = use_direct_2d_coulomb ? 2 : 3;
+        if (GlobalC::exx_info.info_ri.ewald_dimension != required_dimension)
         {
             throw std::invalid_argument(
-                "Direct mixed-Fourier Coulomb requires exx_ewald_dimension=2.");
+                "Direct Coulomb output dimension does not match exx_ewald_dimension.");
         }
         if (RpaLriDetail::debug_dump_ewald_split_enabled()
             || RpaLriDetail::ewald_component_output_enabled())
         {
             throw std::invalid_argument(
-                "Direct mixed-Fourier Coulomb is incompatible with legacy Ewald split diagnostics.");
+                "Direct Coulomb output is incompatible with legacy Ewald split diagnostics.");
         }
 
         const bool use_shrink = GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0;
@@ -830,14 +833,22 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         if (ewald_object == exx_full_coulomb->exx_objs.end())
         {
             throw std::runtime_error(
-                "Direct mixed-Fourier Coulomb could not find the Ewald auxiliary object.");
+                "Direct Coulomb output could not find the Ewald auxiliary object.");
         }
-        ewald_object->second.evq.output_direct_2d_coulomb(
-            ucell,
-            PARAM.inp.out_librpa_2d_direct_ecut,
-            PARAM.inp.out_librpa_2d_direct_kz_order,
-            PARAM.inp.out_librpa_2d_direct_gamma_order);
-        write_strict_2d_coulomb_head_sidecar();
+        if (use_direct_2d_coulomb)
+        {
+            ewald_object->second.evq.output_direct_2d_coulomb(
+                ucell,
+                PARAM.inp.out_librpa_2d_direct_ecut,
+                PARAM.inp.out_librpa_2d_direct_kz_order,
+                PARAM.inp.out_librpa_2d_direct_gamma_order);
+            write_strict_2d_coulomb_head_sidecar();
+        }
+        else
+        {
+            ewald_object->second.evq.output_direct_3d_coulomb(
+                ucell, PARAM.inp.out_librpa_3d_direct_ecut);
+        }
 
         exx_full_coulomb.reset();
         RpaLriDetail::trim_malloc_cache();

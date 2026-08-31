@@ -76,6 +76,7 @@ class Ewald_Vq
                                   double ecut_ry,
                                   int kz_order,
                                   int gamma_order);
+    void output_direct_3d_coulomb(const UnitCell& ucell, double ecut_ry);
 
     inline std::map<TA, std::map<TAK, RI::Tensor<std::complex<double>>>> cal_Vq(
         const UnitCell& ucell,
