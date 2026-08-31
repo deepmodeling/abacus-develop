@@ -71,8 +71,7 @@ int main(int argc, char** argv)
         /* max_iter = */ 100,
         /* sbsize   = */ nband,
         /* rr_step  = */ nband,
-        /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::BLOCK_SUBSPACE);
+        /* gamma_g0 = */ false);
 
     auto h_op = [&](T* in, T* out, int ld, int ncol) {
         for (int j = 0; j < ncol; ++j)

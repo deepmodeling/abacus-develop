@@ -51,8 +51,7 @@ double run_ppcg_pw(const HPsiFunc& hpsi_func,
                               diag_iter_max,
                               sbsize,
                               rr_step_safe,
-                              gamma_only,
-                              PpcgStrategy::BLOCK_SUBSPACE);
+                              gamma_only);
 
     return ppcg.diag(hpsi_func,
                      spsi_func,
@@ -131,8 +130,7 @@ double run_ppcg_pw(const HPsiFunc& hpsi_func,
                                                diag_iter_max,
                                                sbsize,
                                                rr_step_safe,
-                                               gamma_only,
-                                               PpcgStrategy::BLOCK_SUBSPACE);
+                                               gamma_only);
     const double avg_iter = ppcg.diag(bridge_hpsi,
                                       bridge_spsi,
                                       ld_psi,

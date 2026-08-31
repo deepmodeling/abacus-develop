@@ -216,14 +216,12 @@ DiagoPPCG<T, Device>::DiagoPPCG(const Real& diag_thr,
                                  const int& diag_iter_max,
                                  const int& sbsize,
                                  const int& rr_step,
-                                 const bool gamma_g0_real,
-                                 const PpcgStrategy strategy)
+                                 const bool gamma_g0_real)
     : maxiter_(diag_iter_max),
       sbsize_(std::max(1, sbsize)),
       rr_step_(std::max(1, rr_step)),
       diag_thr_(std::max(diag_thr, Real(ppcg_minimum_diagonalization_threshold))),
-      gamma_g0_real_(gamma_g0_real),
-      strategy_(strategy)
+      gamma_g0_real_(gamma_g0_real)
 {
 }
 
@@ -1065,443 +1063,18 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
 namespace hsolver {
 
 //==============================================================================
-// CONJUGATE_GRADIENT STRATEGY
-//==============================================================================
-
-// ---------------------------------------------------------------------------
-// Compute gradient: grad_i = H|psi_i> - eps_i * S|psi_i>
-// ---------------------------------------------------------------------------
-template <typename T, typename Device>
-void DiagoPPCG<T, Device>::calc_gradient(
-    const Real* /*prec*/,
-    const T* hpsi,
-    const T* spsi,
-    const T* /*psi*/,
-    const Real* eigenvalue,
-    std::vector<T>& grad) const
-{
-    grad.assign(ld_psi_ * n_band_, T(0));
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
-#endif
-    for (int j = 0; j < n_band_; ++j)
-    {
-        const Real ej = eigenvalue[j];
-        for (int ig = 0; ig < n_dim_; ++ig)
-        {
-            grad[idx(ig, j, ld_psi_)] = hpsi[idx(ig, j, ld_psi_)]
-                                      - spsi[idx(ig, j, ld_psi_)] * ej;
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Orthogonalize gradient: grad_j -= sum_i <psi_i|grad_j> * S|psi_i>
-// ---------------------------------------------------------------------------
-template <typename T, typename Device>
-void DiagoPPCG<T, Device>::orth_gradient(
-    const T* psi, const T* spsi,
-    std::vector<T>& grad) const
-{
-    std::vector<T> coeff(n_band_ * n_band_, T(0));
-    gram(psi, grad.data(), n_band_, n_band_, coeff, n_band_);
-
-    const T minus_one = T(-1);
-    const T one = T(1);
-    ModuleBase::gemm_op<T, Device>()('N',
-                                     'N',
-                                     n_dim_,
-                                     n_band_,
-                                     n_band_,
-                                     &minus_one,
-                                     spsi,
-                                     ld_psi_,
-                                     coeff.data(),
-                                     n_band_,
-                                     &one,
-                                     grad.data(),
-                                     ld_psi_);
-}
-
-// ---------------------------------------------------------------------------
-// Polak-Ribiere conjugate gradient update with preconditioning:
-//   z_new = -P^{-1} * r_new
-//   beta = max(0, <z_new, r_new - r_old> / <z_old, r_old>)
-//   d_new = z_new + beta * d_old
-// ---------------------------------------------------------------------------
-template <typename T, typename Device>
-void DiagoPPCG<T, Device>::update_polak_ribiere(
-    const std::vector<T>& grad,
-    std::vector<T>& p,
-    std::vector<T>& z_old,
-    std::vector<Real>& beta_denom,
-    const Real* prec) const
-{
-    const bool first_iter = p.empty();
-    if (first_iter)
-    {
-        p.assign(ld_psi_ * n_band_, T(0));
-        z_old.assign(ld_psi_ * n_band_, T(0));
-        beta_denom.assign(n_band_, std::numeric_limits<Real>::infinity());
-    }
-
-    std::vector<T> z_new(ld_psi_ * n_band_, T(0));
-    std::vector<Real> beta_nums(2 * n_band_, Real(0));
-
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
-#endif
-    for (int j = 0; j < n_band_; ++j)
-    {
-        const T* g  = grad.data() + j * ld_psi_;
-        T* zn  = z_new.data() + j * ld_psi_;
-        T* zo  = z_old.data() + j * ld_psi_;
-
-        Real beta_num_zr = 0;
-        Real beta_num_zo = 0;
-
-        for (int ig = 0; ig < n_dim_; ++ig)
-        {
-            // z_new = -P^{-1} * grad
-            T z = -g[ig] / std::max(prec[ig], Real(ppcg_preconditioner_threshold));
-            zn[ig] = z;
-
-            // r_old = -P * z_old (recover old raw residual)
-            T r_old = -prec[ig] * zo[ig];
-
-            beta_num_zr += std::real(z * std::conj(g[ig]));
-            beta_num_zo += std::real(z * std::conj(r_old));
-        }
-        beta_nums[j] = beta_num_zr;
-        beta_nums[n_band_ + j] = beta_num_zo;
-    }
-    const int beta_count = beta_nums.size();
-    reduce_pool_if_mpi_ready(beta_nums.data(), beta_count);
-
-    for (int j = 0; j < n_band_; ++j)
-    {
-        const Real beta_num_zr = beta_nums[j];
-        const Real beta_num_zo = beta_nums[n_band_ + j];
-        Real beta = 0;
-        const Real denom = beta_denom[j];
-        if (denom > Real(ppcg_numerical_threshold))
-        {
-            beta = (beta_num_zr - beta_num_zo) / denom;
-            if (beta < 0)
-            {
-                beta = 0;
-            }
-        }
-        beta_nums[j] = beta;
-
-        // Save <z_new, r_new> as denominator for next iteration.
-        beta_denom[j] = beta_num_zr + Real(ppcg_numerical_threshold);
-    }
-
-    // d_new = z_new + beta * d_old
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
-#endif
-    for (int j = 0; j < n_band_; ++j)
-    {
-        for (int ig = 0; ig < n_dim_; ++ig)
-        {
-            const int off = idx(ig, j, ld_psi_);
-            p[off] = z_new[off] + beta_nums[j] * p[off];
-        }
-    }
-
-    // Persist state for next iteration.
-    z_old.swap(z_new);
-}
-
-// ---------------------------------------------------------------------------
-// Line minimization along search direction:
-//   For each band j: find optimal step α by minimizing the Rayleigh quotient
-//   in the 2D subspace spanned by |psi_j> and |p_j>.
-//
-//   The Rayleigh quotient:
-//     R(α) = (h_ii + 2α h_ip + α² h_pp) / (s_ii + 2α s_ip + α² s_pp)
-//
-//   Setting dR/dα = 0 gives a quadratic equation
-//   matrix_a α² + matrix_b α + matrix_c = 0 with:
-//     matrix_a = s_ip * h_pp - h_ip * s_pp
-//     matrix_b = s_ii * h_pp - h_ii * s_pp
-//     matrix_c = s_ii * h_ip - h_ii * s_ip
-//
-//   The linear approximation α = -matrix_c / matrix_b (dropping the α² term) picks one of
-//   the two stationary points more-or-less arbitrarily.  For bands far from
-//   convergence this can select the MAXIMUM, driving ψ toward high-energy
-//   states.  We solve the full quadratic and explicitly pick the root with
-//   the lower Rayleigh quotient.
-//
-//   Update: |psi>  += α |p>
-//           H|psi> += α H|p>
-//           S|psi> += α S|p>
-// ---------------------------------------------------------------------------
-template <typename T, typename Device>
-void DiagoPPCG<T, Device>::line_minimize(
-    T* psi, T* hpsi, T* spsi,
-    const T* p, const T* hp, const T* sp,
-    int ncol) const
-{
-    std::vector<Real> real_coeffs(4 * ncol, Real(0));
-    std::vector<T> mixed_coeffs(2 * ncol, T(0));
-
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ * ncol > ppcg_openmp_work_threshold)
-#endif
-    for (int j = 0; j < ncol; ++j)
-    {
-        const int off = j * ld_psi_;
-        const T* pj = psi + off;
-        const T* hj = hpsi + off;
-        const T* sj = spsi + off;
-        const T* pp = p + off;
-        const T* hpp = hp + off;
-        const T* spp = sp + off;
-
-        Real h_ii = 0;
-        Real s_ii = 0;
-        Real h_pp = 0;
-        Real s_pp = 0;
-        T h_ip = T(0);
-        T s_ip = T(0);
-
-        for (int ig = 0; ig < n_dim_; ++ig)
-        {
-            h_ii += std::real(std::conj(pj[ig]) * hj[ig]);
-            s_ii += std::real(std::conj(pj[ig]) * sj[ig]);
-            h_ip += std::conj(pj[ig]) * hpp[ig];
-            s_ip += std::conj(pj[ig]) * spp[ig];
-            h_pp += std::real(std::conj(pp[ig]) * hpp[ig]);
-            s_pp += std::real(std::conj(pp[ig]) * spp[ig]);
-        }
-
-        int coeff_offset = j;
-        real_coeffs[coeff_offset] = h_ii;
-        coeff_offset += ncol;
-        real_coeffs[coeff_offset] = s_ii;
-        coeff_offset += ncol;
-        real_coeffs[coeff_offset] = h_pp;
-        coeff_offset += ncol;
-        real_coeffs[coeff_offset] = s_pp;
-
-        mixed_coeffs[j] = h_ip;
-        mixed_coeffs[j + ncol] = s_ip;
-    }
-
-    const int real_coeff_count = real_coeffs.size();
-    const int mixed_coeff_count = mixed_coeffs.size();
-    reduce_pool_if_mpi_ready(real_coeffs.data(), real_coeff_count);
-    reduce_pool_if_mpi_ready(mixed_coeffs.data(), mixed_coeff_count);
-
-    std::vector<T> steps(ncol, T(0));
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (ncol > ppcg_openmp_column_threshold)
-#endif
-    for (int j = 0; j < ncol; ++j)
-    {
-        int coeff_offset = j;
-        Real h_ii = real_coeffs[coeff_offset];
-        coeff_offset += ncol;
-        Real s_ii = real_coeffs[coeff_offset];
-        coeff_offset += ncol;
-        Real h_pp = real_coeffs[coeff_offset];
-        coeff_offset += ncol;
-        Real s_pp = real_coeffs[coeff_offset];
-        const T h_ip_c = mixed_coeffs[j];
-        const T s_ip_c = mixed_coeffs[ncol + j];
-
-        // Rotate the search direction so the first-order Rayleigh quotient
-        // derivative is real. The scalar alpha solve below stays unchanged for
-        // real problems, while complex PW states can use a complex step.
-        T phase = T(1);
-        const Real lambda = h_ii / std::max(s_ii, Real(ppcg_numerical_threshold));
-        const T q = h_ip_c - T(lambda) * s_ip_c;
-        const Real q_abs = std::abs(q);
-        if (q_abs > Real(ppcg_numerical_threshold))
-        {
-            phase = std::conj(q) / q_abs;
-        }
-
-        Real h_ip = std::real(phase * h_ip_c);
-        Real s_ip = std::real(phase * s_ip_c);
-
-        // Coefficients of matrix_a alpha^2 + matrix_b alpha + matrix_c = 0.
-        const Real matrix_a = s_ip * h_pp - h_ip * s_pp;
-        const Real matrix_b = s_ii * h_pp - h_ii * s_pp;
-        const Real matrix_c = s_ii * h_ip - h_ii * s_ip;
-
-        auto ray_quot = [&](Real a) -> Real {
-            return (h_ii + Real(2) * a * h_ip + a * a * h_pp)
-                 / std::max(s_ii + Real(2) * a * s_ip + a * a * s_pp,
-                            Real(ppcg_numerical_threshold));
-        };
-
-        Real alpha = 0;
-        Real alpha_linear = (std::abs(matrix_b) > Real(ppcg_numerical_threshold))
-                          ? -matrix_c / matrix_b : Real(0);
-
-        const Real tolerance = std::numeric_limits<Real>::epsilon()
-                             * Real(ppcg_line_search_tolerance_factor);
-        if (std::abs(matrix_a) > tolerance * std::max(Real(1), std::abs(matrix_b)))
-        {
-            const Real discriminant = matrix_b * matrix_b
-                                    - Real(ppcg_quadratic_discriminant_coefficient)
-                                          * matrix_a * matrix_c;
-            if (discriminant >= Real(0))
-            {
-                const Real sqrt_discriminant = std::sqrt(discriminant);
-                const Real root_denom = Real(ppcg_quadratic_root_denominator_coefficient) * matrix_a;
-                const Real alpha_first = (-matrix_b + sqrt_discriminant) / root_denom;
-                const Real alpha_second = (-matrix_b - sqrt_discriminant) / root_denom;
-
-                const Real quotient_first = ray_quot(alpha_first);
-                const Real quotient_second = ray_quot(alpha_second);
-                const Real quotient_linear = ray_quot(alpha_linear);
-
-                if (quotient_first < quotient_second && quotient_first < quotient_linear)
-                {
-                    alpha = alpha_first;
-                }
-                else if (quotient_second < quotient_first && quotient_second < quotient_linear)
-                {
-                    alpha = alpha_second;
-                }
-                else
-                {
-                    alpha = alpha_linear;
-                }
-            }
-            else
-            {
-                alpha = alpha_linear;
-            }
-        }
-        else
-        {
-            alpha = alpha_linear;
-        }
-
-        steps[j] = T(alpha) * phase;
-    }
-
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * ncol > ppcg_openmp_work_threshold)
-#endif
-    for (int j = 0; j < ncol; ++j)
-    {
-        for (int ig = 0; ig < n_dim_; ++ig)
-        {
-            const int off = idx(ig, j, ld_psi_);
-            psi[off] += steps[j] * p[off];
-            hpsi[off] += steps[j] * hp[off];
-            spsi[off] += steps[j] * sp[off];
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Cholesky orthonormalization (S-orthonormal):
-//   1. Form S-gram matrix J = psi^H * S * psi
-//   2. Cholesky: J = U^T * U  (upper)
-//   3. Invert U: U^{-1}
-//   4. psi *= U^{-1},  Hpsi *= U^{-1},  Spsi *= U^{-1}
-// ---------------------------------------------------------------------------
-template <typename T, typename Device>
-void DiagoPPCG<T, Device>::orth_cholesky(
-    T* psi, T* hpsi, T* spsi, int ncol) const
-{
-    // Save original vectors in case Cholesky fails numerically.
-    std::vector<T> psi_orig(psi, psi + ld_psi_ * ncol);
-    std::vector<T> hpsi_orig(hpsi, hpsi + ld_psi_ * ncol);
-    std::vector<T> spsi_orig(spsi, spsi + ld_psi_ * ncol);
-
-    // Gram matrix of S-orthonormality: J_{ij} = <psi_i | S | psi_j>
-    std::vector<T> gram_s;
-    gram(psi, spsi, ncol, ncol, gram_s, ncol);
-
-    HermitianLapack<T>::potrf(ncol, gram_s.data());
-    HermitianLapack<T>::trtri(ncol, gram_s.data());
-
-    const T one = T(1);
-    const T zero = T(0);
-    std::vector<T> tmp(ld_psi_ * ncol, T(0));
-    ModuleBase::gemm_op<T, Device>()('N',
-                                     'N',
-                                     n_dim_,
-                                     ncol,
-                                     ncol,
-                                     &one,
-                                     psi,
-                                     ld_psi_,
-                                     gram_s.data(),
-                                     ncol,
-                                     &zero,
-                                     tmp.data(),
-                                     ld_psi_);
-    std::copy(tmp.begin(), tmp.end(), psi);
-
-    ModuleBase::gemm_op<T, Device>()('N',
-                                     'N',
-                                     n_dim_,
-                                     ncol,
-                                     ncol,
-                                     &one,
-                                     hpsi,
-                                     ld_psi_,
-                                     gram_s.data(),
-                                     ncol,
-                                     &zero,
-                                     tmp.data(),
-                                     ld_psi_);
-    std::copy(tmp.begin(), tmp.end(), hpsi);
-
-    ModuleBase::gemm_op<T, Device>()('N',
-                                     'N',
-                                     n_dim_,
-                                     ncol,
-                                     ncol,
-                                     &one,
-                                     spsi,
-                                     ld_psi_,
-                                     gram_s.data(),
-                                     ncol,
-                                     &zero,
-                                     tmp.data(),
-                                     ld_psi_);
-    std::copy(tmp.begin(), tmp.end(), spsi);
-
-    const bool cholesky_ok = is_s_orthonormal(psi, spsi, ncol);
-
-    if (!cholesky_ok)
-    {
-        std::copy(psi_orig.begin(), psi_orig.end(), psi);
-        std::copy(hpsi_orig.begin(), hpsi_orig.end(), hpsi);
-        std::copy(spsi_orig.begin(), spsi_orig.end(), spsi);
-        s_gram_schmidt(psi, hpsi, spsi, ncol);
-    }
-}
-
-} // namespace hsolver
-
-
-namespace hsolver {
-
-//==============================================================================
 // MAIN DIAGONALIZATION ROUTINE
 //==============================================================================
 template <typename T, typename Device>
 double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
-                                   const SPsiFunc& spsi_func,
-                                   int ld_psi,
-                                   int nband,
-                                   int dim,
-                                   T* psi_in,
-                                   Real* eigenvalue_in,
-                                   const std::vector<double>& ethr_band,
-                                   const Real* prec)
+                               const SPsiFunc& spsi_func,
+                               int ld_psi,
+                               int nband,
+                               int dim,
+                               T* psi_in,
+                               Real* eigenvalue_in,
+                               const std::vector<double>& ethr_band,
+                               const Real* prec)
 {
     ld_psi_ = ld_psi;
     n_band_ = nband;
@@ -1541,280 +1114,114 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     std::ofstream residual_trace;
     if (const char* path = std::getenv("ABACUS_PPCG_RESIDUAL_TRACE"))
     {
-        // Optional debug trace for plotting PPCG convergence curves.
-        residual_trace.open(path);
-        if (residual_trace)
-        {
-            residual_trace << "iteration,stage,max_residual\n";
-        }
+    // Optional debug trace for plotting PPCG convergence curves.
+    residual_trace.open(path);
+    if (residual_trace)
+    {
+        residual_trace << "iteration,stage,max_residual\n";
+    }
     }
     auto record_residual = [&](int iteration, const char* stage) {
-        if (!residual_trace)
-        {
-            return;
-        }
-        residual_trace
-            << iteration << ','
-            << stage << ','
-            << max_generalized_residual(hpsi_.data(),
-                                        spsi_.data(),
-                                        eigenvalue_in,
-                                        ld_psi_,
-                                        n_dim_,
-                                        ncol)
-            << '\n';
+    if (!residual_trace)
+    {
+        return;
+    }
+    residual_trace
+        << iteration << ','
+        << stage << ','
+        << max_generalized_residual(hpsi_.data(),
+                                    spsi_.data(),
+                                    eigenvalue_in,
+                                    ld_psi_,
+                                    n_dim_,
+                                    ncol)
+        << '\n';
     };
 
-    // ---------------------------------------------------------------------------
-    // Strategy dispatch
-    // ---------------------------------------------------------------------------
-    if (strategy_ == PpcgStrategy::BLOCK_SUBSPACE)
+    // Initialize with Rayleigh-Ritz.
+    rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+    // Recompute to keep hpsi/spi consistent with rotated psi.
+    apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+    apply_s_current(psi_in, spsi_.data(), ncol);
+    record_residual(0, "initial_rr");
+
+    std::vector<T> w_active;
+    std::vector<T> sw_active;
+    std::vector<T> hw_active;
+    w_active.reserve(sz);
+    sw_active.reserve(sz);
+    hw_active.reserve(sz);
+    std::vector<int> cols;
+    cols.reserve(std::min(sbsize_, ncol));
+    SmallSubspace subspace;
+
+    while (!active_cols.empty() && iter <= maxiter_)
     {
-        // Initialize with Rayleigh-Ritz.
-        rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
-        // Recompute to keep hpsi/spi consistent with rotated psi.
-        apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-        apply_s_current(psi_in, spsi_.data(), ncol);
-        record_residual(0, "initial_rr");
+        const int nact = int(active_cols.size());
+        const int nsb = std::max(1, (nact + sbsize_ - 1) / sbsize_);
 
-        std::vector<T> w_active;
-        std::vector<T> sw_active;
-        std::vector<T> hw_active;
-        w_active.reserve(sz);
-        sw_active.reserve(sz);
-        hw_active.reserve(sz);
-        std::vector<int> cols;
-        cols.reserve(std::min(sbsize_, ncol));
-        SmallSubspace subspace;
+        // Precondition the residual.
+        divide_by_preconditioner(active_cols, prec, w_);
+        copy_cols(w_.data(), active_cols, w_active);
+        sw_active.assign(ld_psi_ * nact, T(0));
+        apply_s_current(w_active.data(), sw_active.data(), nact);
+        scatter_cols(sw_.data(), active_cols, sw_active);
+        project_against(psi_in, spsi_.data(), all_cols, w_, sw_, active_cols);
 
-        while (!active_cols.empty() && iter <= maxiter_)
+        // Apply H to the search direction.
+        copy_cols(w_.data(), active_cols, w_active);
+        force_g0_real(w_active.data(), nact);
+        hw_active.assign(ld_psi_ * nact, T(0));
+        sw_active.assign(ld_psi_ * nact, T(0));
+        scatter_cols(w_.data(), active_cols, w_active);
+        apply_h(hpsi_func, w_active.data(), hw_active.data(), nact);
+        apply_s_current(w_active.data(), sw_active.data(), nact);
+        scatter_cols(hw_.data(), active_cols, hw_active);
+        scatter_cols(sw_.data(), active_cols, sw_active);
+
+        avg_iter += double(nact) / double(ncol);
+
+        // Use the stable 2-block [psi, w] projected subspace.  The
+        // preconditioned residual w is normalized to unit S-norm before
+        // building the Gram matrix (see build_small_subspace), which
+        // keeps M well-conditioned even when residuals are small.
+
+        // Block subspace solve.
+        for (int isb = 0; isb < nsb; ++isb)
         {
-            const int nact = int(active_cols.size());
-            const int nsb = std::max(1, (nact + sbsize_ - 1) / sbsize_);
+            const int i0 = isb * sbsize_;
+            const int l = std::min(sbsize_, nact - i0);
+            cols.assign(active_cols.begin() + i0,
+                        active_cols.begin() + i0 + l);
 
-            // Precondition the residual.
-            divide_by_preconditioner(active_cols, prec, w_);
-            copy_cols(w_.data(), active_cols, w_active);
-            sw_active.assign(ld_psi_ * nact, T(0));
-            apply_s_current(w_active.data(), sw_active.data(), nact);
-            scatter_cols(sw_.data(), active_cols, sw_active);
-            project_against(psi_in, spsi_.data(), all_cols, w_, sw_, active_cols);
-
-            // Apply H to the search direction.
-            copy_cols(w_.data(), active_cols, w_active);
-            force_g0_real(w_active.data(), nact);
-            hw_active.assign(ld_psi_ * nact, T(0));
-            sw_active.assign(ld_psi_ * nact, T(0));
-            scatter_cols(w_.data(), active_cols, w_active);
-            apply_h(hpsi_func, w_active.data(), hw_active.data(), nact);
-            apply_s_current(w_active.data(), sw_active.data(), nact);
-            scatter_cols(hw_.data(), active_cols, hw_active);
-            scatter_cols(sw_.data(), active_cols, sw_active);
-
-            avg_iter += double(nact) / double(ncol);
-
-            // Use the stable 2-block [psi, w] projected subspace.  The
-            // preconditioned residual w is normalized to unit S-norm before
-            // building the Gram matrix (see build_small_subspace), which
-            // keeps M well-conditioned even when residuals are small.
-
-            // Block subspace solve.
-            for (int isb = 0; isb < nsb; ++isb)
-            {
-                const int i0 = isb * sbsize_;
-                const int l = std::min(sbsize_, nact - i0);
-                cols.assign(active_cols.begin() + i0,
-                            active_cols.begin() + i0 + l);
-
-                build_small_subspace(psi_in, cols, subspace);
-                solve_small_generalized(2 * l, subspace);
-                update_one_block(psi_in, cols, l, subspace);
-            }
-
-            // Rayleigh-Ritz after each block update keeps the global subspace
-            // synchronized with the updated active vectors.  The block update
-            // can otherwise drift into an ill-conditioned basis before the next
-            // Ritz rotation.
-            rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
-            // The Rayleigh-Ritz rotation already keeps hpsi_/spsi_ consistent
-            // with the rotated psi up to rounding; re-applying H/S exactly is
-            // only needed every rr_step_ iterations to reset the accumulated
-            // rounding drift.
-            if ((iter % rr_step_) == 0)
-            {
-                apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-                apply_s_current(psi_in, spsi_.data(), ncol);
-            }
-            record_residual(iter, "rayleigh_ritz");
-
-            ++iter;
+            build_small_subspace(psi_in, cols, subspace);
+            solve_small_generalized(2 * l, subspace);
+            update_one_block(psi_in, cols, l, subspace);
         }
 
-        // Final consistency: ensure hpsi/spi match the converged psi.
-        apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-        apply_s_current(psi_in, spsi_.data(), ncol);
-        record_residual(iter - 1, "final");
-    }
-    else // CONJUGATE_GRADIENT
-    {
-        // Initialize with Rayleigh-Ritz — same as BLOCK_SUBSPACE.
-        // Diagonal Rayleigh quotients are poor approximations for random
-        // initial guesses; starting the CG loop with them produces wrong
-        // gradients that drive the search toward high-energy bands.
+        // Rayleigh-Ritz after each block update keeps the global subspace
+        // synchronized with the updated active vectors.  The block update
+        // can otherwise drift into an ill-conditioned basis before the next
+        // Ritz rotation.
         rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
-        apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-        apply_s_current(psi_in, spsi_.data(), ncol);
-        record_residual(0, "initial_rr");
-
-        std::vector<T> grad;
-        calc_gradient(prec, hpsi_.data(), spsi_.data(), psi_in,
-                      eigenvalue_in, grad);
-        orth_gradient(psi_in, spsi_.data(), grad);
-
-        std::vector<T> p;
-        z_old_.clear();
-        beta_denom_.clear();
-        update_polak_ribiere(grad, p, z_old_, beta_denom_, prec);
-
-        // CG iteration loop.
-        std::vector<T> hp;
-        std::vector<T> sp;
-        hp.reserve(sz);
-        sp.reserve(sz);
-        while (iter <= maxiter_)
+        // The Rayleigh-Ritz rotation already keeps hpsi_/spsi_ consistent
+        // with the rotated psi up to rounding; re-applying H/S exactly is
+        // only needed every rr_step_ iterations to reset the accumulated
+        // rounding drift.
+        if ((iter % rr_step_) == 0)
         {
-            // Apply H and S to search direction.
-            hp.assign(ld_psi_ * ncol, T(0));
-            sp.assign(ld_psi_ * ncol, T(0));
-            apply_h(hpsi_func, p.data(), hp.data(), ncol);
-            apply_s_current(p.data(), sp.data(), ncol);
-
-            // Line minimization.
-            line_minimize(psi_in, hpsi_.data(), spsi_.data(),
-                          p.data(), hp.data(), sp.data(), ncol);
-
-            const bool do_rr = (iter % rr_step_) == 0;
-            if (do_rr)
-            {
-                // Rayleigh-Ritz: full subspace diagonalization.
-                // We recompute H|psi> and S|psi> first because line_minimize
-                // modified psi.  We do NOT call orth_cholesky here — Cholesky
-                // mixes bands through the upper-triangular U^{-1} factor,
-                // contaminating low-energy bands with high-energy components
-                // and driving the eigenvalues upward.
-                apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-                apply_s_current(psi_in, spsi_.data(), ncol);
-
-                std::vector<int> dummy_active;
-                rayleigh_ritz(psi_in, eigenvalue_in, dummy_active, ethr_band);
-
-                // Sync hpsi/spi to the rotated wavefunctions.
-                apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-                apply_s_current(psi_in, spsi_.data(), ncol);
-
-                // Reset PR state: the rotation changes the basis,
-                // so old gradients / search directions are invalid.
-                p.clear();
-                z_old_.clear();
-                beta_denom_.clear();
-                record_residual(iter, "rayleigh_ritz");
-            }
-            else
-            {
-                // Cholesky orthonormalization.
-                orth_cholesky(psi_in, hpsi_.data(), spsi_.data(), ncol);
-
-                // After Cholesky the bands are S-orthonormal, but the
-                // upper-triangular U^{-1} transformation mixes high-energy
-                // components into the low-energy bands.  Diagonal Rayleigh
-                // quotients then overestimate the low eigenvalues and
-                // produce wrong gradients that drive the CG search toward
-                // high-energy states.
-                //
-                // Solve the subspace generalized eigenvalue problem to get
-                // correct Ritz values.  We do NOT rotate the states — that
-                // would invalidate the Polak-Ribiere conjugate-direction
-                // accumulators.  The Cholesky basis spans the same subspace,
-                // so the Ritz values are exact for this subspace.
-                std::vector<T> h_sub(ncol * ncol, T(0));
-                std::vector<T> s_sub(ncol * ncol, T(0));
-                gram(psi_in, hpsi_.data(), ncol, ncol, h_sub, ncol);
-                gram(psi_in, spsi_.data(), ncol, ncol, s_sub, ncol);
-
-                std::vector<Real> eval_cg(ncol, Real(0));
-                try
-                {
-                    HermitianLapack<T>::sygvd(ncol, h_sub.data(),
-                                              s_sub.data(),
-                                              eval_cg.data());
-                }
-                catch (const std::runtime_error&)
-                {
-                    // Fallback: diagonal Rayleigh quotients.
-                    // h_sub and s_sub may be corrupted by sygvd; re-form them.
-                    gram(psi_in, hpsi_.data(), ncol, ncol, h_sub, ncol);
-                    gram(psi_in, spsi_.data(), ncol, ncol, s_sub, ncol);
-                    for (int ii = 0; ii < ncol; ++ii)
-                    {
-                        eval_cg[ii] =
-                            Real(std::real(h_sub[ii + ii * ncol]))
-                            / std::max(Real(
-                                           std::real(s_sub[ii + ii * ncol])),
-                                       Real(ppcg_numerical_threshold));
-                    }
-                }
-                for (int ii = 0; ii < ncol; ++ii)
-                {
-                    eigenvalue_in[ii] = eval_cg[ii];
-                }
-                record_residual(iter, "cg_step");
-            }
-
-            // Compute new gradient.
-            calc_gradient(prec, hpsi_.data(), spsi_.data(), psi_in,
-                          eigenvalue_in, grad);
-            orth_gradient(psi_in, spsi_.data(), grad);
-
-            // Polak-Ribiere update.
-            update_polak_ribiere(grad, p, z_old_, beta_denom_, prec);
-
-            // Convergence check.
-            bool all_converged = true;
-            std::vector<double> grad_nrm2(ncol, 0.0);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ * ncol > ppcg_openmp_work_threshold)
-#endif
-            for (int i = 0; i < ncol; ++i)
-            {
-                double nrm2 = 0.0;
-                for (int ig = 0; ig < n_dim_; ++ig)
-                {
-                    nrm2 += double(
-                        std::norm(grad[idx(ig, i, ld_psi_)]));
-                }
-                grad_nrm2[i] = nrm2;
-            }
-            reduce_pool_if_mpi_ready(grad_nrm2.data(), ncol);
-            for (int i = 0; i < ncol; ++i)
-            {
-                if (std::sqrt(Real(grad_nrm2[i]))
-                    > std::max(Real(ethr_band[i]), diag_thr_))
-                {
-                    all_converged = false;
-                    break;
-                }
-            }
-            if (all_converged)
-            {
-                break;
-            }
-
-            ++iter;
+            apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+            apply_s_current(psi_in, spsi_.data(), ncol);
         }
+        record_residual(iter, "rayleigh_ritz");
 
-        avg_iter = double(iter);
+        ++iter;
     }
 
+    // Final consistency: ensure hpsi/spi match the converged psi.
+    apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+    apply_s_current(psi_in, spsi_.data(), ncol);
+    record_residual(iter - 1, "final");
     return avg_iter;
 }
 

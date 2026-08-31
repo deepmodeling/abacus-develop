@@ -2,7 +2,7 @@
  * diago_ppcg_float_test.cpp — single-precision unit test for DiagoPPCG.
  *
  * Exercises the std::complex<float> instantiation of the BLOCK_SUBSPACE and
- * CONJUGATE_GRADIENT strategies on dense matrices with analytical reference
+ * BLOCK_SUBSPACE strategy on dense matrices with analytical reference
  * eigenvalues.  Tolerances are looser than the double-precision suite because
  * single precision has roughly 7 significant digits.
  */
@@ -120,8 +120,7 @@ TEST(DiagoPPCGFloatTest, DiagonalBlockSubspace)
         /* max_iter = */ 100,
         /* sbsize   = */ 3,
         /* rr_step  = */ 3,
-        /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::BLOCK_SUBSPACE);
+        /* gamma_g0 = */ false);
 
     auto h_op = [&](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -190,8 +189,7 @@ TEST(DiagoPPCGFloatTest, TridiagonalBlockSubspace)
         /* max_iter = */ 100,
         /* sbsize   = */ 4,
         /* rr_step  = */ 4,
-        /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::BLOCK_SUBSPACE);
+        /* gamma_g0 = */ false);
 
     auto h_op = [&](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -206,68 +204,6 @@ TEST(DiagoPPCGFloatTest, TridiagonalBlockSubspace)
             << "Tridiagonal float BLOCK: eigenvalue[" << i << "] mismatch";
     }
     EXPECT_LE(avg_iter, 100.0) << "Tridiagonal float BLOCK: too many iterations";
-}
-
-// -----------------------------------------------------------------------------
-// CONJUGATE_GRADIENT fallback strategy on the diagonal matrix.
-// -----------------------------------------------------------------------------
-TEST(DiagoPPCGFloatTest, ConjugateGradientFallback)
-{
-    const int n_dim = 5;
-    const int nband = 3;
-    const int ld = n_dim;
-
-    std::vector<T> H_mat(n_dim * n_dim, T(0.0f, 0.0f));
-    for (int i = 0; i < n_dim; ++i)
-    {
-        H_mat[i + i * n_dim] = T(Real(i + 1), 0.0f);
-    }
-
-    std::vector<Real> prec(n_dim);
-    for (int i = 0; i < n_dim; ++i)
-    {
-        prec[i] = Real(i + 1);
-    }
-
-    const Real exact[3] = {1.0f, 2.0f, 3.0f};
-    std::vector<double> ethr(nband, 1e-4);
-
-    std::mt19937 rng(42);
-    std::uniform_real_distribution<Real> dist(-1.0f, 1.0f);
-    std::vector<T> psi(ld * nband, T(0.0f, 0.0f));
-    for (int j = 0; j < nband; ++j)
-    {
-        for (int i = 0; i < n_dim; ++i)
-        {
-            psi[i + j * ld] = T(dist(rng), 0.0f);
-        }
-    }
-    gram_schmidt(psi, ld, n_dim, nband);
-
-    std::vector<T> psi_run = psi;
-    std::vector<Real> eval(nband, 0.0f);
-
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-        /* diag_thr = */ 1e-5f,
-        /* max_iter = */ 200,
-        /* sbsize   = */ 3,
-        /* rr_step  = */ 3,
-        /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT);
-
-    auto h_op = [&](T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
-
-    double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim,
-                                  psi_run.data(), eval.data(), ethr, prec.data());
-
-    for (int i = 0; i < nband; ++i)
-    {
-        EXPECT_NEAR(double(eval[i]), double(exact[i]), 1e-4)
-            << "Diagonal float CG: eigenvalue[" << i << "] mismatch";
-    }
-    EXPECT_LE(avg_iter, 200.0) << "Diagonal float CG: too many iterations";
 }
 
 // -----------------------------------------------------------------------------
@@ -291,8 +227,7 @@ TEST(DiagoPPCGFloatTest, NonFiniteInputThrows)
     std::vector<double> ethr(nband, 1e-4);
 
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-        /* diag_thr = */ 1e-5f, 100, 3, 3, false,
-        hsolver::PpcgStrategy::BLOCK_SUBSPACE);
+        /* diag_thr = */ 1e-5f, 100, 3, 3, false);
 
     auto h_op = [&](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);

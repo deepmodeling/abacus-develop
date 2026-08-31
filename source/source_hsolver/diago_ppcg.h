@@ -11,19 +11,14 @@
 namespace hsolver {
 
 // -----------------------------------------------------------------------------
-// DiagoPPCG: Projection Preconditioned Conjugate Gradient solver
+// DiagoPPCG: Projection Preconditioned solver
 // -----------------------------------------------------------------------------
 //
-// Supports two algorithmic strategies:
-//   CONJUGATE_GRADIENT — band-by-band Polak-Ribiere CG with line minimization
-//     (File 2 approach).
-//   BLOCK_SUBSPACE — block subspace diagonalization (File 1 approach).
-//
-// BLOCK_SUBSPACE is the production path used by ks_solver=ppcg.
-// CONJUGATE_GRADIENT is kept as an explicit fallback strategy.
+// Implements the block-subspace diagonalization strategy (File 1 approach),
+// the production path used by ks_solver=ppcg.  The band-by-band conjugate
+// gradient variant (File 2 approach) was removed from this PR: it was slower
+// than the block subspace path on the dense benchmark and was not used.
 // -----------------------------------------------------------------------------
-
-enum class PpcgStrategy { BLOCK_SUBSPACE, CONJUGATE_GRADIENT };
 
 namespace base_device = ::base_device;
 
@@ -47,8 +42,7 @@ public:
               const int& diag_iter_max,
               const int& sbsize,
               const int& rr_step,
-              const bool gamma_g0_real,
-              const PpcgStrategy strategy = PpcgStrategy::BLOCK_SUBSPACE);
+              const bool gamma_g0_real);
 
     // -------------------------------------------------------------------------
     // Main entry point
@@ -74,7 +68,6 @@ private:
     int rr_step_;
     Real diag_thr_;
     bool gamma_g0_real_;
-    PpcgStrategy strategy_;
 
     // Problem dimensions (set in diag())
     int ld_psi_ = 0;
@@ -97,10 +90,6 @@ private:
     std::vector<T> rr_ssub_;
     std::vector<Real> rr_eval_;
     std::vector<Real> eval_prev_;  // eigenvalues of the previous Rayleigh-Ritz step
-
-    // Polak-Ribiere state (CONJUGATE_GRADIENT strategy)
-    std::vector<T> z_old_;      // previous preconditioned residual
-    std::vector<Real> beta_denom_;
 
     // -------------------------------------------------------------------------
     // Internal helpers
@@ -196,31 +185,6 @@ private:
     void rayleigh_ritz(T* psi, Real* eigenvalue,
                        std::vector<int>& active_cols,
                        const std::vector<double>& ethr_band);
-
-    // -------------------------------------------------------------------------
-    // Conjugate-gradient strategy helpers (File 2 style)
-    // -------------------------------------------------------------------------
-    void calc_gradient(const Real* prec,
-                       const T* hpsi,
-                       const T* spsi,
-                       const T* psi,
-                       const Real* eigenvalue,
-                       std::vector<T>& grad) const;
-
-    void orth_gradient(const T* psi, const T* spsi,
-                       std::vector<T>& grad) const;
-
-    void update_polak_ribiere(const std::vector<T>& grad,
-                              std::vector<T>& p,
-                              std::vector<T>& z_old,
-                              std::vector<Real>& beta_denom,
-                              const Real* prec) const;
-
-    void line_minimize(T* psi, T* hpsi, T* spsi,
-                       const T* p, const T* hp, const T* sp,
-                       int ncol) const;
-
-    void orth_cholesky(T* psi, T* hpsi, T* spsi, int ncol) const;
 };
 
 } // namespace hsolver
