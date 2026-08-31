@@ -303,6 +303,15 @@ TEST(SternheimerABACUSSTSmoke, SamplesOnlyRequestedPeriodicKSUnoccupiedStates)
     EXPECT_THROW(ModuleRI::sternheimer_sampled_unoccupied_count(true, 676, -1), std::invalid_argument);
 }
 
+TEST(SternheimerABACUSSTSmoke, SamplesOnlyRequestedPeriodicOccupiedSourceStates)
+{
+    EXPECT_EQ(ModuleRI::sternheimer_sampled_occupied_count(68, 1), 1);
+    EXPECT_EQ(ModuleRI::sternheimer_sampled_occupied_count(68, 0), 68);
+    EXPECT_EQ(ModuleRI::sternheimer_sampled_occupied_count(68, -1), 68);
+    EXPECT_EQ(ModuleRI::sternheimer_sampled_occupied_count(12, 32), 12);
+    EXPECT_THROW(ModuleRI::sternheimer_sampled_occupied_count(0, 1), std::invalid_argument);
+}
+
 TEST(SternheimerABACUSSTSmoke, GathersRequestedPeriodicKSUnoccupiedStatesForDelta)
 {
     EXPECT_EQ(ModuleRI::sternheimer_lcao_virtual_state_gather_count(676, false, "ks_bands", 32), 0);
@@ -821,8 +830,10 @@ TEST(SternheimerABACUSSTSmoke, TreatsSupercellTranslationResponseAsDiagnosticOnl
     EXPECT_TRUE(ModuleRI::sternheimer_write_periodic_v1(false, false));
     EXPECT_FALSE(ModuleRI::sternheimer_write_periodic_v1(true, false));
     EXPECT_FALSE(ModuleRI::sternheimer_write_periodic_v1(false, true));
+    EXPECT_TRUE(ModuleRI::sternheimer_write_periodic_v1(false, true, false, true));
     EXPECT_TRUE(ModuleRI::sternheimer_write_periodic_v1(true, false, true));
     EXPECT_FALSE(ModuleRI::sternheimer_write_periodic_v1(true, true, true));
+    EXPECT_TRUE(ModuleRI::sternheimer_write_periodic_v1(true, true, true, true));
 
     EXPECT_NO_THROW(ModuleRI::validate_sternheimer_periodic_output_mode(true, true));
     EXPECT_NO_THROW(ModuleRI::validate_sternheimer_periodic_output_mode(false, false));
@@ -929,6 +940,49 @@ TEST(SternheimerABACUSSTSmoke, WrapsNestedFrequencyRankShiftWithinEachKGroup)
     EXPECT_EQ(negative.kpoint_group, 0);
     EXPECT_EQ(negative.frequency_slot, 2);
     EXPECT_EQ(negative.owner_rank, 2);
+}
+
+TEST(SternheimerABACUSSTSmoke, BuildsNestedChannelMPIReplicaLayout)
+{
+    const auto base = ModuleRI::sternheimer_nested_mpi_replica_layout(2, 16, 32, 31, false);
+    EXPECT_EQ(base.response_slots, 32);
+    EXPECT_EQ(base.replicas_per_slot, 1);
+    EXPECT_EQ(base.local_response_slot, 31);
+    EXPECT_EQ(base.local_replica, 0);
+
+    const auto replicated = ModuleRI::sternheimer_nested_mpi_replica_layout(2, 16, 128, 127, true);
+    EXPECT_EQ(replicated.response_slots, 32);
+    EXPECT_EQ(replicated.replicas_per_slot, 4);
+    EXPECT_EQ(replicated.local_response_slot, 31);
+    EXPECT_EQ(replicated.local_replica, 3);
+
+    EXPECT_THROW(ModuleRI::sternheimer_nested_mpi_replica_layout(2, 16, 64, 0, false),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_nested_mpi_replica_layout(2, 16, 48, 0, true),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, AssignsChannelBatchesOnceAndBalancesAcrossReplicas)
+{
+    constexpr int occupied_states = 5;
+    constexpr int batch_count = 126;
+    constexpr int replica_count = 8;
+    std::vector<int> tasks_by_replica(replica_count, 0);
+    for (int occupied = 0; occupied != occupied_states; ++occupied)
+    {
+        for (int batch = 0; batch != batch_count; ++batch)
+        {
+            const int owner = ModuleRI::sternheimer_channel_batch_replica_owner(
+                occupied, batch, batch_count, replica_count);
+            ASSERT_GE(owner, 0);
+            ASSERT_LT(owner, replica_count);
+            ++tasks_by_replica[static_cast<std::size_t>(owner)];
+        }
+    }
+    const auto range = std::minmax_element(tasks_by_replica.begin(), tasks_by_replica.end());
+    EXPECT_LE(*range.second - *range.first, 1);
+    EXPECT_THROW(ModuleRI::sternheimer_channel_batch_replica_owner(0, 126, 126, 8),
+                 std::invalid_argument);
 }
 
 TEST(SternheimerABACUSSTSmoke, RejectsInvalidNestedMPIContracts)

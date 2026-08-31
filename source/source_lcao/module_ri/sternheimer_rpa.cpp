@@ -1794,6 +1794,52 @@ SternheimerSubspaceProjector::SternheimerSubspaceProjector(const std::vector<Vec
     }
 }
 
+SternheimerSubspaceProjector::SternheimerSubspaceProjector(const std::vector<Vector>& subspace,
+                                                           const double grid_weight)
+    : SternheimerSubspaceProjector(subspace, grid_weight, false)
+{
+}
+
+SternheimerSubspaceProjector::SternheimerSubspaceProjector(const std::vector<Vector>& subspace,
+                                                           const double grid_weight,
+                                                           const bool orthonormal_batch)
+    : subspace_(&subspace),
+      dot_([grid_weight](const Vector& lhs, const Vector& rhs) {
+          return SternheimerRPA::local_grid_dot(lhs, rhs, grid_weight);
+      }),
+      batch_grid_weight_(grid_weight),
+      use_direct_batch_dot_(true),
+      use_orthonormal_batch_projection_(orthonormal_batch)
+{
+    if (grid_weight <= 0.0)
+    {
+        throw std::invalid_argument("SternheimerSubspaceProjector requires a positive grid weight.");
+    }
+    basis_norms_.reserve(subspace.size());
+    for (const Vector& basis_vec: subspace)
+    {
+        basis_norms_.push_back(dot_(basis_vec, basis_vec));
+    }
+    if (use_orthonormal_batch_projection_ && !subspace.empty())
+    {
+        const std::size_t grid_size = subspace.front().size();
+        const std::size_t basis_size = subspace.size();
+        basis_by_grid_.resize(grid_size * basis_size);
+        for (const Vector& basis_vec: subspace)
+        {
+            assert_same_size(subspace.front(), basis_vec, "SternheimerSubspaceProjector orthonormal batch");
+        }
+#pragma omp parallel for schedule(static)
+        for (std::size_t ir = 0; ir != grid_size; ++ir)
+        {
+            for (std::size_t basis = 0; basis != basis_size; ++basis)
+            {
+                basis_by_grid_[ir * basis_size + basis] = subspace[basis][ir];
+            }
+        }
+    }
+}
+
 void SternheimerSubspaceProjector::project(Vector& vec) const
 {
     for (std::size_t index = 0; index != subspace_->size(); ++index)
@@ -1816,8 +1862,57 @@ void SternheimerSubspaceProjector::project(Vector& vec) const
 
 void SternheimerSubspaceProjector::project_batch(std::vector<Vector>& vectors) const
 {
-    if (vectors.empty())
+    if (vectors.empty() || subspace_->empty())
     {
+        return;
+    }
+    if (use_direct_batch_dot_)
+    {
+        for (const Vector& vector: vectors)
+        {
+            assert_same_size(subspace_->front(), vector, "SternheimerSubspaceProjector::project_batch");
+        }
+    }
+    if (use_orthonormal_batch_projection_)
+    {
+        const std::size_t basis_size = subspace_->size();
+        const std::size_t column_size = vectors.size();
+        const std::size_t grid_size = vectors.front().size();
+        std::vector<Complex> coefficients(basis_size * column_size, Complex(0.0, 0.0));
+#pragma omp parallel for schedule(static)
+        for (std::size_t basis = 0; basis != basis_size; ++basis)
+        {
+            Complex* coefficient_row = coefficients.data() + basis * column_size;
+            for (std::size_t ir = 0; ir != grid_size; ++ir)
+            {
+                const Complex conjugate_basis = std::conj(basis_by_grid_[ir * basis_size + basis]);
+                for (std::size_t column = 0; column != column_size; ++column)
+                {
+                    coefficient_row[column] += conjugate_basis * vectors[column][ir];
+                }
+            }
+            const Complex scale = std::abs(basis_norms_[basis]) == 0.0
+                                      ? Complex(0.0, 0.0)
+                                      : Complex(batch_grid_weight_, 0.0) / basis_norms_[basis];
+            for (std::size_t column = 0; column != column_size; ++column)
+            {
+                coefficient_row[column] *= scale;
+            }
+        }
+#pragma omp parallel for schedule(static)
+        for (std::size_t ir = 0; ir != grid_size; ++ir)
+        {
+            const Complex* basis_row = basis_by_grid_.data() + ir * basis_size;
+            for (std::size_t column = 0; column != column_size; ++column)
+            {
+                Complex correction(0.0, 0.0);
+                for (std::size_t basis = 0; basis != basis_size; ++basis)
+                {
+                    correction += coefficients[basis * column_size + column] * basis_row[basis];
+                }
+                vectors[column][ir] -= correction;
+            }
+        }
         return;
     }
     for (std::size_t index = 0; index != subspace_->size(); ++index)
@@ -1825,12 +1920,31 @@ void SternheimerSubspaceProjector::project_batch(std::vector<Vector>& vectors) c
         const Vector& basis_vec = (*subspace_)[index];
         const Complex norm = basis_norms_[index];
         std::vector<Complex> coefficients(vectors.size(), Complex(0.0, 0.0));
-        for (std::size_t column = 0; column != vectors.size(); ++column)
+        if (use_direct_batch_dot_)
         {
-            assert_same_size(basis_vec, vectors[column], "SternheimerSubspaceProjector::project_batch");
-            if (std::abs(norm) != 0.0)
+#pragma omp parallel for schedule(static)
+            for (std::size_t column = 0; column != vectors.size(); ++column)
             {
-                coefficients[column] = dot_(basis_vec, vectors[column]) / norm;
+                Complex overlap(0.0, 0.0);
+                for (std::size_t i = 0; i != basis_vec.size(); ++i)
+                {
+                    overlap += std::conj(basis_vec[i]) * vectors[column][i];
+                }
+                if (std::abs(norm) != 0.0)
+                {
+                    coefficients[column] = batch_grid_weight_ * overlap / norm;
+                }
+            }
+        }
+        else
+        {
+            for (std::size_t column = 0; column != vectors.size(); ++column)
+            {
+                assert_same_size(basis_vec, vectors[column], "SternheimerSubspaceProjector::project_batch");
+                if (std::abs(norm) != 0.0)
+                {
+                    coefficients[column] = dot_(basis_vec, vectors[column]) / norm;
+                }
             }
         }
         if (std::abs(norm) == 0.0)
@@ -1838,9 +1952,9 @@ void SternheimerSubspaceProjector::project_batch(std::vector<Vector>& vectors) c
             continue;
         }
 #pragma omp parallel for schedule(static)
-        for (std::size_t i = 0; i != basis_vec.size(); ++i)
+        for (std::size_t column = 0; column != vectors.size(); ++column)
         {
-            for (std::size_t column = 0; column != vectors.size(); ++column)
+            for (std::size_t i = 0; i != basis_vec.size(); ++i)
             {
                 vectors[column][i] -= coefficients[column] * basis_vec[i];
             }

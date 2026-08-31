@@ -4,12 +4,18 @@
 
 #include <fftw3.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <complex>
+#include <memory>
 #include <new>
 #include <stdexcept>
 #include <vector>
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 namespace
 {
@@ -143,6 +149,68 @@ namespace ModuleRI
 
 struct SternheimerFDSpectralPreconditioner::Impl
 {
+    struct FFTContext
+    {
+        explicit FFTContext(const SternheimerFDHamiltonian::Grid& grid)
+        {
+            buffer = fftw_alloc_complex(static_cast<std::size_t>(grid.size()));
+            if (buffer == nullptr)
+            {
+                throw std::bad_alloc();
+            }
+#ifdef _OPENMP
+#pragma omp critical(sternheimer_fftw_plan_management)
+#endif
+            {
+                forward = fftw_plan_dft_3d(grid.nx, grid.ny, grid.nz,
+                                           buffer, buffer, FFTW_FORWARD, FFTW_ESTIMATE);
+                backward = fftw_plan_dft_3d(grid.nx, grid.ny, grid.nz,
+                                            buffer, buffer, FFTW_BACKWARD, FFTW_ESTIMATE);
+            }
+            if (forward == nullptr || backward == nullptr)
+            {
+                destroy();
+                throw std::runtime_error("Failed to initialize the Sternheimer spectral preconditioner FFT.");
+            }
+        }
+
+        ~FFTContext()
+        {
+            destroy();
+        }
+
+        FFTContext(const FFTContext&) = delete;
+        FFTContext& operator=(const FFTContext&) = delete;
+
+        void destroy()
+        {
+#ifdef _OPENMP
+#pragma omp critical(sternheimer_fftw_plan_management)
+#endif
+            {
+                if (forward != nullptr)
+                {
+                    fftw_destroy_plan(forward);
+                    forward = nullptr;
+                }
+                if (backward != nullptr)
+                {
+                    fftw_destroy_plan(backward);
+                    backward = nullptr;
+                }
+            }
+            if (buffer != nullptr)
+            {
+                fftw_free(buffer);
+                buffer = nullptr;
+            }
+        }
+
+        fftw_complex* buffer = nullptr;
+        fftw_plan forward = nullptr;
+        fftw_plan backward = nullptr;
+    };
+
     explicit Impl(const SternheimerFDHamiltonian& hamiltonian,
                   const double reference_eigenvalue,
                   const double omega,
@@ -160,26 +228,7 @@ struct SternheimerFDSpectralPreconditioner::Impl
         {
             throw std::invalid_argument("Invalid Sternheimer FD spectral preconditioner shift.");
         }
-        buffer = fftw_alloc_complex(static_cast<std::size_t>(grid.size()));
-        if (buffer == nullptr)
-        {
-            throw std::bad_alloc();
-        }
-#ifdef _OPENMP
-#pragma omp critical(sternheimer_fftw_plan_management)
-#endif
-        {
-            forward = fftw_plan_dft_3d(grid.nx, grid.ny, grid.nz,
-                                       buffer, buffer, FFTW_FORWARD, FFTW_ESTIMATE);
-            backward = fftw_plan_dft_3d(grid.nx, grid.ny, grid.nz,
-                                        buffer, buffer, FFTW_BACKWARD, FFTW_ESTIMATE);
-        }
-        if (forward == nullptr || backward == nullptr)
-        {
-            destroy();
-            throw std::runtime_error("Failed to initialize the Sternheimer spectral preconditioner FFT.");
-        }
-
+        scalar_context.reset(new FFTContext(grid));
         has_bloch_phase = grid.periodic
                           && (grid.kpoint[0] != 0.0 || grid.kpoint[1] != 0.0 || grid.kpoint[2] != 0.0);
         if (has_bloch_phase)
@@ -219,7 +268,6 @@ struct SternheimerFDSpectralPreconditioner::Impl
                         omega);
                     if (std::abs(denominator) < 1.0e-14)
                     {
-                        destroy();
                         throw std::runtime_error("Sternheimer spectral preconditioner found a singular mode.");
                     }
                     inverse_denominator[static_cast<std::size_t>(index)] = normalization / denominator;
@@ -228,32 +276,61 @@ struct SternheimerFDSpectralPreconditioner::Impl
         }
     }
 
-    ~Impl()
+    void ensure_batch_contexts(const int count) const
     {
-        destroy();
+        while (static_cast<int>(batch_contexts.size()) < count)
+        {
+            batch_contexts.emplace_back(new FFTContext(grid));
+        }
     }
 
-    void destroy()
+    void apply(const SternheimerFDHamiltonian::Vector& input,
+               SternheimerFDHamiltonian::Vector& output,
+               FFTContext& context) const
     {
-#ifdef _OPENMP
-#pragma omp critical(sternheimer_fftw_plan_management)
-#endif
+        for (int ix = 0; ix != grid.nx; ++ix)
         {
-            if (forward != nullptr)
+            for (int iy = 0; iy != grid.ny; ++iy)
             {
-                fftw_destroy_plan(forward);
-                forward = nullptr;
-            }
-            if (backward != nullptr)
-            {
-                fftw_destroy_plan(backward);
-                backward = nullptr;
+                for (int iz = 0; iz != grid.nz; ++iz)
+                {
+                    const int index = (ix * grid.ny + iy) * grid.nz + iz;
+                    std::complex<double> value = input[static_cast<std::size_t>(index)];
+                    if (has_bloch_phase)
+                    {
+                        value *= std::conj(bloch_phase[static_cast<std::size_t>(index)]);
+                    }
+                    context.buffer[index][0] = value.real();
+                    context.buffer[index][1] = value.imag();
+                }
             }
         }
-        if (buffer != nullptr)
+        fftw_execute(context.forward);
+        for (int index = 0; index != grid.size(); ++index)
         {
-            fftw_free(buffer);
-            buffer = nullptr;
+            const std::complex<double> value(context.buffer[index][0], context.buffer[index][1]);
+            const std::complex<double> preconditioned
+                = inverse_denominator[static_cast<std::size_t>(index)] * value;
+            context.buffer[index][0] = preconditioned.real();
+            context.buffer[index][1] = preconditioned.imag();
+        }
+        fftw_execute(context.backward);
+
+        output.resize(input.size());
+        for (int ix = 0; ix != grid.nx; ++ix)
+        {
+            for (int iy = 0; iy != grid.ny; ++iy)
+            {
+                for (int iz = 0; iz != grid.nz; ++iz)
+                {
+                    const int index = (ix * grid.ny + iy) * grid.nz + iz;
+                    const std::complex<double> value(context.buffer[index][0], context.buffer[index][1]);
+                    output[static_cast<std::size_t>(index)]
+                        = has_bloch_phase
+                              ? bloch_phase[static_cast<std::size_t>(index)] * value
+                              : value;
+                }
+            }
         }
     }
 
@@ -265,9 +342,8 @@ struct SternheimerFDSpectralPreconditioner::Impl
     double regularization = 0.0;
     bool has_bloch_phase = false;
     std::vector<std::complex<double>> bloch_phase;
-    fftw_complex* buffer = nullptr;
-    fftw_plan forward = nullptr;
-    fftw_plan backward = nullptr;
+    std::unique_ptr<FFTContext> scalar_context;
+    mutable std::vector<std::unique_ptr<FFTContext>> batch_contexts;
     std::vector<std::complex<double>> inverse_denominator;
 };
 
@@ -290,60 +366,69 @@ void SternheimerFDSpectralPreconditioner::apply(const SternheimerFDHamiltonian::
         throw std::invalid_argument("Sternheimer spectral preconditioner input size does not match the grid.");
     }
 
-    for (int ix = 0; ix != impl_->grid.nx; ++ix)
-    {
-        for (int iy = 0; iy != impl_->grid.ny; ++iy)
-        {
-            for (int iz = 0; iz != impl_->grid.nz; ++iz)
-            {
-                const int index = (ix * impl_->grid.ny + iy) * impl_->grid.nz + iz;
-                std::complex<double> value = input[static_cast<std::size_t>(index)];
-                if (impl_->has_bloch_phase)
-                {
-                    value *= std::conj(impl_->bloch_phase[static_cast<std::size_t>(index)]);
-                }
-                impl_->buffer[index][0] = value.real();
-                impl_->buffer[index][1] = value.imag();
-            }
-        }
-    }
-    fftw_execute(impl_->forward);
-    for (int index = 0; index != impl_->grid.size(); ++index)
-    {
-        const std::complex<double> value(impl_->buffer[index][0], impl_->buffer[index][1]);
-        const std::complex<double> preconditioned
-            = impl_->inverse_denominator[static_cast<std::size_t>(index)] * value;
-        impl_->buffer[index][0] = preconditioned.real();
-        impl_->buffer[index][1] = preconditioned.imag();
-    }
-    fftw_execute(impl_->backward);
-
-    output.resize(input.size());
-    for (int ix = 0; ix != impl_->grid.nx; ++ix)
-    {
-        for (int iy = 0; iy != impl_->grid.ny; ++iy)
-        {
-            for (int iz = 0; iz != impl_->grid.nz; ++iz)
-            {
-                const int index = (ix * impl_->grid.ny + iy) * impl_->grid.nz + iz;
-                const std::complex<double> value(impl_->buffer[index][0], impl_->buffer[index][1]);
-                output[static_cast<std::size_t>(index)]
-                    = impl_->has_bloch_phase
-                          ? impl_->bloch_phase[static_cast<std::size_t>(index)] * value
-                          : value;
-            }
-        }
-    }
+    impl_->apply(input, output, *impl_->scalar_context);
 }
 
 void SternheimerFDSpectralPreconditioner::apply_batch(const SternheimerFDHamiltonian::Matrix& input,
                                                        SternheimerFDHamiltonian::Matrix& output) const
 {
+    apply_batch(input, output, nullptr);
+}
+
+void SternheimerFDSpectralPreconditioner::apply_batch(const SternheimerFDHamiltonian::Matrix& input,
+                                                       SternheimerFDHamiltonian::Matrix& output,
+                                                       int* threads_used) const
+{
+    for (const auto& column: input)
+    {
+        if (column.size() != static_cast<std::size_t>(impl_->grid.size()))
+        {
+            throw std::invalid_argument("Sternheimer spectral preconditioner input size does not match the grid.");
+        }
+    }
+    if (input.empty())
+    {
+        output.clear();
+        if (threads_used != nullptr)
+        {
+            *threads_used = 0;
+        }
+        return;
+    }
+
+    int worker_count = 1;
+#ifdef _OPENMP
+    worker_count = std::min(static_cast<int>(input.size()), omp_get_max_threads());
+#endif
+    impl_->ensure_batch_contexts(worker_count);
     output.resize(input.size());
+#ifdef _OPENMP
+#pragma omp parallel num_threads(worker_count)
+    {
+#pragma omp single
+        {
+            if (threads_used != nullptr)
+            {
+                *threads_used = omp_get_num_threads();
+            }
+        }
+        const int worker = omp_get_thread_num();
+#pragma omp for schedule(static)
+        for (std::size_t column = 0; column < input.size(); ++column)
+        {
+            impl_->apply(input[column], output[column], *impl_->batch_contexts[static_cast<std::size_t>(worker)]);
+        }
+    }
+#else
+    if (threads_used != nullptr)
+    {
+        *threads_used = 1;
+    }
     for (std::size_t column = 0; column != input.size(); ++column)
     {
-        apply(input[column], output[column]);
+        impl_->apply(input[column], output[column], *impl_->batch_contexts.front());
     }
+#endif
 }
 
 bool SternheimerFDSpectralPreconditioner::is_compatible(

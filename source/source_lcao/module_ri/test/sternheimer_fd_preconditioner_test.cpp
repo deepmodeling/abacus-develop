@@ -5,6 +5,10 @@
 #include <gtest/gtest.h>
 #include <vector>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 TEST(SternheimerFDPreconditioner, InvertsPeriodicFDKineticShiftOnBlochMode)
 {
     using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
@@ -103,6 +107,34 @@ TEST(SternheimerFDPreconditioner, BatchMatchesIndependentScalarApplications)
     EXPECT_TRUE(actual.empty());
     input[1].pop_back();
     EXPECT_THROW(preconditioner.apply_batch(input, actual), std::invalid_argument);
+}
+
+TEST(SternheimerFDPreconditioner, ParallelizesIndependentBatchTransforms)
+{
+#ifdef _OPENMP
+    using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
+    using Complex = Hamiltonian::Complex;
+    using Vector = Hamiltonian::Vector;
+    using Matrix = Hamiltonian::Matrix;
+    Hamiltonian::Grid grid{8, 6, 4, 0.41, 0.53, 0.67, true};
+    grid.kpoint = {0.17, -0.11, 0.08};
+    const Hamiltonian hamiltonian(grid, std::vector<double>(grid.size(), 0.0), 1.0, nullptr, 8);
+    const ModuleRI::SternheimerFDSpectralPreconditioner preconditioner(hamiltonian, -0.83, 0.37, 0.02);
+    Matrix input(4, Vector(static_cast<std::size_t>(grid.size()), Complex(0.25, -0.5)));
+    Matrix output;
+
+    const int previous_threads = omp_get_max_threads();
+    const int previous_dynamic = omp_get_dynamic();
+    omp_set_dynamic(0);
+    omp_set_num_threads(4);
+    int threads_used = 0;
+    preconditioner.apply_batch(input, output, &threads_used);
+    omp_set_num_threads(previous_threads);
+    omp_set_dynamic(previous_dynamic);
+
+    EXPECT_EQ(output.size(), input.size());
+    EXPECT_GT(threads_used, 1);
+#endif
 }
 
 TEST(SternheimerFDPreconditioner, ReusesCompatibleThreadLocalWorkspace)

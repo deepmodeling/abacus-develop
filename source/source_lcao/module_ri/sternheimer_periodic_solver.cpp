@@ -1,5 +1,6 @@
 #include "source_lcao/module_ri/sternheimer_periodic_solver.h"
 
+#include <cmath>
 #include <stdexcept>
 #include <utility>
 
@@ -104,16 +105,12 @@ std::vector<SternheimerPeriodicLinearResponse> solve_sternheimer_periodic_linear
         return results;
     }
 
-    const auto dot = [volume_element](const SternheimerFDHamiltonian::Vector& lhs,
-                                      const SternheimerFDHamiltonian::Vector& rhs_vector) {
-        return sternheimer_fd_grid_dot(lhs, rhs_vector, volume_element);
-    };
+    const SternheimerSubspaceProjector occupied_projector(occupied_wavefunctions, volume_element, true);
+    SternheimerFDHamiltonian::Matrix projected_rhs = rhs;
+    occupied_projector.project_batch(projected_rhs);
     for (std::size_t column = 0; column != rhs.size(); ++column)
     {
-        results[column].projected_rhs = rhs[column];
-        SternheimerRPA::project_out_subspace(occupied_wavefunctions,
-                                             dot,
-                                             results[column].projected_rhs);
+        results[column].projected_rhs = projected_rhs[column];
     }
 
     const SternheimerDeltaFixedSubspace fixed_subspace
@@ -128,21 +125,42 @@ std::vector<SternheimerPeriodicLinearResponse> solve_sternheimer_periodic_linear
                                                          omega,
                                                          volume_element,
                                                          options);
+    SternheimerFDHamiltonian::Matrix wavefunctions(rhs.size());
     for (std::size_t column = 0; column != rhs.size(); ++column)
     {
         results[column].wavefunction = responses[column].response.reconstructed_wavefunction;
+        wavefunctions[column] = results[column].wavefunction;
         results[column].solver = responses[column].solver;
         results[column].residual_norm = responses[column].residual_norm;
-        results[column].full_grid_equation_residual_norm
-            = sternheimer_fd_linear_response_residual_norm(hamiltonian,
-                                                            occupied_wavefunctions,
-                                                            reference_eigenvalue,
-                                                            rhs[column],
-                                                            results[column].wavefunction,
-                                                            omega,
-                                                            volume_element);
         results[column].has_delta_components = true;
         results[column].delta_components = std::move(responses[column].response);
+    }
+
+    SternheimerFDHamiltonian::Matrix projected_wavefunctions = wavefunctions;
+    occupied_projector.project_batch(projected_wavefunctions);
+    SternheimerFDHamiltonian::Matrix residuals;
+    hamiltonian.apply_batch(projected_wavefunctions, residuals);
+    const SternheimerFDHamiltonian::Complex shift(-reference_eigenvalue, omega);
+#pragma omp parallel for schedule(static)
+    for (std::size_t column = 0; column != residuals.size(); ++column)
+    {
+        for (std::size_t ir = 0; ir != residuals[column].size(); ++ir)
+        {
+            residuals[column][ir] += shift * projected_wavefunctions[column][ir];
+        }
+    }
+    occupied_projector.project_batch(residuals);
+#pragma omp parallel for schedule(static)
+    for (std::size_t column = 0; column != residuals.size(); ++column)
+    {
+        double norm_squared = 0.0;
+        for (std::size_t ir = 0; ir != residuals[column].size(); ++ir)
+        {
+            residuals[column][ir] -= projected_rhs[column][ir];
+            norm_squared += std::norm(residuals[column][ir]);
+        }
+        results[column].full_grid_equation_residual_norm
+            = std::sqrt(volume_element * norm_squared);
     }
     return results;
 }

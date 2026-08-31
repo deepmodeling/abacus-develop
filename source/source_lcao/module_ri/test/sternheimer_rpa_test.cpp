@@ -429,6 +429,77 @@ TEST(SternheimerRPA, CachedSubspaceProjectorBatchMatchesScalar)
     EXPECT_THROW(projector.project_batch(invalid), std::invalid_argument);
 }
 
+TEST(SternheimerRPA, WeightedSubspaceProjectorBatchMatchesScalar)
+{
+    const double grid_weight = 0.125;
+    const std::vector<Vector> occupied
+        = {{Complex(2.0, 0.0), Complex(0.0, 0.0), Complex(1.0, -0.5)},
+           {Complex(0.0, 0.0), Complex(0.0, 3.0), Complex(-0.25, 0.75)}};
+    const ModuleRI::SternheimerSubspaceProjector scalar_projector(
+        occupied,
+        [grid_weight](const Vector& lhs, const Vector& rhs) { return grid_weight * dot(lhs, rhs); });
+    const ModuleRI::SternheimerSubspaceProjector batch_projector(occupied, grid_weight);
+    std::vector<Vector> expected
+        = {{Complex(2.0, 1.0), Complex(3.0, -4.0), Complex(0.5, 0.25)},
+           {Complex(-1.0, 2.0), Complex(0.5, 0.25), Complex(3.0, -0.75)},
+           {Complex(0.1, -0.2), Complex(-0.3, 0.4), Complex(0.5, -0.6)},
+           {Complex(-0.7, 0.8), Complex(0.9, -1.0), Complex(-1.1, 1.2)}};
+    std::vector<Vector> actual = expected;
+    for (Vector& column: expected)
+    {
+        scalar_projector.project(column);
+    }
+
+    batch_projector.project_batch(actual);
+
+    ASSERT_EQ(actual.size(), expected.size());
+    for (std::size_t column = 0; column != expected.size(); ++column)
+    {
+        ASSERT_EQ(actual[column].size(), expected[column].size());
+        for (std::size_t ir = 0; ir != expected[column].size(); ++ir)
+        {
+            EXPECT_NEAR(actual[column][ir].real(), expected[column][ir].real(), 1.0e-13);
+            EXPECT_NEAR(actual[column][ir].imag(), expected[column][ir].imag(), 1.0e-13);
+        }
+    }
+
+    EXPECT_THROW(ModuleRI::SternheimerSubspaceProjector(occupied, 0.0), std::invalid_argument);
+}
+
+TEST(SternheimerRPA, OrthonormalSubspaceProjectorBatchMatchesScalar)
+{
+    const double grid_weight = 0.25;
+    const std::vector<Vector> occupied
+        = {{Complex(2.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0)},
+           {Complex(0.0, 0.0), Complex(0.0, 2.0), Complex(0.0, 0.0), Complex(0.0, 0.0)}};
+    const ModuleRI::SternheimerSubspaceProjector scalar_projector(
+        occupied,
+        [grid_weight](const Vector& lhs, const Vector& rhs) { return grid_weight * dot(lhs, rhs); });
+    const ModuleRI::SternheimerSubspaceProjector batch_projector(occupied, grid_weight, true);
+    std::vector<Vector> expected
+        = {{Complex(2.0, 1.0), Complex(3.0, -4.0), Complex(0.5, 0.25), Complex(-0.2, 0.7)},
+           {Complex(-1.0, 2.0), Complex(0.5, 0.25), Complex(3.0, -0.75), Complex(0.8, -0.6)},
+           {Complex(0.1, -0.2), Complex(-0.3, 0.4), Complex(0.5, -0.6), Complex(0.9, 1.1)}};
+    std::vector<Vector> actual = expected;
+    for (Vector& column: expected)
+    {
+        scalar_projector.project(column);
+    }
+
+    batch_projector.project_batch(actual);
+
+    ASSERT_EQ(actual.size(), expected.size());
+    for (std::size_t column = 0; column != expected.size(); ++column)
+    {
+        ASSERT_EQ(actual[column].size(), expected[column].size());
+        for (std::size_t ir = 0; ir != expected[column].size(); ++ir)
+        {
+            EXPECT_NEAR(actual[column][ir].real(), expected[column][ir].real(), 1.0e-13);
+            EXPECT_NEAR(actual[column][ir].imag(), expected[column][ir].imag(), 1.0e-13);
+        }
+    }
+}
+
 TEST(SternheimerRPA, SpectralPreconditionerIsDefault)
 {
     const ModuleRI::SternheimerRPA::SolverOptions options{};

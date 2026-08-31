@@ -11,8 +11,10 @@
 #include <cctype>
 #include <cmath>
 #include <complex>
+#include <cstdint>
 #include <cstdlib>
 #include <iomanip>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -336,9 +338,11 @@ inline int sternheimer_periodic_band_count(const int available_bands, const int 
 
 inline bool sternheimer_write_periodic_v1(const bool use_supercell_translation_sum,
                                            const bool bands_are_truncated,
-                                           const bool full_supercell_response = false)
+                                           const bool full_supercell_response = false,
+                                           const bool allow_truncated_diagnostic = false)
 {
-    return (!use_supercell_translation_sum || full_supercell_response) && !bands_are_truncated;
+    return (!use_supercell_translation_sum || full_supercell_response)
+           && (!bands_are_truncated || allow_truncated_diagnostic);
 }
 
 inline void validate_sternheimer_periodic_output_mode(const bool write_periodic_v1,
@@ -911,6 +915,61 @@ struct SternheimerNestedMPIAssignment
     int owner_rank = 0;
 };
 
+struct SternheimerNestedMPIReplicaLayout
+{
+    int response_slots = 1;
+    int replicas_per_slot = 1;
+    int local_response_slot = 0;
+    int local_replica = 0;
+};
+
+inline SternheimerNestedMPIReplicaLayout sternheimer_nested_mpi_replica_layout(
+    const int kpoint_groups,
+    const int frequency_count,
+    const int mpi_ranks,
+    const int mpi_rank,
+    const bool use_channel_mpi)
+{
+    if (kpoint_groups <= 0 || frequency_count <= 0 || mpi_ranks <= 0
+        || mpi_rank < 0 || mpi_rank >= mpi_ranks)
+    {
+        throw std::invalid_argument("Invalid Sternheimer nested-MPI replica dimensions.");
+    }
+    const std::int64_t response_slots_64
+        = static_cast<std::int64_t>(kpoint_groups) * frequency_count;
+    if (response_slots_64 > std::numeric_limits<int>::max())
+    {
+        throw std::overflow_error("Sternheimer nested-MPI response-slot count overflow.");
+    }
+    const int response_slots = static_cast<int>(response_slots_64);
+    if ((!use_channel_mpi && mpi_ranks != response_slots)
+        || (use_channel_mpi && (mpi_ranks < response_slots || mpi_ranks % response_slots != 0)))
+    {
+        throw std::invalid_argument(
+            "Nested Sternheimer MPI requires one rank or an integer channel-MPI multiple per response slot.");
+    }
+    const int replicas_per_slot = use_channel_mpi ? mpi_ranks / response_slots : 1;
+    return {response_slots,
+            replicas_per_slot,
+            mpi_rank / replicas_per_slot,
+            mpi_rank % replicas_per_slot};
+}
+
+inline int sternheimer_channel_batch_replica_owner(const int occupied_state,
+                                                    const int batch_index,
+                                                    const int batch_count,
+                                                    const int replica_count)
+{
+    if (occupied_state < 0 || batch_index < 0 || batch_count <= 0
+        || batch_index >= batch_count || replica_count <= 0)
+    {
+        throw std::invalid_argument("Invalid Sternheimer channel-batch replica dimensions.");
+    }
+    const std::int64_t task_index
+        = static_cast<std::int64_t>(occupied_state) * batch_count + batch_index;
+    return static_cast<int>(task_index % replica_count);
+}
+
 inline SternheimerNestedMPIAssignment sternheimer_nested_mpi_assignment(
     const int global_kpoint_index,
     const int global_kpoint_count,
@@ -1177,6 +1236,18 @@ inline SternheimerLCAOSamplingPlan sternheimer_lcao_sampling_plan(
 inline bool can_reuse_sternheimer_target_lcao_sampling(const bool same_record, const SternheimerLCAOSamplingPlan& plan)
 {
     return same_record && (!plan.sample_source_unoccupied || plan.sample_target_unoccupied);
+}
+
+inline std::size_t sternheimer_sampled_occupied_count(const std::size_t available_states,
+                                                      const int requested_states)
+{
+    if (available_states == 0)
+    {
+        throw std::invalid_argument("Sternheimer occupied-state sampling requires at least one state.");
+    }
+    return requested_states > 0
+               ? std::min(available_states, static_cast<std::size_t>(requested_states))
+               : available_states;
 }
 
 inline std::size_t sternheimer_sampled_unoccupied_count(const bool include_unoccupied,

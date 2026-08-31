@@ -43,10 +43,8 @@ TEST(SternheimerFDNonlocalProjector, CoupledProjectorsUseDMatrix)
 {
     const double volume_element = 1.0;
     Projector::ProjectorBlock block;
-    block.projectors = {{Complex(1.0, 0.0), Complex(0.0, 0.0)},
-                        {Complex(0.0, 0.0), Complex(1.0, 0.0)}};
-    block.d_matrix = {{Complex(2.0, 0.0), Complex(0.5, -0.25)},
-                      {Complex(0.5, 0.25), Complex(4.0, 0.0)}};
+    block.projectors = {{Complex(1.0, 0.0), Complex(0.0, 0.0)}, {Complex(0.0, 0.0), Complex(1.0, 0.0)}};
+    block.d_matrix = {{Complex(2.0, 0.0), Complex(0.5, -0.25)}, {Complex(0.5, 0.25), Complex(4.0, 0.0)}};
 
     Projector projector(2, volume_element, {block});
     const Vector psi = {Complex(1.0, 2.0), Complex(-3.0, 0.5)};
@@ -77,6 +75,74 @@ TEST(SternheimerFDNonlocalProjector, AddToAccumulatesOnExistingVector)
     EXPECT_NEAR(output[0].imag(), 0.0, 1.0e-12);
     EXPECT_NEAR(output[1].real(), 20.0, 1.0e-12);
     EXPECT_NEAR(output[1].imag(), 0.0, 1.0e-12);
+}
+
+TEST(SternheimerFDNonlocalProjector, SparseBatchMatchesRepeatedScalarApplications)
+{
+    const double volume_element = 0.25;
+    Projector::ProjectorBlock block;
+    block.projectors = {{Complex(0.0, 0.0),
+                         Complex(1.0, -0.5),
+                         Complex(0.0, 0.0),
+                         Complex(0.0, 0.0),
+                         Complex(-0.25, 0.75),
+                         Complex(0.0, 0.0)},
+                        {Complex(0.5, 0.25),
+                         Complex(0.0, 0.0),
+                         Complex(0.0, 0.0),
+                         Complex(-1.0, 0.0),
+                         Complex(0.0, 0.0),
+                         Complex(0.0, 0.0)}};
+    block.d_matrix = {{Complex(2.0, 0.0), Complex(0.25, -0.5)}, {Complex(0.25, 0.5), Complex(3.0, 0.0)}};
+    Projector projector(6, volume_element, {block});
+
+    EXPECT_EQ(projector.projector_value_count(), 12U);
+    EXPECT_EQ(projector.nonzero_projector_value_count(), 4U);
+
+    const Projector::Matrix input = {{Complex(1.0, 0.0),
+                                      Complex(2.0, -1.0),
+                                      Complex(-3.0, 0.5),
+                                      Complex(0.0, 2.0),
+                                      Complex(1.5, -0.25),
+                                      Complex(-0.5, 0.0)},
+                                     {Complex(-1.0, 1.0),
+                                      Complex(0.0, 0.5),
+                                      Complex(2.0, 0.0),
+                                      Complex(1.0, -1.0),
+                                      Complex(-2.0, 0.75),
+                                      Complex(0.25, 0.5)},
+                                     {Complex(0.5, -0.5),
+                                      Complex(-1.0, 0.0),
+                                      Complex(0.0, 0.0),
+                                      Complex(3.0, 0.25),
+                                      Complex(0.75, 1.0),
+                                      Complex(-2.0, -1.0)}};
+
+    Projector::Matrix batch_output;
+    projector.apply_batch(input, batch_output);
+    ASSERT_EQ(batch_output.size(), input.size());
+    for (std::size_t column = 0; column != input.size(); ++column)
+    {
+        Vector scalar_output;
+        projector.apply(input[column], scalar_output);
+        ASSERT_EQ(batch_output[column].size(), scalar_output.size());
+        for (std::size_t ir = 0; ir != scalar_output.size(); ++ir)
+        {
+            EXPECT_NEAR(std::abs(batch_output[column][ir] - scalar_output[ir]), 0.0, 1.0e-13);
+        }
+    }
+
+    Projector::Matrix accumulated(input.size(), Vector(6, Complex(0.75, -0.25)));
+    projector.add_to_batch(input, accumulated);
+    for (std::size_t column = 0; column != input.size(); ++column)
+    {
+        Vector scalar_accumulated(6, Complex(0.75, -0.25));
+        projector.add_to(input[column], scalar_accumulated);
+        for (std::size_t ir = 0; ir != scalar_accumulated.size(); ++ir)
+        {
+            EXPECT_NEAR(std::abs(accumulated[column][ir] - scalar_accumulated[ir]), 0.0, 1.0e-13);
+        }
+    }
 }
 
 TEST(SternheimerFDNonlocalProjector, RejectsInvalidBlocks)

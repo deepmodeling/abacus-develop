@@ -1382,7 +1382,7 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
         return sternheimer_fd_grid_dot(lhs, rhs_vec, volume_element);
     };
     const std::vector<Vector>& fixed_functions = fixed_subspace.functions;
-    const SternheimerSubspaceProjector fixed_projector(fixed_functions, dot);
+    const SternheimerSubspaceProjector fixed_projector(fixed_functions, volume_element);
 
     std::vector<Complex> denominators(virtual_states.size(), Complex(0.0, 0.0));
     for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
@@ -1560,7 +1560,7 @@ std::vector<SternheimerDeltaLinearResponse> solve_delta_sternheimer_linear_respo
         return sternheimer_fd_grid_dot(lhs, rhs_vec, volume_element);
     };
     const std::vector<Vector>& fixed_functions = fixed_subspace.functions;
-    const SternheimerSubspaceProjector fixed_projector(fixed_functions, dot);
+    const SternheimerSubspaceProjector fixed_projector(fixed_functions, volume_element, true);
 
     std::vector<Complex> denominators(virtual_states.size(), Complex(0.0, 0.0));
     for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)

@@ -21,6 +21,10 @@ class SternheimerSubspaceProjector
     using Dot = std::function<Complex(const Vector&, const Vector&)>;
 
     SternheimerSubspaceProjector(const std::vector<Vector>& subspace, Dot dot);
+    SternheimerSubspaceProjector(const std::vector<Vector>& subspace, double grid_weight);
+    SternheimerSubspaceProjector(const std::vector<Vector>& subspace,
+                                 double grid_weight,
+                                 bool orthonormal_batch);
 
     void project(Vector& vec) const;
     void project_batch(std::vector<Vector>& vectors) const;
@@ -29,6 +33,10 @@ class SternheimerSubspaceProjector
     const std::vector<Vector>* subspace_ = nullptr;
     Dot dot_;
     std::vector<Complex> basis_norms_;
+    double batch_grid_weight_ = 0.0;
+    bool use_direct_batch_dot_ = false;
+    bool use_orthonormal_batch_projection_ = false;
+    std::vector<Complex> basis_by_grid_;
 };
 
 class SternheimerRPA
