@@ -1,5 +1,6 @@
 #include "esolver_fp.h"
 
+#include "source_base/tool_quit.h"
 #include "source_cell/cal_ux.h"
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_cell/read_pp_ucell.h"
@@ -69,6 +70,16 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
                                             this->inp_->bndpar,
                                             this->inp_->nelec,
                                             this->inp_->nupdown);
+
+    if (atoms_info.use_uspp && inp.esolver_type == "sdft")
+    {
+        ModuleBase::WARNING_QUIT("ESolver_FP", "USPP is not implemented for esolver_type=sdft.");
+    }
+    if (atoms_info.use_uspp && inp.nspin == 4)
+    {
+        ModuleBase::WARNING_QUIT("ESolver_FP", "USPP is not implemented for nspin=4.");
+    }
+
     elecstate::ParamUpdater::update_from_atoms_info(atoms_info);
 
     //! 2) setup pw_rho, pw_rhod, pw_big, sf, and read_pseudopotentials
