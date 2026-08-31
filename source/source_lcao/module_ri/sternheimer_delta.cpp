@@ -1,6 +1,7 @@
 #include "source_lcao/module_ri/sternheimer_delta.h"
 #include "source_lcao/module_ri/sternheimer_fd_preconditioner.h"
 
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/lapack_connector.h"
 #include "source_lcao/module_ri/sternheimer_fd_solver.h"
 #include "source_lcao/module_ri/sternheimer_rpa.h"
@@ -272,6 +273,650 @@ void evaluate_full_grid_delta_hamiltonian_difference(const SternheimerFDHamilton
     subspace.full_grid_hamiltonian_relative_difference
         = reference_norm > 0.0 ? difference_norm / reference_norm : difference_norm;
     subspace.full_grid_hamiltonian_max_abs_difference = max_abs_difference;
+}
+
+constexpr std::size_t delta_grid_block_size = 4096;
+
+const Vector& grid_function_component(const SternheimerDeltaGridFunction& function, const int component)
+{
+    return component < 0 ? function.values : function.gradients[static_cast<std::size_t>(component)];
+}
+
+Vector& grid_function_component(SternheimerDeltaGridFunction& function, const int component)
+{
+    return component < 0 ? function.values : function.gradients[static_cast<std::size_t>(component)];
+}
+
+void pack_grid_function_component(const std::vector<SternheimerDeltaGridFunction>& functions,
+                                  const int component,
+                                  const std::size_t grid_begin,
+                                  const int grid_count,
+                                  std::vector<Complex>& packed)
+{
+    packed.resize(static_cast<std::size_t>(grid_count) * functions.size());
+#pragma omp parallel for schedule(static)
+    for (std::size_t function = 0; function != functions.size(); ++function)
+    {
+        const Vector& source = grid_function_component(functions[function], component);
+        Complex* destination = packed.data() + static_cast<std::size_t>(grid_count) * function;
+        std::copy_n(source.data() + grid_begin, grid_count, destination);
+    }
+}
+
+void pack_vector_component(const std::vector<const Vector*>& vectors,
+                           const std::size_t grid_begin,
+                           const int grid_count,
+                           std::vector<Complex>& packed)
+{
+    packed.resize(static_cast<std::size_t>(grid_count) * vectors.size());
+#pragma omp parallel for schedule(static)
+    for (std::size_t vector = 0; vector != vectors.size(); ++vector)
+    {
+        Complex* destination = packed.data() + static_cast<std::size_t>(grid_count) * vector;
+        std::copy_n(vectors[vector]->data() + grid_begin, grid_count, destination);
+    }
+}
+
+void accumulate_grid_component_product(
+    const std::vector<SternheimerDeltaGridFunction>& left,
+    const int left_component,
+    const std::vector<SternheimerDeltaGridFunction>& right,
+    const int right_component,
+    const std::vector<double>* right_weights,
+    const Complex alpha,
+    std::vector<Complex>& output)
+{
+    if (left.empty() || right.empty())
+    {
+        return;
+    }
+    const std::size_t grid_size = grid_function_component(left.front(), left_component).size();
+    const int left_size = static_cast<int>(left.size());
+    const int right_size = static_cast<int>(right.size());
+    if (output.size() != left.size() * right.size())
+    {
+        throw std::invalid_argument("Sternheimer blocked grid product output size mismatch.");
+    }
+    if (right_weights != nullptr && right_weights->size() != grid_size)
+    {
+        throw std::invalid_argument("Sternheimer blocked grid product weight size mismatch.");
+    }
+
+    std::vector<Complex> left_packed;
+    std::vector<Complex> right_packed;
+    for (std::size_t grid_begin = 0; grid_begin < grid_size; grid_begin += delta_grid_block_size)
+    {
+        const int grid_count = static_cast<int>(std::min(delta_grid_block_size, grid_size - grid_begin));
+        pack_grid_function_component(left, left_component, grid_begin, grid_count, left_packed);
+        const bool reuse_left = &left == &right && left_component == right_component
+                                && right_weights == nullptr;
+        const Complex* right_data = left_packed.data();
+        if (!reuse_left)
+        {
+            pack_grid_function_component(right, right_component, grid_begin, grid_count, right_packed);
+            if (right_weights != nullptr)
+            {
+#pragma omp parallel for schedule(static)
+                for (std::size_t function = 0; function != right.size(); ++function)
+                {
+                    Complex* column
+                        = right_packed.data() + static_cast<std::size_t>(grid_count) * function;
+                    for (int ir = 0; ir != grid_count; ++ir)
+                    {
+                        column[ir] *= (*right_weights)[grid_begin + static_cast<std::size_t>(ir)];
+                    }
+                }
+            }
+            right_data = right_packed.data();
+        }
+        BlasConnector::gemm_cm('C',
+                               'N',
+                               left_size,
+                               right_size,
+                               grid_count,
+                               alpha,
+                               left_packed.data(),
+                               grid_count,
+                               right_data,
+                               grid_count,
+                               Complex(1.0, 0.0),
+                               output.data(),
+                               left_size);
+    }
+}
+
+void project_grid_functions_blocked(
+    const std::vector<SternheimerDeltaGridFunction>& occupied_functions,
+    std::vector<SternheimerDeltaGridFunction>& candidate_functions,
+    const double volume_element)
+{
+    if (occupied_functions.empty() || candidate_functions.empty())
+    {
+        return;
+    }
+    const std::size_t grid_size = candidate_functions.front().values.size();
+    const int occupied_count = static_cast<int>(occupied_functions.size());
+    const int candidate_count = static_cast<int>(candidate_functions.size());
+    std::vector<Complex> coefficients(occupied_functions.size() * candidate_functions.size());
+    std::vector<Complex> occupied_packed;
+    std::vector<Complex> corrections;
+
+    for (int pass = 0; pass != 2; ++pass)
+    {
+        std::fill(coefficients.begin(), coefficients.end(), Complex(0.0, 0.0));
+        accumulate_grid_component_product(occupied_functions,
+                                          -1,
+                                          candidate_functions,
+                                          -1,
+                                          nullptr,
+                                          Complex(volume_element, 0.0),
+                                          coefficients);
+        for (int component = -1; component != 3; ++component)
+        {
+            for (std::size_t grid_begin = 0; grid_begin < grid_size;
+                 grid_begin += delta_grid_block_size)
+            {
+                const int grid_count
+                    = static_cast<int>(std::min(delta_grid_block_size, grid_size - grid_begin));
+                pack_grid_function_component(
+                    occupied_functions, component, grid_begin, grid_count, occupied_packed);
+                corrections.assign(static_cast<std::size_t>(grid_count) * candidate_functions.size(),
+                                   Complex(0.0, 0.0));
+                BlasConnector::gemm_cm('N',
+                                       'N',
+                                       grid_count,
+                                       candidate_count,
+                                       occupied_count,
+                                       Complex(-1.0, 0.0),
+                                       occupied_packed.data(),
+                                       grid_count,
+                                       coefficients.data(),
+                                       occupied_count,
+                                       Complex(0.0, 0.0),
+                                       corrections.data(),
+                                       grid_count);
+#pragma omp parallel for schedule(static)
+                for (std::size_t candidate = 0; candidate != candidate_functions.size(); ++candidate)
+                {
+                    Vector& destination
+                        = grid_function_component(candidate_functions[candidate], component);
+                    const Complex* correction
+                        = corrections.data() + static_cast<std::size_t>(grid_count) * candidate;
+                    for (int ir = 0; ir != grid_count; ++ir)
+                    {
+                        destination[grid_begin + static_cast<std::size_t>(ir)] += correction[ir];
+                    }
+                }
+            }
+        }
+    }
+}
+
+void hermitize_matrix(std::vector<Complex>& matrix, const int size)
+{
+    for (int column = 0; column != size; ++column)
+    {
+        matrix[static_cast<std::size_t>(column)
+               + static_cast<std::size_t>(size) * static_cast<std::size_t>(column)]
+            = Complex(matrix[static_cast<std::size_t>(column)
+                             + static_cast<std::size_t>(size) * static_cast<std::size_t>(column)]
+                          .real(),
+                      0.0);
+        for (int row = 0; row != column; ++row)
+        {
+            const std::size_t upper
+                = static_cast<std::size_t>(row)
+                  + static_cast<std::size_t>(size) * static_cast<std::size_t>(column);
+            const std::size_t lower
+                = static_cast<std::size_t>(column)
+                  + static_cast<std::size_t>(size) * static_cast<std::size_t>(row);
+            const Complex value = 0.5 * (matrix[upper] + std::conj(matrix[lower]));
+            matrix[upper] = value;
+            matrix[lower] = std::conj(value);
+        }
+    }
+}
+
+SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices_blocked(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerDeltaGridFunction>& basis_functions,
+    const double volume_element)
+{
+    const int basis_size = static_cast<int>(basis_functions.size());
+    const std::size_t matrix_size = basis_functions.size() * basis_functions.size();
+    SternheimerDeltaGridMatrices matrices;
+    matrices.overlap.assign(matrix_size, Complex(0.0, 0.0));
+    matrices.kinetic.assign(matrix_size, Complex(0.0, 0.0));
+    matrices.local_potential.assign(matrix_size, Complex(0.0, 0.0));
+    matrices.nonlocal.assign(matrix_size, Complex(0.0, 0.0));
+    matrices.hamiltonian.assign(matrix_size, Complex(0.0, 0.0));
+    if (basis_functions.empty())
+    {
+        return matrices;
+    }
+
+    accumulate_grid_component_product(basis_functions,
+                                      -1,
+                                      basis_functions,
+                                      -1,
+                                      nullptr,
+                                      Complex(volume_element, 0.0),
+                                      matrices.overlap);
+    for (int direction = 0; direction != 3; ++direction)
+    {
+        accumulate_grid_component_product(
+            basis_functions,
+            direction,
+            basis_functions,
+            direction,
+            nullptr,
+            Complex(volume_element * hamiltonian.kinetic_prefactor(), 0.0),
+            matrices.kinetic);
+    }
+    accumulate_grid_component_product(basis_functions,
+                                      -1,
+                                      basis_functions,
+                                      -1,
+                                      &hamiltonian.local_potential(),
+                                      Complex(volume_element, 0.0),
+                                      matrices.local_potential);
+
+    const SternheimerFDNonlocalProjector* nonlocal_projector = hamiltonian.nonlocal_projector();
+    if (nonlocal_projector != nullptr)
+    {
+        if (std::abs(nonlocal_projector->volume_element() - volume_element)
+            > 1.0e-12 * std::max(nonlocal_projector->volume_element(), volume_element))
+        {
+            throw std::invalid_argument(
+                "Sternheimer blocked nonlocal projector uses a different grid volume element.");
+        }
+        constexpr int nonlocal_block_size = 64;
+        const std::size_t grid_size = basis_functions.front().values.size();
+        std::vector<Complex> basis_packed;
+        std::vector<Complex> nonlocal_packed;
+        for (int block_begin = 0; block_begin < basis_size; block_begin += nonlocal_block_size)
+        {
+            const int block_count = std::min(nonlocal_block_size, basis_size - block_begin);
+            std::vector<Vector> input_vectors;
+            input_vectors.reserve(static_cast<std::size_t>(block_count));
+            for (int column = 0; column != block_count; ++column)
+            {
+                input_vectors.push_back(
+                    basis_functions[static_cast<std::size_t>(block_begin + column)].values);
+            }
+            std::vector<Vector> nonlocal_vectors;
+            nonlocal_projector->apply_batch(input_vectors, nonlocal_vectors);
+            std::vector<const Vector*> nonlocal_vector_pointers(static_cast<std::size_t>(block_count));
+            for (int column = 0; column != block_count; ++column)
+            {
+                nonlocal_vector_pointers[static_cast<std::size_t>(column)]
+                    = &nonlocal_vectors[static_cast<std::size_t>(column)];
+            }
+            Complex* output = matrices.nonlocal.data()
+                              + static_cast<std::size_t>(basis_size)
+                                    * static_cast<std::size_t>(block_begin);
+            for (std::size_t grid_begin = 0; grid_begin < grid_size;
+                 grid_begin += delta_grid_block_size)
+            {
+                const int grid_count
+                    = static_cast<int>(std::min(delta_grid_block_size, grid_size - grid_begin));
+                pack_grid_function_component(
+                    basis_functions, -1, grid_begin, grid_count, basis_packed);
+                pack_vector_component(
+                    nonlocal_vector_pointers, grid_begin, grid_count, nonlocal_packed);
+                BlasConnector::gemm_cm('C',
+                                       'N',
+                                       basis_size,
+                                       block_count,
+                                       grid_count,
+                                       Complex(volume_element, 0.0),
+                                       basis_packed.data(),
+                                       grid_count,
+                                       nonlocal_packed.data(),
+                                       grid_count,
+                                       Complex(1.0, 0.0),
+                                       output,
+                                       basis_size);
+            }
+        }
+    }
+
+#pragma omp parallel for schedule(static)
+    for (std::size_t index = 0; index != matrix_size; ++index)
+    {
+        matrices.hamiltonian[index] = matrices.kinetic[index] + matrices.local_potential[index]
+                                      + matrices.nonlocal[index];
+    }
+    hermitize_matrix(matrices.overlap, basis_size);
+    hermitize_matrix(matrices.hamiltonian, basis_size);
+    return matrices;
+}
+
+std::vector<double> diagonalize_complex_generalized_hermitian(std::vector<Complex>& hamiltonian,
+                                                              std::vector<Complex>& overlap,
+                                                              const int size)
+{
+    const int itype = 1;
+    const char jobz = 'V';
+    const char uplo = 'U';
+    const int lda = size;
+    const int ldb = size;
+    int info = 0;
+    std::vector<double> eigenvalues(static_cast<std::size_t>(size), 0.0);
+    Complex work_query(0.0, 0.0);
+    double rwork_query = 0.0;
+    int iwork_query = 0;
+    const int minus_one = -1;
+    zhegvd_(&itype,
+            &jobz,
+            &uplo,
+            &size,
+            hamiltonian.data(),
+            &lda,
+            overlap.data(),
+            &ldb,
+            eigenvalues.data(),
+            &work_query,
+            &minus_one,
+            &rwork_query,
+            &minus_one,
+            &iwork_query,
+            &minus_one,
+            &info);
+    if (info != 0)
+    {
+        throw std::runtime_error(
+            "Sternheimer blocked generalized eigensolver workspace query failed.");
+    }
+    const int lwork = std::max(1, static_cast<int>(std::ceil(work_query.real())));
+    const int lrwork = std::max(1, static_cast<int>(std::ceil(rwork_query)));
+    const int liwork = std::max(1, iwork_query);
+    std::vector<Complex> work(static_cast<std::size_t>(lwork));
+    std::vector<double> rwork(static_cast<std::size_t>(lrwork));
+    std::vector<int> iwork(static_cast<std::size_t>(liwork));
+    zhegvd_(&itype,
+            &jobz,
+            &uplo,
+            &size,
+            hamiltonian.data(),
+            &lda,
+            overlap.data(),
+            &ldb,
+            eigenvalues.data(),
+            work.data(),
+            &lwork,
+            rwork.data(),
+            &lrwork,
+            iwork.data(),
+            &liwork,
+            &info);
+    if (info != 0)
+    {
+        throw std::runtime_error("Sternheimer blocked generalized eigensolver failed with info="
+                                 + std::to_string(info) + ".");
+    }
+    return eigenvalues;
+}
+
+void transform_grid_functions_blocked(
+    const std::vector<SternheimerDeltaGridFunction>& basis_functions,
+    const std::vector<Complex>& coefficients,
+    const int output_size,
+    const bool retain_grid_functions,
+    SternheimerDeltaSubspace& subspace)
+{
+    const int basis_size = static_cast<int>(basis_functions.size());
+    const std::size_t grid_size = basis_functions.front().values.size();
+    subspace.virtual_states.resize(static_cast<std::size_t>(output_size));
+    for (SternheimerDeltaVirtualState& state: subspace.virtual_states)
+    {
+        state.orbital.resize(grid_size);
+    }
+    if (retain_grid_functions)
+    {
+        subspace.grid_functions.resize(static_cast<std::size_t>(output_size));
+        for (SternheimerDeltaGridFunction& function: subspace.grid_functions)
+        {
+            function.values.resize(grid_size);
+            for (Vector& gradient: function.gradients)
+            {
+                gradient.resize(grid_size);
+            }
+        }
+    }
+
+    std::vector<Complex> basis_packed;
+    std::vector<Complex> transformed;
+    const int last_component = retain_grid_functions ? 2 : -1;
+    for (int component = -1; component <= last_component; ++component)
+    {
+        for (std::size_t grid_begin = 0; grid_begin < grid_size;
+             grid_begin += delta_grid_block_size)
+        {
+            const int grid_count
+                = static_cast<int>(std::min(delta_grid_block_size, grid_size - grid_begin));
+            pack_grid_function_component(
+                basis_functions, component, grid_begin, grid_count, basis_packed);
+            transformed.resize(static_cast<std::size_t>(grid_count)
+                               * static_cast<std::size_t>(output_size));
+            BlasConnector::gemm_cm('N',
+                                   'N',
+                                   grid_count,
+                                   output_size,
+                                   basis_size,
+                                   Complex(1.0, 0.0),
+                                   basis_packed.data(),
+                                   grid_count,
+                                   coefficients.data(),
+                                   basis_size,
+                                   Complex(0.0, 0.0),
+                                   transformed.data(),
+                                   grid_count);
+#pragma omp parallel for schedule(static)
+            for (int state_index = 0; state_index != output_size; ++state_index)
+            {
+                const Complex* source
+                    = transformed.data() + static_cast<std::size_t>(grid_count)
+                                                   * static_cast<std::size_t>(state_index);
+                if (component < 0)
+                {
+                    std::copy_n(source,
+                                grid_count,
+                                subspace.virtual_states[static_cast<std::size_t>(state_index)]
+                                        .orbital.data()
+                                    + grid_begin);
+                    if (retain_grid_functions)
+                    {
+                        std::copy_n(source,
+                                    grid_count,
+                                    subspace.grid_functions[static_cast<std::size_t>(state_index)]
+                                            .values.data()
+                                        + grid_begin);
+                    }
+                }
+                else
+                {
+                    std::copy_n(source,
+                                grid_count,
+                                subspace.grid_functions[static_cast<std::size_t>(state_index)]
+                                        .gradients[static_cast<std::size_t>(component)]
+                                        .data()
+                                    + grid_begin);
+                }
+            }
+        }
+    }
+}
+
+void project_vector_batch_blocked(const std::vector<const Vector*>& basis,
+                                  const std::vector<Vector*>& vectors,
+                                  const double volume_element)
+{
+    if (basis.empty() || vectors.empty())
+    {
+        return;
+    }
+    const std::size_t grid_size = basis.front()->size();
+    const int basis_size = static_cast<int>(basis.size());
+    const int vector_count = static_cast<int>(vectors.size());
+    std::vector<const Vector*> vector_sources(vectors.begin(), vectors.end());
+    std::vector<Complex> coefficients(basis.size() * vectors.size(), Complex(0.0, 0.0));
+    std::vector<Complex> basis_packed;
+    std::vector<Complex> vectors_packed;
+    for (std::size_t grid_begin = 0; grid_begin < grid_size; grid_begin += delta_grid_block_size)
+    {
+        const int grid_count = static_cast<int>(std::min(delta_grid_block_size, grid_size - grid_begin));
+        pack_vector_component(basis, grid_begin, grid_count, basis_packed);
+        pack_vector_component(vector_sources, grid_begin, grid_count, vectors_packed);
+        BlasConnector::gemm_cm('C',
+                               'N',
+                               basis_size,
+                               vector_count,
+                               grid_count,
+                               Complex(volume_element, 0.0),
+                               basis_packed.data(),
+                               grid_count,
+                               vectors_packed.data(),
+                               grid_count,
+                               Complex(1.0, 0.0),
+                               coefficients.data(),
+                               basis_size);
+    }
+    for (int basis_index = 0; basis_index != basis_size; ++basis_index)
+    {
+        const Complex norm
+            = sternheimer_fd_grid_dot(*basis[static_cast<std::size_t>(basis_index)],
+                                      *basis[static_cast<std::size_t>(basis_index)],
+                                      volume_element);
+        if (std::abs(norm) == 0.0)
+        {
+            for (int vector = 0; vector != vector_count; ++vector)
+            {
+                coefficients[static_cast<std::size_t>(basis_index)
+                             + basis.size() * static_cast<std::size_t>(vector)]
+                    = Complex(0.0, 0.0);
+            }
+        }
+        else
+        {
+            for (int vector = 0; vector != vector_count; ++vector)
+            {
+                coefficients[static_cast<std::size_t>(basis_index)
+                             + basis.size() * static_cast<std::size_t>(vector)]
+                    /= norm;
+            }
+        }
+    }
+
+    std::vector<Complex> corrections;
+    for (std::size_t grid_begin = 0; grid_begin < grid_size; grid_begin += delta_grid_block_size)
+    {
+        const int grid_count = static_cast<int>(std::min(delta_grid_block_size, grid_size - grid_begin));
+        pack_vector_component(basis, grid_begin, grid_count, basis_packed);
+        corrections.resize(static_cast<std::size_t>(grid_count) * vectors.size());
+        BlasConnector::gemm_cm('N',
+                               'N',
+                               grid_count,
+                               vector_count,
+                               basis_size,
+                               Complex(-1.0, 0.0),
+                               basis_packed.data(),
+                               grid_count,
+                               coefficients.data(),
+                               basis_size,
+                               Complex(0.0, 0.0),
+                               corrections.data(),
+                               grid_count);
+#pragma omp parallel for schedule(static)
+        for (std::size_t vector = 0; vector != vectors.size(); ++vector)
+        {
+            Complex* destination = vectors[vector]->data() + grid_begin;
+            const Complex* correction
+                = corrections.data() + static_cast<std::size_t>(grid_count) * vector;
+            for (int ir = 0; ir != grid_count; ++ir)
+            {
+                destination[ir] += correction[ir];
+            }
+        }
+    }
+}
+
+SternheimerDeltaSubspace build_complete_reference_delta_sternheimer_subspace_blocked(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerDeltaGridFunction>& occupied_functions,
+    std::vector<SternheimerDeltaGridFunction> candidate_functions,
+    const double volume_element,
+    const SternheimerDeltaSubspaceOptions& options)
+{
+    project_grid_functions_blocked(occupied_functions, candidate_functions, volume_element);
+    SternheimerDeltaGridMatrices matrices = assemble_delta_sternheimer_grid_matrices_blocked(
+        hamiltonian, candidate_functions, volume_element);
+    const int basis_size = static_cast<int>(candidate_functions.size());
+    for (int state = 0; state != basis_size; ++state)
+    {
+        const double norm = std::sqrt(std::max(
+            0.0,
+            matrices.overlap[static_cast<std::size_t>(state)
+                             + candidate_functions.size() * static_cast<std::size_t>(state)]
+                .real()));
+        if (norm <= options.norm_tolerance)
+        {
+            throw std::runtime_error(
+                "Sternheimer blocked complete subspace contains a linearly dependent candidate.");
+        }
+    }
+    const std::vector<double> eigenvalues = diagonalize_complex_generalized_hermitian(
+        matrices.hamiltonian, matrices.overlap, basis_size);
+
+    SternheimerDeltaSubspace subspace;
+    subspace.accepted_candidates = basis_size;
+    subspace.discarded_candidates = 0;
+    transform_grid_functions_blocked(candidate_functions,
+                                     matrices.hamiltonian,
+                                     basis_size,
+                                     options.retain_grid_functions,
+                                     subspace);
+    for (int state = 0; state != basis_size; ++state)
+    {
+        subspace.virtual_states[static_cast<std::size_t>(state)].eigenvalue
+            = eigenvalues[static_cast<std::size_t>(state)];
+    }
+    std::vector<SternheimerDeltaGridFunction>().swap(candidate_functions);
+
+    if (options.evaluate_full_grid_difference)
+    {
+        evaluate_full_grid_delta_hamiltonian_difference(hamiltonian, volume_element, subspace);
+    }
+    else
+    {
+        subspace.full_grid_hamiltonian_relative_difference = -1.0;
+        subspace.full_grid_hamiltonian_max_abs_difference = -1.0;
+    }
+
+    std::vector<const Vector*> residual_projector;
+    residual_projector.reserve(occupied_functions.size() + subspace.virtual_states.size());
+    for (const SternheimerDeltaGridFunction& occupied: occupied_functions)
+    {
+        residual_projector.push_back(&occupied.values);
+    }
+    for (const SternheimerDeltaVirtualState& state: subspace.virtual_states)
+    {
+        residual_projector.push_back(&state.orbital);
+    }
+    std::vector<Vector*> residuals;
+    residuals.reserve(subspace.virtual_states.size());
+    for (SternheimerDeltaVirtualState& state: subspace.virtual_states)
+    {
+        hamiltonian.apply(state.orbital, state.residual);
+#pragma omp parallel for schedule(static)
+        for (std::size_t ir = 0; ir != state.residual.size(); ++ir)
+        {
+            state.residual[ir] -= state.eigenvalue * state.orbital[ir];
+        }
+        residuals.push_back(&state.residual);
+    }
+    project_vector_batch_blocked(residual_projector, residuals, volume_element);
+    return subspace;
 }
 
 } // namespace
@@ -988,10 +1633,23 @@ SternheimerDeltaSubspace build_reference_delta_sternheimer_subspace(
         validate_grid_function(candidate, grid_size, "Sternheimer reference delta candidate function");
     }
 
+    const int input_candidate_count = static_cast<int>(candidate_functions.size());
+    const bool complete_requested_space
+        = options.max_virtual_states > 0 && options.max_virtual_states >= input_candidate_count;
+    if (options.use_block_generalized_eigensolver && complete_requested_space
+        && input_candidate_count > 0)
+    {
+        return build_complete_reference_delta_sternheimer_subspace_blocked(
+            hamiltonian,
+            occupied_functions,
+            std::move(candidate_functions),
+            volume_element,
+            options);
+    }
+
     auto dot = [volume_element](const Vector& lhs, const Vector& rhs) {
         return sternheimer_fd_grid_dot(lhs, rhs, volume_element);
     };
-    const int input_candidate_count = static_cast<int>(candidate_functions.size());
     std::vector<SternheimerDeltaGridFunction> residual_candidates = std::move(candidate_functions);
     for (SternheimerDeltaGridFunction& candidate: residual_candidates)
     {

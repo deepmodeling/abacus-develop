@@ -67,6 +67,9 @@ struct SternheimerDeltaSubspaceOptions
     double norm_tolerance = 1.0e-10;
     bool retain_grid_functions = true;
     bool evaluate_full_grid_difference = true;
+    // Complete candidate spaces can use a generalized Hermitian solve and
+    // blocked grid contractions instead of pivoted vector-by-vector MGS.
+    bool use_block_generalized_eigensolver = true;
 };
 
 enum class SternheimerDeltaABlockMode

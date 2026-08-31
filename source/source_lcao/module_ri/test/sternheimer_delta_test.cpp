@@ -654,6 +654,80 @@ TEST(SternheimerDelta, ReferenceSubspacePivotsPastNearDependentCandidates)
     EXPECT_NEAR(subspace.virtual_states[1].eigenvalue, 3.0, 1.0e-13);
 }
 
+TEST(SternheimerDelta, BlockCompleteReferenceSubspaceMatchesLegacyPath)
+{
+    ModuleRI::SternheimerFDHamiltonian::Grid grid{5, 1, 1, 1.0, 1.0, 1.0, false};
+    constexpr double volume_element = 1.0;
+    ModuleRI::SternheimerFDHamiltonian hamiltonian(grid, {0.0, 0.7, 1.9, 3.2, 5.1}, 0.4);
+
+    auto grid_function = [](const Vector& values, const double gradient_scale) {
+        ModuleRI::SternheimerDeltaGridFunction function;
+        function.values = values;
+        for (std::size_t direction = 0; direction != function.gradients.size(); ++direction)
+        {
+            function.gradients[direction].resize(values.size());
+            for (std::size_t ir = 0; ir != values.size(); ++ir)
+            {
+                const double factor = gradient_scale * static_cast<double>((direction + 1) * (ir + 1));
+                function.gradients[direction][ir] = factor * values[ir];
+            }
+        }
+        return function;
+    };
+
+    const auto occupied = grid_function(unit_vector(5, 0), 0.03);
+    Vector candidate0 = unit_vector(5, 1);
+    candidate0[0] = Complex(0.2, -0.1);
+    Vector candidate1 = unit_vector(5, 2);
+    candidate1[1] = Complex(0.3, 0.2);
+    Vector candidate2 = unit_vector(5, 4);
+    candidate2[2] = Complex(-0.25, 0.15);
+    candidate2[3] = Complex(0.4, -0.1);
+    const std::vector<ModuleRI::SternheimerDeltaGridFunction> candidates{
+        grid_function(candidate0, 0.05),
+        grid_function(candidate1, 0.07),
+        grid_function(candidate2, 0.09),
+    };
+
+    ModuleRI::SternheimerDeltaSubspaceOptions block_options;
+    block_options.max_virtual_states = static_cast<int>(candidates.size());
+    block_options.evaluate_full_grid_difference = false;
+    ModuleRI::SternheimerDeltaSubspaceOptions legacy_options = block_options;
+    legacy_options.use_block_generalized_eigensolver = false;
+
+    const auto block = ModuleRI::build_reference_delta_sternheimer_subspace(
+        hamiltonian, {occupied}, candidates, volume_element, block_options);
+    const auto legacy = ModuleRI::build_reference_delta_sternheimer_subspace(
+        hamiltonian, {occupied}, candidates, volume_element, legacy_options);
+
+    ASSERT_EQ(block.virtual_states.size(), legacy.virtual_states.size());
+    EXPECT_EQ(block.accepted_candidates, legacy.accepted_candidates);
+    EXPECT_EQ(block.discarded_candidates, legacy.discarded_candidates);
+    for (std::size_t istate = 0; istate != block.virtual_states.size(); ++istate)
+    {
+        EXPECT_NEAR(block.virtual_states[istate].eigenvalue,
+                    legacy.virtual_states[istate].eigenvalue,
+                    1.0e-11);
+        const Complex overlap = ModuleRI::sternheimer_fd_grid_dot(
+            legacy.virtual_states[istate].orbital,
+            block.virtual_states[istate].orbital,
+            volume_element);
+        EXPECT_NEAR(std::abs(overlap), 1.0, 1.0e-11);
+        const Complex residual_overlap = ModuleRI::sternheimer_fd_grid_dot(
+            legacy.virtual_states[istate].residual,
+            block.virtual_states[istate].residual,
+            volume_element);
+        const double legacy_residual_norm = ModuleRI::sternheimer_fd_grid_norm(
+            legacy.virtual_states[istate].residual, volume_element);
+        const double block_residual_norm = ModuleRI::sternheimer_fd_grid_norm(
+            block.virtual_states[istate].residual, volume_element);
+        EXPECT_NEAR(block_residual_norm, legacy_residual_norm, 1.0e-11);
+        EXPECT_NEAR(std::abs(residual_overlap),
+                    block_residual_norm * legacy_residual_norm,
+                    1.0e-11);
+    }
+}
+
 TEST(SternheimerDelta, CapsRequestedVirtualStatesAtTheLCAOComplementDimension)
 {
     EXPECT_EQ(ModuleRI::sternheimer_delta_virtual_state_limit(0, 176, 16), 160);
