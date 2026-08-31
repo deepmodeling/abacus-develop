@@ -3631,7 +3631,7 @@ parameters:
     type: String
     description: |
       The directory to save files for LibRPA.
-    default_value: "\"./OUT.librpa/\""
+    default_value: "\"OUT.librpa\""
     unit: ""
     availability: basis_type==lcao
   - name: out_pchg

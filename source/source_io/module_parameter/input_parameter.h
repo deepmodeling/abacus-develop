@@ -465,7 +465,7 @@ struct Input_para
     bool restart_save = false;               ///< restart //Peize Lin add 2020-04-04
     bool rpa = false;                        ///< rpa calculation
     bool rpa_out_vel = false;                ///< whether to output velocity matrix for librpa
-    std::string rpa_outdir = "./OUT.librpa/";///< output directory for librpa
+    std::string rpa_outdir = "OUT.librpa";   ///< output directory for librpa
     std::vector<int> out_pchg = {};          ///< specify the bands to be calculated for partial charge
     std::vector<int> out_wfc_norm = {};      ///< specify the bands to be calculated for norm of wfc
     std::vector<int> out_wfc_re_im = {};     ///< specify the bands to be calculated for real and imaginary parts of wfc

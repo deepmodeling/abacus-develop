@@ -8,6 +8,7 @@ log.txt
 result.out
 test.sum
 *.dat
+!tests/08_EXX/58_KP_LR_BSE/librpa.d/KS_eigenvector_*.dat
 .DS_Store
 .cache
 .vscode
