@@ -154,3 +154,16 @@ TEST(SternheimerResponseGrid, RestrictionDoesNotAliasRemovedModeIntoRetainedMode
 
     EXPECT_LT(relative_l2_error(output, expected), 1.0e-11);
 }
+
+int main(int argc, char** argv)
+{
+#ifdef __MPI
+    MPI_Init(&argc, &argv);
+#endif
+    testing::InitGoogleTest(&argc, argv);
+    const int result = RUN_ALL_TESTS();
+#ifdef __MPI
+    MPI_Finalize();
+#endif
+    return result;
+}
