@@ -6,6 +6,10 @@ OBJ_DIR = $(BUILD_DIR)/obj
 BIN_DIR = $(BUILD_DIR)/bin
 BUILD_INFO_DIR = $(BUILD_DIR)/source_io
 
+# The first rule in this file only generates build_info.h, so make would
+# stop after generating that header unless the default goal is set here.
+.DEFAULT_GOAL := abacus
+
 include $(ABACUS_ROOT)Makefile.vars
 
 #==========================
@@ -252,18 +256,25 @@ ${OBJ_DIR}/parse_args.o: $(ABACUS_ROOT)source_io/parse_args.cpp $(BUILD_INFO_DIR
 	@mkdir -p $(dir $@)
 	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
 
+# Explicit rule: source_cell/module_symmetry and source_estate/module_charge
+# both contain a symm_rho.cpp. VPATH resolves symm_rho.o to the source_cell
+# one (listed first), so the Symmetry_rho implementation needs an explicit
+# object name to be compiled from the correct source.
+${OBJ_DIR}/symm_rho_charge.o: $(ABACUS_ROOT)source_estate/module_charge/symm_rho.cpp
+	@mkdir -p $(dir $@)
+	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
+
 ###### END of ABACUS INFO PART ######
 
 #==========================
 # MAKING OPTIONS
 #==========================
 abacus:
-	@ if [ ! -d $(OBJ_DIR) ]; then mkdir $(OBJ_DIR); fi
-	@ if [ ! -d $(BIN_DIR) ]; then mkdir $(BIN_DIR); fi
-	@ $(MAKE) $(BIN_DIR)/${VERSION}.$(suffix)
+	@ mkdir -p $(OBJ_DIR) $(BIN_DIR)
+	@ $(MAKE) -f $(firstword $(MAKEFILE_LIST)) $(BIN_DIR)/${VERSION}.$(suffix)
 
 test:
-	@ $(MAKE) abacus
+	@ $(MAKE) -f $(firstword $(MAKEFILE_LIST)) abacus
 	@ cd $(ABACUS_ROOT)../tests/integrate/;sh Autotest.sh -a $(realpath $(BIN_DIR))/ABACUS.mpi -n $(TESTNP)
 
 pw $(BIN_DIR)/${VERSION}-PW.x:
@@ -280,7 +291,8 @@ $(BIN_DIR)/${VERSION}.$(suffix) : ${FP_OBJS} ${PDIAG_OBJS} ${HEADERS}
 #==========================
 # Note: The specific rule for parse_args.o above is more precise.
 # This generic rule will apply to all other .cpp files.
-${OBJ_DIR}/%.o:$(realpath $(BIN_DIR))%.cpp
+${OBJ_DIR}/%.o:%.cpp
+	@ mkdir -p $(dir $@)
 	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
 	
 .PHONY:clean test

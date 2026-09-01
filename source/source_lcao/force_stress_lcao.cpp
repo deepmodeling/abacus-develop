@@ -877,6 +877,12 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             {
                 ModuleIO::print_stress("DeltaSpin  STRESS", stress_dspin, screen, ry, GlobalV::ofs_running);
             }
+#ifdef __EXX
+            if (cal_exx)
+            {
+                ModuleIO::print_stress("EXX      STRESS", stress_exx, screen, ry, GlobalV::ofs_running);
+            }
+#endif
             ModuleIO::print_stress("TOTAL    STRESS", scs, screen, ry, GlobalV::ofs_running);
         } // end of test
 
