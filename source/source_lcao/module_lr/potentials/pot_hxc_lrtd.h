@@ -74,6 +74,45 @@ namespace LR
         std::map<SpinType, Tfunc> kernel_to_potential_;
 
         void set_integral_func(const SpinType& s, const XCType& xc);
+
+        // ---- scratch buffers ------------------------------------------------------------
+        // `cal_v_eff` used to allocate (and value-initialize) every temporary on every call:
+        // at a 200^3 grid that is ~450 MB of memset per call, all of it overwritten before it
+        // is read, plus the page faults of freshly mapped pages. They now come from a pool
+        // that grows on demand and is SHARED by every `PotHxcLR` (a calculation holds three of
+        // them -- singlet, triplet and the ground-state kernel -- and giving each its own copy
+        // cost ~0.9 GB on the bigger grids). Sharing is safe because `cal_v_eff` is only ever
+        // entered from a single thread: all the OpenMP lives inside the loops it calls.
+        struct Scratch
+        {
+            std::vector<ModuleBase::Vector3<double>> drho;   ///< $\nabla\rho^X$
+            std::vector<ModuleBase::Vector3<double>> gdot;   ///< integrand of the divergence
+            std::vector<double> vxc;                         ///< accumulated $v^{xc}$
+            std::vector<std::complex<double>> rhog;          ///< $\rho^X(G)$, npw
+            std::vector<std::complex<double>> vg;            ///< G-space scratch, nmaxgr
+            void alloc(const int nrxx, const int npw, const int nmaxgr, const bool gga);
+        };
+        static Scratch& scratch();
+        /// Hartree potential of the transition density, built from `scratch().rhog` and
+        /// accumulated into `v_eff` scaled by `factor`. Replaces `H_Hartree_pw::v_hartree`,
+        /// which for the LR use case (a) re-did the forward FFT of $\rho^X$ that the GGA branch
+        /// needs anyway, (b) accumulated a Hartree "energy" of the transition density and pushed
+        /// it through `Parallel_Reduce::reduce_pool` on every call -- a per-call collective whose
+        /// result is never read, and which clobbers the global `H_Hartree_pw::hartree_energy` --
+        /// and (c) returned a full `matrix` by value, to which `v_eff += 2 * (...)` then added a
+        /// second temporary of the same size.
+        void add_v_hartree(const UnitCell& ucell, ModuleBase::matrix& v_eff, const double factor) const;
+        // ---- pre-contracted spin combinations ------------------------------------------
+        // At nspin=2 the singlet/triplet integrands read `v2rho2[3ir] +- v2rho2[3ir+1]` and
+        // `2*vsigma[3ir] +- vsigma[3ir+1]` at every grid point of every call. Both combinations
+        // depend only on the ground state, so they are formed once here. This also turns two
+        // strided reads into one contiguous one, which is where most of the gain is.
+        // Only the combination this potential's own `spin_type_` needs is built (one scalar
+        // array each, so 8 B/point, and nothing at all for nspin=1 or the open-shell branch),
+        // which is why they live here rather than in the shared `KernelXC`.
+        mutable std::vector<double> v2rho2_comb_;
+        mutable std::vector<double> vsigma_comb_;   ///< GGA only
+        void build_spin_combos(const bool gga) const;
     };
 
 } // namespace LR

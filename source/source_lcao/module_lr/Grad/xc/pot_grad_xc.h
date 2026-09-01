@@ -19,6 +19,19 @@ namespace LR
         /// kernel components from PotHxcLR
         const KernelXC& xc_kernel_components_;
         const bool triplet_ = false;
+
+    private:
+        /// Scratch, shared by every `PotGradXCLR` and grown on demand. These used to be
+        /// allocated (and value-initialized) on every call. Safe to share because
+        /// `cal_v_eff` is only ever entered from a single thread (all the OpenMP is inside).
+        struct Scratch
+        {
+            std::vector<ModuleBase::Vector3<double>> drho1;  ///< $\nabla\rho^1$
+            std::vector<ModuleBase::Vector3<double>> gdot;   ///< integrand of the divergence
+            std::vector<double> vtmp;                        ///< local part $A$
+            void alloc(const int nrxx, const bool gga);
+        };
+        static Scratch& scratch();
     };
 
 }
