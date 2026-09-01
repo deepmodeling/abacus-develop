@@ -27,6 +27,7 @@
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
 #include "source_psi/psi.h"
+#include "dfpt_serial_fixture.h"
 
 // ctor/dtor stubs for the cell/spepot/stru_fac link closures live in the
 // shared test/dfpt_test_mocks.cpp compiled into every DFPT test binary.
@@ -55,146 +56,27 @@
  *   - check_sum_rule at Gamma.
  */
 
-class DFPTPhonSerialTest : public testing::Test
+class DFPTPhonSerialTest : public DFPTSerialBase
 {
   protected:
-    const double lat0_ = 1.8897261254578281;
-    const double ecutwfc_ = 2.5;
-    const double rho_mult_ = 9.0;
-    // cubic cell in lat0 units
-    const double a_ = 10.0;
-
-    ModuleBase::Matrix3 latvec_;
-    UnitCell ucell_;
-    ModulePW::PW_Basis pw_rho_;
-    ModulePW::PW_Basis_K pw_wfc_;
     Structure_Factor sf_;
     ModuleDFPT::DFPT_Pert pert_;
     ModuleDFPT::DFPT_Phon phon_;
-    ModuleCell::QList qlist_;
-    ModuleDFPT::DFPT_PW_Data data_;
-
-    const ModuleBase::Vector3<double> q_d_{0.13, 0.0, 0.07};
-    const ModuleBase::Vector3<double> k_d_{-0.13, 0.0, -0.07};
-    ModuleBase::Vector3<double> q_cart_;
-    const ModuleBase::Vector3<double> tau_{1.1, 2.3, 0.7};
 
     void SetUp() override
     {
-        latvec_ = ModuleBase::Matrix3(a_, 0.0, 0.0, 0.0, a_, 0.0, 0.0, 0.0, a_);
-        ucell_.ntype = 1;
-        ucell_.nat = 1;
-        ucell_.atoms = new Atom[1];
-        ucell_.atoms[0].na = 1;
-        ucell_.atoms[0].tau.resize(1);
-        ucell_.atoms[0].tau[0] = tau_;
-        ucell_.latvec = latvec_;
-        ucell_.GT = latvec_.Inverse();
-        ucell_.G = ucell_.GT.Transpose();
-        ucell_.lat0 = lat0_;
-        ucell_.tpiba = ModuleBase::TWO_PI / lat0_;
-        ucell_.tpiba2 = ucell_.tpiba * ucell_.tpiba;
-        ucell_.omega = a_ * a_ * a_ * lat0_ * lat0_ * lat0_;
-        ucell_.iat2it = new int[1];
-        ucell_.iat2ia = new int[1];
-        ucell_.iat2it[0] = 0;
-        ucell_.iat2ia[0] = 0;
-        MakeCoulombAtom();
-
-        SetupBases(k_d_, q_d_);
+        DFPTSerialBase::SetUp();
+        SetupPhon(k_d_, q_d_);
     }
 
-    // (re)initialize the bases and module wiring for a given (k, q) pair;
-    // SetUp uses the default (k_d_, q_d_) fixture values
-    void SetupBases(const ModuleBase::Vector3<double>& k_d,
-                    const ModuleBase::Vector3<double>& q_d)
+    // (re)initialize the bases and the pert/phon wiring for a given (k, q)
+    // pair; SetUp uses the default fixture values
+    void SetupPhon(const ModuleBase::Vector3<double>& k_d,
+                   const ModuleBase::Vector3<double>& q_d)
     {
-        pw_rho_.initgrids(lat0_, latvec_, rho_mult_ * ecutwfc_);
-        pw_rho_.initparameters(false, rho_mult_ * ecutwfc_);
-        pw_rho_.fft_bundle.initfftmode(0);
-        pw_rho_.setuptransform();
-        pw_rho_.collect_local_pw();
-
-        const ModuleBase::Vector3<double> klist[1] = {k_d};
-        pw_wfc_.initgrids(lat0_, latvec_, pw_rho_.nx, pw_rho_.ny, pw_rho_.nz);
-        pw_wfc_.initparameters(false, ecutwfc_, 1, klist);
-        pw_wfc_.fft_bundle.initfftmode(0);
-        pw_wfc_.setuptransform();
-        pw_wfc_.collect_local_pw();
-
-        qlist_.nkstot = 1;
-        qlist_.kvec_d.clear();
-        qlist_.kvec_d.push_back(q_d);
-        q_cart_ = q_d * ucell_.G;
-
-        data_.init(&qlist_, 1, 2, pw_wfc_.npwk_max, pw_rho_.nrxx, 1, 1, nullptr);
+        SetupBases(k_d, q_d, 2);
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
         phon_.init(ucell_, &pw_rho_, &pert_);
-    }
-
-    void TearDown() override
-    {
-        delete[] ucell_.atoms;
-        ucell_.atoms = nullptr;
-        delete[] ucell_.iat2it;
-        ucell_.iat2it = nullptr;
-        delete[] ucell_.iat2ia;
-        ucell_.iat2ia = nullptr;
-    }
-
-    void MakeCoulombAtom()
-    {
-        Atom& at = ucell_.atoms[0];
-        at.label = "C";
-        at.coulomb_potential = true;
-        at.ncpp.zv = 4.0;
-        at.ncpp.tvanp = false;
-        at.ncpp.has_so = false;
-        at.ncpp.nbeta = 0;
-        at.ncpp.nh = 0;
-        at.ncpp.msh = 0;
-        at.ncpp.kkbeta = 0;
-        at.mass = 12.0;
-    }
-
-    double VlocCoulomb(double g2_bohr) const
-    {
-        return -ucell_.atoms[0].ncpp.zv * ModuleBase::e2 * ModuleBase::FOUR_PI / ucell_.omega / g2_bohr;
-    }
-
-    // reconfigure the cell as a two-atom Z=4/Z=2 crystal breaking all symmetry
-    void MakeTwoAtomCell()
-    {
-        ucell_.ntype = 2;
-        ucell_.nat = 2;
-        delete[] ucell_.atoms;
-        ucell_.atoms = new Atom[2];
-        ucell_.atoms[0].na = 1;
-        ucell_.atoms[1].na = 1;
-        ucell_.atoms[0].tau.resize(1);
-        ucell_.atoms[1].tau.resize(1);
-        ucell_.atoms[0].tau[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
-        ucell_.atoms[1].tau[0] = ModuleBase::Vector3<double>(0.25, 0.31, 0.17);
-        for (int it = 0; it < 2; ++it)
-        {
-            Atom& at = ucell_.atoms[it];
-            at.label = (it == 0) ? "A" : "B";
-            at.coulomb_potential = true;
-            at.ncpp.zv = (it == 0) ? 4.0 : 2.0;
-            at.ncpp.tvanp = false;
-            at.ncpp.has_so = false;
-            at.ncpp.nbeta = 0;
-            at.ncpp.nh = 0;
-            at.mass = (it == 0) ? 12.0 : 4.0;
-        }
-        delete[] ucell_.iat2it;
-        delete[] ucell_.iat2ia;
-        ucell_.iat2it = new int[2];
-        ucell_.iat2ia = new int[2];
-        ucell_.iat2it[0] = 0;
-        ucell_.iat2ia[0] = 0;
-        ucell_.iat2it[1] = 1;
-        ucell_.iat2ia[1] = 0;
     }
 
     // independent Ry/bohr^2/amu -> cm^-1 conversion used by diagonalize
@@ -570,7 +452,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
     // with kernel K_{da,db}(G) = -tpiba^2 G_da G_db Vloc(|G|^2) e^{-i2pi G.tau}
     const ModuleBase::Vector3<double> k_d(-0.5, 0.0, 0.0);
     const ModuleBase::Vector3<double> q_d(0.5, 0.0, 0.0);
-    SetupBases(k_d, q_d);
+    SetupPhon(k_d, q_d);
 
     const int npwk = pw_wfc_.npwk[0];
     psi::Psi<std::complex<double>> psi(1, 2, npwk, npwk, true);

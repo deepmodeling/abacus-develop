@@ -23,6 +23,7 @@
 #include "source_pw/module_dfpt/dfpt_kq_basis.h"
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_dfpt/dfpt_rho.h"
+#include "dfpt_serial_fixture.h"
 
 /************************************************
  *  serial unit test of DFPT_Rho (C3)
@@ -57,50 +58,16 @@ std::complex<double> crand()
 
 } // namespace
 
-class DFPTRhoSerialTest : public testing::Test
+class DFPTRhoSerialTest : public DFPTSerialBase
 {
   protected:
-    const double lat0_ = 1.8897261254578281;
-    const double ecutwfc_ = 2.5; // Ry
-    const double rho_mult_ = 9.0;
-
-    ModuleBase::Matrix3 latvec_;
-    ModulePW::PW_Basis pw_rho_;
-    ModulePW::PW_Basis_K pw_wfc_;
-    ModuleCell::QList qlist_;
-    ModuleDFPT::DFPT_PW_Data data_;
     ModuleDFPT::DFPT_Rho rho_;
-
-    const ModuleBase::Vector3<double> q_d_{0.13, 0.0, 0.07};
-    const ModuleBase::Vector3<double> k_d_{-0.13, 0.0, -0.07};
-    ModuleBase::Vector3<double> q_cart_;
-    ModuleBase::Matrix3 G_;
 
     static const int nbands_ = 2;
 
     void SetUp() override
     {
-        latvec_ = ModuleBase::Matrix3(10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 10.0);
-        G_ = latvec_.Inverse().Transpose();
-
-        pw_rho_.initgrids(lat0_, latvec_, rho_mult_ * ecutwfc_);
-        pw_rho_.initparameters(false, rho_mult_ * ecutwfc_);
-        pw_rho_.fft_bundle.initfftmode(0);
-        pw_rho_.setuptransform();
-        pw_rho_.collect_local_pw();
-
-        const ModuleBase::Vector3<double> klist[1] = {k_d_};
-        pw_wfc_.initgrids(lat0_, latvec_, pw_rho_.nx, pw_rho_.ny, pw_rho_.nz);
-        pw_wfc_.initparameters(false, ecutwfc_, 1, klist);
-        pw_wfc_.fft_bundle.initfftmode(0);
-        pw_wfc_.setuptransform();
-        pw_wfc_.collect_local_pw();
-
-        qlist_.nkstot = 1;
-        qlist_.kvec_d.push_back(q_d_);
-        q_cart_ = q_d_ * G_;
-
-        data_.init(&qlist_, 1, nbands_, pw_wfc_.npwk_max, pw_rho_.nrxx, 1, 1, nullptr);
+        DFPTSerialBase::SetUp();
         rho_.init(1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, "plain", 0.4, 0.0);
     }
 

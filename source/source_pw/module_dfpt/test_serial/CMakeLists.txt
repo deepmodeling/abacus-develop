@@ -41,6 +41,8 @@ AddTest(
 	# Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures
   # (see test/dfpt_test_mocks.cpp).
 	../test/dfpt_test_mocks.cpp
+	# Shared serial-side cell/basis/data fixture.
+	dfpt_serial_fixture.cpp
 )
 
 AddTest(
@@ -56,6 +58,8 @@ AddTest(
   # Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures
   # (see test/dfpt_test_mocks.cpp).
   ../test/dfpt_test_mocks.cpp
+  # Shared serial-side cell/basis/data fixture.
+  dfpt_serial_fixture.cpp
 )
 
 AddTest(
@@ -72,6 +76,8 @@ AddTest(
   # Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures
   # (see test/dfpt_test_mocks.cpp).
   ../test/dfpt_test_mocks.cpp
+  # Shared serial-side cell/basis/data fixture.
+  dfpt_serial_fixture.cpp
 )
 
 AddTest(
@@ -88,4 +94,6 @@ AddTest(
   # Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures
   # (see test/dfpt_test_mocks.cpp).
   ../test/dfpt_test_mocks.cpp
+  # Shared serial-side cell/basis/data fixture.
+  dfpt_serial_fixture.cpp
 )

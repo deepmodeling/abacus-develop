@@ -27,6 +27,7 @@
 #include "source_base/vector3.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 #include "source_psi/psi.h"
+#include "dfpt_serial_fixture.h"
 
 // ctor/dtor stubs for the cell/spepot/stru_fac link closures live in the
 // shared test/dfpt_test_mocks.cpp compiled into every DFPT test binary.
@@ -53,161 +54,16 @@
  *   - build_dv under with_u()/u_active()==false (pure-PW DFT+U safety).
  */
 
-class DFPTPertSerialTest : public testing::Test
+class DFPTPertSerialTest : public DFPTSerialBase
 {
   protected:
-    const double lat0_ = 1.8897261254578281;
-    const double ecutwfc_ = 2.5; // Ry
-    // rho cutoff inflated to 9x ecutwfc so every Delta = G''-G' of the
-    // convolution lies inside the rho ball and nothing aliases
-    const double rho_mult_ = 9.0;
-
-    ModuleBase::Matrix3 latvec_;
-    UnitCell ucell_;
-    ModulePW::PW_Basis pw_rho_;
-    ModulePW::PW_Basis_K pw_wfc_;
     Structure_Factor sf_;
     ModuleDFPT::DFPT_Pert pert_;
-    ModuleCell::QList qlist_;
-    ModuleDFPT::DFPT_PW_Data data_;
-
-    // q is generic; k = -q so k+q = 0: the k+q ball then stays inside the
-    // ground-state G list (single-k limitation documented in DFPT_KQ_Basis)
-    const ModuleBase::Vector3<double> q_d_{0.13, 0.0, 0.07};
-    const ModuleBase::Vector3<double> k_d_{-0.13, 0.0, -0.07};
-    ModuleBase::Vector3<double> q_cart_;
-    const ModuleBase::Vector3<double> tau_{1.1, 2.3, 0.7}; // lat0 units
 
     void SetUp() override
     {
-        latvec_ = ModuleBase::Matrix3(10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 10.0);
-        ucell_.ntype = 1;
-        ucell_.nat = 1;
-        ucell_.atoms = new Atom[1];
-        ucell_.atoms[0].na = 1;
-        ucell_.atoms[0].tau.resize(1);
-        ucell_.atoms[0].tau[0] = tau_;
-        ucell_.latvec = latvec_;
-        ucell_.GT = latvec_.Inverse();
-        ucell_.G = ucell_.GT.Transpose();
-        ucell_.lat0 = lat0_;
-        ucell_.tpiba = ModuleBase::TWO_PI / lat0_;
-        ucell_.tpiba2 = ucell_.tpiba * ucell_.tpiba;
-        ucell_.omega = 1000.0 * lat0_ * lat0_ * lat0_;
-        MakeCoulombAtom();
-
-        // shared-grid basis setup, mirroring setup_pwrho / setup_pwwfc
-        pw_rho_.initgrids(lat0_, latvec_, rho_mult_ * ecutwfc_);
-        pw_rho_.initparameters(false, rho_mult_ * ecutwfc_);
-        pw_rho_.fft_bundle.initfftmode(0);
-        pw_rho_.setuptransform();
-        pw_rho_.collect_local_pw();
-
-        const ModuleBase::Vector3<double> klist[1] = {k_d_};
-        pw_wfc_.initgrids(lat0_, latvec_, pw_rho_.nx, pw_rho_.ny, pw_rho_.nz);
-        pw_wfc_.initparameters(false, ecutwfc_, 1, klist);
-        pw_wfc_.fft_bundle.initfftmode(0);
-        pw_wfc_.setuptransform();
-        pw_wfc_.collect_local_pw();
-
-        qlist_.nkstot = 1;
-        qlist_.kvec_d.push_back(q_d_);
-        q_cart_ = q_d_ * ucell_.G;
-
-        data_.init(&qlist_, 1, 2, pw_wfc_.npwk_max, pw_rho_.nrxx, 1, 1, nullptr);
+        DFPTSerialBase::SetUp();
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
-    }
-
-    void TearDown() override
-    {
-        delete[] ucell_.atoms;
-        ucell_.atoms = nullptr;
-    }
-
-    void MakeCoulombAtom()
-    {
-        Atom& at = ucell_.atoms[0];
-        at.label = "C";
-        at.coulomb_potential = true;
-        at.ncpp.zv = 4.0;
-        at.ncpp.tvanp = false;
-        at.ncpp.has_so = false;
-        at.ncpp.nbeta = 0;
-        at.ncpp.nh = 0;
-        at.ncpp.msh = 0;
-        at.ncpp.kkbeta = 0;
-    }
-
-    void MakeNCAtom()
-    {
-        Atom& at = ucell_.atoms[0];
-        at.label = "Si";
-        at.coulomb_potential = false;
-        pseudo& p = at.ncpp;
-        p.zv = 4.0;
-        p.tvanp = false;
-        p.has_so = false;
-        p.nbeta = 2;
-        p.lll = {0, 1};
-        p.nh = 4;
-        p.msh = 121;
-        p.kkbeta = 121;
-        p.r.resize(121);
-        p.rab.resize(121);
-        p.vloc_at.assign(121, 0.0);
-        const double dx = 0.025;
-        for (int i = 0; i < 121; ++i)
-        {
-            p.r[i] = i * dx;
-            p.rab[i] = dx;
-        }
-        p.betar.create(2, 121);
-        for (int i = 0; i < 121; ++i)
-        {
-            const double r = p.r[i];
-            p.betar(0, i) = std::exp(-std::pow(r - 1.0, 2) / (2.0 * 0.3 * 0.3));
-            p.betar(1, i) = std::exp(-std::pow(r - 1.2, 2) / (2.0 * 0.35 * 0.35));
-        }
-        p.dion.create(2, 2);
-        p.dion(0, 0) = 0.8;
-        p.dion(0, 1) = 0.15;
-        p.dion(1, 0) = -0.25;
-        p.dion(1, 1) = 1.1;
-    }
-
-    // key of an integer FFT triple (gcar * a is integral on the cubic cell)
-    long long FKey(int ix, int iy, int iz) const
-    {
-        return (static_cast<long long>(ix + 64) * 128 + (iy + 64)) * 128 + (iz + 64);
-    }
-    long long GKey(const ModuleBase::Vector3<double>& g) const
-    {
-        const double a = 10.0;
-        return FKey(static_cast<int>(std::llround(g.x * a)),
-                    static_cast<int>(std::llround(g.y * a)),
-                    static_cast<int>(std::llround(g.z * a)));
-    }
-
-    // analytic Coulomb local potential (Ry) at |g|^2 in bohr^-2, mirroring
-    // vl_pw.cpp::vloc_coulomb independently of DFPT_Pert::vloc_at_g
-    double VlocCoulomb(double g2_bohr) const
-    {
-        return -ucell_.atoms[0].ncpp.zv * ModuleBase::e2 * ModuleBase::FOUR_PI / ucell_.omega / g2_bohr;
-    }
-
-    // analytic dVloc/dtau_alpha coefficient at displacement vector w (1/lat0);
-    // GS structure-factor convention (stru_fac.cpp): exp(-i 2pi (g.tau)) and
-    // dV/dtau = -i (Delta+q)_alpha tpiba Vloc exp(-i 2pi (Delta+q).tau)
-    std::complex<double> AnalyticDVloc(int dir, const ModuleBase::Vector3<double>& w) const
-    {
-        const double w2 = w * w;
-        if (w2 < 1.0e-12)
-        {
-            return std::complex<double>(0.0, 0.0);
-        }
-        const double arg = -ModuleBase::TWO_PI * (w * tau_);
-        return std::complex<double>(0.0, -1.0) * (ucell_.tpiba * w[dir]) * VlocCoulomb(w2 * ucell_.tpiba2)
-               * std::complex<double>(std::cos(arg), std::sin(arg));
     }
 };
 
