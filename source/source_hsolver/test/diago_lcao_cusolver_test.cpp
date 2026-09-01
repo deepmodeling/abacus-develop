@@ -201,7 +201,6 @@ class DiagoPrepare
 
     void set_env()
     {
-        GlobalV::DSIZE = dsize;
     }
 
     void diago()

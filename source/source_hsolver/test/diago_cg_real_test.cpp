@@ -1,21 +1,19 @@
-#include "gtest/gtest.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
-#include "source_base/inverse_matrix.h"
-#include "source_base/module_external/lapack_connector.h"
-#include "source_psi/psi.h"
-#include "source_hamilt/hamilt.h"
-#include "source_pw/module_pwdft/hamilt_pw.h"
 #include "../diago_cg.h"
+#include "../diag_comm_info.h"
 #include "../diago_iter_assist.h"
 #include "diago_mock.h"
 #include "mpi.h"
+#include "source_base/inverse_matrix.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "source_basis/module_pw/test/test_tool.h"
+#include "source_hamilt/hamilt.h"
+#include "source_psi/psi.h"
+#include "source_pw/module_pwdft/hamilt_pw.h"
+
+#include "gtest/gtest.h"
+#include <ATen/core/tensor_map.h>
 #include <complex>
 #include <random>
-
-#include <ATen/core/tensor_map.h>
 
 /************************************************
  *  unit test of functions in Diago_CG
@@ -145,25 +143,30 @@ public:
         /**************************************************************/
         //  New interface of cg method
         /**************************************************************/
+#ifdef __MPI
+        const hsolver::diag_comm_info diag_comm(POOL_WORLD, mypnum, nprocs);
+#else
+        const hsolver::diag_comm_info diag_comm(mypnum, nprocs);
+#endif
         // warp the subspace_func into a lambda function
-        auto subspace_func = [ha](double* psi_in,
-                                  double* psi_out,
-                                  const int ld_psi,
-                                  const int nband,
-                                  const bool S_orth) {
-            auto psi_in_wrapper = psi::Psi<double>(psi_in, 1, nband, ld_psi, true);
-            auto psi_out_wrapper = psi::Psi<double>(psi_out, 1, nband, ld_psi, true);
-            std::vector<double> eigen(nband, 0.0);
-            hsolver::DiagoIterAssist<double>::diag_subspace(ha, psi_in_wrapper, psi_out_wrapper, eigen.data());
-        };
-        hsolver::DiagoCG<double> cg(
-            PARAM.input.basis_type,
-            PARAM.input.calculation,
-            hsolver::DiagoIterAssist<double>::need_subspace,
-            subspace_func,
-            hsolver::DiagoIterAssist<double>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX,
-            GlobalV::NPROC_IN_POOL);
+        auto subspace_func
+            = [ha, &diag_comm](double* psi_in, double* psi_out, const int ld_psi, const int nband, const bool S_orth) {
+                  auto psi_in_wrapper = psi::Psi<double>(psi_in, 1, nband, ld_psi, true);
+                  auto psi_out_wrapper = psi::Psi<double>(psi_out, 1, nband, ld_psi, true);
+                  std::vector<double> eigen(nband, 0.0);
+                  hsolver::DiagoIterAssist<double>::diag_subspace(ha,
+                                                                  psi_in_wrapper,
+                                                                  psi_out_wrapper,
+                                                                  eigen.data(),
+                                                                  diag_comm);
+              };
+        hsolver::DiagoCG<double> cg("pw",
+                                    "scf",
+                                    hsolver::DiagoIterAssist<double>::need_subspace,
+                                    subspace_func,
+                                    hsolver::DiagoIterAssist<double>::PW_DIAG_THR,
+                                    hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX,
+                                    nprocs);
         // hsolver::DiagoCG<double> cg(precondition_local);
         psi_local.fix_k(0);
         double start, end;
@@ -316,7 +319,6 @@ int main(int argc, char** argv)
     int nproc_in_pool, kpar = 1, mypool, rank_in_pool;
     setupmpi(argc, argv, nproc, myrank);
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
-    GlobalV::NPROC_IN_POOL = nproc;
 #else
     MPI_Init(&argc, &argv);
 #endif

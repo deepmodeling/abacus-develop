@@ -1,18 +1,15 @@
 #include <gtest/gtest.h>
 #include <iostream>
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include <vector>
 
 #define private public
 #define protected public
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
-#include "source_base/global_variable.h"
+#include "source_base/parallel_comm.h"
+#include "source_estate/elecstate_pw.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_hsolver/hsolver_pw_sdft.h"
-#include "source_estate/elecstate_pw.h"
 #undef private
 #undef protected
 
@@ -272,20 +269,20 @@ class TestHSolverPW_SDFT : public ::testing::Test
             "scf",
             "pw",
             "cg",
-            PARAM.sys.use_uspp,
-            PARAM.input.nspin,
+            false,
+            1,
             hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
             hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-            PARAM.input.nbands,
-            PARAM.input.diago_smooth_ethr,
-            PARAM.input.pw_diag_ndim,
-            PARAM.input.diag_subspace,
-            PARAM.input.nb2d,
-            PARAM.sys.ks_run,
-            PARAM.sys.all_ks_run,
-            PARAM.input.bndpar);
+            0,
+            false,
+            4,
+            0,
+            0,
+            false,
+            true,
+            1);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 
@@ -310,8 +307,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
 //     stowf.nchi = 0;
 //     stowf.nchip_max = 0;
 //     psi_test_cd.resize(1, 2, 3);
-//     PARAM.input.nelec = 1.0;
-//     GlobalV::MY_BNDGROUP = 0.0;
+//     const double nelec = 1.0;
 //     int istep = 0;
 //     int iter = 0;
 
@@ -349,9 +345,8 @@ class TestHSolverPW_SDFT : public ::testing::Test
 //     psi_test_no.nk = 2;
 //     psi_test_no.nbands = 0;
 //     psi_test_no.nbasis = 0;
-//     PARAM.input.nelec = 1.0;
-//     GlobalV::MY_BNDGROUP = 0.0;
-//     PARAM.input.nspin = 1;
+//     const double nelec = 1.0;
+//     const int nspin = 1;
 //     elecstate_test.charge = new Charge;
 //     elecstate_test.charge->rho = new double*[1];
 //     elecstate_test.charge->rho[0] = new double[10];
@@ -396,8 +391,6 @@ int main(int argc, char** argv)
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
 
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &BP_WORLD);
     int result = RUN_ALL_TESTS();
 
