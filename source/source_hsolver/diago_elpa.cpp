@@ -1,10 +1,8 @@
 #include "diago_elpa.h"
-#include "source_base/global_function.h"
-#include "source_base/module_external/blas_connector.h"
 
 #include "module_genelpa/elpa_solver.h"
 #include "source_base/module_external/blacs_connector.h"
-#include "source_base/global_variable.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 
@@ -196,11 +194,7 @@ void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
     es.exit();
 
     const int inc = 1;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                "K-S equation was solved by genelpa2");
     BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                "eigenvalues were copied to ekb");
 }
 #endif
 

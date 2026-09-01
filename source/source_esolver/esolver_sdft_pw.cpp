@@ -184,6 +184,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
                               this->stowf,
                               istep,
                               iter,
+                              GlobalV::ofs_running,
                               skip_charge);
 
     // set_diagethr need it

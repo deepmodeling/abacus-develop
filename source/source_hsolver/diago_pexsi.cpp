@@ -20,11 +20,13 @@ template <typename T>
 DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in,
                           const int nspin_in,
                           const int nlocal_in,
-                          const double nelec_in)
+                          const double nelec_in,
+                          const int world_nproc_in)
 {
     this->nspin_dm = (nspin_in == 4) ? 1 : nspin_in;
     this->nlocal = nlocal_in;
     this->nelec = nelec_in;
+    this->world_nproc = world_nproc_in;
 
     mu_buffer.resize(this->nspin_dm);
     for (int i = 0; i < this->nspin_dm; i++)
@@ -73,7 +75,7 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
                       s_mat.p,
                       DM[ik],
                       EDM[ik]);
-    this->ps->solve(mu_buffer[ik]);
+    this->ps->solve(mu_buffer[ik], this->world_nproc);
     this->totalFreeEnergy = this->ps->get_totalFreeEnergy();
     this->totalEnergyH = this->ps->get_totalEnergyH();
     this->totalEnergyS = this->ps->get_totalEnergyS();

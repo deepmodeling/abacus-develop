@@ -1,10 +1,10 @@
 #include "hsolver_pw.h"
 
 #include "source_base/parallel_comm.h"
-#include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_pw.h"
+#include "source_estate/elecstate_tools.h"
 #include "source_hamilt/hamilt.h"
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_bpcg.h"
@@ -13,10 +13,9 @@
 #include "source_hsolver/diago_david.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_psi/psi.h"
-#include "source_estate/elecstate_tools.h"
-
 
 #include <algorithm>
+#include <ostream>
 #include <vector>
 
 namespace hsolver
@@ -71,6 +70,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  double* out_eigenvalues,
                                  const int rank_in_pool_in,
                                  const int nproc_in_pool_in,
+                                 std::ostream& log,
                                  const bool skip_charge,
                                  const double tpiba,
                                  const int nat)
@@ -138,9 +138,9 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
             if (skip_charge)
             {
-                GlobalV::ofs_running << " Average iterative diagonalization steps for k-points " << ik
-                                    << " is " << DiagoIterAssist<T, Device>::avg_iter
-                                    << "\n current threshold of diagonalization is " << this->diag_thr << std::endl;
+                log << " Average iterative diagonalization steps for k-points " << ik << " is "
+                    << DiagoIterAssist<T, Device>::avg_iter << "\n current threshold of diagonalization is "
+                    << this->diag_thr << std::endl;
                 DiagoIterAssist<T, Device>::avg_iter = 0.0;
             }
         }
@@ -177,9 +177,9 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // output iteration information and reset avg_iter
             if (skip_charge)
             {
-                GlobalV::ofs_running << " k(" << ik+1 << "/" << pes->klist->get_nkstot()
-                                     << ") Iter steps (avg)=" << DiagoIterAssist<T, Device>::avg_iter
-                                     << " threshold=" << this->diag_thr << std::endl;
+                log << " k(" << ik + 1 << "/" << pes->klist->get_nkstot()
+                    << ") Iter steps (avg)=" << DiagoIterAssist<T, Device>::avg_iter << " threshold=" << this->diag_thr
+                    << std::endl;
                 DiagoIterAssist<T, Device>::avg_iter = 0.0;
             }
 
@@ -188,7 +188,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     } // else (use_k_continuity)
 
     // output average iteration information and reset avg_iter
-    this->output_iterInfo();
+    this->output_iterInfo(log);
 
     count++;
     // END Loop over k points
@@ -282,16 +282,13 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         // wrap the subspace_func into a lambda function
         // if S_orth is true, then assume psi is S-orthogonal, solve standard eigenproblem
         // otherwise, solve generalized eigenproblem
-        auto subspace_func = [hm, cur_nbasis](T* psi_in,
-                                              T* psi_out,
-                                              const int ld_psi,
-                                              const int nband,
-                                              const bool S_orth) {
-            auto psi_in_wrapper = psi::Psi<T, Device>(psi_in, 1, nband, ld_psi, cur_nbasis);
-            auto psi_out_wrapper = psi::Psi<T, Device>(psi_out, 1, nband, ld_psi, cur_nbasis);
-            std::vector<Real> eigen(nband, 0.0);
-            DiagoIterAssist<T, Device>::diag_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data());
-        };
+        auto subspace_func =
+            [hm, cur_nbasis, &comm_info](T* psi_in, T* psi_out, const int ld_psi, const int nband, const bool S_orth) {
+                auto psi_in_wrapper = psi::Psi<T, Device>(psi_in, 1, nband, ld_psi, cur_nbasis);
+                auto psi_out_wrapper = psi::Psi<T, Device>(psi_out, 1, nband, ld_psi, cur_nbasis);
+                std::vector<Real> eigen(nband, 0.0);
+                DiagoIterAssist<T, Device>::diag_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data(), comm_info);
+            };
         DiagoCG<T, Device> cg(this->basis_type,
                               this->calculation_type,
                               this->need_subspace,
@@ -433,14 +430,14 @@ void HSolverPW<T, Device>::update_precondition(std::vector<Real>& h_diag,
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::output_iterInfo()
+void HSolverPW<T, Device>::output_iterInfo(std::ostream& log)
 {
     // in PW base, average iteration steps for each band and k-point should be printing
     if (DiagoIterAssist<T, Device>::avg_iter > 0.0)
     {
-        GlobalV::ofs_running << " Average iterative diagonalization steps for k-points is "
-                             << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
-                             << "\n current threshold of diagonalizaiton is " << this->diag_thr << std::endl;
+        log << " Average iterative diagonalization steps for k-points is "
+            << DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
+            << "\n current threshold of diagonalizaiton is " << this->diag_thr << std::endl;
         // reset avg_iter
         DiagoIterAssist<T, Device>::avg_iter = 0.0;
     }

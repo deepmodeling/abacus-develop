@@ -7,14 +7,13 @@
 
 #include "diago_scalapack.h"
 
-#include <cassert>
-#include <cstring>
-
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/module_external/blacs_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_hamilt/matrixblock.h"
+
+#include <cassert>
+#include <cstring>
 
 typedef hamilt::MatrixBlock<double> matd;
 typedef hamilt::MatrixBlock<std::complex<double>> matcd;
@@ -155,7 +154,6 @@ int blacs_grid_size(const int* const desc)
                                  + std::to_string(__LINE__));
 }
 
-    //	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
     lwork = work[0];
     work.resize(std::max(lwork,3), 0);
     liwork = iwork[0];
@@ -195,7 +193,6 @@ int blacs_grid_size(const int* const desc)
              iclustr.data(),
              gap.data(),
              &info);
-    //	GlobalV::ofs_running<<"M="<<M<<"\t"<<"NZ="<<NZ<<std::endl;
 
     if (info == 0) {
         return std::make_pair(info, std::vector<int>{});
@@ -287,7 +284,6 @@ int blacs_grid_size(const int* const desc)
                                  + std::to_string(__LINE__));
 }
 
-    //	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"lrwork="<<rwork[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
     lwork = work[0].real();
     work.resize(lwork, 0);
     lrwork = rwork[0] + this->degeneracy_max * this->nlocal;
@@ -332,7 +328,6 @@ int blacs_grid_size(const int* const desc)
              iclustr.data(),
              gap.data(),
              &info);
-    //	GlobalV::ofs_running<<"M="<<M<<"\t"<<"NZ="<<NZ<<std::endl;
 
     if (info == 0) {
         return std::make_pair(info, std::vector<int>{});
@@ -426,17 +421,15 @@ int blacs_grid_size(const int* const desc)
         // `vec` is iclustr, sized 2*NPROW*NPCOL by the caller
         for (std::size_t irank = 0; 2 * irank + 1 < vec.size(); ++irank) {
             degeneracy_need = std::max(degeneracy_need, vec[2 * irank + 1] - vec[2 * irank]);
-}
-        const std::string str_need = "degeneracy_need = " + ModuleBase::GlobalFunc::TO_STRING(degeneracy_need) + ".\n";
-        const std::string str_saved
-            = "degeneracy_saved = " + ModuleBase::GlobalFunc::TO_STRING(this->degeneracy_max) + ".\n";
+        }
         if (degeneracy_need <= this->degeneracy_max)
         {
-            throw std::runtime_error(str_info_FILE + str_need + str_saved);
+            throw std::runtime_error(
+                str_info_FILE + "degeneracy_need = " + ModuleBase::GlobalFunc::TO_STRING(degeneracy_need) + ".\n"
+                + "degeneracy_saved = " + ModuleBase::GlobalFunc::TO_STRING(this->degeneracy_max) + ".\n");
         }
         else
         {
-            GlobalV::ofs_running << str_need << str_saved;
             this->degeneracy_max = degeneracy_need;
             return;
         }

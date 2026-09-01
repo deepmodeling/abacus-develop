@@ -1,14 +1,16 @@
+#include "mi_tools.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_comm.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_base/global_variable.h"
-#include "source_hsolver/diago_iter_assist.h"
-#include "source_io/module_parameter/parameter.h"
-#include "spin_constrain.h"
-#include "mi_tools.h"
-#include "source_pw/module_pwdft/onsite_proj.h"
-#include "source_base/parallel_reduce.h"
-#include "source_hsolver/hsolver_lcao.h"
 #include "source_estate/elecstate_tools.h"
+#include "source_hsolver/diag_comm_info.h"
+#include "source_hsolver/diago_iter_assist.h"
+#include "source_hsolver/hsolver_lcao.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_pw/module_pwdft/onsite_proj.h"
+#include "spin_constrain.h"
 
 #ifdef __LCAO
 #include "source_estate/elecstate_lcao.h"
@@ -89,6 +91,11 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
+#ifdef __MPI
+    const hsolver::diag_comm_info diag_comm(POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL);
+#else
+    const hsolver::diag_comm_info diag_comm(0, 1);
+#endif
 
 #ifdef __LCAO
     if (PARAM.inp.basis_type == "lcao")
@@ -99,12 +106,14 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
         psi::Psi<std::complex<double>>* psi_t = static_cast<psi::Psi<std::complex<double>>*>(this->psi);
         hamilt::Hamilt<std::complex<double>>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
         hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV,
-                                                            PARAM.inp.ks_solver,
-                                                            PARAM.globalv.kpar_lcao,
-                                                            PARAM.globalv.nlocal,
-                                                            PARAM.inp.nbands,
-                                                            PARAM.inp.nelec,
-                                                            PARAM.inp.device == "gpu");
+                                                             PARAM.inp.ks_solver,
+                                                             PARAM.globalv.kpar_lcao,
+                                                             PARAM.globalv.nlocal,
+                                                             PARAM.inp.nbands,
+                                                             PARAM.inp.nelec,
+                                                             PARAM.inp.device == "gpu",
+                                                             GlobalV::NPROC,
+                                                             GlobalV::MY_RANK);
         if (this->nspin_ == 2)
         {
             dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)
@@ -185,7 +194,11 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     {
                         /// Compute H(k) and extract subspace matrices for this k-point
                         hamilt_t->updateHk(ik);
-                        hsolver::DiagoIterAssist<std::complex<double>>::cal_hs_subspace(hamilt_t, psi_t[0], h_k, s_k);
+                        hsolver::DiagoIterAssist<std::complex<double>>::cal_hs_subspace(hamilt_t,
+                                                                                        psi_t[0],
+                                                                                        h_k,
+                                                                                        s_k,
+                                                                                        diag_comm);
                         memcpy(becp_k, onsite_p->get_becp(), sizeof(std::complex<double>) * size_becp);
                     }
                     memcpy(h_tmp.data(), h_k, sizeof(std::complex<double>) * nbands * nbands);
@@ -244,7 +257,12 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     if(initial_hs)
                     {
                         hamilt_t->updateHk(ik);
-                        hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::cal_hs_subspace(hamilt_t, psi_t[0], h_k, s_k);
+                        hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::cal_hs_subspace(
+                            hamilt_t,
+                            psi_t[0],
+                            h_k,
+                            s_k,
+                            diag_comm);
                         base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(becp_k, onsite_p->get_becp(), size_becp);
                     }
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(h_tmp, h_k, nbands * nbands);

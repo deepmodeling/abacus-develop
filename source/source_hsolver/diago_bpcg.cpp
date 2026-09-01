@@ -325,7 +325,7 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 #ifdef __MPI
     if (this->plintrans.nproc_col > 1)
     {
-        start_nband = this->plintrans.start_colB[GlobalV::MY_BNDGROUP];
+        start_nband = this->plintrans.start_colB[this->plintrans.rank_col];
     }
 #endif
     syncmem_var_d2h_op()(eigenvalue_in, this->eigen.template data<Real>() + start_nband, this->n_band_l);

@@ -268,6 +268,7 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                              this->pelec->ekb.c,
                              GlobalV::RANK_IN_POOL,
                              GlobalV::NPROC_IN_POOL,
+                             GlobalV::ofs_running,
                              skip_charge,
                              ucell.tpiba,
                              ucell.nat);

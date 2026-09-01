@@ -1,10 +1,12 @@
 #ifndef HSOLVERPW_H
 #define HSOLVERPW_H
 
-#include "source_estate/elecstate.h"
-#include "source_hamilt/hamilt.h"
 #include "source_base/macros.h"
 #include "source_basis/module_pw/pw_basis_k.h"
+#include "source_estate/elecstate.h"
+#include "source_hamilt/hamilt.h"
+
+#include <iosfwd>
 #include <unordered_map>
 
 namespace hsolver
@@ -58,10 +60,10 @@ class HSolverPW
                double* out_eigenvalues,
                const int rank_in_pool_in,
                const int nproc_in_pool_in,
+               std::ostream& log,
                const bool skip_charge,
                const double tpiba,
                const int nat);
-
 
   protected:
     // diago caller
@@ -74,7 +76,7 @@ class HSolverPW
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);
 
-    void output_iterInfo();
+    void output_iterInfo(std::ostream& log);
 
     ModulePW::PW_Basis_K* wfc_basis = nullptr;
 

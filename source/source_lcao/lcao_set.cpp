@@ -239,7 +239,9 @@ void LCAO_domain::init_chg_hr(
                                               PARAM.globalv.nlocal,
                                               PARAM.inp.nbands,
                                               PARAM.inp.nelec,
-                                              PARAM.inp.device == "gpu");
+                                              PARAM.inp.device == "gpu",
+                                              GlobalV::NPROC,
+                                              GlobalV::MY_RANK);
     hsolver_lcao_obj.solve(p_hamilt, psi, pelec, dm, chr, nspin, 0);
 }
 

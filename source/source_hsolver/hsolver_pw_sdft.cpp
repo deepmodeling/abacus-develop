@@ -21,6 +21,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
                                       Stochastic_WF<T, Device>& stowf,
                                       const int istep,
                                       const int iter,
+                                      std::ostream& log,
                                       const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW_SDFT", "solve");
@@ -70,7 +71,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
         stoiter.checkemm(ik, istep, iter, stowf); // check and reset emax & emin
     }
 
-    this->output_iterInfo();
+    this->output_iterInfo(log);
 
     for (int ik = 0; ik < nks; ik++)
     {

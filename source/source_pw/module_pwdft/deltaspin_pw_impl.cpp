@@ -386,8 +386,16 @@ void SpinConstrain<std::complex<double>>::update_psi_charge_pw_cpu(const ModuleB
             PARAM.inp.nb2d,
             PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(hamilt_t, psi_t[0], this->pelec, this->pelec->ekb.c,
-            GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, false, this->tpiba, this->get_nat());
+        hsolver_pw_obj.solve(hamilt_t,
+                             psi_t[0],
+                             this->pelec,
+                             this->pelec->ekb.c,
+                             GlobalV::RANK_IN_POOL,
+                             GlobalV::NPROC_IN_POOL,
+                             GlobalV::ofs_running,
+                             false,
+                             this->tpiba,
+                             this->get_nat());
     }
     else
     {
@@ -499,8 +507,16 @@ void SpinConstrain<std::complex<double>>::update_psi_charge_pw_gpu(const ModuleB
             PARAM.inp.nb2d,
             PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(hamilt_t, psi_t[0], this->pelec, this->pelec->ekb.c,
-            GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, false, this->tpiba, this->get_nat());
+        hsolver_pw_obj.solve(hamilt_t,
+                             psi_t[0],
+                             this->pelec,
+                             this->pelec->ekb.c,
+                             GlobalV::RANK_IN_POOL,
+                             GlobalV::NPROC_IN_POOL,
+                             GlobalV::ofs_running,
+                             false,
+                             this->tpiba,
+                             this->get_nat());
     }
     else
     {

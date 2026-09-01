@@ -15,6 +15,7 @@
 #include "source_estate/elecstate_pw.h"
 #include "source_pw/module_pwdft/hamilt_lcaopw.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
+#include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/kernels/hegvd_op.h"
@@ -147,8 +148,21 @@ namespace ModuleESolver
                                                this->inp_->basis_type,
                                                this->inp_->calculation,
                                                this->inp_->nbands);
-        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec,
-          *this->psi_local, skip_charge,ucell.tpiba,ucell.nat, this->general_exx_info_);
+#ifdef __MPI
+        const hsolver::diag_comm_info diag_comm(POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL);
+#else
+        const hsolver::diag_comm_info diag_comm(0, 1);
+#endif
+        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt),
+                              *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
+                              this->pelec,
+                              *this->psi_local,
+                              diag_comm,
+                              GlobalV::ofs_running,
+                              skip_charge,
+                              ucell.tpiba,
+                              ucell.nat,
+                              this->general_exx_info_);
 
         // add exx
 #ifdef __EXX

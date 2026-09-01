@@ -63,6 +63,7 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
                Stochastic_WF<T, Device>& stowf,
                const int istep,
                const int iter,
+               std::ostream& log,
                const bool skip_charge);
 
     Stochastic_Iter<T, Device> stoiter;

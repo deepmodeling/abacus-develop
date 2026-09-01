@@ -18,7 +18,7 @@ class PEXSI_Solver
                  const double* s,
                  double*& DM,
                  double*& EDM);
-    int solve(double mu0);
+    int solve(double mu0, const int world_nproc);
     const double get_totalFreeEnergy() const;
     const double get_totalEnergyH() const;
     const double get_totalEnergyS() const;
