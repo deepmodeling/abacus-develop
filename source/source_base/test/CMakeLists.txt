@@ -203,6 +203,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_BASE_math_lib_info
+  SOURCES math_lib_info_test.cpp
+  LIBS parameter base device
+)
+
+AddTest(
   TARGET MODULE_BASE_projgen
   SOURCES projgen_test.cpp
   LIBS parameter base device
