@@ -4,6 +4,7 @@
 #include <ATen/core/tensor.h>
 #include <base/core/allocator.h>
 #include <base/core/cpu_allocator.h>
+#include <base/utils/logging.h>
 
 
 TEST(CPUAllocator, AllocateAndFree) {
@@ -35,4 +36,16 @@ TEST(CPUAllocator, GetDeviceType) {
   base::core::CPUAllocator alloc;
   EXPECT_EQ(container::DeviceType::CpuDevice,
             alloc.GetDeviceType());
+}
+
+TEST(Logging, ReturnsMessage)
+{
+  const char* message = "allocation failed";
+  EXPECT_STREQ(base::utils::check_msg_impl(message), message);
+}
+
+TEST(LoggingDeathTest, AbortsWithContext)
+{
+  EXPECT_DEATH(base::utils::check_exit_impl("allocate", "allocator_test.cpp", 42, "allocation failed"),
+               "Fatal error.*allocation failed");
 }

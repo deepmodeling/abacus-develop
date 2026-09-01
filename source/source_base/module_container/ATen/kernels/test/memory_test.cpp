@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <cstdint>
+
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
 #include <ATen/kernels/memory.h>
@@ -71,6 +73,116 @@ TYPED_TEST(MemoryTest, CastAndDeleteMemory) {
     EXPECT_EQ(B, C);
     deleteMemory(d_A);
 }
+
+template <typename T>
+void test_cpu_memory_operations(const T& value)
+{
+    T* data = nullptr;
+    kernels::resize_memory<T, DEVICE_CPU>()(data, 6, "typed cpu buffer");
+    ASSERT_NE(data, nullptr);
+
+    kernels::set_memory<T, DEVICE_CPU>()(data, value, 6);
+    for (int i = 0; i < 6; ++i)
+    {
+        EXPECT_EQ(data[i], value);
+    }
+
+    const T source[4] = {T(1), T(2), T(3), T(4)};
+    kernels::synchronize_memory<T, DEVICE_CPU, DEVICE_CPU>()(data, source, 4);
+    for (int i = 0; i < 4; ++i)
+    {
+        EXPECT_EQ(data[i], source[i]);
+    }
+
+    const std::vector<int64_t> input_shape = {2, 2};
+    const std::vector<int64_t> output_shape = {2, 3};
+    kernels::set_memory<T, DEVICE_CPU>()(data, T(), 6);
+    kernels::synchronize_memory_stride<T, DEVICE_CPU, DEVICE_CPU>()(data, source, output_shape, input_shape);
+    EXPECT_EQ(data[0], source[0]);
+    EXPECT_EQ(data[1], source[1]);
+    EXPECT_EQ(data[2], T());
+    EXPECT_EQ(data[3], source[2]);
+    EXPECT_EQ(data[4], source[3]);
+    EXPECT_EQ(data[5], T());
+
+    kernels::delete_memory<T, DEVICE_CPU>()(data);
+}
+
+TEST(MemoryTestCPU, IntegerAndComplexInstantiations)
+{
+    test_cpu_memory_operations<int>(7);
+    test_cpu_memory_operations<int64_t>(9);
+    test_cpu_memory_operations<float>(1.5F);
+    test_cpu_memory_operations<double>(2.5);
+    test_cpu_memory_operations<std::complex<float>>(std::complex<float>(1.0F, -2.0F));
+    test_cpu_memory_operations<std::complex<double>>(std::complex<double>(2.0, -3.0));
+}
+
+template <typename Output, typename Input>
+void test_cpu_cast(const Input& input, const Output& expected)
+{
+    const Input source[1] = {input};
+    Output result[1] = {Output()};
+    kernels::cast_memory<Output, Input, DEVICE_CPU, DEVICE_CPU>()(result, source, 1);
+    EXPECT_EQ(result[0], expected);
+}
+
+TEST(MemoryTestCPU, CoversAllCastInstantiations)
+{
+    test_cpu_cast<float, float>(1.25F, 1.25F);
+    test_cpu_cast<double, double>(2.5, 2.5);
+    test_cpu_cast<float, double>(3.5, 3.5F);
+    test_cpu_cast<double, float>(4.5F, 4.5);
+    test_cpu_cast<std::complex<float>, std::complex<float>>({1.0F, 2.0F}, {1.0F, 2.0F});
+    test_cpu_cast<std::complex<double>, std::complex<double>>({2.0, 3.0}, {2.0, 3.0});
+    test_cpu_cast<std::complex<float>, std::complex<double>>({3.0, 4.0}, {3.0F, 4.0F});
+    test_cpu_cast<std::complex<double>, std::complex<float>>({4.0F, 5.0F}, {4.0, 5.0});
+}
+
+#if !(defined(__CUDA) || defined(__ROCM))
+template <typename T>
+void test_gpu_placeholder_operations()
+{
+    T* data = nullptr;
+    const T* source = nullptr;
+    kernels::resize_memory<T, DEVICE_GPU>()(data, 0, "gpu placeholder");
+    EXPECT_EQ(data, nullptr);
+    kernels::set_memory<T, DEVICE_GPU>()(data, T(), 0);
+    kernels::synchronize_memory<T, DEVICE_GPU, DEVICE_GPU>()(data, source, 0);
+    kernels::synchronize_memory<T, DEVICE_GPU, DEVICE_CPU>()(data, source, 0);
+    kernels::synchronize_memory<T, DEVICE_CPU, DEVICE_GPU>()(data, source, 0);
+    kernels::delete_memory<T, DEVICE_GPU>()(data);
+}
+
+template <typename Output, typename Input>
+void test_gpu_placeholder_casts()
+{
+    Output* output = nullptr;
+    const Input* input = nullptr;
+    kernels::cast_memory<Output, Input, DEVICE_GPU, DEVICE_GPU>()(output, input, 0);
+    kernels::cast_memory<Output, Input, DEVICE_GPU, DEVICE_CPU>()(output, input, 0);
+    kernels::cast_memory<Output, Input, DEVICE_CPU, DEVICE_GPU>()(output, input, 0);
+}
+
+TEST(MemoryTestGPUPlaceholder, CoversNoAcceleratorInstantiations)
+{
+    test_gpu_placeholder_operations<int>();
+    test_gpu_placeholder_operations<int64_t>();
+    test_gpu_placeholder_operations<float>();
+    test_gpu_placeholder_operations<double>();
+    test_gpu_placeholder_operations<std::complex<float>>();
+    test_gpu_placeholder_operations<std::complex<double>>();
+
+    test_gpu_placeholder_casts<float, float>();
+    test_gpu_placeholder_casts<double, double>();
+    test_gpu_placeholder_casts<float, double>();
+    test_gpu_placeholder_casts<double, float>();
+    test_gpu_placeholder_casts<std::complex<float>, std::complex<float>>();
+    test_gpu_placeholder_casts<std::complex<double>, std::complex<double>>();
+    test_gpu_placeholder_casts<std::complex<float>, std::complex<double>>();
+    test_gpu_placeholder_casts<std::complex<double>, std::complex<float>>();
+}
+#endif
 
 } // namespace op
 } // namespace container
