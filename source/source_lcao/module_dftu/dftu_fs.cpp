@@ -21,19 +21,19 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     const hamilt::HContainer<double>* dmR_tmp[this->nspin];
     dmR_tmp[0] = this->dftu->get_dmr(0);
 
-	if (this->nspin == 2) 
-	{
-		dmR_tmp[1] = this->dftu->get_dmr(1);
-	}
-	if (dmR_tmp[0]->size_atom_pairs() == 0)
-	{
-		return;
-	}
+    if (this->nspin == 2) 
+    {
+        dmR_tmp[1] = this->dftu->get_dmr(1);
+    }
+    if (dmR_tmp[0]->size_atom_pairs() == 0)
+    {
+        return;
+    }
 
     // begin the calculation of force and stress
     ModuleBase::timer::start("DFTU", "cal_force_stress");
 
-    const Parallel_Orbitals* paraV = dmR_tmp[0]->get_paraV();
+    const Parallel_Orbitals* pv = dmR_tmp[0]->get_paraV();
     const int npol = this->ucell->get_npol();
     std::vector<double> stress_tmp(6, 0);
     if (cal_force)
@@ -89,8 +89,8 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
             const Atom* atom1 = &ucell->atoms[T1];
 
-            auto all_indexes = paraV->get_indexes_row(iat1);
-            auto col_indexes = paraV->get_indexes_col(iat1);
+            auto all_indexes = pv->get_indexes_row(iat1);
+            auto col_indexes = pv->get_indexes_col(iat1);
             // insert col_indexes into all_indexes to get universal set with no repeat elements
             all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
             std::sort(all_indexes.begin(), all_indexes.end());
@@ -187,7 +187,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                     if (cal_force) {
                         this->cal_force_IJR(iat1,
                                             iat2,
-                                            paraV,
+                                            pv,
                                             nlm_tot[ad1],
                                             nlm_tot[ad2],
                                             pot_onsite,
@@ -201,7 +201,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                     if (cal_stress) {
                         this->cal_stress_IJR(iat1,
                                              iat2,
-                                             paraV,
+                                             pv,
                                              nlm_tot[ad1],
                                              nlm_tot[ad2],
                                              pot_onsite,
@@ -272,7 +272,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
 template <typename TK, typename TR>
 void DFTU<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
                                                const int& iat2,
-                                               const Parallel_Orbitals* paraV,
+                                               const Parallel_Orbitals* pv,
                                                const std::unordered_map<int, std::vector<double>>& nlm1_all,
                                                const std::unordered_map<int, std::vector<double>>& nlm2_all,
                                                const std::vector<double>& pot_onsite_in,
@@ -288,17 +288,17 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    auto row_indexes = pv->get_indexes_row(iat1);
+    auto col_indexes = pv->get_indexes_col(iat2);
     const int m_size = int(sqrt(pot_onsite_in.size() / nspin));
     const int m_size2 = m_size * m_size;
 
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol * npol, 0);
 
-	if (npol == 2) 
-	{
-		step_trace[1] = 1;
+    if (npol == 2) 
+    {
+        step_trace[1] = 1;
         step_trace[2] = col_indexes.size();
         step_trace[3] = col_indexes.size() + 1;
     }
@@ -349,7 +349,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
 template <typename TK, typename TR>
 void DFTU<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
                                                 const int& iat2,
-                                                const Parallel_Orbitals* paraV,
+                                                const Parallel_Orbitals* pv,
                                                 const std::unordered_map<int, std::vector<double>>& nlm1_all,
                                                 const std::unordered_map<int, std::vector<double>>& nlm2_all,
                                                 const std::vector<double>& pot_onsite_in,
@@ -366,17 +366,17 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
+    auto row_indexes = pv->get_indexes_row(iat1);
+    auto col_indexes = pv->get_indexes_col(iat2);
     const int m_size = int(sqrt(pot_onsite_in.size() / nspin));
     const int m_size2 = m_size * m_size;
 
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol * npol, 0);
 
-	if (npol == 2) 
-	{
-		step_trace[1] = 1;
+    if (npol == 2) 
+    {
+        step_trace[1] = 1;
         step_trace[2] = col_indexes.size();
         step_trace[3] = col_indexes.size() + 1;
     }
@@ -438,7 +438,7 @@ template void DFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>::ca
 
 template void DFTU<OperatorLCAO<double, double>>::cal_force_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const Parallel_Orbitals* pv,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const std::vector<double>& pot_onsite_in,
@@ -447,7 +447,7 @@ template void DFTU<OperatorLCAO<double, double>>::cal_force_IJR(
     double* force1, double* force2);
 template void DFTU<OperatorLCAO<std::complex<double>, double>>::cal_force_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const Parallel_Orbitals* pv,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const std::vector<double>& pot_onsite_in,
@@ -456,7 +456,7 @@ template void DFTU<OperatorLCAO<std::complex<double>, double>>::cal_force_IJR(
     double* force1, double* force2);
 template void DFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_force_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const Parallel_Orbitals* pv,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const std::vector<double>& pot_onsite_in,
@@ -466,7 +466,7 @@ template void DFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>::ca
 
 template void DFTU<OperatorLCAO<double, double>>::cal_stress_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const Parallel_Orbitals* pv,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const std::vector<double>& pot_onsite_in,
@@ -477,7 +477,7 @@ template void DFTU<OperatorLCAO<double, double>>::cal_stress_IJR(
     double* stress);
 template void DFTU<OperatorLCAO<std::complex<double>, double>>::cal_stress_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const Parallel_Orbitals* pv,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const std::vector<double>& pot_onsite_in,
@@ -488,7 +488,7 @@ template void DFTU<OperatorLCAO<std::complex<double>, double>>::cal_stress_IJR(
     double* stress);
 template void DFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_stress_IJR(
     const int& iat1, const int& iat2,
-    const Parallel_Orbitals* paraV,
+    const Parallel_Orbitals* pv,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
     const std::vector<double>& pot_onsite_in,

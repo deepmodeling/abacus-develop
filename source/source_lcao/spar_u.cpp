@@ -5,6 +5,7 @@
 
 void sparse_format::cal_HR_dftu(
         Plus_U &dftu, // mohan add 2025-11-07
+        const UnitCell &ucell,
 	    const Parallel_Orbitals &pv,
         std::set<Abfs::Vector3_Order<int>> &all_R_coor,
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &SR_sparse,
@@ -73,7 +74,7 @@ void sparse_format::cal_HR_dftu(
                 }
             }
 
-            dftu.cal_eff_pot_mat_R_double(current_spin, SR_tmp, HR_tmp, PARAM.globalv.npol);
+            dftu.cal_eff_pot_mat_R_double(ucell, &pv, current_spin, SR_tmp, HR_tmp, PARAM.globalv.npol);
 
             for (int i = 0; i < PARAM.globalv.nlocal; ++i)
             {
@@ -126,6 +127,7 @@ void sparse_format::cal_HR_dftu(
 
 void sparse_format::cal_HR_dftu_soc(
         Plus_U &dftu, // mohan add 2025-11-07
+        const UnitCell &ucell,
 	    const Parallel_Orbitals &pv,
         std::set<Abfs::Vector3_Order<int>> &all_R_coor,
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> &SR_soc_sparse,
@@ -192,7 +194,7 @@ void sparse_format::cal_HR_dftu_soc(
                 }
             }
 
-            dftu.cal_eff_pot_mat_R_complex_double(current_spin, SR_soc_tmp, HR_soc_tmp, PARAM.globalv.npol);
+            dftu.cal_eff_pot_mat_R_complex_double(ucell, &pv, current_spin, SR_soc_tmp, HR_soc_tmp, PARAM.globalv.npol);
 
             for (int i = 0; i < PARAM.globalv.nlocal; ++i)
             {

@@ -43,16 +43,31 @@ list(APPEND objects
     stress_pw.cpp
     vl_pw.cpp
     vnl_pw.cpp
+    vnl_pw_alpha.cpp
+    vnl_pw_deeq.cpp
+    vnl_pw_getvnl.cpp
     vnl_pw_grad.cpp
+    vnl_pw_init_vnl.cpp
+    vnl_pw_qrad.cpp
     stru_fac.cpp
     stru_fac_k.cpp
     soc.cpp
     elecond.cpp
     fs_nonlocal_tools.cpp
+    fs_nonlocal_tools_vkb.cpp
+    fs_nonlocal_tools_stress.cpp
+    fs_nonlocal_tools_force.cpp
     fs_kin_tools.cpp
     radial_proj.cpp
     onsite_proj.cpp
+    onsite_proj_init.cpp
+    onsite_proj_overlap.cpp
+    onsite_proj_force_stress.cpp
     onsite_proj_tools.cpp
+    onsite_proj_tools_becp.cpp
+    onsite_proj_tools_dbecp.cpp
+    onsite_proj_tools_force.cpp
+    onsite_proj_tools_stress.cpp
     onsite_proj_print.cpp
     vsep_pw.cpp
 )

@@ -9,6 +9,8 @@
 #include "source_pw/module_pwdft/soc.h"
 #include "source_pw/module_pwdft/stru_fac.h"
 #include "source_psi/psi.h"
+
+#include <vector>
 #ifdef __LCAO
 #include "source_basis/module_ao/orb_gaunt_table.h"
 #endif
@@ -67,7 +69,7 @@ class pseudopot_cell_vnl
     ModuleBase::matrix indv;   // indes linking  atomic beta's to beta's in the solid
     ModuleBase::matrix nhtol;  // correspondence n <-> angular momentum l
     ModuleBase::matrix nhtolm; // correspondence n <-> combined lm index for (l,m)
-    ModuleBase::matrix nhtoj;  // new added
+    ModuleBase::matrix nhtoj;  // 
 
     ModuleBase::realArray dvan;       //(:,:,:),  the D functions of the solid
     ModuleBase::ComplexArray dvan_so; //(:,:,:),  spin-orbit case,  added by zhengdy-soc
@@ -87,7 +89,7 @@ class pseudopot_cell_vnl
 
     // liuyu add 2023-10-03
     // uspp
-    int* indv_ijkb0 = nullptr;      // first beta (index in the solid) for each atom
+    std::vector<int> indv_ijkb0;    // first beta (index in the solid) for each atom
     ModuleBase::IntArray ijtoh;     // correspondence beta indexes ih,jh -> composite index ijh
     ModuleBase::realArray qq_at;    // the integral of q functions in the solid (ONE PER ATOM)
     ModuleBase::realArray qq_nt;    // the integral of q functions in the solid (ONE PER NTYP) used to be the qq array

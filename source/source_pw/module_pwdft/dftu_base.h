@@ -58,10 +58,17 @@ class Plus_U_Base
     // --- Accessors for DFT+U configuration ---
     double get_uramping() const { return uramping; }
     int get_occ_mat_ctrl() const { return occ_mat_ctrl; }
+    int get_cal_type() const { return cal_type; }
     bool use_yukawa() const { return use_yukawa_; }
 
     double get_U_Yukawa(int it, int l, int n) const { return U_Yukawa[it][l][n]; }
     double get_J_Yukawa(int it, int l, int n) const { return J_Yukawa[it][l][n]; }
+    void set_U_Yukawa(int it, int l, int n, double val) { U_Yukawa[it][l][n] = val; }
+    void set_J_Yukawa(int it, int l, int n, double val) { J_Yukawa[it][l][n] = val; }
+    double get_lambda() const { return lambda; }
+    void set_lambda(double l) { lambda = l; }
+    std::vector<std::vector<std::vector<std::vector<double>>>>& get_Fk_data() { return Fk; }
+    void set_u_current(int it, double val) { u_current[it] = val; }
 
     double get_energy() const { return energy_u; }
     void set_energy(const double &e) { energy_u = e; }
@@ -129,12 +136,28 @@ class Plus_U_Base
         return occ_mat[iat][l][n][spin](m1, m2);
     }
 
+    /// get saved occupation matrix element occ_mat_save[iat][l][n][spin](m1,m2)
+    double get_occ_mat_save(const int iat, const int l, const int n, const int spin,
+                          const int m1, const int m2) const
+    {
+        return occ_mat_save[iat][l][n][spin](m1, m2);
+    }
+
     /// set occupation matrix element occ_mat[iat][l][n][spin](m1,m2)
     void set_occ_mat(const int iat, const int l, const int n, const int spin,
-                   const int m1, const int m2, const double val)
+                     const int m1, const int m2, const double val)
     {
         occ_mat[iat][l][n][spin](m1, m2) = val;
     }
+
+    /// get reference to occ_mat data
+    std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>>& get_occ_mat_data() { return occ_mat; }
+    /// get reference to occ_mat_save data
+    std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>>& get_occ_mat_save_data() { return occ_mat_save; }
+    /// get occ_mat_initialized flag
+    bool get_occ_mat_initialized() const { return occ_mat_initialized; }
+    /// set occ_mat_initialized flag
+    void set_occ_mat_initialized(bool val) { occ_mat_initialized = val; }
 
     /// get flat occupation matrix for an atom's correlated orbital.
     /// nspin=1: fills occ with occ_mat[iat][l][0][0] data

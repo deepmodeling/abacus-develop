@@ -64,22 +64,23 @@ void KEDF_XWM::set_para(double dV,
  */
 double KEDF_XWM::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho)
 {
-    double** w1Rho5_6 = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    const int nspin = PARAM.inp.nspin;
+    double** w1Rho5_6 = new double*[nspin];
+    for (int is = 0; is < nspin; ++is)
     {
         w1Rho5_6[is] = new double[pw_rho->nrxx];
     }
     this->multi_kernel(prho, this->kernel1_.data(), w1Rho5_6, this->kappa_5_6, pw_rho);
 
-    double** w2Rho5_6 = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    double** w2Rho5_6 = new double*[nspin];
+    for (int is = 0; is < nspin; ++is)
     {
         w2Rho5_6[is] = new double[pw_rho->nrxx];
     }
     this->multi_kernel(prho, this->kernel2_.data(), w2Rho5_6, this->kappa_5_6, pw_rho);
 
     double energy = 0.; // in Ry
-    if (PARAM.inp.nspin == 1)
+    if (nspin == 1)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
@@ -88,14 +89,14 @@ double KEDF_XWM::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
         }
         energy += this->dV_;
     }
-    else if (PARAM.inp.nspin == 2)
+    else if (nspin == 2)
     {
         // TODO: spin polarized
     }
     this->xwm_energy = energy;
     Parallel_Reduce::reduce_all(this->xwm_energy);
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         delete[] w1Rho5_6[is];
         delete[] w2Rho5_6[is];

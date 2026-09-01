@@ -1,5 +1,5 @@
-#ifndef TOWannier90_H
-#define TOWannier90_H
+#ifndef TO_W90_H
+#define TO_W90_H
 
 #include <iostream>
 #include <algorithm>
@@ -14,21 +14,26 @@
 #include "source_base/matrix3.h"
 #include "source_cell/klist.h"
 
-class toWannier90
+class toW90
 {
   public:
-    toWannier90();
+    toW90();
 
-    toWannier90(
+    toW90(
       const bool &out_wannier_mmn, 
       const bool &out_wannier_amn, 
       const bool &out_wannier_unk, 
       const bool &out_wannier_eig,
       const bool &out_wannier_wvfn_formatted, 
       const std::string &nnkpfile,
-      const std::string &wannier_spin
+      const std::string &wannier_spin,
+      const int &nspin,
+      const int &nbands,
+      const int &nqx,
+      const double &dq,
+      const int &npol
     );
-    ~toWannier90();
+    ~toW90();
 
     void calculate();
     void read_nnkp(const UnitCell& ucell, const K_Vectors& kv);
@@ -51,17 +56,17 @@ class toWannier90
 
     // Parameters related to trial orbitals
     int num_wannier=0; // Number of Wannier orbits
-    ModuleBase::Vector3<double> *R_centre = nullptr;
-    int *L = nullptr;
-    int *m = nullptr;
-    int *rvalue = nullptr;
-    ModuleBase::Vector3<double> *z_axis = nullptr;
-    ModuleBase::Vector3<double> *x_axis = nullptr;
-    double *alfa = nullptr;
-    int *spin_eig = nullptr; // 'up' state is 1, 'down' state is -1
-    ModuleBase::Vector3<double> *spin_qaxis = nullptr; // spin quantisation axis
-    std::complex<double> *up_con = nullptr;
-    std::complex<double> *dn_con = nullptr;
+    std::vector<ModuleBase::Vector3<double>> R_centre;
+    std::vector<int> L;
+    std::vector<int> m;
+    std::vector<int> rvalue;
+    std::vector<ModuleBase::Vector3<double>> z_axis;
+    std::vector<ModuleBase::Vector3<double>> x_axis;
+    std::vector<double> alfa;
+    std::vector<int> spin_eig; // 'up' state is 1, 'down' state is -1
+    std::vector<ModuleBase::Vector3<double>> spin_qaxis; // spin quantisation axis
+    std::vector<std::complex<double>> up_con;
+    std::vector<std::complex<double>> dn_con;
 
     // Wannier control parameters
     bool out_wannier_mmn = true;
@@ -74,12 +79,16 @@ class toWannier90
     std::string wannier_file_name = "seedname";
     std::string wannier_spin = "up";
 
+    int nspin_ = 1; // number of spin states, 1, 2 or 4
+    int nbands_ = 0; // number of bands from input
+    int nqx_ = 0; // number of points in q-space integration
+    double dq_ = 0.0; // step of dq for q-space integration
+    int npol_ = 1; // number of polar states
+
     int num_exclude_bands = 0;
-    // int *exclude_bands = nullptr;
     std::unordered_set<int> exclude_bands;
-    // bool *tag_cal_band = nullptr;
     int num_bands = 0;
-    int *cal_band_index = nullptr;
+    std::vector<int> cal_band_index;
     bool gamma_only_wannier = false;
     
 

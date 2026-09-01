@@ -23,7 +23,6 @@ class Plus_U : public Plus_U_Base
     Plus_U();
     ~Plus_U();
 
-  public:
     // allocate relevant data strcutures
     void init(UnitCell& cell,
                 const Parallel_Orbitals* pv,
@@ -36,10 +35,7 @@ class Plus_U : public Plus_U_Base
                 const std::string& global_out_dir,
                 const std::string& init_chg,
                 const int nlocal,
-                const bool gamma_only_local,
                 const std::string& ks_solver,
-                const bool cal_force,
-                const bool cal_stress,
                 const std::string& device,
                 const int kpar,
                 const std::vector<double>& hubbard_u,
@@ -51,95 +47,34 @@ class Plus_U : public Plus_U_Base
 #endif
                 );
 
-    // calculate the energy correction
-    void cal_energy_correction(const UnitCell& ucell, const int istep);
-
   private:
 
-    const Parallel_Orbitals* paraV = nullptr;
-
     double yukawa_lambda = 0.0;
-    int npol = 1;
-    int nlocal = 0;
-    bool gamma_only_local = false;
-    std::string ks_solver;
-    bool cal_force = false;
-    bool cal_stress = false;
 
 #ifdef __LCAO
     const LCAO_Orbitals* ptr_orb_ = nullptr;
     std::vector<double> orb_cutoff_;
-#endif
 
-#ifdef __LCAO
     //=============================================================
     // In dftu_hamilt.cpp
     // For calculating contribution to Hamiltonian matrices
     //=============================================================
   public:
-    void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR, const int npol);
+    void cal_eff_pot_mat_R_double(const UnitCell& ucell,
+                                 const Parallel_Orbitals* pv,
+                                 const int ispin,
+                                 double* SR,
+                                 double* HR,
+                                 const int npol);
 
-	void cal_eff_pot_mat_R_complex_double(const int ispin,
-			std::complex<double>* SR,
-			std::complex<double>* HR,
-			const int npol);
-#endif
+    void cal_eff_pot_mat_R_complex_double(const UnitCell& ucell,
+            const Parallel_Orbitals* pv,
+            const int ispin,
+            std::complex<double>* SR,
+            std::complex<double>* HR,
+            const int npol);
 
-#ifdef __LCAO
-    // calculate the local occupation number matrix
-    void cal_occ_mat_k(const int iter,
-                       const UnitCell& ucell,
-                       const std::vector<std::vector<std::complex<double>>>& dm_k,
-                       const K_Vectors& kv,
-                       const double& mixing_beta,
-                       hamilt::Hamilt<std::complex<double>>* p_ham);
 
-    void cal_occ_mat_gamma(const int iter,
-                           const UnitCell& ucell,
-                           const std::vector<std::vector<double>>& dm_gamma,
-                           const double& mixing_beta,
-                           hamilt::Hamilt<double>* p_ham);
-#endif
-
-#ifdef __LCAO
-    //=============================================================
-    // In dftu_tools.cpp
-    // For calculating onsite potential, which is used
-    // for both Hamiltonian and force/stress
-    //=============================================================
-  public:
-    void pot_onsite_complex(const int spin, const bool newlocale, std::complex<double>* pot_onsite, const int npol);
-    void pot_onsite_real(const int spin, const bool newlocale, double* pot_onsite, const int npol);
-
-  private:
-    double get_onebody_eff_pot(const int T,
-                               const int iat,
-                               const int L,
-                               const int N,
-                               const int spin,
-                               const int m0,
-                               const int m1,
-                               const bool newlocale);
-
-#endif
-
-    //=============================================================
-    // In dftu_yukawa.cpp
-    // Relevant for calculating U using Yukawa potential
-    //=============================================================
-
-  public:
-    void cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx);
-
-  private:
-    void cal_slater_Fk(const UnitCell& ucell,const int L, const int T); // L:angular momnet, T:atom type
-    void cal_yukawa_lambda(double** rho, const int& nrxx);
-
-    double spherical_Bessel(const int k, const double r, const double lambda);
-    double spherical_Hankel(const int k, const double r, const double lambda);
-
-#ifdef __LCAO
-  public:
     /**
      * @brief get the density matrix of target spin
      * nspin = 1 and 4 : ispin should be 0
@@ -154,21 +89,14 @@ class Plus_U : public Plus_U_Base
     void set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dm_in_dftu_cd);
 
     /// read-only accessors for state needed by DFTU_LCAO free functions
-    const Parallel_Orbitals* get_paraV() const { return paraV; }
-    int get_npol() const { return npol; }
-    int get_nlocal() const { return nlocal; }
-    const std::string& get_ks_solver() const { return ks_solver; }
     const std::vector<double>& get_orb_cutoff() const { return orb_cutoff_; }
-    bool is_gamma_only_local() const { return gamma_only_local; }
-    bool is_cal_force() const { return cal_force; }
-    bool is_cal_stress() const { return cal_stress; }
+    double get_yukawa_lambda() const { return yukawa_lambda; }
+    const LCAO_Orbitals* get_ptr_orb() const { return ptr_orb_; }
 
   private:
-    const UnitCell* ucell = nullptr;
     const elecstate::DensityMatrix<double, double>* dm_in_dftu_d = nullptr;
     const elecstate::DensityMatrix<std::complex<double>, double>* dm_in_dftu_cd = nullptr;
 #endif
 };
-
 
 #endif

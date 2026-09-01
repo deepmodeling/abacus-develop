@@ -30,6 +30,8 @@ namespace DFTU_LCAO {
 /// Takes Plus_U& because it calls dftu.pot_onsite_real/complex,
 /// which are still members of Plus_U (defined in dftu_tools.cpp).
 void force_stress(Plus_U& dftu,
+                  const bool cal_force,
+                  const bool cal_stress,
                   const UnitCell& ucell,
                   const Grid_Driver& gd,
                   std::vector<std::vector<double>>* dmk_d,
@@ -39,7 +41,8 @@ void force_stress(Plus_U& dftu,
                   ModuleBase::matrix& force_dftu,
                   ModuleBase::matrix& stress_dftu,
                   const K_Vectors& kv,
-                  const int npol);
+                  const int npol,
+                  const bool gamma_only_local);
 
 /// @brief Force contribution at a k-point (multik path).
 void cal_force_k(int nlocal,

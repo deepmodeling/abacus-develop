@@ -85,14 +85,14 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @brief calculate the <phi|alpha^I> overlap values and save them in this->nlm_tot
      * it will be reused in the calculation of calculate_HR()
      */
-    void cal_nlm_all(const Parallel_Orbitals* paraV);
+    void cal_nlm_all(const Parallel_Orbitals* pv);
 
     /**
      * @brief calculate the occ_mm' = \sum_R DMR*<phi_0|alpha^I_m'><alpha^I_m'|phi_R> matrix for each atom to add U
      */
     void cal_occ(const int& iat1,
                  const int& iat2,
-                 const Parallel_Orbitals* paraV,
+                 const Parallel_Orbitals* pv,
                  const std::unordered_map<int, std::vector<double>>& nlm1_all,
                  const std::unordered_map<int, std::vector<double>>& nlm2_all,
                  const double* data_pointer,
@@ -109,7 +109,7 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_HR_IJR(const int& iat1,
                     const int& iat2,
-                    const Parallel_Orbitals* paraV,
+                    const Parallel_Orbitals* pv,
                     const std::unordered_map<int, std::vector<double>>& nlm1_all,
                     const std::unordered_map<int, std::vector<double>>& nlm2_all,
                     const std::vector<TR>& pot_onsite_in,
@@ -120,7 +120,7 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_force_IJR(const int& iat1,
                        const int& iat2,
-                       const Parallel_Orbitals* paraV,
+                       const Parallel_Orbitals* pv,
                        const std::unordered_map<int, std::vector<double>>& nlm1_all,
                        const std::unordered_map<int, std::vector<double>>& nlm2_all,
                        const std::vector<double>& pot_onsite_in,
@@ -133,7 +133,7 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_stress_IJR(const int& iat1,
                         const int& iat2,
-                        const Parallel_Orbitals* paraV,
+                        const Parallel_Orbitals* pv,
                         const std::unordered_map<int, std::vector<double>>& nlm1_all,
                         const std::unordered_map<int, std::vector<double>>& nlm2_all,
                         const std::vector<double>& pot_onsite_in,

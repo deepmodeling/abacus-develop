@@ -27,7 +27,7 @@ void OperatorDFTU<OperatorLCAO<double, double>>::contributeHk(int ik)
     // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
     std::vector<double> pot_uterm(this->hsk->get_pv()->nloc);
 
-    DFTU_LCAO::pot_uterm_real(*this->dftu, ik, &pot_uterm[0], isk, this->hsk->get_sk(), this->npol);
+    DFTU_LCAO::pot_uterm_real(*this->dftu, *this->ucell, this->hsk->get_pv(), ik, &pot_uterm[0], isk, this->hsk->get_sk(), this->npol);
 
     double* hk = this->hsk->get_hk();
 
@@ -48,7 +48,7 @@ void OperatorDFTU<OperatorLCAO<std::complex<double>, double>>::contributeHk(int 
     // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
     std::vector<std::complex<double>> pot_uterm(this->hsk->get_pv()->nloc);
 
-    DFTU_LCAO::pot_uterm_complex(*this->dftu, ik, &pot_uterm[0], isk, this->hsk->get_sk(), this->npol);
+    DFTU_LCAO::pot_uterm_complex(*this->dftu, *this->ucell, this->hsk->get_pv(), ik, &pot_uterm[0], isk, this->hsk->get_sk(), this->npol);
 
     std::complex<double>* hk = this->hsk->get_hk();
 
@@ -68,7 +68,7 @@ void OperatorDFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>::con
     // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
     std::vector<std::complex<double>> pot_uterm(this->hsk->get_pv()->nloc);
 
-    DFTU_LCAO::pot_uterm_complex(*this->dftu, ik, &pot_uterm[0], isk, this->hsk->get_sk(), this->npol);
+    DFTU_LCAO::pot_uterm_complex(*this->dftu, *this->ucell, this->hsk->get_pv(), ik, &pot_uterm[0], isk, this->hsk->get_sk(), this->npol);
 
     std::complex<double>* hk = this->hsk->get_hk();
     for (int irc = 0; irc < this->hsk->get_pv()->nloc; irc++)

@@ -457,7 +457,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             std::vector<std::vector<double>>* dmk_d = nullptr;
             std::vector<std::vector<std::complex<double>>>* dmk_c = nullptr;
             assign_dmk_ptr<T>(dmat.dm, dmk_d, dmk_c, PARAM.globalv.gamma_only_local);
-            DFTU_LCAO::force_stress(dftu, ucell, gd, dmk_d, dmk_c, pv, fsr_dftu, force_u, stress_u, kv, PARAM.globalv.npol);
+            DFTU_LCAO::force_stress(dftu, isforce, isstress, ucell, gd, dmk_d, dmk_c, pv, fsr_dftu, force_u, stress_u, kv, PARAM.globalv.npol, PARAM.globalv.gamma_only_local);
         }
         else
         {
@@ -877,6 +877,12 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             {
                 ModuleIO::print_stress("DeltaSpin  STRESS", stress_dspin, screen, ry, GlobalV::ofs_running);
             }
+#ifdef __EXX
+            if (cal_exx)
+            {
+                ModuleIO::print_stress("EXX      STRESS", stress_exx, screen, ry, GlobalV::ofs_running);
+            }
+#endif
             ModuleIO::print_stress("TOTAL    STRESS", scs, screen, ry, GlobalV::ofs_running);
         } // end of test
 

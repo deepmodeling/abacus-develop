@@ -1,5 +1,5 @@
-#ifndef TOWannier90_PW_H
-#define TOWannier90_PW_H
+#ifndef TO_W90_PW_H
+#define TO_W90_PW_H
 
 #include <iostream>
 #include <algorithm>
@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <vector>
 
-#include "to_wannier90.h"
+#include "to_w90.h"
 
 #include "source_base/complexmatrix.h"
 #include "source_base/global_function.h"
@@ -17,19 +17,24 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_psi/psi.h"
 
-class toWannier90_PW : public toWannier90
+class toW90_PW : public toW90
 {
   public:
-    toWannier90_PW(
+    toW90_PW(
       const bool &out_wannier_mmn, 
       const bool &out_wannier_amn, 
       const bool &out_wannier_unk, 
       const bool &out_wannier_eig,
       const bool &out_wannier_wvfn_formatted, 
       const std::string &nnkpfile,
-      const std::string &wannier_spin
+      const std::string &wannier_spin,
+      const int &nspin,
+      const int &nbands,
+      const int &nqx,
+      const double &dq,
+      const int &npol
     );
-    ~toWannier90_PW();
+    ~toW90_PW();
 
     void calculate(
       const UnitCell& ucell,
@@ -49,7 +54,7 @@ class toWannier90_PW : public toWannier90
       const psi::Psi<double>* psi
     )
     {
-      throw std::logic_error("The wave function of toWannier90_PW is generally a std::complex<double> type.");
+      throw std::logic_error("The wave function of toW90_PW is generally a std::complex<double> type.");
     }
 
     void cal_Amn(const psi::Psi<std::complex<double>>& psi_pw, const ModulePW::PW_Basis_K* wfcpw);

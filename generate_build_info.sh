@@ -257,7 +257,8 @@ if [ "${USE_CUDA}" == "ON" ]; then
 fi
 # --- Final File Generation ---
 
-INPUT_FILE="source_io/build_info.h.in"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INPUT_FILE="${SCRIPT_DIR}/source/source_io/build_info.h.in"
 
 # Use sed to replace all placeholders with detected values
 # Note the use of different delimiters (#) for paths to avoid conflicts with /
