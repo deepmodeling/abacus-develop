@@ -678,7 +678,8 @@ struct Input_para
     std::string sternheimer_mpi_layout = "frequency_grouped"; ///< MPI ownership layout for response equations
     bool sternheimer_delta = false; ///< whether to use Delta-Sternheimer projected solver for Sternheimer chi0 output
     bool sternheimer_grid_diagnostics = false; ///< whether to write Delta-Sternheimer grid component diagnostics
-    int sternheimer_fd_order = 2; ///< Cartesian finite-difference Laplacian order: 2, 4, 6, or 8
+    int sternheimer_fd_order = 8; ///< Cartesian finite-difference Laplacian order: 2, 4, 6, or 8
+    double sternheimer_response_ecutwfc = 0.0; ///< response-grid cutoff in Ry; 0 reuses the PBE grid
     std::string sternheimer_delta_virtual_source
         = "ks_bands"; ///< fixed virtual source: complete unoccupied KS bands by default
     int sternheimer_delta_max_states = 0; ///< maximum fixed KS/AO virtual states; 0 means all accepted candidates

@@ -179,6 +179,11 @@ AddTest(
   SOURCES sternheimer_abacus_fd_adapter_test.cpp ../sternheimer_abacus_fd_adapter.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_kq.cpp
 )
 AddTest(
+  TARGET MODULE_RI_sternheimer_response_grid_test
+  LIBS parameter base ${math_libs} device container planewave
+  SOURCES sternheimer_response_grid_test.cpp ../sternheimer_response_grid.cpp
+)
+AddTest(
   TARGET MODULE_RI_sternheimer_abacus_fd_nonlocal_test
   LIBS parameter base ${math_libs} device container
   SOURCES sternheimer_abacus_fd_nonlocal_test.cpp

@@ -2028,6 +2028,21 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("must be 2, 4, 6, or 8"));
     }
+    { // sternheimer_response_ecutwfc
+        auto it = find_label("sternheimer_response_ecutwfc", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_DOUBLE_EQ(param.input.sternheimer_response_ecutwfc, 0.0);
+
+        it->second.str_values = {"30.0"};
+        it->second.read_value(it->second, param);
+        EXPECT_DOUBLE_EQ(param.input.sternheimer_response_ecutwfc, 30.0);
+
+        param.input.sternheimer_response_ecutwfc = -1.0;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("must be zero or positive"));
+    }
     { // sternheimer_delta_virtual_source
         auto it = find_label("sternheimer_delta_virtual_source", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());

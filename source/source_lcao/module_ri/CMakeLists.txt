@@ -35,6 +35,7 @@ if (ENABLE_LIBRI)
         sternheimer_kq.cpp
         sternheimer_periodic_solver.cpp
         sternheimer_rpa.cpp
+        sternheimer_response_grid.cpp
         sternheimer_runtime_options.cpp
         sternheimer_siab_mpi.cpp
         sternheimer_siab_memory.cpp
