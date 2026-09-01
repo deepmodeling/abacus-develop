@@ -12,6 +12,8 @@
 
 #include "source_base/global_variable.h"
 
+namespace legacy_global = GlobalV;
+
 /************************************************
  *  unit test of functions in parallel_global.cpp
  ***********************************************/
@@ -240,7 +242,7 @@ class ParaGlobalDeathTest : public ::testing::Test
         my_rank = mpi.GetRank();
 
         // init log file needed by WARNING_QUIT
-        GlobalV::ofs_warning.open("warning.log");
+        legacy_global::ofs_warning.open("warning.log");
 
 
     }
@@ -250,7 +252,7 @@ class ParaGlobalDeathTest : public ::testing::Test
     {
         if (real_rank != 0) return;
 
-        GlobalV::ofs_warning.close();
+        legacy_global::ofs_warning.close();
         remove("warning.log");
     }
 };
