@@ -1,3 +1,4 @@
+#include "../communication_domain.h"
 #include "../kernels/math_kernel_op.h"
 #include "../para_gemm.h"
 
@@ -61,6 +62,54 @@ double get_double(std::complex<double>& val)
 double get_double(double& val)
 {
     return val;
+}
+
+template <typename T>
+void expect_near_value(const T& actual, const T& expected)
+{
+    EXPECT_NEAR(std::abs(actual - expected), 0.0, 1.0e-5);
+}
+
+template <typename T>
+void test_additional_type_paths()
+{
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_communication_domain();
+    MPI_Comm world = domain.communicator();
+    const int rank = domain.rank();
+    const int size = domain.size();
+    const T alpha = static_cast<T>(1);
+    const T beta = static_cast<T>(0);
+    const T a[1] = {static_cast<T>(rank + 1)};
+    const T b[1] = {static_cast<T>(rank + 2)};
+
+    ModuleBase::PGemmCN<T> single;
+    single.set_dimension(MPI_COMM_SELF, MPI_COMM_SELF, 1, 1, 1, 1, 1, 1);
+    T single_result[1] = {};
+    single.multiply(alpha, a, b, beta, single_result);
+    expect_near_value(single_result[0], a[0] * b[0]);
+
+    ModuleBase::PGemmCN<T> column_parallel;
+    column_parallel.set_dimension(world, MPI_COMM_SELF, 1, 1, 1, 1, 1, size);
+    std::vector<T> column_result(size * size);
+    column_parallel.multiply(alpha, a, b, beta, column_result.data());
+    for (int column = 0; column < size; ++column)
+    {
+        for (int row = 0; row < size; ++row)
+        {
+            const T expected = static_cast<T>(row + 1) * static_cast<T>(column + 2);
+            expect_near_value(column_result[column * size + row], expected);
+        }
+    }
+
+    ModuleBase::PGemmCN<T> row_parallel;
+    row_parallel.set_dimension(world, MPI_COMM_SELF, 1, 1, 1, 1, 1, 1, 3);
+    std::vector<T> row_result(size);
+    row_parallel.multiply(alpha, a, b, beta, row_result.data());
+    for (int column = 0; column < size; ++column)
+    {
+        const T expected = static_cast<T>(rank + 1) * static_cast<T>(column + 2);
+        expect_near_value(row_result[column], expected);
+    }
 }
 
 void scatterv_data(const double* sendbuf,
@@ -434,9 +483,11 @@ TYPED_TEST(PgemmTest, divide_col)
                               this->nrow,
                               LDC_global,
                               2);
-    this->pgemm.multiply(this->alpha, this->A_local.data(), this->B_local.data(), this->beta, this->C_global.data()+ start);
-
-    
+    this->pgemm.multiply(this->alpha,
+                         this->A_local.data(),
+                         this->B_local.data(),
+                         this->beta,
+                         this->C_global.data() + start);
 
     for (int i = 0; i < this->ncolB; i++)
     {
@@ -468,9 +519,9 @@ TYPED_TEST(PgemmTest, divide_row)
 
     int LDC_local = this->ncolA + 2;
     std::vector<TypeParam> C_loc(LDC_local * ncolB_global, 0.0);
-    for(int i = 0; i < ncolB_global; i++)
+    for (int i = 0; i < ncolB_global; i++)
     {
-        for(int j = 0; j < this->ncolA; j++)
+        for (int j = 0; j < this->ncolA; j++)
         {
             C_loc[i * LDC_local + j] = this->C_global[i * LDC_global + start + j];
         }
@@ -487,8 +538,6 @@ TYPED_TEST(PgemmTest, divide_row)
                               3);
     this->pgemm.multiply(this->alpha, this->A_local.data(), this->B_local.data(), this->beta, C_loc.data());
 
-    
-
     for (int i = 0; i < ncolB_global; i++)
     {
         for (int j = 0; j < this->ncolA; j++)
@@ -498,6 +547,12 @@ TYPED_TEST(PgemmTest, divide_row)
                         1e-10);
         }
     }
+}
+
+TEST(PgemmAdditionalTypes, FloatAndComplexFloat)
+{
+    test_additional_type_paths<float>();
+    test_additional_type_paths<std::complex<float>>();
 }
 
 int main(int argc, char** argv)
