@@ -28,6 +28,7 @@
 #include "source_lcao/module_ri/sternheimer_grid_diagnostics.h"
 #include "source_lcao/module_ri/sternheimer_periodic_solver.h"
 #include "source_lcao/module_ri/sternheimer_rpa.h"
+#include "source_lcao/module_ri/sternheimer_response_grid.h"
 #include "source_lcao/module_ri/sternheimer_runtime_options.h"
 #include "source_lcao/module_ri/sternheimer_siab_mpi.h"
 #include "source_lcao/module_ri/sternheimer_siab_overlap.h"
@@ -2505,11 +2506,21 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
     }
     validate_sternheimer_periodic_kmesh(response_kmesh,
                                         static_cast<int>(response_kpoints.size()));
+    const bool use_delta_sternheimer = PARAM.inp.sternheimer_delta;
+    if (PARAM.inp.sternheimer_response_ecutwfc > 0.0 && !use_delta_sternheimer)
+    {
+        throw std::runtime_error("An independent Sternheimer response grid requires sternheimer_delta=true.");
+    }
+    SternheimerResponseGrid response_grid = make_sternheimer_response_grid(pw_basis,
+                                                                            PARAM.inp.ecutwfc,
+                                                                            PARAM.inp.sternheimer_response_ecutwfc,
+                                                                            PARAM.inp.fft_mode);
+    const ModulePW::PW_Basis& response_pw_basis = *response_grid.basis;
     const bool use_kpoint_mpi = kpoint_groups > 1;
     const bool use_parallel_grid_mpi = use_frequency_mpi || use_kpoint_mpi;
     const SternheimerABACUSFDGridData grid_data
-        = use_parallel_grid_mpi ? make_sternheimer_fd_full_grid(pw_basis)
-                                : make_sternheimer_fd_grid(pw_basis);
+        = use_parallel_grid_mpi ? make_sternheimer_fd_full_grid(response_pw_basis)
+                                : make_sternheimer_fd_grid(response_pw_basis);
     const bool use_symmetry_partial_response = PARAM.inp.symmetry == "1";
     const bool write_kresolved_diagnostic
         = !use_symmetry_partial_response && env_is_true(kKResolvedDiagnosticEnv);
@@ -2662,7 +2673,6 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
         = use_nested_response_mpi ? nested_replica_layout.local_response_slot % nfreq : 0;
     const int default_frequency_rank_shift = use_frequency_mpi && GlobalV::NPROC > 1 ? 1 : 0;
     const int frequency_rank_shift = int_from_env(kFrequencyRankShiftEnv, default_frequency_rank_shift);
-    const bool use_delta_sternheimer = PARAM.inp.sternheimer_delta;
     const SternheimerDeltaABlockMode delta_a_block_mode = delta_a_block_mode_from_env();
     const bool write_delta_components = use_delta_sternheimer && env_is_true(kDeltaComponentDiagnosticEnv);
     const bool write_lcao_sos = env_is_true(kLCAOSOSDiagnosticEnv);
@@ -2731,14 +2741,28 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                elapsed_seconds_since(chi0_start_time),
                                "nfreq=" + std::to_string(nfreq));
 
+    const std::vector<double> independent_response_full_potential
+        = response_grid.independent
+              ? restrict_sternheimer_real_field(*response_grid.serial_fine_basis,
+                                                *response_grid.serial_response_basis,
+                                                copy_sternheimer_full_local_potential(potential, pw_basis, 0))
+              : std::vector<double>();
     const std::vector<double> kpoint_parallel_full_potential
-        = use_kpoint_mpi ? copy_sternheimer_full_local_potential(potential, pw_basis, 0)
-                         : std::vector<double>();
+        = use_kpoint_mpi
+              ? (response_grid.independent
+                     ? independent_response_full_potential
+                     : copy_sternheimer_full_local_potential(potential, pw_basis, 0))
+              : std::vector<double>();
     const std::vector<double> diagnostic_fixed_local_potential
         = write_wavefunction_diagnostic
-              ? (use_kpoint_mpi
-                     ? copy_sternheimer_full_fixed_local_potential(potential, pw_basis)
-                     : copy_sternheimer_fixed_local_potential(potential, pw_basis))
+              ? (response_grid.independent
+                     ? restrict_sternheimer_real_field(
+                           *response_grid.serial_fine_basis,
+                           *response_grid.serial_response_basis,
+                           copy_sternheimer_full_fixed_local_potential(potential, pw_basis))
+                     : (use_kpoint_mpi
+                            ? copy_sternheimer_full_fixed_local_potential(potential, pw_basis)
+                            : copy_sternheimer_fixed_local_potential(potential, pw_basis)))
               : std::vector<double>();
     append_chi0_progress_event("full_grid_ready",
                                0,
@@ -2749,7 +2773,12 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                nullptr,
                                -1.0,
                                elapsed_seconds_since(chi0_start_time),
-                               "grid_size=" + std::to_string(grid_data.grid.size()));
+                               "pbe_grid=" + std::to_string(pw_basis.nx) + "x"
+                                   + std::to_string(pw_basis.ny) + "x" + std::to_string(pw_basis.nz)
+                                   + ",response_grid=" + std::to_string(grid_data.grid.nx) + "x"
+                                   + std::to_string(grid_data.grid.ny) + "x"
+                                   + std::to_string(grid_data.grid.nz) + ",grid_size="
+                                   + std::to_string(grid_data.grid.size()));
     append_chi0_progress_event("abfs_source_ready",
                                0,
                                -1,
@@ -2898,6 +2927,18 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                 << response_plan.qpoint[2] << '\n';
             out << "grid " << grid_data.grid.nx << ' ' << grid_data.grid.ny << ' ' << grid_data.grid.nz
                 << " size " << grid_data.grid.size() << " dV " << grid_data.volume_element << '\n';
+            out << "pbe_ecutwfc_Ry " << PARAM.inp.ecutwfc << '\n';
+            out << "sternheimer_response_ecutwfc_requested_Ry "
+                << PARAM.inp.sternheimer_response_ecutwfc << '\n';
+            out << "sternheimer_response_ecutwfc_Ry "
+                << (response_grid.independent ? PARAM.inp.sternheimer_response_ecutwfc : PARAM.inp.ecutwfc)
+                << '\n';
+            out << "sternheimer_response_grid_source "
+                << (response_grid.independent ? "independent" : "pbe") << '\n';
+            out << "pbe_grid " << pw_basis.nx << ' ' << pw_basis.ny << ' ' << pw_basis.nz << " size "
+                << pw_basis.nxyz << '\n';
+            out << "response_grid " << grid_data.grid.nx << ' ' << grid_data.grid.ny << ' '
+                << grid_data.grid.nz << " size " << grid_data.grid.size() << '\n';
             out << "abfs_channels " << num_channels << '\n';
             out << "perturbation_coulomb_kernel full_periodic_poisson\n";
             out << "periodic_kmesh " << response_kmesh[0] << ' ' << response_kmesh[1] << ' '
@@ -3239,14 +3280,16 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                        + " target_unoccupied="
                                        + std::to_string(target.unoccupied_functions.size()));
         const SternheimerFDHamiltonian hamiltonian = [&]() {
-            if (use_kpoint_mpi)
+            if (response_grid.independent || use_kpoint_mpi)
             {
                 SternheimerABACUSFDGridData target_grid_data = grid_data;
                 target_grid_data.grid.kpoint = sternheimer_lcao_grid_kpoint(target_record);
                 auto nonlocal_projector = make_sternheimer_fd_nonlocal_projector_from_unitcell(
                     ucell, target_grid_data.grid, target_grid_data.volume_element);
                 return make_sternheimer_fd_hamiltonian_from_local_potential(target_grid_data,
-                                                                             kpoint_parallel_full_potential,
+                                                                             response_grid.independent
+                                                                                 ? independent_response_full_potential
+                                                                                 : kpoint_parallel_full_potential,
                                                                              1.0,
                                                                              std::move(nonlocal_projector),
                                                                              PARAM.inp.sternheimer_fd_order);
@@ -4334,6 +4377,15 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
     }
     out << "grid " << grid_data.grid.nx << ' ' << grid_data.grid.ny << ' ' << grid_data.grid.nz << " size "
         << grid_data.grid.size() << " dV " << grid_data.volume_element << '\n';
+    out << "pbe_ecutwfc_Ry " << PARAM.inp.ecutwfc << '\n';
+    out << "sternheimer_response_ecutwfc_requested_Ry " << PARAM.inp.sternheimer_response_ecutwfc << '\n';
+    out << "sternheimer_response_ecutwfc_Ry "
+        << (response_grid.independent ? PARAM.inp.sternheimer_response_ecutwfc : PARAM.inp.ecutwfc) << '\n';
+    out << "sternheimer_response_grid_source " << (response_grid.independent ? "independent" : "pbe") << '\n';
+    out << "pbe_grid " << pw_basis.nx << ' ' << pw_basis.ny << ' ' << pw_basis.nz << " size " << pw_basis.nxyz
+        << '\n';
+    out << "response_grid " << grid_data.grid.nx << ' ' << grid_data.grid.ny << ' ' << grid_data.grid.nz << " size "
+        << grid_data.grid.size() << '\n';
     out << "nfreq " << nfreq << '\n';
     out << "frequency_grid_source " << frequency_grid_source << '\n';
     if (use_frequency_grid_file)

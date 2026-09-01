@@ -31,6 +31,22 @@ std::unique_ptr<ModulePW::PW_Basis> make_basis(const int nx, const int ny, const
     return basis;
 }
 
+std::unique_ptr<ModulePW::PW_Basis> make_cutoff_basis(const double ecutwfc)
+{
+    auto basis = std::make_unique<ModulePW::PW_Basis>("cpu", "double");
+#ifdef __MPI
+    basis->initmpi(1, 0, MPI_COMM_SELF);
+#endif
+    basis->initgrids(1.0,
+                     ModuleBase::Matrix3(8.0, 0.0, 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 8.0),
+                     4.0 * ecutwfc);
+    basis->initparameters(false, 4.0 * ecutwfc);
+    basis->fft_bundle.initfftmode(0);
+    basis->setuptransform();
+    basis->collect_local_pw();
+    return basis;
+}
+
 std::size_t index(const int ix, const int iy, const int iz, const int ny, const int nz)
 {
     return static_cast<std::size_t>((ix * ny + iy) * nz + iz);
@@ -98,6 +114,34 @@ TEST(SternheimerResponseGrid, SameGridRestrictionReturnsInputExactly)
     const auto output = ModuleRI::restrict_sternheimer_real_field(*basis, *basis, input);
 
     EXPECT_EQ(output, input);
+}
+
+TEST(SternheimerResponseGrid, EqualCutoffKeepsTheOriginalPBEGridPath)
+{
+    const auto pbe_basis = make_cutoff_basis(80.0);
+
+    const auto response_grid = ModuleRI::make_sternheimer_response_grid(*pbe_basis, 80.0, 80.0, 0);
+
+    EXPECT_FALSE(response_grid.independent);
+    EXPECT_EQ(response_grid.basis, pbe_basis.get());
+    EXPECT_EQ(response_grid.serial_fine_basis, nullptr);
+    EXPECT_EQ(response_grid.serial_response_basis, nullptr);
+}
+
+TEST(SternheimerResponseGrid, ReducedCutoffBuildsSerialFineAndResponseBases)
+{
+    const auto pbe_basis = make_cutoff_basis(80.0);
+
+    const auto response_grid = ModuleRI::make_sternheimer_response_grid(*pbe_basis, 80.0, 30.0, 0);
+
+    ASSERT_TRUE(response_grid.independent);
+    ASSERT_NE(response_grid.serial_fine_basis, nullptr);
+    ASSERT_NE(response_grid.serial_response_basis, nullptr);
+    EXPECT_EQ(response_grid.serial_fine_basis->nx, pbe_basis->nx);
+    EXPECT_EQ(response_grid.serial_fine_basis->ny, pbe_basis->ny);
+    EXPECT_EQ(response_grid.serial_fine_basis->nz, pbe_basis->nz);
+    EXPECT_LT(response_grid.serial_response_basis->nxyz, pbe_basis->nxyz);
+    EXPECT_EQ(response_grid.basis, response_grid.serial_response_basis.get());
 }
 
 TEST(SternheimerResponseGrid, RestrictionPreservesConstant)
