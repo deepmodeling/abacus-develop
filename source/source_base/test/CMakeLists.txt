@@ -3,7 +3,7 @@ install(DIRECTORY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET MODULE_BASE_blas_connector
   LIBS parameter  base device
-  SOURCES blas_connector_test.cpp
+  SOURCES blas_connector_test.cpp blas_connector_additional_test.cpp
 )
 AddTest(
   TARGET MODULE_BASE_atom_in
