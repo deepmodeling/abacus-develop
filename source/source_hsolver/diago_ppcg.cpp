@@ -8,6 +8,7 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include <cstdlib>
 #include <fstream>
+#include <limits>
 #include <numeric>
 
 namespace hsolver {
@@ -518,24 +519,37 @@ namespace hsolver {
 //==============================================================================
 
 // ---------------------------------------------------------------------------
-// Lock converged eigenpairs: bands whose eigenvalue stops changing between
-// successive Rayleigh-Ritz steps are considered converged.  This matches the
-// convergence criterion used by CG and Davidson (eigenvalue change < ethr).
+// Lock converged eigenpairs: a band whose residual norm (H|psi> - eps*S|psi>)
+// is below the threshold is converged.  This matches the CG/BPCG criterion and
+// detects both gradual and one-step convergence.
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::lock_epairs(
-    const Real* eigenvalue_prev,
-    const Real* eigenvalue,
+    const std::vector<T>& residual,
     const std::vector<double>& ethr_band,
     std::vector<int>& active_cols) const
 {
     active_cols.clear();
     active_cols.reserve(n_band_);
+    std::vector<double> nrm2_all(n_band_, 0.0);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
+#endif
     for (int j = 0; j < n_band_; ++j)
     {
+        double nrm2 = 0.0;
+        for (int ig = 0; ig < n_dim_; ++ig)
+        {
+            nrm2 += double(std::norm(residual[idx(ig, j, ld_psi_)]));
+        }
+        nrm2_all[j] = nrm2;
+    }
+    reduce_pool_if_mpi_ready(nrm2_all.data(), n_band_);
+    for (int j = 0; j < n_band_; ++j)
+    {
+        const Real rnrm = std::sqrt(std::max(Real(nrm2_all[j]), Real(0)));
         const Real thr = std::max(Real(ethr_band[j]), diag_thr_);
-        const Real delta = std::abs(eigenvalue[j] - eigenvalue_prev[j]);
-        if (delta > thr)
+        if (rnrm > thr)
         {
             active_cols.push_back(j);
         }
@@ -549,10 +563,11 @@ template <typename T, typename Device>
 void DiagoPPCG<T, Device>::build_small_subspace(
     const T* psi,
     const std::vector<int>& cols,
+    int nblk,
     SmallSubspace& subspace) const
 {
     const int l = int(cols.size());
-    const int dim = 2 * l;
+    const int dim = nblk * l;
     subspace.k.resize(dim * dim);
     subspace.m.resize(dim * dim);
     subspace.eval.resize(dim);
@@ -563,6 +578,12 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     copy_cols(w_.data(), cols, subspace.w_l);
     copy_cols(sw_.data(), cols, subspace.sw_l);
     copy_cols(hw_.data(), cols, subspace.hw_l);
+    if (nblk >= 3)
+    {
+        copy_cols(p_.data(), cols, subspace.p_l);
+        copy_cols(sp_.data(), cols, subspace.sp_l);
+        copy_cols(hp_.data(), cols, subspace.hp_l);
+    }
 
     // ---------------------------------------------------------------------------
     // Normalize w columns to unit S-norm for numerical stability.
@@ -617,6 +638,13 @@ void DiagoPPCG<T, Device>::build_small_subspace(
                         subspace.sw_l,
                         subspace.hw_l,
                         l);
+    if (nblk >= 3)
+    {
+        scale_to_unit_snorm(subspace.p_l,
+                            subspace.sp_l,
+                            subspace.hp_l,
+                            l);
+    }
 
     auto copy_block = [&](const std::vector<T>& src,
                           const int col0,
@@ -657,6 +685,12 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     copy_block(subspace.w_l, l, subspace.basis);
     copy_block(subspace.hw_l, l, subspace.hbasis);
     copy_block(subspace.sw_l, l, subspace.sbasis);
+    if (nblk >= 3)
+    {
+        copy_block(subspace.p_l, 2 * l, subspace.basis);
+        copy_block(subspace.hp_l, 2 * l, subspace.hbasis);
+        copy_block(subspace.sp_l, 2 * l, subspace.sbasis);
+    }
 
     gram(subspace.basis.data(), subspace.hbasis.data(), dim, dim, subspace.k, dim);
     gram(subspace.basis.data(), subspace.sbasis.data(), dim, dim, subspace.m, dim);
@@ -721,16 +755,23 @@ void DiagoPPCG<T, Device>::update_one_block(
     T* psi,
     const std::vector<int>& cols,
     int l,
+    int nblk,
     SmallSubspace& subspace)
 {
-    const int dim = 2 * l;
+    const int dim = nblk * l;
     const T* eigvec = subspace.k.data();
 
     subspace.psi_new.assign(ld_psi_ * l, T(0));
     subspace.spsi_new.assign(ld_psi_ * l, T(0));
     subspace.hpsi_new.assign(ld_psi_ * l, T(0));
+    subspace.p_new.assign(ld_psi_ * l, T(0));
+    subspace.sp_new.assign(ld_psi_ * l, T(0));
+    subspace.hp_new.assign(ld_psi_ * l, T(0));
 
+    // coeff_state: full Ritz-vector rows [psi, w, p] -> new iterate.
+    // coeff_p:     the [w, p] rows (psi rows zero) -> new search direction.
     subspace.coeff_state.resize(dim * l);
+    subspace.coeff_p.resize(dim * l);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (l * l > ppcg_openmp_work_threshold)
 #endif
@@ -738,13 +779,24 @@ void DiagoPPCG<T, Device>::update_one_block(
     {
         for (int i = 0; i < l; ++i)
         {
-            subspace.coeff_state[i + j * dim] = eigvec[i + j * dim];
-            subspace.coeff_state[(l + i) + j * dim] = eigvec[(l + i) + j * dim];
+            const T c_psi = eigvec[i + j * dim];
+            const T c_w = eigvec[(l + i) + j * dim];
+            subspace.coeff_state[i + j * dim] = c_psi;
+            subspace.coeff_state[(l + i) + j * dim] = c_w;
+            subspace.coeff_p[i + j * dim] = T(0);
+            subspace.coeff_p[(l + i) + j * dim] = c_w;
+            if (nblk >= 3)
+            {
+                const T c_p = eigvec[(2 * l + i) + j * dim];
+                subspace.coeff_state[(2 * l + i) + j * dim] = c_p;
+                subspace.coeff_p[(2 * l + i) + j * dim] = c_p;
+            }
         }
     }
 
     auto fill_basis = [&](const std::vector<T>& a,
                           const std::vector<T>& b,
+                          const std::vector<T>& c,
                           std::vector<T>& basis)
     {
         basis.resize(ld_psi_ * dim);
@@ -759,6 +811,12 @@ void DiagoPPCG<T, Device>::update_one_block(
             std::copy(b.begin() + j * ld_psi_,
                       b.begin() + (j + 1) * ld_psi_,
                       basis.begin() + (l + j) * ld_psi_);
+            if (nblk >= 3)
+            {
+                std::copy(c.begin() + j * ld_psi_,
+                          c.begin() + (j + 1) * ld_psi_,
+                          basis.begin() + (2 * l + j) * ld_psi_);
+            }
         }
     };
 
@@ -783,17 +841,23 @@ void DiagoPPCG<T, Device>::update_one_block(
                                          ld_psi_);
     };
 
-    fill_basis(subspace.psi_l, subspace.w_l, subspace.basis);
-    fill_basis(subspace.spsi_l, subspace.sw_l, subspace.sbasis);
-    fill_basis(subspace.hpsi_l, subspace.hw_l, subspace.hbasis);
+    fill_basis(subspace.psi_l, subspace.w_l, subspace.p_l, subspace.basis);
+    fill_basis(subspace.spsi_l, subspace.sw_l, subspace.sp_l, subspace.sbasis);
+    fill_basis(subspace.hpsi_l, subspace.hw_l, subspace.hp_l, subspace.hbasis);
 
     combine(subspace.basis, subspace.coeff_state, subspace.psi_new);
     combine(subspace.sbasis, subspace.coeff_state, subspace.spsi_new);
     combine(subspace.hbasis, subspace.coeff_state, subspace.hpsi_new);
+    combine(subspace.basis, subspace.coeff_p, subspace.p_new);
+    combine(subspace.sbasis, subspace.coeff_p, subspace.sp_new);
+    combine(subspace.hbasis, subspace.coeff_p, subspace.hp_new);
 
     scatter_cols(psi, cols, subspace.psi_new);
     scatter_cols(spsi_.data(), cols, subspace.spsi_new);
     scatter_cols(hpsi_.data(), cols, subspace.hpsi_new);
+    scatter_cols(p_.data(), cols, subspace.p_new);
+    scatter_cols(sp_.data(), cols, subspace.sp_new);
+    scatter_cols(hp_.data(), cols, subspace.hp_new);
 }
 
 // ---------------------------------------------------------------------------
@@ -805,11 +869,6 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
     std::vector<int>& active_cols,
     const std::vector<double>& ethr_band)
 {
-    // Remember the eigenvalues of the previous step; convergence is measured
-    // as the eigenvalue change between successive Rayleigh-Ritz steps.
-    eval_prev_.resize(n_band_);
-    std::copy(eigenvalue, eigenvalue + n_band_, eval_prev_.begin());
-
     gram(psi, hpsi_.data(), n_band_, n_band_, rr_hsub_, n_band_);
     gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
 
@@ -916,7 +975,7 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
         }
     }
 
-    lock_epairs(eval_prev_.data(), eigenvalue, ethr_band, active_cols);
+    lock_epairs(w_, ethr_band, active_cols);
 }
 
 } // namespace hsolver
@@ -954,6 +1013,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     w_.assign(sz, T(0));
     sw_.assign(sz, T(0));
     hw_.assign(sz, T(0));
+    p_.assign(sz, T(0));
+    sp_.assign(sz, T(0));
+    hp_.assign(sz, T(0));
     rr_psi_.resize(sz);
     rr_spsi_.resize(sz);
     rr_hpsi_.resize(sz);
@@ -1010,12 +1072,22 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     std::vector<T> w_active;
     std::vector<T> sw_active;
     std::vector<T> hw_active;
+    std::vector<T> p_active;
+    std::vector<T> sp_active;
+    std::vector<T> hp_active;
     w_active.reserve(sz);
     sw_active.reserve(sz);
     hw_active.reserve(sz);
+    p_active.reserve(sz);
+    sp_active.reserve(sz);
+    hp_active.reserve(sz);
     std::vector<int> cols;
     cols.reserve(std::min(sbsize_, ncol));
     SmallSubspace subspace;
+    bool use_p = false;  // previous search direction becomes available after
+                         // the first block update.
+    Real prev_res = std::numeric_limits<Real>::max();  // restart watchdog
+    int stall_streak = 0;                              // consecutive residual rises
 
     while (!active_cols.empty() && iter <= maxiter_)
     {
@@ -1041,14 +1113,39 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         scatter_cols(hw_.data(), active_cols, hw_active);
         scatter_cols(sw_.data(), active_cols, sw_active);
 
+        // S-orthogonalize the previous search direction p against psi, then
+        // re-apply H/S.  The full Rayleigh-Ritz rotation re-mixes psi columns
+        // every step, which would otherwise let p drift into psi's span and
+        // destabilize the [psi, w, p] block subspace.
+        if (use_p)
+        {
+            copy_cols(p_.data(), active_cols, p_active);
+            sp_active.assign(ld_psi_ * nact, T(0));
+            apply_s_current(p_active.data(), sp_active.data(), nact);
+            scatter_cols(sp_.data(), active_cols, sp_active);
+            project_against(psi_in, spsi_.data(), all_cols, p_, sp_, active_cols);
+
+            copy_cols(p_.data(), active_cols, p_active);
+            force_g0_real(p_active.data(), nact);
+            hp_active.assign(ld_psi_ * nact, T(0));
+            sp_active.assign(ld_psi_ * nact, T(0));
+            scatter_cols(p_.data(), active_cols, p_active);
+            apply_h(hpsi_func, p_active.data(), hp_active.data(), nact);
+            apply_s_current(p_active.data(), sp_active.data(), nact);
+            scatter_cols(hp_.data(), active_cols, hp_active);
+            scatter_cols(sp_.data(), active_cols, sp_active);
+        }
+
         avg_iter += double(nact) / double(ncol);
 
-        // Use the stable 2-block [psi, w] projected subspace.  The
-        // preconditioned residual w is normalized to unit S-norm before
-        // building the Gram matrix (see build_small_subspace), which
-        // keeps M well-conditioned even when residuals are small.
+        // LOBPCG-style block subspace.  On the first sweep only [psi, w] is
+        // available; afterwards the previous search direction p is added as a
+        // third block, which restores the conjugate-gradient acceleration.
+        // The w/p blocks are normalized to unit S-norm before building the
+        // Gram matrix (see build_small_subspace), keeping M well-conditioned.
 
         // Block subspace solve.
+        const int nblk = use_p ? 3 : 2;
         for (int isb = 0; isb < nsb; ++isb)
         {
             const int i0 = isb * sbsize_;
@@ -1056,16 +1153,50 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             cols.assign(active_cols.begin() + i0,
                         active_cols.begin() + i0 + l);
 
-            build_small_subspace(psi_in, cols, subspace);
-            solve_small_generalized(2 * l, subspace);
-            update_one_block(psi_in, cols, l, subspace);
+            build_small_subspace(psi_in, cols, nblk, subspace);
+            solve_small_generalized(nblk * l, subspace);
+            update_one_block(psi_in, cols, l, nblk, subspace);
         }
+        use_p = true;
 
         // Rayleigh-Ritz after each block update keeps the global subspace
         // synchronized with the updated active vectors.  The block update
         // can otherwise drift into an ill-conditioned basis before the next
         // Ritz rotation.
         rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+        // Restart the search direction if the residual keeps rising.  With a
+        // poor preconditioner the LOBPCG recurrence can stagnate (or slowly
+        // diverge) instead of reducing the residual.  Requiring several
+        // consecutive rises avoids resetting on a transient bump, and a reset
+        // falls back to a steepest-descent step to recover the low eigenpairs.
+        {
+            const Real cur_res = max_generalized_residual(hpsi_.data(),
+                                                          spsi_.data(),
+                                                          eigenvalue_in,
+                                                          ld_psi_,
+                                                          n_dim_,
+                                                          ncol);
+            const Real rel_tol = std::max(Real(1e-12),
+                                          Real(1e2) * std::numeric_limits<Real>::epsilon());
+            const bool rising = cur_res > prev_res * (Real(1) + rel_tol);
+            if (rising)
+            {
+                ++stall_streak;
+            }
+            else
+            {
+                stall_streak = 0;
+            }
+            if (stall_streak >= 3)
+            {
+                std::fill(p_.begin(), p_.end(), T(0));
+                std::fill(sp_.begin(), sp_.end(), T(0));
+                std::fill(hp_.begin(), hp_.end(), T(0));
+                use_p = false;
+                stall_streak = 0;
+            }
+            prev_res = cur_res;
+        }
         // The Rayleigh-Ritz rotation already keeps hpsi_/spsi_ consistent
         // with the rotated psi up to rounding; re-applying H/S exactly is
         // only needed every rr_step_ iterations to reset the accumulated
@@ -1074,6 +1205,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         {
             apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
             apply_s_current(psi_in, spsi_.data(), ncol);
+            apply_h(hpsi_func, p_.data(), hp_.data(), ncol);
+            apply_s_current(p_.data(), sp_.data(), ncol);
         }
         record_residual(iter, "rayleigh_ritz");
 

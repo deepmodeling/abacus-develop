@@ -83,13 +83,15 @@ private:
     std::vector<T> w_;       // residual / preconditioned residual
     std::vector<T> sw_;      // S * w
     std::vector<T> hw_;      // H * w
+    std::vector<T> p_;       // previous search direction (LOBPCG)
+    std::vector<T> sp_;      // S * p
+    std::vector<T> hp_;      // H * p
     std::vector<T> rr_psi_;  // Rayleigh-Ritz rotation workspace
     std::vector<T> rr_spsi_;
     std::vector<T> rr_hpsi_;
     std::vector<T> rr_hsub_;
     std::vector<T> rr_ssub_;
     std::vector<Real> rr_eval_;
-    std::vector<Real> eval_prev_;  // eigenvalues of the previous Rayleigh-Ritz step
 
     // -------------------------------------------------------------------------
     // Internal helpers
@@ -152,22 +154,29 @@ private:
         std::vector<T> w_l;
         std::vector<T> sw_l;
         std::vector<T> hw_l;
+        std::vector<T> p_l;
+        std::vector<T> sp_l;
+        std::vector<T> hp_l;
         std::vector<T> basis;
         std::vector<T> hbasis;
         std::vector<T> sbasis;
         std::vector<T> coeff_state;
+        std::vector<T> coeff_p;
         std::vector<T> psi_new;
         std::vector<T> spsi_new;
         std::vector<T> hpsi_new;
+        std::vector<T> p_new;
+        std::vector<T> sp_new;
+        std::vector<T> hp_new;
     };
 
-    void lock_epairs(const Real* eigenvalue_prev,
-                     const Real* eigenvalue,
+    void lock_epairs(const std::vector<T>& residual,
                      const std::vector<double>& ethr_band,
                      std::vector<int>& active_cols) const;
 
     void build_small_subspace(const T* psi,
                               const std::vector<int>& cols,
+                              int nblk,
                               SmallSubspace& subspace) const;
 
     void solve_small_generalized(int dim, SmallSubspace& subspace) const;
@@ -175,6 +184,7 @@ private:
     void update_one_block(T* psi,
                           const std::vector<int>& cols,
                           int l,
+                          int nblk,
                           SmallSubspace& subspace);
 
     void rayleigh_ritz(T* psi, Real* eigenvalue,
