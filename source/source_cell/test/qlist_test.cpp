@@ -166,10 +166,10 @@ class QListTest : public testing::Test
 TEST_F(QListTest, GenerateMeshFullSymmetry)
 {
     construct_ucell(stru_lib[0]);
-    GlobalV::ofs_running.open("tmp_qlist_1");
+    ofs_running.open("tmp_qlist_1");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     qlist.generate_mesh(ucell, symm, {8, 8, 8}, true);
 
@@ -196,7 +196,7 @@ TEST_F(QListTest, GenerateMeshFullSymmetry)
         }
     }
 
-    GlobalV::ofs_running.close();
+    ofs_running.close();
     ClearUcell();
     remove("tmp_qlist_1");
 }
@@ -204,10 +204,10 @@ TEST_F(QListTest, GenerateMeshFullSymmetry)
 TEST_F(QListTest, GenerateMeshSmallGrid)
 {
     construct_ucell(stru_lib[0]);
-    GlobalV::ofs_running.open("tmp_qlist_2");
+    ofs_running.open("tmp_qlist_2");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     qlist.generate_mesh(ucell, symm, {2, 2, 2}, true);
 
@@ -220,7 +220,7 @@ TEST_F(QListTest, GenerateMeshSmallGrid)
     EXPECT_DOUBLE_EQ(qlist.get_q(0).y, 0.0);
     EXPECT_DOUBLE_EQ(qlist.get_q(0).z, 0.0);
 
-    GlobalV::ofs_running.close();
+    ofs_running.close();
     ClearUcell();
     remove("tmp_qlist_2");
 }
@@ -228,10 +228,10 @@ TEST_F(QListTest, GenerateMeshSmallGrid)
 TEST_F(QListTest, GammaOnlyGrid)
 {
     construct_ucell(stru_lib[0]);
-    GlobalV::ofs_running.open("tmp_qlist_3");
+    ofs_running.open("tmp_qlist_3");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     qlist.generate_mesh(ucell, symm, {1, 1, 1}, true);
 
@@ -240,7 +240,7 @@ TEST_F(QListTest, GammaOnlyGrid)
     EXPECT_DOUBLE_EQ(qlist.wk[0], 1.0);
     EXPECT_DOUBLE_EQ(qlist.get_q(0).x, 0.0);
 
-    GlobalV::ofs_running.close();
+    ofs_running.close();
     ClearUcell();
     remove("tmp_qlist_3");
 }
@@ -248,10 +248,10 @@ TEST_F(QListTest, GammaOnlyGrid)
 TEST_F(QListTest, IrrepPlaceholder)
 {
     construct_ucell(stru_lib[0]);
-    GlobalV::ofs_running.open("tmp_qlist_4");
+    ofs_running.open("tmp_qlist_4");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     qlist.generate_mesh(ucell, symm, {2, 2, 2}, true);
 
@@ -267,7 +267,7 @@ TEST_F(QListTest, IrrepPlaceholder)
     EXPECT_TRUE(qlist.get_irrep_modes(qlist.get_nq(), 0).empty());
     EXPECT_TRUE(qlist.get_irrep_modes(0, 5).empty());
 
-    GlobalV::ofs_running.close();
+    ofs_running.close();
     ClearUcell();
     remove("tmp_qlist_4");
 }
@@ -275,10 +275,10 @@ TEST_F(QListTest, IrrepPlaceholder)
 TEST_F(QListTest, CartesianCoordinatesComputed)
 {
     construct_ucell(stru_lib[0]);
-    GlobalV::ofs_running.open("tmp_qlist_cart");
+    ofs_running.open("tmp_qlist_cart");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     qlist.generate_mesh(ucell, symm, {2, 2, 2}, true);
 
@@ -297,7 +297,7 @@ TEST_F(QListTest, CartesianCoordinatesComputed)
     EXPECT_DOUBLE_EQ(qlist.kvec_c[0].y, 0.0);
     EXPECT_DOUBLE_EQ(qlist.kvec_c[0].z, 0.0);
 
-    GlobalV::ofs_running.close();
+    ofs_running.close();
     ClearUcell();
     remove("tmp_qlist_cart");
 }
@@ -305,10 +305,10 @@ TEST_F(QListTest, CartesianCoordinatesComputed)
 TEST_F(QListTest, UseIrrepsSwitch)
 {
     construct_ucell(stru_lib[0]);
-    GlobalV::ofs_running.open("tmp_qlist_irreps");
+    ofs_running.open("tmp_qlist_irreps");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     // use_irreps = false: the q mesh is still reduced, but no irrep data
     qlist.generate_mesh(ucell, symm, {2, 2, 2}, false);
@@ -316,7 +316,7 @@ TEST_F(QListTest, UseIrrepsSwitch)
     EXPECT_EQ(qlist.get_nirr(0), 0); // no irrep data was computed
     EXPECT_TRUE(qlist.get_irrep_modes(0, 0).empty());
 
-    GlobalV::ofs_running.close();
+    ofs_running.close();
     ClearUcell();
     remove("tmp_qlist_irreps");
 }
@@ -324,10 +324,10 @@ TEST_F(QListTest, UseIrrepsSwitch)
 TEST_F(QListTest, PrintQlists)
 {
     construct_ucell(stru_lib[0]);
-    GlobalV::ofs_running.open("tmp_qlist_print");
+    ofs_running.open("tmp_qlist_print");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     qlist.generate_mesh(ucell, symm, {1, 1, 1}, false);
 
@@ -341,7 +341,7 @@ TEST_F(QListTest, PrintQlists)
     EXPECT_NE(content.find("Q-POINTS CARTESIAN COORDINATES"), std::string::npos);
     EXPECT_NE(content.find("Q-POINTS DIRECT COORDINATES"), std::string::npos);
 
-    GlobalV::ofs_running.close();
+    ofs_running.close();
     ClearUcell();
     remove("tmp_qlist_print");
     remove("tmp_qlist_print_out");

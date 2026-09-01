@@ -165,10 +165,10 @@ class DFPT_PW_DataTest : public testing::Test
     void init_qlist()
     {
         construct_ucell(stru_lib[0]);
-        GlobalV::ofs_running.open("tmp_dfpt_qlist");
+        ofs_running.open("tmp_dfpt_qlist");
         ModuleSymmetry::Symmetry symm;
         const int cal_symm_repr[2] = {0, 6};
-        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
         qlist.generate_mesh(ucell, symm, {2, 2, 2}, true);
         data.init(&qlist, 1, 2, 3, 0, 1, 1, nullptr);
     }
@@ -176,7 +176,7 @@ class DFPT_PW_DataTest : public testing::Test
     void clear_qlist()
     {
         data.clean();
-        GlobalV::ofs_running.close();
+        ofs_running.close();
         ClearUcell();
         remove("tmp_dfpt_qlist");
     }

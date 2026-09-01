@@ -1,5 +1,7 @@
 #include "gtest/gtest.h"
 
+#include <fstream>
+
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
 #include "source_cell/magnetism.h"
@@ -116,10 +118,9 @@ class LittleGroupTest : public testing::Test
             }
             ucell.nat += ucell.atoms[i].na;
         }
-        GlobalV::ofs_running.open("tmp_little_group");
+        std::ofstream ofs_running("tmp_little_group");
         const int cal_symm_repr[2] = {0, 6};
-        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
-        GlobalV::ofs_running.close();
+        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
     }
 
     void TearDown() override

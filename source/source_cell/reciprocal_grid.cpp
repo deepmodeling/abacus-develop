@@ -148,7 +148,7 @@ void ReciprocalGrid::kvec_c2d(const ModuleBase::Matrix3& latvec)
 
 void ReciprocalGrid::set_both_kvec(const ModuleBase::Matrix3& G, const ModuleBase::Matrix3& R, std::string& skpt)
 {
-    if (true) // Originally GlobalV::FINAL_SCF
+    if (true) // once-per-run gate (the FINAL_SCF hole is irrelevant here)
     {
         if (this->k_nkstot == 0)
         {
@@ -273,7 +273,7 @@ void ReciprocalGrid::print_klists(std::ofstream& ofs) const
                                  this->kvec_c[i].z,
                                  this->wk[i]);
     }
-    GlobalV::ofs_running << "\n" << table << std::endl;
+    ofs << "\n" << table << std::endl;
 
     table.clear();
     table += " K-POINTS DIRECT COORDINATES\n";
@@ -287,7 +287,7 @@ void ReciprocalGrid::print_klists(std::ofstream& ofs) const
                                  this->kvec_d[i].z,
                                  this->wk[i]);
     }
-    GlobalV::ofs_running << "\n" << table << std::endl;
+    ofs << "\n" << table << std::endl;
     return;
 }
 

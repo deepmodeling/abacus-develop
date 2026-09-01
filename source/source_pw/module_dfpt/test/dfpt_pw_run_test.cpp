@@ -162,16 +162,16 @@ class DFPT_PWRunTest : public testing::Test
     void SetUp() override
     {
         construct_ucell(stru_lib[0]);
-        GlobalV::ofs_running.open("tmp_dfpt_run");
+        ofs_running.open("tmp_dfpt_run");
         ModuleSymmetry::Symmetry symm;
         const int cal_symm_repr[2] = {0, 6};
-        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
         ucell.symm = symm;
     }
 
     void TearDown() override
     {
-        GlobalV::ofs_running.close();
+        ofs_running.close();
         ClearUcell();
         remove("tmp_dfpt_run");
     }
