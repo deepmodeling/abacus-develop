@@ -5185,48 +5185,42 @@
 ### dfpt_qmesh
 
 - **Type**: Vector of Int (1 or 3 values)
-- **Availability**: *esolver_type = dfpt*
 - **Description**: Set the Monkhorst-Pack q mesh (gamma-centered) for DFPT phonon calculations. The q mesh must be commensurate with the ground-state k mesh: k + q must be a point of the k list (modulo a reciprocal lattice vector). For example, a 4x4x4 KPT mesh is commensurate with dfpt_qmesh values of 1, 2, or 4 along each direction. This parameter is ignored when dfpt_qfile is set.
 - **Default**: 1 1 1
 
 ### dfpt_qfile
 
 - **Type**: String
-- **Availability**: *esolver_type = dfpt*
 - **Description**: Set the file containing the q points for DFPT, in the same format as the KPT file (Q_POINTS card: Gamma/Monkhorst-Pack mesh, or an explicit Direct/Cartesian list; symmetry reduction is not applied to file q lists). When set, it overrides dfpt_qmesh. Each q point must still be commensurate with the ground-state k mesh.
+- **Default**: ""
 
 ### dfpt_compute_q0
 
 - **Type**: Boolean
-- **Availability**: *esolver_type = dfpt*
 - **Description**: Whether to compute the macroscopic dielectric tensor (epsilon_inf) and the Born effective charges at q = 0 within the same DFPT run. Requires a q point at Gamma (the default dfpt_qmesh 1 1 1).
 - **Default**: false
 
 ### dfpt_loto
 
 - **Type**: Boolean
-- **Availability**: *esolver_type = dfpt*
 - **Description**: Whether to apply the Lyddane-Sachs-Teller non-analytic correction to the Gamma-point dynamical matrix, which splits the longitudinal and transverse optical modes. Requires dfpt_compute_q0 to be true, since the correction is built from epsilon_inf and the Born effective charges.
 - **Default**: false
 
 ### dfpt_conv_thr
 
 - **Type**: Real
-- **Availability**: *esolver_type = dfpt*
 - **Description**: Set the convergence threshold of the self-consistent DFPT cycle: the iteration stops when the relative residual of the first-order density ||drho_out - drho_in|| / ||drho_out|| drops below this value for every displacement.
 - **Default**: 1.0e-8
 
 ### dfpt_max_iter
 
 - **Type**: Integer
-- **Availability**: *esolver_type = dfpt*
 - **Description**: Set the maximum number of self-consistent DFPT iterations for each atomic displacement.
 - **Default**: 100
 
 ### dfpt_mix_beta
 
 - **Type**: Real
-- **Availability**: *esolver_type = dfpt*
 - **Description**: Set the plain-mixing coefficient of the first-order density in the self-consistent DFPT cycle. The response Jacobian has strongly negative eigenvalues on the smallest-G shells (Coulomb stiffness), so beta must stay below 2 / (1 + |lambda_min|); the default 0.4 keeps margin up to |lambda_min| ~ 3. A larger value accelerates convergence for weakly screened systems but may diverge.
 - **Default**: 0.4
 
