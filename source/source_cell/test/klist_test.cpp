@@ -395,6 +395,21 @@ TEST_F(KlistTest, ReadKpointsLine)
     EXPECT_EQ(kv->get_nkstot(), 122);
 }
 
+TEST_F(KlistTest, ReadKpointsLineRejectsZeroInterpolationCount)
+{
+    ModuleSymmetry::Symmetry::symm_flag = 0;
+    const bool gamma_only_local = false;
+    const double kspacing[3] = {0.0, 0.0, 0.0};
+    const std::string kmesh_type = "gamma";
+    const double koffset[3] = {0.0, 0.0, 0.0};
+    const std::string k_file = "./support/KPT_ZERO_LINE_COUNT";
+    kv->nspin = 1;
+
+    EXPECT_EXIT(kv->read_kpoints(ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset),
+                ::testing::ExitedWithCode(1),
+                "");
+}
+
 TEST_F(KlistTest, ReadKpointsCartesian)
 {
     const bool gamma_only_local = false;
