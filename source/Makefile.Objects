@@ -212,6 +212,7 @@ OBJS_CELL=atom_pseudo.o\
     setup_nonlocal.o\
     klist.o\
     k_vector_utils.o\
+    reciprocal_grid.o\
     cell_index.o\
     cell_tools.o\
     check_atomic_stru.o\
@@ -374,6 +375,8 @@ OBJS_HAMILT_OF=kedf_tf.o\
     evolve_ofdft.o\
 
 OBJS_DFPT=dfpt_metal.o\
+    dfpt_hamilt_shift.o\
+    dfpt_kq_basis.o\
     dfpt_pert.o\
     dfpt_phon.o\
     dfpt_pw.o\
@@ -564,6 +567,7 @@ OBJS_SYMMETRY=symm_other.o\
     symm_magnetic.o\
     symm_pricell.o\
     symm_rho.o\
+    little_group.o\
     symmetry.o\
 
 OBJS_XC=xc_functional.o\
@@ -674,6 +678,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_inp_model.o\
     module_parameter/read_inp_postproc.o\
     module_parameter/read_inp_exx_dftu.o\
+    module_parameter/read_inp_dfpt.o\
     module_parameter/read_inp_other.o\
     module_parameter/read_inp_out.o\
     module_parameter/read_set_globalv.o\
