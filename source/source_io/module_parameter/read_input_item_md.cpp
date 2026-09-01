@@ -191,7 +191,10 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.annotation = "extra MDCell neighbor-list radius";
         item.category = "Molecular dynamics";
         item.type = "Real";
-        item.description = "The extra neighbor-list radius in Angstrom for MDCell molecular dynamics. A positive value reuses the cutoff-plus-skin candidate list until an atom has moved by half this distance; 0 rebuilds the list every force evaluation.";
+        item.description = "The extra neighbor-list radius in Angstrom for MDCell molecular dynamics. This parameter "
+                           "is only used for classical potentials or machine-learned interatomic potentials. A "
+                           "positive value reuses the cutoff-plus-skin candidate list until an atom has moved by "
+                           "half this distance; 0 rebuilds the list every force evaluation.";
         item.default_value = "0.0";
         item.unit = "Angstrom";
         read_sync_double(input.mdp.md_neighbor_skin);

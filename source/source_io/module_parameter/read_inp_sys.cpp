@@ -79,7 +79,9 @@ void ReadInput::item_system()
         item.category = "System variables";
         item.type = "Three Integers";
         item.description = "Replicate the input STRU by Na, Nb, and Nc along its lattice vectors for "
-                           "distributed MDCell workflows. The default is 1 1 1, which preserves the input structure.";
+                           "distributed MDCell workflows. This parameter is only used for classical potentials "
+                           "or machine-learned interatomic potentials. The default is 1 1 1, which preserves "
+                           "the input structure.";
         item.default_value = "1 1 1";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             if (item.str_values.size() != 3)

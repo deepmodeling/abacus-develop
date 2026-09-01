@@ -607,7 +607,7 @@
 ### cell_replica
 
 - **Type**: Three Integers
-- **Description**: Replicate the input STRU by Na, Nb, and Nc along its lattice vectors for distributed MDCell workflows. The default is 1 1 1, which preserves the input structure.
+- **Description**: Replicate the input STRU by Na, Nb, and Nc along its lattice vectors for distributed MDCell workflows. This parameter is only used for classical potentials or machine-learned interatomic potentials. The default is 1 1 1, which preserves the input structure.
 - **Default**: 1 1 1
 
 ### calculation
@@ -3525,7 +3525,7 @@
 ### md_neighbor_skin
 
 - **Type**: Real
-- **Description**: The extra neighbor-list radius in Angstrom for MDCell molecular dynamics. A positive value reuses the cutoff-plus-skin candidate list until an atom has moved by half this distance; 0 rebuilds the list every force evaluation.
+- **Description**: The extra neighbor-list radius in Angstrom for MDCell molecular dynamics. This parameter is only used for classical potentials or machine-learned interatomic potentials. A positive value reuses the cutoff-plus-skin candidate list until an atom has moved by half this distance; 0 rebuilds the list every force evaluation.
 - **Default**: 0.0
 - **Unit**: Angstrom
 
