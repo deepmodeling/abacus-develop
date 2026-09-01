@@ -9,7 +9,7 @@ jobs:
   test-coverage:
     name: Generate Coverage Report
     runs-on: X64
-    container: ghcr.io/deepmodeling/abacus-gnu
+    container: ghcr.io/deepmodeling/abacus-gnu-lts
     steps:
       - name: Checkout
         uses: actions/checkout@v4

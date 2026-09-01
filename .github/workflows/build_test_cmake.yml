@@ -41,7 +41,7 @@ jobs:
             name: "Build without LCAO and MPI"
 
     name: ${{ matrix.name }}
-    container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
+    container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}-lts
     steps:
       - name: Checkout
         uses: actions/checkout@v4
