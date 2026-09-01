@@ -4,6 +4,7 @@
 #include "source_base/module_external/blacs_connector.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #include "source_base/tool_quit.h"
 
 typedef hamilt::MatrixBlock<double> matd;
