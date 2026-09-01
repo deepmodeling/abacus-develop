@@ -1,8 +1,10 @@
 #ifndef MD_FUNC_H
 #define MD_FUNC_H
 
-#include "md_statistics.h"
+#include "source_cell/md_cell.h"
 #include "source_esolver/esolver.h"
+
+#include <cstdint>
 
 class Parameter;
 
@@ -25,26 +27,11 @@ namespace MD_func
  */
 double gaussrand();
 
-/**
- * @brief initialize the atomic velocities
- *
- * @param unit_in unitcell information
- * @param my_rank MPI rank of the processor
- * @param restart whether restart the md
- * @param temperature ion temperature
- * @param allmass atomic mass
- * @param frozen_freedom the fixed freedom
- * @param ionmbl determine whether the atomic freedom is fixed
- * @param vel the genarated atomic velocities
- */
-void init_vel(const UnitCell& unit_in,
-              const int& my_rank,
+void init_vel(MDCell& mdcell,
+              const bool& init_vel,
               const bool& restart,
               double& temperature,
-              double* allmass,
-              int& frozen_freedom,
-              ModuleBase::Vector3<int>* ionmbl,
-              ModuleBase::Vector3<double>* vel);
+              std::int64_t& frozen_freedom);
 
 /**
  * @brief read in atomic velocities from STRU
@@ -95,19 +82,18 @@ void rescale_vel(const int& natom,
  *
  * @param p_esolver enrergy solver
  * @param istep current md step
- * @param unit_in unitcell information
+ * @param mdcell MD cell information
  * @param potential potential energy
- * @param force atomic forces
  * @param cal_stress whether calculate stress
  * @param virial lattice virial tensor
  */
 void force_virial(ModuleESolver::ESolver* p_esolver,
                   const int& istep,
-                  UnitCell& unit_in,
+                  MDCell& mdcell,
                   double& potential,
-                  ModuleBase::Vector3<double>* force,
                   const bool& cal_stress,
-                  ModuleBase::matrix& virial);
+                  ModuleBase::matrix& virial,
+                  const bool& md_out_force);
 /**
  * @brief calculate the ionic kinetic energy
  *
@@ -119,38 +105,17 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
 double kinetic_energy(const int& natom, const ModuleBase::Vector3<double>* vel, const double* allmass);
 
 /**
- * @brief calculate kinetic energy and temperature without writing caller-owned state
- */
-MDKineticState calc_kinetic_state(const int& natom,
-                                  const int& frozen_freedom,
-                                  const double* allmass,
-                                  const ModuleBase::Vector3<double>* vel);
-
-/**
  * @brief calculate the total stress tensor
  *
- * @param unit_in unitcell information
- * @param vel the atomic velocities
- * @param allmass atomic mass
+ * @param mdcell MD cell information
  * @param cal_stress whether calculate stress
  * @param virial lattice virial tensor
  * @param stress total stress tensor
  */
-void compute_stress(const UnitCell& unit_in,
-                    const ModuleBase::Vector3<double>* vel,
-                    const double* allmass,
+void compute_stress(const MDCell& mdcell,
                     const bool& cal_stress,
                     const ModuleBase::matrix& virial,
                     ModuleBase::matrix& stress);
-
-/**
- * @brief calculate stress and ionic temperature tensor without writing caller-owned state
- */
-MDStressState calc_stress_state(const int& natom,
-                                const double& omega,
-                                const ModuleBase::Vector3<double>* vel,
-                                const double* allmass,
-                                const ModuleBase::matrix& virial);
 
 /**
  * @brief output the stress information
@@ -169,19 +134,15 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
  *
  * @param step current md step
  * @param global_out_dir directory of output files
- * @param unit_in unitcell information
- * @param param_in input parameters used in md
+ * @param mdcell MD cell information
+ * @param param_in input parameters used in MD
  * @param virial lattice virial tensor
- * @param force atomic forces
- * @param vel atomic velocities
  */
 void dump_info(const int& step,
                const std::string& global_out_dir,
-               const UnitCell& unit_in,
+               const MDCell& mdcell,
                const Parameter& param_in,
-               const ModuleBase::matrix& virial,
-               const ModuleBase::Vector3<double>* force,
-               const ModuleBase::Vector3<double>* vel);
+               const ModuleBase::matrix& virial);
 
 /**
  * @brief obtain the atomic mass and whether the freedom is fixed
@@ -222,31 +183,12 @@ double current_temp(double& kinetic,
                     const int& frozen_freedom,
                     const double* allmass,
                     const ModuleBase::Vector3<double>* vel);
+double current_temp(double& kinetic,
+                    const MDCell& mdcell,
+                    const std::int64_t& frozen_freedom);
+std::int64_t global_dof(const MDCell& mdcell);
 
-/**
- * @brief get the temperature vectors
- *
- * @param natom the number of atoms
- * @param vel atomic velocities
- * @param allmass atomic mass
- * @param t_vector the temperature vectors
- */
-void temp_vector(const int& natom,
-                 const ModuleBase::Vector3<double>* vel,
-                 const double* allmass,
-                 ModuleBase::matrix& t_vector);
-
-/**
- * @brief determine thr current md step and temperature
- *
- * determine the current md step and temperature according to Restart_md.txt if md_restart is true
- *
- * @param my_rank MPI rank of the processor
- * @param file_dir the directory of read-in files
- * @param md_step current md step
- * @param temperature current temperature
- */
-void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature);
+void current_md_info(const MDCell& mdcell, const std::string& file_dir, int& md_step, double& temperature);
 
 } // namespace MD_func
 

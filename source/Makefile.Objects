@@ -772,7 +772,7 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       singular_value.o\
 
 OBJS_PARALLEL=parallel_common.o\
-    communication_domain.o\
+    parallel_cell.o\
     parallel_global.o\
     parallel_comm.o\
     parallel_grid.o\
