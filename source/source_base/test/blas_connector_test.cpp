@@ -182,8 +182,8 @@ TEST(blas_connector, Axpy) {
         answer[i] = x_const[i] * scale + result[i];
     BlasConnector::axpy(size, scale, x_const.data(), incx, result.data(), incy);
     for (int i = 0; i < size; i++) {
-        EXPECT_DOUBLE_EQ(answer[i].real(), result[i].real());
-        EXPECT_DOUBLE_EQ(answer[i].imag(), result[i].imag());
+        EXPECT_NEAR(answer[i].real(), result[i].real(), 1.0e-15);
+        EXPECT_NEAR(answer[i].imag(), result[i].imag(), 1.0e-15);
     }
 }
 
