@@ -86,6 +86,85 @@ class DFPTPhonSerialTest : public DFPTSerialBase
         return std::sqrt(ModuleBase::RYDBERG_SI / amu_kg)
                / (0.529177210903e-10 * 2.0 * ModuleBase::PI * 2.99792458e10);
     }
+
+    // common setup of the isotropic loto closed-form tests: zero 6x6
+    // dynamical matrix, eps_inf = 3I, Z*_1 = 1, Z*_2 = 2, and the
+    // two-atom 12/4 mass table for the mass lookup
+    void SetupIsotropicLoto()
+    {
+        data_.set_dynmat(0, ModuleBase::ComplexMatrix(6, 6, true));
+        ModuleBase::matrix eps(3, 3, true);
+        for (int d = 0; d < 3; ++d)
+        {
+            eps(d, d) = 3.0;
+        }
+        data_.set_dielectric(eps);
+        ModuleBase::matrix z1(3, 3, true);
+        ModuleBase::matrix z2(3, 3, true);
+        z1(0, 0) = z1(1, 1) = z1(2, 2) = 1.0;
+        z2(0, 0) = z2(1, 1) = z2(2, 2) = 2.0;
+        data_.set_born(0, z1);
+        data_.set_born(1, z2);
+        MakeTwoAtomCell();
+    }
+
+    // band 0 occupied with wg = 2, band 1 unoccupied
+    static ModuleBase::matrix MakeOccWeights()
+    {
+        ModuleBase::matrix wg(1, 2, true);
+        wg(0, 0) = 2.0;
+        wg(0, 1) = 0.0;
+        return wg;
+    }
+
+    // psi: band 0 = single plane wave at G' = 0 (c = 1, occupied),
+    // band 1 unoccupied. The buffer is allocated uninitialized; zero it so
+    // only the component set below is nonzero regardless of heap history
+    // from earlier tests. getgpluskcar returns the cartesian k+G, so the
+    // G = 0 entry is the one with k+G = k_cart.
+    psi::Psi<std::complex<double>> MakeSinglePlaneWavePsi(const ModuleBase::Vector3<double>& k_d)
+    {
+        const int npwk = pw_wfc_.npwk[0];
+        psi::Psi<std::complex<double>> psi(1, 2, npwk, npwk, true);
+        psi.zero_out();
+        const ModuleBase::Vector3<double> k_cart = k_d * ucell_.G;
+        for (int ig = 0; ig < npwk; ++ig)
+        {
+            const ModuleBase::Vector3<double> gk = pw_wfc_.getgpluskcar(0, ig);
+            if (std::abs(gk.x - k_cart.x) < 1e-10 && std::abs(gk.y - k_cart.y) < 1e-10
+                && std::abs(gk.z - k_cart.z) < 1e-10)
+            {
+                psi(0, 0, ig) = std::complex<double>(1.0, 0.0);
+                break;
+            }
+        }
+        return psi;
+    }
+
+    // analytic cross term sum_G'' conj(dpsi_G'') sum_i c_i
+    // RHS^a(G''-G'_i): the first-order local Coulomb potential on the k+q
+    // basis, RHS^a(w) = -i tpiba w_a Vloc(|w|^2) e^{-i 2pi w.tau} with
+    // w = G'' - G' + q (GS structure-factor phase convention); the
+    // Delta + q = 0 component is dropped by dVloc
+    std::complex<double> AnalyticCrossTerm(const ModuleDFPT::DFPT_KQ_Basis& kq,
+                                           const std::vector<std::complex<double>>& psi_coef,
+                                           const std::vector<ModuleBase::Vector3<double>>& psi_gcart,
+                                           const std::vector<std::complex<double>>& dpsi_inj,
+                                           int adir) const
+    {
+        std::complex<double> cross(0.0, 0.0);
+        for (int igl = 0; igl < kq.get_npwk(); ++igl)
+        {
+            const ModuleBase::Vector3<double> gpp = kq.get_gpluskq(igl);
+            for (size_t ic = 0; ic < psi_coef.size(); ++ic)
+            {
+                // AnalyticDVloc returns 0 at w = 0 (dVloc drop)
+                cross += psi_coef[ic] * std::conj(dpsi_inj[igl])
+                         * AnalyticDVloc(adir, gpp - psi_gcart[ic] + q_cart_);
+            }
+        }
+        return cross;
+    }
 };
 
 // ---------------------------------------------------------------------------
@@ -269,41 +348,15 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronAnalyticContraction)
 {
     // psi: band 0 = single plane wave at G'=0 (c=1, occupied, wg=2),
     // band 1 unoccupied. k = -q so the k+q basis vectors are plain G''.
-    const int npwk = pw_wfc_.npwk[0];
-    psi::Psi<std::complex<double>> psi(1, 2, npwk, npwk, true);
-    // the buffer is allocated uninitialized; zero it so only the components
-    // set below are nonzero regardless of heap history from earlier tests
-    psi.zero_out();
-    // locate the G=0 plane wave in the k ball: getgpluskcar returns the
-    // cartesian k+G (in 2pi/lat0 units), so look for k+G = k_cart, i.e. G = 0
-    const ModuleBase::Vector3<double> k_cart = k_d_ * ucell_.G;
-    int ig_zero = -1;
-    for (int ig = 0; ig < npwk; ++ig)
-    {
-        const ModuleBase::Vector3<double> gk = pw_wfc_.getgpluskcar(0, ig);
-        if (std::abs(gk.x - k_cart.x) < 1e-10 && std::abs(gk.y - k_cart.y) < 1e-10
-            && std::abs(gk.z - k_cart.z) < 1e-10)
-        {
-            ig_zero = ig;
-            break;
-        }
-    }
-    ASSERT_GE(ig_zero, 0);
-    psi(0, 0, ig_zero) = std::complex<double>(1.0, 0.0);
-    ModuleBase::matrix wg(1, 2, true);
-    wg(0, 0) = 2.0;
-    wg(0, 1) = 0.0;
+    psi::Psi<std::complex<double>> psi = MakeSinglePlaneWavePsi(k_d_);
+    ModuleBase::matrix wg = MakeOccWeights();
 
     // inject a known dpsi for displacement (atom 0, dir=1) on the k+q basis
-    const int npwk_kq = [&]()
-    {
-        ModuleDFPT::DFPT_KQ_Basis kq;
-        kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
-        return kq.get_npwk();
-    }();
-    std::vector<std::complex<double>> dpsi_inj(npwk_kq, std::complex<double>(0.0, 0.0));
+    ModuleDFPT::DFPT_KQ_Basis kq;
+    kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
+    std::vector<std::complex<double>> dpsi_inj(kq.get_npwk(), std::complex<double>(0.0, 0.0));
     dpsi_inj[0] = std::complex<double>(0.3, 0.1);
-    if (npwk_kq > 1)
+    if (kq.get_npwk() > 1)
     {
         dpsi_inj[1] = std::complex<double>(-0.2, 0.05);
     }
@@ -311,42 +364,22 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronAnalyticContraction)
 
     phon_.accumulate_electron(0, 0, 1, psi, wg, data_);
 
-    // expected: row 1 (atom 0, dir 1). The RHS on the k+q basis vector igl
-    // carries the momentum w = Delta + q (Delta = G'' since k + q = 0 makes
-    // every k+q basis vector a pure reciprocal-lattice harmonic G''):
-    // RHS^a(G'') = -i tpiba w_a Vloc(w^2) e^{-i 2pi w.tau} (psi is a single
-    // G'=0 plane wave and the Coulomb potential has no nonlocal part); the
-    // GS structure-factor phase convention is exp(-i 2pi g.tau).
-    ModuleDFPT::DFPT_KQ_Basis kq;
-    kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
+    // expected: row 1 (atom 0, dir 1) of the Hermitian 2n+1 accumulation:
+    // the row element receives wg*<dpsi|dV^a|psi> once per off-diagonal
+    // column; the diagonal column additionally gets its own conjugate
+    // (2 Re). The same-atom anharmonic d2 term is gate-skipped here: at
+    // this q = (0.13, 0, 0.07) the second-order potential carries
+    // 2q = (0.26, 0, 0.14), which is NOT a reciprocal vector, so the
+    // same-k expectation is momentum-forbidden (see the commensurate
+    // test below for the gate-on branch)
+    const std::vector<ModuleBase::Vector3<double>> g0(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int adir = 0; adir < 3; ++adir)
     {
-        std::complex<double> expect_cross(0.0, 0.0);
-        for (int igl = 0; igl < kq.get_npwk(); ++igl)
-        {
-            const ModuleBase::Vector3<double> g = kq.get_gpluskq(igl); // = G''
-            const ModuleBase::Vector3<double> w = g + q_cart_;          // Delta + q
-            const double w2 = w * w;
-            if (w2 < 1.0e-12)
-            {
-                continue; // Delta + q = 0 component dropped by dVloc
-            }
-            const double arg = -ModuleBase::TWO_PI * (w * tau_);
-            const std::complex<double> rhs = std::complex<double>(0.0, -1.0)
-                                             * (ucell_.tpiba * w[adir])
-                                             * VlocCoulomb(w2 * ucell_.tpiba2)
-                                             * std::complex<double>(std::cos(arg), std::sin(arg));
-            expect_cross += std::conj(dpsi_inj[igl]) * rhs;
-        }
-        // the same-atom anharmonic d2 term: at this q = (0.13, 0, 0.07) the
-        // second-order potential carries 2q = (0.26, 0, 0.14), which is NOT
-        // a reciprocal vector: the same-k expectation is momentum-forbidden
-        // and the production gate skips the whole term (zero contribution;
-        // see the commensurate test below for the gate-on branch)
-        // Hermitian 2n+1 accumulation: the row element receives
-        // wg*<dpsi|dV^a|psi> once per off-diagonal column; the diagonal
-        // column additionally gets its own conjugate (2 Re)
-        std::complex<double> expect = wg(0, 0) * expect_cross;
+        std::complex<double> expect = wg(0, 0) * AnalyticCrossTerm(kq,
+                                                                  {std::complex<double>(1.0, 0.0)},
+                                                                  g0,
+                                                                  dpsi_inj,
+                                                                  adir);
         if (adir == 1)
         {
             expect = 2.0 * expect.real();
@@ -375,26 +408,8 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2GateOffGenericQ)
     // nonzero here under the ungated convention (the (0,0) element involves
     // q_x^2 != 0), so this row is a sharp probe that the 2q-reciprocal gate
     // really suppresses the momentum-forbidden term at a generic q
-    const int npwk = pw_wfc_.npwk[0];
-    psi::Psi<std::complex<double>> psi(1, 2, npwk, npwk, true);
-    psi.zero_out();
-    const ModuleBase::Vector3<double> k_cart = k_d_ * ucell_.G;
-    int ig_zero = -1;
-    for (int ig = 0; ig < npwk; ++ig)
-    {
-        const ModuleBase::Vector3<double> gk = pw_wfc_.getgpluskcar(0, ig);
-        if (std::abs(gk.x - k_cart.x) < 1e-10 && std::abs(gk.y - k_cart.y) < 1e-10
-            && std::abs(gk.z - k_cart.z) < 1e-10)
-        {
-            ig_zero = ig;
-            break;
-        }
-    }
-    ASSERT_GE(ig_zero, 0);
-    psi(0, 0, ig_zero) = std::complex<double>(1.0, 0.0);
-    ModuleBase::matrix wg(1, 2, true);
-    wg(0, 0) = 2.0;
-    wg(0, 1) = 0.0;
+    psi::Psi<std::complex<double>> psi = MakeSinglePlaneWavePsi(k_d_);
+    ModuleBase::matrix wg = MakeOccWeights();
 
     ModuleDFPT::DFPT_KQ_Basis kq;
     kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
@@ -409,27 +424,14 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2GateOffGenericQ)
 
     phon_.accumulate_electron(0, 0, 0, psi, wg, data_);
 
+    const std::vector<ModuleBase::Vector3<double>> g0(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int adir = 0; adir < 3; ++adir)
     {
-        std::complex<double> expect_cross(0.0, 0.0);
-        for (int igl = 0; igl < kq.get_npwk(); ++igl)
-        {
-            const ModuleBase::Vector3<double> g = kq.get_gpluskq(igl);
-            const ModuleBase::Vector3<double> w = g + q_cart_;
-            const double w2 = w * w;
-            if (w2 < 1.0e-12)
-            {
-                continue;
-            }
-            const double arg = -ModuleBase::TWO_PI * (w * tau_);
-            const std::complex<double> rhs = std::complex<double>(0.0, -1.0)
-                                             * (ucell_.tpiba * w[adir])
-                                             * VlocCoulomb(w2 * ucell_.tpiba2)
-                                             * std::complex<double>(std::cos(arg),
-                                                                    std::sin(arg));
-            expect_cross += std::conj(dpsi_inj[igl]) * rhs;
-        }
-        std::complex<double> expect = wg(0, 0) * expect_cross;
+        std::complex<double> expect = wg(0, 0) * AnalyticCrossTerm(kq,
+                                                                  {std::complex<double>(1.0, 0.0)},
+                                                                  g0,
+                                                                  dpsi_inj,
+                                                                  adir);
         if (adir == 0)
         {
             expect = 2.0 * expect.real();
@@ -463,17 +465,18 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
     // pairwise differences of |psi|^2 (the G=0 diagonal difference hits the
     // w=0 skip of the kernel); the (0,-1,1) difference makes the mixed
     // component K_{2,1} nonzero as well
-    const int ncomp = 3;
-    const ModuleBase::Vector3<double> gfrac[ncomp]
+    const std::vector<ModuleBase::Vector3<double>> gfrac
         = {ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
            ModuleBase::Vector3<double>(0.0, 1.0, 0.0),
            ModuleBase::Vector3<double>(0.0, 0.0, 1.0)};
-    const std::complex<double> ccoef[ncomp] = {std::complex<double>(1.0, 0.0),
-                                               std::complex<double>(0.6, -0.3),
-                                               std::complex<double>(-0.4, 0.25)};
-    ModuleBase::Vector3<double> gcart[ncomp];
-    int ig_of[ncomp] = {-1, -1, -1};
-    for (int ic = 0; ic < ncomp; ++ic)
+    const std::vector<std::complex<double>> ccoef
+        = {std::complex<double>(1.0, 0.0),
+           std::complex<double>(0.6, -0.3),
+           std::complex<double>(-0.4, 0.25)};
+    const size_t ncomp = gfrac.size();
+    std::vector<ModuleBase::Vector3<double>> gcart(ncomp);
+    std::vector<int> ig_of(ncomp, -1);
+    for (size_t ic = 0; ic < ncomp; ++ic)
     {
         gcart[ic] = gfrac[ic] * ucell_.G;
     }
@@ -481,7 +484,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
     {
         const ModuleBase::Vector3<double> gprim
             = pw_wfc_.getgpluskcar(0, ig) - k_cart;
-        for (int ic = 0; ic < ncomp; ++ic)
+        for (size_t ic = 0; ic < ncomp; ++ic)
         {
             if (std::abs(gprim.x - gcart[ic].x) < 1e-10
                 && std::abs(gprim.y - gcart[ic].y) < 1e-10
@@ -491,22 +494,19 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
             }
         }
     }
-    for (int ic = 0; ic < ncomp; ++ic)
+    for (size_t ic = 0; ic < ncomp; ++ic)
     {
         ASSERT_GE(ig_of[ic], 0);
         psi(0, 0, ig_of[ic]) = ccoef[ic];
     }
-    ModuleBase::matrix wg(1, 2, true);
-    wg(0, 0) = 2.0;
-    wg(0, 1) = 0.0;
+    const ModuleBase::matrix wg = MakeOccWeights();
 
     // injected dpsi on the k+q = 0 ball (arbitrary coefficients)
     ModuleDFPT::DFPT_KQ_Basis kq;
     kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
-    const int npwk_kq = kq.get_npwk();
-    std::vector<std::complex<double>> dpsi_inj(npwk_kq, std::complex<double>(0.0, 0.0));
+    std::vector<std::complex<double>> dpsi_inj(kq.get_npwk(), std::complex<double>(0.0, 0.0));
     dpsi_inj[0] = std::complex<double>(0.3, 0.1);
-    if (npwk_kq > 1)
+    if (kq.get_npwk() > 1)
     {
         dpsi_inj[1] = std::complex<double>(-0.2, 0.05);
     }
@@ -516,30 +516,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
 
     for (int adir = 0; adir < 3; ++adir)
     {
-        // cross term: RHS(G'') = sum_i c_i (-i) tpiba w_{i,a} Vloc(|w_i|^2)
-        // e^{-i2pi w_i.tau} with w_i = G'' - G'_i + q
-        std::complex<double> expect_cross(0.0, 0.0);
-        for (int igl = 0; igl < npwk_kq; ++igl)
-        {
-            const ModuleBase::Vector3<double> gpp = kq.get_gpluskq(igl); // = G''
-            for (int ic = 0; ic < ncomp; ++ic)
-            {
-                const ModuleBase::Vector3<double> w = gpp - gcart[ic] + q_cart_;
-                const double w2 = w * w;
-                if (w2 < 1.0e-12)
-                {
-                    continue;
-                }
-                const double arg = -ModuleBase::TWO_PI * (w * tau_);
-                const std::complex<double> rhs = std::complex<double>(0.0, -1.0)
-                                                 * (ucell_.tpiba * w[adir])
-                                                 * VlocCoulomb(w2 * ucell_.tpiba2)
-                                                 * std::complex<double>(std::cos(arg),
-                                                                        std::sin(arg));
-                expect_cross += ccoef[ic] * std::conj(dpsi_inj[igl]) * rhs;
-            }
-        }
-        std::complex<double> expect = wg(0, 0) * expect_cross;
+        std::complex<double> expect = wg(0, 0) * AnalyticCrossTerm(kq, ccoef, gcart, dpsi_inj, adir);
         if (adir == 1)
         {
             expect = 2.0 * expect.real();
@@ -553,9 +530,9 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
         if (adir >= 1)
         {
             std::complex<double> d2elem(0.0, 0.0);
-            for (int i = 0; i < ncomp; ++i)
+            for (size_t i = 0; i < ncomp; ++i)
             {
-                for (int j = 0; j < ncomp; ++j)
+                for (size_t j = 0; j < ncomp; ++j)
                 {
                     const ModuleBase::Vector3<double> g = gcart[i] - gcart[j];
                     const double g2 = g * g;
@@ -639,37 +616,7 @@ TEST_F(DFPTPhonSerialTest, DiagonalizeKnownMatrix)
 TEST_F(DFPTPhonSerialTest, AddLotoIsotropicClosedForm)
 {
     // isotropic eps_inf = 3, Born charges Z*_1 = 1, Z*_2 = 2, masses 12/4
-    ModuleBase::ComplexMatrix dyn0(6, 6, true);
-    data_.set_dynmat(0, dyn0);
-    ModuleBase::matrix eps(3, 3, true);
-    for (int d = 0; d < 3; ++d)
-    {
-        eps(d, d) = 3.0;
-    }
-    data_.set_dielectric(eps);
-    ModuleBase::matrix z1(3, 3, true);
-    ModuleBase::matrix z2(3, 3, true);
-    z1(0, 0) = z1(1, 1) = z1(2, 2) = 1.0;
-    z2(0, 0) = z2(1, 1) = z2(2, 2) = 2.0;
-    data_.set_born(0, z1);
-    data_.set_born(1, z2);
-    // temporarily make the cell two-atom for mass lookup consistency
-    ucell_.ntype = 2;
-    ucell_.nat = 2;
-    delete[] ucell_.atoms;
-    ucell_.atoms = new Atom[2];
-    ucell_.atoms[0].na = 1;
-    ucell_.atoms[1].na = 1;
-    ucell_.atoms[0].mass = 12.0;
-    ucell_.atoms[1].mass = 4.0;
-    delete[] ucell_.iat2it;
-    delete[] ucell_.iat2ia;
-    ucell_.iat2it = new int[2];
-    ucell_.iat2ia = new int[2];
-    ucell_.iat2it[0] = 0;
-    ucell_.iat2ia[0] = 0;
-    ucell_.iat2it[1] = 1;
-    ucell_.iat2ia[1] = 0;
+    SetupIsotropicLoto();
 
     const ModuleBase::Vector3<double> qhat(1.0, 0.0, 0.0);
     phon_.add_loto(qhat, data_);
@@ -739,37 +686,7 @@ TEST_F(DFPTPhonSerialTest, DiagonalizeLotoClosedForm)
     // [[1/12, 2/sqrt48], [2/sqrt48, 1]]*pref has eigenvalues
     // {0, 13/12 * pref} (determinant 1/12 - 4/48 = 0), the yy/zz blocks
     // stay zero, so the spectrum is {13/12*pref, 0 x 5} in Ry/bohr^2/amu
-    ModuleBase::ComplexMatrix dyn0(6, 6, true);
-    data_.set_dynmat(0, dyn0);
-    ModuleBase::matrix eps(3, 3, true);
-    for (int d = 0; d < 3; ++d)
-    {
-        eps(d, d) = 3.0;
-    }
-    data_.set_dielectric(eps);
-    ModuleBase::matrix z1(3, 3, true);
-    ModuleBase::matrix z2(3, 3, true);
-    z1(0, 0) = z1(1, 1) = z1(2, 2) = 1.0;
-    z2(0, 0) = z2(1, 1) = z2(2, 2) = 2.0;
-    data_.set_born(0, z1);
-    data_.set_born(1, z2);
-    // temporarily make the cell two-atom for the mass lookup
-    ucell_.ntype = 2;
-    ucell_.nat = 2;
-    delete[] ucell_.atoms;
-    ucell_.atoms = new Atom[2];
-    ucell_.atoms[0].na = 1;
-    ucell_.atoms[1].na = 1;
-    ucell_.atoms[0].mass = 12.0;
-    ucell_.atoms[1].mass = 4.0;
-    delete[] ucell_.iat2it;
-    delete[] ucell_.iat2ia;
-    ucell_.iat2it = new int[2];
-    ucell_.iat2ia = new int[2];
-    ucell_.iat2it[0] = 0;
-    ucell_.iat2ia[0] = 0;
-    ucell_.iat2it[1] = 1;
-    ucell_.iat2ia[1] = 0;
+    SetupIsotropicLoto();
 
     phon_.add_loto(ModuleBase::Vector3<double>(1.0, 0.0, 0.0), data_);
     phon_.diagonalize_loto(data_);
