@@ -3,6 +3,8 @@
 
 #include "source_base/matrix3.h"
 
+#include <cstdint>
+
 class BaseCell
 {
 public:
@@ -19,7 +21,7 @@ public:
         return get_kind();
     }
 
-    int nat() const
+    std::int64_t nat() const
     {
         return get_nat();
     }
@@ -48,7 +50,7 @@ public:
 
 private:
     virtual Kind get_kind() const = 0;
-    virtual int get_nat() const = 0;
+    virtual std::int64_t get_nat() const = 0;
     virtual double get_lat0() const = 0;
     virtual double get_omega() const = 0;
     virtual const ModuleBase::Matrix3& get_latvec() const = 0;

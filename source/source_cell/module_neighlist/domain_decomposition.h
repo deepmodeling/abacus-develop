@@ -8,6 +8,7 @@
 #include "source_cell/module_neighlist/local_atom.h"
 
 #include <array>
+#include <cstdint>
 #include <vector>
 
 #include <mpi.h>
@@ -44,6 +45,8 @@ public:
 
     void exchange_ghost_atoms(const std::vector<LocalAtom>& owned_atoms,
                               std::vector<LocalAtom>& ghost_atoms) const;
+    void update_ghost_atom_positions(const std::vector<LocalAtom>& owned_atoms,
+                                     std::vector<LocalAtom>& ghost_atoms) const;
     void accumulate_ghost_forces(std::vector<LocalAtom>& owned_atoms,
                                  std::vector<LocalAtom>& ghost_atoms) const;
     void migrate_owned_atoms(std::vector<LocalAtom>& owned_atoms) const;
@@ -63,7 +66,7 @@ private:
         double mass;
         int image_shift[3];
         int type;
-        int type_index;
+        std::int64_t type_index;
         int owner_rank;
     };
 
@@ -75,12 +78,15 @@ private:
         std::array<int, 3> recv_image_shift;
         int send_rank;
         int recv_rank;
+        std::vector<int> send_atom_indices;
+        std::size_t ghost_begin;
+        int ghost_count;
     };
 
     struct ForceRecord
     {
         int type;
-        int type_index;
+        std::int64_t type_index;
         double force[3];
     };
 
@@ -97,6 +103,8 @@ private:
     double lat0_;
     double cutoff_;
     double skin_;
+    mutable std::vector<GhostExchangeSlot> ghost_slots_;
+    mutable bool ghost_layout_valid_ = false;
 
     static double wrap_fractional(double value);
     static int floor_div(int value, int divisor);

@@ -34,6 +34,10 @@ rules. Read the complete governance document before making or reviewing changes:
   is required.
 - Report the exact verification performed. Do not claim completion without
   fresh test or check output.
+- For multi-step refactors (e.g., splitting a large `.cpp` into several
+  files), build and commit after each step rather than batching all changes
+  before verification. This keeps the blast radius small when a step
+  surfaces a missing include or instantiation error.
 - Prefer `std::vector` over raw `new`/`delete` for dynamic arrays; before
   converting class members, confirm no external code consumes them as raw
   pointers (e.g., `std::vector<bool>` has no `.data()`), and use
@@ -106,6 +110,8 @@ rules. Read the complete governance document before making or reviewing changes:
 python3 tools/03_code_analysis/agent_governance_check.py --staged
 python3 tools/03_code_analysis/agent_governance_check.py --base upstream/develop --head HEAD --format text
 pre-commit run abacus-agent-governance --all-files
+# Score changed C++ files for quality debt (pass line is 60):
+python3 tools/03_code_analysis/code_quality_score.py $(git diff --name-only upstream/develop...HEAD | grep -E '\.(cpp|h)$')
 ```
 
 The repository text files have been normalized to LF once. Day-to-day line

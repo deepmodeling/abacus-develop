@@ -2,6 +2,7 @@
 #define MSST_H
 
 #include "md_base.h"
+#include <vector>
 
 /**
  * @brief MSST method
@@ -14,7 +15,7 @@
 class MSST : public MD_base
 {
   public:
-    MSST(const Parameter& param_in, UnitCell& unit_in);
+    MSST(const Parameter& param_in, MDCell& mdcell_in);
     ~MSST();
 
   private:
@@ -52,7 +53,7 @@ class MSST : public MD_base
      */
     void propagate_voldot(void);
 
-    ModuleBase::Vector3<double>* old_v;   ///< old atomic velocities
+    std::vector<ModuleBase::Vector3<double> > old_v; ///< old atomic velocities
     ModuleBase::Vector3<double> dilation; ///< dilation scale
     ModuleBase::Vector3<double> omega;    ///< time derivative of volume
     double p0;                            ///< initial pressure

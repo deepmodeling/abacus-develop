@@ -1,4 +1,4 @@
-#include "to_wannier90.h"
+#include "to_w90.h"
 
 #include "source_base/parallel_common.h"
 #include "source_io/module_parameter/parameter.h"
@@ -7,17 +7,22 @@
 #include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
 
-toWannier90::toWannier90()
+toW90::toW90()
 {
 }
 
-toWannier90::toWannier90(const bool& out_wannier_mmn,
+toW90::toW90(const bool& out_wannier_mmn,
                          const bool& out_wannier_amn,
                          const bool& out_wannier_unk,
                          const bool& out_wannier_eig,
                          const bool& out_wannier_wvfn_formatted,
                          const std::string& nnkpfile,
-                         const std::string& wannier_spin)
+                         const std::string& wannier_spin,
+                         const int& nspin,
+                         const int& nbands,
+                         const int& nqx,
+                         const double& dq,
+                         const int& npol)
 {
     this->out_wannier_mmn = out_wannier_mmn;
     this->out_wannier_amn = out_wannier_amn;
@@ -28,49 +33,32 @@ toWannier90::toWannier90(const bool& out_wannier_mmn,
     this->wannier_file_name = nnkpfile;
     this->wannier_file_name = wannier_file_name.substr(0, wannier_file_name.length() - 5);
     this->wannier_spin = wannier_spin;
+    this->nspin_ = nspin;
+    this->nbands_ = nbands;
+    this->nqx_ = nqx;
+    this->dq_ = dq;
+    this->npol_ = npol;
 
     if (GlobalV::KPAR != 1)
     {
-        ModuleBase::WARNING_QUIT("toWannier90", "The wannier90 interface does not currently support kpar groups");
+        ModuleBase::WARNING_QUIT("toW90", "The wannier90 interface does not currently support kpar groups");
     }
 
     if (PARAM.inp.bndpar != 1)
     {
-        ModuleBase::WARNING_QUIT("toWannier90", "The wannier90 interface does not currently support bndpar groups");
+        ModuleBase::WARNING_QUIT("toW90", "The wannier90 interface does not currently support bndpar groups");
     }
 }
 
-toWannier90::~toWannier90()
-{
-    if (out_wannier_amn)
-    {
-        delete[] R_centre;
-        delete[] L;
-        delete[] m;
-        delete[] rvalue;
-        delete[] z_axis;
-        delete[] x_axis;
-        delete[] alfa;
-
-        if (PARAM.inp.nspin == 4)
-        {
-            delete[] spin_eig;
-            delete[] spin_qaxis;
-            delete[] up_con;
-            delete[] dn_con;
-        }
-    }
-
-    // delete[] exclude_bands;
-    // delete[] tag_cal_band;
-    delete[] cal_band_index;
-}
-
-void toWannier90::calculate()
+toW90::~toW90()
 {
 }
 
-void toWannier90::read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
+void toW90::calculate()
+{
+}
+
+void toW90::read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
 {
     // read *.nnkp file
     GlobalV::ofs_running << "reading the " << wannier_file_name << ".nnkp file." << std::endl;
@@ -81,9 +69,7 @@ void toWannier90::read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
         read_success = try_read_nnkp(ucell,kv);
     }
 
-#ifdef __MPI
     Parallel_Common::bcast_bool(read_success);
-#endif
 
     if (GlobalV::MY_RANK != 0 && read_success)
     {
@@ -95,11 +81,9 @@ void toWannier90::read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
 #endif
 }
 
-void toWannier90::out_eig(const ModuleBase::matrix& ekb)
+void toW90::out_eig(const ModuleBase::matrix& ekb)
 {
-#ifdef __MPI
     if (GlobalV::MY_RANK == 0)
-#endif
     {
         std::string fileaddress = PARAM.globalv.global_out_dir + wannier_file_name + ".eig";
         std::ofstream eig_file(fileaddress.c_str());
@@ -117,25 +101,25 @@ void toWannier90::out_eig(const ModuleBase::matrix& ekb)
     }
 }
 
-void toWannier90::out_unk()
+void toW90::out_unk()
 {
 }
 
-void toWannier90::cal_Amn()
+void toW90::cal_Amn()
 {
 }
 
-void toWannier90::cal_Mmn()
+void toW90::cal_Mmn()
 {
 }
 
-bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
+bool toW90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
 {
     std::ifstream nnkp_read(nnkpfile.c_str(), std::ios::in);
 
     if (!nnkp_read)
     {
-        ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error during readin parameters.");
+        ModuleBase::WARNING_QUIT("toW90::read_nnkp", "Error during readin parameters.");
     }
 
     if (ModuleBase::GlobalFunc::SCAN_BEGIN(nnkp_read, "real_lattice"))
@@ -156,12 +140,12 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
             || std::abs(real_lattice_nnkp.e32 - ucell.latvec.e32) > 1.0e-4
             || std::abs(real_lattice_nnkp.e33 - ucell.latvec.e33) > 1.0e-4)
         {
-            ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error real_lattice in *.nnkp file");
+            ModuleBase::WARNING_QUIT("toW90::read_nnkp", "Error real_lattice in *.nnkp file");
         }
     }
     else
     {
-        ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Cannot find real_lattice in *.nnkp file");
+        ModuleBase::WARNING_QUIT("toW90::read_nnkp", "Cannot find real_lattice in *.nnkp file");
     }
 
     if (ModuleBase::GlobalFunc::SCAN_BEGIN(nnkp_read, "recip_lattice"))
@@ -183,38 +167,38 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
             || std::abs(recip_lattice_nnkp.e32 - ucell.G.e32) > 1.0e-4
             || std::abs(recip_lattice_nnkp.e33 - ucell.G.e33) > 1.0e-4)
         {
-            ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error recip_lattice in *.nnkp file");
+            ModuleBase::WARNING_QUIT("toW90::read_nnkp", "Error recip_lattice in *.nnkp file");
         }
     }
     else
     {
-        ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Cannot find recip_lattice in *.nnkp file");
+        ModuleBase::WARNING_QUIT("toW90::read_nnkp", "Cannot find recip_lattice in *.nnkp file");
     }
 
     if (ModuleBase::GlobalFunc::SCAN_BEGIN(nnkp_read, "kpoints"))
     {
         num_kpts = kv.get_nkstot();
-        if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
+        if (nspin_ == 1 || nspin_ == 4)
         {
             cal_num_kpts = num_kpts;
         }
-        else if (PARAM.inp.nspin == 2)
+        else if (nspin_ == 2)
         {
             cal_num_kpts = num_kpts / 2;
         }
 
         int numkpt_nnkp = 0;
         ModuleBase::GlobalFunc::READ_VALUE(nnkp_read, numkpt_nnkp);
-        if ((PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4) && numkpt_nnkp != num_kpts)
+        if ((nspin_ == 1 || nspin_ == 4) && numkpt_nnkp != num_kpts)
         {
-            ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error kpoints in *.nnkp file");
+            ModuleBase::WARNING_QUIT("toW90::read_nnkp", "Error kpoints in *.nnkp file");
         }
-        else if (PARAM.inp.nspin == 2 && numkpt_nnkp != (num_kpts / 2))
+        else if (nspin_ == 2 && numkpt_nnkp != (num_kpts / 2))
         {
-            ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error kpoints in *.nnkp file");
+            ModuleBase::WARNING_QUIT("toW90::read_nnkp", "Error kpoints in *.nnkp file");
         }
 
-        ModuleBase::Vector3<double>* kpoints_direct_nnkp = new ModuleBase::Vector3<double>[numkpt_nnkp];
+        std::vector<ModuleBase::Vector3<double>> kpoints_direct_nnkp(numkpt_nnkp);
         for (int ik = 0; ik < numkpt_nnkp; ik++)
         {
             nnkp_read >> kpoints_direct_nnkp[ik].x >> kpoints_direct_nnkp[ik].y >> kpoints_direct_nnkp[ik].z;
@@ -222,23 +206,22 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
                 || std::abs(kpoints_direct_nnkp[ik].y - kv.kvec_d[ik].y) > 1.0e-4
                 || std::abs(kpoints_direct_nnkp[ik].z - kv.kvec_d[ik].z) > 1.0e-4)
             {
-                ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error kpoints in *.nnkp file");
+                ModuleBase::WARNING_QUIT("toW90::read_nnkp", "Error kpoints in *.nnkp file");
             }
         }
-        delete[] kpoints_direct_nnkp;
 
         // ModuleBase::Vector3<double> my_gamma_point(0.0, 0.0, 0.0);
         // if( (num_kpts == 1) && (kv.kvec_d[0] == my_gamma_point) ) gamma_only_wannier = true;
     }
     else
     {
-        ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Cannot find kpoints in *.nnkp file");
+        ModuleBase::WARNING_QUIT("toW90::read_nnkp", "Cannot find kpoints in *.nnkp file");
     }
 
     // read projections
     if (out_wannier_amn)
     {
-        if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+        if (nspin_ == 1 || nspin_ == 2)
         {
             if (ModuleBase::GlobalFunc::SCAN_BEGIN(nnkp_read, "projections"))
             {
@@ -246,16 +229,16 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
 
                 if (num_wannier < 0)
                 {
-                    ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "wannier number is lower than 0");
+                    ModuleBase::WARNING_QUIT("toW90::read_nnkp", "wannier number is lower than 0");
                 }
 
-                R_centre = new ModuleBase::Vector3<double>[num_wannier];
-                L = new int[num_wannier];
-                m = new int[num_wannier];
-                rvalue = new int[num_wannier];
-                z_axis = new ModuleBase::Vector3<double>[num_wannier];
-                x_axis = new ModuleBase::Vector3<double>[num_wannier];
-                alfa = new double[num_wannier];
+                R_centre.resize(num_wannier);
+                L.resize(num_wannier);
+                m.resize(num_wannier);
+                rvalue.resize(num_wannier);
+                z_axis.resize(num_wannier);
+                x_axis.resize(num_wannier);
+                alfa.resize(num_wannier);
 
                 for (int count = 0; count < num_wannier; count++)
                 {
@@ -269,10 +252,10 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
             }
             else
             {
-                ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Cannot find projections in *.nnkp file");
+                ModuleBase::WARNING_QUIT("toW90::read_nnkp", "Cannot find projections in *.nnkp file");
             }
         }
-        else if (PARAM.inp.nspin == 4)
+        else if (nspin_ == 4)
         {
             if (ModuleBase::GlobalFunc::SCAN_BEGIN(nnkp_read, "spinor_projections"))
             {
@@ -280,18 +263,18 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
 
                 if (num_wannier < 0)
                 {
-                    ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "wannier number is lower than 0");
+                    ModuleBase::WARNING_QUIT("toW90::read_nnkp", "wannier number is lower than 0");
                 }
 
-                R_centre = new ModuleBase::Vector3<double>[num_wannier];
-                L = new int[num_wannier];
-                m = new int[num_wannier];
-                rvalue = new int[num_wannier];
-                z_axis = new ModuleBase::Vector3<double>[num_wannier];
-                x_axis = new ModuleBase::Vector3<double>[num_wannier];
-                alfa = new double[num_wannier];
-                spin_eig = new int[num_wannier];
-                spin_qaxis = new ModuleBase::Vector3<double>[num_wannier];
+                R_centre.resize(num_wannier);
+                L.resize(num_wannier);
+                m.resize(num_wannier);
+                rvalue.resize(num_wannier);
+                z_axis.resize(num_wannier);
+                x_axis.resize(num_wannier);
+                alfa.resize(num_wannier);
+                spin_eig.resize(num_wannier);
+                spin_qaxis.resize(num_wannier);
 
                 for (int count = 0; count < num_wannier; count++)
                 {
@@ -307,7 +290,7 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
             }
             else
             {
-                ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Cannot find spinor_projections in *.nnkp file");
+                ModuleBase::WARNING_QUIT("toW90::read_nnkp", "Cannot find spinor_projections in *.nnkp file");
             }
         }
 
@@ -322,30 +305,30 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
         {
             if (L[i] < -5 || L[i] > 3)
             {
-                ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "L angular momentum is wrong, please check !!!");
+                ModuleBase::WARNING_QUIT("toW90::read_nnkp", "L angular momentum is wrong, please check !!!");
             }
 
             if (L[i] >= 0)
             {
                 if (m[i] < 0 || m[i] > 2 * L[i])
                 {
-                    ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "m momentum is wrong, please check !!!");
+                    ModuleBase::WARNING_QUIT("toW90::read_nnkp", "m momentum is wrong, please check !!!");
                 }
             }
             else
             {
                 if (m[i] < 0 || m[i] > -L[i])
                 {
-                    ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "m momentum is wrong, please check !!!");
+                    ModuleBase::WARNING_QUIT("toW90::read_nnkp", "m momentum is wrong, please check !!!");
                 }
             }
         }
 
         // Generate spin-related coefficients
-        if (PARAM.inp.nspin == 4)
+        if (nspin_ == 4)
         {
-            up_con = new std::complex<double>[num_wannier];
-            dn_con = new std::complex<double>[num_wannier];
+            up_con.resize(num_wannier);
+            dn_con.resize(num_wannier);
 
             bool spin_z_pos = false;
             bool spin_z_neg = false;
@@ -416,11 +399,11 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
             }
 
             int numkpt_nnkp;
-            if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
+            if (nspin_ == 1 || nspin_ == 4)
             {
                 numkpt_nnkp = kv.get_nkstot();
             }
-            else if (PARAM.inp.nspin == 2)
+            else if (nspin_ == 2)
             {
                 numkpt_nnkp = kv.get_nkstot() / 2;
             }
@@ -438,7 +421,7 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
                     nnkp_read >> ik_nnkp;
                     if (ik_nnkp != (ik + 1))
                     {
-                        ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "error nnkpts in *.nnkp file");
+                        ModuleBase::WARNING_QUIT("toW90::read_nnkp", "error nnkpts in *.nnkp file");
                     }
                     nnkp_read >> nnlist[ik][ib];
                     nnkp_read >> nncell[ik][ib].x >> nncell[ik][ib].y >> nncell[ik][ib].z;
@@ -448,7 +431,7 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
         }
         else
         {
-            ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Cannot find nnkpts in *.nnkp file");
+            ModuleBase::WARNING_QUIT("toW90::read_nnkp", "Cannot find nnkpts in *.nnkp file");
         }
     }
 
@@ -458,7 +441,7 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
 
         if (num_exclude_bands < 0)
         {
-            ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "the exclude bands is wrong, please check *.nnkp file.");
+            ModuleBase::WARNING_QUIT("toW90::read_nnkp", "the exclude bands is wrong, please check *.nnkp file.");
         }
 
         if (num_exclude_bands > 0)
@@ -474,36 +457,32 @@ bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
     }
     else
     {
-        ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Cannot find exclude_bands in *.nnkp file");
+        ModuleBase::WARNING_QUIT("toW90::read_nnkp", "Cannot find exclude_bands in *.nnkp file");
     }
 
     nnkp_read.close();
 
-    if (PARAM.inp.nbands <= num_exclude_bands)
+    if (nbands_ <= num_exclude_bands)
     {
-        ModuleBase::WARNING_QUIT("toWannier90::read_nnkp",
+        ModuleBase::WARNING_QUIT("toW90::read_nnkp",
                                  "you set the band numer is not enough, please add bands number.");
     }
 
-    // tag_cal_band = new bool[PARAM.inp.nbands];
-    // for (int ib = 0; ib < PARAM.inp.nbands; ib++) tag_cal_band[ib] = true;
-    // for (int ib = 0; ib < num_exclude_bands; ib++) tag_cal_band[ib] = false;
-
     if (num_exclude_bands == 0)
     {
-        num_bands = PARAM.inp.nbands;
-        cal_band_index = new int[num_bands];
-        for (int ib = 0; ib < PARAM.inp.nbands; ib++)
+        num_bands = nbands_;
+        cal_band_index.resize(num_bands);
+        for (int ib = 0; ib < nbands_; ib++)
         {
             cal_band_index[ib] = ib;
         }
     }
     else
     {
-        num_bands = PARAM.inp.nbands - num_exclude_bands;
-        cal_band_index = new int[num_bands];
+        num_bands = nbands_ - num_exclude_bands;
+        cal_band_index.resize(num_bands);
         int count = 0;
-        for (int ib = 0; ib < PARAM.inp.nbands; ib++)
+        for (int ib = 0; ib < nbands_; ib++)
         {
             if (exclude_bands.count(ib) != 1)
             {

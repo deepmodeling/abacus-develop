@@ -17,6 +17,14 @@ parameters:
     default_value: "0"
     unit: ""
     availability: ""
+  - name: cell_replica
+    category: System variables
+    type: Three Integers
+    description: |
+      Replicate the input STRU by Na, Nb, and Nc along its lattice vectors for distributed MDCell workflows. This parameter is only used for classical potentials or machine-learned interatomic potentials. The default is 1 1 1, which preserves the input structure.
+    default_value: 1 1 1
+    unit: ""
+    availability: ""
   - name: calculation
     category: System variables
     type: String
@@ -1449,7 +1457,7 @@ parameters:
     category: Molecular dynamics
     type: Integer
     description: |
-      The output frequency of OUT.{suffix}/STRIU/, which are used to restart molecular dynamics calculations, see md_restart in detail.
+      The output frequency of OUT.{suffix}/STRU_MD_*, which are used to restart molecular dynamics calculations, see md_restart in detail. Set to 0 to disable MD restart output.
     default_value: "5"
     unit: ""
     availability: ""
@@ -1457,8 +1465,24 @@ parameters:
     category: Molecular dynamics
     type: Integer
     description: |
-      The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which including the information of lattices and atoms.
+      The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output.
     default_value: "1"
+    unit: ""
+    availability: ""
+  - name: md_neighbor_skin
+    category: Molecular dynamics
+    type: Real
+    description: |
+      The extra neighbor-list radius in Angstrom for MDCell molecular dynamics. This parameter is only used for classical potentials or machine-learned interatomic potentials. A positive value reuses the cutoff-plus-skin candidate list until an atom has moved by half this distance; 0 rebuilds the list every force evaluation.
+    default_value: "0.0"
+    unit: Angstrom
+    availability: ""
+  - name: md_out_force
+    category: Molecular dynamics
+    type: Boolean
+    description: |
+      Whether to output the TOTAL-FORCE table in OUT.${suffix}/running_md.log for MDCell molecular dynamics. This does not affect force calculation or molecular dynamics integration.
+    default_value: "True"
     unit: ""
     availability: ""
   - name: dump_force
@@ -1490,8 +1514,8 @@ parameters:
     type: Integer
     description: |
       The random seed to initialize random numbers used in molecular dynamics calculations.
-      * < 0: No srand() function is called.
-      * >= 0: The function srand(md_seed) is called.
+      * < 0: Each MPI rank uses the default seed 1 plus its rank.
+      * >= 0: Each MPI rank uses md_seed plus its rank.
     default_value: "-1"
     unit: ""
     availability: ""

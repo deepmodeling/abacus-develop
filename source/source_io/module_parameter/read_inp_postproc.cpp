@@ -382,7 +382,7 @@ void ReadInput::item_postprocess()
                        Developer's notes: on the repair of lcao_in_pw
 
                        lcao_in_pw is a special basis_type, for scf calculation,
-                      it follows workflow of pw, but for nscf the toWannier90
+                      it follows workflow of pw, but for nscf the toW90
                       calculation, the interface is in ESolver_KS_LCAO_elec,
                        therefore lcao_in_pw for towannier90 calculation follows
                       lcao.

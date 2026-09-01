@@ -17,6 +17,8 @@ list(APPEND objects
     module_energy/nscf_fermi_surf.cpp
     module_energy/write_eig_occ.cpp
     module_bessel/numerical_basis.cpp
+    module_bessel/numerical_basis_overlap.cpp
+    module_bessel/numerical_basis_output.cpp
     module_bessel/numerical_basis_jyjy.cpp
     module_bessel/numerical_descriptor.cpp
     module_output/print_info.cpp
@@ -47,10 +49,16 @@ list(APPEND objects
 list(APPEND objects_advanced
     module_unk/unk_overlap_pw.cpp
     module_unk/berryphase.cpp
-    module_wannier/to_wannier90.cpp
-    module_wannier/to_wannier90_pw.cpp
+    module_wannier/to_w90.cpp
+    module_wannier/to_w90_pw.cpp
+    module_wannier/to_w90_pw_io.cpp
+    module_wannier/to_w90_pw_setup.cpp
+    module_wannier/to_w90_pw_overlap.cpp
     module_wannier/to_w90_lcao_pw.cpp
-    module_wannier/to_wannier90_lcao.cpp
+    module_wannier/to_w90_lcao.cpp
+    module_wannier/to_w90_lcao_io.cpp
+    module_wannier/to_w90_lcao_setup.cpp
+    module_wannier/to_w90_lcao_overlap.cpp
     module_wannier/fr_overlap.cpp
 )
 

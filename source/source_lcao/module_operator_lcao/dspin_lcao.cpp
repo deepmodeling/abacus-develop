@@ -56,10 +56,15 @@ inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vec
     coefficients[1] = -current_lambda[0];
 }
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<std::complex<double>>& coefficients)
-{// {\lambda^{I,3}, \lambda^{I,1}-i\lambda^{I,2}, \lambda^{I,1}+i\lambda^{I,2}, -\lambda^{I,3}}
+{// {\lambda^{I,3}, \lambda^{I,1}+i\lambda^{I,2}, \lambda^{I,1}-i\lambda^{I,2}, -\lambda^{I,3}}
+    // The occupation matrix is built conj-first (occ[1]=conj(c_up)*c_dn, spin_constrain.cpp),
+    // and pauli_to_moment measures the physical +m_y from it (bare +Im). The lambda operator must
+    // drive that measured moment with the matching feedback sign, i.e. the pre-#7664 convention
+    // lambda_{ud}=lambda_x+i*lambda_y. #7664 flipped this together with the measurement (mirror-y);
+    // #7748 reverted the measurement but not this, leaving the constraint loop driving the y-mirror.
     coefficients[0] = std::complex<double>(current_lambda[2], 0.0);
-    coefficients[1] = std::complex<double>(current_lambda[0] , -current_lambda[1]);
-    coefficients[2] = std::complex<double>(current_lambda[0] , current_lambda[1]);
+    coefficients[1] = std::complex<double>(current_lambda[0] , current_lambda[1]);
+    coefficients[2] = std::complex<double>(current_lambda[0] , -1 * current_lambda[1]);
     coefficients[3] = std::complex<double>(-1 * current_lambda[2], 0.0);
 }
 

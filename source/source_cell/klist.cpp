@@ -463,7 +463,11 @@ void K_Vectors::interpolate_k_between(std::ifstream& ifk, std::vector<ModuleBase
         ifk >> ks[iks].z;
         ModuleBase::GlobalFunc::READ_VALUE(ifk, nkl[iks]);
 
-        assert(nkl[iks] >= 0);
+        if (nkl[iks] <= 0)
+        {
+            ModuleBase::WARNING_QUIT("K_Vectors::interpolate_k_between",
+                                     "Line-mode interpolation counts must be positive.");
+        }
         nkstot += nkl[iks];
         /* ISSUE#3482: to distinguish different kline segments */
         if ((nkl[iks] == 1) && (iks != (nks_special - 1))) {
@@ -471,7 +475,11 @@ void K_Vectors::interpolate_k_between(std::ifstream& ifk, std::vector<ModuleBase
         }
         kpt_segids.push_back(kpt_segid);
     }
-    assert(nkl[nks_special - 1] == 1);
+    if (nkl[nks_special - 1] != 1)
+    {
+        ModuleBase::WARNING_QUIT("K_Vectors::interpolate_k_between",
+                                 "The final line-mode k-point must have an interpolation count of 1.");
+    }
 
     // std::cout << " nkstot = " << nkstot << std::endl;
     this->renew(nkstot * nspin); // mohan fix bug 2009-09-01

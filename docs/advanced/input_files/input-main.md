@@ -8,6 +8,7 @@
   - [System variables](#system-variables)
     - [suffix](#suffix)
     - [ntype](#ntype)
+    - [cell\_replica](#cell_replica)
     - [calculation](#calculation)
     - [esolver\_type](#esolver_type)
     - [symmetry](#symmetry)
@@ -356,6 +357,8 @@
     - [md\_restart](#md_restart)
     - [md\_restartfreq](#md_restartfreq)
     - [md\_dumpfreq](#md_dumpfreq)
+    - [md\_neighbor\_skin](#md_neighbor_skin)
+    - [md\_out\_force](#md_out_force)
     - [dump\_force](#dump_force)
     - [dump\_vel](#dump_vel)
     - [dump\_virial](#dump_virial)
@@ -600,6 +603,12 @@
 - **Type**: Integer
 - **Description**: Number of different atom species in the calculation.
 - **Default**: 0
+
+### cell_replica
+
+- **Type**: Three Integers
+- **Description**: Replicate the input STRU by Na, Nb, and Nc along its lattice vectors for distributed MDCell workflows. This parameter is only used for classical potentials or machine-learned interatomic potentials. The default is 1 1 1, which preserves the input structure.
+- **Default**: 1 1 1
 
 ### calculation
 
@@ -3504,14 +3513,27 @@
 ### md_restartfreq
 
 - **Type**: Integer
-- **Description**: The output frequency of OUT.{suffix}/STRIU/, which are used to restart molecular dynamics calculations, see md_restart in detail.
+- **Description**: The output frequency of OUT.{suffix}/STRU_MD_*, which are used to restart molecular dynamics calculations, see md_restart in detail. Set to 0 to disable MD restart output.
 - **Default**: 5
 
 ### md_dumpfreq
 
 - **Type**: Integer
-- **Description**: The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which including the information of lattices and atoms.
+- **Description**: The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output.
 - **Default**: 1
+
+### md_neighbor_skin
+
+- **Type**: Real
+- **Description**: The extra neighbor-list radius in Angstrom for MDCell molecular dynamics. This parameter is only used for classical potentials or machine-learned interatomic potentials. A positive value reuses the cutoff-plus-skin candidate list until an atom has moved by half this distance; 0 rebuilds the list every force evaluation.
+- **Default**: 0.0
+- **Unit**: Angstrom
+
+### md_out_force
+
+- **Type**: Boolean
+- **Description**: Whether to output the TOTAL-FORCE table in OUT.${suffix}/running_md.log for MDCell molecular dynamics. This does not affect force calculation or molecular dynamics integration.
+- **Default**: True
 
 ### dump_force
 
@@ -3535,8 +3557,8 @@
 
 - **Type**: Integer
 - **Description**: The random seed to initialize random numbers used in molecular dynamics calculations.
-  - &lt; 0: No srand() function is called.
-  - &gt;= 0: The function srand(md_seed) is called.
+  - &lt; 0: Each MPI rank uses the default seed 1 plus its rank.
+  - &gt;= 0: Each MPI rank uses md_seed plus its rank.
 - **Default**: -1
 
 ### md_tfreq
