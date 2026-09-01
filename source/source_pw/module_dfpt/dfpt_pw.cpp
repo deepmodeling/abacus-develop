@@ -61,7 +61,7 @@ public:
     const XC_First_Order* xc_ = nullptr;
     double nelec_ = 0.0;
     double ecutwfc_ = 0.0;
-    const Plus_U* dftu_ = nullptr;
+    const Plus_U_Base* dftu_ = nullptr;
 
     ///< occupied states at k+q on the k+q G list, [ik][occ m][igl];
     /// rebuilt per q (they depend on q and k only)
@@ -109,7 +109,7 @@ void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
                    Structure_Factor* sf, const std::vector<double>& veff_r,
                    const ModuleBase::matrix& wg, const ModuleBase::matrix& eig,
                    const XC_First_Order* xc,
-                   double nelec, double ecutwfc, const Plus_U* dftu) {
+                   double nelec, double ecutwfc, const Plus_U_Base* dftu) {
     pimpl_->ucell_ = &ucell;
     pimpl_->gs_psi_ = psi;
     pimpl_->pw_rho_ = pw_rho;
@@ -148,6 +148,20 @@ void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
     pimpl_->nelec_ = nelec;
     pimpl_->ecutwfc_ = ecutwfc;
     pimpl_->dftu_ = dftu;
+
+    // DFT+U guard: the ground state now supports PW-basis DFT+U and wires a
+    // provider when dft_plus_u is enabled, but every DFPT U hook
+    // (DFPT_Rho::cal_docc, DFPT_Pert::build_dv_u, DFPT_Q0 born/docc
+    // contractions, DFPT_Phon::dftu_onsite) is a no-op reservation (U0).
+    // Running anyway would converge cleanly while silently dropping the
+    // whole first-order U response, so reject explicitly until U1 lands
+    // (same fail-loud pattern as the metallic-sampling guard above).
+    if (dftu != nullptr) {
+        ModuleBase::WARNING_QUIT("DFPT_PW::init",
+                                 "DFT+U with DFPT is not supported yet: the "
+                                 "first-order U response is not implemented "
+                                 "(U0 reservation); rerun with dft_plus_u 0.");
+    }
 
     // q points: an explicit q list file overrides the Monkhorst-Pack mesh
     if (!pimpl_->qfile_.empty()) {

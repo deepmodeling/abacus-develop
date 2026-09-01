@@ -14,6 +14,7 @@
 #include "source_base/parallel_global.h"
 #include "source_base/global_variable.h"
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 
 pseudo::pseudo()
 {
@@ -296,6 +297,33 @@ TEST_F(DFPT_PW_DataTest, DftuReservationWithNullProvider)
     EXPECT_TRUE(data.get_docc(1).empty());
     EXPECT_TRUE(data.get_docc(-1).empty());
     EXPECT_TRUE(data.get_docc(7).empty());
+
+    clear_qlist();
+}
+
+TEST_F(DFPT_PW_DataTest, DftuReservationProviderUsability)
+{
+    init_qlist();
+
+    // U0 reservation semantics after the Plus_U_Base migration: with_u()
+    // reports the wiring, u_active() follows the occupation-matrix state of
+    // the provider. A default-constructed provider (occupation matrices not
+    // initialized, e.g. no DFT+U ran in the ground state) stays inactive;
+    // once the provider marks its occupation matrices initialized (a real
+    // ground-state DFT+U run), the reservation turns active. DFPT_PW::init
+    // rejects a wired provider outright; this pins the data-level contract.
+    Plus_U_Base dftu;
+    data.init(&qlist, 1, 2, 3, 0, 1, 1, &dftu);
+    EXPECT_TRUE(data.with_u());
+    EXPECT_FALSE(data.u_active());
+    ASSERT_NE(data.get_dftu(), nullptr);
+
+    dftu.set_occ_mat_initialized(true);
+    EXPECT_TRUE(data.u_active());
+
+    data.clean();
+    // clean() resets the response storage but keeps the provider wiring
+    EXPECT_TRUE(data.with_u());
 
     clear_qlist();
 }

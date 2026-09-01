@@ -11,6 +11,8 @@ AddTest(
   	../../../source_cell/qlist.cpp
   	../../../source_cell/reciprocal_grid.cpp
   	../../../source_psi/psi.cpp
+  	# Plus_U_Base ctor/dtor support shim (see dftu_test_support.cpp).
+  	dftu_test_support.cpp
 )
 
 AddTest(

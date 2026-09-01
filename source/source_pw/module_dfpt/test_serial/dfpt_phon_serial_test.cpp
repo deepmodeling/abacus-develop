@@ -26,7 +26,6 @@
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
-#include "source_lcao/module_dftu/dftu.h"
 #include "source_psi/psi.h"
 
 // test-support ctor/dtor stubs (see dfpt_pert_serial_test.cpp)

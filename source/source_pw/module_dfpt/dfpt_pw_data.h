@@ -19,7 +19,7 @@
 #include <vector>
 #include <complex>
 
-class Plus_U;
+class Plus_U_Base;
 
 namespace ModuleDFPT {
 
@@ -46,7 +46,7 @@ public:
     ~DFPT_PW_Data();
     
     void init(ModuleCell::QList* qlist, int nk, int nbands, int npw_max, 
-              int nrxx, int nspin, int nat, const Plus_U* dftu);
+              int nrxx, int nspin, int nat, const Plus_U_Base* dftu);
     
     void clean();
     
@@ -144,15 +144,15 @@ public:
     
     /// DFT+U interface reservation (U0):
     /// the DFPT modules never read global input state directly; the esolver
-    /// layer decides whether DFT+U is active and passes a non-null Plus_U*
-    /// only then.
-    /// with_u(): a Plus_U provider is wired (dft_plus_u enabled upstream).
-    /// u_active(): the provider is additionally usable (locale initialized,
-    ///             which requires the LCAO orbital files; a pure-PW run
-    ///             without them must degrade to inactive safely).
+    /// layer decides whether DFT+U is active and passes a non-null
+    /// Plus_U_Base* only then.
+    /// with_u(): a DFT+U provider is wired (dft_plus_u enabled upstream).
+    /// u_active(): the provider is additionally usable (occupation matrices
+    ///             initialized, which the ground state does when DFT+U
+    ///             actually runs; a provider without them stays inactive).
     bool with_u() const { return dftu_ != nullptr; }
     bool u_active() const;
-    const Plus_U* get_dftu() const { return dftu_; }
+    const Plus_U_Base* get_dftu() const { return dftu_; }
     
     /// first-order occupation matrix (docc) storage, indexed by q.
     /// lazy allocation: unset / out-of-range reads return an empty vector.
@@ -236,7 +236,7 @@ private:
     double dmu_ = 0.0;
     
     /// DFT+U reservation state (U0)
-    const Plus_U* dftu_ = nullptr;
+    const Plus_U_Base* dftu_ = nullptr;
     std::vector<std::vector<std::complex<double>>> docc_;
 
     /// converged v_sc per displacement (atom, dir): [3*nat] entries

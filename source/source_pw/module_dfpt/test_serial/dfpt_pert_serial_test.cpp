@@ -25,7 +25,7 @@
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_psi/psi.h"
 
 // test-support ctor/dtor stubs (see test/dfpt_pw_run_test.cpp); the DFPT
@@ -635,13 +635,14 @@ TEST_F(DFPTPertSerialTest, NonlocalPathRejectsUltrasoft)
 
 TEST_F(DFPTPertSerialTest, BuildDvWithInactiveDftuIsPurePW)
 {
-    // a wired but unusable Plus_U (locale uninitialized) must not change the
-    // assembled first-order potential (U0 reservation, pure-PW degradation)
+    // a wired but unusable provider (occupation matrices not initialized)
+    // must not change the assembled first-order potential (U0 reservation);
+    // DFPT_PW::init additionally rejects a wired provider outright
     ModuleDFPT::DFPT_PW_Data data_plain;
     data_plain.init(&qlist_, 1, 2, pw_wfc_.npwk_max, pw_rho_.nrxx, 1, 1, nullptr);
     pert_.build_dv(0, 0, 1, data_plain);
 
-    Plus_U dftu;
+    Plus_U_Base dftu;
     ModuleDFPT::DFPT_PW_Data data_u;
     data_u.init(&qlist_, 1, 2, pw_wfc_.npwk_max, pw_rho_.nrxx, 1, 1, &dftu);
     EXPECT_TRUE(data_u.with_u());

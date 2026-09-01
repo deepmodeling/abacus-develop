@@ -14,7 +14,7 @@
 #include "source_base/parallel_global.h"
 #include "source_base/global_variable.h"
 #include "source_estate/module_charge/charge_mixing.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
 
 pseudo::pseudo()
@@ -212,23 +212,26 @@ TEST_F(DFPT_PWRunTest, DielectricAndBornAreExposed)
     EXPECT_EQ(born.nc, 0);
 }
 
-TEST_F(DFPT_PWRunTest, DftuReservationWithProviderButUninitializedLocale)
+TEST_F(DFPT_PWRunTest, DftuReservationWithProviderRejectsInit)
 {
-    // DFT+U reservation (U0): a non-null Plus_U is wired (dft_plus_u enabled
-    // upstream) but its locale is NOT initialized here because the LCAO
-    // orbital files are absent. with_u() must be true, u_active() must be
-    // false (safe pure-PW degradation), and run() must complete without
-    // touching any DFT+U kernel (all U hooks are no-op stubs).
-    Plus_U dftu;
+    // DFT+U reservation (U0): the ground state wires a provider when
+    // dft_plus_u is enabled upstream, and PW-basis DFT+U actually runs in
+    // the ground state now. Since every DFPT U hook (cal_docc, build_dv_u,
+    // dftu_onsite, born/docc contractions) is a no-op reservation, running
+    // anyway would converge cleanly while silently dropping the whole
+    // first-order U response; init() must therefore reject the run
+    // explicitly (same fail-loud pattern as the metallic-sampling guard).
+    // The accessor semantics (with_u true, u_active following the
+    // occupation-matrix state) are pinned separately in
+    // DFPT_PW_DataTest.DftuReservationProviderUsability.
+    Plus_U_Base dftu;
     dfpt.set_qmesh(1, 1, 1);
     psi::Psi<std::complex<double>> psi;
-    dfpt.init(ucell, psi, nullptr, nullptr, nullptr, std::vector<double>(),
-              ModuleBase::matrix(), ModuleBase::matrix(), nullptr, 1.0, 15.0, &dftu);
-    EXPECT_TRUE(dfpt.get_with_u());
-    EXPECT_FALSE(dfpt.get_u_active());
-    dfpt.run();
-
-    // still produces the expected number of phonon modes per q
-    const int expected_modes = 3 * ucell.nat;
-    EXPECT_EQ(dfpt.get_phonon_freq(0).size(), expected_modes);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(dfpt.init(ucell, psi, nullptr, nullptr, nullptr, std::vector<double>(),
+                          ModuleBase::matrix(), ModuleBase::matrix(), nullptr, 1.0, 15.0, &dftu),
+                ::testing::ExitedWithCode(1),
+                "");
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("DFT+U with DFPT is not supported"));
 }

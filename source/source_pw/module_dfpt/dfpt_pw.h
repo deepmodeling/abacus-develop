@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-class Plus_U;
+class Plus_U_Base;
 class Structure_Factor;
 
 namespace ModulePW {
@@ -55,14 +55,16 @@ public:
               Structure_Factor* sf, const std::vector<double>& veff_r,
               const ModuleBase::matrix& wg, const ModuleBase::matrix& eig,
               const XC_First_Order* xc,
-              double nelec, double ecutwfc, const Plus_U* dftu);
+              double nelec, double ecutwfc, const Plus_U_Base* dftu);
 
     void run();
 
     /// DFT+U reservation accessors (U0): with_u() reports whether a DFT+U
     /// provider is wired (dft_plus_u enabled upstream); u_active() further
-    /// requires the provider to be usable (locale initialized, i.e. the LCAO
-    /// orbital files are present).
+    /// requires the provider to be usable (occupation matrices initialized).
+    /// init() rejects a wired provider explicitly: every DFPT U hook is a
+    /// no-op reservation, so a DFT+U ground state must not run DFPT until
+    /// the first-order U response (U1) is implemented.
     bool get_with_u() const;
     bool get_u_active() const;
 

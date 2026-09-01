@@ -603,11 +603,12 @@ void DFPT_Pert::dVnl_dtau(int atom_idx, int dir,
 void DFPT_Pert::build_dv_u(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data) {
     // C1 frozen term of the first-order Hubbard potential:
     //   |dphi(k+q)/dtau> V_eff <phi(k)|psi> + adjoint
-    // The provider is only usable when the LCAO orbital files were loaded
-    // (u_active()). A pure-PW run wires Plus_U non-null but the locale is not
-    // initialized, so no DFT+U term can be assembled yet; the diamond DFT+U
-    // test (C7) will exercise this path once OnsiteProjector integration on
-    // the DFPT k+q basis is finalized.
+    // The provider is only usable when its occupation matrices are
+    // initialized (u_active()); DFPT_PW::init additionally rejects a wired
+    // provider outright (every U hook is a no-op U0 reservation), so this
+    // guard is defense in depth; the diamond DFT+U test (C7) will exercise
+    // this path once OnsiteProjector integration on the DFPT k+q basis is
+    // finalized.
     if (!data.u_active()) {
         return;
     }

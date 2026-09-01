@@ -7,7 +7,7 @@
 // ============================================================
 
 #include "dfpt_pw_data.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 
 #include <cmath>
 
@@ -20,7 +20,7 @@ DFPT_PW_Data::~DFPT_PW_Data() {
 }
 
 void DFPT_PW_Data::init(ModuleCell::QList* qlist, int nk, int nbands, int npw_max, 
-                        int nrxx, int nspin, int nat, const Plus_U* dftu) {
+                        int nrxx, int nspin, int nat, const Plus_U_Base* dftu) {
     qlist_ = qlist;
     nk_ = nk;
     nbands_ = nbands;
@@ -40,9 +40,10 @@ void DFPT_PW_Data::clean() {
 }
 
 bool DFPT_PW_Data::u_active() const {
-    // locale initialization requires the LCAO orbital files; a pure-PW run
-    // without them has dftu != nullptr (wired upstream) but is not usable.
-    return with_u() && dftu_->is_locale_initialized();
+    // a usable provider has its occupation matrices initialized (the ground
+    // state does this when DFT+U actually runs); a wired provider without
+    // them (e.g. a default-constructed reservation) stays inactive.
+    return with_u() && dftu_->is_occ_mat_initialized();
 }
 
 void DFPT_PW_Data::set_docc(int q_idx, const std::vector<std::complex<double>>& occ) {

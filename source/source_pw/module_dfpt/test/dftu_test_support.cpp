@@ -1,40 +1,20 @@
 // ============================================================
-// Minimal test-support definitions for constructing Plus_U in
-// the DFPT unit tests (DFT+U interface reservation, U0).
+// Minimal test-support definitions for constructing the DFT+U
+// provider in the DFPT unit tests (DFT+U interface reservation, U0).
 //
-// In production these symbols live in module_dftu/dftu.cpp,
-// which pulls a large link closure (init -> dftu_io/occup ->
-// scalapack ...). The DFPT tests only need to *construct* a
-// Plus_U and read the public inline accessors, so the ctor,
-// dtor and static data members are replicated here instead.
-// This keeps the DFPT (PW) unit tests free of the LCAO-side
-// DFT+U dependency. Keep in sync with dftu.cpp.
+// In production these symbols live in
+// source_pw/module_pwdft/dftu_base.cpp, which is part of the pwdft
+// object library and pulls the PW-side DFT+U link closure. The DFPT
+// tests only need a default-constructed Plus_U_Base (occupation
+// matrices not initialized -> u_active() false), so the ctor and dtor
+// are replicated here instead. This keeps the DFPT unit tests free of
+// that link closure. Keep in sync with dftu_base.cpp.
 // ============================================================
 
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 
-#include <vector>
-
-double Plus_U::energy_u = 0.0;
-
-std::vector<double> Plus_U::U = {};
-
-std::vector<double> Plus_U::U0 = {};
-
-std::vector<int> Plus_U::orbital_corr = {};
-
-double Plus_U::uramping = 0.0;
-
-int Plus_U::omc = 0;
-
-int Plus_U::mixing_dftu = 0;
-
-int Plus_U::nspin = 0;
-
-bool Plus_U::Yukawa = false;
-
-Plus_U::Plus_U()
+Plus_U_Base::Plus_U_Base()
 {}
 
-Plus_U::~Plus_U()
+Plus_U_Base::~Plus_U_Base()
 {}
