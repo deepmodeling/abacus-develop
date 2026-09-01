@@ -13,6 +13,8 @@ AddTest(
   	../../../source_psi/psi.cpp
   	# Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures.
   	dfpt_test_mocks.cpp
+  	# Shared cubic-cell / stru_lib fixture.
+  	dfpt_stru_fixture.cpp
 )
 
 AddTest(
@@ -50,4 +52,6 @@ AddTest(
 	../../../source_psi/psi.cpp
 	# Shared ctor/dtor stubs for the cell/spepot/charge/Plus_U closures.
 	dfpt_test_mocks.cpp
+	# Shared cubic-cell / stru_lib fixture.
+	dfpt_stru_fixture.cpp
 )

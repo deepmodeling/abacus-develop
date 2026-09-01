@@ -10,12 +10,12 @@
 #include "source_cell/unitcell.h"
 #include "source_cell/magnetism.h"
 #undef private
-#include "source_base/mathzone.h"
 #include "source_base/parallel_global.h"
 #include "source_base/global_variable.h"
 #include "source_estate/module_charge/charge_mixing.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
+#include "dfpt_stru_fixture.h"
 
 // ctor/dtor stubs for the cell/spepot/charge link closures live in the
 // shared dfpt_test_mocks.cpp compiled into every DFPT test binary.
@@ -35,95 +35,12 @@
  *     i.e. 3*nat entries for each q.
  */
 
-struct atomtype_
-{
-    std::string atomname;
-    std::vector<std::vector<double>> coordinate;
-};
-
-struct stru_
-{
-    int ibrav;
-    std::string point_group;    // Schoenflies symbol
-    std::string point_group_hm; // Hermann-Mauguin notation.
-    std::string space_group;
-    std::vector<double> cell;
-    std::vector<atomtype_> all_type;
-};
-
-std::vector<stru_> stru_lib{stru_{1,
-                                  "O_h",
-                                  "m-3m",
-                                  "Pm-3m",
-                                  std::vector<double>{1., 0., 0., 0., 1., 0., 0., 0., 1.},
-                                  std::vector<atomtype_>{atomtype_{"C",
-                                                                   std::vector<std::vector<double>>{
-                                                                       {0., 0., 0.},
-                                                                   }}}}};
-
-class DFPT_PWRunTest : public testing::Test
+class DFPT_PWRunTest : public DFPTStruTestFixture
 {
   protected:
     ModuleDFPT::DFPT_PW dfpt;
     std::ofstream ofs_running;
     std::string output;
-
-    UnitCell ucell;
-    void construct_ucell(stru_& stru)
-    {
-        std::vector<atomtype_> coord = stru.all_type;
-        ucell.a1 = ModuleBase::Vector3<double>(stru.cell[0], stru.cell[1], stru.cell[2]);
-        ucell.a2 = ModuleBase::Vector3<double>(stru.cell[3], stru.cell[4], stru.cell[5]);
-        ucell.a3 = ModuleBase::Vector3<double>(stru.cell[6], stru.cell[7], stru.cell[8]);
-        ucell.ntype = stru.all_type.size();
-        ucell.atoms = new Atom[ucell.ntype];
-        ucell.nat = 0;
-        ucell.latvec.e11 = ucell.a1.x;
-        ucell.latvec.e12 = ucell.a1.y;
-        ucell.latvec.e13 = ucell.a1.z;
-        ucell.latvec.e21 = ucell.a2.x;
-        ucell.latvec.e22 = ucell.a2.y;
-        ucell.latvec.e23 = ucell.a2.z;
-        ucell.latvec.e31 = ucell.a3.x;
-        ucell.latvec.e32 = ucell.a3.y;
-        ucell.latvec.e33 = ucell.a3.z;
-        ucell.GT = ucell.latvec.Inverse();
-        ucell.G = ucell.GT.Transpose();
-        ucell.lat0 = 1.8897261254578281;
-        for (int i = 0; i < coord.size(); i++)
-        {
-            ucell.atoms[i].label = coord[i].atomname;
-            ucell.atoms[i].na = coord[i].coordinate.size();
-            ucell.atoms[i].tau.resize(ucell.atoms[i].na);
-            ucell.atoms[i].taud.resize(ucell.atoms[i].na);
-            for (int j = 0; j < ucell.atoms[i].na; j++)
-            {
-                std::vector<double> this_atom = coord[i].coordinate[j];
-                ucell.atoms[i].tau[j] = ModuleBase::Vector3<double>(this_atom[0], this_atom[1], this_atom[2]);
-                ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[i].tau[j].x,
-                                                          ucell.atoms[i].tau[j].y,
-                                                          ucell.atoms[i].tau[j].z,
-                                                          ucell.a1.x,
-                                                          ucell.a1.y,
-                                                          ucell.a1.z,
-                                                          ucell.a2.x,
-                                                          ucell.a2.y,
-                                                          ucell.a2.z,
-                                                          ucell.a3.x,
-                                                          ucell.a3.y,
-                                                          ucell.a3.z,
-                                                          ucell.atoms[i].taud[j].x,
-                                                          ucell.atoms[i].taud[j].y,
-                                                          ucell.atoms[i].taud[j].z);
-            }
-            ucell.nat += ucell.atoms[i].na;
-        }
-    }
-
-    void ClearUcell()
-    {
-        delete[] ucell.atoms;
-    }
 
     void SetUp() override
     {
