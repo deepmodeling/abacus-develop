@@ -16,40 +16,8 @@
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-Atom::Atom()
-{
-}
-Atom::~Atom()
-{
-}
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-SepPot::SepPot() {}
-SepPot::~SepPot() {}
-UnitCell::UnitCell()
-{
-}
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-Sep_Cell::Sep_Cell() noexcept {}
-Sep_Cell::~Sep_Cell() noexcept {}
+// ctor/dtor stubs for the cell/spepot link closures live in the shared
+// dfpt_test_mocks.cpp compiled into every DFPT test binary.
 
 /************************************************
  *  unit test of DFPT_PW_Data (Phase 4 wiring; B4

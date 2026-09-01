@@ -28,56 +28,8 @@
 #include "source_pw/module_pwdft/dftu_base.h"
 #include "source_psi/psi.h"
 
-// test-support ctor/dtor stubs (see test/dfpt_pw_run_test.cpp); the DFPT
-// serial test only needs default-constructible cell/sf objects.
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-Atom::Atom()
-{
-}
-Atom::~Atom()
-{
-}
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-SepPot::SepPot()
-{
-}
-SepPot::~SepPot()
-{
-}
-Sep_Cell::Sep_Cell() noexcept
-{
-}
-Sep_Cell::~Sep_Cell() noexcept
-{
-}
-UnitCell::UnitCell()
-{
-}
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-Structure_Factor::Structure_Factor()
-{
-}
-Structure_Factor::~Structure_Factor()
-{
-}
+// ctor/dtor stubs for the cell/spepot/stru_fac link closures live in the
+// shared test/dfpt_test_mocks.cpp compiled into every DFPT test binary.
 
 /************************************************
  *  serial unit test of DFPT_Pert (C1)

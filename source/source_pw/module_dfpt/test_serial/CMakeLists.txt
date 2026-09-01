@@ -38,8 +38,9 @@ AddTest(
 	../../../source_cell/qlist.cpp
 	../../../source_cell/reciprocal_grid.cpp
 	../../../source_psi/psi.cpp
-	# Plus_U test-support shim shared with the MPI-side dfpt tests.
-	../test/dftu_test_support.cpp
+	# Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures
+  # (see test/dfpt_test_mocks.cpp).
+	../test/dfpt_test_mocks.cpp
 )
 
 AddTest(
@@ -52,8 +53,9 @@ AddTest(
   ../../../source_cell/qlist.cpp
   ../../../source_cell/reciprocal_grid.cpp
   ../../../source_psi/psi.cpp
-  # Plus_U test-support shim shared with the MPI-side dfpt tests.
-  ../test/dftu_test_support.cpp
+  # Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures
+  # (see test/dfpt_test_mocks.cpp).
+  ../test/dfpt_test_mocks.cpp
 )
 
 AddTest(
@@ -67,8 +69,9 @@ AddTest(
   ../../../source_cell/qlist.cpp
   ../../../source_cell/reciprocal_grid.cpp
   ../../../source_psi/psi.cpp
-  # Plus_U test-support shim shared with the MPI-side dfpt tests.
-  ../test/dftu_test_support.cpp
+  # Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures
+  # (see test/dfpt_test_mocks.cpp).
+  ../test/dfpt_test_mocks.cpp
 )
 
 AddTest(
@@ -82,6 +85,7 @@ AddTest(
   ../../../source_cell/qlist.cpp
   ../../../source_cell/reciprocal_grid.cpp
   ../../../source_psi/psi.cpp
-  # Plus_U test-support shim shared with the MPI-side dfpt tests.
-  ../test/dftu_test_support.cpp
+  # Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures
+  # (see test/dfpt_test_mocks.cpp).
+  ../test/dfpt_test_mocks.cpp
 )

@@ -28,55 +28,8 @@
 #include "source_base/vector3.h"
 #include "source_psi/psi.h"
 
-// test-support ctor/dtor stubs (see dfpt_pert_serial_test.cpp)
-pseudo::pseudo()
-{
-}
-pseudo::~pseudo()
-{
-}
-Atom::Atom()
-{
-}
-Atom::~Atom()
-{
-}
-Atom_pseudo::Atom_pseudo()
-{
-}
-Atom_pseudo::~Atom_pseudo()
-{
-}
-SepPot::SepPot()
-{
-}
-SepPot::~SepPot()
-{
-}
-Sep_Cell::Sep_Cell() noexcept
-{
-}
-Sep_Cell::~Sep_Cell() noexcept
-{
-}
-UnitCell::UnitCell()
-{
-}
-UnitCell::~UnitCell()
-{
-}
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-Structure_Factor::Structure_Factor()
-{
-}
-Structure_Factor::~Structure_Factor()
-{
-}
+// ctor/dtor stubs for the cell/spepot/stru_fac link closures live in the
+// shared test/dfpt_test_mocks.cpp compiled into every DFPT test binary.
 
 /************************************************
  *  serial unit test of DFPT_Phon (C5)

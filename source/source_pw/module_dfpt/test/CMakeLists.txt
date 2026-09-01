@@ -11,8 +11,8 @@ AddTest(
   	../../../source_cell/qlist.cpp
   	../../../source_cell/reciprocal_grid.cpp
   	../../../source_psi/psi.cpp
-  	# Plus_U_Base ctor/dtor support shim (see dftu_test_support.cpp).
-  	dftu_test_support.cpp
+  	# Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures.
+  	dfpt_test_mocks.cpp
 )
 
 AddTest(
@@ -20,6 +20,7 @@ AddTest(
   LIBS parameter base device symmetry planewave
   SOURCES dfpt_kq_basis_test.cpp
     ../dfpt_kq_basis.cpp
+    dfpt_test_mocks.cpp
 )
 
 AddTest(
@@ -27,6 +28,7 @@ AddTest(
   LIBS parameter base device symmetry
   SOURCES dfpt_stern_test.cpp
   	../dfpt_stern.cpp
+  	dfpt_test_mocks.cpp
 )
 
 AddTest(
@@ -46,7 +48,6 @@ AddTest(
 	../../../source_cell/qlist.cpp
 	../../../source_cell/reciprocal_grid.cpp
 	../../../source_psi/psi.cpp
-	# Plus_U support shim: lets the test construct a Plus_U without pulling
-	# the LCAO-side DFT+U link closure (see dftu_test_support.cpp).
-	dftu_test_support.cpp
+	# Shared ctor/dtor stubs for the cell/spepot/charge/Plus_U closures.
+	dfpt_test_mocks.cpp
 )
