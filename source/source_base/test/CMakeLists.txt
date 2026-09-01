@@ -145,13 +145,13 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_opt_cg
   LIBS parameter  base device
-  SOURCES opt_cg_test.cpp opt_test_tools.cpp
+  SOURCES opt_cg_test.cpp opt_test_tools.cpp mpi_test_main.cpp
 )
 
 AddTest(
   TARGET MODULE_BASE_opt_tn
   LIBS parameter  base device
-  SOURCES opt_tn_test.cpp opt_test_tools.cpp
+  SOURCES opt_tn_test.cpp opt_test_tools.cpp mpi_test_main.cpp
 )
 
 AddTest(
@@ -194,6 +194,18 @@ AddTest(
   TARGET MODULE_BASE_cubic_spline
   SOURCES cubic_spline_test.cpp
   LIBS parameter  base device
+)
+
+AddTest(
+  TARGET MODULE_BASE_math_erf_complex
+  SOURCES math_erf_complex_test.cpp
+  LIBS parameter base device
+)
+
+AddTest(
+  TARGET MODULE_BASE_projgen
+  SOURCES projgen_test.cpp
+  LIBS parameter base device
 )
 
 AddTest(
