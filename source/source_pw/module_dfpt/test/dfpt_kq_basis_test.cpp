@@ -383,6 +383,7 @@ TEST_F(DFPTKQBasisTest, TranslationInvarianceOfKQ)
 
 TEST_F(DFPTKQBasisTest, InvalidOrMismatchedBaseIsRejected)
 {
+    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     // null providers: valid-but-empty basis
     ModuleDFPT::DFPT_KQ_Basis kq;
     kq.init(nullptr, nullptr, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 0);

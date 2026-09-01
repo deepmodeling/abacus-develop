@@ -214,6 +214,10 @@ TEST_F(DFPT_PWRunTest, DielectricAndBornAreExposed)
 
 TEST_F(DFPT_PWRunTest, DftuReservationWithProviderRejectsInit)
 {
+    // the preceding irrep-loop tests run OpenMP regions, so the default
+    // "fast" fork-based death test can deadlock in the multithreaded child
+    // (CI: OMP_NUM_THREADS=2); use the fork+exec style instead
+    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     // DFT+U reservation (U0): the ground state wires a provider when
     // dft_plus_u is enabled upstream, and PW-basis DFT+U actually runs in
     // the ground state now. Since every DFPT U hook (cal_docc, build_dv_u,
@@ -227,11 +231,11 @@ TEST_F(DFPT_PWRunTest, DftuReservationWithProviderRejectsInit)
     Plus_U_Base dftu;
     dfpt.set_qmesh(1, 1, 1);
     psi::Psi<std::complex<double>> psi;
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(dfpt.init(ucell, psi, nullptr, nullptr, nullptr, std::vector<double>(),
-                          ModuleBase::matrix(), ModuleBase::matrix(), nullptr, 1.0, 15.0, &dftu),
-                ::testing::ExitedWithCode(1),
-                "");
-    const std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("DFT+U with DFPT is not supported"));
+    // death tests match the child's stderr, while WARNING_QUIT writes the
+    // NOTICE block to std::cout; bridge the two inside the statement
+    EXPECT_EXIT({
+        std::cout.rdbuf(std::cerr.rdbuf());
+        dfpt.init(ucell, psi, nullptr, nullptr, nullptr, std::vector<double>(),
+                  ModuleBase::matrix(), ModuleBase::matrix(), nullptr, 1.0, 15.0, &dftu);
+    }, ::testing::ExitedWithCode(1), "DFT\\+U with DFPT is not supported");
 }

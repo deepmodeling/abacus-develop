@@ -624,6 +624,7 @@ TEST_F(DFPTPertSerialTest, DVnlDtauMatchesOperatorFiniteDifference)
 
 TEST_F(DFPTPertSerialTest, NonlocalPathRejectsUltrasoft)
 {
+    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     MakeNCAtom();
     ucell_.atoms[0].ncpp.tvanp = true;
     const int npwk = pw_wfc_.npwk[0];
