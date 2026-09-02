@@ -1,17 +1,23 @@
-#include "source_main/driver.h"
-#include "source_cell/check_atomic_stru.h"
-#include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_relax/relax_driver.h"
-#include "source_esolver/esolver_factory.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_io/module_json/para_json.h"
-#include "source_io/module_output/print_info.h"
-#include "source_md/run_md.h"
+#include "source_base/constants.h"
+#include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+#include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/memory_op.h"
-#include "source_base/kernels/math_kernel_op.h"
+#include "source_base/parallel_cell.h"
+#include "source_cell/check_atomic_stru.h"
+#include "source_cell/distributed_mdcell_reader.h"
+#include "source_cell/md_cell.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_cell/print_cell.h"
+#include "source_esolver/esolver_factory.h"
 #include "source_hsolver/kernels/hegvd_op.h"
+#include "source_io/module_json/para_json.h"
+#include "source_io/module_output/print_info.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_main/driver.h"
+#include "source_md/run_md.h"
+#include "source_relax/relax_driver.h"
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
@@ -42,76 +48,131 @@ void Driver::driver_run()
     //! 1: setup cell and atom information
     // this warning should not be here, mohan 2024-05-22
 #ifndef __LCAO
-    if (PARAM.inp.basis_type == "lcao_in_pw" || PARAM.inp.basis_type == "lcao") {
-        ModuleBase::WARNING_QUIT("driver",
-                                 "to use LCAO basis, compile with __LCAO");
+    if (PARAM.inp.basis_type == "lcao_in_pw" || PARAM.inp.basis_type == "lcao")
+    {
+        ModuleBase::WARNING_QUIT("driver", "to use LCAO basis, compile with __LCAO");
     }
-#endif
-
-    // the life of ucell should begin here, mohan 2024-05-12
-    UnitCell ucell;
-    ucell.setup_from_input(PARAM.inp.latname,
-                PARAM.inp.ntype,
-                PARAM.inp.lmaxmax,
-                PARAM.inp.init_vel,
-                PARAM.inp.fixed_axes);
-
-    ucell.setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running, PARAM.inp.symmetry_prec, PARAM.inp.dfthalf_type, PARAM.inp.pseudo_dir, PARAM.inp.nspin,
-        PARAM.inp.basis_type, PARAM.inp.orbital_dir, PARAM.inp.init_wfc,
-        PARAM.inp.onsite_radius, PARAM.globalv.deepks_setorb, PARAM.inp.rpa,
-        PARAM.inp.fixed_atoms, PARAM.inp.noncolin, PARAM.inp.calculation, PARAM.inp.esolver_type,
-        std::stoi(PARAM.inp.symmetry));
-    unitcell::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
-
-    //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
-    this->init_hardware();
-
-    ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp);
-
-    //! 3: initialize Esolver and fill json-structure
-    p_esolver->before_all_runners(ucell, PARAM.inp);
-
-    // this Json part should be moved to before_all_runners, mohan 2024-05-12
-#ifdef __RAPIDJSON
-    Json::gen_stru_wrapper(&ucell, PARAM.inp);
 #endif
 
     const std::string cal = PARAM.inp.calculation;
+    const Input_para& input = PARAM.inp;
 
-    //! 4: different types of calculations
+    this->init_hardware();
+    ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp);
+
+    // UnitCell is initialized only for workflows that require its full DFT state.
+    UnitCell ucell;
+    bool ucell_initialized = false;
+    const auto initialize_ucell = [&ucell, &ucell_initialized, &input]()
+    {
+        if (ucell_initialized)
+        {
+            return;
+        }
+
+        ucell.setup_from_input(input.latname,
+                               input.ntype,
+                               input.lmaxmax,
+                               input.init_vel,
+                               input.fixed_axes);
+        ucell.setup_cell(PARAM.globalv.global_in_stru,
+                         GlobalV::ofs_running,
+                         input.symmetry_prec,
+                         input.dfthalf_type,
+                         input.pseudo_dir,
+                         input.nspin,
+                         input.basis_type,
+                         input.orbital_dir,
+                         input.init_wfc,
+                         input.onsite_radius,
+                         PARAM.globalv.deepks_setorb,
+                         input.rpa,
+                         input.fixed_atoms,
+                         input.noncolin,
+                         input.calculation,
+                         input.esolver_type,
+                         std::stoi(input.symmetry));
+        unitcell::check_atomic_stru(ucell, input.min_dist_coef);
+        ucell_initialized = true;
+
+#ifdef __RAPIDJSON
+        Json::gen_stru_wrapper(&ucell, input);
+#endif
+    };
+
     if (cal == "md")
     {
-        Run_MD::md_line(ucell, p_esolver, PARAM);
-    }
-    else if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
-    {
-        Relax_Driver rl_driver;
-        rl_driver.relax_driver(p_esolver, ucell, PARAM.inp, GlobalV::ofs_running);
-    }
-    else if (cal == "get_s")
-    {
-        p_esolver->runner(ucell, 0);
-    }
-    else if (cal == "get_pchg" || cal == "get_wf" || cal == "gen_bessel" || cal == "gen_opt_abfs" ||
-             cal == "test_memory" || cal == "test_neighbour")
-    {
-        const int istep = 0;
-        p_esolver->others(ucell, istep);
+        const ModuleBase::CommunicationDomain communication_domain = ModuleBase::world_communication_domain();
+        if (p_esolver->supports_mdcell())
+        {
+            const Input_para& input = PARAM.inp;
+            const double cutoff = p_esolver->mdcell_cutoff(input);
+            if (cutoff <= 0.0)
+            {
+                ModuleBase::WARNING_QUIT("Driver::driver_run",
+                                         "An ESolver supporting MDCell must provide a positive cutoff.");
+            }
+            const std::vector<int> effective_replicate = input.mdp.md_restart
+                                                              ? std::vector<int>{1, 1, 1}
+                                                              : input.cell_replica;
+            MdStruFileMetadata stru_metadata;
+            MDCell mdcell = DistributedMDCellReader::read_stru(PARAM.globalv.global_in_stru,
+                                                                 effective_replicate,
+                                                                 cutoff,
+                                                                 input.mdp.md_neighbor_skin / ModuleBase::BOHR_TO_A,
+                                                                 stru_metadata,
+                                                                 communication_domain);
+            GlobalV::ofs_running << std::endl;
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "TOTAL ATOM NUMBER", mdcell.nat());
+            GlobalV::ofs_running << std::endl;
+            p_esolver->before_all_runners(mdcell, input);
+            Run_MD::md_line(mdcell, p_esolver, PARAM, stru_metadata);
+            p_esolver->after_all_runners(mdcell);
+        }
+        else
+        {
+            initialize_ucell();
+            MDCell mdcell(ucell, 0.0, 0.0, communication_domain);
+            const MdStruFileMetadata stru_metadata = unitcell::make_md_stru_file_metadata(ucell);
+            p_esolver->before_all_runners(ucell, PARAM.inp);
+            Run_MD::md_line(mdcell, p_esolver, PARAM, stru_metadata);
+            p_esolver->after_all_runners(ucell);
+        }
     }
     else
     {
-        ModuleBase::WARNING_QUIT("Driver::driver_run","cannot recognize the 'calculation' command");
+        initialize_ucell();
+        p_esolver->before_all_runners(ucell, PARAM.inp);
+        if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
+        {
+            Relax_Driver rl_driver;
+            rl_driver.relax_driver(p_esolver, ucell, PARAM.inp, GlobalV::ofs_running);
+        }
+        else if (cal == "get_s")
+        {
+            p_esolver->runner(ucell, 0);
+        }
+        else if (cal == "get_pchg" || cal == "get_wf" || cal == "gen_bessel" || cal == "gen_opt_abfs"
+                 || cal == "test_memory" || cal == "test_neighbour")
+        {
+            p_esolver->others(ucell, 0);
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("Driver::driver_run", "cannot recognize the 'calculation' command");
+        }
+        p_esolver->after_all_runners(ucell);
     }
-
-    //! 5: clean up esolver
-    p_esolver->after_all_runners(ucell);
 
     delete p_esolver;
 
     this->finalize_hardware();
 
     //! 6: output the json file
-    Json::create_Json(&ucell, PARAM);
+    if (ucell_initialized)
+    {
+        Json::create_Json(&ucell, PARAM);
+    }
 
     return;
 }

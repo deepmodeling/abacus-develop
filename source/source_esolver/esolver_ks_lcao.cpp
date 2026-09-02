@@ -430,18 +430,20 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         if (this->inp_->sc_lambda_strategy == "linear_scan")
         {
-            sc.run_lambda_linear_scan(iter - 1);
+            sc.run_lambda_linear_scan(iter - 1, GlobalV::ofs_running);
             skip_solve = true;
         }
         else if (!sc.mag_converged() && this->drho > 0 && this->drho < this->inp_->sc_scf_thr)
         {
-            sc.run_lambda_loop(iter - 1);
+            sc.run_lambda_loop(iter - 1, true, GlobalV::ofs_running);
+            this->ds_rms_ = sc.get_last_rms_error();
             sc.set_mag_converged(true);
             skip_solve = true;
         }
         else if (sc.mag_converged())
         {
-            sc.run_lambda_loop(iter - 1);
+            sc.run_lambda_loop(iter - 1, true, GlobalV::ofs_running);
+            this->ds_rms_ = sc.get_last_rms_error();
             skip_solve = true;
         }
     }
@@ -504,7 +506,15 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 	const std::vector<std::vector<TK>>& dm_vec = this->dmat.dm->get_DMK_vector();
 
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
-    finish_dftu_lcao<TK>(iter, conv_esolver, this->inp_->dft_plus_u, this->inp_->out_chg[0], &(this->dftu), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao, PARAM.globalv.global_out_dir, this->inp_->nspin, PARAM.globalv.npol);
+    finish_dftu_lcao<TK>(iter, conv_esolver, this->inp_->dft_plus_u, this->inp_->out_chg[0], &(this->dftu), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao, PARAM.globalv.global_out_dir, this->inp_->nspin, PARAM.globalv.npol, PARAM.globalv.gamma_only_local);
+
+    // mohan add 2025-11: push DFT+U energy from Plus_U instance to ElecState.
+    // Covers both dft_plus_u==1 (new method, energy accumulated by DFTU::contributeHR
+    // via cal_pot_onsite) and dft_plus_u==2 (old method, energy from cal_energy_correction).
+    if (this->inp_->dft_plus_u)
+    {
+        this->pelec->set_dftu_energy(this->dftu.get_energy());
+    }
 
     // 2) for deepks, calculate delta_e, output labels during electronic steps
     this->deepks.delta_e(ucell, this->kv, this->orb_, this->pv, this->gd, dm_vec, this->pelec->f_en, *this->inp_);

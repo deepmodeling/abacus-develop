@@ -1,103 +1,144 @@
 #ifdef __LCAO
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
-#include "dftu.h"
+#include "dftu_lcao.h"
+#include "dftu_yukawa.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <cmath>
-#include <complex>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
+#include <limits>
 #include <sstream>
-#include <cstdio>
-#include <cstring>
 
 
-void Plus_U::cal_yukawa_lambda(double** rho, const int& nrxx)
+void DFTU_LCAO::cal_yukawa_lambda(Plus_U& dftu, double** rho, const int& nrxx)
 {
-    ModuleBase::TITLE("Plus_U", "cal_yukawa_lambda");
+    ModuleBase::TITLE("DFTU_LCAO", "cal_yukawa_lambda");
 
-    if (this->yukawa_lambda > 0)
+    // read from the global PARAM.inp.nspin instead of a Plus_U member;
+    // the member indirection is being removed during the refactor
+    const int nspin = PARAM.inp.nspin;
+
+    if (dftu.get_yukawa_lambda() > 0)
     {
-        this->lambda = this->yukawa_lambda;
+        dftu.set_lambda(dftu.get_yukawa_lambda());
         return;
     }
 
+    // Track sum_rho, sum_rho_lambda, and the global min of rho. min_rho is
+    // kept only for the diagnostic message: negative grid-point values are
+    // expected (atomic-density superposition on a coarse FFT grid oscillates
+    // near atom boundaries) and are clamped to 0 before being raised to the
+    // 1/6 power below, so they no longer produce NaN here. The remaining
+    // failure mode is sum_rho == 0 (rho not populated, or grid/normalization
+    // mismatch), which still makes lambda = sum_rho_lambda/sum_rho = 0/0.
     double sum_rho = 0.0;
     double sum_rho_lambda = 0.0;
-    for (int is = 0; is < Plus_U::nspin; is++)
+    double min_rho = std::numeric_limits<double>::max();
+    for (int is = 0; is < nspin; is++)
     {
-        if(Plus_U::nspin == 4 && is > 0) 
-		{ 
-			continue;// for non-collinear spin case, first spin contains the charge density
-		}
+        if(nspin == 4 && is > 0)
+        {
+            continue;// for non-collinear spin case, first spin contains the charge density
+        }
         for (int ir = 0; ir < nrxx; ir++)
         {
-            double rho_ir = rho[is][ir];
+            const double rho_ir = rho[is][ir];
+            if (rho_ir < min_rho)
+            {
+                min_rho = rho_ir;
+            }
             sum_rho += rho_ir;
 
-            double lambda_ir = 2 * pow(3 * rho_ir / ModuleBase::PI, (double)1.0 / 6.0);
+            // Clamp rho to 0 before pow(3*rho/PI, 1/6): pow(negative, 1/6)
+            // returns NaN in C++ and would silently poison sum_rho_lambda,
+            // lambda, U/J and the Hamiltonian. Negative rho here is a
+            // numerical artifact of superposing atomic densities onto the
+            // FFT grid; the physical charge density is non-negative, and
+            // the contribution of these near-boundary points to the
+            // Thomas-Fermi-like integral is negligible.
+            const double rho_safe = std::max(rho_ir, 0.0);
+            const double lambda_ir = 2 * pow(3 * rho_safe / ModuleBase::PI, (double)1.0 / 6.0);
             sum_rho_lambda += lambda_ir * rho_ir;
         }
     }
 
     double val1 = 0.0;
     double val2 = 0.0;
+    double min_rho_global = min_rho;
 
 #ifdef __MPI
     MPI_Allreduce(&sum_rho, &val1, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     MPI_Allreduce(&sum_rho_lambda, &val2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&min_rho, &min_rho_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+#else
+    val1 = sum_rho;
+    val2 = sum_rho_lambda;
 #endif
 
-    this->lambda = val2 / val1;
+    // Fail loud instead of writing NaN into lambda -> U/J -> Hamiltonian.
+    // After the clamp above, NaN can only slip in if sum_rho == 0 (0/0);
+    // min_rho is still reported for diagnosis when this fires.
+    if (!std::isfinite(val1) || !std::isfinite(val2) || val1 <= 0.0)
+    {
+        std::ostringstream oss;
+        oss << "rho sanity check failed: sum_rho=" << val1
+            << " sum_rho_lambda=" << val2
+            << " min_rho=" << min_rho_global
+            << " (need finite sum_rho > 0); nspin=" << nspin
+            << " nrxx=" << nrxx;
+        ModuleBase::WARNING_QUIT("DFTU_LCAO::cal_yukawa_lambda", oss.str());
+    }
+
+    dftu.set_lambda(val2 / val1);
 
     // rescaling
-    this->lambda /= 1.6;
+    dftu.set_lambda(dftu.get_lambda() / 1.6);
 
     return;
 }
 
-void Plus_U::cal_slater_Fk(const UnitCell& ucell,
-                         const int L, 
-                         const int T)
+void DFTU_LCAO::cal_slater_Fk(Plus_U& dftu, const UnitCell& ucell, const int L, const int T)
 {
-    ModuleBase::TITLE("Plus_U", "cal_slater_Fk");
+    ModuleBase::TITLE("DFTU_LCAO", "cal_slater_Fk");
 
-    if (Yukawa)
+    if (dftu.use_yukawa())
     {
+        const LCAO_Orbitals* orb = dftu.get_ptr_orb();
+        const double lambda_val = dftu.get_lambda();
+        auto& Fk = dftu.get_Fk_data();
+
         for (int chi = 0; chi < ucell.atoms[T].l_nchi[L]; chi++)
         {
-            //	if(chi!=0) continue;
-            const int mesh = ptr_orb_->Phi[T].PhiLN(L, chi).getNr();
+            //    if(chi!=0) continue;
+            const int mesh = orb->Phi[T].PhiLN(L, chi).getNr();
 
             for (int k = 0; k <= L; k++)
             {
                 for (int ir0 = 1; ir0 < mesh; ir0++)
                 {
-                    double r0 = ptr_orb_->Phi[T].PhiLN(L, chi).getRadial(ir0);
-                    const double rab0 = ptr_orb_->Phi[T].PhiLN(L, chi).getRab(ir0);
-                    const double R_L0 = ptr_orb_->Phi[T].PhiLN(L, chi).getPsi(ir0);
+                    double r0 = orb->Phi[T].PhiLN(L, chi).getRadial(ir0);
+                    const double rab0 = orb->Phi[T].PhiLN(L, chi).getRab(ir0);
+                    const double R_L0 = orb->Phi[T].PhiLN(L, chi).getPsi(ir0);
 
                     for (int ir1 = 1; ir1 < mesh; ir1++)
                     {
                         double bslval, hnkval;
-                        double r1 = ptr_orb_->Phi[T].PhiLN(L, chi).getRadial(ir1);
-                        const double rab1 = ptr_orb_->Phi[T].PhiLN(L, chi).getRab(ir1);
-                        const double R_L1 = ptr_orb_->Phi[T].PhiLN(L, chi).getPsi(ir1);
+                        double r1 = orb->Phi[T].PhiLN(L, chi).getRadial(ir1);
+                        const double rab1 = orb->Phi[T].PhiLN(L, chi).getRab(ir1);
+                        const double R_L1 = orb->Phi[T].PhiLN(L, chi).getPsi(ir1);
 
                         int l = 2 * k;
                         if (ir0 < ir1) // less than
                         {
-                            bslval = this->spherical_Bessel(l, r0, lambda);
-                            hnkval = this->spherical_Hankel(l, r1, lambda);
+                            bslval = DFTU_LCAO::spherical_Bessel(l, r0, lambda_val);
+                            hnkval = DFTU_LCAO::spherical_Hankel(l, r1, lambda_val);
                         }
                         else // greater than
                         {
-                            bslval = this->spherical_Bessel(l, r1, lambda);
-                            hnkval = this->spherical_Hankel(l, r0, lambda);
+                            bslval = DFTU_LCAO::spherical_Bessel(l, r1, lambda_val);
+                            hnkval = DFTU_LCAO::spherical_Hankel(l, r0, lambda_val);
                         }
-                        this->Fk[T][L][chi][k] -= (4 * k + 1) * lambda * pow(R_L0, 2) * bslval * hnkval * pow(R_L1, 2)
+                        Fk[T][L][chi][k] -= (4 * k + 1) * lambda_val * pow(R_L0, 2) * bslval * hnkval * pow(R_L1, 2)
                                                   * pow(r0, 2) * pow(r1, 2) * rab0 * rab1;
                     }
                 }
@@ -108,15 +149,17 @@ void Plus_U::cal_slater_Fk(const UnitCell& ucell,
     return;
 }
 
-void Plus_U::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
+void DFTU_LCAO::cal_slater_UJ(Plus_U& dftu, const UnitCell& ucell, double** rho, const int& nrxx)
 {
-    ModuleBase::TITLE("Plus_U", "cal_slater_UJ");
-    if (!Yukawa) 
-	{
-		return;
-	}
+    ModuleBase::TITLE("DFTU_LCAO", "cal_slater_UJ");
+    if (!dftu.use_yukawa())
+    {
+        return;
+    }
 
-    this->cal_yukawa_lambda(rho, nrxx);
+    cal_yukawa_lambda(dftu, rho, nrxx);
+
+    auto& Fk = dftu.get_Fk_data();
 
     for (int it = 0; it < ucell.ntype; it++)
     {
@@ -127,7 +170,7 @@ void Plus_U::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
             int N = ucell.atoms[it].l_nchi[l];
             for (int n = 0; n < N; n++)
             {
-                ModuleBase::GlobalFunc::ZEROS(ModuleBase::GlobalFunc::VECTOR_TO_PTR(this->Fk[it][l][n]), l + 1);
+                ModuleBase::GlobalFunc::ZEROS(ModuleBase::GlobalFunc::VECTOR_TO_PTR(Fk[it][l][n]), l + 1);
             }
         }
     }
@@ -140,38 +183,38 @@ void Plus_U::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
         {
             const int N = ucell.atoms[T].l_nchi[L];
 
-            if (L >= Plus_U::get_orbital_corr(T) && Plus_U::get_orbital_corr(T) != -1)
+            if (L >= dftu.get_orbital_corr(T) && dftu.get_orbital_corr(T) != -1)
             {
-                if (L != Plus_U::get_orbital_corr(T)) 
-				{
-					continue;
-				}
-				this->cal_slater_Fk(ucell,L, T);
+                if (L != dftu.get_orbital_corr(T))
+                {
+                    continue;
+                }
+                cal_slater_Fk(dftu, ucell, L, T);
 
 
                 if( L == 1)
                 {
-                    this->U_Yukawa[T][L][0] = this->Fk[T][L][0][0];
-                    this->J_Yukawa[T][L][0] = this->Fk[T][L][0][1] / 5.0;
+                    dftu.set_U_Yukawa(T, L, 0, Fk[T][L][0][0]);
+                    dftu.set_J_Yukawa(T, L, 0, Fk[T][L][0][1] / 5.0);
                 }
                 else if( L == 2)
                 {
-                    this->U_Yukawa[T][L][0] = this->Fk[T][L][0][0];
-                    this->J_Yukawa[T][L][0] = (this->Fk[T][L][0][1] + this->Fk[T][L][0][2]) / 14.0;
+                    dftu.set_U_Yukawa(T, L, 0, Fk[T][L][0][0]);
+                    dftu.set_J_Yukawa(T, L, 0, (Fk[T][L][0][1] + Fk[T][L][0][2]) / 14.0);
                 }
                 else if( L == 3)
                 {
-                    this->U_Yukawa[T][L][0] = this->Fk[T][L][0][0];
-                    this->J_Yukawa[T][L][0] = (286.0 * this->Fk[T][L][0][1] + 195.0 * this->Fk[T][L][0][2]
-                                                + 250.0 * this->Fk[T][L][0][3])
-                                                / 6435.0;
+                    dftu.set_U_Yukawa(T, L, 0, Fk[T][L][0][0]);
+                    dftu.set_J_Yukawa(T, L, 0, (286.0 * Fk[T][L][0][1] + 195.0 * Fk[T][L][0][2]
+                                                + 250.0 * Fk[T][L][0][3])
+                                                / 6435.0);
                 }
 
                 // Hartree to Rydeberg
-                this->U_Yukawa[T][L][0] *= 2.0;
-                this->J_Yukawa[T][L][0] *= 2.0;
+                dftu.set_U_Yukawa(T, L, 0, dftu.get_U_Yukawa(T, L, 0) * 2.0);
+                dftu.set_J_Yukawa(T, L, 0, dftu.get_J_Yukawa(T, L, 0) * 2.0);
                 // update current U with calculated U-J from Slater integrals
-                this->U[T] = this->U_Yukawa[T][L][0] - this->J_Yukawa[T][L][0];
+                dftu.set_u_current(T, dftu.get_U_Yukawa(T, L, 0) - dftu.get_J_Yukawa(T, L, 0));
             } // end if
         } // end L
     } // end T
@@ -179,9 +222,9 @@ void Plus_U::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
     return;
 }
 
-double Plus_U::spherical_Bessel(const int k, const double r, const double lambda)
+double DFTU_LCAO::spherical_Bessel(const int k, const double r, const double lambda)
 {
-    ModuleBase::TITLE("Plus_U", "spherical_Bessel");
+    ModuleBase::TITLE("DFTU_LCAO", "spherical_Bessel");
 
     double val=0.0;
     double x = r * lambda;
@@ -234,9 +277,9 @@ double Plus_U::spherical_Bessel(const int k, const double r, const double lambda
     return val;
 }
 
-double Plus_U::spherical_Hankel(const int k, const double r, const double lambda)
+double DFTU_LCAO::spherical_Hankel(const int k, const double r, const double lambda)
 {
-    ModuleBase::TITLE("Plus_U", "spherical_Bessel");
+    ModuleBase::TITLE("DFTU_LCAO", "spherical_Hankel");
 
     double val=0.0;
     double x = r * lambda;

@@ -7,6 +7,9 @@
 // ============================================================
 
 #include "dfpt_pw_data.h"
+#include "source_pw/module_pwdft/dftu_base.h"
+
+#include <cmath>
 
 namespace ModuleDFPT {
 
@@ -17,7 +20,7 @@ DFPT_PW_Data::~DFPT_PW_Data() {
 }
 
 void DFPT_PW_Data::init(ModuleCell::QList* qlist, int nk, int nbands, int npw_max, 
-                        int nrxx, int nspin, int nat) {
+                        int nrxx, int nspin, int nat, const Plus_U_Base* dftu) {
     qlist_ = qlist;
     nk_ = nk;
     nbands_ = nbands;
@@ -25,6 +28,7 @@ void DFPT_PW_Data::init(ModuleCell::QList* qlist, int nk, int nbands, int npw_ma
     nrxx_ = nrxx;
     nspin_ = nspin;
     nat_ = nat;
+    dftu_ = dftu;
     
     allocate_memory();
     is_initialized_ = true;
@@ -33,6 +37,116 @@ void DFPT_PW_Data::init(ModuleCell::QList* qlist, int nk, int nbands, int npw_ma
 void DFPT_PW_Data::clean() {
     deallocate_memory();
     is_initialized_ = false;
+}
+
+bool DFPT_PW_Data::u_active() const {
+    // a usable provider has its occupation matrices initialized (the ground
+    // state does this when DFT+U actually runs); a wired provider without
+    // them (e.g. a default-constructed reservation) stays inactive.
+    return with_u() && dftu_->is_occ_mat_initialized();
+}
+
+void DFPT_PW_Data::set_docc(int q_idx, const std::vector<std::complex<double>>& occ) {
+    if (q_idx < 0) {
+        return;
+    }
+    if (q_idx >= static_cast<int>(docc_.size())) {
+        docc_.resize(q_idx + 1);
+    }
+    docc_[q_idx] = occ;
+}
+
+void DFPT_PW_Data::set_vsc_r(int atom_idx, int dir,
+                             const std::vector<std::complex<double>>& v) {
+    if (atom_idx < 0 || dir < 0 || dir >= 3) {
+        return;
+    }
+    const size_t slot = static_cast<size_t>(3 * atom_idx + dir);
+    if (slot >= vsc_r_.size()) {
+        vsc_r_.resize(slot + 1);
+    }
+    vsc_r_[slot] = v;
+}
+
+std::vector<std::complex<double>> DFPT_PW_Data::get_vsc_r(int atom_idx, int dir) const {
+    if (atom_idx < 0 || dir < 0 || dir >= 3) {
+        return std::vector<std::complex<double>>();
+    }
+    const size_t slot = static_cast<size_t>(3 * atom_idx + dir);
+    if (slot < vsc_r_.size()) {
+        return vsc_r_[slot];
+    }
+    return std::vector<std::complex<double>>();
+}
+
+void DFPT_PW_Data::set_dpsi_disp(
+    int atom_idx, int dir,
+    const std::vector<std::vector<std::vector<std::complex<double>>>>& d) {
+    if (atom_idx < 0 || dir < 0 || dir >= 3) {
+        return;
+    }
+    const size_t slot = static_cast<size_t>(3 * atom_idx + dir);
+    if (slot >= dpsi_disp_.size()) {
+        dpsi_disp_.resize(slot + 1);
+    }
+    dpsi_disp_[slot] = d;
+}
+
+std::vector<std::vector<std::vector<std::complex<double>>>>
+DFPT_PW_Data::get_dpsi_disp(int atom_idx, int dir) const {
+    if (atom_idx < 0 || dir < 0 || dir >= 3) {
+        return std::vector<std::vector<std::vector<std::complex<double>>>>();
+    }
+    const size_t slot = static_cast<size_t>(3 * atom_idx + dir);
+    if (slot < dpsi_disp_.size()) {
+        return dpsi_disp_[slot];
+    }
+    return std::vector<std::vector<std::vector<std::complex<double>>>>();
+}
+
+void DFPT_PW_Data::set_pos_resp(
+    int dir, const std::vector<std::vector<std::vector<std::complex<double>>>>& y) {
+    if (dir < 0 || dir >= 3) {
+        return;
+    }
+    if (pos_resp_.size() < 3) {
+        pos_resp_.resize(3);
+    }
+    pos_resp_[dir] = y;
+}
+
+std::vector<std::vector<std::vector<std::complex<double>>>>
+DFPT_PW_Data::get_pos_resp(int dir) const {
+    if (dir < 0 || dir >= 3 || dir >= static_cast<int>(pos_resp_.size())) {
+        return std::vector<std::vector<std::vector<std::complex<double>>>>();
+    }
+    return pos_resp_[dir];
+}
+
+void DFPT_PW_Data::set_dpsi_efield(
+    int dir, const std::vector<std::vector<std::vector<std::complex<double>>>>& d) {
+    if (dir < 0 || dir >= 3) {
+        return;
+    }
+    if (dpsi_efield_.size() < 3) {
+        dpsi_efield_.resize(3);
+    }
+    dpsi_efield_[dir] = d;
+}
+
+std::vector<std::vector<std::vector<std::complex<double>>>>
+DFPT_PW_Data::get_dpsi_efield(int dir) const {
+    if (dir < 0 || dir >= 3 || dir >= static_cast<int>(dpsi_efield_.size())) {
+        return std::vector<std::vector<std::vector<std::complex<double>>>>();
+    }
+    return dpsi_efield_[dir];
+}
+
+std::vector<std::complex<double>> DFPT_PW_Data::get_docc(int q_idx) const {
+    if (q_idx >= 0 && q_idx < static_cast<int>(docc_.size())) {
+        return docc_[q_idx];
+    }
+    return std::vector<std::complex<double>>();
 }
 
 int DFPT_PW_Data::get_nq() const {
@@ -53,73 +167,176 @@ std::vector<int> DFPT_PW_Data::get_irrep_modes(int q_idx, int irrep) const {
 
 void DFPT_PW_Data::set_dpsi(int q_idx, int k_idx, int band_idx, 
                              const std::vector<std::complex<double>>& psi) {
-    (void)q_idx;
-    (void)k_idx;
-    (void)band_idx;
-    (void)psi;
+    if (q_idx < 0 || k_idx < 0 || band_idx < 0) {
+        return;
+    }
+    if (q_idx >= static_cast<int>(dpsi_.size())) {
+        dpsi_.resize(q_idx + 1);
+    }
+    if (k_idx >= static_cast<int>(dpsi_[q_idx].size())) {
+        dpsi_[q_idx].resize(k_idx + 1);
+    }
+    if (band_idx >= static_cast<int>(dpsi_[q_idx][k_idx].size())) {
+        dpsi_[q_idx][k_idx].resize(band_idx + 1);
+    }
+    dpsi_[q_idx][k_idx][band_idx] = psi;
 }
 
 std::vector<std::complex<double>> DFPT_PW_Data::get_dpsi(int q_idx, int k_idx, int band_idx) const {
-    (void)q_idx;
-    (void)k_idx;
-    (void)band_idx;
+    if (q_idx >= 0 && k_idx >= 0 && band_idx >= 0 &&
+        q_idx < static_cast<int>(dpsi_.size()) &&
+        k_idx < static_cast<int>(dpsi_[q_idx].size()) &&
+        band_idx < static_cast<int>(dpsi_[q_idx][k_idx].size()))
+    {
+        return dpsi_[q_idx][k_idx][band_idx];
+    }
     return std::vector<std::complex<double>>();
 }
 
-psi::Psi<std::complex<double>>& DFPT_PW_Data::get_dpsi_obj(int q_idx) {
-    static psi::Psi<std::complex<double>> dummy;
-    (void)q_idx;
-    return dummy;
+void DFPT_PW_Data::set_converged(int q_idx, int irrep, bool flag) {
+    converged_[std::make_pair(q_idx, irrep)] = flag;
+}
+
+bool DFPT_PW_Data::get_converged(int q_idx, int irrep) const {
+    const auto it = converged_.find(std::make_pair(q_idx, irrep));
+    return it != converged_.end() ? it->second : false;
+}
+
+void DFPT_PW_Data::add_residual(int q_idx, int irrep, double r) {
+    residuals_[std::make_pair(q_idx, irrep)].push_back(r);
+}
+
+std::vector<double> DFPT_PW_Data::get_residuals(int q_idx, int irrep) const {
+    const auto it = residuals_.find(std::make_pair(q_idx, irrep));
+    return it != residuals_.end() ? it->second : std::vector<double>();
+}
+
+void DFPT_PW_Data::set_current_iter(int q_idx, int irrep, int iter) {
+    current_iter_[std::make_pair(q_idx, irrep)] = iter;
+}
+
+int DFPT_PW_Data::get_current_iter(int q_idx, int irrep) const {
+    const auto it = current_iter_.find(std::make_pair(q_idx, irrep));
+    return it != current_iter_.end() ? it->second : 0;
 }
 
 void DFPT_PW_Data::set_drho_r(int q_idx, int spin, const std::vector<double>& rho) {
-    (void)q_idx;
-    (void)spin;
-    (void)rho;
+    if (q_idx < 0 || spin < 0) { return; }
+    if (q_idx >= static_cast<int>(drho_r_.size())) {
+        drho_r_.resize(q_idx + 1);
+    }
+    if (spin >= static_cast<int>(drho_r_[q_idx].size())) {
+        drho_r_[q_idx].resize(spin + 1);
+    }
+    drho_r_[q_idx][spin] = rho;
 }
 
 std::vector<double> DFPT_PW_Data::get_drho_r(int q_idx, int spin) const {
-    (void)q_idx;
-    (void)spin;
+    if (q_idx >= 0 && spin >= 0 &&
+        q_idx < static_cast<int>(drho_r_.size()) &&
+        spin < static_cast<int>(drho_r_[q_idx].size()))
+    {
+        return drho_r_[q_idx][spin];
+    }
     return std::vector<double>();
 }
 
 void DFPT_PW_Data::set_drho_g(int q_idx, int spin, const std::vector<std::complex<double>>& rho) {
-    (void)q_idx;
-    (void)spin;
-    (void)rho;
+    if (q_idx < 0 || spin < 0) { return; }
+    if (q_idx >= static_cast<int>(drho_g_.size())) {
+        drho_g_.resize(q_idx + 1);
+    }
+    if (spin >= static_cast<int>(drho_g_[q_idx].size())) {
+        drho_g_[q_idx].resize(spin + 1);
+    }
+    drho_g_[q_idx][spin] = rho;
 }
 
 std::vector<std::complex<double>> DFPT_PW_Data::get_drho_g(int q_idx, int spin) const {
-    (void)q_idx;
-    (void)spin;
+    if (q_idx >= 0 && spin >= 0 &&
+        q_idx < static_cast<int>(drho_g_.size()) &&
+        spin < static_cast<int>(drho_g_[q_idx].size()))
+    {
+        return drho_g_[q_idx][spin];
+    }
     return std::vector<std::complex<double>>();
 }
 
 void DFPT_PW_Data::set_dv_r(int q_idx, int spin, const std::vector<double>& v) {
-    (void)q_idx;
-    (void)spin;
-    (void)v;
+    if (q_idx < 0 || spin < 0) { return; }
+    if (q_idx >= static_cast<int>(dv_r_.size())) {
+        dv_r_.resize(q_idx + 1);
+    }
+    if (spin >= static_cast<int>(dv_r_[q_idx].size())) {
+        dv_r_[q_idx].resize(spin + 1);
+    }
+    dv_r_[q_idx][spin] = v;
 }
 
 std::vector<double> DFPT_PW_Data::get_dv_r(int q_idx, int spin) const {
-    (void)q_idx;
-    (void)spin;
+    if (q_idx >= 0 && spin >= 0 &&
+        q_idx < static_cast<int>(dv_r_.size()) &&
+        spin < static_cast<int>(dv_r_[q_idx].size()))
+    {
+        return dv_r_[q_idx][spin];
+    }
     return std::vector<double>();
 }
 
-void DFPT_PW_Data::set_dynmat(int q_idx, const ModuleBase::matrix& dm) {
+void DFPT_PW_Data::set_dv_recip_c(int q_idx, int spin, const std::vector<std::complex<double>>& v) {
+    if (q_idx < 0 || spin < 0) { return; }
+    if (q_idx >= static_cast<int>(dv_recip_c_.size())) {
+        dv_recip_c_.resize(q_idx + 1);
+    }
+    if (spin >= static_cast<int>(dv_recip_c_[q_idx].size())) {
+        dv_recip_c_[q_idx].resize(spin + 1);
+    }
+    dv_recip_c_[q_idx][spin] = v;
+}
+
+std::vector<std::complex<double>> DFPT_PW_Data::get_dv_recip_c(int q_idx, int spin) const {
+    if (q_idx >= 0 && spin >= 0 &&
+        q_idx < static_cast<int>(dv_recip_c_.size()) &&
+        spin < static_cast<int>(dv_recip_c_[q_idx].size()))
+    {
+        return dv_recip_c_[q_idx][spin];
+    }
+    return std::vector<std::complex<double>>();
+}
+
+void DFPT_PW_Data::set_dv_rc(int q_idx, int spin, const std::vector<std::complex<double>>& v) {
+    if (q_idx < 0 || spin < 0) { return; }
+    if (q_idx >= static_cast<int>(dv_rc_.size())) {
+        dv_rc_.resize(q_idx + 1);
+    }
+    if (spin >= static_cast<int>(dv_rc_[q_idx].size())) {
+        dv_rc_[q_idx].resize(spin + 1);
+    }
+    dv_rc_[q_idx][spin] = v;
+}
+
+std::vector<std::complex<double>> DFPT_PW_Data::get_dv_rc(int q_idx, int spin) const {
+    if (q_idx >= 0 && spin >= 0 &&
+        q_idx < static_cast<int>(dv_rc_.size()) &&
+        spin < static_cast<int>(dv_rc_[q_idx].size()))
+    {
+        return dv_rc_[q_idx][spin];
+    }
+    return std::vector<std::complex<double>>();
+}
+
+void DFPT_PW_Data::set_dynmat(int q_idx, const ModuleBase::ComplexMatrix& dm) {
     if (q_idx >= static_cast<int>(dynmat_.size())) {
         dynmat_.resize(q_idx + 1);
     }
     dynmat_[q_idx] = dm;
 }
 
-ModuleBase::matrix DFPT_PW_Data::get_dynmat(int q_idx) const {
+ModuleBase::ComplexMatrix DFPT_PW_Data::get_dynmat(int q_idx) const {
     if (q_idx < static_cast<int>(dynmat_.size())) {
         return dynmat_[q_idx];
     }
-    return ModuleBase::matrix();
+    return ModuleBase::ComplexMatrix();
 }
 
 void DFPT_PW_Data::set_phon_freq(int q_idx, const std::vector<double>& freq) {
@@ -134,6 +351,14 @@ std::vector<double> DFPT_PW_Data::get_phon_freq(int q_idx) const {
         return phon_freq_[q_idx];
     }
     return std::vector<double>();
+}
+
+void DFPT_PW_Data::set_loto_dir(const ModuleBase::Vector3<double>& dir) {
+    const double norm = std::sqrt(dir * dir);
+    if (norm < 1.0e-10) {
+        return; // keep the current direction on a null input
+    }
+    loto_dir_ = dir / norm;
 }
 
 void DFPT_PW_Data::set_dielectric(const ModuleBase::matrix& eps) {
@@ -168,7 +393,14 @@ void DFPT_PW_Data::deallocate_memory() {
     dynmat_.clear();
     phon_freq_.clear();
     born_.clear();
+    docc_.clear();
+    dv_r_.clear();
+    dv_recip_c_.clear();
+    dv_rc_.clear();
+    dpsi_.clear();
+    converged_.clear();
     residuals_.clear();
+    current_iter_.clear();
 }
 
 } // namespace ModuleDFPT

@@ -9,7 +9,6 @@
 #include "source_hamilt/module_hcontainer/read_hcontainer.h"
 #include "source_lcao/module_ri/exx_lri_interface.h"
 #include "source_lcao/module_ri/ri_2d_comm.h"
-#include "source_lcao/module_rt/td_info.h"
 
 namespace hamilt
 {
@@ -312,11 +311,15 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
         if (this->add_hexx_type == Add_Hexx_Type::R)
         {
             // if k points has no shift, use cell_nearest to reduce the memory cost
-            this->use_cell_nearest = (ModuleBase::Vector3<double>(std::fmod(this->kv.get_koffset(0), 1.0),
-                                                                  std::fmod(this->kv.get_koffset(1), 1.0),
-                                                                  std::fmod(this->kv.get_koffset(2), 1.0))
-                                          .norm()
-                                      < 1e-10);
+            // In the hybrid gauge, BvK-equivalent cells can carry different
+            // finite-field phases, so preserve the original cell indices.
+            const bool hybrid_gauge_rt = PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 2;
+            this->use_cell_nearest = !hybrid_gauge_rt
+                                     && (ModuleBase::Vector3<double>(std::fmod(this->kv.get_koffset(0), 1.0),
+                                                                     std::fmod(this->kv.get_koffset(1), 1.0),
+                                                                     std::fmod(this->kv.get_koffset(2), 1.0))
+                                             .norm()
+                                         < 1e-10);
 
             const std::array<int, 3> Rs_period = {this->kv.nmp[0], this->kv.nmp[1], this->kv.nmp[2]};
             if (this->use_cell_nearest)
@@ -460,6 +463,15 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
         const int two_level_step
             = exx_info_ptr->info_ri.real_number ? this->exd->get_two_level_step() : this->exc->get_two_level_step();
 
+        // Remember that the initial GGA-only stage has completed. In
+        // RT-TDDFT (and in subsequent ionic steps) LibRI may reset
+        // two_level_step to zero; without this persistent state the HR path
+        // would incorrectly skip EXX again.
+        if (two_level_step > 0)
+        {
+            this->initial_gga_done = true;
+        }
+
         // Check if we are in the pre-convergence stage of the two-level SCF (i.e., the pure GGA loop)
         bool in_gga_pre_loop = (two_level_step == 0);
 
@@ -467,7 +479,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
         bool lacks_good_guess = (PARAM.inp.init_wfc != "file" && !this->restart);
 
         // If in the pre-convergence loop and lacking a good initial guess, skip adding the EXX contribution
-        if (in_gga_pre_loop && lacks_good_guess)
+        if (in_gga_pre_loop && lacks_good_guess && !this->initial_gga_done)
         {
             return; // In the non-EXX loop, skip adding EXX contribution
         }
@@ -513,52 +525,25 @@ template <typename TK, typename TR>
 void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorEXX", "constributeHk");
-    const bool has_workflow = exx_info_ptr->info_ri.real_number ? (this->exd != nullptr) : (this->exc != nullptr);
-    int two_level_step = 0;
-    if (has_workflow)
-    {
-        two_level_step
-            = exx_info_ptr->info_ri.real_number ? this->exd->get_two_level_step() : this->exc->get_two_level_step();
-    }
 
-    // Peize Lin add 2016-12-03
-
-    // Taoni Bao add 2026-05-15
-    // In RT-TDDFT, contributeHk is used, but two_level_step is reset to 0 at each ionic step.
-    // In order to add EXX correctly in for istep > 0, this->istep == 0 is needed to avoid skipping EXX calculation.
-    // 1. For NSCF
-    if (PARAM.inp.calculation == "nscf" || !has_workflow)
-    {
-        // Do nothing here, allow the code to proceed and calculate EXX.
-    }
-    // 2. For the first ionic step:
-    else if (this->istep == 0)
-    {
-        // If EXX is once turned on (two_level_step > 0), let OperatorEXX remember this
-        if (two_level_step > 0)
-        {
-            this->initial_gga_done = true;
-        }
-
-        // Check if we are in the pre-convergence stage of the two-level SCF (i.e., the pure GGA loop)
-        bool in_gga_pre_loop = (two_level_step == 0);
-
-        // Check if a high-quality initial guess is missing
-        bool lacks_good_guess = (!this->restart);
-
-        // If in the pre-convergence loop and lacking a good initial guess, skip adding the EXX contribution
-        // Taoni Bao add 2026-05-18, only skip EXX if initial GGA loop is not done
-        // Fix RT-TDDFT EXX missing problem in the evolution
-        if (in_gga_pre_loop && lacks_good_guess && !this->initial_gga_done)
-        {
-            return; // In the non-EXX loop, skip adding EXX contribution
-        }
-    }
-    // 3. For subsequent ionic steps (istep > 0), add EXX normally
-
+    // The main LCAO path stores EXX in H(R) and lets the final base operator
+    // fold H(R) into H(k). Keep this override only for one-shot k-space EXX
+    // operators used by write_Vxc and RDMFT.
     if (this->add_hexx_type == Add_Hexx_Type::R)
     {
-        OperatorLCAO<TK, TR>::contributeHk(ik);
+        return;
+    }
+
+    // The restart path may still use a full EXX workflow. For one-shot
+    // operators exd/exc are null and the value remains zero.
+    int two_level_step = 0;
+    if (exx_info_ptr->info_ri.real_number && this->exd != nullptr)
+    {
+        two_level_step = this->exd->get_two_level_step();
+    }
+    else if (!exx_info_ptr->info_ri.real_number && this->exc != nullptr)
+    {
+        two_level_step = this->exc->get_two_level_step();
     }
 
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
@@ -584,41 +569,25 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
                 }
             }
         }
-        // cal H(k) from H(R) normally
-        if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 2)
+        if (exx_info_ptr->info_ri.real_number)
         {
-            RI_2D_Comm::add_Hexx_td(ucell,
-                                    this->kv,
-                                    ik,
-                                    exx_info_ptr->info_global.hybrid_alpha,
-                                    *this->Hexxc,
-                                    *this->hR->get_paraV(),
-                                    TD_info::td_vel_op->cart_At,
-                                    TD_info::td_vel_op->get_phase_hybrid(),
-                                    this->hsk->get_hk());
+            RI_2D_Comm::add_Hexx(ucell,
+                                 this->kv,
+                                 ik,
+                                 exx_info_ptr->info_global.hybrid_alpha,
+                                 *this->Hexxd,
+                                 *this->hR->get_paraV(),
+                                 this->hsk->get_hk());
         }
         else
         {
-            if (exx_info_ptr->info_ri.real_number)
-            {
-                RI_2D_Comm::add_Hexx(ucell,
-                                     this->kv,
-                                     ik,
-                                     exx_info_ptr->info_global.hybrid_alpha,
-                                     *this->Hexxd,
-                                     *this->hR->get_paraV(),
-                                     this->hsk->get_hk());
-            }
-            else
-            {
-                RI_2D_Comm::add_Hexx(ucell,
-                                     this->kv,
-                                     ik,
-                                     exx_info_ptr->info_global.hybrid_alpha,
-                                     *this->Hexxc,
-                                     *this->hR->get_paraV(),
-                                     this->hsk->get_hk());
-            }
+            RI_2D_Comm::add_Hexx(ucell,
+                                 this->kv,
+                                 ik,
+                                 exx_info_ptr->info_global.hybrid_alpha,
+                                 *this->Hexxc,
+                                 *this->hR->get_paraV(),
+                                 this->hsk->get_hk());
         }
     }
 }

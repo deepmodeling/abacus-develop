@@ -54,6 +54,7 @@ struct Input_para
 
     std::string input_file = "INPUT";   ///< input file name
     std::string stru_file = "STRU";     ///< file contains atomic positions --
+    std::vector<int> cell_replica = {1, 1, 1}; ///< replicate the input STRU along its lattice vectors
                                         ///< xiaohui modify 2015-02-01
     std::string kpoint_file = "KPT";    ///< file contains k-points -- xiaohui modify 2015-02-01
     std::string pseudo_dir = "";        ///< directory of pseudopotential
@@ -113,7 +114,7 @@ struct Input_para
     double mixing_gg0_min = 0.1;
     double mixing_angle = -10.0;
     bool mixing_tau = false;  ///< whether to mix tau in mgga
-    bool mixing_dftu = false; ///< whether to mix locale in DFT+U
+    bool mixing_dftu = false; ///< whether to mix occ_mat in DFT+U
     bool mixing_dmr = false;  ///< whether to mix real space density matrix
 
     bool gamma_only = false;   ///< for plane wave.
@@ -401,6 +402,15 @@ struct Input_para
     int exciton_slice_npoints = 200; ///< grid points per dimension for slice
     std::vector<int> exciton_slice_range = {-1, 2, -1, 2}; ///< cell range: ustart uend vstart vend
 
+    // ==============   #Parameters (10b.dfpt) ===========================
+    std::vector<int> dfpt_qmesh = {1, 1, 1}; ///< Monkhorst-Pack q mesh for DFPT (gamma-centered)
+    std::string dfpt_qfile = "";              ///< file containing the DFPT q-point list; empty means dfpt_qmesh
+    bool dfpt_compute_q0 = false;             ///< compute epsilon_inf and Born effective charges at q = 0
+    bool dfpt_loto = false;                   ///< apply the LO-TO non-analytic correction at q = 0
+    double dfpt_conv_thr = 1.0e-8;            ///< convergence threshold of the DFPT first-order density
+    int dfpt_max_iter = 100;                  ///< max iterations of the DFPT first-order density mixing
+    double dfpt_mix_beta = 0.4;               ///< mixing coefficient of the DFPT first-order density
+
     // ==============   #Parameters (11.Output) ===========================
     int out_stru = 1;                         ///< output stru file each ion step
                                               ///< 0: no output, 1: STRU format, 2: CIF format
@@ -627,7 +637,7 @@ struct Input_para
     bool yukawa_potential = false;         ///< default: false
     double yukawa_lambda = -1.0;           ///< default: -1.0, which means we calculate lambda
     double uramping_eV = -1.0;             ///< U-Ramping method (eV)
-    int omc = 0;                           ///< the mode of occupation matrix control
+    int occ_mat_ctrl = 0;                  ///< the mode of occupation matrix control
     double onsite_radius = 0.0;            ///< radius of the sphere for onsite projection (Bohr)
     std::vector<double> hubbard_u_eV = {}; ///< Hubbard Coulomb interaction parameter U(ev)
     std::vector<int> orbital_corr = {};    ///< which correlated orbitals need corrected ; d:2 ,f:3, do not

@@ -2,8 +2,10 @@
 
 #include "esolver.h"
 #include "esolver_ks_pw.h"
+#include "esolver_dfpt_pw.h"
 #include "esolver_sdft_pw.h"
 #include "source_base/module_device/device.h"
+#include "source_hamilt/module_xc/general_exx_info.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef __LCAO
 #include "esolver_dm2rho.h"
@@ -49,6 +51,10 @@ std::string determine_type(const Input_para& inp)
         else if (inp.esolver_type == "ksdft")
         {
             esolver_type = "ksdft_pw";
+        }
+        else if (PARAM.inp.esolver_type == "dfpt")
+        {
+            esolver_type = "dfpt_pw";
         }
     }
     else if (inp.basis_type == "lcao_in_pw")
@@ -157,6 +163,10 @@ ESolver* init_esolver(const Input_para& inp)
             return new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>();
         }
     }
+    else if (esolver_type == "dfpt_pw")
+    {
+        return new ESolver_DFPT_PW();
+    }
     else if (esolver_type == "sdft_pw")
     {
 #if ((defined __CUDA) || (defined __ROCM))
@@ -254,7 +264,13 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "ksdft_lcao_tddft")
     {
-        if (inp.nspin < 4)
+        // Hybrid RT-TDDFT stores the complete Hamiltonian in complex H(R),
+        // even for collinear spin. The final operator-chain fold then applies
+        // the same TD gauge phase to local, non-local, and EXX terms.
+        General_Exx_Info exx_info;
+        init_general_exx_info(exx_info, inp);
+        const bool use_complex_hr = inp.nspin >= 4 || exx_info.cal_exx;
+        if (!use_complex_hr)
         {
 #if ((defined __CUDA) /* || (defined __ROCM) */)
             if (inp.device == "gpu")

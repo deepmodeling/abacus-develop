@@ -1,10 +1,12 @@
 #ifndef GET_PCHG_LCAO_H
 #define GET_PCHG_LCAO_H
 
-#include "source_cell/klist.h"
-#include "source_estate/module_dm/density_matrix.h"
 #include "source_base/parallel_grid.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_pw/pw_basis.h"
+#include "source_cell/klist.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 
 /**
@@ -17,93 +19,42 @@
 class Get_pchg_lcao
 {
   public:
-    Get_pchg_lcao(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in);
-    Get_pchg_lcao(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in);
-
-    ~Get_pchg_lcao();
+    Get_pchg_lcao(const psi::Psi<double>& psi, const Parallel_Orbitals& para_orb, int nspin);
+    Get_pchg_lcao(const psi::Psi<std::complex<double>>& psi, const Parallel_Orbitals& para_orb, int nspin);
 
     // For gamma_only
-    void begin(double** rho,
-               const ModuleBase::matrix& wg,
-               const std::vector<double>& ef_all_spin,
-               const int rhopw_nrxx,
-               const std::vector<int>& out_pchg,
-               const int nbands,
-               const double nelec,
-               const int nspin,
-               const UnitCell* ucell_in,
-               const Parallel_Grid& pgrid,
-               const Grid_Driver* GridD_in,
-               const K_Vectors& kv,
-               const std::string& global_out_dir,
-               std::ofstream& ofs_running);
+    void begin_gamma(const UnitCell& ucell,
+                     const Parallel_Grid& pgrid,
+                     const Grid_Driver& grid_driver,
+                     const std::vector<int>& out_pchg,
+                     const std::string& global_out_dir,
+                     std::ofstream& ofs_running);
 
     // For multi-k
-    void begin(double** rho,
-               std::complex<double>** rhog,
-               const ModuleBase::matrix& wg,
-               const std::vector<double>& ef_all_spin,
-               const ModulePW::PW_Basis* rho_pw,
-               const int rhopw_nrxx,
-               const std::vector<int>& out_pchg,
-               const int nbands,
-               const double nelec,
-               const int nspin,
-               UnitCell* ucell_in,
-               const Parallel_Grid& pgrid,
-               const Grid_Driver* GridD_in,
-               const K_Vectors& kv,
-               const std::string& global_out_dir,
-               std::ofstream& ofs_running,
-               const bool if_separate_k,
-               const int chr_ngmc);
+    void begin_k(const ModulePW::PW_Basis& rho_pw,
+                 UnitCell& ucell,
+                 const Parallel_Grid& pgrid,
+                 const Grid_Driver& grid_driver,
+                 const K_Vectors& kv,
+                 const std::vector<int>& out_pchg,
+                 bool if_separate_k,
+                 const std::string& global_out_dir,
+                 std::ofstream& ofs_running);
 
   private:
+    const psi::Psi<double>* const psi_gamma_;
+    const psi::Psi<std::complex<double>>* const psi_k_;
+    const Parallel_Orbitals& para_orb_;
+    const int nspin_;
+    const int nbands_;
+
     void prepare_get_pchg(std::ofstream& ofs_running);
 
     /**
-     * @brief Set this->bands_picked_ according to the mode, and process an error if the mode is not recognized.
+     * @brief Build the selected-band mask and reject invalid selectors.
      *
      * @param out_pchg INPUT parameter out_pchg, vector.
-     * @param nbands INPUT parameter nbands.
-     * @param fermi_band Calculated Fermi band.
      */
-    void select_bands(const std::vector<int>& out_pchg, const int nbands, const int fermi_band);
-
-#ifdef __MPI
-    /**
-     * @brief Calculates the density matrix for a given band.
-     *
-     * This method calculates the density matrix for a given band using the wave function coefficients.
-     * It performs a matrix multiplication to produce the density matrix.
-     *
-     * @param ib Band index.
-     * @param nspin Number of spin channels.
-     * @param nelec Total number of electrons.
-     * @param wg Weight matrix for bands and spins (k-points).
-     * @param DM Density matrix to be calculated.
-     * @param kv K-vectors.
-     */
-    void idmatrix(const int& ib,
-                  const int nspin,
-                  const double& nelec,
-                  const ModuleBase::matrix& wg,
-                  elecstate::DensityMatrix<double, double>& DM,
-                  const K_Vectors& kv);
-
-    // For multi-k
-    void idmatrix(const int& ib,
-                  const int nspin,
-                  const double& nelec,
-                  const ModuleBase::matrix& wg,
-                  elecstate::DensityMatrix<std::complex<double>, double>& DM,
-                  const K_Vectors& kv,
-                  const bool if_separate_k);
-
-#endif
-    std::vector<int> bands_picked_;
-    psi::Psi<double>* psi_gamma = nullptr;
-    psi::Psi<std::complex<double>>* psi_k = nullptr;
-    const Parallel_Orbitals* ParaV = nullptr;
+    std::vector<int> select_bands(const std::vector<int>& out_pchg) const;
 };
 #endif // GET_PCHG_LCAO_H

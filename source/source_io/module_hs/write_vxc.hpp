@@ -4,7 +4,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_lcao/module_operator_lcao/op_dftu_lcao.h"
+#include "source_lcao/module_dftu/dftu_lcao_op_legacy.h"
 #include "source_lcao/module_operator_lcao/veff_lcao.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #ifdef __EXX
@@ -209,7 +209,7 @@ void write_Vxc(const int nspin,
         &vxcs_R_ao[0],ucell,/*for paraV*/ kv, Hexxd, Hexxc, &exx_info, hamilt::Add_Hexx_Type::k);
     std::vector<std::vector<double>> e_orb_exx; // orbital energy (EXX)
 #endif
-    hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, nullptr, kv.isk, PARAM.globalv.npol);
+    hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, ucell, nullptr, kv.isk, PARAM.globalv.npol);
 
     // 4. calculate and write the MO-matrix Exc
     Parallel_2D p2d;

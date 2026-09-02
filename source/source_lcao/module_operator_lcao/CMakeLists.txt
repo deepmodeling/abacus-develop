@@ -2,7 +2,6 @@ add_library(
     operator_ks_lcao
     OBJECT
     op_exx_lcao.cpp
-    op_dftu_lcao.cpp
     meta_lcao.cpp
     veff_lcao.cpp
     veff_dh.cpp
@@ -21,8 +20,6 @@ add_library(
     td_pot_hybrid_fs.cpp
     dspin_lcao.cpp
     dspin_fs.cpp
-    dftu_lcao.cpp
-    dftu_fs.cpp
     operator_fs_utils.cpp
 )
 

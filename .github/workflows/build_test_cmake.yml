@@ -28,7 +28,7 @@ jobs:
             name: "Build extra components with GNU toolchain"
           - tag: intel
             external_toolchain_args: "--with-intel"
-            build_args: "-DENABLE_LIBXC=ON -DENABLE_PEXSI=ON -DENABLE_MLALGO=ON -DENABLE_LIBRI=ON -DENABLE_DFTD4=ON"
+            build_args: "-DENABLE_LIBXC=ON -DENABLE_MLALGO=ON -DENABLE_LIBRI=ON -DENABLE_DFTD4=ON"
             name: "Build extra components with Intel toolchain"
 
           - tag: cuda
@@ -72,7 +72,6 @@ jobs:
         run: |
           git config --global --add safe.directory `pwd`
           source toolchain/install/setup
-          prepend_path CMAKE_PREFIX_PATH ${PEXSI32_ROOT}:${SUPERLU_DIST32_ROOT}:${PARMETIS32_ROOT}:${METIS32_ROOT}:${GKLIB_ROOT}
           rm -rf build
           cmake -B build -G Ninja ${{ matrix.build_args }}
           cmake --build build -j $(nproc)

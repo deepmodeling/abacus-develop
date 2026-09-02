@@ -39,6 +39,9 @@ if(ENABLE_MPI)
     md_cell_migrate_mpi_test.cpp
     ../../md_cell.cpp
     ../domain_decomposition.cpp
+    ../neighbor_search.cpp
+    ../bin_manager.cpp
+    ../page_allocator.cpp
   )
   target_link_libraries(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
     PRIVATE
@@ -55,18 +58,17 @@ if(ENABLE_MPI)
     distributed_mdcell_reader_test.cpp
     ../../distributed_mdcell_reader.cpp
     ../../md_cell.cpp
+    ../../print_cell.cpp
     ../domain_decomposition.cpp
-    ../../../source_base/global_variable.cpp
-    ../../../source_base/communication_domain.cpp
-    ../../../source_base/matrix.cpp
-    ../../../source_base/matrix3.cpp
-    ../../../source_base/tool_quit.cpp
+    ../neighbor_search.cpp
+    ../bin_manager.cpp
+    ../page_allocator.cpp
   )
   target_include_directories(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader PRIVATE ${ABACUS_SOURCE_DIR})
   target_compile_definitions(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader PRIVATE __NORMAL)
   target_link_libraries(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader
     PRIVATE
-    Threads::Threads MPI::MPI_CXX GTest::gtest GTest::gmock
+    parameter base device Threads::Threads MPI::MPI_CXX GTest::gtest GTest::gmock abacus::linalg_libs
   )
   install(TARGETS MODULE_CELL_NEIGHBOR_distributed_mdcell_reader DESTINATION ${CMAKE_BINARY_DIR}/tests)
   add_test(NAME MODULE_CELL_NEIGHBOR_distributed_mdcell_reader_np4

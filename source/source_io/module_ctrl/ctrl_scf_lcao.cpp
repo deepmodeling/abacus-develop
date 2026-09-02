@@ -18,13 +18,14 @@
 #include "source_io/module_hs/write_h_terms.h"         // use ModuleIO::write_h_*
 #include "../module_hs/write_hs_r.h"                          // use ModuleIO::write_hsr()
 #include "../module_mulliken/cal_mag.h"                          // use cal_mag()
-#include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
-#include "../module_wannier/to_w90_lcao_pw.h"             // use toWannier90_LCAO_IN_PW
+#include "../module_wannier/to_w90_lcao.h"                   // use toW90_LCAO
+#include "../module_wannier/to_w90_lcao_pw.h"             // use toW90_LCAO_IN_PW
 #include "../module_hs/write_hs.h"                            // use ModuleIO::write_hsk()
 #include "../module_dm/write_dmk.h"                           // use ModuleIO::write_dmk()
 #include "../module_dm/write_dmr.h"                           // use ModuleIO::write_dmr()
 #include "../module_dos/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
 #include "../module_wf/write_wfc_nao.h"                       // use ModuleIO::write_wfc_nao()
+#include "source_lcao/module_deltaspin/lambda_loop_helper.h"   // print_Mi / print_Mag_Force free functions
 #include "source_lcao/module_deltaspin/spin_constrain.h"   // use spinconstrain::SpinConstrain<TK>
 #include "source_lcao/module_operator_lcao/ekinetic.h" // use hamilt::EKinetic
 #ifdef __MLALGO
@@ -554,8 +555,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         sc.cal_mi_lcao(istep);
-        sc.print_Mi(GlobalV::ofs_running);
-        sc.print_Mag_Force(GlobalV::ofs_running);
+        spinconstrain::print_Mi(sc, GlobalV::ofs_running);
+        spinconstrain::print_Mag_Force(sc, GlobalV::ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -580,25 +581,35 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wave function to Wannier90");
         if (inp.wannier_method == 1)
         {
-            toWannier90_LCAO_IN_PW wan(inp.out_wannier_mmn,
+            toW90_LCAO_IN_PW wan(inp.out_wannier_mmn,
                                        inp.out_wannier_amn,
                                        inp.out_wannier_unk,
                                        inp.out_wannier_eig,
                                        inp.out_wannier_wvfn_formatted,
                                        inp.nnkpfile,
-                                       inp.wannier_spin);
+                                       inp.wannier_spin,
+                                       inp.nspin,
+                                       PARAM.inp.nbands,
+                                       PARAM.globalv.nqx,
+                                       PARAM.globalv.dq,
+                                       PARAM.globalv.npol);
             wan.set_tpiba_omega(ucell.tpiba, ucell.omega);
             wan.calculate(ucell, pelec->ekb, pw_wfc, pw_big, sf, kv, psi, &pv);
         }
         else if (inp.wannier_method == 2)
         {
-            toWannier90_LCAO wan(inp.out_wannier_mmn,
+            toW90_LCAO wan(inp.out_wannier_mmn,
                                  inp.out_wannier_amn,
                                  inp.out_wannier_unk,
                                  inp.out_wannier_eig,
                                  inp.out_wannier_wvfn_formatted,
                                  inp.nnkpfile,
                                  inp.wannier_spin,
+                                 inp.nspin,
+                                 PARAM.inp.nbands,
+                                 PARAM.globalv.nqx,
+                                 PARAM.globalv.dq,
+                                 PARAM.globalv.npol,
                                  orb);
 
             wan.calculate(ucell, gd, pelec->ekb, kv, *psi, &pv);

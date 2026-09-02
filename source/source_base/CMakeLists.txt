@@ -51,7 +51,7 @@ add_library(
     tool_title.cpp
     ylm.cpp
     parallel_common.cpp
-    communication_domain.cpp
+    parallel_cell.cpp
     parallel_global.cpp
     parallel_comm.cpp
     parallel_reduce.cpp

@@ -131,6 +131,7 @@ class ElecState
     }
 
     double get_dftu_energy();
+    void set_dftu_energy(double e) { dftu_energy_ = e; }
     double get_local_pp_energy();
 
     fenergy f_en; ///< energies contribute to the total free energy
@@ -148,6 +149,9 @@ class ElecState
   public:
 
     bool skip_weights = false;
+
+  private:
+    double dftu_energy_ = 0.0; ///< DFT+U energy, set by ESolver via set_dftu_energy()
 };
 
 /**

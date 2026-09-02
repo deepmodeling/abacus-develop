@@ -160,7 +160,7 @@ class PexsiPrepare
             std::cout << "nrow: " << hmtest.nrow << ", ncol: " << hmtest.ncol << ", nb: " << nb2d << std::endl;
         }
 
-        dh = std::make_unique<hsolver::DiagoPexsi<T>>(&po, PARAM.input.nspin, nlocal, PARAM.input.nelec);
+        dh.reset(new hsolver::DiagoPexsi<T>(&po, PARAM.input.nspin, nlocal, PARAM.input.nelec));
     }
 
     void distribute_data()

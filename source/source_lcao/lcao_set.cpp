@@ -69,6 +69,7 @@ void LCAO_domain::set_pot(
 {
     //! 1) init local pseudopotentials
     locpp.init_vloc(ucell, &pw_rho);
+    locpp.print_vloc(ucell, &pw_rho, inp.out_element_info, PARAM.globalv.global_out_dir);
 
     //! 2) init potentials
     if (pelec->pot == nullptr)
@@ -88,12 +89,13 @@ void LCAO_domain::set_pot(
                   PARAM.globalv.global_out_dir,
                   inp.init_chg,
                   pv.get_global_row_size(),
-                  PARAM.globalv.gamma_only_local,
                   inp.ks_solver,
-                  inp.cal_force,
-                  inp.cal_stress,
                   inp.device,
                   inp.kpar,
+                  PARAM.globalv.hubbard_u,
+                  PARAM.globalv.uramping,
+                  inp.occ_mat_ctrl,
+                  inp.mixing_dftu,
                   &orb);
     }
 

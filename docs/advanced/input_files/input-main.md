@@ -8,6 +8,7 @@
   - [System variables](#system-variables)
     - [suffix](#suffix)
     - [ntype](#ntype)
+    - [cell\_replica](#cell_replica)
     - [calculation](#calculation)
     - [esolver\_type](#esolver_type)
     - [symmetry](#symmetry)
@@ -357,6 +358,8 @@
     - [md\_restart](#md_restart)
     - [md\_restartfreq](#md_restartfreq)
     - [md\_dumpfreq](#md_dumpfreq)
+    - [md\_neighbor\_skin](#md_neighbor_skin)
+    - [md\_out\_force](#md_out_force)
     - [dump\_force](#dump_force)
     - [dump\_vel](#dump_vel)
     - [dump\_virial](#dump_virial)
@@ -587,6 +590,14 @@
   - [Reduced Density Matrix Functional Theory](#reduced-density-matrix-functional-theory)
     - [rdmft](#rdmft)
     - [rdmft\_power\_alpha](#rdmft_power_alpha)
+  - [Density functional perturbation theory](#density-functional-perturbation-theory)
+    - [dfpt\_qmesh](#dfpt_qmesh)
+    - [dfpt\_qfile](#dfpt_qfile)
+    - [dfpt\_compute\_q0](#dfpt_compute_q0)
+    - [dfpt\_loto](#dfpt_loto)
+    - [dfpt\_conv\_thr](#dfpt_conv_thr)
+    - [dfpt\_max\_iter](#dfpt_max_iter)
+    - [dfpt\_mix\_beta](#dfpt_mix_beta)
 
 ## System variables
 
@@ -601,6 +612,12 @@
 - **Type**: Integer
 - **Description**: Number of different atom species in the calculation.
 - **Default**: 0
+
+### cell_replica
+
+- **Type**: Three Integers
+- **Description**: Replicate the input STRU by Na, Nb, and Nc along its lattice vectors for distributed MDCell workflows. This parameter is only used for classical potentials or machine-learned interatomic potentials. The default is 1 1 1, which preserves the input structure.
+- **Default**: 1 1 1
 
 ### calculation
 
@@ -635,6 +652,7 @@
   - nep: Neuroevolution Potential
   - ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
   - lr: LR-TDDFT with given KS orbitals (Under Development Feature)
+  - dfpt: density functional perturbation theory (Under Development Feature)
 - **Default**: ksdft
 
 ### symmetry
@@ -732,18 +750,22 @@
 ### init_wfc
 
 - **Type**: String
-- **Description**: The type of the starting wave functions.
+- **Description**: The method used to initialize wavefunction coefficients. The available options and behavior depend on `basis_type`.
 
-  Available options are:
+  For `basis_type=pw`, the available options are:
 
-  - atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
-  - atomic+random: add small random numbers on atomic pseudo-wavefunctions
-  - file: from binary files wf*.dat, which are output by setting out_wfc_pw to 2.
-  - random: random numbers
-  - nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
-  - nao+random: add small random numbers on numerical atomic orbitals
+  - `atomic`: Use atomic pseudo wavefunctions from `PP_PSWFC`. If no `PP_PSWFC` states are available, all bands are initialized randomly. If the number of atomic states is smaller than `nbands`, the remaining bands are initialized randomly.
+  - `atomic+random`: If there are at least `nbands` atomic states, apply an approximately 5% multiplicative random perturbation to the atomic initialization. If there are fewer atomic states than `nbands`, use the atomic states and initialize the remaining bands randomly, as for `atomic`.
+  - `random`: Initialize all bands with random coefficients.
+  - `nao`: Use numerical atomic orbitals. If the number of NAO states is smaller than `nbands`, the remaining bands are initialized randomly.
+  - `nao+random`: Apply an approximately 5% multiplicative random perturbation to the NAO initialization; any bands not covered by NAO states are first initialized randomly.
+  - `file`: Read binary `wf*_pw.dat` files generated with `out_wfc_pw=2` from `read_file_dir`. The files must match the current k points, `nbands`, plane-wave layout, and lattice.
 
-  > Note: Only the file option is useful for the lcao basis set, which is mostly used when calculation is set to get_wf and get_pchg.
+  For `basis_type=lcao`, only `file` triggers reading existing wavefunctions. It reads text `wf*_nao.txt` files generated with `out_wfc_lcao=1` from `read_file_dir`; binary files generated with `out_wfc_lcao=2` are not supported. The files must use a compatible NAO basis, match the current k-point and spin setup, and contain enough bands. Normal `init_wfc=file` reading matches files written with the default `out_app_flag=true`, which have no geometry-step index. Files written under `WFC/` with a `g*` geometry-step index when `out_app_flag=false` are not matched automatically.
+
+  For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
+
+  > Note: For `calculation=get_wf` or `calculation=get_pchg`, `init_wfc` is automatically set to `file`. If `basis_type=lcao_in_pw` is also used, the final value is `nao`.
 - **Default**: atomic
 
 ### init_chg
@@ -1947,19 +1969,22 @@
 ### out_wfc_pw
 
 - **Type**: Integer
-- **Availability**: *[`basis_type`](#basis_type)==pw or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_wf)*
-- **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{k}{k-point index}{s}{spin index}{g}{geometry index}{e}{electronic iteration index}{_pw} + {".txt"/".dat"}. Here, the s index refers to spin but the label will not show up for non-spin-polarized calculations, where s1 means spin up channel while s2 means spin down channel, and s4 refers to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. For scf or nscf calculations, g index will not appear, but the g index appears for geometry relaxation and molecular dynamics, where one can use the out_freq_ion command to control. To print out the electroinc wave functions every few SCF iterations, use the out_freq_elec command and the e index will appear in the file name.
-  - 0: no output
-  - 1: (txt format)
-   - non-gamma-only with nspin=1: wfk1_pw.txt, wfk2_pw.txt, ...;
-   - non-gamma-only with nspin=2: wfk1s1_pw.txt, wfk1s2_pw.txt, wfk2s1_pw.txt, wfk2s2_pw.txt, ...;
-   - non-gamma-only with nspin=4: wfk1s4_pw.txt, wfk2s4_pw.txt, ...;
-  - 2: (binary format)
-   - non-gamma-only with nspin=1: wfk1_pw.dat, wfk2_pw.dat, ...;
-   - non-gamma-only with nspin=2: wfk1s1_pw.dat, wfk1s2_pw.dat, wfk2s1_pw.dat, wfk2s2_pw.dat, ...;
-   - non-gamma-only with nspin=4: wfk1s4_pw.dat, wfk2s4_pw.dat, ...;
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==ksdft*
+- **Description**: Controls whether plane-wave Kohn-Sham wavefunction coefficients are written to `OUT.${suffix}/`.
 
-  > Note: In the 3.10-LTS version, the file names are WAVEFUNC1.dat, WAVEFUNC2.dat, etc.
+  Available values are:
+
+  - `0`: Do not write wavefunction coefficients.
+  - `1`: Write text files with the `.txt` suffix.
+  - `2`: Write binary files with the `.dat` suffix.
+
+  The file-name pattern is `wfk{k}[s{spin}][g{geometry step}][e{electronic iteration}]_pw.txt` for `out_wfc_pw=1` and `wfk{k}[s{spin}][g{geometry step}][e{electronic iteration}]_pw.dat` for `out_wfc_pw=2`. All PW output files include a `k*` label, including Gamma-only calculations. Without geometry-step or electronic-iteration indices, representative names are `wfk1_pw.txt` or `wfk1_pw.dat` for `nspin=1`, `wfk1s1_pw.txt` and `wfk1s2_pw.txt` or their `.dat` equivalents for `nspin=2`, and `wfk1s4_pw.txt` or `wfk1s4_pw.dat` for `nspin=4`.
+
+  With `out_freq_ion=0`, files are written only when the electronic calculation converges or reaches `scf_nmax`; no `g*` or `e*` index is added. During structural relaxation or molecular dynamics, later ionic steps overwrite the same unindexed files. With `out_freq_ion` &gt; 0, output is restricted to the ionic steps selected by `out_freq_ion` and is written when the electronic iteration is a multiple of `out_freq_elec`, when the calculation converges, or when it reaches `scf_nmax`. Both `g*` and `e*` indices are then added, including for a static `calculation=scf` or `calculation=nscf` run.
+
+  For `init_wfc=file`, ABACUS automatically reads only unindexed binary `wf*_pw.dat` files from `read_file_dir`. Such directly reusable files are normally generated with `out_wfc_pw=2` and `out_freq_ion=0`. Text `wf*_pw.txt` files and files containing `g*` or `e*` indices are not matched automatically.
+
+  > Note: In the 3.10-LTS version, the binary files are named `WAVEFUNC1.dat`, `WAVEFUNC2.dat`, etc.
 - **Default**: 0
 
 ### out_wfc_lcao
@@ -2404,14 +2429,14 @@
 
 - **Type**: String
 - **Availability**: *[`basis_type`](#basis_type)==pw or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_wf)*
-- **Description**: Selects electronic states for real-space wavefunction-modulus output using the selection syntax and complete-state normalization of `out_pchg`. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`.
+- **Description**: Selects electronic states for real-space wavefunction-modulus output using the selection syntax of `out_pchg`. Each wavefunction is normalized as a single-particle state and does not include SCF occupations or spin-degeneracy factors. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`.
 - **Default**: none
 
 ### out_wfc_re_im
 
 - **Type**: String
 - **Availability**: *[`basis_type`](#basis_type)==pw or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_wf)*
-- **Description**: Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax and complete-state normalization of `out_pchg`. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`.
+- **Description**: Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax of `out_pchg`. Each wavefunction is normalized as a single-particle state and does not include SCF occupations or spin-degeneracy factors. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`.
 - **Default**: none
 
 ### if_separate_k
@@ -3507,14 +3532,27 @@
 ### md_restartfreq
 
 - **Type**: Integer
-- **Description**: The output frequency of OUT.{suffix}/STRIU/, which are used to restart molecular dynamics calculations, see md_restart in detail.
+- **Description**: The output frequency of OUT.{suffix}/STRU_MD_*, which are used to restart molecular dynamics calculations, see md_restart in detail. Set to 0 to disable MD restart output.
 - **Default**: 5
 
 ### md_dumpfreq
 
 - **Type**: Integer
-- **Description**: The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which including the information of lattices and atoms.
+- **Description**: The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output.
 - **Default**: 1
+
+### md_neighbor_skin
+
+- **Type**: Real
+- **Description**: The extra neighbor-list radius in Angstrom for MDCell molecular dynamics. This parameter is only used for classical potentials or machine-learned interatomic potentials. A positive value reuses the cutoff-plus-skin candidate list until an atom has moved by half this distance; 0 rebuilds the list every force evaluation.
+- **Default**: 0.0
+- **Unit**: Angstrom
+
+### md_out_force
+
+- **Type**: Boolean
+- **Description**: Whether to output the TOTAL-FORCE table in OUT.${suffix}/running_md.log for MDCell molecular dynamics. This does not affect force calculation or molecular dynamics integration.
+- **Default**: True
 
 ### dump_force
 
@@ -3538,8 +3576,8 @@
 
 - **Type**: Integer
 - **Description**: The random seed to initialize random numbers used in molecular dynamics calculations.
-  - &lt; 0: No srand() function is called.
-  - &gt;= 0: The function srand(md_seed) is called.
+  - &lt; 0: Each MPI rank uses the default seed 1 plus its rank.
+  - &gt;= 0: Each MPI rank uses md_seed plus its rank.
 - **Default**: -1
 
 ### md_tfreq
@@ -5171,5 +5209,51 @@
 - **Type**: Real
 - **Description**: The alpha parameter of power-functional(or other exx-type/hybrid functionals) which used in RDMFT, g(occ_number) = occ_number^alpha
 - **Default**: 0.656
+
+[back to top](#full-list-of-input-keywords)
+
+## Density functional perturbation theory
+
+### dfpt_qmesh
+
+- **Type**: Vector of Int (1 or 3 values)
+- **Description**: Set the Monkhorst-Pack q mesh (gamma-centered) for DFPT phonon calculations. The q mesh must be commensurate with the ground-state k mesh: k + q must be a point of the k list (modulo a reciprocal lattice vector). For example, a 4x4x4 KPT mesh is commensurate with dfpt_qmesh values of 1, 2, or 4 along each direction. This parameter is ignored when dfpt_qfile is set.
+- **Default**: 1 1 1
+
+### dfpt_qfile
+
+- **Type**: String
+- **Description**: Set the file containing the q points for DFPT, in the same format as the KPT file (Q_POINTS card: Gamma/Monkhorst-Pack mesh, or an explicit Direct/Cartesian list; symmetry reduction is not applied to file q lists). When set, it overrides dfpt_qmesh. Each q point must still be commensurate with the ground-state k mesh.
+- **Default**: ""
+
+### dfpt_compute_q0
+
+- **Type**: Boolean
+- **Description**: Whether to compute the macroscopic dielectric tensor (epsilon_inf) and the Born effective charges at q = 0 within the same DFPT run. Requires a q point at Gamma (the default dfpt_qmesh 1 1 1).
+- **Default**: false
+
+### dfpt_loto
+
+- **Type**: Boolean
+- **Description**: Whether to apply the Lyddane-Sachs-Teller non-analytic correction to the Gamma-point dynamical matrix, which splits the longitudinal and transverse optical modes. Requires dfpt_compute_q0 to be true, since the correction is built from epsilon_inf and the Born effective charges.
+- **Default**: false
+
+### dfpt_conv_thr
+
+- **Type**: Real
+- **Description**: Set the convergence threshold of the self-consistent DFPT cycle: the iteration stops when the relative residual of the first-order density ||drho_out - drho_in|| / ||drho_out|| drops below this value for every displacement.
+- **Default**: 1.0e-8
+
+### dfpt_max_iter
+
+- **Type**: Integer
+- **Description**: Set the maximum number of self-consistent DFPT iterations for each atomic displacement.
+- **Default**: 100
+
+### dfpt_mix_beta
+
+- **Type**: Real
+- **Description**: Set the plain-mixing coefficient of the first-order density in the self-consistent DFPT cycle. The response Jacobian has strongly negative eigenvalues on the smallest-G shells (Coulomb stiffness), so beta must stay below 2 / (1 + |lambda_min|); the default 0.4 keeps margin up to |lambda_min| ~ 3. A larger value accelerates convergence for weakly screened systems but may diverge.
+- **Default**: 0.4
 
 [back to top](#full-list-of-input-keywords)

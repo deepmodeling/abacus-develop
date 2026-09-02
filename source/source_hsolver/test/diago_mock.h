@@ -577,7 +577,7 @@ template<> hamilt::HamiltPW<double>::HamiltPW(
 		ModulePW::PW_Basis_K* wfc_basis,
 		K_Vectors* pkv,
 		pseudopot_cell_vnl* ppcell,
-		Plus_U* p_dftu, // mohan add 20251108
+		Plus_U_Base* p_dftu,
 		const UnitCell* ucell,
 		const General_Exx_Info* exx_info)
 {
@@ -599,7 +599,7 @@ template<> hamilt::HamiltPW<std::complex<double>>::HamiltPW(
 		ModulePW::PW_Basis_K* wfc_basis,
 		K_Vectors* pkv,
 		pseudopot_cell_vnl* ppcell,
-		Plus_U* p_dftu, // mohan add 20251108
+		Plus_U_Base* p_dftu,
 		const UnitCell* ucell,
 		const General_Exx_Info* exx_info)
 {
@@ -621,7 +621,7 @@ template<> hamilt::HamiltPW<std::complex<float>>::HamiltPW(
 		ModulePW::PW_Basis_K* wfc_basis,
 		K_Vectors* pkv,
 		pseudopot_cell_vnl* ppcell,
-		Plus_U* p_dftu, // mohan add 20251108
+		Plus_U_Base* p_dftu,
 		const UnitCell* ucell,
 		const General_Exx_Info* exx_info)
 {

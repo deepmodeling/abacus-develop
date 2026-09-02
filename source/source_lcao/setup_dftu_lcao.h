@@ -53,6 +53,7 @@ void init_dftu_lcao(const int istep,
  * @param global_out_dir Output directory for dm_onsite.txt
  * @param nspin Number of spin channels (1, 2, or 4)
  * @param npol Number of polarizations
+ * @param gamma_only_local Whether only the Gamma point is used for LCAO
  */
 template <typename TK>
 void finish_dftu_lcao(const int iter,
@@ -67,7 +68,8 @@ void finish_dftu_lcao(const int iter,
                        void* hamilt_lcao,
                        const std::string& global_out_dir,
                        int nspin,
-                       int npol);
+                       int npol,
+                       const bool gamma_only_local);
 
 } // namespace ModuleESolver
 

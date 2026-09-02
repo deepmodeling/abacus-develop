@@ -4,7 +4,6 @@
 #ifdef __PEXSI
 #include "diago_pexsi.h"
 #include "source_base/tool_title.h"
-#include "source_base/global_variable.h"
 #include "source_base/tool_quit.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_pexsi/pexsi_solver.h"
@@ -34,7 +33,7 @@ DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in,
     }
 
     this->ParaV = ParaV_in;
-    this->ps = std::make_unique<pexsi::PEXSI_Solver>();
+    this->ps.reset(new pexsi::PEXSI_Solver());
 
     this->DM.resize(this->nspin_dm);
     this->EDM.resize(this->nspin_dm);

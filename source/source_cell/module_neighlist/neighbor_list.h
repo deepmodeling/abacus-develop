@@ -32,6 +32,16 @@ public:
     PageAllocator& get_allocator() { return allocator_; }
     const PageAllocator& get_allocator() const { return allocator_; }
 
+    void set_neighbors(int i, const std::vector<int>& neighbors)
+    {
+        numneigh_[i] = ModuleNeighList::checked_int_size(neighbors.size(), "NeighborList neighbor count");
+        firstneigh_[i] = allocator_.allocate(numneigh_[i]);
+        for (int j = 0; j < numneigh_[i]; ++j)
+        {
+            firstneigh_[i][j] = neighbors[static_cast<std::size_t>(j)];
+        }
+    }
+
 private:
     int nlocal_ = 0;
     std::vector<int> numneigh_;

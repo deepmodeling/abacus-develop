@@ -136,20 +136,18 @@ class DiagoBPCGPrepare
         const std::vector<T> &h_mat = DIAGOTEST::hmatrix_local;
         auto hpsi_func = [h_mat, dim](T *psi_in, T *hpsi_out,
                                 const int ld_psi, const int nvec) {
-            auto one = std::make_unique<T>(1.0);
-            auto zero = std::make_unique<T>(0.0);
-            const T *one_ = one.get();
-            const T *zero_ = zero.get();
+            const T one(1.0);
+            const T zero(0.0);
 
             base_device::DEVICE_CPU *ctx = {};
             // hpsi_out(dim * nvec) = h_mat(dim * dim) * psi_in(dim * nvec)
             ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()(
                 'N', 'N',
                 dim, nvec, dim,
-                one_,
+                &one,
                 h_mat.data(), dim,
                 psi_in, ld_psi,
-                zero_,
+                &zero,
                 hpsi_out, ld_psi);
         };
         const int ndim = psi_local.get_current_ngk();

@@ -58,7 +58,7 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
                                                  const int nacols,
                                                  const int* desc)
 {
-    // 构造函数的实现
+    /// constructor implementation
     this->cblacs_ctxt = desc[1];
     this->nFull = desc[2];
 

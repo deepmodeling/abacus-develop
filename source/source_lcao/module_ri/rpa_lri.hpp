@@ -1517,7 +1517,7 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell &ucell,
 // 			list_As_Vs.first, list_As_Vs.second[0],
 // 			{{"writable_Vws",true}});
 
-// 	// Vs[iat0][{iat1,cell1}]	按 (iat0,iat1) 分进程，每个进程有所有 cell1
+// 	// Vs[iat0][{iat1,cell1}]	distributed across processes by (iat0,iat1); each process holds all cell1
 // 	Vqs = FFT(Vs);
 // 	out_Vs(Vqs);
 

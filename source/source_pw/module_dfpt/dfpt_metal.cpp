@@ -7,6 +7,7 @@
 // ============================================================
 
 #include "dfpt_metal.h"
+#include "source_base/tool_quit.h"
 
 namespace ModuleDFPT {
 
@@ -21,9 +22,17 @@ void DFPT_Metal::init(double sigma, const std::string& smearing_type) {
 
 void DFPT_Metal::dfdeps(const ModuleBase::matrix& eig, double efermi, 
                          ModuleBase::matrix& dfdeps) {
+    // C4 interface reservation: the metallic DFPT branch (smearing
+    // derivatives, Fermi-level shift dmu and the occupation-response part of
+    // the first-order density) is intentionally NOT implemented in this
+    // design-phase iteration; insulating systems only. The data members
+    // (sigma_, smearing_type_) and the is_metal_/dmu_ slots of DFPT_PW_Data
+    // are already in place for the future implementation.
     (void)eig;
     (void)efermi;
     (void)dfdeps;
+    ModuleBase::WARNING_QUIT("DFPT_Metal",
+                             "metallic DFPT (dfdeps) is not supported in the design phase");
 }
 
 void DFPT_Metal::compute_dmu(int q_idx, const psi::Psi<std::complex<double>>& psi,
@@ -34,17 +43,21 @@ void DFPT_Metal::compute_dmu(int q_idx, const psi::Psi<std::complex<double>>& ps
     (void)wg;
     (void)dfdeps;
     (void)data;
+    ModuleBase::WARNING_QUIT("DFPT_Metal",
+                             "metallic DFPT (compute_dmu) is not supported in the design phase");
 }
 
 void DFPT_Metal::compute_drho_metal(int q_idx, const psi::Psi<std::complex<double>>& psi,
-                                    const ModuleBase::matrix& wg, const ModuleBase::matrix& dfdeps,
-                                    double dmu, DFPT_PW_Data& data) {
+                                     const ModuleBase::matrix& wg, const ModuleBase::matrix& dfdeps,
+                                     double dmu, DFPT_PW_Data& data) {
     (void)q_idx;
     (void)psi;
     (void)wg;
     (void)dfdeps;
     (void)dmu;
     (void)data;
+    ModuleBase::WARNING_QUIT("DFPT_Metal",
+                             "metallic DFPT (compute_drho_metal) is not supported in the design phase");
 }
 
 double DFPT_Metal::fd_dfdeps(double e, double efermi) {

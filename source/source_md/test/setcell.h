@@ -6,8 +6,14 @@
 
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/md_cell.h"
 #include "source_cell/unitcell.h"
+#include "source_base/constants.h"
+#include "source_base/parallel_cell.h"
 #include "source_io/module_parameter/parameter.h"
+
+#include <algorithm>
+#include <cmath>
 
 Magnetism::Magnetism()
 {
@@ -104,6 +110,7 @@ class Setcell
         input.cal_stress = true;
 
         input.mdp.md_restart = false;
+        input.init_vel = true;
         input.mdp.md_dt = 1;
         input.mdp.md_tfirst = input.mdp.md_tlast = 300;
 
@@ -128,6 +135,31 @@ class Setcell
         input.mdp.md_nraise = 2;
         input.mdp.md_tolerance = 0;
     };
+
+    static MDCell setup_mdcell(UnitCell& ucell, const Parameter& param)
+    {
+        double cutoff = 0.0;
+        for (std::size_t i = 0; i < param.inp.mdp.lj_rcut.size(); ++i)
+        {
+            cutoff = std::max(cutoff, param.inp.mdp.lj_rcut[i] * ModuleBase::ANGSTROM_AU);
+        }
+        return MDCell(ucell, cutoff, 0.0, ModuleBase::world_communication_domain());
+    }
+
+    static ModuleBase::Vector3<double> fractional_displacement(const LocalAtom& atom)
+    {
+        const ModuleBase::Vector3<double> initial_frac[] = {
+            ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+            ModuleBase::Vector3<double>(0.52, 0.52, 0.0),
+            ModuleBase::Vector3<double>(0.51, 0.0, 0.5),
+            ModuleBase::Vector3<double>(0.0, 0.53, 0.5)
+        };
+        ModuleBase::Vector3<double> displacement = atom.frac - initial_frac[atom.type_index];
+        displacement.x -= std::floor(displacement.x + 0.5);
+        displacement.y -= std::floor(displacement.y + 0.5);
+        displacement.z -= std::floor(displacement.z + 0.5);
+        return displacement;
+    }
 };
 
 #endif
