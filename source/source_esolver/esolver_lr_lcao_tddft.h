@@ -160,6 +160,9 @@ namespace ModuleESolver
         void init_pot_groundstate(const Charge& chg_gs);
         ct::Tensor solve_zvector_eqation(const int ispin);
         std::vector<ModuleBase::matrix> cal_force(const int ispin);
+        /// open-shell (spin-unrestricted) excited-state force: X holds [up | down] and every
+        /// density matrix has two independent channels
+        std::vector<ModuleBase::matrix> cal_force_openshell();
         void test_force();   // test: reproduce the force of ground state
         elecstate::DensityMatrix<T, double> cal_dm_gs();  ///< ground-state density matrix
 

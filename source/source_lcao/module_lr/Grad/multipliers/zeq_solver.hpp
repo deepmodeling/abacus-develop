@@ -60,32 +60,58 @@ namespace LR
         throw std::runtime_error("complex Z-vector solver is not implemented yet");
     }
 
-    template<typename T>
+    /// @brief Solve the Z-vector equation with a dense LAPACK solve.
+    ///
+    /// Works for both the closed-shell (`nspin_x == 1`) and the open-shell (`nspin_x == 2`,
+    /// X = [up | down]) layouts: everything is expressed through per-spin segment sizes, which
+    /// collapse to the single-block case when `nspin_x == 1`.
+    /// `THam` only has to expose `matrix()`, `nk`, `nocc`, `nvirt` and `pX`.
+    template<typename T, typename THam>
     inline void solve_Z_lapack(T* const Z, const T* const R, const int& ld, const int& nstates,
-        const HamiltLR<T>& hm)
+        const THam& hm, const int nspin_x = 1)
     {
         ModuleBase::TITLE("Z_vector", "solve_Z_lapack");
-        assert(ld == hm.nk * hm.pX[0].get_local_size());
+        std::vector<int> npairs(nspin_x), ldim_is(nspin_x), gdim_is(nspin_x);
+        int n_global = 0, ld_expect = 0;
+        for (int is = 0;is < nspin_x;++is)
+        {
+            npairs[is] = hm.nocc[is] * hm.nvirt[is];
+            gdim_is[is] = hm.nk * npairs[is];
+            ldim_is[is] = hm.nk * hm.pX[is].get_local_size();
+            n_global += gdim_is[is];
+            ld_expect += ldim_is[is];
+        }
+        assert(ld == ld_expect);
 
         std::vector<T> hessian_full = hm.matrix();   // MO-hessian, A+B
-
-        const int n_global = hm.nk * hm.nocc[0] * hm.nvirt[0];
-        std::vector<T> Z_full = std::vector<T>(n_global * nstates, T(0.0));
+        std::vector<T> Z_full(static_cast<std::size_t>(n_global) * nstates, T(0.0));
 
         // `hessian_full` is replicated, so the right-hand side must be global too.
-        // `R` is distributed over pX[0] (length `ld` per state), so gather it first --
+        // `R` is distributed over `pX` (length `ld` per state), so gather it first --
         // the mirror image of the scatter of `Z_full` below. Reading `n_global` entries
         // straight out of `R` would be an out-of-bounds read as soon as
         // ld < n_global, and a plain segfault on a rank whose local size is 0.
-        std::vector<T> R_full(n_global * nstates, T(0.0));
+        std::vector<T> R_full(static_cast<std::size_t>(n_global) * nstates, T(0.0));
 #ifdef __MPI
         for (int istate = 0; istate < nstates; ++istate)
         {
-            LR_Util::gather_2d_to_full(hm.pX[0], R + istate * ld, R_full.data() + istate * n_global,
-                false, hm.nvirt[0], hm.nocc[0]);
+            int loffset = istate * ld;
+            int goffset = istate * n_global;
+            for (int is = 0;is < nspin_x;++is)
+            {
+                for (int ik = 0;ik < hm.nk;++ik)
+                {
+                    LR_Util::gather_2d_to_full(hm.pX[is],
+                        R + loffset + ik * hm.pX[is].get_local_size(),
+                        R_full.data() + goffset + ik * npairs[is],
+                        false, hm.nvirt[is], hm.nocc[is]);
+                }
+                loffset += ldim_is[is];
+                goffset += gdim_is[is];
+            }
         }
 #else
-        std::copy(R, R + n_global * nstates, R_full.begin());
+        std::copy(R, R + static_cast<std::size_t>(n_global) * nstates, R_full.begin());
 #endif
 
         // use lapack to solve the linear equation
@@ -100,12 +126,40 @@ namespace LR
         // copy the local part of Z_full to Z
         for (int istate = 0; istate < nstates; ++istate)
         {
-            const int global_offset = istate * n_global;
-            const int offset = istate * ld;
-            LR_Util::scatter_full_to_2d(hm.pX[0], Z_full.data() + global_offset, Z + offset, false);
+            int loffset = istate * ld;
+            int goffset = istate * n_global;
+            for (int is = 0;is < nspin_x;++is)
+            {
+                for (int ik = 0;ik < hm.nk;++ik)
+                {
+                    LR_Util::scatter_full_to_2d(hm.pX[is],
+                        Z_full.data() + goffset + ik * npairs[is],
+                        Z + loffset + ik * hm.pX[is].get_local_size(), false);
+                }
+                loffset += ldim_is[is];
+                goffset += gdim_is[is];
+            }
         }
         std::cout << "The local Z-vector solved by LAPACK:" << std::endl;
         LR_Util::print_value(Z, nstates, ld);
+    }
+
+    /// @brief Run the configured solver (and then, for testing, every supported one).
+    /// Shared by the closed- and open-shell paths; `THamL` only needs `hPsi` plus what
+    /// `solve_Z_lapack` reads.
+    template<typename T, typename THamL>
+    inline void solve_zeq_with(T* const Z, T* const R, const int ld, const int nstates,
+        const THamL& ops_L, const int nspin_x, const std::string& zvec_solver)
+    {
+        for (int i = 0; i < nstates * ld; ++i) { Z[i] = T(0.0); }   // clear Z
+        if (zvec_solver == "cg")
+        {
+            solve_Z_CG(Z, R, ld, nstates,
+                [&ops_L, ld, nstates](const T* const in, T* const out)
+                { ops_L.hPsi(in, out, ld, nstates); });
+        }
+        else if (zvec_solver == "lapack") { solve_Z_lapack(Z, R, ld, nstates, ops_L, nspin_x); }
+        else { throw std::runtime_error("Unsupported Z-vector solver: " + zvec_solver); }
     }
 
     template<typename T>
@@ -133,63 +187,58 @@ namespace LR
         const Parallel_2D& pc,
         const Parallel_Orbitals& pmat,
         const std::string& spin_type,
+        const bool openshell = false,
         const std::string& zvec_solver = "cg")
     {
         ModuleBase::TITLE("Z_vector", "Z_vector");
         const int nk = kv.get_nks() / nspin;
-        // 1. the right-hand side of Z-vector equation
-        const int nloc_per_band = nk * px[0].get_local_size();
+        const int nloc_per_band = openshell
+            ? nk * (px[0].get_local_size() + px[1].get_local_size())
+            : nk * px[0].get_local_size();
         container::Tensor R = LR_Util::newTensor<T>({ nstates, nloc_per_band });
         R.zero();
-        Z_vector_R<T> ops_R(xc_kernel, nspin, naos, nocc, nvirt,
-            ucell, orb_cutoff, gd, psi_ks, eig_ks,
-#ifdef __EXX
-            exx_lri, exx_alpha,
-#endif 
-            pot, pot_hxc_gs, kv, px, pc, pmat, spin_type);
-        ModuleBase::timer::start("Z_vector", "Z_vector_R");
-        ops_R.hPsi(X, R.data<T>(), nloc_per_band, nstates);  // act each operators on X
-        ModuleBase::timer::end("Z_vector", "Z_vector_R");
-        std::cout << "The right side of the Z-vector equation:" << std::endl;
-        LR_Util::print_value(R.data<T>(), nstates, nloc_per_band);
 
-        // 2. the left-hand side of Z-vector equation
-        // Z-vector (need a init?)
-        Z_vector_L<T> ops_L(xc_kernel, nspin, naos, nocc, nvirt,
-            ucell, orb_cutoff, gd, psi_ks, eig_ks,
-#ifdef __EXX
-            exx_lri, exx_alpha,
-#endif 
-            pot_hxc_gs, kv, px, pc, pmat, spin_type);
-
-        // 3. solve Z-vector equation
-        auto solve = [&](const std::string& solver)
+        auto build_and_solve = [&](auto& ops_R, auto& ops_L, const int nspin_x)
             {
-                // clear Z
-                for (int i = 0; i < nstates * nloc_per_band; ++i) { Z[i] = T(0.0); }
-                if (solver == "cg")
-                {
-                    solve_Z_CG(Z, R.data<T>(), nloc_per_band, nstates,
-                        std::bind(&HamiltLR<T>::hPsi, &ops_L, std::placeholders::_1, std::placeholders::_2, nloc_per_band, nstates));
-                }
-                else if (solver == "lapack")
-                {
-                    solve_Z_lapack(Z, R.data<T>(), nloc_per_band, nstates, ops_L);
-                }
-                else
-                {
-                    throw std::runtime_error("Unsupported Z-vector solver: " + solver);
-                }
+                ModuleBase::timer::start("Z_vector", "Z_vector_R");
+                ops_R.hPsi(X, R.template data<T>(), nloc_per_band, nstates);  // act each operator on X
+                ModuleBase::timer::end("Z_vector", "Z_vector_R");
+                std::cout << "The right side of the Z-vector equation:" << std::endl;
+                LR_Util::print_value(R.template data<T>(), nstates, nloc_per_band);
+                solve_zeq_with(Z, R.template data<T>(), nloc_per_band, nstates, ops_L, nspin_x, zvec_solver);
             };
 
-        solve(zvec_solver);
-
-        // test: try supported solvers one by one
-        const std::vector<std::string> supported_solvers = { "cg", "lapack" };
-        for (const auto& s : supported_solvers)
-            solve(s);
-
-        // test: set Z to 0
-        // for (int i = 0; i < nstates * nloc_per_band; ++i) { Z[i] = T(0.0); }
+        if (openshell)
+        {
+            Z_vector_UR<T> ops_R(xc_kernel, nspin, naos, nocc, nvirt,
+                ucell, orb_cutoff, gd, psi_ks, eig_ks,
+#ifdef __EXX
+                exx_lri, exx_alpha,
+#endif
+                pot, pot_hxc_gs, kv, px, pc, pmat);
+            Z_vector_UL<T> ops_L(xc_kernel, nspin, naos, nocc, nvirt,
+                ucell, orb_cutoff, gd, psi_ks, eig_ks,
+#ifdef __EXX
+                exx_lri, exx_alpha,
+#endif
+                pot_hxc_gs, kv, px, pc, pmat);
+            build_and_solve(ops_R, ops_L, /*nspin_x=*/2);
+        }
+        else
+        {
+            Z_vector_R<T> ops_R(xc_kernel, nspin, naos, nocc, nvirt,
+                ucell, orb_cutoff, gd, psi_ks, eig_ks,
+#ifdef __EXX
+                exx_lri, exx_alpha,
+#endif
+                pot, pot_hxc_gs, kv, px, pc, pmat, spin_type);
+            Z_vector_L<T> ops_L(xc_kernel, nspin, naos, nocc, nvirt,
+                ucell, orb_cutoff, gd, psi_ks, eig_ks,
+#ifdef __EXX
+                exx_lri, exx_alpha,
+#endif
+                pot_hxc_gs, kv, px, pc, pmat, spin_type);
+            build_and_solve(ops_R, ops_L, /*nspin_x=*/1);
+        }
     }
 }

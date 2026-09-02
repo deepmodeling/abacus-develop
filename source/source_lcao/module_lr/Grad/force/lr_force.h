@@ -58,6 +58,12 @@ namespace LR
         ModuleBase::matrix cal_force_gxc_dmtrans(const elecstate::DensityMatrix<TK, double>& dm_trans,
             const elecstate::DensityMatrix<TK, double>& dm_gs, const PotGradXCLR& pot_grad);
 
+        /// 3b'. open-shell version: $\sum_\tau\int v^{(2)}_\tau[\rho^X,\rho^X]\,
+        ///      \partial_x\rho^\text{gs}_\tau|_\text{basis}$. Both transition-density channels
+        ///      enter each $v^{(2)}_\tau$, so this cannot be a per-channel loop over the above.
+        ModuleBase::matrix cal_force_gxc_dmtrans_openshell(const elecstate::DensityMatrix<TK, double>& dm_trans,
+            const elecstate::DensityMatrix<TK, double>& dm_gs, const PotGradXCLR& pot_grad);
+
 #ifdef __EXX
         // auto* lrexx_ptr = dynamic_cast<RI::LR<int, std::array<int, 3>, 3, TK>*>(&exx_lri_in.get());
         /// 4. $\alpha \sum_{mnkl}(mk|nl)^x *D^X *D^X$

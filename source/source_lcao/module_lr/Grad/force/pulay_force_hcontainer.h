@@ -94,5 +94,48 @@ ModuleBase::matrix cal_pulay_fs(
     ModuleGint::cal_gint_fvl(nspin_gint, p_vr_hxc, dm.get_DMR_vector(), /*isforce=*/true, /*isstress=*/false, &force, &stress_tmp);
     return force;
 }
+
+/// @brief Open-shell (spin-unrestricted) counterpart of the grid `cal_pulay_fs` above.
+///
+/// The LR kernel mixes the two channels,
+///     $v_\sigma=\sum_{\sigma'}f^{\sigma\sigma'}\rho^1_{\sigma'}$ (+ the full Hartree),
+/// so the density has to be built per channel, the potential accumulated over the inner
+/// spin, and only then contracted with the density matrix of the outer spin. `PotHxcLR`
+/// with `SpinType::S2_updown` selects the $(\sigma,\sigma')$ component via `ispin_op`.
+template<typename TK>
+ModuleBase::matrix cal_pulay_fs_openshell(
+    const elecstate::DensityMatrix<TK, double>& dm,  ///< [in] 2-channel density matrix
+    const UnitCell& ucell,
+    const LR::PotLRBase* pot)
+{
+    ModuleBase::matrix force(ucell.nat, 3);
+    ModuleBase::matrix stress_tmp(3, 3);
+    constexpr int nspin_dm = 2;
+    assert(dm.get_DMR_vector().size() == nspin_dm);
+
+    // 1. dm -> rho, one channel each
+    double** rho;
+    const int& nrxx = pot->nrxx;
+    LR_Util::_allocate_2order_nested_ptr(rho, nspin_dm, nrxx);
+    for (int is = 0; is < nspin_dm; ++is) { ModuleBase::GlobalFunc::ZEROS(rho[is], nrxx); }
+    ModuleGint::cal_gint_rho(dm.get_DMR_vector(), nspin_dm, rho, false);
+
+    // 2. $v_\sigma=\sum_{\sigma'}f^{\sigma\sigma'}\rho_{\sigma'}$
+    std::vector<ModuleBase::matrix> vr_hxc(nspin_dm, ModuleBase::matrix(1, nrxx));
+    for (int sl = 0; sl < nspin_dm; ++sl)
+    {
+        for (int sr = 0; sr < nspin_dm; ++sr)
+        {
+            double* rho_in[1] = { rho[sr] };
+            pot->cal_v_eff(rho_in, ucell, vr_hxc[sl], { sl, sr });
+        }
+    }
+    LR_Util::_deallocate_2order_nested_ptr(rho, nspin_dm);
+
+    // 3. v(r) -> force, summed over the outer spin by `cal_gint_fvl`
+    std::vector<const double*> p_vr_hxc(nspin_dm);
+    for (int is = 0; is < nspin_dm; ++is) { p_vr_hxc[is] = &vr_hxc[is](0, 0); }
+    ModuleGint::cal_gint_fvl(nspin_dm, p_vr_hxc, dm.get_DMR_vector(), /*isforce=*/true, false, &force, &stress_tmp);
+    return force;
 }
- 
+}

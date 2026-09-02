@@ -8,6 +8,38 @@
 #define CREF3(x) const std::vector<ModuleBase::Vector3<double>>& x = x##_
 namespace LR
 {
+    /// libxc component layout for the spin-POLARIZED case, shared by the closed- and open-shell
+    /// $g^{xc}$ code. Spin: 0=u, 1=d. Sigma: 0=uu, 1=ud, 2=dd.
+    /// libxc stores only the unique (unordered) index combinations, which is where all the
+    /// multiplicities in the contractions come from.
+    namespace libxc_idx
+    {
+        /// unordered sigma PAIR -> v2sigma2 (6) and the per-rho block of v3rhosigma2
+        constexpr int p2[3][3] = { {0,1,2},{1,3,4},{2,4,5} };
+        /// unordered sigma TRIPLE -> v3sigma3 (10):
+        /// (000)(001)(002)(011)(012)(022)(111)(112)(122)(222)
+        constexpr int p3[3][3][3] = {
+            { {0,1,2},{1,3,4},{2,4,5} },
+            { {1,3,4},{3,6,7},{4,7,8} },
+            { {2,4,5},{4,7,8},{5,8,9} } };
+        /// v3rho3 (4): (uuu,uud,udd,ddd) -- indexed by the number of d's
+        inline constexpr int r3(const int s0, const int s1, const int s2) { return s0 + s1 + s2; }
+        /// v2rho2 (3): (uu,ud,dd)
+        inline constexpr int r2(const int s0, const int s1) { return s0 + s1; }
+        /// v2rhosigma (6): [rho u,d] x [sigma uu,ud,dd]
+        inline constexpr int rs(const int s, const int a) { return 3 * s + a; }
+        /// v3rho2sigma (9): [rho-pair uu,ud,dd] x [sigma uu,ud,dd]
+        inline constexpr int r2s(const int s0, const int s1, const int a) { return 3 * (s0 + s1) + a; }
+        /// v3rhosigma2 (12): [rho u,d] x [unordered sigma pair]
+        inline constexpr int rs2(const int s, const int a, const int b) { return 6 * s + p2[a][b]; }
+        /// $\partial\sigma_a/\partial\nabla\rho_\tau = \theta^\tau_a\,\nabla\rho_{c(\tau,a)}$
+        /// tau=u: (uu -> 2 grad rho_u, ud -> 1 grad rho_d, dd -> 0)
+        /// tau=d: (uu -> 0,            ud -> 1 grad rho_u, dd -> 2 grad rho_d)
+        constexpr double theta[2][3] = { {2., 1., 0.}, {0., 1., 2.} };
+        /// which density-gradient channel goes with (tau, a); -1 where theta vanishes
+        constexpr int chan[2][3] = { {0, 1, -1}, {-1, 0, 1} };
+    }
+
     /// @brief Calculate the exchange-correlation (XC) kernel ($f_{xc}=\delta^2E_xc/\delta\rho^2$) and store its components.
     class KernelXC
     {

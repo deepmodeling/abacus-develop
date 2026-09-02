@@ -114,7 +114,7 @@ ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int isp
         std::weak_ptr<Exx_LRI<T>>(this->exx_lri), this->exx_info.info_global.hybrid_alpha,
 #endif
         std::weak_ptr<PotHxcLR>(this->pot[ispin]), std::weak_ptr<PotHxcLR>(this->pot_hxc_gs),
-        this->kv, this->paraX_, this->paraC_, this->paraMat_, this->spin_types[ispin]);
+        this->kv, this->paraX_, this->paraC_, this->paraMat_, this->spin_types[ispin], this->openshell);
     ModuleBase::timer::end("ESolver_LR", "solve_zvector_eqation");
     return Z;
 }
@@ -123,6 +123,7 @@ template<typename T, typename TR>
 std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(const int ispin)
 {
     if (PARAM.inp.test_force && ispin == 0) { this->test_force(); }
+    if (this->openshell) { return this->cal_force_openshell(); }
 
     const ct::Tensor& Z = this->solve_zvector_eqation(ispin);
 
@@ -302,7 +303,10 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
             const auto& Ds_gs = LR_Util::get_exx_Ds_spin1(dm_gs, (*this->ucell_), this->kv, this->paraMat_);    // returns 0.5*D[0]
             const auto& Ds_relaxed_diff = LR_Util::get_exx_Ds_spin1(relaxed_diff_dm, (*this->ucell_), this->kv, this->paraMat_);   // returns 0.5*D[0]
             // LR_Util::print_CV(Ds_relaxed_diff, "Ds_relaxed_diff for EXX force");
-            ModuleBase::matrix force_exx_gs_relaxed_diff = lr_force.cal_force_exx_gs_dm_relaxed_diff(Ds_gs, Ds_relaxed_diff, alpha * 4.0);  // cancel the two 0.5s in Ds
+            // `get_exx_Ds_spin1` feeds `split_m2D_ktoR(..., nspin=1)`, which reads only channel 0
+            // with a 0.5 prefactor. For `dm_gs` that channel is $D^\text{gs}_\uparrow$ at nspin=2
+            // but the spin-summed $D^\text{gs}$ at nspin=1, i.e. twice as large.
+            ModuleBase::matrix force_exx_gs_relaxed_diff = lr_force.cal_force_exx_gs_dm_relaxed_diff(Ds_gs, Ds_relaxed_diff, alpha * 4.0) * gs_dm_channel_factor();  // cancel the two 0.5s in Ds
             if (PARAM.inp.test_force)
                 ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "EXX GS-(T+Z) FORCE (eV/Angstrom)", force_exx_gs_relaxed_diff, false);
             force_hamiltgs_relaxed_diff += force_exx_gs_relaxed_diff;
@@ -312,7 +316,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
                 // test H[T] force (Z=0), EXX part
                 const auto& Ds_diff = LR_Util::get_exx_Ds_spin1(diff_dm, (*this->ucell_), this->kv, this->paraMat_);   // returns 0.5*D[0]
                 GlobalV::ofs_running << "========== [TEST H_GS-(T) force (Z=0), EXX part] ===========" << std::endl;
-                ModuleBase::matrix force_exx_gs_diff = lr_force.cal_force_exx_gs_dm_relaxed_diff(Ds_gs, Ds_diff, alpha * 4.0);  // cancel the two 0.5s in Ds
+                ModuleBase::matrix force_exx_gs_diff = lr_force.cal_force_exx_gs_dm_relaxed_diff(Ds_gs, Ds_diff, alpha * 4.0) * gs_dm_channel_factor();  // cancel the two 0.5s in Ds
                 ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "H_GS-T EXX FORCE (Z=0) (eV/Angstrom)", force_exx_gs_diff, false);
                 GlobalV::ofs_running << "========== [\\TEST H_GS-(T) force (Z=0), EXX part] ===========" << std::endl;
             }
@@ -322,6 +326,171 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
     }
     ModuleBase::timer::end("ESolver_LR", "cal_force");
     // total force
+    print_force(forces, std::cout);
+    print_force(forces, GlobalV::ofs_running);
+    return forces;
+}
+
+template<typename T, typename TR>
+std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_openshell()
+{
+    ModuleBase::TITLE("ESolver_LR", "cal_force_openshell");
+    ModuleBase::timer::start("ESolver_LR", "cal_force");
+
+    // Open shell: there is a single eigenproblem whose vector is the concatenation
+    // [up-block | down-block], and every density matrix has two independent channels.
+    // The spin-orbital formulas apply verbatim -- unlike the closed-shell singlet/triplet
+    // algorithm, X here is normalized over BOTH channels, so it carries no implicit sqrt(2)
+    // and none of the collapsed 2/4 factors are needed.
+    const ct::Tensor& Z = this->solve_zvector_eqation(0);
+
+    const std::vector<int> ld_x = { this->nk * this->paraX_[0].get_local_size(),
+                                    this->nk * this->paraX_[1].get_local_size() };
+    const std::vector<int> off_x = { 0, ld_x[0] };
+    std::vector<psi::Psi<T>> c_spin;
+    for (int is : {0, 1}) { c_spin.push_back(LR_Util::get_psi_spin(*this->psi_ks, is, this->nk)); }
+
+    LR_Force<T> lr_force((*this->ucell_), this->kv.kvec_d, this->paraMat_,
+        *this->pw_rhod, *this->pw_rho, this->locpp, this->sf, this->gd, this->two_center_bundle_
+#ifdef __EXX
+        , std::weak_ptr<Exx_LRI<T>>(this->exx_lri), this->exx_info.info_global.hybrid_alpha
+#endif
+    );
+    GlobalV::ofs_running << "Start to calculate excited-state force of updown (open shell)" << std::endl;
+
+    std::vector<ModuleBase::matrix> forces(this->nstates);
+    for (int istate = 0;istate < this->nstates;++istate)
+    {
+        const int offset = istate * this->nloc_per_state;
+        const T* const X_istate = this->X[0].template data<T>() + offset;
+        const T* const Z_istate = Z.template data<T>() + offset;
+
+        // 1. the k-space blocks of each spin channel
+        std::vector<std::vector<ct::Tensor>> dmx_k(2), dmdiff_k(2), relaxed_k(2);
+        for (int is : {0, 1})
+        {
+            dmx_k[is] = cal_dm_trans_pblas(X_istate + off_x[is], this->paraX_[is], c_spin[is], this->paraC_,
+                this->nbasis, this->nocc[is], this->nvirt[is], this->paraMat_);
+            dmdiff_k[is] = cal_dm_diff_pblas(X_istate + off_x[is], this->paraX_[is], c_spin[is], this->paraC_,
+                this->nbasis, this->nocc[is], this->nvirt[is], this->paraMat_);
+            std::vector<ct::Tensor> dmz_k = cal_dm_trans_pblas(Z_istate + off_x[is], this->paraX_[is], c_spin[is],
+                this->paraC_, this->nbasis, this->nocc[is], this->nvirt[is], this->paraMat_);
+            for (auto& d : dmz_k) { LR_Util::matsym(d.template data<T>(), this->nbasis, this->paraMat_); }
+            relaxed_k[is] = dmdiff_k[is] + dmz_k;
+        }
+
+        // 2. $D^X$. Complex and UN-symmetrized first (the EXX kernel needs the full
+        //    non-symmetric $D^X$), then the real symmetrized copy for the grid Hxc force --
+        //    `build_dm_from_dmk_spin` symmetrizes IN PLACE, hence the ordering.
+        auto dm_trans = LR_Util::build_dm_from_dmk_spin<T, T>(dmx_k,
+            this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_);
+        LR_Util::transpose_DMR(dm_trans, (*this->ucell_).nat);
+        auto dm_trans_real = LR_Util::build_dm_from_dmk_spin<T, double>(dmx_k,
+            this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_,
+            /*symmetrize=*/true);
+        LR_Util::transpose_DMR(dm_trans_real, (*this->ucell_).nat);
+
+        // 3. the relaxed difference density matrix $T+D^Z$
+        const elecstate::DensityMatrix<T, T>& relaxed_diff_dm =
+            LR_Util::build_dm_from_dmk_spin<T, T>(relaxed_k,
+                this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_);
+        elecstate::DensityMatrix<T, double> relaxed_diff_dm_real(&this->paraMat_, 2, this->kv.kvec_d, this->nk);
+        LR_Util::initialize_DMR(relaxed_diff_dm_real, this->paraMat_, (*this->ucell_), this->gd, this->orb_cutoff_);
+        LR_Util::get_DMR_real_imag_part(relaxed_diff_dm, relaxed_diff_dm_real, 'R');
+
+        // 4. the energy-weighted density matrix
+        std::weak_ptr<PotHxcLR> pot_weak = this->pot[0];
+        std::weak_ptr<PotHxcLR> pot_hxc_gs_weak = this->pot_hxc_gs;
+#ifdef __EXX
+        std::weak_ptr<Exx_LRI<T>> exx_lri_weak = this->exx_lri;
+#endif
+        const std::vector<std::vector<ct::Tensor>>& edm_k =
+            cal_edm_from_XZ_istate_openshell(X_istate, Z_istate,
+                this->pelec->ekb.c[istate], this->eig_ks.c, dm_trans,
+                *this->psi_ks, this->nspin, this->nbasis, this->nocc, this->nvirt,
+                (*this->ucell_), this->orb_cutoff_,
+#ifdef __EXX
+                exx_lri_weak, this->exx_info.info_global.hybrid_alpha,
+#endif
+                pot_weak, pot_hxc_gs_weak,
+                this->kv, this->gd, this->paraX_, this->paraC_, this->paraMat_, this->xc_kernel);
+        elecstate::DensityMatrix<T, double> edm_real = LR_Util::build_dm_from_dmk_spin<T, double>(edm_k,
+            this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_,
+            /*symmetrize=*/true);
+
+        // 5. the force terms
+        ModuleBase::matrix force_hxc_dmtrans = lr_force.cal_force_hxc_dmtrans(dm_trans_real, *this->pot[0]);
+        if (PARAM.inp.test_force)
+            ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "HXC DMTRANS FORCE (eV/Angstrom)", force_hxc_dmtrans, false);
+
+        const elecstate::DensityMatrix<T, double>& dm_gs = this->cal_dm_gs();
+
+        // the $g^{xc}$ half of $\partial_x K[D^X]D^X$, i.e. the derivative of the xc kernel
+        // through the ground-state density. Only for local kernels.
+        if (LR_Util::has_local_xc(this->xc_kernel))
+        {
+            PotGradXCLR pot_grad(this->pot_hxc_gs->xc_kernel_components(), this->pot_hxc_gs->get_rho_basis(),
+                (*this->ucell_), this->pot_hxc_gs->nrxx, /*triplet=*/false);
+            ModuleBase::matrix force_gxc_dmtrans =
+                lr_force.cal_force_gxc_dmtrans_openshell(dm_trans_real, dm_gs, pot_grad);
+            if (PARAM.inp.test_force)
+                ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "GXC DMTRANS FORCE (eV/Angstrom)", force_gxc_dmtrans, false);
+            force_hxc_dmtrans += force_gxc_dmtrans;
+        }
+
+        ModuleBase::matrix force_hamiltgs_relaxed_diff = lr_force.cal_force_hamilt_gs_dm_relaxed_diff(
+            relaxed_diff_dm_real, dm_gs, false, this->pot_hxc_gs.get());
+        if (PARAM.inp.test_force)
+            ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "H_GS-(T+Z) FORCE (without EXX) (eV/Angstrom)", force_hamiltgs_relaxed_diff, false);
+
+        ModuleBase::matrix force_overlap_edm = lr_force.cal_force_overlap_edm(edm_real);
+        if (PARAM.inp.test_force)
+            ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "OVERLAP-EDM FORCE (eV/Angstrom)", force_overlap_edm, false);
+
+#ifdef __EXX
+        const double& alpha = this->exx_info.info_global.hybrid_alpha;
+        // Exchange is spin-diagonal, so each channel is done independently and summed.
+        // `get_exx_Ds_gs` returns the channels unscaled (SPIN_multiple = 1 at nspin=2), unlike
+        // the closed-shell `get_exx_Ds_spin1` which returns 0.5*D. Counting the closed-shell
+        // `alpha*4.0` back down for both terms:
+        //   $D^XD^X$: each slot goes 0.5*D^X_tot -> D^X_is, i.e. x2 each, and the explicit
+        //     sum over is adds another x2 -- but $D^X_\text{tot}=\sqrt2 D^X_\sigma$ eats one,
+        //     so 4/(2*2) * ... = `alpha`.
+        //   $D^\text{gs}(T{+}D^Z)$: the left slot goes 0.5*D_up -> D_is (x2); the right slot
+        //     goes 0.5*(T+Z)_tot = (T+Z)_up -> (T+Z)_is (x1, no sqrt2 here); the explicit sum
+        //     over is adds x2. So 4/(2*1*2) = `alpha` as well -- NOT `2*alpha`: the earlier
+        //     comment forgot that the closed-shell right slot is already the spin SUM, which is
+        //     exactly what the `for (is)` loop below now supplies.
+        if (LR::exx_kernel_list().count(this->xc_kernel))
+        {
+            const auto& Ds_trans = LR_Util::get_exx_Ds_gs(dm_trans, (*this->ucell_), this->kv, this->paraMat_);
+            ModuleBase::matrix force_exx_dmtrans(this->ucell_->nat, 3);
+            for (int is : {0, 1})
+            {
+                force_exx_dmtrans += lr_force.cal_force_exx_dm_trans(Ds_trans[is], alpha, std::to_string(is));
+            }
+            if (PARAM.inp.test_force)
+                ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "EXX DMTRANS FORCE (eV/Angstrom)", force_exx_dmtrans, false);
+            force_hxc_dmtrans += force_exx_dmtrans;
+        }
+        if (LR::exx_kernel_list().count(PARAM.inp.dft_functional))
+        {
+            const auto& Ds_gs = LR_Util::get_exx_Ds_gs(dm_gs, (*this->ucell_), this->kv, this->paraMat_);
+            const auto& Ds_relaxed_diff = LR_Util::get_exx_Ds_gs(relaxed_diff_dm, (*this->ucell_), this->kv, this->paraMat_);
+            ModuleBase::matrix force_exx_gs_relaxed_diff(this->ucell_->nat, 3);
+            for (int is : {0, 1})
+            {
+                force_exx_gs_relaxed_diff += lr_force.cal_force_exx_gs_dm_relaxed_diff(
+                    Ds_gs[is], Ds_relaxed_diff[is], alpha, std::to_string(is));
+            }
+            if (PARAM.inp.test_force)
+                ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "EXX GS-(T+Z) FORCE (eV/Angstrom)", force_exx_gs_relaxed_diff, false);
+            force_hamiltgs_relaxed_diff += force_exx_gs_relaxed_diff;
+        }
+#endif
+        forces[istate] = force_hxc_dmtrans + force_hamiltgs_relaxed_diff + force_overlap_edm;
+    }
+    ModuleBase::timer::end("ESolver_LR", "cal_force");
     print_force(forces, std::cout);
     print_force(forces, GlobalV::ofs_running);
     return forces;

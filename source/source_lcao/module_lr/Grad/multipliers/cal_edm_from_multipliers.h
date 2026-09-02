@@ -197,4 +197,141 @@ namespace LR
 
         return cal_edm_terms_from_XZWK(X, Z, W.data(), K_cvcx.data(), eig_ext_istate, eig_ks, c, nspin, p_occ_occ[0], px[0], pc, pmat);
     }
+
+    /// @brief Open-shell (spin-unrestricted) counterpart of `cal_edm_from_XZ_istate`.
+    /// Returns the energy-weighted density matrix of each spin channel: `[is][ik]`.
+    ///
+    /// The four EDM terms are all spin-diagonal AO outer products; the spin coupling only
+    /// enters when building the two multipliers, $W^c$ (see `cal_W_from_Z_openshell`) and
+    /// $W^X_{ki\sigma}=2K_{ki\sigma}[D^X]$ (the `op_K_cvcx` blocks below).
+    template<typename T>
+    std::vector<std::vector<ct::Tensor>> cal_edm_from_XZ_istate_openshell(
+        const T* const X,
+        const T* const Z,
+        const double eig_ext_istate,
+        const double* const eig_ks,
+        const elecstate::DensityMatrix<T, T>& dm_trans,   // unused, kept for signature symmetry
+        const psi::Psi<T>& psi_ks,
+        const int& nspin,
+        const int& naos,
+        const std::vector<int>& nocc,
+        const std::vector<int>& nvirt,
+        const UnitCell& ucell,
+        const std::vector<double>& orb_cutoff,
+#ifdef __EXX
+        std::weak_ptr<Exx_LRI<T>> exx_lri,
+        const double& exx_alpha,
+#endif
+        std::weak_ptr<PotHxcLR> pot,
+        std::weak_ptr<PotHxcLR> pot_hxc_gs,
+        const K_Vectors& kv,
+        const Grid_Driver& gd,
+        const std::vector<Parallel_2D>& px,
+        const Parallel_2D& pc,
+        const Parallel_Orbitals& pmat,
+        const std::string xc_kernel)
+    {
+        using ATYPE = typename OperatorLRHxc<T>::MO_TO_AO_TYPE;
+#ifdef __EXX
+        using ATYPE_EXX = typename OperatorLREXX<T>::MO_TO_AO_TYPE;
+#endif
+        const int nk = kv.get_nks() / nspin;
+        const std::vector<int> ld_x = { nk * px[0].get_local_size(), nk * px[1].get_local_size() };
+        const std::vector<int> off_x = { 0, ld_x[0] };
+        const int nband_window = nocc[0] + nvirt[0];
+
+        // 1. the W^c multiplier, one occ-occ block per spin
+        std::vector<Parallel_2D> p_occ_occ(2);
+        for (int is : {0, 1}) { LR_Util::setup_2d_division(p_occ_occ[is], 1, nocc[is], nocc[is], px[is].blacs_ctxt); }
+        std::vector<std::vector<T>> W;
+        cal_W_from_Z_openshell(W, Z, X, eig_ext_istate, eig_ks, nspin, naos, nocc, nvirt,
+            ucell, orb_cutoff, gd, psi_ks,
+#ifdef __EXX
+            exx_lri, exx_alpha,
+#endif
+            pot_hxc_gs, kv, px, pc, p_occ_occ, pmat, xc_kernel);
+
+        // 2. $W^X_{ai\sigma}=2\sum_j X_{aj\sigma}K_{ji\sigma}[D^X]$.
+        //    The free spin sits on X (hence `psi_in = X + off_x[sl]`, laid out over `px[sl]`),
+        //    the summed spin sits on $D^X$.
+        std::vector<std::vector<T>> K_cvcx(2);
+        for (int is : {0, 1}) { K_cvcx[is].assign(ld_x[is], T(0.0)); }
+
+        elecstate::DensityMatrix<T, T> DM_trans(&pmat, 1, kv.kvec_d, nk);
+        LR_Util::initialize_DMR(DM_trans, pmat, ucell, gd, orb_cutoff);
+        std::vector<std::unique_ptr<OperatorLRHxc<T>>> op_K(4);
+        for (int sl : {0, 1})
+        {
+            for (int sr : {0, 1})
+            {
+                op_K[(sl << 1) + sr] = LR_Util::make_unique<OperatorLRHxc<T>>(nspin, naos, nocc, nvirt, psi_ks,
+                    DM_trans, pot, ucell, orb_cutoff, gd, kv, px, pc, pmat,
+                    std::vector<int>({ sl, sr }), T(2.0), ATYPE::CXC_o);
+            }
+        }
+        std::vector<psi::Psi<T>> psi_ks_spin;
+        for (int is : {0, 1}) { psi_ks_spin.push_back(LR_Util::get_psi_spin(psi_ks, is, nk)); }
+#ifdef __EXX
+        std::vector<std::unique_ptr<OperatorLREXX<T>>> op_K_exx(2);
+        const bool with_exx_lr = LR::exx_kernel_list().count(xc_kernel) > 0;
+        if (with_exx_lr)
+        {
+            for (int is : {0, 1})
+            {
+                op_K_exx[is] = LR_Util::make_unique<OperatorLREXX<T>>(nspin, naos, nocc[is], nvirt[is],
+                    ucell, psi_ks_spin[is], DM_trans, exx_lri, kv, px[is], pc, pmat,
+                    2.0 * exx_alpha, ATYPE_EXX::CXC_o);
+            }
+        }
+#endif
+        // $D^X$ is fed to the CXC_o operators TRANSPOSED, exactly as the closed-shell
+        // `cal_force` does (it hands `cal_edm_from_XZ_istate` a `transpose_DMR`-ed $D^X$):
+        // `CVCX_occ` produces the kernel matrix with its two MO indices in the opposite order
+        // to what $W^X_{ai\sigma}=2\sum_jX_{aj\sigma}K_{ji\sigma}[D^X]$ needs, and since
+        // $(K[D])^T=K[D^T]$, transposing on the way in restores it.
+        std::vector<ct::Tensor> dmx_buf;
+        auto set_dm_trans = [&](const int is)->void
+            {
+#ifdef __MPI
+                dmx_buf = cal_dm_trans_pblas(X + off_x[is], px[is], psi_ks_spin[is], pc, naos, nocc[is], nvirt[is], pmat);
+                for (auto& t : dmx_buf) { LR_Util::mattrans(t.data<T>(), naos, pmat); }
+#else
+                dmx_buf = cal_dm_trans_blas(X + off_x[is], psi_ks_spin[is], nocc[is], nvirt[is]);
+                for (auto& t : dmx_buf)
+                {
+                    T* d = t.data<T>();
+                    for (int u = 0;u < naos;++u)
+                    {
+                        for (int v = u + 1;v < naos;++v) { std::swap(d[u * naos + v], d[v * naos + u]); }
+                    }
+                }
+#endif
+                for (int ik = 0;ik < nk;++ik) { DM_trans.set_DMK_pointer(ik, dmx_buf[ik].data<T>()); }
+            };
+        for (int sr : {0, 1})
+        {
+            set_dm_trans(sr);
+            for (int sl : {0, 1})
+            {
+                op_K[(sl << 1) + sr]->act(/*nbands=*/1, ld_x[sl], /*npol=*/1,
+                    X + off_x[sl], K_cvcx[sl].data());
+            }
+#ifdef __EXX
+            if (with_exx_lr)
+            {
+                op_K_exx[sr]->act(/*nbands=*/1, ld_x[sr], /*npol=*/1, X + off_x[sr], K_cvcx[sr].data());
+            }
+#endif
+        }
+
+        // 3. assemble the four EDM terms, per spin channel
+        std::vector<std::vector<ct::Tensor>> edm(2);
+        for (int is : {0, 1})
+        {
+            edm[is] = cal_edm_terms_from_XZWK(X + off_x[is], Z + off_x[is], W[is].data(), K_cvcx[is].data(),
+                eig_ext_istate, eig_ks + is * nk * nband_window, psi_ks_spin[is], nspin,
+                p_occ_occ[is], px[is], pc, pmat);
+        }
+        return edm;
+    }
 }

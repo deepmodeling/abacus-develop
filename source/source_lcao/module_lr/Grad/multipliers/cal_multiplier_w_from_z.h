@@ -2,6 +2,7 @@
 #include "source_hamilt/hamilt.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_lr/Grad/xc/pot_grad_xc.h"
+#include "source_lcao/module_lr/Grad/xc/operator_gxc_ulr.h"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_hxc.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
@@ -175,5 +176,152 @@ namespace LR
         std::cout << "W (H[T+Z]) + W(gxc) terms: " << std::endl;
         LR_Util::print_value(W, nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
         add_ediff_term(W, X, eig, eig_ks, nk, nocc[0], nvirt[0], px[0], p_occ_occ[0]);
+    }
+
+    /// @brief Open-shell (spin-unrestricted) counterpart of `cal_W_from_Z`.
+    ///
+    /// $$W^c_{ij\sigma}=\tfrac12 H_{ij\sigma}[T+D^Z]
+    ///   +\sum_a X_{ai\sigma}(\Omega-\epsilon_{a\sigma})X_{aj\sigma}
+    ///   +\sum_{\kappa\lambda\sigma'}\sum_{\alpha\beta\sigma''}D^X D^X g^{xc}_{\dots,ij\sigma}$$
+    ///
+    /// `W[is]` is the occ-occ block of spin channel `is`, distributed over `p_occ_occ[is]`.
+    /// Factor 1.0 on the $H[T+D^Z]$ operator (the closed-shell version uses 2.0): there
+    /// $\tfrac12 H^S = K^S = 2\cdot$`pot_hxc_gs` because `pot_hxc_gs` is the halved `S2_gs`;
+    /// here it is `S2_updown`, one $K_{\sigma\sigma'}$ component, and the $\sum_{\sigma'}$
+    /// is done by the block loop below.
+    template<typename T>
+    void cal_W_from_Z_openshell(std::vector<std::vector<T>>& W,
+        const T* const Z,
+        const T* const X,
+        const double eig,
+        const double* const eig_ks,
+        const int& nspin,
+        const int& naos,
+        const std::vector<int>& nocc,
+        const std::vector<int>& nvirt,
+        const UnitCell& ucell,
+        const std::vector<double>& orb_cutoff,
+        const Grid_Driver& gd,
+        const psi::Psi<T>& psi_ks,
+#ifdef __EXX
+        std::weak_ptr<Exx_LRI<T>> exx_lri,
+        const double& exx_alpha,
+#endif
+        std::weak_ptr<PotHxcLR> pot_hxc_gs,
+        const K_Vectors& kv,
+        const std::vector<Parallel_2D>& px,
+        const Parallel_2D& pc,
+        const std::vector<Parallel_2D>& p_occ_occ,
+        const Parallel_Orbitals& pmat,
+        const std::string xc_kernel)
+    {
+        ModuleBase::TITLE("cal_W_from_Z_openshell", "cal_W_from_Z_openshell");
+        using ATYPE = typename OperatorLRHxc<T>::MO_TO_AO_TYPE;
+#ifdef __EXX
+        using ATYPE_EXX = typename OperatorLREXX<T>::MO_TO_AO_TYPE;
+#endif
+        const int nk = kv.get_nks() / nspin;
+        const std::vector<int> ld_x = { nk * px[0].get_local_size(), nk * px[1].get_local_size() };
+        const std::vector<int> ld_oo = { nk * p_occ_occ[0].get_local_size(), nk * p_occ_occ[1].get_local_size() };
+        const std::vector<int> off_x = { 0, ld_x[0] };
+        const int nband_window = nocc[0] + nvirt[0];   // common KS window, see `set_dimension`
+
+        W.assign(2, {});
+        for (int is : {0, 1}) { W[is].assign(ld_oo[is], T(0.0)); }
+
+        elecstate::DensityMatrix<T, T> DM_diff_relaxed(&pmat, 1, kv.kvec_d, nk);   // T+D^Z of one channel
+        LR_Util::initialize_DMR(DM_diff_relaxed, pmat, ucell, gd, orb_cutoff);
+
+        // $\tfrac12 H_{ij\sigma}[T+D^Z]=K_{ij\sigma}[T+D^Z]$, one operator per (out, in) spin pair
+        std::vector<std::unique_ptr<OperatorLRHxc<T>>> op_ht(4);
+        for (int sl : {0, 1})
+        {
+            for (int sr : {0, 1})
+            {
+                op_ht[(sl << 1) + sr] = LR_Util::make_unique<OperatorLRHxc<T>>(nspin, naos, nocc, nvirt, psi_ks,
+                    DM_diff_relaxed, pot_hxc_gs, ucell, orb_cutoff, gd, kv, p_occ_occ, pc, pmat,
+                    std::vector<int>({ sl, sr }), T(1.0), ATYPE::CC_oo);
+            }
+        }
+#ifdef __EXX
+        std::vector<psi::Psi<T>> psi_ks_spin;
+        for (int is : {0, 1}) { psi_ks_spin.push_back(LR_Util::get_psi_spin(psi_ks, is, nk)); }
+        std::vector<std::unique_ptr<OperatorLREXX<T>>> op_ht_exx(2);
+        const bool with_exx = LR::exx_kernel_list().count(PARAM.inp.dft_functional) > 0;
+        if (with_exx)
+        {   // exchange is spin-diagonal
+            for (int is : {0, 1})
+            {
+                op_ht_exx[is] = LR_Util::make_unique<OperatorLREXX<T>>(nspin, naos, nocc[is], nvirt[is],
+                    ucell, psi_ks_spin[is], DM_diff_relaxed, exx_lri, kv, p_occ_occ[is], pc, pmat,
+                    exx_alpha, ATYPE_EXX::CC_oo);
+            }
+        }
+#endif
+        // the relaxed difference density matrix of one spin channel
+        std::vector<ct::Tensor> dm_buf;
+        auto set_dm_diff_relaxed = [&](const int is)->void
+            {
+                const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, nk);
+                const T* const x_ptr = X + off_x[is];
+                const T* const z_ptr = Z + off_x[is];
+#ifdef __MPI
+                std::vector<ct::Tensor> z_2d = cal_dm_trans_pblas(z_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat);
+                for (auto& t : z_2d) { LR_Util::matsym(t.data<T>(), naos, pmat); }
+                dm_buf = cal_dm_diff_pblas(x_ptr, px[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat);
+#else
+                std::vector<ct::Tensor> z_2d = cal_dm_trans_blas(z_ptr, psi_ks_is, nocc[is], nvirt[is]);
+                for (auto& t : z_2d) { LR_Util::matsym(t.data<T>(), naos); }
+                dm_buf = cal_dm_diff_blas(x_ptr, psi_ks_is, naos, nocc[is], nvirt[is]);
+#endif
+                for (int ik = 0;ik < nk;++ik)
+                {
+                    dm_buf[ik] = dm_buf[ik] + z_2d[ik];
+                    DM_diff_relaxed.set_DMK_pointer(ik, dm_buf[ik].data<T>());
+                }
+            };
+
+        for (int is_in : {0, 1})
+        {
+            set_dm_diff_relaxed(is_in);
+            for (int is_out : {0, 1})
+            {
+                op_ht[(is_out << 1) + is_in]->act(/*nband=*/1, ld_oo[is_out], /*npol=*/1,
+                    X + off_x[is_in], W[is_out].data());
+            }
+#ifdef __EXX
+            if (with_exx)
+            {   // $\delta_{\sigma\sigma'}$: only the diagonal block contributes
+                op_ht_exx[is_in]->act(/*nband=*/1, ld_oo[is_in], /*npol=*/1,
+                    X + off_x[is_in], W[is_in].data());
+            }
+#endif
+        }
+
+        // $\sum_{\sigma'\sigma''}D^X_{\sigma'}D^X_{\sigma''}g^{xc}_{\dots,ij\tau}$, coefficient 1
+        // in the spin-orbital formula. Quadratic in $D^X$, so it does not fit the block loop above.
+        // The kernel comes from `pot_hxc_gs`, mirroring the closed-shell `cal_W_from_Z`; it only
+        // differs from the LR kernel used on the Z-vector right-hand side when
+        // `xc_kernel != dft_functional`, in which case both branches share the same ambiguity.
+        if (LR_Util::has_local_xc(xc_kernel))
+        {
+            OperatorGxcULR<T> gxc(pot_hxc_gs.lock()->xc_kernel_components(), pot_hxc_gs.lock()->get_rho_basis(),
+                ucell, orb_cutoff, gd, kv, pmat, pc, psi_ks, nocc, nvirt, naos,
+                px, p_occ_occ, LR_Util::MO_TYPE::OO, T(1.0));
+            std::vector<T> w_flat(ld_oo[0] + ld_oo[1], T(0.0));
+            gxc.act(X, w_flat.data());
+            for (int is : {0, 1})
+            {
+                const int off = is * ld_oo[0];
+                for (int i = 0;i < ld_oo[is];++i) { W[is][i] += w_flat[off + i]; }
+            }
+        }
+
+        // $\sum_a X_{ai\sigma}(\Omega-\epsilon_{a\sigma})X_{aj\sigma}$ -- spin-diagonal
+        for (int is : {0, 1})
+        {
+            add_ediff_term(W[is].data(), X + off_x[is], eig, eig_ks + is * nk * nband_window,
+                nk, nocc[is], nvirt[is], px[is], p_occ_occ[is]);
+        }
     }
 }

@@ -7,8 +7,13 @@
 // #include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
 namespace LR
 {
-    /// `dm_gs` carries the ground-state occupations, at nspin=1 they are 2 for fully occupied bands.
-    inline double gs_dm_channel_factor() { return (PARAM.inp.nspin == 1) ? 0.5 : 1.0; }
+    /// The LR density matrices ($D^X$, $T+D^Z$, EDM) carry one channel in the closed-shell
+    /// singlet/triplet algorithm and two independent channels in the open-shell one.
+    template<typename TK>
+    inline bool is_openshell_dm(const elecstate::DensityMatrix<TK, double>& dm)
+    {
+        return dm.get_DMR_vector().size() == 2;
+    }
 
     template<typename TK>
     Charge LR_Force<TK>::dm_to_charge(const elecstate::DensityMatrix<TK, double>& dm)
@@ -58,6 +63,10 @@ namespace LR
         const PotHxcLR* pot_hxc_gs)
     {
         const bool with_ewald = reproduce_gs;
+        // Two independent spin channels in `relax_diff_dm` <=> open-shell (spin-unrestricted) LR.
+        // The closed-shell singlet/triplet algorithm always builds a single-channel LR density
+        // matrix, even at nspin=2.
+        const bool openshell = is_openshell_dm(relax_diff_dm);
         const Charge chr_diff_relaxed = dm_to_charge(relax_diff_dm);
 
         // 1. local pp (Hellmann-Feynman)(fvl_dvl) + ewald + core correction (+ self-consistent charge)
@@ -122,6 +131,27 @@ namespace LR
             //`cal_pulay_fs` calculates only one spin channel because `relax_diff_dm` has only one.
             PulayForceStress::cal_pulay_fs(1/*nspin*/, fhxc_dvhxc, stress_tmp,
                 dm_gs, this->ucell_, &pot_hxc_relaxed_diff, true, false);
+            fhxc_dvhxc *= gs_dm_channel_factor();
+        }
+        else if (openshell)
+        {
+            // $v_\sigma=\sum_{\sigma'}f^{\sigma\sigma'}\rho^{T+Z}_{\sigma'}$ (+ the full Hartree),
+            // contracted with $D^\text{gs}_\sigma$. No factor 2 and no `gs_dm_channel_factor`:
+            // the two ground-state channels are summed explicitly by `cal_gint_fvl` below, and
+            // each carries occupation 1 rather than 2.
+            constexpr int nspin_dm = 2;
+            std::vector<ModuleBase::matrix> v_lin(nspin_dm, ModuleBase::matrix(1, this->rhopw_.nrxx));
+            for (int sl = 0; sl < nspin_dm; ++sl)
+            {
+                for (int sr = 0; sr < nspin_dm; ++sr)
+                {
+                    double* rho_in[1] = { const_cast<double*>(chr_diff_relaxed.rho[sr]) };
+                    pot_hxc_gs->cal_v_eff(rho_in, this->ucell_, v_lin[sl], { sl, sr });
+                }
+            }
+            std::vector<const double*> vr_eff(nspin_dm);
+            for (int is = 0; is < nspin_dm; ++is) { vr_eff[is] = v_lin[is].c; }
+            ModuleGint::cal_gint_fvl(nspin_dm, vr_eff, dm_gs.get_DMR_vector(), true, false, &fhxc_dvhxc, &stress_tmp);
         }
         else
         {
@@ -130,9 +160,9 @@ namespace LR
             pot_hxc_gs->cal_v_eff(rho_in, this->ucell_, v_lin);
             std::vector<const double*> vr_eff = { v_lin.c };
             ModuleGint::cal_gint_fvl(1, vr_eff, dm_gs.get_DMR_vector(), true, false, &fhxc_dvhxc, &stress_tmp);
+            fhxc_dvhxc *= 2;   // for the two channels of the ground-state dm.
+            fhxc_dvhxc *= gs_dm_channel_factor();
         }
-        if(!reproduce_gs) {fhxc_dvhxc *= 2;} // for the two channels of the ground-state dm.
-        fhxc_dvhxc *= gs_dm_channel_factor();
 
         // 4. kinetic (Pulay)
         std::vector<hamilt::HContainer<double>> dT = cal_hs_grad('T', this->ucell_, this->pv_, this->gd_, this->two_center_bundle_);
@@ -165,6 +195,13 @@ namespace LR
         // Verified on H2/SZ against the analytic 4-center derivative: 4*sum D^sym P = 16.8653548
         // vs 2*d(ai|ia)/dz = 16.865355 eV/Ang (7 digits).
         const double pulay_to_total_sym = 2.0;
+        // Open shell: the kernel couples the channels, so the density has to be built per channel
+        // and the potential accumulated over the summed spin before contracting with $D^X_\sigma$.
+        // `pulay_to_total_sym` is a Pulay -> Pulay+Hellmann-Feynman factor and is spin-independent.
+        if (is_openshell_dm(dm_trans))
+        {
+            return PulayForceStress::cal_pulay_fs_openshell(dm_trans, this->ucell_, &pot_hxc) * pulay_to_total_sym;
+        }
         return PulayForceStress::cal_pulay_fs(dm_trans, this->ucell_, &pot_hxc) * pulay_to_total_sym;
     }
 
@@ -198,6 +235,31 @@ namespace LR
         std::vector<const double*> vr_eff = { v2.c };
         ModuleGint::cal_gint_fvl(1, vr_eff, dm_gs.get_DMR_vector(), true, false, &f, &stress_tmp);
         f *= gs_dm_channel_factor();
+        return f;
+    }
+
+    template<typename TK>
+    ModuleBase::matrix LR_Force<TK>::cal_force_gxc_dmtrans_openshell(
+        const elecstate::DensityMatrix<TK, double>& dm_trans,
+        const elecstate::DensityMatrix<TK, double>& dm_gs, const PotGradXCLR& pot_grad)
+    {
+        // Same term as `cal_force_gxc_dmtrans`, spin-resolved: the free index $\tau$ (spin channel)
+        // of $v^{(2)}_\tau$ is contracted with $D^\text{gs}_\tau$, and `cal_gint_fvl` does the
+        // $\sum_\tau$. No `gs_dm_channel_factor` here -- both ground-state channels are summed
+        // explicitly and each carries occupation 1.
+        constexpr int nspin_dm = 2;
+        assert(dm_trans.get_DMR_vector().size() == nspin_dm);
+        const Charge chr_x = dm_to_charge(dm_trans);
+        const double* rho_in[nspin_dm] = { chr_x.rho[0], chr_x.rho[1] };
+
+        std::vector<ModuleBase::matrix> v2(nspin_dm, ModuleBase::matrix(1, this->rhopw_.nrxx));
+        for (int tau = 0; tau < nspin_dm; ++tau) { pot_grad.cal_v_eff_openshell(rho_in, this->ucell_, v2[tau], tau); }
+
+        ModuleBase::matrix f(this->ucell_.nat, 3);
+        ModuleBase::matrix stress_tmp;
+        std::vector<const double*> vr_eff(nspin_dm);
+        for (int is = 0; is < nspin_dm; ++is) { vr_eff[is] = v2[is].c; }
+        ModuleGint::cal_gint_fvl(nspin_dm, vr_eff, dm_gs.get_DMR_vector(), true, false, &f, &stress_tmp);
         return f;
     }
 

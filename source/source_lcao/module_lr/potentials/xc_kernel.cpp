@@ -130,9 +130,10 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         hse_omega);
     const int& nrxx = rho_basis_.nrxx;
     const bool is_gga = std::any_of(funcs.begin(), funcs.end(), [](const xc_func_type& f) { return f.info->family == XC_FAMILY_GGA || f.info->family == XC_FAMILY_HYB_GGA; });
-    // The third-order kernel exists for exactly one purpose: building the $g^{xc}$ coefficients
-    // below. If none were requested, skip it. Openshell waits for future implementation.
-    const bool need_kxc = (this->gxc_spin_ != GxcSpin::NoGxc) && !this->openshell_;
+    // The third-order kernel exists for exactly one purpose: the $g^{xc}$ part of the LR
+    // gradient. If none was requested, skip it. Open shell needs the RAW arrays (see below) --
+    // `build_gxc_coef` is a closed-shell-only pre-contraction.
+    const bool need_kxc = (this->gxc_spin_ != GxcSpin::NoGxc);
 
     std::vector<double> rho(nspin * nrxx);    // r major / spin contigous
     // for GGA
@@ -370,6 +371,10 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
     // Only the combinations the caller asked for: at nspin=2 each set costs 10 doubles per grid
     // point for a GGA, so building an unused one is a third of the whole third-order kernel.
     this->nspin_ = nspin;
+    // Open shell keeps the raw libxc third-order arrays and contracts them on the fly in
+    // `PotGradXCLR::cal_v_eff_openshell`: there is no single spin combination to pre-contract
+    // into (the free spin index $\tau$ stays open), and pre-contracting would cost ~117 doubles
+    // per grid point against the 35 the raw arrays already occupy.
     if (!openshell_ && this->gxc_spin_ != GxcSpin::NoGxc)
     {
         // No `gradrho` here: the divergence coefficients are stored with $\nabla\rho$ factored
@@ -471,17 +476,10 @@ void LR::KernelXC::get_rho_drho_sigma(const int& nspin,
 // d(grad rho_d)/dL = -grad rho^1: W'' picks up 4u'_uu - 2u'_ud where W' picks up 2u'_uu + u'_ud.
 // In the singlet the two coincide, which is why the singlet formula looked tidier than it is.
 // Getting theta~ wrong is invisible in every singlet test.
-namespace
-{
-    // libxc component indices for nspin=2.
-    // sigma types: 0=uu, 1=ud, 2=dd. Unordered sigma pairs -> v2sigma2 / (per-rho block of) v3rhosigma2:
-    constexpr int p2[3][3] = { {0,1,2},{1,3,4},{2,4,5} };
-    // Unordered sigma triples -> v3sigma3: (000)(001)(002)(011)(012)(022)(111)(112)(122)(222)
-    constexpr int p3[3][3][3] = {
-        { {0,1,2},{1,3,4},{2,4,5} },
-        { {1,3,4},{3,6,7},{4,7,8} },
-        { {2,4,5},{4,7,8},{5,8,9} } };
-}
+// libxc component indices for nspin=2 now live in `xc_kernel.h` (namespace LR::libxc_idx).
+// The open-shell g^xc code in `Grad/xc/pot_grad_xc.cpp` needs the same tables.
+using LR::libxc_idx::p2;
+using LR::libxc_idx::p3;
 
 void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& nspin, const bool& is_gga)
 {

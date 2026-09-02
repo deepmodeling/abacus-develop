@@ -285,6 +285,45 @@ namespace LR_Util
         return dm;
     }
 
+    /// @brief Spin-resolved counterpart of `build_dm_from_dmk`: one `dmk` list per spin channel.
+    ///
+    /// Needed by the open-shell gradient, where $D^X$, $T$, $D^Z$ and the energy-weighted
+    /// density matrix all have two independent channels. `DensityMatrix` stores DMK as a flat
+    /// `[nspin][nk]` array, so channel `is` starts at `is * nk`.
+    template <typename TK, typename TR>
+    elecstate::DensityMatrix<TK, TR> build_dm_from_dmk_spin(const std::vector<std::vector<ct::Tensor>>& dmk,
+        const Parallel_Orbitals& pmat,
+        const int& nk,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+        const UnitCell& ucell,
+        const Grid_Driver& gd,
+        const std::vector<double>& orb_cutoff,
+        const bool symmetrize = false,
+        const bool cal_dmr = true)
+    {
+        const int nspin_dm = static_cast<int>(dmk.size());
+        elecstate::DensityMatrix<TK, TR> dm(&pmat, nspin_dm, kvec_d, nk);
+        initialize_DMR(dm, pmat, ucell, gd, orb_cutoff);
+        for (int is = 0; is < nspin_dm; ++is)
+        {
+            assert(static_cast<int>(dmk[is].size()) >= nk);
+            if (symmetrize)
+            {
+                for (int ik = 0; ik < nk; ++ik)
+                {
+                    LR_Util::matsym(dmk[is][ik].data<TK>(), pmat.get_global_row_size(), pmat);
+                }
+            }
+            for (int ik = 0; ik < nk; ++ik) { dm.set_DMK_pointer(is * nk + ik, dmk[is][ik].data<TK>()); }
+        }
+        if (cal_dmr)
+        {
+            dm.cal_DMR();
+            LR_Util::swap_atompair_in_DMR(dm, ucell.nat);
+        }
+        return dm;
+    }
+
     namespace sparse_format
     {
         // ref: sparse_format::cal_HContainer_d/cd and sparse_format::cal_HSR
