@@ -49,10 +49,6 @@ ElecStatePW<T, Device>::~ElecStatePW()
             delete[] this->kin_r;
         }
     }
-    if (PARAM.globalv.use_uspp)
-    {
-        delmem_var_h_op()(this->becsum);
-    }
     delmem_complex_op()(this->wfcr);
     delmem_complex_op()(this->wfcr_another_spin);
 }
@@ -291,9 +287,8 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
     const int nkb = this->ppcell->nkb;
     this->vkb = this->ppcell->template get_vkb_data<Real>();
     const int nh_tot = this->ppcell->nhm * (this->ppcell->nhm + 1) / 2;
-    // becsum on CPU (forces_us / stress_us use CPU dgemm)
-    resmem_var_h_op()(becsum, nh_tot * ucell->nat * PARAM.inp.nspin, "ElecState<PW>::becsum");
-    setmem_var_h_op()(becsum, 0, nh_tot * ucell->nat * PARAM.inp.nspin);
+    const int becsum_size = nh_tot * ucell->nat * PARAM.inp.nspin;
+    this->becsum_.assign(becsum_size, 0.0);
 
     // becp: device buffer for gemm, then D2H for host loops
     T* becp = nullptr;
@@ -429,11 +424,11 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
                             {
                                 if (ih == jh)
                                 {
-                                    becsum[index + ijh] += std::real(aux_gk_host[ih * nh_atom + jh]);
+                                    this->becsum_[index + ijh] += static_cast<double>(std::real(aux_gk_host[ih * nh_atom + jh]));
                                 }
                                 else
                                 {
-                                    becsum[index + ijh] += 2.0 * std::real(aux_gk_host[ih * nh_atom + jh]);
+                                    this->becsum_[index + ijh] += 2.0 * static_cast<double>(std::real(aux_gk_host[ih * nh_atom + jh]));
                                 }
                                 ijh++;
                             }
@@ -470,7 +465,7 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
     // add to the charge density in reciprocal space the part which is due to the US augmentation.
     if (PARAM.globalv.use_uspp)
     {
-        this->addusdens_g(becsum, this->charge->rhog);
+        this->addusdens_g(this->charge->rhog);
     }
     // transform back to real space using dense grids
     if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
@@ -483,13 +478,14 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
 }
 
 template <typename T, typename Device>
-void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, std::complex<double>** rhog)
+void ElecStatePW<T, Device>::addusdens_g(std::complex<double>** rhog)
 {
     const T one{1, 0};
     const T zero{0, 0};
     const int npw = this->charge->rhopw->npw;
     const int lmaxq = this->ppcell->lmaxq;
     const int nh_tot = this->ppcell->nhm * (this->ppcell->nhm + 1) / 2;
+    const double* becsum = this->becsum_.data();
     Structure_Factor* psf = this->ppcell->psf;
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
 
@@ -577,11 +573,35 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, std::complex<double
     delmem_var_op()(ylmk0);
 }
 
+// Taoni add 2026-09-02
+// Added to fix USPP single force/stress reading the former float becsum as double.
+// The double-only drivers receive a base ElecState, while becsum belongs to the precision-templated ElecStatePW.
+// Refactor this bridge for true float force/stress.
+template <typename Device>
+const std::vector<double>* get_becsum(const ElecState& elec)
+{
+    const ElecStatePW<std::complex<double>, Device>* double_elec = dynamic_cast<const ElecStatePW<std::complex<double>, Device>*>(&elec);
+    if (double_elec != nullptr)
+    {
+        return &double_elec->get_becsum();
+    }
+
+    const ElecStatePW<std::complex<float>, Device>* single_elec = dynamic_cast<const ElecStatePW<std::complex<float>, Device>*>(&elec);
+    if (single_elec != nullptr)
+    {
+        return &single_elec->get_becsum();
+    }
+
+    return nullptr;
+}
+
 template class ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>;
 template class ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>;
+template const std::vector<double>* get_becsum<base_device::DEVICE_CPU>(const ElecState& elec);
 #if ((defined __CUDA) || (defined __ROCM))
 template class ElecStatePW<std::complex<float>, base_device::DEVICE_GPU>;
 template class ElecStatePW<std::complex<double>, base_device::DEVICE_GPU>;
+template const std::vector<double>* get_becsum<base_device::DEVICE_GPU>(const ElecState& elec);
 #endif 
 
 } // namespace elecstate
