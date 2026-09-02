@@ -695,6 +695,11 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.ks_solver, "cg");
 
+        param.input.ks_solver = "ppcg";
+        param.input.basis_type = "pw";
+        it->second.check_value(it->second, param);
+        EXPECT_EQ(param.input.ks_solver, "ppcg");
+
         param.input.ks_solver = "default";
         param.input.basis_type = "lcao";
         param.input.device = "gpu";

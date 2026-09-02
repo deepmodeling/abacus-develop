@@ -2,6 +2,7 @@
 
 #include "source_base/parallel_comm.h"
 #include "source_base/global_variable.h"
+#include "source_base/module_device/memory_op.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_pw.h"
@@ -11,16 +12,139 @@
 #include "source_hsolver/diago_cg.h"
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_david.h"
+#include "source_hsolver/diago_ppcg.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_psi/psi.h"
 #include "source_estate/elecstate_tools.h"
 
 
 #include <algorithm>
+#include <type_traits>
 #include <vector>
 
 namespace hsolver
 {
+
+namespace
+{
+template <typename T, typename Device, typename Real, typename HPsiFunc, typename SPsiFunc>
+double run_ppcg_pw(const HPsiFunc& hpsi_func,
+                   const SPsiFunc& spsi_func,
+                   const int ld_psi,
+                   const int nband,
+                   const int dim,
+                   T* psi,
+                   Real* eigenvalue,
+                   const std::vector<double>& ethr_band,
+                   const Real* pre_condition,
+                   const double diag_thr,
+                   const int diag_iter_max,
+                   const int pw_diag_ndim,
+                   const int rr_step,
+                   const bool gamma_only,
+                   std::true_type)
+{
+    const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
+    const int rr_step_safe = std::max(1, rr_step);
+
+    DiagoPPCG<T, Device> ppcg(Real(diag_thr),
+                              diag_iter_max,
+                              sbsize,
+                              rr_step_safe,
+                              gamma_only);
+
+    return ppcg.diag(hpsi_func,
+                     spsi_func,
+                     ld_psi,
+                     nband,
+                     dim,
+                     psi,
+                     eigenvalue,
+                     ethr_band,
+                     pre_condition);
+}
+
+template <typename T, typename Device, typename Real, typename HPsiFunc, typename SPsiFunc>
+double run_ppcg_pw(const HPsiFunc& hpsi_func,
+                   const SPsiFunc& spsi_func,
+                   const int ld_psi,
+                   const int nband,
+                   const int dim,
+                   T* psi,
+                   Real* eigenvalue,
+                   const std::vector<double>& ethr_band,
+                   const Real* pre_condition,
+                   const double diag_thr,
+                   const int diag_iter_max,
+                   const int pw_diag_ndim,
+                   const int rr_step,
+                   const bool gamma_only,
+                   std::false_type)
+{
+    const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
+    const int rr_step_safe = std::max(1, rr_step);
+    const int nelem = ld_psi * nband;
+
+    // Transitional GPU path: keep PPCG's control logic and small dense solves
+    // on host, while applying H/S through the device operators.
+    struct DeviceBuffer
+    {
+        T* ptr = nullptr;
+        explicit DeviceBuffer(const int size)
+        {
+            base_device::memory::resize_memory_op<T, Device>()(ptr, size, "PPCG device bridge");
+        }
+        ~DeviceBuffer()
+        {
+            if (ptr != nullptr)
+                base_device::memory::delete_memory_op<T, Device>()(ptr);
+        }
+        DeviceBuffer(const DeviceBuffer&) = delete;
+        DeviceBuffer& operator=(const DeviceBuffer&) = delete;
+    };
+
+    std::vector<T> psi_host(nelem, T(0));
+    base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+        psi_host.data(), psi, nelem);
+
+    DeviceBuffer psi_dev(nelem);
+    DeviceBuffer out_dev(nelem);
+    auto bridge_hpsi = [&](T* psi_in, T* hpsi_out, const int ld, const int nvec) {
+        const int count = ld * nvec;
+        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+            psi_dev.ptr, psi_in, count);
+        hpsi_func(psi_dev.ptr, out_dev.ptr, ld, nvec);
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+            hpsi_out, out_dev.ptr, count);
+    };
+    auto bridge_spsi = [&](T* psi_in, T* spsi_out, const int ld, const int nvec) {
+        const int count = ld * nvec;
+        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+            psi_dev.ptr, psi_in, count);
+        spsi_func(psi_dev.ptr, out_dev.ptr, ld, nvec);
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+            spsi_out, out_dev.ptr, count);
+    };
+
+    DiagoPPCG<T, base_device::DEVICE_CPU> ppcg(Real(diag_thr),
+                                               diag_iter_max,
+                                               sbsize,
+                                               rr_step_safe,
+                                               gamma_only);
+    const double avg_iter = ppcg.diag(bridge_hpsi,
+                                      bridge_spsi,
+                                      ld_psi,
+                                      nband,
+                                      dim,
+                                      psi_host.data(),
+                                      eigenvalue,
+                                      ethr_band,
+                                      pre_condition);
+    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+        psi, psi_host.data(), nelem);
+    return avg_iter;
+}
+} // namespace
 
 template <typename T, typename Device>
 void HSolverPW<T, Device>::cal_smooth_ethr(const double& wk,
@@ -82,7 +206,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     this->nproc_in_pool = nproc_in_pool_in;
 
     // report if the specified diagonalization method is not supported
-    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
+    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg", "ppcg"};
     if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
     {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This type of eigensolver is not supported!");
@@ -378,6 +502,25 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                         david_maxiter,
                         ntry_max,
                         notconv_max));
+    }
+    else if (this->method == "ppcg")
+    {
+        DiagoIterAssist<T, Device>::avg_iter += run_ppcg_pw<T, Device, Real>(
+            hpsi_func,
+            spsi_func,
+            psi.get_nbasis(),
+            psi.get_nbands(),
+            psi.get_current_ngk(),
+            psi.get_pointer(),
+            eigenvalue,
+            this->ethr_band,
+            pre_condition.data(),
+            this->diag_thr,
+            this->diag_iter_max,
+            DiagoIterAssist<T, Device>::PW_DIAG_NDIM,
+            DiagoIterAssist<T, Device>::PW_DIAG_RR_STEP,
+            this->wfc_basis->gamma_only,
+            std::is_same<Device, base_device::DEVICE_CPU>());
     }
     ModuleBase::timer::end("HSolverPW", "solve_psik");
     return;

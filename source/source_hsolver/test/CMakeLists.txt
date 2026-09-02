@@ -11,7 +11,7 @@ if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_bpcg
     LIBS parameter  base psi device container
-    SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp ../para_lin_tf.cpp  ../diago_iter_assist.cpp  
+    SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp ../para_lin_tf.cpp  ../diago_iter_assist.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_hamilt/operator.cpp
             ../../source_pw/module_pwdft/op_pw.cpp
@@ -76,15 +76,16 @@ if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_pw
     LIBS parameter  psi device base container symmetry
-    SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../hsolver_lcaopw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_lin_tf.cpp
-  ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
-  ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/k_vector_utils.cpp ../../source_cell/reciprocal_grid.cpp
+    SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../hsolver_lcaopw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diago_ppcg.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_lin_tf.cpp
+    ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
+    ../../source_hamilt/module_xc/exx_info.cpp
+    ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/k_vector_utils.cpp ../../source_cell/reciprocal_grid.cpp
   )
 
   AddTest(
     TARGET MODULE_HSOLVER_sdft
     LIBS parameter  psi device base container
-    SOURCES test_hsolver_sdft.cpp ../hsolver_pw_sdft.cpp ../hsolver_pw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_lin_tf.cpp
+    SOURCES test_hsolver_sdft.cpp ../hsolver_pw_sdft.cpp ../hsolver_pw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diago_ppcg.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_lin_tf.cpp
                 ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
     )
 
@@ -122,6 +123,30 @@ if (ENABLE_MPI)
   target_compile_definitions(MODULE_HSOLVER_LCAO_cusolver PRIVATE __CUDA)
   endif()
 endif()
+AddTest(
+  TARGET MODULE_HSOLVER_ppcg
+  LIBS ${math_libs} base device container
+  SOURCES diago_ppcg_test.cpp ../diago_ppcg.cpp
+)
+AddTest(
+  TARGET MODULE_HSOLVER_ppcg_float
+  LIBS ${math_libs} base device container
+  SOURCES diago_ppcg_float_test.cpp ../diago_ppcg.cpp
+)
+
+if (ENABLE_MPI)
+AddTest(
+  TARGET MODULE_HSOLVER_compare
+  LIBS parameter base psi device container
+  SOURCES diago_compare_test.cpp ../diago_cg.cpp ../diago_bpcg.cpp ../diago_david.cpp ../diago_ppcg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_lin_tf.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+AddTest(
+  TARGET MODULE_HSOLVER_ppcg_parallel
+  LIBS parameter base psi device container
+  SOURCES diago_ppcg_parallel_test.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+endif()
+
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES S-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -139,6 +164,7 @@ install(FILES KPoints-Si64-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES diago_cg_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES diago_david_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES diago_lcao_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(FILES diago_ppcg_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 install(FILES PEXSI-H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES PEXSI-S-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -198,6 +224,10 @@ if (ENABLE_MPI)
         COMMAND ${BASH} diago_david_parallel_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       ) 
+  add_test(NAME MODULE_HSOLVER_ppcg_parallel_test
+        COMMAND ${BASH} diago_ppcg_parallel_test.sh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
   if(ENABLE_LCAO)
     add_test(NAME MODULE_HSOLVER_LCAO_parallel
           COMMAND ${BASH} diago_lcao_parallel_test.sh

@@ -54,6 +54,7 @@ For plane-wave basis,
 * cg: The conjugate-gradient (CG) method.
 * dav: The Davidson algorithm.
 * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
+* ppcg: The projection preconditioned conjugate-gradient method. It is optimized and validated for CPU plane-wave calculations; non-CPU devices use a transitional host/device bridge.
 * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment. The BPCG method is currently under testing and is not recommended for use.
 
 For numerical atomic orbitals basis,
@@ -129,7 +130,7 @@ Then the user has to correct the input file and restart the calculation.)";
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::string& ks_solver = para.input.ks_solver;
-            const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace"};
+            const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace", "ppcg"};
             const std::vector<std::string> lcao_solvers = {
                 "genelpa",
                 "elpa",
@@ -1026,7 +1027,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "threshold for eigenvalues is cg electron iterations";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
+        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
         item.default_value = "0.01";
         item.unit = "";
         read_sync_double(input.pw_diag_thr);
@@ -1086,22 +1087,35 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "max iteration number for cg";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.";
+        item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg/ppcg method.";
         item.default_value = "50";
         item.unit = "";
-        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg]");
+        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg, ppcg]");
         read_sync_int(input.pw_diag_nmax);
         this->add_item(item);
     }
     {
         Input_Item item("pw_diag_ndim");
-        item.annotation = "dimension of workspace for Davidson diagonalization";
+        item.annotation = "dimension of workspace for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = dav or ks_solver = dav_subspace. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
+        item.description = "Only useful when you use ks_solver = dav, dav_subspace, or ppcg. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method, and the block size for the PPCG method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
         item.default_value = "4";
         item.unit = "";
+        item.set_availability("basis_type==pw and ks_solver in [dav, dav_subspace, ppcg]");
         read_sync_int(input.pw_diag_ndim);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("pw_diag_rr_step");
+        item.annotation = "Rayleigh-Ritz re-application interval for PPCG";
+        item.category = "Plane wave related variables";
+        item.type = "Integer";
+        item.description = "Only useful when you use ks_solver = ppcg. It controls how often (in subspace iterations) H and S are re-applied to reset the accumulated rounding drift after the Rayleigh-Ritz rotation. A larger value reduces the number of H/S applications and thus the wall time without changing the iteration count in well-conditioned cases; a smaller value is more robust against rounding drift in ill-conditioned problems.";
+        item.default_value = "16";
+        item.unit = "";
+        item.set_availability("basis_type==pw and ks_solver==ppcg");
+        read_sync_int(input.pw_diag_rr_step);
         this->add_item(item);
     }
     {

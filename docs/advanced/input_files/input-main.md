@@ -67,6 +67,7 @@
     - [use\_k\_continuity](#use_k_continuity)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
+    - [pw\_diag\_rr\_step](#pw_diag_rr_step)
     - [diago\_cg\_prec](#diago_cg_prec)
   - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
     - [lmaxmax](#lmaxmax)
@@ -1080,7 +1081,7 @@
 ### pw_diag_thr
 
 - **Type**: Real
-- **Description**: Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be &lt;= 1e-3.
+- **Description**: Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be &lt;= 1e-3.
 - **Default**: 0.01
 
 ### diago_smooth_ethr
@@ -1099,15 +1100,23 @@
 ### pw_diag_nmax
 
 - **Type**: Integer
-- **Availability**: *[`basis_type`](#basis_type)==pw and [`ks_solver`](#ks_solver) in [cg, dav, dav_subspace, bpcg]*
-- **Description**: Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`ks_solver`](#ks_solver) in [cg, dav, dav_subspace, bpcg, ppcg]*
+- **Description**: Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg/ppcg method.
 - **Default**: 50
 
 ### pw_diag_ndim
 
 - **Type**: Integer
-- **Description**: Only useful when you use ks_solver = dav or ks_solver = dav_subspace. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`ks_solver`](#ks_solver) in [dav, dav_subspace, ppcg]*
+- **Description**: Only useful when you use ks_solver = dav, dav_subspace, or ppcg. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method, and the block size for the PPCG method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
 - **Default**: 4
+
+### pw_diag_rr_step
+
+- **Type**: Integer
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`ks_solver`](#ks_solver)==ppcg*
+- **Description**: Only useful when you use ks_solver = ppcg. It controls how often (in subspace iterations) H and S are re-applied to reset the accumulated rounding drift after the Rayleigh-Ritz rotation. A larger value reduces the number of H/S applications and thus the wall time without changing the iteration count in well-conditioned cases; a smaller value is more robust against rounding drift in ill-conditioned problems.
+- **Default**: 16
 
 ### diago_cg_prec
 
@@ -1214,6 +1223,7 @@
   - cg: The conjugate-gradient (CG) method.
   - dav: The Davidson algorithm.
   - dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
+  - ppcg: The projection preconditioned conjugate-gradient method. It is optimized and validated for CPU plane-wave calculations; non-CPU devices use a transitional host/device bridge.
   - bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment. The BPCG method is currently under testing and is not recommended for use.
 
   For numerical atomic orbitals basis,
