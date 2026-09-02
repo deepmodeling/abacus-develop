@@ -82,6 +82,10 @@ class Plus_U_Base
                     Charge_Mixing* p_chgmix,
                     const int* isk);
 
+    /// Rebuild the PW DFT+U effective potential from the current occupation matrix.
+    /// This is required when occupation-matrix control freezes the matrix.
+    void update_eff_pot_pw(const UnitCell& cell);
+
     /// get effective potential pointer for the given spin channel (PW basis)
     ///
     /// nspin=1: isk is ignored, returns &pot_uterm_pw[0]

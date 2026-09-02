@@ -198,6 +198,33 @@ TEST_F(Mixing_Test, BroydenSolveLinearEq)
     clear();
 }
 
+TEST_F(Mixing_Test, BroydenFallsBackForSingularHistory)
+{
+    init_method("broyden");
+
+    Base_Mixing::Mixing_Data mdata;
+    this->mixing->init_mixing_data(mdata, 2, sizeof(double));
+
+    // A rank-deficient residual history makes the symmetric linear system
+    // passed to DSYSV singular.  The mixer should retain the latest linear
+    // step instead of aborting the SCF calculation.
+    const auto singular_inner_product = [](double*, double*) { return 1.0; };
+    const std::vector<double> data_in = {0.0, 0.0};
+    std::vector<double> data_out(2);
+    for (int scale = 1; scale <= 3; ++scale)
+    {
+        data_out[0] = static_cast<double>(scale);
+        data_out[1] = static_cast<double>(2 * scale);
+        this->mixing->push_data(mdata, data_in.data(), data_out.data(), nullptr, true);
+        this->mixing->cal_coef(mdata, singular_inner_product);
+    }
+
+    std::vector<double> mixed(2);
+    this->mixing->mix_data(mdata, mixed.data());
+    EXPECT_DOUBLE_EQ(mixed[0], 1.8);
+    EXPECT_DOUBLE_EQ(mixed[1], 3.6);
+}
+
 TEST_F(Mixing_Test, PulaySolveLinearEq)
 {
 #ifdef _OPENMP

@@ -130,6 +130,7 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
         p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
         if (inp.dft_plus_u && inp.mixing_dftu)
         {
+            p_chgmix->init_mixing_uom();
             // enable mixing_dftu for DFT+U occupation mixing
             dftu.enable_mixing();
             // allocate memory for uom_mdata
@@ -142,6 +143,13 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
     {
         p_chgmix->init_mixing();
         p_chgmix->mixing_restart_count++;
+
+        if (inp.dft_plus_u && inp.mixing_dftu)
+        {
+            p_chgmix->init_mixing_uom();
+            dftu.enable_mixing();
+            p_chgmix->allocate_mixing_uom(dftu.get_size_pot_uterm_pw());
+        }
 
         if (inp.dft_plus_u)
         {

@@ -56,6 +56,19 @@ void Plus_U_Base::cal_occ_pw(const void* psi_in,
     ModuleBase::timer::end("Plus_U_Base", "cal_occ_pw");
 }
 
+void Plus_U_Base::update_eff_pot_pw(const UnitCell& cell)
+{
+    ModuleBase::TITLE("Plus_U_Base", "update_eff_pot_pw");
+    ModuleBase::timer::start("Plus_U_Base", "update_eff_pot_pw");
+
+    if (this->is_occ_mat_initialized())
+    {
+        this->compute_eff_pot_and_energy(cell);
+    }
+
+    ModuleBase::timer::end("Plus_U_Base", "update_eff_pot_pw");
+}
+
 /// reduce occ_mat across all k-pools.
 ///
 /// Each k-pool only accumulates occ_mat contributions from the k-points it
@@ -106,8 +119,7 @@ void Plus_U_Base::reduce_occ_mat(const UnitCell& cell)
 ///   nspin=2: split layout [all_up | all_dn], each atom's spin-up in the
 ///            first half and spin-down in the second half, both indexed by
 ///            pot_uterm_pw_index[iat]
-///   nspin=4: not used here (uom_array mixing only covers nspin=1/2 in the
-///            current code path; the nspin=4 branch is a no-op)
+///   nspin=4: all 4 Pauli blocks are packed contiguously per atom
 void Plus_U_Base::sync_occ_to_uom(const UnitCell& cell)
 {
     if(this->uom_array.size() == 0)
@@ -123,8 +135,9 @@ void Plus_U_Base::sync_occ_to_uom(const UnitCell& cell)
             continue;
         }
         const int size = (2 * target_l + 1) * (2 * target_l + 1);
+        const int spin_fold = (this->nspin == 4) ? 4 : 1;
 
-        for(int mm = 0; mm < size; mm++)
+        for (int mm = 0; mm < size * spin_fold; mm++)
         {
             this->uom_array[pot_uterm_pw_index[iat] + mm] =
                 this->occ_mat[iat][target_l][0][0].c[mm];

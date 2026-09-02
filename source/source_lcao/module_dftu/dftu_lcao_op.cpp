@@ -440,7 +440,8 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     // Purpose: Ensure occ_mat is recomputed from updated DMR in next SCF iteration,
     // rather than using stale pre-read data from file.
     // TODO: This logic is confusing. Consider explicit variable like `is_last_spin_channel`.
-    if (this->current_spin == this->nspin - 1 || this->nspin == 4) 
+    if ((this->current_spin == this->nspin - 1 || this->nspin == 4)
+        && this->dftu->get_occ_mat_ctrl() != 2)
     {
         this->dftu->mark_occ_mat_dirty();
     }

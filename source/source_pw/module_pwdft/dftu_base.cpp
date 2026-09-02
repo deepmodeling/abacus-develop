@@ -8,7 +8,9 @@
 
 #include <cstring>
 #include <fstream>
+#include <limits>
 #include <sstream>
+#include <stdexcept>
 #include <vector>
 
 // local inline helpers for eigenvalue calculation (JacobiRotate, CalculateEigenvalues)
@@ -532,7 +534,55 @@ void Plus_U_Base::read_occup_m(const UnitCell& ucell,
     ifdftu.clear();
     ifdftu.seekg(0);
 
-    char word[20];
+    std::string word;
+
+    // Accept both the traditional whitespace-separated form
+    //   Atom= 6 L= 3 ORBITAL= 0
+    // and the compact form emitted by some DFT+U workflows
+    //   Atom=6 L=3 ORBITAL=0
+    // without changing the matrix body parser below.
+    auto read_tagged_int = [&ifdftu](const std::string& token,
+                                     const std::string& tag,
+                                     int& value) -> bool {
+        if (token.compare(0, tag.size(), tag) != 0)
+        {
+            return false;
+        }
+        if (token.size() == tag.size())
+        {
+            ifdftu >> value;
+        }
+        else
+        {
+            const std::string number = token.substr(tag.size());
+            if (number.empty())
+            {
+                return false;
+            }
+
+            std::size_t consumed = 0;
+            try
+            {
+                const long parsed = std::stol(number, &consumed, 10);
+                if (consumed != number.size()
+                    || parsed < static_cast<long>(std::numeric_limits<int>::min())
+                    || parsed > static_cast<long>(std::numeric_limits<int>::max()))
+                {
+                    return false;
+                }
+                value = static_cast<int>(parsed);
+            }
+            catch (const std::invalid_argument&)
+            {
+                return false;
+            }
+            catch (const std::out_of_range&)
+            {
+                return false;
+            }
+        }
+        return static_cast<bool>(ifdftu);
+    };
 
     int T = 0;
     int iat = 0;
@@ -550,24 +600,25 @@ void Plus_U_Base::read_occup_m(const UnitCell& ucell,
             break;
         }
 
-        if (strcmp("Atom=", word) == 0)
+        if (word.compare(0, 5, "Atom=") == 0)
         {
-            ifdftu >> iat;
+            if (!read_tagged_int(word, "Atom=", iat) || iat < 1 || iat > ucell.nat)
+            {
+                ModuleBase::WARNING_QUIT("Plus_U_Base::read_occup_m", "WRONG ATOM INDEX IN LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
+            }
             iat -= 1;
             ifdftu >> word;
 
-            if (strcmp("L=", word) != 0)
+            if (!read_tagged_int(word, "L=", L))
             {
                 ModuleBase::WARNING_QUIT("Plus_U_Base::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
             }
-            ifdftu >> L;
             ifdftu >> word;
 
-            if (strcmp("ORBITAL=", word) != 0)
+            if (!read_tagged_int(word, "ORBITAL=", zeta))
             {
                 ModuleBase::WARNING_QUIT("Plus_U_Base::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
             }
-            ifdftu >> zeta;
             ifdftu.ignore(150, '\n');
 
             T = ucell.iat2it[iat];
@@ -586,9 +637,8 @@ void Plus_U_Base::read_occup_m(const UnitCell& ucell,
                     for (int is = 0; is < 2; is++)
                     {
                         ifdftu >> word;
-                        if (strcmp("spin=", word) == 0)
+                        if (read_tagged_int(word, "spin=", spin))
                         {
-                            ifdftu >> spin;
                             spin -= 1;
                             ifdftu.ignore(150, '\n');
 
