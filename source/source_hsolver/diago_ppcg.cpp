@@ -1086,8 +1086,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     SmallSubspace subspace;
     bool use_p = false;  // previous search direction becomes available after
                          // the first block update.
-    Real prev_res = std::numeric_limits<Real>::max();  // restart watchdog
-    int stall_streak = 0;                              // consecutive residual rises
+    Real best_res = std::numeric_limits<Real>::max();  // best residual seen
+    int no_improve = 0;  // iterations since the residual last decreased
 
     while (!active_cols.empty() && iter <= maxiter_)
     {
@@ -1176,26 +1176,24 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                                           ld_psi_,
                                                           n_dim_,
                                                           ncol);
-            const Real rel_tol = std::max(Real(1e-12),
-                                          Real(1e2) * std::numeric_limits<Real>::epsilon());
-            const bool rising = cur_res > prev_res * (Real(1) + rel_tol);
-            if (rising)
+            if (cur_res < best_res)
             {
-                ++stall_streak;
+                best_res = cur_res;
+                no_improve = 0;
             }
             else
             {
-                stall_streak = 0;
+                ++no_improve;
             }
-            if (stall_streak >= 3)
+            if (no_improve >= 15)
             {
                 std::fill(p_.begin(), p_.end(), T(0));
                 std::fill(sp_.begin(), sp_.end(), T(0));
                 std::fill(hp_.begin(), hp_.end(), T(0));
                 use_p = false;
-                stall_streak = 0;
+                no_improve = 0;
+                best_res = cur_res;
             }
-            prev_res = cur_res;
         }
         // The Rayleigh-Ritz rotation already keeps hpsi_/spsi_ consistent
         // with the rotated psi up to rounding; re-applying H/S exactly is
