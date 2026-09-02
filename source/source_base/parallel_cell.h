@@ -10,9 +10,9 @@ namespace ModuleBase
 class CommunicationDomain
 {
 public:
-    CommunicationDomain();
+    CommunicationDomain() = default;
 #ifdef __MPI
-    explicit CommunicationDomain(MPI_Comm communicator);
+    void initialize(MPI_Comm communicator);
     MPI_Comm communicator() const;
 #endif
     int rank() const;

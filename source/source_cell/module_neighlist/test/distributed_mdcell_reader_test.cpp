@@ -75,7 +75,8 @@ TEST(DistributedMDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
 
     MPI_Comm md_comm = MPI_COMM_NULL;
     MPI_Comm_split(MPI_COMM_WORLD, world_rank % 2, world_rank, &md_comm);
-    const ModuleBase::CommunicationDomain communication_domain(md_comm);
+    ModuleBase::CommunicationDomain communication_domain;
+    communication_domain.initialize(md_comm);
 
     MdStruFileMetadata stru_metadata;
     MDCell mdcell = DistributedMDCellReader::read_stru(stru_file,
