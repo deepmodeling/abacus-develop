@@ -23,28 +23,29 @@ class CommunicationDomain;
 class MDCell : public BaseCell
 {
 public:
+    MDCell();
     ~MDCell();
     MDCell(const MDCell&) = delete;
     MDCell& operator=(const MDCell&) = delete;
     MDCell(MDCell&&);
     MDCell& operator=(MDCell&&);
 
-    MDCell(UnitCell& ucell,
-           double cutoff,
-           double skin,
-           const ModuleBase::CommunicationDomain& communication_domain);
-    MDCell(const ModuleBase::Matrix3& latvec,
-           const ModuleBase::Matrix3& gt,
-           double lat0,
-           double omega,
-           std::int64_t nat,
-           const std::vector<LocalAtom>& owned_atoms,
-           const std::vector<std::string>& type_labels,
-           const std::vector<double>& type_masses,
-           const std::vector<std::int64_t>& type_atom_counts,
-           double cutoff,
-           double skin,
-           const ModuleBase::CommunicationDomain& communication_domain);
+    void initialize_from_unitcell(UnitCell& ucell,
+                                  double cutoff,
+                                  double skin,
+                                  const ModuleBase::CommunicationDomain& communication_domain);
+    void initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
+                                     const ModuleBase::Matrix3& gt,
+                                     double lat0,
+                                     double omega,
+                                     std::int64_t nat,
+                                     const std::vector<LocalAtom>& owned_atoms,
+                                     const std::vector<std::string>& type_labels,
+                                     const std::vector<double>& type_masses,
+                                     const std::vector<std::int64_t>& type_atom_counts,
+                                     double cutoff,
+                                     double skin,
+                                     const ModuleBase::CommunicationDomain& communication_domain);
 
 #ifdef __MPI
     int mpi_rank() const;

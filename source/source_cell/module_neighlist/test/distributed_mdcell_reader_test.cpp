@@ -19,6 +19,7 @@
 
 static_assert(!std::is_copy_constructible<MDCell>::value, "MDCell must not be copy constructible.");
 static_assert(!std::is_copy_assignable<MDCell>::value, "MDCell must not be copy assignable.");
+static_assert(std::is_default_constructible<MDCell>::value, "MDCell must be default constructible.");
 static_assert(std::is_move_constructible<MDCell>::value, "MDCell must be move constructible.");
 
 namespace
@@ -213,7 +214,8 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     lattice.e11 = 20.0;
     lattice.e22 = 20.0;
     lattice.e33 = 20.0;
-    MDCell mdcell(lattice,
+    MDCell mdcell;
+    mdcell.initialize_from_owned_atoms(lattice,
                   lattice.Inverse(),
                   1.0,
                   1.0,

@@ -56,7 +56,8 @@ TEST(MdCellMigrateMpiTest, AtomCrossingDomainMigratesToNewOwner)
                                         rank,
                                         rank));
     }
-    MDCell mdcell(latvec,
+    MDCell mdcell;
+    mdcell.initialize_from_owned_atoms(latvec,
                   latvec.Inverse(),
                   1.0,
                   1.0,
@@ -123,7 +124,8 @@ TEST(MdCellMigrateMpiTest, GhostForcesReturnToOwners)
                                     0,
                                     rank,
                                     rank));
-    MDCell mdcell(latvec,
+    MDCell mdcell;
+    mdcell.initialize_from_owned_atoms(latvec,
                   latvec.Inverse(),
                   1.0,
                   1.0,
@@ -178,7 +180,8 @@ TEST(MdCellMigrateMpiTest, SkinUpdatesFixedGhostLayoutBeforeRebuild)
                                                      0,
                                                      rank,
                                                      rank));
-    MDCell mdcell(latvec,
+    MDCell mdcell;
+    mdcell.initialize_from_owned_atoms(latvec,
                   latvec.Inverse(),
                   1.0,
                   1.0,

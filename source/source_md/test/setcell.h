@@ -143,7 +143,9 @@ class Setcell
         {
             cutoff = std::max(cutoff, param.inp.mdp.lj_rcut[i] * ModuleBase::ANGSTROM_AU);
         }
-        return MDCell(ucell, cutoff, 0.0, ModuleBase::world_communication_domain());
+        MDCell mdcell;
+        mdcell.initialize_from_unitcell(ucell, cutoff, 0.0, ModuleBase::world_communication_domain());
+        return mdcell;
     }
 
     static ModuleBase::Vector3<double> fractional_displacement(const LocalAtom& atom)
