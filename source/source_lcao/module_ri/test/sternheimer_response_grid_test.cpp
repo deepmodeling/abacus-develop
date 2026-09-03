@@ -4,6 +4,7 @@
 #include "source_base/matrix3.h"
 #include "source_basis/module_pw/pw_basis.h"
 
+#include <array>
 #include <cmath>
 #include <gtest/gtest.h>
 #include <memory>
@@ -144,6 +145,55 @@ TEST(SternheimerResponseGrid, ReducedCutoffBuildsSerialFineAndResponseBases)
     EXPECT_EQ(response_grid.basis, response_grid.serial_response_basis.get());
 }
 
+TEST(SternheimerResponseGrid, ExplicitDimensionsBuildExactAnisotropicGrid)
+{
+    const auto pbe_basis = make_basis(18, 16, 20);
+
+    const auto response_grid = ModuleRI::make_sternheimer_response_grid(
+        *pbe_basis, 80.0, 0.0, 0, std::array<int, 3>{12, 10, 14}, 8);
+
+    ASSERT_TRUE(response_grid.independent);
+    ASSERT_NE(response_grid.serial_response_basis, nullptr);
+    EXPECT_EQ(response_grid.serial_response_basis->nx, 12);
+    EXPECT_EQ(response_grid.serial_response_basis->ny, 10);
+    EXPECT_EQ(response_grid.serial_response_basis->nz, 14);
+    EXPECT_EQ(response_grid.requested_dimensions, (std::array<int, 3>{12, 10, 14}));
+    EXPECT_STREQ(ModuleRI::sternheimer_response_grid_source_name(response_grid.source), "explicit");
+}
+
+TEST(SternheimerResponseGrid, ExplicitPbeDimensionsKeepOriginalPath)
+{
+    const auto pbe_basis = make_basis(18, 16, 20);
+
+    const auto response_grid = ModuleRI::make_sternheimer_response_grid(
+        *pbe_basis, 80.0, 0.0, 0, std::array<int, 3>{18, 16, 20}, 8);
+
+    EXPECT_FALSE(response_grid.independent);
+    EXPECT_EQ(response_grid.basis, pbe_basis.get());
+    EXPECT_STREQ(ModuleRI::sternheimer_response_grid_source_name(response_grid.source), "pbe");
+}
+
+TEST(SternheimerResponseGrid, ExplicitDimensionsRejectAmbiguousOrUnsupportedSelections)
+{
+    const auto pbe_basis = make_basis(18, 16, 20);
+
+    EXPECT_THROW(ModuleRI::make_sternheimer_response_grid(
+                     *pbe_basis, 80.0, 0.0, 0, std::array<int, 3>{12, 0, 14}, 8),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::make_sternheimer_response_grid(
+                     *pbe_basis, 80.0, 0.0, 0, std::array<int, 3>{12, -10, 14}, 8),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::make_sternheimer_response_grid(
+                     *pbe_basis, 80.0, 30.0, 0, std::array<int, 3>{12, 10, 14}, 8),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::make_sternheimer_response_grid(
+                     *pbe_basis, 80.0, 0.0, 0, std::array<int, 3>{20, 10, 14}, 8),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::make_sternheimer_response_grid(
+                     *pbe_basis, 80.0, 0.0, 0, std::array<int, 3>{12, 10, 8}, 8),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerResponseGrid, RestrictionPreservesConstant)
 {
     const auto fine = make_basis(8, 8, 8);
@@ -195,6 +245,59 @@ TEST(SternheimerResponseGrid, RestrictionDoesNotAliasRemovedModeIntoRetainedMode
     const auto expected = cosine_mode(4, 4, 4, 1, 0, 0);
 
     const auto output = ModuleRI::restrict_sternheimer_real_field(*fine, *coarse, input);
+
+    EXPECT_LT(relative_l2_error(output, expected), 1.0e-11);
+}
+
+TEST(SternheimerResponseGrid, AnisotropicRestrictionPreservesCommonMode)
+{
+    const auto fine = make_basis(12, 10, 14);
+    const auto coarse = make_basis(8, 6, 10);
+    const auto input = cosine_mode(12, 10, 14, 2, 1, 3);
+    const auto expected = cosine_mode(8, 6, 10, 2, 1, 3);
+
+    const auto output = ModuleRI::restrict_sternheimer_real_field_rectangular(*fine, *coarse, input);
+
+    EXPECT_LT(relative_l2_error(output, expected), 1.0e-11);
+}
+
+TEST(SternheimerResponseGrid, AnisotropicRestrictionRemovesZOnlyHighModeWithoutAliasing)
+{
+    const auto fine = make_basis(12, 10, 14);
+    const auto coarse = make_basis(8, 6, 10);
+    auto input = cosine_mode(12, 10, 14, 1, 1, 2);
+    const auto removed_z_mode = cosine_mode(12, 10, 14, 1, 1, 6);
+    for (std::size_t ir = 0; ir != input.size(); ++ir)
+    {
+        input[ir] += 0.25 * removed_z_mode[ir];
+    }
+    const auto expected = cosine_mode(8, 6, 10, 1, 1, 2);
+
+    const auto output = ModuleRI::restrict_sternheimer_real_field_rectangular(*fine, *coarse, input);
+
+    EXPECT_LT(relative_l2_error(output, expected), 1.0e-11);
+}
+
+TEST(SternheimerResponseGrid, RectangularRestrictionKeepsInPlaneModeBeyondSparseZSphere)
+{
+    const auto fine = make_basis(18, 18, 18);
+    const auto coarse = make_basis(12, 12, 6);
+    const auto input = cosine_mode(18, 18, 18, 4, 0, 0);
+    const auto expected = cosine_mode(12, 12, 6, 4, 0, 0);
+
+    const auto output = ModuleRI::restrict_sternheimer_real_field_rectangular(*fine, *coarse, input);
+
+    EXPECT_LT(relative_l2_error(output, expected), 1.0e-11);
+}
+
+TEST(SternheimerResponseGrid, RectangularRestrictionCombinesEvenGridNyquistPair)
+{
+    const auto fine = make_basis(12, 10, 14);
+    const auto coarse = make_basis(8, 6, 10);
+    const auto input = cosine_mode(12, 10, 14, 4, 1, 2);
+    const auto expected = cosine_mode(8, 6, 10, 4, 1, 2);
+
+    const auto output = ModuleRI::restrict_sternheimer_real_field_rectangular(*fine, *coarse, input);
 
     EXPECT_LT(relative_l2_error(output, expected), 1.0e-11);
 }

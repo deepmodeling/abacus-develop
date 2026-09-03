@@ -2043,6 +2043,51 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("must be zero or positive"));
     }
+    { // sternheimer_response_nx
+        auto it = find_label("sternheimer_response_nx", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(param.input.sternheimer_response_nx, 0);
+
+        it->second.str_values = {"36"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.sternheimer_response_nx, 36);
+
+        param.input.sternheimer_response_nx = -1;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("must be zero or positive"));
+    }
+    { // sternheimer_response_ny
+        auto it = find_label("sternheimer_response_ny", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(param.input.sternheimer_response_ny, 0);
+
+        it->second.str_values = {"40"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.sternheimer_response_ny, 40);
+
+        param.input.sternheimer_response_ny = -1;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("must be zero or positive"));
+    }
+    { // sternheimer_response_nz
+        auto it = find_label("sternheimer_response_nz", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(param.input.sternheimer_response_nz, 0);
+
+        it->second.str_values = {"72"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.sternheimer_response_nz, 72);
+
+        param.input.sternheimer_response_nz = -1;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("must be zero or positive"));
+    }
     { // sternheimer_delta_virtual_source
         auto it = find_label("sternheimer_delta_virtual_source", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());

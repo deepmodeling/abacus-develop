@@ -2507,14 +2507,29 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
     validate_sternheimer_periodic_kmesh(response_kmesh,
                                         static_cast<int>(response_kpoints.size()));
     const bool use_delta_sternheimer = PARAM.inp.sternheimer_delta;
-    if (PARAM.inp.sternheimer_response_ecutwfc > 0.0 && !use_delta_sternheimer)
+    const std::array<int, 3> requested_response_dimensions = {PARAM.inp.sternheimer_response_nx,
+                                                              PARAM.inp.sternheimer_response_ny,
+                                                              PARAM.inp.sternheimer_response_nz};
+    const bool explicit_response_dimensions_requested
+        = std::any_of(requested_response_dimensions.begin(),
+                      requested_response_dimensions.end(),
+                      [](const int value) { return value != 0; });
+    if ((PARAM.inp.sternheimer_response_ecutwfc > 0.0 || explicit_response_dimensions_requested)
+        && !use_delta_sternheimer)
     {
         throw std::runtime_error("An independent Sternheimer response grid requires sternheimer_delta=true.");
     }
     SternheimerResponseGrid response_grid = make_sternheimer_response_grid(pw_basis,
                                                                             PARAM.inp.ecutwfc,
                                                                             PARAM.inp.sternheimer_response_ecutwfc,
-                                                                            PARAM.inp.fft_mode);
+                                                                            PARAM.inp.fft_mode,
+                                                                            requested_response_dimensions,
+                                                                            PARAM.inp.sternheimer_fd_order);
+    const char* response_grid_source = sternheimer_response_grid_source_name(response_grid.source);
+    const double response_grid_ecutwfc
+        = response_grid.source == SternheimerResponseGridSource::Cutoff
+              ? PARAM.inp.sternheimer_response_ecutwfc
+              : (response_grid.source == SternheimerResponseGridSource::Pbe ? PARAM.inp.ecutwfc : 0.0);
     const ModulePW::PW_Basis& response_pw_basis = *response_grid.basis;
     const bool use_kpoint_mpi = kpoint_groups > 1;
     const bool use_parallel_grid_mpi = use_frequency_mpi || use_kpoint_mpi;
@@ -2741,11 +2756,18 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                elapsed_seconds_since(chi0_start_time),
                                "nfreq=" + std::to_string(nfreq));
 
+    const auto restrict_response_field = [&](const std::vector<double>& fine_values) {
+        return response_grid.source == SternheimerResponseGridSource::Explicit
+                   ? restrict_sternheimer_real_field_rectangular(*response_grid.serial_fine_basis,
+                                                                 *response_grid.serial_response_basis,
+                                                                 fine_values)
+                   : restrict_sternheimer_real_field(*response_grid.serial_fine_basis,
+                                                     *response_grid.serial_response_basis,
+                                                     fine_values);
+    };
     const std::vector<double> independent_response_full_potential
         = response_grid.independent
-              ? restrict_sternheimer_real_field(*response_grid.serial_fine_basis,
-                                                *response_grid.serial_response_basis,
-                                                copy_sternheimer_full_local_potential(potential, pw_basis, 0))
+              ? restrict_response_field(copy_sternheimer_full_local_potential(potential, pw_basis, 0))
               : std::vector<double>();
     const std::vector<double> kpoint_parallel_full_potential
         = use_kpoint_mpi
@@ -2756,10 +2778,7 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
     const std::vector<double> diagnostic_fixed_local_potential
         = write_wavefunction_diagnostic
               ? (response_grid.independent
-                     ? restrict_sternheimer_real_field(
-                           *response_grid.serial_fine_basis,
-                           *response_grid.serial_response_basis,
-                           copy_sternheimer_full_fixed_local_potential(potential, pw_basis))
+                     ? restrict_response_field(copy_sternheimer_full_fixed_local_potential(potential, pw_basis))
                      : (use_kpoint_mpi
                             ? copy_sternheimer_full_fixed_local_potential(potential, pw_basis)
                             : copy_sternheimer_fixed_local_potential(potential, pw_basis)))
@@ -2930,11 +2949,10 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
             out << "pbe_ecutwfc_Ry " << PARAM.inp.ecutwfc << '\n';
             out << "sternheimer_response_ecutwfc_requested_Ry "
                 << PARAM.inp.sternheimer_response_ecutwfc << '\n';
-            out << "sternheimer_response_ecutwfc_Ry "
-                << (response_grid.independent ? PARAM.inp.sternheimer_response_ecutwfc : PARAM.inp.ecutwfc)
-                << '\n';
-            out << "sternheimer_response_grid_source "
-                << (response_grid.independent ? "independent" : "pbe") << '\n';
+            out << "sternheimer_response_ecutwfc_Ry " << response_grid_ecutwfc << '\n';
+            out << "sternheimer_response_grid_requested " << response_grid.requested_dimensions[0] << ' '
+                << response_grid.requested_dimensions[1] << ' ' << response_grid.requested_dimensions[2] << '\n';
+            out << "sternheimer_response_grid_source " << response_grid_source << '\n';
             out << "pbe_grid " << pw_basis.nx << ' ' << pw_basis.ny << ' ' << pw_basis.nz << " size "
                 << pw_basis.nxyz << '\n';
             out << "response_grid " << grid_data.grid.nx << ' ' << grid_data.grid.ny << ' '
@@ -4379,9 +4397,10 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
         << grid_data.grid.size() << " dV " << grid_data.volume_element << '\n';
     out << "pbe_ecutwfc_Ry " << PARAM.inp.ecutwfc << '\n';
     out << "sternheimer_response_ecutwfc_requested_Ry " << PARAM.inp.sternheimer_response_ecutwfc << '\n';
-    out << "sternheimer_response_ecutwfc_Ry "
-        << (response_grid.independent ? PARAM.inp.sternheimer_response_ecutwfc : PARAM.inp.ecutwfc) << '\n';
-    out << "sternheimer_response_grid_source " << (response_grid.independent ? "independent" : "pbe") << '\n';
+    out << "sternheimer_response_ecutwfc_Ry " << response_grid_ecutwfc << '\n';
+    out << "sternheimer_response_grid_requested " << response_grid.requested_dimensions[0] << ' '
+        << response_grid.requested_dimensions[1] << ' ' << response_grid.requested_dimensions[2] << '\n';
+    out << "sternheimer_response_grid_source " << response_grid_source << '\n';
     out << "pbe_grid " << pw_basis.nx << ' ' << pw_basis.ny << ' ' << pw_basis.nz << " size " << pw_basis.nxyz
         << '\n';
     out << "response_grid " << grid_data.grid.nx << ' ' << grid_data.grid.ny << ' ' << grid_data.grid.nz << " size "

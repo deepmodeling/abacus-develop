@@ -680,6 +680,9 @@ struct Input_para
     bool sternheimer_grid_diagnostics = false; ///< whether to write Delta-Sternheimer grid component diagnostics
     int sternheimer_fd_order = 8; ///< Cartesian finite-difference Laplacian order: 2, 4, 6, or 8
     double sternheimer_response_ecutwfc = 0.0; ///< response-grid cutoff in Ry; 0 reuses the PBE grid
+    int sternheimer_response_nx = 0; ///< explicit Delta-Sternheimer response-grid x dimension; 0 disables
+    int sternheimer_response_ny = 0; ///< explicit Delta-Sternheimer response-grid y dimension; 0 disables
+    int sternheimer_response_nz = 0; ///< explicit Delta-Sternheimer response-grid z dimension; 0 disables
     std::string sternheimer_delta_virtual_source
         = "ks_bands"; ///< fixed virtual source: complete unoccupied KS bands by default
     int sternheimer_delta_max_states = 0; ///< maximum fixed KS/AO virtual states; 0 means all accepted candidates
