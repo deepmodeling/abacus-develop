@@ -298,7 +298,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
 
         }
 
-        if (LR::exx_kernel_list().count(PARAM.inp.dft_functional))
+        if (LR::gs_is_hybrid())
         {
             const auto& Ds_gs = LR_Util::get_exx_Ds_spin1(dm_gs, (*this->ucell_), this->kv, this->paraMat_);    // returns 0.5*D[0]
             const auto& Ds_relaxed_diff = LR_Util::get_exx_Ds_spin1(relaxed_diff_dm, (*this->ucell_), this->kv, this->paraMat_);   // returns 0.5*D[0]
@@ -473,7 +473,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
                 ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "EXX DMTRANS FORCE (eV/Angstrom)", force_exx_dmtrans, false);
             force_hxc_dmtrans += force_exx_dmtrans;
         }
-        if (LR::exx_kernel_list().count(PARAM.inp.dft_functional))
+        if (LR::gs_is_hybrid())
         {
             const auto& Ds_gs = LR_Util::get_exx_Ds_gs(dm_gs, (*this->ucell_), this->kv, this->paraMat_);
             const auto& Ds_relaxed_diff = LR_Util::get_exx_Ds_gs(relaxed_diff_dm, (*this->ucell_), this->kv, this->paraMat_);

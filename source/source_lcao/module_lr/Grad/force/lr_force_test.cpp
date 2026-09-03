@@ -36,7 +36,7 @@ namespace LR
         // edm term
         ModuleBase::matrix f_nonortho = cal_force_overlap_edm(edm_gs); // overlap
 #ifdef __EXX
-        if (exx_kernel_list().count(PARAM.inp.dft_functional))
+        if (gs_is_hybrid())
         {
             const auto& Ds_gs = LR_Util::get_exx_Ds_gs(dm_gs, ucell_, kv, pv_);
             const auto& Ds_gs_2 = LR_Util::get_exx_Ds_gs(dm_gs, ucell_, kv, pv_);

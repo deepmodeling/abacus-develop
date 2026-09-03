@@ -35,35 +35,29 @@
 #ifdef __EXX
 namespace
 {
-    /// Screening of the Coulomb operator that `Exx_LRI` is built with: `hse` is erfc-screened,
-    /// `hf` and `pbe0` are bare.
+    /// One `Exx_LRI` carries ONE Coulomb operator, and it may be needed for two different
+    /// reasons: the LR kernel (when `xc_kernel` is a hybrid) and the ground-state force (when
+    /// `dft_functional` is a hybrid). That operator is NOT chosen here -- `Exx_LRI` reads
+    /// `info_ri.coulomb_param`, which `input_conv` builds from `dft_functional` alone. So when
+    /// the two disagree, the kernel silently gets the ground state's screening, not its own.
     ///
-    /// One `Exx_LRI` carries ONE screening, and it may be needed for two different reasons: the
-    /// LR kernel (when `xc_kernel` is a hybrid) and the ground-state force (when
-    /// `dft_functional` is a hybrid). Keying the choice off `xc_kernel` alone -- which is what
-    /// this used to do -- silently produced *unscreened* exchange whenever the object existed
-    /// only for the force, e.g. `dft_functional hse` with `xc_kernel lda` or `rpa`.
-    Conv_Coulomb_Pot_K::Ccp_Type exx_ccp_type(const std::string& name)
-    {
-        return (name == "hse") ? Conv_Coulomb_Pot_K::Ccp_Type::Erfc
-                               : Conv_Coulomb_Pot_K::Ccp_Type::Hf;
-    }
-
-    /// Which functional the single `Exx_LRI` must follow. Prefer the LR kernel, since that one
-    /// enters the eigenproblem; fall back to the ground-state functional, which is the only
-    /// reason the object exists when the kernel is local.
-    std::string exx_source(const std::string& xc_kernel, const std::string& dft_functional)
+    /// This used to be decided by a local `exx_ccp_type()` returning Erfc for "hse" and bare
+    /// Hf otherwise, written onto `info_global.ccp_type`. With general range-separated hybrids
+    /// that two-way split is not even expressible ($\alpha/r+\beta\,\mathrm{erfc}(\mu r)/r$
+    /// is both at once), and the write was in any case dead for the RI path: only `Exx_LRI`
+    /// runs here, and it never looks at `ccp_type`.
+    void warn_if_kernel_differs_from_gs(const std::string& xc_kernel, const std::string& dft_functional)
     {
         const bool k = LR::exx_kernel_list().count(xc_kernel) > 0;
         const bool g = LR::exx_kernel_list().count(dft_functional) > 0;
-        if (k && g && xc_kernel != dft_functional)
+        if (k && xc_kernel != dft_functional)
         {
             GlobalV::ofs_running << " WARNING: xc_kernel (" << xc_kernel << ") and dft_functional ("
-                << dft_functional << ") are two DIFFERENT hybrids. A single Exx_LRI carries one"
-                " screening, so only " << xc_kernel << "'s is used; the ground-state EXX force"
-                " will be inconsistent." << std::endl;
+                << dft_functional << ") are not the same functional. The Coulomb operator of"
+                " Exx_LRI follows dft_functional" << (g ? "" : ", which is not a hybrid at all"
+                " (no coulomb_param, so the LR exchange kernel vanishes)") << "; set both to the"
+                " same hybrid to get the kernel you asked for." << std::endl;
         }
-        return k ? xc_kernel : dft_functional;
     }
 }
 #endif
@@ -138,12 +132,16 @@ template<typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::parameter_check()const
 {
     const std::set<std::string> lr_solvers = { "dav", "lapack" , "spectrum", "dav_subspace", "cg", "elpa", "plot" };
-    const std::set<std::string> xc_kernels = { "rpa", "lda", "pwlda", "pbe", "hf", "hse", "bse", "pbe0" };
+    // "rpa" and "bse" have no xc kernel at all; everything else is either a (semi)local
+    // functional or a hybrid, both of which `LR_Util` enumerates. Listing the names a third
+    // time here is what used to make a newly supported hybrid fail at input parsing.
+    const std::set<std::string> kernel_less = { "rpa", "bse" };
     const std::set<std::string> abs_gauge = { "velocity", "length" };
     if (lr_solvers.find(this->inp_->lr_solver) == lr_solvers.end()) {
         throw std::invalid_argument("ESolver_LR: unknown type of lr_solver");
     }
-    if (xc_kernels.find(this->xc_kernel) == xc_kernels.end()) {
+    if (!kernel_less.count(this->xc_kernel) && !LR_Util::has_local_xc(this->xc_kernel)
+        && !LR_Util::hybrid_xc_list().count(this->xc_kernel)) {
         throw std::invalid_argument("ESolver_LR: unknown type of xc_kernel");
     }
     if (this->nspin != 1 && this->nspin != 2) {
@@ -394,7 +392,8 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolve
             this->move_exx_lri(ks_sol.exx_nao.exc->exx_ptr);
         } else    // construct C, V from scratch
         {
-            exx_info.info_global.ccp_type = exx_ccp_type(exx_source(xc_kernel, dft_functional));
+            warn_if_kernel_differs_from_gs(xc_kernel, dft_functional);
+            // `input_conv` already filled `info_ri.coulomb_param` from INPUT.
             exx_info.sync_from_global();
             // populate ABFs/JLE file lists from UnitCell; keep in sync with Exx_NAO::init
             exx_info.info_ri.files_abfs = ucell.abfs_orbital_files;
@@ -544,10 +543,10 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
     // 2. cal_force with ground state with EXX functional
 #ifdef __EXX
     if (((exx_kernel_list().count(xc_kernel)) && this->inp_->lr_solver != "spectrum")
-        || (this->inp_->cal_force && (exx_kernel_list().count(this->inp_->dft_functional))))
+        || (this->inp_->cal_force && gs_is_hybrid()))
     {
-        exx_info.info_global.ccp_type =
-            exx_ccp_type(exx_source(xc_kernel, LR_Util::tolower(this->inp_->dft_functional)));
+        warn_if_kernel_differs_from_gs(xc_kernel, LR_Util::tolower(this->inp_->dft_functional));
+        // `input_conv` already filled `info_ri.coulomb_param` from INPUT.
         exx_info.sync_from_global();
         // populate ABFs/JLE file lists from UnitCell; keep in sync with Exx_NAO::init
         exx_info.info_ri.files_abfs = ucell.abfs_orbital_files;

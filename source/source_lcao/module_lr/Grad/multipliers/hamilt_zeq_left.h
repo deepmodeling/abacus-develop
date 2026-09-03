@@ -60,7 +60,7 @@ namespace LR
                 { 0 }, 4.0, ATYPE::CC_vo);
             this->ops->add(op_hz);
 #ifdef __EXX
-            if (exx_kernel_list().count(PARAM.inp.dft_functional))
+            if (gs_is_hybrid())
             {
                 hamilt::Operator<T>* op_hz_exx = new OperatorLREXX<T>(nspin, naos, nocc[0], nvirt[0], ucell, psi_ks,
                     *this->DM_trans, exx_lri, kv, pX[0], pc, pmat,
@@ -152,7 +152,7 @@ namespace LR
             // exchange is spin-diagonal ($\delta_{\sigma\sigma'}$), so only blocks 0 and 3.
             // Factor 2*alpha is unchanged from the closed-shell version: the EXX part of the
             // kernel carries no singlet/triplet combination, only $H=2K$.
-            if (exx_kernel_list().count(PARAM.inp.dft_functional))
+            if (gs_is_hybrid())
             {
                 for (int is : {0, 1})
                 {

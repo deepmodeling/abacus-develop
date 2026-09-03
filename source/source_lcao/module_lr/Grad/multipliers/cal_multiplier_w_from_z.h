@@ -164,7 +164,7 @@ namespace LR
         op_ht.act(/*nband=*/1, ld_oo, /*npol=*/1, X, W);    //comment out this line to test H[T+Z]=0
         // std::cout << "W (H[T+Z])) local terms: " << std::endl;
         // LR_Util::print_value(W, nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
-        if (LR::exx_kernel_list().count(PARAM.inp.dft_functional))  // H[T+Z] term depends on ground-state kernel (dft_functional)
+        if (LR::gs_is_hybrid())  // H[T+Z] term depends on ground-state kernel (dft_functional)
             op_ht_exx.act(/*nband=*/1, ld_oo, /*npol=*/1, X, W);
         // std::cout << "W (H[T+Z])) local +exx terms: " << std::endl;
         // LR_Util::print_value(W, nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
@@ -247,7 +247,7 @@ namespace LR
         std::vector<psi::Psi<T>> psi_ks_spin;
         for (int is : {0, 1}) { psi_ks_spin.push_back(LR_Util::get_psi_spin(psi_ks, is, nk)); }
         std::vector<std::unique_ptr<OperatorLREXX<T>>> op_ht_exx(2);
-        const bool with_exx = LR::exx_kernel_list().count(PARAM.inp.dft_functional) > 0;
+        const bool with_exx = LR::gs_is_hybrid();
         if (with_exx)
         {   // exchange is spin-diagonal
             for (int is : {0, 1})

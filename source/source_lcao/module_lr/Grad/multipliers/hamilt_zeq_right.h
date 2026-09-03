@@ -79,7 +79,7 @@ namespace LR
                 { 0 }, T(-4.0), ATYPE::CC_vo, hamilt::calculation_type::lr_dmdiff_hxc);
             this->ops->add(op_ht);
 #ifdef __EXX
-            if (exx_kernel_list().count(PARAM.inp.dft_functional))
+            if (gs_is_hybrid())
             {
                 hamilt::Operator<T>* op_ht_exx = new OperatorLREXX<T>(nspin, naos, nocc[0], nvirt[0], ucell, psi_ks,
                     *this->DM_diff, exx_lri, kv, pX[0], pc, pmat,
@@ -272,7 +272,7 @@ namespace LR
                         -2.0 * exx_alpha, ATYPE_EXX::CXC, {}, hamilt::calculation_type::lr_dmtrans_exx));
                 }
             }
-            if (exx_kernel_list().count(PARAM.inp.dft_functional))
+            if (gs_is_hybrid())
             {
                 for (int is : {0, 1})
                 {
