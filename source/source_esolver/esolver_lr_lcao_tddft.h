@@ -30,10 +30,7 @@ namespace ModuleESolver
     {
     public:
         ESolver_LR(const Input_para& inp, const std::string& in_dir, const std::string& out_dir);
-        ~ESolver_LR() {
-            delete this->psi_ks;
-            delete this->psi_ks_all;
-        }
+        ~ESolver_LR() {}
 
         ///input: input, call, basis(LCAO), psi(ground state), elecstate
         // initialize sth. independent of the ground state
@@ -68,8 +65,8 @@ namespace ModuleESolver
         // ground state info 
 
         /// @brief ground state wave function
-        psi::Psi<T>* psi_ks = nullptr;  ///< KS orbitals used in the [nocc+nvirt] window
-        psi::Psi<T>* psi_ks_all = nullptr;  ///< all KS orbitals, read from the file, or moved from ESolver_FP::pelec.psi
+        std::unique_ptr<psi::Psi<T>> psi_ks;  ///< KS orbitals used in the [nocc+nvirt] window
+        std::unique_ptr<psi::Psi<T>> psi_ks_all;  ///< all KS orbitals, read from the file, or moved from ESolver_FP::pelec.psi
 
         /// @brief ground state bands, read from the file, or moved from ESolver_FP::pelec.ekb
         ModuleBase::matrix eig_ks;///< ground state eigenvalues in the [nocc+nvirt] window

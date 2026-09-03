@@ -59,11 +59,11 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
     this->paraMat_.ncol_bands = this->nbands;
 #endif
 
-    this->psi_ks = new psi::Psi<T>(this->kv.get_nks(),
-                                   this->paraMat_.ncol_bands,
-                                   this->paraMat_.get_row_size(),
-                                   this->kv.ngk,
-                                   true);
+    this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(),
+                                       this->paraMat_.ncol_bands,
+                                       this->paraMat_.get_row_size(),
+                                       this->kv.ngk,
+                                       true));
     this->psi_ks_global = new psi::Psi<T>(this->kv.get_nks(),
                                           this->nbands,
                                           this->nbasis,

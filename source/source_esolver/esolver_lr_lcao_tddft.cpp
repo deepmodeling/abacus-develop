@@ -1,4 +1,6 @@
 #include "esolver_lr_lcao_tddft.h"
+
+#include <algorithm>
 #include "source_lcao/module_lr/utils/lr_io.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/hamilt_casida.h"
@@ -328,7 +330,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolve
 
     auto move_gs = [&, this]() -> void  // move the ground state info
         {
-            this->psi_ks_all = ks_sol.psi;
+            this->psi_ks_all.reset(ks_sol.psi);
             ks_sol.psi = nullptr;
             //only need the eigenvalues. the 'elecstates' of excited states is different from ground state.
             this->eig_ks_all = std::move(ks_sol.pelec->ekb);
@@ -336,13 +338,13 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolve
     move_gs();
     // allocate psi_ks and eig_ks in the [nocc, nvirt] window
 #ifdef __MPI
-    this->psi_ks = new psi::Psi<T>(this->kv.get_nks(),
+    this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(),
         this->paraC_.get_col_size(),
         this->paraC_.get_row_size(),
         this->kv.ngk,
-        true);
+        true));
 #else
-    this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), this->nbands, this->nbasis, this->kv.ngk, true);
+    this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(), this->nbands, this->nbasis, this->kv.ngk, true));
 #endif
     this->eig_ks.create(this->kv.get_nks(), this->nbands);
     const int start_band = this->nocc_max - *std::max_element(nocc.begin(), nocc.end());
@@ -353,11 +355,15 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolve
 #ifdef __MPI
         Cpxgemr2d(this->nbasis, this->nbands, &(*this->psi_ks_all)(ik, 0, 0), 1, start_band + 1, ks_sol.pv.desc_wfc,
             &(*this->psi_ks)(ik, 0, 0), 1, 1, this->paraC_.desc, this->paraC_.blacs_ctxt);
-#else 
+#else
+        // serial: each band is `nbasis` contiguous coefficients, so the window is a plain
+        // band-by-band copy (this loop used to compute the two pointers and copy nothing,
+        // leaving `psi_ks` uninitialized in every non-MPI build)
         for (int ib = 0;ib < this->nbands;++ib)
         {
-            auto* start = &(*this->psi_ks_all)(ik, start_band + ib, 0);
+            const auto* start = &(*this->psi_ks_all)(ik, start_band + ib, 0);
             auto* to = &(*this->psi_ks)(ik, ib, 0);
+            std::copy(start, start + this->nbasis, to);
         }
 #endif
         // copy the KS bands in the [nocc, nvirt] window
@@ -467,11 +473,11 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
     // read the ground state info
     // now ModuleIO::read_wfc_nao needs `Parallel_Orbitals` and can only read all the bands
     // it need improvement to read only the bands needed
-    this->psi_ks = new psi::Psi<T>(this->kv.get_nks(),
-                                   this->paraMat_.ncol_bands,
-                                   this->paraMat_.get_row_size(), 
-                                   this->kv.ngk,
-                                   true);
+    this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(),
+                                       this->paraMat_.ncol_bands,
+                                       this->paraMat_.get_row_size(),
+                                       this->kv.ngk,
+                                       true));
     this->read_ks_wfc();
     if (nspin == 2)
     {
@@ -794,6 +800,9 @@ template<typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
 {
     ModuleBase::TITLE("ESolver_LR", "setup_eigenvectors_X");
+    // this function is called once per `runner`, and `paraX_` is only ever appended to,
+    // so without this reset a second ionic step would double its size
+    this->paraX_.clear();
     for (int is = 0;is < nspin;++is)
     {
         Parallel_2D px;
@@ -948,7 +957,7 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
 
     if (PARAM.inp.cal_force)
     {    // allocate psi_ks_all and eig_ks_all to read all the bands
-        this->psi_ks_all = new psi::Psi<T>(this->kv.get_nks(), paraMat_all_.ncol_bands, paraMat_all_.get_row_size(), this->kv.ngk, true);
+        this->psi_ks_all.reset(new psi::Psi<T>(this->kv.get_nks(), paraMat_all_.ncol_bands, paraMat_all_.get_row_size(), this->kv.ngk, true));
         this->eig_ks_all.create(this->kv.get_nks(), PARAM.inp.nbands);
         this->wg_ks_all.create(this->kv.get_nks(), PARAM.inp.nbands);
         if (!ModuleIO::read_wfc_nao(this->in_dir, paraMat_all_, *this->psi_ks_all,
