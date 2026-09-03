@@ -53,6 +53,11 @@ __global__ void set_phi_kernel(
         const double3 coord = make_double3(mgrid_pos.x-rcoord.x,                    // coord is the relative coordinate of an atom and a meshgrid
                                            mgrid_pos.y-rcoord.y,
                                            mgrid_pos.z-rcoord.z);
+        // Preserve the existing near-origin behavior. Only the exact
+        // atomic grid point follows the CPU direct-recurrence semantics.
+        const bool exact_origin
+            = (coord.x == 0.0 && coord.y == 0.0 && coord.z == 0.0);
+
         double dist = norm3d(coord.x, coord.y, coord.z);
         if (dist < rcut[atom_type])
         {
@@ -61,7 +66,20 @@ __global__ void set_phi_kernel(
             // since nwl is less or equal than 5, the size of ylma is (5+1)^2
             double ylma[36];
             const int nwl = ucell_atom_nwl[atom_type];
-            sph_harm(nwl, coord.x/dist, coord.y/dist, coord.z/dist, ylma);
+            if (exact_origin)
+            {
+                ModuleBase::sph_harm_direct(
+                    nwl, 0.0, 0.0, 0.0, ylma);
+            }
+            else
+            {
+                sph_harm(
+                    nwl,
+                    coord.x/dist,
+                    coord.y/dist,
+                    coord.z/dist,
+                    ylma);
+            }
 
             const double pos = dist / dr_uniform;
             const int ip = static_cast<int>(pos);
