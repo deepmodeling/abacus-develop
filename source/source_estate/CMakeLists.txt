@@ -42,6 +42,7 @@ list(APPEND objects
     module_charge/symm_rhog.cpp
     fp_energy.cpp
     occupy.cpp
+    occ_matrix.cpp
     param_update.cpp
     setup_estate_pw.cpp
     update_pot.cpp

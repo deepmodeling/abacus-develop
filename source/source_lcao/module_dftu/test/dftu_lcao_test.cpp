@@ -5,8 +5,8 @@
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private
-#include "../dftu_lcao_op.h"
-#include "source_lcao/module_dftu/dftu_lcao.h"
+#include "../dftu_nao_op.h"
+#include "source_lcao/module_dftu/dftu_nao.h"
 
 Plus_U::Plus_U(){};
 Plus_U::~Plus_U(){};
@@ -85,16 +85,16 @@ class DFTUTest : public ::testing::Test
         tmp_DMR = DMR;
 
         // setting of DFTU
-        dftu.occ_mat.resize(test_size);
+        dftu.occmat().data().resize(test_size);
         for (int iat = 0; iat < test_size; iat++)
         {
-            dftu.occ_mat[iat].resize(3);
+            dftu.occmat().data()[iat].resize(3);
             for (int l = 0; l < 3; l++)
             {
-                dftu.occ_mat[iat][l].resize(1);
-                dftu.occ_mat[iat][l][0].resize(2);
-                dftu.occ_mat[iat][l][0][0].create(2 * l + 1, 2 * l + 1);
-                dftu.occ_mat[iat][l][0][1].create(2 * l + 1, 2 * l + 1);
+                dftu.occmat().data()[iat][l].resize(1);
+                dftu.occmat().data()[iat][l][0].resize(2);
+                dftu.occmat().data()[iat][l][0][0].create(2 * l + 1, 2 * l + 1);
+                dftu.occmat().data()[iat][l][0][1].create(2 * l + 1, 2 * l + 1);
             }
         }
         dftu.u_current = {U_test};
@@ -112,12 +112,12 @@ class DFTUTest : public ::testing::Test
     }
 
     // Helper for TEST_F bodies: gtest-derived classes do not inherit
-    // the friend declaration, so direct dftu.occ_mat[...] access from
-    // TestBody would fail to compile. This wrapper runs inside
+    // the friend declaration, so direct dftu.occmat().data()[...] access
+    // from TestBody would fail to compile. This wrapper runs inside
     // DFTUTest, which is a friend of Plus_U_Base.
     double occ_mat_c(int iat, int spin, int icc) const
     {
-        return dftu.occ_mat[iat][2][0][spin].c[icc];
+        return dftu.occmat().data()[iat][2][0][spin].c[icc];
     }
 
 #ifdef __MPI

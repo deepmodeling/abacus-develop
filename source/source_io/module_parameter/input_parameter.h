@@ -401,6 +401,15 @@ struct Input_para
     int exciton_slice_npoints = 200; ///< grid points per dimension for slice
     std::vector<int> exciton_slice_range = {-1, 2, -1, 2}; ///< cell range: ustart uend vstart vend
 
+    // ==============   #Parameters (10b.dfpt) ===========================
+    std::vector<int> dfpt_qmesh = {1, 1, 1}; ///< Monkhorst-Pack q mesh for DFPT (gamma-centered)
+    std::string dfpt_qfile = "";              ///< file containing the DFPT q-point list; empty means dfpt_qmesh
+    bool dfpt_compute_q0 = false;             ///< compute epsilon_inf and Born effective charges at q = 0
+    bool dfpt_loto = false;                   ///< apply the LO-TO non-analytic correction at q = 0
+    double dfpt_conv_thr = 1.0e-8;            ///< convergence threshold of the DFPT first-order density
+    int dfpt_max_iter = 100;                  ///< max iterations of the DFPT first-order density mixing
+    double dfpt_mix_beta = 0.4;               ///< mixing coefficient of the DFPT first-order density
+
     // ==============   #Parameters (11.Output) ===========================
     int out_stru = 1;                         ///< output stru file each ion step
                                               ///< 0: no output, 1: STRU format, 2: CIF format

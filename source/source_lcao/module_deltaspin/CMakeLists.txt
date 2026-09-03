@@ -1,6 +1,6 @@
 list(APPEND objects
     spin_constrain.cpp
-    init_sc.cpp
+    deltaspin_init.cpp
     cal_mw.cpp
     basic_funcs.cpp
     lambda_loop_helper.cpp
@@ -8,7 +8,9 @@ list(APPEND objects
     cal_mw_from_lambda.cpp
     template_helpers.cpp
     deltaspin_lcao.cpp
-    cal_mw_helper.cpp
+    deltaspin_lcao_mi.cpp
+    deltaspin_state.cpp
+    deltaspin_pw_mi.cpp
     mi_tools.cpp
 )
 

@@ -67,6 +67,7 @@ jobs:
             -DENABLE_RAPIDJSON=ON \
             -DENABLE_FLOAT_FFTW=ON \
             -DENABLE_DFTD4=ON \
+            -DENABLE_PEXSI=ON \
             -Werror=dev
 
 # Temporarily removed because no one maintains this now.

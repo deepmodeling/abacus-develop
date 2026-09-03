@@ -19,6 +19,7 @@
 
 static_assert(!std::is_copy_constructible<MDCell>::value, "MDCell must not be copy constructible.");
 static_assert(!std::is_copy_assignable<MDCell>::value, "MDCell must not be copy assignable.");
+static_assert(std::is_default_constructible<MDCell>::value, "MDCell must be default constructible.");
 static_assert(std::is_move_constructible<MDCell>::value, "MDCell must be move constructible.");
 
 namespace
@@ -75,7 +76,8 @@ TEST(DistributedMDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
 
     MPI_Comm md_comm = MPI_COMM_NULL;
     MPI_Comm_split(MPI_COMM_WORLD, world_rank % 2, world_rank, &md_comm);
-    const ModuleBase::CommunicationDomain communication_domain(md_comm);
+    ModuleBase::CommunicationDomain communication_domain;
+    communication_domain.initialize(md_comm);
 
     MdStruFileMetadata stru_metadata;
     MDCell mdcell = DistributedMDCellReader::read_stru(stru_file,
@@ -212,7 +214,8 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     lattice.e11 = 20.0;
     lattice.e22 = 20.0;
     lattice.e33 = 20.0;
-    MDCell mdcell(lattice,
+    MDCell mdcell;
+    mdcell.initialize_from_owned_atoms(lattice,
                   lattice.Inverse(),
                   1.0,
                   1.0,

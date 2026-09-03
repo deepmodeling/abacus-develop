@@ -1,8 +1,8 @@
 #include "force_stress_lcao.h"
 
 #include "source_base/parallel_reduce.h"
-#include "source_lcao/module_dftu/dftu_lcao.h" //Quxin add for DFT+U on 20201029
-#include "source_lcao/module_dftu/dftu_force.h"
+#include "source_lcao/module_dftu/dftu_nao.h" //Quxin add for DFT+U on 20201029
+#include "source_lcao/module_dftu/dftu_nao_fs_k.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 // new
@@ -21,7 +21,7 @@
 #include "source_lcao/module_deepks/lcao_deepks_io.h" // mohan add 2024-07-22
 #include "source_lcao/module_deepks/deepks_force.h"
 #endif
-#include "source_lcao/module_dftu/dftu_lcao_op.h"
+#include "source_lcao/module_dftu/dftu_nao_op.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"

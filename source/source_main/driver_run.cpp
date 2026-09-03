@@ -132,7 +132,8 @@ void Driver::driver_run()
         else
         {
             initialize_ucell();
-            MDCell mdcell(ucell, 0.0, 0.0, communication_domain);
+            MDCell mdcell;
+            mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, communication_domain);
             const MdStruFileMetadata stru_metadata = unitcell::make_md_stru_file_metadata(ucell);
             p_esolver->before_all_runners(ucell, PARAM.inp);
             Run_MD::md_line(mdcell, p_esolver, PARAM, stru_metadata);

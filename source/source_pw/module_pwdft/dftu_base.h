@@ -1,12 +1,18 @@
 #ifndef DFTU_BASE_H
 #define DFTU_BASE_H
 
-#include "source_cell/unitcell.h"
-#include "source_estate/module_charge/charge_mixing.h"
+#include "source_base/matrix.h"
+#include "source_estate/occ_matrix.h"
+#include "source_pw/module_pwdft/yukawa_screening.h"
 
+#include <complex>
+#include <memory>
 #include <string>
 #include <vector>
 
+
+class UnitCell;
+class Charge_Mixing;
 
 class DFTUTest;
 
@@ -14,9 +20,6 @@ class Plus_U_Base
 {
   friend class DFTUTest;
 
-  //=============================================================
-  // public section
-  //=============================================================
   public:
     Plus_U_Base();
     ~Plus_U_Base();
@@ -27,6 +30,7 @@ class Plus_U_Base
                    const int nspin,
                    const std::vector<int>& orbital_corr,
                    const bool yukawa_potential,
+                   const double yukawa_lambda,
                    const std::string& global_readin_dir,
                    const std::string& global_out_dir,
                    const std::string& init_chg,
@@ -42,32 +46,23 @@ class Plus_U_Base
 
     // --- Accessors for U values and orbital configuration ---
     double get_u_current(int it) const { return u_current[it]; }
-    double get_u_target(int it) const { return u_target[it]; }
     int get_num_u_types() const { return static_cast<int>(u_current.size()); }
     int get_orbital_corr(int it) const { return orbital_corr[it]; }
     bool has_correlated_orbital(int it) const { return orbital_corr[it] != -1; }
-    const int* get_orbital_corr_data() const { return orbital_corr.data(); }
 
     /// read-only access to the orbital_corr vector (length ntype)
     const std::vector<int>& get_orbital_corr_vec() const { return orbital_corr; }
-
-    /// read-only access to the iat->(l,n,m,ipol)->iwt lookup table
-    const std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>&
-    get_iatlnmipol2iwt() const { return iatlnmipol2iwt; }
 
     // --- Accessors for DFT+U configuration ---
     double get_uramping() const { return uramping; }
     int get_occ_mat_ctrl() const { return occ_mat_ctrl; }
     int get_cal_type() const { return cal_type; }
-    bool use_yukawa() const { return use_yukawa_; }
+    bool use_yukawa() const { return yukawa_ != nullptr; }
 
-    double get_U_Yukawa(int it, int l, int n) const { return U_Yukawa[it][l][n]; }
-    double get_J_Yukawa(int it, int l, int n) const { return J_Yukawa[it][l][n]; }
-    void set_U_Yukawa(int it, int l, int n, double val) { U_Yukawa[it][l][n] = val; }
-    void set_J_Yukawa(int it, int l, int n, double val) { J_Yukawa[it][l][n] = val; }
-    double get_lambda() const { return lambda; }
-    void set_lambda(double l) { lambda = l; }
-    std::vector<std::vector<std::vector<std::vector<double>>>>& get_Fk_data() { return Fk; }
+    /// access the Yukawa screening object (non-null only when use_yukawa())
+    YukawaScreening& yukawa() { return *yukawa_; }
+    const YukawaScreening& yukawa() const { return *yukawa_; }
+
     void set_u_current(int it, double val) { u_current[it] = val; }
 
     double get_energy() const { return energy_u; }
@@ -108,14 +103,6 @@ class Plus_U_Base
                             : static_cast<int>(pot_uterm_pw.size());
     }
 
-    /// get effective potential matrix for PW base (per-atom, raw index)
-    /// @deprecated Use get_pot_uterm_pw_spin() for nspin-aware access.
-    [[deprecated("Use get_pot_uterm_pw_spin() for nspin-aware access")]]
-    const std::complex<double>* get_pot_uterm_pw(const int iat) const
-    {
-        return &(pot_uterm_pw[pot_uterm_pw_index[iat]]);
-    }
-
     int get_size_pot_uterm_pw() const
     {
         return pot_uterm_pw.size();
@@ -129,45 +116,9 @@ class Plus_U_Base
     bool is_mixing_enabled() const { return mixing_dftu != 0; }
     void enable_mixing() { mixing_dftu = 1; }
 
-    /// get occupation matrix element occ_mat[iat][l][n][spin](m1,m2)
-    double get_occ_mat(const int iat, const int l, const int n, const int spin,
-                     const int m1, const int m2) const
-    {
-        return occ_mat[iat][l][n][spin](m1, m2);
-    }
-
-    /// get saved occupation matrix element occ_mat_save[iat][l][n][spin](m1,m2)
-    double get_occ_mat_save(const int iat, const int l, const int n, const int spin,
-                          const int m1, const int m2) const
-    {
-        return occ_mat_save[iat][l][n][spin](m1, m2);
-    }
-
-    /// set occupation matrix element occ_mat[iat][l][n][spin](m1,m2)
-    void set_occ_mat(const int iat, const int l, const int n, const int spin,
-                     const int m1, const int m2, const double val)
-    {
-        occ_mat[iat][l][n][spin](m1, m2) = val;
-    }
-
-    /// get reference to occ_mat data
-    std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>>& get_occ_mat_data() { return occ_mat; }
-    /// get reference to occ_mat_save data
-    std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>>& get_occ_mat_save_data() { return occ_mat_save; }
-    /// get occ_mat_initialized flag
-    bool get_occ_mat_initialized() const { return occ_mat_initialized; }
-    /// set occ_mat_initialized flag
-    void set_occ_mat_initialized(bool val) { occ_mat_initialized = val; }
-
-    /// get flat occupation matrix for an atom's correlated orbital.
-    /// nspin=1: fills occ with occ_mat[iat][l][0][0] data
-    /// nspin=2: fills occ with interleaved occ_mat[iat][l][0][0] and [1] data
-    /// nspin=4: fills occ with occ_mat[iat][l][0][0] data (all 4 Pauli blocks)
-    void get_occ_mat_flat(const int iat, const int l, std::vector<double>& occ) const;
-
-    /// set flat occupation matrix for an atom's correlated orbital (write-back)
-    void set_occ_mat_flat(const int iat, const int l, const int spin,
-                        const std::vector<double>& occ);
+    /// direct access to the occupation matrix object (new write path)
+    OccupationMatrix& occmat() { return occmat_; }
+    const OccupationMatrix& occmat() const { return occmat_; }
 
   protected:
     // --- U values and orbital configuration (set in init_base) ---
@@ -180,15 +131,13 @@ class Plus_U_Base
     int occ_mat_ctrl = 0;
     int mixing_dftu = 0;
     int nspin = 0;
-    bool use_yukawa_ = false;
 
     // --- State flags ---
     // dftu can be calculated only after occ_mat has been initialized
     bool occ_mat_initialized = false;
 
     // --- Occupation matrices ---
-    std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> occ_mat;
-    std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> occ_mat_save;
+    OccupationMatrix occmat_;
 
     // --- Internal state ---
     double energy_u = 0.0;
@@ -197,51 +146,14 @@ class Plus_U_Base
     std::string device;
     int kpar = 1;
 
-    // transform between iwt index and it, ia, L, N and m index
-    std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>
-        iatlnmipol2iwt;
-
-    void copy_occ_mat(const UnitCell& ucell);
-    void zero_occ_mat(const UnitCell& ucell);
-    void mix_occ_mat(const UnitCell& ucell, const double& mixing_beta);
-    void set_occ_mat(const UnitCell& ucell);
-
-    /// accumulate occ_mat from psi for all k-points (per-device template)
-    template <typename Device>
-    void accumulate_occ_one_k(const void* psi_in,
-                              const ModuleBase::matrix& wg_in,
-                              const UnitCell& cell,
-                              const int* isk);
-
-    /// reduce occ_mat across k-pools (per-atom, nspin-aware)
-    void reduce_occ_mat(const UnitCell& cell);
-
-    /// copy occ_mat to uom_array for mixing (nspin-aware split layout)
-    void sync_occ_to_uom(const UnitCell& cell);
-
-    /// compute effective potential pot_onsite and DFT+U energy from occ_mat
-    /// (assumes occ_mat has already been reduced across k-pools)
-    void compute_eff_pot_and_energy(const UnitCell& cell);
-
     std::vector<std::complex<double>> pot_uterm_pw;
     std::vector<int> pot_uterm_pw_index;
     std::vector<double> uom_array;
     std::vector<double> uom_save;
 
-    // Yukawa-related members (base part, no LCAO dependency)
-    double lambda = 0.0;
-    std::vector<std::vector<std::vector<std::vector<double>>>> Fk;
-    std::vector<std::vector<std::vector<double>>> U_Yukawa;
-    std::vector<std::vector<std::vector<double>>> J_Yukawa;
-
-    void read_occup_m(const UnitCell& ucell,
-                      const std::string& fn,
-                      const std::string& init_chg,
-                      int nspin,
-                      int npol);
-    void local_occup_bcast(const UnitCell& ucell,
-                           int nspin,
-                           int npol);
+    // Yukawa screening object; constructed only when use_yukawa() is true.
+    // Owns the screening length, Slater integrals and derived U/J.
+    std::unique_ptr<YukawaScreening> yukawa_;
 };
 
 

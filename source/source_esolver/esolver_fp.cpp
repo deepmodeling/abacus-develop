@@ -182,7 +182,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         }
 
         // reset k-points
-        KVectorUtils::set_after_vc(kv, this->inp_->nspin, ucell.G);
+        kv.set_after_vc(this->inp_->nspin, ucell.G, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 

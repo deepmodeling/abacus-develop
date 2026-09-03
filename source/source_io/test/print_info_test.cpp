@@ -53,7 +53,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 	const double kspacing[3] = {0.0, 0.0, 0.0};
 	const std::string kmesh_type = "gamma";
 	const double koffset[3] = {0.0, 0.0, 0.0};
-	kv->read_kpoints(*ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset);
+	kv->read_kpoints(*ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset, GlobalV::ofs_running);
 	EXPECT_EQ(kv->get_nkstot(),512);
 	std::vector<std::string> cal_type = {"scf","relax","cell-relax","md"};
 	std::vector<std::string> md_types = {"fire","nve","nvt","npt","langevin","msst"};

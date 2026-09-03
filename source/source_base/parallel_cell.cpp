@@ -2,13 +2,11 @@
 
 namespace ModuleBase
 {
-CommunicationDomain::CommunicationDomain()
-{
-}
-
 #ifdef __MPI
-CommunicationDomain::CommunicationDomain(MPI_Comm communicator) : communicator_(communicator)
+void CommunicationDomain::initialize(MPI_Comm communicator)
 {
+    communicator_ = communicator;
+    rank_ = 0;
     if (communicator_ != MPI_COMM_NULL)
     {
         MPI_Comm_rank(communicator_, &rank_);
@@ -28,10 +26,10 @@ int CommunicationDomain::rank() const
 
 CommunicationDomain world_communication_domain()
 {
+    CommunicationDomain communication_domain;
 #ifdef __MPI
-    return CommunicationDomain(MPI_COMM_WORLD);
-#else
-    return CommunicationDomain();
+    communication_domain.initialize(MPI_COMM_WORLD);
 #endif
+    return communication_domain;
 }
 } // namespace ModuleBase

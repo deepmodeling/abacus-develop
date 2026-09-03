@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cmath>
 #include <vector>
 #include <map>
@@ -102,7 +103,8 @@ std::complex<double> ModuleIO::cal_LxijR(
         }
         return -i * 0.5 * (std::sqrt(2) * lmbdp * valp + lmbdm * valm);
     }
-    if (jm < -1) {
+    else {
+        assert(jm < -1); // defensive check
         if (std::fabs(lmbdp) > 1e-12) {
             calculator->calculate(it, il, iz, im, jt, jl, jz, -(jm+1), vR, &valp);
         }
@@ -111,7 +113,6 @@ std::complex<double> ModuleIO::cal_LxijR(
         }
         return -i * 0.5 * (lmbdp * valp + lmbdm * valm);
     }
-    assert(false); // inaccessible
 }
 
 std::complex<double> ModuleIO::cal_LyijR(
@@ -156,7 +157,8 @@ std::complex<double> ModuleIO::cal_LyijR(
         }
         return -i * 0.5 * lmbdm * valm;
     }
-    if (jm < -1) {
+    else {
+        assert(jm < -1); // defensive check
         if (std::fabs(lmbdp) > 1e-12) {
             calculator->calculate(it, il, iz, im, jt, jl, jz, jm+1, vR, &valp);
         }
@@ -165,7 +167,6 @@ std::complex<double> ModuleIO::cal_LyijR(
         }
         return i * 0.5 * (lmbdp * valp - lmbdm * valm);
     }
-    assert(false); // inaccessible
 }
 
 ModuleIO::AngularMomentumCalculator::AngularMomentumCalculator(

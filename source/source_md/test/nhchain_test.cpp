@@ -52,8 +52,11 @@ class NHC_test : public testing::Test
         param_in.input.mdp.md_pmode = "tri";
         param_in.input.mdp.md_pfirst = 1;
         param_in.input.mdp.md_plast = 1;
-        mdcell = new MDCell(ucell, 8.5 * ModuleBase::ANGSTROM_AU, 0.0,
-                            ModuleBase::world_communication_domain());
+        mdcell = new MDCell;
+        mdcell->initialize_from_unitcell(ucell,
+                                         8.5 * ModuleBase::ANGSTROM_AU,
+                                         0.0,
+                                         ModuleBase::world_communication_domain());
         p_esolver->before_all_runners(*mdcell, param_in.inp);
         mdrun = new Nose_Hoover(param_in, *mdcell);
         mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);

@@ -211,7 +211,7 @@ OBJS_CELL=atom_pseudo.o\
     print_cell.o\
     setup_nonlocal.o\
     klist.o\
-    k_vector_utils.o\
+    reciprocal_grid.o\
     cell_index.o\
     cell_tools.o\
     check_atomic_stru.o\
@@ -281,6 +281,7 @@ OBJS_ELECSTAT=elecstate.o\
     read_orb.o\
     setup_estate_pw.o\
     update_pot.o\
+    occ_matrix.o
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       init_dm.o\
@@ -373,12 +374,23 @@ OBJS_HAMILT_OF=kedf_tf.o\
     kedf_manager.o\
     evolve_ofdft.o\
 
-OBJS_DFPT=dfpt_metal.o\
+OBJS_DFPT=dfpt_hamilt_shift.o\
+    dfpt_kq_basis.o\
+    dfpt_metal.o\
     dfpt_pert.o\
+    dfpt_pert_nl.o\
+    dfpt_pert_vkb.o\
     dfpt_phon.o\
+    dfpt_phon_elec.o\
+    dfpt_phon_ewald.o\
     dfpt_pw.o\
     dfpt_pw_data.o\
+    dfpt_pw_init.o\
+    dfpt_pw_q0.o\
+    dfpt_pw_run.o\
+    dfpt_pw_solve.o\
     dfpt_q0.o\
+    dfpt_q0_pos.o\
     dfpt_rho.o\
     dfpt_stern.o
 
@@ -399,13 +411,12 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     veff_lcao.o\
     veff_dh.o\
     meta_lcao.o\
-    dftu_lcao_op.o\
+    dftu_nao_op.o\
     deepks_lcao.o\
     op_exx_lcao.o\
     dspin_lcao.o\
     dspin_fs.o\
     setup_dftu_lcao.o\
-    dftu_fs.o\
     operator_fs_utils.o\
 
 OBJS_HCONTAINER=base_matrix.o\
@@ -564,6 +575,7 @@ OBJS_SYMMETRY=symm_other.o\
     symm_magnetic.o\
     symm_pricell.o\
     symm_rho.o\
+    little_group.o\
     symmetry.o\
 
 OBJS_XC=xc_functional.o\
@@ -674,6 +686,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_inp_model.o\
     module_parameter/read_inp_postproc.o\
     module_parameter/read_inp_exx_dftu.o\
+    module_parameter/read_inp_dfpt.o\
     module_parameter/read_inp_other.o\
     module_parameter/read_inp_out.o\
     module_parameter/read_set_globalv.o\
@@ -808,12 +821,12 @@ OBJS_SRCPW=h_ewald_pw.o\
     setup_pwwfc.o\
     update_cell_pw.o\
     dftu_base.o\
-    dftu_output.o\
-    dftu_tools_pw.o\
-    dftu_cal_occ_pw.o\
+    dftu_base_io.o\
+    dftu_base_occ.o\
+    dftu_base_tools.o\
+    yukawa_screening.o\
     setup_dftu_pw.o\
     deltaspin_pw.o\
-    deltaspin_pw_impl.o\
     force_pw.o\
     force_pw_us.o\
     force_pw_nl.o\
@@ -885,25 +898,29 @@ OBJS_VDW=vdw.o\
     vdwd3_autoset_xcname.o\
     vdwd3_auto_xcpar.o
 
-OBJS_DFTU=dftu_lcao.o\
-      dftu_force.o\
-      dftu_yukawa.o\
-      dftu_folding.o\
-      dftu_lcao_pots.o\
-      dftu_lcao_energy.o\
-      dftu_lcao_op_legacy.o\
-      dftu_lcao_occ.o\
+OBJS_DFTU=dftu_nao.o\
+      dftu_nao_fs_k.o\
+      dftu_nao_for_r.o\
+      dftu_nao_fs_r.o\
+      dftu_nao_str_r.o\
+      dftu_nao_folding.o\
+      dftu_nao_pots.o\
+      dftu_nao_energy.o\
+      dftu_nao_op_legacy.o\
+      dftu_nao_occ.o\
       dftu_hamilt.o
 
 OBJS_DELTASPIN=basic_funcs.o\
       cal_mw_from_lambda.o\
       cal_mw.o\
-      init_sc.o\
+      deltaspin_init.o\
       lambda_loop_helper.o\
       lambda_loop.o\
       spin_constrain.o\
-      cal_mw_helper.o\
       deltaspin_lcao.o\
+      deltaspin_lcao_mi.o\
+      deltaspin_state.o\
+      deltaspin_pw_mi.o\
       mi_tools.o\
       template_helpers.o\
 

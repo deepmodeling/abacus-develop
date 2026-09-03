@@ -388,6 +388,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
 // }
 
 #ifdef __MPI
+#include "source_base/parallel_comm.h"
 #include "source_base/timer.h"
 #include "mpi.h"
 int main(int argc, char** argv)

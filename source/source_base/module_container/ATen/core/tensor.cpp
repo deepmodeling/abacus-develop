@@ -295,7 +295,8 @@ bool Tensor::AllocateFrom(const Tensor& other, const TensorShape& shape) {
 
 void Tensor::sync(const Tensor& rhs) {
     REQUIRES_OK(this->data_type_ == rhs.data_type_ 
-        && this->device_ == rhs.device_)
+        && this->device_ == rhs.device_,
+        "sync: data_type and device must match between tensors")
 
     if (this->shape_ == rhs.shape_) {
         TEMPLATE_ALL_2(data_type_, device_,

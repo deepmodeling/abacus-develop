@@ -103,6 +103,9 @@ rules. Read the complete governance document before making or reviewing changes:
 - Member -> free function: inventory `this->` reads; pass as params (const
   for config, ref for mutable state); move only when body is `this`-free;
   keep thin wrapper; compile each step.
+- Extract a base-class nested-vector member in three steps (hold + forward,
+  switch writers, delete legacy) so no commit mixes old-storage writes with
+  new-storage reads.
 
 ## Local Commands
 

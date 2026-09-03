@@ -356,18 +356,19 @@ MDCell DistributedMDCellReader::read_stru(const std::string& stru_file,
     std::int64_t nat = 0;
     const std::vector<LocalAtom> owned_atoms = read_owned_atoms(ifs, metadata, primitive_latvec, primitive_gt,
                                                                   cell_replica, cutoff, skin, nat, communication_domain);
-    MDCell mdcell(metadata.latvec,
-                  metadata.gt,
-                  metadata.lat0,
-                  metadata.omega,
-                  nat,
-                  owned_atoms,
-                  metadata.labels,
-                  metadata.masses,
-                  metadata.type_atom_counts,
-                  cutoff,
-                  skin,
-                  communication_domain);
+    MDCell mdcell;
+    mdcell.initialize_from_owned_atoms(metadata.latvec,
+                                       metadata.gt,
+                                       metadata.lat0,
+                                       metadata.omega,
+                                       nat,
+                                       owned_atoms,
+                                       metadata.labels,
+                                       metadata.masses,
+                                       metadata.type_atom_counts,
+                                       cutoff,
+                                       skin,
+                                       communication_domain);
     stru_metadata = metadata.stru_file_metadata;
     return mdcell;
 }

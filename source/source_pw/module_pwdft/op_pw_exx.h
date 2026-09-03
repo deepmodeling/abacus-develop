@@ -175,6 +175,70 @@ class OperatorEXXPW : public OperatorPW<T, Device>
 
 };
 
+// Explicit specializations must be declared before any implicit instantiation.
+// The extern template declarations below would otherwise instantiate the
+// generic cal_density_recip / rho_recip2real members.
+template <>
+void OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>::cal_density_recip(
+    const std::complex<double>* psi_nk_real,
+    const std::complex<double>* psi_mq_real,
+    double omega) const;
+
+template <>
+void OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>::cal_density_recip(
+    const std::complex<float>* psi_nk_real,
+    const std::complex<float>* psi_mq_real,
+    double omega) const;
+
+template <>
+void OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>::rho_recip2real(
+    const std::complex<double>* rho_recip,
+    std::complex<double>* rho_real,
+    bool add,
+    double factor) const;
+
+template <>
+void OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>::rho_recip2real(
+    const std::complex<float>* rho_recip,
+    std::complex<float>* rho_real,
+    bool add,
+    float factor) const;
+
+#if ((defined __CUDA) || (defined __ROCM))
+template <>
+void OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>::cal_density_recip(
+    const std::complex<double>* psi_nk_real,
+    const std::complex<double>* psi_mq_real,
+    double omega) const;
+
+template <>
+void OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>::cal_density_recip(
+    const std::complex<float>* psi_nk_real,
+    const std::complex<float>* psi_mq_real,
+    double omega) const;
+
+template <>
+void OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>::rho_recip2real(
+    const std::complex<double>* rho_recip,
+    std::complex<double>* rho_real,
+    bool add,
+    double factor) const;
+
+template <>
+void OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>::rho_recip2real(
+    const std::complex<float>* rho_recip,
+    std::complex<float>* rho_real,
+    bool add,
+    float factor) const;
+#endif
+
+extern template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>;
+extern template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+extern template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>;
+extern template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>;
+#endif
+
 template <typename Real, typename Device>
 void get_exx_potential(const K_Vectors* kv,
                        const ModulePW::PW_Basis_K* wfcpw,

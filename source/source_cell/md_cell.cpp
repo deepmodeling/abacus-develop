@@ -8,6 +8,7 @@
 #include <cmath>
 #include <stdexcept>
 
+MDCell::MDCell() = default;
 MDCell::~MDCell() = default;
 MDCell::MDCell(MDCell&&) = default;
 MDCell& MDCell::operator=(MDCell&&) = default;
@@ -176,10 +177,10 @@ void MDCell::initialize_from_owned_atoms_(double cutoff, double skin)
 #endif
 
 
-MDCell::MDCell(UnitCell& ucell,
-               double cutoff,
-               double skin,
-               const ModuleBase::CommunicationDomain& communication_domain)
+void MDCell::initialize_from_unitcell(UnitCell& ucell,
+                                      double cutoff,
+                                      double skin,
+                                      const ModuleBase::CommunicationDomain& communication_domain)
 {
 #ifdef __MPI
     initialize_from_ucell_(ucell, communication_domain.communicator(), cutoff, skin);
@@ -189,18 +190,18 @@ MDCell::MDCell(UnitCell& ucell,
 #endif
 }
 
-MDCell::MDCell(const ModuleBase::Matrix3& latvec,
-               const ModuleBase::Matrix3& gt,
-               double lat0,
-               double omega,
-               std::int64_t nat,
-               const std::vector<LocalAtom>& owned_atoms,
-               const std::vector<std::string>& type_labels,
-               const std::vector<double>& type_masses,
-               const std::vector<std::int64_t>& type_atom_counts,
-               double cutoff,
-               double skin,
-               const ModuleBase::CommunicationDomain& communication_domain)
+void MDCell::initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
+                                         const ModuleBase::Matrix3& gt,
+                                         double lat0,
+                                         double omega,
+                                         std::int64_t nat,
+                                         const std::vector<LocalAtom>& owned_atoms,
+                                         const std::vector<std::string>& type_labels,
+                                         const std::vector<double>& type_masses,
+                                         const std::vector<std::int64_t>& type_atom_counts,
+                                         double cutoff,
+                                         double skin,
+                                         const ModuleBase::CommunicationDomain& communication_domain)
 {
     latvec_ = latvec;
     gt_ = gt;

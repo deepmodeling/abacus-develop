@@ -12,7 +12,7 @@ void projectors::OnsiteProjector<T, Device>::cal_force_onsite_dftu(int ik, int n
     const std::complex<double>* pot_onsite_ptr = dftu.get_pot_uterm_pw_spin(isk_val);
     const int pot_onsite_size = dftu.get_size_pot_uterm_pw_spin();
     this->fs_tools->cal_force_dftu(ik, npm, force,
-        dftu.get_orbital_corr_data(), pot_onsite_ptr, pot_onsite_size, wg_ik);
+        dftu.get_orbital_corr_vec().data(), pot_onsite_ptr, pot_onsite_size, wg_ik);
 }
 
 template <typename T, typename Device>
@@ -24,7 +24,7 @@ double projectors::OnsiteProjector<T, Device>::cal_stress_onsite_dftu(int ik, in
     const std::complex<double>* pot_onsite_ptr = dftu.get_pot_uterm_pw_spin(isk_val);
     const int pot_onsite_size = dftu.get_size_pot_uterm_pw_spin();
     return this->fs_tools->cal_stress_dftu(ik, npm,
-        dftu.get_orbital_corr_data(), pot_onsite_ptr, pot_onsite_size, wg_ik);
+        dftu.get_orbital_corr_vec().data(), pot_onsite_ptr, pot_onsite_size, wg_ik);
 }
 
 template <typename T, typename Device>

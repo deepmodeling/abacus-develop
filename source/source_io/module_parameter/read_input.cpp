@@ -175,6 +175,7 @@ ReadInput::ReadInput(const int& rank)
     this->item_tdofdft();
     this->item_lr_tddft();
     this->item_bse();
+    this->item_dfpt();
     this->item_output();
     this->item_postprocess();
     this->item_model();

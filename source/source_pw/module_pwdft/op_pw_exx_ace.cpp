@@ -320,10 +320,13 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_ace(psi::Psi<T, Device>* ppsi_) 
     Eexx = Eexx / hybrid_alpha / 2; // This factor of 2 is from the definition of EXX energy.
     return Eexx;
 }
+
+// Explicit instantiation for members defined in this translation unit.
 template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>;
 template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>;
 template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
-}
+
+} // namespace hamilt
