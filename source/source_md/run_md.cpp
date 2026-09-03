@@ -4,7 +4,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_cell.h"
-#include "source_cell/distributed_mdcell_reader.h"
+#include "source_cell/mdcell_reader.h"
 #include "source_cell/md_cell.h"
 #include "source_esolver/esolver.h"
 #include "source_io/module_parameter/parameter.h"
@@ -44,11 +44,11 @@ void prepare_mdcell(MDCell& mdcell,
     }
 
     const ModuleBase::CommunicationDomain comm_domain = ModuleBase::world_comm_domain();
-    mdcell = DistributedMDCellReader::read_stru(param_in.globalv.global_in_stru,
-                                                  effective_replicate,
-                                                  cutoff,
-                                                  input.mdp.md_neighbor_skin / ModuleBase::BOHR_TO_A,
-                                                  comm_domain);
+    mdcell = MDCellReader::read_stru(param_in.globalv.global_in_stru,
+                                     effective_replicate,
+                                     cutoff,
+                                     input.mdp.md_neighbor_skin / ModuleBase::BOHR_TO_A,
+                                     comm_domain);
     GlobalV::ofs_running << std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "TOTAL ATOM NUMBER", mdcell.nat());
     GlobalV::ofs_running << std::endl;

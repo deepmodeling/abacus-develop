@@ -1,4 +1,4 @@
-#include "source_cell/distributed_mdcell_reader.h"
+#include "source_cell/mdcell_reader.h"
 
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
@@ -323,7 +323,7 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
 }
 } // namespace
 
-MDCell DistributedMDCellReader::read_stru(const std::string& stru_file,
+MDCell MDCellReader::read_stru(const std::string& stru_file,
                                           const std::vector<int>& cell_replica,
                                           double cutoff,
                                           double skin,

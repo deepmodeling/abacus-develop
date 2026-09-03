@@ -94,7 +94,7 @@ AddTest(
   ../msst.cpp
   ../nhchain.cpp
   ../verlet.cpp
-  ../../source_cell/distributed_mdcell_reader.cpp
+  ../../source_cell/mdcell_reader.cpp
   ${depend_files}
 )
 

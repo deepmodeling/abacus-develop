@@ -225,7 +225,7 @@ OBJS_CELL=atom_pseudo.o\
     read_pp_ucell.o\
     cal_wfc.o\
     cal_ux.o\
-    distributed_mdcell_reader.o\
+    mdcell_reader.o\
     md_cell.o\
     cif_io.o\
     ucell_io.o\

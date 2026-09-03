@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "source_cell/distributed_mdcell_reader.h"
+#include "source_cell/mdcell_reader.h"
 #include "source_cell/md_cell.h"
 #include "source_cell/print_cell.h"
 #include "source_base/constants.h"
@@ -62,12 +62,12 @@ ModuleBase::Matrix3 make_lattice()
 }
 } // namespace
 
-TEST(DistributedMDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
+TEST(MDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
 {
     int world_rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-    const std::string stru_file = "distributed_mdcell_reader_cartesian.STRU";
+    const std::string stru_file = "mdcell_reader_cartesian.STRU";
     if (world_rank == 0)
     {
         write_cartesian_stru_case(stru_file);
@@ -79,11 +79,11 @@ TEST(DistributedMDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     ModuleBase::CommunicationDomain comm_domain;
     comm_domain.initialize(md_comm);
 
-    MDCell mdcell = DistributedMDCellReader::read_stru(stru_file,
-                                                        std::vector<int>{1, 1, 1},
-                                                        1.0 * ModuleBase::ANGSTROM_AU,
-                                                        0.0,
-                                                        comm_domain);
+    MDCell mdcell = MDCellReader::read_stru(stru_file,
+                                             std::vector<int>{1, 1, 1},
+                                             1.0 * ModuleBase::ANGSTROM_AU,
+                                             0.0,
+                                             comm_domain);
 
     EXPECT_EQ(mdcell.type_labels().size(), 1U);
     EXPECT_EQ(mdcell.type_labels()[0], "He");
@@ -150,7 +150,7 @@ TEST(DistributedMDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     MPI_Comm_free(&md_comm);
 }
 
-TEST(DistributedMDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
+TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
 {
     int rank = 0;
     int size = 1;
@@ -230,11 +230,11 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     const std::string output_file = "distributed_mdcell_restart.STRU";
     mdcell::print_stru_file(mdcell, metadata, output_file);
 
-    MDCell round_trip = DistributedMDCellReader::read_stru(output_file,
-                                                            std::vector<int>{1, 1, 1},
-                                                            0.1,
-                                                            0.0,
-                                                            ModuleBase::world_comm_domain());
+    MDCell round_trip = MDCellReader::read_stru(output_file,
+                                                 std::vector<int>{1, 1, 1},
+                                                 0.1,
+                                                 0.0,
+                                                 ModuleBase::world_comm_domain());
     double local_positions[4] = {0.0, 0.0, 0.0, 0.0};
     double local_velocities[4] = {0.0, 0.0, 0.0, 0.0};
     int local_mbl_x[4] = {0, 0, 0, 0};

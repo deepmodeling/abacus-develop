@@ -1,5 +1,5 @@
-#ifndef DISTRIBUTED_MDCELL_READER_H
-#define DISTRIBUTED_MDCELL_READER_H
+#ifndef MDCELL_READER_H
+#define MDCELL_READER_H
 
 #include <string>
 #include <vector>
@@ -10,7 +10,7 @@ namespace ModuleBase
 class CommunicationDomain;
 }
 
-class DistributedMDCellReader
+class MDCellReader
 {
 public:
     static MDCell read_stru(const std::string& stru_file,
