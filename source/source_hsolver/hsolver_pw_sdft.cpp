@@ -27,6 +27,9 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     ModuleBase::TITLE("HSolverPW_SDFT", "solve");
     ModuleBase::timer::start("HSolverPW_SDFT", "solve");
 
+    this->rank_in_pool = wfc_basis->poolrank;
+    this->nproc_in_pool = wfc_basis->poolnproc;
+
     const int npwx = psi.get_nbasis();
     const int nbands = psi.get_nbands();
     const int nks = psi.get_nk();
