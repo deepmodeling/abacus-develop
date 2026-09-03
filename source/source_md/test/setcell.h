@@ -144,7 +144,7 @@ class Setcell
             cutoff = std::max(cutoff, param.inp.mdp.lj_rcut[i] * ModuleBase::ANGSTROM_AU);
         }
         MDCell mdcell;
-        mdcell.initialize_from_unitcell(ucell, cutoff, 0.0, ModuleBase::world_communication_domain());
+        mdcell.initialize_from_unitcell(ucell, cutoff, 0.0, ModuleBase::world_comm_domain());
         return mdcell;
     }
 

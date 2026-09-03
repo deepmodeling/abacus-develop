@@ -68,7 +68,7 @@ TEST(MdCellMigrateMpiTest, AtomCrossingDomainMigratesToNewOwner)
                   std::vector<std::int64_t>(1, 2),
                   0.1,
                   0.0,
-                  ModuleBase::world_communication_domain());
+                  ModuleBase::world_comm_domain());
 
     ASSERT_EQ(mdcell.mpi_size(), size);
     if (size == 2)
@@ -136,7 +136,7 @@ TEST(MdCellMigrateMpiTest, GhostForcesReturnToOwners)
                   std::vector<std::int64_t>(1, 2),
                   0.6,
                   0.0,
-                  ModuleBase::world_communication_domain());
+                  ModuleBase::world_comm_domain());
 
     long long local_copies[2] = {0, 0};
     for (std::size_t iat = 0; iat < mdcell.ghost_atoms().size(); ++iat)
@@ -192,7 +192,7 @@ TEST(MdCellMigrateMpiTest, SkinUpdatesFixedGhostLayoutBeforeRebuild)
                   std::vector<std::int64_t>(1, 2),
                   0.1,
                   0.2,
-                  ModuleBase::world_communication_domain());
+                  ModuleBase::world_comm_domain());
 
     mdcell.prepare_neighbors();
     mdcell.mutable_owned_atoms()[0].frac.x += rank == 0 ? 0.05 : -0.05;

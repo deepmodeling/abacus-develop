@@ -2,6 +2,7 @@
 #define MD_CELL_H
 
 #include "source_cell/base_cell.h"
+#include "source_cell/md_stru_file_metadata.h"
 #include "source_cell/module_neighlist/local_atom.h"
 
 #ifdef __MPI
@@ -33,7 +34,7 @@ public:
     void initialize_from_unitcell(UnitCell& ucell,
                                   double cutoff,
                                   double skin,
-                                  const ModuleBase::CommunicationDomain& communication_domain);
+                                  const ModuleBase::CommunicationDomain& comm_domain);
     void initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
                                      const ModuleBase::Matrix3& gt,
                                      double lat0,
@@ -45,7 +46,7 @@ public:
                                      const std::vector<std::int64_t>& type_atom_counts,
                                      double cutoff,
                                      double skin,
-                                     const ModuleBase::CommunicationDomain& communication_domain);
+                                     const ModuleBase::CommunicationDomain& comm_domain);
 
 #ifdef __MPI
     int mpi_rank() const;
@@ -68,6 +69,8 @@ public:
     const std::vector<std::string>& type_labels() const { return type_labels_; }
     const std::vector<double>& type_masses() const { return type_masses_; }
     const std::vector<std::int64_t>& type_atom_counts() const { return type_atom_counts_; }
+    MdStruFileMetadata& mutable_stru_file_metadata() { return stru_file_metadata_; }
+    const MdStruFileMetadata& stru_file_metadata() const { return stru_file_metadata_; }
     std::vector<LocalAtom>& mutable_owned_atoms();
     std::vector<LocalAtom>& mutable_ghost_atoms();
 
@@ -110,6 +113,7 @@ private:
     std::vector<std::string> type_labels_;
     std::vector<double> type_masses_;
     std::vector<std::int64_t> type_atom_counts_;
+    MdStruFileMetadata stru_file_metadata_;
     double cutoff_ = 0.0;
     double skin_ = 0.0;
     std::unique_ptr<NeighborSearch> neighbor_search_;

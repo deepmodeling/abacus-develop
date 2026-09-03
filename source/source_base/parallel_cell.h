@@ -24,7 +24,7 @@ private:
     int rank_ = 0;
 };
 
-CommunicationDomain world_communication_domain();
+CommunicationDomain world_comm_domain();
 } // namespace ModuleBase
 
 #endif

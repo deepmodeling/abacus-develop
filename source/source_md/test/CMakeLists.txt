@@ -84,6 +84,21 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_MD_run
+  LIBS parameter psi device
+  SOURCES run_md_test.cpp
+  ../run_md.cpp
+  ../md_base.cpp
+  ../fire.cpp
+  ../langevin.cpp
+  ../msst.cpp
+  ../nhchain.cpp
+  ../verlet.cpp
+  ../../source_cell/distributed_mdcell_reader.cpp
+  ${depend_files}
+)
+
+AddTest(
   TARGET MODULE_MD_fire
   LIBS parameter psi device
   SOURCES fire_test.cpp

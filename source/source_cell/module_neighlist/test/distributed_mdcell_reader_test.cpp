@@ -76,16 +76,14 @@ TEST(DistributedMDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
 
     MPI_Comm md_comm = MPI_COMM_NULL;
     MPI_Comm_split(MPI_COMM_WORLD, world_rank % 2, world_rank, &md_comm);
-    ModuleBase::CommunicationDomain communication_domain;
-    communication_domain.initialize(md_comm);
+    ModuleBase::CommunicationDomain comm_domain;
+    comm_domain.initialize(md_comm);
 
-    MdStruFileMetadata stru_metadata;
     MDCell mdcell = DistributedMDCellReader::read_stru(stru_file,
                                                         std::vector<int>{1, 1, 1},
                                                         1.0 * ModuleBase::ANGSTROM_AU,
                                                         0.0,
-                                                        stru_metadata,
-                                                        communication_domain);
+                                                        comm_domain);
 
     EXPECT_EQ(mdcell.type_labels().size(), 1U);
     EXPECT_EQ(mdcell.type_labels()[0], "He");
@@ -93,9 +91,9 @@ TEST(DistributedMDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     EXPECT_DOUBLE_EQ(mdcell.type_masses()[0], 4.0026);
     ASSERT_EQ(mdcell.type_atom_counts().size(), 1U);
     EXPECT_EQ(mdcell.type_atom_counts()[0], 4);
-    ASSERT_EQ(stru_metadata.species.size(), 1U);
-    EXPECT_EQ(stru_metadata.species[0].pseudo_file, "auto");
-    EXPECT_EQ(stru_metadata.species[0].pseudo_type, "auto");
+    ASSERT_EQ(mdcell.stru_file_metadata().species.size(), 1U);
+    EXPECT_EQ(mdcell.stru_file_metadata().species[0].pseudo_file, "auto");
+    EXPECT_EQ(mdcell.stru_file_metadata().species[0].pseudo_type, "auto");
     EXPECT_EQ(mdcell.nat(), 4);
 
     DomainDecomposition decomp;
@@ -110,7 +108,7 @@ TEST(DistributedMDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     for (std::size_t iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
     {
         const LocalAtom& atom = mdcell.owned_atoms()[iat];
-        EXPECT_EQ(decomp.owner_rank_from_frac(atom.frac), communication_domain.rank());
+        EXPECT_EQ(decomp.owner_rank_from_frac(atom.frac), comm_domain.rank());
         local_ids.insert(std::make_pair(atom.type, atom.type_index));
         EXPECT_GE(atom.type, 0);
         EXPECT_DOUBLE_EQ(atom.force.x, 0.0);
@@ -226,19 +224,17 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
                   std::vector<std::int64_t>{2, 2},
                   0.0,
                   0.0,
-                  ModuleBase::world_communication_domain());
+                  ModuleBase::world_comm_domain());
     MdStruFileMetadata metadata;
     metadata.species.resize(2);
     const std::string output_file = "distributed_mdcell_restart.STRU";
     mdcell::print_stru_file(mdcell, metadata, output_file);
 
-    MdStruFileMetadata round_trip_metadata;
     MDCell round_trip = DistributedMDCellReader::read_stru(output_file,
                                                             std::vector<int>{1, 1, 1},
                                                             0.1,
                                                             0.0,
-                                                            round_trip_metadata,
-                                                            ModuleBase::world_communication_domain());
+                                                            ModuleBase::world_comm_domain());
     double local_positions[4] = {0.0, 0.0, 0.0, 0.0};
     double local_velocities[4] = {0.0, 0.0, 0.0, 0.0};
     int local_mbl_x[4] = {0, 0, 0, 0};

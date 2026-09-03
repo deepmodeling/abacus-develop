@@ -1,8 +1,6 @@
 #ifndef DISTRIBUTED_MDCELL_READER_H
 #define DISTRIBUTED_MDCELL_READER_H
 
-#include "source_cell/md_stru_file_metadata.h"
-
 #include <string>
 #include <vector>
 
@@ -19,8 +17,7 @@ public:
                             const std::vector<int>& cell_replica,
                             double cutoff,
                             double skin,
-                            MdStruFileMetadata& stru_metadata,
-                            const ModuleBase::CommunicationDomain& communication_domain);
+                            const ModuleBase::CommunicationDomain& comm_domain);
 };
 
 #endif

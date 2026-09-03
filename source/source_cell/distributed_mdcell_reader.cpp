@@ -190,13 +190,13 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
                                          double cutoff,
                                          double skin,
                                          std::int64_t& nat,
-                                         const ModuleBase::CommunicationDomain& communication_domain)
+                                         const ModuleBase::CommunicationDomain& comm_domain)
 {
     int rank = 0;
 #ifdef __MPI
     DomainDecomposition decomposition;
-    decomposition.init(communication_domain.communicator(), metadata.latvec, metadata.lat0, cutoff, skin);
-    rank = communication_domain.rank();
+    decomposition.init(comm_domain.communicator(), metadata.latvec, metadata.lat0, cutoff, skin);
+    rank = comm_domain.rank();
 #endif
 
     int begin[3] = {0, 0, 0};
@@ -327,8 +327,7 @@ MDCell DistributedMDCellReader::read_stru(const std::string& stru_file,
                                           const std::vector<int>& cell_replica,
                                           double cutoff,
                                           double skin,
-                                          MdStruFileMetadata& stru_metadata,
-                                          const ModuleBase::CommunicationDomain& communication_domain)
+                                          const ModuleBase::CommunicationDomain& comm_domain)
 {
     if (cutoff <= 0.0)
     {
@@ -355,7 +354,7 @@ MDCell DistributedMDCellReader::read_stru(const std::string& stru_file,
     metadata.omega = std::abs(metadata.latvec.Det()) * metadata.lat0 * metadata.lat0 * metadata.lat0;
     std::int64_t nat = 0;
     const std::vector<LocalAtom> owned_atoms = read_owned_atoms(ifs, metadata, primitive_latvec, primitive_gt,
-                                                                  cell_replica, cutoff, skin, nat, communication_domain);
+                                                                  cell_replica, cutoff, skin, nat, comm_domain);
     MDCell mdcell;
     mdcell.initialize_from_owned_atoms(metadata.latvec,
                                        metadata.gt,
@@ -368,7 +367,7 @@ MDCell DistributedMDCellReader::read_stru(const std::string& stru_file,
                                        metadata.type_atom_counts,
                                        cutoff,
                                        skin,
-                                       communication_domain);
-    stru_metadata = metadata.stru_file_metadata;
+                                       comm_domain);
+    mdcell.mutable_stru_file_metadata() = metadata.stru_file_metadata;
     return mdcell;
 }

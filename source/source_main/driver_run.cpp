@@ -1,19 +1,10 @@
-#include "source_base/constants.h"
-#include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_base/module_device/device.h"
-#include "source_base/module_device/memory_op.h"
-#include "source_base/parallel_cell.h"
 #include "source_cell/check_atomic_stru.h"
-#include "source_cell/distributed_mdcell_reader.h"
 #include "source_cell/md_cell.h"
-#include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_cell/print_cell.h"
 #include "source_esolver/esolver_factory.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_io/module_json/para_json.h"
-#include "source_io/module_output/print_info.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_main/driver.h"
 #include "source_md/run_md.h"
@@ -60,7 +51,7 @@ void Driver::driver_run()
     this->init_hardware();
     ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp);
 
-    // UnitCell is initialized only for workflows that require its full DFT state.
+    const bool supports_mdcell = p_esolver->supports_mdcell();
     UnitCell ucell;
     bool ucell_initialized = false;
     const auto initialize_ucell = [&ucell, &ucell_initialized, &input]()
@@ -102,41 +93,26 @@ void Driver::driver_run()
 
     if (cal == "md")
     {
-        const ModuleBase::CommunicationDomain communication_domain = ModuleBase::world_communication_domain();
-        if (p_esolver->supports_mdcell())
+        MDCell mdcell;
+        if (supports_mdcell)
         {
-            const Input_para& input = PARAM.inp;
-            const double cutoff = p_esolver->mdcell_cutoff(input);
-            if (cutoff <= 0.0)
-            {
-                ModuleBase::WARNING_QUIT("Driver::driver_run",
-                                         "An ESolver supporting MDCell must provide a positive cutoff.");
-            }
-            const std::vector<int> effective_replicate = input.mdp.md_restart
-                                                              ? std::vector<int>{1, 1, 1}
-                                                              : input.cell_replica;
-            MdStruFileMetadata stru_metadata;
-            MDCell mdcell = DistributedMDCellReader::read_stru(PARAM.globalv.global_in_stru,
-                                                                 effective_replicate,
-                                                                 cutoff,
-                                                                 input.mdp.md_neighbor_skin / ModuleBase::BOHR_TO_A,
-                                                                 stru_metadata,
-                                                                 communication_domain);
-            GlobalV::ofs_running << std::endl;
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "TOTAL ATOM NUMBER", mdcell.nat());
-            GlobalV::ofs_running << std::endl;
-            p_esolver->before_all_runners(mdcell, input);
-            Run_MD::md_line(mdcell, p_esolver, PARAM, stru_metadata);
-            p_esolver->after_all_runners(mdcell);
+            Run_MD::prepare_mdcell(mdcell, p_esolver, PARAM);
+            p_esolver->before_all_runners(mdcell, PARAM.inp);
         }
         else
         {
             initialize_ucell();
-            MDCell mdcell;
-            mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, communication_domain);
-            const MdStruFileMetadata stru_metadata = unitcell::make_md_stru_file_metadata(ucell);
+            Run_MD::prepare_mdcell(mdcell, ucell);
             p_esolver->before_all_runners(ucell, PARAM.inp);
-            Run_MD::md_line(mdcell, p_esolver, PARAM, stru_metadata);
+        }
+
+        Run_MD::md_line(mdcell, p_esolver, PARAM);
+        if (supports_mdcell)
+        {
+            p_esolver->after_all_runners(mdcell);
+        }
+        else
+        {
             p_esolver->after_all_runners(ucell);
         }
     }
