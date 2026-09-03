@@ -819,6 +819,7 @@ OBJS_SRCPW=h_ewald_pw.o\
     setup_pot.o\
     setup_pwrho.o\
     setup_pwwfc.o\
+    uspp_support.o\
     update_cell_pw.o\
     dftu_base.o\
     dftu_base_io.o\
