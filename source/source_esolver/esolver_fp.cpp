@@ -13,6 +13,7 @@
 #include "source_io/module_parameter/parameter.h"
 
 #include "source_pw/module_pwdft/setup_pwrho.h" // mohan 20251005
+#include "source_pw/module_pwdft/uspp_support.h"
 #include "source_hamilt/module_xc/xc_functional.h" // mohan 20251005
 #include "source_io/module_ctrl/ctrl_output_fp.h"
 #include "source_io/module_chgpot/write_init.h" // write_chg_init, write_pot_init
@@ -71,16 +72,18 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
                                             this->inp_->nelec,
                                             this->inp_->nupdown);
 
-    if (atoms_info.use_uspp && inp.esolver_type == "sdft")
-    {
-        ModuleBase::WARNING_QUIT("ESolver_FP", "USPP is not implemented for esolver_type=sdft.");
-    }
-    if (atoms_info.use_uspp && inp.nspin == 4)
-    {
-        ModuleBase::WARNING_QUIT("ESolver_FP", "USPP is not implemented for nspin=4.");
-    }
-
     elecstate::ParamUpdater::update_from_atoms_info(atoms_info);
+
+    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+    pw::validate_uspp_support(atoms_info.use_uspp,
+                              inp.basis_type,
+                              inp.esolver_type,
+                              inp.nspin,
+                              XC_Functional::get_func_type(),
+                              inp.berry_phase,
+                              inp.towannier90,
+                              inp.cal_cond);
+    GlobalV::ofs_running << XC_Functional::output_info() << std::endl;
 
     //! 2) setup pw_rho, pw_rhod, pw_big, sf, and read_pseudopotentials
     pw::setup_pwrho(ucell, PARAM.globalv.double_grid, this->pw_rho_flag, 
@@ -122,10 +125,6 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     //! 10) calculate the structure factor
     this->sf.setup(&ucell, Pgrid, this->pw_rhod);
-
-    //! 11) setup the xc functional
-    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-    GlobalV::ofs_running<<XC_Functional::output_info()<<std::endl;
 
     //! 11) initialize the charge density, we need to first set xc_type,
     // then we can call chr.allocate()
