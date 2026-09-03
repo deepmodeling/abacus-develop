@@ -6,7 +6,7 @@
 #include "source_cell/sep_cell.h"
 #include "source_cell/magnetism.h"
 #include "module_symmetry/symmetry.h"
-#include "source_cell/base_cell.h"
+#include "source_cell/basecell.h"
 #include "source_cell/nonlocal_info_base.h"
 
 /**

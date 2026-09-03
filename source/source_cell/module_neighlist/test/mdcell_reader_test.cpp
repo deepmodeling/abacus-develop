@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "source_cell/mdcell_reader.h"
-#include "source_cell/md_cell.h"
+#include "source_cell/mdcell.h"
 #include "source_cell/print_cell.h"
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"

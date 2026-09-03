@@ -36,8 +36,8 @@ AddTest(
 
 if(ENABLE_MPI)
   add_executable(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
-    md_cell_migrate_mpi_test.cpp
-    ../../md_cell.cpp
+    mdcell_migrate_mpi_test.cpp
+    ../../mdcell.cpp
     ../domain_decomposition.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp
@@ -57,7 +57,7 @@ if(ENABLE_MPI)
   add_executable(MODULE_CELL_NEIGHBOR_mdcell_reader
     mdcell_reader_test.cpp
     ../../mdcell_reader.cpp
-    ../../md_cell.cpp
+    ../../mdcell.cpp
     ../../print_cell.cpp
     ../domain_decomposition.cpp
     ../neighbor_search.cpp

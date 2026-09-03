@@ -5,7 +5,7 @@ add_subdirectory(module_neighlist)
 add_library(
     cell
     OBJECT
-    base_cell.cpp
+    basecell.cpp
     atom_pseudo.cpp
     atom_spec.cpp
     pseudo.cpp
@@ -16,7 +16,7 @@ add_library(
     read_pp_blps.cpp
     read_pp_vwr.cpp
     mdcell_reader.cpp
-    md_cell.cpp
+    mdcell.cpp
     unitcell.cpp
     read_atoms.cpp
     read_atoms_helper.cpp

@@ -1,4 +1,4 @@
-#include "source_cell/md_cell.h"
+#include "source_cell/mdcell.h"
 
 #include "source_base/parallel_cell.h"
 #include "source_cell/unitcell.h"
@@ -556,7 +556,7 @@ void MDCell::sync_backing_unitcell()
 
 BaseCell::Kind MDCell::get_kind() const
 {
-    return Kind::md_cell;
+    return Kind::mdcell;
 }
 
 std::int64_t MDCell::get_nat() const

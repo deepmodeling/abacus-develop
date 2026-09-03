@@ -1,7 +1,7 @@
-#ifndef MD_CELL_H
-#define MD_CELL_H
+#ifndef MDCELL_H
+#define MDCELL_H
 
-#include "source_cell/base_cell.h"
+#include "source_cell/basecell.h"
 #include "source_cell/md_stru_file_metadata.h"
 #include "source_cell/module_neighlist/local_atom.h"
 

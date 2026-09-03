@@ -5,7 +5,7 @@
 #include "source_cell/module_neighlist/bin_manager.h"
 #include "source_cell/module_neighlist/neighbor_list.h"
 #include "source_cell/module_neighlist/local_atom.h"
-#include "source_cell/base_cell.h"
+#include "source_cell/basecell.h"
 
 class MDCell;
 class UnitCell;

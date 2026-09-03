@@ -18,7 +18,7 @@
 #include "esolver_nep.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
-#include "source_cell/md_cell.h"
+#include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_cell/cif_io.h"
 #include "source_io/module_output/output_log.h"
@@ -37,7 +37,7 @@ void ESolver_NEP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     nep_potential = 0.0;
     nep_virial.create(3, 3);
 
-    if (basecell.kind() == BaseCell::Kind::md_cell)
+    if (basecell.kind() == BaseCell::Kind::mdcell)
     {
         MDCell& mdcell = static_cast<MDCell&>(basecell);
 #ifdef __NEP
@@ -69,7 +69,7 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
     ModuleBase::TITLE("ESolver_NEP", "runner");
     ModuleBase::timer::start("ESolver_NEP", "runner");
 
-    if (basecell.kind() == BaseCell::Kind::md_cell)
+    if (basecell.kind() == BaseCell::Kind::mdcell)
     {
 #ifndef __NEP
         ModuleBase::WARNING_QUIT("ESolver_NEP", "Please recompile with -D__NEP");
@@ -289,7 +289,7 @@ double ESolver_NEP::mdcell_cutoff(const Input_para& inp) const
 
 void ESolver_NEP::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
-    if (basecell.kind() == BaseCell::Kind::md_cell)
+    if (basecell.kind() == BaseCell::Kind::mdcell)
     {
         const MDCell& mdcell = static_cast<const MDCell&>(basecell);
         force.create(mdcell.nlocal(), 3);

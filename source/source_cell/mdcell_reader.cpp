@@ -3,7 +3,7 @@
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/vector3.h"
-#include "source_cell/md_cell.h"
+#include "source_cell/mdcell.h"
 
 #ifdef __MPI
 #include "source_cell/module_neighlist/domain_decomposition.h"
