@@ -218,7 +218,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     //! calculate ewald energy
     if (!this->inp_->test_skip_ewald)
     {
-        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac);
+        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac, this->inp_->test_energy, GlobalV::ofs_running);
     }
 
     //! set direction of magnetism, used in non-collinear case 

@@ -128,7 +128,8 @@ void LCAO_domain::init_dm_from_file(
             dm_container,
             dmfile,
             PARAM.globalv.nlocal,
-            &ucell
+            &ucell,
+            GlobalV::MY_RANK
         );
         reader_dm.read();
     }
@@ -181,7 +182,7 @@ void LCAO_domain::init_hr_from_file(
     test_file.close();
 
     hmat->set_zero();
-    hamilt::Read_HContainer<TR> reader_hr(hmat, hrfile, PARAM.globalv.nlocal, &ucell);
+    hamilt::Read_HContainer<TR> reader_hr(hmat, hrfile, PARAM.globalv.nlocal, &ucell, GlobalV::MY_RANK);
     reader_hr.read();
     return;
 }
