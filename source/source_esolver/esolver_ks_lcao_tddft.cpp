@@ -64,7 +64,7 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::~ESolver_KS_LCAO_TDDFT()
 template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     // If the device is GPU, we must open use_tensor and use_lapack
@@ -125,7 +125,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
 template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int istep)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_KS_LCAO_TDDFT", "runner");

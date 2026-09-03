@@ -49,7 +49,7 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
@@ -241,7 +241,7 @@ double ESolver_KS_LCAO<TK, TR>::cal_energy()
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_KS_LCAO", "cal_force");
@@ -271,7 +271,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_KS_LCAO", "cal_stress");
@@ -293,7 +293,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(BaseCell& basecell, ModuleBase::matrix&
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_all_runners");

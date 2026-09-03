@@ -61,7 +61,7 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
     lj_potential = 0.0;
     lj_virial.zero_out();
 
-    if (cell.kind() == BaseCell::Kind::unit_cell)
+    if (cell.kind() == BaseCell::Kind::unitcell)
     {
         NeighborSearch neighbor_search;
         UnitCell& ucell = static_cast<UnitCell&>(cell);
@@ -193,7 +193,7 @@ double ESolver_LJ::cal_energy()
 
 void ESolver_LJ::cal_force(BaseCell& cell, ModuleBase::matrix& force)
 {
-    if (cell.kind() == BaseCell::Kind::unit_cell)
+    if (cell.kind() == BaseCell::Kind::unitcell)
     {
         UnitCell& ucell = static_cast<UnitCell&>(cell);
         force = lj_force;
@@ -215,7 +215,7 @@ void ESolver_LJ::cal_stress(BaseCell& cell, ModuleBase::matrix& stress)
 {
     stress = lj_virial;
 
-    if (cell.kind() == BaseCell::Kind::unit_cell)
+    if (cell.kind() == BaseCell::Kind::unitcell)
     {
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, GlobalV::ofs_running);
     }

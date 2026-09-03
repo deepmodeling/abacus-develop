@@ -35,7 +35,7 @@ ESolver_SDFT_PW<T, Device>::~ESolver_SDFT_PW()
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     // 1) initialize parameters from int Input class
@@ -218,7 +218,7 @@ double ESolver_SDFT_PW<T, Device>::cal_energy()
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     Sto_Forces<double, Device> ff(ucell.nat);
@@ -240,7 +240,7 @@ void ESolver_SDFT_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matri
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     Sto_Stress_PW<double, Device> ss;
@@ -262,7 +262,7 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matr
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     // 1) write down etot and eigenvalues (for MDFT) information

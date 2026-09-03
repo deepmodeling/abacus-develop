@@ -38,7 +38,7 @@ ESolver_DoubleXC<TK, TR>::~ESolver_DoubleXC()
 template <typename TK, typename TR>
 void ESolver_DoubleXC<TK, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_DoubleXC", "before_all_runners");
@@ -377,7 +377,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
 template <typename TK, typename TR>
 void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_DoubleXC", "cal_force");

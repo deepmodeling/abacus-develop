@@ -30,7 +30,7 @@ struct StruMetadata
     std::vector<std::string> labels;
     std::vector<double> masses;
     std::vector<std::int64_t> type_atom_counts;
-    MdStruFileMetadata stru_file_metadata;
+    StruMeta stru_meta;
 };
 
 std::string next_data_line(std::ifstream& ifs, const char* context)
@@ -130,15 +130,15 @@ StruMetadata parse_stru_metadata(std::ifstream& ifs)
         }
         if (line == "NUMERICAL_ORBITAL")
         {
-            for (std::size_t it = 0; it < metadata.stru_file_metadata.species.size(); ++it)
+            for (std::size_t it = 0; it < metadata.stru_meta.species.size(); ++it)
             {
-                metadata.stru_file_metadata.species[it].orbital_file = next_data_line(ifs, "NUMERICAL_ORBITAL body");
+                metadata.stru_meta.species[it].orbital_file = next_data_line(ifs, "NUMERICAL_ORBITAL body");
             }
             continue;
         }
         if (line == "NUMERICAL_DESCRIPTOR")
         {
-            metadata.stru_file_metadata.descriptor_file = next_data_line(ifs, "NUMERICAL_DESCRIPTOR body");
+            metadata.stru_meta.descriptor_file = next_data_line(ifs, "NUMERICAL_DESCRIPTOR body");
             continue;
         }
 
@@ -153,9 +153,9 @@ StruMetadata parse_stru_metadata(std::ifstream& ifs)
 
         metadata.labels.push_back(label);
         metadata.masses.push_back(parse_double(mass_token, "atomic mass"));
-        MdStruFileSpecies species;
+        StruSpecies species;
         iss >> species.pseudo_file >> species.pseudo_type;
-        metadata.stru_file_metadata.species.push_back(species);
+        metadata.stru_meta.species.push_back(species);
     }
 
     expect_keyword(ifs, "LATTICE_CONSTANT");
@@ -232,7 +232,7 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
             throw std::runtime_error("ATOMIC_POSITIONS label order does not match ATOMIC_SPECIES.");
         }
         std::istringstream magnetism(next_data_line(ifs, "magnetism"));
-        magnetism >> metadata.stru_file_metadata.species[it].start_mag;
+        magnetism >> metadata.stru_meta.species[it].start_mag;
         const std::int64_t nat_type = parse_int64(next_data_line(ifs, "atom count"), "atom count");
 
         for (std::int64_t ia = 0; ia < nat_type; ++ia)
@@ -368,6 +368,6 @@ MDCell MDCellReader::read_stru(const std::string& stru_file,
                                        cutoff,
                                        skin,
                                        comm_domain);
-    mdcell.mutable_stru_file_metadata() = metadata.stru_file_metadata;
+    mdcell.mutable_stru_meta() = metadata.stru_meta;
     return mdcell;
 }

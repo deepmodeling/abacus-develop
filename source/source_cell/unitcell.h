@@ -238,7 +238,7 @@ class UnitCell : public BaseCell {
     /// @{
     Kind get_kind() const override
     {
-        return Kind::unit_cell;
+        return Kind::unitcell;
     }
 
     std::int64_t get_nat() const override

@@ -10,7 +10,7 @@ class BaseCell
 public:
     enum class Kind
     {
-        unit_cell,
+        unitcell,
         mdcell
     };
 

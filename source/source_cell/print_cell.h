@@ -6,7 +6,7 @@
 #define PRINT_CELL_H
 
 #include "atom_spec.h"
-#include "source_cell/md_stru_file_metadata.h"
+#include "source_cell/strumeta.h"
 #include "source_cell/unitcell.h"
 
 class MDCell;
@@ -67,13 +67,13 @@ namespace unitcell
      */
     void print_cell(const UnitCell& ucell, std::ofstream& ofs);
 
-    MdStruFileMetadata make_md_stru_file_metadata(const UnitCell& ucell);
+    StruMeta make_stru_meta(const UnitCell& ucell);
 }
 
 namespace mdcell
 {
 void print_stru_file(const MDCell& mdcell,
-                     const MdStruFileMetadata& stru_metadata,
+                     const StruMeta& stru_meta,
                      const std::string& fn);
 }
 

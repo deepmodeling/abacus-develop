@@ -307,7 +307,7 @@ void ESolver_DP::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
     stress = dp_virial;
 
-    if (basecell.kind() == BaseCell::Kind::unit_cell)
+    if (basecell.kind() == BaseCell::Kind::unitcell)
     {
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, GlobalV::ofs_running);
     }

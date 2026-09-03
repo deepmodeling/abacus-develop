@@ -73,7 +73,7 @@ void ESolver_KS_PW<T, Device>::allocate_hamilt(const UnitCell& ucell)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ESolver_KS::before_all_runners(ucell, inp);
@@ -365,7 +365,7 @@ double ESolver_KS_PW<T, Device>::cal_energy()
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     Forces<double, Device> ff(ucell.nat);
@@ -393,7 +393,7 @@ void ESolver_KS_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matrix&
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     Stress_PW<double, Device> ss(this->pelec);
@@ -428,7 +428,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matrix
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ESolver_KS::after_all_runners(ucell);

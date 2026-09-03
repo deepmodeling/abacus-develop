@@ -1,5 +1,5 @@
-#ifndef MD_STRU_FILE_METADATA_H
-#define MD_STRU_FILE_METADATA_H
+#ifndef STRUMETA_H
+#define STRUMETA_H
 
 #include <string>
 #include <vector>
@@ -11,7 +11,7 @@
  * physical topology data. This type deliberately contains only input/output
  * information that is not used by MD integration or force evaluation.
  */
-struct MdStruFileSpecies
+struct StruSpecies
 {
     std::string pseudo_file;
     std::string pseudo_type;
@@ -19,9 +19,9 @@ struct MdStruFileSpecies
     double start_mag = 0.0;
 };
 
-struct MdStruFileMetadata
+struct StruMeta
 {
-    std::vector<MdStruFileSpecies> species;
+    std::vector<StruSpecies> species;
     std::string descriptor_file;
 };
 

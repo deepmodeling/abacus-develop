@@ -74,7 +74,7 @@ namespace ModuleESolver
     template <typename T>
     void ESolver_KS_LIP<T>::before_all_runners(BaseCell& basecell, const Input_para& inp)
     {
-        basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+        basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
         UnitCell& ucell = static_cast<UnitCell&>(basecell);
         ESolver_KS_PW<T>::before_all_runners(basecell, inp);
 
@@ -251,7 +251,7 @@ namespace ModuleESolver
     template <typename T>
     void ESolver_KS_LIP<T>::after_all_runners(BaseCell& basecell)
     {
-        basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+        basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
         UnitCell& ucell = static_cast<UnitCell&>(basecell);
         ESolver_KS_PW<T>::after_all_runners(basecell);
 

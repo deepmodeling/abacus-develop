@@ -189,7 +189,7 @@ ESolver_DFPT_PW::~ESolver_DFPT_PW()
 
 void ESolver_DFPT_PW::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_DFPT_PW", "before_all_runners");
@@ -218,7 +218,7 @@ void ESolver_DFPT_PW::before_all_runners(BaseCell& basecell, const Input_para& i
 
 void ESolver_DFPT_PW::runner(BaseCell& basecell, const int istep)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_DFPT_PW", "runner");
@@ -244,7 +244,7 @@ void ESolver_DFPT_PW::runner(BaseCell& basecell, const int istep)
 
 void ESolver_DFPT_PW::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_DFPT_PW", "after_all_runners");

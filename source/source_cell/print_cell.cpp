@@ -210,14 +210,14 @@ namespace unitcell
 
 namespace
 {
-std::string mdcell_stru_header(const MDCell& cell, const MdStruFileMetadata& metadata)
+std::string mdcell_stru_header(const MDCell& cell, const StruMeta& metadata)
 {
     std::ostringstream output;
     output << std::fixed << std::setprecision(10);
     output << "ATOMIC_SPECIES\n";
     for (std::size_t it = 0; it < metadata.species.size(); ++it)
     {
-        const MdStruFileSpecies& species = metadata.species[it];
+        const StruSpecies& species = metadata.species[it];
         output << cell.type_labels()[it] << " " << std::setprecision(4) << cell.type_masses()[it] << std::setprecision(10);
         if (!species.pseudo_file.empty()) output << " " << species.pseudo_file;
         if (!species.pseudo_type.empty()) output << " " << species.pseudo_type;
@@ -242,9 +242,9 @@ std::string mdcell_stru_header(const MDCell& cell, const MdStruFileMetadata& met
     return output.str();
 }
 
-std::string mdcell_type_header(const MDCell& cell, const MdStruFileMetadata& metadata, const std::size_t it)
+std::string mdcell_type_header(const MDCell& cell, const StruMeta& metadata, const std::size_t it)
 {
-    const MdStruFileSpecies& species = metadata.species[it];
+    const StruSpecies& species = metadata.species[it];
     std::ostringstream output;
     output << "\n" << cell.type_labels()[it] << " #label\n";
     output << std::fixed << std::setprecision(4) << species.start_mag << " #magnetism\n";
@@ -294,13 +294,13 @@ bool write_at(const int file, const std::string& data, MPI_Offset offset)
 
 namespace unitcell
 {
-MdStruFileMetadata make_md_stru_file_metadata(const UnitCell& ucell)
+StruMeta make_stru_meta(const UnitCell& ucell)
 {
-    MdStruFileMetadata metadata;
+    StruMeta metadata;
     metadata.species.resize(static_cast<std::size_t>(ucell.ntype));
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        MdStruFileSpecies& species = metadata.species[static_cast<std::size_t>(it)];
+        StruSpecies& species = metadata.species[static_cast<std::size_t>(it)];
         if (static_cast<std::size_t>(it) < ucell.pseudo_fn.size()) species.pseudo_file = ucell.pseudo_fn[it];
         if (static_cast<std::size_t>(it) < ucell.pseudo_type.size()) species.pseudo_type = ucell.pseudo_type[it];
         if (static_cast<std::size_t>(it) < ucell.orbital_fn.size()) species.orbital_file = ucell.orbital_fn[it];
@@ -313,15 +313,15 @@ MdStruFileMetadata make_md_stru_file_metadata(const UnitCell& ucell)
 
 namespace mdcell
 {
-void print_stru_file(const MDCell& cell, const MdStruFileMetadata& metadata, const std::string& fn)
+void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::string& fn)
 {
-    if (metadata.species.size() != cell.type_labels().size()
-        || metadata.species.size() != cell.type_masses().size()
-        || metadata.species.size() != cell.type_atom_counts().size())
+    if (stru_meta.species.size() != cell.type_labels().size()
+        || stru_meta.species.size() != cell.type_masses().size()
+        || stru_meta.species.size() != cell.type_atom_counts().size())
     {
         throw std::runtime_error("MDCell STRU metadata does not match the MDCell type data.");
     }
-    const std::string header = mdcell_stru_header(cell, metadata);
+    const std::string header = mdcell_stru_header(cell, stru_meta);
 #ifdef __MPI
     int rank = 0;
     const MPI_Comm comm = cell.communicator();
@@ -359,9 +359,9 @@ void print_stru_file(const MDCell& cell, const MdStruFileMetadata& metadata, con
     }
 
     MPI_Offset offset = static_cast<MPI_Offset>(header.size());
-    for (std::size_t it = 0; it < metadata.species.size(); ++it)
+    for (std::size_t it = 0; it < stru_meta.species.size(); ++it)
     {
-        const std::string type_header = mdcell_type_header(cell, metadata, it);
+        const std::string type_header = mdcell_type_header(cell, stru_meta, it);
         int type_header_ok = 1;
         if (rank == 0) type_header_ok = write_at(file, type_header, offset) ? 1 : 0;
         MPI_Bcast(&type_header_ok, 1, MPI_INT, 0, comm);
@@ -400,8 +400,8 @@ void print_stru_file(const MDCell& cell, const MdStruFileMetadata& metadata, con
 #else
     std::ofstream output(fn.c_str());
     output << header;
-    for (std::size_t it = 0; it < metadata.species.size(); ++it)
-        output << mdcell_type_header(cell, metadata, it) << local_mdcell_atoms(cell, it);
+    for (std::size_t it = 0; it < stru_meta.species.size(); ++it)
+        output << mdcell_type_header(cell, stru_meta, it) << local_mdcell_atoms(cell, it);
 #endif
 }
 }

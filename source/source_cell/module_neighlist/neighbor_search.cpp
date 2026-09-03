@@ -153,7 +153,7 @@ void NeighborSearch::init(BaseCell& cell, double sr)
         return;
     }
 
-    assert(cell.kind() == BaseCell::Kind::unit_cell);
+    assert(cell.kind() == BaseCell::Kind::unitcell);
     UnitCell& ucell = static_cast<UnitCell&>(cell);
     init_from_unitcell_(ucell, sr);
 }

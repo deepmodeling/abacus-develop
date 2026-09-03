@@ -310,7 +310,7 @@ void ESolver_NEP::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 void ESolver_NEP::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
     stress = nep_virial;
-    if (basecell.kind() == BaseCell::Kind::unit_cell)
+    if (basecell.kind() == BaseCell::Kind::unitcell)
     {
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, GlobalV::ofs_running);
     }

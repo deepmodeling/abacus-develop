@@ -91,9 +91,9 @@ TEST(MDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     EXPECT_DOUBLE_EQ(mdcell.type_masses()[0], 4.0026);
     ASSERT_EQ(mdcell.type_atom_counts().size(), 1U);
     EXPECT_EQ(mdcell.type_atom_counts()[0], 4);
-    ASSERT_EQ(mdcell.stru_file_metadata().species.size(), 1U);
-    EXPECT_EQ(mdcell.stru_file_metadata().species[0].pseudo_file, "auto");
-    EXPECT_EQ(mdcell.stru_file_metadata().species[0].pseudo_type, "auto");
+    ASSERT_EQ(mdcell.stru_meta().species.size(), 1U);
+    EXPECT_EQ(mdcell.stru_meta().species[0].pseudo_file, "auto");
+    EXPECT_EQ(mdcell.stru_meta().species[0].pseudo_type, "auto");
     EXPECT_EQ(mdcell.nat(), 4);
 
     DomainDecomposition decomp;
@@ -225,7 +225,7 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
                   0.0,
                   0.0,
                   ModuleBase::world_comm_domain());
-    MdStruFileMetadata metadata;
+    StruMeta metadata;
     metadata.species.resize(2);
     const std::string output_file = "distributed_mdcell_restart.STRU";
     mdcell::print_stru_file(mdcell, metadata, output_file);

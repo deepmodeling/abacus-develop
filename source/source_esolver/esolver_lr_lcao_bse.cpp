@@ -15,7 +15,7 @@ namespace ModuleESolver
 template <typename T, typename TR>
 void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_BSE", "before_all_runners");
@@ -155,7 +155,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
 template <typename T, typename TR>
 void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_BSE", "runner");
@@ -374,7 +374,7 @@ void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
 template <typename T, typename TR>
 void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_BSE", "after_all_runners");

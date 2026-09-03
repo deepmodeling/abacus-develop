@@ -27,7 +27,7 @@ ESolver_GetS::~ESolver_GetS()
 
 void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     this->inp_ = &inp;
@@ -130,7 +130,7 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
 void ESolver_GetS::runner(BaseCell& basecell, const int istep)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_GetS", "runner");
@@ -220,7 +220,7 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
 
 void ESolver_GetS::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 };
 double ESolver_GetS::cal_energy()
@@ -229,12 +229,12 @@ double ESolver_GetS::cal_energy()
 };
 void ESolver_GetS::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 };
 void ESolver_GetS::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 };
 

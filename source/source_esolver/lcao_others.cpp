@@ -31,7 +31,7 @@ namespace ModuleESolver
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_KS_LCAO", "others");

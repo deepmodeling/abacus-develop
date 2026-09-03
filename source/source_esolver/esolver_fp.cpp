@@ -36,7 +36,7 @@ ESolver_FP::~ESolver_FP()
 
 void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     this->inp_ = &inp;
@@ -270,7 +270,7 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
 
 void ESolver_FP::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     // print out the final total energy

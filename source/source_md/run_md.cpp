@@ -57,7 +57,7 @@ void prepare_mdcell(MDCell& mdcell,
 void prepare_mdcell(MDCell& mdcell, UnitCell& ucell)
 {
     mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, ModuleBase::world_comm_domain());
-    mdcell.mutable_stru_file_metadata() = unitcell::make_md_stru_file_metadata(ucell);
+    mdcell.mutable_stru_meta() = unitcell::make_stru_meta(ucell);
 }
 
 void md_line(MDCell& mdcell,
@@ -149,7 +149,7 @@ void md_line(MDCell& mdcell,
             }
             std::stringstream file;
             file << PARAM.globalv.global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
-            mdcell::print_stru_file(mdcell, mdcell.stru_file_metadata(), file.str());
+            mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str());
             mdrun->write_restart(PARAM.globalv.global_out_dir);
         }
 
