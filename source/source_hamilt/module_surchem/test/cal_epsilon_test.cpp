@@ -7,7 +7,6 @@
 #include "../surchem.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_basis/module_pw/pw_basis.h"
 
 #include "gmock/gmock.h"
@@ -26,11 +25,6 @@
  *   - cal_epsilon
  *     - calculate the relative permittivity
  */
-
-namespace GlobalC
-{
-ModulePW::PW_Basis* rhopw;
-}
 
 class cal_epsilon_test : public testing::Test
 {
@@ -62,8 +56,6 @@ TEST_F(cal_epsilon_test, cal_epsilon)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
@@ -122,8 +114,6 @@ int main(int argc, char** argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 
     testing::InitGoogleTest(&argc, argv);

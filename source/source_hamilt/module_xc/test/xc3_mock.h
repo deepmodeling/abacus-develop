@@ -199,23 +199,6 @@ void TITLE(const std::string& class_name, const std::string& function_name, bool
 
 } // namespace ModuleBase
 
-namespace GlobalV
-{
-std::string BASIS_TYPE = "";
-bool CAL_STRESS = false;
-int CAL_FORCE = 0;
-int NSPIN;
-int NPOL;
-bool DOMAG;
-bool DOMAG_Z;
-std::ofstream ofs_device;
-std::ofstream ofs_running;
-} // namespace GlobalV
-
-namespace GlobalC
-{
-Exx_Info exx_info;
-}
 
 UnitCell::UnitCell() {};
 UnitCell::~UnitCell() {};
