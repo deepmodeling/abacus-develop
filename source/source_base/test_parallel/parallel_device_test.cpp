@@ -1,7 +1,8 @@
 #ifdef __MPI
 #include "source_base/parallel_device.h"
 
-#include "source_base/communication_domain.h"
+#include "source_base/parallel_cell.h"
+#include "source_base/parallel_comm.h"
 
 #include "gtest/gtest.h"
 #include <complex>
@@ -51,7 +52,8 @@ void exercise_mpi_wrappers(const ModuleBase::CommunicationDomain& domain)
 {
     MPI_Comm communicator = domain.communicator();
     const int rank = domain.rank();
-    const int size = domain.size();
+    MPICommGroup world_group(communicator);
+    const int size = world_group.gsize;
     const int count = 2;
 
     T sent[count] = {static_cast<T>(rank + 1), static_cast<T>(rank + 2)};

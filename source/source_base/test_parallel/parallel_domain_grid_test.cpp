@@ -1,5 +1,5 @@
-#include "source_base/communication_domain.h"
 #include "source_base/global_variable.h"
+#include "source_base/parallel_cell.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_grid.h"
 
@@ -12,32 +12,32 @@ TEST(CommunicationDomainTest, ReportsDefaultAndWorldDomains)
 {
     const ModuleBase::CommunicationDomain local_domain;
     EXPECT_EQ(local_domain.rank(), 0);
-    EXPECT_EQ(local_domain.size(), 1);
+    EXPECT_EQ(local_domain.communicator(), MPI_COMM_NULL);
 
     const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_communication_domain();
+    MPICommGroup world_group(world_domain.communicator());
     EXPECT_EQ(world_domain.communicator(), MPI_COMM_WORLD);
     EXPECT_GE(world_domain.rank(), 0);
-    EXPECT_LT(world_domain.rank(), world_domain.size());
+    EXPECT_LT(world_domain.rank(), world_group.gsize);
 
-    const ModuleBase::CommunicationDomain null_domain(MPI_COMM_NULL);
+    ModuleBase::CommunicationDomain null_domain;
+    null_domain.initialize(MPI_COMM_NULL);
     EXPECT_EQ(null_domain.communicator(), MPI_COMM_NULL);
     EXPECT_EQ(null_domain.rank(), 0);
-    EXPECT_EQ(null_domain.size(), 1);
 }
 
 TEST(MPICommGroupTest, DividesWorldIntoEvenGroups)
 {
     const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_communication_domain();
     MPICommGroup group(MPI_COMM_WORLD);
-    EXPECT_EQ(group.gsize, world_domain.size());
     EXPECT_EQ(group.grank, world_domain.rank());
 
-    const int group_count = world_domain.size() > 1 ? 2 : 1;
+    const int group_count = group.gsize > 1 ? 2 : 1;
     group.divide_group_comm(group_count);
 
     EXPECT_TRUE(group.is_even);
     EXPECT_EQ(group.ngroups, group_count);
-    EXPECT_EQ(group.nprocs_in_group, world_domain.size() / group_count);
+    EXPECT_EQ(group.nprocs_in_group, group.gsize / group_count);
     EXPECT_EQ(group.my_group, world_domain.rank() / group.nprocs_in_group);
     EXPECT_EQ(group.rank_in_group, world_domain.rank() % group.nprocs_in_group);
     EXPECT_NE(group.group_comm, MPI_COMM_NULL);
@@ -47,17 +47,18 @@ TEST(MPICommGroupTest, DividesWorldIntoEvenGroups)
 TEST(ParallelGridTest, BroadcastsAndReducesDistributedGrid)
 {
     const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_communication_domain();
+    MPICommGroup world_group(world_domain.communicator());
     const int nx = 2;
     const int ny = 1;
-    const int nz = world_domain.size();
+    const int nz = world_group.gsize;
     const int local_nz = 1;
     const int local_size = nx * ny * local_nz;
 
     legacy_global::KPAR = 1;
     legacy_global::MY_POOL = 0;
-    legacy_global::NPROC = world_domain.size();
+    legacy_global::NPROC = world_group.gsize;
     legacy_global::MY_RANK = world_domain.rank();
-    legacy_global::NPROC_IN_POOL = world_domain.size();
+    legacy_global::NPROC_IN_POOL = world_group.gsize;
     legacy_global::RANK_IN_POOL = world_domain.rank();
     legacy_global::RANK_IN_BPGROUP = world_domain.rank();
     POOL_WORLD = MPI_COMM_WORLD;
@@ -65,7 +66,7 @@ TEST(ParallelGridTest, BroadcastsAndReducesDistributedGrid)
     KP_WORLD = MPI_COMM_NULL;
 
     Parallel_Grid grid;
-    grid.init(nx, ny, nz, local_nz, local_size, nz, 1, world_domain.size());
+    grid.init(nx, ny, nz, local_nz, local_size, nz, 1, world_group.gsize);
     EXPECT_EQ(grid.get_nx(), nx);
     EXPECT_EQ(grid.get_ny(), ny);
     EXPECT_EQ(grid.get_nz(), nz);

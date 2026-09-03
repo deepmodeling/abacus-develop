@@ -1,6 +1,7 @@
-#include "../communication_domain.h"
 #include "../kernels/math_kernel_op.h"
 #include "../para_gemm.h"
+#include "../parallel_cell.h"
+#include "../parallel_comm.h"
 
 #include <gtest/gtest.h>
 #include <iostream>
@@ -76,7 +77,8 @@ void test_additional_type_paths()
     const ModuleBase::CommunicationDomain domain = ModuleBase::world_communication_domain();
     MPI_Comm world = domain.communicator();
     const int rank = domain.rank();
-    const int size = domain.size();
+    MPICommGroup world_group(world);
+    const int size = world_group.gsize;
     const T alpha = static_cast<T>(1);
     const T beta = static_cast<T>(0);
     const T a[1] = {static_cast<T>(rank + 1)};
