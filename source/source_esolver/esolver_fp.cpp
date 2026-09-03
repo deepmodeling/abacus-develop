@@ -48,6 +48,14 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     surchem_parameters.nc_k = inp.nc_k;
     this->solvent.set_parameters(surchem_parameters);
 
+    XCFunctionalParameters xc_parameters;
+    xc_parameters.xc_temperature = inp.xc_temperature;
+    xc_parameters.exx_fock_alpha = inp.exx_fock_alpha;
+    xc_parameters.exx_erfc_alpha = inp.exx_erfc_alpha;
+    xc_parameters.xc_exch_ext = inp.xc_exch_ext;
+    xc_parameters.xc_corr_ext = inp.xc_corr_ext;
+    XC_Functional::set_runtime_parameters(xc_parameters);
+
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
     //! 1) read pseudopotentials

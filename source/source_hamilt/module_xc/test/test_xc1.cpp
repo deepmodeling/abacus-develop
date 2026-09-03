@@ -79,6 +79,20 @@ TEST_F(XCTest_KSDT, set_xc_type)
     EXPECT_EQ(XC_Functional::get_func_type(),1);
 }
 
+TEST_F(XCTest_KSDT, runtime_parameters)
+{
+    XCFunctionalParameters parameters;
+    parameters.xc_temperature = 0.25;
+    parameters.xc_exch_ext = {101.0, 0.75};
+    parameters.xc_corr_ext = {130.0, 0.5};
+    XC_Functional::set_runtime_parameters(parameters);
+
+    const XCFunctionalParameters& stored = XC_Functional::get_runtime_parameters();
+    EXPECT_DOUBLE_EQ(stored.xc_temperature, 0.25);
+    EXPECT_EQ(stored.xc_exch_ext, parameters.xc_exch_ext);
+    EXPECT_EQ(stored.xc_corr_ext, parameters.xc_corr_ext);
+}
+
 class XCTest_KT2 : public XCTest
 {
     protected:

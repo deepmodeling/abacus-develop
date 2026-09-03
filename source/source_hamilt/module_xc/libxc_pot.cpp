@@ -4,7 +4,6 @@
 #include "libxc_abacus.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
@@ -180,7 +179,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
 
     if(4==nspin_in)
     {
-        v = XC_Functional_Libxc::convert_v_nspin4(nrxx, chr, amag, v);
+        v = XC_Functional_Libxc::convert_v_nspin4(nrxx, chr, amag, v, domag, domag_z);
     }
 
     //-------------------------------------------------
