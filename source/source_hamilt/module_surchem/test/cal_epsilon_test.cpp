@@ -102,6 +102,15 @@ TEST_F(cal_epsilon_test, cal_epsilon)
     EXPECT_EQ(PS_TOTN_real[0], 0.274231);
     EXPECT_EQ(epsilon[0], 1);
     EXPECT_NEAR(epsilon[12], 1.00005, doublethreshold);
+
+    SurchemParameters parameters;
+    parameters.eb_k = 40.0;
+    parameters.sigma_k = 0.8;
+    parameters.nc_k = 0.001;
+    solvent_model.set_parameters(parameters);
+    solvent_model.cal_epsilon(&pwtest, PS_TOTN_real, epsilon, epsilon0);
+    const double shape = erfc(log(PS_TOTN_real[12] / parameters.nc_k) / sqrt(2.0) / parameters.sigma_k) / 2;
+    EXPECT_NEAR(epsilon[12], 1.0 + (parameters.eb_k - 1.0) * shape, doublethreshold);
     // EXPECT_EQ(epsilon[19], 43.1009);
     // EXPECT_EQ(epsilon[26], 78.746);
     delete[] PS_TOTN_real;

@@ -13,6 +13,11 @@ surchem::surchem()
     qs = 0;
 }
 
+void surchem::set_parameters(const SurchemParameters& parameters)
+{
+    this->parameters_ = parameters;
+}
+
 void surchem::allocate(const int &nrxx, const int &nspin)
 {
     assert(nrxx >= 0);

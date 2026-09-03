@@ -1,7 +1,6 @@
 #include "source_base/timer.h"
 #include "source_base/parallel_reduce.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_parameter/parameter.h"
 #include "surchem.h"
 
 void lapl_rho(const double& tpiba2,
@@ -41,20 +40,24 @@ void lapl_rho(const double& tpiba2,
 
 // calculates first derivative of the shape function in realspace
 // exp(-(log(n/n_c))^2 /(2 sigma^2)) /(sigma * sqrt(2*pi) )/n
-void shape_gradn(const std::complex<double>* ps_totn, const ModulePW::PW_Basis* rho_basis, double* eprime)
+void shape_gradn(const std::complex<double>* ps_totn,
+                 const ModulePW::PW_Basis* rho_basis,
+                 const double nc_k,
+                 const double sigma_k,
+                 double* eprime)
 {
 
     double *ps_totn_real = new double[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(ps_totn_real, rho_basis->nrxx);
     rho_basis->recip2real(ps_totn, ps_totn_real);
 
-    double epr_c = 1.0 / sqrt(ModuleBase::TWO_PI) / PARAM.inp.sigma_k;
+    double epr_c = 1.0 / sqrt(ModuleBase::TWO_PI) / sigma_k;
     double epr_z = 0;
     double min = 1e-10;
 
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
-        epr_z = log(std::max(ps_totn_real[ir], min) / PARAM.inp.nc_k) / sqrt(2) / PARAM.inp.sigma_k;
+        epr_z = log(std::max(ps_totn_real[ir], min) / nc_k) / sqrt(2) / sigma_k;
         eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / std::max(ps_totn_real[ir], min);
     }
 
@@ -108,7 +111,7 @@ void surchem::createcavity(const UnitCell& ucell,
     // gamma * A = exp(-(log(n/n_c))^2 /(2 sigma^2)) /(sigma * sqrt(2*pi) )
     //-------------------------------------------------------------
     double *term1 = new double[rho_basis->nrxx];
-    shape_gradn(ps_totn, rho_basis, term1);
+    shape_gradn(ps_totn, rho_basis, this->parameters_.nc_k, this->parameters_.sigma_k, term1);
 
     //-------------------------------------------------------------
     // quantum surface area, integral of (gamma*A / n) * |\nabla n|
@@ -127,7 +130,7 @@ void surchem::createcavity(const UnitCell& ucell,
     //-------------------------------------------------------------
     // cavitation energy
     //-------------------------------------------------------------
-    this->Acav = PARAM.inp.tau * qs * ucell.omega / rho_basis->nxyz;
+    this->Acav = this->parameters_.tau * qs * ucell.omega / rho_basis->nxyz;
     Parallel_Reduce::reduce_pool(this->Acav);
 
     // double Ael = cal_Acav(ucell, pwb);
@@ -153,7 +156,7 @@ void surchem::createcavity(const UnitCell& ucell,
 
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
-        vwork[ir] = vwork[ir] * term1[ir] * PARAM.inp.tau;
+        vwork[ir] = vwork[ir] * term1[ir] * this->parameters_.tau;
     }
 
     delete[] nablan;

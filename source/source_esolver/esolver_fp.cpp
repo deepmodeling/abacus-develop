@@ -41,6 +41,13 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     this->inp_ = &inp;
 
+    SurchemParameters surchem_parameters;
+    surchem_parameters.eb_k = inp.eb_k;
+    surchem_parameters.tau = inp.tau;
+    surchem_parameters.sigma_k = inp.sigma_k;
+    surchem_parameters.nc_k = inp.nc_k;
+    this->solvent.set_parameters(surchem_parameters);
+
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
     //! 1) read pseudopotentials

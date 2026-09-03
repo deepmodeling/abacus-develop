@@ -11,6 +11,14 @@
 class Parallel_Grid;
 class Structure_Factor;
 
+struct SurchemParameters
+{
+    double eb_k = 80.0;
+    double tau = 1.0798e-05;
+    double sigma_k = 0.6;
+    double nc_k = 0.00037;
+};
+
 class surchem
 {
   public:
@@ -34,6 +42,8 @@ class surchem
     void allocate(const int& nrxx, const int& nspin);
 
     void clear();
+
+    void set_parameters(const SurchemParameters& parameters);
 
     void cal_epsilon(const ModulePW::PW_Basis* rho_basis, const double* PS_TOTN_real, double* epsilon, double* epsilon0);
 
@@ -120,6 +130,7 @@ class surchem
     void cal_force_sol(const UnitCell& cell,
                        const ModulePW::PW_Basis* rho_basis,
                        const ModuleBase::matrix& vloc,
+                       int nspin,
                        ModuleBase::matrix& forcesol);
 
     void force_cor_one(const UnitCell& cell,
@@ -127,13 +138,17 @@ class surchem
                        const ModuleBase::matrix& vloc,
                        ModuleBase::matrix& forcesol);
 
-    void force_cor_two(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol);
+    void force_cor_two(const UnitCell& cell,
+                       const ModulePW::PW_Basis* rho_basis,
+                       int nspin,
+                       ModuleBase::matrix& forcesol);
 
     void get_totn_reci(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, std::complex<double>* totn_reci);
 
     void induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, double* induced_rho) const;
 
   private:
+    SurchemParameters parameters_;
 };
 
 #endif
