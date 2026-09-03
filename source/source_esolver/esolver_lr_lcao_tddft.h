@@ -54,8 +54,32 @@ namespace ModuleESolver
         const std::string in_dir;
         const std::string out_dir;
         const UnitCell* ucell_ = nullptr;
-        Grid_Driver gd;
         std::vector<double> orb_cutoff_;
+
+        /// @brief the ground-state solver, kept alive across ionic steps (esolver_type = "ks-lr").
+        /// Null on the `lr` path, where the ground state comes from files instead.
+        std::unique_ptr<ModuleESolver::ESolver_KS_LCAO<T, TR>> ks_;
+
+        // Geometry-dependent objects that the ground-state solver already builds for the current
+        // structure. They are aliased rather than rebuilt: `ESolver_KS_LCAO::before_scf` refreshes
+        // its own copies every ionic step, so recomputing them here would be both wasted work and
+        // a chance for the two to disagree. On the `lr` path the pointers are bound to this
+        // object's own members below, which `initialize_from_unitcell_` fills from file.
+        Grid_Driver gd_own_;                  ///< only used when `ks_` is null
+        TwoCenterBundle two_center_bundle_own_;  ///< only used when `ks_` is null
+        Grid_Driver* gd_ptr_ = nullptr;
+        const TwoCenterBundle* tcb_ptr_ = nullptr;
+        Parallel_Grid* pgrid_ptr_ = nullptr;
+        Structure_Factor* sf_ptr_ = nullptr;
+        pseudopot_cell_vl* locpp_ptr_ = nullptr;
+
+        Grid_Driver& gd() const { return *this->gd_ptr_; }
+        const TwoCenterBundle& tcb() const { return *this->tcb_ptr_; }
+        Parallel_Grid& pgrid() const { return *this->pgrid_ptr_; }
+        Structure_Factor& sfac() const { return *this->sf_ptr_; }
+        pseudopot_cell_vl& vloc() const { return *this->locpp_ptr_; }
+        /// bind the aliases above; `ks_` must already be set (or null for the `lr` path)
+        void bind_ground_state_aliases_();
 
         // not to use ElecState because 2-particle state is quite different from 1-particle state.
         // implement a independent one (ExcitedState) to pack physical properties if needed.
@@ -66,7 +90,11 @@ namespace ModuleESolver
 
         /// @brief ground state wave function
         std::unique_ptr<psi::Psi<T>> psi_ks;  ///< KS orbitals used in the [nocc+nvirt] window
-        std::unique_ptr<psi::Psi<T>> psi_ks_all;  ///< all KS orbitals, read from the file, or moved from ESolver_FP::pelec.psi
+        /// @brief all KS orbitals. On the `ks-lr` path this aliases the ground-state solver's
+        /// `psi` (nk x nbands x nbasis -- far too big to copy every ionic step, and only read
+        /// here); on the `lr` path it points at `psi_ks_all_own_`, filled from file.
+        psi::Psi<T>* psi_ks_all_ = nullptr;
+        std::unique_ptr<psi::Psi<T>> psi_ks_all_own_;
 
         /// @brief ground state bands, read from the file, or moved from ESolver_FP::pelec.ekb
         ModuleBase::matrix eig_ks;///< ground state eigenvalues in the [nocc+nvirt] window
@@ -108,9 +136,7 @@ namespace ModuleESolver
         std::string xc_kernel;
 
         void initialize_from_unitcell_(UnitCell& ucell, const Input_para& inp);
-        void initialize_from_ks_(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol,
-                                 UnitCell& ucell,
-                                 const Input_para& inp);
+        void initialize_from_ks_(UnitCell& ucell, const Input_para& inp);
 
         std::vector<std::string> spin_types;
 
@@ -125,7 +151,6 @@ namespace ModuleESolver
         Parallel_Orbitals paraMat_;
         Parallel_Orbitals paraMat_all_; // for the parallelized size of the KS orbitals
 
-        TwoCenterBundle two_center_bundle_;
 
         LCAO_Orbitals orb_; ///< numerical atomic orbital data for single-point evaluation
         std::vector<std::complex<double>> velocity_mo; ///< store the velocity matrix elements in MO basis

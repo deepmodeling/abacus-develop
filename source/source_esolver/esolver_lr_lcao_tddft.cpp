@@ -275,10 +275,12 @@ void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, co
         // The embedded KS run happens before Relax_Driver starts its first step.
         Json::init_output_array_obj();
 #endif
-        ModuleESolver::ESolver_KS_LCAO<T, TR> ks_solver;
-        ks_solver.before_all_runners(basecell, inp);
-        ks_solver.runner(basecell, 0);
-        this->initialize_from_ks_(std::move(ks_solver), ucell, inp);
+        // the ground-state solver is a member, not a temporary: `runner` re-runs its SCF on every
+        // ionic step, and the objects aliased below have to stay alive for as long as this solver does
+        this->ks_ = LR_Util::make_unique<ModuleESolver::ESolver_KS_LCAO<T, TR>>();
+        this->ks_->before_all_runners(basecell, inp);
+        this->ks_->runner(basecell, 0);
+        this->initialize_from_ks_(ucell, inp);
     }
     else
     {
@@ -287,23 +289,53 @@ void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, co
 }
 
 template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol,
-                                                 UnitCell& ucell,
-                                                 const Input_para& inp)
+void ModuleESolver::ESolver_LR<T, TR>::bind_ground_state_aliases_()
+{
+    if (this->ks_)
+    {
+        // `ESolver_FP::before_all_runners` was never called on this object, so its own `pw_rhod`,
+        // `Pgrid`, `sf` and `locpp` are empty -- the excited-state force needs all four. Point at
+        // the ground-state solver's, which `before_scf` refreshes for the current geometry every
+        // ionic step. `pw_rho_flag` stays false so the destructor does not free what it borrowed.
+        this->pw_rho = this->ks_->pw_rho;
+        this->pw_rhod = this->ks_->pw_rhod;
+        this->pw_big = this->ks_->pw_big;
+        this->pw_rho_flag = false;
+        this->pgrid_ptr_ = &this->ks_->Pgrid;
+        this->sf_ptr_ = &this->ks_->sf;
+        this->locpp_ptr_ = &this->ks_->locpp;
+        this->gd_ptr_ = &this->ks_->gd;
+        // the two-center tables depend on the orbitals only, so the ground-state solver's single
+        // build serves every geometry. This used to be moved over only for `abs_gauge velocity`,
+        // leaving `LR_Force` and `cal_hs_grad` with an empty bundle in the length gauge.
+        this->tcb_ptr_ = &this->ks_->two_center_bundle_;
+    }
+    else
+    {
+        this->pgrid_ptr_ = &this->Pgrid;
+        this->sf_ptr_ = &this->sf;
+        this->locpp_ptr_ = &this->locpp;
+        this->gd_ptr_ = &this->gd_own_;
+        this->tcb_ptr_ = &this->two_center_bundle_own_;
+    }
+}
+
+template <typename T, typename TR>
+void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR(KS)");
+    ModuleESolver::ESolver_KS_LCAO<T, TR>& ks_sol = *this->ks_;
+    this->bind_ground_state_aliases_();
 
 	if (this->inp_->lr_solver == "spectrum") 
 	{
 		throw std::invalid_argument("when lr_solver==spectrum, esolver_type must be `lr` to skip KS calculation.");
 	}
 
-    this->gd = std::move(ks_sol.gd);
-
     // xc kernel
     this->xc_kernel = LR_Util::tolower(inp.xc_kernel);
     //kv
-    this->kv = std::move(ks_sol.kv);
+    this->kv = ks_sol.kv;   // copy: cheap, and the KS solver keeps using its own
 
     this->parameter_check();
 
@@ -318,8 +350,8 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolve
         this->set_parallel_orbitals_band(this->paraMat_all_, PARAM.inp.nbands);
     }
 
-    this->paraMat_.atom_begin_row = std::move(ks_sol.pv.atom_begin_row);
-    this->paraMat_.atom_begin_col = std::move(ks_sol.pv.atom_begin_col);
+    this->paraMat_.atom_begin_row = ks_sol.pv.atom_begin_row;
+    this->paraMat_.atom_begin_col = ks_sol.pv.atom_begin_col;
     this->paraMat_.iat2iwt_ = ucell.get_iat2iwt();
 
     LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands
@@ -328,14 +360,12 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolve
 #endif
     );
 
-    auto move_gs = [&, this]() -> void  // move the ground state info
-        {
-            this->psi_ks_all.reset(ks_sol.psi);
-            ks_sol.psi = nullptr;
-            //only need the eigenvalues. the 'elecstates' of excited states is different from ground state.
-            this->eig_ks_all = std::move(ks_sol.pelec->ekb);
-        };
-    move_gs();
+    // The ground-state solver owns `psi` and reuses it across ionic steps, so it cannot be stolen.
+    // `eig_ks_all` / `wg_ks_all` are nspin x nbands matrices -- a few kB, copied rather than aliased
+    // so that they survive the KS solver overwriting `pelec` on the next step.
+    this->psi_ks_all_ = ks_sol.psi;
+    this->eig_ks_all = ks_sol.pelec->ekb;
+    this->wg_ks_all = ks_sol.pelec->wg;
     // allocate psi_ks and eig_ks in the [nocc, nvirt] window
 #ifdef __MPI
     this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(),
@@ -353,7 +383,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolve
     {
         // copy the KS orbitals in the [nocc, nvirt] window
 #ifdef __MPI
-        Cpxgemr2d(this->nbasis, this->nbands, &(*this->psi_ks_all)(ik, 0, 0), 1, start_band + 1, ks_sol.pv.desc_wfc,
+        Cpxgemr2d(this->nbasis, this->nbands, &(*this->psi_ks_all_)(ik, 0, 0), 1, start_band + 1, ks_sol.pv.desc_wfc,
             &(*this->psi_ks)(ik, 0, 0), 1, 1, this->paraC_.desc, this->paraC_.blacs_ctxt);
 #else
         // serial: each band is `nbasis` contiguous coefficients, so the window is a plain
@@ -361,7 +391,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolve
         // leaving `psi_ks` uninitialized in every non-MPI build)
         for (int ib = 0;ib < this->nbands;++ib)
         {
-            const auto* start = &(*this->psi_ks_all)(ik, start_band + ib, 0);
+            const auto* start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
             auto* to = &(*this->psi_ks)(ik, ib, 0);
             std::copy(start, start + this->nbasis, to);
         }
@@ -375,15 +405,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolve
         this->nupdown = cal_nupdown_form_occ(ks_sol.pelec->wg);
         reset_dim_spin2();
     }
-    this->gint_info_ = std::move(ks_sol.gint_info_);
-    // move pw basis
-    if (this->pw_rho_flag)
-    {
-        this->pw_rho_flag = true;
-        delete this->pw_rho;    // newed in ESolver_FP::ESolver_FP
-    }
-    this->pw_rho = ks_sol.pw_rho;
-    ks_sol.pw_rho = nullptr;
+    // `gint_info_` stays owned by the KS solver: its `before_scf` rebuilds and re-publishes it
     //init potential and calculate kernels using ground state charge
     init_pot(*ks_sol.pelec->charge);
 
@@ -413,16 +435,13 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolve
 #endif
     this->pelec = new elecstate::ElecStateLCAO<T>();
     orb_cutoff_ = ks_sol.orb_.cutoffs();
-    if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
-    {
-        this->two_center_bundle_ = std::move(ks_sol.two_center_bundle_);
-    }
 }
 
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR(from scratch)");
+    this->bind_ground_state_aliases_();
     // xc kernel
     this->xc_kernel = LR_Util::tolower(inp.xc_kernel);
 
@@ -449,15 +468,15 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
     this->parameter_check();
 
     /// read orbitals and build the interpolation table
-    two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn.data(), inp.orbital_dir);
+    two_center_bundle_own_.build_orb(ucell.ntype, ucell.orbital_fn.data(), inp.orbital_dir);
 
     LCAO_Orbitals orb;
-    two_center_bundle_.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax,
+    two_center_bundle_own_.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax,
                                         inp.out_element_info, inp.cal_force);
     orb_cutoff_ = orb.cutoffs();
     if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
     {
-        setup_2center_table(this->two_center_bundle_, orb, ucell);
+        setup_2center_table(this->two_center_bundle_own_, orb, ucell);
     }
 
     this->set_dimension();
@@ -495,7 +514,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
     this->pelec = new elecstate::ElecState();
 
     // read the ground state charge density and calculate xc kernel
-    Pgrid.init(this->pw_rho->nx,
+    pgrid().init(this->pw_rho->nx,
         this->pw_rho->ny,
         this->pw_rho->nz,
         this->pw_rho->nplane,
@@ -516,7 +535,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
         PARAM.globalv.gamma_only_local);
     atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,
-                         this->gd,
+                         this->gd(),
                          *this->ucell_,
                          search_radius,
                          this->inp_->test_atom_input);
@@ -536,7 +555,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
         this->pw_big->nbzp,
         orb.Phi,
         ucell,
-        this->gd,
+        this->gd(),
         this->inp_->nspin,
         PARAM.globalv.gamma_only_local,
         PARAM.globalv.domag,
@@ -614,7 +633,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
                               this->nvirt,
                               *this->ucell_,
                               orb_cutoff_,
-                              this->gd,
+                              this->gd(),
                               *this->psi_ks,
                               this->eig_ks,
 #ifdef __EXX
@@ -650,7 +669,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
                                 this->nvirt,
                                 *this->ucell_,
                                 orb_cutoff_,
-                                this->gd,
+                                this->gd(),
                                 *this->psi_ks,
                                 this->eig_ks,
 #ifdef __EXX
@@ -723,7 +742,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
     // cal electron-hole density
     if (this->inp_->out_chg[0])
     {
-        LR_Density<T> lr_density(*this->ucell_, kv, gd, *psi_ks, orb_cutoff_, Pgrid,
+        LR_Density<T> lr_density(*this->ucell_, kv, gd(), *psi_ks, orb_cutoff_, pgrid(),
             nspin, nocc, nvirt, nbasis,
             paraX_, paraC_, paraMat_, openshell);
 
@@ -739,7 +758,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
     if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity" )
     {
         const int nspin_tmp = this->inp_->nspin == 2 ? 2 : 1;
-        this->velocity_mo = LR_Util::cal_velocity_mo(*this->ucell_, this->gd, this->two_center_bundle_, 
+        this->velocity_mo = LR_Util::cal_velocity_mo(*this->ucell_, this->gd(), this->tcb(), 
                                                     this->paraMat_, this->paraC_, this->kv, *this->psi_ks, 
                                                     this->nk, nspin_tmp, this->nbasis, this->nocc, this->nvirt);
     }
@@ -757,7 +776,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
     for (int is = 0;is < this->X.size();++is)
     {
         LR_Spectrum<T> spectrum(nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks,
-            *this->ucell_, this->kv, this->gd, this->orb_cutoff_, this->two_center_bundle_,
+            *this->ucell_, this->kv, this->gd(), this->orb_cutoff_, this->tcb(),
             this->paraX_, this->paraC_, this->paraMat_,
             &this->pelec->ekb.c[is * nstates], this->eig_ks.c, this->X[is].template data<T>(), nstates, openshell,
             LR_Util::tolower(this->inp_->abs_gauge), GlobalV::MY_RANK, this->out_dir);
@@ -886,7 +905,7 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
     const int gxc_lr = (!PARAM.inp.cal_force || !LR_Util::has_local_xc(xc_kernel)) ? GX::NoGxc
         : ((nspin == 1) ? GX::Singlet : GX::BothSpins);
     std::shared_ptr<const LR::KernelXC> kernel_lr = PotHxcLR::make_kernel(
-        xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, Pgrid, oshell, gxc_lr, this->inp_->lr_init_xc_kernel);
+        xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, pgrid(), oshell, gxc_lr, this->inp_->lr_init_xc_kernel);
     switch (nspin)
     {
     case 1:
@@ -919,7 +938,7 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
         // `KernelXC` are bit-for-bit identical, so reuse the one just built.
         const bool share_lr = (xc_kernel_gs == xc_kernel) && ((gxc_lr & gxc_gs) == gxc_gs);
         std::shared_ptr<const LR::KernelXC> kernel_gs = share_lr ? kernel_lr
-            : PotHxcLR::make_kernel(xc_kernel_gs, *this->pw_rho, *this->ucell_, chg_gs, Pgrid, oshell, gxc_gs, this->inp_->lr_init_xc_kernel);
+            : PotHxcLR::make_kernel(xc_kernel_gs, *this->pw_rho, *this->ucell_, chg_gs, pgrid(), oshell, gxc_gs, this->inp_->lr_init_xc_kernel);
         this->pot_hxc_gs = std::make_shared<LR::PotHxcLR>(kernel_gs, xc_kernel_gs, *this->pw_rho, *this->ucell_, chg_gs.nrxx, st_gs);
     }
 }
@@ -957,10 +976,11 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
 
     if (PARAM.inp.cal_force)
     {    // allocate psi_ks_all and eig_ks_all to read all the bands
-        this->psi_ks_all.reset(new psi::Psi<T>(this->kv.get_nks(), paraMat_all_.ncol_bands, paraMat_all_.get_row_size(), this->kv.ngk, true));
+        this->psi_ks_all_own_.reset(new psi::Psi<T>(this->kv.get_nks(), paraMat_all_.ncol_bands, paraMat_all_.get_row_size(), this->kv.ngk, true));
+        this->psi_ks_all_ = this->psi_ks_all_own_.get();
         this->eig_ks_all.create(this->kv.get_nks(), PARAM.inp.nbands);
         this->wg_ks_all.create(this->kv.get_nks(), PARAM.inp.nbands);
-        if (!ModuleIO::read_wfc_nao(this->in_dir, paraMat_all_, *this->psi_ks_all,
+        if (!ModuleIO::read_wfc_nao(this->in_dir, paraMat_all_, *this->psi_ks_all_,
                 this->eig_ks_all,
                 this->wg_ks_all,
                 this->kv.ik2iktot,
@@ -987,12 +1007,12 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
         if (this->nspin == 1) { ssc << this->in_dir << "chg.cube"; }
         else { ssc << this->in_dir << "chgs" << is + 1 << ".cube"; }
         GlobalV::ofs_running << ssc.str() << std::endl;
-        ModuleIO::read_vdata_palgrid(Pgrid,
+        if (ModuleIO::read_vdata_palgrid(pgrid(),
             GlobalV::MY_RANK,
             GlobalV::ofs_running,
             ssc.str(),
             chg_gs.rho[is],
-            this->ucell_->nat);
+            this->ucell_->nat))
         GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
     }
 }

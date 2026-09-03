@@ -68,9 +68,13 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge& chg_gs
     std::vector<std::string> pot_register;
     if (PARAM.inp.vl_in_h)
     {
-        //! 11) calculate the structure factor
-        this->sf.setup(&(*this->ucell_), Pgrid, this->pw_rhod);
-        this->locpp.init_vloc((*this->ucell_), this->pw_rho);
+        if (!this->ks_)
+        {   // on the `ks-lr` path `sfac()`/`vloc()` alias the ground-state solver's, which
+            // `ESolver_FP::before_scf` already refreshed for the current geometry
+            //! 11) calculate the structure factor
+            this->sfac().setup(&(*this->ucell_), pgrid(), this->pw_rhod);
+            this->vloc().init_vloc((*this->ucell_), this->pw_rho);
+        }
         pot_register.push_back("local");
     }
     if(PARAM.inp.vh_in_h)
@@ -81,7 +85,7 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge& chg_gs
     
     // initialize the ground state potential
     this->pot_gs = LR_Util::make_unique<elecstate::Potential>(this->pw_rhod, this->pw_rho,
-        &(*this->ucell_), &this->locpp.vloc, &this->sf, &this->solvent,
+        &(*this->ucell_), &this->vloc().vloc, &this->sfac(), &this->solvent,
        &this->etxc_gs, &this->vtxc_gs);
     this->pot_gs.get()->pot_register(pot_register);
     XC_Functional::set_xc_type((*this->ucell_).atoms[0].ncpp.xc_func);    // set XC type of the ground state
@@ -93,7 +97,7 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge& chg_gs
     if (PARAM.inp.test_force)
     {
         this->pot_gs_hartree = LR_Util::make_unique<elecstate::Potential>(this->pw_rhod, this->pw_rho,
-            &(*this->ucell_), &this->locpp.vloc, &this->sf, &this->solvent,
+            &(*this->ucell_), &this->vloc().vloc, &this->sfac(), &this->solvent,
             &this->etxc_gs, &this->vtxc_gs);
         this->pot_gs_hartree->pot_register({ "hartree" });
         this->pot_gs_hartree->init_pot(&chg_gs);  // call update_from_charge inside
@@ -109,7 +113,7 @@ ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int isp
     // construct and solve the Z-vector equation
     Z_vector_equation(this->X[ispin].template data<T>(), Z.template data<T>(),
         this->xc_kernel, this->nstates, this->nspin, this->nbasis, this->nocc, this->nvirt,
-        (*this->ucell_), orb_cutoff_, this->gd, *this->psi_ks, this->eig_ks,
+        (*this->ucell_), orb_cutoff_, this->gd(), *this->psi_ks, this->eig_ks,
 #ifdef __EXX    
         std::weak_ptr<Exx_LRI<T>>(this->exx_lri), this->exx_info.info_global.hybrid_alpha,
 #endif
@@ -133,7 +137,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
 
     // calculate the force (the partial gradient of Lagrangian)
     LR_Force<T> lr_force((*this->ucell_), this->kv.kvec_d, this->paraMat_,
-        *this->pw_rhod, *this->pw_rho, this->locpp, this->sf, this->gd, this->two_center_bundle_
+        *this->pw_rhod, *this->pw_rho, this->vloc(), this->sfac(), this->gd(), this->tcb()
 #ifdef __EXX
         , std::weak_ptr<Exx_LRI<T>>(this->exx_lri), this->exx_info.info_global.hybrid_alpha
 #endif
@@ -157,7 +161,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
         // (`cal_force_exx_dm_trans` feeds the same tensor to both slots, so it is consistent.)
         auto dm_trans =   // D(X) complex
             LR_Util::build_dm_from_dmk<T, T>(dm_trans_k,
-                this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_);
+                this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_);
         LR_Util::transpose_DMR(dm_trans, (*this->ucell_).nat);
         // D(X) real, for the grid Hxc force. The Coulomb kernel (mu nu | kappa lambda) is
         // symmetric within each index pair, so it only ever sees the symmetric part of D^X.
@@ -167,7 +171,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
         // NOTE: `build_dm_from_dmk` symmetrizes `dm_trans_k` IN PLACE, hence the ordering.
         auto dm_trans_real =   // D(X), double (FIXME: not enough for periodic system!)
             LR_Util::build_dm_from_dmk<T, double>(dm_trans_k,
-                this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_,
+                this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_,
                 /*symmetrize=*/true);
         LR_Util::transpose_DMR(dm_trans_real, (*this->ucell_).nat);
         // LR_Util::print_DMR(dm_trans, "dm_trans of istate " + std::to_string(istate));
@@ -189,10 +193,10 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
         const std::vector<ct::Tensor>& relaxed_diff_dm_k = dm_diff_k + dm_relaxed_k;
         const elecstate::DensityMatrix<T, T>& diff_dm =
             LR_Util::build_dm_from_dmk<T, T>(dm_diff_k,
-                this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_);
+                this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_);
         const elecstate::DensityMatrix<T, T>& relaxed_diff_dm =
             LR_Util::build_dm_from_dmk<T, T>(relaxed_diff_dm_k,
-                this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_);
+                this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_);
         // LR_Util::print_DMR(relaxed_diff_dm, "relaxed_diff_dm T+Z (Z symmetrized) of istate " + std::to_string(istate));
 
         // elecstate::DensityMatrix<T, T> relaxed_diff_dm =    // T+D(Z), (R) can be complex
@@ -201,10 +205,10 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
         //             cal_dm_diff_pb las(this->X[ispin].template data<T>() + offset, this->paraX_[ispin], c, this->paraC_, this->nbasis, this->nocc[ispin], this->nvirt[ispin], this->paraMat_)
         //             + cal_dm_trans_pblas(Z.template data<T>() + offset, this->paraX_[ispin], c, this->paraC_, this->nbasis, this->nocc[ispin], this->nvirt[ispin], this->paraMat_)
         //             ,// ),
-        //         this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_);
+        //         this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_);
         // LR_Util::print_DMR(relaxed_diff_dm, "relaxed_diff_dm of istate " + std::to_string(istate));
         elecstate::DensityMatrix<T, double> relaxed_diff_dm_real(&this->paraMat_, 1, this->kv.kvec_d, this->nk);
-        LR_Util::initialize_DMR(relaxed_diff_dm_real, this->paraMat_, (*this->ucell_), this->gd, this->orb_cutoff_);
+        LR_Util::initialize_DMR(relaxed_diff_dm_real, this->paraMat_, (*this->ucell_), this->gd(), this->orb_cutoff_);
         LR_Util::get_DMR_real_imag_part(relaxed_diff_dm, relaxed_diff_dm_real, 'R');
 
         // get edm of type DensityMatrix
@@ -228,7 +232,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
                 exx_lri_weak, this->exx_info.info_global.hybrid_alpha,
 #endif
                 pot_weak, pot_hxc_gs_weak,
-                this->kv, this->gd, this->paraX_, this->paraC_, this->paraMat_,
+                this->kv, this->gd(), this->paraX_, this->paraC_, this->paraMat_,
                 this->xc_kernel, this->spin_types[ispin]);
         if (PARAM.inp.test_force && nocc[0] == 1 && nvirt[0] == 1)
         {
@@ -238,7 +242,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
             test_edm_H2<T>(edm_k[0].data<T>(), this->eig_ks.c, c, this->nbasis);
         }
         elecstate::DensityMatrix<T, double> edm_real = LR_Util::build_dm_from_dmk<T, double>(edm_k,
-            this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_, /*symmetrize=*/true);
+            this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_, /*symmetrize=*/true);
         // print edm_real (R)
         if (PARAM.inp.test_force)
         {
@@ -275,7 +279,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
         {
             // test H[T] force (Z=0), non-EXX part
             elecstate::DensityMatrix<T, double> diff_dm_real(&this->paraMat_, 1, this->kv.kvec_d, this->nk);
-            LR_Util::initialize_DMR(diff_dm_real, this->paraMat_, (*this->ucell_), this->gd, this->orb_cutoff_);
+            LR_Util::initialize_DMR(diff_dm_real, this->paraMat_, (*this->ucell_), this->gd(), this->orb_cutoff_);
             LR_Util::get_DMR_real_imag_part(diff_dm, diff_dm_real, 'R');
 
             GlobalV::ofs_running << "========== [TEST H_GS-(T) force (Z=0), non-EXX part] ===========" << std::endl;
@@ -351,7 +355,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     for (int is : {0, 1}) { c_spin.push_back(LR_Util::get_psi_spin(*this->psi_ks, is, this->nk)); }
 
     LR_Force<T> lr_force((*this->ucell_), this->kv.kvec_d, this->paraMat_,
-        *this->pw_rhod, *this->pw_rho, this->locpp, this->sf, this->gd, this->two_center_bundle_
+        *this->pw_rhod, *this->pw_rho, this->vloc(), this->sfac(), this->gd(), this->tcb()
 #ifdef __EXX
         , std::weak_ptr<Exx_LRI<T>>(this->exx_lri), this->exx_info.info_global.hybrid_alpha
 #endif
@@ -383,19 +387,19 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
         //    non-symmetric $D^X$), then the real symmetrized copy for the grid Hxc force --
         //    `build_dm_from_dmk_spin` symmetrizes IN PLACE, hence the ordering.
         auto dm_trans = LR_Util::build_dm_from_dmk_spin<T, T>(dmx_k,
-            this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_);
+            this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_);
         LR_Util::transpose_DMR(dm_trans, (*this->ucell_).nat);
         auto dm_trans_real = LR_Util::build_dm_from_dmk_spin<T, double>(dmx_k,
-            this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_,
+            this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_,
             /*symmetrize=*/true);
         LR_Util::transpose_DMR(dm_trans_real, (*this->ucell_).nat);
 
         // 3. the relaxed difference density matrix $T+D^Z$
         const elecstate::DensityMatrix<T, T>& relaxed_diff_dm =
             LR_Util::build_dm_from_dmk_spin<T, T>(relaxed_k,
-                this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_);
+                this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_);
         elecstate::DensityMatrix<T, double> relaxed_diff_dm_real(&this->paraMat_, 2, this->kv.kvec_d, this->nk);
-        LR_Util::initialize_DMR(relaxed_diff_dm_real, this->paraMat_, (*this->ucell_), this->gd, this->orb_cutoff_);
+        LR_Util::initialize_DMR(relaxed_diff_dm_real, this->paraMat_, (*this->ucell_), this->gd(), this->orb_cutoff_);
         LR_Util::get_DMR_real_imag_part(relaxed_diff_dm, relaxed_diff_dm_real, 'R');
 
         // 4. the energy-weighted density matrix
@@ -413,9 +417,9 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
                 exx_lri_weak, this->exx_info.info_global.hybrid_alpha,
 #endif
                 pot_weak, pot_hxc_gs_weak,
-                this->kv, this->gd, this->paraX_, this->paraC_, this->paraMat_, this->xc_kernel);
+                this->kv, this->gd(), this->paraX_, this->paraC_, this->paraMat_, this->xc_kernel);
         elecstate::DensityMatrix<T, double> edm_real = LR_Util::build_dm_from_dmk_spin<T, double>(edm_k,
-            this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_,
+            this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_,
             /*symmetrize=*/true);
 
         // 5. the force terms
@@ -500,8 +504,8 @@ template<typename T, typename TR>
 elecstate::DensityMatrix<T, double> ModuleESolver::ESolver_LR<T, TR>::cal_dm_gs()
 {
     elecstate::DensityMatrix<T, double> dm_gs(&this->paraMat_, this->nspin, this->kv.kvec_d, this->nk);
-    elecstate::cal_dm_psi(&this->paraMat_all_, this->wg_ks_all, *this->psi_ks_all, dm_gs);   // nbands is important here
-    LR_Util::initialize_DMR(dm_gs, this->paraMat_, (*this->ucell_), this->gd, this->orb_cutoff_);   // nbands is not important here
+    elecstate::cal_dm_psi(&this->paraMat_all_, this->wg_ks_all, *this->psi_ks_all_, dm_gs);   // nbands is important here
+    LR_Util::initialize_DMR(dm_gs, this->paraMat_, (*this->ucell_), this->gd(), this->orb_cutoff_);   // nbands is not important here
     dm_gs.cal_DMR();
     return dm_gs;
 }
@@ -510,7 +514,7 @@ template<typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::test_force()
 {
     LR_Force<T> lr_force((*this->ucell_), this->kv.kvec_d, this->paraMat_, *this->pw_rhod, *this->pw_rho,
-        this->locpp, this->sf, this->gd, this->two_center_bundle_
+        this->vloc(), this->sfac(), this->gd(), this->tcb()
 #ifdef __EXX
         , std::weak_ptr<Exx_LRI<T>>(this->exx_lri), this->exx_info.info_global.hybrid_alpha
 #endif
@@ -524,8 +528,8 @@ void ModuleESolver::ESolver_LR<T, TR>::test_force()
     ModuleBase::matrix wg_ekb_ks_all(nspin, PARAM.inp.nbands);
     std::transform(this->wg_ks_all.c, this->wg_ks_all.c + nspin * PARAM.inp.nbands,
         this->eig_ks_all.c, wg_ekb_ks_all.c, std::multiplies<double>());
-    elecstate::cal_dm_psi(&this->paraMat_all_, wg_ekb_ks_all, *this->psi_ks_all, edm_gs);
-    LR_Util::initialize_DMR(edm_gs, this->paraMat_, (*this->ucell_), this->gd, this->orb_cutoff_);
+    elecstate::cal_dm_psi(&this->paraMat_all_, wg_ekb_ks_all, *this->psi_ks_all_, edm_gs);
+    LR_Util::initialize_DMR(edm_gs, this->paraMat_, (*this->ucell_), this->gd(), this->orb_cutoff_);
     edm_gs.cal_DMR();
     // ground-state force
     ModuleBase::matrix force_gs = lr_force.reproduce_force_gs(kv, dm_gs, edm_gs);
