@@ -1,7 +1,6 @@
 #ifndef H_EWALD_PW_H
 #define H_EWALD_PW_H
 
-#include "source_base/global_function.h"
 #include "source_cell/unitcell.h"
 #include "source_basis/module_pw/pw_basis.h"
 

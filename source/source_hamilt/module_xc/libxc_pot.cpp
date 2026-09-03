@@ -3,7 +3,6 @@
 #include "xc_functional.h"
 #include "libxc_abacus.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"

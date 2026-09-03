@@ -1,4 +1,5 @@
 #include "h_ewald_pw.h"
+#include "source_base/global_function.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/mymath.h" // use heapsort
 #include "dnrm2.h"
