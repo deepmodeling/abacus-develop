@@ -70,7 +70,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 {
     ModuleBase::TITLE("XC_Functional", "set_xc_type");
     //Note : due to the separation of gcx_spin and gcc_spin,
-    //when you are adding new GGA functionals,
+    //when you are adding GGA functionals,
     //please put exchange first, followed by correlation,
     //such as for PBE we have:
     //        func_id.push_back(XC_GGA_X_PBE);
@@ -347,7 +347,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 
     // if((func_type == 4 || func_type == 5) && basis_type == "pw")
     // {
-    //     ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for planewave yet");
+    //     ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for plane-wave yet");
     // }
 
     // Hybrid functional is now supported for both PW and LCAO basis

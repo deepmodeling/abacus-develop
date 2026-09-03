@@ -7,6 +7,7 @@
 #include "../diago_bpcg.h"
 #include "diago_mock.h"
 #include "mpi.h"
+#include "source_base/parallel_comm.h"
 #include "source_basis/module_pw/test/test_tool.h"
 
 #include <gtest/gtest.h>

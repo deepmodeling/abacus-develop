@@ -32,9 +32,9 @@ class ElecStatePW : public ElecState
     ~ElecStatePW();
 
     //! interface for HSolver to calculate rho from Psi
-    virtual void psiToRho(const psi::Psi<T, Device>& psi);
+    void psiToRho(const psi::Psi<T, Device>& psi) override;
 
-    virtual void cal_tau(const psi::Psi<T, Device>& psi);
+    void cal_tau(const psi::Psi<T, Device>& psi) override;
 
     double get_spin_constrain_energy() override;
 

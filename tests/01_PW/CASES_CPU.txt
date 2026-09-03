@@ -132,3 +132,5 @@ scf_out_chg_tau
 814_PW_LT_triclinic
 815_PW_DFTU_S2_Z
 816_PW_DFTU_S4_XY
+scf_deltaspin2
+scf_deltaspin4

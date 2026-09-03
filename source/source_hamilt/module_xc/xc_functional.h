@@ -206,17 +206,19 @@ class XC_Functional
         double &v2c);
 
 //-------------------
-//  xc_grad.cpp
+//  xc_grad*.cpp
 //-------------------
 
-// This file contains subroutines realted to gradient calculations
-// it contains 5 subroutines:
-// 1. gradcorr, which calculates gradient correction
-// 2. grad_wfc, which calculates gradient of wavefunction
+// The gradient correction is a pipeline: XC_Functional::gradcorr is the
+// public entry point declared below, and its three internal stage
+// functions (gradcorr_prepare_rho / gradcorr_xc_kernel /
+// gradcorr_assemble_vxc) are declared in xc_grad_internal.h.
+// This file group also provides:
+// 1. grad_wfc, which calculates gradient of wavefunction
 //      it is used in stress_func_mgga.cpp
-// 3. grad_rho, which calculates gradient of density
-// 4. grad_dot, which calculates divergence of something
-// 5. noncolin_rho, which diagonalizes the spin density matrix
+// 2. grad_rho, which calculates gradient of density
+// 3. grad_dot, which calculates divergence of something
+// 4. noncolin_rho, which diagonalizes the spin density matrix
 //  and gives the spin up and spin down components of the charge.
 
     static void gradcorr(

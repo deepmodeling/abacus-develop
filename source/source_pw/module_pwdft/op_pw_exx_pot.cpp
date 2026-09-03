@@ -4,6 +4,13 @@
 
 namespace hamilt
 {
+extern template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>;
+extern template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+extern template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>;
+extern template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>;
+#endif
+
 template <typename Real, typename Device>
 void get_exx_potential(const K_Vectors* kv,
                        const ModulePW::PW_Basis_K* wfcpw,
@@ -531,8 +538,6 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
 
     return exx_div;
 }
-template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>;
-template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>;
 template void get_exx_potential<float, base_device::DEVICE_CPU>(const K_Vectors*,
                                                                 const ModulePW::PW_Basis_K*,
                                                                 ModulePW::PW_Basis*,
@@ -576,8 +581,6 @@ template void get_exx_stress_potential<double, base_device::DEVICE_CPU>(const K_
                                                                         int,
                                                                         const CoulombParam&);
 #if ((defined __CUDA) || (defined __ROCM))
-template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>;
-template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>;
 template void get_exx_potential<float, base_device::DEVICE_GPU>(const K_Vectors*,
                                                                 const ModulePW::PW_Basis_K*,
                                                                 ModulePW::PW_Basis*,

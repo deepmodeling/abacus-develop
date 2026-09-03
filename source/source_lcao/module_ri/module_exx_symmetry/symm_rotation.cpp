@@ -129,7 +129,7 @@ namespace ModuleSymmetry
                         // for nspin<4 (Theta=K) the original TRS_conj path already gives the conjugate.
                         //
                         // Which spatial operation the index denotes depends on the regime, matching
-                        // how the k-reduction filled kgmatrix[] (see KVectorUtils::ibz_kpoint):
+                        // how the k-reduction filled kgmatrix[] (see K_Vectors::reduce_by_symmetry):
                         //  - nspin=4 magnetic (Shubnikov): index j+nsym_ is the antiunitary element
                         //    Theta*gmatrix_anti[j]; its Ms is stored under the RAW key j+nsym_.
                         //  - otherwise (grey group / nspin<4): index i+nsym_ is Theta*gmatrix[i],

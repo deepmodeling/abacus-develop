@@ -5,54 +5,68 @@
 
 namespace ModuleESolver
 {
+class ESolver_LJ;
+}
 
-    class ESolver_LJ : public ESolver
+class MDCell;
+
+namespace ModuleESolver
+{
+
+class ESolver_LJ : public ESolver
+{
+  public:
+    ESolver_LJ()
     {
-    public:
-        ESolver_LJ()
-        {
-            classname = "ESolver_LJ";
-        }
+        classname = "ESolver_LJ";
+    }
 
-        void before_all_runners(BaseCell& cell, const Input_para& inp) override;
+    void before_all_runners(BaseCell& cell, const Input_para& inp) override;
 
-        void runner(BaseCell& cell, const int istep) override;
+    void runner(BaseCell& cell, const int istep) override;
 
-        double cal_energy() override;
+    double cal_energy() override;
 
-        void cal_force(BaseCell& cell, ModuleBase::matrix& force) override;
+    void cal_force(BaseCell& cell, ModuleBase::matrix& force) override;
 
-        void cal_stress(BaseCell& cell, ModuleBase::matrix& stress) override;
+    void cal_stress(BaseCell& cell, ModuleBase::matrix& stress) override;
 
         void after_all_runners(BaseCell& cell) override;
 
-      private:
-        double LJ_energy(const double& d, const int& i, const int& j) const;
+        void others(BaseCell& cell, const int istep) override;
 
-        ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j) const;
+        bool supports_mdcell() const override
+        {
+            return true;
+        }
 
-        void LJ_virial(const ModuleBase::Vector3<double>& force, const ModuleBase::Vector3<double>& dtau);
+        double mdcell_cutoff(const Input_para& inp) const override;
 
-        void rcut_search_radius(const int& ntype, const std::vector<double>& rcut);
+  private:
+    double LJ_energy(const double& d, const int& i, const int& j) const;
 
-        void set_c6_c12(const int& ntype,
-                        const int& rule,
-                        const std::vector<double>& epsilon,
-                        const std::vector<double>& sigma);
+    ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j) const;
 
-        void cal_en_shift(const int& ntype, const bool& is_shift);
+    void rcut_search_radius(const int& ntype, const std::vector<double>& rcut);
 
-        //--------------temporary----------------------------
-        double search_radius=-1.0;
-        ModuleBase::matrix lj_rcut;
-        ModuleBase::matrix lj_c12;
-        ModuleBase::matrix lj_c6;
-        ModuleBase::matrix en_shift;
+    void set_c6_c12(const int& ntype,
+                    const int& rule,
+                    const std::vector<double>& epsilon,
+                    const std::vector<double>& sigma);
 
-        double lj_potential=0.0;
-        ModuleBase::matrix lj_force;
-        ModuleBase::matrix lj_virial;
-        //---------------------------------------------------
-    };
-}
+    void cal_en_shift(const int& ntype, const bool& is_shift);
+
+    //--------------temporary----------------------------
+    double search_radius = -1.0;
+    ModuleBase::matrix lj_rcut;
+    ModuleBase::matrix lj_c12;
+    ModuleBase::matrix lj_c6;
+    ModuleBase::matrix en_shift;
+
+    double lj_potential = 0.0;
+    ModuleBase::matrix lj_force;
+    ModuleBase::matrix lj_virial;
+    //---------------------------------------------------
+};
+} // namespace ModuleESolver
 #endif

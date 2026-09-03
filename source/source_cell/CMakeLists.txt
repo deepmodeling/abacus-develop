@@ -22,6 +22,7 @@ add_library(
     read_atoms_helper.cpp
     read_orb.cpp
     klist.cpp
+    reciprocal_grid.cpp
     parallel_kpoints.cpp
     cell_index.cpp
     cell_tools.cpp
@@ -32,7 +33,6 @@ add_library(
     read_stru.cpp
     print_cell.cpp
     read_atom_species.cpp
-    k_vector_utils.cpp
     sep.cpp
     sep_cell.cpp
     qlist.cpp

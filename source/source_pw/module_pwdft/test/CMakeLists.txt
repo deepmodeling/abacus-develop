@@ -29,6 +29,31 @@ AddTest(
 )
 
 AddTest(
+	TARGET MODULE_PW_dftu_base_test
+	LIBS parameter base device
+	SOURCES dftu_base_test.cpp
+	../dftu_base.cpp
+	../dftu_base_io.cpp
+	../yukawa_screening.cpp
+	../../../source_estate/occ_matrix.cpp
+	../../../source_cell/unitcell.cpp
+	../../../source_cell/atom_spec.cpp
+	../../../source_cell/atom_pseudo.cpp
+	../../../source_cell/pseudo.cpp
+	../../../source_cell/magnetism.cpp
+	../../../source_cell/sep.cpp
+	../../../source_cell/sep_cell.cpp
+	../../../source_cell/read_atom_species.cpp
+	../../../source_cell/read_atoms.cpp
+	../../../source_cell/read_atoms_helper.cpp
+	../../../source_cell/cell_tools.cpp
+	../../../source_cell/print_cell.cpp
+	../../../source_cell/read_orb.cpp
+	../../../source_cell/read_stru.cpp
+	../../../source_cell/bcast_cell.cpp
+)
+
+AddTest(
 	TARGET MODULE_PW_structure_factor_test
 	LIBS parameter base device planewave
 	SOURCES structure_factor_test.cpp ../stru_fac.cpp

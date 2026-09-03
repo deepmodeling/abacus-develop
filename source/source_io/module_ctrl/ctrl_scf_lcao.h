@@ -9,7 +9,7 @@
 #include "source_estate/module_dm/density_matrix.h"    // mohan add 2025-11-04
 #include "source_hamilt/module_surchem/surchem.h"       // use surchem (for dH veff pots)
 #include "source_lcao/hamilt_lcao.h"                   // use hamilt::HamiltLCAO<TK, TR>
-#include "source_lcao/module_dftu/dftu_lcao.h"              // mohan add 20251107
+#include "source_lcao/module_dftu/dftu_nao.h"              // mohan add 20251107
 #include "source_lcao/module_rdmft/rdmft.h"            // use RDMFT codes
 #include "source_lcao/setup_deepks.h"                  // for deepks, mohan add 20251008
 #include "source_lcao/setup_exx.h"                     // for exx, mohan add 20251008

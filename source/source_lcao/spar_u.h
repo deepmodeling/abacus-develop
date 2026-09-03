@@ -2,7 +2,7 @@
 #define SPARSE_FORMAT_U_H
 
 #include "source_lcao/module_ri/abfs_vector3_order.h"
-#include "source_lcao/module_dftu/dftu_lcao.h" // mohan add 20251107
+#include "source_lcao/module_dftu/dftu_nao.h" // mohan add 20251107
 
 namespace sparse_format
 {

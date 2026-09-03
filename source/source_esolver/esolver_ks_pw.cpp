@@ -202,7 +202,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
     // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
-    pw::iter_init_dftu_pw(iter,
+    DFTU_BASE::iter_init_dftu_pw(iter,
                           istep,
                           this->dftu,
                           this->stp.template get_psi_t<T, Device>(),

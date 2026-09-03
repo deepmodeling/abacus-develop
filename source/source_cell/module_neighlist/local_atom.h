@@ -4,6 +4,8 @@
 #include "source_cell/module_neighlist/neighbor_types.h"
 #include "source_base/vector3.h"
 
+#include <cstdint>
+
 /**
  * @brief Atom record owned by a distributed neighbor-search rank.
  *
@@ -21,9 +23,8 @@ struct LocalAtom
     ModuleBase::Vector3<int> mbl;
     double mass;
     int type;
-    int type_index;
+    std::int64_t type_index;
     int owner_rank;
-    bool is_ghost;
 
     LocalAtom()
         : cart(0.0, 0.0, 0.0),
@@ -34,8 +35,7 @@ struct LocalAtom
           mass(1.0),
           type(0),
           type_index(0),
-          owner_rank(0),
-          is_ghost(false)
+          owner_rank(0)
     {
     }
 
@@ -46,9 +46,8 @@ struct LocalAtom
               const ModuleBase::Vector3<int>& mbl_in,
               double mass_in,
               int type_in,
-              int type_index_in,
-              int owner_rank_in,
-              bool is_ghost_in)
+              std::int64_t type_index_in,
+              int owner_rank_in)
         : cart(cart_in),
           frac(frac_in),
           vel(vel_in),
@@ -57,8 +56,7 @@ struct LocalAtom
           mass(mass_in),
           type(type_in),
           type_index(type_index_in),
-          owner_rank(owner_rank_in),
-          is_ghost(is_ghost_in)
+          owner_rank(owner_rank_in)
     {
     }
 };
