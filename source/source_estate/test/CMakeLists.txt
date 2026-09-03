@@ -17,6 +17,12 @@ AddTest(
   SOURCES ../kernels/test/elecstate_op_test.cpp
 )
 
+if(USE_CUDA)
+  target_compile_definitions(MODULE_ESTATE_Elecstate_Op_UTs PRIVATE __UT_USE_CUDA)
+elseif(USE_ROCM)
+  target_compile_definitions(MODULE_ESTATE_Elecstate_Op_UTs PRIVATE __UT_USE_ROCM)
+endif()
+
 AddTest(
   TARGET MODULE_ESTATE_elecstate_occupy
   LIBS parameter  base device
