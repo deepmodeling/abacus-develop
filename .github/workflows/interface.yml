@@ -58,12 +58,14 @@ jobs:
         env:
           SCRIPT: ${{ matrix.script }}
           PREFIX: ${{ matrix.prefix }}
+          BASIS: ${{ matrix.basis }}
         run: |
           python3 << 'PYEOF'
           import os, re, textwrap
 
           script = os.environ["SCRIPT"]
           prefix = os.environ["PREFIX"]
+          basis = os.environ["BASIS"]
 
           # ── 1. Patch the example script ────────────────────────
           with open(script) as f:

@@ -121,6 +121,17 @@ The repository text files have been normalized to LF once. Day-to-day line
 ending enforcement should rely on staged/changed-file hooks and CI; rerun the
 full mixed-line-ending hook only for intentional repository-wide normalization.
 
+## Upstream Repository
+
+- Repository: https://github.com/deepmodeling/abacus-develop
+- Issues: https://github.com/deepmodeling/abacus-develop/issues
+- Pull requests: https://github.com/deepmodeling/abacus-develop/pulls
+- Upstream PRs are opened from personal fork branches
+  (`<fork-owner>:<branch>` into `develop`).
+- `workflow_dispatch`-only workflows (e.g. `.github/workflows/interface.yml`)
+  are not triggered by push/PR events; PR CI cannot verify such fixes, so
+  state "manual dispatch run required" in the PR verification notes.
+
 ## PR Self-Check
 
 - Confirm the PR body states exact commands run, whether they passed or failed,
