@@ -6,6 +6,8 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/module_rt/propagator.h"
 #include "tddft_test.h"
+#undef protected
+#undef private
 
 #include <source_base/module_external/scalapack_connector.h>
 #include <mpi.h>

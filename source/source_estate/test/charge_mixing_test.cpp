@@ -7,6 +7,7 @@
 #include "source_base/module_mixing/broyden_mixing.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_xc/xc_functional.h"
+#undef private
 
 #ifdef _OPENMP
 #include <omp.h>

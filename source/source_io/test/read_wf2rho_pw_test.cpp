@@ -16,6 +16,7 @@
 #include "source_io/module_wf/read_wf2rho_pw.h"
 #include "source_io/module_wf/write_wfc_pw.h"
 #include "source_psi/psi.h"
+#undef private
 
 #ifdef __MPI
 #include "mpi.h"

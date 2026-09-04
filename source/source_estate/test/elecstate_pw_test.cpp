@@ -11,6 +11,8 @@
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/soc.h"
+#undef protected
+#undef private
 // mock functions for testing
 int XC_Functional::func_type = 1;
 namespace elecstate
@@ -324,4 +326,3 @@ TEST_F(ElecStatePWTest, ParallelKSingle)
     EXPECT_NO_THROW(elecstate_pw_s->parallelK());
 }
 
-#undef protected

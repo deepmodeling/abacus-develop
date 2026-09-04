@@ -6,6 +6,8 @@
 #define protected public
 #include "md_test_fixture.h"
 #include "source_md/md_func.h"
+#undef protected
+#undef private
 
 #define doublethreshold 1e-12
 /************************************************

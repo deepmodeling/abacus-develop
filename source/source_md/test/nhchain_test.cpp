@@ -7,6 +7,8 @@
 #include "setcell.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_md/nhchain.h"
+#undef protected
+#undef private
 #define doublethreshold 1e-12
 /************************************************
  *  unit test of functions in nhchain.h

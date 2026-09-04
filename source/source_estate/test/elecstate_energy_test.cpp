@@ -5,6 +5,7 @@
 #define private public
 #include "source_estate/elecstate.h"
 #include "source_hamilt/module_xc/xc_functional.h"
+#undef private
 
 #include <string>
 Parameter PARMA;

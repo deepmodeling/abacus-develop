@@ -9,6 +9,8 @@
 #include "source_estate/module_charge/charge.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "prepare_unitcell.h"
+#undef protected
+#undef private
 // mock functions for UnitCell
 
 Magnetism::Magnetism()
