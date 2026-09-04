@@ -1223,7 +1223,7 @@ TEST_F(toQOTest, CalculateSelfOvlpRPswfc)
     ucell.orbital_fn.data()[0] = "Si_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.orbital_fn.data()[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.atoms[1].nwl = 1; // only s and p for C
-    //TestParameters::input().qo_thr = 1e-10;
+    //PARAM.input.qo_thr = 1e-10;
     tqo.initialize(TestParameters::sys().global_out_dir,
                    "",
                    "",

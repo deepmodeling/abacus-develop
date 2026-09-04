@@ -210,7 +210,7 @@ class TestHSolverPW : public ::testing::Test {
 //     this->ekb_f.resize(2);
 //     psi_test_cf.resize(1, 2, 3);
 //     psi_test_cd.resize(1, 2, 3);
-//     TestParameters::input().nelec = 1.0;
+//     PARAM.input.nelec = 1.0;
 
 //     // check solve()
 //     EXPECT_EQ(this->hs_f.initialed_psi, false);
@@ -304,14 +304,14 @@ class TestHSolverPW : public ::testing::Test {
 //     // EXPECT_NEAR(this->hs_d.precondition[2], 6.236067977, 1e-8);
 
 //     // // check diago_ethr
-//     // TestParameters::input().init_chg = "atomic";
+//     // PARAM.input.init_chg = "atomic";
 //     // GlobalV::PW_DIAG_THR = 1e-7;
-//     // TestParameters::input().calculation = "scf";
+//     // PARAM.input.calculation = "scf";
 //     // float test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 1, 1.0);
 //     // EXPECT_NEAR(hs_f.diag_ethr, 0.01, 1.0e-7);
 //     // EXPECT_NEAR(test_diagethr, 0.01, 1.0e-7);
-//     // TestParameters::input().calculation = "md";
-//     // TestParameters::input().init_chg = "file";
+//     // PARAM.input.calculation = "md";
+//     // PARAM.input.init_chg = "file";
 //     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 1, 1.0);
 //     // EXPECT_NEAR(test_diagethr, 1e-5, 1.0e-7);
 //     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 2, 1.0);
@@ -319,14 +319,14 @@ class TestHSolverPW : public ::testing::Test {
 //     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 3, 1.0e-3);
 //     // EXPECT_NEAR(test_diagethr, 0.0001, 1.0e-7);
 
-//     // TestParameters::input().init_chg = "atomic";
+//     // PARAM.input.init_chg = "atomic";
 //     // GlobalV::PW_DIAG_THR = 1e-7;
-//     // TestParameters::input().calculation = "scf";
+//     // PARAM.input.calculation = "scf";
 //     // double test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 1, 1.0);
 //     // EXPECT_EQ(hs_d.diag_ethr, 0.01);
 //     // EXPECT_EQ(test_diagethr_d, 0.01);
-//     // TestParameters::input().calculation = "md";
-//     // TestParameters::input().init_chg = "file";
+//     // PARAM.input.calculation = "md";
+//     // PARAM.input.init_chg = "file";
 //     // test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 1, 1.0);
 //     // EXPECT_EQ(test_diagethr_d, 1e-5);
 //     // test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 2, 1.0);

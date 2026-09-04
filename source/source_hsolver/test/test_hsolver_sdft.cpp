@@ -310,7 +310,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
 //     stowf.nchi = 0;
 //     stowf.nchip_max = 0;
 //     psi_test_cd.resize(1, 2, 3);
-//     TestParameters::input().nelec = 1.0;
+//     PARAM.input.nelec = 1.0;
 //     GlobalV::MY_BNDGROUP = 0.0;
 //     int istep = 0;
 //     int iter = 0;
@@ -349,9 +349,9 @@ class TestHSolverPW_SDFT : public ::testing::Test
 //     psi_test_no.nk = 2;
 //     psi_test_no.nbands = 0;
 //     psi_test_no.nbasis = 0;
-//     TestParameters::input().nelec = 1.0;
+//     PARAM.input.nelec = 1.0;
 //     GlobalV::MY_BNDGROUP = 0.0;
-//     TestParameters::input().nspin = 1;
+//     PARAM.input.nspin = 1;
 //     elecstate_test.charge = new Charge;
 //     elecstate_test.charge->rho = new double*[1];
 //     elecstate_test.charge->rho[0] = new double[10];

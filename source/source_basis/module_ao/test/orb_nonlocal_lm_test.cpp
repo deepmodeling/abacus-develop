@@ -5,8 +5,6 @@
 #include <fstream>
 #include <iomanip>
 
-#include "source_io/module_parameter/parameter.h"
-#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #include "source_basis/module_ao/orb_nonlocal_lm.h"
 #undef private
@@ -696,7 +694,7 @@ TEST_F(NumericalNonlocalLmTest, BetaSave) {
     std::string tmp_r, tmp_k, tmp_beta, tmp;
     double tol = 1e-5;
 
-    // should be TestParameters::sys().global_out_dir+label
+    // should be PARAM.sys.global_out_dir+label
     // but in this unit test global_out_dir is empty string
     // see Numerical_Nonlocal_Lm::plot() for details
     std::string dir = "./O/";

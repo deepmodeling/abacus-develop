@@ -1339,7 +1339,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).vdw_s6 = "default";
         TestParameters::input(param).vdw_method = "d3_0";
         it->second.reset_value(it->second, param);
-        // EXPECT_EQ(TestParameters::input(param).vdw_s6, "1.0");
+        // EXPECT_EQ(param.input.vdw_s6, "1.0");
         EXPECT_EQ(TestParameters::input(param).vdw_s6, "default");
     }
     { // vdw_s8
@@ -1347,13 +1347,13 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).vdw_s8 = "default";
         TestParameters::input(param).vdw_method = "d3_0";
         it->second.reset_value(it->second, param);
-        // EXPECT_EQ(TestParameters::input(param).vdw_s8, "0.722");
+        // EXPECT_EQ(param.input.vdw_s8, "0.722");
         EXPECT_EQ(TestParameters::input(param).vdw_s8, "default");
 
         TestParameters::input(param).vdw_s8 = "default";
         TestParameters::input(param).vdw_method = "d3_bj";
         it->second.reset_value(it->second, param);
-        // EXPECT_EQ(TestParameters::input(param).vdw_s8, "0.7875");
+        // EXPECT_EQ(param.input.vdw_s8, "0.7875");
         EXPECT_EQ(TestParameters::input(param).vdw_s8, "default");
     }
     { // vdw_a1
@@ -1361,13 +1361,13 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).vdw_a1 = "default";
         TestParameters::input(param).vdw_method = "d3_0";
         it->second.reset_value(it->second, param);
-        // EXPECT_EQ(TestParameters::input(param).vdw_a1, "1.217");
+        // EXPECT_EQ(param.input.vdw_a1, "1.217");
         EXPECT_EQ(TestParameters::input(param).vdw_a1, "default");
 
         TestParameters::input(param).vdw_a1 = "default";
         TestParameters::input(param).vdw_method = "d3_bj";
         it->second.reset_value(it->second, param);
-        // EXPECT_EQ(TestParameters::input(param).vdw_a1, "0.4289");
+        // EXPECT_EQ(param.input.vdw_a1, "0.4289");
         EXPECT_EQ(TestParameters::input(param).vdw_a1, "default");
     }
     { // vdw_a2
@@ -1375,13 +1375,13 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).vdw_a2 = "default";
         TestParameters::input(param).vdw_method = "d3_0";
         it->second.reset_value(it->second, param);
-        // EXPECT_EQ(TestParameters::input(param).vdw_a2, "1.0");
+        // EXPECT_EQ(param.input.vdw_a2, "1.0");
         EXPECT_EQ(TestParameters::input(param).vdw_a2, "default");
 
         TestParameters::input(param).vdw_a2 = "default";
         TestParameters::input(param).vdw_method = "d3_bj";
         it->second.reset_value(it->second, param);
-        // EXPECT_EQ(TestParameters::input(param).vdw_a2, "4.4407");
+        // EXPECT_EQ(param.input.vdw_a2, "4.4407");
         EXPECT_EQ(TestParameters::input(param).vdw_a2, "default");
     }
     { // vdw_c6_unit

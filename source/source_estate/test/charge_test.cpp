@@ -47,7 +47,7 @@ void Set_GlobalV_Default()
  *     - this is a trivial test
  *   - Allocate: Charge::set_rhopw(), Charge::allocate(), Charge::destroy()
  *     - allocate rho, rhog, rho_save, rhog_save, kin_r, kin_r_save
- *     - using rhopw and TestParameters::input().nspin
+ *     - using rhopw and PARAM.input.nspin
  *   - SumRho: Charge::sum_rho()
  *     - calculate \sum_{is}^nspin \sum_{ir}^nrxx rho[is][ir]
  *   - RenormalizeRho: Charge::renormalize_rho()

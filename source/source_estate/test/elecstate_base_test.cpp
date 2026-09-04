@@ -521,8 +521,8 @@ TEST_F(ElecStateTest, CalculateWeightsGWeights)
                                  elecstate->nelec_spin,
                                  GLOBAL_NBANDS,
                                  elecstate->skip_weights);
-    // TestParameters::input().nelec = 10;
-    // TestParameters::input().nbands = 6;
+    // PARAM.input.nelec = 10;
+    // PARAM.input.nbands = 6;
     // nks = 5;
     // wg = 10/(5*6) = 0.33333333333
     EXPECT_NEAR(elecstate->wg(0, 0), 0.33333333333, 1e-10);
@@ -598,8 +598,8 @@ TEST_F(ElecStateTest, CalculateWeightsGWeightsTwoFermi)
                                  elecstate->nelec_spin,
                                  GLOBAL_NBANDS,
                                  elecstate->skip_weights);
-    // TestParameters::input().nelec = 10;
-    // TestParameters::input().nbands = 6;
+    // PARAM.input.nelec = 10;
+    // PARAM.input.nbands = 6;
     // nks = 10;
     // wg = 10/(10*6) = 0.16666666666
     EXPECT_NEAR(elecstate->wg(0, 0), 0.16666666666, 1e-10);
