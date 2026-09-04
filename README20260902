@@ -1,0 +1,65 @@
+# para* 重构计划（分支 2026-09-02-b）
+
+## 背景与起点
+
+- **分支**：`2026-09-02-b`，起点 commit `2a7696f5d`（step-0 cleanup source_base parallel_*）
+- **基线状态**：`source_base/` 下有 14 个 `parallel_*` 文件（2d/cell/comm/common/device/global/grid/reduce），**没有** `module_parallel/` 目录，**没有** ParallelPartition——从 0 开始
+- 之前分支上尝试过 ParallelPartition（8 个裸 MPI_Comm 成员）和 ParaTag enum 两套方案，都已推倒
+
+## 核心设计（已定）
+
+**两个类，放在 `source/source_base/module_parallel/` 下：**
+
+### 1. `ParaWorld` —— 单个通信域
+- 内容：`tag`（字符串常量）+ `comm`（MPI_Comm，串行下不存在）+ `rank` + `size`
+- 把原本散在 GlobalV 的并行参数（NPROC_IN_POOL、RANK_IN_POOL 等）收进对应域对象
+- 方法：`tag()` / `rank()` / `size()` / `comm()`（仅 __MPI）/ `valid()` / `static serial(tag)` 安全退化（size=1, rank=0）
+- 串行编译：`comm()` 用 `#ifdef __MPI` 包住，`rank()`/`size()`/`tag()` 总可用
+- 域特有参数（如 npw_per_proc、2D 网格行列）**不放进类**，由函数按需另外传
+
+### 2. `ParaCollection` —— 全域容器
+- 内容：`std::vector<ParaWorld>`
+- 查找：`find(tag)` 按字符串 tag 线性查找，**找不到返回静态空域（安全退化，不抛异常）**
+- tag 用常量（避免裸字符串拼写错误运行时才暴露）
+
+### 3. `ParaTag` —— 域标签常量
+- 8 大域：`pw` / `kmesh` / `bsame_kdiff` / `bdiff_ksame` / `rgrid` / `diag` / `matrix` / `atom`
+- 对应原全局：POOL_WORLD / KP_WORLD / INT_BGROUP / BP_WORLD / GRID_WORLD / DIAG_WORLD / matrix / atom
+
+## 目标
+
+- 函数通过**注入** `const ParaWorld&` 或 `const ParaCollection&` 获取通信域，不再读裸全局 POOL_WORLD/GlobalV
+- wrapper（Parallel_Common::bcast_* / Parallel_Reduce::reduce_*）加 `ParaWorld` 重载，`#ifdef __MPI` 收进 wrapper 内部，调用点无 `#ifdef`、无 MPI_Comm，串行并行都能编译跑
+- 测试用 `ParaWorld::serial(tag)` 或一行工厂构造，**去掉 GlobalV/divide_pools/set_global_partition 样板**
+
+## 分步计划（每步一个 commit，确认合理再进下一步）
+
+| 步骤 | 内容 | commit 信息 |
+|---|---|---|
+| **step 1** | 建 `module_parallel/` 目录 + `ParaWorld` 类（tag 常量 + comm/rank/size + `serial()` + `valid()`），含单元测试 + CMake/Makefile.Objects 接线 | `feat(parallel): add ParaWorld comm-domain value type` |
+| **step 2** | `ParaCollection`（`vector<ParaWorld>` + `find(tag)` 安全退化返回静态空域），含单元测试 | `feat(parallel): add ParaCollection domain container` |
+| **step 3** | 用 `ParaWorld`/`ParaCollection` 表达 8 大域装配（替代旧 divide_pools 全局写法），接进 driver 初始化 | `feat(parallel): assemble domains into ParaCollection at driver` |
+| **step 4** | `Parallel_Common::bcast_bool` 加 `ParaWorld` 重载（`#ifdef __MPI` 收进 wrapper，串行 no-op，旧签名保留） | `feat(parallel): bcast_bool overload taking ParaWorld` |
+| **step 5** | rhog_io.cpp 打样：注入 `ParaWorld`，`bcast_bool(error, pw)` 一行无 `#ifdef`；read_rhog_test 改一行构造去 GlobalV | `refactor(io): inject ParaWorld into read_rhog` |
+
+## 命名与规范约束
+
+- 文件名小写+下划线：`para_world.h/.cpp`、`para_collection.h/.cpp`
+- C++11，4 空格缩进，大括号独占一行，不用 `using namespace std`，注释用英文 doxygen 格式
+- 不加默认参数，不用全局变量（ParaCollection 通过注入传递，不做全局单例）
+- include guard 用短名，与同目录其它文件一致
+- 不用 goto，不用宏做域替换，struct 不裸露公有成员
+- 函数参数带校验（指针非空、int 范围合理）
+
+## 验证方式
+
+- 编译目录：`/home/510Group/6_abacus_mc/abacus-mc/build_max_para_test`，命令 `make -j 30`
+- 测试：`OMP_NUM_THREADS=1 ctest -V -R <pattern>`
+- 注意：沙箱内 MPI 测试会因 `/dev/nvidiactl` 受限误报崩溃，需看 ctest 日志实际结果
+- 每步 commit 前确认编译 0 错误 + 相关测试通过
+
+## 待确认细节（开工前）
+
+1. 文件路径 `source/source_base/module_parallel/para_world.h/.cpp` 是否 OK
+2. `ParaWorld` 串行下 `comm()` 不存在（`#ifdef __MPI`），`rank()`/`size()` 返回 0/1，`tag()` 总可用——是否 OK
+3. 从 step 1 开始，还是想先调整步骤划分

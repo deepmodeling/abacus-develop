@@ -14,7 +14,7 @@
 // Module: module_io/module_chgpot
 // =====================================================================
 
-#include "source_io/module_chgpot/write_init.h"
+#include "source_estate/write_init.h"
 #include "source_io/module_output/cube_io.h"
 #include "source_base/tool_quit.h"
 

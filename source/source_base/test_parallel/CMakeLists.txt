@@ -1,7 +1,7 @@
 AddTest(
   TARGET MODULE_BASE_ParaCommon
   LIBS parameter MPI::MPI_CXX
-  SOURCES parallel_common_test.cpp ../global_variable.cpp ../parallel_common.cpp
+  SOURCES parallel_common_test.cpp ../global_variable.cpp ../parallel_common.cpp ../parallel_reduce.cpp ../parallel_comm.cpp ../parallel_global.cpp ../tool_quit.cpp ../global_file.cpp ../global_function.cpp ../memory_recorder.cpp ../timer.cpp
 )
 
 AddTest(

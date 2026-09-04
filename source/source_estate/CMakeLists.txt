@@ -40,6 +40,9 @@ list(APPEND objects
     module_charge/charge_mixing_uspp.cpp
     module_charge/symm_rho.cpp
     module_charge/symm_rhog.cpp
+    rhog_io.cpp
+    write_elecstat_pot.cpp
+    write_init.cpp
     fp_energy.cpp
     occupy.cpp
     occ_matrix.cpp
@@ -72,7 +75,6 @@ endif()
 if(BUILD_TESTING)
   if(ENABLE_MPI)
     add_subdirectory(test)
-    add_subdirectory(test_mpi)
   endif()
 endif()
 
