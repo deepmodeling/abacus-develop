@@ -3988,7 +3988,7 @@
   - d4: Grimme's DFT-D4 dispersion correction method using the external DFT-D4 library
   - none: no vdW correction
 
-  > Note: DFT-D3 damping parameters are loaded from the bundled s-dftd3 v1.5.0 dataset. Individual user values overwrite the corresponding tabulated values. Setting all four of vdw_s6, vdw_s8, vdw_a1 and vdw_a2 defines a fully custom set and bypasses functional lookup.
+  > Note: ABACUS automatically loads DFT-D3 parameters for supported functionals according to dft_functional setting. Individual user values overwrite the corresponding tabulated values. Setting all four of vdw_s6, vdw_s8, vdw_a1 and vdw_a2 defines a fully custom set and bypasses functional lookup.
 - **Default**: none
 
 ### vdw_d4_xc
@@ -4014,13 +4014,13 @@
 
 - **Type**: String
 - **Availability**: *[`vdw_method`](#vdw_method) in [d2, d3_0, d3_bj]*
-- **Description**: Scale factor s6. DFT-D2 keeps its established defaults; for DFT-D3, ABACUS loads the s-dftd3 value for dft_functional. A user value overwrites the selected default.
+- **Description**: Scale factor s6, which is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP); if not set, will use values of PBE functional by default. For DFT-D3, ABACUS will search in built-in dataset based on the dft_functional setting by default; user set value will overwrite the searched value.
 
 ### vdw_s8
 
 - **Type**: String
 - **Availability**: *[`vdw_method`](#vdw_method) in [d3_0, d3_bj]*
-- **Description**: Scale factor s8 for D3(0) and D3(BJ). If not set, ABACUS loads the s-dftd3 value for dft_functional. A user value overwrites the tabulated value.
+- **Description**: Scale factor s8 for D3(0) and D3(BJ). By default, ABACUS will search in built-in dataset based on the dft_functional setting. User set value will overwrite the searched value.
 
 ### vdw_a1
 
