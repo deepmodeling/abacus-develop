@@ -8,6 +8,7 @@
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"
 #include "source_base/module_container/ATen/core/tensor_map.h"
+#include "source_base/parallel_comm.h"
 
 namespace LR
 {

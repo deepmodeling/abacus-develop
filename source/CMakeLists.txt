@@ -417,6 +417,15 @@ define_property(
   BRIEF_DOCS "Additional ABACUS feature definitions for targets in this directory"
   FULL_DOCS "Additional feature definitions for targets created in this directory.")
 
+define_property(
+  TARGET
+  PROPERTY ABACUS_KEPT_FEATURE_DEFINITIONS
+  BRIEF_DOCS "Feature definitions this target keeps despite a directory-level disable"
+  FULL_DOCS "Feature definitions that must not be stripped from this target even "
+    "when its source directory disables them via "
+    "abacus_disable_feature_definitions(). Used by tests that genuinely need a "
+    "feature (e.g. __MPI) inside a directory that otherwise disables it.")
+
 function(abacus_disable_feature_definitions)
   abacus_normalize_definitions(_defs ${ARGN})
   set_property(DIRECTORY APPEND PROPERTY
@@ -448,7 +457,12 @@ function(abacus_apply_build_options target)
   set(_defs "${_abacus_feature_definitions}")
   get_property(_disabled DIRECTORY "${_source_dir}" PROPERTY ABACUS_DISABLED_FEATURE_DEFINITIONS)
   get_property(_local DIRECTORY "${_source_dir}" PROPERTY ABACUS_LOCAL_FEATURE_DEFINITIONS)
+  get_target_property(_kept "${target}" ABACUS_KEPT_FEATURE_DEFINITIONS)
 
+  if(_kept)
+    # A target may opt back into definitions its directory disables.
+    list(REMOVE_ITEM _disabled ${_kept})
+  endif()
   if(_disabled)
     # Filter after conditional definitions have been evaluated.
     string(JOIN "|" _disabled_regex ${_disabled})

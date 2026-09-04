@@ -273,8 +273,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         hpsi_info info(&psi_wrapper, bands_range, hpsi_out);
         hm->ops->hPsi(info);
     };
-    auto spsi_func = [hm](const T* psi_in, T* spsi_out, const int ld_psi, const int nvec) {
-        hm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nvec);
+    auto spsi_func = [hm, cur_nbasis](const T* psi_in, T* spsi_out, const int ld_psi, const int nvec) {
+        hm->sPsi(psi_in, spsi_out, ld_psi, cur_nbasis, nvec);
     };
 
     if (this->method == "cg")
@@ -318,7 +318,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int ndim = psi.get_current_ngk();
         DiagoBPCG<T, Device> bpcg(pre_condition.data());
         bpcg.init_iter(this->nbands, nband_l, nbasis, ndim);
-        bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
+        bpcg.diag(hpsi_func, spsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
     }
     else if (this->method == "dav_subspace")
     {

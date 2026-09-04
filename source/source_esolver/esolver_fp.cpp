@@ -1,5 +1,6 @@
 #include "esolver_fp.h"
 
+#include "source_base/tool_quit.h"
 #include "source_cell/cal_ux.h"
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_cell/read_pp_ucell.h"
@@ -8,13 +9,17 @@
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/print_info.h"
-#include "source_io/module_chgpot/rhog_io.h"
+#include "source_estate/rhog_io.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include "source_pw/module_pwdft/setup_pwrho.h" // mohan 20251005
+#include "source_pw/module_pwdft/uspp_support.h"
 #include "source_hamilt/module_xc/xc_functional.h" // mohan 20251005
 #include "source_io/module_ctrl/ctrl_output_fp.h"
-#include "source_io/module_chgpot/write_init.h" // write_chg_init, write_pot_init
+#include "source_estate/write_init.h" // write_chg_init, write_pot_init
+#include "source_base/module_parallel/para_world.h"
+#include "source_base/module_parallel/para_tag.h"
+#include "source_base/module_parallel/para_bridge.h"
 
 namespace ModuleESolver
 {
@@ -69,7 +74,19 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
                                             this->inp_->bndpar,
                                             this->inp_->nelec,
                                             this->inp_->nupdown);
+
     elecstate::ParamUpdater::update_from_atoms_info(atoms_info);
+
+    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+    pw::validate_uspp_support(atoms_info.use_uspp,
+                              inp.basis_type,
+                              inp.esolver_type,
+                              inp.nspin,
+                              XC_Functional::get_func_type(),
+                              inp.berry_phase,
+                              inp.towannier90,
+                              inp.cal_cond);
+    GlobalV::ofs_running << XC_Functional::output_info() << std::endl;
 
     //! 2) setup pw_rho, pw_rhod, pw_big, sf, and read_pseudopotentials
     pw::setup_pwrho(ucell, PARAM.globalv.double_grid, this->pw_rho_flag, 
@@ -111,10 +128,6 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     //! 10) calculate the structure factor
     this->sf.setup(&ucell, Pgrid, this->pw_rhod);
-
-    //! 11) setup the xc functional
-    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-    GlobalV::ofs_running<<XC_Functional::output_info()<<std::endl;
 
     //! 11) initialize the charge density, we need to first set xc_type,
     // then we can call chr.allocate()
@@ -235,15 +248,20 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
             {
                 this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
             }
-            ModuleIO::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-CHARGE-DENSITY.restart",
-                                 PARAM.globalv.gamma_only_pw,
-                                 this->pw_rhod,
-                                 this->inp_->nspin,
-                                 ucell.GT,
-                                 this->chr.rhog_save,
-                                 GlobalV::MY_POOL,
-                                 GlobalV::RANK_IN_POOL,
-                                 GlobalV::NPROC_IN_POOL);
+            // Temporary bridge: use factory until ParaCollection is wired into driver.
+            Parallel::ParaWorld pw_world = Parallel::make_pw_world();
+            // Only pool 0 writes the rhog file (rhog is identical across pools).
+            if (GlobalV::MY_POOL == 0)
+            {
+                elecstate::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-CHARGE-DENSITY.restart",
+                                     PARAM.globalv.gamma_only_pw,
+                                     this->pw_rhod,
+                                     this->inp_->nspin,
+                                     ucell.GT,
+                                     this->chr.rhog_save,
+                                     pw_world,
+                                     &GlobalV::ofs_warning);
+            }
 
             if (XC_Functional::get_ked_flag())
             {
@@ -254,15 +272,17 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
                     kin_g.push_back(kin_g_space.data() + is * this->chr.ngmc);
                     this->pw_rhod->real2recip(this->chr.kin_r_save[is], kin_g[is]);
                 }
-                ModuleIO::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-TAU-DENSITY.restart",
-                                     PARAM.globalv.gamma_only_pw,
-                                     this->pw_rhod,
-                                     this->inp_->nspin,
-                                     ucell.GT,
-                                     kin_g.data(),
-                                     GlobalV::MY_POOL,
-                                     GlobalV::RANK_IN_POOL,
-                                     GlobalV::NPROC_IN_POOL);
+                if (GlobalV::MY_POOL == 0)
+                {
+                    elecstate::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-TAU-DENSITY.restart",
+                                         PARAM.globalv.gamma_only_pw,
+                                         this->pw_rhod,
+                                         this->inp_->nspin,
+                                         ucell.GT,
+                                         kin_g.data(),
+                                         pw_world,
+                                         &GlobalV::ofs_warning);
+                }
             }
         }
     }

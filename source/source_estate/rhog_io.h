@@ -3,7 +3,9 @@
 
 #include <string>
 #include <cassert>
+#include <ostream>
 #include "source_basis/module_pw/pw_basis.h"
+#include "source_base/module_parallel/para_world.h"
 /**
  * I/O free function of rho(G) in binary format
  * Author: YuLiu98, Kirk0830
@@ -40,21 +42,25 @@
  *    rho   
  */
 
-namespace ModuleIO
+namespace elecstate
 {
 
-bool read_rhog(const std::string& filename, const ModulePW::PW_Basis* pw_rhod, std::complex<double>** rhog);
+bool read_rhog(const std::string& filename,
+               const ModulePW::PW_Basis* pw_rhod,
+               const int nspin,
+               std::complex<double>** rhog,
+               const Parallel::ParaWorld& pw_world,
+               std::ostream* os_warning);
 
 bool write_rhog(const std::string& fchg,
-                const bool gamma_only,            // from INPUT
-                const ModulePW::PW_Basis* pw_rho, // pw_rho in runtime
-                const int nspin,                  // GlobalV
-                const ModuleBase::Matrix3& GT,    // from UnitCell, useful for calculating the miller
+                const bool gamma_only,
+                const ModulePW::PW_Basis* pw_rho,
+                const int nspin,
+                const ModuleBase::Matrix3& GT,
                 std::complex<double>** rhog,
-                const int ipool,
-                const int irank,
-                const int nrank);
+                const Parallel::ParaWorld& pw_world,
+                std::ostream* os_warning);
 
-} // namespace ModuleIO
+} // namespace elecstate
 
 #endif

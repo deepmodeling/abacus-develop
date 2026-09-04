@@ -12,6 +12,8 @@
 //-----stress------------------
 #include "source_pw/module_pwdft/stress_pw.h"
 //---------------------------------------------------
+#include "source_base/global_variable.h"
+#include "source_base/parallel_comm.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_pw/module_pwdft/hamilt_lcaopw.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
