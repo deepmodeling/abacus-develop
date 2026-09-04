@@ -31,7 +31,10 @@ XC_Functional_Libxc::convert_rho_amag_nspin4(
 	const std::size_t nrxx,
 	const Charge* const chr)
 {
-	assert(nspin==4);
+	// `nspin` is the number of LibXC spin channels, not the physical nspin of the
+	// system. This nspin4 branch is only entered for a magnetized nspin==4 system,
+	// which LibXC always evaluates in the polarized (2-channel) representation.
+	assert(nspin==2);
 	std::vector<double> rho(nrxx*nspin);
 	std::vector<double> amag(nrxx);
 	#ifdef _OPENMP
