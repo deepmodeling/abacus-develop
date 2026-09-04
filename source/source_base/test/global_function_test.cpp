@@ -695,9 +695,6 @@ TEST_F(GlobalFunctionTest,MemAvailable)
 
 TEST_F(GlobalFunctionTest,BlockHere)
 {
-#ifdef __MPI
-#undef __MPI
-#endif
 	std::string output2;
 	std::string block_in="111";
 	GlobalV::MY_RANK=1;
@@ -712,9 +709,6 @@ TEST_F(GlobalFunctionTest,BlockHere)
 
 TEST_F(GlobalFunctionTest,BlockHere2)
 {
-#ifdef __MPI
-#undef __MPI
-#endif
 	std::string output2;
 	std::string block_in="111";
 	GlobalV::MY_RANK=0;
@@ -733,9 +727,6 @@ TEST_F(GlobalFunctionTest,BlockHere2)
 
 TEST_F(GlobalFunctionTest,BlockHere3)
 {
-#ifdef __MPI
-#undef __MPI
-#endif
 	std::string output2;
 	std::string block_in="111";
 	GlobalV::MY_RANK=0;

@@ -1,6 +1,3 @@
-#ifdef __MPI
-#undef __MPI
-#endif
 #include "./opt_test_tools.h"
 #include <math.h>
 
