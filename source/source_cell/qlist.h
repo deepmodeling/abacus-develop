@@ -135,7 +135,9 @@ public:
                             const ModuleSymmetry::Symmetry& symm,
                             bool use_symm,
                             std::string& skpt,
-                            bool& match) override;
+                            bool& match,
+                            const int my_rank,
+                            std::ofstream& ofs_running) override;
 
 private:
     std::vector<int> nirr_; ///< number of irreps for each q-point

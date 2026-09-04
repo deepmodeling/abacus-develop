@@ -36,19 +36,19 @@ void QList::generate_mesh(UnitCell& ucell, ModuleSymmetry::Symmetry& symm,
     const double offset[3] = {0.0, 0.0, 0.0};
     this->Monkhorst_Pack(this->nmp, offset, 0);
 
-    this->nkstot_full = this->nkstot;
+    this->nkstot_nospin = this->nkstot;
     this->nks = this->nkstot;
 
     // Star reduction: always use symmetry, always include the -q partner.
     bool match = true;
     std::string skpt;
-    this->reduce_by_symmetry(ucell, symm, true, skpt, match);
+    this->reduce_by_symmetry(ucell, symm, true, skpt, match, GlobalV::MY_RANK, GlobalV::ofs_running);
     if (!match)
     {
         ModuleBase::WARNING("QList::generate_mesh",
                             "Reciprocal lattice is incompatible with the real-space lattice. "
                             "Falling back to the unreduced q-point mesh.");
-        this->nkstot = this->nks = this->nkstot_full;
+        this->nkstot = this->nks = this->nkstot_nospin;
     }
 
     // weights sum to 1 (average over the full Brillouin zone)
@@ -189,7 +189,7 @@ void QList::read_from_file(const std::string& filename, UnitCell& ucell) {
         }
     }
 
-    this->nkstot_full = this->nks = this->nkstot;
+    this->nkstot_nospin = this->nks = this->nkstot;
 
     // complement the coordinates: fill the missing representation
     if (!this->kc_done && this->kd_done)
@@ -329,8 +329,12 @@ void QList::reduce_by_symmetry(const UnitCell& ucell,
                                const ModuleSymmetry::Symmetry& symm,
                                bool use_symm,
                                std::string& skpt,
-                               bool& match) {
+                               bool& match,
+                               const int my_rank,
+                               std::ofstream& ofs_running) {
     (void)skpt;
+    (void)my_rank;
+    (void)ofs_running;
     // q-points are spin-free: build the point-group operations and always
     // double them by the time-reversal operation -q (no magnetic group).
     std::vector<ModuleBase::Matrix3> kgmatrix(48 * 2);

@@ -22,6 +22,7 @@ VPATH=./src_global:\
 ./source_base:\
 ./source_base/kernels:\
 ./source_base/module_external:\
+./source_base/module_parallel:\
 ./source_base/module_container/base/core:\
 ./source_base/module_container/ATen/core:\
 ./source_base/module_container/ATen/kernels:\
@@ -211,6 +212,7 @@ OBJS_CELL=atom_pseudo.o\
     print_cell.o\
     setup_nonlocal.o\
     klist.o\
+    klist_io.o\
     reciprocal_grid.o\
     cell_index.o\
     cell_tools.o\
@@ -625,7 +627,6 @@ OBJS_IO=module_parameter/input_conv.o\
     output.o\
     module_output/print_info.o\
     module_output/read_cube.o\
-    module_chgpot/rhog_io.o\
     module_wf/read_wfc_pw.o\
     module_wf/read_wf2rho_pw.o\
     module_restart/restart.o\
@@ -647,10 +648,8 @@ OBJS_IO=module_parameter/input_conv.o\
     module_output/write_pao.o\
     module_wf/write_wfc_pw.o\
     module_output/write_cube.o\
-    module_chgpot/write_elecstat_pot.o\
     module_elf/write_elf.o\
     module_dipole/write_dipole.o\
-    module_chgpot/write_init.o\
     module_current/td_current_io.o\
     module_current/td_current_io_comm.o\
     td_efield_io.o\
@@ -791,7 +790,18 @@ OBJS_PARALLEL=parallel_common.o\
     parallel_grid.o\
     parallel_kpoints.o\
     parallel_reduce.o\
-    parallel_device.o
+    parallel_device.o\
+    para_world.o\
+    para_collection.o\
+    para_kmesh_world.o\
+    para_pw_world.o\
+    para_diag_world.o\
+    para_rgrid_world.o\
+    para_bgroup_world.o\
+    para_matrix_world.o\
+    para_mpi_func.o\
+    para_setup.o\
+    para_bridge.o
 
 OBJS_SRCPW=h_ewald_pw.o\
     dnrm2.o\
@@ -815,10 +825,14 @@ OBJS_SRCPW=h_ewald_pw.o\
     mix_precond.o\
     charge_mixing_rho.o\
     charge_mixing_uspp.o\
+    rhog_io.o\
+    write_elecstat_pot.o\
+    write_init.o\
     fp_energy.o\
     setup_pot.o\
     setup_pwrho.o\
     setup_pwwfc.o\
+    uspp_support.o\
     update_cell_pw.o\
     dftu_base.o\
     dftu_base_io.o\

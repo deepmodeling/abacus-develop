@@ -4,6 +4,7 @@
 #include "source_base/constants.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/module_container/ATen/tensor.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_device.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"

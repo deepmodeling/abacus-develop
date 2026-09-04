@@ -1,5 +1,6 @@
 #include "source_base/inverse_matrix.h"
 #include "source_base/module_external/lapack_connector.h"
+#include "source_base/parallel_comm.h"
 #include "source_psi/psi.h"
 #include "source_hamilt/hamilt.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
@@ -11,6 +12,7 @@
 #include "source_basis/module_pw/test/test_tool.h"
 
 #include <gtest/gtest.h>
+#include <algorithm>
 #include <complex>
 #include <random>
 
@@ -151,13 +153,16 @@ class DiagoBPCGPrepare
                 &zero,
                 hpsi_out, ld_psi);
         };
+        auto spsi_func = [](const T* psi_in, T* spsi_out, const int ld_psi, const int nvec) {
+            std::copy(psi_in, psi_in + ld_psi * nvec, spsi_out);
+        };
         const int ndim = psi_local.get_current_ngk();
         bpcg.init_iter(nband, nband, npw, ndim);
         std::vector<double> ethr_band(nband, 1e-5);
-        bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
-        bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
-        bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
-        bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
+        bpcg.diag(hpsi_func, spsi_func, psi_local.get_pointer(), en, ethr_band);
+        bpcg.diag(hpsi_func, spsi_func, psi_local.get_pointer(), en, ethr_band);
+        bpcg.diag(hpsi_func, spsi_func, psi_local.get_pointer(), en, ethr_band);
+        bpcg.diag(hpsi_func, spsi_func, psi_local.get_pointer(), en, ethr_band);
         end = MPI_Wtime();
         //if(mypnum == 0) printf("diago time:%7.3f\n",end-start);
         delete [] DIAGOTEST::npw_local;

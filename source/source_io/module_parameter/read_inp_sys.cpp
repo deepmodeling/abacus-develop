@@ -1177,7 +1177,7 @@ Available options are:
         item.default_value = "0";
         read_sync_int(input.ndz);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.ndy > para.input.ny)
+            if (para.input.ndz > para.input.nz)
             {
                 para.sys.double_grid = true;
             }

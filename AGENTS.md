@@ -26,6 +26,15 @@ rules. Read the complete governance document before making or reviewing changes:
   8. Declare one variable per line; do not use comma-separated declarations.
   9. Do not call MPI routines directly; use the internally-guarded wrappers
      (e.g., `Parallel_Reduce::reduce_*`, `Parallel_Common::bcast_*`) instead.
+  10. Do not write new `#define private public` or `#define protected public`
+      access hacks in test files. If a unit test needs to inspect internal
+      state, either promote the member visibility explicitly or add a
+      public test-only accessor.
+  11. New unit test source files shall be named `test_<module_name>.cpp`,
+      matching the source file they exercise. For example, the test for
+      `rhog_io.cpp` shall be `test_rhog_io.cpp`. This naming keeps the
+      file-to-test relationship discoverable and consistent across the
+      repository. Historical tests are not required to be renamed.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.

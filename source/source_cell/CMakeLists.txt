@@ -22,6 +22,7 @@ add_library(
     read_atoms_helper.cpp
     read_orb.cpp
     klist.cpp
+    klist_io.cpp
     reciprocal_grid.cpp
     parallel_kpoints.cpp
     cell_index.cpp

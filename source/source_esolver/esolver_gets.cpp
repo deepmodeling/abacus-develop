@@ -91,6 +91,7 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
                  ucell.G,
                  ucell.latvec,
                  GlobalV::ofs_running,
+                 GlobalV::ofs_warning,
                  use_ibz,
                  global_out_dir,
                  gamma_only_local,

@@ -20,6 +20,7 @@ list(APPEND objects
     setup_pot.cpp
     setup_pwrho.cpp
     setup_pwwfc.cpp
+    uspp_support.cpp
     update_cell_pw.cpp
     setup_dftu_pw.cpp
     deltaspin_pw.cpp
