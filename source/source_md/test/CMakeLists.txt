@@ -95,6 +95,7 @@ AddTest(
   ../nhchain.cpp
   ../verlet.cpp
   ../../source_cell/mdcell_reader.cpp
+  ../../source_cell/magnetism.cpp
   ${depend_files}
 )
 
