@@ -1,6 +1,7 @@
 #include "source_base/math_erf_complex.h"
 
 #include "gtest/gtest.h"
+#include <algorithm>
 #include <cmath>
 #include <complex>
 
@@ -13,6 +14,17 @@ void expect_complex_near(const std::complex<double>& actual,
 {
     EXPECT_NEAR(actual.real(), expected.real(), tolerance);
     EXPECT_NEAR(actual.imag(), expected.imag(), tolerance);
+}
+
+// erf() grows like exp(Im(z)^2), so the sampled values below span more than sixty orders of
+// magnitude. Scale the tolerance with the magnitude of the expected value, otherwise the
+// assertion silently degenerates into a demand for bit-exact agreement.
+void expect_complex_relative_near(const std::complex<double>& actual,
+                                  const std::complex<double>& expected,
+                                  const double relative_tolerance)
+{
+    const double scale = std::max(1.0, std::abs(expected));
+    expect_complex_near(actual, expected, relative_tolerance * scale);
 }
 
 } // namespace
@@ -71,6 +83,6 @@ TEST(ErrorFuncTest, SymmetryHoldsAcrossAlgorithmRegions)
     {
         const std::complex<double> erf_z = ModuleBase::ErrorFunc::erf(z, 1.0e-12);
         const std::complex<double> erf_conjugate = ModuleBase::ErrorFunc::erf(std::conj(z), 1.0e-12);
-        expect_complex_near(erf_conjugate, std::conj(erf_z), 1.0e-11);
+        expect_complex_relative_near(erf_conjugate, std::conj(erf_z), 1.0e-11);
     }
 }

@@ -132,6 +132,11 @@ TensorBuffer& TensorBuffer::operator=(const TensorBuffer& other)
     }
 
     delete this->alloc_;
+    this->alloc_ = nullptr;
+    this->data_ = nullptr;
+    this->owns_memory_ = false;
+    this->allocated_bytes_ = 0;
+
     if (other.GetDeviceType() == DeviceType::CpuDevice)
     {
         this->alloc_ = new base::core::CPUAllocator();
@@ -142,6 +147,13 @@ TensorBuffer& TensorBuffer::operator=(const TensorBuffer& other)
         this->alloc_ = new base::core::GPUAllocator();
     }
 #endif // __CUDA || __ROCM
+    else
+    {
+        // `other` has no allocator: it is either a moved-from buffer or a non-owning
+        // reference buffer built from a raw pointer. There is nothing to allocate from,
+        // so leave this buffer empty instead of dereferencing the freed allocator.
+        return *this;
+    }
 
     this->data_ = this->alloc_->allocate(other.GetAllocatedBytes());
     this->owns_memory_ = true;

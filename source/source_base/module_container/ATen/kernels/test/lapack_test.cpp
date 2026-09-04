@@ -71,19 +71,24 @@ TYPED_TEST(LapackTest, Potrf) {
     // Note all blas and lapack operators within container are column major!
     // For this reason, we should employ 'L' instead of 'U' in the subsequent line.
     potrfCalculator('L', dim, B.data<Type>(), dim);
-    EXPECT_GT(std::abs(B.data<Type>()[0]), 0.0);
-    EXPECT_GT(std::abs(B.data<Type>()[4]), 0.0);
-    EXPECT_GT(std::abs(B.data<Type>()[8]), 0.0);
+    // B may live on an accelerator, so pull it back before inspecting elements on the host.
+    const Tensor factorized = B.to_device<DEVICE_CPU>();
+    EXPECT_GT(std::abs(factorized.data<Type>()[0]), 0.0);
+    EXPECT_GT(std::abs(factorized.data<Type>()[4]), 0.0);
+    EXPECT_GT(std::abs(factorized.data<Type>()[8]), 0.0);
 
     setMatrixCalculator('L', B.data<Type>(), dim);
-    EXPECT_EQ(B.data<Type>()[1], static_cast<Type>(0.0));
-    EXPECT_EQ(B.data<Type>()[2], static_cast<Type>(0.0));
-    EXPECT_EQ(B.data<Type>()[5], static_cast<Type>(0.0));
+    const Tensor masked = B.to_device<DEVICE_CPU>();
+    EXPECT_EQ(masked.data<Type>()[1], static_cast<Type>(0.0));
+    EXPECT_EQ(masked.data<Type>()[2], static_cast<Type>(0.0));
+    EXPECT_EQ(masked.data<Type>()[5], static_cast<Type>(0.0));
 }
 
 TYPED_TEST(LapackTest, GetrfGetriGetrs) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
-    using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;
+    // This test drives the wrappers with host stack buffers, so it is pinned to the CPU
+    // backend; handing these pointers to the cuSolver path would be an invalid device pointer.
+    using Device = DEVICE_CPU;
 
     const int dim = 2;
     const int rhs_count = 1;
