@@ -57,7 +57,7 @@ void Plus_U_Base::cal_occ_pw(const void* psi_in,
                                 this->pot_uterm_pw_index, this->uom_array);
 
     // mixing
-    if(is_mixing_enabled() && p_chgmix != nullptr)
+    if (this->mixing_dftu != 0 && p_chgmix != nullptr)
     {
         p_chgmix->mix_uom(this->uom_array, this->uom_save);
         this->occmat_.read_from_flat(cell, this->orbital_corr,

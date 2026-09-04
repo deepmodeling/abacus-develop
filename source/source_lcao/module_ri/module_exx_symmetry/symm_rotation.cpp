@@ -98,7 +98,7 @@ namespace ModuleSymmetry
         ModuleBase::timer::start("Symmetry_rotation", "restore_dm");
         std::vector<std::vector<std::complex<double>>> dm_k_full;
         int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;
-        dm_k_full.reserve(kv.get_nkstot_full() * nspin0); //nkstot_full didn't doubled by spin
+        dm_k_full.reserve(kv.get_nkstot_nospin() * nspin0); //nkstot_nospin didn't doubled by spin
         int nk = kv.get_nkstot() / nspin0;
 
         // (nspin=4) Sigma_y = I (x) sigma_y for the time-reversal spin flip; k-independent, build once.

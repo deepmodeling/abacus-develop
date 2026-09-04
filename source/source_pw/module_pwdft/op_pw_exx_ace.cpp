@@ -140,7 +140,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
             setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
             setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
             setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
-            int nqs = kv->get_nkstot_full();
+            int nqs = kv->get_nkstot_nospin();
 
             bool skip_ik = false;
             if (ik >= wfcpw->nks)

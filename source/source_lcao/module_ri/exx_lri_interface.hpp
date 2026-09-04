@@ -156,7 +156,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
     if(this->info_global.cal_exx)
     {
         if (this->exx_spacegroup_symmetry)
-            { this->mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1)); }
+            { this->mix_DMk_2D.set_nks(kv.get_nkstot_nospin() * (PARAM.inp.nspin == 2 ? 2 : 1)); }
         else
             { this->mix_DMk_2D.set_nks(kv.get_nks()); }
 

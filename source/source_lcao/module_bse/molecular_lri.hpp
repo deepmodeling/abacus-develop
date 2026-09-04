@@ -160,7 +160,7 @@ void MolecularLRI<T>::build_q_to_kpair_map(int mode, double threshold)
     {
         std::set<Tk, kComparator> q_coarse_set;
         const K_Vectors& kv_coarse = this->kRlist.klist_coarse;
-        int nk_coarse = kv_coarse.get_nkstot_full();
+        int nk_coarse = kv_coarse.get_nkstot_nospin();
         for (int ik1 = 0; ik1 < nk_coarse; ++ik1)
         {
             Tk ck1 = RI_Util::Vector3_to_array3(kv_coarse.kvec_d.at(ik1));

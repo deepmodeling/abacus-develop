@@ -58,7 +58,7 @@ AddTest(
   TARGET MODULE_IO_write_bands
   LIBS parameter base device symmetry
   SOURCES write_bands_test.cpp ../module_output/band_parallel_output.cpp ../module_energy/write_bands.cpp
-  ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
+  ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 AddTest(

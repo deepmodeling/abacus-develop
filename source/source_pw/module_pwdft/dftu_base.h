@@ -113,7 +113,6 @@ class Plus_U_Base
     void mark_occ_mat_initialized() { occ_mat_initialized = true; }
     void mark_occ_mat_dirty() { occ_mat_initialized = false; }
 
-    bool is_mixing_enabled() const { return mixing_dftu != 0; }
     void enable_mixing() { mixing_dftu = 1; }
 
     /// direct access to the occupation matrix object (new write path)

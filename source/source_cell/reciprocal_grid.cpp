@@ -170,7 +170,8 @@ void ReciprocalGrid::kvec_c2d(const ModuleBase::Matrix3& latvec)
 void ReciprocalGrid::set_both_kvec(const ModuleBase::Matrix3& G,
                                    const ModuleBase::Matrix3& R,
                                    std::string& skpt,
-                                   std::ofstream& ofs_running)
+                                   std::ofstream& ofs_running,
+                                   std::ofstream& ofs_warning)
 {
     // Re-derive the "which representation was read from file" flags.
     // For auto-generated meshes (k_nkstot == 0) the direct coordinates
@@ -194,7 +195,7 @@ void ReciprocalGrid::set_both_kvec(const ModuleBase::Matrix3& G,
         }
         else
         {
-            GlobalV::ofs_warning << " Error : neither Cartesian nor Direct kpoint." << std::endl;
+            ofs_warning << " Error : neither Cartesian nor Direct kpoint." << std::endl;
         }
     }
 
@@ -355,7 +356,7 @@ void ReciprocalGrid::reduce_ibz(const ModuleBase::Matrix3* rot_ops,
     ModuleBase::Vector3<double> kvec_rot_k;
 
     // update map k -> irreducible k
-    ibz_index.assign(this->nkstot_full, -1); // -1 means not in ibz list
+    ibz_index.assign(this->nkstot_nospin, -1); // -1 means not in ibz list
     // search in all k-points.
     for (int i = 0; i < this->nkstot; ++i)
     {

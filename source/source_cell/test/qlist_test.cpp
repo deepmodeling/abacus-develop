@@ -180,7 +180,7 @@ TEST_F(QListTest, GenerateMeshFullSymmetry)
     qlist.generate_mesh(ucell, symm, {8, 8, 8}, true);
 
     // full mesh 512 -> irreducible q-points of the primitive cubic lattice
-    EXPECT_EQ(qlist.nkstot_full, 512);
+    EXPECT_EQ(qlist.nkstot_nospin, 512);
     EXPECT_EQ(qlist.get_nq(), 35);
     EXPECT_EQ(qlist.get_nq(), qlist.nkstot);
     EXPECT_TRUE(qlist.is_mp);
@@ -218,7 +218,7 @@ TEST_F(QListTest, GenerateMeshSmallGrid)
     qlist.generate_mesh(ucell, symm, {2, 2, 2}, true);
 
     // {0,0.5}^3 under O_h folds to Gamma + X + M + R
-    EXPECT_EQ(qlist.nkstot_full, 8);
+    EXPECT_EQ(qlist.nkstot_nospin, 8);
     EXPECT_EQ(qlist.get_nq(), 4);
 
     // the first irreducible q-point must be Gamma (0,0,0)
@@ -241,7 +241,7 @@ TEST_F(QListTest, GammaOnlyGrid)
 
     qlist.generate_mesh(ucell, symm, {1, 1, 1}, true);
 
-    EXPECT_EQ(qlist.nkstot_full, 1);
+    EXPECT_EQ(qlist.nkstot_nospin, 1);
     EXPECT_EQ(qlist.get_nq(), 1);
     EXPECT_DOUBLE_EQ(qlist.wk[0], 1.0);
     EXPECT_DOUBLE_EQ(qlist.get_q(0).x, 0.0);
