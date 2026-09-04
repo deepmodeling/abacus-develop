@@ -637,7 +637,12 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
         // neighbour lists, the grid tables and the Hamiltonian for the geometry of this step.
         XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
         this->ks_->runner(ucell, istep);
-        if (!this->ks_initialized_) { this->initialize_from_ks_(ucell, *this->inp_); }
+        this->etot_gs_ = this->ks_->cal_energy();
+        if (!this->ks_initialized_)
+        {
+            this->initialize_from_ks_(ucell, *this->inp_);
+            this->setup_relax_target_();   // needs the final dimensions, i.e. `openshell`
+        }
         else { this->refresh_from_ks_(ucell); }
     }
 
@@ -773,6 +778,14 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
             for (int is = 0;is < nspin;++is) { read_states(spin_types[is], this->pelec->ekb.c + is * nstates, this->X[is].template data<T>(), nloc_per_state, nstates); }
         }
     }
+    if (this->excited_relax_)
+    {
+        // The LR terms only carry d(Omega)/dR; the ground-state force is a separate piece of the
+        // excited-state total energy gradient and comes straight from the KS solver.
+        this->ks_->cal_force(ucell, this->force_gs_);
+        this->lr_grad_ = this->cal_force(this->target_is_, this->inp_->lr_target_state)[0];
+    }
+
     ModuleBase::timer::end("ESolver_LR", "runner");
     return;
 }
@@ -845,7 +858,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
             // }
             // =============================================== for test ====================================================
         }
-        if (PARAM.inp.cal_force) { this->cal_force(is); }
+        if (PARAM.inp.cal_force && !this->excited_relax_) { this->cal_force(is); }
     }
 }
 template<typename T, typename TR>

@@ -271,6 +271,35 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
                     "esolver_type=lr requires calculation=nscf (it reads the ground state "
                     "wave function computed by a separate SCF run); please set calculation=nscf.");
             }
+            const bool is_lr = (para.input.esolver_type == "lr" || para.input.esolver_type == "ks-lr");
+            if (is_lr && para.input.calculation == "cell-relax")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "LR-TDDFT has no excited-state stress, so calculation=cell-relax cannot be driven by it. "
+                    "Use calculation=relax to relax the atomic positions at fixed cell.");
+            }
+            if (is_lr && para.input.calculation == "md")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "excited-state MD is not supported: the non-adiabatic couplings between excited states "
+                    "are not implemented, so a trajectory cannot switch surfaces at a crossing, and a "
+                    "single-surface run would silently follow a fixed state index straight through one. "
+                    "Use calculation=relax instead.");
+            }
+            if (para.input.esolver_type == "lr" && para.input.calculation == "relax")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "esolver_type=lr reads a ground state from disk that belongs to one fixed geometry, "
+                    "so it cannot follow moving ions. Use esolver_type=ks-lr, which runs the SCF itself "
+                    "at every ionic step.");
+            }
+            if (para.input.esolver_type == "ks-lr" && para.input.calculation == "relax"
+                && para.input.lr_solver == "spectrum")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "lr_solver=spectrum only reads previously written excitation amplitudes; it solves "
+                    "nothing, so it cannot produce gradients for a relaxation.");
+            }
         };
         this->add_item(item);
     }

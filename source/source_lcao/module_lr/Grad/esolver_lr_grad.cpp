@@ -8,7 +8,7 @@
 using namespace LR;
 
 template <typename Tstream>
-inline void print_force(const std::vector<ModuleBase::matrix>& force, Tstream& ofs)
+inline void print_force(const std::vector<ModuleBase::matrix>& force, Tstream& ofs, const int istate_begin = 0)
 {
     const int nstate = force.size();
     ofs << "Gradients of each excited state: (eV/Angstrom)" << std::endl;
@@ -19,7 +19,7 @@ inline void print_force(const std::vector<ModuleBase::matrix>& force, Tstream& o
     {
         for (int iat = 0;iat < force[i].nr;++iat)
         {
-            std::string istate = iat == 0 ? std::to_string(i) : " ";
+            std::string istate = iat == 0 ? std::to_string(istate_begin + i) : " ";
             ofs << std::setw(6) << istate << std::setw(6) << iat << std::setw(6) << "force";
             for (int ixyz = 0;ixyz < 3;++ixyz) { ofs << std::setw(15) << force[i](iat, ixyz) * fac; }
             ofs << std::endl;
@@ -59,6 +59,104 @@ inline void test_edm_H2(const T* const edm, const double* const eig_ks, const ps
         }
         std::cout << std::endl;
     }
+}
+
+///========================= excited-state geometry relaxation =========================
+
+template<typename T, typename TR>
+void ModuleESolver::ESolver_LR<T, TR>::setup_relax_target_()
+{
+    this->excited_relax_ = (PARAM.inp.calculation == "relax");
+    if (!this->excited_relax_) { return; }
+
+    // The Z-vector equation has no complex solver (see Grad/multipliers/zeq_solver.hpp), so an
+    // excited-state gradient only exists at gamma. Fail here rather than after the SCF.
+    if (!std::is_same<T, double>::value)
+    {
+        ModuleBase::WARNING_QUIT("ESolver_LR",
+            "excited-state relaxation currently requires gamma-only sampling: the complex "
+            "Z-vector solver is not implemented.");
+    }
+    if (this->inp_->lr_target_state >= this->nstates)
+    {
+        ModuleBase::WARNING_QUIT("ESolver_LR",
+            "lr_target_state is beyond the states actually solved (lr_nstates <= 0 expands to "
+            "all particle-hole pairs, which may be fewer than requested).");
+    }
+
+    // `openshell` is only settled after the ground-state occupations have been read, which is why
+    // this cannot live in the input-file checks
+    const std::string& spin = this->inp_->lr_target_spin;
+    if (this->openshell)
+    {
+        if (spin != "updown")
+        {
+            ModuleBase::WARNING_QUIT("ESolver_LR",
+                "this is an open-shell (spin-unrestricted) calculation, whose single channel is "
+                "'updown'; lr_target_spin=singlet/triplet does not exist here.");
+        }
+        this->target_is_ = 0;
+    }
+    else
+    {
+        if (spin == "updown")
+        {
+            ModuleBase::WARNING_QUIT("ESolver_LR",
+                "lr_target_spin=updown is only meaningful for an open-shell calculation; this one "
+                "is closed-shell, so use singlet or triplet.");
+        }
+        this->target_is_ = (spin == "triplet") ? 1 : 0;
+        if (this->target_is_ >= this->nspin)
+        {
+            ModuleBase::WARNING_QUIT("ESolver_LR",
+                "lr_target_spin=triplet requires nspin=2: the triplet channel is not built here.");
+        }
+    }
+    this->force_gs_.create(this->ucell_->nat, 3);
+    this->lr_grad_.create(this->ucell_->nat, 3);
+    GlobalV::ofs_running << " Excited-state relaxation follows state " << this->inp_->lr_target_state
+        << " of the " << (this->openshell ? "updown" : (this->target_is_ == 1 ? "triplet" : "singlet"))
+        << " channel." << std::endl;
+}
+
+template<typename T, typename TR>
+double ModuleESolver::ESolver_LR<T, TR>::cal_energy()
+{
+    // Outside a relaxation nothing consumes this, and returning a non-zero value would change
+    // what the existing single-point outputs report.
+    if (!this->excited_relax_) { return 0.0; }
+    return this->etot_gs_ + this->pelec->ekb.c[this->target_ekb_offset_()];
+}
+
+template<typename T, typename TR>
+void ModuleESolver::ESolver_LR<T, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
+{
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
+    const UnitCell& ucell = static_cast<const UnitCell&>(basecell);
+    if (!this->excited_relax_)
+    {   // single-point runs print the gradients of every state from `after_all_runners` instead
+        return;
+    }
+    if (this->lr_grad_.nr != ucell.nat)
+    {
+        ModuleBase::WARNING_QUIT("ESolver_LR::cal_force",
+            "the excited-state gradient has not been computed for this geometry.");
+    }
+    // `force_gs_` is already a force (F = -dE_gs/dR, the ABACUS convention), while `cal_force(int)`
+    // returns the *gradient* +d(Omega)/dR -- hence the minus sign. Both are Ry/Bohr.
+    force.create(ucell.nat, 3);
+    force = this->force_gs_ - this->lr_grad_;
+    ModuleIO::print_force(GlobalV::ofs_running, ucell, "EXCITED-STATE TOTAL-FORCE (eV/Angstrom)", force, false);
+}
+
+template<typename T, typename TR>
+void ModuleESolver::ESolver_LR<T, TR>::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
+{
+    static_cast<void>(stress);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
+    ModuleBase::WARNING_QUIT("ESolver_LR::cal_stress",
+        "the excited-state stress is not implemented (every stress term under module_lr/Grad is a "
+        "dummy passed with isstress=false).");
 }
 
 template<typename T, typename TR>
@@ -105,14 +203,18 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge& chg_gs
 }
 
 template<typename T, typename TR>
-ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int ispin)
+ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int ispin, const int istate_only)
 {
     ModuleBase::TITLE("ESolver_LR", "cal_force");
     ModuleBase::timer::start("ESolver_LR", "solve_zvector_eqation");
-    ct::Tensor Z = LR_Util::newTensor<T>({ this->nstates, this->nloc_per_state });
+    // `Z_vector_equation` treats X and Z as `nstates` independent blocks of `nloc_per_state`,
+    // so a single state is just the corresponding block with nstates = 1
+    const int nst = (istate_only < 0) ? this->nstates : 1;
+    const int xoff = (istate_only < 0) ? 0 : istate_only * this->nloc_per_state;
+    ct::Tensor Z = LR_Util::newTensor<T>({ nst, this->nloc_per_state });
     // construct and solve the Z-vector equation
-    Z_vector_equation(this->X[ispin].template data<T>(), Z.template data<T>(),
-        this->xc_kernel, this->nstates, this->nspin, this->nbasis, this->nocc, this->nvirt,
+    Z_vector_equation(this->X[ispin].template data<T>() + xoff, Z.template data<T>(),
+        this->xc_kernel, nst, this->nspin, this->nbasis, this->nocc, this->nvirt,
         (*this->ucell_), orb_cutoff_, this->gd(), *this->psi_ks, this->eig_ks,
 #ifdef __EXX    
         std::weak_ptr<Exx_LRI<T>>(this->exx_lri), this->exx_info.info_global.hybrid_alpha,
@@ -124,12 +226,12 @@ ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int isp
 }
 
 template<typename T, typename TR>
-std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(const int ispin)
+std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(const int ispin, const int istate_only)
 {
     if (PARAM.inp.test_force && ispin == 0) { this->test_force(); }
-    if (this->openshell) { return this->cal_force_openshell(); }
+    if (this->openshell) { return this->cal_force_openshell(istate_only); }
 
-    const ct::Tensor& Z = this->solve_zvector_eqation(ispin);
+    const ct::Tensor& Z = this->solve_zvector_eqation(ispin, istate_only);
 
     ModuleBase::TITLE("ESolver_LR", "cal_force");
     ModuleBase::timer::start("ESolver_LR", "cal_force");
@@ -147,10 +249,13 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
     // elecstate::DensityMatrix<T, T> dm_gs(this->paraMat_, 1, this->kv.kvec_d, this->nk);
 
     // for each state, calculate dm_trans, dm_relaxed_diff, edm and force
-    std::vector<ModuleBase::matrix> forces(this->nstates);
-    for (int istate = 0;istate < this->nstates;++istate)
+    const int ist_begin = (istate_only < 0) ? 0 : istate_only;
+    const int ist_end = (istate_only < 0) ? this->nstates : istate_only + 1;
+    std::vector<ModuleBase::matrix> forces(ist_end - ist_begin);
+    for (int istate = ist_begin;istate < ist_end;++istate)
     {
-        const int offset = istate * this->nloc_per_state;
+        const int offset = istate * this->nloc_per_state;             // block of X
+        const int zoffset = (istate - ist_begin) * this->nloc_per_state;   // block of Z
         // The imag part will be cancelled in the force calculation, so we use double DM(R) to calculate force. 
         // But complex transition DM(R) is still used in energy density matrix calculation.
         const auto& dm_trans_k = cal_dm_trans_pblas(this->X[ispin].template data<T>() + offset, this->paraX_[ispin], c, this->paraC_, this->nbasis, this->nocc[ispin], this->nvirt[ispin], this->paraMat_);
@@ -183,7 +288,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
         // std::cout << "dm_diff_k T(k) after symmetrization, istate " + std::to_string(istate) << std::endl;
         // LR_Util::print_value(dm_diff_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
 
-        const std::vector<ct::Tensor>& dm_relaxed_k = cal_dm_trans_pblas(Z.template data<T>() + offset, this->paraX_[ispin], c, this->paraC_, this->nbasis, this->nocc[ispin], this->nvirt[ispin], this->paraMat_);
+        const std::vector<ct::Tensor>& dm_relaxed_k = cal_dm_trans_pblas(Z.template data<T>() + zoffset, this->paraX_[ispin], c, this->paraC_, this->nbasis, this->nocc[ispin], this->nvirt[ispin], this->paraMat_);
         std::cout << "dm_relaxed_k Z(k) before symmetrization, istate " + std::to_string(istate) << std::endl;
         LR_Util::print_value(dm_relaxed_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
         for (auto& d : dm_relaxed_k) { LR_Util::matsym(d.data<T>(), this->nbasis, this->paraMat_); }    // symmetrize
@@ -223,7 +328,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
 #endif
         const std::vector<ct::Tensor>& edm_k =
             cal_edm_from_XZ_istate(this->X[ispin].template data<T>() + offset,
-                Z.template data<T>() + offset,
+                Z.template data<T>() + zoffset,
                 this->pelec->ekb.c[ ispin * nstates + istate],
                 // pack the following as a struct or use parameter package
                 this->eig_ks.c, dm_trans,
@@ -326,17 +431,17 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
             }
         }
 #endif
-        forces[istate] = force_hxc_dmtrans + force_hamiltgs_relaxed_diff + force_overlap_edm;
+        forces[istate - ist_begin] = force_hxc_dmtrans + force_hamiltgs_relaxed_diff + force_overlap_edm;
     }
     ModuleBase::timer::end("ESolver_LR", "cal_force");
     // total force
-    print_force(forces, std::cout);
-    print_force(forces, GlobalV::ofs_running);
+    print_force(forces, std::cout, ist_begin);
+    print_force(forces, GlobalV::ofs_running, ist_begin);
     return forces;
 }
 
 template<typename T, typename TR>
-std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_openshell()
+std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_openshell(const int istate_only)
 {
     ModuleBase::TITLE("ESolver_LR", "cal_force_openshell");
     ModuleBase::timer::start("ESolver_LR", "cal_force");
@@ -346,7 +451,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     // The spin-orbital formulas apply verbatim -- unlike the closed-shell singlet/triplet
     // algorithm, X here is normalized over BOTH channels, so it carries no implicit sqrt(2)
     // and none of the collapsed 2/4 factors are needed.
-    const ct::Tensor& Z = this->solve_zvector_eqation(0);
+    const ct::Tensor& Z = this->solve_zvector_eqation(0, istate_only);
 
     const std::vector<int> ld_x = { this->nk * this->paraX_[0].get_local_size(),
                                     this->nk * this->paraX_[1].get_local_size() };
@@ -362,12 +467,14 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     );
     GlobalV::ofs_running << "Start to calculate excited-state force of updown (open shell)" << std::endl;
 
-    std::vector<ModuleBase::matrix> forces(this->nstates);
-    for (int istate = 0;istate < this->nstates;++istate)
+    const int ist_begin = (istate_only < 0) ? 0 : istate_only;
+    const int ist_end = (istate_only < 0) ? this->nstates : istate_only + 1;
+    std::vector<ModuleBase::matrix> forces(ist_end - ist_begin);
+    for (int istate = ist_begin;istate < ist_end;++istate)
     {
         const int offset = istate * this->nloc_per_state;
         const T* const X_istate = this->X[0].template data<T>() + offset;
-        const T* const Z_istate = Z.template data<T>() + offset;
+        const T* const Z_istate = Z.template data<T>() + (istate - ist_begin) * this->nloc_per_state;
 
         // 1. the k-space blocks of each spin channel
         std::vector<std::vector<ct::Tensor>> dmx_k(2), dmdiff_k(2), relaxed_k(2);
@@ -492,11 +599,11 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
             force_hamiltgs_relaxed_diff += force_exx_gs_relaxed_diff;
         }
 #endif
-        forces[istate] = force_hxc_dmtrans + force_hamiltgs_relaxed_diff + force_overlap_edm;
+        forces[istate - ist_begin] = force_hxc_dmtrans + force_hamiltgs_relaxed_diff + force_overlap_edm;
     }
     ModuleBase::timer::end("ESolver_LR", "cal_force");
-    print_force(forces, std::cout);
-    print_force(forces, GlobalV::ofs_running);
+    print_force(forces, std::cout, ist_begin);
+    print_force(forces, GlobalV::ofs_running, ist_begin);
     return forces;
 }
 

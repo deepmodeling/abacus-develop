@@ -38,17 +38,13 @@ namespace ModuleESolver
         virtual void runner(BaseCell& basecell, int istep) override;
         virtual void after_all_runners(BaseCell& basecell) override;
 
-        virtual double cal_energy()  override { return 0.0; };
-        virtual void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override
-        {
-            static_cast<void>(force);
-            basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-        };
-        virtual void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override
-        {
-            static_cast<void>(stress);
-            basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-        };
+        /// Total energy of the excited state being relaxed: E_gs + Omega. Zero outside a
+        /// relaxation, where nothing consumes it and the old behaviour is kept.
+        virtual double cal_energy() override;
+        /// Force on the atoms in the relaxed excited state, F = -d(E_gs + Omega)/dR (Ry/Bohr).
+        virtual void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
+        /// Not implemented: there is no excited-state stress. `cell-relax` is rejected at input.
+        virtual void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
 
       protected:
         const std::string in_dir;
@@ -143,6 +139,22 @@ namespace ModuleESolver
         bool ks_initialized_ = false;   ///< whether `initialize_from_ks_` has already run
         bool exx_owned_ = false;        ///< `exx_lri` was built here (so its Cs/Vs are ours to refresh)
 
+        // ---------- geometry relaxation on an excited state ----------
+        /// resolve and validate `lr_target_state` / `lr_target_spin`; call once the dimensions
+        /// (and therefore `openshell`) are final
+        void setup_relax_target_();
+        bool excited_relax_ = false;   ///< driving `calculation = relax` from an excited state
+        int target_is_ = 0;            ///< spin block of the relaxed state in `X` and `pelec->ekb`
+        double etot_gs_ = 0.0;         ///< ground-state total energy of the current step (Ry)
+        ModuleBase::matrix force_gs_;  ///< ground-state force of the current step (Ry/Bohr, F = -dE/dR)
+        /// +d(Omega)/dR of the relaxed state (Ry/Bohr). Note the sign: what `cal_force(int)` returns
+        /// is a *gradient*, while `ESolver::cal_force` must hand back a force.
+        ModuleBase::matrix lr_grad_;
+        /// index of the relaxed state inside `pelec->ekb`
+        int target_ekb_offset_() const
+        { return this->openshell ? this->inp_->lr_target_state
+                                 : this->target_is_ * this->nstates + this->inp_->lr_target_state; }
+
         std::vector<std::string> spin_types;
 
         std::unique_ptr<ModuleGint::GintInfo> gint_info_ = nullptr;
@@ -185,11 +197,15 @@ namespace ModuleESolver
 
         ///========================== for gradient calculation =========================
         void init_pot_groundstate(const Charge& chg_gs);
-        ct::Tensor solve_zvector_eqation(const int ispin);
-        std::vector<ModuleBase::matrix> cal_force(const int ispin);
+        /// Solve the Z-vector equation. `istate_only >= 0` restricts it to that one excited state
+        /// (the returned tensor then holds a single block); -1 solves all `nstates`.
+        ct::Tensor solve_zvector_eqation(const int ispin, const int istate_only = -1);
+        /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only` as above:
+        /// geometry relaxation follows a single state, and the Z-vector solve dominates the cost.
+        std::vector<ModuleBase::matrix> cal_force(const int ispin, const int istate_only = -1);
         /// open-shell (spin-unrestricted) excited-state force: X holds [up | down] and every
         /// density matrix has two independent channels
-        std::vector<ModuleBase::matrix> cal_force_openshell();
+        std::vector<ModuleBase::matrix> cal_force_openshell(const int istate_only = -1);
         void test_force();   // test: reproduce the force of ground state
         elecstate::DensityMatrix<T, double> cal_dm_gs();  ///< ground-state density matrix
 
