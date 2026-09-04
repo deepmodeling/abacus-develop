@@ -165,7 +165,9 @@ namespace XC_Functional_Libxc
         const std::size_t nrxx,
         const Charge* const chr,
         const std::vector<double> &amag,
-        const ModuleBase::matrix &v);
+        const ModuleBase::matrix &v,
+        const bool domag,
+        const bool domag_z);
 
 
 //-------------------

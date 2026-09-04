@@ -149,7 +149,7 @@ TEST_F(InitDMFileTest, Nspin1_ReadSingleFile)
     ASSERT_EQ(dm->_DMR.size(), 1);
 
     hamilt::HContainer<double>* dmr0 = dm->get_DMR_vector()[0];
-    hamilt::Read_HContainer<double> reader(dmr0, "./test_dm_dir/dmrs1_nao.csr", nlocal, &ucell);
+    hamilt::Read_HContainer<double> reader(dmr0, "./test_dm_dir/dmrs1_nao.csr", nlocal, &ucell, 0);
     reader.read();
 
     EXPECT_GT(dmr0->size_atom_pairs(), 0);
@@ -183,12 +183,12 @@ TEST_F(InitDMFileTest, Nspin2_ReadTwoFiles)
 
     // Read spin-up
     hamilt::HContainer<double>* dmr0 = dm->get_DMR_vector()[0];
-    hamilt::Read_HContainer<double> reader0(dmr0, "./test_dm_dir/dmrs1_nao.csr", nlocal, &ucell);
+    hamilt::Read_HContainer<double> reader0(dmr0, "./test_dm_dir/dmrs1_nao.csr", nlocal, &ucell, 0);
     reader0.read();
 
     // Read spin-down
     hamilt::HContainer<double>* dmr1 = dm->get_DMR_vector()[1];
-    hamilt::Read_HContainer<double> reader1(dmr1, "./test_dm_dir/dmrs2_nao.csr", nlocal, &ucell);
+    hamilt::Read_HContainer<double> reader1(dmr1, "./test_dm_dir/dmrs2_nao.csr", nlocal, &ucell, 0);
     reader1.read();
 
     EXPECT_GT(dmr0->size_atom_pairs(), 0);
@@ -264,7 +264,7 @@ TEST_F(InitDMFileTest, HR_Nspin1_ReadSingleFile)
 
     // Read HR from file (same as init_hr_from_file does internally)
     hR.set_zero();
-    hamilt::Read_HContainer<double> reader(&hR, "./test_hr_dir/hrs1_nao.csr", nlocal, &ucell);
+    hamilt::Read_HContainer<double> reader(&hR, "./test_hr_dir/hrs1_nao.csr", nlocal, &ucell, 0);
     reader.read();
 
     // Verify data was loaded
@@ -308,13 +308,13 @@ TEST_F(InitDMFileTest, HR_Nspin2_ReadTwoFiles)
     // Read spin-up
     auto* hR_up = create_hcontainer();
     hR_up->set_zero();
-    hamilt::Read_HContainer<double> reader_up(hR_up, "./test_hr_dir/hrs1_nao.csr", nlocal, &ucell);
+    hamilt::Read_HContainer<double> reader_up(hR_up, "./test_hr_dir/hrs1_nao.csr", nlocal, &ucell, 0);
     reader_up.read();
 
     // Read spin-down
     auto* hR_down = create_hcontainer();
     hR_down->set_zero();
-    hamilt::Read_HContainer<double> reader_down(hR_down, "./test_hr_dir/hrs2_nao.csr", nlocal, &ucell);
+    hamilt::Read_HContainer<double> reader_down(hR_down, "./test_hr_dir/hrs2_nao.csr", nlocal, &ucell, 0);
     reader_down.read();
 
     // Verify both have data

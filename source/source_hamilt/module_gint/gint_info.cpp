@@ -1,6 +1,5 @@
 #include <cmath>
 #include <map>
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "gint_info.h"
 #include "gint_type.h"
@@ -15,8 +14,9 @@ GintInfo::GintInfo(
     int startidx_bx, int startidx_by, int startidx_bz,
     int nbx_local, int nby_local, int nbz_local,
     const Numerical_Orbital* Phi,
-    const UnitCell& ucell, Grid_Driver& gd)
-    : ucell_(&ucell)
+    const UnitCell& ucell, Grid_Driver& gd,
+    const int nspin, const bool gamma_only, const bool domag, const bool use_gpu, const int nstream)
+    : ucell_(&ucell), nspin_(nspin), gamma_only_(gamma_only), domag_(domag), use_gpu_(use_gpu)
 {
     // initialize the unitcell information
     unitcell_info_ = std::make_shared<UnitCellInfo>(ucell_->a1 * ucell_->lat0, ucell_->a2 * ucell_->lat0, ucell_->a3 * ucell_->lat0,
@@ -46,16 +46,16 @@ GintInfo::GintInfo(
     init_atoms_(ucell_->ntype, ucell_->atoms, Phi);
 
     // initialize trace_lo_ and lgd_
-    init_trace_lo_(ucell, PARAM.inp.nspin);
+    init_trace_lo_(ucell, nspin_);
 
     // initialize the ijr_info
     // this step needs to be done after init_atoms_, because it requires the information of is_atom_on_bgrid
     init_ijr_info_(ucell, gd);
 
     #ifdef __CUDA
-    if(PARAM.inp.device == "gpu")
+    if(use_gpu_)
     {
-        streams_num_ = PARAM.inp.nstream;  // the default value of num_stream is 4
+        streams_num_ = nstream;  // the default value of num_stream is 4
         const int batch_size = nbz_local;
         init_bgrid_batches_(batch_size);
         gpu_vars_ = std::make_shared<GintGpuVars>(biggrid_info_, ucell, Phi);
@@ -151,7 +151,16 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
 
 void GintInfo::init_trace_lo_(const UnitCell& ucell, const int nspin)
 {
-    this->trace_lo_ = std::vector<int>(PARAM.globalv.nlocal, -1);
+    int nlocal = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        nlocal += ucell.atoms[it].nw * ucell.atoms[it].na;
+    }
+    if (nspin == 4)
+    {
+        nlocal *= 2;
+    }
+    this->trace_lo_ = std::vector<int>(nlocal, -1);
     this->lgd_ = 0;
     int iat = 0;
     int iw_all = 0;

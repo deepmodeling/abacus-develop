@@ -203,34 +203,6 @@ TEST_F(vdwd2Test, WrongVdwType)
 }
 
 
-// mohan comment out 2025-04-05 since the original code has been removed.
-// further investigation is needed.
-/*
-TEST_F(vdwd2Test, OneAtomWarning)
-{
-    UnitCell ucell1;
-    stru_ structure1{std::vector<double>{0.5, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.5},
-                     std::vector<atomtype_>{atomtype_{"Si", std::vector<std::vector<double>>{{0., 0., 0.}}}}};
-
-    construct_ucell(structure1,ucell1);
-
-    GlobalV::ofs_warning.open("warning.log");
-    std::ifstream ifs;
-    std::string output;
-
-    std::unique_ptr<vdw::Vdw> vdw_test = vdw::make_vdw(ucell1, input);
-
-    GlobalV::ofs_warning.close();
-	ifs.open("warning.log");
-	getline(ifs,output);
-	EXPECT_THAT(output,testing::HasSubstr("warning"));
-    EXPECT_EQ(vdw_test,nullptr);
-
-    ifs.close();
-    ClearUcell(ucell1);
-}
-*/
-
 TEST_F(vdwd2Test, D2ReadFile)
 {
     input.vdw_C6_file = "c6.txt";

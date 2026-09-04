@@ -123,7 +123,12 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
             this->pw_big->nbzp,
             this->orb_.Phi,
             ucell,
-            this->gd));
+            this->gd,
+            inp.nspin,
+            PARAM.globalv.gamma_only_local,
+            PARAM.globalv.domag,
+            inp.device == "gpu",
+            inp.nstream));
             ModuleGint::Gint::set_gint_info(this->gint_info_.get());
 
     this->pot.resize(this->nspin, nullptr);

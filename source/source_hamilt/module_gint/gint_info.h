@@ -6,7 +6,6 @@
 #include "source_cell/unitcell.h"
 #include "source_cell/atom_spec.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
-#include "source_io/module_parameter/parameter.h"
 #include "gint_helper.h"
 #include "big_grid.h"
 #include "gint_atom.h"
@@ -32,7 +31,8 @@ class GintInfo
         int startidx_bx, int startidx_by, int startidx_bz,
         int nbx_local, int nby_local, int nbz_local,
         const Numerical_Orbital* Phi,
-        const UnitCell& ucell, Grid_Driver& gd);
+        const UnitCell& ucell, Grid_Driver& gd,
+        int nspin, bool gamma_only, bool domag, bool use_gpu, int nstream);
 
     ~GintInfo();
 
@@ -63,6 +63,9 @@ class GintInfo
     int get_local_mgrid_num() const { return localcell_info_->get_mgrids_num(); }
     double get_mgrid_volume() const { return meshgrid_info_->get_volume(); }
     GintPrecision get_exec_precision() const { return exec_precision_; }
+    int get_nspin() const { return nspin_; }
+    bool get_domag() const { return domag_; }
+    bool use_gpu() const { return use_gpu_; }
     void set_exec_precision(const GintPrecision precision) { exec_precision_ = precision; }
 
     //=========================================
@@ -72,7 +75,7 @@ class GintInfo
     HContainer<T> get_hr(int npol = 1) const
     {
         auto hr = HContainer<T>(ucell_->nat);
-        if(PARAM.inp.gamma_only)
+        if(gamma_only_)
         {
             hr.fix_gamma();
         }
@@ -135,6 +138,10 @@ class GintInfo
     int lgd_ = 0;
 
     GintPrecision exec_precision_ = GintPrecision::fp64;
+    int nspin_ = 1;
+    bool gamma_only_ = false;
+    bool domag_ = false;
+    bool use_gpu_ = false;
 
     #ifdef __CUDA
     public:

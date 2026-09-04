@@ -11,10 +11,6 @@
 #include <fstream>
 #include <iostream>
 
-// Include parameter.h with private access for testing
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 /************************************************
  *  unit test of functions in cal_vel.cpp
  ***********************************************/
@@ -60,7 +56,7 @@ TEST_F(cal_vel_test, shape_gradn)
 
     for (int ir = 0; ir < nrxx; ir++)
     {
-        epr_z = log(std::max(PS_TOTN_real[ir], min) / PARAM.inp.nc_k) / sqrt(2) / PARAM.inp.sigma_k;
+        epr_z = log(std::max(PS_TOTN_real[ir], min) / nc_k) / sqrt(2) / sigma_k;
         eprime[ir] = epr_c * exp(-pow(epr_z, 2)) / std::max(PS_TOTN_real[ir], min);
     }
 
@@ -91,8 +87,6 @@ TEST_F(cal_vel_test, eps_pot)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
@@ -138,7 +132,7 @@ TEST_F(cal_vel_test, eps_pot)
 
     for (int ir = 0; ir < nrxx; ir++)
     {
-        eprime[ir] = eprime[ir] * (PARAM.input.eb_k - 1);
+        eprime[ir] = eprime[ir] * (80.0 - 1);
     }
 
     ModuleBase::Vector3<double>* nabla_phi = new ModuleBase::Vector3<double>[nrxx];
@@ -189,8 +183,6 @@ TEST_F(cal_vel_test, cal_vel)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
@@ -238,8 +230,6 @@ int main(int argc, char** argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 
     testing::InitGoogleTest(&argc, argv);

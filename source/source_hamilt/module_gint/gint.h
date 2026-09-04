@@ -19,6 +19,11 @@ class Gint
         gint_info_ = gint_info;
     }
 
+    static const GintInfo& get_gint_info()
+    {
+        return *gint_info_;
+    }
+
     protected:
     static GintInfo* gint_info_;
 };

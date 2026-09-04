@@ -228,7 +228,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 const std::string dmfile
                     = PARAM.globalv.global_readin_dir + "/dmrs" + std::to_string(is + 1) + "_nao.csr";
                 dmR_vec[is] = new hamilt::HContainer<double>(const_cast<Parallel_Orbitals*>(pv));
-                hamilt::Read_HContainer<double> reader_dm(dmR_vec[is], dmfile, PARAM.globalv.nlocal, &ucell);
+                hamilt::Read_HContainer<double> reader_dm(dmR_vec[is], dmfile, PARAM.globalv.nlocal, &ucell, GlobalV::MY_RANK);
                 reader_dm.read();
             }
 

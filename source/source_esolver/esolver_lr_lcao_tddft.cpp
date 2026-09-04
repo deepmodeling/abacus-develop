@@ -470,7 +470,12 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
         this->pw_big->nbzp,
         orb.Phi,
         ucell,
-        this->gd));
+        this->gd,
+        this->inp_->nspin,
+        PARAM.globalv.gamma_only_local,
+        PARAM.globalv.domag,
+        this->inp_->device == "gpu",
+        this->inp_->nstream));
     ModuleGint::Gint::set_gint_info(gint_info_.get());
     // if EXX from scratch, init 2-center integral and calculate Cs, Vs 
 #ifdef __EXX
