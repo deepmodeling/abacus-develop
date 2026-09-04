@@ -28,6 +28,11 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     ModuleBase::TITLE("HSolverPW_SDFT", "solve");
     ModuleBase::timer::start("HSolverPW_SDFT", "solve");
 
+    // This override never calls HSolverPW::solve, which is where the base class
+    // normally establishes the pool communication context. Set it up here so that
+    // hamiltSolvePsiK builds a diag_comm_info describing the real pool; otherwise it
+    // would keep the defaults (rank 0, 1 process) and every reduction guarded by
+    // diag_comm.nproc > 1 would be silently skipped.
     this->rank_in_pool = wfc_basis->poolrank;
     this->nproc_in_pool = wfc_basis->poolnproc;
 
