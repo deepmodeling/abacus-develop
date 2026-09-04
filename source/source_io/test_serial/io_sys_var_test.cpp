@@ -15,6 +15,8 @@
  *   - Item_test:
  *     - read in specific values for some items
  */
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #include "source_io/module_parameter/input_item.h"
 #include "source_io/module_parameter/read_input.h"
@@ -43,41 +45,41 @@ TEST_F(InputTest, Item_test)
     readinput.check_ntype_flag = false;
 
     { 
-        param.input.suffix = "test";
-        readinput.set_global_dir(param.inp, param.sys);
+        TestParameters::input(param).suffix = "test";
+        readinput.set_global_dir(param.inp, TestParameters::sys(param));
 
-        EXPECT_EQ(param.sys.global_out_dir, "OUT.test/");
-        EXPECT_EQ(param.sys.global_stru_dir, "OUT.test/STRU/");
-        EXPECT_EQ(param.sys.global_matrix_dir, "OUT.test/matrix/");
+        EXPECT_EQ(TestParameters::sys(param).global_out_dir, "OUT.test/");
+        EXPECT_EQ(TestParameters::sys(param).global_stru_dir, "OUT.test/STRU/");
+        EXPECT_EQ(TestParameters::sys(param).global_matrix_dir, "OUT.test/matrix/");
 
-        readinput.set_globalv(param.inp, param.sys);
+        readinput.set_globalv(param.inp, TestParameters::sys(param));
     
-        param.input.basis_type = "lcao";
-        param.input.gamma_only = true;
-        param.input.esolver_type = "tddft";
-        param.input.nspin = 2;
-        readinput.set_globalv(param.inp, param.sys);
-        EXPECT_EQ(param.sys.gamma_only_local, 0);
+        TestParameters::input(param).basis_type = "lcao";
+        TestParameters::input(param).gamma_only = true;
+        TestParameters::input(param).esolver_type = "tddft";
+        TestParameters::input(param).nspin = 2;
+        readinput.set_globalv(param.inp, TestParameters::sys(param));
+        EXPECT_EQ(TestParameters::sys(param).gamma_only_local, 0);
         
-        param.input.deepks_scf = true;
-        param.input.deepks_out_labels = true;
-        readinput.set_globalv(param.inp, param.sys);
-        EXPECT_EQ(param.sys.deepks_setorb, 1);
+        TestParameters::input(param).deepks_scf = true;
+        TestParameters::input(param).deepks_out_labels = true;
+        readinput.set_globalv(param.inp, TestParameters::sys(param));
+        EXPECT_EQ(TestParameters::sys(param).deepks_setorb, 1);
 
-        param.input.nspin = 4;
-        param.input.noncolin = true;
-        readinput.set_globalv(param.inp, param.sys);
-        EXPECT_EQ(param.sys.domag, 1);
-        EXPECT_EQ(param.sys.domag_z, 0);
-        EXPECT_EQ(param.sys.npol, 2);
+        TestParameters::input(param).nspin = 4;
+        TestParameters::input(param).noncolin = true;
+        readinput.set_globalv(param.inp, TestParameters::sys(param));
+        EXPECT_EQ(TestParameters::sys(param).domag, 1);
+        EXPECT_EQ(TestParameters::sys(param).domag_z, 0);
+        EXPECT_EQ(TestParameters::sys(param).npol, 2);
 
-        param.input.nspin = 1;
-        param.input.lspinorb = true;
-        param.input.noncolin = false;
-        readinput.set_globalv(param.inp, param.sys);
-        EXPECT_EQ(param.sys.domag, 0);
-        EXPECT_EQ(param.sys.domag_z, 0);
-        EXPECT_EQ(param.sys.npol, 1);
+        TestParameters::input(param).nspin = 1;
+        TestParameters::input(param).lspinorb = true;
+        TestParameters::input(param).noncolin = false;
+        readinput.set_globalv(param.inp, TestParameters::sys(param));
+        EXPECT_EQ(TestParameters::sys(param).domag, 0);
+        EXPECT_EQ(TestParameters::sys(param).domag_z, 0);
+        EXPECT_EQ(TestParameters::sys(param).npol, 1);
 
         
     }

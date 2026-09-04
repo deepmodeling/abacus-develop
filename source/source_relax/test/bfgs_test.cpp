@@ -7,9 +7,7 @@
 #include "source_relax/ions_move_bfgs2.h"
 #undef private
 
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
 
 #include "source_relax/ions_move_basic.h" // for Ions_Move_Basic static members
 #include "source_relax/relax_data.h"

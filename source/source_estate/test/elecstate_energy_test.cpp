@@ -1,9 +1,11 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #include "source_estate/elecstate.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_parameter/parameter.h"
+#undef private
 
 #include <string>
 Parameter PARMA;
@@ -65,21 +67,21 @@ class MockElecState : public ElecState
   public:
     void Set_GlobalV_Default()
     {
-        PARAM.input.imp_sol = false;
-        PARAM.input.dft_plus_u = 0;
+        TestParameters::input().imp_sol = false;
+        TestParameters::input().dft_plus_u = 0;
         // base class
-        PARAM.input.nspin = 1;
-        PARAM.input.nelec = 10.0;
-        PARAM.input.nupdown  = 0.0;
-        PARAM.sys.two_fermi = false;
-        PARAM.input.nbands = 6;
-        PARAM.sys.nlocal = 6;
-        PARAM.input.esolver_type = "ksdft";
-        PARAM.input.lspinorb = false;
-        PARAM.input.basis_type = "pw";
+        TestParameters::input().nspin = 1;
+        TestParameters::input().nelec = 10.0;
+        TestParameters::input().nupdown  = 0.0;
+        TestParameters::sys().two_fermi = false;
+        TestParameters::input().nbands = 6;
+        TestParameters::sys().nlocal = 6;
+        TestParameters::input().esolver_type = "ksdft";
+        TestParameters::input().lspinorb = false;
+        TestParameters::input().basis_type = "pw";
         GlobalV::KPAR = 1;
         GlobalV::NPROC_IN_POOL = 1;
-        PARAM.input.sc_mag_switch = true;
+        TestParameters::input().sc_mag_switch = true;
     }
 };
 const double* ElecState::getRho(int spin) const
@@ -114,7 +116,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarris)
 TEST_F(ElecStateEnergyTest, CalEnergiesHarrisImpSol)
 {
     elecstate->f_en.deband_harris = 0.1;
-    PARAM.input.imp_sol = true;
+    TestParameters::input().imp_sol = true;
     elecstate->cal_energies(1);
     // deband_harris + hatree + efiled + gatefield + esol_el + esol_cav + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.6);
@@ -123,7 +125,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarrisImpSol)
 TEST_F(ElecStateEnergyTest, CalEnergiesHarrisDFTU)
 {
     elecstate->f_en.deband_harris = 0.1;
-    PARAM.input.dft_plus_u = 1;
+    TestParameters::input().dft_plus_u = 1;
     elecstate->cal_energies(1);
     // deband_harris + hatree + efiled + gatefield + edftu + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.3);
@@ -140,7 +142,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtot)
 TEST_F(ElecStateEnergyTest, CalEnergiesEtotImpSol)
 {
     elecstate->f_en.deband = 0.1;
-    PARAM.input.imp_sol = true;
+    TestParameters::input().imp_sol = true;
     elecstate->cal_energies(2);
     // deband + hatree + efiled + gatefield + esol_el + esol_cav + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.6);
@@ -149,7 +151,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtotImpSol)
 TEST_F(ElecStateEnergyTest, CalEnergiesEtotDFTU)
 {
     elecstate->f_en.deband = 0.1;
-    PARAM.input.dft_plus_u = 1;
+    TestParameters::input().dft_plus_u = 1;
     elecstate->cal_energies(2);
     // deband + hatree + efiled + gatefield + edftu + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.3);
@@ -173,10 +175,10 @@ TEST_F(ElecStateEnergyTest, CalBandgap)
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
     elecstate->klist = klist;
-    elecstate->ekb.create(klist->get_nks(), PARAM.input.nbands);
+    elecstate->ekb.create(klist->get_nks(), TestParameters::input().nbands);
     for (int ik = 0; ik < klist->get_nks(); ik++)
     {
-        for (int ib = 0; ib < PARAM.input.nbands; ib++)
+        for (int ib = 0; ib < TestParameters::input().nbands; ib++)
         {
             elecstate->ekb(ik, ib) = ib;
         }
@@ -210,10 +212,10 @@ TEST_F(ElecStateEnergyTest, CalBandgapUpDw)
         } 
     }
     elecstate->klist = klist;
-    elecstate->ekb.create(klist->get_nks(), PARAM.input.nbands);
+    elecstate->ekb.create(klist->get_nks(), TestParameters::input().nbands);
     for (int ik = 0; ik < klist->get_nks(); ik++)
     {
-        for (int ib = 0; ib < PARAM.input.nbands; ib++)
+        for (int ib = 0; ib < TestParameters::input().nbands; ib++)
         {
             if (ik < 3)
             {

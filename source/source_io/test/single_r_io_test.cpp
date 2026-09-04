@@ -1,8 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 #include "source_io/module_hs/single_r_io.h"
 #include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
@@ -57,7 +56,7 @@ TEST(ModuleIOTest, OutputSingleR)
     const double sparse_threshold = 1e-8;
     const bool binary = false;
     Parallel_Orbitals pv;
-    PARAM.sys.nlocal = 99;
+    TestParameters::sys().nlocal = 99;
     pv.set_serial(5, 5);
     std::map<size_t, std::map<size_t, double>> XR = {
         {0, {{1, 0.5}, {3, 0.3}}},

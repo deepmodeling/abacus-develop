@@ -1,9 +1,8 @@
 #include <string>
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 
 /***************************************************************
  *  unit test of class Occupy
@@ -182,7 +181,7 @@ TEST_F(OccupyTest, DecisionArbitrary)
 
 TEST_F(OccupyTest, IweightsNOSPIN)
 {
-  PARAM.input.nspin = 1;
+  TestParameters::input().nspin = 1;
   double ef = 0.0;
   ModuleBase::matrix wg(1, 1);
   std::vector<double> wk(1, 2.0);
@@ -196,7 +195,7 @@ TEST_F(OccupyTest, IweightsNOSPIN)
 
 TEST_F(OccupyTest, IweightsSPIN)
 {
-  PARAM.input.nspin = 2;
+  TestParameters::input().nspin = 2;
   double ef_up = 0.0;
   double ef_dw = 0.0;
   ModuleBase::matrix wg(2, 1);
@@ -217,7 +216,7 @@ TEST_F(OccupyTest, IweightsSPIN)
 
 TEST_F(OccupyTest, IweightsWarning)
 {
-  PARAM.input.nspin = 1;
+  TestParameters::input().nspin = 1;
   double ef = 0.0;
   ModuleBase::matrix wg(1, 1);
   std::vector<double> wk(1, 2.0);

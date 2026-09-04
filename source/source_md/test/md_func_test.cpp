@@ -1,12 +1,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #define protected public
 #include "md_test_fixture.h"
 #include "source_md/md_func.h"
+#undef protected
+#undef private
 
 #define doublethreshold 1e-12
 /************************************************
@@ -131,7 +132,7 @@ TEST_F(MD_func_test, dump_info)
     {
         atom.vel = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
     }
-    MD_func::dump_info(0, PARAM.sys.global_out_dir, mdcell, param_in, virial);
+    MD_func::dump_info(0, TestParameters::sys().global_out_dir, mdcell, param_in, virial);
     std::ifstream ifs("MD_dump");
     std::string output_str;
     getline(ifs, output_str);
@@ -177,7 +178,7 @@ TEST_F(MD_func_test, dump_info)
     ifs.close();
 
     // append
-    MD_func::dump_info(1, PARAM.sys.global_out_dir, mdcell, param_in, virial);
+    MD_func::dump_info(1, TestParameters::sys().global_out_dir, mdcell, param_in, virial);
     std::ifstream ifs2("MD_dump");
     getline(ifs2, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MDSTEP:  0"));

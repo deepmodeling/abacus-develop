@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 #include "source_base/inverse_matrix.h"
 #include "source_base/module_external/lapack_connector.h"
 #include "source_psi/psi.h"
@@ -155,8 +154,8 @@ class DiagoCGPrepare
                                           eigen.data());
         };
         hsolver::DiagoCG<std::complex<float>> cg(
-            PARAM.input.basis_type,
-            PARAM.input.calculation,
+            TestParameters::input().basis_type,
+            TestParameters::input().calculation,
             hsolver::DiagoIterAssist<std::complex<float>>::need_subspace,
             subspace_func,
             hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR,

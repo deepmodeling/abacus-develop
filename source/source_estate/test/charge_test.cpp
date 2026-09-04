@@ -1,13 +1,16 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #define protected public
 #include "source_cell/unitcell.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_parameter/parameter.h"
 #include "prepare_unitcell.h"
+#undef protected
+#undef private
 // mock functions for UnitCell
 
 Magnetism::Magnetism()
@@ -28,9 +31,9 @@ double tmp_ucell_omega = 500.0;
 double tmp_gridecut = 80.0;
 void Set_GlobalV_Default()
 {
-    PARAM.input.nspin = 1;
-    PARAM.input.test_charge = 0;
-    PARAM.input.nelec = 8;
+    TestParameters::input().nspin = 1;
+    TestParameters::input().test_charge = 0;
+    TestParameters::input().nelec = 8;
 }
 } // namespace elecstate
 
@@ -103,16 +106,16 @@ TEST_F(ChargeTest, Allocate)
     EXPECT_EQ(rhopw->npw, 3143);
     EXPECT_EQ(rhopw->npwtot, 3143);
     // call Charge::allocate()
-    PARAM.input.test_charge = 2;
+    TestParameters::input().test_charge = 2;
     XC_Functional::func_type = 3;
     XC_Functional::ked_flag = true;
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
     const bool kin_den = charge->kin_density();
-    charge->allocate(PARAM.input.nspin, kin_den);
+    charge->allocate(TestParameters::input().nspin, kin_den);
     EXPECT_TRUE(charge->allocate_rho);
     // test if Charge::allocate() be called twice
-    EXPECT_NO_THROW(charge->allocate(PARAM.input.nspin, kin_den));
+    EXPECT_NO_THROW(charge->allocate(TestParameters::input().nspin, kin_den));
     EXPECT_TRUE(charge->allocate_rho);
 }
 
@@ -121,9 +124,9 @@ TEST_F(ChargeTest, SumRho)
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
     const bool kin_den = charge->kin_density();
-    charge->allocate(PARAM.input.nspin, kin_den);
+    charge->allocate(TestParameters::input().nspin, kin_den);
     EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
+    int nspin = (TestParameters::input().nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -140,9 +143,9 @@ TEST_F(ChargeTest, RenormalizeRho)
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
     const bool kin_den = charge->kin_density();
-    charge->allocate(PARAM.input.nspin, kin_den);
+    charge->allocate(TestParameters::input().nspin, kin_den);
     EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
+    int nspin = (TestParameters::input().nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -150,7 +153,7 @@ TEST_F(ChargeTest, RenormalizeRho)
             charge->rho[is][ir] = 0.1;
         }
     }
-    EXPECT_EQ(PARAM.input.nelec, 8);
+    EXPECT_EQ(TestParameters::input().nelec, 8);
     charge->set_omega(&ucell->omega);;
     charge->renormalize_rho();
     EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
@@ -161,9 +164,9 @@ TEST_F(ChargeTest, CheckNe)
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
     const bool kin_den = charge->kin_density();
-    charge->allocate(PARAM.input.nspin, kin_den);
+    charge->allocate(TestParameters::input().nspin, kin_den);
     EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
+    int nspin = (TestParameters::input().nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -171,7 +174,7 @@ TEST_F(ChargeTest, CheckNe)
             charge->rho[is][ir] = 0.1;
         }
     }
-    EXPECT_EQ(PARAM.input.nelec, 8);
+    EXPECT_EQ(TestParameters::input().nelec, 8);
     charge->set_omega(&ucell->omega);;
     charge->renormalize_rho();
     EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
@@ -183,9 +186,9 @@ TEST_F(ChargeTest, SaveRhoBeforeSumBand)
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
     const bool kin_den = charge->kin_density();
-    charge->allocate(PARAM.input.nspin, kin_den);
+    charge->allocate(TestParameters::input().nspin, kin_den);
     EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
+    int nspin = (TestParameters::input().nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -193,7 +196,7 @@ TEST_F(ChargeTest, SaveRhoBeforeSumBand)
             charge->rho[is][ir] = 0.1;
         }
     }
-    EXPECT_EQ(PARAM.input.nelec, 8);
+    EXPECT_EQ(TestParameters::input().nelec, 8);
     XC_Functional::func_type = 3;
     XC_Functional::ked_flag = true;
     charge->set_omega(&ucell->omega);;
@@ -207,7 +210,7 @@ TEST_F(ChargeTest, InitFinalScf)
     charge->set_rhopw(rhopw);
     XC_Functional::func_type = 1;
     XC_Functional::ked_flag = false;
-    PARAM.input.test_charge = 2;
+    TestParameters::input().test_charge = 2;
     charge->init_final_scf();
     EXPECT_TRUE(charge->allocate_rho_final_scf);
 }

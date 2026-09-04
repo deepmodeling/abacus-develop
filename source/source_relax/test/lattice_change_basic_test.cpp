@@ -6,9 +6,8 @@
 #include "for_test.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 
 /************************************************
  *  unit tests of namespace Lattice_Change_Basic
@@ -29,14 +28,14 @@ class LatticeChangeBasicTest : public ::testing::Test
         // Reset mock state before each test
         unitcell::reset_remake_cell_mock();
         // Reset fixed_ibrav to default
-        PARAM.input.fixed_ibrav = false;
+        TestParameters::input().fixed_ibrav = false;
     }
 
     virtual void TearDown()
     {
         // Clean up after each test
         unitcell::reset_remake_cell_mock();
-        PARAM.input.fixed_ibrav = false;
+        TestParameters::input().fixed_ibrav = false;
     }
 };
 
@@ -222,7 +221,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    PARAM.input.stress_thr = 10.0;
+    TestParameters::input().stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case1.log");
     ucell.lat_axis_free[0] = 1;
     ucell.lat_axis_free[1] = 1;
@@ -259,7 +258,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    PARAM.input.stress_thr = 10.0;
+    TestParameters::input().stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case2.log");
     ucell.lat_axis_free[0] = 1;
     ucell.lat_axis_free[1] = 1;
@@ -296,7 +295,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    PARAM.input.stress_thr = 10.0;
+    TestParameters::input().stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case3.log");
     ucell.lat_axis_free[0] = 1;
     ucell.lat_axis_free[1] = 1;
@@ -333,7 +332,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    PARAM.input.stress_thr = 10.0;
+    TestParameters::input().stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case4.log");
     ucell.lat_axis_free[0] = 0;
     ucell.lat_axis_free[1] = 0;
@@ -370,7 +369,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase5)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    PARAM.input.stress_thr = 10.0;
+    TestParameters::input().stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case5.log");
     ucell.lat_axis_free[0] = 0;
     ucell.lat_axis_free[1] = 0;
@@ -407,7 +406,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    PARAM.input.stress_thr = 10.0;
+    TestParameters::input().stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case6.log");
     ucell.lat_axis_free[0] = 0;
     ucell.lat_axis_free[1] = 0;
@@ -741,7 +740,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravSimpleCubic)
     move[7] = 0.0;
     move[8] = 0.1;
 
-    PARAM.input.fixed_ibrav = true;
+    TestParameters::input().fixed_ibrav = true;
     Lattice_Change_Basic::fixed_axes = "None";
 
     // Verify remake_cell was not called yet
@@ -765,7 +764,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravSimpleCubic)
     EXPECT_NEAR(ucell.latvec.e32, 0.0, 1e-10);
 
     // Reset for other tests
-    PARAM.input.fixed_ibrav = false;
+    TestParameters::input().fixed_ibrav = false;
 }
 
 // Test fixed_ibrav with FCC lattice
@@ -803,7 +802,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
     // Apply a small move
     for (int i = 0; i < 9; i++) move[i] = 0.01 * ucell.lat0;
 
-    PARAM.input.fixed_ibrav = true;
+    TestParameters::input().fixed_ibrav = true;
     Lattice_Change_Basic::fixed_axes = "None";
 
     // Verify remake_cell was not called yet
@@ -837,7 +836,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
     EXPECT_NEAR(ucell.latvec.e12, 0.0, 1e-10);
 
     // Reset for other tests
-    PARAM.input.fixed_ibrav = false;
+    TestParameters::input().fixed_ibrav = false;
 }
 
 // Test combination of fixed_axes = "volume" and fixed_ibrav
@@ -884,7 +883,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeAndIbrav)
     move[7] = 0.0;
     move[8] = 1.2;
 
-    PARAM.input.fixed_ibrav = true;
+    TestParameters::input().fixed_ibrav = true;
     Lattice_Change_Basic::fixed_axes = "volume";
 
     // Verify remake_cell was not called yet
@@ -910,7 +909,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeAndIbrav)
     EXPECT_NEAR(ucell.latvec.e32, 0.0, 1e-10);
 
     // Reset for other tests
-    PARAM.input.fixed_ibrav = false;
+    TestParameters::input().fixed_ibrav = false;
 }
 
 // Test axis constraint with fixed_axes = "a"
@@ -1054,7 +1053,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeNoFixedIbrav)
     move[7] = 0.0;
     move[8] = 0.1;
 
-    PARAM.input.fixed_ibrav = false; // Explicitly set to false
+    TestParameters::input().fixed_ibrav = false; // Explicitly set to false
     Lattice_Change_Basic::fixed_axes = "None";
 
     // Verify remake_cell was not called yet

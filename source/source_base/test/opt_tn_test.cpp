@@ -1,4 +1,7 @@
 #include "gtest/gtest.h"
+#ifdef __MPI
+#include <mpi.h>
+#endif
 #include "../opt_tn.hpp"
 #include "../opt_dcsrch.h"
 #include "./opt_test_tools.h"
@@ -114,28 +117,36 @@ protected:
 
 TEST_F(TN_test, TN_Solve_LinearEq)
 {
-#ifdef __MPI
-#undef __MPI
     Solve(0);
     EXPECT_NEAR(x[0], 0.50000000000003430589, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], -3.4028335704761047964e-14, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 1.5000000000000166533, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 1);
     ASSERT_EQ(tn.get_iter(), 1);
-#define __MPI
-#endif
 }
 
 TEST_F(TN_test, TN_Min_Func)
 {
-#ifdef __MPI
-#undef __MPI
     Solve(1);
     EXPECT_NEAR(x[0], 4.0049968540891525137, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], 2.1208751163987624722, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 9.4951527720891863993, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 6);
     ASSERT_EQ(tn.get_iter(), 6);
-#define __MPI
+}
+
+int main(int argc, char** argv)
+{
+#ifdef __MPI
+    MPI_Init(&argc, &argv);
 #endif
+
+    testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();
+
+#ifdef __MPI
+    MPI_Finalize();
+#endif
+
+    return result;
 }

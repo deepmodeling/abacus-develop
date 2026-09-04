@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 #include <vector>
 
 #define private public
@@ -273,20 +272,20 @@ class TestHSolverPW_SDFT : public ::testing::Test
             "scf",
             "pw",
             "cg",
-            PARAM.sys.use_uspp,
-            PARAM.input.nspin,
+            TestParameters::sys().use_uspp,
+            TestParameters::input().nspin,
             hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
             hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-            PARAM.input.nbands,
-            PARAM.input.diago_smooth_ethr,
-            PARAM.input.pw_diag_ndim,
-            PARAM.input.diag_subspace,
-            PARAM.input.nb2d,
-            PARAM.sys.ks_run,
-            PARAM.sys.all_ks_run,
-            PARAM.input.bndpar);
+            TestParameters::input().nbands,
+            TestParameters::input().diago_smooth_ethr,
+            TestParameters::input().pw_diag_ndim,
+            TestParameters::input().diag_subspace,
+            TestParameters::input().nb2d,
+            TestParameters::sys().ks_run,
+            TestParameters::sys().all_ks_run,
+            TestParameters::input().bndpar);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 

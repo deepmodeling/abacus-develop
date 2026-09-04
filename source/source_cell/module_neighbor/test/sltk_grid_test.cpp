@@ -1,6 +1,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #include "source_cell/module_neighbor/sltk_grid.h"
 #include "prepare_unitcell.h"
@@ -106,10 +108,10 @@ TEST_F(SltkGridTest, InitNoExpand)
     ofs.open("test.out");
     unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
     test_atom_in = 2;
-    PARAM.input.test_grid = 1;
+    TestParameters::input().test_grid = 1;
     double radius = 1e-1000;
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
-    Grid LatGrid(PARAM.input.test_grid);
+    Grid LatGrid(TestParameters::input().test_grid);
     LatGrid.init(ofs, *ucell, Atom_inp);
     ofs.close();
 }

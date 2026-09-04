@@ -4,6 +4,7 @@
 #include "gtest/gtest.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #include "source_md/md_base.h"
 #include "setcell.h"
 
@@ -20,7 +21,7 @@ class MdTestBase : public testing::Test
     void SetUp() override
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
+        Setcell::parameters(TestParameters::input(param_in));
 
         p_esolver.reset(new ModuleESolver::ESolver_LJ());
         p_esolver->before_all_runners(ucell, param_in.inp);
@@ -37,7 +38,7 @@ class MdIntegratorFixture : public MdTestBase
     {
         MdTestBase::SetUp();
         mdrun.reset(new Integrator(param_in, ucell));
-        mdrun->setup(p_esolver.get(), PARAM.sys.global_readin_dir);
+        mdrun->setup(p_esolver.get(), TestParameters::sys().global_readin_dir);
     }
 };
 
@@ -66,7 +67,7 @@ class MdFuncTestFixture : public testing::Test
     void SetUp() override
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
+        Setcell::parameters(TestParameters::input(param_in));
         natom = ucell.nat;
 
         allmass_store.resize(natom);

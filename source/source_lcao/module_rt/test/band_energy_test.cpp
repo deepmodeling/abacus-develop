@@ -2,6 +2,7 @@
 
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #include "tddft_test.h"
 
 #include <cstdio>
@@ -11,14 +12,13 @@
 #include <mpi.h>
 #include <source_base/module_external/scalapack_connector.h>
 
-class TestParameters
+namespace
 {
-  public:
-    static void set_td_print_eij(const double threshold)
-    {
-        PARAM.input.td_print_eij = threshold;
-    }
-};
+void set_td_print_eij(const double threshold)
+{
+    TestParameters::input().td_print_eij = threshold;
+}
+} // namespace
 
 /************************************************
  *  unit test of functions in band_energy.h
@@ -101,10 +101,10 @@ TEST(BandEnergyTest, testBandEnergy)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     const std::string output_path = "band_energy_test_output_" + std::to_string(rank) + ".txt";
     std::ofstream ofs(output_path.c_str());
-    TestParameters::set_td_print_eij(0.0);
+    set_td_print_eij(0.0);
     module_rt::compute_ekb(pv, nband, nlocal, Htmp, psi_k, ekb, ofs);
     ofs.close();
-    TestParameters::set_td_print_eij(-1.0);
+    set_td_print_eij(-1.0);
 
     // Check the results
     EXPECT_NEAR(ekb[0], 3.0, doublethreshold);

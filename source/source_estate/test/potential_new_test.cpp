@@ -2,33 +2,33 @@
 
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 
 #include "gtest/gtest.h"
 #include <memory>
 #include <string>
 #include <vector>
 
-class TestParameters
+namespace
 {
-  public:
-    static void reset()
-    {
-        PARAM.input.nspin = 1;
-        PARAM.input.basis_type = "pw";
-        PARAM.input.device = "cpu";
-        PARAM.input.precision = "double";
-        PARAM.sys.has_float_data = false;
-        PARAM.sys.has_double_data = true;
-    }
+void reset_parameters()
+{
+    TestParameters::input().nspin = 1;
+    TestParameters::input().basis_type = "pw";
+    TestParameters::input().device = "cpu";
+    TestParameters::input().precision = "double";
+    TestParameters::sys().has_float_data = false;
+    TestParameters::sys().has_double_data = true;
+}
 
-    static void use_cpu_single()
-    {
-        PARAM.input.device = "cpu";
-        PARAM.input.precision = "single";
-        PARAM.sys.has_float_data = true;
-        PARAM.sys.has_double_data = false;
-    }
-};
+void use_cpu_single()
+{
+    TestParameters::input().device = "cpu";
+    TestParameters::input().precision = "single";
+    TestParameters::sys().has_float_data = true;
+    TestParameters::sys().has_double_data = false;
+}
+} // namespace
 
 Structure_Factor::Structure_Factor()
 {
@@ -165,7 +165,7 @@ class PotentialNewTest : public ::testing::Test
   protected:
     void SetUp() override
     {
-        TestParameters::reset();
+        reset_parameters();
         XC_Functional::set_xc_type("lda");
         elecstate::MockPotComponent::reset();
 
@@ -183,7 +183,7 @@ class PotentialNewTest : public ::testing::Test
     {
         potential.reset();
         XC_Functional::set_xc_type("lda");
-        TestParameters::reset();
+        reset_parameters();
         elecstate::MockPotComponent::reset();
     }
 
@@ -266,7 +266,7 @@ TEST_F(PotentialNewTest, EmptyPotentialReturnsNullData)
 
 TEST_F(PotentialNewTest, ConstructorCPUSingle)
 {
-    TestParameters::use_cpu_single();
+    use_cpu_single();
     smooth_basis->nrxx = 100;
     create_potential(smooth_basis.get(), smooth_basis.get());
 

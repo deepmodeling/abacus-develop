@@ -146,12 +146,20 @@ AddTest(
   TARGET MODULE_BASE_opt_cg
   LIBS parameter  base device
   SOURCES opt_cg_test.cpp opt_test_tools.cpp
+  # opt_cg/opt_tn call into base, which is built with __MPI and therefore
+  # reaches Parallel_Reduce::reduce_all. Keep __MPI here so this target's
+  # main() actually calls MPI_Init.
+  KEEP_FEATURE_DEFINITIONS __MPI
 )
 
 AddTest(
   TARGET MODULE_BASE_opt_tn
   LIBS parameter  base device
   SOURCES opt_tn_test.cpp opt_test_tools.cpp
+  # opt_cg/opt_tn call into base, which is built with __MPI and therefore
+  # reaches Parallel_Reduce::reduce_all. Keep __MPI here so this target's
+  # main() actually calls MPI_Init.
+  KEEP_FEATURE_DEFINITIONS __MPI
 )
 
 AddTest(

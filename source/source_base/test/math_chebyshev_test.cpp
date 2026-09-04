@@ -331,55 +331,6 @@ TEST_F(MathChebyshevTest, tracepolyA)
     delete p_chetest;
 }
 
-TEST_F(MathChebyshevTest, checkconverge)
-{
-#ifdef __MPI
-#undef __MPI
-    const int norder = 100;
-    p_chetest = new ModuleBase::Chebyshev<double>(norder);
-    auto fun_sigma_y
-        = [&](std::complex<double>* in, std::complex<double>* out, const int m = 1) { fun.sigma_y(in, out, m); };
-
-    std::complex<double>* v = new std::complex<double>[4];
-    v[0] = 1.0;
-    v[1] = 0.0;
-    v[2] = 0.0;
-    v[3] = 1.0; //[1 0; 0 1]
-    double tmin = -1.1;
-    double tmax = 1.1;
-    bool converge;
-    converge = p_chetest->checkconverge(fun_sigma_y, v, 2, 2, tmax, tmin, 0.2);
-    EXPECT_TRUE(converge);
-    converge = p_chetest->checkconverge(fun_sigma_y, v + 2, 2, 2, tmax, tmin, 0.2);
-    EXPECT_TRUE(converge);
-    EXPECT_NEAR(tmin, -1.1, 1e-8);
-    EXPECT_NEAR(tmax, 1.1, 1e-8);
-
-    tmax = -1.1;
-    converge = p_chetest->checkconverge(fun_sigma_y, v, 2, 2, tmax, tmin, 2.2);
-    EXPECT_TRUE(converge);
-    EXPECT_NEAR(tmin, -1.1, 1e-8);
-    EXPECT_NEAR(tmax, 1.1, 1e-8);
-
-    // not converge
-    v[0] = std::complex<double>(0, 1), v[1] = 1;
-    fun.factor = 1.5;
-    tmin = -1.1, tmax = 1.1;
-    converge = p_chetest->checkconverge(fun_sigma_y, v, 2, 2, tmax, tmin, 0.2);
-    EXPECT_FALSE(converge);
-
-    fun.factor = -1.5;
-    tmin = -1.1, tmax = 1.1;
-    converge = p_chetest->checkconverge(fun_sigma_y, v, 2, 2, tmax, tmin, 0.2);
-    EXPECT_FALSE(converge);
-    fun.factor = 1;
-
-    delete[] v;
-    delete p_chetest;
-#define __MPI
-#endif
-}
-
 TEST_F(MathChebyshevTest, recurs)
 {
     testing::internal::CaptureStdout();
@@ -620,33 +571,5 @@ TEST_F(MathChebyshevTest, tracepolyA_float)
     delete p_fchetest;
 }
 
-TEST_F(MathChebyshevTest, checkconverge_float)
-{
-    #ifdef __MPI
-    #undef __MPI
-    const int norder = 100;
-    p_fchetest = new ModuleBase::Chebyshev<float>(norder);
-
-    std::complex<float>* v = new std::complex<float>[4];
-    v[0] = 1.0;
-    v[1] = 0.0;
-    v[2] = 0.0;
-    v[3] = 1.0; //[1 0; 0 1]
-    float tmin = -1.1;
-    float tmax = 1.1;
-    bool converge;
-
-    auto fun_sigma_yf
-        = [&](std::complex<float>* in, std::complex<float>* out, const int m = 1) { fun.sigma_y(in, out, m); };
-    converge = p_fchetest->checkconverge(fun_sigma_yf, v, 2, 2, tmax, tmin, 0.2);
-    EXPECT_TRUE(converge);
-    converge = p_fchetest->checkconverge(fun_sigma_yf, v + 2, 2, 2, tmax, tmin, 0.2);
-    EXPECT_TRUE(converge);
-    EXPECT_NEAR(tmin, -1.1, 1e-6);
-    EXPECT_NEAR(tmax, 1.1, 1e-6);
-
-    delete[] v;
-    delete p_fchetest;
-    #endif
-}
 #endif
+

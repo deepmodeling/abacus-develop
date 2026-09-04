@@ -2,8 +2,9 @@
 #include "for_test.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
+#define private public
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_cg.h"
 #undef private
@@ -21,7 +22,7 @@ class IonsMoveCGTest : public ::testing::Test
         Ions_Move_Basic::dim = 6;
         update_iter = 5;
         im_cg.allocate(Ions_Move_Basic::dim);
-        PARAM.input.force_thr = 0.001;
+        TestParameters::input().force_thr = 0.001;
 
         // ban the 'cout' 
         // mohan add 2025-05-02

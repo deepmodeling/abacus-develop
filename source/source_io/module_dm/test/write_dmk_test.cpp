@@ -13,9 +13,10 @@
 #include <vector>
 #include <map>
 
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #include "source_io/module_dm/write_dmk.h"
-#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_base/global_variable.h"
 #include "../../test/prepare_unitcell.h"
@@ -151,7 +152,7 @@ TEST(DMKTest,WriteDMK) {
 
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
     gen_dmk(dmk_multik, efs, nspin, nk_multik, nlocal, pv);
-    PARAM.sys.global_out_dir = "./";
+    TestParameters::sys().global_out_dir = "./";
 
     const int istep = -1;
     K_Vectors kv;
@@ -250,7 +251,7 @@ TEST(DMKTest, ReadDMK) {
     std::vector<std::vector<std::complex<double>>> dmk_multik;
     Parallel_2D pv;
     std::vector<double> efs;
-    PARAM.sys.global_out_dir = "./";
+    TestParameters::sys().global_out_dir = "./";
 
     init_pv(nlocal, pv);
 
