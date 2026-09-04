@@ -55,7 +55,9 @@ AI agents have additional workflow obligations:
 
 - Inspect existing interfaces before using them.
 - State uncertainty instead of inventing business rules or APIs.
-- Report exact verification results and any checks that could not be run.
+- Report exact verification results and any checks that could not be run. Match
+  verification depth to the risk of the change using the tiers in `AGENTS.md`,
+  and name the tier reached rather than implying an unrun command passed.
 
 ## Rule Grading Matrix
 
@@ -165,16 +167,23 @@ changed and the PR explains why the new reference is correct.
 ## CLI Verification
 
 When a usable ABACUS executable is present, INPUT and command-line changes
-should include the relevant CLI checks in the PR verification record:
+should include the relevant CLI checks in the PR verification record.
+
+The executable is not named `abacus`. CMake names it
+`abacus_<level>_<para-or-device>` through `ABACUS_BIN_NAME`, and `install`
+preserves that name, so resolve the path first the way
+`.github/workflows/test.yml` does:
 
 ```bash
-./build/abacus --version
-./build/abacus -h <parameter>
-./build/abacus --check-input
+ABACUS_BIN=$(find build -name "abacus_*" -type f -executable | head -1)
+"$ABACUS_BIN" --version
+"$ABACUS_BIN" -h <parameter>
+"$ABACUS_BIN" --check-input
 ```
 
 Run `--check-input` from a directory containing a valid `INPUT` case. If no
-local executable or valid case is available, state that explicitly in the PR.
+local executable or valid case is available, state that explicitly in the PR
+rather than configuring a new build solely to produce the output.
 
 ## AI PR Review Integration
 
