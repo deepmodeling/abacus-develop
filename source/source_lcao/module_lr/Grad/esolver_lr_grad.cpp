@@ -89,21 +89,29 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_relax_target_()
     const std::string& spin = this->inp_->lr_target_spin;
     if (this->openshell)
     {
-        if (spin != "updown")
+        // An open-shell calculation solves one spin-conserving channel, so there is nothing to
+        // choose: whatever lr_target_spin says, this is the state that gets relaxed. Only an
+        // explicit `triplet` is worth mentioning -- `singlet` is the default and expresses no
+        // intent, and `updown` is already the right name for this channel.
+        if (spin == "triplet")
         {
-            ModuleBase::WARNING_QUIT("ESolver_LR",
-                "this is an open-shell (spin-unrestricted) calculation, whose single channel is "
-                "'updown'; lr_target_spin=singlet/triplet does not exist here.");
+            GlobalV::ofs_running << " WARNING: lr_target_spin=triplet is ignored. This is an"
+                " open-shell calculation with a single spin-conserving channel (updown), which is"
+                " what the relaxation will follow." << std::endl;
         }
         this->target_is_ = 0;
     }
     else
     {
+        // Closed shell is the opposite case: singlet and triplet are genuinely different states
+        // with different gradients, so `updown` here is ambiguous rather than redundant -- it
+        // usually means lr_unrestricted was meant to be set.
         if (spin == "updown")
         {
             ModuleBase::WARNING_QUIT("ESolver_LR",
-                "lr_target_spin=updown is only meaningful for an open-shell calculation; this one "
-                "is closed-shell, so use singlet or triplet.");
+                "lr_target_spin=updown, but this is a closed-shell calculation, where singlet and "
+                "triplet are separate states with separate gradients. Pick one of them, or set "
+                "lr_unrestricted to run spin-unrestricted.");
         }
         this->target_is_ = (spin == "triplet") ? 1 : 0;
         if (this->target_is_ >= this->nspin)
@@ -351,7 +359,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
         // print edm_real (R)
         if (PARAM.inp.test_force)
         {
-            LR_Util::save_DMR(edm_real, "data-EDMR-sparse", this->paraMat_);
+            LR_Util::save_DMR(edm_real, "data-EDMR-sparse" + std::string(this->excited_relax_ ? "_state" + std::to_string(istate) : ""), this->paraMat_);
             // LR_Util::print_DMR(edm_real, "edm_real (R) of istate " + std::to_string(istate));
         }
 

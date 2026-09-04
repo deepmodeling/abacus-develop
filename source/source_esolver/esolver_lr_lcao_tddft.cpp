@@ -534,8 +534,9 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
                                        true));
     this->read_ks_wfc();
     if (nspin == 2)
-    {
-        this->nupdown = cal_nupdown_form_occ(this->pelec->wg);
+    {   // `read_ks_wfc` fills `wg_ks`, not `pelec->wg` -- reading the latter here meant nupdown was
+        // always 0, so a spin-polarised ground state silently took the closed-shell branch
+        this->nupdown = cal_nupdown_form_occ(this->wg_ks);
         reset_dim_spin2();
     }
 
@@ -546,6 +547,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
     );
 
     // clear ks info, new elecstate for excition
+    delete this->pelec;   // the ElecStateLCAO allocated above, only needed while reading the KS data
     this->pelec = new elecstate::ElecState();
 
     // read the ground state charge density and calculate xc kernel
@@ -650,8 +652,16 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
     this->setup_eigenvectors_X();
     this->pelec->ekb.create(nspin, this->nstates);
 
-    auto efile_out = [&](const std::string& label)->std::string {return this->out_dir + "Excitation_Energy_" + label + ".dat";};
-    auto vfile_out = [&](const std::string& label)->std::string {return this->out_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK+1) + ".dat";};
+    // set once here rather than inside the solver branches: the open-shell `spectrum` branch used
+    // to leave it empty, and both `after_all_runners` and the gradient index it
+    this->spin_types = this->openshell ? std::vector<std::string>({ "updown" })
+                                       : std::vector<std::string>({ "singlet", "triplet" });
+
+    // a relaxation writes these once per ionic step; without the suffix every step would overwrite
+    // the last, and the trajectory would be impossible to inspect afterwards
+    const std::string step_suffix = this->excited_relax_ ? "_step" + std::to_string(istep) : "";
+    auto efile_out = [&](const std::string& label)->std::string {return this->out_dir + "Excitation_Energy_" + label + step_suffix + ".dat";};
+    auto vfile_out = [&](const std::string& label)->std::string {return this->out_dir + "Excitation_Amplitude_" + label + step_suffix + "_" + std::to_string(GlobalV::MY_RANK+1) + ".dat";};
     if (this->inp_->lr_solver == "elpa")
     {
         ModuleBase::WARNING_QUIT("ESolver_LR", "ESolver_LR doesn't support elpa now.");
@@ -677,7 +687,6 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
                 }
             }
             std::cout << "Solving spin-conserving excitation for open-shell system." << std::endl;
-            this->spin_types = { "updown" };
             HamiltULR<T> hulr(xc_kernel,
                               nspin,
                               this->nbasis,
@@ -709,7 +718,6 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
                 OperatorLRDiag<double> pre_op(this->eig_ks.c, this->paraX_[0], this->nk, this->nocc[0], this->nvirt[0]);
                 pre_op.act(1, nloc_per_state, 1, precondition.data(), precondition.data()); 
             }
-            this->spin_types = { "singlet", "triplet" };
             const std::vector<std::string>& spin_types = this->spin_types;
             for (int is = 0;is < nspin;++is)
             {
@@ -773,7 +781,6 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
         }
         else
         {
-            this->spin_types = { "singlet", "triplet" };
             const std::vector<std::string>& spin_types = this->spin_types;
             for (int is = 0;is < nspin;++is) { read_states(spin_types[is], this->pelec->ekb.c + is * nstates, this->X[is].template data<T>(), nloc_per_state, nstates); }
         }
@@ -868,7 +875,6 @@ void ModuleESolver::ESolver_LR<T, TR>::set_parallel_orbitals_band(Parallel_Orbit
     pmat.set_desc_wfc_Eij(this->nbasis, nbands_in, pmat.get_row_size());
     int err = pmat.set_nloc_wfc_Eij(nbands_in, GlobalV::ofs_running, GlobalV::ofs_warning);
     pmat.set_atomic_trace(this->ucell_->get_iat2iwt(), this->ucell_->nat, this->nbasis);
-    if (this->inp_->ri_hartree_benchmark != "aims") { pmat.set_atomic_trace(this->ucell_->get_iat2iwt(), this->ucell_->nat, this->nbasis); }
 #else
     pmat.nrow_bands = this->nbasis;
     pmat.ncol_bands = nbands_in;
@@ -897,7 +903,6 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
     this->X.resize(openshell ? 1 : nspin, LR_Util::newTensor<T>({ nstates, nloc_per_state }));
     for (auto& x : X) { x.zero(); }
 
-    auto spin_types = (nspin == 2 && !openshell) ? std::vector<std::string>({ "singlet", "triplet" }) : std::vector<std::string>({ "updown" });
     // if spectrum-only, read the LR-eigenstates from file and return
     if (this->inp_->lr_solver != "spectrum") { set_X_initial_guess(); }
 }

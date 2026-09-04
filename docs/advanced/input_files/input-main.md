@@ -570,6 +570,8 @@
     - [nocc](#nocc)
     - [nvirt](#nvirt)
     - [lr\_nstates](#lr_nstates)
+    - [lr\_target\_state](#lr_target_state)
+    - [lr\_target\_spin](#lr_target_spin)
     - [lr\_unrestricted](#lr_unrestricted)
     - [abs\_wavelen\_range](#abs_wavelen_range)
     - [out\_wfc\_lr](#out_wfc_lr)
@@ -5140,6 +5142,30 @@
 - **Type**: Integer
 - **Description**: The number of 2-particle states to be solved.
 - **Default**: 0
+
+### lr_target_state
+
+- **Type**: Integer
+- **Description**: Index of the excited state whose potential energy surface `calculation = relax` follows, counted from 0 within the spin channel selected by [lr_target_spin](#lr_target_spin).
+
+  Only the gradient of this one state is computed, since solving the Z-vector equation dominates the cost of an excited-state gradient. It also selects the state whose excitation energy is added to the ground-state total energy, which is the quantity the energy-based relaxation algorithms (`cg`, `bfgs`, `lbfgs`) line-search on.
+
+  Ignored outside `calculation = relax`: a single-point run solves and reports the gradients of every state.
+
+  [NOTE] The state is followed by index, not by character. If it crosses another state during the relaxation, the optimizer will silently continue on the other surface.
+- **Default**: 0
+
+### lr_target_spin
+
+- **Type**: String
+- **Description**: Which spin channel [lr_target_state](#lr_target_state) indexes.
+  - singlet / triplet: the two closed-shell channels solved at `nspin = 2`. At `nspin = 1` only `singlet` exists.
+  - updown: the single spin-conserving channel of an open-shell calculation ([lr_unrestricted](#lr_unrestricted), or a spin-polarised ground state with a non-zero moment).
+
+  An open-shell calculation has only one channel, so any value is accepted there and relaxes that channel; an explicit `triplet` is reported as ignored. A closed-shell calculation rejects `updown`, since singlet and triplet are separate states with separate gradients.
+
+  Ignored outside `calculation = relax`.
+- **Default**: singlet
 
 ### lr_unrestricted
 

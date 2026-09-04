@@ -1041,12 +1041,15 @@ Only the gradient of this one state is computed, since solving the Z-vector equa
         item.default_value = "0";
         item.unit = "";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
+            // Both parameters only steer a relaxation. A single-point run solves and reports every
+            // state, so they are dead there and must not be able to abort it.
+            if (para.input.calculation != "relax") { return; }
             if (para.input.lr_target_state < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "lr_target_state must be >= 0");
             }
             // lr_nstates <= 0 means "all particle-hole pairs"; that count is only known once the
-            // ground state has been read, so ESolver_LR::parameter_check() re-checks there
+            // ground state has been read, so ESolver_LR::setup_relax_target_() re-checks there
             if (para.input.lr_nstates > 0 && para.input.lr_target_state >= para.input.lr_nstates)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "lr_target_state must be < lr_nstates");
