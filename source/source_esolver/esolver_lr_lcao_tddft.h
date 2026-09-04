@@ -136,7 +136,12 @@ namespace ModuleESolver
         std::string xc_kernel;
 
         void initialize_from_unitcell_(UnitCell& ucell, const Input_para& inp);
+        /// one-time setup from the ground-state solver; ends by calling `refresh_from_ks_`
         void initialize_from_ks_(UnitCell& ucell, const Input_para& inp);
+        /// re-read everything that depends on the atomic positions, once per ionic step
+        void refresh_from_ks_(UnitCell& ucell);
+        bool ks_initialized_ = false;   ///< whether `initialize_from_ks_` has already run
+        bool exx_owned_ = false;        ///< `exx_lri` was built here (so its Cs/Vs are ours to refresh)
 
         std::vector<std::string> spin_types;
 
@@ -191,8 +196,10 @@ namespace ModuleESolver
 #ifdef __EXX
         /// Tdata of Exx_LRI is same as T, for the reason, see operator_lr_exx.h
         std::shared_ptr<Exx_LRI<T>> exx_lri = nullptr;
-        void move_exx_lri(std::shared_ptr<Exx_LRI<double>>&);
-        void move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>&);
+        /// share the ground-state solver's Exx_LRI. It is shared, not stolen: the KS solver
+        /// keeps using it on the next ionic step.
+        void share_exx_lri(std::shared_ptr<Exx_LRI<double>>&);
+        void share_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>&);
         Exx_Info exx_info;
 #endif
     };

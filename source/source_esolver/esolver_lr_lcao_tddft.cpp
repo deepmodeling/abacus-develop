@@ -29,6 +29,7 @@
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_lri_interface.h"
 #include "source_hamilt/module_xc/exx_info.h" // for init_exx_info
+#include "source_hamilt/module_xc/xc_functional.h"   // for set_xc_type
 #endif
 
 // gradient
@@ -66,28 +67,26 @@ namespace
 
 #ifdef __EXX
 template<>
-void ModuleESolver::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
+void ModuleESolver::ESolver_LR<double>::share_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
 {
-    ModuleBase::TITLE("ESolver_LR<double>", "move_exx_lri");
+    ModuleBase::TITLE("ESolver_LR<double>", "share_exx_lri");
     this->exx_lri = exx_ks;
-    exx_ks = nullptr;
 }
 template<>
-void ModuleESolver::ESolver_LR<std::complex<double>>::move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
+void ModuleESolver::ESolver_LR<std::complex<double>>::share_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
 {
-    ModuleBase::TITLE("ESolver_LR<complex>", "move_exx_lri");
+    ModuleBase::TITLE("ESolver_LR<complex>", "share_exx_lri");
     this->exx_lri = exx_ks;
-    exx_ks = nullptr;
 }
 template<>
-void ModuleESolver::ESolver_LR<std::complex<double>>::move_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
+void ModuleESolver::ESolver_LR<std::complex<double>>::share_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
 {
-    throw std::runtime_error("ESolver_LR<std::complex<double>>::move_exx_lri: cannot move double to std::complex<double>");
+    throw std::runtime_error("ESolver_LR<std::complex<double>>::share_exx_lri: cannot share double to std::complex<double>");
 }
 template<>
-void ModuleESolver::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
+void ModuleESolver::ESolver_LR<double>::share_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
 {
-    throw std::runtime_error("ESolver_LR<double>::move_exx_lri: cannot move std::complex<double> to double");
+    throw std::runtime_error("ESolver_LR<double>::share_exx_lri: cannot share std::complex<double> to double");
 }
 #endif
 
@@ -276,11 +275,11 @@ void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, co
         Json::init_output_array_obj();
 #endif
         // the ground-state solver is a member, not a temporary: `runner` re-runs its SCF on every
-        // ionic step, and the objects aliased below have to stay alive for as long as this solver does
+        // ionic step, and the objects aliased from it have to stay alive as long as it does.
+        // Its SCF is deliberately NOT run here -- `before_all_runners` is called once, outside the
+        // relaxation loop, so the ground state has to be recomputed from `runner(istep)` instead.
         this->ks_ = LR_Util::make_unique<ModuleESolver::ESolver_KS_LCAO<T, TR>>();
         this->ks_->before_all_runners(basecell, inp);
-        this->ks_->runner(basecell, 0);
-        this->initialize_from_ks_(ucell, inp);
     }
     else
     {
@@ -360,12 +359,6 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
 #endif
     );
 
-    // The ground-state solver owns `psi` and reuses it across ionic steps, so it cannot be stolen.
-    // `eig_ks_all` / `wg_ks_all` are nspin x nbands matrices -- a few kB, copied rather than aliased
-    // so that they survive the KS solver overwriting `pelec` on the next step.
-    this->psi_ks_all_ = ks_sol.psi;
-    this->eig_ks_all = ks_sol.pelec->ekb;
-    this->wg_ks_all = ks_sol.pelec->wg;
     // allocate psi_ks and eig_ks in the [nocc, nvirt] window
 #ifdef __MPI
     this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(),
@@ -377,6 +370,49 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
     this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(), this->nbands, this->nbasis, this->kv.ngk, true));
 #endif
     this->eig_ks.create(this->kv.get_nks(), this->nbands);
+    this->pelec = new elecstate::ElecStateLCAO<T>();
+    orb_cutoff_ = ks_sol.orb_.cutoffs();
+
+#ifdef __EXX
+    if (exx_kernel_list().count(xc_kernel) )
+    {
+        // same kernel as the ground state? then one Exx_LRI serves both
+        std::string dft_functional = LR_Util::tolower(this->inp_->dft_functional);
+        const bool share = (xc_kernel == dft_functional)
+            && ((ks_sol.exx_nao.exd && std::is_same<T, double>::value)
+                || (ks_sol.exx_nao.exc && std::is_same<T, std::complex<double>>::value));
+        if (share) { this->exx_owned_ = false; }   // `refresh_from_ks_` re-binds it every step
+        else    // construct C, V from scratch
+        {
+            warn_if_kernel_differs_from_gs(xc_kernel, dft_functional);
+            // `input_conv` already filled `info_ri.coulomb_param` from INPUT.
+            exx_info.sync_from_global();
+            // populate ABFs/JLE file lists from UnitCell; keep in sync with Exx_NAO::init
+            exx_info.info_ri.files_abfs = ucell.abfs_orbital_files;
+            exx_info.info_opt_abfs.files_abfs = ucell.abfs_orbital_files;
+            exx_info.info_opt_abfs.files_jles = ucell.jle_orbital_files;
+            this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
+            this->exx_lri->init(MPI_COMM_WORLD, ucell, this->kv, ks_sol.orb_);
+            this->exx_owned_ = true;   // the position-dependent `cal_exx_ions` is left to `refresh_from_ks_`
+        }
+    }
+#endif
+
+    refresh_from_ks_(ucell);
+    this->ks_initialized_ = true;
+}
+
+template <typename T, typename TR>
+void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell& ucell)
+{
+    ModuleBase::TITLE("ESolver_LR", "refresh_from_ks_");
+    ModuleESolver::ESolver_KS_LCAO<T, TR>& ks_sol = *this->ks_;
+    // The ground-state solver owns `psi` and reuses it across ionic steps, so it cannot be stolen.
+    // `eig_ks_all` / `wg_ks_all` are nspin x nbands matrices -- a few kB, copied rather than aliased
+    // so that they survive the KS solver overwriting `pelec` on the next step.
+    this->psi_ks_all_ = ks_sol.psi;
+    this->eig_ks_all = ks_sol.pelec->ekb;
+    this->wg_ks_all = ks_sol.pelec->wg;
     const int start_band = this->nocc_max - *std::max_element(nocc.begin(), nocc.end());
 
     for (int ik = 0;ik < this->kv.get_nks();++ik)
@@ -402,40 +438,39 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
 
     if (nspin == 2)
     {
-        this->nupdown = cal_nupdown_form_occ(ks_sol.pelec->wg);
-        reset_dim_spin2();
+        const int nupdown_now = cal_nupdown_form_occ(ks_sol.pelec->wg);
+        if (!this->ks_initialized_)
+        {
+            this->nupdown = nupdown_now;
+            reset_dim_spin2();   // shifts nocc/nvirt between the spin channels: must run exactly once
+        }
+        else if (nupdown_now != this->nupdown)
+        {
+            ModuleBase::WARNING_QUIT("ESolver_LR::refresh_from_ks_",
+                "the ground-state spin population changed between ionic steps, but nocc/nvirt and"
+                " the distributions built from them were fixed at the first step.");
+        }
     }
     // `gint_info_` stays owned by the KS solver: its `before_scf` rebuilds and re-publishes it
     //init potential and calculate kernels using ground state charge
     init_pot(*ks_sol.pelec->charge);
 
 #ifdef __EXX
-    if (exx_kernel_list().count(xc_kernel) )
+    if (exx_kernel_list().count(xc_kernel))
     {
-        // if the same kernel is calculated in the esolver_ks, move it
-        std::string dft_functional = LR_Util::tolower(this->inp_->dft_functional);
-        if (ks_sol.exx_nao.exd && std::is_same<T, double>::value && xc_kernel == dft_functional) {
-            this->move_exx_lri(ks_sol.exx_nao.exd->exx_ptr);
-        } else if (ks_sol.exx_nao.exc && std::is_same<T, std::complex<double>>::value && xc_kernel == dft_functional) {
-            this->move_exx_lri(ks_sol.exx_nao.exc->exx_ptr);
-        } else    // construct C, V from scratch
-        {
-            warn_if_kernel_differs_from_gs(xc_kernel, dft_functional);
-            // `input_conv` already filled `info_ri.coulomb_param` from INPUT.
-            exx_info.sync_from_global();
-            // populate ABFs/JLE file lists from UnitCell; keep in sync with Exx_NAO::init
-            exx_info.info_ri.files_abfs = ucell.abfs_orbital_files;
-            exx_info.info_opt_abfs.files_abfs = ucell.abfs_orbital_files;
-            exx_info.info_opt_abfs.files_jles = ucell.jle_orbital_files;
-            this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
-            this->exx_lri->init(MPI_COMM_WORLD, ucell,this->kv, ks_sol.orb_);
-            this->exx_lri->cal_exx_ions(ucell,this->inp_->out_ri_cv);
+        if (this->exx_owned_)
+        {   // Cs/Vs follow the atoms, so they are rebuilt for every geometry
+            this->exx_lri->cal_exx_ions(ucell, this->inp_->out_ri_cv);
         }
+        else if (ks_sol.exx_nao.exd) { this->share_exx_lri(ks_sol.exx_nao.exd->exx_ptr); }
+        else if (ks_sol.exx_nao.exc) { this->share_exx_lri(ks_sol.exx_nao.exc->exx_ptr); }
     }
 #endif
-    this->pelec = new elecstate::ElecStateLCAO<T>();
-    orb_cutoff_ = ks_sol.orb_.cutoffs();
+    // the grid-integration tables hang off a static pointer that the ground-state solver
+    // re-publishes in its `before_scf`; make sure it names the object we integrate on
+    ModuleGint::Gint::set_gint_info(this->ks_->gint_info_.get());
 }
+
 
 template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell, const Input_para& inp)
@@ -594,6 +629,18 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
 
     ModuleBase::TITLE("ESolver_LR", "runner");
     ModuleBase::timer::start("ESolver_LR", "runner");
+
+    if (this->ks_)
+    {
+        // `init_pot_groundstate` leaves the global XC type on the LR kernel, so put it back before
+        // the ground-state SCF. `ESolver_KS::runner` is re-entrant: its `before_scf` rebuilds the
+        // neighbour lists, the grid tables and the Hamiltonian for the geometry of this step.
+        XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+        this->ks_->runner(ucell, istep);
+        if (!this->ks_initialized_) { this->initialize_from_ks_(ucell, *this->inp_); }
+        else { this->refresh_from_ks_(ucell); }
+    }
+
     //allocate 2-particle state and setup 2d division
     this->setup_eigenvectors_X();
     this->pelec->ekb.create(nspin, this->nstates);
@@ -894,7 +941,7 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
 {
     using ST = PotHxcLR::SpinType;
     using GX = LR::KernelXC::GxcSpin;
-    this->pot.resize(nspin, nullptr);
+    this->pot.assign(nspin, nullptr);   // assign, not resize: a re-init must drop the previous geometry's
     if (this->inp_->ri_hartree_benchmark != "none") { return; } //no need to initialize potential for Hxc kernel in the RI-benchmark routine
 
     // The singlet and triplet potentials evaluate the *same* kernel arrays and differ only in which
