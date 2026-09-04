@@ -28,6 +28,7 @@ AddTest(
   ../../../source_pw/module_pwdft/dftu_base_io.cpp
   ../../../source_pw/module_pwdft/yukawa_screening.cpp
   ../../../source_estate/occ_matrix.cpp
+  ../../../source_estate/occ_mixer.cpp
   ../../../source_hamilt/module_hcontainer/func_folding.cpp
   ../../../source_hamilt/module_hcontainer/base_matrix.cpp
   ../../../source_hamilt/module_hcontainer/hcontainer.cpp

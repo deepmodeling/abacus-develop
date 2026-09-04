@@ -263,10 +263,9 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
         } // end ia
     } // end it
 
-    if(PARAM.inp.mixing_dftu && dftu.is_occ_mat_initialized())
+    if(dftu.has_occ_mixer() && dftu.is_occ_mat_initialized())
     {
-        elecstate::mix_occ_with_save(dftu.occmat().data(), dftu.occmat().data_save(),
-                                     ucell, orbital_corr, nspin, mixing_beta);
+        dftu.occ_mixer().mix_plain(dftu.occmat(), mixing_beta);
     }
 
     dftu.mark_occ_mat_initialized();
@@ -437,10 +436,9 @@ void DFTU_LCAO::cal_occ_mat_gamma(const Parallel_Orbitals* pv,
         } // it
     } // is
 
-    if(PARAM.inp.mixing_dftu && dftu.is_occ_mat_initialized())
+    if(dftu.has_occ_mixer() && dftu.is_occ_mat_initialized())
     {
-        elecstate::mix_occ_with_save(dftu.occmat().data(), dftu.occmat().data_save(),
-                                     ucell, orbital_corr, nspin, mixing_beta);
+        dftu.occ_mixer().mix_plain(dftu.occmat(), mixing_beta);
     }
 
     dftu.mark_occ_mat_initialized();

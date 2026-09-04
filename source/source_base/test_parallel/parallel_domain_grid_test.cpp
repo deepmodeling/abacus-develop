@@ -14,7 +14,7 @@ TEST(CommunicationDomainTest, ReportsDefaultAndWorldDomains)
     EXPECT_EQ(local_domain.rank(), 0);
     EXPECT_EQ(local_domain.communicator(), MPI_COMM_NULL);
 
-    const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_communication_domain();
+    const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_comm_domain();
     MPICommGroup world_group(world_domain.communicator());
     EXPECT_EQ(world_domain.communicator(), MPI_COMM_WORLD);
     EXPECT_GE(world_domain.rank(), 0);
@@ -28,7 +28,7 @@ TEST(CommunicationDomainTest, ReportsDefaultAndWorldDomains)
 
 TEST(MPICommGroupTest, DividesWorldIntoEvenGroups)
 {
-    const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_communication_domain();
+    const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_comm_domain();
     MPICommGroup group(MPI_COMM_WORLD);
     EXPECT_EQ(group.grank, world_domain.rank());
 
@@ -46,7 +46,7 @@ TEST(MPICommGroupTest, DividesWorldIntoEvenGroups)
 
 TEST(ParallelGridTest, BroadcastsAndReducesDistributedGrid)
 {
-    const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_communication_domain();
+    const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_comm_domain();
     MPICommGroup world_group(world_domain.communicator());
     const int nx = 2;
     const int ny = 1;
