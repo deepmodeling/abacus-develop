@@ -147,9 +147,8 @@ namespace ModuleESolver
         int target_is_ = 0;            ///< spin block of the relaxed state in `X` and `pelec->ekb`
         double etot_gs_ = 0.0;         ///< ground-state total energy of the current step (Ry)
         ModuleBase::matrix force_gs_;  ///< ground-state force of the current step (Ry/Bohr, F = -dE/dR)
-        /// +d(Omega)/dR of the relaxed state (Ry/Bohr). Note the sign: what `cal_force(int)` returns
-        /// is a *gradient*, while `ESolver::cal_force` must hand back a force.
-        ModuleBase::matrix lr_grad_;
+        /// The LR part of the excited-state force, -d(Omega)/dR (Ry/Bohr). 
+        ModuleBase::matrix lr_force_;
         /// index of the relaxed state inside `pelec->ekb`
         int target_ekb_offset_() const
         { return this->openshell ? this->inp_->lr_target_state

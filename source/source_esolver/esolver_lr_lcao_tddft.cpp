@@ -1,6 +1,7 @@
 #include "esolver_lr_lcao_tddft.h"
 
 #include <algorithm>
+#include <iomanip>
 #include "source_lcao/module_lr/utils/lr_io.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/hamilt_casida.h"
@@ -787,10 +788,26 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
     }
     if (this->excited_relax_)
     {
-        // The LR terms only carry d(Omega)/dR; the ground-state force is a separate piece of the
-        // excited-state total energy gradient and comes straight from the KS solver.
+        // The LR terms only carry the Omega part of the force; the ground-state part is separate
+        // and comes straight from the KS solver.
         this->ks_->cal_force(ucell, this->force_gs_);
-        this->lr_grad_ = this->cal_force(this->target_is_, this->inp_->lr_target_state)[0];
+        this->lr_force_ = this->cal_force(this->target_is_, this->inp_->lr_target_state)[0];
+
+        // One line per ionic step with the two halves of the energy and of the gradient. Without
+        // it the relaxation only reports a force, and whether E_gs + Omega actually goes down --
+        // the thing being minimised -- cannot be read off the log at all.
+        const double omega = this->pelec->ekb.c[this->target_ekb_offset_()];
+        auto max_abs = [](const ModuleBase::matrix& m) -> double
+            { double v = 0.0; for (int i = 0;i < m.nr * m.nc;++i) { v = std::max(v, std::abs(m.c[i])); } return v; };
+        GlobalV::ofs_running << std::setprecision(8) << std::fixed
+            << " EXCITED-STATE RELAX step " << istep
+            << ": E_gs = " << this->etot_gs_ * ModuleBase::Ry_to_eV
+            << " eV, Omega = " << omega * ModuleBase::Ry_to_eV
+            << " eV, E_exc = " << (this->etot_gs_ + omega) * ModuleBase::Ry_to_eV << " eV"
+            << std::setprecision(6)
+            << " | |F_gs|max = " << max_abs(this->force_gs_) * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
+            << ", |F_Omega|max = " << max_abs(this->lr_force_) * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
+            << " eV/Angstrom" << std::defaultfloat << std::endl;
     }
 
     ModuleBase::timer::end("ESolver_LR", "runner");
@@ -874,7 +891,14 @@ void ModuleESolver::ESolver_LR<T, TR>::set_parallel_orbitals_band(Parallel_Orbit
 #ifdef __MPI
     pmat.set_desc_wfc_Eij(this->nbasis, nbands_in, pmat.get_row_size());
     int err = pmat.set_nloc_wfc_Eij(nbands_in, GlobalV::ofs_running, GlobalV::ofs_warning);
-    pmat.set_atomic_trace(this->ucell_->get_iat2iwt(), this->ucell_->nat, this->nbasis);
+    // Skipped for the aims benchmark: with `aims_nbasis` the per-atom orbital counts behind
+    // `iat2iwt` do not match `nbasis`, so the atomic trace would be wrong. The guard came from
+    // d4fe3fe84 ("Support different basis number from aims"), and was silently undone by
+    // 1e4c1c6af (BSE, #7718) re-adding an unconditional call above it.
+    if (this->inp_->ri_hartree_benchmark != "aims")
+    {
+        pmat.set_atomic_trace(this->ucell_->get_iat2iwt(), this->ucell_->nat, this->nbasis);
+    }
 #else
     pmat.nrow_bands = this->nbasis;
     pmat.ncol_bands = nbands_in;

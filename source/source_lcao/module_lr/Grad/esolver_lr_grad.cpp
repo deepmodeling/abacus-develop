@@ -11,7 +11,7 @@ template <typename Tstream>
 inline void print_force(const std::vector<ModuleBase::matrix>& force, Tstream& ofs, const int istate_begin = 0)
 {
     const int nstate = force.size();
-    ofs << "Gradients of each excited state: (eV/Angstrom)" << std::endl;
+    ofs << "Forces (-gradients) of each excited state: (eV/Angstrom)" << std::endl;
     ofs << std::setprecision(6) << std::setw(6) << "state" << std::setw(6) << "atom"
         << std::setw(15) << "x" << std::setw(15) << "y" << std::setw(15) << "z" << std::endl;
     const double fac = ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
@@ -121,7 +121,7 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_relax_target_()
         }
     }
     this->force_gs_.create(this->ucell_->nat, 3);
-    this->lr_grad_.create(this->ucell_->nat, 3);
+    this->lr_force_.create(this->ucell_->nat, 3);
     GlobalV::ofs_running << " Excited-state relaxation follows state " << this->inp_->lr_target_state
         << " of the " << (this->openshell ? "updown" : (this->target_is_ == 1 ? "triplet" : "singlet"))
         << " channel." << std::endl;
@@ -145,15 +145,17 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force(BaseCell& basecell, ModuleBase:
     {   // single-point runs print the gradients of every state from `after_all_runners` instead
         return;
     }
-    if (this->lr_grad_.nr != ucell.nat)
+    if (this->lr_force_.nr != ucell.nat)
     {
         ModuleBase::WARNING_QUIT("ESolver_LR::cal_force",
             "the excited-state gradient has not been computed for this geometry.");
     }
-    // `force_gs_` is already a force (F = -dE_gs/dR, the ABACUS convention), while `cal_force(int)`
-    // returns the *gradient* +d(Omega)/dR -- hence the minus sign. Both are Ry/Bohr.
+    // Both halves already follow the ABACUS force convention F = -dE/dR (Ry/Bohr), so they add.
+    // The "Gradients of each excited state" heading that `cal_force(int)` prints under is a
+    // misnomer: the finite-difference reference it was validated against (`abacus-fd lr-custom`)
+    // computes (E(-h) - E(+h))/h, which is -d(Omega)/dR, and the two agree in sign.
     force.create(ucell.nat, 3);
-    force = this->force_gs_ - this->lr_grad_;
+    force = this->force_gs_ + this->lr_force_;
     ModuleIO::print_force(GlobalV::ofs_running, ucell, "EXCITED-STATE TOTAL-FORCE (eV/Angstrom)", force, false);
 }
 
