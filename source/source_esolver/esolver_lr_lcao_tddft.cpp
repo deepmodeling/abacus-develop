@@ -375,17 +375,23 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
     orb_cutoff_ = ks_sol.orb_.cutoffs();
 
 #ifdef __EXX
-    if (exx_kernel_list().count(xc_kernel) )
+    // Two independent reasons to need an Exx_LRI: the LR exchange kernel, and the ground-state
+    // EXX terms of the gradient (the H_gs[T+Z] and W multipliers, gated on gs_is_hybrid()).
+    // `initialize_from_unitcell_` has always covered both; this path used to test only the first,
+    // so a local kernel on top of a hybrid ground state had no exx_lri at all when asked for forces.
+    if (exx_kernel_list().count(xc_kernel) || (this->inp_->cal_force && gs_is_hybrid()))
     {
-        // same kernel as the ground state? then one Exx_LRI serves both
         std::string dft_functional = LR_Util::tolower(this->inp_->dft_functional);
-        const bool share = (xc_kernel == dft_functional)
-            && ((ks_sol.exx_nao.exd && std::is_same<T, double>::value)
-                || (ks_sol.exx_nao.exc && std::is_same<T, std::complex<double>>::value));
+        // Either object would be built from the same `info_ri.coulomb_param`, which `input_conv`
+        // derives from dft_functional alone -- so whenever the ground-state solver has one of the
+        // right type it is the same object we would construct, already up to date for this
+        // geometry. Sharing it also skips a `cal_exx_ions` per ionic step.
+        const bool share = (ks_sol.exx_nao.exd && std::is_same<T, double>::value)
+                        || (ks_sol.exx_nao.exc && std::is_same<T, std::complex<double>>::value);
+        warn_if_kernel_differs_from_gs(xc_kernel, dft_functional);
         if (share) { this->exx_owned_ = false; }   // `refresh_from_ks_` re-binds it every step
         else    // construct C, V from scratch
         {
-            warn_if_kernel_differs_from_gs(xc_kernel, dft_functional);
             // `input_conv` already filled `info_ri.coulomb_param` from INPUT.
             exx_info.sync_from_global();
             // populate ABFs/JLE file lists from UnitCell; keep in sync with Exx_NAO::init
@@ -457,7 +463,7 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell& ucell)
     init_pot(*ks_sol.pelec->charge);
 
 #ifdef __EXX
-    if (exx_kernel_list().count(xc_kernel))
+    if (exx_kernel_list().count(xc_kernel) || (this->inp_->cal_force && gs_is_hybrid()))
     {
         if (this->exx_owned_)
         {   // Cs/Vs follow the atoms, so they are rebuilt for every geometry
