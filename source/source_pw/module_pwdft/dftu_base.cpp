@@ -48,8 +48,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
     ModuleBase::TITLE("Plus_U_Base", "init_base");
 
 #ifndef __MPI
-    std::cout << "DFT+U module is only accessible in mpi version" << std::endl;
-    exit(0);
+    ModuleBase::WARNING_QUIT("Plus_U_Base::init_base", "DFT+U module is only accessible in MPI version");
 #endif
 
     this->nspin = nspin;
@@ -82,13 +81,14 @@ void Plus_U_Base::init_base(UnitCell& cell,
         {
             const int iat = cell.itia2iat(it, ia);
 
-            if(!has_correlated_orbital(it))
+            const int target_l = this->orbital_corr[it];
+            if (target_l == -1)
             {
                 continue;
             }
 
-            const int tlp1_npol = (get_orbital_corr(it)*2+1)*npol;
-            const int tlp1 = 2 * get_orbital_corr(it) + 1;
+            const int tlp1_npol = (target_l * 2 + 1) * npol;
+            const int tlp1 = 2 * target_l + 1;
             const int elem_size = tlp1 * tlp1;
             if(nspin == 4)
             {
@@ -148,7 +148,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
         DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->orbital_corr, nspin, npol);
 #endif
 
-        mark_occ_mat_initialized();
+        this->occ_mat_initialized = true;
         this->occmat_.copy_to_save(cell, this->orbital_corr);
         this->occmat_.write_save_to_flat(cell, this->orbital_corr,
                                          this->pot_uterm_pw_index, this->uom_save);
@@ -164,7 +164,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
 #ifdef __MPI
             DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->orbital_corr, nspin, npol);
 #endif
-            mark_occ_mat_initialized();
+            this->occ_mat_initialized = true;
         }
         else
         {
@@ -173,18 +173,19 @@ void Plus_U_Base::init_base(UnitCell& cell,
     }
 
     ModuleBase::Memory::record("Plus_U_Base::occ_mat", sizeof(double) * num_locale);
-    return;
 }
 
 
 void Plus_U_Base::uramping_update()
 {
     // Yukawa calculates U directly every iteration, no need for ramping
-    if (use_yukawa()) {
+    if (this->yukawa_ != nullptr)
+    {
         return;
     }
     // if uramping < 0.1, use the original U
-    if (this->uramping < 0.01) {
+    if (this->uramping < 0.01)
+    {
         return;
     }
     // loop to change U
@@ -205,7 +206,8 @@ void Plus_U_Base::uramping_update()
 bool Plus_U_Base::u_converged()
 {
     // Yukawa calculates U directly every iteration, always considered converged
-    if (use_yukawa()) {
+    if (this->yukawa_ != nullptr)
+    {
         return true;
     }
     for (int i = 0; i < static_cast<int>(this->u_target.size()); i++)

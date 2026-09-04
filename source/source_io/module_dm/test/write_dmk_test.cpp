@@ -1,6 +1,20 @@
-#include "source_io/module_dm/write_dmk.h"
+// Pre-include every standard-library header reachable from write_dmk.h so
+// their include guards are already set before '#define private public' is
+// active. The macro renames the 'private'/'public' keywords, so any system
+// header parsed while it is defined gets corrupted and the build fails with
+// "'...__xfer_bufptrs' redeclared with different access". write_dmk.h pulls
+// in <sstream> indirectly via global_variable.h -> <iomanip> ->
+// bits/quoted_string.h, so <iomanip> must be pre-included too.
+#include <iomanip>
+#include <sstream>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <map>
 
 #define private public
+#include "source_io/module_dm/write_dmk.h"
 #include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_base/global_variable.h"
@@ -142,9 +156,9 @@ TEST(DMKTest,WriteDMK) {
     const int istep = -1;
     K_Vectors kv;
     kv.set_nkstot(1);
-    kv.set_nkstot_full(1);
+    kv.set_nkstot_nospin(1);
     kv.set_nks(1);
-    kv.set_nspin(2);
+    kv.spin_mult = 2;
     kv.kvec_c.resize(1);
     kv.kvec_c[0].x = 0.0;
     kv.kvec_c[0].y = 0.0;

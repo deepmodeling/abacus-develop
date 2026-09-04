@@ -14,7 +14,7 @@
  * Inherits the spin-free common reciprocal-grid functionality
  * (mesh generation, coordinate conversion, weights, printing, star/IBZ
  * reduction primitive) from ModuleCell::ReciprocalGrid and adds the
- * spin expansion (isk, nspin doubling) and the k-point IBZ logic.
+ * spin expansion (isk, spin-multiplicity doubling) and the k-point IBZ logic.
  */
 class K_Vectors : public ModuleCell::ReciprocalGrid
 {
@@ -60,6 +60,7 @@ public:
         const ModuleBase::Matrix3& reciprocal_vec,
         const ModuleBase::Matrix3& latvec,
         std::ofstream& ofs,
+        std::ofstream& ofs_warning,
         const bool use_ibz,
         const std::string& global_out_dir,
         const bool gamma_only_local,
@@ -77,9 +78,9 @@ public:
         return this->nkstot;
     }
 
-    int get_nkstot_full() const
+    int get_nkstot_nospin() const
     {
-        return this->nkstot_full;
+        return this->nkstot_nospin;
     }
 
     double get_koffset(const int i) const
@@ -92,9 +93,11 @@ public:
         return this->k_nkstot;
     }
 
-    int get_nspin() const
+    /// @brief Spin multiplicity of the k-point list: 1 (no doubling, also for
+    ///        non-collinear nspin=4) or 2 (LSDA, k points split into up/down).
+    int get_spin_mult() const
     {
-        return this->nspin;
+        return this->spin_mult;
     }
 
     std::string get_k_kword() const
@@ -112,14 +115,9 @@ public:
         this->nkstot = value;
     }
 
-    void set_nkstot_full(int value)
+    void set_nkstot_nospin(int value)
     {
-        this->nkstot_full = value;
-    }
-
-    void set_nspin(int value)
-    {
-        this->nspin = value;
+        this->nkstot_nospin = value;
     }
 
     bool get_is_mp() const
@@ -150,24 +148,27 @@ public:
     void update_use_ibz(const int& nkstot_ibz,
                         const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz,
                         const std::vector<double>& wk_ibz,
-                        std::ofstream& ofs_running);
+                        std::ofstream& ofs_running,
+                        const int my_rank);
 
     /**
-     * @brief Sets up the k-points after a volume change.
+     * @brief Updates the k-points after a volume change.
      *
-     * Sets the number of spins, converts the direct coordinates (which are
-     * kept across the volume change) to the new Cartesian coordinates using
-     * the new reciprocal lattice, prints the resulting table, and marks both
-     * coordinate sets as up to date.
+     * Converts the direct coordinates (which are kept across the volume
+     * change) to the new Cartesian coordinates using the new reciprocal
+     * lattice, prints the resulting table, and marks both coordinate sets
+     * as up to date. The spin multiplicity is not touched: it was fixed by
+     * set() and never changes during a run.
      *
-     * @param nspin_in The number of spins. 1 for non-spin-polarized
-     *                 calculations and 2 for spin-polarized calculations.
      * @param G The new reciprocal lattice matrix.
      */
-    void set_after_vc(const int& nspin_in, const ModuleBase::Matrix3& G, std::ofstream& ofs_running);
+    void set_after_vc(const ModuleBase::Matrix3& G, std::ofstream& ofs_running);
 
   private:
-    int nspin = 0;             ///< number of spin states
+    /// Spin multiplicity used to size the k-point list: 1 for input nspin 1
+    /// or 4 (non-collinear k points are not doubled) and 2 for input nspin 2
+    /// (LSDA up/down k points). This is NOT the physical nspin (1/2/4).
+    int spin_mult = 0;
     double koffset[3] = {0.0}; ///< used only in automatic k-points
 
     /**
@@ -182,10 +183,10 @@ public:
      */
     void renew(const int& kpoint_number) override;
 
-    /// @brief Spin multiplicity used when generating the mesh (1/2 for nspin 1/2).
+    /// @brief Spin multiplicity used when generating the mesh (1/2).
     int spin_factor() const override
     {
-        return this->nspin;
+        return this->spin_mult;
     }
 
     /**
@@ -207,7 +208,9 @@ public:
                             const ModuleSymmetry::Symmetry& symm,
                             bool use_symm,
                             std::string& skpt,
-                            bool& match) override;
+                            bool& match,
+                            const int my_rank,
+                            std::ofstream& ofs_running) override;
 
     /// @brief step 1 : generate kpoints
 
@@ -236,28 +239,9 @@ public:
                       const double kspacing[3],
                       const std::string& kmesh_type,
                       const double koffset[3],
-                      std::ofstream& ofs_running); // return 0: something wrong.
-
-    /**
-     * @brief Overwrite the KPT file with an auto-generated mesh when requested.
-     *
-     * Writes a Gamma-mesh KPT file if gamma_only_local is set, or a
-     * KSPACING-derived Gamma/Monkhorst-Pack mesh if kspacing is positive.
-     * Does nothing when neither condition holds.
-     *
-     * @param ucell unit cell (reciprocal lattice and lat0 for the mesh size)
-     * @param fn KPT filename to (over)write
-     * @param gamma_only_local whether to force a single Gamma point
-     * @param kspacing target k-point spacing in 1/bohr (three components)
-     * @param kmesh_type "mp" for Monkhorst-Pack, anything else for Gamma
-     * @param koffset mesh offsets (three components)
-     */
-    void generate_kfile(const UnitCell& ucell,
-                        const std::string& fn,
-                        const bool gamma_only_local,
-                        const double kspacing[3],
-                        const std::string& kmesh_type,
-                        const double koffset[3]);
+                      std::ofstream& ofs_running,
+                      std::ofstream& ofs_warning,
+                      const int my_rank); // return 0: something wrong.
 
     /**
      * @brief Read the KPT file and build the k-point list from it.
@@ -271,7 +255,77 @@ public:
      * @return bool Returns true if the k-points are successfully read,
      *              false otherwise.
      */
-    bool parse_kfile(const std::string& fn, std::ofstream& ofs_running);
+    bool parse_kfile(const std::string& fn, std::ofstream& ofs_running, std::ofstream& ofs_warning);
+
+    /**
+     * @brief Read the Monkhorst-Pack/Gamma mesh block and generate the mesh.
+     *
+     * Handles the nkstot == 0 form of the KPT file: validates the type
+     * keyword, reads the mesh dimensions and optional offsets, then calls
+     * Monkhorst_Pack to fill the k-point list.
+     *
+     * @param ifk stream positioned after the type keyword
+     * @param kword type keyword (Gamma / Monkhorst-Pack / MP / mp)
+     * @param ofs_running running log stream
+     * @return false (after warning) when the keyword is neither Gamma nor
+     *         Monkhorst-Pack; true when the mesh was generated.
+     */
+    bool read_mp_mesh(std::ifstream& ifk,
+                      const std::string& kword,
+                      std::ofstream& ofs_running,
+                      std::ofstream& ofs_warning);
+
+    /**
+     * @brief Read the explicitly listed k points (nkstot > 0 form of KPT).
+     *
+     * Dispatches on the type keyword: Cartesian/Direct lists are sized via
+     * renew() and filled through KListIO::read_kpt_list; Line_Cartesian/
+     * Line_Direct delegate to setup_line_kpoints.
+     *
+     * @param ifk stream positioned after the type keyword
+     * @param kword type keyword: Cartesian, C, Direct, D, Line_Cartesian,
+     *              Line_Direct, L or Line
+     * @return false (after warning) for unknown keywords or line mode with
+     *         symmetry enabled; true when the k-point list was built.
+     */
+    bool read_listed_kpoints(std::ifstream& ifk, const std::string& kword, std::ofstream& ofs_warning);
+
+    /**
+     * @brief Build line-mode k points by interpolating between special points.
+     *
+     * Refuses (warning + false) when symmetry reduction is enabled, then
+     * interpolates the special points read from `ifk`, resets all weights
+     * to 1, and marks the Cartesian or Direct coordinate set as done.
+     *
+     * @param ifk stream to read the special points from
+     * @param kvec target coordinate container (kvec_c or kvec_d)
+     * @param cartesian true for Line_Cartesian, false for Line_Direct
+     * @param ofs_warning warning-log stream for error messages
+     */
+    bool setup_line_kpoints(std::ifstream& ifk,
+                            std::vector<ModuleBase::Vector3<double>>& kvec,
+                            const bool cartesian,
+                            std::ofstream& ofs_warning);
+
+    /**
+     * @brief Handle a reciprocal/real lattice Bravais-type mismatch after
+     *        IBZ reduction.
+     *
+     * When symmetry_autoclose is enabled, symmetry is switched off and the
+     * IBZ reduction is retried; otherwise the run aborts with a WARNING_QUIT
+     * listing the possible remedies.
+     *
+     * @param ucell unit cell used for the retried IBZ reduction
+     * @param symm symmetry operations used for the retried reduction
+     * @param skpt k-point option string forwarded to reduce_by_symmetry
+     * @param match set to true when the autoclose retry succeeds
+     */
+    void handle_symmetry_mismatch(const UnitCell& ucell,
+                                  const ModuleSymmetry::Symmetry& symm,
+                                  std::string& skpt,
+                                  bool& match,
+                                  const int my_rank,
+                                  std::ofstream& ofs);
 
     /**
      * @brief Adds k-points linearly between special points.
@@ -319,12 +373,6 @@ public:
      */
     void set_kup_and_kdw(std::ofstream& ofs_running);
 
-    /**
-     * @brief Gets the global index of a k-point.
-     * @return this->ik2iktot[ik]
-     */
-    void cal_ik_global();
-
 #ifdef __MPI
     /**
      * @brief Distributes k-points among MPI processes.
@@ -336,7 +384,7 @@ public:
      * @note Assumes nkstot > 0 and quits if some process ends up with
      *       no k-points.
      */
-    void mpi_k(std::ofstream& ofs_running);
+    void mpi_k(std::ofstream& ofs_running, const int my_rank, const int my_pool);
 #endif
 };
 #endif // KVECT_H

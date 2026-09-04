@@ -16,7 +16,7 @@ AddTest(
   ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/hcontainer.cpp
   ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/atom_pair.cpp
   ${ABACUS_SOURCE_DIR}/source_basis/module_ao/parallel_orbitals.cpp
-  ${ABACUS_SOURCE_DIR}/source_cell/klist.cpp
+  ${ABACUS_SOURCE_DIR}/source_cell/klist.cpp ${ABACUS_SOURCE_DIR}/source_cell/klist_io.cpp
   ${ABACUS_SOURCE_DIR}/source_cell/parallel_kpoints.cpp
   ${ABACUS_SOURCE_DIR}/source_cell/reciprocal_grid.cpp
 
@@ -30,7 +30,7 @@ AddTest(
   ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/hcontainer.cpp
   ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/atom_pair.cpp
   ${ABACUS_SOURCE_DIR}/source_basis/module_ao/parallel_orbitals.cpp
-  ${ABACUS_SOURCE_DIR}/source_cell/klist.cpp
+  ${ABACUS_SOURCE_DIR}/source_cell/klist.cpp ${ABACUS_SOURCE_DIR}/source_cell/klist_io.cpp
   ${ABACUS_SOURCE_DIR}/source_cell/parallel_kpoints.cpp
   ${ABACUS_SOURCE_DIR}/source_cell/reciprocal_grid.cpp
 )
@@ -43,7 +43,7 @@ AddTest(
   ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/hcontainer.cpp
   ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/atom_pair.cpp
   ${ABACUS_SOURCE_DIR}/source_basis/module_ao/parallel_orbitals.cpp
-  ${ABACUS_SOURCE_DIR}/source_cell/klist.cpp
+  ${ABACUS_SOURCE_DIR}/source_cell/klist.cpp ${ABACUS_SOURCE_DIR}/source_cell/klist_io.cpp
   ${ABACUS_SOURCE_DIR}/source_cell/parallel_kpoints.cpp
   ${ABACUS_SOURCE_DIR}/source_cell/reciprocal_grid.cpp
 )
@@ -56,7 +56,7 @@ AddTest(
   ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/hcontainer.cpp
   ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/atom_pair.cpp
   ${ABACUS_SOURCE_DIR}/source_basis/module_ao/parallel_orbitals.cpp
-  ${ABACUS_SOURCE_DIR}/source_cell/klist.cpp
+  ${ABACUS_SOURCE_DIR}/source_cell/klist.cpp ${ABACUS_SOURCE_DIR}/source_cell/klist_io.cpp
   ${ABACUS_SOURCE_DIR}/source_cell/parallel_kpoints.cpp
   ${ABACUS_SOURCE_DIR}/source_cell/reciprocal_grid.cpp
 )

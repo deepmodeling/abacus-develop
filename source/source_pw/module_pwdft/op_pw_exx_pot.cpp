@@ -505,7 +505,7 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
         }
     }
 
-    div *= ModuleBase::e2 * ModuleBase::FOUR_PI / tpiba2 / kv->get_nkstot_full();
+    div *= ModuleBase::e2 * ModuleBase::FOUR_PI / tpiba2 / kv->get_nkstot_nospin();
     // std::cout << "div: " << div << std::endl;
 
     // numerically value the mean value of F(q) in the reciprocal space
@@ -532,7 +532,7 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
     aa += 1.0 / std::sqrt(alpha * ModuleBase::PI);
 
     div -= ModuleBase::e2 * ucell_omega * aa;
-    exx_div = div * kv->get_nkstot_full();
+    exx_div = div * kv->get_nkstot_nospin();
     //    exx_div = 0;
     // std::cout << "EXX divergence: " << exx_div << std::endl;
 
