@@ -11,6 +11,8 @@
 #include <mpi.h>
 #endif
 
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #include "source_basis/module_ao/orb_atomic_lm.h"
 #undef private
@@ -146,7 +148,7 @@ void NumericalOrbitalLmTest::SetUp() {
     // in agreement with the current code
     flag_sbpool_ = true;
 
-    // PARAM.input.cal_force
+    // TestParameters::input().cal_force
     // if true, extra_uniform will compute zty
     force_flag_ = true;
 
@@ -714,7 +716,7 @@ TEST_F(NumericalOrbitalLmTest, PsiSave) {
     std::string tmp_r, tmp_k, tmp_beta, tmp;
     double tol = 1e-5;
 
-    // should be PARAM.sys.global_out_dir+label
+    // should be TestParameters::sys().global_out_dir+label
     // but in this unit test global_out_dir is empty string
     // see Numerical_Nonlocal_Lm::plot() for details
     std::string dir = "./O/";

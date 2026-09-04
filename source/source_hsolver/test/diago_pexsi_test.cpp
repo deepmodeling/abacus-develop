@@ -1,8 +1,7 @@
 #ifdef __PEXSI
 #include "source_hsolver/diago_pexsi.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 
 #include "source_base/global_variable.h"
 #include "source_base/module_external/scalapack_connector.h"
@@ -160,7 +159,7 @@ class PexsiPrepare
             std::cout << "nrow: " << hmtest.nrow << ", ncol: " << hmtest.ncol << ", nb: " << nb2d << std::endl;
         }
 
-        dh.reset(new hsolver::DiagoPexsi<T>(&po, PARAM.input.nspin, nlocal, PARAM.input.nelec));
+        dh.reset(new hsolver::DiagoPexsi<T>(&po, TestParameters::input().nspin, nlocal, TestParameters::input().nelec));
     }
 
     void distribute_data()
@@ -188,10 +187,10 @@ class PexsiPrepare
 
     void set_env()
     {
-        PARAM.sys.nlocal = nlocal;
-        PARAM.input.nbands = nbands;
+        TestParameters::sys().nlocal = nlocal;
+        TestParameters::input().nbands = nbands;
         GlobalV::DSIZE = dsize;
-        PARAM.input.nspin = 1;
+        TestParameters::input().nspin = 1;
         DIAG_WORLD = MPI_COMM_WORLD;
         GlobalV::NPROC = dsize;
 
@@ -303,7 +302,7 @@ class PexsiPrepare
             return false;
         }
 
-        f_dm >> PARAM.input.nelec >> mu;
+        f_dm >> TestParameters::input().nelec >> mu;
 
         dm.resize(nread * nread);
         // T* edm = new T[nglobal*nglobal];

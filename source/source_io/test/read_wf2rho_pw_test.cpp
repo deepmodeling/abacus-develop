@@ -3,6 +3,8 @@
 
 #undef __LCAO
 
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #include "source_base/module_out/filename.h" // mohan add 2025-05-17
 #include "source_base/parallel_grid.h"
@@ -11,7 +13,6 @@
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_io/module_wf/read_wf2rho_pw.h"
 #include "source_io/module_wf/write_wfc_pw.h"
 #include "source_psi/psi.h"
@@ -117,7 +118,7 @@ class ReadWfcRhoTest : public ::testing::Test
         rhopw = new ModulePW::PW_Basis;
         kv = new K_Vectors;
         // output .dat file
-        PARAM.input.out_wfc_pw = 2;
+        TestParameters::input().out_wfc_pw = 2;
 #ifdef __MPI
         MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 #endif
@@ -297,7 +298,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
                            npol,
                            GlobalV::RANK_IN_POOL,
                            GlobalV::NPROC_IN_POOL,
-                           PARAM.input.out_wfc_pw,
+                           TestParameters::input().out_wfc_pw,
                            ecutwfc,
                            out_dir,
                            *psi,
@@ -376,9 +377,9 @@ int main(int argc, char** argv)
     setupmpi(argc, argv, GlobalV::NPROC, GlobalV::MY_RANK);
 
     // when kpar == 2, nspin == 2
-    PARAM.input.kpar = (GlobalV::NPROC > 1) ? 2 : 1;
-    GlobalV::KPAR = PARAM.input.kpar;
-    PARAM.input.bndpar = 1;
+    TestParameters::input().kpar = (GlobalV::NPROC > 1) ? 2 : 1;
+    GlobalV::KPAR = TestParameters::input().kpar;
+    TestParameters::input().bndpar = 1;
     Parallel_Global::divide_pools(GlobalV::NPROC,
                                   GlobalV::MY_RANK,
                                   PARAM.inp.bndpar,

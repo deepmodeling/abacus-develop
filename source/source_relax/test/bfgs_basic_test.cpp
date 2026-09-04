@@ -1,9 +1,8 @@
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/relax_data.h"
 #include "gmock/gmock.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 #include "gtest/gtest.h"
 #define private public
 #define protected public
@@ -113,7 +112,7 @@ TEST_F(BFGSBasicTest, UpdateInverseHessianCase2)
 TEST_F(BFGSBasicTest, CheckWolfeConditions)
 {
     Ions_Move_Basic::dim = 3;
-    PARAM.input.test_relax_method = 1;
+    TestParameters::input().test_relax_method = 1;
     bfgs.allocate_basic();
     bfgs.pos[0] = 2.0;
     bfgs.grad[0] = 2.0;
@@ -302,7 +301,7 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusCase2)
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::trust_radius_old = 0.0;
     Ions_Move_Basic::relax_bfgs_rmin = 100.0;
-    PARAM.input.test_relax_method = 1;
+    TestParameters::input().test_relax_method = 1;
     bfgs.allocate_basic();
     bfgs.grad_p[0] = 1.0;
     bfgs.move[1] = 2.0;
@@ -335,7 +334,7 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusWarningQuit)
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::trust_radius_old = 0.0;
     Ions_Move_Basic::relax_bfgs_rmin = 100.0;
-    PARAM.input.test_relax_method = 1;
+    TestParameters::input().test_relax_method = 1;
     bfgs.allocate_basic();
     bfgs.grad_p[0] = 1.0;
     bfgs.move[1] = 2.0;

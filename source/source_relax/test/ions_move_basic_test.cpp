@@ -1,8 +1,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/relax_data.h"
 #include "for_test.h"
@@ -67,7 +66,7 @@ TEST_F(IonsMoveBasicTest, MoveAtoms)
 {
     // Initialize data
     Ions_Move_Basic::dim = 6;
-    PARAM.input.test_relax_method = 1;
+    TestParameters::input().test_relax_method = 1;
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
     {
         pos[i] = 0.0;
@@ -103,8 +102,8 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     // Initialize data
     Ions_Move_Basic::dim = 6;
     int update_iter = 1;
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
+    TestParameters::input().test_relax_method = 1;
+    TestParameters::input().out_level = "ie";
     std::vector<double> etot_info(2, 0.0);
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
     {
@@ -145,9 +144,9 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     Ions_Move_Basic::dim = 6;
     int update_iter = 1;
     std::vector<double> etot_info(2, 0.0);
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
-    PARAM.input.force_thr  = 1.0;
+    TestParameters::input().test_relax_method = 1;
+    TestParameters::input().out_level = "ie";
+    TestParameters::input().force_thr  = 1.0;
     grad[0] = 1.0;
 
     // Call the function being tested
@@ -184,9 +183,9 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     Ions_Move_Basic::dim = 6;
     int update_iter = 1;
     std::vector<double> etot_info = {1.0, 0.0};
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
-    PARAM.input.force_thr  = 1.0;
+    TestParameters::input().test_relax_method = 1;
+    TestParameters::input().out_level = "ie";
+    TestParameters::input().force_thr  = 1.0;
     grad[0] = 1.0;
 
     // Call the function being tested

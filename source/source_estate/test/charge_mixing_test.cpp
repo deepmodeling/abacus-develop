@@ -1,11 +1,12 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #include "../module_charge/charge_mixing.h"
 #include "source_base/module_mixing/broyden_mixing.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_parameter/parameter.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -84,16 +85,16 @@ class ChargeMixingTest : public ::testing::Test
         pw_dbasis.setuptransform(&pw_basis);
         pw_dbasis.collect_local_pw();
         // default mixing parameters
-        PARAM.input.mixing_mode = "broyden";
-        PARAM.input.mixing_beta = 0.8;
-        PARAM.input.mixing_ndim = 8;
-        PARAM.input.mixing_gg0  = 1.0;
-        PARAM.input.mixing_tau  = false;
-        PARAM.input.mixing_beta_mag = 1.6;
-        PARAM.input.mixing_gg0_mag = 0.0;
-        PARAM.input.mixing_gg0_min = 0.1;
-        PARAM.input.mixing_angle = -10.0;
-        PARAM.input.mixing_dmr = false;
+        TestParameters::input().mixing_mode = "broyden";
+        TestParameters::input().mixing_beta = 0.8;
+        TestParameters::input().mixing_ndim = 8;
+        TestParameters::input().mixing_gg0  = 1.0;
+        TestParameters::input().mixing_tau  = false;
+        TestParameters::input().mixing_beta_mag = 1.6;
+        TestParameters::input().mixing_gg0_mag = 0.0;
+        TestParameters::input().mixing_gg0_min = 0.1;
+        TestParameters::input().mixing_angle = -10.0;
+        TestParameters::input().mixing_dmr = false;
         ucell.omega = 1.0;
         ucell.tpiba = 1.0;
     }
@@ -107,23 +108,23 @@ TEST_F(ChargeMixingTest, SetMixingTest)
 #ifdef _OPENMP
     omp_set_num_threads(1);
 #endif
-    PARAM.input.nspin = 1;
+    TestParameters::input().nspin = 1;
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
-    PARAM.input.mixing_beta = 1.0;
-    PARAM.input.mixing_ndim = 1;
-    PARAM.input.mixing_gg0 = 1.0;
+    TestParameters::input().mixing_beta = 1.0;
+    TestParameters::input().mixing_ndim = 1;
+    TestParameters::input().mixing_gg0 = 1.0;
 
-    CMtest.set_mixing(PARAM.input.mixing_mode,
-                    PARAM.input.mixing_beta,
-                    PARAM.input.mixing_ndim,
-                    PARAM.input.mixing_gg0,
-                    PARAM.input.mixing_tau,
-                    PARAM.input.mixing_beta_mag,
-                    PARAM.input.mixing_gg0_mag,
-                    PARAM.input.mixing_gg0_min,
-                    PARAM.input.mixing_angle,
-                    PARAM.input.mixing_dmr,
+    CMtest.set_mixing(TestParameters::input().mixing_mode,
+                    TestParameters::input().mixing_beta,
+                    TestParameters::input().mixing_ndim,
+                    TestParameters::input().mixing_gg0,
+                    TestParameters::input().mixing_tau,
+                    TestParameters::input().mixing_beta_mag,
+                    TestParameters::input().mixing_gg0_mag,
+                    TestParameters::input().mixing_gg0_min,
+                    TestParameters::input().mixing_angle,
+                    TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
     EXPECT_EQ(CMtest.get_mixing_mode(), "broyden");
@@ -137,75 +138,75 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     EXPECT_EQ(CMtest.mixing_angle, -10.0);
     EXPECT_EQ(CMtest.mixing_dmr, false);
 
-    PARAM.input.mixing_tau = true;
-    PARAM.input.mixing_mode = "plain";
-    CMtest.set_mixing(PARAM.input.mixing_mode,
-                    PARAM.input.mixing_beta,
-                    PARAM.input.mixing_ndim,
-                    PARAM.input.mixing_gg0,
-                    PARAM.input.mixing_tau,
-                    PARAM.input.mixing_beta_mag,
-                    PARAM.input.mixing_gg0_mag,
-                    PARAM.input.mixing_gg0_min,
-                    PARAM.input.mixing_angle,
-                    PARAM.input.mixing_dmr,
+    TestParameters::input().mixing_tau = true;
+    TestParameters::input().mixing_mode = "plain";
+    CMtest.set_mixing(TestParameters::input().mixing_mode,
+                    TestParameters::input().mixing_beta,
+                    TestParameters::input().mixing_ndim,
+                    TestParameters::input().mixing_gg0,
+                    TestParameters::input().mixing_tau,
+                    TestParameters::input().mixing_beta_mag,
+                    TestParameters::input().mixing_gg0_mag,
+                    TestParameters::input().mixing_gg0_min,
+                    TestParameters::input().mixing_angle,
+                    TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
     EXPECT_EQ(CMtest.mixing_mode, "plain");
     EXPECT_EQ(CMtest.mixing_tau, true);
 
-    PARAM.input.mixing_beta = 1.1;
+    TestParameters::input().mixing_beta = 1.1;
     std::string output;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(CMtest.set_mixing(PARAM.input.mixing_mode,
-                                PARAM.input.mixing_beta,
-                                PARAM.input.mixing_ndim,
-                                PARAM.input.mixing_gg0,
-                                PARAM.input.mixing_tau,
-                                PARAM.input.mixing_beta_mag,
-                                PARAM.input.mixing_gg0_mag,
-                                PARAM.input.mixing_gg0_min,
-                                PARAM.input.mixing_angle,
-                                PARAM.input.mixing_dmr,
+    EXPECT_EXIT(CMtest.set_mixing(TestParameters::input().mixing_mode,
+                                TestParameters::input().mixing_beta,
+                                TestParameters::input().mixing_ndim,
+                                TestParameters::input().mixing_gg0,
+                                TestParameters::input().mixing_tau,
+                                TestParameters::input().mixing_beta_mag,
+                                TestParameters::input().mixing_gg0_mag,
+                                TestParameters::input().mixing_gg0_min,
+                                TestParameters::input().mixing_angle,
+                                TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);, ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("You'd better set mixing_beta to [0.0, 1.0]!"));
 
-    PARAM.input.mixing_beta = 0.7;
-    PARAM.input.mixing_beta_mag = -0.1;
-    PARAM.input.nspin = 2;
+    TestParameters::input().mixing_beta = 0.7;
+    TestParameters::input().mixing_beta_mag = -0.1;
+    TestParameters::input().nspin = 2;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(CMtest.set_mixing(PARAM.input.mixing_mode,
-                                PARAM.input.mixing_beta,
-                                PARAM.input.mixing_ndim,
-                                PARAM.input.mixing_gg0,
-                                PARAM.input.mixing_tau,
-                                PARAM.input.mixing_beta_mag,
-                                PARAM.input.mixing_gg0_mag,
-                                PARAM.input.mixing_gg0_min,
-                                PARAM.input.mixing_angle,
-                                PARAM.input.mixing_dmr,
+    EXPECT_EXIT(CMtest.set_mixing(TestParameters::input().mixing_mode,
+                                TestParameters::input().mixing_beta,
+                                TestParameters::input().mixing_ndim,
+                                TestParameters::input().mixing_gg0,
+                                TestParameters::input().mixing_tau,
+                                TestParameters::input().mixing_beta_mag,
+                                TestParameters::input().mixing_gg0_mag,
+                                TestParameters::input().mixing_gg0_min,
+                                TestParameters::input().mixing_angle,
+                                TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);, ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("You'd better set mixing_beta_mag >= 0.0!"));
 
-    PARAM.input.nspin = 1;
-    PARAM.input.mixing_beta = 0.7;
-    PARAM.input.mixing_beta_mag = 1.6;
-    PARAM.input.mixing_mode = "nothing";
+    TestParameters::input().nspin = 1;
+    TestParameters::input().mixing_beta = 0.7;
+    TestParameters::input().mixing_beta_mag = 1.6;
+    TestParameters::input().mixing_mode = "nothing";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(CMtest.set_mixing(PARAM.input.mixing_mode,
-                                PARAM.input.mixing_beta,
-                                PARAM.input.mixing_ndim,
-                                PARAM.input.mixing_gg0,
-                                PARAM.input.mixing_tau,
-                                PARAM.input.mixing_beta_mag,
-                                PARAM.input.mixing_gg0_mag,
-                                PARAM.input.mixing_gg0_min,
-                                PARAM.input.mixing_angle,
-                                PARAM.input.mixing_dmr,
+    EXPECT_EXIT(CMtest.set_mixing(TestParameters::input().mixing_mode,
+                                TestParameters::input().mixing_beta,
+                                TestParameters::input().mixing_ndim,
+                                TestParameters::input().mixing_gg0,
+                                TestParameters::input().mixing_tau,
+                                TestParameters::input().mixing_beta_mag,
+                                TestParameters::input().mixing_gg0_mag,
+                                TestParameters::input().mixing_gg0_min,
+                                TestParameters::input().mixing_angle,
+                                TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);, ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
@@ -217,49 +218,49 @@ TEST_F(ChargeMixingTest, InitMixingTest)
 #ifdef _OPENMP
     omp_set_num_threads(1);
 #endif
-    PARAM.input.nspin = 1;
+    TestParameters::input().nspin = 1;
     XC_Functional::func_type = 1;
     XC_Functional::ked_flag = false;
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
 
-    CMtest.set_mixing(PARAM.input.mixing_mode,
-                    PARAM.input.mixing_beta,
-                    PARAM.input.mixing_ndim,
-                    PARAM.input.mixing_gg0,
-                    PARAM.input.mixing_tau,
-                    PARAM.input.mixing_beta_mag,
-                    PARAM.input.mixing_gg0_mag,
-                    PARAM.input.mixing_gg0_min,
-                    PARAM.input.mixing_angle,
-                    PARAM.input.mixing_dmr,
+    CMtest.set_mixing(TestParameters::input().mixing_mode,
+                    TestParameters::input().mixing_beta,
+                    TestParameters::input().mixing_ndim,
+                    TestParameters::input().mixing_gg0,
+                    TestParameters::input().mixing_tau,
+                    TestParameters::input().mixing_beta_mag,
+                    TestParameters::input().mixing_gg0_mag,
+                    TestParameters::input().mixing_gg0_min,
+                    TestParameters::input().mixing_angle,
+                    TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
     
-    PARAM.input.scf_thr_type= 1;
+    TestParameters::input().scf_thr_type= 1;
     CMtest.init_mixing();
     EXPECT_EQ(CMtest.rho_mdata.length, pw_basis.npw);
     
-    PARAM.input.scf_thr_type= 2;
+    TestParameters::input().scf_thr_type= 2;
     CMtest.init_mixing();
     EXPECT_EQ(CMtest.rho_mdata.length, pw_basis.nrxx);
 
-    PARAM.input.nspin = 4;
+    TestParameters::input().nspin = 4;
     CMtest.init_mixing();
     EXPECT_EQ(CMtest.rho_mdata.length, 4 * pw_basis.nrxx);
 
-    PARAM.input.nspin = 1;
-    PARAM.input.mixing_tau = true;
-    CMtest.set_mixing(PARAM.input.mixing_mode,
-                    PARAM.input.mixing_beta,
-                    PARAM.input.mixing_ndim,
-                    PARAM.input.mixing_gg0,
-                    PARAM.input.mixing_tau,
-                    PARAM.input.mixing_beta_mag,
-                    PARAM.input.mixing_gg0_mag,
-                    PARAM.input.mixing_gg0_min,
-                    PARAM.input.mixing_angle,
-                    PARAM.input.mixing_dmr,
+    TestParameters::input().nspin = 1;
+    TestParameters::input().mixing_tau = true;
+    CMtest.set_mixing(TestParameters::input().mixing_mode,
+                    TestParameters::input().mixing_beta,
+                    TestParameters::input().mixing_ndim,
+                    TestParameters::input().mixing_gg0,
+                    TestParameters::input().mixing_tau,
+                    TestParameters::input().mixing_beta_mag,
+                    TestParameters::input().mixing_gg0_mag,
+                    TestParameters::input().mixing_gg0_min,
+                    TestParameters::input().mixing_angle,
+                    TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
     XC_Functional::func_type = 3;
@@ -267,18 +268,18 @@ TEST_F(ChargeMixingTest, InitMixingTest)
     CMtest.init_mixing();
     EXPECT_EQ(CMtest.tau_mdata.length, pw_basis.nrxx);
 
-    PARAM.input.nspin = 4;
-    PARAM.input.mixing_angle = 1.0;
-    CMtest.set_mixing(PARAM.input.mixing_mode,
-                    PARAM.input.mixing_beta,
-                    PARAM.input.mixing_ndim,
-                    PARAM.input.mixing_gg0,
-                    PARAM.input.mixing_tau,
-                    PARAM.input.mixing_beta_mag,
-                    PARAM.input.mixing_gg0_mag,
-                    PARAM.input.mixing_gg0_min,
-                    PARAM.input.mixing_angle,
-                    PARAM.input.mixing_dmr,
+    TestParameters::input().nspin = 4;
+    TestParameters::input().mixing_angle = 1.0;
+    CMtest.set_mixing(TestParameters::input().mixing_mode,
+                    TestParameters::input().mixing_beta,
+                    TestParameters::input().mixing_ndim,
+                    TestParameters::input().mixing_gg0,
+                    TestParameters::input().mixing_tau,
+                    TestParameters::input().mixing_beta_mag,
+                    TestParameters::input().mixing_gg0_mag,
+                    TestParameters::input().mixing_gg0_min,
+                    TestParameters::input().mixing_angle,
+                    TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
     CMtest.init_mixing();
@@ -289,47 +290,47 @@ TEST_F(ChargeMixingTest, InnerDotRealTest)
 {
     Charge_Mixing CMtest;
     // non mixing angle case
-    CMtest.set_mixing(PARAM.input.mixing_mode,
-                    PARAM.input.mixing_beta,
-                    PARAM.input.mixing_ndim,
-                    PARAM.input.mixing_gg0,
-                    PARAM.input.mixing_tau,
-                    PARAM.input.mixing_beta_mag,
-                    PARAM.input.mixing_gg0_mag,
-                    PARAM.input.mixing_gg0_min,
-                    PARAM.input.mixing_angle,
-                    PARAM.input.mixing_dmr,
+    CMtest.set_mixing(TestParameters::input().mixing_mode,
+                    TestParameters::input().mixing_beta,
+                    TestParameters::input().mixing_ndim,
+                    TestParameters::input().mixing_gg0,
+                    TestParameters::input().mixing_tau,
+                    TestParameters::input().mixing_beta_mag,
+                    TestParameters::input().mixing_gg0_mag,
+                    TestParameters::input().mixing_gg0_min,
+                    TestParameters::input().mixing_angle,
+                    TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
     CMtest.set_rhopw(&pw_basis, &pw_basis);
-    PARAM.input.nspin = 4;
+    TestParameters::input().nspin = 4;
 
     // a simple sum for inner product
-    std::vector<double> drho1(pw_basis.nrxx * PARAM.input.nspin);
-    std::vector<double> drho2(pw_basis.nrxx * PARAM.input.nspin);
-    for (int i = 0; i < pw_basis.nrxx * PARAM.input.nspin; ++i)
+    std::vector<double> drho1(pw_basis.nrxx * TestParameters::input().nspin);
+    std::vector<double> drho2(pw_basis.nrxx * TestParameters::input().nspin);
+    for (int i = 0; i < pw_basis.nrxx * TestParameters::input().nspin; ++i)
     {
         drho1[i] = 1.0;
         drho2[i] = double(i);
     }
     double inner = CMtest.inner_product_real(drho1.data(), drho2.data());
-    EXPECT_NEAR(inner, 0.5 * pw_basis.nrxx * PARAM.input.nspin  * (pw_basis.nrxx * PARAM.input.nspin - 1), 1e-8);
+    EXPECT_NEAR(inner, 0.5 * pw_basis.nrxx * TestParameters::input().nspin  * (pw_basis.nrxx * TestParameters::input().nspin - 1), 1e-8);
 
     // mixing angle case
-    PARAM.input.mixing_angle = 1.0;
-    CMtest.set_mixing(PARAM.input.mixing_mode,
-                    PARAM.input.mixing_beta,
-                    PARAM.input.mixing_ndim,
-                    PARAM.input.mixing_gg0,
-                    PARAM.input.mixing_tau,
-                    PARAM.input.mixing_beta_mag,
-                    PARAM.input.mixing_gg0_mag,
-                    PARAM.input.mixing_gg0_min,
-                    PARAM.input.mixing_angle,
-                    PARAM.input.mixing_dmr,
+    TestParameters::input().mixing_angle = 1.0;
+    CMtest.set_mixing(TestParameters::input().mixing_mode,
+                    TestParameters::input().mixing_beta,
+                    TestParameters::input().mixing_ndim,
+                    TestParameters::input().mixing_gg0,
+                    TestParameters::input().mixing_tau,
+                    TestParameters::input().mixing_beta_mag,
+                    TestParameters::input().mixing_gg0_mag,
+                    TestParameters::input().mixing_gg0_min,
+                    TestParameters::input().mixing_angle,
+                    TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
-    PARAM.input.nspin = 4;
+    TestParameters::input().nspin = 4;
 
     // a simple sum for inner product
     drho1.resize(pw_basis.nrxx * 2);
@@ -347,31 +348,31 @@ TEST_F(ChargeMixingTest, InnerDotRecipSimpleTest)
 {
     Charge_Mixing CMtest;
     // non mixing angle case
-    CMtest.set_mixing(PARAM.input.mixing_mode,
-                    PARAM.input.mixing_beta,
-                    PARAM.input.mixing_ndim,
-                    PARAM.input.mixing_gg0,
-                    PARAM.input.mixing_tau,
-                    PARAM.input.mixing_beta_mag,
-                    PARAM.input.mixing_gg0_mag,
-                    PARAM.input.mixing_gg0_min,
-                    PARAM.input.mixing_angle,
-                    PARAM.input.mixing_dmr,
+    CMtest.set_mixing(TestParameters::input().mixing_mode,
+                    TestParameters::input().mixing_beta,
+                    TestParameters::input().mixing_ndim,
+                    TestParameters::input().mixing_gg0,
+                    TestParameters::input().mixing_tau,
+                    TestParameters::input().mixing_beta_mag,
+                    TestParameters::input().mixing_gg0_mag,
+                    TestParameters::input().mixing_gg0_min,
+                    TestParameters::input().mixing_angle,
+                    TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
     CMtest.set_rhopw(&pw_basis, &pw_basis);
-    PARAM.input.nspin = 2;
+    TestParameters::input().nspin = 2;
 
     // a simple sum for inner product
-    std::vector<std::complex<double>> drhog1(pw_basis.npw * PARAM.input.nspin);
-    std::vector<std::complex<double>> drhog2(pw_basis.npw * PARAM.input.nspin);
-    for (int i = 0; i < pw_basis.npw * PARAM.input.nspin; ++i)
+    std::vector<std::complex<double>> drhog1(pw_basis.npw * TestParameters::input().nspin);
+    std::vector<std::complex<double>> drhog2(pw_basis.npw * TestParameters::input().nspin);
+    for (int i = 0; i < pw_basis.npw * TestParameters::input().nspin; ++i)
     {
         drhog1[i] = 1.0;
         drhog2[i] = double(i);
     }
     double inner = CMtest.inner_product_recip_simple(drhog1.data(), drhog2.data());
-    EXPECT_NEAR(inner, 0.5 * pw_basis.npw * PARAM.input.nspin * (pw_basis.npw * PARAM.input.nspin - 1), 1e-8);
+    EXPECT_NEAR(inner, 0.5 * pw_basis.npw * TestParameters::input().nspin * (pw_basis.npw * TestParameters::input().nspin - 1), 1e-8);
 }
 
 TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
@@ -381,7 +382,7 @@ TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
     CMtest.set_rhopw(&pw_basis, &pw_basis);
     const int npw = pw_basis.npw;
     const int nrxx = pw_basis.nrxx;
-    PARAM.input.nspin = 1;
+    TestParameters::input().nspin = 1;
     std::vector<double> drhor1(pw_basis.nrxx);
     std::vector<double> drhor2(pw_basis.nrxx);
     for (int i = 0; i < pw_basis.nrxx; ++i)
@@ -395,19 +396,19 @@ TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
     // RECIPROCAL NSPIN=1
     ucell.tpiba2 = 1.0;
     ucell.omega = 2.0;
-    CMtest.set_mixing(PARAM.input.mixing_mode,
-                    PARAM.input.mixing_beta,
-                    PARAM.input.mixing_ndim,
-                    PARAM.input.mixing_gg0,
-                    PARAM.input.mixing_tau,
-                    PARAM.input.mixing_beta_mag,
-                    PARAM.input.mixing_gg0_mag,
-                    PARAM.input.mixing_gg0_min,
-                    PARAM.input.mixing_angle,
-                    PARAM.input.mixing_dmr,
+    CMtest.set_mixing(TestParameters::input().mixing_mode,
+                    TestParameters::input().mixing_beta,
+                    TestParameters::input().mixing_ndim,
+                    TestParameters::input().mixing_gg0,
+                    TestParameters::input().mixing_tau,
+                    TestParameters::input().mixing_beta_mag,
+                    TestParameters::input().mixing_gg0_mag,
+                    TestParameters::input().mixing_gg0_min,
+                    TestParameters::input().mixing_angle,
+                    TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
-    PARAM.input.nspin = 1;
+    TestParameters::input().nspin = 1;
     std::vector<std::complex<double>> drhog1(pw_basis.npw);
     std::vector<std::complex<double>> drhog2(pw_basis.npw);
     for (int i = 0; i < pw_basis.nrxx; ++i)
@@ -422,12 +423,12 @@ TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
     EXPECT_NEAR(inner, -0.3 * ModuleBase::e2 * ModuleBase::FOUR_PI, 1e-8);
 
     // RECIPROCAL NSPIN=2
-    PARAM.input.nspin = 2;
-    drhog1.resize(pw_basis.npw * PARAM.input.nspin);
-    drhog2.resize(pw_basis.npw * PARAM.input.nspin);
-    std::vector<std::complex<double>> drhog1_mag(pw_basis.npw * PARAM.input.nspin);
-    std::vector<std::complex<double>> drhog2_mag(pw_basis.npw * PARAM.input.nspin);
-    for (int i = 0; i < pw_basis.npw * PARAM.input.nspin; ++i)
+    TestParameters::input().nspin = 2;
+    drhog1.resize(pw_basis.npw * TestParameters::input().nspin);
+    drhog2.resize(pw_basis.npw * TestParameters::input().nspin);
+    std::vector<std::complex<double>> drhog1_mag(pw_basis.npw * TestParameters::input().nspin);
+    std::vector<std::complex<double>> drhog2_mag(pw_basis.npw * TestParameters::input().nspin);
+    for (int i = 0; i < pw_basis.npw * TestParameters::input().nspin; ++i)
     {
         drhog1[i] = std::complex<double>(1.0, double(i));
         drhog2[i] = std::complex<double>(1.0, 1.0);
@@ -440,46 +441,46 @@ TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
         drhog2_mag[i] = drhog2[i] + drhog2[i+pw_basis.npw];
         drhog2_mag[i+pw_basis.npw] = drhog2[i] - drhog2[i+pw_basis.npw];
     }
-    PARAM.sys.gamma_only_pw= false;
+    TestParameters::sys().gamma_only_pw= false;
     inner = CMtest.inner_product_recip_hartree(drhog1_mag.data(), drhog2_mag.data());
     EXPECT_NEAR(inner, 236763.82650318215, 1e-8);
-    PARAM.sys.gamma_only_pw= true;
+    TestParameters::sys().gamma_only_pw= true;
     inner = CMtest.inner_product_recip_hartree(drhog1_mag.data(), drhog2_mag.data());
     EXPECT_NEAR(inner, 236763.82650318215 * 2, 1e-8);
 
     // RECIPROCAL NSPIN=4 without mixing_angle
-    PARAM.input.nspin = 4;
-    drhog1.resize(pw_basis.npw * PARAM.input.nspin);
-    drhog2.resize(pw_basis.npw * PARAM.input.nspin);
-    for (int i = 0; i < pw_basis.npw * PARAM.input.nspin; ++i)
+    TestParameters::input().nspin = 4;
+    drhog1.resize(pw_basis.npw * TestParameters::input().nspin);
+    drhog2.resize(pw_basis.npw * TestParameters::input().nspin);
+    for (int i = 0; i < pw_basis.npw * TestParameters::input().nspin; ++i)
     {
         drhog1[i] = std::complex<double>(1.0, double(i));
         drhog2[i] = std::complex<double>(1.0, 1.0);
     }
 
-    PARAM.sys.domag = false;
-    PARAM.sys.domag_z = false;
+    TestParameters::sys().domag = false;
+    TestParameters::sys().domag_z = false;
     inner = CMtest.inner_product_recip_hartree(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 28260.091995611871, 1e-8);
-    PARAM.sys.gamma_only_pw= true;
-    PARAM.sys.domag = true;
-    PARAM.sys.domag_z = true;
+    TestParameters::sys().gamma_only_pw= true;
+    TestParameters::sys().domag = true;
+    TestParameters::sys().domag_z = true;
     inner = CMtest.inner_product_recip_hartree(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 110668.61166927818, 1e-8);
 
     // RECIPROCAL NSPIN=4 with mixing_angle
-    PARAM.input.nspin = 4;
-    PARAM.input.mixing_angle = 1.0;
-    CMtest.set_mixing(PARAM.input.mixing_mode,
-                    PARAM.input.mixing_beta,
-                    PARAM.input.mixing_ndim,
-                    PARAM.input.mixing_gg0,
-                    PARAM.input.mixing_tau,
-                    PARAM.input.mixing_beta_mag,
-                    PARAM.input.mixing_gg0_mag,
-                    PARAM.input.mixing_gg0_min,
-                    PARAM.input.mixing_angle,
-                    PARAM.input.mixing_dmr,
+    TestParameters::input().nspin = 4;
+    TestParameters::input().mixing_angle = 1.0;
+    CMtest.set_mixing(TestParameters::input().mixing_mode,
+                    TestParameters::input().mixing_beta,
+                    TestParameters::input().mixing_ndim,
+                    TestParameters::input().mixing_gg0,
+                    TestParameters::input().mixing_tau,
+                    TestParameters::input().mixing_beta_mag,
+                    TestParameters::input().mixing_gg0_mag,
+                    TestParameters::input().mixing_gg0_min,
+                    TestParameters::input().mixing_angle,
+                    TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
     drhog1.resize(pw_basis.npw * 2);
@@ -489,10 +490,10 @@ TEST_F(ChargeMixingTest, InnerDotRecipHartreeTest)
         drhog1[i] = std::complex<double>(1.0, double(i));
         drhog2[i] = std::complex<double>(1.0, 1.0);
     }
-    PARAM.sys.gamma_only_pw= false;
+    TestParameters::sys().gamma_only_pw= false;
     inner = CMtest.inner_product_recip_hartree(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 36548.881431837777, 1e-8);
-    PARAM.sys.gamma_only_pw= true;
+    TestParameters::sys().gamma_only_pw= true;
     inner = CMtest.inner_product_recip_hartree(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 44776.555369916401, 1e-8);
 }
@@ -502,7 +503,7 @@ TEST_F(ChargeMixingTest, InnerDotRecipRhoTest)
     // REAL
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
-    PARAM.input.nspin = 1;
+    TestParameters::input().nspin = 1;
     std::vector<double> drhor1(pw_basis.nrxx);
     std::vector<double> drhor2(pw_basis.nrxx);
     for (int i = 0; i < pw_basis.nrxx; ++i)
@@ -516,19 +517,19 @@ TEST_F(ChargeMixingTest, InnerDotRecipRhoTest)
     // RECIPROCAL
     ucell.tpiba2 = 1.0;
     ucell.omega = 2.0;
-    CMtest.set_mixing(PARAM.input.mixing_mode,
-                    PARAM.input.mixing_beta,
-                    PARAM.input.mixing_ndim,
-                    PARAM.input.mixing_gg0,
-                    PARAM.input.mixing_tau,
-                    PARAM.input.mixing_beta_mag,
-                    PARAM.input.mixing_gg0_mag,
-                    PARAM.input.mixing_gg0_min,
-                    PARAM.input.mixing_angle,
-                    PARAM.input.mixing_dmr,
+    CMtest.set_mixing(TestParameters::input().mixing_mode,
+                    TestParameters::input().mixing_beta,
+                    TestParameters::input().mixing_ndim,
+                    TestParameters::input().mixing_gg0,
+                    TestParameters::input().mixing_tau,
+                    TestParameters::input().mixing_beta_mag,
+                    TestParameters::input().mixing_gg0_mag,
+                    TestParameters::input().mixing_gg0_min,
+                    TestParameters::input().mixing_angle,
+                    TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
-    PARAM.input.nspin = 1;
+    TestParameters::input().nspin = 1;
     std::vector<std::complex<double>> drhog1(pw_basis.npw);
     std::vector<std::complex<double>> drhog2(pw_basis.npw);
     for (int i = 0; i < pw_basis.nrxx; ++i)
@@ -542,37 +543,37 @@ TEST_F(ChargeMixingTest, InnerDotRecipRhoTest)
     inner = CMtest.inner_product_recip_rho(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, -0.3 * ModuleBase::e2 * ModuleBase::FOUR_PI, 1e-8);
 
-    PARAM.input.nspin = 2;
-    drhog1.resize(pw_basis.npw * PARAM.input.nspin);
-    drhog2.resize(pw_basis.npw * PARAM.input.nspin);
-    for (int i = 0; i < pw_basis.npw * PARAM.input.nspin; ++i)
+    TestParameters::input().nspin = 2;
+    drhog1.resize(pw_basis.npw * TestParameters::input().nspin);
+    drhog2.resize(pw_basis.npw * TestParameters::input().nspin);
+    for (int i = 0; i < pw_basis.npw * TestParameters::input().nspin; ++i)
     {
         drhog1[i] = std::complex<double>(1.0, double(i));
         drhog2[i] = std::complex<double>(1.0, 1.0);
     }
-    PARAM.sys.gamma_only_pw= false;
+    TestParameters::sys().gamma_only_pw= false;
     inner = CMtest.inner_product_recip_rho(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 236763.82650318215, 1e-8);
-    PARAM.sys.gamma_only_pw= true;
+    TestParameters::sys().gamma_only_pw= true;
     inner = CMtest.inner_product_recip_rho(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 236763.82650318215 * 2, 1e-8);
 
-    PARAM.input.nspin = 4;
-    drhog1.resize(pw_basis.npw * PARAM.input.nspin);
-    drhog2.resize(pw_basis.npw * PARAM.input.nspin);
-    for (int i = 0; i < pw_basis.npw * PARAM.input.nspin; ++i)
+    TestParameters::input().nspin = 4;
+    drhog1.resize(pw_basis.npw * TestParameters::input().nspin);
+    drhog2.resize(pw_basis.npw * TestParameters::input().nspin);
+    for (int i = 0; i < pw_basis.npw * TestParameters::input().nspin; ++i)
     {
         drhog1[i] = std::complex<double>(1.0, double(i));
         drhog2[i] = std::complex<double>(1.0, 1.0);
     }
 
-    PARAM.sys.domag = false;
-    PARAM.sys.domag_z = false;
+    TestParameters::sys().domag = false;
+    TestParameters::sys().domag_z = false;
     inner = CMtest.inner_product_recip_rho(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 28260.091995611871, 1e-8);
-    PARAM.sys.gamma_only_pw= true;
-    PARAM.sys.domag = true;
-    PARAM.sys.domag_z = true;
+    TestParameters::sys().gamma_only_pw= true;
+    TestParameters::sys().domag = true;
+    TestParameters::sys().domag_z = true;
     inner = CMtest.inner_product_recip_rho(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 110668.61166927818, 1e-8);
 }
@@ -582,30 +583,30 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
     ucell.tpiba = 1.0;
-    CMtest.set_mixing(PARAM.input.mixing_mode,
-                    PARAM.input.mixing_beta,
-                    PARAM.input.mixing_ndim,
-                    PARAM.input.mixing_gg0,
-                    PARAM.input.mixing_tau,
-                    PARAM.input.mixing_beta_mag,
-                    PARAM.input.mixing_gg0_mag,
-                    PARAM.input.mixing_gg0_min,
-                    PARAM.input.mixing_angle,
-                    PARAM.input.mixing_dmr,
+    CMtest.set_mixing(TestParameters::input().mixing_mode,
+                    TestParameters::input().mixing_beta,
+                    TestParameters::input().mixing_ndim,
+                    TestParameters::input().mixing_gg0,
+                    TestParameters::input().mixing_tau,
+                    TestParameters::input().mixing_beta_mag,
+                    TestParameters::input().mixing_gg0_mag,
+                    TestParameters::input().mixing_gg0_min,
+                    TestParameters::input().mixing_angle,
+                    TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
     // nspin = 1
-    PARAM.input.nspin = 1;
-    std::complex<double>* drhog = new std::complex<double>[PARAM.input.nspin*pw_basis.npw];
-    std::complex<double>* drhog_old = new std::complex<double>[PARAM.input.nspin*pw_basis.npw];
-    for (int i = 0; i < PARAM.input.nspin*pw_basis.npw; ++i)
+    TestParameters::input().nspin = 1;
+    std::complex<double>* drhog = new std::complex<double>[TestParameters::input().nspin*pw_basis.npw];
+    std::complex<double>* drhog_old = new std::complex<double>[TestParameters::input().nspin*pw_basis.npw];
+    for (int i = 0; i < TestParameters::input().nspin*pw_basis.npw; ++i)
     {
         drhog_old[i] = drhog[i] = std::complex<double>(1.0, 1.0);
     }
     // no kerker
     CMtest.mixing_gg0 = 0.0;
     CMtest.Kerker_screen_recip(drhog);
-    for (int i = 0; i < PARAM.input.nspin*pw_basis.npw; ++i)
+    for (int i = 0; i < TestParameters::input().nspin*pw_basis.npw; ++i)
     {
         EXPECT_EQ(drhog[i], drhog_old[i]);
     }
@@ -624,19 +625,19 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
     delete[] drhog_old;
 
     // nspin = 2
-    PARAM.input.nspin = 2;
+    TestParameters::input().nspin = 2;
     CMtest.mixing_beta = 0.4;
     CMtest.mixing_beta_mag = 1.6;
-    drhog = new std::complex<double>[PARAM.input.nspin*pw_basis.npw];
-    drhog_old = new std::complex<double>[PARAM.input.nspin*pw_basis.npw];
-    for (int i = 0; i < PARAM.input.nspin*pw_basis.npw; ++i)
+    drhog = new std::complex<double>[TestParameters::input().nspin*pw_basis.npw];
+    drhog_old = new std::complex<double>[TestParameters::input().nspin*pw_basis.npw];
+    for (int i = 0; i < TestParameters::input().nspin*pw_basis.npw; ++i)
     {
         drhog_old[i] = drhog[i] = std::complex<double>(1.0, 1.0);
     }
     // mixing_gg0 = 0.0
     CMtest.mixing_gg0 = 0.0;
     CMtest.Kerker_screen_recip(drhog);
-    for (int i = 0; i < PARAM.input.nspin*pw_basis.npw; ++i)
+    for (int i = 0; i < TestParameters::input().nspin*pw_basis.npw; ++i)
     {
         EXPECT_EQ(drhog[i], drhog_old[i]);
     }
@@ -659,17 +660,17 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
     delete[] drhog_old;
 
     // nspin = 4
-    PARAM.input.nspin = 4;
-    drhog = new std::complex<double>[PARAM.input.nspin*pw_basis.npw];
-    drhog_old = new std::complex<double>[PARAM.input.nspin*pw_basis.npw];
-    for (int i = 0; i < PARAM.input.nspin*pw_basis.npw; ++i)
+    TestParameters::input().nspin = 4;
+    drhog = new std::complex<double>[TestParameters::input().nspin*pw_basis.npw];
+    drhog_old = new std::complex<double>[TestParameters::input().nspin*pw_basis.npw];
+    for (int i = 0; i < TestParameters::input().nspin*pw_basis.npw; ++i)
     {
         drhog_old[i] = drhog[i] = std::complex<double>(1.0, 1.0);
     }
     // mixing_gg0 = 0.0
     CMtest.mixing_gg0 = 0.0;
     CMtest.Kerker_screen_recip(drhog);
-    for (int i = 0; i < PARAM.input.nspin*pw_basis.npw; ++i)
+    for (int i = 0; i < TestParameters::input().nspin*pw_basis.npw; ++i)
     {
         EXPECT_EQ(drhog[i], drhog_old[i]);
     }
@@ -709,7 +710,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
         double gg = this->pw_basis.gg[i];
         double ref = std::max(gg / (gg + gg2), 0.1 / CMtest.mixing_beta_mag);
         // rho
-        for (int j = 1; j < PARAM.input.nspin; ++j)
+        for (int j = 1; j < TestParameters::input().nspin; ++j)
         {
             EXPECT_NEAR(drhog[i + pw_basis.npw * j].real(), ref, 1e-10);
             EXPECT_NEAR(drhog[i + pw_basis.npw * j].imag(), ref, 1e-10);
@@ -724,30 +725,30 @@ TEST_F(ChargeMixingTest, KerkerScreenRealTest)
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
     ucell.tpiba = 1.0;
-    CMtest.set_mixing(PARAM.input.mixing_mode,
-                    PARAM.input.mixing_beta,
-                    PARAM.input.mixing_ndim,
-                    PARAM.input.mixing_gg0,
-                    PARAM.input.mixing_tau,
-                    PARAM.input.mixing_beta_mag,
-                    PARAM.input.mixing_gg0_mag,
-                    PARAM.input.mixing_gg0_min,
-                    PARAM.input.mixing_angle,
-                    PARAM.input.mixing_dmr,
+    CMtest.set_mixing(TestParameters::input().mixing_mode,
+                    TestParameters::input().mixing_beta,
+                    TestParameters::input().mixing_ndim,
+                    TestParameters::input().mixing_gg0,
+                    TestParameters::input().mixing_tau,
+                    TestParameters::input().mixing_beta_mag,
+                    TestParameters::input().mixing_gg0_mag,
+                    TestParameters::input().mixing_gg0_min,
+                    TestParameters::input().mixing_angle,
+                    TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
     // nspin = 1
-    PARAM.input.nspin = 1;
-    double* drhor = new double[PARAM.input.nspin*pw_basis.nrxx];
-    double* drhor_ref = new double[PARAM.input.nspin*pw_basis.nrxx];
-    for (int i = 0; i < PARAM.input.nspin*pw_basis.nrxx; ++i)
+    TestParameters::input().nspin = 1;
+    double* drhor = new double[TestParameters::input().nspin*pw_basis.nrxx];
+    double* drhor_ref = new double[TestParameters::input().nspin*pw_basis.nrxx];
+    for (int i = 0; i < TestParameters::input().nspin*pw_basis.nrxx; ++i)
     {
         drhor_ref[i] = drhor[i] = 1.0;
     }
     // no kerker
     CMtest.mixing_gg0 = 0.0;
     CMtest.Kerker_screen_real(drhor);
-    for (int i = 0; i < PARAM.input.nspin*pw_basis.nrxx; ++i)
+    for (int i = 0; i < TestParameters::input().nspin*pw_basis.nrxx; ++i)
     {
         EXPECT_EQ(drhor[i], drhor_ref[i]);
     }
@@ -755,25 +756,25 @@ TEST_F(ChargeMixingTest, KerkerScreenRealTest)
     delete[] drhor_ref;
 
     // nspin = 2
-    PARAM.input.nspin = 2;
+    TestParameters::input().nspin = 2;
     CMtest.mixing_gg0 = 0.0;
-    std::complex<double>* drhog = new std::complex<double>[PARAM.input.nspin*pw_basis.npw];
-    std::complex<double>* drhog_old = new std::complex<double>[PARAM.input.nspin*pw_basis.npw];
-    drhor = new double[PARAM.input.nspin*pw_basis.nrxx];
-    drhor_ref = new double[PARAM.input.nspin*pw_basis.nrxx];
-    for (int i = 0; i < PARAM.input.nspin*pw_basis.npw; ++i)
+    std::complex<double>* drhog = new std::complex<double>[TestParameters::input().nspin*pw_basis.npw];
+    std::complex<double>* drhog_old = new std::complex<double>[TestParameters::input().nspin*pw_basis.npw];
+    drhor = new double[TestParameters::input().nspin*pw_basis.nrxx];
+    drhor_ref = new double[TestParameters::input().nspin*pw_basis.nrxx];
+    for (int i = 0; i < TestParameters::input().nspin*pw_basis.npw; ++i)
     {
         drhog_old[i] = drhog[i] = std::complex<double>(1.0, 1.0);
     }
     CMtest.Kerker_screen_recip(drhog); // no kerker
-    for (int i = 0; i < PARAM.input.nspin*pw_basis.npw; ++i)
+    for (int i = 0; i < TestParameters::input().nspin*pw_basis.npw; ++i)
     {
         EXPECT_EQ(drhog[i], drhog_old[i]);
     }
 
     // RECIPROCAL
     CMtest.mixing_gg0 = 1.0;
-    PARAM.input.mixing_gg0_mag = 0.0;
+    TestParameters::input().mixing_gg0_mag = 0.0;
     CMtest.Kerker_screen_recip(drhog);
     const double gg0 = std::pow(ModuleBase::BOHR_TO_A, 2);
     for (int i = 0; i < pw_basis.npw; ++i)
@@ -790,7 +791,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRealTest)
     pw_basis.recip2real(drhog_old, drhor);
 
     CMtest.mixing_gg0 = 0.0;
-    PARAM.input.mixing_gg0_mag = 0.0;
+    TestParameters::input().mixing_gg0_mag = 0.0;
     // nothing happens
     CMtest.Kerker_screen_real(drhor);
 
@@ -810,17 +811,17 @@ TEST_F(ChargeMixingTest, KerkerScreenRealTest)
 
 TEST_F(ChargeMixingTest, MixRhoTest)
 {
-     PARAM.sys.double_grid = false;
+     TestParameters::sys().double_grid = false;
     charge.set_rhopw(&pw_basis);
-    const int nspin = PARAM.input.nspin = 1;
-    PARAM.sys.domag_z = false;
+    const int nspin = TestParameters::input().nspin = 1;
+    TestParameters::sys().domag_z = false;
     XC_Functional::func_type = 3;
     XC_Functional::ked_flag = true;
-    PARAM.input.mixing_beta = 0.7;
-    PARAM.input.mixing_ndim = 1;
-    PARAM.input.mixing_gg0 = 0.0;
-    PARAM.input.mixing_tau = true;
-    PARAM.input.mixing_mode = "plain";
+    TestParameters::input().mixing_beta = 0.7;
+    TestParameters::input().mixing_ndim = 1;
+    TestParameters::input().mixing_gg0 = 0.0;
+    TestParameters::input().mixing_tau = true;
+    TestParameters::input().mixing_mode = "plain";
     const int nrxx = pw_basis.nrxx;
     const int npw = pw_basis.npw;
     charge._space_rho = new double[nspin * nrxx];
@@ -862,17 +863,17 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     // RECIPROCAL
     Charge_Mixing CMtest_recip;
     CMtest_recip.set_rhopw(&pw_basis, &pw_basis);
-    PARAM.input.scf_thr_type= 1;
-    CMtest_recip.set_mixing(PARAM.input.mixing_mode,
-                            PARAM.input.mixing_beta,
-                            PARAM.input.mixing_ndim,
-                            PARAM.input.mixing_gg0,
-                            PARAM.input.mixing_tau,
-                            PARAM.input.mixing_beta_mag,
-                            PARAM.input.mixing_gg0_mag,
-                            PARAM.input.mixing_gg0_min,
-                            PARAM.input.mixing_angle,
-                            PARAM.input.mixing_dmr,
+    TestParameters::input().scf_thr_type= 1;
+    CMtest_recip.set_mixing(TestParameters::input().mixing_mode,
+                            TestParameters::input().mixing_beta,
+                            TestParameters::input().mixing_ndim,
+                            TestParameters::input().mixing_gg0,
+                            TestParameters::input().mixing_tau,
+                            TestParameters::input().mixing_beta_mag,
+                            TestParameters::input().mixing_gg0_mag,
+                            TestParameters::input().mixing_gg0_min,
+                            TestParameters::input().mixing_angle,
+                            TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
     CMtest_recip.init_mixing();
@@ -902,18 +903,18 @@ TEST_F(ChargeMixingTest, MixRhoTest)
 
     // REAL
     Charge_Mixing CMtest_real;
-    PARAM.input.scf_thr_type= 2;
+    TestParameters::input().scf_thr_type= 2;
     CMtest_real.set_rhopw(&pw_basis, &pw_basis);
-    CMtest_real.set_mixing(PARAM.input.mixing_mode,
-                        PARAM.input.mixing_beta,
-                        PARAM.input.mixing_ndim,
-                        PARAM.input.mixing_gg0,
-                        PARAM.input.mixing_tau,
-                        PARAM.input.mixing_beta_mag,
-                        PARAM.input.mixing_gg0_mag,
-                        PARAM.input.mixing_gg0_min,
-                        PARAM.input.mixing_angle,
-                        PARAM.input.mixing_dmr,
+    CMtest_real.set_mixing(TestParameters::input().mixing_mode,
+                        TestParameters::input().mixing_beta,
+                        TestParameters::input().mixing_ndim,
+                        TestParameters::input().mixing_gg0,
+                        TestParameters::input().mixing_tau,
+                        TestParameters::input().mixing_beta_mag,
+                        TestParameters::input().mixing_gg0_mag,
+                        TestParameters::input().mixing_gg0_min,
+                        TestParameters::input().mixing_angle,
+                        TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
     CMtest_real.init_mixing();
@@ -949,17 +950,17 @@ TEST_F(ChargeMixingTest, MixRhoTest)
 
 TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
 {
-     PARAM.sys.double_grid = true;
+     TestParameters::sys().double_grid = true;
     charge.set_rhopw(&pw_dbasis);
-    const int nspin = PARAM.input.nspin = 1;
-    PARAM.sys.domag_z = false;
+    const int nspin = TestParameters::input().nspin = 1;
+    TestParameters::sys().domag_z = false;
     XC_Functional::func_type = 3;
     XC_Functional::ked_flag = true;
-    PARAM.input.mixing_beta = 0.7;
-    PARAM.input.mixing_ndim = 1;
-    PARAM.input.mixing_gg0 = 0.0;
-    PARAM.input.mixing_tau = true;
-    PARAM.input.mixing_mode = "plain";
+    TestParameters::input().mixing_beta = 0.7;
+    TestParameters::input().mixing_ndim = 1;
+    TestParameters::input().mixing_gg0 = 0.0;
+    TestParameters::input().mixing_tau = true;
+    TestParameters::input().mixing_mode = "plain";
     const int nrxx = pw_dbasis.nrxx;
     const int npw = pw_dbasis.npw;
     charge._space_rho = new double[nspin * nrxx];
@@ -1002,17 +1003,17 @@ TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
     Charge_Mixing CMtest_recip;
     CMtest_recip.set_rhopw(&pw_basis, &pw_dbasis);
 
-    PARAM.input.scf_thr_type= 1;
-    CMtest_recip.set_mixing(PARAM.input.mixing_mode,
-                            PARAM.input.mixing_beta,
-                            PARAM.input.mixing_ndim,
-                            PARAM.input.mixing_gg0,
-                            PARAM.input.mixing_tau,
-                            PARAM.input.mixing_beta_mag,
-                            PARAM.input.mixing_gg0_mag,
-                            PARAM.input.mixing_gg0_min,
-                            PARAM.input.mixing_angle,
-                            PARAM.input.mixing_dmr,
+    TestParameters::input().scf_thr_type= 1;
+    CMtest_recip.set_mixing(TestParameters::input().mixing_mode,
+                            TestParameters::input().mixing_beta,
+                            TestParameters::input().mixing_ndim,
+                            TestParameters::input().mixing_gg0,
+                            TestParameters::input().mixing_tau,
+                            TestParameters::input().mixing_beta_mag,
+                            TestParameters::input().mixing_gg0_mag,
+                            TestParameters::input().mixing_gg0_min,
+                            TestParameters::input().mixing_angle,
+                            TestParameters::input().mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
 
@@ -1059,7 +1060,7 @@ TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
 TEST_F(ChargeMixingTest, MixDivCombTest)
 {
     // NSPIN = 1
-    PARAM.input.nspin = 1;
+    TestParameters::input().nspin = 1;
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_dbasis);
     std::vector<std::complex<double>> data(pw_dbasis.npw, 1.0);
@@ -1078,7 +1079,7 @@ TEST_F(ChargeMixingTest, MixDivCombTest)
     EXPECT_EQ(datahf2, nullptr);
 
     // NSPIN = 2
-    PARAM.input.nspin = 2;
+    TestParameters::input().nspin = 2;
     data.resize(pw_dbasis.npw * 2, 1.0);
     std::vector<std::complex<double>> dataout(pw_dbasis.npw * 2, 1.0);
     CMtest.divide_data(data.data(), datas, datahf);

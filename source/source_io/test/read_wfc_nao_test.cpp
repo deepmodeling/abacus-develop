@@ -1,8 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 #include "source_io/module_wf/read_wfc_nao.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_io/module_wf/write_wfc_nao.h"
@@ -31,7 +30,7 @@ TEST_F(ReadWfcNaoTest,ReadWfcNao)
       //Global variables
       const int nbands = 3;
       const int nlocal = 3;
-      PARAM.sys.global_readin_dir = "./support/";
+      TestParameters::sys().global_readin_dir = "./support/";
       const int nks = 1;
       const int nspin = 1;
       int my_rank = 0;
@@ -59,7 +58,7 @@ TEST_F(ReadWfcNaoTest,ReadWfcNao)
       const int nkstot = 1;
 
       // Act
-	  ModuleIO::read_wfc_nao(PARAM.sys.global_readin_dir, ParaV, psid, 
+	  ModuleIO::read_wfc_nao(TestParameters::sys().global_readin_dir, ParaV, psid, 
 			  ekb, wg, ik2iktot, nkstot, nspin);
       // Assert
       EXPECT_NEAR(ekb(0,1),0.31482195194888534794941393,1e-5);
@@ -76,7 +75,7 @@ TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
     const int nbands = 2;
     const int skip_band = 1;
     const int nlocal = 3;
-    PARAM.sys.global_readin_dir = "./support/";
+    TestParameters::sys().global_readin_dir = "./support/";
     const int nks = 1;
     const int nspin = 1;
     const int nstep = -1;
@@ -105,7 +104,7 @@ TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
 	const int nkstot = 1;
 
 	// Act
-	ModuleIO::read_wfc_nao(PARAM.sys.global_readin_dir, ParaV, psid, 
+	ModuleIO::read_wfc_nao(TestParameters::sys().global_readin_dir, ParaV, psid, 
 			ekb, wg, ik2iktot, nkstot, nspin, skip_band, nstep);
 
     // Assert

@@ -7,9 +7,8 @@
 #include "for_testing_klist.h"
 #include "dos_test.h"
 
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 
 /************************************************
  *  unit test of write_dos_pw
@@ -48,11 +47,11 @@ TEST_F(DosPWTest,Dos1)
 	dosp.read_istate_info();
 	EXPECT_EQ(dosp.is,0);
 	double dos_scale = 0.01;
-	PARAM.input.nspin = 1;
-	PARAM.input.dos_emax_ev = dosp.emax_ev;
-	PARAM.sys.dos_setemax = true;
-	PARAM.input.dos_emin_ev = dosp.emin_ev;
-	PARAM.sys.dos_setemin = true;
+	TestParameters::input().nspin = 1;
+	TestParameters::input().dos_emax_ev = dosp.emax_ev;
+	TestParameters::sys().dos_setemax = true;
+	TestParameters::input().dos_emin_ev = dosp.emin_ev;
+	TestParameters::sys().dos_setemin = true;
 	kv->set_nks(dosp.nks);
 	kv->set_nkstot(dosp.nkstot);
 	kv->isk.reserve(kv->get_nks());
@@ -62,7 +61,7 @@ TEST_F(DosPWTest,Dos1)
 		kv->isk[ik] = dosp.isk[ik];
 		kv->wk[ik] = dosp.wk[ik];
 	}
-	PARAM.input.nbands = dosp.nbands;
+	TestParameters::input().nbands = dosp.nbands;
 
     // initialize the Fermi energy
     elecstate::Efermi fermi_energy;
@@ -113,11 +112,11 @@ TEST_F(DosPWTest,Dos2)
 	dosp.read_istate_info();
 	EXPECT_EQ(dosp.is,0);
 	double dos_scale = 0.01;
-	PARAM.input.nspin = 1;
-	PARAM.input.dos_emax_ev = dosp.emax_ev;
-	PARAM.sys.dos_setemax = false;
-	PARAM.input.dos_emin_ev = dosp.emin_ev;
-	PARAM.sys.dos_setemin = false;
+	TestParameters::input().nspin = 1;
+	TestParameters::input().dos_emax_ev = dosp.emax_ev;
+	TestParameters::sys().dos_setemax = false;
+	TestParameters::input().dos_emin_ev = dosp.emin_ev;
+	TestParameters::sys().dos_setemin = false;
 	kv->set_nks(dosp.nks);
 	kv->set_nkstot(dosp.nkstot);
 	kv->isk.reserve(kv->get_nks());
@@ -127,7 +126,7 @@ TEST_F(DosPWTest,Dos2)
 		kv->isk[ik] = dosp.isk[ik];
 		kv->wk[ik] = dosp.wk[ik];
 	}
-	PARAM.input.nbands = dosp.nbands;
+	TestParameters::input().nbands = dosp.nbands;
 
     // initialize the Fermi energy
     elecstate::Efermi fermi_energy;

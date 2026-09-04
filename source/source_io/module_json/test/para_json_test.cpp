@@ -1,11 +1,12 @@
 #include "gtest/gtest.h"
 
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #include "source_io/module_json/abacusjson.h"
 #include "source_io/module_json/general_info.h"
 #include "source_io/module_json/init_info.h"
 #include "source_io/module_json/readin_info.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_io/module_json/para_json.h"
 #include "source_base/constants.h"
 #include "source_base/version.h"
@@ -212,12 +213,12 @@ TEST(AbacusJsonTest, GeneralInfo)
     Json::convert_time(time_now, start_time_str);
 
     Parameter param;
-    param.sys.start_time = time_now;
-    param.input.device = "cpu";
-    param.input.pseudo_dir = "./abacus/test/pseudo_dir";
-    param.input.orbital_dir = "./abacus/test/orbital_dir";
-    param.sys.global_in_stru = "./abacus/test/stru_file";
-    param.input.kpoint_file = "./abacus/test/kpoint_file";
+    TestParameters::sys(param).start_time = time_now;
+    TestParameters::input(param).device = "cpu";
+    TestParameters::input(param).pseudo_dir = "./abacus/test/pseudo_dir";
+    TestParameters::input(param).orbital_dir = "./abacus/test/orbital_dir";
+    TestParameters::sys(param).global_in_stru = "./abacus/test/stru_file";
+    TestParameters::input(param).kpoint_file = "./abacus/test/kpoint_file";
     // output the json file
     Json::AbacusJson::doc.Parse("{}");
     Json::gen_general_info(param);

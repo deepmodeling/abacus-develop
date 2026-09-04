@@ -1,8 +1,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 #include <unistd.h>
 #include <cstdio>
 #include <iostream>
@@ -114,7 +113,7 @@ TEST(OutputEfermiTest, TestNotConvergence) {
 TEST(OutputEfermiTest, TestMOutputLevel) {
     bool convergence = true;
     double efermi = 1.0;
-    PARAM.input.out_level = "m"; // Setting output level to "m"
+    TestParameters::input().out_level = "m"; // Setting output level to "m"
     std::ofstream ofs_running("test_output_efermi_m_outputlevel.txt");
     ModuleIO::output_efermi(convergence, efermi, ofs_running);
     ofs_running.close();
@@ -184,7 +183,7 @@ Sep_Cell::~Sep_Cell() noexcept {}
 
 TEST(OutputVacuumLevelTest, OutputVacuumLevel)
 {
-    PARAM.input.nspin = 1;
+    TestParameters::input().nspin = 1;
     UnitCell ucell;
     const int nx = 50, ny = 50, nz = 50, nxyz = 125000, nrxx = 125000, nplane = 50, startz_current = 0;
 
@@ -220,7 +219,7 @@ TEST(OutputVacuumLevelTest, OutputVacuumLevel)
 TEST(PrintForce, PrintForce)
 {
     UnitCell ucell;
-    PARAM.input.test_force = 1;
+    TestParameters::input().test_force = 1;
     std::string name = "TOTAL-FORCE";
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 1.0;

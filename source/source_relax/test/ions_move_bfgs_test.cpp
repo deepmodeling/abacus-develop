@@ -1,9 +1,10 @@
 #include "for_test.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #define protected public
-#include "source_io/module_parameter/parameter.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_bfgs.h"
 #undef private
@@ -109,10 +110,10 @@ TEST_F(IonsMoveBFGSTest, StartCase2)
     ucell.set_atom_flag = true;
 
     // Initialize PARAM
-    PARAM.input.force_thr = 1.0e-3;
-    PARAM.input.force_thr_ev = PARAM.input.force_thr * 13.6058 / 0.529177;
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
+    TestParameters::input().force_thr = 1.0e-3;
+    TestParameters::input().force_thr_ev = TestParameters::input().force_thr * 13.6058 / 0.529177;
+    TestParameters::input().test_relax_method = 1;
+    TestParameters::input().out_level = "ie";
 
     // Initialize istep
     const int istep = 1;
@@ -147,7 +148,7 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase1)
 {
     // Initilize data
     bfgs.init_done = false;
-    PARAM.input.test_relax_method = 1;
+    TestParameters::input().test_relax_method = 1;
     double lat0 = 1.0;
     bfgs.allocate();
     bfgs.save_flag = true;
@@ -187,7 +188,7 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase2)
     // Initilize data
     bfgs.init_done = false;
     bfgs.allocate();
-    PARAM.input.test_relax_method = 1;
+    TestParameters::input().test_relax_method = 1;
     double lat0 = 1.0;
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
     {
@@ -231,8 +232,8 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     bfgs.init_done = false;
     bfgs.allocate();
     bfgs.tr_min_hit = false;
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
+    TestParameters::input().test_relax_method = 1;
+    TestParameters::input().out_level = "ie";
     double lat0 = 1.0;
     const int istep = 1;
     std::vector<double> etot_info = {1.0, 0.9, 0.1};
@@ -296,8 +297,8 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
     bfgs.init_done = false;
     bfgs.allocate();
     bfgs.tr_min_hit = false;
-    PARAM.input.test_relax_method = 0;
-    PARAM.input.out_level = "none";
+    TestParameters::input().test_relax_method = 0;
+    TestParameters::input().out_level = "none";
     double lat0 = 1.0;
     const int istep = 1;
     std::vector<double> etot_info = {1.0, 0.9, 0.1};
@@ -413,8 +414,8 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
     bfgs.init_done = false;
     bfgs.allocate();
     bfgs.tr_min_hit = true;
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
+    TestParameters::input().test_relax_method = 1;
+    TestParameters::input().out_level = "ie";
     double lat0 = 1.0;
     const int istep = 1;
     std::vector<double> etot_info = {1.0, 0.9, 0.1};
@@ -443,8 +444,8 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit2)
     bfgs.init_done = false;
     bfgs.allocate();
     bfgs.tr_min_hit = false;
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
+    TestParameters::input().test_relax_method = 1;
+    TestParameters::input().out_level = "ie";
     double lat0 = 1.0;
     const int istep = 1;
     std::vector<double> etot_info = {1.0, 0.9, 0.1};

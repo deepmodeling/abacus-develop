@@ -2,8 +2,9 @@
 #include "for_test.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
+#define private public
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_sd.h"
 #undef private
@@ -21,7 +22,7 @@ class IonsMoveSDTest : public ::testing::Test
         Ions_Move_Basic::dim = 6;
         update_iter = 5;
         im_sd.allocate();
-        PARAM.input.force_thr = 0.001;
+        TestParameters::input().force_thr = 0.001;
     }
 
     void TearDown() override
@@ -162,7 +163,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
 {
     // setup data
     const int istep = 1;
-    PARAM.input.out_level = "ie";
+    TestParameters::input().out_level = "ie";
     std::vector<double> etot_info(2, 0.0);
 
     // call function
@@ -182,7 +183,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
     // setup data
     const int istep = 2;
     std::vector<double> etot_info = {0.0, 1.0};
-    PARAM.input.out_level = "m";
+    TestParameters::input().out_level = "m";
 
     // call function
     im_sd.cal_tradius_sd(istep, etot_info);
@@ -197,7 +198,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
     // setup data
     const int istep = 2;
     std::vector<double> etot_info = {1.0, 0.0};
-    PARAM.input.out_level = "m";
+    TestParameters::input().out_level = "m";
 
     // call function
     im_sd.cal_tradius_sd(istep, etot_info);

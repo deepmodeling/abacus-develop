@@ -1,8 +1,9 @@
 #include "gtest/gtest.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #include "setcell.h"
 #include "source_esolver/esolver_lj.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_md/md_func.h"
 #undef private
 #define doublethreshold 1e-12
@@ -33,7 +34,7 @@ class LJ_pot_test : public testing::Test
         natom = ucell.nat;
         stress.create(3, 3);
 
-        Setcell::parameters(param.input);
+        Setcell::parameters(TestParameters::input(param));
     }
 
     void TearDown()

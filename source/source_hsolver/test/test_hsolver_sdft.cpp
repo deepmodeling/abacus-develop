@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 #include <vector>
 
 #define private public
@@ -273,20 +272,20 @@ class TestHSolverPW_SDFT : public ::testing::Test
             "scf",
             "pw",
             "cg",
-            PARAM.sys.use_uspp,
-            PARAM.input.nspin,
+            TestParameters::sys().use_uspp,
+            TestParameters::input().nspin,
             hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
             hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-            PARAM.input.nbands,
-            PARAM.input.diago_smooth_ethr,
-            PARAM.input.pw_diag_ndim,
-            PARAM.input.diag_subspace,
-            PARAM.input.nb2d,
-            PARAM.sys.ks_run,
-            PARAM.sys.all_ks_run,
-            PARAM.input.bndpar);
+            TestParameters::input().nbands,
+            TestParameters::input().diago_smooth_ethr,
+            TestParameters::input().pw_diag_ndim,
+            TestParameters::input().diag_subspace,
+            TestParameters::input().nb2d,
+            TestParameters::sys().ks_run,
+            TestParameters::sys().all_ks_run,
+            TestParameters::input().bndpar);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 
@@ -311,7 +310,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
 //     stowf.nchi = 0;
 //     stowf.nchip_max = 0;
 //     psi_test_cd.resize(1, 2, 3);
-//     PARAM.input.nelec = 1.0;
+//     TestParameters::input().nelec = 1.0;
 //     GlobalV::MY_BNDGROUP = 0.0;
 //     int istep = 0;
 //     int iter = 0;
@@ -350,9 +349,9 @@ class TestHSolverPW_SDFT : public ::testing::Test
 //     psi_test_no.nk = 2;
 //     psi_test_no.nbands = 0;
 //     psi_test_no.nbasis = 0;
-//     PARAM.input.nelec = 1.0;
+//     TestParameters::input().nelec = 1.0;
 //     GlobalV::MY_BNDGROUP = 0.0;
-//     PARAM.input.nspin = 1;
+//     TestParameters::input().nspin = 1;
 //     elecstate_test.charge = new Charge;
 //     elecstate_test.charge->rho = new double*[1];
 //     elecstate_test.charge->rho[0] = new double[10];

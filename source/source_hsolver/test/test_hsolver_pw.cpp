@@ -2,9 +2,10 @@
 #include <iostream>
 #include <vector>
 
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #define protected public
-#include "source_io/module_parameter/parameter.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "hsolver_supplementary_mock.h"
@@ -159,33 +160,33 @@ class TestHSolverPW : public ::testing::Test {
                                                                            "scf",
                                                                            "pw",
                                                                            "cg",
-                                                                           PARAM.sys.use_uspp,
-                                                                           PARAM.input.nspin,
+                                                                           TestParameters::sys().use_uspp,
+                                                                           TestParameters::input().nspin,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-                                                                           PARAM.input.nbands,
-                                                                           PARAM.input.diago_smooth_ethr,
-                                                                           PARAM.input.pw_diag_ndim,
-                                                                           PARAM.input.diag_subspace,
-                                                                           PARAM.input.nb2d);
+                                                                           TestParameters::input().nbands,
+                                                                           TestParameters::input().diago_smooth_ethr,
+                                                                           TestParameters::input().pw_diag_ndim,
+                                                                           TestParameters::input().diag_subspace,
+                                                                           TestParameters::input().nb2d);
     hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
         = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(&pwbk,
                                                                             "scf",
                                                                             "pw",
                                                                             "cg",
-                                                                            PARAM.sys.use_uspp,
-                                                                            PARAM.input.nspin,
+                                                                            TestParameters::sys().use_uspp,
+                                                                            TestParameters::input().nspin,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-                                                                            PARAM.input.nbands,
-                                                                            PARAM.input.diago_smooth_ethr,
-                                                                            PARAM.input.pw_diag_ndim,
-                                                                            PARAM.input.diag_subspace,
-                                                                            PARAM.input.nb2d);
+                                                                            TestParameters::input().nbands,
+                                                                            TestParameters::input().diago_smooth_ethr,
+                                                                            TestParameters::input().pw_diag_ndim,
+                                                                            TestParameters::input().diag_subspace,
+                                                                            TestParameters::input().nb2d);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
     hamilt::Hamilt<std::complex<float>> hamilt_test_f;
@@ -209,7 +210,7 @@ class TestHSolverPW : public ::testing::Test {
 //     this->ekb_f.resize(2);
 //     psi_test_cf.resize(1, 2, 3);
 //     psi_test_cd.resize(1, 2, 3);
-//     PARAM.input.nelec = 1.0;
+//     TestParameters::input().nelec = 1.0;
 
 //     // check solve()
 //     EXPECT_EQ(this->hs_f.initialed_psi, false);
@@ -303,14 +304,14 @@ class TestHSolverPW : public ::testing::Test {
 //     // EXPECT_NEAR(this->hs_d.precondition[2], 6.236067977, 1e-8);
 
 //     // // check diago_ethr
-//     // PARAM.input.init_chg = "atomic";
+//     // TestParameters::input().init_chg = "atomic";
 //     // GlobalV::PW_DIAG_THR = 1e-7;
-//     // PARAM.input.calculation = "scf";
+//     // TestParameters::input().calculation = "scf";
 //     // float test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 1, 1.0);
 //     // EXPECT_NEAR(hs_f.diag_ethr, 0.01, 1.0e-7);
 //     // EXPECT_NEAR(test_diagethr, 0.01, 1.0e-7);
-//     // PARAM.input.calculation = "md";
-//     // PARAM.input.init_chg = "file";
+//     // TestParameters::input().calculation = "md";
+//     // TestParameters::input().init_chg = "file";
 //     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 1, 1.0);
 //     // EXPECT_NEAR(test_diagethr, 1e-5, 1.0e-7);
 //     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 2, 1.0);
@@ -318,14 +319,14 @@ class TestHSolverPW : public ::testing::Test {
 //     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 3, 1.0e-3);
 //     // EXPECT_NEAR(test_diagethr, 0.0001, 1.0e-7);
 
-//     // PARAM.input.init_chg = "atomic";
+//     // TestParameters::input().init_chg = "atomic";
 //     // GlobalV::PW_DIAG_THR = 1e-7;
-//     // PARAM.input.calculation = "scf";
+//     // TestParameters::input().calculation = "scf";
 //     // double test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 1, 1.0);
 //     // EXPECT_EQ(hs_d.diag_ethr, 0.01);
 //     // EXPECT_EQ(test_diagethr_d, 0.01);
-//     // PARAM.input.calculation = "md";
-//     // PARAM.input.init_chg = "file";
+//     // TestParameters::input().calculation = "md";
+//     // TestParameters::input().init_chg = "file";
 //     // test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 1, 1.0);
 //     // EXPECT_EQ(test_diagethr_d, 1e-5);
 //     // test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 2, 1.0);
@@ -369,7 +370,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
             psi_value_f += std::complex<float>(1.0, 0.0);
         }
     }
-    PARAM.input.nelec = 1.0;
+    TestParameters::input().nelec = 1.0;
 
     // check solve()
     elecstate_test.ekb.c[0] = 1.0;
@@ -378,15 +379,15 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     General_Exx_Info exx_info_local;
     hsolver::HSolverLIP<std::complex<float>> hs_f_lip
         = hsolver::HSolverLIP<std::complex<float>>(&pwbk,
-                                                   PARAM.sys.use_uspp,
-                                                   PARAM.input.basis_type,
-                                                   PARAM.input.calculation,
+                                                   TestParameters::sys().use_uspp,
+                                                   TestParameters::input().basis_type,
+                                                   TestParameters::input().calculation,
                                                    elecstate_test.ekb.nc);
     hsolver::HSolverLIP<std::complex<double>> hs_d_lip
         = hsolver::HSolverLIP<std::complex<double>>(&pwbk,
-                                                    PARAM.sys.use_uspp,
-                                                    PARAM.input.basis_type,
-                                                    PARAM.input.calculation,
+                                                    TestParameters::sys().use_uspp,
+                                                    TestParameters::input().basis_type,
+                                                    TestParameters::input().calculation,
                                                     elecstate_test.ekb.nc);
     hs_f_lip.solve(&hamilt_test_f, psi_test_cf, &elecstate_test,transform_test_cf, true,0.0,0, exx_info_local);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);

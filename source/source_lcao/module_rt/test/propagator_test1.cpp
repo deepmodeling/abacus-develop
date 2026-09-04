@@ -1,9 +1,10 @@
 #include <gtest/gtest.h>
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/test_parameters.h"
 #define private public
 #define protected public
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/module_rt/propagator.h"
-#include "source_io/module_parameter/parameter.h"
 #include "tddft_test.h"
 
 #include <source_base/module_external/scalapack_connector.h>
@@ -38,7 +39,7 @@ TEST(PropagatorTest, testPropagatorCN)
     pv->nloc = nlocal * nlocal;
     pv->ncol = nlocal;
     pv->set_coord(0, 0);
-    PARAM.input.mdp.md_dt = 4 * ModuleBase::AU_to_FS;
+    TestParameters::input().mdp.md_dt = 4 * ModuleBase::AU_to_FS;
 
     // Initialize input matrices
     int info;

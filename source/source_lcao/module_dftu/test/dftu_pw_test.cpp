@@ -1,9 +1,8 @@
 #include "gtest/gtest.h"
 #include <complex>
 #include <vector>
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_parameter/test_parameters.h"
 #include "source_base/matrix.h"
 #include "source_pw/module_pwdft/dftu_base_tools.h"
 
@@ -40,7 +39,7 @@ TEST_F(DftuPwTest, EnergyWeightsAllNspin)
     struct Case { int nspin; double expected_weight; double expected_diag; };
     Case cases[] = {{1, 1.0, 0.5}, {2, 0.5, 0.5}, {4, 0.25, 1.0}};
     for (const auto& c : cases) {
-        PARAM.input.nspin = c.nspin;
+        TestParameters::input().nspin = c.nspin;
         double weight_eu = 1;
         switch (PARAM.inp.nspin) {
             case 1: weight_eu = 1.0; break;
