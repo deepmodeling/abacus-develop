@@ -1,4 +1,7 @@
 #include "gtest/gtest.h"
+#ifdef __MPI
+#include <mpi.h>
+#endif
 #include "../opt_cg.h"
 #include "../opt_dcsrch.h"
 #include "./opt_test_tools.h"
@@ -196,3 +199,19 @@ TEST_F(CG_test, HZ_Min_Func)
     ASSERT_EQ(cg.get_iter(), 18);
 }
 // g++ -std=c++11 ../opt_CG.cpp ../opt_DCsrch.cpp ./CG_test.cpp ./test_tools.cpp  -lgtest -lpthread -lgtest_main -o test.exe
+
+int main(int argc, char** argv)
+{
+#ifdef __MPI
+    MPI_Init(&argc, &argv);
+#endif
+
+    testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();
+
+#ifdef __MPI
+    MPI_Finalize();
+#endif
+
+    return result;
+}
