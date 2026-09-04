@@ -90,26 +90,16 @@ void Symmetry_rho::psymmg_soc(std::complex<double>* rhog_x, std::complex<double>
 		// index [0,nrotk) unitary, [nrotk, nrotk+nrotk_anti) the spatial parts of the
 		// antiunitary elements Theta*g -- same layout as density_sym_ops().
 		const int na = symm.magnetic_nspin4 ? symm.nrotk_anti : 0;
-		// PR 7664 flipped the spinor->Pauli rho^y sign (func_xyz_to_updown), so the grid
-		// magnetization rho^y = chr.rho[2] consumed by rhog_symmetry_nspin4 now uses the
-		// standard sigma_y=[[0,-i],[i,0]] convention. Relative to that convention the
-		// pseudovector rotation applied to (rho^x,rho^y,rho^z) must be conjugated by
-		// S=diag(1,-1,1) (i.e. the y-channel handedness is flipped); without this the
-		// density symmetrization is out of sync only in the transverse y-channel.
-		// spin_so3() itself is left untouched (it is still the physical pseudovector 
-		// rotation used for magnetic-group detection on the STRU moments). 
-		auto yflip = [](ModuleBase::Matrix3 W) {
-			W.e12 = -W.e12; W.e21 = -W.e21; W.e23 = -W.e23; W.e32 = -W.e32; return W; };
 		std::vector<ModuleBase::Matrix3> wspin(symm.nrotk + na);
 		for (int i = 0; i < symm.nrotk; ++i)
 		{
 			const ModuleBase::Matrix3 gmatc = ilatvec * symm.gmatrix[i] * latvec;
-			wspin[i] = yflip(ModuleSymmetry::SpinRotation::spin_so3(gmatc));
+			wspin[i] = ModuleSymmetry::SpinRotation::spin_so3(gmatc);
 		}
 		for (int j = 0; j < na; ++j)
 		{
 			const ModuleBase::Matrix3 gmatc = ilatvec * symm.gmatrix_anti[j] * latvec;
-			wspin[symm.nrotk + j] = yflip(ModuleSymmetry::SpinRotation::spin_so3(gmatc));
+			wspin[symm.nrotk + j] = ModuleSymmetry::SpinRotation::spin_so3(gmatc);
 		}
 		return wspin;
 	};

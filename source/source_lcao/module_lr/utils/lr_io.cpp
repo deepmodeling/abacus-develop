@@ -165,7 +165,7 @@ void RI_kRlist::read_kpts_fine(const std::string& file, const UnitCell& ucell,
     int nks = (PARAM.inp.nspin == 2) ? 2 * nk : nk;
     klist->set_nks(nks);
     klist->set_nkstot(nks);
-    klist->set_nkstot_full(nk);
+    klist->set_nkstot_nospin(nk);
 
     auto klist_reset = [&klist](int kpoint_number){
         klist->kvec_c.resize(0);    klist->kvec_c.resize(kpoint_number);

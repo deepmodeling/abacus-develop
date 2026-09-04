@@ -18,8 +18,8 @@
 #include "source_io/module_hs/write_h_terms.h"         // use ModuleIO::write_h_*
 #include "../module_hs/write_hs_r.h"                          // use ModuleIO::write_hsr()
 #include "../module_mulliken/cal_mag.h"                          // use cal_mag()
-#include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
-#include "../module_wannier/to_w90_lcao_pw.h"             // use toWannier90_LCAO_IN_PW
+#include "../module_wannier/to_w90_lcao.h"                   // use toW90_LCAO
+#include "../module_wannier/to_w90_lcao_pw.h"             // use toW90_LCAO_IN_PW
 #include "../module_hs/write_hs.h"                            // use ModuleIO::write_hsk()
 #include "../module_dm/write_dmk.h"                           // use ModuleIO::write_dmk()
 #include "../module_dm/write_dmr.h"                           // use ModuleIO::write_dmr()
@@ -581,25 +581,35 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wave function to Wannier90");
         if (inp.wannier_method == 1)
         {
-            toWannier90_LCAO_IN_PW wan(inp.out_wannier_mmn,
+            toW90_LCAO_IN_PW wan(inp.out_wannier_mmn,
                                        inp.out_wannier_amn,
                                        inp.out_wannier_unk,
                                        inp.out_wannier_eig,
                                        inp.out_wannier_wvfn_formatted,
                                        inp.nnkpfile,
-                                       inp.wannier_spin);
+                                       inp.wannier_spin,
+                                       inp.nspin,
+                                       PARAM.inp.nbands,
+                                       PARAM.globalv.nqx,
+                                       PARAM.globalv.dq,
+                                       PARAM.globalv.npol);
             wan.set_tpiba_omega(ucell.tpiba, ucell.omega);
             wan.calculate(ucell, pelec->ekb, pw_wfc, pw_big, sf, kv, psi, &pv);
         }
         else if (inp.wannier_method == 2)
         {
-            toWannier90_LCAO wan(inp.out_wannier_mmn,
+            toW90_LCAO wan(inp.out_wannier_mmn,
                                  inp.out_wannier_amn,
                                  inp.out_wannier_unk,
                                  inp.out_wannier_eig,
                                  inp.out_wannier_wvfn_formatted,
                                  inp.nnkpfile,
                                  inp.wannier_spin,
+                                 inp.nspin,
+                                 PARAM.inp.nbands,
+                                 PARAM.globalv.nqx,
+                                 PARAM.globalv.dq,
+                                 PARAM.globalv.npol,
                                  orb);
 
             wan.calculate(ucell, gd, pelec->ekb, kv, *psi, &pv);

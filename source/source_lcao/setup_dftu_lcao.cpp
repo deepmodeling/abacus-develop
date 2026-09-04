@@ -1,7 +1,9 @@
 #include "setup_dftu_lcao.h"
-#include "source_lcao/module_dftu/dftu_lcao.h"
-#include "source_lcao/module_dftu/dftu_occup.h"
-#include "source_pw/module_pwdft/dftu_output.h" // mohan add 2025-11-08
+#include "source_lcao/module_dftu/dftu_nao.h"
+#include "source_lcao/module_dftu/dftu_nao_occ.h"
+#include "source_lcao/module_dftu/dftu_nao_energy.h"
+#include "source_pw/module_pwdft/dftu_base_io.h" // mohan add 2025-11-08
+#include "source_io/module_parameter/parameter.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/hamilt_lcao.h"
 
@@ -32,7 +34,18 @@ void init_dftu_lcao(const int istep,
     }
     
     /// Calculate U and J if Yukawa potential is used
-    dftu_ptr->cal_slater_UJ(ucell, rho, nrxx);
+    if (dftu_ptr->use_yukawa())
+    {
+        dftu_ptr->yukawa().cal_slater_UJ(ucell, rho, nrxx, PARAM.inp.nspin, dftu_ptr->get_ptr_orb());
+        // update current U with calculated U-J from Slater integrals
+        for (int T = 0; T < ucell.ntype; T++)
+        {
+            if (dftu_ptr->has_correlated_orbital(T))
+            {
+                dftu_ptr->set_u_current(T, dftu_ptr->yukawa().get_Ueff(T));
+            }
+        }
+    }
 }
 
 template <typename TK>
@@ -48,28 +61,30 @@ void finish_dftu_lcao(const int iter,
                        void* hamilt_lcao,
                        const std::string& global_out_dir,
                        int nspin,
-                       int npol)
+                       int npol,
+                       const bool gamma_only_local)
 {
     if (!dft_plus_u)
     {
         return;
     }
-    
+
     auto* dftu_ptr = static_cast<Plus_U*>(dftu);
     auto* hamilt_lcao_ptr = static_cast<hamilt::HamiltLCAO<TK, double>*>(hamilt_lcao);
-    
+
     /// old DFT+U method calculates energy correction in esolver,
     /// new DFT+U method calculates energy in Hamiltonian
     if (dft_plus_u == 2)
     {
         if (dftu_ptr->get_occ_mat_ctrl() != 2)
         {
-            DFTU_LCAO::cal_occ_mat(iter, ucell, dm_vec, kv, mixing_beta,
-                                   static_cast<hamilt::Hamilt<TK>*>(hamilt_lcao_ptr), *dftu_ptr);
+            DFTU_LCAO::cal_occ_mat(hamilt_lcao_ptr->getHR()->get_paraV(), iter, ucell, dm_vec, kv, mixing_beta,
+                                   static_cast<hamilt::Hamilt<TK>*>(hamilt_lcao_ptr), *dftu_ptr,
+                                   gamma_only_local, nspin);
         }
-        dftu_ptr->cal_energy_correction(ucell, iter);
+        DFTU_LCAO::cal_energy_correction(*dftu_ptr, ucell);
     }
-    dftu_io::output(*dftu_ptr, ucell, out_chg, global_out_dir, nspin, npol);
+    DFTU_BASE::output(*dftu_ptr, ucell, out_chg, global_out_dir, nspin, npol);
     
     /// use the converged occupation matrix for next MD/Relax SCF calculation
     if (conv_esolver)
@@ -109,7 +124,8 @@ template void finish_dftu_lcao<double>(const int iter,
                                         void* hamilt_lcao,
                                         const std::string& global_out_dir,
                                         int nspin,
-                                        int npol);
+                                        int npol,
+                                        const bool gamma_only_local);
 
 template void finish_dftu_lcao<std::complex<double>>(const int iter,
                                                       const bool conv_esolver,
@@ -123,6 +139,7 @@ template void finish_dftu_lcao<std::complex<double>>(const int iter,
                                                       void* hamilt_lcao,
                                                       const std::string& global_out_dir,
                                                       int nspin,
-                                                      int npol);
+                                                      int npol,
+                                                      const bool gamma_only_local);
 
 } // namespace ModuleESolver

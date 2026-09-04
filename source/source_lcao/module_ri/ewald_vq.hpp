@@ -48,7 +48,7 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
 
     this->mpi_comm = mpi_comm_in;
     this->p_kv = kv_in;
-    this->nks0 = this->p_kv->get_nkstot_full();
+    this->nks0 = this->p_kv->get_nkstot_nospin();
     this->kvec_c.resize(this->nks0);
     this->ccp_rmesh_times = ccp_rmesh_times_in;
     this->abfs_Lmax = abfs_Lmax_in;

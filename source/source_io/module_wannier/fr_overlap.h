@@ -3,6 +3,7 @@
 #ifdef __LCAO
 #include <complex>
 #include <functional>
+#include <memory>
 #include "source_basis/module_ao/orb_read.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -24,8 +25,8 @@ public:
                         const LCAO_Orbitals* ptr_orb,
                         const Grid_Driver* GridD_in,
                         const Parallel_Orbitals* paraV,
-                        int radial_grid_num = 140,
-                        int degree = 110);
+                        int radial_grid_num,
+                        int degree);
 
     FR_overlap(const FR_overlap<T>& FR_in);
 
@@ -37,7 +38,7 @@ public:
 
     hamilt::HContainer<T>* get_FR_pointer() const
     {
-        return this->FR_container;
+        return this->FR_container.get();
     }
 
 protected:
@@ -59,8 +60,8 @@ protected:
   const UnitCell* ucell = nullptr;
   const LCAO_Orbitals* ptr_orb_ = nullptr;
   int radial_grid_num = 140;
-  ModuleBase::Lebedev_laikov_grid* Leb_grid = nullptr;
-  hamilt::HContainer<T>* FR_container = nullptr;
+  std::unique_ptr<ModuleBase::Lebedev_laikov_grid> Leb_grid;
+  std::unique_ptr<hamilt::HContainer<T>> FR_container;
 };
 #endif
 #endif

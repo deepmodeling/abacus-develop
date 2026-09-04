@@ -70,7 +70,7 @@
             __func__,                                   \
             __FILE__,                                   \
             static_cast<uint32_t>(__LINE__),            \
-            CHECK_MSG(expr, ##__VA_ARGS__));            \
+            CHECK_MSG(expr, __VA_ARGS__));             \
     }
 
 // The macro TEMPLATE_1() expands to a switch statement conditioned on

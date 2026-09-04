@@ -314,7 +314,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
     // std::map<std::pair<int, int>, bool> has_real;
     setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
     setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
-    int nqs = kv->get_nkstot_full();
+    int nqs = kv->get_nkstot_nospin();
     int nspin_fac = PARAM.inp.nspin == 2 ? 2 : 1;
     int ispin = this->ik < (wfcpw->nks / nspin_fac) ? 0 : 1;
 

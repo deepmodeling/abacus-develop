@@ -27,9 +27,6 @@
  *   - MD_func::read_vel
  *     - read atomic velocity from STRU
  *
- *   - MD_func::init_vel
- *     - initialize the atomic velocities
- *
  *   - MD_func::rescale_vel
  *     - rescale the velocity to the target temperature
  *
@@ -58,43 +55,6 @@ TEST_F(MD_func_test, gaussrand)
     EXPECT_DOUBLE_EQ(MD_func::gaussrand(), 1.1122716058967226);
     EXPECT_DOUBLE_EQ(MD_func::gaussrand(), -0.34532367182326629);
     EXPECT_DOUBLE_EQ(MD_func::gaussrand(), 0.60805637857480721);
-}
-
-TEST_F(MD_func_test, randomvel)
-{
-    ucell.init_vel = 0;
-    temperature = 300 / ModuleBase::Hartree_to_K;
-    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
-
-    EXPECT_NEAR(vel[0].x, 9.9105892783200826e-06, doublethreshold);
-    EXPECT_NEAR(vel[0].y, -3.343699576563167e-05, doublethreshold);
-    EXPECT_NEAR(vel[0].z, 9.385130426808701e-05, doublethreshold);
-    EXPECT_NEAR(vel[1].x, -0.00017919300771203808, doublethreshold);
-    EXPECT_NEAR(vel[1].y, 5.7074002254799079e-05, doublethreshold);
-    EXPECT_NEAR(vel[1].z, -3.1088136026582953e-05, doublethreshold);
-    EXPECT_NEAR(vel[2].x, 0.000141316492668737, doublethreshold);
-    EXPECT_NEAR(vel[2].y, -0.00015841124290501442, doublethreshold);
-    EXPECT_NEAR(vel[2].z, 1.900921882689748e-05, doublethreshold);
-    EXPECT_NEAR(vel[3].x, 2.7965925764981002e-05, doublethreshold);
-    EXPECT_NEAR(vel[3].y, 0.00013477423641584702, doublethreshold);
-    EXPECT_NEAR(vel[3].z, -8.177238706840153e-05, doublethreshold);
-}
-
-TEST_F(MD_func_test, getmassmbl)
-{
-    ucell.init_vel = 0;
-    temperature = 300 / ModuleBase::Hartree_to_K;
-    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
-
-    for (int i = 0; i < natom; ++i)
-    {
-        EXPECT_DOUBLE_EQ(allmass[i], 39.948 / ModuleBase::AU_to_MASS);
-        EXPECT_TRUE(ionmbl[i].x == 1);
-        EXPECT_TRUE(ionmbl[i].y == 1);
-        EXPECT_TRUE(ionmbl[i].z == 1);
-    }
-
-    EXPECT_TRUE(frozen_freedom == 3);
 }
 
 TEST_F(MD_func_test, readvel)
@@ -142,69 +102,36 @@ TEST_F(MD_func_test, RescaleVel)
     EXPECT_DOUBLE_EQ(vel[3].z, 0.00013737032325207373);
 }
 
-TEST_F(MD_func_test, InitVelCase1)
-{
-    ucell.init_vel = 1;
-    temperature = -1.0;
-    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
-
-    EXPECT_NEAR(temperature, 300.0 / ModuleBase::Hartree_to_K, doublethreshold);
-}
-
-TEST_F(MD_func_test, InitVelCase2)
-{
-    ucell.init_vel = 1;
-    temperature = 300.0 / ModuleBase::Hartree_to_K;
-    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
-
-    EXPECT_DOUBLE_EQ(temperature, 300.0 / ModuleBase::Hartree_to_K);
-}
-
-TEST_F(MD_func_test, InitVelCase3)
-{
-    ucell.init_vel = 1;
-    temperature = 310.0 / ModuleBase::Hartree_to_K;
-
-    EXPECT_DOUBLE_EQ(temperature, 310.0 / ModuleBase::Hartree_to_K);
-}
-
-TEST_F(MD_func_test, InitVelCase4)
-{
-    ucell.init_vel = 0;
-    temperature = 300.0 / ModuleBase::Hartree_to_K;
-    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
-
-    EXPECT_DOUBLE_EQ(temperature, 300.0 / ModuleBase::Hartree_to_K);
-}
-
-TEST_F(MD_func_test, InitVelCase5)
-{
-    ucell.init_vel = 1;
-    temperature = 330.0 / ModuleBase::Hartree_to_K;
-    MD_func::init_vel(ucell, GlobalV::MY_RANK, true, temperature, allmass, frozen_freedom, ionmbl, vel);
-
-    EXPECT_DOUBLE_EQ(temperature, 330.0 / ModuleBase::Hartree_to_K);
-}
-
 TEST_F(MD_func_test, compute_stress)
 {
-    temperature = 300.0 / ModuleBase::Hartree_to_K;
-    MD_func::init_vel(ucell, GlobalV::MY_RANK, false, temperature, allmass, frozen_freedom, ionmbl, vel);
-    MD_func::compute_stress(ucell, vel, allmass, true, virial, stress);
-    EXPECT_DOUBLE_EQ(stress(0, 0), 5.2064533063674207e-06);
-    EXPECT_DOUBLE_EQ(stress(0, 1), -1.6467487572445666e-06);
-    EXPECT_DOUBLE_EQ(stress(0, 2), 1.5039983732220917e-06);
-    EXPECT_DOUBLE_EQ(stress(1, 0), -1.6467487572445661e-06);
-    EXPECT_DOUBLE_EQ(stress(1, 1), 2.380646437613151e-06);
-    EXPECT_DOUBLE_EQ(stress(1, 2), -1.2514149065904968e-06);
-    EXPECT_DOUBLE_EQ(stress(2, 0), 1.5039983732220917e-06);
-    EXPECT_DOUBLE_EQ(stress(2, 1), -1.2514149065904968e-06);
-    EXPECT_DOUBLE_EQ(stress(2, 2), 9.6330189688583664e-07);
+    const ModuleBase::Vector3<double> test_velocity(0.1, 0.2, 0.3);
+    MDCell mdcell;
+    mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, ModuleBase::world_communication_domain());
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+    {
+        atom.vel = test_velocity;
+    }
+    MD_func::compute_stress(mdcell, true, virial, stress);
+    EXPECT_DOUBLE_EQ(stress(0, 0), 2.9128300667662788);
+    EXPECT_DOUBLE_EQ(stress(0, 1), 5.8256601335325575);
+    EXPECT_DOUBLE_EQ(stress(0, 2), 8.7384902002988341);
+    EXPECT_DOUBLE_EQ(stress(1, 0), 5.8256601335325575);
+    EXPECT_DOUBLE_EQ(stress(1, 1), 11.651320267065115);
+    EXPECT_DOUBLE_EQ(stress(1, 2), 17.476980400597668);
+    EXPECT_DOUBLE_EQ(stress(2, 0), 8.7384902002988358);
+    EXPECT_DOUBLE_EQ(stress(2, 1), 17.476980400597672);
+    EXPECT_DOUBLE_EQ(stress(2, 2), 26.215470600896506);
 }
 
 TEST_F(MD_func_test, dump_info)
 {
-    MD_func::dump_info(0, PARAM.sys.global_out_dir, ucell, param_in, virial, force, vel);
+    MDCell mdcell;
+    mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, ModuleBase::world_communication_domain());
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+    {
+        atom.vel = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
+    }
+    MD_func::dump_info(0, PARAM.sys.global_out_dir, mdcell, param_in, virial);
     std::ifstream ifs("MD_dump");
     std::string output_str;
     getline(ifs, output_str);
@@ -250,7 +177,7 @@ TEST_F(MD_func_test, dump_info)
     ifs.close();
 
     // append
-    MD_func::dump_info(1, PARAM.sys.global_out_dir, ucell, param_in, virial, force, vel);
+    MD_func::dump_info(1, PARAM.sys.global_out_dir, mdcell, param_in, virial);
     std::ifstream ifs2("MD_dump");
     getline(ifs2, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MDSTEP:  0"));
@@ -378,28 +305,41 @@ TEST_F(MD_func_test, print_stress)
     remove("running.log");
 }
 
-TEST_F(MD_func_test, current_md_info)
+TEST_F(MD_func_test, current_md_info_mdcell_accepts_step_only_restart)
 {
-    // Set up the file directory and create the Restart_md.txt file
-    std::string file_dir = "./";
-    std::ofstream file(file_dir + "Restart_md.txt");
+    std::ofstream file("Restart_md.txt");
     file << 123;
     file.close();
+
+    MDCell mdcell;
+    mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, ModuleBase::world_communication_domain());
     int istep = -1;
     double temperature = 0.0;
-    MD_func::current_md_info(0, file_dir, istep, temperature);
+    MD_func::current_md_info(mdcell, "./", istep, temperature);
 
-    // Call the function with the correct file path and check the result
     EXPECT_EQ(istep, 123);
     EXPECT_DOUBLE_EQ(temperature, 0.0);
     remove("Restart_md.txt");
 }
 
+TEST_F(MD_func_test, global_dof_mdcell)
+{
+    MDCell mdcell;
+    mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, ModuleBase::world_communication_domain());
+    EXPECT_EQ(MD_func::global_dof(mdcell), 9);
+
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+    {
+        atom.mbl.x = 0;
+    }
+    EXPECT_EQ(MD_func::global_dof(mdcell), 6);
+}
+
 TEST_F(MD_func_test, current_step_warning)
 {
-    // Call the function and check that it outputs a warning and quits
-    std::string file_dir = "./";
+    MDCell mdcell;
+    mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, ModuleBase::world_communication_domain());
     int istep = 0;
     double temperature = 0.0;
-    EXPECT_EXIT(MD_func::current_md_info(0, file_dir, istep, temperature), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(MD_func::current_md_info(mdcell, "./", istep, temperature), ::testing::ExitedWithCode(1), "");
 }

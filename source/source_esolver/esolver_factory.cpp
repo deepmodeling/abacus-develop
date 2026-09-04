@@ -2,6 +2,7 @@
 
 #include "esolver.h"
 #include "esolver_ks_pw.h"
+#include "esolver_dfpt_pw.h"
 #include "esolver_sdft_pw.h"
 #include "source_base/module_device/device.h"
 #include "source_hamilt/module_xc/general_exx_info.h"
@@ -50,6 +51,10 @@ std::string determine_type(const Input_para& inp)
         else if (inp.esolver_type == "ksdft")
         {
             esolver_type = "ksdft_pw";
+        }
+        else if (inp.esolver_type == "dfpt")
+        {
+            esolver_type = "dfpt_pw";
         }
     }
     else if (inp.basis_type == "lcao_in_pw")
@@ -132,6 +137,7 @@ ESolver* init_esolver(const Input_para& inp)
 {
     // determine type of esolver based on INPUT information
     const std::string esolver_type = determine_type(inp);
+    const bool gamma_only = PARAM.globalv.gamma_only_local;
 
     // initialize the corresponding Esolver child class
     if (esolver_type == "ksdft_pw")
@@ -157,6 +163,10 @@ ESolver* init_esolver(const Input_para& inp)
         {
             return new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>();
         }
+    }
+    else if (esolver_type == "dfpt_pw")
+    {
+        return new ESolver_DFPT_PW();
     }
     else if (esolver_type == "sdft_pw")
     {
@@ -198,7 +208,7 @@ ESolver* init_esolver(const Input_para& inp)
     {
         if (inp.calculation == "get_s")
         {
-            if (PARAM.globalv.gamma_only_local)
+            if (gamma_only)
             {
                 ModuleBase::WARNING_QUIT("ESolver", "get_s is not implemented for gamma_only");
             }
@@ -209,7 +219,7 @@ ESolver* init_esolver(const Input_para& inp)
         }
         else if (inp.deepks_out_base != "none")
         {
-            if (PARAM.globalv.gamma_only_local)
+            if (gamma_only)
             {
                 return new ESolver_DoubleXC<double, double>();
             }
@@ -224,7 +234,7 @@ ESolver* init_esolver(const Input_para& inp)
         }
         else if (inp.dm_to_rho)
         {
-            if (PARAM.globalv.gamma_only_local)
+            if (gamma_only)
             {
                 ModuleBase::WARNING_QUIT("ESolver", "dm_to_rho is not implemented for gamma_only");
             }
@@ -239,7 +249,7 @@ ESolver* init_esolver(const Input_para& inp)
         }
         else
         {
-            if (PARAM.globalv.gamma_only_local)
+            if (gamma_only)
             {
                 return new ESolver_KS_LCAO<double, double>();
             }
@@ -288,7 +298,7 @@ ESolver* init_esolver(const Input_para& inp)
         const std::string& out_dir = PARAM.globalv.global_out_dir;
         if (inp.xc_kernel != "bse")
         {
-            if (PARAM.globalv.gamma_only_local)
+            if (gamma_only)
             {
                 return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir);
             }
@@ -300,7 +310,7 @@ ESolver* init_esolver(const Input_para& inp)
         else
         {
 #ifdef __EXX
-            if (PARAM.globalv.gamma_only_local)
+            if (gamma_only)
             {
                 return new ModuleESolver::ESolver_BSE<double, double>(inp, in_dir, out_dir);
             }
@@ -318,7 +328,7 @@ ESolver* init_esolver(const Input_para& inp)
     {
         const std::string& in_dir = PARAM.globalv.global_readin_dir;
         const std::string& out_dir = PARAM.globalv.global_out_dir;
-        if (PARAM.globalv.gamma_only_local)
+        if (gamma_only)
         {
             return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir);
         }

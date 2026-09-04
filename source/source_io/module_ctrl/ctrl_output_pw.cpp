@@ -6,11 +6,12 @@
 #include "../module_dos/cal_ldos.h"
 #include "../module_dos/write_dos_pw.h" // use write_dos_pw
 #include "../module_unk/berryphase.h"
-#include "../module_wannier/to_wannier90_pw.h" // wannier90 interface
+#include "../module_wannier/to_w90_pw.h" // wannier90 interface
 #include "../module_wf/get_wf_pw.h"
 #include "../module_wf/write_wfc_pw.h" // use write_wfc_pw
 #include "source_base/formatter.h"
 #include "source_lcao/module_deltaspin/lambda_loop_helper.h"
+#include "source_lcao/module_deltaspin/deltaspin_pw_mi.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/elecond.h"
 #include "source_pw/module_pwdft/onsite_proj.h" // use projector
@@ -184,13 +185,18 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     if (inp.calculation == "nscf" && inp.towannier90)
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wannier functions calculation");
-        toWannier90_PW wan(inp.out_wannier_mmn,
+        toW90_PW wan(inp.out_wannier_mmn,
                            inp.out_wannier_amn,
                            inp.out_wannier_unk,
                            inp.out_wannier_eig,
                            inp.out_wannier_wvfn_formatted,
                            inp.nnkpfile,
-                           inp.wannier_spin);
+                           inp.wannier_spin,
+                           inp.nspin,
+                           PARAM.inp.nbands,
+                           PARAM.globalv.nqx,
+                           PARAM.globalv.dq,
+                           PARAM.globalv.npol);
         wan.set_tpiba_omega(ucell.tpiba, ucell.omega);
         wan.calculate(ucell, pelec->ekb, pw_wfc, pw_big, kv, stp.psi_cpu);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wannier functions calculation");
@@ -214,7 +220,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     if (inp.sc_mag_switch)
     {
         spinconstrain::SpinConstrain<std::complex<double>>& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
-        sc.cal_mi_pw();
+        spinconstrain::pw::cal_mi_pw(sc.state_, sc.psi, sc.pelec);
         spinconstrain::print_Mag_Force(sc, GlobalV::ofs_running);
     }
 

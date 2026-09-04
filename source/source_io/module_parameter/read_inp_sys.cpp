@@ -112,6 +112,38 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
+        Input_Item item("cell_replica");
+        item.annotation = "replicate the input structure along the three lattice vectors";
+        item.category = "System variables";
+        item.type = "Three Integers";
+        item.description = "Replicate the input STRU by Na, Nb, and Nc along its lattice vectors for "
+                           "distributed MDCell workflows. This parameter is only used for classical potentials "
+                           "or machine-learned interatomic potentials. The default is 1 1 1, which preserves "
+                           "the input structure.";
+        item.default_value = "1 1 1";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            if (item.str_values.size() != 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "cell_replica requires exactly three integers.");
+            }
+            for (int i = 0; i < 3; ++i)
+            {
+                para.input.cell_replica[static_cast<std::size_t>(i)] = std::stoi(item.str_values[static_cast<std::size_t>(i)]);
+            }
+        };
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            for (int i = 0; i < 3; ++i)
+            {
+                if (para.input.cell_replica[static_cast<std::size_t>(i)] <= 0)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "cell_replica values must all be positive.");
+                }
+            }
+        };
+        sync_intvec(input.cell_replica, 3, 1);
+        this->add_item(item);
+    }
+    {
         Input_Item item("calculation");
         item.annotation = "scf; relax; md; cell-relax; nscf; get_s; get_wf; get_pchg; gen_bessel; gen_opt_abfs; test_memory; test_neighbour";
         item.category = "System variables";
@@ -176,7 +208,7 @@ void ReadInput::item_system()
     }
     {
         Input_Item item("esolver_type");
-        item.annotation = "the energy solver: ksdft, sdft, ofdft, tdofdft, tddft, lj, dp, ks-lr, lr";
+        item.annotation = "the energy solver: ksdft, sdft, ofdft, tdofdft, tddft, lj, dp, ks-lr, lr, dfpt";
         item.category = "System variables";
         item.type = "String";
         item.description = R"(Choose the energy solver.
@@ -189,11 +221,12 @@ void ReadInput::item_system()
 * dp: DeeP potential
 * nep: Neuroevolution Potential
 * ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
-* lr: LR-TDDFT with given KS orbitals (Under Development Feature))";
+* lr: LR-TDDFT with given KS orbitals (Under Development Feature)
+* dfpt: density functional perturbation theory (Under Development Feature))";
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "lr", "ks-lr" };
+            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "lr", "ks-lr", "dfpt" };
             if (std::find(esolver_types.begin(), esolver_types.end(), para.input.esolver_type) == esolver_types.end())
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
@@ -1222,7 +1255,7 @@ Available options are:
         item.default_value = "0";
         read_sync_int(input.ndz);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.ndy > para.input.ny)
+            if (para.input.ndz > para.input.nz)
             {
                 para.sys.double_grid = true;
             }

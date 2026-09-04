@@ -131,6 +131,8 @@ class ReadInput
     void item_lr_tddft();
     // items for BSE
     void item_bse();
+    // items for density functional perturbation theory
+    void item_dfpt();
     // items for output
     void item_output();
     // items for postprocess

@@ -707,6 +707,7 @@ TEST_F(InputTest, Item_test)
     }
     { // ndx
         auto it = find_label("ndx", readinput.input_lists);
+        param.sys.double_grid = false;
         param.input.ndx = 2;
         param.input.nx = 1;
         it->second.reset_value(it->second, param);
@@ -729,6 +730,7 @@ TEST_F(InputTest, Item_test)
     }
     { // ndy
         auto it = find_label("ndy", readinput.input_lists);
+        param.sys.double_grid = false;
         param.input.ndy = 2;
         param.input.ny = 1;
         it->second.reset_value(it->second, param);
@@ -751,6 +753,7 @@ TEST_F(InputTest, Item_test)
     }
     { // ndz
         auto it = find_label("ndz", readinput.input_lists);
+        param.sys.double_grid = false;
         param.input.ndz = 2;
         param.input.nz = 1;
         it->second.reset_value(it->second, param);

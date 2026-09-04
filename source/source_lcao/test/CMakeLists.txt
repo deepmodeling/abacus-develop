@@ -5,7 +5,7 @@ abacus_disable_feature_definitions(__ROCM)
 if(ENABLE_LCAO)
 AddTest(
   TARGET MODULE_LCAO_init_dm_from_file_test
-  LIBS parameter base device
+  LIBS parameter base device symmetry
   SOURCES test_init_dm_from_file.cpp tmp_mocks.cpp
     ${ABACUS_SOURCE_DIR}/source_estate/module_dm/density_matrix.cpp
     ${ABACUS_SOURCE_DIR}/source_estate/module_dm/density_matrix_io.cpp
@@ -21,6 +21,9 @@ AddTest(
     ${ABACUS_SOURCE_DIR}/source_io/module_dm/write_dmr.cpp
     ${ABACUS_SOURCE_DIR}/source_cell/ucell_io.cpp
     ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/output_hcontainer.cpp
+    ${ABACUS_SOURCE_DIR}/source_cell/klist.cpp ${ABACUS_SOURCE_DIR}/source_cell/klist_io.cpp
+    ${ABACUS_SOURCE_DIR}/source_cell/parallel_kpoints.cpp
+    ${ABACUS_SOURCE_DIR}/source_cell/reciprocal_grid.cpp
 )
 
 AddTest(

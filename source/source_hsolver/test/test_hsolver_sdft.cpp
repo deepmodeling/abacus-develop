@@ -10,6 +10,7 @@
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
 #include "source_base/global_variable.h"
+#include "source_base/parallel_comm.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_hsolver/hsolver_pw_sdft.h"
 #include "source_estate/elecstate_pw.h"
@@ -388,6 +389,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
 // }
 
 #ifdef __MPI
+#include "source_base/parallel_comm.h"
 #include "source_base/timer.h"
 #include "mpi.h"
 int main(int argc, char** argv)

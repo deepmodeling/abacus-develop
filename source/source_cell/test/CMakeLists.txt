@@ -86,13 +86,31 @@ AddTest(
 AddTest(
   TARGET MODULE_CELL_klist_test
   LIBS base device symmetry
-  SOURCES klist_test.cpp ../klist.cpp ../parallel_kpoints.cpp ../k_vector_utils.cpp
+  SOURCES klist_test.cpp ../klist.cpp ../klist_io.cpp ../parallel_kpoints.cpp ../reciprocal_grid.cpp
+)
+
+AddTest(
+  TARGET MODULE_CELL_reciprocal_grid_test
+  LIBS base device symmetry
+  SOURCES reciprocal_grid_test.cpp ../reciprocal_grid.cpp
+)
+
+AddTest(
+  TARGET MODULE_CELL_qlist_test
+  LIBS base device symmetry
+  SOURCES qlist_test.cpp ../qlist.cpp ../reciprocal_grid.cpp
+)
+
+AddTest(
+  TARGET MODULE_CELL_little_group_test
+  LIBS base device symmetry
+  SOURCES little_group_test.cpp
 )
 
 AddTest(
   TARGET MODULE_CELL_klist_test_para1
   LIBS base device symmetry
-  SOURCES klist_test_para.cpp ../klist.cpp ../parallel_kpoints.cpp ../k_vector_utils.cpp
+  SOURCES klist_test_para.cpp ../klist.cpp ../klist_io.cpp ../parallel_kpoints.cpp ../reciprocal_grid.cpp
 )
 
 add_test(NAME MODULE_CELL_klist_test_para4

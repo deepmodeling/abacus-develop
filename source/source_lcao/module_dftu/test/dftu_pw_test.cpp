@@ -5,7 +5,7 @@
 #include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_base/matrix.h"
-#include "source_pw/module_pwdft/dftu_tools_pw.h"
+#include "source_pw/module_pwdft/dftu_base_tools.h"
 
 /***********************************************************************
  * Unit tests for DFT+U PW nspin=1/2/4 support (PR-2)
@@ -83,7 +83,7 @@ TEST_F(DftuPwTest, PotOnsitePotNspin1_DiagonalLocale)
         occ_mat_c[m * m_size + m] = 0.3; // diagonal
 
     std::vector<std::complex<double>> pot_onsite(size, {0.0, 0.0});
-    dftu_pw::compute_pot_onsite_scalar(pot_onsite.data(), occ_mat_c.data(), U_val, 0.5, 1.0, m_size);
+    DFTU_BASE::compute_pot_onsite_scalar(pot_onsite.data(), occ_mat_c.data(), U_val, 0.5, 1.0, m_size);
 
     // diagonal: U*(0.5 - 0.3) = 4.0*0.2 = 0.8
     for (int m = 0; m < m_size; m++)
@@ -107,8 +107,8 @@ TEST_F(DftuPwTest, PotOnsitePotNspin2_TwoSpinChannels)
 
     std::vector<std::complex<double>> pot_onsite_up(size, {0.0, 0.0});
     std::vector<std::complex<double>> pot_onsite_dn(size, {0.0, 0.0});
-    dftu_pw::compute_pot_onsite_scalar(pot_onsite_up.data(), occ_mat_up.data(), U_val, 0.5, 0.5, m_size);
-    dftu_pw::compute_pot_onsite_scalar(pot_onsite_dn.data(), occ_mat_dn.data(), U_val, 0.5, 0.5, m_size);
+    DFTU_BASE::compute_pot_onsite_scalar(pot_onsite_up.data(), occ_mat_up.data(), U_val, 0.5, 0.5, m_size);
+    DFTU_BASE::compute_pot_onsite_scalar(pot_onsite_dn.data(), occ_mat_dn.data(), U_val, 0.5, 0.5, m_size);
 
     // pot_onsite_up[0,0] = U*(0.5 - 0.4) = 0.5
     EXPECT_DOUBLE_EQ(pot_onsite_up[0].real(), 0.5);
@@ -133,7 +133,7 @@ TEST_F(DftuPwTest, PotOnsitePotNspin4_PauliTransform)
     pot_onsite[2] = {0.3, 0.0}; // sigma_y
     pot_onsite[3] = {0.2, 0.0}; // sigma_z
 
-    dftu_pw::pauli_to_spin_basis(pot_onsite, m_size);
+    DFTU_BASE::pauli_to_spin_basis(pot_onsite, m_size);
 
     EXPECT_DOUBLE_EQ(pot_onsite[0].real(), 0.6);  // 0.5*(1.0+0.2)
     EXPECT_DOUBLE_EQ(pot_onsite[0].imag(), 0.0);
@@ -164,7 +164,7 @@ TEST_F(DftuPwTest, EnergyNspin12_DiagonalLocale)
 
     // nspin=1: E = U * 1.0 * (0.5^2 + 0.3^2 + 0.2^2) = 4 * 0.38 = 1.52
     std::vector<std::complex<double>> pot_onsite_nspin1(size, {0.0, 0.0});
-    double energy_u = dftu_pw::compute_pot_onsite_scalar(
+    double energy_u = DFTU_BASE::compute_pot_onsite_scalar(
         pot_onsite_nspin1.data(), occ_mat_c.data(), U_val, 0.5, 1.0, m_size);
     EXPECT_DOUBLE_EQ(energy_u, 1.52);
 
@@ -174,9 +174,9 @@ TEST_F(DftuPwTest, EnergyNspin12_DiagonalLocale)
     std::vector<std::complex<double>> pot_onsite_up(size, {0.0, 0.0});
     std::vector<std::complex<double>> pot_onsite_dn(size, {0.0, 0.0});
     energy_u = 0.0;
-    energy_u += dftu_pw::compute_pot_onsite_scalar(
+    energy_u += DFTU_BASE::compute_pot_onsite_scalar(
         pot_onsite_up.data(), occ_mat_up.data(), U_val, 0.5, 0.5, m_size);
-    energy_u += dftu_pw::compute_pot_onsite_scalar(
+    energy_u += DFTU_BASE::compute_pot_onsite_scalar(
         pot_onsite_dn.data(), occ_mat_dn.data(), U_val, 0.5, 0.5, m_size);
     // E = U*0.5*(0.4^2 + 0.6^2) = 4*0.5*(0.16+0.36) = 1.04
     EXPECT_DOUBLE_EQ(energy_u, 1.04);
@@ -200,7 +200,7 @@ TEST_F(DftuPwTest, EnergyNspin4_WithOffDiagonal)
     occ_mat_c[size + 2] = 0.0; occ_mat_c[size + 3] = 0.2;
 
     std::vector<std::complex<double>> pot_onsite(size * 4, {0.0, 0.0});
-    double energy_u = dftu_pw::compute_pot_onsite_spinor(
+    double energy_u = DFTU_BASE::compute_pot_onsite_spinor(
         pot_onsite.data(), occ_mat_c.data(), U_val, 1.0, weight_eu, m_size);
 
     // is=0: 2*0.25*(0.5*0.5 + 0.1*0.1 + 0.1*0.1 + 0.5*0.5) = 0.26
@@ -227,7 +227,7 @@ TEST_F(DftuPwTest, LocaleAccumNspin12)
     wg(0, 1) = 0.5;
 
     std::vector<double> occ_mat_c(m_size * m_size, 0.0);
-    dftu_pw::accumulate_occ_scalar(
+    DFTU_BASE::accumulate_occ_scalar(
         occ_mat_c.data(), becp.data(), nbands, nkb,
         begin_ih, m_begin, m_size, wg, ik);
 
@@ -261,7 +261,7 @@ TEST_F(DftuPwTest, LocaleAccumNspin4_PauliComponents)
 
     ModuleBase::matrix wg(1, nbands);
     wg(0, 0) = 1.0;
-    dftu_pw::accumulate_occ_spinor(
+    DFTU_BASE::accumulate_occ_spinor(
         occ_mat_c.data(), becp.data(), nbands, npol, nkb,
         0, 0, m_size, wg, ik);
 

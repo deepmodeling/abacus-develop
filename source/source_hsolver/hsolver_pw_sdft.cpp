@@ -1,6 +1,7 @@
 #include "hsolver_pw_sdft.h"
 
 #include "source_base/global_function.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_device.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"

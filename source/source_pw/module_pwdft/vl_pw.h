@@ -6,12 +6,15 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
 
+#include <string>
+#include <vector>
+
 class pseudopot_cell_vl
 {
 public:
 
-	pseudopot_cell_vl();
-	~pseudopot_cell_vl();
+    pseudopot_cell_vl();
+    ~pseudopot_cell_vl();
 
     /**
      * @brief init local potential
@@ -22,14 +25,28 @@ public:
     void init_vloc(const UnitCell& ucell,
                    const ModulePW::PW_Basis* rho_basis);
 
+    /**
+     * @brief print the local potential in G space to v_loc_g.dat
+     *        for each element
+     *
+     * @param ucell unitcell
+     * @param rho_basis pw basis
+     * @param out_element_info whether to print the local potential
+     * @param global_out_dir global output directory
+     */
+    void print_vloc(const UnitCell& ucell,
+                    const ModulePW::PW_Basis* rho_basis,
+                    const bool& out_element_info,
+                    const std::string& global_out_dir) const;
+
     ModuleBase::matrix vloc;   //(ntype,ngl),the local potential for each atom type(ntype,ngl)
-	bool * numeric = nullptr; //[ntype], =true
+    bool * numeric = nullptr; //[ntype], =true
 
 private:
 
-	double * zp = nullptr;   // (npsx),the charge of the pseudopotential
+    std::vector<double> zp;  // (npsx),the charge of the pseudopotential
 
-	void allocate(const UnitCell& ucell,
+    void allocate(const UnitCell& ucell,
                   const int ngg);
     /**
      * @brief compute the coulomb potential in reciprocal space
@@ -39,7 +56,7 @@ private:
                       const double& zp, 
                       double* vloc_1d, 
                       const ModulePW::PW_Basis* rho_basis) const;
-	// generate vloc for a particular atom type.
+    // generate vloc for a particular atom type.
     void vloc_of_g(const int& msh,
                    const double* rab,
                    const double* r,
@@ -48,9 +65,6 @@ private:
                    double* vloc,
                    const UnitCell& ucell,
                    const ModulePW::PW_Basis* rho_basis) const;
-
-    void print_vloc(const UnitCell& ucell,
-                    const ModulePW::PW_Basis* rho_basis) const;
 };
 
 #endif // VL_IN_PW 

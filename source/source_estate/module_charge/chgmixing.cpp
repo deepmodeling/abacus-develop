@@ -1,6 +1,8 @@
 #include "source_estate/module_charge/chgmixing.h"
+
+#include "source_base/parallel_comm.h"
 #include "source_estate/update_pot.h"
-#include "source_lcao/module_dftu/dftu_lcao.h"
+#include "source_lcao/module_dftu/dftu_nao.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 
 void module_charge::chgmixing_ks(const int iter, // scf iteration number

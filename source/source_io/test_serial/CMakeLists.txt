@@ -14,6 +14,7 @@ add_library(
     ../module_parameter/read_input_item_sdft.cpp
     ../module_parameter/read_inp_tddft.cpp
     ../module_parameter/read_inp_bse.cpp
+    ../module_parameter/read_inp_dfpt.cpp
     ../module_parameter/read_inp_deepks.cpp
     ../module_parameter/read_inp_model.cpp
     ../module_parameter/read_inp_postproc.cpp  
@@ -55,8 +56,9 @@ AddTest(
 
 AddTest(
   TARGET MODULE_IO_write_bands
-  LIBS parameter base device
+  LIBS parameter base device symmetry
   SOURCES write_bands_test.cpp ../module_output/band_parallel_output.cpp ../module_energy/write_bands.cpp
+  ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 AddTest(

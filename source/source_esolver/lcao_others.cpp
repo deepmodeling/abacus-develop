@@ -15,7 +15,7 @@
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/lcao_domain.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_lcao/module_dftu/dftu_lcao.h"
+#include "source_lcao/module_dftu/dftu_nao.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 

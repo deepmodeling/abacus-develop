@@ -215,7 +215,7 @@ int Symmetry::density_sym_ops(std::vector<ModuleBase::Matrix3>& kgmat,
                               std::vector<double>& trs_inv) const
 {
     // The density must be symmetrized with the SAME group that was used to fold the k-points
-    // (see KVectorUtils::ibz_kpoint): otherwise the density accumulated over the IBZ is not
+    // (see K_Vectors::reduce_by_symmetry): otherwise the density accumulated over the IBZ is not
     // restored to the full BZ result. For nspin=4 with a non-zero moment that group is the
     // Shubnikov group H + Theta*A, so the antiunitary elements' spatial parts are appended here.
     // Theta leaves the charge invariant and reverses the magnetization, which is what `trs_inv`

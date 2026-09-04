@@ -1,13 +1,19 @@
-#include "dftu_lcao.h"
+#include "dftu_nao.h"
 #include "dftu_hamilt.h"
+#include "dftu_nao_pots.h"
+#include "source_base/global_function.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
+#include "source_base/tool_title.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 
 
 #ifdef __LCAO
 namespace DFTU_LCAO {
 
 void pot_uterm_complex(Plus_U& dftu,
+                       const UnitCell& ucell,
+                       const Parallel_Orbitals* pv,
                        const int ik,
                        std::complex<double>* pot_uterm,
                        const std::vector<int>& isk,
@@ -24,9 +30,8 @@ void pot_uterm_complex(Plus_U& dftu,
 
     int spin = isk[ik];
 
-    const Parallel_Orbitals* paraV = dftu.get_paraV();
-    const int nlocal = dftu.get_nlocal();
-    ModuleBase::GlobalFunc::ZEROS(pot_uterm, paraV->nloc);
+    const int nlocal = pv->get_global_row_size();
+    ModuleBase::GlobalFunc::ZEROS(pot_uterm, pv->nloc);
 
     //=============================================================
     //   PART2: call pblas to calculate effective potential matrix
@@ -37,20 +42,20 @@ void pot_uterm_complex(Plus_U& dftu,
     const std::complex<double> half = 0.5;
     const std::complex<double> zero = 0.0;
 
-    std::vector<std::complex<double>> pot_onsite(paraV->nloc);
-    dftu.pot_onsite_complex(spin, true, &pot_onsite[0], npol);
+    std::vector<std::complex<double>> pot_onsite(pv->nloc);
+    DFTU_LCAO::pot_onsite_complex(dftu, ucell, pv, spin, true, &pot_onsite[0], npol);
 
 #ifdef __MPI
     ScalapackConnector::gemm(transN, transN,
             nlocal, nlocal, nlocal,
             half,
-            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), one_int, one_int, paraV->desc,
-            sk, one_int, one_int, paraV->desc,
+            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), one_int, one_int, pv->desc,
+            sk, one_int, one_int, pv->desc,
             zero,
-            pot_uterm, one_int, one_int, paraV->desc);
+            pot_uterm, one_int, one_int, pv->desc);
 #endif
 
-    for (int irc = 0; irc < paraV->nloc; irc++)
+    for (int irc = 0; irc < pv->nloc; irc++)
     {
         pot_onsite[irc] = pot_uterm[irc];
     }
@@ -58,9 +63,9 @@ void pot_uterm_complex(Plus_U& dftu,
 #ifdef __MPI
     ScalapackConnector::tranu(nlocal, nlocal,
             one,
-            &pot_onsite[0], one_int, one_int, paraV->desc,
+            &pot_onsite[0], one_int, one_int, pv->desc,
             one,
-            pot_uterm, one_int, one_int, paraV->desc);
+            pot_uterm, one_int, one_int, pv->desc);
 #endif
 
     ModuleBase::timer::end("DFTU_LCAO", "pot_uterm_complex");
@@ -68,6 +73,8 @@ void pot_uterm_complex(Plus_U& dftu,
 }
 
 void pot_uterm_real(Plus_U& dftu,
+                    const UnitCell& ucell,
+                    const Parallel_Orbitals* pv,
                     const int ik,
                     double* pot_uterm,
                     const std::vector<int>& isk,
@@ -83,9 +90,8 @@ void pot_uterm_real(Plus_U& dftu,
 
     int spin = isk[ik];
 
-    const Parallel_Orbitals* paraV = dftu.get_paraV();
-    const int nlocal = dftu.get_nlocal();
-    ModuleBase::GlobalFunc::ZEROS(pot_uterm, paraV->nloc);
+    const int nlocal = pv->get_global_row_size();
+    ModuleBase::GlobalFunc::ZEROS(pot_uterm, pv->nloc);
 
     //=============================================================
     //   PART2: call pblas to calculate effective potential matrix
@@ -94,94 +100,100 @@ void pot_uterm_real(Plus_U& dftu,
     int one_int = 1;
     double alpha = 1.0, beta = 0.0, half = 0.5, one = 1.0;
 
-    std::vector<double> pot_onsite(paraV->nloc);
-    dftu.pot_onsite_real(spin, 1, &pot_onsite[0], npol);
+    std::vector<double> pot_onsite(pv->nloc);
+    DFTU_LCAO::pot_onsite_real(dftu, ucell, pv, spin, true, &pot_onsite[0], npol);
 
 #ifdef __MPI
     ScalapackConnector::gemm(transN, transN,
             nlocal, nlocal, nlocal,
             half,
-            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), 1, 1, paraV->desc,
-            sk, 1, 1, paraV->desc,
+            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), 1, 1, pv->desc,
+            sk, 1, 1, pv->desc,
             beta,
-            pot_uterm, 1, 1, paraV->desc);
+            pot_uterm, 1, 1, pv->desc);
 #endif
 
-    for (int irc = 0; irc < paraV->nloc; irc++)
+    for (int irc = 0; irc < pv->nloc; irc++)
         pot_onsite[irc] = pot_uterm[irc];
 
 #ifdef __MPI
     pdtran_(&nlocal, &nlocal,
             &one,
-            &pot_onsite[0], &one_int, &one_int, const_cast<int*>(paraV->desc),
+            &pot_onsite[0], &one_int, &one_int, const_cast<int*>(pv->desc),
             &one,
-            pot_uterm, &one_int, &one_int, const_cast<int*>(paraV->desc));
+            pot_uterm, &one_int, &one_int, const_cast<int*>(pv->desc));
 #endif
 
     ModuleBase::timer::end("DFTU_LCAO", "pot_uterm_real");
     return;
 }
 
-} // namespace DFTU_LCAO
-
-void Plus_U::cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR, const int npol)
+/// @brief Accumulate the DFT+U term into the real-space HR (double).
+/// Wraps pot_onsite_real plus the (pot_onsite*SR + SR*pot_onsite)/2 GEMM pair.
+void pot_uterm_HR_real(const Plus_U& dftu, const UnitCell& ucell, const Parallel_Orbitals* pv, const int ispin, double* SR, double* HR, const int npol)
 {
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
     const double alpha = 1.0, beta = 0.0, one = 1.0, half = 0.5;
+    const int nlocal = pv->get_global_row_size();
 
-    std::vector<double> pot_onsite(this->paraV->nloc);
-    this->pot_onsite_real(ispin, 1, &pot_onsite[0], npol);
+    std::vector<double> pot_onsite(pv->nloc);
+    pot_onsite_real(dftu, ucell, pv, ispin, true, &pot_onsite[0], npol);
 
 #ifdef __MPI
     ScalapackConnector::gemm(transN, transN,
-            this->nlocal, this->nlocal, this->nlocal,
-            half, 
-            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), 1, 1, this->paraV->desc, 
-            SR, 1, 1, this->paraV->desc,
+            nlocal, nlocal, nlocal,
+            half,
+            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), 1, 1, pv->desc,
+            SR, 1, 1, pv->desc,
             beta,
-            HR, 1, 1, this->paraV->desc);
+            HR, 1, 1, pv->desc);
 
     ScalapackConnector::gemm(transN, transN,
-            this->nlocal, this->nlocal, this->nlocal,
-            half, 
-            SR, 1, 1, this->paraV->desc, 
-            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), 1, 1, this->paraV->desc,
+            nlocal, nlocal, nlocal,
+            half,
+            SR, 1, 1, pv->desc,
+            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), 1, 1, pv->desc,
             one,
-            HR, 1, 1, this->paraV->desc);
+            HR, 1, 1, pv->desc);
 #endif
 
     return;
 }
 
-void Plus_U::cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double>* SR, std::complex<double>* HR, const int npol)
+/// @brief Accumulate the DFT+U term into the real-space HR (complex).
+/// Wraps pot_onsite_complex plus the (pot_onsite*SR + SR*pot_onsite)/2 GEMM pair.
+void pot_uterm_HR_complex(const Plus_U& dftu, const UnitCell& ucell, const Parallel_Orbitals* pv, const int ispin, std::complex<double>* SR, std::complex<double>* HR, const int npol)
 {
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
     const std::complex<double> zero = 0.0, one = 1.0, half = 0.5;
+    const int nlocal = pv->get_global_row_size();
 
-    std::vector<std::complex<double>> pot_onsite(this->paraV->nloc);
-    this->pot_onsite_complex(ispin, 1, &pot_onsite[0], npol);
+    std::vector<std::complex<double>> pot_onsite(pv->nloc);
+    pot_onsite_complex(dftu, ucell, pv, ispin, true, &pot_onsite[0], npol);
 
 #ifdef __MPI
     ScalapackConnector::gemm(transN, transN,
-            this->nlocal, this->nlocal, this->nlocal,
-            half, 
-            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), one_int, one_int, this->paraV->desc,
-            SR, one_int, one_int, this->paraV->desc,
+            nlocal, nlocal, nlocal,
+            half,
+            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), one_int, one_int, pv->desc,
+            SR, one_int, one_int, pv->desc,
             zero,
-            HR, one_int, one_int, this->paraV->desc);
+            HR, one_int, one_int, pv->desc);
 
     ScalapackConnector::gemm(transN, transN,
-            this->nlocal, this->nlocal, this->nlocal,
-            half, 
-            SR, one_int, one_int, this->paraV->desc, 
-            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), one_int, one_int, this->paraV->desc,
+            nlocal, nlocal, nlocal,
+            half,
+            SR, one_int, one_int, pv->desc,
+            ModuleBase::GlobalFunc::VECTOR_TO_PTR(pot_onsite), one_int, one_int, pv->desc,
             one,
-            HR, one_int, one_int, this->paraV->desc);
+            HR, one_int, one_int, pv->desc);
 #endif
 
     return;
 }
+
+} // namespace DFTU_LCAO
 
 #endif

@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #define private public
-#include "source_io/module_parameter/parameter.h"
-#include "md_test_fixture.h"
+#include "setcell.h"
 #include "source_esolver/esolver_lj.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_md/md_func.h"
 #undef private
 #define doublethreshold 1e-12
@@ -17,56 +17,138 @@
  *     - calculate energy, force, virial for lj pot
  */
 
-class LJ_pot_test : public LjPotTestFixture
+class LJ_pot_test : public testing::Test
 {
+  protected:
+    ModuleBase::matrix stress;
+    double potential;
+    int natom;
+    UnitCell ucell;
+    Parameter param;
+
+    void SetUp()
+    {
+        Setcell::setupcell(ucell);
+
+        natom = ucell.nat;
+        stress.create(3, 3);
+
+        Setcell::parameters(param.input);
+    }
+
+    void TearDown()
+    {
+    }
 };
 
 TEST_F(LJ_pot_test, potential)
 {
-    std::unique_ptr<ModuleESolver::ESolver> p_esolver(new ModuleESolver::ESolver_LJ());
-    p_esolver->before_all_runners(ucell, input);
-    MD_func::force_virial(p_esolver.get(), 0, ucell, potential, force, true, stress);
+    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    MDCell mdcell = Setcell::setup_mdcell(ucell, param);
+    p_esolver->before_all_runners(mdcell, param.inp);
+    MD_func::force_virial(p_esolver, 0, mdcell, potential, true, stress, false);
     EXPECT_NEAR(potential, -0.011957818623534381, doublethreshold);
+}
+
+TEST_F(LJ_pot_test, unitcell_compatibility)
+{
+    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    p_esolver->before_all_runners(ucell, param.inp);
+    p_esolver->runner(ucell, 0);
+    p_esolver->cal_force(ucell, stress);
+
+    EXPECT_NEAR(p_esolver->cal_energy(), -0.023915637247068761, doublethreshold);
+    EXPECT_NEAR(stress(0, 0), 0.00099635466178755387, doublethreshold);
+
+    delete p_esolver;
 }
 
 TEST_F(LJ_pot_test, force)
 {
-    std::unique_ptr<ModuleESolver::ESolver> p_esolver(new ModuleESolver::ESolver_LJ());
-    p_esolver->before_all_runners(ucell, input);
-    MD_func::force_virial(p_esolver.get(), 0, ucell, potential, force, true, stress);
-    EXPECT_NEAR(force[0].x, 0.00049817733089377704, doublethreshold);
-    EXPECT_NEAR(force[0].y, 0.00082237246837022328, doublethreshold);
-    EXPECT_NEAR(force[0].z, -3.0493186101154812e-20, doublethreshold);
-    EXPECT_NEAR(force[1].x, -0.00064758615201580339, doublethreshold);
-    EXPECT_NEAR(force[1].y, -0.00066924999462089304, doublethreshold);
-    EXPECT_NEAR(force[1].z, -1.8634724839594607e-20, doublethreshold);
-    EXPECT_NEAR(force[2].x, -0.00035411224839165616, doublethreshold);
-    EXPECT_NEAR(force[2].y, 0.0008091080910885112, doublethreshold);
-    EXPECT_NEAR(force[2].z, -1.1858461261560205e-20, doublethreshold);
-    EXPECT_NEAR(force[3].x, 0.00050352106951368229, doublethreshold);
-    EXPECT_NEAR(force[3].y, -0.00096223056483784122, doublethreshold);
-    EXPECT_NEAR(force[3].z, 2.0328790734103208e-20, doublethreshold);
+    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    MDCell mdcell = Setcell::setup_mdcell(ucell, param);
+    p_esolver->before_all_runners(mdcell, param.inp);
+    MD_func::force_virial(p_esolver, 0, mdcell, potential, true, stress, false);
+    const std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
+    EXPECT_NEAR(atoms[0].force.x, 0.00049817733089377704, doublethreshold);
+    EXPECT_NEAR(atoms[0].force.y, 0.00082237246837022328, doublethreshold);
+    EXPECT_NEAR(atoms[0].force.z, 0.0, doublethreshold);
+    EXPECT_NEAR(atoms[1].force.x, -0.00064758615201580339, doublethreshold);
+    EXPECT_NEAR(atoms[1].force.y, -0.00066924999462089304, doublethreshold);
+    EXPECT_NEAR(atoms[1].force.z, 0.0, doublethreshold);
+    EXPECT_NEAR(atoms[2].force.x, -0.00035411224839165616, doublethreshold);
+    EXPECT_NEAR(atoms[2].force.y, 0.0008091080910885112, doublethreshold);
+    EXPECT_NEAR(atoms[2].force.z, 0.0, doublethreshold);
+    EXPECT_NEAR(atoms[3].force.x, 0.00050352106951368229, doublethreshold);
+    EXPECT_NEAR(atoms[3].force.y, -0.00096223056483784122, doublethreshold);
+    EXPECT_NEAR(atoms[3].force.z, 0.0, doublethreshold);
+}
+
+TEST_F(LJ_pot_test, mdcell_cal_force)
+{
+    ModuleESolver::ESolver_LJ p_esolver;
+    MDCell mdcell = Setcell::setup_mdcell(ucell, param);
+    p_esolver.before_all_runners(mdcell, param.inp);
+    p_esolver.runner(mdcell, 0);
+
+    ModuleBase::matrix force;
+    p_esolver.cal_force(mdcell, force);
+    for (int iat = 0; iat < mdcell.nlocal(); ++iat)
+    {
+        const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(iat)];
+        EXPECT_DOUBLE_EQ(force(iat, 0), atom.force.x);
+        EXPECT_DOUBLE_EQ(force(iat, 1), atom.force.y);
+        EXPECT_DOUBLE_EQ(force(iat, 2), atom.force.z);
+    }
 }
 
 TEST_F(LJ_pot_test, stress)
 {
-    std::unique_ptr<ModuleESolver::ESolver> p_esolver(new ModuleESolver::ESolver_LJ());
-    p_esolver->before_all_runners(ucell, input);
-    MD_func::force_virial(p_esolver.get(), 0, ucell, potential, force, true, stress);
+    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    MDCell mdcell = Setcell::setup_mdcell(ucell, param);
+    p_esolver->before_all_runners(mdcell, param.inp);
+    MD_func::force_virial(p_esolver, 0, mdcell, potential, true, stress, false);
     EXPECT_NEAR(stress(0, 0), 8.0360222227631859e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 1), 1.7207745586539077e-07, doublethreshold);
-    EXPECT_NEAR(stress(0, 2), 0, doublethreshold);
+    EXPECT_NEAR(stress(0, 2), 0.0, doublethreshold);
     EXPECT_NEAR(stress(1, 0), 1.7207745586539077e-07, doublethreshold);
     EXPECT_NEAR(stress(1, 1), 1.0630708613186662e-06, doublethreshold);
-    EXPECT_NEAR(stress(1, 2), -1.1858461261560206e-22, doublethreshold);
-    EXPECT_NEAR(stress(2, 0), 0, doublethreshold);
-    EXPECT_NEAR(stress(2, 1), -1.1858461261560206e-22, doublethreshold);
+    EXPECT_NEAR(stress(1, 2), 0.0, doublethreshold);
+    EXPECT_NEAR(stress(2, 0), 0.0, doublethreshold);
+    EXPECT_NEAR(stress(2, 1), 0.0, doublethreshold);
     EXPECT_NEAR(stress(2, 2), 6.4275429572682057e-07, doublethreshold);
+}
+
+TEST_F(LJ_pot_test, mdcell_stress_includes_external_pressure)
+{
+    ModuleESolver::ESolver_LJ p_esolver;
+    MDCell mdcell = Setcell::setup_mdcell(ucell, param);
+    Input_para input = param.inp;
+    p_esolver.before_all_runners(mdcell, input);
+    p_esolver.runner(mdcell, 0);
+
+    const double saved_press1 = input.press1;
+    const double saved_press2 = input.press2;
+    const double saved_press3 = input.press3;
+    input.press1 = 1.0;
+    input.press2 = 2.0;
+    input.press3 = 3.0;
+
+    p_esolver.cal_stress(mdcell, stress);
+
+    const double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+    EXPECT_NEAR(stress(0, 0), p_esolver.lj_virial(0, 0) - 1.0 / unit_transform, doublethreshold);
+    EXPECT_NEAR(stress(1, 1), p_esolver.lj_virial(1, 1) - 2.0 / unit_transform, doublethreshold);
+    EXPECT_NEAR(stress(2, 2), p_esolver.lj_virial(2, 2) - 3.0 / unit_transform, doublethreshold);
+
+    input.press1 = saved_press1;
+    input.press2 = saved_press2;
+    input.press3 = saved_press3;
 }
 
 TEST_F(LJ_pot_test, RcutSearchRadius)
 {
-    std::unique_ptr<ModuleESolver::ESolver_LJ> p_esolver(new ModuleESolver::ESolver_LJ());
+    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
     ucell.ntype = 2;
     std::vector<double> rcut = {3.0};
     p_esolver->rcut_search_radius(ucell.ntype, rcut);
@@ -91,7 +173,7 @@ TEST_F(LJ_pot_test, RcutSearchRadius)
 
 TEST_F(LJ_pot_test, SetC6C12)
 {
-    std::unique_ptr<ModuleESolver::ESolver_LJ> p_esolver(new ModuleESolver::ESolver_LJ());
+    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
     ucell.ntype = 2;
 
     // no rule
@@ -164,7 +246,7 @@ TEST_F(LJ_pot_test, SetC6C12)
 
 TEST_F(LJ_pot_test, CalEnShift)
 {
-    std::unique_ptr<ModuleESolver::ESolver_LJ> p_esolver(new ModuleESolver::ESolver_LJ());
+    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
     ucell.ntype = 2;
 
     std::vector<double> rcut = {3.0};
