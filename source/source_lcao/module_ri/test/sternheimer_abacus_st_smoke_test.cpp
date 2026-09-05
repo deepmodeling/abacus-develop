@@ -574,6 +574,47 @@ TEST(SternheimerABACUSSTSmoke, BuildsPeriodicGammaResponsePlanBySelfMappingKPoin
     EXPECT_EQ(plan.kq_pairs[1].target_index, 1);
 }
 
+TEST(SternheimerABACUSSTSmoke, BuildsSingleGammaPeriodicResponsePlanWithPositiveIndex)
+{
+    const auto gamma = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 2.0);
+    const auto plan = ModuleRI::build_sternheimer_periodic_response_plan({gamma}, 1);
+
+    EXPECT_EQ(plan.iq, 1);
+    EXPECT_EQ(plan.qpoint, (ModuleRI::SternheimerReducedKPoint{0.0, 0.0, 0.0}));
+    EXPECT_EQ(plan.record_index_by_global_k, (std::vector<int>{0}));
+    ASSERT_EQ(plan.kq_pairs.size(), 1U);
+    EXPECT_EQ(plan.kq_pairs[0].source_index, 0);
+    EXPECT_EQ(plan.kq_pairs[0].target_index, 0);
+    EXPECT_DOUBLE_EQ(plan.kweight_sum, 2.0);
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_periodic_kmesh({1, 1, 1}, 1));
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsNonGammaSinglePointPeriodicResponse)
+{
+    for (int direction = 0; direction != 3; ++direction)
+    {
+        auto point = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 2.0);
+        point.kpoint[direction] = 0.25;
+        EXPECT_THROW(ModuleRI::build_sternheimer_periodic_response_plan({point}, 1),
+                     std::invalid_argument);
+    }
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsFractionalOccupationForSingleGammaPeriodicResponse)
+{
+    auto gamma = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 2.0);
+    gamma.occupations[0] = 0.5;
+    EXPECT_THROW(ModuleRI::build_sternheimer_periodic_response_plan({gamma}, 1),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsSpinChannelForSingleGammaPeriodicResponse)
+{
+    const auto gamma = make_occupied_kpoint(0, 0, 1, {0.0, 0.0, 0.0}, 1.0);
+    EXPECT_THROW(ModuleRI::build_sternheimer_periodic_response_plan({gamma}, 1),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerABACUSSTSmoke, BuildsDisjointFixedQKOrbitsFromLittleGroupPermutations)
 {
     const std::vector<int> identity = {0, 1, 2, 3, 4, 5, 6, 7};

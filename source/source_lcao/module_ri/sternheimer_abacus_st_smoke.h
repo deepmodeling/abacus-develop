@@ -807,9 +807,13 @@ inline SternheimerPeriodicResponsePlan build_sternheimer_periodic_response_plan(
     }
     else
     {
-        if (records.size() <= 1)
+        // A positive q index can select Gamma even on a one-point periodic mesh.
+        if (records.size() == 1
+            && std::any_of(records.front().kpoint.begin(),
+                           records.front().kpoint.end(),
+                           [](const double coordinate) { return std::abs(coordinate) > tolerance; }))
         {
-            throw std::invalid_argument("A nonzero Sternheimer q point requires more than one k point.");
+            throw std::invalid_argument("A single-k periodic Sternheimer response requires a Gamma k point.");
         }
         for (const SternheimerLCAOOccupiedKPoint& record: records)
         {
