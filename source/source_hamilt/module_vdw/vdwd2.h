@@ -8,6 +8,7 @@
 #define VDWD2_H
 
 #include "vdw.h"
+#include "vdwd2_parameters.h"
 
 namespace vdw
 {

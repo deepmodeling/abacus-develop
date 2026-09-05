@@ -8,7 +8,7 @@ install(FILES r0.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET MODULE_HAMILT_vdwTest
   LIBS parameter base device vdw
-  SOURCES vdw_test.cpp 
+  SOURCES vdw_test.cpp vdwd3_evaluator_test.cpp
 )
 
 if(ENABLE_DFTD4)

@@ -252,7 +252,7 @@ void ReadInput::item_model()
 * d4: Grimme's DFT-D4 dispersion correction method using the external DFT-D4 library
 * none: no vdW correction
 
-[NOTE] ABACUS supports automatic setting of DFT-D3 parameters for common functionals. To benefit from this feature, please specify the parameter dft_functional explicitly, otherwise the autoset procedure will crash. If not satisfied with the built-in parameters, any manual setting on vdw_s6, vdw_s8, vdw_a1 and vdw_a2 will overwrite the automatic values.)";
+[NOTE] ABACUS automatically loads DFT-D3 parameters for supported functionals according to dft_functional setting. Individual user values overwrite the corresponding tabulated values. Setting all four of vdw_s6, vdw_s8, vdw_a1 and vdw_a2 defines a fully custom set and bypasses functional lookup.)";
         item.default_value = "none";
         item.unit = "";
         read_sync_string(input.vdw_method);
@@ -298,7 +298,7 @@ Available options are:
         item.annotation = "scale parameter of d2/d3_0/d3_bj";
         item.category = "vdW correction";
         item.type = "String";
-        item.description = "This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). If not set, will use values of PBE functional. For DFT-D3, recommended values with different DFT functionals can be found on the here. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
+        item.description = "Scale factor s6, which is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP); if not set, will use values of PBE functional by default. For DFT-D3, ABACUS will search in built-in dataset based on the dft_functional setting by default; user set value will overwrite the searched value.";
         item.default_value = "";
         item.unit = "";
         item.set_availability("vdw_method in [d2, d3_0, d3_bj]");
@@ -323,7 +323,7 @@ Available options are:
         item.annotation = "scale parameter of d3_0/d3_bj";
         item.category = "vdW correction";
         item.type = "String";
-        item.description = "This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
+        item.description = "Scale factor s8 for D3(0) and D3(BJ). By default, ABACUS will search in built-in dataset based on the dft_functional setting. User set value will overwrite the searched value.";
         item.default_value = "";
         item.unit = "";
         item.set_availability("vdw_method in [d3_0, d3_bj]");
@@ -348,7 +348,7 @@ Available options are:
         item.annotation = "damping parameter of d3_0/d3_bj";
         item.category = "vdW correction";
         item.type = "String";
-        item.description = "This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
+        item.description = "Damping parameter rs6 for D3(0), or a1 for D3(BJ). If not set, ABACUS loads the s-dftd3 value for dft_functional. A user value overwrites the tabulated value.";
         item.default_value = "";
         item.unit = "";
         item.set_availability("vdw_method in [d3_0, d3_bj]");
@@ -370,10 +370,10 @@ Available options are:
     }
     {
         Input_Item item("vdw_a2");
-        item.annotation = "damping parameter of d3_bj";
+        item.annotation = "damping parameter of d3_0/d3_bj";
         item.category = "vdW correction";
         item.type = "String";
-        item.description = "This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
+        item.description = "Damping parameter rs8 for D3(0), or a2 for D3(BJ). If not set, ABACUS loads the s-dftd3 value for dft_functional. A user value overwrites the tabulated value.";
         item.default_value = "";
         item.unit = "";
         item.set_availability("vdw_method in [d3_0, d3_bj]");
@@ -498,13 +498,20 @@ Namely, each line contains the element name and the corresponding parameter.)";
         item.type = "String";
         item.description = R"(Determines the method used for specifying the cutoff radius in periodic systems when applying Van der Waals correction. Available options are:
 * radius: The supercell is selected within a sphere centered at the origin with a radius defined by vdw_cutoff_radius.
-* period: The extent of the supercell is explicitly specified using the vdw_cutoff_period keyword.)";
+* period: The extent of the D2 supercell is explicitly specified using the vdw_cutoff_period keyword. DFT-D3 and DFT-D4 require radius.)";
         item.default_value = "radius";
         item.unit = "";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.vdw_cutoff_type != "radius" && para.input.vdw_cutoff_type != "period")
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_type must be radius or period");
+            }
+            if (para.input.vdw_cutoff_type == "period"
+                && (para.input.vdw_method == "d3_0" || para.input.vdw_method == "d3_bj"
+                    || para.input.vdw_method == "d4"))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "DFT-D3 and DFT-D4 require vdw_cutoff_type=radius");
             }
         };
         read_sync_string(input.vdw_cutoff_type);
@@ -528,7 +535,8 @@ Namely, each line contains the element name and the corresponding parameter.)";
                 }
                 else if (para.input.vdw_method == "d3_0" || para.input.vdw_method == "d3_bj")
                 {
-                    para.input.vdw_cutoff_radius = "95";
+                    // Match the s-dftd3 default two-body real-space cutoff.
+                    para.input.vdw_cutoff_radius = "60";
                 }
                 else if (para.input.vdw_method == "d4")
                 {
@@ -581,7 +589,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
 A value of zero disables smoothing for the two-body contribution.)";
         item.default_value = "0.05";
         item.unit = "Bohr";
-        item.set_availability("vdw_method==d4");
+        item.set_availability("vdw_method in [d3_0, d3_bj, d4]");
         read_sync_double(input.vdw_cutoff_width2);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.vdw_cutoff_width2 < 0.0)
@@ -598,9 +606,9 @@ A value of zero disables smoothing for the two-body contribution.)";
         item.type = "Real";
         item.description = R"(Width of the smooth switching region for the three-body Axilrod-Teller-Muto (ATM) dispersion real-space cutoff.
 A value of zero disables smoothing for the three-body contribution.)";
-        item.default_value = "0.05";
+        item.default_value = "0.0";
         item.unit = "Bohr";
-        item.set_availability("vdw_method==d4");
+        item.set_availability("vdw_method in [d3_0, d3_bj, d4]");
         read_sync_double(input.vdw_cutoff_width3);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.vdw_cutoff_width3 < 0.0)

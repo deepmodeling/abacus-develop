@@ -1416,12 +1416,12 @@ TEST_F(InputTest, Item_test2)
         param.input.vdw_cutoff_radius = "default";
         param.input.vdw_method = "d3_0";
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.vdw_cutoff_radius, "95");
+        EXPECT_EQ(param.input.vdw_cutoff_radius, "60");
 
         param.input.vdw_cutoff_radius = "default";
         param.input.vdw_method = "d3_bj";
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.vdw_cutoff_radius, "95");
+        EXPECT_EQ(param.input.vdw_cutoff_radius, "60");
 
         param.input.vdw_cutoff_radius = "default";
         param.input.vdw_method = "none";

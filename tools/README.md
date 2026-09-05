@@ -29,10 +29,13 @@ tools/
 ├── 03_code_analysis/                 # Source code analysis tools
 │   └── generate_include_analysis.py
 │
-└── 04_windows_installation/          # Windows one-click installer via WSL2
-    ├── install-abacus.bat
-    ├── uninstall-abacus.bat
-    ├── provision.sh
+├── 04_windows_installation/          # Windows one-click installer via WSL2
+│   ├── install-abacus.bat
+│   ├── uninstall-abacus.bat
+│   ├── provision.sh
+│   └── README.md
+└── 05_param_generation/              # Generate parameters (developers only)
+    ├── generate_d3_data.py           # Generate DFT-D3 parameters from pinned s-dftd3 and mctc-lib package
     └── README.md
 ```
 
