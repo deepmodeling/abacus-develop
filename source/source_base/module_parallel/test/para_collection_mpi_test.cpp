@@ -8,7 +8,7 @@ TEST(ParaCollectionMpiTest, AssembleAndFind)
 {
     Parallel::ParaCollection coll;
     coll.add(std::unique_ptr<Parallel::ParaWorld>(
-        new Parallel::ParaKmeshWorld(MPI_COMM_WORLD, 1, 0, 1, 4, 1)));
+        new Parallel::ParaKmeshWorld(MPI_COMM_WORLD, 1, 0, 4, 1)));
     coll.add(Parallel::ParaWorld::make_serial(Parallel::ParaTag::pw));
     EXPECT_EQ(coll.size(), 2u);
 
@@ -25,7 +25,7 @@ TEST(ParaCollectionMpiTest, FindMissingReturnsInvalid)
 {
     Parallel::ParaCollection coll;
     coll.add(std::unique_ptr<Parallel::ParaWorld>(
-        new Parallel::ParaKmeshWorld(MPI_COMM_WORLD, 1, 0, 1, 4, 1)));
+        new Parallel::ParaKmeshWorld(MPI_COMM_WORLD, 1, 0, 4, 1)));
 
     const Parallel::ParaWorld& missing = coll.find("nonexistent");
     EXPECT_FALSE(missing.valid());
@@ -35,7 +35,7 @@ TEST(ParaCollectionMpiTest, FindAsSubclass)
 {
     Parallel::ParaCollection coll;
     coll.add(std::unique_ptr<Parallel::ParaWorld>(
-        new Parallel::ParaKmeshWorld(MPI_COMM_WORLD, 1, 0, 1, 8, 1)));
+        new Parallel::ParaKmeshWorld(MPI_COMM_WORLD, 1, 0, 8, 1)));
 
     const Parallel::ParaKmeshWorld* kmesh = coll.find_as<Parallel::ParaKmeshWorld>(Parallel::ParaTag::kmesh);
     ASSERT_NE(kmesh, nullptr);

@@ -15,7 +15,7 @@
 // =====================================================================
 
 #include "source_estate/write_init.h"
-#include "source_io/module_output/cube_io.h"
+#include "source_cell/cube_io.h"
 #include "source_base/tool_quit.h"
 
 #include <sstream>

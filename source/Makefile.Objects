@@ -231,6 +231,10 @@ OBJS_CELL=atom_pseudo.o\
     mdcell.o\
     cif_io.o\
     ucell_io.o\
+    read_cube.o\
+    write_cube.o\
+    write_pao.o\
+    output_log.o\
 
 OBJS_DEEPKS=lcao_deepks.o\
         deepks_basic.o\
@@ -626,7 +630,6 @@ OBJS_IO=module_parameter/input_conv.o\
     module_bessel/numerical_basis_output.o\
     output.o\
     module_output/print_info.o\
-    module_output/read_cube.o\
     module_wf/read_wfc_pw.o\
     module_wf/read_wf2rho_pw.o\
     module_restart/restart.o\
@@ -645,9 +648,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_wannier/to_w90_pw_setup.o\
     module_wannier/fr_overlap.o\
     module_unk/unk_overlap_pw.o\
-    module_output/write_pao.o\
     module_wf/write_wfc_pw.o\
-    module_output/write_cube.o\
     module_elf/write_elf.o\
     module_dipole/write_dipole.o\
     module_current/td_current_io.o\
@@ -655,7 +656,6 @@ OBJS_IO=module_parameter/input_conv.o\
     td_efield_io.o\
     td_vector_pot_io.o\
     module_chgpot/write_libxc_r.o\
-    module_output/output_log.o\
     module_hs/output_mat_sparse.o\
     module_ctrl/ctrl_scf_lcao.o\
     module_ctrl/ctrl_runner_lcao.o\
@@ -692,7 +692,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_hs/cal_plpr.o\
 
 OBJS_IO_LCAO=module_hs/cal_r_overlap_r.o\
-      module_output/write_orb_info.o\
+      write_orb_info.o\
       module_dos/write_dos_lcao.o\
       module_energy/write_proj_band_lcao.o\
       module_energy/write_eig_occ.o\
@@ -797,7 +797,7 @@ OBJS_PARALLEL=parallel_common.o\
     para_pw_world.o\
     para_diag_world.o\
     para_rgrid_world.o\
-    para_bgroup_world.o\
+    para_bdiff_ksame_world.o\
     para_matrix_world.o\
     para_mpi_func.o\
     para_setup.o\

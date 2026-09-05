@@ -30,8 +30,8 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_BASE_para_bgroup_world
-  SOURCES para_bgroup_world_test.cpp ../para_bgroup_world.cpp ../para_world.cpp
+  TARGET MODULE_BASE_para_bdiff_ksame_world
+  SOURCES para_bdiff_ksame_world_test.cpp ../para_bdiff_ksame_world.cpp ../para_world.cpp
 )
 
 AddTest(
@@ -77,10 +77,18 @@ AddTest(
 )
 target_compile_definitions(MODULE_BASE_para_setup_mpi PRIVATE __MPI)
 
+# Built with add_executable (not AddTest) so that no direct-run CTest entry is
+# created; the binary is only exercised through mpirun by the .sh test below,
+# matching the multi-process requirement of these cases.
+add_executable(MODULE_BASE_para_kmesh_world_mpi test_para_kmesh_world_mpi.cpp ../para_bdiff_ksame_world.cpp ../para_kmesh_world.cpp ../para_world.cpp)
+target_link_libraries(MODULE_BASE_para_kmesh_world_mpi PRIVATE MPI::MPI_CXX GTest::gtest GTest::gtest_main abacus::linalg_libs)
+target_compile_definitions(MODULE_BASE_para_kmesh_world_mpi PRIVATE __MPI)
+
 file(COPY para_world_mpi_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY para_collection_mpi_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY para_mpi_func_mpi_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY para_setup_mpi_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY test_para_kmesh_world_mpi.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 find_program(BASH bash)
 add_test(NAME MODULE_BASE_para_world_mpi_test
       COMMAND ${BASH} para_world_mpi_test.sh
@@ -96,5 +104,9 @@ add_test(NAME MODULE_BASE_para_mpi_func_mpi_test
 )
 add_test(NAME MODULE_BASE_para_setup_mpi_test
       COMMAND ${BASH} para_setup_mpi_test.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+add_test(NAME MODULE_BASE_para_kmesh_world_mpi_test
+      COMMAND ${BASH} test_para_kmesh_world_mpi.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )

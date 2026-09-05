@@ -44,7 +44,15 @@ add_library(
     cal_ux.cpp
     cif_io.cpp
     ucell_io.cpp
+    read_cube.cpp
+    write_cube.cpp
+    write_pao.cpp
+    output_log.cpp
 )
+
+if(ENABLE_LCAO)
+    target_sources(cell PRIVATE write_orb_info.cpp)
+endif()
 
 if(ENABLE_COVERAGE)
   add_coverage(cell)

@@ -3,10 +3,18 @@
 #include "mpi.h"
 #include "parallel_global.h"
 
-MPI_Comm POOL_WORLD; //groups for different plane waves. In this group, only plane waves are different. K-points and bands are the same.
-MPI_Comm KP_WORLD;   // groups for differnt k. In this group, only k-points are different. Bands and plane waves are the same.
-MPI_Comm BP_WORLD;   // groups for differnt bands. In this group, only bands are different. K-points and plane waves are the same.
-MPI_Comm INT_BGROUP; // internal comm groups for same bands. In this group, only bands are the same. K-points and plane waves are different.
+// Two-level pool terminology used across the parallel layer:
+//   - k-pool: a group of processes that share one subset of k-points. The
+//     processes are split into KPAR k-pools first (divide_pools); this split
+//     is independent of bndpar. MY_POOL / KP_WORLD refer to this level.
+//   - band-pool: a sub-group of one k-pool, created afterwards by dividing
+//     the k-pool into BNDPAR band groups. NPROC_IN_POOL / RANK_IN_POOL /
+//     POOL_WORLD refer to this level, i.e. the term "pool" in those globals
+//     means the (k-pool, band-group) cell, NOT the k-pool itself.
+MPI_Comm POOL_WORLD;   // one band-pool (k-pool x band-group cell): plane waves are distributed, k-points and the band window are shared.
+MPI_Comm KP_WORLD;     // links k-pools: only k-points differ; same rank_in_pool position in every k-pool. Valid ONLY when k-pools are equally sized (NPROC % KPAR == 0), otherwise MPI_COMM_NULL.
+MPI_Comm BP_WORLD;     // links band groups inside one k-pool: only the band window differs; k-points and plane-wave slab are the same. One communicator per rank position.
+MPI_Comm INT_BGROUP;   // same band-group index across all k-pools (plus the plane-wave ranks of that band group): k-points differ, the band window is the same. Always valid, also for uneven k-pools.
 MPI_Comm GRID_WORLD; // mohan add 2012-01-13
 MPI_Comm DIAG_WORLD; // mohan add 2012-01-13
 

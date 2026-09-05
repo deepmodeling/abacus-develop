@@ -230,9 +230,14 @@ void Parallel_Global::divide_pools(const int& NPROC,
                                    int& RANK_IN_POOL,
                                    int& MY_POOL)
 {
-    // note: the order of k-point parallelization and band parallelization is important
-    //       The order will not change the behavior of KP_WORLD or BP_WORLD, and MY_POOL
-    //       and MY_BNDGROUP will be the same as well.
+    // Two-level split, order matters:
+    // 1. k-point parallelization: NPROC processes are divided into KPAR
+    //    k-pools FIRST, independent of BNDPAR. MY_POOL is the k-pool index.
+    //    Uneven k-pool sizes (NPROC % KPAR != 0) are allowed here; in that
+    //    case KP_WORLD is MPI_COMM_NULL (see MPICommGroup::divide_group_comm).
+    // 2. band parallelization: each k-pool is divided into BNDPAR band
+    //    groups ("band-pools"). NPROC_IN_POOL / RANK_IN_POOL / POOL_WORLD
+    //    belong to this (k-pool x band-group) cell, NOT to the k-pool.
     if(BNDPAR > 1 && NPROC %(BNDPAR * KPAR) != 0)
     {
         std::cout << "Error: When BNDPAR = " << BNDPAR << " > 1, number of processes (" << NPROC

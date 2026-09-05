@@ -74,7 +74,7 @@ void expect_near_value(const T& actual, const T& expected)
 template <typename T>
 void test_additional_type_paths()
 {
-    const ModuleBase::CommunicationDomain domain = ModuleBase::world_communication_domain();
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
     MPI_Comm world = domain.communicator();
     const int rank = domain.rank();
     MPICommGroup world_group(world);

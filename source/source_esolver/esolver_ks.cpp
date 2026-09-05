@@ -11,7 +11,7 @@
 #include "source_io/module_energy/write_eig_occ.h"
 #include "source_io/module_energy/write_bands.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_output/output_log.h" // use write_head
+#include "source_cell/output_log.h" // use write_head
 #include "source_estate/elecstate_print.h" // print_etot
 #include "source_lcao/module_dftu/dftu_nao.h" // mohan add 2025-11-07
 #include "source_hamilt/module_xc/general_exx_info.h" // for init_general_exx_info

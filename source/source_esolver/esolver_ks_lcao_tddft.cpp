@@ -8,7 +8,7 @@
 #include "source_io/module_ctrl/ctrl_output_td.h"
 #include "source_io/module_efield/td_efield_io.h"
 #include "source_io/module_efield/td_vector_pot_io.h"
-#include "source_io/module_output/output_log.h"
+#include "source_cell/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_wf/read_wfc_nao.h"
 //------LCAO HSolver ElecState-------

@@ -3,6 +3,8 @@
 
 #include "source_estate/elecstate_lcao.h"
 
+struct Input_para;
+
 namespace ModuleIO
 {
 
@@ -13,7 +15,8 @@ void ctrl_output_fp(UnitCell& ucell,
                     Charge& chr,
                     surchem& solvent,
                     Parallel_Grid& para_grid,
-                    const int istep);
+                    const int istep,
+                    const Input_para& inp);
 
 }
 #endif

@@ -1,10 +1,11 @@
 #include "ctrl_output_fp.h" // use ctrl_output_fp()
-#include "../module_output/cube_io.h" // use write_vdata_palgrid
+#include "source_cell/cube_io.h" // use write_vdata_palgrid
 #include "../module_dipole/dipole_io.h" // use write_dipole
 #include "source_estate/module_charge/symm_rho.h" // use Symmetry_rho
 #include "source_hamilt/module_xc/xc_functional.h"    // use XC_Functional
 #include "source_estate/write_elecstat_pot.h" // use write_elecstat_pot
 #include "source_io/module_elf/write_elf.h"
+#include "source_io/module_parameter/input_parameter.h"
 
 #ifdef __LIBXC
 #include "source_io/module_chgpot/write_libxc_r.h"
@@ -20,35 +21,36 @@ void ctrl_output_fp(UnitCell& ucell,
                     Charge& chr,
                     surchem& solvent,
                     Parallel_Grid& para_grid,
-                    const int istep)
+                    const int istep,
+                    const Input_para& inp)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_fp");
     ModuleBase::timer::start("ModuleIO", "ctrl_output_fp");
 
-    const bool out_app_flag = PARAM.inp.out_app_flag;
+    const bool out_app_flag = inp.out_app_flag;
     const bool gamma_only = PARAM.globalv.gamma_only_local;
-    const int nspin = PARAM.inp.nspin;
+    const int nspin = inp.nspin;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
 
     // print out the 'g' index when istep_in != -1
     int istep_in = -1;
-    if (PARAM.inp.esolver_type != "tddft" && PARAM.inp.out_freq_ion > 0) // default value of out_freq_ion is 0
+    if (inp.esolver_type != "tddft" && inp.out_freq_ion > 0) // default value of out_freq_ion is 0
     {
-        if (istep % PARAM.inp.out_freq_ion == 0)
+        if (istep % inp.out_freq_ion == 0)
         {
             istep_in = istep;
         }
     }
-    else if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.out_freq_td > 0) // default value of out_freq_td is 0
+    else if (inp.esolver_type == "tddft" && inp.out_freq_td > 0) // default value of out_freq_td is 0
     {
-        if (istep % PARAM.inp.out_freq_td == 0)
+        if (istep % inp.out_freq_td == 0)
         {
             istep_in = istep;
         }
     }
 
     std::string geom_block;
-    bool should_output = (PARAM.inp.out_freq_ion == 0);
+    bool should_output = (inp.out_freq_ion == 0);
     if (istep_in >= 0)
     {
         geom_block = "g" + std::to_string(istep + 1);
@@ -56,7 +58,7 @@ void ctrl_output_fp(UnitCell& ucell,
     }
 
     // 4) write charge density
-    if (PARAM.inp.out_chg[0] > 0 && should_output)
+    if (inp.out_chg[0] > 0 && should_output)
     {
         for (int is = 0; is < nspin; ++is)
         {
@@ -82,7 +84,7 @@ void ctrl_output_fp(UnitCell& ucell,
                                           fn,
                                           pelec->eferm.get_efval(is),
                                           &(ucell),
-                                          PARAM.inp.out_chg[1],
+                                          inp.out_chg[1],
                                           1,
                                           PARAM.globalv.two_fermi,
                                           false);
@@ -110,7 +112,7 @@ void ctrl_output_fp(UnitCell& ucell,
     }
 
     // 5) write potential
-    if ((PARAM.inp.out_pot[0] == 1 || PARAM.inp.out_pot[0] == 3) && should_output)
+    if ((inp.out_pot[0] == 1 || inp.out_pot[0] == 3) && should_output)
     {
         for (int is = 0; is < nspin; is++)
         {
@@ -136,13 +138,13 @@ void ctrl_output_fp(UnitCell& ucell,
                                           fn,
                                           0.0, // efermi
                                           &(ucell),
-                                          PARAM.inp.out_pot[1],  // precision
+                                          inp.out_pot[1],  // precision
                                           0, // out_fermi
                                           PARAM.globalv.two_fermi,
                                           false);
         }
     }
-    else if (PARAM.inp.out_pot[0] == 2 && should_output)
+    else if (inp.out_pot[0] == 2 && should_output)
     {
         std::string fn = PARAM.globalv.global_out_dir + "potes";
         fn += geom_block + ".cube";
@@ -159,11 +161,16 @@ void ctrl_output_fp(UnitCell& ucell,
             &(ucell),
             pelec->pot->get_fixed_v(),
             solvent,
-            PARAM.inp.out_pot[1]);
+            inp.out_pot[1],
+            nspin,
+            inp.efield_flag,
+            inp.dip_cor_flag,
+            inp.imp_sol,
+            PARAM.globalv.two_fermi);
     }
 
     // 6) write ELF
-    if (PARAM.inp.out_elf[0] > 0 && should_output)
+    if (inp.out_elf[0] > 0 && should_output)
     {
         chr.cal_elf = true;
         Symmetry_rho srho;
@@ -181,16 +188,16 @@ void ctrl_output_fp(UnitCell& ucell,
             pw_rhod,
             para_grid,
             &(ucell),
-            PARAM.inp.out_elf[1],
+            inp.out_elf[1],
             geom_block,
             PARAM.globalv.two_fermi);
     }
 
 #ifdef __LIBXC
     // 7) write xc(r)
-    if (PARAM.inp.out_xc_r[0] >= 0 && should_output)
+    if (inp.out_xc_r[0] >= 0 && should_output)
     {
-        ModuleIO::write_libxc_r(PARAM.inp.out_xc_r[0],
+        ModuleIO::write_libxc_r(inp.out_xc_r[0],
                                 XC_Functional::get_func_id(),
                                 pw_rhod->nrxx, // number of real-space grid
                                 ucell.omega,   // volume of cell
@@ -202,7 +209,7 @@ void ctrl_output_fp(UnitCell& ucell,
 #endif
 
     // 8) write dipole moment
-    if (PARAM.inp.out_dipole == 1 && should_output)
+    if (inp.out_dipole == 1 && should_output)
     {
         for (int is = 0; is < nspin; ++is)
         {

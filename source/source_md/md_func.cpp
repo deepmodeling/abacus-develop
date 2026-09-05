@@ -2,7 +2,7 @@
 
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
-#include "source_io/module_output/output_log.h"
+#include "source_cell/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <cerrno>

@@ -3,7 +3,7 @@
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_hamilt/module_gint/gint_interface.h"
-#include "source_io/module_output/cube_io.h"
+#include "source_cell/cube_io.h"
 
 #include <algorithm>
 #include <cassert>

@@ -1,8 +1,8 @@
 #include "elecstate_tools.h"
 
 #include "occupy.h"
+#include "source_base/module_parallel/para_bridge.h"
 #include "source_base/parallel_comm.h"
-#include "source_base/parallel_reduce.h"
 
 #include <algorithm>
 #include <numeric>
@@ -74,11 +74,16 @@ void calEBand(const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, fener
     }
     f_en.eband = eband;
 
-#ifdef __MPI
-    // Combine contributions distributed by both KPAR and BNDPAR.
-    const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
-    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, f_en.eband);
-#endif
+    // Two-step reduction, order matters:
+    // 1. Band dimension: BPCG shards the band range across the band
+    //    groups of this k-pool, so combine the per-window partial sums
+    //    first (no-op with a single band group).
+    // 2. k dimension: exactly one contribution per k-pool.
+    // Reduce-only domains: no k-point distribution data needed.
+    Parallel::ParaKmeshWorld kmesh = Parallel::make_kmesh_world();
+    Parallel::ParaBdiffKsameWorld bdiff = Parallel::make_bdiff_ksame_world();
+    bdiff.reduce_across_bdiff_ksame(f_en.eband);
+    kmesh.reduce_across_pools(f_en.eband);
     return;
 }
 
@@ -98,27 +103,41 @@ void calculate_weights(const ModuleBase::matrix& ekb,
 
     const int nbands = ekb.nc;
     const int nks = ekb.nr;
+    const int nspin = PARAM.inp.nspin;
     if (!(Occupy::use_gaussian_broadening || Occupy::fixed_occupations))
     {
         // Taoni fix smearing_method=fixed for BPCG on 2026-08-21
         // Integer occupations use global band indices even when ekb is a local
         // contiguous BPCG shard.
         const int band_offset = get_band_offset(nbands, global_nbands);
+        // The kmesh domain is only built in the branches that dereference
+        // klist, so that callers passing no k-list (fixed occupations) are
+        // not affected. Only the reduction is needed here, so use the
+        // reduce-only overload and skip building the distribution arrays
+        // on every SCF iteration.
+        Parallel::ParaKmeshWorld kmesh = Parallel::make_kmesh_world();
         if (PARAM.globalv.two_fermi)
         {
-            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[0], ekb, eferm.ef_up, wg, 0, klist->isk);
-            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[1], ekb, eferm.ef_dw, wg, 1, klist->isk);
+            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[0], ekb, eferm.ef_up, wg,
+                             nspin, 0, klist->isk, kmesh);
+            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[1], ekb, eferm.ef_dw, wg,
+                             nspin, 1, klist->isk, kmesh);
             // ef = ( ef_up + ef_dw ) / 2.0_dp need??? mohan add 2012-04-16
             // Keep independent Fermi levels for the two spin channels.
         }
         else
         {
             // A spin selector of -1 requests the combined-spin occupation path.
-            Occupy::iweights(nks, klist->wk, nbands, band_offset, PARAM.inp.nelec, ekb, eferm.ef, wg, -1, klist->isk);
+            Occupy::iweights(nks, klist->wk, nbands, band_offset, PARAM.inp.nelec, ekb, eferm.ef, wg,
+                             nspin, -1, klist->isk, kmesh);
         }
     }
     else if (Occupy::use_gaussian_broadening)
     {
+        // The kmesh domain is only built in the branches that dereference
+        // klist, so that callers passing no k-list (fixed occupations) are
+        // not affected. Reduce-only overload: see the iweights branch above.
+        Parallel::ParaKmeshWorld kmesh = Parallel::make_kmesh_world();
         if (PARAM.globalv.two_fermi)
         {
             double demet_up = 0.0;
@@ -134,7 +153,8 @@ void calculate_weights(const ModuleBase::matrix& ekb,
                              demet_up,
                              wg,
                              0,
-                             klist->isk);
+                             klist->isk,
+                             kmesh);
             Occupy::gweights(nks,
                              klist->wk,
                              nbands,
@@ -146,7 +166,8 @@ void calculate_weights(const ModuleBase::matrix& ekb,
                              demet_dw,
                              wg,
                              1,
-                             klist->isk);
+                             klist->isk,
+                             kmesh);
             f_en.demet = demet_up + demet_dw;
         }
         else
@@ -163,13 +184,15 @@ void calculate_weights(const ModuleBase::matrix& ekb,
                              f_en.demet,
                              wg,
                              -1,
-                             klist->isk);
+                             klist->isk,
+                             kmesh);
         }
-#ifdef __MPI
         // demet is accumulated independently on every k-point and band partition.
-        const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
-        Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, f_en.demet);
-#endif
+        // Band dimension first (BPCG band shards), then one contribution
+        // per k-pool; see calEBand for the ordering rationale.
+        Parallel::ParaBdiffKsameWorld bdiff = Parallel::make_bdiff_ksame_world();
+        bdiff.reduce_across_bdiff_ksame(f_en.demet);
+        kmesh.reduce_across_pools(f_en.demet);
     }
     else if (Occupy::fixed_occupations)
     {

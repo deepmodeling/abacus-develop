@@ -124,7 +124,7 @@ TEST(ParallelDevice, CoversGpuStagingWithoutAccelerator)
 
 TEST(ParallelDevice, CoversMpiTypeOverloads)
 {
-    const ModuleBase::CommunicationDomain domain = ModuleBase::world_communication_domain();
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
     exercise_mpi_wrappers<float>(domain);
     exercise_mpi_wrappers<double>(domain);
     exercise_mpi_wrappers<std::complex<float>>(domain);

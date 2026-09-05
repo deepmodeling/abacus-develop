@@ -7,7 +7,7 @@
 #include "source_estate/param_update.h"
 #include "source_hamilt/module_ewald/h_ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
-#include "source_io/module_output/output_log.h"
+#include "source_cell/output_log.h"
 #include "source_io/module_output/print_info.h"
 #include "source_estate/rhog_io.h"
 #include "source_io/module_parameter/parameter.h"
@@ -153,8 +153,8 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     CE.update_delta_rho(ucell, &(this->chr), &(this->sf));
 
     //! print out charge density, potential, elf, etc.
-	ModuleIO::ctrl_output_fp(ucell, this->pelec, this->pw_big, this->pw_rhod, 
-			this->chr, this->solvent, this->Pgrid, istep); 
+	ModuleIO::ctrl_output_fp(ucell, this->pelec, this->pw_big, this->pw_rhod,
+			this->chr, this->solvent, this->Pgrid, istep, PARAM.inp);
 
 }
 

@@ -1,6 +1,7 @@
 #ifndef PARA_WORLD_H
 #define PARA_WORLD_H
 
+#include <cstring>
 #include <memory>
 #include <string>
 
@@ -20,9 +21,13 @@ namespace Parallel
  * GlobalV::RANK_IN_POOL / POOL_WORLD by an object that functions
  * receive explicitly.
  *
- * In serial builds (no __MPI) the communicator member does not
- * exist; rank() always returns 0 and size() always returns 1, so
- * call sites compile unchanged in both serial and MPI builds.
+ * The communicator is stored as an opaque handle so that the class
+ * layout is identical in serial and MPI builds. Binaries that mix
+ * translation units compiled with different __MPI settings (e.g. unit
+ * tests linked against the MPI-compiled base library) would otherwise
+ * be an ODR violation with undefined behavior. In serial builds rank()
+ * always returns 0 and size() always returns 1, so call sites compile
+ * unchanged in both serial and MPI builds.
  */
 class ParaWorld
 {
@@ -59,7 +64,11 @@ public:
     /// Underlying MPI communicator (MPI builds only).
     MPI_Comm comm() const
     {
-        return comm_;
+        MPI_Comm comm = MPI_COMM_NULL;
+        static_assert(sizeof(MPI_Comm) <= sizeof(comm_),
+                      "MPI_Comm does not fit into the opaque handle");
+        std::memcpy(&comm, &comm_, sizeof(MPI_Comm));
+        return comm;
     }
 #endif
 
@@ -127,12 +136,23 @@ protected:
 #endif
 
 private:
+#ifdef __MPI
+    /// Wrap an MPI communicator into the opaque handle storage.
+    static void* handle_from_comm(const MPI_Comm& comm)
+    {
+        void* handle = nullptr;
+        std::memcpy(&handle, &comm, sizeof(MPI_Comm));
+        return handle;
+    }
+#endif
+
     std::string tag_;   ///< domain tag
     int rank_;          ///< rank inside domain
     int size_;          ///< number of processes in domain
-#ifdef __MPI
-    MPI_Comm comm_;     ///< wrapped communicator (never owned/freed here)
-#endif
+    // Opaque communicator handle, present in both serial and MPI builds
+    // so that the class layout never depends on the __MPI macro (see the
+    // class comment). Never owned/freed here.
+    void* comm_;
 };
 
 } // namespace Parallel

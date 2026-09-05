@@ -3,7 +3,7 @@
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private
-#include "source_io/module_output/write_orb_info.h"
+#include "source_cell/write_orb_info.h"
 #include "source_cell/unitcell.h"
 #include "prepare_unitcell.h"
 #include "source_cell/read_pp_ucell.h"

@@ -51,7 +51,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_rho_io
   LIBS parameter base device cell_info
-  SOURCES rho_io_test.cpp ../module_output/read_cube.cpp ../module_output/write_cube.cpp
+  SOURCES rho_io_test.cpp ../../source_cell/read_cube.cpp ../../source_cell/write_cube.cpp
 )
 
 AddTest(

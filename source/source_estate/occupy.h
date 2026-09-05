@@ -5,6 +5,11 @@
 #include "source_base/matrix.h"
 #include "source_base/vector3.h"
 
+namespace Parallel
+{
+class ParaKmeshWorld;
+}
+
 class Occupy
 {
 
@@ -15,13 +20,13 @@ public:
 
     static void decision(const std::string &name,const std::string &smearing_method,const double &smearing_sigma);
 
-    static const bool& gauss(void) 
-	{
+    static const bool& gauss(void)
+    {
         return use_gaussian_broadening;
     }
 
-    static const bool& fix(void) 
-	{
+    static const bool& fix(void)
+    {
         return fixed_occupations;
     }
 
@@ -43,8 +48,10 @@ public:
                          const ModuleBase::matrix& ekb,
                          double& ef,
                          ModuleBase::matrix& wg,
+                         const int nspin,
                          const int& is,
-                         const std::vector<int>& isk);
+                         const std::vector<int>& isk,
+                         const Parallel::ParaKmeshWorld& kmesh);
 
     static void gweights(const int nks,
                          const std::vector<double>& wk,
@@ -57,43 +64,43 @@ public:
                          double& demet,
                          ModuleBase::matrix& wg,
                          const int& is,
-                         const std::vector<int>& isk);
+                         const std::vector<int>& isk,
+                         const Parallel::ParaKmeshWorld& kmesh);
 
-    static void tweights(const int nks,const int nspin,const int nband,
-						const double &nelec,const int ntetra,
-                         const ModuleBase::matrix &tetra,double **ekb,double &ef,ModuleBase::matrix &wg);
+    static void tweights(const int nks, const int nspin, const int nband,
+                         const double& nelec, const int ntetra,
+                         const ModuleBase::matrix& tetra, double** ekb, double& ef, ModuleBase::matrix& wg);
 
     static double wsweight(const ModuleBase::Vector3<double> &r, ModuleBase::Vector3<double> *rws,const int nrws);
 
+    static void efermig(const ModuleBase::matrix& ekb,
+                        const int nbnd,
+                        const int nks,
+                        const double& nelec,
+                        const std::vector<double>& wk,
+                        const double& smearing_sigma,
+                        const int ngauss,
+                        double& ef,
+                        const int& is,
+                        const std::vector<int>& isk,
+                        const Parallel::ParaKmeshWorld& kmesh);
+
+    static double sumkg(const ModuleBase::matrix& ekb,
+                        const int nband,
+                        const int nks,
+                        const std::vector<double>& wk,
+                        const double& smearing_sigma,
+                        const int ngauss,
+                        const double& e,
+                        const int& is,
+                        const std::vector<int>& isk,
+                        const Parallel::ParaKmeshWorld& kmesh);
+
+    static double wgauss(const double& x, const int n);
+
+    static double w1gauss(const double& x, const int n);
+
 private:
-  static void efermig(const ModuleBase::matrix& ekb,
-                      const int nbnd,
-                      const int nks,
-                      const double& nelec,
-                      const std::vector<double>& wk,
-                      const double& smearing_sigma,
-                      const int ngauss,
-                      double& ef,
-                      const int& is,
-                      const std::vector<int>& isk);
-
-  static double sumkg(const ModuleBase::matrix& ekb,
-                      const int nband,
-                      const int nks,
-                      const std::vector<double>& wk,
-                      const double& smearing_sigma,
-                      const int ngauss,
-                      const double& e,
-                      const int& is,
-                      const std::vector<int>& isk);
-
-  static double wgauss(const double& x, const int n);
-
-  static double w1gauss(const double& x, const int n);
-
-  //============================
-  // Needed in tweights
-  //============================
   static void efermit(double** ekb,
                       const int nband,
                       const int nks,

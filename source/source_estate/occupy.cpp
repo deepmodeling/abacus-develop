@@ -2,8 +2,8 @@
 
 #include "source_base/constants.h"
 #include "source_base/mymath.h"
-#include "source_base/parallel_reduce.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_base/module_parallel/para_bridge.h"
+#include "source_base/module_parallel/para_kmesh_world.h"
 
 Occupy::Occupy()
 {
@@ -126,8 +126,10 @@ void Occupy::decision(const std::string& name, const std::string& smearing_metho
  * @param ekb the array save the band energy.
  * @param ef output: the highest occupied Kohn-Sham level.
  * @param wg output: weight for each k, each band.
+ * @param nspin number of spin components: 1 (spin-degenerate), 2 (collinear) or 4 (non-collinear).
  * @param is the spin index now.
  * @param isk distinguish k point belong to which spin.
+ * @param kmesh k-point parallel domain for cross-pool reduction.
  */
 void Occupy::iweights(
     const int nks,
@@ -138,17 +140,22 @@ void Occupy::iweights(
     const ModuleBase::matrix& ekb,
     double& ef,
     ModuleBase::matrix& wg,
+    const int nspin,
     const int& is, //<- is should be -1, 0, or 1. -1 means set all spins, and 0 means spin up, 1 means spin down.
-    const std::vector<int>& isk)
+    const std::vector<int>& isk,
+    const Parallel::ParaKmeshWorld& kmesh)
 {
-    assert(is < 2);
+    assert(nspin == 1 || nspin == 2 || nspin == 4);
+    assert(is >= -1 && is < 2);
     double degspin = 2.0;
-    if (PARAM.inp.nspin == 4) {
+    if (nspin == 4)
+    {
         degspin = 1.0;
-}
-    if (is != -1) {
+    }
+    if (is != -1)
+    {
         degspin = 1.0;
-}
+    }
 
     double ib_mind = nelec / degspin;
     int ib_min = std::ceil(ib_mind);
@@ -163,7 +170,7 @@ void Occupy::iweights(
     for (int ik = 0; ik < nks; ++ik)
     {
         // when NSPIN=2, only calculate spin up or spin down with TWO_FERMI mode(nupdown != 0)
-        if (PARAM.inp.nspin == 2 && isk[ik] != is && is != -1)
+        if (nspin == 2 && isk[ik] != is && is != -1)
         {
             continue;
         }
@@ -182,9 +189,7 @@ void Occupy::iweights(
             }
         }
     }
-    #ifdef __MPI
-    Parallel_Reduce::reduce_max(ef);
-    #endif
+    kmesh.reduce_max_across_pools(ef);
     return;
 }
 
@@ -203,6 +208,7 @@ void Occupy::iweights(
  * @param wg output: weight of each band at each k point
  * @param is spin
  * @param isk array to point out each k belong to which spin
+ * @param kmesh k-point parallel domain for cross-pool reduction.
  */
 void Occupy::gweights(const int nks,
                       const std::vector<double>& wk,
@@ -215,24 +221,26 @@ void Occupy::gweights(const int nks,
                       double& demet,
                       ModuleBase::matrix& wg,
                       const int& is,
-                      const std::vector<int>& isk)
+                      const std::vector<int>& isk,
+                      const Parallel::ParaKmeshWorld& kmesh)
 {
     // ModuleBase::TITLE("Occupy","gweights");
     //===============================
     //  Calculate the Fermi energy ef
     //===============================
     //  call efermig
-    Occupy::efermig(ekb, nband, nks, nelec, wk, smearing_sigma, ngauss, ef, is, isk);
+    Occupy::efermig(ekb, nband, nks, nelec, wk, smearing_sigma, ngauss, ef, is, isk, kmesh);
     demet = 0.0;
 
     for (int ik = 0; ik < nks; ik++)
     {
         // mohan add 2011-04-03
-        if (is != -1 && is != isk[ik]) {
+        if (is != -1 && is != isk[ik])
+        {
             continue;
-}
+        }
 
-        for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
+        for (int ib = 0; ib < nband; ib++)
         {
             //================================
             // Calculate the gaussian weights
@@ -266,6 +274,7 @@ void Occupy::gweights(const int nks,
  * @param ef output: fermi level
  * @param is spin
  * @param isk array to point out each k belong to which spin
+ * @param kmesh k-point parallel domain for cross-pool reduction.
  */
 void Occupy::efermig(const ModuleBase::matrix& ekb,
                      const int nband,
@@ -276,7 +285,8 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
                      const int ngauss,
                      double& ef,
                      const int& is,
-                     const std::vector<int>& isk)
+                     const std::vector<int>& isk,
+                     const Parallel::ParaKmeshWorld& kmesh)
 {
     // ModuleBase::TITLE("Occupy","efermig");
     //==================================================================
@@ -309,10 +319,8 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
     eup += 2 * smearing_sigma;
     elw -= 2 * smearing_sigma;
     // find min and max across pools
-    #ifdef __MPI
-    Parallel_Reduce::reduce_max(eup);
-    Parallel_Reduce::reduce_min(elw);
-    #endif
+    kmesh.reduce_max_across_pools(eup);
+    kmesh.reduce_min_across_pools(elw);
     //=================
     // Bisection method
     //=================
@@ -320,8 +328,8 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
     int changetime = 0;
     while (true)
     {
-        const double sumkup = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, eup, is, isk);
-        const double sumklw = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, elw, is, isk);
+        const double sumkup = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, eup, is, isk, kmesh);
+        const double sumklw = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, elw, is, isk, kmesh);
 
         if (changetime > 1000)
         {
@@ -360,7 +368,7 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
         // change ef value
         //======================
         ef = (eup + elw) / 2.0;
-        const double sumkmid = sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, ef, is, isk);
+        const double sumkmid = sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, ef, is, isk, kmesh);
 
         if (std::abs(sumkmid - nelec) < eps)
         {
@@ -390,6 +398,7 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
  * @param e a givern energy
  * @param is spin
  * @param isk array to point out each k belong to which spin
+ * @param kmesh k-point parallel domain for cross-pool reduction.
  * @return (double) the number of states
  */
 double Occupy::sumkg(const ModuleBase::matrix& ekb,
@@ -400,15 +409,17 @@ double Occupy::sumkg(const ModuleBase::matrix& ekb,
                      const int ngauss,
                      const double& e,
                      const int& is,
-                     const std::vector<int>& isk)
+                     const std::vector<int>& isk,
+                     const Parallel::ParaKmeshWorld& kmesh)
 {
     // ModuleBase::TITLE("Occupy","sumkg");
     double sum2 = 0.0;
     for (int ik = 0; ik < nks; ik++)
     {
-        if (is != -1 && is != isk[ik]) {
+        if (is != -1 && is != isk[ik])
+        {
             continue;
-}
+        }
 
         double sum1 = 0.0;
         for (int ib = 0; ib < nband; ib++)
@@ -421,14 +432,14 @@ double Occupy::sumkg(const ModuleBase::matrix& ekb,
         sum2 += wk[ik] * sum1;
     }
 
-    // GlobalV::ofs_running << "\n sum2 before reduce = " << sum2 << std::endl;
-
-#ifdef __MPI
-    const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
-    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, sum2);
-#endif
-
-    // GlobalV::ofs_running << "\n sum2 after reduce = " << sum2 << std::endl;
+    // Two-step reduction, order matters:
+    // 1. Band dimension: BPCG shards the band range across the band
+    //    groups of this k-pool, so combine the per-window partial sums
+    //    first (no-op with a single band group).
+    Parallel::ParaBdiffKsameWorld bdiff = Parallel::make_bdiff_ksame_world();
+    bdiff.reduce_across_bdiff_ksame(sum2);
+    // 2. k dimension: exactly one contribution per k-pool.
+    kmesh.reduce_across_pools(sum2);
 
     return sum2;
 }
@@ -487,7 +498,7 @@ double Occupy::wgauss(const double& x, const int n)
     //====================
     wga = 0.5 * (1 - erf(-x));
     // wga = gauss_freq(x * ModuleBase::SQRT2);
-    //	std::cout<<"\n x="<<x<<" wga="<<wga;
+    // std::cout<<"\n x="<<x<<" wga="<<wga;
     if (n == 0)
     {
         return wga;
