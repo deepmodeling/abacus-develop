@@ -535,6 +535,8 @@ OBJS_PW=fft_bundle.o\
     pw_op.o\
 
 OBJS_RELAXATION=relax_data.o\
+    socket_ipi.o\
+    socket_driver.o\
     cg_base.o\
     bfgs_basic.o\
     relax_driver.o\
