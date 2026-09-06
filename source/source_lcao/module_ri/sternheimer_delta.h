@@ -278,6 +278,29 @@ std::vector<SternheimerDeltaLinearResponse> solve_delta_sternheimer_linear_respo
     double volume_element,
     const SternheimerRPA::SolverOptions& options = SternheimerRPA::SolverOptions());
 
+// Reuse an immutable projector across channel workers. Its basis must outlive the solve.
+SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const SternheimerSubspaceProjector& fixed_projector,
+    double reference_eigenvalue,
+    const SternheimerFDHamiltonian::Vector& rhs,
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const std::vector<SternheimerFDHamiltonian::Complex>& perturbation_matrix_elements,
+    double omega,
+    double volume_element,
+    const SternheimerRPA::SolverOptions& options = SternheimerRPA::SolverOptions());
+
+std::vector<SternheimerDeltaLinearResponse> solve_delta_sternheimer_linear_response_batch(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const SternheimerSubspaceProjector& fixed_projector,
+    double reference_eigenvalue,
+    const SternheimerFDHamiltonian::Matrix& rhs,
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const std::vector<std::vector<SternheimerFDHamiltonian::Complex>>& perturbation_matrix_elements,
+    double omega,
+    double volume_element,
+    const SternheimerRPA::SolverOptions& options = SternheimerRPA::SolverOptions());
+
 SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,

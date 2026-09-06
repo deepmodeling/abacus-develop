@@ -3338,6 +3338,7 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
             target_occupied_projector.push_back(function.values);
         }
         SternheimerDeltaSubspace delta_subspace;
+        std::unique_ptr<SternheimerPeriodicResponseProjectors> pair_projectors;
         SternheimerChannelWorkerPlan pair_channel_worker_plan = channel_worker_plan;
         target_projector_dimensions[pair_index] = static_cast<int>(target_occupied_projector.size());
         if (use_delta_sternheimer)
@@ -3410,14 +3411,79 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
             {
                 target.unoccupied_states = SternheimerFDZeroOrderStates();
             }
-            const SternheimerMemorySnapshot pair_channel_memory = detect_sternheimer_memory_snapshot();
+            const auto memory_before_trim = detect_sternheimer_memory_snapshot();
+            const auto trim_status = trim_sternheimer_process_heap();
+            const auto memory_after_trim = detect_sternheimer_memory_snapshot();
+            bool pack_projectors = channel_batch_width > 1;
+            std::uint64_t shared_projector_bytes
+                = SternheimerPeriodicResponseProjectors::estimated_storage_bytes(
+                    grid_data.grid.size(), target_occupied_projector.size(), delta_subspace.virtual_states.size(),
+                    pack_projectors);
+            append_chi0_progress_event(
+                "delta_memory_reclaimed", 0, -1, -1, -1, solved_equations, nullptr, -1.0,
+                elapsed_seconds_since(chi0_start_time),
+                "resource_source=" + memory_after_trim.source
+                    + " accounting_mode=" + sternheimer_memory_accounting_mode_name(memory_after_trim.mode)
+                    + " memory_before_trim_bytes=" + std::to_string(memory_before_trim.current_bytes)
+                    + " memory_after_trim_bytes=" + std::to_string(memory_after_trim.current_bytes)
+                    + " node_memory_limit_bytes=" + std::to_string(memory_after_trim.limit_bytes)
+                    + " trim_status=" + std::to_string(static_cast<int>(trim_status))
+                    + " shared_projector_bytes=" + std::to_string(shared_projector_bytes));
+            // Admit the persistent packed projectors before allocating them, then
+            // measure them as baseline rather than duplicating them in each worker.
+            if (pack_projectors)
+            {
+                try
+                {
+                    const auto admission = plan_sternheimer_channel_workers(
+                        num_channels, sternheimer_channel_openmp_threads(), grid_data.grid.size(), channel_threads,
+                        reserve_sternheimer_shared_memory(memory_after_trim, shared_projector_bytes), channel_batch_width);
+                    pack_projectors = admission.channel_batch_width > 1;
+                }
+                catch (const std::runtime_error&)
+                {
+                    // A scalar solve borrows the same complete basis without packing it.
+                    // It still has to pass the unchanged admission check below.
+                    pack_projectors = false;
+                }
+            }
+            shared_projector_bytes = SternheimerPeriodicResponseProjectors::estimated_storage_bytes(
+                grid_data.grid.size(), target_occupied_projector.size(), delta_subspace.virtual_states.size(),
+                pack_projectors);
+            const int admitted_batch_width = pack_projectors ? channel_batch_width : 1;
+            plan_sternheimer_channel_workers(
+                num_channels, sternheimer_channel_openmp_threads(), grid_data.grid.size(), channel_threads,
+                reserve_sternheimer_shared_memory(memory_after_trim, shared_projector_bytes), admitted_batch_width);
+            pair_projectors = std::make_unique<SternheimerPeriodicResponseProjectors>(
+                target_occupied_projector, delta_subspace.virtual_states, grid_data.volume_element, pack_projectors);
+            trim_sternheimer_process_heap();
+            SternheimerMemorySnapshot pair_channel_memory = detect_sternheimer_memory_snapshot();
+            append_chi0_progress_event(
+                "shared_projectors_ready", 0, -1, -1, -1, solved_equations, nullptr, -1.0,
+                elapsed_seconds_since(chi0_start_time),
+                "memory_current_bytes=" + std::to_string(pair_channel_memory.current_bytes)
+                    + " node_memory_limit_bytes=" + std::to_string(pair_channel_memory.limit_bytes)
+                    + " shared_projector_bytes=" + std::to_string(shared_projector_bytes)
+                    + " owned_projector_bytes="
+                    + std::to_string(pair_projectors->occupied.storage_bytes() + pair_projectors->fixed.storage_bytes()));
             pair_channel_worker_plan
                 = plan_sternheimer_channel_workers(num_channels,
                                                     sternheimer_channel_openmp_threads(),
                                                     grid_data.grid.size(),
                                                     channel_threads,
                                                     pair_channel_memory,
-                                                    channel_batch_width);
+                                                    admitted_batch_width);
+            if (pack_projectors && pair_channel_worker_plan.channel_batch_width == 1)
+            {
+                pair_projectors.reset();
+                trim_sternheimer_process_heap();
+                pair_projectors = std::make_unique<SternheimerPeriodicResponseProjectors>(
+                    target_occupied_projector, delta_subspace.virtual_states, grid_data.volume_element, false);
+                pair_channel_memory = detect_sternheimer_memory_snapshot();
+                pair_channel_worker_plan = plan_sternheimer_channel_workers(
+                    num_channels, sternheimer_channel_openmp_threads(), grid_data.grid.size(), channel_threads,
+                    pair_channel_memory, 1);
+            }
             channel_worker_plan = pair_channel_worker_plan;
             append_chi0_progress_event(
                 "equation_workers_ready",
@@ -3530,24 +3596,10 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                     bool has_wavefunction_diagnostic = false;
                     SternheimerWavefunctionDiagnostic::Record wavefunction_diagnostic;
                 };
-                const std::vector<SternheimerChannelBatch> all_channel_batches
-                    = make_sternheimer_channel_batches(num_channels, pair_channel_batch_width);
-                std::vector<SternheimerChannelBatch> channel_batches;
-                channel_batches.reserve(all_channel_batches.size());
-                for (std::size_t batch_index = 0;
-                     batch_index != all_channel_batches.size();
-                     ++batch_index)
-                {
-                    if (sternheimer_channel_batch_replica_owner(
-                            ib,
-                            static_cast<int>(batch_index),
-                            static_cast<int>(all_channel_batches.size()),
-                            response_replicas)
-                        == local_channel_replica)
-                    {
-                        channel_batches.push_back(all_channel_batches[batch_index]);
-                    }
-                }
+                const std::vector<SternheimerChannelBatch> channel_batches
+                    = make_sternheimer_owned_channel_batches(num_channels, channel_batch_width,
+                                                             pair_channel_batch_width, response_replicas,
+                                                             local_channel_replica, ib);
                 const int solved_equations_before_band = solved_equations;
                 std::atomic<int> completed_batch_equations{0};
                 std::vector<std::vector<PeriodicChannelEquationResult>> grouped_channel_results
@@ -3598,7 +3650,8 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                     perturbation_matrix_elements.front(),
                                     omega_ry,
                                     grid_data.volume_element,
-                                    solver_options));
+                                    solver_options,
+                                    pair_projectors.get()));
                             }
                             else
                             {
@@ -3612,7 +3665,8 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                     perturbation_matrix_elements,
                                     omega_ry,
                                     grid_data.volume_element,
-                                    solver_options);
+                                    solver_options,
+                                    pair_projectors.get());
                             }
                             std::vector<const SternheimerFDHamiltonian::Vector*> response_views;
                             response_views.reserve(responses.size());

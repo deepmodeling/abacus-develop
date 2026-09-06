@@ -1,8 +1,23 @@
 #include "source_lcao/module_ri/sternheimer_periodic_solver.h"
+#include <limits>
 
 #include <complex>
 #include <gtest/gtest.h>
 #include <vector>
+
+TEST(SternheimerPeriodicSolver, SharedProjectorReservationIncludesMetadataAndRejectsOverflow)
+{
+    using Projectors = ModuleRI::SternheimerPeriodicResponseProjectors;
+    using Vector = ModuleRI::SternheimerFDHamiltonian::Vector;
+    EXPECT_EQ(Projectors::estimated_storage_bytes(10, 2, 3),
+              7u * (11u * sizeof(ModuleRI::SternheimerFDHamiltonian::Complex) + sizeof(const Vector*)));
+    EXPECT_EQ(Projectors::estimated_storage_bytes(10, 2, 3, false),
+              7u * (sizeof(ModuleRI::SternheimerFDHamiltonian::Complex) + sizeof(const Vector*)));
+    EXPECT_THROW(Projectors::estimated_storage_bytes(std::numeric_limits<std::size_t>::max(), 2, 3),
+                 std::overflow_error);
+    EXPECT_THROW(Projectors::estimated_storage_bytes(10, std::numeric_limits<std::size_t>::max(), 3),
+                 std::overflow_error);
+}
 
 TEST(SternheimerPeriodicSolver, StandardModeSolvesInFullGridComplement)
 {
@@ -277,13 +292,23 @@ TEST(SternheimerPeriodicSolver, DeltaBatchMatchesIndependentChannels)
     const Hamiltonian::Matrix rhs = {
         states.wavefunctions[3],
         states.wavefunctions[5]};
+    Hamiltonian::Matrix coupled_rhs = rhs;
+    for (std::size_t column = 0; column != coupled_rhs.size(); ++column)
+    {
+        for (std::size_t ir = 0; ir != coupled_rhs[column].size(); ++ir)
+        {
+            coupled_rhs[column][ir] += Complex(0.3, 0.2 * (column + 1)) * states.wavefunctions[1][ir]
+                                      + Complex(-0.2, 0.15) * states.wavefunctions[2][ir]
+                                      + Complex(0.4, -0.1) * states.wavefunctions[4][ir];
+        }
+    }
     std::vector<std::vector<Complex>> perturbation_matrix_elements(rhs.size());
     for (std::size_t column = 0; column != rhs.size(); ++column)
     {
         for (const auto& state: virtual_states)
         {
             perturbation_matrix_elements[column].push_back(
-                ModuleRI::sternheimer_fd_grid_dot(state.orbital, rhs[column], volume_element));
+                -ModuleRI::sternheimer_fd_grid_dot(state.orbital, coupled_rhs[column], volume_element));
         }
     }
     ModuleRI::SternheimerRPA::SolverOptions options;
@@ -299,7 +324,7 @@ TEST(SternheimerPeriodicSolver, DeltaBatchMatchesIndependentChannels)
                                                                                hamiltonian,
                                                                                occupied,
                                                                                states.eigenvalues[0],
-                                                                               rhs[column],
+                                                                               coupled_rhs[column],
                                                                                virtual_states,
                                                                                perturbation_matrix_elements[column],
                                                                                omega,
@@ -311,16 +336,44 @@ TEST(SternheimerPeriodicSolver, DeltaBatchMatchesIndependentChannels)
         hamiltonian,
         occupied,
         states.eigenvalues[0],
-        rhs,
+        coupled_rhs,
         virtual_states,
         perturbation_matrix_elements,
         omega,
         volume_element,
         options);
 
+    const ModuleRI::SternheimerPeriodicResponseProjectors projectors(
+        occupied, virtual_states, volume_element);
+    const ModuleRI::SternheimerPeriodicResponseProjectors scalar_projectors(
+        occupied, virtual_states, volume_element, false);
+    EXPECT_LT(scalar_projectors.fixed.storage_bytes(), projectors.fixed.storage_bytes());
+    const auto shared_batch = ModuleRI::solve_sternheimer_periodic_linear_response_batch(
+        true, hamiltonian, occupied, states.eigenvalues[0], coupled_rhs, virtual_states,
+        perturbation_matrix_elements, omega, volume_element, options, &projectors);
+    const auto owning_subspace = ModuleRI::build_delta_sternheimer_fixed_subspace(occupied, virtual_states);
+    const auto owning_batch = ModuleRI::solve_delta_sternheimer_linear_response_batch(
+        hamiltonian, owning_subspace, states.eigenvalues[0], coupled_rhs, virtual_states,
+        perturbation_matrix_elements, omega, volume_element, options);
+    ASSERT_EQ(shared_batch.size(), batch.size());
+
     ASSERT_EQ(batch.size(), scalar.size());
     for (std::size_t column = 0; column != scalar.size(); ++column)
     {
+        const auto shared_scalar = ModuleRI::solve_sternheimer_periodic_linear_response(
+            true, hamiltonian, occupied, states.eigenvalues[0], coupled_rhs[column], virtual_states,
+            perturbation_matrix_elements[column], omega, volume_element, options, &scalar_projectors);
+        EXPECT_EQ(shared_batch[column].solver.converged, owning_batch[column].solver.converged);
+        EXPECT_EQ(shared_batch[column].solver.iterations, owning_batch[column].solver.iterations);
+        EXPECT_NEAR(shared_batch[column].residual_norm, owning_batch[column].residual_norm, 1.0e-12);
+        EXPECT_NEAR(shared_scalar.residual_norm, scalar[column].residual_norm, 1.0e-12);
+        EXPECT_GT(std::abs(shared_batch[column].delta_components.sos_coefficients[0]), 1.0e-4);
+        EXPECT_GT(std::abs(shared_batch[column].delta_components.pulay_coefficients[0]), 1.0e-6);
+        for (std::size_t state = 0; state != virtual_states.size(); ++state)
+        {
+            EXPECT_NEAR(std::abs(shared_batch[column].delta_components.coefficients[state]
+                                - owning_batch[column].response.coefficients[state]), 0.0, 1.0e-12);
+        }
         EXPECT_EQ(batch[column].solver.converged, scalar[column].solver.converged);
         EXPECT_EQ(batch[column].solver.iterations, scalar[column].solver.iterations);
         EXPECT_NEAR(batch[column].solver.relative_residual, scalar[column].solver.relative_residual, 1.0e-12);
@@ -331,6 +384,9 @@ TEST(SternheimerPeriodicSolver, DeltaBatchMatchesIndependentChannels)
         ASSERT_EQ(batch[column].wavefunction.size(), scalar[column].wavefunction.size());
         for (std::size_t ir = 0; ir != scalar[column].wavefunction.size(); ++ir)
         {
+            EXPECT_NEAR(std::abs(shared_batch[column].wavefunction[ir]
+                                 - owning_batch[column].response.reconstructed_wavefunction[ir]), 0.0, 1.0e-12);
+            EXPECT_NEAR(std::abs(shared_scalar.wavefunction[ir] - scalar[column].wavefunction[ir]), 0.0, 1.0e-12);
             EXPECT_NEAR(batch[column].projected_rhs[ir].real(), scalar[column].projected_rhs[ir].real(), 1.0e-12);
             EXPECT_NEAR(batch[column].projected_rhs[ir].imag(), scalar[column].projected_rhs[ir].imag(), 1.0e-12);
             EXPECT_NEAR(batch[column].wavefunction[ir].real(), scalar[column].wavefunction[ir].real(), 1.0e-11);

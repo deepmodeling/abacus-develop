@@ -4,6 +4,7 @@
 #include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
 
 #include <complex>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -25,12 +26,23 @@ class SternheimerSubspaceProjector
     SternheimerSubspaceProjector(const std::vector<Vector>& subspace,
                                  double grid_weight,
                                  bool orthonormal_batch);
+    // Borrowed vectors must remain alive, at stable addresses and unchanged.
+    // The pointer list is owned; an orthonormal batch projector packs the basis
+    // once. Concurrent projections require distinct outputs and a thread-safe Dot.
+    SternheimerSubspaceProjector(std::vector<const Vector*> subspace, Dot dot);
+    SternheimerSubspaceProjector(std::vector<const Vector*> subspace, double grid_weight);
+    SternheimerSubspaceProjector(std::vector<const Vector*> subspace,
+                                 double grid_weight,
+                                 bool orthonormal_batch);
 
     void project(Vector& vec) const;
     void project_batch(std::vector<Vector>& vectors) const;
+    std::size_t basis_size() const;
+    // Owned vector capacities only; excludes borrowed grids and callback storage.
+    std::size_t storage_bytes() const;
 
   private:
-    const std::vector<Vector>* subspace_ = nullptr;
+    std::vector<const Vector*> subspace_;
     Dot dot_;
     std::vector<Complex> basis_norms_;
     double batch_grid_weight_ = 0.0;

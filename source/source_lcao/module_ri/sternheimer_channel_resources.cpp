@@ -10,6 +10,10 @@
 #include <stdexcept>
 #include <string>
 
+#if defined(__GLIBC__)
+#include <malloc.h>
+#endif
+
 #ifdef __MPI
 #include <mpi.h>
 #endif
@@ -44,19 +48,43 @@ std::uint64_t checked_multiply(const std::uint64_t lhs, const std::uint64_t rhs)
     return lhs * rhs;
 }
 
+std::uint64_t checked_add(const std::uint64_t lhs, const std::uint64_t rhs)
+{
+    if (rhs > std::numeric_limits<std::uint64_t>::max() - lhs)
+    {
+        throw std::overflow_error("Sternheimer shared memory reservation overflow.");
+    }
+    return lhs + rhs;
+}
+
 std::uint64_t three_quarters(const std::uint64_t bytes)
 {
     return (bytes / 4) * 3 + ((bytes % 4) * 3) / 4;
 }
 
-std::uint64_t checked_remaining(const std::uint64_t target, const std::uint64_t current)
+std::runtime_error memory_budget_error(const char* reason,
+                                      const SternheimerMemorySnapshot& memory,
+                                      const std::uint64_t target)
 {
-    if (current >= target)
+    std::ostringstream message;
+    message << reason << " resource_source=" << memory.source
+            << " accounting_mode=" << sternheimer_memory_accounting_mode_name(memory.mode)
+            << " node_memory_limit_bytes=" << memory.limit_bytes
+            << " memory_current_bytes=" << memory.current_bytes
+            << " memory_target_bytes=" << target << " local_mpi_ranks=" << memory.local_mpi_ranks;
+    return std::runtime_error(message.str());
+}
+
+std::uint64_t checked_remaining(const std::uint64_t target, const SternheimerMemorySnapshot& memory)
+{
+    if (memory.current_bytes >= target)
     {
-        throw std::runtime_error(
-            "Sternheimer channel memory baseline leaves no room for one worker within the 75 percent target.");
+        throw memory_budget_error(
+            "Sternheimer channel memory baseline leaves no room for one worker within the 75 percent target.",
+            memory,
+            target);
     }
-    return target - current;
+    return target - memory.current_bytes;
 }
 
 std::string trim_copy(const std::string& text)
@@ -222,6 +250,55 @@ detail::SternheimerOptionalValue<std::uint64_t> allreduce_optional_max(
 
 } // namespace
 
+SternheimerHeapTrimStatus trim_sternheimer_process_heap() noexcept
+{
+#if defined(__GLIBC__)
+    return malloc_trim(0) != 0 ? SternheimerHeapTrimStatus::pages_released
+                               : SternheimerHeapTrimStatus::no_pages_released;
+#else
+    return SternheimerHeapTrimStatus::unsupported;
+#endif
+}
+
+SternheimerMemorySnapshot reserve_sternheimer_shared_memory(const SternheimerMemorySnapshot& memory,
+                                                           const std::uint64_t bytes_per_rank)
+{
+    if (memory.mode == SternheimerMemoryAccountingMode::fallback_one)
+    {
+        return memory;
+    }
+    if (memory.local_mpi_ranks <= 0)
+    {
+        throw std::invalid_argument("Sternheimer shared memory reservation requires a positive local MPI rank count.");
+    }
+    SternheimerMemorySnapshot adjusted = memory;
+    switch (memory.mode)
+    {
+    case SternheimerMemoryAccountingMode::node_aggregate:
+        adjusted.current_bytes = checked_add(
+            memory.current_bytes, checked_multiply(bytes_per_rank, static_cast<std::uint64_t>(memory.local_mpi_ranks)));
+        break;
+    case SternheimerMemoryAccountingMode::per_rank:
+        adjusted.current_bytes = checked_add(memory.current_bytes, bytes_per_rank);
+        break;
+    case SternheimerMemoryAccountingMode::available: {
+        const std::uint64_t reserved_bytes
+            = checked_multiply(bytes_per_rank, static_cast<std::uint64_t>(memory.local_mpi_ranks));
+        if (reserved_bytes > memory.limit_bytes)
+        {
+            throw memory_budget_error("Sternheimer shared memory reservation exceeds available memory.",
+                                      memory,
+                                      three_quarters(memory.limit_bytes));
+        }
+        adjusted.limit_bytes -= reserved_bytes;
+        break;
+    }
+    case SternheimerMemoryAccountingMode::fallback_one:
+        break;
+    }
+    return adjusted;
+}
+
 std::uint64_t estimate_sternheimer_channel_worker_bytes(const std::size_t grid_size)
 {
     return checked_multiply(checked_multiply(kComplexVectorsPerWorker, static_cast<std::uint64_t>(grid_size)),
@@ -242,6 +319,42 @@ std::vector<SternheimerChannelBatch> make_sternheimer_channel_batches(const int 
     for (int begin = 0; begin < num_channels; begin += batch_width)
     {
         batches.push_back({begin, std::min(batch_width, num_channels - begin)});
+    }
+    return batches;
+}
+
+std::vector<SternheimerChannelBatch> make_sternheimer_owned_channel_batches(const int num_channels,
+                                                                           const int ownership_batch_width,
+                                                                           const int worker_batch_width,
+                                                                           const int replica_count,
+                                                                           const int replica_index,
+                                                                           const int occupied_band_index)
+{
+    if (num_channels < 0 || ownership_batch_width <= 0 || worker_batch_width <= 0
+        || replica_count <= 0 || replica_index < 0 || replica_index >= replica_count
+        || occupied_band_index < 0)
+    {
+        throw std::invalid_argument("Invalid Sternheimer owned-channel batch dimensions.");
+    }
+    std::vector<SternheimerChannelBatch> batches;
+    if (num_channels == 0)
+    {
+        return batches;
+    }
+    const std::int64_t chunk_count = 1 + (num_channels - 1) / ownership_batch_width;
+    // Match sternheimer_channel_batch_replica_owner using the global requested-width count.
+    const std::int64_t band_offset = static_cast<std::int64_t>(occupied_band_index) * chunk_count % replica_count;
+    const std::int64_t first_chunk = (replica_index - band_offset + replica_count) % replica_count;
+    for (std::int64_t chunk = first_chunk; chunk < chunk_count; chunk += replica_count)
+    {
+        int begin = static_cast<int>(chunk * ownership_batch_width);
+        const int end = begin + std::min(ownership_batch_width, num_channels - begin);
+        while (begin < end)
+        {
+            const int size = std::min(worker_batch_width, end - begin);
+            batches.push_back({begin, size});
+            begin += size;
+        }
     }
     return batches;
 }
@@ -297,13 +410,13 @@ SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(const int num_chan
     {
     case SternheimerMemoryAccountingMode::node_aggregate:
         plan.target_bytes = three_quarters(memory.limit_bytes);
-        plan.increment_bytes_per_rank = checked_remaining(plan.target_bytes, memory.current_bytes)
+        plan.increment_bytes_per_rank = checked_remaining(plan.target_bytes, memory)
                                         / static_cast<std::uint64_t>(memory.local_mpi_ranks);
         break;
     case SternheimerMemoryAccountingMode::per_rank: {
         const std::uint64_t rank_limit = memory.limit_bytes / static_cast<std::uint64_t>(memory.local_mpi_ranks);
         plan.target_bytes = three_quarters(rank_limit);
-        plan.increment_bytes_per_rank = checked_remaining(plan.target_bytes, memory.current_bytes);
+        plan.increment_bytes_per_rank = checked_remaining(plan.target_bytes, memory);
         break;
     }
     case SternheimerMemoryAccountingMode::available:
@@ -317,8 +430,10 @@ SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(const int num_chan
     const std::uint64_t memory_batch_width = plan.increment_bytes_per_rank / base_worker_bytes;
     if (memory_batch_width == 0)
     {
-        throw std::runtime_error(
-            "Sternheimer channel memory budget cannot accommodate one worker within the 75 percent target.");
+        throw memory_budget_error(
+            "Sternheimer channel memory budget cannot accommodate one worker within the 75 percent target.",
+            memory,
+            plan.target_bytes);
     }
     plan.channel_batch_width = std::min(
         channel_batch_width,

@@ -40,6 +40,17 @@ void assert_same_size(const SternheimerRPA::Vector& lhs, const SternheimerRPA::V
     }
 }
 
+std::vector<const SternheimerRPA::Vector*> make_subspace_views(const std::vector<SternheimerRPA::Vector>& subspace)
+{
+    std::vector<const SternheimerRPA::Vector*> views;
+    views.reserve(subspace.size());
+    for (const SternheimerRPA::Vector& basis: subspace)
+    {
+        views.push_back(&basis);
+    }
+    return views;
+}
+
 double vector_norm(const SternheimerRPA::LinearProblem& problem, const SternheimerRPA::Vector& vec)
 {
     const auto norm2 = problem.dot(vec, vec);
@@ -1781,70 +1792,104 @@ SternheimerRPA::Complex SternheimerRPA::local_grid_dot(const Vector& lhs, const 
 }
 
 SternheimerSubspaceProjector::SternheimerSubspaceProjector(const std::vector<Vector>& subspace, Dot dot)
-    : subspace_(&subspace), dot_(std::move(dot))
+    : SternheimerSubspaceProjector(make_subspace_views(subspace), std::move(dot))
+{
+}
+
+SternheimerSubspaceProjector::SternheimerSubspaceProjector(std::vector<const Vector*> subspace, Dot dot)
+    : subspace_(std::move(subspace)), dot_(std::move(dot))
 {
     if (!dot_)
     {
         throw std::invalid_argument("SternheimerSubspaceProjector requires a dot callback.");
     }
-    basis_norms_.reserve(subspace.size());
-    for (const Vector& basis_vec: subspace)
+    for (const Vector* basis: subspace_)
     {
-        basis_norms_.push_back(dot_(basis_vec, basis_vec));
+        if (basis == nullptr)
+        {
+            throw std::invalid_argument("SternheimerSubspaceProjector requires non-null basis views.");
+        }
+    }
+    for (const Vector* basis: subspace_)
+    {
+        assert_same_size(*subspace_.front(), *basis, "SternheimerSubspaceProjector basis");
+    }
+    basis_norms_.reserve(subspace_.size());
+    for (const Vector* basis: subspace_)
+    {
+        basis_norms_.push_back(dot_(*basis, *basis));
     }
 }
 
 SternheimerSubspaceProjector::SternheimerSubspaceProjector(const std::vector<Vector>& subspace,
                                                            const double grid_weight)
-    : SternheimerSubspaceProjector(subspace, grid_weight, false)
+    : SternheimerSubspaceProjector(make_subspace_views(subspace), grid_weight, false)
 {
 }
 
 SternheimerSubspaceProjector::SternheimerSubspaceProjector(const std::vector<Vector>& subspace,
                                                            const double grid_weight,
                                                            const bool orthonormal_batch)
-    : subspace_(&subspace),
-      dot_([grid_weight](const Vector& lhs, const Vector& rhs) {
+    : SternheimerSubspaceProjector(make_subspace_views(subspace), grid_weight, orthonormal_batch)
+{
+}
+
+SternheimerSubspaceProjector::SternheimerSubspaceProjector(std::vector<const Vector*> subspace,
+                                                           const double grid_weight)
+    : SternheimerSubspaceProjector(std::move(subspace), grid_weight, false)
+{
+}
+
+SternheimerSubspaceProjector::SternheimerSubspaceProjector(std::vector<const Vector*> subspace,
+                                                           const double grid_weight,
+                                                           const bool orthonormal_batch)
+    : SternheimerSubspaceProjector(std::move(subspace), [grid_weight](const Vector& lhs, const Vector& rhs) {
           return SternheimerRPA::local_grid_dot(lhs, rhs, grid_weight);
-      }),
-      batch_grid_weight_(grid_weight),
-      use_direct_batch_dot_(true),
-      use_orthonormal_batch_projection_(orthonormal_batch)
+      })
 {
     if (grid_weight <= 0.0)
     {
         throw std::invalid_argument("SternheimerSubspaceProjector requires a positive grid weight.");
     }
-    basis_norms_.reserve(subspace.size());
-    for (const Vector& basis_vec: subspace)
+    batch_grid_weight_ = grid_weight;
+    use_direct_batch_dot_ = true;
+    use_orthonormal_batch_projection_ = orthonormal_batch;
+    if (use_orthonormal_batch_projection_ && !subspace_.empty())
     {
-        basis_norms_.push_back(dot_(basis_vec, basis_vec));
-    }
-    if (use_orthonormal_batch_projection_ && !subspace.empty())
-    {
-        const std::size_t grid_size = subspace.front().size();
-        const std::size_t basis_size = subspace.size();
-        basis_by_grid_.resize(grid_size * basis_size);
-        for (const Vector& basis_vec: subspace)
+        const std::size_t grid_size = subspace_.front()->size();
+        const std::size_t basis_size = subspace_.size();
+        if (grid_size != 0 && basis_size > basis_by_grid_.max_size() / grid_size)
         {
-            assert_same_size(subspace.front(), basis_vec, "SternheimerSubspaceProjector orthonormal batch");
+            throw std::overflow_error("SternheimerSubspaceProjector packed basis size overflow.");
         }
+        basis_by_grid_.resize(grid_size * basis_size);
 #pragma omp parallel for schedule(static)
         for (std::size_t ir = 0; ir != grid_size; ++ir)
         {
             for (std::size_t basis = 0; basis != basis_size; ++basis)
             {
-                basis_by_grid_[ir * basis_size + basis] = subspace[basis][ir];
+                basis_by_grid_[ir * basis_size + basis] = (*subspace_[basis])[ir];
             }
         }
     }
 }
 
+std::size_t SternheimerSubspaceProjector::basis_size() const
+{
+    return subspace_.size();
+}
+
+std::size_t SternheimerSubspaceProjector::storage_bytes() const
+{
+    return subspace_.capacity() * sizeof(const Vector*)
+           + (basis_norms_.capacity() + basis_by_grid_.capacity()) * sizeof(Complex);
+}
+
 void SternheimerSubspaceProjector::project(Vector& vec) const
 {
-    for (std::size_t index = 0; index != subspace_->size(); ++index)
+    for (std::size_t index = 0; index != subspace_.size(); ++index)
     {
-        const Vector& basis_vec = (*subspace_)[index];
+        const Vector& basis_vec = *subspace_[index];
         assert_same_size(basis_vec, vec, "SternheimerSubspaceProjector::project");
         const Complex norm = basis_norms_[index];
         if (std::abs(norm) == 0.0)
@@ -1862,20 +1907,17 @@ void SternheimerSubspaceProjector::project(Vector& vec) const
 
 void SternheimerSubspaceProjector::project_batch(std::vector<Vector>& vectors) const
 {
-    if (vectors.empty() || subspace_->empty())
+    if (vectors.empty() || subspace_.empty())
     {
         return;
     }
-    if (use_direct_batch_dot_)
+    for (const Vector& vector: vectors)
     {
-        for (const Vector& vector: vectors)
-        {
-            assert_same_size(subspace_->front(), vector, "SternheimerSubspaceProjector::project_batch");
-        }
+        assert_same_size(*subspace_.front(), vector, "SternheimerSubspaceProjector::project_batch");
     }
     if (use_orthonormal_batch_projection_)
     {
-        const std::size_t basis_size = subspace_->size();
+        const std::size_t basis_size = subspace_.size();
         const std::size_t column_size = vectors.size();
         const std::size_t grid_size = vectors.front().size();
         std::vector<Complex> coefficients(basis_size * column_size, Complex(0.0, 0.0));
@@ -1915,9 +1957,9 @@ void SternheimerSubspaceProjector::project_batch(std::vector<Vector>& vectors) c
         }
         return;
     }
-    for (std::size_t index = 0; index != subspace_->size(); ++index)
+    for (std::size_t index = 0; index != subspace_.size(); ++index)
     {
-        const Vector& basis_vec = (*subspace_)[index];
+        const Vector& basis_vec = *subspace_[index];
         const Complex norm = basis_norms_[index];
         std::vector<Complex> coefficients(vectors.size(), Complex(0.0, 0.0));
         if (use_direct_batch_dot_)

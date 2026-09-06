@@ -2020,6 +2020,27 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     const double volume_element,
     const SternheimerRPA::SolverOptions& options)
 {
+    for (const Vector& function: fixed_subspace.functions)
+    {
+        check_vector_size(function, static_cast<std::size_t>(hamiltonian.grid().size()),
+                          "Sternheimer delta fixed-subspace state");
+    }
+    const SternheimerSubspaceProjector projector(fixed_subspace.functions, volume_element);
+    return solve_delta_sternheimer_linear_response(hamiltonian, projector, reference_eigenvalue,
+        rhs, virtual_states, perturbation_matrix_elements, omega, volume_element, options);
+}
+
+SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const SternheimerSubspaceProjector& fixed_projector,
+    const double reference_eigenvalue,
+    const SternheimerFDHamiltonian::Vector& rhs,
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const std::vector<SternheimerFDHamiltonian::Complex>& perturbation_matrix_elements,
+    const double omega,
+    const double volume_element,
+    const SternheimerRPA::SolverOptions& options)
+{
     const int grid_size = hamiltonian.grid().size();
     check_vector_size(rhs, static_cast<std::size_t>(grid_size), "Sternheimer delta rhs");
     if (virtual_states.size() != perturbation_matrix_elements.size())
@@ -2031,17 +2052,11 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     {
         throw std::invalid_argument("Sternheimer delta linear response requires a positive grid volume element.");
     }
-    for (const Vector& function: fixed_subspace.functions)
-    {
-        check_vector_size(function, static_cast<std::size_t>(grid_size), "Sternheimer delta fixed-subspace state");
-    }
     validate_virtual_states(virtual_states, static_cast<std::size_t>(grid_size));
 
     auto dot = [volume_element](const Vector& lhs, const Vector& rhs_vec) {
         return sternheimer_fd_grid_dot(lhs, rhs_vec, volume_element);
     };
-    const std::vector<Vector>& fixed_functions = fixed_subspace.functions;
-    const SternheimerSubspaceProjector fixed_projector(fixed_functions, volume_element);
 
     std::vector<Complex> denominators(virtual_states.size(), Complex(0.0, 0.0));
     for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
@@ -2100,7 +2115,7 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
 
     SternheimerDeltaLinearResponse result;
     result.response.out_wavefunction.assign(static_cast<std::size_t>(grid_size), Complex(0.0, 0.0));
-    if (fixed_functions.size() >= static_cast<std::size_t>(grid_size))
+    if (fixed_projector.basis_size() >= static_cast<std::size_t>(grid_size))
     {
         const double projected_rhs_norm = sternheimer_fd_grid_norm(projected_rhs, volume_element);
         const double rhs_norm = sternheimer_fd_grid_norm(rhs, volume_element);
@@ -2183,6 +2198,31 @@ std::vector<SternheimerDeltaLinearResponse> solve_delta_sternheimer_linear_respo
     const double volume_element,
     const SternheimerRPA::SolverOptions& options)
 {
+    if (rhs.empty())
+    {
+        return {};
+    }
+    for (const Vector& function: fixed_subspace.functions)
+    {
+        check_vector_size(function, static_cast<std::size_t>(hamiltonian.grid().size()),
+                          "Sternheimer delta batch fixed-subspace state");
+    }
+    const SternheimerSubspaceProjector projector(fixed_subspace.functions, volume_element, true);
+    return solve_delta_sternheimer_linear_response_batch(hamiltonian, projector, reference_eigenvalue,
+        rhs, virtual_states, perturbation_matrix_elements, omega, volume_element, options);
+}
+
+std::vector<SternheimerDeltaLinearResponse> solve_delta_sternheimer_linear_response_batch(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const SternheimerSubspaceProjector& fixed_projector,
+    const double reference_eigenvalue,
+    const SternheimerFDHamiltonian::Matrix& rhs,
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const std::vector<std::vector<SternheimerFDHamiltonian::Complex>>& perturbation_matrix_elements,
+    const double omega,
+    const double volume_element,
+    const SternheimerRPA::SolverOptions& options)
+{
     using Matrix = SternheimerFDHamiltonian::Matrix;
     if (rhs.empty())
     {
@@ -2207,19 +2247,11 @@ std::vector<SternheimerDeltaLinearResponse> solve_delta_sternheimer_linear_respo
     {
         throw std::invalid_argument("Sternheimer delta batch response requires a positive grid volume element.");
     }
-    for (const Vector& function: fixed_subspace.functions)
-    {
-        check_vector_size(function,
-                          static_cast<std::size_t>(grid_size),
-                          "Sternheimer delta batch fixed-subspace state");
-    }
     validate_virtual_states(virtual_states, static_cast<std::size_t>(grid_size));
 
     const auto dot = [volume_element](const Vector& lhs, const Vector& rhs_vec) {
         return sternheimer_fd_grid_dot(lhs, rhs_vec, volume_element);
     };
-    const std::vector<Vector>& fixed_functions = fixed_subspace.functions;
-    const SternheimerSubspaceProjector fixed_projector(fixed_functions, volume_element, true);
 
     std::vector<Complex> denominators(virtual_states.size(), Complex(0.0, 0.0));
     for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
@@ -2291,7 +2323,7 @@ std::vector<SternheimerDeltaLinearResponse> solve_delta_sternheimer_linear_respo
 
     std::vector<SternheimerDeltaLinearResponse> results(rhs.size());
     Matrix out_wavefunctions(rhs.size(), Vector(static_cast<std::size_t>(grid_size), Complex(0.0, 0.0)));
-    if (fixed_functions.size() >= static_cast<std::size_t>(grid_size))
+    if (fixed_projector.basis_size() >= static_cast<std::size_t>(grid_size))
     {
         for (std::size_t column = 0; column != rhs.size(); ++column)
         {

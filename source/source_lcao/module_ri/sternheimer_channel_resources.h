@@ -17,6 +17,17 @@ enum class SternheimerMemoryAccountingMode
     fallback_one
 };
 
+enum class SternheimerHeapTrimStatus
+{
+    unsupported,
+    no_pages_released,
+    pages_released
+};
+
+// Best-effort allocator-cache release; never frees live buffers. Status is
+// informational only: callers must take a fresh snapshot and retain the guard.
+SternheimerHeapTrimStatus trim_sternheimer_process_heap() noexcept;
+
 struct SternheimerMemorySnapshot
 {
     SternheimerMemoryAccountingMode mode = SternheimerMemoryAccountingMode::fallback_one;
@@ -25,6 +36,11 @@ struct SternheimerMemorySnapshot
     int local_mpi_ranks = 1;
     std::string source = "unavailable";
 };
+
+// Pure preallocation accounting; bytes_per_rank must already be overflow-checked.
+// Fallback remains unknown. After allocation, plan again from an actual snapshot.
+SternheimerMemorySnapshot reserve_sternheimer_shared_memory(const SternheimerMemorySnapshot& memory,
+                                                           std::uint64_t bytes_per_rank);
 
 struct SternheimerChannelWorkerPlan
 {
@@ -44,6 +60,16 @@ struct SternheimerChannelBatch
 };
 
 std::vector<SternheimerChannelBatch> make_sternheimer_channel_batches(int num_channels, int batch_width);
+
+// Ownership uses (occupied_band_index * global_chunk_count + chunk_index) % replica_count.
+// Only owned requested-width chunks are subdivided; local worker width never changes ownership.
+// All replicas must use the same channel count, ownership width, replica count and band index.
+std::vector<SternheimerChannelBatch> make_sternheimer_owned_channel_batches(int num_channels,
+                                                                           int ownership_batch_width,
+                                                                           int worker_batch_width,
+                                                                           int replica_count,
+                                                                           int replica_index,
+                                                                           int occupied_band_index);
 
 std::uint64_t estimate_sternheimer_channel_worker_bytes(std::size_t grid_size);
 

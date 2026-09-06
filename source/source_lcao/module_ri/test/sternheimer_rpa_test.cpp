@@ -1,12 +1,16 @@
 #include "source_lcao/module_ri/sternheimer_rpa.h"
 
 #include <algorithm>
+#include <atomic>
 #include <complex>
 #include <cstdint>
 #include <cstdio>
 #include <fstream>
+#include <future>
 #include <gtest/gtest.h>
 #include <string>
+#include <thread>
+#include <type_traits>
 #include <vector>
 
 namespace
@@ -360,6 +364,216 @@ TEST(SternheimerRPA, ProjectOutSubspace)
 
     EXPECT_NEAR(std::abs(dot(occupied[0], vec)), 0.0, 1.0e-14);
     EXPECT_NEAR(std::abs(dot(occupied[1], vec)), 0.0, 1.0e-14);
+}
+
+TEST(SternheimerRPA, SubspaceProjectorAcceptsNonowningPointerViews)
+{
+    using Projector = ModuleRI::SternheimerSubspaceProjector;
+    using Views = std::vector<const Vector*>;
+    EXPECT_TRUE((std::is_constructible<Projector, Views, Projector::Dot>::value));
+    EXPECT_TRUE((std::is_constructible<Projector, Views, double>::value));
+    EXPECT_TRUE((std::is_constructible<Projector, Views, double, bool>::value));
+}
+
+TEST(SternheimerRPA, SubspaceProjectorRejectsMismatchedBasisSizesAtConstruction)
+{
+    const std::vector<Vector> invalid{{Complex(1.0, 0.0)}, {Complex(1.0, 0.0), Complex(0.0, 0.0)}};
+    EXPECT_THROW(ModuleRI::SternheimerSubspaceProjector(invalid, dot), std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerSubspaceProjector(invalid, 1.0), std::invalid_argument);
+}
+
+TEST(SternheimerRPA, SubspaceProjectorBorrowsOriginalVectorsAndOwnsOnlyViewList)
+{
+    using Projector = ModuleRI::SternheimerSubspaceProjector;
+    const Vector first{Complex(1.0, 0.0), Complex(0.0, 1.0), Complex(0.0, 0.0)};
+    const Vector second{Complex(0.0, 1.0), Complex(1.0, 0.0), Complex(0.0, 0.0)};
+    int dot_calls = 0;
+    const auto identity_dot = [&](const Vector& lhs, const Vector& rhs) {
+        EXPECT_TRUE(&lhs == &first || &lhs == &second);
+        ++dot_calls;
+        return dot(lhs, rhs);
+    };
+    const Projector projector = [&]() {
+        std::vector<const Vector*> views{&first, &second};
+        return Projector(views, identity_dot);
+    }();
+    EXPECT_EQ(dot_calls, 2);
+    Vector scalar{Complex(2.0, 1.0), Complex(-3.0, 0.5), Complex(4.0, -2.0)};
+    std::vector<Vector> batch{scalar};
+    projector.project(scalar);
+    projector.project_batch(batch);
+    EXPECT_EQ(dot_calls, 6);
+    EXPECT_EQ(batch.front(), scalar);
+    EXPECT_NEAR(std::abs(scalar[0]), 0.0, 1.0e-14);
+    EXPECT_NEAR(std::abs(scalar[1]), 0.0, 1.0e-14);
+    EXPECT_EQ(scalar[2], Complex(4.0, -2.0));
+}
+
+TEST(SternheimerRPA, SubspaceProjectorLegacyConstructorAlsoBorrowsOriginalVectors)
+{
+    const std::vector<Vector> basis{{Complex(1.0, 0.0), Complex(0.0, 0.0)}};
+    const ModuleRI::SternheimerSubspaceProjector projector(
+        basis,
+        [&](const Vector& lhs, const Vector& rhs) {
+            EXPECT_EQ(&lhs, &basis.front());
+            return dot(lhs, rhs);
+        });
+    Vector value{Complex(2.0, -1.0), Complex(0.5, 0.25)};
+    projector.project(value);
+    EXPECT_NEAR(std::abs(value.front()), 0.0, 1.0e-14);
+}
+
+TEST(SternheimerRPA, SubspaceProjectorPointerViewsRejectNullAndInconsistentSizes)
+{
+    using Projector = ModuleRI::SternheimerSubspaceProjector;
+    const Vector first(3, Complex(1.0, 0.0));
+    const Vector shorter(2, Complex(1.0, 0.0));
+    const std::vector<std::vector<const Vector*>> invalid_views{
+        {nullptr}, {&first, nullptr}, {&first, &shorter}};
+    for (const auto& views: invalid_views)
+    {
+        EXPECT_THROW(Projector(views, dot), std::invalid_argument);
+        EXPECT_THROW(Projector(views, 1.0), std::invalid_argument);
+        EXPECT_THROW(Projector(views, 1.0, true), std::invalid_argument);
+    }
+    const std::vector<const Vector*> views{&first};
+    EXPECT_THROW(Projector(views, Projector::Dot{}), std::invalid_argument);
+    EXPECT_THROW(Projector(views, 0.0), std::invalid_argument);
+    for (const bool packed: {false, true})
+    {
+        const Projector projector(views, 1.0, packed);
+        Vector invalid(2);
+        EXPECT_THROW(projector.project(invalid), std::invalid_argument);
+        std::vector<Vector> invalid_batch{first, invalid};
+        EXPECT_THROW(projector.project_batch(invalid_batch), std::invalid_argument);
+    }
+}
+
+TEST(SternheimerRPA, SubspaceProjectorPointerViewsAllowEmptyAndZeroNormBases)
+{
+    using Projector = ModuleRI::SternheimerSubspaceProjector;
+    const Vector zero(3, Complex(0.0, 0.0));
+    const Vector input{Complex(1.0, 2.0), Complex(3.0, 4.0), Complex(-1.0, 0.5)};
+    for (const auto& views: {std::vector<const Vector*>{}, std::vector<const Vector*>{&zero}})
+    {
+        for (const bool packed: {false, true})
+        {
+            const Projector projector(views, 0.5, packed);
+            Vector scalar = input;
+            std::vector<Vector> batch{input, input};
+            projector.project(scalar);
+            projector.project_batch(batch);
+            EXPECT_EQ(scalar, input);
+            EXPECT_EQ(batch, (std::vector<Vector>{input, input}));
+            std::vector<Vector> empty;
+            projector.project_batch(empty);
+            EXPECT_TRUE(empty.empty());
+        }
+    }
+}
+
+TEST(SternheimerRPA, SubspaceProjectorOwnsOnePackedBasisAndNoScalarGridCopy)
+{
+    using Projector = ModuleRI::SternheimerSubspaceProjector;
+    constexpr std::size_t grid_size = 1024;
+    Vector first(grid_size, Complex(0.0, 0.0));
+    Vector second = first;
+    first[0] = Complex(1.0, 0.0);
+    second[1] = Complex(0.0, 1.0);
+    const std::vector<const Vector*> views{&first, &second};
+    const Projector scalar(views, 1.0);
+    const Projector packed(views, 1.0, true);
+    EXPECT_EQ(scalar.storage_bytes(), views.size() * (sizeof(const Vector*) + sizeof(Complex)));
+    EXPECT_EQ(packed.storage_bytes() - scalar.storage_bytes(),
+              views.size() * grid_size * sizeof(Complex));
+    const auto bytes_before = packed.storage_bytes();
+    for (int repeat = 0; repeat != 8; ++repeat)
+    {
+        std::vector<Vector> batch{first, second};
+        packed.project_batch(batch);
+        EXPECT_EQ(packed.storage_bytes(), bytes_before);
+    }
+}
+
+TEST(SternheimerRPA, SubspaceProjectorReportsBasisSizeIncludingZeroNormViews)
+{
+    using Projector = ModuleRI::SternheimerSubspaceProjector;
+    const Vector zero(3, Complex(0.0, 0.0));
+    const Vector first(3, Complex(1.0, 0.0));
+    const Projector empty(std::vector<const Vector*>{}, 1.0);
+    const Projector views(std::vector<const Vector*>{&zero, &first}, 1.0, true);
+    const std::vector<Vector> basis{first};
+    const Projector legacy(basis, dot);
+    EXPECT_EQ(empty.basis_size(), 0U);
+    EXPECT_EQ(views.basis_size(), 2U);
+    EXPECT_EQ(legacy.basis_size(), 1U);
+}
+
+TEST(SternheimerRPA, SubspaceProjectorPointerViewsSupportConcurrentScalarAndBatchReuse)
+{
+    using Projector = ModuleRI::SternheimerSubspaceProjector;
+    const Vector first{Complex(1.0, 0.0), Complex(0.0, 1.0), Complex(0.0, 0.0), Complex(0.0, 0.0)};
+    const Vector second{Complex(0.0, 1.0), Complex(1.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0)};
+    const Vector zero(first.size(), Complex(0.0, 0.0));
+    const std::vector<const Vector*> views{&first, &second, &zero};
+    const std::vector<Vector> basis{first, second, zero};
+    const std::vector<Vector> inputs{
+        {Complex(2.0, 1.0), Complex(3.0, -4.0), Complex(0.5, 0.25), Complex(-0.2, 0.7)},
+        {Complex(-1.0, 2.0), Complex(0.5, 0.25), Complex(3.0, -0.75), Complex(0.8, -0.6)},
+        {Complex(0.1, -0.2), Complex(-0.3, 0.4), Complex(0.5, -0.6), Complex(0.9, 1.1)}};
+    auto expected = inputs;
+    for (auto& column: expected)
+    {
+        ModuleRI::SternheimerRPA::project_out_subspace(basis, dot, column);
+    }
+    for (int mode = 0; mode != 3; ++mode)
+    {
+        const Projector projector = mode == 0 ? Projector(views, dot) : Projector(views, 0.25, mode == 2);
+        const auto bytes_before = projector.storage_bytes();
+        std::atomic<int> ready{0};
+        std::atomic<bool> start{false};
+        std::vector<std::future<double>> workers;
+        for (int worker = 0; worker != 8; ++worker)
+        {
+            workers.push_back(std::async(std::launch::async, [&]() {
+                ++ready;
+                while (!start.load())
+                {
+                    std::this_thread::yield();
+                }
+                double max_error = 0.0;
+                for (int repeat = 0; repeat != 12; ++repeat)
+                {
+                    auto scalar = inputs;
+                    auto batch = inputs;
+                    for (auto& column: scalar)
+                    {
+                        projector.project(column);
+                    }
+                    projector.project_batch(batch);
+                    for (std::size_t column = 0; column != inputs.size(); ++column)
+                    {
+                        for (std::size_t ir = 0; ir != first.size(); ++ir)
+                        {
+                            max_error = std::max(max_error, std::abs(scalar[column][ir] - expected[column][ir]));
+                            max_error = std::max(max_error, std::abs(batch[column][ir] - expected[column][ir]));
+                        }
+                    }
+                }
+                return max_error;
+            }));
+        }
+        while (ready.load() != 8)
+        {
+            std::this_thread::yield();
+        }
+        start = true;
+        for (auto& worker: workers)
+        {
+            EXPECT_LE(worker.get(), 1.0e-13);
+        }
+        EXPECT_EQ(projector.storage_bytes(), bytes_before);
+    }
 }
 
 TEST(SternheimerRPA, CachedSubspaceProjectorReusesBasisNorms)
