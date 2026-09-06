@@ -108,7 +108,10 @@ int ELPA_Solver::generalized_eigenvector(std::complex<double>* A, std::complex<d
             t=-1;
             timer(myid, "B*A^T", "2.1b", t);
         }
-        ScalapackConnector::hemm('R', 'U', nFull, 1.0, A, B, 0.0, zwork.data(), desc);
+        // A now stores the general product H * U^-1, so its conjugate
+        // transpose must be formed with GEMM rather than treating A as
+        // Hermitian a second time.
+        ScalapackConnector::gemm('N', 'C', nFull, nFull, nFull, 1.0, B, A, 0.0, zwork.data(), desc);
         if(loglevel>1)
         {
             timer(myid, "B*A^T", "2.1b", t);
