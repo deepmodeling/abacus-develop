@@ -1,4 +1,4 @@
-#include "source_cell/md_cell.h"
+#include "source_cell/mdcell.h"
 
 #include "source_base/parallel_cell.h"
 #include "source_cell/unitcell.h"
@@ -180,12 +180,12 @@ void MDCell::initialize_from_owned_atoms_(double cutoff, double skin)
 void MDCell::initialize_from_unitcell(UnitCell& ucell,
                                       double cutoff,
                                       double skin,
-                                      const ModuleBase::CommunicationDomain& communication_domain)
+                                      const ModuleBase::CommunicationDomain& comm_domain)
 {
 #ifdef __MPI
-    initialize_from_ucell_(ucell, communication_domain.communicator(), cutoff, skin);
+    initialize_from_ucell_(ucell, comm_domain.communicator(), cutoff, skin);
 #else
-    static_cast<void>(communication_domain);
+    static_cast<void>(comm_domain);
     initialize_from_ucell_(ucell, cutoff, skin);
 #endif
 }
@@ -201,7 +201,7 @@ void MDCell::initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
                                          const std::vector<std::int64_t>& type_atom_counts,
                                          double cutoff,
                                          double skin,
-                                         const ModuleBase::CommunicationDomain& communication_domain)
+                                         const ModuleBase::CommunicationDomain& comm_domain)
 {
     latvec_ = latvec;
     gt_ = gt;
@@ -213,9 +213,9 @@ void MDCell::initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
     type_masses_ = type_masses;
     type_atom_counts_ = type_atom_counts;
 #ifdef __MPI
-    initialize_from_owned_atoms_(communication_domain.communicator(), cutoff, skin);
+    initialize_from_owned_atoms_(comm_domain.communicator(), cutoff, skin);
 #else
-    static_cast<void>(communication_domain);
+    static_cast<void>(comm_domain);
     initialize_from_owned_atoms_(cutoff, skin);
 #endif
 }
@@ -556,7 +556,7 @@ void MDCell::sync_backing_unitcell()
 
 BaseCell::Kind MDCell::get_kind() const
 {
-    return Kind::md_cell;
+    return Kind::mdcell;
 }
 
 std::int64_t MDCell::get_nat() const

@@ -41,6 +41,17 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_BASE_parallel_device
+  LIBS MPI::MPI_CXX base device parameter
+  SOURCES parallel_device_test.cpp ../test/mpi_test_main.cpp
+)
+
+add_test(NAME MODULE_BASE_parallel_device_parallel
+      COMMAND mpirun -np 4 ./MODULE_BASE_parallel_device
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+AddTest(
   TARGET MODULE_BASE_math_chebyshev_mpi
   LIBS MPI::MPI_CXX parameter base device container
   SOURCES math_cheby_mpi_test.cpp
@@ -55,6 +66,17 @@ AddTest(
     TARGET MODULE_BASE_parallel_2d_test
     SOURCES parallel_2d_test.cpp ../parallel_2d.cpp
     LIBS parameter
+)
+
+AddTest(
+  TARGET MODULE_BASE_parallel_domain_grid
+  SOURCES parallel_domain_grid_test.cpp ../test/mpi_test_main.cpp
+  LIBS parameter MPI::MPI_CXX base device
+)
+
+add_test(NAME MODULE_BASE_parallel_domain_grid_parallel
+      COMMAND mpirun -np 4 ./MODULE_BASE_parallel_domain_grid
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 install(FILES parallel_2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

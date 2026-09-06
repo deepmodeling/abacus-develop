@@ -8,7 +8,6 @@
 #include "../diago_bpcg.h"
 #include "diago_mock.h"
 #include "mpi.h"
-#include "source_base/parallel_comm.h"
 #include "source_basis/module_pw/test/test_tool.h"
 
 #include <gtest/gtest.h>
@@ -287,8 +286,7 @@ int main(int argc, char **argv)
 	int nproc_in_pool, kpar=1, mypool, rank_in_pool;
     setupmpi(argc,argv,nproc, myrank);
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
-    MPI_Comm_split(MPI_COMM_WORLD,myrank,0,&BP_WORLD);
-    GlobalV::NPROC_IN_POOL = nproc;
+    MPI_Comm_split(MPI_COMM_WORLD, myrank, 0, &BP_WORLD);
 #else
 	MPI_Init(&argc, &argv);	
 #endif

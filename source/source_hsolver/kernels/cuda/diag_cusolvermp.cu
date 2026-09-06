@@ -1,7 +1,6 @@
 #ifdef __CUSOLVERMP
 #include "diag_cusolvermp.cuh"
 #include "source_base/module_device/device_check.h"
-#include "source_base/global_variable.h"
 
 #include <assert.h>
 
@@ -11,7 +10,6 @@ extern "C"
 }
 #include <iostream>
 #include <cstdint>
-#include "source_base/global_function.h"
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/device_check.h"
 
@@ -295,23 +293,6 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
 
     return 0;
 }
-template <typename inputT>
-void Diag_CusolverMP_gvd<inputT>::outputParameters()
-{
-    GlobalV::ofs_running << "nFull: " << this->nFull << std::endl
-                         << "m_local: " << this->m_local << std::endl
-                         << "n_local: " << this->n_local << std::endl
-                         << "lda: " << this->lda << std::endl
-                         << "nprows: " << this->nprows << std::endl
-                         << "npcols: " << this->npcols << std::endl
-                         << "myprow: " << this->myprow << std::endl
-                         << "mypcol: " << this->mypcol << std::endl
-                         << "globalMpiRank: " << this->globalMpiRank << std::endl
-                         << "globalMpiSize: " << this->globalMpiSize << std::endl
-                         << "matrix_i: " << this->matrix_i << std::endl
-                         << "matrix_j: " << this->matrix_j << std::endl;
-}
-
 template class Diag_CusolverMP_gvd<double>;
 template class Diag_CusolverMP_gvd<std::complex<double>>;
 #endif

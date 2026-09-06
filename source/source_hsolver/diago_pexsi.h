@@ -19,7 +19,11 @@ class DiagoPexsi
     static std::vector<double> mu_buffer;
 
   public:
-    DiagoPexsi(const Parallel_Orbitals* ParaV_in, const int nspin_in, const int nlocal_in, const double nelec_in);
+    DiagoPexsi(const Parallel_Orbitals* ParaV_in,
+               const int nspin_in,
+               const int nlocal_in,
+               const double nelec_in,
+               const int world_nproc_in);
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
     const Parallel_Orbitals* ParaV = nullptr;
     std::vector<T*> DM;
@@ -37,6 +41,7 @@ class DiagoPexsi
     /// global dimension of the NAO Hamiltonian
     int nlocal = 0;
     double nelec = 0.0;
+    int world_nproc = 1;
 };
 } // namespace hsolver
 

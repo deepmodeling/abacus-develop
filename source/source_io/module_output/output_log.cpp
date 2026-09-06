@@ -6,7 +6,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/parallel_comm.h"
-#include "source_cell/md_cell.h"
+#include "source_cell/mdcell.h"
 
 #include <cmath>
 #include <iomanip>

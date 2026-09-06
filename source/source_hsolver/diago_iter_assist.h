@@ -12,6 +12,8 @@
 namespace hsolver
 {
 
+struct diag_comm_info;
+
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class DiagoIterAssist
 {
@@ -48,7 +50,8 @@ class DiagoIterAssist
     static void diag_subspace(const hamilt::Hamilt<T, Device>* const pHamilt,
                               const psi::Psi<T, Device>& psi,
                               psi::Psi<T, Device>& evc,
-                              Real *en,
+                              Real* en,
+                              const diag_comm_info& diag_comm,
                               int n_band = 0,
                               const bool is_S_orthogonal = false);
 
@@ -65,16 +68,18 @@ class DiagoIterAssist
     /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc,
     /// and return all - zero eigenenergies.
     static void diag_subspace_init(
-            hamilt::Hamilt<T, Device>* pHamilt,
-            const T* psi,
-            int psi_nr,
-            int psi_nc,
-            psi::Psi<T, Device> &evc,
-            Real* en,
-            const std::string& basis_type,
-            const std::string& calculation,
-            const std::function<void(T*, const int)>& add_to_hcc = [](T* null, const int n) {},
-            const std::function<void(const T* const, const int, const int)>& export_vcc = [](const T* null, const int n, const int m) {});
+        hamilt::Hamilt<T, Device>* pHamilt,
+        const T* psi,
+        int psi_nr,
+        int psi_nc,
+        psi::Psi<T, Device>& evc,
+        Real* en,
+        const std::string& basis_type,
+        const std::string& calculation,
+        const diag_comm_info& diag_comm,
+        const std::function<void(T*, const int)>& add_to_hcc = [](T* null, const int n) {},
+        const std::function<void(const T* const, const int, const int)>& export_vcc
+        = [](const T* null, const int n, const int m) {});
 
     static void diag_heevx(const int nstart,
                             const int nbands,
@@ -96,9 +101,10 @@ class DiagoIterAssist
     /// @param hcc : Hamiltonian matrix
     /// @param scc : overlap matrix
     static void cal_hs_subspace(const hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
-                                                const psi::Psi<T, Device>& psi,     // [in] wavefunction
-                                                T *hcc, 
-                                                T *scc);
+                                const psi::Psi<T, Device>& psi,           // [in] wavefunction
+                                T* hcc,
+                                T* scc,
+                                const diag_comm_info& diag_comm);
 
     /// @brief calculate the response matrix from rotation matrix solved by diagonalization of H and S matrix
     /// @param hcc : Hamiltonian matrix

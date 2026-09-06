@@ -1,9 +1,9 @@
-#include "source_cell/distributed_mdcell_reader.h"
+#include "source_cell/mdcell_reader.h"
 
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/vector3.h"
-#include "source_cell/md_cell.h"
+#include "source_cell/mdcell.h"
 
 #ifdef __MPI
 #include "source_cell/module_neighlist/domain_decomposition.h"
@@ -30,7 +30,7 @@ struct StruMetadata
     std::vector<std::string> labels;
     std::vector<double> masses;
     std::vector<std::int64_t> type_atom_counts;
-    MdStruFileMetadata stru_file_metadata;
+    StruMeta stru_meta;
 };
 
 std::string next_data_line(std::ifstream& ifs, const char* context)
@@ -130,15 +130,15 @@ StruMetadata parse_stru_metadata(std::ifstream& ifs)
         }
         if (line == "NUMERICAL_ORBITAL")
         {
-            for (std::size_t it = 0; it < metadata.stru_file_metadata.species.size(); ++it)
+            for (std::size_t it = 0; it < metadata.stru_meta.species.size(); ++it)
             {
-                metadata.stru_file_metadata.species[it].orbital_file = next_data_line(ifs, "NUMERICAL_ORBITAL body");
+                metadata.stru_meta.species[it].orbital_file = next_data_line(ifs, "NUMERICAL_ORBITAL body");
             }
             continue;
         }
         if (line == "NUMERICAL_DESCRIPTOR")
         {
-            metadata.stru_file_metadata.descriptor_file = next_data_line(ifs, "NUMERICAL_DESCRIPTOR body");
+            metadata.stru_meta.descriptor_file = next_data_line(ifs, "NUMERICAL_DESCRIPTOR body");
             continue;
         }
 
@@ -153,9 +153,9 @@ StruMetadata parse_stru_metadata(std::ifstream& ifs)
 
         metadata.labels.push_back(label);
         metadata.masses.push_back(parse_double(mass_token, "atomic mass"));
-        MdStruFileSpecies species;
+        StruSpecies species;
         iss >> species.pseudo_file >> species.pseudo_type;
-        metadata.stru_file_metadata.species.push_back(species);
+        metadata.stru_meta.species.push_back(species);
     }
 
     expect_keyword(ifs, "LATTICE_CONSTANT");
@@ -190,13 +190,13 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
                                          double cutoff,
                                          double skin,
                                          std::int64_t& nat,
-                                         const ModuleBase::CommunicationDomain& communication_domain)
+                                         const ModuleBase::CommunicationDomain& comm_domain)
 {
     int rank = 0;
 #ifdef __MPI
     DomainDecomposition decomposition;
-    decomposition.init(communication_domain.communicator(), metadata.latvec, metadata.lat0, cutoff, skin);
-    rank = communication_domain.rank();
+    decomposition.init(comm_domain.communicator(), metadata.latvec, metadata.lat0, cutoff, skin);
+    rank = comm_domain.rank();
 #endif
 
     int begin[3] = {0, 0, 0};
@@ -232,7 +232,7 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
             throw std::runtime_error("ATOMIC_POSITIONS label order does not match ATOMIC_SPECIES.");
         }
         std::istringstream magnetism(next_data_line(ifs, "magnetism"));
-        magnetism >> metadata.stru_file_metadata.species[it].start_mag;
+        magnetism >> metadata.stru_meta.species[it].start_mag;
         const std::int64_t nat_type = parse_int64(next_data_line(ifs, "atom count"), "atom count");
 
         for (std::int64_t ia = 0; ia < nat_type; ++ia)
@@ -323,12 +323,11 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
 }
 } // namespace
 
-MDCell DistributedMDCellReader::read_stru(const std::string& stru_file,
+MDCell MDCellReader::read_stru(const std::string& stru_file,
                                           const std::vector<int>& cell_replica,
                                           double cutoff,
                                           double skin,
-                                          MdStruFileMetadata& stru_metadata,
-                                          const ModuleBase::CommunicationDomain& communication_domain)
+                                          const ModuleBase::CommunicationDomain& comm_domain)
 {
     if (cutoff <= 0.0)
     {
@@ -355,7 +354,7 @@ MDCell DistributedMDCellReader::read_stru(const std::string& stru_file,
     metadata.omega = std::abs(metadata.latvec.Det()) * metadata.lat0 * metadata.lat0 * metadata.lat0;
     std::int64_t nat = 0;
     const std::vector<LocalAtom> owned_atoms = read_owned_atoms(ifs, metadata, primitive_latvec, primitive_gt,
-                                                                  cell_replica, cutoff, skin, nat, communication_domain);
+                                                                  cell_replica, cutoff, skin, nat, comm_domain);
     MDCell mdcell;
     mdcell.initialize_from_owned_atoms(metadata.latvec,
                                        metadata.gt,
@@ -368,7 +367,7 @@ MDCell DistributedMDCellReader::read_stru(const std::string& stru_file,
                                        metadata.type_atom_counts,
                                        cutoff,
                                        skin,
-                                       communication_domain);
-    stru_metadata = metadata.stru_file_metadata;
+                                       comm_domain);
+    mdcell.mutable_stru_meta() = metadata.stru_meta;
     return mdcell;
 }

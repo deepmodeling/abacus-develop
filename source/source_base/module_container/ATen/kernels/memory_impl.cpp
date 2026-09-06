@@ -102,7 +102,7 @@ struct resize_memory<T, DEVICE_GPU> {
 
 template <typename T>
 struct set_memory<T, DEVICE_GPU> {
-    void operator()(T* arr, const int var, const size_t& size) {}
+    void operator()(T* arr, const T& var, const size_t& size) {}
 };
 
 template <typename T>

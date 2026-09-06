@@ -29,7 +29,7 @@ ESolver_DM2rho<TK, TR>::~ESolver_DM2rho()
 template <typename TK, typename TR>
 void ESolver_DM2rho<TK, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_DM2rho", "before_all_runners");
@@ -43,7 +43,7 @@ void ESolver_DM2rho<TK, TR>::before_all_runners(BaseCell& basecell, const Input_
 template <typename TK, typename TR>
 void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_DM2rho", "runner");
@@ -95,7 +95,7 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
 template <typename TK, typename TR>
 void ESolver_DM2rho<TK, TR>::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_DM2rho", "after_all_runners");

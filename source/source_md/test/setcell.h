@@ -6,7 +6,7 @@
 
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_cell/md_cell.h"
+#include "source_cell/mdcell.h"
 #include "source_cell/unitcell.h"
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
@@ -144,7 +144,7 @@ class Setcell
             cutoff = std::max(cutoff, param.inp.mdp.lj_rcut[i] * ModuleBase::ANGSTROM_AU);
         }
         MDCell mdcell;
-        mdcell.initialize_from_unitcell(ucell, cutoff, 0.0, ModuleBase::world_communication_domain());
+        mdcell.initialize_from_unitcell(ucell, cutoff, 0.0, ModuleBase::world_comm_domain());
         return mdcell;
     }
 

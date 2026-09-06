@@ -375,8 +375,16 @@ void update_psi_charge_pw_cpu(ScState& state,
             PARAM.inp.nb2d,
             PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(hamilt_t, psi_t[0], pelec, pelec->ekb.c,
-            GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, false, state.tpiba, state.get_nat());
+        hsolver_pw_obj.solve(hamilt_t,
+                             psi_t[0],
+                             pelec,
+                             pelec->ekb.c,
+                             GlobalV::RANK_IN_POOL,
+                             GlobalV::NPROC_IN_POOL,
+                             GlobalV::ofs_running,
+                             false,
+                             state.tpiba,
+                             state.get_nat());
     }
     else
     {
@@ -481,8 +489,16 @@ void update_psi_charge_pw_gpu(ScState& state,
             PARAM.inp.nb2d,
             PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(hamilt_t, psi_t[0], pelec, pelec->ekb.c,
-            GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, false, state.tpiba, state.get_nat());
+        hsolver_pw_obj.solve(hamilt_t,
+                             psi_t[0],
+                             pelec,
+                             pelec->ekb.c,
+                             GlobalV::RANK_IN_POOL,
+                             GlobalV::NPROC_IN_POOL,
+                             GlobalV::ofs_running,
+                             false,
+                             state.tpiba,
+                             state.get_nat());
     }
     else
     {

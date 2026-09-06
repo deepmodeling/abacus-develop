@@ -24,12 +24,12 @@ int CommunicationDomain::rank() const
     return rank_;
 }
 
-CommunicationDomain world_communication_domain()
+CommunicationDomain world_comm_domain()
 {
-    CommunicationDomain communication_domain;
+    CommunicationDomain comm_domain;
 #ifdef __MPI
-    communication_domain.initialize(MPI_COMM_WORLD);
+    comm_domain.initialize(MPI_COMM_WORLD);
 #endif
-    return communication_domain;
+    return comm_domain;
 }
 } // namespace ModuleBase

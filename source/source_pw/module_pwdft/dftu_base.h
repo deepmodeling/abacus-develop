@@ -3,6 +3,7 @@
 
 #include "source_base/matrix.h"
 #include "source_estate/occ_matrix.h"
+#include "source_estate/occ_mixer.h"
 #include "source_pw/module_pwdft/yukawa_screening.h"
 
 #include <complex>
@@ -113,11 +114,14 @@ class Plus_U_Base
     void mark_occ_mat_initialized() { occ_mat_initialized = true; }
     void mark_occ_mat_dirty() { occ_mat_initialized = false; }
 
-    void enable_mixing() { mixing_dftu = 1; }
-
     /// direct access to the occupation matrix object (new write path)
     OccupationMatrix& occmat() { return occmat_; }
     const OccupationMatrix& occmat() const { return occmat_; }
+
+    /// access the occupation-matrix mixer (non-null only when mixing enabled)
+    OccMatMixer& occ_mixer() { return *occ_mixer_; }
+    const OccMatMixer& occ_mixer() const { return *occ_mixer_; }
+    bool has_occ_mixer() const { return occ_mixer_ != nullptr; }
 
   protected:
     // --- U values and orbital configuration (set in init_base) ---
@@ -128,7 +132,6 @@ class Plus_U_Base
     // --- DFT+U configuration flags ---
     double uramping = 0.0;
     int occ_mat_ctrl = 0;
-    int mixing_dftu = 0;
     int nspin = 0;
 
     // --- State flags ---
@@ -137,6 +140,10 @@ class Plus_U_Base
 
     // --- Occupation matrices ---
     OccupationMatrix occmat_;
+
+    // Occupation-matrix mixer; constructed only when mixing_dftu != 0.
+    // Owns the flat uom/uom_save buffers and the mixing orchestration.
+    std::unique_ptr<OccMatMixer> occ_mixer_;
 
     // --- Internal state ---
     double energy_u = 0.0;
@@ -147,8 +154,6 @@ class Plus_U_Base
 
     std::vector<std::complex<double>> pot_uterm_pw;
     std::vector<int> pot_uterm_pw_index;
-    std::vector<double> uom_array;
-    std::vector<double> uom_save;
 
     // Yukawa screening object; constructed only when use_yukawa() is true.
     // Owns the screening length, Slater integrals and derived U/J.

@@ -1,5 +1,5 @@
-#ifndef BASE_CELL_H
-#define BASE_CELL_H
+#ifndef BASECELL_H
+#define BASECELL_H
 
 #include "source_base/matrix3.h"
 
@@ -10,8 +10,8 @@ class BaseCell
 public:
     enum class Kind
     {
-        unit_cell,
-        md_cell
+        unitcell,
+        mdcell
     };
 
     virtual ~BaseCell() = default;

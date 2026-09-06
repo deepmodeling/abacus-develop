@@ -280,27 +280,27 @@ void OccupationMatrix::write_save_to_flat(const UnitCell& cell,
         for (int I = 0; I < cell.atoms[T].na; I++)
         {
             const int iat = cell.itia2iat(T, I);
-            const int size = occ_[iat][target_l][0][0].nr * occ_[iat][target_l][0][0].nc;
+            const int size = occ_save_[iat][target_l][0][0].nr * occ_save_[iat][target_l][0][0].nc;
 
             if (nspin_ == 4)
             {
                 for (int mm = 0; mm < size; mm++)
                 {
-                    uom_save[index[iat] + mm] = occ_[iat][target_l][0][0].c[mm];
+                    uom_save[index[iat] + mm] = occ_save_[iat][target_l][0][0].c[mm];
                 }
             }
             else if (nspin_ == 1 || nspin_ == 2)
             {
                 for (int mm = 0; mm < size; mm++)
                 {
-                    uom_save[index[iat] + mm] = occ_[iat][target_l][0][0].c[mm];
+                    uom_save[index[iat] + mm] = occ_save_[iat][target_l][0][0].c[mm];
                 }
                 if (nspin_ == 2)
                 {
                     const int half_size = uom_save.size() / 2;
                     for (int mm = 0; mm < size; mm++)
                     {
-                        uom_save[half_size + index[iat] + mm] = occ_[iat][target_l][0][1].c[mm];
+                        uom_save[half_size + index[iat] + mm] = occ_save_[iat][target_l][0][1].c[mm];
                     }
                 }
             }

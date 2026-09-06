@@ -1,7 +1,5 @@
-#ifndef DISTRIBUTED_MDCELL_READER_H
-#define DISTRIBUTED_MDCELL_READER_H
-
-#include "source_cell/md_stru_file_metadata.h"
+#ifndef MDCELL_READER_H
+#define MDCELL_READER_H
 
 #include <string>
 #include <vector>
@@ -12,15 +10,14 @@ namespace ModuleBase
 class CommunicationDomain;
 }
 
-class DistributedMDCellReader
+class MDCellReader
 {
 public:
     static MDCell read_stru(const std::string& stru_file,
                             const std::vector<int>& cell_replica,
                             double cutoff,
                             double skin,
-                            MdStruFileMetadata& stru_metadata,
-                            const ModuleBase::CommunicationDomain& communication_domain);
+                            const ModuleBase::CommunicationDomain& comm_domain);
 };
 
 #endif

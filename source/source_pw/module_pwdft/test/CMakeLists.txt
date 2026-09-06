@@ -36,6 +36,7 @@ AddTest(
 	../dftu_base_io.cpp
 	../yukawa_screening.cpp
 	../../../source_estate/occ_matrix.cpp
+	../../../source_estate/occ_mixer.cpp
 	../../../source_cell/unitcell.cpp
 	../../../source_cell/atom_spec.cpp
 	../../../source_cell/atom_pseudo.cpp

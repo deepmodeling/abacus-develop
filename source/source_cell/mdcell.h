@@ -1,7 +1,8 @@
-#ifndef MD_CELL_H
-#define MD_CELL_H
+#ifndef MDCELL_H
+#define MDCELL_H
 
-#include "source_cell/base_cell.h"
+#include "source_cell/basecell.h"
+#include "source_cell/strumeta.h"
 #include "source_cell/module_neighlist/local_atom.h"
 
 #ifdef __MPI
@@ -33,7 +34,7 @@ public:
     void initialize_from_unitcell(UnitCell& ucell,
                                   double cutoff,
                                   double skin,
-                                  const ModuleBase::CommunicationDomain& communication_domain);
+                                  const ModuleBase::CommunicationDomain& comm_domain);
     void initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
                                      const ModuleBase::Matrix3& gt,
                                      double lat0,
@@ -45,7 +46,7 @@ public:
                                      const std::vector<std::int64_t>& type_atom_counts,
                                      double cutoff,
                                      double skin,
-                                     const ModuleBase::CommunicationDomain& communication_domain);
+                                     const ModuleBase::CommunicationDomain& comm_domain);
 
 #ifdef __MPI
     int mpi_rank() const;
@@ -68,6 +69,8 @@ public:
     const std::vector<std::string>& type_labels() const { return type_labels_; }
     const std::vector<double>& type_masses() const { return type_masses_; }
     const std::vector<std::int64_t>& type_atom_counts() const { return type_atom_counts_; }
+    StruMeta& mutable_stru_meta() { return stru_meta_; }
+    const StruMeta& stru_meta() const { return stru_meta_; }
     std::vector<LocalAtom>& mutable_owned_atoms();
     std::vector<LocalAtom>& mutable_ghost_atoms();
 
@@ -110,6 +113,7 @@ private:
     std::vector<std::string> type_labels_;
     std::vector<double> type_masses_;
     std::vector<std::int64_t> type_atom_counts_;
+    StruMeta stru_meta_;
     double cutoff_ = 0.0;
     double skin_ = 0.0;
     std::unique_ptr<NeighborSearch> neighbor_search_;

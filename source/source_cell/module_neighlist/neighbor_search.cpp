@@ -1,5 +1,5 @@
 #include "source_cell/module_neighlist/neighbor_search.h"
-#include "source_cell/md_cell.h"
+#include "source_cell/mdcell.h"
 #include "source_cell/unitcell.h"
 
 #include <cmath>
@@ -146,14 +146,14 @@ void NeighborSearch::init_from_unitcell_(const UnitCell& ucell, double sr)
 
 void NeighborSearch::init(BaseCell& cell, double sr)
 {
-    if (cell.kind() == BaseCell::Kind::md_cell)
+    if (cell.kind() == BaseCell::Kind::mdcell)
     {
-        MDCell& md_cell = static_cast<MDCell&>(cell);
-        init_from_mdcell_(md_cell, sr);
+        MDCell& mdcell = static_cast<MDCell&>(cell);
+        init_from_mdcell_(mdcell, sr);
         return;
     }
 
-    assert(cell.kind() == BaseCell::Kind::unit_cell);
+    assert(cell.kind() == BaseCell::Kind::unitcell);
     UnitCell& ucell = static_cast<UnitCell&>(cell);
     init_from_unitcell_(ucell, sr);
 }

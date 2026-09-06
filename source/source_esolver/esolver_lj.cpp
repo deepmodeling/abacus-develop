@@ -1,7 +1,7 @@
 #include "esolver_lj.h"
 
 #include "source_base/global_variable.h"
-#include "source_cell/md_cell.h"
+#include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_cell/module_neighlist/neighbor_types.h"
 #include "source_io/module_parameter/parameter.h"
@@ -34,7 +34,7 @@ void ESolver_LJ::before_all_runners(BaseCell& cell, const Input_para& inp)
     lj_potential = 0.0;
     lj_virial.create(3, 3);
 
-    if (cell.kind() == BaseCell::Kind::md_cell)
+    if (cell.kind() == BaseCell::Kind::mdcell)
     {
         MDCell& mdcell = static_cast<MDCell&>(cell);
         rcut_search_radius(static_cast<int>(mdcell.type_labels().size()), inp.mdp.lj_rcut);
@@ -61,7 +61,7 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
     lj_potential = 0.0;
     lj_virial.zero_out();
 
-    if (cell.kind() == BaseCell::Kind::unit_cell)
+    if (cell.kind() == BaseCell::Kind::unitcell)
     {
         NeighborSearch neighbor_search;
         UnitCell& ucell = static_cast<UnitCell&>(cell);
@@ -193,7 +193,7 @@ double ESolver_LJ::cal_energy()
 
 void ESolver_LJ::cal_force(BaseCell& cell, ModuleBase::matrix& force)
 {
-    if (cell.kind() == BaseCell::Kind::unit_cell)
+    if (cell.kind() == BaseCell::Kind::unitcell)
     {
         UnitCell& ucell = static_cast<UnitCell&>(cell);
         force = lj_force;
@@ -215,7 +215,7 @@ void ESolver_LJ::cal_stress(BaseCell& cell, ModuleBase::matrix& stress)
 {
     stress = lj_virial;
 
-    if (cell.kind() == BaseCell::Kind::unit_cell)
+    if (cell.kind() == BaseCell::Kind::unitcell)
     {
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, GlobalV::ofs_running);
     }

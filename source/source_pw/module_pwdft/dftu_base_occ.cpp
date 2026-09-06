@@ -33,8 +33,10 @@ void Plus_U_Base::cal_occ_pw(const void* psi_in,
 {
     ModuleBase::timer::start("Plus_U_Base", "cal_occ_pw");
     this->occmat_.copy_to_save(cell, this->orbital_corr);
-    this->occmat_.write_save_to_flat(cell, this->orbital_corr,
-                                     this->pot_uterm_pw_index, this->uom_save);
+    if(this->has_occ_mixer())
+    {
+        this->occ_mixer().begin_iter(this->occmat_);
+    }
     this->occmat_.zero(cell, this->orbital_corr);
 
     if(this->device == "cpu")
@@ -50,18 +52,16 @@ void Plus_U_Base::cal_occ_pw(const void* psi_in,
     }
 #endif
 
-    // reduce occ_mat across k-pools, then copy to uom_array for mixing
+    // reduce occ_mat across k-pools
     DFTU_BASE::reduce_occ_mat(cell, this->nspin, this->kpar,
                               this->orbital_corr, this->occmat_);
-    this->occmat_.write_to_flat(cell, this->orbital_corr,
-                                this->pot_uterm_pw_index, this->uom_array);
 
-    // mixing
-    if (this->mixing_dftu != 0 && p_chgmix != nullptr)
+    // mixing: flatten the fresh occ, mix against the saved one, write back
+    if(this->has_occ_mixer() && p_chgmix != nullptr)
     {
-        p_chgmix->mix_uom(this->uom_array, this->uom_save);
-        this->occmat_.read_from_flat(cell, this->orbital_corr,
-                                     this->pot_uterm_pw_index, this->uom_array);
+        this->occ_mixer().collect(this->occmat_);
+        p_chgmix->mix_uom(this->occ_mixer().uom(), this->occ_mixer().uom_save());
+        this->occ_mixer().write_back(this->occmat_);
     }
 
     DFTU_BASE::compute_pot_uterm_and_energy(cell, this->nspin,

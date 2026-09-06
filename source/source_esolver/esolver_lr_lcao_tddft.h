@@ -43,12 +43,12 @@ namespace ModuleESolver
         virtual void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override
         {
             static_cast<void>(force);
-            basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+            basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
         };
         virtual void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override
         {
             static_cast<void>(stress);
-            basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+            basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
         };
 
       protected:

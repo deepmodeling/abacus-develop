@@ -43,6 +43,18 @@ TEST(Tensor, Constructor) {
     EXPECT_EQ(t4.data(), vec.data());
 }
 
+TEST(Tensor, CopyAssignment)
+{
+    container::Tensor source({1, 2, 3, 4});
+    source.reshape({2, 2});
+    container::Tensor destination;
+
+    destination = source;
+
+    EXPECT_EQ(destination, source);
+    EXPECT_NE(destination.data(), source.data());
+}
+
 
 TEST(Tensor, GetDataPointer) {
     // Create a 1x1 float tensor with data [1.0, 2.0, 3.0, 4.0].

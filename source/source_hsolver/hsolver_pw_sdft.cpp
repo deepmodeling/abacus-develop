@@ -22,10 +22,19 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
                                       Stochastic_WF<T, Device>& stowf,
                                       const int istep,
                                       const int iter,
+                                      std::ostream& log,
                                       const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW_SDFT", "solve");
     ModuleBase::timer::start("HSolverPW_SDFT", "solve");
+
+    // This override never calls HSolverPW::solve, which is where the base class
+    // normally establishes the pool communication context. Set it up here so that
+    // hamiltSolvePsiK builds a diag_comm_info describing the real pool; otherwise it
+    // would keep the defaults (rank 0, 1 process) and every reduction guarded by
+    // diag_comm.nproc > 1 would be silently skipped.
+    this->rank_in_pool = wfc_basis->poolrank;
+    this->nproc_in_pool = wfc_basis->poolnproc;
 
     const int npwx = psi.get_nbasis();
     const int nbands = psi.get_nbands();
@@ -71,7 +80,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
         stoiter.checkemm(ik, istep, iter, stowf); // check and reset emax & emin
     }
 
-    this->output_iterInfo();
+    this->output_iterInfo(log);
 
     for (int ik = 0; ik < nks; ik++)
     {
