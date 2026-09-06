@@ -2,7 +2,7 @@
 #include <vector>
 #include <map>
 #include <set>
-#include "source_lcao/module_ri/abfs-vector3_order.h"
+#include "source_lcao/module_ri/abfs_vector3_order.h"
 #include "source_base/matrix3.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_cell/klist.h"

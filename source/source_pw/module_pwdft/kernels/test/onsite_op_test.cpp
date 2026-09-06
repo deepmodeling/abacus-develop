@@ -173,11 +173,11 @@ TEST_F(OnsitePsDeltaSpinNpol2Test, MultiBand)
 // For npol=1:
 //   for each ip:
 //     m1 = ip_m[ip], if m1 < 0 continue
-//     iat = ip_iat[ip], vu_iat = vu + vu_begin_iat[iat]
+//     iat = ip_iat[ip], pot_onsite_iat = pot_onsite + pot_onsite_begin_iat[iat]
 //     tlp1 = 2*orb_l + 1
 //     for ip2 in [ip-m1, ip-m1+tlp1):
 //       m2 = ip_m[ip2]
-//       ps[ip * npm + ib] += vu_iat[m1*tlp1 + m2] * becp[ib * tnp + ip2]
+//       ps[ip * npm + ib] += pot_onsite_iat[m1*tlp1 + m2] * becp[ib * tnp + ip2]
 // =====================================================================
 
 class OnsitePsDftuNpol1Test : public ::testing::Test
@@ -196,26 +196,26 @@ TEST_F(OnsitePsDftuNpol1Test, SingleBandSingleAtom_DOrbital)
     std::vector<int> orb_l_iat = {2}; // d-orbital (l=2)
     std::vector<int> ip_iat = {0, 0, 0, 0, 0}; // all belong to atom 0
     std::vector<int> ip_m = {0, 1, 2, 3, 4}; // m indices
-    std::vector<int> vu_begin_iat = {0}; // VU starts at index 0
+    std::vector<int> pot_onsite_begin_iat = {0}; // pot_onsite starts at index 0
 
-    // VU matrix for d-orbital (5x5), row-major
-    std::vector<complexd> vu(25, 0.0);
-    vu[0] = 1.0; // VU[0,0]
-    vu[6] = 2.0; // VU[1,1]
-    vu[12] = 3.0; // VU[2,2]
+    // pot_onsite matrix for d-orbital (5x5), row-major
+    std::vector<complexd> pot_onsite(25, 0.0);
+    pot_onsite[0] = 1.0; // pot_onsite[0,0]
+    pot_onsite[6] = 2.0; // pot_onsite[1,1]
+    pot_onsite[12] = 3.0; // pot_onsite[2,2]
 
     std::vector<complexd> becp = {1.0, 0.5, 0.3, 0.2, 0.1}; // 5 projectors
     std::vector<complexd> ps(5, 0.0); // tnp * npm = 5
 
     kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), vu_begin_iat.data(),
-           tnp, vu.data(), ps.data(), becp.data());
+           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
+           tnp, pot_onsite.data(), ps.data(), becp.data());
 
     // For ip=0 (m1=0): ip2 ranges from 0 to 5
-    //   ps[0] += VU[0,0]*becp[0] + VU[0,1]*becp[1] + ...
+    //   ps[0] += pot_onsite[0,0]*becp[0] + pot_onsite[0,1]*becp[1] + ...
     //          = 1.0*1.0 + 0 + 0 + 0 + 0 = 1.0
     // For ip=1 (m1=1): ip2 ranges from 0 to 5
-    //   ps[1] += VU[1,0]*becp[0] + VU[1,1]*becp[1] + ...
+    //   ps[1] += pot_onsite[1,0]*becp[0] + pot_onsite[1,1]*becp[1] + ...
     //          = 0 + 2.0*0.5 + 0 + 0 + 0 = 1.0
     // For ip=2 (m1=2): ps[2] += 3.0*0.3 = 0.9
     EXPECT_NEAR(ps[0].real(), 1.0, 1e-15);
@@ -225,33 +225,33 @@ TEST_F(OnsitePsDftuNpol1Test, SingleBandSingleAtom_DOrbital)
     EXPECT_NEAR(ps[4].real(), 0.0, 1e-15);
 }
 
-TEST_F(OnsitePsDftuNpol1Test, OffDiagonalVU)
+TEST_F(OnsitePsDftuNpol1Test, OffDiagonalPotOnsite)
 {
-    // Test off-diagonal VU elements
+    // Test off-diagonal pot_onsite elements
     const int npm = 1, npol = 1, tnp = 3; // p-orbital
 
     std::vector<int> orb_l_iat = {1}; // p-orbital
     std::vector<int> ip_iat = {0, 0, 0};
     std::vector<int> ip_m = {0, 1, 2};
-    std::vector<int> vu_begin_iat = {0};
+    std::vector<int> pot_onsite_begin_iat = {0};
 
-    // VU with off-diagonal: VU[0,1] = 0.5, VU[1,0] = 0.5
-    std::vector<complexd> vu(9, 0.0);
-    vu[1] = 0.5; // VU[0,1]
-    vu[3] = 0.5; // VU[1,0]
+    // pot_onsite with off-diagonal: pot_onsite[0,1] = 0.5, pot_onsite[1,0] = 0.5
+    std::vector<complexd> pot_onsite(9, 0.0);
+    pot_onsite[1] = 0.5; // pot_onsite[0,1]
+    pot_onsite[3] = 0.5; // pot_onsite[1,0]
 
     std::vector<complexd> becp = {1.0, 2.0, 3.0};
     std::vector<complexd> ps(3, 0.0);
 
     kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), vu_begin_iat.data(),
-           tnp, vu.data(), ps.data(), becp.data());
+           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
+           tnp, pot_onsite.data(), ps.data(), becp.data());
 
     // ip=0 (m1=0): ip2 from 0 to 3
-    //   ps[0] += VU[0,0]*becp[0] + VU[0,1]*becp[1] + VU[0,2]*becp[2]
+    //   ps[0] += pot_onsite[0,0]*becp[0] + pot_onsite[0,1]*becp[1] + pot_onsite[0,2]*becp[2]
     //          = 0*1.0 + 0.5*2.0 + 0*3.0 = 1.0
     // ip=1 (m1=1):
-    //   ps[1] += VU[1,0]*becp[0] + VU[1,1]*becp[1] + VU[1,2]*becp[2]
+    //   ps[1] += pot_onsite[1,0]*becp[0] + pot_onsite[1,1]*becp[1] + pot_onsite[1,2]*becp[2]
     //          = 0.5*1.0 + 0*2.0 + 0*3.0 = 0.5
     EXPECT_NEAR(ps[0].real(), 1.0, 1e-15);
     EXPECT_NEAR(ps[1].real(), 0.5, 1e-15);
@@ -266,20 +266,20 @@ TEST_F(OnsitePsDftuNpol1Test, NonCorrelatedProjector_MMinus1)
     std::vector<int> ip_iat = {0, 0, 0, 0};
     // First projector is not correlated (m=-1), rest are p-type (m=0,1,2)
     std::vector<int> ip_m = {-1, 0, 1, 2};
-    std::vector<int> vu_begin_iat = {0};
+    std::vector<int> pot_onsite_begin_iat = {0};
 
-    std::vector<complexd> vu(9, 1.0); // all VU = 1.0
+    std::vector<complexd> pot_onsite(9, 1.0); // all pot_onsite = 1.0
     std::vector<complexd> becp = {1.0, 1.0, 1.0, 1.0};
     std::vector<complexd> ps(4, 0.0);
 
     kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), vu_begin_iat.data(),
-           tnp, vu.data(), ps.data(), becp.data());
+           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
+           tnp, pot_onsite.data(), ps.data(), becp.data());
 
     // ip=0: m1=-1, skipped
     // ip=1,2,3: should have contributions
     EXPECT_NEAR(ps[0].real(), 0.0, 1e-15); // skipped
-    EXPECT_NEAR(ps[1].real(), 3.0, 1e-15); // sum of VU[1,*]*becp
+    EXPECT_NEAR(ps[1].real(), 3.0, 1e-15); // sum of pot_onsite[1,*]*becp
     EXPECT_NEAR(ps[2].real(), 3.0, 1e-15);
     EXPECT_NEAR(ps[3].real(), 3.0, 1e-15);
 }
@@ -291,10 +291,10 @@ TEST_F(OnsitePsDftuNpol1Test, MultiBand_DOrbital)
     std::vector<int> orb_l_iat = {2};
     std::vector<int> ip_iat = {0, 0, 0, 0, 0};
     std::vector<int> ip_m = {0, 1, 2, 3, 4};
-    std::vector<int> vu_begin_iat = {0};
+    std::vector<int> pot_onsite_begin_iat = {0};
 
-    std::vector<complexd> vu(25, 0.0);
-    vu[0] = 2.0; // VU[0,0]
+    std::vector<complexd> pot_onsite(25, 0.0);
+    pot_onsite[0] = 2.0; // pot_onsite[0,0]
 
     // Band 0: becp[0..4], Band 1: becp[5..9]
     std::vector<complexd> becp = {
@@ -304,11 +304,11 @@ TEST_F(OnsitePsDftuNpol1Test, MultiBand_DOrbital)
     std::vector<complexd> ps(10, 0.0); // tnp * npm = 10
 
     kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), vu_begin_iat.data(),
-           tnp, vu.data(), ps.data(), becp.data());
+           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
+           tnp, pot_onsite.data(), ps.data(), becp.data());
 
-    // Band 0: ps[0] += VU[0,0] * becp[0] = 2.0 * 1.0 = 2.0
-    // Band 1: ps[5] += VU[0,0] * becp[5] = 2.0 * 0.0 = 0.0
+    // Band 0: ps[0] += pot_onsite[0,0] * becp[0] = 2.0 * 1.0 = 2.0
+    // Band 1: ps[5] += pot_onsite[0,0] * becp[5] = 2.0 * 0.0 = 0.0
     // Wait, becp indexing: becp[ib * tnp + ip2]
     // For band 1, ib=1: becp[1*5 + 0] = becp[5] = 0.0
     EXPECT_NEAR(ps[0].real(), 2.0, 1e-15);
@@ -319,10 +319,10 @@ TEST_F(OnsitePsDftuNpol1Test, MultiBand_DOrbital)
 // 4. DFT+U kernel (npol=2 branch)
 //
 // For npol=2:
-//   ps[ip * npm + ib2] += vu_iat[index_mm] * becp[ib2*tnp + ip2]
-//                       + vu_iat[index_mm + 2*tlp1^2] * becp[ib2*tnp + ip2 + tnp]
-//   ps[ip * npm + ib2+1] += vu_iat[index_mm + tlp1^2] * becp[ib2*tnp + ip2]
-//                         + vu_iat[index_mm + 3*tlp1^2] * becp[ib2*tnp + ip2 + tnp]
+//   ps[ip * npm + ib2] += pot_onsite_iat[index_mm] * becp[ib2*tnp + ip2]
+//                       + pot_onsite_iat[index_mm + 2*tlp1^2] * becp[ib2*tnp + ip2 + tnp]
+//   ps[ip * npm + ib2+1] += pot_onsite_iat[index_mm + tlp1^2] * becp[ib2*tnp + ip2]
+//                         + pot_onsite_iat[index_mm + 3*tlp1^2] * becp[ib2*tnp + ip2 + tnp]
 //
 // where index_mm = m1 * tlp1 + m2
 // =====================================================================
@@ -343,14 +343,14 @@ TEST_F(OnsitePsDftuNpol2Test, SingleBandSingleAtom_Porbital)
     std::vector<int> orb_l_iat = {1}; // p-orbital
     std::vector<int> ip_iat = {0, 0, 0};
     std::vector<int> ip_m = {0, 1, 2};
-    std::vector<int> vu_begin_iat = {0};
+    std::vector<int> pot_onsite_begin_iat = {0};
 
-    // VU: 4 blocks of 3x3 = 36 elements
-    std::vector<complexd> vu(36, 0.0);
-    // Block 0 (Pauli I): VU[0,0] = 2.0
-    vu[0] = 2.0;
-    // Block 1 (Pauli X): VU[0,0] = 1.0
-    vu[9] = 1.0; // tlp1^2 = 9
+    // pot_onsite: 4 blocks of 3x3 = 36 elements
+    std::vector<complexd> pot_onsite(36, 0.0);
+    // Block 0 (Pauli I): pot_onsite[0,0] = 2.0
+    pot_onsite[0] = 2.0;
+    // Block 1 (Pauli X): pot_onsite[0,0] = 1.0
+    pot_onsite[9] = 1.0; // tlp1^2 = 9
 
     // becp: 2 rows (spin up/down) x 3 projectors
     std::vector<complexd> becp = {
@@ -360,12 +360,12 @@ TEST_F(OnsitePsDftuNpol2Test, SingleBandSingleAtom_Porbital)
     std::vector<complexd> ps = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; // tnp * npm = 6
 
     kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), vu_begin_iat.data(),
-           tnp, vu.data(), ps.data(), becp.data());
+           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
+           tnp, pot_onsite.data(), ps.data(), becp.data());
 
     // For ip=0 (m1=0): ip2 from 0 to 3
-    //   ps[0] += vu[0]*becp[0] + vu[18]*becp[3] = 2.0*1.0 + 0*0.0 = 2.0
-    //   ps[1] += vu[9]*becp[0] + vu[27]*becp[3] = 1.0*1.0 + 0*0.0 = 1.0
+    //   ps[0] += pot_onsite[0]*becp[0] + pot_onsite[18]*becp[3] = 2.0*1.0 + 0*0.0 = 2.0
+    //   ps[1] += pot_onsite[9]*becp[0] + pot_onsite[27]*becp[3] = 1.0*1.0 + 0*0.0 = 1.0
     EXPECT_NEAR(ps[0].real(), 2.0, 1e-15);
     EXPECT_NEAR(ps[1].real(), 1.0, 1e-15);
 }
@@ -377,10 +377,10 @@ TEST_F(OnsitePsDftuNpol2Test, MultiBand)
     std::vector<int> orb_l_iat = {1};
     std::vector<int> ip_iat = {0, 0, 0};
     std::vector<int> ip_m = {0, 1, 2};
-    std::vector<int> vu_begin_iat = {0};
+    std::vector<int> pot_onsite_begin_iat = {0};
 
-    std::vector<complexd> vu(36, 0.0);
-    vu[0] = 2.0; // Block 0, VU[0,0]
+    std::vector<complexd> pot_onsite(36, 0.0);
+    pot_onsite[0] = 2.0; // Block 0, pot_onsite[0,0]
 
     // becp: 2 spin x 3 proj x 2 bands = 12 elements
     // Layout: [band0_up, band0_dn, band1_up, band1_dn]
@@ -393,13 +393,13 @@ TEST_F(OnsitePsDftuNpol2Test, MultiBand)
     std::vector<complexd> ps(12, 0.0);
 
     kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), vu_begin_iat.data(),
-           tnp, vu.data(), ps.data(), becp.data());
+           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
+           tnp, pot_onsite.data(), ps.data(), becp.data());
 
     // Band pair 0 (ib=0, ib2=0):
-    //   ps[0] += vu[0]*becp[0] + vu[18]*becp[3] = 2.0*1.0 + 0 = 2.0
+    //   ps[0] += pot_onsite[0]*becp[0] + pot_onsite[18]*becp[3] = 2.0*1.0 + 0 = 2.0
     // Band pair 1 (ib=1, ib2=2):
-    //   ps[2] += vu[0]*becp[6] + vu[18]*becp[9] = 2.0*0.2 + 0 = 0.4
+    //   ps[2] += pot_onsite[0]*becp[6] + pot_onsite[18]*becp[9] = 2.0*0.2 + 0 = 0.4
     EXPECT_NEAR(ps[0].real(), 2.0, 1e-15);
     EXPECT_NEAR(ps[2].real(), 0.4, 1e-15);
 }
@@ -447,23 +447,23 @@ TEST_F(OnsitePsEdgeCasesTest, ZeroLambda)
     EXPECT_NEAR(ps[1].real(), 20.0, 1e-15);
 }
 
-TEST_F(OnsitePsEdgeCasesTest, ComplexVU)
+TEST_F(OnsitePsEdgeCasesTest, Complexpot_onsite)
 {
-    // DFT+U with complex VU elements
+    // DFT+U with complex pot_onsite elements
     const int npm = 1, npol = 1, tnp = 2;
 
     std::vector<int> orb_l_iat = {0}; // s-orbital, but 2 projectors
     std::vector<int> ip_iat = {0, 0};
     std::vector<int> ip_m = {0, -1}; // first correlated, second not
-    std::vector<int> vu_begin_iat = {0};
+    std::vector<int> pot_onsite_begin_iat = {0};
 
-    std::vector<complexd> vu = {complexd(1.0, 2.0)}; // 1x1 VU matrix
+    std::vector<complexd> pot_onsite = {complexd(1.0, 2.0)}; // 1x1 pot_onsite matrix
     std::vector<complexd> becp = {complexd(0.5, 0.5), 1.0};
     std::vector<complexd> ps = {0.0, 0.0};
 
     kernel(nullptr, npm, npol,
-           orb_l_iat.data(), ip_iat.data(), ip_m.data(), vu_begin_iat.data(),
-           tnp, vu.data(), ps.data(), becp.data());
+           orb_l_iat.data(), ip_iat.data(), ip_m.data(), pot_onsite_begin_iat.data(),
+           tnp, pot_onsite.data(), ps.data(), becp.data());
 
     // ps[0] += (1+complexd(0.0, 2.0)) * (0.5+0.5i) = 0.5+0.5i + complexd(0.0, 1.0)-1 = -0.5+1.5i
     EXPECT_NEAR(ps[0].real(), -0.5, 1e-15);

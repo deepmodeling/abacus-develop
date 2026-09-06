@@ -5,12 +5,13 @@
 #include "source_cell/klist.h" // k points
 #include "source_io/module_parameter/input_parameter.h" // Input_para
 #include "source_basis/module_ao/parallel_orbitals.h" // parallel orbitals
-#include "source_basis/module_ao/ORB_read.h" // orb
+#include "source_basis/module_ao/orb_read.h" // orb
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
+#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info
 
 // for EXX
 #ifdef __EXX
-// Exx_LRI_Interface forward declaration, full definition in Exx_LRI_interface.h (moved to .cpp)
+// Exx_LRI_Interface forward declaration, full definition in exx_lri_interface.h (moved to .cpp)
 // mohan add 20260605
 template <typename TK, typename TR> class Exx_LRI_Interface;
 #endif
@@ -28,14 +29,15 @@ class Exx_NAO
     std::shared_ptr<Exx_LRI_Interface<TK, std::complex<double>>> exc = nullptr;
 #endif
 
-    void init(const UnitCell& ucell);
+    void init(const UnitCell& ucell, Exx_Info& exx_info);
 
 	void before_runner(
 			UnitCell& ucell, // unitcell
 			K_Vectors &kv, // k points
             const LCAO_Orbitals &orb, // orbital info
 			const Parallel_Orbitals &pv, // parallel orbitals
-			const Input_para& inp);
+			const Input_para& inp,
+			Exx_Info& exx_info);
 
 	void before_scf(
 			const UnitCell &ucell, // unitcell
@@ -43,7 +45,8 @@ class Exx_NAO
 			const LCAO_Orbitals &orb, // orbital info
 			Charge_Mixing* p_chgmix,
 			const int istep,
-			const Input_para& inp);
+			const Input_para& inp,
+			Exx_Info& exx_info);
 
 };
 

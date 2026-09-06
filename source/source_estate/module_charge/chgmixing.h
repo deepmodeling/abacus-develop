@@ -6,7 +6,7 @@
 #include "source_estate/module_charge/charge_mixing.h" // use p_chgmix
 #include "source_io/module_parameter/input_parameter.h" // use Input_para
 #include "source_cell/unitcell.h"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
+#include "source_pw/module_pwdft/dftu_base.h"
 
 namespace module_charge
 {
@@ -28,12 +28,12 @@ void chgmixing_ks(const int iter, // scf iteration number
 
 void chgmixing_ks_pw(const int iter,
         Charge_Mixing* p_chgmix,
-        Plus_U &dftu, // mohan add 2025-11-06
+        Plus_U_Base& dftu,
 		const Input_para& inp); // input parameters
 
 void chgmixing_ks_lcao(const int iter, // scf iteration number
         Charge_Mixing* p_chgmix, // charge mixing class
-        Plus_U &dftu, // mohan add 2025-11-06
+        Plus_U_Base& dftu,
         const int nnr, // dimension of density matrix
 		const Input_para& inp); // input parameters
 

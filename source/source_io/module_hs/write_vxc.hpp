@@ -4,14 +4,15 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_lcao/module_operator_lcao/op_dftu_lcao.h"
+#include "source_lcao/module_dftu/dftu_nao_op_legacy.h"
 #include "source_lcao/module_operator_lcao/veff_lcao.h"
+#include "source_hamilt/module_xc/exx_info.h"
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #endif
 #include "source_psi/psi.h"
-#include "source_io/module_hs/write_HS.h"
-#include "source_io/module_output/filename.h" // use filename_output function
+#include "source_io/module_hs/write_hs.h"
+#include "source_base/module_out/filename.h" // use filename_output function
 
 namespace ModuleIO
 {
@@ -153,7 +154,8 @@ void write_Vxc(const int nspin,
                const std::vector<double>& orb_cutoff,
                const ModuleBase::matrix& wg,
                Grid_Driver& gd,
-               bool cal_exx
+               bool cal_exx,
+               const Exx_Info& exx_info
 #ifdef __EXX
                ,
                std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
@@ -201,13 +203,13 @@ void write_Vxc(const int nspin,
     std::vector<std::vector<double>> e_orb_tot;   // orbital energy (total)
 #ifdef __EXX
     hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexx_op_ao(&vxc_k_ao,
-        &vxcs_R_ao[0],ucell,/*for paraV*/ kv, Hexxd, Hexxc, hamilt::Add_Hexx_Type::k);
+        &vxcs_R_ao[0],ucell,/*for paraV*/ kv, Hexxd, Hexxc, &exx_info, hamilt::Add_Hexx_Type::k);
     hamilt::HS_Matrix_K<TK> vexxonly_k_ao(pv, 1); // only hk is needed, sk is skipped
     hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexxonly_op_ao(&vexxonly_k_ao,
-        &vxcs_R_ao[0],ucell,/*for paraV*/ kv, Hexxd, Hexxc, hamilt::Add_Hexx_Type::k);
+        &vxcs_R_ao[0],ucell,/*for paraV*/ kv, Hexxd, Hexxc, &exx_info, hamilt::Add_Hexx_Type::k);
     std::vector<std::vector<double>> e_orb_exx; // orbital energy (EXX)
 #endif
-    hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, nullptr, kv.isk, PARAM.globalv.npol);
+    hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, ucell, nullptr, kv.isk, PARAM.globalv.npol);
 
     // 4. calculate and write the MO-matrix Exc
     Parallel_2D p2d;

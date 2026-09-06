@@ -19,6 +19,8 @@ namespace LR
     void OperatorLRHxc<T, Device>::act(const int nbands, const int nbasis, const int npol, const T* psi_in, T* hpsi, const int ngk_ik, const bool is_first_node)const
     {
         ModuleBase::TITLE("OperatorLRHxc", "act");
+        ModuleBase::timer::start("OperatorLRHxc", "act");
+
         const int& sl = ispin_ks[0];
         const auto psil_ks = LR_Util::get_psi_spin(psi_ks, sl, nk);
 
@@ -45,6 +47,11 @@ namespace LR
 #else
         ao_to_mo_blas(v_hxc_2d, psil_ks, nocc[sl], nvirt[sl], hpsi);
 #endif
+        // for debug
+        //std::cout << "After Hxc, hpsi: [nvirt= " << nvirt[sl] << " nocc= " << nocc[sl] << " nk= " << nk << " ]" << std::endl;
+        //LR_Util::print_value(hpsi, nk, nocc[sl], nvirt[sl]);
+
+        ModuleBase::timer::end("OperatorLRHxc", "act");
     }
 
 
@@ -66,7 +73,7 @@ namespace LR
         this->pot.lock()->cal_v_eff(rho_trans, ucell, vr_hxc, ispin_ks);
         LR_Util::_deallocate_2order_nested_ptr(rho_trans, 1);
 
-        // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\mu(r)
+        // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\nu(r)
         this->hR->set_zero();   // clear hR for each bands
         ModuleGint::cal_gint_vl(vr_hxc.c, &*this->hR);
         ModuleBase::timer::end("OperatorLRHxc", "grid_calculation");
@@ -105,7 +112,7 @@ namespace LR
 
                 LR_Util::_deallocate_2order_nested_ptr(rho_trans, 1);
 
-                // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\mu(r)
+                // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\nu(r)
                 HR_real_imag.set_zero();
                 ModuleGint::cal_gint_vl(vr_hxc.c, &HR_real_imag);
                 // LR_Util::print_HR(HR_real_imag, this->ucell.nat, "VR(real, 2d)");

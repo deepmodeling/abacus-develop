@@ -20,7 +20,7 @@ add_test(NAME MODULE_IO_input_test_para_4
 AddTest(
   TARGET MODULE_IO_read_exit_file_test
   LIBS parameter  base device
-  SOURCES read_exit_file_test.cpp ../module_output/read_exit_file.cpp
+  SOURCES read_exit_file_test.cpp
 )
 
 add_test(NAME MODULE_IO_read_exit_file_test_para_4
@@ -35,15 +35,36 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_IO_binstream_test
-  SOURCES binstream_test.cpp ../module_output/binstream.cpp
+  TARGET MODULE_IO_td_efield_io_test
+  LIBS parameter base device
+  SOURCES td_efield_io_test.cpp ../module_efield/td_efield_io.cpp
+    ../../source_estate/module_pot/td_field.cpp ../../source_estate/module_pot/td_field_profiles.cpp
+    ../../source_estate/module_pot/td_field_manager.cpp
+)
+
+AddTest(
+  TARGET MODULE_IO_td_vector_pot_io_test
+  LIBS parameter base device
+  SOURCES td_vector_pot_io_test.cpp ../module_efield/td_vector_pot_io.cpp
+)
+
+AddTest(
+  TARGET MODULE_IO_write_hsk_binary_test
+  LIBS parameter base device
+  SOURCES write_hsk_binary_test.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
+)
+
+add_test(
+  NAME MODULE_IO_write_hsk_binary_test_parallel
+  COMMAND mpirun -np 2 ./MODULE_IO_write_hsk_binary_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 AddTest(
   TARGET MODULE_IO_write_eig_occ_test
   LIBS parameter  base device symmetry
-  SOURCES write_eig_occ_test.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
-		../module_output/cif_io.cpp
+  SOURCES write_eig_occ_test.cpp ../module_output/band_parallel_output.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp
+		../../source_cell/cif_io.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 AddTest(
@@ -55,19 +76,19 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_dos_pw
   LIBS parameter  base device symmetry
-  SOURCES write_dos_pw_test.cpp ../module_dos/cal_dos.cpp ../module_dos/write_dos_pw.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../module_energy/nscf_fermi_surf.cpp ../../source_cell/k_vector_utils.cpp
+  SOURCES write_dos_pw_test.cpp ../module_dos/cal_dos.cpp ../module_dos/write_dos_pw.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../module_energy/nscf_fermi_surf.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_print_info
   LIBS parameter  base device symmetry cell_info
-  SOURCES print_info_test.cpp ../module_output/print_info.cpp ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/k_vector_utils.cpp
+  SOURCES print_info_test.cpp ../module_output/print_info.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_single_R_test
   LIBS parameter
-  SOURCES single_R_io_test.cpp ../module_hs/single_R_io.cpp
+  SOURCES single_r_io_test.cpp ../module_hs/single_r_io.cpp
 	../../source_base/global_variable.cpp
 	../../source_base/parallel_reduce.cpp
 	../../source_base/parallel_common.cpp
@@ -79,7 +100,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_wfc_nao
   LIBS parameter  base psi device
-  SOURCES write_wfc_nao_test.cpp ../module_output/filename.cpp ../module_wf/write_wfc_nao.cpp ../../source_basis/module_ao/parallel_orbitals.cpp ../module_output/binstream.cpp
+  SOURCES write_wfc_nao_test.cpp ../module_wf/write_wfc_nao.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
 )
 
 configure_file(write_wfc_nao_para.sh ${CMAKE_CURRENT_BINARY_DIR}/write_wfc_nao_para.sh COPYONLY)
@@ -119,30 +140,6 @@ AddTest(
   SOURCES ../module_output/output_log.cpp outputlog_test.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
-AddTest(
-  TARGET MODULE_IO_sparse_matrix_test
-  LIBS parameter  base device
-  SOURCES sparse_matrix_test.cpp ../module_output/sparse_matrix.cpp
-)
-
-AddTest(
-  TARGET MODULE_IO_file_reader_test
-  LIBS parameter  base device
-  SOURCES file_reader_test.cpp ../module_output/file_reader.cpp
-)
-
-AddTest(
-  TARGET MODULE_IO_csr_reader_test
-  LIBS parameter  base device
-  SOURCES csr_reader_test.cpp ../module_output/csr_reader.cpp ../module_output/file_reader.cpp ../module_output/sparse_matrix.cpp
-)
-
-AddTest(
-  TARGET MODULE_IO_read_rhog_test
-  LIBS parameter  base device planewave
-  SOURCES read_rhog_test.cpp ../module_chgpot/rhog_io.cpp ../module_output/binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp
-)
-
 if(ENABLE_LCAO)
 AddTest(
   TARGET MODULE_IO_to_qo_test
@@ -155,15 +152,14 @@ AddTest(
   ../../source_cell/atom_spec.cpp
   ../../source_cell/parallel_kpoints.cpp
   ../../source_cell/test/support/mock_unitcell.cpp
-  ../../source_lcao/center2_orb.cpp
-  ../module_output/orb_io.cpp
+  ../../source_lcao/center2orb.cpp
 )
 endif()
 
 AddTest(
   TARGET MODULE_IO_read_wfc_pw_test
   LIBS parameter  base device planewave
-  SOURCES read_wfc_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_output/binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp
+  SOURCES read_wfc_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
 add_test(NAME MODULE_IO_read_wfc_pw_test_parallel
@@ -173,8 +169,9 @@ add_test(NAME MODULE_IO_read_wfc_pw_test_parallel
 
 AddTest(
   TARGET MODULE_IO_read_wf2rho_pw_test
-  LIBS parameter base device planewave psi
-  SOURCES read_wf2rho_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_wf/read_wf2rho_pw.cpp ../module_output/binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp  ../../source_estate/module_charge/charge_mpi.cpp ../module_output/filename.cpp ../module_wf/write_wfc_pw.cpp
+  LIBS parameter base device planewave psi symmetry
+  SOURCES read_wf2rho_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_wf/read_wf2rho_pw.cpp ../../source_basis/module_pw/test/test_tool.cpp  ../../source_estate/module_charge/charge_mpi.cpp ../module_wf/write_wfc_pw.cpp
+  ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 add_test(NAME MODULE_IO_read_wf2rho_pw_parallel
@@ -188,8 +185,7 @@ AddTest(
   LIBS parameter  base device numerical_atomic_orbitals container orb
   SOURCES numerical_basis_test.cpp
           ../module_bessel/numerical_basis_jyjy.cpp
-          ../../source_lcao/center2_orb.cpp
-          ../module_output/orb_io.cpp
+          ../../source_lcao/center2orb.cpp
 )
 
 
@@ -199,7 +195,6 @@ AddTest(
   SOURCES output_mulliken_test.cpp output_mulliken_mock.cpp ../module_mulliken/output_mulliken.cpp
   ../../source_cell/cell_index.cpp
   ../../source_basis/module_ao/parallel_orbitals.cpp
-  ../module_output/orb_io.cpp
 )
 
 #if(ENABLE_LCAO)
@@ -217,20 +212,9 @@ AddTest(
 #endif()
 
 AddTest(
-  TARGET MODULE_IO_cif_io_test
-  LIBS parameter base device
-  SOURCES cif_io_test.cpp ../module_output/cif_io.cpp
-)
-
-add_test(NAME MODULE_IO_cif_io_test_parallel
-      COMMAND mpirun -np 4 ./MODULE_IO_cif_io_test
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-AddTest(
   TARGET MODULE_IO_orb_io_test
   LIBS parameter base device
-  SOURCES orb_io_test.cpp ../module_output/orb_io.cpp
+  SOURCES orb_io_test.cpp
 )
 
 add_test(NAME MODULE_IO_orb_io_test_parallel
@@ -240,8 +224,9 @@ add_test(NAME MODULE_IO_orb_io_test_parallel
 
 AddTest(
   TARGET MODULE_IO_write_dmk
-  LIBS parameter base device cell_info
-  SOURCES ../module_dm/test/write_dmk_test.cpp ../module_dm/write_dmk.cpp ../module_output/ucell_io.cpp
+  LIBS parameter base device cell_info symmetry
+  SOURCES ../module_dm/test/write_dmk_test.cpp ../module_dm/write_dmk.cpp ../../source_cell/ucell_io.cpp
+  ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 add_test(
@@ -264,13 +249,13 @@ add_test(
 
 if(ENABLE_LCAO)
 AddTest(
-  TARGET MODULE_IO_cal_pLpR_test
+  TARGET MODULE_IO_cal_plpr_test
   LIBS parameter base device neighbor
   SOURCES
-  cal_pLpR_test.cpp
-  ../module_hs/cal_pLpR.cpp
-  ../../source_basis/module_ao/ORB_atomic_lm.cpp
-  ../../source_basis/module_ao/ORB_atomic.cpp
+  cal_plpr_test.cpp
+  ../module_hs/cal_plpr.cpp
+  ../../source_basis/module_ao/orb_atomic_lm.cpp
+  ../../source_basis/module_ao/orb_atomic.cpp
   ../../source_basis/module_nao/radial_set.cpp
   ../../source_basis/module_nao/numerical_radial.cpp
   ../../source_basis/module_nao/beta_radials.cpp
@@ -289,17 +274,21 @@ AddTest(
   LIBS parameter base device hcontainer
   SOURCES
   write_hs_r_compat_test.cpp
-  ../module_hs/write_HS_R.cpp
-  ../module_hs/write_HS_sparse.cpp
-  ../module_hs/single_R_io.cpp
+  ../module_hs/write_hs_r.cpp
+  ../module_hs/write_hs_sparse.cpp
+  ../module_hs/single_r_io.cpp
   ../module_hs/rr_sparse_writer.cpp
   ../module_dm/write_dmr.cpp
-  ../module_output/ucell_io.cpp
-  ../module_output/sparse_matrix.cpp
-  ../module_output/csr_reader.cpp
-  ../module_output/file_reader.cpp
+  ../../source_cell/ucell_io.cpp
   ../../source_basis/module_ao/parallel_orbitals.cpp
   ../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp
+)
+
+add_test(
+  NAME MODULE_IO_write_hsr_binary_test_parallel
+  COMMAND mpirun -np 2 ./MODULE_IO_write_hs_r_compat_test
+          --gtest_filter=WriteHsRCompatibility.HContainerBinaryMpiGatherWritesCompleteFiles
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 endif()
 

@@ -220,6 +220,10 @@ or parsing behavior should include both:
 - `docs/parameters.yaml`
 - `docs/advanced/input_files/input-main.md`
 
+These files are generated artifacts, not additional sources of truth. Update
+the C++ `Input_Item` registrations and regenerate both files; do not edit the
+YAML or Markdown output by hand.
+
 If the diff touches parameter internals but does not change user-visible INPUT
 behavior, the PR should state why no documentation update is required. Missing
 documentation updates trigger a governance warning (not a block), but maintainers

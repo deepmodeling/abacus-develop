@@ -3,7 +3,7 @@
 
 #include <mpi.h>
 
-#include "source_hsolver/module_pexsi/dist_matrix_transformer.h"
+#include "source_hsolver/module_pexsi/dist_mat_tf.h"
 // a Block Cyclic Data Distribution matrix
 // http://www.netlib.org/utk/papers/factor/node3.html
 // local matrix elements is stored in column major

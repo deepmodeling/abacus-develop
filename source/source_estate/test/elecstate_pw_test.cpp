@@ -64,7 +64,7 @@ pseudopot_cell_vnl::~pseudopot_cell_vnl()
 }
 
 #ifdef __LCAO
-#include "source_basis/module_ao/ORB_gaunt_table.h"
+#include "source_basis/module_ao/orb_gaunt_table.h"
 ORB_gaunt_table::ORB_gaunt_table() {}
 ORB_gaunt_table::~ORB_gaunt_table() {}
 #endif
@@ -242,6 +242,7 @@ TEST_F(ElecStatePWTest, ConstructorDouble)
     EXPECT_EQ(elecstate_pw_d->charge, chg);
     EXPECT_EQ(elecstate_pw_d->klist, klist);
     EXPECT_EQ(elecstate_pw_d->bigpw, bigpw);
+    EXPECT_TRUE(elecstate_pw_d->get_becsum().empty());
 }
 
 TEST_F(ElecStatePWTest, ConstructorSingle)
@@ -257,6 +258,7 @@ TEST_F(ElecStatePWTest, ConstructorSingle)
     EXPECT_EQ(elecstate_pw_s->charge, chg);
     EXPECT_EQ(elecstate_pw_s->klist, klist);
     EXPECT_EQ(elecstate_pw_s->bigpw, bigpw);
+    EXPECT_TRUE(elecstate_pw_s->get_becsum().empty());
 }
 
 TEST_F(ElecStatePWTest, InitRhoDataDouble)

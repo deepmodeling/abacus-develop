@@ -1,8 +1,8 @@
 #include "deepks_test_runner.h"
 
 #include "source_lcao/module_deepks/deepks_iterate.h"
-#include "source_lcao/module_rt/snap_phialpha_half_tddft.h"
-#include "source_lcao/module_rt/snap_projector_half_tddft.h"
+#include "source_lcao/module_rt/snap_pha_half_tddft.h"
+#include "source_lcao/module_rt/snap_proj_half_tddft.h"
 
 #include <algorithm>
 #include <cmath>

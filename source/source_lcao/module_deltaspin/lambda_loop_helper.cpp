@@ -1,40 +1,53 @@
+#include "lambda_loop_helper.h"
+
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <iomanip>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "basic_funcs.h"
-#include "spin_constrain.h"
+#include "source_base/formatter.h"
 
 /**
  * @file lambda_loop_helper.cpp
- * @brief Helper/auxiliary methods for the lambda optimization loop.
+ * @brief Free-function implementations of lambda loop helpers.
  *
- * @par Functions overview
- * - print_termination(): Print final spin and lambda values when loop exits
- * - check_rms_stop(): Check convergence and print step info
- * - print_header(): Print header at loop start
- * - check_restriction(): Cap step size to prevent overshooting
- * - cal_alpha_opt(): Compute optimal step size via linear interpolation
- * - check_gradient_decay(): Check if dM/dlambda has decayed below threshold
+ * @par History
+ * Originally these were explicit specializations of SpinConstrain member
+ * functions:
+ *   template <> void SpinConstrain<std::complex<double>>::print_termination(...)
+ * They have been lifted to free function templates so that the SpinConstrain
+ * class no longer has to carry the lambda-loop workflow as part of its
+ * interface. The complex-double specialization is provided by instantiating
+ * the template with TK = std::complex<double>; a double stub is provided
+ * elsewhere to keep the link surface stable.
  */
 
+namespace spinconstrain
+{
+
 /**
- * @brief Print final spin and lambda values when lambda loop terminates.
+ * @brief Print final spin and lambda values when the lambda loop terminates.
  *
  * @par Output
- * - "after-optimization spin (uB)": Final magnetic moments Mi for each atom
- * - "after-optimization lambda (eV/uB)": Final Lagrange multipliers for each atom
+ * - "after-optimization spin (uB)": Final magnetic moments Mi per atom
+ * - "after-optimization lambda (eV/uB)": Final Lagrange multipliers per atom
  * - "Inner optimization for lambda ends.": Termination marker
- *
- * @par Interpretation
- * - Mi close to target_mag: constraint successfully satisfied
- * - Mi far from target_mag: constraint not converged (check RMS error in log)
- * - lambda ≈ 0: system naturally has the target moment
- * - lambda large: system resists the constraint (may indicate unrealistic target)
  */
-template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::print_termination()
+template <typename TK>
+void print_termination(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
 {
-    print_2d("after-optimization spin (uB): (print in the inner loop): ", this->Mi_, this->nspin_);
-    print_2d("after-optimization lambda (eV/uB): (print in the inner loop): ", this->lambda_, this->nspin_, ModuleBase::Ry_to_eV);
-    std::cout << "Inner optimization for lambda ends." << std::endl;
-    std::cout << "===============================================================================" << std::endl;
+    print_2d(" after-optimization spin (uB): (print in the inner loop): ", sc.get_Mi(), sc.get_nspin(), 1.0, ofs_running);
+    print_2d(" after-optimization lambda (eV/uB): (print in the inner loop): ",
+             sc.get_sc_lambda(),
+             sc.get_nspin(),
+             ModuleBase::Ry_to_eV,
+             ofs_running);
+    ofs_running << " Inner optimization for lambda ends." << std::endl;
+    ofs_running << " ================================================================================" << std::endl;
 }
 
 /**
@@ -50,47 +63,49 @@ void spinconstrain::SpinConstrain<std::complex<double>>::print_termination()
  * @par Return value
  * - true: loop should terminate (either converged or max steps)
  * - false: continue optimization
- *
- * @param outer_step Current SCF outer iteration
- * @param i_step Current inner lambda step
- * @param rms_error Current RMS error of Mi - M_target
- * @param duration Time for this step
- * @param total_duration Cumulative time for inner loop
  */
-template <>
-bool spinconstrain::SpinConstrain<std::complex<double>>::check_rms_stop(int outer_step,
-                                                                                  int i_step,
-                                                                                  double rms_error,
-                                                                                  double duration,
-                                                                                  double total_duration)
+template <typename TK>
+bool check_rms_stop(const SpinConstrain<TK>& sc,
+                    int outer_step,
+                    int i_step,
+                    double rms_error,
+                    double duration,
+                    double total_duration,
+                    std::ostream& ofs_running)
 {
-    std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << std::left << std::setw(5) << i_step + 1
-              << "       RMS = " << rms_error << "     TIME(s) = " << std::setw(11) << duration << std::endl;
-    if (rms_error < this->current_sc_thr_ || i_step == this->nsc_ - 1)
+    ofs_running << " Step (Outer -- Inner) =  " << outer_step << " -- " << std::left << std::setw(5) << i_step + 1
+                         << "       RMS = " << rms_error << "     TIME(s) = " << std::setw(11) << duration << std::endl;
+    const double current_sc_thr = sc.get_current_sc_thr();
+    const int nsc = sc.get_nsc();
+    if (rms_error < current_sc_thr || i_step == nsc - 1)
     {
-        if (rms_error < this->current_sc_thr_)
+        if (rms_error < current_sc_thr)
         {
-            std::cout << "Meet convergence criterion ( < " << this->current_sc_thr_ << " ), exit.";
-            std::cout << "       Total TIME(s) = " << total_duration << std::endl;
+            ofs_running << " DeltaSpin: lambda loop converged ( RMS < " << current_sc_thr
+                                 << " ), inner steps = " << (i_step + 1)
+                                 << ", Total TIME(s) = " << total_duration << std::endl;
+            ofs_running << std::endl;
         }
-        else if (i_step == this->nsc_ - 1)
+        else if (i_step == nsc - 1)
         {
-            std::cout << "Reach maximum number of steps ( " << this->nsc_ << " ), exit.";
-            std::cout << "              Total TIME(s) = " << total_duration << std::endl;
+            std::cout << " DeltaSpin: lambda loop reached max steps ( " << nsc
+                      << " ), RMS = " << rms_error
+                      << ", Total TIME(s) = " << total_duration << std::endl;
+            std::cout << std::endl;
         }
-        this->print_termination();
+        print_termination(sc, ofs_running);
         return true;
     }
     return false;
 }
 
 /// @brief Print header at start of lambda optimization loop
-template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::print_header()
+template <typename TK>
+void print_header(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
 {
-    std::cout << "===============================================================================" << std::endl;
-    std::cout << "Inner optimization for lambda begins ..." << std::endl;
-    std::cout << "Covergence criterion for the iteration: " << this->sc_thr_ << std::endl;
+    ofs_running << " ================================================================================" << std::endl;
+    ofs_running << " Inner optimization for lambda begins ..." << std::endl;
+    ofs_running << " Covergence criterion for the iteration: " << sc.get_sc_thr() << std::endl;
 }
 
 /**
@@ -105,23 +120,22 @@ void spinconstrain::SpinConstrain<std::complex<double>>::print_header()
  * @par Output (when restriction is applied)
  * - "alpha after restrict = X eV/uB^2": The capped step size
  * - "boundary after = X eV/uB": The actual maximum lambda change
- *
- * @param search Current search direction
- * @param alpha_trial Trial step size (modified in place if capped)
  */
-template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::check_restriction(
-    const std::vector<ModuleBase::Vector3<double>>& search,
-    double& alpha_trial)
+template <typename TK>
+void check_restriction(const SpinConstrain<TK>& sc,
+                       const std::vector<ModuleBase::Vector3<double>>& search,
+                       double& alpha_trial,
+                       std::ostream& ofs_running)
 {
+    const double restrict_current = sc.get_sccut();
     double boundary = std::abs(alpha_trial * maxval_abs_2d(search));
 
-    if (this->restrict_current_ > 0 && boundary > this->restrict_current_)
+    if (restrict_current > 0 && boundary > restrict_current)
     {
-        alpha_trial = copysign(1.0, alpha_trial) * this->restrict_current_ / maxval_abs_2d(search);
+        alpha_trial = copysign(1.0, alpha_trial) * restrict_current / maxval_abs_2d(search);
         boundary = std::abs(alpha_trial * maxval_abs_2d(search));
-        std::cout << "alpha after restrict = " << alpha_trial * ModuleBase::Ry_to_eV << std::endl;
-        std::cout << "boundary after = " << boundary * ModuleBase::Ry_to_eV << std::endl;
+        ofs_running << " alpha after restrict = " << alpha_trial * ModuleBase::Ry_to_eV << std::endl;
+        ofs_running << " boundary after = " << boundary * ModuleBase::Ry_to_eV << std::endl;
     }
 }
 
@@ -138,26 +152,17 @@ void spinconstrain::SpinConstrain<std::complex<double>>::check_restriction(
  *   sum_k  = sum((target - spin) . (spin_plus - spin))   over constrained components
  *   sum_k2 = sum(|spin - spin_plus|^2)                   over constrained components
  *
- * This is equivalent to finding the minimum of a quadratic approximation
- * to E(lambda) along the search direction.
- *
  * @par Edge case handling
  * - If |sum_k2| < 1e-30: spin and spin_plus are nearly identical, meaning
  *   the lambda change has no effect on Mi. Return alpha_trial as fallback.
- *   This can happen if the system is already saturated or if lambda is too small.
- *
- * @param spin Mi at current lambda
- * @param spin_plus Mi at trial lambda (current + alpha_trial * search)
- * @param alpha_trial Current trial step size
- * @return Optimal step size alpha_opt
  */
-template <>
-double spinconstrain::SpinConstrain<std::complex<double>>::cal_alpha_opt(
-    std::vector<ModuleBase::Vector3<double>> spin,
-    std::vector<ModuleBase::Vector3<double>> spin_plus,
-    const double alpha_trial)
+template <typename TK>
+double cal_alpha_opt(const SpinConstrain<TK>& sc,
+                     std::vector<ModuleBase::Vector3<double>> spin,
+                     std::vector<ModuleBase::Vector3<double>> spin_plus,
+                     const double alpha_trial)
 {
-    int nat = this->get_nat();
+    int nat = sc.get_nat();
     const bool print = false;
     const double zero = 0.0;
 
@@ -167,9 +172,9 @@ double spinconstrain::SpinConstrain<std::complex<double>>::cal_alpha_opt(
     std::vector<ModuleBase::Vector3<double>> spin_plus_mask(nat, 0.0);
     std::vector<ModuleBase::Vector3<double>> temp_1(nat, 0.0);
     std::vector<ModuleBase::Vector3<double>> temp_2(nat, 0.0);
-    where_fill_scalar_else_2d(this->constrain_, 0, zero, this->target_mag_, target_spin_mask);
-    where_fill_scalar_else_2d(this->constrain_, 0, zero, spin, spin_mask);
-    where_fill_scalar_else_2d(this->constrain_, 0, zero, spin_plus, spin_plus_mask);
+    where_fill_scalar_else_2d(sc.get_constrain(), 0, zero, sc.get_target_mag(), target_spin_mask);
+    where_fill_scalar_else_2d(sc.get_constrain(), 0, zero, spin, spin_mask);
+    where_fill_scalar_else_2d(sc.get_constrain(), 0, zero, spin_plus, spin_plus_mask);
 
     // Compute dot products for linear interpolation
     for (int ia = 0; ia < nat; ia++)
@@ -227,33 +232,20 @@ double spinconstrain::SpinConstrain<std::complex<double>>::cal_alpha_opt(
  *
  * @par Output (when triggered)
  * "Reach limitation of current step ( maximum gradient < X uB^2/eV in atom type Y ), exit."
- *
- * @par Debug output [GRAD-DECAY]
- * - WARNING: nu_change too small: indicates delta_lambda and dnu_last_step are
- *   nearly identical, meaning the optimizer is not making progress. This can happen
- *   if alpha_trial has become very small or if the search direction is nearly zero.
- *   Solution: check that alpha_trial is not vanishing; increase sc_thr if target
- *   is physically unreachable.
- *
- * @param new_spin Mi at current lambda
- * @param spin Mi at previous lambda
- * @param delta_lambda Current lambda change
- * @param dnu_last_step Previous cumulative step
- * @param print Whether to print detailed gradient info
- * @return true if gradient decayed below threshold (should terminate), false otherwise
  */
-template <>
-bool spinconstrain::SpinConstrain<std::complex<double>>::check_gradient_decay(
-    std::vector<ModuleBase::Vector3<double>> new_spin,
-    std::vector<ModuleBase::Vector3<double>> spin,
-    std::vector<ModuleBase::Vector3<double>> delta_lambda,
-    std::vector<ModuleBase::Vector3<double>> dnu_last_step,
-    bool print)
+template <typename TK>
+bool check_gradient_decay(const SpinConstrain<TK>& sc,
+                          std::vector<ModuleBase::Vector3<double>> new_spin,
+                          std::vector<ModuleBase::Vector3<double>> spin,
+                          std::vector<ModuleBase::Vector3<double>> delta_lambda,
+                          std::vector<ModuleBase::Vector3<double>> dnu_last_step,
+                          bool print,
+                          std::ostream& ofs_running)
 {
     const double one = 1.0;
     const double zero = 0.0;
-    int nat = this->get_nat();
-    int ntype = this->get_ntype();
+    int nat = sc.get_nat();
+    int ntype = sc.get_ntype();
 
     // Change in magnetic moments and lambda
     std::vector<ModuleBase::Vector3<double>> spin_change(nat, 0.0);
@@ -273,9 +265,10 @@ bool spinconstrain::SpinConstrain<std::complex<double>>::check_gradient_decay(
     subtract_2d(new_spin, spin, spin_change);
     subtract_2d(delta_lambda, dnu_last_step, nu_change);
 
+    const auto& constrain = sc.get_constrain();
     // Mask unconstrained components
-    where_fill_scalar_2d(this->constrain_, 0, zero, spin_change);
-    where_fill_scalar_2d(this->constrain_, 0, one, nu_change);
+    where_fill_scalar_2d(constrain, 0, zero, spin_change);
+    where_fill_scalar_2d(constrain, 0, one, nu_change);
 
     // Calculate full gradient matrix
     for (int ia = 0; ia < nat; ia++)
@@ -299,8 +292,12 @@ bool spinconstrain::SpinConstrain<std::complex<double>>::check_gradient_decay(
         }
     }
 
+    const auto& atom_counts = sc.get_atomCounts();
+    const auto& decay_grad = sc.get_decay_grad();
+    const int nspin = sc.get_nspin();
+
     // Extract diagonal gradient and find max per atom type
-    for (const auto& sc_elem: this->get_atomCounts())
+    for (const auto& sc_elem: atom_counts)
     {
         int it = sc_elem.first;
         int nat_it = sc_elem.second;
@@ -322,29 +319,174 @@ bool spinconstrain::SpinConstrain<std::complex<double>>::check_gradient_decay(
 
     if (print)
     {
-        print_2d("diagonal gradient: ", spin_nu_gradient_diag, this->nspin_);
-        std::cout << "maximum gradient appears at: " << std::endl;
+        print_2d(" diagonal gradient: ", spin_nu_gradient_diag, nspin, 1.0, ofs_running);
+        ofs_running << " maximum gradient appears at: " << std::endl;
         for (int it = 0; it < ntype; it++)
         {
-            std::cout << "( " << max_gradient_index[it].first << ", " << max_gradient_index[it].second << " )"
-                      << std::endl;
+            ofs_running << " ( " << max_gradient_index[it].first << ", " << max_gradient_index[it].second << " )"
+                                 << std::endl;
         }
-        std::cout << "maximum gradient: " << std::endl;
+        ofs_running << " maximum gradient: " << std::endl;
         for (int it = 0; it < ntype; it++)
         {
-            std::cout << max_gradient[it]/ModuleBase::Ry_to_eV << std::endl;
+            ofs_running << " " << max_gradient[it]/ModuleBase::Ry_to_eV << std::endl;
         }
     }
 
     // Check if any atom type's gradient has decayed below threshold
     for (int it = 0; it < ntype; it++)
     {
-        if (this->decay_grad_[it] > 0 && std::abs(max_gradient[it]) < this->decay_grad_[it])
+        if (decay_grad[it] > 0 && std::abs(max_gradient[it]) < decay_grad[it])
         {
-            std::cout << "Reach limitation of current step ( maximum gradient < " << this->decay_grad_[it]/ModuleBase::Ry_to_eV // uB^2/Ry to uB^2/eV
-                      << " in atom type " << it << " ), exit." << std::endl;
+            std::cout << " DeltaSpin: lambda loop early-terminated ( maximum gradient < "
+                      << decay_grad[it]/ModuleBase::Ry_to_eV // uB^2/Ry to uB^2/eV
+                      << " in atom type " << it << " )" << std::endl;
+            std::cout << std::endl;
             return true;
         }
     }
     return false;
 }
+
+/**
+ * @brief Print atomic magnetic moments Mi in a formatted table.
+ *
+ * @par Output format
+ * - nspin=2: "Total Magnetism (uB)" with single z-component column
+ * - nspin=4: three columns (Mx, My, Mz)
+ *
+ * Lifted from SpinConstrain<TK>::print_Mi; accesses state via getters.
+ */
+template <typename TK>
+void print_Mi(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
+{
+    sc.check_atomCounts();
+    const int nat = sc.get_nat();
+    const int nspin = sc.get_nspin();
+    const auto& Mi = sc.get_Mi();
+    const auto& atomLabel = sc.get_atomLabels();
+    std::vector<double> mag_x(nat, 0.0);
+    std::vector<double> mag_y(nat, 0.0);
+    std::vector<double> mag_z(nat, 0.0);
+    if (nspin == 2)
+    {
+        const std::vector<std::string> title = {"Total Magnetism (uB)", ""};
+        const std::vector<std::string> fmts = {"%-26s", "%20.10f"};
+        FmtTable table(/*titles=*/title,
+                       /*nrows=*/nat,
+                       /*formats=*/fmts,
+                       /*indent=*/0,
+                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
+        for (int iat = 0; iat < nat; ++iat)
+        {
+            mag_z[iat] = Mi[iat].z;
+        }
+        table << atomLabel << mag_z;
+        ofs_running << table.str() << std::endl;
+    }
+    else if (nspin == 4)
+    {
+        const std::vector<std::string> title = {"Total Magnetism (uB)", "", "", ""};
+        const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
+        FmtTable table(/*titles=*/title,
+                       /*nrows=*/nat,
+                       /*formats=*/fmts,
+                       /*indent=*/0,
+                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
+        for (int iat = 0; iat < nat; ++iat)
+        {
+            mag_x[iat] = Mi[iat].x;
+            mag_y[iat] = Mi[iat].y;
+            mag_z[iat] = Mi[iat].z;
+        }
+        table << atomLabel << mag_x << mag_y << mag_z;
+        ofs_running << table.str() << std::endl;
+    }
+}
+
+/**
+ * @brief Print the magnetic force (-lambda) per atom in eV/uB.
+ *
+ * Lifted from SpinConstrain<TK>::print_Mag_Force; accesses state via getters.
+ * lambda is read via get_sc_lambda() and converted from Ry to eV on output.
+ */
+template <typename TK>
+void print_Mag_Force(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
+{
+    sc.check_atomCounts();
+    const int nat = sc.get_nat();
+    const int nspin = sc.get_nspin();
+    const auto& lambda = sc.get_sc_lambda();
+    const auto& atomLabel = sc.get_atomLabels();
+    std::vector<double> mag_force_x(nat, 0.0);
+    std::vector<double> mag_force_y(nat, 0.0);
+    std::vector<double> mag_force_z(nat, 0.0);
+    if (nspin == 2)
+    {
+        const std::vector<std::string> title = {"Magnetic force (eV/uB)", ""};
+        const std::vector<std::string> fmts = {"%-26s", "%20.10f"};
+        FmtTable table(/*titles=*/title,
+                       /*nrows=*/nat,
+                       /*formats=*/fmts,
+                       /*indent=*/0,
+                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
+        for (int iat = 0; iat < nat; ++iat)
+        {
+            mag_force_z[iat] = lambda[iat].z * ModuleBase::Ry_to_eV;
+        }
+        table << atomLabel << mag_force_z;
+        ofs_running << table.str() << std::endl;
+    }
+    else if (nspin == 4)
+    {
+        const std::vector<std::string> title = {"Magnetic force (eV/uB)", "", "", ""};
+        const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
+        FmtTable table(/*titles=*/title,
+                       /*nrows=*/nat,
+                       /*formats=*/fmts,
+                       /*indent=*/0,
+                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
+        for (int iat = 0; iat < nat; ++iat)
+        {
+            mag_force_x[iat] = lambda[iat].x * ModuleBase::Ry_to_eV;
+            mag_force_y[iat] = lambda[iat].y * ModuleBase::Ry_to_eV;
+            mag_force_z[iat] = lambda[iat].z * ModuleBase::Ry_to_eV;
+        }
+        table << atomLabel << mag_force_x << mag_force_y << mag_force_z;
+        ofs_running << table.str() << std::endl;
+    }
+}
+
+
+// Explicit instantiation for the only supported TK = std::complex<double>.
+// The double stub is provided by template_helpers.cpp via the existing
+// specialization mechanism (kept as a separate file to avoid duplicate symbols).
+template void print_termination<std::complex<double>>(const SpinConstrain<std::complex<double>>&, std::ostream&);
+template bool check_rms_stop<std::complex<double>>(const SpinConstrain<std::complex<double>>&,
+                                                   int, int, double, double, double, std::ostream&);
+template void print_header<std::complex<double>>(const SpinConstrain<std::complex<double>>&, std::ostream&);
+template void check_restriction<std::complex<double>>(const SpinConstrain<std::complex<double>>&,
+                                                       const std::vector<ModuleBase::Vector3<double>>&,
+                                                       double&, std::ostream&);
+template double cal_alpha_opt<std::complex<double>>(const SpinConstrain<std::complex<double>>&,
+                                                    std::vector<ModuleBase::Vector3<double>>,
+                                                    std::vector<ModuleBase::Vector3<double>>,
+                                                    const double);
+template bool check_gradient_decay<std::complex<double>>(const SpinConstrain<std::complex<double>>&,
+                                                          std::vector<ModuleBase::Vector3<double>>,
+                                                          std::vector<ModuleBase::Vector3<double>>,
+                                                          std::vector<ModuleBase::Vector3<double>>,
+                                                          std::vector<ModuleBase::Vector3<double>>,
+                                                          bool, std::ostream&);
+
+// print_Mi / print_Mag_Force are generic (no per-TK stub needed): the
+// template body works for both TK = std::complex<double> (real usage) and
+// TK = double (nspin=2 stub path instantiated by template_helpers_test).
+// We instantiate both so callers in PW/LCAO ESolvers that hold either TK
+// can link against a single definition.
+template void print_Mi<std::complex<double>>(const SpinConstrain<std::complex<double>>&, std::ostream&);
+template void print_Mag_Force<std::complex<double>>(const SpinConstrain<std::complex<double>>&, std::ostream&);
+template void print_Mi<double>(const SpinConstrain<double>&, std::ostream&);
+template void print_Mag_Force<double>(const SpinConstrain<double>&, std::ostream&);
+
+} // namespace spinconstrain

@@ -14,11 +14,9 @@
 
     class K_Vectors;
     class UnitCell;
-    class Structure_Factor;
     namespace elecstate{ class ElecState; }
     namespace ModulePW{ class PW_Basis_K; }
     namespace ModulePW{ class PW_Basis; }
-    namespace ModuleSymmetry{ class Symmetry; }
     namespace psi
     {
     template <typename T, typename Device>
@@ -36,13 +34,11 @@ public:
     const Exx_Info_Lip& info;
 
     Exx_Lip(const Exx_Info_Lip& info_in,
-            const ModuleSymmetry::Symmetry& symm,
             K_Vectors* kv_ptr_in,
             psi::Psi<T, Device>* psi_local_in,
             psi::Psi<T, Device>* kspw_psi_ptr_in,
             const ModulePW::PW_Basis_K* wfc_basis_in,
             const ModulePW::PW_Basis* rho_basis_in,
-            const Structure_Factor& sf,
             const UnitCell* ucell_ptr_in,
             const elecstate::ElecState* pelec_in);
 

@@ -66,6 +66,9 @@ class ESolver_NEP : public ESolver
      */
     void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
 
+    bool supports_mdcell() const override;
+    double mdcell_cutoff(const Input_para& inp) const override;
+
     /**
      * @brief Prints the final total energy of the NEP model to the output file
      *
@@ -80,6 +83,7 @@ class ESolver_NEP : public ESolver
      * @param ucell unitcell information
      */
     void type_map(const UnitCell& ucell);
+    void initialize_type_map_(const std::vector<std::string>& type_labels);
 
     /**
      * @brief NEP related variables for ESolver_NEP class
@@ -95,6 +99,7 @@ class ESolver_NEP : public ESolver
 
     std::string nep_file;          ///< directory of NEP model file
     std::vector<int> atype = {};   ///< atom type mapping for NEP model
+    std::vector<int> md_type_to_nep_type_;
     double nep_potential;          ///< computed potential energy
     ModuleBase::matrix nep_force;  ///< computed atomic forces
     ModuleBase::matrix nep_virial; ///< computed lattice virials

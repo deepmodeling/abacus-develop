@@ -232,6 +232,10 @@ void XC_Functional::gcx_spin(
         return;
     }
 
+    if(func_id.empty())
+    {
+        return;
+    }
     // not the correct way to do things, will change later
     // should put exchange and correlation together
     // like the others
@@ -386,8 +390,12 @@ void XC_Functional::gcc_spin(
             zeta = -x;
         }
     } //endif
-
-    if(func_id[0]==XC_HYB_GGA_XC_PBEH)
+    
+    if(func_id.empty())
+    {
+        return;
+    }
+    if(!func_id.empty() && func_id[0]==XC_HYB_GGA_XC_PBEH)
     {
         XC_Functional::pbec_spin(rho, zeta, grho, 1, sc, v1cup, v1cdw, v2c);
         return;
@@ -395,7 +403,10 @@ void XC_Functional::gcc_spin(
 
     //for(int id : func_id)
     //{
-        int id = func_id[1];
+        // gcc_spin handles the correlation half, which lives in func_id[1] for X+C pairs;
+        // fall back to func_id[0] when only one functional is registered (correlation-only).
+        // Example: PBE0
+        int id = (func_id.size() > 1) ? func_id[1] : func_id[0];
         switch( id )
         {
             case XC_GGA_C_P86:

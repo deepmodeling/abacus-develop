@@ -1,7 +1,7 @@
 #include "spar_dh.h"
 
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/LCAO_domain.h"
+#include "source_lcao/lcao_domain.h"
 #include "source_hamilt/module_gint/gint_interface.h"
 #include <vector>
 

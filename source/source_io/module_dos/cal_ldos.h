@@ -8,6 +8,7 @@
 #include "source_estate/module_charge/charge.h" // chr
 #include "source_lcao/setup_dm.h" // Setup_DM
 #include "source_cell/klist.h" // K_Vectors
+#include "source_cell/module_neighbor/sltk_grid_driver.h" // Grid_Driver
 #include "source_base/matrix.h" // matrix
 
 namespace ModuleIO
@@ -28,22 +29,29 @@ class Cal_ldos
         const ModuleBase::matrix &wg, // mohan add 2025-11-02
 		const psi::Psi<T>& psi,
 		const Parallel_Grid& pgrid,
+		const Grid_Driver& grid_driver,
 		const UnitCell& ucell);
 
 }; // namespace Cal_ldos
 
+template <typename Device>
 void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                 const psi::Psi<std::complex<double>>& psi,
+                 const psi::Psi<std::complex<double>, Device>& psi,
+                 const Device* ctx,
                  const Parallel_Grid& pgrid,
                  const UnitCell& ucell);
 
+template <typename Device>
 void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                 const psi::Psi<std::complex<double>>& psi,
+                 const psi::Psi<std::complex<double>, Device>& psi,
+                 const Device* ctx,
                  const Parallel_Grid& pgrid,
                  const UnitCell& ucell);
 
+template <typename Device>
 void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                  const psi::Psi<std::complex<double>>& psi,
+                  const psi::Psi<std::complex<double>, Device>& psi,
+                  const Device* ctx,
                   const Parallel_Grid& pgrid,
                   const UnitCell& ucell);
 

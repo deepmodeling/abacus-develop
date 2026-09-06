@@ -113,16 +113,20 @@ void Parallel_Kpoints::set_startpro_pool()
     return;
 }
 
-
 // gather kpoints from all processor pools, only need to be called by the first processor of each pool.
 void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>& vec_local,
                                   std::vector<ModuleBase::Vector3<double>>& vec_global) const
 {
+    int world_rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    // Taoni fix bndpar on 2026-08-21
+    // rank_in_pool is repeated in every band group under BPCG. The first
+    // world rank of the k-point pool instead identifies one unique contributor.
+    const bool is_pool_root = (world_rank == this->startpro_pool[this->my_pool]);
     vec_global.resize(this->nkstot_np, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int i = 0; i < this->nks_np; ++i)
     {
-
-        if (this->rank_in_pool == 0)
+        if (is_pool_root)
         {
             vec_global[i + startk_pool[this->my_pool]] = vec_local[i];
         }
@@ -154,7 +158,6 @@ void Parallel_Kpoints::pool_collection(double& value, const double* wk, const in
             {
                 MPI_Status ierror;
                 MPI_Recv(&value, 1, MPI_DOUBLE, this->startpro_pool[pool], ik, MPI_COMM_WORLD, &ierror);
-
             }
         }
         else
@@ -215,7 +218,7 @@ void Parallel_Kpoints::pool_collection_aux(T* value, const V& w, const int& dim,
     T* p = &w.ptr[begin];
     // temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
     int pool = 0;
-    if (this->nspin != 2) 
+    if (this->nspin != 2)
     {
         pool = this->whichpool[ik];
     }

@@ -1,6 +1,5 @@
 #include "./kedf_xwm.h"
 
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/tool_quit.h"
 
@@ -60,26 +59,27 @@ void KEDF_XWM::set_para(double dV,
  * 
  * @param prho charge density
  * @param pw_rho pw basis
+ * @param nspin number of spin channels
  * @return the energy of XWM KEDF
  */
-double KEDF_XWM::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho)
+double KEDF_XWM::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho, int nspin)
 {
-    double** w1Rho5_6 = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    double** w1Rho5_6 = new double*[nspin];
+    for (int is = 0; is < nspin; ++is)
     {
         w1Rho5_6[is] = new double[pw_rho->nrxx];
     }
-    this->multi_kernel(prho, this->kernel1_.data(), w1Rho5_6, this->kappa_5_6, pw_rho);
+    this->multi_kernel(prho, this->kernel1_.data(), w1Rho5_6, this->kappa_5_6, pw_rho, nspin);
 
-    double** w2Rho5_6 = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    double** w2Rho5_6 = new double*[nspin];
+    for (int is = 0; is < nspin; ++is)
     {
         w2Rho5_6[is] = new double[pw_rho->nrxx];
     }
-    this->multi_kernel(prho, this->kernel2_.data(), w2Rho5_6, this->kappa_5_6, pw_rho);
+    this->multi_kernel(prho, this->kernel2_.data(), w2Rho5_6, this->kappa_5_6, pw_rho, nspin);
 
     double energy = 0.; // in Ry
-    if (PARAM.inp.nspin == 1)
+    if (nspin == 1)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
@@ -88,14 +88,14 @@ double KEDF_XWM::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
         }
         energy += this->dV_;
     }
-    else if (PARAM.inp.nspin == 2)
+    else if (nspin == 2)
     {
         // TODO: spin polarized
     }
     this->xwm_energy = energy;
     Parallel_Reduce::reduce_all(this->xwm_energy);
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         delete[] w1Rho5_6[is];
         delete[] w2Rho5_6[is];
@@ -113,30 +113,31 @@ double KEDF_XWM::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
  * @param is spin index
  * @param ir grid index
  * @param pw_rho pw basis
+ * @param nspin number of spin channels
  * @return the energy density of XWM KEDF
  */
-double KEDF_XWM::get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho)
+double KEDF_XWM::get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho, int nspin)
 {
-    double** w1Rho5_6 = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    double** w1Rho5_6 = new double*[nspin];
+    for (int is = 0; is < nspin; ++is)
     {
         w1Rho5_6[is] = new double[pw_rho->nrxx];
     }
-    this->multi_kernel(prho, this->kernel1_.data(), w1Rho5_6, this->kappa_5_6, pw_rho);
+    this->multi_kernel(prho, this->kernel1_.data(), w1Rho5_6, this->kappa_5_6, pw_rho, nspin);
 
-    double** w2Rho5_6 = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    double** w2Rho5_6 = new double*[nspin];
+    for (int is = 0; is < nspin; ++is)
     {
         w2Rho5_6[is] = new double[pw_rho->nrxx];
     }
-    this->multi_kernel(prho, this->kernel2_.data(), w2Rho5_6, this->kappa_5_6, pw_rho);
+    this->multi_kernel(prho, this->kernel2_.data(), w2Rho5_6, this->kappa_5_6, pw_rho, nspin);
 
     double result = std::pow(prho[is][ir], this->kappa_5_6) * w1Rho5_6[is][ir]
                   + std::pow(prho[is][ir], this->kappa_11_6) * w2Rho5_6[is][ir];
     
     result *= this->dV_;
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         delete[] w1Rho5_6[is];
         delete[] w2Rho5_6[is];
@@ -153,24 +154,25 @@ double KEDF_XWM::get_energy_density(const double* const* prho, int is, int ir, M
  * @param prho charge density
  * @param pw_rho pw basis
  * @param rtau_xwm rtau_xwm => rtau_xwm + tau_xwm
+ * @param nspin number of spin channels
  */
-void KEDF_XWM::tau_xwm(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_xwm)
+void KEDF_XWM::tau_xwm(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_xwm, int nspin)
 {
-    double** w1Rho5_6 = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    double** w1Rho5_6 = new double*[nspin];
+    for (int is = 0; is < nspin; ++is)
     {
         w1Rho5_6[is] = new double[pw_rho->nrxx];
     }
-    this->multi_kernel(prho, this->kernel1_.data(), w1Rho5_6, this->kappa_5_6, pw_rho);
+    this->multi_kernel(prho, this->kernel1_.data(), w1Rho5_6, this->kappa_5_6, pw_rho, nspin);
 
-    double** w2Rho5_6 = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    double** w2Rho5_6 = new double*[nspin];
+    for (int is = 0; is < nspin; ++is)
     {
         w2Rho5_6[is] = new double[pw_rho->nrxx];
     }
-    this->multi_kernel(prho, this->kernel2_.data(), w2Rho5_6, this->kappa_5_6, pw_rho);
+    this->multi_kernel(prho, this->kernel2_.data(), w2Rho5_6, this->kappa_5_6, pw_rho, nspin);
 
-    if (PARAM.inp.nspin == 1)
+    if (nspin == 1)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
@@ -178,12 +180,12 @@ void KEDF_XWM::tau_xwm(const double* const* prho, ModulePW::PW_Basis* pw_rho, do
                           + std::pow(prho[0][ir], this->kappa_11_6) * w2Rho5_6[0][ir];
         }
     }
-    else if (PARAM.inp.nspin == 2)
+    else if (nspin == 2)
     {
         // TODO: spin polarized
     }
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         delete[] w1Rho5_6[is];
         delete[] w2Rho5_6[is];
@@ -199,34 +201,35 @@ void KEDF_XWM::tau_xwm(const double* const* prho, ModulePW::PW_Basis* pw_rho, do
  * @param prho charge density
  * @param pw_rho pw basis
  * @param rpotential rpotential => rpotential + V_{XWM}
+ * @param nspin number of spin channels
  */
-void KEDF_XWM::xwm_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential)
+void KEDF_XWM::xwm_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential, int nspin)
 {
     ModuleBase::TITLE("KEDF_XWM", "xwm_potential");
     ModuleBase::timer::start("KEDF_XWM", "xwm_potential");
-    double** w1Rho5_6 = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    double** w1Rho5_6 = new double*[nspin];
+    for (int is = 0; is < nspin; ++is)
     {
         w1Rho5_6[is] = new double[pw_rho->nrxx];
     }
-    this->multi_kernel(prho, this->kernel1_.data(), w1Rho5_6, this->kappa_5_6, pw_rho);
+    this->multi_kernel(prho, this->kernel1_.data(), w1Rho5_6, this->kappa_5_6, pw_rho, nspin);
 
-    double** w2Rho11_6 = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    double** w2Rho11_6 = new double*[nspin];
+    for (int is = 0; is < nspin; ++is)
     {
         w2Rho11_6[is] = new double[pw_rho->nrxx];
     }
-    this->multi_kernel(prho, this->kernel2_.data(), w2Rho11_6, this->kappa_11_6, pw_rho);
+    this->multi_kernel(prho, this->kernel2_.data(), w2Rho11_6, this->kappa_11_6, pw_rho, nspin);
 
-    double** w2Rho5_6 = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    double** w2Rho5_6 = new double*[nspin];
+    for (int is = 0; is < nspin; ++is)
     {
         w2Rho5_6[is] = new double[pw_rho->nrxx];
     }
-    this->multi_kernel(prho, this->kernel2_.data(), w2Rho5_6, this->kappa_5_6, pw_rho);
+    this->multi_kernel(prho, this->kernel2_.data(), w2Rho5_6, this->kappa_5_6, pw_rho, nspin);
 
     double energy = 0.;
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
@@ -245,7 +248,7 @@ void KEDF_XWM::xwm_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
     this->xwm_energy = energy;
     Parallel_Reduce::reduce_all(this->xwm_energy);
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         delete[] w1Rho5_6[is];
         delete[] w2Rho11_6[is];
@@ -277,11 +280,12 @@ void KEDF_XWM::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho,
  * @param [out] rkernel_rho \int{W(r-r')rho^{exponent}(r') dr'}
  * @param [in] exponent the exponent of rho
  * @param [in] pw_rho pw_basis
+ * @param [in] nspin number of spin channels
  */
-void KEDF_XWM::multi_kernel(const double* const* prho, const double* kernel, double** rkernel_rho, double exponent, ModulePW::PW_Basis* pw_rho)
+void KEDF_XWM::multi_kernel(const double* const* prho, const double* kernel, double** rkernel_rho, double exponent, ModulePW::PW_Basis* pw_rho, int nspin)
 {
-    std::complex<double>** recipkernelRho = new std::complex<double>*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    std::complex<double>** recipkernelRho = new std::complex<double>*[nspin];
+    for (int is = 0; is < nspin; ++is)
     {
         recipkernelRho[is] = new std::complex<double>[pw_rho->npw];
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
@@ -296,7 +300,7 @@ void KEDF_XWM::multi_kernel(const double* const* prho, const double* kernel, dou
         pw_rho->recip2real(recipkernelRho[is], rkernel_rho[is]);
     }
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         delete[] recipkernelRho[is];
     }

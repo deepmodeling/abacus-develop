@@ -73,6 +73,30 @@ jobs:
           cd tests/13_NAO_multik_GPU
           bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
 
+      - name: Test 02_NAO_Gamma on GPU
+        run: |
+          cd tests/02_NAO_Gamma
+          find . -name INPUT | while read f; do
+              if grep -qE '^[[:space:]]*device[[:space:]]+' "$f"; then
+                  sed -i -E 's/^[[:space:]]*device[[:space:]]+.*/device    gpu/' "$f"
+              else
+                  echo "device    gpu" >> "$f"
+              fi
+          done
+          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+
+      - name: Test 03_NAO_multik on GPU
+        run: |
+          cd tests/03_NAO_multik
+          find . -name INPUT | while read f; do
+              if grep -qE '^[[:space:]]*device[[:space:]]+' "$f"; then
+                  sed -i -E 's/^[[:space:]]*device[[:space:]]+.*/device    gpu/' "$f"
+              else
+                  echo "device    gpu" >> "$f"
+              fi
+          done
+          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+
       - name: Test 15_rtTDDFT_GPU
         run: |
           cd tests/15_rtTDDFT_GPU

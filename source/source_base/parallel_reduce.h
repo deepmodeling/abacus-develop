@@ -80,8 +80,6 @@ void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double* o
 
 void gather_int_all(int& v, int* all);
 
-bool check_if_equal(double& v); // mohan add 2009-11-11
-
 } // namespace Parallel_Reduce
 
 #endif

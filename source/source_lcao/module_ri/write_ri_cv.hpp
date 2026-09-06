@@ -1,6 +1,9 @@
-// #include "source_lcao/module_ri/LRI_CV_Tools.h"
+// #include "source_lcao/module_ri/lri_cv_tools.h"
+#include "source_base/global_function.h"
+#include "source_base/tool_title.h"
 #include <map>
 #include <cstddef>
+#include <dirent.h>
 #define IZ(x) int x = 0;
 #define SZ(x) std::size_t x = 0;
 
@@ -38,7 +41,13 @@ namespace LRI_CV_Tools
             infile >> ia1 >> ia2 >> ic_1 >> ic_2 >> ic_3 >> nw1 >> nw2 >> nabf;
             const TC& box = { ic_1, ic_2, ic_3 };
             RI::Tensor<T> tensor_cs({ nabf, nw1, nw2 });
-            for (std::size_t i = 0; i != nw1; i++) { for (std::size_t j = 0; j != nw2; j++) { for (std::size_t mu = 0; mu != nabf; mu++) { infile >> tensor_cs(mu, i, j); } } }
+            for (std::size_t i = 0; i != nw1; i++) {
+                for (std::size_t j = 0; j != nw2; j++) {
+                    for (std::size_t mu = 0; mu != nabf; mu++) {
+                        infile >> tensor_cs(mu, i, j);
+                    }
+                }
+            }
             // no screening for data-structure consistency
             if (absmax(tensor_cs) >= threshold) { Cs[ia1 - 1][{ia2 - 1, box}] = tensor_cs; }
         }
@@ -51,7 +60,13 @@ namespace LRI_CV_Tools
     {
         std::ofstream outfile;
         outfile.open(file_path);
-        outfile << Cs.size() << " " << Cs.at(0).size() / Cs.size() << std::endl;    //natom, ncell
+        if (Cs.size() == 0)
+        {
+            outfile << " Empty Cs " << std::endl;
+            outfile.close();
+            return;
+        }
+        outfile << Cs.size() << " " << Cs.begin()->second.size() / Cs.size() << std::endl;    //natom, (ncell, not real if Cs is incomplete)
         for (auto& it1 : Cs)
         {
             const int& ia1 = it1.first;
@@ -74,6 +89,47 @@ namespace LRI_CV_Tools
             }
         }
         outfile.close();
+    }
+
+    template<typename T>
+    TLRI<T> read_Cs_ao_all(const std::string& path, const double& threshold)
+    {
+        IZ(natom) IZ(ncell) IZ(ia1) IZ(ia2) IZ(ic_1) IZ(ic_2) IZ(ic_3)
+        SZ(nw1) SZ(nw2) SZ(nabf)
+        TLRI<T> Cs;
+
+        struct dirent *ptr;
+        DIR *dir;
+        dir = opendir(path.c_str());
+        while ((ptr = readdir(dir)) != NULL){// read all the files in the directory
+            std::string fm(ptr->d_name);
+            if (fm.find("Cs_data_") == 0)// find file Cs_data_xxx
+            {
+                ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "found Cs file: " + fm + ", start reading...");
+                std::ifstream infile(path + fm);
+                infile >> natom >> ncell;   // no use of ncell
+
+                while (infile.peek() != EOF)
+                {
+                    if(!(infile >> ia1 >> ia2 >> ic_1 >> ic_2 >> ic_3 >> nw1 >> nw2 >> nabf)){break;}
+                    const TC& box = { ic_1, ic_2, ic_3 };
+                    RI::Tensor<T> tensor_cs({ nabf, nw1, nw2 });
+                    for (std::size_t i = 0; i != nw1; i++) {
+                        for (std::size_t j = 0; j != nw2; j++) {
+                            for (std::size_t mu = 0; mu != nabf; mu++) {
+                                infile >> tensor_cs(mu, i, j);
+                            }
+                        }
+                    }
+                    // no screening for data-structure consistency
+                    if (absmax(tensor_cs) >= threshold) { Cs[ia1 - 1][{ia2 - 1, box}] = tensor_cs; }
+                }
+                infile.close();
+            }
+        }
+        closedir(dir);
+        ModuleBase::TITLE("LRI_CV_Tools", "read_Cs_ao_all done.");
+        return Cs;
     }
 
     template<typename T>
@@ -106,7 +162,13 @@ namespace LRI_CV_Tools
     {
         std::ofstream outfile;
         outfile.open(file_path);
-        outfile << Vs.size() << " " << Vs.at(0).size() / Vs.size() << std::endl;    //natom, ncell
+        if (Vs.size() == 0)
+        {
+            outfile << " Empty Vs " << std::endl;
+            outfile.close();
+            return;
+        }
+        outfile << Vs.size() << " " << Vs.begin()->second.size() / Vs.size() << std::endl;    //natom, (ncell, not real if Vs is incomplete)
         for (const auto& it1 : Vs)
         {
             const int& ia1 = it1.first;

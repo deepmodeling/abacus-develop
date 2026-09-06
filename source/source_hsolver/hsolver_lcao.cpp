@@ -24,7 +24,6 @@
 #include "diago_pexsi.h"
 #endif
 
-#include "source_base/global_variable.h"
 #include "source_base/module_device/device.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_base/memory_recorder.h"
@@ -37,8 +36,8 @@
 namespace hsolver
 {
 
-template <typename TK, typename Device>
-void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
+template <typename TK>
+void HSolverLCAO<TK>::solve(hamilt::Hamilt<TK>* pHamilt,
                                    psi::Psi<TK>& psi,
 								   elecstate::ElecState* pes,
 								   elecstate::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
@@ -53,7 +52,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
     {
     #ifdef __MPI
     #ifdef __CUDA
-        if (this->method == "cusolver" && GlobalV::NPROC > 1)
+        if (this->method == "cusolver" && this->world_nproc > 1)
         {
             this->parakSolve_cusolver(pHamilt, psi, pes);
         }else 
@@ -91,6 +90,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
                                      pes->eferm,
                                      pes->f_en,
                                      pes->nelec_spin,
+                                     this->nbands,
                                      pes->skip_weights);
 
         elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
@@ -112,7 +112,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
     else if (this->method == "pexsi")
     {
 #ifdef __PEXSI // other purification methods should follow this routine
-        DiagoPexsi<TK> pe(ParaV, nspin, this->nlocal, this->nelec);
+        DiagoPexsi<TK> pe(ParaV, nspin, this->nlocal, this->nelec, this->world_nproc);
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             /// update H(k) for each k point
@@ -132,8 +132,8 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
     return;
 }
 
-template <typename T, typename Device>
-void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue)
+template <typename T>
+void HSolverLCAO<T>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue)
 {
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
     ModuleBase::timer::start("HSolverLCAO", "hamiltSolvePsiK");
@@ -141,19 +141,19 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     if (this->method == "scalapack_gvx")
     {
 #ifdef __MPI
-        DiagoScalapack<T> sa;
+        DiagoScalapack<T> sa(this->nlocal, this->nbands);
         sa.diag(hm, psi, eigenvalue);
 #endif
     }
 #ifdef __ELPA
     else if (this->method == "genelpa")
     {
-        DiagoElpa<T> el;
+        DiagoElpa<T> el(this->nlocal, this->nbands);
         el.diag(hm, psi, eigenvalue);
     }
     else if (this->method == "elpa")
     {
-        DiagoElpaNative<T> el;
+        DiagoElpaNative<T> el(this->nlocal, this->nbands, this->use_gpu);
         el.diag(hm, psi, eigenvalue);
     }
 #endif
@@ -161,7 +161,7 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     else if (this->method == "cusolver")
     {
         // Note: This branch will only be executed in the single-process case
-        DiagoCusolver<T> cu;
+        DiagoCusolver<T> cu(this->nlocal, this->nbands);
         hamilt::MatrixBlock<T> hk, sk;
         hm->matrix(hk, sk);
         cu.diag(hk, sk, psi, eigenvalue);
@@ -169,14 +169,14 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
 #ifdef __CUSOLVERMP
     else if (this->method == "cusolvermp")
     {
-        DiagoCusolverMP<T> cm;
+        DiagoCusolverMP<T> cm(this->nlocal, this->nbands);
         cm.diag(hm, psi, eigenvalue);
     }
 #endif
 #endif
     else if (this->method == "lapack") // only for single core
     {
-        DiagoLapack<T> la;
+        DiagoLapack<T> la(this->nlocal, this->nbands);
         la.diag(hm, psi, eigenvalue);
     }
     else
@@ -187,8 +187,8 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     ModuleBase::timer::end("HSolverLCAO", "hamiltSolvePsiK");
 }
 
-template <typename T, typename Device>
-void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
+template <typename T>
+void HSolverLCAO<T>::parakSolve(hamilt::Hamilt<T>* pHamilt,
                                         psi::Psi<T>& psi,
                                         elecstate::ElecState* pes,
                                         const int kpar,
@@ -202,7 +202,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
     int nks = psi.get_nk();
     int nrow = this->ParaV->get_global_row_size();
     int nb2d = this->ParaV->get_block_size();
-    k2d.set_para_env(psi.get_nk(), nrow, nb2d, GlobalV::NPROC, GlobalV::MY_RANK, nspin);
+    k2d.set_para_env(psi.get_nk(), nrow, nb2d, this->world_nproc, this->world_rank, nspin);
     /// set psi_pool
     const int zero = 0;
     int coord_col = k2d.get_p2D_pool()->get_coord_col();
@@ -253,23 +253,23 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
             /// solve eigenvector and eigenvalue for H(k)
             if (this->method == "scalapack_gvx")
             {
-                DiagoScalapack<T> sa;
+                DiagoScalapack<T> sa(this->nlocal, this->nbands);
                 sa.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
             }
             else if (this->method == "lapack")
             {
-                DiagoLapack<T> la;
+                DiagoLapack<T> la(this->nlocal, this->nbands);
                 la.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
             }
 #ifdef __ELPA
             else if (this->method == "genelpa")
             {
-                DiagoElpa<T> el;
+                DiagoElpa<T> el(this->nlocal, this->nbands);
                 el.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
             }
             else if (this->method == "elpa")
             {
-                DiagoElpaNative<T> el;
+                DiagoElpaNative<T> el(this->nlocal, this->nbands, this->use_gpu);
                 el.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
             }
 #endif
@@ -313,8 +313,8 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
 }
 
 #if defined (__MPI) && defined (__CUDA)
-template <typename T, typename Device>
-void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
+template <typename T>
+void HSolverLCAO<T>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
                                             psi::Psi<T>& psi,
                                             elecstate::ElecState* pes)
 {
@@ -324,9 +324,8 @@ void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
     const int local_rank = dev_ctx.get_local_rank();
     const int device_count = dev_ctx.get_device_count();
 
-    int world_rank, world_size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    const int world_rank = this->world_rank;
+    const int world_size = this->world_nproc;
 
     // Determine if this process is active (assigned a dedicated GPU)
     // We enforce 1 process per GPU by checking local_rank < device_count.
@@ -427,7 +426,7 @@ void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
         if(kpt_assigned != -1)
         {
             psi_local.resize(1, ncol, nrow);
-            DiagoCusolver<T> cu{};
+            DiagoCusolver<T> cu(this->nlocal, this->nbands);
             hamilt::MatrixBlock<T> hk_local = hamilt::MatrixBlock<T>{
                     hk_mat.data(), (size_t)nrow, (size_t)ncol,
                     mat_para_local.desc};

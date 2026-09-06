@@ -14,7 +14,7 @@ HamiltSdftPW<T, Device>::HamiltSdftPW(elecstate::Potential* pot_in,
 									  const int& npol,
                                       Real* emin_in,
                                       Real* emax_in)
-    : HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp, nullptr, ucell), ngk(p_kv->ngk)
+    : HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp, nullptr, ucell, nullptr), ngk(p_kv->ngk)
 {
     this->classname = "HamiltSdftPW";
     this->npwk_max = wfc_basis->npwk_max;

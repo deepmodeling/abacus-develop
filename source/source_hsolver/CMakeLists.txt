@@ -4,7 +4,7 @@ list(APPEND objects
     diago_david.cpp
     diago_dav_subspace.cpp
     diago_bpcg.cpp
-    para_linear_transform.cpp
+    para_lin_tf.cpp
     hsolver_pw.cpp
     hsolver_lcaopw.cpp
     hsolver_pw_sdft.cpp
@@ -80,7 +80,7 @@ if(ENABLE_COVERAGE)
   add_coverage(hsolver)
 endif()
 
-if(ENABLE_LCAO AND ENABLE_ELPA)
+if(ENABLE_ELPA)
   add_subdirectory(module_genelpa)
 endif()
 

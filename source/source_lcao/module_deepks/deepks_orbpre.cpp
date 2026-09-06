@@ -6,7 +6,7 @@
 
 #include "deepks_orbpre.h"
 
-#include "LCAO_deepks_io.h" // mohan add 2024-07-22
+#include "lcao_deepks_io.h" // mohan add 2024-07-22
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/module_external/blas_connector.h"

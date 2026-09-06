@@ -16,11 +16,17 @@ class DiagoCusolverMP
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    DiagoCusolverMP()
+    /// @param nlocal_in global dimension of the NAO Hamiltonian
+    /// @param nbands_in number of lowest eigenpairs to compute
+    DiagoCusolverMP(const int nlocal_in, const int nbands_in) : nlocal(nlocal_in), nbands(nbands_in)
     {
     }
     // the diag function for CUSOLVERMP diagonalization
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
+
+  private:
+    const int nlocal;
+    const int nbands;
 };
 } // namespace hsolver
 #endif // __CUSOLVERMP

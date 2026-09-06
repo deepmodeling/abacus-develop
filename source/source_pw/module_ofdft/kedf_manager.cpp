@@ -187,7 +187,7 @@ void KEDF_Manager::get_potential(
     }
     if (this->of_kinetic_ == "xwm")
     {
-        this->xwm_->xwm_potential(prho, pw_rho, rpot);
+        this->xwm_->xwm_potential(prho, pw_rho, rpot, PARAM.inp.nspin);
     }
     if (this->of_kinetic_ == "lkt")
     {
@@ -353,7 +353,7 @@ void KEDF_Manager::get_energy_density(
     }
     if (this->of_kinetic_ == "xwm")
     {
-        this->xwm_->tau_xwm(prho, pw_rho, rtau[0]);
+        this->xwm_->tau_xwm(prho, pw_rho, rtau[0], PARAM.inp.nspin);
     }
     if (this->of_kinetic_ == "lkt")
     {

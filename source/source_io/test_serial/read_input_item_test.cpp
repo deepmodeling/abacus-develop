@@ -153,8 +153,10 @@ TEST_F(InputTest, Item_test)
         param.input.esolver_type = "lr";
         param.input.calculation = "scf";
         it = find_label("esolver_type", readinput.input_lists);
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.calculation, "nscf");
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("esolver_type=lr requires calculation=nscf"));
     }
     { // nspin
         auto it = find_label("nspin", readinput.input_lists);
@@ -651,6 +653,7 @@ TEST_F(InputTest, Item_test)
     }
     { // ndx
         auto it = find_label("ndx", readinput.input_lists);
+        param.sys.double_grid = false;
         param.input.ndx = 2;
         param.input.nx = 1;
         it->second.reset_value(it->second, param);
@@ -673,6 +676,7 @@ TEST_F(InputTest, Item_test)
     }
     { // ndy
         auto it = find_label("ndy", readinput.input_lists);
+        param.sys.double_grid = false;
         param.input.ndy = 2;
         param.input.ny = 1;
         it->second.reset_value(it->second, param);
@@ -695,6 +699,7 @@ TEST_F(InputTest, Item_test)
     }
     { // ndz
         auto it = find_label("ndz", readinput.input_lists);
+        param.sys.double_grid = false;
         param.input.ndz = 2;
         param.input.nz = 1;
         it->second.reset_value(it->second, param);
@@ -1062,11 +1067,11 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.out_hsk[0], 1);
         EXPECT_EQ(param.input.out_hsk[1], 12);
 
-        param.input.out_hsk[0] = 2;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("reserved but not implemented"));
+        it->second.str_values = {"2", "12"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_hsk[0], 2);
+        EXPECT_EQ(param.input.out_hsk[1], 12);
+        it->second.check_value(it->second, param);
 
         param.input.out_hsk[0] = 3;
         testing::internal::CaptureStdout();
@@ -1081,11 +1086,17 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.out_hsr[0], 1);
         EXPECT_EQ(param.input.out_hsr[1], 10);
 
-        param.input.out_hsr[0] = 2;
+        it->second.str_values = {"2", "12"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_hsr[0], 2);
+        EXPECT_EQ(param.input.out_hsr[1], 12);
+        it->second.check_value(it->second, param);
+
+        param.input.out_hsr[0] = 4;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("reserved but not implemented"));
+        EXPECT_THAT(output, testing::HasSubstr("format must be 0, 1, 2, or 3"));
 
 #ifndef __CNPY
         param.input.out_hsr[0] = 3;
@@ -1463,6 +1474,22 @@ TEST_F(InputTest, Item_test2)
     { // vdw_radius_unit
         auto it = find_label("vdw_radius_unit", readinput.input_lists);
         param.input.vdw_radius_unit = "test";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // vdw_cutoff_width2
+        auto it = find_label("vdw_cutoff_width2", readinput.input_lists);
+        param.input.vdw_cutoff_width2 = -1.0;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // vdw_cutoff_width3
+        auto it = find_label("vdw_cutoff_width3", readinput.input_lists);
+        param.input.vdw_cutoff_width3 = -1.0;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -2017,6 +2044,10 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // diag_subspace
+        auto it = find_label("diag_subspace", readinput.input_lists);
+        EXPECT_EQ(it->second.get_availability(), "basis_type==pw and ks_solver==dav_subspace");
     }
     { // md_nstep
         auto it = find_label("md_nstep", readinput.input_lists);

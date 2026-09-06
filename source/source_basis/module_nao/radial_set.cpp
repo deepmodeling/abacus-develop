@@ -5,7 +5,7 @@
 #include <memory>
 #include <fstream>
 
-#include "source_base/spherical_bessel_transformer.h"
+#include "source_base/sph_bessel_tf.h"
 
 // FIXME: should update with pyabacus
 // #include "source_io/orb_io.h"

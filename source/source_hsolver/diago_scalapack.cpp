@@ -1,6 +1,5 @@
 //=====================
 // AUTHOR : Peize Lin
-#include "source_io/module_parameter/parameter.h"
 // DATE : 2021-11-02
 // REFACTORING AUTHOR : Daye Zheng
 // DATE : 2022-04-14
@@ -8,19 +7,31 @@
 
 #include "diago_scalapack.h"
 
-#include <cassert>
-#include <cstring>
-
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
+#include "source_base/module_external/blacs_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_hamilt/matrixblock.h"
+
+#include <cassert>
+#include <cstring>
 
 typedef hamilt::MatrixBlock<double> matd;
 typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver
 {
+namespace
+{
+/// Number of processes in the BLACS process grid that `desc` lives on.
+/// p?sygvx requires iclustr(2*NPROW*NPCOL) and gap(NPROW*NPCOL).
+int blacs_grid_size(const int* const desc)
+{
+    int nprow = 0, npcol = 0, myprow = 0, mypcol = 0;
+    Cblacs_gridinfo(desc[1], &nprow, &npcol, &myprow, &mypcol);
+    return nprow * npcol;
+}
+} // namespace
+
     template<>
     void DiagoScalapack<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, Real* eigenvalue_in)
 {
@@ -28,10 +39,10 @@ namespace hsolver
     matd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
     this->pdsygvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
     template<>
     void DiagoScalapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in, psi::Psi<std::complex<double>>& psi, Real* eigenvalue_in)
@@ -40,10 +51,10 @@ namespace hsolver
     matcd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
     this->pzhegvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
 
 #ifdef __MPI
@@ -56,10 +67,10 @@ namespace hsolver
 {
     ModuleBase::TITLE("DiagoScalapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
     this->pdsygvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
     template<>
     void DiagoScalapack<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex<double>>& h_mat,
@@ -70,10 +81,10 @@ namespace hsolver
 {
     ModuleBase::TITLE("DiagoScalapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
     this->pzhegvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
 #endif
 
@@ -92,21 +103,22 @@ namespace hsolver
     memcpy(s_tmp.c, s_mat, sizeof(double) * ncol * nrow);
 
     const char jobz = 'V', range = 'I', uplo = 'U';
-    const int itype = 1, il = 1, iu = PARAM.inp.nbands, one = 1;
+    const int itype = 1, il = 1, iu = this->nbands, one = 1;
     int M = 0, NZ = 0, lwork = -1, liwork = -1, info = 0;
     double vl = 0, vu = 0;
     const double abstol = SCALAPACK_ABSTOL, orfac = SCALAPACK_ORFAC;
     std::vector<double> work(3, 0);
     std::vector<int> iwork(1, 0);
-    std::vector<int> ifail(PARAM.globalv.nlocal, 0);
-    std::vector<int> iclustr(2 * GlobalV::DSIZE);
-    std::vector<double> gap(GlobalV::DSIZE);
+    std::vector<int> ifail(this->nlocal, 0);
+    const int ngrid = blacs_grid_size(desc);
+    std::vector<int> iclustr(2 * ngrid);
+    std::vector<double> gap(ngrid);
 
     pdsygvx_(&itype,
              &jobz,
              &range,
              &uplo,
-             &PARAM.globalv.nlocal,
+             &this->nlocal,
              h_tmp.c,
              &one,
              &one,
@@ -142,7 +154,6 @@ namespace hsolver
                                  + std::to_string(__LINE__));
 }
 
-    //	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
     lwork = work[0];
     work.resize(std::max(lwork,3), 0);
     liwork = iwork[0];
@@ -152,7 +163,7 @@ namespace hsolver
              &jobz,
              &range,
              &uplo,
-             &PARAM.globalv.nlocal,
+             &this->nlocal,
              h_tmp.c,
              &one,
              &one,
@@ -182,7 +193,6 @@ namespace hsolver
              iclustr.data(),
              gap.data(),
              &info);
-    //	GlobalV::ofs_running<<"M="<<M<<"\t"<<"NZ="<<NZ<<std::endl;
 
     if (info == 0) {
         return std::make_pair(info, std::vector<int>{});
@@ -217,7 +227,7 @@ namespace hsolver
     memcpy(s_tmp.c, s_mat, sizeof(std::complex<double>) * ncol * nrow);
 
     const char jobz = 'V', range = 'I', uplo = 'U';
-    const int itype = 1, il = 1, iu = PARAM.inp.nbands, one = 1;
+    const int itype = 1, il = 1, iu = this->nbands, one = 1;
     int M = 0, NZ = 0, lwork = -1, lrwork = -1, liwork = -1, info = 0;
     const double abstol = SCALAPACK_ABSTOL, orfac = SCALAPACK_ORFAC;
     //Note: pzhegvx_ has a bug
@@ -227,15 +237,16 @@ namespace hsolver
     std::vector<std::complex<double>> work(1, 0);
     std::vector<double> rwork(3, 0);
     std::vector<int> iwork(1, 0);
-    std::vector<int> ifail(PARAM.globalv.nlocal, 0);
-    std::vector<int> iclustr(2 * GlobalV::DSIZE);
-    std::vector<double> gap(GlobalV::DSIZE);
+    std::vector<int> ifail(this->nlocal, 0);
+    const int ngrid = blacs_grid_size(desc);
+    std::vector<int> iclustr(2 * ngrid);
+    std::vector<double> gap(ngrid);
 
     pzhegvx_(&itype,
              &jobz,
              &range,
              &uplo,
-             &PARAM.globalv.nlocal,
+             &this->nlocal,
              h_tmp.c,
              &one,
              &one,
@@ -273,10 +284,9 @@ namespace hsolver
                                  + std::to_string(__LINE__));
 }
 
-    //	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"lrwork="<<rwork[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
     lwork = work[0].real();
     work.resize(lwork, 0);
-    lrwork = rwork[0] + this->degeneracy_max * PARAM.globalv.nlocal;
+    lrwork = rwork[0] + this->degeneracy_max * this->nlocal;
     int maxlrwork = std::max(lrwork,3);
     rwork.resize(maxlrwork, 0);
     liwork = iwork[0];
@@ -286,7 +296,7 @@ namespace hsolver
              &jobz,
              &range,
              &uplo,
-             &PARAM.globalv.nlocal,
+             &this->nlocal,
              h_tmp.c,
              &one,
              &one,
@@ -318,7 +328,6 @@ namespace hsolver
              iclustr.data(),
              gap.data(),
              &info);
-    //	GlobalV::ofs_running<<"M="<<M<<"\t"<<"NZ="<<NZ<<std::endl;
 
     if (info == 0) {
         return std::make_pair(info, std::vector<int>{});
@@ -409,19 +418,18 @@ namespace hsolver
     else if (info / 2 % 2)
     {
         int degeneracy_need = 0;
-        for (int irank = 0; irank < GlobalV::DSIZE; ++irank) {
+        // `vec` is iclustr, sized 2*NPROW*NPCOL by the caller
+        for (std::size_t irank = 0; 2 * irank + 1 < vec.size(); ++irank) {
             degeneracy_need = std::max(degeneracy_need, vec[2 * irank + 1] - vec[2 * irank]);
-}
-        const std::string str_need = "degeneracy_need = " + ModuleBase::GlobalFunc::TO_STRING(degeneracy_need) + ".\n";
-        const std::string str_saved
-            = "degeneracy_saved = " + ModuleBase::GlobalFunc::TO_STRING(this->degeneracy_max) + ".\n";
+        }
         if (degeneracy_need <= this->degeneracy_max)
         {
-            throw std::runtime_error(str_info_FILE + str_need + str_saved);
+            throw std::runtime_error(
+                str_info_FILE + "degeneracy_need = " + ModuleBase::GlobalFunc::TO_STRING(degeneracy_need) + ".\n"
+                + "degeneracy_saved = " + ModuleBase::GlobalFunc::TO_STRING(this->degeneracy_max) + ".\n");
         }
         else
         {
-            GlobalV::ofs_running << str_need << str_saved;
             this->degeneracy_max = degeneracy_need;
             return;
         }
@@ -431,7 +439,7 @@ namespace hsolver
         const std::string str_M = "M = " + ModuleBase::GlobalFunc::TO_STRING(vec[0]) + ".\n";
         const std::string str_NZ = "NZ = " + ModuleBase::GlobalFunc::TO_STRING(vec[1]) + ".\n";
         const std::string str_NBANDS
-            = "PARAM.inp.nbands = " + ModuleBase::GlobalFunc::TO_STRING(PARAM.inp.nbands) + ".\n";
+            = "nbands = " + ModuleBase::GlobalFunc::TO_STRING(this->nbands) + ".\n";
         throw std::runtime_error(str_info_FILE + str_M + str_NZ + str_NBANDS);
     }
     else if (info / 16 % 2)

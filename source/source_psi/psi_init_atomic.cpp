@@ -1,35 +1,21 @@
 #include "psi_init_atomic.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/unitcell.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 #include "source_pw/module_pwdft/soc.h"
-// numerical algorithm support
 #include "source_base/math_integral.h" // for numerical integration
 #include "source_base/math_polyint.h" // for polynomial interpolation
 #include "source_base/math_ylmreal.h" // for real spherical harmonics
 #include "source_base/math_sphbes.h" // for spherical bessel functions
-// basic functions support
 #include "source_base/tool_quit.h"
 #include "source_base/timer.h"
-// global variables definition
 #include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
-// io support
 #include "source_io/module_output/write_pao.h"
-
-// free function, compared with common radial function normalization, it does not multiply r to function
-// due to pswfc is already multiplied by r
-// template <typename T>
-// void normalize(int n_rgrid, std::vector<T>& pswfcr, double* rab)
-// {
-//     std::vector<T> pswfc2r2(pswfcr.size());
-//     std::transform(pswfcr.begin(), pswfcr.end(), pswfc2r2.begin(), [](T pswfc) { return pswfc * pswfc; });
-//     T norm = ModuleBase::Integral::simpson(n_rgrid, pswfc2r2.data(), rab);
-//     norm = sqrt(norm);
-//     std::transform(pswfcr.begin(), pswfcr.end(), pswfcr.begin(), [norm](T pswfc) { return pswfc / norm; });
-// }
 
 template <typename T>
 void psi_init_atomic<T>::allocate_ps_table()
 {
-   // find correct dimension for ovlp_flzjlq
+    // find correct dimension for ovlp_flzjlq
     int dim1 = this->p_ucell_->ntype;
     int dim2 = 0; // dim2 should be the maximum number of pseudo atomic orbitals
     for (int it = 0; it < this->p_ucell_->ntype; it++)
@@ -38,36 +24,65 @@ void psi_init_atomic<T>::allocate_ps_table()
     }
     if (dim2 == 0)
     {
-        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::allocate_table", "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
+        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::allocate_table", 
+            "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
     }
-    int dim3 = PARAM.globalv.nqx;
+    if (this->nqx_ <= 0)
+    {
+        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::allocate_ps_table",
+            "nqx_ must be greater than 0. Did you forget to call prepare_params() before initialize()?");
+    }
+    int dim3 = this->nqx_;
     // allocate memory for ovlp_flzjlq
     this->ovlp_pswfcjlq_.create(dim1, dim2, dim3);
     this->ovlp_pswfcjlq_.zero_out();
 }
 
 template <typename T>
-void psi_init_atomic<T>::initialize(const Structure_Factor* sf,         //< structure factor
-                                           const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
-                                           const UnitCell* p_ucell,            //< unit cell
-                                           const K_Vectors* p_kv_in,
-                                           const int& random_seed,       //< random seed
-                                           const pseudopot_cell_vnl* p_pspot_nl,
-                                           const int& rank)
+void psi_init_atomic<T>::prepare_params(const int& nqx,
+                                        const double& dq,
+                                        const int& nspin,
+                                        const bool& domag,
+                                        const bool& domag_z,
+                                        const bool& pseudo_mesh,
+                                        const int& lmaxkb)
+{
+    this->nqx_ = nqx;
+    this->dq_ = dq;
+    this->nspin_ = nspin;
+    this->domag_ = domag;
+    this->domag_z_ = domag_z;
+    this->pseudo_mesh_ = pseudo_mesh;
+    this->lmaxkb_ = lmaxkb;
+    this->params_prepared_ = true;
+}
+
+template <typename T>
+void psi_init_atomic<T>::initialize(const Structure_Factor* sf,
+    const ModulePW::PW_Basis_K* pw_wfc,
+    const UnitCell* p_ucell,
+    const std::vector<int>& ik2iktot,
+    const int& random_seed,
+    const int& rank,
+    const int& npol,
+    const int& nbands)
 {
     ModuleBase::timer::start("psi_init_atomic", "initialize");
 
-    if(p_pspot_nl == nullptr)
+    if (!this->params_prepared_)
     {
-        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::initialize", 
-                                 "pseudopot_cell_vnl object cannot be nullptr for atomic, quit.");
+        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::initialize",
+            "prepare_params() must be called before initialize()");
     }
-    // import
-    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank);
-    this->nbands_start_ = std::max(this->p_ucell_->natomwfc, PARAM.inp.nbands);
+
+    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, random_seed, rank, npol, nbands);
+
+    this->nbands_start_ = std::max(this->p_ucell_->natomwfc, nbands);
     this->nbands_complem_ = this->nbands_start_ - this->p_ucell_->natomwfc;
+
     // allocate
     this->allocate_ps_table();
+
     // then for generate random number to fill in the wavefunction
     this->ixy2is_.clear();
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
@@ -90,7 +105,7 @@ void psi_init_atomic<T>::tabulate()
     {
         max_msh = (this->p_ucell_->atoms[it].ncpp.msh > max_msh) ? this->p_ucell_->atoms[it].ncpp.msh : max_msh;
     }
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max mesh points in Pseudopotential",max_msh);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max mesh points in Pseudopotential",max_msh);
     
     this->ovlp_pswfcjlq_.zero_out();
     const int startq = 0;
@@ -98,17 +113,17 @@ void psi_init_atomic<T>::tabulate()
     std::vector<double> aux(max_msh);
     std::vector<double> vchi(max_msh);
 
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",PARAM.globalv.dq);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",PARAM.globalv.nqx);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",this->dq_);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",this->nqx_);
 
     for (int it=0; it<this->p_ucell_->ntype; it++)
     {
-		Atom* atom = &this->p_ucell_->atoms[it];
+        Atom* atom = &this->p_ucell_->atoms[it];
 
-		GlobalV::ofs_running<<"\n number of pseudo atomic orbitals for "<<atom->label<<" is "<< atom->ncpp.nchi << std::endl;
+        GlobalV::ofs_running<<"\n number of pseudo atomic orbitals for "<<atom->label<<" is "<< atom->ncpp.nchi << std::endl;
 
         // QE uses atom->ncpp.mesh
-        const int n_rgrid = (PARAM.inp.pseudo_mesh) ? atom->ncpp.mesh : atom->ncpp.msh;
+        const int n_rgrid = (this->pseudo_mesh_) ? atom->ncpp.mesh : atom->ncpp.msh;
         std::vector<double> chi2(n_rgrid);
 
         for (int ic = 0; ic < atom->ncpp.nchi ;ic++)
@@ -201,9 +216,9 @@ void psi_init_atomic<T>::tabulate()
             }
 
             const int l = atom->ncpp.lchi[ic];
-            for (int iq = startq; iq < PARAM.globalv.nqx; iq++)
+            for (int iq = startq; iq < this->nqx_; iq++)
             {
-                const double q = PARAM.globalv.dq * iq;
+                const double q = this->dq_ * iq;
                 ModuleBase::Sphbes::Spherical_Bessel(atom->ncpp.msh, atom->ncpp.r.data(), q, l, aux.data());
                 for (int ir = 0; ir < atom->ncpp.msh; ir++)
                 {
@@ -232,12 +247,13 @@ template <typename T>
 void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
 {
     ModuleBase::timer::start("psi_init_atomic", "init_psig");
+
     const int npw = this->pw_wfc_->npwk[ik];
     const int npwk_max = this->pw_wfc_->npwk_max;
     int lmax = this->p_ucell_->lmax_ppwf;
     const int total_lm = (lmax + 1) * (lmax + 1);
     ModuleBase::matrix ylm(total_lm, npw);
-    ModuleBase::GlobalFunc::ZEROS(psig, PARAM.globalv.npol * this->nbands_start_ * npwk_max);
+    ModuleBase::GlobalFunc::ZEROS(psig, this->npol_ * this->nbands_start_ * npwk_max);
 
     std::vector<std::complex<double>> aux(npw);
     std::vector<double> chiaux(npw);
@@ -273,17 +289,17 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                     {
                         ovlp_pswfcjlg[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
                             this->ovlp_pswfcjlq_, it, ipswfc, 
-                            PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * this->p_ucell_->tpiba );
+                            this->nqx_, this->dq_, gk[ig].norm() * this->p_ucell_->tpiba );
                     }
 /* NSPIN == 4 */
-                    if(PARAM.inp.nspin == 4)
+                    if(this->nspin_ == 4)
                     {
                         if(this->p_ucell_->atoms[it].ncpp.has_so)
                         {
                             Soc soc; soc.rot_ylm(l + 1);
                             const double j = this->p_ucell_->atoms[it].ncpp.jchi[ipswfc];
     /* NOT NONCOLINEAR CASE, rotation matrix become identity */
-                            if (!(PARAM.globalv.domag||PARAM.globalv.domag_z))
+                            if (!(this->domag_||this->domag_z_))
                             {
                                 double cg_coeffs[2];
                                 for(int m = -l-1; m < l+1; m++)
@@ -297,7 +313,7 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                                             if(fabs(cg_coeffs[is]) > 1e-8)
                                             {
         /* GET COMPLEX SPHERICAL HARMONIC FUNCTION */
-                                                const int ind = this->p_pspot_nl_->lmaxkb + soc.sph_ind(l,j,m,is); // ind can be l+m, l+m+1, l+m-1
+                                                const int ind = this->lmaxkb_ + soc.sph_ind(l,j,m,is); // ind can be l+m, l+m+1, l+m-1
                                                 std::fill(aux.begin(), aux.end(), std::complex<double>(0.0, 0.0));
                                                 for(int n1 = 0; n1 < 2*l+1; n1++)
                                                 {
@@ -336,17 +352,17 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                                 int ipswfc_noncolin_soc=0;
         /* J = L - 1/2 -> continue */
         /* J = L + 1/2 */
-						if(fabs(j - l + 0.5) < 1e-4) 
-						{
-							continue;
-						}
-						chiaux.clear(); 
-						chiaux.resize(npw);
+                                if(fabs(j - l + 0.5) < 1e-4)
+                                {
+                                    continue;
+                                }
+                                chiaux.clear();
+                                chiaux.resize(npw);
         /* L == 0 */
-						if(l == 0) 
-						{
-							std::memcpy(chiaux.data(), ovlp_pswfcjlg.data(), npw * sizeof(double));
-						}
+                                if(l == 0)
+                                {
+                                    std::memcpy(chiaux.data(), ovlp_pswfcjlg.data(), npw * sizeof(double));
+                                }
                                 else
                                 {
         /* L != 0, scan pswfcs that have the same L and satisfy J(pswfc) = L - 0.5 */
@@ -366,7 +382,7 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                                         chiaux[ig] =  l *
                                             ModuleBase::PolyInt::Polynomial_Interpolation(
                                                 this->ovlp_pswfcjlq_, it, ipswfc_noncolin_soc, 
-                                                PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * this->p_ucell_->tpiba);
+                                                this->nqx_, this->dq_, gk[ig].norm() * this->p_ucell_->tpiba);
                                         chiaux[ig] += ovlp_pswfcjlg[ig] * (l + 1.0) ;
                                         chiaux[ig] *= 1/(2.0*l+1.0);
                                     }
@@ -472,14 +488,14 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                     }
                 }
             }
-			delete [] sk;
+            delete [] sk;
         }
     }
-	/* complement the rest of bands if there are */
-	if(this->nbands_complem() > 0)
-	{
-		this->random_t(psig, index, this->nbands_start_, ik);
-	}
+    /* complement the rest of bands if there are */
+    if(this->nbands_complem() > 0)
+    {
+        this->random_t(psig, index, this->nbands_start_, ik);
+    }
     ModuleBase::timer::end("psi_init_atomic", "init_psig");
 }
 

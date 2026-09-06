@@ -12,18 +12,24 @@ list(APPEND objects
     op_pw_exx.cpp
     op_pw_exx_ace.cpp
     op_pw_exx_pot.cpp
+    dftu_base.cpp
+    dftu_base_io.cpp
+    dftu_base_occ.cpp
+    dftu_base_tools.cpp
+    yukawa_screening.cpp
     setup_pot.cpp
     setup_pwrho.cpp
     setup_pwwfc.cpp
+    uspp_support.cpp
     update_cell_pw.cpp
     setup_dftu_pw.cpp
     deltaspin_pw.cpp
-    forces_nl.cpp
-    forces_cc.cpp
-    forces_scc.cpp
-    forces.cpp
-    forces_us.cpp
-    forces_onsite.cpp
+    force_pw_nl.cpp
+    force_pw_cc.cpp
+    force_pw_scc.cpp
+    force_pw.cpp
+    force_pw_us.cpp
+    force_pw_onsite.cpp
     stress_cc.cpp
     stress_ewa.cpp
     stress_gga.cpp
@@ -38,17 +44,31 @@ list(APPEND objects
     stress_pw.cpp
     vl_pw.cpp
     vnl_pw.cpp
+    vnl_pw_alpha.cpp
+    vnl_pw_deeq.cpp
+    vnl_pw_getvnl.cpp
     vnl_pw_grad.cpp
-    structure_factor.cpp
-    structure_factor_k.cpp
+    vnl_pw_init_vnl.cpp
+    vnl_pw_qrad.cpp
+    stru_fac.cpp
+    stru_fac_k.cpp
     soc.cpp
-    parallel_grid.cpp
     elecond.cpp
     fs_nonlocal_tools.cpp
+    fs_nonlocal_tools_vkb.cpp
+    fs_nonlocal_tools_stress.cpp
+    fs_nonlocal_tools_force.cpp
     fs_kin_tools.cpp
     radial_proj.cpp
     onsite_proj.cpp
+    onsite_proj_init.cpp
+    onsite_proj_overlap.cpp
+    onsite_proj_force_stress.cpp
     onsite_proj_tools.cpp
+    onsite_proj_tools_becp.cpp
+    onsite_proj_tools_dbecp.cpp
+    onsite_proj_tools_force.cpp
+    onsite_proj_tools_stress.cpp
     onsite_proj_print.cpp
     vsep_pw.cpp
 )

@@ -50,24 +50,22 @@ To compile ABACUS, please make sure that the following prerequisites are present
 
 > GCC version 5 or later is always required. Intel compilers also use GCC headers and libraries[(ref)](https://www.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compatibility-and-portability/gcc-compatibility-and-interoperability.html#gcc-compatibility-and-interoperability_GUID-52CB6FE0-83DA-4028-9EF4-0DFAF1652736).
 
-- MPI library. The recommended versions are [Intel MPI](https://software.intel.com/enus/mpi-library), [MPICH](https://www.mpich.org/) or [Open MPI](https://www.open-mpi.org/).
-- Fortran compiler if you are building `BLAS`, `LAPACK`, `ScaLAPACK`, and `ELPA` from source file. You can use [Intel® Fortran Compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html) or [GFortran](https://gcc.gnu.org/fortran/).
+- Fortran compiler if you are building dependencies written by Fortran, such as `BLAS`, `LAPACK`, `ScaLAPACK`, and `ELPA`, from source file. You can use [Intel® Fortran Compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html) or [GFortran](https://gcc.gnu.org/fortran/).
 - [BLAS](http://www.netlib.org/blas/). You can use [OpenBLAS](https://www.openblas.net/).
 - [LAPACK](http://www.netlib.org/lapack/).
 - [FFTW3](http://www.fftw.org/).
 
-These requirements support the calculation of plane-wave basis in ABACUS. For LCAO basis calculation, additional components are required:
+If you are building ABACUS with MPI parallel support, you'll also need at least:
 
+- MPI library. The recommended implementations include [Intel MPI](https://software.intel.com/enus/mpi-library), [MPICH](https://www.mpich.org/), and [Open MPI](https://www.open-mpi.org/).
 - [ScaLAPACK](http://www.netlib.org/scalapack/).
-- [CEREAL](https://uscilab.github.io/cereal/).
-- [ELPA](https://elpa.mpcdf.mpg.de/) >= 2017 (optional).
 
 ## Install by toolchain
 
 We offer a set of [toolchain](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain)
 scripts to compile and install all the requirements and ABACUS itself
 automatically and suitable for machine characteristic in an online or offline way. 
-The toolchain can be downloaded with ABACUS repo, and users can easily compile the requirements by running *toolchain_[gnu,intel,gcc-aocl,aocc-aocl].sh* and ABACUS itself by running *build_abacus_[gnu,intel,gcc-aocl,aocc-aocl].sh* script in the toolchain directory in `GNU`, `Intel-oneAPI` , `GCC-AMD AOCL` and `AMD AOCC-AOCL` toolchain.
+The toolchain can be downloaded with ABACUS repo, and users can easily compile the requirements by running `toolchain_[gnu,gcc-mkl,intel,gcc-aocl,aocc-aocl].sh` and ABACUS itself by running `build_abacus_[gnu,gcc-mkl,intel,gcc-aocl,aocc-aocl].sh` script in the toolchain directory in `GNU`, `Intel-oneAPI` , `GCC-AMD AOCL` and `AMD AOCC-AOCL` toolchain.
 Sometimes, ABACUS by toolchain installation may have better efficient performance due to the suitable compiled dependencies. One should read the [README in toolchain](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain/README.md) for most of the information before use, and related tutorials can be accessed via ABACUS WeChat platform.
 
 ## Install by conda
@@ -123,17 +121,20 @@ Possible command: `cmake -B build -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON -DENABLE_
 
 ### Install requirements
 
-Some of these packages can be installed with popular package management system via root permission if you have, such as `apt` and `yum`:
+Some of these packages can be installed with popular package management system via root permission if you have, such as `apt` and `yum`. For example:
 
 ```bash
-sudo apt update && sudo apt install -y libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev g++ make cmake bc git pkgconf
+sudo apt update && sudo apt install -y libopenmpi-dev libopenblas-openmp-dev libscalapack-openmpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev g++ make cmake bc git pkgconf
 ```
 
 > Installing ELPA by apt only matches requirements on Ubuntu 22.04. For earlier linux distributions, you should build ELPA from source.
 
-We recommend [Intel® oneAPI toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/commercial-base-hpc.html) (former Intel® Parallel Studio) as toolchain. The [Intel® oneAPI Base Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#base-kit) contains Intel® oneAPI Math Kernel Library (aka `MKL`), including `BLAS`, `LAPACK`, `ScaLAPACK` and `FFTW3`. The [Intel® oneAPI HPC Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#hpc-kit) contains Intel® MPI Library, and C++ compiler(including MPI compiler).
-> Please note that building `elpa` with a different MPI library may cause conflict.
-> Don't forget to [set environment variables](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-intel-oneapi-render-linux/top/configure-your-system.html) before you start! `cmake` will use Intel MKL if the environment variable `MKLROOT` is set.
+You can also use [Intel® oneAPI toolkit](https://www.intel.com/content/www/us/en/developer/tools/oneapi/oneapi-toolkit.html) (former Intel® Parallel Studio) as toolchain. The [Intel® oneAPI Base Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#base-kit) contains Intel® oneAPI Math Kernel Library (aka `MKL`), including `BLAS`, `LAPACK`, `ScaLAPACK` and `FFTW3`. The [Intel® oneAPI HPC Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#hpc-kit) contains Intel® MPI Library, and C++ compiler (including MPI compiler). (Note: Since version 2026.0.0, the two toolkits has been merged into a single [Intel® oneAPI toolkits](https://www.intel.com/content/www/us/en/developer/tools/oneapi/oneapi-toolkit.html))
+
+```{note}
+- Please note that building `elpa` with a different MPI library may cause conflict. Don't forget to [set environment variables](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-intel-oneapi-render-linux/top/configure-your-system.html) before you start!
+- `cmake` will use Intel MKL if the environment variable `MKLROOT` is set.
+```
 
 Please refer to our [guide](https://github.com/deepmodeling/abacus-develop/wiki/Building-and-Running-ABACUS) on installing requirements.
 
@@ -252,14 +253,19 @@ OMP_NUM_THREADS=4 mpirun -n 4 abacus
 
 In this case, the total thread count is 16.
 
-> Notice: If the MPI library you are using is OpenMPI, which is commonly the case, when you set the number of processes to 1 or 2, OpenMPI will default to `--bind-to core`. This means that no matter how many threads you set, these threads will be restricted to run on 1 or 2 CPU cores. Therefore, setting a higher number of OpenMP threads might result in slower program execution. Hence, when using `mpirun -n` set to 1 or 2, it is recommended to set `--bind-to none` to avoid performance degradation. For example:`OMP_NUM_THREADS=6 mpirun --bind-to none -n 1 abacus`. The detailed binding strategy of OpenMPI can be referred to at https://docs.open-mpi.org/en/v5.0.x/man-openmpi/man1/mpirun.1.html#quick-summary.
+```{note}
+**Open MPI applies process binding by default.** This can affect hybrid MPI+OpenMP runs because the launcher does not infer the number of OpenMP threads required by each MPI rank. A binding that is appropriate for an MPI-only calculation can therefore leave each rank with too few CPUs for its OpenMP threads.
+
+For hybrid runs using OpenMPI, either disable binding with `--bind-to none` (recommended for common users) or explicitly allocate the required number of cores per rank, for example with `--map-by slot:PE=<OMP_NUM_THREADS> --bind-to core`. For example: `OMP_NUM_THREADS=6 mpirun --bind-to none -n 1 abacus`. See https://docs.open-mpi.org/en/v5.0.x/man-openmpi/man1/mpirun.1.html#quick-summary.
+```
 
 ABACUS will try to determine the number of threads used by each process if `OMP_NUM_THREADS` is not set. However, it is **required** to set `OMP_NUM_THREADS` before running `mpirun` to avoid potential performance issues.
 
 Please refer to [hands-on guide](./hands_on.md) for more instructions.
 
-> Note: Some Intel CPU has a feature named Hyper-Threading(HT). This feature enables one physical core switch fastly between two logical threads. It would benefits from I/O bound tasks: when a thread is blocked by I/O, the CPU core can work on another thread. However, it helps little on CPU bound tasks, like ABACUS and many other scientific computing softwares. We recommend using the physical CPU core number.
-> To determine if HT is turned on, execute `lscpu | grep 'per core'` and see if 'Thread(s) per core' is 2.
+```{note}
+Usually a CPU has a feature named Hyper-Threading(HT). This feature enables one physical core switch fastly between two logical threads. It would benefits from I/O bound tasks: when a thread is blocked by I/O, the CPU core can work on another thread. However, it helps little on CPU bound tasks, like ABACUS and many other scientific computing softwares. **We recommend using the physical CPU core number.** To determine if HT is turned on, execute `lscpu | grep 'per core'` and see if `Thread(s) per core` is 2.
+```
 
 ## Container Deployment
 

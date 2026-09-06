@@ -11,7 +11,7 @@ list(APPEND objects
     gint_vl.cpp
     gint_vl_metagga.cpp
     gint_vl_nspin4.cpp
-    gint_vl_metagga_nspin4.cpp
+    gint_vl_mgga_n4.cpp
     gint_rho.cpp
     gint_drho.cpp
     gint_tau.cpp
@@ -39,7 +39,7 @@ if(USE_CUDA)
       gint_fvl_gpu.cpp
       gint_vl_metagga_gpu.cpp
       gint_vl_nspin4_gpu.cpp
-      gint_vl_metagga_nspin4_gpu.cpp
+      gint_vl_mgga_n4_gpu.cpp
       gint_tau_gpu.cpp
       gint_fvl_meta_gpu.cpp
       kernel/dgemm_vbatch.cu

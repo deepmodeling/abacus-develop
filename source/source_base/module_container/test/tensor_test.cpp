@@ -43,6 +43,18 @@ TEST(Tensor, Constructor) {
     EXPECT_EQ(t4.data(), vec.data());
 }
 
+TEST(Tensor, CopyAssignment)
+{
+    container::Tensor source({1, 2, 3, 4});
+    source.reshape({2, 2});
+    container::Tensor destination;
+
+    destination = source;
+
+    EXPECT_EQ(destination, source);
+    EXPECT_NE(destination.data(), source.data());
+}
+
 
 TEST(Tensor, GetDataPointer) {
     // Create a 1x1 float tensor with data [1.0, 2.0, 3.0, 4.0].
@@ -216,6 +228,27 @@ TEST(Tensor, GetValueAndInnerMostPtr) {
     auto row_ptr = t.inner_most_ptr<int>(2);
     EXPECT_EQ(row_ptr[0], 9);
     EXPECT_EQ(row_ptr[3], 12);
+}
+
+TEST(Tensor, InnerMostPtrBounds)
+{
+    container::Tensor vector(container::DataType::DT_INT, container::DeviceType::CpuDevice, {4});
+    std::vector<int> values = {1, 2, 3, 4};
+    memcpy(vector.data<int>(), values.data(), sizeof(int) * values.size());
+
+    auto element_ptr = vector.inner_most_ptr<int>(2);
+    EXPECT_EQ(*element_ptr, 3);
+    EXPECT_THROW(vector.inner_most_ptr<int>(-1), std::invalid_argument);
+    EXPECT_THROW(vector.inner_most_ptr<int>(4), std::invalid_argument);
+
+    container::Tensor matrix(container::DataType::DT_INT, container::DeviceType::CpuDevice, {2, 2});
+    EXPECT_THROW(matrix.inner_most_ptr<int>(2), std::invalid_argument);
+
+    container::Tensor empty(container::DataType::DT_INT, container::DeviceType::CpuDevice, container::TensorShape());
+    EXPECT_THROW(empty.inner_most_ptr<int>(0), std::invalid_argument);
+
+    container::Tensor rank_three(container::DataType::DT_INT, container::DeviceType::CpuDevice, {1, 1, 1});
+    EXPECT_THROW(rank_three.inner_most_ptr<int>(0), std::invalid_argument);
 }
 
 TEST(Tensor, ReshapeDeathTest) {

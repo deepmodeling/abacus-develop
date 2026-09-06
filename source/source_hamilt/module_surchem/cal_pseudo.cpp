@@ -1,6 +1,6 @@
 #include "surchem.h"
 
-#include "source_pw/module_pwdft/structure_factor.h" // Structure_Factor member access (sf->strucFac)
+#include "source_pw/module_pwdft/stru_fac.h" // Structure_Factor member access (sf->strucFac)
 
 // atom_in surchem::GetAtom;
 

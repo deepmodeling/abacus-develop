@@ -28,16 +28,16 @@ class KEDF_XWM
                   ModulePW::PW_Basis* pw_rho);
 
 
-    double get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho);
-    double get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho);
-    void tau_xwm(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_xwm);
-    void xwm_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential);
+    double get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho, int nspin);
+    double get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho, int nspin);
+    void tau_xwm(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_xwm, int nspin);
+    void xwm_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential, int nspin);
     void get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, double vw_weight);
     double xwm_energy = 0.;
     ModuleBase::matrix stress;
 
   private:
-    void multi_kernel(const double* const* prho, const double* kernel, double** rkernel_rho, double exponent, ModulePW::PW_Basis* pw_rho);
+    void multi_kernel(const double* const* prho, const double* kernel, double** rkernel_rho, double exponent, ModulePW::PW_Basis* pw_rho, int nspin);
     void fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis* pw_rho);
 
     double dV_ = 0.;

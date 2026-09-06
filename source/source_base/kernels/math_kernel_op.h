@@ -80,10 +80,9 @@ template <typename T, typename Device> struct vector_mul_real_op {
   void operator()(const int dim, T* result, const T* vector, const Real constant);
 };
 
-// vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
-template <typename T, typename Device> struct vector_mul_vector_op {
-  using Real = typename GetTypeReal<T>::type;
-  /// @brief result[i] = vector1[i](complex) * vector2[i](not complex)
+// vector operator: result[i] = vector1[i] * vector2[i]
+template <typename T, typename Device, typename Operand> struct vector_mul_vector_op {
+  /// @brief result[i] = vector1[i] * vector2[i]
   ///
   /// Input Parameters
   /// \param dim : array size
@@ -93,7 +92,32 @@ template <typename T, typename Device> struct vector_mul_vector_op {
   ///
   /// Output Parameters
   /// \param result : output array
-  void operator()(const int& dim, T* result, const T* vector1, const Real* vector2, const bool& add = false);
+  void operator()(const int& dim, T* result, const T* vector1, const Operand* vector2, const bool& add);
+};
+
+template <typename T, typename Operand>
+struct vector_mul_vector_op<T, base_device::DEVICE_CPU, Operand> {
+  void operator()(const int &dim, T *result, const T *vector1,
+                  const Operand *vector2, const bool &add) {
+    if (dim <= 0) {
+      return;
+    }
+    if (add) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+      for (int i = 0; i < dim; i++) {
+        result[i] += vector1[i] * vector2[i];
+      }
+    } else {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+      for (int i = 0; i < dim; i++) {
+        result[i] = vector1[i] * vector2[i];
+      }
+    }
+  }
 };
 
 // vector operator: result[i] = vector[i] / constant
@@ -111,10 +135,9 @@ template <typename T, typename Device> struct vector_div_constant_op {
   void operator()(const int& dim, T* result, const T* vector, const Real constant);
 };
 
-// vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
-template <typename T, typename Device> struct vector_div_vector_op {
-  using Real = typename GetTypeReal<T>::type;
-  /// @brief result[i] = vector1[i](complex) / vector2[i](not complex)
+// vector operator: result[i] = vector1[i] / vector2[i]
+template <typename T, typename Device, typename Operand> struct vector_div_vector_op {
+  /// @brief result[i] = vector1[i] / vector2[i]
   ///
   /// Input Parameters
   /// \param dim : array size
@@ -124,7 +147,23 @@ template <typename T, typename Device> struct vector_div_vector_op {
   /// Output Parameters
   /// \param result : output array
   void operator()(const int &dim, T *result, const T *vector1,
-                  const Real *vector2);
+                  const Operand *vector2);
+};
+
+template <typename T, typename Operand>
+struct vector_div_vector_op<T, base_device::DEVICE_CPU, Operand> {
+  void operator()(const int &dim, T *result, const T *vector1,
+                  const Operand *vector2) {
+    if (dim <= 0) {
+      return;
+    }
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < dim; i++) {
+      result[i] = vector1[i] / vector2[i];
+    }
+  }
 };
 
 //  compute Y = alpha * X + Y
@@ -146,9 +185,8 @@ template <typename T, typename Device> struct axpy_op {
 };
 
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
-template <typename T, typename Device>
+template <typename T, typename Device, typename Scalar>
 struct vector_add_vector_op {
-  using Real = typename GetTypeReal<T>::type;
   /// @brief result[i] = vector1[i] * constant1 + vector2[i] * constant2
   ///
   /// Input Parameters
@@ -161,7 +199,24 @@ struct vector_add_vector_op {
   /// Output Parameters
   /// \param result : output array
   void operator()(const int &dim, T *result, const T *vector1,
-                  const Real constant1, const T *vector2, const Real constant2);
+                  const Scalar constant1, const T *vector2, const Scalar constant2);
+};
+
+template <typename T, typename Scalar>
+struct vector_add_vector_op<T, base_device::DEVICE_CPU, Scalar> {
+  void operator()(const int &dim, T *result, const T *vector1,
+                  const Scalar constant1, const T *vector2,
+                  const Scalar constant2) {
+    if (dim <= 0) {
+      return;
+    }
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < dim; i++) {
+      result[i] = vector1[i] * constant1 + vector2[i] * constant2;
+    }
+  }
 };
 
 template <typename T, typename Device> struct dot_real_op {
@@ -405,10 +460,10 @@ struct vector_mul_real_op<T, base_device::DEVICE_GPU>
   void operator()(const int dim, T* result, const T* vector, const Real constant);
 };
 
-// vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
-template <typename T> struct vector_mul_vector_op<T, base_device::DEVICE_GPU> {
-  using Real = typename GetTypeReal<T>::type;
-  void operator()(const int& dim, T* result, const T* vector1, const Real* vector2, const bool& add = false);
+// vector operator: result[i] = vector1[i] * vector2[i]
+template <typename T, typename Operand>
+struct vector_mul_vector_op<T, base_device::DEVICE_GPU, Operand> {
+  void operator()(const int& dim, T* result, const T* vector1, const Operand* vector2, const bool& add);
 };
 
 // vector operator: result[i] = vector[i] / constant
@@ -417,20 +472,19 @@ template <typename T> struct vector_div_constant_op<T, base_device::DEVICE_GPU> 
   void operator()(const int& dim, T* result, const T* vector, const Real constant);
 };
 
-// vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
-template <typename T> struct vector_div_vector_op<T, base_device::DEVICE_GPU> {
-  using Real = typename GetTypeReal<T>::type;
+// vector operator: result[i] = vector1[i] / vector2[i]
+template <typename T, typename Operand>
+struct vector_div_vector_op<T, base_device::DEVICE_GPU, Operand> {
   void operator()(const int &dim, T *result,
-                  const T *vector1, const Real *vector2);
+                  const T *vector1, const Operand *vector2);
 };
 
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
-template <typename T>
-struct vector_add_vector_op<T, base_device::DEVICE_GPU> {
-  using Real = typename GetTypeReal<T>::type;
+template <typename T, typename Scalar>
+struct vector_add_vector_op<T, base_device::DEVICE_GPU, Scalar> {
   void operator()(const int &dim, T *result,
-                  const T *vector1, const Real constant1, const T *vector2,
-                  const Real constant2);
+                  const T *vector1, const Scalar constant1, const T *vector2,
+                  const Scalar constant2);
 };
 
 template <typename T> struct matrixCopy<T, base_device::DEVICE_GPU> {

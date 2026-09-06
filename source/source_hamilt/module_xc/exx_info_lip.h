@@ -1,7 +1,7 @@
 #ifndef EXX_INFO_LIP_H
 #define EXX_INFO_LIP_H
 
-#include "source_lcao/module_ri/conv_coulomb_pot_k.h"
+#include "source_hamilt/module_xc/coulomb_config.h"
 
 struct Exx_Info_Lip
 {

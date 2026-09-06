@@ -143,6 +143,11 @@ class CalAtomsInfo
         result.nbands = nbands;
         unitcell::cal_nbands(static_cast<int>(result.nelec), result.nlocal, nelec_spin, result.nbands,
                               esolver_type, lspinorb, nspin, basis_type, smearing_method);
+        // Taoni add check for bndpar > nbands on 2026-08-21
+        if (ks_solver == "bpcg" && result.nbands > 0 && bndpar > result.nbands)
+        {
+            ModuleBase::WARNING_QUIT("CalAtomsInfo", "bndpar cannot exceed nbands when ks_solver is bpcg");
+        }
 
         // calculate the number of nbands_local
         result.nbands_l = result.nbands;

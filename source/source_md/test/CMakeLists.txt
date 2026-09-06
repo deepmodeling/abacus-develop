@@ -3,7 +3,7 @@ abacus_add_local_feature_definitions(__NORMAL)
 
 list(APPEND depend_files
   ../md_func.cpp
-  ../../source_cell/base_cell.cpp
+  ../../source_cell/basecell.cpp
   ../../source_cell/unitcell.cpp
   ../../source_cell/update_cell.cpp
   ../../source_cell/bcast_cell.cpp
@@ -50,16 +50,18 @@ list(APPEND depend_files
   ../../source_cell/module_neighlist/neighbor_search.cpp
   ../../source_cell/module_neighlist/bin_manager.cpp
   ../../source_cell/module_neighlist/page_allocator.cpp
-  ../../source_cell/module_neighlist/unitcell_lite.cpp
+  ../../source_cell/module_neighlist/domain_decomposition.cpp
+  ../../source_cell/mdcell.cpp
   ../../source_base/output.cpp
   ../../source_io/module_output/output_log.cpp
   ../../source_io/module_output/print_info.cpp
-  ../../source_io/module_output/cif_io.cpp
+  ../../source_cell/cif_io.cpp
   ../../source_esolver/esolver_lj.cpp
   ../../source_base/parallel_reduce.cpp
   ../../source_base/parallel_global.cpp
+  ../../source_base/parallel_cell.cpp
   ../../source_base/parallel_comm.cpp
-  ../../source_cell/read_pseudo.cpp
+  ../../source_cell/read_pp_ucell.cpp
   ../../source_cell/cal_wfc.cpp
   ../../source_cell/cal_nelec_nband.cpp
   ../../source_cell/read_orb.cpp
@@ -78,6 +80,22 @@ AddTest(
   TARGET MODULE_MD_func
   LIBS parameter psi device
   SOURCES md_func_test.cpp
+  ${depend_files}
+)
+
+AddTest(
+  TARGET MODULE_MD_run
+  LIBS parameter psi device
+  SOURCES run_md_test.cpp
+  ../run_md.cpp
+  ../md_base.cpp
+  ../fire.cpp
+  ../langevin.cpp
+  ../msst.cpp
+  ../nhchain.cpp
+  ../verlet.cpp
+  ../../source_cell/mdcell_reader.cpp
+  ../../source_cell/magnetism.cpp
   ${depend_files}
 )
 

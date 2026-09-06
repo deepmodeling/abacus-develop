@@ -9,7 +9,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
 #include "source_io/module_parameter/parameter.h"
 
 namespace hamilt
@@ -20,8 +20,9 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
                               ModulePW::PW_Basis_K* wfc_basis,
                               K_Vectors* pkv,
                               pseudopot_cell_vnl* nlpp,
-                              Plus_U* p_dftu, // mohan add 2025-11-06
-                              const UnitCell* ucell)
+                              Plus_U_Base* p_dftu,
+                              const UnitCell* ucell,
+                              const General_Exx_Info* exx_info)
     : ucell(ucell)
 {
     this->classname = "HamiltPW";
@@ -130,11 +131,11 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
                                                                                  (PARAM.inp.dft_plus_u > 0));
         this->ops->add(onsite_proj);
     }
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (exx_info && exx_info->cal_exx)
     {
-        bool separate_loop = GlobalC::exx_info.info_global.separate_loop;
-        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-        auto coulomb_param = GlobalC::exx_info.info_global.coulomb_param;
+        bool separate_loop = exx_info->separate_loop;
+        double hybrid_alpha = exx_info->hybrid_alpha;
+        auto coulomb_param = exx_info->coulomb_param;
         auto exx = new OperatorEXXPW<T, Device>(isk, wfc_basis, pot_in->get_rho_basis(), pkv, ucell, separate_loop, hybrid_alpha, coulomb_param);
         if (this->ops == nullptr)
         {
@@ -233,93 +234,84 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
         setmem_complex_op()(ps, 0, this->ppcell->nkb * nbands);
 
         // spsi = psi + sum qq <beta|psi> |beta>
-        if (PARAM.inp.noncolin)
+        // qq <beta|psi>
+        char transa = 'N';
+        char transb = 'N';
+        for (int it = 0; it < ucell->ntype; it++)
         {
-            // spsi_nc
-            std::cout << " noncolinear in uspp is not implemented yet " << std::endl;
-            exit(0);
+            Atom* atoms = &ucell->atoms[it];
+            if (atoms->ncpp.tvanp)
+            {
+                const int nh = atoms->ncpp.nh;
+                T* qqc = nullptr;
+                resmem_complex_op()(qqc, nh * nh, "Hamilt<PW>::qqc");
+                std::vector<T> qqc_host(nh*nh);
+                const double* qq_now_host = &this->ppcell->qq_nt.ptr[it * this->ppcell->nhm * this->ppcell->nhm];
+
+                for (int i = 0; i < nh; i++)
+                {
+                    for (int j = 0; j < nh; j++)
+                    {
+                        const int source_index = i * this->ppcell->nhm + j;
+                        const int target_index = i * nh + j;
+
+                        qqc_host[target_index] = static_cast<Real>(qq_now_host[source_index]) * one;
+                    }
+                }
+
+                syncmem_complex_h2d_op()(qqc, qqc_host.data(), qqc_host.size());
+
+                for (int ia = 0; ia < atoms->na; ia++)
+                {
+                    const int iat = ucell->itia2iat(it, ia);
+                    gemm_op()(transa,
+                              transb,
+                              nh,
+                              nbands,
+                              nh,
+                              &one,
+                              qqc,
+                              nh,
+                              &becp[this->ppcell->indv_ijkb0[iat]],
+                              this->ppcell->nkb,
+                              &zero,
+                              &ps[this->ppcell->indv_ijkb0[iat]],
+                              this->ppcell->nkb);
+                }
+                delmem_complex_op()(qqc);
+            }
+        }
+
+        if (nbands == 1)
+        {
+            const int inc = 1;
+            gemv_op()(transa,
+                      npw,
+                      this->ppcell->nkb,
+                      &one,
+                      this->vkb,
+                      this->ppcell->vkbnc,
+                      ps,
+                      inc,
+                      &one,
+                      spsi,
+                      inc);
         }
         else
         {
-            // qq <beta|psi>
-            char transa = 'N';
-            char transb = 'N';
-            for (int it = 0; it < ucell->ntype; it++)
-            {
-                Atom* atoms = &ucell->atoms[it];
-                if (atoms->ncpp.tvanp)
-                {
-                    const int nh = atoms->ncpp.nh;
-                    T* qqc = nullptr;
-                    resmem_complex_op()(qqc, nh * nh, "Hamilt<PW>::qqc");
-                    std::vector<T> qqc_host(nh*nh);
-                    const double* qq_now_host = &this->ppcell->qq_nt.ptr[it * this->ppcell->nhm * this->ppcell->nhm];
-
-                    for (int i = 0; i < nh; i++)
-                    {
-                        for (int j = 0; j < nh; j++)
-                        {
-                            const int source_index = i * this->ppcell->nhm + j;
-                            const int target_index = i * nh + j;
-
-                            qqc_host[target_index] = static_cast<Real>(qq_now_host[source_index]) * one;
-                        }
-                    }
-
-                    syncmem_complex_h2d_op()(qqc, qqc_host.data(), qqc_host.size());
-
-                    for (int ia = 0; ia < atoms->na; ia++)
-                    {
-                        const int iat = ucell->itia2iat(it, ia);
-                        gemm_op()(transa,
-                                  transb,
-                                  nh,
-                                  nbands,
-                                  nh,
-                                  &one,
-                                  qqc,
-                                  nh,
-                                  &becp[this->ppcell->indv_ijkb0[iat]],
-                                  this->ppcell->nkb,
-                                  &zero,
-                                  &ps[this->ppcell->indv_ijkb0[iat]],
-                                  this->ppcell->nkb);
-                    }
-                    delmem_complex_op()(qqc);
-                }
-            }
-
-            if (nbands == 1)
-            {
-                const int inc = 1;
-                gemv_op()(transa,
-                          npw,
-                          this->ppcell->nkb,
-                          &one,
-                          this->vkb,
-                          this->ppcell->vkbnc,
-                          ps,
-                          inc,
-                          &one,
-                          spsi,
-                          inc);
-            }
-            else
-            {
-                gemm_op()(transa,
-                          transb,
-                          npw,
-                          nbands,
-                          this->ppcell->nkb,
-                          &one,
-                          this->vkb,
-                          this->ppcell->vkbnc,
-                          ps,
-                          this->ppcell->nkb,
-                          &one,
-                          spsi,
-                          nrow);
-            }
+            gemm_op()(transa,
+                      transb,
+                      npw,
+                      nbands,
+                      this->ppcell->nkb,
+                      &one,
+                      this->vkb,
+                      this->ppcell->vkbnc,
+                      ps,
+                      this->ppcell->nkb,
+                      &one,
+                      spsi,
+                      nrow);
         }
         delmem_complex_op()(ps);
         delmem_complex_op()(becp);

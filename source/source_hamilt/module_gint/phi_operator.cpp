@@ -2,6 +2,8 @@
 #include "source_base/global_function.h"
 #include "source_base/matrix.h"
 
+#include <cassert>
+
 namespace ModuleGint
 {
 
@@ -162,49 +164,38 @@ void PhiOperator::cal_env_k(
     const std::complex<double>* wfc,
     const vector<int>& trace_lo,
     const int ik,
-    const int nspin,
     const int npol,
-    const int lgd,
-    const std::vector<Vec3d>& kvec_c,
     const std::vector<Vec3d>& kvec_d,
-    double* rho) const
+    const int grid_size,
+    std::complex<double>* wfc_r) const
 {
     for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom = biggrid_->get_atom(i);
         const int iw_start = atom->get_start_iw();
-        const Vec3d R(atom->get_unitcell_idx());
-        const double arg = (kvec_d[ik] * R) * ModuleBase::TWO_PI;
+        // GintAtom::get_R() stores R_Gint = I_bgrid - I_atom, which is the negative
+        // of the actual AO-image translation R_AO. The Bloch sum requires
+        // exp(+i 2pi k_d dot R_AO), so this is exp(-i 2pi k_d dot R_Gint).
+        const Vec3d r_gint(atom->get_R());
+        const double arg = -(kvec_d[ik] * r_gint) * ModuleBase::TWO_PI;
         const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
         const int start_idx = atoms_startidx_[i];
         for(int j = 0; j < biggrid_->get_mgrids_num(); ++j)
         {
             if(is_atom_on_mgrid(i, j))
-            {   
-                std::complex<double> tmp{0.0, 0.0};
-                int phi_start_idx = j * cols_ + start_idx;
-
-                int iw_lo = 0;
-                if (nspin == 4) // is it a simple add of 2 spins?
+            {
+                const int phi_start_idx = j * cols_ + start_idx;
+                for (int ipol = 0; ipol < npol; ++ipol)
                 {
-                    for (int is = 0; is < 2; ++is)
+                    std::complex<double> tmp{0.0, 0.0};
+                    for (int iw = 0; iw < atom->get_nw(); ++iw)
                     {
-                        iw_lo = trace_lo[iw_start] / npol + lgd / npol * is;
-                        for (int iw = 0; iw < atom->get_nw(); ++iw, ++iw_lo)
-                        {
-                            tmp += std::complex<double>(phi[phi_start_idx + iw], 0.0) * wfc[iw_lo] * kphase;
-                        }
+                        const int iw_lo = trace_lo[iw_start + iw * npol + ipol];
+                        assert(iw_lo >= 0);
+                        tmp += phi[phi_start_idx + iw] * wfc[iw_lo];
                     }
+                    wfc_r[ipol * grid_size + mgrid_lidx_[j]] += tmp * kphase;
                 }
-                else
-                {
-                    iw_lo = trace_lo[iw_start];
-                    for (int iw = 0; iw < atom->get_nw(); ++iw, ++iw_lo)
-                    {
-                        tmp += std::complex<double>(phi[phi_start_idx + iw], 0.0) * wfc[iw_lo] * kphase;
-                    }
-                }
-                rho[mgrid_lidx_[j]] += tmp.real();
             }
         }
     }

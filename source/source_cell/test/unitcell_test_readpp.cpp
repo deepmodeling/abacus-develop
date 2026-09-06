@@ -6,7 +6,7 @@
 #include "source_cell/check_atomic_stru.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/cal_nelec_nband.h"
-#include "source_cell/read_pseudo.h"
+#include "source_cell/read_pp_ucell.h"
 #include <valarray>
 #include <vector>
 #include "string.h"

@@ -1,10 +1,10 @@
 #pragma once
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/parallel_grid.h"
+#include "source_base/parallel_grid.h"
 #include "source_estate/module_charge/charge.h"
-#define CREF(x) const std::vector<double>& x = x##_;
-#define CREF3(x) const std::vector<ModuleBase::Vector3<double>>& x = x##_;
+#define CREF(x) const std::vector<double>& x = x##_
+#define CREF3(x) const std::vector<ModuleBase::Vector3<double>>& x = x##_
 namespace LR
 {
     /// @brief Calculate the exchange-correlation (XC) kernel ($f_{xc}=\delta^2E_xc/\delta\rho^2$) and store its components.
@@ -21,7 +21,7 @@ namespace LR
             const std::string& kernel_name,
             const std::vector<std::string>& lr_init_xc_kernel,
             const bool openshell = false);
-        ~KernelXC() {};
+        ~KernelXC() {}
 
         // const references
         CREF(vrho);CREF(vsigma); CREF(v2rho2); CREF(v2rhosigma); CREF(v2sigma2);

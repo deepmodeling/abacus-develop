@@ -11,7 +11,7 @@ endif()
 
 # if(ENABLE_COVERAGE)
 #   add_coverage(psi)
-#   add_coverage(psi_initializer)
+#   add_coverage(psi_init)
 # endif()
 
 # if (BUILD_TESTING)

@@ -74,16 +74,16 @@ TEST_F(DMTransTest, DoubleSerial)
             std::vector<int> temp(s.nks, s.naos);
             psi::Psi<double> c(s.nks, s.nocc + s.nvirt, s.naos, temp, true);
             set_rand(c.get_pointer(), size_c);
-            auto test = [&](psi::Psi<double>& X, const LR::MO_TYPE type)
+            auto test = [&](psi::Psi<double>& X, const LR_Util::MO_TYPE type)
                 {
                     X.fix_b(istate);
                     const std::vector<container::Tensor>& dm_for = LR::cal_dm_trans_forloop_serial(X.get_pointer(), c, s.nocc, s.nvirt, 1., type);
                     const std::vector<container::Tensor>& dm_blas = LR::cal_dm_trans_blas(X.get_pointer(), c, s.nocc, s.nvirt, 1., type);
                     for (int isk = 0;isk < s.nks;++isk) check_eq(dm_for[isk].data<double>(), dm_blas[isk].data<double>(), s.naos * s.naos);
                 };
-            test(X_vo, LR::MO_TYPE::VO);
-            test(X_oo, LR::MO_TYPE::OO);
-            test(X_vv, LR::MO_TYPE::VV);
+            test(X_vo, LR_Util::MO_TYPE::VO);
+            test(X_oo, LR_Util::MO_TYPE::OO);
+            test(X_vv, LR_Util::MO_TYPE::VV);
         }
 
     }
@@ -105,16 +105,16 @@ TEST_F(DMTransTest, ComplexSerial)
             std::vector<int> temp(s.nks, s.naos);
             psi::Psi<std::complex<double>> c(s.nks, s.nocc + s.nvirt, s.naos, temp, true);
             set_rand(c.get_pointer(), size_c);
-            auto test = [&](psi::Psi<std::complex<double>>& X, const LR::MO_TYPE type)
+            auto test = [&](psi::Psi<std::complex<double>>& X, const LR_Util::MO_TYPE type)
                 {
                     X.fix_b(istate);
                     const std::vector<container::Tensor>& dm_for = LR::cal_dm_trans_forloop_serial(X.get_pointer(), c, s.nocc, s.nvirt, std::complex<double>(1., 0.), type);
                     const std::vector<container::Tensor>& dm_blas = LR::cal_dm_trans_blas(X.get_pointer(), c, s.nocc, s.nvirt, std::complex<double>(1., 0.), type);
                     for (int isk = 0;isk < s.nks;++isk) check_eq(dm_for[isk].data<std::complex<double>>(), dm_blas[isk].data<std::complex<double>>(), s.naos * s.naos);
                 };
-            test(X_vo, LR::MO_TYPE::VO);
-            test(X_oo, LR::MO_TYPE::OO);
-            test(X_vv, LR::MO_TYPE::VV);
+            test(X_vo, LR_Util::MO_TYPE::VO);
+            test(X_oo, LR_Util::MO_TYPE::OO);
+            test(X_vv, LR_Util::MO_TYPE::VV);
         }
 
     }
@@ -159,6 +159,7 @@ TEST_F(DMTransTest, DoubleParallel)
 
         auto gather = [&](const psi::Psi<double>& X, psi::Psi<double>& X_full, const Parallel_2D& px, const int dim1, const int dim2)
             {
+                X_full.zero_out();
                 for (int istate = 0;istate < nstate;++istate)
                 {
                     X.fix_b(istate);
@@ -183,6 +184,7 @@ TEST_F(DMTransTest, DoubleParallel)
             // gather C
             std::vector<int> temp(s.nks, s.naos);
             psi::Psi<double> c_full(s.nks, s.nocc + s.nvirt, s.naos, temp, true);
+            c_full.zero_out();
             for (int isk = 0;isk < s.nks;++isk)
             {
                 c.fix_k(isk);
@@ -190,7 +192,7 @@ TEST_F(DMTransTest, DoubleParallel)
                 LR_Util::gather_2d_to_full(pc, c.get_pointer(), c_full.get_pointer(), false, s.naos, s.nocc + s.nvirt);
             }
 
-            auto test = [&](psi::Psi<double>& X, psi::Psi<double>& X_full, const Parallel_2D& px, const LR::MO_TYPE type)
+            auto test = [&](psi::Psi<double>& X, psi::Psi<double>& X_full, const Parallel_2D& px, const LR_Util::MO_TYPE type)
                 {
                     X.fix_b(istate);
                     X_full.fix_b(istate);
@@ -198,6 +200,7 @@ TEST_F(DMTransTest, DoubleParallel)
                     std::vector<container::Tensor> dm_gather(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
                     for (int isk = 0;isk < s.nks;++isk)
                     {
+                        dm_gather[isk].zero();
                         LR_Util::gather_2d_to_full(pmat, dm_pblas_loc[isk].data<double>(), dm_gather[isk].data<double>(), false, s.naos, s.naos);
                     }
                     if (my_rank == 0)
@@ -206,9 +209,9 @@ TEST_F(DMTransTest, DoubleParallel)
                         for (int isk = 0;isk < s.nks;++isk) check_eq(dm_full[isk].data<double>(), dm_gather[isk].data<double>(), s.naos * s.naos);
                     }
                 };
-            test(X_vo, X_full_vo, px_vo, LR::MO_TYPE::VO);
-            test(X_oo, X_full_oo, px_oo, LR::MO_TYPE::OO);
-            test(X_vv, X_full_vv, px_vv, LR::MO_TYPE::VV);
+            test(X_vo, X_full_vo, px_vo, LR_Util::MO_TYPE::VO);
+            test(X_oo, X_full_oo, px_oo, LR_Util::MO_TYPE::OO);
+            test(X_vv, X_full_vv, px_vv, LR_Util::MO_TYPE::VV);
         }
     }
 }
@@ -244,6 +247,7 @@ TEST_F(DMTransTest, ComplexParallel)
 
         auto gather = [&](const psi::Psi<std::complex<double>>& X, psi::Psi<std::complex<double>>& X_full, const Parallel_2D& px, const int dim1, const int dim2)
             {
+                X_full.zero_out();
                 for (int istate = 0;istate < nstate;++istate)
                 {
                     X.fix_b(istate);
@@ -267,6 +271,7 @@ TEST_F(DMTransTest, ComplexParallel)
             // compare to global matrix
             std::vector<int> ngk_temp_2(s.nks, s.naos);
             psi::Psi<std::complex<double>> c_full(s.nks, s.nocc + s.nvirt, s.naos, ngk_temp_2, true);
+            c_full.zero_out();
             for (int isk = 0;isk < s.nks;++isk)
             {
                 c.fix_k(isk);
@@ -274,7 +279,7 @@ TEST_F(DMTransTest, ComplexParallel)
                 LR_Util::gather_2d_to_full(pc, c.get_pointer(), c_full.get_pointer(), false, s.naos, s.nocc + s.nvirt);
             }
 
-            auto test = [&](psi::Psi<std::complex<double>>& X, psi::Psi<std::complex<double>>& X_full, const Parallel_2D& px, const LR::MO_TYPE type)
+            auto test = [&](psi::Psi<std::complex<double>>& X, psi::Psi<std::complex<double>>& X_full, const Parallel_2D& px, const LR_Util::MO_TYPE type)
                 {
                     X.fix_b(istate);
                     X_full.fix_b(istate);
@@ -282,6 +287,7 @@ TEST_F(DMTransTest, ComplexParallel)
                     std::vector<container::Tensor> dm_gather(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
                     for (int isk = 0;isk < s.nks;++isk)
                     {
+                        dm_gather[isk].zero();
                         LR_Util::gather_2d_to_full(pmat, dm_pblas_loc[isk].data<std::complex<double>>(), dm_gather[isk].data<std::complex<double>>(), false, s.naos, s.naos);
                     }
                     if (my_rank == 0)
@@ -290,9 +296,9 @@ TEST_F(DMTransTest, ComplexParallel)
                         for (int isk = 0;isk < s.nks;++isk) check_eq(dm_full[isk].data<std::complex<double>>(), dm_gather[isk].data<std::complex<double>>(), s.naos * s.naos);
                     }
                 };
-            test(X_vo, X_full_vo, px_vo, LR::MO_TYPE::VO);
-            test(X_oo, X_full_oo, px_oo, LR::MO_TYPE::OO);
-            test(X_vv, X_full_vv, px_vv, LR::MO_TYPE::VV);
+            test(X_vo, X_full_vo, px_vo, LR_Util::MO_TYPE::VO);
+            test(X_oo, X_full_oo, px_oo, LR_Util::MO_TYPE::OO);
+            test(X_vv, X_full_vv, px_vv, LR_Util::MO_TYPE::VV);
         }
     }
 }

@@ -2,25 +2,37 @@
  * @file qlist.h
  * @brief QList class for managing q-points.
  * @author Mohan Chen (added on 2026-05-18)
- * @note This code is currently in the design phase and has not been
- *       put into production yet. It may change in the future.
- *       Please use this code with caution. Only developers who know
- *       what they are doing should use this code.
+ * @note The q-point mesh generation and star (IBZ) reduction share the
+ *       spin-free functionality of ModuleCell::ReciprocalGrid with
+ *       K_Vectors; the irreducible-representation analysis is added on top.
  */
 #ifndef QLIST_H
 #define QLIST_H
 
 #include "source_base/vector3.h"
-#include "module_symmetry/symmetry.h"
-#include "unitcell.h"
+#include "module_symmetry/little_group.h"
+#include "reciprocal_grid.h"
 #include <vector>
+
+class UnitCell;
+namespace ModuleSymmetry
+{
+class Symmetry;
+}
 
 namespace ModuleCell {
 
 /**
  * @brief QList class for managing q-points.
+ *
+ * Inherits the spin-free reciprocal-grid functionality (mesh generation,
+ * coordinate conversion, weights, star reduction primitive) from
+ * ReciprocalGrid and adds the q-specific star reduction (always including
+ * the time-reversal partner -q, no spin expansion) together with the
+ * little-group irreducible-representation data (placeholder in the current
+ * version).
  */
-class QList {
+class QList : public ModuleCell::ReciprocalGrid {
 public:
     /**
      * @brief Default constructor.
@@ -31,9 +43,9 @@ public:
      * @brief Destructor.
      */
     ~QList();
-    
+
     /**
-     * @brief Generate q-point mesh.
+     * @brief Generate the Monkhorst-Pack q-point mesh and reduce it by star.
      *
      * @param ucell unit cell
      * @param symm symmetry object
@@ -42,35 +54,61 @@ public:
      */
     void generate_mesh(UnitCell& ucell, ModuleSymmetry::Symmetry& symm,
                        const std::vector<int>& mp_grid, bool use_irreps);
-    
+
     /**
-     * @brief Read q-points from file.
+     * @brief Read q-points from a q-points file.
+     *
+     * Supports the same formats as the K-points file: a Monkhorst-Pack
+     * mesh (nkstot == 0), an explicit Direct/Cartesian list, or a
+     * Line_Direct/Line_Cartesian path (interpolated). No symmetry
+     * reduction is performed here (the interface has no symmetry object);
+     * use generate_mesh for a symmetry-reduced mesh.
      *
      * @param filename filename
      * @param ucell unit cell
      */
     void read_from_file(const std::string& filename, UnitCell& ucell);
-    
+
+    /**
+     * @brief Print the q-points in both Cartesian and direct coordinates.
+     * @param ofs output stream
+     */
+    void print_qlists(std::ofstream& ofs) const;
+
     /**
      * @brief Get the number of q-points.
      * @return number of q-points
      */
-    int get_nq() const { return nq_; }
-    
+    int get_nq() const { return this->nkstot; }
+
     /**
      * @brief Get q-point at given index.
      * @param idx q-point index
-     * @return q-point vector
+     * @return q-point vector (direct coordinates); zero vector if idx is out of range
      */
-    ModuleBase::Vector3<double> get_q(int idx) const { return qvec_[idx]; }
-    
+    ModuleBase::Vector3<double> get_q(int idx) const
+    {
+        if (idx < 0 || idx >= static_cast<int>(this->kvec_d.size()))
+        {
+            return ModuleBase::Vector3<double>();
+        }
+        return this->kvec_d[idx];
+    }
+
     /**
      * @brief Get the number of irreps at given q-point.
      * @param idx q-point index
-     * @return number of irreps
+     * @return number of irreps (0 if no irrep data was computed)
      */
-    int get_nirr(int idx) const { return nirr_[idx]; }
-    
+    int get_nirr(int idx) const
+    {
+        if (idx < 0 || idx >= static_cast<int>(this->nirr_.size()))
+        {
+            return 0;
+        }
+        return nirr_[idx];
+    }
+
     /**
      * @brief Get irrep modes at given q-point and irrep index.
      * @param q_idx q-point index
@@ -79,27 +117,51 @@ public:
      */
     std::vector<int> get_irrep_modes(int q_idx, int irrep_idx) const;
 
-private:
-    int nq_ = 0; ///< number of q-points
-    std::vector<ModuleBase::Vector3<double>> qvec_; ///< q-point vectors
-    std::vector<int> nirr_; ///< number of irreps for each q-point
-    std::vector<std::vector<std::vector<int>>> irrep_modes_; ///< irrep modes
-    
     /**
-     * @brief Reduce q-points using symmetry.
+     * @brief Reduce the q-points by star (time-reversal included).
+     *
+     * Implements the pure-virtual hook of ReciprocalGrid: builds the
+     * reciprocal-space point-group operations via build_star_ops, always
+     * doubles them by -q, and folds the mesh with ReciprocalGrid::reduce_ibz.
      *
      * @param ucell unit cell
      * @param symm symmetry object
+     * @param use_symm whether symmetry reduction is enabled
+     * @param skpt output string (unused for q-points)
+     * @param match set to false if the reciprocal lattice is not compatible
+     *              with the real-space lattice
      */
-    void reduce(UnitCell& ucell, ModuleSymmetry::Symmetry& symm);
-    
+    void reduce_by_symmetry(const UnitCell& ucell,
+                            const ModuleSymmetry::Symmetry& symm,
+                            bool use_symm,
+                            std::string& skpt,
+                            bool& match,
+                            const int my_rank,
+                            std::ofstream& ofs_running) override;
+
+private:
+    std::vector<int> nirr_; ///< number of irreps for each q-point
+    std::vector<std::vector<std::vector<int>>> irrep_modes_; ///< irrep modes
+    ModuleSymmetry::LittleGroup little_group_; ///< little group of the current q-point
+
+    /**
+     * @brief Interpolate q-points between successive special points.
+     *
+     * @param ifq input stream positioned at the special-point list
+     * @param qvec output q-point coordinates
+     */
+    void interpolate_q_between(std::ifstream& ifq, std::vector<ModuleBase::Vector3<double>>& qvec);
+
     /**
      * @brief Get irreps for each q-point.
      *
+     * Currently fills a fully-symmetric placeholder (one A1 irrep per
+     * q-point); the LittleGroup decomposition is implemented in Phase 3.
+     *
      * @param ucell unit cell
      * @param symm symmetry object
      */
-    void get_irreps(UnitCell& ucell, ModuleSymmetry::Symmetry& symm);
+    void get_irreps(const UnitCell& ucell, const ModuleSymmetry::Symmetry& symm);
 };
 
 } // namespace ModuleCell

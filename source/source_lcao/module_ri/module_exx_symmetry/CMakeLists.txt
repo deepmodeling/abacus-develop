@@ -2,9 +2,9 @@ if (ENABLE_LIBRI)
 
     list(APPEND objects
         irreducible_sector.cpp
-        irreducible_sector_bvk.cpp
-        symmetry_rotation.cpp
-        symmetry_rotation_output.cpp
+        irred_sec_bvk.cpp
+        symm_rotation.cpp
+        symm_rot_out.cpp
     )
     add_library(
         module_exx_symmetry

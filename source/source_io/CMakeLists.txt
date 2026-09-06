@@ -1,4 +1,4 @@
-# Note: Help data is now embedded in Input_Item objects in read_input_item_*.cpp
+# Note: Help data is embedded in Input_Item registrations under module_parameter.
 # The old input_help_data.h generation has been removed.
 
 list(APPEND objects
@@ -10,51 +10,53 @@ list(APPEND objects
     module_output/cal_test.cpp
     module_dos/cal_dos.cpp
     module_dos/cal_ldos.cpp
-    module_ml/cal_mlkedf_descriptors.cpp
-    module_output/cif_io.cpp
+    module_ml/cal_mlkedf_desc.cpp
     module_dos/write_dos_pw.cpp
+    module_output/band_parallel_output.cpp
     module_energy/write_bands.cpp
     module_energy/nscf_fermi_surf.cpp
     module_energy/write_eig_occ.cpp
     module_bessel/numerical_basis.cpp
+    module_bessel/numerical_basis_overlap.cpp
+    module_bessel/numerical_basis_output.cpp
     module_bessel/numerical_basis_jyjy.cpp
     module_bessel/numerical_descriptor.cpp
     module_output/print_info.cpp
     module_output/read_cube.cpp
-    module_chgpot/rhog_io.cpp
-    module_output/read_exit_file.cpp
     module_wf/read_wfc_pw.cpp
     module_wf/read_wf2rho_pw.cpp
     module_restart/restart.cpp
-    module_output/binstream.cpp
     module_wf/write_wfc_pw.cpp
     module_output/write_pao.cpp
     module_output/write_cube.cpp
-    module_chgpot/write_elecstat_pot.cpp
     module_elf/write_elf.cpp
     module_dipole/write_dipole.cpp
-    module_chgpot/write_init.cpp
-    module_ml/write_mlkedf_descriptors.cpp
+    module_ml/write_mlkedf_desc.cpp
     module_current/td_current_io.cpp
     module_current/td_current_io_comm.cpp
+    module_efield/td_efield_io.cpp
+    module_efield/td_vector_pot_io.cpp
     module_chgpot/write_libxc_r.cpp
     module_output/output_log.cpp
     module_json/para_json.cpp
     parse_args.cpp
     input_help.cpp
-    module_output/orb_io.cpp
-    module_output/filename.cpp
-    module_output/ucell_io.cpp
 )
 
 list(APPEND objects_advanced
     module_unk/unk_overlap_pw.cpp
     module_unk/berryphase.cpp
-    module_wannier/to_wannier90.cpp
-    module_wannier/to_wannier90_pw.cpp
-    module_wannier/to_wannier90_lcao_in_pw.cpp
-    module_wannier/to_wannier90_lcao.cpp
-    module_wannier/fR_overlap.cpp
+    module_wannier/to_w90.cpp
+    module_wannier/to_w90_pw.cpp
+    module_wannier/to_w90_pw_io.cpp
+    module_wannier/to_w90_pw_setup.cpp
+    module_wannier/to_w90_pw_overlap.cpp
+    module_wannier/to_w90_lcao_pw.cpp
+    module_wannier/to_w90_lcao.cpp
+    module_wannier/to_w90_lcao_io.cpp
+    module_wannier/to_w90_lcao_setup.cpp
+    module_wannier/to_w90_lcao_overlap.cpp
+    module_wannier/fr_overlap.cpp
 )
 
 if(ENABLE_LCAO)
@@ -70,9 +72,6 @@ if(ENABLE_LCAO)
       module_wf/write_wfc_nao.cpp
       module_dm/write_dmk.cpp
       module_dm/write_dmr.cpp
-      module_output/sparse_matrix.cpp
-      module_output/file_reader.cpp
-      module_output/csr_reader.cpp
       module_qo/to_qo_kernel.cpp
       module_qo/to_qo_mpi.cpp
       module_qo/to_qo_structures.cpp
@@ -80,18 +79,18 @@ if(ENABLE_LCAO)
       module_mulliken/output_dmk.cpp
       module_mulliken/output_mulliken.cpp
       module_ml/io_npz.cpp
-      module_hs/cal_pLpR.cpp
-      module_dhs/write_dH.cpp
-      module_dhs/write_dH_terms.cpp
+      module_hs/cal_plpr.cpp
+      module_dhs/write_dh.cpp
+      module_dhs/write_dh_terms.cpp
   )
   list(APPEND objects_advanced	   
       module_unk/unk_overlap_lcao.cpp
-      module_hs/write_HS_R.cpp
-      module_hs/write_H_terms.cpp
-      module_hs/write_HS_sparse.cpp
-      module_hs/single_R_io.cpp
+      module_hs/write_hs_r.cpp
+      module_hs/write_h_terms.cpp
+      module_hs/write_hs_sparse.cpp
+      module_hs/single_r_io.cpp
       module_hs/rr_sparse_writer.cpp
-      module_hs/cal_r_overlap_R.cpp
+      module_hs/cal_r_overlap_r.cpp
       module_hs/output_mat_sparse.cpp
       module_ctrl/ctrl_scf_lcao.cpp
       module_ctrl/ctrl_runner_lcao.cpp
@@ -102,19 +101,23 @@ endif()
 add_library(
     io_input
     OBJECT
-    module_parameter/read_input_item_system.cpp
-    module_parameter/read_input_item_elec_stru.cpp
-    module_parameter/read_input_item_relax.cpp
+    module_parameter/read_inp_sys.cpp
+    module_parameter/read_inp_estruc.cpp
+    module_parameter/read_inp_relax.cpp
     module_parameter/read_input_item_md.cpp
-    module_parameter/read_input_item_ofdft.cpp
+    module_parameter/read_inp_ofdft.cpp
     module_parameter/read_input_item_sdft.cpp
-    module_parameter/read_input_item_tddft.cpp
-    module_parameter/read_input_item_deepks.cpp
-    module_parameter/read_input_item_model.cpp
-    module_parameter/read_input_item_postprocess.cpp  
-    module_parameter/read_input_item_exx_dftu.cpp
-    module_parameter/read_input_item_other.cpp   
-    module_parameter/read_input_item_output.cpp  
+    module_parameter/read_inp_tddft.cpp
+    module_parameter/read_inp_bse.cpp
+    module_parameter/read_inp_dfpt.cpp
+    module_parameter/read_inp_deepks.cpp
+    module_parameter/read_inp_model.cpp
+    module_parameter/read_inp_postproc.cpp  
+    module_parameter/read_inp_exx_dftu.cpp
+    module_parameter/read_inp_other.cpp   
+    module_parameter/read_inp_out.cpp  
+    module_parameter/availability.cpp
+    module_parameter/availability_validator.cpp
     module_parameter/read_input.cpp
     module_parameter/read_set_globalv.cpp
 )
@@ -143,14 +146,13 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
+  add_subdirectory(module_parameter/test)
+  add_subdirectory(test_serial)
   if(ENABLE_MPI)
     add_subdirectory(test)
-    add_subdirectory(test_serial)
   endif()
 endif()
 
 if(ENABLE_RAPIDJSON)
-  if(ENABLE_MPI)
-    add_subdirectory(module_json)
-  endif()
+  add_subdirectory(module_json)
 endif()

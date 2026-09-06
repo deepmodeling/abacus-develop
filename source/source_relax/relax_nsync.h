@@ -2,8 +2,9 @@
 #define ION_CELL_OPTIMIZER_H
 
 #include "ions_move_methods.h"
-#include "lattice_change_methods.h"
+#include "lat_change_method.h"
 #include "source_cell/unitcell.h"
+#include "source_io/module_parameter/input_parameter.h"
 #include <fstream>
 
 /**
@@ -26,7 +27,7 @@ class IonCellOptimizer
      * @brief Initialize relaxation algorithms.
      * @param natom Number of atoms in the system
      */
-    void init_relax(const int& natom);
+    void init_relax(const int& natom, const Input_para& inp);
 
     /**
      * @brief Perform one step of relaxation (atomic and/or cell).
@@ -57,6 +58,7 @@ class IonCellOptimizer
   private:
     Ions_Move_Methods IMM;       ///< Ionic movement methods for atom relaxation
     Lattice_Change_Methods LCM;  ///< Lattice change methods for cell relaxation
+    const Input_para* inp_ = nullptr;
 };
 
 #endif

@@ -2,6 +2,15 @@
 
 This guide helps you install ABACUS with advanced features. Please make sure to read the [easy-installation guide](../quick_start/easy_install.md) before.
 
+## Build with ELPA
+
+The [ELPA](https://elpa.mpcdf.mpg.de/) library provides highly efficient and highly scalable direct eigensolvers for symmetric (hermitian) matrices. ABACUS uses ELPA in the following cases:
+
+- LCAO calculations with `ks_solver` set to `elpa` or `genelpa`, which is generally faster than `scalapack_gvx`;
+- PW calculations with `ks_solver` set to `dav_subspace` and `diag_subspace` set to `1`.
+
+To build ABACUS with ELPA support, pass `-DENABLE_ELPA=ON` to CMake.
+
 ## Build with Libxc
 
 ABACUS use exchange-correlation functionals by default. However, for some functionals (such as HSE hybrid functional), Libxc is required.
@@ -64,19 +73,13 @@ To build ABACUS:
 cmake -B build -DNEP_DIR=/path/to/nep_cpu
 ```
 
-## Build with LibRI and LibComm
+## Build with LibRI support
 
-The new EXX implementation depends on two external libraries:
-
-- [LibRI](https://github.com/abacusmodeling/LibRI)
-- [LibComm](https://github.com/abacusmodeling/LibComm)
-
-These two libraries are added as submodules in the [deps](https://github.com/deepmodeling/abacus-develop/tree/develop/deps) folder. Set `-DENABLE_LIBRI=ON` to build with these two libraries.
+The new EXX implementation directly depends on [LibRI](https://github.com/abacusmodeling/LibRI) to provide RI implementation, while LibRI requires two external dependencies: [LibComm](https://github.com/abacusmodeling/LibComm) for inter-process communication, and [cereal](https://github.com/USCiLab/cereal) for serialization. Set `-DENABLE_LIBRI=ON` to build with these libraries.
 
 ```{note}
 `ENABLE_LIBCOMM` is deprecated because LibComm is not a standalone ABACUS feature. CMake locates it automatically as a dependency of LibRI. If you prefer using manually downloaded libraries, enable LibRI and provide their locations via `-DLIBRI_DIR=/path/to/LibRI` and `-DLIBCOMM_DIR=/path/to/LibComm`.
 ```
-
 
 ## Build with DFT-D4 support
 
@@ -134,7 +137,9 @@ If you are confident that your MPI supports CUDA Aware, you can add `-DUSE_CUDA_
 
 ## Build math library from source
 
-> Note: We recommend using the latest available compiler sets, since they offer faster implementations of math functions.
+```{note}
+We recommend using the latest available compiler sets instead, since they offer faster implementations of math functions.
+```
 
 This flag is disabled by default. To build math functions from source code, define `ENABLE_ABACUS_LIBM` flag. It is expected to get a better performance on legacy versions of `gcc` and `clang`.
 

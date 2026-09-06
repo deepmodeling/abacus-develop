@@ -10,6 +10,10 @@ namespace LR
         const int nv = this->nvirt[0];
         const auto& px = this->pX[0];
         const int ldim = nk * px.get_local_size();
+        if (px.get_local_size() == 0) {
+            std::cerr<< "Warning: Parallel_2D in RANK "+std::to_string(GlobalV::MY_RANK) +" has no local size, please use less mpi." << std::endl;
+            std::cerr<< " [File:"<<__FILE__<< ", Function: " << __FUNCTION__ << ", Line: " << __LINE__ << "]" << std::endl;
+        }
         int npairs = no * nv;
         std::vector<T> Amat_full(this->nk * npairs * this->nk * npairs, 0.0);
         for (int ik = 0;ik < this->nk;++ik) {
@@ -45,7 +49,9 @@ namespace LR
                         LR_Util::gather_2d_to_full(px, &A_aibj.get_pointer()[ik_ai * px.get_local_size()],
                             Amat_full.data() + kbj * this->nk * npairs /*col, bj*/ + ik_ai * npairs/*row, ai*/,
                             false, nv, no);
-}
+                    }
+#else
+                    std::memcpy(Amat_full.data() + kbj * this->nk * npairs, A_aibj.get_pointer(), this->nk * npairs * sizeof(T));
 #endif
                 }
 }

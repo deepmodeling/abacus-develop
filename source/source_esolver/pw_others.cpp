@@ -12,12 +12,12 @@ namespace ModuleESolver
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::others(BaseCell& basecell, const int istep)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_KS_PW", "others");
 
-    const std::string cal_type = PARAM.inp.calculation;
+    const std::string cal_type = this->inp_->calculation;
 
     if (cal_type == "test_memory")
     {
@@ -34,9 +34,9 @@ void ESolver_KS_PW<T, Device>::others(BaseCell& basecell, const int istep)
         Numerical_Descriptor nc;
         nc.output_descriptor(ucell,
                              *(this->stp.psi_cpu),
-                             PARAM.inp.bessel_descriptor_lmax,
-                             PARAM.inp.bessel_descriptor_rcut,
-                             PARAM.inp.bessel_descriptor_tolerence,
+                             this->inp_->bessel_descriptor_lmax,
+                             this->inp_->bessel_descriptor_rcut,
+                             this->inp_->bessel_descriptor_tolerence,
                              this->kv.get_nks());
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "GENERATE DESCRIPTOR FOR DEEPKS");
     }

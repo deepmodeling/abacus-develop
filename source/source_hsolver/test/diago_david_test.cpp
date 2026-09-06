@@ -1,4 +1,5 @@
 #include"source_hsolver/diago_david.h"
+#include "source_hsolver/diag_comm_info.h"
 #include"source_hsolver/diago_iter_assist.h"
 #include "source_base/parallel_comm.h"
 #include"source_pw/module_pwdft/hamilt_pw.h"
@@ -87,7 +88,7 @@ public:
 		//do Diago_David::diag()
 		double* en = new double[npw];		
 		hamilt::Hamilt<std::complex<double>> *phm;
-		phm = new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+		phm = new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
 #ifdef __MPI 
         const hsolver::diag_comm_info comm_info = {POOL_WORLD, mypnum, nprocs};
@@ -101,9 +102,8 @@ public:
 		hsolver::DiagoDavid<std::complex<double>> dav(precondition, nband, dim, order, comm_info);
 
 		hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = maxiter;
-		hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = eps;
-		GlobalV::NPROC_IN_POOL = nprocs;
-		phi.fix_k(0);
+        hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = eps;
+        phi.fix_k(0);
 
 		double use_time = 0.0;
 #ifdef __MPI		

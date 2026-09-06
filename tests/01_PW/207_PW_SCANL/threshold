@@ -1,0 +1,5 @@
+# Libxc 5.1.7 and 7.1.x use different numerical implementations of SCAN-L.
+# These thresholds cover both supported versions.
+threshold 0.000002
+force_threshold 0.005
+stress_threshold 0.05

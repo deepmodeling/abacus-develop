@@ -3,7 +3,7 @@
 namespace ModuleSymmetry
 {
     // Raw-index dispatch shared by the real-space sector helpers, matching the convention used
-    // everywhere else (symmetry_rotation.h): isym < nrotk -> unitary gmatrix[isym];
+    // everywhere else (symm_rotation.h): isym < nrotk -> unitary gmatrix[isym];
     // isym >= nrotk -> spatial part of the antiunitary element Theta*gmatrix_anti[isym-nrotk].
     // Only the SPATIAL part is needed here: Theta acts on H(R) as sigma_y (.)^* sigma_y and
     // leaves R and the atom pair untouched, so the sector bookkeeping is identical for both kinds.

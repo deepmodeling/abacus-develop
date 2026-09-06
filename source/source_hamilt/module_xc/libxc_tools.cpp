@@ -88,6 +88,37 @@ XC_Functional_Libxc::cal_gdr(
 	return gdr;
 }
 
+void XC_Functional_Libxc::cal_gdr_and_lapl(
+	const int nspin,
+	const std::size_t nrxx,
+	const std::vector<double> &rho,
+	const double tpiba,
+	const Charge* const chr,
+	std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr,
+	std::vector<double> &lapl,
+	const bool need_laplacian)
+{
+	gdr.resize(nspin);
+	lapl.assign(nrxx * nspin, 0.0);
+	for( int is=0; is!=nspin; ++is )
+	{
+		std::vector<double> rhor(nrxx);
+		for(std::size_t ir=0; ir<nrxx; ++ir)
+			rhor[ir] = rho[ir*nspin+is];
+		std::vector<std::complex<double>> rhog(chr->rhopw->npw);
+		chr->rhopw->real2recip(rhor.data(), rhog.data());
+		gdr[is].resize(nrxx);
+		XC_Functional::grad_rho(rhog.data(), gdr[is].data(), chr->rhopw, tpiba);
+		if (need_laplacian)
+		{
+			std::vector<double> lapl_spin(nrxx);
+			XC_Functional::laplacian_rho(rhog.data(), lapl_spin.data(), chr->rhopw, tpiba);
+			for(std::size_t ir=0; ir<nrxx; ++ir)
+				lapl[ir*nspin+is] = lapl_spin[ir];
+		}
+	}
+}
+
 // converting grho (abacus=>libxc)
 std::vector<double> XC_Functional_Libxc::convert_sigma(
 	const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr)

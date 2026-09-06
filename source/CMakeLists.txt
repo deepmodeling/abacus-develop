@@ -67,6 +67,7 @@ set(_abacus_feature_definitions
   $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
   $<$<BOOL:${ENABLE_EXX_DEV}>:__EXX_DEV>
   $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
+  $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
   $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
 
 if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
@@ -416,6 +417,15 @@ define_property(
   BRIEF_DOCS "Additional ABACUS feature definitions for targets in this directory"
   FULL_DOCS "Additional feature definitions for targets created in this directory.")
 
+define_property(
+  TARGET
+  PROPERTY ABACUS_KEPT_FEATURE_DEFINITIONS
+  BRIEF_DOCS "Feature definitions this target keeps despite a directory-level disable"
+  FULL_DOCS "Feature definitions that must not be stripped from this target even "
+    "when its source directory disables them via "
+    "abacus_disable_feature_definitions(). Used by tests that genuinely need a "
+    "feature (e.g. __MPI) inside a directory that otherwise disables it.")
+
 function(abacus_disable_feature_definitions)
   abacus_normalize_definitions(_defs ${ARGN})
   set_property(DIRECTORY APPEND PROPERTY
@@ -447,7 +457,12 @@ function(abacus_apply_build_options target)
   set(_defs "${_abacus_feature_definitions}")
   get_property(_disabled DIRECTORY "${_source_dir}" PROPERTY ABACUS_DISABLED_FEATURE_DEFINITIONS)
   get_property(_local DIRECTORY "${_source_dir}" PROPERTY ABACUS_LOCAL_FEATURE_DEFINITIONS)
+  get_target_property(_kept "${target}" ABACUS_KEPT_FEATURE_DEFINITIONS)
 
+  if(_kept)
+    # A target may opt back into definitions its directory disables.
+    list(REMOVE_ITEM _disabled ${_kept})
+  endif()
   if(_disabled)
     # Filter after conditional definitions have been evaluated.
     string(JOIN "|" _disabled_regex ${_disabled})
@@ -565,7 +580,7 @@ list(APPEND device_srcs
   source_hamilt/module_xc/kernels/xc_functional_op.cpp
   source_pw/module_pwdft/kernels/cal_density_real_op.cpp
   source_pw/module_pwdft/kernels/mul_potential_op.cpp
-  source_pw/module_pwdft/kernels/vec_mul_vec_complex_op.cpp
+  source_pw/module_pwdft/kernels/vec_mul_cx_op.cpp
   source_pw/module_pwdft/kernels/exx_cal_energy_op.cpp)
 
 if(USE_CUDA)
@@ -678,13 +693,17 @@ target_link_libraries(
     cell
     parameter
     psi_overall_init
-    psi_initializer
+    psi_init
     psi
     dftu
     deltaspin
     container
     device
     base)
+
+if(ENABLE_ELPA)
+  target_link_libraries(${ABACUS_BIN_NAME} PRIVATE genelpa)
+endif()
 
 if(ENABLE_LCAO)
   target_link_libraries(
@@ -698,8 +717,8 @@ if(ENABLE_LCAO)
       numerical_atomic_orbitals
       lr
       rdmft)
-  if(ENABLE_ELPA)
-    target_link_libraries(${ABACUS_BIN_NAME} PRIVATE genelpa)
+  if(ENABLE_LIBRI)
+    target_link_libraries(${ABACUS_BIN_NAME} PRIVATE bse)
   endif()
   if(ENABLE_PEXSI)
     target_link_libraries(${ABACUS_BIN_NAME} PRIVATE pexsi)

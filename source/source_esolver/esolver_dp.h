@@ -68,6 +68,9 @@ class ESolver_DP : public ESolver
      */
     void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
 
+    bool supports_mdcell() const override;
+    double mdcell_cutoff(const Input_para& inp) const override;
+
     /**
      * @brief Prints the final total energy of the DP model to the output file
      *
@@ -82,6 +85,7 @@ class ESolver_DP : public ESolver
      * @param ucell unitcell information
      */
     void type_map(const UnitCell& ucell);
+    void initialize_type_map_(const std::vector<std::string>& type_labels);
 
     /**
      * @brief DeePMD related variables for ESolver_DP class
@@ -109,6 +113,7 @@ class ESolver_DP : public ESolver
 
     std::string dp_file;             ///< directory of DP model file
     std::vector<int> atype = {};     ///< atom type corresponding to DP model
+    std::vector<int> md_type_to_dp_type_;
     std::vector<double> fparam = {}; ///< frame parameter for dp potential: dim_fparam
     std::vector<double> aparam = {}; ///< atomic parameter for dp potential: natoms x dim_aparam
     double rescaling = 1.0;          ///< rescaling factor for DP model

@@ -18,7 +18,7 @@ Use [out_hsk](../input_files/input-main.md#out_hsk) to print the upper triangula
 | --- | --- |
 | `0` | Disabled |
 | `1` | Text; an optional second value controls precision, for example `out_hsk 1 12` |
-| `2` | Reserved for future binary output; not implemented |
+| `2` | Native binary `.dat` output |
 | `3` | Reserved for H(k)/S(k) NPZ output; not implemented |
 
 The legacy keyword `out_mat_hs 1 [precision]` remains supported as an alias for `out_hsk 1 [precision]`. If both names are present, `out_hsk` takes precedence.
@@ -45,6 +45,18 @@ Each output block starts with a comment header containing the one-based ionic-st
 
 For multi-k calculations, the matrices are Hermitian and each matrix element is written as `(real,imag)`. For gamma-only calculations, the matrices are symmetric and the matrix elements are written as real numbers.
 
+### Native Binary Format
+
+For `out_hsk 2`, the filenames in the table above use `.dat` instead of `.txt`. Each matrix record is written without padding or a self-describing header:
+
+1. the matrix dimension as a native C++ `int`;
+2. the upper-triangular elements in row-major order, from `(0,0)` through `(0,N-1)`, then `(1,1)` through `(1,N-1)`, and so on;
+3. each gamma-only element as one native `double`, or each multi-k/spinor element as two consecutive native `double` values containing the real and imaginary parts.
+
+The file therefore contains `sizeof(int) + N(N+1)/2 * sizeof(double)` bytes for a gamma-only record and `sizeof(int) + N(N+1) * sizeof(double)` bytes for a multi-k or spinor record. The format uses the host integer representation and byte order and is intended for readers using a compatible ABI.
+
+When `out_app_flag` is true, the first ionic step truncates the shared file and every later step appends another complete record. When it is false, each ionic step has a separate filename containing `g${step}` before `_nao`.
+
 ## out_hsr
 
 The output of $H(R)$ and $S(R)$ matrices is controlled by [out_hsr](../input_files/input-main.md#out_hsr). It is available for both gamma-only and multi-k LCAO calculations:
@@ -53,12 +65,12 @@ The output of $H(R)$ and $S(R)$ matrices is controlled by [out_hsr](../input_fil
 | --- | --- |
 | `0` | Disabled |
 | `1` | Text CSR; an optional second value controls precision, for example `out_hsr 1 12` |
-| `2` | Reserved for future binary output; not implemented |
+| `2` | Native binary CSR using `.dat` files |
 | `3` | NPZ: `hrs1_nao.npz`, `hrs2_nao.npz` when needed, and `sr_nao.npz` |
 
 The legacy keywords `out_mat_hs2 1 [precision]` and `out_hsr_npz 1` remain supported as aliases for text and NPZ output respectively. If `out_hsr` is present together with either legacy keyword, `out_hsr` takes precedence.
 
-For a multi-k calculation, the files contain the individual real-space blocks stored for the Bravais lattice vectors $R$. For a gamma-only calculation, ABACUS stores the real-space contributions in a folded representation. Both text CSR and NPZ output write this internal representation directly: all stored $R$-space contributions are summed into a single block labelled `R = (0, 0, 0)`.
+For a multi-k calculation, the files contain the individual real-space blocks stored for the Bravais lattice vectors $R$. For a gamma-only calculation, ABACUS stores the real-space contributions in a folded representation. Text CSR, native binary, and NPZ output write this internal representation directly: all stored $R$-space contributions are summed into a single block labelled `R = (0, 0, 0)`.
 
 The folded gamma-only output is sufficient to inspect the matrix used by the gamma-only real-space container, but it does not retain the original lattice-vector resolution and cannot be used to interpolate matrices at arbitrary k points. Terms that are added only while constructing $H(k)$, rather than stored in the internal $H(R)$ container, are not guaranteed to be present. Use [out_hsk](../input_files/input-main.md#out_hsk) when the final $H(\Gamma)$ and $S(\Gamma)$ matrices are required.
 
@@ -76,6 +88,22 @@ In gamma-only mode, every generated file reports one Bravais lattice vector and 
 ```text
 # representation: gamma-only folded matrix; stored R-space contributions are summed into R = (0, 0, 0)
 ```
+
+### Native Binary CSR Format
+
+Set `out_hsr 2` to write the same H(R) and S(R) matrix sets with a `.dat` suffix. For example, an `nspin = 2` calculation writes `hrs1_nao.dat`, `hrs2_nao.dat`, and `sr_nao.dat`. When `out_app_flag` is false, the one-based ionic step is included before `_nao`, for example `hrs1g1_nao.dat` and `srg1_nao.dat`.
+
+Each ionic step is a complete record with no padding or self-describing header:
+
+1. Native `int`: zero-based ionic step, matrix dimension, number of R blocks.
+2. For every R block in lexicographic `(Rx, Ry, Rz)` order, four native `int` values: `Rx`, `Ry`, `Rz`, and `nnz`.
+3. `nnz` matrix values in CSR order. Real matrices use one native `double`; complex matrices use consecutive real and imaginary `double` values.
+4. `nnz` native `int` column indices.
+5. `dimension + 1` native `long long` row pointers.
+
+All R blocks stored by the internal HContainer are present, including blocks with zero nonzero values. The sparse threshold is `1e-10`, matching text CSR output. The format uses the host integer representation and byte order and therefore requires a compatible ABI. It does not contain unit-cell, spin, or matrix-label metadata; those are determined by the calculation input and filename.
+
+When `out_app_flag` is true, the first ionic step truncates the shared file and later ionic steps append complete records. Otherwise every ionic step is written to its own file.
 
 ### NPZ Format
 
@@ -113,7 +141,7 @@ The CSR format stores a sparse m × n matrix M in row form using three arrays (v
 
 ### Precision Control
 
-Use `out_hsr 1 12` to output text CSR files with 12-digit precision (default is 8). Precision is ignored for NPZ output.
+Use `out_hsr 1 12` to output text CSR files with 12-digit precision (default is 8). Precision is ignored for native binary and NPZ output.
 
 For calculations involving ionic movements, the output frequency of the matrix is controlled by [out_freq_ion](../input_files/input-main.md#out_freq_ion) and [out_app_flag](../input_files/input-main.md#out_app_flag). 
 

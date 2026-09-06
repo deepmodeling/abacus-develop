@@ -2,8 +2,8 @@
 #define INFONONLOCAL_H
 
 #include "../source_cell/atom_spec.h"
-#include "../source_basis/module_ao/ORB_nonlocal.h"
-#include "../source_basis/module_ao/ORB_read.h"
+#include "../source_basis/module_ao/orb_nonlocal.h"
+#include "../source_basis/module_ao/orb_read.h"
 class InfoNonlocal
 {
 		public:

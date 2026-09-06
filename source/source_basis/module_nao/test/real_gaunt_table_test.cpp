@@ -12,7 +12,7 @@
 using iclock = std::chrono::high_resolution_clock;
 
 #include "source_base/constants.h"
-#include "source_basis/module_ao/ORB_gaunt_table.h"
+#include "source_basis/module_ao/orb_gaunt_table.h"
 
 /***********************************************************
  *      Unit test of class "RealGauntTable"

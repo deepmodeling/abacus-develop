@@ -10,7 +10,7 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_base/module_device/types.h"
-#include "source_io/module_output/binstream.h"
+#include "source_base/module_out/binstream.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <vector>

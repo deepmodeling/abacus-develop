@@ -2,7 +2,10 @@ add_library(
     symmetry
     OBJECT
     symm_other.cpp
-    symmetry_basic.cpp
+    symm_basic.cpp
+    symm_basic_order.cpp
+    symm_basic_setgroup.cpp
+    symm_basic_pointgroup.cpp
     symm_analysis.cpp
     symm_check.cpp
     symm_getgroup.cpp
@@ -12,7 +15,8 @@ add_library(
     symm_pricell.cpp
     symm_rho.cpp
     symmetry.cpp
-    symmetry_rotation_spin.cpp
+    symm_rot_spin.cpp
+    little_group.cpp
 )
 
 if(ENABLE_COVERAGE)

@@ -1,14 +1,14 @@
 #include "diago_iter_assist.h"
-#include "source_io/module_parameter/parameter.h"
+
 #include "source_base/complexmatrix.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
-#include "source_base/module_device/device.h"
-#include "source_base/parallel_reduce.h"
-#include "source_base/timer.h"
-#include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/kernels/math_kernel_op.h"
+#include "source_base/module_device/device.h"
+#include "source_base/parallel_device.h"
+#include "source_base/timer.h"
+#include "source_hsolver/diag_comm_info.h"
+#include "source_hsolver/kernels/hegvd_op.h"
 
 namespace hsolver
 {
@@ -19,13 +19,15 @@ namespace hsolver
 // Produces on output n_band eigenvectors (n_band <= nstart) in evc.
 //----------------------------------------------------------------------
 template <typename T, typename Device>
-void DiagoIterAssist<T, Device>::diag_subspace(const hamilt::Hamilt<T, Device>* const pHamilt, // hamiltonian operator carrier
-                                                const psi::Psi<T, Device>& psi,     // [in] wavefunction
-                                                psi::Psi<T, Device>& evc,           // [out] wavefunction, eigenvectors
-                                                Real* en,                           // [out] eigenvalues
-                                                int n_band, // [in] number of bands to be calculated, also number of rows
-                                                           // of evc, if set to 0, n_band = nstart, default 0
-                                                const bool S_orth // [in] if true, psi is assumed to be already S-orthogonalized
+void DiagoIterAssist<T, Device>::diag_subspace(
+    const hamilt::Hamilt<T, Device>* const pHamilt, // hamiltonian operator carrier
+    const psi::Psi<T, Device>& psi,                 // [in] wavefunction
+    psi::Psi<T, Device>& evc,                       // [out] wavefunction, eigenvectors
+    Real* en,                                       // [out] eigenvalues
+    const diag_comm_info& diag_comm,
+    int n_band,       // [in] number of bands to be calculated, also number of rows
+                      // of evc, if set to 0, n_band = nstart, default 0
+    const bool S_orth // [in] if true, psi is assumed to be already S-orthogonalized
 )
 {
     ModuleBase::TITLE("DiagoIterAssist", "diag_subspace");
@@ -121,12 +123,14 @@ void DiagoIterAssist<T, Device>::diag_subspace(const hamilt::Hamilt<T, Device>* 
         }
     }
 
-    if (GlobalV::NPROC_IN_POOL > 1)
+    if (diag_comm.nproc > 1)
     {
-        Parallel_Reduce::reduce_pool(hcc, nstart * nstart);
+#ifdef __MPI
+        Parallel_Common::reduce_dev<T, Device>(hcc, nstart * nstart, diag_comm.comm);
         if(!S_orth){
-            Parallel_Reduce::reduce_pool(scc, nstart * nstart);
+            Parallel_Common::reduce_dev<T, Device>(scc, nstart * nstart, diag_comm.comm);
         }
+#endif
     }
 
     // after generation of H and (optionally) S matrix, diag them
@@ -171,12 +175,16 @@ void DiagoIterAssist<T, Device>::diag_subspace(const hamilt::Hamilt<T, Device>* 
 }
 
 template <typename T, typename Device>
-void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* pHamilt,
+void DiagoIterAssist<T, Device>::diag_subspace_init(
+    hamilt::Hamilt<T, Device>* pHamilt,
     const T* psi,
     int psi_nr,
     int psi_nc,
     psi::Psi<T, Device>& evc,
     Real* en,
+    const std::string& basis_type,
+    const std::string& calculation,
+    const diag_comm_info& diag_comm,
     const std::function<void(T*, const int)>& add_to_hcc,
     const std::function<void(const T* const, const int, const int)>& export_vcc)
 {
@@ -303,10 +311,12 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
         add_to_hcc(hcc, nstart);
     }
 
-    if (GlobalV::NPROC_IN_POOL > 1)
+    if (diag_comm.nproc > 1)
     {
-        Parallel_Reduce::reduce_pool(hcc, nstart * nstart);
-        Parallel_Reduce::reduce_pool(scc, nstart * nstart);
+#ifdef __MPI
+        Parallel_Common::reduce_dev<T, Device>(hcc, nstart * nstart, diag_comm.comm);
+        Parallel_Common::reduce_dev<T, Device>(scc, nstart * nstart, diag_comm.comm);
+#endif
     }
 
     // after generation of H and S matrix, diag them
@@ -330,13 +340,13 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
     //=======================
     // diagonize the H-matrix
     //=======================
-    if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw") && PARAM.inp.calculation == "nscf")
+    if ((basis_type == "lcao" || basis_type == "lcao_in_pw") && calculation == "nscf")
     {
-        GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
+        // The caller requested eigenvalues only, so no wavefunction rotation is needed.
     }
-    else if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw" || PARAM.inp.basis_type == "pw")
-             && (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "md"
-                 || PARAM.inp.calculation == "relax")) // pengfei 2014-10-13
+    else if ((basis_type == "lcao" || basis_type == "lcao_in_pw" || basis_type == "pw")
+             && (calculation == "scf" || calculation == "md"
+                 || calculation == "relax")) // pengfei 2014-10-13
     {
         // because psi and evc are different here,
         // I think if psi and evc are the same,
@@ -477,10 +487,12 @@ void DiagoIterAssist<T, Device>::diag_hegvd(const int nstart,
 }
 
 template <typename T, typename Device>
-void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
-                                                const psi::Psi<T, Device>& psi,     // [in] wavefunction
-                                                T *hcc, 
-                                                T *scc)
+void DiagoIterAssist<T, Device>::cal_hs_subspace(
+    const hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
+    const psi::Psi<T, Device>& psi,           // [in] wavefunction
+    T* hcc,
+    T* scc,
+    const diag_comm_info& diag_comm)
 {
     const int nstart = psi.get_nbands();
     
@@ -536,10 +548,12 @@ void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>
                                          nstart);
     }
 
-    if (GlobalV::NPROC_IN_POOL > 1)
+    if (diag_comm.nproc > 1)
     {
-        Parallel_Reduce::reduce_pool(hcc, nstart * nstart);
-        Parallel_Reduce::reduce_pool(scc, nstart * nstart);
+#ifdef __MPI
+        Parallel_Common::reduce_dev<T, Device>(hcc, nstart * nstart, diag_comm.comm);
+        Parallel_Common::reduce_dev<T, Device>(scc, nstart * nstart, diag_comm.comm);
+#endif
     }
 
     delmem_complex_op()(temp);
@@ -635,31 +649,6 @@ void DiagoIterAssist<T, Device>::diag_subspace_psi(const T* hcc,
     delmem_complex_op()(vcc);
 
     ModuleBase::timer::end("DiagoIterAssist", "diag_subspace_psi");
-}
-
-template <typename T, typename Device>
-bool DiagoIterAssist<T, Device>::test_exit_cond(const int& ntry, const int& notconv)
-{
-    //================================================================
-    // If this logical function is true, need to do diag_subspace
-    // and cg again.
-    //================================================================
-
-    bool scf = true;
-    if (PARAM.inp.calculation == "nscf") {
-        scf = false;
-}
-
-    // If ntry <=5, try to do it better, if ntry > 5, exit.
-    const bool f1 = (ntry <= 5);
-
-    // In non-self consistent calculation, do until totally converged.
-    const bool f2 = ((!scf && (notconv > 0)));
-
-    // if self consistent calculation, if not converged > 5,
-    // using diag_subspace and cg method again. ntry++
-    const bool f3 = ((scf && (notconv > 5)));
-    return (f1 && (f2 || f3));
 }
 
 template class DiagoIterAssist<std::complex<float>, base_device::DEVICE_CPU>;

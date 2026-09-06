@@ -2,7 +2,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/libm/libm.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_estate/module_pot/h_tddft_pw.h"
 
 namespace hamilt
 {

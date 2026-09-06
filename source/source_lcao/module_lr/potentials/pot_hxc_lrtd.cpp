@@ -1,6 +1,6 @@
 #include "pot_hxc_lrtd.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_estate/module_pot/H_Hartree_pw.h"
+#include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include <set>

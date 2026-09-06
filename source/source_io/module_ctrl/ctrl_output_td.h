@@ -1,17 +1,18 @@
 #ifndef CTRL_OUTPUT_TD_H
 #define CTRL_OUTPUT_TD_H
 
-#include "source_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/orb_read.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/elecstate_lcao.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/module_rt/velocity_op.h"
 #include "source_lcao/record_adj.h"
 #include "source_psi/psi.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/setup_exx.h"
+#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info
 #ifdef __EXX
 #include <RI/global/Tensor.h>
 #endif
@@ -35,7 +36,8 @@ void ctrl_output_td(const UnitCell& ucell,
                     hamilt::HamiltLCAO<std::complex<double>, TR>* p_hamilt,
                     Record_adj& RA,
                     TD_info* td_p,
-                    const Exx_NAO<std::complex<double>>& exx_nao
+                    const Exx_NAO<std::complex<double>>& exx_nao,
+                    const Exx_Info& exx_info
                     );
 
 } // namespace ModuleIO

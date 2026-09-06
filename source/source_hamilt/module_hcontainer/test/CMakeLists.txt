@@ -52,7 +52,6 @@ AddTest(
     ../hcontainer.cpp
     ../atom_pair.cpp
     ../../../source_basis/module_ao/parallel_orbitals.cpp
-    ../../../source_io/module_output/sparse_matrix.cpp
 )
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

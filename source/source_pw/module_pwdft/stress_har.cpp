@@ -1,6 +1,6 @@
 #include "stress_func.h"
 #include "source_base/parallel_reduce.h"
-#include "source_estate/module_pot/H_Hartree_pw.h"
+#include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 

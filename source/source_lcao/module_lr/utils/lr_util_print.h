@@ -25,6 +25,10 @@ namespace LR_Util
     int read_value(const std::string& file, T* ptr, const int& size, Args&&... args)
     {
         std::ifstream ifs(file);
+        if (!ifs.is_open()){
+            std::cerr << "Error: Cannot open file " << file << std::endl;
+            return -1;
+        }
         const int res = read_value(ifs, ptr, size, args...);
         ifs.close();
         return res;
@@ -49,6 +53,10 @@ namespace LR_Util
     int write_value(const std::string& file, const int& prec, const T* ptr, const int& size, Args&&... args)
     {
         std::ofstream ofs(file);
+        if (!ofs.is_open()){
+            std::cerr << "Error: Cannot open file " << file << std::endl;
+            return -1;
+        }
         ofs << std::setprecision(prec) << std::scientific;
         const int res = write_value(ofs, ptr, size, args...);
         ofs.close();

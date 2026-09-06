@@ -189,7 +189,7 @@ TEST_F(OccupyTest, IweightsNOSPIN)
   ModuleBase::matrix ekb(1, 1);
   std::vector<int> isk(1);
   ekb(0, 0) = 0.1;
-  occupy.iweights(1, wk, 1, 2.0, ekb, ef, wg, 0, isk);
+  occupy.iweights(1, wk, 1, 0, 2.0, ekb, ef, wg, 0, isk);
   EXPECT_DOUBLE_EQ(wg(0, 0), 2.0);
   EXPECT_DOUBLE_EQ(ef, 0.1);
 }
@@ -207,8 +207,8 @@ TEST_F(OccupyTest, IweightsSPIN)
   isk[1] = 1;
   ekb(0, 0) = 0.1;
   ekb(1, 0) = 0.2;
-  occupy.iweights(2, wk, 1, 1.0, ekb, ef_up, wg, 0, isk);
-  occupy.iweights(2, wk, 1, 1.0, ekb, ef_dw, wg, 1, isk);
+  occupy.iweights(2, wk, 1, 0, 1.0, ekb, ef_up, wg, 0, isk);
+  occupy.iweights(2, wk, 1, 0, 1.0, ekb, ef_dw, wg, 1, isk);
   EXPECT_DOUBLE_EQ(wg(0, 0), 1.0);
   EXPECT_DOUBLE_EQ(wg(1, 0), 1.0);
   EXPECT_DOUBLE_EQ(ef_up, 0.1);
@@ -226,7 +226,7 @@ TEST_F(OccupyTest, IweightsWarning)
   ekb(0, 0) = 0.1;
 
   testing::internal::CaptureStdout();
-  EXPECT_EXIT(occupy.iweights(1, wk, 1, 1.0, ekb, ef, wg, -1, isk);, ::testing::ExitedWithCode(1), "");
+  EXPECT_EXIT(occupy.iweights(1, wk, 1, 0, 1.0, ekb, ef, wg, -1, isk);, ::testing::ExitedWithCode(1), "");
   output = testing::internal::GetCapturedStdout();
   EXPECT_THAT(output, testing::HasSubstr("It is not a semiconductor or insulator. Please do not set 'smearing_method=fixed', and try other options."));
 }

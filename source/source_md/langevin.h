@@ -3,6 +3,8 @@
 
 #include "md_base.h"
 
+#include <vector>
+
 /**
  * @brief Langevin method
  *
@@ -14,9 +16,7 @@
 class Langevin : public MD_base
 {
   public:
-    Langevin(const Parameter& param_in, UnitCell& unit_in);
-
-    ~Langevin();
+    Langevin(const Parameter& param_in, MDCell& mdcell_in);
 
   private:
     void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
@@ -37,7 +37,7 @@ class Langevin : public MD_base
      */
     void post_force();
 
-    ModuleBase::Vector3<double>* total_force; ///< total force = true force + Langevin fictitious_force
+    std::vector<ModuleBase::Vector3<double> > total_force; ///< total force = true force + Langevin fictitious_force
     double md_damp;                           ///< damping factor
 };
 

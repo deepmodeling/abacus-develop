@@ -13,7 +13,7 @@
 class FIRE : public MD_base
 {
   public:
-    FIRE(const Parameter& param_in, UnitCell& unit_in);
+    FIRE(const Parameter& param_in, MDCell& mdcell_in);
 
     ~FIRE();
 

@@ -1,15 +1,16 @@
 #include "hsolver_lcaopw.h"
 
-#include "source_base/global_variable.h"
 #include "source_base/parallel_global.h" // for MPI
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_pw.h"
-#include "source_pw/module_pwdft/hamilt_pw.h"
-#include "source_hsolver/diago_iter_assist.h"
 #include "source_estate/elecstate_tools.h"
-#include "source_hamilt/module_xc/exx_info.h"
+#include "source_hamilt/module_xc/general_exx_info.h"
+#include "source_hsolver/diag_comm_info.h"
+#include "source_hsolver/diago_iter_assist.h"
+#include "source_pw/module_pwdft/hamilt_pw.h"
 
+#include <ostream>
 
 #ifdef __EXX
 #include "source_pw/module_pwdft/hamilt_lcaopw.h"
@@ -26,9 +27,12 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
                           psi::Psi<T>& psi,           // ESolver_KS_PW::kspw_psi
                           elecstate::ElecState* pes,  // ESolver_KS_PW::pes
                           psi::Psi<T>& transform,
+                          const diag_comm_info& diag_comm,
+                          std::ostream& log,
                           const bool skip_charge,
                           const double tpiba,
-                          const int nat)
+                          const int nat,
+                          const General_Exx_Info& exx_info)
 {
     ModuleBase::TITLE("HSolverLIP", "solve");
     ModuleBase::timer::start("HSolverLIP", "solve");
@@ -43,8 +47,8 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
 
 #ifdef __EXX
         auto& exx_lip = dynamic_cast<hamilt::HamiltLIP<T>*>(pHamilt)->exx_lip;
-        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+        bool cal_exx = exx_info.cal_exx;
+        double hybrid_alpha = exx_info.hybrid_alpha;
         auto add_exx_to_subspace_hamilt = [&ik, &exx_lip, cal_exx, hybrid_alpha](T* hcc, const int naos) -> void {
             if (cal_exx)
             {
@@ -66,26 +70,27 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
         };
 #endif
         /// solve eigenvector and eigenvalue for H(k)
-        hsolver::DiagoIterAssist<T>::diag_subspace_init(
-            pHamilt,                 // interface to hamilt
-            transform.get_pointer(), // transform matrix between lcao and pw
-            transform.get_nbands(),
-            transform.get_nbasis(),
-            psi,                                  // psi in pw basis
-            eigenvalues.data() + ik * pes->ekb.nc // eigenvalues
+        hsolver::DiagoIterAssist<T>::diag_subspace_init(pHamilt,                 // interface to hamilt
+                                                        transform.get_pointer(), // transform matrix between lcao and pw
+                                                        transform.get_nbands(),
+                                                        transform.get_nbasis(),
+                                                        psi,                                   // psi in pw basis
+                                                        eigenvalues.data() + ik * pes->ekb.nc, // eigenvalues
+                                                        this->basis_type,
+                                                        this->calculation,
+                                                        diag_comm
 #ifdef __EXX
-            ,
-            add_exx_to_subspace_hamilt,
-            set_exxlip_lcaowfc
+                                                        ,
+                                                        add_exx_to_subspace_hamilt,
+                                                        set_exxlip_lcaowfc
 #endif
         );
 
         if (skip_charge)
         {
-            GlobalV::ofs_running << "Average iterative diagonalization steps for k-points " << ik
-                                 << " is: " << DiagoIterAssist<T>::avg_iter
-                                 << " ; where current threshold is: " << DiagoIterAssist<T>::PW_DIAG_THR << " . "
-                                 << std::endl;
+            log << "Average iterative diagonalization steps for k-points " << ik
+                << " is: " << DiagoIterAssist<T>::avg_iter
+                << " ; where current threshold is: " << DiagoIterAssist<T>::PW_DIAG_THR << " . " << std::endl;
             DiagoIterAssist<T>::avg_iter = 0.0;
         }
         /// calculate the contribution of Psi for charge density rho
@@ -101,6 +106,7 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
                                  pes->eferm,
                                  pes->f_en,
                                  pes->nelec_spin,
+                                 this->global_nbands,
                                  pes->skip_weights);
     elecstate::calEBand(pes->ekb,pes->wg,pes->f_en);
     if (skip_charge)

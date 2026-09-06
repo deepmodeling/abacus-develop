@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "../module_ewald/H_Ewald_pw.h"
+#include "../module_ewald/h_ewald_pw.h"
 #include "../module_ewald/dnrm2.h"
 #include "source_base/matrix3.h"
 #include <vector>

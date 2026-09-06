@@ -20,7 +20,7 @@
 
 extern "C"
 {
-#include "source_hsolver/module_genelpa/Cblacs.h"
+#include "source_hsolver/module_genelpa/cblacs.h"
 }
 
 #define LOG_DEBUG(msg)                                                                                                 \

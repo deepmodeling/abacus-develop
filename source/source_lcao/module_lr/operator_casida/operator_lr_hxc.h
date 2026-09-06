@@ -33,6 +33,7 @@ namespace LR
             kv(kv_in), pX(pX_in), pc(pc_in), pmat(pmat_in), ispin_ks(ispin_ks)
       {
           ModuleBase::TITLE("OperatorLRHxc", "OperatorLRHxc");
+          std::cout<<"Initializing OperatorLRHxc"<<std::endl;
           this->cal_type = hamilt::calculation_type::lcao_gint;
           this->is_first_node = true;
           this->hR = std::unique_ptr<hamilt::HContainer<T>>(new hamilt::HContainer<T>(&pmat_in));
@@ -58,7 +59,7 @@ namespace LR
         const int& nspin;
         const int& naos;
         const int nk = 1;
-        // const int nloc_per_band = 1;    ///< local size of each state of X  (passed by nbasis in act())
+        // const int nloc_per_state = 1;    ///< local size of each state of X  (passed by nbasis in act())
         const std::vector<int>& nocc;
         const std::vector<int>& nvirt;
         const std::vector<int> ispin_ks = { 0 };  ///< the index of spin of psi_ks used in {AX, DM_trans}

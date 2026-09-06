@@ -1,7 +1,7 @@
 #include "conv_coulomb_pot_k.h"
 #include "source_base/constants.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/orb_atomic_lm.h"
 
 namespace Conv_Coulomb_Pot_K
 {

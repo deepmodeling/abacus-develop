@@ -11,7 +11,7 @@
 namespace hsolver
 {
 
-template <typename TK, typename Device = base_device::DEVICE_CPU>
+template <typename TK>
 class HSolverLCAO
 {
   public:
@@ -19,8 +19,13 @@ class HSolverLCAO
                 const std::string method_in,
                 const int kpar_lcao_in,
                 const int nlocal_in,
-                const double nelec_in)
-        : ParaV(ParaV_in), method(method_in), kpar_lcao(kpar_lcao_in), nlocal(nlocal_in), nelec(nelec_in) {};
+                const int nbands_in,
+                const double nelec_in,
+                const bool use_gpu_in,
+                const int world_nproc_in,
+                const int world_rank_in)
+        : ParaV(ParaV_in), method(method_in), kpar_lcao(kpar_lcao_in), nlocal(nlocal_in), nbands(nbands_in),
+          nelec(nelec_in), use_gpu(use_gpu_in), world_nproc(world_nproc_in), world_rank(world_rank_in){};
 
     void solve(hamilt::Hamilt<TK>* pHamilt,
                psi::Psi<TK>& psi,
@@ -49,8 +54,12 @@ class HSolverLCAO
     const std::string method;
 
     const int kpar_lcao; // number of pools for LCAO diagonalization
-    const int nlocal;    // global dimension of the NAO Hamiltonian, only used by the pexsi branch
+    const int nlocal;    // global dimension of the NAO Hamiltonian
+    const int nbands;    // number of bands to be solved for
     const double nelec;  // total number of electrons, only used by the pexsi branch
+    const bool use_gpu;  // true if running on GPU, only used by the native-ELPA branch
+    const int world_nproc;
+    const int world_rank;
 };
 
 } // namespace hsolver

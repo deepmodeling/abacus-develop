@@ -126,13 +126,6 @@ else()
   set(ABACUS_LCAO_ENABLED "False")
 endif()
 
-# Core Math Libraries
-if(ENABLE_LCAO AND ENABLE_ELPA)
-    set(ABACUS_ELPA_VERSION "yes (v${ELPA_VERSION})")
-else()
-    set(ABACUS_ELPA_VERSION "no")
-endif()
-
 # BLAS and FFTW libraries
 if(MKL_FOUND)
   set(ABACUS_BLAS_VENDOR "MKL")
@@ -179,12 +172,25 @@ else()
   endif()
 endif()
 
+# ELPA eigensolver
+if(ENABLE_ELPA)
+    set(ABACUS_ELPA_VERSION "yes (v${ELPA_VERSION})")
+else()
+    set(ABACUS_ELPA_VERSION "no")
+endif()
+
 if(ENABLE_LIBXC AND Libxc_VERSION)
     set(ABACUS_LIBXC_VERSION "yes (v${Libxc_VERSION})")
 elseif(ENABLE_LIBXC)
     set(ABACUS_LIBXC_VERSION "yes (path: ${Libxc_DIR})")
 else()
     set(ABACUS_LIBXC_VERSION "no")
+endif()
+
+if(ENABLE_DFTD4)
+    set(ABACUS_DFTD4_VERSION "yes (v${dftd4_VERSION})")
+else()
+    set(ABACUS_DFTD4_VERSION "no")
 endif()
 
 # Accelerators
@@ -451,6 +457,7 @@ message("                     LibRI          = ${ABACUS_LIBRI_VERSION}")
 if(ENABLE_EXX_DEV)
   message("                                      (EXX developing features enabled)")
 endif()
+message("                     DFT-D4         = ${ABACUS_DFTD4_VERSION}")
 message("                     RAPIDJSON      = ${ABACUS_RAPIDJSON_VERSION}")
 message("                     PEXSI          = ${ABACUS_PEXSI_VERSION}")
 message("                     CNPY           = ${ABACUS_CNPY_VERSION}")

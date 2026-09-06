@@ -1,3 +1,4 @@
+#include "lambda_loop_helper.h"
 #include "spin_constrain.h"
 
 /**
@@ -16,24 +17,17 @@
  * - Simple getters/setters (nspin, npol, atomCounts, etc.) still work correctly
  *   because they are not template-specialized (they use the base template)
  *
- * @par Methods stubbed
- * - cal_mw_from_lambda: no-op (computed by complex<double> specialization)
- * - cal_mi_lcao: no-op (computed by complex<double> specialization)
- * - run_lambda_loop: no-op (computed by complex<double> specialization)
- * - check_rms_stop: returns false (continue loop)
- * - check_restriction: no-op
- * - cal_alpha_opt: returns 0.0
- * - print_termination: no-op
- * - print_header: no-op
- * - check_gradient_decay: returns false (no early termination)
- * - run_lambda_linear_scan: no-op
- * - reset_dspin_operator: no-op
+ * @par History
+ * The following routines were originally member-function stubs of
+ * SpinConstrain<double>. They have been lifted to free-function stubs in
+ * the spinconstrain namespace alongside their complex<double> counterparts
+ * (see lambda_loop_helper.cpp). Each returns the safe no-op value.
  */
 
 /// @brief cal_mw_from_lambda stub (TK=double): no-op
 template <>
 void spinconstrain::SpinConstrain<double>::cal_mw_from_lambda(int i_step,
-		const ModuleBase::Vector3<double>* delta_lambda)
+        const ModuleBase::Vector3<double>* delta_lambda)
 {
 }
 
@@ -46,65 +40,73 @@ void spinconstrain::SpinConstrain<double>::cal_mi_lcao(const int& step, bool pri
 /// @brief run_lambda_loop stub (TK=double): no-op
 template <>
 void spinconstrain::SpinConstrain<double>::run_lambda_loop(int outer_step,
-		bool rerun)
+        bool rerun,
+        std::ostream& ofs_running)
 {
 }
 
 /// @brief check_rms_stop stub (TK=double): always return false (continue)
 template <>
-bool spinconstrain::SpinConstrain<double>::check_rms_stop(int outer_step,
-                                                                    int i_step,
-                                                                    double rms_error,
-                                                                    double duration,
-                                                                    double total_duration)
+bool spinconstrain::check_rms_stop<double>(const spinconstrain::SpinConstrain<double>& sc,
+                                           int outer_step,
+                                           int i_step,
+                                           double rms_error,
+                                           double duration,
+                                           double total_duration,
+                                           std::ostream& ofs_running)
 {
     return false;
 }
 
 /// @brief check_restriction stub (TK=double): no-op
 template <>
-void spinconstrain::SpinConstrain<double>::check_restriction(
-    const std::vector<ModuleBase::Vector3<double>>& search,
-    double& alpha_trial)
+void spinconstrain::check_restriction<double>(const spinconstrain::SpinConstrain<double>& sc,
+                                              const std::vector<ModuleBase::Vector3<double>>& search,
+                                              double& alpha_trial,
+                                              std::ostream& ofs_running)
 {
 }
 
 /// @brief cal_alpha_opt stub (TK=double): return 0.0
 template <>
-double spinconstrain::SpinConstrain<double>::cal_alpha_opt(std::vector<ModuleBase::Vector3<double>> spin,
-                                                                     std::vector<ModuleBase::Vector3<double>> spin_plus,
-                                                                     const double alpha_trial)
+double spinconstrain::cal_alpha_opt<double>(const spinconstrain::SpinConstrain<double>& sc,
+                                            std::vector<ModuleBase::Vector3<double>> spin,
+                                            std::vector<ModuleBase::Vector3<double>> spin_plus,
+                                            const double alpha_trial)
 {
     return 0.0;
 }
 
 /// @brief print_termination stub (TK=double): no-op
 template <>
-void spinconstrain::SpinConstrain<double>::print_termination()
+void spinconstrain::print_termination<double>(const spinconstrain::SpinConstrain<double>& sc,
+                                               std::ostream& ofs_running)
 {
 }
 
 /// @brief print_header stub (TK=double): no-op
 template <>
-void spinconstrain::SpinConstrain<double>::print_header()
+void spinconstrain::print_header<double>(const spinconstrain::SpinConstrain<double>& sc,
+                                         std::ostream& ofs_running)
 {
 }
 
 /// @brief check_gradient_decay stub (TK=double): always return false (no early termination)
 template <>
-bool spinconstrain::SpinConstrain<double>::check_gradient_decay(
-    std::vector<ModuleBase::Vector3<double>> new_spin,
-    std::vector<ModuleBase::Vector3<double>> old_spin,
-    std::vector<ModuleBase::Vector3<double>> new_delta_lambda,
-    std::vector<ModuleBase::Vector3<double>> old_delta_lambda,
-    bool print)
+bool spinconstrain::check_gradient_decay<double>(const spinconstrain::SpinConstrain<double>& sc,
+                                                 std::vector<ModuleBase::Vector3<double>> new_spin,
+                                                 std::vector<ModuleBase::Vector3<double>> old_spin,
+                                                 std::vector<ModuleBase::Vector3<double>> new_delta_lambda,
+                                                 std::vector<ModuleBase::Vector3<double>> old_delta_lambda,
+                                                 bool print,
+                                                 std::ostream& ofs_running)
 {
     return false;
 }
 
 /// @brief run_lambda_linear_scan stub (TK=double): no-op
 template <>
-void spinconstrain::SpinConstrain<double>::run_lambda_linear_scan(int outer_step)
+void spinconstrain::SpinConstrain<double>::run_lambda_linear_scan(int outer_step, std::ostream& ofs_running)
 {
 }
 

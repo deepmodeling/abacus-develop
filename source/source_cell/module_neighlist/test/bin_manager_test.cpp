@@ -153,7 +153,7 @@ TEST(BinManagerUnit, GhostAtomsAreCounted)
     std::vector<NeighborAtom> ghost;
 
     inside.emplace_back(0.0, 0.0, 0.0, 0, 0, 0);
-    ghost.emplace_back(0.4, 0.0, 0.0, 0, 1, 1, 3, 1);
+    ghost.emplace_back(0.4, 0.0, 0.0, 0, 1, 1, 1);
 
     BinManager bm;
     std::vector<NeighborAtom> all_atoms = inside;

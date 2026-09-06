@@ -1,4 +1,4 @@
-#include "source_io/module_output/read_exit_file.h"
+#include "source_base/module_out/read_exit_file.h"
 #include "source_io/module_parameter/read_input.h"
 #include "mpi.h"
 

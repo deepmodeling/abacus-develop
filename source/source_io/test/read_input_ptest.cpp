@@ -1,16 +1,17 @@
-#include <cstdio>
-#include <fstream>
+#include "source_base/tool_quit.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/read_input.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "source_base/tool_quit.h"
-#include "source_io/module_parameter/read_input.h"
-#include "source_io/module_parameter/parameter.h"
+#include <cstdio>
+#include <fstream>
+#include <functional>
 
 // #ifdef __MPI
+#include "mpi.h"
 #include "source_base/parallel_global.h"
 #include "source_basis/module_pw/test/test_tool.h"
-#include "mpi.h"
 // #endif
 /************************************************
  *  unit test of read_input_test.cpp
@@ -26,7 +27,7 @@
 
 class InputParaTest : public testing::Test
 {
-	protected:
+  protected:
 };
 
 // #ifdef __MPI
@@ -273,6 +274,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.vdw_abc);
     EXPECT_EQ(std::stod(param.inp.vdw_cutoff_radius), 56.6918);
     EXPECT_EQ(param.inp.vdw_radius_unit, "Bohr");
+    EXPECT_DOUBLE_EQ(param.inp.vdw_cutoff_width2, 0.05);
+    EXPECT_DOUBLE_EQ(param.inp.vdw_cutoff_width3, 0.05);
     EXPECT_DOUBLE_EQ(param.inp.vdw_cn_thr, 40.0);
     EXPECT_EQ(param.inp.vdw_cn_thr_unit, "Bohr");
     EXPECT_EQ(param.inp.vdw_C6_file, "default");
@@ -316,29 +319,31 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.td_vext, 0);
     EXPECT_EQ(param.inp.propagator, 0);
     EXPECT_EQ(param.inp.td_stype, 0);
-    EXPECT_EQ(param.inp.td_ttype, "0");
+    EXPECT_THAT(param.inp.td_ttype, testing::ElementsAre(0));
     EXPECT_EQ(param.inp.td_tstart, 1);
     EXPECT_EQ(param.inp.td_tend, 1000);
     EXPECT_EQ(param.inp.td_lcut1, 0.05);
     EXPECT_EQ(param.inp.td_lcut2, 0.95);
-    EXPECT_EQ(param.inp.td_gauss_amp, "0.25");
-    EXPECT_EQ(param.inp.td_gauss_freq, "22.13");
-    EXPECT_EQ(param.inp.td_gauss_phase, "0.0");
-    EXPECT_EQ(param.inp.td_gauss_t0, "100.0");
-    EXPECT_EQ(param.inp.td_gauss_sigma, "30.0");
-    EXPECT_EQ(param.inp.td_trape_amp, "2.74");
-    EXPECT_EQ(param.inp.td_trape_freq, "1.60");
-    EXPECT_EQ(param.inp.td_trape_phase, "0.0");
-    EXPECT_EQ(param.inp.td_trape_t1, "1875");
-    EXPECT_EQ(param.inp.td_trape_t2, "5625");
-    EXPECT_EQ(param.inp.td_trape_t3, "7500");
-    EXPECT_EQ(param.inp.td_trigo_freq1, "1.164656");
-    EXPECT_EQ(param.inp.td_trigo_freq2, "0.029116");
-    EXPECT_EQ(param.inp.td_trigo_phase1, "0.0");
-    EXPECT_EQ(param.inp.td_trigo_phase2, "0.0");
-    EXPECT_EQ(param.inp.td_trigo_amp, "2.74");
-    EXPECT_EQ(param.inp.td_heavi_t0, "100");
-    EXPECT_EQ(param.inp.td_heavi_amp, "1.0");
+    EXPECT_THAT(param.inp.td_gauss_amp, testing::ElementsAre(0.25));
+    EXPECT_THAT(param.inp.td_gauss_freq, testing::ElementsAre(22.13));
+    EXPECT_THAT(param.inp.td_gauss_phase, testing::ElementsAre(0.0));
+    EXPECT_THAT(param.inp.td_gauss_t0, testing::ElementsAre(100.0));
+    EXPECT_THAT(param.inp.td_gauss_sigma, testing::ElementsAre(30.0));
+    EXPECT_THAT(param.inp.td_trape_amp, testing::ElementsAre(2.74));
+    EXPECT_THAT(param.inp.td_trape_freq, testing::ElementsAre(1.60));
+    EXPECT_THAT(param.inp.td_trape_phase, testing::ElementsAre(0.0));
+    EXPECT_THAT(param.inp.td_trape_t1, testing::ElementsAre(1875.0));
+    EXPECT_THAT(param.inp.td_trape_t2, testing::ElementsAre(5625.0));
+    EXPECT_THAT(param.inp.td_trape_t3, testing::ElementsAre(7500.0));
+    EXPECT_THAT(param.inp.td_trigo_freq1, testing::ElementsAre(1.164656));
+    EXPECT_THAT(param.inp.td_trigo_freq2, testing::ElementsAre(0.029116));
+    EXPECT_THAT(param.inp.td_trigo_phase1, testing::ElementsAre(0.0));
+    EXPECT_THAT(param.inp.td_trigo_phase2, testing::ElementsAre(0.0));
+    EXPECT_THAT(param.inp.td_trigo_amp, testing::ElementsAre(2.74));
+    EXPECT_THAT(param.inp.td_heavi_t0, testing::ElementsAre(100.0));
+    EXPECT_THAT(param.inp.td_heavi_amp, testing::ElementsAre(1.0));
+    EXPECT_THAT(param.inp.td_supsine_tstart, testing::ElementsAre(1));
+    EXPECT_THAT(param.inp.td_supsine_tend, testing::ElementsAre(1000));
 
     EXPECT_EQ(param.inp.out_dipole, 0);
     EXPECT_EQ(param.inp.out_efield, 0);
@@ -353,9 +358,11 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.yukawa_potential);
     EXPECT_DOUBLE_EQ(param.inp.yukawa_lambda, -1.0);
     EXPECT_EQ(param.inp.onsite_radius, 0.0);
-    EXPECT_EQ(param.inp.omc, 0);
+    EXPECT_EQ(param.inp.occ_mat_ctrl, 0);
     EXPECT_FALSE(param.inp.dft_plus_dmft);
     EXPECT_FALSE(param.inp.rpa);
+    EXPECT_FALSE(param.inp.rpa_out_vel);
+    EXPECT_EQ(param.inp.rpa_outdir, "./OUT.librpa/");
     EXPECT_EQ(param.inp.imp_sol, 0);
     EXPECT_DOUBLE_EQ(param.inp.eb_k, 80.0);
     EXPECT_DOUBLE_EQ(param.inp.tau, 1.0798 * 1e-5);
@@ -404,6 +411,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.mdp.md_pmode, "iso");
     EXPECT_EQ(param.inp.mdp.md_restart, 0);
     EXPECT_EQ(param.inp.mdp.md_restartfreq, 5);
+    EXPECT_FALSE(param.inp.mdp.md_out_force);
     EXPECT_EQ(param.inp.mdp.md_seed, -1);
     EXPECT_EQ(param.inp.mdp.md_prec_level, 0);
     EXPECT_DOUBLE_EQ(param.inp.ref_cell_factor, 1.2);
@@ -451,9 +459,73 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.abs_wavelen_range.size(), 2);
     EXPECT_DOUBLE_EQ(param.inp.abs_wavelen_range[0], 0.0);
     EXPECT_DOUBLE_EQ(param.inp.abs_broadening, 0.01);
-    EXPECT_EQ(param.inp.abs_gauge, "length");
+    EXPECT_EQ(param.inp.abs_gauge, "velocity");
+    EXPECT_EQ(param.inp.bse_tda, "tda");
+    EXPECT_EQ(param.inp.bse_spin_types[0], "singlet");
+    EXPECT_EQ(param.inp.bse_spin_types[1], "triplet");
+    EXPECT_FALSE(param.inp.bse_mem_save);
+    EXPECT_TRUE(param.inp.bse_ri_hartree);
+    EXPECT_EQ(param.inp.bse_use_fine_kgrid, 0);
+    EXPECT_FALSE(param.inp.out_bse_ab);
+    EXPECT_EQ(param.inp.bse_continue, 0);
+    EXPECT_EQ(param.inp.plot_istate, 0);
+    EXPECT_EQ(param.inp.exciton_plot_type, "average");
+    EXPECT_EQ(param.inp.exciton_plot_format, "cube");
+    ASSERT_EQ(param.inp.exciton_fixed_coordinate.size(), 6);
+    for (const double coordinate : param.inp.exciton_fixed_coordinate)
+    {
+        EXPECT_DOUBLE_EQ(coordinate, 0.0);
+    }
+    EXPECT_EQ(param.inp.exciton_slice_plane, "ab");
+    EXPECT_DOUBLE_EQ(param.inp.exciton_slice_pos, 0.0);
+    EXPECT_EQ(param.inp.exciton_slice_npoints, 200);
+    EXPECT_EQ(param.inp.exciton_slice_range, (std::vector<int>{-1, 2, -1, 2}));
     EXPECT_EQ(param.inp.rdmft, 0);
     EXPECT_DOUBLE_EQ(param.inp.rdmft_power_alpha, 0.656);
+}
+
+TEST_F(InputParaTest, TypedTDFieldLists)
+{
+    ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    readinput.read_parameters(param, "./support/INPUT.td_field_mixed");
+
+    EXPECT_THAT(param.inp.td_ttype, testing::ElementsAre(4, 0, 1, 2, 3, 0, 4, 1, 2, 3));
+    EXPECT_THAT(param.inp.td_vext_dire, testing::ElementsAre(1, 2, 3, 1, 2, 3, 1, 2, 3, 1));
+    EXPECT_THAT(param.inp.td_gauss_freq, testing::ElementsAre(0.7, -1.1));
+    EXPECT_THAT(param.inp.td_gauss_amp, testing::ElementsAre(0.04, -0.03));
+    EXPECT_THAT(param.inp.td_trape_t1, testing::ElementsAre(1.0, 2.0));
+    EXPECT_THAT(param.inp.td_trape_amp, testing::ElementsAre(0.025, -0.02));
+    EXPECT_THAT(param.inp.td_trigo_freq1, testing::ElementsAre(0.9, -1.4));
+    EXPECT_THAT(param.inp.td_trigo_amp, testing::ElementsAre(0.015, -0.018));
+    EXPECT_THAT(param.inp.td_heavi_t0, testing::ElementsAre(3.0, 5.0));
+    EXPECT_THAT(param.inp.td_heavi_amp, testing::ElementsAre(0.01, -0.012));
+    EXPECT_THAT(param.inp.td_supsine_freq, testing::ElementsAre(0.7, -1.0));
+    EXPECT_THAT(param.inp.td_supsine_amp, testing::ElementsAre(0.05, -0.04));
+    EXPECT_THAT(param.inp.td_supsine_tstart, testing::ElementsAre(0, 2));
+    EXPECT_THAT(param.inp.td_supsine_tend, testing::ElementsAre(5, 6));
+}
+
+TEST_F(InputParaTest, TDFieldStructureErrors)
+{
+    struct InvalidCase
+    {
+        const char* name;
+        std::function<void(Input_para&)> mutate;
+    };
+
+    const std::vector<InvalidCase> cases = {{"missing", [](Input_para& input) { input.td_gauss_amp.clear(); }},
+                                            {"extra", [](Input_para& input) { input.td_gauss_freq.push_back(1.0); }},
+                                            {"field count", [](Input_para& input) { input.td_ttype.push_back(0); }}};
+
+    for (const InvalidCase& invalid_case: cases)
+    {
+        Input_para input;
+        input.td_vext = true;
+        invalid_case.mutate(input);
+        EXPECT_EXIT(ModuleIO::check_td_efield_parameters(input), testing::ExitedWithCode(1), "") << invalid_case.name;
+    }
 }
 
 TEST_F(InputParaTest, DiagoProc)

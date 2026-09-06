@@ -1,14 +1,22 @@
 list(APPEND objects
-      dftu.cpp
-      dftu_force.cpp
-      dftu_yukawa.cpp
-      dftu_folding.cpp
-      dftu_io.cpp
-      dftu_tools.cpp
-      dftu_occup.cpp
+      dftu_nao.cpp
+      dftu_nao_fs_k.cpp
+      dftu_nao_folding.cpp
+      dftu_nao_pots.cpp
+      dftu_nao_occ.cpp
+      dftu_nao_energy.cpp
       dftu_hamilt.cpp
-      dftu_pw.cpp
 )
+
+if(ENABLE_LCAO)
+  list(APPEND objects
+        dftu_nao_op.cpp
+        dftu_nao_fs_r.cpp
+        dftu_nao_for_r.cpp
+        dftu_nao_str_r.cpp
+        dftu_nao_op_legacy.cpp
+  )
+endif()
 
 add_library(
     dftu

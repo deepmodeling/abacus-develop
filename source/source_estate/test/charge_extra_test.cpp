@@ -16,7 +16,6 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
-Parallel_Grid::~Parallel_Grid(){};
 
 
 // mock functions for Charge

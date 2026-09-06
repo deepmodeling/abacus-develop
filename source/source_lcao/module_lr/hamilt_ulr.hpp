@@ -118,7 +118,7 @@ namespace LR
             const std::vector<int> npairs = { this->nocc[0] * this->nvirt[0], this->nocc[1] * this->nvirt[1] };
             const std::vector<int64_t> ldim_is = { nk * pX[0].get_local_size(), nk * pX[1].get_local_size() };
             const std::vector<int> gdim_is = { nk * npairs[0], nk * npairs[1] };
-            std::vector<T> Amat_full(gdim * gdim);
+            std::vector<T> Amat_full(gdim * gdim, 0.0);
             for (int is_bj : {0, 1})
             {
                 const int no = this->nocc[is_bj];
@@ -172,36 +172,36 @@ namespace LR
         }
 
         /// copy global data (eigenvectors) to local memory
-        void global2local(T* lvec, const T* gvec, const int& nband) const
-        {
-            const std::vector<int> npairs = { this->nocc[0] * this->nvirt[0], this->nocc[1] * this->nvirt[1] };
-            const std::vector<int64_t> ldim_is = { nk * pX[0].get_local_size(), nk * pX[1].get_local_size() };
-            const std::vector<int> gdim_is = { nk * npairs[0], nk * npairs[1] };
-            for (int ib = 0;ib < nband;++ib)
-            {
-                const int loffset_b = ib * this->ldim;
-                const int goffset_b = ib * this->gdim;
-                for (int is : {0, 1})
-                {
-                    const int loffset_bs = loffset_b + is * ldim_is[0];
-                    const int goffset_bs = goffset_b + is * gdim_is[0];
-                    for (int ik = 0;ik < nk;++ik)
-                    {
-                        const int loffset = loffset_bs + ik * pX[is].get_local_size();
-                        const int goffset = goffset_bs + ik * npairs[is];
-                        for (int lo = 0;lo < pX[is].get_col_size();++lo)
-                        {
-                            const int go = pX[is].local2global_col(lo);
-                            for (int lv = 0;lv < pX[is].get_row_size();++lv)
-                            {
-                                const int gv = pX[is].local2global_row(lv);
-                                lvec[loffset + lo * pX[is].get_row_size() + lv] = gvec[goffset + go * nvirt[is] + gv];
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // void global2local(T* lvec, const T* gvec, const int& nband) const
+        // {
+        //     const std::vector<int> npairs = { this->nocc[0] * this->nvirt[0], this->nocc[1] * this->nvirt[1] };
+        //     const std::vector<int64_t> ldim_is = { nk * pX[0].get_local_size(), nk * pX[1].get_local_size() };
+        //     const std::vector<int> gdim_is = { nk * npairs[0], nk * npairs[1] };
+        //     for (int ib = 0;ib < nband;++ib)
+        //     {
+        //         const int loffset_b = ib * this->ldim;
+        //         const int goffset_b = ib * this->gdim;
+        //         for (int is : {0, 1})
+        //         {
+        //             const int loffset_bs = loffset_b + is * ldim_is[0];
+        //             const int goffset_bs = goffset_b + is * gdim_is[0];
+        //             for (int ik = 0;ik < nk;++ik)
+        //             {
+        //                 const int loffset = loffset_bs + ik * pX[is].get_local_size();
+        //                 const int goffset = goffset_bs + ik * npairs[is];
+        //                 for (int lo = 0;lo < pX[is].get_col_size();++lo)
+        //                 {
+        //                     const int go = pX[is].local2global_col(lo);
+        //                     for (int lv = 0;lv < pX[is].get_row_size();++lv)
+        //                     {
+        //                         const int gv = pX[is].local2global_row(lv);
+        //                         lvec[loffset + lo * pX[is].get_row_size() + lv] = gvec[goffset + go * nvirt[is] + gv];
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
     private:
         const std::vector<int>& nocc;

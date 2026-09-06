@@ -10,7 +10,7 @@
 #include "source_base/timer.h"
 #include "source_base/mathzone.h"
 #include "source_base/constants.h"
-#include "symmetry_basic.h"
+#include "symm_basic.h"
 
 namespace ModuleSymmetry
 {

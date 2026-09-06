@@ -5,33 +5,25 @@
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
 #include "parallel_kpoints.h"
-#include "k_vector_utils.h"
+#include "reciprocal_grid.h"
 #include <vector>
 
 /**
  * @brief Class for k-points management.
+ *
+ * Inherits the spin-free common reciprocal-grid functionality
+ * (mesh generation, coordinate conversion, weights, printing, star/IBZ
+ * reduction primitive) from ModuleCell::ReciprocalGrid and adds the
+ * spin expansion (isk, spin-multiplicity doubling) and the k-point IBZ logic.
  */
-class K_Vectors
+class K_Vectors : public ModuleCell::ReciprocalGrid
 {
 public:
-    std::vector<ModuleBase::Vector3<double>> kvec_c; ///< Cartesian coordinates of k points
-    std::vector<ModuleBase::Vector3<double>> kvec_d; ///< Direct coordinates of k points
-    std::vector<ModuleBase::Vector3<double>> kvec_c_full; ///< Cartesian coordinates of full k mesh match with nkstot_full
-
-    std::vector<double> wk; ///< wk, weight of k points
-
-    std::vector<int> ngk; ///< ngk, number of plane waves for each k point
     std::vector<int> isk; ///< distinguish spin up and down k points
-
-    int nmp[3]={0};                 ///< Number of Monhorst-Pack
-    std::vector<int> kl_segids; ///< index of kline segment
 
     /// @brief equal k points to each ibz-kpont, corresponding to a certain symmetry operations. 
     /// dim: [iks_ibz][(isym, kvec_d)]
     std::vector<std::map<int, ModuleBase::Vector3<double>>> kstars;
-
-    bool kc_done = false; ///< flag indicating if Cartesian coordinates are calculated
-    bool kd_done = false; ///< flag indicating if direct coordinates are calculated
 
     K_Vectors(){};
     ~K_Vectors(){};
@@ -68,6 +60,7 @@ public:
         const ModuleBase::Matrix3& reciprocal_vec,
         const ModuleBase::Matrix3& latvec,
         std::ofstream& ofs,
+        std::ofstream& ofs_warning,
         const bool use_ibz,
         const std::string& global_out_dir,
         const bool gamma_only_local,
@@ -85,9 +78,9 @@ public:
         return this->nkstot;
     }
 
-    int get_nkstot_full() const
+    int get_nkstot_nospin() const
     {
-        return this->nkstot_full;
+        return this->nkstot_nospin;
     }
 
     double get_koffset(const int i) const
@@ -100,9 +93,11 @@ public:
         return this->k_nkstot;
     }
 
-    int get_nspin() const
+    /// @brief Spin multiplicity of the k-point list: 1 (no doubling, also for
+    ///        non-collinear nspin=4) or 2 (LSDA, k points split into up/down).
+    int get_spin_mult() const
     {
-        return this->nspin;
+        return this->spin_mult;
     }
 
     std::string get_k_kword() const
@@ -120,14 +115,9 @@ public:
         this->nkstot = value;
     }
 
-    void set_nkstot_full(int value)
+    void set_nkstot_nospin(int value)
     {
-        this->nkstot_full = value;
-    }
-
-    void set_nspin(int value)
-    {
-        this->nspin = value;
+        this->nkstot_nospin = value;
     }
 
     bool get_is_mp() const
@@ -157,34 +147,70 @@ public:
      */
     void update_use_ibz(const int& nkstot_ibz,
                         const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz,
-                        const std::vector<double>& wk_ibz);
+                        const std::vector<double>& wk_ibz,
+                        std::ofstream& ofs_running,
+                        const int my_rank);
+
+    /**
+     * @brief Updates the k-points after a volume change.
+     *
+     * Converts the direct coordinates (which are kept across the volume
+     * change) to the new Cartesian coordinates using the new reciprocal
+     * lattice, prints the resulting table, and marks both coordinate sets
+     * as up to date. The spin multiplicity is not touched: it was fixed by
+     * set() and never changes during a run.
+     *
+     * @param G The new reciprocal lattice matrix.
+     */
+    void set_after_vc(const ModuleBase::Matrix3& G, std::ofstream& ofs_running);
 
   private:
-    int nks = 0;         ///< number of symmetry-reduced k points in this pool(processor, up+dw)
-    int nkstot = 0;      ///< number of symmetry-reduced k points in full k mesh
-    int nkstot_full = 0; ///< number of k points before symmetry reduction in full k mesh
-
-    int nspin = 0;              ///< number of spin states
-    double koffset[3] = {0.0};  ///< used only in automatic k-points
-    std::string k_kword;        ///< LiuXh add 20180619
-    int k_nkstot = 0;           ///< LiuXh add 20180619
-    bool is_mp = false;         ///< Monkhorst-Pack
+    /// Spin multiplicity used to size the k-point list: 1 for input nspin 1
+    /// or 4 (non-collinear k points are not doubled) and 2 for input nspin 2
+    /// (LSDA up/down k points). This is NOT the physical nspin (1/2/4).
+    int spin_mult = 0;
+    double koffset[3] = {0.0}; ///< used only in automatic k-points
 
     /**
      * @brief Resize the k-point related vectors according to the new k-point number.
      *
-     * This function resizes the vectors that store the k-point information,
-     * including the Cartesian and Direct coordinates of k-points,
-     * the weights of k-points, the index of k-points, and the number of plane waves for each k-point.
+     * Extends the base-class implementation so that the spin index (isk) is
+     * resized along with the coordinate/weight containers.
      *
      * @param kpoint_number The new number of k-points.
      *
      * @return void
-     *
-     * @note The memory recording lines are commented out. If you want to track the memory usage,
-     *       you can uncomment these lines.
      */
-    void renew(const int& kpoint_number);
+    void renew(const int& kpoint_number) override;
+
+    /// @brief Spin multiplicity used when generating the mesh (1/2).
+    int spin_factor() const override
+    {
+        return this->spin_mult;
+    }
+
+    /**
+     * @brief Reduce the k-points to the irreducible Brillouin zone (IBZ).
+     *
+     * Orchestrates the K-specific parts of the IBZ reduction (Bravais-lattice
+     * compatibility checks, point-group construction, time-reversal / magnetic
+     * operation doubling, k-star bookkeeping and the printed reduction table)
+     * and delegates the generic folding loop to ReciprocalGrid::reduce_ibz.
+     *
+     * @param ucell unit cell
+     * @param symm symmetry of the system
+     * @param use_symm whether symmetry reduction is enabled
+     * @param skpt output string holding the reduction table
+     * @param match set to false if the reciprocal lattice is not compatible
+     *              with the real-space lattice
+     */
+    void reduce_by_symmetry(const UnitCell& ucell,
+                            const ModuleSymmetry::Symmetry& symm,
+                            bool use_symm,
+                            std::string& skpt,
+                            bool& match,
+                            const int my_rank,
+                            std::ofstream& ofs_running) override;
 
     /// @brief step 1 : generate kpoints
 
@@ -212,7 +238,94 @@ public:
                       const bool gamma_only_local,
                       const double kspacing[3],
                       const std::string& kmesh_type,
-                      const double koffset[3]); // return 0: something wrong.
+                      const double koffset[3],
+                      std::ofstream& ofs_running,
+                      std::ofstream& ofs_warning,
+                      const int my_rank); // return 0: something wrong.
+
+    /**
+     * @brief Read the KPT file and build the k-point list from it.
+     *
+     * Locates the "K_POINTS" header, reads the point count and type keyword,
+     * then dispatches to the Monkhorst-Pack mesh, the explicit Cartesian/
+     * Direct list, or the Line-mode interpolation accordingly.
+     *
+     * @param fn KPT filename to read
+     *
+     * @return bool Returns true if the k-points are successfully read,
+     *              false otherwise.
+     */
+    bool parse_kfile(const std::string& fn, std::ofstream& ofs_running, std::ofstream& ofs_warning);
+
+    /**
+     * @brief Read the Monkhorst-Pack/Gamma mesh block and generate the mesh.
+     *
+     * Handles the nkstot == 0 form of the KPT file: validates the type
+     * keyword, reads the mesh dimensions and optional offsets, then calls
+     * Monkhorst_Pack to fill the k-point list.
+     *
+     * @param ifk stream positioned after the type keyword
+     * @param kword type keyword (Gamma / Monkhorst-Pack / MP / mp)
+     * @param ofs_running running log stream
+     * @return false (after warning) when the keyword is neither Gamma nor
+     *         Monkhorst-Pack; true when the mesh was generated.
+     */
+    bool read_mp_mesh(std::ifstream& ifk,
+                      const std::string& kword,
+                      std::ofstream& ofs_running,
+                      std::ofstream& ofs_warning);
+
+    /**
+     * @brief Read the explicitly listed k points (nkstot > 0 form of KPT).
+     *
+     * Dispatches on the type keyword: Cartesian/Direct lists are sized via
+     * renew() and filled through KListIO::read_kpt_list; Line_Cartesian/
+     * Line_Direct delegate to setup_line_kpoints.
+     *
+     * @param ifk stream positioned after the type keyword
+     * @param kword type keyword: Cartesian, C, Direct, D, Line_Cartesian,
+     *              Line_Direct, L or Line
+     * @return false (after warning) for unknown keywords or line mode with
+     *         symmetry enabled; true when the k-point list was built.
+     */
+    bool read_listed_kpoints(std::ifstream& ifk, const std::string& kword, std::ofstream& ofs_warning);
+
+    /**
+     * @brief Build line-mode k points by interpolating between special points.
+     *
+     * Refuses (warning + false) when symmetry reduction is enabled, then
+     * interpolates the special points read from `ifk`, resets all weights
+     * to 1, and marks the Cartesian or Direct coordinate set as done.
+     *
+     * @param ifk stream to read the special points from
+     * @param kvec target coordinate container (kvec_c or kvec_d)
+     * @param cartesian true for Line_Cartesian, false for Line_Direct
+     * @param ofs_warning warning-log stream for error messages
+     */
+    bool setup_line_kpoints(std::ifstream& ifk,
+                            std::vector<ModuleBase::Vector3<double>>& kvec,
+                            const bool cartesian,
+                            std::ofstream& ofs_warning);
+
+    /**
+     * @brief Handle a reciprocal/real lattice Bravais-type mismatch after
+     *        IBZ reduction.
+     *
+     * When symmetry_autoclose is enabled, symmetry is switched off and the
+     * IBZ reduction is retried; otherwise the run aborts with a WARNING_QUIT
+     * listing the possible remedies.
+     *
+     * @param ucell unit cell used for the retried IBZ reduction
+     * @param symm symmetry operations used for the retried reduction
+     * @param skpt k-point option string forwarded to reduce_by_symmetry
+     * @param match set to true when the autoclose retry succeeds
+     */
+    void handle_symmetry_mismatch(const UnitCell& ucell,
+                                  const ModuleSymmetry::Symmetry& symm,
+                                  std::string& skpt,
+                                  bool& match,
+                                  const int my_rank,
+                                  std::ofstream& ofs);
 
     /**
      * @brief Adds k-points linearly between special points.
@@ -237,65 +350,6 @@ public:
      */
     void interpolate_k_between(std::ifstream& ifk, std::vector<ModuleBase::Vector3<double>>& kvec);
 
-    /**
-     * @brief Generates k-points using the Monkhorst-Pack scheme.
-     *
-     * This function generates k-points in the reciprocal space using the Monkhorst-Pack scheme.
-     *
-     * @param nmp_in the number of k-points in each dimension.
-     * @param koffset_in the offset for the k-points in each dimension.
-     * @param k_type The type of k-point.  1 means without Gamma point, 0 means with Gamma.
-     *
-     * @return void
-     *
-     * @note The function assumes that the k-points are evenly distributed in the reciprocal space.
-     * @note The function sets the weight of each k-point to be equal, so that the total weight of all k-points is 1.
-     * @note The function sets the flag kd_done to true to indicate that the k-points have been generated.
-     */
-    void Monkhorst_Pack(const int* nmp_in, const double* koffset_in, const int tipo);
-
-    /**
-     * @brief Calculates the coordinate of a k-point using the Monkhorst-Pack scheme.
-     *
-     * This function calculates the coordinate of a k-point in the reciprocal space using the Monkhorst-Pack scheme.
-     * The Monkhorst-Pack scheme is a method for generating k-points in the Brillouin zone.
-     *
-     * @param k_type The type of k-point. 1 means without Gamma point, 0 means with Gamma.
-     * @param offset The offset for the k-point.
-     * @param n The index of the k-point in the current dimension.
-     * @param dim The total number of k-points in the current dimension.
-     *
-     * @return double Returns the coordinate of the k-point.
-     *
-     * @note The function assumes that the k-points are evenly distributed in the reciprocal space.
-     */
-    double Monkhorst_Pack_formula(const int& k_type, const double& offset, const int& n, const int& dim);
-
-    /// @brief step 2 : set both kvec and kved; normalize weight
-
-    //    void set_both_kvec(const ModuleBase::Matrix3& G, const ModuleBase::Matrix3& R, std::string& skpt);
-
-    /**
-     * @brief Normalizes the weights of the k-points.
-     *
-     * This function normalizes the weights of the k-points so that their sum is equal to the degeneracy of spin
-     * (degspin).
-     *
-     * @param degspin The degeneracy of spin. This is 1 for non-spin-polarized calculations and 2 for spin-polarized
-     * calculations.
-     *
-     * @return void
-     *
-     * @note This function should only be called by the master process (MY_RANK == 0).
-     * @note If the sum of the weights is zero or very small (< 1e-10), the function will set equal weights for all
-     * k-points and issue a warning. This allows calculations like get_wf to proceed with zero-weight k-points.
-     * @note The function first normalizes the weights so that their sum is 1, and then scales them by the degeneracy of
-     * spin.
-     */
-    void normalize_wk(const int& degspin);
-
-
-
     /// @brief step 4 : *2 kpoints
 
     /**
@@ -317,15 +371,20 @@ public:
      * @note The function also doubles the total number of k-points (nks and nkstot) for spin-polarized calculations.
      * @note The function prints the total number of k-points for spin-polarized calculations.
      */
-    void set_kup_and_kdw();
+    void set_kup_and_kdw(std::ofstream& ofs_running);
 
-    /**
-     * @brief Gets the global index of a k-point.
-     * @return this->ik2iktot[ik]
-     */
-    void cal_ik_global();
 #ifdef __MPI
-    friend void KVectorUtils::kvec_mpi_k(K_Vectors& kvec);
+    /**
+     * @brief Distributes k-points among MPI processes.
+     *
+     * Broadcasts the k-point metadata (flags, counts, mesh, segment IDs)
+     * from rank 0 and distributes the per-pool k-point slice (indices,
+     * weights, coordinates) to every process. Only compiled with MPI.
+     *
+     * @note Assumes nkstot > 0 and quits if some process ends up with
+     *       no k-points.
+     */
+    void mpi_k(std::ofstream& ofs_running, const int my_rank, const int my_pool);
 #endif
 };
 #endif // KVECT_H

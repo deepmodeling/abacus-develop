@@ -40,57 +40,31 @@ void compute_ekb(const Parallel_Orbitals* pv,
     std::complex<double>* eij = new std::complex<double>[pv->nloc];
     ModuleBase::GlobalFunc::ZEROS(eij, pv->nloc);
 
-    ScalapackConnector::gemm('N',
-                             'N',
-                             nlocal,
-                             nband,
-                             nlocal,
-                             1.0,
-                             Htmp,
-                             1,
-                             1,
-                             pv->desc,
-                             psi_k,
-                             1,
-                             1,
-                             pv->desc_wfc,
-                             0.0,
-                             tmp1,
-                             1,
-                             1,
-                             pv->desc_wfc);
+    ScalapackConnector::
+        gemm('N', 'N', nlocal, nband, nlocal, 1.0, Htmp, 1, 1, pv->desc, psi_k, 1, 1, pv->desc_wfc, 0.0, tmp1, 1, 1, pv->desc_wfc);
 
-    ScalapackConnector::gemm('C',
-                             'N',
-                             nband,
-                             nband,
-                             nlocal,
-                             1.0,
-                             psi_k,
-                             1,
-                             1,
-                             pv->desc_wfc,
-                             tmp1,
-                             1,
-                             1,
-                             pv->desc_wfc,
-                             0.0,
-                             eij,
-                             1,
-                             1,
-                             pv->desc_Eij);
+    ScalapackConnector::
+        gemm('C', 'N', nband, nband, nlocal, 1.0, psi_k, 1, 1, pv->desc_wfc, tmp1, 1, 1, pv->desc_wfc, 0.0, eij, 1, 1, pv->desc_Eij);
 
-    if (PARAM.inp.td_print_eij > 0.0)
+    if (PARAM.inp.td_print_eij >= 0.0)
     {
-        ofs_running
-            << "------------------------------------------------------------------------------------------------"
-            << std::endl;
+        ofs_running << "------------------------------------------------------------------------------------------------" << std::endl;
         ofs_running << " Eij:" << std::endl;
         for (int i = 0; i < pv->nrow_bands; i++)
         {
+            const int global_i = globalIndex(i, pv->nb, pv->dim0, pv->get_coord_row());
+            if (global_i >= nband)
+            {
+                continue;
+            }
             const int in = i * pv->ncol;
             for (int j = 0; j < pv->ncol_bands; j++)
             {
+                const int global_j = globalIndex(j, pv->nb, pv->dim1, pv->get_coord_col());
+                if (global_j >= nband)
+                {
+                    continue;
+                }
                 double aa = eij[in + j].real();
                 double bb = eij[in + j].imag();
                 if (std::abs(aa) < PARAM.inp.td_print_eij)
@@ -105,18 +79,15 @@ void compute_ekb(const Parallel_Orbitals* pv,
                 {
                     std::streamsize original_precision = ofs_running.precision();
                     ofs_running << std::fixed << std::setprecision(8);
-                    ofs_running << "i = " << std::setw(2) << i << ", j = " << std::setw(2) << j
-                                << ", Eij = " << std::setw(12) << aa << " + " << std::setw(12) << bb << " i"
-                                << std::endl;
+                    ofs_running << "i = " << std::setw(2) << global_i + 1 << ", j = " << std::setw(2) << global_j + 1
+                                << ", Eij = " << std::setw(12) << aa << " + " << std::setw(12) << bb << " i" << std::endl;
                     ofs_running.unsetf(std::ios_base::fixed);
                     ofs_running.precision(original_precision);
                 }
             }
         }
         ofs_running << std::endl;
-        ofs_running
-            << "------------------------------------------------------------------------------------------------"
-            << std::endl;
+        ofs_running << "------------------------------------------------------------------------------------------------" << std::endl;
     }
 
     int info = 0;
@@ -407,14 +378,10 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
     using ct_Device = typename ct::PsiToContainer<Device>::type;
 
     // Create Tensor objects for temporary data
-    ct::Tensor tmp1(ct::DataType::DT_COMPLEX_DOUBLE,
-                    ct_device_type,
-                    ct::TensorShape({nlocal * nband})); // tmp1 shape: nlocal * nband
+    ct::Tensor tmp1(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal * nband})); // tmp1 shape: nlocal * nband
     tmp1.zero();
 
-    ct::Tensor eij(ct::DataType::DT_COMPLEX_DOUBLE,
-                   ct_device_type,
-                   ct::TensorShape({nlocal * nlocal})); // eij shape: nlocal * nlocal
+    ct::Tensor eij(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal * nlocal})); // eij shape: nlocal * nlocal
     // Why not use nband * nband ?????
     eij.zero();
 
@@ -455,9 +422,7 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
     {
         ct::Tensor eij_cpu = eij.to_device<ct::DEVICE_CPU>();
 
-        ofs_running
-            << "------------------------------------------------------------------------------------------------"
-            << std::endl;
+        ofs_running << "------------------------------------------------------------------------------------------------" << std::endl;
         ofs_running << " Eij:" << std::endl;
         for (int i = 0; i < nband; i++)
         {
@@ -478,18 +443,15 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                 {
                     std::streamsize original_precision = ofs_running.precision();
                     ofs_running << std::fixed << std::setprecision(8);
-                    ofs_running << "i = " << std::setw(2) << i << ", j = " << std::setw(2) << j
-                                << ", Eij = " << std::setw(12) << aa << " + " << std::setw(12) << bb << " i"
-                                << std::endl;
+                    ofs_running << "i = " << std::setw(2) << i + 1 << ", j = " << std::setw(2) << j + 1 << ", Eij = " << std::setw(12) << aa
+                                << " + " << std::setw(12) << bb << " i" << std::endl;
                     ofs_running.unsetf(std::ios_base::fixed);
                     ofs_running.precision(original_precision);
                 }
             }
         }
         ofs_running << std::endl;
-        ofs_running
-            << "------------------------------------------------------------------------------------------------"
-            << std::endl;
+        ofs_running << "------------------------------------------------------------------------------------------------" << std::endl;
     }
 
     // Extract diagonal elements of eij into ekb

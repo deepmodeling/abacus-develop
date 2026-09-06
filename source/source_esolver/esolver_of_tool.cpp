@@ -32,29 +32,29 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
                                                 &(this->pelec->f_en.vtxc));
     // There is no Operator in ESolver_OF, register Potentials here!
     std::vector<std::string> pot_register_in;
-    if (PARAM.inp.vion_in_h)
+    if (this->inp_->vion_in_h)
     {
         pot_register_in.push_back("local");
     }
-    if (PARAM.inp.vh_in_h)
+    if (this->inp_->vh_in_h)
     {
         pot_register_in.push_back("hartree");
     }
     // no variable can choose xc, maybe it is necessary
     pot_register_in.push_back("xc");
-    if (PARAM.inp.imp_sol)
+    if (this->inp_->imp_sol)
     {
         pot_register_in.push_back("surchem");
     }
-    if (PARAM.inp.efield_flag)
+    if (this->inp_->efield_flag)
     {
         pot_register_in.push_back("efield");
     }
-    if (PARAM.inp.gate_flag)
+    if (this->inp_->gate_flag)
     {
         pot_register_in.push_back("gatefield");
     }
-    if (PARAM.inp.ml_exx)
+    if (this->inp_->ml_exx)
     {
         pot_register_in.push_back("ml_exx");
     }
@@ -73,13 +73,13 @@ void ESolver_OF::allocate_array()
 {
     // Initialize the "wavefunction", which is sqrt(rho)
     this->psi_ = new psi::Psi<double>(1, 
-                                      PARAM.inp.nspin, 
+                                      this->inp_->nspin, 
                                       this->pw_rho->nrxx,
                                       this->pw_rho->nrxx,
                                       true);
-    ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
-    this->pphi_ = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
+    this->pphi_ = new double*[this->inp_->nspin];
+    for (int is = 0; is < this->inp_->nspin; ++is)
     {
         this->pphi_[is] = this->psi_->get_pointer(is);
     }
@@ -90,25 +90,25 @@ void ESolver_OF::allocate_array()
     this->ptemp_rho_ = new Charge();
     this->ptemp_rho_->set_rhopw(this->pw_rho);
     const bool kin_den = this->ptemp_rho_->kin_density(); // mohan add 20251202
-    this->ptemp_rho_->allocate(PARAM.inp.nspin, kin_den);
+    this->ptemp_rho_->allocate(this->inp_->nspin, kin_den);
 
-    this->theta_ = new double[PARAM.inp.nspin];
-    this->pdLdphi_ = new double*[PARAM.inp.nspin];
-    this->pdEdphi_ = new double*[PARAM.inp.nspin];
-    this->pdirect_ = new double*[PARAM.inp.nspin];
-    this->precip_dir_ = new std::complex<double>*[PARAM.inp.nspin];
+    this->theta_ = new double[this->inp_->nspin];
+    this->pdLdphi_ = new double*[this->inp_->nspin];
+    this->pdEdphi_ = new double*[this->inp_->nspin];
+    this->pdirect_ = new double*[this->inp_->nspin];
+    this->precip_dir_ = new std::complex<double>*[this->inp_->nspin];
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < this->inp_->nspin; ++is)
     {
         this->pdLdphi_[is] = new double[this->pw_rho->nrxx];
         this->pdEdphi_[is] = new double[this->pw_rho->nrxx];
         this->pdirect_[is] = new double[this->pw_rho->nrxx];
         this->precip_dir_[is] = new std::complex<double>[pw_rho->npw];
     }
-    ModuleBase::Memory::record("OFDFT::pdLdphi_", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
-    ModuleBase::Memory::record("OFDFT::pdEdphi_", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
-    ModuleBase::Memory::record("OFDFT::pdirect_", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
-    ModuleBase::Memory::record("OFDFT::precip_dir_", sizeof(std::complex<double>) * PARAM.inp.nspin * this->pw_rho->npw);
+    ModuleBase::Memory::record("OFDFT::pdLdphi_", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
+    ModuleBase::Memory::record("OFDFT::pdEdphi_", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
+    ModuleBase::Memory::record("OFDFT::pdirect_", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
+    ModuleBase::Memory::record("OFDFT::precip_dir_", sizeof(std::complex<double>) * this->inp_->nspin * this->pw_rho->npw);
 }
 
 /**
@@ -120,10 +120,10 @@ void ESolver_OF::allocate_array()
  */
 void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& ucell)
 {
-    double** dEdtemp_phi = new double*[PARAM.inp.nspin];
-    double** temp_phi = new double*[PARAM.inp.nspin];
+    double** dEdtemp_phi = new double*[this->inp_->nspin];
+    double** temp_phi = new double*[this->inp_->nspin];
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < this->inp_->nspin; ++is)
     {
         dEdtemp_phi[is] = new double[this->pw_rho->nrxx];
         if (is == this->tn_spin_flag_)
@@ -140,7 +140,7 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& uce
         }
     }
 
-    unitcell::cal_ux(ucell, PARAM.inp.nspin);
+    unitcell::cal_ux(ucell, this->inp_->nspin);
     this->pelec->pot->update_from_charge(this->ptemp_rho_, &ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_eff_v();
 
@@ -157,7 +157,7 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& uce
     {
         rdLdphi[i] = dEdtemp_phi[this->tn_spin_flag_][i] - 2. * temp_mu * ptemp_phi[i];
     }
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < this->inp_->nspin; ++is)
     {
         delete[] dEdtemp_phi[is];
     }
@@ -180,7 +180,7 @@ void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& uc
 {
     double* dphi_dtheta = new double[this->pw_rho->nrxx];
 
-    unitcell::cal_ux(ucell, PARAM.inp.nspin);
+    unitcell::cal_ux(ucell, this->inp_->nspin);
     this->pelec->pot->update_from_charge(temp_rho, &ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_eff_v();
 
@@ -188,7 +188,7 @@ void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& uc
                                        ptemp_phi,
                                        this->pw_rho,
                                        vr_eff); // KEDF potential
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < this->inp_->nspin; ++is)
     {
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
@@ -225,16 +225,16 @@ double ESolver_OF::cal_mu(double* pphi, double* pdEdphi, double nelec)
 void ESolver_OF::adjust_direction(void)
 {
     // filter the high frequency term in direction if of_full_pw = false
-    if (!PARAM.inp.of_full_pw)
+    if (!this->inp_->of_full_pw)
     {
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < this->inp_->nspin; ++is)
         {
             pw_rho->real2recip(this->pdirect_[is], this->precip_dir_[is]);
             pw_rho->recip2real(this->precip_dir_[is], this->pdirect_[is]);
         }
     }
 
-    if (PARAM.inp.nspin == 1)
+    if (this->inp_->nspin == 1)
     {
         double temp_theta = 0; // temp_theta = |d'|/|d0 + phi|, theta = min(theta, temp_theta)
 
@@ -265,9 +265,9 @@ void ESolver_OF::adjust_direction(void)
         temp_theta = norm_direction / temp_theta;
         this->theta_[0] = std::min(this->theta_[0], temp_theta);
     }
-    else if (PARAM.inp.nspin == 2) // theta = 0
+    else if (this->inp_->nspin == 2) // theta = 0
     {
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < this->inp_->nspin; ++is)
         {
             // (1) make direction orthogonal to phi
             // |d'> = |d0> - |phi><phi|d0>/nelec
@@ -305,15 +305,15 @@ void ESolver_OF::adjust_direction(void)
  */
 void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell)
 {
-    assert(PARAM.inp.nspin > 0);
-    double* temp_theta = new double[PARAM.inp.nspin];
-    ModuleBase::GlobalFunc::ZEROS(temp_theta, PARAM.inp.nspin);
+    assert(this->inp_->nspin > 0);
+    double* temp_theta = new double[this->inp_->nspin];
+    ModuleBase::GlobalFunc::ZEROS(temp_theta, this->inp_->nspin);
 
     double max_dEdtheta = 1e5; // threshould of dEdtheta, avoid the unstable optimization
     this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, temp_theta, dEdtheta);
 
     // Assert dEdtheta(theta = 0) < 0, otherwise line search will not work.
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < this->inp_->nspin; ++is)
     {
         if (dEdtheta[is] > max_dEdtheta)
         {

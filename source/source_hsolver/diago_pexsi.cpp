@@ -4,7 +4,6 @@
 #ifdef __PEXSI
 #include "diago_pexsi.h"
 #include "source_base/tool_title.h"
-#include "source_base/global_variable.h"
 #include "source_base/tool_quit.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_pexsi/pexsi_solver.h"
@@ -21,11 +20,13 @@ template <typename T>
 DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in,
                           const int nspin_in,
                           const int nlocal_in,
-                          const double nelec_in)
+                          const double nelec_in,
+                          const int world_nproc_in)
 {
     this->nspin_dm = (nspin_in == 4) ? 1 : nspin_in;
     this->nlocal = nlocal_in;
     this->nelec = nelec_in;
+    this->world_nproc = world_nproc_in;
 
     mu_buffer.resize(this->nspin_dm);
     for (int i = 0; i < this->nspin_dm; i++)
@@ -34,7 +35,7 @@ DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in,
     }
 
     this->ParaV = ParaV_in;
-    this->ps = std::make_unique<pexsi::PEXSI_Solver>();
+    this->ps.reset(new pexsi::PEXSI_Solver());
 
     this->DM.resize(this->nspin_dm);
     this->EDM.resize(this->nspin_dm);
@@ -74,7 +75,7 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
                       s_mat.p,
                       DM[ik],
                       EDM[ik]);
-    this->ps->solve(mu_buffer[ik]);
+    this->ps->solve(mu_buffer[ik], this->world_nproc);
     this->totalFreeEnergy = this->ps->get_totalFreeEnergy();
     this->totalEnergyH = this->ps->get_totalEnergyH();
     this->totalEnergyS = this->ps->get_totalEnergyS();

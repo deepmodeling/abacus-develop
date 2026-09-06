@@ -136,12 +136,12 @@ inline void elpa_skew_eigenvectors(const elpa_t handle, float  *a, float  *ev, f
 #elif ELPA_API_VERSION < 20220501   // ELPA version between 2021.11.001 and 2022.05.001
 inline void elpa_skew_eigenvectors(const elpa_t handle, double *a, double *ev, double *q, int *error)
 {
-    elpa_eigenvectors_all_host_arrays_d(handle, a, ev, q, error);
+    elpa_skew_eigenvectors_all_host_arrays_d(handle, a, ev, q, error);
 }
 
 inline void elpa_skew_eigenvectors(const elpa_t handle, float  *a, float  *ev, float  *q, int *error)
 {
-    elpa_eigenvectors_all_host_arrays_f(handle, a, ev, q, error);
+    elpa_skew_eigenvectors_all_host_arrays_f(handle, a, ev, q, error);
 }
 #else // ELPA version 2022.05.001, ELPA has its own c++ interface from version 2022.11.001
 inline void elpa_skew_eigenvectors(const elpa_t handle, double *a, double *ev, double *q, int *error)

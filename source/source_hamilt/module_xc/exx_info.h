@@ -21,9 +21,11 @@ struct Exx_Info
     }
 };
 
-namespace GlobalC
-{
-    extern Exx_Info exx_info;
-}
+/// Forward declaration for Input_para (full definition in input_parameter.h)
+struct Input_para;
+
+/// Initialize an Exx_Info object from input parameters.
+/// Returns true if opt_orb mode is requested (generate_opt_orb).
+bool init_exx_info(Exx_Info& exx_info, const Input_para& inp);
 
 #endif

@@ -162,15 +162,18 @@ void print_build_info()
     print_info("NEP Support", ABACUS_NEP_VERSION);
     print_info("TensorFlow Support", ABACUS_TENSORFLOW_VERSION);
 
-    // --- 11. Testing & Other Libraries ---
-    print_section("Testing & Other Libraries");
-    print_info("GTest Support", ABACUS_GTEST_VERSION);
-    print_info("Google Benchmark", ABACUS_GOOGLEBENCH_VERSION);
+    // --- 11. Other Libraries ---
+    print_section("Other Libraries");
+    print_info("DFT-D4 Support", ABACUS_DFTD4_VERSION);
     print_info("RapidJSON Support", ABACUS_RAPIDJSON_VERSION);
     print_info("PEXSI Support", ABACUS_PEXSI_VERSION);
     print_info("cnpy Support", ABACUS_CNPY_VERSION);
 
-    std::cout << "----------------------------------------------------" << std::endl;
+    // --- 12. Testing ---
+    print_section("Testing");
+    print_info("GTest Support", ABACUS_GTEST_VERSION);
+    print_info("Google Benchmark", ABACUS_GOOGLEBENCH_VERSION);
+
     std::cout << std::endl;
 }
 

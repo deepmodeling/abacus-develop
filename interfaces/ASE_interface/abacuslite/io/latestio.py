@@ -443,9 +443,6 @@ def read_abacus_out(fileobj,
 
     # read the eigenvalues (nframe, nk, nbnd)
     elecstate = read_band_from_eig_occ(fileobj.parent / 'eig_occ.txt')
-    # FIXME: remove thw following line till the eig_occ.txt is not written 
-    #        in the append mode
-    (fileobj.parent / 'eig_occ.txt').unlink()
 
     # read the atomic forces (nframe, nat, 3)
     forces = read_forces_from_running_log(abacus_lines)
@@ -701,7 +698,7 @@ class TestLatestIO(unittest.TestCase):
 
         # remove the files
         (self.testfiles / 'running_md.log').unlink()
-        # (self.testfiles / 'eig_occ.txt').unlink()
+        (self.testfiles / 'eig_occ.txt').unlink()
         (self.testfiles / 'MD_dump').unlink()
 
     def test_read_iter_header_from_running_log(self):

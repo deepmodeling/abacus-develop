@@ -32,6 +32,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 		Structure_Factor &sf,         // structure factor
 		ModuleBase::matrix &vloc,     // local pseudopotential 
 		Exx_NAO<TK> &exx_nao,
+		const Exx_Info& exx_info,
 		surchem &solvent);             // solvent model
 
 }

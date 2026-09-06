@@ -41,10 +41,10 @@ void ESolver_OF::init_opt()
     }
 
     // optimize theta if nspin=2
-    if (PARAM.inp.nspin == 2)
+    if (this->inp_->nspin == 2)
     {
         this->opt_cg_mag_ = new ModuleBase::Opt_CG;
-        this->opt_cg_mag_->allocate(PARAM.inp.nspin);
+        this->opt_cg_mag_->allocate(this->inp_->nspin);
     }
 }
 
@@ -59,7 +59,7 @@ void ESolver_OF::cal_potential_wrapper(double* ptemp_phi, double* rdLdphi)
  */
 void ESolver_OF::get_direction(UnitCell& ucell)
 {
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < this->inp_->nspin; ++is)
     {
         if (this->of_method_ == "tn")
         {
@@ -104,7 +104,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
     double kinetic_energy = 0.0;   // kinetic energy
     double pseudopot_energy = 0.0; // electron-ion interaction energy
 
-    if (PARAM.inp.nspin == 1)
+    if (this->inp_->nspin == 1)
     {
         int numDC = 0; // iteration number of line search
         strcpy(this->task_, "START");
@@ -164,16 +164,16 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
             }
         }
     }
-    else if (PARAM.inp.nspin == 2)
+    else if (this->inp_->nspin == 2)
     {
         ModuleBase::WARNING_QUIT("esolver_of", "Sorry, SPIN2 case is not supported by OFDFT for now.");
         // ========================== Under testing ==========================
         //     this->opt_cg_mag_->refresh();
 
-        //     double *pthetaDir = new double[PARAM.inp.nspin];
-        //     double *temp_theta = new double[PARAM.inp.nspin];
-        //     ModuleBase::GlobalFunc::ZEROS(pthetaDir, PARAM.inp.nspin);
-        //     ModuleBase::GlobalFunc::ZEROS(temp_theta, PARAM.inp.nspin);
+        //     double *pthetaDir = new double[this->inp_->nspin];
+        //     double *temp_theta = new double[this->inp_->nspin];
+        //     ModuleBase::GlobalFunc::ZEROS(pthetaDir, this->inp_->nspin);
+        //     ModuleBase::GlobalFunc::ZEROS(temp_theta, this->inp_->nspin);
         //     double thetaAlpha = 0.;
         //     double alphaTol = 1e-4;
         //     double maxThetaDir = 0.;
@@ -189,7 +189,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
 
         //         if (dEdalpha >= 0.)
         //         {
-        //             for (int is = 0; is < PARAM.inp.nspin; ++is)
+        //             for (int is = 0; is < this->inp_->nspin; ++is)
         //             {
         //                 pthetaDir[is] = -dEdtheta[is];
         //             }
@@ -209,7 +209,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
         //             this->pelec->f_en.calculate_etot(this->pw_rho->nrxx,
         //             if (strncmp(this->task_, "FG", 2) == 0)
         //             {
-        //                 for (int is = 0; is < PARAM.inp.nspin; ++is)
+        //                 for (int is = 0; is < this->inp_->nspin; ++is)
         //                 {
         //                     temp_theta[is] = this->theta_[is] + thetaAlpha *
         //                     pthetaDir[is]; for (int ir = 0; ir <
@@ -251,7 +251,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
         //             }
         //         }
 
-        //         for (int is = 0; is < PARAM.inp.nspin; ++is) this->theta_[is]
+        //         for (int is = 0; is < this->inp_->nspin; ++is) this->theta_[is]
         //         += thetaAlpha * pthetaDir[is]; if (sqrt(dEdtheta[0] *
         //         dEdtheta[0] + dEdtheta[1] * dEdtheta[1]) < alphaTol) break;
         //         thetaIter++;
@@ -261,7 +261,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
         //     delete[] pthetaDir;
         // ========================== Under testing ==========================
     }
-    else if (PARAM.inp.nspin == 4)
+    else if (this->inp_->nspin == 4)
     {
         ModuleBase::WARNING_QUIT("esolver_of", "Sorry, SPIN4 case is not supported by OFDFT for now.");
     }

@@ -11,15 +11,13 @@ namespace LR
         const int& nocc,
         const int& nvirt,
         const double factor,
-        const MO_TYPE type)
+        const LR_Util::MO_TYPE type)
     {
         // cxc_out_test(X_istate, c);
         ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_forloop");
         const int nks = c.get_nk();
-        const int imo1 = type == MO_TYPE::VV ? nocc : 0;
-        const int imo2 = type == MO_TYPE::OO ? 0 : nocc;
-        const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
-        const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
+        int nmo1, nmo2, imo1, imo2;
+        LR_Util::set_dim(type, nocc, nvirt, nmo1, nmo2, imo1, imo2);
 
         const int naos = c.get_nbasis();
         std::vector<container::Tensor> dm_trans(nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { naos, naos }));
@@ -51,16 +49,14 @@ namespace LR
         const int& nocc,
         const int& nvirt,
         const std::complex<double> factor,
-        const MO_TYPE type)
+        const LR_Util::MO_TYPE type)
     {
         // cxc_out_test(X_istate, c);
         ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_forloop");
         const int nks = c.get_nk();
         const int naos = c.get_nbasis();
-        const int imo1 = type == MO_TYPE::VV ? nocc : 0;
-        const int imo2 = type == MO_TYPE::OO ? 0 : nocc;
-        const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
-        const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
+        int nmo1, nmo2, imo1, imo2;
+        LR_Util::set_dim(type, nocc, nvirt, nmo1, nmo2, imo1, imo2);
         std::vector<container::Tensor> dm_trans(nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { naos, naos }));
         for (auto& dm : dm_trans)ModuleBase::GlobalFunc::ZEROS(dm.data<std::complex<double>>(), naos * naos);
         // loop for AOs
@@ -92,15 +88,13 @@ namespace LR
         const int& nocc,
         const int& nvirt,
         const double factor,
-        const MO_TYPE type)
+        const LR_Util::MO_TYPE type)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_blas");
         const int nks = c.get_nk();
         const int naos = c.get_nbasis();
-        const int imo1 = type == MO_TYPE::VV ? nocc : 0;
-        const int imo2 = type == MO_TYPE::OO ? 0 : nocc;
-        const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
-        const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
+        int nmo1, nmo2, imo1, imo2;
+        LR_Util::set_dim(type, nocc, nvirt, nmo1, nmo2, imo1, imo2);
         std::vector<container::Tensor> dm_trans(nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { naos, naos }));
         for (size_t isk = 0;isk < nks;++isk)
         {
@@ -130,15 +124,13 @@ namespace LR
         const int& nocc,
         const int& nvirt,
         const std::complex<double> factor,
-        const MO_TYPE type)
+        const LR_Util::MO_TYPE type)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_blas");
         const int nks = c.get_nk();
         const int naos = c.get_nbasis();
-        const int imo1 = type == MO_TYPE::VV ? nocc : 0;
-        const int imo2 = type == MO_TYPE::OO ? 0 : nocc;
-        const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
-        const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
+        int nmo1, nmo2, imo1, imo2;
+        LR_Util::set_dim(type, nocc, nvirt, nmo1, nmo2, imo1, imo2);
         std::vector<container::Tensor> dm_trans(nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { naos, naos }));
         for (size_t isk = 0;isk < nks;++isk)
         {

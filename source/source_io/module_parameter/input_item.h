@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/availability.h"
 namespace ModuleIO
 {
 class Input_Item
@@ -30,7 +31,7 @@ class Input_Item
         description = item.description;
         default_value = item.default_value;
         unit = item.unit;
-        availability = item.availability;
+        availability_expr_ = item.availability_expr_;
         annotation = item.annotation;
         read_value = item.read_value;
         check_value = item.check_value;
@@ -48,7 +49,22 @@ class Input_Item
     std::string description;   ///< full description (supports multi-line, lists, notes)
     std::string default_value; ///< default value as string
     std::string unit;          ///< unit of measurement (empty if none)
-    std::string availability;  ///< availability conditions (empty if always)
+    /// Set and validate the canonical availability expression. An empty value
+    /// means that the item is always available.
+    void set_availability(const std::string& value)
+    {
+        availability_expr_ = parse_availability(value);
+    }
+
+    std::string get_availability() const
+    {
+        return availability_expr_.to_string();
+    }
+
+    const AvailabilityExpr& get_availability_expr() const
+    {
+        return availability_expr_;
+    }
 
     bool is_read() const ///< check if the input item is read
     {
@@ -74,6 +90,9 @@ class Input_Item
     /// get final_value function for output INPUT file
     std::function<void(Input_Item&, const Parameter&)> get_final_value = nullptr;
     // ====== !!! Do not add any more functions here.  ======
+
+  private:
+    AvailabilityExpr availability_expr_;   ///< parsed condition tree
 };
 
 } // namespace ModuleIO
