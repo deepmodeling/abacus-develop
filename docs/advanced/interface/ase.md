@@ -105,7 +105,7 @@ Please read the examples in `interfaces/ASE_interface/examples/` for more detail
 
 ### Socket I/O with ASE
 
-For socket-driven ASE workflows, use the `AbacusSocketIO` calculator. ASE runs the i-PI socket server, while ABACUS keeps `calculation=scf` and is launched with `socket_driver=1` as the client. The protocol is simple: ASE sends atomic positions and cell data to ABACUS; ABACUS evaluates one SCF step for that structure and returns energy, forces, and virial. See the [ASE socket I/O documentation](https://ase-lib.org/ase/calculators/socketio/socketio.html) and the i-PI reference paper, [Ceriotti et al., Comput. Phys. Commun. 185, 1019-1026 (2014)](https://doi.org/10.1016/j.cpc.2013.10.027), for the protocol background.
+For socket-driven ASE workflows, use the `AbacusSocketIO` calculator. ASE runs the i-PI socket server, while ABACUS keeps `calculation=scf` and is launched with `socket_driver=1` as the client. Energy, forces, and stress are independent properties controlled by `cal_force` and `cal_stress`; the fixed i-PI wire layout still contains padding fields, while extras metadata identifies which values were actually computed. See the [ASE socket I/O documentation](https://ase-lib.org/ase/calculators/socketio/socketio.html) and the i-PI reference paper, [Ceriotti et al., Comput. Phys. Commun. 185, 1019-1026 (2014)](https://doi.org/10.1016/j.cpc.2013.10.027), for the protocol background.
 
 Build ABACUS as usual before using this interface. PW-only builds work with `basis_type=pw`; LCAO socket calculations require an LCAO-enabled executable. No extra socket library is required.
 
@@ -157,14 +157,16 @@ with abacus as calc:
     BFGS(atoms).run(fmax=0.05)
 ```
 
-`AbacusSocketIO` sets `socket_driver=1` and `cal_force=1` automatically. It also selects the socket endpoint and passes it to ABACUS through `ABACUS_SOCKET_ADDRESS`, so users normally do not set this environment variable by hand when using abacuslite.
+`AbacusSocketIO` sets `socket_driver=1` automatically. The adapter enables properties requested through ASE, restarting the client if a later request expands the active property set. Set `inp={'cal_force': 1}` and/or `inp={'cal_stress': 1}` when a fixed-cell optimizer, MD integrator, or stress evaluation client needs those properties. Energy is always available. The interface selects the socket endpoint and passes it to ABACUS through `ABACUS_SOCKET_ADDRESS`, so users normally do not set this environment variable by hand when using abacuslite.
 
 There are two endpoint styles:
 
 - `unixsocket="abacus_si"` uses a local Unix-domain socket. ASE creates and listens on `/tmp/ipi_abacus_si`; abacuslite launches ABACUS with `ABACUS_SOCKET_ADDRESS=/tmp/ipi_abacus_si:UNIX`. The `:UNIX` suffix is part of ABACUS' address syntax and means that `/tmp/ipi_abacus_si` is a filesystem socket path, not a TCP host. This is usually the best choice when ASE and ABACUS run on the same node because it avoids TCP port conflicts.
 - `port=31415` uses a TCP socket. abacuslite launches ABACUS with `ABACUS_SOCKET_ADDRESS=localhost:31415`, meaning host `localhost` and TCP port `31415`. Use this style when the socket server should listen on a TCP port. If ABACUS is launched manually instead of through `AbacusSocketIO`, set `ABACUS_SOCKET_ADDRESS` yourself to the same `host:port` or `path:UNIX` endpoint.
 
-Calling `atoms.get_potential_energy()` is supported, but the ABACUS client still computes forces because the i-PI `GETFORCE` exchange returns energy, forces, and virial as one response.
+Calling `atoms.get_potential_energy()` does not force a force or stress calculation. If a requested property was disabled, ASE raises `PropertyNotImplementedError`; zero-filled i-PI padding is never treated as a physical result. When SCF does not converge, `AbacusSocketIO.last_scf_converged` is set to `False` and the caller decides whether to continue or stop.
+
+The ABACUS metadata extension is required to expose force/stress presence safely. If a legacy client returns an empty extras field, the adapter accepts only an energy-only response and refuses to infer forces or stress from the fixed-wire padding. Generic i-PI/ASE clients that ignore ABACUS extras cannot distinguish mandatory padding from a computed zero; use `AbacusSocketIO` or another metadata-aware client when requesting optional properties. When launching ABACUS with a generic client, explicitly set `cal_force=1` for force-driven workflows and `cal_stress=1` for stress evaluation; an omitted switch defaults to disabled. Such clients also need their own policy for unconverged SCF results.
 
 A socket calculator owns one ABACUS process initialized from one fixed `INPUT`/`STRU` setup. Reuse the same `AbacusSocketIO` instance only for position updates under the same electronic-structure settings and the same cell. Do not change `kpts`, `kspacing`, `nspin`, `basis_type`, `basissets`, pseudopotentials, species, atom count, cell, or other core `INPUT`/`STRU` parameters through an existing socket calculator; create a new `AbacusSocketIO` instance and a new ABACUS client process for those changes. `AbacusSocketIO` rejects cell changes before sending them to ABACUS, and the ABACUS socket driver also checks incoming POSDATA cells against the initial `STRU` cell and exits if they differ.
 
@@ -185,3 +187,10 @@ If you use this program and method in your research, please read and cite the pu
 `Su C, Lv J, Li Q, Wang H, Zhang L, Wang Y, Ma Y. Construction of crystal structure prototype database: methods and applications. J Phys Condens Matter. 2017 Apr 26;29(16):165901.`
 
 and you should install it first with command `pip install spap`.
+
+Socket results are read directly from the completed in-memory solver frame, not
+parsed from output files. The client clears cached results and convergence
+metadata before a new request and publishes them only after validating the full
+response. A failed request therefore leaves no previous-frame result available
+in the calculator cache. This protocol guarantee does not establish SCF
+convergence or numerical agreement with independent single-point calculations.

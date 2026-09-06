@@ -321,7 +321,7 @@ TEST_F(InputTest, Item_test)
         param.input.socket_driver = true;
         param.input.cal_force = false;
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.cal_force, true);
+        EXPECT_EQ(param.input.cal_force, false);
         param.input.socket_driver = false;
     }
     { // ecutrho

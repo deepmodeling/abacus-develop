@@ -30,6 +30,7 @@ Refactored from Sun Dec 07 21:41 2025
 @author: Huang Yi-ke
 '''
 
+import json
 import os
 import re
 import shutil
@@ -594,9 +595,10 @@ class AbacusSocketIO(SocketIOCalculator):
     A socket calculator owns one ABACUS process with one fixed INPUT/STRU
     setup. The i-PI protocol can update positions, but electronic-structure
     parameters such as k-points, spin, basis, pseudopotentials, and species
-    require a new calculator instance. Energy-only ASE calls are accepted, but
-    ABACUS still computes forces because i-PI GETFORCE returns energy, forces,
-    and virial together.
+    require a new calculator instance. Energy, forces, and stress are
+    independently controlled by ABACUS INPUT. The fixed-layout i-PI response
+    uses zero padding for absent fields and an extras metadata record so
+    padding is never exposed as a computed property.
     """
 
     def __init__(self,
@@ -607,7 +609,19 @@ class AbacusSocketIO(SocketIOCalculator):
                  timeout=None,
                  log=None,
                  **kwargs):
-        inp = self._socket_inp(kwargs.pop('inp', {}))
+        inp = dict(kwargs.pop('inp', {}))
+        self._property_constraints = {}
+        for keyword, property_name in (('cal_force', 'forces'),
+                                       ('cal_stress', 'stress')):
+            if keyword in inp:
+                self._property_constraints[property_name] = self._input_bool(
+                    inp[keyword], keyword)
+        self.implemented_properties = [
+            'energy', 'free_energy', 'forces', 'stress']
+        self._active_properties = None
+        self._last_socket_metadata = None
+        self.last_scf_converged = None
+        inp = self._socket_inp(inp)
         self.abacus = Abacus(
             profile=profile,
             directory=directory,
@@ -623,19 +637,27 @@ class AbacusSocketIO(SocketIOCalculator):
             launch_client=self._launch_client,
         )
 
-    def calculate(self, atoms=None, properties=['energy'], system_changes=None):
+    def calculate(self, atoms=None, properties=None, system_changes=None):
         from ase.calculators.calculator import (
             PropertyNotImplementedError,
             all_changes,
         )
         from ase.stress import full_3x3_to_voigt_6_stress
 
+        # A failed new request must not expose results or convergence from the
+        # previous geometry. Publish only a completely validated response.
+        self.results = {}
+        self.last_scf_converged = None
+        self._last_socket_metadata = None
         if system_changes is None:
             system_changes = all_changes
         if atoms is None:
             atoms = self.atoms
         if atoms is None:
             raise ValueError('AbacusSocketIO.calculate requires atoms')
+
+        requested = self._normalize_socket_properties(properties)
+        self._check_requested_properties(requested)
 
         bad = [change for change in system_changes
                if change not in self.supported_changes]
@@ -645,6 +667,22 @@ class AbacusSocketIO(SocketIOCalculator):
                 'Please create new socket calculator.'
                 .format(bad if len(bad) > 1 else bad[0]))
 
+        desired = set(requested)
+        desired.discard('free_energy')
+        desired.add('energy')
+        for property_name, enabled in self._property_constraints.items():
+            if enabled:
+                desired.add(property_name)
+        active = set(self._active_properties or ())
+        if not active:
+            active.update(desired)
+        elif not desired.issubset(active):
+            active.update(desired)
+            if self.server is not None:
+                self._close_socket_session()
+        self._active_properties = tuple(
+            name for name in ('energy', 'forces', 'stress') if name in active)
+
         self._check_fixed_cell(atoms)
         order = self._socket_sort_indices(atoms)
         socket_atoms = atoms[order]
@@ -652,21 +690,71 @@ class AbacusSocketIO(SocketIOCalculator):
 
         if self.server is None:
             self.server = self.launch_server()
-            proc = self.launch_client(socket_atoms, properties,
+            proc = self.launch_client(socket_atoms, list(self._active_properties),
                                       port=self._port,
                                       unixsocket=self._unixsocket)
             self.server.proc = proc
 
-        results = self.server.calculate(socket_atoms)
-        results['free_energy'] = results['energy']
-        virial = results.pop('virial')
-        if self.atoms.cell.rank == 3 and any(self.atoms.pbc):
-            vol = atoms.get_volume()
-            results['stress'] = -full_3x3_to_voigt_6_stress(virial) / vol
-        if 'forces' in results:
-            results['forces'] = self._forces_to_input_order(
-                results['forces'], order)
-        self.results.update(results)
+        raw_results = self.server.calculate(socket_atoms)
+        if not isinstance(raw_results, dict):
+            raise ValueError('ABACUS socket server returned a non-mapping result')
+        results = dict(raw_results)
+        metadata = self._decode_socket_metadata(results.pop('morebytes', None))
+        if metadata is None:
+            if set(self._active_properties) != {'energy'}:
+                raise ValueError(
+                    'ABACUS socket response omitted property metadata; refusing '
+                    'to infer forces or stress from fixed-wire padding')
+            present = {'energy'}
+            converged = None
+        else:
+            present = set(metadata['present'])
+            converged = metadata['scf_converged']
+
+        if 'energy' not in present or 'energy' not in results:
+            raise ValueError('ABACUS socket response did not provide energy')
+        energy = float(results['energy'])
+        if not np.isfinite(energy):
+            raise ValueError('ABACUS socket energy is not finite')
+        free_energy = float(results.get('free_energy', energy))
+        if not np.isfinite(free_energy):
+            raise ValueError('ABACUS socket free energy is not finite')
+        current = {'energy': energy, 'free_energy': free_energy}
+
+        if 'forces' in present:
+            if 'forces' not in results:
+                raise ValueError(
+                    'ABACUS socket metadata advertises forces, but wire response omitted them')
+            forces = np.asarray(results['forces'], dtype=np.float64)
+            expected_shape = (len(socket_atoms), 3)
+            if forces.shape != expected_shape or not np.all(np.isfinite(forces)):
+                raise ValueError('ABACUS socket forces have invalid shape or values')
+            current['forces'] = self._forces_to_input_order(forces, order)
+
+        if 'stress' in present:
+            virial = results.get('virial')
+            if virial is None:
+                raise ValueError(
+                    'ABACUS socket metadata advertises stress, but wire response omitted virial')
+            if self.atoms.cell.rank != 3 or not any(self.atoms.pbc):
+                raise PropertyNotImplementedError(
+                    'ABACUS socket stress requires a periodic rank-3 cell')
+            virial = np.asarray(virial, dtype=np.float64)
+            if virial.shape != (3, 3) or not np.all(np.isfinite(virial)):
+                raise ValueError('ABACUS socket virial is not a finite 3x3 matrix')
+            vol = float(atoms.get_volume())
+            if not np.isfinite(vol) or vol <= 0.0:
+                raise ValueError('ABACUS socket stress requires a positive cell volume')
+            current['stress'] = -full_3x3_to_voigt_6_stress(virial) / vol
+
+        missing = [name for name in requested if name not in current]
+        if missing:
+            raise PropertyNotImplementedError(
+                'ABACUS socket response did not provide requested {}'.format(
+                    ', '.join(missing)))
+        self.results = current
+        self._last_socket_metadata = metadata
+        self.last_scf_converged = converged
 
     def _check_fixed_cell(self, atoms):
         from ase.calculators.calculator import PropertyNotImplementedError
@@ -693,11 +781,95 @@ class AbacusSocketIO(SocketIOCalculator):
             )
         return super().set(**kwargs)
 
+    def _check_requested_properties(self, requested):
+        from ase.calculators.calculator import PropertyNotImplementedError
+
+        constraints = self._property_constraints
+        keywords = {'forces': 'cal_force', 'stress': 'cal_stress'}
+        for property_name, keyword in keywords.items():
+            if property_name in requested and constraints.get(property_name) is False:
+                raise PropertyNotImplementedError(
+                    '{}=0 disables requested {}'.format(keyword, property_name))
+
+    @staticmethod
+    def _normalize_socket_properties(properties):
+        from ase.calculators.calculator import PropertyNotImplementedError
+
+        if properties is None:
+            names = ['energy']
+        elif isinstance(properties, str):
+            names = [properties]
+        else:
+            names = list(properties)
+        if not names:
+            names = ['energy']
+        allowed = {'energy', 'free_energy', 'forces', 'stress'}
+        unknown = [name for name in names if name not in allowed]
+        if unknown:
+            raise PropertyNotImplementedError(
+                'ABACUS socket does not implement {}'.format(', '.join(unknown)))
+        return tuple(dict.fromkeys(names))
+
+    def _close_socket_session(self):
+        server = getattr(self, 'server', None)
+        if server is not None:
+            close = getattr(server, 'close', None)
+            if callable(close):
+                close()
+        self.server = None
+        self.results = {}
+
+    @staticmethod
+    def _decode_socket_metadata(raw):
+        if raw is None:
+            return None
+        if isinstance(raw, str):
+            payload = raw.encode('utf-8')
+        elif isinstance(raw, (bytes, bytearray, memoryview)):
+            payload = bytes(raw)
+        else:
+            payload = np.asarray(raw, dtype=np.uint8).tobytes()
+        if not payload:
+            return None
+        try:
+            metadata = json.loads(payload.decode('utf-8'))
+        except (UnicodeDecodeError, ValueError) as error:
+            raise ValueError('ABACUS socket extras are not valid UTF-8 JSON') from error
+        if not isinstance(metadata, dict):
+            raise ValueError('ABACUS socket extras must be a JSON object')
+        if metadata.get('schema') != 'abacus.socket.properties.v1':
+            raise ValueError('unsupported ABACUS socket extras schema')
+        present = metadata.get('present')
+        if not isinstance(present, list):
+            raise ValueError('ABACUS socket extras present must be a list')
+        allowed = {'energy', 'forces', 'stress'}
+        if any(not isinstance(name, str) or name not in allowed for name in present):
+            raise ValueError('ABACUS socket extras contain an unknown property')
+        if 'energy' not in present:
+            raise ValueError('ABACUS socket extras must include energy')
+        scf_converged = metadata.get('scf_converged')
+        if not isinstance(scf_converged, bool):
+            raise ValueError('ABACUS socket extras scf_converged must be Boolean')
+        return {
+            'present': tuple(dict.fromkeys(present)),
+            'scf_converged': scf_converged,
+        }
+
     def _launch_client(self, atoms, properties=None, port=None, unixsocket=None):
         from subprocess import Popen
 
         if properties is None:
-            properties = self.abacus.template.implemented_properties
+            properties = list(self._active_properties or ('energy',))
+        properties = set(properties)
+        properties.discard('free_energy')
+        properties.add('energy')
+        # The i-PI response has fixed force/virial fields, but ABACUS must be
+        # told explicitly which expensive quantities to evaluate.  Keep these
+        # switches synchronized with the session mask before writing INPUT.
+        self.abacus.parameters['cal_force'] = int('forces' in properties)
+        self.abacus.parameters['cal_stress'] = int('stress' in properties)
+        properties = [name for name in ('energy', 'forces', 'stress')
+                      if name in properties]
 
         directory = Path(self.abacus.directory)
         directory.mkdir(exist_ok=True, parents=True)
@@ -727,12 +899,28 @@ class AbacusSocketIO(SocketIOCalculator):
         calculation = inp.get('calculation', 'scf')
         if calculation != 'scf':
             raise ValueError('ABACUS socket I/O requires calculation="scf"')
+        for keyword in ('cal_force', 'cal_stress'):
+            if keyword in inp:
+                inp[keyword] = int(AbacusSocketIO._input_bool(inp[keyword], keyword))
         inp.update({
             'calculation': 'scf',
             'socket_driver': 1,
-            'cal_force': 1,
         })
         return inp
+
+    @staticmethod
+    def _input_bool(value, name):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, int) and value in (0, 1):
+            return bool(value)
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in ('true', '1'):
+                return True
+            if normalized in ('false', '0'):
+                return False
+        raise ValueError('{} must be one of true, false, 1, or 0'.format(name))
 
     @staticmethod
     def _socket_sort_indices(atoms):
@@ -781,6 +969,86 @@ class TestAbacusCalculator(unittest.TestCase):
         changed.cell[0, 0] = 5.1
         with self.assertRaisesRegex(PropertyNotImplementedError, 'fixed-cell'):
             calc._check_fixed_cell(changed)
+
+    def test_socketio_input_keeps_independent_property_switches(self):
+        self.assertEqual(
+            AbacusSocketIO._socket_inp({'cal_force': 0, 'cal_stress': 1}),
+            {'calculation': 'scf', 'socket_driver': 1,
+             'cal_force': 0, 'cal_stress': 1})
+
+    def test_socketio_boolean_parser_rejects_ambiguous_values(self):
+        for value in ('yes', 'no', 'on', 'off', ''):
+            with self.assertRaisesRegex(ValueError, 'cal_force'):
+                AbacusSocketIO._input_bool(value, 'cal_force')
+
+    def test_socketio_metadata_rejects_unknown_property(self):
+        metadata = json.dumps({
+            'schema': 'abacus.socket.properties.v1',
+            'present': ['energy', 'charges'],
+            'scf_converged': True,
+        }).encode('utf-8')
+        with self.assertRaisesRegex(ValueError, 'unknown property'):
+            AbacusSocketIO._decode_socket_metadata(
+                np.frombuffer(metadata, dtype=np.int8))
+
+    def test_socketio_metadata_marks_padding_absent(self):
+        metadata = json.dumps({
+            'schema': 'abacus.socket.properties.v1',
+            'present': ['energy'],
+            'scf_converged': False,
+        }).encode('utf-8')
+        decoded = AbacusSocketIO._decode_socket_metadata(
+            np.frombuffer(metadata, dtype=np.int8))
+        self.assertEqual(decoded['present'], ('energy',))
+        self.assertFalse(decoded['scf_converged'])
+
+    def test_socketio_legacy_response_cannot_infer_force_from_padding(self):
+        class LegacyServer:
+            def calculate(self, atoms):
+                return {
+                    'energy': 1.0,
+                    'forces': np.zeros((len(atoms), 3)),
+                    'virial': np.zeros((3, 3)),
+                    'morebytes': b'',
+                }
+
+        calc = object.__new__(AbacusSocketIO)
+        calc.variable_cell = False
+        calc._property_constraints = {}
+        calc._active_properties = ('energy', 'forces')
+        calc._reference_cell = None
+        calc.atoms = None
+        calc.server = LegacyServer()
+        atoms = Atoms('Si')
+        with self.assertRaisesRegex(ValueError, 'refusing to infer forces'):
+            calc.calculate(atoms=atoms, properties=('forces',), system_changes=())
+
+    def test_socketio_failed_response_clears_previous_frame(self):
+        class BrokenServer:
+            def calculate(self, atoms):
+                raise EOFError('incomplete frame')
+
+        calc = object.__new__(AbacusSocketIO)
+        calc._property_constraints = {}
+        calc._active_properties = ('energy',)
+        calc._reference_cell = None
+        calc.atoms = None
+        calc.results = {'energy': 123.0}
+        calc.last_scf_converged = True
+        calc._last_socket_metadata = {'scf_converged': True}
+        calc.server = BrokenServer()
+        with self.assertRaises(EOFError):
+            calc.calculate(Atoms('Si'), properties=('energy',), system_changes=())
+        self.assertEqual(calc.results, {})
+        self.assertIsNone(calc.last_scf_converged)
+        self.assertIsNone(calc._last_socket_metadata)
+
+    def test_socketio_requested_disabled_property_is_rejected(self):
+        calc = object.__new__(AbacusSocketIO)
+        calc._property_constraints = {'forces': False, 'stress': False}
+        from ase.calculators.calculator import PropertyNotImplementedError
+        with self.assertRaises(PropertyNotImplementedError):
+            calc._check_requested_properties(('forces',))
 
     def test_parse_version_allows_launcher_noise(self):
         stdout = 'launcher info\nABACUS version v3.11.0-beta6\n'
