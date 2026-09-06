@@ -430,6 +430,31 @@ TEST_P(DiagoElpaNativeUpperTest, PreservesInputsAndIgnoresLowerTriangle)
 }
 
 INSTANTIATE_TEST_SUITE_P(BlockSizes, DiagoElpaNativeUpperTest, ::testing::Values(1, 2, 3));
+
+TEST(DiagoElpaComplexTest, UsesAuthoritativeUpperTriangle)
+{
+    std::stringstream out_info;
+    DiagoPrepare<std::complex<double>> dp(0, 0, 1, 0, "genelpa", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat");
+    ASSERT_TRUE(dp.produce_HS());
+
+    if (dp.myrank == 0)
+    {
+        dp.diago_lapack();
+        for (int row = 1; row < dp.nlocal; ++row)
+        {
+            for (int col = 0; col < row; ++col)
+            {
+                dp.h[row * dp.nlocal + col] = std::complex<double>(17.0 + row + col, -13.0);
+            }
+        }
+    }
+
+    dp.diago();
+    if (dp.myrank == 0)
+    {
+        EXPECT_TRUE(dp.compare_eigen(out_info)) << out_info.str();
+    }
+}
 #endif
 
 int main(int argc, char** argv)
