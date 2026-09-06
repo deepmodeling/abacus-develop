@@ -6,6 +6,7 @@
 #include "source_lcao/module_ri/sternheimer_fd_hamiltonian.h"
 
 #include <complex>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -22,6 +23,8 @@ struct SternheimerRadialPerturbation
     std::string label;
     std::vector<double> radial_grid;
     std::vector<double> radial_values;
+    bool continue_coulomb_tail = false;
+    double coulomb_tail_coefficient = std::numeric_limits<double>::quiet_NaN();
 };
 
 struct SternheimerABFGridChannel
@@ -61,6 +64,10 @@ struct SternheimerCoulombProjectionDiagnostic
 
 std::vector<std::vector<SternheimerRadialPerturbation>> make_sternheimer_radial_perturbations_from_orbitals(
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orbitals);
+
+// Set the exterior r^(-l-1) coefficient from the finalized compact auxiliary charge.
+void set_sternheimer_coulomb_tail_from_charge(SternheimerRadialPerturbation& potential,
+                                              const Numerical_Orbital_Lm& charge);
 
 std::vector<SternheimerABFGridChannel> describe_sternheimer_abf_grid_channels(
     const std::vector<std::vector<SternheimerRadialPerturbation>>& radials_by_type,

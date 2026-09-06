@@ -1,6 +1,7 @@
 #include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
 
 #include "source_base/constants.h"
+#include "source_base/math_integral.h"
 #include "source_base/math_ylmreal.h"
 
 #include <algorithm>
@@ -172,6 +173,39 @@ void validate_radial(const ModuleRI::SternheimerRadialPerturbation& radial)
 namespace ModuleRI
 {
 
+void set_sternheimer_coulomb_tail_from_charge(SternheimerRadialPerturbation& potential,
+                                              const Numerical_Orbital_Lm& charge)
+{
+    validate_radial(potential);
+    if (charge.getNr() < 3 || charge.getNr() % 2 == 0 || charge.getL() != potential.angular_momentum
+        || charge.getType() != potential.type_index || charge.getChi() != potential.radial_index
+        || charge.get_r_radial().back() > potential.radial_grid.back() + 1.e-12 || potential.radial_grid.back() <= 0.0)
+    {
+        throw std::invalid_argument("Coulomb tail requires a matching compact charge within the potential table.");
+    }
+    std::vector<double> integrand(charge.getNr());
+    for (int ir = 0; ir < charge.getNr(); ++ir)
+    {
+        const double radius = charge.getRadial(ir);
+        if (!std::isfinite(radius) || radius < 0.0 || !std::isfinite(charge.getPsi(ir))
+            || !std::isfinite(charge.getRab(ir)) || charge.getRab(ir) <= 0.0
+            || (ir > 0 && radius <= charge.getRadial(ir - 1)))
+        {
+            throw std::invalid_argument("Invalid auxiliary charge radial quadrature for Coulomb tail.");
+        }
+        integrand[ir] = charge.getPsi(ir) * std::pow(radius, charge.getL() + 2);
+    }
+    double moment = 0.0;
+    ModuleBase::Integral::Simpson_Integral(charge.getNr(), integrand.data(), charge.get_rab().data(), moment);
+    const double coefficient = ModuleBase::FOUR_PI * moment / (2 * charge.getL() + 1);
+    if (!std::isfinite(coefficient))
+    {
+        throw std::invalid_argument("Nonfinite auxiliary Coulomb multipole moment.");
+    }
+    potential.coulomb_tail_coefficient = coefficient;
+    potential.continue_coulomb_tail = true;
+}
+
 std::vector<std::vector<SternheimerRadialPerturbation>> make_sternheimer_radial_perturbations_from_orbitals(
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orbitals)
 {
@@ -274,6 +308,13 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
         for (const SternheimerRadialPerturbation& radial: radials_by_type[type])
         {
             validate_radial(radial);
+            if (radial.continue_coulomb_tail
+                && (grid.periodic || radial.radial_grid.back() <= 0.0
+                    || !std::isfinite(radial.coulomb_tail_coefficient)))
+            {
+                throw std::invalid_argument(
+                    "Coulomb multipole tails require an isolated grid and a charge-derived coefficient.");
+            }
             for (int m_index = 0; m_index != 2 * radial.angular_momentum + 1; ++m_index)
             {
                 if (max_channels > 0 && static_cast<int>(channels.size()) >= max_channels)
@@ -327,14 +368,19 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
                                             const double dy = displacement[1] - translation[1];
                                             const double dz = displacement[2] - translation[2];
                                             const double radius = std::sqrt(dx * dx + dy * dy + dz * dz);
-                                            if (radius > cutoff)
+                                            if (radius > cutoff && !radial.continue_coulomb_tail)
                                             {
                                                 continue;
                                             }
                                             evaluate_real_spherical_harmonics(radial.angular_momentum, dx, dy, dz, ylm);
-                                            const double radial_angular_value
-                                                = interpolate_radial(radial.radial_grid, radial.radial_values, radius)
-                                                  * ylm[ylm_index];
+                                            // Outside a compact charge, the isolated l-channel potential is r^(-l-1).
+                                            const double radial_value
+                                                = radius > cutoff ? radial.coulomb_tail_coefficient
+                                                                        / std::pow(radius, radial.angular_momentum + 1)
+                                                                  : interpolate_radial(radial.radial_grid,
+                                                                                       radial.radial_values,
+                                                                                       radius);
+                                            const double radial_angular_value = radial_value * ylm[ylm_index];
                                             const std::complex<double> phase = sternheimer_bloch_phase(qpoint, image);
                                             channel.potential_r[ir] += phase * radial_angular_value;
                                         }

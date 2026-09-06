@@ -9,6 +9,130 @@
 
 namespace ModuleRI
 {
+SternheimerAOPotentials read_sternheimer_ao_potentials(const std::string& path, const int nao, const int naux)
+{
+    std::ifstream input(path);
+    std::string magic, units, extra;
+    int version = 0, file_nao = 0, file_naux = 0;
+    if (!(input >> magic >> version >> file_nao >> file_naux >> units) || magic != "ABACUS_STERNHEIMER_AO_POTENTIALS"
+        || version != 1 || units != "Gamma_Hartree" || nao <= 0 || naux <= 0 || file_nao != nao || file_naux != naux)
+    {
+        throw std::runtime_error("Analytic AO potential header or dimensions differ.");
+    }
+    SternheimerAOPotentials result;
+    result.nao = nao;
+    result.naux = naux;
+    const std::size_t block = static_cast<std::size_t>(nao) * nao;
+    if (block > std::numeric_limits<std::size_t>::max() / static_cast<std::size_t>(naux))
+    {
+        throw std::runtime_error("Analytic AO potential dimensions overflow.");
+    }
+    result.values.resize(block * naux);
+    for (auto& value: result.values)
+    {
+        double re = 0., im = 0.;
+        if (!(input >> re >> im) || !std::isfinite(re) || !std::isfinite(im))
+        {
+            throw std::runtime_error("Incomplete or non-finite analytic AO potentials.");
+        }
+        value = {re, im};
+    }
+    if (input >> extra)
+    {
+        throw std::runtime_error("Trailing data in analytic AO potentials.");
+    }
+    double error = 0., norm = 0.;
+    for (int mu = 0; mu < naux; ++mu)
+    {
+        for (int p = 0; p < nao; ++p)
+        {
+            for (int q = 0; q < nao; ++q)
+            {
+                const auto value = result.values[mu * block + p * nao + q];
+                error += std::norm(value - std::conj(result.values[mu * block + q * nao + p]));
+                norm += std::norm(value);
+            }
+        }
+    }
+    if (norm == 0. || !std::isfinite(norm) || std::sqrt(error / norm) > 1.e-10)
+    {
+        throw std::runtime_error("Analytic AO potential matrices are not Hermitian.");
+    }
+    return result;
+}
+
+SternheimerPerturbationTensor contract_sternheimer_ao_potentials(
+    const SternheimerAOPotentials& potentials,
+    const std::vector<std::vector<std::complex<double>>>& occupied_coefficients,
+    const std::vector<std::vector<std::complex<double>>>& virtual_coefficients)
+{
+    const int nao = potentials.nao;
+    const std::size_t block = static_cast<std::size_t>(nao) * nao;
+    if (nao <= 0 || potentials.naux <= 0 || potentials.values.size() != block * potentials.naux)
+    {
+        throw std::invalid_argument("Invalid analytic AO potential dimensions.");
+    }
+    for (const auto* coefficients: {&occupied_coefficients, &virtual_coefficients})
+    {
+        for (const auto& state: *coefficients)
+        {
+            if (state.size() != static_cast<std::size_t>(nao))
+            {
+                throw std::invalid_argument("Analytic AO coefficient dimensions differ.");
+            }
+        }
+    }
+    SternheimerPerturbationTensor tensor(static_cast<int>(occupied_coefficients.size()),
+                                         static_cast<int>(virtual_coefficients.size()),
+                                         potentials.naux);
+    for (int i = 0; i < tensor.occupied; ++i)
+    {
+        for (int mu = 0; mu < tensor.auxiliaries; ++mu)
+        {
+            std::vector<std::complex<double>> image(nao, 0.);
+            for (int p = 0; p < nao; ++p)
+            {
+                for (int q = 0; q < nao; ++q)
+                {
+                    image[p] += potentials.values[mu * block + p * nao + q] * occupied_coefficients[i][q];
+                }
+            }
+            for (int a = 0; a < tensor.virtuals; ++a)
+            {
+                for (int p = 0; p < nao; ++p)
+                {
+                    tensor.at(i, a, mu) += std::conj(virtual_coefficients[a][p]) * image[p];
+                }
+            }
+        }
+    }
+    return tensor;
+}
+
+void accumulate_sternheimer_analytic_ao_column(const SternheimerPerturbationTensor& couplings_ha,
+                                               const int occupied_index,
+                                               const std::vector<std::complex<double>>& response_coefficients,
+                                               const double occupation,
+                                               const int channel,
+                                               std::vector<std::complex<double>>& branch)
+{
+    const int naux = couplings_ha.auxiliaries;
+    if (response_coefficients.size() != static_cast<std::size_t>(couplings_ha.virtuals)
+        || branch.size() != static_cast<std::size_t>(naux) * naux || channel < 0 || channel >= naux)
+    {
+        throw std::invalid_argument("Analytic AO response projection dimensions differ.");
+    }
+    for (int mu = 0; mu < naux; ++mu)
+    {
+        std::complex<double> value = 0.;
+        for (int a = 0; a < couplings_ha.virtuals; ++a)
+        {
+            value += std::conj(couplings_ha.at(occupied_index, a, mu)) * response_coefficients[a];
+        }
+        branch[static_cast<std::size_t>(mu) * naux + channel] += occupation * value;
+    }
+}
+
 namespace
 {
 

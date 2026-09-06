@@ -103,7 +103,7 @@ if(TARGET abacus_greenx_minimax)
 endif()
 AddTest(
   TARGET MODULE_RI_sternheimer_runtime_options_test
-  LIBS ${math_libs}
+  LIBS parameter base ${math_libs} device
   SOURCES sternheimer_runtime_options_test.cpp ../sternheimer_runtime_options.cpp
 )
 AddTest(
@@ -156,7 +156,7 @@ AddTest(
 AddTest(
   TARGET MODULE_RI_sternheimer_grid_diagnostics_test
   LIBS ${STERNHEIMER_RPA_TEST_LIBS}
-  SOURCES sternheimer_grid_diagnostics_test.cpp ../sternheimer_grid_diagnostics.cpp ../sternheimer_delta.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_preconditioner.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_rpa.cpp ../../../source_base/module_external/blas_connector_matrix.cpp
+  SOURCES sternheimer_grid_diagnostics_test.cpp ../sternheimer_grid_diagnostics.cpp ../sternheimer_delta.cpp ../sternheimer_kq.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_preconditioner.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_rpa.cpp ../../../source_base/module_external/blas_connector_matrix.cpp
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_dft_zero_order_test
@@ -206,6 +206,13 @@ AddTest(
   TARGET MODULE_RI_sternheimer_abfs_perturbation_test
   LIBS parameter base ${math_libs} device container
   SOURCES sternheimer_abfs_perturbation_test.cpp ../sternheimer_abfs_perturbation.cpp ../sternheimer_kq.cpp
+)
+AddTest(
+  TARGET MODULE_RI_sternheimer_coulomb_tail_test
+  LIBS parameter base ${math_libs} device container
+  SOURCES sternheimer_coulomb_tail_test.cpp ../sternheimer_abfs_perturbation.cpp
+          ../sternheimer_kq.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp
+          ../conv_coulomb_pot_k.cpp ../../../source_basis/module_ao/ORB_atomic_lm.cpp
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_abacus_st_smoke_test

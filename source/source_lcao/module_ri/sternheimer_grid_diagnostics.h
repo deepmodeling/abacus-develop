@@ -44,6 +44,28 @@ struct SternheimerLocalPerturbationTensor
     std::vector<int> row_counts;
 };
 
+struct SternheimerAOPotentials
+{
+    int nao = 0;
+    int naux = 0;
+    // Channel-major, row-major AO matrices in Hartree.
+    std::vector<std::complex<double>> values;
+};
+
+SternheimerAOPotentials read_sternheimer_ao_potentials(const std::string& path, int nao, int naux);
+
+SternheimerPerturbationTensor contract_sternheimer_ao_potentials(
+    const SternheimerAOPotentials& potentials,
+    const std::vector<std::vector<std::complex<double>>>& occupied_coefficients,
+    const std::vector<std::vector<std::complex<double>>>& virtual_coefficients);
+
+void accumulate_sternheimer_analytic_ao_column(const SternheimerPerturbationTensor& couplings_ha,
+                                               int occupied_index,
+                                               const std::vector<std::complex<double>>& response_coefficients,
+                                               double occupation,
+                                               int channel,
+                                               std::vector<std::complex<double>>& branch);
+
 SternheimerLocalPerturbationTensor build_local_delta_perturbation_tensor(
     const std::vector<SternheimerDeltaGridFunction>& virtual_functions,
     const std::vector<std::vector<double>>& perturbation_potentials,

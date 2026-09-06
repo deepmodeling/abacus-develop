@@ -1247,6 +1247,53 @@ SternheimerABFBuildData build_abfs_ccp_data(const UnitCell& ucell,
     const auto abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(abfs, make_fock_hartree_coulomb_param(), ccp_rmesh_times);
     auto radials_by_type = make_sternheimer_radial_perturbations_from_orbitals(abfs_ccp);
 
+    SternheimerFDHamiltonian::Grid potential_grid = grid;
+    if (PARAM.inp.sternheimer_molecular_coulomb == "isolated_ri")
+    {
+        if (build_coulomb_metric)
+        {
+            throw std::invalid_argument("isolated_ri cannot be combined with SIAB metric construction.");
+        }
+        // Only the perturbation is isolated; the FD Hamiltonian keeps its existing boundary condition.
+        potential_grid.periodic = false;
+        std::ofstream audit;
+        if (GlobalV::MY_RANK == 0)
+        {
+            audit.open("STERNHEIMER_COULOMB_TAIL.dat");
+            if (!audit)
+            {
+                throw std::runtime_error("Cannot write the molecular Coulomb-tail audit.");
+            }
+            audit << "# type l radial_index radius_bohr endpoint_Ha charge_moment_coefficient "
+                     "endpoint_extrapolated_coefficient\n"
+                  << std::setprecision(17);
+        }
+        for (auto& type_radials: radials_by_type)
+        {
+            for (auto& radial: type_radials)
+            {
+                const auto& charges = abfs.at(radial.type_index).at(radial.angular_momentum);
+                const auto charge = std::find_if(charges.begin(), charges.end(), [&](const Numerical_Orbital_Lm& orb) {
+                    return orb.getChi() == radial.radial_index;
+                });
+                if (charge == charges.end())
+                {
+                    throw std::runtime_error("Cannot match the Coulomb potential to its finalized auxiliary charge.");
+                }
+                set_sternheimer_coulomb_tail_from_charge(radial, *charge);
+                if (GlobalV::MY_RANK == 0)
+                {
+                    audit << radial.type_index << ' ' << radial.angular_momentum << ' ' << radial.radial_index << ' '
+                          << radial.radial_grid.back() << ' ' << radial.radial_values.back() << ' '
+                          << radial.coulomb_tail_coefficient << ' '
+                          << radial.radial_values.back()
+                                 * std::pow(radial.radial_grid.back(), radial.angular_momentum + 1)
+                          << '\n';
+                }
+            }
+        }
+    }
+
     std::vector<int> atom_types;
     std::vector<ModuleBase::Vector3<double>> atom_positions;
     atom_types.reserve(ucell.nat);
@@ -1266,16 +1313,15 @@ SternheimerABFBuildData build_abfs_ccp_data(const UnitCell& ucell,
     result.atom_types = std::move(atom_types);
     result.atom_positions = std::move(atom_positions);
     result.preorth_report = preorth_report;
-    result.channels = build_coulomb_metric
-                          ? describe_sternheimer_abf_grid_channels(result.radials_by_type,
-                                                                   result.atom_types,
-                                                                   result.atom_positions,
-                                                                   max_channels)
-                          : sample_sternheimer_abf_grid_channels(result.radials_by_type,
-                                                                 result.atom_types,
-                                                                 result.atom_positions,
-                                                                 grid,
-                                                                 max_channels);
+    result.channels = build_coulomb_metric ? describe_sternheimer_abf_grid_channels(result.radials_by_type,
+                                                                                    result.atom_types,
+                                                                                    result.atom_positions,
+                                                                                    max_channels)
+                                           : sample_sternheimer_abf_grid_channels(result.radials_by_type,
+                                                                                  result.atom_types,
+                                                                                  result.atom_positions,
+                                                                                  potential_grid,
+                                                                                  max_channels);
     if (build_coulomb_metric)
     {
         if (max_channels > 0)
@@ -4863,6 +4909,22 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         }
 
         const bool use_lcao_zero_order = lcao_occupied_kpoints != nullptr;
+        const std::string analytic_ao_path = PARAM.inp.sternheimer_ao_potential_file;
+        const bool use_analytic_ao = validate_sternheimer_molecular_coulomb(PARAM.inp);
+        if (std::getenv("ABACUS_STERNHEIMER_ANALYTIC_AO_POTENTIALS") != nullptr
+            || sternheimer_environment_flag("ABACUS_STERNHEIMER_MOLECULAR_COULOMB_TAIL", false))
+        {
+            throw std::invalid_argument(
+                "Use the explicit sternheimer_molecular_coulomb and "
+                "sternheimer_ao_potential_file inputs instead of experimental environment flags.");
+        }
+        if (use_analytic_ao
+            && (!use_lcao_zero_order
+                || (!GlobalC::exx_info.info_ri.files_abfs.empty() && PARAM.inp.exx_pca_threshold < 1.0)))
+        {
+            throw std::invalid_argument("isolated_ri requires LCAO states and either product-PCA ABFS or "
+                                        "external-only ABFS (exx_pca_threshold >= 1), not a mixed basis.");
+        }
         if ((lcao_orbitals == nullptr) != (lcao_occupied_kpoints == nullptr))
         {
             throw std::runtime_error("Sternheimer LCAO zero-order input is incomplete.");
@@ -5008,6 +5070,10 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         const bool use_frequency_grid_file = !frequency_grid_file.empty();
         const bool use_delta_sternheimer = PARAM.inp.sternheimer_delta;
         const int channel_batch_width = use_delta_sternheimer ? sternheimer_channel_batch_width() : 1;
+        if (use_analytic_ao && pca_threshold != PARAM.inp.exx_pca_threshold)
+        {
+            throw std::invalid_argument("isolated_ri cannot override the producer auxiliary-basis PCA threshold.");
+        }
         const SternheimerDeltaABlockMode delta_a_block_mode = delta_a_block_mode_from_env();
         if (use_lcao_zero_order)
         {
@@ -5270,7 +5336,16 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
             }
         }
 
+        SternheimerAOPotentials analytic_ao_potentials;
+        if (use_analytic_ao)
+        {
+            analytic_ao_potentials = read_sternheimer_ao_potentials(analytic_ao_path,
+                                                                    static_cast<int>(sampled_ao_functions.size()),
+                                                                    num_channels);
+        }
         const std::size_t response_count = response_kpoints.size();
+        std::vector<SternheimerPerturbationTensor> analytic_ao_tensors(response_count);
+        double analytic_ao_max_reconstruction_error = 0.0;
         std::vector<SternheimerFDHamiltonian> hamiltonians;
         std::vector<SternheimerFDZeroOrderStates> states_by_response(response_count);
         std::vector<std::vector<SternheimerDeltaGridFunction>> lcao_projector_functions_by_response(response_count);
@@ -5487,6 +5562,45 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                 if (delta_subspaces[response_index].virtual_states.empty())
                 {
                     throw std::runtime_error("Sternheimer delta mode produced no fixed virtual states.");
+                }
+                if (use_analytic_ao)
+                {
+                    std::vector<const SternheimerFDHamiltonian::Vector*> ao_states;
+                    const auto& wavefunctions = states_by_response[response_index].wavefunctions;
+                    for (const auto& state: wavefunctions)
+                    {
+                        ao_states.push_back(&state);
+                    }
+                    for (const auto& state: delta_subspaces[response_index].virtual_states)
+                    {
+                        ao_states.push_back(&state.orbital);
+                    }
+                    double reconstruction_error = 0.;
+                    double gram_reciprocal_condition = 0.;
+                    const auto coordinates = recover_delta_grid_ao_coefficients(sampled_ao_functions,
+                                                                                ao_states,
+                                                                                grid_data.volume_element,
+                                                                                1.e-8,
+                                                                                reconstruction_error,
+                                                                                &gram_reciprocal_condition);
+                    analytic_ao_max_reconstruction_error
+                        = std::max(analytic_ao_max_reconstruction_error, reconstruction_error);
+                    const std::vector<std::vector<SternheimerFDHamiltonian::Complex>> occupied_coordinates(
+                        coordinates.begin(),
+                        coordinates.begin() + wavefunctions.size());
+                    const std::vector<std::vector<SternheimerFDHamiltonian::Complex>> virtual_coordinates(
+                        coordinates.begin() + wavefunctions.size(),
+                        coordinates.end());
+                    analytic_ao_tensors[response_index] = contract_sternheimer_ao_potentials(analytic_ao_potentials,
+                                                                                             occupied_coordinates,
+                                                                                             virtual_coordinates);
+                    if (GlobalV::MY_RANK == 0)
+                    {
+                        out << "analytic_ao_source " << analytic_ao_path << '\n';
+                        out << "analytic_ao_reconstruction_error " << reconstruction_error << '\n';
+                        out << "analytic_ao_gram_reciprocal_condition " << gram_reciprocal_condition << '\n';
+                        out << "analytic_ao_coupling_unit Hartree\n";
+                    }
                 }
                 delta_fixed_subspaces[response_index]
                     = build_delta_sternheimer_fixed_subspace(occupied_projector_by_response[response_index],
@@ -5725,20 +5839,38 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                         result.equation_residual_norm = equation_residual_norm;
                         if (write_grid_diagnostics && delta_response != nullptr)
                         {
-                            SternheimerRPA::accumulate_chi0_branch_column(potentials,
-                                                                          states.wavefunctions[ib],
-                                                                          delta_response->in_sos_wavefunction,
-                                                                          grid_data.volume_element,
+                            if (use_analytic_ao)
+                            {
+                                accumulate_sternheimer_analytic_ao_column(analytic_ao_tensors[response_index],
+                                                                          ib,
+                                                                          delta_response->sos_coefficients,
                                                                           occupation,
                                                                           ichannel,
                                                                           *chi0_sos_branch);
-                            SternheimerRPA::accumulate_chi0_branch_column(potentials,
-                                                                          states.wavefunctions[ib],
-                                                                          delta_response->in_pulay_wavefunction,
-                                                                          grid_data.volume_element,
+                                accumulate_sternheimer_analytic_ao_column(analytic_ao_tensors[response_index],
+                                                                          ib,
+                                                                          delta_response->pulay_coefficients,
                                                                           occupation,
                                                                           ichannel,
                                                                           *chi0_pulay_branch);
+                            }
+                            else
+                            {
+                                SternheimerRPA::accumulate_chi0_branch_column(potentials,
+                                                                              states.wavefunctions[ib],
+                                                                              delta_response->in_sos_wavefunction,
+                                                                              grid_data.volume_element,
+                                                                              occupation,
+                                                                              ichannel,
+                                                                              *chi0_sos_branch);
+                                SternheimerRPA::accumulate_chi0_branch_column(potentials,
+                                                                              states.wavefunctions[ib],
+                                                                              delta_response->in_pulay_wavefunction,
+                                                                              grid_data.volume_element,
+                                                                              occupation,
+                                                                              ichannel,
+                                                                              *chi0_pulay_branch);
+                            }
                             SternheimerRPA::accumulate_chi0_branch_column(potentials,
                                                                           states.wavefunctions[ib],
                                                                           delta_response->out_wavefunction,
@@ -5769,15 +5901,55 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                         }
                         if (write_librpa)
                         {
-                            SternheimerRPA::accumulate_chi0_branch_column(potentials,
-                                                                          states.wavefunctions[ib],
-                                                                          delta_wavefunction,
-                                                                          grid_data.volume_element,
+                            if (use_analytic_ao)
+                            {
+                                if (delta_response == nullptr)
+                                {
+                                    throw std::runtime_error("Missing analytic AO Delta response.");
+                                }
+                                accumulate_sternheimer_analytic_ao_column(analytic_ao_tensors[response_index],
+                                                                          ib,
+                                                                          delta_response->coefficients,
                                                                           occupation,
                                                                           ichannel,
                                                                           *chi0_branch);
+                                SternheimerRPA::accumulate_chi0_branch_column(potentials,
+                                                                              states.wavefunctions[ib],
+                                                                              delta_response->out_wavefunction,
+                                                                              grid_data.volume_element,
+                                                                              occupation,
+                                                                              ichannel,
+                                                                              *chi0_branch);
+                            }
+                            else
+                            {
+                                SternheimerRPA::accumulate_chi0_branch_column(potentials,
+                                                                              states.wavefunctions[ib],
+                                                                              delta_wavefunction,
+                                                                              grid_data.volume_element,
+                                                                              occupation,
+                                                                              ichannel,
+                                                                              *chi0_branch);
+                            }
                         }
                         return result;
+                    };
+
+                    const auto get_delta_couplings = [&](const int ichannel, const std::vector<double>& perturbation) {
+                        if (!use_analytic_ao)
+                        {
+                            return delta_sternheimer_perturbation_matrix_elements(delta_subspace.virtual_states,
+                                                                                  perturbation,
+                                                                                  states.wavefunctions[ib],
+                                                                                  grid_data.volume_element);
+                        }
+                        const auto& tensor = analytic_ao_tensors[response_index];
+                        std::vector<SternheimerFDHamiltonian::Complex> couplings(tensor.virtuals);
+                        for (int a = 0; a < tensor.virtuals; ++a)
+                        {
+                            couplings[a] = kHartreeToRydberg * tensor.at(ib, a, ichannel);
+                        }
+                        return couplings;
                     };
 
                     std::vector<ChannelEquationResult> channel_results;
@@ -5795,11 +5967,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                 if (use_delta_sternheimer)
                                 {
                                     const auto perturbation_matrix_elements
-                                        = delta_sternheimer_perturbation_matrix_elements(
-                                            delta_subspace.virtual_states,
-                                            perturbations_ry[channel_index],
-                                            states.wavefunctions[ib],
-                                            grid_data.volume_element);
+                                        = get_delta_couplings(ichannel, perturbations_ry[channel_index]);
                                     const SternheimerDeltaLinearResponse response
                                         = solve_delta_sternheimer_linear_response(hamiltonian,
                                                                                   delta_fixed_subspace,
@@ -5856,11 +6024,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                             states.wavefunctions[ib],
                                             rhs_batch[static_cast<std::size_t>(offset)]);
                                         perturbation_matrix_elements[static_cast<std::size_t>(offset)]
-                                            = delta_sternheimer_perturbation_matrix_elements(
-                                                delta_subspace.virtual_states,
-                                                perturbations_ry[channel_index],
-                                                states.wavefunctions[ib],
-                                                grid_data.volume_element);
+                                            = get_delta_couplings(ichannel, perturbations_ry[channel_index]);
                                     }
                                     const std::vector<SternheimerDeltaLinearResponse> responses
                                         = solve_delta_sternheimer_linear_response_batch(hamiltonian,
@@ -6213,6 +6377,16 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         out << "solver_tolerance " << solver_tolerance << '\n';
         out << "sternheimer_zero_order_source " << (use_lcao_zero_order ? "lcao_ks" : "fd_grid") << '\n';
         out << "sternheimer_lcao_virtual_source " << (use_lcao_zero_order ? "ks_bands" : "none") << '\n';
+        out << "analytic_ao_coupling " << (use_analytic_ao ? "yes" : "no") << '\n';
+        out << "sternheimer_molecular_coulomb " << PARAM.inp.sternheimer_molecular_coulomb << '\n';
+        out << "molecular_coulomb_tail " << (use_analytic_ao ? "isolated_charge_multipole" : "none") << '\n';
+        if (use_analytic_ao)
+        {
+            out << "analytic_ao_reconstruction_max_relative_error " << analytic_ao_max_reconstruction_error << '\n';
+            out << "analytic_ao_contract rhs_and_left_projection\n";
+            out << "analytic_ao_qspace re_solved_grid_rhs\n";
+            out << "analytic_ao_residual hybrid_ao_qspace_equations\n";
+        }
         out << "sternheimer_lcao_unoccupied_bands_per_spin";
         for (const SternheimerDeltaSubspace& delta_subspace: delta_subspaces)
         {

@@ -1469,6 +1469,271 @@ TEST(SternheimerDelta, StrictIndependentDeltaHamiltonianMatchesExplicitHybridBlo
     EXPECT_NEAR(result.response.coefficients[0].imag(), expected_eta_coefficient.imag(), 1.0e-9);
 }
 
+TEST(SternheimerDelta, IndependentAOCouplingsMatchPatchedFullGridScalarAndBatch)
+{
+    using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
+    Hamiltonian::Grid grid{5, 1, 1, 0.6, 1.0, 1.0, true};
+    constexpr double dv = 0.6;
+    const Hamiltonian hamiltonian(grid, {0.1, -0.05, 0.2, -0.1, 0.05});
+    const auto states = ModuleRI::solve_sternheimer_fd_zero_order_dense(hamiltonian, 5, dv);
+    Vector candidate = states.wavefunctions[2];
+    for (std::size_t r = 0; r != candidate.size(); ++r)
+    {
+        candidate[r] += Complex(0.25, -0.1) * states.wavefunctions[3][r];
+    }
+    ModuleRI::SternheimerDeltaSubspaceOptions subspace_options;
+    subspace_options.max_virtual_states = 1;
+    const auto subspace = ModuleRI::build_delta_sternheimer_subspace(hamiltonian,
+                                                                     {states.wavefunctions[0]},
+                                                                     {candidate},
+                                                                     dv,
+                                                                     subspace_options);
+    const auto& eta = subspace.virtual_states[0].orbital;
+    const auto fixed
+        = ModuleRI::build_delta_sternheimer_fixed_subspace({states.wavefunctions[0]}, subspace.virtual_states);
+    const std::vector<std::vector<double>> potentials = {{0.7, -0.3, 0.2, 0.5, -0.4}, {-0.2, 0.4, 0.8, -0.1, 0.3}};
+    Hamiltonian::Matrix rhs(2), patched_rhs(2);
+    std::vector<std::vector<Complex>> couplings(2);
+    for (std::size_t channel = 0; channel != rhs.size(); ++channel)
+    {
+        ModuleRI::SternheimerRPA::build_rhs_from_hartree_perturbation(potentials[channel],
+                                                                      states.wavefunctions[0],
+                                                                      rhs[channel]);
+        couplings[channel] = ModuleRI::delta_sternheimer_perturbation_matrix_elements(subspace.virtual_states,
+                                                                                      potentials[channel],
+                                                                                      states.wavefunctions[0],
+                                                                                      dv);
+        const Complex change(0.12 * (channel + 1), -0.07);
+        couplings[channel][0] += change;
+        patched_rhs[channel] = rhs[channel];
+        for (std::size_t r = 0; r != eta.size(); ++r)
+        {
+            patched_rhs[channel][r] -= change * eta[r];
+        }
+    }
+    ModuleRI::SternheimerRPA::SolverOptions options;
+    options.max_iter = 100;
+    options.residual_tol = 1e-12;
+    constexpr double omega = 0.45;
+    const auto batch = ModuleRI::solve_delta_sternheimer_linear_response_batch(hamiltonian,
+                                                                               fixed,
+                                                                               states.eigenvalues[0],
+                                                                               rhs,
+                                                                               subspace.virtual_states,
+                                                                               couplings,
+                                                                               omega,
+                                                                               dv,
+                                                                               options);
+    for (std::size_t channel = 0; channel != rhs.size(); ++channel)
+    {
+        const auto standard = ModuleRI::solve_sternheimer_fd_linear_response(hamiltonian,
+                                                                             {states.wavefunctions[0]},
+                                                                             states.eigenvalues[0],
+                                                                             patched_rhs[channel],
+                                                                             omega,
+                                                                             dv,
+                                                                             options);
+        const auto scalar = ModuleRI::solve_delta_sternheimer_linear_response(hamiltonian,
+                                                                              fixed,
+                                                                              states.eigenvalues[0],
+                                                                              rhs[channel],
+                                                                              subspace.virtual_states,
+                                                                              couplings[channel],
+                                                                              omega,
+                                                                              dv,
+                                                                              options);
+        ASSERT_TRUE(standard.solver.converged);
+        for (const auto* result: {&scalar, &batch[channel]})
+        {
+            ASSERT_TRUE(result->solver.converged);
+            EXPECT_LT(result->residual_norm, 1e-9);
+            expect_vector_near(result->response.reconstructed_wavefunction, standard.delta_wavefunction, 1e-9);
+            for (std::size_t left = 0; left != rhs.size(); ++left)
+            {
+                const Complex block_projection
+                    = std::conj(couplings[left][0]) * result->response.coefficients[0]
+                      - ModuleRI::sternheimer_fd_grid_dot(rhs[left], result->response.out_wavefunction, dv);
+                const Complex full_projection
+                    = -ModuleRI::sternheimer_fd_grid_dot(patched_rhs[left], standard.delta_wavefunction, dv);
+                EXPECT_NEAR(std::abs(block_projection - full_projection), 0.0, 1e-9);
+            }
+        }
+    }
+}
+
+TEST(SternheimerDelta, ComplexMultiVirtualResponseMatchesIndependentHybridBlock)
+{
+    using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
+    Hamiltonian::Grid grid{5, 1, 1, 0.6, 1.0, 1.0, true};
+    constexpr double dv = 0.6;
+    const Hamiltonian hamiltonian(grid, {0.1, -0.05, 0.2, -0.1, 0.05});
+    const auto states = ModuleRI::solve_sternheimer_fd_zero_order_dense(hamiltonian, 5, dv);
+    const auto dot
+        = [](const Vector& lhs, const Vector& rhs) { return ModuleRI::sternheimer_fd_grid_dot(lhs, rhs, dv); };
+    const auto rotate = [](Vector& first, Vector& second, double angle, double phase_angle) {
+        const Vector original_first = first;
+        const Vector original_second = second;
+        const Complex phase = std::exp(Complex(0.0, phase_angle));
+        for (std::size_t r = 0; r != first.size(); ++r)
+        {
+            first[r] = std::cos(angle) * original_first[r] + std::sin(angle) * phase * original_second[r];
+            second[r] = -std::sin(angle) * std::conj(phase) * original_first[r] + std::cos(angle) * original_second[r];
+        }
+    };
+    // Two AO directions and their orthogonal grid complement span all unoccupied states.
+    std::vector<Vector> basis
+        = {states.wavefunctions[1], states.wavefunctions[2], states.wavefunctions[3], states.wavefunctions[4]};
+    rotate(basis[0], basis[2], 0.41, 0.37);
+    rotate(basis[1], basis[3], 0.33, -0.47);
+    rotate(basis[0], basis[1], 0.29, 0.53);
+    rotate(basis[2], basis[3], 0.32, -0.61);
+    std::vector<Vector> h_basis(4);
+    for (int a = 0; a != 4; ++a)
+    {
+        hamiltonian.apply(basis[a], h_basis[a]);
+        for (int b = 0; b != 4; ++b)
+        {
+            EXPECT_NEAR(std::abs(dot(basis[b], basis[a]) - Complex(a == b ? 1.0 : 0.0)), 0.0, 1.e-12);
+        }
+    }
+    std::vector<ModuleRI::SternheimerDeltaVirtualState> virtuals;
+    for (int a = 0; a != 2; ++a)
+    {
+        Vector residual(grid.size(), 0.0);
+        for (int q = 2; q != 4; ++q)
+        {
+            const Complex coupling = dot(basis[q], h_basis[a]);
+            for (std::size_t r = 0; r != residual.size(); ++r)
+            {
+                residual[r] += coupling * basis[q][r];
+            }
+        }
+        const double ao_energy = dot(basis[a], h_basis[a]).real() + (a == 0 ? 0.37 : -0.28);
+        virtuals.push_back({basis[a], residual, ao_energy});
+    }
+    const auto fixed = ModuleRI::build_delta_sternheimer_fixed_subspace({states.wavefunctions[0]}, virtuals);
+    const std::vector<std::vector<double>> potentials_ry = {{0.7, -0.3, 0.2, 0.5, -0.4}, {-0.2, 0.4, 0.8, -0.1, 0.3}};
+    const std::vector<Vector> couplings_ha
+        = {{Complex(0.17, -0.13), Complex(-0.09, 0.21)}, {Complex(-0.11, 0.08), Complex(0.23, 0.16)}};
+    Hamiltonian::Matrix rhs(2), couplings_ry = couplings_ha;
+    for (int channel = 0; channel != 2; ++channel)
+    {
+        ModuleRI::SternheimerRPA::build_rhs_from_hartree_perturbation(potentials_ry[channel],
+                                                                      states.wavefunctions[0],
+                                                                      rhs[channel]);
+        for (int a = 0; a != 2; ++a)
+        {
+            couplings_ry[channel][a] *= 2.0;
+            EXPECT_GT(std::abs(couplings_ry[channel][a] + dot(basis[a], rhs[channel])), 1.e-3);
+        }
+    }
+    ModuleRI::SternheimerRPA::SolverOptions options;
+    options.max_iter = 100;
+    options.residual_tol = 1.e-12;
+    for (const double omega: {0.45, -0.45})
+    {
+        const auto batch = ModuleRI::solve_delta_sternheimer_linear_response_batch(hamiltonian,
+                                                                                   fixed,
+                                                                                   states.eigenvalues[0],
+                                                                                   rhs,
+                                                                                   virtuals,
+                                                                                   couplings_ry,
+                                                                                   omega,
+                                                                                   dv,
+                                                                                   options);
+        ASSERT_EQ(batch.size(), rhs.size());
+        for (int channel = 0; channel != 2; ++channel)
+        {
+            // Assemble and solve the full 4x4 hybrid equation independently of the Schur solver.
+            std::vector<Vector> matrix(4, Vector(4));
+            Vector expected(4);
+            for (int row = 0; row != 4; ++row)
+            {
+                expected[row] = row < 2 ? -couplings_ry[channel][row] : dot(basis[row], rhs[channel]);
+                for (int col = 0; col != 4; ++col)
+                {
+                    matrix[row][col] = row < 2 && col < 2 ? Complex(row == col ? virtuals[row].eigenvalue : 0.0)
+                                                          : dot(basis[row], h_basis[col]);
+                    if (row == col)
+                    {
+                        matrix[row][col] += Complex(-states.eigenvalues[0], omega);
+                    }
+                }
+            }
+            for (int col = 0; col != 4; ++col)
+            {
+                int pivot = col;
+                for (int row = col + 1; row != 4; ++row)
+                {
+                    if (std::abs(matrix[row][col]) > std::abs(matrix[pivot][col]))
+                    {
+                        pivot = row;
+                    }
+                }
+                ASSERT_GT(std::abs(matrix[pivot][col]), 1.e-12);
+                std::swap(matrix[col], matrix[pivot]);
+                std::swap(expected[col], expected[pivot]);
+                const Complex diagonal = matrix[col][col];
+                for (int j = col; j != 4; ++j)
+                {
+                    matrix[col][j] /= diagonal;
+                }
+                expected[col] /= diagonal;
+                for (int row = 0; row != 4; ++row)
+                {
+                    if (row == col)
+                    {
+                        continue;
+                    }
+                    const Complex factor = matrix[row][col];
+                    for (int j = col; j != 4; ++j)
+                    {
+                        matrix[row][j] -= factor * matrix[col][j];
+                    }
+                    expected[row] -= factor * expected[col];
+                }
+            }
+            Vector expected_out(grid.size(), 0.0), expected_total(grid.size(), 0.0);
+            for (std::size_t r = 0; r != expected_total.size(); ++r)
+            {
+                expected_out[r] = expected[2] * basis[2][r] + expected[3] * basis[3][r];
+                expected_total[r] = expected_out[r] + expected[0] * basis[0][r] + expected[1] * basis[1][r];
+            }
+            const auto scalar = ModuleRI::solve_delta_sternheimer_linear_response(hamiltonian,
+                                                                                  fixed,
+                                                                                  states.eigenvalues[0],
+                                                                                  rhs[channel],
+                                                                                  virtuals,
+                                                                                  couplings_ry[channel],
+                                                                                  omega,
+                                                                                  dv,
+                                                                                  options);
+            for (const auto* result: {&scalar, &batch[channel]})
+            {
+                ASSERT_TRUE(result->solver.converged);
+                EXPECT_LT(result->residual_norm, 1.e-9);
+                expect_vector_near(result->response.out_wavefunction, expected_out, 1.e-9);
+                expect_vector_near(result->response.reconstructed_wavefunction, expected_total, 1.e-9);
+                for (int a = 0; a != 2; ++a)
+                {
+                    EXPECT_NEAR(std::abs(result->response.coefficients[a] - expected[a]), 0.0, 1.e-9);
+                }
+                for (int left = 0; left != 2; ++left)
+                {
+                    Complex actual_left = -0.5 * dot(rhs[left], result->response.out_wavefunction);
+                    Complex expected_left = -0.5 * dot(rhs[left], expected_out);
+                    for (int a = 0; a != 2; ++a)
+                    {
+                        actual_left += std::conj(couplings_ha[left][a]) * result->response.coefficients[a];
+                        expected_left += std::conj(couplings_ha[left][a]) * expected[a];
+                    }
+                    EXPECT_NEAR(std::abs(actual_left - expected_left), 0.0, 1.e-9);
+                }
+            }
+        }
+    }
+}
+
 TEST(SternheimerDelta, ComplexQPerturbationMatrixElementsMatchGridIntegral)
 {
     ModuleRI::SternheimerDeltaVirtualState eta0;

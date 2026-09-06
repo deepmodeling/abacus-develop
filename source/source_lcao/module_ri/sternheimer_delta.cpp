@@ -1322,6 +1322,135 @@ std::vector<std::array<int, 3>> enumerate_delta_sternheimer_periodic_images(
     return images;
 }
 
+std::vector<std::vector<Complex>> recover_delta_grid_ao_coefficients(
+    const std::vector<SternheimerDeltaGridFunction>& basis,
+    const std::vector<const Vector*>& states,
+    const double volume_element,
+    const double reconstruction_tolerance,
+    double& maximum_relative_error,
+    double* gram_reciprocal_condition)
+{
+    if (basis.empty() || states.empty() || !std::isfinite(volume_element) || volume_element <= 0.
+        || !std::isfinite(reconstruction_tolerance) || reconstruction_tolerance <= 0.)
+    {
+        throw std::invalid_argument("Invalid AO coordinate reconstruction request.");
+    }
+    const int nao = static_cast<int>(basis.size());
+    const int nstates = static_cast<int>(states.size());
+    const std::size_t grid_size = basis.front().values.size();
+    if (grid_size == 0)
+    {
+        throw std::invalid_argument("Empty AO reconstruction grid.");
+    }
+    for (const auto& function: basis)
+    {
+        if (function.values.size() != grid_size)
+        {
+            throw std::invalid_argument("AO reconstruction grid dimensions differ.");
+        }
+    }
+    for (const auto* state: states)
+    {
+        if (state == nullptr || state->size() != grid_size)
+        {
+            throw std::invalid_argument("AO reconstruction state dimensions differ.");
+        }
+    }
+    std::vector<Complex> gram(basis.size() * basis.size(), 0.);
+    accumulate_grid_component_product(basis, -1, basis, -1, nullptr, Complex(volume_element, 0.), gram);
+    for (const auto value: gram)
+    {
+        if (!std::isfinite(value.real()) || !std::isfinite(value.imag()))
+        {
+            throw std::runtime_error("Non-finite sampled AO Gram matrix.");
+        }
+    }
+    // A small wavefunction residual cannot bound coordinates in a nearly null AO direction.
+    auto gram_eigenvectors = gram;
+    const auto gram_eigenvalues = diagonalize_complex_hermitian(gram_eigenvectors, nao);
+    const double reciprocal_condition = gram_eigenvalues.front() / gram_eigenvalues.back();
+    if (!std::isfinite(reciprocal_condition) || gram_eigenvalues.back() <= 0. || reciprocal_condition < 1.e-8)
+    {
+        throw std::runtime_error("Sampled AO Gram matrix is ill-conditioned (rcond < 1e-8); "
+                                 "refine the grid or remove near-dependent orbitals.");
+    }
+    if (gram_reciprocal_condition != nullptr)
+    {
+        *gram_reciprocal_condition = reciprocal_condition;
+    }
+    std::vector<Complex> coordinates(basis.size() * states.size(), 0.);
+    std::vector<Complex> packed_basis, packed_states;
+    for (std::size_t begin = 0; begin < grid_size; begin += delta_grid_block_size)
+    {
+        const int count = static_cast<int>(std::min(delta_grid_block_size, grid_size - begin));
+        pack_grid_function_component(basis, -1, begin, count, packed_basis);
+        pack_vector_component(states, begin, count, packed_states);
+        BlasConnector::gemm_cm('C',
+                               'N',
+                               nao,
+                               nstates,
+                               count,
+                               Complex(volume_element, 0.),
+                               packed_basis.data(),
+                               count,
+                               packed_states.data(),
+                               count,
+                               Complex(1., 0.),
+                               coordinates.data(),
+                               nao);
+    }
+    std::vector<int> pivots(basis.size());
+    int info = 0;
+    zgesv_(&nao, &nstates, gram.data(), &nao, pivots.data(), coordinates.data(), &nao, &info);
+    if (info != 0)
+    {
+        throw std::runtime_error("AO coordinate reconstruction Gram solve failed.");
+    }
+    std::vector<double> errors(states.size(), 0.), norms(states.size(), 0.);
+    for (std::size_t begin = 0; begin < grid_size; begin += delta_grid_block_size)
+    {
+        const int count = static_cast<int>(std::min(delta_grid_block_size, grid_size - begin));
+        pack_grid_function_component(basis, -1, begin, count, packed_basis);
+        pack_vector_component(states, begin, count, packed_states);
+        std::vector<Complex> reconstructed(static_cast<std::size_t>(count) * states.size());
+        BlasConnector::gemm_cm('N',
+                               'N',
+                               count,
+                               nstates,
+                               nao,
+                               Complex(1., 0.),
+                               packed_basis.data(),
+                               count,
+                               coordinates.data(),
+                               nao,
+                               Complex(0., 0.),
+                               reconstructed.data(),
+                               count);
+        for (int state = 0; state < nstates; ++state)
+        {
+            for (int ir = 0; ir < count; ++ir)
+            {
+                const std::size_t index = static_cast<std::size_t>(state) * count + ir;
+                errors[state] += std::norm(reconstructed[index] - packed_states[index]);
+                norms[state] += std::norm(packed_states[index]);
+            }
+        }
+    }
+    maximum_relative_error = 0.;
+    std::vector<std::vector<Complex>> result(states.size());
+    for (int state = 0; state < nstates; ++state)
+    {
+        const double error = std::sqrt(errors[state] / norms[state]);
+        if (!std::isfinite(error) || error > reconstruction_tolerance)
+        {
+            throw std::runtime_error("Delta state cannot be reconstructed in the supplied AO span.");
+        }
+        maximum_relative_error = std::max(maximum_relative_error, error);
+        result[state].assign(coordinates.begin() + state * nao, coordinates.begin() + (state + 1) * nao);
+    }
+    return result;
+}
+
 SternheimerDeltaCoefficientComponents solve_delta_sternheimer_subspace_coefficients(
     const std::vector<SternheimerFDHamiltonian::Complex>& hamiltonian_matrix,
     const std::vector<SternheimerFDHamiltonian::Complex>& overlap_matrix,
@@ -2176,10 +2305,9 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
     {
         const Complex delta_block(virtual_states[ia].eigenvalue - reference_eigenvalue, omega);
-        const Complex eta_residual
-            = delta_block * result.response.coefficients[ia]
-              + dot(virtual_states[ia].residual, result.response.out_wavefunction)
-              - dot(virtual_states[ia].orbital, rhs);
+        const Complex eta_residual = delta_block * result.response.coefficients[ia]
+                                     + dot(virtual_states[ia].residual, result.response.out_wavefunction)
+                                     + perturbation_matrix_elements[ia];
         residual_norm_squared += std::norm(eta_residual);
     }
     result.residual_norm = std::sqrt(residual_norm_squared);
@@ -2403,10 +2531,9 @@ std::vector<SternheimerDeltaLinearResponse> solve_delta_sternheimer_linear_respo
         for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
         {
             const Complex delta_block(virtual_states[ia].eigenvalue - reference_eigenvalue, omega);
-            const Complex eta_residual
-                = delta_block * results[column].response.coefficients[ia]
-                  + dot(virtual_states[ia].residual, results[column].response.out_wavefunction)
-                  - dot(virtual_states[ia].orbital, rhs[column]);
+            const Complex eta_residual = delta_block * results[column].response.coefficients[ia]
+                                         + dot(virtual_states[ia].residual, results[column].response.out_wavefunction)
+                                         + perturbation_matrix_elements[column][ia];
             residual_norm_squared += std::norm(eta_residual);
         }
         results[column].residual_norm = std::sqrt(residual_norm_squared);

@@ -23,6 +23,126 @@ std::string read_text_file(const std::string& path)
 
 } // namespace
 
+TEST(SternheimerGridDiagnostics, AnalyticAOCouplingsUseRecoveredNonorthogonalCoordinates)
+{
+    ModuleRI::SternheimerDeltaGridFunction a, b;
+    a.values = {1., 0., 0.};
+    b.values = {Complex(0.3, 0.2), 2., 0.};
+    for (int direction = 0; direction < 3; ++direction)
+    {
+        a.gradients[direction].assign(3, 0.);
+        b.gradients[direction].assign(3, 0.);
+    }
+    const std::vector<ModuleRI::SternheimerDeltaGridFunction> basis = {a, b};
+    const std::vector<Complex> ci = {Complex(0.7, 0.1), Complex(-0.2, 0.3)};
+    const std::vector<Complex> ca = {Complex(-0.1, 0.4), Complex(0.6, -0.2)};
+    const auto psi = ModuleRI::linear_combination_delta_sternheimer_grid_functions(basis, ci);
+    const auto eta = ModuleRI::linear_combination_delta_sternheimer_grid_functions(basis, ca);
+    double error = -1.;
+    const auto coordinates
+        = ModuleRI::recover_delta_grid_ao_coefficients(basis, {&psi.values, &eta.values}, 0.4, 1.e-10, error);
+    EXPECT_LT(error, 1.e-12);
+    for (int p = 0; p < 2; ++p)
+    {
+        EXPECT_NEAR(std::abs(coordinates[0][p] - ci[p]), 0., 1.e-12);
+        EXPECT_NEAR(std::abs(coordinates[1][p] - ca[p]), 0., 1.e-12);
+    }
+    const std::string path = "STERNHEIMER_ANALYTIC_AO_TEST.dat";
+    {
+        std::ofstream out(path);
+        out << "ABACUS_STERNHEIMER_AO_POTENTIALS 1 2 1 Gamma_Hartree\n"
+               "2 0\n0.3 0.4\n0.3 -0.4\n-1 0\n";
+    }
+    const auto matrices = ModuleRI::read_sternheimer_ao_potentials(path, 2, 1);
+    const auto tensor = ModuleRI::contract_sternheimer_ao_potentials(matrices, {coordinates[0]}, {coordinates[1]});
+    const Complex expected = std::conj(ca[0]) * (2. * ci[0] + Complex(0.3, 0.4) * ci[1])
+                             + std::conj(ca[1]) * (Complex(0.3, -0.4) * ci[0] - ci[1]);
+    EXPECT_NEAR(std::abs(tensor.at(0, 0, 0) - expected), 0., 1.e-12);
+    std::vector<Complex> branch(1, 0.);
+    ModuleRI::accumulate_sternheimer_analytic_ao_column(tensor, 0, {Complex(0.2, -0.1)}, 2., 0, branch);
+    EXPECT_NEAR(std::abs(branch[0] - 2. * std::conj(expected) * Complex(0.2, -0.1)), 0., 1.e-12);
+    EXPECT_THROW(ModuleRI::read_sternheimer_ao_potentials(path, 3, 1), std::runtime_error);
+    const std::vector<Complex> outside = {0., 0., 1.};
+    EXPECT_THROW(ModuleRI::recover_delta_grid_ao_coefficients(basis, {&outside}, 0.4, 1.e-10, error),
+                 std::runtime_error);
+    std::remove(path.c_str());
+}
+
+TEST(SternheimerGridDiagnostics, AnalyticAOCoordinatesRejectIllConditionedSampledBasis)
+{
+    ModuleRI::SternheimerDeltaGridFunction a, b;
+    a.values = {1., 0.};
+    b.values = {1., 1.e-7};
+    const std::vector<Complex> state = {2., 1.e-7};
+    double error = -1.;
+    // Tiny reconstruction error alone does not bound the AO coefficient error.
+    EXPECT_THROW(ModuleRI::recover_delta_grid_ao_coefficients({a, b}, {&state}, 1., 1.e-8, error), std::runtime_error);
+}
+
+TEST(SternheimerGridDiagnostics, AnalyticAOPotentialReaderRejectsMalformedData)
+{
+    const std::string path = "STERNHEIMER_ANALYTIC_AO_BAD.dat";
+    for (const std::string& data:
+         {"2 0\n0.3 0.4\n0.3 0.4\n-1 0\n", "nan 0\n0 0\n0 0\n1 0\n", "1 0\n0 0\n0 0\n", "1 0\n0 0\n0 0\n1 0\nextra\n"})
+    {
+        std::ofstream out(path);
+        out << "ABACUS_STERNHEIMER_AO_POTENTIALS 1 2 1 Gamma_Hartree\n" << data;
+        out.close();
+        EXPECT_THROW(ModuleRI::read_sternheimer_ao_potentials(path, 2, 1), std::runtime_error);
+    }
+    std::remove(path.c_str());
+}
+
+TEST(SternheimerGridDiagnostics, MultiChannelAnalyticAOProjectionMatchesDirectComplexContraction)
+{
+    ModuleRI::SternheimerAOPotentials potentials;
+    potentials.nao = 2;
+    potentials.naux = 2;
+    potentials.values
+        = {2.0, Complex(0.3, 0.4), Complex(0.3, -0.4), -1.0, -0.7, Complex(-0.2, 0.5), Complex(-0.2, -0.5), 1.3};
+    const std::vector<std::vector<Complex>> occupied
+        = {{Complex(0.7, 0.1), Complex(-0.2, 0.3)}, {Complex(0.2, -0.4), Complex(0.5, 0.1)}};
+    const std::vector<std::vector<Complex>> virtuals
+        = {{Complex(-0.1, 0.4), Complex(0.6, -0.2)}, {Complex(0.3, 0.2), Complex(-0.2, 0.5)}};
+    const std::vector<double> occupations = {2.0, 0.7};
+    const auto tensor = ModuleRI::contract_sternheimer_ao_potentials(potentials, occupied, virtuals);
+    std::vector<Complex> branch(4, Complex(0.13, -0.07));
+    std::vector<Complex> expected = branch;
+    for (int channel = 0; channel != 2; ++channel)
+    {
+        for (int i = 0; i != 2; ++i)
+        {
+            const std::vector<Complex> response
+                = {Complex(0.2 * (channel + 1), -0.1 * (i + 1)), Complex(-0.3 * (i + 1), 0.15 * (channel + 1))};
+            ModuleRI::accumulate_sternheimer_analytic_ao_column(tensor, i, response, occupations[i], channel, branch);
+            for (int mu = 0; mu != 2; ++mu)
+            {
+                for (int a = 0; a != 2; ++a)
+                {
+                    for (int p = 0; p != 2; ++p)
+                    {
+                        for (int q = 0; q != 2; ++q)
+                        {
+                            expected[mu * 2 + channel] += occupations[i] * virtuals[a][p]
+                                                          * std::conj(potentials.values[mu * 4 + p * 2 + q])
+                                                          * std::conj(occupied[i][q]) * response[a];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for (std::size_t index = 0; index != branch.size(); ++index)
+    {
+        EXPECT_NEAR(std::abs(branch[index] - expected[index]), 0.0, 1.e-12);
+    }
+    EXPECT_THROW(ModuleRI::contract_sternheimer_ao_potentials(potentials, {{1.0}}, virtuals), std::invalid_argument);
+    EXPECT_THROW(ModuleRI::accumulate_sternheimer_analytic_ao_column(tensor, 0, {1.0}, 2.0, 0, branch),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::accumulate_sternheimer_analytic_ao_column(tensor, 0, {1.0, 1.0}, 2.0, 2, branch),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerGridDiagnostics, MeasuresResponseComponentReconstruction)
 {
     const std::vector<Complex> sos = {Complex(1.0, 0.5), Complex(-0.5, 0.25)};
