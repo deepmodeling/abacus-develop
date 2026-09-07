@@ -1,8 +1,6 @@
 #include "source_base/global_variable.h"
 
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <streambuf>
@@ -45,15 +43,15 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
 {
     // Global variables 
     GlobalV::KPAR = 1;
-    PARAM.input.nbands = 4;
-    PARAM.sys.nbands_l = 4;
-    PARAM.input.nspin = 1;
-    PARAM.sys.global_out_dir = "./";
+    PARAM.input_for_test().nbands = 4;
+    PARAM.sys_for_test().nbands_l = 4;
+    PARAM.input_for_test().nspin = 1;
+    PARAM.sys_for_test().global_out_dir = "./";
 
     // MPI setting
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
-                                PARAM.input.bndpar,
+                                PARAM.inp.bndpar,
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_BNDGROUP,
                                 GlobalV::RANK_IN_BPGROUP,
@@ -66,7 +64,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     kv->set_nkstot(nkstot_init);
     int nkstot = kv->get_nkstot();
     kv->para_k.kinfo(nkstot, GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::RANK_IN_POOL, 
-    GlobalV::NPROC_IN_POOL, PARAM.input.nspin);
+    GlobalV::NPROC_IN_POOL, PARAM.inp.nspin);
     kv->set_nks(kv->para_k.nks_pool[GlobalV::MY_POOL]);
 
     // The number of plane waves for each k point
@@ -79,8 +77,8 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     }
 
     // Initialize the number of bands
-    ekb.create(kv->get_nks(), PARAM.input.nbands);
-    wg.create(kv->get_nks(), PARAM.input.nbands);
+    ekb.create(kv->get_nks(), PARAM.inp.nbands);
+    wg.create(kv->get_nks(), PARAM.inp.nbands);
 
     // fill the eigenvalues
     ekb.fill_out(0.15);

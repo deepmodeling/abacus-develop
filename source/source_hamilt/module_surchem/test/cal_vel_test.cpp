@@ -12,9 +12,7 @@
 #include <iostream>
 
 // Include parameter.h with private access for testing
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
 /************************************************
  *  unit test of functions in cal_vel.cpp
  ***********************************************/
@@ -138,7 +136,7 @@ TEST_F(cal_vel_test, eps_pot)
 
     for (int ir = 0; ir < nrxx; ir++)
     {
-        eprime[ir] = eprime[ir] * (PARAM.input.eb_k - 1);
+        eprime[ir] = eprime[ir] * (PARAM.inp.eb_k - 1);
     }
 
     ModuleBase::Vector3<double>* nabla_phi = new ModuleBase::Vector3<double>[nrxx];

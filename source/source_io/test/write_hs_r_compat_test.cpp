@@ -1,9 +1,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
 
 #include "source_base/global_variable.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -256,12 +254,12 @@ void fill_matrix_at_R(hamilt::HContainer<T>& matrix,
 void init_sparse_output_globals(const int nspin = 1)
 {
     GlobalV::DRANK = 0;
-    PARAM.input.nspin = nspin;
-    PARAM.input.calculation = "scf";
-    PARAM.input.out_app_flag = false;
-    PARAM.sys.global_out_dir = "./";
-    PARAM.sys.global_matrix_dir = "./";
-    PARAM.sys.nlocal = 2;
+    PARAM.input_for_test().nspin = nspin;
+    PARAM.input_for_test().calculation = "scf";
+    PARAM.input_for_test().out_app_flag = false;
+    PARAM.sys_for_test().global_out_dir = "./";
+    PARAM.sys_for_test().global_matrix_dir = "./";
+    PARAM.sys_for_test().nlocal = 2;
 }
 
 void remove_derivative_files(const std::string& fileflag)
@@ -629,8 +627,8 @@ TEST(WriteHsRCompatibility, LegacySparseHeaderKeepsStepStyle)
     std::remove(filename.c_str());
 
     GlobalV::DRANK = 0;
-    PARAM.sys.global_out_dir = "./";
-    PARAM.sys.nlocal = 99;
+    PARAM.sys_for_test().global_out_dir = "./";
+    PARAM.sys_for_test().nlocal = 99;
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -666,7 +664,7 @@ TEST(WriteHsRCompatibility, LegacySparseTextCountsOnlyValuesAboveThreshold)
     std::remove(filename.c_str());
 
     GlobalV::DRANK = 0;
-    PARAM.sys.global_out_dir = "./";
+    PARAM.sys_for_test().global_out_dir = "./";
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -733,8 +731,8 @@ TEST(WriteHsRCompatibility, LegacySparseBinaryHeaderWritesConcreteStep)
     std::remove(filename.c_str());
 
     GlobalV::DRANK = 0;
-    PARAM.sys.global_out_dir = "./";
-    PARAM.sys.nlocal = 99;
+    PARAM.sys_for_test().global_out_dir = "./";
+    PARAM.sys_for_test().nlocal = 99;
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -767,7 +765,7 @@ TEST(WriteHsRCompatibility, LegacySparseBinaryCountsOnlyValuesAboveThreshold)
     std::remove(filename.c_str());
 
     GlobalV::DRANK = 0;
-    PARAM.sys.global_out_dir = "./";
+    PARAM.sys_for_test().global_out_dir = "./";
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
