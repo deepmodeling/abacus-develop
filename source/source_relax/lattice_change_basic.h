@@ -1,7 +1,6 @@
 #ifndef LATTICE_CHANGE_BASIC_H
 #define LATTICE_CHANGE_BASIC_H
 
-#include "relax_criteria.h"
 #include <fstream>
 #include <vector>
 #include "relax_data.h"
