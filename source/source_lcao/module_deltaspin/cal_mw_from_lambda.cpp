@@ -128,16 +128,6 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
         }
         // Diagonalization without updating charge density (last param = true means skip charge update)
         hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->state_.nspin_, true);
-        elecstate::calculate_weights(this->pelec->ekb,
-                                     this->pelec->wg,
-                                     this->pelec->klist,
-                                     this->pelec->eferm,
-                                     this->pelec->f_en,
-                                     this->pelec->nelec_spin,
-                                     PARAM.inp.nbands,
-                                     this->pelec->skip_weights);
-        elecstate::calEBand(this->pelec->ekb,this->pelec->wg,this->pelec->f_en);
-
         // Note: although update_lambda() modifies lambda in-place above,
         // solve() unconditionally recomputes DM and DMR (via cal_dm_psi +
         // cal_DMR) from the psi obtained by diagonalizing with the new
