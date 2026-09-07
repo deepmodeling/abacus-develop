@@ -19,6 +19,14 @@ class Charge;
 
 namespace XC_Functional_Libxc
 {
+    struct LibxcWeightedDerivatives
+    {
+        double energy_sum;
+        std::vector<double> drho;
+        std::vector<double> dsigma;
+    };
+
+
 //-------------------
 //  libxc_setup.cpp
 //-------------------
@@ -136,6 +144,20 @@ namespace XC_Functional_Libxc
         const std::vector<double> &sgn,
         const std::vector<double> &rho,
         std::vector<double> exc);
+
+    // Reverse the density and sigma sanitizers for the weighted energy
+    // accumulated by ABACUS. The result is in Hartree units and excludes the
+    // real-space grid weight and ModuleBase::e2.
+    extern LibxcWeightedDerivatives make_libxc_weighted_derivatives(
+        const xc_func_type &func,
+        const int nspin,
+        const std::size_t nrxx,
+        const std::vector<double> &sgn,
+        const std::vector<double> &rho,
+        const std::vector<double> &sigma,
+        const std::vector<double> &exc,
+        const std::vector<double> &vrho,
+        const std::vector<double> &vsigma);
 
     // converting vtxc and v from vrho and vsigma (libxc=>abacus)
     extern std::pair<double, ModuleBase::matrix> convert_vtxc_v(
