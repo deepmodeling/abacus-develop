@@ -105,6 +105,31 @@ Please read the examples in `interfaces/ASE_interface/examples/` for more detail
 
 ### Socket I/O with ASE
 
+#### When to use socket mode
+
+`AbacusSocketIO` is designed for a sequence of electronic-structure
+evaluations in which the atomic positions change while the simulation context
+remains fixed. Reuse one socket calculator only when the cell and periodic
+boundary conditions, atom count and species, pseudopotentials and orbitals,
+k-point sampling, spin settings, and other electronic-structure parameters do
+not change. The socket session can then keep one ABACUS process alive and
+receive successive position updates.
+
+This pattern is suitable for fixed-cell ASE optimization and molecular
+dynamics, fixed-cell NEB (use an independent calculator/session for each image),
+finite-displacement phonon or ASE finite-difference frequency calculations,
+position-only P-RFO or transition-state searches, and repeated fixed-cell
+force evaluations in larger workflows such as thermal-property or active-
+learning data generation. These workflows can use the socket calculator only
+when their driver calls the ASE calculator interface; the existing Phonopy,
+ShengBTE, DP-GEN, or transition-state tools are not automatically converted
+to socket workflows by installing abacuslite.
+
+Use the regular `Abacus` FileIO calculator when the cell, composition, or
+electronic-structure settings must change. Direct DFPT or dynamical-matrix
+calculations, and external workflows that require properties beyond energy,
+forces, and stress, also remain outside the current socket property interface.
+
 For socket-driven ASE workflows, use the `AbacusSocketIO` calculator. ASE runs the i-PI socket server, while ABACUS keeps `calculation=scf` and is launched with `socket_driver=1` as the client. Energy, forces, and stress are independent properties controlled by `cal_force` and `cal_stress`; the fixed i-PI wire layout still contains padding fields, while extras metadata identifies which values were actually computed. See the [ASE socket I/O documentation](https://ase-lib.org/ase/calculators/socketio/socketio.html) and the i-PI reference paper, [Ceriotti et al., Comput. Phys. Commun. 185, 1019-1026 (2014)](https://doi.org/10.1016/j.cpc.2013.10.027), for the protocol background.
 
 Build ABACUS as usual before using this interface. PW-only builds work with `basis_type=pw`; LCAO socket calculations require an LCAO-enabled executable. No extra socket library is required.
