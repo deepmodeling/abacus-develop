@@ -1,5 +1,6 @@
 #ifndef INPUT_CONV_TEST_H
 #define INPUT_CONV_TEST_H
+#include "source_io/module_parameter/parameter.h"
 #define private public
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_cell/unitcell.h"
@@ -9,7 +10,6 @@
 #include "source_estate/module_pot/gatefield.h"
 #include "source_estate/occupy.h"
 #include "source_hsolver/hsolver_lcao.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h"
 #include "source_io/module_unk/berryphase.h"
 #include "source_lcao/force_stress_lcao.h"
@@ -21,10 +21,10 @@
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_cg.h"
 #include "source_relax/lattice_change_basic.h"
-#ifdef __PEXSI
 #include "source_hsolver/module_pexsi/pexsi_solver.h"
-#endif
 #undef private
+#ifdef __PEXSI
+#endif
 bool berryphase::berry_phase_flag = false;
 double elecstate::Gatefield::zgate = 0.5;
 bool elecstate::Gatefield::relax = false;

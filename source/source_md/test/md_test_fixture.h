@@ -37,7 +37,7 @@ class MdIntegratorFixture : public MdTestBase
     {
         MdTestBase::SetUp();
         mdrun.reset(new Integrator(param_in, ucell));
-        mdrun->setup(p_esolver.get(), PARAM.sys.global_readin_dir);
+        mdrun->setup(p_esolver.get(), PARAM.globalv.global_readin_dir);
     }
 };
 

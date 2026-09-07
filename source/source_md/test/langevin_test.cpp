@@ -1,13 +1,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
 #define private public
 #define protected public
 #include "setcell.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_md/langevin.h"
+#undef private
+#undef protected
 #define doublethreshold 1e-12
 
 /************************************************
@@ -56,7 +56,7 @@ class Langevin_test : public testing::Test
                                          ModuleBase::world_comm_domain());
         p_esolver->before_all_runners(mdcell, param_in.inp);
         mdrun = new Langevin(param_in, mdcell);
-        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
+        mdrun->setup(p_esolver, PARAM.globalv.global_readin_dir);
     }
 
     void TearDown()
@@ -148,7 +148,7 @@ TEST_F(Langevin_test, write_restart)
 {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(PARAM.sys.global_out_dir);
+    mdrun->write_restart(PARAM.globalv.global_out_dir);
 
     std::ifstream ifs("Restart_md.txt");
     std::string output_str;
@@ -159,7 +159,7 @@ TEST_F(Langevin_test, write_restart)
 
 TEST_F(Langevin_test, restart)
 {
-    mdrun->restart(PARAM.sys.global_readin_dir);
+    mdrun->restart(PARAM.globalv.global_readin_dir);
     remove("Restart_md.txt");
 
     EXPECT_EQ(mdrun->step_rst_, 3);

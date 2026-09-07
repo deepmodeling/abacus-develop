@@ -5,7 +5,7 @@
 
 #include "source_hsolver/diago_iter_assis.h"
 #include "diago_mock.h"
-
+#undef protected
 class TestDiagoIterAssist : public ::testing::Test
 {
 	public:

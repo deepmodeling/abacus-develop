@@ -10,8 +10,8 @@
 #define private public
 #define protected public
 #include "source_relax/ions_move_methods.h"
-#undef protected
 #undef private
+#undef protected
 /************************************************
  *  unit tests of class Ions_Move_Methods
  ***********************************************/

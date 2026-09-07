@@ -5,8 +5,8 @@
 #include <complex>
 #include "source_cell/unitcell.h"
 #include "source_estate/module_dm/test/prepare_unitcell.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
+#define private public
 #include "source_pw/module_pwdft/stru_fac.h"
 #undef private
 /************************************************
@@ -93,7 +93,7 @@ TEST_F(StructureFactorTest, setup_structure_factor_double)
 
 TEST_F(StructureFactorTest, setup_structure_factor_float)
 {
-    PARAM.sys.has_float_data = true;
+    PARAM.sys_for_test().has_float_data = true;
     rho_basis->npw = 10;
     SF.setup(ucell,*pgrid,rho_basis);  
 
