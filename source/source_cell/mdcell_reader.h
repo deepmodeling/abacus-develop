@@ -15,7 +15,6 @@ class MDCellReader
 public:
     static MDCell read_stru(const std::string& stru_file,
                             const std::vector<int>& cell_replica,
-                            double cutoff,
                             double skin,
                             const ModuleBase::CommunicationDomain& comm_domain);
 };
