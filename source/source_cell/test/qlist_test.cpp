@@ -5,14 +5,12 @@
 #include <iterator>
 #include <streambuf>
 #include <string>
-#define private public
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
 #include "source_cell/pseudo.h"
 #include "source_cell/qlist.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/magnetism.h"
-#undef private
 #include "source_base/mathzone.h"
 #include "source_base/parallel_global.h"
 #include "source_base/global_variable.h"

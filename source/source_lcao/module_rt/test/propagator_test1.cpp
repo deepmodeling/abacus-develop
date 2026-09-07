@@ -1,12 +1,8 @@
 #include <gtest/gtest.h>
 #include "source_io/module_parameter/parameter.h"
-#define private public
-#define protected public
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/module_rt/propagator.h"
 #include "tddft_test.h"
-#undef private
-#undef protected
 #include <source_base/module_external/scalapack_connector.h>
 #include <mpi.h>
 /************************************************

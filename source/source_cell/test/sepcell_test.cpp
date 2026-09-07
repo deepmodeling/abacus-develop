@@ -9,10 +9,8 @@
 #include <mpi.h>
 #endif
 
-#define private public
 #include "source_cell/sep_cell.h"
 #include "source_cell/unitcell.h"
-#undef private
 pseudo::pseudo()
 {
 }

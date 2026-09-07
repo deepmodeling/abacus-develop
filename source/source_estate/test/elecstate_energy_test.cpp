@@ -1,10 +1,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "source_io/module_parameter/parameter.h"
-#define private public
 #include "source_estate/elecstate.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#undef private
 #include <string>
 Parameter PARMA;
 

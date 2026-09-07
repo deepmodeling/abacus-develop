@@ -1,12 +1,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "source_io/module_parameter/parameter.h"
-#define private public
-#define protected public
 #include "md_test_fixture.h"
 #include "source_md/md_func.h"
-#undef private
-#undef protected
 #define doublethreshold 1e-12
 /************************************************
  *  unit test of functions in md_func.h
