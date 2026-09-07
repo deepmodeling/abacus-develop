@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include <memory>
 #include "gint_info.h"
 #include "gint_type.h"
@@ -21,6 +22,9 @@ class Gint
 
     static const GintInfo& get_gint_info()
     {
+        // set_gint_info() must have been called by the owning ESolver before any
+        // grid integration runs; dereferencing a null gint_info_ here would be UB.
+        assert(gint_info_ != nullptr && "Gint::set_gint_info() has not been called");
         return *gint_info_;
     }
 

@@ -11,12 +11,21 @@
 class Parallel_Grid;
 class Structure_Factor;
 
+/**
+ * @brief Implicit-solvent settings, injected at the ESolver boundary.
+ *
+ * These deliberately carry no physical defaults. The only production instance of
+ * surchem is ESolver_FP::solvent, which is always configured from Input_para via
+ * surchem::set_parameters(); mirroring the INPUT defaults here would create a second
+ * copy that could silently drift out of sync with input_parameter.h. Callers that
+ * need specific values (unit tests included) must state them explicitly.
+ */
 struct SurchemParameters
 {
-    double eb_k = 80.0;
-    double tau = 1.0798e-05;
-    double sigma_k = 0.6;
-    double nc_k = 0.00037;
+    double eb_k = 0.0;    ///< relative permittivity of the bulk solvent
+    double tau = 0.0;     ///< effective surface tension parameter
+    double sigma_k = 0.0; ///< width of the diffuse cavity
+    double nc_k = 0.0;    ///< cut-off charge density
 };
 
 class surchem
@@ -149,6 +158,7 @@ class surchem
 
   private:
     SurchemParameters parameters_;
+    bool parameters_set_ = false;
 };
 
 #endif

@@ -31,6 +31,19 @@ class cal_vcav_test : public testing::Test
   protected:
     surchem solvent_model;
     UnitCell ucell;
+
+    // The solvent model carries no built-in defaults, so these tests state the
+    // values they were written against (the INPUT defaults for eb_k / tau /
+    // sigma_k / nc_k) instead of depending on SurchemParameters' initializers.
+    void SetUp() override
+    {
+        SurchemParameters parameters;
+        parameters.eb_k = 80.0;
+        parameters.tau = 1.0798e-05;
+        parameters.sigma_k = 0.6;
+        parameters.nc_k = 0.00037;
+        solvent_model.set_parameters(parameters);
+    }
 };
 TEST_F(cal_vcav_test, lapl_rho)
 {

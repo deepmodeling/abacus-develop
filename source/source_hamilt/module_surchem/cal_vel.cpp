@@ -3,6 +3,8 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "surchem.h"
 
+#include <cassert>
+
 void shape_gradn(const double* PS_TOTN_real,
                  const ModulePW::PW_Basis* rho_basis,
                  const double nc_k,
@@ -72,6 +74,9 @@ void surchem::cal_vel(const UnitCell& cell,
 {
     ModuleBase::TITLE("surchem", "cal_vel");
     ModuleBase::timer::start("surchem", "cal_vel");
+
+    assert(this->parameters_set_
+           && "surchem::set_parameters() must be called before using the solvent model");
 
     rho_basis->recip2real(TOTN, TOTN_real);
 

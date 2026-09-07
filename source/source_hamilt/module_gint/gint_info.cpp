@@ -1,6 +1,7 @@
 #include <cmath>
 #include <map>
 #include "source_base/timer.h"
+#include "source_cell/cal_nelec_nband.h"
 #include "gint_info.h"
 #include "gint_type.h"
 #include "source_base/memory_recorder.h"
@@ -151,15 +152,9 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
 
 void GintInfo::init_trace_lo_(const UnitCell& ucell, const int nspin)
 {
-    int nlocal = 0;
-    for (int it = 0; it < ucell.ntype; ++it)
-    {
-        nlocal += ucell.atoms[it].nw * ucell.atoms[it].na;
-    }
-    if (nspin == 4)
-    {
-        nlocal *= 2;
-    }
+    // same helper that cal_atoms_info() uses to fill PARAM.globalv.nlocal, so this
+    // no longer duplicates that formula
+    const int nlocal = unitcell::cal_nlocal(ucell.atoms, ucell.ntype, nspin);
     this->trace_lo_ = std::vector<int>(nlocal, -1);
     this->lgd_ = 0;
     int iat = 0;

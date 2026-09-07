@@ -22,6 +22,16 @@
 #include <vector>
 
 
+/**
+ * @brief LibXC runtime settings, injected once at the ESolver boundary.
+ *
+ * Unlike SurchemParameters these initializers are not a copy of any physical INPUT
+ * default: 0.0 and the empty vectors are the neutral "nothing requested" state, and
+ * "default" is the same pre-parse sentinel Input_para uses, which ReadInput resolves
+ * to a real number before it ever reaches here. Keeping it deliberately unparseable
+ * means a missing set_runtime_parameters() fails loudly in std::stod rather than
+ * silently substituting a plausible-looking exchange fraction.
+ */
 struct XCFunctionalParameters
 {
     double xc_temperature = 0.0;

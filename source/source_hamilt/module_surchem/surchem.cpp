@@ -16,6 +16,7 @@ surchem::surchem()
 void surchem::set_parameters(const SurchemParameters& parameters)
 {
     this->parameters_ = parameters;
+    this->parameters_set_ = true;
 }
 
 void surchem::allocate(const int &nrxx, const int &nspin)

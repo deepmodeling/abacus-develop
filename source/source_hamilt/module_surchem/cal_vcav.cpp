@@ -3,6 +3,8 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "surchem.h"
 
+#include <cassert>
+
 void lapl_rho(const double& tpiba2,
               const std::complex<double>* rhog, 
               double* lapn, 
@@ -69,6 +71,8 @@ void surchem::createcavity(const UnitCell& ucell,
                            const std::complex<double>* ps_totn,
                            double* vwork)
 {
+    assert(this->parameters_set_
+           && "surchem::set_parameters() must be called before using the solvent model");
     ModuleBase::Vector3<double> *nablan = new ModuleBase::Vector3<double>[rho_basis->nrxx];
     ModuleBase::GlobalFunc::ZEROS(nablan, rho_basis->nrxx);
     
