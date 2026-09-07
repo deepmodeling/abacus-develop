@@ -1,6 +1,7 @@
 #ifndef IONS_MOVE_LBFGS_H
 #define IONS_MOVE_LBFGS_H
 
+#include "relax_criteria.h"
 #include <vector>
 #include <tuple> 
 #include <algorithm>

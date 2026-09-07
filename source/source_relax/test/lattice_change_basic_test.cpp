@@ -17,6 +17,10 @@
 // Define a fixture for the tests
 class LatticeChangeBasicTest : public ::testing::Test
 {
+  public:
+    bool fixed_ibrav = false;
+    double stress_thr = 10.0;
+
   protected:
     ModuleBase::matrix stress;
     UnitCell ucell;
@@ -29,14 +33,14 @@ class LatticeChangeBasicTest : public ::testing::Test
         // Reset mock state before each test
         unitcell::reset_remake_cell_mock();
         // Reset fixed_ibrav to default
-        PARAM.input.fixed_ibrav = false;
+        fixed_ibrav = false;
     }
 
     virtual void TearDown()
     {
         // Clean up after each test
         unitcell::reset_remake_cell_mock();
-        PARAM.input.fixed_ibrav = false;
+        fixed_ibrav = false;
     }
 };
 
@@ -151,7 +155,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLattice)
     move[8] = 3.0;
 
     // Call change_lattice method
-    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+    Lattice_Change_Basic::change_lattice(ucell, move, lat, fixed_ibrav);
 
     // Check expected values for ucell after lattice change
     EXPECT_DOUBLE_EQ(ucell.latvec.e11, 0.2);
@@ -222,7 +226,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    PARAM.input.stress_thr = 10.0;
+    stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case1.log");
     ucell.lat_axis_free[0] = 1;
     ucell.lat_axis_free[1] = 1;
@@ -238,7 +242,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
     stress(2, 2) = 9.0;
 
     // Call the function under test
-    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs, stress_thr);
     ofs.close();
 
     // Check the results
@@ -259,7 +263,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    PARAM.input.stress_thr = 10.0;
+    stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case2.log");
     ucell.lat_axis_free[0] = 1;
     ucell.lat_axis_free[1] = 1;
@@ -275,7 +279,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
     stress(2, 2) = 0.0;
 
     // Call the function under test
-    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs, stress_thr);
     ofs.close();
 
     // Check the results
@@ -296,7 +300,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    PARAM.input.stress_thr = 10.0;
+    stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case3.log");
     ucell.lat_axis_free[0] = 1;
     ucell.lat_axis_free[1] = 1;
@@ -312,7 +316,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
     stress(2, 2) = 0.0;
 
     // Call the function under test
-    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs, stress_thr);
     ofs.close();
 
     // Check the results
@@ -333,7 +337,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    PARAM.input.stress_thr = 10.0;
+    stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case4.log");
     ucell.lat_axis_free[0] = 0;
     ucell.lat_axis_free[1] = 0;
@@ -349,7 +353,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
     grad[8] = 1.0;
 
     // Call the function under test
-    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs, stress_thr);
     ofs.close();
 
     // Check the results
@@ -370,7 +374,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase5)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    PARAM.input.stress_thr = 10.0;
+    stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case5.log");
     ucell.lat_axis_free[0] = 0;
     ucell.lat_axis_free[1] = 0;
@@ -386,7 +390,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase5)
     grad[8] = 0.0;
 
     // Call the function under test
-    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs, stress_thr);
     ofs.close();
 
     // Check the results
@@ -407,7 +411,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
-    PARAM.input.stress_thr = 10.0;
+    stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case6.log");
     ucell.lat_axis_free[0] = 0;
     ucell.lat_axis_free[1] = 0;
@@ -423,7 +427,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
     grad[8] = 0.0;
 
     // Call the function under test
-    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs);
+    bool converged = Lattice_Change_Basic::check_converged(ucell, stress, grad, ofs, stress_thr);
     ofs.close();
 
     // Check the results
@@ -578,7 +582,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescaling)
     Lattice_Change_Basic::fixed_axes = "volume";
 
     // Call change_lattice method
-    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+    Lattice_Change_Basic::change_lattice(ucell, move, lat, fixed_ibrav);
 
     // Check that volume is preserved (should still be 1000)
     EXPECT_NEAR(ucell.omega, 1000.0, 1e-8);
@@ -636,7 +640,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescalingNonCubic)
     Lattice_Change_Basic::fixed_axes = "volume";
 
     // Call change_lattice method
-    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+    Lattice_Change_Basic::change_lattice(ucell, move, lat, fixed_ibrav);
 
     // Check that volume is preserved
     EXPECT_NEAR(ucell.omega, 1200.0, 1e-8);
@@ -688,7 +692,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeNoVolumeConstraint)
     Lattice_Change_Basic::fixed_axes = "None";
 
     // Call change_lattice method
-    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+    Lattice_Change_Basic::change_lattice(ucell, move, lat, fixed_ibrav);
 
     // Check that volume DID change (should be 1331)
     EXPECT_NEAR(ucell.omega, 1331.0, 1e-8);
@@ -741,14 +745,14 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravSimpleCubic)
     move[7] = 0.0;
     move[8] = 0.1;
 
-    PARAM.input.fixed_ibrav = true;
+    fixed_ibrav = true;
     Lattice_Change_Basic::fixed_axes = "None";
 
     // Verify remake_cell was not called yet
     EXPECT_FALSE(unitcell::was_remake_cell_called());
 
     // Call change_lattice method
-    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+    Lattice_Change_Basic::change_lattice(ucell, move, lat, fixed_ibrav);
 
     // Verify remake_cell was called
     EXPECT_TRUE(unitcell::was_remake_cell_called());
@@ -765,7 +769,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravSimpleCubic)
     EXPECT_NEAR(ucell.latvec.e32, 0.0, 1e-10);
 
     // Reset for other tests
-    PARAM.input.fixed_ibrav = false;
+    fixed_ibrav = false;
 }
 
 // Test fixed_ibrav with FCC lattice
@@ -803,14 +807,14 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
     // Apply a small move
     for (int i = 0; i < 9; i++) move[i] = 0.01 * ucell.lat0;
 
-    PARAM.input.fixed_ibrav = true;
+    fixed_ibrav = true;
     Lattice_Change_Basic::fixed_axes = "None";
 
     // Verify remake_cell was not called yet
     EXPECT_FALSE(unitcell::was_remake_cell_called());
 
     // Call change_lattice method
-    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+    Lattice_Change_Basic::change_lattice(ucell, move, lat, fixed_ibrav);
 
     // Verify remake_cell was called
     EXPECT_TRUE(unitcell::was_remake_cell_called());
@@ -837,7 +841,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
     EXPECT_NEAR(ucell.latvec.e12, 0.0, 1e-10);
 
     // Reset for other tests
-    PARAM.input.fixed_ibrav = false;
+    fixed_ibrav = false;
 }
 
 // Test combination of fixed_axes = "volume" and fixed_ibrav
@@ -884,14 +888,14 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeAndIbrav)
     move[7] = 0.0;
     move[8] = 1.2;
 
-    PARAM.input.fixed_ibrav = true;
+    fixed_ibrav = true;
     Lattice_Change_Basic::fixed_axes = "volume";
 
     // Verify remake_cell was not called yet
     EXPECT_FALSE(unitcell::was_remake_cell_called());
 
     // Call change_lattice method
-    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+    Lattice_Change_Basic::change_lattice(ucell, move, lat, fixed_ibrav);
 
     // Verify remake_cell was called (should be called before volume rescaling)
     EXPECT_TRUE(unitcell::was_remake_cell_called());
@@ -910,7 +914,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeAndIbrav)
     EXPECT_NEAR(ucell.latvec.e32, 0.0, 1e-10);
 
     // Reset for other tests
-    PARAM.input.fixed_ibrav = false;
+    fixed_ibrav = false;
 }
 
 // Test axis constraint with fixed_axes = "a"
@@ -999,7 +1003,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedAxisA)
     Lattice_Change_Basic::fixed_axes = "a";
 
     // Call change_lattice method
-    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+    Lattice_Change_Basic::change_lattice(ucell, move, lat, fixed_ibrav);
 
     // Check that first lattice vector didn't change
     EXPECT_DOUBLE_EQ(ucell.latvec.e11, initial_e11);
@@ -1054,14 +1058,14 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeNoFixedIbrav)
     move[7] = 0.0;
     move[8] = 0.1;
 
-    PARAM.input.fixed_ibrav = false; // Explicitly set to false
+    fixed_ibrav = false; // Explicitly set to false
     Lattice_Change_Basic::fixed_axes = "None";
 
     // Verify remake_cell was not called yet
     EXPECT_FALSE(unitcell::was_remake_cell_called());
 
     // Call change_lattice method
-    Lattice_Change_Basic::change_lattice(ucell, move, lat);
+    Lattice_Change_Basic::change_lattice(ucell, move, lat, fixed_ibrav);
 
     // Verify remake_cell was NOT called
     EXPECT_FALSE(unitcell::was_remake_cell_called());

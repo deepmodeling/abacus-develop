@@ -1,8 +1,5 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/relax_data.h"
 #include "for_test.h"
@@ -67,7 +64,7 @@ TEST_F(IonsMoveBasicTest, MoveAtoms)
 {
     // Initialize data
     Ions_Move_Basic::dim = 6;
-    PARAM.input.test_relax_method = 1;
+    const int test_relax_method = 1;
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
     {
         pos[i] = 0.0;
@@ -76,7 +73,7 @@ TEST_F(IonsMoveBasicTest, MoveAtoms)
 
     // Call the function being tested
     std::ofstream ofs("test_move_atoms.log");
-    Ions_Move_Basic::move_atoms(ucell, move, pos, ofs);
+    Ions_Move_Basic::move_atoms(ucell, move, pos, ofs, test_relax_method);
     ofs.close();
 
     // Check the results
@@ -103,8 +100,10 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     // Initialize data
     Ions_Move_Basic::dim = 6;
     int update_iter = 1;
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
+    const int test_relax_method = 1;
+    const std::string out_level = "ie";
+    const double force_thr = 1.0e-3;
+    const double force_thr_ev = force_thr * 13.6058 / 0.529177;
     std::vector<double> etot_info(2, 0.0);
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
     {
@@ -114,7 +113,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case1.log");
     testing::internal::CaptureStdout();
-    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs, etot_info);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs, etot_info, force_thr, force_thr_ev, out_level, test_relax_method);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -145,15 +144,16 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     Ions_Move_Basic::dim = 6;
     int update_iter = 1;
     std::vector<double> etot_info(2, 0.0);
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
-    PARAM.input.force_thr  = 1.0;
+    const int test_relax_method = 1;
+    const std::string out_level = "ie";
+    const double force_thr = 1.0;
+    const double force_thr_ev = force_thr * 13.6058 / 0.529177;
     grad[0] = 1.0;
 
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case2.log");
     testing::internal::CaptureStdout();
-    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs, etot_info);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs, etot_info, force_thr, force_thr_ev, out_level, test_relax_method);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -184,15 +184,16 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     Ions_Move_Basic::dim = 6;
     int update_iter = 1;
     std::vector<double> etot_info = {1.0, 0.0};
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
-    PARAM.input.force_thr  = 1.0;
+    const int test_relax_method = 1;
+    const std::string out_level = "ie";
+    const double force_thr = 1.0;
+    const double force_thr_ev = force_thr * 13.6058 / 0.529177;
     grad[0] = 1.0;
 
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case3.log");
     testing::internal::CaptureStdout();
-    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs, etot_info);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs, etot_info, force_thr, force_thr_ev, out_level, test_relax_method);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 

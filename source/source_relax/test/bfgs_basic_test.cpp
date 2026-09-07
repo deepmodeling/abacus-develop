@@ -16,6 +16,9 @@
 
 class BFGSBasicTest : public ::testing::Test
 {
+  public:
+    int test_relax_method = 0;
+
   protected:
     void SetUp() override
     {
@@ -113,7 +116,7 @@ TEST_F(BFGSBasicTest, UpdateInverseHessianCase2)
 TEST_F(BFGSBasicTest, CheckWolfeConditions)
 {
     Ions_Move_Basic::dim = 3;
-    PARAM.input.test_relax_method = 1;
+    test_relax_method = 1;
     bfgs.allocate_basic();
     bfgs.pos[0] = 2.0;
     bfgs.grad[0] = 2.0;
@@ -284,7 +287,7 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusCase1)
     std::vector<double> etot_info = {0.0, 0.0, 0.0};
 
     std::ofstream ofs("test_log.log");
-    bfgs.compute_trust_radius(ofs, etot_info);
+    bfgs.compute_trust_radius(ofs, etot_info, test_relax_method);
 
     EXPECT_EQ(bfgs.tr_min_hit, false);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, -1.0);
@@ -302,7 +305,7 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusCase2)
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::trust_radius_old = 0.0;
     Ions_Move_Basic::relax_bfgs_rmin = 100.0;
-    PARAM.input.test_relax_method = 1;
+    test_relax_method = 1;
     bfgs.allocate_basic();
     bfgs.grad_p[0] = 1.0;
     bfgs.move[1] = 2.0;
@@ -317,7 +320,7 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusCase2)
     std::vector<double> etot_info = {0.0, 0.0, 0.0};
 
     std::ofstream ofs("test_log.log");
-    bfgs.compute_trust_radius(ofs, etot_info);
+    bfgs.compute_trust_radius(ofs, etot_info, test_relax_method);
 
     EXPECT_EQ(bfgs.tr_min_hit, true);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, 100.0);
@@ -335,7 +338,7 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusWarningQuit)
     Ions_Move_Basic::dim = 2;
     Ions_Move_Basic::trust_radius_old = 0.0;
     Ions_Move_Basic::relax_bfgs_rmin = 100.0;
-    PARAM.input.test_relax_method = 1;
+    test_relax_method = 1;
     bfgs.allocate_basic();
     bfgs.grad_p[0] = 1.0;
     bfgs.move[1] = 2.0;

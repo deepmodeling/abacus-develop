@@ -1,6 +1,7 @@
 #ifndef LATTICE_CHANGE_BASIC_H
 #define LATTICE_CHANGE_BASIC_H
 
+#include "relax_criteria.h"
 #include <fstream>
 #include <vector>
 #include "relax_data.h"
@@ -43,7 +44,7 @@ void setup_gradient(const UnitCell &ucell, double *lat, double *grad, ModuleBase
  * @param move Displacement vector for lattice change (9 elements)
  * @param lat Current lattice vectors (9 elements)
  */
-void change_lattice(UnitCell &ucell, double *move, double *lat);
+void change_lattice(UnitCell &ucell, double *move, double *lat, const bool fixed_ibrav);
 
 /**
  * @brief Check convergence based on stress threshold.
@@ -53,7 +54,7 @@ void change_lattice(UnitCell &ucell, double *move, double *lat);
  * @param ofs Output stream for logging
  * @return true if converged, false otherwise
  */
-bool check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad, std::ofstream& ofs);
+bool check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad, std::ofstream& ofs, const double& stress_thr);
 
 /**
  * @brief Terminate lattice optimization and output results.

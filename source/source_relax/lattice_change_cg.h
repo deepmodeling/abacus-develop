@@ -1,6 +1,7 @@
 #ifndef LATTICE_CHANGE_CG_H
 #define LATTICE_CHANGE_CG_H
 
+#include "relax_criteria.h"
 #include <fstream>
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
@@ -15,7 +16,7 @@ class Lattice_Change_CG : public CG_Base
     ~Lattice_Change_CG() = default;
 
     void allocate(void);
-    bool start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot, std::ofstream& ofs, std::vector<double>& etot_info);
+    bool start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot, std::ofstream& ofs, std::vector<double>& etot_info, const Relax_Criteria& criteria);
 
   private:
     std::vector<double> lat0;

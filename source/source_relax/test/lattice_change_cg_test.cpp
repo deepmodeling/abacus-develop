@@ -78,7 +78,7 @@ TEST_F(LatticeChangeCGTest, TestStartConverged)
 
     // call function
     std::ofstream ofs("test_lc_cg_start_converged.log");
-    lc_cg.start(ucell, stress, etot, ofs, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs, etot_info, criteria);
     ofs.close();
 
     // Check output
@@ -107,7 +107,7 @@ TEST_F(LatticeChangeCGTest, TestStartSd)
 
     // call function
     std::ofstream ofs("test_lc_cg_start_sd.log");
-    lc_cg.start(ucell, stress, etot, ofs, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs, etot_info, criteria);
     ofs.close();
 
     // Check output
@@ -136,13 +136,13 @@ TEST_F(LatticeChangeCGTest, TestStartTrialGoto)
     // call function
     lc_cg.move0[0] = 1.0;
     std::ofstream ofs1("test_lc_cg_start_trial_goto_temp1.log");
-    lc_cg.start(ucell, stress, etot, ofs1, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs1, etot_info, criteria);
     ofs1.close();
     std::remove("test_lc_cg_start_trial_goto_temp1.log");
     Lattice_Change_Basic::stress_step = 2;
     lc_cg.move0[0] = 10.0;
     std::ofstream ofs("test_lc_cg_start_trial_goto.log");
-    lc_cg.start(ucell, stress, etot, ofs, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs, etot_info, criteria);
     ofs.close();
 
     // Check output
@@ -170,12 +170,12 @@ TEST_F(LatticeChangeCGTest, TestStartTrial)
 
     // call function
     std::ofstream ofs1("test_lc_cg_start_trial_temp1.log");
-    lc_cg.start(ucell, stress, etot, ofs1, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs1, etot_info, criteria);
     ofs1.close();
     std::remove("test_lc_cg_start_trial_temp1.log");
     Lattice_Change_Basic::stress_step = 2;
     std::ofstream ofs("test_lc_cg_start_trial.log");
-    lc_cg.start(ucell, stress, etot, ofs, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs, etot_info, criteria);
     ofs.close();
 
     // Check output
@@ -203,16 +203,16 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase1)
 
     // call function
     std::ofstream ofs1("test_lc_cg_start_notrial_goto_case1_temp1.log");
-    lc_cg.start(ucell, stress, etot, ofs1, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs1, etot_info, criteria);
     ofs1.close();
     std::remove("test_lc_cg_start_notrial_goto_case1_temp1.log");
     Lattice_Change_Basic::stress_step = 2;
     std::ofstream ofs2("test_lc_cg_start_notrial_goto_case1_temp2.log");
-    lc_cg.start(ucell, stress, etot, ofs2, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs2, etot_info, criteria);
     ofs2.close();
     std::remove("test_lc_cg_start_notrial_goto_case1_temp2.log");
     std::ofstream ofs("test_lc_cg_start_notrial_goto_case1.log");
-    lc_cg.start(ucell, stress, etot, ofs, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs, etot_info, criteria);
     ofs.close();
 
     // Check output
@@ -241,18 +241,18 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase2)
     // call function
     lc_cg.move0[0] = 0.1;
     std::ofstream ofs1("test_lc_cg_start_notrial_goto_case2_temp1.log");
-    lc_cg.start(ucell, stress, etot, ofs1, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs1, etot_info, criteria);
     ofs1.close();
     std::remove("test_lc_cg_start_notrial_goto_case2_temp1.log");
     Lattice_Change_Basic::stress_step = 2;
     std::ofstream ofs2("test_lc_cg_start_notrial_goto_case2_temp2.log");
-    lc_cg.start(ucell, stress, etot, ofs2, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs2, etot_info, criteria);
     ofs2.close();
     std::remove("test_lc_cg_start_notrial_goto_case2_temp2.log");
     std::ofstream ofs("test_lc_cg_start_notrial_goto_case2.log");
     lc_cg.move0[0] = 0.1;
     stress(0, 1) = 0.0001;
-    lc_cg.start(ucell, stress, etot, ofs, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs, etot_info, criteria);
     ofs.close();
 
     // Check output
@@ -281,17 +281,17 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrial)
     // call function
     lc_cg.move0[0] = 1.0;
     std::ofstream ofs1("test_lc_cg_start_notrial_temp1.log");
-    lc_cg.start(ucell, stress, etot, ofs1, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs1, etot_info, criteria);
     ofs1.close();
     std::remove("test_lc_cg_start_notrial_temp1.log");
     Lattice_Change_Basic::stress_step = 2;
     lc_cg.move0[0] = 10.0;
     std::ofstream ofs2("test_lc_cg_start_notrial_temp2.log");
-    lc_cg.start(ucell, stress, etot, ofs2, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs2, etot_info, criteria);
     ofs2.close();
     std::remove("test_lc_cg_start_notrial_temp2.log");
     std::ofstream ofs("test_lc_cg_start_notrial.log");
-    lc_cg.start(ucell, stress, etot, ofs, etot_info);
+    lc_cg.start(ucell, stress, etot, ofs, etot_info, criteria);
     ofs.close();
 
     // Check output

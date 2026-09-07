@@ -57,7 +57,7 @@ class BFGS_Basic
 
     void update_inverse_hessian(const double& lat0, std::ofstream& ofs);
     void check_wolfe_conditions(std::ofstream& ofs, std::vector<double>& etot_info);
-    void compute_trust_radius(std::ofstream& ofs, std::vector<double>& etot_info);
+    void compute_trust_radius(std::ofstream& ofs, std::vector<double>& etot_info, const int test_relax_method);
 };
 
 #endif

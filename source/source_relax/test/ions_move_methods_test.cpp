@@ -153,19 +153,19 @@ TEST_F(IonsMoveMethodsTest, CalMovement)
 
     relax_method = {"bfgs", "1"};
     imm.allocate(natom, "bfgs", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
     relax_method = {"sd", "1"};
     imm.allocate(natom, "sd", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
     relax_method = {"cg", "1"};
     imm.allocate(natom, "cg", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
     relax_method = {"cg_bfgs", "1"};
     imm.allocate(natom, "cg_bfgs", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 }
 
 // Test the cal_movement() function warning quit
@@ -181,7 +181,7 @@ TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
     imm.allocate(natom, "none", "1");
 
     GlobalV::ofs_warning.open("log");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
     GlobalV::ofs_warning.close();
 
     std::ifstream ifs("log");

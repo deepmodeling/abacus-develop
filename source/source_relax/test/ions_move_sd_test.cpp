@@ -1,3 +1,4 @@
+#include "source_relax/relax_criteria.h"
 #include <regex>
 #include "for_test.h"
 #include "gmock/gmock.h"
@@ -14,6 +15,9 @@
 
 class IonsMoveSDTest : public ::testing::Test
 {
+  public:
+    Relax_Criteria criteria;
+
   protected:
     void SetUp() override
     {
@@ -21,7 +25,7 @@ class IonsMoveSDTest : public ::testing::Test
         Ions_Move_Basic::dim = 6;
         update_iter = 5;
         im_sd.allocate();
-        PARAM.input.force_thr = 0.001;
+        criteria.force_thr = 0.001;
     }
 
     void TearDown() override
@@ -76,7 +80,7 @@ TEST_F(IonsMoveSDTest, TestStartConverged)
 
     // call function
     std::ofstream ofs("test_sd_start_converged.log");
-    im_sd.start(ucell, force, etot, istep, update_iter, ofs, etot_info);
+    im_sd.start(ucell, force, etot, istep, update_iter, ofs, etot_info, criteria);
     ofs.close();
 
     // Check output
@@ -128,7 +132,7 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
 
     // call function
     std::ofstream ofs("test_sd_start_not_converged.log");
-    im_sd.start(ucell, force, etot, istep, update_iter, ofs, etot_info);
+    im_sd.start(ucell, force, etot, istep, update_iter, ofs, etot_info, criteria);
     ofs.close();
 
     // Check output
@@ -162,7 +166,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
 {
     // setup data
     const int istep = 1;
-    PARAM.input.out_level = "ie";
+    criteria.out_level = "ie";
     std::vector<double> etot_info(2, 0.0);
 
     // call function
@@ -182,7 +186,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
     // setup data
     const int istep = 2;
     std::vector<double> etot_info = {0.0, 1.0};
-    PARAM.input.out_level = "m";
+    criteria.out_level = "m";
 
     // call function
     im_sd.cal_tradius_sd(istep, etot_info);
@@ -197,7 +201,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
     // setup data
     const int istep = 2;
     std::vector<double> etot_info = {1.0, 0.0};
-    PARAM.input.out_level = "m";
+    criteria.out_level = "m";
 
     // call function
     im_sd.cal_tradius_sd(istep, etot_info);
