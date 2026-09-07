@@ -37,10 +37,32 @@ class Parameter
     void set_pal_param(const int& myrank, const int& nproc, const int& nthread_per_proc);
     // Set the start time
     void set_start_time(const std::time_t& start_time);
+
+    // ---------------------------------------------------------------
+    // --------------      Test-only accessors        ----------------
+    // ---------------------------------------------------------------
+    // Unit tests frequently need to drive the code under test through a
+    // specific INPUT configuration. These two accessors are the only
+    // sanctioned way to do that: they replace the historical
+    // `#define private public` hack, which reinterprets access control for
+    // every declaration in the translation unit (including standard library
+    // headers) and makes the test TU disagree with the rest of the build.
+    //
+    // Production code must use the read-only views above (inp / mdp /
+    // globalv). The governance checker rejects these two names outside
+    // test directories.
+    Input_para& input_for_test()
+    {
+        return input;
+    }
+    System_para& sys_for_test()
+    {
+        return sys;
+    }
+
   private:
     friend class ModuleIO::ReadInput; // ReadInput read INPUT file and give the value to Parameter
     friend class elecstate::ParamUpdater; // ParamUpdater updates Parameter values from atoms_info
-    friend class TestParameters; // TestParameters modifies Parameter values for unit tests
 
     // INPUT parameters
     Input_para input;

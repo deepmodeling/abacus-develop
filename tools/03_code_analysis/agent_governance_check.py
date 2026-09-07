@@ -244,6 +244,24 @@ def check_line_endings(
 
 GLOBAL_DEPENDENCY_RE = re.compile(r"\b(GlobalV::|GlobalC::|PARAM(?:\.|->|::|\b))")
 
+# `#define private public` / `#define protected public` in test translation
+# units. See AGENTS.md rule 10.
+ACCESS_HACK_RE = re.compile(r"^\s*#\s*define\s+(?:private|protected)\s+public\b")
+
+# Sanctioned test-only escape hatches. These must never appear in production
+# translation units; they exist so that tests do not need ACCESS_HACK_RE.
+TEST_ONLY_ACCESSOR_RE = re.compile(r"\b(?:input_for_test|sys_for_test)\s*\(")
+
+# Unit-test directories as they are actually spelled in source/.
+TEST_DIR_RE = re.compile(
+    r"(?:^|/)(?:test|tests|test_serial|test_parallel|test_pw|test_gpu|test_code)(?:/|$)"
+)
+
+
+def is_unit_test_path(path: str) -> bool:
+    return bool(TEST_DIR_RE.search(path.replace("\\", "/")))
+
+
 
 def is_global_dependency_check_path(path: str) -> bool:
     if path.startswith("tools/03_code_analysis/"):
@@ -294,6 +312,74 @@ def check_global_dependencies(
             ),
             action,
         )
+
+
+def check_access_hacks(
+    findings: List[Finding],
+    added_lines: Iterable[DiffLine],
+    removed_lines: Iterable[DiffLine],
+) -> None:
+    """Ratchet on `#define private public` (AGENTS.md rule 10).
+
+    Mirrors the global-dependency budget: a PR may remove these hacks freely,
+    but a net increase blocks. This lets the remaining offending files be
+    cleaned up incrementally without blocking unrelated work.
+    """
+    added = [line for line in added_lines if ACCESS_HACK_RE.search(line.content)]
+    removed = [line for line in removed_lines if ACCESS_HACK_RE.search(line.content)]
+    if not added:
+        return
+
+    delta = len(added) - len(removed)
+    severity = BLOCK if delta > 0 else WARN
+    action = (
+        "Use PARAM.input_for_test()/sys_for_test() for INPUT parameters, a public "
+        "const observer for read-only assertions, or an explicit `friend class "
+        "XxxTest;` on the class under test."
+    )
+    for line in added:
+        add_finding(
+            findings,
+            "No access-control hacks",
+            severity,
+            line.path,
+            line.line,
+            (
+                "Adds `#define private/protected public`, which reinterprets access "
+                "control for the whole translation unit (standard library headers "
+                "included) and makes this TU disagree with the rest of the build; "
+                "PR total added={added}, removed={removed}, net_delta={delta}.".format(
+                    added=len(added), removed=len(removed), delta=delta
+                )
+            ),
+            action,
+        )
+
+
+def check_test_only_accessors(findings: List[Finding], added_lines: Iterable[DiffLine]) -> None:
+    """Keep the sanctioned test escape hatches out of production code."""
+    for line in added_lines:
+        if Path(line.path).suffix.lower() not in SOURCE_REVIEW_EXTENSIONS:
+            continue
+        if is_unit_test_path(line.path):
+            continue
+        # parameter.h itself declares them.
+        if line.path.endswith("source_io/module_parameter/parameter.h"):
+            continue
+        if not TEST_ONLY_ACCESSOR_RE.search(line.content):
+            continue
+        add_finding(
+            findings,
+            "Test-only accessor in production code",
+            BLOCK,
+            line.path,
+            line.line,
+            "PARAM.input_for_test()/sys_for_test() give write access to INPUT "
+            "parameters and are reserved for unit tests.",
+            "Read parameters through PARAM.inp / PARAM.mdp / PARAM.globalv, or pass "
+            "the value explicitly instead of mutating the global PARAM.",
+        )
+
 
 
 def _has_default_arg_in_parens(stripped: str) -> bool:
@@ -731,6 +817,8 @@ def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
 
     check_line_endings(findings, root, changed, statuses, args)
     check_global_dependencies(findings, lines, removed_lines)
+    check_access_hacks(findings, lines, removed_lines)
+    check_test_only_accessors(findings, lines)
     check_default_parameters(findings, lines)
     check_hpp_warnings(findings, statuses, lines)
     check_header_include_warnings(findings, lines)

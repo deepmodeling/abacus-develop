@@ -22,19 +22,19 @@ namespace GlobalC
 Exx_Info exx_info;
 }
 
-class TestParameters
+class TestInputSetter
 {
 public:
     static void init(int npol, bool gamma_only_local, int nlocal, int nspin)
     {
-        PARAM.sys.npol = npol;
-        PARAM.sys.gamma_only_local = gamma_only_local;
-        PARAM.sys.nlocal = nlocal;
-        PARAM.sys.global_out_dir = "";
-        PARAM.sys.global_readin_dir = "";
-        PARAM.input.ks_solver = "cg";
-        PARAM.input.nspin = nspin;
-        PARAM.input.deepks_equiv = false;
+        PARAM.sys_for_test().npol = npol;
+        PARAM.sys_for_test().gamma_only_local = gamma_only_local;
+        PARAM.sys_for_test().nlocal = nlocal;
+        PARAM.sys_for_test().global_out_dir = "";
+        PARAM.sys_for_test().global_readin_dir = "";
+        PARAM.input_for_test().ks_solver = "cg";
+        PARAM.input_for_test().nspin = nspin;
+        PARAM.input_for_test().deepks_equiv = false;
     }
 };
 
@@ -216,7 +216,7 @@ void test_deepks<T>::setup_cell()
     this->nlocal = atoms_info.nlocal;
     this->nbands = atoms_info.nbands;
 
-    TestParameters::init(this->npol, this->gamma_only_local, this->nlocal, this->nspin);
+    TestInputSetter::init(this->npol, this->gamma_only_local, this->nlocal, this->nspin);
 
     return;
 }

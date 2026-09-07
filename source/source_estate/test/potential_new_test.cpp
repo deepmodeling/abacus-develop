@@ -8,25 +8,25 @@
 #include <string>
 #include <vector>
 
-class TestParameters
+class TestInputSetter
 {
   public:
     static void reset()
     {
-        PARAM.input.nspin = 1;
-        PARAM.input.basis_type = "pw";
-        PARAM.input.device = "cpu";
-        PARAM.input.precision = "double";
-        PARAM.sys.has_float_data = false;
-        PARAM.sys.has_double_data = true;
+        PARAM.input_for_test().nspin = 1;
+        PARAM.input_for_test().basis_type = "pw";
+        PARAM.input_for_test().device = "cpu";
+        PARAM.input_for_test().precision = "double";
+        PARAM.sys_for_test().has_float_data = false;
+        PARAM.sys_for_test().has_double_data = true;
     }
 
     static void use_cpu_single()
     {
-        PARAM.input.device = "cpu";
-        PARAM.input.precision = "single";
-        PARAM.sys.has_float_data = true;
-        PARAM.sys.has_double_data = false;
+        PARAM.input_for_test().device = "cpu";
+        PARAM.input_for_test().precision = "single";
+        PARAM.sys_for_test().has_float_data = true;
+        PARAM.sys_for_test().has_double_data = false;
     }
 };
 
@@ -165,7 +165,7 @@ class PotentialNewTest : public ::testing::Test
   protected:
     void SetUp() override
     {
-        TestParameters::reset();
+        TestInputSetter::reset();
         XC_Functional::set_xc_type("lda");
         elecstate::MockPotComponent::reset();
 
@@ -183,7 +183,7 @@ class PotentialNewTest : public ::testing::Test
     {
         potential.reset();
         XC_Functional::set_xc_type("lda");
-        TestParameters::reset();
+        TestInputSetter::reset();
         elecstate::MockPotComponent::reset();
     }
 
@@ -266,7 +266,7 @@ TEST_F(PotentialNewTest, EmptyPotentialReturnsNullData)
 
 TEST_F(PotentialNewTest, ConstructorCPUSingle)
 {
-    TestParameters::use_cpu_single();
+    TestInputSetter::use_cpu_single();
     smooth_basis->nrxx = 100;
     create_potential(smooth_basis.get(), smooth_basis.get());
 
