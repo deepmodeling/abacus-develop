@@ -6,6 +6,7 @@
 #define protected public
 #include "../esolver_dp.h"
 #include "source_io/module_parameter/input_parameter.h"
+#undef protected
 #undef private
 /************************************************
  *  unit tests of class ESolver_DP

@@ -5,6 +5,8 @@
 #include "source_lcao/module_rt/propagator.h"
 #include "source_io/module_parameter/parameter.h"
 #include "tddft_test.h"
+#undef protected
+#undef private
 
 #include <source_base/module_external/scalapack_connector.h>
 #include <mpi.h>

@@ -8,6 +8,8 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 #include "prepare_unitcell.h"
+#undef protected
+#undef private
 // mock functions for UnitCell
 
 Magnetism::Magnetism()
