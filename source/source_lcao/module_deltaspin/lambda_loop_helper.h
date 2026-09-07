@@ -112,8 +112,8 @@ double cal_alpha_opt(const SpinConstrain<TK>& sc,
  * @par Algorithm
  * 1. Compute spin_change = new_spin - spin
  * 2. Compute nu_change     = delta_lambda - dnu_last_step
- * 3. Build full gradient matrix dM[ia][ic]/dlambda[ja][jc]
- * 4. Extract diagonal; pick max abs per atom type
+ * 3. Compute only the diagonal response dM[ia][ic]/dlambda[ia][ic]
+ * 4. Pick the maximum absolute diagonal response per atom type
  * 5. Return true if max(|diag|) < decay_grad[itype] for any type
  *
  * @param sc             SpinConstrain instance
@@ -127,10 +127,10 @@ double cal_alpha_opt(const SpinConstrain<TK>& sc,
  */
 template <typename TK>
 bool check_gradient_decay(const SpinConstrain<TK>& sc,
-                          std::vector<ModuleBase::Vector3<double>> new_spin,
-                          std::vector<ModuleBase::Vector3<double>> spin,
-                          std::vector<ModuleBase::Vector3<double>> delta_lambda,
-                          std::vector<ModuleBase::Vector3<double>> dnu_last_step,
+                          const std::vector<ModuleBase::Vector3<double>>& new_spin,
+                          const std::vector<ModuleBase::Vector3<double>>& spin,
+                          const std::vector<ModuleBase::Vector3<double>>& delta_lambda,
+                          const std::vector<ModuleBase::Vector3<double>>& dnu_last_step,
                           bool print,
                           std::ostream& ofs_running);
 
