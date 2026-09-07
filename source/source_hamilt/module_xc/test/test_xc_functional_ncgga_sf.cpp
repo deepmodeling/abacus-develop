@@ -1491,13 +1491,92 @@ TEST_F(RealPwNcgga, LibxcGgaGrad2DifferentiatesMixedLdaAndGgaComponents)
     expect_vtxc_matches_returned_potential("libxc_gga2_mixed_lda_gga", evaluate);
 }
 
+TEST_F(RealPwNcgga, LibxcGgaGrad2StressProductionDispatchClosesSmoothMetricDerivative)
+{
+    const BranchMargins margins = report_branch_margins("libxc_stress_smooth");
+    EXPECT_GT(margins.min_abs_total_density, 1.0);
+    EXPECT_GT(margins.min_signed_saturation_gap, 0.8);
+    EXPECT_GT(margins.min_eta_distance, 0.3);
 
+    // The analytic tensor must come through the existing public production
+    // dispatch.  Keeping the new helper out of the test-only patch lets the
+    // matched parent build and fail on the numerical identity, not at link
+    // time because the child-only helper does not exist yet.
+    expect_gradient_stress_metric_derivative(
+        "libxc_smooth_dispatch",
+        [this]() { return evaluate_libxc_gga(); },
+        [this]() { return evaluate_libxc_pbe_gradient_stress_dispatch(); },
+        3.0e-4,
+        1.0e-11);
+}
 
+TEST_F(RealPwNcgga, LibxcGgaGrad2StressProductionDispatchClosesLocalMapBranches)
+{
+    const Evaluator energy = [this]() { return evaluate_libxc_gga(); };
+    const StressEvaluator stress = [this]() { return evaluate_libxc_pbe_gradient_stress_dispatch(); };
 
+    set_negative_gga_state();
+    const BranchMargins negative = report_branch_margins("libxc_stress_negative_abs");
+    EXPECT_GT(negative.min_abs_total_density, 1.3);
+    EXPECT_GT(negative.min_signed_saturation_gap, 0.8);
+    expect_gradient_stress_metric_derivative("libxc_negative_abs_dispatch", energy, stress, 3.0e-4, 1.0e-11);
 
+    set_saturated_gga_state();
+    const BranchMargins saturated = report_branch_margins("libxc_stress_saturated");
+    EXPECT_LT(saturated.max_signed_saturation_gap, -0.1);
+    expect_gradient_stress_metric_derivative("libxc_saturated_dispatch", energy, stress, 3.0e-4, 1.0e-11);
 
+    set_inside_eta_state();
+    const BranchMargins radial = report_branch_margins("libxc_stress_inside_eta");
+    EXPECT_LT(radial.max_magnitude, 6.0e-4);
+    EXPECT_GT(radial.min_eta_distance, 4.0e-4);
+    expect_gradient_stress_metric_derivative("libxc_inside_eta_dispatch", energy, stress, 3.0e-4, 1.0e-11);
+}
 
+TEST_F(RealPwNcgga, LibxcGgaGrad2StressAggregatesPublicFunctionalScaling)
+{
+    const std::vector<int> gga = {XC_GGA_X_ITYH, XC_GGA_C_LYPR, XC_GGA_X_B88, XC_GGA_C_LYP};
+    const std::map<int, double> scaling
+        = {{XC_GGA_X_ITYH, -1.0}, {XC_GGA_C_LYPR, -1.0}, {XC_GGA_X_B88, 1.0}, {XC_GGA_C_LYP, 1.0}};
+    const std::vector<double> exchange_short = evaluate_gradient_stress_dispatch("GGA_X_ITYH");
+    const std::vector<double> correlation_short = evaluate_gradient_stress_dispatch("GGA_C_LYPR");
+    const std::vector<double> exchange_full = evaluate_gradient_stress_dispatch("GGA_X_B88");
+    const std::vector<double> correlation_full = evaluate_gradient_stress_dispatch("GGA_C_LYP");
+    const std::vector<double> scaled = evaluate_gradient_stress_dispatch("BLYP_LR");
+    ASSERT_EQ(exchange_short.size(), 9U);
+    ASSERT_EQ(correlation_short.size(), 9U);
+    ASSERT_EQ(exchange_full.size(), 9U);
+    ASSERT_EQ(correlation_full.size(), 9U);
+    ASSERT_EQ(scaled.size(), 9U);
+    for (int row = 0; row < 3; ++row)
+    {
+        for (int column = 0; column <= row; ++column)
+        {
+            const int index = row * 3 + column;
+            const double expected
+                = -exchange_short[index] - correlation_short[index] + exchange_full[index] + correlation_full[index];
+            EXPECT_NEAR(scaled[index], expected, 3.0e-12 * std::max(1.0, std::abs(expected)));
+        }
+    }
+    expect_gradient_stress_metric_derivative(
+        "libxc_blyp_lr_dispatch",
+        [this, &gga, &scaling]() { return evaluate_libxc(gga, &scaling); },
+        [this]() { return evaluate_gradient_stress_dispatch("BLYP_LR"); },
+        3.0e-4,
+        1.0e-11);
+}
 
+TEST_F(RealPwNcgga, LibxcGgaGrad2StressProductionDispatchClosesFullXcDiagonalWithoutCore)
+{
+    set_zero_core_density();
+    const BranchMargins margins = report_branch_margins("libxc_full_xc_no_core");
+    EXPECT_GT(margins.min_abs_total_density, 1.0);
+    EXPECT_GT(margins.min_signed_saturation_gap, 0.8);
+    expect_full_xc_diagonal_stress(
+        "libxc_full_xc_dispatch_no_core",
+        [this]() { return evaluate_libxc_gga(); },
+        [this]() { return evaluate_libxc_pbe_gradient_stress_dispatch(); });
+}
 #endif
 
 TEST_F(RealPwNcgga, BuiltinGgaGrad2VtxcEqualsFinalValencePotentialInnerProduct)
@@ -1653,13 +1732,64 @@ TEST_F(RealPwNcgga, BuiltinGgaGrad2IsCovariantUnderGlobalSpinRotation)
     }
 }
 
+TEST_F(RealPwNcgga, BuiltinGgaGrad2StressClosesSmoothSixComponentMetricDerivative)
+{
+    const BranchMargins margins = report_branch_margins("stress_smooth");
+    EXPECT_GT(margins.min_abs_total_density, 1.0);
+    EXPECT_GT(margins.min_signed_saturation_gap, 0.8);
+    EXPECT_GT(margins.min_eta_distance, 0.3);
+    expect_builtin_gradient_stress_metric_derivative("smooth");
 
+    set_zero_core_density();
+    const BranchMargins zero_core = report_branch_margins("stress_smooth_zero_core");
+    EXPECT_GT(zero_core.min_abs_total_density, 1.0);
+    EXPECT_GT(zero_core.min_signed_saturation_gap, 0.8);
+    expect_builtin_full_xc_diagonal_stress("smooth");
+}
 
+TEST_F(RealPwNcgga, BuiltinGgaGrad2StressClosesNegativeAbsSixComponentMetricDerivative)
+{
+    set_negative_gga_state();
+    const BranchMargins margins = report_branch_margins("stress_negative_abs");
+    EXPECT_GT(margins.min_abs_total_density, 1.3);
+    EXPECT_GT(margins.min_signed_saturation_gap, 0.8);
+    expect_builtin_gradient_stress_metric_derivative("negative_abs");
 
+    set_zero_core_density();
+    const BranchMargins zero_core = report_branch_margins("stress_negative_abs_zero_core");
+    EXPECT_GT(zero_core.min_abs_total_density, 1.3);
+    EXPECT_GT(zero_core.min_signed_saturation_gap, 0.8);
+    expect_builtin_full_xc_diagonal_stress("negative_abs");
+}
 
+TEST_F(RealPwNcgga, BuiltinGgaGrad2StressClosesSaturatedSixComponentMetricDerivative)
+{
+    set_saturated_gga_state();
+    const BranchMargins margins = report_branch_margins("stress_saturated");
+    EXPECT_LT(margins.max_signed_saturation_gap, -0.1);
+    expect_builtin_gradient_stress_metric_derivative("saturated");
 
+    set_zero_core_density();
+    const BranchMargins zero_core = report_branch_margins("stress_saturated_zero_core");
+    EXPECT_LT(zero_core.max_signed_saturation_gap, -0.1);
+    expect_builtin_full_xc_diagonal_stress("saturated");
+}
 
+TEST_F(RealPwNcgga, BuiltinGgaGrad2StressClosesRadialEtaSixComponentMetricDerivative)
+{
+    set_inside_eta_state();
+    const BranchMargins margins = report_branch_margins("stress_inside_eta");
+    EXPECT_GT(margins.min_abs_total_density, 0.025);
+    EXPECT_LT(margins.max_magnitude, 6.0e-4);
+    EXPECT_GT(margins.min_eta_distance, 4.0e-4);
+    expect_builtin_gradient_stress_metric_derivative("inside_eta");
 
+    set_zero_core_density();
+    const BranchMargins zero_core = report_branch_margins("stress_inside_eta_zero_core");
+    EXPECT_GT(zero_core.min_abs_total_density, 0.025);
+    EXPECT_LT(zero_core.max_magnitude, 6.0e-4);
+    expect_builtin_full_xc_diagonal_stress("inside_eta");
+}
 
 } // namespace
 

@@ -235,5 +235,113 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& 
     return std::make_tuple(etxc, vtxc, std::move(v));
 }
 
+void gradcorr_ncgga_lca_builtin(const Charge* const chr,
+                                ModulePW::PW_Basis* rhopw,
+                                const double tpiba,
+                                std::vector<double>& stress_gga)
+{
+    stress_gga.assign(9, 0.0);
+
+    const int nrxx = rhopw->nrxx;
+    const int npw = rhopw->npw;
+    const double e2 = ModuleBase::e2;
+    constexpr double epsr = 1.0e-6;
+
+    // Rebuild the same complete local map used by the gga_grad=2 energy:
+    //   rho_s = N_s(n + rho_core, m),
+    //   g_s   = sum_A dN_s/dx_A G_h x_A.
+    // Metric differentiation keeps the real-grid values x_A fixed, so the
+    // map Jacobian is unchanged and every G_h x_A transforms covariantly.
+    std::vector<NcggaSpinMapPoint> spin_map(nrxx);
+    std::array<std::vector<ModuleBase::Vector3<double>>, 4> field_gradient;
+    for (int channel = 0; channel < 4; ++channel)
+    {
+        field_gradient[channel].resize(nrxx);
+    }
+    std::array<std::vector<ModuleBase::Vector3<double>>, 2> spin_gradient;
+    for (int spin = 0; spin < 2; ++spin)
+    {
+        spin_gradient[spin].resize(nrxx);
+    }
+
+    std::vector<std::complex<double>> reciprocal(npw);
+    rhopw->real2recip(chr->rho[0], reciprocal.data());
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        reciprocal[ig] += chr->rhog_core[ig];
+    }
+    XC_Functional::grad_rho(reciprocal.data(), field_gradient[0].data(), rhopw, tpiba);
+
+    for (int channel = 1; channel < 4; ++channel)
+    {
+        rhopw->real2recip(chr->rho[channel], reciprocal.data());
+        XC_Functional::grad_rho(reciprocal.data(), field_gradient[channel].data(), rhopw, tpiba);
+    }
+
+    for (int ir = 0; ir < nrxx; ++ir)
+    {
+        const std::array<double, 3> magnetization = {{chr->rho[1][ir], chr->rho[2][ir], chr->rho[3][ir]}};
+        spin_map[ir] = make_ncgga_spin_map_point(chr->rho[0][ir] + chr->rho_core[ir],
+                                                 make_ncgga_radial_point(magnetization, ncgga_lca_radial_eta()));
+        for (int spin = 0; spin < 2; ++spin)
+        {
+            for (int channel = 0; channel < 4; ++channel)
+            {
+                spin_gradient[spin][ir] += spin_map[ir].jacobian(spin, channel) * field_gradient[channel][ir];
+            }
+        }
+    }
+
+    for (int ir = 0; ir < nrxx; ++ir)
+    {
+        const double rho_up = spin_map[ir].spin_density[0];
+        const double rho_down = spin_map[ir].spin_density[1];
+        const ModuleBase::Vector3<double>& grad_up = spin_gradient[0][ir];
+        const ModuleBase::Vector3<double>& grad_down = spin_gradient[1][ir];
+
+        double sx = 0.0;
+        double v1xup = 0.0;
+        double v1xdw = 0.0;
+        double v2xup = 0.0;
+        double v2xdw = 0.0;
+        XC_Functional::gcx_spin(rho_up,
+                                rho_down,
+                                grad_up * grad_up,
+                                grad_down * grad_down,
+                                sx,
+                                v1xup,
+                                v1xdw,
+                                v2xup,
+                                v2xdw);
+
+        double sc = 0.0;
+        double v1cup = 0.0;
+        double v1cdw = 0.0;
+        double v2c = 0.0;
+        const double rho = rho_up + rho_down;
+        if (rho > epsr)
+        {
+            double zeta = std::fabs((rho_up - rho_down) / rho);
+            const ModuleBase::Vector3<double> grad_rho = grad_up + grad_down;
+            XC_Functional::gcc_spin(rho, zeta, grad_rho * grad_rho, sc, v1cup, v1cdw, v2c);
+        }
+
+        const ModuleBase::Vector3<double> h_up = e2 * ((v2xup + v2c) * grad_up + v2c * grad_down);
+        const ModuleBase::Vector3<double> h_down = e2 * ((v2xdw + v2c) * grad_down + v2c * grad_up);
+        const double grad_up_component[3] = {grad_up.x, grad_up.y, grad_up.z};
+        const double grad_down_component[3] = {grad_down.x, grad_down.y, grad_down.z};
+        const double h_up_component[3] = {h_up.x, h_up.y, h_up.z};
+        const double h_down_component[3] = {h_down.x, h_down.y, h_down.z};
+        for (int row = 0; row < 3; ++row)
+        {
+            for (int column = 0; column <= row; ++column)
+            {
+                stress_gga[row * 3 + column] += h_up_component[row] * grad_up_component[column]
+                                                + h_down_component[row] * grad_down_component[column];
+            }
+        }
+    }
+}
+
 } // namespace NCGGA_SF_Builtin
 } // namespace ModuleXC

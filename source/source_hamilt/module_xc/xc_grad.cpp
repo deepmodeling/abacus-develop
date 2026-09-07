@@ -66,6 +66,32 @@ void XC_Functional::gradcorr(
         return;
     }
 
+    if (is_stress && !use_libxc && nspin == 4 && (domag || domag_z) && gga_grad == 2)
+    {
+        ModuleXC::NCGGA_SF_Builtin::gradcorr_ncgga_lca_builtin(
+            chr, rhopw, ucell->tpiba, stress_gga);
+        return;
+    }
+
+
+
+#ifdef __LIBXC
+    if (is_stress && use_libxc && nspin == 4 && (domag || domag_z)
+        && gga_grad == 2)
+    {
+        XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(
+            func_id,
+            rhopw->nrxx,
+            ucell->tpiba,
+            chr,
+            &scaling_factor_xc,
+            hybrid_alpha_in,
+            hse_omega_in,
+            stress_gga);
+        return;
+    }
+#endif
+
     bool igcc_is_lyp = false;
     // func_id may hold a single entry (e.g. PBE0 -> {XC_HYB_GGA_XC_PBEH}), so guard the index.
     if( func_id.size() > 1 && func_id[1] == XC_GGA_C_LYP)

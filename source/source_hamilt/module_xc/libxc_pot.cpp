@@ -16,6 +16,170 @@
 #include <vector>
 #include <complex>
 
+void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_id,
+                                                  const std::size_t nrxx,
+                                                  const double tpiba,
+                                                  const Charge* const chr,
+                                                  const std::map<int, double>* scaling_factor,
+                                                  const double hybrid_alpha,
+                                                  const double hse_omega,
+                                                  std::vector<double>& stress_gga)
+{
+    constexpr int nspin = 2;
+    stress_gga.assign(9, 0.0);
+
+    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_POLARIZED, hybrid_alpha, hse_omega);
+    bool has_gga = false;
+    for (const xc_func_type& func: funcs)
+    {
+        has_gga = has_gga || func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA;
+    }
+    if (!has_gga)
+    {
+        XC_Functional_Libxc::finish_func(funcs);
+        return;
+    }
+
+    // This is the same forward graph used by v_xc_libxc: the local spin map,
+    // its projected FFT gradients, and the sigma invariants are constructed
+    // once and shared by all Libxc components.
+    const XC_Functional_Libxc::NclSfDiscreteData sf_data
+        = XC_Functional_Libxc::make_ncl_sf_discrete_data(nrxx, tpiba, chr, true);
+    const std::vector<double>& rho = sf_data.rho;
+    const std::vector<double> sigma = XC_Functional_Libxc::convert_sigma(sf_data.spin_gradient);
+    std::vector<double> aggregate_dsigma(3 * nrxx, 0.0);
+
+    for (xc_func_type& func: funcs)
+    {
+        if (func.info->family != XC_FAMILY_GGA && func.info->family != XC_FAMILY_HYB_GGA)
+        {
+            continue;
+        }
+
+        constexpr double rho_threshold = 1.0e-6;
+        constexpr double grho_threshold = 1.0e-10;
+        xc_func_set_dens_threshold(&func, rho_threshold);
+        const std::vector<double> sgn
+            = XC_Functional_Libxc::cal_sgn(rho_threshold, grho_threshold, func, nspin, nrxx, rho, sigma);
+        std::vector<double> exc(nrxx);
+        std::vector<double> vrho(nspin * nrxx);
+        std::vector<double> vsigma(3 * nrxx);
+        constexpr int nr_batch_size = 1024;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, nr_batch_size)
+#endif
+        for (int ir_start = 0; ir_start < static_cast<int>(nrxx); ir_start += nr_batch_size)
+        {
+            const int ir_end = std::min(ir_start + nr_batch_size, static_cast<int>(nrxx));
+            const int nrxx_thread = ir_end - ir_start;
+            xc_gga_exc_vxc(&func,
+                           nrxx_thread,
+                           rho.data() + ir_start * nspin,
+                           sigma.data() + ir_start * 3,
+                           exc.data() + ir_start,
+                           vrho.data() + ir_start * nspin,
+                           vsigma.data() + ir_start * 3);
+        }
+
+        double factor = 1.0;
+        if (scaling_factor != nullptr)
+        {
+            const std::map<int, double>::const_iterator entry = scaling_factor->find(func.info->number);
+            if (entry != scaling_factor->end())
+            {
+                factor = entry->second;
+            }
+        }
+        const XC_Functional_Libxc::LibxcWeightedDerivatives weighted
+            = XC_Functional_Libxc::make_libxc_weighted_derivatives(func,
+                                                                   nspin,
+                                                                   nrxx,
+                                                                   sgn,
+                                                                   rho,
+                                                                   sigma,
+                                                                   exc,
+                                                                   vrho,
+                                                                   vsigma);
+        for (std::size_t index = 0; index < aggregate_dsigma.size(); ++index)
+        {
+            aggregate_dsigma[index] += factor * weighted.dsigma[index];
+        }
+    }
+
+// For g_s=sum_A J_sA G_h x_A, a reciprocal deformation changes G_h but
+// not the pointwise map J.  Therefore the metric derivative is exactly
+// sum_s h_s,l g_s,m, with h_s=dE/dg_s built from the sanitizer-reversed,
+// component-scaled aggregate above.
+#ifdef _OPENMP
+#pragma omp parallel
+    {
+        std::vector<double> local_stress(9, 0.0);
+#pragma omp for schedule(static, 512)
+        for (std::size_t ir = 0; ir < nrxx; ++ir)
+        {
+            const std::size_t sigma_index = 3 * ir;
+            const ModuleBase::Vector3<double>& grad_up = sf_data.spin_gradient[0][ir];
+            const ModuleBase::Vector3<double>& grad_down = sf_data.spin_gradient[1][ir];
+            const ModuleBase::Vector3<double> h_up
+                = ModuleBase::e2
+                  * (2.0 * aggregate_dsigma[sigma_index] * grad_up + aggregate_dsigma[sigma_index + 1] * grad_down);
+            const ModuleBase::Vector3<double> h_down
+                = ModuleBase::e2
+                  * (2.0 * aggregate_dsigma[sigma_index + 2] * grad_down + aggregate_dsigma[sigma_index + 1] * grad_up);
+            const double grad_up_component[3] = {grad_up.x, grad_up.y, grad_up.z};
+            const double grad_down_component[3] = {grad_down.x, grad_down.y, grad_down.z};
+            const double h_up_component[3] = {h_up.x, h_up.y, h_up.z};
+            const double h_down_component[3] = {h_down.x, h_down.y, h_down.z};
+            for (int l = 0; l < 3; ++l)
+            {
+                for (int m = 0; m <= l; ++m)
+                {
+                    local_stress[l * 3 + m]
+                        += h_up_component[l] * grad_up_component[m] + h_down_component[l] * grad_down_component[m];
+                }
+            }
+        }
+#pragma omp critical(libxc_ncgga_stress_reduce)
+        {
+            for (int l = 0; l < 3; ++l)
+            {
+                for (int m = 0; m <= l; ++m)
+                {
+                    stress_gga[l * 3 + m] += local_stress[l * 3 + m];
+                }
+            }
+        }
+    }
+#else
+    for (std::size_t ir = 0; ir < nrxx; ++ir)
+    {
+        const std::size_t sigma_index = 3 * ir;
+        const ModuleBase::Vector3<double>& grad_up = sf_data.spin_gradient[0][ir];
+        const ModuleBase::Vector3<double>& grad_down = sf_data.spin_gradient[1][ir];
+        const ModuleBase::Vector3<double> h_up
+            = ModuleBase::e2
+              * (2.0 * aggregate_dsigma[sigma_index] * grad_up + aggregate_dsigma[sigma_index + 1] * grad_down);
+        const ModuleBase::Vector3<double> h_down
+            = ModuleBase::e2
+              * (2.0 * aggregate_dsigma[sigma_index + 2] * grad_down + aggregate_dsigma[sigma_index + 1] * grad_up);
+        const double grad_up_component[3] = {grad_up.x, grad_up.y, grad_up.z};
+        const double grad_down_component[3] = {grad_down.x, grad_down.y, grad_down.z};
+        const double h_up_component[3] = {h_up.x, h_up.y, h_up.z};
+        const double h_down_component[3] = {h_down.x, h_down.y, h_down.z};
+        for (int l = 0; l < 3; ++l)
+        {
+            for (int m = 0; m <= l; ++m)
+            {
+                stress_gga[l * 3 + m]
+                    += h_up_component[l] * grad_up_component[m] + h_down_component[l] * grad_down_component[m];
+            }
+        }
+    }
+#endif
+
+    XC_Functional_Libxc::finish_func(funcs);
+}
+
 std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( // Peize Lin update for nspin==4 at
                                                                                 // 2023.01.14
     const std::vector<int>& func_id,
