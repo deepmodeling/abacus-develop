@@ -47,7 +47,7 @@ class FIREtest : public testing::Test
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
+        Setcell::parameters(param_in.input_for_test());
 
         p_esolver = new ModuleESolver::ESolver_LJ();
         mdcell.initialize_from_unitcell(ucell,

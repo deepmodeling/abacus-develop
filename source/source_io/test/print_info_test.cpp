@@ -65,7 +65,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 			PARAM.sys_for_test().gamma_only_local = false;
 			PARAM.input_for_test().calculation = cal_type[i];
 			testing::internal::CaptureStdout();
-            EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.input));
+            EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.inp));
             output = testing::internal::GetCapturedStdout();
 			if(PARAM.inp.calculation == "scf")
 			{
@@ -88,7 +88,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 			{
                 PARAM.input_for_test().mdp.md_type = md_types[j];
                 testing::internal::CaptureStdout();
-                EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.input));
+                EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.inp));
                 output = testing::internal::GetCapturedStdout();
                 EXPECT_THAT(output,testing::HasSubstr("Molecular Dynamics simulations"));
                 if (PARAM.mdp.md_type == "fire")
@@ -123,7 +123,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 	{
 		PARAM.input_for_test().basis_type = basis_type[i];
 		testing::internal::CaptureStdout();
-        EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.input));
+        EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.inp));
         output = testing::internal::GetCapturedStdout();
 		if(PARAM.inp.basis_type == "lcao")
 		{

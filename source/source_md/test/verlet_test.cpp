@@ -48,7 +48,7 @@ class Verlet_test : public testing::Test
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
+        Setcell::parameters(param_in.input_for_test());
 
         p_esolver = new ModuleESolver::ESolver_LJ();
         mdcell.initialize_from_unitcell(ucell,
@@ -115,7 +115,7 @@ TEST_F(Verlet_test, first_half)
 TEST_F(Verlet_test, NVE)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    param_in.input.mdp.md_type = "nve";
+    param_in.input_for_test().mdp.md_type = "nve";
     mdrun->second_half();
     ;
 
@@ -149,8 +149,8 @@ TEST_F(Verlet_test, NVE)
 TEST_F(Verlet_test, Anderson)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    param_in.input.mdp.md_type = "nvt";
-    param_in.input.mdp.md_thermostat = "anderson";
+    param_in.input_for_test().mdp.md_type = "nvt";
+    param_in.input_for_test().mdp.md_thermostat = "anderson";
     mdrun->second_half();
     ;
 
@@ -184,8 +184,8 @@ TEST_F(Verlet_test, Anderson)
 TEST_F(Verlet_test, Berendsen)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    param_in.input.mdp.md_type = "nvt";
-    param_in.input.mdp.md_thermostat = "berendsen";
+    param_in.input_for_test().mdp.md_type = "nvt";
+    param_in.input_for_test().mdp.md_thermostat = "berendsen";
     mdrun->second_half();
     ;
 
@@ -219,8 +219,8 @@ TEST_F(Verlet_test, Berendsen)
 TEST_F(Verlet_test, rescaling)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    param_in.input.mdp.md_type = "nvt";
-    param_in.input.mdp.md_thermostat = "rescaling";
+    param_in.input_for_test().mdp.md_type = "nvt";
+    param_in.input_for_test().mdp.md_thermostat = "rescaling";
     mdrun->second_half();
     ;
 
@@ -254,8 +254,8 @@ TEST_F(Verlet_test, rescaling)
 TEST_F(Verlet_test, rescale_v)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    param_in.input.mdp.md_type = "nvt";
-    param_in.input.mdp.md_thermostat = "rescale_v";
+    param_in.input_for_test().mdp.md_type = "nvt";
+    param_in.input_for_test().mdp.md_thermostat = "rescale_v";
     mdrun->second_half();
     ;
 
@@ -290,10 +290,10 @@ TEST_F(Verlet_test, CSVR)
 {
     std::ofstream ofs;
     mdrun->first_half(ofs);
-    param_in.input.mdp.md_type = "nvt";
-    param_in.input.mdp.md_thermostat = "csvr";
-    param_in.input.mdp.md_csvr_tau = 100.0;
-    param_in.input.mdp.md_seed = 12345;
+    param_in.input_for_test().mdp.md_type = "nvt";
+    param_in.input_for_test().mdp.md_thermostat = "csvr";
+    param_in.input_for_test().mdp.md_csvr_tau = 100.0;
+    param_in.input_for_test().mdp.md_seed = 12345;
     mdrun->second_half();
 
     // Check that positions are updated correctly

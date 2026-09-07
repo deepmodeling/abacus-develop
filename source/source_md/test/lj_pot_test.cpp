@@ -33,7 +33,7 @@ class LJ_pot_test : public testing::Test
         natom = ucell.nat;
         stress.create(3, 3);
 
-        Setcell::parameters(param.input);
+        Setcell::parameters(param.input_for_test());
     }
 
     void TearDown()

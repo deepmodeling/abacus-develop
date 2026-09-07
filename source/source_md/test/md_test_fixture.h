@@ -20,7 +20,7 @@ class MdTestBase : public testing::Test
     void SetUp() override
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
+        Setcell::parameters(param_in.input_for_test());
 
         p_esolver.reset(new ModuleESolver::ESolver_LJ());
         p_esolver->before_all_runners(ucell, param_in.inp);
@@ -66,7 +66,7 @@ class MdFuncTestFixture : public testing::Test
     void SetUp() override
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
+        Setcell::parameters(param_in.input_for_test());
         natom = ucell.nat;
 
         allmass_store.resize(natom);

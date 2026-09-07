@@ -45,13 +45,13 @@ class NHC_test : public testing::Test
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
+        Setcell::parameters(param_in.input_for_test());
 
         p_esolver = new ModuleESolver::ESolver_LJ();
-        param_in.input.mdp.md_type = "npt";
-        param_in.input.mdp.md_pmode = "tri";
-        param_in.input.mdp.md_pfirst = 1;
-        param_in.input.mdp.md_plast = 1;
+        param_in.input_for_test().mdp.md_type = "npt";
+        param_in.input_for_test().mdp.md_pmode = "tri";
+        param_in.input_for_test().mdp.md_pfirst = 1;
+        param_in.input_for_test().mdp.md_plast = 1;
         mdcell.initialize_from_unitcell(ucell,
                                          8.5 * ModuleBase::ANGSTROM_AU,
                                          0.0,
