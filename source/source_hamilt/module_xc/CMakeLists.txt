@@ -1,6 +1,7 @@
 add_library(
     xc_
     OBJECT
+    xc_ncgga_radial.cpp
     xc_functional.cpp
     xc_pot.cpp
     xc_grad.cpp

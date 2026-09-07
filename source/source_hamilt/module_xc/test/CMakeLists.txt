@@ -123,3 +123,8 @@ AddTest(
   ../../../source_base/module_fft/fft_cpu.cpp
   ${FFT_SRC}
 )
+
+AddTest(
+  TARGET MODULE_HAMILT_XCTest_NCGGA_RADIAL
+  SOURCES test_xc_ncgga_radial.cpp ../xc_ncgga_radial.cpp
+)
