@@ -49,7 +49,7 @@ TEST_F(BFGSTest, TestAllocate)
     EXPECT_FALSE(bfgs.dpos.empty());
     EXPECT_EQ(bfgs.size, size);
     EXPECT_EQ(bfgs.alpha,70);
-    EXPECT_EQ(bfgs.maxstep, Ions_Move_Basic::relax_bfgs_rmax);
+    EXPECT_EQ(bfgs.maxstep, PARAM.inp.relax_bfgs_rmax);
     EXPECT_TRUE(bfgs.sign);
     EXPECT_EQ(bfgs.largest_grad,0.0);
 }

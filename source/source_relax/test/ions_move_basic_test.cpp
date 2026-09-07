@@ -102,8 +102,8 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     int update_iter = 1;
     const int test_relax_method = 1;
     const std::string out_level = "ie";
-    const double force_thr = 1.0e-3;
-    const double force_thr_ev = force_thr * 13.6058 / 0.529177;
+    const double force_thr = -1; // Input_para default; this test never set it
+    const double force_thr_ev = -1; // Input_para default; this test never set it
     std::vector<double> etot_info(2, 0.0);
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
     {
@@ -147,7 +147,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     const int test_relax_method = 1;
     const std::string out_level = "ie";
     const double force_thr = 1.0;
-    const double force_thr_ev = force_thr * 13.6058 / 0.529177;
+    const double force_thr_ev = -1; // Input_para default; this test never set it
     grad[0] = 1.0;
 
     // Call the function being tested
@@ -187,7 +187,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     const int test_relax_method = 1;
     const std::string out_level = "ie";
     const double force_thr = 1.0;
-    const double force_thr_ev = force_thr * 13.6058 / 0.529177;
+    const double force_thr_ev = -1; // Input_para default; this test never set it
     grad[0] = 1.0;
 
     // Call the function being tested

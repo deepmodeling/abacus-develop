@@ -17,9 +17,12 @@
  */
 struct Relax_Criteria
 {
-    double force_thr = 0.0;       ///< Force convergence threshold, Ry/Bohr
-    double force_thr_ev = 0.0;    ///< The same threshold in eV/Angstrom, reconciled by ReadInput
-    double stress_thr = 0.0;      ///< Stress convergence threshold, kbar
+    // The defaults below deliberately mirror the corresponding Input_para
+    // defaults, so that a caller (or a test) which leaves a field alone gets
+    // exactly the behaviour it got when these values were read from PARAM.
+    double force_thr = -1;        ///< Force convergence threshold, Ry/Bohr
+    double force_thr_ev = -1;     ///< The same threshold in eV/Angstrom, reconciled by ReadInput
+    double stress_thr = 0.5;      ///< Stress convergence threshold, kbar
     bool fixed_ibrav = false;     ///< Keep the Bravais lattice type fixed while relaxing the cell
     std::string out_level = "ie"; ///< Output verbosity; "ie" prints per-step energy to stdout
     int test_relax_method = 0;    ///< Debug verbosity for the relaxation algorithms
