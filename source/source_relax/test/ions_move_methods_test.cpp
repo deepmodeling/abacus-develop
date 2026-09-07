@@ -1,3 +1,4 @@
+#include "source_relax/relax_criteria.h"
 #include "for_test.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -10,8 +11,8 @@
 #define private public
 #define protected public
 #include "source_relax/ions_move_methods.h"
-#undef protected
 #undef private
+#undef protected
 /************************************************
  *  unit tests of class Ions_Move_Methods
  ***********************************************/
@@ -92,6 +93,9 @@ namespace unitcell
 // Define a fixture for the tests
 class IonsMoveMethodsTest : public ::testing::Test
 {
+  public:
+    Relax_Criteria criteria;
+
   protected:
     Ions_Move_Methods imm;
     const int natom = 2;

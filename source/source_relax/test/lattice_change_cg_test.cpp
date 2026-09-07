@@ -1,3 +1,4 @@
+#include "source_relax/relax_criteria.h"
 #include "for_test.h"
 #include "gtest/gtest.h"
 #include "mock_remake_cell.h"
@@ -12,6 +13,9 @@
 
 class LatticeChangeCGTest : public ::testing::Test
 {
+  public:
+    Relax_Criteria criteria;
+
   protected:
     void SetUp() override
     {

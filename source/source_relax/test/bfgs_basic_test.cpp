@@ -1,9 +1,7 @@
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/relax_data.h"
 #include "gmock/gmock.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
 #include "gtest/gtest.h"
 #define private public
 #define protected public
@@ -207,7 +205,7 @@ TEST_F(BFGSBasicTest, NewStepCase1)
     double lat0 = 1.0;
     std::ofstream ofs("test_log.log");
     std::vector<double> etot_info(2, 0.0);
-    bfgs.new_step(lat0, update_iter, ofs, etot_info);
+    bfgs.new_step(lat0, update_iter, ofs, etot_info, test_relax_method);
 
     EXPECT_EQ(update_iter, 1);
     EXPECT_EQ(bfgs.tr_min_hit, false);
@@ -242,7 +240,7 @@ TEST_F(BFGSBasicTest, NewStepCase2)
     double lat0 = 1.0;
     std::ofstream ofs("test_log.log");
     std::vector<double> etot_info(2, 0.0);
-    bfgs.new_step(lat0, update_iter, ofs, etot_info);
+    bfgs.new_step(lat0, update_iter, ofs, etot_info, test_relax_method);
 
     EXPECT_EQ(update_iter, 3);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, -1.0);
@@ -266,7 +264,7 @@ TEST_F(BFGSBasicTest, NewStepWarningQuit)
     std::vector<double> etot_info(2, 0.0);
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.new_step(lat0, update_iter, ofs, etot_info), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.new_step(lat0, update_iter, ofs, etot_info, test_relax_method), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("bfgs_ndim > 1 not implemented yet"));
 }
@@ -354,7 +352,7 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusWarningQuit)
 
     std::ofstream ofs("test_log.log");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.compute_trust_radius(ofs, etot_info), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.compute_trust_radius(ofs, etot_info, test_relax_method), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("bfgs history already reset at previous step, we got trapped!"));
 }

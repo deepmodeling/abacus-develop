@@ -157,7 +157,7 @@ void BFGS_Basic::save_bfgs(void)
 // a new bfgs step is done
 // we have already done well in the previous direction
 // we should get a new direction in this case
-void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info)
+void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, const int test_relax_method)
 {
     ModuleBase::TITLE("BFGS_Basic", "new_step");
 
@@ -247,7 +247,7 @@ void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& o
     else if (update_iter > 1)
     {
         trust_radius = trust_radius_old;
-        this->compute_trust_radius(ofs, etot_info);
+        this->compute_trust_radius(ofs, etot_info, test_relax_method);
     }
     // std::cout<<"trust_radius ="<<" "<<trust_radius;
     return;

@@ -8,6 +8,8 @@
 #include "setcell.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_md/msst.h"
+#undef private
+#undef protected
 #define doublethreshold 1e-12
 
 /************************************************

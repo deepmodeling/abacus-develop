@@ -6,11 +6,10 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
-
+#undef private
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-
 int XC_Functional::func_type = 1;
 bool XC_Functional::ked_flag = false;
 

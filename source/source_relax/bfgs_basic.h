@@ -25,7 +25,7 @@ class BFGS_Basic
 
   protected:
     void allocate_basic(void);
-    void new_step(const double& lat0, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info);
+    void new_step(const double& lat0, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, const int test_relax_method);
     void reset_hessian(void);
     void save_bfgs(void);
 

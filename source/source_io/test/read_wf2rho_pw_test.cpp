@@ -16,12 +16,12 @@
 #include "source_io/module_wf/write_wfc_pw.h"
 #include "source_psi/psi.h"
 
-#ifdef __MPI
-#include "mpi.h"
 #include "source_base/parallel_global.h"
 #include "source_basis/module_pw/test/test_tool.h"
+#undef private
+#ifdef __MPI
+#include "mpi.h"
 #endif
-
 Charge::Charge()
 {
 }

@@ -2,9 +2,9 @@
 #include "for_test.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "source_io/module_parameter/parameter.h"
 #define private public
 #define protected public
-#include "source_io/module_parameter/parameter.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_bfgs.h"
 #undef private
@@ -164,7 +164,7 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase1)
 
     // Call the function being tested
     std::ofstream ofs("test_restart_bfgs_case1.log");
-    bfgs.restart_bfgs(lat0, update_iter, ofs);
+    bfgs.restart_bfgs(lat0, update_iter, ofs, criteria.test_relax_method);
     ofs.close();
 
     // Check the results
@@ -202,7 +202,7 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase2)
 
     // Call the function being tested
     std::ofstream ofs("test_restart_bfgs_case2.log");
-    bfgs.restart_bfgs(lat0, update_iter, ofs);
+    bfgs.restart_bfgs(lat0, update_iter, ofs, criteria.test_relax_method);
     ofs.close();
     std::remove("test_restart_bfgs_case2.log");
 
@@ -251,7 +251,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     // Call the function being tested
     std::ofstream ofs("test_bfgs_routine_case1.log");
     testing::internal::CaptureStdout();
-    bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info);
+    bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info, criteria.out_level, criteria.test_relax_method);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -316,7 +316,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
     // Call the function being tested
     std::ofstream ofs("test_bfgs_routine_case2.log");
     testing::internal::CaptureStdout();
-    bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info);
+    bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info, criteria.out_level, criteria.test_relax_method);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -375,7 +375,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase3)
 
     // Call the function being tested
     std::ofstream ofs("test_bfgs_routine_case3.log");
-    bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info);
+    bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info, criteria.out_level, criteria.test_relax_method);
     ofs.close();
 
     // Check the results
@@ -433,7 +433,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
     // Check the results
     std::ofstream ofs("test_bfgs_routine_warning_quit1.log");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info, criteria.out_level, criteria.test_relax_method), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     ofs.close();
     std::remove("test_bfgs_routine_warning_quit1.log");
@@ -457,7 +457,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit2)
     // Check the results
     std::ofstream ofs("test_bfgs_routine_warning_quit2.log");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info, criteria.out_level, criteria.test_relax_method), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     ofs.close();
     std::remove("test_bfgs_routine_warning_quit2.log");

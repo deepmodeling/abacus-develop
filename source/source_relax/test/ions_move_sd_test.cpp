@@ -3,8 +3,8 @@
 #include "for_test.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
+#define private public
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_sd.h"
 #undef private
@@ -171,7 +171,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
 
     // call function
     testing::internal::CaptureStdout();
-    im_sd.cal_tradius_sd(istep, etot_info);
+    im_sd.cal_tradius_sd(istep, etot_info, criteria.out_level);
     std::string std_outout = testing::internal::GetCapturedStdout();
 
     // Check the results
@@ -189,7 +189,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
     criteria.out_level = "m";
 
     // call function
-    im_sd.cal_tradius_sd(istep, etot_info);
+    im_sd.cal_tradius_sd(istep, etot_info, criteria.out_level);
 
     // Check the results
     EXPECT_EQ(Ions_Move_Basic::trust_radius, -1.0);
@@ -204,7 +204,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
     criteria.out_level = "m";
 
     // call function
-    im_sd.cal_tradius_sd(istep, etot_info);
+    im_sd.cal_tradius_sd(istep, etot_info, criteria.out_level);
 
     // Check the results
     EXPECT_EQ(Ions_Move_Basic::trust_radius, -0.5);
@@ -219,7 +219,7 @@ TEST_F(IonsMoveSDTest, CalTradiusWraningQuit)
 
     // Check the results
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(im_sd.cal_tradius_sd(istep, etot_info), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(im_sd.cal_tradius_sd(istep, etot_info), ::testing::ExitedWithCode(1), "", criteria.out_level);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("istep < 1!"));
 }

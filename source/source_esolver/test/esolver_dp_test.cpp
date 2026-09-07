@@ -2,11 +2,12 @@
 #include "gtest/gtest.h"
 #include "for_test.h"
 
+#include "source_io/module_parameter/input_parameter.h"
 #define private public
 #define protected public
 #include "../esolver_dp.h"
-#include "source_io/module_parameter/input_parameter.h"
 #undef private
+#undef protected
 /************************************************
  *  unit tests of class ESolver_DP
  ***********************************************/

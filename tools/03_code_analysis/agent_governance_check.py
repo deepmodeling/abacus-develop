@@ -244,6 +244,10 @@ def check_line_endings(
 
 GLOBAL_DEPENDENCY_RE = re.compile(r"\b(GlobalV::|GlobalC::|PARAM(?:\.|->|::|\b))")
 
+# `#define private public` / `#define protected public`. See AGENTS.md rule 10.
+ACCESS_HACK_RE = re.compile(r"^\s*#\s*define\s+(?:private|protected)\s+public\b")
+
+
 
 def is_global_dependency_check_path(path: str) -> bool:
     if path.startswith("tools/03_code_analysis/"):
@@ -294,6 +298,49 @@ def check_global_dependencies(
             ),
             action,
         )
+
+
+def check_access_hacks(
+    findings: List[Finding],
+    added_lines: Iterable[DiffLine],
+    removed_lines: Iterable[DiffLine],
+) -> None:
+    """Ratchet on `#define private public` (AGENTS.md rule 10).
+
+    Mirrors the global-dependency budget: removals are free, a net increase
+    blocks. The remaining offenders therefore do not block unrelated work while
+    they are being refactored away module by module.
+    """
+    added = [line for line in added_lines if ACCESS_HACK_RE.search(line.content)]
+    removed = [line for line in removed_lines if ACCESS_HACK_RE.search(line.content)]
+    if not added:
+        return
+
+    delta = len(added) - len(removed)
+    severity = BLOCK if delta > 0 else WARN
+    for line in added:
+        add_finding(
+            findings,
+            "No access-control hacks",
+            severity,
+            line.path,
+            line.line,
+            (
+                "Adds `#define private/protected public`, which reinterprets access "
+                "control for the whole translation unit (standard library headers "
+                "included) and makes this TU disagree with the rest of the build; "
+                "PR total added={a}, removed={r}, net_delta={d}.".format(
+                    a=len(added), r=len(removed), d=delta
+                )
+            ),
+            (
+                "Pass the INPUT values the code needs as explicit arguments instead of "
+                "reading global PARAM inside it, so the test can drive it without "
+                "touching PARAM at all; otherwise add a public const observer, or an "
+                "explicit `friend class XxxTest;` on the class under test."
+            ),
+        )
+
 
 
 def _has_default_arg_in_parens(stripped: str) -> bool:
@@ -731,6 +778,7 @@ def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
 
     check_line_endings(findings, root, changed, statuses, args)
     check_global_dependencies(findings, lines, removed_lines)
+    check_access_hacks(findings, lines, removed_lines)
     check_default_parameters(findings, lines)
     check_hpp_warnings(findings, statuses, lines)
     check_header_include_warnings(findings, lines)

@@ -6,9 +6,7 @@
 #include "for_test.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
 
 /************************************************
  *  unit tests of namespace Lattice_Change_Basic

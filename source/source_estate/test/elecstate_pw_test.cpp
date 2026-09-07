@@ -11,6 +11,8 @@
 #include "source_pw/module_pwdft/soc.h"
 #include "source_io/module_parameter/parameter.h"
 // mock functions for testing
+#undef private
+#undef protected
 int XC_Functional::func_type = 1;
 namespace elecstate
 {

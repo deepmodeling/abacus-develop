@@ -242,7 +242,7 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, int& upda
     }
     else if (etot_info[0] <= etot_info[1])
     {
-        this->new_step(lat0, update_iter, ofs, etot_info);
+        this->new_step(lat0, update_iter, ofs, etot_info, test_relax_method);
     }
 
     if (out_level == "ie")
