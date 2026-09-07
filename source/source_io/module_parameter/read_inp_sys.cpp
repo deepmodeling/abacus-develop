@@ -179,6 +179,9 @@ void ReadInput::item_system()
 * host:port, for example localhost:31415 or 127.0.0.1:31415, opens a TCP connection to that host and port. Use this when the i-PI server listens on a TCP port.
 * path:UNIX, for example /tmp/ipi_abacus_si:UNIX, opens a Unix-domain socket at the given filesystem path. The :UNIX suffix tells ABACUS that the preceding value is a local socket path rather than a TCP host name. This form only works on the same machine.
 When using the ASE AbacusSocketIO interface, this environment variable is set automatically from the port or unixsocket calculator argument.)";
+        item.description += R"(
+
+Socket mode always computes energy. Force and stress extraction follows cal_force and cal_stress independently; disabled properties are sent as protocol padding and marked absent in the ABACUS i-PI extras metadata, not reported as physical zero values. This metadata extension is required for safe optional-property handling: a legacy response with empty extras is accepted only for energy-only use, while a generic client that ignores extras cannot distinguish padding from a computed zero. A non-converged SCF step is returned with scf_converged=false metadata so an external driver can choose its policy.)";
         item.default_value = "False";
         read_sync_bool(input.socket_driver);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -323,7 +326,8 @@ When using the ASE AbacusSocketIO interface, this environment variable is set au
         item.annotation = "if calculate the force at the end of the electronic iteration";
         item.category = "System variables";
         item.type = "Boolean";
-        item.description = "If set to True, calculate the force at the end of the electronic iteration.";
+        item.description = R"(If set to True, calculate the force at the end of the electronic iteration.
+In socket_driver mode, this flag controls whether the returned frame advertises forces; it is not forced on by the socket protocol.)";
         item.default_value = "False";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             std::vector<std::string> use_force = {"cell-relax", "relax", "md"};
@@ -627,7 +631,8 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
         item.annotation = "calculate the stress or not";
         item.category = "System variables";
         item.type = "Boolean";
-        item.description = "If set to True, calculate the stress at the end of the electronic iteration.";
+        item.description = R"(If set to True, calculate the stress at the end of the electronic iteration.
+In socket_driver mode, this flag independently controls whether the returned frame advertises stress/virial.)";
         item.default_value = "False";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "md")
