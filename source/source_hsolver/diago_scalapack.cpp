@@ -8,15 +8,15 @@
 #include "diago_scalapack.h"
 
 #include "source_base/global_function.h"
+#include "source_base/matrix_block.h"
 #include "source_base/module_external/blacs_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_hamilt/matrixblock.h"
 
 #include <cassert>
 #include <cstring>
 
-typedef hamilt::MatrixBlock<double> matd;
-typedef hamilt::MatrixBlock<std::complex<double>> matcd;
+typedef ModuleBase::MatrixBlock<double> matd;
+typedef ModuleBase::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver
 {
@@ -59,8 +59,8 @@ int blacs_grid_size(const int* const desc)
 
 #ifdef __MPI
  template<>
-    void DiagoScalapack<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
-    hamilt::MatrixBlock<double>& s_mat,
+    void DiagoScalapack<double>::diag_pool(ModuleBase::MatrixBlock<double>& h_mat,
+    ModuleBase::MatrixBlock<double>& s_mat,
     psi::Psi<double>& psi,
     Real* eigenvalue_in,
     MPI_Comm& comm)
@@ -73,8 +73,8 @@ int blacs_grid_size(const int* const desc)
     BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
     template<>
-    void DiagoScalapack<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex<double>>& h_mat,
-    hamilt::MatrixBlock<std::complex<double>>& s_mat,
+    void DiagoScalapack<std::complex<double>>::diag_pool(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
     psi::Psi<std::complex<double>>& psi,
     Real* eigenvalue_in,
     MPI_Comm& comm)

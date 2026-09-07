@@ -3,13 +3,14 @@
 #include <memory>
 #ifdef __PEXSI
 #include "diago_pexsi.h"
+#include "source_base/matrix_block.h"
 #include "source_base/tool_title.h"
 #include "source_base/tool_quit.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_pexsi/pexsi_solver.h"
 
-typedef hamilt::MatrixBlock<double> matd;
-typedef hamilt::MatrixBlock<std::complex<double>> matcd;
+typedef ModuleBase::MatrixBlock<double> matd;
+typedef ModuleBase::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver
 {

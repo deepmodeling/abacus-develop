@@ -7,8 +7,8 @@
 #include "source_base/tool_title.h"
 #include "source_base/tool_quit.h"
 
-typedef hamilt::MatrixBlock<double> matd;
-typedef hamilt::MatrixBlock<std::complex<double>> matcd;
+typedef ModuleBase::MatrixBlock<double> matd;
+typedef ModuleBase::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver {
 #ifdef __MPI
@@ -141,8 +141,8 @@ void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in,
 
 #ifdef __MPI
 template <>
-void DiagoElpa<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex<double>>& h_mat,
-    hamilt::MatrixBlock<std::complex<double>>& s_mat,
+void DiagoElpa<std::complex<double>>::diag_pool(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
     psi::Psi<std::complex<double>>& psi,
     Real* eigenvalue_in,
     MPI_Comm& comm)
@@ -170,8 +170,8 @@ void DiagoElpa<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex
 }
 
 template <>
-void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
-    hamilt::MatrixBlock<double>& s_mat,
+void DiagoElpa<double>::diag_pool(ModuleBase::MatrixBlock<double>& h_mat,
+    ModuleBase::MatrixBlock<double>& s_mat,
     psi::Psi<double>& psi,
     Real* eigenvalue_in,
     MPI_Comm& comm)

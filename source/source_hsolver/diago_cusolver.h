@@ -2,9 +2,10 @@
 #define DIAGOCUSOLVER_H
 
 #include "source_base/macros.h"   // GetRealType
-#include "source_hamilt/hamilt.h"
+#include "source_base/matrix_block.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hsolver/kernels/cuda/diag_cusolver.cuh"
+#include "source_psi/psi.h"
 
 namespace hsolver
 {
@@ -26,8 +27,8 @@ class DiagoCusolver
 
     // Override the diag function for CUSOLVER diagonalization
     void diag(
-      hamilt::MatrixBlock<T>& h_mat,
-      hamilt::MatrixBlock<T>& s_mat,
+      ModuleBase::MatrixBlock<T>& h_mat,
+      ModuleBase::MatrixBlock<T>& s_mat,
       psi::Psi<T>& psi,
       Real* eigenvalue_in);
 

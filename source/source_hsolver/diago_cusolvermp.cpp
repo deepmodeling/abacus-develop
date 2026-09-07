@@ -2,6 +2,7 @@
 
 #include "diago_cusolvermp.h"
 
+#include "source_base/matrix_block.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
@@ -14,7 +15,7 @@ template <typename T>
 void DiagoCusolverMP<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoCusolverMP", "diag");
-    hamilt::MatrixBlock<T> h_mat, s_mat;
+    ModuleBase::MatrixBlock<T> h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
 
     std::vector<Real> eigen(this->nlocal, 0.0);

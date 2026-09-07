@@ -43,7 +43,7 @@ void Parallel_K2D<TK>::distribute_hsk(hamilt::Hamilt<TK>* pHamilt,
     for (int ipool = 0; ipool < ik_kpar.size(); ++ipool)
     {
         pHamilt->updateHk(ik_kpar[ipool]);
-        hamilt::MatrixBlock<TK> HK_global, SK_global;
+        ModuleBase::MatrixBlock<TK> HK_global, SK_global;
         pHamilt->matrix(HK_global, SK_global);
         if (this->MY_POOL == this->Pkpoints->whichpool[ik_kpar[ipool]]) {
             this->hk_pool.resize(this->P2D_pool->get_local_size(), 0.0);

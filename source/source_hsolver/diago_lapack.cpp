@@ -8,16 +8,16 @@
 
 #include <cstring>
 
-typedef hamilt::MatrixBlock<double> matd;
-typedef hamilt::MatrixBlock<std::complex<double>> matcd;
+typedef ModuleBase::MatrixBlock<double> matd;
+typedef ModuleBase::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver
 {
 namespace
 {
 template <typename T>
-void check_lapack_layout(const hamilt::MatrixBlock<T>& h_mat,
-                         const hamilt::MatrixBlock<T>& s_mat,
+void check_lapack_layout(const ModuleBase::MatrixBlock<T>& h_mat,
+                         const ModuleBase::MatrixBlock<T>& s_mat,
                          const std::size_t n)
 {
     if (h_mat.row != n || h_mat.col != n || s_mat.row != n || s_mat.col != n)
@@ -68,8 +68,8 @@ void DiagoLapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>
 
 #ifdef __MPI
  template<>
-    void DiagoLapack<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
-    hamilt::MatrixBlock<double>& s_mat,
+    void DiagoLapack<double>::diag_pool(ModuleBase::MatrixBlock<double>& h_mat,
+    ModuleBase::MatrixBlock<double>& s_mat,
     psi::Psi<double>& psi,
     Real* eigenvalue_in,
     MPI_Comm& comm)
@@ -83,8 +83,8 @@ void DiagoLapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>
     BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
     template<>
-    void DiagoLapack<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex<double>>& h_mat,
-    hamilt::MatrixBlock<std::complex<double>>& s_mat,
+    void DiagoLapack<std::complex<double>>::diag_pool(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
     psi::Psi<std::complex<double>>& psi,
     Real* eigenvalue_in,
     MPI_Comm& comm)

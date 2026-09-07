@@ -1,9 +1,9 @@
 #ifndef PARALLEL_K2D_H
 #define PARALLEL_K2D_H
 
+#include "source_base/matrix_block.h"
 #include "source_base/parallel_2d.h"
 #include "source_cell/parallel_kpoints.h"
-#include "source_hamilt/matrixblock.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
