@@ -7,15 +7,17 @@ abacuslite is a lightweight plugin for ABACUS (Atomic-orbital Based Ab-initio Co
 ### Key Features
 
 - **Lightweight Design**: Implemented as a plugin, no need to modify ASE core code
-- **Version Compatibility**: No longer restricted to specific ASE versions, works with most ASE versions
+- **Version Compatibility**: Supports ASE versions satisfying the package requirement `ase>=3.22`
 - **ASE Integration**: Uses ASE as the running platform, making ABACUS a callable calculator within it
-- **Function Support**: Currently only supports SCF (Self-Consistent Field) functionality, returning energy, forces, stress, etc.
+- **Function Support**: Provides SCF-based energy, force, and stress evaluations through ASE. ASE can use these evaluations for relaxation, molecular dynamics, NEB, band-structure, and density-of-states workflows.
+- **Socket Support**: `AbacusSocketIO` provides fixed-cell i-PI socket calculations, with energy always available and forces/stress enabled independently when requested.
 
 ## Installation
 
-Installation is very simple, just execute the following command in the project root directory:
+Install the plugin from the ASE interface directory:
 
 ```bash
+cd interfaces/ASE_interface
 pip install .
 ```
 
@@ -32,9 +34,9 @@ Please refer to the example scripts in the `examples` folder. Recommended learni
 7. **constraintmd.py** - Constrained molecular dynamics simulation
 8. **metadynamics.py** - Metadynamics simulation
 9. **neb.py** - Nudged Elastic Band (NEB) calculation
-10. **socketio.py** - ASE optimization with the AbacusSocketIO calculator running ABACUS as an i-PI socket client
+10. **socketio.py** - Fixed-cell ASE optimization with `AbacusSocketIO`, running ABACUS as an i-PI socket client
 
-More usage examples will be provided in future versions.
+The regular `Abacus` calculator runs one ABACUS calculation for each ASE property evaluation. ASE controls the relaxation, molecular-dynamics, and other workflow steps. The socket calculator reuses one ABACUS process for position updates, while the cell and electronic-structure settings remain fixed for that calculator instance.
 
 ## Authors
 
@@ -49,7 +51,7 @@ Thanks to the ABACUS development team for their support and contributions.
 
 ## License
 
-[Fill in according to the actual project license]
+This interface is distributed under the [GNU Lesser General Public License v3.0 or later](../../LICENSE).
 
 ## Contact
 
