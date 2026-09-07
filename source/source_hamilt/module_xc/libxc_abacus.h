@@ -5,10 +5,12 @@
 
 #include "source_base/matrix.h"
 #include "source_base/vector3.h"
+#include "xc_ncgga_radial.h"
 
 #include <xc.h>
 #include <xc_funcs.h>
 
+#include <array>
 #include <tuple>
 #include <vector>
 
@@ -26,29 +28,41 @@ namespace XC_Functional_Libxc
         std::vector<double> dsigma;
     };
 
+    // Complete forward data for the gga_grad=2 noncollinear Libxc graph:
+    //   rho_s = N_s(x),
+    //   g_s   = sum_A (d N_s / d x_A) G_h x_A.
+    // Keeping the local map and all input gradients together lets the reverse
+    // use the exact same branch choices and radial Hessian as the forward.
+    struct NclSfDiscreteData
+    {
+        std::vector<ModuleXC::NcggaSpinMapPoint> spin_map;
+        std::vector<double> rho;
+        std::vector<std::vector<ModuleBase::Vector3<double>>> spin_gradient;
+        std::array<std::vector<ModuleBase::Vector3<double>>, 3> grad_m;
+    };
 
 //-------------------
 //  libxc_setup.cpp
 //-------------------
 
     // sets functional type, which allows combination of LIBXC keyword connected by "+"
-    //        for example, "XC_LDA_X+XC_LDA_C_PZ"
+    //        for example: "XC_LDA_X+XC_LDA_C_PZ"
     extern std::pair<int, std::vector<int>> set_xc_type_libxc(const std::string& xc_func_in);
 
     /**
      * @brief instantiate the XC functional by its ID, and set the external parameters if provided.
-     * 
+     *
      * @param func_id libxc ID of functional, see https://libxc.gitlab.io/functionals/ for details
      * @param xc_polarized 0: unpolarized, 1: spin-polarized
-     * @return std::vector<xc_func_type> 
-     * 
+     * @return std::vector<xc_func_type>
+     *
      * @note the functionality of this method is extended by supporting the user-defined
-     *       external parameters of xc. However, there are several functionals' external 
-     *       parameters are pre-defined in the code, which herein we call those are 
-     *       "in-built" parameters. If the same functional ID is found in both in-built 
+     *       external parameters of xc. However, there are several functionals' external
+     *       parameters are pre-defined in the code, which herein we call those are
+     *       "in-built" parameters. If the same functional ID is found in both in-built
      *       and external parameters, the external parameters will overwrite the in-built ones.
      *       The external parameters can be passed here by keywords xc_exch_ext and
-     *       xc_corr_ext in the input file. The expected format would be an XC ID 
+     *       xc_corr_ext in the input file. The expected format would be an XC ID
      *       followed by a list of parameters.
      */
     extern std::vector<xc_func_type> init_func(
@@ -73,9 +87,23 @@ namespace XC_Functional_Libxc
         const int nspin,
         const bool domag,
         const bool domag_z,
+        const int gga_grad,
         const std::map<int, double>* scaling_factor,
         const double hybrid_alpha,
         const double hse_omega);
+
+    // Reciprocal-metric derivative of the exact gga_grad=2 Libxc energy
+    // graph. The returned lower-triangular tensor is the unnormalized local
+    // grid sum; Stress_Func performs the pool reduction and divides by nxyz.
+    extern void gradcorr_ncgga_sf_libxc(
+        const std::vector<int>& func_id,
+        const std::size_t nrxx,
+        const double tpiba,
+        const Charge* const chr,
+        const std::map<int, double>* scaling_factor,
+        const double hybrid_alpha,
+        const double hse_omega,
+        std::vector<double>& stress_gga);
 
     // for mGGA functional
     extern std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> v_xc_meta(
@@ -103,6 +131,25 @@ namespace XC_Functional_Libxc
     extern std::tuple<std::vector<double>, std::vector<double>> convert_rho_amag_nspin4(
         const int nspin,
         const std::size_t nrxx,
+        const Charge* const chr);
+
+    // Build the exact gga_grad=2 local spin map and, when requested, its
+    // projected FFT-gradient graph.  LDA-only callers set need_gradient=false.
+    extern NclSfDiscreteData make_ncl_sf_discrete_data(
+        const std::size_t nrxx,
+        const double tpiba,
+        const Charge* const chr,
+        const bool need_gradient);
+
+    // Reverse one aggregate of all scaled Libxc components.  The returned
+    // potential is already in (n,mx,my,mz) representation.  An empty dsigma
+    // selects the LDA-only local reverse and performs no FFT divergence.
+    extern ModuleBase::matrix reverse_ncl_sf_discrete(
+        const std::size_t nrxx,
+        const NclSfDiscreteData& data,
+        const std::vector<double>& drho,
+        const std::vector<double>& dsigma,
+        const double tpiba,
         const Charge* const chr);
 
     // calculating grho
@@ -159,7 +206,7 @@ namespace XC_Functional_Libxc
         const std::vector<double> &vrho,
         const std::vector<double> &vsigma);
 
-    // converting vtxc and v from vrho and vsigma (libxc=>abacus)
+    // Convert collinear LibXC derivatives to the potential.
     extern std::pair<double, ModuleBase::matrix> convert_vtxc_v(
         const xc_func_type &func,
         const int nspin,
@@ -183,12 +230,14 @@ namespace XC_Functional_Libxc
         const Charge* const chr);
 
     // convert v for NSPIN=4
+    // has_mag: whether the calculation has (noncollinear) magnetization,
+    // i.e. domag || domag_z
     extern ModuleBase::matrix convert_v_nspin4(
         const std::size_t nrxx,
         const Charge* const chr,
         const std::vector<double> &amag,
-        const ModuleBase::matrix &v);
-
+        const ModuleBase::matrix &v,
+        const bool has_mag);
 
 //-------------------
 //  libxc_lda_wrap.cpp

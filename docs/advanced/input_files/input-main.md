@@ -94,6 +94,7 @@
     - [pseudo\_rcut](#pseudo_rcut)
     - [pseudo\_mesh](#pseudo_mesh)
     - [nspin](#nspin)
+    - [gga\_grad](#gga_grad)
     - [smearing\_method](#smearing_method)
     - [smearing\_sigma](#smearing_sigma)
     - [smearing\_sigma\_temp](#smearing_sigma_temp)
@@ -1325,6 +1326,17 @@
   - 2: Collinear spin polarized.
   - 4: Noncollinear or spin-orbit calculations. Set nspin to 4 explicitly when noncolin or lspinorb is enabled.
 - **Default**: 1
+
+### gga_grad
+
+- **Type**: Integer
+- **Description**: Selects the local spin mapping for LDA/GGA functionals in magnetic nspin=4 calculations.
+  - 0: preserves the original algorithm (default).
+  - 1: uses the local magnetization magnitude instead of the global quantization axis in the built-in GGA gradient correction. For LIBXC functionals, 0 and 1 are equivalent.
+  - 2: uses a C2-regularized magnetization magnitude with eta = 1e-3 in atomic density units. The spin densities are (abs(n + rho_core) +/- min(S_eta(m), abs(n + rho_core)))/2. GGA gradients are the local-map Jacobian applied to the FFT gradients of the four density channels. The potential reverses this same discrete energy graph, including the radial Hessian and density/sigma clipping branches; the GGA stress uses the corresponding metric derivative.
+  For r = |m| and x = r/eta, S_eta = eta*x^3*(3*x^2 - 8*x + 6) for r &lt; eta, and S_eta = r otherwise. The regularization is part of the functional definition, including its first and second derivatives.
+  Mode 2 also uses this local map for the LDA contribution. Other spin configurations retain their existing behavior.
+- **Default**: 0
 
 ### smearing_method
 

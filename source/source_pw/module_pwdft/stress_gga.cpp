@@ -10,6 +10,7 @@ void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
                                              ModulePW::PW_Basis* rho_basis,
                                              const Charge* const chr)
 {
+    const Parameter& parameters = PARAM;
     ModuleBase::TITLE("Stress","stress_gga");
     ModuleBase::timer::start("Stress","stress_gga");
 
@@ -31,7 +32,7 @@ void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
     XC_Functional::gradcorr(
         dum1, dum2, dum3, chr, rho_basis, &ucell,
         stress_gga, is_stress,
-        PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z,
+        parameters.inp.nspin, parameters.globalv.domag, parameters.globalv.domag_z, parameters.inp.gga_grad,
         hybrid_alpha, hse_omega);
 
     for(int l = 0;l< 3;l++)

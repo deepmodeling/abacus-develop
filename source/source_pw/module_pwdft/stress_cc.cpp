@@ -21,12 +21,13 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 											const bool *numeric,
                                             const Charge* const chr)
 {
+    const Parameter& parameters = PARAM;
     ModuleBase::TITLE("Stress","stress_cc");
 	ModuleBase::timer::start("Stress","stress_cc");
         
 	FPTYPE fact=1.0;
 
-	if(is_pw&&PARAM.globalv.gamma_only_pw) 
+	if(is_pw&&parameters.globalv.gamma_only_pw)
 	{
 		fact = 2.0; //is_pw:PW basis, gamma_only need to FPTYPE.
 	}
@@ -62,7 +63,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 #ifdef __LIBXC
         const auto etxc_vtxc_v
             = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rho_basis->nrxx, ucell.omega, ucell.tpiba, chr,
-                                             PARAM.inp.nspin, hybrid_alpha, hse_omega);
+                                             parameters.inp.nspin, hybrid_alpha, hse_omega);
 
         // etxc = std::get<0>(etxc_vtxc_v);
         // vtxc = std::get<1>(etxc_vtxc_v);
@@ -73,11 +74,12 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	}
 	else
 	{
-		unitcell::cal_ux(ucell, PARAM.inp.nspin);
+		unitcell::cal_ux(ucell, parameters.inp.nspin);
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &ucell,
-                                              PARAM.inp.nspin,
-                                              PARAM.globalv.domag,
-                                              PARAM.globalv.domag_z,
+                                              parameters.inp.nspin,
+                                              parameters.globalv.domag,
+                                              parameters.globalv.domag_z,
+                                              parameters.inp.gga_grad,
                                               hybrid_alpha,
                                               hse_omega);
         // etxc = std::get<0>(etxc_vtxc_v); // may delete?
@@ -87,7 +89,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 
     std::complex<FPTYPE>* psic = new std::complex<FPTYPE>[rho_basis->nmaxgr];
 
-    if(PARAM.inp.nspin==1||PARAM.inp.nspin==4)
+    if(parameters.inp.nspin==1||parameters.inp.nspin==4)
 	{
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)

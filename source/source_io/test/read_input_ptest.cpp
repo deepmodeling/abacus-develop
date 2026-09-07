@@ -95,6 +95,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.min_dist_coef, 0.2);
     EXPECT_EQ(param.inp.gint_precision, "double");
     EXPECT_EQ(param.inp.dft_functional, "hse");
+    EXPECT_EQ(Parameter().inp.gga_grad, 0);
+    EXPECT_EQ(param.inp.gga_grad, 2);
     EXPECT_DOUBLE_EQ(param.inp.xc_temperature, 0.0);
     EXPECT_EQ(param.inp.nspin, 1);
     EXPECT_DOUBLE_EQ(param.inp.nelec, 0.0);
@@ -482,6 +484,37 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.exciton_slice_range, (std::vector<int>{-1, 2, -1, 2}));
     EXPECT_EQ(param.inp.rdmft, 0);
     EXPECT_DOUBLE_EQ(param.inp.rdmft_power_alpha, 0.656);
+}
+
+TEST_F(InputParaTest, GgaGradAcceptedRange)
+{
+    ModuleIO::ReadInput readinput(0);
+    bool found = false;
+    for (const auto& entry: readinput.get_input_lists())
+    {
+        if (entry.first != "gga_grad")
+        {
+            continue;
+        }
+        found = true;
+        ModuleIO::Input_Item item(entry.second);
+        for (int mode = 0; mode <= 2; ++mode)
+        {
+            Parameter param;
+            item.str_values = {std::to_string(mode)};
+            item.read_value(item, param);
+            EXPECT_EQ(param.inp.gga_grad, mode);
+            item.check_value(item, param);
+        }
+        for (const int mode: {-1, 3})
+        {
+            Parameter param;
+            item.str_values = {std::to_string(mode)};
+            item.read_value(item, param);
+            EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
+        }
+    }
+    EXPECT_TRUE(found);
 }
 
 TEST_F(InputParaTest, TypedTDFieldLists)

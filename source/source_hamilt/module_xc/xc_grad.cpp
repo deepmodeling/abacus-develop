@@ -14,11 +14,13 @@
 // noncolin_rho.
 
 #include "xc_functional.h"
+#include "xc_functional_ncgga_sf.h"
 #include "xc_grad_internal.h"
 #include "source_base/timer.h"
 
 #ifdef __LIBXC
 #include <xc_funcs.h>
+#include "libxc_abacus.h"
 #endif
 
 void XC_Functional::gradcorr(
@@ -33,6 +35,7 @@ void XC_Functional::gradcorr(
     const int nspin,
     const bool domag,
     const bool domag_z,
+    const int gga_grad,
     const double hybrid_alpha_in,
     const double hse_omega_in)
 {
@@ -108,6 +111,7 @@ void XC_Functional::gradcorr(
     params.igcc_is_lyp = igcc_is_lyp;
     params.domag = domag;
     params.domag_z = domag_z;
+    params.gga_grad = gga_grad;
     params.hybrid_alpha = hybrid_alpha_in;
     params.hse_omega = hse_omega_in;
     params.use_libxc = use_libxc;

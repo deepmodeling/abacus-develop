@@ -150,7 +150,10 @@ void gradcorr_prepare_rho(
                 }
             }
         }
-        XC_Functional::noncolin_rho(buf.rhotmp1.data(), buf.rhotmp2.data(), buf.neg.data(), chr->rho, rhopw->nrxx, ucell->magnet.ux_, ucell->magnet.lsign_);
+        // Mode 1 ignores the global quantization axis to remain continuous
+        // when the magnetic moments tilt away from a collinear state.
+        const bool use_global_axis = ucell->magnet.lsign_ && params.gga_grad != 1;
+        XC_Functional::noncolin_rho(buf.rhotmp1.data(), buf.rhotmp2.data(), buf.neg.data(), chr->rho, rhopw->nrxx, ucell->magnet.ux_, use_global_axis);
         rhopw->real2recip(buf.rhotmp1.data(), buf.rhogsum1.data());
         rhopw->real2recip(buf.rhotmp2.data(), buf.rhogsum2.data());
 #ifdef _OPENMP
