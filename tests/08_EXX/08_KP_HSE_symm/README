@@ -1,1 +1,30 @@
-HSE calculation on Si, multiple k-points, cal force and stress, exx real number, symmetry=1
+HSE calculation on Si, multiple k-points, force and stress, real EXX, symmetry=1.
+
+The density at each irreducible k point must be averaged over its unitary
+little group before expanding its star. A star stores one representative per
+unique k point; it does not contain all operations fixing that point. On this
+coarse finite grid, omitting that average leaves the EXX density outside the
+space-group-invariant subspace, so rotating irreducible H(R) blocks can produce
+a non-Hermitian Hamiltonian.
+
+In ABACUS's transposed density storage, the average is
+  P_k(D) = sum_{g in G_k} M_g^T D M_g^* / |G_k|,
+where g k = k modulo a reciprocal lattice vector. P_k is a group projector:
+it preserves Hermiticity and removes dependence on the chosen unitary star
+representative. The existing star-size factor is applied only after averaging.
+The unit tests in module_exx_symmetry/test/test_symm_rotation.cpp exercise this
+contract with complex matrices and separate spin channels.
+
+The reference energy and stress were regenerated after this correction, with
+unchanged INPUT and thresholds. On the same case, corrected ScaLAPACK runs with
+1 and 4 MPI ranks and one-stage ELPA runs with 1 and 4 ranks agree within 1e-9 eV;
+all report totalstressref=2143.792554 and totalforceref=0.000000. Disabling only
+exx_symmetry_realspace (full EXX contraction with the same projected density)
+also agrees within 2e-10 eV. The maximum ||H-H^dagger||_F over 57 solves drops
+from 6.7e-3 to 1.3e-15. This is a fixed-input regression reference, not a claim of
+cutoff or outer-loop convergence. The historical timing reference is retained.
+
+Verification used GCC, OpenMPI 5.0.10, ELPA 2026.02.001, LibXC 7.0.0 and the
+repository-pinned LibRI. The two-stage ELPA backend in that environment failed
+before the first EXX update, so its result is not included in the agreement
+claim; no solver-stage change is part of this fix.
