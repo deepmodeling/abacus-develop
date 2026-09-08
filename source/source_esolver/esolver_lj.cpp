@@ -18,16 +18,6 @@
 
 namespace ModuleESolver
 {
-double ESolver_LJ::mdcell_cutoff(const Input_para& inp) const
-{
-    double cutoff = 0.0;
-    for (std::size_t i = 0; i < inp.mdp.lj_rcut.size(); ++i)
-    {
-        cutoff = std::max(cutoff, inp.mdp.lj_rcut[i] * ModuleBase::ANGSTROM_AU);
-    }
-    return cutoff;
-}
-
 void ESolver_LJ::before_all_runners(BaseCell& cell, const Input_para& inp)
 {
     this->inp_ = &inp;
@@ -37,6 +27,12 @@ void ESolver_LJ::before_all_runners(BaseCell& cell, const Input_para& inp)
     if (cell.kind() == BaseCell::Kind::mdcell)
     {
         MDCell& mdcell = static_cast<MDCell&>(cell);
+        double cutoff = 0.0;
+        for (std::size_t i = 0; i < inp.mdp.lj_rcut.size(); ++i)
+        {
+            cutoff = std::max(cutoff, inp.mdp.lj_rcut[i] * ModuleBase::ANGSTROM_AU);
+        }
+        mdcell.initialize_neighbors(cutoff);
         rcut_search_radius(static_cast<int>(mdcell.type_labels().size()), inp.mdp.lj_rcut);
         set_c6_c12(static_cast<int>(mdcell.type_labels().size()), inp.mdp.lj_rule, inp.mdp.lj_epsilon, inp.mdp.lj_sigma);
         cal_en_shift(static_cast<int>(mdcell.type_labels().size()), inp.mdp.lj_eshift);
@@ -79,7 +75,7 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
             atom_offsets[it + 1] = atom_offsets[it] + ucell.atoms[it].na;
         }
 
-        for (int local_i = 0; local_i < neighbor_list.get_nlocal(); ++local_i)
+        for (int local_i = 0; local_i < neighbor_list.get_ncentral_atoms(); ++local_i)
         {
             const NeighborAtom& center_atom = inside_atoms[static_cast<std::size_t>(local_i)];
             const int it = center_atom.atom_type;
@@ -137,7 +133,7 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
     double local_potential = 0.0;
     std::array<double, 9> local_virial{};
 
-    for (int local_i = 0; local_i < neighbor_list.get_nlocal(); ++local_i)
+    for (int local_i = 0; local_i < neighbor_list.get_ncentral_atoms(); ++local_i)
     {
         LocalAtom& center_atom = owned_atoms[static_cast<std::size_t>(local_i)];
         ModuleBase::Vector3<double> tau1(center_atom.cart.x, center_atom.cart.y, center_atom.cart.z);
@@ -202,8 +198,8 @@ void ESolver_LJ::cal_force(BaseCell& cell, ModuleBase::matrix& force)
     }
 
     MDCell& mdcell = static_cast<MDCell&>(cell);
-    force.create(mdcell.nlocal(), 3);
-    for (int i = 0; i < mdcell.nlocal(); ++i)
+    force.create(mdcell.nowned_atoms(), 3);
+    for (int i = 0; i < mdcell.nowned_atoms(); ++i)
     {
         force(i, 0) = mdcell.owned_atoms()[static_cast<std::size_t>(i)].force.x;
         force(i, 1) = mdcell.owned_atoms()[static_cast<std::size_t>(i)].force.y;
