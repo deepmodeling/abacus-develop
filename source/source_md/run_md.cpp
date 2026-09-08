@@ -6,7 +6,6 @@
 #include "source_base/parallel_cell.h"
 #include "source_cell/mdcell_reader.h"
 #include "source_cell/mdcell.h"
-#include "source_esolver/esolver.h"
 #include "source_io/module_parameter/parameter.h"
 #include "fire.h"
 #include "langevin.h"
@@ -25,18 +24,9 @@
 namespace Run_MD
 {
 
-void prepare_mdcell(MDCell& mdcell,
-                    ModuleESolver::ESolver* p_esolver,
-                    const Parameter& param_in)
+void prepare_mdcell(MDCell& mdcell, const Parameter& param_in)
 {
     const Input_para& input = param_in.inp;
-    const double cutoff = p_esolver->mdcell_cutoff(input);
-    if (cutoff <= 0.0)
-    {
-        ModuleBase::WARNING_QUIT("Run_MD::prepare_mdcell",
-                                 "An ESolver supporting MDCell must provide a positive cutoff.");
-    }
-
     std::vector<int> effective_replicate = input.cell_replica;
     if (input.mdp.md_restart)
     {
@@ -46,7 +36,6 @@ void prepare_mdcell(MDCell& mdcell,
     const ModuleBase::CommunicationDomain comm_domain = ModuleBase::world_comm_domain();
     mdcell = MDCellReader::read_stru(param_in.globalv.global_in_stru,
                                      effective_replicate,
-                                     cutoff,
                                      input.mdp.md_neighbor_skin / ModuleBase::BOHR_TO_A,
                                      comm_domain);
     GlobalV::ofs_running << std::endl;
@@ -56,7 +45,7 @@ void prepare_mdcell(MDCell& mdcell,
 
 void prepare_mdcell(MDCell& mdcell, UnitCell& ucell)
 {
-    mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, ModuleBase::world_comm_domain());
+    mdcell.initialize_from_unitcell(ucell, 0.0, ModuleBase::world_comm_domain());
     mdcell.mutable_stru_meta() = unitcell::make_stru_meta(ucell);
 }
 

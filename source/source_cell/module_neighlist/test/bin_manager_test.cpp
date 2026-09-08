@@ -82,7 +82,7 @@ TEST(BinManagerUnit, EmptyAtomsBuildNeighbors)
     nl.initialize(0, 16);
 
     bm.build_atom_neighbors(nl, atoms, atoms);
-    EXPECT_EQ(nl.get_nlocal(), 0);
+    EXPECT_EQ(nl.get_ncentral_atoms(), 0);
 }
 
 TEST(BinManagerUnit, BoundaryAndExactRadius)
@@ -166,7 +166,7 @@ TEST(BinManagerUnit, GhostAtomsAreCounted)
 
     bm.build_atom_neighbors(nl, inside, all_atoms);
 
-    EXPECT_EQ(nl.get_nlocal(), 1);
+    EXPECT_EQ(nl.get_ncentral_atoms(), 1);
     EXPECT_EQ(nl.get_numneigh(0), 1);
     bool found = false;
     if (nl.get_numneigh(0) > 0 && nl.get_firstneigh(0) != nullptr) {

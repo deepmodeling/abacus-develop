@@ -202,7 +202,7 @@ void NeighborSearch::filter_candidate_neighbors_(double cutoff, double lat0)
     const double cutoff2 = cutoff * cutoff;
     neighbor_list_.reset();
     std::vector<int> active;
-    for (int i = 0; i < candidate_neighbor_list_.get_nlocal(); ++i)
+    for (int i = 0; i < candidate_neighbor_list_.get_ncentral_atoms(); ++i)
     {
         active.clear();
         const NeighborAtom& center = all_atoms_[static_cast<std::size_t>(i)];

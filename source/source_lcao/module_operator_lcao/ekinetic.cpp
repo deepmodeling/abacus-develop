@@ -33,7 +33,7 @@ hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::EKinetic(
 
 // destructor
 template <typename TK, typename TR>
-hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::~EKinetic<hamilt::OperatorLCAO<TK, TR>>()
+hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::~EKinetic()
 {
     if (this->allocated)
     {
