@@ -50,10 +50,7 @@ class MSST_test : public testing::Test
         Setcell::parameters(param_in.input);
 
         p_esolver = new ModuleESolver::ESolver_LJ();
-        mdcell.initialize_from_unitcell(ucell,
-                                         8.5 * ModuleBase::ANGSTROM_AU,
-                                         0.0,
-                                         ModuleBase::world_comm_domain());
+        mdcell = Setcell::setup_mdcell(ucell);
         p_esolver->before_all_runners(mdcell, param_in.inp);
         mdrun = new MSST(param_in, mdcell);
         mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
@@ -96,18 +93,18 @@ TEST_F(MSST_test, first_half)
 {
     mdrun->first_half(GlobalV::ofs_running);
 
-    EXPECT_NEAR(ucell.lat0, 1.0, doublethreshold);
-    EXPECT_NEAR(ucell.lat0_angstrom, 0.52917700000000001, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e11, 10.0, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e12, 0.00, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e13, 0.00, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e21, 0.00, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e22, 10.0, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e23, 0.00, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e31, 0.00, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e32, 0.00, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e33, 9.9959581179144905, doublethreshold);
-    EXPECT_NEAR(ucell.omega, 999.59581179144902, doublethreshold);
+    EXPECT_NEAR(mdcell.lat0(), 1.0, doublethreshold);
+    EXPECT_NEAR(mdcell.lat0() * ModuleBase::BOHR_TO_A, 0.52917700000000001, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e11, 10.0, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e12, 0.00, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e13, 0.00, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e21, 0.00, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e22, 10.0, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e23, 0.00, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e31, 0.00, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e32, 0.00, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e33, 9.9959581179144905, doublethreshold);
+    EXPECT_NEAR(mdcell.omega(), 999.59581179144902, doublethreshold);
 
     EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(0)]).x, -0.00054271823071484467, doublethreshold);
     EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(0)]).y, 0.00029442816868202821, doublethreshold);
@@ -142,18 +139,18 @@ TEST_F(MSST_test, second_half)
     mdrun->second_half();
     ;
 
-    EXPECT_NEAR(ucell.lat0, 1.0, doublethreshold);
-    EXPECT_NEAR(ucell.lat0_angstrom, 0.52917700000000001, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e11, 10.0, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e12, 0.00, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e13, 0.00, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e21, 0.00, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e22, 10.0, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e23, 0.00, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e31, 0.00, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e32, 0.00, doublethreshold);
-    EXPECT_NEAR(ucell.latvec.e33, 9.9959581179144905, doublethreshold);
-    EXPECT_NEAR(ucell.omega, 999.59581179144902, doublethreshold);
+    EXPECT_NEAR(mdcell.lat0(), 1.0, doublethreshold);
+    EXPECT_NEAR(mdcell.lat0() * ModuleBase::BOHR_TO_A, 0.52917700000000001, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e11, 10.0, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e12, 0.00, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e13, 0.00, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e21, 0.00, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e22, 10.0, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e23, 0.00, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e31, 0.00, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e32, 0.00, doublethreshold);
+    EXPECT_NEAR(mdcell.latvec().e33, 9.9959581179144905, doublethreshold);
+    EXPECT_NEAR(mdcell.omega(), 999.59581179144902, doublethreshold);
 
     EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(0)]).x, -0.00054271823071484467, doublethreshold);
     EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(0)]).y, 0.00029442816868202821, doublethreshold);

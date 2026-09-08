@@ -11,7 +11,7 @@ Langevin::Langevin(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param
 
     md_damp = mdp.md_damp / ModuleBase::AU_to_FS;
 
-    total_force.resize(static_cast<std::size_t>(mdcell.nlocal()));
+    total_force.resize(static_cast<std::size_t>(mdcell.nowned_atoms()));
 }
 
 
@@ -34,7 +34,7 @@ void Langevin::first_half(std::ofstream& ofs)
     ModuleBase::TITLE("Langevin", "first_half");
     ModuleBase::timer::start("Langevin", "first_half");
 
-    for (int i = 0; i < mdcell.nlocal(); ++i)
+    for (int i = 0; i < mdcell.nowned_atoms(); ++i)
     {
         LocalAtom& atom = mdcell.mutable_owned_atoms()[static_cast<std::size_t>(i)];
         for (int k = 0; k < 3; ++k)
@@ -55,7 +55,7 @@ void Langevin::second_half()
     ModuleBase::timer::start("Langevin", "second_half");
 
     post_force();
-    for (int i = 0; i < mdcell.nlocal(); ++i)
+    for (int i = 0; i < mdcell.nowned_atoms(); ++i)
     {
         LocalAtom& atom = mdcell.mutable_owned_atoms()[static_cast<std::size_t>(i)];
         for (int k = 0; k < 3; ++k)
@@ -93,9 +93,9 @@ void Langevin::restart(const std::string& global_readin_dir)
 void Langevin::post_force()
 {
     double t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
-    total_force.resize(static_cast<std::size_t>(mdcell.nlocal()));
+    total_force.resize(static_cast<std::size_t>(mdcell.nowned_atoms()));
 
-    for (int i = 0; i < mdcell.nlocal(); ++i)
+    for (int i = 0; i < mdcell.nowned_atoms(); ++i)
     {
         ModuleBase::Vector3<double> random_value;
         for (int k = 0; k < 3; ++k)

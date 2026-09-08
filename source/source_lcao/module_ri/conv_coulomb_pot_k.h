@@ -3,14 +3,22 @@
 
 #include "source_hamilt/module_xc/coulomb_config.h"
 
+#include <type_traits>
+
 namespace Conv_Coulomb_Pot_K
 {
-	template<typename T> extern T cal_orbs_ccp(
+	// Constrains the scalar cal_orbs_ccp/cal_orbs_ccp_spencer overloads below:
+	// icpc cannot order them against the recursive std::vector overloads and
+	// reports an ambiguity, so the scalar overload is disabled for vectors.
+	template<typename T> struct is_std_vector : std::false_type {};
+	template<typename T, typename Alloc> struct is_std_vector<std::vector<T, Alloc>> : std::true_type {};
+
+	template<typename T> extern typename std::enable_if<!is_std_vector<T>::value, T>::type cal_orbs_ccp(
 		const T &orbs,
 		const CoulombParam &coulomb_param,
 		const double rmesh_times);
 
-	template<typename T> extern T cal_orbs_ccp_spencer(
+	template<typename T> extern typename std::enable_if<!is_std_vector<T>::value, T>::type cal_orbs_ccp_spencer(
 		const T &orbs,
 		const CoulombParam &coulomb_param,
 		const double rmesh_times);
