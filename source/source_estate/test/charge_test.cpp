@@ -9,8 +9,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "prepare_unitcell.h"
 // mock functions for UnitCell
-#undef private
-#undef protected
+
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;

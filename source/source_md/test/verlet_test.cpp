@@ -8,8 +8,7 @@
 #include "setcell.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_md/verlet.h"
-#undef private
-#undef protected
+
 #include <fstream>
 #define doublethreshold 1e-12
 

@@ -39,8 +39,8 @@
 #define protected public
 #define private public
 #include "../pw_basis.h"
-#undef protected
 #undef private
+#undef protected
 
 class PWBasisTEST: public testing::Test
 {

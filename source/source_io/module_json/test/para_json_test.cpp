@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
 
 #define private public
-#include "source_io/module_parameter/parameter.h"
 #include "source_io/module_json/abacusjson.h"
 #include "source_io/module_json/general_info.h"
 #include "source_io/module_json/init_info.h"
 #include "source_io/module_json/readin_info.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_io/module_json/para_json.h"
 #include "source_base/constants.h"
 #include "source_base/version.h"

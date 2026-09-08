@@ -31,8 +31,8 @@
 #include "../pw_basis_k.h"
 #include "../pw_basis.h"
 #include "../pw_gatherscatter.h"
-#undef protected
 #undef private
+#undef protected
 
 class PWBasisKTEST: public testing::Test
 {

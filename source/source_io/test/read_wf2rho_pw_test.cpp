@@ -3,14 +3,6 @@
 
 #undef __LCAO
 
-// <mpi.h> must be parsed before the access-control override below:
-// parallel_global.h pulls it in transitively under __MPI, so an #include
-// placed after the #undef would be a no-op and the macro would still
-// reinterpret access control for <mpi.h>.
-#ifdef __MPI
-#include "mpi.h"
-#endif
-
 #define private public
 #include "source_base/module_out/filename.h" // mohan add 2025-05-17
 #include "source_base/parallel_grid.h"
@@ -23,9 +15,9 @@
 #include "source_io/module_wf/read_wf2rho_pw.h"
 #include "source_io/module_wf/write_wfc_pw.h"
 #include "source_psi/psi.h"
-#undef private
 
 #ifdef __MPI
+#include "mpi.h"
 #include "source_base/parallel_global.h"
 #include "source_basis/module_pw/test/test_tool.h"
 #endif
