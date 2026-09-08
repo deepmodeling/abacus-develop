@@ -1,4 +1,12 @@
 #include <gtest/gtest.h>
+
+// System and third-party headers must be parsed before the access-control
+// override below: parallel_orbitals.h pulls <mpi.h> in transitively, so an
+// #include placed after the #undef would be a no-op and the macro would
+// still reinterpret access control for <mpi.h>.
+#include <mpi.h>
+#include <source_base/module_external/scalapack_connector.h>
+
 #define private public
 #define protected public
 #include "source_basis/module_ao/parallel_orbitals.h"
@@ -7,8 +15,6 @@
 #include "tddft_test.h"
 #undef private
 #undef protected
-#include <source_base/module_external/scalapack_connector.h>
-#include <mpi.h>
 /************************************************
  *  unit test of functions in propagator.h
  ***********************************************/

@@ -255,6 +255,18 @@ def is_global_dependency_check_path(path: str) -> bool:
     return Path(path).suffix.lower() in CODE_EXTENSIONS
 
 
+def is_access_hack_check_path(path: str) -> bool:
+    """Only C/C++ translation units can carry a real access-control hack.
+
+    Without this filter a fenced `#define private public` inside AGENTS.md or
+    docs/ counts against the budget, so documenting the anti-pattern would
+    block CI and deleting that documentation would credit it.
+    """
+    if path.startswith("tools/03_code_analysis/"):
+        return False
+    return Path(path).suffix.lower() in SOURCE_REVIEW_EXTENSIONS
+
+
 def global_dependency_hits(lines: Iterable[DiffLine]) -> List[Tuple[DiffLine, int]]:
     hits: List[Tuple[DiffLine, int]] = []
     for line in lines:
@@ -311,8 +323,16 @@ def check_access_hacks(
     blocks. The remaining offenders therefore do not block unrelated work while
     they are being refactored away module by module.
     """
-    added = [line for line in added_lines if ACCESS_HACK_RE.search(line.content)]
-    removed = [line for line in removed_lines if ACCESS_HACK_RE.search(line.content)]
+    added = [
+        line
+        for line in added_lines
+        if is_access_hack_check_path(line.path) and ACCESS_HACK_RE.search(line.content)
+    ]
+    removed = [
+        line
+        for line in removed_lines
+        if is_access_hack_check_path(line.path) and ACCESS_HACK_RE.search(line.content)
+    ]
     if not added:
         return
 
