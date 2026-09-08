@@ -75,6 +75,10 @@ namespace
 {
 int test_rank = 0;
 int test_size = 1;
+// Use a finite range separation for the BLYP_LR scaling check. At omega=0,
+// its short- and full-range terms cancel, and some LibXC versions return
+// non-finite short-range derivatives at this boundary.
+constexpr double test_hse_omega = 0.11;
 
 double pool_sum(const double local)
 {
@@ -276,7 +280,7 @@ class RealPwNcgga : public testing::Test
                                                2,
                                                scaling_factor,
                                                0.0,
-                                               0.0);
+                                               test_hse_omega);
     }
 
     VxcResult evaluate_libxc_gga(const std::map<int, double>* scaling_factor = nullptr)
@@ -507,7 +511,7 @@ class RealPwNcgga : public testing::Test
                                 false,
                                 2,
                                 0.0,
-                                0.0);
+                                test_hse_omega);
         EXPECT_EQ(stress.size(), 9U);
         return stress;
     }
