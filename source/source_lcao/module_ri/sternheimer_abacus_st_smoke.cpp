@@ -2671,6 +2671,8 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
             }
         }
     }
+    const SternheimerKPointSchedule kpoint_schedule(fixed_q_representative,
+                                                     use_kpoint_mpi ? kpoint_groups : 1);
     constexpr double q_tolerance = 1.0e-10;
     const bool gamma_qpoint
         = std::all_of(response_plan.qpoint.begin(), response_plan.qpoint.end(), [q_tolerance](const double coordinate) {
@@ -3030,21 +3032,17 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                          const int ifrequency) {
         if (use_nested_response_mpi)
         {
-            const auto assignment = sternheimer_nested_mpi_assignment(
+            const auto assignment = kpoint_schedule.assignment(
                 source_kpoint_index,
-                static_cast<int>(response_kpoints.size()),
                 ifrequency,
                 nfreq,
-                kpoint_groups,
                 kpoint_groups * nfreq,
                 frequency_rank_shift);
             return assignment.owner_rank * response_replicas;
         }
         if (use_kpoint_mpi)
         {
-            return sternheimer_kpoint_owner_group(source_kpoint_index,
-                                                  static_cast<int>(response_kpoints.size()),
-                                                  kpoint_groups);
+            return kpoint_schedule.owner_group(source_kpoint_index);
         }
         if (use_frequency_mpi && use_channel_mpi)
         {
@@ -3142,21 +3140,8 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
     std::vector<double> target_lcao_occ_unocc_overlap_max(response_plan.kq_pairs.size(), 0.0);
     int local_wavefunction_diagnostic_count = 0;
 
-    std::vector<std::size_t> owned_pair_indices
-        = sternheimer_owned_kq_pair_indices(response_plan,
-                                            use_kpoint_mpi ? local_kpoint_group : 0,
-                                            use_kpoint_mpi ? kpoint_groups : 1);
-    if (use_symmetry_partial_response)
-    {
-        owned_pair_indices.erase(
-            std::remove_if(owned_pair_indices.begin(),
-                           owned_pair_indices.end(),
-                           [&](const std::size_t pair_index) {
-                               const int source_index = response_plan.kq_pairs[pair_index].source_index;
-                               return !fixed_q_representative[static_cast<std::size_t>(source_index)];
-                           }),
-            owned_pair_indices.end());
-    }
+    const std::vector<std::size_t> owned_pair_indices
+        = kpoint_schedule.owned_pair_indices(response_plan, use_kpoint_mpi ? local_kpoint_group : 0);
     std::vector<SternheimerPartialResponseRecord> local_partial_records;
     for (const std::size_t pair_index: owned_pair_indices)
     {

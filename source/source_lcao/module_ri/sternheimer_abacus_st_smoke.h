@@ -1031,6 +1031,93 @@ inline std::vector<std::size_t> sternheimer_owned_kq_pair_indices(const Sternhei
     return owned;
 }
 
+class SternheimerKPointSchedule
+{
+  public:
+    SternheimerKPointSchedule(const std::vector<bool>& active_sources, const int kpoint_groups)
+        : ordinal_by_global_k_(active_sources.size(), -1), kpoint_groups_(kpoint_groups)
+    {
+        if (active_sources.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        {
+            throw std::overflow_error("Sternheimer representative k-point count overflow.");
+        }
+        for (std::size_t source = 0; source != active_sources.size(); ++source)
+        {
+            if (active_sources[source])
+            {
+                ordinal_by_global_k_[source] = active_kpoint_count_++;
+            }
+        }
+        if (kpoint_groups_ <= 0 || kpoint_groups_ > active_kpoint_count_)
+        {
+            throw std::invalid_argument(
+                "Sternheimer k-point groups must not exceed the active representative count.");
+        }
+    }
+
+    int owner_group(const int global_source) const
+    {
+        return sternheimer_kpoint_owner_group(active_ordinal(global_source),
+                                               active_kpoint_count_,
+                                               kpoint_groups_);
+    }
+
+    SternheimerNestedMPIAssignment assignment(const int global_source,
+                                               const int ifrequency,
+                                               const int frequency_count,
+                                               const int response_slots,
+                                               const int frequency_rank_shift = 0) const
+    {
+        return sternheimer_nested_mpi_assignment(active_ordinal(global_source),
+                                                  active_kpoint_count_,
+                                                  ifrequency,
+                                                  frequency_count,
+                                                  kpoint_groups_,
+                                                  response_slots,
+                                                  frequency_rank_shift);
+    }
+
+    std::vector<std::size_t> owned_pair_indices(const SternheimerPeriodicResponsePlan& plan,
+                                               const int kpoint_group) const
+    {
+        if (plan.record_index_by_global_k.size() != ordinal_by_global_k_.size()
+            || kpoint_group < 0 || kpoint_group >= kpoint_groups_)
+        {
+            throw std::invalid_argument("Invalid Sternheimer representative schedule dimensions.");
+        }
+        std::vector<std::size_t> owned;
+        for (std::size_t pair_index = 0; pair_index != plan.kq_pairs.size(); ++pair_index)
+        {
+            const int source = plan.kq_pairs[pair_index].source_index;
+            if (source < 0 || source >= static_cast<int>(ordinal_by_global_k_.size()))
+            {
+                throw std::invalid_argument("Invalid Sternheimer representative source index.");
+            }
+            if (ordinal_by_global_k_[source] >= 0 && owner_group(source) == kpoint_group)
+            {
+                owned.push_back(pair_index);
+            }
+        }
+        return owned;
+    }
+
+  private:
+    int active_ordinal(const int global_source) const
+    {
+        if (global_source < 0 || global_source >= static_cast<int>(ordinal_by_global_k_.size())
+            || ordinal_by_global_k_[global_source] < 0)
+        {
+            throw std::invalid_argument("Sternheimer response owner requires an active representative source.");
+        }
+        return ordinal_by_global_k_[global_source];
+    }
+
+    // Scheduling ordinals never replace the global source/target indices in the response plan.
+    std::vector<int> ordinal_by_global_k_;
+    int kpoint_groups_;
+    int active_kpoint_count_ = 0;
+};
+
 inline void validate_sternheimer_lcao_occupied_kpoints(
     const std::vector<SternheimerLCAOOccupiedKPoint>& records,
     const int local_kpoint_count,
