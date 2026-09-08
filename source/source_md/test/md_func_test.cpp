@@ -107,7 +107,7 @@ TEST_F(MD_func_test, compute_stress)
 {
     const ModuleBase::Vector3<double> test_velocity(0.1, 0.2, 0.3);
     MDCell mdcell;
-    mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, ModuleBase::world_comm_domain());
+    mdcell.initialize_from_unitcell(ucell, 0.0, ModuleBase::world_comm_domain());
     for (LocalAtom& atom : mdcell.mutable_owned_atoms())
     {
         atom.vel = test_velocity;
@@ -127,7 +127,7 @@ TEST_F(MD_func_test, compute_stress)
 TEST_F(MD_func_test, dump_info)
 {
     MDCell mdcell;
-    mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, ModuleBase::world_comm_domain());
+    mdcell.initialize_from_unitcell(ucell, 0.0, ModuleBase::world_comm_domain());
     for (LocalAtom& atom : mdcell.mutable_owned_atoms())
     {
         atom.vel = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
@@ -313,7 +313,7 @@ TEST_F(MD_func_test, current_md_info_mdcell_accepts_step_only_restart)
     file.close();
 
     MDCell mdcell;
-    mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, ModuleBase::world_comm_domain());
+    mdcell.initialize_from_unitcell(ucell, 0.0, ModuleBase::world_comm_domain());
     int istep = -1;
     double temperature = 0.0;
     MD_func::current_md_info(mdcell, "./", istep, temperature);
@@ -326,7 +326,7 @@ TEST_F(MD_func_test, current_md_info_mdcell_accepts_step_only_restart)
 TEST_F(MD_func_test, global_dof_mdcell)
 {
     MDCell mdcell;
-    mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, ModuleBase::world_comm_domain());
+    mdcell.initialize_from_unitcell(ucell, 0.0, ModuleBase::world_comm_domain());
     EXPECT_EQ(MD_func::global_dof(mdcell), 9);
 
     for (LocalAtom& atom : mdcell.mutable_owned_atoms())
@@ -339,7 +339,7 @@ TEST_F(MD_func_test, global_dof_mdcell)
 TEST_F(MD_func_test, current_step_warning)
 {
     MDCell mdcell;
-    mdcell.initialize_from_unitcell(ucell, 0.0, 0.0, ModuleBase::world_comm_domain());
+    mdcell.initialize_from_unitcell(ucell, 0.0, ModuleBase::world_comm_domain());
     int istep = 0;
     double temperature = 0.0;
     EXPECT_EXIT(MD_func::current_md_info(mdcell, "./", istep, temperature), ::testing::ExitedWithCode(1), "");
