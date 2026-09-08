@@ -113,6 +113,27 @@ TEST_F(InputTest, Item_test)
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
+        param.input.calculation = "socket";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+
+    { // socket_driver
+        auto it = find_label("socket_driver", readinput.input_lists);
+        param.input.socket_driver = true;
+        param.input.calculation = "nscf";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
+        param.input.socket_driver = true;
+        param.input.calculation = "scf";
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        param.input.socket_driver = false;
     }
 
     { // esolver_type
@@ -287,6 +308,7 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("cal_force", readinput.input_lists);
         param.input.calculation = "cell-relax";
         param.input.cal_force = false;
+        param.input.socket_driver = false;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.cal_force, true);
 
@@ -294,6 +316,13 @@ TEST_F(InputTest, Item_test)
         param.input.cal_force = true;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.cal_force, false);
+
+        param.input.calculation = "scf";
+        param.input.socket_driver = true;
+        param.input.cal_force = false;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.cal_force, false);
+        param.input.socket_driver = false;
     }
     { // ecutrho
         auto it = find_label("ecutrho", readinput.input_lists);
@@ -404,7 +433,14 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.chg_extrap, "first-order");
 
         param.input.chg_extrap = "default";
+        param.input.calculation = "scf";
+        param.input.socket_driver = true;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.chg_extrap, "first-order");
+
+        param.input.chg_extrap = "default";
         param.input.calculation = "none";
+        param.input.socket_driver = false;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.chg_extrap, "atomic");
 
@@ -1416,12 +1452,12 @@ TEST_F(InputTest, Item_test2)
         param.input.vdw_cutoff_radius = "default";
         param.input.vdw_method = "d3_0";
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.vdw_cutoff_radius, "95");
+        EXPECT_EQ(param.input.vdw_cutoff_radius, "60");
 
         param.input.vdw_cutoff_radius = "default";
         param.input.vdw_method = "d3_bj";
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.vdw_cutoff_radius, "95");
+        EXPECT_EQ(param.input.vdw_cutoff_radius, "60");
 
         param.input.vdw_cutoff_radius = "default";
         param.input.vdw_method = "none";

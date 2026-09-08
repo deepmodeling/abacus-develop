@@ -16,9 +16,7 @@ class ESolver;
  */
 namespace Run_MD
 {
-void prepare_mdcell(MDCell& mdcell,
-                    ModuleESolver::ESolver* p_esolver,
-                    const Parameter& param_in);
+void prepare_mdcell(MDCell& mdcell, const Parameter& param_in);
 
 void prepare_mdcell(MDCell& mdcell, UnitCell& ucell);
 

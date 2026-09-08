@@ -12,12 +12,12 @@ public:
     NeighborList() = default;
     ~NeighborList() = default;
 
-    void initialize(std::size_t nlocal, std::size_t pgsize)
+    void initialize(std::size_t ncentral_atoms, std::size_t pgsize)
     {
-        nlocal_ = ModuleNeighList::checked_int_size(nlocal, "NeighborList local atom count");
+        ncentral_atoms_ = ModuleNeighList::checked_int_size(ncentral_atoms, "NeighborList central atom count");
         allocator_.initialize(ModuleNeighList::checked_int_size(pgsize, "NeighborList page size"));
-        numneigh_.assign(nlocal, 0);
-        firstneigh_.assign(nlocal, nullptr);
+        numneigh_.assign(ncentral_atoms, 0);
+        firstneigh_.assign(ncentral_atoms, nullptr);
     }
 
     void reset()
@@ -25,7 +25,7 @@ public:
         allocator_.reset();
     }
 
-    int get_nlocal() const { return nlocal_; }
+    int get_ncentral_atoms() const { return ncentral_atoms_; }
     int get_numneigh(int i) const { return numneigh_[i]; }
     int* get_firstneigh(int i) { return firstneigh_[i]; }
     const int* get_firstneigh(int i) const { return firstneigh_[i]; }
@@ -43,7 +43,7 @@ public:
     }
 
 private:
-    int nlocal_ = 0;
+    int ncentral_atoms_ = 0;
     std::vector<int> numneigh_;
     std::vector<int*> firstneigh_;
     PageAllocator allocator_;

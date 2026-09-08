@@ -535,6 +535,9 @@ OBJS_PW=fft_bundle.o\
     pw_op.o\
 
 OBJS_RELAXATION=relax_data.o\
+    socket_ipi.o\
+    socket_frame.o\
+    socket_driver.o\
     cg_base.o\
     bfgs_basic.o\
     relax_driver.o\
@@ -909,9 +912,9 @@ OBJS_VDW=vdw.o\
     vdwd3_parameters.o\
     vdwd2.o\
     vdwd3.o\
-    vdwd3_parameters_tab.o\
-    vdwd3_autoset_xcname.o\
-    vdwd3_auto_xcpar.o
+    vdwd3_data.o\
+    vdwd3_evaluator.o\
+    vdw_xcname.o
 
 OBJS_DFTU=dftu_nao.o\
       dftu_nao_fs_k.o\
