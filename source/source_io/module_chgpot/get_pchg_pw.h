@@ -1,340 +1,103 @@
 #ifndef GET_PCHG_PW_H
 #define GET_PCHG_PW_H
 
-#include "source_base/module_container/ATen/core/tensor.h"
-#include "source_base/parallel_comm.h"
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_base/parallel_grid.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/klist.h"
+#include "source_cell/unitcell.h"
 #include "source_io/module_output/band_parallel_output.h"
-#include "source_io/module_output/cube_io.h"
+#include "source_psi/psi.h"
+
+#include <complex>
+#include <string>
+#include <vector>
 
 namespace ModuleIO
 {
 /**
- * @brief Write band-resolved partial charges from plane-wave coefficients.
+ * @brief Write band-resolved PW partial charges on the dense real-space grid.
  *
- * The selected bands are transformed to the dense real-space grid. Depending on
- * @p if_separate_k, the function either writes one cube per k-point or sums the
- * k-point contributions, restores symmetry, and writes one cube per spin/charge
- * component. For spinors, the four components are charge, m_x, m_y, and m_z.
+ * The caller owns the wavefunction and bases, which must outlive this object.
+ * Scratch buffers are local to each begin() call.
  */
 template <typename Device>
-void get_pchg_pw(const std::vector<int>& out_pchg,
-                 const int nspin,
-                 const int global_nbands,
-                 UnitCell* ucell,
-                 const psi::Psi<std::complex<double>, Device>* kspw_psi,
-                 const ModulePW::PW_Basis* pw_rho,
-                 const ModulePW::PW_Basis* pw_rhod,
-                 const ModulePW::PW_Basis_K* pw_wfc,
-                 const Parallel_Grid& pgrid,
-                 const std::string& global_out_dir,
-                 const bool if_separate_k,
-                 const bool noncolin,
-                 const K_Vectors& kv)
+class Get_pchg_pw
 {
-    const int nks = kv.get_nks();       // current process pool k-point count
-    const int nkstot = kv.get_nkstot(); // total k-point count
-    // INPUT selectors and file labels use global bands, while BPCG Psi storage uses a
-    // contiguous local shard. Constructing the layout collectively reconciles both views.
-    const BandParallelLayout band_layout(kspw_psi->get_nbands(), global_nbands);
+  public:
+    /** @brief Bind the wavefunction, grids, and global band/spin configuration. */
+    Get_pchg_pw(const psi::Psi<std::complex<double>, Device>& psi,
+                const ModulePW::PW_Basis_K& pw_wfc,
+                const ModulePW::PW_Basis& pw_rho,
+                const ModulePW::PW_Basis& pw_rhod,
+                const int nspin,
+                const int global_nbands);
 
-    const int nks_without_spin = nspin == 2 ? nkstot / 2 : nkstot;
-    const int smooth_nrxx = pw_wfc->nrxx;
-    const int dense_nrxx = pw_rhod->nrxx;
-    // Avoid an extra forward and backward FFT unless a distinct dense grid is in use.
-    const bool needs_interpolation = pw_rhod != pw_rho;
+    /**
+     * @brief Write selected bands, either per k-point or after k summation and symmetry.
+     * @param ucell Cell whose symmetry workspace may be updated during symmetrization.
+     * @param noncolin Whether to retain transverse spinor magnetization components.
+     */
+    void begin(UnitCell* ucell,
+               const Parallel_Grid& pgrid,
+               const K_Vectors& kv,
+               const std::vector<int>& out_pchg,
+               const std::string& global_out_dir,
+               const bool if_separate_k,
+               const bool noncolin) const;
 
-    // Expand the INPUT selection into a fixed-size mask indexed directly by band.
-    std::vector<int> bands_picked(global_nbands, 0);
-    if (static_cast<int>(out_pchg.size()) > global_nbands)
-    {
-        ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
-                                 "The number of bands specified by `out_pchg` in the "
-                                 "INPUT file exceeds `nbands`!");
-    }
-    for (int value: out_pchg)
-    {
-        if (value != 0 && value != 1)
-        {
-            ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
-                                     "The elements of `out_pchg` must be either 0 or 1. "
-                                     "Invalid values found!");
-        }
-    }
-    const int length = std::min(static_cast<int>(out_pchg.size()), global_nbands);
-    for (int i = 0; i < length; ++i)
-    {
-        bands_picked[i] = static_cast<int>(out_pchg[i]);
-    }
+  private:
+    const psi::Psi<std::complex<double>, Device>& psi_;
+    const ModulePW::PW_Basis_K& pw_wfc_;
+    const ModulePW::PW_Basis& pw_rho_;
+    const ModulePW::PW_Basis& pw_rhod_;
+    const int nspin_;
+    const int global_nbands_;
 
-    // Map the wavefunction backend type to the tensor library's device type.
-    using ContainerDevice = typename ct::PsiToContainer<Device>::type;
-    const ct::DeviceType device_type = ct::DeviceTypeToEnum<ContainerDevice>::value;
-    const bool is_cpu = device_type == ct::DeviceType::CpuDevice;
-    const bool is_spinor = nspin == 4;
-    // Spinor coefficients store the up and down blocks consecutively.
-    const int npwx = kspw_psi->get_nbasis() / (is_spinor ? 2 : 1);
+    // Defined in the implementation to keep device buffers out of this header.
+    class Workspace;
 
-    // Zero-length tensors avoid allocating buffers that a given backend or spin mode never uses.
-    ct::Tensor wfcr_up_smooth(ct::DataType::DT_COMPLEX_DOUBLE, device_type, ct::TensorShape({smooth_nrxx}));
-    ct::Tensor wfcr_down_smooth(ct::DataType::DT_COMPLEX_DOUBLE, device_type, ct::TensorShape({is_spinor ? smooth_nrxx : 0}));
-    ct::Tensor wfcr_up_smooth_host(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({is_cpu ? 0 : smooth_nrxx}));
-    ct::Tensor wfcr_down_smooth_host(ct::DataType::DT_COMPLEX_DOUBLE,
-                                     ct::DeviceType::CpuDevice,
-                                     ct::TensorShape({!is_cpu && is_spinor ? smooth_nrxx : 0}));
-    ct::Tensor wfcr_up_dense_host(ct::DataType::DT_COMPLEX_DOUBLE,
-                                  ct::DeviceType::CpuDevice,
-                                  ct::TensorShape({needs_interpolation ? dense_nrxx : 0}));
-    ct::Tensor wfcr_down_dense_host(ct::DataType::DT_COMPLEX_DOUBLE,
-                                    ct::DeviceType::CpuDevice,
-                                    ct::TensorShape({needs_interpolation && is_spinor ? dense_nrxx : 0}));
-    ct::Tensor reciprocal_buffer_host(ct::DataType::DT_COMPLEX_DOUBLE,
-                                      ct::DeviceType::CpuDevice,
-                                      ct::TensorShape({needs_interpolation ? pw_rhod->npw : 0}));
+    // Validate the binary selector and return a zero-padded global band mask.
+    std::vector<int> select_bands(const std::vector<int>& selection, const std::string& parameter_name) const;
 
-    // Capture the shared bases and scratch buffers by reference. The returned pointer is owned by
-    // one of the tensor arguments and remains valid until that tensor is reused or destroyed.
-    auto transform_wfc = [&](const std::complex<double>* coefficients,
-                             const int ik,
-                             ct::Tensor& smooth,
-                             ct::Tensor& smooth_host,
-                             ct::Tensor& dense_host) -> const std::complex<double>* {
-        // Perform the wavefunction FFT on its native device, then expose host data for cube output.
-        pw_wfc->template recip_to_real<std::complex<double>, Device>(coefficients, smooth.data<std::complex<double>>(), ik);
-        const std::complex<double>* smooth_data = smooth.data<std::complex<double>>();
-        if (!is_cpu)
-        {
-            ct::kernels::synchronize_memory<std::complex<double>, ct::DEVICE_CPU, ContainerDevice>()(
-                smooth_host.data<std::complex<double>>(),
-                smooth_data,
-                smooth_nrxx);
-            smooth_data = smooth_host.data<std::complex<double>>();
-        }
-        if (!needs_interpolation)
-        {
-            return smooth_data;
-        }
+    // Transform the owner's band and broadcast each local real-space slab.
+    void transform_band(const int global_band, const int ik, const BandParallelLayout& layout, Workspace* work) const;
+    // The returned data belongs to the selected workspace component and is valid
+    // until that component is transformed again or the workspace is destroyed.
+    const std::complex<double>* transform_wfc(const std::complex<double>* coefficients,
+                                              const int ik,
+                                              const int component,
+                                              Workspace* work) const;
 
-        // Zero padding in reciprocal space transfers the smooth-grid field to the dense rho grid.
-        reciprocal_buffer_host.zero();
-        pw_rho->real2recip(smooth_data, reciprocal_buffer_host.data<std::complex<double>>());
-        pw_rhod->recip2real(reciprocal_buffer_host.data<std::complex<double>>(), dense_host.data<std::complex<double>>());
-        return dense_host.data<std::complex<double>>();
-    };
+    void write_separate(const int band,
+                        const UnitCell& ucell,
+                        const Parallel_Grid& pgrid,
+                        const K_Vectors& kv,
+                        const std::string& out_dir,
+                        const bool noncolin,
+                        const BandParallelLayout& layout,
+                        Workspace* work) const;
+    void write_summed(const int band,
+                      UnitCell* ucell,
+                      const Parallel_Grid& pgrid,
+                      const K_Vectors& kv,
+                      const std::string& out_dir,
+                      const bool noncolin,
+                      const BandParallelLayout& layout,
+                      Workspace* work) const;
 
-    // Each buffer stores one rank-local dense-grid slab. It is global with respect to
-    // band ownership, not spatial decomposition: POOL_WORLD still distributes the grid.
-    std::vector<std::complex<double>> wfcr_up_global(dense_nrxx);
-    std::vector<std::complex<double>> wfcr_down_global(is_spinor ? dense_nrxx : 0);
-    // Only the owning band group may index the local Psi shard. After its FFT, BP_WORLD
-    // broadcasts the slab to the corresponding plane-wave rank in every band group.
-    // Every group must call this lambda in the same band/k-point/component order.
-    auto transform_global_band = [&](const int global_band,
-                                     const int basis_offset,
-                                     const int ik,
-                                     ct::Tensor& smooth,
-                                     ct::Tensor& smooth_host,
-                                     ct::Tensor& dense_host,
-                                     std::vector<std::complex<double>>& global_wfcr) -> const std::complex<double>* {
-        const int owner = band_layout.owner_group(global_band);
-        if (band_layout.band_group() == owner)
-        {
-            const int local_band = band_layout.local_index(global_band);
-            kspw_psi->fix_k(ik);
-            const std::complex<double>* owner_wfcr
-                = transform_wfc(&kspw_psi[0](local_band, basis_offset), ik, smooth, smooth_host, dense_host);
-            std::copy(owner_wfcr, owner_wfcr + dense_nrxx, global_wfcr.begin());
-        }
-#ifdef __MPI
-        MPI_Bcast(global_wfcr.data(), dense_nrxx, MPI_DOUBLE_COMPLEX, owner, BP_WORLD);
-#endif
-        return global_wfcr.data();
-    };
+    void calc_density(const int spin_index, const double weight, const bool noncolin, const bool accumulate, Workspace* work) const;
+    void sum_pools(const Parallel_Grid& pgrid, const K_Vectors& kv, Workspace* work) const;
+    void symmetrize(UnitCell* ucell, Workspace* work) const;
 
-    std::vector<std::vector<double>> rho_band(nspin, std::vector<double>(dense_nrxx));
-    // Convert a two-component spinor into the Pauli-basis fields (rho, m_x, m_y, m_z).
-    // Per-k output overwrites the fields, whereas k-summed output accumulates weighted fields.
-    auto accumulate_spinor_density
-        = [&](const std::complex<double>* up, const std::complex<double>* down, const double weight, const bool accumulate) {
-              for (int ir = 0; ir < dense_nrxx; ++ir)
-              {
-                  const double up_norm = std::norm(up[ir]);
-                  const double down_norm = std::norm(down[ir]);
-                  const double rho0 = (up_norm + down_norm) * weight;
-                  const double mx = 2.0 * (up[ir].real() * down[ir].real() + up[ir].imag() * down[ir].imag()) * weight;
-                  const double my = 2.0 * (up[ir].real() * down[ir].imag() - down[ir].real() * up[ir].imag()) * weight;
-                  const double mz = (up_norm - down_norm) * weight;
-                  if (accumulate)
-                  {
-                      rho_band[0][ir] += rho0;
-                      rho_band[1][ir] += noncolin ? mx : 0.0;
-                      rho_band[2][ir] += noncolin ? my : 0.0;
-                      rho_band[3][ir] += mz;
-                  }
-                  else
-                  {
-                      rho_band[0][ir] = rho0;
-                      rho_band[1][ir] = noncolin ? mx : 0.0;
-                      rho_band[2][ir] = noncolin ? my : 0.0;
-                      rho_band[3][ir] = mz;
-                  }
-              }
-          };
-
-    // Traverse global bands on every rank so that owner broadcasts remain collective-safe
-    // even when the selected band belongs to a nonzero band group.
-    for (int ib = 0; ib < global_nbands; ++ib)
-    {
-        if (!bands_picked[ib])
-        {
-            continue;
-        }
-
-        for (int is = 0; is < nspin; ++is)
-        {
-            std::fill(rho_band[is].begin(), rho_band[is].end(), 0.0);
-        }
-
-        if (if_separate_k)
-        {
-            // Preserve each Bloch state's contribution; no Brillouin-zone weight is applied here.
-            // Each KPAR pool writes only the global k-points it owns.
-            for (int ik = 0; ik < nks; ++ik)
-            {
-                const int ikstot = kv.ik2iktot[ik];
-                const int spin_index = kv.isk[ik];
-                // In collinear calculations the two spin channels share the same k-point numbering.
-                const int k_number = ikstot % nks_without_spin + 1;
-
-                const std::complex<double>* wfcr_up_host_data
-                    = transform_global_band(ib, 0, ik, wfcr_up_smooth, wfcr_up_smooth_host, wfcr_up_dense_host, wfcr_up_global);
-                const std::complex<double>* wfcr_down_host_data = nullptr;
-                if (is_spinor)
-                {
-                    wfcr_down_host_data = transform_global_band(ib,
-                                                                npwx,
-                                                                ik,
-                                                                wfcr_down_smooth,
-                                                                wfcr_down_smooth_host,
-                                                                wfcr_down_dense_host,
-                                                                wfcr_down_global);
-                }
-
-                const double spin_degeneracy = nspin == 1 ? 2.0 : 1.0;
-                const double weight = spin_degeneracy / ucell->omega;
-                if (is_spinor)
-                {
-                    accumulate_spinor_density(wfcr_up_host_data, wfcr_down_host_data, weight, false);
-                }
-                else
-                {
-                    for (int ir = 0; ir < dense_nrxx; ++ir)
-                    {
-                        rho_band[spin_index][ir] = std::norm(wfcr_up_host_data[ir]) * weight;
-                    }
-                }
-
-                const int component_begin = is_spinor ? 0 : spin_index;
-                const int component_end = is_spinor ? 4 : spin_index + 1;
-                for (int component = component_begin; component < component_end; ++component)
-                {
-                    std::stringstream ssc;
-                    ssc << global_out_dir << "pchgi" << ib + 1 << "s" << component + 1 << "k" << k_number << ".cube";
-                    ModuleIO::write_vdata_palgrid(pgrid,
-                                                  rho_band[component].data(),
-                                                  component,
-                                                  nspin,
-                                                  0,
-                                                  ssc.str(),
-                                                  0.0,
-                                                  ucell,
-                                                  11,
-                                                  0,
-                                                  false,
-                                                  true);
-                }
-            }
-        }
-        else
-        {
-            // Form the pool-local part of the Brillouin-zone weighted density. Owner
-            // broadcasts make this contribution identical across band groups.
-            for (int ik = 0; ik < nks; ++ik)
-            {
-                const int spin_index = kv.isk[ik];
-
-                const std::complex<double>* wfcr_up_host_data
-                    = transform_global_band(ib, 0, ik, wfcr_up_smooth, wfcr_up_smooth_host, wfcr_up_dense_host, wfcr_up_global);
-                const std::complex<double>* wfcr_down_host_data = nullptr;
-                if (is_spinor)
-                {
-                    wfcr_down_host_data = transform_global_band(ib,
-                                                                npwx,
-                                                                ik,
-                                                                wfcr_down_smooth,
-                                                                wfcr_down_smooth_host,
-                                                                wfcr_down_dense_host,
-                                                                wfcr_down_global);
-                }
-
-                const double weight = static_cast<double>(kv.wk[ik] / ucell->omega);
-                if (is_spinor)
-                {
-                    accumulate_spinor_density(wfcr_up_host_data, wfcr_down_host_data, weight, true);
-                }
-                else
-                {
-                    for (int ir = 0; ir < dense_nrxx; ++ir)
-                    {
-                        rho_band[spin_index][ir] += std::norm(wfcr_up_host_data[ir]) * weight;
-                    }
-                }
-            }
-
-#ifdef __MPI
-            if (kv.para_k.kpar > 1)
-            {
-                // Each pool owns only part of the k-point sum; assemble it before symmetrization.
-                for (int is = 0; is < nspin; ++is)
-                {
-                    pgrid.reduce_across_pools(rho_band[is].data());
-                }
-            }
-#endif
-
-            // Symmetry_rho operates on arrays of component pointers and uses reciprocal workspaces.
-            Symmetry_rho srho;
-            std::vector<double*> rho_save_pointers(nspin);
-            std::vector<std::vector<std::complex<double>>> rhog(nspin, std::vector<std::complex<double>>(pw_rhod->npw));
-            std::vector<std::complex<double>*> rhog_pointers(nspin);
-            for (int is = 0; is < nspin; ++is)
-            {
-                rho_save_pointers[is] = rho_band[is].data();
-                rhog_pointers[is] = rhog[is].data();
-            }
-            if (is_spinor)
-            {
-                // Charge and magnetization components obey different spinor symmetry transformations.
-                srho.begin(0, rho_save_pointers.data(), rhog_pointers.data(), pw_rhod->npw, nullptr, pw_rhod, ucell->symm);
-                srho.begin_soc(rho_save_pointers.data(), rhog_pointers.data(), pw_rhod, ucell->symm);
-            }
-            else
-            {
-                for (int is = 0; is < nspin; ++is)
-                {
-                    srho.begin(is, rho_save_pointers.data(), rhog_pointers.data(), pw_rhod->npw, nullptr, pw_rhod, ucell->symm);
-                }
-            }
-
-            for (int is = 0; is < nspin; ++is)
-            {
-                std::stringstream ssc;
-                ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
-                ModuleIO::write_vdata_palgrid(pgrid, rho_band[is].data(), is, nspin, 0, ssc.str(), 0.0, ucell, 11, 0, false, false);
-            }
-        }
-    }
-}
+    void write_cube(const int band,
+                    const int component,
+                    const int k_number,
+                    const UnitCell& ucell,
+                    const Parallel_Grid& pgrid,
+                    const std::string& out_dir,
+                    const bool separate_k,
+                    const std::vector<double>& values) const;
+};
 } // namespace ModuleIO
 
 #endif // GET_PCHG_PW_H
