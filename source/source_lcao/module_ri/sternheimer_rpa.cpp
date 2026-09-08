@@ -1925,9 +1925,11 @@ void SternheimerSubspaceProjector::project_batch(std::vector<Vector>& vectors) c
         for (std::size_t basis = 0; basis != basis_size; ++basis)
         {
             Complex* coefficient_row = coefficients.data() + basis * column_size;
+            // The borrowed column is contiguous; the packed transpose is for reconstruction.
+            const Vector& basis_column = *subspace_[basis];
             for (std::size_t ir = 0; ir != grid_size; ++ir)
             {
-                const Complex conjugate_basis = std::conj(basis_by_grid_[ir * basis_size + basis]);
+                const Complex conjugate_basis = std::conj(basis_column[ir]);
                 for (std::size_t column = 0; column != column_size; ++column)
                 {
                     coefficient_row[column] += conjugate_basis * vectors[column][ir];

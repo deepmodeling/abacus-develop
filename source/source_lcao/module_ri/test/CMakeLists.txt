@@ -116,7 +116,7 @@ AddTest(
 AddTest(
   TARGET MODULE_RI_sternheimer_rpa_test
   LIBS ${STERNHEIMER_RPA_TEST_LIBS}
-  SOURCES sternheimer_rpa_test.cpp ../sternheimer_rpa.cpp
+  SOURCES sternheimer_rpa_test.cpp sternheimer_projector_locality_test.cpp ../sternheimer_rpa.cpp
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_wavefunction_diagnostic_test
