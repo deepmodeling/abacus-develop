@@ -35,13 +35,6 @@ class ESolver_LJ : public ESolver
 
         void others(BaseCell& cell, const int istep) override;
 
-        bool supports_mdcell() const override
-        {
-            return true;
-        }
-
-        double mdcell_cutoff(const Input_para& inp) const override;
-
   private:
     double LJ_energy(const double& d, const int& i, const int& j) const;
 

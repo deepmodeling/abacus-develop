@@ -51,7 +51,7 @@ void Driver::driver_run()
     this->init_hardware();
     ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp);
 
-    const bool supports_mdcell = p_esolver->supports_mdcell();
+    const bool direct_mdcell = input.esolver_type == "lj" || input.esolver_type == "dp" || input.esolver_type == "nep";
     UnitCell ucell;
     bool ucell_initialized = false;
     const auto initialize_ucell = [&ucell, &ucell_initialized, &input]()
@@ -94,9 +94,9 @@ void Driver::driver_run()
     if (cal == "md")
     {
         MDCell mdcell;
-        if (supports_mdcell)
+        if (direct_mdcell)
         {
-            Run_MD::prepare_mdcell(mdcell, p_esolver, PARAM);
+            Run_MD::prepare_mdcell(mdcell, PARAM);
             p_esolver->before_all_runners(mdcell, PARAM.inp);
         }
         else
@@ -107,7 +107,7 @@ void Driver::driver_run()
         }
 
         Run_MD::md_line(mdcell, p_esolver, PARAM);
-        if (supports_mdcell)
+        if (direct_mdcell)
         {
             p_esolver->after_all_runners(mdcell);
         }
