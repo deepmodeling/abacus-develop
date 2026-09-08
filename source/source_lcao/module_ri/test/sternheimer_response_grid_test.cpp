@@ -173,6 +173,65 @@ TEST(SternheimerResponseGrid, ExplicitPbeDimensionsKeepOriginalPath)
     EXPECT_STREQ(ModuleRI::sternheimer_response_grid_source_name(response_grid.source), "pbe");
 }
 
+TEST(SternheimerResponseGrid, Molecular140Ry20AngstromSelects128WithoutChangingPbe288)
+{
+    ModulePW::PW_Basis pbe_basis("cpu", "double");
+#ifdef __MPI
+    pbe_basis.initmpi(1, 0, MPI_COMM_SELF);
+#endif
+    const double length_bohr = 20.0 * ModuleBase::ANGSTROM_AU;
+    pbe_basis.initgrids(1.0,
+                       ModuleBase::Matrix3(length_bohr, 0.0, 0.0,
+                                           0.0, length_bohr, 0.0,
+                                           0.0, 0.0, length_bohr),
+                       4.0 * 140.0);
+    const std::array<int, 3> pbe_dimensions = {pbe_basis.nx, pbe_basis.ny, pbe_basis.nz};
+    ASSERT_EQ(pbe_dimensions, (std::array<int, 3>{288, 288, 288}));
+    const auto response = ModuleRI::make_sternheimer_response_grid(
+        pbe_basis, 140.0, 0.0, 0, std::array<int, 3>{128, 128, 128}, 8);
+    ASSERT_TRUE(response.independent);
+    ASSERT_NE(response.basis, &pbe_basis);
+    EXPECT_EQ(response.basis->nx, 128);
+    EXPECT_EQ(response.basis->ny, 128);
+    EXPECT_EQ(response.basis->nz, 128);
+    EXPECT_EQ(response.basis->nrxx, 128 * 128 * 128);
+    EXPECT_EQ(response.serial_fine_basis->nxyz, 288 * 288 * 288);
+    EXPECT_EQ((std::array<int, 3>{pbe_basis.nx, pbe_basis.ny, pbe_basis.nz}), pbe_dimensions);
+    EXPECT_STREQ(ModuleRI::sternheimer_response_grid_source_name(response.source), "explicit");
+    RecordProperty("pbe_ecutwfc_Ry", 140);
+    RecordProperty("pbe_grid", "288 288 288");
+    RecordProperty("response_grid", "128 128 128");
+    RecordProperty("validation_scope", "native grid construction only; no molecular physics");
+}
+
+TEST(SternheimerResponseGrid, MolecularSpinFieldsRestrictIndependentlyWithoutChangingPbeFields)
+{
+    const auto pbe = make_basis(18, 16, 20);
+    const auto response = ModuleRI::make_sternheimer_response_grid(
+        *pbe, 80.0, 0.0, 0, std::array<int, 3>{12, 10, 14}, 8);
+    const auto low = cosine_mode(18, 16, 20, 1, 2, 1);
+    const auto high = cosine_mode(18, 16, 20, 7, 0, 0);
+    const auto expected_low = cosine_mode(12, 10, 14, 1, 2, 1);
+    for (int spin = 0; spin != 2; ++spin)
+    {
+        std::vector<double> fine(low.size());
+        std::vector<double> expected(expected_low.size());
+        for (std::size_t ir = 0; ir != fine.size(); ++ir)
+        {
+            fine[ir] = 2.0 + spin + (spin + 1.0) * low[ir] + 0.3 * high[ir];
+        }
+        for (std::size_t ir = 0; ir != expected.size(); ++ir)
+        {
+            expected[ir] = 2.0 + spin + (spin + 1.0) * expected_low[ir];
+        }
+        const auto original = fine;
+        const auto coarse = ModuleRI::restrict_sternheimer_real_field_rectangular(
+            *response.serial_fine_basis, *response.serial_response_basis, fine);
+        EXPECT_LT(relative_l2_error(coarse, expected), 1.0e-12);
+        EXPECT_EQ(fine, original);
+    }
+}
+
 TEST(SternheimerResponseGrid, ExplicitDimensionsRejectAmbiguousOrUnsupportedSelections)
 {
     const auto pbe_basis = make_basis(18, 16, 20);

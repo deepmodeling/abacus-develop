@@ -5148,8 +5148,46 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                    elapsed_seconds_since(chi0_start_time),
                                    "rank_shift=" + std::to_string(frequency_rank_shift));
 
+        const std::array<int, 3> requested_response_dimensions = {PARAM.inp.sternheimer_response_nx,
+                                                                  PARAM.inp.sternheimer_response_ny,
+                                                                  PARAM.inp.sternheimer_response_nz};
+        const bool response_grid_requested
+            = PARAM.inp.sternheimer_response_ecutwfc > 0.0
+              || std::any_of(requested_response_dimensions.begin(),
+                             requested_response_dimensions.end(),
+                             [](const int value) { return value != 0; });
+        if (response_grid_requested && (!use_delta_sternheimer || !use_lcao_zero_order || write_siab))
+        {
+            throw std::invalid_argument(
+                "An independent molecular Sternheimer response grid requires LCAO Delta-ST without SIAB output.");
+        }
+        SternheimerResponseGrid response_grid = make_sternheimer_response_grid(pw_basis,
+                                                                                PARAM.inp.ecutwfc,
+                                                                                PARAM.inp.sternheimer_response_ecutwfc,
+                                                                                PARAM.inp.fft_mode,
+                                                                                requested_response_dimensions,
+                                                                                PARAM.inp.sternheimer_fd_order);
+        const ModulePW::PW_Basis& response_pw_basis = *response_grid.basis;
         const SternheimerABACUSFDGridData grid_data
-            = use_frequency_mpi ? make_sternheimer_fd_full_grid(pw_basis) : make_sternheimer_fd_grid(pw_basis);
+            = use_frequency_mpi ? make_sternheimer_fd_full_grid(response_pw_basis)
+                                : make_sternheimer_fd_grid(response_pw_basis);
+        if (GlobalV::MY_RANK == 0)
+        {
+            out << "sternheimer_response_ecutwfc_requested_Ry " << PARAM.inp.sternheimer_response_ecutwfc << '\n';
+            out << "sternheimer_response_ecutwfc_Ry "
+                << (response_grid.source == SternheimerResponseGridSource::Cutoff
+                        ? PARAM.inp.sternheimer_response_ecutwfc
+                        : (response_grid.source == SternheimerResponseGridSource::Pbe ? PARAM.inp.ecutwfc : 0.0))
+                << '\n';
+            out << "sternheimer_response_grid_requested " << requested_response_dimensions[0] << ' '
+                << requested_response_dimensions[1] << ' ' << requested_response_dimensions[2] << '\n';
+            out << "sternheimer_response_grid_source " << sternheimer_response_grid_source_name(response_grid.source)
+                << '\n';
+            out << "pbe_grid " << pw_basis.nx << ' ' << pw_basis.ny << ' ' << pw_basis.nz << " size "
+                << pw_basis.nxyz << '\n';
+            out << "response_grid " << grid_data.grid.nx << ' ' << grid_data.grid.ny << ' ' << grid_data.grid.nz
+                << " size " << grid_data.grid.size() << " dV " << grid_data.volume_element << '\n';
+        }
         SternheimerABFBuildData abfs_data
             = build_abfs_ccp_data(ucell, grid_data.grid, -1, pca_threshold, ccp_rmesh_times, write_siab);
         std::vector<SternheimerABFGridChannel>& channels = abfs_data.channels;
@@ -5348,8 +5386,30 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
             const SternheimerReducedKPoint response_grid_kpoint
                 = response_kpoint == nullptr ? SternheimerReducedKPoint{0.0, 0.0, 0.0}
                                               : sternheimer_lcao_grid_kpoint(*response_kpoint);
-            hamiltonians.push_back(
-                use_frequency_mpi
+            hamiltonians.push_back([&]() {
+                if (response_grid.independent)
+                {
+                    const auto fine_potential
+                        = copy_sternheimer_full_local_potential(potential, pw_basis, response_spin_index);
+                    const auto response_potential
+                        = response_grid.source == SternheimerResponseGridSource::Explicit
+                              ? restrict_sternheimer_real_field_rectangular(*response_grid.serial_fine_basis,
+                                                                            *response_grid.serial_response_basis,
+                                                                            fine_potential)
+                              : restrict_sternheimer_real_field(*response_grid.serial_fine_basis,
+                                                                *response_grid.serial_response_basis,
+                                                                fine_potential);
+                    SternheimerABACUSFDGridData response_grid_data = grid_data;
+                    response_grid_data.grid.kpoint = response_grid_kpoint;
+                    auto nonlocal_projector = make_sternheimer_fd_nonlocal_projector_from_unitcell(
+                        ucell, response_grid_data.grid, response_grid_data.volume_element);
+                    return make_sternheimer_fd_hamiltonian_from_local_potential(response_grid_data,
+                                                                               response_potential,
+                                                                               1.0,
+                                                                               std::move(nonlocal_projector),
+                                                                               PARAM.inp.sternheimer_fd_order);
+                }
+                return use_frequency_mpi
                     ? make_sternheimer_fd_full_hamiltonian(
                           potential,
                           pw_basis,
@@ -5365,7 +5425,8 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                           response_spin_index,
                           1.0,
                           response_grid_kpoint,
-                          PARAM.inp.sternheimer_fd_order));
+                          PARAM.inp.sternheimer_fd_order);
+            }());
             append_chi0_progress_event("hamiltonian_ready",
                                        0,
                                        -1,
