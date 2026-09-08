@@ -3396,7 +3396,7 @@
 - **Availability**: *[`symmetry`](#symmetry)==1 and ([`dft_functional`](#dft_functional) in [hse, hf, pbe0, scan0] or ([`basis_type`](#basis_type)==lcao and [`rpa`](#rpa)==true))*
 - **Description**: - False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
   - True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
-  - For multi-k calculations, D(k) is averaged over the unitary little group of each irreducible k point before star expansion, for either setting.
+  For multi-k calculations, D(k) is averaged over the unitary little group of each irreducible k point before star expansion, for either setting.
 - **Default**: True
 
 ### out_ri_cv
