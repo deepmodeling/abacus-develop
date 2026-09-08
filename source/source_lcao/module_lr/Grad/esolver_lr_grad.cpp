@@ -245,7 +245,9 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
 
     ModuleBase::TITLE("ESolver_LR", "cal_force");
     ModuleBase::timer::start("ESolver_LR", "cal_force");
-    const auto& c = LR_Util::get_psi_spin(*this->psi_ks, ispin, this->nk);   // wavefunction coefficients of ground state
+    // Spin channel 0, NOT `ispin`. `ispin` indexes `spin_types` = {singlet, triplet}.
+    // Closed shell always use spin-up channel of psi_ks, i.e. psi_ks(0).
+    const auto& c = LR_Util::get_psi_spin(*this->psi_ks, 0, this->nk);   // wavefunction coefficients of ground state
 
     // calculate the force (the partial gradient of Lagrangian)
     LR_Force<T> lr_force((*this->ucell_), this->kv.kvec_d, this->paraMat_,

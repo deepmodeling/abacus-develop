@@ -37,7 +37,6 @@ namespace LR
             {
                 const int ga = px.local2global_row(la);
                 const double weight = eig_ext_istate - eig_ks[eigks_start_k + nocc + ga];
-                std::cout << "la=" << la << ", ks-eig=" << eig_ks[eigks_start_k + nocc + ga] << ", weight=" << weight << ", X2=" << X[x_start_k + la] << std::endl;
                 for (int li = 0;li < px.get_col_size();++li)
                 {
                     const int idx = li * px.get_row_size() + la;
@@ -173,8 +172,6 @@ namespace LR
         if (LR_Util::has_local_xc(xc_kernel))
             op_gxc.act(/*nband=*/1, ld_oo, /*npol=*/1, X, W);
 
-        std::cout << "W (H[T+Z]) + W(gxc) terms: " << std::endl;
-        LR_Util::print_value(W, nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
         add_ediff_term(W, X, eig, eig_ks, nk, nocc[0], nvirt[0], px[0], p_occ_occ[0]);
     }
 

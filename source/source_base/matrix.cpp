@@ -75,7 +75,12 @@ matrix::matrix( matrix && m_in )
 matrix& matrix::operator=( const matrix & m_in )
 {
     this->create( m_in.nr, m_in.nc, false );
-    memcpy( c, m_in.c, nr*nc*sizeof(double) );
+    // `create` leaves `c` null for an empty matrix, and memcpy's arguments are declared
+    // non-null even for a zero count -- so assigning an empty matrix is undefined behaviour.
+    if( nr && nc )
+    {
+        memcpy( c, m_in.c, nr*nc*sizeof(double) );
+    }
     return *this;
 }
 
