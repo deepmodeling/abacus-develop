@@ -582,6 +582,8 @@ OBJS_SYMMETRY=symm_other.o\
     symmetry.o\
 
 OBJS_XC=xc_functional.o\
+    xc_functional_ncgga_sf.o\
+    xc_ncgga_radial.o\
     xc_functional_op.o\
     xc_pot.o\
     xc_grad.o\
