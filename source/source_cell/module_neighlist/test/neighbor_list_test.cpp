@@ -55,24 +55,24 @@ TEST(NeighborList_InitializeAndReset, Behavior)
 {
     NeighborList nl;
     nl.initialize(0, 16);
-    EXPECT_EQ(nl.get_nlocal(), 0);
+    EXPECT_EQ(nl.get_ncentral_atoms(), 0);
 
     nl.initialize(5, 8);
-    EXPECT_EQ(nl.get_nlocal(), 5);
+    EXPECT_EQ(nl.get_ncentral_atoms(), 5);
     for (int i = 0; i < 5; ++i) {
         EXPECT_EQ(nl.get_numneigh(i), 0);
         EXPECT_EQ(nl.get_firstneigh(i), nullptr);
     }
 
     nl.reset();
-    EXPECT_EQ(nl.get_nlocal(), 5);
+    EXPECT_EQ(nl.get_ncentral_atoms(), 5);
 }
 
 TEST(NeighborList_Getters, Accessors)
 {
     NeighborList nl;
     nl.initialize(3, 16);
-    EXPECT_EQ(nl.get_nlocal(), 3);
+    EXPECT_EQ(nl.get_ncentral_atoms(), 3);
     EXPECT_EQ(nl.get_numneigh(0), 0);
     EXPECT_EQ(nl.get_firstneigh(0), nullptr);
 }
