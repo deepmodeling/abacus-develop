@@ -3,7 +3,6 @@
 
 #include "source_base/macros.h"   // GetRealType
 #include "source_base/matrix_block.h"
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hsolver/kernels/cuda/diag_cusolver.cuh"
 #include "source_psi/psi.h"
 

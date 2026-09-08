@@ -1,5 +1,6 @@
 #include "parallel_k2d.h"
 
+#include "source_base/matrix_block.h"
 #include "source_base/parallel_global.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
