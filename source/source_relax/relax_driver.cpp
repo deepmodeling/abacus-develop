@@ -1,7 +1,6 @@
 #include "relax_driver.h"
 #include "source_base/formatter.h"
 #include "source_base/global_file.h"
-#include "source_base/version.h"
 #include "source_cell/cif_io.h"
 #include "source_io/module_json/output_info.h"
 #include "source_io/module_output/output_log.h"
@@ -9,6 +8,7 @@
 #include "source_base/module_out/read_exit_file.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/print_cell.h"
+#include "source_main/version.h"
 
 #include <ctime>
 
