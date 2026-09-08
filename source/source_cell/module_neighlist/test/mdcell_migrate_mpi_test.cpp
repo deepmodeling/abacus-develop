@@ -66,38 +66,38 @@ TEST(MdCellMigrateMpiTest, AtomCrossingDomainMigratesToNewOwner)
                   std::vector<std::string>(1, "X"),
                   std::vector<double>(1, 1.0),
                   std::vector<std::int64_t>(1, 2),
-                  0.1,
                   0.0,
                   ModuleBase::world_comm_domain());
+    mdcell.initialize_neighbors(0.1);
 
     ASSERT_EQ(mdcell.mpi_size(), size);
     if (size == 2)
     {
-        ASSERT_EQ(mdcell.nlocal(), 1);
+        ASSERT_EQ(mdcell.nowned_atoms(), 1);
         mdcell.mutable_owned_atoms()[0].vel.x = static_cast<double>(rank + 1);
         mdcell.mutable_owned_atoms()[0].force.y = static_cast<double>(rank + 3);
         mdcell.migrate_owned_atoms();
-        ASSERT_EQ(mdcell.nlocal(), 1);
+        ASSERT_EQ(mdcell.nowned_atoms(), 1);
         EXPECT_EQ(mdcell.owned_atoms()[0].owner_rank, rank);
         EXPECT_EQ(mdcell.owned_atoms()[0].vel.x, static_cast<double>(rank + 1));
         EXPECT_EQ(mdcell.owned_atoms()[0].force.y, static_cast<double>(rank + 3));
 
-        if (rank == 0 && mdcell.nlocal() == 1)
+        if (rank == 0 && mdcell.nowned_atoms() == 1)
         {
             mdcell.mutable_owned_atoms()[0].cart.x = 0.8;
         }
-        if (rank == 1 && mdcell.nlocal() == 1)
+        if (rank == 1 && mdcell.nowned_atoms() == 1)
         {
             mdcell.mutable_owned_atoms()[0].cart.x = 0.3;
         }
         mdcell.migrate_owned_atoms();
 
-        long long local_count = mdcell.nlocal();
+        long long local_count = mdcell.nowned_atoms();
         long long global_count = 0;
         MPI_Allreduce(&local_count, &global_count, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
         EXPECT_EQ(global_count, 2);
 
-        for (int i = 0; i < mdcell.nlocal(); ++i)
+        for (int i = 0; i < mdcell.nowned_atoms(); ++i)
         {
             EXPECT_EQ(mdcell.owned_atoms()[static_cast<std::size_t>(i)].owner_rank, rank);
         }
@@ -134,9 +134,9 @@ TEST(MdCellMigrateMpiTest, GhostForcesReturnToOwners)
                   std::vector<std::string>(1, "X"),
                   std::vector<double>(1, 1.0),
                   std::vector<std::int64_t>(1, 2),
-                  0.6,
                   0.0,
                   ModuleBase::world_comm_domain());
+    mdcell.initialize_neighbors(0.6);
 
     long long local_copies[2] = {0, 0};
     for (std::size_t iat = 0; iat < mdcell.ghost_atoms().size(); ++iat)
@@ -154,7 +154,7 @@ TEST(MdCellMigrateMpiTest, GhostForcesReturnToOwners)
     }
     mdcell.accumulate_ghost_forces();
 
-    ASSERT_EQ(mdcell.nlocal(), 1);
+    ASSERT_EQ(mdcell.nowned_atoms(), 1);
     const double expected = static_cast<double>(global_copies[rank] * (rank + 1));
     EXPECT_DOUBLE_EQ(mdcell.owned_atoms()[0].force.x, expected);
     EXPECT_DOUBLE_EQ(mdcell.owned_atoms()[0].force.y, 2.0 * expected);
@@ -190,16 +190,16 @@ TEST(MdCellMigrateMpiTest, SkinUpdatesFixedGhostLayoutBeforeRebuild)
                   std::vector<std::string>(1, "X"),
                   std::vector<double>(1, 1.0),
                   std::vector<std::int64_t>(1, 2),
-                  0.1,
                   0.2,
                   ModuleBase::world_comm_domain());
+    mdcell.initialize_neighbors(0.1);
 
     mdcell.prepare_neighbors();
     mdcell.mutable_owned_atoms()[0].frac.x += rank == 0 ? 0.05 : -0.05;
     mdcell.mutable_owned_atoms()[0].cart = mdcell.mutable_owned_atoms()[0].frac * latvec;
     mdcell.prepare_neighbors();
 
-    ASSERT_EQ(mdcell.nlocal(), 1);
+    ASSERT_EQ(mdcell.nowned_atoms(), 1);
     for (std::size_t i = 0; i < mdcell.ghost_atoms().size(); ++i)
     {
         const LocalAtom& ghost = mdcell.ghost_atoms()[i];

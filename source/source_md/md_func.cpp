@@ -333,7 +333,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
 {
     ModuleBase::TITLE("MD_func", "force_virial");
     ModuleBase::timer::start("MD_func", "force_virial");
-    if (p_esolver->supports_mdcell())
+    if (!mdcell.has_backing_unitcell())
     {
         mdcell.prepare_neighbors();
         p_esolver->runner(static_cast<BaseCell&>(mdcell), istep);
@@ -347,7 +347,6 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     }
     else
     {
-        if (!mdcell.has_backing_unitcell()) ModuleBase::WARNING_QUIT("MD_func::force_virial", "This ESolver requires UnitCell, but MDCell has no backing UnitCell.");
         UnitCell& ucell = mdcell.backing_unitcell();
         std::vector<std::vector<ModuleBase::Vector3<double>>> backing_velocities(
             static_cast<std::size_t>(ucell.ntype));
@@ -441,7 +440,7 @@ void dump_info(const int& step,
     }
     std::ostringstream local;
     local << std::fixed << std::setprecision(12);
-    for (int i = 0; i < mdcell.nlocal(); ++i)
+    for (int i = 0; i < mdcell.nowned_atoms(); ++i)
     {
         const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
         local << "  " << type_offsets[static_cast<std::size_t>(atom.type)] + atom.type_index
@@ -552,7 +551,7 @@ double current_temp(double& kinetic,
 std::int64_t global_dof(const MDCell& mdcell)
 {
     std::int64_t local_frozen[3] = {0, 0, 0};
-    for (int i = 0; i < mdcell.nlocal(); ++i)
+    for (int i = 0; i < mdcell.nowned_atoms(); ++i)
     {
         const ModuleBase::Vector3<int>& mbl = mdcell.owned_atoms()[static_cast<std::size_t>(i)].mbl;
         if (mbl.x == 0) ++local_frozen[0];

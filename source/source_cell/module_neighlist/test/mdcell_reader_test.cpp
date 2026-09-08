@@ -81,7 +81,6 @@ TEST(MDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
 
     MDCell mdcell = MDCellReader::read_stru(stru_file,
                                              std::vector<int>{1, 1, 1},
-                                             1.0 * ModuleBase::ANGSTROM_AU,
                                              0.0,
                                              comm_domain);
 
@@ -223,7 +222,6 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
                   std::vector<double>{1.0, 1.0},
                   std::vector<std::int64_t>{2, 2},
                   0.0,
-                  0.0,
                   ModuleBase::world_comm_domain());
     StruMeta metadata;
     metadata.species.resize(2);
@@ -232,7 +230,6 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
 
     MDCell round_trip = MDCellReader::read_stru(output_file,
                                                  std::vector<int>{1, 1, 1},
-                                                 0.1,
                                                  0.0,
                                                  ModuleBase::world_comm_domain());
     double local_positions[4] = {0.0, 0.0, 0.0, 0.0};

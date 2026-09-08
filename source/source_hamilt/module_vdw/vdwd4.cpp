@@ -1,4 +1,5 @@
 #include "vdwd4.h"
+#include "vdw_xcname.h"
 
 #include "source_base/constants.h"
 #include "source_base/element_name.h"
@@ -81,7 +82,7 @@ double cutoff_to_bohr(const std::string& value, const std::string& unit)
 } // namespace
 
 Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_para& input)
-    : Vdw(unit_in), xc_name_(to_lower(xc_name)), model_name_(to_lower(input.vdw_d4_model))
+    : Vdw(unit_in), xc_name_(normalize_xc_name(xc_name)), model_name_(to_lower(input.vdw_d4_model))
 {
     cutoff_disp2_ = cutoff_to_bohr(input.vdw_cutoff_radius, input.vdw_radius_unit);
     cutoff_disp3_ = std::min(40.0, cutoff_disp2_);

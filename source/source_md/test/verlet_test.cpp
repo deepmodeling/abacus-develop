@@ -52,10 +52,7 @@ class Verlet_test : public testing::Test
         Setcell::parameters(param_in.input);
 
         p_esolver = new ModuleESolver::ESolver_LJ();
-        mdcell.initialize_from_unitcell(ucell,
-                                         8.5 * ModuleBase::ANGSTROM_AU,
-                                         0.0,
-                                         ModuleBase::world_comm_domain());
+        mdcell = Setcell::setup_mdcell(ucell);
         p_esolver->before_all_runners(mdcell, param_in.inp);
         mdrun = new Verlet(param_in, mdcell);
         mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);

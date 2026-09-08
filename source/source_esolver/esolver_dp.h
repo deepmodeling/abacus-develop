@@ -68,9 +68,6 @@ class ESolver_DP : public ESolver
      */
     void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
 
-    bool supports_mdcell() const override;
-    double mdcell_cutoff(const Input_para& inp) const override;
-
     /**
      * @brief Prints the final total energy of the DP model to the output file
      *

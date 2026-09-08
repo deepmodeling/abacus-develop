@@ -82,73 +82,40 @@ void MDCell::sync_backing_unitcell_owned_atoms_()
     }
 }
 
+void MDCell::initialize_from_unitcell(UnitCell& ucell,
+                                      double skin,
+                                      const ModuleBase::CommunicationDomain& comm_domain)
+{
+    backing_unitcell_ = &ucell;
+    nat_ = ucell.nat;
+    lat0_ = ucell.lat0;
+    omega_ = ucell.omega;
+    latvec_ = ucell.latvec;
+    gt_ = ucell.GT;
+    type_labels_.resize(static_cast<std::size_t>(ucell.ntype));
+    type_masses_.resize(static_cast<std::size_t>(ucell.ntype));
+    type_atom_counts_.resize(static_cast<std::size_t>(ucell.ntype));
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        type_labels_[static_cast<std::size_t>(it)] = ucell.atoms[it].label;
+        type_masses_[static_cast<std::size_t>(it)] = ucell.atoms[it].mass;
+        type_atom_counts_[static_cast<std::size_t>(it)] = ucell.atoms[it].na;
+    }
+    cutoff_ = 0.0;
+    skin_ = skin;
+    neighbor_search_.reset();
+    neighbor_layout_valid_ = false;
+    owned_atoms_.clear();
+    ghost_atoms_.clear();
+
 #ifdef __MPI
-void MDCell::initialize_from_ucell_(UnitCell& ucell, MPI_Comm comm, double cutoff, double skin)
-{
-    backing_unitcell_ = &ucell;
-    nat_ = ucell.nat;
-    lat0_ = ucell.lat0;
-    omega_ = ucell.omega;
-    latvec_ = ucell.latvec;
-    gt_ = ucell.GT;
-    type_labels_.resize(static_cast<std::size_t>(ucell.ntype));
-    type_masses_.resize(static_cast<std::size_t>(ucell.ntype));
-    type_atom_counts_.resize(static_cast<std::size_t>(ucell.ntype));
-    for (int it = 0; it < ucell.ntype; ++it)
-    {
-        type_labels_[static_cast<std::size_t>(it)] = ucell.atoms[it].label;
-        type_masses_[static_cast<std::size_t>(it)] = ucell.atoms[it].mass;
-        type_atom_counts_[static_cast<std::size_t>(it)] = ucell.atoms[it].na;
-    }
-    comm_ = comm;
-    cutoff_ = cutoff;
-    skin_ = skin;
-
-    owned_atoms_.clear();
-    ghost_atoms_.clear();
+    comm_ = comm_domain.communicator();
     MPI_Comm_rank(comm_, &rank_);
     MPI_Comm_size(comm_, &size_);
-
-    decomp_.init(comm_, latvec_, lat0_, cutoff_, skin_);
+    decomp_.init(comm_, latvec_, lat0_, 0.0, 0.0);
     decomp_.split_owned_atoms_from_ucell(ucell, owned_atoms_);
-    clear_forces_(owned_atoms_);
-    exchange_ghost_atoms();
-}
-
-void MDCell::initialize_from_owned_atoms_(MPI_Comm comm, double cutoff, double skin)
-{
-    comm_ = comm;
-    cutoff_ = cutoff;
-    skin_ = skin;
-    MPI_Comm_rank(comm_, &rank_);
-    MPI_Comm_size(comm_, &size_);
-    decomp_.init(comm_, latvec_, lat0_, cutoff_, skin_);
-    clear_forces_(owned_atoms_);
-    exchange_ghost_atoms();
-}
 #else
-void MDCell::initialize_from_ucell_(UnitCell& ucell, double cutoff, double skin)
-{
-    backing_unitcell_ = &ucell;
-    nat_ = ucell.nat;
-    lat0_ = ucell.lat0;
-    omega_ = ucell.omega;
-    latvec_ = ucell.latvec;
-    gt_ = ucell.GT;
-    type_labels_.resize(static_cast<std::size_t>(ucell.ntype));
-    type_masses_.resize(static_cast<std::size_t>(ucell.ntype));
-    type_atom_counts_.resize(static_cast<std::size_t>(ucell.ntype));
-    for (int it = 0; it < ucell.ntype; ++it)
-    {
-        type_labels_[static_cast<std::size_t>(it)] = ucell.atoms[it].label;
-        type_masses_[static_cast<std::size_t>(it)] = ucell.atoms[it].mass;
-        type_atom_counts_[static_cast<std::size_t>(it)] = ucell.atoms[it].na;
-    }
-    cutoff_ = cutoff;
-    skin_ = skin;
-    owned_atoms_.clear();
-    ghost_atoms_.clear();
-
+    static_cast<void>(comm_domain);
     for (int it = 0; it < ucell.ntype; ++it)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
@@ -164,30 +131,9 @@ void MDCell::initialize_from_ucell_(UnitCell& ucell, double cutoff, double skin)
                                              0));
         }
     }
-    exchange_ghost_atoms();
-}
+#endif
 
-void MDCell::initialize_from_owned_atoms_(double cutoff, double skin)
-{
-    cutoff_ = cutoff;
-    skin_ = skin;
     clear_forces_(owned_atoms_);
-    exchange_ghost_atoms();
-}
-#endif
-
-
-void MDCell::initialize_from_unitcell(UnitCell& ucell,
-                                      double cutoff,
-                                      double skin,
-                                      const ModuleBase::CommunicationDomain& comm_domain)
-{
-#ifdef __MPI
-    initialize_from_ucell_(ucell, comm_domain.communicator(), cutoff, skin);
-#else
-    static_cast<void>(comm_domain);
-    initialize_from_ucell_(ucell, cutoff, skin);
-#endif
 }
 
 void MDCell::initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
@@ -199,7 +145,6 @@ void MDCell::initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
                                          const std::vector<std::string>& type_labels,
                                          const std::vector<double>& type_masses,
                                          const std::vector<std::int64_t>& type_atom_counts,
-                                         double cutoff,
                                          double skin,
                                          const ModuleBase::CommunicationDomain& comm_domain)
 {
@@ -212,12 +157,42 @@ void MDCell::initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
     type_labels_ = type_labels;
     type_masses_ = type_masses;
     type_atom_counts_ = type_atom_counts;
+    backing_unitcell_ = nullptr;
+    cutoff_ = 0.0;
+    skin_ = skin;
+    neighbor_search_.reset();
+    neighbor_layout_valid_ = false;
+    ghost_atoms_.clear();
 #ifdef __MPI
-    initialize_from_owned_atoms_(comm_domain.communicator(), cutoff, skin);
+    comm_ = comm_domain.communicator();
+    MPI_Comm_rank(comm_, &rank_);
+    MPI_Comm_size(comm_, &size_);
 #else
     static_cast<void>(comm_domain);
-    initialize_from_owned_atoms_(cutoff, skin);
 #endif
+    clear_forces_(owned_atoms_);
+}
+
+void MDCell::initialize_neighbors(double cutoff)
+{
+    if (cutoff <= 0.0)
+    {
+        throw std::runtime_error("MDCell neighbor cutoff must be positive.");
+    }
+
+    cutoff_ = cutoff;
+    neighbor_search_.reset();
+    neighbor_layout_valid_ = false;
+
+#ifdef __MPI
+    if (comm_ == MPI_COMM_NULL)
+    {
+        throw std::runtime_error("MDCell communication domain is not initialized.");
+    }
+    decomp_.init(comm_, latvec_, lat0_, cutoff_, skin_);
+#endif
+
+    migrate_owned_atoms();
 }
 
 #ifdef __MPI
@@ -341,6 +316,11 @@ void MDCell::migrate_owned_atoms()
 
 void MDCell::prepare_neighbors()
 {
+    if (cutoff_ <= 0.0)
+    {
+        throw std::runtime_error("MDCell neighbors must be initialized before use.");
+    }
+
     bool rebuild = !neighbor_layout_valid_ || neighbor_reference_frac_.size() != owned_atoms_.size();
     double local_max_displacement = 0.0;
     if (!rebuild)

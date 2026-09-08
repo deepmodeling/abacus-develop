@@ -32,7 +32,6 @@ public:
     MDCell& operator=(MDCell&&);
 
     void initialize_from_unitcell(UnitCell& ucell,
-                                  double cutoff,
                                   double skin,
                                   const ModuleBase::CommunicationDomain& comm_domain);
     void initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
@@ -44,9 +43,10 @@ public:
                                      const std::vector<std::string>& type_labels,
                                      const std::vector<double>& type_masses,
                                      const std::vector<std::int64_t>& type_atom_counts,
-                                     double cutoff,
                                      double skin,
                                      const ModuleBase::CommunicationDomain& comm_domain);
+
+    void initialize_neighbors(double cutoff);
 
 #ifdef __MPI
     int mpi_rank() const;
@@ -74,7 +74,7 @@ public:
     std::vector<LocalAtom>& mutable_owned_atoms();
     std::vector<LocalAtom>& mutable_ghost_atoms();
 
-    int nlocal() const { return static_cast<int>(owned_atoms_.size()); }
+    int nowned_atoms() const { return static_cast<int>(owned_atoms_.size()); }
     int nghost() const { return static_cast<int>(ghost_atoms_.size()); }
     double cutoff() const;
     bool has_backing_unitcell() const;
@@ -89,14 +89,6 @@ private:
     double get_omega() const override;
     const ModuleBase::Matrix3& get_latvec() const override;
     const ModuleBase::Matrix3& get_GT() const override;
-
-#ifdef __MPI
-    void initialize_from_ucell_(UnitCell& ucell, MPI_Comm comm, double cutoff, double skin);
-    void initialize_from_owned_atoms_(MPI_Comm comm, double cutoff, double skin);
-#else
-    void initialize_from_ucell_(UnitCell& ucell, double cutoff, double skin);
-    void initialize_from_owned_atoms_(double cutoff, double skin);
-#endif
 
     void sync_backing_unitcell_geometry_();
     void sync_backing_unitcell_owned_atoms_();
