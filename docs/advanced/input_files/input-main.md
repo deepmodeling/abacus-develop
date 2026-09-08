@@ -10,6 +10,7 @@
     - [ntype](#ntype)
     - [cell\_replica](#cell_replica)
     - [calculation](#calculation)
+    - [socket\_driver](#socket_driver)
     - [esolver\_type](#esolver_type)
     - [symmetry](#symmetry)
     - [symmetry\_prec](#symmetry_prec)
@@ -637,6 +638,20 @@
   - test_neighbour: obtain information of neighboring atoms (for LCAO basis only), please specify a positive search_radius manually
 - **Default**: scf
 
+### socket_driver
+
+- **Type**: Boolean
+- **Description**: If set to True, ABACUS keeps the calculation type as scf and receives atomic positions from an external driver through the i-PI socket protocol.
+
+  > Note: Use calculation = scf with socket_driver = True. ABACUS connects to the external i-PI server selected by ABACUS_SOCKET_ADDRESS. If ABACUS_SOCKET_ADDRESS is unset, ABACUS uses localhost:31415. The value can use one of two forms:
+
+  - host:port, for example localhost:31415 or 127.0.0.1:31415, opens a TCP connection to that host and port. Use this when the i-PI server listens on a TCP port.
+  - path:UNIX, for example /tmp/ipi_abacus_si:UNIX, opens a Unix-domain socket at the given filesystem path. The :UNIX suffix tells ABACUS that the preceding value is a local socket path rather than a TCP host name. This form only works on the same machine.
+  When using the ASE AbacusSocketIO interface, this environment variable is set automatically from the port or unixsocket calculator argument.
+
+  Socket mode always computes energy. Force and stress extraction follows cal_force and cal_stress independently; disabled properties are sent as protocol padding and marked absent in the ABACUS i-PI extras metadata, not reported as physical zero values. This metadata extension is required for safe optional-property handling: a legacy response with empty extras is accepted only for energy-only use, while a generic client that ignores extras cannot distinguish padding from a computed zero. A non-converged SCF step is returned with scf_converged=false metadata so an external driver can choose its policy.
+- **Default**: False
+
 ### esolver_type
 
 - **Type**: String
@@ -686,6 +701,7 @@
 
 - **Type**: Boolean
 - **Description**: If set to True, calculate the force at the end of the electronic iteration.
+  In socket_driver mode, this flag controls whether the returned frame advertises forces; it is not forced on by the socket protocol.
 - **Default**: False
 
 ### kpar
@@ -801,6 +817,7 @@
 
 - **Type**: Boolean
 - **Description**: If set to True, calculate the stress at the end of the electronic iteration.
+  In socket_driver mode, this flag independently controls whether the returned frame advertises stress/virial.
 - **Default**: False
 
 ### diago_proc
@@ -899,7 +916,12 @@
 ### chg_extrap
 
 - **Type**: String
-- **Description**: Charge extrapolation method for MD and relaxation calculations.
+- **Description**: Charge extrapolation method for MD, relaxation, and socket-driven calculations.
+
+  When set to default, ABACUS chooses second-order for md, first-order for
+  relax/cell-relax and socket_driver calculations, and atomic for other calculations. Socket-driven
+  molecular dynamics can explicitly set second-order if the external driver
+  updates structures smoothly enough for second-order extrapolation.
 - **Default**: default
 
 ### nb2d
