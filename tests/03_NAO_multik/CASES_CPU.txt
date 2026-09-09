@@ -3,6 +3,7 @@ scf_pp_upf201
 scf_pp_sg15
 scf_pp_gth
 scf_angle_spin4
+scf_angle_spin4_y
 scf_u_spin1
 scf_u_spin2
 scf_u_spin4
