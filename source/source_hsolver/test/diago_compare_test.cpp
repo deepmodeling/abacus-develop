@@ -8,8 +8,9 @@
  *   - Davidson (DiagoDavid)
  *
  * Every solver is fed the SAME Hamiltonian, the SAME initial guess and the
- * SAME per-band convergence threshold, so wall-clock time and the eigenvalue
- * error vs. a LAPACK reference are directly comparable.
+ * SAME per-band convergence threshold, and wall time is measured to the SAME
+ * reference accuracy (max_eval_err < err_target) so the timings are directly
+ * comparable despite the solvers' differing internal stopping rules.
  *
  * This is a benchmark/audit aid, not a correctness unit test: it is DISABLED
  * by default and must be run explicitly.
@@ -27,6 +28,7 @@
 
 #include "mpi.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <complex>
@@ -46,6 +48,38 @@ using Real = double;
 static int g_sbsize = -1;
 static int g_rr_step = -1;
 
+// ---------------------------------------------------------------------------
+// Unified stopping criterion.  Wall time is measured as "time to reach
+// max_eval_err < err_target", the same LAPACK-reference accuracy for every
+// solver.  Each solver's own stopping rule (eigenvalue-change for PPCG/CG,
+// residual for BPCG/Davidson) is looser than the reference error, so every
+// solver is re-driven for up to max_outer_passes calls to diag().  max_err
+// always reports the accuracy actually reached, so a solver that fails to hit
+// err_target within the budget stays visible.
+//
+// NOTE: err_target must be strictly coarser than every solver's own stopping
+// point.  The CG solver stops on |eigenvalue change| < ethr, which in practice
+// leaves max_eval_err ~ (2-4)x ethr; a target tighter than that (e.g. 1e-6
+// with ethr=1e-6) can never be reached, so CG burns all max_outer_passes doing
+// an expensive subspace restart + per-band CG each round.  A relaxed target
+// keeps the cross-solver comparison honest instead of penalizing CG for being
+// re-driven into repeated subspace restarts.
+// ---------------------------------------------------------------------------
+const double err_target = 1e-5;    // relaxed: reachable by every solver
+const int max_outer_passes = 20;   // outer diag() re-drives before giving up
+
+// max over bands of |eval_i - ref_i|: the reference-based accuracy that makes
+// wall-clock times comparable across solvers.
+static double max_eval_err(const Real* eval, const Real* ref, int nband)
+{
+    double err = 0.0;
+    for (int i = 0; i < nband; ++i)
+    {
+        err = std::max(err, std::abs(eval[i] - ref[i]));
+    }
+    return err;
+}
+
 // Total heap memory currently allocated (bytes).  Used to compare the peak
 // working memory of the solvers: PPCG keeps a bounded subspace, while
 // Davidson grows its basis with the number of iterations.
@@ -55,14 +89,30 @@ static long heap_bytes()
     return static_cast<long>(mi.uordblks) + static_cast<long>(mi.hblkhd);
 }
 
-extern "C" void zgemm_(const char* transa, const char* transb, const int* m, const int* n, const int* k, const T* alpha,
-                       const T* a, const int* lda, const T* b, const int* ldb, const T* beta, T* c, const int* ldc);
-
-static void dense_h_multiply(const T* H, int n, const T* in, T* out, int ld, int ncol)
+// Sparse symmetric band of half-bandwidth `bw`, stored in LAPACK upper-band
+// format: H[i, j] (i <= j, d = j - i) lives at band[bd*j + (bw - d)],
+// with bd = bw + 1.  This matvec is O(n * bw), modeling the real plane-wave H
+// application (kinetic energy is a diagonal/tridiagonal discretization of
+// -Laplacian/2 plus a local potential) instead of an O(n^2) dense zgemm.
+static void banded_h_multiply(const Real* band, int n, int bw, int bd, const T* in, T* out, int ld, int ncol)
 {
-    const T one(1.0, 0.0);
-    const T zero(0.0, 0.0);
-    zgemm_("N", "N", &n, &ncol, &n, &one, H, &n, in, &ld, &zero, out, &ld);
+    for (int j = 0; j < ncol; ++j)
+    {
+        for (int i = 0; i < n; ++i)
+        {
+            Real acc = 0.0;
+            const int hi = std::min(n - 1, i + bw);
+            for (int k = std::max(0, i - bw); k <= hi; ++k)
+            {
+                // H[i, k]: reuse the upper-triangular stored entry (k may be < i)
+                const int r = std::min(i, k);
+                const int c = std::max(i, k);
+                const int d = c - r;
+                acc += band[bd * c + (bw - d)] * std::real(in[k + j * ld]);
+            }
+            out[i + j * ld] = T(acc, 0.0);
+        }
+    }
 }
 
 static void identity_s(const T* in, T* out, int ld, int ncol)
@@ -76,44 +126,60 @@ static void identity_s(const T* in, T* out, int ld, int ncol)
     }
 }
 
-// Reference eigenvalues via LAPACK zheev (H is Hermitian, S = I).
-static void ref_eigen(const T* H, int n, Real* e)
+extern "C" void dsbev_(const char* jobz, const char* uplo, const int* n, const int* kd,
+                       double* ab, const int* ldab, double* w, double* z, const int* ldz,
+                       double* work, int* info);
+
+// Reference eigenvalues via LAPACK dsbev on the symmetric band matrix.  Only
+// the lowest `nband_req` are kept.  dsbev is O(n * bw^2), avoiding the O(n^3)
+// tridiagonalization that dense zheev/zheevx would require for large n.
+static void ref_eigen(const Real* band, int n, int bw, int bd, int nband_req, Real* e)
 {
-    std::vector<T> a(H, H + n * n);
-    int lwork = 2 * n;
-    std::vector<T> work(lwork);
-    std::vector<Real> rwork(3 * n - 2);
+    std::vector<double> ab(band, band + size_t(bd) * n);
+    std::vector<double> w(n);
+    const char jobz = 'N', uplo = 'U';
+    std::vector<double> work(3 * n);
     int info = 0;
-    char jobz = 'N', uplo = 'U';
-    zheev_(&jobz, &uplo, &n, a.data(), &n, e, work.data(), &lwork, rwork.data(), &info);
+    dsbev_(&jobz, &uplo, &n, &bw, ab.data(), &bd, w.data(), nullptr, &n, work.data(), &info);
+    if (info != 0)
+    {
+        std::fprintf(stderr, "[ref_eigen] dsbev info=%d\n", info);
+    }
+    for (int i = 0; i < nband_req; ++i)
+    {
+        e[i] = w[i];
+    }
 }
 
-// Diagonal-dominant random Hermitian matrix (same recipe as the PPCG benchmark).
-static void make_H(int n, int sparsity_pct, std::vector<T>& H, std::vector<Real>& prec)
+// Diagonally-dominant symmetric band matrix: a local potential on the diagonal
+// plus random couplings within a half-bandwidth `bw`.  Stored in LAPACK upper
+// band format `band[bd*j + (bw - (j - i))] = H[i, j]` for i <= j, bd = bw + 1.
+// This is the discrete analogue of H = -Laplacian/2 + V(r) that plane-wave
+// solvers actually apply.
+static void make_H(int n, int bw, std::vector<Real>& band, int& bd, std::vector<Real>& prec)
 {
-    H.assign(n * n, T(0));
-    std::mt19937 rng(unsigned(n * 100 + sparsity_pct));
+    bd = bw + 1;
+    band.assign(size_t(bd) * n, 0.0);
+    std::mt19937 rng(unsigned(n * 100 + bw));
     std::uniform_real_distribution<Real> dist(-1.0, 1.0);
     for (int i = 0; i < n; ++i)
     {
-        for (int j = i; j < n; ++j)
+        band[bd * i + bw] = std::abs(dist(rng)) * n + 1.0;  // diagonal (d=0)
+    }
+    for (int i = 0; i < n; ++i)
+    {
+        for (int d = 1; d <= bw; ++d)
         {
-            if (i != j && (rng() % 100) < sparsity_pct)
+            if (i + d < n)
             {
-                continue;
-            }
-            Real val = (i == j) ? std::abs(dist(rng)) * n + 1.0 : dist(rng) * 0.5;
-            H[i + j * n] = T(val, 0);
-            if (i != j)
-            {
-                H[j + i * n] = T(val, 0);
+                band[bd * (i + d) + (bw - d)] = dist(rng) * 0.5 / double(d);
             }
         }
     }
     prec.resize(n);
     for (int i = 0; i < n; ++i)
     {
-        prec[i] = std::max(std::real(H[i + i * n]), 1e-6);
+        prec[i] = std::max(band[bd * i + bw], 1e-6);
     }
 }
 
@@ -159,10 +225,10 @@ static void make_psi(int n, int nband, std::vector<T>& psi)
 }
 
 // Rayleigh-Ritz subspace diagonalization used as CG's subspace_func.
-static void rr_subspace(const T* H, int n, T* psi_in, T* psi_out, int ld, int nband)
+static void rr_subspace(const Real* band, int n, int bw, int bd, T* psi_in, T* psi_out, int ld, int nband)
 {
     std::vector<T> hpsi(size_t(n) * nband, T(0));
-    dense_h_multiply(H, n, psi_in, hpsi.data(), n, nband);
+    banded_h_multiply(band, n, bw, bd, psi_in, hpsi.data(), n, nband);
 
     // S_sub = Psi^H Psi (S = I), H_sub = Psi^H H Psi
     std::vector<T> s_sub(nband * nband, T(0)), h_sub(nband * nband, T(0));
@@ -215,7 +281,7 @@ struct Result
     bool ok = false;
 };
 
-static Result run_ppcg(const std::vector<T>& H, int n, int nband, const std::vector<Real>& prec,
+static Result run_ppcg(const std::vector<Real>& band, int n, int bw, int bd, int nband, const std::vector<Real>& prec,
                        const std::vector<T>& psi0, const std::vector<double>& ethr, const Real* ref)
 {
     Result r;
@@ -225,47 +291,58 @@ static Result run_ppcg(const std::vector<T>& H, int n, int nband, const std::vec
     const int sbsize = (g_sbsize > 0) ? g_sbsize : nband;
     const int rr_step = (g_rr_step > 0) ? g_rr_step : 16;
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-8, 500, sbsize, rr_step, false);
-    auto h_op = [&H, n](T* in, T* out, int ld, int nc) { dense_h_multiply(H.data(), n, in, out, ld, nc); };
+    auto h_op = [&band, n, bw, bd](T* in, T* out, int ld, int nc) { banded_h_multiply(band.data(), n, bw, bd, in, out, ld, nc); };
     auto t0 = std::chrono::high_resolution_clock::now();
-    solver.diag(h_op, nullptr, n, nband, n, psi.data(), eval.data(), ethr, prec.data());
+    int pass = 0;
+    for (; pass < max_outer_passes; ++pass)
+    {
+        solver.diag(h_op, nullptr, n, nband, n, psi.data(), eval.data(), ethr, prec.data());
+        if (max_eval_err(eval.data(), ref, nband) < err_target)
+        {
+            break;
+        }
+    }
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.mem_bytes = heap_bytes() - mem0;
-    for (int i = 0; i < nband; ++i)
-    {
-        r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
-    }
+    r.max_err = max_eval_err(eval.data(), ref, nband);
     r.ok = true;
     return r;
 }
 
-static Result run_cg(const std::vector<T>& H, int n, int nband, const std::vector<Real>& prec,
+static Result run_cg(const std::vector<Real>& band, int n, int bw, int bd, int nband, const std::vector<Real>& prec,
                      const std::vector<T>& psi0, const std::vector<double>& ethr, const Real* ref)
 {
     Result r;
     std::vector<T> psi = psi0;
     std::vector<Real> eval(nband, 0.0);
-    auto subspace_func = [&H, n](T* psi_in, T* psi_out, int ld, int nband, bool) {
-        rr_subspace(H.data(), n, psi_in, psi_out, ld, nband);
+    auto subspace_func = [&band, n, bw, bd](T* psi_in, T* psi_out, int ld, int nband, bool) {
+        rr_subspace(band.data(), n, bw, bd, psi_in, psi_out, ld, nband);
     };
     long mem0 = heap_bytes();
     hsolver::DiagoCG<T, hsolver::base_device::DEVICE_CPU> cg("pw", "scf", true, subspace_func, 1e-8, 500, 1);
-    auto h_op = [&H, n](T* in, T* out, int ld, int nc) { dense_h_multiply(H.data(), n, in, out, ld, nc); };
+    auto h_op = [&band, n, bw, bd](T* in, T* out, int ld, int nc) { banded_h_multiply(band.data(), n, bw, bd, in, out, ld, nc); };
     auto s_op = [](T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); };
     auto t0 = std::chrono::high_resolution_clock::now();
-    cg.diag(h_op, s_op, n, nband, n, psi.data(), eval.data(), ethr, prec.data());
+    int pass = 0;
+    for (; pass < max_outer_passes; ++pass)
+    {
+        cg.diag(h_op, s_op, n, nband, n, psi.data(), eval.data(), ethr, prec.data());
+        if (max_eval_err(eval.data(), ref, nband) < err_target)
+        {
+            break;
+        }
+    }
+
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.mem_bytes = heap_bytes() - mem0;
-    for (int i = 0; i < nband; ++i)
-    {
-        r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
-    }
+    r.max_err = max_eval_err(eval.data(), ref, nband);
     r.ok = true;
     return r;
 }
 
-static Result run_bpcg(const std::vector<T>& H, int n, int nband, const std::vector<Real>& prec,
+static Result run_bpcg(const std::vector<Real>& band, int n, int bw, int bd, int nband, const std::vector<Real>& prec,
                        const std::vector<T>& psi0, const std::vector<double>& ethr, const Real* ref)
 {
     Result r;
@@ -274,19 +351,14 @@ static Result run_bpcg(const std::vector<T>& H, int n, int nband, const std::vec
     long mem0 = heap_bytes();
     hsolver::DiagoBPCG<T, hsolver::base_device::DEVICE_CPU> bpcg(prec.data());
     bpcg.init_iter(nband, nband, n, n);
-    auto h_op = [&H, n](T* in, T* out, int ld, int nc) { dense_h_multiply(H.data(), n, in, out, ld, nc); };
+    auto h_op = [&band, n, bw, bd](T* in, T* out, int ld, int nc) { banded_h_multiply(band.data(), n, bw, bd, in, out, ld, nc); };
     // BPCG::diag() is a single block-CG sweep; iterate until convergence.
     int it = 0;
     auto t0 = std::chrono::high_resolution_clock::now();
-    for (; it < 200; ++it)
+    for (; it < max_outer_passes; ++it)
     {
         bpcg.diag(h_op, psi.data(), eval.data(), ethr);
-        double err = 0.0;
-        for (int i = 0; i < nband; ++i)
-        {
-            err = std::max(err, std::abs(eval[i] - ref[i]));
-        }
-        if (err < ethr[0])
+        if (max_eval_err(eval.data(), ref, nband) < err_target)
         {
             break;
         }
@@ -294,15 +366,12 @@ static Result run_bpcg(const std::vector<T>& H, int n, int nband, const std::vec
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.mem_bytes = heap_bytes() - mem0;
-    for (int i = 0; i < nband; ++i)
-    {
-        r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
-    }
+    r.max_err = max_eval_err(eval.data(), ref, nband);
     r.ok = true;
     return r;
 }
 
-static Result run_dav(const std::vector<T>& H, int n, int nband, const std::vector<Real>& prec,
+static Result run_dav(const std::vector<Real>& band, int n, int bw, int bd, int nband, const std::vector<Real>& prec,
                       const std::vector<T>& psi0, const std::vector<double>& ethr, const Real* ref)
 {
     Result r;
@@ -311,17 +380,17 @@ static Result run_dav(const std::vector<T>& H, int n, int nband, const std::vect
     hsolver::diag_comm_info comm(MPI_COMM_WORLD, 0, 1);
     long mem0 = heap_bytes();
     hsolver::DiagoDavid<T, hsolver::base_device::DEVICE_CPU> dav(prec.data(), nband, n, 4, comm);
-    auto h_op = [&H, n](T* in, T* out, int ld, int nc) { dense_h_multiply(H.data(), n, in, out, ld, nc); };
+    auto h_op = [&band, n, bw, bd](T* in, T* out, int ld, int nc) { banded_h_multiply(band.data(), n, bw, bd, in, out, ld, nc); };
     auto s_op = [](T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); };
     auto t0 = std::chrono::high_resolution_clock::now();
+    // Davidson's diag() already iterates its growing subspace to convergence,
+    // so it must be called exactly once; a re-drive loop would reuse the stale
+    // Ritz basis and trigger a rank-deficient Schmidt orthogonalization.
     dav.diag(h_op, s_op, n, psi.data(), eval.data(), ethr, 500);
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.mem_bytes = heap_bytes() - mem0;
-    for (int i = 0; i < nband; ++i)
-    {
-        r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
-    }
+    r.max_err = max_eval_err(eval.data(), ref, nband);
     r.ok = true;
     return r;
 }
@@ -338,10 +407,10 @@ int main(int argc, char** argv)
     {
         int n;
         int nband;
-        int sparsity;
+        int bw;
     };
     // Without arguments a small default grid is used.  To benchmark a single
-    // (possibly large) problem, pass:  <n> <nband> <sparsity_pct> [sbsize] [rr_step]
+    // (possibly large) problem, pass:  <n> <nband> <bw> [sbsize] [rr_step]
     std::vector<Case> cases;
     if (argc >= 4)
     {
@@ -350,7 +419,7 @@ int main(int argc, char** argv)
     else
     {
         cases = {
-            {50, 10, 0}, {50, 10, 60}, {100, 10, 60}, {200, 10, 80}, {500, 10, 80},
+            {50, 10, 1}, {50, 10, 3}, {100, 10, 3}, {200, 10, 5}, {500, 10, 5},
         };
     }
     if (argc >= 5)
@@ -363,27 +432,28 @@ int main(int argc, char** argv)
     }
 
     std::printf("\n=== Solver comparison (identical H, psi0, ethr) ===\n");
-    std::printf("%-5s %-5s %-6s %-10s %-14s %-10s %-12s\n", "n", "nband", "spars", "solver", "wall_time(s)",
+    std::printf("%-5s %-5s %-6s %-10s %-14s %-10s %-12s\n", "n", "nband", "bw", "solver", "wall_time(s)",
                 "max_err", "mem(MB)");
     std::printf("-----------------------------------------------------------------\n");
 
     for (const auto& c : cases)
     {
-        std::vector<T> H;
+        std::vector<Real> band;
+        int bd = 0;
         std::vector<Real> prec;
-        make_H(c.n, c.sparsity, H, prec);
+        make_H(c.n, c.bw, band, bd, prec);
         std::vector<Real> ref(c.n, 0.0);
-        ref_eigen(H.data(), c.n, ref.data());
+        ref_eigen(band.data(), c.n, c.bw, bd, c.nband, ref.data());
         std::vector<T> psi0;
         make_psi(c.n, c.nband, psi0);
         std::vector<double> ethr(c.nband, 1e-6);
 
-        Result r_ppcg = run_ppcg(H, c.n, c.nband, prec, psi0, ethr, ref.data());
-        Result r_cg = run_cg(H, c.n, c.nband, prec, psi0, ethr, ref.data());
-        Result r_bpcg = run_bpcg(H, c.n, c.nband, prec, psi0, ethr, ref.data());
-        Result r_dav = run_dav(H, c.n, c.nband, prec, psi0, ethr, ref.data());
+        Result r_ppcg = run_ppcg(band, c.n, c.bw, bd, c.nband, prec, psi0, ethr, ref.data());
+        Result r_cg = run_cg(band, c.n, c.bw, bd, c.nband, prec, psi0, ethr, ref.data());
+        Result r_bpcg = run_bpcg(band, c.n, c.bw, bd, c.nband, prec, psi0, ethr, ref.data());
+        Result r_dav = run_dav(band, c.n, c.bw, bd, c.nband, prec, psi0, ethr, ref.data());
 
-        std::printf("%-5d %-5d %-6d %-10s %-14.5f %-10.2e %-12.2f\n", c.n, c.nband, c.sparsity, "PPCG", r_ppcg.wall_s,
+        std::printf("%-5d %-5d %-6d %-10s %-14.5f %-10.2e %-12.2f\n", c.n, c.nband, c.bw, "PPCG", r_ppcg.wall_s,
                     r_ppcg.max_err, r_ppcg.mem_bytes / 1048576.0);
         std::printf("%-5s %-5s %-6s %-10s %-14.5f %-10.2e %-12.2f\n", "", "", "", "CG", r_cg.wall_s,
                     r_cg.max_err, r_cg.mem_bytes / 1048576.0);

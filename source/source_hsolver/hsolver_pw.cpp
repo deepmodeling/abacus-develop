@@ -19,6 +19,7 @@
 
 
 #include <algorithm>
+#include <stdexcept>
 #include <type_traits>
 #include <vector>
 
@@ -109,21 +110,37 @@ double run_ppcg_pw(const HPsiFunc& hpsi_func,
 
     DeviceBuffer psi_dev(nelem);
     DeviceBuffer out_dev(nelem);
-    auto bridge_hpsi = [&](T* psi_in, T* hpsi_out, const int ld, const int nvec) {
+    // The bridge buffers are allocated once per diagonalization and reused for
+    // every H/S application.  Keep the leading dimension explicit: operators
+    // may receive padded wavefunction columns, so copying only ``dim`` would
+    // corrupt the column stride expected by the device implementation.
+    const auto copy_to_device = [&](T* host_ptr, const int ld, const int nvec) {
         const int count = ld * nvec;
+        if (count > nelem)
+        {
+            throw std::out_of_range("PPCG GPU bridge: block exceeds allocated workspace");
+        }
         base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
-            psi_dev.ptr, psi_in, count);
-        hpsi_func(psi_dev.ptr, out_dev.ptr, ld, nvec);
+            psi_dev.ptr, host_ptr, count);
+    };
+    const auto copy_from_device = [&](T* host_ptr, const int ld, const int nvec) {
+        const int count = ld * nvec;
+        if (count > nelem)
+        {
+            throw std::out_of_range("PPCG GPU bridge: block exceeds allocated workspace");
+        }
         base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
-            hpsi_out, out_dev.ptr, count);
+            host_ptr, out_dev.ptr, count);
+    };
+    auto bridge_hpsi = [&](T* psi_in, T* hpsi_out, const int ld, const int nvec) {
+        copy_to_device(psi_in, ld, nvec);
+        hpsi_func(psi_dev.ptr, out_dev.ptr, ld, nvec);
+        copy_from_device(hpsi_out, ld, nvec);
     };
     auto bridge_spsi = [&](T* psi_in, T* spsi_out, const int ld, const int nvec) {
-        const int count = ld * nvec;
-        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
-            psi_dev.ptr, psi_in, count);
+        copy_to_device(psi_in, ld, nvec);
         spsi_func(psi_dev.ptr, out_dev.ptr, ld, nvec);
-        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
-            spsi_out, out_dev.ptr, count);
+        copy_from_device(spsi_out, ld, nvec);
     };
 
     DiagoPPCG<T, base_device::DEVICE_CPU> ppcg(Real(diag_thr),
