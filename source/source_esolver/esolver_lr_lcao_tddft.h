@@ -163,6 +163,29 @@ namespace ModuleESolver
         Parallel_2D paraC_;
         /// @brief variables for parallel distribution of excited states
         std::vector<Parallel_2D> paraX_;
+
+        // ---------------- the Z-vector (CPSCF) window ----------------
+        // The Z-vector equation enforces the Brillouin condition in EVERY occupied-virtual
+        // rotation, so it must not be confined to the `nvirt` window X lives in. 
+        // It should be the whole AO virtual space.
+        //
+        // These mirror `psi_ks` / `eig_ks` / `paraC_` / `paraX_` / `nvirt` / `nloc_per_state`
+        // but span every virtual band the ground state produced (`PARAM.inp.nbands`), so the
+        // window is widened by raising *nbands*, not `nvirt`. X keeps its own window, so Omega
+        // -- and with it any finite-difference reference -- is untouched.
+        std::unique_ptr<psi::Psi<T>> psi_ks_z_;
+        ModuleBase::matrix eig_ks_z_;
+        Parallel_2D paraC_z_;
+        std::vector<Parallel_2D> paraX_z_;
+        std::vector<int> nvirt_z_;
+        int nbands_z_ = 0;
+        int nloc_per_state_z_ = 0;
+        /// (re)build the Z window from `psi_ks_all_` / `eig_ks_all`. `desc_src` describes the
+        /// source wavefunction's 2D layout; unused (and may be null) in a serial build.
+        void fill_z_window_(const int* desc_src);
+        /// Widen `nst` X blocks starting at `istate_begin` from the X window into the Z window,
+        /// zero-filling the virtual rows X does not have.
+        ct::Tensor pad_X_to_z_(const int ispin, const int istate_begin, const int nst) const;
         /// @brief variables for parallel distribution of matrix in AO representation
         Parallel_Orbitals paraMat_;
         Parallel_Orbitals paraMat_all_; // for the parallelized size of the KS orbitals
@@ -198,7 +221,7 @@ namespace ModuleESolver
         void init_pot_groundstate(const Charge& chg_gs);
         /// Solve the Z-vector equation. `istate_only >= 0` restricts it to that one excited state
         /// (the returned tensor then holds a single block); -1 solves all `nstates`.
-        ct::Tensor solve_zvector_eqation(const int ispin, const int istate_only = -1);
+        ct::Tensor solve_zvector_eqation(const int ispin, const int istate_only, const ct::Tensor& Xz);
         /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only` as above:
         /// geometry relaxation follows a single state, and the Z-vector solve dominates the cost.
         std::vector<ModuleBase::matrix> cal_force(const int ispin, const int istate_only = -1);

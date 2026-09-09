@@ -213,24 +213,76 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge& chg_gs
 }
 
 template<typename T, typename TR>
-ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int ispin, const int istate_only)
+ct::Tensor ModuleESolver::ESolver_LR<T, TR>::pad_X_to_z_(const int ispin, const int istate_begin, const int nst) const
+{
+    ct::Tensor Xz = LR_Util::newTensor<T>({ nst, this->nloc_per_state_z_ });
+    Xz.zero();
+    // Closed shell: one channel, and `ispin` selects the spin COMBINATION (singlet/triplet)
+    // whose X is being widened -- `nocc`/`nvirt`/`paraX_` are the same for both.
+    // Open shell: one eigenvector holding both channels back to back, so both sub-blocks are
+    // widened and the second one is re-based, because widening the first moves where it starts.
+    const std::vector<int> chan = this->openshell ? std::vector<int>{ 0, 1 }
+                                                  : std::vector<int>{ ispin };
+    const int ix = this->openshell ? 0 : ispin;   // which entry of `X`
+    int soff_ch = 0, zoff_ch = 0;                 // channel offsets inside one state's block
+    for (const int is : chan)
+    {
+        const Parallel_2D& pxs = this->paraX_[is];
+        const Parallel_2D& pxz = this->paraX_z_[is];
+        for (int ist = 0;ist < nst;++ist)
+        {
+            const T* const src = this->X[ix].template data<T>()
+                + (istate_begin + ist) * this->nloc_per_state + soff_ch;
+            T* const dst = Xz.data<T>() + ist * this->nloc_per_state_z_ + zoff_ch;
+            for (int ik = 0;ik < this->nk;++ik)
+            {
+                const int soff = ik * pxs.get_local_size();
+                const int zoff = ik * pxz.get_local_size();
+                // Both windows are block-cyclic with nb2d = 1 on the same process grid and share
+                // the occupied dimension, so a global (virt, occ) element lives on the same
+                // process in both -- only its local index differs. The widening is therefore a
+                // purely local copy.
+                for (int o = 0;o < this->nocc[is];++o)
+                {
+                    for (int v = 0;v < this->nvirt[is];++v)
+                    {
+                        if (!pxs.in_this_processor(v, o)) { continue; }
+                        dst[zoff + pxz.global2local_col(o) * pxz.get_row_size() + pxz.global2local_row(v)]
+                            = src[soff + pxs.global2local_col(o) * pxs.get_row_size() + pxs.global2local_row(v)];
+                    }
+                }
+            }
+        }
+        soff_ch += this->nk * pxs.get_local_size();
+        zoff_ch += this->nk * pxz.get_local_size();
+    }
+    return Xz;
+}
+
+template<typename T, typename TR>
+ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int ispin, const int istate_only, const ct::Tensor& Xz)
 {
     ModuleBase::TITLE("ESolver_LR", "cal_force");
     ModuleBase::timer::start("ESolver_LR", "solve_zvector_eqation");
     // `Z_vector_equation` treats X and Z as `nstates` independent blocks of `nloc_per_state`,
     // so a single state is just the corresponding block with nstates = 1
     const int nst = (istate_only < 0) ? this->nstates : 1;
-    const int xoff = (istate_only < 0) ? 0 : istate_only * this->nloc_per_state;
-    ct::Tensor Z = LR_Util::newTensor<T>({ nst, this->nloc_per_state });
+    // X arrives already widened into the Z window (`Xz`), which spans every virtual band the
+    // ground state produced rather than the `nvirt` window X was solved in -- the Brillouin
+    // condition the Z-vector enforces holds in EVERY occupied-virtual rotation. The padded
+    // entries are zero, so every X-derived quantity (D^X, T) is unchanged; only the space Z is
+    // solved in grows. Both the closed- and the open-shell path go through here.
+    ct::Tensor Z = LR_Util::newTensor<T>({ nst, this->nloc_per_state_z_ });
     // construct and solve the Z-vector equation
-    Z_vector_equation(this->X[ispin].template data<T>() + xoff, Z.template data<T>(),
-        this->xc_kernel, nst, this->nspin, this->nbasis, this->nocc, this->nvirt,
-        (*this->ucell_), orb_cutoff_, this->gd(), *this->psi_ks, this->eig_ks,
+    Z_vector_equation(Xz.template data<T>(), Z.template data<T>(),
+        this->xc_kernel, nst, this->nspin, this->nbasis, this->nocc, this->nvirt_z_,
+        (*this->ucell_), orb_cutoff_, this->gd(), *this->psi_ks_z_, this->eig_ks_z_,
 #ifdef __EXX    
         std::weak_ptr<Exx_LRI<T>>(this->exx_lri), this->exx_info.info_global.hybrid_alpha,
 #endif
         std::weak_ptr<PotHxcLR>(this->pot[ispin]), std::weak_ptr<PotHxcLR>(this->pot_hxc_gs),
-        this->kv, this->paraX_, this->paraC_, this->paraMat_, this->spin_types[ispin], this->openshell);
+        this->kv, this->paraX_z_, this->paraC_z_,
+        this->paraMat_, this->spin_types[ispin], this->openshell);
     ModuleBase::timer::end("ESolver_LR", "solve_zvector_eqation");
     return Z;
 }
@@ -241,13 +293,27 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
     if (PARAM.inp.test_force && ispin == 0) { this->test_force(); }
     if (this->openshell) { return this->cal_force_openshell(istate_only); }
 
-    const ct::Tensor& Z = this->solve_zvector_eqation(ispin, istate_only);
+    // for each state, calculate dm_trans, dm_relaxed_diff, edm and force
+    const int ist_begin = (istate_only < 0) ? 0 : istate_only;
+    const int ist_end = (istate_only < 0) ? this->nstates : istate_only + 1;
+
+    // The whole closed-shell gradient runs in the Z window (every virtual band the ground state
+    // produced), not the `nvirt` window X was solved in: only there does the Z-vector enforce
+    // the Brillouin condition in every occupied-virtual rotation. X is zero-padded into it, so
+    // D^X and T come out bit-identical -- and Omega is untouched, so an existing finite-difference
+    // reference stays valid. See `fill_z_window_`.
+    const ct::Tensor Xz = this->pad_X_to_z_(ispin, ist_begin, ist_end - ist_begin);
+    const std::vector<int>& nvirt_g = this->nvirt_z_;
+    const std::vector<Parallel_2D>& paraX_g = this->paraX_z_;
+    const int nloc_g = this->nloc_per_state_z_;
+
+    const ct::Tensor& Z = this->solve_zvector_eqation(ispin, istate_only, Xz);
 
     ModuleBase::TITLE("ESolver_LR", "cal_force");
     ModuleBase::timer::start("ESolver_LR", "cal_force");
     // Spin channel 0, NOT `ispin`. `ispin` indexes `spin_types` = {singlet, triplet}.
     // Closed shell always use spin-up channel of psi_ks, i.e. psi_ks(0).
-    const auto& c = LR_Util::get_psi_spin(*this->psi_ks, 0, this->nk);   // wavefunction coefficients of ground state
+    const auto& c = LR_Util::get_psi_spin(*this->psi_ks_z_, 0, this->nk);   // wavefunction coefficients of ground state
 
     // calculate the force (the partial gradient of Lagrangian)
     LR_Force<T> lr_force((*this->ucell_), this->kv.kvec_d, this->paraMat_,
@@ -260,17 +326,14 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
     // ground state dm for currrent spin (only for test the correctness of the force)
     // elecstate::DensityMatrix<T, T> dm_gs(this->paraMat_, 1, this->kv.kvec_d, this->nk);
 
-    // for each state, calculate dm_trans, dm_relaxed_diff, edm and force
-    const int ist_begin = (istate_only < 0) ? 0 : istate_only;
-    const int ist_end = (istate_only < 0) ? this->nstates : istate_only + 1;
     std::vector<ModuleBase::matrix> forces(ist_end - ist_begin);
     for (int istate = ist_begin;istate < ist_end;++istate)
     {
-        const int offset = istate * this->nloc_per_state;             // block of X
-        const int zoffset = (istate - ist_begin) * this->nloc_per_state;   // block of Z
+        const int offset = (istate - ist_begin) * nloc_g;   // block of X (widened into the Z window)
+        const int zoffset = offset;                         // block of Z
         // The imag part will be cancelled in the force calculation, so we use double DM(R) to calculate force. 
         // But complex transition DM(R) is still used in energy density matrix calculation.
-        const auto& dm_trans_k = cal_dm_trans_pblas(this->X[ispin].template data<T>() + offset, this->paraX_[ispin], c, this->paraC_, this->nbasis, this->nocc[ispin], this->nvirt[ispin], this->paraMat_);
+        const auto& dm_trans_k = cal_dm_trans_pblas(Xz.data<T>() + offset, paraX_g[ispin], c, this->paraC_z_, this->nbasis, this->nocc[ispin], nvirt_g[ispin], this->paraMat_);
         // D(X) complex, for the EXX (LibRI) force. Built FIRST and left UN-symmetrized:
         // the exchange kernel (mu kappa | nu lambda) puts the two indices of one D^X into
         // different electron coordinates, so Tr[D^X D^X K_exx] = (aa|ii) requires the full
@@ -293,14 +356,14 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
         LR_Util::transpose_DMR(dm_trans_real, (*this->ucell_).nat);
         // LR_Util::print_DMR(dm_trans, "dm_trans of istate " + std::to_string(istate));
         // difference density matrix 
-        std::vector<ct::Tensor> dm_diff_k = cal_dm_diff_pblas(this->X[ispin].template data<T>() + offset, this->paraX_[ispin], c, this->paraC_, this->nbasis, this->nocc[ispin], this->nvirt[ispin], this->paraMat_);
+        std::vector<ct::Tensor> dm_diff_k = cal_dm_diff_pblas(Xz.data<T>() + offset, paraX_g[ispin], c, this->paraC_z_, this->nbasis, this->nocc[ispin], nvirt_g[ispin], this->paraMat_);
         std::cout << "dm_diff_k T(k) before symmetrization, istate " + std::to_string(istate) << std::endl;
         LR_Util::print_value(dm_diff_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
         // for (auto& d : dm_diff_k) { LR_Util::matsym(d.data<T>(), this->nbasis, this->paraMat_); }   // symmetrize
         // std::cout << "dm_diff_k T(k) after symmetrization, istate " + std::to_string(istate) << std::endl;
         // LR_Util::print_value(dm_diff_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
 
-        const std::vector<ct::Tensor>& dm_relaxed_k = cal_dm_trans_pblas(Z.template data<T>() + zoffset, this->paraX_[ispin], c, this->paraC_, this->nbasis, this->nocc[ispin], this->nvirt[ispin], this->paraMat_);
+        const std::vector<ct::Tensor>& dm_relaxed_k = cal_dm_trans_pblas(Z.template data<T>() + zoffset, paraX_g[ispin], c, this->paraC_z_, this->nbasis, this->nocc[ispin], nvirt_g[ispin], this->paraMat_);
         std::cout << "dm_relaxed_k Z(k) before symmetrization, istate " + std::to_string(istate) << std::endl;
         LR_Util::print_value(dm_relaxed_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
         for (auto& d : dm_relaxed_k) { LR_Util::matsym(d.data<T>(), this->nbasis, this->paraMat_); }    // symmetrize
@@ -319,8 +382,8 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
         // elecstate::DensityMatrix<T, T> relaxed_diff_dm =    // T+D(Z), (R) can be complex
         //     LR_Util::build_dm_from_dmk<T, T>(
         //         // LR_Util::operator+(
-        //             cal_dm_diff_pb las(this->X[ispin].template data<T>() + offset, this->paraX_[ispin], c, this->paraC_, this->nbasis, this->nocc[ispin], this->nvirt[ispin], this->paraMat_)
-        //             + cal_dm_trans_pblas(Z.template data<T>() + offset, this->paraX_[ispin], c, this->paraC_, this->nbasis, this->nocc[ispin], this->nvirt[ispin], this->paraMat_)
+        //             cal_dm_diff_pb las(Xz.data<T>() + offset, paraX_g[ispin], c, this->paraC_z_, this->nbasis, this->nocc[ispin], nvirt_g[ispin], this->paraMat_)
+        //             + cal_dm_trans_pblas(Z.template data<T>() + offset, paraX_g[ispin], c, this->paraC_z_, this->nbasis, this->nocc[ispin], nvirt_g[ispin], this->paraMat_)
         //             ,// ),
         //         this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_);
         // LR_Util::print_DMR(relaxed_diff_dm, "relaxed_diff_dm of istate " + std::to_string(istate));
@@ -339,24 +402,24 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
         std::weak_ptr<Exx_LRI<T>> exx_lri_weak = this->exx_lri;
 #endif
         const std::vector<ct::Tensor>& edm_k =
-            cal_edm_from_XZ_istate(this->X[ispin].template data<T>() + offset,
+            cal_edm_from_XZ_istate(Xz.data<T>() + offset,
                 Z.template data<T>() + zoffset,
                 this->pelec->ekb.c[ ispin * nstates + istate],
                 // pack the following as a struct or use parameter package
-                this->eig_ks.c, dm_trans,
-                c, this->nspin, this->nbasis, this->nocc, this->nvirt, (*this->ucell_), this->orb_cutoff_,
+                this->eig_ks_z_.c, dm_trans,
+                c, this->nspin, this->nbasis, this->nocc, nvirt_g, (*this->ucell_), this->orb_cutoff_,
 #ifdef __EXX
                 exx_lri_weak, this->exx_info.info_global.hybrid_alpha,
 #endif
                 pot_weak, pot_hxc_gs_weak,
-                this->kv, this->gd(), this->paraX_, this->paraC_, this->paraMat_,
+                this->kv, this->gd(), paraX_g, this->paraC_z_, this->paraMat_,
                 this->xc_kernel, this->spin_types[ispin]);
-        if (PARAM.inp.test_force && nocc[0] == 1 && nvirt[0] == 1)
+        if (PARAM.inp.test_force && nocc[0] == 1 && nvirt_g[0] == 1)
         {
-            const std::vector<ct::Tensor>& dm_diff = cal_dm_diff_pblas(this->X[0].template data<T>() + offset, this->paraX_[0], c, this->paraC_, this->nbasis, this->nocc[0], this->nvirt[0], this->paraMat_);
+            const std::vector<ct::Tensor>& dm_diff = cal_dm_diff_pblas(Xz.data<T>() + offset, paraX_g[0], c, this->paraC_z_, this->nbasis, this->nocc[0], nvirt_g[0], this->paraMat_);
             // test_dm_diff_H2<T>(relaxed_diff_dm.get_DMK_pointer(0), c, this->nbasis);
             test_dm_diff_H2<T>(dm_diff[0].data<T>(), c, this->nbasis);
-            test_edm_H2<T>(edm_k[0].data<T>(), this->eig_ks.c, c, this->nbasis);
+            test_edm_H2<T>(edm_k[0].data<T>(), this->eig_ks_z_.c, c, this->nbasis);
         }
         elecstate::DensityMatrix<T, double> edm_real = LR_Util::build_dm_from_dmk<T, double>(edm_k,
             this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_, /*symmetrize=*/true);
@@ -463,13 +526,23 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     // The spin-orbital formulas apply verbatim -- unlike the closed-shell singlet/triplet
     // algorithm, X here is normalized over BOTH channels, so it carries no implicit sqrt(2)
     // and none of the collapsed 2/4 factors are needed.
-    const ct::Tensor& Z = this->solve_zvector_eqation(0, istate_only);
+    const int ist_begin_ = (istate_only < 0) ? 0 : istate_only;
+    const int ist_end_ = (istate_only < 0) ? this->nstates : istate_only + 1;
+    // Like the closed-shell path, the whole gradient runs in the Z window: X is zero-padded
+    // into it (both channels, each re-based -- see `pad_X_to_z_`), so D^X and T are unchanged
+    // while the Z-vector gets every occupied-virtual rotation the AO basis supports.
+    const ct::Tensor Xz = this->pad_X_to_z_(0, ist_begin_, ist_end_ - ist_begin_);
+    const std::vector<int>& nvirt_g = this->nvirt_z_;
+    const std::vector<Parallel_2D>& paraX_g = this->paraX_z_;
+    const int nloc_g = this->nloc_per_state_z_;
 
-    const std::vector<int> ld_x = { this->nk * this->paraX_[0].get_local_size(),
-                                    this->nk * this->paraX_[1].get_local_size() };
+    const ct::Tensor& Z = this->solve_zvector_eqation(0, istate_only, Xz);
+
+    const std::vector<int> ld_x = { this->nk * paraX_g[0].get_local_size(),
+                                    this->nk * paraX_g[1].get_local_size() };
     const std::vector<int> off_x = { 0, ld_x[0] };
     std::vector<psi::Psi<T>> c_spin;
-    for (int is : {0, 1}) { c_spin.push_back(LR_Util::get_psi_spin(*this->psi_ks, is, this->nk)); }
+    for (int is : {0, 1}) { c_spin.push_back(LR_Util::get_psi_spin(*this->psi_ks_z_, is, this->nk)); }
 
     LR_Force<T> lr_force((*this->ucell_), this->kv.kvec_d, this->paraMat_,
         *this->pw_rhod, *this->pw_rho, this->vloc(), this->sfac(), this->gd(), this->tcb()
@@ -479,25 +552,25 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     );
     GlobalV::ofs_running << "Start to calculate excited-state force of updown (open shell)" << std::endl;
 
-    const int ist_begin = (istate_only < 0) ? 0 : istate_only;
-    const int ist_end = (istate_only < 0) ? this->nstates : istate_only + 1;
+    const int ist_begin = ist_begin_;
+    const int ist_end = ist_end_;
     std::vector<ModuleBase::matrix> forces(ist_end - ist_begin);
     for (int istate = ist_begin;istate < ist_end;++istate)
     {
-        const int offset = istate * this->nloc_per_state;
-        const T* const X_istate = this->X[0].template data<T>() + offset;
-        const T* const Z_istate = Z.template data<T>() + (istate - ist_begin) * this->nloc_per_state;
+        const int offset = (istate - ist_begin) * nloc_g;   // X widened into the Z window
+        const T* const X_istate = Xz.data<T>() + offset;
+        const T* const Z_istate = Z.template data<T>() + offset;
 
         // 1. the k-space blocks of each spin channel
         std::vector<std::vector<ct::Tensor>> dmx_k(2), dmdiff_k(2), relaxed_k(2);
         for (int is : {0, 1})
         {
-            dmx_k[is] = cal_dm_trans_pblas(X_istate + off_x[is], this->paraX_[is], c_spin[is], this->paraC_,
-                this->nbasis, this->nocc[is], this->nvirt[is], this->paraMat_);
-            dmdiff_k[is] = cal_dm_diff_pblas(X_istate + off_x[is], this->paraX_[is], c_spin[is], this->paraC_,
-                this->nbasis, this->nocc[is], this->nvirt[is], this->paraMat_);
-            std::vector<ct::Tensor> dmz_k = cal_dm_trans_pblas(Z_istate + off_x[is], this->paraX_[is], c_spin[is],
-                this->paraC_, this->nbasis, this->nocc[is], this->nvirt[is], this->paraMat_);
+            dmx_k[is] = cal_dm_trans_pblas(X_istate + off_x[is], paraX_g[is], c_spin[is], this->paraC_z_,
+                this->nbasis, this->nocc[is], nvirt_g[is], this->paraMat_);
+            dmdiff_k[is] = cal_dm_diff_pblas(X_istate + off_x[is], paraX_g[is], c_spin[is], this->paraC_z_,
+                this->nbasis, this->nocc[is], nvirt_g[is], this->paraMat_);
+            std::vector<ct::Tensor> dmz_k = cal_dm_trans_pblas(Z_istate + off_x[is], paraX_g[is], c_spin[is],
+                this->paraC_z_, this->nbasis, this->nocc[is], nvirt_g[is], this->paraMat_);
             for (auto& d : dmz_k) { LR_Util::matsym(d.template data<T>(), this->nbasis, this->paraMat_); }
             relaxed_k[is] = dmdiff_k[is] + dmz_k;
         }
@@ -529,14 +602,14 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
 #endif
         const std::vector<std::vector<ct::Tensor>>& edm_k =
             cal_edm_from_XZ_istate_openshell(X_istate, Z_istate,
-                this->pelec->ekb.c[istate], this->eig_ks.c, dm_trans,
-                *this->psi_ks, this->nspin, this->nbasis, this->nocc, this->nvirt,
+                this->pelec->ekb.c[istate], this->eig_ks_z_.c, dm_trans,
+                *this->psi_ks_z_, this->nspin, this->nbasis, this->nocc, nvirt_g,
                 (*this->ucell_), this->orb_cutoff_,
 #ifdef __EXX
                 exx_lri_weak, this->exx_info.info_global.hybrid_alpha,
 #endif
                 pot_weak, pot_hxc_gs_weak,
-                this->kv, this->gd(), this->paraX_, this->paraC_, this->paraMat_, this->xc_kernel);
+                this->kv, this->gd(), paraX_g, this->paraC_z_, this->paraMat_, this->xc_kernel);
         elecstate::DensityMatrix<T, double> edm_real = LR_Util::build_dm_from_dmk_spin<T, double>(edm_k,
             this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_,
             /*symmetrize=*/true);

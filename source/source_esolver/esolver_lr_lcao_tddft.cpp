@@ -1,4 +1,5 @@
 #include "esolver_lr_lcao_tddft.h"
+#include <cstdlib>
 
 #include <algorithm>
 #include <iomanip>
@@ -476,6 +477,9 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell& ucell)
     // the grid-integration tables hang off a static pointer that the ground-state solver
     // re-publishes in its `before_scf`; make sure it names the object we integrate on
     ModuleGint::Gint::set_gint_info(this->ks_->gint_info_.get());
+
+    // the Z-vector window: after `reset_dim_spin2`, so nocc/nvirt/openshell are final
+    this->fill_z_window_(ks_sol.pv.desc_wfc);
 }
 
 
@@ -546,6 +550,8 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
         this->nupdown = cal_nupdown_form_occ(this->wg_ks);
         reset_dim_spin2();
     }
+    // the Z-vector window: after `reset_dim_spin2`, so nocc/nvirt/openshell are final
+    this->fill_z_window_(paraMat_all_.desc_wfc);
 
     LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands
 #ifdef __MPI
@@ -1086,6 +1092,92 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
         {
             GlobalV::ofs_running << " Read in all the KS wavefunctions for force calculation. " << std::endl;
         }
+    }
+}
+
+template<typename T, typename TR>
+void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
+{
+    ModuleBase::TITLE("ESolver_LR", "fill_z_window_");
+    if (!PARAM.inp.cal_force || this->psi_ks_all_ == nullptr) { return; }
+
+    const int start_band = this->nocc_max - *std::max_element(nocc.begin(), nocc.end());
+    // Every band the ground state solved, from the window start upward. `eig_ks_all` is the
+    // authority on how many there are: on the ks-lr path it is the KS solver's `ekb`, on the
+    // file path it was read with `skip_bands = 0`.
+    this->nbands_z_ = this->eig_ks_all.nc - start_band;
+    if (this->nbands_z_ <= this->nbands)
+    {   // nothing to widen: nbands was already at (or below) the X window
+        this->nbands_z_ = this->nbands;
+    }
+    this->nvirt_z_.assign(this->nspin, 0);
+    for (int is = 0; is < this->nspin; ++is) { this->nvirt_z_[is] = this->nbands_z_ - this->nocc[is]; }
+
+    LR_Util::setup_2d_division(this->paraC_z_, 1, this->nbasis, this->nbands_z_
+#ifdef __MPI
+        , this->paraMat_.blacs_ctxt
+#endif
+    );
+    this->paraX_z_.clear();
+    for (int is = 0; is < this->nspin; ++is)
+    {
+        Parallel_2D px;
+        LR_Util::setup_2d_division(px, /*nb2d=*/1, this->nvirt_z_[is], this->nocc[is]
+#ifdef __MPI
+            , this->paraC_z_.blacs_ctxt
+#endif
+        );
+        this->paraX_z_.emplace_back(std::move(px));
+    }
+    // Open shell solves one eigenproblem whose vector is the concatenation [up | down], so a
+    // state's block is as long as both channels together; the closed-shell singlet/triplet
+    // algorithm carries a single channel. (Same rule as `nloc_per_state` in
+    // `setup_eigenvectors_X`, applied to the widened windows.)
+    this->nloc_per_state_z_ = this->nk * (this->openshell
+        ? this->paraX_z_[0].get_local_size() + this->paraX_z_[1].get_local_size()
+        : this->paraX_z_[0].get_local_size());
+
+#ifdef __MPI
+    this->psi_ks_z_.reset(new psi::Psi<T>(this->kv.get_nks(), this->paraC_z_.get_col_size(),
+        this->paraC_z_.get_row_size(), this->kv.ngk, true));
+#else
+    this->psi_ks_z_.reset(new psi::Psi<T>(this->kv.get_nks(), this->nbands_z_, this->nbasis, this->kv.ngk, true));
+#endif
+    this->eig_ks_z_.create(this->kv.get_nks(), this->nbands_z_);
+
+    for (int ik = 0; ik < this->kv.get_nks(); ++ik)
+    {
+        // same redistribution `refresh_from_ks_` does for the X window, over more bands
+#ifdef __MPI
+        Cpxgemr2d(this->nbasis, this->nbands_z_, &(*this->psi_ks_all_)(ik, 0, 0), 1, start_band + 1,
+            const_cast<int*>(desc_src), &(*this->psi_ks_z_)(ik, 0, 0), 1, 1,
+            this->paraC_z_.desc, this->paraC_z_.blacs_ctxt);
+#else
+        for (int ib = 0; ib < this->nbands_z_; ++ib)
+        {
+            const auto* start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
+            std::copy(start, start + this->nbasis, &(*this->psi_ks_z_)(ik, ib, 0));
+        }
+#endif
+        for (int ib = 0; ib < this->nbands_z_; ++ib)
+        { this->eig_ks_z_(ik, ib) = this->eig_ks_all(ik, start_band + ib); }
+    }
+    GlobalV::ofs_running << "Z-vector window: nbands = " << this->nbands_z_
+        << " (X window: " << this->nbands << "), nvirt =";
+    for (int is = 0; is < this->nspin; ++is)
+    { GlobalV::ofs_running << " " << this->nvirt_z_[is] << "(X window: " << this->nvirt[is] << ")"; }
+    GlobalV::ofs_running << std::endl;
+    if (this->nbands_z_ < this->nbasis)
+    {
+        // The Z window can only be as wide as the ground state's band count, so a gradient is
+        // converged in it only when `nbands` reaches the size of the AO basis. Measured on
+        // `08_BeH2/rpa_at_lda` (NLOCAL 17), where Omega = eps_a - eps_i makes the finite
+        // difference exact: nbands 11 -> 18% too high, nbands 17 -> 6 digits.
+        GlobalV::ofs_running << " WARNING: the excited-state gradient is not converged with"
+            " respect to the Z-vector (CPSCF) space: nbands = " << this->nbands_z_
+            << " covers only part of the " << this->nbasis << " AO basis functions (NLOCAL)."
+            " Set nbands = " << this->nbasis << " for a converged gradient; nvirt may stay as"
+            " it is, since the excitation energies do not depend on this." << std::endl;
     }
 }
 
