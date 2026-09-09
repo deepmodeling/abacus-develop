@@ -2,9 +2,6 @@
 #include <chrono>
 
 // mock of DFTU
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "../dftu_nao_op.h"
 #include "source_lcao/module_dftu/dftu_nao.h"
 
@@ -99,8 +96,6 @@ class DFTUTest : public ::testing::Test
         }
         dftu.u_current = {U_test};
         dftu.orbital_corr = {orbital_c_test};
-
-        PARAM.input.onsite_radius = 1.0;
     }
 
     void TearDown() override
@@ -147,13 +142,14 @@ class DFTUTest : public ::testing::Test
     int my_rank = 0;
     double U_test = 1.0;
     int orbital_c_test = 2;
+    double onsite_radius_test = 1.0;
 };
 
 // using TEST_F to test DFTU
 TEST_F(DFTUTest, constructHRd2d)
 {
     // test for nspin=1
-    PARAM.input.nspin = 1;
+    const int nspin = 1;
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
@@ -167,7 +163,7 @@ TEST_F(DFTUTest, constructHRd2d)
     }
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     hamilt::DFTU<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu);
+        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu, nspin, onsite_radius_test);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time
         = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
@@ -219,7 +215,7 @@ TEST_F(DFTUTest, constructHRd2d)
 TEST_F(DFTUTest, constructHRd2cd)
 {
     // test for nspin=2
-    PARAM.input.nspin = 2;
+    const int nspin = 2;
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, true);
     hsk.set_zero_hk();
@@ -232,7 +228,7 @@ TEST_F(DFTUTest, constructHRd2cd)
         HR->get_wrapper()[i] = 0.0;
     }
     hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, double>>
-        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu);
+        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu, nspin, onsite_radius_test);
     op.contributeHR();
     // check the occupations of dftu for spin-up
     for (int iat = 0; iat < test_size; iat++)

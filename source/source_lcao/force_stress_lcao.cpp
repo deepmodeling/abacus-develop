@@ -468,7 +468,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                                                    &gd,
                                                                    two_center_bundle.overlap_orb_onsite.get(),
                                                                    orb.cutoffs(),
-                                                                   &dftu);
+                                                                   &dftu,
+                                                                   PARAM.inp.nspin,
+                                                                   PARAM.inp.onsite_radius);
 
             tmpu.cal_force_stress(isforce, isstress, force_u, stress_u);
         }

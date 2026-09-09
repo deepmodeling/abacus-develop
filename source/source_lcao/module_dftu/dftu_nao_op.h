@@ -45,7 +45,9 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                const Grid_Driver* gridD_in,
                                const TwoCenterIntegrator* intor,
                                const std::vector<double>& orb_cutoff,
-                               Plus_U* p_dftu);
+                               Plus_U* p_dftu,
+                               const int nspin_in,
+                               const double onsite_radius);
     ~DFTU<OperatorLCAO<TK, TR>>();
 
     /**
@@ -93,7 +95,7 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * the size of HR will not change in DFTU,
      * because I don't want to expand HR larger than Nonlocal operator caused by DFTU
      */
-    void initialize_HR(const Grid_Driver* gridD_in);
+    void initialize_HR(const Grid_Driver* gridD_in, const double onsite_radius);
 
     /**
      * @brief calculate the <phi|alpha^I> overlap values and save them in this->nlm_tot

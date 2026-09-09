@@ -4,7 +4,6 @@
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 
 // Include the free function implementations for force/stress in real space
@@ -18,7 +17,9 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
                                                  const Grid_Driver* GridD_in,
                                                  const TwoCenterIntegrator* intor,
                                                  const std::vector<double>& orb_cutoff,
-                                                 Plus_U* p_dftu)
+                                                 Plus_U* p_dftu,
+                                                 const int nspin_in,
+                                                 const double onsite_radius)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), intor_(intor), orb_cutoff_(orb_cutoff)
 {
     this->cal_type = calculation_type::lcao_dftu;
@@ -28,9 +29,9 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
     assert(this->ucell != nullptr);
 #endif
     // initialize HR to allocate sparse Nonlocal matrix memory
-    this->initialize_HR(GridD_in);
+    this->initialize_HR(GridD_in, onsite_radius);
     // set nspin
-    this->nspin = PARAM.inp.nspin;
+    this->nspin = nspin_in;
 }
 
 // destructor
@@ -41,7 +42,7 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::~DFTU()
 
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
+void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD, const double onsite_radius)
 {
     ModuleBase::TITLE("DFTU", "initialize_HR");
     ModuleBase::timer::start("DFTU", "initialize_HR");
@@ -75,7 +76,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb_cutoff_[T1] + PARAM.inp.onsite_radius)
+                < orb_cutoff_[T1] + onsite_radius)
             {
                 is_adj[ad1] = true;
             }
