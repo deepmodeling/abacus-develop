@@ -347,6 +347,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                                      ucell,
                                      this->pelec,
                                      this->chr,
+                                     this->ppcell,
                                      this->kv,
                                      this->pw_wfc,
                                      this->pw_rho,

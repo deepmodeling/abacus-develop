@@ -2,6 +2,7 @@
 
 #include "source_base/constants.h"
 #include "source_base/module_container/ATen/core/tensor.h"
+#include "source_base/module_device/memory_op.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_device.h"
 #include "source_base/tool_quit.h"
@@ -10,18 +11,20 @@
 #include <algorithm>
 #include <cmath>
 #include <sstream>
+#include <type_traits>
 
 namespace ModuleIO
 {
 // This nested class owns scratch storage for one begin() call and can access the output object's private data.
-template <typename Device>
-class Get_wf_pw<Device>::Workspace
+template <typename T, typename Device>
+class Get_wf_pw<T, Device>::Workspace
 {
   public:
     // typename marks a type selected from the Device-dependent mapping.
     using ContainerDevice = typename ct::PsiToContainer<Device>::type;
     const ct::DeviceType device_type = ct::DeviceTypeToEnum<ContainerDevice>::value;
     const bool is_cpu = device_type == ct::DeviceType::CpuDevice;
+    const bool needs_host_copy = !is_cpu || !std::is_same<T, std::complex<double>>::value;
     const bool is_spinor;
     const bool needs_interpolation;
     const int smooth_nrxx;
@@ -42,12 +45,13 @@ class Get_wf_pw<Device>::Workspace
     explicit Workspace(const Get_wf_pw& output)
         : is_spinor(output.nspin_ == 4), needs_interpolation(&output.pw_rhod_ != &output.pw_rho_), smooth_nrxx(output.pw_wfc_.nrxx),
           dense_nrxx(output.pw_rhod_.nrxx), npwx(output.psi_.get_nbasis() / (is_spinor ? 2 : 1)),
-          smooth{ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE, device_type, ct::TensorShape({smooth_nrxx})),
-                 ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE, device_type, ct::TensorShape({is_spinor ? smooth_nrxx : 0}))},
-          smooth_host{ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({is_cpu ? 0 : smooth_nrxx})),
-                      ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE,
-                                 ct::DeviceType::CpuDevice,
-                                 ct::TensorShape({!is_cpu && is_spinor ? smooth_nrxx : 0}))},
+          smooth{ct::Tensor(ct::DataTypeToEnum<T>::value, device_type, ct::TensorShape({smooth_nrxx})),
+                 ct::Tensor(ct::DataTypeToEnum<T>::value, device_type, ct::TensorShape({is_spinor ? smooth_nrxx : 0}))},
+          smooth_host{
+              ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({needs_host_copy ? smooth_nrxx : 0})),
+              ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE,
+                         ct::DeviceType::CpuDevice,
+                         ct::TensorShape({needs_host_copy && is_spinor ? smooth_nrxx : 0}))},
           dense_host{ct::Tensor(ct::DataType::DT_COMPLEX_DOUBLE,
                                 ct::DeviceType::CpuDevice,
                                 ct::TensorShape({needs_interpolation ? dense_nrxx : 0})),
@@ -63,24 +67,24 @@ class Get_wf_pw<Device>::Workspace
     }
 };
 
-template <typename Device>
-Get_wf_pw<Device>::Get_wf_pw(const psi::Psi<std::complex<double>, Device>& psi,
-                             const ModulePW::PW_Basis_K& pw_wfc,
-                             const ModulePW::PW_Basis& pw_rho,
-                             const ModulePW::PW_Basis& pw_rhod,
-                             const int nspin,
-                             const int global_nbands)
+template <typename T, typename Device>
+Get_wf_pw<T, Device>::Get_wf_pw(const psi::Psi<T, Device>& psi,
+                                const ModulePW::PW_Basis_K& pw_wfc,
+                                const ModulePW::PW_Basis& pw_rho,
+                                const ModulePW::PW_Basis& pw_rhod,
+                                const int nspin,
+                                const int global_nbands)
     : psi_(psi), pw_wfc_(pw_wfc), pw_rho_(pw_rho), pw_rhod_(pw_rhod), nspin_(nspin), global_nbands_(global_nbands)
 {
 }
 
-template <typename Device>
-void Get_wf_pw<Device>::begin(const UnitCell& ucell,
-                              const Parallel_Grid& pgrid,
-                              const K_Vectors& kv,
-                              const std::vector<int>& out_wfc_norm,
-                              const std::vector<int>& out_wfc_re_im,
-                              const std::string& global_out_dir) const
+template <typename T, typename Device>
+void Get_wf_pw<T, Device>::begin(const UnitCell& ucell,
+                                 const Parallel_Grid& pgrid,
+                                 const K_Vectors& kv,
+                                 const std::vector<int>& out_wfc_norm,
+                                 const std::vector<int>& out_wfc_re_im,
+                                 const std::string& global_out_dir) const
 {
     // Resolve global band ownership collectively before validating the selection.
     const BandParallelLayout layout(psi_.get_nbands(), global_nbands_);
@@ -120,8 +124,8 @@ void Get_wf_pw<Device>::begin(const UnitCell& ucell,
     }
 }
 
-template <typename Device>
-std::vector<int> Get_wf_pw<Device>::select_bands(const std::vector<int>& selection, const std::string& parameter_name) const
+template <typename T, typename Device>
+std::vector<int> Get_wf_pw<T, Device>::select_bands(const std::vector<int>& selection, const std::string& parameter_name) const
 {
     // begin() checks all selection lengths first; omitted bands remain unselected.
     std::vector<int> band_mask(global_nbands_, 0);
@@ -137,8 +141,8 @@ std::vector<int> Get_wf_pw<Device>::select_bands(const std::vector<int>& selecti
     return band_mask;
 }
 
-template <typename Device>
-void Get_wf_pw<Device>::transform_band(const int global_band, const int ik, const BandParallelLayout& layout, Workspace* work) const
+template <typename T, typename Device>
+void Get_wf_pw<T, Device>::transform_band(const int global_band, const int ik, const BandParallelLayout& layout, Workspace* work) const
 {
     const int owner = layout.owner_group(global_band);
     // All band groups must visit the same band/k/component sequence. Only the
@@ -159,27 +163,29 @@ void Get_wf_pw<Device>::transform_band(const int global_band, const int ik, cons
     }
 }
 
-template <typename Device>
-const std::complex<double>* Get_wf_pw<Device>::transform_wfc(const std::complex<double>* coefficients,
-                                                             const int ik,
-                                                             const int component,
-                                                             Workspace* work) const
+template <typename T, typename Device>
+const std::complex<double>* Get_wf_pw<T, Device>::transform_wfc(const T* coefficients,
+                                                                const int ik,
+                                                                const int component,
+                                                                Workspace* work) const
 {
-    using ContainerDevice = typename Workspace::ContainerDevice;
-    // The FFT reconstructs the lattice-periodic part u_nk(r) on the wavefunction device.
-    // .template identifies a member template when the object type depends on Device.
-    pw_wfc_.template recip_to_real<std::complex<double>, Device>(coefficients,
-                                                                 work->smooth[component].template data<std::complex<double>>(),
-                                                                 ik);
-    const std::complex<double>* smooth_data = work->smooth[component].template data<std::complex<double>>();
-    // Interpolation and cube output consume host data, so GPU results must be copied back.
-    if (!work->is_cpu)
+    // Reconstruct the periodic part u_nk(r) using the solver's precision and device.
+    // .template identifies a member template when the object type depends on T or Device.
+    pw_wfc_.template recip_to_real<T, Device>(coefficients, work->smooth[component].template data<T>(), ik);
+    const std::complex<double>* smooth_data = nullptr;
+    if (work->needs_host_copy)
     {
-        ct::kernels::synchronize_memory<std::complex<double>, ct::DEVICE_CPU, ContainerDevice>()(
+        // Convert only this state's FFT result to host double for grid processing.
+        base_device::memory::cast_memory_op<std::complex<double>, T, base_device::DEVICE_CPU, Device>()(
             work->smooth_host[component].template data<std::complex<double>>(),
-            smooth_data,
+            work->smooth[component].template data<T>(),
             work->smooth_nrxx);
         smooth_data = work->smooth_host[component].template data<std::complex<double>>();
+    }
+    else
+    {
+        // CPU double output can use the FFT buffer directly.
+        smooth_data = work->smooth[component].template data<std::complex<double>>();
     }
     if (!work->needs_interpolation)
     {
@@ -195,31 +201,8 @@ const std::complex<double>* Get_wf_pw<Device>::transform_wfc(const std::complex<
     return work->dense_host[component].template data<std::complex<double>>();
 }
 
-template <typename Device>
-void Get_wf_pw<Device>::write_norm(const int band,
-                                   const UnitCell& ucell,
-                                   const Parallel_Grid& pgrid,
-                                   const K_Vectors& kv,
-                                   const std::string& out_dir,
-                                   const BandParallelLayout& layout,
-                                   Workspace* work) const
-{
-    // Collinear spin channels share the same physical k-point numbering in file names.
-    const int nks_without_spin = nspin_ == 2 ? kv.get_nkstot() / 2 : kv.get_nkstot();
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
-        const int spin_index = kv.isk[ik];
-        const int k_number = kv.ik2iktot[ik] % nks_without_spin + 1;
-        transform_band(band, ik, layout, work);
-        // Wavefunction amplitudes carry the inverse square root of the cell volume.
-        const double scale = std::sqrt(1.0 / ucell.omega);
-        calc_norm(spin_index, scale, work);
-        write_cube(band, spin_index, k_number, "", ucell, pgrid, out_dir, work->values[spin_index]);
-    }
-}
-
-template <typename Device>
-void Get_wf_pw<Device>::write_complex(const int band,
+template <typename T, typename Device>
+void Get_wf_pw<T, Device>::write_norm(const int band,
                                       const UnitCell& ucell,
                                       const Parallel_Grid& pgrid,
                                       const K_Vectors& kv,
@@ -234,6 +217,31 @@ void Get_wf_pw<Device>::write_complex(const int band,
         const int spin_index = kv.isk[ik];
         const int k_number = kv.ik2iktot[ik] % nks_without_spin + 1;
         transform_band(band, ik, layout, work);
+        // The solver supplies L2-normalized NC states or S-normalized USPP states.
+        // Wavefunction amplitudes carry the inverse square root of the cell volume.
+        const double scale = std::sqrt(1.0 / ucell.omega);
+        calc_norm(spin_index, scale, work);
+        write_cube(band, spin_index, k_number, "", ucell, pgrid, out_dir, work->values[spin_index]);
+    }
+}
+
+template <typename T, typename Device>
+void Get_wf_pw<T, Device>::write_complex(const int band,
+                                         const UnitCell& ucell,
+                                         const Parallel_Grid& pgrid,
+                                         const K_Vectors& kv,
+                                         const std::string& out_dir,
+                                         const BandParallelLayout& layout,
+                                         Workspace* work) const
+{
+    // Collinear spin channels share the same physical k-point numbering in file names.
+    const int nks_without_spin = nspin_ == 2 ? kv.get_nkstot() / 2 : kv.get_nkstot();
+    for (int ik = 0; ik < kv.get_nks(); ++ik)
+    {
+        const int spin_index = kv.isk[ik];
+        const int k_number = kv.ik2iktot[ik] % nks_without_spin + 1;
+        transform_band(band, ik, layout, work);
+        // The solver supplies L2-normalized NC states or S-normalized USPP states.
         // Wavefunction amplitudes carry the inverse square root of the cell volume.
         const double scale = std::sqrt(1.0 / ucell.omega);
         calc_phase(ik, kv, &work->phase);
@@ -250,8 +258,8 @@ void Get_wf_pw<Device>::write_complex(const int band,
     }
 }
 
-template <typename Device>
-void Get_wf_pw<Device>::calc_norm(const int spin_index, const double scale, Workspace* work) const
+template <typename T, typename Device>
+void Get_wf_pw<T, Device>::calc_norm(const int spin_index, const double scale, Workspace* work) const
 {
     // Output the modulus, not its square; a spinor combines the squared moduli of both components.
     // The Bloch phase has unit modulus and therefore does not enter this field.
@@ -263,8 +271,8 @@ void Get_wf_pw<Device>::calc_norm(const int spin_index, const double scale, Work
     }
 }
 
-template <typename Device>
-void Get_wf_pw<Device>::calc_phase(const int ik, const K_Vectors& kv, std::vector<std::complex<double>>* phase) const
+template <typename T, typename Device>
+void Get_wf_pw<T, Device>::calc_phase(const int ik, const K_Vectors& kv, std::vector<std::complex<double>>* phase) const
 {
     // Build exp(i k.r) from fractional k-point and grid coordinates to recover the Bloch state.
     // The local slab is stored as [x][y][local_z]; startz_current restores the global z index.
@@ -281,12 +289,12 @@ void Get_wf_pw<Device>::calc_phase(const int ik, const K_Vectors& kv, std::vecto
     }
 }
 
-template <typename Device>
-void Get_wf_pw<Device>::calc_component(const std::vector<std::complex<double>>& component,
-                                       const std::vector<std::complex<double>>& phase,
-                                       const double scale,
-                                       std::vector<double>* real,
-                                       std::vector<double>* imag) const
+template <typename T, typename Device>
+void Get_wf_pw<T, Device>::calc_component(const std::vector<std::complex<double>>& component,
+                                          const std::vector<std::complex<double>>& phase,
+                                          const double scale,
+                                          std::vector<double>* real,
+                                          std::vector<double>* imag) const
 {
     // Restore psi_nk(r) = exp(i k.r) u_nk(r) before separating and normalizing Re/Im.
     for (int ir = 0; ir < pw_rhod_.nrxx; ++ir)
@@ -297,24 +305,26 @@ void Get_wf_pw<Device>::calc_component(const std::vector<std::complex<double>>& 
     }
 }
 
-template <typename Device>
-void Get_wf_pw<Device>::write_cube(const int band,
-                                   const int component,
-                                   const int k_number,
-                                   const std::string& part,
-                                   const UnitCell& ucell,
-                                   const Parallel_Grid& pgrid,
-                                   const std::string& out_dir,
-                                   const std::vector<double>& values) const
+template <typename T, typename Device>
+void Get_wf_pw<T, Device>::write_cube(const int band,
+                                      const int component,
+                                      const int k_number,
+                                      const std::string& part,
+                                      const UnitCell& ucell,
+                                      const Parallel_Grid& pgrid,
+                                      const std::string& out_dir,
+                                      const std::vector<double>& values) const
 {
     std::stringstream filename;
     filename << out_dir << "wfi" << band + 1 << "s" << component + 1 << "k" << k_number << part << ".cube";
     ModuleIO::write_vdata_palgrid(pgrid, values.data(), component, nspin_, 0, filename.str(), 0.0, &ucell, 11, 0, false, true);
 }
 
-// Explicit instantiation emits the supported device implementations from this .cpp file.
-template class Get_wf_pw<base_device::DEVICE_CPU>;
+// Explicit instantiation emits both precisions for each supported device from this .cpp file.
+template class Get_wf_pw<std::complex<float>, base_device::DEVICE_CPU>;
+template class Get_wf_pw<std::complex<double>, base_device::DEVICE_CPU>;
 #if defined(__CUDA) || defined(__ROCM)
-template class Get_wf_pw<base_device::DEVICE_GPU>;
+template class Get_wf_pw<std::complex<float>, base_device::DEVICE_GPU>;
+template class Get_wf_pw<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 } // namespace ModuleIO

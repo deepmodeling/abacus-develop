@@ -58,6 +58,7 @@ AddTest(
   LIBS parameter  planewave_serial base device symmetry
   SOURCES elecstate_pw_test.cpp
     ../elecstate_pw.cpp
+    ../uspp_density.cpp
     ../elecstate_pw_cal_tau.cpp
     ../elecstate.cpp
     ../occupy.cpp
