@@ -2,12 +2,45 @@ Test non-collinear Fe in LCAO basis with multiple k points, moments along +-y.
 
 This is scf_angle_spin4 with the initial moments globally rotated by 90 degrees
 about z (+-x -> +-y). Without spin-orbit coupling the spin frame is decoupled
-from the lattice, so every result here must equal the scf_angle_spin4 reference
-exactly.
+from the lattice, so every reference value must equal the scf_angle_spin4 one;
+result.ref is that file, unchanged.
 
-The y channel is the only one that can go wrong on its own: m_x and m_z are read
-off the real part of the spinor density-matrix block and are invariant under the
-conjugation convention of that block, while m_y reads the imaginary part. The
-+-x case therefore cannot detect a sign error in the sigma_y loop between the
-Hamiltonian assembly (clx_j in merge_hr_part_to_hR) and the density extraction
-(func_xyz_to_updown). See issues #7759 and #7831, and PRs #7513, #7664, #7832.
+## Why the +-y twin is needed
+
+m_x and m_z are read off the real part of the spinor density-matrix block and
+are invariant under the conjugation convention of that block. Only m_y reads
+the imaginary part. The +-x case therefore cannot detect a sign error in the
+sigma_y loop between the Hamiltonian assembly (clx_j in merge_hr_part_to_hR)
+and the density extraction (func_xyz_to_updown), which is how that convention
+changed three times -- #7513, #7664, #7832 -- without any test reacting. See
+issues #7759 and #7831.
+
+Reintroducing the #7664 m_y sign on top of develop 3937023d6 moves this case
+by 3.19 eV (-6264.2727 vs -6267.4652), drops AMAG from 6.70362 to 3.9e-05 and
+stops it converging, while scf_angle_spin4 does not move at all.
+
+## Why ks_solver is pinned to scalapack_gvx
+
+With scalapack_gvx this case is bitwise identical to scf_angle_spin4 at both
+np=2 and np=4 (-6267.4651888505, AMAG 6.70362, 12 iterations), which is the
+exact rotational invariance the case is meant to assert.
+
+With genelpa -- the default when ELPA is available, and what scf_angle_spin4
+itself uses -- the +-y case does NOT converge (hits scf_nmax=50) and settles
+BELOW the true ground state by an np-dependent amount:
+
+  solver          np   E_KohnSham (eV)     AMAG      iters
+  scalapack_gvx   2    -6267.4651888505    6.70362   12
+  scalapack_gvx   4    -6267.4651888505    6.70362   12
+  genelpa         2    -6269.6774946269    6.80171   50 (no convergence)
+  genelpa         4    -6267.7588409455    6.76183   50 (no convergence)
+
+A variational method cannot go below the ground state, and the result must not
+depend on the rank count, so this is a solver defect, not a physics result. It
+is the genelpa complex generalized transform reading the stale lower triangle
+of a Hermitian matrix for which LCAO only fills the upper triangle -- defect 2
+of #7913. The +-x case is insensitive to it because H_{up,down} = B_x is real
+there, whereas for +-y it is purely imaginary (-i*B_y).
+
+Remove this pin once #7913 is fixed, so that the case also guards the genelpa
+path.
