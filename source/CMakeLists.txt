@@ -176,7 +176,12 @@ elseif(USE_SW)
     ${SW_MATH}/libswblas.a
     gfortran)
 else()
-  if(ENABLE_MPI)
+  # The DSP ScaLAPACK bundles BLAS objects built without OpenMP support.
+  # The linker resolves BLAS symbols from the first library that provides
+  # them, so the standalone BLAS must precede ScaLAPACK on the link line;
+  # otherwise the bundled non-OpenMP BLAS wins and OpenBLAS aborts with
+  # "Detect OpenMP Loop" once ABACUS calls it from an OpenMP region.
+  if(ENABLE_MPI AND NOT USE_DSP)
     list(APPEND _abacus_linalg_libs ScaLAPACK::ScaLAPACK)
   endif()
   if(ENABLE_OPENMP)
@@ -186,6 +191,9 @@ else()
     FFTW3::FFTW3
     LAPACK::LAPACK
     BLAS::BLAS)
+  if(ENABLE_MPI AND USE_DSP)
+    list(APPEND _abacus_linalg_libs ScaLAPACK::ScaLAPACK)
+  endif()
   list(APPEND _abacus_linalg_include_dirs ${FFTW3_INCLUDE_DIRS})
   if(ENABLE_FLOAT_FFTW)
     list(APPEND _abacus_linalg_libs FFTW3::FFTW3_FLOAT)
