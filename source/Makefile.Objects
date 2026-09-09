@@ -260,6 +260,7 @@ OBJS_ELECSTAT=elecstate.o\
     elecstate_print.o\
     elecstate_tools.o\
     elecstate_pw.o\
+    uspp_density.o\
     elecstate_pw_sdft.o\
     elecstate_pw_cal_tau.o\
     makov_payne.o\
@@ -632,6 +633,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_output/print_info.o\
     module_output/read_cube.o\
     module_wf/read_wfc_pw.o\
+    module_wf/get_wf_pw.o\
     module_wf/read_wf2rho_pw.o\
     module_restart/restart.o\
     module_wannier/to_w90.o\
@@ -659,6 +661,7 @@ OBJS_IO=module_parameter/input_conv.o\
     td_efield_io.o\
     td_vector_pot_io.o\
     module_chgpot/write_libxc_r.o\
+    module_chgpot/get_pchg_pw.o\
     module_output/output_log.o\
     module_hs/output_mat_sparse.o\
     module_ctrl/ctrl_scf_lcao.o\
