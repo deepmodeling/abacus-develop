@@ -7,6 +7,7 @@
 #include "source_cell/unitcell.h"
 #include "source_io/module_output/band_parallel_output.h"
 #include "source_psi/psi.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 
 #include <complex>
 #include <string>
@@ -18,17 +19,19 @@ namespace ModuleIO
  * @brief Write band-resolved PW partial charges on the dense real-space grid.
  *
  * The caller owns the wavefunction and bases, which must outlive this object.
+ * T follows the solver wavefunction precision; host grid processing uses double.
  * Scratch buffers are local to each begin() call.
  */
-template <typename Device>
+template <typename T, typename Device>
 class Get_pchg_pw
 {
   public:
     /** @brief Bind the wavefunction, grids, and global band/spin configuration. */
-    Get_pchg_pw(const psi::Psi<std::complex<double>, Device>& psi,
+    Get_pchg_pw(const psi::Psi<T, Device>& psi,
                 const ModulePW::PW_Basis_K& pw_wfc,
                 const ModulePW::PW_Basis& pw_rho,
                 const ModulePW::PW_Basis& pw_rhod,
+                const pseudopot_cell_vnl& ppcell,
                 const int nspin,
                 const int global_nbands);
 
@@ -46,10 +49,11 @@ class Get_pchg_pw
                const bool noncolin) const;
 
   private:
-    const psi::Psi<std::complex<double>, Device>& psi_;
+    const psi::Psi<T, Device>& psi_;
     const ModulePW::PW_Basis_K& pw_wfc_;
     const ModulePW::PW_Basis& pw_rho_;
     const ModulePW::PW_Basis& pw_rhod_;
+    const pseudopot_cell_vnl& ppcell_;
     const int nspin_;
     const int global_nbands_;
 
@@ -63,10 +67,7 @@ class Get_pchg_pw
     void transform_band(const int global_band, const int ik, const BandParallelLayout& layout, Workspace* work) const;
     // The returned data belongs to the selected workspace component and is valid
     // until that component is transformed again or the workspace is destroyed.
-    const std::complex<double>* transform_wfc(const std::complex<double>* coefficients,
-                                              const int ik,
-                                              const int component,
-                                              Workspace* work) const;
+    const std::complex<double>* transform_wfc(const T* coefficients, const int ik, const int component, Workspace* work) const;
 
     void write_separate(const int band,
                         const UnitCell& ucell,
@@ -86,6 +87,13 @@ class Get_pchg_pw
                       Workspace* work) const;
 
     void calc_density(const int spin_index, const double weight, const bool noncolin, const bool accumulate, Workspace* work) const;
+    void accumulate_uspp(const int band,
+                         const int ik,
+                         const int spin,
+                         const double weight,
+                         const BandParallelLayout& layout,
+                         Workspace* work) const;
+    void add_augmentation(const UnitCell& ucell, Workspace* work) const;
     void sum_pools(const Parallel_Grid& pgrid, const K_Vectors& kv, Workspace* work) const;
     void symmetrize(UnitCell* ucell, Workspace* work) const;
 

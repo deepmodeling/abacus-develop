@@ -18,14 +18,15 @@ namespace ModuleIO
  * @brief Write real-space norms and complex components of selected PW states.
  *
  * The caller owns the wavefunction and bases, which must outlive this object.
+ * T follows the solver wavefunction precision; host grid processing uses double.
  * Scratch buffers are local to each begin() call.
  */
-template <typename Device>
+template <typename T, typename Device>
 class Get_wf_pw
 {
   public:
     /** @brief Bind the wavefunction, grids, and global band/spin configuration. */
-    Get_wf_pw(const psi::Psi<std::complex<double>, Device>& psi,
+    Get_wf_pw(const psi::Psi<T, Device>& psi,
               const ModulePW::PW_Basis_K& pw_wfc,
               const ModulePW::PW_Basis& pw_rho,
               const ModulePW::PW_Basis& pw_rhod,
@@ -46,7 +47,7 @@ class Get_wf_pw
                const std::string& global_out_dir) const;
 
   private:
-    const psi::Psi<std::complex<double>, Device>& psi_;
+    const psi::Psi<T, Device>& psi_;
     const ModulePW::PW_Basis_K& pw_wfc_;
     const ModulePW::PW_Basis& pw_rho_;
     const ModulePW::PW_Basis& pw_rhod_;
@@ -63,10 +64,7 @@ class Get_wf_pw
     void transform_band(const int global_band, const int ik, const BandParallelLayout& layout, Workspace* work) const;
     // The returned data belongs to the selected workspace component and is valid
     // until that component is transformed again or the workspace is destroyed.
-    const std::complex<double>* transform_wfc(const std::complex<double>* coefficients,
-                                              const int ik,
-                                              const int component,
-                                              Workspace* work) const;
+    const std::complex<double>* transform_wfc(const T* coefficients, const int ik, const int component, Workspace* work) const;
 
     void write_norm(const int band,
                     const UnitCell& ucell,
