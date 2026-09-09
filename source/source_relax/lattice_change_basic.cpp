@@ -3,7 +3,6 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_cell/update_cell.h"
 
 // Lattice-specific parameters (shared variables are in Relax_Data)
@@ -98,7 +97,7 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, do
     return;
 }
 
-void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double *lat)
+void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double *lat, const bool fixed_ibrav)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "change_lattice");
 
@@ -151,7 +150,7 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     // Order matters: fixed_ibrav first, then volume rescaling
 
     // 1. Enforce Bravais lattice symmetry if fixed_ibrav is set
-    if (PARAM.inp.fixed_ibrav)
+    if (fixed_ibrav)
     {
         unitcell::remake_cell(ucell.lat);
     }
@@ -231,7 +230,7 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     return;
 }
 
-bool Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad, std::ofstream& ofs)
+bool Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad, std::ofstream& ofs, const double& stress_thr)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "check_converged");
 
@@ -278,17 +277,17 @@ bool Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     }
     else if (ucell.lat_axis_free[0] == 1 && ucell.lat_axis_free[1] == 1 && ucell.lat_axis_free[2] == 1)
     {
-        if (Lattice_Change_Basic::largest_grad < PARAM.inp.stress_thr && stress_ii_max < PARAM.inp.stress_thr)
+        if (Lattice_Change_Basic::largest_grad < stress_thr && stress_ii_max < stress_thr)
         {
             ofs << "\n Geometry relaxation is converged!" << std::endl;
             ofs << "\n Largest stress is " << largest_grad  
-             << " kbar while threshold is " << PARAM.inp.stress_thr << " kbar" << std::endl;
+             << " kbar while threshold is " << stress_thr << " kbar" << std::endl;
             ++Lattice_Change_Basic::update_iter;
             return true;
         }
         else
         {
-            ofs << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
+            ofs << "\n Geometry relaxation is not converged because threshold is " << stress_thr
                                  << " kbar" << std::endl;
             return false;
         }
@@ -296,17 +295,17 @@ bool Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     else
     {
         // the code is almost the same as previous codes
-        if (Lattice_Change_Basic::largest_grad < 10 * PARAM.inp.stress_thr)
+        if (Lattice_Change_Basic::largest_grad < 10 * stress_thr)
         {
             ofs << "\n Geometry relaxation is converged!" << std::endl;
             ofs << "\n Largest stress is " << largest_grad  
-             << " kbar while threshold is " << PARAM.inp.stress_thr << " kbar" << std::endl;
+             << " kbar while threshold is " << stress_thr << " kbar" << std::endl;
             ++Lattice_Change_Basic::update_iter;
             return true;
         }
         else
         {
-            ofs << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
+            ofs << "\n Geometry relaxation is not converged because threshold is " << stress_thr
                                  << " kbar" << std::endl;
             return false;
         }

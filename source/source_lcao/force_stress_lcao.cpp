@@ -408,7 +408,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     if (PARAM.inp.imp_sol && isforce)
     {
         fsol.create(nat, 3);
-        solvent.cal_force_sol(ucell, rhopw, locpp.vloc, fsol);
+        solvent.cal_force_sol(ucell, rhopw, locpp.vloc, PARAM.inp.nspin, fsol);
     }
 
     //! atomic forces from DFT+U (Quxin version)

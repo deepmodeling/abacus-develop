@@ -27,7 +27,7 @@ void LCAO_domain::set_psi_occ_dm_chg(
     {
         if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir,
              pv, *psi, pelec->ekb, pelec->wg, kv.ik2iktot,
-             kv.get_nkstot(), inp.nspin))
+             kv.get_nkstot(), inp.nspin, inp.init_wfc_file_format == "binary"))
         {
             ModuleBase::WARNING_QUIT("set_psi_occ_dm_chg", "read electronic wave functions failed");
         }
@@ -128,7 +128,8 @@ void LCAO_domain::init_dm_from_file(
             dm_container,
             dmfile,
             PARAM.globalv.nlocal,
-            &ucell
+            &ucell,
+            GlobalV::MY_RANK
         );
         reader_dm.read();
     }
@@ -181,7 +182,7 @@ void LCAO_domain::init_hr_from_file(
     test_file.close();
 
     hmat->set_zero();
-    hamilt::Read_HContainer<TR> reader_hr(hmat, hrfile, PARAM.globalv.nlocal, &ucell);
+    hamilt::Read_HContainer<TR> reader_hr(hmat, hrfile, PARAM.globalv.nlocal, &ucell, GlobalV::MY_RANK);
     reader_hr.read();
     return;
 }

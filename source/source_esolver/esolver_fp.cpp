@@ -46,6 +46,21 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     this->inp_ = &inp;
 
+    SurchemParameters surchem_parameters;
+    surchem_parameters.eb_k = inp.eb_k;
+    surchem_parameters.tau = inp.tau;
+    surchem_parameters.sigma_k = inp.sigma_k;
+    surchem_parameters.nc_k = inp.nc_k;
+    this->solvent.set_parameters(surchem_parameters);
+
+    XCFunctionalParameters xc_parameters;
+    xc_parameters.xc_temperature = inp.xc_temperature;
+    xc_parameters.exx_fock_alpha = inp.exx_fock_alpha;
+    xc_parameters.exx_erfc_alpha = inp.exx_erfc_alpha;
+    xc_parameters.xc_exch_ext = inp.xc_exch_ext;
+    xc_parameters.xc_corr_ext = inp.xc_corr_ext;
+    XC_Functional::set_runtime_parameters(xc_parameters);
+
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
     //! 1) read pseudopotentials
@@ -224,7 +239,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     //! calculate ewald energy
     if (!this->inp_->test_skip_ewald)
     {
-        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac);
+        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac, this->inp_->test_energy, GlobalV::ofs_running);
     }
 
     //! set direction of magnetism, used in non-collinear case 

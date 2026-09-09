@@ -99,7 +99,12 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                               this->pw_big->nbzp,
                                               orb_.Phi,
                                               ucell,
-                                              this->gd));
+                                              this->gd,
+                                              this->inp_->nspin,
+                                              gamma_only_local,
+                                              PARAM.globalv.domag,
+                                              this->inp_->device == "gpu",
+                                              this->inp_->nstream));
     ModuleGint::Gint::set_gint_info(gint_info_.get());
 
     // (2)For each atom, calculate the adjacent atoms in different cells

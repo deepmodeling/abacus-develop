@@ -1,3 +1,4 @@
+#include "source_relax/relax_criteria.h"
 #include <regex>
 #include "for_test.h"
 #include "gtest/gtest.h"
@@ -14,6 +15,9 @@
 
 class IonsMoveCGTest : public ::testing::Test
 {
+  public:
+    Relax_Criteria criteria;
+
   protected:
     void SetUp() override
     {
@@ -21,7 +25,7 @@ class IonsMoveCGTest : public ::testing::Test
         Ions_Move_Basic::dim = 6;
         update_iter = 5;
         im_cg.allocate(Ions_Move_Basic::dim);
-        PARAM.input.force_thr = 0.001;
+        criteria.force_thr = 0.001;
 
         // ban the 'cout' 
         // mohan add 2025-05-02
@@ -102,7 +106,7 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
 
     // call function
     std::ofstream ofs("TestStartConverged.log");
-    im_cg.start(ucell, force, etot, istep, update_iter, ofs, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
 
     // Check output
@@ -139,7 +143,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
 
     // call function
     std::ofstream ofs("TestStartSd.log");
-    im_cg.start(ucell, force, etot, istep, update_iter, ofs, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
 
     // Check output
@@ -175,7 +179,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartTrialGoto_temp1.log");
-    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method, criteria);
     ofs1.close();
     std::remove("TestStartTrialGoto_temp1.log");
     int istep_2 = 2;
@@ -183,7 +187,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     force(0, 0) = 0.001;
     relax_method = {"cg_bfgs", "1"};
     std::ofstream ofs("TestStartTrialGoto.log");
-    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
 
     // Check output
@@ -218,13 +222,13 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartTrial_temp1.log");
-    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method, criteria);
     ofs1.close();
     std::remove("TestStartTrial_temp1.log");
     int istep_2 = 2;
     im_cg.move0[0] = 10.0;
     std::ofstream ofs("TestStartTrial.log");
-    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
 
     // Check output
@@ -260,19 +264,19 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartNoTrialGotoCase1_temp1.log");
-    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method, criteria);
     ofs1.close();
     std::remove("TestStartNoTrialGotoCase1_temp1.log");
     int istep_2 = 2;
     std::ofstream ofs2("TestStartNoTrialGotoCase1_temp2.log");
-    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs2, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs2, etot_info, relax_method, criteria);
     ofs2.close();
     std::remove("TestStartNoTrialGotoCase1_temp2.log");
     im_cg.move0[0] = 1.0;
     force(0, 0) = 0.001;
     relax_method = {"cg_bfgs", "1"};
     std::ofstream ofs("TestStartNoTrialGotoCase1.log");
-    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
 
     // Check output
@@ -310,18 +314,18 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartNoTrialGotoCase2_temp1.log");
-    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method, criteria);
     ofs1.close();
     std::remove("TestStartNoTrialGotoCase2_temp1.log");
     int istep_2 = 2;
     im_cg.move0[0] = 10.0;
     std::ofstream ofs2("TestStartNoTrialGotoCase2_temp2.log");
-    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs2, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs2, etot_info, relax_method, criteria);
     ofs2.close();
     std::remove("TestStartNoTrialGotoCase2_temp2.log");
     relax_method = {"cg_bfgs", "1"};
     std::ofstream ofs("TestStartNoTrialGotoCase2.log");
-    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
 
     // Check output
@@ -359,18 +363,18 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     // call function
     im_cg.move0[0] = 1.0;
     std::ofstream ofs1("TestStartNoTrial_temp1.log");
-    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep, update_iter, ofs1, etot_info, relax_method, criteria);
     ofs1.close();
     std::remove("TestStartNoTrial_temp1.log");
     int istep_2 = 2;
     im_cg.move0[0] = 1.0;
     force(0, 0) = 0.001;
     std::ofstream ofs2("TestStartNoTrial_temp2.log");
-    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs2, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs2, etot_info, relax_method, criteria);
     ofs2.close();
     std::remove("TestStartNoTrial_temp2.log");
     std::ofstream ofs("TestStartNoTrial.log");
-    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method);
+    im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
 
     // Check output

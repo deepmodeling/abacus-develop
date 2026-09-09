@@ -111,24 +111,10 @@ class CalAtomsInfo
             atoms[it].set_index();
         }
 
-        // calculate the total number of local basis
-        // nlocal = sum over all atom types of (atoms[it].nw * atoms[it].na)
-        // For nspin == 4 (non-collinear), each basis function has 2 polarizations,
-        // so nlocal is doubled. This value is used by cal_nwfc() to initialize
-        // index arrays (iwt2iat, iwt2iw, itia2iat).
-        result.nlocal = 0;
-        for (int it = 0; it < ntype; ++it)
-        {
-            const int nlocal_it = atoms[it].nw * atoms[it].na;
-            if (nspin != 4)
-            {
-                result.nlocal += nlocal_it;
-            }
-            else
-            {
-                result.nlocal += nlocal_it * 2; // zhengdy-soc
-            }
-        }
+        // calculate the total number of local basis. This value is used by cal_nwfc()
+        // to initialize index arrays (iwt2iat, iwt2iw, itia2iat). The formula lives in
+        // unitcell::cal_nlocal() so that GintInfo::init_trace_lo_() shares it.
+        result.nlocal = unitcell::cal_nlocal(atoms, ntype, nspin);
 
         result.nelec = nelec;
         unitcell::cal_nelec(atoms, ntype, result.nelec, nelec_delta);
