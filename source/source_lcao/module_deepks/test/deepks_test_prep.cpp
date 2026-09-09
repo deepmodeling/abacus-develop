@@ -319,6 +319,7 @@ void test_deepks<T>::setup_kpt()
                  ucell.G,
                  ucell.latvec,
                  GlobalV::ofs_running,
+                 GlobalV::ofs_warning,
                  use_ibz,
                  global_out_dir,
                  gamma_only_local,

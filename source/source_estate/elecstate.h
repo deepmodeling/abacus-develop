@@ -42,7 +42,14 @@ class ElecState
 
     // calculate electronic charge density on grid points or density matrix in real space
     // the consequence charge density rho saved into rho_out, preparing for charge mixing.
+    // NOTE: all overloads are intentionally provided (with empty bodies) so that
+    // template derived classes (e.g. ElecStatePW<T, Device>) can safely mark their
+    // psiToRho/cal_tau as 'override' regardless of which (T, Device) combo is instantiated.
     virtual void psiToRho(const psi::Psi<std::complex<double>>& psi)
+    {
+        return;
+    }
+    virtual void psiToRho(const psi::Psi<std::complex<double>, base_device::DEVICE_GPU>& psi)
     {
         return;
     }
@@ -50,7 +57,23 @@ class ElecState
     {
         return;
     }
+    virtual void psiToRho(const psi::Psi<double, base_device::DEVICE_GPU>& psi)
+    {
+        return;
+    }
+    virtual void psiToRho(const psi::Psi<std::complex<float>>& psi)
+    {
+        return;
+    }
+    virtual void psiToRho(const psi::Psi<std::complex<float>, base_device::DEVICE_GPU>& psi)
+    {
+        return;
+    }
     virtual void cal_tau(const psi::Psi<std::complex<double>>& psi)
+    {
+        return;
+    }
+    virtual void cal_tau(const psi::Psi<std::complex<double>, base_device::DEVICE_GPU>& psi)
     {
         return;
     }
@@ -58,7 +81,15 @@ class ElecState
     {
         return;
     }
+    virtual void cal_tau(const psi::Psi<double, base_device::DEVICE_GPU>& psi)
+    {
+        return;
+    }
     virtual void cal_tau(const psi::Psi<std::complex<float>>& psi)
+    {
+        return;
+    }
+    virtual void cal_tau(const psi::Psi<std::complex<float>, base_device::DEVICE_GPU>& psi)
     {
         return;
     }

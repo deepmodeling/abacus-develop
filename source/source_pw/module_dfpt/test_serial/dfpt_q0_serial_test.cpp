@@ -10,24 +10,19 @@
 // serial tests; all references are closed-form or operator finite
 // differences, no ground-state solver is involved.
 
-#define private public
-#include "source_cell/atom_pseudo.h"
-#include "source_cell/atom_spec.h"
-#include "source_cell/pseudo.h"
-#include "source_cell/qlist.h"
-#include "source_cell/unitcell.h"
-#include "source_cell/magnetism.h"
-#include "source_pw/module_pwdft/stru_fac.h"
-#include "source_pw/module_dfpt/dfpt_pert.h"
-#include "source_pw/module_dfpt/dfpt_q0.h"
-#undef private
-
+#include "dfpt_serial_fixture.h"
 #include "source_base/constants.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
+#include "source_cell/atom_pseudo.h"
+#include "source_cell/atom_spec.h"
+#include "source_cell/qlist.h"
+#include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
-#include "dfpt_serial_fixture.h"
+#include "source_pw/module_dfpt/dfpt_pert.h"
+#include "source_pw/module_dfpt/dfpt_q0.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 
 // ctor/dtor stubs for the cell/spepot/stru_fac link closures live in the
 // shared test/dfpt_test_mocks.cpp compiled into every DFPT test binary.
@@ -82,8 +77,7 @@ class DFPTQ0SerialTest : public DFPTSerialBase
         for (int ig = 0; ig < npwk; ++ig)
         {
             const ModuleBase::Vector3<double> g = pw_wfc_.getgpluskcar(0, ig);
-            if (std::llround(g.x * a_) == ix && std::llround(g.y * a_) == iy
-                && std::llround(g.z * a_) == iz)
+            if (std::llround(g.x * a_) == ix && std::llround(g.y * a_) == iy && std::llround(g.z * a_) == iz)
             {
                 return ig;
             }
@@ -141,10 +135,8 @@ TEST_F(DFPTQ0SerialTest, BuildVkbDkMatchesFiniteDifference)
             {
                 const std::complex<double> fd = (vkb_p[mu][i] - vkb_m[mu][i]) / (2.0 * eps);
                 const double scale = std::max(1.0, std::abs(fd));
-                EXPECT_NEAR(dvkb[mu][i].real(), fd.real(), 1.0e-5 * scale)
-                    << "mu=" << mu << " i=" << i << " d=" << d;
-                EXPECT_NEAR(dvkb[mu][i].imag(), fd.imag(), 1.0e-5 * scale)
-                    << "mu=" << mu << " i=" << i << " d=" << d;
+                EXPECT_NEAR(dvkb[mu][i].real(), fd.real(), 1.0e-5 * scale) << "mu=" << mu << " i=" << i << " d=" << d;
+                EXPECT_NEAR(dvkb[mu][i].imag(), fd.imag(), 1.0e-5 * scale) << "mu=" << mu << " i=" << i << " d=" << d;
             }
         }
     }
@@ -229,8 +221,7 @@ TEST_F(DFPTQ0SerialTest, PosMatrixNonlocalMatchesOperatorFiniteDifference)
     psi::Psi<std::complex<double>> psi(1, nb, npwk, npwk, true);
     psi.zero_out();
     unsigned seed = 20260817u;
-    auto rnd = [&]()
-    {
+    auto rnd = [&]() {
         seed = seed * 1664525u + 1013904223u;
         return ((seed >> 8) & 0xffffff) / 16777216.0 * 2.0 - 1.0;
     };
@@ -239,8 +230,7 @@ TEST_F(DFPTQ0SerialTest, PosMatrixNonlocalMatchesOperatorFiniteDifference)
     {
         for (int ig = 0; ig < npwk; ++ig)
         {
-            c[b][ig] = (ig == ig0) ? std::complex<double>(0.0, 0.0)
-                                   : std::complex<double>(rnd(), rnd());
+            c[b][ig] = (ig == ig0) ? std::complex<double>(0.0, 0.0) : std::complex<double>(rnd(), rnd());
         }
     }
     // Gram-Schmidt, skipping the zero column keeps the norm from column 1 on
@@ -304,8 +294,7 @@ TEST_F(DFPTQ0SerialTest, PosMatrixNonlocalMatchesOperatorFiniteDifference)
 
     // becp with the |G| = 0 column dropped on a shifted list
     auto vnl_matrix = [&](const std::vector<ModuleBase::Vector3<double>>& glist,
-                          std::vector<std::vector<std::complex<double>>>& mmat)
-    {
+                          std::vector<std::vector<std::complex<double>>>& mmat) {
         std::vector<std::vector<std::complex<double>>> vkb;
         pert_.build_vkb(0, 0, glist, vkb);
         std::vector<std::vector<std::complex<double>>> becp(nb);
@@ -369,21 +358,17 @@ TEST_F(DFPTQ0SerialTest, PosMatrixNonlocalMatchesOperatorFiniteDifference)
                 }
                 const double de = eig(0, m) - eig(0, n);
                 // recover p from r: r = -i p / (tpiba de)
-                const std::complex<double> p_r
-                    = std::complex<double>(0.0, 1.0) * ucell_.tpiba * de * r_mat[0][m][n][d];
+                const std::complex<double> p_r = std::complex<double>(0.0, 1.0) * ucell_.tpiba * de * r_mat[0][m][n][d];
                 // analytic kinetic + finite-difference nonlocal
                 std::complex<double> p_kin(0.0, 0.0);
                 for (int ig = 0; ig < npwk; ++ig)
                 {
-                    p_kin += 2.0 * ucell_.tpiba2 * gk[ig][d] * std::conj(psi(0, m, ig))
-                             * psi(0, n, ig);
+                    p_kin += 2.0 * ucell_.tpiba2 * gk[ig][d] * std::conj(psi(0, m, ig)) * psi(0, n, ig);
                 }
                 const std::complex<double> p_nl = (mm_p[m][n] - mm_m[m][n]) / (2.0 * eps);
                 const double scale = std::max(1.0, std::abs(p_kin) + std::abs(p_nl));
-                EXPECT_NEAR(p_r.real(), (p_kin + p_nl).real(), 1.0e-6 * scale)
-                    << "m=" << m << " n=" << n << " d=" << d;
-                EXPECT_NEAR(p_r.imag(), (p_kin + p_nl).imag(), 1.0e-6 * scale)
-                    << "m=" << m << " n=" << n << " d=" << d;
+                EXPECT_NEAR(p_r.real(), (p_kin + p_nl).real(), 1.0e-6 * scale) << "m=" << m << " n=" << n << " d=" << d;
+                EXPECT_NEAR(p_r.imag(), (p_kin + p_nl).imag(), 1.0e-6 * scale) << "m=" << m << " n=" << n << " d=" << d;
             }
         }
     }
@@ -409,16 +394,15 @@ TEST_F(DFPTQ0SerialTest, ComputeEpsScfSyntheticStash)
     wg(0, 1) = 0.0;
 
     // synthetic bare position legs Y^a_{0,0} = P_c x_a|psi_0>
-    const std::complex<double> gam[3] = {std::complex<double>(0.15, -0.3),
-                                         std::complex<double>(0.4, 0.05),
-                                         std::complex<double>(-0.35, 0.2)};
-    const std::complex<double> del[3] = {std::complex<double>(-0.25, 0.45),
-                                         std::complex<double>(0.1, -0.1),
-                                         std::complex<double>(0.3, 0.25)};
+    const std::complex<double> gam[3]
+        = {std::complex<double>(0.15, -0.3), std::complex<double>(0.4, 0.05), std::complex<double>(-0.35, 0.2)};
+    const std::complex<double> del[3]
+        = {std::complex<double>(-0.25, 0.45), std::complex<double>(0.1, -0.1), std::complex<double>(0.3, 0.25)};
     for (int a = 0; a < 3; ++a)
     {
         std::vector<std::vector<std::vector<std::complex<double>>>> y(
-            1, std::vector<std::vector<std::complex<double>>>(2));
+            1,
+            std::vector<std::vector<std::complex<double>>>(2));
         y[0][0].assign(npwk, std::complex<double>(0.0, 0.0));
         y[0][0][ig0] = gam[a];
         y[0][0][igx] = del[a];
@@ -426,16 +410,15 @@ TEST_F(DFPTQ0SerialTest, ComputeEpsScfSyntheticStash)
     }
 
     // synthetic converged E-field responses dpsi^E,b_{0,0}
-    const std::complex<double> mue[3] = {std::complex<double>(0.3, 0.2),
-                                         std::complex<double>(-0.1, 0.4),
-                                         std::complex<double>(0.25, -0.15)};
-    const std::complex<double> nue[3] = {std::complex<double>(0.2, -0.35),
-                                         std::complex<double>(0.45, 0.1),
-                                         std::complex<double>(-0.2, -0.05)};
+    const std::complex<double> mue[3]
+        = {std::complex<double>(0.3, 0.2), std::complex<double>(-0.1, 0.4), std::complex<double>(0.25, -0.15)};
+    const std::complex<double> nue[3]
+        = {std::complex<double>(0.2, -0.35), std::complex<double>(0.45, 0.1), std::complex<double>(-0.2, -0.05)};
     for (int b = 0; b < 3; ++b)
     {
         std::vector<std::vector<std::vector<std::complex<double>>>> e(
-            1, std::vector<std::vector<std::complex<double>>>(2));
+            1,
+            std::vector<std::vector<std::complex<double>>>(2));
         e[0][0].assign(npwk, std::complex<double>(0.0, 0.0));
         e[0][0][ig0] = mue[b];
         e[0][0][igx] = nue[b];
@@ -451,11 +434,8 @@ TEST_F(DFPTQ0SerialTest, ComputeEpsScfSyntheticStash)
         {
             // <Y^a|dE^b> = conj(gam_a) mue_b + conj(del_a) nue_b over the
             // shared G support, wg-weighted with the 16 pi/Omega prefactor
-            const std::complex<double> dot = std::conj(gam[a]) * mue[b]
-                                             + std::conj(del[a]) * nue[b];
-            const double expect = ((a == b) ? 1.0 : 0.0)
-                                  - 16.0 * ModuleBase::PI / ucell_.omega
-                                        * wg(0, 0) * dot.real();
+            const std::complex<double> dot = std::conj(gam[a]) * mue[b] + std::conj(del[a]) * nue[b];
+            const double expect = ((a == b) ? 1.0 : 0.0) - 16.0 * ModuleBase::PI / ucell_.omega * wg(0, 0) * dot.real();
             EXPECT_NEAR(eps(a, b), expect, 1.0e-12) << "a=" << a << " b=" << b;
         }
     }
@@ -497,16 +477,15 @@ TEST_F(DFPTQ0SerialTest, ComputeBornTwoLevelAnalytic)
     // synthetic converged displacement responses dpsi(scf)/du_{0,idir} for
     // the occupied band (G0/Gx components, distinct complexes per idir
     // catch transposed indices); the empty-band row stays unsolved
-    const std::complex<double> alpha[3] = {std::complex<double>(0.3, 0.2),
-                                           std::complex<double>(-0.1, 0.4),
-                                           std::complex<double>(0.25, -0.15)};
-    const std::complex<double> beta[3] = {std::complex<double>(0.2, -0.35),
-                                          std::complex<double>(0.45, 0.1),
-                                          std::complex<double>(-0.2, -0.05)};
+    const std::complex<double> alpha[3]
+        = {std::complex<double>(0.3, 0.2), std::complex<double>(-0.1, 0.4), std::complex<double>(0.25, -0.15)};
+    const std::complex<double> beta[3]
+        = {std::complex<double>(0.2, -0.35), std::complex<double>(0.45, 0.1), std::complex<double>(-0.2, -0.05)};
     for (int idir = 0; idir < 3; ++idir)
     {
         std::vector<std::vector<std::vector<std::complex<double>>>> disp(
-            1, std::vector<std::vector<std::complex<double>>>(2));
+            1,
+            std::vector<std::vector<std::complex<double>>>(2));
         disp[0][0].assign(npwk, std::complex<double>(0.0, 0.0));
         disp[0][0][ig0] = alpha[idir];
         disp[0][0][igx] = beta[idir];
@@ -514,16 +493,15 @@ TEST_F(DFPTQ0SerialTest, ComputeBornTwoLevelAnalytic)
     }
 
     // synthetic solved position legs Y^a_{0,0} = P_c x_a|psi_0>
-    const std::complex<double> gam[3] = {std::complex<double>(0.15, -0.3),
-                                         std::complex<double>(0.4, 0.05),
-                                         std::complex<double>(-0.35, 0.2)};
-    const std::complex<double> del[3] = {std::complex<double>(-0.25, 0.45),
-                                         std::complex<double>(0.1, -0.1),
-                                         std::complex<double>(0.3, 0.25)};
+    const std::complex<double> gam[3]
+        = {std::complex<double>(0.15, -0.3), std::complex<double>(0.4, 0.05), std::complex<double>(-0.35, 0.2)};
+    const std::complex<double> del[3]
+        = {std::complex<double>(-0.25, 0.45), std::complex<double>(0.1, -0.1), std::complex<double>(0.3, 0.25)};
     for (int a = 0; a < 3; ++a)
     {
         std::vector<std::vector<std::vector<std::complex<double>>>> y(
-            1, std::vector<std::vector<std::complex<double>>>(2));
+            1,
+            std::vector<std::vector<std::complex<double>>>(2));
         y[0][0].assign(npwk, std::complex<double>(0.0, 0.0));
         y[0][0][ig0] = gam[a];
         y[0][0][igx] = del[a];
@@ -540,10 +518,8 @@ TEST_F(DFPTQ0SerialTest, ComputeBornTwoLevelAnalytic)
         {
             // <dpsi^{idir}|Y^a> = conj(alpha)gam + conj(beta)del over the
             // shared G support, wg-weighted with the -2 spin prefactor
-            const std::complex<double> dot = std::conj(alpha[idir]) * gam[a]
-                                             + std::conj(beta[idir]) * del[a];
-            const double expect = ((a == idir) ? zion : 0.0)
-                                  - 2.0 * wg(0, 0) * dot.real();
+            const std::complex<double> dot = std::conj(alpha[idir]) * gam[a] + std::conj(beta[idir]) * del[a];
+            const double expect = ((a == idir) ? zion : 0.0) - 2.0 * wg(0, 0) * dot.real();
             EXPECT_NEAR(zstar(a, idir), expect, 1.0e-12) << "a=" << a << " idir=" << idir;
         }
     }
@@ -607,8 +583,7 @@ TEST_F(DFPTQ0SerialTest, StarRotationCyclicGroup)
 
     // single reduced k point (1/4,0,0) on its own wfc basis
     ModulePW::PW_Basis_K kwfc;
-    const ModuleBase::Vector3<double> klist[1]
-        = {ModuleBase::Vector3<double>(0.25, 0.0, 0.0)};
+    const ModuleBase::Vector3<double> klist[1] = {ModuleBase::Vector3<double>(0.25, 0.0, 0.0)};
     kwfc.initgrids(lat0_, latvec_, pw_rho_.nx, pw_rho_.ny, pw_rho_.nz);
     kwfc.initparameters(false, ecutwfc_, 1, klist);
     kwfc.fft_bundle.initfftmode(0);

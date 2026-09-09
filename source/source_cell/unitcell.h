@@ -6,7 +6,7 @@
 #include "source_cell/sep_cell.h"
 #include "source_cell/magnetism.h"
 #include "module_symmetry/symmetry.h"
-#include "source_cell/base_cell.h"
+#include "source_cell/basecell.h"
 #include "source_cell/nonlocal_info_base.h"
 
 /**
@@ -238,7 +238,7 @@ class UnitCell : public BaseCell {
     /// @{
     Kind get_kind() const override
     {
-        return Kind::unit_cell;
+        return Kind::unitcell;
     }
 
     std::int64_t get_nat() const override

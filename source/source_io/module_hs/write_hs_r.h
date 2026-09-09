@@ -2,11 +2,13 @@
 #define WRITE_HS_R_H
 
 #include "source_base/matrix.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/klist.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/lcao_hs_arrays.hpp"
-#include "source_lcao/module_dftu/dftu_lcao.h" // mohan add 20251107
+#include "source_lcao/module_dftu/dftu_nao.h" // mohan add 20251107
 
 #ifdef __EXX
 #include "RI/global/Tensor.h" // for RI::Tensor

@@ -1,8 +1,6 @@
 #ifndef DFPT_SERIAL_FIXTURE_H
 #define DFPT_SERIAL_FIXTURE_H
 
-#include <complex>
-#include "gtest/gtest.h"
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
 #include "source_basis/module_pw/pw_basis.h"
@@ -11,17 +9,19 @@
 #include "source_cell/unitcell.h"
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
 
+#include "gtest/gtest.h"
+#include <complex>
+
 // Shared serial-side gtest fixture for the DFPT unit tests
 // (dfpt_pert/rho/phon/q0_serial_test.cpp). Everything runs without
 // __MPI: the plane-wave bases are built through the real serial
 // initgrids/initparameters/setuptransform path on a shared FFT grid,
 // exactly like the production setup_pwrho/setup_pwwfc sequence.
 //
-// NOTE ON INCLUDE ORDER: the tests that touch private members include
-// the cell/qlist/dfpt headers with `#define private public` BEFORE this
-// header; the include guards then keep this header's own includes inert.
-// The fixture implementation (dfpt_serial_fixture.cpp) needs the same
-// define for QList, so it wraps its include accordingly.
+// All members the fixture touches (UnitCell geometry fields, the
+// Atom/pseudo public data, QList::nkstot / kvec_d and the
+// DFPT_PW_Data::init entry) are public, so the tests include the
+// cell/qlist/dfpt headers normally.
 
 class DFPTSerialBase : public testing::Test
 {
@@ -58,9 +58,7 @@ class DFPTSerialBase : public testing::Test
 
     // (re)initialize the bases and the shared data wiring for a given
     // (k, q) pair and band count; SetUp uses the default fixture values
-    void SetupBases(const ModuleBase::Vector3<double>& k_d,
-                    const ModuleBase::Vector3<double>& q_d,
-                    int nbands);
+    void SetupBases(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d, int nbands);
 
     void MakeCoulombAtom();
     void MakeNCAtom();

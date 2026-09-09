@@ -2,6 +2,7 @@
 
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/para_gemm.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"

@@ -2,6 +2,7 @@
 // blacs
     // Initialization
 #include "mpi.h"
+#include <complex>
 int Csys2blacs_handle(MPI_Comm SysCtxt);
 void Cblacs_pinfo(int *myid, int *nprocs);
 void Cblacs_get(int icontxt, int what, int *val);
@@ -17,8 +18,8 @@ void Cblacs_barrier(int icontxt, char *scope);
     // Point to  Point
 void Cdgesd2d(int icontxt, int m, int n, double *a, int lda, int rdest, int cdest);
 void Cdgerv2d(int icontxt, int m, int n, double *a, int lda, int rsrc, int csrc);
-void Czgesd2d(int icontxt, int m, int n, double _Complex *a, int lda, int rdest, int cdest);
-void Czgerv2d(int icontxt, int m, int n, double _Complex *a, int lda, int rsrc, int csrc);
+void Czgesd2d(int icontxt, int m, int n, std::complex<double> *a, int lda, int rdest, int cdest);
+void Czgerv2d(int icontxt, int m, int n, std::complex<double> *a, int lda, int rsrc, int csrc);
     // Combine
 //void Cdgamx2d(int icontxt, int scope, int top, int m, int n,
 //              double *a, int lda, int *ra, int *ca, int rcflag, int rdest, int cdest);

@@ -122,7 +122,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     Mix_DMk_2D<T> mix_DMk_2D;
     bool exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
     if (exx_spacegroup_symmetry)
-        {mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1));}
+        {mix_DMk_2D.set_nks(kv.get_nkstot_nospin() * (PARAM.inp.nspin == 2 ? 2 : 1));}
     else
         {mix_DMk_2D.set_nks(kv.get_nks());}
         

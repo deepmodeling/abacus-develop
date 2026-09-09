@@ -14,10 +14,10 @@ AddTest(
   LIBS base device parameter symmetry
   SOURCES spin_constrain_test.cpp
     ../spin_constrain.cpp
+    ../deltaspin_state.cpp
     ../../../source_basis/module_ao/parallel_orbitals.cpp
-    ../../../source_cell/klist.cpp
+    ../../../source_cell/klist.cpp ../../../source_cell/klist_io.cpp
     ../../../source_cell/parallel_kpoints.cpp
-    ../../../source_cell/k_vector_utils.cpp
     ../../../source_cell/reciprocal_grid.cpp
 )
 
@@ -26,12 +26,12 @@ AddTest(
   LIBS base device parameter symmetry
   SOURCES template_helpers_test.cpp
     ../spin_constrain.cpp
+    ../deltaspin_state.cpp
     ../template_helpers.cpp
     ../lambda_loop_helper.cpp
     ../basic_funcs.cpp
-    ../../../source_cell/klist.cpp
+    ../../../source_cell/klist.cpp ../../../source_cell/klist_io.cpp
     ../../../source_cell/parallel_kpoints.cpp
-    ../../../source_cell/k_vector_utils.cpp
     ../../../source_cell/reciprocal_grid.cpp
 )
 

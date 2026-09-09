@@ -20,7 +20,7 @@
 #include "esolver_dp.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
-#include "source_cell/md_cell.h"
+#include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_cell/cif_io.h"
 #include "source_io/module_output/output_log.h"
@@ -43,11 +43,14 @@ void ESolver_DP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     fparam = inp.mdp.dp_fparam;
     aparam = inp.mdp.dp_aparam;
 
-    if (basecell.kind() == BaseCell::Kind::md_cell)
+    if (basecell.kind() == BaseCell::Kind::mdcell)
     {
         MDCell& mdcell = static_cast<MDCell&>(basecell);
 #ifdef __DPMD
+        mdcell.initialize_neighbors(dp.cutoff() * ModuleBase::ANGSTROM_AU);
         initialize_type_map_(mdcell.type_labels());
+#else
+        ModuleBase::WARNING_QUIT("ESolver_DP", "Please recompile with -D__DPMD");
 #endif
         return;
     }
@@ -69,7 +72,7 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
     ModuleBase::TITLE("ESolver_DP", "runner");
     ModuleBase::timer::start("ESolver_DP", "runner");
 
-    if (basecell.kind() == BaseCell::Kind::md_cell)
+    if (basecell.kind() == BaseCell::Kind::mdcell)
     {
 #ifndef __DPMD
         ModuleBase::WARNING_QUIT("ESolver_DP", "Please recompile with -D__DPMD");
@@ -80,9 +83,9 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         {
             mdcell.prepare_neighbors();
         }
-        const int nlocal = mdcell.nlocal();
+        const int nowned_atoms = mdcell.nowned_atoms();
         const int nghost = mdcell.nghost();
-        const int natom = nlocal + nghost;
+        const int natom = nowned_atoms + nghost;
         if (natom == 0)
         {
             ModuleBase::WARNING_QUIT("ESolver_DP", "MDCell contains no atoms.");
@@ -105,8 +108,8 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         std::vector<int> local_atype(static_cast<std::size_t>(natom), 0);
         for (int iat = 0; iat < natom; ++iat)
         {
-            const LocalAtom& atom = iat < nlocal ? owned_atoms[static_cast<std::size_t>(iat)]
-                                                  : ghost_atoms[static_cast<std::size_t>(iat - nlocal)];
+            const LocalAtom& atom = iat < nowned_atoms ? owned_atoms[static_cast<std::size_t>(iat)]
+                                                  : ghost_atoms[static_cast<std::size_t>(iat - nowned_atoms)];
             coord[3 * iat] = atom.cart.x * mdcell.lat0() * ModuleBase::BOHR_TO_A;
             coord[3 * iat + 1] = atom.cart.y * mdcell.lat0() * ModuleBase::BOHR_TO_A;
             coord[3 * iat + 2] = atom.cart.z * mdcell.lat0() * ModuleBase::BOHR_TO_A;
@@ -125,25 +128,25 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         }
 
         const NeighborList& neighbor_list = mdcell.neighbor_search().get_neighbor_list();
-        std::vector<int> ilist(static_cast<std::size_t>(nlocal), 0);
-        std::vector<int> numneigh(static_cast<std::size_t>(nlocal), 0);
-        std::vector<int*> firstneigh(static_cast<std::size_t>(nlocal), NULL);
-        for (int iat = 0; iat < nlocal; ++iat)
+        std::vector<int> ilist(static_cast<std::size_t>(nowned_atoms), 0);
+        std::vector<int> numneigh(static_cast<std::size_t>(nowned_atoms), 0);
+        std::vector<int*> firstneigh(static_cast<std::size_t>(nowned_atoms), NULL);
+        for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             ilist[static_cast<std::size_t>(iat)] = iat;
             numneigh[static_cast<std::size_t>(iat)] = neighbor_list.get_numneigh(iat);
             firstneigh[static_cast<std::size_t>(iat)] = const_cast<int*>(neighbor_list.get_firstneigh(iat));
         }
 #ifdef __DPMDC
-        deepmd::hpp::InputNlist nlist(nlocal,
-                                      nlocal > 0 ? &ilist[0] : NULL,
-                                      nlocal > 0 ? &numneigh[0] : NULL,
-                                      nlocal > 0 ? &firstneigh[0] : NULL);
+        deepmd::hpp::InputNlist nlist(nowned_atoms,
+                                      nowned_atoms > 0 ? &ilist[0] : NULL,
+                                      nowned_atoms > 0 ? &numneigh[0] : NULL,
+                                      nowned_atoms > 0 ? &firstneigh[0] : NULL);
 #else
-        deepmd::InputNlist nlist(nlocal,
-                                 nlocal > 0 ? &ilist[0] : NULL,
-                                 nlocal > 0 ? &numneigh[0] : NULL,
-                                 nlocal > 0 ? &firstneigh[0] : NULL);
+        deepmd::InputNlist nlist(nowned_atoms,
+                                 nowned_atoms > 0 ? &ilist[0] : NULL,
+                                 nowned_atoms > 0 ? &numneigh[0] : NULL,
+                                 nowned_atoms > 0 ? &firstneigh[0] : NULL);
 #endif
         double local_energy = 0.0;
         std::vector<double> force, virial;
@@ -157,15 +160,15 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
 
         std::vector<LocalAtom>& mutable_owned_atoms = mdcell.mutable_owned_atoms();
         std::vector<LocalAtom>& mutable_ghost_atoms = mdcell.mutable_ghost_atoms();
-        for (int iat = 0; iat < nlocal; ++iat)
+        for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             mutable_owned_atoms[static_cast<std::size_t>(iat)].force.set(force[3 * iat], force[3 * iat + 1], force[3 * iat + 2]);
         }
         for (int iat = 0; iat < nghost; ++iat)
         {
-            mutable_ghost_atoms[static_cast<std::size_t>(iat)].force.set(force[3 * (nlocal + iat)],
-                                                                           force[3 * (nlocal + iat) + 1],
-                                                                           force[3 * (nlocal + iat) + 2]);
+            mutable_ghost_atoms[static_cast<std::size_t>(iat)].force.set(force[3 * (nowned_atoms + iat)],
+                                                                           force[3 * (nowned_atoms + iat) + 1],
+                                                                           force[3 * (nowned_atoms + iat) + 2]);
         }
         mdcell.accumulate_ghost_forces();
 
@@ -184,7 +187,7 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         const double fact_f = rescaling / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
         const double fact_v = rescaling / (mdcell.omega() * ModuleBase::Ry_to_eV);
         dp_potential = local_energy * fact_e;
-        for (int iat = 0; iat < nlocal; ++iat)
+        for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             LocalAtom& atom = mutable_owned_atoms[static_cast<std::size_t>(iat)];
             atom.force *= fact_f;
@@ -266,29 +269,13 @@ double ESolver_DP::cal_energy()
     return dp_potential;
 }
 
-bool ESolver_DP::supports_mdcell() const
-{
-    return true;
-}
-
-double ESolver_DP::mdcell_cutoff(const Input_para& inp) const
-{
-    static_cast<void>(inp);
-#ifdef __DPMD
-    return dp.cutoff() * ModuleBase::ANGSTROM_AU;
-#else
-    ModuleBase::WARNING_QUIT("ESolver_DP::mdcell_cutoff", "Please recompile with -D__DPMD");
-    return 0.0;
-#endif
-}
-
 void ESolver_DP::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
-    if (basecell.kind() == BaseCell::Kind::md_cell)
+    if (basecell.kind() == BaseCell::Kind::mdcell)
     {
         const MDCell& mdcell = static_cast<const MDCell&>(basecell);
-        force.create(mdcell.nlocal(), 3);
-        for (int iat = 0; iat < mdcell.nlocal(); ++iat)
+        force.create(mdcell.nowned_atoms(), 3);
+        for (int iat = 0; iat < mdcell.nowned_atoms(); ++iat)
         {
             const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(iat)];
             force(iat, 0) = atom.force.x;
@@ -307,7 +294,7 @@ void ESolver_DP::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
     stress = dp_virial;
 
-    if (basecell.kind() == BaseCell::Kind::unit_cell)
+    if (basecell.kind() == BaseCell::Kind::unitcell)
     {
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, GlobalV::ofs_running);
     }

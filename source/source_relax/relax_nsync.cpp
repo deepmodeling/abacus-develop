@@ -93,7 +93,16 @@ bool IonCellOptimizer::relax_step(const int& istep,
         
         // Calculate and apply atomic movement
         std::vector<std::string> relax_method = inp_->relax_method;
-        IMM.cal_movement(istep, force_step, force, energy, ucell, ofs_running, relax_method);
+
+        Relax_Criteria criteria;
+        criteria.force_thr = inp_->force_thr;
+        criteria.force_thr_ev = inp_->force_thr_ev;
+        criteria.stress_thr = inp_->stress_thr;
+        criteria.fixed_ibrav = inp_->fixed_ibrav;
+        criteria.out_level = inp_->out_level;
+        criteria.test_relax_method = inp_->test_relax_method;
+
+        IMM.cal_movement(istep, force_step, force, energy, ucell, ofs_running, relax_method, criteria);
         ++force_step;
         
         // Check convergence
@@ -122,7 +131,15 @@ bool IonCellOptimizer::relax_step(const int& istep,
         assert(inp_->cal_stress == 1);
         
         // Calculate and apply lattice change
-        LCM.cal_lattice_change(istep, stress_step, stress, energy, ucell, ofs_running);
+        Relax_Criteria criteria;
+        criteria.force_thr = inp_->force_thr;
+        criteria.force_thr_ev = inp_->force_thr_ev;
+        criteria.stress_thr = inp_->stress_thr;
+        criteria.fixed_ibrav = inp_->fixed_ibrav;
+        criteria.out_level = inp_->out_level;
+        criteria.test_relax_method = inp_->test_relax_method;
+
+        LCM.cal_lattice_change(istep, stress_step, stress, energy, ucell, ofs_running, criteria);
         bool converged = LCM.get_converged();
         
         if (!converged)

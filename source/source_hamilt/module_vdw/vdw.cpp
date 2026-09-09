@@ -58,7 +58,7 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell &ucell,
     // }
     if (input.vdw_method == "d2")
     {
-        std::unique_ptr<Vdwd2> vdw_ptr = make_unique<Vdwd2>(ucell);
+        std::unique_ptr<Vdwd2> vdw_ptr = make_unique_compat<Vdwd2>(ucell);
         vdw_ptr->parameter().initial_parameters(input, plog);
         vdw_ptr->parameter().initset(ucell);
         return vdw_ptr;
@@ -70,9 +70,10 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell &ucell,
         {
             xc_psp[it] = ucell.atoms[it].ncpp.xc_func;
         }
-        std::unique_ptr<Vdwd3> vdw_ptr = make_unique<Vdwd3>(ucell);
-        vdw_ptr->parameter().initial_parameters(parse_xcname(input.dft_functional, xc_psp), input, plog);
-        return vdw_ptr;
+        return make_unique_compat<Vdwd3>(ucell,
+                                  parse_xcname(input.dft_functional, xc_psp),
+                                  input,
+                                  plog);
     }
     else if (input.vdw_method == "d4")
     {
@@ -89,7 +90,7 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell &ucell,
             xc_name = parse_xcname(input.dft_functional, xc_psp);
         }
 
-        return vdw::make_unique<Vdwd4>(ucell, xc_name, input);
+        return make_unique_compat<Vdwd4>(ucell, xc_name, input);
 #else
         ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::make_vdw",
                                  "DFT-D4 support was not enabled at build time. "

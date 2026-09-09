@@ -1,14 +1,16 @@
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#include <algorithm>
-#include <iostream>
-#include <vector>
+#include "source_pw/module_dfpt/dfpt_kq_basis.h"
+
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "source_pw/module_dfpt/dfpt_kq_basis.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include <algorithm>
+#include <iostream>
+#include <vector>
 
 /************************************************
  *  unit test of DFPT_KQ_Basis (C0)
@@ -31,7 +33,8 @@
  * enumeration fixes.
  */
 
-namespace {
+namespace
+{
 
 bool VecLess(const ModuleBase::Vector3<double>& a, const ModuleBase::Vector3<double>& b)
 {
@@ -246,8 +249,7 @@ TEST_F(DFPTKQBasisTest, GammaQ0ReproducesWfcGrid)
     EXPECT_EQ(kq.get_npwk(), pw_.npw);
 
     // every selected vector lies inside the cutoff and on the brute-force set
-    const std::vector<ModuleBase::Vector3<double>> ref = ReferenceSelection(
-        ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    const std::vector<ModuleBase::Vector3<double>> ref = ReferenceSelection(ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     EXPECT_EQ(static_cast<int>(ref.size()), pw_.npw);
     const std::vector<ModuleBase::Vector3<double>> sel = KqSet(kq);
     EXPECT_EQ(sel.size(), ref.size());
@@ -278,8 +280,7 @@ TEST_F(DFPTKQBasisTest, ShiftedCenterSelectsAsymmetricSphere)
 {
     // k = (0,0,0.5b): the |G+k|^2 cut keeps an asymmetric shell
     const double b = ModuleBase::TWO_PI / lat0_;
-    BuildBase({ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-               ModuleBase::Vector3<double>(0.0, 0.0, 0.5 * b)});
+    BuildBase({ModuleBase::Vector3<double>(0.0, 0.0, 0.0), ModuleBase::Vector3<double>(0.0, 0.0, 0.5 * b)});
 
     ModuleDFPT::DFPT_KQ_Basis kq;
     kq.init(&pw_, &prho_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 1);

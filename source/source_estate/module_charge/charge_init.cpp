@@ -14,11 +14,14 @@
 #include "source_cell/magnetism.h"
 #include "source_base/parallel_grid.h"
 #include "source_io/module_output/cube_io.h"
-#include "source_io/module_chgpot/rhog_io.h"
+#include "source_estate/rhog_io.h"
 #include "source_io/module_wf/read_wf2rho_pw.h"
 #include "source_io/module_restart/restart.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_cell/klist.h"
+#include "source_base/module_parallel/para_world.h"
+#include "source_base/module_parallel/para_tag.h"
+#include "source_base/module_parallel/para_bridge.h"
 
 void Charge::init_rho(const UnitCell& ucell,
                       const Parallel_Grid& pgrid,
@@ -50,7 +53,9 @@ void Charge::init_rho(const UnitCell& ucell,
         // liuyu 2023-12-05
         std::stringstream binary;
         binary << PARAM.globalv.global_readin_dir << PARAM.inp.suffix + "-CHARGE-DENSITY.restart";
-        if (ModuleIO::read_rhog(binary.str(), rhopw, rhog))
+        // Temporary bridge: use factory until ParaCollection is wired into driver.
+        Parallel::ParaWorld pw_world = Parallel::make_pw_world();
+        if (elecstate::read_rhog(binary.str(), rhopw, nspin, rhog, pw_world, &GlobalV::ofs_warning))
         {
             GlobalV::ofs_running << " Read electron density from file: " << binary.str() << std::endl;
             for (int is = 0; is < nspin; ++is)
@@ -147,7 +152,7 @@ void Charge::init_rho(const UnitCell& ucell,
 
                 std::stringstream binary;
                 binary << PARAM.globalv.global_readin_dir << PARAM.inp.suffix + "-TAU-DENSITY.restart";
-                if (ModuleIO::read_rhog(binary.str(), rhopw, kin_g.data()))
+                if (elecstate::read_rhog(binary.str(), rhopw, nspin, kin_g.data(), pw_world, &GlobalV::ofs_warning))
                 {
                     GlobalV::ofs_running << " Read in the kinetic energy density: " << binary.str() << std::endl;
                     for (int is = 0; is < nspin; ++is)

@@ -38,13 +38,22 @@ AddTest(
   LIBS parameter base device symmetry planewave
   SOURCES dfpt_pw_run_test.cpp
 	../dfpt_pw.cpp
+	../dfpt_pw_init.cpp
+	../dfpt_pw_run.cpp
+	../dfpt_pw_solve.cpp
+	../dfpt_pw_q0.cpp
 	../dfpt_pw_data.cpp
 	../dfpt_pert.cpp
+	../dfpt_pert_vkb.cpp
+	../dfpt_pert_nl.cpp
 	../dfpt_kq_basis.cpp
 	../dfpt_stern.cpp
 	../dfpt_rho.cpp
 	../dfpt_phon.cpp
+	../dfpt_phon_ewald.cpp
+	../dfpt_phon_elec.cpp
 	../dfpt_q0.cpp
+	../dfpt_q0_pos.cpp
 	../dfpt_metal.cpp
 	../dfpt_hamilt_shift.cpp
 	../../../source_cell/qlist.cpp

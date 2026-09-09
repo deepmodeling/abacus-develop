@@ -81,7 +81,7 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
 
     nspin = PARAM.inp.nspin;
     nbands_total = PARAM.inp.nbands;
-    nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->get_nkstot_full(): kv->get_nks();
+    nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->get_nkstot_nospin(): kv->get_nks();
     nk_total *= nspin;
     only_exx_type = ( XC_func_rdmft == "hf" || XC_func_rdmft == "muller" || XC_func_rdmft == "power" );
 

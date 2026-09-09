@@ -11,23 +11,18 @@
 // the real serial initgrids/initparameters/setuptransform path on a shared
 // FFT grid, exactly like the production setup_pwrho/setup_pwwfc sequence.
 
-#define private public
-#include "source_cell/atom_pseudo.h"
-#include "source_cell/atom_spec.h"
-#include "source_cell/pseudo.h"
-#include "source_cell/qlist.h"
-#include "source_cell/unitcell.h"
-#include "source_cell/magnetism.h"
-#include "source_pw/module_pwdft/stru_fac.h"
-#include "source_pw/module_dfpt/dfpt_pert.h"
-#undef private
-
+#include "dfpt_serial_fixture.h"
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
-#include "source_pw/module_pwdft/dftu_base.h"
+#include "source_cell/atom_pseudo.h"
+#include "source_cell/atom_spec.h"
+#include "source_cell/qlist.h"
+#include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
-#include "dfpt_serial_fixture.h"
+#include "source_pw/module_dfpt/dfpt_pert.h"
+#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 
 // ctor/dtor stubs for the cell/spepot/stru_fac link closures live in the
 // shared test/dfpt_test_mocks.cpp compiled into every DFPT test binary.
@@ -106,8 +101,7 @@ TEST_F(DFPTPertSerialTest, DVlocDtauMatchesFiniteDifference)
                 const double ap = -ModuleBase::TWO_PI * (w * (tau_ + eps * d));
                 const double am = -ModuleBase::TWO_PI * (w * (tau_ - eps * d));
                 const std::complex<double> fd = VlocCoulomb((w * w) * ucell_.tpiba2)
-                                                * (std::polar(1.0, ap) - std::polar(1.0, am))
-                                                / (2.0 * eps * lat0_);
+                                                * (std::polar(1.0, ap) - std::polar(1.0, am)) / (2.0 * eps * lat0_);
                 EXPECT_NEAR(dv[ig].real(), fd.real(), 1.0e-9);
                 EXPECT_NEAR(dv[ig].imag(), fd.imag(), 1.0e-9);
             }
@@ -176,7 +170,7 @@ TEST_F(DFPTPertSerialTest, ApplyDvConvolutionMatchesAnalyticMatrixElement)
         const ModuleBase::Vector3<double> gpp = kq.get_gcar(igl);
         const std::complex<double> e0 = AnalyticDVloc(0, gpp + q_cart_);
         const std::complex<double> e1 = 0.7 * AnalyticDVloc(0, gpp - g1 + q_cart_)
-                                      + std::complex<double>(0.3, 0.2) * AnalyticDVloc(0, gpp - g2 + q_cart_);
+                                        + std::complex<double>(0.3, 0.2) * AnalyticDVloc(0, gpp - g2 + q_cart_);
         EXPECT_NEAR(d0[igl].real(), e0.real(), 1.0e-8);
         EXPECT_NEAR(d0[igl].imag(), e0.imag(), 1.0e-8);
         EXPECT_NEAR(d1[igl].real(), e1.real(), 1.0e-8);
@@ -260,8 +254,7 @@ TEST_F(DFPTPertSerialTest, BuildVkbL0MatchesIndependentSimpson)
     const pseudo& p = ucell_.atoms[0].ncpp;
     const double dx = p.rab[0];
     const double pref = ModuleBase::FOUR_PI / std::sqrt(ucell_.omega);
-    auto simpson = [&](const std::function<double(int)>& f, int n)
-    {
+    auto simpson = [&](const std::function<double(int)>& f, int n) {
         double s = f(0) + f(n - 1);
         for (int i = 1; i < n - 1; ++i)
         {
@@ -274,16 +267,15 @@ TEST_F(DFPTPertSerialTest, BuildVkbL0MatchesIndependentSimpson)
     {
         const double g = std::sqrt(gk[ig] * gk[ig]) * ucell_.tpiba; // bohr^-1
         // independent j0 and Simpson transform (no ModuleBase Sphbes/Integral)
-        auto f0 = [&](int i)
-        {
+        auto f0 = [&](int i) {
             const double gr = g * p.r[i];
             const double j0 = (gr < 1.0e-12) ? 1.0 : std::sin(gr) / gr;
             return p.betar(0, i) * j0 * p.r[i];
         };
         const double vq = pref * simpson(f0, p.msh);
         const double arg = -ModuleBase::TWO_PI * (gk[ig] * tau_);
-        const std::complex<double> expect = 0.5 * std::sqrt(1.0 / ModuleBase::PI) * vq
-                                            * std::complex<double>(std::cos(arg), std::sin(arg));
+        const std::complex<double> expect
+            = 0.5 * std::sqrt(1.0 / ModuleBase::PI) * vq * std::complex<double>(std::cos(arg), std::sin(arg));
         EXPECT_NEAR(vkb[0][ig].real(), expect.real(), 1.0e-9 * std::max(1.0, std::abs(expect)));
         EXPECT_NEAR(vkb[0][ig].imag(), expect.imag(), 1.0e-9 * std::max(1.0, std::abs(expect)));
     }
@@ -331,8 +323,7 @@ TEST_F(DFPTPertSerialTest, DVnlDtauMatchesOperatorFiniteDifference)
     // deterministic pseudo-random wavefunctions, normalized per band
     psi::Psi<std::complex<double>> psi(1, 2, npwk, npwk, true);
     unsigned seed = 20260814u;
-    auto rnd = [&]()
-    {
+    auto rnd = [&]() {
         seed = seed * 1664525u + 1013904223u;
         return ((seed >> 8) & 0xffffff) / 16777216.0 * 2.0 - 1.0;
     };

@@ -1,5 +1,6 @@
 #include "esolver_fp.h"
 
+#include "source_base/tool_quit.h"
 #include "source_cell/cal_ux.h"
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_cell/read_pp_ucell.h"
@@ -8,13 +9,17 @@
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/print_info.h"
-#include "source_io/module_chgpot/rhog_io.h"
+#include "source_estate/rhog_io.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include "source_pw/module_pwdft/setup_pwrho.h" // mohan 20251005
+#include "source_pw/module_pwdft/uspp_support.h"
 #include "source_hamilt/module_xc/xc_functional.h" // mohan 20251005
 #include "source_io/module_ctrl/ctrl_output_fp.h"
-#include "source_io/module_chgpot/write_init.h" // write_chg_init, write_pot_init
+#include "source_estate/write_init.h" // write_chg_init, write_pot_init
+#include "source_base/module_parallel/para_world.h"
+#include "source_base/module_parallel/para_tag.h"
+#include "source_base/module_parallel/para_bridge.h"
 
 namespace ModuleESolver
 {
@@ -36,10 +41,25 @@ ESolver_FP::~ESolver_FP()
 
 void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     this->inp_ = &inp;
+
+    SurchemParameters surchem_parameters;
+    surchem_parameters.eb_k = inp.eb_k;
+    surchem_parameters.tau = inp.tau;
+    surchem_parameters.sigma_k = inp.sigma_k;
+    surchem_parameters.nc_k = inp.nc_k;
+    this->solvent.set_parameters(surchem_parameters);
+
+    XCFunctionalParameters xc_parameters;
+    xc_parameters.xc_temperature = inp.xc_temperature;
+    xc_parameters.exx_fock_alpha = inp.exx_fock_alpha;
+    xc_parameters.exx_erfc_alpha = inp.exx_erfc_alpha;
+    xc_parameters.xc_exch_ext = inp.xc_exch_ext;
+    xc_parameters.xc_corr_ext = inp.xc_corr_ext;
+    XC_Functional::set_runtime_parameters(xc_parameters);
 
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
@@ -69,7 +89,19 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
                                             this->inp_->bndpar,
                                             this->inp_->nelec,
                                             this->inp_->nupdown);
+
     elecstate::ParamUpdater::update_from_atoms_info(atoms_info);
+
+    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+    pw::validate_uspp_support(atoms_info.use_uspp,
+                              inp.basis_type,
+                              inp.esolver_type,
+                              inp.nspin,
+                              XC_Functional::get_func_type(),
+                              inp.berry_phase,
+                              inp.towannier90,
+                              inp.cal_cond);
+    GlobalV::ofs_running << XC_Functional::output_info() << std::endl;
 
     //! 2) setup pw_rho, pw_rhod, pw_big, sf, and read_pseudopotentials
     pw::setup_pwrho(ucell, PARAM.globalv.double_grid, this->pw_rho_flag, 
@@ -97,7 +129,7 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     const bool gamma_only_local = PARAM.globalv.gamma_only_local;
     const double kspacing[3] = {this->inp_->kspacing[0], this->inp_->kspacing[1], this->inp_->kspacing[2]};
     const double koffset[3] = {this->inp_->koffset[0], this->inp_->koffset[1], this->inp_->koffset[2]};
-    this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir, gamma_only_local, kspacing, this->inp_->kmesh_type, koffset);
+    this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, GlobalV::ofs_warning, use_ibz, global_out_dir, gamma_only_local, kspacing, this->inp_->kmesh_type, koffset);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     //! 8) print information
@@ -111,10 +143,6 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     //! 10) calculate the structure factor
     this->sf.setup(&ucell, Pgrid, this->pw_rhod);
-
-    //! 11) setup the xc functional
-    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-    GlobalV::ofs_running<<XC_Functional::output_info()<<std::endl;
 
     //! 11) initialize the charge density, we need to first set xc_type,
     // then we can call chr.allocate()
@@ -182,7 +210,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         }
 
         // reset k-points
-        KVectorUtils::set_after_vc(kv, this->inp_->nspin, ucell.G);
+        kv.set_after_vc(ucell.G, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 
@@ -211,7 +239,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     //! calculate ewald energy
     if (!this->inp_->test_skip_ewald)
     {
-        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac);
+        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac, this->inp_->test_energy, GlobalV::ofs_running);
     }
 
     //! set direction of magnetism, used in non-collinear case 
@@ -235,15 +263,20 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
             {
                 this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
             }
-            ModuleIO::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-CHARGE-DENSITY.restart",
-                                 PARAM.globalv.gamma_only_pw,
-                                 this->pw_rhod,
-                                 this->inp_->nspin,
-                                 ucell.GT,
-                                 this->chr.rhog_save,
-                                 GlobalV::MY_POOL,
-                                 GlobalV::RANK_IN_POOL,
-                                 GlobalV::NPROC_IN_POOL);
+            // Temporary bridge: use factory until ParaCollection is wired into driver.
+            Parallel::ParaWorld pw_world = Parallel::make_pw_world();
+            // Only pool 0 writes the rhog file (rhog is identical across pools).
+            if (GlobalV::MY_POOL == 0)
+            {
+                elecstate::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-CHARGE-DENSITY.restart",
+                                     PARAM.globalv.gamma_only_pw,
+                                     this->pw_rhod,
+                                     this->inp_->nspin,
+                                     ucell.GT,
+                                     this->chr.rhog_save,
+                                     pw_world,
+                                     &GlobalV::ofs_warning);
+            }
 
             if (XC_Functional::get_ked_flag())
             {
@@ -254,15 +287,17 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
                     kin_g.push_back(kin_g_space.data() + is * this->chr.ngmc);
                     this->pw_rhod->real2recip(this->chr.kin_r_save[is], kin_g[is]);
                 }
-                ModuleIO::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-TAU-DENSITY.restart",
-                                     PARAM.globalv.gamma_only_pw,
-                                     this->pw_rhod,
-                                     this->inp_->nspin,
-                                     ucell.GT,
-                                     kin_g.data(),
-                                     GlobalV::MY_POOL,
-                                     GlobalV::RANK_IN_POOL,
-                                     GlobalV::NPROC_IN_POOL);
+                if (GlobalV::MY_POOL == 0)
+                {
+                    elecstate::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-TAU-DENSITY.restart",
+                                         PARAM.globalv.gamma_only_pw,
+                                         this->pw_rhod,
+                                         this->inp_->nspin,
+                                         ucell.GT,
+                                         kin_g.data(),
+                                         pw_world,
+                                         &GlobalV::ofs_warning);
+                }
             }
         }
     }
@@ -270,7 +305,7 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
 
 void ESolver_FP::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     // print out the final total energy

@@ -10,6 +10,7 @@
     - [ntype](#ntype)
     - [cell\_replica](#cell_replica)
     - [calculation](#calculation)
+    - [socket\_driver](#socket_driver)
     - [esolver\_type](#esolver_type)
     - [symmetry](#symmetry)
     - [symmetry\_prec](#symmetry_prec)
@@ -638,6 +639,20 @@
   - test_neighbour: obtain information of neighboring atoms (for LCAO basis only), please specify a positive search_radius manually
 - **Default**: scf
 
+### socket_driver
+
+- **Type**: Boolean
+- **Description**: If set to True, ABACUS keeps the calculation type as scf and receives atomic positions from an external driver through the i-PI socket protocol.
+
+  > Note: Use calculation = scf with socket_driver = True. ABACUS connects to the external i-PI server selected by ABACUS_SOCKET_ADDRESS. If ABACUS_SOCKET_ADDRESS is unset, ABACUS uses localhost:31415. The value can use one of two forms:
+
+  - host:port, for example localhost:31415 or 127.0.0.1:31415, opens a TCP connection to that host and port. Use this when the i-PI server listens on a TCP port.
+  - path:UNIX, for example /tmp/ipi_abacus_si:UNIX, opens a Unix-domain socket at the given filesystem path. The :UNIX suffix tells ABACUS that the preceding value is a local socket path rather than a TCP host name. This form only works on the same machine.
+  When using the ASE AbacusSocketIO interface, this environment variable is set automatically from the port or unixsocket calculator argument.
+
+  Socket mode always computes energy. Force and stress extraction follows cal_force and cal_stress independently; disabled properties are sent as protocol padding and marked absent in the ABACUS i-PI extras metadata, not reported as physical zero values. This metadata extension is required for safe optional-property handling: a legacy response with empty extras is accepted only for energy-only use, while a generic client that ignores extras cannot distinguish padding from a computed zero. A non-converged SCF step is returned with scf_converged=false metadata so an external driver can choose its policy.
+- **Default**: False
+
 ### esolver_type
 
 - **Type**: String
@@ -687,6 +702,7 @@
 
 - **Type**: Boolean
 - **Description**: If set to True, calculate the force at the end of the electronic iteration.
+  In socket_driver mode, this flag controls whether the returned frame advertises forces; it is not forced on by the socket protocol.
 - **Default**: False
 
 ### kpar
@@ -802,6 +818,7 @@
 
 - **Type**: Boolean
 - **Description**: If set to True, calculate the stress at the end of the electronic iteration.
+  In socket_driver mode, this flag independently controls whether the returned frame advertises stress/virial.
 - **Default**: False
 
 ### diago_proc
@@ -900,7 +917,12 @@
 ### chg_extrap
 
 - **Type**: String
-- **Description**: Charge extrapolation method for MD and relaxation calculations.
+- **Description**: Charge extrapolation method for MD, relaxation, and socket-driven calculations.
+
+  When set to default, ABACUS chooses second-order for md, first-order for
+  relax/cell-relax and socket_driver calculations, and atomic for other calculations. Socket-driven
+  molecular dynamics can explicitly set second-order if the external driver
+  updates structures smoothly enough for second-order extrapolation.
 - **Default**: default
 
 ### nb2d
@@ -3998,7 +4020,7 @@
   - d4: Grimme's DFT-D4 dispersion correction method using the external DFT-D4 library
   - none: no vdW correction
 
-  > Note: ABACUS supports automatic setting of DFT-D3 parameters for common functionals. To benefit from this feature, please specify the parameter dft_functional explicitly, otherwise the autoset procedure will crash. If not satisfied with the built-in parameters, any manual setting on vdw_s6, vdw_s8, vdw_a1 and vdw_a2 will overwrite the automatic values.
+  > Note: ABACUS automatically loads DFT-D3 parameters for supported functionals according to dft_functional setting. Individual user values overwrite the corresponding tabulated values. Setting all four of vdw_s6, vdw_s8, vdw_a1 and vdw_a2 defines a fully custom set and bypasses functional lookup.
 - **Default**: none
 
 ### vdw_d4_xc
@@ -4024,25 +4046,25 @@
 
 - **Type**: String
 - **Availability**: *[`vdw_method`](#vdw_method) in [d2, d3_0, d3_bj]*
-- **Description**: This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). If not set, will use values of PBE functional. For DFT-D3, recommended values with different DFT functionals can be found on the here. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.
+- **Description**: Scale factor s6, which is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP); if not set, will use values of PBE functional by default. For DFT-D3, ABACUS will search in built-in dataset based on the dft_functional setting by default; user set value will overwrite the searched value.
 
 ### vdw_s8
 
 - **Type**: String
 - **Availability**: *[`vdw_method`](#vdw_method) in [d3_0, d3_bj]*
-- **Description**: This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.
+- **Description**: Scale factor s8 for D3(0) and D3(BJ). By default, ABACUS will search in built-in dataset based on the dft_functional setting. User set value will overwrite the searched value.
 
 ### vdw_a1
 
 - **Type**: String
 - **Availability**: *[`vdw_method`](#vdw_method) in [d3_0, d3_bj]*
-- **Description**: This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.
+- **Description**: Damping parameter rs6 for D3(0), or a1 for D3(BJ). If not set, ABACUS loads the s-dftd3 value for dft_functional. A user value overwrites the tabulated value.
 
 ### vdw_a2
 
 - **Type**: String
 - **Availability**: *[`vdw_method`](#vdw_method) in [d3_0, d3_bj]*
-- **Description**: This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.
+- **Description**: Damping parameter rs8 for D3(0), or a2 for D3(BJ). If not set, ABACUS loads the s-dftd3 value for dft_functional. A user value overwrites the tabulated value.
 
 ### vdw_d
 
@@ -4105,7 +4127,7 @@
 - **Type**: String
 - **Description**: Determines the method used for specifying the cutoff radius in periodic systems when applying Van der Waals correction. Available options are:
   - radius: The supercell is selected within a sphere centered at the origin with a radius defined by vdw_cutoff_radius.
-  - period: The extent of the supercell is explicitly specified using the vdw_cutoff_period keyword.
+  - period: The extent of the D2 supercell is explicitly specified using the vdw_cutoff_period keyword. DFT-D3 and DFT-D4 require radius.
 - **Default**: radius
 
 ### vdw_cutoff_radius
@@ -4127,7 +4149,7 @@
 ### vdw_cutoff_width2
 
 - **Type**: Real
-- **Availability**: *[`vdw_method`](#vdw_method)==d4*
+- **Availability**: *[`vdw_method`](#vdw_method) in [d3_0, d3_bj, d4]*
 - **Description**: Width of the smooth switching region for the two-body pairwise dispersion real-space cutoff.
   A value of zero disables smoothing for the two-body contribution.
 - **Default**: 0.05
@@ -4136,10 +4158,10 @@
 ### vdw_cutoff_width3
 
 - **Type**: Real
-- **Availability**: *[`vdw_method`](#vdw_method)==d4*
+- **Availability**: *[`vdw_method`](#vdw_method) in [d3_0, d3_bj, d4]*
 - **Description**: Width of the smooth switching region for the three-body Axilrod-Teller-Muto (ATM) dispersion real-space cutoff.
   A value of zero disables smoothing for the three-body contribution.
-- **Default**: 0.05
+- **Default**: 0.0
 - **Unit**: Bohr
 
 ### vdw_cutoff_period

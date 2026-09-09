@@ -1,11 +1,3 @@
-// ============================================================
-// This code is added by Mohan Chen on 2026-05-18.
-// This code is currently in the design phase and has not been
-// put into production yet. It may change in the future.
-// Please use this code with caution. Only developers who know
-// what they are doing should use this code.
-// ============================================================
-
 #ifndef DFPT_PHON_H
 #define DFPT_PHON_H
 
@@ -15,11 +7,13 @@
 
 #include <string>
 
-namespace ModulePW {
+namespace ModulePW
+{
 class PW_Basis;
 }
 
-namespace ModuleDFPT {
+namespace ModuleDFPT
+{
 
 class DFPT_Pert;
 
@@ -42,23 +36,27 @@ class DFPT_Pert;
  * storage never needs a direction dimension (data-layer refactor reserved
  * for phase B).
  */
-class DFPT_Phon {
-public:
+class DFPT_Phon
+{
+  public:
     DFPT_Phon();
     ~DFPT_Phon();
-    
+
     void init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, DFPT_Pert* pert);
-    
+
     void assemble(int q_idx, DFPT_PW_Data& data);
 
     /// Fill the D[b][*] row of the electronic dynamical-matrix contribution
     /// for the converged displacement (atom_idx, dir); psi/wg are the
     /// ground-state wavefunctions and occupations. Requires a wired
     /// DFPT_Pert (init); a null pert leaves the row untouched.
-    void accumulate_electron(int q_idx, int atom_idx, int dir,
+    void accumulate_electron(int q_idx,
+                             int atom_idx,
+                             int dir,
                              const psi::Psi<std::complex<double>>& psi,
-                             const ModuleBase::matrix& wg, DFPT_PW_Data& data);
-    
+                             const ModuleBase::matrix& wg,
+                             DFPT_PW_Data& data);
+
     void diagonalize(int q_idx, DFPT_PW_Data& data);
 
     /// Diagonalize the LO-TO corrected Gamma dynamical matrix (after
@@ -77,30 +75,50 @@ public:
     /// data.loto_dir(); returns an empty string unless the corrected
     /// frequencies have been computed (add_loto + diagonalize_loto).
     std::string format_loto_report(const DFPT_PW_Data& data) const;
-    
+
     /// Non-analytic (LO-TO) term along the q->0 direction qhat (unit vector,
     /// Cartesian): D_NAC = (4 pi e^2/Omega) (qhat Z*_a)(qhat Z*_b) /
     /// (qhat eps_inf qhat) / sqrt(M_a M_b). Uses the dielectric tensor and
     /// Born charges stored in data (set by DFPT_Q0, C6).
     void add_loto(const ModuleBase::Vector3<double>& qhat, DFPT_PW_Data& data);
-    
+
     /// Acoustic sum rule check at q=Gamma: max_a |sum_b D_ab| relative to
     /// the largest matrix element; returns true when below 1e-6 (or away
     /// from Gamma, where the rule does not apply).
     bool check_sum_rule(int q_idx, DFPT_PW_Data& data) const;
 
-private:
+    /// Ewald ion-ion force constants C^ewald_ab(q) (G-space + real-space +
+    /// Gaussian self term), mass-reduced by 1/sqrt(M_a M_b). A stateless
+    /// building block exposed publicly so the serial analytic tests can
+    /// validate it directly (no internal state is touched).
+    void ion_ion(const ModuleBase::Vector3<double>& q_frac, ModuleBase::ComplexMatrix& dyn);
+
+    /// read-only view of the accumulated electronic dynamical-matrix rows
+    /// (see dynmat_accum_); consumed by the serial analytic tests.
+    const ModuleBase::ComplexMatrix& dynmat_accum() const
+    {
+        return dynmat_accum_;
+    }
+
+  private:
     UnitCell* ucell_ = nullptr;
     ModulePW::PW_Basis* pw_rho_ = nullptr;
     DFPT_Pert* pert_ = nullptr;
-    
+
     double ewald_alpha_ = 0.0;
     double ewald_rcut_ = 0.0;
-    
-    /// Ewald ion-ion force constants C^ewald_ab(q) (G-space + real-space +
-    /// Gaussian self term), mass-reduced by 1/sqrt(M_a M_b).
-    void ion_ion(const ModuleBase::Vector3<double>& q_frac, ModuleBase::ComplexMatrix& dyn);
-    
+
+    /// same-atom anharmonic term <psi | d2_ab V_ext | psi> accumulated into
+    /// the (rowb, cola) entries of dynmat_accum_ (upper triangle only; the
+    /// Hermitian partner is added here from conj(d2sum))
+    void accum_d2_same_atom(int atom_idx,
+                            int dir,
+                            int iat,
+                            int idir,
+                            int rowb,
+                            const psi::Psi<std::complex<double>>& psi,
+                            const ModuleBase::matrix& wg);
+
     /// DFT+U contribution to the dynamical matrix (U0 reservation).
     void dftu_onsite(int q_idx, DFPT_PW_Data& data);
 

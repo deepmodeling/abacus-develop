@@ -1,6 +1,8 @@
 #include "source_estate/module_charge/chgmixing.h"
+
+#include "source_base/parallel_comm.h"
 #include "source_estate/update_pot.h"
-#include "source_lcao/module_dftu/dftu_lcao.h"
+#include "source_lcao/module_dftu/dftu_nao.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 
 void module_charge::chgmixing_ks(const int iter, // scf iteration number
@@ -128,12 +130,10 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
     {
         p_chgmix->init_mixing();
         p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
-        if (inp.dft_plus_u && inp.mixing_dftu)
+        if (inp.dft_plus_u && dftu.has_occ_mixer())
         {
-            // enable mixing_dftu for DFT+U occupation mixing
-            dftu.enable_mixing();
-            // allocate memory for uom_mdata
-            p_chgmix->allocate_mixing_uom(dftu.get_size_pot_uterm_pw());
+            // allocate memory for uom_mdata sized to the flat occupation buffer
+            p_chgmix->allocate_mixing_uom(dftu.occ_mixer().flat_size());
         }
     }
 
@@ -191,11 +191,6 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
         p_chgmix->mix_reset(); // init mixing
         p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
         p_chgmix->mixing_restart_count = 0;
-        // enable mixing_dftu for DFT+U occupation mixing
-        if (inp.dft_plus_u && inp.mixing_dftu)
-        {
-            dftu.enable_mixing();
-        }
         // this output will be removed once the feeature is stable
         if (dftu.get_uramping() > 0.01)
         {

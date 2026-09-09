@@ -22,6 +22,7 @@ VPATH=./src_global:\
 ./source_base:\
 ./source_base/kernels:\
 ./source_base/module_external:\
+./source_base/module_parallel:\
 ./source_base/module_container/base/core:\
 ./source_base/module_container/ATen/core:\
 ./source_base/module_container/ATen/kernels:\
@@ -195,7 +196,7 @@ OBJS_BASE=assoc_laguerre.o\
     orb_io.o\
 
 OBJS_CELL=atom_pseudo.o\
-    base_cell.o\
+    basecell.o\
     qlist.o\
     atom_spec.o\
     pseudo.o\
@@ -211,7 +212,7 @@ OBJS_CELL=atom_pseudo.o\
     print_cell.o\
     setup_nonlocal.o\
     klist.o\
-    k_vector_utils.o\
+    klist_io.o\
     reciprocal_grid.o\
     cell_index.o\
     cell_tools.o\
@@ -226,8 +227,8 @@ OBJS_CELL=atom_pseudo.o\
     read_pp_ucell.o\
     cal_wfc.o\
     cal_ux.o\
-    distributed_mdcell_reader.o\
-    md_cell.o\
+    mdcell_reader.o\
+    mdcell.o\
     cif_io.o\
     ucell_io.o\
 
@@ -282,6 +283,8 @@ OBJS_ELECSTAT=elecstate.o\
     read_orb.o\
     setup_estate_pw.o\
     update_pot.o\
+    occ_matrix.o\
+    occ_mixer.o
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       init_dm.o\
@@ -374,14 +377,23 @@ OBJS_HAMILT_OF=kedf_tf.o\
     kedf_manager.o\
     evolve_ofdft.o\
 
-OBJS_DFPT=dfpt_metal.o\
-    dfpt_hamilt_shift.o\
+OBJS_DFPT=dfpt_hamilt_shift.o\
     dfpt_kq_basis.o\
+    dfpt_metal.o\
     dfpt_pert.o\
+    dfpt_pert_nl.o\
+    dfpt_pert_vkb.o\
     dfpt_phon.o\
+    dfpt_phon_elec.o\
+    dfpt_phon_ewald.o\
     dfpt_pw.o\
     dfpt_pw_data.o\
+    dfpt_pw_init.o\
+    dfpt_pw_q0.o\
+    dfpt_pw_run.o\
+    dfpt_pw_solve.o\
     dfpt_q0.o\
+    dfpt_q0_pos.o\
     dfpt_rho.o\
     dfpt_stern.o
 
@@ -402,13 +414,12 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     veff_lcao.o\
     veff_dh.o\
     meta_lcao.o\
-    dftu_lcao_op.o\
+    dftu_nao_op.o\
     deepks_lcao.o\
     op_exx_lcao.o\
     dspin_lcao.o\
     dspin_fs.o\
     setup_dftu_lcao.o\
-    dftu_fs.o\
     operator_fs_utils.o\
 
 OBJS_HCONTAINER=base_matrix.o\
@@ -526,6 +537,9 @@ OBJS_PW=fft_bundle.o\
     pw_op.o\
 
 OBJS_RELAXATION=relax_data.o\
+    socket_ipi.o\
+    socket_frame.o\
+    socket_driver.o\
     cg_base.o\
     bfgs_basic.o\
     relax_driver.o\
@@ -619,7 +633,6 @@ OBJS_IO=module_parameter/input_conv.o\
     output.o\
     module_output/print_info.o\
     module_output/read_cube.o\
-    module_chgpot/rhog_io.o\
     module_wf/read_wfc_pw.o\
     module_wf/read_wf2rho_pw.o\
     module_restart/restart.o\
@@ -641,10 +654,8 @@ OBJS_IO=module_parameter/input_conv.o\
     module_output/write_pao.o\
     module_wf/write_wfc_pw.o\
     module_output/write_cube.o\
-    module_chgpot/write_elecstat_pot.o\
     module_elf/write_elf.o\
     module_dipole/write_dipole.o\
-    module_chgpot/write_init.o\
     module_current/td_current_io.o\
     module_current/td_current_io_comm.o\
     td_efield_io.o\
@@ -785,7 +796,18 @@ OBJS_PARALLEL=parallel_common.o\
     parallel_grid.o\
     parallel_kpoints.o\
     parallel_reduce.o\
-    parallel_device.o
+    parallel_device.o\
+    para_world.o\
+    para_collection.o\
+    para_kmesh_world.o\
+    para_pw_world.o\
+    para_diag_world.o\
+    para_rgrid_world.o\
+    para_bgroup_world.o\
+    para_matrix_world.o\
+    para_mpi_func.o\
+    para_setup.o\
+    para_bridge.o
 
 OBJS_SRCPW=h_ewald_pw.o\
     dnrm2.o\
@@ -809,18 +831,22 @@ OBJS_SRCPW=h_ewald_pw.o\
     mix_precond.o\
     charge_mixing_rho.o\
     charge_mixing_uspp.o\
+    rhog_io.o\
+    write_elecstat_pot.o\
+    write_init.o\
     fp_energy.o\
     setup_pot.o\
     setup_pwrho.o\
     setup_pwwfc.o\
+    uspp_support.o\
     update_cell_pw.o\
     dftu_base.o\
-    dftu_output.o\
-    dftu_tools_pw.o\
-    dftu_cal_occ_pw.o\
+    dftu_base_io.o\
+    dftu_base_occ.o\
+    dftu_base_tools.o\
+    yukawa_screening.o\
     setup_dftu_pw.o\
     deltaspin_pw.o\
-    deltaspin_pw_impl.o\
     force_pw.o\
     force_pw_us.o\
     force_pw_nl.o\
@@ -888,29 +914,33 @@ OBJS_VDW=vdw.o\
     vdwd3_parameters.o\
     vdwd2.o\
     vdwd3.o\
-    vdwd3_parameters_tab.o\
-    vdwd3_autoset_xcname.o\
-    vdwd3_auto_xcpar.o
+    vdwd3_data.o\
+    vdwd3_evaluator.o\
+    vdw_xcname.o
 
-OBJS_DFTU=dftu_lcao.o\
-      dftu_force.o\
-      dftu_yukawa.o\
-      dftu_folding.o\
-      dftu_lcao_pots.o\
-      dftu_lcao_energy.o\
-      dftu_lcao_op_legacy.o\
-      dftu_lcao_occ.o\
+OBJS_DFTU=dftu_nao.o\
+      dftu_nao_fs_k.o\
+      dftu_nao_for_r.o\
+      dftu_nao_fs_r.o\
+      dftu_nao_str_r.o\
+      dftu_nao_folding.o\
+      dftu_nao_pots.o\
+      dftu_nao_energy.o\
+      dftu_nao_op_legacy.o\
+      dftu_nao_occ.o\
       dftu_hamilt.o
 
 OBJS_DELTASPIN=basic_funcs.o\
       cal_mw_from_lambda.o\
       cal_mw.o\
-      init_sc.o\
+      deltaspin_init.o\
       lambda_loop_helper.o\
       lambda_loop.o\
       spin_constrain.o\
-      cal_mw_helper.o\
       deltaspin_lcao.o\
+      deltaspin_lcao_mi.o\
+      deltaspin_state.o\
+      deltaspin_pw_mi.o\
       mi_tools.o\
       template_helpers.o\
 

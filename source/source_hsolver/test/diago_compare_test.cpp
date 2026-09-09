@@ -352,12 +352,13 @@ static Result run_bpcg(const std::vector<Real>& band, int n, int bw, int bd, int
     hsolver::DiagoBPCG<T, hsolver::base_device::DEVICE_CPU> bpcg(prec.data());
     bpcg.init_iter(nband, nband, n, n);
     auto h_op = [&band, n, bw, bd](T* in, T* out, int ld, int nc) { banded_h_multiply(band.data(), n, bw, bd, in, out, ld, nc); };
+    auto s_op = [](const T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); };
     // BPCG::diag() is a single block-CG sweep; iterate until convergence.
     int it = 0;
     auto t0 = std::chrono::high_resolution_clock::now();
     for (; it < max_outer_passes; ++it)
     {
-        bpcg.diag(h_op, psi.data(), eval.data(), ethr);
+        bpcg.diag(h_op, s_op, psi.data(), eval.data(), ethr);
         if (max_eval_err(eval.data(), ref, nband) < err_target)
         {
             break;

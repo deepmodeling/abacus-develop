@@ -4,12 +4,15 @@
 #include "source_base/macros.h"
 #include "source_estate/elecstate.h"
 #include "source_hamilt/hamilt.h"
+#include <iosfwd>
 
 /// General_Exx_Info forward declaration, full definition in general_exx_info.h
 struct General_Exx_Info;
 
 namespace hsolver
 {
+
+struct diag_comm_info;
 
 // LCAO-in-PW does not support GPU now.
 template <typename T>
@@ -40,6 +43,8 @@ class HSolverLIP
                psi::Psi<T>& psi,
                elecstate::ElecState* pes,
                psi::Psi<T>& transform,
+               const diag_comm_info& diag_comm,
+               std::ostream& log,
                const bool skip_charge,
                const double tpiba,
                const int nat,

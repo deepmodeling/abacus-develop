@@ -23,17 +23,14 @@ list(APPEND objects
     module_bessel/numerical_descriptor.cpp
     module_output/print_info.cpp
     module_output/read_cube.cpp
-    module_chgpot/rhog_io.cpp
     module_wf/read_wfc_pw.cpp
     module_wf/read_wf2rho_pw.cpp
     module_restart/restart.cpp
     module_wf/write_wfc_pw.cpp
     module_output/write_pao.cpp
     module_output/write_cube.cpp
-    module_chgpot/write_elecstat_pot.cpp
     module_elf/write_elf.cpp
     module_dipole/write_dipole.cpp
-    module_chgpot/write_init.cpp
     module_ml/write_mlkedf_desc.cpp
     module_current/td_current_io.cpp
     module_current/td_current_io_comm.cpp

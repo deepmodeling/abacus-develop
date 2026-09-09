@@ -1,8 +1,11 @@
-#include "dftu_lcao.h"
+#include "dftu_nao.h"
 #include "dftu_hamilt.h"
-#include "dftu_lcao_pots.h"
+#include "dftu_nao_pots.h"
+#include "source_base/global_function.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
+#include "source_base/tool_title.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 
 
 #ifdef __LCAO
@@ -125,9 +128,9 @@ void pot_uterm_real(Plus_U& dftu,
     return;
 }
 
-} // namespace DFTU_LCAO
-
-void Plus_U::cal_eff_pot_mat_R_double(const UnitCell& ucell, const Parallel_Orbitals* pv, const int ispin, double* SR, double* HR, const int npol)
+/// @brief Accumulate the DFT+U term into the real-space HR (double).
+/// Wraps pot_onsite_real plus the (pot_onsite*SR + SR*pot_onsite)/2 GEMM pair.
+void pot_uterm_HR_real(const Plus_U& dftu, const UnitCell& ucell, const Parallel_Orbitals* pv, const int ispin, double* SR, double* HR, const int npol)
 {
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
@@ -135,7 +138,7 @@ void Plus_U::cal_eff_pot_mat_R_double(const UnitCell& ucell, const Parallel_Orbi
     const int nlocal = pv->get_global_row_size();
 
     std::vector<double> pot_onsite(pv->nloc);
-    DFTU_LCAO::pot_onsite_real(*this, ucell, pv, ispin, true, &pot_onsite[0], npol);
+    pot_onsite_real(dftu, ucell, pv, ispin, true, &pot_onsite[0], npol);
 
 #ifdef __MPI
     ScalapackConnector::gemm(transN, transN,
@@ -158,7 +161,9 @@ void Plus_U::cal_eff_pot_mat_R_double(const UnitCell& ucell, const Parallel_Orbi
     return;
 }
 
-void Plus_U::cal_eff_pot_mat_R_complex_double(const UnitCell& ucell, const Parallel_Orbitals* pv, const int ispin, std::complex<double>* SR, std::complex<double>* HR, const int npol)
+/// @brief Accumulate the DFT+U term into the real-space HR (complex).
+/// Wraps pot_onsite_complex plus the (pot_onsite*SR + SR*pot_onsite)/2 GEMM pair.
+void pot_uterm_HR_complex(const Plus_U& dftu, const UnitCell& ucell, const Parallel_Orbitals* pv, const int ispin, std::complex<double>* SR, std::complex<double>* HR, const int npol)
 {
     const char transN = 'N', transT = 'T';
     const int one_int = 1;
@@ -166,7 +171,7 @@ void Plus_U::cal_eff_pot_mat_R_complex_double(const UnitCell& ucell, const Paral
     const int nlocal = pv->get_global_row_size();
 
     std::vector<std::complex<double>> pot_onsite(pv->nloc);
-    DFTU_LCAO::pot_onsite_complex(*this, ucell, pv, ispin, true, &pot_onsite[0], npol);
+    pot_onsite_complex(dftu, ucell, pv, ispin, true, &pot_onsite[0], npol);
 
 #ifdef __MPI
     ScalapackConnector::gemm(transN, transN,
@@ -188,5 +193,7 @@ void Plus_U::cal_eff_pot_mat_R_complex_double(const UnitCell& ucell, const Paral
 
     return;
 }
+
+} // namespace DFTU_LCAO
 
 #endif

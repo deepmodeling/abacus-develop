@@ -239,7 +239,7 @@ void Ions_Move_LBFGS::determine_step(std::vector<double>& steplength,std::vector
 }
 void Ions_Move_LBFGS::update_pos(UnitCell& ucell)
 {
-    double a[3*size];
+    std::vector<double> a(3 * size, 0.0);
     for(int i=0;i<size;i++)
     {
         for(int j=0;j<3;j++)
@@ -248,7 +248,7 @@ void Ions_Move_LBFGS::update_pos(UnitCell& ucell)
             a[i*3+j]/=ModuleBase::BOHR_TO_A;
         }
     }
-    unitcell::update_pos_tau(ucell.lat,a,ucell.ntype,ucell.nat,ucell.atoms);
+    unitcell::update_pos_tau(ucell.lat,a.data(),ucell.ntype,ucell.nat,ucell.atoms);
 }
 
 bool Ions_Move_LBFGS::is_restrain()

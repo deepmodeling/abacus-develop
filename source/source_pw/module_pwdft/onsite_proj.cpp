@@ -8,8 +8,10 @@ projectors::OnsiteProjector<T, Device>* projectors::OnsiteProjector<T, Device>::
     return &instance;
 }
 
+namespace projectors {
+
 template<typename T, typename Device>
-projectors::OnsiteProjector<T, Device>::~OnsiteProjector()
+OnsiteProjector<T, Device>::~OnsiteProjector()
 {
     //delete[] becp;
     delete fs_tools;
@@ -24,17 +26,19 @@ projectors::OnsiteProjector<T, Device>::~OnsiteProjector()
 
 // explicit method instantiation
 template
-projectors::OnsiteProjector<double, base_device::DEVICE_CPU>*
-projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
+OnsiteProjector<double, base_device::DEVICE_CPU>*
+OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
 
 template
-projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::~OnsiteProjector();
+OnsiteProjector<double, base_device::DEVICE_CPU>::~OnsiteProjector();
 
 #if ((defined __CUDA) || (defined __ROCM))
 template
-projectors::OnsiteProjector<double, base_device::DEVICE_GPU>*
-projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
+OnsiteProjector<double, base_device::DEVICE_GPU>*
+OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
 
 template
-projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::~OnsiteProjector();
+OnsiteProjector<double, base_device::DEVICE_GPU>::~OnsiteProjector();
 #endif
+
+} // namespace projectors

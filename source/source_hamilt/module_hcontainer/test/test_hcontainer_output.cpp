@@ -1,6 +1,9 @@
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_hamilt/module_hcontainer/output_hcontainer.h"
 #include "source_cell/unitcell.h"
+#include <complex>
+#include <sstream>
+#include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -158,4 +161,79 @@ TEST_F(OutputHContainerTest, Write)
     EXPECT_THAT(output, testing::HasSubstr(" 5.00e+00 6.00e+00 1.00e+01"));
     EXPECT_THAT(output, testing::HasSubstr(" 2 3 3"));
     EXPECT_THAT(output, testing::HasSubstr(" 0 0 0 2 3"));
+}
+
+template <typename T>
+class OutputHContainerPreservationTest : public testing::Test
+{
+};
+
+using OutputTypes = testing::Types<double, std::complex<double>>;
+TYPED_TEST_SUITE(OutputHContainerPreservationTest, OutputTypes);
+
+TYPED_TEST(OutputHContainerPreservationTest, RepeatedWritesPreserveAllRBlocksAndBackingStorage)
+{
+    Parallel_Orbitals para;
+    para.set_serial(4, 4);
+    const int atom_begin[] = {0, 2};
+    para.set_atomic_trace(atom_begin, 2, 4);
+    std::vector<TypeParam> first = {TypeParam(1), TypeParam(2), TypeParam(3), TypeParam(4)};
+    std::vector<TypeParam> second = {TypeParam(5), TypeParam(6), TypeParam(7), TypeParam(8)};
+    std::vector<TypeParam> empty(4, TypeParam(1e-12));
+    const auto first_before = first;
+    const auto second_before = second;
+    const auto empty_before = empty;
+    hamilt::HContainer<TypeParam> matrix(&para);
+    matrix.insert_pair(hamilt::AtomPair<TypeParam>(0, 0, 1, 0, 0, &para, first.data()));
+    matrix.insert_pair(hamilt::AtomPair<TypeParam>(0, 0, -1, 0, 0, &para, second.data()));
+    matrix.insert_pair(hamilt::AtomPair<TypeParam>(1, 1, 0, 0, 0, &para, empty.data()));
+    auto* pair = matrix.find_pair(0, 0);
+    ASSERT_NE(pair, nullptr);
+    const auto first_r = pair->get_R_index(0);
+    const auto second_r = pair->get_R_index(1);
+    const auto* first_pointer = pair->get_pointer(0);
+    const auto* second_pointer = pair->get_pointer(1);
+
+    std::ostringstream once;
+    hamilt::Output_HContainer<TypeParam> writer(&matrix, once, 1e-10, 8);
+    writer.write();
+    EXPECT_THAT(once.str(), testing::HasSubstr(" -1 0 0 4\n"));
+    EXPECT_THAT(once.str(), testing::HasSubstr(" 0 0 0 0\n # CSR values\n\n # CSR column indices\n\n"));
+    EXPECT_LT(once.str().find(" -1 0 0 4\n"), once.str().find(" 1 0 0 4\n"));
+    const std::string first_output = once.str();
+    writer.write();
+    EXPECT_EQ(once.str(), first_output + first_output);
+
+    std::ostringstream block;
+    hamilt::Output_HContainer<TypeParam> single(&matrix, block, 1e-10, 8);
+    single.write(1, 0, 0);
+    single.write(-1, 0, 0);
+    EXPECT_EQ(matrix.size_atom_pairs(), 2); // No R remains fixed after writing.
+    EXPECT_EQ(matrix.size_R_loop(), 3);
+    EXPECT_EQ(matrix.find_pair(0, 0), pair);
+    EXPECT_EQ(pair->get_R_index(0), first_r);
+    EXPECT_EQ(pair->get_R_index(1), second_r);
+    EXPECT_EQ(pair->get_pointer(0), first_pointer);
+    EXPECT_EQ(pair->get_pointer(1), second_pointer);
+    for (int element = 0; element < 4; ++element)
+    {
+        EXPECT_EQ(first_pointer[element], first_before[element]);
+        EXPECT_EQ(second_pointer[element], second_before[element]);
+    }
+    EXPECT_EQ(first, first_before);
+    EXPECT_EQ(second, second_before);
+    EXPECT_EQ(empty, empty_before);
+
+    // The same container must still be usable by a subsequent gamma-only calculation.
+    matrix.fix_gamma();
+    EXPECT_EQ(matrix.size_R_loop(), 1);
+    for (int element = 0; element < 4; ++element)
+    {
+        EXPECT_EQ(matrix.find_pair(0, 0)->get_pointer(0)[element],
+                  first_before[element] + second_before[element]);
+    }
+    std::ostringstream gamma;
+    hamilt::Output_HContainer<TypeParam> gamma_writer(&matrix, gamma, 1e-10, 8);
+    gamma_writer.write();
+    EXPECT_THAT(gamma.str(), testing::HasSubstr(" 0 0 0 4\n"));
 }

@@ -2,6 +2,7 @@
 
 #include "source_base/global_variable.h"
 #include "source_base/memory_recorder.h"
+#include "source_base/parallel_comm.h"
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
@@ -35,7 +36,7 @@ ESolver_SDFT_PW<T, Device>::~ESolver_SDFT_PW()
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     // 1) initialize parameters from int Input class
@@ -184,6 +185,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
                               this->stowf,
                               istep,
                               iter,
+                              GlobalV::ofs_running,
                               skip_charge);
 
     // set_diagethr need it
@@ -218,7 +220,7 @@ double ESolver_SDFT_PW<T, Device>::cal_energy()
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     Sto_Forces<double, Device> ff(ucell.nat);
@@ -240,7 +242,7 @@ void ESolver_SDFT_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matri
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     Sto_Stress_PW<double, Device> ss;
@@ -262,7 +264,7 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matr
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     // 1) write down etot and eigenvalues (for MDFT) information

@@ -1,6 +1,8 @@
 #ifndef ELECSTATEPW_H
 #define ELECSTATEPW_H
 
+#include <vector>
+
 #include <source_base/macros.h>
 
 #include "elecstate.h"
@@ -32,16 +34,24 @@ class ElecStatePW : public ElecState
     ~ElecStatePW();
 
     //! interface for HSolver to calculate rho from Psi
-    virtual void psiToRho(const psi::Psi<T, Device>& psi);
+    void psiToRho(const psi::Psi<T, Device>& psi) override;
 
-    virtual void cal_tau(const psi::Psi<T, Device>& psi);
+    void cal_tau(const psi::Psi<T, Device>& psi) override;
 
     double get_spin_constrain_energy() override;
 
     //! calculate becsum for uspp
     void cal_becsum(const psi::Psi<T, Device>& psi);
 
-    Real* becsum = nullptr;
+    /**
+     * @brief Return the USPP projector occupancy coefficients.
+     *
+     * @return Read-only canonical double-precision coefficients.
+     */
+    const std::vector<double>& get_becsum() const
+    {
+        return becsum_;
+    }
 
     //! init rho_data and kin_r_data
     void init_rho_data();
@@ -74,7 +84,7 @@ class ElecStatePW : public ElecState
 
     //! Non-local pseudopotentials
     //! \sum_lm Q_lm(r) \sum_i <psi_i|beta_l><beta_m|psi_i> w_i
-    void addusdens_g(const Real* becsum, std::complex<double>** rhog);
+    void addusdens_g(std::complex<double>** rhog);
 
     Device * ctx = {};
 
@@ -89,6 +99,8 @@ class ElecStatePW : public ElecState
     T* wfcr_another_spin = nullptr;
 
   private:
+    std::vector<double> becsum_;
+
     using meta_op = hamilt::meta_pw_op<Real, Device>;
     using elecstate_pw_op = elecstate::elecstate_pw_op<Real, Device>;
 
@@ -106,15 +118,21 @@ class ElecStatePW : public ElecState
     using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
     using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
 
-    using resmem_var_h_op = base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>;
-    using delmem_var_h_op = base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>;
-    using setmem_var_h_op = base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>;
     using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
     using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
 
     using gemv_op = ModuleBase::gemv_op<T, Device>;
     using gemm_op = ModuleBase::gemm_op<T, Device>;
 };
+
+/**
+ * @brief Return the USPP projector occupancy coefficients of a PW electronic state.
+ *
+ * @param elec Electronic state to inspect.
+ * @return Read-only coefficients, or nullptr when the state is not a supported PW state for Device.
+ */
+template <typename Device>
+const std::vector<double>* get_becsum(const ElecState& elec);
 
 } // namespace elecstate
 

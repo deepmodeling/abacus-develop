@@ -1,7 +1,5 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#define private public
-#undef private
 #include "memory"
 #include "source_base/mathzone.h"
 #include "source_base/global_variable.h"

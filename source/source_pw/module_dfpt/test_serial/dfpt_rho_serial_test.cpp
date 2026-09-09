@@ -9,10 +9,7 @@
 // the real serial initgrids/initparameters/setuptransform path on a shared
 // FFT grid, exactly like the production setup_pwrho/setup_pwwfc sequence.
 
-#define private public
-#include "source_cell/qlist.h"
-#undef private
-
+#include "dfpt_serial_fixture.h"
 #include "source_base/constants.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
@@ -23,7 +20,6 @@
 #include "source_pw/module_dfpt/dfpt_kq_basis.h"
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_dfpt/dfpt_rho.h"
-#include "dfpt_serial_fixture.h"
 
 /************************************************
  *  serial unit test of DFPT_Rho (C3)
@@ -42,7 +38,8 @@
  *   - occupation gate: bands with wg < 1e-8 do not contribute.
  */
 
-namespace {
+namespace
+{
 
 unsigned g_seed = 20260815u;
 double test_rand()
@@ -68,7 +65,7 @@ class DFPTRhoSerialTest : public DFPTSerialBase
     void SetUp() override
     {
         DFPTSerialBase::SetUp();
-        rho_.init(1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, "plain", 0.4, 0.0);
+        rho_.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("plain"), 0.4, 0.0});
     }
 
     void FillRandomStates(psi::Psi<std::complex<double>>& psi,
@@ -135,8 +132,7 @@ TEST_F(DFPTRhoSerialTest, ComputeDrhoMatchesBruteForceGSpace)
         const int mx = (ix <= pw_rho_.nx / 2) ? ix : ix - pw_rho_.nx;
         const int my = (iy <= pw_rho_.ny / 2) ? iy : iy - pw_rho_.ny;
         const int mz = (iz <= pw_rho_.nz / 2) ? iz : iz - pw_rho_.nz;
-        const ModuleBase::Vector3<double> delta =
-            ModuleBase::Vector3<double>(mx, my, mz) * G_;
+        const ModuleBase::Vector3<double> delta = ModuleBase::Vector3<double>(mx, my, mz) * G_;
         // A_Delta = (2 w / omega) * sum_G c*_G d_{G+Delta}: the spin factor
         // 2 sits in the band weight w1 = 2 w / omega (the QE incdrhoscf
         // convention, a915352cd), brute-forced over the lists
@@ -146,9 +142,8 @@ TEST_F(DFPTRhoSerialTest, ComputeDrhoMatchesBruteForceGSpace)
             const ModuleBase::Vector3<double> gq = kq.get_gcar(jgl);
             for (size_t j = 0; j < glist.size(); ++j)
             {
-                if (std::abs(glist[j].x - (gq.x - delta.x)) < 1.0e-6 &&
-                    std::abs(glist[j].y - (gq.y - delta.y)) < 1.0e-6 &&
-                    std::abs(glist[j].z - (gq.z - delta.z)) < 1.0e-6)
+                if (std::abs(glist[j].x - (gq.x - delta.x)) < 1.0e-6 && std::abs(glist[j].y - (gq.y - delta.y)) < 1.0e-6
+                    && std::abs(glist[j].z - (gq.z - delta.z)) < 1.0e-6)
                 {
                     aref += std::conj(clist[j]) * dvec[jgl];
                     break;
@@ -205,8 +200,7 @@ TEST_F(DFPTRhoSerialTest, ComputeDrhoRealSpaceMatchesDirectSum)
         const double fx = static_cast<double>(ix) / pw_rho_.nx;
         const double fy = static_cast<double>(iy) / pw_rho_.ny;
         const double fz = static_cast<double>(iz) / pw_rho_.nz;
-        const ModuleBase::Vector3<double> r_cart =
-            ModuleBase::Vector3<double>(fx, fy, fz) * latvec_;
+        const ModuleBase::Vector3<double> r_cart = ModuleBase::Vector3<double>(fx, fy, fz) * latvec_;
         std::complex<double> u(0.0, 0.0);
         for (size_t j = 0; j < glist.size(); ++j)
         {
@@ -248,7 +242,7 @@ TEST_F(DFPTRhoSerialTest, ChargeConservationAtGamma)
     ModuleDFPT::DFPT_PW_Data data0;
     data0.init(&qlist0, 1, nbands_, pw_wfc0.npwk_max, pw_rho_.nrxx, 1, 1, nullptr);
     ModuleDFPT::DFPT_Rho rho0;
-    rho0.init(1, pw_rho_.nrxx, &pw_rho_, &pw_wfc0, G_, "plain", 0.4, 0.0);
+    rho0.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc0, G_, std::string("plain"), 0.4, 0.0});
 
     psi::Psi<std::complex<double>> psi(1, nbands_, pw_wfc0.npwk_max, pw_wfc0.npwk[0], true);
     ModuleDFPT::DFPT_KQ_Basis kq0;
@@ -353,8 +347,7 @@ TEST_F(DFPTRhoSerialTest, MixDrhoSecondStepCombinesCorrectly)
 TEST_F(DFPTRhoSerialTest, VHartreeQClosedFormAndZeroMode)
 {
     // single-G amplitude: dv_ha_g[ig] = e2 4 pi / (tpiba2 |G+q|^2) drho_g[ig]
-    const int ig_star = [this]()
-    {
+    const int ig_star = [this]() {
         for (int ig = 0; ig < pw_rho_.npw; ++ig)
         {
             if ((pw_rho_.gcar[ig] + q_cart_) * (pw_rho_.gcar[ig] + q_cart_) > 1.0e-4)
@@ -373,8 +366,7 @@ TEST_F(DFPTRhoSerialTest, VHartreeQClosedFormAndZeroMode)
     ASSERT_EQ(dv.size(), static_cast<size_t>(pw_rho_.npw));
     const ModuleBase::Vector3<double> w = pw_rho_.gcar[ig_star] + q_cart_;
     const std::complex<double> expect
-        = ModuleBase::e2 * ModuleBase::FOUR_PI / (pw_rho_.tpiba2 * (w * w))
-          * drho_g[ig_star];
+        = ModuleBase::e2 * ModuleBase::FOUR_PI / (pw_rho_.tpiba2 * (w * w)) * drho_g[ig_star];
     for (int ig = 0; ig < pw_rho_.npw; ++ig)
     {
         if (ig == ig_star)
@@ -418,7 +410,7 @@ TEST_F(DFPTRhoSerialTest, MixDrhoKerkerFirstStepIsPreconditionedScaledOutput)
     }
     ASSERT_GT(w2_min, 0.0);
     const double a2 = 4.0 * w2_min;
-    rho_k.init(1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, "kerker", 0.7, a2);
+    rho_k.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("kerker"), 0.7, a2});
 
     std::vector<std::complex<double>> out(pw_rho_.npw);
     int n_small = 0;
@@ -497,8 +489,7 @@ TEST_F(DFPTRhoSerialTest, MixDrhoKerkerStabilizesStiffModelProblem)
         target[ig] = 0.01 * std::complex<double>(std::cos(0.3 * ig), std::sin(0.9 * ig));
     }
 
-    auto model_out = [&](const std::vector<std::complex<double>>& in)
-    {
+    auto model_out = [&](const std::vector<std::complex<double>>& in) {
         std::vector<std::complex<double>> o(npw);
         for (int ig = 0; ig < npw; ++ig)
         {
@@ -509,7 +500,7 @@ TEST_F(DFPTRhoSerialTest, MixDrhoKerkerStabilizesStiffModelProblem)
 
     // plain beta = 0.7 on the stiff model diverges
     ModuleDFPT::DFPT_Rho rho_p;
-    rho_p.init(1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, "plain", 0.7, 0.0);
+    rho_p.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("plain"), 0.7, 0.0});
     data_.set_drho_g(0, 0, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
     for (int it = 0; it < 40; ++it)
     {
@@ -522,7 +513,7 @@ TEST_F(DFPTRhoSerialTest, MixDrhoKerkerStabilizesStiffModelProblem)
     // kerker beta = 0.7 with a^2 = 9 w2_min (f ~ 0.1 on the stiff shell)
     // converges to the target
     ModuleDFPT::DFPT_Rho rho_k;
-    rho_k.init(1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, "kerker", 0.7, 9.0 * w2_min);
+    rho_k.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("kerker"), 0.7, 9.0 * w2_min});
     data_.set_drho_g(0, 0, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
     for (int it = 0; it < 300; ++it)
     {

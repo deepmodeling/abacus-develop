@@ -1,21 +1,14 @@
-// ============================================================
-// This code is added by Mohan Chen on 2026-05-18.
-// This code is currently in the design phase and has not been
-// put into production yet. It may change in the future.
-// Please use this code with caution. Only developers who know
-// what they are doing should use this code.
-// ============================================================
-
 #ifndef DFPT_Q0_H
 #define DFPT_Q0_H
 
 #include "dfpt_pw_data.h"
-#include "source_cell/unitcell.h"
-#include "source_psi/psi.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/unitcell.h"
+#include "source_psi/psi.h"
 
-namespace ModuleDFPT {
+namespace ModuleDFPT
+{
 
 class DFPT_Pert;
 
@@ -42,23 +35,23 @@ class DFPT_Pert;
  * SOLVED conduction-projected position response (QE zstar_eu/add_zstar_ue
  * anchoring; Gonze-Lee screened form). The position leg
  *   Y^a_{k,v} = P_c x_a|psi_{k,v}>,  (H(k)-eps_v) Y = P_c [H,x_a]|psi_v>,
-   * with the commutator rhs [H,x_a]|psi> = -(i/tpiba) dH/dk_a|psi> (the
-   * same velocity operator as above), is solved exactly by Sternheimer
-   * solves in DFPT_PW (solve_pos_resp, stashed per direction in the shared
-   * data) and therefore carries the complete conduction-space response; the
-   * eigenvector-truncated r-matrix contraction of the du form is only its
-   * nbands-cut approximation. With dpsi^kappa(scf) the converged q = 0
-   * Sternheimer displacement responses:
-   *   Z*_k,ab = Z_k delta_ab - 2 sum_{k,v occ} wg
-   *             * Re <dpsi^{k,b}_scf,v | Y^a_v>
-   * (wg carries the spin degeneracy, so the prefactor is the -2*wk of
-   * add_zstar_ue). By the symmetry of the mixed second derivative of the
-   * total energy this equals the transposed leg
-   * -2*sum wg*Re<dpsi^E_a(scf)|dV_ext^{k,b}|psi_v> that QE's zstar_eu
-   * computes with the electric-field responses; only one leg is needed.
-   * The dpsi^kappa Sternheimer gauge (<psi_occ|dpsi> = 0) drops the
-   * occupied-occupied block of x exactly. The diamond C7 target
-   * (Z* -> 0 by inversion + ASR) requires the screened dpsi.
+ * with the commutator rhs [H,x_a]|psi> = -(i/tpiba) dH/dk_a|psi> (the
+ * same velocity operator as above), is solved exactly by Sternheimer
+ * solves in DFPT_PW (solve_pos_resp, stashed per direction in the shared
+ * data) and therefore carries the complete conduction-space response; the
+ * eigenvector-truncated r-matrix contraction of the du form is only its
+ * nbands-cut approximation. With dpsi^kappa(scf) the converged q = 0
+ * Sternheimer displacement responses:
+ *   Z*_k,ab = Z_k delta_ab - 2 sum_{k,v occ} wg
+ *             * Re <dpsi^{k,b}_scf,v | Y^a_v>
+ * (wg carries the spin degeneracy, so the prefactor is the -2*wk of
+ * add_zstar_ue). By the symmetry of the mixed second derivative of the
+ * total energy this equals the transposed leg
+ * -2*sum wg*Re<dpsi^E_a(scf)|dV_ext^{k,b}|psi_v> that QE's zstar_eu
+ * computes with the electric-field responses; only one leg is needed.
+ * The dpsi^kappa Sternheimer gauge (<psi_occ|dpsi> = 0) drops the
+ * occupied-occupied block of x exactly. The diamond C7 target
+ * (Z* -> 0 by inversion + ASR) requires the screened dpsi.
  * With a symmetry-reduced k list both sums run over the irreducible k and
  * each partial tensor chi(k) is star-averaged: the physical partial at a
  * rotated star member Rk is R chi(k) R^T, and atom-resolved (Born) partials
@@ -67,13 +60,13 @@ class DFPT_Pert;
  * The absolute calibration of both expressions is pinned by the diamond
  * end-to-end test in C7 (structure/symmetry by the C6 tests).
  */
-class DFPT_Q0 {
-public:
-    DFPT_Q0();
-    ~DFPT_Q0();
+class DFPT_Q0
+{
+  public:
+    DFPT_Q0() = default;
+    ~DFPT_Q0() = default;
 
-    void init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho,
-              ModulePW::PW_Basis_K* pw_wfc, DFPT_Pert* pert);
+    void init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, ModulePW::PW_Basis_K* pw_wfc, DFPT_Pert* pert);
 
     /// SCF dielectric tensor (QE dielec.f90 form):
     ///   eps = 1 - (16 pi / Omega) sum_k wg sum_v Re <Y^a_v|dpsi^E,b_v>
@@ -84,7 +77,8 @@ public:
 
     void compute_born(const psi::Psi<std::complex<double>>& psi,
                       const ModuleBase::matrix& wg,
-                      const ModuleBase::matrix& eig, DFPT_PW_Data& data);
+                      const ModuleBase::matrix& eig,
+                      DFPT_PW_Data& data);
 
     void compute_q0_response(DFPT_PW_Data& data);
 
@@ -104,11 +98,12 @@ public:
     // applies chi' = R chi R^T directly) plus the atom map iat -> image
     // atom under the same operation (built from the direct space
     // gmatrix/gtrans pair; species map to themselves).
-    struct StarMember {
-        ModuleBase::Matrix3 cart;      ///< defaults to the identity
-        std::vector<int> atom_map;     ///< empty means the identity map
+    struct StarMember
+    {
+        ModuleBase::Matrix3 cart;  ///< defaults to the identity
+        std::vector<int> atom_map; ///< empty means the identity map
     };
-    std::vector<std::vector<StarMember>> stars_;  ///< [ik] -> star members
+    std::vector<std::vector<StarMember>> stars_; ///< [ik] -> star members
 
     /// rebuild stars_ for the stored k list (nk points); falls back to a
     /// single identity member per k when the point group is unavailable
@@ -117,11 +112,9 @@ public:
 
     /// chi_rot(a,b) = sum_{a'b'} R(a,a') R(b,b') chi(a',b') of a 3x3
     /// partial tensor under a cartesian rotation
-    static void rotate_tensor(const ModuleBase::Matrix3& r,
-                              const ModuleBase::matrix& chi,
-                              double (&chi_rot)[9]);
+    static void rotate_tensor(const ModuleBase::Matrix3& r, const ModuleBase::matrix& chi, double (&chi_rot)[9]);
 
-private:
+  private:
     UnitCell* ucell_ = nullptr;
     ModulePW::PW_Basis* pw_rho_ = nullptr;
     ModulePW::PW_Basis_K* pw_wfc_ = nullptr;

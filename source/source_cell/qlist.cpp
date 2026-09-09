@@ -4,10 +4,12 @@
 
 #include "qlist.h"
 
+#include "module_symmetry/symmetry.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/formatter.h"
 #include "source_base/tool_quit.h"
+#include "unitcell.h"
 #include <algorithm>
 #include <cassert>
 #include <iomanip>
@@ -34,19 +36,19 @@ void QList::generate_mesh(UnitCell& ucell, ModuleSymmetry::Symmetry& symm,
     const double offset[3] = {0.0, 0.0, 0.0};
     this->Monkhorst_Pack(this->nmp, offset, 0);
 
-    this->nkstot_full = this->nkstot;
+    this->nkstot_nospin = this->nkstot;
     this->nks = this->nkstot;
 
     // Star reduction: always use symmetry, always include the -q partner.
     bool match = true;
     std::string skpt;
-    this->reduce_by_symmetry(ucell, symm, true, skpt, match);
+    this->reduce_by_symmetry(ucell, symm, true, skpt, match, GlobalV::MY_RANK, GlobalV::ofs_running);
     if (!match)
     {
         ModuleBase::WARNING("QList::generate_mesh",
                             "Reciprocal lattice is incompatible with the real-space lattice. "
                             "Falling back to the unreduced q-point mesh.");
-        this->nkstot = this->nks = this->nkstot_full;
+        this->nkstot = this->nks = this->nkstot_nospin;
     }
 
     // weights sum to 1 (average over the full Brillouin zone)
@@ -111,9 +113,9 @@ void QList::read_from_file(const std::string& filename, UnitCell& ucell) {
     this->k_kword = qword;
 
     const int max_qpoints = 100000;
-    if (this->nkstot > max_qpoints)
+    if (this->nkstot < 0 || this->nkstot > max_qpoints)
     {
-        ModuleBase::WARNING("QList::read_from_file", "nkstot > MAX_QPOINTS");
+        ModuleBase::WARNING("QList::read_from_file", "nkstot is negative or greater than MAX_QPOINTS.");
         this->nkstot = this->nks = 0;
         return;
     }
@@ -187,7 +189,7 @@ void QList::read_from_file(const std::string& filename, UnitCell& ucell) {
         }
     }
 
-    this->nkstot_full = this->nks = this->nkstot;
+    this->nkstot_nospin = this->nks = this->nkstot;
 
     // complement the coordinates: fill the missing representation
     if (!this->kc_done && this->kd_done)
@@ -233,7 +235,11 @@ void QList::interpolate_q_between(std::ifstream& ifq, std::vector<ModuleBase::Ve
         ifq >> qs[iqs].y;
         ifq >> qs[iqs].z;
         ModuleBase::GlobalFunc::READ_VALUE(ifq, nql[iqs]);
-        assert(nql[iqs] >= 0);
+        if (nql[iqs] <= 0)
+        {
+            ModuleBase::WARNING_QUIT("QList::interpolate_q_between",
+                                     "Line-mode interpolation counts must be positive.");
+        }
         this->nkstot += nql[iqs];
         if ((nql[iqs] == 1) && (iqs != (nqs_special - 1)))
         {
@@ -241,7 +247,11 @@ void QList::interpolate_q_between(std::ifstream& ifq, std::vector<ModuleBase::Ve
         }
         this->kl_segids.push_back(qpt_segid);
     }
-    assert(nql[nqs_special - 1] == 1);
+    if (nql[nqs_special - 1] != 1)
+    {
+        ModuleBase::WARNING_QUIT("QList::interpolate_q_between",
+                                 "The final line-mode q-point must have an interpolation count of 1.");
+    }
 
     this->renew(this->nkstot);
 
@@ -319,8 +329,12 @@ void QList::reduce_by_symmetry(const UnitCell& ucell,
                                const ModuleSymmetry::Symmetry& symm,
                                bool use_symm,
                                std::string& skpt,
-                               bool& match) {
+                               bool& match,
+                               const int my_rank,
+                               std::ofstream& ofs_running) {
     (void)skpt;
+    (void)my_rank;
+    (void)ofs_running;
     // q-points are spin-free: build the point-group operations and always
     // double them by the time-reversal operation -q (no magnetic group).
     std::vector<ModuleBase::Matrix3> kgmatrix(48 * 2);
@@ -358,16 +372,14 @@ void QList::reduce_by_symmetry(const UnitCell& ucell,
         nrotkm *= 2;
     }
 
-    ModuleBase::Matrix3* kkmatrix = new ModuleBase::Matrix3[nrotkm];
-    symm.gmatrix_convert(kgmatrix.data(), kkmatrix, nrotkm, ucell.G, q_vec);
+    std::vector<ModuleBase::Matrix3> kkmatrix(nrotkm);
+    symm.gmatrix_convert(kgmatrix.data(), kkmatrix.data(), nrotkm, ucell.G, q_vec);
 
     std::vector<ModuleBase::Vector3<double>> qvec_ibz;
     std::vector<double> wk_ibz;
     std::vector<int> ibz_index;
     std::vector<int> ibz2bz;
-    this->reduce_ibz(kgmatrix.data(), nrotkm, ucell.G, q_vec, kkmatrix, symm.epsilon, qvec_ibz, wk_ibz, ibz_index, ibz2bz);
-
-    delete[] kkmatrix;
+    this->reduce_ibz(kgmatrix.data(), nrotkm, ucell.G, q_vec, kkmatrix.data(), symm.epsilon, qvec_ibz, wk_ibz, ibz_index, ibz2bz);
 
     // update the reduced q-point list (no spin expansion)
     const int nq_ibz = qvec_ibz.size();

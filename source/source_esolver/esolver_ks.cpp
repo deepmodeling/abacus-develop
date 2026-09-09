@@ -13,7 +13,7 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_output/output_log.h" // use write_head
 #include "source_estate/elecstate_print.h" // print_etot
-#include "source_lcao/module_dftu/dftu_lcao.h" // mohan add 2025-11-07
+#include "source_lcao/module_dftu/dftu_nao.h" // mohan add 2025-11-07
 #include "source_hamilt/module_xc/general_exx_info.h" // for init_general_exx_info
 
 namespace ModuleESolver
@@ -38,7 +38,7 @@ ESolver_KS::~ESolver_KS()
 
 void ESolver_KS::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_KS", "before_all_runners");
@@ -125,7 +125,7 @@ void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, co
 
 void ESolver_KS::runner(BaseCell& basecell, const int istep)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_KS", "runner");
@@ -170,6 +170,7 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
 
     // 7) after scf
     this->after_scf(ucell, istep, conv_esolver);
+    this->conv_esolver = conv_esolver;
 
     ModuleBase::timer::end(this->classname, "runner");
     return;
@@ -324,7 +325,7 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 
 void ESolver_KS::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     // 1) write Etot information

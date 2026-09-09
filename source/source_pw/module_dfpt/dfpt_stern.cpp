@@ -1,26 +1,27 @@
-// ============================================================
-// This code is added by Mohan Chen on 2026-05-18.
-// This code is currently in the design phase and has not been
-// put into production yet. It may change in the future.
-// Please use this code with caution. Only developers who know
-// what they are doing should use this code.
-// ============================================================
-
 #include "dfpt_stern.h"
 
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #include <cmath>
 
-namespace ModuleDFPT {
-
-DFPT_Stern::DFPT_Stern() {}
-
-DFPT_Stern::~DFPT_Stern() {}
-
-namespace {
-
-double real_vdot(const std::vector<std::complex<double>>& a,
-                 const std::vector<std::complex<double>>& b)
+namespace ModuleDFPT
 {
+
+DFPT_Stern::DFPT_Stern()
+{
+}
+
+DFPT_Stern::~DFPT_Stern()
+{
+}
+
+namespace
+{
+
+double real_vdot(const std::vector<std::complex<double>>& a, const std::vector<std::complex<double>>& b)
+{
+    ModuleBase::TITLE("DFPT_Stern", "real_vdot");
+    ModuleBase::timer::start("DFPT_Stern", "real_vdot");
     // Re <a|b> = Re sum_i conj(a_i) b_i (the CG scalar products of a
     // Hermitian operator are real up to roundoff)
     double s = 0.0;
@@ -28,6 +29,7 @@ double real_vdot(const std::vector<std::complex<double>>& a,
     {
         s += a[i].real() * b[i].real() + a[i].imag() * b[i].imag();
     }
+    ModuleBase::timer::end("DFPT_Stern", "real_vdot");
     return s;
 }
 
@@ -37,6 +39,8 @@ void DFPT_Stern::apply_pv(const std::vector<std::vector<std::complex<double>>>& 
                           const std::vector<std::complex<double>>& x,
                           std::vector<std::complex<double>>& px) const
 {
+    ModuleBase::TITLE("DFPT_Stern", "apply_pv");
+    ModuleBase::timer::start("DFPT_Stern", "apply_pv");
     px = x;
     // two modified Gram-Schmidt sweeps keep the complement exact enough for
     // long CG chains even when the occupied set is only machine-orthonormal;
@@ -58,6 +62,7 @@ void DFPT_Stern::apply_pv(const std::vector<std::vector<std::complex<double>>>& 
             }
         }
     }
+    ModuleBase::timer::end("DFPT_Stern", "apply_pv");
 }
 
 int DFPT_Stern::solve(const LinearOperator& aop,
@@ -68,11 +73,14 @@ int DFPT_Stern::solve(const LinearOperator& aop,
                       std::vector<std::complex<double>>& dpsi,
                       double& residual) const
 {
+    ModuleBase::TITLE("DFPT_Stern", "solve");
+    ModuleBase::timer::start("DFPT_Stern", "solve");
     const int n = aop.dimension();
     dpsi.assign(n, std::complex<double>(0.0, 0.0));
     if (n == 0 || static_cast<int>(b.size()) != n || max_iter <= 0)
     {
         residual = 0.0;
+        ModuleBase::timer::end("DFPT_Stern", "solve");
         return 0;
     }
     for (size_t m = 0; m < occ_kq.size(); ++m)
@@ -80,6 +88,7 @@ int DFPT_Stern::solve(const LinearOperator& aop,
         if (static_cast<int>(occ_kq[m].size()) != n)
         {
             residual = 0.0;
+            ModuleBase::timer::end("DFPT_Stern", "solve");
             return 0;
         }
     }
@@ -87,11 +96,13 @@ int DFPT_Stern::solve(const LinearOperator& aop,
     std::vector<std::complex<double>> pb(n);
     apply_pv(occ_kq, b, pb);
     const double bnorm = std::sqrt(real_vdot(pb, pb));
-    if (bnorm < 1.0e-300)
+    const double homog_bnorm_floor = 1.0e-300; ///< empirical parameter: rhs norm floor for the homogeneous case
+    if (bnorm < homog_bnorm_floor)
     {
         // the right-hand side lies inside the occupied subspace: the
         // projected system is homogeneous and dpsi = 0 solves it exactly
         residual = 0.0;
+        ModuleBase::timer::end("DFPT_Stern", "solve");
         return 0;
     }
 
@@ -146,6 +157,7 @@ int DFPT_Stern::solve(const LinearOperator& aop,
     apply_pv(occ_kq, dpsi, tmp);
     dpsi.swap(tmp);
     residual = std::sqrt(rnorm2) / bnorm;
+    ModuleBase::timer::end("DFPT_Stern", "solve");
     return used;
 }
 

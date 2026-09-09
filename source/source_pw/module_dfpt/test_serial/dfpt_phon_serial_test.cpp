@@ -10,24 +10,20 @@
 // eigensolver and the LO-TO term. Runs without __MPI on the shared FFT grid
 // like the other DFPT serial tests.
 
-#define private public
-#include "source_cell/atom_pseudo.h"
-#include "source_cell/atom_spec.h"
-#include "source_cell/pseudo.h"
-#include "source_cell/qlist.h"
-#include "source_cell/unitcell.h"
-#include "source_cell/magnetism.h"
-#include "source_pw/module_pwdft/stru_fac.h"
-#include "source_pw/module_dfpt/dfpt_pert.h"
-#include "source_pw/module_dfpt/dfpt_phon.h"
-#undef private
-
+#include "dfpt_serial_fixture.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
+#include "source_cell/atom_pseudo.h"
+#include "source_cell/atom_spec.h"
+#include "source_cell/qlist.h"
+#include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
-#include "dfpt_serial_fixture.h"
+#include "source_pw/module_dfpt/dfpt_kq_basis.h"
+#include "source_pw/module_dfpt/dfpt_pert.h"
+#include "source_pw/module_dfpt/dfpt_phon.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 
 // ctor/dtor stubs for the cell/spepot/stru_fac link closures live in the
 // shared test/dfpt_test_mocks.cpp compiled into every DFPT test binary.
@@ -71,8 +67,7 @@ class DFPTPhonSerialTest : public DFPTSerialBase
 
     // (re)initialize the bases and the pert/phon wiring for a given (k, q)
     // pair; SetUp uses the default fixture values
-    void SetupPhon(const ModuleBase::Vector3<double>& k_d,
-                   const ModuleBase::Vector3<double>& q_d)
+    void SetupPhon(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
     {
         SetupBases(k_d, q_d, 2);
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
@@ -83,8 +78,7 @@ class DFPTPhonSerialTest : public DFPTSerialBase
     double RyBohr2AmuToCm1() const
     {
         const double amu_kg = 1.66053906660e-27; // CODATA amu in kg
-        return std::sqrt(ModuleBase::RYDBERG_SI / amu_kg)
-               / (0.529177210903e-10 * 2.0 * ModuleBase::PI * 2.99792458e10);
+        return std::sqrt(ModuleBase::RYDBERG_SI / amu_kg) / (0.529177210903e-10 * 2.0 * ModuleBase::PI * 2.99792458e10);
     }
 
     // common setup of the isotropic loto closed-form tests: zero 6x6
@@ -159,8 +153,7 @@ class DFPTPhonSerialTest : public DFPTSerialBase
             for (size_t ic = 0; ic < psi_coef.size(); ++ic)
             {
                 // AnalyticDVloc returns 0 at w = 0 (dVloc drop)
-                cross += psi_coef[ic] * std::conj(dpsi_inj[igl])
-                         * AnalyticDVloc(adir, gpp - psi_gcart[ic] + q_cart_);
+                cross += psi_coef[ic] * std::conj(dpsi_inj[igl]) * AnalyticDVloc(adir, gpp - psi_gcart[ic] + q_cart_);
             }
         }
         return cross;
@@ -199,17 +192,14 @@ TEST_F(DFPTPhonSerialTest, IonIonAcousticSumRuleGamma)
         {
             rowsum += sqrtm[j / 3] * dyn(i, j);
         }
-        EXPECT_LT(std::abs(rowsum), 1.0e-6 * max_elem)
-            << "row " << i << " sum " << std::abs(rowsum);
+        EXPECT_LT(std::abs(rowsum), 1.0e-6 * max_elem) << "row " << i << " sum " << std::abs(rowsum);
     }
     // Hermitian
     for (int i = 0; i < 6; ++i)
     {
         for (int j = i + 1; j < 6; ++j)
         {
-            EXPECT_NEAR(std::abs(dyn(i, j) - std::conj(dyn(j, i))),
-                        0.0,
-                        1.0e-10 * max_elem);
+            EXPECT_NEAR(std::abs(dyn(i, j) - std::conj(dyn(j, i))), 0.0, 1.0e-10 * max_elem);
         }
     }
 }
@@ -218,9 +208,9 @@ TEST_F(DFPTPhonSerialTest, IonIonGammaAcousticZeroModes)
 {
     // same two-atom cell: three acoustic eigenvalues vanish at Gamma
     MakeTwoAtomCell();
-    data_.set_dynmat(0, ModuleBase::ComplexMatrix(6, 6, true));
-    ModuleBase::ComplexMatrix& dyn = data_.dynmat_[0];
+    ModuleBase::ComplexMatrix dyn(6, 6, true);
     phon_.ion_ion(ModuleBase::Vector3<double>(0.0, 0.0, 0.0), dyn);
+    data_.set_dynmat(0, dyn);
     phon_.diagonalize(0, data_);
     const std::vector<double> freq = data_.get_phon_freq(0);
     ASSERT_EQ(freq.size(), 6u);
@@ -274,8 +264,7 @@ TEST_F(DFPTPhonSerialTest, IonIonGenericQVsDirectSum)
         for (int ib = 0; ib < 2; ++ib)
         {
             const bool self = (ib == ia);
-            const ModuleBase::Vector3<double> dt =
-                (ib == 0 ? tau1 : tau2) - (ia == 0 ? tau1 : tau2);
+            const ModuleBase::Vector3<double> dt = (ib == 0 ? tau1 : tau2) - (ia == 0 ? tau1 : tau2);
             for (int n1 = -nshell; n1 <= nshell; ++n1)
             {
                 for (int n2 = -nshell; n2 <= nshell; ++n2)
@@ -286,14 +275,12 @@ TEST_F(DFPTPhonSerialTest, IonIonGenericQVsDirectSum)
                         {
                             continue;
                         }
-                        const ModuleBase::Vector3<double> r(
-                            (n1 * a_ + dt.x) * lat0_,
-                            (n2 * a_ + dt.y) * lat0_,
-                            (n3 * a_ + dt.z) * lat0_);
+                        const ModuleBase::Vector3<double> r((n1 * a_ + dt.x) * lat0_,
+                                                            (n2 * a_ + dt.y) * lat0_,
+                                                            (n3 * a_ + dt.z) * lat0_);
                         const double r2 = r * r;
                         const double r5 = r2 * r2 * std::sqrt(r2);
-                        const double ph = ModuleBase::TWO_PI
-                                          * (q_d_.x * n1 + q_d_.y * n2 + q_d_.z * n3);
+                        const double ph = ModuleBase::TWO_PI * (q_d_.x * n1 + q_d_.y * n2 + q_d_.z * n3);
                         const std::complex<double> phase(std::cos(ph), std::sin(ph));
                         const double pref = -z[ia] * z[ib] * ModuleBase::e2 / std::sqrt(m[ia] * m[ib]);
                         for (int da = 0; da < 3; ++da)
@@ -305,14 +292,12 @@ TEST_F(DFPTPhonSerialTest, IonIonGenericQVsDirectSum)
                                 if (self)
                                 {
                                     ref(3 * ia + da, 3 * ia + db)
-                                        += z[ia] * z[ia] * ModuleBase::e2 / m[ia] * h0
-                                           * (1.0 - phase);
+                                        += z[ia] * z[ia] * ModuleBase::e2 / m[ia] * h0 * (1.0 - phase);
                                 }
                                 else
                                 {
                                     ref(3 * ia + da, 3 * ib + db) += pref * h0 * phase;
-                                    ref(3 * ia + da, 3 * ia + db)
-                                        -= pref * std::sqrt(m[ib] / m[ia]) * h0;
+                                    ref(3 * ia + da, 3 * ia + db) -= pref * std::sqrt(m[ib] / m[ia]) * h0;
                                 }
                             }
                         }
@@ -375,21 +360,15 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronAnalyticContraction)
     const std::vector<ModuleBase::Vector3<double>> g0(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int adir = 0; adir < 3; ++adir)
     {
-        std::complex<double> expect = wg(0, 0) * AnalyticCrossTerm(kq,
-                                                                  {std::complex<double>(1.0, 0.0)},
-                                                                  g0,
-                                                                  dpsi_inj,
-                                                                  adir);
+        std::complex<double> expect
+            = wg(0, 0) * AnalyticCrossTerm(kq, {std::complex<double>(1.0, 0.0)}, g0, dpsi_inj, adir);
         if (adir == 1)
         {
             expect = 2.0 * expect.real();
         }
         expect /= ucell_.atoms[0].mass;
-        EXPECT_NEAR(std::abs(phon_.dynmat_accum_(1, adir) - expect),
-                    0.0,
-                    1.0e-7 * (1.0 + std::abs(expect)))
-            << "adir " << adir << " got " << phon_.dynmat_accum_(1, adir)
-            << " expect " << expect;
+        EXPECT_NEAR(std::abs(phon_.dynmat_accum()(1, adir) - expect), 0.0, 1.0e-7 * (1.0 + std::abs(expect)))
+            << "adir " << adir << " got " << phon_.dynmat_accum()(1, adir) << " expect " << expect;
     }
 
     // the dpsi slot must be restored to the injected solution
@@ -413,8 +392,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2GateOffGenericQ)
 
     ModuleDFPT::DFPT_KQ_Basis kq;
     kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
-    std::vector<std::complex<double>> dpsi_inj(kq.get_npwk(),
-                                               std::complex<double>(0.0, 0.0));
+    std::vector<std::complex<double>> dpsi_inj(kq.get_npwk(), std::complex<double>(0.0, 0.0));
     dpsi_inj[0] = std::complex<double>(0.25, -0.15);
     if (kq.get_npwk() > 2)
     {
@@ -427,21 +405,15 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2GateOffGenericQ)
     const std::vector<ModuleBase::Vector3<double>> g0(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int adir = 0; adir < 3; ++adir)
     {
-        std::complex<double> expect = wg(0, 0) * AnalyticCrossTerm(kq,
-                                                                  {std::complex<double>(1.0, 0.0)},
-                                                                  g0,
-                                                                  dpsi_inj,
-                                                                  adir);
+        std::complex<double> expect
+            = wg(0, 0) * AnalyticCrossTerm(kq, {std::complex<double>(1.0, 0.0)}, g0, dpsi_inj, adir);
         if (adir == 0)
         {
             expect = 2.0 * expect.real();
         }
         expect /= ucell_.atoms[0].mass;
-        EXPECT_NEAR(std::abs(phon_.dynmat_accum_(0, adir) - expect),
-                    0.0,
-                    1.0e-7 * (1.0 + std::abs(expect)))
-            << "adir " << adir << " got " << phon_.dynmat_accum_(0, adir)
-            << " expect " << expect;
+        EXPECT_NEAR(std::abs(phon_.dynmat_accum()(0, adir) - expect), 0.0, 1.0e-7 * (1.0 + std::abs(expect)))
+            << "adir " << adir << " got " << phon_.dynmat_accum()(0, adir) << " expect " << expect;
     }
 }
 
@@ -465,14 +437,11 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
     // pairwise differences of |psi|^2 (the G=0 diagonal difference hits the
     // w=0 skip of the kernel); the (0,-1,1) difference makes the mixed
     // component K_{2,1} nonzero as well
-    const std::vector<ModuleBase::Vector3<double>> gfrac
-        = {ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-           ModuleBase::Vector3<double>(0.0, 1.0, 0.0),
-           ModuleBase::Vector3<double>(0.0, 0.0, 1.0)};
+    const std::vector<ModuleBase::Vector3<double>> gfrac = {ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                                            ModuleBase::Vector3<double>(0.0, 1.0, 0.0),
+                                                            ModuleBase::Vector3<double>(0.0, 0.0, 1.0)};
     const std::vector<std::complex<double>> ccoef
-        = {std::complex<double>(1.0, 0.0),
-           std::complex<double>(0.6, -0.3),
-           std::complex<double>(-0.4, 0.25)};
+        = {std::complex<double>(1.0, 0.0), std::complex<double>(0.6, -0.3), std::complex<double>(-0.4, 0.25)};
     const size_t ncomp = gfrac.size();
     std::vector<ModuleBase::Vector3<double>> gcart(ncomp);
     std::vector<int> ig_of(ncomp, -1);
@@ -482,12 +451,10 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
     }
     for (int ig = 0; ig < npwk; ++ig)
     {
-        const ModuleBase::Vector3<double> gprim
-            = pw_wfc_.getgpluskcar(0, ig) - k_cart;
+        const ModuleBase::Vector3<double> gprim = pw_wfc_.getgpluskcar(0, ig) - k_cart;
         for (size_t ic = 0; ic < ncomp; ++ic)
         {
-            if (std::abs(gprim.x - gcart[ic].x) < 1e-10
-                && std::abs(gprim.y - gcart[ic].y) < 1e-10
+            if (std::abs(gprim.x - gcart[ic].x) < 1e-10 && std::abs(gprim.y - gcart[ic].y) < 1e-10
                 && std::abs(gprim.z - gcart[ic].z) < 1e-10)
             {
                 ig_of[ic] = ig;
@@ -541,21 +508,17 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
                         continue;
                     }
                     const double arg = -ModuleBase::TWO_PI * (g * tau_);
-                    const std::complex<double> kterm
-                        = -(ucell_.tpiba * g[adir]) * (ucell_.tpiba * g[1])
-                          * VlocCoulomb(g2 * ucell_.tpiba2)
-                          * std::complex<double>(std::cos(arg), std::sin(arg));
+                    const std::complex<double> kterm = -(ucell_.tpiba * g[adir]) * (ucell_.tpiba * g[1])
+                                                       * VlocCoulomb(g2 * ucell_.tpiba2)
+                                                       * std::complex<double>(std::cos(arg), std::sin(arg));
                     d2elem += std::conj(ccoef[i]) * ccoef[j] * kterm;
                 }
             }
             expect += wg(0, 0) * d2elem;
         }
         expect /= ucell_.atoms[0].mass;
-        EXPECT_NEAR(std::abs(phon_.dynmat_accum_(1, adir) - expect),
-                    0.0,
-                    1.0e-7 * (1.0 + std::abs(expect)))
-            << "adir " << adir << " got " << phon_.dynmat_accum_(1, adir)
-            << " expect " << expect;
+        EXPECT_NEAR(std::abs(phon_.dynmat_accum()(1, adir) - expect), 0.0, 1.0e-7 * (1.0 + std::abs(expect)))
+            << "adir " << adir << " got " << phon_.dynmat_accum()(1, adir) << " expect " << expect;
     }
 }
 
@@ -584,8 +547,7 @@ TEST_F(DFPTPhonSerialTest, DiagonalizeKnownMatrix)
     const std::vector<double> freq = data_.get_phon_freq(0);
     ASSERT_EQ(freq.size(), 6u);
     std::vector<double> expect;
-    auto block = [&expect](double a, double b, std::complex<double> c)
-    {
+    auto block = [&expect](double a, double b, std::complex<double> c) {
         const double mid = 0.5 * (a + b);
         const double rad = std::sqrt(std::pow(0.5 * (a - b), 2) + std::norm(c));
         expect.push_back(mid + rad);
@@ -593,9 +555,9 @@ TEST_F(DFPTPhonSerialTest, DiagonalizeKnownMatrix)
     };
     block(lam[0], lam[1], dyn(0, 1)); // coupled pair
     block(lam[2], lam[3], dyn(2, 3)); // coupled pair
-    expect.push_back(lam[4]); // untouched diagonal
+    expect.push_back(lam[4]);         // untouched diagonal
     expect.push_back(lam[5]);
-    for (double& e : expect)
+    for (double& e: expect)
     {
         const double s = (e >= 0.0) ? 1.0 : -1.0;
         e = s * std::sqrt(std::abs(e)) * RyBohr2AmuToCm1();
@@ -622,8 +584,7 @@ TEST_F(DFPTPhonSerialTest, AddLotoIsotropicClosedForm)
     phon_.add_loto(qhat, data_);
 
     // closed form: D_NAC(0x,1x) = 4pi e2/Omega * 1*2/(3) / sqrt(12*4)
-    const double expect = ModuleBase::FOUR_PI * ModuleBase::e2 / ucell_.omega / 3.0
-                          * 2.0 / std::sqrt(48.0);
+    const double expect = ModuleBase::FOUR_PI * ModuleBase::e2 / ucell_.omega / 3.0 * 2.0 / std::sqrt(48.0);
     const ModuleBase::ComplexMatrix dyn = data_.get_dynmat(0);
     EXPECT_NEAR(std::abs(dyn(0, 3) - std::complex<double>(expect, 0.0)), 0.0, 1.0e-12);
     EXPECT_NEAR(std::abs(dyn(3, 0) - std::complex<double>(expect, 0.0)), 0.0, 1.0e-12);
@@ -711,12 +672,11 @@ TEST_F(DFPTPhonSerialTest, FormatReportsRegression)
     // fixture q = (0.13, 0, 0.07) direct; three crafted frequencies
     data_.set_phon_freq(0, std::vector<double>{-7.32457, 517.491, 0.0});
     const std::string qrep = phon_.format_q_report(0, data_);
-    const std::string expect_q
-        = " DFPT phonon frequencies at q #0 = (0.130000 0.000000 0.070000) "
-          "(direct) in cm^-1:\n"
-          "   mode   0 : -7.324570 cm^-1\n"
-          "   mode   1 : 517.491000 cm^-1\n"
-          "   mode   2 : 0.000000 cm^-1\n";
+    const std::string expect_q = " DFPT phonon frequencies at q #0 = (0.130000 0.000000 0.070000) "
+                                 "(direct) in cm^-1:\n"
+                                 "   mode   0 : -7.324570 cm^-1\n"
+                                 "   mode   1 : 517.491000 cm^-1\n"
+                                 "   mode   2 : 0.000000 cm^-1\n";
     EXPECT_EQ(qrep, expect_q);
 
     // LO-TO report: empty before the corrected frequencies exist
@@ -724,11 +684,10 @@ TEST_F(DFPTPhonSerialTest, FormatReportsRegression)
     data_.set_loto_dir(ModuleBase::Vector3<double>(0.0, 3.0, 0.0));
     data_.set_phon_freq_loto(std::vector<double>{0.0, 520.123456, 520.123457});
     const std::string lrep = phon_.format_loto_report(data_);
-    const std::string expect_l
-        = " DFPT LO-TO corrected frequencies at q #0 along q->0 direction "
-          "(0.000000 1.000000 0.000000) in cm^-1:\n"
-          "   mode   0 : 0.000000 cm^-1\n"
-          "   mode   1 : 520.123456 cm^-1\n"
-          "   mode   2 : 520.123457 cm^-1\n";
+    const std::string expect_l = " DFPT LO-TO corrected frequencies at q #0 along q->0 direction "
+                                 "(0.000000 1.000000 0.000000) in cm^-1:\n"
+                                 "   mode   0 : 0.000000 cm^-1\n"
+                                 "   mode   1 : 520.123456 cm^-1\n"
+                                 "   mode   2 : 520.123457 cm^-1\n";
     EXPECT_EQ(lrep, expect_l);
 }

@@ -2,7 +2,7 @@
 #define ESOLVER_H
 
 #include "source_base/matrix.h"
-#include "source_cell/base_cell.h"
+#include "source_cell/basecell.h"
 #include "source_cell/unitcell.h"
 
 struct Input_para;
@@ -45,17 +45,6 @@ class ESolver
 
     //! calcualte stress of given cell
     virtual void cal_stress(BaseCell& cell, ModuleBase::matrix& stress) = 0;
-
-    virtual bool supports_mdcell() const
-    {
-        return false;
-    }
-
-    virtual double mdcell_cutoff(const Input_para& inp) const
-    {
-        static_cast<void>(inp);
-        return 0.0;
-    }
 
     bool conv_esolver = true; // whether esolver is converged
 

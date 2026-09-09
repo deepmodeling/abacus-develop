@@ -1,11 +1,3 @@
-// ============================================================
-// This code is added by Mohan Chen on 2026-05-18.
-// This code is currently in design phase and has not been
-// put into production yet. It may change in the future.
-// Please use this code with caution. Only developers who know
-// what they are doing should use this code.
-// ============================================================
-
 #ifndef DFPT_PW_H
 #define DFPT_PW_H
 
@@ -14,20 +6,44 @@
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
 class Plus_U_Base;
 class Structure_Factor;
 
-namespace ModulePW {
+namespace ModulePW
+{
 class PW_Basis;
 class PW_Basis_K;
-}
+} // namespace ModulePW
 
-namespace ModuleDFPT {
+namespace ModuleDFPT
+{
 
 class XC_First_Order;
+
+/// Bundled initialisation context for DFPT_PW (see dfpt_pw_impl.h for the
+/// full field-level doxygen). Forward-declared here so callers can build a
+/// struct aggregate without pulling the heavy impl header; the detailed
+/// field docs live alongside the private impl header that actually uses
+/// each field.
+struct DFPT_PW_InitContext
+{
+    UnitCell* ucell;
+    const psi::Psi<std::complex<double>>* psi;
+    ModulePW::PW_Basis* pw_rho;
+    ModulePW::PW_Basis_K* pw_wfc;
+    Structure_Factor* sf;
+    const std::vector<double>* veff_r;
+    const ModuleBase::matrix* wg;
+    const ModuleBase::matrix* eig;
+    const XC_First_Order* xc;
+    double nelec;
+    double ecutwfc;
+    const Plus_U_Base* dftu;
+};
 
 /**
  * @brief Density-functional perturbation theory driver (plane waves).
@@ -45,17 +61,44 @@ class XC_First_Order;
  * With null bases (design-phase skeleton) run() keeps the documented
  * first-iteration-converged fallback of the irrep bookkeeping loop.
  */
-class DFPT_PW {
-public:
+class DFPT_PW
+{
+  public:
+    class Impl; // pimpl forward declaration (kept in public section so the
+                // private nested class can be named as DFPT_PW::Impl from
+                // outside translation units that include the impl header).
+
     DFPT_PW();
     ~DFPT_PW();
 
-    void init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
-              ModulePW::PW_Basis* pw_rho, ModulePW::PW_Basis_K* pw_wfc,
-              Structure_Factor* sf, const std::vector<double>& veff_r,
-              const ModuleBase::matrix& wg, const ModuleBase::matrix& eig,
+    /// Package-and-forward convenience wrapper: the former 12-argument
+    /// signature is retained for backward compatibility with the small
+    /// number of call sites (esolver_dfpt_pw.cpp + three test fixtures),
+    /// and the actual validation/submodule wiring happens in the
+    /// InitContext overload below. Keeping the thin wrapper inline avoids
+    /// a separate TU and gives the call-site aggregate initialization the
+    /// same performance as a direct call.
+    void init(UnitCell& ucell,
+              const psi::Psi<std::complex<double>>& psi,
+              ModulePW::PW_Basis* pw_rho,
+              ModulePW::PW_Basis_K* pw_wfc,
+              Structure_Factor* sf,
+              const std::vector<double>& veff_r,
+              const ModuleBase::matrix& wg,
+              const ModuleBase::matrix& eig,
               const XC_First_Order* xc,
-              double nelec, double ecutwfc, const Plus_U_Base* dftu);
+              double nelec,
+              double ecutwfc,
+              const Plus_U_Base* dftu)
+    {
+        const DFPT_PW_InitContext ctx{&ucell, &psi, pw_rho, pw_wfc, sf, &veff_r, &wg, &eig, xc, nelec, ecutwfc, dftu};
+        init(ctx);
+    }
+
+    /// Single-context init carrying the twelve parameters as named fields
+    /// so the function body stays under the coding-rule parameter-count
+    /// budget. Semantics are identical to the overload above.
+    void init(const DFPT_PW_InitContext& ctx);
 
     void run();
 
@@ -115,9 +158,8 @@ public:
 
     std::string format_loto_report() const;
 
-private:
-    class Impl;
-    Impl* pimpl_;
+  private:
+    std::unique_ptr<Impl> pimpl_;
 };
 
 } // namespace ModuleDFPT

@@ -440,7 +440,6 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                          if (isk != nullptr && isk[ik] == 1) {
                              spin_sign = -1;
                          }
-                         for (int ip = 0; ip < nproj; ip++)
                         for (int ip = 0; ip < nproj; ip++)
                         {
                             const int inkb = sum + ip;

@@ -2,6 +2,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include <complex>
 
 /************************************************
  *  unit test of csr_reader.cpp
@@ -71,13 +72,14 @@ TEST_F(csrFileReaderTest, CsrReader)
     // 0 0 0 10
     sparse_matrix = csr.getMatrix(0);
     sparse_matrix1 = csr.getMatrix(0, 1, 1);
-    for (const auto& element : sparse_matrix.getElements())
+    for (const auto& element: sparse_matrix.getElements())
     {
         auto it = sparse_matrix1.getElements().find(element.first);
         EXPECT_EQ(it->first.first, element.first.first);
         EXPECT_EQ(it->first.second, element.first.second);
         EXPECT_DOUBLE_EQ(it->second, element.second);
-        //std::cout << "element( " << element.first.first << ", " << element.first.second << " ) = " << element.second << std::endl;
+        // std::cout << "element( " << element.first.first << ", " << element.first.second << " ) = " << element.second
+        // << std::endl;
     }
     EXPECT_DOUBLE_EQ(sparse_matrix(0, 3), 4.0);
     EXPECT_DOUBLE_EQ(sparse_matrix(1, 2), 7.0);
@@ -85,16 +87,44 @@ TEST_F(csrFileReaderTest, CsrReader)
     // the second R
     sparse_matrix = csr.getMatrix(1);
     sparse_matrix1 = csr.getMatrix(0, 0, 0);
-    for (const auto& element : sparse_matrix.getElements())
+    for (const auto& element: sparse_matrix.getElements())
     {
         auto it = sparse_matrix1.getElements().find(element.first);
         EXPECT_EQ(it->first.first, element.first.first);
         EXPECT_EQ(it->first.second, element.first.second);
         EXPECT_DOUBLE_EQ(it->second, element.second);
-        //std::cout << "element( " << element.first.first << ", " << element.first.second << " ) = " << element.second << std::endl;
+        // std::cout << "element( " << element.first.first << ", " << element.first.second << " ) = " << element.second
+        // << std::endl;
     }
     EXPECT_DOUBLE_EQ(sparse_matrix(2, 2), 5.0);
     EXPECT_DOUBLE_EQ(sparse_matrix(2, 3), 6.0);
     EXPECT_DOUBLE_EQ(sparse_matrix(3, 3), 10.0);
     EXPECT_DOUBLE_EQ(sparse_matrix(0, 0), 0.0);
+}
+
+TEST_F(csrFileReaderTest, ComplexCsrReader)
+{
+    ModuleIO::csrFileReader<std::complex<double>> csr(filename);
+
+    EXPECT_TRUE(csr.isOpen());
+    EXPECT_EQ(csr.getStep(), 1);
+    EXPECT_EQ(csr.getMatrixDimension(), 4);
+    EXPECT_EQ(csr.getNumberOfR(), 2);
+    EXPECT_EQ(csr.getRCoordinate(0), std::vector<int>({0, 1, 1}));
+    EXPECT_EQ(csr.getRCoordinate(1), std::vector<int>({0, 0, 0}));
+
+    const ModuleIO::SparseMatrix<std::complex<double>> first_by_index = csr.getMatrix(0);
+    const ModuleIO::SparseMatrix<std::complex<double>> first_by_coordinate = csr.getMatrix(0, 1, 1);
+    EXPECT_EQ(first_by_index.getElements(), first_by_coordinate.getElements());
+    EXPECT_EQ(first_by_index(0, 3), std::complex<double>(4.0, 0.0));
+    EXPECT_EQ(first_by_index(1, 2), std::complex<double>(7.0, 0.0));
+    EXPECT_EQ(first_by_index(0, 0), std::complex<double>(0.0, 0.0));
+
+    const ModuleIO::SparseMatrix<std::complex<double>> second_by_index = csr.getMatrix(1);
+    const ModuleIO::SparseMatrix<std::complex<double>> second_by_coordinate = csr.getMatrix(0, 0, 0);
+    EXPECT_EQ(second_by_index.getElements(), second_by_coordinate.getElements());
+    EXPECT_EQ(second_by_index(2, 2), std::complex<double>(5.0, 0.0));
+    EXPECT_EQ(second_by_index(2, 3), std::complex<double>(6.0, 0.0));
+    EXPECT_EQ(second_by_index(3, 3), std::complex<double>(10.0, 0.0));
+    EXPECT_EQ(second_by_index(0, 0), std::complex<double>(0.0, 0.0));
 }

@@ -257,7 +257,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 		// information about density matrix at this k-point
 		ofs << " " << nspin << " # number of spin directions" << std::endl;
                 ofs << " " << ispin+1 << " # spin index" << std::endl; 
-		ofs << " " << kv.get_nkstot_full() << " # total k points " << std::endl;
+		ofs << " " << kv.get_nkstot_nospin() << " # total k points " << std::endl;
 		ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
 		ofs << " " << ik+1 << " # k-point index " << std::endl;
                 ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z  

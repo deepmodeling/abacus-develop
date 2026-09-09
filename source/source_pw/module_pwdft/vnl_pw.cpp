@@ -336,6 +336,19 @@ void pseudopot_cell_vnl::rescale_vnl(const double& omega_in)
     {
         this->qrad.ptr[i] *= ratio;
     }
+    if (this->use_gpu_)
+    {
+        if (this->s_tab != nullptr)
+        {
+            castmem_d2s_h2d_op()(this->s_tab, this->tab.ptr, this->tab.getSize());
+        }
+        // The double table is also used by GPU force and stress paths.
+        syncmem_d2d_h2d_op()(this->d_tab, this->tab.ptr, this->tab.getSize());
+    }
+    else if (this->s_tab != nullptr)
+    {
+        castmem_d2s_h2h_op()(this->s_tab, this->tab.ptr, this->tab.getSize());
+    }
 }
 
 template <>

@@ -81,7 +81,7 @@ struct synchronize_memory_stride {
         const std::vector<int64_t>& out_size,
         const std::vector<int64_t>& in_size)
     {
-        REQUIRES_OK(in_size.size() == out_size.size() && in_size.size() <= 2);
+        REQUIRES_OK(in_size.size() == out_size.size() && in_size.size() <= 2, "rank mismatch: in_size and out_size must have the same rank <= 2");
         if (in_size.size() == 1) {
             synchronize_memory<T, Device_out, Device_in>()(arr_out, arr_in, in_size[0]);
         }

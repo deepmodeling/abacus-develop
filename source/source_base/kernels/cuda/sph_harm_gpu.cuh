@@ -4,36 +4,15 @@
 
 namespace ModuleBase {
 
-/// Spherical harmonics computation (table lookup method)
-/// Directly uses constexpr ylmcoef, compiler auto-inlines
-/// @param nwl Maximum angular momentum L (0 <= nwl <= 5)
-/// @param x,y,z Direction vector (need not be normalized, normalization is done internally)
-/// @param ylma Output array, size (nwl+1)^2
-__device__ static void sph_harm(
+/// Evaluate the existing spherical-harmonic recurrence directly.
+/// This helper performs no input normalization and no zero-vector fallback.
+__device__ static void sph_harm_direct(
     const int nwl,
-    const double x_in,
-    const double y_in,
-    const double z_in,
+    const double x,
+    const double y,
+    const double z,
     double* __restrict__ ylma)
 {
-   // Normalize the input direction vector
-   double r = sqrt(x_in * x_in + y_in * y_in + z_in * z_in);
-   double x, y, z;
-   if (r < 1e-10)
-   {
-       // At origin, default to z-axis direction
-       x = 0.0;
-       y = 0.0;
-       z = 1.0;
-   }
-   else
-   {
-       const double inv_r = 1.0 / r;
-       x = x_in * inv_r;
-       y = y_in * inv_r;
-       z = z_in * inv_r;
-   }
-
    /***************************
    L = 0
    ***************************/
@@ -145,6 +124,39 @@ __device__ static void sph_harm(
               - tmp0 * ylma[24]; // l=5,m=-5
    if (nwl == 5)
        return;
+}
+
+/// Spherical harmonics computation (table lookup method)
+/// Directly uses constexpr ylmcoef, compiler auto-inlines
+/// @param nwl Maximum angular momentum L (0 <= nwl <= 5)
+/// @param x,y,z Direction vector (need not be normalized, normalization is done internally)
+/// @param ylma Output array, size (nwl+1)^2
+__device__ static void sph_harm(
+    const int nwl,
+    const double x_in,
+    const double y_in,
+    const double z_in,
+    double* __restrict__ ylma)
+{
+   // Normalize the input direction vector
+   double r = sqrt(x_in * x_in + y_in * y_in + z_in * z_in);
+   double x, y, z;
+   if (r < 1e-10)
+   {
+       // At origin, default to z-axis direction
+       x = 0.0;
+       y = 0.0;
+       z = 1.0;
+   }
+   else
+   {
+       const double inv_r = 1.0 / r;
+       x = x_in * inv_r;
+       y = y_in * inv_r;
+       z = z_in * inv_r;
+   }
+
+    sph_harm_direct(nwl, x, y, z, ylma);
 }
 
 /// Spherical harmonics and gradient computation

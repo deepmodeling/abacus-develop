@@ -12,9 +12,12 @@
 //-----stress------------------
 #include "source_pw/module_pwdft/stress_pw.h"
 //---------------------------------------------------
+#include "source_base/global_variable.h"
+#include "source_base/parallel_comm.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_pw/module_pwdft/hamilt_lcaopw.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
+#include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/kernels/hegvd_op.h"
@@ -74,7 +77,7 @@ namespace ModuleESolver
     template <typename T>
     void ESolver_KS_LIP<T>::before_all_runners(BaseCell& basecell, const Input_para& inp)
     {
-        basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+        basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
         UnitCell& ucell = static_cast<UnitCell&>(basecell);
         ESolver_KS_PW<T>::before_all_runners(basecell, inp);
 
@@ -147,8 +150,21 @@ namespace ModuleESolver
                                                this->inp_->basis_type,
                                                this->inp_->calculation,
                                                this->inp_->nbands);
-        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec,
-          *this->psi_local, skip_charge,ucell.tpiba,ucell.nat, this->general_exx_info_);
+#ifdef __MPI
+        const hsolver::diag_comm_info diag_comm(POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL);
+#else
+        const hsolver::diag_comm_info diag_comm(0, 1);
+#endif
+        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt),
+                              *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
+                              this->pelec,
+                              *this->psi_local,
+                              diag_comm,
+                              GlobalV::ofs_running,
+                              skip_charge,
+                              ucell.tpiba,
+                              ucell.nat,
+                              this->general_exx_info_);
 
         // add exx
 #ifdef __EXX
@@ -251,7 +267,7 @@ namespace ModuleESolver
     template <typename T>
     void ESolver_KS_LIP<T>::after_all_runners(BaseCell& basecell)
     {
-        basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+        basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
         UnitCell& ucell = static_cast<UnitCell&>(basecell);
         ESolver_KS_PW<T>::after_all_runners(basecell);
 

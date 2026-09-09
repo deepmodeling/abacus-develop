@@ -1,10 +1,6 @@
 #ifdef __PEXSI
 #include "source_hsolver/diago_pexsi.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 
-#include "source_base/global_variable.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_global.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
@@ -86,6 +82,7 @@ class PexsiPrepare
     int icontxt;
 
     double mu;
+    double nelec = 0.0;
 
     // density matrix
     std::vector<T*> dm_local;
@@ -160,7 +157,7 @@ class PexsiPrepare
             std::cout << "nrow: " << hmtest.nrow << ", ncol: " << hmtest.ncol << ", nb: " << nb2d << std::endl;
         }
 
-        dh.reset(new hsolver::DiagoPexsi<T>(&po, PARAM.input.nspin, nlocal, PARAM.input.nelec));
+        dh.reset(new hsolver::DiagoPexsi<T>(&po, 1, nlocal, nelec, dsize));
     }
 
     void distribute_data()
@@ -188,12 +185,7 @@ class PexsiPrepare
 
     void set_env()
     {
-        PARAM.sys.nlocal = nlocal;
-        PARAM.input.nbands = nbands;
-        GlobalV::DSIZE = dsize;
-        PARAM.input.nspin = 1;
         DIAG_WORLD = MPI_COMM_WORLD;
-        GlobalV::NPROC = dsize;
 
         psi.fix_k(0);
     }
@@ -303,7 +295,7 @@ class PexsiPrepare
             return false;
         }
 
-        f_dm >> PARAM.input.nelec >> mu;
+        f_dm >> nelec >> mu;
 
         dm.resize(nread * nread);
         // T* edm = new T[nglobal*nglobal];

@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "xctest.h"
 #include "../xc_functional.h"
-#include "../exx_info.h"
 
 /************************************************
 *  unit test of set_xc_type
@@ -16,19 +15,6 @@ namespace ModuleBase
     void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
     void TITLE(const std::string &class_function_name,bool disable){};
     void TITLE(const std::string &class_name,const std::string &function_name,bool disable){};
-}
-
-namespace GlobalV
-{
-    std::string BASIS_TYPE = "";
-    bool CAL_STRESS = 0;
-    int CAL_FORCE = 0;
-    int NSPIN = 1;
-}
-
-namespace GlobalC
-{
-	Exx_Info exx_info;
 }
 
 class XCTest_HSE : public XCTest
@@ -77,6 +63,20 @@ class XCTest_KSDT : public XCTest
 TEST_F(XCTest_KSDT, set_xc_type)
 {
     EXPECT_EQ(XC_Functional::get_func_type(),1);
+}
+
+TEST_F(XCTest_KSDT, runtime_parameters)
+{
+    XCFunctionalParameters parameters;
+    parameters.xc_temperature = 0.25;
+    parameters.xc_exch_ext = {101.0, 0.75};
+    parameters.xc_corr_ext = {130.0, 0.5};
+    XC_Functional::set_runtime_parameters(parameters);
+
+    const XCFunctionalParameters& stored = XC_Functional::get_runtime_parameters();
+    EXPECT_DOUBLE_EQ(stored.xc_temperature, 0.25);
+    EXPECT_EQ(stored.xc_exch_ext, parameters.xc_exch_ext);
+    EXPECT_EQ(stored.xc_corr_ext, parameters.xc_corr_ext);
 }
 
 class XCTest_KT2 : public XCTest

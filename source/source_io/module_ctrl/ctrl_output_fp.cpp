@@ -3,7 +3,7 @@
 #include "../module_dipole/dipole_io.h" // use write_dipole
 #include "source_estate/module_charge/symm_rho.h" // use Symmetry_rho
 #include "source_hamilt/module_xc/xc_functional.h"    // use XC_Functional
-#include "source_io/module_chgpot/write_elecstat_pot.h" // use write_elecstat_pot
+#include "source_estate/write_elecstat_pot.h" // use write_elecstat_pot
 #include "source_io/module_elf/write_elf.h"
 
 #ifdef __LIBXC

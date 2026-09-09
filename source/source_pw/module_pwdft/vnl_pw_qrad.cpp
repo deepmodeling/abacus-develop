@@ -18,7 +18,7 @@
  * This file contains:
  * - compute_qrad(): build the qrad interpolation table
  * - radial_fft_q(): interpolate qrad on-the-fly for given G-vectors
- * - Explicit template instantiations for CPU/GPU and float/double
+ * - Explicit template instantiations for CPU float/double
  */
 
 /**
@@ -184,12 +184,12 @@ void pseudopot_cell_vnl::radial_fft_q(const int ng,
 }
 
 /**
- * @brief Interpolate the radial Q-function on given G-vectors (device template version).
+ * @brief Interpolate the radial Q-function on given G-vectors (CPU raw-pointer template version).
  *
- * This version works with raw device pointers for both CPU and GPU backends.
+ * This version works with raw CPU pointers.
  * The angular momentum l is determined from the combined lm index.
  *
- * @param ctx    device context (CPU or GPU)
+ * @param ctx    CPU device context
  * @param ng     number of G-vectors
  * @param ih     first beta function index
  * @param jh     second beta function index
@@ -228,8 +228,6 @@ void pseudopot_cell_vnl::radial_fft_q(Device* ctx,
     const int jvl = nhtolm(itype, jh);
 
     setmem_complex_op()(qg, 0, ng);
-
-    const double* qnorm_double = reinterpret_cast<const double*>(qnorm);
 
     // makes the sum over the non zero LM
     int l = -1;
@@ -273,7 +271,8 @@ void pseudopot_cell_vnl::radial_fft_q(Device* ctx,
         double work = 0.0;
         for (int ig = 0; ig < ng; ig++)
         {
-            if (std::abs(qnorm_double[ig] - qm1) > 1e-6)
+            const double qnorm_value = static_cast<double>(qnorm[ig]);
+            if (std::abs(qnorm_value - qm1) > 1e-6)
             {
                 work = ModuleBase::PolyInt::Polynomial_Interpolation(this->qrad,
                                                                      itype,
@@ -281,15 +280,15 @@ void pseudopot_cell_vnl::radial_fft_q(Device* ctx,
                                                                      ijv,
                                                                      PARAM.globalv.nqxq,
                                                                      PARAM.globalv.dq,
-                                                                     qnorm_double[ig]);
-                qm1 = qnorm_double[ig];
+                                                                     qnorm_value);
+                qm1 = qnorm_value;
             }
             qg[ig] += pref * static_cast<FPTYPE>(work) * ylm[lp * ng + ig];
         }
     }
 }
 
-// Explicit instantiations for CPU/GPU and float/double precision.
+// Explicit instantiations for CPU float/double precision.
 // These must stay in the same translation unit as the template definition.
 template void pseudopot_cell_vnl::radial_fft_q<float, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
                                                                                const int,
@@ -307,21 +306,3 @@ template void pseudopot_cell_vnl::radial_fft_q<double, base_device::DEVICE_CPU>(
                                                                                 const double*,
                                                                                 const double*,
                                                                                 std::complex<double>*) const;
-#if defined(__CUDA) || defined(__ROCM)
-template void pseudopot_cell_vnl::radial_fft_q<float, base_device::DEVICE_GPU>(base_device::DEVICE_GPU*,
-                                                                               const int,
-                                                                               const int,
-                                                                               const int,
-                                                                               const int,
-                                                                               const float*,
-                                                                               const float*,
-                                                                               std::complex<float>*) const;
-template void pseudopot_cell_vnl::radial_fft_q<double, base_device::DEVICE_GPU>(base_device::DEVICE_GPU*,
-                                                                                const int,
-                                                                                const int,
-                                                                                const int,
-                                                                                const int,
-                                                                                const double*,
-                                                                                const double*,
-                                                                                std::complex<double>*) const;
-#endif

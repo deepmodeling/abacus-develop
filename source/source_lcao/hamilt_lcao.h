@@ -22,7 +22,7 @@ namespace elecstate { template <typename TK, typename TR> class DensityMatrix; }
 // Setup_DeePKS forward declaration, full definition in setup_deepks.h (moved to .cpp)
 // mohan add 20260605
 template <typename TK> class Setup_DeePKS;
-// Plus_U forward declaration, full definition in module_dftu/dftu_lcao.h (moved to .cpp)
+// Plus_U forward declaration, full definition in module_dftu/dftu_nao.h (moved to .cpp)
 // mohan add 20260605
 class Plus_U;
 

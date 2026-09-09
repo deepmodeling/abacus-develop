@@ -24,7 +24,6 @@
 #include "diago_pexsi.h"
 #endif
 
-#include "source_base/global_variable.h"
 #include "source_base/module_device/device.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_base/memory_recorder.h"
@@ -53,7 +52,7 @@ void HSolverLCAO<TK>::solve(hamilt::Hamilt<TK>* pHamilt,
     {
     #ifdef __MPI
     #ifdef __CUDA
-        if (this->method == "cusolver" && GlobalV::NPROC > 1)
+        if (this->method == "cusolver" && this->world_nproc > 1)
         {
             this->parakSolve_cusolver(pHamilt, psi, pes);
         }else 
@@ -113,7 +112,7 @@ void HSolverLCAO<TK>::solve(hamilt::Hamilt<TK>* pHamilt,
     else if (this->method == "pexsi")
     {
 #ifdef __PEXSI // other purification methods should follow this routine
-        DiagoPexsi<TK> pe(ParaV, nspin, this->nlocal, this->nelec);
+        DiagoPexsi<TK> pe(ParaV, nspin, this->nlocal, this->nelec, this->world_nproc);
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             /// update H(k) for each k point
@@ -203,7 +202,7 @@ void HSolverLCAO<T>::parakSolve(hamilt::Hamilt<T>* pHamilt,
     int nks = psi.get_nk();
     int nrow = this->ParaV->get_global_row_size();
     int nb2d = this->ParaV->get_block_size();
-    k2d.set_para_env(psi.get_nk(), nrow, nb2d, GlobalV::NPROC, GlobalV::MY_RANK, nspin);
+    k2d.set_para_env(psi.get_nk(), nrow, nb2d, this->world_nproc, this->world_rank, nspin);
     /// set psi_pool
     const int zero = 0;
     int coord_col = k2d.get_p2D_pool()->get_coord_col();
@@ -325,9 +324,8 @@ void HSolverLCAO<T>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
     const int local_rank = dev_ctx.get_local_rank();
     const int device_count = dev_ctx.get_device_count();
 
-    int world_rank, world_size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    const int world_rank = this->world_rank;
+    const int world_size = this->world_nproc;
 
     // Determine if this process is active (assigned a dedicated GPU)
     // We enforce 1 process per GPU by checking local_rank < device_count.
