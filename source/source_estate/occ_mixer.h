@@ -13,7 +13,7 @@ class UnitCell;
  * Owns the flattened occupation-matrix buffers used by the charge-mixing
  * machinery (PW path) and the plain linear mixing kernel (LCAO path).
  *
- * The flat layout reuses the pot_uterm_pw_index offset table: for nspin=2
+ * The flat layout reuses the uterm_mat_index offset table: for nspin=2
  * the buffer is split into [all_up | all_dn] halves; for nspin=1/4 a single
  * block per atom is used. Serialization to/from the nested OccupationMatrix
  * is delegated to OccupationMatrix::{write_to_flat, read_from_flat,
@@ -38,13 +38,13 @@ class OccMatMixer
     /**
      * @brief Allocate the flat buffers and bind the layout table.
      * @param cell          unit cell (borrowed, must outlive this object)
-     * @param orbital_corr  per-type correlated-l table (borrowed)
-     * @param flat_index    per-atom offset table, i.e. pot_uterm_pw_index (borrowed)
+     * @param l_channel  per-type correlated-l table (borrowed)
+     * @param flat_index    per-atom offset table, i.e. uterm_mat_index (borrowed)
      * @param nspin         spin channels (1, 2 or 4)
-     * @param total_size    total flat-buffer size (== pot_uterm_pw.size())
+     * @param total_size    total flat-buffer size (== uterm_mat.size())
      */
     void init(const UnitCell* cell,
-              const std::vector<int>* orbital_corr,
+              const std::vector<int>* l_channel,
               const std::vector<int>* flat_index,
               int nspin,
               int total_size);
@@ -97,9 +97,9 @@ class OccMatMixer
   private:
     std::vector<double> uom_;      ///< new / mixed flat occupation matrix
     std::vector<double> uom_save_; ///< previous flat occupation matrix
-    const std::vector<int>* index_ = nullptr;        ///< borrowed pot_uterm_pw_index
+    const std::vector<int>* index_ = nullptr;        ///< borrowed uterm_mat_index
     const UnitCell* cell_ = nullptr;                 ///< borrowed unit cell
-    const std::vector<int>* orbital_corr_ = nullptr; ///< borrowed correlated-l table
+    const std::vector<int>* l_channel_ = nullptr; ///< borrowed l_channel table
     int nspin_ = 0;
 };
 

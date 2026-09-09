@@ -90,7 +90,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              Grid_Driver& gd,
                              psi::Psi<TK>* psi,
                              hamilt::HamiltLCAO<TK, TR>* p_hamilt,
-                             Plus_U& dftu, // mohan add 2025-11-07
+                             Plus_U_Base& dftu, // mohan add 2025-11-07
                              TwoCenterBundle& two_center_bundle,
                              LCAO_Orbitals& orb,
                              const ModulePW::PW_Basis_K* pw_wfc,   // for berryphase
@@ -752,7 +752,7 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
     Grid_Driver& gd,
     psi::Psi<double>* psi,
     hamilt::HamiltLCAO<double, double>* p_hamilt,
-    Plus_U& dftu, // mohan add 2025-11-07
+    Plus_U_Base& dftu, // mohan add 2025-11-07
     TwoCenterBundle& two_center_bundle,
     LCAO_Orbitals& orb,
     const ModulePW::PW_Basis_K* pw_wfc,         // for berryphase
@@ -781,7 +781,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
     Grid_Driver& gd,
     psi::Psi<std::complex<double>>* psi,
     hamilt::HamiltLCAO<std::complex<double>, double>* p_hamilt,
-    Plus_U& dftu, // mohan add 2025-11-07
+    Plus_U_Base& dftu, // mohan add 2025-11-07
     TwoCenterBundle& two_center_bundle,
     LCAO_Orbitals& orb,
     const ModulePW::PW_Basis_K* pw_wfc,                       // for berryphase
@@ -809,7 +809,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
     Grid_Driver& gd,
     psi::Psi<std::complex<double>>* psi,
     hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* p_hamilt,
-    Plus_U& dftu, // mohan add 2025-11-07
+    Plus_U_Base& dftu, // mohan add 2025-11-07
     TwoCenterBundle& two_center_bundle,
     LCAO_Orbitals& orb,
     const ModulePW::PW_Basis_K* pw_wfc,                                     // for berryphase

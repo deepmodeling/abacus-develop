@@ -8,7 +8,7 @@ namespace sparse_format
 {
 
 	void cal_HR_dftu(
-        Plus_U &dftu, // mohan add 2025-11-07
+        Plus_U_Base &dftu, // mohan add 2025-11-07
         const UnitCell &ucell,
 		const Parallel_Orbitals &pv,
 		std::set<Abfs::Vector3_Order<int>> &all_R_coor,
@@ -18,7 +18,7 @@ namespace sparse_format
 		const double &sparse_thr);
 
 	void cal_HR_dftu_soc(
-        Plus_U &dftu, // mohan add 2025-11-07
+        Plus_U_Base &dftu, // mohan add 2025-11-07
         const UnitCell &ucell,
 		const Parallel_Orbitals &pv,
 		std::set<Abfs::Vector3_Order<int>> &all_R_coor,

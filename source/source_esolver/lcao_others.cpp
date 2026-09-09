@@ -138,7 +138,7 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                                         two_center_bundle_,
                                                         orb_,
                                                         this->dmat.dm,
-                                                        &this->dftu,
+                                                        this->dftu_.get(),
                                                         this->deepks,
                                                         istep,
                                                         this->exx_nao,

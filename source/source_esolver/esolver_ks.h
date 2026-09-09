@@ -8,8 +8,10 @@
 #include "source_hamilt/hamilt.h"                      // use Hamiltonian
 #include "source_hamilt/hamilt_base.h"                 // use Hamiltonian base class
 #include "source_hamilt/module_xc/general_exx_info.h"  // ESolver owns General_Exx_Info value
-#include "source_lcao/module_dftu/dftu_nao.h"              // mohan add 20251107
+#include "source_pw/module_pwdft/dftu_base.h"          // Plus_U_Base for dftu_ member
 #include "source_pw/module_pwdft/vnl_pw.h"
+
+#include <memory> // std::unique_ptr for dftu_ member
 
 namespace ModuleESolver
 {
@@ -60,8 +62,9 @@ class ESolver_KS : public ESolver_FP
     //! nonlocal pseudopotentials
     pseudopot_cell_vnl ppcell;
 
-    //! DFT+U method, mohan add 2025-11-07
-    Plus_U dftu;
+    //! DFT+U method (base-class pointer; PW news Plus_U_Base, LCAO news Plus_U).
+    //! Owned by ESolver_KS via unique_ptr; released automatically in ~ESolver_KS.
+    std::unique_ptr<Plus_U_Base> dftu_;
 
     std::string basisname;          //! esolver_ks_lcao.cpp
     double esolver_KS_ne = 0.0;     //! number of electrons

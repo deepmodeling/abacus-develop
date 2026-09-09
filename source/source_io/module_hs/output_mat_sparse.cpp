@@ -16,7 +16,7 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
                        hamilt::Hamilt<T>* p_ham,
-                       Plus_U* p_dftu)
+                       Plus_U_Base* p_dftu)
 {
     LCAO_HS_Arrays HS_Arrays; // store sparse arrays
 
@@ -95,7 +95,7 @@ void output_mat_sparse(const bool& out_mat_dh,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
                        hamilt::Hamilt<T>* p_ham,
-                       Plus_U* p_dftu)
+                       Plus_U_Base* p_dftu)
 {
     MatSparseOutputOptions options;
     options.out_mat_dh = out_mat_dh;
@@ -128,7 +128,7 @@ template void output_mat_sparse<double>(const bool& out_mat_dh,
                                         const Grid_Driver& grid,
                                         const K_Vectors& kv,
                                         hamilt::Hamilt<double>* p_ham,
-                                        Plus_U* p_dftu);
+                                        Plus_U_Base* p_dftu);
 
 template void output_mat_sparse<std::complex<double>>(const bool& out_mat_dh,
                                                       const bool& out_mat_ds,
@@ -143,7 +143,7 @@ template void output_mat_sparse<std::complex<double>>(const bool& out_mat_dh,
                                                       const Grid_Driver& grid,
                                                       const K_Vectors& kv,
                                                       hamilt::Hamilt<std::complex<double>>* p_ham,
-                                                      Plus_U* p_dftu);
+                                                      Plus_U_Base* p_dftu);
 
 template void output_mat_sparse<double>(const MatSparseOutputOptions& options,
                                         const int& istep,
@@ -155,7 +155,7 @@ template void output_mat_sparse<double>(const MatSparseOutputOptions& options,
                                         const Grid_Driver& grid,
                                         const K_Vectors& kv,
                                         hamilt::Hamilt<double>* p_ham,
-                                        Plus_U* p_dftu);
+                                        Plus_U_Base* p_dftu);
 
 template void output_mat_sparse<std::complex<double>>(const MatSparseOutputOptions& options,
                                                       const int& istep,
@@ -167,6 +167,6 @@ template void output_mat_sparse<std::complex<double>>(const MatSparseOutputOptio
                                                       const Grid_Driver& grid,
                                                       const K_Vectors& kv,
                                                       hamilt::Hamilt<std::complex<double>>* p_ham,
-                                                      Plus_U* p_dftu);
+                                                      Plus_U_Base* p_dftu);
 
 } // namespace ModuleIO

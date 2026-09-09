@@ -7,6 +7,7 @@
 #include "source_lcao/rho_tau_lcao.h" // use dm2rho
 #include "source_lcao/hamilt_lcao.h" // use HamiltLCAO for init_chg_hr
 #include "source_hsolver/hsolver_lcao.h" // use HSolverLCAO for init_chg_hr
+#include "source_lcao/module_dftu/dftu_nao.h" // use Plus_U for the LCAO-specific init
 
 template <typename TK>
 void LCAO_domain::set_psi_occ_dm_chg(
@@ -60,7 +61,7 @@ void LCAO_domain::set_pot(
 		const LCAO_Orbitals& orb,
 		Parallel_Orbitals &pv, // not const due to deepks
 		pseudopot_cell_vl &locpp,
-        Plus_U &dftu,
+        Plus_U_Base &dftu,
         surchem& solvent,
         Exx_NAO<TK> &exx_nao,
         Setup_DeePKS<TK> &deepks,
@@ -82,16 +83,17 @@ void LCAO_domain::set_pot(
 
     if (inp.dft_plus_u)
     {
-        dftu.init(ucell, &pv,
+        // set_pot receives the base-class reference; the LCAO-specific init
+        // (with LCAO_Orbitals) lives on the derived Plus_U, so cast here.
+        static_cast<Plus_U&>(dftu).init(ucell, &pv,
                   PARAM.globalv.npol,
-                  inp.nspin, inp.orbital_corr, inp.yukawa_potential, inp.yukawa_lambda,
+                  inp.nspin, inp.l_channel, inp.yukawa_potential, inp.yukawa_lambda,
                   PARAM.globalv.global_readin_dir,
                   PARAM.globalv.global_out_dir,
                   inp.init_chg,
                   pv.get_global_row_size(),
                   inp.ks_solver,
                   inp.device,
-                  inp.kpar,
                   PARAM.globalv.hubbard_u,
                   PARAM.globalv.uramping,
                   inp.occ_mat_ctrl,
@@ -276,7 +278,7 @@ template void LCAO_domain::set_pot<double>(
 		const LCAO_Orbitals& orb,
 		Parallel_Orbitals &pv,
 		pseudopot_cell_vl &locpp,
-        Plus_U &dftu,
+        Plus_U_Base &dftu,
         surchem& solvent,
         Exx_NAO<double> &exx_nao,
         Setup_DeePKS<double> &deepks,
@@ -293,7 +295,7 @@ template void LCAO_domain::set_pot<std::complex<double>>(
 		const LCAO_Orbitals& orb,
 		Parallel_Orbitals &pv,
 		pseudopot_cell_vl &locpp,
-        Plus_U &dftu,
+        Plus_U_Base &dftu,
         surchem& solvent,
         Exx_NAO<std::complex<double>> &exx_nao,
         Setup_DeePKS<std::complex<double>> &deepks,

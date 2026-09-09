@@ -17,7 +17,6 @@
 #include <string>
 #include <vector>
 
-#ifdef __LCAO
 
 namespace DFTU_LCAO {
 
@@ -86,7 +85,5 @@ void folding_matrix_k_new(const std::string& ks_solver,
                           hamilt::Hamilt<std::complex<double>>* p_ham);
 
 } // namespace DFTU_LCAO
-
-#endif // __LCAO
 
 #endif // DFTU_FOLDING_H

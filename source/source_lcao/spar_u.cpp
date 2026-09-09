@@ -8,7 +8,7 @@
 #include "source_lcao/module_dftu/dftu_hamilt.h"
 
 void sparse_format::cal_HR_dftu(
-        Plus_U &dftu, // mohan add 2025-11-07
+        Plus_U_Base &dftu, // mohan add 2025-11-07
         const UnitCell &ucell,
 	    const Parallel_Orbitals &pv,
         std::set<Abfs::Vector3_Order<int>> &all_R_coor,
@@ -130,7 +130,7 @@ void sparse_format::cal_HR_dftu(
 
 
 void sparse_format::cal_HR_dftu_soc(
-        Plus_U &dftu, // mohan add 2025-11-07
+        Plus_U_Base &dftu, // mohan add 2025-11-07
         const UnitCell &ucell,
 	    const Parallel_Orbitals &pv,
         std::set<Abfs::Vector3_Order<int>> &all_R_coor,

@@ -45,7 +45,7 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                const Grid_Driver* gridD_in,
                                const TwoCenterIntegrator* intor,
                                const std::vector<double>& orb_cutoff,
-                               Plus_U* p_dftu,
+                               Plus_U_Base* p_dftu,
                                const int nspin_in,
                                const double onsite_radius);
     ~DFTU<OperatorLCAO<TK, TR>>();
@@ -64,7 +64,7 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     // Getters for free functions in dftu_nao_fs_r/dftu_nao_for_r/dftu_nao_str_r
     const UnitCell* get_ucell() const { return ucell; }
-    Plus_U* get_dftu() const { return dftu; }
+    Plus_U_Base* get_dftu() const { return dftu; }
     const TwoCenterIntegrator* get_intor() const { return intor_; }
     int get_nspin() const { return nspin; }
     std::vector<AdjacentAtomInfo>& get_adjs_all() { return adjs_all; }
@@ -79,7 +79,7 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
   private:
     const UnitCell* ucell = nullptr;
 
-    Plus_U* dftu = nullptr;
+    Plus_U_Base* dftu = nullptr;
 
     hamilt::HContainer<TR>* HR = nullptr;
 

@@ -1,4 +1,3 @@
-#ifdef __LCAO
 #include "dftu_nao_fs_k.h"
 #include "dftu_nao_folding.h"
 #include "dftu_nao.h"
@@ -15,7 +14,8 @@
 
 namespace DFTU_LCAO {
 
-void force_stress(Plus_U& dftu,
+void force_stress(Plus_U_Base& dftu,
+                  const std::vector<double>& orb_cutoff,
                   const bool cal_force,
                   const bool cal_stress,
                   const UnitCell& ucell,
@@ -135,7 +135,7 @@ void force_stress(Plus_U& dftu,
             if (cal_force)
             {
                 cal_force_gamma(nlocal, npol,
-                                dftu.get_orbital_corr_vec(), dftu.occmat().iatlnmipol2iwt(),
+                                dftu.get_l_channel_vec(), dftu.occmat().iatlnmipol2iwt(),
                                 ucell, &rho_pot_onsite[0], pv,
                                 fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z, force_dftu);
             }
@@ -143,7 +143,7 @@ void force_stress(Plus_U& dftu,
             if (cal_stress)
             {
                 cal_stress_gamma(nlocal, npol,
-                                 PARAM.inp.ks_solver, dftu.get_orb_cutoff(),
+                                 PARAM.inp.ks_solver, orb_cutoff,
                                  ucell, pv, &gd,
                                  fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z, fsr.DH_r,
                                  &rho_pot_onsite[0], stress_dftu);
@@ -181,14 +181,14 @@ void force_stress(Plus_U& dftu,
             if (cal_force)
             {
                 cal_force_k(nlocal, npol,
-                            PARAM.inp.ks_solver, dftu.get_orb_cutoff(),
-                            dftu.get_orbital_corr_vec(), dftu.occmat().iatlnmipol2iwt(),
+                            PARAM.inp.ks_solver, orb_cutoff,
+                            dftu.get_l_channel_vec(), dftu.occmat().iatlnmipol2iwt(),
                             ucell, gd, fsr, pv, ik, &rho_pot_onsite[0], force_dftu, kv.kvec_d[ik]);
             }
             if (cal_stress)
             {
                 cal_stress_k(nlocal, npol,
-                             PARAM.inp.ks_solver, dftu.get_orb_cutoff(),
+                             PARAM.inp.ks_solver, orb_cutoff,
                              ucell, gd, fsr, pv, ik, &rho_pot_onsite[0], stress_dftu, kv.kvec_d[ik]);
             }
         } // ik
@@ -229,7 +229,7 @@ void cal_force_k(const int nlocal,
                  const int npol,
                  const std::string& ks_solver,
                  const std::vector<double>& orb_cutoff,
-                 const std::vector<int>& orbital_corr,
+                 const std::vector<int>& l_channel,
                  const std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& iatlnmipol2iwt,
                  const UnitCell& ucell,
                  const Grid_Driver& gd,
@@ -322,7 +322,7 @@ void cal_force_k(const int nlocal,
         for (int it = 0; it < ucell.ntype; it++)
         {
             const int NL = ucell.atoms[it].nwl + 1;
-            const int LC = orbital_corr[it];
+            const int LC = l_channel[it];
 
             if (LC == -1)
                 continue;
@@ -332,7 +332,7 @@ void cal_force_k(const int nlocal,
 
                 for (int l = 0; l < NL; l++)
                 {
-                    if (l != orbital_corr[it])
+                    if (l != l_channel[it])
                         continue;
                     const int N = ucell.atoms[it].l_nchi[l];
 
@@ -440,7 +440,7 @@ void cal_stress_k(const int nlocal,
 
 void cal_force_gamma(const int nlocal,
                      const int npol,
-                     const std::vector<int>& orbital_corr,
+                     const std::vector<int>& l_channel,
                      const std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& iatlnmipol2iwt,
                      const UnitCell& ucell,
                      const double* rho_pot_onsite,
@@ -541,7 +541,7 @@ void cal_force_gamma(const int nlocal,
         for (int it = 0; it < ucell.ntype; it++)
         {
             const int NL = ucell.atoms[it].nwl + 1;
-            const int LC = orbital_corr[it];
+            const int LC = l_channel[it];
 
             if (LC == -1)
                 continue;
@@ -551,7 +551,7 @@ void cal_force_gamma(const int nlocal,
 
                 for (int l = 0; l < NL; l++)
                 {
-                    if (l != orbital_corr[it])
+                    if (l != l_channel[it])
                         continue;
 
                     const int N = ucell.atoms[it].l_nchi[l];
@@ -663,4 +663,3 @@ void cal_stress_gamma(const int nlocal,
 
 } // namespace DFTU_LCAO
 
-#endif

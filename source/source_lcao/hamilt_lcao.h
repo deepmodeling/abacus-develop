@@ -22,9 +22,8 @@ namespace elecstate { template <typename TK, typename TR> class DensityMatrix; }
 // Setup_DeePKS forward declaration, full definition in setup_deepks.h (moved to .cpp)
 // mohan add 20260605
 template <typename TK> class Setup_DeePKS;
-// Plus_U forward declaration, full definition in module_dftu/dftu_nao.h (moved to .cpp)
-// mohan add 20260605
-class Plus_U;
+// Plus_U_Base forward declaration, full definition in source_pw/module_pwdft/dftu_base.h
+class Plus_U_Base;
 
 // Exx_NAO forward declaration, full definition in setup_exx.h (moved to .cpp)
 // mohan add 20260605
@@ -61,7 +60,7 @@ class HamiltLCAO : public Hamilt<TK>
                const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
                elecstate::DensityMatrix<TK, double>* DM_in,
-               Plus_U* p_dftu, // mohan add 2025-11-05
+               Plus_U_Base* p_dftu, // mohan add 2025-11-05
                Setup_DeePKS<TK> &deepks,
                const int istep,
                Exx_NAO<TK> &exx_nao,

@@ -17,7 +17,7 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
                                                  const Grid_Driver* GridD_in,
                                                  const TwoCenterIntegrator* intor,
                                                  const std::vector<double>& orb_cutoff,
-                                                 Plus_U* p_dftu,
+                                                 Plus_U_Base* p_dftu,
                                                  const int nspin_in,
                                                  const double onsite_radius)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), intor_(intor), orb_cutoff_(orb_cutoff)
@@ -25,9 +25,9 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
     this->cal_type = calculation_type::lcao_dftu;
     this->ucell = &ucell_in;
     this->dftu = p_dftu;
-#ifdef __DEBUG
+
     assert(this->ucell != nullptr);
-#endif
+
     // initialize HR to allocate sparse Nonlocal matrix memory
     this->initialize_HR(GridD_in, onsite_radius);
     // set nspin
@@ -55,11 +55,11 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver
         int T0=0;
         int I0=0;
         ucell->iat2iait(iat0, &I0, &T0);
-        if (!this->dftu->has_correlated_orbital(T0))
+        if (!this->dftu->has_l_channel(T0))
         {
             continue;
         }
-        const int target_L = this->dftu->get_orbital_corr(T0);
+        const int target_L = this->dftu->get_l_channel(T0);
 
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau0, T0, I0, &adjs);
@@ -107,11 +107,11 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
         int T0=0;
         int I0=0;
         ucell->iat2iait(iat0, &I0, &T0);
-        if (!this->dftu->has_correlated_orbital(T0))
+        if (!this->dftu->has_l_channel(T0))
         {
             continue;
         }
-        const int target_L = this->dftu->get_orbital_corr(T0);
+        const int target_L = this->dftu->get_l_channel(T0);
         const int tlp1 = 2 * target_L + 1;
         AdjacentAtomInfo& adjs = this->adjs_all[atom_index++];
 
@@ -177,11 +177,11 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
  * @brief Contribute DFT+U Hamiltonian to real-space HR matrix
  * 
  * @details This function handles different scenarios based on:
- * 1. Whether occ_mat (occupation matrix) is read from file (is_occ_mat_initialized)
+ * 1. Whether occ_mat (occupation matrix) is read from file (is_occmat_ready)
  * 2. Spin configuration (nspin=1, 2, or 4)
  * 3. SCF iteration stage (first vs subsequent iterations)
  * 
- * Case 1: Occ_mat NOT initialized (!is_occ_mat_initialized)
+ * Case 1: Occ_mat NOT ready (!is_occmat_ready)
  *   - First electronic iteration: calculates occupation matrix from density matrix (DMR)
  *     * Uses get_dmr(current_spin) to get real-space density matrix
  *     * Accumulates contributions from all atom pairs via cal_occ()
@@ -190,12 +190,12 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
  *     * For nspin=1: occ is scaled by 0.5 (since only one spin channel computed)
  *   - Subsequent iterations: occ_mat is computed fresh each iteration from updated DMR
  * 
- * Case 2: Occ_mat IS initialized (is_occ_mat_initialized, i.e., read from dm_onsite.txt file)
+ * Case 2: Occ_mat IS ready (is_occmat_ready, i.e., read from dm_onsite.txt file)
  *   - First electronic iteration: uses pre-read occ_mat directly without DMR calculation
  *     * Skips DMR-based occ calculation entirely
  *     * Reads occ_mat from stored data via get_occ_mat()
  *     * Different indexing for nspin=4 vs nspin=1/2 (see below)
- *   - After first iteration: mark_occ_mat_dirty() is called to force recomputation
+ *   - After first iteration: set_occmat_stale() is called to force recomputation
  * 
  * Spin configurations:
  *   nspin=1 (non-spin-polarized):
@@ -206,14 +206,14 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
  *   nspin=2 (collinear spin-polarized):
  *     - Two separate spin channels (spin-up: 0, spin-down: 1)
  *     - current_spin toggles between 0 and 1 across iterations
- *     - mark_occ_mat_dirty() called when current_spin == 1 (last spin)
+ *     - set_occmat_stale() called when current_spin == 1 (last spin)
  *     - HR accumulated separately for each spin
  *   
  *   nspin=4 (non-collinear/SOC):
  *     - Single 4x4 Pauli matrix representation per atom
  *     - occ has 4*(2l+1)^2 elements (spin_fold=4)
  *     - get_occ_mat uses spin=0, ipol indices for Pauli blocks
- *     - mark_occ_mat_dirty() always called (current_spin check always true)
+ *     - set_occmat_stale() always called (current_spin check always true)
  *     - No current_spin toggling (all spins handled simultaneously)
  * 
  * @warning THREAD SAFETY: cal_HR_IJR() updates shared HR matrix entries.
@@ -228,10 +228,10 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     ModuleBase::TITLE("DFTU", "contributeHR");
     // Early exit conditions:
     // - get_dmr(0) == nullptr: DMR not available (typical in first iteration without file input)
-    // - !is_occ_mat_initialized(): occ_mat not read from file AND not yet computed from DMR
+    // - !is_occmat_ready(): occ_mat not read from file AND not yet computed from DMR
     // When both true, skip DFT+U contribution entirely (first iteration, no file input)
-    const bool dmr_null = (this->dftu->get_dmr(0) == nullptr);
-    const bool occ_mat_not_init = !this->dftu->is_occ_mat_initialized();
+    const bool dmr_null = (static_cast<const Plus_U*>(this->dftu)->get_dmr(0) == nullptr);
+    const bool occ_mat_not_init = !this->dftu->is_occmat_ready();
 
     if (dmr_null && occ_mat_not_init)
     {
@@ -262,11 +262,11 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         auto tau0 = ucell->get_tau(iat0);
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
-        if (!this->dftu->has_correlated_orbital(T0))
+        if (!this->dftu->has_l_channel(T0))
         {
             continue;
         }
-        const int target_L = this->dftu->get_orbital_corr(T0);
+        const int target_L = this->dftu->get_l_channel(T0);
         const int tlp1 = 2 * target_L + 1;
         AdjacentAtomInfo& adjs = this->adjs_all[atom_index++];
 
@@ -280,15 +280,15 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         // BRANCH 1: Occ_mat NOT initialized (compute from DMR)
         // ============================================================
         // This branch is taken when:
-        // - is_occ_mat_initialized() == false (no file read or omc != 0)
+        // - is_occmat_ready() == false (no file read or omc != 0)
         // - DMR is available (get_dmr() != nullptr)
         // Typical scenario: normal SCF iterations after first step
-        if (!this->dftu->is_occ_mat_initialized())
+        if (!this->dftu->is_occmat_ready())
         {
             // TODO: UNSAFE - get_dmr(current_spin) assumes DMR has correct spin indexing.
             // For nspin=2, current_spin must be correctly toggled (0 then 1).
             // If current_spin is wrong, wrong spin channel's DMR is used.
-            const hamilt::HContainer<double>* dmR_current = this->dftu->get_dmr(this->current_spin);
+            const hamilt::HContainer<double>* dmR_current = static_cast<const Plus_U*>(this->dftu)->get_dmr(this->current_spin);
             for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
             {
                 const int T1 = adjs.ntype[ad1];
@@ -334,7 +334,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         // BRANCH 2: Occ_mat IS initialized (use pre-read data)
         // ============================================================
         // This branch is taken when:
-        // - is_occ_mat_initialized() == true (occ_mat read from dm_onsite.txt file)
+        // - is_occmat_ready() == true (occ_mat read from dm_onsite.txt file)
         // - OR omc != 0 (occupation matrix control with dm_onsite_ini.txt)
         // Typical scenario: first SCF iteration with file input, or restart calculation
         else
@@ -446,7 +446,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     // TODO: This logic is confusing. Consider explicit variable like `is_last_spin_channel`.
     if (this->current_spin == this->nspin - 1 || this->nspin == 4) 
     {
-        this->dftu->mark_occ_mat_dirty();
+        this->dftu->set_occmat_stale();
     }
 
     // 8. Spin channel toggling for nspin=2

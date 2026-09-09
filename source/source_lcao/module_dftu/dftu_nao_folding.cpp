@@ -1,4 +1,3 @@
-#ifdef __LCAO
 #include "dftu_nao_folding.h"
 #include "dftu_nao.h"
 #include "source_base/timer.h"
@@ -295,4 +294,3 @@ void folding_matrix_k_new(const std::string& ks_solver,
 
 } // namespace DFTU_LCAO
 
-#endif // __LCAO

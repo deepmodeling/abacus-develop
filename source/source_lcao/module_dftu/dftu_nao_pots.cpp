@@ -6,8 +6,7 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
 
-#ifdef __LCAO
-void DFTU_LCAO::pot_onsite_complex(const Plus_U& dftu,
+void DFTU_LCAO::pot_onsite_complex(const Plus_U_Base& dftu,
                                    const UnitCell& ucell,
                                    const Parallel_Orbitals* pv,
                                    const int spin,
@@ -22,7 +21,7 @@ void DFTU_LCAO::pot_onsite_complex(const Plus_U& dftu,
 
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        if (dftu.get_orbital_corr(it) == -1)
+        if (dftu.get_l_channel(it) == -1)
         {
             continue;
         }
@@ -31,7 +30,7 @@ void DFTU_LCAO::pot_onsite_complex(const Plus_U& dftu,
             const int iat = ucell.itia2iat(it, ia);
             for (int L = 0; L <= ucell.atoms[it].nwl; L++)
             {
-                if (L != dftu.get_orbital_corr(it))
+                if (L != dftu.get_l_channel(it))
                 {
                     continue;
                 }
@@ -80,7 +79,7 @@ void DFTU_LCAO::pot_onsite_complex(const Plus_U& dftu,
     return;
 }
 
-void DFTU_LCAO::pot_onsite_real(const Plus_U& dftu,
+void DFTU_LCAO::pot_onsite_real(const Plus_U_Base& dftu,
                                 const UnitCell& ucell,
                                 const Parallel_Orbitals* pv,
                                 const int spin,
@@ -95,7 +94,7 @@ void DFTU_LCAO::pot_onsite_real(const Plus_U& dftu,
 
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        if (dftu.get_orbital_corr(it) == -1)
+        if (dftu.get_l_channel(it) == -1)
         {
             continue;
         }
@@ -104,7 +103,7 @@ void DFTU_LCAO::pot_onsite_real(const Plus_U& dftu,
             const int iat = ucell.itia2iat(it, ia);
             for (int L = 0; L <= ucell.atoms[it].nwl; L++)
             {
-                if (L != dftu.get_orbital_corr(it))
+                if (L != dftu.get_l_channel(it))
                 {
                     continue;
                 }
@@ -154,7 +153,7 @@ void DFTU_LCAO::pot_onsite_real(const Plus_U& dftu,
     return;
 }
 
-double DFTU_LCAO::get_onsite_pot(const Plus_U& dftu,
+double DFTU_LCAO::get_onsite_pot(const Plus_U_Base& dftu,
                                  const int T,
                                  const int iat,
                                  const int L,
@@ -168,15 +167,15 @@ double DFTU_LCAO::get_onsite_pot(const Plus_U& dftu,
 
     double pot_onsite = 0.0;
 
-    switch (dftu.get_cal_type())
+    switch (dftu.get_form())
     {
-    case 1: // rotationally invarient formalism and FLL double counting
+    case Plus_U_Base::UForm::lich_fll: // Lichtenstein (rotationally invariant) + FLL DC
         break;
 
-    case 2: // rotationally invarient formalism and AMF double counting
+    case Plus_U_Base::UForm::lich_amf: // Lichtenstein (rotationally invariant) + AMF DC
         break;
 
-    case 3: // simplified formalism and FLL double counting
+    case Plus_U_Base::UForm::dud_fll: // Dudarev (simplified) + FLL DC
         if (new_occ_mat)
         {
             if (dftu.use_yukawa())
@@ -237,11 +236,7 @@ double DFTU_LCAO::get_onsite_pot(const Plus_U& dftu,
         }
 
         break;
-
-    case 4: // simplified formalism and AMF double counting
-        break;
     }
 
     return pot_onsite;
 }
-#endif

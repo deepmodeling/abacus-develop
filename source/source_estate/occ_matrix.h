@@ -22,7 +22,7 @@ class OccupationMatrix
   public:
     /// allocate occ/occ_save/iatlnmipol2iwt according to the cell
     void init(const UnitCell& cell,
-              const std::vector<int>& orbital_corr,
+              const std::vector<int>& l_channel,
               int nspin,
               int npol);
 
@@ -82,23 +82,23 @@ class OccupationMatrix
     void set_flat(int iat, int l, int spin, const std::vector<double>& occ);
 
     // --- whole-array operations ---
-    void zero(const UnitCell& cell, const std::vector<int>& orbital_corr);
-    void copy_to_save(const UnitCell& cell, const std::vector<int>& orbital_corr);
+    void zero(const UnitCell& cell, const std::vector<int>& l_channel);
+    void copy_to_save(const UnitCell& cell, const std::vector<int>& l_channel);
 
     // --- flat mixing buffer (de)serialization over all atoms ---
     /// write occ into uom at offsets given by index (split spin layout)
     void write_to_flat(const UnitCell& cell,
-                       const std::vector<int>& orbital_corr,
+                       const std::vector<int>& l_channel,
                        const std::vector<int>& index,
                        std::vector<double>& uom) const;
     /// read occ from uom at offsets given by index (split spin layout)
     void read_from_flat(const UnitCell& cell,
-                        const std::vector<int>& orbital_corr,
+                        const std::vector<int>& l_channel,
                         const std::vector<int>& index,
                         const std::vector<double>& uom);
     /// write occ_save into uom_save (skips when uom_save is empty)
     void write_save_to_flat(const UnitCell& cell,
-                            const std::vector<int>& orbital_corr,
+                            const std::vector<int>& l_channel,
                             const std::vector<int>& index,
                             std::vector<double>& uom_save) const;
 
@@ -121,7 +121,7 @@ namespace elecstate
 void mix_occ_with_save(std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>>& occ_mat,
                        const std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>>& occ_mat_save,
                        const UnitCell& cell,
-                       const std::vector<int>& orbital_corr,
+                       const std::vector<int>& l_channel,
                        const int nspin,
                        const double beta);
 } // namespace elecstate

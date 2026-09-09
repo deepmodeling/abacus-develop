@@ -11,9 +11,8 @@
 #include <string>
 #include <vector>
 
-class Plus_U;
+class Plus_U_Base;
 
-#ifdef __LCAO
 namespace DFTU_LCAO {
 
 /// @brief Compute the occupation matrix and delegate to Plus_U member.
@@ -30,7 +29,7 @@ void cal_occ_mat(const Parallel_Orbitals* pv,
                  const K_Vectors& kv,
                  const double& mixing_beta,
                  hamilt::Hamilt<T>* p_ham,
-                 Plus_U& dftu,
+                 Plus_U_Base& dftu,
                  const bool gamma_only_local,
                  const int nspin);
 
@@ -43,7 +42,7 @@ void cal_occ_mat_k(const Parallel_Orbitals* pv,
                    const double& mixing_beta,
                    hamilt::Hamilt<std::complex<double>>* p_ham,
                    const bool gamma_only_local,
-                   Plus_U& dftu);
+                   Plus_U_Base& dftu);
 
 // calculate the local occupation number matrix (gamma-point version)
 void cal_occ_mat_gamma(const Parallel_Orbitals* pv,
@@ -52,9 +51,8 @@ void cal_occ_mat_gamma(const Parallel_Orbitals* pv,
                        const std::vector<std::vector<double>>& dm_gamma,
                        const double& mixing_beta,
                        hamilt::Hamilt<double>* p_ham,
-                       Plus_U& dftu);
+                       Plus_U_Base& dftu);
 
 } // namespace DFTU_LCAO
-#endif
 
 #endif

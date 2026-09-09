@@ -1,5 +1,5 @@
-#ifndef DFTU_BASE_TOOLS_H
-#define DFTU_BASE_TOOLS_H
+#ifndef DFTU_PW_TOOLS_H
+#define DFTU_PW_TOOLS_H
 
 #include <complex>
 #include <vector>
@@ -8,13 +8,12 @@
 class UnitCell;
 class OccupationMatrix;
 
-/// Free functions for DFT+U PW basis calculations.
+/// Pure (side-effect free) functions for DFT+U PW basis calculations.
 ///
-/// These functions are pure (no access to Plus_U_Base members) so they can be
-/// unit-tested directly by including this header. The member functions in
-/// dftu_base_occ.cpp call them after computing per-atom offsets and fetching
-/// the relevant member state (occ_mat, pot_uterm_pw, u_current, etc.).
-namespace DFTU_BASE {
+/// These functions are stateless and can be unit-tested directly.
+/// The member functions in dftu_pw.cpp call them after computing
+/// per-atom offsets and fetching the relevant member state.
+namespace pw {
 
 /// transform pot_onsite from Pauli basis to spin basis (in-place, nspin==4 only).
 ///
@@ -34,7 +33,7 @@ void pauli_to_spin_basis(std::complex<double>* pot_onsite, int m_size);
 /// returns the energy_u increment. Internally calls pauli_to_spin_basis
 /// to convert pot_onsite to spin basis in-place.
 ///
-/// pot_onsite:  pointer to pot_uterm_pw[pot_uterm_pw_index[iat]]
+/// pot_onsite:  pointer to uterm_mat[uterm_mat_index[iat]]
 /// occ: pointer to occ_mat[iat][target_l][0][0].c (4 Pauli blocks packed)
 double compute_pot_onsite_spinor(
     std::complex<double>* pot_onsite,
@@ -110,7 +109,7 @@ void accumulate_occ_scalar(
 void reduce_occ_mat(const UnitCell& cell,
                     const int nspin,
                     const int kpar,
-                    const std::vector<int>& orbital_corr,
+                    const std::vector<int>& l_channel,
                     OccupationMatrix& occmat);
 
 /// compute effective potential pot_onsite and DFT+U energy from occ_mat.
@@ -119,7 +118,7 @@ void reduce_occ_mat(const UnitCell& cell,
 ///   - occmat has been accumulated from psi and reduced across k-pools.
 ///
 /// Outputs:
-///   - pot_uterm_pw: pot_onsite = U * (diag*delta - occ) written per atom
+///   - uterm_mat: pot_onsite = U * (diag*delta - occ) written per atom
 ///     nspin=4: 4 Pauli blocks per atom, then transformed to spin basis
 ///     nspin=1: single channel
 ///     nspin=2: two channels in split layout [all_up | all_dn]
@@ -128,25 +127,12 @@ void reduce_occ_mat(const UnitCell& cell,
 void compute_pot_uterm_and_energy(const UnitCell& cell,
                                   const int nspin,
                                   const std::vector<double>& u_current,
-                                  const std::vector<int>& orbital_corr,
-                                  const std::vector<int>& pot_uterm_pw_index,
+                                  const std::vector<int>& l_channel,
+                                  const std::vector<int>& uterm_mat_index,
                                   const OccupationMatrix& occmat,
-                                  std::vector<std::complex<double>>& pot_uterm_pw,
+                                  std::vector<std::complex<double>>& uterm_mat,
                                   double& energy_u);
 
-/// accumulate occ_mat from psi for all k-points (per-device template).
-///
-/// Explicitly instantiated for DEVICE_CPU (and DEVICE_GPU when available)
-/// in dftu_base_occ.cpp.
-template <typename Device>
-void accumulate_occ_one_k(const void* psi_in,
-                          const ModuleBase::matrix& wg_in,
-                          const UnitCell& cell,
-                          const int* isk,
-                          const int nspin,
-                          const std::vector<int>& orbital_corr,
-                          OccupationMatrix& occmat);
+} // namespace pw
 
-} // namespace DFTU_BASE
-
-#endif
+#endif // DFTU_PW_TOOLS_H

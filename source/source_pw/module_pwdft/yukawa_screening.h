@@ -26,7 +26,7 @@ class YukawaScreening
     /// allocate Fk / U_Yukawa / J_Yukawa according to the cell and record the
     /// user-provided screening length (yukawa_lambda_cfg > 0 means fixed).
     void init(const UnitCell& cell,
-              const std::vector<int>& orbital_corr,
+              const std::vector<int>& l_channel,
               double yukawa_lambda_cfg);
 
     /// determine lambda: use the fixed config value when positive, otherwise
@@ -51,7 +51,7 @@ class YukawaScreening
     /// effective U-J of the correlated orbital (n = 0) for atom type it
     double get_Ueff(int it) const
     {
-        const int l = orbital_corr_[it];
+        const int l = l_channel_[it];
         return U_Yukawa_[it][l][0] - J_Yukawa_[it][l][0];
     }
 
@@ -63,7 +63,7 @@ class YukawaScreening
 
     double lambda_ = 0.0;
     double yukawa_lambda_cfg_ = 0.0;
-    std::vector<int> orbital_corr_;
+    std::vector<int> l_channel_;
     std::vector<std::vector<std::vector<std::vector<double>>>> Fk_;
     std::vector<std::vector<std::vector<double>>> U_Yukawa_;
     std::vector<std::vector<std::vector<double>>> J_Yukawa_;
