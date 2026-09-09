@@ -2,6 +2,9 @@ add_library(
     relax
     OBJECT
     relax_data.cpp
+    socket_ipi.cpp
+    socket_frame.cpp
+    socket_driver.cpp
     cg_base.cpp
     relax_driver.cpp
     relax_sync.cpp

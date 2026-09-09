@@ -3,9 +3,7 @@
 #include <cmath>
 #include <vector>
 
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
 
 /***********************************************************************
  * Unit tests for DeltaSpin PW support

@@ -137,7 +137,12 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
         0, 0, this->pw_big->nbzp_start,
         this->pw_big->nbx, this->pw_big->nby, this->pw_big->nbzp,
-        orb_.Phi, ucell, this->gd));
+        orb_.Phi, ucell, this->gd,
+        this->inp_->nspin,
+        PARAM.globalv.gamma_only_local,
+        PARAM.globalv.domag,
+        this->inp_->device == "gpu",
+        this->inp_->nstream));
     ModuleGint::Gint::set_gint_info(gint_info_.get());
 
     // 7) For each atom, calculate the adjacent atoms in different cells
@@ -583,7 +588,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
             this->orb_, this->pw_wfc, this->pw_rho, this->pw_big, this->sf,
             this->pw_rhod, this->locpp.vloc, this->solvent,
             this->rdmft_solver, this->deepks, this->exx_nao, this->exx_info_,
-            this->conv_esolver, this->scf_nmax_flag, istep);
+            conv_esolver, this->scf_nmax_flag, istep);
 
     //! 3) Clean up RA, which is used to serach for adjacent atoms
     if (!this->inp_->cal_force && !this->inp_->cal_stress)

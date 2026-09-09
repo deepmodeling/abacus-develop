@@ -1,7 +1,7 @@
 #ifdef __LIBXC
 
 #include "libxc_abacus.h"
-#include "source_io/module_parameter/parameter.h"
+#include "xc_functional.h"
 #include "source_base/tool_quit.h"
 #include "source_base/formatter.h"
 
@@ -197,11 +197,11 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
     {
         // finite temperature XC functionals
         case XC_LDA_XC_KSDT:
-            return {PARAM.inp.xc_temperature * 0.5};
+            return {XC_Functional::get_runtime_parameters().xc_temperature * 0.5};
         case XC_LDA_XC_CORRKSDT:
-            return {PARAM.inp.xc_temperature * 0.5};
+            return {XC_Functional::get_runtime_parameters().xc_temperature * 0.5};
         case XC_LDA_XC_GDSMFB:
-            return {PARAM.inp.xc_temperature * 0.5};
+            return {XC_Functional::get_runtime_parameters().xc_temperature * 0.5};
 #ifdef __EXX
         // hybrid functionals
         case XC_HYB_GGA_XC_PBEH:
@@ -228,8 +228,8 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
             // This is a range-separated hybrid functional with range-separation constant  0.400,
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
-            return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
-                std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -1.0
+            return { std::stod(XC_Functional::get_runtime_parameters().exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
+                std::stod(XC_Functional::get_runtime_parameters().exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -1.0
                 hse_omega }; //Range separation constant: 0.4
         }
         case XC_HYB_GGA_XC_LRC_WPBE:  // Long-range corrected PBE (LRC-wPBE) by by Rohrdanz, Martins and Herbert
@@ -237,8 +237,8 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
             // This is a range-separated hybrid functional with range-separation constant  0.300,
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
-            return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
-                std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -1.0
+            return { std::stod(XC_Functional::get_runtime_parameters().exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
+                std::stod(XC_Functional::get_runtime_parameters().exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -1.0
                 hse_omega }; //Range separation constant: 0.3
         }
         case XC_HYB_GGA_XC_LRC_WPBEH:  // Long-range corrected short-range hybrid PBE (LRC-wPBEh) by Rohrdanz, Martins and Herbert
@@ -246,8 +246,8 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
             // This is a range-separated hybrid functional with range-separation constant  0.200,
             // and 20.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.    
-            return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
-                std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -0.8
+            return { std::stod(XC_Functional::get_runtime_parameters().exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
+                std::stod(XC_Functional::get_runtime_parameters().exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -0.8
                 hse_omega }; //Range separation constant: 0.2
         }
         case XC_HYB_GGA_XC_CAM_PBEH:  // CAM hybrid screened exchange PBE version
@@ -255,8 +255,8 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
             // This is a range-separated hybrid functional with range-separation constant  0.700,
             // and 100.0% short-range and 20.0% long-range exact exchange,
             // using the error function kernel.
-            return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 0.2
-                std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: 0.8
+            return { std::stod(XC_Functional::get_runtime_parameters().exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 0.2
+                std::stod(XC_Functional::get_runtime_parameters().exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: 0.8
                 hse_omega }; //Range separation constant: 0.7
         }
 #endif
@@ -267,13 +267,13 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
 
 const std::vector<double> external_xc_func_ext_params(const int id)
 {
-    const auto& exch_ext = PARAM.inp.xc_exch_ext;
+    const auto& exch_ext = XC_Functional::get_runtime_parameters().xc_exch_ext;
     if (!exch_ext.empty() && static_cast<int>(exch_ext.front()) == id)
     {
         return {exch_ext.begin() + 1, exch_ext.end()};
     }
 
-    const auto& corr_ext = PARAM.inp.xc_corr_ext;
+    const auto& corr_ext = XC_Functional::get_runtime_parameters().xc_corr_ext;
     if (!corr_ext.empty() && static_cast<int>(corr_ext.front()) == id)
     {
         return {corr_ext.begin() + 1, corr_ext.end()};
