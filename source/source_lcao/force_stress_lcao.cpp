@@ -921,6 +921,8 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
                                           const pseudopot_cell_vl& locpp,
                                           const Structure_Factor& sf)
 {
+    const auto& xc_input = PARAM.inp;
+    const auto& xc_spin = PARAM.globalv;
     ModuleBase::TITLE("Force_Stress_LCAO", "calForcePwPart");
 #ifdef __CUDA
     if(PARAM.inp.device == "gpu")
@@ -928,7 +930,8 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
         Forces<double, base_device::DEVICE_GPU> f_pw(nat);
         f_pw.cal_force_loc(ucell, fvl_dvl, rhopw, locpp.vloc, chr);
         f_pw.cal_force_ew(ucell, fewalds, rhopw, &sf);
-        f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell);
+        f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell,
+            xc_input.nspin, xc_spin.domag, xc_spin.domag_z, xc_input.gga_grad);
         f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist, locpp.numeric, ucell);
     }
     else
@@ -937,7 +940,8 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
         Forces<double, base_device::DEVICE_CPU> f_pw(nat);
         f_pw.cal_force_loc(ucell, fvl_dvl, rhopw, locpp.vloc, chr);
         f_pw.cal_force_ew(ucell, fewalds, rhopw, &sf);
-        f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell);
+        f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell,
+            xc_input.nspin, xc_spin.domag, xc_spin.domag_z, xc_input.gga_grad);
         f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist, locpp.numeric, ucell);
     }
 
@@ -1027,6 +1031,8 @@ void Force_Stress_LCAO<T>::calStressPwPart(UnitCell& ucell,
                                            const pseudopot_cell_vl& locpp,
                                            const Structure_Factor& sf)
 {
+    const auto& xc_input = PARAM.inp;
+    const auto& xc_spin = PARAM.globalv;
     ModuleBase::TITLE("Force_Stress_LCAO", "calStressPwPart");
 
     // local pseudopotential stress:
@@ -1039,7 +1045,8 @@ void Force_Stress_LCAO<T>::calStressPwPart(UnitCell& ucell,
     sc_pw.stress_ewa(ucell, sigmaewa, rhopw, 0); // remain problem
 
     // stress due to core correlation.
-    sc_pw.stress_cc(sigmacc, rhopw, ucell, &sf, 0, locpp.numeric, chr);
+    sc_pw.stress_cc(sigmacc, rhopw, ucell, &sf, 0, locpp.numeric, chr,
+        xc_input.nspin, xc_spin.domag, xc_spin.domag_z, xc_input.gga_grad, xc_spin.gamma_only_pw);
 
     // stress due to self-consistent charge.
     for (int i = 0; i < 3; i++)
@@ -1047,7 +1054,8 @@ void Force_Stress_LCAO<T>::calStressPwPart(UnitCell& ucell,
         sigmaxc(i, i) = -etxc / ucell.omega;
     }
     // Exchange-correlation for PBE
-    sc_pw.stress_gga(ucell, sigmaxc, rhopw, chr);
+    sc_pw.stress_gga(ucell, sigmaxc, rhopw, chr,
+        xc_input.nspin, xc_spin.domag, xc_spin.domag_z, xc_input.gga_grad);
 
     return;
 }
