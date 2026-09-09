@@ -132,7 +132,7 @@ TEST_F(OutputHContainerTest, WriteReadConsistency)
     // Read back
     auto* hc_read = create_hcontainer(0.0);
     hc_read->set_zero();
-    hamilt::Read_HContainer<double> reader(hc_read, "./test_ohc_dir/hrs1_nao.csr", nlocal, &ucell);
+    hamilt::Read_HContainer<double> reader(hc_read, "./test_ohc_dir/hrs1_nao.csr", nlocal, &ucell, 0);
     reader.read();
 
     // Compare every diagonal element of every atom pair
@@ -223,7 +223,7 @@ TEST_F(OutputHContainerTest, PrecisionParameter)
 
     auto* hc_read = create_hcontainer(0.0);
     hc_read->set_zero();
-    hamilt::Read_HContainer<double> reader(hc_read, "./test_ohc_dir/hrs1_nao.csr", nlocal, &ucell);
+    hamilt::Read_HContainer<double> reader(hc_read, "./test_ohc_dir/hrs1_nao.csr", nlocal, &ucell, 0);
     reader.read();
 
     int nw = ucell.atoms[0].nw;
@@ -258,13 +258,13 @@ TEST_F(OutputHContainerTest, Nspin2TwoFileConsistency)
     // Read back spin-up
     auto* hc_read_up = create_hcontainer(0.0);
     hc_read_up->set_zero();
-    hamilt::Read_HContainer<double> reader_up(hc_read_up, "./test_ohc_dir/hrs1_nao.csr", nlocal, &ucell);
+    hamilt::Read_HContainer<double> reader_up(hc_read_up, "./test_ohc_dir/hrs1_nao.csr", nlocal, &ucell, 0);
     reader_up.read();
 
     // Read back spin-down
     auto* hc_read_down = create_hcontainer(0.0);
     hc_read_down->set_zero();
-    hamilt::Read_HContainer<double> reader_down(hc_read_down, "./test_ohc_dir/hrs2_nao.csr", nlocal, &ucell);
+    hamilt::Read_HContainer<double> reader_down(hc_read_down, "./test_ohc_dir/hrs2_nao.csr", nlocal, &ucell, 0);
     reader_down.read();
 
     int nw = ucell.atoms[0].nw;

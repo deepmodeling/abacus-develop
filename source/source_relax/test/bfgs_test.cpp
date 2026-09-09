@@ -7,9 +7,7 @@
 #include "source_relax/ions_move_bfgs2.h"
 #undef private
 
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
 
 #include "source_relax/ions_move_basic.h" // for Ions_Move_Basic static members
 #include "source_relax/relax_data.h"
@@ -51,7 +49,7 @@ TEST_F(BFGSTest, TestAllocate)
     EXPECT_FALSE(bfgs.dpos.empty());
     EXPECT_EQ(bfgs.size, size);
     EXPECT_EQ(bfgs.alpha,70);
-    EXPECT_EQ(bfgs.maxstep,PARAM.inp.relax_bfgs_rmax);
+    EXPECT_EQ(bfgs.maxstep, PARAM.inp.relax_bfgs_rmax);
     EXPECT_TRUE(bfgs.sign);
     EXPECT_EQ(bfgs.largest_grad,0.0);
 }

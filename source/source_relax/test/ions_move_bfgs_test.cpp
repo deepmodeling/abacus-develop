@@ -1,3 +1,4 @@
+#include "source_relax/relax_criteria.h"
 #include "for_test.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -16,6 +17,9 @@
 // Define a fixture for the tests
 class IonsMoveBFGSTest : public ::testing::Test
 {
+  public:
+    Relax_Criteria criteria;
+
   protected:
     Ions_Move_BFGS bfgs;
     int update_iter;
@@ -78,7 +82,7 @@ TEST_F(IonsMoveBFGSTest, StartCase1)
     // Call the function being tested
     bfgs.allocate();
     std::ofstream ofs("test_start_case1.log");
-    bfgs.start(ucell, force, energy_in, istep, update_iter, ofs, etot_info);
+    bfgs.start(ucell, force, energy_in, istep, update_iter, ofs, etot_info, criteria);
     ofs.close();
 
     // Check the results
@@ -109,10 +113,10 @@ TEST_F(IonsMoveBFGSTest, StartCase2)
     ucell.set_atom_flag = true;
 
     // Initialize PARAM
-    PARAM.input.force_thr = 1.0e-3;
-    PARAM.input.force_thr_ev = PARAM.input.force_thr * 13.6058 / 0.529177;
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
+    criteria.force_thr = 1.0e-3;
+    criteria.force_thr_ev = criteria.force_thr * 13.6058 / 0.529177;
+    criteria.test_relax_method = 1;
+    criteria.out_level = "ie";
 
     // Initialize istep
     const int istep = 1;
@@ -127,7 +131,7 @@ TEST_F(IonsMoveBFGSTest, StartCase2)
     // Call the function being tested
     bfgs.allocate();
     std::ofstream ofs("test_start_case2.log");
-    bfgs.start(ucell, force, energy_in, istep, update_iter, ofs, etot_info);
+    bfgs.start(ucell, force, energy_in, istep, update_iter, ofs, etot_info, criteria);
     ofs.close();
 
     // Check the results
@@ -147,7 +151,7 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase1)
 {
     // Initilize data
     bfgs.init_done = false;
-    PARAM.input.test_relax_method = 1;
+    criteria.test_relax_method = 1;
     double lat0 = 1.0;
     bfgs.allocate();
     bfgs.save_flag = true;
@@ -160,7 +164,7 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase1)
 
     // Call the function being tested
     std::ofstream ofs("test_restart_bfgs_case1.log");
-    bfgs.restart_bfgs(lat0, update_iter, ofs);
+    bfgs.restart_bfgs(lat0, update_iter, ofs, criteria.test_relax_method);
     ofs.close();
 
     // Check the results
@@ -187,7 +191,7 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase2)
     // Initilize data
     bfgs.init_done = false;
     bfgs.allocate();
-    PARAM.input.test_relax_method = 1;
+    criteria.test_relax_method = 1;
     double lat0 = 1.0;
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
     {
@@ -198,7 +202,7 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase2)
 
     // Call the function being tested
     std::ofstream ofs("test_restart_bfgs_case2.log");
-    bfgs.restart_bfgs(lat0, update_iter, ofs);
+    bfgs.restart_bfgs(lat0, update_iter, ofs, criteria.test_relax_method);
     ofs.close();
     std::remove("test_restart_bfgs_case2.log");
 
@@ -231,8 +235,8 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     bfgs.init_done = false;
     bfgs.allocate();
     bfgs.tr_min_hit = false;
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
+    criteria.test_relax_method = 1;
+    criteria.out_level = "ie";
     double lat0 = 1.0;
     const int istep = 1;
     std::vector<double> etot_info = {1.0, 0.9, 0.1};
@@ -247,7 +251,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     // Call the function being tested
     std::ofstream ofs("test_bfgs_routine_case1.log");
     testing::internal::CaptureStdout();
-    bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info);
+    bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info, criteria.out_level, criteria.test_relax_method);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -296,8 +300,8 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
     bfgs.init_done = false;
     bfgs.allocate();
     bfgs.tr_min_hit = false;
-    PARAM.input.test_relax_method = 0;
-    PARAM.input.out_level = "none";
+    criteria.test_relax_method = 0;
+    criteria.out_level = "none";
     double lat0 = 1.0;
     const int istep = 1;
     std::vector<double> etot_info = {1.0, 0.9, 0.1};
@@ -312,7 +316,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
     // Call the function being tested
     std::ofstream ofs("test_bfgs_routine_case2.log");
     testing::internal::CaptureStdout();
-    bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info);
+    bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info, criteria.out_level, criteria.test_relax_method);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -371,7 +375,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase3)
 
     // Call the function being tested
     std::ofstream ofs("test_bfgs_routine_case3.log");
-    bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info);
+    bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info, criteria.out_level, criteria.test_relax_method);
     ofs.close();
 
     // Check the results
@@ -413,8 +417,8 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
     bfgs.init_done = false;
     bfgs.allocate();
     bfgs.tr_min_hit = true;
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
+    criteria.test_relax_method = 1;
+    criteria.out_level = "ie";
     double lat0 = 1.0;
     const int istep = 1;
     std::vector<double> etot_info = {1.0, 0.9, 0.1};
@@ -429,7 +433,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
     // Check the results
     std::ofstream ofs("test_bfgs_routine_warning_quit1.log");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info, criteria.out_level, criteria.test_relax_method), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     ofs.close();
     std::remove("test_bfgs_routine_warning_quit1.log");
@@ -443,8 +447,8 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit2)
     bfgs.init_done = false;
     bfgs.allocate();
     bfgs.tr_min_hit = false;
-    PARAM.input.test_relax_method = 1;
-    PARAM.input.out_level = "ie";
+    criteria.test_relax_method = 1;
+    criteria.out_level = "ie";
     double lat0 = 1.0;
     const int istep = 1;
     std::vector<double> etot_info = {1.0, 0.9, 0.1};
@@ -453,7 +457,7 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit2)
     // Check the results
     std::ofstream ofs("test_bfgs_routine_warning_quit2.log");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.bfgs_routine(lat0, istep, update_iter, ofs, etot_info, criteria.out_level, criteria.test_relax_method), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     ofs.close();
     std::remove("test_bfgs_routine_warning_quit2.log");

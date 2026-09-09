@@ -21,6 +21,26 @@
 #include <map> // added by jghan, 2024-10-10
 #include <vector>
 
+
+/**
+ * @brief LibXC runtime settings, injected once at the ESolver boundary.
+ *
+ * Unlike SurchemParameters these initializers are not a copy of any physical INPUT
+ * default: 0.0 and the empty vectors are the neutral "nothing requested" state, and
+ * "default" is the same pre-parse sentinel Input_para uses, which ReadInput resolves
+ * to a real number before it ever reaches here. Keeping it deliberately unparseable
+ * means a missing set_runtime_parameters() fails loudly in std::stod rather than
+ * silently substituting a plausible-looking exchange fraction.
+ */
+struct XCFunctionalParameters
+{
+    double xc_temperature = 0.0;
+    std::vector<std::string> exx_fock_alpha = {"default"};
+    std::vector<std::string> exx_erfc_alpha = {"default"};
+    std::vector<double> xc_exch_ext;
+    std::vector<double> xc_corr_ext;
+};
+
 class XC_Functional
 {
     public:
@@ -86,6 +106,13 @@ class XC_Functional
 
     static void set_hse_omega(const double omega_in);
 
+    static void set_runtime_parameters(const XCFunctionalParameters& parameters);
+
+    static const XCFunctionalParameters& get_runtime_parameters()
+    {
+        return runtime_parameters;
+    };
+
     static double get_hse_omega()
     {
         return hse_omega;
@@ -118,6 +145,8 @@ class XC_Functional
 
     // hse_omega for HSE functional:
     static double hse_omega;
+
+    static XCFunctionalParameters runtime_parameters;
 
     // added by jghan, 2024-07-07
     // as a scaling factor for different xc-functionals
