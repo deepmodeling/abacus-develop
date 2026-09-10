@@ -712,6 +712,19 @@ parameters:
     default_value: "1"
     unit: ""
     availability: ""
+  - name: gga_grad
+    category: Electronic structure
+    type: Integer
+    description: |
+      Selects the local spin mapping for LDA/GGA functionals in magnetic nspin=4 calculations.
+      * 0: preserves the original algorithm (default).
+      * 1: uses the local magnetization magnitude instead of the global quantization axis in the built-in GGA gradient correction. For LIBXC functionals, 0 and 1 are equivalent.
+      * 2: uses a C2-regularized magnetization magnitude with eta = 1e-3 in atomic density units. The spin densities are (abs(n + rho_core) +/- min(S_eta(m), abs(n + rho_core)))/2. GGA gradients are the local-map Jacobian applied to the FFT gradients of the four density channels. The potential reverses this same discrete energy graph, including the radial Hessian and density/sigma clipping branches; the GGA stress uses the corresponding metric derivative.
+      For r = |m| and x = r/eta, S_eta = eta*x^3*(3*x^2 - 8*x + 6) for r < eta, and S_eta = r otherwise. The regularization is part of the functional definition, including its first and second derivatives.
+      Mode 2 also uses this local map for the LDA contribution. Other spin configurations retain their existing behavior.
+    default_value: "0"
+    unit: ""
+    availability: ""
   - name: smearing_method
     category: Electronic structure
     type: String
@@ -4673,6 +4686,7 @@ parameters:
     description: |
       * False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
       * True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
+      For multi-k calculations, D(k) is averaged over the unitary little group of each irreducible k point before star expansion, for either setting.
     default_value: "True"
     unit: ""
     availability: "symmetry==1 and (dft_functional in [hse, hf, pbe0, scan0] or (basis_type==lcao and rpa==true))"

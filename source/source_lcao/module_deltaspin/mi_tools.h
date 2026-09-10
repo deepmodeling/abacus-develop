@@ -1,10 +1,11 @@
 #ifndef MI_TOOLS_H
 #define MI_TOOLS_H
 
+#include "source_base/vector3.h"
+
+#include <array>
 #include <complex>
 #include <vector>
-
-#include "source_base/vector3.h"
 
 /**
  * @file mi_tools.h
@@ -22,6 +23,21 @@
 
 namespace spinconstrain
 {
+
+/**
+ * @brief Convert a Cartesian Pauli vector to a spinor-space operator.
+ *
+ * For sigma_y = [[0, -i], [i, 0]], lambda dot sigma is stored in row-major
+ * order as {lambda_z, lambda_x - i lambda_y,
+ *           lambda_x + i lambda_y, -lambda_z}.
+ */
+inline std::array<std::complex<double>, 4> pauli_vector_to_spinor(const ModuleBase::Vector3<double>& lambda)
+{
+    return {{std::complex<double>(lambda.z, 0.0),
+             std::complex<double>(lambda.x, -lambda.y),
+             std::complex<double>(lambda.x, lambda.y),
+             std::complex<double>(-lambda.z, 0.0)}};
+}
 
 /**
  * @brief Convert spinor occupation matrix to magnetic moment vector using Pauli matrices.

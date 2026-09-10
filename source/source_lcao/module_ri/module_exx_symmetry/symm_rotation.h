@@ -74,6 +74,17 @@ namespace ModuleSymmetry
         std::vector<std::complex<double>> trs_spin_rotate(const std::vector<std::complex<double>>& X,
             const std::vector<std::complex<double>>& sigma_y, const Parallel_2D& pv, const double scale) const;
 
+        /// Inject synthetic AO rotations for density-restoration regression tests.
+        void set_density_rotations_for_testing(
+            const std::vector<std::map<int, std::vector<std::complex<double>>>>& rotations,
+            const std::vector<std::vector<int>>& little_groups,
+            const int nrot)
+        {
+            this->Ms_ = rotations;
+            this->little_groups_ = little_groups;
+            this->nsym_ = nrot;
+        }
+
         /// calculate Wigner D matrix
         double wigner_d(const double beta, const int l, const int m1, const int m2) const;
         std::complex<double> wigner_D(const TCdouble& euler_angle, const int l, const int m1, const int m2, const bool inv) const;
@@ -208,6 +219,10 @@ namespace ModuleSymmetry
         /// The unitary matrix associate D(Rk) with D(k) for each ibz-kpoint Rk and each symmetry operation.
         /// size: [nks_ibz][nsym][nbasis*nbasis], only need to calculate once.
         std::vector<std::map<int, std::vector<std::complex<double>>>> Ms_;
+
+        /// Unitary operations fixing each IBZ k point modulo reciprocal lattice vectors.
+        /// Geometry data built with Ms_ in cal_Ms, not an SCF workflow switch.
+        std::vector<std::vector<int>> little_groups_;
 
         /// (nspin=4) the SU(2) spin-1/2 rotation U(isym) for each symmetry operation, size [nsym].
         /// The spinor AO rotation is T(isym) (x) U(isym); restore_HR_nspin4 uses it to mix the 4 spin

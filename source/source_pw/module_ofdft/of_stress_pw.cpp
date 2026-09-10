@@ -16,6 +16,8 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
                               Structure_Factor* p_sf,
                               K_Vectors* p_kv)
 {
+    const auto& xc_input = PARAM.inp;
+    const auto& xc_spin = PARAM.globalv;
     ModuleBase::TITLE("OF_Stress_PW", "cal_stress");
     ModuleBase::timer::start("OF_Stress_PW", "cal_stress");
 
@@ -74,13 +76,15 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     {
         sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
-    stress_gga(ucell,sigmaxc, this->rhopw, pelec->charge);
+    stress_gga(ucell,sigmaxc, this->rhopw, pelec->charge,
+        xc_input.nspin, xc_spin.domag, xc_spin.domag_z, xc_input.gga_grad);
 
     // local contribution
     stress_loc(ucell,sigmaloc, this->rhopw, locpp.vloc, p_sf, true, pelec->charge);
 
     // nlcc
-    stress_cc(sigmaxcc, this->rhopw, ucell, p_sf, true, locpp.numeric, pelec->charge);
+    stress_cc(sigmaxcc, this->rhopw, ucell, p_sf, true, locpp.numeric, pelec->charge,
+        xc_input.nspin, xc_spin.domag, xc_spin.domag_z, xc_input.gga_grad, xc_spin.gamma_only_pw);
 
     // vdW term prepared before SCF for this ionic configuration.
     if (vdw_result != nullptr)

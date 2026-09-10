@@ -396,3 +396,5 @@ sccut                          4 #Maximal step size for lambda in eV/uB
 #Parameters (23. Time-dependent orbital-free DFT)
 of_cd                    0 #0: no CD potential; 1: add CD potential
 of_mCD_alpha                   1.0 # parameter of modified CD potential
+
+gga_grad 2

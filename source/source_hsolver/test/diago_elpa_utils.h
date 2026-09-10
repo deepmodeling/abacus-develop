@@ -167,7 +167,7 @@ void lapack_diago(double *hmatrix, double *smatrix, double *e, int &nFull)
     const char jobz = 'V'; // 'N':only calc eigenvalue, 'V': eigenvalues and eigenvectors
     const char uplo = 'U'; // Upper triangles
     int lwork = (nFull + 2) * nFull, info = 0;
-    double *ev = new double[nFull * nFull];
+    double *ev = new double[lwork];
 
     double *a = new double[nFull * nFull];
     double *b = new double[nFull * nFull];
@@ -196,7 +196,7 @@ void lapack_diago(std::complex<double> *hmatrix, std::complex<double> *smatrix, 
     const char uplo = 'U'; // Upper triangles
     int lwork = (nFull + 1) * nFull, info = 0;
     double *rwork = new double[3 * nFull - 2];
-    std::complex<double> *ev = new std::complex<double>[nFull * nFull];
+    std::complex<double> *ev = new std::complex<double>[lwork];
 
     std::complex<double> *a = new std::complex<double>[nFull * nFull];
     std::complex<double> *b = new std::complex<double>[nFull * nFull];

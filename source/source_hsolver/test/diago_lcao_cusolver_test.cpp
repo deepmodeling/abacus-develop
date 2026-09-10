@@ -134,6 +134,21 @@ class DiagoPrepare
         return ok;
     }
 
+    void poison_lower_triangle()
+    {
+        // The distributed solver buffers are column-major. Keep the original
+        // row-major fixtures intact for the independent LAPACK reference.
+        for (int col = 0; col < nlocal; ++col)
+        {
+            for (int row = col + 1; row < nlocal; ++row)
+            {
+                const int index = row + col * nlocal;
+                this->h_local[index] = T(123.0 + row + col);
+                this->s_local[index] = T(0.0);
+            }
+        }
+    }
+
     void print_hs()
     {
         if (!PRINT_HS)
@@ -203,6 +218,10 @@ class DiagoPrepare
     {
         this->pb2d();
         this->distribute_data();
+        if (ks_solver == "cusolver")
+        {
+            this->poison_lower_triangle();
+        }
         this->print_hs();
         this->set_env();
 
