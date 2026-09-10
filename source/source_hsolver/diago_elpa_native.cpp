@@ -143,12 +143,13 @@ void DiagoElpaNative<T>::diag_pool(ModuleBase::MatrixBlock<T>& h_mat,
 #endif
 
 template <typename T>
-void DiagoElpaNative<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in)
+void DiagoElpaNative<T>::diag(ModuleBase::MatrixBlock<T>& h_mat,
+                              ModuleBase::MatrixBlock<T>& s_mat,
+                              psi::Psi<T>& psi,
+                              Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoElpaNative", "diag");
 #ifdef __MPI
-    ModuleBase::MatrixBlock<T> h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
     MPI_Comm COMM_DIAG = setmpicomm(); // set mpi_comm needed
     diag_pool(h_mat, s_mat, psi, eigenvalue_in, COMM_DIAG);
 #else
