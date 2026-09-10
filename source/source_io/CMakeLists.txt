@@ -22,13 +22,10 @@ list(APPEND objects
     module_bessel/numerical_basis_jyjy.cpp
     module_bessel/numerical_descriptor.cpp
     module_output/print_info.cpp
-    module_output/read_cube.cpp
     module_wf/read_wfc_pw.cpp
     module_wf/read_wf2rho_pw.cpp
     module_restart/restart.cpp
     module_wf/write_wfc_pw.cpp
-    module_output/write_pao.cpp
-    module_output/write_cube.cpp
     module_elf/write_elf.cpp
     module_dipole/write_dipole.cpp
     module_ml/write_mlkedf_desc.cpp
@@ -37,7 +34,6 @@ list(APPEND objects
     module_efield/td_efield_io.cpp
     module_efield/td_vector_pot_io.cpp
     module_chgpot/write_libxc_r.cpp
-    module_output/output_log.cpp
     module_json/para_json.cpp
     parse_args.cpp
     input_help.cpp
@@ -64,7 +60,6 @@ if(ENABLE_LCAO)
       module_dos/write_dos_lcao.cpp
       module_dos/cal_pdos_gamma.cpp
       module_dos/cal_pdos_multik.cpp
-      module_output/write_orb_info.cpp
       module_energy/write_proj_band_lcao.cpp
       module_chgpot/get_pchg_lcao.cpp
       module_wf/get_wf_lcao.cpp

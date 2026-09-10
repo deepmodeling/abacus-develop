@@ -1,8 +1,8 @@
 #include "elecstate_tools.h"
 
 #include "occupy.h"
-#include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"
+#include "source_base/parallel_comm.h"
 
 #include <algorithm>
 #include <numeric>
@@ -100,25 +100,32 @@ void calculate_weights(const ModuleBase::matrix& ekb,
     const int nks = ekb.nr;
     if (!(Occupy::use_gaussian_broadening || Occupy::fixed_occupations))
     {
+        const int nspin = PARAM.inp.nspin;
         // Taoni fix smearing_method=fixed for BPCG on 2026-08-21
         // Integer occupations use global band indices even when ekb is a local
         // contiguous BPCG shard.
         const int band_offset = get_band_offset(nbands, global_nbands);
         if (PARAM.globalv.two_fermi)
         {
-            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[0], ekb, eferm.ef_up, wg, 0, klist->isk);
-            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[1], ekb, eferm.ef_dw, wg, 1, klist->isk);
+            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[0], ekb, eferm.ef_up, wg,
+                             nspin, 0, klist->isk);
+            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[1], ekb, eferm.ef_dw, wg,
+                             nspin, 1, klist->isk);
             // ef = ( ef_up + ef_dw ) / 2.0_dp need??? mohan add 2012-04-16
             // Keep independent Fermi levels for the two spin channels.
         }
         else
         {
             // A spin selector of -1 requests the combined-spin occupation path.
-            Occupy::iweights(nks, klist->wk, nbands, band_offset, PARAM.inp.nelec, ekb, eferm.ef, wg, -1, klist->isk);
+            Occupy::iweights(nks, klist->wk, nbands, band_offset, PARAM.inp.nelec, ekb, eferm.ef, wg,
+                             nspin, -1, klist->isk);
         }
     }
     else if (Occupy::use_gaussian_broadening)
     {
+        // The pool count is needed both by the Fermi-energy search inside
+        // gweights and by the all-pool demet reduction below.
+        const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
         if (PARAM.globalv.two_fermi)
         {
             double demet_up = 0.0;
@@ -134,7 +141,8 @@ void calculate_weights(const ModuleBase::matrix& ekb,
                              demet_up,
                              wg,
                              0,
-                             klist->isk);
+                             klist->isk,
+                             npool);
             Occupy::gweights(nks,
                              klist->wk,
                              nbands,
@@ -146,7 +154,8 @@ void calculate_weights(const ModuleBase::matrix& ekb,
                              demet_dw,
                              wg,
                              1,
-                             klist->isk);
+                             klist->isk,
+                             npool);
             f_en.demet = demet_up + demet_dw;
         }
         else
@@ -163,11 +172,11 @@ void calculate_weights(const ModuleBase::matrix& ekb,
                              f_en.demet,
                              wg,
                              -1,
-                             klist->isk);
+                             klist->isk,
+                             npool);
         }
 #ifdef __MPI
         // demet is accumulated independently on every k-point and band partition.
-        const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
         Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, f_en.demet);
 #endif
     }

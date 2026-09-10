@@ -79,7 +79,7 @@ add_library(
     module_parallel/para_pw_world.cpp
     module_parallel/para_diag_world.cpp
     module_parallel/para_rgrid_world.cpp
-    module_parallel/para_bgroup_world.cpp
+    module_parallel/para_bdiff_ksame_world.cpp
     module_parallel/para_matrix_world.cpp
     module_parallel/para_mpi_func.cpp
     module_parallel/para_setup.cpp

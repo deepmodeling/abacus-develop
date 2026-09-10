@@ -12,6 +12,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_main/version.h"
 #include "source_base/parallel_global.h"
+#include "source_main/para_worlds_global.h"
 #ifdef __DSP
 #include "source_base/module_device/memory_op.h"
 #include "source_base/module_external/blas_connector.h"
@@ -150,6 +151,18 @@ void Driver::reading()
 
     // (*temp*) copy the variables from INPUT to each class
     Input_Conv::Convert();
+
+    // Build the image-level communication domains: one esolver_world per
+    // image plus the cross-image images_world, held in the process-wide
+    // ParaCollection. With nimage = 1 the esolver world is congruent to
+    // MPI_COMM_WORLD, so the legacy decomposition below (still performed on
+    // MPI_COMM_WORLD) is bit-identical.
+    // TODO(images): when nimage > 1 is enabled, the split_diag_world,
+    // split_grid_world and init_pools calls below must be re-based from
+    // MPI_COMM_WORLD onto the esolver world obtained here.
+    Parallel::init_global_para_worlds(GlobalV::NPROC,
+                                      GlobalV::MY_RANK,
+                                      PARAM.inp.nimage);
 
     // (4) define the 'DIAGONALIZATION' world in MPI
     Parallel_Global::split_diag_world(PARAM.inp.diago_proc,

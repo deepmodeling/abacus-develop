@@ -5,7 +5,7 @@
 #include "source_cell/atom_spec.h"
 #include "source_cell/klist.h"
 #include "source_estate/module_dm/density_matrix.h"
-#include "source_io/module_output/cube_io.h"
+#include "source_cell/cube_io.h"
 #include "source_hamilt/module_gint/gint_interface.h"
 #include "source_lcao/module_lr/dm_trans/dm_trans.h"
 #include "source_lcao/module_lr/utils/lr_util.h"

@@ -471,6 +471,31 @@ In socket_driver mode, this flag controls whether the returned frame advertises 
         this->add_item(item);
     }
     {
+        Input_Item item("nimage");
+        item.annotation = "number of independent images (e.g. NEB replicas)";
+        item.category = "System variables";
+        item.type = "Integer";
+        item.description = R"(Number of independent calculation images that share the MPI processes.
+* Each image runs its own esolver instance on a dedicated esolver_world communicator, split from MPI_COMM_WORLD by image id.
+* The cross-image images_world communicator connects ranks with the same rank_in_esolver across images.
+* Currently only nimage = 1 is supported; larger values are reserved for path-based methods such as NEB and will be rejected.)";
+        item.default_value = "1";
+        item.unit = "";
+        item.set_availability("");
+        read_sync_int(input.nimage);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.nimage < 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "nimage must be a positive integer");
+            }
+            if (para.input.nimage > 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "nimage > 1 is not implemented yet");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("latname");
         item.annotation = "the name of lattice name";
         item.category = "System variables";

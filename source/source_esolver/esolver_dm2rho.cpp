@@ -5,7 +5,7 @@
 #include "source_cell/read_pp_ucell.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_ml/io_npz.h"
-#include "source_io/module_output/cube_io.h"
+#include "source_cell/cube_io.h"
 #include "source_lcao/lcao_domain.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"

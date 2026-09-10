@@ -9,14 +9,19 @@ namespace Parallel
 /**
  * @brief Domain tag constants for the parallel communication domains.
  *
- * These tags replace raw string literals to avoid typo-induced runtime
- * failures. They map to the legacy global communicators as follows:
+ * Pool terminology (see parallel_comm.cpp):
+ *   - k-pool: one of the KPAR groups of processes that share one subset of
+ *     k-points. This split happens first and is independent of bndpar.
+ *   - band-pool: one of the BNDPAR sub-groups of a k-pool, holding one
+ *     band window ("band group").
+ *
+ * The tags map to the legacy global communicators as follows:
  *   - esolver      -> one esolver instance (intra-image communicator)
  *   - images       -> cross-image communicator (same rank_in_esolver)
- *   - pw           -> POOL_WORLD
- *   - kmesh        -> KP_WORLD
- *   - bsame_kdiff  -> INT_BGROUP
- *   - bdiff_ksame  -> BP_WORLD
+ *   - pw           -> POOL_WORLD (one band-pool)
+ *   - kmesh        -> KP_WORLD (links k-pools; only valid when the k-pool split is even)
+ *   - bsame_kdiff  -> INT_BGROUP (same band group across k-pools)
+ *   - bdiff_ksame  -> BP_WORLD (different band groups inside one k-pool)
  *   - rgrid        -> GRID_WORLD
  *   - diag         -> DIAG_WORLD
  *   - matrix       -> matrix domain

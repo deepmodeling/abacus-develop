@@ -18,6 +18,7 @@
     - [cal\_force](#cal_force)
     - [kpar](#kpar)
     - [bndpar](#bndpar)
+    - [nimage](#nimage)
     - [latname](#latname)
     - [assume\_isolated](#assume_isolated)
     - [init\_wfc](#init_wfc)
@@ -723,6 +724,15 @@
   - In SDFT, distribute stochastic orbitals among the band groups. When the deterministic Kohn-Sham eigensolver is not BPCG, band group 0 calculates the deterministic orbitals and broadcasts them to the other groups.
   - bndpar must be positive and no greater than the number of MPI processes. When bndpar is greater than 1, kpar * bndpar must divide the number of MPI processes exactly.
   > Note: For PW calculations on GPU, if the input kpar * bndpar differs from the number of MPI processes, ABACUS automatically sets the effective kpar to NPROC / bndpar.
+- **Default**: 1
+
+### nimage
+
+- **Type**: Integer
+- **Description**: Number of independent calculation images that share the MPI processes.
+  - Each image runs its own esolver instance on a dedicated esolver_world communicator, split from MPI_COMM_WORLD by image id.
+  - The cross-image images_world communicator connects ranks with the same rank_in_esolver across images.
+  - Currently only nimage = 1 is supported; larger values are reserved for path-based methods such as NEB and will be rejected.
 - **Default**: 1
 
 ### latname

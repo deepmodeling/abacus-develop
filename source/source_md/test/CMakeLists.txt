@@ -53,7 +53,7 @@ list(APPEND depend_files
   ../../source_cell/module_neighlist/domain_decomposition.cpp
   ../../source_cell/mdcell.cpp
   ../../source_base/output.cpp
-  ../../source_io/module_output/output_log.cpp
+  ../../source_cell/output_log.cpp
   ../../source_io/module_output/print_info.cpp
   ../../source_cell/cif_io.cpp
   ../../source_esolver/esolver_lj.cpp

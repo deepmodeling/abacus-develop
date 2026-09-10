@@ -551,7 +551,8 @@ add_library(
   driver
   OBJECT
   source_main/driver.cpp
-  source_main/driver_run.cpp)
+  source_main/driver_run.cpp
+  source_main/para_worlds_global.cpp)
 
 list(APPEND device_srcs
   source_pw/module_pwdft/kernels/nonlocal_op.cpp
@@ -754,6 +755,7 @@ abacus_apply_build_options(${ABACUS_BIN_NAME})
 # Register integration tests only after the final executable and its path are
 # available. Unit tests are added by source subdirectories through AddTest().
 if(BUILD_TESTING)
+  add_subdirectory(source_main/test)
   add_subdirectory("${ABACUS_TEST_DIR}" "${PROJECT_BINARY_DIR}/tests")
 endif()
 

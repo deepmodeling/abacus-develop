@@ -20,7 +20,12 @@ namespace ModuleIO
 /// @param ucell_
 /// @param v_eff_fixed
 /// @param solvent: for solvation model
-/// #param precision: output precision
+/// @param precision: output precision
+/// @param nspin: number of spin channels (1, 2, or 4)
+/// @param efield_flag: whether electric field is applied
+/// @param dip_cor_flag: whether dipole correction is applied
+/// @param imp_sol: whether implicit solvation model is used
+/// @param two_fermi: whether two Fermi levels are used
 void write_elecstat_pot(
 #ifdef __MPI
     const int& bz,
@@ -33,7 +38,12 @@ void write_elecstat_pot(
     const UnitCell* ucell_,
     const double* v_eff_fixed,
     const surchem& solvent,
-    const int precision);
+    const int precision,
+    const int nspin,
+    const bool efield_flag,
+    const bool dip_cor_flag,
+    const bool imp_sol,
+    const bool two_fermi);
 
 } // namespace ModuleIO
 

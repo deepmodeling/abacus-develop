@@ -4,7 +4,7 @@
 #include "source_base/tool_quit.h"
 #include "source_base/global_variable.h" // use GlobalC
 #include "source_hamilt/module_vdw/vdw.h"
-#include "source_io/module_output/output_log.h"
+#include "source_cell/output_log.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
 
