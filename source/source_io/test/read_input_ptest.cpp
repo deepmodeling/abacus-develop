@@ -152,6 +152,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.pw_diag_nmax, 50);
     EXPECT_EQ(param.inp.diago_cg_prec, 1);
     EXPECT_EQ(param.inp.pw_diag_ndim, 4);
+    EXPECT_EQ(param.inp.pw_diag_rr_step, 16);
     EXPECT_DOUBLE_EQ(param.inp.pw_diag_thr, 1.0e-2);
     EXPECT_FALSE(param.inp.diago_smooth_ethr);
     EXPECT_EQ(param.inp.nb2d, 0);

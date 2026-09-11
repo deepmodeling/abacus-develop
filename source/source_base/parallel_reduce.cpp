@@ -104,6 +104,7 @@ template void Parallel_Reduce::reduce_pool<double>(double&);
 template void Parallel_Reduce::reduce_pool<std::complex<double>>(std::complex<double>&);
 
 template void Parallel_Reduce::reduce_pool<int>(int*, const int);
+template void Parallel_Reduce::reduce_pool<float>(float*, const int);
 template void Parallel_Reduce::reduce_pool<double>(double*, const int);
 template void Parallel_Reduce::reduce_pool<std::complex<float>>(std::complex<float>*, const int);
 template void Parallel_Reduce::reduce_pool<std::complex<double>>(std::complex<double>*, const int);
