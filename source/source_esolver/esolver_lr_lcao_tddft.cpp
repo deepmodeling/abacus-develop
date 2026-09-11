@@ -99,15 +99,14 @@ int ModuleESolver::ESolver_LR<T, TR>::cal_nupdown_form_occ(const ModuleBase::mat
 {   // only for nspin=2
     const int& nk = wg.nr / 2;
     auto occ_sum_k = [&](const int& is, const int& ib)->double { double o = 0.0; for (int ik = 0;ik < nk;++ik) { o += wg(is * nk + ik, ib); } return o;};
-    int nupdown = 0;
-    for (int ib = 0;ib < wg.nc;++ib)
-    {
-        const int nu = static_cast<int>(std::lround(occ_sum_k(0, ib)));
-        const int nd = static_cast<int>(std::lround(occ_sum_k(1, ib)));
-        if ((nu + nd) == 0) { break; }
-        nupdown += nu - nd;
-    }
-    return nupdown;
+    // Sum the occupations of each channel FIRST and round once, instead of rounding band by band
+    // and summing the differences. A half-occupied degenerate frontier pair (OH's 2-Pi doublet
+    // smears its odd electron as 0.5/0.5 over the two pi_down orbitals) otherwise makes the answer
+    // a coin flip: the stored values are 0.5000000052 and 0.4999999947, so one rounds up and one
+    // down, and which way they land is pure noise.
+    double up = 0.0, dn = 0.0;
+    for (int ib = 0;ib < wg.nc;++ib) { up += occ_sum_k(0, ib); dn += occ_sum_k(1, ib); }
+    return static_cast<int>(std::lround(up) - std::lround(dn));
 }
 
 template<typename T, typename TR>
@@ -223,11 +222,7 @@ void ModuleESolver::ESolver_LR<T, TR>::reset_dim_spin2()
 	{ 
 		return; 
 	}
-	if (nupdown == 0) 
-	{ 
-		std::cout << " ** Assuming degenerate spin-up and spin-down states  **" << std::endl; 
-	}
-	else
+	if (nupdown != 0)
     {
         this->openshell = true;
         nupdown > 0 ? ((nocc[1] -= nupdown) && (nvirt[1] += nupdown)) : ((nocc[0] += nupdown) && (nvirt[0] -= nupdown));
@@ -249,6 +244,10 @@ void ModuleESolver::ESolver_LR<T, TR>::reset_dim_spin2()
 	if (this->inp_->lr_unrestricted) 
 	{ 
 		this->openshell = true; 
+	}
+    if (!this->openshell) 
+	{ 
+		std::cout << " ** Assuming degenerate spin-up and spin-down states  **" << std::endl; 
 	}
 }
 
