@@ -20,6 +20,9 @@ using std::vector;
 class Numerical_Orbital_Lm
 {
 	friend class Numerical_Orbital;
+	/// the unit test drives cal_kradial(), cal_kradial_sbpool(),
+	/// cal_rradial_sbpool() and plot() directly
+	friend class NumericalOrbitalLmTest;
 
 	public:
 
@@ -139,6 +142,7 @@ public:
 	const std::vector<double>& get_psi() const { return psi; }
 	const double* getPsi_r() const { return ModuleBase::GlobalFunc::VECTOR_TO_PTR(psir); }
 	const double& getPsi_r(const int ir) const { return psir[ir]; }
+	const std::vector<double>& get_psir() const { return psir; }
 
 	const double* getPsif() const               { return ModuleBase::GlobalFunc::VECTOR_TO_PTR(psif); }
 	const double& getPsif(const int ik) const   { return psif[ik]; }
