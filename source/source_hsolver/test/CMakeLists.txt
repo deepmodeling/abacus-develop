@@ -93,7 +93,7 @@ if (ENABLE_MPI)
     AddTest(
       TARGET MODULE_HSOLVER_LCAO
       LIBS parameter  ELPA::ELPA base genelpa psi device
-      SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
+      SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_elpa_native.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
     )
     else()
       AddTest(
