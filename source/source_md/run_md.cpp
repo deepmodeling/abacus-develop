@@ -6,6 +6,7 @@
 #include "source_base/parallel_cell.h"
 #include "source_cell/mdcell_reader.h"
 #include "source_cell/mdcell.h"
+#include "source_cell/module_neighlist/domain_decomposition.h"
 #include "source_io/module_parameter/parameter.h"
 #include "fire.h"
 #include "langevin.h"
@@ -24,7 +25,7 @@
 namespace Run_MD
 {
 
-void prepare_mdcell(MDCell& mdcell, const Parameter& param_in)
+void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecomposition& decomp)
 {
     const Input_para& input = param_in.inp;
     std::vector<int> effective_replicate = input.cell_replica;
@@ -37,21 +38,46 @@ void prepare_mdcell(MDCell& mdcell, const Parameter& param_in)
     mdcell = MDCellReader::read_stru(param_in.globalv.global_in_stru,
                                      effective_replicate,
                                      input.mdp.md_neighbor_skin / ModuleBase::BOHR_TO_A,
-                                     comm_domain);
+                                     comm_domain,
+                                     decomp);
     GlobalV::ofs_running << std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "TOTAL ATOM NUMBER", mdcell.nat());
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "TOTAL ATOM NUMBER", mdcell.nat_);
     GlobalV::ofs_running << std::endl;
 }
 
-void prepare_mdcell(MDCell& mdcell, UnitCell& ucell)
+void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp)
 {
-    mdcell.initialize_from_unitcell(ucell, 0.0, ModuleBase::world_comm_domain());
-    mdcell.mutable_stru_meta() = unitcell::make_stru_meta(ucell);
+    const ModuleBase::CommunicationDomain comm_domain = ModuleBase::world_comm_domain();
+    decomp.init(comm_domain, ucell.latvec, ucell.lat0, 0.0, 0.0);
+    const std::vector<LocalAtom> owned_atoms = decomp.split_owned_atoms_from_ucell(ucell);
+    std::vector<std::string> type_labels;
+    std::vector<double> type_masses;
+    std::vector<std::int64_t> type_atom_counts;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        type_labels.push_back(ucell.atoms[it].label);
+        type_masses.push_back(ucell.atoms[it].mass);
+        type_atom_counts.push_back(ucell.atoms[it].na);
+    }
+    mdcell.initialize_from_owned_atoms(ucell.latvec,
+                                       ucell.GT,
+                                       ucell.lat0,
+                                       ucell.omega,
+                                       ucell.nat,
+                                       owned_atoms,
+                                       type_labels,
+                                       type_masses,
+                                       type_atom_counts,
+                                       0.0,
+                                       comm_domain);
+    mdcell.backing_unitcell_ = &ucell;
+    mdcell.stru_meta_ = unitcell::make_stru_meta(ucell);
 }
 
 void md_line(MDCell& mdcell,
              ModuleESolver::ESolver* p_esolver,
-             const Parameter& param_in)
+             const Parameter& param_in,
+             DomainDecomposition& decomp)
 {
     ModuleBase::TITLE("Run_MD", "md_line");
     ModuleBase::timer::start("Run_MD", "md_line");
@@ -87,7 +113,7 @@ void md_line(MDCell& mdcell,
     {
         if (mdrun->step_ == 0)
         {
-            mdrun->setup(p_esolver, PARAM.globalv.global_readin_dir);
+            mdrun->setup(p_esolver, param_in.globalv.global_readin_dir, decomp);
         }
         else
         {
@@ -102,6 +128,7 @@ void md_line(MDCell& mdcell,
             MD_func::force_virial(p_esolver,
                                   mdrun->step_,
                                   mdcell,
+                                  decomp,
                                   mdrun->potential,
                                   param_in.inp.cal_stress,
                                   mdrun->virial,
@@ -132,13 +159,13 @@ void md_line(MDCell& mdcell,
         if (param_in.mdp.md_restartfreq > 0
             && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_restartfreq == 0)
         {
-            if (mdcell.has_backing_unitcell())
+            if (mdcell.backing_unitcell_ != nullptr)
             {
                 mdcell.sync_backing_unitcell();
             }
             std::stringstream file;
             file << PARAM.globalv.global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
-            mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str());
+            mdcell::print_stru_file(mdcell, mdcell.stru_meta_, file.str());
             mdrun->write_restart(PARAM.globalv.global_out_dir);
         }
 

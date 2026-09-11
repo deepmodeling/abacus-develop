@@ -5,6 +5,7 @@
 #include "source_esolver/esolver_lj.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_md/md_base.h"
+#include "source_cell/module_neighlist/domain_decomposition.h"
 #include "setcell.h"
 
 #include <memory>
@@ -31,13 +32,18 @@ template <class Integrator>
 class MdIntegratorFixture : public MdTestBase
 {
   protected:
+    MDCell mdcell;
+    DomainDecomposition decomp;
     std::unique_ptr<MD_base> mdrun;
 
     void SetUp() override
     {
         MdTestBase::SetUp();
-        mdrun.reset(new Integrator(param_in, ucell));
-        mdrun->setup(p_esolver.get(), PARAM.sys.global_readin_dir);
+        mdcell = Setcell::setup_mdcell(ucell);
+        decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec_, mdcell.lat0_, 0.0, 0.0);
+        p_esolver->before_all_runners(mdcell, param_in.inp);
+        mdrun.reset(new Integrator(param_in, mdcell));
+        mdrun->setup(p_esolver.get(), param_in.globalv.global_readin_dir, decomp);
     }
 };
 

@@ -17,19 +17,9 @@ class UnitCell : public BaseCell {
     UnitCell();
     ~UnitCell();
 
-    double get_lat0() const override
+    Kind kind() const override
     {
-        return lat0;
-    }
-
-    double get_omega() const override
-    {
-        return omega;
-    }
-
-    const ModuleBase::Matrix3& get_latvec() const override
-    {
-        return latvec;
+        return Kind::unitcell;
     }
 
     /// @brief Initialize basic cell parameters (latname, ntype, lmaxmax, init_vel)
@@ -234,23 +224,6 @@ class UnitCell : public BaseCell {
 
     ModuleBase::Matrix3 stress; ///< calculate stress on the cell
 
-    /// @name BaseCell private overrides
-    /// @{
-    Kind get_kind() const override
-    {
-        return Kind::unitcell;
-    }
-
-    std::int64_t get_nat() const override
-    {
-        return nat;
-    }
-
-    const ModuleBase::Matrix3& get_GT() const override
-    {
-        return GT;
-    }
-    /// @}
 };
 
 #endif // unitcell class

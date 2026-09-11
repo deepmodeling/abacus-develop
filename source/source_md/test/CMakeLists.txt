@@ -73,6 +73,7 @@ AddTest(
   TARGET MODULE_MD_LJ_pot
   LIBS parameter psi device
   SOURCES lj_pot_test.cpp
+  ../../source_cell/module_neighlist/test/test_domain_decomposition.cpp
   ${depend_files}
 )
 
@@ -80,6 +81,7 @@ AddTest(
   TARGET MODULE_MD_func
   LIBS parameter psi device
   SOURCES md_func_test.cpp
+  test_md_func.cpp
   ${depend_files}
 )
 

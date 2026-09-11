@@ -5,9 +5,7 @@
 #include "source_base/vector3.h"
 #include "source_cell/mdcell.h"
 
-#ifdef __MPI
 #include "source_cell/module_neighlist/domain_decomposition.h"
-#endif
 
 #include <cctype>
 #include <cstdint>
@@ -188,20 +186,19 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
                                          const ModuleBase::Matrix3& primitive_gt,
                                          const std::vector<int>& cell_replica,
                                          std::int64_t& nat,
-                                         const ModuleBase::CommunicationDomain& comm_domain)
+                                         const ModuleBase::CommunicationDomain& comm_domain,
+                               DomainDecomposition& decomp)
 {
     int rank = 0;
 #ifdef __MPI
-    DomainDecomposition decomposition;
-    decomposition.init(comm_domain.communicator(), metadata.latvec, metadata.lat0, 0.0, 0.0);
     rank = comm_domain.rank();
 #endif
 
     int begin[3] = {0, 0, 0};
     int end[3] = {cell_replica[0], cell_replica[1], cell_replica[2]};
 #ifdef __MPI
-    const std::array<int, 3>& dims = decomposition.dims();
-    const std::array<int, 3>& coords = decomposition.coords();
+    const std::array<int, 3>& dims = decomp.dims();
+    const std::array<int, 3>& coords = decomp.coords();
     for (int idim = 0; idim < 3; ++idim)
     {
         begin[idim] = std::max(0, static_cast<int>(std::floor(
@@ -294,7 +291,7 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
                             (iz + frac.z) / cell_replica[2]);
                         int owner = 0;
 #ifdef __MPI
-                        owner = decomposition.owner_rank_from_frac(final_frac);
+                        owner = decomp.owner_rank_from_frac(final_frac);
 #endif
                         if (owner == rank)
                         {
@@ -324,7 +321,8 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
 MDCell MDCellReader::read_stru(const std::string& stru_file,
                                const std::vector<int>& cell_replica,
                                double skin,
-                               const ModuleBase::CommunicationDomain& comm_domain)
+                               const ModuleBase::CommunicationDomain& comm_domain,
+                               DomainDecomposition& decomp)
 {
     std::ifstream ifs(stru_file.c_str(), std::ios::in);
     if (!ifs)
@@ -344,9 +342,10 @@ MDCell MDCellReader::read_stru(const std::string& stru_file,
     metadata.latvec.e31 *= cell_replica[2]; metadata.latvec.e32 *= cell_replica[2]; metadata.latvec.e33 *= cell_replica[2];
     metadata.gt = metadata.latvec.Inverse();
     metadata.omega = std::abs(metadata.latvec.Det()) * metadata.lat0 * metadata.lat0 * metadata.lat0;
+    decomp.init(comm_domain, metadata.latvec, metadata.lat0, 0.0, skin);
     std::int64_t nat = 0;
     const std::vector<LocalAtom> owned_atoms = read_owned_atoms(ifs, metadata, primitive_latvec, primitive_gt,
-                                                                  cell_replica, nat, comm_domain);
+                                                                  cell_replica, nat, comm_domain, decomp);
     MDCell mdcell;
     mdcell.initialize_from_owned_atoms(metadata.latvec,
                                        metadata.gt,
@@ -359,6 +358,6 @@ MDCell MDCellReader::read_stru(const std::string& stru_file,
                                        metadata.type_atom_counts,
                                        skin,
                                        comm_domain);
-    mdcell.mutable_stru_meta() = metadata.stru_meta;
+    mdcell.stru_meta_ = metadata.stru_meta;
     return mdcell;
 }

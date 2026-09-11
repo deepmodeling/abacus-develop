@@ -1,3 +1,4 @@
+#include "source_cell/module_neighlist/domain_decomposition.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
@@ -9,6 +10,38 @@
 #include "source_md/md_func.h"
 
 #define doublethreshold 1e-12
+
+namespace
+{
+void initialize_mdcell_from_ucell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp)
+{
+    const ModuleBase::CommunicationDomain comm_domain = ModuleBase::world_comm_domain();
+    decomp.init(comm_domain, ucell.latvec, ucell.lat0, 0.0, 0.0);
+    const std::vector<LocalAtom> owned_atoms = decomp.split_owned_atoms_from_ucell(ucell);
+    std::vector<std::string> type_labels;
+    std::vector<double> type_masses;
+    std::vector<std::int64_t> type_atom_counts;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        type_labels.push_back(ucell.atoms[it].label);
+        type_masses.push_back(ucell.atoms[it].mass);
+        type_atom_counts.push_back(ucell.atoms[it].na);
+    }
+    mdcell.initialize_from_owned_atoms(ucell.latvec,
+                                       ucell.GT,
+                                       ucell.lat0,
+                                       ucell.omega,
+                                       ucell.nat,
+                                       owned_atoms,
+                                       type_labels,
+                                       type_masses,
+                                       type_atom_counts,
+                                       0.0,
+                                       comm_domain);
+    mdcell.backing_unitcell_ = &ucell;
+}
+} // namespace
+
 /************************************************
  *  unit test of functions in md_func.h
  ***********************************************/
@@ -106,8 +139,9 @@ TEST_F(MD_func_test, compute_stress)
 {
     const ModuleBase::Vector3<double> test_velocity(0.1, 0.2, 0.3);
     MDCell mdcell;
-    mdcell.initialize_from_unitcell(ucell, 0.0, ModuleBase::world_comm_domain());
-    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+    DomainDecomposition decomp;
+    initialize_mdcell_from_ucell(mdcell, ucell, decomp);
+    for (LocalAtom& atom : mdcell.owned_atoms_)
     {
         atom.vel = test_velocity;
     }
@@ -126,8 +160,9 @@ TEST_F(MD_func_test, compute_stress)
 TEST_F(MD_func_test, dump_info)
 {
     MDCell mdcell;
-    mdcell.initialize_from_unitcell(ucell, 0.0, ModuleBase::world_comm_domain());
-    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+    DomainDecomposition decomp;
+    initialize_mdcell_from_ucell(mdcell, ucell, decomp);
+    for (LocalAtom& atom : mdcell.owned_atoms_)
     {
         atom.vel = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
     }
@@ -312,7 +347,8 @@ TEST_F(MD_func_test, current_md_info_mdcell_accepts_step_only_restart)
     file.close();
 
     MDCell mdcell;
-    mdcell.initialize_from_unitcell(ucell, 0.0, ModuleBase::world_comm_domain());
+    DomainDecomposition decomp;
+    initialize_mdcell_from_ucell(mdcell, ucell, decomp);
     int istep = -1;
     double temperature = 0.0;
     MD_func::current_md_info(mdcell, "./", istep, temperature);
@@ -325,10 +361,11 @@ TEST_F(MD_func_test, current_md_info_mdcell_accepts_step_only_restart)
 TEST_F(MD_func_test, global_dof_mdcell)
 {
     MDCell mdcell;
-    mdcell.initialize_from_unitcell(ucell, 0.0, ModuleBase::world_comm_domain());
+    DomainDecomposition decomp;
+    initialize_mdcell_from_ucell(mdcell, ucell, decomp);
     EXPECT_EQ(MD_func::global_dof(mdcell), 9);
 
-    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+    for (LocalAtom& atom : mdcell.owned_atoms_)
     {
         atom.mbl.x = 0;
     }
@@ -338,7 +375,8 @@ TEST_F(MD_func_test, global_dof_mdcell)
 TEST_F(MD_func_test, current_step_warning)
 {
     MDCell mdcell;
-    mdcell.initialize_from_unitcell(ucell, 0.0, ModuleBase::world_comm_domain());
+    DomainDecomposition decomp;
+    initialize_mdcell_from_ucell(mdcell, ucell, decomp);
     int istep = 0;
     double temperature = 0.0;
     EXPECT_EXIT(MD_func::current_md_info(mdcell, "./", istep, temperature), ::testing::ExitedWithCode(1), "");

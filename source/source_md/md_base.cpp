@@ -43,7 +43,7 @@ MD_base::MD_base(const Parameter& param_in, MDCell& mdcell_in)
 MD_base::~MD_base() {}
 
 
-void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
+void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
 {
     if (mdp.md_restart)
     {
@@ -57,11 +57,11 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
 
 	ModuleIO::print_screen(stress_step, force_step, istep_print);
 
-    MD_func::force_virial(p_esolver, step_, mdcell, potential, cal_stress, virial, mdp.md_out_force);
+    MD_func::force_virial(p_esolver, step_, mdcell, decomp, potential, cal_stress, virial, mdp.md_out_force);
     MD_func::compute_stress(mdcell, cal_stress, virial, stress);
-    if (mdcell.has_backing_unitcell())
+    if (mdcell.backing_unitcell_ != nullptr)
     {
-        mdcell.backing_unitcell().ionic_position_updated = true;
+        mdcell.backing_unitcell_->ionic_position_updated = true;
     }
 
     return;
@@ -87,7 +87,7 @@ void MD_base::second_half()
 
 void MD_base::update_pos()
 {
-    std::vector<LocalAtom>& atoms = mdcell.mutable_owned_atoms();
+    std::vector<LocalAtom>& atoms = mdcell.owned_atoms_;
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
         LocalAtom& atom = atoms[i];
@@ -96,19 +96,19 @@ void MD_base::update_pos()
         {
             if (atom.mbl[k])
             {
-                pos[k] = atom.vel[k] * md_dt / mdcell.lat0();
+                pos[k] = atom.vel[k] * md_dt / mdcell.lat0_;
             }
             else
             {
                 pos[k] = 0;
             }
         }
-        pos = pos * mdcell.GT();
+        pos = pos * mdcell.gt_;
         atom.frac += pos;
         atom.frac.x -= std::floor(atom.frac.x);
         atom.frac.y -= std::floor(atom.frac.y);
         atom.frac.z -= std::floor(atom.frac.z);
-        atom.cart = atom.frac * mdcell.latvec();
+        atom.cart = atom.frac * mdcell.latvec_;
     }
 
     return;
@@ -117,7 +117,7 @@ void MD_base::update_pos()
 
 void MD_base::update_vel()
 {
-    std::vector<LocalAtom>& atoms = mdcell.mutable_owned_atoms();
+    std::vector<LocalAtom>& atoms = mdcell.owned_atoms_;
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
         LocalAtom& atom = atoms[i];

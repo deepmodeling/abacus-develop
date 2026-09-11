@@ -7,6 +7,7 @@
 #include <cstdint>
 
 class Parameter;
+class DomainDecomposition;
 
 #ifdef __MPI
 #include <mpi.h> // MPI functions
@@ -90,6 +91,7 @@ void rescale_vel(const int& natom,
 void force_virial(ModuleESolver::ESolver* p_esolver,
                   const int& istep,
                   MDCell& mdcell,
+                  DomainDecomposition& decomp,
                   double& potential,
                   const bool& cal_stress,
                   ModuleBase::matrix& virial,

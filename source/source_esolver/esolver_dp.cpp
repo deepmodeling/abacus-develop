@@ -47,8 +47,8 @@ void ESolver_DP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     {
         MDCell& mdcell = static_cast<MDCell&>(basecell);
 #ifdef __DPMD
-        mdcell.initialize_neighbors(dp.cutoff() * ModuleBase::ANGSTROM_AU);
-        initialize_type_map_(mdcell.type_labels());
+        mdcell.set_neighbor_cutoff(dp.cutoff() * ModuleBase::ANGSTROM_AU);
+        initialize_type_map_(mdcell.type_labels_);
 #else
         ModuleBase::WARNING_QUIT("ESolver_DP", "Please recompile with -D__DPMD");
 #endif
@@ -81,10 +81,10 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         MDCell& mdcell = static_cast<MDCell&>(basecell);
         if (!mdcell.has_neighbor_search())
         {
-            mdcell.prepare_neighbors();
+            ModuleBase::WARNING_QUIT("ESolver", "MDCell neighbors must be prepared by the caller before runner().");
         }
-        const int nowned_atoms = mdcell.nowned_atoms();
-        const int nghost = mdcell.nghost();
+        const int nowned_atoms = mdcell.owned_atoms_.size();
+        const int nghost = mdcell.ghost_atoms_.size();
         const int natom = nowned_atoms + nghost;
         if (natom == 0)
         {
@@ -92,27 +92,27 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         }
 
         std::vector<double> cell(9, 0.0);
-        cell[0] = mdcell.latvec().e11 * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-        cell[1] = mdcell.latvec().e12 * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-        cell[2] = mdcell.latvec().e13 * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-        cell[3] = mdcell.latvec().e21 * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-        cell[4] = mdcell.latvec().e22 * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-        cell[5] = mdcell.latvec().e23 * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-        cell[6] = mdcell.latvec().e31 * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-        cell[7] = mdcell.latvec().e32 * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-        cell[8] = mdcell.latvec().e33 * mdcell.lat0() * ModuleBase::BOHR_TO_A;
+        cell[0] = mdcell.latvec_.e11 * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
+        cell[1] = mdcell.latvec_.e12 * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
+        cell[2] = mdcell.latvec_.e13 * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
+        cell[3] = mdcell.latvec_.e21 * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
+        cell[4] = mdcell.latvec_.e22 * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
+        cell[5] = mdcell.latvec_.e23 * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
+        cell[6] = mdcell.latvec_.e31 * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
+        cell[7] = mdcell.latvec_.e32 * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
+        cell[8] = mdcell.latvec_.e33 * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
 
-        const std::vector<LocalAtom>& owned_atoms = mdcell.owned_atoms();
-        const std::vector<LocalAtom>& ghost_atoms = mdcell.ghost_atoms();
+        const std::vector<LocalAtom>& owned_atoms = mdcell.owned_atoms_;
+        const std::vector<LocalAtom>& ghost_atoms = mdcell.ghost_atoms_;
         std::vector<double> coord(static_cast<std::size_t>(3 * natom), 0.0);
         std::vector<int> local_atype(static_cast<std::size_t>(natom), 0);
         for (int iat = 0; iat < natom; ++iat)
         {
             const LocalAtom& atom = iat < nowned_atoms ? owned_atoms[static_cast<std::size_t>(iat)]
                                                   : ghost_atoms[static_cast<std::size_t>(iat - nowned_atoms)];
-            coord[3 * iat] = atom.cart.x * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-            coord[3 * iat + 1] = atom.cart.y * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-            coord[3 * iat + 2] = atom.cart.z * mdcell.lat0() * ModuleBase::BOHR_TO_A;
+            coord[3 * iat] = atom.cart.x * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
+            coord[3 * iat + 1] = atom.cart.y * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
+            coord[3 * iat + 2] = atom.cart.z * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
             if (atom.type < 0 || static_cast<std::size_t>(atom.type) >= md_type_to_dp_type_.size())
             {
                 ModuleBase::WARNING_QUIT("ESolver_DP", "MDCell atom type is outside the DeePMD type map.");
@@ -158,8 +158,8 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
             ModuleBase::WARNING_QUIT("ESolver_DP", "DeePMD returned an invalid force array for MDCell.");
         }
 
-        std::vector<LocalAtom>& mutable_owned_atoms = mdcell.mutable_owned_atoms();
-        std::vector<LocalAtom>& mutable_ghost_atoms = mdcell.mutable_ghost_atoms();
+        std::vector<LocalAtom>& mutable_owned_atoms = mdcell.owned_atoms_;
+        std::vector<LocalAtom>& mutable_ghost_atoms = mdcell.ghost_atoms_;
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             mutable_owned_atoms[static_cast<std::size_t>(iat)].force.set(force[3 * iat], force[3 * iat + 1], force[3 * iat + 2]);
@@ -170,7 +170,6 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
                                                                            force[3 * (nowned_atoms + iat) + 1],
                                                                            force[3 * (nowned_atoms + iat) + 2]);
         }
-        mdcell.accumulate_ghost_forces();
 
         if (virial.size() != 9)
         {
@@ -185,11 +184,15 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
 #endif
         const double fact_e = rescaling / ModuleBase::Ry_to_eV;
         const double fact_f = rescaling / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
-        const double fact_v = rescaling / (mdcell.omega() * ModuleBase::Ry_to_eV);
+        const double fact_v = rescaling / (mdcell.omega_ * ModuleBase::Ry_to_eV);
         dp_potential = local_energy * fact_e;
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             LocalAtom& atom = mutable_owned_atoms[static_cast<std::size_t>(iat)];
+            atom.force *= fact_f;
+        }
+        for (LocalAtom& atom : mutable_ghost_atoms)
+        {
             atom.force *= fact_f;
         }
         for (int i = 0; i < 3; ++i)
@@ -274,10 +277,10 @@ void ESolver_DP::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
     if (basecell.kind() == BaseCell::Kind::mdcell)
     {
         const MDCell& mdcell = static_cast<const MDCell&>(basecell);
-        force.create(mdcell.nowned_atoms(), 3);
-        for (int iat = 0; iat < mdcell.nowned_atoms(); ++iat)
+        force.create(mdcell.owned_atoms_.size(), 3);
+        for (int iat = 0; iat < mdcell.owned_atoms_.size(); ++iat)
         {
-            const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(iat)];
+            const LocalAtom& atom = mdcell.owned_atoms_[static_cast<std::size_t>(iat)];
             force(iat, 0) = atom.force.x;
             force(iat, 1) = atom.force.y;
             force(iat, 2) = atom.force.z;

@@ -43,8 +43,8 @@ void ESolver_NEP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 #ifdef __NEP
         const double cutoff = std::max(nep.paramb.rc_radial_max, nep.paramb.rc_angular_max)
                               * ModuleBase::ANGSTROM_AU;
-        mdcell.initialize_neighbors(cutoff);
-        initialize_type_map_(mdcell.type_labels());
+        mdcell.set_neighbor_cutoff(cutoff);
+        initialize_type_map_(mdcell.type_labels_);
 #else
         ModuleBase::WARNING_QUIT("ESolver_NEP", "Please recompile with -D__NEP");
 #endif
@@ -83,18 +83,18 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
         MDCell& mdcell = static_cast<MDCell&>(basecell);
         if (!mdcell.has_neighbor_search())
         {
-            mdcell.prepare_neighbors();
+            ModuleBase::WARNING_QUIT("ESolver", "MDCell neighbors must be prepared by the caller before runner().");
         }
-        const int nowned_atoms = mdcell.nowned_atoms();
-        const int nghost = mdcell.nghost();
+        const int nowned_atoms = mdcell.owned_atoms_.size();
+        const int nghost = mdcell.ghost_atoms_.size();
         const int natom = nowned_atoms + nghost;
         if (natom == 0)
         {
             ModuleBase::WARNING_QUIT("ESolver_NEP", "MDCell contains no atoms.");
         }
 
-        const std::vector<LocalAtom>& owned_atoms = mdcell.owned_atoms();
-        const std::vector<LocalAtom>& ghost_atoms = mdcell.ghost_atoms();
+        const std::vector<LocalAtom>& owned_atoms = mdcell.owned_atoms_;
+        const std::vector<LocalAtom>& ghost_atoms = mdcell.ghost_atoms_;
         std::vector<int> local_type(static_cast<std::size_t>(natom), 0);
         std::vector<std::array<double, 3> > position(static_cast<std::size_t>(natom));
         std::vector<std::array<double, 3> > force(static_cast<std::size_t>(natom));
@@ -109,9 +109,9 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
                 ModuleBase::WARNING_QUIT("ESolver_NEP", "MDCell atom type is outside the NEP type map.");
             }
             local_type[static_cast<std::size_t>(iat)] = atom.type;
-            position[static_cast<std::size_t>(iat)][0] = atom.cart.x * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-            position[static_cast<std::size_t>(iat)][1] = atom.cart.y * mdcell.lat0() * ModuleBase::BOHR_TO_A;
-            position[static_cast<std::size_t>(iat)][2] = atom.cart.z * mdcell.lat0() * ModuleBase::BOHR_TO_A;
+            position[static_cast<std::size_t>(iat)][0] = atom.cart.x * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
+            position[static_cast<std::size_t>(iat)][1] = atom.cart.y * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
+            position[static_cast<std::size_t>(iat)][2] = atom.cart.z * mdcell.lat0_ * ModuleBase::BOHR_TO_A;
             force[static_cast<std::size_t>(iat)].fill(0.0);
             position_ptrs[static_cast<std::size_t>(iat)] = position[static_cast<std::size_t>(iat)].data();
             force_ptrs[static_cast<std::size_t>(iat)] = force[static_cast<std::size_t>(iat)].data();
@@ -146,8 +146,8 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
                                NULL);
         ModuleBase::timer::end("ESolver_NEP", "compute");
 
-        std::vector<LocalAtom>& mutable_owned_atoms = mdcell.mutable_owned_atoms();
-        std::vector<LocalAtom>& mutable_ghost_atoms = mdcell.mutable_ghost_atoms();
+        std::vector<LocalAtom>& mutable_owned_atoms = mdcell.owned_atoms_;
+        std::vector<LocalAtom>& mutable_ghost_atoms = mdcell.ghost_atoms_;
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             mutable_owned_atoms[static_cast<std::size_t>(iat)].force.set(force[static_cast<std::size_t>(iat)][0],
@@ -160,7 +160,6 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
                                                                            force[static_cast<std::size_t>(nowned_atoms + iat)][1],
                                                                            force[static_cast<std::size_t>(nowned_atoms + iat)][2]);
         }
-        mdcell.accumulate_ghost_forces();
 
 #ifdef __MPI
         MPI_Allreduce(MPI_IN_PLACE, &local_energy, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
@@ -168,11 +167,15 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
 #endif
         const double fact_e = 1.0 / ModuleBase::Ry_to_eV;
         const double fact_f = 1.0 / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
-        const double fact_v = 1.0 / (mdcell.omega() * ModuleBase::Ry_to_eV);
+        const double fact_v = 1.0 / (mdcell.omega_ * ModuleBase::Ry_to_eV);
         nep_potential = local_energy * fact_e;
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             LocalAtom& atom = mutable_owned_atoms[static_cast<std::size_t>(iat)];
+            atom.force *= fact_f;
+        }
+        for (LocalAtom& atom : mutable_ghost_atoms)
+        {
             atom.force *= fact_f;
         }
         nep_virial(0, 0) = local_virial[0] * fact_v;
@@ -277,10 +280,10 @@ void ESolver_NEP::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
     if (basecell.kind() == BaseCell::Kind::mdcell)
     {
         const MDCell& mdcell = static_cast<const MDCell&>(basecell);
-        force.create(mdcell.nowned_atoms(), 3);
-        for (int iat = 0; iat < mdcell.nowned_atoms(); ++iat)
+        force.create(mdcell.owned_atoms_.size(), 3);
+        for (int iat = 0; iat < mdcell.owned_atoms_.size(); ++iat)
         {
-            const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(iat)];
+            const LocalAtom& atom = mdcell.owned_atoms_[static_cast<std::size_t>(iat)];
             force(iat, 0) = atom.force.x;
             force(iat, 1) = atom.force.y;
             force(iat, 2) = atom.force.z;

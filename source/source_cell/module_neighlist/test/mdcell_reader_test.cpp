@@ -1,3 +1,4 @@
+#include "source_cell/module_neighlist/domain_decomposition.h"
 #include <gtest/gtest.h>
 
 #include "source_cell/mdcell_reader.h"
@@ -6,7 +7,6 @@
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/global_variable.h"
-#include "source_cell/module_neighlist/domain_decomposition.h"
 
 #include <cstdio>
 #include <cstdint>
@@ -79,34 +79,35 @@ TEST(MDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     ModuleBase::CommunicationDomain comm_domain;
     comm_domain.initialize(md_comm);
 
+    DomainDecomposition reader_decomp;
     MDCell mdcell = MDCellReader::read_stru(stru_file,
                                              std::vector<int>{1, 1, 1},
                                              0.0,
-                                             comm_domain);
+                                             comm_domain, reader_decomp);
 
-    EXPECT_EQ(mdcell.type_labels().size(), 1U);
-    EXPECT_EQ(mdcell.type_labels()[0], "He");
-    ASSERT_EQ(mdcell.type_masses().size(), 1U);
-    EXPECT_DOUBLE_EQ(mdcell.type_masses()[0], 4.0026);
-    ASSERT_EQ(mdcell.type_atom_counts().size(), 1U);
-    EXPECT_EQ(mdcell.type_atom_counts()[0], 4);
-    ASSERT_EQ(mdcell.stru_meta().species.size(), 1U);
-    EXPECT_EQ(mdcell.stru_meta().species[0].pseudo_file, "auto");
-    EXPECT_EQ(mdcell.stru_meta().species[0].pseudo_type, "auto");
-    EXPECT_EQ(mdcell.nat(), 4);
+    EXPECT_EQ(mdcell.type_labels_.size(), 1U);
+    EXPECT_EQ(mdcell.type_labels_[0], "He");
+    ASSERT_EQ(mdcell.type_masses_.size(), 1U);
+    EXPECT_DOUBLE_EQ(mdcell.type_masses_[0], 4.0026);
+    ASSERT_EQ(mdcell.type_atom_counts_.size(), 1U);
+    EXPECT_EQ(mdcell.type_atom_counts_[0], 4);
+    ASSERT_EQ(mdcell.stru_meta_.species.size(), 1U);
+    EXPECT_EQ(mdcell.stru_meta_.species[0].pseudo_file, "auto");
+    EXPECT_EQ(mdcell.stru_meta_.species[0].pseudo_type, "auto");
+    EXPECT_EQ(mdcell.nat_, 4);
 
     DomainDecomposition decomp;
-    decomp.init(md_comm, make_lattice(), 1.0, 1.0 * ModuleBase::ANGSTROM_AU, 0.0);
+    decomp.init(comm_domain, make_lattice(), 1.0, 1.0 * ModuleBase::ANGSTROM_AU, 0.0);
 
-    long long local_count = static_cast<long long>(mdcell.owned_atoms().size());
+    long long local_count = static_cast<long long>(mdcell.owned_atoms_.size());
     long long global_count = 0;
     MPI_Allreduce(&local_count, &global_count, 1, MPI_LONG_LONG, MPI_SUM, md_comm);
     EXPECT_EQ(global_count, 4);
 
     std::set<std::pair<int, int> > local_ids;
-    for (std::size_t iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
+    for (std::size_t iat = 0; iat < mdcell.owned_atoms_.size(); ++iat)
     {
-        const LocalAtom& atom = mdcell.owned_atoms()[iat];
+        const LocalAtom& atom = mdcell.owned_atoms_[iat];
         EXPECT_EQ(decomp.owner_rank_from_frac(atom.frac), comm_domain.rank());
         local_ids.insert(std::make_pair(atom.type, atom.type_index));
         EXPECT_GE(atom.type, 0);
@@ -114,13 +115,13 @@ TEST(MDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
         EXPECT_DOUBLE_EQ(atom.force.y, 0.0);
         EXPECT_DOUBLE_EQ(atom.force.z, 0.0);
     }
-    EXPECT_EQ(local_ids.size(), mdcell.owned_atoms().size());
+    EXPECT_EQ(local_ids.size(), mdcell.owned_atoms_.size());
 
     bool saw_v01 = false;
     bool saw_v04 = false;
-    for (std::size_t iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
+    for (std::size_t iat = 0; iat < mdcell.owned_atoms_.size(); ++iat)
     {
-        const LocalAtom& atom = mdcell.owned_atoms()[iat];
+        const LocalAtom& atom = mdcell.owned_atoms_[iat];
         if (atom.type == 0 && atom.type_index == 0)
         {
             saw_v01 = true;
@@ -228,17 +229,18 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     const std::string output_file = "distributed_mdcell_restart.STRU";
     mdcell::print_stru_file(mdcell, metadata, output_file);
 
+    DomainDecomposition reader_decomp;
     MDCell round_trip = MDCellReader::read_stru(output_file,
                                                  std::vector<int>{1, 1, 1},
                                                  0.0,
-                                                 ModuleBase::world_comm_domain());
+                                                 ModuleBase::world_comm_domain(), reader_decomp);
     double local_positions[4] = {0.0, 0.0, 0.0, 0.0};
     double local_velocities[4] = {0.0, 0.0, 0.0, 0.0};
     int local_mbl_x[4] = {0, 0, 0, 0};
     int local_owners[4] = {0, 0, 0, 0};
-    for (std::size_t iat = 0; iat < round_trip.owned_atoms().size(); ++iat)
+    for (std::size_t iat = 0; iat < round_trip.owned_atoms_.size(); ++iat)
     {
-        const LocalAtom& atom = round_trip.owned_atoms()[iat];
+        const LocalAtom& atom = round_trip.owned_atoms_[iat];
         const int index = atom.type == 0 ? static_cast<int>(atom.cart.x)
                                          : 2 + static_cast<int>(atom.cart.x) - 10;
         local_positions[index] = atom.cart.x;

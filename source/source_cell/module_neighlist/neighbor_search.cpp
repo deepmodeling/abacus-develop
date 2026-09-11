@@ -46,10 +46,10 @@ void NeighborSearch::init_from_mdcell_(const MDCell& cell, double sr)
     all_atoms_.clear();
     bin_manager_.clear();
 
-    search_radius_ = sr / cell.lat0();
+    search_radius_ = sr / cell.lat0_;
 
-    const std::size_t total_atoms = ModuleNeighList::checked_size_sum(cell.owned_atoms().size(),
-                                                                       cell.ghost_atoms().size(),
+    const std::size_t total_atoms = ModuleNeighList::checked_size_sum(cell.owned_atoms_.size(),
+                                                                       cell.ghost_atoms_.size(),
                                                                        "NeighborSearch distributed atom count");
     if (total_atoms > static_cast<std::size_t>(std::numeric_limits<ModuleNeighList::LocalAtomIndex>::max()))
     {
@@ -57,12 +57,12 @@ void NeighborSearch::init_from_mdcell_(const MDCell& cell, double sr)
     }
 
     all_atoms_.reserve(total_atoms);
-    inside_atoms_.reserve(cell.owned_atoms().size());
-    ghost_atoms_.reserve(cell.ghost_atoms().size());
+    inside_atoms_.reserve(cell.owned_atoms_.size());
+    ghost_atoms_.reserve(cell.ghost_atoms_.size());
 
-    for (size_t iat = 0; iat < cell.owned_atoms().size(); ++iat)
+    for (size_t iat = 0; iat < cell.owned_atoms_.size(); ++iat)
     {
-        const LocalAtom& local = cell.owned_atoms()[iat];
+        const LocalAtom& local = cell.owned_atoms_[iat];
         NeighborAtom atom(local.cart.x,
                           local.cart.y,
                           local.cart.z,
@@ -75,9 +75,9 @@ void NeighborSearch::init_from_mdcell_(const MDCell& cell, double sr)
         inside_atoms_.push_back(atom);
     }
 
-    for (size_t iat = 0; iat < cell.ghost_atoms().size(); ++iat)
+    for (size_t iat = 0; iat < cell.ghost_atoms_.size(); ++iat)
     {
-        const LocalAtom& local = cell.ghost_atoms()[iat];
+        const LocalAtom& local = cell.ghost_atoms_[iat];
         NeighborAtom atom(local.cart.x,
                           local.cart.y,
                           local.cart.z,
@@ -168,14 +168,14 @@ void NeighborSearch::build_neighbors()
 
 void NeighborSearch::refresh_mdcell(const MDCell& cell, double cutoff)
 {
-    const std::size_t expected = cell.owned_atoms().size() + cell.ghost_atoms().size();
-    if (all_atoms_.size() != expected || inside_atoms_.size() != cell.owned_atoms().size())
+    const std::size_t expected = cell.owned_atoms_.size() + cell.ghost_atoms_.size();
+    if (all_atoms_.size() != expected || inside_atoms_.size() != cell.owned_atoms_.size())
     {
         throw std::runtime_error("MDCell neighbor layout changed without rebuilding the candidate list.");
     }
-    for (std::size_t i = 0; i < cell.owned_atoms().size(); ++i)
+    for (std::size_t i = 0; i < cell.owned_atoms_.size(); ++i)
     {
-        const LocalAtom& atom = cell.owned_atoms()[i];
+        const LocalAtom& atom = cell.owned_atoms_[i];
         all_atoms_[i].position_x = atom.cart.x;
         all_atoms_[i].position_y = atom.cart.y;
         all_atoms_[i].position_z = atom.cart.z;
@@ -183,10 +183,10 @@ void NeighborSearch::refresh_mdcell(const MDCell& cell, double cutoff)
         inside_atoms_[i].position_y = atom.cart.y;
         inside_atoms_[i].position_z = atom.cart.z;
     }
-    const std::size_t offset = cell.owned_atoms().size();
-    for (std::size_t i = 0; i < cell.ghost_atoms().size(); ++i)
+    const std::size_t offset = cell.owned_atoms_.size();
+    for (std::size_t i = 0; i < cell.ghost_atoms_.size(); ++i)
     {
-        const LocalAtom& atom = cell.ghost_atoms()[i];
+        const LocalAtom& atom = cell.ghost_atoms_[i];
         all_atoms_[offset + i].position_x = atom.cart.x;
         all_atoms_[offset + i].position_y = atom.cart.y;
         all_atoms_[offset + i].position_z = atom.cart.z;
@@ -194,7 +194,7 @@ void NeighborSearch::refresh_mdcell(const MDCell& cell, double cutoff)
         ghost_atoms_[i].position_y = atom.cart.y;
         ghost_atoms_[i].position_z = atom.cart.z;
     }
-    filter_candidate_neighbors_(cutoff, cell.lat0());
+    filter_candidate_neighbors_(cutoff, cell.lat0_);
 }
 
 void NeighborSearch::filter_candidate_neighbors_(double cutoff, double lat0)
