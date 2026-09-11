@@ -5,11 +5,16 @@
 #include "source_base/vector3.h"
 #include <vector>
 
+class MagnetismTest;
+
 /**
  * @brief Class for magnetism calculations.
  */
 class Magnetism
 {
+    /// @brief the unit test drives the private judge_parallel() helper directly
+    friend class MagnetismTest;
+
 public:
     /// @brief Constructor
     Magnetism();

@@ -38,11 +38,11 @@ void init_dftu_lcao(const int istep,
     {
         dftu_ptr->yukawa().cal_slater_UJ(ucell, rho, nrxx, PARAM.inp.nspin, dftu_ptr->get_ptr_orb());
         // update current U with calculated U-J from Slater integrals
-        for (int T = 0; T < ucell.ntype; T++)
+        for (int it = 0; it < ucell.ntype; it++)
         {
-            if (dftu_ptr->has_correlated_orbital(T))
+            if (dftu_ptr->has_l_channel(it))
             {
-                dftu_ptr->set_u_current(T, dftu_ptr->yukawa().get_Ueff(T));
+                dftu_ptr->set_u_current(it, dftu_ptr->yukawa().get_Ueff(it));
             }
         }
     }
@@ -89,7 +89,7 @@ void finish_dftu_lcao(const int iter,
     /// use the converged occupation matrix for next MD/Relax SCF calculation
     if (conv_esolver)
     {
-        dftu_ptr->mark_occ_mat_initialized();
+        dftu_ptr->set_occmat_ready();
     }
 }
 

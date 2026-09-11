@@ -22,16 +22,22 @@
  *     - bcast upf201 pp info to other processes
  */
 
-#define private public
 #include "source_cell/read_pp.h"
 #include "source_cell/pseudo.h"
 #include "source_cell/atom_pseudo.h"
-#undef private
 class AtomPseudoTest : public testing::Test
 {
 protected:
     std::unique_ptr<Pseudopot_upf> upf{new Pseudopot_upf};
     std::unique_ptr<Atom_pseudo> atom_pseudo{new Atom_pseudo};
+
+    // Pseudopot_upf declares this fixture a friend, but a TEST_F body lives in
+    // a class derived from it, and friendship is not inherited -- so the call
+    // into the private format reader has to happen here.
+    int read_pseudo_upf201(std::ifstream& ifs, Atom_pseudo& pp) const
+    {
+        return upf->read_pseudo_upf201(ifs, pp);
+    }
 };
 
 TEST_F(AtomPseudoTest, SetDSo)
@@ -43,7 +49,7 @@ TEST_F(AtomPseudoTest, SetDSo)
     std::ifstream ifs;
     ifs.open("./support/C.upf");
     const double pseudo_rcut = 15.0;
-    upf->read_pseudo_upf201(ifs, *atom_pseudo);
+    read_pseudo_upf201(ifs, *atom_pseudo);
     upf->complete_default(*atom_pseudo, pseudo_rcut);
     ifs.close();
     EXPECT_EQ(atom_pseudo->nh,14);
@@ -75,7 +81,7 @@ TEST_F(AtomPseudoTest, BcastAtomPseudo)
         std::ifstream ifs;
         ifs.open("./support/C.upf");
         const double pseudo_rcut = 15.0;
-        upf->read_pseudo_upf201(ifs, *atom_pseudo);
+        read_pseudo_upf201(ifs, *atom_pseudo);
         upf->complete_default(*atom_pseudo, pseudo_rcut);
         ifs.close();
     }

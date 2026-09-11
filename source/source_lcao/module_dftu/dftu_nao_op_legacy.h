@@ -25,7 +25,7 @@ class OperatorDFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                   const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                   hamilt::HContainer<TR>* hR_in,
                                   const UnitCell& ucell_in,
-                                  Plus_U* dftu_in,
+                                  Plus_U_Base* dftu_in,
                                   const std::vector<int>& isk_in,
                                   const int npol_in)
         : isk(isk_in), npol(npol_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
@@ -41,7 +41,7 @@ class OperatorDFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
   private:
 
-    Plus_U *dftu;
+    Plus_U_Base *dftu;
 
     const UnitCell* ucell = nullptr;
 

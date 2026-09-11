@@ -36,7 +36,7 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
                        hamilt::Hamilt<T>* p_ham,
-                       Plus_U* p_dftu);
+                       Plus_U_Base* p_dftu);
 
 /// @brief legacy bool-only interface kept for source compatibility
 template <typename T>
@@ -53,7 +53,7 @@ void output_mat_sparse(const bool& out_mat_dh,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
 					   hamilt::Hamilt<T>* p_ham,
-					   Plus_U* p_dftu);
+					   Plus_U_Base* p_dftu);
 } // namespace ModuleIO
 
 #endif // OUTPUT_MAT_SPARSE_H

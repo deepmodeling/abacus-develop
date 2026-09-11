@@ -4,10 +4,8 @@
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#ifdef __LCAO
 #include "source_basis/module_ao/orb_read.h"
 #include "source_estate/module_dm/density_matrix.h"
-#endif
 
 #include <complex>
 #include <vector>
@@ -22,7 +20,7 @@ void Plus_U::init(UnitCell& cell,
                 const Parallel_Orbitals* pv,
                 const int npol,
                 const int nspin,
-                const std::vector<int>& orbital_corr,
+                const std::vector<int>& l_channel,
                 const bool yukawa_potential,
                 const double yukawa_lambda,
                 const std::string& global_readin_dir,
@@ -31,25 +29,20 @@ void Plus_U::init(UnitCell& cell,
                 const int nlocal,
                 const std::string& ks_solver,
                 const std::string& device,
-                const int kpar,
                 const std::vector<double>& hubbard_u,
                 const double uramping,
                 const int occ_mat_ctrl,
                 const int mixing_dftu
-#ifdef __LCAO
                 , const LCAO_Orbitals* orb
-#endif
                 )
 {
     ModuleBase::TITLE("Plus_U", "init");
 
-#ifdef __LCAO
     ptr_orb_ = orb;
     if(ptr_orb_ != nullptr)
     {
         orb_cutoff_ = orb->cutoffs();
     }
-#endif
 
     if (pv != nullptr)
     {
@@ -68,14 +61,13 @@ void Plus_U::init(UnitCell& cell,
     this->init_base(cell,
                     npol,
                     nspin,
-                    orbital_corr,
+                    l_channel,
                     yukawa_potential,
                     yukawa_lambda,
                     global_readin_dir,
                     global_out_dir,
                     init_chg,
                     device,
-                    kpar,
                     hubbard_u,
                     uramping,
                     occ_mat_ctrl,
@@ -85,8 +77,6 @@ void Plus_U::init(UnitCell& cell,
 
 // uramping_update() and u_converged() are now implemented in
 // dftu_base.cpp as Plus_U_Base methods (inherited by Plus_U).
-
-#ifdef __LCAO
 
 void Plus_U::set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dmr)
 {
@@ -116,4 +106,3 @@ const hamilt::HContainer<double>* Plus_U::get_dmr(int ispin) const
     }
 }
 
-#endif

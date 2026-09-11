@@ -3,18 +3,17 @@
 
 #include <complex>
 
-class Plus_U;
+class Plus_U_Base;
 class UnitCell;
 class Parallel_Orbitals;
 
-#ifdef __LCAO
 namespace DFTU_LCAO {
 
 /**
  * @brief one-body effective onsite potential element for a given (m0,m1) pair.
  *
- * Dispatches on cal_type; only case 3 (simplified formalism with FLL double
- * counting) is currently implemented, the other cases return 0.
+ * Dispatches on UForm; only dud_fll (Dudarev simplified formalism with FLL
+ * double counting) is currently implemented, the other forms return 0.
  *
  * @param dftu        Plus_U state providing U/J values and occupation matrices
  * @param T           atom type
@@ -27,7 +26,7 @@ namespace DFTU_LCAO {
  * @param new_occ_mat if true use occ_mat, otherwise use occ_mat_save
  * @return            onsite potential matrix element
  */
-double get_onsite_pot(const Plus_U& dftu,
+double get_onsite_pot(const Plus_U_Base& dftu,
                       const int T,
                       const int iat,
                       const int L,
@@ -51,7 +50,7 @@ double get_onsite_pot(const Plus_U& dftu,
  * @param pot_onsite  output buffer (length pv->nloc)
  * @param npol        number of polarizations
  */
-void pot_onsite_complex(const Plus_U& dftu,
+void pot_onsite_complex(const Plus_U_Base& dftu,
                         const UnitCell& ucell,
                         const Parallel_Orbitals* pv,
                         const int spin,
@@ -64,7 +63,7 @@ void pot_onsite_complex(const Plus_U& dftu,
  *
  * Real-valued counterpart of pot_onsite_complex.
  */
-void pot_onsite_real(const Plus_U& dftu,
+void pot_onsite_real(const Plus_U_Base& dftu,
                      const UnitCell& ucell,
                      const Parallel_Orbitals* pv,
                      const int spin,
@@ -73,6 +72,5 @@ void pot_onsite_real(const Plus_U& dftu,
                      const int npol);
 
 } // namespace DFTU_LCAO
-#endif
 
 #endif

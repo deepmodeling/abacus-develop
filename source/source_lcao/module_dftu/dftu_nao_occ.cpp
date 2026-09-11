@@ -5,15 +5,12 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_estate/occ_matrix.h"
 #include "source_io/module_parameter/parameter.h"
-#ifdef __LCAO
 #include "source_lcao/hamilt_lcao.h"
-#endif
 
-// cal_occ_mat_k / cal_occ_mat_gamma take Plus_U& dftu directly and read all
+// cal_occ_mat_k / cal_occ_mat_gamma take Plus_U_Base& dftu directly and read all
 // occupation-matrix state (occ/save arrays, lookup table, nspin/npol, and the
-// occ_mat_initialized flag) from dftu.occmat() and the Plus_U_Base accessors.
+// occmat_ready flag) from dftu.occmat() and the Plus_U_Base accessors.
 
-#ifdef __LCAO
 
 void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
                          const int iter,
@@ -23,7 +20,7 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
                          const double& mixing_beta,
                          hamilt::Hamilt<std::complex<double>>* p_ham,
                          const bool gamma_only_local,
-                         Plus_U& dftu)
+                         Plus_U_Base& dftu)
 {
     ModuleBase::TITLE("DFTU_LCAO", "cal_occ_mat_k");
     ModuleBase::timer::start("DFTU_LCAO", "cal_occ_mat_k");
@@ -33,11 +30,11 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
     const int nlocal = pv->get_global_row_size();
     const std::string& ks_solver = PARAM.inp.ks_solver;
     const auto& iatlnmipol2iwt = dftu.occmat().iatlnmipol2iwt();
-    const std::vector<int>& orbital_corr = dftu.get_orbital_corr_vec();
+    const std::vector<int>& l_channel = dftu.get_l_channel_vec();
 
     // copy occ_mat to occ_mat_save, then zero occ_mat
-    dftu.occmat().copy_to_save(ucell, orbital_corr);
-    dftu.occmat().zero(ucell, orbital_corr);
+    dftu.occmat().copy_to_save(ucell, l_channel);
+    dftu.occmat().zero(ucell, l_channel);
 
     //=================Part 1======================
     // call SCALAPACK routine to calculate the product of the S and density matrix
@@ -90,7 +87,7 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
         for (int it = 0; it < ucell.ntype; it++)
         {
             const int NL = ucell.atoms[it].nwl + 1;
-            const int LC = orbital_corr[it];
+            const int LC = l_channel[it];
 
             if (LC == -1)
             {
@@ -103,7 +100,7 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
 
                 for (int l = 0; l < NL; l++)
                 {
-                    if (l != orbital_corr[it])
+                    if (l != l_channel[it])
                     {
                         continue;
                     }
@@ -165,7 +162,7 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
     for (int it = 0; it < ucell.ntype; it++)
     {
         const int NL = ucell.atoms[it].nwl + 1;
-        const int LC = orbital_corr[it];
+        const int LC = l_channel[it];
 
         if (LC == -1)
         {
@@ -178,7 +175,7 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
 
             for (int l = 0; l < NL; l++)
             {
-                if (l != orbital_corr[it])
+                if (l != l_channel[it])
                 {
                     continue;
                 }
@@ -263,12 +260,12 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
         } // end ia
     } // end it
 
-    if(dftu.has_occ_mixer() && dftu.is_occ_mat_initialized())
+    if(dftu.has_occ_mixer() && dftu.is_occmat_ready())
     {
         dftu.occ_mixer().mix_plain(dftu.occmat(), mixing_beta);
     }
 
-    dftu.mark_occ_mat_initialized();
+    dftu.set_occmat_ready();
     ModuleBase::timer::end("DFTU_LCAO", "cal_occ_mat_k");
     return;
 }
@@ -279,7 +276,7 @@ void DFTU_LCAO::cal_occ_mat_gamma(const Parallel_Orbitals* pv,
                              const std::vector<std::vector<double>> &dm_gamma,
                              const double& mixing_beta,
                              hamilt::Hamilt<double>* p_ham,
-                             Plus_U& dftu)
+                             Plus_U_Base& dftu)
 {
     ModuleBase::TITLE("DFTU_LCAO", "cal_occ_mat_gamma");
     ModuleBase::timer::start("DFTU_LCAO", "cal_occ_mat_gamma");
@@ -288,11 +285,11 @@ void DFTU_LCAO::cal_occ_mat_gamma(const Parallel_Orbitals* pv,
     const int npol = dftu.occmat().npol();
     const int nlocal = pv->get_global_row_size();
     const auto& iatlnmipol2iwt = dftu.occmat().iatlnmipol2iwt();
-    const std::vector<int>& orbital_corr = dftu.get_orbital_corr_vec();
+    const std::vector<int>& l_channel = dftu.get_l_channel_vec();
 
     // copy occ_mat to occ_mat_save, then zero occ_mat
-    dftu.occmat().copy_to_save(ucell, orbital_corr);
-    dftu.occmat().zero(ucell, orbital_corr);
+    dftu.occmat().copy_to_save(ucell, l_channel);
+    dftu.occmat().zero(ucell, l_channel);
 
     //=================Part 1======================
     // call PBLAS routine to calculate the product of the S and density matrix
@@ -331,7 +328,7 @@ void DFTU_LCAO::cal_occ_mat_gamma(const Parallel_Orbitals* pv,
         for (int it = 0; it < ucell.ntype; it++)
         {
             const int NL = ucell.atoms[it].nwl + 1;
-            const int LC = orbital_corr[it];
+            const int LC = l_channel[it];
 
             if (LC == -1)
             {
@@ -343,7 +340,7 @@ void DFTU_LCAO::cal_occ_mat_gamma(const Parallel_Orbitals* pv,
 
                 for (int l = 0; l < NL; l++)
                 {
-                    if (l != orbital_corr[it])
+                    if (l != l_channel[it])
                     {
                         continue;
                     }
@@ -436,12 +433,12 @@ void DFTU_LCAO::cal_occ_mat_gamma(const Parallel_Orbitals* pv,
         } // it
     } // is
 
-    if(dftu.has_occ_mixer() && dftu.is_occ_mat_initialized())
+    if(dftu.has_occ_mixer() && dftu.is_occmat_ready())
     {
         dftu.occ_mixer().mix_plain(dftu.occmat(), mixing_beta);
     }
 
-    dftu.mark_occ_mat_initialized();
+    dftu.set_occmat_ready();
     ModuleBase::timer::end("DFTU_LCAO", "cal_occ_mat_gamma");
     return;
 }
@@ -457,7 +454,7 @@ void cal_occ_mat(const Parallel_Orbitals* pv,
                  const K_Vectors& kv,
                  const double& mixing_beta,
                  hamilt::Hamilt<double>* p_ham,
-                 Plus_U& dftu,
+                 Plus_U_Base& dftu,
                  const bool gamma_only_local,
                  const int nspin)
 {
@@ -473,7 +470,7 @@ void cal_occ_mat(const Parallel_Orbitals* pv,
                  const K_Vectors& kv,
                  const double& mixing_beta,
                  hamilt::Hamilt<std::complex<double>>* p_ham,
-                 Plus_U& dftu,
+                 Plus_U_Base& dftu,
                  const bool gamma_only_local,
                  const int nspin)
 {
@@ -481,4 +478,3 @@ void cal_occ_mat(const Parallel_Orbitals* pv,
 }
 
 } // namespace DFTU_LCAO
-#endif

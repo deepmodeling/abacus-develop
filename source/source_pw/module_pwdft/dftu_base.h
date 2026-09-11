@@ -22,21 +22,30 @@ class Plus_U_Base
   friend class DFTUTest;
 
   public:
+    // DFT+U formalism & double-counting (DC) scheme.
+    // Only dud_fll is implemented; the others are placeholders (return 0).
+    enum class UForm
+    {
+        lich_fll = 1, // Lichtenstein (rotationally invariant) + FLL DC
+        lich_amf = 2, // Lichtenstein (rotationally invariant) + AMF DC
+        dud_fll  = 3, // Dudarev (simplified) + FLL DC -- default, implemented
+    };
+
     Plus_U_Base();
-    ~Plus_U_Base();
+    // virtual so that a derived Plus_U can be deleted through a Plus_U_Base*
+    virtual ~Plus_U_Base();
 
     /// allocate relevant data structures (base part, no LCAO types)
     void init_base(UnitCell& cell,
                    const int npol,
                    const int nspin,
-                   const std::vector<int>& orbital_corr,
+                   const std::vector<int>& l_channel,
                    const bool yukawa_potential,
                    const double yukawa_lambda,
                    const std::string& global_readin_dir,
                    const std::string& global_out_dir,
                    const std::string& init_chg,
                    const std::string& device,
-                   const int kpar,
                    const std::vector<double>& hubbard_u,
                    const double uramping,
                    const int occ_mat_ctrl,
@@ -45,74 +54,68 @@ class Plus_U_Base
     void uramping_update();
     bool u_converged();
 
-    // --- Accessors for U values and orbital configuration ---
+    // u_current
     double get_u_current(int it) const { return u_current[it]; }
+    void set_u_current(int it, double val) { u_current[it] = val; }
     int get_num_u_types() const { return static_cast<int>(u_current.size()); }
-    int get_orbital_corr(int it) const { return orbital_corr[it]; }
-    bool has_correlated_orbital(int it) const { return orbital_corr[it] != -1; }
 
-    /// read-only access to the orbital_corr vector (length ntype)
-    const std::vector<int>& get_orbital_corr_vec() const { return orbital_corr; }
+    // l_channel
+    int get_l_channel(int it) const { return l_channel[it]; }
+    bool has_l_channel(int it) const { return l_channel[it] != -1; }
+    const std::vector<int>& get_l_channel_vec() const { return l_channel; }
 
-    // --- Accessors for DFT+U configuration ---
     double get_uramping() const { return uramping; }
     int get_occ_mat_ctrl() const { return occ_mat_ctrl; }
-    int get_cal_type() const { return cal_type; }
-    bool use_yukawa() const { return yukawa_ != nullptr; }
+    UForm get_form() const { return form; }
 
-    /// access the Yukawa screening object (non-null only when use_yukawa())
+
+    /// Yukawa screening object (non-null only when use_yukawa())
+    bool use_yukawa() const { return yukawa_ != nullptr; }
     YukawaScreening& yukawa() { return *yukawa_; }
     const YukawaScreening& yukawa() const { return *yukawa_; }
 
-    void set_u_current(int it, double val) { u_current[it] = val; }
-
+    // +U energy term
     double get_energy() const { return energy_u; }
     void set_energy(const double &e) { energy_u = e; }
     void set_double_energy() { energy_u *= 2.0; }
 
-    /// interface for PW basis
-    /// calculate the local occupation number matrix for PW based wave functions
-    void cal_occ_pw(const void* psi_in,
-                    const ModuleBase::matrix& wg_in,
-                    const UnitCell& cell,
-                    Charge_Mixing* p_chgmix,
-                    const int* isk);
 
-    /// get effective potential pointer for the given spin channel (PW basis)
+    /// get the U-term coefficient matrix pointer for the given spin channel
+    /// (small (2l+1)^2 per-atom matrix, projector coefficient)
     ///
-    /// nspin=1: isk is ignored, returns &pot_uterm_pw[0]
+    /// nspin=1: isk is ignored, returns &uterm_mat[0]
     /// nspin=2: isk selects spin-up (0) or spin-down (1) half of the
     ///          split layout [all_up | all_dn]
-    /// nspin=4: isk is ignored, returns &pot_uterm_pw[0] (all Pauli blocks)
-    const std::complex<double>* get_pot_uterm_pw_spin(const int isk) const
+    /// nspin=4: isk is ignored, returns &uterm_mat[0] (all Pauli blocks)
+    const std::complex<double>* get_uterm_mat_spin(const int nspin, const int isk) const
     {
         if (nspin == 2 && isk == 1)
         {
-            return pot_uterm_pw.data() + pot_uterm_pw.size() / 2;
+            return uterm_mat.data() + uterm_mat.size() / 2;
         }
-        return pot_uterm_pw.data();
+        return uterm_mat.data();
     }
 
-    /// get size of effective potential for a single spin channel (PW basis)
+    /// get size of the U-term coefficient matrix for a single spin channel
     ///
     /// nspin=1: full array size
     /// nspin=2: half of the total (one spin channel in split layout)
     /// nspin=4: full array size (all Pauli blocks are packed together)
-    int get_size_pot_uterm_pw_spin() const
+    int get_size_uterm_mat_spin(const int nspin) const
     {
-        return (nspin == 2) ? static_cast<int>(pot_uterm_pw.size() / 2)
-                            : static_cast<int>(pot_uterm_pw.size());
+        return (nspin == 2) ? static_cast<int>(uterm_mat.size() / 2)
+                            : static_cast<int>(uterm_mat.size());
     }
 
-    int get_size_pot_uterm_pw() const
+    int get_size_uterm_mat() const
     {
-        return pot_uterm_pw.size();
+        return uterm_mat.size();
     }
 
-    // dftu can be calculated only after occ_mat has been initialized
-    bool is_occ_mat_initialized() const { return occ_mat_initialized; }
-    void mark_occ_mat_initialized() { occ_mat_initialized = true; }
-    void mark_occ_mat_dirty() { occ_mat_initialized = false; }
+    // dftu can be calculated only after occ_mat is ready
+    bool is_occmat_ready() const { return occmat_ready_; }
+    void set_occmat_ready() { occmat_ready_ = true; }
+    void set_occmat_stale() { occmat_ready_ = false; }
 
     /// direct access to the occupation matrix object (new write path)
     OccupationMatrix& occmat() { return occmat_; }
@@ -123,20 +126,27 @@ class Plus_U_Base
     const OccMatMixer& occ_mixer() const { return *occ_mixer_; }
     bool has_occ_mixer() const { return occ_mixer_ != nullptr; }
 
+    // --- Accessors for free-function interfaces (e.g. DFTU_BASE::cal_occ_pw) ---
+    const std::string& get_device() const { return device; }
+    const std::vector<double>& get_u_current_vec() const { return u_current; }
+    const std::vector<int>& get_uterm_mat_index() const { return uterm_mat_index; }
+    std::vector<std::complex<double>>& get_uterm_mat() { return uterm_mat; }
+    const std::vector<std::complex<double>>& get_uterm_mat() const { return uterm_mat; }
+    double& energy_ref() { return energy_u; }
+
+  private:
+    // --- State flags ---
+    // dftu can be calculated only after occ_mat is ready
+    bool occmat_ready_ = false;
+
   protected:
     // --- U values and orbital configuration (set in init_base) ---
     std::vector<double> u_current;
     std::vector<double> u_target;
-    std::vector<int> orbital_corr;
+    std::vector<int> l_channel;
 
-    // --- DFT+U configuration flags ---
     double uramping = 0.0;
     int occ_mat_ctrl = 0;
-    int nspin = 0;
-
-    // --- State flags ---
-    // dftu can be calculated only after occ_mat has been initialized
-    bool occ_mat_initialized = false;
 
     // --- Occupation matrices ---
     OccupationMatrix occmat_;
@@ -148,12 +158,11 @@ class Plus_U_Base
     // --- Internal state ---
     double energy_u = 0.0;
 
-    int cal_type = 3;
+    UForm form = UForm::dud_fll;
     std::string device;
-    int kpar = 1;
 
-    std::vector<std::complex<double>> pot_uterm_pw;
-    std::vector<int> pot_uterm_pw_index;
+    std::vector<std::complex<double>> uterm_mat;
+    std::vector<int> uterm_mat_index;
 
     // Yukawa screening object; constructed only when use_yukawa() is true.
     // Owns the screening length, Slater integrals and derived U/J.

@@ -10,9 +10,9 @@
 
 #include "source_base/macros.h"   // GetRealType
 #include "source_base/matrix_block.h"
-#include "source_hamilt/hamilt.h"
 #include "source_base/matrix.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_psi/psi.h"
 
 #include <complex>
 #include <utility>
@@ -31,7 +31,10 @@ class DiagoLapack
     /// @param nbands_in number of lowest eigenpairs to compute
     DiagoLapack(const int nlocal_in, const int nbands_in) : nlocal(nlocal_in), nbands(nbands_in) {};
 
-    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
+    void diag(ModuleBase::MatrixBlock<T>& h_mat,
+              ModuleBase::MatrixBlock<T>& s_mat,
+              psi::Psi<T>& psi,
+              Real* eigenvalue_in);
   #ifdef __MPI
     // diagnolization used in parallel-k case
     void diag_pool(ModuleBase::MatrixBlock<T>& h_mat, ModuleBase::MatrixBlock<T>& s_mat, psi::Psi<T>& psi, Real* eigenvalue_in, MPI_Comm& comm);

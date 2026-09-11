@@ -641,7 +641,7 @@ struct Input_para
     int occ_mat_ctrl = 0;                  ///< the mode of occupation matrix control
     double onsite_radius = 0.0;            ///< radius of the sphere for onsite projection (Bohr)
     std::vector<double> hubbard_u_eV = {}; ///< Hubbard Coulomb interaction parameter U(ev)
-    std::vector<int> orbital_corr = {};    ///< which correlated orbitals need corrected ; d:2 ,f:3, do not
+    std::vector<int> l_channel = {};    ///< which correlated orbitals need corrected ; d:2 ,f:3, do not
                                            ///< need correction:-1
 
     // ==============   #Parameters (17.non-collinear spin-constrained DFT) =========

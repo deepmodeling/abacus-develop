@@ -77,7 +77,7 @@ class Onsite_Proj_tools
         int ik,
         int npm,
         FPTYPE* force,
-        const int* orbital_corr,
+        const int* l_channel,
         const std::complex<FPTYPE>* pot_onsite,
         const int size_pot_onsite,
         const FPTYPE* h_wg
@@ -95,7 +95,7 @@ class Onsite_Proj_tools
     double cal_stress_dftu(
         int ik,
         int npm,
-        const int* orbital_corr,
+        const int* l_channel,
         const std::complex<FPTYPE>* pot_onsite,
         const int size_pot_onsite,
         const FPTYPE* h_wg

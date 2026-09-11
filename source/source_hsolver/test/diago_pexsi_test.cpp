@@ -1,4 +1,5 @@
 #ifdef __PEXSI
+#include "source_base/matrix_block.h"
 #include "source_hsolver/diago_pexsi.h"
 
 #include "source_base/module_external/scalapack_connector.h"
@@ -24,8 +25,10 @@
 #define PRINT_HS false
 #define REPEATRUN 1
 
+/// Minimal H(k)/S(k) supplier. The LCAO eigensolvers take the matrix blocks
+/// directly, so this test no longer needs a hamilt::Hamilt subclass.
 template <typename T>
-class HamiltTEST : public hamilt::Hamilt<T>
+class HamiltTEST
 {
   public:
     int desc[9];
@@ -33,17 +36,10 @@ class HamiltTEST : public hamilt::Hamilt<T>
     std::vector<T> h_local;
     std::vector<T> s_local;
 
-    void matrix(hamilt::MatrixBlock<T>& hk_in, hamilt::MatrixBlock<T>& sk_in)
+    void matrix(ModuleBase::MatrixBlock<T>& hk_in, ModuleBase::MatrixBlock<T>& sk_in)
     {
-        hk_in = hamilt::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
-        sk_in = hamilt::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
-    }
-
-    void constructHamilt(const int iter, const hamilt::MatrixBlock<double> rho)
-    {
-    }
-    void updateHk(const int ik)
-    {
+        hk_in = ModuleBase::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
+        sk_in = ModuleBase::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
     }
 };
 
@@ -254,7 +250,9 @@ class PexsiPrepare
         {
             hmtest.h_local = this->h_local;
             hmtest.s_local = this->s_local;
-            dh->diag(&hmtest, psi, nullptr);
+            ModuleBase::MatrixBlock<T> h_mat, s_mat;
+            hmtest.matrix(h_mat, s_mat);
+            dh->diag(h_mat, s_mat, psi, nullptr);
 
             // copy the density matrix to dm_local
             dm_local = dh->DM;

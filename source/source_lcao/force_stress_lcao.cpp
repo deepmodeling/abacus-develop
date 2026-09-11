@@ -87,7 +87,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           const K_Vectors& kv,
                                           ModulePW::PW_Basis* rhopw,
                                           surchem& solvent,
-                                          Plus_U &dftu, // mohan add 2025-11-07
+                                          Plus_U_Base &dftu, // mohan add 2025-11-07
                                           Setup_DeePKS<T>& deepks,
                                           Exx_NAO<T> &exx_nao,
                                           ModuleSymmetry::Symmetry* symm,
@@ -457,7 +457,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             std::vector<std::vector<double>>* dmk_d = nullptr;
             std::vector<std::vector<std::complex<double>>>* dmk_c = nullptr;
             assign_dmk_ptr<T>(dmat.dm, dmk_d, dmk_c, PARAM.globalv.gamma_only_local);
-            DFTU_LCAO::force_stress(dftu, isforce, isstress, ucell, gd, dmk_d, dmk_c, pv, fsr_dftu, force_u, stress_u, kv, PARAM.globalv.npol, PARAM.globalv.gamma_only_local);
+            DFTU_LCAO::force_stress(dftu, orb.cutoffs(), isforce, isstress, ucell, gd, dmk_d, dmk_c, pv, fsr_dftu, force_u, stress_u, kv, PARAM.globalv.npol, PARAM.globalv.gamma_only_local);
         }
         else
         {

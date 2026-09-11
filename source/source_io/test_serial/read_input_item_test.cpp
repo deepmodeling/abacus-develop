@@ -1908,14 +1908,14 @@ TEST_F(InputTest, Item_test2)
     { // dft_plus_u
         auto it = find_label("dft_plus_u", readinput.input_lists);
         param.input.dft_plus_u = 1;
-        param.input.orbital_corr = {-1, -1};
+        param.input.l_channel = {-1, -1};
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.dft_plus_u, 0);
     }
     { // uramping
         auto it = find_label("uramping", readinput.input_lists);
         param.sys.uramping = 1;
-        param.input.orbital_corr = {-1, -1};
+        param.input.l_channel = {-1, -1};
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.sys.uramping, 0);
     }
@@ -1949,7 +1949,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("orbital_corr", readinput.input_lists);
         param.input.ntype = 2;
         it->second.str_values = {"1", "2"};
-        param.input.orbital_corr = {1, 2};
+        param.input.l_channel = {1, 2};
         it->second.check_value(it->second, param);
         param.input.ntype = 3;
         testing::internal::CaptureStdout();
@@ -1958,7 +1958,7 @@ TEST_F(InputTest, Item_test2)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         param.input.ntype = 2;
-        param.input.orbital_corr = {1, 4};
+        param.input.l_channel = {1, 4};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();

@@ -926,15 +926,15 @@ __global__ void cal_stress_onsite(
         const int *atom_na,
         const FPTYPE *d_wg,
         const thrust::complex<FPTYPE> *pot_onsite,
-        const int* orbital_corr,
+        const int* l_channel,
         const thrust::complex<FPTYPE> *becp,
         const thrust::complex<FPTYPE> *dbecp,
         FPTYPE *stress)
 {
     const int ib = blockIdx.x / ntype;
     const int it = blockIdx.x % ntype;
-    if(orbital_corr[it] == -1) return;
-    const int orbital_l = orbital_corr[it];
+    if(l_channel[it] == -1) return;
+    const int orbital_l = l_channel[it];
     const int ip_begin = orbital_l * orbital_l;
     const int tlp1 = 2 * orbital_l + 1;
     const int tlp1_2 = tlp1 * tlp1;
@@ -1063,7 +1063,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                     const int* atom_na,
                     const FPTYPE* d_wg,
                     const std::complex<FPTYPE>* pot_onsite,
-                    const int* orbital_corr,
+                    const int* l_channel,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress)
@@ -1079,7 +1079,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                  atom_na,
                  d_wg,
                  reinterpret_cast<const thrust::complex<FPTYPE>*>(pot_onsite),
-                 orbital_corr,
+                 l_channel,
                  reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
                  reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
                  stress);
@@ -1095,7 +1095,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                  atom_na,
                  d_wg,
                  reinterpret_cast<const thrust::complex<FPTYPE>*>(pot_onsite),
-                 orbital_corr,
+                 l_channel,
                  reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
                  reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
                  stress);
