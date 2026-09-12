@@ -16,8 +16,13 @@
 #include <vector>
 
 class UnitCell;
+class MDCell;
 class NeighborSearch;
 class DomainDecomposition;
+namespace Run_MD
+{
+void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);
+}
 namespace ModuleBase
 {
 class CommunicationDomain;
@@ -32,8 +37,6 @@ public:
     MDCell(const MDCell&) = delete;
     MDCell& operator=(const MDCell&) = delete;
     MDCell& operator=(MDCell&&);
-
-    Kind kind() const override;
 
     void initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
                                      const ModuleBase::Matrix3& gt,
@@ -53,17 +56,45 @@ public:
     const NeighborSearch& neighbor_search() const;
     void set_lattice_vectors(const ModuleBase::Matrix3& latvec);
     void refresh_cart_from_frac();
-
     void sync_backing_unitcell();
+
+    std::vector<LocalAtom>& owned_atoms();
+    const std::vector<LocalAtom>& owned_atoms() const;
+    std::vector<LocalAtom>& ghost_atoms();
+    const std::vector<LocalAtom>& ghost_atoms() const;
+    const std::vector<std::string>& type_labels() const;
+    const std::vector<double>& type_masses() const;
+    const std::vector<std::int64_t>& type_atom_counts() const;
+    StruMeta& mutable_stru_meta();
+    const StruMeta& stru_meta() const;
+    int nowned_atoms() const;
+    int nghost() const;
+    double cutoff() const;
+    bool has_backing_unitcell() const;
+    void set_backing_unitcell(UnitCell& ucell);
+    UnitCell& backing_unitcell();
+    const UnitCell& backing_unitcell() const;
 
 #ifdef __MPI
     int mpi_rank() const;
     int mpi_size() const;
     MPI_Comm communicator() const { return comm_; }
-
 #endif
 
-public:
+private:
+    friend void Run_MD::prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);
+    Kind get_kind() const override;
+    std::int64_t get_nat() const override;
+    double get_lat0() const override;
+    double get_omega() const override;
+    const ModuleBase::Matrix3& get_latvec() const override;
+    const ModuleBase::Matrix3& get_GT() const override;
+
+    friend class DomainDecomposition;
+    void sync_backing_unitcell_geometry_();
+    void clear_forces_(std::vector<LocalAtom>& atoms);
+    static double wrap_fractional_(double value);
+
     std::int64_t nat_ = 0;
     double lat0_ = 0.0;
     double omega_ = 0.0;
@@ -75,14 +106,7 @@ public:
     std::vector<double> type_masses_;
     std::vector<std::int64_t> type_atom_counts_;
     StruMeta stru_meta_;
-
     UnitCell* backing_unitcell_ = nullptr;
-
-private:
-    friend class DomainDecomposition;
-    void sync_backing_unitcell_geometry_();
-    void clear_forces_(std::vector<LocalAtom>& atoms);
-    static double wrap_fractional_(double value);
 
     double cutoff_ = 0.0;
     double skin_ = 0.0;

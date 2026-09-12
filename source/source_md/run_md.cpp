@@ -41,7 +41,7 @@ void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecompositi
                                      comm_domain,
                                      decomp);
     GlobalV::ofs_running << std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "TOTAL ATOM NUMBER", mdcell.nat_);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "TOTAL ATOM NUMBER", mdcell.nat());
     GlobalV::ofs_running << std::endl;
 }
 
@@ -70,8 +70,8 @@ void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp
                                        type_atom_counts,
                                        0.0,
                                        comm_domain);
-    mdcell.backing_unitcell_ = &ucell;
-    mdcell.stru_meta_ = unitcell::make_stru_meta(ucell);
+    mdcell.set_backing_unitcell(ucell);
+    mdcell.mutable_stru_meta() = unitcell::make_stru_meta(ucell);
 }
 
 void md_line(MDCell& mdcell,
@@ -159,13 +159,13 @@ void md_line(MDCell& mdcell,
         if (param_in.mdp.md_restartfreq > 0
             && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_restartfreq == 0)
         {
-            if (mdcell.backing_unitcell_ != nullptr)
+            if (mdcell.has_backing_unitcell())
             {
                 mdcell.sync_backing_unitcell();
             }
             std::stringstream file;
             file << PARAM.globalv.global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
-            mdcell::print_stru_file(mdcell, mdcell.stru_meta_, file.str());
+            mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str());
             mdrun->write_restart(PARAM.globalv.global_out_dir);
         }
 

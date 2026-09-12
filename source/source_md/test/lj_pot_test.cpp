@@ -48,7 +48,7 @@ TEST_F(LJ_pot_test, potential)
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
-    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec_, mdcell.lat0_, 0.0, 0.0);
+    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
     p_esolver->before_all_runners(mdcell, param.inp);
     MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress, false);
     EXPECT_NEAR(potential, -0.011957818623534381, doublethreshold);
@@ -73,10 +73,10 @@ TEST_F(LJ_pot_test, force)
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
-    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec_, mdcell.lat0_, 0.0, 0.0);
+    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
     p_esolver->before_all_runners(mdcell, param.inp);
     MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress, false);
-    const std::vector<LocalAtom>& atoms = mdcell.owned_atoms_;
+    const std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
     EXPECT_NEAR(atoms[0].force.x, 0.00049817733089377704, doublethreshold);
     EXPECT_NEAR(atoms[0].force.y, 0.00082237246837022328, doublethreshold);
     EXPECT_NEAR(atoms[0].force.z, 0.0, doublethreshold);
@@ -97,15 +97,16 @@ TEST_F(LJ_pot_test, mdcell_cal_force)
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
-    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec_, mdcell.lat0_, 0.0, 0.0);
+    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
     p_esolver.before_all_runners(mdcell, param.inp);
+    decomp.prepare_neighbors(mdcell);
     p_esolver.runner(mdcell, 0);
 
     ModuleBase::matrix force;
     p_esolver.cal_force(mdcell, force);
-    for (int iat = 0; iat < mdcell.owned_atoms_.size(); ++iat)
+    for (int iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
     {
-        const LocalAtom& atom = mdcell.owned_atoms_[static_cast<std::size_t>(iat)];
+        const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(iat)];
         EXPECT_DOUBLE_EQ(force(iat, 0), atom.force.x);
         EXPECT_DOUBLE_EQ(force(iat, 1), atom.force.y);
         EXPECT_DOUBLE_EQ(force(iat, 2), atom.force.z);
@@ -118,7 +119,7 @@ TEST_F(LJ_pot_test, stress)
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
-    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec_, mdcell.lat0_, 0.0, 0.0);
+    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
     p_esolver->before_all_runners(mdcell, param.inp);
     MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress, false);
     EXPECT_NEAR(stress(0, 0), 8.0360222227631859e-07, doublethreshold);
@@ -138,9 +139,10 @@ TEST_F(LJ_pot_test, mdcell_stress_includes_external_pressure)
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
-    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec_, mdcell.lat0_, 0.0, 0.0);
+    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
     Input_para input = param.inp;
     p_esolver.before_all_runners(mdcell, input);
+    decomp.prepare_neighbors(mdcell);
     p_esolver.runner(mdcell, 0);
 
     const double saved_press1 = input.press1;

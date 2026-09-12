@@ -40,22 +40,22 @@ TEST(RunMDTest, prepare_mdcell_from_unitcell)
     DomainDecomposition decomp;
     Run_MD::prepare_mdcell(mdcell, ucell, decomp);
 
-    EXPECT_EQ(mdcell.nat_, ucell.nat);
-    EXPECT_EQ(mdcell.stru_meta_.species.size(), 1U);
+    EXPECT_EQ(mdcell.nat(), ucell.nat);
+    EXPECT_EQ(mdcell.stru_meta().species.size(), 1U);
 
     // UnitCell-backed initialization uses the same wrapping as distributed input.
     ucell.atoms[0].tau[0].set(-0.2, 1.25, 2.5);
     ucell.atoms[0].taud[0] = ucell.atoms[0].tau[0];
     ucell.atoms[0].vel[0].set(1.0, 2.0, 3.0);
     Run_MD::prepare_mdcell(mdcell, ucell, decomp);
-    ASSERT_EQ(mdcell.owned_atoms_.size(), 1);
-    EXPECT_TRUE(mdcell.backing_unitcell_ != nullptr);
-    EXPECT_EQ(mdcell.backing_unitcell_, &ucell);
-    const LocalAtom& atom = mdcell.owned_atoms_[0];
+    ASSERT_EQ(mdcell.owned_atoms().size(), 1);
+    EXPECT_TRUE(mdcell.has_backing_unitcell());
+    EXPECT_EQ(&mdcell.backing_unitcell(), &ucell);
+    const LocalAtom& atom = mdcell.owned_atoms()[0];
     EXPECT_NEAR(atom.frac.x, 0.8, 1.0e-12);
     EXPECT_NEAR(atom.frac.y, 0.25, 1.0e-12);
     EXPECT_NEAR(atom.frac.z, 0.5, 1.0e-12);
-    EXPECT_DOUBLE_EQ((atom.cart - atom.frac * mdcell.latvec_).norm2(), 0.0);
+    EXPECT_DOUBLE_EQ((atom.cart - atom.frac * mdcell.latvec()).norm2(), 0.0);
     EXPECT_DOUBLE_EQ(atom.vel.y, 2.0);
     EXPECT_EQ(atom.mbl.x, 0);
     EXPECT_EQ(atom.owner_rank, 0);

@@ -13,7 +13,7 @@ MSST::MSST(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdc
     msst_vel = mdp.msst_vel * ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
     msst_vis = mdp.msst_vis / ModuleBase::AU_to_MASS / ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
 
-    assert(mdcell.nat_ > 0);
+    assert(mdcell.nat() > 0);
 
     dilation.set(1, 1, 1);
     omega.set(0, 0, 0);
@@ -24,7 +24,7 @@ MSST::MSST(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdc
     lag_pos = 0;
     vsum = 0;
 
-    for (const LocalAtom& atom : mdcell.owned_atoms_) totmass += atom.mass;
+    for (const LocalAtom& atom : mdcell.owned_atoms()) totmass += atom.mass;
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &totmass, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
@@ -40,9 +40,9 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
     ModuleBase::timer::start("MSST", "setup");
 
     MD_base::setup(p_esolver, global_readin_dir, decomp);
-    if (mdcell.backing_unitcell_ != nullptr)
+    if (mdcell.has_backing_unitcell())
     {
-        mdcell.backing_unitcell_->cell_parameter_updated = true;
+        mdcell.backing_unitcell().cell_parameter_updated = true;
     }
 
     int sd = mdp.msst_direction;
@@ -50,7 +50,7 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
     if (!mdp.md_restart)
     {
         lag_pos = 0;
-        v0 = mdcell.omega_;
+        v0 = mdcell.omega();
         p0 = stress(sd, sd);
         e0 = potential + kinetic;
 
@@ -62,7 +62,7 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
 
             std::cout << "initial strain rate = " << fac2 << "    msst_tscale = " << mdp.msst_tscale << std::endl;
 
-            for (LocalAtom& atom : mdcell.owned_atoms_) atom.vel *= sqrt(1.0 - mdp.msst_tscale);
+            for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel *= sqrt(1.0 - mdp.msst_tscale);
         }
 
         MD_func::compute_stress(mdcell, cal_stress, virial, stress);
@@ -90,10 +90,10 @@ void MSST::first_half(std::ofstream& ofs)
     vsum = vel_sum();
 
     /// save the velocities
-    old_v.resize(mdcell.owned_atoms_.size());
-    for (int i = 0; i < mdcell.owned_atoms_.size(); ++i)
+    old_v.resize(mdcell.owned_atoms().size());
+    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        old_v[static_cast<std::size_t>(i)] = mdcell.owned_atoms_[static_cast<std::size_t>(i)].vel;
+        old_v[static_cast<std::size_t>(i)] = mdcell.owned_atoms()[static_cast<std::size_t>(i)].vel;
     }
 
     /// propagate velocity sum 1/2 step by temporarily propagating the velocities
@@ -102,16 +102,16 @@ void MSST::first_half(std::ofstream& ofs)
     vsum = vel_sum();
 
     /// reset the velocities
-    for (int i = 0; i < mdcell.owned_atoms_.size(); ++i)
+    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        mdcell.owned_atoms_[static_cast<std::size_t>(i)].vel = old_v[static_cast<std::size_t>(i)];
+        mdcell.owned_atoms()[static_cast<std::size_t>(i)].vel = old_v[static_cast<std::size_t>(i)];
     }
 
     /// propagate velocities 1/2 step using the new velocity sum
     propagate_vel();
 
     /// propagate volume 1/2 step
-    vol = mdcell.omega_ + omega[sd] * dthalf;
+    vol = mdcell.omega() + omega[sd] * dthalf;
 
     /// rescale positions and change box size
     rescale(ofs, vol);
@@ -120,7 +120,7 @@ void MSST::first_half(std::ofstream& ofs)
     MD_base::update_pos();
 
     /// propagate volume 1/2 step
-    vol = mdcell.omega_ + omega[sd] * dthalf;
+    vol = mdcell.omega() + omega[sd] * dthalf;
 
     /// rescale positions and change box size
     rescale(ofs, vol);
@@ -150,7 +150,7 @@ void MSST::second_half()
     propagate_voldot();
 
     /// calculate Lagrangian position
-    lag_pos -= msst_vel * mdcell.omega_ / v0 * md_dt;
+    lag_pos -= msst_vel * mdcell.omega() / v0 * md_dt;
 
     ModuleBase::timer::end("MSST", "second_half");
 
@@ -243,7 +243,7 @@ double MSST::vel_sum() const
 {
     double vsum = 0;
 
-    for (const LocalAtom& atom : mdcell.owned_atoms_) vsum += atom.vel.norm2();
+    for (const LocalAtom& atom : mdcell.owned_atoms()) vsum += atom.vel.norm2();
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &vsum, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
@@ -254,10 +254,10 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
 {
     int sd = mdp.msst_direction;
 
-    assert(mdcell.omega_ > 0.0);
+    assert(mdcell.omega() > 0.0);
 
-    dilation[sd] = volume / mdcell.omega_;
-    ModuleBase::Matrix3 latvec = mdcell.latvec_;
+    dilation[sd] = volume / mdcell.omega();
+    ModuleBase::Matrix3 latvec = mdcell.latvec();
     latvec.e11 *= dilation[0];
     latvec.e22 *= dilation[1];
     latvec.e33 *= dilation[2];
@@ -265,7 +265,7 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
     mdcell.refresh_cart_from_frac();
 
     /// rescale velocity
-    for (LocalAtom& atom : mdcell.owned_atoms_) atom.vel[sd] *= dilation[sd];
+    for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel[sd] *= dilation[sd];
     static_cast<void>(ofs);
 }
 
@@ -274,14 +274,14 @@ void MSST::propagate_vel()
 {
     const int sd = mdp.msst_direction;
     const double dthalf = 0.5 * md_dt;
-    const double fac = msst_vis * pow(omega[sd], 2) / (vsum * mdcell.omega_);
+    const double fac = msst_vis * pow(omega[sd], 2) / (vsum * mdcell.omega());
 
-    for (LocalAtom& atom : mdcell.owned_atoms_)
+    for (LocalAtom& atom : mdcell.owned_atoms())
     {
         ModuleBase::Vector3<double> const_C = atom.force / atom.mass;
         ModuleBase::Vector3<double> const_D;
         const_D.set(fac / atom.mass, fac / atom.mass, fac / atom.mass);
-        const_D[sd] -= 2 * omega[sd] / mdcell.omega_;
+        const_D[sd] -= 2 * omega[sd] / mdcell.omega();
 
         for (int k = 0; k < 3; ++k)
         {
@@ -307,12 +307,12 @@ void MSST::propagate_voldot()
     const int sd = mdp.msst_direction;
     const double dthalf = 0.5 * md_dt;
     double p_current = stress(sd, sd);
-    double p_msst = msst_vel * msst_vel * totmass * (v0 - mdcell.omega_) / (v0 * v0);
+    double p_msst = msst_vel * msst_vel * totmass * (v0 - mdcell.omega()) / (v0 * v0);
     double const_A = totmass * (p_current - p0 - p_msst) / msst_qmass;
-    double const_B = totmass * msst_vis / (msst_qmass * mdcell.omega_);
+    double const_B = totmass * msst_vis / (msst_qmass * mdcell.omega());
 
     /// prevent the increase of volume
-    if (mdcell.omega_ > v0 && const_A > 0)
+    if (mdcell.omega() > v0 && const_A > 0)
     {
         const_A = -const_A;
     }

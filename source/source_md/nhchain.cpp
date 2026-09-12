@@ -59,7 +59,7 @@ Nose_Hoover::Nose_Hoover(const Parameter& param_in, MDCell& mdcell_in) : MD_base
          */
         else if (mdp.md_pmode == "tri")
         {
-            const ModuleBase::Matrix3& latvec = mdcell.latvec_;
+            const ModuleBase::Matrix3& latvec = mdcell.latvec();
             if (latvec.e12 || latvec.e13 || latvec.e23)
             {
                 ModuleBase::WARNING_QUIT("Nose_Hoover", "the lattice must be lower-triangular when md_pmode == tri!");
@@ -182,7 +182,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& gl
         couple_stress();
 
         /// init barostat
-        double nkt = (static_cast<double>(mdcell.nat_) + 1.0) * t_target;
+        double nkt = (static_cast<double>(mdcell.nat()) + 1.0) * t_target;
 
         for (int i = 0; i < 6; ++i)
         {
@@ -550,7 +550,7 @@ void Nose_Hoover::particle_thermo()
     }
 
     /// rescale velocity due to thermostats
-    for (LocalAtom& atom : mdcell.owned_atoms_) atom.vel *= scale;
+    for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel *= scale;
 }
 
 void Nose_Hoover::baro_thermo()
@@ -644,7 +644,7 @@ void Nose_Hoover::update_baro()
     else
     {
         ModuleBase::matrix t_vector(3, 3);
-        for (const LocalAtom& atom : mdcell.owned_atoms_)
+        for (const LocalAtom& atom : mdcell.owned_atoms())
             for (int i = 0; i < 3; ++i)
                 for (int j = 0; j < 3; ++j)
                     t_vector(i, j) += atom.mass * atom.vel[i] * atom.vel[j];
@@ -660,7 +660,7 @@ void Nose_Hoover::update_baro()
             }
         }
     }
-    term_one /= static_cast<double>(pdim) * mdcell.nat_;
+    term_one /= static_cast<double>(pdim) * mdcell.nat();
 
     double g_omega = 0.0;
     double term_two = 0;
@@ -668,18 +668,18 @@ void Nose_Hoover::update_baro()
     {
         if (pflag[i])
         {
-            g_omega = (p_current[i] - p_hydro) * mdcell.omega_ / mass_omega[i] + term_one / mass_omega[i];
+            g_omega = (p_current[i] - p_hydro) * mdcell.omega() / mass_omega[i] + term_one / mass_omega[i];
             v_omega[i] += g_omega * md_dt / 2.0;
             term_two += v_omega[i];
         }
     }
-    term_two /= static_cast<double>(pdim) * mdcell.nat_;
+    term_two /= static_cast<double>(pdim) * mdcell.nat();
 
     for (int i = 3; i < 6; ++i)
     {
         if (pflag[i])
         {
-            g_omega = p_current[i] * mdcell.omega_ / mass_omega[i];
+            g_omega = p_current[i] * mdcell.omega() / mass_omega[i];
             v_omega[i] += g_omega * md_dt / 2.0;
         }
     }
@@ -695,7 +695,7 @@ void Nose_Hoover::vel_baro()
         factor[i] = exp(-(v_omega[i] + mtk_term) * md_dt / 4);
     }
 
-    for (LocalAtom& atom : mdcell.owned_atoms_)
+    for (LocalAtom& atom : mdcell.owned_atoms())
     {
         for (int j = 0; j < 3; ++j)
         {
@@ -722,7 +722,7 @@ void Nose_Hoover::vel_baro()
 void Nose_Hoover::update_volume(std::ofstream& ofs)
 {
     double factor = 0.0;
-    ModuleBase::Matrix3 latvec = mdcell.latvec_;
+    ModuleBase::Matrix3 latvec = mdcell.latvec();
 
     /// tri mode, off-diagonal components, first half
     if (pflag[4])

@@ -53,12 +53,12 @@ protected:
     {
         ASSERT_TRUE(cell.has_neighbor_search());
         const NeighborList& list = cell.neighbor_search().get_neighbor_list();
-        ASSERT_EQ(list.get_ncentral_atoms(), cell.owned_atoms_.size());
-        for (int i = 0; i < cell.owned_atoms_.size(); ++i)
+        ASSERT_EQ(list.get_ncentral_atoms(), cell.owned_atoms().size());
+        for (int i = 0; i < cell.owned_atoms().size(); ++i)
         {
             EXPECT_EQ(list.get_numneigh(i), count);
         }
-        long long owned = cell.owned_atoms_.size();
+        long long owned = cell.owned_atoms().size();
         Parallel_Reduce::reduce_all(owned);
         EXPECT_EQ(owned, 2);
     }
@@ -67,12 +67,12 @@ protected:
 TEST_F(DomainDecompositionTest, CutoffSetterDoesNotExchangeAtoms)
 {
     EXPECT_FALSE(cell.has_neighbor_search());
-    EXPECT_EQ(cell.ghost_atoms_.size(), 0);
-    EXPECT_EQ(cell.owned_atoms_.size(), domain.rank() == 0 ? 2 : 0);
+    EXPECT_EQ(cell.ghost_atoms().size(), 0);
+    EXPECT_EQ(cell.owned_atoms().size(), domain.rank() == 0 ? 2 : 0);
     EXPECT_THROW(cell.set_neighbor_cutoff(0.0), std::runtime_error);
     decomp.prepare_neighbors(cell);
     expect_neighbor_count(1);
-    for (const LocalAtom& atom : cell.owned_atoms_)
+    for (const LocalAtom& atom : cell.owned_atoms())
     {
         EXPECT_EQ(atom.owner_rank, domain.rank());
         EXPECT_DOUBLE_EQ(atom.vel.x, atom.type_index + 1.0);
@@ -84,27 +84,27 @@ TEST_F(DomainDecompositionTest, GhostForcesAreReturnedAndConsumed)
 {
     decomp.prepare_neighbors(cell);
     long long copies[2] = {0, 0};
-    for (LocalAtom& atom : cell.ghost_atoms_)
+    for (LocalAtom& atom : cell.ghost_atoms())
     {
         ++copies[atom.type_index];
         atom.force.set(atom.type_index + 1.0, 0.0, 0.0);
     }
     Parallel_Reduce::reduce_all(copies, 2);
-    for (LocalAtom& atom : cell.owned_atoms_)
+    for (LocalAtom& atom : cell.owned_atoms())
     {
         atom.force.set(5.0, 0.0, 0.0);
     }
     decomp.accumulate_ghost_forces(cell);
-    for (const LocalAtom& atom : cell.owned_atoms_)
+    for (const LocalAtom& atom : cell.owned_atoms())
     {
         EXPECT_DOUBLE_EQ(atom.force.x, 5.0 + copies[atom.type_index] * (atom.type_index + 1.0));
     }
-    for (const LocalAtom& atom : cell.ghost_atoms_)
+    for (const LocalAtom& atom : cell.ghost_atoms())
     {
         EXPECT_DOUBLE_EQ(atom.force.norm2(), 0.0);
     }
     decomp.accumulate_ghost_forces(cell);
-    for (const LocalAtom& atom : cell.owned_atoms_)
+    for (const LocalAtom& atom : cell.owned_atoms())
     {
         EXPECT_DOUBLE_EQ(atom.force.x, 5.0 + copies[atom.type_index] * (atom.type_index + 1.0));
     }
@@ -114,20 +114,20 @@ TEST_F(DomainDecompositionTest, ReusesLayoutAndRefreshesGhostCoordinates)
 {
     decomp.prepare_neighbors(cell);
     const NeighborSearch* search = &cell.neighbor_search();
-    const std::size_t ghosts = cell.ghost_atoms_.size();
-    for (LocalAtom& atom : cell.owned_atoms_)
+    const std::size_t ghosts = cell.ghost_atoms().size();
+    for (LocalAtom& atom : cell.owned_atoms())
     {
         atom.frac.x += 0.01;
-        atom.cart = atom.frac * cell.latvec_;
+        atom.cart = atom.frac * cell.latvec();
     }
-    for (LocalAtom& atom : cell.ghost_atoms_)
+    for (LocalAtom& atom : cell.ghost_atoms())
     {
         atom.force.set(8.0, 0.0, 0.0);
     }
     decomp.prepare_neighbors(cell);
     EXPECT_EQ(&cell.neighbor_search(), search);
-    EXPECT_EQ(cell.ghost_atoms_.size(), ghosts);
-    for (const LocalAtom& atom : cell.ghost_atoms_)
+    EXPECT_EQ(cell.ghost_atoms().size(), ghosts);
+    for (const LocalAtom& atom : cell.ghost_atoms())
     {
         EXPECT_NEAR(atom.frac.x, atom.type_index == 0 ? 0.06 : 0.96, 1.0e-12);
         EXPECT_DOUBLE_EQ(atom.force.norm2(), 0.0);
@@ -139,7 +139,7 @@ TEST_F(DomainDecompositionTest, LatticeAndCutoffChangesRebuildNeighbors)
 {
     decomp.prepare_neighbors(cell);
     expect_neighbor_count(1);
-    ModuleBase::Matrix3 lattice = cell.latvec_;
+    ModuleBase::Matrix3 lattice = cell.latvec();
     lattice.e11 = 8.0;
     cell.set_lattice_vectors(lattice);
     cell.refresh_cart_from_frac();
@@ -164,12 +164,12 @@ TEST_F(DomainDecompositionTest, OneRankInvalidationRebuildsCollectively)
 TEST_F(DomainDecompositionTest, CrossingSkinThresholdChangesActiveNeighbors)
 {
     decomp.prepare_neighbors(cell);
-    for (LocalAtom& atom : cell.owned_atoms_)
+    for (LocalAtom& atom : cell.owned_atoms())
     {
         if (atom.type_index == 0)
         {
             atom.frac.x = 0.25;
-            atom.cart = atom.frac * cell.latvec_;
+            atom.cart = atom.frac * cell.latvec();
         }
     }
     decomp.prepare_neighbors(cell);
@@ -189,8 +189,8 @@ TEST_F(DomainDecompositionTest, SingleDomainUsesHaloFiltering)
     EXPECT_EQ(decomp.coords(), coords);
     decomp.prepare_neighbors(cell);
     // Only the two x-boundary images overlap the halo, not all 26 images per atom.
-    ASSERT_EQ(cell.ghost_atoms_.size(), 2);
-    for (const LocalAtom& ghost : cell.ghost_atoms_)
+    ASSERT_EQ(cell.ghost_atoms().size(), 2);
+    for (const LocalAtom& ghost : cell.ghost_atoms())
     {
         EXPECT_EQ(ghost.owner_rank, 0);
         EXPECT_NEAR(ghost.cart.x, ghost.type_index == 0 ? 4.2 : -0.2, 1.0e-12);
@@ -200,31 +200,31 @@ TEST_F(DomainDecompositionTest, SingleDomainUsesHaloFiltering)
 
 TEST_F(DomainDecompositionTest, CrossingHaloEdgePreservesCachedGhostSlots)
 {
-    for (LocalAtom& atom : cell.owned_atoms_)
+    for (LocalAtom& atom : cell.owned_atoms())
     {
         if (atom.type_index == 0)
         {
             atom.frac.x = 0.224; // Just inside the 0.225 fractional halo margin.
-            atom.cart = atom.frac * cell.latvec_;
+            atom.cart = atom.frac * cell.latvec();
         }
     }
     decomp.prepare_neighbors(cell);
-    const std::vector<LocalAtom> ghosts = cell.ghost_atoms_;
+    const std::vector<LocalAtom> ghosts = cell.ghost_atoms();
     const NeighborSearch* search = &cell.neighbor_search();
-    for (LocalAtom& atom : cell.owned_atoms_)
+    for (LocalAtom& atom : cell.owned_atoms())
     {
         if (atom.type_index == 0)
         {
             atom.frac.x += 0.002; // Cross the halo edge without consuming half the skin.
-            atom.cart = atom.frac * cell.latvec_;
+            atom.cart = atom.frac * cell.latvec();
         }
     }
     decomp.prepare_neighbors(cell);
     EXPECT_EQ(&cell.neighbor_search(), search);
-    ASSERT_EQ(cell.ghost_atoms_.size(), ghosts.size());
+    ASSERT_EQ(cell.ghost_atoms().size(), ghosts.size());
     for (std::size_t i = 0; i < ghosts.size(); ++i)
     {
-        const LocalAtom& updated = cell.ghost_atoms_[i];
+        const LocalAtom& updated = cell.ghost_atoms()[i];
         EXPECT_EQ(updated.type_index, ghosts[i].type_index);
         EXPECT_EQ(updated.owner_rank, ghosts[i].owner_rank);
         EXPECT_NEAR(updated.cart.x - ghosts[i].cart.x,
@@ -236,7 +236,7 @@ TEST_F(DomainDecompositionTest, CrossingHaloEdgePreservesCachedGhostSlots)
 
 TEST_F(DomainDecompositionTest, SkewCellMultipleImagesMatchBruteForce)
 {
-    ModuleBase::Matrix3 lattice = cell.latvec_;
+    ModuleBase::Matrix3 lattice = cell.latvec();
     lattice.e21 = 0.8;
     lattice.e31 = 0.4;
     lattice.e32 = 0.6;
@@ -248,7 +248,7 @@ TEST_F(DomainDecompositionTest, SkewCellMultipleImagesMatchBruteForce)
     {
         if (evaluation == 1)
         {
-            for (LocalAtom& atom : cell.owned_atoms_)
+            for (LocalAtom& atom : cell.owned_atoms())
             {
                 atom.frac.x += 0.01;
                 atom.cart = atom.frac * lattice;
@@ -256,9 +256,9 @@ TEST_F(DomainDecompositionTest, SkewCellMultipleImagesMatchBruteForce)
         }
         decomp.prepare_neighbors(cell);
         const NeighborList& list = cell.neighbor_search().get_neighbor_list();
-        for (int i = 0; i < cell.owned_atoms_.size(); ++i)
+        for (int i = 0; i < cell.owned_atoms().size(); ++i)
         {
-            const LocalAtom& center = cell.owned_atoms_[i];
+            const LocalAtom& center = cell.owned_atoms()[i];
             // Identify each neighbor by atom ID and its integer periodic shift.
             std::set<std::array<int, 4>> expected;
             for (int id = 0; id < 2; ++id)
@@ -289,9 +289,9 @@ TEST_F(DomainDecompositionTest, SkewCellMultipleImagesMatchBruteForce)
             for (int j = 0; j < list.get_numneigh(i); ++j)
             {
                 const int index = neighbors[j];
-                const LocalAtom& atom = index < cell.owned_atoms_.size()
-                                            ? cell.owned_atoms_[index]
-                                            : cell.ghost_atoms_[index - cell.owned_atoms_.size()];
+                const LocalAtom& atom = index < cell.owned_atoms().size()
+                                            ? cell.owned_atoms()[index]
+                                            : cell.ghost_atoms()[index - cell.owned_atoms().size()];
                 const ModuleBase::Vector3<double> shift = atom.cart * lattice.Inverse() - atom.frac;
                 actual.insert({{static_cast<int>(atom.type_index),
                                 static_cast<int>(std::lround(shift.x)),

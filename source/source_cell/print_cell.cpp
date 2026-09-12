@@ -218,7 +218,7 @@ std::string mdcell_stru_header(const MDCell& cell, const StruMeta& metadata)
     for (std::size_t it = 0; it < metadata.species.size(); ++it)
     {
         const StruSpecies& species = metadata.species[it];
-        output << cell.type_labels_[it] << " " << std::setprecision(4) << cell.type_masses_[it] << std::setprecision(10);
+        output << cell.type_labels()[it] << " " << std::setprecision(4) << cell.type_masses()[it] << std::setprecision(10);
         if (!species.pseudo_file.empty()) output << " " << species.pseudo_file;
         if (!species.pseudo_type.empty()) output << " " << species.pseudo_type;
         output << "\n";
@@ -233,8 +233,8 @@ std::string mdcell_stru_header(const MDCell& cell, const StruMeta& metadata)
             output << metadata.species[it].orbital_file << "\n";
     }
     if (!metadata.descriptor_file.empty()) output << "\nNUMERICAL_DESCRIPTOR\n" << metadata.descriptor_file << "\n";
-    output << "\nLATTICE_CONSTANT\n" << cell.lat0_ << "\n\nLATTICE_VECTORS\n";
-    const ModuleBase::Matrix3& lattice = cell.latvec_;
+    output << "\nLATTICE_CONSTANT\n" << cell.lat0() << "\n\nLATTICE_VECTORS\n";
+    const ModuleBase::Matrix3& lattice = cell.latvec();
     output << lattice.e11 << " " << lattice.e12 << " " << lattice.e13 << "\n";
     output << lattice.e21 << " " << lattice.e22 << " " << lattice.e23 << "\n";
     output << lattice.e31 << " " << lattice.e32 << " " << lattice.e33 << "\n";
@@ -246,18 +246,18 @@ std::string mdcell_type_header(const MDCell& cell, const StruMeta& metadata, con
 {
     const StruSpecies& species = metadata.species[it];
     std::ostringstream output;
-    output << "\n" << cell.type_labels_[it] << " #label\n";
+    output << "\n" << cell.type_labels()[it] << " #label\n";
     output << std::fixed << std::setprecision(4) << species.start_mag << " #magnetism\n";
-    output << cell.type_atom_counts_[it] << " #number of atoms\n";
+    output << cell.type_atom_counts()[it] << " #number of atoms\n";
     return output.str();
 }
 
 std::string local_mdcell_atoms(const MDCell& cell, const std::size_t type)
 {
     std::string output;
-    for (std::size_t iat = 0; iat < cell.owned_atoms_.size(); ++iat)
+    for (std::size_t iat = 0; iat < cell.owned_atoms().size(); ++iat)
     {
-        const LocalAtom& atom = cell.owned_atoms_[iat];
+        const LocalAtom& atom = cell.owned_atoms()[iat];
         if (atom.type == static_cast<int>(type))
         {
             std::ostringstream atom_output;
@@ -315,9 +315,9 @@ namespace mdcell
 {
 void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::string& fn)
 {
-    if (stru_meta.species.size() != cell.type_labels_.size()
-        || stru_meta.species.size() != cell.type_masses_.size()
-        || stru_meta.species.size() != cell.type_atom_counts_.size())
+    if (stru_meta.species.size() != cell.type_labels().size()
+        || stru_meta.species.size() != cell.type_masses().size()
+        || stru_meta.species.size() != cell.type_atom_counts().size())
     {
         throw std::runtime_error("MDCell STRU metadata does not match the MDCell type data.");
     }

@@ -11,7 +11,7 @@ Langevin::Langevin(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param
 
     md_damp = mdp.md_damp / ModuleBase::AU_to_FS;
 
-    total_force.resize(static_cast<std::size_t>(mdcell.owned_atoms_.size()));
+    total_force.resize(static_cast<std::size_t>(mdcell.owned_atoms().size()));
 }
 
 
@@ -34,9 +34,9 @@ void Langevin::first_half(std::ofstream& ofs)
     ModuleBase::TITLE("Langevin", "first_half");
     ModuleBase::timer::start("Langevin", "first_half");
 
-    for (int i = 0; i < mdcell.owned_atoms_.size(); ++i)
+    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        LocalAtom& atom = mdcell.owned_atoms_[static_cast<std::size_t>(i)];
+        LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
         for (int k = 0; k < 3; ++k)
         {
             if (atom.mbl[k]) atom.vel[k] += 0.5 * total_force[i][k] * md_dt / atom.mass;
@@ -55,9 +55,9 @@ void Langevin::second_half()
     ModuleBase::timer::start("Langevin", "second_half");
 
     post_force();
-    for (int i = 0; i < mdcell.owned_atoms_.size(); ++i)
+    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        LocalAtom& atom = mdcell.owned_atoms_[static_cast<std::size_t>(i)];
+        LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
         for (int k = 0; k < 3; ++k)
         {
             if (atom.mbl[k]) atom.vel[k] += 0.5 * total_force[i][k] * md_dt / atom.mass;
@@ -93,16 +93,16 @@ void Langevin::restart(const std::string& global_readin_dir)
 void Langevin::post_force()
 {
     double t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
-    total_force.resize(static_cast<std::size_t>(mdcell.owned_atoms_.size()));
+    total_force.resize(static_cast<std::size_t>(mdcell.owned_atoms().size()));
 
-    for (int i = 0; i < mdcell.owned_atoms_.size(); ++i)
+    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
         ModuleBase::Vector3<double> random_value;
         for (int k = 0; k < 3; ++k)
         {
             random_value[k] = static_cast<double>(std::rand()) / RAND_MAX - 0.5;
         }
-        const LocalAtom& atom = mdcell.owned_atoms_[static_cast<std::size_t>(i)];
+        const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
         ModuleBase::Vector3<double> fictitious_force = -atom.mass * atom.vel / md_damp;
         for (int j = 0; j < 3; ++j)
         {

@@ -40,7 +40,7 @@ class MdIntegratorFixture : public MdTestBase
     {
         MdTestBase::SetUp();
         mdcell = Setcell::setup_mdcell(ucell);
-        decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec_, mdcell.lat0_, 0.0, 0.0);
+        decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
         p_esolver->before_all_runners(mdcell, param_in.inp);
         mdrun.reset(new Integrator(param_in, mdcell));
         mdrun->setup(p_esolver.get(), param_in.globalv.global_readin_dir, decomp);

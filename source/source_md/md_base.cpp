@@ -59,9 +59,9 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
 
     MD_func::force_virial(p_esolver, step_, mdcell, decomp, potential, cal_stress, virial, mdp.md_out_force);
     MD_func::compute_stress(mdcell, cal_stress, virial, stress);
-    if (mdcell.backing_unitcell_ != nullptr)
+    if (mdcell.has_backing_unitcell())
     {
-        mdcell.backing_unitcell_->ionic_position_updated = true;
+        mdcell.backing_unitcell().ionic_position_updated = true;
     }
 
     return;
@@ -87,7 +87,7 @@ void MD_base::second_half()
 
 void MD_base::update_pos()
 {
-    std::vector<LocalAtom>& atoms = mdcell.owned_atoms_;
+    std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
         LocalAtom& atom = atoms[i];
@@ -96,19 +96,19 @@ void MD_base::update_pos()
         {
             if (atom.mbl[k])
             {
-                pos[k] = atom.vel[k] * md_dt / mdcell.lat0_;
+                pos[k] = atom.vel[k] * md_dt / mdcell.lat0();
             }
             else
             {
                 pos[k] = 0;
             }
         }
-        pos = pos * mdcell.gt_;
+        pos = pos * mdcell.GT();
         atom.frac += pos;
         atom.frac.x -= std::floor(atom.frac.x);
         atom.frac.y -= std::floor(atom.frac.y);
         atom.frac.z -= std::floor(atom.frac.z);
-        atom.cart = atom.frac * mdcell.latvec_;
+        atom.cart = atom.frac * mdcell.latvec();
     }
 
     return;
@@ -117,7 +117,7 @@ void MD_base::update_pos()
 
 void MD_base::update_vel()
 {
-    std::vector<LocalAtom>& atoms = mdcell.owned_atoms_;
+    std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
         LocalAtom& atom = atoms[i];

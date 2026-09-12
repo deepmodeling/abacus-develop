@@ -358,6 +358,6 @@ MDCell MDCellReader::read_stru(const std::string& stru_file,
                                        metadata.type_atom_counts,
                                        skin,
                                        comm_domain);
-    mdcell.stru_meta_ = metadata.stru_meta;
+    mdcell.mutable_stru_meta() = metadata.stru_meta;
     return mdcell;
 }

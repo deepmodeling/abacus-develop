@@ -279,8 +279,8 @@ void print_force(std::ofstream& ofs, const MDCell& cell, const std::string& name
 {
     const double output_acc = 1.0e-8;
     const double force_unit = ModuleBase::Hartree_to_eV / ModuleBase::BOHR_TO_A;
-    const std::vector<LocalAtom>& owned_atoms = cell.owned_atoms_;
-    const std::vector<std::string>& type_labels = cell.type_labels_;
+    const std::vector<LocalAtom>& owned_atoms = cell.owned_atoms();
+    const std::vector<std::string>& type_labels = cell.type_labels();
 
     const auto print_atom = [&ofs, &type_labels, output_acc, force_unit](const LocalAtom& atom) {
         const std::string& label = type_labels[static_cast<std::size_t>(atom.type)];
@@ -299,7 +299,7 @@ void print_force(std::ofstream& ofs, const MDCell& cell, const std::string& name
     MPI_Comm_size(cell.communicator(), &size);
     if (rank != 0)
     {
-        const int nowned_atoms = cell.owned_atoms_.size();
+        const int nowned_atoms = cell.owned_atoms().size();
         MPI_Send(&nowned_atoms, 1, MPI_INT, 0, 0, cell.communicator());
         for (const LocalAtom& atom : owned_atoms)
         {

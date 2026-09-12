@@ -33,9 +33,9 @@ void ESolver_LJ::before_all_runners(BaseCell& cell, const Input_para& inp)
             cutoff = std::max(cutoff, inp.mdp.lj_rcut[i] * ModuleBase::ANGSTROM_AU);
         }
         mdcell.set_neighbor_cutoff(cutoff);
-        rcut_search_radius(static_cast<int>(mdcell.type_labels_.size()), inp.mdp.lj_rcut);
-        set_c6_c12(static_cast<int>(mdcell.type_labels_.size()), inp.mdp.lj_rule, inp.mdp.lj_epsilon, inp.mdp.lj_sigma);
-        cal_en_shift(static_cast<int>(mdcell.type_labels_.size()), inp.mdp.lj_eshift);
+        rcut_search_radius(static_cast<int>(mdcell.type_labels().size()), inp.mdp.lj_rcut);
+        set_c6_c12(static_cast<int>(mdcell.type_labels().size()), inp.mdp.lj_rule, inp.mdp.lj_epsilon, inp.mdp.lj_sigma);
+        cal_en_shift(static_cast<int>(mdcell.type_labels().size()), inp.mdp.lj_eshift);
         return;
     }
 
@@ -120,7 +120,7 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
         ModuleBase::WARNING_QUIT("ESolver", "MDCell neighbors must be prepared by the caller before runner().");
     }
 
-    std::vector<LocalAtom>& owned_atoms = mdcell.owned_atoms_;
+    std::vector<LocalAtom>& owned_atoms = mdcell.owned_atoms();
     for (std::size_t i = 0; i < owned_atoms.size(); ++i)
     {
         owned_atoms[i].force.set(0.0, 0.0, 0.0);
@@ -143,7 +143,7 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
             ModuleBase::Vector3<double> tau2(neighbor_atom.position_x,
                                              neighbor_atom.position_y,
                                              neighbor_atom.position_z);
-            ModuleBase::Vector3<double> dtau = (tau1 - tau2) * mdcell.lat0_;
+            ModuleBase::Vector3<double> dtau = (tau1 - tau2) * mdcell.lat0();
             const double distance = dtau.norm();
             if (distance < lj_rcut(center_atom.type, neighbor_atom.atom_type))
             {
@@ -177,7 +177,7 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
     {
         for (int j = 0; j < 3; ++j)
         {
-            lj_virial(i, j) = local_virial[i * 3 + j] / (2.0 * mdcell.omega_);
+            lj_virial(i, j) = local_virial[i * 3 + j] / (2.0 * mdcell.omega());
         }
     }
 }
@@ -198,12 +198,12 @@ void ESolver_LJ::cal_force(BaseCell& cell, ModuleBase::matrix& force)
     }
 
     MDCell& mdcell = static_cast<MDCell&>(cell);
-    force.create(mdcell.owned_atoms_.size(), 3);
-    for (int i = 0; i < mdcell.owned_atoms_.size(); ++i)
+    force.create(mdcell.owned_atoms().size(), 3);
+    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        force(i, 0) = mdcell.owned_atoms_[static_cast<std::size_t>(i)].force.x;
-        force(i, 1) = mdcell.owned_atoms_[static_cast<std::size_t>(i)].force.y;
-        force(i, 2) = mdcell.owned_atoms_[static_cast<std::size_t>(i)].force.z;
+        force(i, 0) = mdcell.owned_atoms()[static_cast<std::size_t>(i)].force.x;
+        force(i, 1) = mdcell.owned_atoms()[static_cast<std::size_t>(i)].force.y;
+        force(i, 2) = mdcell.owned_atoms()[static_cast<std::size_t>(i)].force.z;
     }
 }
 

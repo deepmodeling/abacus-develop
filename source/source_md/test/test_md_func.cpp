@@ -17,12 +17,12 @@ public:
     {
         MDCell& cell = static_cast<MDCell&>(base);
         EXPECT_TRUE(cell.has_neighbor_search());
-        EXPECT_GT(cell.ghost_atoms_.size(), 0);
-        for (LocalAtom& atom : cell.owned_atoms_)
+        EXPECT_GT(cell.ghost_atoms().size(), 0);
+        for (LocalAtom& atom : cell.owned_atoms())
         {
             atom.force.set(4.0, 0.0, 0.0);
         }
-        for (LocalAtom& atom : cell.ghost_atoms_)
+        for (LocalAtom& atom : cell.ghost_atoms())
         {
             EXPECT_DOUBLE_EQ(atom.force.norm2(), 0.0);
             atom.force.set(2.0, 0.0, 0.0);
@@ -67,9 +67,9 @@ TEST(MdForceVirialTest, ReturnsGhostForcesBeforeConvertingUnitsExactlyOnce)
         MD_func::force_virial(&solver, step, cell, decomp, potential, true, virial, false);
         EXPECT_DOUBLE_EQ(potential, 3.0);
         EXPECT_DOUBLE_EQ(virial(0, 0), 4.0);
-        ASSERT_EQ(cell.owned_atoms_.size(), 1);
-        EXPECT_DOUBLE_EQ(cell.owned_atoms_[0].force.x, 2.0 + cell.ghost_atoms_.size());
-        for (const LocalAtom& ghost : cell.ghost_atoms_)
+        ASSERT_EQ(cell.owned_atoms().size(), 1);
+        EXPECT_DOUBLE_EQ(cell.owned_atoms()[0].force.x, 2.0 + cell.ghost_atoms().size());
+        for (const LocalAtom& ghost : cell.ghost_atoms())
         {
             EXPECT_DOUBLE_EQ(ghost.force.norm2(), 0.0);
         }

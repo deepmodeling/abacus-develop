@@ -38,7 +38,7 @@ void initialize_mdcell_from_ucell(MDCell& mdcell, UnitCell& ucell, DomainDecompo
                                        type_atom_counts,
                                        0.0,
                                        comm_domain);
-    mdcell.backing_unitcell_ = &ucell;
+    mdcell.set_backing_unitcell(ucell);
 }
 } // namespace
 
@@ -141,7 +141,7 @@ TEST_F(MD_func_test, compute_stress)
     MDCell mdcell;
     DomainDecomposition decomp;
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
-    for (LocalAtom& atom : mdcell.owned_atoms_)
+    for (LocalAtom& atom : mdcell.owned_atoms())
     {
         atom.vel = test_velocity;
     }
@@ -162,7 +162,7 @@ TEST_F(MD_func_test, dump_info)
     MDCell mdcell;
     DomainDecomposition decomp;
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
-    for (LocalAtom& atom : mdcell.owned_atoms_)
+    for (LocalAtom& atom : mdcell.owned_atoms())
     {
         atom.vel = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
     }
@@ -365,7 +365,7 @@ TEST_F(MD_func_test, global_dof_mdcell)
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
     EXPECT_EQ(MD_func::global_dof(mdcell), 9);
 
-    for (LocalAtom& atom : mdcell.owned_atoms_)
+    for (LocalAtom& atom : mdcell.owned_atoms())
     {
         atom.mbl.x = 0;
     }

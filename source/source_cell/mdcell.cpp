@@ -13,9 +13,114 @@ MDCell::~MDCell() = default;
 MDCell::MDCell(MDCell&&) = default;
 MDCell& MDCell::operator=(MDCell&&) = default;
 
-BaseCell::Kind MDCell::kind() const
+BaseCell::Kind MDCell::get_kind() const
 {
     return Kind::mdcell;
+}
+
+std::int64_t MDCell::get_nat() const
+{
+    return nat_;
+}
+
+double MDCell::get_lat0() const
+{
+    return lat0_;
+}
+
+double MDCell::get_omega() const
+{
+    return omega_;
+}
+
+const ModuleBase::Matrix3& MDCell::get_latvec() const
+{
+    return latvec_;
+}
+
+const ModuleBase::Matrix3& MDCell::get_GT() const
+{
+    return gt_;
+}
+
+std::vector<LocalAtom>& MDCell::owned_atoms()
+{
+    return owned_atoms_;
+}
+
+const std::vector<LocalAtom>& MDCell::owned_atoms() const
+{
+    return owned_atoms_;
+}
+
+std::vector<LocalAtom>& MDCell::ghost_atoms()
+{
+    return ghost_atoms_;
+}
+
+const std::vector<LocalAtom>& MDCell::ghost_atoms() const
+{
+    return ghost_atoms_;
+}
+
+const std::vector<std::string>& MDCell::type_labels() const
+{
+    return type_labels_;
+}
+
+const std::vector<double>& MDCell::type_masses() const
+{
+    return type_masses_;
+}
+
+const std::vector<std::int64_t>& MDCell::type_atom_counts() const
+{
+    return type_atom_counts_;
+}
+
+StruMeta& MDCell::mutable_stru_meta()
+{
+    return stru_meta_;
+}
+
+const StruMeta& MDCell::stru_meta() const
+{
+    return stru_meta_;
+}
+
+int MDCell::nowned_atoms() const
+{
+    return static_cast<int>(owned_atoms_.size());
+}
+
+int MDCell::nghost() const
+{
+    return static_cast<int>(ghost_atoms_.size());
+}
+
+double MDCell::cutoff() const
+{
+    return cutoff_;
+}
+
+bool MDCell::has_backing_unitcell() const
+{
+    return backing_unitcell_ != nullptr;
+}
+
+void MDCell::set_backing_unitcell(UnitCell& ucell)
+{
+    backing_unitcell_ = &ucell;
+}
+
+UnitCell& MDCell::backing_unitcell()
+{
+    return *backing_unitcell_;
+}
+
+const UnitCell& MDCell::backing_unitcell() const
+{
+    return *backing_unitcell_;
 }
 
 void MDCell::initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
