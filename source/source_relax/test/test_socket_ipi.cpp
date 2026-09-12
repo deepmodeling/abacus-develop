@@ -18,7 +18,7 @@
 
 namespace
 {
-constexpr std::size_t IPI_HEADER_LEN = 12;
+constexpr std::size_t kIpiHeaderLen = 12;
 
 std::string errno_message(const std::string& prefix)
 {
@@ -74,7 +74,7 @@ void recv_all(int fd, void* data, std::size_t nbytes)
 std::string padded_header(const std::string& header)
 {
     std::string padded = header;
-    padded.resize(IPI_HEADER_LEN, ' ');
+    padded.resize(kIpiHeaderLen, ' ');
     return padded;
 }
 
@@ -170,7 +170,7 @@ TEST(IpiSocketTest, WriteHeaderPadsToTwelveBytes)
         try
         {
             const int fd = server.accept_once();
-            char buffer[IPI_HEADER_LEN];
+            char buffer[kIpiHeaderLen];
             recv_all(fd, buffer, sizeof(buffer));
             received.assign(buffer, sizeof(buffer));
             ::close(fd);

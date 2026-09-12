@@ -112,6 +112,7 @@ template void Parallel_Reduce::reduce_min<int>(int&);
 template void Parallel_Reduce::reduce_min<float>(float&);
 template void Parallel_Reduce::reduce_min<double>(double&);
 
+template void Parallel_Reduce::reduce_max<int>(int&);
 template void Parallel_Reduce::reduce_max<float>(float&);
 template void Parallel_Reduce::reduce_max<double>(double&);
 

@@ -84,6 +84,14 @@ Atom::Atom()
 Atom::~Atom()
 {
 }
+#ifdef __MPI
+void Atom::bcast_atom()
+{
+}
+void Atom::bcast_atom2()
+{
+}
+#endif
 Atom_pseudo::Atom_pseudo()
 {
 }
