@@ -41,6 +41,8 @@ list(APPEND objects
     module_json/para_json.cpp
     parse_args.cpp
     input_help.cpp
+    module_chgpot/get_pchg_pw.cpp
+    module_wf/get_wf_pw.cpp
 )
 
 list(APPEND objects_advanced

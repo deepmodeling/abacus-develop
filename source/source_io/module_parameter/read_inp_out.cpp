@@ -1507,7 +1507,15 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
         item.category = "Output information";
         item.type = "String";
-        item.description = R"(Selects electronic states for partial (band-decomposed) charge-density output using a space-separated string of `0`s and `1`s, where `1` selects a state and `0` skips it. Repetition follows the `ocp_set` syntax, for example `1 4*0 5*1 0`; the expanded list must not exceed `nbands`. Each output represents a complete one-particle state rather than its SCF occupation. The spin degeneracy is 2 for `nspin=1` and 1 for `nspin=2` or `nspin=4`. For `nspin=1`, `s1` contains the charge density. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down charge densities, respectively. For `nspin=4`, `s1`, `s2`, `s3`, and `s4` respectively contain $\rho_0$, $m_x$, $m_y$, and $m_z$. With `if_separate_k=true`, files are named `pchgi[state]s[component]k[kpoint].cube`; otherwise, the weighted k-point sum is named `pchgi[state]s[component].cube`.
+        item.description = R"(Selects electronic states for partial (band-decomposed) charge-density output using a space-separated string of `0`s and `1`s, where `1` selects a state and `0` skips it. Repetition follows the `ocp_set` syntax, for example `1 4*0 5*1 0`; the expanded list must not exceed `nbands`. Each output represents a complete one-particle state. The spin degeneracy is 2 for `nspin=1` and 1 for `nspin=2` or `nspin=4`. For `nspin=1`, `s1` contains the charge density. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down charge densities, respectively. For `nspin=4`, `s1`, `s2`, `s3`, and `s4` respectively contain $\rho_0$, $m_x$, $m_y$, and $m_z$. With `if_separate_k=true`, files are named `pchgi[state]s[component]k[kpoint].cube`; otherwise, the weighted k-point sum is named `pchgi[state]s[component].cube`.
+
+For PW calculations with ultrasoft pseudopotentials (USPP), the single-state valence density includes the augmentation contribution:
+
+$$
+\rho_{n\boldsymbol{k}}(\boldsymbol{r})=\left\vert\tilde{\psi}_{n\boldsymbol{k}}(\boldsymbol{r})\right\vert^2+\sum_{Iij}Q_{ij}^{I}(\boldsymbol{r})\Braket{\tilde{\psi}_{n\boldsymbol{k}} | \beta_i^I}\Braket{\beta_j^I | \tilde{\psi}_{n\boldsymbol{k}}}.
+$$
+
+Here $\tilde{\psi}$ is the pseudo-wavefunction, $\beta_i^I$ are the atomic projectors, and $Q_{ij}^I$ are the augmentation functions. Each separate-k output has a cell integral equal to the spin degeneracy. The merged output uses k-point weights including spin degeneracy, and its integral equals their sum for the corresponding spin channel.
 
 [NOTE] Enabling symmetry may produce unintended partial charge densities because of reduced k-point weights and real-space symmetry operations. If the desired symmetry treatment is uncertain, set `symmetry = -1`. Use the same symmetry setting as in the SCF calculation.)";
         item.default_value = "none";
@@ -1515,6 +1523,15 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_pchg)");
         item.read_value
             = [](const Input_Item& item, Parameter& para) { parse_expression(item.str_values, para.input.out_pchg); };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.basis_type == "pw" && para.input.calculation == "nscf" && para.input.mem_saver == 1
+                && !para.input.out_pchg.empty())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                        "out_pchg is incompatible with mem_saver=1 in PW NSCF calculations: "
+                                        "wavefunctions are overwritten between k points. Set mem_saver=0 for this output.");
+            }
+        };
         item.get_final_value = [](Input_Item& item, const Parameter& para) {
             if (item.is_read())
             {
@@ -1529,12 +1546,21 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "specify the bands to be calculated for the norm of wavefunctions";
         item.category = "Output information";
         item.type = "String";
-        item.description = R"(Selects electronic states for real-space wavefunction-modulus output using the selection syntax of `out_pchg`. Each wavefunction is normalized as a single-particle state and does not include SCF occupations or spin-degeneracy factors. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`.)";
+        item.description = R"(Selects electronic states for real-space wavefunction-modulus output using the selection syntax of `out_pchg`. Each output contains single-particle wavefunction amplitudes. In PW calculations, norm-conserving pseudo-wavefunctions satisfy $\Braket{\psi_{n\boldsymbol{k}} | \psi_{n\boldsymbol{k}}}=1$, while USPP pseudo-wavefunctions satisfy $\Braket{\tilde{\psi}_{n\boldsymbol{k}} | \hat{S} | \tilde{\psi}_{n\boldsymbol{k}}}=1$, where $\hat{S}=1+\sum_{Iij}q_{ij}^I\Ket{\beta_i^I}\Bra{\beta_j^I}$ is the USPP overlap operator, $q_{ij}^I=\int Q_{ij}^I(\boldsymbol{r})\,\mathrm{d}\boldsymbol{r}$, and $\beta_i^I$ are the atomic projectors. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`.)";
         item.default_value = "none";
         item.unit = "";
         item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_wf)");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.out_wfc_norm);
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.basis_type == "pw" && para.input.calculation == "nscf" && para.input.mem_saver == 1
+                && !para.input.out_wfc_norm.empty())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                        "out_wfc_norm is incompatible with mem_saver=1 in PW NSCF calculations: "
+                                        "wavefunctions are overwritten between k points. Set mem_saver=0 for this output.");
+            }
         };
         item.get_final_value = [](Input_Item& item, const Parameter& para) {
             if (item.is_read())
@@ -1550,12 +1576,21 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "specify the bands to be calculated for the real and imaginary parts of wavefunctions";
         item.category = "Output information";
         item.type = "String";
-        item.description = R"(Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax of `out_pchg`. Each wavefunction is normalized as a single-particle state and does not include SCF occupations or spin-degeneracy factors. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`.)";
+        item.description = R"(Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax of `out_pchg`. Each output contains single-particle wavefunction amplitudes. In PW calculations, norm-conserving pseudo-wavefunctions satisfy $\Braket{\psi_{n\boldsymbol{k}} | \psi_{n\boldsymbol{k}}}=1$, while USPP pseudo-wavefunctions satisfy $\Braket{\tilde{\psi}_{n\boldsymbol{k}} | \hat{S} | \tilde{\psi}_{n\boldsymbol{k}}}=1$, where $\hat{S}=1+\sum_{Iij}q_{ij}^I\Ket{\beta_i^I}\Bra{\beta_j^I}$ is the USPP overlap operator, $q_{ij}^I=\int Q_{ij}^I(\boldsymbol{r})\,\mathrm{d}\boldsymbol{r}$, and $\beta_i^I$ are the atomic projectors. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`.)";
         item.default_value = "none";
         item.unit = "";
         item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_wf)");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.out_wfc_re_im);
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.basis_type == "pw" && para.input.calculation == "nscf" && para.input.mem_saver == 1
+                && !para.input.out_wfc_re_im.empty())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                        "out_wfc_re_im is incompatible with mem_saver=1 in PW NSCF calculations: "
+                                        "wavefunctions are overwritten between k points. Set mem_saver=0 for this output.");
+            }
         };
         item.get_final_value = [](Input_Item& item, const Parameter& para) {
             if (item.is_read())

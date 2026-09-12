@@ -1,0 +1,16 @@
+USPP partial charge and pseudo-wavefunction output for insulating NaCl.
+
+The existing Na/Cl UPF 2.0 potentials provide 16 valence electrons. Fixed
+occupations fill bands 1--8; band 9 tests an unoccupied state's partial charge.
+The calculation uses two k-points, double grids, KPAR=2 and BNDPAR=2.
+Every merged partial-charge cube integrates to 2.
+
+Wavefunction references use only band 1, separated from band 2 by over 27 eV
+at both k-points. Its modulus integral and phase-invariant fingerprints were
+checked with 1/3/4 MPI ranks, different pool/band decompositions, 1/2 OpenMP
+threads, and CPU/CUDA. The largest fingerprint difference was 1.3e-8.
+
+Independent local checks verified the occupied-state density sum against
+SCF valence charge, the modulus/Re/Im identity, and separate/merged k output.
+The stricter local density reconstruction used scf_thr=1e-20 because the
+charge cube writer exports rho_save; its maximum pointwise error was 9.5e-11.
