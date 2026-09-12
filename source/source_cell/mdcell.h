@@ -58,19 +58,19 @@ public:
     void refresh_cart_from_frac();
     void sync_backing_unitcell();
 
-    std::vector<LocalAtom>& owned_atoms();
-    const std::vector<LocalAtom>& owned_atoms() const;
-    std::vector<LocalAtom>& ghost_atoms();
-    const std::vector<LocalAtom>& ghost_atoms() const;
-    const std::vector<std::string>& type_labels() const;
-    const std::vector<double>& type_masses() const;
-    const std::vector<std::int64_t>& type_atom_counts() const;
-    StruMeta& mutable_stru_meta();
-    const StruMeta& stru_meta() const;
-    int nowned_atoms() const;
-    int nghost() const;
-    double cutoff() const;
-    bool has_backing_unitcell() const;
+    std::vector<LocalAtom>& owned_atoms() { return owned_atoms_; }
+    const std::vector<LocalAtom>& owned_atoms() const { return owned_atoms_; }
+    std::vector<LocalAtom>& ghost_atoms() { return ghost_atoms_; }
+    const std::vector<LocalAtom>& ghost_atoms() const { return ghost_atoms_; }
+    const std::vector<std::string>& type_labels() const { return type_labels_; }
+    const std::vector<double>& type_masses() const { return type_masses_; }
+    const std::vector<std::int64_t>& type_atom_counts() const { return type_atom_counts_; }
+    StruMeta& mutable_stru_meta() { return stru_meta_; }
+    const StruMeta& stru_meta() const { return stru_meta_; }
+    int nowned_atoms() const { return static_cast<int>(owned_atoms_.size()); }
+    int nghost() const { return static_cast<int>(ghost_atoms_.size()); }
+    double cutoff() const { return cutoff_; }
+    bool has_backing_unitcell() const { return backing_unitcell_ != nullptr; }
     void set_backing_unitcell(UnitCell& ucell);
     UnitCell& backing_unitcell();
     const UnitCell& backing_unitcell() const;
