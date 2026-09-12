@@ -29,6 +29,7 @@
 #include "source_lcao/module_ri/sternheimer_galerkin_audit.h"
 #include "source_lcao/module_ri/sternheimer_weak_grid.h"
 #include "source_lcao/module_ri/sternheimer_weak_augmented.h"
+#include "source_lcao/module_ri/sternheimer_weak_matrix_audit.h"
 #include "source_lcao/module_ri/sternheimer_periodic_solver.h"
 #include "source_lcao/module_ri/sternheimer_rpa.h"
 #include "source_lcao/module_ri/sternheimer_response_grid.h"
@@ -2350,21 +2351,31 @@ void run_sternheimer_weak_response_audit(
     using Vector = SternheimerFDHamiltonian::Vector;
     using Complex = SternheimerFDHamiltonian::Complex;
     using Blocks = SternheimerWeakAugmented;
+    const bool matrix_audit = env_is_true("ABACUS_STERNHEIMER_WEAK_MATRIX_AUDIT");
     const auto started = std::chrono::steady_clock::now();
     std::ofstream audit("STERNHEIMER_WEAK_RESPONSE_AUDIT.dat");
     if (!audit) throw std::runtime_error("Cannot open fine-weak response audit.");
     audit << std::setprecision(17)
           << "status diagnostic_only\nphysical_result no\nfull_q_response no\n"
           << "reference fine_analytic_weak_form\nsource_band_selection VBM_only\n"
-          << "auxiliary_channel_selection first_two_only\nsymmetry_restoration no\n"
+          << (matrix_audit ? "auxiliary_channel_selection all\nsymmetry_restoration no\n"
+                           : "auxiliary_channel_selection first_two_only\nsymmetry_restoration no\n")
           << "fine_grid " << fine_grid.grid.nx << ' ' << fine_grid.grid.ny << ' ' << fine_grid.grid.nz << '\n'
           << "coarse_grid " << coarse_grid.grid.nx << ' ' << coarse_grid.grid.ny << ' ' << coarse_grid.grid.nz << '\n'
           << "source_target " << source_index + 1 << ' ' << target_index + 1 << '\n'
           << "omega_Ha " << omega_ha << '\n';
-    const auto stage = [&](const char* name) {
+    if (matrix_audit)
+        audit << "matrix_audit yes\nresponse_matrix partial\n"
+              << "global_matrix_checks deferred_external_merge\n"
+              << "qpoint " << qpoint[0] << ' ' << qpoint[1] << ' ' << qpoint[2] << '\n';
+    const auto stage = [&](const std::string& name, const double solve_s = -1.0,
+                           const double contraction_s = -1.0, const double finecheck_s = -1.0) {
         const auto memory = detect_sternheimer_memory_snapshot();
         audit << "stage " << name << " elapsed_s " << elapsed_seconds_since(started)
-              << " memory_current_bytes " << memory.current_bytes << '\n';
+              << " memory_current_bytes " << memory.current_bytes;
+        if (solve_s >= 0.0)
+            audit << " solve_s " << solve_s << " contraction_s " << contraction_s << " finecheck_s " << finecheck_s;
+        audit << '\n';
         audit.flush();
         if (!audit) throw std::runtime_error("Fine-weak response audit write failed.");
     };
@@ -2382,6 +2393,31 @@ void run_sternheimer_weak_response_audit(
         || target_record.coefficients.size() != target_record.eigenvalues.size()
         || target_record.unoccupied_coefficients.size() != target_record.unoccupied_eigenvalues.size())
         throw std::runtime_error("Fine-weak audit requires nbands=nlocal and every target coefficient vector.");
+    if (matrix_audit)
+    {
+        if (source_record.coefficients.size() != source_record.eigenvalues.size()
+            || source_record.occupations.size() != source_record.eigenvalues.size()
+            || target_record.eigenvalues.empty()
+            || target_record.occupations.size() != target_record.eigenvalues.size()
+            || fine_potential.size() != static_cast<std::size_t>(fine_grid.grid.size()))
+            throw std::runtime_error("Weak matrix audit requires complete source/target KS records and full fine potential.");
+        const auto finite_real = [](const double value) { return std::isfinite(value); };
+        for (const auto* values : {&source_record.eigenvalues, &target_record.eigenvalues,
+                                   &target_record.unoccupied_eigenvalues, &fine_potential})
+            if (!std::all_of(values->begin(), values->end(), finite_real))
+                throw std::runtime_error("Weak matrix audit input contains nonfinite real values.");
+        for (const auto* coefficients : {&source_record.coefficients, &target_record.coefficients,
+                                         &target_record.unoccupied_coefficients})
+            for (const auto& state : *coefficients)
+                if (state.size() != static_cast<std::size_t>(PARAM.globalv.nlocal)
+                    || !std::all_of(state.begin(), state.end(), [](const Complex value) {
+                           return std::isfinite(value.real()) && std::isfinite(value.imag());
+                       }))
+                    throw std::runtime_error("Weak matrix audit requires complete finite KS coefficient vectors.");
+        for (int a = 0; a < 3; ++a)
+            if (!std::isfinite(source_k[a]) || !std::isfinite(fine_grid.grid.kpoint[a]) || !std::isfinite(qpoint[a]))
+                throw std::runtime_error("Weak matrix audit requires finite k/q coordinates.");
+    }
     auto target = sample_sternheimer_lcao_kpoint(
         ucell, fine_grid.grid, orbitals, target_record, 0, true, 0,
         fine_grid.volume_element, PARAM.inp.sternheimer_delta_norm_tol);
@@ -2445,6 +2481,166 @@ void run_sternheimer_weak_response_audit(
     source = SternheimerSampledLCAOKPoint();
     audit << "source_band " << band + 1 << "\nsource_epsilon_Ry " << epsilon << '\n';
     const auto input = build_abfs_density_input(ucell, pca_threshold, rpa_abfs);
+    if (matrix_audit)
+    {
+        const auto metadata = describe_sternheimer_abf_grid_channels(
+            input.radials_by_type, input.atom_types, input.atom_positions, -1);
+        if (metadata.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+            throw std::length_error("Weak matrix audit channel count exceeds BLAS integer range.");
+        const int channel_count = static_cast<int>(metadata.size());
+        const auto shard = SternheimerWeakAuditShard::parse(
+            std::getenv("WEAK_AUDIT_SHARD_INDEX"), std::getenv("WEAK_AUDIT_SHARD_COUNT"), channel_count);
+        const auto owned_columns = shard.columns();
+        audit << "shard_index " << shard.index << "\nshard_count " << shard.count
+              << "\nauxiliary_channels " << channel_count << '\n'
+              << "# auxiliary_channel IDs are 1-based; named metadata indices are 0-based; M is real-Ylm index\n";
+        for (int j = 0; j < channel_count; ++j)
+        {
+            const auto& channel = metadata[j];
+            if (channel.channel_index != j)
+                throw std::runtime_error("Weak matrix audit requires contiguous global auxiliary channel IDs.");
+            audit << "auxiliary_channel " << j + 1 << " atom_index " << channel.atom_index
+                  << " atom_local_index " << channel.atom_local_index << " type_index " << channel.type_index
+                  << " L " << channel.angular_momentum << " M " << channel.magnetic_index
+                  << " radial_index " << channel.radial_index << " label " << std::quoted(channel.label) << '\n';
+        }
+        stage("auxiliary_metadata_ready");
+        const auto sample_fine_vertex = [&](const int j) {
+            auto single = sample_sternheimer_abf_bloch_grid_channels(
+                input.radials_by_type, input.atom_types, input.atom_positions, fine_grid.grid, qpoint, 1, j);
+            if (single.size() != 1 || single.front().channel_index != j)
+                throw std::runtime_error("Weak matrix audit failed to sample the requested global auxiliary channel.");
+            solve_sternheimer_abf_periodic_full_coulomb_in_place(single, fine_grid.grid, qpoint, 0.0);
+            Vector g = std::move(single.front().potential_r);
+            if (g.size() != source_values.size())
+                throw std::runtime_error("Weak matrix audit fine vertex dimension mismatch.");
+            for (std::size_t ir = 0; ir < g.size(); ++ir)
+            {
+                // In-place Ha -> Ry multiplication avoids a second fine vertex allocation.
+                g[ir] *= 2.0 * source_values[ir];
+                if (!std::isfinite(g[ir].real()) || !std::isfinite(g[ir].imag()))
+                    throw std::runtime_error("Weak matrix audit fine vertex is nonfinite.");
+            }
+            return g;
+        };
+        const int ncoarse = blocks->ncoarse();
+        const auto checked_elements = [](const std::size_t rows, const std::size_t columns) {
+            if (columns != 0 && rows > Vector().max_size() / columns)
+                throw std::length_error("Weak matrix audit projected storage size overflow.");
+            return rows * columns;
+        };
+        // The all-channel cache contains only gF/gW, packed column-major for BLAS.
+        Blocks::Vertices projected_vertices;
+        projected_vertices.f.resize(checked_elements(nvirtual, channel_count));
+        projected_vertices.w.resize(checked_elements(ncoarse, channel_count));
+        audit << "projected_f_bytes " << projected_vertices.f.size() * sizeof(Complex)
+              << "\nprojected_w_bytes " << projected_vertices.w.size() * sizeof(Complex)
+              << "\nfine_vertex_cache_channels 1\n";
+        const Vector first_row_vertex = sample_fine_vertex(0);
+        for (int j = 0; j < channel_count; ++j)
+        {
+            {
+                const Vector sampled = j != 0 ? sample_fine_vertex(j) : Vector();
+                const Vector& g = j == 0 ? first_row_vertex : sampled;
+                Vector gu(functions.size()), ge;
+                for (std::size_t u = 0; u < functions.size(); ++u)
+                    gu[u] = sternheimer_fd_grid_dot(functions[u].values, g, fine_grid.volume_element);
+                op->project(g, ge);
+                const auto vertex = blocks->project_vertices(gu, ge);
+                std::copy(vertex.f.begin(), vertex.f.end(),
+                          projected_vertices.f.begin() + std::size_t(j) * nvirtual);
+                std::copy(vertex.w.begin(), vertex.w.end(),
+                          projected_vertices.w.begin() + std::size_t(j) * ncoarse);
+            }
+            // Only the first-row fine vertex survives for the repeated selected-row check.
+            if ((j + 1) % 32 == 0 || j + 1 == channel_count)
+            {
+                stage("vertices_projected_" + std::to_string(j + 1));
+            }
+        }
+        trim_sternheimer_process_heap();
+        stage("fine_vertices_ready");
+        SternheimerRPA::SolverOptions options;
+        options.max_iter = positive_int_from_env("ABACUS_STERNHEIMER_WEAK_AUDIT_MAX_ITER", 300);
+        options.residual_tol = 1e-8;
+        options.use_fd_spectral_preconditioner = false;
+        audit << "coordinate_transform complement_inverse_sqrt\npreconditioner none\nmax_iter "
+              << options.max_iter << "\nresidual_tolerance " << options.residual_tol << '\n';
+        Vector partial_response(checked_elements(channel_count, owned_columns.size()), Complex(0.0));
+        std::size_t equations = 0;
+        for (int sign : {1, -1})
+        {
+            Blocks::Worker worker(blocks, [op](const Vector& x, Vector& result) { op->apply(x, result); },
+                                  epsilon, sign * 2.0 * omega_ha);
+            for (std::size_t owned = 0; owned < owned_columns.size(); ++owned)
+            {
+                const int j = owned_columns[owned];
+                const auto f_begin = projected_vertices.f.begin() + std::size_t(j) * nvirtual;
+                const auto w_begin = projected_vertices.w.begin() + std::size_t(j) * ncoarse;
+                const Blocks::Vertices vertex{Vector(f_begin, f_begin + nvirtual), Vector(w_begin, w_begin + ncoarse)};
+                const auto solve_started = std::chrono::steady_clock::now();
+                const auto result = worker.solve(vertex, options);
+                const double solve_s = elapsed_seconds_since(solve_started);
+                audit << "equation " << ++equations << " channel " << j + 1 << " sign " << sign
+                      << " converged " << (result.converged ? "yes" : "no") << " iterations " << result.schur.iterations
+                      << " full_residual " << result.relative_residual << " elapsed_s " << elapsed_seconds_since(started) << '\n';
+                audit.flush();
+                if (!audit) throw std::runtime_error("Weak matrix audit equation output failed.");
+                if (!result.converged) throw std::runtime_error("Fine-weak response audit equation did not converge.");
+                const auto contraction_started = std::chrono::steady_clock::now();
+                Vector block_column(channel_count, Complex(0.0));
+                BlasConnector::gemv('C', nvirtual, channel_count, Complex(0.5), projected_vertices.f.data(), nvirtual,
+                                    result.coefficients.data(), 1, Complex(0.0), block_column.data(), 1);
+                BlasConnector::gemv('C', ncoarse, channel_count, Complex(0.5), projected_vertices.w.data(), ncoarse,
+                                    result.coefficients.data() + nvirtual, 1, Complex(1.0), block_column.data(), 1);
+                const double contraction_s = elapsed_seconds_since(contraction_started);
+                const auto finecheck_started = std::chrono::steady_clock::now();
+                const auto expansion = blocks->expand_coordinates(result.coefficients);
+                Vector fine_response;
+                op->lift(expansion.e, fine_response);
+                for (std::size_t u = 0; u < functions.size(); ++u)
+                {
+#pragma omp parallel for schedule(static)
+                    for (std::size_t ir = 0; ir < fine_response.size(); ++ir)
+                        fine_response[ir] += expansion.u[u] * functions[u].values[ir];
+                }
+                const Vector diagonal_vertex = j != 0 ? sample_fine_vertex(j) : Vector();
+                for (int i = 0; i < channel_count; ++i)
+                {
+                    const Complex block_value = block_column[i];
+                    if (!std::isfinite(block_value.real()) || !std::isfinite(block_value.imag()))
+                        throw std::runtime_error("Weak matrix audit projected response is nonfinite.");
+                    if (i == j || i == 0)
+                    {
+                        // The first row is cached; only the solved column is regenerated.
+                        const Complex fine_value = 0.5 * sternheimer_fd_grid_dot(
+                            i == 0 ? first_row_vertex : diagonal_vertex, fine_response, fine_grid.volume_element);
+                        const double error = std::abs(fine_value - block_value) / std::max(1.0, std::abs(fine_value));
+                        audit << "vertex_check " << equations << ' ' << i + 1 << ' ' << error << '\n';
+                        if (!std::isfinite(error) || error > 1e-9)
+                            throw std::runtime_error("Fine-weak left/right vertex consistency failed.");
+                    }
+                    partial_response[std::size_t(i) + std::size_t(channel_count) * owned] += block_value;
+                }
+                stage("columns_complete_" + std::to_string(equations), solve_s, contraction_s,
+                      elapsed_seconds_since(finecheck_started));
+            }
+        }
+        if (equations != 2 * owned_columns.size())
+            throw std::runtime_error("Weak matrix audit did not solve both signs for every owned column.");
+        for (std::size_t owned = 0; owned < owned_columns.size(); ++owned)
+            for (int i = 0; i < channel_count; ++i)
+            {
+                const auto value = partial_response[std::size_t(i) + std::size_t(channel_count) * owned];
+                if (!std::isfinite(value.real()) || !std::isfinite(value.imag()))
+                    throw std::runtime_error("Weak matrix audit signed response sum is nonfinite.");
+                audit << "response " << i + 1 << ' ' << owned_columns[owned] + 1 << ' '
+                      << value.real() << ' ' << value.imag() << '\n';
+            }
+        audit << "audit_complete yes\nresponse_equations " << equations << '\n';
+        stage("complete");
+        return;
+    }
     auto channels = sample_sternheimer_abf_bloch_grid_channels(
         input.radials_by_type, input.atom_types, input.atom_positions, fine_grid.grid, qpoint, 2);
     if (channels.size() != 2) throw std::runtime_error("Fine-weak audit requires two real ABFS channels.");
@@ -3297,7 +3493,8 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                    + std::to_string(grid_data.grid.ny) + "x"
                                    + std::to_string(grid_data.grid.nz) + ",grid_size="
                                    + std::to_string(grid_data.grid.size()));
-    if (env_is_true("ABACUS_STERNHEIMER_WEAK_RESPONSE_AUDIT"))
+    if (env_is_true("ABACUS_STERNHEIMER_WEAK_RESPONSE_AUDIT")
+        || env_is_true("ABACUS_STERNHEIMER_WEAK_MATRIX_AUDIT"))
     {
         if (GlobalV::NPROC != 1 || use_supercell_translation_sum || !use_delta_sternheimer
             || PARAM.inp.sternheimer_delta_max_states != 0 || gamma_qpoint)
@@ -7101,6 +7298,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
             = dynamic_cast<const SternheimerExcitationError*>(&error) != nullptr;
         const bool fatal_spectrum_failure = invalid_excitation_spectrum
             || env_is_true("ABACUS_STERNHEIMER_WEAK_RESPONSE_AUDIT")
+            || env_is_true("ABACUS_STERNHEIMER_WEAK_MATRIX_AUDIT")
             || env_is_true("ABACUS_STERNHEIMER_SPECTRUM_AUDIT")
             || env_is_true("ABACUS_STERNHEIMER_GALERKIN_AUDIT");
         if (fatal_spectrum_failure)

@@ -284,10 +284,15 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
     const std::vector<ModuleBase::Vector3<double>>& atom_positions,
     const SternheimerFDHamiltonian::Grid& grid,
     const SternheimerReducedKPoint& qpoint,
-    const int max_channels)
+    const int max_channels,
+    const int start_channel)
 {
     validate_grid(grid);
     validate_qpoint(qpoint, grid.periodic);
+    if (start_channel < 0)
+    {
+        throw std::invalid_argument("Sternheimer ABFS sampling start channel must be nonnegative.");
+    }
     if (atom_types.size() != atom_positions.size())
     {
         throw std::invalid_argument("Sternheimer ABFS perturbation atom type/position count mismatch.");
@@ -320,6 +325,12 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
                 if (max_channels > 0 && static_cast<int>(channels.size()) >= max_channels)
                 {
                     return channels;
+                }
+                if (channel_index < start_channel)
+                {
+                    ++channel_index;
+                    ++atom_local_index;
+                    continue;
                 }
 
                 SternheimerABFBlochGridChannel channel;

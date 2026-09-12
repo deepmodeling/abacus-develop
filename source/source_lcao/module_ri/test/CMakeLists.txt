@@ -174,6 +174,12 @@ AddTest(
   SOURCES sternheimer_weak_grid_test.cpp ../sternheimer_weak_grid.cpp ../sternheimer_grid_transfer.cpp ../sternheimer_delta.cpp ../sternheimer_kq.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_preconditioner.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_rpa.cpp ../../../source_base/module_external/blas_connector_matrix.cpp
 )
 AddTest(
+  TARGET MODULE_RI_sternheimer_weak_matrix_audit_test
+  LIBS parameter base ${math_libs} device container
+  SOURCES sternheimer_weak_matrix_audit_test.cpp ../sternheimer_abfs_perturbation.cpp ../sternheimer_kq.cpp
+          ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp
+)
+AddTest(
   TARGET MODULE_RI_sternheimer_weak_augmented_test
   LIBS ${STERNHEIMER_RPA_TEST_LIBS}
   SOURCES sternheimer_weak_augmented_test.cpp ../sternheimer_weak_augmented.cpp ../sternheimer_rpa.cpp ../../../source_base/module_external/blas_connector_matrix.cpp
