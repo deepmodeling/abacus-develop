@@ -46,11 +46,11 @@ void restrict_kpt(ModuleBase::Vector3<double>& kvec, double epsilon);
 class ReciprocalGrid
 {
   public:
-    /// Cartesian coordinates of the points.
+    /// Cartesian coordinates of the points, in unit of 2*pi/lat0.
     std::vector<ModuleBase::Vector3<double>> kvec_c;
     /// Direct coordinates of the points.
     std::vector<ModuleBase::Vector3<double>> kvec_d;
-    /// Cartesian coordinates of the full (unreduced) mesh.
+    /// Cartesian coordinates of the full (unreduced) mesh, in unit of 2*pi/lat0.
     std::vector<ModuleBase::Vector3<double>> kvec_c_full;
     /// Weight of each point.
     std::vector<double> wk;

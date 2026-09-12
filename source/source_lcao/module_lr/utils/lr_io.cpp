@@ -17,15 +17,10 @@
 #include <omp.h>
 #endif
 namespace LR_IO {
-    const std::string FILE_COARSE = "stru_out";
-    const std::string FILE_FINE_UNIFORM = "band_kpath_info";
-    const std::string FILE_FINE_NONUNIFORM = "KPT_bse";
-    const std::string FILE_BAND_OUT = "band_out";
-    const std::string FILE_BAND_KPATH = "band_kpath_info";
 
 void parse_band_out_file(const std::string& in_dir, int& nbands_file, int& nk_file, int& nspin_file, int& nocc_file)
 {
-    std::string file = in_dir + FILE_BAND_OUT;
+    std::string file = in_dir + "band_out.txt";
     std::ifstream ifs(file);
     if (!ifs) throw std::runtime_error(file + " not found");
     std::string tmp, line;
@@ -52,7 +47,7 @@ void parse_band_out_file(const std::string& in_dir, int& nbands_file, int& nk_fi
 
     if (PARAM.inp.bse_use_fine_kgrid)
     {
-        file = in_dir + FILE_BAND_KPATH;
+        file = in_dir + "band_kpath_info";
         std::ifstream ifs(file);
         if (!ifs) throw std::runtime_error(file + " not found");
         std::string tmp;
@@ -65,151 +60,6 @@ void parse_band_out_file(const std::string& in_dir, int& nbands_file, int& nk_fi
     }
 }
 
-#ifdef __EXX
-
-RI_kRlist::RI_kRlist(const UnitCell& ucell, K_Vectors* const pkv,
-    const std::string& in_dir, const int use_fine_kgrid, const std::string& out_dir)
-    : klist(pkv)
-{
-    read_kpts_coarse(in_dir + FILE_COARSE, ucell, this->klist, out_dir);
-    this->klist_coarse = *this->klist;
-    this->period = RI_Util::get_Born_vonKarmen_period(*klist);
-    this->Rlist = RI_Util::get_Born_von_Karmen_cells(period);
-    // std::cout << "Rlist:" << std::endl;
-    // int count = 0;
-    // for (const auto& iR: Rlist)
-    // {
-    //     count++;
-    //     std::cout << "iR=" << count <<": "<< iR[0] << " " << iR[1] << " " << iR[2] << std::endl;
-    // }
-    if (use_fine_kgrid==1)
-    {
-        read_kpts_fine(in_dir + FILE_FINE_UNIFORM, ucell, this->klist, false, out_dir);
-    }
-    else if (use_fine_kgrid==2)
-    {
-        read_kpts_fine(in_dir + FILE_FINE_NONUNIFORM, ucell, this->klist, true, out_dir);
-    }
-    else if (use_fine_kgrid!=0)
-        ModuleBase::WARNING_QUIT("LR_IO", "use_fine_kgrid must be 0, 1 or 2");
-};
-
-void RI_kRlist::read_kpts_coarse(const std::string& file, const UnitCell& ucell,
-                                 K_Vectors* const klist, const std::string& out_dir)
-{
-    std::ifstream ifs;
-    ifs.open(file);
-    if (!ifs) throw std::runtime_error(file + " not found");
-    std::string tmp;
-    for (int i = 0; i < 7; ++i) { std::getline(ifs, tmp); } // get the 7th line(number of atoms)
-    int nat = std::stoi(tmp);
-    for (int i = 0; i != nat; ++i) { std::getline(ifs, tmp); }
-    int nks_original = klist->get_nks();
-    // std::cout << "Origianl klist (Cartesian|Direct)" << std::endl;
-    // for (int ik = 0;ik < nks_original;++ik)
-    // {
-    //     std::cout << "ik=" << std::setw(5) << ik << std::setw(11) << klist->kvec_c[ik].x << std::setw(11) 
-    //     << klist->kvec_c[ik].y << std::setw(11) << klist->kvec_c[ik].z << " | " << std::setw(11)
-    //     << klist->kvec_d[ik].x << std::setw(11) << klist->kvec_d[ik].y << std::setw(11) << klist->kvec_d[ik].z << std::endl;
-    // }
-
-    ifs >> klist->nmp[0] >> klist->nmp[1] >> klist->nmp[2];
-    int nk = klist->nmp[0] * klist->nmp[1] * klist->nmp[2];
-    int nks = (PARAM.inp.nspin == 2) ? 2 * nk : nk;
-    assert(nks == nks_original);
-
-    for (int ik = 0; ik < nk; ++ik)
-    {
-        ifs >> klist->kvec_c[ik].x >> klist->kvec_c[ik].y >> klist->kvec_c[ik].z;
-        klist->kvec_c[ik] /= ModuleBase::TWO_PI * ModuleBase::BOHR_TO_A; // in unit of 2pi/angstrom
-        klist->kvec_d[ik] = klist->kvec_c[ik] * ucell.latvec.Transpose();
-        set_zero_if_close(klist->kvec_d[ik]);
-        klist->wk[ik] = 1.0 / double(nk);
-    }
-    if (PARAM.inp.nspin == 2)
-    {
-        for (int ik = 0; ik < nk; ++ik)
-        {
-            klist->kvec_c[ik + nk] = klist->kvec_c[ik];
-            klist->kvec_d[ik + nk] = klist->kvec_d[ik];
-            klist->wk[ik + nk] = klist->wk[ik];
-        }
-    }
-
-    std::ofstream ofs_kpts_coarse(out_dir + "kpts_coarse.dat");
-    ofs_kpts_coarse << "kpts_coarse:" << nk << std::setw(16) << "( Cartesian" << std::setw(36) 
-        << "|                Direct )" << std::setw(15) << "| wk (normalized as sum = nk)" << std::endl;
-    for (int ik = 0; ik < nks; ++ik)
-    {
-        ofs_kpts_coarse << std::setw(5) << ik << std::setw(12) << klist->kvec_c[ik].x << std::setw(12) 
-        << klist->kvec_c[ik].y << std::setw(12) << klist->kvec_c[ik].z << " | " << std::setw(12)
-        << klist->kvec_d[ik].x << std::setw(12) << klist->kvec_d[ik].y << std::setw(12) << klist->kvec_d[ik].z 
-        << " | " << klist->wk[ik]*nk << std::endl;
-    }
-    ofs_kpts_coarse.close();
-}
-
-void RI_kRlist::read_kpts_fine(const std::string& file, const UnitCell& ucell,
-                               K_Vectors* const klist, const bool is_weighted,
-                               const std::string& out_dir)
-{
-    // band_kpath_info format: first line: nband nbasis nspin nk, then kx ky kz per line (direct coords)
-    // KPT_bse format: first line = nk, then kx ky kz wk per line (direct coords, BSE weight sum=nk)
-    std::ifstream ifs;
-    ifs.open(file);
-    if (!ifs) throw std::runtime_error(file + " not found");
-    int nk;
-    if (is_weighted) {ifs >> nk; ifs.ignore(2048, '\n');}
-    else {ifs >> nk >> nk >> nk >> nk;}
-
-    int nks = (PARAM.inp.nspin == 2) ? 2 * nk : nk;
-    klist->set_nks(nks);
-    klist->set_nkstot(nks);
-    klist->set_nkstot_nospin(nk);
-
-    auto klist_reset = [&klist](int kpoint_number){
-        klist->kvec_c.resize(0);    klist->kvec_c.resize(kpoint_number);
-        klist->kvec_d.resize(0);    klist->kvec_d.resize(kpoint_number);
-        klist->wk.resize(0);        klist->wk.resize(kpoint_number);
-        klist->isk.resize(0);
-        klist->ngk.resize(0);
-    };
-    klist_reset(nks);
-
-    for (int ik = 0; ik < nk; ++ik)
-    {
-        ifs >> klist->kvec_d[ik].x >> klist->kvec_d[ik].y >> klist->kvec_d[ik].z;
-        if (is_weighted) {
-            ifs >> klist->wk[ik];
-            klist->wk[ik] /= double(nk);
-        }
-        else {klist->wk[ik] = 1.0 / double(nk);}
-        klist->kvec_c[ik] = klist->kvec_d[ik] * ucell.G;
-        set_zero_if_close(klist->kvec_c[ik]);
-    }
-    std::cout << "Read " << nk << " k-points and weights from " << file << std::endl;
-    if (PARAM.inp.nspin == 2)
-    {
-        for (int ik = 0; ik < nk; ++ik)
-        {
-            klist->kvec_c[ik + nk] = klist->kvec_c[ik];
-            klist->kvec_d[ik + nk] = klist->kvec_d[ik];
-            klist->wk[ik + nk] = klist->wk[ik];
-        }
-    }
-    std::ofstream ofs_kpts_fine(out_dir + "kpts_fine.dat");
-    ofs_kpts_fine << "kpts_fine:" << nk << std::setw(18) << "( Cartesian" << std::setw(36) 
-        << "|                Direct )" << std::setw(15) << "| wk (normalized as sum = nk)" << std::endl;
-    for (int ik = 0; ik < nk; ++ik)
-    {
-        ofs_kpts_fine << std::setw(5) << ik << std::setw(12) << klist->kvec_c[ik].x << std::setw(12) 
-        << klist->kvec_c[ik].y << std::setw(12) << klist->kvec_c[ik].z << " | " << std::setw(12)
-        << klist->kvec_d[ik].x << std::setw(12) << klist->kvec_d[ik].y << std::setw(12) << klist->kvec_d[ik].z
-        << " | " << klist->wk[ik]*nk << std::endl;
-    }
-    ofs_kpts_fine.close();
-}
-
 std::vector<double> read_energy_qp(const int nocc,
                                    const int nvirt,
                                    const std::string& in_dir,
@@ -218,7 +68,7 @@ std::vector<double> read_energy_qp(const int nocc,
                                    const int nspin_tmp,
                                    const int nspin_file)
 {
-    const std::string file = in_dir + "energy_qp";
+    const std::string file = in_dir + "energy_qp.txt";
     std::cout << "in read_energy_qp, nbands(nocc+nvir): " << (nocc+nvirt) << std::endl;
     std::vector<double> eig_info( nspin_tmp * nk * (nocc + nvirt) * 3 ); // occ, eig_ks, eig_gw
     std::ifstream ifs_gw (file);
@@ -294,8 +144,8 @@ std::vector<double> read_energy_qp_from_band_files(const K_Vectors& kv,
     std::vector<double> eig_info( nspin_tmp * nk * (nocc + nvirt) * 3 ); // occ, eig_ks, eig_gw
     for (int is =0; is < nspin_file; ++is)
     {
-        std::string ks_file = ks_prefix + std::to_string(is + 1) + ".dat";
-        std::string gw_file = gw_prefix + std::to_string(is + 1) + ".dat";
+        std::string ks_file = ks_prefix + std::to_string(is + 1) + ".txt";
+        std::string gw_file = gw_prefix + std::to_string(is + 1) + ".txt";
         std::ifstream ifs_ks (ks_file);
         if (!ifs_ks) throw std::runtime_error(ks_file + " not found");
         std::ifstream ifs_gw (gw_file);
@@ -473,7 +323,7 @@ void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
                     wfc_ks.get_pointer(), 1, 1, const_cast<int*>(pmat.desc_wfc)/*nbasis×nbands*/,
                     pv_glb.blacs_ctxt);
 #else
-        BlasConnector::copy(nbands*nlocal, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
+        BlasConnector::copy(nbands*nbasis, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
 #endif
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read librpa eigenvectors.");
@@ -573,12 +423,33 @@ void read_librpa_eigenvectors_from_band_files(psi::Psi<TK>& wfc_ks,
                     wfc_ks.get_pointer(), 1, 1, const_cast<int*>(pmat.desc_wfc)/*nbasis×nbands*/,
                     pv_glb.blacs_ctxt);
 #else
-        BlasConnector::copy(nbands*nlocal, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
+        BlasConnector::copy(nbands*nbasis, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
 #endif
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read librpa eigenvectors.");
 }
 
+template void read_librpa_eigenvectors<double>(
+    psi::Psi<double>& wfc_ks, psi::Psi<double>& wfc_ks_global,
+    const std::string& in_dir, const int ncore, const int nbands_file,
+    const int nspin_tmp, const int nspin_file, const int my_rank, Parallel_Orbitals& pmat);
+template void read_librpa_eigenvectors<std::complex<double>>(
+    psi::Psi<std::complex<double>>& wfc_ks, psi::Psi<std::complex<double>>& wfc_ks_global,
+    const std::string& in_dir, const int ncore, const int nbands_file,
+    const int nspin_tmp, const int nspin_file, const int my_rank, Parallel_Orbitals& pmat);
+
+template void read_librpa_eigenvectors_from_band_files<double>(
+    psi::Psi<double>& wfc_ks, psi::Psi<double>& wfc_ks_global,
+    const std::string& in_dir, const int ncore, const int nbands_file,
+    const int nspin_tmp, const int nspin_file, const int my_rank, Parallel_Orbitals& pmat);
+template void read_librpa_eigenvectors_from_band_files<std::complex<double>>(
+    psi::Psi<std::complex<double>>& wfc_ks, psi::Psi<std::complex<double>>& wfc_ks_global,
+    const std::string& in_dir, const int ncore, const int nbands_file,
+    const int nspin_tmp, const int nspin_file, const int my_rank, Parallel_Orbitals& pmat);
+
+// ================= LRI related functions =========================
+
+#ifdef __EXX
 template <typename TCs, typename TVs> // only for blocking by atom pairs
 TLRI<TVs> read_coulomb_mat_k(const std::string& in_dir, const TLRI<TCs>& Cs, LR_IO::RI_kRlist& kRlist)
 {
@@ -857,100 +728,163 @@ TLRI<Tdata> read_Ws(const TLRI<TVs>& Vs, const std::vector<TC>& Rlist)
     std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Ws;
     
     const int nat = Vs.size();
-    std::string temp;
-    int nk, istart, iend, jstart, jend, ik;
-    size_t nabfmu, nabfnu, non_zero, mu, nu; //I.nab, J.nab
-    size_t nR = Rlist.size();
-    for(int iat = 0; iat != nat; ++iat)//loop atom I
+    std::size_t nrow, ncol, non_zero, irow, icol;
+    const std::size_t nR = Rlist.size();
+    std::vector<std::size_t> abf_start_index(nat + 1, 0);
+    for(int iat = 0; iat != nat; ++iat)
     {
-        for(int jat = 0; jat != nat; ++jat)//loop atom J
+        const std::size_t nabf = Vs.at(iat).at({0,{0,0,0}}).shape[0];
+        abf_start_index[iat + 1] = abf_start_index[iat] + nabf;
+    }
+    const std::size_t nabf_total = abf_start_index[nat];
+    std::vector<int> belong_atom(nabf_total, -1);
+    for(int iat = 0; iat != nat ; ++iat)
+    {
+        std::fill(belong_atom.begin() + abf_start_index[iat],
+            belong_atom.begin() + abf_start_index[iat + 1], iat);
+    }
+    std::vector<bool> R_is_read(nR, false);
+    for(std::size_t iR = 0; iR < nR; ++iR)
+    {
+        const std::string filename = "librpa.d/Wc_iR_" + std::to_string(iR) + "_ifreq_0.mtx";
+        std::ifstream infileW(filename);
+        if(!infileW) throw std::runtime_error(filename + " not found!");
+        if(GlobalV::MY_RANK == 0) std::cout << "reading Wc file: " << filename << std::endl;
+
+        TC R{}; // iR of Wc file is not equal to iR in Rlist !!!
+        bool R_is_found = false;
+        bool dimensions_are_found = false;
+        std::string line;
+        std::getline(infileW, line); // skip line 1: %%MatrixMarket...
+        while(std::getline(infileW, line))
         {
-            for(int iR = 0; iR < nR; ++iR)
+            const std::size_t first = line.find_first_not_of(" \t\r");
+            if(first == std::string::npos) continue;
+            if(line[first] == '%')
             {
-                std::ifstream infileW;
-                std::string filename = "librpa.d/Wc_Mu_"+std::to_string(iat)+"_Nu_"+std::to_string(jat)+"_iR_"+std::to_string(iR)+"_ifreq_0.mtx";
-                infileW.open(filename);
-                if(!infileW) throw std::runtime_error( filename + " not found!");
-                // else std::cout << "reading Wc file: " << filename ;
-                int nabf1 = Vs.at(iat).at({jat,{0,0,0}}).shape[0];
-                int nabf2 = Vs.at(iat).at({jat,{0,0,0}}).shape[1];
-
-                TC R; // iR of Wc file is not equal to iR in Rlist !!!
-                infileW.ignore(2048, '\n'); // skip line 1: %%MatrixMarket...
-                std::getline(infileW, temp); // read line 2: "%"
-                std::getline(infileW, temp); // read line 3: "% Wc at iR N ( Rx Ry Rz ) ..."
-                size_t lparen = temp.find('(');
-                size_t rparen = temp.find(')', lparen);
-                if (lparen == std::string::npos || rparen == std::string::npos)
-                    throw std::runtime_error("Failed to parse R coordinates in " + filename);
-                std::istringstream riss(temp.substr(lparen + 1, rparen - lparen - 1));
-                riss >> R[0] >> R[1] >> R[2];
-                while(infileW.peek() == '%') infileW.ignore(2048, '\n');	//skip comments
-
-                infileW >> nabfmu >> nabfnu >> non_zero;
-                assert(nabfmu == nabf1);
-                assert(nabfnu == nabf2);
-                RI::Tensor<Tdata> tensor_W({ nabfmu, nabfnu });
-                for (int index = 0; index < non_zero; ++index)
+                if(line.find("Wc at iR", first) != std::string::npos)
                 {
-                    infileW >> mu >> nu ;
-                    LR_IO::read_one_data(infileW, tensor_W(mu-1, nu-1));
+                    const std::size_t lparen = line.find('(', first);
+                    const std::size_t rparen = line.find(')', lparen);
+                    if(lparen == std::string::npos || rparen == std::string::npos)
+                    {
+                        throw std::runtime_error("Failed to parse R coordinates in " + filename);
+                    }
+                    std::istringstream riss(line.substr(lparen + 1, rparen - lparen - 1));
+                    if(!(riss >> R[0] >> R[1] >> R[2]))
+                    {
+                        throw std::runtime_error("Failed to parse R coordinates in " + filename);
+                    }
+                    R_is_found = true;
                 }
-                infileW.close();
-                tensor_W += Vs.at(iat).at({jat, R});
-                // for(int i = 0; i != nabf1; ++i)
-                //     for(int j = 0; j != nabf2; ++j)
-                //     {
-                //         tensor_W(i, j) += Vs.at(iat).at({jat, R})(i,j);
-                //         std::cout << "Wxc: " << i << " " << j << " " << tensor_W(i,j) << std::endl; //check
-                //     }
-                Ws[iat][{jat, R}] = std::move(tensor_W);
-                // std::cout << " Finished. R: " << "( " << R[0] << " " << R[1] << " " << R[2] << " )" << std::endl;
+                continue;
+            }
+            std::istringstream dimensions(line);
+            if(!(dimensions >> nrow >> ncol >> non_zero))
+            {
+                throw std::runtime_error("Failed to parse matrix dimensions in " + filename);
+            }
+            dimensions_are_found = true;
+            break;
+        }
+        if(!R_is_found || !dimensions_are_found)
+        {
+            throw std::runtime_error("Incomplete MatrixMarket header in " + filename);
+        }
+        if(nrow != nabf_total || ncol != nabf_total)
+        {
+            throw std::runtime_error("Matrix dimensions in " + filename
+                                     + " do not match the auxiliary basis size");
+        }
+
+        const auto R_iter = std::find(Rlist.begin(), Rlist.end(), R);
+        if(R_iter == Rlist.end())
+        {
+            throw std::runtime_error("R coordinates in " + filename + " are not in Rlist");
+        }
+        const std::size_t R_index = std::distance(Rlist.begin(), R_iter);
+        if(R_is_read[R_index])
+        {
+            throw std::runtime_error("Duplicate R coordinates found in " + filename);
+        }
+        R_is_read[R_index] = true;
+
+        for(int iat = 0; iat != nat; ++iat)//loop atom I
+        {
+            for(int jat = 0; jat != nat; ++jat)//loop atom J
+            {
+                Ws[iat][{jat, R}] = Vs.at(iat).at({jat, R}).copy();
             }
         }
+        Tdata temp_data;
+        for (std::size_t index = 0; index < non_zero; ++index)
+        {
+            if(!(infileW >> irow >> icol))
+            {
+                throw std::runtime_error("Failed to read matrix index in " + filename);
+            }
+            if(irow == 0 || irow > nabf_total || icol == 0 || icol > nabf_total)
+            {
+                throw std::runtime_error("Matrix index out of range in " + filename);
+            }
+            int iat = belong_atom[irow - 1];
+            int jat = belong_atom[icol - 1];
+            LR_IO::read_one_data(infileW, temp_data);
+            Ws[iat][{jat, R}](irow-1-abf_start_index[iat], icol-1-abf_start_index[jat]) += temp_data;
+        }
     }
-    ModuleBase::TITLE("LR_IO", "read_Ws done.");
+    if(std::find(R_is_read.begin(), R_is_read.end(), false) != R_is_read.end())
+    {
+        throw std::runtime_error("Not all R coordinates in Rlist were read from Wc files");
+    }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read WR files.");
     return Ws;
 }
-
-template void read_librpa_eigenvectors<double>(
-    psi::Psi<double>& wfc_ks, psi::Psi<double>& wfc_ks_global,
-    const std::string& in_dir, const int ncore, const int nbands_file,
-    const int nspin_tmp, const int nspin_file, const int my_rank, Parallel_Orbitals& pmat);
-
-template void read_librpa_eigenvectors<std::complex<double>>(
-    psi::Psi<std::complex<double>>& wfc_ks, psi::Psi<std::complex<double>>& wfc_ks_global,
-    const std::string& in_dir, const int ncore, const int nbands_file,
-    const int nspin_tmp, const int nspin_file, const int my_rank, Parallel_Orbitals& pmat);
-
-template void read_librpa_eigenvectors_from_band_files<double>(
-    psi::Psi<double>& wfc_ks, psi::Psi<double>& wfc_ks_global,
-    const std::string& in_dir, const int ncore, const int nbands_file,
-    const int nspin_tmp, const int nspin_file, const int my_rank, Parallel_Orbitals& pmat);
-
-template void read_librpa_eigenvectors_from_band_files<std::complex<double>>(
-    psi::Psi<std::complex<double>>& wfc_ks, psi::Psi<std::complex<double>>& wfc_ks_global,
-    const std::string& in_dir, const int ncore, const int nbands_file,
-    const int nspin_tmp, const int nspin_file, const int my_rank, Parallel_Orbitals& pmat);
+template<typename T>
+void write_lri_R_max_norm(const TLRI<T>& tensors,
+                            const UnitCell& ucell,
+                            const std::string& filename)
+{
+    std::ofstream ofs(filename);
+    if (!ofs) { throw std::runtime_error("Cannot open " + filename); }
+    ofs << "# iat jat Rx Ry Rz Rnorm_bohr tensor_max_abs\n";
+    ofs << std::setprecision(16);
+    for (const auto& iat_blocks : tensors)
+    {
+        for (const auto& pair_tensor : iat_blocks.second)
+        {
+            const int jat = pair_tensor.first.first;
+            const auto& R = pair_tensor.first.second;
+            const ModuleBase::Vector3<double> R_cart =
+                (static_cast<double>(R[0]) * ucell.a1
+                + static_cast<double>(R[1]) * ucell.a2
+                + static_cast<double>(R[2]) * ucell.a3) * ucell.lat0;
+            ofs << iat_blocks.first << ' ' << jat << ' '
+                << R[0] << ' ' << R[1] << ' ' << R[2] << ' ' << R_cart.norm() << ' '
+                << pair_tensor.second.norm(std::numeric_limits<double>::max()) << '\n';
+        }
+    }
+}
 
 template TLRI<double> read_coulomb_mat_k<double, double>
-(const std::string& in_dir, const TLRI<double>& Cs, LR_IO::RI_kRlist& kRlist);
-
+    (const std::string& in_dir, const TLRI<double>& Cs, LR_IO::RI_kRlist& kRlist);
 template TLRI<std::complex<double>> read_coulomb_mat_k<std::complex<double>, std::complex<double>>
-(const std::string& in_dir, const TLRI<std::complex<double>>& Cs, LR_IO::RI_kRlist& kRlist);
+    (const std::string& in_dir, const TLRI<std::complex<double>>& Cs, LR_IO::RI_kRlist& kRlist);
 
 template TLRI<double> read_coulomb_mat_general_k<double, double>
-(const std::string& in_dir, const TLRI<double>& Cs, LR_IO::RI_kRlist& kRlist);
-
+    (const std::string& in_dir, const TLRI<double>& Cs, LR_IO::RI_kRlist& kRlist);
 template TLRI<std::complex<double>> read_coulomb_mat_general_k<std::complex<double>, std::complex<double>>
-(const std::string& in_dir, const TLRI<std::complex<double>>& Cs, LR_IO::RI_kRlist& kRlist);
+    (const std::string& in_dir, const TLRI<std::complex<double>>& Cs, LR_IO::RI_kRlist& kRlist);
 
 template TLRI<double> read_Ws<double, double>
-(const TLRI<double>& Vs, const std::vector<TC>& Rlist);
-
+    (const TLRI<double>& Vs, const std::vector<TC>& Rlist);
 template TLRI<std::complex<double>> read_Ws<std::complex<double>, std::complex<double>>
-(const TLRI<std::complex<double>>& Vs, const std::vector<TC>& Rlist);
+    (const TLRI<std::complex<double>>& Vs, const std::vector<TC>& Rlist);
+
+template void write_lri_R_max_norm<double>
+    (const TLRI<double>& tensors, const UnitCell& ucell, const std::string& filename);
+template void write_lri_R_max_norm<std::complex<double>>
+    (const TLRI<std::complex<double>>& tensors, const UnitCell& ucell, const std::string& filename);
 
 #endif // __EXX
 

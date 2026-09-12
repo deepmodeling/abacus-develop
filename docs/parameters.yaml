@@ -2981,7 +2981,7 @@ parameters:
     category: Bethe-Salpeter Equation
     type: Integer
     description: |
-      q-to-k-pair mapping mode: 0 uses exact mapping, 1 uses the coarse q-grid approximation, and 2 uses exact for Γ-close q-points and coarse for other q-points.
+      q-to-k-pair mapping mode for W: 0=exact, 1=coarse q grid, 2=mixed, 3=truncate pairs with |q|>threshold (W elements dropped)
     default_value: "0"
     unit: ""
     availability: ""
@@ -2989,7 +2989,7 @@ parameters:
     category: Bethe-Salpeter Equation
     type: Real
     description: |
-      Threshold radius in Bohr^-1 for exact q-to-k-pair mapping when bse_q_approx_mode is 2.
+      Threshold radius in unit of 2*pi/lat0 (same unit system as kvec_c) for exact q-to-k-pair mapping when bse_q_approx_mode is 2; in mode 3 pairs with larger |q| are dropped entirely.
     default_value: "0.1"
     unit: ""
     availability: ""
@@ -3738,7 +3738,7 @@ parameters:
     type: String
     description: |
       The directory to save files for LibRPA.
-    default_value: "\"./OUT.librpa/\""
+    default_value: "\"OUT.librpa\""
     unit: ""
     availability: basis_type==lcao
   - name: out_pchg

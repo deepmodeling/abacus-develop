@@ -627,7 +627,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
     }
     const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     std::stringstream ss;
-    ss << filename << GlobalV::MY_RANK << ".txt";
+    ss << filename << (GlobalV::MY_RANK + 1) << ".txt";
 
     std::ofstream ofs;
     ofs.open(outdir + ss.str().c_str(), std::ios::out);
@@ -700,11 +700,11 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
         }
     }
 
-    // out_ri_tensor("olp_ss.dat", olp_q_ss, 0.);
+    // out_ri_tensor("olp_ss.txt", olp_q_ss, 0.);
     // Inverse of overlap(q)
     inverse_olp(ucell, olp_q_ss, index_abfs_s);
-    // out_ri_tensor("olp_ss_inv.dat", olp_q_ss, 0.);
-    // out_ri_tensor("olp_s.dat", olp_q_s, 0.);
+    // out_ri_tensor("olp_ss_inv.txt", olp_q_ss, 0.);
+    // out_ri_tensor("olp_s.txt", olp_q_s, 0.);
     for (auto& Ip: overlap_abfs_abf)
     {
         auto I = Ip.first;
@@ -822,7 +822,7 @@ void RPA_LRI<T, Tdata>::inverse_olp(const UnitCell& ucell,
                 }
             }
         }
-        // out_pure_ri_tensor("olp_all.dat", olp_all, 0.);
+        // out_pure_ri_tensor("olp_all.txt", olp_all, 0.);
         auto olp_inv = LRI_CV_Tools::cal_I(olp_all,
                                            Inverse_Matrix<std::complex<double>>::Method::syev,
                                            this->info.shrink_LU_inv_thr);
@@ -833,7 +833,7 @@ void RPA_LRI<T, Tdata>::inverse_olp(const UnitCell& ucell,
                 olp_inv(ic, ir) = std::conj(olp_inv(ir, ic));
             }
         }
-        // out_pure_ri_tensor("olp_inv.dat", olp_inv, 0.);
+        // out_pure_ri_tensor("olp_inv.txt", olp_inv, 0.);
         for (auto& Ip: overlap_abfs_abfs)
         {
             auto I = Ip.first;
@@ -968,18 +968,13 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
     const int nks_tot = PARAM.inp.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
     const int npsin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
     const int nbands = parav.get_wfc_global_nbands();
-    const int nlocal = parav.get_wfc_global_nbasis();
+    const int nbasis = parav.get_wfc_global_nbasis();
     const std::size_t values_per_iw = static_cast<std::size_t>(nbands) * npsin_tmp;
-    const std::complex<double> zero(0.0, 0.0);
 
 #ifdef __MPI
     const MPI_Comm mpi_comm = parav.comm();
     const int mpi_rank = parav.get_coord_row() * parav.get_dim1() + parav.get_coord_col();
     const int mpi_size = parav.get_dim0() * parav.get_dim1();
-    if (mpi_comm == MPI_COMM_NULL)
-    {
-        throw std::runtime_error("RPA eigenvector MPI-IO received MPI_COMM_NULL.");
-    }
     const auto check_mpi = [mpi_comm](const int local_error, const std::string& context) {
         const int local_failed = local_error == MPI_SUCCESS ? 0 : 1;
         int any_failed = 0;
@@ -989,84 +984,193 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
             throw std::runtime_error(context);
         }
     };
-    int communicator_relation = MPI_UNEQUAL;
-    check_mpi(MPI_Comm_compare(mpi_comm, this->mpi_comm, &communicator_relation),
-              "Failed to compare RPA eigenvector MPI communicators.");
-    if (communicator_relation != MPI_IDENT && communicator_relation != MPI_CONGRUENT)
-    {
-        throw std::runtime_error("RPA and wavefunction MPI communicators are inconsistent.");
-    }
-    if (mpi_size <= 0 || mpi_rank < 0 || mpi_rank >= mpi_size)
-    {
-        throw std::runtime_error("Invalid RPA eigenvector BLACS process grid.");
-    }
-
-    // Assign a contiguous orbital interval to each rank. Rank order then also
+    // 1. Assign a contiguous basis interval to each rank. Rank order also
     // gives the order of the corresponding text blocks in the output file.
-    std::vector<int> recv_counts(mpi_size, nlocal / mpi_size);
-    for (int ip = 0; ip < nlocal % mpi_size; ++ip)
+    std::vector<int> output_basis_counts(mpi_size, nbasis / mpi_size);
+    for (int ip = 0; ip < nbasis % mpi_size; ++ip)
     {
-        ++recv_counts[ip];
+        ++output_basis_counts[ip];
     }
-    const int local_nw = recv_counts[mpi_rank];
+    std::vector<int> output_basis_offsets(mpi_size + 1, 0);
+    std::vector<int> output_basis_owner(nbasis);
+    for (int ip = 0; ip < mpi_size; ++ip)
+    {
+        output_basis_offsets[ip + 1]
+            = output_basis_offsets[ip] + output_basis_counts[ip];
+        std::fill(output_basis_owner.begin() + output_basis_offsets[ip],
+                  output_basis_owner.begin() + output_basis_offsets[ip + 1],
+                  ip);
+    }
+    const int local_nw = output_basis_counts[mpi_rank];
 #else
     const int mpi_rank = 0;
-    const int local_nw = nlocal;
+    const int local_nw = nbasis;
 #endif
+    const std::size_t local_size = static_cast<std::size_t>(local_nw) * values_per_iw;
+    std::vector<std::complex<double>> local_wfc(local_size);
+#ifdef __MPI
+    struct WfcPackIndex
+    {
+        int spin;
+        int band;
+        int basis;
+    };
 
+    // 2. Build the 2D block-cyclic to contiguous-basis redistribution map.
+    // ncol_bands is the number of wavefunction bands stored on this rank.
+    const int local_band_count = parav.ncol_bands;
+    const unsigned long long send_size_wide
+        = static_cast<unsigned long long>(local_band_count) * psi.get_nbasis() * npsin_tmp;
+    const unsigned long long recv_size_wide
+        = static_cast<unsigned long long>(local_nw) * values_per_iw;
+    const unsigned long long max_alltoallv_count = std::numeric_limits<int>::max();
+    check_mpi(send_size_wide <= max_alltoallv_count && recv_size_wide <= max_alltoallv_count
+                  ? MPI_SUCCESS
+                  : MPI_ERR_COUNT,
+              "RPA eigenvector buffer exceeds MPI_Alltoallv count range.");
+
+    // Group every locally owned (band, basis, spin) coefficient by destination rank.
+    std::vector<int> send_counts(mpi_size, 0);
+    for (int ib = 0; ib < nbands; ++ib)
+    {
+        if (parav.global2local_col(ib) < 0)
+        {
+            continue;
+        }
+        for (int ir = 0; ir < psi.get_nbasis(); ++ir)
+        {
+            send_counts[output_basis_owner[parav.local2global_row(ir)]] += npsin_tmp;
+        }
+    }
+    std::vector<int> send_displacements(mpi_size, 0);
+    std::vector<int> recv_counts(mpi_size);
+    std::vector<int> recv_displacements(mpi_size, 0);
+    for (int ip = 1; ip < mpi_size; ++ip)
+    {
+        send_displacements[ip] = send_displacements[ip - 1] + send_counts[ip - 1];
+    }
+    check_mpi(MPI_Alltoall(send_counts.data(), 1, MPI_INT, recv_counts.data(), 1, MPI_INT, mpi_comm),
+              "Failed to exchange RPA eigenvector redistribution counts.");
+    for (int ip = 1; ip < mpi_size; ++ip)
+    {
+        recv_displacements[ip] = recv_displacements[ip - 1] + recv_counts[ip - 1];
+    }
+    const int send_size = static_cast<int>(send_size_wide);
+    const int recv_size = static_cast<int>(recv_size_wide);
+    check_mpi(recv_displacements.back() + recv_counts.back() == recv_size
+                  ? MPI_SUCCESS
+                  : MPI_ERR_COUNT,
+              "RPA eigenvector Alltoallv redistribution map is inconsistent.");
+    // Store source-local coordinates and destination-local flat indices in the
+    // same packing order. The map is k-independent, so exchange target indices once.
+    std::vector<WfcPackIndex> pack_indices(send_size);
+    std::vector<unsigned long long> send_targets(send_size);
+    std::vector<unsigned long long> recv_targets(recv_size);
+    std::vector<int> send_positions = send_displacements;
+    for (int ib = 0; ib < nbands; ++ib)
+    {
+        const int ib_local = parav.global2local_col(ib);
+        if (ib_local < 0)
+        {
+            continue;
+        }
+        for (int ir = 0; ir < psi.get_nbasis(); ++ir)
+        {
+            const int iw = parav.local2global_row(ir);
+            const int destination = output_basis_owner[iw];
+            for (int is = 0; is < npsin_tmp; ++is)
+            {
+                const int position = send_positions[destination]++;
+                pack_indices[position] = {is, ib_local, ir};
+                send_targets[position]
+                    = static_cast<unsigned long long>(iw - output_basis_offsets[destination])
+                          * values_per_iw
+                      + ib * npsin_tmp + is;
+            }
+        }
+    }
+    std::complex<double> dummy(0.0, 0.0);
+    unsigned long long dummy_target = 0;
+    check_mpi(MPI_Alltoallv(send_size > 0 ? send_targets.data() : &dummy_target,
+                            send_counts.data(),
+                            send_displacements.data(),
+                            MPI_UNSIGNED_LONG_LONG,
+                            recv_size > 0 ? recv_targets.data() : &dummy_target,
+                            recv_counts.data(),
+                            recv_displacements.data(),
+                            MPI_UNSIGNED_LONG_LONG,
+                            mpi_comm),
+              "Failed to exchange RPA eigenvector destination indices.");
+    std::vector<std::complex<double>> send_wfc(send_size);
+    std::vector<std::complex<double>> recv_wfc(recv_size);
+#endif
+    std::string output_buffer;
+    constexpr std::size_t output_line_bytes = 61; // required width: 2 * 30 columns plus '\n'
+    output_buffer.reserve(local_size * output_line_bytes + 32); // 32 bytes for the k-point index and newline
+
+    // 3. Open the unified output file once for all k points.
+    const std::string filename = outdir + "KS_eigenvector.txt";
+#ifdef __MPI
+    MPI_File file = MPI_FILE_NULL;
+    unsigned long long total_file_bytes = 0; // start offset of the current k point
+    const unsigned long long max_mpi_offset
+        = static_cast<unsigned long long>(std::numeric_limits<MPI_Offset>::max());
+    const char dummy_buffer = '\0';
+    check_mpi(MPI_File_open(mpi_comm,
+                            filename.c_str(),
+                            MPI_MODE_CREATE | MPI_MODE_WRONLY,
+                            MPI_INFO_NULL,
+                            &file),
+              "Failed to open " + filename + ".");
+    check_mpi(MPI_File_set_size(file, 0), "Failed to truncate " + filename + ".");
+#else
+    std::ofstream ofs(filename.c_str(), std::ios::out);
+#endif
+    // 4. Process k points in file order; all ranks participate in each iteration.
     for (int ik = 0; ik < nks_tot; ik++)
     {
-        std::stringstream ss;
-        ss << "KS_eigenvector_" << ik << ".dat";
-
-        const std::size_t local_size = static_cast<std::size_t>(local_nw) * values_per_iw;
-        std::vector<std::complex<double>> local_wfc(local_size, zero);
-        std::vector<std::complex<double>> wfc_iks(nlocal, zero);
 #ifdef __MPI
-        std::vector<std::complex<double>> reduced_wfc(local_nw);
-        std::complex<double> dummy;
-#endif
-
+        // 4.1 Pack and redistribute all bands and spins for this k point.
+        for (int index = 0; index < send_size; ++index)
+        {
+            const WfcPackIndex& source = pack_indices[index];
+            send_wfc[index] = psi(ik + nks_tot * source.spin, source.band, source.basis);
+        }
+        check_mpi(MPI_Alltoallv(send_size > 0 ? send_wfc.data() : &dummy,
+                                send_counts.data(),
+                                send_displacements.data(),
+                                MPI_DOUBLE_COMPLEX,
+                                recv_size > 0 ? recv_wfc.data() : &dummy,
+                                recv_counts.data(),
+                                recv_displacements.data(),
+                                MPI_DOUBLE_COMPLEX,
+                                mpi_comm),
+                  "Failed to redistribute RPA eigenvectors with MPI_Alltoallv.");
+        for (int index = 0; index < recv_size; ++index)
+        {
+            local_wfc[static_cast<std::size_t>(recv_targets[index])] = recv_wfc[index];
+        }
+#else
         for (int is = 0; is < npsin_tmp; is++)
         {
-            for (int ib_global = 0; ib_global < nbands; ++ib_global)
+            for (int ib = 0; ib < nbands; ++ib)
             {
-                std::fill(wfc_iks.begin(), wfc_iks.end(), zero);
-
-                const int ib_local = parav.global2local_col(ib_global);
-                if (ib_local >= 0)
+                for (int iw = 0; iw < psi.get_nbasis(); ++iw)
                 {
-                    for (int ir = 0; ir < psi.get_nbasis(); ir++)
-                    {
-                        wfc_iks[parav.local2global_row(ir)] = psi(ik + nks_tot * is, ib_local, ir);
-                    }
+                    local_wfc[iw * values_per_iw + ib * npsin_tmp + is]
+                        = psi(ik + nks_tot * is, ib, iw);
                 }
-
-#ifdef __MPI
-                MPI_Reduce_scatter(wfc_iks.data(),
-                                   local_nw > 0 ? reduced_wfc.data() : &dummy,
-                                   recv_counts.data(),
-                                   MPI_DOUBLE_COMPLEX,
-                                   MPI_SUM,
-                                   mpi_comm);
-#else
-                const std::vector<std::complex<double>>& reduced_wfc = wfc_iks;
+            }
+        }
 #endif
-                for (int iw = 0; iw < local_nw; ++iw)
-                {
-                    const std::size_t index
-                        = static_cast<std::size_t>(iw) * values_per_iw + ib_global * npsin_tmp + is;
-                    local_wfc[index] = reduced_wfc[iw];
-                }
-            } // ib
-        } // is
-
-        std::ostringstream output;
-        output << std::fixed << std::setprecision(15);
+        // 4.2 Format this rank's contiguous basis interval in basis-band-spin order.
+        output_buffer.clear();
         if (mpi_rank == 0)
         {
-            output << ik + 1 << '\n';
+            output_buffer += std::to_string(ik + 1);
+            output_buffer += '\n';
         }
+        char line_buffer[128];
         for (int iw = 0; iw < local_nw; ++iw)
         {
             for (int ib = 0; ib < nbands; ++ib)
@@ -1075,134 +1179,81 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
                 {
                     const std::complex<double>& value
                         = local_wfc[static_cast<std::size_t>(iw) * values_per_iw + ib * npsin_tmp + is];
-                    output << std::setw(30) << value.real() << std::setw(30) << value.imag() << '\n';
+                    const int line_length = std::snprintf(line_buffer,
+                                                          sizeof(line_buffer),
+                                                          "%30.15f%30.15f\n",
+                                                          value.real(),
+                                                          value.imag());
+                    if (line_length != static_cast<int>(output_line_bytes))
+                    {
+                        throw std::runtime_error("Failed to format an RPA eigenvector value.");
+                    }
+                    output_buffer.append(line_buffer, static_cast<std::size_t>(line_length));
                 }
             }
         }
 
-        const std::string output_buffer = output.str();
-        const std::string filename = outdir + ss.str();
 #ifdef __MPI
+        // 4.3 Fixed-width value lines make each rank's file offset deterministic;
+        // only the k-point header length varies.
         const unsigned long long local_bytes
             = static_cast<unsigned long long>(output_buffer.size());
-        const bool local_size_valid
-            = static_cast<std::size_t>(local_bytes) == output_buffer.size();
-        if (!local_size_valid)
-        {
-            throw std::runtime_error("RPA eigenvector local output exceeds uint64_t range.");
-        }
-        std::vector<unsigned long long> byte_counts(mpi_size, 0);
-        check_mpi(MPI_Allgather(&local_bytes,
-                                1,
-                                MPI_UNSIGNED_LONG_LONG,
-                                byte_counts.data(),
-                                1,
-                                MPI_UNSIGNED_LONG_LONG,
-                                mpi_comm),
-                  "Failed to collect RPA eigenvector output sizes.");
-
-        unsigned long long file_offset_bytes = 0;
-        unsigned long long total_file_bytes = 0;
-        unsigned long long max_local_bytes = 0;
-        const unsigned long long max_mpi_offset
-            = static_cast<unsigned long long>(std::numeric_limits<MPI_Offset>::max());
-        bool file_layout_valid = true;
-        for (int ip = 0; ip < mpi_size; ++ip)
-        {
-            if (ip == mpi_rank)
-            {
-                file_offset_bytes = total_file_bytes;
-            }
-            if (byte_counts[ip] > max_mpi_offset - total_file_bytes)
-            {
-                file_layout_valid = false;
-                break;
-            }
-            total_file_bytes += byte_counts[ip];
-            max_local_bytes = std::max(max_local_bytes, byte_counts[ip]);
-        }
-        if (!file_layout_valid)
+        const unsigned long long header_bytes = std::to_string(ik + 1).size() + 1;
+        const unsigned long long bytes_per_basis = values_per_iw * output_line_bytes;
+        if (bytes_per_basis > (max_mpi_offset - header_bytes) / std::max(nbasis, 1)
+            || header_bytes + static_cast<unsigned long long>(nbasis) * bytes_per_basis
+                   > max_mpi_offset - total_file_bytes)
         {
             throw std::runtime_error("RPA eigenvector file layout exceeds MPI_Offset range.");
         }
-
-        const std::string temporary_filename = filename + ".tmp";
-        MPI_File file = MPI_FILE_NULL;
-        bool file_opened = false;
-        const char dummy_buffer = '\0';
-        try
+        const unsigned long long kpoint_bytes
+            = header_bytes + static_cast<unsigned long long>(nbasis) * bytes_per_basis;
+        const unsigned long long rank_offset_bytes
+            = mpi_rank == 0
+                  ? 0
+                  : header_bytes
+                        + static_cast<unsigned long long>(output_basis_offsets[mpi_rank])
+                              * bytes_per_basis;
+        const unsigned long long file_offset_bytes = total_file_bytes + rank_offset_bytes;
+        // Rank 0 has the largest basis slice and additionally owns the k-point header.
+        const unsigned long long max_local_bytes
+            = header_bytes
+              + static_cast<unsigned long long>(output_basis_counts[0]) * bytes_per_basis;
+        const unsigned long long max_write_count
+            = static_cast<unsigned long long>(std::numeric_limits<int>::max());
+        // MPI_File_write_at_all is collective, so every rank executes the same
+        // number of chunks; ranks without data in a chunk pass a zero count.
+        for (unsigned long long buffer_offset = 0;
+             buffer_offset < max_local_bytes;
+             buffer_offset += max_write_count)
         {
-            int mpi_error = MPI_File_open(mpi_comm,
-                                          temporary_filename.c_str(),
-                                          MPI_MODE_CREATE | MPI_MODE_WRONLY,
-                                          MPI_INFO_NULL,
-                                          &file);
-            check_mpi(mpi_error, "Failed to open " + temporary_filename + ".");
-            file_opened = true;
-            check_mpi(MPI_File_set_errhandler(file, MPI_ERRORS_RETURN),
-                      "Failed to set the RPA eigenvector MPI file error handler.");
-            check_mpi(MPI_File_set_size(file, static_cast<MPI_Offset>(total_file_bytes)),
-                      "Failed to set the RPA eigenvector file size.");
-
-            const unsigned long long max_write_count
-                = static_cast<unsigned long long>(std::numeric_limits<int>::max());
-            for (unsigned long long buffer_offset = 0;
-                 buffer_offset < max_local_bytes;
-                 buffer_offset += max_write_count)
-            {
-                const unsigned long long remaining
-                    = local_bytes > buffer_offset ? local_bytes - buffer_offset : 0;
-                const int write_count
-                    = static_cast<int>(std::min(remaining, max_write_count));
-                const char* write_buffer
-                    = write_count > 0
-                          ? output_buffer.data() + static_cast<std::size_t>(buffer_offset)
-                          : &dummy_buffer;
-                MPI_Status status;
-                const unsigned long long write_offset
-                    = write_count > 0 ? file_offset_bytes + buffer_offset : file_offset_bytes;
-                mpi_error = MPI_File_write_at_all(
-                    file,
-                    static_cast<MPI_Offset>(write_offset),
-                    write_buffer,
-                    write_count,
-                    MPI_CHAR,
-                    &status);
-                check_mpi(mpi_error, "Failed to write " + temporary_filename + ".");
-            }
-
-            check_mpi(MPI_File_sync(file), "Failed to sync " + temporary_filename + ".");
-            mpi_error = MPI_File_close(&file);
-            file_opened = false;
-            check_mpi(mpi_error, "Failed to close " + temporary_filename + ".");
-
-            const int rename_error
-                = mpi_rank == 0
-                          && std::rename(temporary_filename.c_str(), filename.c_str()) != 0
-                      ? MPI_ERR_IO
-                      : MPI_SUCCESS;
-            check_mpi(rename_error, "Failed to publish " + filename + ".");
+            const unsigned long long remaining
+                = local_bytes > buffer_offset ? local_bytes - buffer_offset : 0;
+            const int write_count
+                = static_cast<int>(std::min(remaining, max_write_count));
+            const char* write_buffer
+                = write_count > 0
+                      ? output_buffer.data() + static_cast<std::size_t>(buffer_offset)
+                      : &dummy_buffer;
+            const unsigned long long write_offset
+                = write_count > 0 ? file_offset_bytes + buffer_offset : file_offset_bytes;
+            check_mpi(MPI_File_write_at_all(file,
+                                            static_cast<MPI_Offset>(write_offset),
+                                            write_buffer,
+                                            write_count,
+                                            MPI_CHAR,
+                                            MPI_STATUS_IGNORE),
+                      "Failed to write " + filename + ".");
         }
-        catch (...)
-        {
-            if (file_opened)
-            {
-                MPI_File_close(&file);
-            }
-            MPI_Barrier(mpi_comm);
-            if (mpi_rank == 0)
-            {
-                std::remove(temporary_filename.c_str());
-            }
-            MPI_Barrier(mpi_comm);
-            throw;
-        }
+        total_file_bytes += kpoint_bytes;
 #else
-        std::ofstream ofs(filename.c_str(), std::ios::out);
         ofs << output_buffer;
-        ofs.close();
 #endif
     } // ik
+#ifdef __MPI
+    check_mpi(MPI_File_sync(file), "Failed to sync " + filename + ".");
+    check_mpi(MPI_File_close(&file), "Failed to close " + filename + ".");
+#endif
 }
 
 template <typename T, typename Tdata>
@@ -1213,14 +1264,11 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
         return;
     }
     ModuleBase::TITLE("DFT_RPA_interface", "out_struc");
-    double TWOPI_Bohr2A = ModuleBase::TWO_PI * ModuleBase::BOHR_TO_A;
     const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
-    ModuleBase::Matrix3 lat = ucell.latvec / ModuleBase::BOHR_TO_A;
-    ModuleBase::Matrix3 G_RPA = ucell.G * TWOPI_Bohr2A;
-    std::stringstream ss;
-    ss << "stru_out";
+    const ModuleBase::Matrix3 lat = ucell.latvec * ucell.lat0; // in unit of Bohr
+    const ModuleBase::Matrix3 G_RPA = ucell.G * (ModuleBase::TWO_PI / ucell.lat0); // in unit of 1/Bohr
     std::ofstream ofs;
-    ofs.open(outdir + ss.str().c_str(), std::ios::out);
+    ofs.open(outdir + "stru_out.txt", std::ios::out);
     ofs << std::fixed << std::setprecision(9);
     ofs << lat.e11 << std::setw(15) << lat.e12 << std::setw(15) << lat.e13 << std::endl;
     ofs << lat.e21 << std::setw(15) << lat.e22 << std::setw(15) << lat.e23 << std::endl;
@@ -1231,22 +1279,13 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
     ofs << G_RPA.e31 << std::setw(15) << G_RPA.e32 << std::setw(15) << G_RPA.e33 << std::endl;
 
     ofs << ucell.nat << std::endl;
-    std::string& Coordinate = ucell.Coordinate;
-    bool direct = (Coordinate == "Direct");
-    // Only consider Direct or Cartesian
     for (int it = 0; it < ucell.ntype; it++)
     {
-        Atom* atom = &ucell.atoms[it];
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
-            const double& x = direct ? ucell.atoms[it].tau[ia].x * ucell.lat0
-                                     : ucell.atoms[it].tau[ia].x;
-            const double& y = direct ? ucell.atoms[it].tau[ia].y * ucell.lat0
-                                     : ucell.atoms[it].tau[ia].y;
-            const double& z = direct ? ucell.atoms[it].tau[ia].z * ucell.lat0
-                                     : ucell.atoms[it].tau[ia].z;
-            ofs << std::setw(15) << x << std::setw(15) << y << std::setw(15) << z
-                << std::setw(15) << it + 1 << std::endl;
+            const ModuleBase::Vector3<double> position = ucell.atoms[it].tau[ia] * ucell.lat0; // in unit of Bohr
+            ofs << std::setw(15) << position.x << std::setw(15) << position.y
+                << std::setw(15) << position.z << std::setw(15) << it + 1 << std::endl;
         }
     }
 
@@ -1254,9 +1293,10 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
 
     for (int ik = 0; ik != nks_tot; ik++)
     {
-        ofs << std::setw(15) << p_kv->kvec_c[ik].x * TWOPI_Bohr2A << std::setw(15)
-            << p_kv->kvec_c[ik].y * TWOPI_Bohr2A << std::setw(15)
-            << p_kv->kvec_c[ik].z * TWOPI_Bohr2A << std::endl;
+        const ModuleBase::Vector3<double> kpoint =
+            p_kv->kvec_c[ik] * (ModuleBase::TWO_PI / ucell.lat0); // in unit of 1/Bohr
+        ofs << std::setw(15) << kpoint.x << std::setw(15) << kpoint.y
+            << std::setw(15) << kpoint.z << std::endl;
     }
     // added for BZ to IBZ (actually LibRPA interface only support BZ by 2025/03/30)
     if (PARAM.inp.symmetry == "-1")
@@ -1280,10 +1320,8 @@ void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
     }
     const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     const int nspin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
-    std::stringstream ss;
-    ss << "band_out";
     std::ofstream ofs;
-    ofs.open(outdir + ss.str().c_str(), std::ios::out);
+    ofs.open(outdir + "band_out.txt", std::ios::out);
     ofs << std::fixed << std::setprecision(15);
     ofs << nks_tot << std::endl;
     ofs << nspin_tmp << std::endl;
@@ -1316,7 +1354,7 @@ void RPA_LRI<T, Tdata>::out_Cs(const UnitCell& ucell, std::map<TA, std::map<TAC,
     ModuleBase::timer::start("RPA_LRI", "out_Cs");
 
     std::stringstream ss;
-    ss << filename << GlobalV::MY_RANK << ".txt";
+    ss << filename << (GlobalV::MY_RANK + 1) << ".txt";
     std::ofstream ofs;
     ofs.open(outdir + ss.str().c_str(), std::ios::out);
     ofs << ucell.nat << "    " << 0 << std::endl;
@@ -1377,7 +1415,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
     }
     const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     std::stringstream ss;
-    ss << filename << GlobalV::MY_RANK << ".txt";
+    ss << filename << (GlobalV::MY_RANK + 1) << ".txt";
 
     std::ofstream ofs;
     ofs.open(outdir + ss.str().c_str(), std::ios::out);
@@ -1462,10 +1500,10 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell &ucell,
         parav, parac, *this->p_kv, psi, nk, nspin_tmp, PARAM.globalv.nlocal, nocc, nvirt);
     if (GlobalV::MY_RANK == 0){
         // for librpa readable
-        LR_Util::output_spectrum_mo_librpa(velocity_mo, outdir + "velocity_matrix",
+        LR_Util::output_spectrum_mo_librpa(velocity_mo, outdir + "velocity_matrix.txt",
             nk, nspin_tmp, nbands, nbasis, nbands, *this->p_kv);
         // for human readable
-        // LR_Util::output_spectrum_mo(velocity_mo, PARAM.globalv.global_out_dir + "velocity_matrix_rpa.dat",
+        // LR_Util::output_spectrum_mo(velocity_mo, PARAM.globalv.global_out_dir + "velocity_matrix_h.txt",
         //     pelec->ekb.c, nk, nspin_tmp, PARAM.inp.nbands, *this->p_kv);
     }
     ModuleBase::timer::end("RPA_LRI", "out_velocity");
