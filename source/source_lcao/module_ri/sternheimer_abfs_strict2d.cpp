@@ -19,7 +19,7 @@ struct Geometry
 {
     std::size_t size;
     std::size_t nxy;
-    double dz;
+    double length;
     double dv;
     ModuleRI::SternheimerFDLatticeVectors dual;
 };
@@ -37,7 +37,7 @@ Geometry checked_geometry(const Grid& grid)
             throw std::invalid_argument("Strict2D ABFS Coulomb requires finite positive grid spacings.");
         }
     }
-    // FFTW's many-transform strides/dimensions and the existing Grid use int.
+    // FFTW dimensions and the existing Grid use int.
     std::size_t size = 1;
     for (const int dimension: {grid.nx, grid.ny, grid.nz})
     {
@@ -87,7 +87,7 @@ Geometry checked_geometry(const Grid& grid)
     planar_grid.lattice_vectors[2][1] = 0.0;
     return {size,
             static_cast<std::size_t>(grid.nx) * grid.ny,
-            std::abs(lattice[2][2]) / grid.nz,
+            std::abs(lattice[2][2]),
             volume / static_cast<double>(size),
             ModuleRI::sternheimer_fd_grid_dual_vectors(planar_grid)};
 }
@@ -97,41 +97,53 @@ bool finite(const Complex& value)
     return std::isfinite(value.real()) && std::isfinite(value.imag());
 }
 
-struct PlanarFFT
+// 1 - (1-exp(-x))/x, without cancellation in the constant-mode projection.
+double constant_mode_fraction(const double x)
+{
+    if (x >= 0.1) return 1.0 + std::expm1(-x) / x;
+    double term = x / 2.0;
+    double result = term;
+    for (int order = 2; order <= 18; ++order)
+    {
+        term *= -x / (order + 1);
+        result += term;
+    }
+    return result;
+}
+
+struct FourierFFT
 {
     fftw_complex* data = nullptr;
     fftw_plan forward = nullptr;
     fftw_plan backward = nullptr;
 
-    PlanarFFT(const Grid& grid, const std::size_t size)
+    FourierFFT(const Grid& grid, const std::size_t size)
     {
         data = fftw_alloc_complex(size);
         if (data == nullptr)
         {
             throw std::bad_alloc();
         }
-        // Original storage is [(x*ny+y)*nz+z]: nz independent strided xy FFTs.
-        const int dimensions[2] = {grid.nx, grid.ny};
+        // Fourier coordinates in all three directions; z is a finite basis,
+        // NOT a periodic Green function or a periodic boundary condition.
 #ifdef _OPENMP
 #pragma omp critical(sternheimer_fftw_plan_management)
 #endif
         {
-            forward = fftw_plan_many_dft(2, dimensions, grid.nz, data, nullptr, grid.nz, 1,
-                                         data, nullptr, grid.nz, 1, FFTW_FORWARD, FFTW_ESTIMATE);
-            backward = fftw_plan_many_dft(2, dimensions, grid.nz, data, nullptr, grid.nz, 1,
-                                          data, nullptr, grid.nz, 1, FFTW_BACKWARD, FFTW_ESTIMATE);
+            forward = fftw_plan_dft_3d(grid.nx, grid.ny, grid.nz, data, data, FFTW_FORWARD, FFTW_ESTIMATE);
+            backward = fftw_plan_dft_3d(grid.nx, grid.ny, grid.nz, data, data, FFTW_BACKWARD, FFTW_ESTIMATE);
         }
         if (forward == nullptr || backward == nullptr)
         {
             release();
-            throw std::runtime_error("Failed to initialize strict2D ABFS planar FFTW plans.");
+            throw std::runtime_error("Failed to initialize strict2D ABFS Galerkin FFTW plans.");
         }
     }
 
-    PlanarFFT(const PlanarFFT&) = delete;
-    PlanarFFT& operator=(const PlanarFFT&) = delete;
+    FourierFFT(const FourierFFT&) = delete;
+    FourierFFT& operator=(const FourierFFT&) = delete;
 
-    ~PlanarFFT()
+    ~FourierFFT()
     {
         release();
     }
@@ -193,8 +205,9 @@ void solve_sternheimer_abf_strict2d_coulomb_in_place(
         }
     }
     std::vector<Complex> phase(geometry.nxy);
-    std::vector<double> decay(geometry.nxy);
-    std::vector<double> factor(geometry.nxy);
+    std::vector<double> wave_number(geometry.nxy);
+    std::vector<double> boundary_average(geometry.nxy);
+    std::vector<double> constant_fraction(geometry.nxy);
     for (int x = 0; x < grid.nx; ++x)
     {
         for (int y = 0; y < grid.ny; ++y)
@@ -214,18 +227,28 @@ void solve_sternheimer_abf_strict2d_coulomb_in_place(
             const double angle = ModuleBase::TWO_PI * (qpoint[0] * (static_cast<double>(x) / grid.nx)
                                                        + qpoint[1] * (static_cast<double>(y) / grid.ny));
             phase[p] = std::exp(Complex(0.0, angle));
-            decay[p] = std::exp(-Q * geometry.dz);
-            factor[p] = (ModuleBase::TWO_PI / Q) * geometry.dz / static_cast<double>(geometry.nxy);
-            if (!finite(phase[p]) || !std::isfinite(factor[p]) || factor[p] <= 0.0)
+            const double x = Q * geometry.length;
+            if (!finite(phase[p]) || !std::isfinite(x) || x <= 0.0)
             {
                 throw std::invalid_argument("Strict2D ABFS Coulomb has an unrepresentable phase or kernel scale.");
             }
+            wave_number[p] = Q;
+            boundary_average[p] = -std::expm1(-x) / x;
+            constant_fraction[p] = constant_mode_fraction(x);
         }
+    }
+    std::vector<double> kz(grid.nz);
+    for (int n = 0; n < grid.nz; ++n)
+    {
+        const int sn = n < grid.nz / 2 + grid.nz % 2 ? n : n - grid.nz;
+        kz[n] = ModuleBase::TWO_PI * (static_cast<double>(sn) / geometry.length);
+        if (!std::isfinite(kz[n]))
+            throw std::invalid_argument("Strict2D ABFS Coulomb has an unrepresentable z wave number.");
     }
     if (density_channels.empty()) return;
 
-    PlanarFFT fft(grid, geometry.size);
-    std::vector<Complex> left(grid.nz);
+    FourierFFT fft(grid, geometry.size);
+    std::vector<Complex> particular(grid.nz);
     for (auto& channel: density_channels)
     {
         for (std::size_t p = 0; p < geometry.nxy; ++p)
@@ -246,37 +269,54 @@ void solve_sternheimer_abf_strict2d_coulomb_in_place(
         for (std::size_t p = 0; p < geometry.nxy; ++p)
         {
             const std::size_t base = p * grid.nz;
-            const double a = decay[p];
-            // left[z] includes the diagonal. right excludes it at evaluation;
-            // this counts each source once, without periodic wrap or subtraction.
-            Complex sum{};
-            for (int z = 0; z < grid.nz; ++z)
+            const double Q = wave_number[p];
+            Complex nonzero_sum{}, k_moment{};
+            for (int n = 0; n < grid.nz; ++n)
             {
-                const Complex rho(fft.data[base + z][0], fft.data[base + z][1]);
+                const Complex rho(fft.data[base + n][0], fft.data[base + n][1]);
                 if (!finite(rho))
                 {
                     throw std::overflow_error("Strict2D ABFS Coulomb overflow in forward FFT.");
                 }
-                sum = rho + a * sum;
-                if (!finite(sum))
+                const double norm = std::hypot(Q, kz[n]);
+                const double symbol = (ModuleBase::FOUR_PI / norm) / norm;
+                particular[n] = (rho / static_cast<double>(geometry.size)) * symbol;
+                if (!std::isfinite(symbol) || !finite(particular[n]))
                 {
-                    throw std::overflow_error("Strict2D ABFS Coulomb overflow in forward recurrence.");
+                    throw std::overflow_error("Strict2D ABFS Coulomb overflow in Galerkin particular solution.");
                 }
-                left[z] = sum;
+                if (n != 0) nonzero_sum += particular[n];
+                k_moment += kz[n] * particular[n];
+                if (!finite(nonzero_sum) || !finite(k_moment))
+                    throw std::overflow_error("Strict2D ABFS Coulomb overflow in Galerkin boundary moments.");
             }
-            Complex right{};
-            for (int z = grid.nz - 1; z >= 0; --z)
+            const Complex p_at_zero = particular[0] + nonzero_sum;
+            if (!finite(p_at_zero))
+                throw std::overflow_error("Strict2D ABFS Coulomb overflow in Galerkin boundary value.");
+            // p'(0)=i*k_moment. Combining the EXACT Fourier projections of
+            // A exp(-Qz) and B exp(-Q(L-z)) gives the real symmetric rank-two
+            // correction below. Neither exponential is sampled on the grid.
+            for (int m = 0; m < grid.nz; ++m)
             {
-                const Complex rho(fft.data[base + z][0], fft.data[base + z][1]);
-                const Complex convolution = left[z] + a * right;
-                const Complex potential = factor[p] * convolution;
-                right = rho + a * right;
-                if (!finite(convolution) || !finite(right) || !finite(potential))
+                Complex potential;
+                if (m == 0)
                 {
-                    throw std::overflow_error("Strict2D ABFS Coulomb overflow in backward recurrence or kernel scaling.");
+                    potential = constant_fraction[p] * particular[0] - boundary_average[p] * nonzero_sum;
                 }
-                fft.data[base + z][0] = potential.real();
-                fft.data[base + z][1] = potential.imag();
+                else
+                {
+                    const double norm = std::hypot(Q, kz[m]);
+                    const double q_weight = (Q / norm) * (Q / norm);
+                    const double k_weight = (kz[m] / norm) / norm;
+                    const Complex correction = q_weight * p_at_zero - k_weight * k_moment;
+                    if (!finite(correction))
+                        throw std::overflow_error("Strict2D ABFS Coulomb overflow in Galerkin boundary projection.");
+                    potential = particular[m] - boundary_average[p] * correction;
+                }
+                if (!finite(potential))
+                    throw std::overflow_error("Strict2D ABFS Coulomb overflow in Galerkin potential coefficients.");
+                fft.data[base + m][0] = potential.real();
+                fft.data[base + m][1] = potential.imag();
             }
         }
         fftw_execute(fft.backward);

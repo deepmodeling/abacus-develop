@@ -62,12 +62,67 @@ Channel density(const Grid& grid, const int seed)
     return channel;
 }
 
-// Explicit planar Fourier projection of FULL Bloch fields and direct z sum.
-// This oracle uses neither FFTW nor recurrences nor production geometry helpers.
+// Gauss-Legendre quadrature on [0,1], independent of the production operator.
+std::vector<std::pair<double, double>> projection_quadrature()
+{
+    constexpr int order = 64;
+    std::vector<std::pair<double, double>> result;
+    for (int j = 0; j < order; ++j)
+    {
+        double x = std::cos(two_pi / 2.0 * (j + 0.75) / (order + 0.5));
+        double derivative = 0.0;
+        for (int iteration = 0; iteration < 30; ++iteration)
+        {
+            double previous = 1.0, current = x;
+            for (int n = 2; n <= order; ++n)
+            {
+                const double next = ((2 * n - 1) * x * current - (n - 1) * previous) / n;
+                previous = current;
+                current = next;
+            }
+            derivative = order * (x * current - previous) / (x * x - 1.0);
+            const double step = current / derivative;
+            x -= step;
+            if (std::abs(step) < 1.0e-15) break;
+        }
+        result.emplace_back((x + 1.0) / 2.0, 1.0 / ((1.0 - x * x) * derivative * derivative));
+    }
+    return result;
+}
+
+// Independently integrate the continuous Green function against exp(ik_n*z')
+// by splitting the source integral at z, then numerically project in target z.
+// No ODE boundary amplitudes, production Fourier factors or sampled cusp sum.
+std::vector<Complex> continuous_green_matrix(const int nz, const double length, const double Q)
+{
+    std::vector<Complex> matrix(nz * nz, Complex{});
+    for (const auto& node: projection_quadrature())
+    {
+        const double z = length * node.first;
+        for (int n = 0; n < nz; ++n)
+        {
+            const int sn = n <= (nz - 1) / 2 ? n : n - nz;
+            const double kn = two_pi * sn / length;
+            const Complex oscillation = std::exp(Complex(0.0, kn * z));
+            const Complex green = two_pi / Q
+                * ((oscillation - std::exp(-Q * z)) / Complex(Q, kn)
+                   + (oscillation - std::exp(-Q * (length - z))) / Complex(Q, -kn));
+            for (int m = 0; m < nz; ++m)
+            {
+                const int sm = m <= (nz - 1) / 2 ? m : m - nz;
+                matrix[m * nz + n] += node.second * std::exp(Complex(0.0, -two_pi * sm * node.first)) * green;
+            }
+        }
+    }
+    return matrix;
+}
+
+// Explicit planar Fourier projection of FULL Bloch fields plus continuous-z
+// Green integration and Fourier projection, without FFTW or grid dual helpers.
 std::vector<Complex> direct_potential(const Channel& rho, const Grid& grid, const QPoint& q)
 {
     std::vector<Complex> result(rho.potential_r.size(), Complex{});
-    const double dz = std::abs(grid.lattice_vectors[2][2]) / grid.nz;
+    const double length = std::abs(grid.lattice_vectors[2][2]);
     for (int mx = -grid.nx / 2; mx <= (grid.nx - 1) / 2; ++mx)
     {
         for (int my = -grid.ny / 2; my <= (grid.ny - 1) / 2; ++my)
@@ -87,14 +142,24 @@ std::vector<Complex> direct_potential(const Channel& rho, const Grid& grid, cons
                     }
                 }
             }
+            std::vector<Complex> rho_modes(grid.nz, Complex{}), potential_modes(grid.nz, Complex{});
+            for (int n = 0; n < grid.nz; ++n)
+            {
+                for (int z = 0; z < grid.nz; ++z)
+                {
+                    rho_modes[n] += coefficients[z] * std::exp(Complex(0.0, -two_pi * n * z / grid.nz))
+                                    / double(grid.nz);
+                }
+            }
+            const auto green = continuous_green_matrix(grid.nz, length, Q);
+            for (int m = 0; m < grid.nz; ++m)
+                for (int n = 0; n < grid.nz; ++n)
+                    potential_modes[m] += green[m * grid.nz + n] * rho_modes[n];
             for (int z = 0; z < grid.nz; ++z)
             {
                 Complex potential{};
-                for (int source_z = 0; source_z < grid.nz; ++source_z)
-                {
-                    potential += two_pi * dz / Q * std::exp(-Q * dz * std::abs(z - source_z))
-                                 * coefficients[source_z];
-                }
+                for (int m = 0; m < grid.nz; ++m)
+                    potential += potential_modes[m] * std::exp(Complex(0.0, two_pi * m * z / grid.nz));
                 for (int x = 0; x < grid.nx; ++x)
                 {
                     for (int y = 0; y < grid.ny; ++y)
@@ -121,9 +186,9 @@ Complex inner_product(const Channel& a, const Channel& b, const double dv)
 }
 } // namespace
 
-TEST(SternheimerABFSStrict2D, MatchesDirectDiscreteSumOnSkewOddEvenGrids)
+TEST(SternheimerABFSStrict2D, MatchesContinuousGreenGalerkinOnSkewOddEvenGrids)
 {
-    for (const Grid grid: {skew_grid(), skew_grid(3, 4, 1), skew_grid(1, 1, 3)})
+    for (const Grid grid: {skew_grid(), skew_grid(3, 4, 1), skew_grid(1, 1, 3), skew_grid(3, 2, 4)})
     {
         // Includes negative q, a zone edge, and an unfolded reciprocal shift.
         for (const QPoint q: {QPoint{0.0, 0.25, 0.0}, QPoint{0.5, -0.23, 0.0}, QPoint{1.17, -1.21, 0.0}})
@@ -201,35 +266,76 @@ TEST(SternheimerABFSStrict2D, ImplicitOrthogonalCellMatchesExplicitCell)
     EXPECT_TRUE(ModuleRI::sternheimer_abf_strict2d_selected_coulomb_integrals(empty, empty, implicit_grid, {}).empty());
 }
 
-TEST(SternheimerABFSStrict2D, BoundarySheetHasEqualWeightAndNoPeriodicZWrap)
+TEST(SternheimerABFSStrict2D, GalerkinConstantModeMatchesContinuousGreenAverage)
 {
-    const Grid grid = skew_grid();
-    const QPoint q{0.12, -0.16, 0.0};
-    const double Q = wave_number(grid, q[0], q[1]);
-    const double dz = 6.5 / grid.nz;
-    for (const int source_z: {0, grid.nz - 1})
+    // RED against 40f3967ca: rectangle self interaction overestimates this
+    // exact continuous constant-mode integral even on the single-z grid.
+    for (const int nz: {1, 3, 4, 7})
     {
+        const Grid grid = skew_grid(1, 1, nz);
+        const QPoint q{0.12, -0.16, 0.0};
+        const double Q = wave_number(grid, q[0], q[1]);
+        const double length = 6.5;
+        const double periodic = 2.0 * two_pi / (Q * Q);
+        const double expected = periodic * (1.0 + std::expm1(-Q * length) / (Q * length));
         Channel rho;
-        rho.potential_r.resize(grid.nx * grid.ny * grid.nz, Complex{});
-        const Complex amplitude(0.4, -0.9);
-        for (int x = 0; x < grid.nx; ++x)
-        {
-            for (int y = 0; y < grid.ny; ++y)
-            {
-                rho.potential_r[index(grid, x, y, source_z)]
-                    = amplitude * std::exp(Complex(0.0, two_pi * (q[0] * x / grid.nx + q[1] * y / grid.ny)));
-            }
-        }
+        rho.potential_r.assign(nz, Complex(1.0, 0.0));
         std::vector<Channel> phi{rho};
         ModuleRI::solve_sternheimer_abf_strict2d_coulomb_in_place(phi, grid, q);
-        for (int z = 0; z < grid.nz; ++z)
-        {
-            const Complex expected = amplitude * two_pi * dz / Q * std::exp(-Q * dz * std::abs(z - source_z));
-            EXPECT_NEAR(std::abs(phi[0].potential_r[index(grid, 0, 0, z)] - expected), 0.0, 2.0e-12);
-        }
-        EXPECT_LT(std::abs(phi[0].potential_r[index(grid, 0, 0, grid.nz - 1 - source_z)]),
-                  std::abs(phi[0].potential_r[index(grid, 0, 0, source_z)]) * 0.5);
+        const Complex average = inner_product(rho, phi[0], 1.0 / nz);
+        EXPECT_NEAR(average.real(), expected, 3.0e-12);
+        EXPECT_NEAR(average.imag(), 0.0, 3.0e-12);
+        EXPECT_LT(average.real(), periodic); // No periodic-z images.
     }
+}
+
+TEST(SternheimerABFSStrict2D, ProjectsBoundaryExponentialsRatherThanSamplingThem)
+{
+    const Grid grid = skew_grid(1, 1, 3);
+    const QPoint q{0.12, -0.16, 0.0};
+    const double Q = wave_number(grid, q[0], q[1]);
+    Channel rho;
+    rho.potential_r.assign(grid.nz, Complex(1.0, 0.0));
+    const auto reference = direct_potential(rho, grid, q);
+    std::vector<Channel> phi{rho};
+    ModuleRI::solve_sternheimer_abf_strict2d_coulomb_in_place(phi, grid, q);
+    for (int z = 0; z < grid.nz; ++z)
+        EXPECT_NEAR(std::abs(phi[0].potential_r[z] - reference[z]), 0.0, 3.0e-12);
+    const double unprojected_at_zero = two_pi / (Q * Q) * (-std::expm1(-Q * 6.5));
+    EXPECT_GT(std::abs(phi[0].potential_r[0] - unprojected_at_zero), 1.0e-2);
+}
+
+TEST(SternheimerABFSStrict2D, RetainsComplexNegativeZNyquistMode)
+{
+    const Grid grid = skew_grid(1, 1, 4);
+    const QPoint q{0.12, -0.16, 0.0};
+    Channel rho;
+    for (int z = 0; z < grid.nz; ++z)
+        rho.potential_r.push_back(Complex(0.4, 1.1) * (z % 2 == 0 ? 1.0 : -1.0));
+    const auto reference = direct_potential(rho, grid, q);
+    std::vector<Channel> phi{rho};
+    ModuleRI::solve_sternheimer_abf_strict2d_coulomb_in_place(phi, grid, q);
+    for (int z = 0; z < grid.nz; ++z)
+        EXPECT_NEAR(std::abs(phi[0].potential_r[z] - reference[z]), 0.0, 3.0e-12);
+    const Complex energy = inner_product(rho, phi[0], 1.0);
+    EXPECT_GT(energy.real(), 0.0);
+    EXPECT_NEAR(energy.imag(), 0.0, 3.0e-12);
+}
+
+TEST(SternheimerABFSStrict2D, StableSmallQConstantMode)
+{
+    const Grid grid = skew_grid(1, 1, 1);
+    const QPoint q{1.0e-9, 0.0, 0.0};
+    const double Q = wave_number(grid, q[0], q[1]);
+    const double length = 6.5;
+    const double x = Q * length;
+    const double expected = two_pi * length / Q * (1.0 - x / 3.0 + x * x / 12.0);
+    Channel rho;
+    rho.potential_r = {Complex(1.0, 0.0)};
+    std::vector<Channel> phi{rho};
+    ModuleRI::solve_sternheimer_abf_strict2d_coulomb_in_place(phi, grid, q);
+    EXPECT_NEAR(phi[0].potential_r[0].real() / expected, 1.0, 2.0e-14);
+    EXPECT_EQ(phi[0].potential_r[0].imag(), 0.0);
 }
 
 TEST(SternheimerABFSStrict2D, SelectedIntegralsUseCellVolumeAndRequestedOrder)
@@ -298,7 +404,7 @@ TEST(SternheimerABFSStrict2D, RejectsGammaQzAndUnsupportedCellsBeforeMutation)
                  std::invalid_argument);
 }
 
-TEST(SternheimerABFSStrict2D, RejectsFiniteDensityOverflowInForwardRecurrence)
+TEST(SternheimerABFSStrict2D, RejectsFiniteDensityOverflowInForwardFFT)
 {
     Grid grid;
     grid.nx = grid.ny = 1;
@@ -311,11 +417,11 @@ TEST(SternheimerABFSStrict2D, RejectsFiniteDensityOverflowInForwardRecurrence)
     try
     {
         ModuleRI::solve_sternheimer_abf_strict2d_coulomb_in_place(channels, grid, QPoint{0.001, 0.0, 0.0});
-        FAIL() << "Finite density must not silently overflow the z recurrence.";
+        FAIL() << "Finite density must not silently overflow the z Fourier transform.";
     }
     catch (const std::overflow_error& error)
     {
-        EXPECT_NE(std::string(error.what()).find("forward recurrence"), std::string::npos);
+        EXPECT_NE(std::string(error.what()).find("forward FFT"), std::string::npos);
     }
     EXPECT_EQ(channels[0].potential_r, rho.potential_r);
     EXPECT_EQ(channels[0].max_abs, rho.max_abs);
@@ -326,11 +432,13 @@ TEST(SternheimerABFSStrict2D, RejectsFiniteModeOverflowInInverseFFT)
     Grid grid;
     grid.nx = 2;
     grid.ny = grid.nz = 1;
-    grid.hx = grid.hy = grid.hz = 1.0;
+    grid.hx = std::sqrt(two_pi) / 4.0;
+    grid.hy = 1.0;
+    grid.hz = 4.0;
     Channel rho;
-    // q=1/2 gives equal factors of two for both planar FFT modes. Each
-    // scaled mode is finite (0.8*max), but their inverse-FFT sum overflows.
-    rho.potential_r = {Complex(0.4 * std::numeric_limits<double>::max(), 0.0), Complex{}};
+    // q=1/2 gives equal projected factors for both planar modes. Their
+    // separate coefficients are finite, but their inverse-FFT sum overflows.
+    rho.potential_r = {Complex(0.9 * std::numeric_limits<double>::max(), 0.0), Complex{}};
     rho.max_abs = 19.0;
     std::vector<Channel> channels{rho};
     try
