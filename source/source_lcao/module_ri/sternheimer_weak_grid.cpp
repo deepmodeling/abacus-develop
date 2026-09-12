@@ -3,9 +3,12 @@
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/lapack_connector.h"
 
+#include <fftw3.h>
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <new>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -98,10 +101,158 @@ std::size_t CheckWorkspace(const H& fine, const H::Grid& coarse, std::size_t bud
     }
     return bytes;
 }
+
+H::Grid ProductGrid(const H::Grid& coarse, const H::Grid& fine)
+{
+    H::Grid product = fine;
+    const auto dimension = [](int nc, int nf) {
+        return static_cast<int>(std::min(std::size_t(nf), Mul(2, std::size_t(nc))));
+    };
+    product.nx = dimension(coarse.nx, fine.nx);
+    product.ny = dimension(coarse.ny, fine.ny);
+    product.nz = dimension(coarse.nz, fine.nz);
+    product.hx = fine.hx * (double(fine.nx) / product.nx);
+    product.hy = fine.hy * (double(fine.ny) / product.ny);
+    product.hz = fine.hz * (double(fine.nz) / product.nz);
+    return product;
+}
+
+struct CacheBytes
+{
+    std::size_t storage = 0;
+    std::size_t peak = 0;
+};
+
+CacheBytes ExactCacheBytes(const H& fine, const H::Grid& coarse, bool nonlocal, bool local)
+{
+    // Validate dimensions, cell and explicit Bloch label without allocating fields.
+    ModuleRI::SternheimerGridTransfer::workspace_bytes_required(coarse, fine.grid());
+    CacheBytes result;
+    if (nonlocal && fine.nonlocal_projector())
+        for (const auto& block : fine.nonlocal_projector()->blocks())
+        {
+            const auto rank = block.projectors.size();
+            if (rank > std::size_t(std::numeric_limits<int>::max()))
+                throw std::length_error("Sternheimer exact projector cache exceeds BLAS integer range.");
+            const auto elements = Add(Add(Mul(coarse.size(), rank), Mul(rank, rank)), Mul(2, rank));
+            result.storage = Add(result.storage, Mul(elements, sizeof(Complex)));
+        }
+    result.peak = result.storage;
+    if (local)
+    {
+        const auto product = ProductGrid(coarse, fine.grid());
+        const auto np = std::size_t(product.size());
+        // Potential construction uses fine/product FFT buffers plus its result.
+        result.peak = Add(result.storage, Mul(Add(fine.grid().size(), Mul(2, np)), sizeof(Complex)));
+        result.storage = Add(result.storage,
+            Add(ModuleRI::SternheimerGridTransfer::workspace_bytes_required(coarse, product),
+                Mul(Mul(2, np), sizeof(Complex))));
+        result.peak = std::max(result.peak, result.storage);
+    }
+    return result;
+}
+
+struct PotentialFFT
+{
+    fftw_complex* fine = nullptr;
+    fftw_complex* product = nullptr;
+    fftw_plan forward = nullptr;
+    fftw_plan backward = nullptr;
+    ~PotentialFFT()
+    {
+#pragma omp critical(sternheimer_fftw_plan_management)
+        {
+            if (forward) fftw_destroy_plan(forward);
+            if (backward) fftw_destroy_plan(backward);
+        }
+        fftw_free(fine);
+        fftw_free(product);
+    }
+};
+
+H::Vector ProductPotential(const H& fine, const H::Grid& coarse, const H::Grid& product)
+{
+    const auto& fg = fine.grid();
+    PotentialFFT fft;
+    fft.fine = fftw_alloc_complex(fg.size());
+    fft.product = fftw_alloc_complex(product.size());
+    if (!fft.fine || !fft.product) throw std::bad_alloc();
+#pragma omp critical(sternheimer_fftw_plan_management)
+    {
+        fft.forward = fftw_plan_dft_3d(fg.nx, fg.ny, fg.nz, fft.fine, fft.fine, FFTW_FORWARD, FFTW_ESTIMATE);
+        fft.backward = fftw_plan_dft_3d(product.nx, product.ny, product.nz,
+                                       fft.product, fft.product, FFTW_BACKWARD, FFTW_ESTIMATE);
+    }
+    if (!fft.forward || !fft.backward)
+        throw std::runtime_error("Sternheimer exact local cache failed to create FFTW plans.");
+    for (int i = 0; i < fg.size(); ++i)
+    {
+        fft.fine[i][0] = fine.local_potential()[i];
+        fft.fine[i][1] = 0.0;
+    }
+    fftw_execute(fft.forward);
+    const std::array<int, 3> nc{{coarse.nx, coarse.ny, coarse.nz}};
+    const std::array<int, 3> nf{{fg.nx, fg.ny, fg.nz}};
+    const std::array<int, 3> np{{product.nx, product.ny, product.nz}};
+    const double normalization = 1.0 / fg.size();
+    for (int i = 0; i < product.size(); ++i)
+    {
+        const std::array<int, 3> index{{i / (product.ny * product.nz), (i / product.nz) % product.ny, i % product.nz}};
+        std::array<int, 3> source{};
+        bool retained = true;
+        for (int a = 0; a < 3; ++a)
+        {
+            const int mode = index[a] <= np[a] / 2 ? index[a] : index[a] - np[a];
+            // Coarse modes use +Nyquist; their differences span [-(Nc-1),Nc-1].
+            // On a 2*Nc product axis its unused Nyquist plane must be zero.
+            // On fine-limited axes use each original DFT bin once, including Nyquist.
+            retained = retained && std::abs(mode) <= nc[a] - 1;
+            source[a] = mode < 0 ? mode + nf[a] : mode;
+        }
+        const auto j = (std::size_t(source[0]) * fg.ny + source[1]) * fg.nz + source[2];
+        fft.product[i][0] = retained ? normalization * fft.fine[j][0] : 0.0;
+        fft.product[i][1] = retained ? normalization * fft.fine[j][1] : 0.0;
+    }
+    fftw_execute(fft.backward);
+    H::Vector result(product.size());
+    for (int i = 0; i < product.size(); ++i)
+        result[i] = Complex(fft.product[i][0], fft.product[i][1]);
+    CheckOutput(result);
+    return result;
+}
 } // namespace
 
 namespace ModuleRI
 {
+struct SternheimerWeakGridOperator::ExactApplyCache
+{
+    struct NonlocalBlock
+    {
+        int rank = 0;
+        Vector b, d, overlaps, weighted;
+    };
+    bool nonlocal = false;
+    bool local = false;
+    std::size_t storage_bytes = 0;
+    std::vector<NonlocalBlock> blocks;
+    std::unique_ptr<SternheimerGridTransfer> local_transfer;
+    Vector local_potential, product_work;
+
+    void add_nonlocal(const Vector& x, Vector& result)
+    {
+        const int nc = static_cast<int>(x.size());
+        for (auto& block : blocks)
+        {
+            BlasConnector::gemv('C', nc, block.rank, Complex(1.0), block.b.data(), nc,
+                                x.data(), 1, Complex(0.0), block.overlaps.data(), 1);
+            BlasConnector::gemv('N', block.rank, block.rank, Complex(1.0), block.d.data(), block.rank,
+                                block.overlaps.data(), 1, Complex(0.0), block.weighted.data(), 1);
+            BlasConnector::gemv('N', nc, block.rank, Complex(1.0), block.b.data(), nc,
+                                block.weighted.data(), 1, Complex(1.0), result.data(), 1);
+        }
+    }
+};
+
 double orthonormalize_sternheimer_weak_states_in_place(
     std::vector<SternheimerDeltaGridFunction>& states, const double volume_element,
     const double min_metric, const std::size_t max_workspace_bytes)
@@ -220,10 +371,73 @@ SternheimerWeakGridOperator::SternheimerWeakGridOperator(std::shared_ptr<const H
       fine_output_(fine_->grid().size()), coarse_temporary_(coarse.size()), coarse_result_(coarse.size())
 {}
 
+SternheimerWeakGridOperator::~SternheimerWeakGridOperator() = default;
+
 const SternheimerWeakGridOperator::Grid& SternheimerWeakGridOperator::grid() const { return transfer_.coarse_grid(); }
 const SternheimerWeakGridOperator::Hamiltonian& SternheimerWeakGridOperator::fine_hamiltonian() const { return *fine_; }
 double SternheimerWeakGridOperator::coarse_volume_element() const { return coarse_dv_; }
 double SternheimerWeakGridOperator::fine_volume_element() const { return fine_dv_; }
+
+bool SternheimerWeakGridOperator::has_exact_nonlocal_cache() const { return exact_cache_ && exact_cache_->nonlocal; }
+bool SternheimerWeakGridOperator::has_exact_local_cache() const { return exact_cache_ && exact_cache_->local; }
+std::size_t SternheimerWeakGridOperator::exact_cache_storage_bytes() const
+{
+    return exact_cache_ ? exact_cache_->storage_bytes : 0;
+}
+
+std::size_t SternheimerWeakGridOperator::exact_cache_workspace_bytes_required(
+    const Hamiltonian& fine, const Grid& coarse, bool nonlocal, bool local)
+{
+    return ExactCacheBytes(fine, coarse, nonlocal, local).peak;
+}
+
+void SternheimerWeakGridOperator::enable_exact_apply_cache(bool nonlocal, bool local, std::size_t budget)
+{
+    if (!nonlocal && !local)
+    {
+        exact_cache_.reset();
+        return;
+    }
+    const auto bytes = ExactCacheBytes(*fine_, grid(), nonlocal, local);
+    if (Add(exact_cache_storage_bytes(), bytes.peak) > budget)
+        throw std::length_error("Sternheimer exact apply cache workspace budget exceeded.");
+    auto cache = std::make_unique<ExactApplyCache>();
+    cache->nonlocal = nonlocal;
+    cache->local = local;
+    cache->storage_bytes = bytes.storage;
+    if (nonlocal && fine_->nonlocal_projector())
+    {
+        const auto& blocks = fine_->nonlocal_projector()->blocks();
+        cache->blocks.reserve(blocks.size());
+        for (const auto& input : blocks)
+        {
+            ExactApplyCache::NonlocalBlock block;
+            block.rank = static_cast<int>(input.projectors.size());
+            block.b.resize(Mul(grid().size(), block.rank));
+            block.d.resize(Mul(block.rank, block.rank));
+            block.overlaps.resize(block.rank);
+            block.weighted.resize(block.rank);
+            for (int j = 0; j < block.rank; ++j)
+            {
+                // project(beta) = sqrt(dVc) R beta = E^dagger Wf beta.
+                project(input.projectors[j], coarse_temporary_);
+                std::copy(coarse_temporary_.begin(), coarse_temporary_.end(),
+                          block.b.begin() + std::size_t(j) * grid().size());
+                for (int i = 0; i < block.rank; ++i)
+                    block.d[i + std::size_t(block.rank) * j] = input.d_matrix[i][j];
+            }
+            cache->blocks.push_back(std::move(block));
+        }
+    }
+    if (local)
+    {
+        const auto product = ProductGrid(grid(), fine_->grid());
+        cache->local_potential = ProductPotential(*fine_, grid(), product);
+        cache->local_transfer = std::make_unique<SternheimerGridTransfer>(grid(), product);
+        cache->product_work.resize(product.size());
+    }
+    exact_cache_ = std::move(cache);
+}
 
 std::size_t SternheimerWeakGridOperator::workspace_bytes_required(const Hamiltonian& fine, const Grid& coarse)
 {
@@ -241,13 +455,29 @@ void SternheimerWeakGridOperator::apply(const Vector& coefficients, Vector& resu
     Validate(coefficients, grid().size());
     transfer_.apply_negative_laplacian(coefficients, coarse_result_, workspace_bytes_);
     for (auto& value : coarse_result_) value *= fine_->kinetic_prefactor();
-    transfer_.interpolate(coefficients, fine_input_);
-    fine_->apply_local_potential(fine_input_, fine_output_);
-    transfer_.restrict_adjoint(fine_output_, coarse_temporary_);
+    const bool local_cached = has_exact_local_cache(), nonlocal_cached = has_exact_nonlocal_cache();
+    if (!local_cached || !nonlocal_cached) transfer_.interpolate(coefficients, fine_input_);
+    if (local_cached)
+    {
+        auto& cache = *exact_cache_;
+        cache.local_transfer->interpolate(coefficients, cache.product_work);
+        for (std::size_t i = 0; i < cache.product_work.size(); ++i)
+            cache.product_work[i] *= cache.local_potential[i];
+        cache.local_transfer->restrict_adjoint(cache.product_work, coarse_temporary_);
+    }
+    else
+    {
+        fine_->apply_local_potential(fine_input_, fine_output_);
+        transfer_.restrict_adjoint(fine_output_, coarse_temporary_);
+    }
     for (std::size_t i = 0; i < coarse_result_.size(); ++i) coarse_result_[i] += coarse_temporary_[i];
-    fine_->apply_nonlocal(fine_input_, fine_output_);
-    transfer_.restrict_adjoint(fine_output_, coarse_temporary_);
-    for (std::size_t i = 0; i < coarse_result_.size(); ++i) coarse_result_[i] += coarse_temporary_[i];
+    if (nonlocal_cached) exact_cache_->add_nonlocal(coefficients, coarse_result_);
+    else
+    {
+        fine_->apply_nonlocal(fine_input_, fine_output_);
+        transfer_.restrict_adjoint(fine_output_, coarse_temporary_);
+        for (std::size_t i = 0; i < coarse_result_.size(); ++i) coarse_result_[i] += coarse_temporary_[i];
+    }
     CheckOutput(coarse_result_);
     result = coarse_result_;
 }

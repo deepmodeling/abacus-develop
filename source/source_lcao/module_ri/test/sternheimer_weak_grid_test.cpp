@@ -374,4 +374,179 @@ TEST(SternheimerWeakGrid, NormalizationReportsArithmeticOverflow)
     Functions states{state};
     EXPECT_THROW(ModuleRI::orthonormalize_sternheimer_weak_states_in_place(states, 1.0), std::overflow_error);
 }
+
+#ifdef ABACUS_STERNHEIMER_WEAK_EXACT_APPLY_CACHE
+std::shared_ptr<const H> MakeCacheH(const H::Grid& coarse, const H::Grid& fine, bool nonlocal = true)
+{
+    const std::array<int, 3> c{{coarse.nx, coarse.ny, coarse.nz}};
+    const std::array<int, 3> f{{fine.nx, fine.ny, fine.nz}};
+    std::vector<double> potential(fine.size(), 0.7);
+    for (int i = 0; i < fine.size(); ++i)
+    {
+        const auto r = Position(fine, i);
+        // Required difference-window endpoints, just-outside modes and fine Nyquist.
+        for (int a = 0; a < 3; ++a)
+            potential[i] += 0.17 * std::sin(pi2 * (c[a] - 1) * r[a])
+                            + 0.23 * std::cos(pi2 * c[a] * r[a])
+                            + 0.13 * std::cos(pi2 * (f[a] / 2) * r[a]);
+        potential[i] += 0.19 * std::sin(pi2 * ((c[0] - 1) * r[0] - (c[1] - 1) * r[1]
+                                              + (c[2] - 1) * r[2]));
+    }
+    using P = ModuleRI::SternheimerFDNonlocalProjector;
+    std::shared_ptr<const P> projector;
+    if (nonlocal)
+    {
+        P::ProjectorBlock first, second;
+        first.projectors.assign(2, Vector(fine.size()));
+        second.projectors.assign(1, Vector(fine.size()));
+        for (int i = 0; i < fine.size(); ++i)
+        {
+            first.projectors[0][i] = Complex(std::sin(0.31 * i), std::cos(0.57 * i)) / std::sqrt(30.0);
+            first.projectors[1][i] = Complex(std::cos(0.71 * i), std::sin(0.29 * i)) / std::sqrt(30.0);
+            second.projectors[0][i] = i % 3 ? Complex(0.0) : Complex(0.11, -0.09);
+        }
+        first.d_matrix = {{Complex(0.4), Complex(0.08, 0.27)}, {Complex(0.08, -0.27), Complex(-0.3)}};
+        second.d_matrix = {{Complex(-0.17)}};
+        projector = std::make_shared<const P>(fine.size(), DV(fine), std::vector<P::ProjectorBlock>{first, second});
+    }
+    return std::make_shared<const H>(fine, potential, 0.7, projector, 8);
+}
+
+void CheckCachedActions(const H::Grid& coarse, const H::Grid& fine, bool nonlocal, bool local)
+{
+    const auto h = MakeCacheH(coarse, fine);
+    Operator original(h, coarse), cached(h, coarse);
+    EXPECT_FALSE(cached.has_exact_nonlocal_cache());
+    EXPECT_FALSE(cached.has_exact_local_cache());
+    EXPECT_EQ(cached.exact_cache_storage_bytes(), 0u);
+    cached.enable_exact_apply_cache(nonlocal, local);
+    EXPECT_EQ(cached.has_exact_nonlocal_cache(), nonlocal);
+    EXPECT_EQ(cached.has_exact_local_cache(), local);
+    Vector x(coarse.size()), y(coarse.size()), expected, actual, hy;
+    for (int i = 0; i < coarse.size(); ++i)
+    {
+        x[i] = Complex(std::sin(0.37 * i + 0.2), std::cos(0.53 * i));
+        y[i] = Complex(std::cos(0.61 * i), std::sin(0.19 * i + 0.3));
+    }
+    original.apply(x, expected);
+    cached.apply(x, actual);
+    Near(actual, expected);
+    cached.apply(y, hy);
+    EXPECT_LT(std::abs(Dot(y, actual) - Dot(hy, x)), 2e-9);
+    cached.apply(x, x);
+    Near(x, expected);
+    // Visit every mode, including the asymmetric positive coarse Nyquist.
+    const std::array<int, 3> dims{{coarse.nx, coarse.ny, coarse.nz}};
+    for (int i = 0; i < coarse.size(); ++i)
+    {
+        std::array<int, 3> mode{{i / (coarse.ny * coarse.nz), (i / coarse.nz) % coarse.ny, i % coarse.nz}};
+        for (int a = 0; a < 3; ++a) if (mode[a] > dims[a] / 2) mode[a] -= dims[a];
+        x = PlaneWave(coarse, mode).values;
+        original.apply(x, expected);
+        cached.apply(x, actual);
+        Near(actual, expected);
+    }
+}
+
+TEST(SternheimerWeakGrid, ExactNonlocalCacheMatchesFineApplyAtSkewNonzeroK)
+{
+    CheckCachedActions(Grid(2, 3, 2), Grid(7, 7, 6), true, false);
+    CheckCachedActions(Grid(3, 2, 3), Grid(8, 5, 8), true, false);
+}
+
+TEST(SternheimerWeakGrid, ExactLocalCacheRetainsBoundaryDifferencesAndRejectsAliasedHighModes)
+{
+    CheckCachedActions(Grid(2, 3, 2), Grid(7, 9, 8), false, true);
+    CheckCachedActions(Grid(3, 2, 3), Grid(9, 7, 9), false, true);
+}
+
+TEST(SternheimerWeakGrid, ExactCombinedCacheHandlesFineLimitedAxesAndIdentityTransfer)
+{
+    CheckCachedActions(Grid(3, 4, 2), Grid(4, 7, 3), true, true);
+    CheckCachedActions(Grid(3, 2, 2), Grid(3, 2, 2), true, true);
+    CheckCachedActions(Grid(1, 2, 1), Grid(1, 5, 4), true, true);
+}
+
+TEST(SternheimerWeakGrid, ExactCacheSupportsLargeExplicitBlochLabelsAnd144Axis)
+{
+    auto coarse = Grid(3, 2, 2), fine = Grid(144, 5, 6);
+    coarse.kpoint = fine.kpoint = {3.17, -2.13, 1.21};
+    CheckCachedActions(coarse, fine, true, true);
+}
+
+TEST(SternheimerWeakGrid, ExactCacheLeavesFineBlocksLiftAndProjectUnchanged)
+{
+    const auto coarse = Grid(2, 3, 2), fine = Grid(5, 7, 6);
+    Operator op(MakeCacheH(coarse, fine), coarse);
+    const Functions states{PlaneWave(fine, {0, 0, 0}), PlaneWave(fine, {6, 0, 0})};
+    const auto before = op.assemble_blocks(states);
+    Vector x(coarse.size(), Complex(0.2, -0.1)), lifted, projected, after_lift, after_project;
+    op.lift(x, lifted);
+    op.project(lifted, projected);
+    op.enable_exact_apply_cache(true, true);
+    const auto after = op.assemble_blocks(states);
+    Near(before.state_hamiltonian, after.state_hamiltonian);
+    Near(before.state_coarse_overlap, after.state_coarse_overlap);
+    Near(before.state_coarse_hamiltonian, after.state_coarse_hamiltonian);
+    op.lift(x, after_lift);
+    op.project(lifted, after_project);
+    Near(lifted, after_lift);
+    Near(projected, after_project);
+}
+
+TEST(SternheimerWeakGrid, ExactCacheBudgetFailuresAreTransactionalAndCachesCanBeDisabled)
+{
+    const auto coarse = Grid(2, 3, 2), fine = Grid(7, 9, 8);
+    const auto h = MakeCacheH(coarse, fine);
+    Operator op(h, coarse);
+    const auto budget = Operator::exact_cache_workspace_bytes_required(*h, coarse, true, true);
+    EXPECT_GT(budget, 0u);
+    EXPECT_THROW(op.enable_exact_apply_cache(true, true, budget - 1), std::length_error);
+    EXPECT_EQ(op.exact_cache_storage_bytes(), 0u);
+    op.enable_exact_apply_cache(true, true, budget);
+    EXPECT_GT(op.exact_cache_storage_bytes(), 0u);
+    EXPECT_LE(op.exact_cache_storage_bytes(), budget);
+    Vector x(coarse.size(), Complex(0.2, 0.7)), expected, actual;
+    op.apply(x, expected);
+    EXPECT_THROW(op.enable_exact_apply_cache(true, false, 0), std::length_error);
+    EXPECT_TRUE(op.has_exact_local_cache());
+    EXPECT_TRUE(op.has_exact_nonlocal_cache());
+    op.apply(x, actual);
+    Near(actual, expected);
+    Vector sentinel{Complex(17.0, -2.0)};
+    EXPECT_THROW(op.apply(Vector(1), sentinel), std::invalid_argument);
+    x[0] = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_THROW(op.apply(x, sentinel), std::invalid_argument);
+    ASSERT_EQ(sentinel.size(), 1u);
+    EXPECT_EQ(sentinel[0], Complex(17.0, -2.0));
+    op.enable_exact_apply_cache(false, false, 0);
+    EXPECT_EQ(op.exact_cache_storage_bytes(), 0u);
+    EXPECT_FALSE(op.has_exact_nonlocal_cache());
+    EXPECT_FALSE(op.has_exact_local_cache());
+}
+
+TEST(SternheimerWeakGrid, ExactCacheHandlesAbsentProjectorsAndValidatesGridBeforeAllocation)
+{
+    const auto coarse = Grid(3, 2, 2), fine = Grid(7, 5, 6);
+    const auto h = MakeCacheH(coarse, fine, false);
+    Operator original(h, coarse), cached(h, coarse);
+    cached.enable_exact_apply_cache(true, true);
+    Vector x(coarse.size(), Complex(0.7, 0.3)), expected, actual;
+    original.apply(x, expected);
+    cached.apply(x, actual);
+    Near(expected, actual);
+    auto invalid = coarse;
+    invalid.nx = 0;
+    EXPECT_THROW(Operator::exact_cache_workspace_bytes_required(*h, invalid, true, true), std::invalid_argument);
+    invalid = coarse;
+    invalid.kpoint[0] += 1;
+    EXPECT_THROW(Operator::exact_cache_workspace_bytes_required(*h, invalid, true, true), std::invalid_argument);
+    EXPECT_EQ(Operator::exact_cache_workspace_bytes_required(*h, coarse, false, false), 0u);
+}
+#else
+TEST(SternheimerWeakGrid, ExactApplyCacheRequiresImplementation)
+{
+    FAIL() << "Missing opt-in exact apply cache: expected test-first RED before implementation";
+}
+#endif
 } // namespace

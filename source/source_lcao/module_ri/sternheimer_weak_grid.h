@@ -1,6 +1,8 @@
 #ifndef STERNHEIMER_WEAK_GRID_H
 #define STERNHEIMER_WEAK_GRID_H
 
+#define ABACUS_STERNHEIMER_WEAK_EXACT_APPLY_CACHE 1
+
 #include "source_lcao/module_ri/sternheimer_delta.h"
 #include "source_lcao/module_ri/sternheimer_grid_transfer.h"
 
@@ -52,6 +54,7 @@ class SternheimerWeakGridOperator
     SternheimerWeakGridOperator(std::shared_ptr<const Hamiltonian> fine_hamiltonian,
                                const Grid& coarse_grid,
                                std::size_t max_workspace_bytes = 512ULL * 1024 * 1024);
+    ~SternheimerWeakGridOperator();
     SternheimerWeakGridOperator(const SternheimerWeakGridOperator&) = delete;
     SternheimerWeakGridOperator& operator=(const SternheimerWeakGridOperator&) = delete;
 
@@ -64,6 +67,24 @@ class SternheimerWeakGridOperator
     void apply(const Vector& coefficients, Vector& result);
     void lift(const Vector& coefficients, Vector& fine_values);
     void project(const Vector& fine_values, Vector& coefficients);
+
+    // Explicit opt-in, normally after assemble_blocks. Neither cache changes
+    // fine blocks, lift/project or analytic kinetic energy. false/false disables.
+    // NL retains every projector and D entry. Local retains exactly the fine
+    // discrete-quadrature difference frequencies on min(Nf,2*Nc) per axis.
+    // Budget bounds EXTRA numerical payload at construction peak, including
+    // any old cache until replacement succeeds; excludes the existing operator,
+    // shared H, allocator/object overhead and opaque FFTW/BLAS allocations.
+    // A failed enable leaves the old cache active. Concurrent calls need separate
+    // operator instances; the cache owns mutable FFT and application scratch.
+    void enable_exact_apply_cache(bool cache_nonlocal, bool cache_local,
+                                 std::size_t max_extra_workspace_bytes = 512ULL * 1024 * 1024);
+    bool has_exact_nonlocal_cache() const;
+    bool has_exact_local_cache() const;
+    std::size_t exact_cache_storage_bytes() const;
+    // Fresh-cache peak, not RSS. For replacement add exact_cache_storage_bytes().
+    static std::size_t exact_cache_workspace_bytes_required(const Hamiltonian& fine, const Grid& coarse,
+                                                           bool cache_nonlocal, bool cache_local);
 
     SternheimerWeakGridBlocks assemble_blocks(const std::vector<Function>& states,
                                              double metric_tolerance = 1e-8,
@@ -82,6 +103,8 @@ class SternheimerWeakGridOperator
     double coarse_dv_;
     double fine_dv_;
     Vector fine_input_, fine_output_, coarse_temporary_, coarse_result_;
+    struct ExactApplyCache;
+    std::unique_ptr<ExactApplyCache> exact_cache_;
 };
 
 } // namespace ModuleRI

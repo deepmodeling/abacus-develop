@@ -18,6 +18,7 @@
 #include "source_lcao/module_ri/exx_abfs-io.h"
 #include "source_lcao/module_ri/rpa_abfs_preorthogonalization.h"
 #include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
+#include "source_lcao/module_ri/sternheimer_abfs_strict2d.h"
 #include "source_lcao/module_ri/sternheimer_channel_parallel.h"
 #include "source_lcao/module_ri/sternheimer_channel_resources.h"
 #include "source_lcao/module_ri/sternheimer_chi0_mpi.h"
@@ -30,6 +31,7 @@
 #include "source_lcao/module_ri/sternheimer_weak_grid.h"
 #include "source_lcao/module_ri/sternheimer_weak_augmented.h"
 #include "source_lcao/module_ri/sternheimer_weak_matrix_audit.h"
+#include "source_lcao/module_ri/sternheimer_weak_q_unit.h"
 #include "source_lcao/module_ri/sternheimer_periodic_solver.h"
 #include "source_lcao/module_ri/sternheimer_rpa.h"
 #include "source_lcao/module_ri/sternheimer_response_grid.h"
@@ -2333,6 +2335,548 @@ void run_sternheimer_galerkin_spectrum_audit(
     }
 }
 
+void run_sternheimer_weak_q_unit(
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orbitals,
+    SternheimerABACUSFDGridData fine_grid,
+    SternheimerABACUSFDGridData coarse_grid,
+    const std::vector<double>& fine_potential,
+    const std::vector<SternheimerLCAOOccupiedKPoint>& records,
+    const SternheimerPeriodicResponsePlan& response_plan,
+    const SternheimerRPA::FrequencyGrid& frequency_grid,
+    const double pca_threshold,
+    const SternheimerOrbitalSet* rpa_abfs)
+{
+    using Vector = SternheimerFDHamiltonian::Vector;
+    using Complex = SternheimerFDHamiltonian::Complex;
+    using Blocks = SternheimerWeakAugmented;
+    const auto started = std::chrono::steady_clock::now();
+    const bool coulomb_only = env_is_true("ABACUS_STERNHEIMER_WEAK_Q_COULOMB_ONLY");
+    const int nfreq = static_cast<int>(frequency_grid.omega_ha.size());
+    if (nfreq <= 0 || frequency_grid.weights_ha.size() != frequency_grid.omega_ha.size()
+        || response_plan.kq_pairs.size() != records.size()
+        || response_plan.record_index_by_global_k.size() != records.size()
+        || fine_potential.size() != static_cast<std::size_t>(fine_grid.grid.size())
+        || !std::isfinite(fine_grid.volume_element) || fine_grid.volume_element <= 0
+        || PARAM.inp.exx_ewald_dimension != 2)
+        throw std::invalid_argument("Weak q unit requires full k/frequency/reference data and exact 2D Coulomb.");
+    const auto finite_complex = [](Complex value) {
+        return std::isfinite(value.real()) && std::isfinite(value.imag());
+    };
+    const auto hash_reals = [](siab::Sha256& digest, const std::vector<double>& values) {
+        hash_u64(digest, values.size());
+        for (double value : values)
+        {
+            if (!std::isfinite(value)) throw std::invalid_argument("Weak q unit nonfinite reference data.");
+            hash_double(digest, value);
+        }
+    };
+    std::vector<int> occupied_counts(records.size());
+    siab::Sha256 reference_digest;
+    hash_reals(reference_digest, cell_vectors_bohr(ucell));
+    hash_reals(reference_digest, fine_potential);
+    std::vector<std::string> coefficient_hashes(records.size());
+    double vbm = -std::numeric_limits<double>::infinity();
+    double cbm = std::numeric_limits<double>::infinity();
+    for (std::size_t k = 0; k < records.size(); ++k)
+    {
+        const auto& record = records.at(response_plan.record_index_by_global_k.at(k));
+        const auto nocc = record.eigenvalues.size();
+        if (record.global_k_index != static_cast<int>(k) || record.spin_index != 0
+            || record.has_grid_kpoint_override || nocc == 0 || record.unoccupied_eigenvalues.empty()
+            || nocc + record.unoccupied_eigenvalues.size() != static_cast<std::size_t>(PARAM.globalv.nlocal)
+            || record.coefficients.size() != nocc || record.occupations.size() != nocc
+            || record.unoccupied_coefficients.size() != record.unoccupied_eigenvalues.size())
+            throw std::invalid_argument("Weak q unit requires nbands=nlocal and all full-k occupied/virtual KS records.");
+        occupied_counts[k] = static_cast<int>(nocc);
+        hash_int(reference_digest, record.global_k_index);
+        hash_double(reference_digest, record.kweight);
+        for (double value : record.kpoint)
+        {
+            if (!std::isfinite(value)) throw std::invalid_argument("Weak q unit nonfinite k point.");
+            hash_double(reference_digest, value);
+        }
+        hash_reals(reference_digest, record.eigenvalues);
+        hash_reals(reference_digest, record.unoccupied_eigenvalues);
+        hash_reals(reference_digest, record.occupations);
+        for (std::size_t ib = 0; ib < nocc; ++ib)
+        {
+            sternheimer_weak_q_weight(record.kweight, record.occupations[ib]);
+            vbm = std::max(vbm, record.eigenvalues[ib]);
+        }
+        for (double value : record.unoccupied_eigenvalues) cbm = std::min(cbm, value);
+        siab::Sha256 coefficient_digest;
+        for (const auto* coefficients : {&record.coefficients, &record.unoccupied_coefficients})
+            for (const auto& state : *coefficients)
+            {
+                if (state.size() != static_cast<std::size_t>(PARAM.globalv.nlocal))
+                    throw std::invalid_argument("Weak q unit incomplete KS coefficient vector.");
+                for (Complex value : state)
+                {
+                    if (!finite_complex(value)) throw std::invalid_argument("Weak q unit nonfinite KS coefficient.");
+                    hash_double(coefficient_digest, value.real());
+                    hash_double(coefficient_digest, value.imag());
+                    hash_double(reference_digest, value.real());
+                    hash_double(reference_digest, value.imag());
+                }
+            }
+        coefficient_hashes[k] = coefficient_digest.finish();
+    }
+    if (!(cbm - vbm > 1e-10) || std::abs(response_plan.kweight_sum - 2.0) > 1e-10)
+        throw std::invalid_argument("Weak q unit requires a positive full-k PBE gap and spin-degenerate k weights summing to two.");
+    for (int f = 0; f < nfreq; ++f)
+    {
+        sternheimer_weak_q_omega_ry(frequency_grid.omega_ha[f]);
+        if (!std::isfinite(frequency_grid.weights_ha[f]) || frequency_grid.weights_ha[f] <= 0)
+            throw std::invalid_argument("Weak q unit requires finite positive frequency quadrature weights.");
+    }
+    const auto input = build_abfs_density_input(ucell, pca_threshold, rpa_abfs);
+    const auto metadata = describe_sternheimer_abf_grid_channels(
+        input.radials_by_type, input.atom_types, input.atom_positions, -1);
+    if (metadata.empty() || metadata.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw std::length_error("Weak q unit invalid auxiliary dimension.");
+    const int channels = static_cast<int>(metadata.size());
+    SternheimerWeakQUnit::Raw raw;
+    raw.source_k = std::getenv("WEAK_Q_SOURCE_K");
+    raw.band_begin = std::getenv("WEAK_Q_BAND_BEGIN");
+    raw.band_end = std::getenv("WEAK_Q_BAND_END");
+    raw.frequency_begin = std::getenv("WEAK_Q_FREQ_BEGIN");
+    raw.frequency_end = std::getenv("WEAK_Q_FREQ_END");
+    raw.shard_index = std::getenv("WEAK_Q_SHARD_INDEX");
+    raw.shard_count = std::getenv("WEAK_Q_SHARD_COUNT");
+    const auto unit = SternheimerWeakQUnit::parse(raw, occupied_counts, nfreq, channels);
+    const auto owned_columns = unit.columns();
+    const auto& pair = response_plan.kq_pairs.at(unit.source_k - 1);
+    if (pair.source_index != unit.source_k - 1)
+        throw std::invalid_argument("Weak q unit full-k source does not match the response plan.");
+    const auto& source_record = records.at(response_plan.record_index_by_global_k.at(pair.source_index));
+    const auto& target_record = records.at(response_plan.record_index_by_global_k.at(pair.target_index));
+    validate_sternheimer_weak_q_fold(sternheimer_lcao_grid_kpoint(source_record), response_plan.qpoint,
+                                    sternheimer_lcao_grid_kpoint(target_record), pair.reciprocal_shift);
+    // Fields are full Bloch values. Canonical target E admits integer folds without an extra exp(iG.r).
+    fine_grid.grid.kpoint = sternheimer_lcao_grid_kpoint(target_record);
+    coarse_grid.grid.kpoint = fine_grid.grid.kpoint;
+    const std::string stem = unit.stem(response_plan.iq) + (coulomb_only ? "_coulomb_only" : "");
+    const auto output = [](const std::string& path) {
+        std::ofstream stream(path, std::ios::out | std::ios::trunc);
+        stream.exceptions(std::ios::failbit | std::ios::badbit);
+        stream << std::setprecision(17);
+        return stream;
+    };
+    const auto limits = [](std::ostream& out) {
+        out << "format_version 1\nfull_q_response no\nphysical_result no\nreader_v1 no\n"
+            << "response_symmetry_restoration no\nresponse_representation raw_potential_potential\n"
+            << "occupation_weighted yes\nfrequency_weight_applied no\nqweight_applied no\n"
+            << "signed_branches both\nsecond_hermitian_completion no\n";
+    };
+    const auto identity = [&](std::ostream& out) {
+        limits(out);
+        out << "iq " << response_plan.iq << "\nsource_k " << unit.source_k
+            << "\ntarget_k " << pair.target_index + 1
+            << "\nband_begin " << unit.band_begin << "\nband_end " << unit.band_end
+            << "\nfrequency_begin " << unit.frequency_begin << "\nfrequency_end " << unit.frequency_end
+            << "\nshard_index " << unit.shard.index << "\nshard_count " << unit.shard.count
+            << "\nauxiliary_channels " << channels << "\nowned_columns " << owned_columns.size()
+            << "\nall_source_bands " << (unit.all_source_bands(occupied_counts[unit.source_k - 1]) ? "yes" : "no")
+            << "\nall_frequencies " << (unit.all_frequencies(nfreq) ? "yes" : "no")
+            << "\nqpoint " << response_plan.qpoint[0] << ' ' << response_plan.qpoint[1] << ' ' << response_plan.qpoint[2]
+            << "\nreciprocal_shift " << pair.reciprocal_shift[0] << ' ' << pair.reciprocal_shift[1]
+            << ' ' << pair.reciprocal_shift[2] << '\n';
+    };
+    const auto reference_sha256 = reference_digest.finish();
+    siab::Sha256 auxiliary_digest;
+    for (const auto& radials : input.radials_by_type)
+    {
+        hash_u64(auxiliary_digest, radials.size());
+        for (const auto& radial : radials)
+        {
+            hash_int(auxiliary_digest, radial.type_index);
+            hash_int(auxiliary_digest, radial.angular_momentum);
+            hash_int(auxiliary_digest, radial.radial_index);
+            hash_reals(auxiliary_digest, radial.radial_grid);
+            hash_reals(auxiliary_digest, radial.radial_values);
+        }
+    }
+    for (std::size_t atom = 0; atom < input.atom_types.size(); ++atom)
+    {
+        hash_int(auxiliary_digest, input.atom_types[atom]);
+        for (double value : {input.atom_positions.at(atom).x, input.atom_positions.at(atom).y,
+                            input.atom_positions.at(atom).z})
+        {
+            if (!std::isfinite(value)) throw std::invalid_argument("Weak q unit nonfinite atom position.");
+            hash_double(auxiliary_digest, value);
+        }
+    }
+    const auto auxiliary_sha256 = auxiliary_digest.finish();
+    const auto lattice = sternheimer_fd_grid_lattice_vectors(fine_grid.grid);
+    const double slab_height = std::abs(lattice[2][2]);
+    const double normal_sign = lattice[2][2] >= 0 ? 1.0 : -1.0;
+    bool z_support_contained = true;
+    std::ostringstream support_report;
+    support_report << std::setprecision(17);
+    for (std::size_t atom = 0; atom < input.atom_types.size(); ++atom)
+        for (const auto& radial : input.radials_by_type.at(input.atom_types[atom]))
+        {
+            if (radial.continue_coulomb_tail)
+                throw std::invalid_argument("Weak q unit requires compact densities, not Coulomb-tail radial functions.");
+            const double radius = sternheimer_weak_q_radial_support(radial.radial_grid, radial.radial_values);
+            const double center = normal_sign * input.atom_positions.at(atom).z;
+            const bool contained = sternheimer_weak_q_z_support_contained(center, radius, slab_height);
+            z_support_contained = z_support_contained && contained;
+            support_report << "abf_z_support " << atom << ' ' << radial.angular_momentum << ' '
+                           << radial.radial_index << ' ' << center << ' ' << radius << ' '
+                           << center - radius << ' ' << slab_height - center - radius << ' '
+                           << (contained ? "yes" : "no") << '\n';
+        }
+    auto manifest = output(stem + "_input.dat");
+    manifest << "format_version 1\niq " << response_plan.iq << "\nfull_kpoints " << records.size()
+             << "\nqpoint " << response_plan.qpoint[0] << ' ' << response_plan.qpoint[1] << ' ' << response_plan.qpoint[2]
+             << "\nnlocal " << PARAM.globalv.nlocal << "\npbe_symmetry " << PARAM.inp.symmetry
+             << "\nreference_sha256 " << reference_sha256 << "\nauxiliary_sha256 " << auxiliary_sha256
+             << "\ncompiled_commit " << compiled_commit_metadata()
+             << "\nexecutable_sha256 " << siab::sha256_file(siab::resolve_executable_path())
+             << "\norbital_sha256 " << siab::sha256_file_manifest(siab::resolve_required_input_files(
+                    orbital_dir_from_env_or_input(), orbital_files_from_env_or_cell(ucell), "initial orbital"))
+             << "\npseudopotential_sha256 " << siab::sha256_file_manifest(siab::resolve_required_input_files(
+                    PARAM.inp.pseudo_dir, ucell.pseudo_fn, "pseudopotential"))
+             << "\nfine_grid " << fine_grid.grid.nx << ' ' << fine_grid.grid.ny << ' ' << fine_grid.grid.nz
+             << "\ncoarse_grid " << coarse_grid.grid.nx << ' ' << coarse_grid.grid.ny << ' ' << coarse_grid.grid.nz
+             << "\nfine_dv " << fine_grid.volume_element << "\npca_threshold " << pca_threshold
+             << "\ncoulomb_kernel strict2d\nkweight_sum " << response_plan.kweight_sum
+             << "\nsource_reference original_pbe_band_order\n";
+    manifest << "slab_z_length_bohr " << slab_height << "\nz_support_contained "
+             << (z_support_contained ? "yes" : "no") << "\nz_support_treatment no_atom_rewrapping\n"
+             << support_report.str();
+    for (const auto& path : find_coulomb_v1_rank_files(response_plan.iq, GlobalV::NPROC))
+        manifest << "coulomb_reference_file " << path << ' ' << siab::sha256_file(path) << '\n';
+    for (std::size_t k = 0; k < records.size(); ++k)
+    {
+        const auto& record = records.at(response_plan.record_index_by_global_k.at(k));
+        manifest << "kpoint " << k + 1 << ' ' << record.kpoint[0] << ' ' << record.kpoint[1] << ' '
+                 << record.kpoint[2] << ' ' << record.kweight << ' ' << record.eigenvalues.size() << ' '
+                 << record.unoccupied_eigenvalues.size() << '\n'
+                 << "coefficients_sha256 " << k + 1 << ' ' << coefficient_hashes[k] << '\n';
+        for (std::size_t ib = 0; ib < record.eigenvalues.size(); ++ib)
+            manifest << "source_band " << k + 1 << ' ' << ib + 1 << ' ' << record.eigenvalues[ib] << ' '
+                     << record.occupations[ib] << ' ' << sternheimer_weak_q_weight(record.kweight, record.occupations[ib]) << '\n';
+        for (std::size_t ib = 0; ib < record.unoccupied_eigenvalues.size(); ++ib)
+            manifest << "target_virtual " << k + 1 << ' ' << record.eigenvalues.size() + ib + 1 << ' '
+                     << record.unoccupied_eigenvalues[ib] << '\n';
+    }
+    for (const auto& entry : response_plan.kq_pairs)
+    {
+        const auto& source = records.at(response_plan.record_index_by_global_k.at(entry.source_index));
+        const auto& target = records.at(response_plan.record_index_by_global_k.at(entry.target_index));
+        validate_sternheimer_weak_q_fold(source.kpoint, response_plan.qpoint, target.kpoint, entry.reciprocal_shift);
+        manifest << "kpair " << entry.source_index + 1 << ' ' << entry.target_index + 1 << ' '
+                 << entry.reciprocal_shift[0] << ' ' << entry.reciprocal_shift[1] << ' ' << entry.reciprocal_shift[2] << '\n';
+    }
+    manifest << "frequency_table " << nfreq << "\nfrequency_grid_file "
+             << std::quoted(PARAM.inp.sternheimer_frequency_grid_file) << '\n';
+    for (int f = 0; f < nfreq; ++f)
+        manifest << "frequency " << f + 1 << ' ' << frequency_grid.omega_ha[f] << ' ' << frequency_grid.weights_ha[f] << '\n';
+    manifest << "auxiliary_channels " << channels << '\n';
+    for (int j = 0; j < channels; ++j)
+    {
+        const auto& channel = metadata[j];
+        if (channel.channel_index != j) throw std::invalid_argument("Weak q unit auxiliary channel IDs are not contiguous.");
+        manifest << "auxiliary_channel " << j + 1 << " atom_index " << channel.atom_index
+                 << " atom_local_index " << channel.atom_local_index << " type_index " << channel.type_index
+                 << " L " << channel.angular_momentum << " M " << channel.magnetic_index
+                 << " radial_index " << channel.radial_index << " label " << std::quoted(channel.label) << '\n';
+    }
+    manifest << "manifest_complete yes\n";
+    manifest.close();
+    const auto input_manifest_sha256 = siab::sha256_file(stem + "_input.dat");
+    auto audit = output(stem + "_unit.dat");
+    identity(audit);
+    audit << "input_manifest " << stem << "_input.dat\ninput_manifest_sha256 " << input_manifest_sha256
+          << "\nreference_sha256 " << reference_sha256 << "\nauxiliary_sha256 " << auxiliary_sha256
+          << "\nexpected_equations " << (coulomb_only ? 0 : unit.expected_equations())
+          << "\nmode " << (coulomb_only ? "coulomb_only" : "response_unit") << '\n';
+    const auto stage = [&](const std::string& name) {
+        const auto memory = detect_sternheimer_memory_snapshot();
+        audit << "stage " << name << " elapsed_s " << elapsed_seconds_since(started)
+              << " memory_current_bytes " << memory.current_bytes << '\n';
+        audit.flush();
+    };
+    const auto sample_density = [&](int j) {
+        auto single = sample_sternheimer_abf_bloch_grid_channels(
+            input.radials_by_type, input.atom_types, input.atom_positions, fine_grid.grid, response_plan.qpoint, 1, j);
+        if (single.size() != 1 || single.front().channel_index != j
+            || single.front().potential_r.size() != fine_potential.size()
+            || !std::all_of(single.front().potential_r.begin(), single.front().potential_r.end(), finite_complex))
+            throw std::runtime_error("Weak q unit failed to sample finite full-Bloch auxiliary density.");
+        return single;
+    };
+    const auto sample_potential = [&](int j) {
+        auto single = sample_density(j);
+        solve_sternheimer_abf_strict2d_coulomb_in_place(single, fine_grid.grid, response_plan.qpoint);
+        if (single.front().potential_r.size() != fine_potential.size()
+            || !std::all_of(single.front().potential_r.begin(), single.front().potential_r.end(), finite_complex))
+            throw std::runtime_error("Weak q unit nonfinite strict2D potential.");
+        return std::move(single.front().potential_r);
+    };
+    // Coulomb-only mode stops here, before NAO blocks or any response equation.
+    auto coulomb = output(stem + "_coulomb.dat");
+    identity(coulomb);
+    coulomb << "input_manifest_sha256 " << input_manifest_sha256
+            << "\nintegral_representation density_potential_Ha\n"
+            << "integral_occupation_weighted no\nkernel_matched_to_ewald no\nz_support_contained "
+            << (z_support_contained ? "yes" : "no") << '\n';
+    std::vector<int> samples{0, std::min(1, channels - 1), channels / 2, channels - 1,
+                             owned_columns.front(), owned_columns.back()};
+    std::sort(samples.begin(), samples.end());
+    samples.erase(std::unique(samples.begin(), samples.end()), samples.end());
+    coulomb << "coulomb_sample_channels " << samples.size() << '\n';
+    for (int j : samples)
+    {
+        const Vector v = sample_potential(j);
+        std::vector<int> rows{0, std::min(1, channels - 1), j};
+        std::sort(rows.begin(), rows.end());
+        rows.erase(std::unique(rows.begin(), rows.end()), rows.end());
+        for (int i : rows)
+        {
+            const auto density = sample_density(i);
+            const Complex value = sternheimer_fd_grid_dot(density.front().potential_r, v, fine_grid.volume_element);
+            if (!finite_complex(value)) throw std::runtime_error("Weak q unit nonfinite density-potential integral.");
+            coulomb << "coulomb_integral " << i + 1 << ' ' << j + 1 << ' ' << value.real() << ' ' << value.imag() << '\n';
+        }
+    }
+    coulomb << "coulomb_samples_complete yes\n";
+    coulomb.close();
+    audit << "coulomb_file " << stem << "_coulomb.dat\nkernel_matched_to_ewald no\n";
+    stage("coulomb_samples_complete");
+    if (coulomb_only)
+    {
+        audit << "response_equations 0\nunit_complete yes\n";
+        audit.close();
+        return;
+    }
+    if (!z_support_contained)
+        throw std::runtime_error("Weak q unit ABF z support crosses the open slab window; Coulomb samples are diagnostic only. Recenter/extend the common reference window before response admission.");
+    auto target = sample_sternheimer_lcao_kpoint(
+        ucell, fine_grid.grid, orbitals, target_record, 0, true, 0,
+        fine_grid.volume_element, PARAM.inp.sternheimer_delta_norm_tol);
+    const int nocc = static_cast<int>(target.occupied_functions.size());
+    const int nvirtual = static_cast<int>(target.unoccupied_functions.size());
+    if (nocc != static_cast<int>(target_record.eigenvalues.size())
+        || nvirtual != static_cast<int>(target_record.unoccupied_eigenvalues.size()))
+        throw std::runtime_error("Weak q unit lost complete target KS states.");
+    auto functions = std::move(target.occupied_functions);
+    functions.insert(functions.end(), std::make_move_iterator(target.unoccupied_functions.begin()),
+                     std::make_move_iterator(target.unoccupied_functions.end()));
+    target = SternheimerSampledLCAOKPoint();
+    const double metric_error = orthonormalize_sternheimer_weak_states_in_place(functions, fine_grid.volume_element);
+    if (!std::isfinite(metric_error) || metric_error > 1e-8)
+        throw std::runtime_error("Weak q unit target metric gate failed.");
+    auto nonlocal = make_sternheimer_fd_nonlocal_projector_from_unitcell(ucell, fine_grid.grid, fine_grid.volume_element);
+    auto h = std::make_shared<const SternheimerFDHamiltonian>(make_sternheimer_fd_hamiltonian_from_local_potential(
+        fine_grid, fine_potential, 1.0, std::move(nonlocal), PARAM.inp.sternheimer_fd_order));
+    auto op = std::make_shared<SternheimerWeakGridOperator>(h, coarse_grid.grid);
+    auto assembled = op->assemble_blocks(functions);
+    Blocks::Data data;
+    data.nocc = nocc; data.nvirtual = nvirtual; data.ncoarse = coarse_grid.grid.size();
+    data.hu = std::move(assembled.state_hamiltonian);
+    data.l = std::move(assembled.state_coarse_overlap);
+    data.k = std::move(assembled.state_coarse_hamiltonian);
+    auto blocks = std::make_shared<const Blocks>(std::move(data));
+    audit << "nocc " << nocc << "\nnvirtual " << nvirtual << "\northonormalization_max_error " << metric_error
+          << "\ncomplement_metric_min " << blocks->minimum_metric_eigenvalue() << '\n';
+    for (auto& function : functions)
+        for (auto& gradient : function.gradients) Vector().swap(gradient);
+    trim_sternheimer_process_heap();
+    stage("weak_blocks_ready");
+    if (env_is_true("ABACUS_STERNHEIMER_WEAK_EXACT_CACHE"))
+    {
+        Vector probe(blocks->ncoarse()), uncached, cached;
+        for (std::size_t i = 0; i < probe.size(); ++i)
+            probe[i] = Complex(std::sin(0.31 * (i + 1)), std::cos(0.17 * (i + 1)));
+        const auto before = std::chrono::steady_clock::now();
+        op->apply(probe, uncached);
+        const double uncached_s = elapsed_seconds_since(before);
+        const auto enable = std::chrono::steady_clock::now();
+        op->enable_exact_apply_cache(true, true);
+        const double enable_s = elapsed_seconds_since(enable);
+        const auto after = std::chrono::steady_clock::now();
+        op->apply(probe, cached);
+        const double cached_s = elapsed_seconds_since(after);
+        if (uncached.size() != probe.size() || cached.size() != probe.size())
+            throw std::runtime_error("Weak q cache probe returned an invalid dimension.");
+        double norm_reference = 0, norm_difference = 0;
+        for (std::size_t i = 0; i < probe.size(); ++i)
+        {
+            if (!finite_complex(uncached[i]) || !finite_complex(cached[i]))
+                throw std::runtime_error("Weak q cache probe returned nonfinite values.");
+            norm_reference = std::hypot(norm_reference, std::abs(uncached[i]));
+            norm_difference = std::hypot(norm_difference, std::abs(cached[i] - uncached[i]));
+        }
+        const double cache_error = norm_reference > 0 ? norm_difference / norm_reference : norm_difference;
+        audit << "cache_probe_relative_error " << cache_error << "\ncache_uncached_apply_s " << uncached_s
+              << "\ncache_enable_s " << enable_s << "\ncache_cached_apply_s " << cached_s
+              << "\ncache_storage_bytes " << op->exact_cache_storage_bytes()
+              << "\ncache_nonlocal " << op->has_exact_nonlocal_cache() << "\ncache_local " << op->has_exact_local_cache()
+              << "\ncache_probe_is_not_operator_proof yes\n";
+        audit.flush();
+        if (!std::isfinite(cache_error) || cache_error > 1e-10)
+            throw std::runtime_error("Weak q exact cache probe failed 1e-10 gate.");
+    }
+    const auto elements = [](std::size_t rows, std::size_t columns) {
+        if (columns && rows > Vector().max_size() / columns)
+            throw std::length_error("Weak q unit matrix size overflow.");
+        return rows * columns;
+    };
+    std::vector<Vector> partials(static_cast<std::size_t>(unit.frequency_end - unit.frequency_begin + 1),
+                                  Vector(elements(channels, owned_columns.size()), Complex(0)));
+    SternheimerRPA::SolverOptions options;
+    options.max_iter = positive_int_from_env("ABACUS_STERNHEIMER_WEAK_AUDIT_MAX_ITER", 300);
+    options.residual_tol = 1e-8;
+    options.use_fd_spectral_preconditioner = false;
+    std::uint64_t equations = 0;
+    std::uint64_t fine_checked_equations = 0;
+    std::uint64_t fine_vertex_checks = 0;
+    audit << "fine_check_policy first_last_owned_columns_each_band_frequency_sign\n"
+          << "fine_check_tolerance 1e-9\noriginal_residual_tolerance 1e-8\n";
+    for (int ib = unit.band_begin; ib <= unit.band_end; ++ib)
+    {
+        // Preserve each original source band and its energy; only normalize its fine-grid norm.
+        auto sampled = build_lcao_grid_functions_from_coefficients(ucell, fine_grid.grid, orbitals,
+            sternheimer_lcao_grid_kpoint(source_record), {source_record.coefficients.at(ib - 1)});
+        Vector source_values = std::move(sampled.at(0).values);
+        sampled.clear();
+        const double source_norm = sternheimer_fd_grid_norm(source_values, fine_grid.volume_element);
+        if (!std::isfinite(source_norm) || source_norm <= PARAM.inp.sternheimer_delta_norm_tol)
+            throw std::runtime_error("Weak q unit invalid source norm.");
+        for (auto& value : source_values) value /= source_norm;
+        const double epsilon = source_record.eigenvalues.at(ib - 1);
+        const double occupation = sternheimer_weak_q_weight(source_record.kweight, source_record.occupations.at(ib - 1));
+        audit << "source_band " << ib << " epsilon_Ry " << epsilon << " source_norm " << source_norm
+              << " weighted_occupation " << occupation << '\n';
+        const auto sample_fine_vertex = [&](int j) {
+            Vector g = sample_potential(j);
+            for (std::size_t ir = 0; ir < g.size(); ++ir)
+            {
+                g[ir] *= 2.0 * source_values[ir];
+                if (!finite_complex(g[ir])) throw std::runtime_error("Weak q unit nonfinite fine vertex.");
+            }
+            return g;
+        };
+        const int ncoarse = blocks->ncoarse();
+        Blocks::Vertices projected_vertices;
+        projected_vertices.f.resize(elements(nvirtual, channels));
+        projected_vertices.w.resize(elements(ncoarse, channels));
+        const Vector first_row_vertex = sample_fine_vertex(0);
+        for (int j = 0; j < channels; ++j)
+        {
+            const Vector sampled_vertex = j == 0 ? Vector() : sample_fine_vertex(j);
+            const Vector& g = j == 0 ? first_row_vertex : sampled_vertex;
+            Vector gu(functions.size()), ge;
+            for (std::size_t u = 0; u < functions.size(); ++u)
+                gu[u] = sternheimer_fd_grid_dot(functions[u].values, g, fine_grid.volume_element);
+            op->project(g, ge);
+            const auto vertex = blocks->project_vertices(gu, ge);
+            std::copy(vertex.f.begin(), vertex.f.end(), projected_vertices.f.begin() + std::size_t(j) * nvirtual);
+            std::copy(vertex.w.begin(), vertex.w.end(), projected_vertices.w.begin() + std::size_t(j) * ncoarse);
+            if ((j + 1) % 32 == 0 || j + 1 == channels) stage("vertices_projected_" + std::to_string(j + 1));
+        }
+        stage("source_vertices_ready");
+        for (int ifrequency = unit.frequency_begin; ifrequency <= unit.frequency_end; ++ifrequency)
+        {
+            auto& partial = partials.at(ifrequency - unit.frequency_begin);
+            for (int sign : {1, -1})
+            {
+                Blocks::Worker worker(blocks, [op](const Vector& x, Vector& y) { op->apply(x, y); }, epsilon,
+                    sign * sternheimer_weak_q_omega_ry(frequency_grid.omega_ha.at(ifrequency - 1)));
+                for (std::size_t owned = 0; owned < owned_columns.size(); ++owned)
+                {
+                    const int j = owned_columns[owned];
+                    const auto f = projected_vertices.f.begin() + std::size_t(j) * nvirtual;
+                    const auto w = projected_vertices.w.begin() + std::size_t(j) * ncoarse;
+                    const Blocks::Vertices vertex{Vector(f, f + nvirtual), Vector(w, w + ncoarse)};
+                    const auto solve_start = std::chrono::steady_clock::now();
+                    const auto result = worker.solve(vertex, options);
+                    audit << "equation " << ++equations << " band " << ib << " ifrequency " << ifrequency
+                          << " column " << j + 1 << " sign " << sign << " converged " << (result.converged ? "yes" : "no")
+                          << " iterations " << result.schur.iterations << " relative_residual " << result.relative_residual
+                          << " absolute_residual " << result.absolute_residual << " solve_s " << elapsed_seconds_since(solve_start) << '\n';
+                    audit.flush();
+                    validate_sternheimer_weak_q_residual(result.converged, result.relative_residual, result.absolute_residual);
+                    if (result.coefficients.size() != static_cast<std::size_t>(nvirtual) + ncoarse
+                        || !std::all_of(result.coefficients.begin(), result.coefficients.end(), finite_complex))
+                        throw std::runtime_error("Weak q unit nonfinite or incomplete response coefficients.");
+                    Vector column(channels, Complex(0));
+                    const Complex left_factor(sternheimer_weak_q_left_vertex_factor());
+                    BlasConnector::gemv('C', nvirtual, channels, left_factor, projected_vertices.f.data(), nvirtual,
+                        result.coefficients.data(), 1, Complex(0), column.data(), 1);
+                    BlasConnector::gemv('C', ncoarse, channels, left_factor, projected_vertices.w.data(), ncoarse,
+                        result.coefficients.data() + nvirtual, 1, Complex(1), column.data(), 1);
+                    if (owned == 0 || owned + 1 == owned_columns.size())
+                    {
+                        ++fine_checked_equations;
+                        const auto fine_check_started = std::chrono::steady_clock::now();
+                        const auto expansion = blocks->expand_coordinates(result.coefficients);
+                        Vector fine_response;
+                        op->lift(expansion.e, fine_response);
+                        for (std::size_t u = 0; u < functions.size(); ++u)
+                        {
+#pragma omp parallel for schedule(static)
+                            for (std::size_t ir = 0; ir < fine_response.size(); ++ir)
+                                fine_response[ir] += expansion.u[u] * functions[u].values[ir];
+                        }
+                        if (!std::all_of(fine_response.begin(), fine_response.end(), finite_complex))
+                            throw std::runtime_error("Weak q unit nonfinite fine response check.");
+                        const Vector diagonal_vertex = j == 0 ? Vector() : sample_fine_vertex(j);
+                        for (int i : {0, j})
+                        {
+                            const Complex fine_value = sternheimer_weak_q_left_vertex_factor() * sternheimer_fd_grid_dot(
+                                i == 0 ? first_row_vertex : diagonal_vertex, fine_response, fine_grid.volume_element);
+                            const double error = std::abs(fine_value - column[i]) / std::max(1.0, std::abs(fine_value));
+                            audit << "vertex_check " << equations << ' ' << i + 1 << ' ' << error << '\n';
+                            ++fine_vertex_checks;
+                            if (!finite_complex(fine_value) || !std::isfinite(error) || error > 1e-9)
+                                throw std::runtime_error("Weak q unit fine/block left-right vertex gate failed.");
+                            if (j == 0) break;
+                        }
+                        audit << "fine_check_seconds " << equations << ' ' << elapsed_seconds_since(fine_check_started) << '\n';
+                    }
+                    accumulate_sternheimer_weak_q_column(partial, column, channels, owned, occupation);
+                }
+            }
+            stage("source_frequency_complete_" + std::to_string(ifrequency));
+        }
+    }
+    if (equations != unit.expected_equations()) throw std::runtime_error("Weak q unit equation coverage is incomplete.");
+    for (int ifrequency = unit.frequency_begin; ifrequency <= unit.frequency_end; ++ifrequency)
+    {
+        const auto& partial = partials.at(ifrequency - unit.frequency_begin);
+        const auto filename = stem + "_columns_ifreq_" + std::to_string(ifrequency) + ".dat";
+        auto columns = output(filename);
+        identity(columns);
+        columns << "input_manifest_sha256 " << input_manifest_sha256 << "\nifrequency " << ifrequency
+                << "\nomega_Ha " << frequency_grid.omega_ha.at(ifrequency - 1)
+                << "\nweight_Ha " << frequency_grid.weights_ha.at(ifrequency - 1)
+                << "\nlayout column_major_owned_columns\n";
+        for (std::size_t owned = 0; owned < owned_columns.size(); ++owned)
+        {
+            columns << "owned_column " << owned_columns[owned] + 1 << '\n';
+            for (int i = 0; i < channels; ++i)
+            {
+                const Complex value = partial[std::size_t(i) + std::size_t(channels) * owned];
+                if (!finite_complex(value)) throw std::runtime_error("Weak q unit nonfinite final signed weighted response.");
+                columns << "response " << i + 1 << ' ' << owned_columns[owned] + 1 << ' '
+                        << value.real() << ' ' << value.imag() << '\n';
+            }
+        }
+        columns << "columns_complete yes\n";
+        columns.close();
+        audit << "column_file " << ifrequency << ' ' << filename << '\n';
+    }
+    stage("response_unit_complete");
+    audit << "response_equations " << equations << "\nfine_checked_equations " << fine_checked_equations
+          << "\nfine_vertex_checks " << fine_vertex_checks << "\nunit_complete yes\n";
+    audit.close();
+}
+
 void run_sternheimer_weak_response_audit(
     const UnitCell& ucell,
     const LCAO_Orbitals& orbitals,
@@ -3089,6 +3633,18 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                                const std::chrono::steady_clock::time_point& chi0_start_time,
                                                const SternheimerOrbitalSet* reusable_rpa_abfs)
 {
+    const bool use_weak_q_unit = env_is_true("ABACUS_STERNHEIMER_WEAK_Q_UNIT");
+    if (use_weak_q_unit
+        && (GlobalV::NPROC != 1 || use_frequency_mpi || kpoint_groups != 1 || PARAM.inp.sternheimer_channel_mpi
+            || !PARAM.inp.sternheimer_delta || PARAM.inp.sternheimer_delta_max_states != 0
+            || PARAM.inp.sternheimer_delta_virtual_source != "ks_bands"
+            || (PARAM.inp.sternheimer_frequency_grid_file.empty()
+                && !env_is_true("ABACUS_STERNHEIMER_WEAK_Q_COULOMB_ONLY"))
+            || env_is_true("ABACUS_STERNHEIMER_WEAK_RESPONSE_AUDIT")
+            || env_is_true("ABACUS_STERNHEIMER_WEAK_MATRIX_AUDIT")
+            || env_is_true("ABACUS_STERNHEIMER_SPECTRUM_AUDIT")
+            || env_is_true("ABACUS_STERNHEIMER_GALERKIN_AUDIT")))
+        throw std::invalid_argument("Weak q unit requires one rank, complete KS target states, a fixed frequency file except for Coulomb-only bootstrap, and no other audit route.");
     if (PARAM.inp.nspin != 1)
     {
         throw std::runtime_error("The first periodic Sternheimer driver supports only nspin=1 insulators.");
@@ -3101,6 +3657,8 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
     const char* supercell_translation_sum_raw = std::getenv(kSupercellTranslationSumEnv);
     const bool use_supercell_translation_sum
         = supercell_translation_sum_raw != nullptr && supercell_translation_sum_raw[0] != '\0';
+    if (use_weak_q_unit && use_supercell_translation_sum)
+        throw std::invalid_argument("Weak q unit does not support supercell translation reconstruction.");
     const bool full_supercell_response
         = use_supercell_translation_sum && env_is_true(kSupercellFullResponseEnv);
     if (env_is_true(kSupercellFullResponseEnv) && !use_supercell_translation_sum)
@@ -3193,6 +3751,10 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
             response_kpoints,
             response_q_index,
             use_supercell_translation_sum && !full_supercell_response);
+    if (use_weak_q_unit
+        && (std::abs(response_plan.qpoint[2]) > 1e-12
+            || (std::abs(response_plan.qpoint[0]) <= 1e-12 && std::abs(response_plan.qpoint[1]) <= 1e-12)))
+        throw std::invalid_argument("Weak q unit requires a non-Gamma in-plane q point.");
     if (PARAM.inp.sternheimer_q_index <= 0)
     {
         throw std::runtime_error("Internal error: the periodic Sternheimer path requires a positive q index.");
@@ -3229,9 +3791,9 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
     const SternheimerABACUSFDGridData grid_data
         = use_parallel_grid_mpi ? make_sternheimer_fd_full_grid(response_pw_basis)
                                 : make_sternheimer_fd_grid(response_pw_basis);
-    const bool use_symmetry_partial_response = PARAM.inp.symmetry == "1";
+    const bool use_symmetry_partial_response = PARAM.inp.symmetry == "1" && !use_weak_q_unit;
     const bool write_kresolved_diagnostic
-        = !use_symmetry_partial_response && env_is_true(kKResolvedDiagnosticEnv);
+        = !use_weak_q_unit && !use_symmetry_partial_response && env_is_true(kKResolvedDiagnosticEnv);
     const bool write_partial_kresolved = use_symmetry_partial_response || write_kresolved_diagnostic;
     std::vector<int> canonical_q_indices
         = sternheimer_canonical_q_indices_one_based(response_kpoints);
@@ -3493,6 +4055,14 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                    + std::to_string(grid_data.grid.ny) + "x"
                                    + std::to_string(grid_data.grid.nz) + ",grid_size="
                                    + std::to_string(grid_data.grid.size()));
+    if (use_weak_q_unit)
+    {
+        run_sternheimer_weak_q_unit(ucell, orbitals, make_sternheimer_fd_full_grid(pw_basis), grid_data,
+            copy_sternheimer_full_local_potential(potential, pw_basis, 0), response_kpoints,
+            response_plan, frequency_grid, pca_threshold, periodic_abfs_orbitals);
+        out << "status diagnostic_only\nphysical_result no\nfull_q_response no\nreader_v1 no\nweak_q_unit_complete yes\n";
+        return;
+    }
     if (env_is_true("ABACUS_STERNHEIMER_WEAK_RESPONSE_AUDIT")
         || env_is_true("ABACUS_STERNHEIMER_WEAK_MATRIX_AUDIT"))
     {
@@ -5541,6 +6111,8 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
     try
     {
         reset_chi0_progress_file();
+        if (env_is_true("ABACUS_STERNHEIMER_WEAK_Q_UNIT") && PARAM.inp.sternheimer_q_index <= 0)
+            throw std::invalid_argument("Weak q unit requires a positive periodic q index.");
         const auto chi0_start_time = std::chrono::steady_clock::now();
         append_chi0_progress_event("enter",
                                    0,
@@ -7297,6 +7869,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         const bool invalid_excitation_spectrum
             = dynamic_cast<const SternheimerExcitationError*>(&error) != nullptr;
         const bool fatal_spectrum_failure = invalid_excitation_spectrum
+            || env_is_true("ABACUS_STERNHEIMER_WEAK_Q_UNIT")
             || env_is_true("ABACUS_STERNHEIMER_WEAK_RESPONSE_AUDIT")
             || env_is_true("ABACUS_STERNHEIMER_WEAK_MATRIX_AUDIT")
             || env_is_true("ABACUS_STERNHEIMER_SPECTRUM_AUDIT")
