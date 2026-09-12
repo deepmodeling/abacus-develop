@@ -1,7 +1,7 @@
 #include "force_stress_lcao.h"
 
 #include "source_base/parallel_reduce.h"
-#include "source_lcao/module_dftu/dftu_nao.h" //Quxin add for DFT+U on 20201029
+#include "source_pw/module_pwdft/dftu_base.h" //Quxin add for DFT+U on 20201029
 #include "source_lcao/module_dftu/dftu_nao_fs_k.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
@@ -457,7 +457,12 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             std::vector<std::vector<double>>* dmk_d = nullptr;
             std::vector<std::vector<std::complex<double>>>* dmk_c = nullptr;
             assign_dmk_ptr<T>(dmat.dm, dmk_d, dmk_c, PARAM.globalv.gamma_only_local);
-            DFTU_LCAO::force_stress(dftu, orb.cutoffs(), isforce, isstress, ucell, gd, dmk_d, dmk_c, pv, fsr_dftu, force_u, stress_u, kv, PARAM.globalv.npol, PARAM.globalv.gamma_only_local);
+            DFTU_LCAO::DftuFsEnv dftu_fs_env(dftu, ucell, gd, pv, fsr_dftu,
+                                             orb.cutoffs(), PARAM.inp.ks_solver,
+                                             PARAM.globalv.npol);
+            DFTU_LCAO::force_stress(dftu_fs_env, isforce, isstress,
+                                    dmk_d, dmk_c, force_u, stress_u, kv,
+                                    PARAM.globalv.gamma_only_local);
         }
         else
         {
@@ -470,7 +475,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                                                    orb.cutoffs(),
                                                                    &dftu,
                                                                    PARAM.inp.nspin,
-                                                                   PARAM.inp.onsite_radius);
+                                                                   PARAM.inp.onsite_radius,
+                                                                   dmat.dm);
 
             tmpu.cal_force_stress(isforce, isstress, force_u, stress_u);
         }

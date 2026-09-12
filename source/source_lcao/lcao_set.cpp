@@ -7,7 +7,7 @@
 #include "source_lcao/rho_tau_lcao.h" // use dm2rho
 #include "source_lcao/hamilt_lcao.h" // use HamiltLCAO for init_chg_hr
 #include "source_hsolver/hsolver_lcao.h" // use HSolverLCAO for init_chg_hr
-#include "source_lcao/module_dftu/dftu_nao.h" // use Plus_U for the LCAO-specific init
+#include "source_pw/module_pwdft/dftu_base.h" // use Plus_U_Base for the DFT+U init
 
 template <typename TK>
 void LCAO_domain::set_psi_occ_dm_chg(
@@ -83,22 +83,29 @@ void LCAO_domain::set_pot(
 
     if (inp.dft_plus_u)
     {
-        // set_pot receives the base-class reference; the LCAO-specific init
-        // (with LCAO_Orbitals) lives on the derived Plus_U, so cast here.
-        static_cast<Plus_U&>(dftu).init(ucell, &pv,
-                  PARAM.globalv.npol,
-                  inp.nspin, inp.l_channel, inp.yukawa_potential, inp.yukawa_lambda,
-                  PARAM.globalv.global_readin_dir,
-                  PARAM.globalv.global_out_dir,
-                  inp.init_chg,
-                  pv.get_global_row_size(),
-                  inp.ks_solver,
-                  inp.device,
-                  PARAM.globalv.hubbard_u,
-                  PARAM.globalv.uramping,
-                  inp.occ_mat_ctrl,
-                  inp.mixing_dftu,
-                  &orb);
+        // init_base does not see paraV; validate the square-matrix invariant
+        // of the LCAO parallel distribution here.
+        const int global_rows = pv.get_global_row_size();
+        const int global_cols = pv.get_global_col_size();
+        if (global_rows != global_cols)
+        {
+            ModuleBase::WARNING_QUIT("LCAO_domain::set_pot",
+                                     "Global row and column dimensions do not match");
+        }
+        dftu.init_base(ucell,
+                       PARAM.globalv.npol,
+                       inp.nspin,
+                       inp.l_channel,
+                       inp.yukawa_potential,
+                       inp.yukawa_lambda,
+                       PARAM.globalv.global_readin_dir,
+                       PARAM.globalv.global_out_dir,
+                       inp.init_chg,
+                       inp.device,
+                       PARAM.globalv.hubbard_u,
+                       PARAM.globalv.uramping,
+                       inp.occ_mat_ctrl,
+                       inp.mixing_dftu);
     }
 
     //! 4) init exact exchange calculations

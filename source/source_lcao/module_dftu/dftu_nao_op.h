@@ -5,10 +5,16 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_dftu/dftu_nao.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 
 #include <unordered_map>
+
+namespace elecstate
+{
+template <typename TK, typename TR>
+class DensityMatrix;
+} // namespace elecstate
 
 namespace hamilt
 {
@@ -47,7 +53,8 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                const std::vector<double>& orb_cutoff,
                                Plus_U_Base* p_dftu,
                                const int nspin_in,
-                               const double onsite_radius);
+                               const double onsite_radius,
+                               const elecstate::DensityMatrix<TK, double>* dm_in);
     ~DFTU<OperatorLCAO<TK, TR>>();
 
     /**
@@ -55,6 +62,13 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * <phi_{\mu, 0}|beta_p1>D_{p1, p2}<beta_p2|phi_{\nu, R}>
      */
     virtual void contributeHR() override;
+
+    /**
+     * @brief get the real-space density matrix of target spin from the solver-owned DensityMatrix
+     * @param ispin spin index (0 based): 0 for nspin=1/4, 0/1 for nspin=2
+     * @return read-only DMR pointer, or nullptr when DMR has not been calculated yet
+     */
+    const hamilt::HContainer<double>* get_dmr(int ispin) const;
 
     /// calculate force and stress for DFT+U
     void cal_force_stress(const bool cal_force,
@@ -81,6 +95,9 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     Plus_U_Base* dftu = nullptr;
 
+    /// @brief solver-owned density matrix providing DMR; lifetime covers each ionic step
+    const elecstate::DensityMatrix<TK, double>* dm_ = nullptr;
+
     hamilt::HContainer<TR>* HR = nullptr;
 
     const TwoCenterIntegrator* intor_ = nullptr;
@@ -103,27 +120,33 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_nlm_all(const Parallel_Orbitals* pv);
 
-    /**
-     * @brief calculate the occ_mm' = \sum_R DMR*<phi_0|alpha^I_m'><alpha^I_m'|phi_R> matrix for each atom to add U
-     */
-    void cal_occ(const int& iat1,
-                 const int& iat2,
-                 const Parallel_Orbitals* pv,
-                 const std::unordered_map<int, std::vector<double>>& nlm1_all,
-                 const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                 const double* data_pointer,
-                 std::vector<double>& occupations);
+    /// @brief BRANCH 1 of contributeHR: compute occ from DMR for one
+    ///        Hubbard atom (iat0). Walks (ad1, ad2) neighbor pairs, calls
+    ///        DFTU_LCAO::cal_occ_ijr, MPI-reduces, scales for nspin=1, and
+    ///        stores via set_flat.
+    void compute_occ_from_dmr(int iat0,
+                              int target_L,
+                              const AdjacentAtomInfo& adjs,
+                              const Parallel_Orbitals* pv,
+                              std::vector<double>& occ);
 
-    /**
-     * @brief calculate the HR local matrix of <I,J,R> atom pair
-     */
-    void cal_HR_IJR(const int& iat1,
-                    const int& iat2,
-                    const Parallel_Orbitals* pv,
-                    const std::unordered_map<int, std::vector<double>>& nlm1_all,
-                    const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                    const std::vector<TR>& pot_onsite_in,
-                    TR* data_pointer);
+    /// @brief BRANCH 2 of contributeHR: load pre-read occ_mat from file
+    ///        into occ for one Hubbard atom (iat0). Dispatches on nspin
+    ///        (nspin=4 uses stacked Pauli blocks; nspin=1/2 uses per-spin
+    ///        get).
+    void load_occ_from_file(int iat0,
+                            int target_L,
+                            std::vector<double>& occ);
+
+    /// @brief Step 5 of contributeHR: accumulate HR contributions from
+    ///        all (ad1, ad2) neighbor pairs for one Hubbard atom (iat0)
+    ///        using the precomputed pot_onsite. Protected by an OpenMP
+    ///        critical section because different iat0 may write the same
+    ///        HR(iat1, iat2, R) entry.
+    void accumulate_HR_for_iat0(int iat0,
+                                const AdjacentAtomInfo& adjs,
+                                const Parallel_Orbitals* pv,
+                                const std::vector<TR>& pot_onsite);
 
     /**
      * @brief calculate the atomic Force of <I,J,R> atom pair

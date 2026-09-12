@@ -1,42 +1,32 @@
 #include "setup_dftu_lcao.h"
-#include "source_lcao/module_dftu/dftu_nao.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_lcao/module_dftu/dftu_nao_occ.h"
 #include "source_lcao/module_dftu/dftu_nao_energy.h"
 #include "source_pw/module_pwdft/dftu_base_io.h" // mohan add 2025-11-08
 #include "source_io/module_parameter/parameter.h"
-#include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/hamilt_lcao.h"
 
 namespace ModuleESolver
 {
 
-template <typename TK>
-void init_dftu_lcao(const int istep,
-                     const int iter,
-                     int dft_plus_u,
-                     void* dftu,
-                     void* dm,
-                     const UnitCell& ucell,
-                     double** rho,
-                     const int nrxx)
+void init_dftu_lcao(int dft_plus_u,
+                    void* dftu,
+                    const UnitCell& ucell,
+                    double** rho,
+                    const int nrxx,
+                    const LCAO_Orbitals* orb)
 {
     if (!dft_plus_u)
     {
         return;
     }
-    
-    auto* dftu_ptr = static_cast<Plus_U*>(dftu);
-    auto* dm_ptr = static_cast<elecstate::DensityMatrix<TK, double>*>(dm);
-    
-    if (istep != 0 || iter != 1)
-    {
-        dftu_ptr->set_dmr(dm_ptr);
-    }
-    
+
+    auto* dftu_ptr = static_cast<Plus_U_Base*>(dftu);
+
     /// Calculate U and J if Yukawa potential is used
     if (dftu_ptr->use_yukawa())
     {
-        dftu_ptr->yukawa().cal_slater_UJ(ucell, rho, nrxx, PARAM.inp.nspin, dftu_ptr->get_ptr_orb());
+        dftu_ptr->yukawa().cal_slater_UJ(ucell, rho, nrxx, PARAM.inp.nspin, orb);
         // update current U with calculated U-J from Slater integrals
         for (int it = 0; it < ucell.ntype; it++)
         {
@@ -49,8 +39,7 @@ void init_dftu_lcao(const int istep,
 }
 
 template <typename TK>
-void finish_dftu_lcao(const int iter,
-                       const bool conv_esolver,
+void finish_dftu_lcao(const bool conv_esolver,
                        int dft_plus_u,
                        bool out_chg,
                        void* dftu,
@@ -69,7 +58,7 @@ void finish_dftu_lcao(const int iter,
         return;
     }
 
-    auto* dftu_ptr = static_cast<Plus_U*>(dftu);
+    auto* dftu_ptr = static_cast<Plus_U_Base*>(dftu);
     auto* hamilt_lcao_ptr = static_cast<hamilt::HamiltLCAO<TK, double>*>(hamilt_lcao);
 
     /// old DFT+U method calculates energy correction in esolver,
@@ -78,11 +67,11 @@ void finish_dftu_lcao(const int iter,
     {
         if (dftu_ptr->get_occ_mat_ctrl() != 2)
         {
-            DFTU_LCAO::cal_occ_mat(hamilt_lcao_ptr->getHR()->get_paraV(), iter, ucell, dm_vec, kv, mixing_beta,
+            DFTU_LCAO::cal_occ_mat(hamilt_lcao_ptr->getHR()->get_paraV(), ucell, dm_vec, kv, mixing_beta,
                                    static_cast<hamilt::Hamilt<TK>*>(hamilt_lcao_ptr), *dftu_ptr,
-                                   gamma_only_local, nspin);
+                                   gamma_only_local, nspin, PARAM.inp.ks_solver);
         }
-        DFTU_LCAO::cal_energy_correction(*dftu_ptr, ucell);
+        DFTU_LCAO::cal_energy_correction(*dftu_ptr, ucell, PARAM.inp.nspin, ucell.get_npol());
     }
     DFTU_BASE::output(*dftu_ptr, ucell, out_chg, global_out_dir, nspin, npol);
     
@@ -94,26 +83,7 @@ void finish_dftu_lcao(const int iter,
 }
 
 /// Template instantiation
-template void init_dftu_lcao<double>(const int istep,
-                                      const int iter,
-                                      int dft_plus_u,
-                                      void* dftu,
-                                      void* dm,
-                                      const UnitCell& ucell,
-                                      double** rho,
-                                      const int nrxx);
-
-template void init_dftu_lcao<std::complex<double>>(const int istep,
-                                                    const int iter,
-                                                    int dft_plus_u,
-                                                    void* dftu,
-                                                    void* dm,
-                                                    const UnitCell& ucell,
-                                                    double** rho,
-                                                    const int nrxx);
-
-template void finish_dftu_lcao<double>(const int iter,
-                                        const bool conv_esolver,
+template void finish_dftu_lcao<double>(const bool conv_esolver,
                                         int dft_plus_u,
                                         bool out_chg,
                                         void* dftu,
@@ -127,8 +97,7 @@ template void finish_dftu_lcao<double>(const int iter,
                                         int npol,
                                         const bool gamma_only_local);
 
-template void finish_dftu_lcao<std::complex<double>>(const int iter,
-                                                      const bool conv_esolver,
+template void finish_dftu_lcao<std::complex<double>>(const bool conv_esolver,
                                                       int dft_plus_u,
                                                       bool out_chg,
                                                       void* dftu,

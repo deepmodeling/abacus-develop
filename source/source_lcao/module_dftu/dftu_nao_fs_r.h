@@ -38,13 +38,16 @@
 
 namespace hamilt
 {
-
 // Forward declarations to avoid circular dependency with dftu_lcao_op.h
 template <typename TK, typename TR>
 class OperatorLCAO;
 
 template <typename T>
 class DFTU;
+} // namespace hamilt
+
+namespace DFTU_LCAO
+{
 
 /**
  * @brief Calculate DFT+U force and stress in real space (unified for gamma-only and multik)
@@ -58,22 +61,22 @@ class DFTU;
  *       and two-center integrals <phi|chi> computed by TwoCenterIntegrator. It is
  *       independent of k-point sampling because DMR already contains the BZ integration.
  *
- * @param dftu_op     [in] pointer to the DFTU operator object (for accessing ucell, dftu, intor_)
+ * @param dftu_op     [in] pointer to the DFTU operator object (for accessing ucell, dftu, intor_ and DMR)
  * @param cal_force   [in] whether to compute force
  * @param cal_stress  [in] whether to compute stress
  * @param force       [out] force matrix (nat, 3), accumulated
  * @param stress      [out] stress matrix (3, 3), accumulated
  *
- * @warning The density matrix must be set via Plus_U::set_dmr() before calling this.
+ * @warning DMR is read through the solver-owned DensityMatrix held by the DFTU operator.
  *          If get_dmr(0) returns nullptr, the function aborts with WARNING_QUIT.
  */
 template <typename TK, typename TR>
-void cal_fs_nao_r(DFTU<OperatorLCAO<TK, TR>>* dftu_op,
+void cal_fs_nao_r(hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>* dftu_op,
                         const bool cal_force,
                         const bool cal_stress,
                         ModuleBase::matrix& force,
                         ModuleBase::matrix& stress);
 
-} // namespace hamilt
+} // namespace DFTU_LCAO
 
 #endif // DFTU_NAO_FS_R_H

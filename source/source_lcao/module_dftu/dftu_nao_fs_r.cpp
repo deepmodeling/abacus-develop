@@ -10,30 +10,29 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 
-namespace hamilt
+namespace DFTU_LCAO
 {
 
 template <typename TK, typename TR>
-void cal_fs_nao_r(DFTU<OperatorLCAO<TK, TR>>* dftu_op,
+void cal_fs_nao_r(hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>* dftu_op,
                         const bool cal_force,
                         const bool cal_stress,
                         ModuleBase::matrix& force,
                         ModuleBase::matrix& stress)
 {
     ModuleBase::TITLE("DFTU", "cal_fs_nao_r");
-    const Plus_U* dftu = static_cast<const Plus_U*>(dftu_op->get_dftu());
-    if (dftu->get_dmr(0) == nullptr)
+    if (dftu_op->get_dmr(0) == nullptr)
     {
         ModuleBase::WARNING_QUIT("DFTU", "dmr is not set");
     }
 
     // try to get the density matrix, if the density matrix is empty, skip the calculation and return
     std::vector<const hamilt::HContainer<double>*> dmR_tmp(dftu_op->get_nspin(), nullptr);
-    dmR_tmp[0] = dftu->get_dmr(0);
+    dmR_tmp[0] = dftu_op->get_dmr(0);
 
     if (dftu_op->get_nspin() == 2)
     {
-        dmR_tmp[1] = dftu->get_dmr(1);
+        dmR_tmp[1] = dftu_op->get_dmr(1);
     }
     if (dmR_tmp[0]->size_atom_pairs() == 0)
     {
@@ -194,7 +193,7 @@ void cal_fs_nao_r(DFTU<OperatorLCAO<TK, TR>>* dftu_op,
                         // calculate force
                         if (cal_force)
                         {
-                            cal_for_IJR_nao_r(dftu_op, iat1, iat2, pv,
+                            cal_for_IJR_nao_r(iat1, iat2, pv,
                                             nlm_tot[ad1], nlm_tot[ad2],
                                             pot_onsite, tmp.data(), dftu_op->get_nspin(),
                                             force_tmp1, force_tmp2);
@@ -203,7 +202,7 @@ void cal_fs_nao_r(DFTU<OperatorLCAO<TK, TR>>* dftu_op,
                         // calculate stress
                         if (cal_stress)
                         {
-                            cal_str_IJR_nao_r(dftu_op, iat1, iat2, pv,
+                            cal_str_IJR_nao_r(iat1, iat2, pv,
                                              nlm_tot[ad1], nlm_tot[ad2],
                                              pot_onsite, tmp.data(), dftu_op->get_nspin(),
                                              dis1, dis2, stress_local.data());
@@ -267,18 +266,18 @@ void cal_fs_nao_r(DFTU<OperatorLCAO<TK, TR>>* dftu_op,
 
 // explicit template instantiation
 template void cal_fs_nao_r<double, double>(
-    DFTU<OperatorLCAO<double, double>>* dftu_op,
+    hamilt::DFTU<hamilt::OperatorLCAO<double, double>>* dftu_op,
     const bool cal_force, const bool cal_stress,
     ModuleBase::matrix& force, ModuleBase::matrix& stress);
 
 template void cal_fs_nao_r<std::complex<double>, double>(
-    DFTU<OperatorLCAO<std::complex<double>, double>>* dftu_op,
+    hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, double>>* dftu_op,
     const bool cal_force, const bool cal_stress,
     ModuleBase::matrix& force, ModuleBase::matrix& stress);
 
 template void cal_fs_nao_r<std::complex<double>, std::complex<double>>(
-    DFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>* dftu_op,
+    hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>* dftu_op,
     const bool cal_force, const bool cal_stress,
     ModuleBase::matrix& force, ModuleBase::matrix& stress);
 
-} // namespace hamilt
+} // namespace DFTU_LCAO

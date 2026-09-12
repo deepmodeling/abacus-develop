@@ -20,6 +20,20 @@
 
 namespace DFTU_LCAO {
 
+/// @brief Shared context for the folding helpers. Bundles the read-only
+///        parameters that every folding variant needs (npol, ks_solver,
+///        orbital cutoffs, unit cell, parallel-orbitals descriptor, and
+///        the grid driver) so the per-call signatures stay small.
+struct FoldingCtx
+{
+    int npol;
+    std::string ks_solver;
+    std::vector<double> orb_cutoff;
+    const UnitCell* ucell;
+    const Parallel_Orbitals* pv;
+    const Grid_Driver* gd;
+};
+
 /// @brief Judge whether atom pair (T1,I1) and (T2,I2,tau2) are adjacent
 ///        by direct orbital cutoff overlap or three-body bridging via a
 ///        common nonlocal projector center T0.
@@ -43,12 +57,7 @@ int get_linear_index(const std::string& ks_solver,
 /// @brief Fold the dSR matrix for gamma-only calculations.
 ///        npol is the spin-polarization factor; orb_cutoff and ks_solver
 ///        are forwarded to is_adjacent_pair and get_linear_index.
-void fold_dSR_gamma(int npol,
-                    const std::string& ks_solver,
-                    const std::vector<double>& orb_cutoff,
-                    const UnitCell& ucell,
-                    const Parallel_Orbitals& pv,
-                    const Grid_Driver* gd,
+void fold_dSR_gamma(const FoldingCtx& ctx,
                     double* dsloc_x,
                     double* dsloc_y,
                     double* dsloc_z,
@@ -60,13 +69,8 @@ void fold_dSR_gamma(int npol,
 // dim1 = 0 : S, for Hamiltonian
 // dim1 = 1-3 : dS, for force
 // dim1 = 4-6 : dS * dR, for stress
-void folding_matrix_k(int npol,
-                      const std::string& ks_solver,
-                      const std::vector<double>& orb_cutoff,
-                      const UnitCell& ucell,
-                      const Grid_Driver& gd,
+void folding_matrix_k(const FoldingCtx& ctx,
                       ForceStressArrays& fsr,
-                      const Parallel_Orbitals& pv,
                       int ik,
                       int dim1,
                       int dim2,

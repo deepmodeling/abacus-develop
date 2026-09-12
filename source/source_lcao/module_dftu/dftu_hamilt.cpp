@@ -1,4 +1,4 @@
-#include "dftu_nao.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "dftu_hamilt.h"
 #include "dftu_nao_pots.h"
 #include "source_base/global_function.h"

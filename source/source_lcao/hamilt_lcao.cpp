@@ -3,7 +3,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
-#include "source_lcao/module_dftu/dftu_nao.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_lcao/setup_exx.h"
 #include "source_lcao/setup_deepks.h"
 #include "source_estate/module_dm/density_matrix.h"
@@ -243,7 +243,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                                       orb.cutoffs(),
                                                       p_dftu,
                                                       PARAM.inp.nspin,
-                                                      PARAM.inp.onsite_radius);
+                                                      PARAM.inp.onsite_radius,
+                                                      DM_in);
             }
             this->getOperator()->add(plus_u);
         }
@@ -403,7 +404,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                                       orb.cutoffs(),
                                                       p_dftu,
                                                       PARAM.inp.nspin,
-                                                      PARAM.inp.onsite_radius);
+                                                      PARAM.inp.onsite_radius,
+                                                      DM_in);
             }
             this->getOperator()->add(plus_u);
         }

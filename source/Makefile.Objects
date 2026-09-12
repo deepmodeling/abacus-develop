@@ -916,8 +916,7 @@ OBJS_VDW=vdw.o\
     vdwd3_evaluator.o\
     vdw_xcname.o
 
-OBJS_DFTU=dftu_nao.o\
-      dftu_nao_fs_k.o\
+OBJS_DFTU=dftu_nao_fs_k.o\
       dftu_nao_for_r.o\
       dftu_nao_fs_r.o\
       dftu_nao_str_r.o\

@@ -28,7 +28,7 @@ Plus_U_Base::~Plus_U_Base()
 
 
 // init_base: base-only initialization shared by PW and LCAO paths.
-// LCAO-specific setup (paraV, orb, ucell pointer) stays in Plus_U::init().
+// LCAO callers validate the paraV square-matrix invariant before calling.
 void Plus_U_Base::init_base(UnitCell& cell,
                              const int npol,
                              const int nspin,

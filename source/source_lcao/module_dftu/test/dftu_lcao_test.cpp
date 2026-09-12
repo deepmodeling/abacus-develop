@@ -3,20 +3,11 @@
 
 // mock of DFTU
 #include "../dftu_nao_op.h"
-#include "source_lcao/module_dftu/dftu_nao.h"
+#include "source_pw/module_pwdft/dftu_base.h"
+#include "source_estate/module_dm/density_matrix.h"
 
-Plus_U::Plus_U(){};
-Plus_U::~Plus_U(){};
-
-Plus_U dftu;
+Plus_U_Base dftu;
 // Static member definitions are in dftu_base.cpp (Plus_U_Base::)
-
-const hamilt::HContainer<double>* tmp_DMR;
-
-const hamilt::HContainer<double>* Plus_U::get_dmr(int ispin) const
-{
-    return tmp_DMR;
-}
 
 //---------------------------------------
 // Unit test of Plus_U class
@@ -77,9 +68,6 @@ class DFTUTest : public ::testing::Test
         init_parav();
         // set up a HContainer with ucell
         HR = new hamilt::HContainer<double>(ucell, paraV);
-        // initialize DMR and set default values of 1.0
-        DMR = new hamilt::HContainer<double>(*HR);
-        tmp_DMR = DMR;
 
         // setting of DFTU
         dftu.occmat().data().resize(test_size);
@@ -101,7 +89,6 @@ class DFTUTest : public ::testing::Test
     void TearDown() override
     {
         delete HR;
-        delete DMR;
         delete paraV;
         delete[] ucell.atoms;
     }
@@ -134,7 +121,6 @@ class DFTUTest : public ::testing::Test
 
     UnitCell ucell;
     hamilt::HContainer<double>* HR;
-    hamilt::HContainer<double>* DMR;
     Parallel_Orbitals* paraV;
     TwoCenterIntegrator intor_;
 
@@ -154,16 +140,26 @@ TEST_F(DFTUTest, constructHRd2d)
     hamilt::HS_Matrix_K<double> hsk(paraV, true);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
-    // reset HR and DMR
+    // build a solver-like density matrix: uniform DMK gives uniform DMR (= factor) at Gamma point
     const double factor = 1.0 / test_nw / test_nw / test_size / test_size;
-    for (int i = 0; i < DMR->get_nnr(); i++)
+    elecstate::DensityMatrix<double, double> dm(paraV, 1);
+    dm.init_DMR(*HR);
+    for (int i = 0; i < paraV->nrow; i++)
     {
-        DMR->get_wrapper()[i] = factor;
+        for (int j = 0; j < paraV->ncol; j++)
+        {
+            dm.set_DMK(1, 0, i, j, factor);
+        }
+    }
+    dm.cal_DMR();
+    // reset HR
+    for (int i = 0; i < HR->get_nnr(); i++)
+    {
         HR->get_wrapper()[i] = 0.0;
     }
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     hamilt::DFTU<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu, nspin, onsite_radius_test);
+        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu, nspin, onsite_radius_test, &dm);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time
         = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
@@ -220,15 +216,29 @@ TEST_F(DFTUTest, constructHRd2cd)
     hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, true);
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
-    // reset HR and DMR
+    // build a solver-like density matrix: uniform DMK gives uniform DMR (= factor) at Gamma point
     const double factor = 0.5 / test_nw / test_nw / test_size / test_size;
-    for (int i = 0; i < DMR->get_nnr(); i++)
+    std::vector<ModuleBase::Vector3<double>> kvec_d_dm(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    elecstate::DensityMatrix<std::complex<double>, double> dm(paraV, 2, kvec_d_dm, 1);
+    dm.init_DMR(*HR);
+    for (int is = 1; is <= 2; ++is)
     {
-        DMR->get_wrapper()[i] = factor;
+        for (int i = 0; i < paraV->nrow; i++)
+        {
+            for (int j = 0; j < paraV->ncol; j++)
+            {
+                dm.set_DMK(is, 0, i, j, std::complex<double>(factor, 0.0));
+            }
+        }
+    }
+    dm.cal_DMR();
+    // reset HR
+    for (int i = 0; i < HR->get_nnr(); i++)
+    {
         HR->get_wrapper()[i] = 0.0;
     }
     hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, double>>
-        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu, nspin, onsite_radius_test);
+        op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu, nspin, onsite_radius_test, &dm);
     op.contributeHR();
     // check the occupations of dftu for spin-up
     for (int iat = 0; iat < test_size; iat++)
