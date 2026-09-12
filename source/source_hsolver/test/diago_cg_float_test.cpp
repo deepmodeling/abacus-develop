@@ -152,7 +152,18 @@ class DiagoCGPrepare
             auto psi_in_wrapper = psi::Psi<std::complex<float>>(psi_in, 1, nband, ld_psi, true);
             auto psi_out_wrapper = psi::Psi<std::complex<float>>(psi_out, 1, nband, ld_psi, true);
             std::vector<float> eigen(nband, 0.0f);
-            hsolver::DiagoIterAssist<std::complex<float>>::diag_subspace(ha,
+            hsolver::DiagoIterAssist<std::complex<float>>::HPsiFunc sub_hpsi = [ha](std::complex<float>* p, std::complex<float>* hp, const int ld, const int cur_nbas, const int nvec) {
+                psi::Psi<std::complex<float>> w(p, 1, nvec, ld, cur_nbas);
+                psi::Range r(true, 0, 0, nvec - 1);
+                using hpsi_info = typename hamilt::Operator<std::complex<float>>::hpsi_info;
+                hpsi_info info(&w, r, hp);
+                ha->ops->hPsi(info);
+            };
+            hsolver::DiagoIterAssist<std::complex<float>>::SPsiFunc sub_spsi = [ha](const std::complex<float>* p, std::complex<float>* sp, const int nrow, const int npw, const int nb) {
+                ha->sPsi(p, sp, nrow, npw, nb);
+            };
+            hsolver::DiagoIterAssist<std::complex<float>>::diag_subspace(sub_hpsi,
+                                                                         sub_spsi,
                                                                          psi_in_wrapper,
                                                                          psi_out_wrapper,
                                                                          eigen.data(),

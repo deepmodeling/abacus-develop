@@ -1,5 +1,7 @@
 #include "psi_prepare.h"
 
+#include "source_hamilt/hamilt.h"
+
 #include "source_base/macros.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/parallel_device.h"
@@ -245,11 +247,29 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             if (this->ks_solver == "cg")
             {
                 std::vector<typename GetTypeReal<T>::type> etatom(nbands_start, 0.0);
+                /// An empty hpsi functor tells diag_subspace_init that the Hamiltonian
+                /// has no operators allocated yet, which used to be the ops == nullptr check.
+                typename hsolver::DiagoIterAssist<T, Device>::HPsiFunc hpsi_func;
+                if (p_hamilt->ops != nullptr)
+                {
+                    hpsi_func = [p_hamilt](T* psi_in, T* hpsi_out, const int ld_psi, const int current_nbasis, const int nvec) {
+                        Psi<T, Device> psi_wrapper(psi_in, 1, nvec, ld_psi, current_nbasis);
+                        Range bands_range(true, 0, 0, nvec - 1);
+                        using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+                        hpsi_info info(&psi_wrapper, bands_range, hpsi_out);
+                        p_hamilt->ops->hPsi(info);
+                    };
+                }
+                typename hsolver::DiagoIterAssist<T, Device>::SPsiFunc spsi_func
+                    = [p_hamilt](const T* psi_in, T* spsi_out, const int nrow, const int npw, const int nbands) {
+                          p_hamilt->sPsi(psi_in, spsi_out, nrow, npw, nbands);
+                      };
                 if (not_equal)
                 {
                     // for diagH_subspace_init, psi_device->get_pointer() and kspw_psi->get_pointer() should be
                     // different
-                    hsolver::DiagoIterAssist<T, Device>::diag_subspace_init(p_hamilt,
+                    hsolver::DiagoIterAssist<T, Device>::diag_subspace_init(hpsi_func,
+                                                                            spsi_func,
                                                                             psi_device->get_pointer(),
                                                                             nbands_start,
                                                                             nbasis,
@@ -262,7 +282,8 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                 else
                 {
                     // for diagH_subspace, psi_device->get_pointer() and kspw_psi->get_pointer() can be the same
-                    hsolver::DiagoIterAssist<T, Device>::diag_subspace(p_hamilt,
+                    hsolver::DiagoIterAssist<T, Device>::diag_subspace(hpsi_func,
+                                                                       spsi_func,
                                                                        *psi_device,
                                                                        *kspw_psi,
                                                                        etatom.data(),

@@ -7,6 +7,7 @@
 #include "source_base/tool_title.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_hsolver/diag_comm_info.h"
+#include "source_hamilt/hamilt.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_io/module_parameter/parameter.h"
@@ -184,7 +185,28 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     {
                         /// Compute H(k) and extract subspace matrices for this k-point
                         hamilt_t->updateHk(ik);
-                        hsolver::DiagoIterAssist<std::complex<double>>::cal_hs_subspace(hamilt_t,
+                        hsolver::DiagoIterAssist<std::complex<double>>::HPsiFunc hpsi_func
+                            = [hamilt_t](std::complex<double>* psi_in,
+                                         std::complex<double>* hpsi_out,
+                                         const int ld_psi,
+                                         const int current_nbasis,
+                                         const int nvec) {
+                                  psi::Psi<std::complex<double>, base_device::DEVICE_CPU> psi_wrapper(psi_in, 1, nvec, ld_psi, current_nbasis);
+                                  psi::Range bands_range(true, 0, 0, nvec - 1);
+                                  using hpsi_info = typename hamilt::Operator<std::complex<double>, base_device::DEVICE_CPU>::hpsi_info;
+                                  hpsi_info info(&psi_wrapper, bands_range, hpsi_out);
+                                  hamilt_t->ops->hPsi(info);
+                              };
+                        hsolver::DiagoIterAssist<std::complex<double>>::SPsiFunc spsi_func
+                            = [hamilt_t](const std::complex<double>* psi_in,
+                                         std::complex<double>* spsi_out,
+                                         const int nrow,
+                                         const int npw,
+                                         const int nbands) {
+                                  hamilt_t->sPsi(psi_in, spsi_out, nrow, npw, nbands);
+                              };
+                        hsolver::DiagoIterAssist<std::complex<double>>::cal_hs_subspace(hpsi_func,
+                                                                                        spsi_func,
                                                                                         psi_t[0],
                                                                                         h_k,
                                                                                         s_k,
@@ -245,8 +267,29 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     if(initial_hs)
                     {
                         hamilt_t->updateHk(ik);
+                        hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::HPsiFunc hpsi_func
+                            = [hamilt_t](std::complex<double>* psi_in,
+                                         std::complex<double>* hpsi_out,
+                                         const int ld_psi,
+                                         const int current_nbasis,
+                                         const int nvec) {
+                                  psi::Psi<std::complex<double>, base_device::DEVICE_GPU> psi_wrapper(psi_in, 1, nvec, ld_psi, current_nbasis);
+                                  psi::Range bands_range(true, 0, 0, nvec - 1);
+                                  using hpsi_info = typename hamilt::Operator<std::complex<double>, base_device::DEVICE_GPU>::hpsi_info;
+                                  hpsi_info info(&psi_wrapper, bands_range, hpsi_out);
+                                  hamilt_t->ops->hPsi(info);
+                              };
+                        hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::SPsiFunc spsi_func
+                            = [hamilt_t](const std::complex<double>* psi_in,
+                                         std::complex<double>* spsi_out,
+                                         const int nrow,
+                                         const int npw,
+                                         const int nbands) {
+                                  hamilt_t->sPsi(psi_in, spsi_out, nrow, npw, nbands);
+                              };
                         hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::cal_hs_subspace(
-                            hamilt_t,
+                            hpsi_func,
+                            spsi_func,
                             psi_t[0],
                             h_k,
                             s_k,

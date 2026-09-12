@@ -155,7 +155,18 @@ public:
                   auto psi_in_wrapper = psi::Psi<double>(psi_in, 1, nband, ld_psi, true);
                   auto psi_out_wrapper = psi::Psi<double>(psi_out, 1, nband, ld_psi, true);
                   std::vector<double> eigen(nband, 0.0);
-                  hsolver::DiagoIterAssist<double>::diag_subspace(ha,
+                  hsolver::DiagoIterAssist<double>::HPsiFunc sub_hpsi = [ha](double* p, double* hp, const int ld, const int cur_nbas, const int nvec) {
+                      psi::Psi<double> w(p, 1, nvec, ld, cur_nbas);
+                      psi::Range r(true, 0, 0, nvec - 1);
+                      using hpsi_info = typename hamilt::Operator<double>::hpsi_info;
+                      hpsi_info info(&w, r, hp);
+                      ha->ops->hPsi(info);
+                  };
+                  hsolver::DiagoIterAssist<double>::SPsiFunc sub_spsi = [ha](const double* p, double* sp, const int nrow, const int npw, const int nb) {
+                      ha->sPsi(p, sp, nrow, npw, nb);
+                  };
+                  hsolver::DiagoIterAssist<double>::diag_subspace(sub_hpsi,
+                                                                  sub_spsi,
                                                                   psi_in_wrapper,
                                                                   psi_out_wrapper,
                                                                   eigen.data(),
