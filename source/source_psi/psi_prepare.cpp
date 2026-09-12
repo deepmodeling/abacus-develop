@@ -253,14 +253,14 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                 if (p_hamilt->ops != nullptr)
                 {
                     hpsi_func = [p_hamilt](T* psi_in, T* hpsi_out, const int ld_psi, const int current_nbasis, const int nvec) {
-                        auto psi_wrapper = Psi<T, Device>(psi_in, 1, nvec, ld_psi, current_nbasis);
+                        Psi<T, Device> psi_wrapper(psi_in, 1, nvec, ld_psi, current_nbasis);
                         Range bands_range(true, 0, 0, nvec - 1);
                         using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
                         hpsi_info info(&psi_wrapper, bands_range, hpsi_out);
                         p_hamilt->ops->hPsi(info);
                     };
                 }
-                auto spsi_func
+                typename hsolver::DiagoIterAssist<T, Device>::SPsiFunc spsi_func
                     = [p_hamilt](const T* psi_in, T* spsi_out, const int nrow, const int npw, const int nbands) {
                           p_hamilt->sPsi(psi_in, spsi_out, nrow, npw, nbands);
                       };

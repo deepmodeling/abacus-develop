@@ -147,14 +147,14 @@ class DiagoCGPrepare
             auto psi_in_wrapper = psi::Psi<std::complex<double>>(psi_in, 1, nband, ld_psi, true);
             auto psi_out_wrapper = psi::Psi<std::complex<double>>(psi_out, 1, nband, ld_psi, true);
             std::vector<double> eigen(nband, 0.0);
-            auto sub_hpsi = [ha](std::complex<double>* p, std::complex<double>* hp, const int ld, const int cur_nbas, const int nvec) {
-                auto w = psi::Psi<std::complex<double>>(p, 1, nvec, ld, cur_nbas);
+            hsolver::DiagoIterAssist<std::complex<double>>::HPsiFunc sub_hpsi = [ha](std::complex<double>* p, std::complex<double>* hp, const int ld, const int cur_nbas, const int nvec) {
+                psi::Psi<std::complex<double>> w(p, 1, nvec, ld, cur_nbas);
                 psi::Range r(true, 0, 0, nvec - 1);
                 using hpsi_info = typename hamilt::Operator<std::complex<double>>::hpsi_info;
                 hpsi_info info(&w, r, hp);
                 ha->ops->hPsi(info);
             };
-            auto sub_spsi = [ha](const std::complex<double>* p, std::complex<double>* sp, const int nrow, const int npw, const int nb) {
+            hsolver::DiagoIterAssist<std::complex<double>>::SPsiFunc sub_spsi = [ha](const std::complex<double>* p, std::complex<double>* sp, const int nrow, const int npw, const int nb) {
                 ha->sPsi(p, sp, nrow, npw, nb);
             };
             hsolver::DiagoIterAssist<std::complex<double>>::diag_subspace(sub_hpsi,

@@ -285,33 +285,34 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         // DiagoIterAssist drives more than one wavefunction layout through the
         // same functor, so it hands the dimensions over on every call instead of
         // relying on a captured set.
-        auto sub_hpsi_func
+        typename DiagoIterAssist<T, Device>::HPsiFunc sub_hpsi_func
             = [hm](T* psi_in, T* hpsi_out, const int ld_psi, const int current_nbasis, const int nvec) {
-                  auto psi_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, current_nbasis);
+                  psi::Psi<T, Device> psi_wrapper(psi_in, 1, nvec, ld_psi, current_nbasis);
                   psi::Range bands_range(true, 0, 0, nvec - 1);
                   using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
                   hpsi_info info(&psi_wrapper, bands_range, hpsi_out);
                   hm->ops->hPsi(info);
               };
-        auto sub_spsi_func
+        typename DiagoIterAssist<T, Device>::SPsiFunc sub_spsi_func
             = [hm](const T* psi_in, T* spsi_out, const int nrow, const int npw, const int nbands) {
                   hm->sPsi(psi_in, spsi_out, nrow, npw, nbands);
               };
-        auto subspace_func = [cur_nbasis, &comm_info, sub_hpsi_func, sub_spsi_func](T* psi_in,
-                                                                                    T* psi_out,
-                                                                                    const int ld_psi,
-                                                                                    const int nband,
-                                                                                    const bool S_orth) {
-            auto psi_in_wrapper = psi::Psi<T, Device>(psi_in, 1, nband, ld_psi, cur_nbasis);
-            auto psi_out_wrapper = psi::Psi<T, Device>(psi_out, 1, nband, ld_psi, cur_nbasis);
-            std::vector<Real> eigen(nband, 0.0);
-            DiagoIterAssist<T, Device>::diag_subspace(sub_hpsi_func,
-                                                      sub_spsi_func,
-                                                      psi_in_wrapper,
-                                                      psi_out_wrapper,
-                                                      eigen.data(),
-                                                      comm_info);
-        };
+        typename DiagoCG<T, Device>::SubspaceFunc subspace_func
+            = [cur_nbasis, &comm_info, sub_hpsi_func, sub_spsi_func](T* psi_in,
+                                                                     T* psi_out,
+                                                                     const int ld_psi,
+                                                                     const int nband,
+                                                                     const bool S_orth) {
+                  psi::Psi<T, Device> psi_in_wrapper(psi_in, 1, nband, ld_psi, cur_nbasis);
+                  psi::Psi<T, Device> psi_out_wrapper(psi_out, 1, nband, ld_psi, cur_nbasis);
+                  std::vector<Real> eigen(nband, 0.0);
+                  DiagoIterAssist<T, Device>::diag_subspace(sub_hpsi_func,
+                                                            sub_spsi_func,
+                                                            psi_in_wrapper,
+                                                            psi_out_wrapper,
+                                                            eigen.data(),
+                                                            comm_info);
+              };
         DiagoCG<T, Device> cg(this->basis_type,
                               this->calculation_type,
                               this->need_subspace,

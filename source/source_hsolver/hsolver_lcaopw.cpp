@@ -75,16 +75,17 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
         if (pHamilt->ops != nullptr)
         {
             hpsi_func = [pHamilt](T* psi_in, T* hpsi_out, const int ld_psi, const int current_nbasis, const int nvec) {
-                auto psi_wrapper = psi::Psi<T>(psi_in, 1, nvec, ld_psi, current_nbasis);
+                psi::Psi<T> psi_wrapper(psi_in, 1, nvec, ld_psi, current_nbasis);
                 psi::Range bands_range(true, 0, 0, nvec - 1);
                 using hpsi_info = typename hamilt::Operator<T>::hpsi_info;
                 hpsi_info info(&psi_wrapper, bands_range, hpsi_out);
                 pHamilt->ops->hPsi(info);
             };
         }
-        auto spsi_func = [pHamilt](const T* psi_in, T* spsi_out, const int nrow, const int npw, const int nbands) {
-            pHamilt->sPsi(psi_in, spsi_out, nrow, npw, nbands);
-        };
+        typename hsolver::DiagoIterAssist<T>::SPsiFunc spsi_func
+            = [pHamilt](const T* psi_in, T* spsi_out, const int nrow, const int npw, const int nbands) {
+                  pHamilt->sPsi(psi_in, spsi_out, nrow, npw, nbands);
+              };
 
         /// solve eigenvector and eigenvalue for H(k)
         hsolver::DiagoIterAssist<T>::diag_subspace_init(hpsi_func,
