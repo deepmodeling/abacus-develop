@@ -34,12 +34,12 @@ MSST::~MSST()
 {
 }
 
-void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
+void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
 {
     ModuleBase::TITLE("MSST", "setup");
     ModuleBase::timer::start("MSST", "setup");
 
-    MD_base::setup(p_esolver, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir, decomp);
     if (mdcell.has_backing_unitcell())
     {
         mdcell.backing_unitcell().cell_parameter_updated = true;
@@ -62,7 +62,7 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
 
             std::cout << "initial strain rate = " << fac2 << "    msst_tscale = " << mdp.msst_tscale << std::endl;
 
-            for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.vel *= sqrt(1.0 - mdp.msst_tscale);
+            for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel *= sqrt(1.0 - mdp.msst_tscale);
         }
 
         MD_func::compute_stress(mdcell, cal_stress, virial, stress);
@@ -91,7 +91,7 @@ void MSST::first_half(std::ofstream& ofs)
 
     /// save the velocities
     old_v.resize(mdcell.owned_atoms().size());
-    for (int i = 0; i < mdcell.nowned_atoms(); ++i)
+    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
         old_v[static_cast<std::size_t>(i)] = mdcell.owned_atoms()[static_cast<std::size_t>(i)].vel;
     }
@@ -102,9 +102,9 @@ void MSST::first_half(std::ofstream& ofs)
     vsum = vel_sum();
 
     /// reset the velocities
-    for (int i = 0; i < mdcell.nowned_atoms(); ++i)
+    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        mdcell.mutable_owned_atoms()[static_cast<std::size_t>(i)].vel = old_v[static_cast<std::size_t>(i)];
+        mdcell.owned_atoms()[static_cast<std::size_t>(i)].vel = old_v[static_cast<std::size_t>(i)];
     }
 
     /// propagate velocities 1/2 step using the new velocity sum
@@ -265,7 +265,7 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
     mdcell.refresh_cart_from_frac();
 
     /// rescale velocity
-    for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.vel[sd] *= dilation[sd];
+    for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel[sd] *= dilation[sd];
     static_cast<void>(ofs);
 }
 
@@ -276,7 +276,7 @@ void MSST::propagate_vel()
     const double dthalf = 0.5 * md_dt;
     const double fac = msst_vis * pow(omega[sd], 2) / (vsum * mdcell.omega());
 
-    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+    for (LocalAtom& atom : mdcell.owned_atoms())
     {
         ModuleBase::Vector3<double> const_C = atom.force / atom.mass;
         ModuleBase::Vector3<double> const_D;

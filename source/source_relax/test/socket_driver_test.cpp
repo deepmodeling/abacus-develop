@@ -227,7 +227,7 @@ class FakeESolver : public ModuleESolver::ESolver
 
     void cal_force(BaseCell& cell, ModuleBase::matrix& force) override
     {
-        force.create(cell.nat(), 3);
+        force.create(dynamic_cast<UnitCell&>(cell).nat, 3);
         force(0, 0) = 4.0 + 2.0 * position_;
     }
 

@@ -1,3 +1,4 @@
+#include "source_cell/module_neighlist/domain_decomposition.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
@@ -41,6 +42,7 @@ class Langevin_test : public testing::Test
     MD_base* mdrun;
     UnitCell ucell;
     MDCell mdcell;
+    DomainDecomposition decomp;
     Parameter param_in;
     ModuleESolver::ESolver* p_esolver;
 
@@ -51,9 +53,10 @@ class Langevin_test : public testing::Test
 
         p_esolver = new ModuleESolver::ESolver_LJ();
         mdcell = Setcell::setup_mdcell(ucell);
+        decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
         p_esolver->before_all_runners(mdcell, param_in.inp);
         mdrun = new Langevin(param_in, mdcell);
-        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
+        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir, decomp);
     }
 
     void TearDown()

@@ -7,6 +7,8 @@
 
 #include <cstdint>
 
+class DomainDecomposition;
+
 /**
  * @brief base class of md
  *
@@ -27,7 +29,7 @@ class MD_base
      * @param p_esolver the energy solver used in md
      * @param global_readin_dir directory of files for reading
      */
-    virtual void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+    virtual void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp);
 
     /**
      * @brief the first half of equation of motion, update velocities and

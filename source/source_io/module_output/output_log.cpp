@@ -299,7 +299,7 @@ void print_force(std::ofstream& ofs, const MDCell& cell, const std::string& name
     MPI_Comm_size(cell.communicator(), &size);
     if (rank != 0)
     {
-        const int nowned_atoms = cell.nowned_atoms();
+        const int nowned_atoms = cell.owned_atoms().size();
         MPI_Send(&nowned_atoms, 1, MPI_INT, 0, 0, cell.communicator());
         for (const LocalAtom& atom : owned_atoms)
         {

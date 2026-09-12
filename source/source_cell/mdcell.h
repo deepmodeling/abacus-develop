@@ -4,9 +4,10 @@
 #include "source_cell/basecell.h"
 #include "source_cell/strumeta.h"
 #include "source_cell/module_neighlist/local_atom.h"
+#include "source_base/matrix3.h"
 
 #ifdef __MPI
-#include "source_cell/module_neighlist/domain_decomposition.h"
+#include <mpi.h>
 #endif
 
 #include <string>
@@ -15,7 +16,13 @@
 #include <vector>
 
 class UnitCell;
+class MDCell;
 class NeighborSearch;
+class DomainDecomposition;
+namespace Run_MD
+{
+void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);
+}
 namespace ModuleBase
 {
 class CommunicationDomain;
@@ -26,14 +33,11 @@ class MDCell : public BaseCell
 public:
     MDCell();
     ~MDCell();
+    MDCell(MDCell&&);
     MDCell(const MDCell&) = delete;
     MDCell& operator=(const MDCell&) = delete;
-    MDCell(MDCell&&);
     MDCell& operator=(MDCell&&);
 
-    void initialize_from_unitcell(UnitCell& ucell,
-                                  double skin,
-                                  const ModuleBase::CommunicationDomain& comm_domain);
     void initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
                                      const ModuleBase::Matrix3& gt,
                                      double lat0,
@@ -46,43 +50,39 @@ public:
                                      double skin,
                                      const ModuleBase::CommunicationDomain& comm_domain);
 
-    void initialize_neighbors(double cutoff);
+    void set_neighbor_cutoff(double cutoff);
 
-#ifdef __MPI
-    int mpi_rank() const;
-    int mpi_size() const;
-    MPI_Comm communicator() const { return comm_; }
-
-#endif
-
-    void exchange_ghost_atoms();
-    void accumulate_ghost_forces();
-    void migrate_owned_atoms();
-    void prepare_neighbors();
     bool has_neighbor_search() const;
     const NeighborSearch& neighbor_search() const;
     void set_lattice_vectors(const ModuleBase::Matrix3& latvec);
     void refresh_cart_from_frac();
+    void sync_backing_unitcell();
 
+    std::vector<LocalAtom>& owned_atoms() { return owned_atoms_; }
     const std::vector<LocalAtom>& owned_atoms() const { return owned_atoms_; }
-    const std::vector<LocalAtom>& ghost_atoms() const;
+    std::vector<LocalAtom>& ghost_atoms() { return ghost_atoms_; }
+    const std::vector<LocalAtom>& ghost_atoms() const { return ghost_atoms_; }
     const std::vector<std::string>& type_labels() const { return type_labels_; }
     const std::vector<double>& type_masses() const { return type_masses_; }
     const std::vector<std::int64_t>& type_atom_counts() const { return type_atom_counts_; }
     StruMeta& mutable_stru_meta() { return stru_meta_; }
     const StruMeta& stru_meta() const { return stru_meta_; }
-    std::vector<LocalAtom>& mutable_owned_atoms();
-    std::vector<LocalAtom>& mutable_ghost_atoms();
-
     int nowned_atoms() const { return static_cast<int>(owned_atoms_.size()); }
     int nghost() const { return static_cast<int>(ghost_atoms_.size()); }
-    double cutoff() const;
-    bool has_backing_unitcell() const;
+    double cutoff() const { return cutoff_; }
+    bool has_backing_unitcell() const { return backing_unitcell_ != nullptr; }
+    void set_backing_unitcell(UnitCell& ucell);
     UnitCell& backing_unitcell();
     const UnitCell& backing_unitcell() const;
-    void sync_backing_unitcell();
+
+#ifdef __MPI
+    int mpi_rank() const;
+    int mpi_size() const;
+    MPI_Comm communicator() const { return comm_; }
+#endif
 
 private:
+    friend void Run_MD::prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);
     Kind get_kind() const override;
     std::int64_t get_nat() const override;
     double get_lat0() const override;
@@ -90,8 +90,8 @@ private:
     const ModuleBase::Matrix3& get_latvec() const override;
     const ModuleBase::Matrix3& get_GT() const override;
 
+    friend class DomainDecomposition;
     void sync_backing_unitcell_geometry_();
-    void sync_backing_unitcell_owned_atoms_();
     void clear_forces_(std::vector<LocalAtom>& atoms);
     static double wrap_fractional_(double value);
 
@@ -106,18 +106,18 @@ private:
     std::vector<double> type_masses_;
     std::vector<std::int64_t> type_atom_counts_;
     StruMeta stru_meta_;
+    UnitCell* backing_unitcell_ = nullptr;
+
     double cutoff_ = 0.0;
     double skin_ = 0.0;
     std::unique_ptr<NeighborSearch> neighbor_search_;
     std::vector<ModuleBase::Vector3<double> > neighbor_reference_frac_;
     bool neighbor_layout_valid_ = false;
-    UnitCell* backing_unitcell_ = nullptr;
 
 #ifdef __MPI
     MPI_Comm comm_ = MPI_COMM_NULL;
     int rank_ = 0;
     int size_ = 1;
-    DomainDecomposition decomp_;
 #endif
 };
 
