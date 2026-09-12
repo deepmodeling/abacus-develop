@@ -28,7 +28,8 @@
  * Computes the DeltaSpin correction to the subspace Hamiltonian:
  *   H_corrected = H_original + becp^† * delta_lambda * becp
  *
- * For npol=2 (non-collinear), the 2x2 Pauli matrix coefficients are:
+ * For npol=2 (non-collinear), coefficients use the spin-block order
+ * {up-up, down-up, up-down, down-down}:
  *   coeff0 = (lambda_z, 0)        coeff1 = (lambda_x, lambda_y)
  *   coeff2 = (lambda_x, -lambda_y) coeff3 = (-lambda_z, 0)
  * Applied as: ps_up = coeff0 * becp_up + coeff2 * becp_dn
