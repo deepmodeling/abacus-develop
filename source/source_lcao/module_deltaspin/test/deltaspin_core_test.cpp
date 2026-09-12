@@ -120,8 +120,8 @@ TEST(PauliConventionTest, LambdaExpectationMatchesDotMoment)
 // 2. calculate_delta_hcc: Pauli matrix expansion
 //
 // npol=2: H += becp^H * lambda * becp
-//   lambda in Pauli basis: |lambda_z    lambda_x+i*lambda_y|
-//                          |lambda_x-i*lambda_y   -lambda_z |
+//   lambda in Pauli basis: |lambda_z                lambda_x-i*lambda_y|
+//                          |lambda_x+i*lambda_y     -lambda_z           |
 //
 // npol=1: H += becp^H * lambda_z * sign * becp
 // =====================================================================

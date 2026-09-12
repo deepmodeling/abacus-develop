@@ -31,7 +31,8 @@ TEST_F(DeltaSpinPwTest, DeltaHcc_Npol2_SingleAtom)
     // npol=2: for each (ib, ip):
     //   ps[becpind]      += coeff0 * becp1 + coeff2 * becp2
     //   ps[becpind+nkb]  += coeff1 * becp1 + coeff3 * becp2
-    // where coeff0 = (lambda_z, 0), coeff1 = (lambda_x, lambda_y),
+    // Coefficients use {up-up, down-up, up-down, down-down} order:
+    //       coeff0 = (lambda_z, 0), coeff1 = (lambda_x, lambda_y),
     //       coeff2 = (lambda_x, -lambda_y), coeff3 = (-lambda_z, 0)
 
     const int nat = 1;

@@ -42,14 +42,14 @@ inline std::array<std::complex<double>, 4> pauli_vector_to_spinor(const ModuleBa
 /**
  * @brief Convert spinor occupation matrix to magnetic moment vector using Pauli matrices.
  *
- * @details For a two-component spinor wavefunction, the spin density matrix is:
- *   rho = |a|^2    a*b  |   = | (1+Mz)/2    (Mx-iMy)/2 |
- *         |b*a    |b|^2  |     | (Mx+iMy)/2   (1-Mz)/2  |
- * The magnetic moment components are extracted via Pauli matrix traces:
- *   Mx = Tr(rho * sigma_x) = occ[1] + occ[2]           (real part)
- *   My = Tr(rho * sigma_y) = -Im(occ[1] - occ[2])      (from sigma_y = [[0,-i],[i,0]])
- *   Mz = Tr(rho * sigma_z) = occ[0] - occ[3]            (real part)
- * where occ = {|a|^2, a*b, b*a, |b|^2} from becp coefficients.
+ * @details For a two-component spinor wavefunction, the occupation array is:
+ *   occ = |a|^2    a^*b  |   = | (1+Mz)/2    (Mx+iMy)/2 |
+ *         |b^*a    |b|^2 |     | (Mx-iMy)/2   (1-Mz)/2  |
+ * In this bra-first storage convention, the magnetic moment components are:
+ *   Mx = occ[1] + occ[2]           (real part)
+ *   My = Im(occ[1] - occ[2])
+ *   Mz = occ[0] - occ[3]           (real part)
+ * where occ = {|a|^2, a^*b, b^*a, |b|^2} from becp coefficients.
  *
  * @param occ 4-element array of occupation matrix elements (complex)
  * @param weight k-point weight for integration
