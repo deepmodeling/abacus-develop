@@ -149,9 +149,34 @@ AddTest(
   SOURCES sternheimer_fd_solver_test.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_preconditioner.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_kq.cpp ../sternheimer_rpa.cpp
 )
 AddTest(
+  TARGET MODULE_RI_sternheimer_grid_transfer_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_grid_transfer_test.cpp ../sternheimer_grid_transfer.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_kq.cpp
+)
+AddTest(
+  TARGET MODULE_RI_sternheimer_galerkin_operator_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_galerkin_operator_test.cpp ../sternheimer_galerkin_operator.cpp ../sternheimer_grid_transfer.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_kq.cpp
+)
+AddTest(
   TARGET MODULE_RI_sternheimer_delta_test
   LIBS ${STERNHEIMER_RPA_TEST_LIBS}
   SOURCES sternheimer_delta_test.cpp ../sternheimer_delta.cpp ../sternheimer_kq.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_preconditioner.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_rpa.cpp ../../../source_base/module_external/blas_connector_matrix.cpp
+)
+AddTest(
+  TARGET MODULE_RI_sternheimer_galerkin_audit_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_galerkin_audit_test.cpp ../sternheimer_galerkin_audit.cpp ../sternheimer_galerkin_operator.cpp ../sternheimer_grid_transfer.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_kq.cpp ../../../source_base/module_external/blas_connector_matrix.cpp
+)
+AddTest(
+  TARGET MODULE_RI_sternheimer_weak_grid_test
+  LIBS ${STERNHEIMER_RPA_TEST_LIBS}
+  SOURCES sternheimer_weak_grid_test.cpp ../sternheimer_weak_grid.cpp ../sternheimer_grid_transfer.cpp ../sternheimer_delta.cpp ../sternheimer_kq.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_preconditioner.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_rpa.cpp ../../../source_base/module_external/blas_connector_matrix.cpp
+)
+AddTest(
+  TARGET MODULE_RI_sternheimer_weak_augmented_test
+  LIBS ${STERNHEIMER_RPA_TEST_LIBS}
+  SOURCES sternheimer_weak_augmented_test.cpp ../sternheimer_weak_augmented.cpp ../sternheimer_rpa.cpp ../../../source_base/module_external/blas_connector_matrix.cpp
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_grid_diagnostics_test

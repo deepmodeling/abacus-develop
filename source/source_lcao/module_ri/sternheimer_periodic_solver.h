@@ -4,8 +4,26 @@
 #include "source_lcao/module_ri/sternheimer_delta.h"
 #include "source_lcao/module_ri/sternheimer_fd_solver.h"
 
+#include <stdexcept>
+#include <string>
+
 namespace ModuleRI
 {
+
+class SternheimerExcitationError : public std::runtime_error
+{
+  public:
+    using std::runtime_error::runtime_error;
+};
+
+// Validate one periodic k/k+q pair using all source occupied energies in Ry.
+// Return the positive minimum excitation, or throw without modifying inputs.
+// The caller supplies grid/k-pair context and handles fatal process termination;
+// workers without an owned pair must not call this with empty placeholder data.
+double require_positive_periodic_delta_excitations(
+    const std::vector<SternheimerDeltaVirtualState>& target_states,
+    const std::vector<double>& source_occupied_eigenvalues_ry,
+    const std::string& diagnostic_context);
 
 struct SternheimerPeriodicLinearResponse
 {

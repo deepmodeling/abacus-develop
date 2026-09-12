@@ -3,9 +3,11 @@
 #include "source_lcao/module_ri/sternheimer_fd_solver.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <complex>
 #include <gtest/gtest.h>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -43,6 +45,168 @@ std::vector<Complex> column_major_matrix_vector_product(const std::vector<Comple
         for (std::size_t row = 0; row != size; ++row)
         {
             result[row] += matrix[row + size * column] * vector[column];
+        }
+    }
+    return result;
+}
+
+using GridFunction = ModuleRI::SternheimerDeltaGridFunction;
+using GridMatrices = ModuleRI::SternheimerDeltaGridMatrices;
+using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
+using NonlocalProjector = ModuleRI::SternheimerFDNonlocalProjector;
+
+const std::array<Vector GridMatrices::*, 5> grid_matrix_components{
+    {&GridMatrices::overlap, &GridMatrices::kinetic, &GridMatrices::local_potential,
+     &GridMatrices::nonlocal, &GridMatrices::hamiltonian}};
+
+void expect_grid_matrices_near(const GridMatrices& actual,
+                              const GridMatrices& expected,
+                              const double tolerance)
+{
+    EXPECT_EQ(actual.row_count, expected.row_count);
+    EXPECT_EQ(actual.column_count, expected.column_count);
+    for (const auto component: grid_matrix_components)
+    {
+        expect_vector_near(actual.*component, expected.*component, tolerance);
+    }
+}
+
+struct WeakCrossFixture
+{
+    Hamiltonian::Grid grid;
+    double volume_element;
+    std::vector<double> potential;
+    NonlocalProjector::ProjectorBlock block;
+
+    explicit WeakCrossFixture(const int nx = 5, const int ny = 3, const int nz = 2)
+        : grid{nx, ny, nz, 2.0 / nx, 1.7 / ny, 2.3 / nz, true},
+          volume_element(2.0 * 1.7 * 2.3 / grid.size())
+    {
+        grid.kpoint = {{0.17, -0.23, 0.11}};
+        grid.lattice_vectors = {{{2.0, 0.0, 0.0}, {0.4, 1.7, 0.0}, {0.2, 0.3, 2.3}}};
+        block.projectors.resize(2);
+        block.d_matrix = {{Complex(1.7, 0.0), Complex(0.3, 0.2)},
+                          {Complex(0.3, -0.2), Complex(-0.4, 0.0)}};
+        for (int ir = 0; ir != grid.size(); ++ir)
+        {
+            potential.push_back(0.3 * std::cos(0.31 * ir) - 0.2);
+            block.projectors[0].emplace_back(0.1 * std::sin(0.2 * ir), 0.2 * std::cos(0.17 * ir));
+            block.projectors[1].emplace_back(0.2 * std::cos(0.3 * ir), -0.1 * std::sin(0.27 * ir));
+        }
+    }
+
+    Hamiltonian hamiltonian(const bool include_nonlocal = true, const double prefactor = 1.0) const
+    {
+        std::shared_ptr<const NonlocalProjector> projector;
+        if (include_nonlocal)
+        {
+            projector = std::make_shared<NonlocalProjector>(
+                grid.size(), volume_element, std::vector<NonlocalProjector::ProjectorBlock>{block});
+        }
+        return Hamiltonian(grid, potential, prefactor, projector, 8);
+    }
+
+    std::vector<GridFunction> functions(const int count, const double offset) const
+    {
+        const double two_pi = 2.0 * std::acos(-1.0);
+        std::vector<GridFunction> result(count);
+        for (int band = 0; band != count; ++band)
+        {
+            for (int ix = 0; ix != grid.nx; ++ix)
+            {
+                for (int iy = 0; iy != grid.ny; ++iy)
+                {
+                    for (int iz = 0; iz != grid.nz; ++iz)
+                    {
+                        Complex value(0.0, 0.0);
+                        std::array<Complex, 3> gradient{};
+                        // Analytic Cartesian derivatives of two Bloch plane waves in the oblique cell.
+                        for (int mode = 0; mode != 2; ++mode)
+                        {
+                            const std::array<double, 3> reduced{
+                                {grid.kpoint[0] + mode, grid.kpoint[1] + (band % 2),
+                                 grid.kpoint[2] - mode}};
+                            const double qx = two_pi * reduced[0] / 2.0;
+                            const double qy = (two_pi * reduced[1] - 0.4 * qx) / 1.7;
+                            const double qz = (two_pi * reduced[2] - 0.2 * qx - 0.3 * qy) / 2.3;
+                            const double phase = two_pi * (reduced[0] * ix / grid.nx
+                                                           + reduced[1] * iy / grid.ny
+                                                           + reduced[2] * iz / grid.nz);
+                            const Complex term = Complex(0.4 + offset + 0.13 * band + 0.2 * mode,
+                                                         0.3 * offset - 0.11 * band + 0.1 * mode)
+                                                 * std::exp(Complex(0.0, phase));
+                            value += term;
+                            gradient[0] += Complex(0.0, qx) * term;
+                            gradient[1] += Complex(0.0, qy) * term;
+                            gradient[2] += Complex(0.0, qz) * term;
+                        }
+                        result[band].values.push_back(value);
+                        for (int direction = 0; direction != 3; ++direction)
+                        {
+                            result[band].gradients[direction].push_back(gradient[direction]);
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+};
+
+GridMatrices scalar_cross_matrices(const Hamiltonian& hamiltonian,
+                                  const std::vector<GridFunction>& left,
+                                  const std::vector<GridFunction>& right,
+                                  const double volume_element)
+{
+    GridMatrices result;
+    result.row_count = left.size();
+    result.column_count = right.size();
+    for (const auto component: grid_matrix_components)
+    {
+        (result.*component).assign(left.size() * right.size(), Complex(0.0, 0.0));
+    }
+    for (std::size_t column = 0; column != right.size(); ++column)
+    {
+        for (std::size_t row = 0; row != left.size(); ++row)
+        {
+            const std::size_t index = row + left.size() * column;
+            for (std::size_t ir = 0; ir != left[row].values.size(); ++ir)
+            {
+                const Complex product = volume_element * std::conj(left[row].values[ir])
+                                        * right[column].values[ir];
+                result.overlap[index] += product;
+                result.local_potential[index] += product * hamiltonian.local_potential()[ir];
+                for (int direction = 0; direction != 3; ++direction)
+                {
+                    result.kinetic[index] += volume_element * hamiltonian.kinetic_prefactor()
+                                             * std::conj(left[row].gradients[direction][ir])
+                                             * right[column].gradients[direction][ir];
+                }
+            }
+            // Independent beta-D-beta quadrature: no projector apply or BLAS assembly helpers.
+            if (hamiltonian.nonlocal_projector() != nullptr)
+            {
+                for (const auto& block: hamiltonian.nonlocal_projector()->blocks())
+                {
+                    for (std::size_t p = 0; p != block.projectors.size(); ++p)
+                    {
+                        for (std::size_t q = 0; q != block.projectors.size(); ++q)
+                        {
+                            Complex left_beta(0.0, 0.0), beta_right(0.0, 0.0);
+                            for (std::size_t ir = 0; ir != left[row].values.size(); ++ir)
+                            {
+                                left_beta += volume_element * std::conj(left[row].values[ir])
+                                             * block.projectors[p][ir];
+                                beta_right += volume_element * std::conj(block.projectors[q][ir])
+                                              * right[column].values[ir];
+                            }
+                            result.nonlocal[index] += left_beta * block.d_matrix[p][q] * beta_right;
+                        }
+                    }
+                }
+            }
+            result.hamiltonian[index] = result.kinetic[index] + result.local_potential[index]
+                                        + result.nonlocal[index];
         }
     }
     return result;
@@ -652,6 +816,308 @@ TEST(SternheimerDelta, ReferenceSubspacePivotsPastNearDependentCandidates)
     EXPECT_EQ(subspace.discarded_candidates, 1);
     EXPECT_NEAR(subspace.virtual_states[0].eigenvalue, 2.0, 1.0e-13);
     EXPECT_NEAR(subspace.virtual_states[1].eigenvalue, 3.0, 1.0e-13);
+}
+
+TEST(SternheimerDelta, FastReferenceMatricesMatchScalarComponents)
+{
+    using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
+    using Projector = ModuleRI::SternheimerFDNonlocalProjector;
+    Hamiltonian::Grid grid{5, 1, 1, 1.0, 1.0, 1.0, false};
+    Projector::ProjectorBlock block;
+    block.projectors = {{Complex(0.3, 0.1), Complex(-0.1, 0.4), Complex(0.2, -0.3),
+                   Complex(0.1, 0.2), Complex(-0.5, 0.1)}};
+    block.d_matrix = {{Complex(1.7, 0.0)}};
+    auto projector = std::make_shared<Projector>(5, 0.7, std::vector<Projector::ProjectorBlock>{block});
+    Hamiltonian hamiltonian(grid, {0.1, -0.2, 0.3, 0.4, -0.5}, 1.0, projector);
+    std::vector<ModuleRI::SternheimerDeltaGridFunction> basis(3);
+    for (std::size_t i = 0; i < basis.size(); ++i)
+    {
+        for (int j = 0; j < 5; ++j)
+        {
+            const Complex z(std::sin(double((i + 1) * (j + 1))), std::cos(double(i + j)));
+            basis[i].values.push_back(z);
+            for (int d = 0; d < 3; ++d)
+            {
+                basis[i].gradients[d].push_back(z * Complex(0.2 * (d + 1), 0.1 * j));
+            }
+        }
+    }
+    const auto scalar = ModuleRI::assemble_delta_sternheimer_grid_matrices(hamiltonian, basis, 0.7);
+    const auto fast = ModuleRI::assemble_delta_sternheimer_grid_matrices_fast(hamiltonian, basis, 0.7);
+    for (const auto pair : {std::make_pair(&scalar.overlap, &fast.overlap),
+                            std::make_pair(&scalar.kinetic, &fast.kinetic),
+                            std::make_pair(&scalar.local_potential, &fast.local_potential),
+                            std::make_pair(&scalar.nonlocal, &fast.nonlocal),
+                            std::make_pair(&scalar.hamiltonian, &fast.hamiltonian)})
+    {
+        expect_vector_near(*pair.first, *pair.second, 1.0e-12);
+    }
+}
+
+TEST(SternheimerDelta, CrossMatricesMatchIndependentObliqueComplexQuadrature)
+{
+    const WeakCrossFixture fixture;
+    const auto hamiltonian = fixture.hamiltonian();
+    const auto left = fixture.functions(2, 0.1);
+    const auto right = fixture.functions(3, -0.2);
+    const auto actual = ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        hamiltonian, left, right, fixture.volume_element);
+    expect_grid_matrices_near(actual, scalar_cross_matrices(
+        hamiltonian, left, right, fixture.volume_element), 2.0e-12);
+    EXPECT_GT(std::abs(actual.overlap[0].imag()), 1.0e-3);
+    EXPECT_GT(std::abs(actual.nonlocal[0]), 1.0e-5);
+}
+
+TEST(SternheimerDelta, CrossMatricesReverseToAdjointWithoutSquareCleanup)
+{
+    const WeakCrossFixture fixture;
+    const auto hamiltonian = fixture.hamiltonian();
+    const auto left = fixture.functions(2, 0.1);
+    for (const int columns: {2, 3})
+    {
+        const auto right = fixture.functions(columns, -0.2);
+        const auto lr = ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+            hamiltonian, left, right, fixture.volume_element);
+        const auto rl = ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+            hamiltonian, right, left, fixture.volume_element);
+        for (const auto component: grid_matrix_components)
+        {
+            for (std::size_t row = 0; row != left.size(); ++row)
+            {
+                for (std::size_t column = 0; column != right.size(); ++column)
+                {
+                    EXPECT_NEAR(std::abs((lr.*component)[row + left.size() * column]
+                                         - std::conj((rl.*component)[column + right.size() * row])),
+                                0.0, 2.0e-12);
+                }
+            }
+        }
+        EXPECT_GT(std::abs(lr.overlap[0].imag()), 1.0e-3);
+    }
+}
+
+TEST(SternheimerDelta, CrossMatricesSameBasisMatchBothSquareAssemblies)
+{
+    const WeakCrossFixture fixture;
+    const auto hamiltonian = fixture.hamiltonian();
+    const auto basis = fixture.functions(3, 0.1);
+    const auto cross = ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        hamiltonian, basis, basis, fixture.volume_element);
+    expect_grid_matrices_near(cross, ModuleRI::assemble_delta_sternheimer_grid_matrices_fast(
+        hamiltonian, basis, fixture.volume_element), 2.0e-12);
+    expect_grid_matrices_near(cross, ModuleRI::assemble_delta_sternheimer_grid_matrices(
+        hamiltonian, basis, fixture.volume_element), 2.0e-12);
+}
+
+TEST(SternheimerDelta, CrossMatricesPreserveUnequalComplexNormalization)
+{
+    const WeakCrossFixture fixture;
+    const auto hamiltonian = fixture.hamiltonian();
+    auto left = fixture.functions(2, 0.1);
+    auto right = fixture.functions(3, -0.2);
+    auto expected = ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        hamiltonian, left, right, fixture.volume_element);
+    const std::array<Complex, 2> left_scale{{Complex(2.0, -0.4), Complex(0.1, 0.2)}};
+    const std::array<Complex, 3> right_scale{{Complex(0.3, 0.7), Complex(-1.1, 0.2), Complex(3.0, -0.1)}};
+    for (std::size_t row = 0; row != left.size(); ++row)
+    {
+        for (int component = -1; component != 3; ++component)
+        {
+            Vector& values = component < 0 ? left[row].values : left[row].gradients[component];
+            for (Complex& value: values)
+            {
+                value *= left_scale[row];
+            }
+        }
+    }
+    for (std::size_t column = 0; column != right.size(); ++column)
+    {
+        for (int component = -1; component != 3; ++component)
+        {
+            Vector& values = component < 0 ? right[column].values : right[column].gradients[component];
+            for (Complex& value: values)
+            {
+                value *= right_scale[column];
+            }
+        }
+        for (std::size_t row = 0; row != left.size(); ++row)
+        {
+            for (const auto component: grid_matrix_components)
+            {
+                (expected.*component)[row + left.size() * column]
+                    *= std::conj(left_scale[row]) * right_scale[column];
+            }
+        }
+    }
+    expect_grid_matrices_near(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        hamiltonian, left, right, fixture.volume_element), expected, 3.0e-12);
+}
+
+TEST(SternheimerDelta, CrossMatricesUseAnalyticGradientsAndHamiltonianRyPrefactor)
+{
+    const WeakCrossFixture fixture;
+    auto left = fixture.functions(2, 0.1);
+    const auto right = fixture.functions(3, -0.2);
+    const auto ry = ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        fixture.hamiltonian(false, 1.0), left, right, fixture.volume_element);
+    const auto hartree = ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        fixture.hamiltonian(false, 0.5), left, right, fixture.volume_element);
+    for (std::size_t i = 0; i != ry.kinetic.size(); ++i)
+    {
+        EXPECT_NEAR(std::abs(ry.kinetic[i] - 2.0 * hartree.kinetic[i]), 0.0, 1.0e-12);
+        EXPECT_EQ(ry.nonlocal[i], Complex(0.0, 0.0));
+    }
+    for (auto& function: left)
+    {
+        for (auto& gradient: function.gradients)
+        {
+            std::fill(gradient.begin(), gradient.end(), Complex(0.0, 0.0));
+        }
+    }
+    const auto zero = ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        fixture.hamiltonian(false), left, right, fixture.volume_element);
+    expect_vector_near(zero.overlap, ry.overlap, 0.0);
+    for (const Complex value: zero.kinetic)
+    {
+        EXPECT_EQ(value, Complex(0.0, 0.0));
+    }
+}
+
+TEST(SternheimerDelta, CrossMatricesHandleGridAndNonlocalColumnBlockRemainders)
+{
+    const WeakCrossFixture fixture(4103, 1, 1);
+    const auto hamiltonian = fixture.hamiltonian();
+    const auto left = fixture.functions(2, 0.1);
+    const auto right = fixture.functions(65, -0.2);
+    expect_grid_matrices_near(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        hamiltonian, left, right, fixture.volume_element), scalar_cross_matrices(
+        hamiltonian, left, right, fixture.volume_element), 2.0e-9);
+}
+
+TEST(SternheimerDelta, CrossMatricesKeepExplicitEmptyDimensions)
+{
+    const WeakCrossFixture fixture;
+    const auto hamiltonian = fixture.hamiltonian();
+    const auto basis = fixture.functions(2, 0.1);
+    const auto left_empty = ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        hamiltonian, {}, basis, fixture.volume_element);
+    const auto right_empty = ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        hamiltonian, basis, {}, fixture.volume_element);
+    const auto both_empty = ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        hamiltonian, {}, {}, fixture.volume_element);
+    EXPECT_EQ(left_empty.row_count, 0u);
+    EXPECT_EQ(left_empty.column_count, 2u);
+    EXPECT_EQ(right_empty.row_count, 2u);
+    EXPECT_EQ(right_empty.column_count, 0u);
+    EXPECT_EQ(both_empty.row_count, 0u);
+    EXPECT_EQ(both_empty.column_count, 0u);
+    for (const auto component: grid_matrix_components)
+    {
+        EXPECT_TRUE((left_empty.*component).empty());
+        EXPECT_TRUE((right_empty.*component).empty());
+        EXPECT_TRUE((both_empty.*component).empty());
+    }
+}
+
+TEST(SternheimerDelta, CrossMatricesRejectEitherSideValueAndGradientDimensions)
+{
+    const WeakCrossFixture fixture;
+    const auto hamiltonian = fixture.hamiltonian();
+    const auto valid = fixture.functions(2, 0.1);
+    for (int component = -1; component != 3; ++component)
+    {
+        auto invalid = valid;
+        (component < 0 ? invalid[1].values : invalid[1].gradients[component]).pop_back();
+        EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+            hamiltonian, invalid, valid, fixture.volume_element), std::invalid_argument);
+        EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+            hamiltonian, valid, invalid, fixture.volume_element), std::invalid_argument);
+        EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+            hamiltonian, {}, invalid, fixture.volume_element), std::invalid_argument);
+    }
+}
+
+TEST(SternheimerDelta, CrossMatricesRejectNonfiniteSamplesOnEitherSide)
+{
+    const WeakCrossFixture fixture;
+    const auto hamiltonian = fixture.hamiltonian();
+    const auto valid = fixture.functions(2, 0.1);
+    for (const double bad: {std::numeric_limits<double>::quiet_NaN(),
+                            std::numeric_limits<double>::infinity()})
+    {
+        for (int component = -1; component != 3; ++component)
+        {
+            auto invalid = valid;
+            (component < 0 ? invalid[1].values : invalid[1].gradients[component])[0] = Complex(0.0, bad);
+            EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+                hamiltonian, invalid, valid, fixture.volume_element), std::invalid_argument);
+            EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+                hamiltonian, valid, invalid, fixture.volume_element), std::invalid_argument);
+        }
+    }
+}
+
+TEST(SternheimerDelta, CrossMatricesRejectInvalidWeightsAndHamiltonianData)
+{
+    const WeakCrossFixture fixture;
+    const auto valid = fixture.functions(1, 0.1);
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const double inf = std::numeric_limits<double>::infinity();
+    for (const double bad: {0.0, -1.0, nan, inf})
+    {
+        EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+            fixture.hamiltonian(), valid, valid, bad), std::invalid_argument);
+    }
+    EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        fixture.hamiltonian(), valid, valid, 2.0 * fixture.volume_element), std::invalid_argument);
+    for (const double bad: {nan, inf})
+    {
+        EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+            fixture.hamiltonian(false, bad), valid, valid, fixture.volume_element), std::invalid_argument);
+        auto modified = fixture;
+        modified.potential[0] = bad;
+        EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+            modified.hamiltonian(), valid, valid, fixture.volume_element), std::invalid_argument);
+        modified = fixture;
+        modified.block.projectors[0][0] = Complex(bad, 0.0);
+        EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+            modified.hamiltonian(), valid, valid, fixture.volume_element), std::invalid_argument);
+        modified = fixture;
+        modified.block.d_matrix[0][1] = Complex(0.0, bad);
+        EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+            modified.hamiltonian(), valid, valid, fixture.volume_element), std::invalid_argument);
+    }
+}
+
+TEST(SternheimerDelta, CrossMatricesRejectFiniteArithmeticOverflow)
+{
+    Hamiltonian::Grid grid{1, 1, 1, 1.0, 1.0, 1.0, false};
+    GridFunction huge;
+    huge.values = {Complex(1.0e200, 0.0)};
+    for (auto& gradient: huge.gradients)
+    {
+        gradient = {Complex(0.0, 0.0)};
+    }
+    EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        Hamiltonian(grid, {0.0}, 0.0), {huge}, {huge}, 1.0), std::overflow_error);
+    huge.values[0] = Complex(1.0, 0.0);
+    huge.gradients[1][0] = Complex(1.0e200, 0.0);
+    EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        Hamiltonian(grid, {0.0}, 1.0), {huge}, {huge}, 1.0), std::overflow_error);
+    huge.gradients[1][0] = Complex(0.0, 0.0);
+    huge.values[0] = Complex(2.0, 0.0);
+    EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        Hamiltonian(grid, {1.0e308}, 0.0), {huge}, {huge}, 1.0), std::overflow_error);
+    EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        Hamiltonian(grid, {0.0}, std::numeric_limits<double>::max()),
+        {huge}, {huge}, 2.0), std::overflow_error);
+    NonlocalProjector::ProjectorBlock block;
+    block.projectors = {{Complex(1.0e150, 0.0)}};
+    block.d_matrix = {{Complex(1.0e100, 0.0)}};
+    const auto projector = std::make_shared<NonlocalProjector>(
+        1, 1.0, std::vector<NonlocalProjector::ProjectorBlock>{block});
+    EXPECT_THROW(ModuleRI::assemble_delta_sternheimer_cross_matrices_fast(
+        Hamiltonian(grid, {0.0}, 0.0, projector), {huge}, {huge}, 1.0), std::overflow_error);
 }
 
 TEST(SternheimerDelta, DefaultFullReferenceSubspaceUsesBlockPathAndMatchesLegacy)

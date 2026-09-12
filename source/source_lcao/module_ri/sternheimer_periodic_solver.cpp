@@ -1,8 +1,11 @@
 #include "source_lcao/module_ri/sternheimer_periodic_solver.h"
 
 #include <cmath>
+#include <iomanip>
 #include <memory>
 #include <limits>
+#include <locale>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 
@@ -29,6 +32,73 @@ std::vector<const SternheimerFDHamiltonian::Vector*> fixed_subspace_views(
     return views;
 }
 } // namespace
+
+double require_positive_periodic_delta_excitations(
+    const std::vector<SternheimerDeltaVirtualState>& target_states,
+    const std::vector<double>& source_occupied_eigenvalues_ry,
+    const std::string& diagnostic_context)
+{
+    std::ostringstream diagnostic;
+    diagnostic.imbue(std::locale::classic());
+    diagnostic << std::setprecision(std::numeric_limits<double>::max_digits10)
+               << "STERNHEIMER_EXCITATION_ERROR context={" << diagnostic_context
+               << "} units=Ry index_base=1 source_count=" << source_occupied_eigenvalues_ry.size()
+               << " target_count=" << target_states.size();
+    if (source_occupied_eigenvalues_ry.empty() || target_states.empty())
+    {
+        diagnostic << " reason=empty_spectrum";
+        throw SternheimerExcitationError(diagnostic.str());
+    }
+
+    std::size_t source_max_index = 0;
+    for (std::size_t index = 0; index != source_occupied_eigenvalues_ry.size(); ++index)
+    {
+        const double value = source_occupied_eigenvalues_ry[index];
+        if (!std::isfinite(value))
+        {
+            diagnostic << " reason=nonfinite_source source_index=" << index + 1
+                       << " source_eigenvalue_Ry=" << value;
+            throw SternheimerExcitationError(diagnostic.str());
+        }
+        if (value > source_occupied_eigenvalues_ry[source_max_index])
+        {
+            source_max_index = index;
+        }
+    }
+    std::size_t target_min_index = 0;
+    for (std::size_t index = 0; index != target_states.size(); ++index)
+    {
+        const double value = target_states[index].eigenvalue;
+        if (!std::isfinite(value))
+        {
+            diagnostic << " reason=nonfinite_target target_index=" << index + 1
+                       << " target_eigenvalue_Ry=" << value;
+            throw SternheimerExcitationError(diagnostic.str());
+        }
+        if (value < target_states[target_min_index].eigenvalue)
+        {
+            target_min_index = index;
+        }
+    }
+
+    const double source_max = source_occupied_eigenvalues_ry[source_max_index];
+    const double target_min = target_states[target_min_index].eigenvalue;
+    const double minimum_excitation = target_min - source_max;
+    diagnostic << " source_max_Ry=" << source_max << " source_max_index=" << source_max_index + 1
+               << " target_min_Ry=" << target_min << " target_min_index=" << target_min_index + 1
+               << " min_excitation_Ry=" << minimum_excitation;
+    if (!std::isfinite(minimum_excitation))
+    {
+        diagnostic << " reason=nonfinite_gap";
+        throw SternheimerExcitationError(diagnostic.str());
+    }
+    if (minimum_excitation <= 0.0)
+    {
+        diagnostic << " reason=nonpositive_gap";
+        throw SternheimerExcitationError(diagnostic.str());
+    }
+    return minimum_excitation;
+}
 
 SternheimerPeriodicResponseProjectors::SternheimerPeriodicResponseProjectors(
     const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,

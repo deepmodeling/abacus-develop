@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 #include <string>
 
@@ -66,6 +67,17 @@ void validate_grid_function(const SternheimerDeltaGridFunction& function,
     for (const Vector& gradient: function.gradients)
     {
         check_vector_size(gradient, grid_size, context + " gradient");
+    }
+}
+
+void validate_finite_grid_vector(const Vector& values, const std::string& context)
+{
+    for (const Complex value: values)
+    {
+        if (!std::isfinite(value.real()) || !std::isfinite(value.imag()))
+        {
+            throw std::invalid_argument(context + " contains a nonfinite value.");
+        }
     }
 }
 
@@ -477,27 +489,44 @@ void hermitize_matrix(std::vector<Complex>& matrix, const int size)
     }
 }
 
-SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices_blocked(
+SternheimerDeltaGridMatrices assemble_delta_sternheimer_cross_matrices_blocked(
     const SternheimerFDHamiltonian& hamiltonian,
-    const std::vector<SternheimerDeltaGridFunction>& basis_functions,
+    const std::vector<SternheimerDeltaGridFunction>& left_functions,
+    const std::vector<SternheimerDeltaGridFunction>& right_functions,
     const double volume_element)
 {
-    const int basis_size = static_cast<int>(basis_functions.size());
-    const std::size_t matrix_size = basis_functions.size() * basis_functions.size();
+    const std::size_t max_elements = Vector().max_size();
+    const std::size_t max_blas_dimension = static_cast<std::size_t>(std::numeric_limits<int>::max());
+    if (left_functions.size() > max_blas_dimension || right_functions.size() > max_blas_dimension
+        || (!right_functions.empty() && left_functions.size() > max_elements / right_functions.size()))
+    {
+        throw std::overflow_error("Sternheimer blocked cross matrix dimensions exceed BLAS or vector limits.");
+    }
+    const int left_size = static_cast<int>(left_functions.size());
+    const int right_size = static_cast<int>(right_functions.size());
+    const std::size_t grid_size = left_functions.empty() ? 0 : left_functions.front().values.size();
+    const std::size_t packed_rows = std::min(delta_grid_block_size, grid_size);
+    if (!right_functions.empty() && packed_rows != 0
+        && std::max(left_functions.size(), right_functions.size()) > max_elements / packed_rows)
+    {
+        throw std::overflow_error("Sternheimer blocked cross matrix packing size exceeds vector limits.");
+    }
+    const std::size_t matrix_size = left_functions.size() * right_functions.size();
     SternheimerDeltaGridMatrices matrices;
+    matrices.row_count = left_functions.size();
+    matrices.column_count = right_functions.size();
     matrices.overlap.assign(matrix_size, Complex(0.0, 0.0));
     matrices.kinetic.assign(matrix_size, Complex(0.0, 0.0));
     matrices.local_potential.assign(matrix_size, Complex(0.0, 0.0));
     matrices.nonlocal.assign(matrix_size, Complex(0.0, 0.0));
     matrices.hamiltonian.assign(matrix_size, Complex(0.0, 0.0));
-    if (basis_functions.empty())
+    if (left_functions.empty() || right_functions.empty())
     {
         return matrices;
     }
-
-    accumulate_grid_component_product(basis_functions,
+    accumulate_grid_component_product(left_functions,
                                       -1,
-                                      basis_functions,
+                                      right_functions,
                                       -1,
                                       nullptr,
                                       Complex(volume_element, 0.0),
@@ -505,17 +534,17 @@ SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices_blocked(
     for (int direction = 0; direction != 3; ++direction)
     {
         accumulate_grid_component_product(
-            basis_functions,
+            left_functions,
             direction,
-            basis_functions,
+            right_functions,
             direction,
             nullptr,
             Complex(volume_element * hamiltonian.kinetic_prefactor(), 0.0),
             matrices.kinetic);
     }
-    accumulate_grid_component_product(basis_functions,
+    accumulate_grid_component_product(left_functions,
                                       -1,
-                                      basis_functions,
+                                      right_functions,
                                       -1,
                                       &hamiltonian.local_potential(),
                                       Complex(volume_element, 0.0),
@@ -531,18 +560,17 @@ SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices_blocked(
                 "Sternheimer blocked nonlocal projector uses a different grid volume element.");
         }
         constexpr int nonlocal_block_size = 64;
-        const std::size_t grid_size = basis_functions.front().values.size();
         std::vector<Complex> basis_packed;
         std::vector<Complex> nonlocal_packed;
-        for (int block_begin = 0; block_begin < basis_size; block_begin += nonlocal_block_size)
+        for (int block_begin = 0; block_begin < right_size;)
         {
-            const int block_count = std::min(nonlocal_block_size, basis_size - block_begin);
+            const int block_count = std::min(nonlocal_block_size, right_size - block_begin);
             std::vector<Vector> input_vectors;
             input_vectors.reserve(static_cast<std::size_t>(block_count));
             for (int column = 0; column != block_count; ++column)
             {
                 input_vectors.push_back(
-                    basis_functions[static_cast<std::size_t>(block_begin + column)].values);
+                    right_functions[static_cast<std::size_t>(block_begin + column)].values);
             }
             std::vector<Vector> nonlocal_vectors;
             nonlocal_projector->apply_batch(input_vectors, nonlocal_vectors);
@@ -553,7 +581,7 @@ SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices_blocked(
                     = &nonlocal_vectors[static_cast<std::size_t>(column)];
             }
             Complex* output = matrices.nonlocal.data()
-                              + static_cast<std::size_t>(basis_size)
+                              + static_cast<std::size_t>(left_size)
                                     * static_cast<std::size_t>(block_begin);
             for (std::size_t grid_begin = 0; grid_begin < grid_size;
                  grid_begin += delta_grid_block_size)
@@ -561,12 +589,12 @@ SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices_blocked(
                 const int grid_count
                     = static_cast<int>(std::min(delta_grid_block_size, grid_size - grid_begin));
                 pack_grid_function_component(
-                    basis_functions, -1, grid_begin, grid_count, basis_packed);
+                    left_functions, -1, grid_begin, grid_count, basis_packed);
                 pack_vector_component(
                     nonlocal_vector_pointers, grid_begin, grid_count, nonlocal_packed);
                 BlasConnector::gemm_cm('C',
                                        'N',
-                                       basis_size,
+                                       left_size,
                                        block_count,
                                        grid_count,
                                        Complex(volume_element, 0.0),
@@ -576,8 +604,9 @@ SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices_blocked(
                                        grid_count,
                                        Complex(1.0, 0.0),
                                        output,
-                                       basis_size);
+                                       left_size);
             }
+            block_begin += block_count;
         }
     }
 
@@ -587,8 +616,19 @@ SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices_blocked(
         matrices.hamiltonian[index] = matrices.kinetic[index] + matrices.local_potential[index]
                                       + matrices.nonlocal[index];
     }
-    hermitize_matrix(matrices.overlap, basis_size);
-    hermitize_matrix(matrices.hamiltonian, basis_size);
+    return matrices;
+}
+
+SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices_blocked(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerDeltaGridFunction>& basis_functions,
+    const double volume_element)
+{
+    // Preserve the square path's packing, accumulation order, and S/H cleanup.
+    SternheimerDeltaGridMatrices matrices = assemble_delta_sternheimer_cross_matrices_blocked(
+        hamiltonian, basis_functions, basis_functions, volume_element);
+    hermitize_matrix(matrices.overlap, static_cast<int>(basis_functions.size()));
+    hermitize_matrix(matrices.hamiltonian, static_cast<int>(basis_functions.size()));
     return matrices;
 }
 
@@ -1643,6 +1683,98 @@ SternheimerDeltaPulayOperatorComponents decompose_delta_sternheimer_pulay_operat
     return result;
 }
 
+SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices_fast(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerDeltaGridFunction>& basis_functions,
+    const double volume_element)
+{
+    if (!std::isfinite(volume_element) || volume_element <= 0.0)
+    {
+        throw std::invalid_argument("Sternheimer reference delta matrices require a finite positive grid volume element.");
+    }
+    for (const auto& function: basis_functions)
+    {
+        validate_grid_function(function, hamiltonian.grid().size(), "Sternheimer reference delta basis");
+    }
+    return assemble_delta_sternheimer_grid_matrices_blocked(hamiltonian, basis_functions, volume_element);
+}
+
+SternheimerDeltaGridMatrices assemble_delta_sternheimer_cross_matrices_fast(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerDeltaGridFunction>& left_functions,
+    const std::vector<SternheimerDeltaGridFunction>& right_functions,
+    const double volume_element)
+{
+    if (!std::isfinite(volume_element) || volume_element <= 0.0
+        || !std::isfinite(hamiltonian.kinetic_prefactor()))
+    {
+        throw std::invalid_argument(
+            "Sternheimer cross matrices require a finite positive grid volume element and finite kinetic prefactor.");
+    }
+    if (!std::isfinite(volume_element * hamiltonian.kinetic_prefactor()))
+    {
+        throw std::overflow_error("Sternheimer cross matrix kinetic quadrature weight overflow.");
+    }
+    const std::size_t grid_size = static_cast<std::size_t>(hamiltonian.grid().size());
+    for (const auto* functions: {&left_functions, &right_functions})
+    {
+        const std::string context = functions == &left_functions
+                                        ? "Sternheimer cross matrix left basis"
+                                        : "Sternheimer cross matrix right basis";
+        for (const auto& function: *functions)
+        {
+            validate_grid_function(function, grid_size, context);
+            for (int component = -1; component != 3; ++component)
+            {
+                validate_finite_grid_vector(grid_function_component(function, component), context);
+            }
+        }
+    }
+    for (const double value: hamiltonian.local_potential())
+    {
+        if (!std::isfinite(value))
+        {
+            throw std::invalid_argument("Sternheimer cross matrix local potential contains a nonfinite value.");
+        }
+    }
+    const SternheimerFDNonlocalProjector* projector = hamiltonian.nonlocal_projector();
+    if (projector != nullptr)
+    {
+        if (!std::isfinite(projector->volume_element()) || projector->volume_element() <= 0.0
+            || std::abs(projector->volume_element() - volume_element)
+                   > 1.0e-12 * std::max(projector->volume_element(), volume_element))
+        {
+            throw std::invalid_argument(
+                "Sternheimer cross matrix nonlocal projector uses an invalid or different grid volume element.");
+        }
+        for (const auto& block: projector->blocks())
+        {
+            for (const Vector& values: block.projectors)
+            {
+                validate_finite_grid_vector(values, "Sternheimer cross matrix nonlocal projector");
+            }
+            for (const Vector& row: block.d_matrix)
+            {
+                validate_finite_grid_vector(row, "Sternheimer cross matrix nonlocal D");
+            }
+        }
+    }
+    SternheimerDeltaGridMatrices matrices = assemble_delta_sternheimer_cross_matrices_blocked(
+        hamiltonian, left_functions, right_functions, volume_element);
+    for (const Vector* component: {&matrices.overlap, &matrices.kinetic, &matrices.local_potential,
+                                   &matrices.nonlocal, &matrices.hamiltonian})
+    {
+        for (const Complex value: *component)
+        {
+            if (!std::isfinite(value.real()) || !std::isfinite(value.imag()))
+            {
+                throw std::overflow_error("Sternheimer cross matrix quadrature produced a nonfinite result.");
+            }
+        }
+    }
+    return matrices;
+}
+
 SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerDeltaGridFunction>& basis_functions,
@@ -1671,6 +1803,8 @@ SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices(
     const std::size_t matrix_size
         = static_cast<std::size_t>(basis_size) * static_cast<std::size_t>(basis_size);
     SternheimerDeltaGridMatrices matrices;
+    matrices.row_count = basis_functions.size();
+    matrices.column_count = basis_functions.size();
     matrices.overlap.assign(matrix_size, Complex(0.0, 0.0));
     matrices.kinetic.assign(matrix_size, Complex(0.0, 0.0));
     matrices.local_potential.assign(matrix_size, Complex(0.0, 0.0));

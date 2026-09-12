@@ -93,12 +93,14 @@ struct SternheimerDeltaGridFunction
 
 struct SternheimerDeltaGridMatrices
 {
-    // LAPACK column-major storage.
+    // LAPACK column-major storage: element (row, column) is row + row_count * column.
     std::vector<SternheimerFDHamiltonian::Complex> overlap;
     std::vector<SternheimerFDHamiltonian::Complex> kinetic;
     std::vector<SternheimerFDHamiltonian::Complex> local_potential;
     std::vector<SternheimerFDHamiltonian::Complex> nonlocal;
     std::vector<SternheimerFDHamiltonian::Complex> hamiltonian;
+    std::size_t row_count = 0;
+    std::size_t column_count = 0;
 };
 
 // Add one interleaved AO image sample to grid functions. Function values and
@@ -222,6 +224,26 @@ SternheimerDeltaSubspace build_delta_sternheimer_subspace(
 SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerDeltaGridFunction>& basis_functions,
+    double volume_element);
+
+// Same reference integrals, using the production subspace's blocked BLAS path.
+SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices_fast(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerDeltaGridFunction>& basis_functions,
+    double volume_element);
+
+// Rectangular weak forms <left_i|O|right_j> on the same fine grid/Hamiltonian.
+// Gradients are caller-supplied analytic Cartesian derivatives of the sampled
+// functions, including their Bloch phase, not fractional or periodic-part derivatives.
+// T uses hamiltonian.kinetic_prefactor() (1.0 for Ry); no FD kinetic is applied.
+// No projection, normalization, or Hermitian cleanup is performed, even for
+// equal-sized bases. Either basis may be empty; dimensions are retained.
+// Invalid dimensions/nonfinite inputs throw invalid_argument; unrepresentable
+// sizes or nonfinite arithmetic results throw overflow_error.
+SternheimerDeltaGridMatrices assemble_delta_sternheimer_cross_matrices_fast(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerDeltaGridFunction>& left_functions,
+    const std::vector<SternheimerDeltaGridFunction>& right_functions,
     double volume_element);
 
 // Reference-code path: project values and gradients with identical coefficients,

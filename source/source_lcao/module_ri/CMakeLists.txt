@@ -27,6 +27,11 @@ if (ENABLE_LIBRI)
         sternheimer_dft_zero_order.cpp
         sternheimer_delta.cpp
         sternheimer_grid_diagnostics.cpp
+        sternheimer_grid_transfer.cpp
+        sternheimer_galerkin_operator.cpp
+        sternheimer_galerkin_audit.cpp
+        sternheimer_weak_grid.cpp
+        sternheimer_weak_augmented.cpp
         sternheimer_fd_hamiltonian.cpp
         sternheimer_fd_preconditioner.cpp
         sternheimer_fd_nonlocal_projector.cpp

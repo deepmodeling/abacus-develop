@@ -3,7 +3,218 @@
 
 #include <complex>
 #include <gtest/gtest.h>
+#include <string>
 #include <vector>
+
+namespace
+{
+std::vector<ModuleRI::SternheimerDeltaVirtualState> excitation_test_states(
+    const std::vector<double>& eigenvalues)
+{
+    std::vector<ModuleRI::SternheimerDeltaVirtualState> states(eigenvalues.size());
+    for (std::size_t index = 0; index != eigenvalues.size(); ++index)
+    {
+        states[index].eigenvalue = eigenvalues[index];
+        states[index].orbital = {{1.0, 0.25}};
+        states[index].residual = {{0.0, -0.125}};
+    }
+    return states;
+}
+} // namespace
+
+TEST(SternheimerExcitationGuard, AcceptsUnsortedPositiveSpectrumWithoutMutation)
+{
+    const std::vector<double> source = {-0.4, -0.8, -0.6};
+    const auto target = excitation_test_states({0.3, -0.2, 0.1});
+    const auto source_before = source;
+    const auto target_before = target;
+    EXPECT_DOUBLE_EQ(ModuleRI::require_positive_periodic_delta_excitations(target, source, "positive"),
+                     -0.2 - (-0.4));
+    EXPECT_EQ(source, source_before);
+    ASSERT_EQ(target.size(), target_before.size());
+    for (std::size_t index = 0; index != target.size(); ++index)
+    {
+        EXPECT_EQ(target[index].eigenvalue, target_before[index].eigenvalue);
+        EXPECT_EQ(target[index].orbital, target_before[index].orbital);
+        EXPECT_EQ(target[index].residual, target_before[index].residual);
+    }
+}
+
+TEST(SternheimerExcitationGuard, AcceptsSmallPositiveGapWithoutFloor)
+{
+    EXPECT_DOUBLE_EQ(ModuleRI::require_positive_periodic_delta_excitations(
+                         excitation_test_states({1.0e-14}), {0.0}, "small_positive"),
+                     1.0e-14);
+}
+
+TEST(SternheimerExcitationGuard, RejectsZeroGap)
+{
+    EXPECT_THROW(ModuleRI::require_positive_periodic_delta_excitations(
+                     excitation_test_states({0.3, -0.4}), {-0.8, -0.4}, "zero"),
+                 ModuleRI::SternheimerExcitationError);
+    EXPECT_THROW(ModuleRI::require_positive_periodic_delta_excitations(
+                     excitation_test_states({-0.0}), {0.0}, "negative_zero"),
+                 ModuleRI::SternheimerExcitationError);
+}
+
+TEST(SternheimerExcitationGuard, RejectsNegativeGap)
+{
+    EXPECT_THROW(ModuleRI::require_positive_periodic_delta_excitations(
+                     excitation_test_states({0.3, -0.45}), {-0.8, -0.4}, "negative"),
+                 ModuleRI::SternheimerExcitationError);
+}
+
+TEST(SternheimerExcitationGuard, UsesCompleteSourceMaximumNotFirstBand)
+{
+    // The first source band alone would give a positive gap of 0.2 Ry.
+    EXPECT_THROW(ModuleRI::require_positive_periodic_delta_excitations(
+                     excitation_test_states({-0.6, 0.3}), {-0.8, -0.4}, "complete_source"),
+                 ModuleRI::SternheimerExcitationError);
+}
+
+TEST(SternheimerExcitationGuard, UsesSuppliedSourceReferenceNotTargetOccupiedReference)
+{
+    const auto target = excitation_test_states({-0.5, 0.3});
+    const std::vector<double> target_occupied = {-0.7};
+    EXPECT_DOUBLE_EQ(ModuleRI::require_positive_periodic_delta_excitations(
+                         target, target_occupied, "target_reference_control"),
+                     -0.5 - (-0.7));
+    EXPECT_THROW(ModuleRI::require_positive_periodic_delta_excitations(
+                     target, {-0.4}, "actual_source_reference"),
+                 ModuleRI::SternheimerExcitationError);
+}
+
+TEST(SternheimerExcitationGuard, RejectsEmptySpectra)
+{
+    EXPECT_THROW(ModuleRI::require_positive_periodic_delta_excitations({}, {-0.4}, "empty_target"),
+                 ModuleRI::SternheimerExcitationError);
+    EXPECT_THROW(ModuleRI::require_positive_periodic_delta_excitations(
+                     excitation_test_states({0.2}), {}, "empty_source"),
+                 ModuleRI::SternheimerExcitationError);
+    EXPECT_THROW(ModuleRI::require_positive_periodic_delta_excitations({}, {}, "both_empty"),
+                 ModuleRI::SternheimerExcitationError);
+}
+
+TEST(SternheimerExcitationGuard, RejectsEveryNonfiniteSourcePosition)
+{
+    const double invalid_values[] = {std::numeric_limits<double>::quiet_NaN(),
+                                     std::numeric_limits<double>::infinity(),
+                                     -std::numeric_limits<double>::infinity()};
+    for (const double invalid: invalid_values)
+    {
+        for (std::size_t index = 0; index != 3; ++index)
+        {
+            std::vector<double> source = {-0.8, -0.4, -0.6};
+            source[index] = invalid;
+            try
+            {
+                ModuleRI::require_positive_periodic_delta_excitations(
+                    excitation_test_states({0.3, -0.2}), source, "nonfinite_source_fixture");
+                FAIL() << "Accepted nonfinite source energy at " << index;
+            }
+            catch (const ModuleRI::SternheimerExcitationError& error)
+            {
+                const std::string message = error.what();
+                EXPECT_NE(message.find("reason=nonfinite_source"), std::string::npos);
+                EXPECT_NE(message.find("source_index=" + std::to_string(index + 1)), std::string::npos);
+                EXPECT_NE(message.find("context={nonfinite_source_fixture}"), std::string::npos);
+            }
+        }
+    }
+}
+
+TEST(SternheimerExcitationGuard, RejectsEveryNonfiniteTargetPosition)
+{
+    const double invalid_values[] = {std::numeric_limits<double>::quiet_NaN(),
+                                     std::numeric_limits<double>::infinity(),
+                                     -std::numeric_limits<double>::infinity()};
+    for (const double invalid: invalid_values)
+    {
+        for (std::size_t index = 0; index != 3; ++index)
+        {
+            std::vector<double> target = {0.3, -0.2, 0.1};
+            target[index] = invalid;
+            try
+            {
+                ModuleRI::require_positive_periodic_delta_excitations(
+                    excitation_test_states(target), {-0.8, -0.4}, "nonfinite_target_fixture");
+                FAIL() << "Accepted nonfinite target energy at " << index;
+            }
+            catch (const ModuleRI::SternheimerExcitationError& error)
+            {
+                const std::string message = error.what();
+                EXPECT_NE(message.find("reason=nonfinite_target"), std::string::npos);
+                EXPECT_NE(message.find("target_index=" + std::to_string(index + 1)), std::string::npos);
+                EXPECT_NE(message.find("context={nonfinite_target_fixture}"), std::string::npos);
+            }
+        }
+    }
+}
+
+TEST(SternheimerExcitationGuard, RejectsOverflowFromFiniteExtrema)
+{
+    for (const double source: {std::numeric_limits<double>::max(), -std::numeric_limits<double>::max()})
+    {
+        try
+        {
+            ModuleRI::require_positive_periodic_delta_excitations(
+                excitation_test_states({-source}), {source}, "overflow_fixture");
+            FAIL() << "Accepted nonfinite gap from finite extrema";
+        }
+        catch (const ModuleRI::SternheimerExcitationError& error)
+        {
+            EXPECT_NE(std::string(error.what()).find("reason=nonfinite_gap"), std::string::npos);
+        }
+    }
+}
+
+TEST(SternheimerExcitationGuard, ReportsFullPrecisionBoundsIndicesAndContext)
+{
+    const double source_max = -0.40123456789012345;
+    const double target_min = -0.44634567890123456;
+    const std::string context = "grid=24,24,48 pbe_grid=72,72,288 q=2 source_k=1 target_k=2 rank=3";
+    try
+    {
+        ModuleRI::require_positive_periodic_delta_excitations(
+            excitation_test_states({0.3, target_min, -0.42}), {-0.7, source_max, -0.5}, context);
+        FAIL() << "Accepted inverted spectrum";
+    }
+    catch (const ModuleRI::SternheimerExcitationError& error)
+    {
+        const std::runtime_error& base_error = error;
+        const std::string message = base_error.what();
+        EXPECT_NE(message.find("context={" + context + "}"), std::string::npos);
+        EXPECT_NE(message.find("units=Ry index_base=1"), std::string::npos);
+        EXPECT_NE(message.find("source_count=3 target_count=3"), std::string::npos);
+        EXPECT_NE(message.find("source_max_index=2"), std::string::npos);
+        EXPECT_NE(message.find("target_min_index=2"), std::string::npos);
+        EXPECT_NE(message.find("reason=nonpositive_gap"), std::string::npos);
+        const std::string fields[] = {"source_max_Ry=", "target_min_Ry=", "min_excitation_Ry="};
+        const double expected[] = {source_max, target_min, target_min - source_max};
+        for (std::size_t index = 0; index != 3; ++index)
+        {
+            const auto position = message.find(fields[index]);
+            ASSERT_NE(position, std::string::npos);
+            EXPECT_EQ(std::stod(message.substr(position + fields[index].size())), expected[index]);
+        }
+    }
+}
+
+TEST(SternheimerExcitationGuard, ReportsFirstIndexForTiedExtrema)
+{
+    try
+    {
+        ModuleRI::require_positive_periodic_delta_excitations(
+            excitation_test_states({-0.5, -0.5}), {-0.4, -0.4}, "ties");
+        FAIL() << "Accepted inverted spectrum";
+    }
+    catch (const ModuleRI::SternheimerExcitationError& error)
+    {
+        const std::string message = error.what();
+        EXPECT_NE(message.find("source_max_index=1"), std::string::npos);
+        EXPECT_NE(message.find("target_min_index=1"), std::string::npos);
+    }
+}
 
 TEST(SternheimerPeriodicSolver, SharedProjectorReservationIncludesMetadataAndRejectsOverflow)
 {

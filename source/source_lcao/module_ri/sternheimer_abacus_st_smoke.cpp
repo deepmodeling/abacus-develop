@@ -26,6 +26,9 @@
 #include "source_lcao/module_ri/sternheimer_abacus_fd_nonlocal.h"
 #include "source_lcao/module_ri/sternheimer_fd_solver.h"
 #include "source_lcao/module_ri/sternheimer_grid_diagnostics.h"
+#include "source_lcao/module_ri/sternheimer_galerkin_audit.h"
+#include "source_lcao/module_ri/sternheimer_weak_grid.h"
+#include "source_lcao/module_ri/sternheimer_weak_augmented.h"
 #include "source_lcao/module_ri/sternheimer_periodic_solver.h"
 #include "source_lcao/module_ri/sternheimer_rpa.h"
 #include "source_lcao/module_ri/sternheimer_response_grid.h"
@@ -1969,6 +1972,8 @@ struct SternheimerSampledLCAOKPoint
     double occupied_raw_norm_max = 0.0;
     double unoccupied_raw_norm_min = std::numeric_limits<double>::infinity();
     double unoccupied_raw_norm_max = 0.0;
+    std::vector<double> occupied_raw_norms;
+    std::vector<double> unoccupied_raw_norms;
 };
 
 SternheimerSampledLCAOKPoint sample_sternheimer_lcao_kpoint(
@@ -2023,6 +2028,7 @@ SternheimerSampledLCAOKPoint sample_sternheimer_lcao_kpoint(
         }
         sampled.occupied_raw_norm_min = std::min(sampled.occupied_raw_norm_min, norm);
         sampled.occupied_raw_norm_max = std::max(sampled.occupied_raw_norm_max, norm);
+        sampled.occupied_raw_norms.push_back(norm);
         const SternheimerFDHamiltonian::Complex inverse_norm(1.0 / norm, 0.0);
         for (auto& value: occupied_function.values)
         {
@@ -2053,6 +2059,7 @@ SternheimerSampledLCAOKPoint sample_sternheimer_lcao_kpoint(
         }
         sampled.unoccupied_raw_norm_min = std::min(sampled.unoccupied_raw_norm_min, norm);
         sampled.unoccupied_raw_norm_max = std::max(sampled.unoccupied_raw_norm_max, norm);
+        sampled.unoccupied_raw_norms.push_back(norm);
         const SternheimerFDHamiltonian::Complex inverse_norm(1.0 / norm, 0.0);
         for (auto& value: unoccupied_function.values)
         {
@@ -2075,6 +2082,450 @@ SternheimerSampledLCAOKPoint sample_sternheimer_lcao_kpoint(
         throw std::runtime_error("Sternheimer periodic occupied projector lost a linearly dependent KS state.");
     }
     return sampled;
+}
+
+void run_sternheimer_spectrum_audit(
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orbitals,
+    const SternheimerABACUSFDGridData& grid_data,
+    const std::vector<double>& local_potential,
+    const SternheimerLCAOOccupiedKPoint& source_record,
+    const SternheimerLCAOOccupiedKPoint& target_record,
+    const int source_index,
+    const int target_index)
+{
+    auto target = sample_sternheimer_lcao_kpoint(
+        ucell, grid_data.grid, orbitals, target_record, 0, true, 0,
+        grid_data.volume_element, PARAM.inp.sternheimer_delta_norm_tol);
+    if (target.unoccupied_functions.empty() || source_record.eigenvalues.empty())
+    {
+        throw std::runtime_error("Spectrum audit requires the complete occupied and virtual KS records.");
+    }
+    auto target_grid = grid_data;
+    target_grid.grid.kpoint = sternheimer_lcao_grid_kpoint(target_record);
+    auto projectors = make_sternheimer_fd_nonlocal_projector_from_unitcell(
+        ucell, target_grid.grid, target_grid.volume_element);
+    const auto hamiltonian = make_sternheimer_fd_hamiltonian_from_local_potential(
+        target_grid, local_potential, 1.0, std::move(projectors), PARAM.inp.sternheimer_fd_order);
+    std::ofstream audit("STERNHEIMER_SPECTRUM_AUDIT.dat");
+    if (!audit)
+    {
+        throw std::runtime_error("Cannot open spectrum audit output.");
+    }
+    audit << std::setprecision(17)
+          << "status diagnostic_only\n"
+          << "physical_result no\n"
+          << "response_equations 0\n"
+          << "grid " << grid_data.grid.nx << ' ' << grid_data.grid.ny << ' '
+          << grid_data.grid.nz << '\n'
+          << "source_target " << source_index + 1 << ' ' << target_index + 1 << '\n'
+          << "occupied_raw_norm_range " << target.occupied_raw_norm_min << ' '
+          << target.occupied_raw_norm_max << '\n'
+          << "virtual_raw_norm_range " << target.unoccupied_raw_norm_min << ' '
+          << target.unoccupied_raw_norm_max << '\n';
+    std::vector<double> eigenvalues = target_record.eigenvalues;
+    eigenvalues.insert(eigenvalues.end(), target_record.unoccupied_eigenvalues.begin(),
+                       target_record.unoccupied_eigenvalues.end());
+    const std::size_t occupied_count = target.occupied_functions.size();
+    std::vector<double> raw_norms = target.occupied_raw_norms;
+    raw_norms.insert(raw_norms.end(), target.unoccupied_raw_norms.begin(), target.unoccupied_raw_norms.end());
+    auto functions = std::move(target.occupied_functions);
+    functions.insert(functions.end(), std::make_move_iterator(target.unoccupied_functions.begin()),
+                     std::make_move_iterator(target.unoccupied_functions.end()));
+    target.unoccupied_functions.clear();
+    {
+        const auto matrices = assemble_delta_sternheimer_grid_matrices_fast(
+            hamiltonian, functions, grid_data.volume_element);
+        audit << "# state pbe_Ry overlap kinetic_Ry local_Ry nonlocal_Ry expectation_Ry raw_norm\n";
+        for (std::size_t state = 0; state < functions.size(); ++state)
+        {
+            const std::size_t index = state * (functions.size() + 1);
+            const double norm2 = matrices.overlap[index].real();
+            audit << "state " << state + 1 << ' ' << eigenvalues.at(state) << ' '
+                  << norm2 << ' ' << matrices.kinetic[index].real() / norm2 << ' '
+                  << matrices.local_potential[index].real() / norm2 << ' '
+                  << matrices.nonlocal[index].real() / norm2 << ' '
+                  << matrices.hamiltonian[index].real() / norm2 << ' ' << raw_norms.at(state) << '\n';
+        }
+        std::ofstream matrix_out("STERNHEIMER_SPECTRUM_MATRICES.dat");
+        if (!matrix_out)
+        {
+            throw std::runtime_error("Cannot open spectrum matrices output.");
+        }
+        matrix_out << std::setprecision(17) << "# row col S T Vloc Vnl H (real imag), column major\n";
+        for (std::size_t column = 0; column < functions.size(); ++column)
+        {
+            for (std::size_t row = 0; row < functions.size(); ++row)
+            {
+                const auto index = row + column * functions.size();
+                matrix_out << row + 1 << ' ' << column + 1;
+                for (const auto* matrix : {&matrices.overlap, &matrices.kinetic,
+                                          &matrices.local_potential, &matrices.nonlocal,
+                                          &matrices.hamiltonian})
+                {
+                    matrix_out << ' ' << (*matrix)[index].real() << ' ' << (*matrix)[index].imag();
+                }
+                matrix_out << '\n';
+            }
+        }
+        matrix_out.close();
+        if (!matrix_out)
+        {
+            throw std::runtime_error("Spectrum matrix output did not complete.");
+        }
+    }
+    audit.flush();
+    if (!audit)
+    {
+        throw std::runtime_error("Spectrum state output did not complete.");
+    }
+    functions.erase(functions.begin(), functions.begin() + occupied_count);
+    SternheimerDeltaSubspaceOptions options;
+    options.max_virtual_states = 0;
+    options.norm_tolerance = PARAM.inp.sternheimer_delta_norm_tol;
+    options.retain_grid_functions = false;
+    options.evaluate_full_grid_difference = false;
+    const auto subspace = build_reference_delta_sternheimer_subspace(
+        hamiltonian, target.occupied_projector_functions, std::move(functions),
+        grid_data.volume_element, options);
+    const double source_vbm = *std::max_element(source_record.eigenvalues.begin(),
+                                                source_record.eigenvalues.end());
+    const double pbe_cbm = *std::min_element(target_record.unoccupied_eigenvalues.begin(),
+                                            target_record.unoccupied_eigenvalues.end());
+    audit << "source_vbm_Ry " << source_vbm << '\n'
+          << "target_cbm_Ry " << pbe_cbm << '\n'
+          << "pbe_transition_min_Ry " << pbe_cbm - source_vbm << '\n';
+    double delta_min = std::numeric_limits<double>::infinity();
+    for (std::size_t state = 0; state < subspace.virtual_states.size(); ++state)
+    {
+        const double energy = subspace.virtual_states[state].eigenvalue;
+        delta_min = std::min(delta_min, energy);
+        audit << "delta_state " << state + 1 << ' ' << energy << '\n';
+    }
+    audit << "delta_transition_min_Ry " << delta_min - source_vbm << '\n'
+          << "audit_complete yes\n";
+    audit.close();
+    if (!audit)
+    {
+        throw std::runtime_error("Spectrum audit output did not complete.");
+    }
+}
+
+void run_sternheimer_galerkin_spectrum_audit(
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orbitals,
+    SternheimerABACUSFDGridData fine_grid,
+    SternheimerABACUSFDGridData response_grid,
+    const std::vector<double>& fine_potential,
+    const SternheimerLCAOOccupiedKPoint& source_record,
+    const SternheimerLCAOOccupiedKPoint& target_record,
+    const int source_index,
+    const int target_index)
+{
+    fine_grid.grid.kpoint = sternheimer_lcao_grid_kpoint(target_record);
+    response_grid.grid.kpoint = fine_grid.grid.kpoint;
+    auto target = sample_sternheimer_lcao_kpoint(
+        ucell, fine_grid.grid, orbitals, target_record, 0, true, 0,
+        fine_grid.volume_element, PARAM.inp.sternheimer_delta_norm_tol);
+    if (target.unoccupied_functions.empty() || source_record.eigenvalues.empty())
+    {
+        throw std::runtime_error("Galerkin spectrum audit requires complete occupied and virtual KS records.");
+    }
+    const auto occupied_count = target.occupied_functions.size();
+    auto raw_norms = target.occupied_raw_norms;
+    raw_norms.insert(raw_norms.end(), target.unoccupied_raw_norms.begin(), target.unoccupied_raw_norms.end());
+    auto functions = std::move(target.occupied_functions);
+    functions.insert(functions.end(), std::make_move_iterator(target.unoccupied_functions.begin()),
+                     std::make_move_iterator(target.unoccupied_functions.end()));
+    target = SternheimerSampledLCAOKPoint();
+    std::vector<const SternheimerFDHamiltonian::Vector*> fine_states;
+    for (auto& function : functions)
+    {
+        // This diagnostic compares FullGrid FD8 forms, not the old weak-A block.
+        for (auto& gradient : function.gradients)
+        {
+            SternheimerFDHamiltonian::Vector().swap(gradient);
+        }
+        fine_states.push_back(&function.values);
+    }
+    auto nonlocal = make_sternheimer_fd_nonlocal_projector_from_unitcell(
+        ucell, fine_grid.grid, fine_grid.volume_element);
+    auto fine_hamiltonian = std::make_shared<const SternheimerFDHamiltonian>(
+        make_sternheimer_fd_hamiltonian_from_local_potential(
+            fine_grid, fine_potential, 1.0, std::move(nonlocal), PARAM.inp.sternheimer_fd_order));
+    trim_sternheimer_process_heap();
+    std::ofstream audit("STERNHEIMER_GALERKIN_AUDIT.dat");
+    if (!audit)
+    {
+        throw std::runtime_error("Cannot open Galerkin spectrum audit.");
+    }
+    audit << std::setprecision(17)
+          << "status diagnostic_only\nphysical_result no\nresponse_equations 0\n"
+          << "reference FullGrid_FD8_not_weak_A\nfull_pc_positivity_certified no\n"
+          << "fine_grid " << fine_grid.grid.nx << ' ' << fine_grid.grid.ny << ' ' << fine_grid.grid.nz << '\n'
+          << "coarse_grid " << response_grid.grid.nx << ' ' << response_grid.grid.ny << ' '
+          << response_grid.grid.nz << '\n'
+          << "source_target " << source_index + 1 << ' ' << target_index + 1 << '\n'
+          << "nocc " << occupied_count << "\nnvirtual " << functions.size() - occupied_count << '\n'
+          << "source_vbm_Ry " << *std::max_element(source_record.eigenvalues.begin(), source_record.eigenvalues.end())
+          << '\n';
+    std::vector<double> pbe_eigenvalues = target_record.eigenvalues;
+    pbe_eigenvalues.insert(pbe_eigenvalues.end(), target_record.unoccupied_eigenvalues.begin(),
+                          target_record.unoccupied_eigenvalues.end());
+    audit << "# state case index pbe_Ry fine_norm2 projected_norm2 reconstruction_error raw_sampled_norm\n";
+    constexpr std::size_t audit_workspace_budget = 32ULL * 1024 * 1024 * 1024;
+    for (const bool identity : {true, false})
+    {
+        const std::string label = identity ? "fine" : "projected";
+        const auto matrices = audit_sternheimer_galerkin_matrices(
+            fine_hamiltonian, fine_states, identity ? fine_grid.grid : response_grid.grid,
+            audit_workspace_budget);
+        const auto n = matrices.dimension;
+        if (n != functions.size())
+        {
+            throw std::runtime_error("Galerkin audit changed the full KS state count.");
+        }
+        std::ofstream output("STERNHEIMER_GALERKIN_" + label + "_MATRICES.dat");
+        if (!output)
+        {
+            throw std::runtime_error("Cannot open Galerkin matrix output.");
+        }
+        output << std::setprecision(17) << "# row col S T Vloc Vnl H (real imag), column major\n";
+        for (std::size_t column = 0; column != n; ++column)
+        {
+            for (std::size_t row = 0; row != n; ++row)
+            {
+                const auto index = row + column * n;
+                output << row + 1 << ' ' << column + 1;
+                for (const auto* matrix : {&matrices.overlap, &matrices.kinetic, &matrices.local_potential,
+                                          &matrices.nonlocal, &matrices.hamiltonian})
+                {
+                    output << ' ' << matrix->at(index).real() << ' ' << matrix->at(index).imag();
+                }
+                output << '\n';
+            }
+        }
+        output.close();
+        if (!output)
+        {
+            throw std::runtime_error("Galerkin matrix output did not complete.");
+        }
+        audit << "case " << label << " workspace_bytes " << matrices.workspace_bytes
+              << " filtered_identity_max_abs_error " << matrices.filtered_matrix_identity_max_abs_error << '\n';
+        for (std::size_t state = 0; state != n; ++state)
+        {
+            audit << "state " << label << ' ' << state + 1 << ' ' << pbe_eigenvalues.at(state) << ' '
+                  << matrices.fine_norm_squared.at(state) << ' ' << matrices.projected_norm_squared.at(state)
+                  << ' ' << matrices.reconstruction_relative_error.at(state) << ' ' << raw_norms.at(state) << '\n';
+        }
+        audit.flush();
+        if (!audit)
+        {
+            throw std::runtime_error("Galerkin state output did not complete.");
+        }
+    }
+    audit << "audit_complete yes\n";
+    audit.close();
+    if (!audit)
+    {
+        throw std::runtime_error("Galerkin audit output did not complete.");
+    }
+}
+
+void run_sternheimer_weak_response_audit(
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orbitals,
+    SternheimerABACUSFDGridData fine_grid,
+    SternheimerABACUSFDGridData coarse_grid,
+    const std::vector<double>& fine_potential,
+    const SternheimerLCAOOccupiedKPoint& source_record,
+    const SternheimerLCAOOccupiedKPoint& target_record,
+    const SternheimerReducedKPoint& qpoint,
+    const double omega_ha,
+    const double pca_threshold,
+    const SternheimerOrbitalSet* rpa_abfs,
+    const int source_index,
+    const int target_index)
+{
+    using Vector = SternheimerFDHamiltonian::Vector;
+    using Complex = SternheimerFDHamiltonian::Complex;
+    using Blocks = SternheimerWeakAugmented;
+    const auto started = std::chrono::steady_clock::now();
+    std::ofstream audit("STERNHEIMER_WEAK_RESPONSE_AUDIT.dat");
+    if (!audit) throw std::runtime_error("Cannot open fine-weak response audit.");
+    audit << std::setprecision(17)
+          << "status diagnostic_only\nphysical_result no\nfull_q_response no\n"
+          << "reference fine_analytic_weak_form\nsource_band_selection VBM_only\n"
+          << "auxiliary_channel_selection first_two_only\nsymmetry_restoration no\n"
+          << "fine_grid " << fine_grid.grid.nx << ' ' << fine_grid.grid.ny << ' ' << fine_grid.grid.nz << '\n'
+          << "coarse_grid " << coarse_grid.grid.nx << ' ' << coarse_grid.grid.ny << ' ' << coarse_grid.grid.nz << '\n'
+          << "source_target " << source_index + 1 << ' ' << target_index + 1 << '\n'
+          << "omega_Ha " << omega_ha << '\n';
+    const auto stage = [&](const char* name) {
+        const auto memory = detect_sternheimer_memory_snapshot();
+        audit << "stage " << name << " elapsed_s " << elapsed_seconds_since(started)
+              << " memory_current_bytes " << memory.current_bytes << '\n';
+        audit.flush();
+        if (!audit) throw std::runtime_error("Fine-weak response audit write failed.");
+    };
+    const auto source_k = sternheimer_lcao_grid_kpoint(source_record);
+    fine_grid.grid.kpoint = sternheimer_lcao_grid_kpoint(target_record);
+    coarse_grid.grid.kpoint = fine_grid.grid.kpoint;
+    for (int a = 0; a < 3; ++a)
+        if (std::abs(fine_grid.grid.kpoint[a] - source_k[a] - qpoint[a]) > 1e-12)
+            throw std::runtime_error("Fine-weak audit does not yet admit BZ-folded k pairs.");
+    if (source_record.eigenvalues.empty() || target_record.unoccupied_eigenvalues.empty()
+        || !(omega_ha > 0.0) || !std::isfinite(omega_ha))
+        throw std::runtime_error("Fine-weak audit requires complete KS records and positive frequency.");
+    if (target_record.eigenvalues.size() + target_record.unoccupied_eigenvalues.size()
+            != static_cast<std::size_t>(PARAM.globalv.nlocal)
+        || target_record.coefficients.size() != target_record.eigenvalues.size()
+        || target_record.unoccupied_coefficients.size() != target_record.unoccupied_eigenvalues.size())
+        throw std::runtime_error("Fine-weak audit requires nbands=nlocal and every target coefficient vector.");
+    auto target = sample_sternheimer_lcao_kpoint(
+        ucell, fine_grid.grid, orbitals, target_record, 0, true, 0,
+        fine_grid.volume_element, PARAM.inp.sternheimer_delta_norm_tol);
+    const int nocc = static_cast<int>(target.occupied_functions.size());
+    const int nvirtual = static_cast<int>(target.unoccupied_functions.size());
+    if (nocc != static_cast<int>(target_record.eigenvalues.size())
+        || nvirtual != static_cast<int>(target_record.unoccupied_eigenvalues.size()))
+        throw std::runtime_error("Fine-weak audit lost target KS states.");
+    auto functions = std::move(target.occupied_functions);
+    functions.insert(functions.end(), std::make_move_iterator(target.unoccupied_functions.begin()),
+                     std::make_move_iterator(target.unoccupied_functions.end()));
+    target = SternheimerSampledLCAOKPoint();
+    stage("fine_states_sampled");
+    const double orthogonality_error = orthonormalize_sternheimer_weak_states_in_place(functions, fine_grid.volume_element);
+    audit << "orthonormalization_max_error " << orthogonality_error << '\n';
+    if (orthogonality_error > 1e-8)
+        throw std::runtime_error("Fine-weak state orthonormalization failed its numerical gate.");
+    stage("fine_states_orthonormal");
+    auto nonlocal = make_sternheimer_fd_nonlocal_projector_from_unitcell(
+        ucell, fine_grid.grid, fine_grid.volume_element);
+    auto h = std::make_shared<const SternheimerFDHamiltonian>(
+        make_sternheimer_fd_hamiltonian_from_local_potential(
+            fine_grid, fine_potential, 1.0, std::move(nonlocal), PARAM.inp.sternheimer_fd_order));
+    auto op = std::make_shared<SternheimerWeakGridOperator>(h, coarse_grid.grid);
+    auto assembled = op->assemble_blocks(functions);
+    const double metric_error = assembled.maximum_metric_error;
+    std::ofstream hu_output("STERNHEIMER_WEAK_HU.dat");
+    hu_output << std::setprecision(17) << "# nocc nvirtual, then row col H_Ry_real H_Ry_imag\n"
+              << nocc << ' ' << nvirtual << '\n';
+    for (std::size_t j = 0; j < functions.size(); ++j)
+        for (std::size_t i = 0; i < functions.size(); ++i)
+        {
+            const auto value = assembled.state_hamiltonian[i + functions.size() * j];
+            hu_output << i + 1 << ' ' << j + 1 << ' ' << value.real() << ' ' << value.imag() << '\n';
+        }
+    hu_output.close();
+    if (!hu_output) throw std::runtime_error("Fine-weak Hamiltonian audit write failed.");
+    Blocks::Data data;
+    data.nocc = nocc; data.nvirtual = nvirtual; data.ncoarse = coarse_grid.grid.size();
+    data.hu = std::move(assembled.state_hamiltonian);
+    data.l = std::move(assembled.state_coarse_overlap);
+    data.k = std::move(assembled.state_coarse_hamiltonian);
+    auto blocks = std::make_shared<const Blocks>(std::move(data));
+    audit << "nocc " << nocc << "\nnvirtual " << nvirtual
+          << "\nfine_state_metric_error " << metric_error
+          << "\ncomplement_metric_min " << blocks->minimum_metric_eigenvalue() << '\n';
+    // Couplings retain every analytic gradient contribution; only now release gradients.
+    for (auto& function : functions)
+        for (auto& gradient : function.gradients) Vector().swap(gradient);
+    trim_sternheimer_process_heap();
+    stage("weak_blocks_ready");
+    auto source_grid = fine_grid.grid;
+    source_grid.kpoint = source_k;
+    auto source = sample_sternheimer_lcao_kpoint(
+        ucell, source_grid, orbitals, source_record, 0, false, 0,
+        fine_grid.volume_element, PARAM.inp.sternheimer_delta_norm_tol);
+    const auto vbm = std::max_element(source_record.eigenvalues.begin(), source_record.eigenvalues.end());
+    const auto band = std::size_t(vbm - source_record.eigenvalues.begin());
+    const double epsilon = *vbm;
+    Vector source_values = std::move(source.occupied_functions.at(band).values);
+    source = SternheimerSampledLCAOKPoint();
+    audit << "source_band " << band + 1 << "\nsource_epsilon_Ry " << epsilon << '\n';
+    const auto input = build_abfs_density_input(ucell, pca_threshold, rpa_abfs);
+    auto channels = sample_sternheimer_abf_bloch_grid_channels(
+        input.radials_by_type, input.atom_types, input.atom_positions, fine_grid.grid, qpoint, 2);
+    if (channels.size() != 2) throw std::runtime_error("Fine-weak audit requires two real ABFS channels.");
+    solve_sternheimer_abf_periodic_full_coulomb_in_place(channels, fine_grid.grid, qpoint, 0.0);
+    std::array<Vector, 2> fine_vertices;
+    std::array<Blocks::Vertices, 2> vertices;
+    for (std::size_t j = 0; j < 2; ++j)
+    {
+        auto& g = fine_vertices[j];
+        g.resize(source_values.size());
+        // The real ABFS potentials are Ha; the weak Hamiltonian and RHS are Ry.
+        for (std::size_t ir = 0; ir < g.size(); ++ir) g[ir] = 2.0 * channels[j].potential_r[ir] * source_values[ir];
+        Vector gu(functions.size()), ge;
+        for (std::size_t u = 0; u < functions.size(); ++u)
+            gu[u] = sternheimer_fd_grid_dot(functions[u].values, g, fine_grid.volume_element);
+        op->project(g, ge);
+        vertices[j] = blocks->project_vertices(gu, ge);
+    }
+    stage("fine_vertices_ready");
+    SternheimerRPA::SolverOptions options;
+    options.max_iter = positive_int_from_env("ABACUS_STERNHEIMER_WEAK_AUDIT_MAX_ITER", 300);
+    options.residual_tol = 1e-8;
+    options.use_fd_spectral_preconditioner = false;
+    audit << "coordinate_transform complement_inverse_sqrt\npreconditioner none\nmax_iter "
+          << options.max_iter << "\nresidual_tolerance " << options.residual_tol << '\n';
+    std::array<Complex, 4> response{};
+    int equations = 0;
+    for (int sign : {1, -1})
+    {
+        Blocks::Worker worker(blocks, [op](const Vector& x, Vector& result) { op->apply(x, result); },
+                              epsilon, sign * 2.0 * omega_ha);
+        for (std::size_t j = 0; j < 2; ++j)
+        {
+            const auto result = worker.solve(vertices[j], options);
+            audit << "equation " << ++equations << " channel " << j + 1 << " sign " << sign
+                  << " converged " << (result.converged ? "yes" : "no") << " iterations " << result.schur.iterations
+                  << " full_residual " << result.relative_residual << " elapsed_s " << elapsed_seconds_since(started) << '\n';
+            audit.flush();
+            if (!result.converged) throw std::runtime_error("Fine-weak response audit equation did not converge.");
+            const auto expansion = blocks->expand_coordinates(result.coefficients);
+            Vector fine_response;
+            op->lift(expansion.e, fine_response);
+            for (std::size_t u = 0; u < functions.size(); ++u)
+            {
+#pragma omp parallel for schedule(static)
+                for (std::size_t ir = 0; ir < fine_response.size(); ++ir)
+                    fine_response[ir] += expansion.u[u] * functions[u].values[ir];
+            }
+            const Vector y(result.coefficients.begin(), result.coefficients.begin() + nvirtual);
+            const Vector x(result.coefficients.begin() + nvirtual, result.coefficients.end());
+            for (std::size_t i = 0; i < 2; ++i)
+            {
+                const Complex fine_value = 0.5 * sternheimer_fd_grid_dot(fine_vertices[i], fine_response, fine_grid.volume_element);
+                const Complex block_value = 0.5 * (sternheimer_fd_grid_dot(vertices[i].f, y, 1.0)
+                                                       + sternheimer_fd_grid_dot(vertices[i].w, x, 1.0));
+                const double error = std::abs(fine_value - block_value) / std::max(1.0, std::abs(fine_value));
+                audit << "vertex_check " << equations << ' ' << i + 1 << ' ' << error << '\n';
+                if (!std::isfinite(error) || error > 1e-9)
+                    throw std::runtime_error("Fine-weak left/right vertex consistency failed.");
+                response[i + 2 * j] += fine_value;
+            }
+        }
+    }
+    for (int j = 0; j < 2; ++j)
+        for (int i = 0; i < 2; ++i)
+            audit << "response " << i + 1 << ' ' << j + 1 << ' ' << response[i + 2 * j].real()
+                  << ' ' << response[i + 2 * j].imag() << '\n';
+    double hermitian_error = 0.0;
+    for (int j = 0; j < 2; ++j)
+        for (int i = 0; i < 2; ++i)
+            hermitian_error = std::max(hermitian_error, std::abs(response[i + 2 * j] - std::conj(response[j + 2 * i])));
+    const auto off_diagonal = 0.5 * (response[1] + std::conj(response[2]));
+    const double maximum_eigenvalue = 0.5 * (response[0].real() + response[3].real())
+        + std::hypot(0.5 * (response[0].real() - response[3].real()), std::abs(off_diagonal));
+    audit << "response_hermitian_error " << hermitian_error
+          << "\nresponse_max_eigenvalue " << maximum_eigenvalue << '\n';
+    audit.flush();
+    if (!std::isfinite(maximum_eigenvalue) || hermitian_error > 1e-7 || maximum_eigenvalue > 1e-8)
+        throw std::runtime_error("Fine-weak diagnostic response sign/Hermiticity failed.");
+    audit << "audit_complete yes\nresponse_equations " << equations << '\n';
+    stage("complete");
 }
 
 std::vector<std::vector<double>> collect_channel_potentials(const std::vector<SternheimerABFGridChannel>& channels)
@@ -2846,6 +3297,51 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                    + std::to_string(grid_data.grid.ny) + "x"
                                    + std::to_string(grid_data.grid.nz) + ",grid_size="
                                    + std::to_string(grid_data.grid.size()));
+    if (env_is_true("ABACUS_STERNHEIMER_WEAK_RESPONSE_AUDIT"))
+    {
+        if (GlobalV::NPROC != 1 || use_supercell_translation_sum || !use_delta_sternheimer
+            || PARAM.inp.sternheimer_delta_max_states != 0 || gamma_qpoint)
+            throw std::runtime_error("Fine-weak response audit requires one rank, full states, and nonzero q.");
+        const auto& pair = response_plan.kq_pairs.at(0);
+        const auto& source = response_kpoints.at(response_plan.record_index_by_global_k.at(pair.source_index));
+        const auto& target = response_kpoints.at(response_plan.record_index_by_global_k.at(pair.target_index));
+        run_sternheimer_weak_response_audit(
+            ucell, orbitals, make_sternheimer_fd_full_grid(pw_basis), grid_data,
+            copy_sternheimer_full_local_potential(potential, pw_basis, 0), source, target,
+            response_plan.qpoint, frequency_grid.omega_ha.at(0), pca_threshold, periodic_abfs_orbitals,
+            pair.source_index, pair.target_index);
+        out << "status diagnostic_only\nphysical_result no\nweak_response_audit_complete yes\n";
+        return;
+    }
+    if (env_is_true("ABACUS_STERNHEIMER_SPECTRUM_AUDIT")
+        || env_is_true("ABACUS_STERNHEIMER_GALERKIN_AUDIT"))
+    {
+        if (GlobalV::NPROC != 1 || use_supercell_translation_sum || !use_delta_sternheimer)
+        {
+            throw std::runtime_error("Spectrum-only audit requires one MPI rank and the direct periodic Delta route.");
+        }
+        const auto& pair = response_plan.kq_pairs.at(0);
+        const auto& source = response_kpoints.at(response_plan.record_index_by_global_k.at(pair.source_index));
+        const auto& target = response_kpoints.at(response_plan.record_index_by_global_k.at(pair.target_index));
+        if (env_is_true("ABACUS_STERNHEIMER_GALERKIN_AUDIT"))
+        {
+            run_sternheimer_galerkin_spectrum_audit(
+                ucell, orbitals, make_sternheimer_fd_full_grid(pw_basis), grid_data,
+                copy_sternheimer_full_local_potential(potential, pw_basis, 0), source, target,
+                pair.source_index, pair.target_index);
+        }
+        else
+        {
+            const auto audit_potential = response_grid.independent
+                ? independent_response_full_potential
+                : copy_sternheimer_full_local_potential(potential, pw_basis, 0);
+            run_sternheimer_spectrum_audit(ucell, orbitals, grid_data, audit_potential, source, target,
+                                           pair.source_index, pair.target_index);
+        }
+        out << "status diagnostic_only\n" << "physical_result no\n"
+            << "response_equations 0\n" << "spectrum_audit_complete yes\n";
+        return;
+    }
     append_chi0_progress_event("abfs_source_ready",
                                0,
                                -1,
@@ -3406,10 +3902,23 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                                                       grid_data.volume_element,
                                                                       pair_delta_options,
                                                                       delta_a_block_mode);
-            if (delta_subspace.virtual_states.empty())
+            std::ostringstream excitation_context;
+            excitation_context << std::setprecision(17)
+                               << "q_index=" << response_plan.iq
+                               << " source_k=" << pair.source_index + 1
+                               << " target_k=" << pair.target_index + 1
+                               << " rank=" << GlobalV::MY_RANK
+                               << " response_grid=" << grid_data.grid.nx << 'x' << grid_data.grid.ny
+                               << 'x' << grid_data.grid.nz
+                               << " pbe_grid=" << pw_basis.nx << 'x' << pw_basis.ny << 'x' << pw_basis.nz
+                               << " a_block=" << sternheimer_delta_a_block_mode_name(delta_a_block_mode);
+            for (const auto* record : {&source_record, &target_record})
             {
-                throw std::runtime_error("Periodic Sternheimer produced no target-sector Delta virtual states.");
+                const auto& k = sternheimer_lcao_grid_kpoint(*record);
+                excitation_context << " k_reduced=" << k[0] << ',' << k[1] << ',' << k[2];
             }
+            require_positive_periodic_delta_excitations(
+                delta_subspace.virtual_states, source_record.eigenvalues, excitation_context.str());
             target_delta_dimensions[pair_index] = static_cast<int>(delta_subspace.virtual_states.size());
             const auto delta_minmax = std::minmax_element(
                 delta_subspace.virtual_states.begin(),
@@ -6588,12 +7097,27 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         GlobalV::ofs_running << " Sternheimer chi0 output failed: " << error.what() << std::endl;
         GlobalV::ofs_running << " Sternheimer chi0 status: " << status_path << std::endl;
         GlobalV::ofs_running.flush();
+        const bool invalid_excitation_spectrum
+            = dynamic_cast<const SternheimerExcitationError*>(&error) != nullptr;
+        const bool fatal_spectrum_failure = invalid_excitation_spectrum
+            || env_is_true("ABACUS_STERNHEIMER_WEAK_RESPONSE_AUDIT")
+            || env_is_true("ABACUS_STERNHEIMER_SPECTRUM_AUDIT")
+            || env_is_true("ABACUS_STERNHEIMER_GALERKIN_AUDIT");
+        if (fatal_spectrum_failure)
+        {
+            out.flush();
+            std::cerr << "Fatal Sternheimer spectrum or audit: " << error.what() << std::endl;
+        }
 #ifdef __MPI
-        if (use_distributed_mpi && GlobalV::NPROC > 1)
+        if ((use_parallel_response_mpi || fatal_spectrum_failure) && GlobalV::NPROC > 1)
         {
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
 #endif
+        if (fatal_spectrum_failure)
+        {
+            std::exit(EXIT_FAILURE);
+        }
     }
 }
 
