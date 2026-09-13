@@ -14,7 +14,8 @@ Secondly, for the "dpgen init_bulk" step, an `init.json` file should be provided
 
 ```json
 {
-    "init_fp_style":    "ABACUS",   # abacus interface
+    "init_fp_style":    "ABACUS",
+    "_comment":        "abacus interface",
     "stages":           [1,2,3,4],
     "cell_type":        "fcc",
     "super_cell":       [2, 1, 1],
@@ -49,7 +50,8 @@ Next, for the "dpgen run" step, the following `run_param.json` should be provide
     "init_data_sys": [
         "Al.STRU.01x01x01/02.md/sys-0004/deepmd"
     ],
-    "sys_format": "abacus/stru",   # the initial structures are in ABACUS/STRU formate
+    "_comment":  "the initial structures are in ABACUS/STRU format",
+    "sys_format": "abacus/stru",
     "sys_configs_prefix": "./",
     "sys_configs": [
         [
@@ -162,11 +164,15 @@ Next, for the "dpgen run" step, the following `run_param.json` should be provide
     "fp_task_max": 20,
     "fp_task_min": 5,
     "fp_pp_path": "./",
-    "fp_pp_files": ["Al_ONCV_PBE-1.0.upf"],   # the pseudopotential file
-    "fp_orb_files": ["Al_gga_9au_100Ry_4s4p1d.orb"],  # the orbital file (use only in LCAO calculation)
-    "k_points":[2, 2, 2, 0, 0, 0],  # k-mesh setting
-    "user_fp_params":{  # All the ABACUS input paramters are defined here
-    "ntype": 1,         # defining input parameters from INPUT files is not supported yet.
+    "_comment": "the pseudopotential file",
+    "fp_pp_files": ["Al_ONCV_PBE-1.0.upf"],
+    "_comment": "the orbital file is used only in LCAO calculation",
+    "fp_orb_files": ["Al_gga_9au_100Ry_4s4p1d.orb"],
+    "_comment": "k-mesh setting",
+    "k_points":[2, 2, 2, 0, 0, 0],
+    "_comment": "All the ABACUS input paramters are defined through user_fp_params",
+    "user_fp_params":{
+    "ntype": 1,
     "ecutwfc": 80,      
     "mixing_type": "broyden",
     "mixing_beta": 0.8,
@@ -176,8 +182,10 @@ Next, for the "dpgen run" step, the following `run_param.json` should be provide
     "smearing_method": "mp",
     "smearing_sigma": 0.002,
     "scf_thr":1e-8,
-    "cal_force":1,        # calculate force must be set to 1 in dpgen calculation
-    "kspacing": 0.01  # when KSPACING is set, the above k_points setting becomes invalid.
+    "_comment": "calculate force must be set to 1 in dpgen calculation",
+    "cal_force":1,
+    "_comment": "when KSPACING is set, the above k_points setting becomes invalid",
+    "kspacing": 0.01
     }
 }
 ```
