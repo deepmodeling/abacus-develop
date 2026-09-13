@@ -55,6 +55,19 @@ endif()
       GTest::gtest_main
       GTest::gmock_main
       abacus::linalg_libs)
+
+    # Unit tests build executables that contain NVTX-instrumented translation
+    # units: some link `base`, others (e.g. MODULE_BASE_timer) list timer.cpp
+    # directly in SOURCES and therefore bypass the library's own dependencies.
+    # The test closure deliberately stops short of the optional feature
+    # libraries, so the NVTX library that these objects need has to be added
+    # here to cover both cases. For CUDA >= 12.9 cuda_compat.h selects the
+    # header-only nvtx3 API, which resolves its implementation at runtime and
+    # needs no link-time dependency.
+    if(USE_CUDA AND CUDAToolkit_VERSION VERSION_LESS 12.9)
+      target_link_libraries(${UT_TARGET} PRIVATE nvToolsExt)
+    endif()
+
     if(BUILD_TESTING AND ENABLE_GOOGLEBENCH)
       target_link_libraries(
         ${UT_TARGET} PRIVATE benchmark::benchmark)

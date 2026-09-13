@@ -660,6 +660,16 @@ endif()
 # base uses symbols from device (memory_op and math_ylm_op).
 target_link_libraries(base PUBLIC device)
 
+# ModuleBase::timer emits NVTX ranges when __USE_NVTX is defined, so every object
+# in `base` that consumes them needs the NVTX library at link time. Carry it on
+# `base` itself so it reaches all consumers of the library. Unit tests that list
+# timer.cpp directly in SOURCES bypass this and are covered in cmake/Testing.cmake.
+# CUDA >= 12.9 uses the header-only nvtx3 API, which resolves its implementation
+# at runtime and needs no link-time dependency.
+if(USE_CUDA AND CUDAToolkit_VERSION VERSION_LESS 12.9)
+  target_link_libraries(base PUBLIC nvToolsExt)
+endif()
+
 if(ENABLE_COVERAGE)
   add_coverage(driver)
 endif()
