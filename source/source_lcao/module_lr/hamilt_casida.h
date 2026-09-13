@@ -38,6 +38,7 @@ namespace LR
                const Parallel_2D& pc_in,
                const Parallel_Orbitals& pmat_in,
                const std::string& spin_type,
+               const std::string& in_dir,
                const std::string& out_dir,
                const std::string& ri_hartree_benchmark = "none",
                const std::vector<int>& aims_nbasis = {})
@@ -56,11 +57,10 @@ namespace LR
 #ifdef __EXX
             using TAC = std::pair<int, std::array<int, 3>>;
             using TLRI = std::map<int, std::map<TAC, RI::Tensor<T>>>;
-            const std::string& dir = PARAM.globalv.global_readin_dir;
             TLRI Cs_read; 
             TLRI Vs_read; 
 #ifdef __DEBUG
-            // TLRI Vs_compare = LRI_CV_Tools::read_Vs_abf<T>(dir + "Vs");
+            // TLRI Vs_compare = LRI_CV_Tools::read_Vs_abf<T>(in_dir + "Vs");
             // LRI_CV_Tools::write_Vs_abf(Vs_read, "Vs_read_from_coulomb");
             // LRI_CV_Tools::write_Cs_ao(Cs_read, "Cs_ao_read"); // ensure Cs_ao is read correctly
             // assert(RI_Benchmark::compare_Vs(Vs_read, Vs_compare));
@@ -75,27 +75,23 @@ namespace LR
                     {
                         LR_IO::RI_kRlist kRlist (ucell_in,
                                                 const_cast<K_Vectors*>(&kv_in),
-                                                dir,
-                                                use_fine_kgrid,
-                                                out_dir);
+                                                nspin, in_dir, out_dir, use_fine_kgrid);
                         // though C and V are real, here still use <T> to multiply with psi
-                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(dir);
-                        Vs_read = LR_IO::read_coulomb_mat_general_k<T,T>(dir, Cs_read, kRlist);
+                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(in_dir);
+                        Vs_read = LR_IO::read_coulomb_mat_general_k<T,T>(in_dir, Cs_read, kRlist);
                     }
                     else if (ri_hartree_benchmark == "abacus")
                     {
-                        Cs_read = LRI_CV_Tools::read_Cs_ao<T>(dir + "Cs");
-                        Vs_read = LRI_CV_Tools::read_Vs_abf<T>(dir + "Vs");
+                        Cs_read = LRI_CV_Tools::read_Cs_ao<T>(in_dir + "Cs");
+                        Vs_read = LRI_CV_Tools::read_Vs_abf<T>(in_dir + "Vs");
                     }
                     else if (ri_hartree_benchmark == "abacus-librpa")
                     {
                         LR_IO::RI_kRlist kRlist (ucell_in,
                                                 const_cast<K_Vectors*>(&kv_in),
-                                                dir,
-                                                use_fine_kgrid,
-                                                out_dir);
-                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(dir);
-                        Vs_read = LR_IO::read_coulomb_mat_k<T,T>(dir, Cs_read, kRlist);
+                                                nspin, in_dir, out_dir, use_fine_kgrid);
+                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(in_dir);
+                        Vs_read = LR_IO::read_coulomb_mat_k<T,T>(in_dir, Cs_read, kRlist);
                     }
                     if (!std::set<std::string>({ "rpa", "hf"}).count(xc_kernel)) {
                         throw std::runtime_error("ri_hartree_benchmark is only supported for xc_kernel = rpa, hf");

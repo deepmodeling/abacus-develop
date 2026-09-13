@@ -362,7 +362,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.dft_plus_dmft);
     EXPECT_FALSE(param.inp.rpa);
     EXPECT_FALSE(param.inp.rpa_out_vel);
-    EXPECT_EQ(param.inp.rpa_outdir, "./OUT.librpa/");
+    EXPECT_EQ(param.inp.rpa_outdir, "OUT.librpa/");
     EXPECT_EQ(param.inp.imp_sol, 0);
     EXPECT_DOUBLE_EQ(param.inp.eb_k, 80.0);
     EXPECT_DOUBLE_EQ(param.inp.tau, 1.0798 * 1e-5);
