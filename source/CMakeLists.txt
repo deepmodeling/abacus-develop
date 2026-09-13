@@ -49,6 +49,10 @@ set(_abacus_feature_definitions
   $<$<BOOL:${USE_KML}>:__KML>
   $<$<AND:$<NOT:$<BOOL:${USE_KML}>>,$<BOOL:${MKL_FOUND}>>:__MKL>
   $<$<BOOL:${USE_CUDA}>:__CUDA>
+  # NVTX range emission in ModuleBase::timer. Consumed by source_base/timer.cpp and
+  # source_main/driver.cpp, so it must be a global feature definition: a definition
+  # set on ${ABACUS_BIN_NAME} alone would only reach source_main/main.cpp.
+  $<$<BOOL:${USE_CUDA}>:__USE_NVTX>
   $<$<BOOL:${USE_CUDA}>:__UT_USE_CUDA>
   $<$<BOOL:${ENABLE_NCCL_PARALLEL_DEVICE}>:__NCCL_PARALLEL_DEVICE>
   $<$<BOOL:${ENABLE_CUSOLVERMP}>:__CUSOLVERMP>
@@ -517,7 +521,6 @@ set(ABACUS_BIN_PATH ${PROJECT_BINARY_DIR}/${ABACUS_BIN_NAME})
 if(USE_CUDA)
   set_property(TARGET ${ABACUS_BIN_NAME}
     PROPERTY CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
-  target_compile_definitions(${ABACUS_BIN_NAME} PRIVATE __USE_NVTX)
 endif()
 
 if(ENABLE_COVERAGE)
