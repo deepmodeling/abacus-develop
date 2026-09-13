@@ -33,6 +33,7 @@ if (ENABLE_LIBRI)
         sternheimer_galerkin_audit.cpp
         sternheimer_weak_grid.cpp
         sternheimer_weak_augmented.cpp
+        sternheimer_weak_q_reference.cpp
         sternheimer_fd_hamiltonian.cpp
         sternheimer_fd_preconditioner.cpp
         sternheimer_fd_nonlocal_projector.cpp

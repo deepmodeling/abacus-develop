@@ -32,6 +32,9 @@
 #include "source_lcao/module_ri/sternheimer_weak_augmented.h"
 #include "source_lcao/module_ri/sternheimer_weak_matrix_audit.h"
 #include "source_lcao/module_ri/sternheimer_weak_q_unit.h"
+#include "source_lcao/module_ri/sternheimer_weak_q_dispatch.h"
+#include "source_lcao/module_ri/sternheimer_weak_q_reference.h"
+#include <fftw3.h>
 #include "source_lcao/module_ri/sternheimer_periodic_solver.h"
 #include "source_lcao/module_ri/sternheimer_rpa.h"
 #include "source_lcao/module_ri/sternheimer_response_grid.h"
@@ -2340,8 +2343,8 @@ void run_sternheimer_weak_q_unit(
     const LCAO_Orbitals& orbitals,
     SternheimerABACUSFDGridData fine_grid,
     SternheimerABACUSFDGridData coarse_grid,
-    const std::vector<double>& fine_potential,
-    const std::vector<SternheimerLCAOOccupiedKPoint>& records,
+    const std::vector<double>& live_fine_potential,
+    const std::vector<SternheimerLCAOOccupiedKPoint>& live_records,
     const SternheimerPeriodicResponsePlan& response_plan,
     const SternheimerRPA::FrequencyGrid& frequency_grid,
     const double pca_threshold,
@@ -2350,6 +2353,8 @@ void run_sternheimer_weak_q_unit(
     using Vector = SternheimerFDHamiltonian::Vector;
     using Complex = SternheimerFDHamiltonian::Complex;
     using Blocks = SternheimerWeakAugmented;
+    auto fine_potential = live_fine_potential;
+    auto records = live_records;
     const auto started = std::chrono::steady_clock::now();
     const bool coulomb_only = env_is_true("ABACUS_STERNHEIMER_WEAK_Q_COULOMB_ONLY");
     const int nfreq = static_cast<int>(frequency_grid.omega_ha.size());
@@ -2371,6 +2376,73 @@ void run_sternheimer_weak_q_unit(
             hash_double(digest, value);
         }
     };
+    // Separate process shards replay this exact fine potential AND full KS set.
+    // Seal physical inputs, not live SCF roundoff; never round reference hashes.
+    const auto input = build_abfs_density_input(ucell, pca_threshold, rpa_abfs);
+    siab::Sha256 contract_digest;
+    const auto contract_text = [&](const std::string& text) {
+        hash_u64(contract_digest, text.size());
+        contract_digest.update(reinterpret_cast<const unsigned char*>(text.data()), text.size());
+    };
+    if (std::getenv(kOrbitalDirEnv) || std::getenv(kOrbitalFilesEnv))
+        throw std::invalid_argument("Weak q sealed references require the actual SCF orbitals, without orbital overrides.");
+    for (const auto& filename : {PARAM.inp.input_file, PARAM.inp.stru_file, PARAM.inp.kpoint_file})
+        contract_text(siab::sha256_file(filename));
+    contract_text(siab::sha256_file_manifest(siab::resolve_required_input_files(
+        orbital_dir_from_env_or_input(), orbital_files_from_env_or_cell(ucell), "initial orbital")));
+    contract_text(siab::sha256_file_manifest(siab::resolve_required_input_files(
+        PARAM.inp.pseudo_dir, ucell.pseudo_fn, "pseudopotential")));
+    hash_reals(contract_digest, cell_vectors_bohr(ucell));
+    for (std::size_t atom = 0; atom < input.atom_types.size(); ++atom)
+    {
+        hash_int(contract_digest, input.atom_types[atom]);
+        for (double value : {input.atom_positions.at(atom).x, input.atom_positions.at(atom).y,
+                             input.atom_positions.at(atom).z})
+            hash_double(contract_digest, value);
+    }
+    for (int value : {fine_grid.grid.nx, fine_grid.grid.ny, fine_grid.grid.nz,
+                      coarse_grid.grid.nx, coarse_grid.grid.ny, coarse_grid.grid.nz,
+                      PARAM.globalv.nlocal, PARAM.inp.sternheimer_fd_order, response_plan.iq})
+        hash_int(contract_digest, value);
+    hash_double(contract_digest, fine_grid.volume_element);
+    hash_double(contract_digest, pca_threshold);
+    hash_reals(contract_digest, frequency_grid.omega_ha);
+    hash_reals(contract_digest, frequency_grid.weights_ha);
+    for (const auto& record : records)
+    {
+        hash_int(contract_digest, record.global_k_index);
+        hash_int(contract_digest, record.spin_index);
+        for (double v : record.kpoint) hash_double(contract_digest, v);
+        hash_double(contract_digest, record.kweight);
+        hash_reals(contract_digest, record.occupations);
+        hash_u64(contract_digest, record.unoccupied_eigenvalues.size());
+    }
+    for (const auto& radials : input.radials_by_type)
+        for (const auto& radial : radials)
+        {
+            hash_int(contract_digest, radial.type_index);
+            hash_int(contract_digest, radial.angular_momentum);
+            hash_int(contract_digest, radial.radial_index);
+            hash_reals(contract_digest, radial.radial_grid);
+            hash_reals(contract_digest, radial.radial_values);
+        }
+    const auto reference_contract = contract_digest.finish();
+    const SternheimerWeakQReferenceDimensions reference_dimensions{
+        static_cast<std::uint64_t>(fine_grid.grid.size()), records.size(),
+        static_cast<std::uint64_t>(PARAM.globalv.nlocal)};
+    const char* reference_import = std::getenv("WEAK_Q_REFERENCE_IMPORT");
+    const char* reference_export = std::getenv("WEAK_Q_REFERENCE_EXPORT");
+    if (reference_import && reference_export)
+        throw std::invalid_argument("Weak q reference import and export are mutually exclusive.");
+    if (reference_import)
+    {
+        auto sealed = read_sternheimer_weak_q_reference(reference_import, reference_contract, reference_dimensions);
+        fine_potential.swap(sealed.fine_potential);
+        records.swap(sealed.full_records);
+    }
+    if (reference_export)
+        write_sternheimer_weak_q_reference(reference_export, reference_contract, reference_dimensions,
+                                           fine_potential, records);
     std::vector<int> occupied_counts(records.size());
     siab::Sha256 reference_digest;
     hash_reals(reference_digest, cell_vectors_bohr(ucell));
@@ -2430,7 +2502,6 @@ void run_sternheimer_weak_q_unit(
         if (!std::isfinite(frequency_grid.weights_ha[f]) || frequency_grid.weights_ha[f] <= 0)
             throw std::invalid_argument("Weak q unit requires finite positive frequency quadrature weights.");
     }
-    const auto input = build_abfs_density_input(ucell, pca_threshold, rpa_abfs);
     const auto metadata = describe_sternheimer_abf_grid_channels(
         input.radials_by_type, input.atom_types, input.atom_positions, -1);
     if (metadata.empty() || metadata.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
@@ -2445,7 +2516,27 @@ void run_sternheimer_weak_q_unit(
     raw.shard_index = std::getenv("WEAK_Q_SHARD_INDEX");
     raw.shard_count = std::getenv("WEAK_Q_SHARD_COUNT");
     const auto unit = SternheimerWeakQUnit::parse(raw, occupied_counts, nfreq, channels);
-    const auto owned_columns = unit.columns();
+    const bool parallel_benchmark = env_is_true("WEAK_Q_PARALLEL_BENCHMARK");
+    auto owned_columns = unit.columns();
+    if (parallel_benchmark)
+    {
+        if (owned_columns.size() < 48 || unit.band_end <= unit.band_begin
+            || unit.frequency_end <= unit.frequency_begin)
+            throw std::invalid_argument("Weak q benchmark requires 48 columns and distinct band/frequency endpoints.");
+        const auto all_columns = owned_columns;
+        owned_columns.clear();
+        for (std::size_t i = 0; i < 48; ++i)
+            owned_columns.push_back(all_columns[i * (all_columns.size() - 1) / 47]);
+    }
+    int allocated_threads = 1;
+#ifdef _OPENMP
+    allocated_threads = omp_get_max_threads();
+#endif
+    allocated_threads = positive_int_from_env("SLURM_CPUS_PER_TASK", allocated_threads);
+    const SternheimerWeakQLayout layout{
+        positive_int_from_env("WEAK_Q_WORKERS", 1),
+        positive_int_from_env("WEAK_Q_INNER_THREADS", allocated_threads), allocated_threads};
+    layout.validate();
     const auto& pair = response_plan.kq_pairs.at(unit.source_k - 1);
     if (pair.source_index != unit.source_k - 1)
         throw std::invalid_argument("Weak q unit full-k source does not match the response plan.");
@@ -2456,7 +2547,9 @@ void run_sternheimer_weak_q_unit(
     // Fields are full Bloch values. Canonical target E admits integer folds without an extra exp(iG.r).
     fine_grid.grid.kpoint = sternheimer_lcao_grid_kpoint(target_record);
     coarse_grid.grid.kpoint = fine_grid.grid.kpoint;
-    const std::string stem = unit.stem(response_plan.iq) + (coulomb_only ? "_coulomb_only" : "");
+    const std::string stem = unit.stem(response_plan.iq) + (coulomb_only ? "_coulomb_only" : "")
+        + (parallel_benchmark ? "_benchmark_w" + std::to_string(layout.workers)
+                                 + "_t" + std::to_string(layout.inner_threads) : "");
     const auto output = [](const std::string& path) {
         std::ofstream stream(path, std::ios::out | std::ios::trunc);
         stream.exceptions(std::ios::failbit | std::ios::badbit);
@@ -2477,8 +2570,8 @@ void run_sternheimer_weak_q_unit(
             << "\nfrequency_begin " << unit.frequency_begin << "\nfrequency_end " << unit.frequency_end
             << "\nshard_index " << unit.shard.index << "\nshard_count " << unit.shard.count
             << "\nauxiliary_channels " << channels << "\nowned_columns " << owned_columns.size()
-            << "\nall_source_bands " << (unit.all_source_bands(occupied_counts[unit.source_k - 1]) ? "yes" : "no")
-            << "\nall_frequencies " << (unit.all_frequencies(nfreq) ? "yes" : "no")
+            << "\nall_source_bands " << (!parallel_benchmark && unit.all_source_bands(occupied_counts[unit.source_k - 1]) ? "yes" : "no")
+            << "\nall_frequencies " << (!parallel_benchmark && unit.all_frequencies(nfreq) ? "yes" : "no")
             << "\nqpoint " << response_plan.qpoint[0] << ' ' << response_plan.qpoint[1] << ' ' << response_plan.qpoint[2]
             << "\nreciprocal_shift " << pair.reciprocal_shift[0] << ' ' << pair.reciprocal_shift[1]
             << ' ' << pair.reciprocal_shift[2] << '\n';
@@ -2544,11 +2637,17 @@ void run_sternheimer_weak_q_unit(
              << "\nfine_dv " << fine_grid.volume_element << "\npca_threshold " << pca_threshold
              << "\ncoulomb_kernel strict2d\nkweight_sum " << response_plan.kweight_sum
              << "\nsource_reference original_pbe_band_order\n";
+    manifest << "reference_contract_sha256 " << reference_contract << '\n';
     manifest << "slab_z_length_bohr " << slab_height << "\nz_support_contained "
              << (z_support_contained ? "yes" : "no") << "\nz_support_treatment no_atom_rewrapping\n"
              << support_report.str();
-    for (const auto& path : find_coulomb_v1_rank_files(response_plan.iq, GlobalV::NPROC))
+    for (const auto& generated_path : find_coulomb_v1_rank_files(response_plan.iq, GlobalV::NPROC))
+    {
+        std::string path = generated_path;
+        if (const char* directory = std::getenv("WEAK_Q_COULOMB_REFERENCE_DIR"))
+            path = std::string(directory) + "/" + generated_path.substr(generated_path.find_last_of('/') + 1);
         manifest << "coulomb_reference_file " << path << ' ' << siab::sha256_file(path) << '\n';
+    }
     for (std::size_t k = 0; k < records.size(); ++k)
     {
         const auto& record = records.at(response_plan.record_index_by_global_k.at(k));
@@ -2594,6 +2693,9 @@ void run_sternheimer_weak_q_unit(
           << "\nreference_sha256 " << reference_sha256 << "\nauxiliary_sha256 " << auxiliary_sha256
           << "\nexpected_equations " << (coulomb_only ? 0 : unit.expected_equations())
           << "\nmode " << (coulomb_only ? "coulomb_only" : "response_unit") << '\n';
+    audit << "parallel_workers " << layout.workers << "\ninner_threads " << layout.inner_threads
+          << "\nallocated_threads " << layout.allocated_threads
+          << "\nparallel_benchmark " << (parallel_benchmark ? "yes" : "no") << '\n';
     const auto stage = [&](const std::string& name) {
         const auto memory = detect_sternheimer_memory_snapshot();
         audit << "stage " << name << " elapsed_s " << elapsed_seconds_since(started)
@@ -2726,6 +2828,49 @@ void run_sternheimer_weak_q_unit(
             throw std::length_error("Weak q unit matrix size overflow.");
         return rows * columns;
     };
+    // FFTW captures its thread count when each plan is created. Build private
+    // operators serially; do not hold the plan lock across a constructor.
+    const auto plan_threads = [](int threads) {
+#ifdef _OPENMP
+#pragma omp critical(sternheimer_fftw_plan_management)
+        { fftw_plan_with_nthreads(threads); }
+#else
+        (void)threads;
+#endif
+    };
+    struct FFTWidthRestore
+    {
+        int threads;
+        ~FFTWidthRestore()
+        {
+#ifdef _OPENMP
+#pragma omp critical(sternheimer_fftw_plan_management)
+            { fftw_plan_with_nthreads(threads); }
+#endif
+        }
+    };
+    std::vector<std::shared_ptr<SternheimerWeakGridOperator>> worker_ops;
+    const auto operators_started = std::chrono::steady_clock::now();
+    plan_threads(layout.inner_threads);
+    try
+    {
+        sternheimer_weak_q_detail::InnerThreadsGuard guard(layout.inner_threads);
+        for (int worker_index = 0; worker_index < layout.workers; ++worker_index)
+        {
+            auto worker_op = std::make_shared<SternheimerWeakGridOperator>(h, coarse_grid.grid);
+            if (env_is_true("ABACUS_STERNHEIMER_WEAK_EXACT_CACHE"))
+                worker_op->enable_exact_apply_cache(true, true);
+            worker_ops.push_back(std::move(worker_op));
+        }
+    }
+    catch (...)
+    {
+        plan_threads(allocated_threads);
+        throw;
+    }
+    plan_threads(allocated_threads);
+    audit << "parallel_operator_setup_s " << elapsed_seconds_since(operators_started) << '\n';
+    stage("parallel_operators_ready");
     std::vector<Vector> partials(static_cast<std::size_t>(unit.frequency_end - unit.frequency_begin + 1),
                                   Vector(elements(channels, owned_columns.size()), Complex(0)));
     SternheimerRPA::SolverOptions options;
@@ -2739,6 +2884,7 @@ void run_sternheimer_weak_q_unit(
           << "fine_check_tolerance 1e-9\noriginal_residual_tolerance 1e-8\n";
     for (int ib = unit.band_begin; ib <= unit.band_end; ++ib)
     {
+        if (parallel_benchmark && ib != unit.band_begin && ib != unit.band_end) continue;
         // Preserve each original source band and its energy; only normalize its fine-grid norm.
         auto sampled = build_lcao_grid_functions_from_coefficients(ucell, fine_grid.grid, orbitals,
             sternheimer_lcao_grid_kpoint(source_record), {source_record.coefficients.at(ib - 1)});
@@ -2782,24 +2928,41 @@ void run_sternheimer_weak_q_unit(
         stage("source_vertices_ready");
         for (int ifrequency = unit.frequency_begin; ifrequency <= unit.frequency_end; ++ifrequency)
         {
+            if (parallel_benchmark && ifrequency != unit.frequency_begin && ifrequency != unit.frequency_end) continue;
             auto& partial = partials.at(ifrequency - unit.frequency_begin);
             for (int sign : {1, -1})
             {
-                Blocks::Worker worker(blocks, [op](const Vector& x, Vector& y) { op->apply(x, y); }, epsilon,
-                    sign * sternheimer_weak_q_omega_ry(frequency_grid.omega_ha.at(ifrequency - 1)));
-                for (std::size_t owned = 0; owned < owned_columns.size(); ++owned)
+                std::mutex audit_mutex;
+                std::mutex fine_check_mutex;
+                const auto batch_started = std::chrono::steady_clock::now();
+                FFTWidthRestore restore_width{allocated_threads};
+                plan_threads(layout.inner_threads);
+                const auto task_counts = run_sternheimer_weak_q_tasks(owned_columns.size(), layout,
+                    [&](int worker_index) {
+                        auto worker_op = worker_ops.at(worker_index);
+                        return std::unique_ptr<Blocks::Worker>(new Blocks::Worker(blocks,
+                            [worker_op](const Vector& x, Vector& y) { worker_op->apply(x, y); }, epsilon,
+                            sign * sternheimer_weak_q_omega_ry(frequency_grid.omega_ha.at(ifrequency - 1))));
+                    }, [&](std::size_t owned, std::unique_ptr<Blocks::Worker>& worker, int worker_index)
                 {
                     const int j = owned_columns[owned];
                     const auto f = projected_vertices.f.begin() + std::size_t(j) * nvirtual;
                     const auto w = projected_vertices.w.begin() + std::size_t(j) * ncoarse;
                     const Blocks::Vertices vertex{Vector(f, f + nvirtual), Vector(w, w + ncoarse)};
                     const auto solve_start = std::chrono::steady_clock::now();
-                    const auto result = worker.solve(vertex, options);
-                    audit << "equation " << ++equations << " band " << ib << " ifrequency " << ifrequency
+                    const auto result = worker->solve(vertex, options);
+                    const double solve_seconds = elapsed_seconds_since(solve_start);
+                    std::uint64_t equation_id;
+                    {
+                    std::lock_guard<std::mutex> lock(audit_mutex);
+                    equation_id = ++equations;
+                    audit << "equation " << equation_id << " band " << ib << " ifrequency " << ifrequency
                           << " column " << j + 1 << " sign " << sign << " converged " << (result.converged ? "yes" : "no")
                           << " iterations " << result.schur.iterations << " relative_residual " << result.relative_residual
-                          << " absolute_residual " << result.absolute_residual << " solve_s " << elapsed_seconds_since(solve_start) << '\n';
+                          << " absolute_residual " << result.absolute_residual << " solve_s " << solve_seconds
+                          << " worker " << worker_index << '\n';
                     audit.flush();
+                    }
                     validate_sternheimer_weak_q_residual(result.converged, result.relative_residual, result.absolute_residual);
                     if (result.coefficients.size() != static_cast<std::size_t>(nvirtual) + ncoarse
                         || !std::all_of(result.coefficients.begin(), result.coefficients.end(), finite_complex))
@@ -2812,11 +2975,14 @@ void run_sternheimer_weak_q_unit(
                         result.coefficients.data() + nvirtual, 1, Complex(1), column.data(), 1);
                     if (owned == 0 || owned + 1 == owned_columns.size())
                     {
+                        std::lock_guard<std::mutex> check_lock(fine_check_mutex);
+                        std::ostringstream check_log;
+                        check_log << std::setprecision(17);
                         ++fine_checked_equations;
                         const auto fine_check_started = std::chrono::steady_clock::now();
                         const auto expansion = blocks->expand_coordinates(result.coefficients);
                         Vector fine_response;
-                        op->lift(expansion.e, fine_response);
+                        worker_ops.at(worker_index)->lift(expansion.e, fine_response);
                         for (std::size_t u = 0; u < functions.size(); ++u)
                         {
 #pragma omp parallel for schedule(static)
@@ -2831,23 +2997,33 @@ void run_sternheimer_weak_q_unit(
                             const Complex fine_value = sternheimer_weak_q_left_vertex_factor() * sternheimer_fd_grid_dot(
                                 i == 0 ? first_row_vertex : diagonal_vertex, fine_response, fine_grid.volume_element);
                             const double error = std::abs(fine_value - column[i]) / std::max(1.0, std::abs(fine_value));
-                            audit << "vertex_check " << equations << ' ' << i + 1 << ' ' << error << '\n';
+                            check_log << "vertex_check " << equation_id << ' ' << i + 1 << ' ' << error << '\n';
                             ++fine_vertex_checks;
                             if (!finite_complex(fine_value) || !std::isfinite(error) || error > 1e-9)
                                 throw std::runtime_error("Weak q unit fine/block left-right vertex gate failed.");
                             if (j == 0) break;
                         }
-                        audit << "fine_check_seconds " << equations << ' ' << elapsed_seconds_since(fine_check_started) << '\n';
+                        check_log << "fine_check_seconds " << equation_id << ' ' << elapsed_seconds_since(fine_check_started) << '\n';
+                        std::lock_guard<std::mutex> log_lock(audit_mutex);
+                        audit << check_log.str();
                     }
                     accumulate_sternheimer_weak_q_column(partial, column, channels, owned, occupation);
-                }
+                });
+                plan_threads(allocated_threads);
+                audit << "parallel_batch band " << ib << " ifrequency " << ifrequency << " sign " << sign
+                      << " equations " << owned_columns.size() << " wall_s " << elapsed_seconds_since(batch_started) << '\n';
+                for (std::size_t w = 0; w < task_counts.size(); ++w)
+                    audit << "worker_tasks " << w << ' ' << task_counts[w] << '\n';
+                audit.flush();
             }
             stage("source_frequency_complete_" + std::to_string(ifrequency));
         }
     }
-    if (equations != unit.expected_equations()) throw std::runtime_error("Weak q unit equation coverage is incomplete.");
+    const auto expected_equations = parallel_benchmark ? std::uint64_t(48 * 2 * 2 * 2) : unit.expected_equations();
+    if (equations != expected_equations) throw std::runtime_error("Weak q unit equation coverage is incomplete.");
     for (int ifrequency = unit.frequency_begin; ifrequency <= unit.frequency_end; ++ifrequency)
     {
+        if (parallel_benchmark && ifrequency != unit.frequency_begin && ifrequency != unit.frequency_end) continue;
         const auto& partial = partials.at(ifrequency - unit.frequency_begin);
         const auto filename = stem + "_columns_ifreq_" + std::to_string(ifrequency) + ".dat";
         auto columns = output(filename);
@@ -2873,7 +3049,8 @@ void run_sternheimer_weak_q_unit(
     }
     stage("response_unit_complete");
     audit << "response_equations " << equations << "\nfine_checked_equations " << fine_checked_equations
-          << "\nfine_vertex_checks " << fine_vertex_checks << "\nunit_complete yes\n";
+          << "\nfine_vertex_checks " << fine_vertex_checks
+          << (parallel_benchmark ? "\nbenchmark_complete yes\nunit_complete no\n" : "\nunit_complete yes\n");
     audit.close();
 }
 
@@ -4060,7 +4237,9 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
         run_sternheimer_weak_q_unit(ucell, orbitals, make_sternheimer_fd_full_grid(pw_basis), grid_data,
             copy_sternheimer_full_local_potential(potential, pw_basis, 0), response_kpoints,
             response_plan, frequency_grid, pca_threshold, periodic_abfs_orbitals);
-        out << "status diagnostic_only\nphysical_result no\nfull_q_response no\nreader_v1 no\nweak_q_unit_complete yes\n";
+        out << "status diagnostic_only\nphysical_result no\nfull_q_response no\nreader_v1 no\n"
+            << (env_is_true("WEAK_Q_PARALLEL_BENCHMARK")
+                ? "weak_q_benchmark_complete yes\nweak_q_unit_complete no\n" : "weak_q_unit_complete yes\n");
         return;
     }
     if (env_is_true("ABACUS_STERNHEIMER_WEAK_RESPONSE_AUDIT")

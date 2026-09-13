@@ -193,6 +193,17 @@ AddTest(
           ../../../source_base/module_external/blas_connector_matrix.cpp
 )
 AddTest(
+  TARGET MODULE_RI_sternheimer_weak_q_dispatch_test
+  LIBS ${STERNHEIMER_RPA_TEST_LIBS}
+  SOURCES sternheimer_weak_q_dispatch_test.cpp
+)
+AddTest(
+  TARGET MODULE_RI_sternheimer_weak_q_reference_test
+  LIBS ${STERNHEIMER_RPA_TEST_LIBS}
+  SOURCES sternheimer_weak_q_reference_test.cpp ../sternheimer_weak_q_reference.cpp
+          ../sternheimer_siab_provenance.cpp
+)
+AddTest(
   TARGET MODULE_RI_sternheimer_abfs_strict2d_test
   LIBS parameter base ${math_libs} device container
   SOURCES sternheimer_abfs_strict2d_test.cpp ../sternheimer_abfs_strict2d.cpp

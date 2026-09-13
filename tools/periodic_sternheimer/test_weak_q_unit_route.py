@@ -121,7 +121,7 @@ class WeakQUnitRoute(unittest.TestCase):
         route = self.route()
         self.assertTrue('if (owned == 0 || owned + 1 == owned_columns.size())' in route)
         selected = route.index('if (owned == 0 || owned + 1 == owned_columns.size())')
-        self.assertLess(selected, route.index('op->lift(expansion.e, fine_response)'))
+        self.assertLess(selected, route.index('worker_ops.at(worker_index)->lift(expansion.e, fine_response)'))
         self.assertLess(selected, route.index('const Vector diagonal_vertex'))
         self.assertLess(route.index("BlasConnector::gemv('C'"), selected)
         self.assertIn('fine_checked_equations', route)
