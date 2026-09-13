@@ -695,7 +695,7 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         Input_Item item("cal_syns");
         item.annotation = "calculate asynchronous overlap matrix to output for Hefei-NAMD";
         item.category = "Molecular dynamics";
-        item.type = R"(Boolean [Integer](optional))";
+        item.type = R"(Boolean \[Integer\](optional))";
         item.description = R"(Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates <phi(t-1)|phi(t)> by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
 
 * 0 or false: disable
