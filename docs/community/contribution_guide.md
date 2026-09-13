@@ -11,7 +11,7 @@ We assume you already have a good idea on what to do, otherwise the [issue track
 It is suggested to [submit new issues](https://github.com/deepmodeling/abacus-develop/issues/new/choose) before coding out changes to involve more discussions and suggestions from development team. Refer to the technical guide in [Contributing to ABACUS](../CONTRIBUTING.md) when needed.
 
 - **Follow governance rules.**
-Before implementation and review, read [`AGENTS.md`](../../AGENTS.md) and the
+Before implementation and review, read [`AGENTS.md`](https://github.com/deepmodeling/abacus-develop/blob/develop/AGENTS.md) and the
 [ABACUS Agent Governance](../developers_guide/agent_governance.md) guide. New
 code is reviewed against the shared rules for global dependencies, default
 parameters, header dependencies, tests, INPUT documentation linkage, LF line
