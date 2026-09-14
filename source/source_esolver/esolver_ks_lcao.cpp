@@ -5,7 +5,7 @@
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_deltaspin/deltaspin_lcao.h"
 #include "source_lcao/setup_dftu_lcao.h"
-#include "source_lcao/module_dftu/dftu_nao.h" // Plus_U (LCAO DFT+U derived class)
+#include "source_pw/module_pwdft/dftu_base.h" // Plus_U_Base (PW and LCAO share it)
 #include "source_hamilt/hs_matrix_k.h"
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_lcao/lcao_domain.h" // need DeePKS_init
@@ -36,7 +36,7 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 {
     this->classname = "ESolver_KS_LCAO";
     this->basisname = "LCAO";
-    this->dftu_.reset(new Plus_U());
+    this->dftu_.reset(new Plus_U_Base());
 }
 
 template <typename TK, typename TR>
@@ -163,7 +163,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
-            two_center_bundle_, orb_, this->dmat.dm, this->dftu_.get(), this->deepks, istep, exx_nao, this->exx_info_);
+            two_center_bundle_, orb_, this->dmat.dm, this->dftu_.get(), this->deepks, istep, exx_nao, this->exx_info_, *this->inp_);
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -394,7 +394,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     }
 #endif
 
-    init_dftu_lcao<TK>(istep, iter, this->inp_->dft_plus_u, this->dftu_.get(), this->dmat.dm, ucell, this->chr.rho, this->pw_rho->nrxx);
+    init_dftu_lcao(this->inp_->dft_plus_u, this->dftu_.get(), ucell, this->chr.rho, this->pw_rho->nrxx, &this->orb_);
 
 #ifdef __MLALGO
     // the density matrixes of DeePKS have been updated in each iter
@@ -515,7 +515,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 	const std::vector<std::vector<TK>>& dm_vec = this->dmat.dm->get_DMK_vector();
 
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
-    finish_dftu_lcao<TK>(iter, conv_esolver, this->inp_->dft_plus_u, this->inp_->out_chg[0], this->dftu_.get(), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao, PARAM.globalv.global_out_dir, this->inp_->nspin, PARAM.globalv.npol, PARAM.globalv.gamma_only_local);
+    finish_dftu_lcao<TK>(conv_esolver, this->inp_->dft_plus_u, this->inp_->out_chg[0], this->dftu_.get(), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao, PARAM.globalv.global_out_dir, this->inp_->nspin, PARAM.globalv.npol, PARAM.globalv.gamma_only_local);
 
     // mohan add 2025-11: push DFT+U energy from Plus_U instance to ElecState.
     // Covers both dft_plus_u==1 (new method, energy accumulated by DFTU::contributeHR
