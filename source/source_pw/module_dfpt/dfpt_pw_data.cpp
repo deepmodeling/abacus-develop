@@ -58,7 +58,7 @@ bool DFPT_PW_Data::u_active() const
     // state does this when DFT+U actually runs); a wired provider without
     // them (e.g. a default-constructed reservation) stays inactive.
     ModuleBase::timer::end("DFPT_PW_Data", "u_active");
-    return with_u() && dftu_->is_occ_mat_initialized();
+    return with_u() && dftu_->is_occmat_ready();
 }
 
 void DFPT_PW_Data::set_docc(int q_idx, const std::vector<std::complex<double>>& occ)

@@ -24,6 +24,8 @@ void DensityMatrix<TK, TR>::init_DMR(const Grid_Driver* GridD_in, const UnitCell
         delete it;
     }
     this->_DMR.clear();
+    // a newly allocated DMR is not a wavefunction-derived density matrix until cal_DMR()
+    this->_dmr_ready = false;
     // construct a new DMR
     hamilt::HContainer<TR>* tmp_DMR;
     tmp_DMR = new hamilt::HContainer<TR>(this->_paraV);
@@ -79,6 +81,8 @@ void DensityMatrix<TK, TR>::init_DMR(Record_adj& ra, const UnitCell* ucell)
         delete it;
     }
     this->_DMR.clear();
+    // a newly allocated DMR is not a wavefunction-derived density matrix until cal_DMR()
+    this->_dmr_ready = false;
     // construct a new DMR
     hamilt::HContainer<TR>* tmp_DMR;
     tmp_DMR = new hamilt::HContainer<TR>(this->_paraV);
@@ -134,6 +138,8 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TR>& DMR_in)
         delete it;
     }
     this->_DMR.clear();
+    // a newly allocated DMR is not a wavefunction-derived density matrix until cal_DMR()
+    this->_dmr_ready = false;
     // set up a HContainer using another one
     for (int is = 0; is < this->_nspin; ++is) // loop over spin
     {
@@ -156,6 +162,8 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
         delete it;
     }
     this->_DMR.clear();
+    // a newly allocated DMR is not a wavefunction-derived density matrix until cal_DMR()
+    this->_dmr_ready = false;
     // set up a HContainer using another one
     int size_ap = DMR_in.size_atom_pairs();
     if (size_ap > 0)

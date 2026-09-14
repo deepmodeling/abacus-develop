@@ -186,19 +186,30 @@ void Vdwd3::write_parameters(std::ofstream* plog) const
           << " smooth_width_3b=" << cutoffs_.width3 << std::endl;
 }
 
-d3::Structure Vdwd3::build_structure() const
+d3::Structure Vdwd3::build_structure(std::vector<int>& atom_indices) const
 {
     d3::Structure structure;
+    atom_indices.clear();
     structure.atomic_numbers.reserve(ucell_.nat);
     structure.positions.reserve(ucell_.nat);
+    atom_indices.reserve(ucell_.nat);
 
+    int iat = 0;
     for (int it = 0; it < ucell_.ntype; ++it)
     {
+        if (ucell_.atoms[it].flag_empty_element)
+        {
+            iat += ucell_.atoms[it].na;
+            continue;
+        }
+
         const int atomic_number = atomic_number_from_symbol(ucell_.atoms[it].ncpp.psd);
         for (int ia = 0; ia < ucell_.atoms[it].na; ++ia)
         {
             structure.atomic_numbers.push_back(atomic_number);
             structure.positions.push_back(to_d3_vector(ucell_.atoms[it].tau[ia] * ucell_.lat0));
+            atom_indices.push_back(iat);
+            ++iat;
         }
     }
 
@@ -217,7 +228,9 @@ void Vdwd3::evaluate_impl(const VdwRequest& request, VdwResult& result)
     d3::Result d3_result;
     std::string error;
     const bool derivatives = request.force || request.stress;
-    if (!d3::evaluate(build_structure(), parameters_, cutoffs_, derivatives, d3_result, error))
+    std::vector<int> atom_indices;
+    const d3::Structure structure = build_structure(atom_indices);
+    if (!d3::evaluate(structure, parameters_, cutoffs_, derivatives, d3_result, error))
     {
         ModuleBase::WARNING_QUIT("Vdwd3::evaluate", error);
     }
@@ -227,12 +240,13 @@ void Vdwd3::evaluate_impl(const VdwRequest& request, VdwResult& result)
 
     if (request.force)
     {
-        result.force.resize(ucell_.nat);
-        for (int iat = 0; iat < ucell_.nat; ++iat)
+        result.force.assign(ucell_.nat, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+        for (std::size_t index = 0; index < atom_indices.size(); ++index)
         {
-            result.force[iat] = ModuleBase::Vector3<double>(-2.0 * d3_result.gradient[iat].x,
-                                                            -2.0 * d3_result.gradient[iat].y,
-                                                            -2.0 * d3_result.gradient[iat].z);
+            const int iat = atom_indices[index];
+            result.force[iat] = ModuleBase::Vector3<double>(-2.0 * d3_result.gradient[index].x,
+                                                            -2.0 * d3_result.gradient[index].y,
+                                                            -2.0 * d3_result.gradient[index].z);
         }
         result.has_force = true;
     }

@@ -180,6 +180,7 @@ add_test(NAME MODULE_IO_read_wf2rho_pw_parallel
 )
 
 
+if(ENABLE_LCAO)
 AddTest(
   TARGET MODULE_IO_numerical_basis_test
   LIBS parameter  base device numerical_atomic_orbitals container orb
@@ -187,6 +188,7 @@ AddTest(
           ../module_bessel/numerical_basis_jyjy.cpp
           ../../source_lcao/center2orb.cpp
 )
+endif()
 
 
 AddTest(

@@ -12,9 +12,11 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_pw/module_pwdft/vl_pw.h"
-#include "source_lcao/module_dftu/dftu_nao.h"
 #include "source_lcao/setup_exx.h"
 #include "source_lcao/setup_deepks.h"
+
+// Plus_U_Base forward declaration, full definition in source_pw/module_pwdft/dftu_base.h
+class Plus_U_Base;
 
 namespace LCAO_domain
 {
@@ -48,7 +50,7 @@ void set_pot(
 		const LCAO_Orbitals& orb,
 		Parallel_Orbitals &pv,
 		pseudopot_cell_vl &locpp,
-        Plus_U &dftu,
+        Plus_U_Base &dftu,
         surchem& solvent,
         Exx_NAO<TK> &exx_nao,
         Setup_DeePKS<TK> &deepks,

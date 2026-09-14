@@ -55,6 +55,13 @@ AddTest(
 )
 
 AddTest(
+	TARGET MODULE_PW_test_dftu_pw_tools
+	LIBS parameter base device
+	SOURCES test_dftu_pw_tools.cpp
+	../dftu_pw_tools.cpp
+)
+
+AddTest(
 	TARGET MODULE_PW_structure_factor_test
 	LIBS parameter base device planewave
 	SOURCES structure_factor_test.cpp ../stru_fac.cpp

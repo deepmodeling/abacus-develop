@@ -13,7 +13,7 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_output/output_log.h" // use write_head
 #include "source_estate/elecstate_print.h" // print_etot
-#include "source_lcao/module_dftu/dftu_nao.h" // mohan add 2025-11-07
+#include "source_pw/module_pwdft/dftu_base.h" // Plus_U_Base::u_converged in iter_finish
 #include "source_hamilt/module_xc/general_exx_info.h" // for init_general_exx_info
 
 namespace ModuleESolver
@@ -247,7 +247,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 #ifdef __LCAO
     if (this->inp_->dft_plus_u)
     {
-        converged_u = this->dftu.u_converged();
+        converged_u = this->dftu_->u_converged();
     }
 #endif
 

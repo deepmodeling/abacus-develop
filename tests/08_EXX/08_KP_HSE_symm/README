@@ -15,16 +15,22 @@ representative. The existing star-size factor is applied only after averaging.
 The unit tests in module_exx_symmetry/test/test_symm_rotation.cpp exercise this
 contract with complex matrices and separate spin channels.
 
-The reference energy and stress were regenerated after this correction, with
-unchanged INPUT and thresholds. On the same case, corrected ScaLAPACK runs with
-1 and 4 MPI ranks and one-stage ELPA runs with 1 and 4 ranks agree within 1e-9 eV;
-all report totalstressref=2143.792554 and totalforceref=0.000000. Disabling only
-exx_symmetry_realspace (full EXX contraction with the same projected density)
-also agrees within 2e-10 eV. The maximum ||H-H^dagger||_F over 57 solves drops
-from 6.7e-3 to 1.3e-15. This is a fixed-input regression reference, not a claim of
-cutoff or outer-loop convergence. The historical timing reference is retained.
+The reference was regenerated after merging upstream develop 54aaffefb,
+including its ELPA fallback correction, on 2026-09-14. It uses the unchanged
+case with the default genelpa solver on one MPI rank. Its total energy is
+-189.4406826032011395 eV. ScaLAPACK runs with 1 and 4 MPI ranks and a full EXX
+contraction run (exx_symmetry_realspace=0, with the same projected density)
+agree within 1.4e-9 eV. All four report totalstressref=2143.792554 and
+totalforceref=0.000000. INPUT, thresholds and the historical timing reference
+are unchanged. This is a fixed-input regression reference, not a claim of
+cutoff or outer-loop convergence.
 
 Verification used GCC, OpenMPI 5.0.10, ELPA 2026.02.001, LibXC 7.0.0 and the
-repository-pinned LibRI. The two-stage ELPA backend in that environment failed
-before the first EXX update, so its result is not included in the agreement
-claim; no solver-stage change is part of this fix.
+repository-pinned LibRI on Sai DSPRHBM, with OMP_NUM_THREADS=1. The 12 EXX
+symmetry tests and, on one rank, both complex ELPA upper-triangle tests and
+all three native ELPA block-size tests passed. The complete LCAO solver test
+still crashes inside the installed two-stage ELPA real routine; the four-rank
+complex ELPA tests and HSE case also fail in that library after disabling
+XPMEM to avoid a UCX communication error. These failures remain unresolved,
+and four-rank ELPA is not included in the agreement claim. No solver-stage
+or production INPUT default change is part of this merge.

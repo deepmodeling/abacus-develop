@@ -73,59 +73,55 @@ int ELPA_Solver::generalized_eigenvector(std::complex<double>* A, std::complex<d
     }
     if(DecomposedState == 1 || DecomposedState == 2)
     {
-        // calculate A*U^-1, put to work
+        // Form H * U^{-1} in work. Only the upper triangle of H is
+        // authoritative, so use the Hermitian matrix-matrix product.
         if(loglevel>1)
         {
             t=-1;
             timer(myid, "A*U^-1", "2.1a", t);
         }
-        // LCAO provides the authoritative upper triangle of the Hermitian
-        // Hamiltonian. PZHEMM observes that contract, while PZGEMM would read
-        // an uninitialized/stale lower triangle through A^H.
         ScalapackConnector::hemm('L', 'U', nFull, 1.0, A, B, 0.0, zwork.data(), desc);
         if(loglevel>1)
         {
             timer(myid, "A*U^-1", "2.1a", t);
         }
 
-        // calculate U^-C^(A*U^-1), put to a
+        // Form U^{-H} * (H * U^{-1}) in A.
         if(loglevel>1)
         {
             t=-1;
-            timer(myid, "U^-T*(A*U^-1)", "2.2a", t);
+            timer(myid, "U^-H*(H*U^-1)", "2.2a", t);
         }
         ScalapackConnector::gemm('C', 'N', nFull, nFull, nFull, 1.0, B, zwork.data(), 0.0, A, desc);
         if(loglevel>1)
         {
-            timer(myid, "U^-T*(A*U^-1)", "2.2a", t);
+            timer(myid, "U^-H*(H*U^-1)", "2.2a", t);
         }
     }
     else
     {
-        // calculate b*a^C and put to work
+        // Here B stores S^{-1/2}. Form B * H in work. A is still the
+        // original Hermitian H, whose authoritative data is its upper triangle.
         if(loglevel>1)
         {
             t=-1;
-            timer(myid, "B*A^T", "2.1b", t);
+            timer(myid, "B*H", "2.1b", t);
         }
-        // A now stores the general product H * U^-1, so its conjugate
-        // transpose must be formed with GEMM rather than treating A as
-        // Hermitian a second time.
-        ScalapackConnector::gemm('N', 'C', nFull, nFull, nFull, 1.0, B, A, 0.0, zwork.data(), desc);
+        ScalapackConnector::hemm('R', 'U', nFull, 1.0, A, B, 0.0, zwork.data(), desc);
         if(loglevel>1)
         {
-            timer(myid, "B*A^T", "2.1b", t);
+            timer(myid, "B*H", "2.1b", t);
         }
-        // calculate b*work^C and put to a -- original A*x=v*B*x was transform to a*x'=v*x'
+        // Form B * work^H = B * H * B^H in A.
         if(loglevel>1)
         {
             t=-1;
-            timer(myid, "B*(B*A^T)^T", "2.2b", t);
+            timer(myid, "B*H*B^H", "2.2b", t);
         }
         ScalapackConnector::gemm('N', 'C', nFull, nFull, nFull, 1.0, B, zwork.data(), 0.0, A, desc);
         if(loglevel>1)
         {
-            timer(myid, "B*(B*A^T)^T", "2.2b", t);
+            timer(myid, "B*H*B^H", "2.2b", t);
         }
     }
     if((loglevel>0 && myid==0) || loglevel>1)
@@ -271,7 +267,7 @@ int ELPA_Solver::decomposeRightMatrix(std::complex<double>* B, double* EigenValu
         if(loglevel>2) saveMatrix("U_inv.dat", nFull, B, desc, cblacs_ctxt);
     } else {
         // if cholesky decomposing failed, try diagonalize
-        // calculate B^{-1/2}_{i,j}=\sum_k q_{i,k}*ev_k^{-1/2}*q_{j,k} and put to b, which will be b^-1/2
+        // Form B^{-1/2} = Q * diag(ev^{-1/2}) * Q^H in B.
         DecomposedState=3;
         if(loglevel>1)
         {
@@ -297,7 +293,7 @@ int ELPA_Solver::decomposeRightMatrix(std::complex<double>* B, double* EigenValu
                 zwork[i*lda+j]=EigenVector[i*lda+j]*ev_sqrt;
         }
 
-        // calculate qevq=qev*q^T, put to b, which is B^{-1/2}
+        // Form Q * diag(ev^{-1/2}) * Q^H in B.
         if(loglevel>1)
         {
             t=-1;

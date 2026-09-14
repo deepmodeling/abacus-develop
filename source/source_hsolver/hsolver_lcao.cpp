@@ -1,5 +1,7 @@
 #include "hsolver_lcao.h"
 
+#include "source_base/matrix_block.h"
+
 #ifdef __MPI
 #include "diago_scalapack.h"
 #include "source_base/module_external/scalapack_connector.h"
@@ -118,8 +120,10 @@ void HSolverLCAO<TK>::solve(hamilt::Hamilt<TK>* pHamilt,
             /// update H(k) for each k point
             pHamilt->updateHk(ik);
             psi.fix_k(ik);
+            ModuleBase::MatrixBlock<TK> hk, sk;
+            pHamilt->matrix(hk, sk);
             // solve eigenvector and eigenvalue for H(k)
-            pe.diag(pHamilt, psi, nullptr);
+            pe.diag(hk, sk, psi, nullptr);
         }
         auto _pes = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(pes);
         pes->f_en.eband = pe.totalFreeEnergy;
@@ -138,23 +142,28 @@ void HSolverLCAO<T>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, do
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
     ModuleBase::timer::start("HSolverLCAO", "hamiltSolvePsiK");
 
+    // H(k) and S(k) are all the eigensolvers need from the Hamiltonian, so
+    // fetch them once here rather than once inside each solver.
+    ModuleBase::MatrixBlock<T> hk, sk;
+    hm->matrix(hk, sk);
+
     if (this->method == "scalapack_gvx")
     {
 #ifdef __MPI
         DiagoScalapack<T> sa(this->nlocal, this->nbands);
-        sa.diag(hm, psi, eigenvalue);
+        sa.diag(hk, sk, psi, eigenvalue);
 #endif
     }
 #ifdef __ELPA
     else if (this->method == "genelpa")
     {
         DiagoElpa<T> el(this->nlocal, this->nbands);
-        el.diag(hm, psi, eigenvalue);
+        el.diag(hk, sk, psi, eigenvalue);
     }
     else if (this->method == "elpa")
     {
         DiagoElpaNative<T> el(this->nlocal, this->nbands, this->use_gpu);
-        el.diag(hm, psi, eigenvalue);
+        el.diag(hk, sk, psi, eigenvalue);
     }
 #endif
 #ifdef __CUDA
@@ -162,22 +171,20 @@ void HSolverLCAO<T>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, do
     {
         // Note: This branch will only be executed in the single-process case
         DiagoCusolver<T> cu(this->nlocal, this->nbands);
-        hamilt::MatrixBlock<T> hk, sk;
-        hm->matrix(hk, sk);
         cu.diag(hk, sk, psi, eigenvalue);
     }
 #ifdef __CUSOLVERMP
     else if (this->method == "cusolvermp")
     {
         DiagoCusolverMP<T> cm(this->nlocal, this->nbands);
-        cm.diag(hm, psi, eigenvalue);
+        cm.diag(hk, sk, psi, eigenvalue);
     }
 #endif
 #endif
     else if (this->method == "lapack") // only for single core
     {
         DiagoLapack<T> la(this->nlocal, this->nbands);
-        la.diag(hm, psi, eigenvalue);
+        la.diag(hk, sk, psi, eigenvalue);
     }
     else
     {
@@ -208,6 +215,12 @@ void HSolverLCAO<T>::parakSolve(hamilt::Hamilt<T>* pHamilt,
     int coord_col = k2d.get_p2D_pool()->get_coord_col();
     int ncol_bands_pool
         = numroc_(&(nbands), &(nb2d), &coord_col, &zero, &(k2d.get_p2D_pool()->dim1));
+    /// Parallel_K2D only redistributes H(k)/S(k); updating the Hamiltonian
+    /// for a given k point stays here, where the Hamiltonian is known.
+    auto get_hsk = [pHamilt](int ik, ModuleBase::MatrixBlock<T>& hk, ModuleBase::MatrixBlock<T>& sk) {
+        pHamilt->updateHk(ik);
+        pHamilt->matrix(hk, sk);
+    };
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < k2d.get_pKpoints()->get_max_nks_pool(); ++ik)
     {
@@ -233,7 +246,7 @@ void HSolverLCAO<T>::parakSolve(hamilt::Hamilt<T>* pHamilt,
                 ik_kpar[i] = ik + k2d.get_pKpoints()->startk_pool[i];
             }
         }
-        k2d.distribute_hsk(pHamilt, ik_kpar, nrow);
+        k2d.distribute_hsk(get_hsk, ik_kpar, nrow);
         /// global index of k point
         int ik_global = ik + k2d.get_pKpoints()->startk_pool[k2d.get_my_pool()];
         auto psi_pool = psi::Psi<T>(1, ncol_bands_pool, k2d.get_p2D_pool()->nrow, k2d.get_p2D_pool()->nrow, true);
@@ -242,14 +255,14 @@ void HSolverLCAO<T>::parakSolve(hamilt::Hamilt<T>* pHamilt,
         {
             /// local psi in pool
             psi_pool.fix_k(0);
-            hamilt::MatrixBlock<T> hk_pool = hamilt::MatrixBlock<T>{k2d.hk_pool.data(),
-                                                                    (size_t)k2d.get_p2D_pool()->get_row_size(),
-                                                                    (size_t)k2d.get_p2D_pool()->get_col_size(),
-                                                                    k2d.get_p2D_pool()->desc};
-            hamilt::MatrixBlock<T> sk_pool = hamilt::MatrixBlock<T>{k2d.sk_pool.data(),
-                                                                    (size_t)k2d.get_p2D_pool()->get_row_size(),
-                                                                    (size_t)k2d.get_p2D_pool()->get_col_size(),
-                                                                    k2d.get_p2D_pool()->desc};
+            ModuleBase::MatrixBlock<T> hk_pool = ModuleBase::MatrixBlock<T>{k2d.hk_pool.data(),
+                                                                            (size_t)k2d.get_p2D_pool()->get_row_size(),
+                                                                            (size_t)k2d.get_p2D_pool()->get_col_size(),
+                                                                            k2d.get_p2D_pool()->desc};
+            ModuleBase::MatrixBlock<T> sk_pool = ModuleBase::MatrixBlock<T>{k2d.sk_pool.data(),
+                                                                            (size_t)k2d.get_p2D_pool()->get_row_size(),
+                                                                            (size_t)k2d.get_p2D_pool()->get_col_size(),
+                                                                            k2d.get_p2D_pool()->desc};
             /// solve eigenvector and eigenvalue for H(k)
             if (this->method == "scalapack_gvx")
             {
@@ -402,7 +415,7 @@ void HSolverLCAO<T>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
                 sk_mat.resize(nrow * ncol);
             }
             pHamilt->updateHk(ik);
-            hamilt::MatrixBlock<T> hk_2D, sk_2D;
+            ModuleBase::MatrixBlock<T> hk_2D, sk_2D;
             pHamilt->matrix(hk_2D, sk_2D);
             int desc_tmp[9];
             T* hk_local_ptr = hk_mat.data();
@@ -427,10 +440,10 @@ void HSolverLCAO<T>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
         {
             psi_local.resize(1, ncol, nrow);
             DiagoCusolver<T> cu(this->nlocal, this->nbands);
-            hamilt::MatrixBlock<T> hk_local = hamilt::MatrixBlock<T>{
+            ModuleBase::MatrixBlock<T> hk_local = ModuleBase::MatrixBlock<T>{
                     hk_mat.data(), (size_t)nrow, (size_t)ncol,
                     mat_para_local.desc};
-            hamilt::MatrixBlock<T> sk_local = hamilt::MatrixBlock<T>{
+            ModuleBase::MatrixBlock<T> sk_local = ModuleBase::MatrixBlock<T>{
                     sk_mat.data(), (size_t)nrow, (size_t)ncol,
                     mat_para_local.desc};
             cu.diag(hk_local, sk_local, psi_local, &(pes->ekb(kpt_assigned, 0)));

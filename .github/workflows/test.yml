@@ -2,6 +2,9 @@ name: Integration Test and Unit Test
 
 on:
   pull_request:
+  push:
+    branches:
+      - develop
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -14,12 +17,18 @@ defaults:
 jobs:
   test:
     name: Test
-    runs-on: X64
+    runs-on:
+      - self-hosted
+      - cpu
+      - linux-x64
     if: github.repository_owner == 'deepmodeling'
     container:
       image: ghcr.io/deepmodeling/abacus-gnu
-      volumes:
-        - /tmp/ccache:/github/home/.ccache
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPRESS: "true"
+      CCACHE_MAXSIZE: 8G
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7.0.1
@@ -46,6 +55,26 @@ jobs:
             ninja-build \
             xz-utils
           sudo pip install clang-format clang-tidy
+
+      - name: Calculate compiler cache fingerprint
+        id: compiler
+        run: |
+          fingerprint="$({ c++ --version; ccache --version; } | sha256sum | cut -d' ' -f1)"
+          echo "fingerprint=${fingerprint}" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: abacus-gnu-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
+          restore-keys: |
+            abacus-gnu-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-
+
+      - name: Prepare compiler cache
+        run: |
+          mkdir -p "${CCACHE_DIR}"
+          ccache --set-config="max_size=${CCACHE_MAXSIZE}"
+          ccache --zero-stats
 
       - name: Install external tools from toolchain
         run: |
@@ -85,6 +114,12 @@ jobs:
         run: |
           cmake --build build -j8
           cmake --install build
+
+      - name: Report compiler cache
+        if: always()
+        run: |
+          ccache --show-stats
+          ccache --show-stats >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Check documentation consistency
         run: |

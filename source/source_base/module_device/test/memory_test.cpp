@@ -170,6 +170,59 @@ TEST_F(TestModulePsiMemory, delete_memory_op_complex_double_cpu)
     delete_memory_complex_double_cpu_op()(hz_xx);
 }
 
+// ---------------------------------------------------------------------------
+// Runtime-dispatch wrappers (issue #7553).
+//
+// synchronize_memory()/cast_memory() pick a compile-time specialization from a
+// pair of runtime AbacusDevice_t values. The branches used to be joined with
+// `||`, so the first one matched whenever EITHER side was the CPU and every
+// host<->device transfer was served by the host-to-host specialization. The
+// checks below pin the exact-pair dispatch for all combinations available in
+// the current build.
+// ---------------------------------------------------------------------------
+
+TEST_F(TestModulePsiMemory, synchronize_memory_dispatch_cpu_to_cpu)
+{
+    std::vector<double> h_xx(xx.size(), 0);
+    base_device::memory::synchronize_memory(h_xx.data(),
+                                            xx.data(),
+                                            xx.size(),
+                                            base_device::AbacusDevice_t::CpuDevice,
+                                            base_device::AbacusDevice_t::CpuDevice);
+    for (int ii = 0; ii < xx.size(); ii++)
+    {
+        EXPECT_EQ(h_xx[ii], xx[ii]);
+    }
+}
+
+TEST_F(TestModulePsiMemory, synchronize_memory_dispatch_complex_cpu_to_cpu)
+{
+    std::vector<std::complex<double>> hz_xx(z_xx.size(), std::complex<double>(0, 0));
+    base_device::memory::synchronize_memory(hz_xx.data(),
+                                            z_xx.data(),
+                                            z_xx.size(),
+                                            base_device::AbacusDevice_t::CpuDevice,
+                                            base_device::AbacusDevice_t::CpuDevice);
+    for (int ii = 0; ii < z_xx.size(); ii++)
+    {
+        EXPECT_EQ(hz_xx[ii], z_xx[ii]);
+    }
+}
+
+TEST_F(TestModulePsiMemory, cast_memory_dispatch_cpu_to_cpu)
+{
+    std::vector<float> h_xx(xx.size(), 0);
+    base_device::memory::cast_memory(h_xx.data(),
+                                     xx.data(),
+                                     xx.size(),
+                                     base_device::AbacusDevice_t::CpuDevice,
+                                     base_device::AbacusDevice_t::CpuDevice);
+    for (int ii = 0; ii < xx.size(); ii++)
+    {
+        EXPECT_FLOAT_EQ(h_xx[ii], static_cast<float>(xx[ii]));
+    }
+}
+
 #if __UT_USE_CUDA || __UT_USE_ROCM
 TEST_F(TestModulePsiMemory, set_memory_op_double_gpu)
 {
@@ -345,6 +398,92 @@ TEST_F(TestModulePsiMemory, delete_memory_op_complex_double_gpu)
 {
     thrust::device_ptr<std::complex<double>> dz_xx = thrust::device_malloc<std::complex<double>>(z_xx.size());
     delete_memory_complex_double_gpu_op()(thrust::raw_pointer_cast(dz_xx));
+}
+
+
+// Exact-pair dispatch across the host/device boundary (issue #7553). Before the
+// fix these three cases all reached synchronize_memory_op<..., CPU, CPU>, i.e. a
+// plain host memcpy on a device pointer.
+TEST_F(TestModulePsiMemory, synchronize_memory_dispatch_cpu_to_gpu)
+{
+    thrust::device_ptr<double> d_xx = thrust::device_malloc<double>(xx.size());
+    std::vector<double> hv_xx(xx.size(), 0);
+    thrust::copy(hv_xx.begin(), hv_xx.end(), d_xx);
+    base_device::memory::synchronize_memory(thrust::raw_pointer_cast(d_xx),
+                                            xx.data(),
+                                            xx.size(),
+                                            base_device::AbacusDevice_t::GpuDevice,
+                                            base_device::AbacusDevice_t::CpuDevice);
+
+    thrust::host_vector<double> h_xx(xx.size());
+    thrust::copy(d_xx, d_xx + xx.size(), h_xx.begin());
+    for (int ii = 0; ii < xx.size(); ii++)
+    {
+        EXPECT_EQ(h_xx[ii], xx[ii]);
+    }
+    thrust::device_free(d_xx);
+}
+
+TEST_F(TestModulePsiMemory, synchronize_memory_dispatch_gpu_to_cpu)
+{
+    thrust::device_ptr<double> d_xx = thrust::device_malloc<double>(xx.size());
+    thrust::copy(xx.begin(), xx.end(), d_xx);
+    thrust::host_vector<double> h_xx(xx.size());
+    base_device::memory::synchronize_memory(thrust::raw_pointer_cast(h_xx.data()),
+                                            thrust::raw_pointer_cast(d_xx),
+                                            xx.size(),
+                                            base_device::AbacusDevice_t::CpuDevice,
+                                            base_device::AbacusDevice_t::GpuDevice);
+
+    for (int ii = 0; ii < xx.size(); ii++)
+    {
+        EXPECT_EQ(h_xx[ii], xx[ii]);
+    }
+    thrust::device_free(d_xx);
+}
+
+TEST_F(TestModulePsiMemory, synchronize_memory_dispatch_gpu_to_gpu)
+{
+    thrust::device_ptr<double> d1_xx = thrust::device_malloc<double>(xx.size());
+    thrust::device_ptr<double> d2_xx = thrust::device_malloc<double>(xx.size());
+    thrust::copy(xx.begin(), xx.end(), d1_xx);
+    base_device::memory::synchronize_memory(thrust::raw_pointer_cast(d2_xx),
+                                            thrust::raw_pointer_cast(d1_xx),
+                                            xx.size(),
+                                            base_device::AbacusDevice_t::GpuDevice,
+                                            base_device::AbacusDevice_t::GpuDevice);
+
+    thrust::host_vector<double> h_xx(xx.size());
+    thrust::copy(d2_xx, d2_xx + xx.size(), h_xx.begin());
+    for (int ii = 0; ii < xx.size(); ii++)
+    {
+        EXPECT_EQ(h_xx[ii], xx[ii]);
+    }
+    thrust::device_free(d1_xx);
+    thrust::device_free(d2_xx);
+}
+
+TEST_F(TestModulePsiMemory, cast_memory_dispatch_cpu_to_gpu_and_back)
+{
+    thrust::device_ptr<float> d_xx = thrust::device_malloc<float>(xx.size());
+    base_device::memory::cast_memory(thrust::raw_pointer_cast(d_xx),
+                                     xx.data(),
+                                     xx.size(),
+                                     base_device::AbacusDevice_t::GpuDevice,
+                                     base_device::AbacusDevice_t::CpuDevice);
+
+    std::vector<double> h_xx(xx.size(), 0);
+    base_device::memory::cast_memory(h_xx.data(),
+                                     thrust::raw_pointer_cast(d_xx),
+                                     xx.size(),
+                                     base_device::AbacusDevice_t::CpuDevice,
+                                     base_device::AbacusDevice_t::GpuDevice);
+
+    for (int ii = 0; ii < xx.size(); ii++)
+    {
+        EXPECT_FLOAT_EQ(static_cast<float>(h_xx[ii]), static_cast<float>(xx[ii]));
+    }
+    thrust::device_free(d_xx);
 }
 
 #endif // __UT_USE_CUDA || __UT_USE_ROCM
