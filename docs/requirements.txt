@@ -3,3 +3,4 @@ myst_parser[linkify]
 sphinx-book-theme
 deepmodeling-sphinx>=0.3.0
 pyyaml
+sphinx
