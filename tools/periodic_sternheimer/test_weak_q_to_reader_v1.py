@@ -69,6 +69,52 @@ class ReaderV1PackagingTests(unittest.TestCase):
         self.assertAlmostEqual(direct.real, packaged.real, places=14)
         self.assertAlmostEqual(direct.imag, packaged.imag, places=14)
 
+    def test_coulomb_round_trip_preserves_finite_part_matrix(self):
+        raw = np.array(
+            [
+                [-3.0, 0.2 + 0.1j, -0.4],
+                [0.2 - 0.1j, 4.0, 0.3j],
+                [-0.4, -0.3j, 9.0],
+            ],
+            dtype=np.complex128,
+        )
+        output = self.root / "v1_coulomb_full_iq_1_rank0.dat"
+
+        report = converter.package_coulomb_matrix(
+            raw,
+            output,
+            iq=1,
+            atom_naux=(1, 2),
+        )
+        actual = converter.read_coulomb_v1(output)
+
+        self.assertEqual(actual.iq, 1)
+        self.assertEqual(actual.ifrequency, 0)
+        self.assertEqual(actual.atom_naux, (1, 2))
+        np.testing.assert_array_equal(actual.matrix, raw)
+        self.assertEqual(report["matrix_kind"], "finite_part_coulomb")
+        self.assertLess(report["round_trip_relative_frobenius"], 1.0e-15)
+
+    def test_reads_complete_full_coulomb_text(self):
+        source = self.root / "finite-coulomb.dat"
+        source.write_text(
+            "format_version 1\n"
+            "full_matrix_rows 2\n"
+            "full_matrix_columns 2\n"
+            "coulomb_integral 1 1 -2.0 0.0\n"
+            "coulomb_integral 1 2 0.25 0.5\n"
+            "coulomb_integral 2 1 0.25 -0.5\n"
+            "coulomb_integral 2 2 3.0 0.0\n"
+            "full_matrix_complete yes\n"
+        )
+
+        actual = converter.read_full_coulomb_text(source)
+
+        np.testing.assert_array_equal(
+            actual,
+            np.array([[-2.0, 0.25 + 0.5j], [0.25 - 0.5j, 3.0]], dtype=np.complex128),
+        )
+
     def test_invalid_input_fails_closed_without_output(self):
         cases = (
             (np.eye(2, dtype=np.complex128), dict(iq=0), "iq"),

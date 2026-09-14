@@ -150,6 +150,60 @@ def read_coulomb_v1(path):
     return _read_header_and_matrix(path, COULOMB_V1_MARKER)
 
 
+def read_full_coulomb_text(path):
+    path = Path(path)
+    rows = None
+    columns = None
+    matrix = None
+    seen = None
+    record_count = 0
+    complete = False
+
+    with path.open(encoding="utf-8") as stream:
+        for line_number, line in enumerate(stream, start=1):
+            fields = line.split()
+            if not fields:
+                continue
+            if fields[0] == "full_matrix_rows":
+                _require(len(fields) == 2 and rows is None,
+                         f"invalid row metadata at line {line_number}")
+                rows = int(fields[1])
+            elif fields[0] == "full_matrix_columns":
+                _require(len(fields) == 2 and columns is None,
+                         f"invalid column metadata at line {line_number}")
+                columns = int(fields[1])
+            elif fields[0] == "coulomb_integral":
+                _require(rows is not None and columns is not None,
+                         f"matrix dimensions must precede records at line {line_number}")
+                _require(rows > 0 and rows == columns,
+                         "matrix dimensions must be positive and square")
+                if matrix is None:
+                    matrix = np.empty((rows, columns), dtype=np.complex128)
+                    seen = np.zeros((rows, columns), dtype=np.bool_)
+                _require(len(fields) == 5, f"invalid matrix record at line {line_number}")
+                row, column = int(fields[1]) - 1, int(fields[2]) - 1
+                _require(0 <= row < rows and 0 <= column < columns,
+                         f"matrix record is out of bounds at line {line_number}")
+                _require(not seen[row, column], f"duplicate matrix record at line {line_number}")
+                value = complex(float(fields[3]), float(fields[4]))
+                _require(math.isfinite(value.real) and math.isfinite(value.imag),
+                         f"non-finite matrix record at line {line_number}")
+                matrix[row, column] = value
+                seen[row, column] = True
+                record_count += 1
+            elif fields[0] == "full_matrix_complete":
+                _require(fields == ["full_matrix_complete", "yes"],
+                         f"invalid completion marker at line {line_number}")
+                complete = True
+
+    _require(rows is not None and columns is not None and rows > 0 and rows == columns,
+             "matrix dimensions must be positive and square")
+    _require(complete, "matrix completion marker is missing")
+    _require(matrix is not None and record_count == rows * columns and bool(np.all(seen)),
+             "matrix coverage is incomplete")
+    return matrix
+
+
 def package_matrix(matrix, output, *, iq, ifrequency, omega, weight, atom_naux):
     output = Path(output)
     if output.exists():
@@ -206,6 +260,63 @@ def package_matrix(matrix, output, *, iq, ifrequency, omega, weight, atom_naux):
         "mathematical_object": "M = V chi0 V",
         "coulomb_transform": "none",
         "projection": "(M + M^H) / 2",
+        "raw": _matrix_summary(matrix),
+        "packaged": _matrix_summary(restored.matrix),
+        "round_trip_relative_frobenius": round_trip,
+    }
+
+
+def package_coulomb_matrix(matrix, output, *, iq, atom_naux):
+    output = Path(output)
+    if output.exists():
+        raise FileExistsError(output)
+    matrix = np.asarray(matrix, dtype=np.complex128)
+    atom_naux = tuple(atom_naux)
+    offsets = _offsets(atom_naux)
+    _require(iq > 0, "iq must be positive")
+    _require(matrix.ndim == 2 and matrix.shape[0] == matrix.shape[1], "matrix must be square")
+    _require(matrix.shape == (offsets[-1], offsets[-1]), "matrix dimension does not match atom_naux")
+    _require(np.isfinite(matrix).all(), "matrix values must be finite")
+
+    hermitian = 0.5 * (matrix + matrix.conj().T)
+    pairs = _pairs(len(atom_naux))
+    header_size = 6 * 4 + 4 * len(atom_naux) + 12 * len(pairs)
+    records = []
+    byte_offset = header_size
+    for pair_index, (iatom, jatom) in enumerate(pairs):
+        records.append((pair_index, byte_offset))
+        byte_offset += atom_naux[iatom] * atom_naux[jatom] * 16
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temporary = output.with_name(f".{output.name}.tmp.{os.getpid()}")
+    try:
+        with temporary.open("xb") as stream:
+            stream.write(struct.pack("<6i", COULOMB_V1_MARKER, iq, offsets[-1], COMPLEX_FLAG,
+                                     len(atom_naux), len(pairs)))
+            stream.write(struct.pack(f"<{len(atom_naux)}i", *atom_naux))
+            for pair_index, payload_offset in records:
+                stream.write(struct.pack("<iq", pair_index, payload_offset))
+            for iatom, jatom in pairs:
+                i0, i1 = offsets[iatom], offsets[iatom + 1]
+                j0, j1 = offsets[jatom], offsets[jatom + 1]
+                block = np.ascontiguousarray(hermitian[i0:i1, j0:j1], dtype="<c16")
+                stream.write(block.tobytes(order="C"))
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.link(temporary, output)
+        temporary.unlink()
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
+
+    restored = read_coulomb_v1(output)
+    denominator = float(np.linalg.norm(hermitian))
+    round_trip = float(np.linalg.norm(restored.matrix - hermitian)) / denominator if denominator else 0.0
+    return {
+        "path": str(output),
+        "sha256": _sha256(output),
+        "matrix_kind": "finite_part_coulomb",
+        "projection": "(V + V^H) / 2",
         "raw": _matrix_summary(matrix),
         "packaged": _matrix_summary(restored.matrix),
         "round_trip_relative_frobenius": round_trip,
