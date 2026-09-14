@@ -199,10 +199,13 @@ std::vector<std::complex<double>> sternheimer_abf_coulomb_panel(
     return result;
 }
 
-void solve_sternheimer_abf_strict2d_coulomb_in_place(
+namespace
+{
+void solve_sternheimer_abf_strict2d_coulomb_impl(
     std::vector<SternheimerABFBlochGridChannel>& density_channels,
     const SternheimerFDHamiltonian::Grid& grid,
-    const SternheimerReducedKPoint& qpoint)
+    const SternheimerReducedKPoint& qpoint,
+    const bool gamma_finite_part)
 {
     const Geometry geometry = checked_geometry(grid);
     for (const double coordinate: qpoint)
@@ -216,8 +219,15 @@ void solve_sternheimer_abf_strict2d_coulomb_in_place(
     {
         throw std::invalid_argument("Strict2D ABFS Coulomb supports only qz=0, without reciprocal-z folding.");
     }
-    if (std::abs(std::remainder(qpoint[0], 1.0)) <= 1.0e-14
-        && std::abs(std::remainder(qpoint[1], 1.0)) <= 1.0e-14)
+    const bool gamma_equivalent
+        = std::abs(std::remainder(qpoint[0], 1.0)) <= 1.0e-14
+          && std::abs(std::remainder(qpoint[1], 1.0)) <= 1.0e-14;
+    const bool gamma = qpoint[0] == 0.0 && qpoint[1] == 0.0;
+    if (gamma_finite_part && !gamma)
+    {
+        throw std::invalid_argument("Strict2D ABFS Gamma finite-part Coulomb requires exactly q=(0,0,0).");
+    }
+    if (gamma_equivalent && !gamma_finite_part)
     {
         throw std::invalid_argument("Strict2D ABFS Coulomb does not support Gamma or its planar reciprocal equivalents.");
     }
@@ -240,6 +250,7 @@ void solve_sternheimer_abf_strict2d_coulomb_in_place(
     std::vector<double> wave_number(geometry.nxy);
     std::vector<double> boundary_average(geometry.nxy);
     std::vector<double> constant_fraction(geometry.nxy);
+    std::vector<bool> zero_mode(geometry.nxy, false);
     for (int x = 0; x < grid.nx; ++x)
     {
         for (int y = 0; y < grid.ny; ++y)
@@ -252,9 +263,20 @@ void solve_sternheimer_abf_strict2d_coulomb_in_place(
             const double Qy = ModuleBase::TWO_PI * ((gx + qpoint[0]) * geometry.dual[0][1]
                                                   + (gy + qpoint[1]) * geometry.dual[1][1]);
             const double Q = std::hypot(Qx, Qy);
-            if (!std::isfinite(Q) || Q <= 0.0)
+            if (!std::isfinite(Q))
             {
                 throw std::invalid_argument("Strict2D ABFS Coulomb requires finite nonzero Q for EVERY planar mode.");
+            }
+            if (Q == 0.0)
+            {
+                if (!gamma_finite_part || !gamma || gx != 0 || gy != 0)
+                {
+                    throw std::invalid_argument("Strict2D ABFS Coulomb requires finite nonzero Q for EVERY planar mode.");
+                }
+                zero_mode[p] = true;
+                phase[p] = Complex(1.0, 0.0);
+                wave_number[p] = 0.0;
+                continue;
             }
             const double angle = ModuleBase::TWO_PI * (qpoint[0] * (static_cast<double>(x) / grid.nx)
                                                        + qpoint[1] * (static_cast<double>(y) / grid.ny));
@@ -310,6 +332,11 @@ void solve_sternheimer_abf_strict2d_coulomb_in_place(
                 {
                     throw std::overflow_error("Strict2D ABFS Coulomb overflow in forward FFT.");
                 }
+                if (zero_mode[p] && n == 0)
+                {
+                    particular[n] = Complex();
+                    continue;
+                }
                 const double norm = std::hypot(Q, kz[n]);
                 const double symbol = (ModuleBase::FOUR_PI / norm) / norm;
                 particular[n] = (rho / static_cast<double>(geometry.size)) * symbol;
@@ -322,6 +349,7 @@ void solve_sternheimer_abf_strict2d_coulomb_in_place(
                 if (!finite(nonzero_sum) || !finite(k_moment))
                     throw std::overflow_error("Strict2D ABFS Coulomb overflow in Galerkin boundary moments.");
             }
+            const Complex rho_zero(fft.data[base][0], fft.data[base][1]);
             const Complex p_at_zero = particular[0] + nonzero_sum;
             if (!finite(p_at_zero))
                 throw std::overflow_error("Strict2D ABFS Coulomb overflow in Galerkin boundary value.");
@@ -331,7 +359,21 @@ void solve_sternheimer_abf_strict2d_coulomb_in_place(
             for (int m = 0; m < grid.nz; ++m)
             {
                 Complex potential;
-                if (m == 0)
+                if (zero_mode[p] && m == 0)
+                {
+                    potential = -ModuleBase::TWO_PI * geometry.length * geometry.length
+                                    * rho_zero / (3.0 * static_cast<double>(geometry.size))
+                                - nonzero_sum;
+                }
+                else if (zero_mode[p])
+                {
+                    const double km = kz[m];
+                    const Complex charge_term
+                        = ModuleBase::FOUR_PI * rho_zero
+                          / (static_cast<double>(geometry.size) * km * km);
+                    potential = particular[m] - charge_term + k_moment / km;
+                }
+                else if (m == 0)
                 {
                     potential = constant_fraction[p] * particular[0] - boundary_average[p] * nonzero_sum;
                 }
@@ -382,6 +424,23 @@ void solve_sternheimer_abf_strict2d_coulomb_in_place(
         }
         channel.max_abs = max_abs;
     }
+}
+} // namespace
+
+void solve_sternheimer_abf_strict2d_coulomb_in_place(
+    std::vector<SternheimerABFBlochGridChannel>& density_channels,
+    const SternheimerFDHamiltonian::Grid& grid,
+    const SternheimerReducedKPoint& qpoint)
+{
+    solve_sternheimer_abf_strict2d_coulomb_impl(density_channels, grid, qpoint, false);
+}
+
+void solve_sternheimer_abf_strict2d_coulomb_finite_part_in_place(
+    std::vector<SternheimerABFBlochGridChannel>& density_channels,
+    const SternheimerFDHamiltonian::Grid& grid,
+    const SternheimerReducedKPoint& qpoint)
+{
+    solve_sternheimer_abf_strict2d_coulomb_impl(density_channels, grid, qpoint, true);
 }
 
 std::vector<std::complex<double>> sternheimer_abf_strict2d_selected_coulomb_integrals(

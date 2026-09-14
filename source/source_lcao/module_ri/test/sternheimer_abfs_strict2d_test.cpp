@@ -7,6 +7,7 @@
 #include <cmath>
 #include <complex>
 #include <limits>
+#include <numeric>
 #include <stdexcept>
 
 namespace
@@ -336,6 +337,68 @@ TEST(SternheimerABFSStrict2D, StableSmallQConstantMode)
     ModuleRI::solve_sternheimer_abf_strict2d_coulomb_in_place(phi, grid, q);
     EXPECT_NEAR(phi[0].potential_r[0].real() / expected, 1.0, 2.0e-14);
     EXPECT_EQ(phi[0].potential_r[0].imag(), 0.0);
+}
+
+TEST(SternheimerABFSStrict2D, GammaFinitePartMatchesConstantDensityAnalyticLimit)
+{
+    const Grid grid = skew_grid(1, 1, 1);
+    const double length = 6.5;
+    Channel rho;
+    rho.potential_r = {Complex(1.0, 0.0)};
+    std::vector<Channel> phi{rho};
+
+    ModuleRI::solve_sternheimer_abf_strict2d_coulomb_finite_part_in_place(
+        phi, grid, QPoint{0.0, 0.0, 0.0});
+
+    EXPECT_NEAR(phi[0].potential_r[0].real(), -two_pi * length * length / 3.0,
+                2.0e-12);
+    EXPECT_EQ(phi[0].potential_r[0].imag(), 0.0);
+}
+
+TEST(SternheimerABFSStrict2D, GammaFinitePartIsSmallQLimitAfterRemovingSingularConstant)
+{
+    const Grid grid = skew_grid(1, 1, 4);
+    const QPoint small_q{1.0e-6, 0.0, 0.0};
+    const double Q = wave_number(grid, small_q[0], small_q[1]);
+    const double length = 6.5;
+    Channel rho;
+    rho.potential_r = {{0.8, 0.2}, {-0.1, 0.4}, {0.5, -0.3}, {0.2, 0.1}};
+    const Complex average = std::accumulate(rho.potential_r.begin(), rho.potential_r.end(),
+                                            Complex{}) / static_cast<double>(grid.nz);
+
+    std::vector<Channel> gamma{rho};
+    ModuleRI::solve_sternheimer_abf_strict2d_coulomb_finite_part_in_place(
+        gamma, grid, QPoint{0.0, 0.0, 0.0});
+    std::vector<Channel> finite_q{rho};
+    ModuleRI::solve_sternheimer_abf_strict2d_coulomb_in_place(finite_q, grid, small_q);
+
+    const Complex singular = two_pi * length * average / Q;
+    double reference_scale = 1.0;
+    double max_error = 0.0;
+    for (int iz = 0; iz < grid.nz; ++iz)
+    {
+        reference_scale = std::max(reference_scale, std::abs(gamma[0].potential_r[iz]));
+        max_error = std::max(max_error,
+                             std::abs(finite_q[0].potential_r[iz] - singular
+                                      - gamma[0].potential_r[iz]));
+    }
+    EXPECT_LT(max_error / reference_scale, 2.0e-5);
+}
+
+TEST(SternheimerABFSStrict2D, GammaFinitePartRejectsNonGammaInputBeforeMutation)
+{
+    const Grid grid = skew_grid();
+    const Channel original = density(grid, 0);
+    std::vector<Channel> channels{original};
+
+    for (const QPoint q : {QPoint{0.0, 0.25, 0.0}, QPoint{1.0, -1.0, 0.0},
+                           QPoint{1.0e-15, 0.0, 0.0}})
+    {
+        EXPECT_THROW(ModuleRI::solve_sternheimer_abf_strict2d_coulomb_finite_part_in_place(
+                         channels, grid, q),
+                     std::invalid_argument);
+        EXPECT_EQ(channels[0].potential_r, original.potential_r);
+    }
 }
 
 TEST(SternheimerABFSStrict2D, SelectedIntegralsUseCellVolumeAndRequestedOrder)

@@ -2358,6 +2358,9 @@ void run_sternheimer_weak_q_unit(
     const auto started = std::chrono::steady_clock::now();
     const bool coulomb_only = env_is_true("ABACUS_STERNHEIMER_WEAK_Q_COULOMB_ONLY");
     const bool full_coulomb_matrix = env_is_true("WEAK_Q_FULL_COULOMB_MATRIX");
+    const bool gamma_finite_part
+        = response_plan.qpoint[0] == 0.0 && response_plan.qpoint[1] == 0.0
+          && response_plan.qpoint[2] == 0.0;
     if (full_coulomb_matrix && !coulomb_only)
         throw std::invalid_argument("Full Coulomb matrix audit requires Coulomb-only mode; response unchanged.");
     const int nfreq = static_cast<int>(frequency_grid.omega_ha.size());
@@ -2577,7 +2580,11 @@ void run_sternheimer_weak_q_unit(
             << "\nall_frequencies " << (!parallel_benchmark && unit.all_frequencies(nfreq) ? "yes" : "no")
             << "\nqpoint " << response_plan.qpoint[0] << ' ' << response_plan.qpoint[1] << ' ' << response_plan.qpoint[2]
             << "\nreciprocal_shift " << pair.reciprocal_shift[0] << ' ' << pair.reciprocal_shift[1]
-            << ' ' << pair.reciprocal_shift[2] << '\n';
+            << ' ' << pair.reciprocal_shift[2]
+            << "\ncoulomb_zero_mode " << (gamma_finite_part ? "gamma_finite_part" : "none")
+            << "\ncoulomb_singular_component "
+            << (gamma_finite_part ? "removed_2pi_over_q_planar_constant" : "none")
+            << "\nanalytic_gamma_head_required " << (gamma_finite_part ? "yes" : "no") << '\n';
     };
     const auto reference_sha256 = reference_digest.finish();
     siab::Sha256 auxiliary_digest;
@@ -2638,7 +2645,12 @@ void run_sternheimer_weak_q_unit(
              << "\nfine_grid " << fine_grid.grid.nx << ' ' << fine_grid.grid.ny << ' ' << fine_grid.grid.nz
              << "\ncoarse_grid " << coarse_grid.grid.nx << ' ' << coarse_grid.grid.ny << ' ' << coarse_grid.grid.nz
              << "\nfine_dv " << fine_grid.volume_element << "\npca_threshold " << pca_threshold
-             << "\ncoulomb_kernel strict2d\nkweight_sum " << response_plan.kweight_sum
+             << "\ncoulomb_kernel strict2d\ncoulomb_zero_mode "
+             << (gamma_finite_part ? "gamma_finite_part" : "none")
+             << "\ncoulomb_singular_component "
+             << (gamma_finite_part ? "removed_2pi_over_q_planar_constant" : "none")
+             << "\nanalytic_gamma_head_required " << (gamma_finite_part ? "yes" : "no")
+             << "\nkweight_sum " << response_plan.kweight_sum
              << "\nsource_reference original_pbe_band_order\n";
     manifest << "reference_contract_sha256 " << reference_contract << '\n';
     manifest << "slab_z_length_bohr " << slab_height << "\nz_support_contained "
@@ -2716,7 +2728,11 @@ void run_sternheimer_weak_q_unit(
     };
     const auto sample_potential = [&](int j) {
         auto single = sample_density(j);
-        solve_sternheimer_abf_strict2d_coulomb_in_place(single, fine_grid.grid, response_plan.qpoint);
+        if (gamma_finite_part)
+            solve_sternheimer_abf_strict2d_coulomb_finite_part_in_place(
+                single, fine_grid.grid, response_plan.qpoint);
+        else
+            solve_sternheimer_abf_strict2d_coulomb_in_place(single, fine_grid.grid, response_plan.qpoint);
         if (single.front().potential_r.size() != fine_potential.size()
             || !std::all_of(single.front().potential_r.begin(), single.front().potential_r.end(), finite_complex))
             throw std::runtime_error("Weak q unit nonfinite strict2D potential.");
@@ -2790,7 +2806,12 @@ void run_sternheimer_weak_q_unit(
                     std::vector<SternheimerABFBlochGridChannel> single(1);
                     const std::size_t j = begin+static_cast<std::size_t>(jj);
                     single[0].potential_r.assign(densities.begin()+ng*j, densities.begin()+ng*(j+1));
-                    solve_sternheimer_abf_strict2d_coulomb_in_place(single, fine_grid.grid, response_plan.qpoint);
+                    if (gamma_finite_part)
+                        solve_sternheimer_abf_strict2d_coulomb_finite_part_in_place(
+                            single, fine_grid.grid, response_plan.qpoint);
+                    else
+                        solve_sternheimer_abf_strict2d_coulomb_in_place(
+                            single, fine_grid.grid, response_plan.qpoint);
                     std::copy(single[0].potential_r.begin(), single[0].potential_r.end(), potentials.begin()+ng*jj);
                 }
                 catch (...)
@@ -4000,10 +4021,8 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
             response_kpoints,
             response_q_index,
             use_supercell_translation_sum && !full_supercell_response);
-    if (use_weak_q_unit
-        && (std::abs(response_plan.qpoint[2]) > 1e-12
-            || (std::abs(response_plan.qpoint[0]) <= 1e-12 && std::abs(response_plan.qpoint[1]) <= 1e-12)))
-        throw std::invalid_argument("Weak q unit requires a non-Gamma in-plane q point.");
+    if (use_weak_q_unit && std::abs(response_plan.qpoint[2]) > 1e-12)
+        throw std::invalid_argument("Weak q unit requires an in-plane q point.");
     if (PARAM.inp.sternheimer_q_index <= 0)
     {
         throw std::runtime_error("Internal error: the periodic Sternheimer path requires a positive q index.");

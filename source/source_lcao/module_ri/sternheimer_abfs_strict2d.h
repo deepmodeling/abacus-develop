@@ -90,6 +90,14 @@ void solve_sternheimer_abf_strict2d_coulomb_in_place(
     const SternheimerFDHamiltonian::Grid& grid,
     const SternheimerReducedKPoint& qpoint);
 
+// Q -> 0 regular part of the open-z kernel after removing the divergent
+// planar constant 2*pi/Q. This is intended only for an analytic Gamma
+// head/wing construction; it is not a finite standalone Coulomb operator.
+void solve_sternheimer_abf_strict2d_coulomb_finite_part_in_place(
+    std::vector<SternheimerABFBlochGridChannel>& density_channels,
+    const SternheimerFDHamiltonian::Grid& grid,
+    const SternheimerReducedKPoint& qpoint);
+
 // Cheap selected matrix elements, in the supplied pair order (duplicates OK):
 //   result[k] = dV * sum_r conj(densities[pairs[k].first].potential_r[r])
 //                                * potentials[pairs[k].second].potential_r[r],
