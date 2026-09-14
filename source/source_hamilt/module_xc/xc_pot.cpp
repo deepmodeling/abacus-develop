@@ -8,12 +8,15 @@
 #include "source_base/timer.h"
 #include "xc_functional.h"
 
+#include "xc_functional_ncgga_sf.h"
+
 #ifdef __LIBXC
 #include "libxc_abacus.h"
 #ifdef __EXX
 #include "source_hamilt/module_xc/exx_info.h"
 #endif
 #endif
+
 
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
 std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
@@ -23,10 +26,12 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     const int nspin,
     const bool domag,
     const bool domag_z,
+    const int gga_grad,
     const double hybrid_alpha,
     const double hse_omega)
 {
     ModuleBase::TITLE("XC_Functional", "v_xc");
+
 
     if (use_libxc)
     {
@@ -39,12 +44,19 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
                                                nspin,
                                                domag,
                                                domag_z,
+                                               gga_grad,
                                                &(scaling_factor_xc),
                                                hybrid_alpha,
                                                hse_omega);
 #else
         ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
 #endif
+    }
+
+    // Evaluate the regularized projected local-collinear graph.
+    if (nspin == 4 && (domag || domag_z) && gga_grad == 2)
+    {
+        return ModuleXC::NCGGA_SF_Builtin::v_xc_ncgga_sf_builtin(nrxx, ucell->omega, ucell->tpiba, chr);
     }
 
     ModuleBase::timer::start("XC_Functional", "v_xc");
@@ -183,7 +195,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     // the dummy variable dum contains gradient correction to stress
     // which is not used here
     std::vector<double> dum;
-    gradcorr(etxc, vtxc, v, chr, chr->rhopw, ucell, dum, false, nspin, domag, domag_z, hybrid_alpha, hse_omega);
+    gradcorr(etxc, vtxc, v, chr, chr->rhopw, ucell, dum, false, nspin, domag, domag_z, gga_grad, hybrid_alpha, hse_omega);
 
     // parallel code : collect vtxc,etxc
     // mohan add 2008-06-01

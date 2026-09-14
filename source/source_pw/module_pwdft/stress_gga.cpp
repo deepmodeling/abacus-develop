@@ -1,14 +1,17 @@
 #include "stress_func.h"
 #include "source_base/parallel_reduce.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_parameter/parameter.h"
 
 //calculate the GGA stress correction in PW and LCAO
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
                                              ModuleBase::matrix& sigma,
                                              ModulePW::PW_Basis* rho_basis,
-                                             const Charge* const chr)
+                                             const Charge* const chr,
+                                             const int nspin,
+                                             const bool domag,
+                                             const bool domag_z,
+                                             const int gga_grad)
 {
     ModuleBase::TITLE("Stress","stress_gga");
     ModuleBase::timer::start("Stress","stress_gga");
@@ -31,7 +34,7 @@ void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
     XC_Functional::gradcorr(
         dum1, dum2, dum3, chr, rho_basis, &ucell,
         stress_gga, is_stress,
-        PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z,
+        nspin, domag, domag_z, gga_grad,
         hybrid_alpha, hse_omega);
 
     for(int l = 0;l< 3;l++)

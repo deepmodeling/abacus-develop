@@ -23,6 +23,8 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            const General_Exx_Info& exx_info,
                                            const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in)
 {
+    const auto& xc_input = PARAM.inp;
+    const auto& xc_spin = PARAM.globalv;
     ModuleBase::TITLE("Stress_PW", "cal_stress");
     ModuleBase::timer::start("Stress_PW", "cal_stress");
 
@@ -91,7 +93,8 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     {
         sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
-    this->stress_gga(ucell, sigmaxc, rho_basis, pelec->charge);
+    this->stress_gga(ucell, sigmaxc, rho_basis, pelec->charge,
+        xc_input.nspin, xc_spin.domag, xc_spin.domag_z, xc_input.gga_grad);
     if (XC_Functional::get_ked_flag())
     {
         this->stress_mgga(ucell,
@@ -108,7 +111,8 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_loc(ucell, sigmaloc, rho_basis, locpp.vloc, p_sf, 1, pelec->charge);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, ucell, p_sf, 1, locpp.numeric, pelec->charge);
+    this->stress_cc(sigmaxcc, rho_basis, ucell, p_sf, 1, locpp.numeric, pelec->charge,
+        xc_input.nspin, xc_spin.domag, xc_spin.domag_z, xc_input.gga_grad, xc_spin.gamma_only_pw);
 
     // nonlocal
     this->stress_nl(sigmanl, this->pelec->wg, this->pelec->ekb, p_sf, p_kv, p_symm, wfc_basis, d_psi_in, nlpp, ucell);

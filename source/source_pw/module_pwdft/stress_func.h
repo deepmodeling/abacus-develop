@@ -117,7 +117,12 @@ class Stress_Func
                    const Structure_Factor* p_sf,
                    const bool is_pw,
                    const bool *numeric,
-                   const Charge* const chr); // nonlinear core correction stress in PW or LCAO basis
+                   const Charge* const chr,
+                   const int nspin,
+                   const bool domag,
+                   const bool domag_z,
+                   const int gga_grad,
+                   const bool gamma_only_pw); // nonlinear core correction stress in PW or LCAO basis
 
     void deriv_drhoc(const bool& numeric,
                      const double& omega,
@@ -134,7 +139,11 @@ class Stress_Func
     void stress_gga(const UnitCell& ucell,
                     ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
-                    const Charge* const chr); // gga part in both PW and LCAO basis
+                    const Charge* const chr,
+                    const int nspin,
+                    const bool domag,
+                    const bool domag_z,
+                    const int gga_grad); // gga part in both PW and LCAO basis
     void stress_mgga(const UnitCell& ucell,
                      ModuleBase::matrix& sigma,
                      const ModuleBase::matrix& wg,

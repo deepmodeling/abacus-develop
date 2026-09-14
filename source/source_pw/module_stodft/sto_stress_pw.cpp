@@ -23,6 +23,8 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                                const pseudopot_cell_vnl* nlpp,
                                                UnitCell& ucell_in)
 {
+    const auto& xc_input = PARAM.inp;
+    const auto& xc_spin = PARAM.globalv;
     ModuleBase::TITLE("Sto_Stress_PW", "cal_stress");
     ModuleBase::timer::start("Sto_Stress_PW", "cal_stress");
     const ModuleBase::matrix& wg = elec.wg;
@@ -50,13 +52,15 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     {
         sigmaxc(i, i) = -(elec.f_en.etxc - elec.f_en.vtxc) / this->ucell->omega;
     }
-    this->stress_gga(ucell_in, sigmaxc, rho_basis, chr);
+    this->stress_gga(ucell_in, sigmaxc, rho_basis, chr,
+        xc_input.nspin, xc_spin.domag, xc_spin.domag_z, xc_input.gga_grad);
 
     // local contribution
     this->stress_loc(ucell_in, sigmaloc, rho_basis, locpp->vloc, p_sf, true, chr);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, ucell_in, p_sf, true, locpp->numeric, chr);
+    this->stress_cc(sigmaxcc, rho_basis, ucell_in, p_sf, true, locpp->numeric, chr,
+        xc_input.nspin, xc_spin.domag, xc_spin.domag_z, xc_input.gga_grad, xc_spin.gamma_only_pw);
 
     // nonlocal
     this->sto_stress_nl(sigmanl, wg, p_sf, p_symm, p_kv, wfc_basis, *nlpp, ucell_in, psi_in, stowf);

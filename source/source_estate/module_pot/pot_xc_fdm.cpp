@@ -16,6 +16,7 @@ PotXC_FDM::PotXC_FDM(
 	const UnitCell*const ucell)
 	: chg_0(chg_0_in)
 {
+    const Parameter& parameters = PARAM;
 	this->rho_basis_ = rho_basis_in;
 	this->dynamic_mode = true;
 	this->fixed_mode = false;
@@ -28,9 +29,10 @@ PotXC_FDM::PotXC_FDM(
 #endif
 	const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v_0
 		= XC_Functional::v_xc(this->chg_0->nrxx, this->chg_0, ucell,
-							  PARAM.inp.nspin,
-							  PARAM.globalv.domag,
-							  PARAM.globalv.domag_z,
+							  parameters.inp.nspin,
+							  parameters.globalv.domag,
+							  parameters.globalv.domag_z,
+							  parameters.inp.gga_grad,
 							  hybrid_alpha,
 							  hse_omega);
 	this->v_xc_0 = std::get<2>(etxc_vtxc_v_0);
@@ -41,6 +43,7 @@ void PotXC_FDM::cal_v_eff(
 	const UnitCell*const ucell,
 	ModuleBase::matrix& v_eff)
 {
+    const Parameter& parameters = PARAM;
 	ModuleBase::TITLE("PotXC_FDM", "cal_veff");
 	ModuleBase::timer::start("PotXC_FDM", "cal_veff");
 
@@ -66,9 +69,10 @@ void PotXC_FDM::cal_v_eff(
 #endif
 	const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v_01
 		= XC_Functional::v_xc(chg_01.nrxx, &chg_01, ucell,
-							  PARAM.inp.nspin,
-							  PARAM.globalv.domag,
-							  PARAM.globalv.domag_z,
+							  parameters.inp.nspin,
+							  parameters.globalv.domag,
+							  parameters.globalv.domag_z,
+							  parameters.inp.gga_grad,
 							  hybrid_alpha,
 							  hse_omega);
 	const ModuleBase::matrix &v_xc_01 = std::get<2>(etxc_vtxc_v_01);
