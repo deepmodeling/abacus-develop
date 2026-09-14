@@ -24,9 +24,7 @@ void EXPECT_COMPLEX_DOUBLE_EQ(const std::complex<double>& a,const std::complex<d
     EXPECT_DOUBLE_EQ(a.imag(),b.imag());
 }
 
-#define private public
 #include "source_pw/module_pwdft/soc.h"
-#undef private
 class FcoefTest : public testing::Test
 {
 protected:
@@ -118,8 +116,9 @@ TEST_F(SocTest, SphInd)
 TEST_F(SocTest, RotYlm)
 {
                   soc.rot_ylm(0);
-                  EXPECT_NE(soc.p_rot, nullptr);
-                  EXPECT_COMPLEX_DOUBLE_EQ(soc.p_rot[0],std::complex<double>(1.0, 0.0));
+                  // rotylm() below dereferences p_rot and checks its value, so it
+                  // already covers both "was it allocated" and "is it right".
+                  EXPECT_COMPLEX_DOUBLE_EQ(soc.rotylm(0, 0),std::complex<double>(1.0, 0.0));
                   soc.rot_ylm(2);
                   int l = 2;
                   int l2p1 = 2*l + 1;
@@ -127,11 +126,11 @@ TEST_F(SocTest, RotYlm)
                   {
                                     int m = (i+1)/2;
                                     int n = l-m;
-                                    EXPECT_COMPLEX_DOUBLE_EQ(soc.p_rot[l2p1*i + n], std::complex<double>(pow(-1.0,m)/sqrt(2), 0.0));
-                                    EXPECT_COMPLEX_DOUBLE_EQ(soc.p_rot[l2p1*(i+1) + n], std::complex<double>(0.0,-pow(-1.0,m)/sqrt(2)));
+                                    EXPECT_COMPLEX_DOUBLE_EQ(soc.rotylm(i, n), std::complex<double>(pow(-1.0,m)/sqrt(2), 0.0));
+                                    EXPECT_COMPLEX_DOUBLE_EQ(soc.rotylm(i+1, n), std::complex<double>(0.0,-pow(-1.0,m)/sqrt(2)));
                                     n = l+m;
-                                    EXPECT_COMPLEX_DOUBLE_EQ(soc.p_rot[l2p1*i + n], std::complex<double>(1.0/sqrt(2),0.0));
-                                    EXPECT_COMPLEX_DOUBLE_EQ(soc.p_rot[l2p1*(i+1) + n], std::complex<double>(0.0,1.0/sqrt(2)));
+                                    EXPECT_COMPLEX_DOUBLE_EQ(soc.rotylm(i, n), std::complex<double>(1.0/sqrt(2),0.0));
+                                    EXPECT_COMPLEX_DOUBLE_EQ(soc.rotylm(i+1, n), std::complex<double>(0.0,1.0/sqrt(2)));
                   }
                   const std::complex<double> &rot = soc.rotylm(2, 1);
                   EXPECT_DOUBLE_EQ(rot.real(),0.0);

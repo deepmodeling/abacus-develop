@@ -2,16 +2,16 @@
 
 #include "../module_bessel/numerical_basis.h"
 #include "../module_bessel/numerical_descriptor.h"
-#include "../module_chgpot/get_pchg_pw.h"
 #include "../module_dos/cal_ldos.h"
 #include "../module_dos/write_dos_pw.h" // use write_dos_pw
 #include "../module_unk/berryphase.h"
 #include "../module_wannier/to_w90_pw.h" // wannier90 interface
-#include "../module_wf/get_wf_pw.h"
-#include "../module_wf/write_wfc_pw.h" // use write_wfc_pw
+#include "../module_wf/write_wfc_pw.h"   // use write_wfc_pw
 #include "source_base/formatter.h"
-#include "source_lcao/module_deltaspin/lambda_loop_helper.h"
+#include "source_io/module_chgpot/get_pchg_pw.h"
+#include "source_io/module_wf/get_wf_pw.h"
 #include "source_lcao/module_deltaspin/deltaspin_pw_mi.h"
+#include "source_lcao/module_deltaspin/lambda_loop_helper.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/elecond.h"
 #include "source_pw/module_pwdft/onsite_proj.h" // use projector
@@ -87,6 +87,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                            UnitCell& ucell,
                            elecstate::ElecState* pelec,
                            const Charge& chr,
+                           const pseudopot_cell_vnl& ppcell,
                            const K_Vectors& kv,
                            const ModulePW::PW_Basis_K* pw_wfc,
                            const ModulePW::PW_Basis* pw_rho,
@@ -157,26 +158,21 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     }
 
     //------------------------------------------------------------------
-    // 5) calculate band-decomposed (partial) charge density in pw basis
+    // 5) Write partial charges and real-space wavefunctions
+    // for the current electronic state.
     //------------------------------------------------------------------
     if (inp.out_pchg.size() > 0)
     {
-        // update psi_d
-        stp.update_psi_d();
+        // Use the solver's native wavefunction precision for FFT and projector overlaps.
+        ModuleIO::Get_pchg_pw<T, Device> output(*stp.template get_psi_t<T, Device>(), *pw_wfc, *pw_rho, *pw_rhod, ppcell, inp.nspin, inp.nbands);
+        output.begin(&ucell, para_grid, kv, inp.out_pchg, PARAM.globalv.global_out_dir, inp.if_separate_k, inp.noncolin);
+    }
 
-        ModuleIO::get_pchg_pw(inp.out_pchg,
-                              inp.nspin,
-                              inp.nbands,
-                              &ucell,
-                              stp.template get_psi_d<T, Device>(),
-                              pw_rho,
-                              pw_rhod,
-                              pw_wfc,
-                              para_grid,
-                              PARAM.globalv.global_out_dir,
-                              inp.if_separate_k,
-                              inp.noncolin,
-                              kv);
+    if (inp.out_wfc_norm.size() > 0 || inp.out_wfc_re_im.size() > 0)
+    {
+        // Use the solver's native wavefunction precision for FFT.
+        ModuleIO::Get_wf_pw<T, Device> output(*stp.template get_psi_t<T, Device>(), *pw_wfc, *pw_rho, *pw_rhod, inp.nspin, inp.nbands);
+        output.begin(ucell, para_grid, kv, inp.out_wfc_norm, inp.out_wfc_re_im, PARAM.globalv.global_out_dir);
     }
 
     //------------------------------------------------------------------
@@ -186,17 +182,17 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wannier functions calculation");
         toW90_PW wan(inp.out_wannier_mmn,
-                           inp.out_wannier_amn,
-                           inp.out_wannier_unk,
-                           inp.out_wannier_eig,
-                           inp.out_wannier_wvfn_formatted,
-                           inp.nnkpfile,
-                           inp.wannier_spin,
-                           inp.nspin,
-                           PARAM.inp.nbands,
-                           PARAM.globalv.nqx,
-                           PARAM.globalv.dq,
-                           PARAM.globalv.npol);
+                     inp.out_wannier_amn,
+                     inp.out_wannier_unk,
+                     inp.out_wannier_eig,
+                     inp.out_wannier_wvfn_formatted,
+                     inp.nnkpfile,
+                     inp.wannier_spin,
+                     inp.nspin,
+                     PARAM.inp.nbands,
+                     PARAM.globalv.nqx,
+                     PARAM.globalv.dq,
+                     PARAM.globalv.npol);
         wan.set_tpiba_omega(ucell.tpiba, ucell.omega);
         wan.calculate(ucell, pelec->ekb, pw_wfc, pw_big, kv, stp.psi_cpu);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wannier functions calculation");
@@ -265,7 +261,11 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
     if (inp.out_ldos[0])
     {
         stp.update_psi_d();
-        ModuleIO::cal_ldos_pw(reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(pelec), *stp.template get_psi_d<T, Device>(), ctx, para_grid, ucell);
+        ModuleIO::cal_ldos_pw(reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(pelec),
+                              *stp.template get_psi_d<T, Device>(),
+                              ctx,
+                              para_grid,
+                              ucell);
     }
 
     //----------------------------------------------------------
@@ -291,40 +291,18 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
     }
 
     //----------------------------------------------------------
-    //! 3) Print out electronic wave functions in real space
-    //----------------------------------------------------------
-    if (inp.out_wfc_norm.size() > 0 || inp.out_wfc_re_im.size() > 0)
-    {
-        stp.update_psi_d();
-
-        ModuleIO::get_wf_pw(inp.out_wfc_norm,
-                            inp.out_wfc_re_im,
-                            inp.nspin,
-                            inp.nbands,
-                            &ucell,
-                            stp.template get_psi_d<T, Device>(),
-                            pw_wfc,
-                            pw_rho,
-                            pw_rhod,
-                            para_grid,
-                            PARAM.globalv.global_out_dir,
-                            kv);
-    }
-
-    //----------------------------------------------------------
-    //! 4) Use Kubo-Greenwood method to compute conductivities
+    //! 3) Use Kubo-Greenwood method to compute conductivities
     //----------------------------------------------------------
     if (inp.cal_cond)
     {
         using Real = typename GetTypeReal<T>::type;
         EleCond<Real, Device> elec_cond(&ucell, &kv, pelec, pw_wfc, stp.template get_psi_t<T, Device>(), &ppcell);
-        elec_cond
-            .KG(inp.cond_smear, inp.cond_fwhm, inp.cond_wcut, inp.cond_dw, inp.cond_dt, inp.cond_nonlocal, inp.cond_mgga_vel, pelec->wg);
+        elec_cond.KG(inp.cond_smear, inp.cond_fwhm, inp.cond_wcut, inp.cond_dw, inp.cond_dt, inp.cond_nonlocal, inp.cond_mgga_vel, pelec->wg);
     }
 
 #ifdef __MLALGO
     //----------------------------------------------------------
-    //! 7) generate training data for ML-KEDF
+    //! 4) generate training data for ML-KEDF
     //----------------------------------------------------------
     if (inp.of_ml_gene_data == 1)
     {
@@ -368,6 +346,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_CPU
                                                                                   UnitCell& ucell,
                                                                                   elecstate::ElecState* pelec,
                                                                                   const Charge& chr,
+                                                                                  const pseudopot_cell_vnl& ppcell,
                                                                                   const K_Vectors& kv,
                                                                                   const ModulePW::PW_Basis_K* pw_wfc,
                                                                                   const ModulePW::PW_Basis* pw_rho,
@@ -382,6 +361,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CP
                                                                                    UnitCell& ucell,
                                                                                    elecstate::ElecState* pelec,
                                                                                    const Charge& chr,
+                                                                                   const pseudopot_cell_vnl& ppcell,
                                                                                    const K_Vectors& kv,
                                                                                    const ModulePW::PW_Basis_K* pw_wfc,
                                                                                    const ModulePW::PW_Basis* pw_rho,
@@ -397,6 +377,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_GPU
                                                                                   UnitCell& ucell,
                                                                                   elecstate::ElecState* pelec,
                                                                                   const Charge& chr,
+                                                                                  const pseudopot_cell_vnl& ppcell,
                                                                                   const K_Vectors& kv,
                                                                                   const ModulePW::PW_Basis_K* pw_wfc,
                                                                                   const ModulePW::PW_Basis* pw_rho,
@@ -411,6 +392,7 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_GP
                                                                                    UnitCell& ucell,
                                                                                    elecstate::ElecState* pelec,
                                                                                    const Charge& chr,
+                                                                                   const pseudopot_cell_vnl& ppcell,
                                                                                    const K_Vectors& kv,
                                                                                    const ModulePW::PW_Basis_K* pw_wfc,
                                                                                    const ModulePW::PW_Basis* pw_rho,

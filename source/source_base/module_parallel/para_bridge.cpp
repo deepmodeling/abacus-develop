@@ -19,4 +19,13 @@ ParaWorld make_pw_world()
 #endif
 }
 
+ParaWorld make_band_world()
+{
+#ifdef __MPI
+    return ParaWorld::make_mpi(ParaTag::bdiff_ksame, BP_WORLD);
+#else
+    return ParaWorld::serial(ParaTag::bdiff_ksame);
+#endif
+}
+
 } // namespace Parallel

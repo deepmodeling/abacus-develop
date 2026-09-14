@@ -26,12 +26,10 @@
  *     - bcast norm-conserving pseudopotential info to all processes
  */
 
-#define private public
 #include "source_cell/read_pp.h"
 #include "source_cell/pseudo.h"
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
-#undef private
 class AtomSpecTest : public testing::Test
 {
 protected:
@@ -39,6 +37,13 @@ protected:
     Pseudopot_upf upf;
     std::ofstream ofs;
     std::ifstream ifs;
+
+    // Pseudopot_upf declares this fixture a friend, but a TEST_F body lives
+    // in a class derived from it and friendship is not inherited.
+    int read_pseudo_upf201(std::ifstream& is, Atom_pseudo& pp)
+    {
+        return upf.read_pseudo_upf201(is, pp);
+    }
 };
 
 TEST_F(AtomSpecTest, PrintAtom)
@@ -182,7 +187,7 @@ TEST_F(AtomSpecTest, BcastAtom2)
     {
         ifs.open("./support/C.upf");
         const double pseudo_rcut = 15.0;
-        upf.read_pseudo_upf201(ifs, atom.ncpp);
+        read_pseudo_upf201(ifs, atom.ncpp);
         upf.complete_default(atom.ncpp, pseudo_rcut);
         ifs.close();
         EXPECT_TRUE(atom.ncpp.has_so);

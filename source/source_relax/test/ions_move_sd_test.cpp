@@ -3,11 +3,8 @@
 #include "for_test.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_sd.h"
-#undef private
 
 /************************************************
  *  unit tests of class Ions_Move_SD
@@ -44,8 +41,8 @@ TEST_F(IonsMoveSDTest, TestAllocate)
     im_sd.allocate();
 
     // Check if allocated vectors are not empty
-    EXPECT_EQ(im_sd.grad_saved.size(), 4U);
-    EXPECT_EQ(im_sd.pos_saved.size(), 4U);
+    EXPECT_EQ(im_sd.get_grad_saved().size(), 4U);
+    EXPECT_EQ(im_sd.get_pos_saved().size(), 4U);
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
@@ -62,10 +59,10 @@ TEST_F(IonsMoveSDTest, TestAllocateAndInitialize)
     im_sd.allocate();
 
     // Check that the arrays are correctly initialized to 0
-    EXPECT_DOUBLE_EQ(im_sd.grad_saved[0], 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[1], 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.grad_saved[2], 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[3], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_grad_saved()[0], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[1], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_grad_saved()[2], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[3], 0.0);
 }
 
 // Test function start() when converged
@@ -98,13 +95,13 @@ TEST_F(IonsMoveSDTest, TestStartConverged)
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 5);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.energy_saved, 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[0], 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[1], 10.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[2], 20.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[3], 30.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[4], 40.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[5], 50.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_energy_saved(), 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[0], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[1], 10.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[2], 20.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[3], 30.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[4], 40.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[5], 50.0);
 }
 
 // Test function start() when nor converged
@@ -146,19 +143,19 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 6);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 1.0);
-    EXPECT_DOUBLE_EQ(im_sd.energy_saved, 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[0], -1.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[1], 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[2], 10.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[3], 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[4], 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[5], 10.0);
-    EXPECT_DOUBLE_EQ(im_sd.grad_saved[0], -1.0);
-    EXPECT_DOUBLE_EQ(im_sd.grad_saved[1], 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.grad_saved[2], 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.grad_saved[3], 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.grad_saved[4], 0.0);
-    EXPECT_DOUBLE_EQ(im_sd.grad_saved[5], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_energy_saved(), 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[0], -1.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[1], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[2], 10.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[3], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[4], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_pos_saved()[5], 10.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_grad_saved()[0], -1.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_grad_saved()[1], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_grad_saved()[2], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_grad_saved()[3], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_grad_saved()[4], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.get_grad_saved()[5], 0.0);
 }
 
 // Test function cal_tradius_sd() case 1
@@ -171,7 +168,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
 
     // call function
     testing::internal::CaptureStdout();
-    im_sd.cal_tradius_sd(istep, etot_info, criteria.out_level);
+    ions_move_sd::cal_tradius_sd(istep, etot_info, criteria.out_level);
     std::string std_outout = testing::internal::GetCapturedStdout();
 
     // Check the results
@@ -189,7 +186,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
     criteria.out_level = "m";
 
     // call function
-    im_sd.cal_tradius_sd(istep, etot_info, criteria.out_level);
+    ions_move_sd::cal_tradius_sd(istep, etot_info, criteria.out_level);
 
     // Check the results
     EXPECT_EQ(Ions_Move_Basic::trust_radius, -1.0);
@@ -204,7 +201,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
     criteria.out_level = "m";
 
     // call function
-    im_sd.cal_tradius_sd(istep, etot_info, criteria.out_level);
+    ions_move_sd::cal_tradius_sd(istep, etot_info, criteria.out_level);
 
     // Check the results
     EXPECT_EQ(Ions_Move_Basic::trust_radius, -0.5);
@@ -219,7 +216,7 @@ TEST_F(IonsMoveSDTest, CalTradiusWraningQuit)
 
     // Check the results
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(im_sd.cal_tradius_sd(istep, etot_info, criteria.out_level), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(ions_move_sd::cal_tradius_sd(istep, etot_info, criteria.out_level), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("istep < 1!"));
 }

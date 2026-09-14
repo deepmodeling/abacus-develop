@@ -2,6 +2,7 @@
 #define RUN_MD_H
 
 class MDCell;
+class DomainDecomposition;
 class UnitCell;
 struct Parameter;
 
@@ -16,9 +17,9 @@ class ESolver;
  */
 namespace Run_MD
 {
-void prepare_mdcell(MDCell& mdcell, const Parameter& param_in);
+void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecomposition& decomp);
 
-void prepare_mdcell(MDCell& mdcell, UnitCell& ucell);
+void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);
 
 /**
  * @brief the md loop line
@@ -29,7 +30,8 @@ void prepare_mdcell(MDCell& mdcell, UnitCell& ucell);
  */
 void md_line(MDCell& mdcell,
              ModuleESolver::ESolver* p_esolver,
-             const Parameter& param_in);
+             const Parameter& param_in,
+             DomainDecomposition& decomp);
 } // namespace Run_MD
 
 #endif

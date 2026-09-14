@@ -63,7 +63,7 @@ bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     }
     else
     {
-        this->cal_tradius_sd(istep, etot_info, criteria.out_level);
+        ions_move_sd::cal_tradius_sd(istep, etot_info, criteria.out_level);
         for (int i = 0; i < dim; i++)
         {
             move[i] = -grad_saved[i] * trust_radius;
@@ -74,7 +74,7 @@ bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     }
 }
 
-void Ions_Move_SD::cal_tradius_sd(const int istep, std::vector<double>& etot_info, const std::string& out_level) const
+void ions_move_sd::cal_tradius_sd(const int istep, std::vector<double>& etot_info, const std::string& out_level)
 {
     static int accepted_number = 0;
 
@@ -101,7 +101,7 @@ void Ions_Move_SD::cal_tradius_sd(const int istep, std::vector<double>& etot_inf
     }
     else
     {
-        ModuleBase::WARNING_QUIT("Ions_Move_SD::cal_tradius_sd", "istep < 1!");
+        ModuleBase::WARNING_QUIT("ions_move_sd::cal_tradius_sd", "istep < 1!");
     }
     if (out_level == "ie")
     {
