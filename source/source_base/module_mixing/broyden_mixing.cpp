@@ -175,7 +175,7 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
         {
             for (int j = 0; j < ndim_cal_dF; ++j)
             {
-                gamma_eigen[i] += beta_tmp(j, i) * gamma[j];
+                gamma_eigen[i] += beta_tmp(i, j) * gamma[j];
             }
             if (eigenvalues[i] > 1.0e-12 * eigenvalues[ndim_cal_dF - 1])
             {
@@ -191,7 +191,7 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
         {
             for (int j = 0; j < ndim_cal_dF; ++j)
             {
-                gamma[i] += beta_tmp(i, j) * gamma_eigen[j];
+                gamma[i] += beta_tmp(j, i) * gamma_eigen[j];
             }
         }
 
