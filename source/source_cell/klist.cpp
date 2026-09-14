@@ -335,14 +335,14 @@ bool K_Vectors::read_listed_kpoints(std::ifstream& ifk, const std::string& kword
 {
     if (kword == "Cartesian" || kword == "C") // Cartesian coordinates
     {
-        this->renew(nkstot); // mohan fix bug 2009-09-01; spin_mult doubling done later by set_kup_and_kdw()
+        this->renew(nkstot * this->spin_mult); // mohan fix bug 2009-09-01
         KListIO::read_kpt_list(ifk, nkstot, this->kvec_c, this->wk);
         this->kc_done = true;
         return true;
     }
     if (kword == "Direct" || kword == "D") // Direct coordinates
     {
-        this->renew(nkstot); // mohan fix bug 2009-09-01; spin_mult doubling done later by set_kup_and_kdw()
+        this->renew(nkstot * this->spin_mult); // mohan fix bug 2009-09-01
         KListIO::read_kpt_list(ifk, nkstot, this->kvec_d, this->wk);
         this->kd_done = true;
         return true;
@@ -395,7 +395,7 @@ void K_Vectors::interpolate_k_between(std::ifstream& ifk, std::vector<ModuleBase
     const KListIO::LineK line = KListIO::interp_line(ifk, this->nkstot);
 
     this->nkstot = line.nks_total;
-    this->renew(this->nkstot); // mohan fix bug 2009-09-01; spin_mult doubling done later by set_kup_and_kdw()
+    this->renew(this->nkstot * this->spin_mult); // mohan fix bug 2009-09-01
 
     for (int i = 0; i < this->nkstot; i++)
     {
@@ -446,11 +446,17 @@ void K_Vectors::set_kup_and_kdw(std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("K_Vectors", "setup_kup_and_kdw");
 
-    // grow the containers to make room for the down-spin copy expand_spin_kpoints()
-    // is about to append (indices [nkstot, 2*nkstot)); done here, on demand, rather
-    // than speculatively reserved earlier, so nothing upstream of this point ever
-    // sees kvec_d/kvec_c/wk/isk padded with not-yet-meaningful placeholder entries.
-    this->renew(this->nkstot * this->spin_mult);
+    // grow the containers expand_spin_kpoints() is about to append the down-spin
+    // copy into (indices [nkstot, 2*nkstot)). Resize only these; NOT via renew(),
+    // which would also resize kvec_c_full -- that one must keep holding the
+    // original, un-doubled, un-symmetry-reduced full-BZ mesh for later consumers
+    // (e.g. Ewald_Vq) regardless of what nkstot has become by this point.
+    const int nkstot_spin = this->nkstot * this->spin_mult;
+    this->kvec_c.resize(nkstot_spin);
+    this->kvec_d.resize(nkstot_spin);
+    this->wk.resize(nkstot_spin);
+    this->ngk.resize(nkstot_spin);
+    this->isk.resize(nkstot_spin);
 
     KListIO::expand_spin_kpoints(this->spin_mult,
                                  this->kvec_c,
