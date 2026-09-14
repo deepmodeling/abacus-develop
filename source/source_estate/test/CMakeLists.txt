@@ -47,6 +47,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_ESTATE_elecstate_base
+  KEEP_FEATURE_DEFINITIONS __MPI
   LIBS parameter  base device symmetry
   SOURCES elecstate_base_test.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../source_psi/psi.cpp
   ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp

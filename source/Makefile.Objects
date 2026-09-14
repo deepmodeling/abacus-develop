@@ -621,7 +621,6 @@ OBJS_IO=module_parameter/input_conv.o\
     module_output/cal_test.o\
     module_dos/write_dos_pw.o\
     module_energy/nscf_fermi_surf.o\
-    module_output/band_parallel_output.o\
     module_energy/write_bands.o\
     module_dos/cal_dos.o\
     module_dos/cal_pdos_gamma.o\
@@ -801,6 +800,7 @@ OBJS_PARALLEL=parallel_common.o\
     parallel_reduce.o\
     parallel_device.o\
     para_world.o\
+    para_band_output.o\
     para_collection.o\
     para_kmesh_world.o\
     para_pw_world.o\

@@ -2,8 +2,7 @@
 
 #include "source_base/module_container/ATen/core/tensor.h"
 #include "source_base/module_device/memory_op.h"
-#include "source_base/parallel_comm.h"
-#include "source_base/parallel_device.h"
+#include "source_base/module_parallel/para_bridge.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_estate/uspp_density.h"
@@ -120,7 +119,7 @@ void Get_pchg_pw<T, Device>::begin(UnitCell* ucell,
                                    const bool noncolin) const
 {
     // Resolve global band ownership collectively before validating the selection.
-    const BandParallelLayout layout(psi_.get_nbands(), global_nbands_);
+    const Parallel::ParaBandOutput band_output(psi_.get_nbands(), global_nbands_, Parallel::make_band_world());
     if (static_cast<int>(out_pchg.size()) > global_nbands_)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
@@ -142,11 +141,11 @@ void Get_pchg_pw<T, Device>::begin(UnitCell* ucell,
         std::fill(work.becsum.begin(), work.becsum.end(), 0.0);
         if (if_separate_k)
         {
-            write_separate(band, *ucell, pgrid, kv, global_out_dir, noncolin, layout, &work);
+            write_separate(band, *ucell, pgrid, kv, global_out_dir, noncolin, band_output, &work);
         }
         else
         {
-            write_summed(band, ucell, pgrid, kv, global_out_dir, noncolin, layout, &work);
+            write_summed(band, ucell, pgrid, kv, global_out_dir, noncolin, band_output, &work);
         }
     }
 }
@@ -169,24 +168,25 @@ std::vector<int> Get_pchg_pw<T, Device>::select_bands(const std::vector<int>& se
 }
 
 template <typename T, typename Device>
-void Get_pchg_pw<T, Device>::transform_band(const int global_band, const int ik, const BandParallelLayout& layout, Workspace* work) const
+void Get_pchg_pw<T, Device>::transform_band(const int global_band,
+                                            const int ik,
+                                            const Parallel::ParaBandOutput& band_output,
+                                            Workspace* work) const
 {
-    const int owner = layout.owner_group(global_band);
+    const int owner = band_output.owner_group(global_band);
     // All band groups must visit the same band/k/component sequence. Only the
     // owner indexes Psi; the broadcast replicates a slab, not the entire grid.
     for (int component = 0; component < (work->is_spinor ? 2 : 1); ++component)
     {
-        if (layout.band_group() == owner)
+        if (band_output.band_group() == owner)
         {
-            const int local_band = layout.local_index(global_band);
+            const int local_band = band_output.local_index(global_band);
             psi_.fix_k(ik);
             // Spinor coefficients occupy two consecutive blocks with stride npwx.
             const std::complex<double>* owner_wfcr = transform_wfc(&psi_(local_band, component * work->npwx), ik, component, work);
             std::copy(owner_wfcr, owner_wfcr + work->dense_nrxx, work->wfcr[component].begin());
         }
-#ifdef __MPI
-        Parallel_Common::bcast_data(work->wfcr[component].data(), work->dense_nrxx, BP_WORLD, owner);
-#endif
+        band_output.bcast_band(global_band, work->wfcr[component].data(), work->dense_nrxx);
     }
 }
 
@@ -235,7 +235,7 @@ void Get_pchg_pw<T, Device>::write_separate(const int band,
                                             const K_Vectors& kv,
                                             const std::string& out_dir,
                                             const bool noncolin,
-                                            const BandParallelLayout& layout,
+                                            const Parallel::ParaBandOutput& band_output,
                                             Workspace* work) const
 {
     // Collinear spin channels share the same physical k-point numbering in file names.
@@ -244,14 +244,14 @@ void Get_pchg_pw<T, Device>::write_separate(const int band,
     {
         const int spin_index = kv.isk[ik];
         const int k_number = kv.ik2iktot[ik] % nks_without_spin + 1;
-        transform_band(band, ik, layout, work);
+        transform_band(band, ik, band_output, work);
         // Per-k states carry spin degeneracy, without a Brillouin-zone weight.
         const double spin_degeneracy = nspin_ == 1 ? 2.0 : 1.0;
         // Divide by the cell volume to convert the squared FFT amplitudes to a density.
         calc_density(spin_index, spin_degeneracy / ucell.omega, noncolin, false, work);
         // Each separate-k file needs its own augmentation, weighted by the same spin degeneracy as the soft term.
         std::fill(work->becsum.begin(), work->becsum.end(), 0.0);
-        accumulate_uspp(band, ik, spin_index, spin_degeneracy, layout, work);
+        accumulate_uspp(band, ik, spin_index, spin_degeneracy, band_output, work);
         add_augmentation(ucell, work);
         // Scalar/collinear output selects isk; spinors emit charge and all magnetization components.
         const int component_begin = work->is_spinor ? 0 : spin_index;
@@ -270,21 +270,21 @@ void Get_pchg_pw<T, Device>::write_summed(const int band,
                                           const K_Vectors& kv,
                                           const std::string& out_dir,
                                           const bool noncolin,
-                                          const BandParallelLayout& layout,
+                                          const Parallel::ParaBandOutput& band_output,
                                           Workspace* work) const
 {
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
-        transform_band(band, ik, layout, work);
+        transform_band(band, ik, band_output, work);
         // wk supplies the k-point weight (including spin degeneracy); omega normalizes the density.
         calc_density(kv.isk[ik], kv.wk[ik] / ucell->omega, noncolin, true, work);
         // Use the same k-point weight for the soft and augmentation contributions.
-        accumulate_uspp(band, ik, kv.isk[ik], kv.wk[ik], layout, work);
+        accumulate_uspp(band, ik, kv.isk[ik], kv.wk[ik], band_output, work);
     }
     // Form rho_soft + rho_aug in each pool, then sum over k pools.
     // Symmetry must act on this complete density so both contributions receive the same transformation.
     add_augmentation(*ucell, work);
-    sum_pools(pgrid, kv, work);
+    sum_pools(pgrid, work);
     symmetrize(ucell, work);
     for (int is = 0; is < nspin_; ++is)
     {
@@ -353,7 +353,7 @@ void Get_pchg_pw<T, Device>::accumulate_uspp(const int band,
                                              const int ik,
                                              const int spin,
                                              const double weight,
-                                             const BandParallelLayout& layout,
+                                             const Parallel::ParaBandOutput& band_output,
                                              Workspace* work) const
 {
     if (!work->projector)
@@ -361,8 +361,8 @@ void Get_pchg_pw<T, Device>::accumulate_uspp(const int band,
         return;
     }
     std::fill(work->state_becsum.begin(), work->state_becsum.end(), 0.0);
-    const int owner = layout.owner_group(band);
-    if (layout.band_group() == owner)
+    const int owner = band_output.owner_group(band);
+    if (band_output.band_group() == owner)
     {
         psi_.fix_k(ik);
         work->state_weight[0] = weight;
@@ -371,18 +371,16 @@ void Get_pchg_pw<T, Device>::accumulate_uspp(const int band,
         // Overlaps <beta_i|psi> measure this state's amplitudes in the atomic augmentation channels.
         // The helper sums them over plane-wave ranks, then forms weighted pairs <psi|beta_i><beta_j|psi>.
         work->projector->accumulate(ik,
-                                    &psi_(layout.local_index(band), 0),
+                                    &psi_(band_output.local_index(band), 0),
                                     psi_.get_nbasis(),
                                     psi_.get_current_ngk(),
                                     spin,
                                     work->state_weight,
                                     &work->state_becsum);
     }
-#ifdef __MPI
     // Only the owner holds this band's coefficients; replicate its projector products to all band groups.
     // A broadcast gives every group the same augmentation without multiplying its charge by the group count.
-    Parallel_Common::bcast_data(work->state_becsum.data(), static_cast<int>(work->state_becsum.size()), BP_WORLD, owner);
-#endif
+    band_output.bcast_band(band, work->state_becsum.data(), static_cast<int>(work->state_becsum.size()));
     for (std::size_t i = 0; i < work->becsum.size(); ++i)
     {
         work->becsum[i] += work->state_becsum[i];
@@ -417,18 +415,13 @@ void Get_pchg_pw<T, Device>::add_augmentation(const UnitCell& ucell, Workspace* 
 }
 
 template <typename T, typename Device>
-void Get_pchg_pw<T, Device>::sum_pools(const Parallel_Grid& pgrid, const K_Vectors& kv, Workspace* work) const
+void Get_pchg_pw<T, Device>::sum_pools(const Parallel_Grid& pgrid, Workspace* work) const
 {
-#ifdef __MPI
-    if (kv.para_k.kpar > 1)
+    // Complete the k sum before applying symmetry, without summing band replicas.
+    for (int is = 0; is < nspin_; ++is)
     {
-        // Complete the k sum before applying symmetry, without summing band replicas.
-        for (int is = 0; is < nspin_; ++is)
-        {
-            pgrid.reduce_across_pools(work->density[is].data());
-        }
+        pgrid.reduce_across_pools(work->density[is].data());
     }
-#endif
 }
 
 template <typename T, typename Device>

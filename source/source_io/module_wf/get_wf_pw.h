@@ -1,11 +1,11 @@
 #ifndef GET_WF_PW_H
 #define GET_WF_PW_H
 
+#include "source_base/module_parallel/para_band_output.h"
 #include "source_base/parallel_grid.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
-#include "source_io/module_output/band_parallel_output.h"
 #include "source_psi/psi.h"
 
 #include <complex>
@@ -61,7 +61,7 @@ class Get_wf_pw
     std::vector<int> select_bands(const std::vector<int>& selection, const std::string& parameter_name) const;
 
     // Transform the owner's band and broadcast each local real-space slab.
-    void transform_band(const int global_band, const int ik, const BandParallelLayout& layout, Workspace* work) const;
+    void transform_band(const int global_band, const int ik, const Parallel::ParaBandOutput& band_output, Workspace* work) const;
     // The returned data belongs to the selected workspace component and is valid
     // until that component is transformed again or the workspace is destroyed.
     const std::complex<double>* transform_wfc(const T* coefficients, const int ik, const int component, Workspace* work) const;
@@ -71,14 +71,14 @@ class Get_wf_pw
                     const Parallel_Grid& pgrid,
                     const K_Vectors& kv,
                     const std::string& out_dir,
-                    const BandParallelLayout& layout,
+                    const Parallel::ParaBandOutput& band_output,
                     Workspace* work) const;
     void write_complex(const int band,
                        const UnitCell& ucell,
                        const Parallel_Grid& pgrid,
                        const K_Vectors& kv,
                        const std::string& out_dir,
-                       const BandParallelLayout& layout,
+                       const Parallel::ParaBandOutput& band_output,
                        Workspace* work) const;
 
     void calc_norm(const int spin_index, const double scale, Workspace* work) const;

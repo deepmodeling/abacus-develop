@@ -1,11 +1,11 @@
 #ifndef GET_PCHG_PW_H
 #define GET_PCHG_PW_H
 
+#include "source_base/module_parallel/para_band_output.h"
 #include "source_base/parallel_grid.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
-#include "source_io/module_output/band_parallel_output.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 
@@ -64,7 +64,7 @@ class Get_pchg_pw
     std::vector<int> select_bands(const std::vector<int>& selection, const std::string& parameter_name) const;
 
     // Transform the owner's band and broadcast each local real-space slab.
-    void transform_band(const int global_band, const int ik, const BandParallelLayout& layout, Workspace* work) const;
+    void transform_band(const int global_band, const int ik, const Parallel::ParaBandOutput& band_output, Workspace* work) const;
     // The returned data belongs to the selected workspace component and is valid
     // until that component is transformed again or the workspace is destroyed.
     const std::complex<double>* transform_wfc(const T* coefficients, const int ik, const int component, Workspace* work) const;
@@ -75,7 +75,7 @@ class Get_pchg_pw
                         const K_Vectors& kv,
                         const std::string& out_dir,
                         const bool noncolin,
-                        const BandParallelLayout& layout,
+                        const Parallel::ParaBandOutput& band_output,
                         Workspace* work) const;
     void write_summed(const int band,
                       UnitCell* ucell,
@@ -83,7 +83,7 @@ class Get_pchg_pw
                       const K_Vectors& kv,
                       const std::string& out_dir,
                       const bool noncolin,
-                      const BandParallelLayout& layout,
+                      const Parallel::ParaBandOutput& band_output,
                       Workspace* work) const;
 
     void calc_density(const int spin_index, const double weight, const bool noncolin, const bool accumulate, Workspace* work) const;
@@ -91,10 +91,10 @@ class Get_pchg_pw
                          const int ik,
                          const int spin,
                          const double weight,
-                         const BandParallelLayout& layout,
+                         const Parallel::ParaBandOutput& band_output,
                          Workspace* work) const;
     void add_augmentation(const UnitCell& ucell, Workspace* work) const;
-    void sum_pools(const Parallel_Grid& pgrid, const K_Vectors& kv, Workspace* work) const;
+    void sum_pools(const Parallel_Grid& pgrid, Workspace* work) const;
     void symmetrize(UnitCell* ucell, Workspace* work) const;
 
     void write_cube(const int band,

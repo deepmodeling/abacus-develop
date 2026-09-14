@@ -6,6 +6,7 @@
 #include "source_base/macros.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/module_container/ATen/core/tensor.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/parallel_reduce.h"
 
 #include <cassert>
@@ -185,8 +186,7 @@ void add_uspp_density(const UnitCell& ucell,
                 {
                     for (int ij = 0; ij < nij; ij++)
                     {
-                        tbecsum_host[is * atom->na * nij + ia * nij + ij]
-                            = static_cast<std::complex<double>>(becsum[is * ucell.nat * nh_tot + iat * nh_tot + ij]);
+                        tbecsum_host[is * atom->na * nij + ia * nij + ij] = static_cast<std::complex<double>>(becsum[is * ucell.nat * nh_tot + iat * nh_tot + ij]);
                     }
                 }
                 for (int ig = 0; ig < npw; ig++)
@@ -205,21 +205,20 @@ void add_uspp_density(const UnitCell& ucell,
                 std::vector<std::complex<double>> aux2_host(nij * npw);
                 const std::complex<double> one_d(1, 0);
                 const std::complex<double> zero_d(0, 0);
-                char transa = 'N';
-                char transb = 'T';
-                zgemm_(&transa,
-                       &transb,
-                       &npw,
-                       &nij,
-                       &atom->na,
-                       &one_d,
-                       skk_host.data(),
-                       &npw,
-                       &tbecsum_host[is * atom->na * nij],
-                       &nij,
-                       &zero_d,
-                       aux2_host.data(),
-                       &npw);
+                BlasConnector::gemm_cm('N',
+                                       'T',
+                                       npw,
+                                       nij,
+                                       atom->na,
+                                       one_d,
+                                       skk_host.data(),
+                                       npw,
+                                       &tbecsum_host[is * atom->na * nij],
+                                       nij,
+                                       zero_d,
+                                       aux2_host.data(),
+                                       npw,
+                                       base_device::AbacusDevice_t::CpuDevice);
 
                 int ijh = 0;
                 for (int ih = 0; ih < atom->ncpp.nh; ih++)
@@ -228,8 +227,7 @@ void add_uspp_density(const UnitCell& ucell,
                     {
                         // Reconstruct the atom-centered Q_ij(G) from radial tables and spherical harmonics.
                         // Use the same packed-pair order as becsum; its off-diagonal factor is already included.
-                        ppcell.radial_fft_q<double,
-                                            base_device::DEVICE_CPU>(nullptr, npw, ih, jh, it, qmod_host.data(), ylmk0.c, qgm_host.data());
+                        ppcell.radial_fft_q<double, base_device::DEVICE_CPU>(nullptr, npw, ih, jh, it, qmod_host.data(), ylmk0.c, qgm_host.data());
                         for (int ig = 0; ig < npw; ig++)
                         {
                             rhog[is][ig] += qgm_host[ig] * aux2_host[ijh * npw + ig];

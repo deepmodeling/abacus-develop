@@ -3,8 +3,7 @@
 #include "source_base/constants.h"
 #include "source_base/module_container/ATen/core/tensor.h"
 #include "source_base/module_device/memory_op.h"
-#include "source_base/parallel_comm.h"
-#include "source_base/parallel_device.h"
+#include "source_base/module_parallel/para_bridge.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_output/cube_io.h"
 
@@ -87,7 +86,7 @@ void Get_wf_pw<T, Device>::begin(const UnitCell& ucell,
                                  const std::string& global_out_dir) const
 {
     // Resolve global band ownership collectively before validating the selection.
-    const BandParallelLayout layout(psi_.get_nbands(), global_nbands_);
+    const Parallel::ParaBandOutput band_output(psi_.get_nbands(), global_nbands_, Parallel::make_band_world());
     if (static_cast<int>(out_wfc_norm.size()) > global_nbands_ || static_cast<int>(out_wfc_re_im.size()) > global_nbands_)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
@@ -107,7 +106,7 @@ void Get_wf_pw<T, Device>::begin(const UnitCell& ucell,
         {
             std::fill(work.values[is].begin(), work.values[is].end(), 0.0);
         }
-        write_norm(band, ucell, pgrid, kv, global_out_dir, layout, &work);
+        write_norm(band, ucell, pgrid, kv, global_out_dir, band_output, &work);
     }
     for (int band = 0; band < global_nbands_; ++band)
     {
@@ -120,7 +119,7 @@ void Get_wf_pw<T, Device>::begin(const UnitCell& ucell,
             std::fill(work.values[is].begin(), work.values[is].end(), 0.0);
             std::fill(work.imag[is].begin(), work.imag[is].end(), 0.0);
         }
-        write_complex(band, ucell, pgrid, kv, global_out_dir, layout, &work);
+        write_complex(band, ucell, pgrid, kv, global_out_dir, band_output, &work);
     }
 }
 
@@ -142,24 +141,25 @@ std::vector<int> Get_wf_pw<T, Device>::select_bands(const std::vector<int>& sele
 }
 
 template <typename T, typename Device>
-void Get_wf_pw<T, Device>::transform_band(const int global_band, const int ik, const BandParallelLayout& layout, Workspace* work) const
+void Get_wf_pw<T, Device>::transform_band(const int global_band,
+                                          const int ik,
+                                          const Parallel::ParaBandOutput& band_output,
+                                          Workspace* work) const
 {
-    const int owner = layout.owner_group(global_band);
+    const int owner = band_output.owner_group(global_band);
     // All band groups must visit the same band/k/component sequence. Only the
     // owner indexes Psi; the broadcast replicates a slab, not the entire grid.
     for (int component = 0; component < (work->is_spinor ? 2 : 1); ++component)
     {
-        if (layout.band_group() == owner)
+        if (band_output.band_group() == owner)
         {
-            const int local_band = layout.local_index(global_band);
+            const int local_band = band_output.local_index(global_band);
             psi_.fix_k(ik);
             // Spinor coefficients occupy two consecutive blocks with stride npwx.
             const std::complex<double>* owner_wfcr = transform_wfc(&psi_(local_band, component * work->npwx), ik, component, work);
             std::copy(owner_wfcr, owner_wfcr + work->dense_nrxx, work->wfcr[component].begin());
         }
-#ifdef __MPI
-        Parallel_Common::bcast_data(work->wfcr[component].data(), work->dense_nrxx, BP_WORLD, owner);
-#endif
+        band_output.bcast_band(global_band, work->wfcr[component].data(), work->dense_nrxx);
     }
 }
 
@@ -207,7 +207,7 @@ void Get_wf_pw<T, Device>::write_norm(const int band,
                                       const Parallel_Grid& pgrid,
                                       const K_Vectors& kv,
                                       const std::string& out_dir,
-                                      const BandParallelLayout& layout,
+                                      const Parallel::ParaBandOutput& band_output,
                                       Workspace* work) const
 {
     // Collinear spin channels share the same physical k-point numbering in file names.
@@ -216,7 +216,7 @@ void Get_wf_pw<T, Device>::write_norm(const int band,
     {
         const int spin_index = kv.isk[ik];
         const int k_number = kv.ik2iktot[ik] % nks_without_spin + 1;
-        transform_band(band, ik, layout, work);
+        transform_band(band, ik, band_output, work);
         // The solver supplies L2-normalized NC states or S-normalized USPP states.
         // Wavefunction amplitudes carry the inverse square root of the cell volume.
         const double scale = std::sqrt(1.0 / ucell.omega);
@@ -231,7 +231,7 @@ void Get_wf_pw<T, Device>::write_complex(const int band,
                                          const Parallel_Grid& pgrid,
                                          const K_Vectors& kv,
                                          const std::string& out_dir,
-                                         const BandParallelLayout& layout,
+                                         const Parallel::ParaBandOutput& band_output,
                                          Workspace* work) const
 {
     // Collinear spin channels share the same physical k-point numbering in file names.
@@ -240,7 +240,7 @@ void Get_wf_pw<T, Device>::write_complex(const int band,
     {
         const int spin_index = kv.isk[ik];
         const int k_number = kv.ik2iktot[ik] % nks_without_spin + 1;
-        transform_band(band, ik, layout, work);
+        transform_band(band, ik, band_output, work);
         // The solver supplies L2-normalized NC states or S-normalized USPP states.
         // Wavefunction amplitudes carry the inverse square root of the cell volume.
         const double scale = std::sqrt(1.0 / ucell.omega);

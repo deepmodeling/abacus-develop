@@ -1,15 +1,41 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <string>
+#ifdef __MPI
+#include "source_base/parallel_comm.h"
+
+#include <mpi.h>
+#endif
 #define private public
 #define protected public
+#include "source_base/module_fft/fft_bundle.h"
 #include "source_estate/elecstate.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/occupy.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_base/module_fft/fft_bundle.h"
 #undef protected
 #undef private
+
+#ifdef __MPI
+int main(int argc, char** argv)
+{
+    MPI_Init(&argc, &argv);
+    testing::InitGoogleTest(&argc, argv);
+    // These existing fixtures describe one process and one band group.
+    int nproc = 0;
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    if (nproc != 1)
+    {
+        MPI_Finalize();
+        return 1;
+    }
+    BP_WORLD = MPI_COMM_SELF;
+    POOL_WORLD = MPI_COMM_SELF;
+    const int result = RUN_ALL_TESTS();
+    MPI_Finalize();
+    return result;
+}
+#endif
 
 // Mock functions for testing elecstate.cpp
 namespace elecstate
@@ -46,10 +72,18 @@ Magnetism::~Magnetism()
 {
 }
 
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
-Sep_Cell::Sep_Cell() noexcept {}
-Sep_Cell::~Sep_Cell() noexcept {}
+SepPot::SepPot()
+{
+}
+SepPot::~SepPot()
+{
+}
+Sep_Cell::Sep_Cell() noexcept
+{
+}
+Sep_Cell::~Sep_Cell() noexcept
+{
+}
 #include "source_cell/klist.h"
 
 ModulePW::PW_Basis::PW_Basis()
@@ -264,7 +298,7 @@ TEST_F(ElecStateTest, FixedWeights)
     {
         ocp_kb[i] = 1.0;
     }
-    elecstate::fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec,klist,elecstate->wg,elecstate->skip_weights);
+    elecstate::fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec, klist, elecstate->wg, elecstate->skip_weights);
     EXPECT_EQ(elecstate->wg(0, 0), 1.0);
     EXPECT_EQ(elecstate->wg(klist->get_nks() - 1, PARAM.input.nbands - 1), 1.0);
     EXPECT_TRUE(elecstate->skip_weights);
@@ -287,7 +321,7 @@ TEST_F(ElecStateDeathTest, FixedWeightsWarning1)
         ocp_kb[i] = 1.0;
     }
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec,klist,elecstate->wg,elecstate->skip_weights),
+    EXPECT_EXIT(elecstate::fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec, klist, elecstate->wg, elecstate->skip_weights),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
@@ -311,7 +345,7 @@ TEST_F(ElecStateDeathTest, FixedWeightsWarning2)
         ocp_kb[i] = 1.0;
     }
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec,klist,elecstate->wg,elecstate->skip_weights),
+    EXPECT_EXIT(elecstate::fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec, klist, elecstate->wg, elecstate->skip_weights),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
