@@ -12,6 +12,7 @@
 #include "source_base/realarray.h"
 
 class AtomPseudoTest;
+class AtomSpecTest;
 class NCPPTest;
 class ReadPPTest;
 
@@ -26,6 +27,7 @@ class Pseudopot_upf
     /// @brief the unit tests drive the private format readers and the
     /// complete_default_* helpers directly; see source_cell/test/
     friend class AtomPseudoTest;
+    friend class AtomSpecTest;
     friend class NCPPTest;
     friend class ReadPPTest;
 
