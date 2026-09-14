@@ -46,7 +46,7 @@ jobs:
           echo "fingerprint=${fingerprint}" >> "${GITHUB_OUTPUT}"
 
       - name: Restore compiler cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ env.CCACHE_DIR }}
           key: abacus-cuda-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
