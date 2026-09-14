@@ -5,7 +5,7 @@
 #include "source_base/parallel_comm.h"
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_io/module_output/band_parallel_output.h"
-#include "source_io/module_output/cube_io.h"
+#include "source_cell/cube_io.h"
 
 namespace ModuleIO
 {

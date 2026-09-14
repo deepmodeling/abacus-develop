@@ -1,5 +1,5 @@
 #include "write_elf.h"
-#include "source_io/module_output/cube_io.h"
+#include "source_cell/cube_io.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif

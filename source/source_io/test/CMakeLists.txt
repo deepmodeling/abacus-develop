@@ -113,7 +113,7 @@ add_test(NAME MODULE_IO_write_wfc_nao_para
 AddTest(
   TARGET MODULE_IO_write_orb_info
   LIBS parameter  base device cell_info
-  SOURCES write_orb_info_test.cpp ../module_output/write_orb_info.cpp
+  SOURCES write_orb_info_test.cpp ../../source_cell/write_orb_info.cpp
 )
 
 AddTest(
@@ -137,7 +137,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_output_log_test
   LIBS parameter base device
-  SOURCES ../module_output/output_log.cpp outputlog_test.cpp ../../source_basis/module_pw/test/test_tool.cpp
+  SOURCES ../../source_cell/output_log.cpp outputlog_test.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
 if(ENABLE_LCAO)

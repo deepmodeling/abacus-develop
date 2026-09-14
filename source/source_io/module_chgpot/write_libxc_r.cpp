@@ -12,7 +12,7 @@
 #include "source_estate/module_charge/charge.h"
 #include "source_basis/module_pw/pw_basis_big.h"
 #include "source_basis/module_pw/pw_basis.h"
-#include "source_io/module_output/cube_io.h"
+#include "source_cell/cube_io.h"
 #include "source_base/global_variable.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"

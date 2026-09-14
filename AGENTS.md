@@ -58,6 +58,10 @@ rules. Read the complete governance document before making or reviewing changes:
   pointers (e.g., `std::vector<bool>` has no `.data()`), and use
   `std::fill`/`std::copy` instead of `ZEROS`/`COPYARRAY` on vector buffers.
 
+## Token And Tool Budget
+
+- Before any non-trivial action, state the expected token cost; default to the cheapest path (e.g., one `Read`/`Grep` over sub-agents) and ask before deep exploration.
+
 ## Repository Map
 
 - Core C++ implementation lives under `source/`; source additions must be wired

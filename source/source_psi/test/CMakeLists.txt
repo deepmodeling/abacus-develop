@@ -16,7 +16,7 @@ AddTest(
         ../../source_cell/atom_spec.cpp
         ../../source_cell/test/support/mock_unitcell.cpp
         
-        ../../source_io/module_output/write_pao.cpp
+        ../../source_cell/write_pao.cpp
         ../../source_io/module_wf/read_wfc_pw.cpp
 )
 endif()

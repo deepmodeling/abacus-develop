@@ -145,6 +145,17 @@ parameters:
     default_value: "1"
     unit: ""
     availability: (basis_type==pw and esolver_type==sdft) or (basis_type==pw and esolver_type==ksdft and ks_solver==bpcg)
+  - name: nimage
+    category: System variables
+    type: Integer
+    description: |
+      Number of independent calculation images that share the MPI processes.
+      * Each image runs its own esolver instance on a dedicated esolver_world communicator, split from MPI_COMM_WORLD by image id.
+      * The cross-image images_world communicator connects ranks with the same rank_in_esolver across images.
+      * Currently only nimage = 1 is supported; larger values are reserved for path-based methods such as NEB and will be rejected.
+    default_value: "1"
+    unit: ""
+    availability: ""
   - name: latname
     category: System variables
     type: String

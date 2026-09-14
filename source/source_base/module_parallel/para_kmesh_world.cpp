@@ -7,28 +7,40 @@ namespace Parallel
 {
 
 ParaKmeshWorld::ParaKmeshWorld(int nkstot, int nspin)
-    : ParaWorld("kmesh"), kpar_(1), my_pool_(0), rank_in_pool_(0),
-      nproc_(1), nspin_(nspin), nkstot_(nkstot)
+    : ParaWorld("kmesh"), nspin_(nspin), nkstot_(nkstot)
 {
     distribute_kpoints();
     nks_local_ = nkstot_;
     startk_global_ = 0;
+    nproc_ = size();
+}
+
+ParaKmeshWorld::ParaKmeshWorld()
+    : ParaWorld("kmesh"), nspin_(1)
+{
+    // Intentionally empty: no k-point distribution data.
+    // Only kpar_ / comm() are valid for reduce_across_pools.
+    nproc_ = size();
 }
 
 #ifdef __MPI
-ParaKmeshWorld::ParaKmeshWorld(const MPI_Comm& comm, int kpar, int my_pool, int nproc, int nkstot, int nspin)
+ParaKmeshWorld::ParaKmeshWorld(const MPI_Comm& comm, int kpar, int my_pool, int nkstot, int nspin)
     : ParaWorld("kmesh", comm), kpar_(kpar), my_pool_(my_pool),
-      rank_in_pool_(rank()), nproc_(nproc), nspin_(nspin), nkstot_(nkstot)
+      rank_in_pool_(rank()), nspin_(nspin), nkstot_(nkstot)
 {
+    // nproc_ must be known before distribute_kpoints(), which derives the
+    // first rank of every k-pool from it.
+    nproc_ = size();
     distribute_kpoints();
     nks_local_ = nks_pool_[my_pool_];
     startk_global_ = startk_pool_[my_pool_];
+    kpool_root_ = (rank_in_pool_ == startpro_pool_[my_pool_]);
 }
 #endif
 
 void ParaKmeshWorld::distribute_kpoints()
 {
-    // k-points per pool (evenly divided, remainder to front)
+    // k-points per k-pool (evenly divided, remainder to front)
     nks_pool_.resize(kpar_, 0);
     const int nks_ave = nkstot_ / kpar_;
     const int nks_rem = nkstot_ % kpar_;
@@ -37,14 +49,14 @@ void ParaKmeshWorld::distribute_kpoints()
         nks_pool_[i] = nks_ave + (i < nks_rem ? 1 : 0);
     }
 
-    // global start index per pool
+    // global start index per k-pool
     startk_pool_.resize(kpar_, 0);
     for (int i = 1; i < kpar_; ++i)
     {
         startk_pool_[i] = startk_pool_[i - 1] + nks_pool_[i - 1];
     }
 
-    // pool index per k-point
+    // k-pool index per k-point
     whichpool_.resize(nkstot_, 0);
     for (int p = 0; p < kpar_; ++p)
     {
@@ -54,7 +66,9 @@ void ParaKmeshWorld::distribute_kpoints()
         }
     }
 
-    // first world rank per pool
+    // first communicator rank per k-pool (processes are split into
+    // consecutive rank blocks, remainder to the front k-pools; this
+    // mirrors Parallel_Global::divide_mpi_groups)
     startpro_pool_.resize(kpar_, 0);
     const int nproc_ave = nproc_ / kpar_;
     const int nproc_rem = nproc_ % kpar_;
@@ -90,7 +104,49 @@ int ParaKmeshWorld::startpro_pool(int pool) const
 
 int ParaKmeshWorld::max_nks_pool() const
 {
+    // Reduce-only domains carry no distribution arrays (see the default
+    // constructor); querying them here would dereference an empty vector.
+    assert(!nks_pool_.empty());
     return *std::max_element(nks_pool_.begin(), nks_pool_.end());
+}
+
+void ParaKmeshWorld::reduce_across_pools(double& value) const
+{
+    if (kpar_ <= 1)
+    {
+        return;
+    }
+#ifdef __MPI
+    // Exactly one contribution per k-pool: the first process of each
+    // k-pool injects the partial sum, all other processes inject zero.
+    // A single world-wide Allreduce therefore returns the sum of the
+    // per-k-pool partial sums, with no normalization division and with
+    // uneven k-pool sizes handled naturally.
+    const double local = kpool_root_ ? value : 0.0;
+    MPI_Allreduce(&local, &value, 1, MPI_DOUBLE, MPI_SUM, comm());
+#endif
+}
+
+void ParaKmeshWorld::reduce_max_across_pools(double& value) const
+{
+    if (nproc_ <= 1)
+    {
+        return;
+    }
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_DOUBLE, MPI_MAX, comm());
+#endif
+}
+
+void ParaKmeshWorld::reduce_min_across_pools(double& value) const
+{
+    if (nproc_ <= 1)
+    {
+        return;
+    }
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_DOUBLE, MPI_MIN, comm());
+#endif
 }
 
 void ParaKmeshWorld::pool_collection(double& value, const double* wk, int ik) const

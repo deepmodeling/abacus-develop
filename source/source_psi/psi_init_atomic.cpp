@@ -10,7 +10,7 @@
 #include "source_base/tool_quit.h"
 #include "source_base/timer.h"
 #include "source_base/global_variable.h"
-#include "source_io/module_output/write_pao.h"
+#include "source_cell/write_pao.h"
 
 template <typename T>
 void psi_init_atomic<T>::allocate_ps_table()

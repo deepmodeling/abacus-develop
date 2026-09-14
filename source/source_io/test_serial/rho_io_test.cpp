@@ -1,9 +1,9 @@
-#include "source_io/module_output/cube_io.h"
+#include "source_cell/cube_io.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "source_base/global_variable.h"
-#include "source_io/module_output/cube_io.h"
+#include "source_cell/cube_io.h"
 #include "prepare_unitcell.h"
 #include "source_base/parallel_grid.h"
 

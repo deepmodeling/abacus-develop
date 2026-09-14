@@ -1,11 +1,12 @@
 #include "source_base/element_name.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_estate/module_pot/efield.h"
-#include "source_io/module_output/cube_io.h"
-#include "source_io/module_output/output_log.h"
+#include "source_cell/cube_io.h"
+#include "source_cell/output_log.h"
 #include "write_elecstat_pot.h"
+
+#include <cassert>
 
 namespace ModuleIO
 {
@@ -22,17 +23,19 @@ void write_elecstat_pot(
     const UnitCell* ucell,
     const double* v_eff,
     const surchem& solvent,
-    const int precision)
+    const int precision,
+    const int nspin,
+    const bool efield_flag,
+    const bool dip_cor_flag,
+    const bool imp_sol,
+    const bool two_fermi)
 {
     ModuleBase::TITLE("ModuleIO", "write_elecstat_pot");
     ModuleBase::timer::start("ModuleIO", "write_elecstat_pot");
 
-    std::vector<double> v_elecstat(rho_basis->nrxx, 0.0);
+    assert(nspin == 1 || nspin == 2 || nspin == 4);
 
-    const int nspin = PARAM.inp.nspin;
-    const int efield = PARAM.inp.efield_flag;
-    const int dip_corr = PARAM.inp.dip_cor_flag;
-    const bool imp_sol = PARAM.inp.imp_sol;
+    std::vector<double> v_elecstat(rho_basis->nrxx, 0.0);
 
     //==========================================
     // Hartree potential
@@ -44,7 +47,7 @@ void write_elecstat_pot(
     //! Dipole correction
     //==========================================
     ModuleBase::matrix v_efield;
-    if (efield>0 && dip_corr>0)
+    if (efield_flag && dip_cor_flag)
     {
         v_efield.create(nspin, rho_basis->nrxx);
         v_efield = elecstate::Efield::add_efield(*ucell,
@@ -62,11 +65,11 @@ void write_elecstat_pot(
         // the spin index is 0
         v_elecstat[ir] = vh(0, ir) + v_eff[ir];
 
-        if (efield>0 && dip_corr>0)
+        if (efield_flag && dip_cor_flag)
         {
             v_elecstat[ir] += v_efield(0, ir);
         }
-        if(imp_sol == true)
+        if(imp_sol)
         {
             v_elecstat[ir] += solvent.delta_phi[ir];
         }
@@ -103,7 +106,7 @@ void write_elecstat_pot(
         ucell,
         precision,
         out_fermi,
-        PARAM.globalv.two_fermi,
+        two_fermi,
         false);
 
     ModuleBase::timer::end("ModuleIO", "write_elecstat_pot");

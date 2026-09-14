@@ -1,5 +1,5 @@
 #include "ctrl_output_fp.h" // use ctrl_output_fp()
-#include "../module_output/cube_io.h" // use write_vdata_palgrid
+#include "source_cell/cube_io.h" // use write_vdata_palgrid
 #include "../module_dipole/dipole_io.h" // use write_dipole
 #include "source_estate/module_charge/symm_rho.h" // use Symmetry_rho
 #include "source_hamilt/module_xc/xc_functional.h"    // use XC_Functional
@@ -161,7 +161,12 @@ void ctrl_output_fp(UnitCell& ucell,
             &(ucell),
             pelec->pot->get_fixed_v(),
             solvent,
-            inp.out_pot[1]);
+            inp.out_pot[1],
+            nspin,
+            inp.efield_flag,
+            inp.dip_cor_flag,
+            inp.imp_sol,
+            PARAM.globalv.two_fermi);
     }
 
     // 6) write ELF

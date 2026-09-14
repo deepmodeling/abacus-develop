@@ -3,10 +3,10 @@
 
 #ifdef __MPI
 #include "mpi.h"
-extern MPI_Comm POOL_WORLD;
-extern MPI_Comm KP_WORLD; // communicator among different pools
-extern MPI_Comm INT_BGROUP;
-extern MPI_Comm BP_WORLD;
+extern MPI_Comm POOL_WORLD; // one band-pool (k-pool x band-group cell): only plane waves are distributed
+extern MPI_Comm KP_WORLD; // links k-pools at the same rank_in_pool position; MPI_COMM_NULL when k-pools are uneven
+extern MPI_Comm INT_BGROUP; // same band-group index across all k-pools
+extern MPI_Comm BP_WORLD; // links band groups inside one k-pool (same k, different band windows)
 extern MPI_Comm GRID_WORLD; // mohan add 2012-01-13
 extern MPI_Comm DIAG_WORLD; // mohan add 2012-01-13
 
