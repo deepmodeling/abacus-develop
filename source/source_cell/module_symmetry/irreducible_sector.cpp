@@ -1,4 +1,4 @@
-#include "source_lcao/module_ri/module_exx_symmetry/irreducible_sector.h"
+#include "source_cell/module_symmetry/irreducible_sector.h"
 #include "source_io/module_parameter/parameter.h"
 namespace ModuleSymmetry
 {
@@ -62,7 +62,7 @@ namespace ModuleSymmetry
         }
     }
 
-    // Perfoming {R|t} to atom position r in the R=0 lattice, we get Rr+t, which may get out of R=0 lattice, 
+    // Perfoming {R|t} to atom position r in the R=0 lattice, we get Rr+t, which may get out of R=0 lattice,
     // whose image in R=0 lattice is r'=Rr+t-O. This function is to get O for each atom and each symmetry operation.
     // the range of direct position is [-0.5, 0.5).
     TCdouble Irreducible_Sector::get_return_lattice(const Symmetry& symm,
@@ -109,7 +109,7 @@ namespace ModuleSymmetry
         ModuleBase::TITLE("Symmetry_rotation", "cal_return_lattice_all");
         // Columns [0, nrotk) are the unitary operations; columns [nrotk, nrotk+nrotk_anti) are the
         // spatial parts of the antiunitary elements Theta*g of the Shubnikov group (nspin=4 magnetic),
-        // so that Symmetry_rotation can address both with one raw index. 
+        // so that Symmetry_rotation can address both with one raw index.
         this->return_lattice_.resize(st.nat, std::vector<TCdouble>(symm.nrotk + symm.nrotk_anti));
         for (int iat1 = 0;iat1 < st.nat;++iat1)
         {

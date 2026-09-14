@@ -75,7 +75,7 @@ namespace ModuleSymmetry
             return;
         }
 
-        // extern lattice to minimal BvK lattice, and set direct coordinates in min BvK lattice 
+        // extern lattice to minimal BvK lattice, and set direct coordinates in min BvK lattice
         int bvk_gcd = gcd(bvk_period[0], gcd(bvk_period[1], bvk_period[2]));
         const TC bvk_min_period = TC({ bvk_period[0] / bvk_gcd, bvk_period[1] / bvk_gcd, bvk_period[2] / bvk_gcd });
         const int bvk_nat = st.nat * bvk_min_period[0] * bvk_min_period[1] * bvk_min_period[2];

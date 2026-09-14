@@ -7,8 +7,7 @@
 #include "source_estate/occ_matrix.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "source_lcao/module_ri/ri_util.h"
-#include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
+#include "source_cell/module_symmetry/symm_rotation_k.h"
 
 // cal_occ_mat_k / cal_occ_mat_gamma take Plus_U_Base& dftu directly and read all
 // occupation-matrix state (occ/save arrays, lookup table, nspin/npol, and the
@@ -20,7 +19,7 @@ namespace
 // of one run: process-lifetime static since cal_occ_mat_k has no natural
 // per-ion-step owning object to hang this off (unlike the dft_plus_u=1
 // operator path, which owns its own copy).
-ModuleSymmetry::Symmetry_rotation dftu_occ_symrot;
+ModuleSymmetry::Symmetry_rotation_k dftu_occ_symrot;
 bool dftu_occ_symrot_built = false;
 
 /// @brief accumulate one k-star member's rotated S*DM product into occmat,
@@ -105,9 +104,9 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
     const bool dftu_spacegroup_symmetry = (ModuleSymmetry::Symmetry::symm_flag == 1) && !kv.kstars.empty();
     if (dftu_spacegroup_symmetry && !dftu_occ_symrot_built)
     {
-        const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
+        const std::array<int, 3> period{ kv.nmp[0], kv.nmp[1], kv.nmp[2] };
         dftu_occ_symrot.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
-            RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
+            ModuleSymmetry::Symmetry_rotation_k::get_bvk_cells(period), period, ucell.lat);
         dftu_occ_symrot.cal_Ms(kv, ucell, *pv);
         dftu_occ_symrot_built = true;
     }

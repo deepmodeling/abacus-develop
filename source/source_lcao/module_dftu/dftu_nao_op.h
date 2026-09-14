@@ -5,7 +5,7 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_lcao/module_dftu/dftu_nao_adj.h"
-#include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h" // ModuleSymmetry::Symmetry_rotation (value member)
+#include "source_cell/module_symmetry/symm_rotation_k.h" // ModuleSymmetry::Symmetry_rotation_k (value member); LibRI-free
 
 #include <vector>
 
@@ -97,10 +97,10 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /// the DFT+U occupation matrix. Set via set_kv() after construction.
     const K_Vectors* kv_ = nullptr;
 
-    /// @brief rotation machinery reused from the EXX module to reconstruct
-    /// D(k) at every k-star member from D(k_ibz); built lazily (once) the
-    /// first time it is needed (rebuilt every ionic step).
-    ModuleSymmetry::Symmetry_rotation symrot_;
+    /// @brief LibRI-independent k-space rotation machinery (shared base of EXX's own
+    /// Symmetry_rotation) to reconstruct D(k) at every k-star member from D(k_ibz);
+    /// built lazily (once) the first time it is needed (rebuilt every ionic step).
+    ModuleSymmetry::Symmetry_rotation_k symrot_;
     bool symrot_built_ = false;
 };
 

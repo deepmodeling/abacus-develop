@@ -11,7 +11,6 @@
 #include "source_base/parallel_reduce.h"
 #include "source_cell/klist.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "source_lcao/module_ri/ri_util.h"
 
 #include <memory>
 
@@ -140,10 +139,10 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     {
         if (!this->symrot_built_)
         {
-            const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(*this->kv_);
+            const std::array<int, 3> period{ this->kv_->nmp[0], this->kv_->nmp[1], this->kv_->nmp[2] };
             // for return_lattice to calculate Ms
             this->symrot_.find_irreducible_sector(this->ucell->symm, this->ucell->atoms, this->ucell->st,
-                RI_Util::get_Born_von_Karmen_cells(period), period, this->ucell->lat);
+                ModuleSymmetry::Symmetry_rotation_k::get_bvk_cells(period), period, this->ucell->lat);
             this->symrot_.cal_Ms(*this->kv_, *this->ucell, *pv);
             this->symrot_built_ = true;
         }

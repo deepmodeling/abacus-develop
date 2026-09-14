@@ -15,7 +15,7 @@ AddTest(
 if(ENABLE_LCAO AND ENABLE_MPI)
 AddTest(
   TARGET dftu_lcao_test
-  LIBS parameter psi base device container
+  LIBS parameter psi base device container symmetry
   SOURCES dftu_lcao_test.cpp ../dftu_nao_op.cpp ../dftu_nao_adj.cpp ../dftu_nao_pots.cpp ../dftu_nao_fs_r.cpp ../dftu_nao_for_r.cpp ../dftu_nao_str_r.cpp
   ../../../source_estate/module_dm/density_matrix.cpp
   ../../../source_estate/module_dm/density_matrix_io.cpp
