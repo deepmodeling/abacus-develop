@@ -48,7 +48,7 @@ class Sphbes(_Sphbes):
         
     @staticmethod
     def sphbes_zeros(l: int, n: int, zeros: NDArray[np.float64]) -> None: 
-        super().sphbes_zeros(l, n, zeros)
+        _Sphbes.sphbes_zeros(l, n, zeros)
 
 class Integral(_Integral):
     def __init__(self) -> None: 
@@ -81,7 +81,7 @@ class Integral(_Integral):
         rab: NDArray[np.float64], 
         asum: NDArray[np.float64]
     ) -> None: 
-        super().Simpson_Integral_0toall(mesh, func, rab, asum)
+        _Integral.Simpson_Integral_0toall(mesh, func, rab, asum)
         
     @staticmethod
     def Simpson_Integral_alltoinf(
@@ -90,7 +90,7 @@ class Integral(_Integral):
         rab: NDArray[np.float64], 
         asum: NDArray[np.float64]
     ) -> None: 
-        super().Simpson_Integral_alltoinf(mesh, func, rab, asum)
+        _Integral.Simpson_Integral_alltoinf(mesh, func, rab, asum)
         
     @overload
     @staticmethod

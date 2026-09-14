@@ -1,0 +1,121 @@
+#include "setup_dftu_lcao.h"
+#include "source_pw/module_pwdft/dftu_base.h"
+#include "source_lcao/module_dftu/dftu_nao_occ.h"
+#include "source_lcao/module_dftu/dftu_nao_energy.h"
+#include "source_pw/module_pwdft/dftu_base_io.h" // mohan add 2025-11-08
+#include "source_io/module_parameter/parameter.h"
+#include "source_lcao/hamilt_lcao.h"
+
+namespace ModuleESolver
+{
+
+void init_dftu_lcao(int dft_plus_u,
+                    void* dftu,
+                    const UnitCell& ucell,
+                    double** rho,
+                    const int nrxx,
+                    const LCAO_Orbitals* orb)
+{
+    if (!dft_plus_u)
+    {
+        return;
+    }
+
+    auto* dftu_ptr = static_cast<Plus_U_Base*>(dftu);
+
+    /// Calculate U and J if Yukawa potential is used
+    if (dftu_ptr->use_yukawa())
+    {
+        dftu_ptr->yukawa().cal_slater_UJ(ucell, rho, nrxx, PARAM.inp.nspin, orb);
+        // update current U with calculated U-J from Slater integrals
+        for (int it = 0; it < ucell.ntype; it++)
+        {
+            if (dftu_ptr->has_l_channel(it))
+            {
+                dftu_ptr->set_u_current(it, dftu_ptr->yukawa().get_Ueff(it));
+            }
+        }
+    }
+}
+
+template <typename TK>
+void finish_dftu_lcao(const bool conv_esolver,
+                       int dft_plus_u,
+                       bool out_chg,
+                       void* dftu,
+                       const UnitCell& ucell,
+                       const std::vector<std::vector<TK>>& dm_vec,
+                       const K_Vectors& kv,
+                       const double mixing_beta,
+                       void* hamilt_lcao,
+                       const std::string& global_out_dir,
+                       int nspin,
+                       int npol,
+                       const bool gamma_only_local)
+{
+    if (!dft_plus_u)
+    {
+        return;
+    }
+
+    auto* dftu_ptr = static_cast<Plus_U_Base*>(dftu);
+    auto* hamilt_lcao_ptr = static_cast<hamilt::HamiltLCAO<TK, double>*>(hamilt_lcao);
+
+    /// old DFT+U method calculates energy correction in esolver,
+    /// new DFT+U method calculates energy in Hamiltonian
+    if (dft_plus_u == 2)
+    {
+        if (dftu_ptr->get_occ_mat_ctrl() != 2)
+        {
+            const Parallel_Orbitals* pv = hamilt_lcao_ptr->getHR()->get_paraV();
+            if (pv != nullptr && hamilt_lcao_ptr != nullptr)
+            {
+                DFTU_LCAO::cal_occ_mat(pv, ucell, dm_vec, kv, mixing_beta,
+                                       static_cast<hamilt::Hamilt<TK>*>(hamilt_lcao_ptr), *dftu_ptr,
+                                       gamma_only_local, nspin, PARAM.inp.ks_solver);
+            }
+        }
+        if (dftu_ptr->is_occmat_ready())
+        {
+            DFTU_LCAO::cal_energy_correction(*dftu_ptr, ucell, PARAM.inp.nspin);
+        }
+    }
+    DFTU_BASE::output(*dftu_ptr, ucell, out_chg, global_out_dir, nspin, npol);
+    
+    /// use the converged occupation matrix for next MD/Relax SCF calculation
+    if (conv_esolver)
+    {
+        dftu_ptr->set_occmat_ready();
+    }
+}
+
+/// Template instantiation
+template void finish_dftu_lcao<double>(const bool conv_esolver,
+                                        int dft_plus_u,
+                                        bool out_chg,
+                                        void* dftu,
+                                        const UnitCell& ucell,
+                                        const std::vector<std::vector<double>>& dm_vec,
+                                        const K_Vectors& kv,
+                                        const double mixing_beta,
+                                        void* hamilt_lcao,
+                                        const std::string& global_out_dir,
+                                        int nspin,
+                                        int npol,
+                                        const bool gamma_only_local);
+
+template void finish_dftu_lcao<std::complex<double>>(const bool conv_esolver,
+                                                      int dft_plus_u,
+                                                      bool out_chg,
+                                                      void* dftu,
+                                                      const UnitCell& ucell,
+                                                      const std::vector<std::vector<std::complex<double>>>& dm_vec,
+                                                      const K_Vectors& kv,
+                                                      const double mixing_beta,
+                                                      void* hamilt_lcao,
+                                                      const std::string& global_out_dir,
+                                                      int nspin,
+                                                      int npol,
+                                                      const bool gamma_only_local);
+
+} // namespace ModuleESolver

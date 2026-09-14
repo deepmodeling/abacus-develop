@@ -4,7 +4,7 @@
 # this compare script is used in different integrate tests
 COMPARE_SCRIPT="../../integrate/tools/CompareFile.py"
 #COMPARE_SCRIPT="../../integrate/tools/compare_file.py"
-SUM_CUBE_EXE="python3 ../../integrate/tools/sum_cube.py"
+CUBE_TOOL="../../integrate/tools/cube_tool.py"
 COLLECT_NPY_MEANS="../../integrate/tools/collect_npy_means.py"
 
 
@@ -79,11 +79,19 @@ has_dftu=$(get_input_key_value "dft_plus_u" "INPUT")
 has_band=$(get_input_key_value "out_band" "INPUT")
 has_dos=$(get_input_key_value "out_dos" "INPUT")
 has_cond=$(get_input_key_value "cal_cond" "INPUT")
+out_hsk=$(get_input_key_value "out_hsk" "INPUT")
+out_hsr=$(get_input_key_value "out_hsr" "INPUT")
 has_hs=$(get_input_key_value "out_mat_hs" "INPUT")
 has_hs2=$(get_input_key_value "out_mat_hs2" "INPUT")
 out_hr_npz=$(get_input_key_value "out_hr_npz" "INPUT")
 out_hsr_npz=$(get_input_key_value "out_hsr_npz" "INPUT")
 out_dm_npz=$(get_input_key_value "out_dm_npz" "INPUT")
+if ! test -z "$out_hsk"; then
+    has_hs=$out_hsk
+fi
+if ! test -z "$out_hsr"; then
+    has_hs2=$out_hsr
+fi
 has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
 has_xc2=$(get_input_key_value "out_mat_xc2" "INPUT")
 has_eband_separate=$(get_input_key_value "out_eband_terms" "INPUT")
@@ -116,6 +124,8 @@ base=$(get_input_key_value "basis_type" "INPUT")
 word_total_time="atomic_world"
 symmetry=$(get_input_key_value "symmetry" "INPUT")
 out_current=$(get_input_key_value "out_current" "INPUT")
+out_efield=$(get_input_key_value "out_efield" "INPUT")
+out_vecpot=$(get_input_key_value "out_vecpot" "INPUT")
 nspin=$(get_input_key_value "nspin" "INPUT")
 test -e $1 && rm $1
 
@@ -329,11 +339,11 @@ if ! test -z "$has_hs"  && [ $has_hs == 1 ]; then
     else
         # ========== Multiple k-points calculation ==========
         if ! test -z "$nspin" && [ $nspin == 2 ]; then
-            # nspin=2 (spin-polarized): compare hks1_2 + hks2_2 Hamiltonian + sk2 overlap matrix
-            h1ref=hks1_2_nao.txt.ref
-            h1cal=OUT.autotest/hks1_2_nao.txt
-            h2ref=hks2_2_nao.txt.ref
-            h2cal=OUT.autotest/hks2_2_nao.txt
+            # nspin=2 (spin-polarized): compare spin-up/spin-down H(k) and S(k) at the second k-point
+            h1ref=hk2s1_nao.txt.ref
+            h1cal=OUT.autotest/hk2s1_nao.txt
+            h2ref=hk2s2_nao.txt.ref
+            h2cal=OUT.autotest/hk2s2_nao.txt
             sref=sk2_nao.txt.ref
             scal=OUT.autotest/sk2_nao.txt
             # Compare Hamiltonian matrix for spin 1
@@ -361,6 +371,21 @@ if ! test -z "$has_hs"  && [ $has_hs == 1 ]; then
             python3 $COMPARE_SCRIPT $sref $scal 8
             echo "CompareS_pass $?" >>$1
         fi
+    fi
+elif ! test -z "$has_hs" && [ $has_hs == 2 ]; then
+    HSK_BINARY_COMPARE="../../integrate/tools/compare_hsk_binary.py"
+    if ! test -z "$gamma_only" && [ $gamma_only == 1 ]; then
+        HSK_TEXT_REFERENCE_DIR="../scf_out_hk"
+        python3 $HSK_BINARY_COMPARE OUT.autotest/hk_nao.dat "$HSK_TEXT_REFERENCE_DIR/hk_nao.txt.ref" real 3
+        echo "CompareH_pass $?" >>$1
+        python3 $HSK_BINARY_COMPARE OUT.autotest/sk_nao.dat "$HSK_TEXT_REFERENCE_DIR/sk_nao.txt.ref" real 3
+        echo "CompareS_pass $?" >>$1
+    else
+        HSK_TEXT_REFERENCE_DIR="../scf_out_hsk"
+        python3 $HSK_BINARY_COMPARE OUT.autotest/hk2_nao.dat "$HSK_TEXT_REFERENCE_DIR/hk2_nao.txt.ref" complex 3
+        echo "CompareH_pass $?" >>$1
+        python3 $HSK_BINARY_COMPARE OUT.autotest/sk2_nao.dat "$HSK_TEXT_REFERENCE_DIR/sk2_nao.txt.ref" complex 3
+        echo "CompareS_pass $?" >>$1
     fi
 fi
 
@@ -426,20 +451,32 @@ if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
         python3 $COMPARE_SCRIPT hrs2_nao.csr.ref OUT.autotest/hrs2_nao.csr 8
         echo "CompareHR2_pass $?" >>$1
     fi
-    python3 $COMPARE_SCRIPT srs1_nao.csr.ref OUT.autotest/srs1_nao.csr 8
+    python3 $COMPARE_SCRIPT sr_nao.csr.ref OUT.autotest/sr_nao.csr 8
+    echo "CompareSR_pass $?" >>$1
+elif ! test -z "$has_hs2" && [ "$has_hs2" == 2 ]; then
+    HSR_BINARY_COMPARE="../../integrate/tools/compare_hsr_binary.py"
+    python3 $HSR_BINARY_COMPARE OUT.autotest/hrs1_nao.dat hrs1_nao.csr.ref real 4
+    echo "CompareHR_pass $?" >>$1
+    if ! test -z "$nspin" && [ "$nspin" -eq 2 ]; then
+        python3 $HSR_BINARY_COMPARE OUT.autotest/hrs2_nao.dat hrs2_nao.csr.ref real 4
+        echo "CompareHR2_pass $?" >>$1
+    fi
+    python3 $HSR_BINARY_COMPARE OUT.autotest/sr_nao.dat sr_nao.csr.ref real 4
     echo "CompareSR_pass $?" >>$1
 fi
 
 #-----------------------------------
 # H(R), S(R), and DM(R) matrices in NPZ format
 #-----------------------------------
-if ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; then
-    test -f OUT.autotest/output_SR.npz
+if { ! test -z "$out_hsr" && [ "$out_hsr" == 3 ]; } || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
+    test -f OUT.autotest/sr_nao.npz
     echo "OutputSRNPZ_pass $?" >>$1
 fi
 
-if { ! test -z "$out_hr_npz" && [ "$out_hr_npz" == 1 ]; } || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
-    test -f OUT.autotest/output_HR0.npz
+if { ! test -z "$out_hr_npz" && [ "$out_hr_npz" == 1 ]; } \
+    || { ! test -z "$out_hsr" && [ "$out_hsr" == 3 ]; } \
+    || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
+    test -f OUT.autotest/hrs1_nao.npz
     echo "OutputHRNPZ_pass $?" >>$1
 fi
 
@@ -507,8 +544,7 @@ fi
 #---------------------------------------
 #echo $out_chg
 if ! test -z "$out_chg"  && [  $out_chg -ge 1 ]; then
-	python3 $COMPARE_SCRIPT chg.cube.ref OUT.autotest/chg.cube 8
-	echo "chg.cube_pass $?" >>$1
+	record_compare_result "$1" "chg.cube_pass" "chg.cube.ref" "OUT.autotest/chg.cube" 6
 fi
 
 
@@ -659,6 +695,14 @@ fi
 # 1. get_wf/get_pchg calculation tag (LCAO)
 # 2. out_wfc_norm/out_wfc_re_im/out_pchg (PW)
 #--------------------------------------------
+shopt -s nullglob
+for pchg_ref in pchgi*.cube.ref; do
+    pchg_cube=${pchg_ref%.ref}
+    pchg_key=$(sanitize_result_key "${pchg_cube}_compare")
+    record_compare_result "$1" "$pchg_key" "$pchg_ref" "OUT.autotest/$pchg_cube" 6
+done
+shopt -u nullglob
+
 need_process_cube=false
 # Check if this is a LCAO calculation with get_wf/get_pchg
 if [ $calculation == "get_wf" ] || [ $calculation == "get_pchg" ]; then
@@ -674,15 +718,70 @@ fi
 # Process .cube files if needed
 if [ "$need_process_cube" = true ]; then
     cubefiles=$(ls OUT.autotest/ | grep -E '.cube$')
-    
+    wavefunction_re_files=()
+
     if [ -z "$cubefiles" ]; then
         echo "Error: No .cube files found in OUT.autotest/"
         exit 1
     else
         for cube in $cubefiles; do
-            total_chg=$($SUM_CUBE_EXE OUT.autotest/$cube)
+            if [[ "$cube" =~ ^wfi[0-9]+s[0-9]+(k[0-9]+)?re[.]cube$ ]]; then
+                wavefunction_re_files+=("$cube")
+                continue
+            fi
+            if [[ "$cube" =~ ^wfi[0-9]+s[0-9]+(k[0-9]+)?im[.]cube$ ]]; then
+                continue
+            fi
+            total_chg=$(python3 "$CUBE_TOOL" integrate "OUT.autotest/$cube")
             echo "$cube $total_chg" >> $1
         done
+    fi
+
+    for cube in "${wavefunction_re_files[@]}"; do
+        if [[ "$cube" =~ ^wfi([0-9]+)s([0-9]+)(k[0-9]+)?re[.]cube$ ]]; then
+            band=${BASH_REMATCH[1]}
+            spin=${BASH_REMATCH[2]}
+            kpoint=${BASH_REMATCH[3]}
+            state_prefix=${cube%re.cube}
+            fingerprint_args=(
+                "OUT.autotest/$cube"
+                "OUT.autotest/${state_prefix}im.cube"
+            )
+            if [ "$nspin" = "4" ]; then
+                if [ "$spin" != "1" ]; then
+                    continue
+                fi
+                lower_prefix="wfi${band}s2${kpoint}"
+                fingerprint_args+=(
+                    "OUT.autotest/${lower_prefix}re.cube"
+                    "OUT.autotest/${lower_prefix}im.cube"
+                )
+                result_prefix="wfi${band}${kpoint}_spinor_wfc_fp"
+            else
+                result_prefix="${state_prefix}_wfc_fp"
+            fi
+
+            if fingerprint=$(python3 "$CUBE_TOOL" fingerprint-wfc "${fingerprint_args[@]}"); then
+                while read -r metric value; do
+                    echo "${result_prefix}_${metric} $value" >> "$1"
+                done <<< "$fingerprint"
+            else
+                echo "Error: Failed to generate wavefunction fingerprint for $state_prefix"
+                exit 1
+            fi
+        fi
+    done
+fi
+
+# Check the pointwise Pauli identities when all PW nspin=4 spinor outputs are available.
+nspin=$(get_input_key_value "nspin" "INPUT")
+if_separate_k=$(get_input_key_value "if_separate_k" "INPUT")
+if [ "$nspin" = "4" ] && { [ "$if_separate_k" = "1" ] || [ "$if_separate_k" = "true" ]; } \
+    && [ -n "$out_wfc_norm" ] && [ -n "$out_wfc_re_im" ] && [ -n "$out_pchg" ]; then
+    if python3 "$CUBE_TOOL" check-spinor OUT.autotest; then
+        echo "pw_spinor_cube_identity 0" >> "$1"
+    else
+        echo "pw_spinor_cube_identity 1" >> "$1"
     fi
 fi
 
@@ -710,14 +809,20 @@ fi
 if ! test -z "$run_rpa" && [ $run_rpa == 1 ]; then
 	Etot_without_rpa=`grep Etot_without_rpa log.txt | awk 'BEGIN{FS=":"} {print $2}' `
 	echo "Etot_without_rpa $Etot_without_rpa" >> $1
+	rpa_outdir=$(get_input_key_value "rpa_outdir" "INPUT")
+	if [ -z "$rpa_outdir" ]; then
+		rpa_outdir="./OUT.librpa"
+	fi
+	rpa_outdir=${rpa_outdir%/}
 	shopt -s nullglob
 	rpa_ref_files=(refcoulomb_*.txt refCs_*.txt refshrink_sinvS_*.txt)
 	if [ ${#rpa_ref_files[@]} -gt 0 ]; then
 		IFS=$'\n' rpa_ref_files=($(printf '%s\n' "${rpa_ref_files[@]}" | LC_ALL=C sort))
 		unset IFS
 		for onref in "${rpa_ref_files[@]}"; do
-			oncal=${onref#ref}
-			compare_key="CompareRPA_$(sanitize_result_key "$oncal")_pass"
+			oncal_name=${onref#ref}
+			oncal="$rpa_outdir/$oncal_name"
+			compare_key="CompareRPA_$(sanitize_result_key "$oncal_name")_pass"
 			record_compare_result "$1" "$compare_key" "$onref" "$oncal" 8 1
 		done
 	fi
@@ -734,12 +839,23 @@ bash ${script_dir}/catch_deepks_properties.sh $1
 # check symmetry 
 #--------------------------------------------
 if ! test -z "$symmetry" && [ $symmetry == 1 ]; then
-	pointgroup=`grep 'POINT GROUP' $running_path | tail -n 2 | head -n 1 | awk '{print $4}'`
-	spacegroup=`grep 'SPACE GROUP' $running_path | tail -n 1 | awk '{print $7}'`
+	# exclude the nspin=4 MAGNETIC POINT/SPACE GROUP lines so they do not interfere
+	# with the crystallographic point-group / space-group detection below
+	pointgroup=`grep 'POINT GROUP =' $running_path | grep -v 'MAGNETIC' | grep -v 'BvK' | awk '{print $4}'`
+	spacegroup=`grep 'SPACE GROUP =' $running_path | grep -v 'MAGNETIC' | grep -v 'BvK' | awk '{print $7}'`
 	nksibz=`grep 'Number of irreducible k-points' $running_path | awk '{print $6}'`
 	echo "pointgroupref $pointgroup" >>$1
 	echo "spacegroupref $spacegroup" >>$1
 	echo "nksibzref $nksibz" >>$1
+	# (nspin=4) magnetic (Shubnikov) group analysis: capture the space-group-consistent
+	# magnetic point group. Only printed when the group is actually reduced (magnetic);
+	# non-magnetic nspin=4 does not print it, so the capture is skipped when empty.
+	if ! test -z "$nspin" && [ $nspin == 4 ]; then
+		magpointgroup=`grep 'MAGNETIC POINT GROUP IN SPACE GROUP' $running_path | awk '{print $NF}'`
+		if ! test -z "$magpointgroup"; then
+			echo "magpointgroupref $magpointgroup" >>$1
+		fi
+	fi
 fi
 
 #--------------------------------------------
@@ -753,16 +869,39 @@ if ! test -z "$out_current" && [ $out_current ]; then
 fi
 
 #--------------------------------------------
+# Check electric fields in rt-TDDFT
+#--------------------------------------------
+if ! test -z "$out_efield" && [ "$out_efield" == 1 ]; then
+	efield_refs=(efield_*.txt.ref)
+	if [ ! -e "${efield_refs[0]}" ]; then
+		echo "CompareEfieldReference_pass 1" >>$1
+	else
+		for efield_ref in "${efield_refs[@]}"; do
+			efield_name=${efield_ref%.ref}
+			efield_key=$(sanitize_result_key "$efield_name")
+			record_compare_result "$1" "Compare${efield_key}_pass" "$efield_ref" "OUT.autotest/$efield_name" 8
+		done
+	fi
+fi
+
+#--------------------------------------------
+# Check vector potential in rt-TDDFT
+#--------------------------------------------
+if ! test -z "$out_vecpot" && [ "$out_vecpot" == 1 ]; then
+	record_compare_result "$1" "CompareVectorPot_pass" "vector_pot.txt.ref" "OUT.autotest/vector_pot.txt" 8
+fi
+
+#--------------------------------------------
 # Linear response function 
 #--------------------------------------------
 if [ $is_lr == 1 ]; then
-	lrns=$(get_input_key_value "lr_nstates" "INPUT")
-	lrns1=`echo "$lrns + 1" |bc`
-	grep -A$lrns1 "Excitation Energy" $running_path | awk 'NR > 2 && $2 ~ /^[0-9]+\.[0-9]+$/ {print $2}' > lr_eig.txt
-	lreig_tot=`sum_file lr_eig.txt`
-	echo "totexcitationenergyref $lreig_tot" >>$1
+	shopt -s nullglob
+	lr_files=(OUT.autotest/trans_analysis_*_tda.dat)
+	if [ ${#lr_files[@]} -gt 0 ]; then
+		cat "${lr_files[@]}" | awk '/Excitation Energy/{p=1; next} p && /^[[:space:]]*[0-9]+[[:space:]]/{printf "excitationenergyref%d %.6f\n", ++n, $2} /Occupied orbital/{p=0}' >>$1
+	fi
+	shopt -u nullglob
 fi
-
 #--------------------------------------------
 # Check RDMFT method 
 #--------------------------------------------

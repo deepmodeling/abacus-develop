@@ -20,7 +20,7 @@ basis_type           lcao
 smearing_method      gauss
 smearing_sigma       0.002
 
-out_mat_hs           1
+out_hsk              1
 
 #Parameters (5.Mixing)
 mixing_type          broyden
@@ -33,5 +33,4 @@ ks_solver            genelpa
 ### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
 ###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
 ###     converged with respect to the energy cutoff.
-
 

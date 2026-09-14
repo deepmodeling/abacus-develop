@@ -5,8 +5,6 @@
 include_guard(GLOBAL)
 
 function(abacus_setup_cublasmp)
-  abacus_add_feature_definitions(__CUBLASMP)
-
   # 1. Search for cuBLASMp library and header files
   # libcublasmp.so
   find_library(CUBLASMP_LIBRARY NAMES cublasmp

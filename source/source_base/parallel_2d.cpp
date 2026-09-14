@@ -6,9 +6,21 @@
 #include <cassert>
 #include <numeric>
 
-bool Parallel_2D::in_this_processor(const int iw1_all, const int iw2_all) const
+bool Parallel_2D::in_this_processor(const std::size_t iw1_all, const std::size_t iw2_all) const
 {
     return global2local_row(iw1_all) != -1 && global2local_col(iw2_all) != -1;
+}
+
+int Parallel_2D::owner_processor(const std::size_t iw1_all, const std::size_t iw2_all) const
+{
+    assert(iw1_all < get_global_row_size() && iw2_all < get_global_col_size());
+    if (is_serial)
+    {
+        return 0;
+    }
+    int proc_row = (iw1_all / nb) % dim0;
+    int proc_col = (iw2_all / nb) % dim1;
+    return proc_row * dim1 + proc_col;
 }
 
 int Parallel_2D::get_global_row_size() const

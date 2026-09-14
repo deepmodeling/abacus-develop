@@ -9,7 +9,7 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 
 #ifdef __EXX
-#include "source_lcao/module_ri/RI_2D_Comm.h"
+#include "source_lcao/module_ri/ri_2d_comm.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #endif
 #include "source_lcao/module_operator_lcao/ekinetic.h"
@@ -232,7 +232,7 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
     }
 
 #ifdef __EXX
-    if(GlobalC::exx_info.info_global.cal_exx)
+    if(this->exx_info_->info_global.cal_exx)
     {
         HR_exx_XC->set_zero();
 
@@ -247,7 +247,7 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
         for(int ik=0; ik<DM_XC.size(); ++ik) { DM_XC_pointer[ik] = &DM_XC[ik];
 }
 
-        if (GlobalC::exx_info.info_ri.real_number)
+        if (this->exx_info_->info_ri.real_number)
         {
             // transfer the DM_XC to appropriate format
             std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<double>>>> 
@@ -256,7 +256,7 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
                 : RI_2D_Comm::split_m2D_ktoR<double>(ucell,*kv, DM_XC_pointer, *ParaV, nspin, this->exx_spacegroup_symmetry);
 
             // provide the Ds_XC to Vxc_fromRI(V_exx_XC)
-            if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_ri.exx_symmetry_realspace)
+            if (this->exx_spacegroup_symmetry && this->exx_info_->info_ri.exx_symmetry_realspace)
             {
                 Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, ucell,*ParaV, &this->symrot_exx);
             }
@@ -273,6 +273,7 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
                 *kv,
                 &Vxc_fromRI_d->Hexxs,
                 nullptr,
+                this->exx_info_,
                 hamilt::Add_Hexx_Type::k
             );
         }
@@ -285,7 +286,7 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
                 : RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(ucell,*kv, DM_XC_pointer, *ParaV, nspin, this->exx_spacegroup_symmetry);
 
             // // provide the Ds_XC to Vxc_fromRI(V_exx_XC)
-            if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_ri.exx_symmetry_realspace)
+            if (this->exx_spacegroup_symmetry && this->exx_info_->info_ri.exx_symmetry_realspace)
             {
                 Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, ucell,*ParaV, &this->symrot_exx);
             }
@@ -302,6 +303,7 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
                 *kv,
                 nullptr,
                 &Vxc_fromRI_c->Hexxs,
+                this->exx_info_,
                 hamilt::Add_Hexx_Type::k
             );
         }

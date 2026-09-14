@@ -1,9 +1,9 @@
 #include "write_dmr.h"
 
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_lcao/module_hcontainer/output_hcontainer.h"
-#include "source_io/module_output/ucell_io.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/output_hcontainer.h"
+#include "source_cell/ucell_io.h"
 
 namespace ModuleIO
 {
@@ -95,7 +95,6 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
         // gather the parallel matrix to serial matrix
 #ifdef __MPI
         Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
         serialV.set_serial(nbasis, nbasis);
         serialV.set_atomic_trace(iat2iwt, nat, nbasis);
         hamilt::HContainer<double> dm_serial(&serialV);

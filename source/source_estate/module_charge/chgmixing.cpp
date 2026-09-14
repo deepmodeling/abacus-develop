@@ -1,6 +1,7 @@
 #include "source_estate/module_charge/chgmixing.h"
+
+#include "source_base/parallel_comm.h"
 #include "source_estate/update_pot.h"
-#include "source_lcao/module_dftu/dftu.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 
 void module_charge::chgmixing_ks(const int iter, // scf iteration number
@@ -119,7 +120,7 @@ void module_charge::chgmixing_ks(const int iter, // scf iteration number
 
 void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
         Charge_Mixing* p_chgmix, // charge mixing class
-        Plus_U &dftu, // mohan add 2025-11-06
+        Plus_U_Base& dftu,
 		const Input_para& inp) // input parameters
 {
     ModuleBase::TITLE("module_charge", "chgmixing_ks_pw");
@@ -128,12 +129,10 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
     {
         p_chgmix->init_mixing();
         p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
-        if (inp.dft_plus_u && inp.mixing_dftu)
+        if (inp.dft_plus_u && dftu.has_occ_mixer())
         {
-            // enable mixing_dftu for DFT+U occupation mixing
-            dftu.enable_mixing();
-            // allocate memory for uom_mdata
-            p_chgmix->allocate_mixing_uom(dftu.get_size_eff_pot_pw());
+            // allocate memory for uom_mdata sized to the flat occupation buffer
+            p_chgmix->allocate_mixing_uom(dftu.occ_mixer().flat_size());
         }
     }
 
@@ -145,11 +144,11 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
 
         if (inp.dft_plus_u)
         {
-            if (dftu.uramping > 0.01 && !dftu.u_converged())
+            if (dftu.get_uramping() > 0.01 && !dftu.u_converged())
             {
                 p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
             }
-            if (dftu.uramping > 0.01)
+            if (dftu.get_uramping() > 0.01)
             {
                 bool do_uramping = true;
                 if (inp.sc_mag_switch)
@@ -167,7 +166,7 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
 					std::cout << " U-Ramping! Current U = ";
 					for (int i = 0; i < dftu.get_num_u_types(); i++)
 					{
-						std::cout << dftu.get_hubbard_u(i) * ModuleBase::Ry_to_eV << " ";
+						std::cout << dftu.get_u_current(i) * ModuleBase::Ry_to_eV << " ";
 					}
 					std::cout << " eV " << std::endl;
 				}
@@ -180,7 +179,7 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
 
 void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
         Charge_Mixing* p_chgmix, // charge mixing class
-        Plus_U &dftu, // mohan add 2025-11-06
+        Plus_U_Base& dftu,
         const int nnr, // dimension of density matrix
 		const Input_para& inp) // input parameters
 {
@@ -191,18 +190,13 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
         p_chgmix->mix_reset(); // init mixing
         p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
         p_chgmix->mixing_restart_count = 0;
-        // enable mixing_dftu for DFT+U occupation mixing
-        if (inp.dft_plus_u && inp.mixing_dftu)
-        {
-            dftu.enable_mixing();
-        }
         // this output will be removed once the feeature is stable
-        if (dftu.uramping > 0.01)
+        if (dftu.get_uramping() > 0.01)
         {
             std::cout << " U-Ramping! Current U = ";
             for (int i = 0; i < dftu.get_num_u_types(); i++)
             {
-                std::cout << dftu.get_hubbard_u(i) * ModuleBase::Ry_to_eV << " ";
+                std::cout << dftu.get_u_current(i) * ModuleBase::Ry_to_eV << " ";
             }
             std::cout << " eV " << std::endl;
         }
@@ -216,16 +210,16 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
         if (inp.dft_plus_u)
         {
             dftu.uramping_update(); // update U by uramping if uramping > 0.01
-            if (dftu.uramping > 0.01)
+            if (dftu.get_uramping() > 0.01)
             {
                 std::cout << " U-Ramping! Current U = ";
                 for (int i = 0; i < dftu.get_num_u_types(); i++)
                 {
-                    std::cout << dftu.get_hubbard_u(i) * ModuleBase::Ry_to_eV << " ";
+                    std::cout << dftu.get_u_current(i) * ModuleBase::Ry_to_eV << " ";
                 }
                 std::cout << " eV " << std::endl;
             }
-            if (dftu.uramping > 0.01 && !dftu.u_converged())
+            if (dftu.get_uramping() > 0.01 && !dftu.u_converged())
             {
                 p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
             }

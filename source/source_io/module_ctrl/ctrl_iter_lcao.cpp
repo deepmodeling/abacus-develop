@@ -1,13 +1,14 @@
 #include "ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 
 #include "source_base/global_variable.h" // use GlobalC
+#include "source_hamilt/module_xc/exx_info.h"
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
-#include "source_lcao/module_deepks/LCAO_deepks_interface.h"
+#include "source_lcao/module_deepks/lcao_deepks.h"
+#include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #endif
 #include "source_io/module_restart/restart.h"
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#include "source_lcao/module_ri/exx_lri_interface.h"
 #endif
 
 namespace ModuleIO
@@ -28,6 +29,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 		LCAO_Orbitals &orb, // orbital info *
         Setup_DeePKS<TK> &deepks,
         Exx_NAO<TK> &exx_nao,
+        const Exx_Info& exx_info,
         int &iter,
         const int istep,
         bool &conv_esolver,
@@ -47,8 +49,8 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
     }
 
 #ifdef __EXX
-    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-    bool real_number = GlobalC::exx_info.info_ri.real_number;
+    bool cal_exx = exx_info.info_global.cal_exx;
+    bool real_number = exx_info.info_ri.real_number;
 
     if (inp.calculation != "nscf")
     {
@@ -98,6 +100,7 @@ template void ctrl_iter_lcao<double, double>(UnitCell& ucell, // unit cell *
 		LCAO_Orbitals &orb, // orbital info *
         Setup_DeePKS<double> &deepks,
         Exx_NAO<double> &exx_nao,
+        const Exx_Info& exx_info,
         int &iter,
         const int istep,
         bool &conv_esolver,
@@ -118,6 +121,7 @@ template void ctrl_iter_lcao<std::complex<double>, double>(UnitCell& ucell, // u
 		LCAO_Orbitals &orb, // orbital info *
         Setup_DeePKS<std::complex<double>> &deepks,
         Exx_NAO<std::complex<double>> &exx_nao,
+        const Exx_Info& exx_info,
         int &iter,
         const int istep,
         bool &conv_esolver,
@@ -138,6 +142,7 @@ template void ctrl_iter_lcao<std::complex<double>, std::complex<double>>(UnitCel
 		LCAO_Orbitals &orb, // orbital info *
         Setup_DeePKS<std::complex<double>> &deepks,
         Exx_NAO<std::complex<double>> &exx_nao,
+        const Exx_Info& exx_info,
         int &iter,
         const int istep,
         bool &conv_esolver,

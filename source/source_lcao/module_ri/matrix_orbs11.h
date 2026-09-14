@@ -1,0 +1,83 @@
+//=======================
+// AUTHOR : Peize Lin
+// DATE :   2022-08-17
+//=======================
+
+#ifndef MATRIX_ORB11_H
+#define MATRIX_ORB11_H
+
+#include "source_base/element_basis_index.h"
+#include "source_base/sph_bessel_recursive.h"
+#include "source_base/vector3.h"
+#include "source_basis/module_ao/orb_gaunt_table.h"
+#include "source_basis/module_ao/orb_read.h"
+#include "source_lcao/center2orb_orb11.h"
+#include "source_cell/unitcell.h"
+#include <RI/global/Tensor.h>
+#include <map>
+#include <set>
+#include <vector>
+
+class Matrix_Orbs11
+{
+  public:
+    void init(
+        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A,
+        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B,
+        const UnitCell& ucell,
+        const LCAO_Orbitals& orb,
+        const double kmesh_times);       // extend Kcut, keep dK
+
+    void init_radial_table();
+    void init_radial_table(const std::map<size_t, std::map<size_t, std::set<double>>>& Rs); // unit: ucell.lat0
+
+    enum class Matrix_Order
+    {
+        AB,
+        BA
+    };
+
+    template <typename Tdata>
+    RI::Tensor<Tdata> cal_overlap_matrix(const size_t TA,
+                                         const size_t TB,
+                                         const ModuleBase::Vector3<double>& tauA, // unit: ucell.lat0
+                                         const ModuleBase::Vector3<double>& tauB, // unit: ucell.lat0
+                                         const ModuleBase::Element_Basis_Index::IndexLNM& index_A,
+                                         const ModuleBase::Element_Basis_Index::IndexLNM& index_B,
+                                         const Matrix_Order& matrix_order) const;
+    template <typename Tdata>
+    std::array<RI::Tensor<Tdata>, 3> cal_grad_overlap_matrix(
+        const size_t TA,
+        const size_t TB,
+        const ModuleBase::Vector3<double>& tauA, // unit: ucell.lat0
+        const ModuleBase::Vector3<double>& tauB, // unit: ucell.lat0
+        const ModuleBase::Element_Basis_Index::IndexLNM& index_A,
+        const ModuleBase::Element_Basis_Index::IndexLNM& index_B,
+        const Matrix_Order& matrix_order) const;
+
+    template <typename Tdata>
+    std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, RI::Tensor<Tdata>>>>> cal_overlap_matrix_all(
+        const UnitCell &ucell,
+        const ModuleBase::Element_Basis_Index::IndexLNM& index_r,
+        const ModuleBase::Element_Basis_Index::IndexLNM& index_c) const;
+
+    std::shared_ptr<ORB_gaunt_table> MGT;
+
+  private:
+    ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
+    const double lcao_dr_ = 0.01;
+    double* lat0=nullptr;                                         // restore ucell.lat0
+    std::map<size_t,                                              // TA
+             std::map<size_t,                                     // TB
+                      std::map<int,                               // LA
+                               std::map<size_t,                   // NA
+                                        std::map<int,             // LB
+                                                 std::map<size_t, // NB
+                                                          Center2_Orb::Orb11>>>>>>
+        center2_orb11_s;
+    // this->center2_orb11_s[TA][TB][LA][NA][LB][NB]
+};
+
+#include "matrix_orbs11.hpp"
+
+#endif

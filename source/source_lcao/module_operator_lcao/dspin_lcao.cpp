@@ -1,10 +1,12 @@
 #include "dspin_lcao.h"
-#include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_base/timer.h"
+
 #include "source_base/memory_recorder.h"
-#include "source_base/tool_title.h"
 #include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_deltaspin/mi_tools.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
 
 template <typename TK, typename TR>
 hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::DeltaSpin(HS_Matrix_K<TK>* hsk_in,
@@ -56,11 +58,13 @@ inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vec
     coefficients[1] = -current_lambda[0];
 }
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<std::complex<double>>& coefficients)
-{// {\lambda^{I,3}, \lambda^{I,1}+i\lambda^{I,2}, \lambda^{I,1}-i\lambda^{I,2}, -\lambda^{I,3}}
-    coefficients[0] = std::complex<double>(current_lambda[2], 0.0);
-    coefficients[1] = std::complex<double>(current_lambda[0] , current_lambda[1]);
-    coefficients[2] = std::complex<double>(current_lambda[0] , -1 * current_lambda[1]);
-    coefficients[3] = std::complex<double>(-1 * current_lambda[2], 0.0);
+{
+    const ModuleBase::Vector3<double> lambda(current_lambda[0], current_lambda[1], current_lambda[2]);
+    const auto spinor = spinconstrain::pauli_vector_to_spinor(lambda);
+    for (int is = 0; is < 4; ++is)
+    {
+        coefficients[is] = spinor[is];
+    }
 }
 
 template <typename TK, typename TR>
@@ -627,8 +631,6 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
                &zero_c, PI_sub[iat].data(), &nbands_global);
     }
 }
-
-#include "dspin_force_stress.hpp"
 
 template class hamilt::DeltaSpin<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>;

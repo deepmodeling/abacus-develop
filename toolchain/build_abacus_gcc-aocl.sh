@@ -22,7 +22,6 @@ BUILD_DIR=build_abacus_gcc_aocl
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-ELPA=${ELPA_ROOT}
 LAPACK=$AOCLhome/lib
 SCALAPACK=$AOCLhome/lib
 FFTW3=$AOCLhome
@@ -64,11 +63,10 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DLAPACK_DIR=$LAPACK \
         -DSCALAPACK_DIR=$SCALAPACK \
         -DFFTW3_DIR=$FFTW3 \
-        -DELPA_DIR=$ELPA \
         -DENABLE_LCAO=ON \
         -DENABLE_LIBXC=ON \
-        -DUSE_OPENMP=ON \
-        -DUSE_ELPA=ON \
+        -DENABLE_OPENMP=ON \
+        -DENABLE_ELPA=ON \
         -DENABLE_RAPIDJSON=ON \
         -DENABLE_LIBRI=ON \
         -DLIBRI_DIR=$LIBRI \

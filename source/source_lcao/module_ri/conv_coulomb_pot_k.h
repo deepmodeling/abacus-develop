@@ -1,28 +1,26 @@
 #ifndef CONV_COULOMB_POT_K_H
 #define CONV_COULOMB_POT_K_H
 
-#include <vector>
-#include <map>
-#include <string>
+#include "source_hamilt/module_xc/coulomb_config.h"
+
+#include <type_traits>
 
 namespace Conv_Coulomb_Pot_K
 {
-	enum class Coulomb_Type{Fock, Erfc};
-	enum class Ccp_Type{		//	parameter:
-		Ccp,					//
-		Hf,						//		"hf_Rcut"
-		Erfc,					//		"hse_omega"
-		Erf};					//		"hse_omega", "hf_Rcut"
-	enum class Coulomb_Method{Center2, Ewald}; // Different methods for constructing the Coulomb matrix.
+	// Constrains the scalar cal_orbs_ccp/cal_orbs_ccp_spencer overloads below:
+	// icpc cannot order them against the recursive std::vector overloads and
+	// reports an ambiguity, so the scalar overload is disabled for vectors.
+	template<typename T> struct is_std_vector : std::false_type {};
+	template<typename T, typename Alloc> struct is_std_vector<std::vector<T, Alloc>> : std::true_type {};
 
-	template<typename T> extern T cal_orbs_ccp(
+	template<typename T> extern typename std::enable_if<!is_std_vector<T>::value, T>::type cal_orbs_ccp(
 		const T &orbs,
-		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
+		const CoulombParam &coulomb_param,
 		const double rmesh_times);
 
-	template<typename T> extern T cal_orbs_ccp_spencer(
+	template<typename T> extern typename std::enable_if<!is_std_vector<T>::value, T>::type cal_orbs_ccp_spencer(
 		const T &orbs,
-		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
+		const CoulombParam &coulomb_param,
 		const double rmesh_times);
 
   //private:
@@ -47,8 +45,6 @@ namespace Conv_Coulomb_Pot_K
 		const double erfc_omega,
 		const double rcut);
 }
-
-using CoulombParam = std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>;
 
 #include "conv_coulomb_pot_k.hpp"
 

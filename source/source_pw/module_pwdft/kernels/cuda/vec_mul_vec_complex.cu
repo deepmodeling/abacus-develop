@@ -1,4 +1,4 @@
-#include "source_pw/module_pwdft/kernels/vec_mul_vec_complex_op.h"
+#include "source_pw/module_pwdft/kernels/vec_mul_cx_op.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi.h"
 

@@ -1,12 +1,12 @@
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 
 #include "libxc_abacus.h"
-#include "source_io/module_parameter/parameter.h"
+#include "xc_functional.h"
 #include "source_base/tool_quit.h"
 #include "source_base/formatter.h"
 
 #ifdef __EXX
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info type
 #endif
 
 #include <xc.h>
@@ -14,25 +14,13 @@
 #include <regex>
 #include <map>
 #include <algorithm>
-#include <cassert>
 
 bool not_supported_xc_with_laplacian(const std::string& xc_func_in)
 {
-    // see Pyscf: https://github.com/pyscf/pyscf/blob/master/pyscf/dft/libxc.py#L1062
-    // ABACUS issue: https://github.com/deepmodeling/abacus-develop/issues/5372
-    const std::vector<std::string> not_supported = {
-        "MGGA_XC_CC06",
-        "MGGA_C_CS",
-        "MGGA_X_BR89",
-        "MGGA_X_MK00"
-    };
-    for (const std::string& s : not_supported)
-    {
-        if (xc_func_in.find(s) != std::string::npos)
-        {
-            return true;
-        }
-    }
+    // Laplacian of density is now supported for meta-GGA functionals.
+    // The following functionals were previously blocked but are now supported:
+    //   MGGA_XC_CC06, MGGA_C_CS, MGGA_X_BR89, MGGA_X_MK00
+    // Ensure PW stress path handles vlapl contribution correctly if using PW basis.
     return false;
 }
 
@@ -180,6 +168,23 @@ XC_Functional_Libxc::set_xc_type_libxc(const std::string& xc_func_in)
         ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc", message);
     }
 
+    // warn if any functional needs Laplacian of density
+    {
+        std::vector<xc_func_type> tmp_funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, 0.0, 0.0);
+        for (auto& f : tmp_funcs)
+        {
+            if (f.info->flags & XC_FLAGS_NEEDS_LAPLACIAN)
+            {
+                std::cout << " WARNING: XC functional \"" << f.info->name
+                          << "\" requires Laplacian of density (nabla^2 rho)."
+                          << " This may require a higher energy cutoff for numerical stability."
+                          << std::endl;
+                break;
+            }
+        }
+        XC_Functional_Libxc::finish_func(tmp_funcs);
+    }
+
     // return
     return std::make_pair(func_type, func_id);
 }
@@ -192,15 +197,15 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
     {
         // finite temperature XC functionals
         case XC_LDA_XC_KSDT:
-            return {PARAM.inp.xc_temperature * 0.5};
+            return {XC_Functional::get_runtime_parameters().xc_temperature * 0.5};
         case XC_LDA_XC_CORRKSDT:
-            return {PARAM.inp.xc_temperature * 0.5};
+            return {XC_Functional::get_runtime_parameters().xc_temperature * 0.5};
         case XC_LDA_XC_GDSMFB:
-            return {PARAM.inp.xc_temperature * 0.5};
+            return {XC_Functional::get_runtime_parameters().xc_temperature * 0.5};
 #ifdef __EXX
         // hybrid functionals
         case XC_HYB_GGA_XC_PBEH:
-            return {hybrid_alpha, hse_omega, hse_omega};
+            return {hybrid_alpha};
         case XC_HYB_GGA_XC_HSE06:
             return {hybrid_alpha, hse_omega, hse_omega};
         // short-range of B88_X
@@ -223,8 +228,8 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
             // This is a range-separated hybrid functional with range-separation constant  0.400,
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
-            return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
-                std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -1.0
+            return { std::stod(XC_Functional::get_runtime_parameters().exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
+                std::stod(XC_Functional::get_runtime_parameters().exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -1.0
                 hse_omega }; //Range separation constant: 0.4
         }
         case XC_HYB_GGA_XC_LRC_WPBE:  // Long-range corrected PBE (LRC-wPBE) by by Rohrdanz, Martins and Herbert
@@ -232,8 +237,8 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
             // This is a range-separated hybrid functional with range-separation constant  0.300,
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
-            return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
-                std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -1.0
+            return { std::stod(XC_Functional::get_runtime_parameters().exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
+                std::stod(XC_Functional::get_runtime_parameters().exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -1.0
                 hse_omega }; //Range separation constant: 0.3
         }
         case XC_HYB_GGA_XC_LRC_WPBEH:  // Long-range corrected short-range hybrid PBE (LRC-wPBEh) by Rohrdanz, Martins and Herbert
@@ -241,8 +246,8 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
             // This is a range-separated hybrid functional with range-separation constant  0.200,
             // and 20.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.    
-            return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
-                std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -0.8
+            return { std::stod(XC_Functional::get_runtime_parameters().exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
+                std::stod(XC_Functional::get_runtime_parameters().exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -0.8
                 hse_omega }; //Range separation constant: 0.2
         }
         case XC_HYB_GGA_XC_CAM_PBEH:  // CAM hybrid screened exchange PBE version
@@ -250,8 +255,8 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
             // This is a range-separated hybrid functional with range-separation constant  0.700,
             // and 100.0% short-range and 20.0% long-range exact exchange,
             // using the error function kernel.
-            return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 0.2
-                std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: 0.8
+            return { std::stod(XC_Functional::get_runtime_parameters().exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 0.2
+                std::stod(XC_Functional::get_runtime_parameters().exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: 0.8
                 hse_omega }; //Range separation constant: 0.7
         }
 #endif
@@ -262,20 +267,19 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
 
 const std::vector<double> external_xc_func_ext_params(const int id)
 {
-    const std::map<int, std::vector<double>> mymap = {
-        {
-            PARAM.inp.xc_exch_ext[0],
-            std::vector<double>(PARAM.inp.xc_exch_ext.begin()+1,
-                                PARAM.inp.xc_exch_ext.end())
-        },
-        {
-            PARAM.inp.xc_corr_ext[0],
-            std::vector<double>(PARAM.inp.xc_corr_ext.begin()+1,
-                                PARAM.inp.xc_corr_ext.end())
-        }
-     };
-    auto it = mymap.find(id);
-    return (it != mymap.end()) ? it->second : std::vector<double>{};
+    const auto& exch_ext = XC_Functional::get_runtime_parameters().xc_exch_ext;
+    if (!exch_ext.empty() && static_cast<int>(exch_ext.front()) == id)
+    {
+        return {exch_ext.begin() + 1, exch_ext.end()};
+    }
+
+    const auto& corr_ext = XC_Functional::get_runtime_parameters().xc_corr_ext;
+    if (!corr_ext.empty() && static_cast<int>(corr_ext.front()) == id)
+    {
+        return {corr_ext.begin() + 1, corr_ext.end()};
+    }
+
+    return {};
 }
 
 std::vector<xc_func_type> 
@@ -290,33 +294,32 @@ XC_Functional_Libxc::init_func(const std::vector<int> &func_id,
         funcs.push_back({}); // create placeholder
         xc_func_init(&funcs.back(), id, xc_polarized); // instantiate the XC term
 
-        // search for external parameters
-        const std::vector<double> in_built_ext_params = in_built_xc_func_ext_params(id, hybrid_alpha, hse_omega);
-        const std::vector<double> external_ext_params = external_xc_func_ext_params(id);
-        // for temporary use, I name their size as n1 and n2
-        const int n1 = in_built_ext_params.size();
-        const int n2 = external_ext_params.size();
+        // Search for external parameters. User-supplied parameters take precedence
+        // over ABACUS built-in overrides.
+        const std::vector<double> in_built_ext_params
+            = in_built_xc_func_ext_params(id, hybrid_alpha, hse_omega);
+        const std::vector<double> external_ext_params
+            = external_xc_func_ext_params(id);
+        const std::vector<double>& requested_ext_params
+            = external_ext_params.empty() ? in_built_ext_params : external_ext_params;
 
-// #ifdef __DEBUG // will the following assertion cause performance issue?
-        // assert the number of parameters should be either zero or the value from
-        // libxc function xc_func_info_get_n_ext_params, this is to avoid the undefined
-        // behavior of illegal memory access
-        const xc_func_info_type* info = xc_func_get_info(&funcs.back());
-        const int nref = xc_func_info_get_n_ext_params(info);
-        assert ((n1 == 0) || (n1 == nref) || (n2 == 0) || (n2 == nref));
-// #endif
-
-        // external overwrites in-built if the same functional id is found in both maps
-        const double* xc_func_ext_params = 
-            (n2 > 0) ? external_ext_params.data() : 
-            (n1 > 0) ? in_built_ext_params.data() :
-            nullptr; // nullptr if no external parameters are found
-
-        // if there are no external parameters, do nothing, otherwise we set
-        if(xc_func_ext_params != nullptr)
+        if (!requested_ext_params.empty())
         {
-            // set the external parameters
-            xc_func_set_ext_params(&funcs.back(), const_cast<double*>(xc_func_ext_params));
+            const xc_func_info_type* info = xc_func_get_info(&funcs.back());
+            const int nref = xc_func_info_get_n_ext_params(info);
+
+            // xc_func_set_ext_params() reads exactly nref entries
+            if (requested_ext_params.size() != static_cast<std::size_t>(nref))
+            {
+                ModuleBase::WARNING_QUIT(
+                    "XC_Functional_Libxc::init_func",
+                    "Invalid number of external parameters for Libxc functional id "
+                        + std::to_string(id) + ": got "
+                        + std::to_string(requested_ext_params.size())
+                        + ", expected " + std::to_string(nref) + ".");
+            }
+
+            xc_func_set_ext_params(&funcs.back(), requested_ext_params.data());
         }
     }
     return funcs;

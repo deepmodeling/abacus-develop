@@ -1,5 +1,6 @@
 #include "potential_new.h"
 
+#include "pot_ml_exx.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/memory_recorder.h"
@@ -8,7 +9,6 @@
 #include "source_base/tool_title.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
-#include "pot_ml_exx.h"
 
 #include <map>
 
@@ -24,9 +24,8 @@ Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                      double* etxc_in,
                      double* vtxc_in,
                      VSep* vsep_cell_in)
-    : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), 
-      solvent_(solvent_in), vsep_cell(vsep_cell_in), etxc_(etxc_in),
-      vtxc_(vtxc_in)
+    : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), solvent_(solvent_in), vsep_cell(vsep_cell_in),
+      etxc_(etxc_in), vtxc_(vtxc_in)
 {
     this->rho_basis_ = rho_basis_in;
     this->rho_basis_smooth_ = rho_basis_smooth_in;
@@ -96,19 +95,19 @@ void Potential::allocate()
     ModuleBase::TITLE("Potential", "allocate");
 
     const int nspin = PARAM.inp.nspin;
-    assert(nspin==1 || nspin==2 || nspin==4);
+    assert(nspin == 1 || nspin == 2 || nspin == 4);
 
     const int nrxx = this->rho_basis_->nrxx;
     const int nrxx_smooth = this->rho_basis_smooth_->nrxx;
 
     if (nrxx == 0)
-	{
-		return;
-	}
-	if (nrxx_smooth == 0)
-	{
-		return;
-	}
+    {
+        return;
+    }
+    if (nrxx_smooth == 0)
+    {
+        return;
+    }
 
     this->v_eff_fixed.resize(nrxx);
     ModuleBase::Memory::record("Pot::veff_fix", sizeof(double) * nrxx);
@@ -156,10 +155,9 @@ void Potential::allocate()
     }
 }
 
-void Potential::update_from_charge(const Charge*const chg, const UnitCell*const ucell)
+void Potential::update_from_charge(const Charge* const chg, const UnitCell* const ucell)
 {
     ModuleBase::TITLE("Potential", "update_from_charge");
-    //ModuleBase::timer::start("Potential", "update_from_charge");
 
     if (!this->fixed_done)
     {
@@ -194,8 +192,6 @@ void Potential::update_from_charge(const Charge*const chg, const UnitCell*const 
         }
         // There's no need to synchronize memory for double precision pointers while in a CPU environment
     }
-
-    //ModuleBase::timer::end("Potential", "update_from_charge");
 }
 
 void Potential::cal_fixed_v(double* vl_pseudo)
@@ -215,7 +211,7 @@ void Potential::cal_fixed_v(double* vl_pseudo)
     ModuleBase::timer::end("Potential", "cal_fixed_v");
 }
 
-void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff)
+void Potential::cal_v_eff(const Charge* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff)
 {
     ModuleBase::TITLE("Potential", "cal_veff");
     ModuleBase::timer::start("Potential", "cal_veff");
@@ -248,7 +244,7 @@ void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Mo
     ModuleBase::timer::end("Potential", "cal_veff");
 }
 
-void Potential::init_pot(const Charge*const chg)
+void Potential::init_pot(const Charge* const chg)
 {
     ModuleBase::TITLE("Potential", "init_pot");
     ModuleBase::timer::start("Potential", "init_pot");
@@ -284,9 +280,9 @@ void Potential::interpolate_vrs(void)
     ModuleBase::timer::start("Potential", "interpolate_vrs");
 
     const int nspin = PARAM.inp.nspin;
-    assert(nspin==1 || nspin==2 || nspin==4);
+    assert(nspin == 1 || nspin == 2 || nspin == 4);
 
-    if (PARAM.globalv.double_grid)
+    if (rho_basis_ != rho_basis_smooth_)
     {
         if (rho_basis_->gamma_only != rho_basis_smooth_->gamma_only)
         {

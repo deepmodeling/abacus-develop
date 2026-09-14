@@ -20,7 +20,7 @@
 #include "source_estate/elecstate.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/hamilt_lcao.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
 #include <complex>

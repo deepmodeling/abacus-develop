@@ -5,8 +5,8 @@
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_hamilt/hamilt.h"
-#include "source_lcao/hs_matrix_k.hpp"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/hs_matrix_k.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 
 #include <memory>
 #include <vector>
@@ -22,13 +22,18 @@ namespace elecstate { template <typename TK, typename TR> class DensityMatrix; }
 // Setup_DeePKS forward declaration, full definition in setup_deepks.h (moved to .cpp)
 // mohan add 20260605
 template <typename TK> class Setup_DeePKS;
-// Plus_U forward declaration, full definition in module_dftu/dftu.h (moved to .cpp)
-// mohan add 20260605
-class Plus_U;
+// Plus_U_Base forward declaration, full definition in source_pw/module_pwdft/dftu_base.h
+class Plus_U_Base;
 
 // Exx_NAO forward declaration, full definition in setup_exx.h (moved to .cpp)
 // mohan add 20260605
-template <typename TK> class Exx_NAO; 
+template <typename TK> class Exx_NAO;
+
+/// Exx_Info forward declaration, full definition in exx_info.h
+struct Exx_Info;
+
+// Input_para forward declaration, full definition in input_parameter.h
+struct Input_para;
 
 namespace hamilt
 {
@@ -58,10 +63,12 @@ class HamiltLCAO : public Hamilt<TK>
                const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
                elecstate::DensityMatrix<TK, double>* DM_in,
-               Plus_U* p_dftu, // mohan add 2025-11-05
+               Plus_U_Base* p_dftu, // mohan add 2025-11-05
                Setup_DeePKS<TK> &deepks,
-               const int istep, 
-               Exx_NAO<TK> &exx_nao);
+               const int istep,
+               Exx_NAO<TK> &exx_nao,
+               const Exx_Info& exx_info,
+               const Input_para& inp);
 
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer

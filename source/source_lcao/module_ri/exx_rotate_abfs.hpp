@@ -2,7 +2,7 @@
 #define EXX_ROTATE_ABFS_HPP
 #include "source_base/constants.h"
 #include "source_base/math_integral.h"
-#include "source_basis/module_ao/element_basis_index-ORB.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "exx_rotate_abfs.h"
 
 #include <cmath> // For std::erfc function used in smooth truncation
@@ -192,7 +192,7 @@ void Moment_abfs<Tdata>::cal_VR(
 {
     ModuleBase::TITLE("Rotate_abfs", "cal_VR");
     ModuleBase::timer::start("Rotate_abfs", "cal_VR");
-    // copy in source\module_hamilt_lcao\hamilt_lcaodft\center2_orb-orb11.cpp
+    // copy in source\module_hamilt_lcao\hamilt_lcaodft\center2orb_orb11.cpp
     const double tiny1 = 1e-12;
     const ModuleBase::Element_Basis_Index::Range range = ModuleBase::Element_Basis_Index::construct_range(orb_in);
     // index: T: type, L: angular momentum, N: radial index, M: magnetic moment
@@ -269,8 +269,8 @@ void Moment_abfs<Tdata>::cal_VR(
                             // Determine N1 and N2 loop ranges based on rotate_abfs
                             // When rotate_abfs=true: only N=0 has non-zero moment, calculate only N1=0 and N2=0
                             // When rotate_abfs=false: all moments are non-zero, calculate all N1, N2
-                            const int N1_max = GlobalC::exx_info.info_ri.rotate_abfs ? 1 : orb_in[T1][L1].size();
-                            const int N2_max = GlobalC::exx_info.info_ri.rotate_abfs ? 1 : orb_in[T2][L2].size();
+                            const int N1_max = this->info.rotate_abfs ? 1 : orb_in[T1][L1].size();
+                            const int N2_max = this->info.rotate_abfs ? 1 : orb_in[T2][L2].size();
 
                             for (int N1 = 0; N1 != N1_max; ++N1)
                             {

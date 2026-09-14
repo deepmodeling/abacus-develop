@@ -5,15 +5,12 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include <array>
 #include <vector>
 
 namespace hamilt
 {
-
-#ifndef __EKINETICTEMPLATE
-#define __EKINETICTEMPLATE
 
 /// The EKinetic class template inherits from class T
 /// it is used to calculate the electronic kinetic
@@ -24,8 +21,6 @@ template <class T>
 class EKinetic : public T
 {
 };
-
-#endif
 
 /// EKinetic class template specialization for OperatorLCAO<TK> base class
 /// It is used to calculate the electronic kinetic matrix in real space and fold it to k-space

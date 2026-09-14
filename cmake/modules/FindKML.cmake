@@ -20,7 +20,7 @@
 #   KML_BLAS_THREADING  kblas variant: auto, multi, locking, or nolocking
 #                        (default: auto)
 #
-# The default threading selection uses the caller's USE_OPENMP option when it
+# The default threading selection uses the caller's ENABLE_OPENMP option when it
 # is available: multi for OpenMP builds and nolocking otherwise. Projects can
 # select a KML_BLAS_THREADING variant explicitly.
 #
@@ -46,7 +46,7 @@ endif()
 
 set(_kml_thread_variants multi locking nolocking)
 if(KML_BLAS_THREADING STREQUAL "auto")
-  if(DEFINED USE_OPENMP AND USE_OPENMP)
+  if(ENABLE_OPENMP)
     set(_kml_blas_threading multi)
   else()
     set(_kml_blas_threading nolocking)

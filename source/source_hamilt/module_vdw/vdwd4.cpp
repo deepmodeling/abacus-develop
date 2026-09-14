@@ -1,4 +1,5 @@
 #include "vdwd4.h"
+#include "vdw_xcname.h"
 
 #include "source_base/constants.h"
 #include "source_base/element_name.h"
@@ -81,15 +82,32 @@ double cutoff_to_bohr(const std::string& value, const std::string& unit)
 } // namespace
 
 Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_para& input)
-    : Vdw(unit_in), xc_name_(to_lower(xc_name)), model_name_(to_lower(input.vdw_d4_model))
+    : Vdw(unit_in), xc_name_(normalize_xc_name(xc_name)), model_name_(to_lower(input.vdw_d4_model))
 {
     cutoff_disp2_ = cutoff_to_bohr(input.vdw_cutoff_radius, input.vdw_radius_unit);
     cutoff_disp3_ = std::min(40.0, cutoff_disp2_);
     cutoff_cn_ = length_to_bohr(input.vdw_cn_thr, input.vdw_cn_thr_unit);
+    smooth_width_2b_ = input.vdw_cutoff_width2;
+    smooth_width_3b_ = input.vdw_cutoff_width3;
+
+    if (smooth_width_2b_ < 0.0 || smooth_width_2b_ > cutoff_disp2_)
+    {
+        ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4",
+                                 "vdw_cutoff_width2 must satisfy 0 <= width <= two-body cutoff");
+    }
+    if (smooth_width_3b_ < 0.0 || smooth_width_3b_ > cutoff_disp3_)
+    {
+        ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4",
+                                 "vdw_cutoff_width3 must satisfy 0 <= width <= three-body cutoff");
+    }
 
     double valence_charge = 0.0;
     for (int it = 0; it < ucell_.ntype; ++it)
     {
+        if (ucell_.atoms[it].flag_empty_element)
+        {
+            continue;
+        }
         valence_charge += ucell_.atoms[it].ncpp.zv * ucell_.atoms[it].na;
     }
     total_charge_ = valence_charge - input.nelec;
@@ -98,18 +116,28 @@ Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_pa
 void Vdwd4::build_structure(std::vector<int>& numbers,
                             std::vector<double>& positions,
                             std::vector<double>& lattice,
-                            std::array<bool, 3>& periodic) const
+                            std::array<bool, 3>& periodic,
+                            std::vector<int>& atom_indices) const
 {
     numbers.clear();
     positions.clear();
     lattice.clear();
+    atom_indices.clear();
 
     numbers.reserve(ucell_.nat);
     positions.reserve(3 * ucell_.nat);
     lattice.reserve(9);
+    atom_indices.reserve(ucell_.nat);
 
+    int iat = 0;
     for (int it = 0; it < ucell_.ntype; ++it)
     {
+        if (ucell_.atoms[it].flag_empty_element)
+        {
+            iat += ucell_.atoms[it].na;
+            continue;
+        }
+
         const int atomic_number = atomic_number_from_symbol(ucell_.atoms[it].ncpp.psd);
 
         for (int ia = 0; ia < ucell_.atoms[it].na; ++ia)
@@ -120,6 +148,8 @@ void Vdwd4::build_structure(std::vector<int>& numbers,
             positions.push_back(position.x);
             positions.push_back(position.y);
             positions.push_back(position.z);
+            atom_indices.push_back(iat);
+            ++iat;
         }
     }
 
@@ -145,7 +175,8 @@ void Vdwd4::build_structure(std::vector<int>& numbers,
 
 void Vdwd4::compute(double& energy_ha,
                     std::vector<double>* gradient_ha_bohr,
-                    std::array<double, 9>* sigma_ha)
+                    std::array<double, 9>* sigma_ha,
+                    std::vector<int>& atom_indices)
 {
 #ifdef __DFTD4
     std::vector<int> numbers;
@@ -153,13 +184,13 @@ void Vdwd4::compute(double& energy_ha,
     std::vector<double> lattice;
     std::array<bool, 3> periodic;
 
-    build_structure(numbers, positions, lattice, periodic);
+    build_structure(numbers, positions, lattice, periodic, atom_indices);
 
     if (gradient_ha_bohr != nullptr
-        && gradient_ha_bohr->size() != static_cast<std::size_t>(3 * ucell_.nat))
+        && gradient_ha_bohr->size() < static_cast<std::size_t>(3 * numbers.size()))
     {
         ModuleBase::WARNING_QUIT("Vdwd4::compute",
-                                 "gradient_ha_bohr must have size 3 * nat when requested.");
+                                 "gradient_ha_bohr is too small for the filtered atom set.");
     }
 
     // These vectors own all arrays passed to DFT-D4. Their data() pointers
@@ -167,7 +198,7 @@ void Vdwd4::compute(double& energy_ha,
     dftd4_error error = dftd4_new_error();
 
     dftd4_structure mol = dftd4_new_structure(error,
-                                              ucell_.nat,
+                                              static_cast<int>(numbers.size()),
                                               numbers.data(),
                                               positions.data(),
                                               &total_charge_,
@@ -191,8 +222,14 @@ void Vdwd4::compute(double& energy_ha,
         ModuleBase::WARNING_QUIT("Vdwd4::compute", "Unsupported DFT-D4 model: " + model_name_);
     }
 
-    dftd4_set_model_realspace_cutoff(error, model, cutoff_disp2_, cutoff_disp3_, cutoff_cn_);
-    check_dftd4_error(error, "dftd4_set_model_realspace_cutoff");
+    dftd4_set_model_realspace_cutoff_smooth(error,
+                                            model,
+                                            cutoff_disp2_,
+                                            cutoff_disp3_,
+                                            cutoff_cn_,
+                                            smooth_width_2b_,
+                                            smooth_width_3b_);
+    check_dftd4_error(error, "dftd4_set_model_realspace_cutoff_smooth");
 
     std::vector<char> method(xc_name_.begin(), xc_name_.end());
     method.push_back('\0');
@@ -219,90 +256,77 @@ void Vdwd4::compute(double& energy_ha,
 #endif
 }
 
-void Vdwd4::cal_energy()
+void Vdwd4::set_force_from_gradient(const std::vector<double>& gradient_ha_bohr,
+                                    const std::vector<int>& atom_indices,
+                                    VdwResult& result) const
 {
-    ModuleBase::TITLE("Vdwd4", "cal_energy");
-    ModuleBase::timer::start("Vdwd4", "cal_energy");
+    result.force.assign(ucell_.nat, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
 
-    double energy_ha = 0.0;
-    compute(energy_ha, nullptr, nullptr);
-
-    // DFT-D4 returns Hartree; ABACUS vdW energies are stored in Ry.
-    energy_ = 2.0 * energy_ha;
-
-    ModuleBase::timer::end("Vdwd4", "cal_energy");
-}
-
-void Vdwd4::set_force_from_gradient(const std::vector<double>& gradient_ha_bohr)
-{
-    force_.clear();
-    force_.resize(ucell_.nat);
-
-    for (int iat = 0; iat < ucell_.nat; ++iat)
+    for (std::size_t index = 0; index < atom_indices.size(); ++index)
     {
+        const int iat = atom_indices[index];
         // DFT-D4 returns dE/dR in Ha/Bohr; ABACUS forces are -dE/dR in Ry/Bohr.
-        force_[iat].x = -2.0 * gradient_ha_bohr[3 * iat + 0];
-        force_[iat].y = -2.0 * gradient_ha_bohr[3 * iat + 1];
-        force_[iat].z = -2.0 * gradient_ha_bohr[3 * iat + 2];
+        result.force[iat].x = -2.0 * gradient_ha_bohr[3 * index + 0];
+        result.force[iat].y = -2.0 * gradient_ha_bohr[3 * index + 1];
+        result.force[iat].z = -2.0 * gradient_ha_bohr[3 * index + 2];
     }
 
-    has_force_cache_ = true;
+    result.has_force = true;
 }
 
-void Vdwd4::set_stress_from_sigma(const std::array<double, 9>& sigma_ha)
+void Vdwd4::set_stress_from_sigma(const std::array<double, 9>& sigma_ha,
+                                  VdwResult& result) const
 {
     // Tentative mapping consistent with the current D3 convention.
     // Confirm sign, transposition and volume normalization by finite-strain tests.
-    stress_ = ModuleBase::Matrix3(2.0 * sigma_ha[0], 2.0 * sigma_ha[1], 2.0 * sigma_ha[2],
-                                  2.0 * sigma_ha[3], 2.0 * sigma_ha[4], 2.0 * sigma_ha[5],
-                                  2.0 * sigma_ha[6], 2.0 * sigma_ha[7], 2.0 * sigma_ha[8])
-              / ucell_.omega;
-
-    has_stress_cache_ = true;
+    result.stress = ModuleBase::Matrix3(2.0 * sigma_ha[0],
+                                        2.0 * sigma_ha[1],
+                                        2.0 * sigma_ha[2],
+                                        2.0 * sigma_ha[3],
+                                        2.0 * sigma_ha[4],
+                                        2.0 * sigma_ha[5],
+                                        2.0 * sigma_ha[6],
+                                        2.0 * sigma_ha[7],
+                                        2.0 * sigma_ha[8])
+                    / ucell_.omega;
+    result.has_stress = true;
 }
 
-void Vdwd4::cal_force()
+void Vdwd4::evaluate_impl(const VdwRequest& request, VdwResult& result)
 {
-    ModuleBase::TITLE("Vdwd4", "cal_force");
-    ModuleBase::timer::start("Vdwd4", "cal_force");
+    ModuleBase::TITLE("Vdwd4", "evaluate");
+    ModuleBase::timer::start("Vdwd4", "evaluate");
 
-    if (!has_force_cache_ || !has_stress_cache_)
+    double energy_ha = 0.0;
+    std::vector<int> atom_indices;
+    if (request.force || request.stress)
     {
-        double energy_ha = 0.0;
         std::vector<double> gradient(3 * ucell_.nat, 0.0);
         std::array<double, 9> sigma;
         sigma.fill(0.0);
 
-        // Request sigma together with the gradient.  The DFT-D4 C API computes
-        // sigma internally for gradient calculations anyway, so keep it and
-        // avoid a second expensive D4 call when ABACUS subsequently requests stress.
-        compute(energy_ha, &gradient, &sigma);
-        set_force_from_gradient(gradient);
-        set_stress_from_sigma(sigma);
+        // The DFT-D4 C API evaluates energy, gradient and sigma together.
+        // Keep all requested quantities from this single call.
+        compute(energy_ha, &gradient, &sigma, atom_indices);
+
+        if (request.force)
+        {
+            set_force_from_gradient(gradient, atom_indices, result);
+        }
+        if (request.stress)
+        {
+            set_stress_from_sigma(sigma, result);
+        }
     }
-
-    ModuleBase::timer::end("Vdwd4", "cal_force");
-}
-
-void Vdwd4::cal_stress()
-{
-    ModuleBase::TITLE("Vdwd4", "cal_stress");
-    ModuleBase::timer::start("Vdwd4", "cal_stress");
-
-    if (!has_stress_cache_)
+    else
     {
-        double energy_ha = 0.0;
-        std::vector<double> gradient(3 * ucell_.nat, 0.0);
-        std::array<double, 9> sigma;
-        sigma.fill(0.0);
-
-        // DFT-D4 may require a valid gradient buffer when sigma is requested.
-        compute(energy_ha, &gradient, &sigma);
-        set_force_from_gradient(gradient);
-        set_stress_from_sigma(sigma);
+        compute(energy_ha, nullptr, nullptr, atom_indices);
     }
 
-    ModuleBase::timer::end("Vdwd4", "cal_stress");
+    // DFT-D4 returns Hartree; ABACUS vdW energies are stored in Ry.
+    result.energy = 2.0 * energy_ha;
+
+    ModuleBase::timer::end("Vdwd4", "evaluate");
 }
 
 } // namespace vdw

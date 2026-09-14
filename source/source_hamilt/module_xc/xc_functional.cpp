@@ -1,9 +1,10 @@
 #include "xc_functional.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_title.h"
+#include "source_base/constants.h"
+#include <cmath>
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include "libxc_abacus.h"
 #endif
 
@@ -14,9 +15,11 @@ XC_Functional::~XC_Functional(){}
 std::vector<int> XC_Functional::func_id(1);
 int XC_Functional::func_type = 0;
 bool XC_Functional::ked_flag = false;
+bool XC_Functional::need_laplacian = false;
 bool XC_Functional::use_libxc = true;
 double XC_Functional::hybrid_alpha = 0.25;
 double XC_Functional::hse_omega = 0.0;
+XCFunctionalParameters XC_Functional::runtime_parameters;
 std::map<int, double> XC_Functional::scaling_factor_xc = { {1, 1.0} }; // added by jghan, 2024-10-10
 
 void XC_Functional::set_hybrid_alpha(const double alpha_in)
@@ -27,6 +30,11 @@ void XC_Functional::set_hybrid_alpha(const double alpha_in)
 void XC_Functional::set_hse_omega(const double omega_in)
 {
     hse_omega = omega_in;
+}
+
+void XC_Functional::set_runtime_parameters(const XCFunctionalParameters& parameters)
+{
+    runtime_parameters = parameters;
 }
 
 void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
@@ -67,7 +75,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 {
     ModuleBase::TITLE("XC_Functional", "set_xc_type");
     //Note : due to the separation of gcx_spin and gcc_spin,
-    //when you are adding new GGA functionals,
+    //when you are adding GGA functionals,
     //please put exchange first, followed by correlation,
     //such as for PBE we have:
     //        func_id.push_back(XC_GGA_X_PBE);
@@ -154,7 +162,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 2;
         use_libxc = false;
     }
-#ifdef USE_LIBXC
+#ifdef __LIBXC
     else if ( xc_func == "SCAN")
     {
         func_id.push_back(XC_MGGA_X_SCAN);
@@ -168,6 +176,18 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_id.push_back(XC_MGGA_C_SCAN);
         func_type = 5;
         use_libxc = true;
+    }
+    else if ( xc_func == "SCANL")
+    {
+        func_id.push_back(XC_MGGA_X_SCANL);
+        func_id.push_back(XC_MGGA_C_SCANL);
+        func_type = 3;
+        use_libxc = true;
+        std::cout << "\n WARNING: SCANL (SCAN-L) functional uses Laplacian of density (nabla^2 rho)."
+                  << "\n This may require a higher energy cutoff (ecutwfc) for numerical stability."
+                  << "\n For semiconductors: standard settings work well."
+                  << "\n For metals: k-grid >= 6x6x6, smearing_sigma <= 0.01 Ry, mixing_beta = 0.1-0.15"
+                  << std::endl;
     }
     else if( xc_func == "LC_PBE")
     {
@@ -220,7 +240,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 4;
         use_libxc = false;
     }
-#ifdef USE_LIBXC
+#ifdef __LIBXC
     else if( xc_func == "HSE")
     {
         func_id.push_back(XC_HYB_GGA_XC_HSE06);
@@ -278,7 +298,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 #endif
     else
     {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
         //see if it matches libxc functionals
         const std::pair<int, std::vector<int>> type_id = XC_Functional_Libxc::set_xc_type_libxc(xc_func);
         func_type = std::get<0>(type_id);
@@ -302,6 +322,29 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         ked_flag = false;
     }
 
+#ifdef __LIBXC
+    if (use_libxc && ked_flag)
+    {
+        std::vector<xc_func_type> check_funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, 0.0, 0.0);
+        need_laplacian = false;
+        for (auto& f : check_funcs)
+        {
+            if (f.info->flags & XC_FLAGS_NEEDS_LAPLACIAN)
+            {
+                need_laplacian = true;
+                break;
+            }
+        }
+        XC_Functional_Libxc::finish_func(check_funcs);
+    }
+    else
+    {
+        need_laplacian = false;
+    }
+#else
+    need_laplacian = false;
+#endif
+
     if (func_id[0] == XC_GGA_X_OPTX)
     {
         std::cerr << "\n OPTX untested please test,";
@@ -309,7 +352,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 
     // if((func_type == 4 || func_type == 5) && basis_type == "pw")
     // {
-    //     ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for planewave yet");
+    //     ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for plane-wave yet");
     // }
 
     // Hybrid functional is now supported for both PW and LCAO basis
@@ -320,7 +363,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     // }
     // #endif
 
-#ifndef USE_LIBXC
+#ifndef __LIBXC
     if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0" 
         || xc_func == "MULLER" || xc_func == "POWER" || xc_func == "WP22" || xc_func == "CWP22" ||
         xc_func == "LC_PBE" || xc_func == "LC_WPBE" || xc_func == "LRC_WPBE" ||
@@ -336,7 +379,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 std::string XC_Functional::output_info()
 {
     ModuleBase::TITLE("XC_Functional", "output_info");
-#ifdef USE_LIBXC
+#ifdef __LIBXC
     if(use_libxc)
     {
         std::stringstream ss;

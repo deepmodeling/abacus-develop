@@ -1,6 +1,7 @@
 #ifndef IONS_MOVE_CG_H
 #define IONS_MOVE_CG_H
 
+#include "relax_criteria.h"
 #include <fstream>
 #include <iostream>
 #include "source_base/matrix.h"
@@ -15,11 +16,15 @@ class Ions_Move_CG : public CG_Base
     ~Ions_Move_CG() = default;
 
     void allocate(const int dim);
-    bool start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, std::vector<std::string>& relax_method);
+    bool start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, std::vector<std::string>& relax_method, const Relax_Criteria& criteria);
 
     static double RELAX_CG_THR;
 
   private:
+    // Unit tests need to inspect the saved previous-step state and to seed
+    // move0 in order to drive the trial/no-trial branches of start().
+    friend class IonsMoveCGTest;
+
     std::vector<double> pos0;
     std::vector<double> grad0;
     std::vector<double> cg_grad0;

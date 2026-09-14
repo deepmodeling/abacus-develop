@@ -199,12 +199,14 @@ template <>
 void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
 {
     DensityMatrix_Tools::cal_DMR(*this, this->_DMR, ik_in);
+    this->_dmr_ready = true;
 }
 
 template <>
 void DensityMatrix<std::complex<double>, std::complex<double>>::cal_DMR(const int ik_in)
 {
     DensityMatrix_Tools::cal_DMR(*this, this->_DMR, ik_in);
+    this->_dmr_ready = true;
 }
 
 
@@ -363,12 +365,14 @@ template <>
 void DensityMatrix<std::complex<double>, double>::cal_DMR_td(const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid, const ModuleBase::Vector3<double> At, const int ik_in)
 {
     DensityMatrix_Tools::cal_DMR_td(*this, this->_DMR, phase_hybrid, At, ik_in);
+    this->_dmr_ready = true;
 }
 
 template <>
 void DensityMatrix<std::complex<double>, std::complex<double>>::cal_DMR_td(const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid, const ModuleBase::Vector3<double> At, const int ik_in)
 {
     DensityMatrix_Tools::cal_DMR_td(*this, this->_DMR, phase_hybrid, At, ik_in);
+    this->_dmr_ready = true;
 }
 
 
@@ -544,6 +548,7 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
         }
     }
     ModuleBase::timer::end("DensityMatrix", "cal_DMR");
+    this->_dmr_ready = true;
 }
 
 
@@ -655,7 +660,12 @@ void DensityMatrix_Tools::func_xyz_to_updown<double>(const std::complex<double> 
 {
     target_DMR_mat[icol + step_trace[0]] = tmp[0].real() + tmp[3].real();  // rho_0 = (rho_upup + rho_downdown).real()
     target_DMR_mat[icol + step_trace[1]] = tmp[1].real() + tmp[2].real();  // rho_x = (rho_updown + rho_downup).real()
-    target_DMR_mat[icol + step_trace[2]] = tmp[1].imag() - tmp[2].imag(); // rho_y = Im(rho_updown - rho_downup)
+    // rho_y: the stored DM block is the complex conjugate of the physical 1-RDM P (cal_dm_psi builds
+    // DM_{ab}=sum conj(c_a) c_b = conj(P), so tmp[1]=DM_{ud}=conj(P_{ud})). Extracting m_y from the
+    // CONJUGATED block therefore carries the opposite sign of the bare-textbook formula; m_x/m_z read
+    // Re() and are conjugation-invariant. Using the bare formula (PR #7664) sign-flips m_y and quenches
+    // in-plane non-collinear moments (e.g. Mn3Sn 120-deg AFM); see issue #7831.
+    target_DMR_mat[icol + step_trace[2]] = tmp[1].imag() - tmp[2].imag();  // rho_y = Im(P_updown) - Im(P_downup)
     target_DMR_mat[icol + step_trace[3]] = tmp[0].real() - tmp[3].real();  // rho_z = (rho_upup - rho_downdown).real()
 }
 
@@ -664,6 +674,7 @@ void DensityMatrix_Tools::func_xyz_to_updown<std::complex<double>>(const std::co
 {
     target_DMR_mat[icol + step_trace[0]] = tmp[0] + tmp[3];                                         // rho_0 = (rho_upup + rho_downdown)
     target_DMR_mat[icol + step_trace[1]] = tmp[1] + tmp[2];                                         // rho_x = (rho_updown + rho_downup)
+    // rho_y sign accounts for the conjugated stored DM block (conj(P)); see the <double> specialization above.
     target_DMR_mat[icol + step_trace[2]] = -ModuleBase::IMAG_UNIT * (tmp[1] - tmp[2]); // rho_y = -i*(rho_updown - rho_downup)
     target_DMR_mat[icol + step_trace[3]] = tmp[0] - tmp[3];                                         // rho_z = (rho_upup - rho_downdown)
 }

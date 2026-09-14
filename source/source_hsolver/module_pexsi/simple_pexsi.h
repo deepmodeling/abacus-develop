@@ -2,6 +2,7 @@
 #define SIMPLE_PEXSI_H
 
 #include <mpi.h>
+#include <string>
 // a simple interface for calling pexsi with 2D block cyclic distributed matrix
 namespace pexsi
 {

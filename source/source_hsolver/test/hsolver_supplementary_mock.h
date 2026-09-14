@@ -59,6 +59,12 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
 {
 }
 
+template <typename T, typename Device>
+double ElecStatePW<T, Device>::get_spin_constrain_energy()
+{
+    return 0.0;
+}
+
 template class ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>;
 template class ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))

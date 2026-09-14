@@ -26,11 +26,12 @@ void write_eband_terms(const int nspin,
                        const ModuleBase::matrix& wg,
                        Grid_Driver& gd,
                        const std::vector<double>& orb_cutoff,
-                       const TwoCenterBundle& two_center_bundle
+                       const TwoCenterBundle& two_center_bundle,
+                       const Exx_Info& exx_info
 #ifdef __EXX
                        ,
-                       std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
-                       std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
+                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
 #endif
 )
     {
@@ -182,7 +183,7 @@ void write_eband_terms(const int nspin,
         // 5. xc (including exx)
         if (!PARAM.inp.out_mat_xc)  // avoid duplicate output
         {
-            bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+            bool cal_exx = exx_info.info_global.cal_exx;
             write_Vxc<TK, TR>(nspin,
                               nbasis,
                               drank,
@@ -199,7 +200,8 @@ void write_eband_terms(const int nspin,
                               orb_cutoff,
                               wg,
                               gd,
-                              cal_exx
+                              cal_exx,
+                              exx_info
 #ifdef __EXX
                               ,
                               Hexxd,

@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 {
     int kpar;
     kpar = 1;
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
     precision_flag = "mixing";
 #else
     precision_flag = "double";

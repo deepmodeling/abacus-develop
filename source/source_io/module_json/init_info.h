@@ -4,6 +4,8 @@
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_cell/unitcell.h"
 
+struct Input_para;
+
 /**
  * @brief In this part of the code to complete the init part of the json tree.
  */
@@ -14,8 +16,9 @@ namespace Json
 
 /**
  * @param ucell: ucell for reading json parameters.
+ * @param inp: input parameters for reading json parameters.
  */
-void gen_init(UnitCell* ucell);
+void gen_init(UnitCell* ucell, const Input_para& inp);
 
 /**
  * @param nkstot,nkstot_ibz: two param in json tree
@@ -24,8 +27,9 @@ void add_nkstot(int nkstot);
 
 /**
  * @param ucell: ucell for reading structure init in abacus.
+ * @param inp: input parameters for reading orbital directory.
  */
-void gen_stru(UnitCell* ucell);
+void gen_stru(UnitCell* ucell, const Input_para& inp);
 #endif
 } // namespace Json
 #endif

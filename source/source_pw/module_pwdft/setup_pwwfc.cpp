@@ -26,7 +26,7 @@ void pw::setup_pwwfc(const Input_para& inp,
         fft_device = "cpu";
     }
     std::string fft_precision = inp.precision;
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
     if (inp.cal_cond && inp.esolver_type == "sdft")
     {
         fft_precision = "mixing";

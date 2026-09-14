@@ -37,7 +37,7 @@ void Ions_Move_CG::allocate(const int dim)
     this->fmax = 0.0;
 }
 
-bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, std::vector<std::string>& relax_method)
+bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, std::vector<std::string>& relax_method, const Relax_Criteria& criteria)
 {
     ModuleBase::TITLE("Ions_Move_CG", "start");
     assert(Ions_Move_Basic::dim > 0);
@@ -77,7 +77,7 @@ bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
         bool converged = false;
         if (flag == 0)
         {
-            converged = Ions_Move_Basic::check_converged(ucell, grad.data(), update_iter, ofs, etot_info);
+            converged = Ions_Move_Basic::check_converged(ucell, grad.data(), update_iter, ofs, etot_info, criteria.force_thr, criteria.force_thr_ev, criteria.out_level, criteria.test_relax_method);
         }
         if (converged)
         {
@@ -93,7 +93,7 @@ bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
 
             CG_Base::normalize(dim, cg_gradn.data(), cg_grad.data());
             CG_Base::setup_move(dim, move0.data(), cg_gradn.data(), this->steplength);
-            Ions_Move_Basic::move_atoms(ucell, move0.data(), pos.data(), ofs);
+            Ions_Move_Basic::move_atoms(ucell, move0.data(), pos.data(), ofs, criteria.test_relax_method);
 
             for (int i = 0; i < dim; i++)
             {
@@ -145,7 +145,7 @@ bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
             }
 
             CG_Base::setup_move(dim, move.data(), cg_gradn.data(), best_x);
-            Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs);
+            Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs, criteria.test_relax_method);
             this->trial = false;
             this->xa = 0;
             CG_Base::f_cal(dim, move0.data(), move.data(), this->xc);
@@ -183,7 +183,7 @@ bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
 
         CG_Base::normalize(dim, cg_gradn.data(), cg_grad0.data());
         CG_Base::setup_move(dim, move.data(), cg_gradn.data(), best_x);
-        Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs);
+        Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs, criteria.test_relax_method);
         Ions_Move_Basic::relax_bfgs_init = this->xc;
         return false;
     }

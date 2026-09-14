@@ -1,7 +1,7 @@
-#include "../LCAO_deepks.h"
+#include "../lcao_deepks.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/orb_read.h"
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -71,7 +71,7 @@ class test_deepks
     elecstate::DensityMatrix<T, double>* p_elec_DM = nullptr;
 
     // preparation
-    void preparation();
+    void preparation(bool use_modern_orbital_reader);
     void set_parameters(); // set some global variables
     void setup_cell();
 
@@ -80,7 +80,7 @@ class test_deepks
 
     void prep_neighbour();
     void setup_kpt();
-    void set_orbs();
+    void set_orbs(bool use_modern_orbital_reader);
 
     // tranfer Matrix into vector<T>
     void set_dm_new();
@@ -91,6 +91,7 @@ class test_deepks
     // checking
     void check_dstable();
     void check_phialpha();
+    void check_phialpha_grid_zero_field();
 
     void read_dm(const int nks);
 

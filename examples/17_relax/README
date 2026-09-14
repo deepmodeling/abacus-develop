@@ -19,5 +19,5 @@ set `relax_method` to `cg`(default value)
 (3)`relax_nmax`: number of ion iteration steps; `force_thr_ev`: force threshold, unit: eV/Angstrom; \
 `stress_ev`: stress threshold, unit: kBar.
 
-(4)Output file OUT.ABACUS/STRU_NOW.cif contains the optimized atom positions.
+(4)Output file OUT.ABACUS/STRU_FINAL contains the optimized atom positions.
 

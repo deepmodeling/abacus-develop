@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "../bin_manager.h"
-#include "../neighbor_list.h"
+#include "source_cell/module_neighlist/bin_manager.h"
+#include "source_cell/module_neighlist/neighbor_list.h"
 
 TEST(BinManagerUnit, InitAndBinning)
 {
@@ -82,7 +82,7 @@ TEST(BinManagerUnit, EmptyAtomsBuildNeighbors)
     nl.initialize(0, 16);
 
     bm.build_atom_neighbors(nl, atoms, atoms);
-    EXPECT_EQ(nl.get_nlocal(), 0);
+    EXPECT_EQ(nl.get_ncentral_atoms(), 0);
 }
 
 TEST(BinManagerUnit, BoundaryAndExactRadius)
@@ -153,7 +153,7 @@ TEST(BinManagerUnit, GhostAtomsAreCounted)
     std::vector<NeighborAtom> ghost;
 
     inside.emplace_back(0.0, 0.0, 0.0, 0, 0, 0);
-    ghost.emplace_back(0.4, 0.0, 0.0, 0, 1, 1, 3, 1);
+    ghost.emplace_back(0.4, 0.0, 0.0, 0, 1, 1, 1);
 
     BinManager bm;
     std::vector<NeighborAtom> all_atoms = inside;
@@ -166,7 +166,7 @@ TEST(BinManagerUnit, GhostAtomsAreCounted)
 
     bm.build_atom_neighbors(nl, inside, all_atoms);
 
-    EXPECT_EQ(nl.get_nlocal(), 1);
+    EXPECT_EQ(nl.get_ncentral_atoms(), 1);
     EXPECT_EQ(nl.get_numneigh(0), 1);
     bool found = false;
     if (nl.get_numneigh(0) > 0 && nl.get_firstneigh(0) != nullptr) {

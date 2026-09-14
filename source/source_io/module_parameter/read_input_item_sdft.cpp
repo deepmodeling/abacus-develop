@@ -1,7 +1,8 @@
-#include "source_base/global_function.h"
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+
+#include <exception>
 
 namespace ModuleIO
 {
@@ -21,7 +22,7 @@ void ReadInput::item_sdft()
 * other: use 2)";
         item.default_value = "2";
         item.unit = "";
-        item.availability = "esolver_type = sdft";
+        item.set_availability("esolver_type==sdft");
         read_sync_int(input.method_sto);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.method_sto != 1 && para.input.method_sto != 2)
@@ -37,38 +38,42 @@ void ReadInput::item_sdft()
         item.category = "Electronic structure (SDFT)";
         item.type = "Integer or string";
         item.description = R"(The number of stochastic orbitals
-* > 0: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
-* 0: Perform Kohn-Sham DFT.
+* 1-1000000: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
+* 0: Invalid. Use all for the complete-basis SDFT mode.
 * all: All complete basis sets are used to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors.)";
         item.default_value = "256";
         item.unit = "";
-        item.availability = "esolver_type = sdft";
+        item.set_availability("esolver_type==sdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             std::string nbandsto_str = strvalue;
             if (nbandsto_str != "all")
             {
-                para.input.nbands_sto = std::stoi(nbandsto_str);
+                std::size_t parsed_chars = 0;
+                try
+                {
+                    para.input.nbands_sto = std::stoi(nbandsto_str, &parsed_chars);
+                }
+                catch (const std::exception&)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "nbands_sto should be in the range of 1 to 1000000 or be all");
+                }
+                if (parsed_chars != nbandsto_str.size())
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "nbands_sto should be in the range of 1 to 1000000 or be all");
+                }
             }
             else
             {
                 para.input.nbands_sto = 0;
             }
         };
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            // only do it when nbands_sto is set in INPUT
-            if (item.is_read())
-            {
-                if (strvalue == "0" && para.input.esolver_type == "sdft")
-                {
-                    para.input.esolver_type = "ksdft";
-                    ModuleBase::GlobalFunc::AUTO_SET("esolver_type", para.input.esolver_type);
-                }
-            }
-        };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nbands_sto < 0 || para.input.nbands_sto > 100000)
+            const bool use_complete_basis = item.is_read() && strvalue == "all";
+            if ((!use_complete_basis && para.input.nbands_sto < 1) || para.input.nbands_sto > 1000000)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "nbands_sto should be in the range of 0 to 100000");
+                ModuleBase::WARNING_QUIT("ReadInput", "nbands_sto should be in the range of 1 to 1000000 or be all");
             }
         };
         item.get_final_value = [](Input_Item& item, const Parameter& para) {
@@ -92,7 +97,7 @@ void ReadInput::item_sdft()
         item.description = "Chebyshev expansion orders for stochastic DFT.";
         item.default_value = "100";
         item.unit = "";
-        item.availability = "esolver_type = sdft";
+        item.set_availability("esolver_type==sdft");
         read_sync_int(input.nche_sto);
         this->add_item(item);
     }
@@ -105,7 +110,7 @@ void ReadInput::item_sdft()
         item.description = "Trial energy to guess the lower bound of eigen energies of the Hamiltonian Operator.";
         item.default_value = "0.0";
         item.unit = "Ry";
-        item.availability = "esolver_type = sdft";
+        item.set_availability("esolver_type==sdft");
         read_sync_double(input.emin_sto);
         this->add_item(item);
     }
@@ -118,7 +123,7 @@ void ReadInput::item_sdft()
         item.description = "Trial energy to guess the upper bound of eigen energies of the Hamiltonian Operator.";
         item.default_value = "0.0";
         item.unit = "Ry";
-        item.availability = "esolver_type = sdft";
+        item.set_availability("esolver_type==sdft");
         read_sync_double(input.emax_sto);
         this->add_item(item);
     }
@@ -134,7 +139,7 @@ void ReadInput::item_sdft()
 * -1: the seed is decided by time(NULL).)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "esolver_type = sdft";
+        item.set_availability("esolver_type==sdft");
         read_sync_int(input.seed_sto);
         this->add_item(item);
     }
@@ -146,7 +151,7 @@ void ReadInput::item_sdft()
         item.description = R"(Stochastic wave functions are initialized in a large box generated by "4*initsto_ecut". initsto_ecut should be larger than ecutwfc. In this method, SDFT results are the same when using different cores. Besides, coefficients of the same G are the same when ecutwfc is rising to initsto_ecut. If it is smaller than ecutwfc, it will be turned off.)";
         item.default_value = "0.0";
         item.unit = "Ry";
-        item.availability = "esolver_type = sdft";
+        item.set_availability("esolver_type==sdft");
         read_sync_double(input.initsto_ecut);
         this->add_item(item);
     }
@@ -160,7 +165,7 @@ void ReadInput::item_sdft()
 * 0: Never change stochastic orbitals.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "esolver_type = sdft";
+        item.set_availability("esolver_type==sdft");
         read_sync_int(input.initsto_freq);
         this->add_item(item);
     }
@@ -172,7 +177,7 @@ void ReadInput::item_sdft()
         item.description = "Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "method_sto = 2 and out_dos = 1 or cal_cond = True";
+        item.set_availability("esolver_type==sdft and ((method_sto==2 and out_dos==1) or (basis_type==pw and cal_cond==true))");
         read_sync_int(input.npart_sto);
         this->add_item(item);
     }

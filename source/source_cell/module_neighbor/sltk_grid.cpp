@@ -35,7 +35,7 @@ void Grid::init(std::ofstream& ofs_in, const UnitCell& ucell, const double radiu
 
 void Grid::Check_Expand_Condition(const UnitCell& ucell)
 {
-    //	ModuleBase::TITLE(GlobalV::ofs_running, "Atom_input", "Check_Expand_Condition");
+    //    ModuleBase::TITLE(GlobalV::ofs_running, "Atom_input", "Check_Expand_Condition");
 
     if (!pbc)
     {

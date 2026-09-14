@@ -17,7 +17,7 @@ scf_nmax          100
 relax_nmax        2
 cal_force         1
 force_thr_ev      0.01
-relax_method      cg
+relax_method      cg 1
 cal_stress        1
 
 #Parameters (4.Basis)
@@ -32,5 +32,3 @@ mixing_type       broyden
 mixing_beta       0.5
 
 gamma_only        1
-
-relax_new         0

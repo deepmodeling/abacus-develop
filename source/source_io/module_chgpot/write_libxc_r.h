@@ -6,7 +6,7 @@
 #ifndef WRITE_LIBXC_R_H
 #define WRITE_LIBXC_R_H
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 
 #include <vector>
 #include <fstream>
@@ -49,6 +49,6 @@ namespace ModuleIO
   #endif
 }
 
-#endif // USE_LIBXC
+#endif // __LIBXC
 
 #endif // WRITE_LIBXC_R_H

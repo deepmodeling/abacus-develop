@@ -1,6 +1,5 @@
 #include "bfgs_basic.h"
 #include <algorithm>
-#include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -158,7 +157,7 @@ void BFGS_Basic::save_bfgs(void)
 // a new bfgs step is done
 // we have already done well in the previous direction
 // we should get a new direction in this case
-void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info)
+void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, const int test_relax_method)
 {
     ModuleBase::TITLE("BFGS_Basic", "new_step");
 
@@ -248,7 +247,7 @@ void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& o
     else if (update_iter > 1)
     {
         trust_radius = trust_radius_old;
-        this->compute_trust_radius(ofs, etot_info);
+        this->compute_trust_radius(ofs, etot_info, test_relax_method);
     }
     // std::cout<<"trust_radius ="<<" "<<trust_radius;
     return;
@@ -256,7 +255,7 @@ void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& o
 
 // trust radius is computed in this function
 // trust radius determine the step length
-void BFGS_Basic::compute_trust_radius(std::ofstream& ofs, std::vector<double>& etot_info)
+void BFGS_Basic::compute_trust_radius(std::ofstream& ofs, std::vector<double>& etot_info, const int test_relax_method)
 {
     ModuleBase::TITLE("BFGS_Basic", "compute_trust_radius");
 
@@ -307,7 +306,7 @@ void BFGS_Basic::compute_trust_radius(std::ofstream& ofs, std::vector<double>& e
         trust_radius = std::min(trust_radius, norm_move);
     }
 
-    if (PARAM.inp.test_relax_method)
+    if (test_relax_method)
     {
         ModuleBase::GlobalFunc::OUT(ofs, "wolfe_flag", wolfe_flag);
         ModuleBase::GlobalFunc::OUT(ofs, "trust_radius_old", trust_radius_old);

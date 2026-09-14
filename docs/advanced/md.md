@@ -18,6 +18,7 @@ When [md_type](./input_files/input-main.md#md_type) is set to nvt, [md_thermosta
   - berendsen: Berendsen thermostat
   - rescaling: velocity Rescaling method 1
   - rescale_v: velocity Rescaling method 2
+  - csvr: Canonical Sampling through Velocity Rescaling (CSVR) thermostat
 
 When [md_type](./input_files/input-main.md#md_type) is set to npt, [md_pmode](./input_files/input-main.md#md_pmode) is used to specify the cell fluctuation mode in NPT ensemble based on the Nose-Hoover style non-Hamiltonian equations of motion.
 
@@ -79,6 +80,10 @@ Reset the temperature of a group of atoms by explicitly rescaling their velociti
 ## Rescale_v
 
 Reset the temperature of a group of atoms by explicitly rescaling their velocities. Every [md_nraise](./input_files/input-main.md#md_nraise) steps the current temperature is rescaled to target temperature.
+
+## CSVR
+
+The CSVR (Canonical Sampling through Velocity Rescaling) thermostat is a stochastic velocity rescaling approach proposed by [Bussi, Donadio, and Parrinello](https://doi.org/10.1063/1.2408420). It rescales the velocities by a factor that is drawn from the appropriate distribution to ensure a canonical ensemble, combining the simplicity of Berendsen-like rescaling with the correct canonical sampling of the Nosé-Hoover chain. The coupling strength is controlled by [md_csvr_tau](./input_files/input-main.md#md_csvr_tau).
 
 ## MSST
 ABACUS performs the [Multi-Scale Shock Technique (MSST) integration](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.90.235503) to update positions and velocities each timestep to mimic a compressive shock wave passing over the system. The MSST varies the cell volume and temperature in such a way as to restrain the system to the shock Hugoniot and the Rayleigh line. These restraints correspond to the macroscopic conservation laws dictated by a shock front.

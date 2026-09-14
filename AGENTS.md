@@ -8,7 +8,7 @@ rules. Read the complete governance document before making or reviewing changes:
 
 ## Required Baseline
 
-- Follow the seven ABACUS coding rules summarized from the project governance:
+- Follow the nine ABACUS coding rules summarized from the project governance:
   1. Do not increase cross-layer control through `GlobalV`, `GlobalC`, or
      `PARAM`; pass dependencies explicitly where practical. Migration-neutral
      moves must keep the PR-level global dependency budget non-increasing and
@@ -23,6 +23,33 @@ rules. Read the complete governance document before making or reviewing changes:
   6. Add focused tests for key features, bug fixes, INPUT behavior changes,
      heterogeneous kernels, and core-module refactors.
   7. Keep code compatible with the repository C++11 baseline.
+  8. Declare one variable per line; do not use comma-separated declarations.
+  9. Do not call MPI routines directly; use the internally-guarded wrappers
+     (e.g., `Parallel_Reduce::reduce_*`, `Parallel_Common::bcast_*`) instead.
+  10. Do not write new `#define private public` or `#define protected public`
+      access hacks in test files; the governance checker **blocks** a net
+      increase. These macros reinterpret access control for every declaration
+      in the translation unit -- standard library headers included -- and make
+      the test TU disagree with the rest of the build. The usual root cause is
+      that the code under test reads global `PARAM` itself, so the test has to
+      reach in to drive it; the fix is to pass those INPUT values as explicit
+      arguments (see `Relax_Criteria` and `K_Vectors::read_kpoints`). Where the
+      test genuinely needs internal state, add a public `const` observer, or an
+      explicit `friend class XxxTest;` on the class under test.
+  11. New unit test source files shall be named `test_<module_name>.cpp`,
+      matching the source file they exercise. For example, the test for
+      `rhog_io.cpp` shall be `test_rhog_io.cpp`. This naming keeps the
+      file-to-test relationship discoverable and consistent across the
+      repository. Historical tests are not required to be renamed.
+  12. Place `ModuleBase::timer::start`/`end` at the beginning and end of a
+      function, not around isolated statements inside the function body. Use
+      the enclosing function name (or constructor name) as the timer label so
+      the timer scopes the whole unit of work.
+  13. Do not call non-trivial functions inside a constructor's member
+      initializer list (e.g., `member(compute_something(...))`); limit the
+      initializer list to direct parameter passthrough. Perform multi-step
+      computations in the constructor body instead, so failures are easy to
+      debug and each intermediate result is inspectable.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.
@@ -32,6 +59,14 @@ rules. Read the complete governance document before making or reviewing changes:
   binary and is not stored in the repository.
 - Report the exact verification performed. Do not claim completion without
   fresh test or check output.
+- For multi-step refactors (e.g., splitting a large `.cpp` into several
+  files), build and commit after each step rather than batching all changes
+  before verification. This keeps the blast radius small when a step
+  surfaces a missing include or instantiation error.
+- Prefer `std::vector` over raw `new`/`delete` for dynamic arrays; before
+  converting class members, confirm no external code consumes them as raw
+  pointers (e.g., `std::vector<bool>` has no `.data()`), and use
+  `std::fill`/`std::copy` instead of `ZEROS`/`COPYARRAY` on vector buffers.
 
 ## Repository Map
 
@@ -72,6 +107,11 @@ rules. Read the complete governance document before making or reviewing changes:
 - Do not relax existing tests or references merely to make a failure pass.
   Update references only when the intended behavior changed and the PR explains
   why.
+- When mocking `UnitCell` in a test fixture, do not `delete[] iat2it` or
+  `iat2ia` in `TearDown`: they are owned by `UnitCell`'s internal `Statistics`
+  member, whose destructor releases them. Deleting them again causes a double
+  free. Mirror the ownership pattern of existing fixtures such as
+  `source/source_lcao/module_dftu/test/dftu_lcao_test.cpp`.
 
 ## Review And Exception Flow
 
@@ -83,6 +123,18 @@ rules. Read the complete governance document before making or reviewing changes:
   test sufficiency, and exception approval require human review.
 - Exceptions must be recorded in the PR with reason, scope, risk, and a follow-up
   cleanup plan.
+- After a refactor, propose brief lessons worth recording in this file, then
+  ask the developer whether to write them in; be cautious and skip unclear
+  or unverified lessons.
+
+## Refactoring Patterns
+
+- Member -> free function: inventory `this->` reads; pass as params (const
+  for config, ref for mutable state); move only when body is `this`-free;
+  keep thin wrapper; compile each step.
+- Extract a base-class nested-vector member in three steps (hold + forward,
+  switch writers, delete legacy) so no commit mixes old-storage writes with
+  new-storage reads.
 
 ## Local Commands
 
@@ -90,11 +142,24 @@ rules. Read the complete governance document before making or reviewing changes:
 python3 tools/03_code_analysis/agent_governance_check.py --staged
 python3 tools/03_code_analysis/agent_governance_check.py --base upstream/develop --head HEAD --format text
 pre-commit run abacus-agent-governance --all-files
+# Score changed C++ files for quality debt (pass line is 60):
+python3 tools/03_code_analysis/code_quality_score.py $(git diff --name-only upstream/develop...HEAD | grep -E '\.(cpp|h)$')
 ```
 
 The repository text files have been normalized to LF once. Day-to-day line
 ending enforcement should rely on staged/changed-file hooks and CI; rerun the
 full mixed-line-ending hook only for intentional repository-wide normalization.
+
+## Upstream Repository
+
+- Repository: https://github.com/deepmodeling/abacus-develop
+- Issues: https://github.com/deepmodeling/abacus-develop/issues
+- Pull requests: https://github.com/deepmodeling/abacus-develop/pulls
+- Upstream PRs are opened from personal fork branches
+  (`<fork-owner>:<branch>` into `develop`).
+- `workflow_dispatch`-only workflows (e.g. `.github/workflows/interface.yml`)
+  are not triggered by push/PR events; PR CI cannot verify such fixes, so
+  state "manual dispatch run required" in the PR verification notes.
 
 ## PR Self-Check
 

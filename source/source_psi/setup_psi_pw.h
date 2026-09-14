@@ -4,9 +4,8 @@
 #include "source_psi/psi_prepare.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_base/module_device/device.h"
 #include "source_hamilt/hamilt.h"
@@ -39,7 +38,7 @@ class Setup_Psi_pw
     // for PW, we have psi_cpu
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi_cpu = nullptr;
 
-    // psi_initializer controller
+    // psi_base controller
     psi::PSIPrepareBase* p_psi_init = nullptr;
 
     //------------
@@ -51,7 +50,7 @@ class Setup_Psi_pw
         const K_Vectors &kv,
         const Structure_Factor &sf,
         const ModulePW::PW_Basis_K &pw_wfc, 
-        const pseudopot_cell_vnl &ppcell,
+        const int &lmaxkb,
         const Input_para &inp);
 
     void init(hamilt::HamiltBase* p_hamilt);
@@ -71,7 +70,7 @@ class Setup_Psi_pw
     int get_nbands() const { return this->psi_cpu->get_nbands(); }
     int get_nk() const { return this->psi_cpu->get_nk(); }
     int get_nbasis() const { return this->psi_cpu->get_nbasis(); }
-    size_t size() const { return this->psi_cpu->size(); }
+    std::size_t size() const { return this->psi_cpu->size(); }
     
     // Get runtime type information
     base_device::AbacusDevice_t get_device_type() const { return device_type_; }
@@ -126,7 +125,7 @@ class Setup_Psi_pw
         const K_Vectors &kv,
         const Structure_Factor &sf,
         const ModulePW::PW_Basis_K &pw_wfc, 
-        const pseudopot_cell_vnl &ppcell,
+        const int &lmaxkb,
         const Input_para &inp);
 
     template <typename T, typename Device>
@@ -142,10 +141,10 @@ class Setup_Psi_pw
     void copy_d2h_impl();
 
     template <typename T, typename Device>
-    void castmem_d2h_impl(std::complex<double>* dst, const std::complex<double>* src, const size_t size);
+    void castmem_d2h_impl(std::complex<double>* dst, const std::complex<double>* src, const std::size_t size);
     
     template <typename T, typename Device>
-    void castmem_d2h_impl(std::complex<double>* dst, const std::complex<float>* src, const size_t size);
+    void castmem_d2h_impl(std::complex<double>* dst, const std::complex<float>* src, const std::size_t size);
 
 };
 

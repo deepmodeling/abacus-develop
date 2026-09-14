@@ -376,11 +376,11 @@ void print_screen(const int& stress_step, const int& force_step, const int& iste
         else if(PARAM.inp.calculation=="cell-relax")
         {
             std::cout << " RELAX STEP: " << unsigned(istep);
-            std::cout << " (CELL_CHANGE# " << unsigned(stress_step);
-            std::cout << " IONS_CHANGE# " << unsigned(force_step) << ")" << std::endl;
+            std::cout << " (CELL# " << unsigned(stress_step);
+            std::cout << " IONS# " << unsigned(force_step) << ")" << std::endl;
             GlobalV::ofs_running << " RELAX STEP: " << unsigned(istep);
-            GlobalV::ofs_running << " (CELL_CHANGE# " << unsigned(stress_step);
-            GlobalV::ofs_running << " IONS_CHANGE# " << unsigned(force_step) << ")" << std::endl;
+            GlobalV::ofs_running << " (CELL# " << unsigned(stress_step);
+            GlobalV::ofs_running << " IONS# " << unsigned(force_step) << ")" << std::endl;
         }
     }
 

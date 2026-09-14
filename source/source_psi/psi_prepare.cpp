@@ -5,15 +5,22 @@
 #include "source_base/parallel_device.h"
 #include "source_base/parallel_global.h"
 #include "source_base/timer.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/tool_quit.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/unitcell.h"
+#include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi_init_atomic.h"
-#include "source_psi/psi_init_atomic_random.h"
+#include "source_psi/psi_init_atom_rand.h"
 #include "source_psi/psi_init_file.h"
 #include "source_psi/psi_init_nao.h"
 #include "source_psi/psi_init_nao_random.h"
 #include "source_psi/psi_init_random.h"
+#include "source_pw/module_pwdft/stru_fac.h"
+
 namespace psi
 {
 
@@ -24,10 +31,11 @@ PSIPrepare<T, Device>::PSIPrepare(const std::string& init_wfc_in,
                             const int& rank_in,
                             const UnitCell& ucell_in,
                             const Structure_Factor& sf_in,
-                            const K_Vectors& kv_in,
-                            const pseudopot_cell_vnl& nlpp_in,
+                            const std::vector<int>& ik2iktot_in,
+                            const int& nkstot_in,
+                            const int& lmaxkb_in,
                             const ModulePW::PW_Basis_K& pw_wfc_in)
-    : ucell(ucell_in), sf(sf_in), nlpp(nlpp_in), kv(kv_in), pw_wfc(pw_wfc_in), rank(rank_in)
+    : ucell(ucell_in), sf(sf_in), lmaxkb(lmaxkb_in), pw_wfc(pw_wfc_in), rank(rank_in), ik2iktot_(ik2iktot_in), nkstot_(nkstot_in)
 {
     this->init_wfc = init_wfc_in;
     this->ks_solver = ks_solver_in;
@@ -35,7 +43,7 @@ PSIPrepare<T, Device>::PSIPrepare(const std::string& init_wfc_in,
 }
 
 template <typename T, typename Device>
-void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
+void PSIPrepare<T, Device>::prepare_init(const int& random_seed, const int istep)
 {
 
     // under restriction of C++11, std::unique_ptr can not be allocate via std::make_unique
@@ -44,28 +52,42 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
     this->psi_initer.reset();
     if (this->init_wfc == "random")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_random<T>());
+        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_random<T>());
         GlobalV::ofs_running << "\n Using RANDOM starting wave functions for all " << PARAM.inp.nbands << " bands\n";
     }
     else if (this->init_wfc == "file")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_file<T>());
+        psi_init_file<T>* file_initer = new psi_init_file<T>();
+        file_initer->prepare_params(
+            PARAM.inp.nspin,
+            PARAM.globalv.global_readin_dir,
+            GlobalV::RANK_IN_POOL,
+            GlobalV::NPROC_IN_POOL,
+            this->nkstot_
+        );
+        this->psi_initer = std::unique_ptr<psi_base<T>>(file_initer);
         GlobalV::ofs_running << "\n Using FILE starting wave functions\n";
     }
     else if ((this->init_wfc.substr(0, 6) == "atomic") && (this->ucell.natomwfc == 0))
     {
-        std::cout << " WARNING: init_wfc = " + this->init_wfc +
-            " requires atomic pseudo wavefunctions(PP_PSWFC),\n but none available."
-            " Automatically switch to random initialization." << std::endl;
+        // The switch to random initialization still happens every ion step,
+        // but the warning is printed only on the first step to avoid
+        // spamming relax/cell-relax output with the same message.
+        if (istep == 0)
+        {
+            std::cout << " WARNING: init_wfc = " + this->init_wfc +
+                " requires atomic pseudo wavefunctions(PP_PSWFC),\n but none available."
+                " Automatically switch to random initialization." << std::endl;
+            GlobalV::ofs_running << "\n WARNING:\n init_wfc = " + this->init_wfc + " requires atomic pseudo wavefunctions(PP_PSWFC), but none available. \n"
+                " Automatically switch to random initialization.\n"
+                " Note: Random starting wavefunctions may slow down convergence.\n"
+                "      For faster convergence, consider using:\n"
+                "      1) A pseudopotential file that includes atomic wavefunctions (with PP_PSWFC), or\n"
+                "      2) Numerical atomic orbitals with 'init_wfc = nao' or 'nao+random' if available.\n"
+                << std::endl;
+        }
         GlobalV::ofs_running << "\n Using RANDOM starting wave functions for all " << PARAM.inp.nbands << " bands\n";
-        GlobalV::ofs_running << "\n WARNING:\n init_wfc = " + this->init_wfc + " requires atomic pseudo wavefunctions(PP_PSWFC), but none available. \n"
-            " Automatically switch to random initialization.\n"
-            " Note: Random starting wavefunctions may slow down convergence.\n"
-            "      For faster convergence, consider using:\n"
-            "      1) A pseudopotential file that includes atomic wavefunctions (with PP_PSWFC), or\n"
-            "      2) Numerical atomic orbitals with 'init_wfc = nao' or 'nao+random' if available.\n"
-            << std::endl;
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_random<T>());
+        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_random<T>());
     }
     else if (this->init_wfc == "atomic"
              || (this->init_wfc == "atomic+random" && this->ucell.natomwfc < PARAM.inp.nbands))
@@ -82,22 +104,56 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
             GlobalV::ofs_running << "\n Using ATOMIC starting wave functions for all " << this->ucell.natomwfc << " atomic orbitals"
                 << " (covers " << PARAM.inp.nbands << " bands)\n";
         }
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_atomic<T>());
+        psi_init_atomic<T>* atomic_initer = new psi_init_atomic<T>();
+        atomic_initer->prepare_params(
+            PARAM.globalv.nqx,
+            PARAM.globalv.dq,
+            PARAM.inp.nspin,
+            PARAM.globalv.domag,
+            PARAM.globalv.domag_z,
+            PARAM.inp.pseudo_mesh,
+            this->lmaxkb
+        );
+        this->psi_initer = std::unique_ptr<psi_base<T>>(atomic_initer);
     }
     else if (this->init_wfc == "atomic+random")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_atomic_random<T>());
+        psi_init_atomic_random<T>* atomic_rand_initer = new psi_init_atomic_random<T>();
+        atomic_rand_initer->prepare_params(
+            PARAM.globalv.nqx,
+            PARAM.globalv.dq,
+            PARAM.inp.nspin,
+            PARAM.globalv.domag,
+            PARAM.globalv.domag_z,
+            PARAM.inp.pseudo_mesh,
+            this->lmaxkb
+        );
+        this->psi_initer = std::unique_ptr<psi_base<T>>(atomic_rand_initer);
         GlobalV::ofs_running << "\n Using ATOMIC+RANDOM starting wave functions with "
                              << this->ucell.natomwfc << " atomic orbitals\n";
     }
     else if (this->init_wfc == "nao")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_nao<T>());
+        psi_init_nao<T>* nao_initer = new psi_init_nao<T>();
+        nao_initer->prepare_params(
+            PARAM.globalv.nqx,
+            PARAM.globalv.dq,
+            PARAM.inp.nspin,
+            PARAM.inp.orbital_dir
+        );
+        this->psi_initer = std::unique_ptr<psi_base<T>>(nao_initer);
         GlobalV::ofs_running << "\n Using NAO starting wave functions\n";
     }
     else if (this->init_wfc == "nao+random")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_nao_random<T>());
+        psi_init_nao_random<T>* nao_rand_initer = new psi_init_nao_random<T>();
+        nao_rand_initer->prepare_params(
+            PARAM.globalv.nqx,
+            PARAM.globalv.dq,
+            PARAM.inp.nspin,
+            PARAM.inp.orbital_dir
+        );
+        this->psi_initer = std::unique_ptr<psi_base<T>>(nao_rand_initer);
         GlobalV::ofs_running << "\n Using NAO+RANDOM starting wave functions\n";
     }
     else
@@ -105,7 +161,8 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
         ModuleBase::WARNING_QUIT("PSIInit::prepare_init", "for new psi initializer, init_wfc type not supported");
     }
 
-    this->psi_initer->initialize(&sf, &pw_wfc, &ucell, &kv, random_seed, &nlpp, rank);
+    this->psi_initer->initialize(&sf, &pw_wfc, &ucell, ik2iktot_, random_seed, rank,
+                                     PARAM.globalv.npol, PARAM.inp.nbands);
     this->psi_initer->tabulate();
 
     ModuleBase::timer::end("PSIPrepare", "prepare_init");
@@ -131,6 +188,11 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
     const int nbands_l = psi->get_nbands();
     const int nbasis = psi->get_nbasis();
     const bool not_equal = (nbands_start != nbands_l);
+#ifdef __MPI
+    const hsolver::diag_comm_info diag_comm(POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL);
+#else
+    const hsolver::diag_comm_info diag_comm(0, 1);
+#endif
 
     Psi<T>* psi_cpu = reinterpret_cast<psi::Psi<T>*>(psi);
     Psi<T, Device>* psi_device = kspw_psi;
@@ -188,20 +250,24 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                     // for diagH_subspace_init, psi_device->get_pointer() and kspw_psi->get_pointer() should be
                     // different
                     hsolver::DiagoIterAssist<T, Device>::diag_subspace_init(p_hamilt,
-                                                                             psi_device->get_pointer(),
-                                                                             nbands_start,
-                                                                             nbasis,
-                                                                             *(kspw_psi),
-                                                                             etatom.data());
+                                                                            psi_device->get_pointer(),
+                                                                            nbands_start,
+                                                                            nbasis,
+                                                                            *(kspw_psi),
+                                                                            etatom.data(),
+                                                                            this->basis_type,
+                                                                            PARAM.inp.calculation,
+                                                                            diag_comm);
                 }
                 else
                 {
                     // for diagH_subspace, psi_device->get_pointer() and kspw_psi->get_pointer() can be the same
                     hsolver::DiagoIterAssist<T, Device>::diag_subspace(p_hamilt,
-                                                                        *psi_device,
-                                                                        *kspw_psi,
-                                                                        etatom.data(),
-                                                                        nbands_start);
+                                                                       *psi_device,
+                                                                       *kspw_psi,
+                                                                       etatom.data(),
+                                                                       diag_comm,
+                                                                       nbands_start);
                 }
             }
             else // dav, bpcg

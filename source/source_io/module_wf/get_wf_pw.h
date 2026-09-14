@@ -1,278 +1,103 @@
 #ifndef GET_WF_PW_H
 #define GET_WF_PW_H
 
+#include "source_base/module_parallel/para_band_output.h"
+#include "source_base/parallel_grid.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/klist.h"
+#include "source_cell/unitcell.h"
+#include "source_psi/psi.h"
+
+#include <complex>
+#include <string>
+#include <vector>
+
 namespace ModuleIO
 {
-template <typename Device>
-void get_wf_pw(const std::vector<int>& out_wfc_norm,
-               const std::vector<int>& out_wfc_re_im,
-               const int nbands,
-               const int nspin,
-               const int nxyz,
-               UnitCell* ucell,
-               const psi::Psi<std::complex<double>, Device>* kspw_psi,
-               const ModulePW::PW_Basis_K* pw_wfc,
-               const Device* ctx,
-               const Parallel_Grid& pgrid,
-               const std::string& global_out_dir,
-               const K_Vectors& kv,
-               const int kpar,
-               const int my_pool)
+/**
+ * @brief Write real-space norms and complex components of selected PW states.
+ *
+ * The caller owns the wavefunction and bases, which must outlive this object.
+ * T follows the solver wavefunction precision; host grid processing uses double.
+ * Scratch buffers are local to each begin() call.
+ */
+template <typename T, typename Device>
+class Get_wf_pw
 {
-    // Get necessary parameters from kv
-    const int nks = kv.get_nks();       // current process pool k-point count
-    const int nkstot = kv.get_nkstot(); // total k-point count
+  public:
+    /** @brief Bind the wavefunction, grids, and global band/spin configuration. */
+    Get_wf_pw(const psi::Psi<T, Device>& psi,
+              const ModulePW::PW_Basis_K& pw_wfc,
+              const ModulePW::PW_Basis& pw_rho,
+              const ModulePW::PW_Basis& pw_rhod,
+              const int nspin,
+              const int global_nbands);
 
-    // Loop over k-parallelism
-    for (int ip = 0; ip < kpar; ++ip)
-    {
-        if (my_pool != ip)
-        {
-            continue;
-        }
+    /**
+     * @brief Write independently selected norm and Re/Im cubes for every k-point.
+     *
+     * A spinor has one combined norm and separate up/down complex components.
+     * Re/Im output includes the Bloch phase; all fields scale as omega^(-1/2).
+     */
+    void begin(const UnitCell& ucell,
+               const Parallel_Grid& pgrid,
+               const K_Vectors& kv,
+               const std::vector<int>& out_wfc_norm,
+               const std::vector<int>& out_wfc_re_im,
+               const std::string& global_out_dir) const;
 
-        // bands_picked is a vector of 0s and 1s, where 1 means the band is picked to output
-        std::vector<int> bands_picked_norm(nbands, 0);
-        std::vector<int> bands_picked_re_im(nbands, 0);
+  private:
+    const psi::Psi<T, Device>& psi_;
+    const ModulePW::PW_Basis_K& pw_wfc_;
+    const ModulePW::PW_Basis& pw_rho_;
+    const ModulePW::PW_Basis& pw_rhod_;
+    const int nspin_;
+    const int global_nbands_;
 
-        // Check if length of out_wfc_norm and out_wfc_re_im is valid
-        if (static_cast<int>(out_wfc_norm.size()) > nbands || static_cast<int>(out_wfc_re_im.size()) > nbands)
-        {
-            ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
-                                     "The number of bands specified by `out_wfc_norm` or `out_wfc_re_im` in the "
-                                     "INPUT file exceeds `nbands`!");
-        }
+    // Defined in the implementation to keep device buffers out of this header.
+    class Workspace;
 
-        // Check if all elements in bands_picked are 0 or 1
-        for (int value: out_wfc_norm)
-        {
-            if (value != 0 && value != 1)
-            {
-                ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
-                                         "The elements of `out_wfc_norm` must be either 0 or 1. "
-                                         "Invalid values found!");
-            }
-        }
-        for (int value: out_wfc_re_im)
-        {
-            if (value != 0 && value != 1)
-            {
-                ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
-                                         "The elements of `out_wfc_re_im` must be either 0 or 1. "
-                                         "Invalid values found!");
-            }
-        }
+    // Validate the binary selector and return a zero-padded global band mask.
+    std::vector<int> select_bands(const std::vector<int>& selection, const std::string& parameter_name) const;
 
-        // Fill bands_picked with values from out_wfc_norm
-        // Remaining bands are already set to 0
-        int length = std::min(static_cast<int>(out_wfc_norm.size()), nbands);
-        for (int i = 0; i < length; ++i)
-        {
-            // out_wfc_norm rely on function parse_expression
-            bands_picked_norm[i] = static_cast<int>(out_wfc_norm[i]);
-        }
-        length = std::min(static_cast<int>(out_wfc_re_im.size()), nbands);
-        for (int i = 0; i < length; ++i)
-        {
-            bands_picked_re_im[i] = static_cast<int>(out_wfc_re_im[i]);
-        }
+    // Transform the owner's band and broadcast each local real-space slab.
+    void transform_band(const int global_band, const int ik, const Parallel::ParaBandOutput& band_output, Workspace* work) const;
+    // The returned data belongs to the selected workspace component and is valid
+    // until that component is transformed again or the workspace is destroyed.
+    const std::complex<double>* transform_wfc(const T* coefficients, const int ik, const int component, Workspace* work) const;
 
-        // Allocate host memory
-        std::vector<std::complex<double>> wfcr_norm(nxyz);
-        std::vector<std::vector<double>> rho_band_norm(nspin, std::vector<double>(nxyz));
+    void write_norm(const int band,
+                    const UnitCell& ucell,
+                    const Parallel_Grid& pgrid,
+                    const K_Vectors& kv,
+                    const std::string& out_dir,
+                    const Parallel::ParaBandOutput& band_output,
+                    Workspace* work) const;
+    void write_complex(const int band,
+                       const UnitCell& ucell,
+                       const Parallel_Grid& pgrid,
+                       const K_Vectors& kv,
+                       const std::string& out_dir,
+                       const Parallel::ParaBandOutput& band_output,
+                       Workspace* work) const;
 
-        // Allocate device memory
-        std::complex<double>* wfcr_norm_device = nullptr;
-        if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
-        {
-            base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfcr_norm_device, nxyz);
-        }
+    void calc_norm(const int spin_index, const double scale, Workspace* work) const;
+    void calc_phase(const int ik, const K_Vectors& kv, std::vector<std::complex<double>>* phase) const;
+    void calc_component(const std::vector<std::complex<double>>& component,
+                        const std::vector<std::complex<double>>& phase,
+                        const double scale,
+                        std::vector<double>* real,
+                        std::vector<double>* imag) const;
 
-        for (int ib = 0; ib < nbands; ++ib)
-        {
-            // Skip the loop iteration if bands_picked[ib] is 0
-            if (!bands_picked_norm[ib])
-            {
-                continue;
-            }
-
-            for (int is = 0; is < nspin; ++is)
-            {
-                std::fill(rho_band_norm[is].begin(), rho_band_norm[is].end(), 0.0);
-            }
-            for (int ik = 0; ik < nks; ++ik)
-            {
-                const int ikstot = kv.ik2iktot[ik];                 // global k-point index
-                const int spin_index = kv.isk[ik];                  // spin index
-                const int k_number = ikstot % (nkstot / nspin) + 1; // k-point number, starting from 1
-
-                kspw_psi->fix_k(ik);
-
-                // FFT on device and copy result back to host
-                if (std::is_same<Device, base_device::DEVICE_CPU>::value)
-                {
-                    pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr_norm.data(), ik);
-                }
-                else
-                {
-                    pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr_norm_device, ik);
-
-                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>()(
-                        wfcr_norm.data(),
-                        wfcr_norm_device,
-                        nxyz);
-                }
-
-                // To ensure the normalization of charge density in multi-k calculation
-                double wg_sum_k = 0.0;
-                if (nspin == 1)
-                {
-                    wg_sum_k = 2.0;
-                }
-                else if (nspin == 2)
-                {
-                    wg_sum_k = 1.0;
-                }
-                else
-                {
-                    ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
-                                             "Real space wavefunction output currently do not support noncollinear "
-                                             "polarized calculation (nspin = 4)!");
-                }
-
-                double w1 = static_cast<double>(wg_sum_k / ucell->omega);
-
-                for (int i = 0; i < nxyz; ++i)
-                {
-                    rho_band_norm[spin_index][i] = std::abs(wfcr_norm[i]) * std::sqrt(w1);
-                }
-
-                std::stringstream ss_file;
-                ss_file << global_out_dir << "wfi" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << ".cube";
-
-                ModuleIO::write_vdata_palgrid(pgrid,
-                                              rho_band_norm[spin_index].data(),
-                                              spin_index,
-                                              nspin,
-                                              0,
-                                              ss_file.str(),
-                                              0.0,
-                                              ucell,
-                                              11,
-                                              1,
-                                              PARAM.globalv.two_fermi,
-                                              true); // reduce_all_pool is true
-            }
-        }
-
-        // Allocate host memory
-        std::vector<std::complex<double>> wfc_re_im(nxyz);
-        std::vector<std::vector<double>> rho_band_re(nspin, std::vector<double>(nxyz));
-        std::vector<std::vector<double>> rho_band_im(nspin, std::vector<double>(nxyz));
-
-        // Allocate device memory
-        std::complex<double>* wfc_re_im_device = nullptr;
-        if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
-        {
-            base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfc_re_im_device, nxyz);
-        }
-
-        for (int ib = 0; ib < nbands; ++ib)
-        {
-            // Skip the loop iteration if bands_picked[ib] is 0
-            if (!bands_picked_re_im[ib])
-            {
-                continue;
-            }
-
-            for (int is = 0; is < nspin; ++is)
-            {
-                std::fill(rho_band_re[is].begin(), rho_band_re[is].end(), 0.0);
-                std::fill(rho_band_im[is].begin(), rho_band_im[is].end(), 0.0);
-            }
-            for (int ik = 0; ik < nks; ++ik)
-            {
-                const int ikstot = kv.ik2iktot[ik];                 // global k-point index
-                const int spin_index = kv.isk[ik];                  // spin index
-                const int k_number = ikstot % (nkstot / nspin) + 1; // k-point number, starting from 1
-
-                kspw_psi->fix_k(ik);
-
-                // FFT on device and copy result back to host
-                if (std::is_same<Device, base_device::DEVICE_CPU>::value)
-                {
-                    pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfc_re_im.data(), ik);
-                }
-                else
-                {
-                    pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfc_re_im_device, ik);
-
-                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>()(
-                        wfc_re_im.data(),
-                        wfc_re_im_device,
-                        nxyz);
-                }
-
-                // To ensure the normalization of charge density in multi-k calculation
-                double wg_sum_k = 0.0;
-                if (nspin == 1)
-                {
-                    wg_sum_k = 2.0;
-                }
-                else if (nspin == 2)
-                {
-                    wg_sum_k = 1.0;
-                }
-                else
-                {
-                    ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
-                                             "Real space wavefunction output currently do not support noncollinear "
-                                             "polarized calculation (nspin = 4)!");
-                }
-
-                double w1 = static_cast<double>(wg_sum_k / ucell->omega);
-
-                for (int i = 0; i < nxyz; ++i)
-                {
-                    rho_band_re[spin_index][i] = std::real(wfc_re_im[i]) * std::sqrt(w1);
-                    rho_band_im[spin_index][i] = std::imag(wfc_re_im[i]) * std::sqrt(w1);
-                }
-
-                std::stringstream ss_real;
-                ss_real << global_out_dir << "wfi" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << "re.cube";
-
-                ModuleIO::write_vdata_palgrid(pgrid,
-                                              rho_band_re[spin_index].data(),
-                                              spin_index,
-                                              nspin,
-                                              0,
-                                              ss_real.str(),
-                                              0.0,
-                                              ucell,
-                                              11,
-                                              1,
-                                              PARAM.globalv.two_fermi,
-                                              true); // reduce_all_pool is true
-
-                std::stringstream ss_imag;
-                ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << "im.cube";
-
-                ModuleIO::write_vdata_palgrid(pgrid,
-                                              rho_band_im[spin_index].data(),
-                                              spin_index,
-                                              nspin,
-                                              0,
-                                              ss_imag.str(),
-                                              0.0,
-                                              ucell,
-                                              11,
-                                              1,
-                                              PARAM.globalv.two_fermi,
-                                              true); // reduce_all_pool is true
-            }
-        }
-    }
-}
+    void write_cube(const int band,
+                    const int component,
+                    const int k_number,
+                    const std::string& part,
+                    const UnitCell& ucell,
+                    const Parallel_Grid& pgrid,
+                    const std::string& out_dir,
+                    const std::vector<double>& values) const;
+};
 } // namespace ModuleIO
 
 #endif // GET_WF_PW_H

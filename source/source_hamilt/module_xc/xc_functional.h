@@ -5,11 +5,11 @@
 #ifndef XC_FUNCTIONAL_H
 #define XC_FUNCTIONAL_H
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include <xc.h>
 #else
 #include "xc_ids.h"
-#endif	// ifdef USE_LIBXC
+#endif	// ifdef __LIBXC
 #include "source_base/macros.h"
 #include "source_base/global_function.h"
 #include "source_base/vector3.h"
@@ -19,6 +19,27 @@
 #include "source_cell/unitcell.h"
 
 #include <map> // added by jghan, 2024-10-10
+#include <vector>
+
+
+/**
+ * @brief LibXC runtime settings, injected once at the ESolver boundary.
+ *
+ * Unlike SurchemParameters these initializers are not a copy of any physical INPUT
+ * default: 0.0 and the empty vectors are the neutral "nothing requested" state, and
+ * "default" is the same pre-parse sentinel Input_para uses, which ReadInput resolves
+ * to a real number before it ever reaches here. Keeping it deliberately unparseable
+ * means a missing set_runtime_parameters() fails loudly in std::stod rather than
+ * silently substituting a plausible-looking exchange fraction.
+ */
+struct XCFunctionalParameters
+{
+    double xc_temperature = 0.0;
+    std::vector<std::string> exx_fock_alpha = {"default"};
+    std::vector<std::string> exx_erfc_alpha = {"default"};
+    std::vector<double> xc_exch_ext;
+    std::vector<double> xc_corr_ext;
+};
 
 class XC_Functional
 {
@@ -84,6 +105,13 @@ class XC_Functional
 
     static void set_hse_omega(const double omega_in);
 
+    static void set_runtime_parameters(const XCFunctionalParameters& parameters);
+
+    static const XCFunctionalParameters& get_runtime_parameters()
+    {
+        return runtime_parameters;
+    };
+
     static double get_hse_omega()
     {
         return hse_omega;
@@ -92,6 +120,11 @@ class XC_Functional
     static bool get_ked_flag()
     {
         return ked_flag;
+    };
+
+    static bool get_need_laplacian()
+    {
+        return need_laplacian;
     };
 
     /// Usually in exx caculation, the first SCF loop should be converged with PBE
@@ -104,13 +137,15 @@ class XC_Functional
     static std::vector<int> func_id; // libxc id of functional
     static int func_type; //0:none, 1:lda, 2:gga, 3:mgga, 4:hybrid lda/gga, 5:hybrid mgga
     static bool ked_flag; // whether the functional has kinetic energy density
+    static bool need_laplacian; // whether any functional needs Laplacian of density
     static bool use_libxc;
-
     // exx_hybrid_alpha for mixing exx in hybrid functional:
     static double hybrid_alpha;
 
     // hse_omega for HSE functional:
     static double hse_omega;
+
+    static XCFunctionalParameters runtime_parameters;
 
     // added by jghan, 2024-07-07
     // as a scaling factor for different xc-functionals
@@ -200,17 +235,19 @@ class XC_Functional
         double &v2c);
 
 //-------------------
-//  xc_grad.cpp
+//  xc_grad*.cpp
 //-------------------
 
-// This file contains subroutines realted to gradient calculations
-// it contains 5 subroutines:
-// 1. gradcorr, which calculates gradient correction
-// 2. grad_wfc, which calculates gradient of wavefunction
+// The gradient correction is a pipeline: XC_Functional::gradcorr is the
+// public entry point declared below, and its three internal stage
+// functions (gradcorr_prepare_rho / gradcorr_xc_kernel /
+// gradcorr_assemble_vxc) are declared in xc_grad_internal.h.
+// This file group also provides:
+// 1. grad_wfc, which calculates gradient of wavefunction
 //      it is used in stress_func_mgga.cpp
-// 3. grad_rho, which calculates gradient of density
-// 4. grad_dot, which calculates divergence of something
-// 5. noncolin_rho, which diagonalizes the spin density matrix
+// 2. grad_rho, which calculates gradient of density
+// 3. grad_dot, which calculates divergence of something
+// 4. noncolin_rho, which diagonalizes the spin density matrix
 //  and gives the spin up and spin down components of the charge.
 
     static void gradcorr(
@@ -247,6 +284,12 @@ class XC_Functional
     static void grad_dot(
         const ModuleBase::Vector3<double>* h,
         double* dh,
+        const ModulePW::PW_Basis* rho_basis,
+        const double tpiba);
+
+    static void laplacian_rho(
+        const std::complex<double>* rhog,
+        double* lapl,
         const ModulePW::PW_Basis* rho_basis,
         const double tpiba);
 

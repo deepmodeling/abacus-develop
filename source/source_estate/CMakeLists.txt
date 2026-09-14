@@ -1,18 +1,20 @@
 list(APPEND objects
     elecstate.cpp
     init_scf.cpp
-    elecstate_energy_terms.cpp
+    estate_e_terms.cpp
     elecstate_energy.cpp
     elecstate_exx.cpp
     elecstate_print.cpp
     elecstate_tools.cpp
     elecstate_pw.cpp
+    uspp_density.cpp
     elecstate_pw_sdft.cpp
     elecstate_pw_cal_tau.cpp
     makov_payne.cpp
     module_pot/gatefield.cpp
     module_pot/efield.cpp
-    module_pot/H_Hartree_pw.cpp
+    module_pot/h_hartree_pw.cpp
+    module_pot/h_tddft_pw.cpp
     module_pot/pot_xc.cpp
     module_pot/pot_local.cpp
     module_pot/potential_new.cpp
@@ -22,27 +24,31 @@ list(APPEND objects
     module_pot/pot_sep.cpp
     module_pot/pot_xc_fdm.cpp
     module_pot/pot_cosikr.cpp
+    module_pot/td_field.cpp
+    module_pot/td_field_profiles.cpp
+    module_pot/td_field_manager.cpp
     module_charge/chgmixing.cpp
-    module_charge/gint_precision_controller.cpp
+    module_charge/gint_prec_ctrl.cpp
     module_charge/charge.cpp
     module_charge/charge_init.cpp
     module_charge/charge_mpi.cpp
     module_charge/charge_extra.cpp
     module_charge/charge_mixing.cpp
     module_charge/charge_mixing_dmr.cpp
-    module_charge/charge_mixing_residual.cpp
-    module_charge/charge_mixing_preconditioner.cpp
+    module_charge/mix_resid.cpp
+    module_charge/mix_precond.cpp
     module_charge/charge_mixing_rho.cpp
     module_charge/charge_mixing_uspp.cpp
-    module_charge/symmetry_rho.cpp
-    module_charge/symmetry_rhog.cpp
+    module_charge/symm_rho.cpp
+    module_charge/symm_rhog.cpp
+    rhog_io.cpp
+    write_elecstat_pot.cpp
+    write_init.cpp
     fp_energy.cpp
     occupy.cpp
-    cal_ux.cpp
-    read_orb.cpp
-    cal_nelec_nband.cpp
-    read_pseudo.cpp
-    cal_wfc.cpp
+    occ_matrix.cpp
+    occ_mixer.cpp
+    param_update.cpp
     setup_estate_pw.cpp
     update_pot.cpp
 )
@@ -50,7 +56,6 @@ list(APPEND objects
 if(ENABLE_LCAO)
   list(APPEND objects
       elecstate_lcao.cpp
-      module_pot/H_TDDFT_pw.cpp
       module_dm/init_dm.cpp
       module_dm/density_matrix.cpp
       module_dm/density_matrix_io.cpp
@@ -72,7 +77,6 @@ endif()
 if(BUILD_TESTING)
   if(ENABLE_MPI)
     add_subdirectory(test)
-    add_subdirectory(test_mpi)
   endif()
 endif()
 

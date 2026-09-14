@@ -286,7 +286,7 @@ void Pseudopot_upf::read_pseudo_local(std::ifstream& ifs, Atom_pseudo& pp)
 
 void Pseudopot_upf::read_pseudo_nl(std::ifstream& ifs, Atom_pseudo& pp)
 {
-    //	int nb, mb, n, ir, idum, ldum, lp, i, ikk;
+    //    int nb, mb, n, ir, idum, ldum, lp, i, ikk;
     int nb = 0;
     int mb = 0;
     int ir = 0;

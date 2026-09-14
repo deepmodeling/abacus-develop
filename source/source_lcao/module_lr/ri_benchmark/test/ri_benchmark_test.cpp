@@ -9,8 +9,7 @@ pseudo::pseudo() {}
 pseudo::~pseudo() {}
 Atom_pseudo::Atom_pseudo() {}
 Atom_pseudo::~Atom_pseudo() {}
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
+
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
 Atom::Atom() { this->nw = 2; }

@@ -3,7 +3,7 @@
 // DATE :   2024-09-12
 //======================
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 
 #include "write_libxc_r.h"
 #include "source_base/parallel_comm.h"
@@ -498,4 +498,4 @@ void ModuleIO::write_cube_core(
 
 #endif  // #ifdef __MPI
 
-#endif // USE_LIBXC
+#endif // __LIBXC

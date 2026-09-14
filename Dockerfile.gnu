@@ -11,10 +11,12 @@ FROM ubuntu:22.04
 RUN apt update && apt install -y --no-install-recommends \
     libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev \
     libxc-dev libgtest-dev libgmock-dev libbenchmark-dev python3-numpy \
-    bc cmake git g++ make time sudo unzip vim wget gfortran
+    libmetis-dev libparmetis-dev libsuperlu-dist-dev \
+    bc cmake git g++ make time sudo unzip vim wget gfortran ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
     # If you wish to use the LLVM compiler, replace 'g++' above with 'clang libomp-dev'.
 
-ENV GIT_SSL_NO_VERIFY=true TERM=xterm-256color \
+ENV TERM=xterm-256color \
     OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 OMPI_MCA_btl_vader_single_copy_mechanism=none
     # The above environment variables are for using OpenMPI in Docker.
 
@@ -23,10 +25,30 @@ RUN git clone https://github.com/llohse/libnpy.git && \
     rm -r libnpy
 
 RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.0%2Bcpu.zip \
-        --no-check-certificate --quiet -O libtorch.zip && \
+        --quiet -O libtorch.zip && \
     unzip -q libtorch.zip -d /opt && rm libtorch.zip
 
+# RapidJSON
+RUN cd /tmp && \
+    wget --quiet https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a -O rapidjson-24b5e7a.tar.gz && \
+    tar -xzf rapidjson-24b5e7a.tar.gz && cd rapidjson-24b5e7a && \
+    cmake -B build -DRAPIDJSON_BUILD_DOC=OFF -DRAPIDJSON_BUILD_EXAMPLES=OFF -DRAPIDJSON_BUILD_TESTS=OFF && \
+    cmake --build build --target install && \
+    cd /tmp && rm -r rapidjson-24b5e7a rapidjson-24b5e7a.tar.gz
+
 ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake
+
+# PEXSI
+ARG PEXSI_VERSION=2.0.0
+RUN wget --quiet https://github.com/HPC-AI-Team/pexsi/archive/refs/tags/v${PEXSI_VERSION}.tar.gz \
+        -O /tmp/pexsi.tar.gz && \
+    mkdir -p /tmp/pexsi && \
+    tar -xzf /tmp/pexsi.tar.gz -C /tmp/pexsi --strip-components=1 && \
+    cmake -S /tmp/pexsi -B /tmp/pexsi/build \
+        -DPEXSI_ENABLE_OPENMP=ON \
+        -DSuperLU_DIST_INCLUDE_DIR=/usr/include/superlu-dist && \
+    cmake --build /tmp/pexsi/build --target install -j $(nproc) && \
+    rm -rf /tmp/pexsi
 
 ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
     # This will fetch the latest commit info, and store in docker building cache.
@@ -34,8 +56,8 @@ ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/deve
 
 RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cd abacus-develop && \
-    cmake -B build -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_RAPIDJSON=ON && \
-    cmake --build build -j`nproc` && \
+    cmake -B build -DENABLE_MLALGO=ON -DENABLE_PEXSI=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_RAPIDJSON=ON && \
+    cmake --build build -j $(nproc) && \
     cmake --install build && \
     rm -rf build
     #&& rm -rf abacus-develop

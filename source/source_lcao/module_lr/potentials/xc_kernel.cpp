@@ -7,7 +7,7 @@
 #include <set>
 #include <chrono>
 #include "source_io/module_output/cube_io.h"
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include <xc.h>
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #endif
@@ -48,7 +48,7 @@ LR::KernelXC::KernelXC(const ModulePW::PW_Basis& rho_basis,
         return;
     }
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
     if (lr_init_xc_kernel[0] == "from_charge_file")
     {
         assert(lr_init_xc_kernel.size() >= 2);
@@ -111,7 +111,7 @@ inline void cutoff_grid_data_spin2(std::vector<Telement>& func, const std::vecto
     }
 }
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const double& tpiba, const double* const* const rho_gs, const double* const rho_core)
 {
     ModuleBase::TITLE("XC_Functional", "f_xc_libxc");

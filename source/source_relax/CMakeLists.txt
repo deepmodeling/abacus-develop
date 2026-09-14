@@ -2,6 +2,12 @@ add_library(
     relax
     OBJECT
     relax_data.cpp
+    socket_ipi.cpp
+    socket_frame_utils.cpp
+    socket_frame.cpp
+    socket_utils.cpp
+    socket_handlers.cpp
+    socket_driver.cpp
     cg_base.cpp
     relax_driver.cpp
     relax_sync.cpp
@@ -17,7 +23,7 @@ add_library(
     ions_move_methods.cpp
     lattice_change_basic.cpp
     lattice_change_cg.cpp
-    lattice_change_methods.cpp
+    lat_change_method.cpp
     matrix_methods.cpp
 )
 

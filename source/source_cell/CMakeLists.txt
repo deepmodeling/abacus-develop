@@ -5,6 +5,7 @@ add_subdirectory(module_neighlist)
 add_library(
     cell
     OBJECT
+    basecell.cpp
     atom_pseudo.cpp
     atom_spec.cpp
     pseudo.cpp
@@ -14,13 +15,18 @@ add_library(
     read_pp_upf201.cpp
     read_pp_blps.cpp
     read_pp_vwr.cpp
+    mdcell_reader.cpp
+    mdcell.cpp
     unitcell.cpp
     read_atoms.cpp
     read_atoms_helper.cpp
-    setup_nonlocal.cpp
+    read_orb.cpp
     klist.cpp
+    klist_io.cpp
+    reciprocal_grid.cpp
     parallel_kpoints.cpp
     cell_index.cpp
+    cell_tools.cpp
     check_atomic_stru.cpp
     update_cell.cpp
     magnetism.cpp
@@ -28,11 +34,16 @@ add_library(
     read_stru.cpp
     print_cell.cpp
     read_atom_species.cpp
-    k_vector_utils.cpp
     sep.cpp
     sep_cell.cpp
     qlist.cpp
     qlist.h
+    cal_nelec_nband.cpp
+    read_pp_ucell.cpp
+    cal_wfc.cpp
+    cal_ux.cpp
+    cif_io.cpp
+    ucell_io.cpp
 )
 
 if(ENABLE_COVERAGE)
@@ -40,8 +51,8 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
+  add_subdirectory(test)
   if(ENABLE_MPI)
-    add_subdirectory(test)
     add_subdirectory(test_pw)
   endif()
 endif()

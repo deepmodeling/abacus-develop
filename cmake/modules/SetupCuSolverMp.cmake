@@ -5,8 +5,6 @@
 include_guard(GLOBAL)
 
 function(abacus_setup_cusolvermp)
-  abacus_add_feature_definitions(__CUSOLVERMP)
-
   # Find cuSOLVERMp first, then decide communicator backend.
   find_library(CUSOLVERMP_LIBRARY NAMES cusolverMp
       HINTS ${CAL_CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
@@ -44,12 +42,19 @@ function(abacus_setup_cusolvermp)
     endif()
   endif()
 
-  # Check minimum version requirement (>= 0.4.0)
-  if(CUSOLVERMP_VERSION_STR AND CUSOLVERMP_VERSION_STR VERSION_LESS "0.4.0")
+  # Check minimum version requirement (>= 0.9.0)
+  if(NOT CUSOLVERMP_VERSION_STR)
+    message(FATAL_ERROR
+      "Unable to detect the cuSOLVERMp version from ${CUSOLVERMP_VERSION_HEADER}. "
+      "ABACUS requires cuSOLVERMp >= 0.9.0."
+    )
+  elseif(CUSOLVERMP_VERSION_STR VERSION_LESS "0.9.0")
     message(FATAL_ERROR
       "cuSOLVERMp version ${CUSOLVERMP_VERSION_STR} is too old. "
-      "ABACUS requires cuSOLVERMp >= 0.4.0 (NVIDIA HPC SDK >= 23.5). "
-      "Please upgrade your NVIDIA HPC SDK installation."
+      "NVIDIA documents an STEDC defect in cuSOLVERMp 0.4.2 through 0.8.0 that affects "
+      "non-power-of-two block sizes and certain 2D process grids; Syevd and "
+      "Sygvd use STEDC internally. "
+      "ABACUS requires cuSOLVERMp >= 0.9.0. Please upgrade cuSOLVERMp."
     )
   endif()
 
@@ -75,8 +80,6 @@ function(abacus_setup_cusolvermp)
   # - _use_cal=ON  -> cal communicator backend
   # - _use_cal=OFF -> NCCL communicator backend
   if(_use_cal)
-    abacus_add_feature_definitions(__USE_CAL)
-
     find_library(CAL_LIBRARY NAMES cal
         HINTS ${CAL_CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
         PATH_SUFFIXES lib lib64 math_libs/lib64)

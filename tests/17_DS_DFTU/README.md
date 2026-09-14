@@ -175,9 +175,9 @@ The following test cases are disabled in `CASES_CPU.txt` (commented out with `#`
 
 - 09 (PW DFT+U + noncollinear): Only supports **2-process MPI** execution, `result.ref` reference files provided
 - The following test cases set `kpar=2` in INPUT and require at least **2 MPI processes** to run: 11, 12, 14, 15, 16, 18, 19, 21, 37, 39, 41, 43, 45
-- 62 (LCAO_DFTU_NSCF_Band_XY): Single-thread and multi-thread results are inconsistent; investigation shows HR, HK, and SK are consistent across threads, but eigenvalues from genelpa differ; switching to scalapack_gvx produces consistent results across thread counts. Note: this test is named "NSCF" but actually runs with `calculation = scf` (`scf_nmax = 1`), using pre-shipped charge density and onsite.dm files as initial guess
+- 62 (LCAO_DFTU_NSCF_Band_XY): Single-thread and multi-thread results are inconsistent; investigation shows HR, HK, and SK are consistent across threads, but eigenvalues from genelpa differ; switching to scalapack_gvx produces consistent results across thread counts. Note: this test is named "NSCF" but actually runs with `calculation = scf` (`scf_nmax = 1`), using pre-shipped charge density and dm_onsite.txt files as initial guess
 - All NSCF tests (55, 60, 61, 62, 63, 64) have been **converted to SCF+NSCF workflow**:
-  - Pre-converged `autotest-CHARGE-DENSITY.restart` and `onsite.dm` files have been removed
+  - Pre-converged `autotest-CHARGE-DENSITY.restart` and `dm_onsite.txt` files have been removed
   - Each test directory contains a `scf/` subdirectory with SCF input files
   - Run with: `bash ../run_scf_nscf.sh <abacus_path> [mpi_np]`
   - These tests are **disabled in CI** (commented out in CASES_CPU.txt)

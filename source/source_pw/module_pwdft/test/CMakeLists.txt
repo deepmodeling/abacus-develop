@@ -29,9 +29,42 @@ AddTest(
 )
 
 AddTest(
+	TARGET MODULE_PW_dftu_base_test
+	LIBS parameter base device
+	SOURCES dftu_base_test.cpp
+	../dftu_base.cpp
+	../dftu_base_io.cpp
+	../yukawa_screening.cpp
+	../../../source_estate/occ_matrix.cpp
+	../../../source_estate/occ_mixer.cpp
+	../../../source_cell/unitcell.cpp
+	../../../source_cell/atom_spec.cpp
+	../../../source_cell/atom_pseudo.cpp
+	../../../source_cell/pseudo.cpp
+	../../../source_cell/magnetism.cpp
+	../../../source_cell/sep.cpp
+	../../../source_cell/sep_cell.cpp
+	../../../source_cell/read_atom_species.cpp
+	../../../source_cell/read_atoms.cpp
+	../../../source_cell/read_atoms_helper.cpp
+	../../../source_cell/cell_tools.cpp
+	../../../source_cell/print_cell.cpp
+	../../../source_cell/read_orb.cpp
+	../../../source_cell/read_stru.cpp
+	../../../source_cell/bcast_cell.cpp
+)
+
+AddTest(
+	TARGET MODULE_PW_test_dftu_pw_tools
+	LIBS parameter base device
+	SOURCES test_dftu_pw_tools.cpp
+	../dftu_pw_tools.cpp
+)
+
+AddTest(
 	TARGET MODULE_PW_structure_factor_test
 	LIBS parameter base device planewave
-	SOURCES structure_factor_test.cpp ../structure_factor.cpp ../parallel_grid.cpp
+	SOURCES structure_factor_test.cpp ../stru_fac.cpp
 	../../../source_cell/unitcell.cpp
 
 	../../../source_cell/update_cell.cpp
@@ -44,6 +77,7 @@ AddTest(
 	../../../source_cell/read_atom_species.cpp
 	../../../source_cell/read_atoms.cpp
 	../../../source_cell/read_atoms_helper.cpp
+	../../../source_cell/cell_tools.cpp
 	../../../source_cell/read_pp.cpp
 	../../../source_cell/read_pp_complete.cpp
 	../../../source_cell/read_pp_upf100.cpp
@@ -52,8 +86,8 @@ AddTest(
 	../../../source_cell/read_pp_blps.cpp
   ../../../source_cell/sep.cpp
   ../../../source_cell/sep_cell.cpp
-	../../../source_estate/read_pseudo.cpp
-	../../../source_estate/cal_wfc.cpp
-	../../../source_estate/cal_nelec_nband.cpp
-	../../../source_estate/read_orb.cpp
+	../../../source_cell/read_pp_ucell.cpp
+	../../../source_cell/cal_wfc.cpp
+	../../../source_cell/cal_nelec_nband.cpp
+	../../../source_cell/read_orb.cpp
 )

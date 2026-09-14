@@ -7,7 +7,6 @@
 #include "../surchem.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_basis/module_pw/pw_basis.h"
 
 #include "gmock/gmock.h"
@@ -27,15 +26,23 @@
  *     - calculate the relative permittivity
  */
 
-namespace GlobalC
-{
-ModulePW::PW_Basis* rhopw;
-}
-
 class cal_epsilon_test : public testing::Test
 {
   protected:
     surchem solvent_model;
+
+    // The solvent model carries no built-in defaults, so these tests state the
+    // values they were written against (the INPUT defaults for eb_k / tau /
+    // sigma_k / nc_k) instead of depending on SurchemParameters' initializers.
+    void SetUp() override
+    {
+        SurchemParameters parameters;
+        parameters.eb_k = 80.0;
+        parameters.tau = 1.0798e-05;
+        parameters.sigma_k = 0.6;
+        parameters.nc_k = 0.00037;
+        solvent_model.set_parameters(parameters);
+    }
 };
 
 TEST_F(cal_epsilon_test, cal_epsilon)
@@ -62,8 +69,6 @@ TEST_F(cal_epsilon_test, cal_epsilon)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
@@ -102,6 +107,15 @@ TEST_F(cal_epsilon_test, cal_epsilon)
     EXPECT_EQ(PS_TOTN_real[0], 0.274231);
     EXPECT_EQ(epsilon[0], 1);
     EXPECT_NEAR(epsilon[12], 1.00005, doublethreshold);
+
+    SurchemParameters parameters;
+    parameters.eb_k = 40.0;
+    parameters.sigma_k = 0.8;
+    parameters.nc_k = 0.001;
+    solvent_model.set_parameters(parameters);
+    solvent_model.cal_epsilon(&pwtest, PS_TOTN_real, epsilon, epsilon0);
+    const double shape = erfc(log(PS_TOTN_real[12] / parameters.nc_k) / sqrt(2.0) / parameters.sigma_k) / 2;
+    EXPECT_NEAR(epsilon[12], 1.0 + (parameters.eb_k - 1.0) * shape, doublethreshold);
     // EXPECT_EQ(epsilon[19], 43.1009);
     // EXPECT_EQ(epsilon[26], 78.746);
     delete[] PS_TOTN_real;
@@ -113,8 +127,6 @@ int main(int argc, char** argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 
     testing::InitGoogleTest(&argc, argv);

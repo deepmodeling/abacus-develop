@@ -72,27 +72,19 @@ class UcellTestPrepare
         // basic info
         this->ntype = this->elements.size();
         static UnitCell ucell;
-        ucell.setup(this->latname, this->ntype, this->lmaxmax, this->init_vel, this->fixed_axes);
+        ucell.setup_from_input(this->latname, this->ntype, this->lmaxmax, this->init_vel, this->fixed_axes);
         
-        delete[] ucell.magnet.start_mag; // mag set here
-        
-        ucell.atom_label.resize(ucell.ntype);
-		ucell.atom_mass.resize(ucell.ntype);
-		ucell.pseudo_fn.resize(ucell.ntype);
+        ucell.pseudo_fn.resize(ucell.ntype);
 		ucell.pseudo_type.resize(ucell.ntype);
         ucell.orbital_fn.resize(ucell.ntype);
-        ucell.magnet.start_mag = new double[ucell.ntype]; // mag set here
         ucell.magnet.ux_[0] = 0.0;                                  // ux_ set here
         ucell.magnet.ux_[1] = 0.0;
         ucell.magnet.ux_[2] = 0.0;
         for (int it = 0; it < ucell.ntype; ++it)
         {
-            ucell.atom_label[it] = this->elements[it];
-            ucell.atom_mass[it] = this->atomic_mass[it];
             ucell.pseudo_fn[it] = this->pp_files[it];
             ucell.pseudo_type[it] = this->pp_types[it];
             ucell.orbital_fn[it] = this->orb_files[it];
-            ucell.magnet.start_mag[it] = 0.0; // mag set here
         }
         // lattice info
         ucell.lat0 = this->lat0;
@@ -152,7 +144,7 @@ class UcellTestPrepare
             ucell.atoms[it].angle2.resize(ucell.atoms[it].na);
             ucell.atoms[it].m_loc_.resize(ucell.atoms[it].na);
             ucell.atoms[it].mbl.resize(ucell.atoms[it].na);
-            ucell.atoms[it].mass = ucell.atom_mass[it]; // mass set here
+            ucell.atoms[it].mass = this->atomic_mass[it];
             for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
             {
                 if (ucell.Coordinate == "Direct")

@@ -1,9 +1,8 @@
 #include "source_base/mathzone.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_global.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_base/global_variable.h"
+
 #include "source_cell/parallel_kpoints.h"
 
 #include "gmock/gmock.h"
@@ -11,21 +10,15 @@
 #include <iostream>
 #include <streambuf>
 #define private public
-#include "../klist.h"
-#include "source_basis/module_ao/ORB_gaunt_table.h"
+#include "source_cell/klist.h"
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
 #include "source_cell/parallel_kpoints.h"
 #include "source_cell/pseudo.h"
-#include "source_cell/setup_nonlocal.h"
+
 #include "source_cell/unitcell.h"
 #include "source_cell/magnetism.h"
-#include "source_pw/module_pwdft/vl_pw.h"
-#include "source_pw/module_pwdft/vnl_pw.h"
-#include "source_pw/module_pwdft/parallel_grid.h"
-#include "source_io/module_unk/berryphase.h"
 #undef private
-bool berryphase::berry_phase_flag = false;
 
 pseudo::pseudo()
 {
@@ -45,12 +38,9 @@ Atom_pseudo::Atom_pseudo()
 Atom_pseudo::~Atom_pseudo()
 {
 }
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
+
+SepPot::SepPot(){} 
+SepPot::~SepPot(){}
 UnitCell::UnitCell()
 {
 }
@@ -60,37 +50,11 @@ UnitCell::~UnitCell()
 Magnetism::Magnetism()
 {
 }
+Sep_Cell::Sep_Cell() noexcept {}
+Sep_Cell::~Sep_Cell() noexcept {}
 Magnetism::~Magnetism()
 {
 }
-ORB_gaunt_table::ORB_gaunt_table()
-{
-}
-ORB_gaunt_table::~ORB_gaunt_table()
-{
-}
-pseudopot_cell_vl::pseudopot_cell_vl()
-{
-}
-pseudopot_cell_vl::~pseudopot_cell_vl()
-{
-}
-pseudopot_cell_vnl::pseudopot_cell_vnl()
-{
-}
-pseudopot_cell_vnl::~pseudopot_cell_vnl()
-{
-}
-Soc::~Soc()
-{
-}
-Fcoef::~Fcoef()
-{
-}
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
-Sep_Cell::Sep_Cell() noexcept {}
-Sep_Cell::~Sep_Cell() noexcept {}
 
 
 /************************************************
@@ -111,7 +75,7 @@ Sep_Cell::~Sep_Cell() noexcept {}
  *       than nkstot in set_both_kvec_after_vc
  */
 
-// abbriviated from module_symmetry/test/symmetry_test.cpp
+// abbriviated from module_symmetry/test/symm_test.cpp
 struct atomtype_
 {
     std::string atomname;
@@ -215,19 +179,20 @@ TEST_F(KlistParaTest, Set)
     if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_running.open("tmp_klist_5");
 }
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
+    const int cal_symm_repr[2] = {0, 6};
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
     // read KPT
     std::string k_file = "./support/KPT1";
-    // set klist
-    kv->nspin = 1;
-    PARAM.input.nspin = 1;
+    // note: do NOT pre-set kv->spin_mult here; set() takes the physical
+    // nspin as input and performs the 4->1 mapping internally.
     if (GlobalV::NPROC == 4)
     {
         GlobalV::KPAR = 2;
     }
+    const int bndpar = 1;
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
-                                PARAM.input.bndpar,
+                                bndpar,
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_BNDGROUP,
                                 GlobalV::RANK_IN_BPGROUP,
@@ -236,10 +201,16 @@ TEST_F(KlistParaTest, Set)
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
     ModuleSymmetry::Symmetry::symm_flag = 1;
-    kv->set(ucell,symm, k_file, kv->nspin, ucell.G, ucell.latvec,  GlobalV::ofs_running);
+    const bool use_ibz = true;
+    const std::string global_out_dir = "./";
+    const bool gamma_only_local = false;
+    const double kspacing[3] = {0.0, 0.0, 0.0};
+    const std::string kmesh_type = "gamma";
+    const double koffset[3] = {0.0, 0.0, 0.0};
+    kv->set(ucell, symm, k_file, /*nspin_in*/ 1, ucell.G, ucell.latvec, GlobalV::ofs_running, GlobalV::ofs_warning, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
     EXPECT_EQ(kv->get_nkstot(), 35);
-    EXPECT_EQ(kv->get_nkstot_full(), 512);
-    EXPECT_GT(kv->get_nkstot_full(), kv->get_nkstot());
+    EXPECT_EQ(kv->get_nkstot_nospin(), 512);
+    EXPECT_GT(kv->get_nkstot_nospin(), kv->get_nkstot());
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     if (GlobalV::NPROC == 4)
@@ -332,19 +303,20 @@ TEST_F(KlistParaTest, SetAfterVC)
     if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_running.open("tmp_klist_6");
 }
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
+    const int cal_symm_repr[2] = {0, 6};
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
     // read KPT
     std::string k_file = "./support/KPT1";
-    // set klist
-    kv->nspin = 1;
-    PARAM.input.nspin = 1;
+    // note: do NOT pre-set kv->spin_mult here; set() takes the physical
+    // nspin as input and performs the 4->1 mapping internally.
     if (GlobalV::NPROC == 4)
     {
         GlobalV::KPAR = 1;
     }
+    const int bndpar = 1;
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
-                                PARAM.input.bndpar,
+                                bndpar,
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_BNDGROUP,
                                 GlobalV::RANK_IN_BPGROUP,
@@ -353,7 +325,13 @@ TEST_F(KlistParaTest, SetAfterVC)
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
     ModuleSymmetry::Symmetry::symm_flag = 1;
-    kv->set(ucell,symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    const bool use_ibz = true;
+    const std::string global_out_dir = "./";
+    const bool gamma_only_local = false;
+    const double kspacing[3] = {0.0, 0.0, 0.0};
+    const std::string kmesh_type = "gamma";
+    const double koffset[3] = {0.0, 0.0, 0.0};
+    kv->set(ucell, symm, k_file, /*nspin_in*/ 1, ucell.G, ucell.latvec, GlobalV::ofs_running, GlobalV::ofs_warning, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
@@ -374,8 +352,7 @@ TEST_F(KlistParaTest, SetAfterVC)
     }
     // call set_after_vc here
     kv->kc_done = false;
-//    kv->set_after_vc(kv->nspin, ucell.G, ucell.latvec);
-    KVectorUtils::set_after_vc(*kv, kv->nspin, ucell.G);
+    kv->set_after_vc(ucell.G, GlobalV::ofs_running);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     // clear

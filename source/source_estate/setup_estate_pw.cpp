@@ -107,6 +107,7 @@ void setup_estate_pw_impl(
     }
 
     locpp.init_vloc(ucell, pw_rhod);
+    locpp.print_vloc(ucell, pw_rhod, inp.out_element_info, PARAM.globalv.global_out_dir);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     ppcell.init(ucell, &sf, pw_wfc);

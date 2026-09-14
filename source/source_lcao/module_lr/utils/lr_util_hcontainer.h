@@ -107,13 +107,14 @@ namespace LR_Util
                 for (int iR = 0;iR < ap1->get_R_size();++iR)
                 {
                     const ModuleBase::Vector3<int>& R = ap1->get_R_index(iR);
+                    // std::cout<< "dot_R_matrix: iat1=" << iat1 << ", iat2=" << iat2 << ", R=(" << R.x << ", " << R.y << ", " << R.z << ")"<<std::endl;
                     auto mat1 = ap1->get_HR_values(R.x, R.y, R.z);
                     auto mat2 = ap2->get_HR_values(R.x, R.y, R.z);
-                    sum += std::inner_product(mat1.get_pointer(), mat1.get_pointer() + mat1.get_memory_size(), mat2.get_pointer(), (TR1)0.0);
+                    sum += std::inner_product(mat1.get_pointer(), mat1.get_pointer() + mat1.get_col_size()*mat1.get_row_size(), mat2.get_pointer(), (TR1)0.0);
                 }
             }
         }
-        Parallel_Reduce::reduce_all(sum);
+        // Parallel_Reduce::reduce_all(sum);  // not needed, since it will be reduced outside
         return sum;
     }
 

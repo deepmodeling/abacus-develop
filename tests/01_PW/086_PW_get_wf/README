@@ -1,1 +1,1 @@
-test the output of out_wfc_norm and out_wfc_re_im
+Test `out_wfc_norm` and `out_wfc_re_im` with the nondegenerate first band.

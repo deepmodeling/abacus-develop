@@ -38,6 +38,7 @@ public:
     static void iweights(const int nks,
                          const std::vector<double>& wk,
                          const int nband,
+                         const int band_offset,
                          const double& nelec,
                          const ModuleBase::matrix& ekb,
                          double& ef,

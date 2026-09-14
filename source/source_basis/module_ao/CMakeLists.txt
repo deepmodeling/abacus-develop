@@ -2,14 +2,14 @@ if(ENABLE_LCAO)
   add_library(
       orb
       OBJECT
-      ORB_atomic.cpp
-      ORB_atomic_lm.cpp
-      ORB_gaunt_table.cpp
-      ORB_nonlocal.cpp
-      ORB_nonlocal_lm.cpp
-      ORB_read.cpp
+      orb_atomic.cpp
+      orb_atomic_lm.cpp
+      orb_gaunt_table.cpp
+      orb_nonlocal.cpp
+      orb_nonlocal_lm.cpp
+      orb_read.cpp
       parallel_orbitals.cpp
-      element_basis_index-ORB.cpp
+      elem_basis_idx_orb.cpp
   )
 
   if(ENABLE_COVERAGE)

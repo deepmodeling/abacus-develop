@@ -3,7 +3,6 @@ set(neighbor_search_sources
     domain_decomposition.cpp
     neighbor_search.cpp
     page_allocator.cpp
-    unitcell_lite.cpp
 )
 
 add_library(

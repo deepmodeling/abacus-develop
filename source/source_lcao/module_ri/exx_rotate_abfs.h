@@ -2,12 +2,12 @@
 #ifndef EXX_ROTATE_ABFS_H
 #define EXX_ROTATE_ABFS_H
 
-#include "LRI_CV.h"
+#include "lri_cv.h"
 #include "source_hamilt/module_xc/exx_info_ri.h"
 // #include "module_xc/exx_info.h"
-// #include "module_basis/module_ao/ORB_atomic_lm.h"
-#include "Exx_LRI.h"
-// #include "module_ri/Exx_LRI.h"
+// #include "module_basis/module_ao/orb_atomic_lm.h"
+#include "exx_lri.h"
+// #include "module_ri/exx_lri.h"
 // #include <RI/physics/Exx.h>
 #include <RI/ri/RI_Tools.h>
 #include <array>
@@ -68,8 +68,8 @@ class Moment_abfs
 
   private:
     // std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> VR;
-    // WARNING: reference to Exx_Info_RI, which holds references into Exx_Info_Global.
-    // Must not outlive GlobalC::exx_info. See exx_info.h for details.
+    // WARNING: reference to Exx_Info_RI.
+    // Must not outlive the Exx_Info_RI passed to the constructor.
     Exx_Info_RI& info;
 };
 #include "exx_rotate_abfs.hpp"

@@ -16,7 +16,7 @@ ATOMIC_POSITIONS
 Cartesian
 
 Si #label
-0 #magnetism
+1 #magnetism
 2 #number of atoms
 0  0  0  m  1  1  1  v  0.000135711648533  3.02182240507e-05  -8.2024241958e-05
 0.25  0.25  0.25  m  1  1  1  v  -0.000135711648533  -3.02182240507e-05  8.2024241958e-05

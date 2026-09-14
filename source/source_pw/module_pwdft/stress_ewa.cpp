@@ -1,6 +1,6 @@
 #include "stress_func.h"
 #include "source_base/parallel_reduce.h"
-#include "source_hamilt/module_ewald/H_Ewald_pw.h"
+#include "source_hamilt/module_ewald/h_ewald_pw.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
 #include "source_base/libm/libm.h"
@@ -144,7 +144,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 				//calculate tau[na]-tau[nb]
 				d_tau = ucell.atoms[it].tau[i] - ucell.atoms[jt].tau[j];
 				//generates nearest-neighbors shells 
-				H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), mxr, nrm);
+				H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), mxr, nrm, PARAM.inp.test_energy);
 				for(int nr=0; nr<nrm; nr++)
 				{
 					rr=sqrt(r2[nr]) * ucell.lat0;

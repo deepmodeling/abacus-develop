@@ -1,11 +1,11 @@
 #include "read_atoms_helper.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/constants.h"
 #include "source_base/mathzone.h"
 #include "read_stru.h"
 #include "print_cell.h"
-#include "source_estate/read_orb.h"
+#include "read_orb.h"
+#include "cell_tools.h"
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -48,7 +48,7 @@ bool validate_coordinate_system(const std::string& Coordinate,
     return true;
 }
 
-void allocate_atom_properties(Atom& atom, int na, double mass)
+void allocate_atom_properties(Atom& atom, int na)
 {
     atom.tau.resize(na, ModuleBase::Vector3<double>(0,0,0));
     atom.dis.resize(na, ModuleBase::Vector3<double>(0,0,0));
@@ -62,13 +62,13 @@ void allocate_atom_properties(Atom& atom, int na, double mass)
     atom.m_loc_.resize(na, ModuleBase::Vector3<double>(0,0,0));
     atom.lambda.resize(na, ModuleBase::Vector3<double>(0,0,0));
     atom.constrain.resize(na, ModuleBase::Vector3<int>(0,0,0));
-    atom.mass = mass;
 }
 
 void set_atom_movement_flags(Atom& atom, int ia,
-                             const ModuleBase::Vector3<int>& mv)
+                             const ModuleBase::Vector3<int>& mv,
+                             const bool fixed_atoms)
 {
-    if(!PARAM.inp.fixed_atoms)
+    if(!fixed_atoms)
     {
         atom.mbl[ia] = mv;
     }
@@ -133,10 +133,12 @@ void autoset_magnetization(UnitCell& ucell, int nspin,
 
 bool finalize_atom_positions(UnitCell& ucell,
                              std::ofstream& ofs_running,
-                             std::ofstream& ofs_warning)
+                             std::ofstream& ofs_warning,
+                             const std::string& calculation,
+                             const std::string& esolver_type)
 {
     // Check if any atom can move in MD
-    if(!ucell.if_atoms_can_move() && PARAM.inp.calculation=="md" && PARAM.inp.esolver_type!="tddft")
+    if(!unitcell::if_atoms_can_move(ucell.atoms, ucell.ntype) && calculation=="md" && esolver_type!="tddft")
     {
         ModuleBase::WARNING("read_atoms", "no atoms can move in MD simulations!");
         return false;
@@ -200,7 +202,7 @@ void transform_atom_coordinates(Atom& atom, int ia,
     if(Coordinate=="Direct")
     {
         // change v from direct to cartesian,
-        // the unit is GlobalC::sf.ucell.lat0
+        // the unit is ucell.lat0
         atom.taud[ia] = v;
         atom.tau[ia] = v * latvec;
     }
@@ -266,7 +268,8 @@ void transform_atom_coordinates(Atom& atom, int ia,
 void process_magnetization(Atom& atom, int it, int ia,
                           int nspin, bool input_vec_mag,
                           bool input_angle_mag,
-                          std::ofstream& ofs_running)
+                          std::ofstream& ofs_running,
+                          const bool noncolin)
 {
     // Recalculate mag and m_loc_ from read in angle1, angle2 and mag or mx, my, mz
     if(input_angle_mag)
@@ -301,7 +304,7 @@ void process_magnetization(Atom& atom, int it, int ia,
 
     if(nspin==4)
     {
-        if(!PARAM.inp.noncolin)
+        if(!noncolin)
         {
             // collinear case with nspin = 4, only z component is used
             atom.m_loc_[ia].x = 0;
@@ -489,19 +492,24 @@ bool read_atom_type_header(int it, UnitCell& ucell,
                           std::ifstream& ifpos,
                           std::ofstream& ofs_running,
                           std::ofstream& ofs_warning,
-                          bool& set_element_mag_zero)
+                          bool& set_element_mag_zero,
+                          const std::string& basis_type,
+                          const std::string& orbital_dir,
+                          const std::string& init_wfc,
+                          const double onsite_radius)
 {
     //=======================================
     // (1) read in atom label
     // start magnetization
     //=======================================
+    const std::string label_from_species = ucell.atoms[it].label;
     ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.atoms[it].label);
 
-    if(ucell.atoms[it].label != ucell.atom_label[it])
+    if(ucell.atoms[it].label != label_from_species)
     {
         ofs_warning << " Label orders in ATOMIC_POSITIONS and ATOMIC_SPECIES sections do not match!" << std::endl;
         ofs_warning << " Label read from ATOMIC_POSITIONS is " << ucell.atoms[it].label << std::endl;
-        ofs_warning << " Label from ATOMIC_SPECIES is " << ucell.atom_label[it] << std::endl;
+        ofs_warning << " Label from ATOMIC_SPECIES is " << label_from_species << std::endl;
         return false;
     }
     ModuleBase::GlobalFunc::OUT(ofs_running, "Atom label", ucell.atoms[it].label);
@@ -516,21 +524,21 @@ bool read_atom_type_header(int it, UnitCell& ucell,
     // int* ucell.atoms[it].l_nchi;
     //===========================================
 
-    if ((PARAM.inp.basis_type == "lcao")||(PARAM.inp.basis_type == "lcao_in_pw"))
+    if ((basis_type == "lcao")||(basis_type == "lcao_in_pw"))
     {
-        std::string orbital_file = PARAM.inp.orbital_dir + ucell.orbital_fn[it];
-        bool normal = elecstate::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
+        std::string orbital_file = orbital_dir + ucell.orbital_fn[it];
+        bool normal = unitcell::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
         if(!normal)
         {
             return false;
         }
     }
-    else if(PARAM.inp.basis_type == "pw")
+    else if(basis_type == "pw")
     {
-        if ((PARAM.inp.init_wfc.substr(0, 3) == "nao") || PARAM.inp.onsite_radius > 0.0)
+        if ((init_wfc.substr(0, 3) == "nao") || onsite_radius > 0.0)
         {
-            std::string orbital_file = PARAM.inp.orbital_dir + ucell.orbital_fn[it];
-            bool normal = elecstate::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
+            std::string orbital_file = orbital_dir + ucell.orbital_fn[it];
+            bool normal = unitcell::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
             if(!normal)
             {
                 return false;

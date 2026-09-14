@@ -1,6 +1,6 @@
 #include "rho_tau_lcao.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_lcao/module_gint/gint_interface.h"
+#include "source_hamilt/module_gint/gint_interface.h"
 
 void LCAO_domain::dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
     const int nspin,

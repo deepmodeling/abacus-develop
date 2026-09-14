@@ -79,7 +79,9 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                                                const NeighborOrbitalData* __restrict__ neighbor_orbitals,
                                                const ProjectorData* __restrict__ projectors,
                                                const double* __restrict__ psi_radial,
+                                               const double* __restrict__ psi_radial_grid,
                                                const double* __restrict__ beta_radial,
+                                               const double* __restrict__ beta_radial_grid,
                                                const int* __restrict__ proj_m0_offset,
                                                int total_neighbor_orbitals,
                                                int nproj,
@@ -127,8 +129,8 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
     const double r1_max = norb.psi_rcut;
 
     // Integration range from projector radial grid
-    const double r_min = proj.r_min;
-    const double r_max = proj.r_max;
+    const double r_min = proj.grid_info.r_min;
+    const double r_max = proj.grid_info.r_max;
     const double xl = 0.5 * (r_max - r_min);    // Half-range for Gauss-Legendre
     const double xmean = 0.5 * (r_max + r_min); // Midpoint
 
@@ -228,12 +230,18 @@ __global__ void snap_psibeta_atom_batch_kernel(double3 R0,
                 }
 
                 // Interpolate orbital radial function
-                const double psi_val
-                    = interpolate_radial_gpu(psi_radial + norb.psi_offset, norb.psi_mesh, 1.0 / norb.psi_dk, tnorm);
+                const double psi_val = interpolate_radial(psi_radial_grid + norb.psi_grid_offset,
+                                                          psi_radial + norb.psi_offset,
+                                                          norb.psi_mesh,
+                                                          norb.grid_info,
+                                                          tnorm);
 
                 // Interpolate projector radial function
-                const double beta_val
-                    = interpolate_radial_gpu(beta_radial + proj.beta_offset, proj.beta_mesh, 1.0 / proj.beta_dk, r_val);
+                const double beta_val = interpolate_radial(beta_radial_grid + proj.beta_grid_offset,
+                                                           beta_radial + proj.beta_offset,
+                                                           proj.beta_mesh,
+                                                           proj.grid_info,
+                                                           r_val);
 
                 // Phase factor exp(i * A · r)
                 const double phase = r_val * A_dot_leb;

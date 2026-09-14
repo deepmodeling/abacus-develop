@@ -1,10 +1,11 @@
 #include "hsolver_pw_sdft.h"
 
 #include "source_base/global_function.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_device.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_estate/elecstate_tools.h"
 
 #include <algorithm>
@@ -21,10 +22,19 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
                                       Stochastic_WF<T, Device>& stowf,
                                       const int istep,
                                       const int iter,
+                                      std::ostream& log,
                                       const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW_SDFT", "solve");
     ModuleBase::timer::start("HSolverPW_SDFT", "solve");
+
+    // This override never calls HSolverPW::solve, which is where the base class
+    // normally establishes the pool communication context. Set it up here so that
+    // hamiltSolvePsiK builds a diag_comm_info describing the real pool; otherwise it
+    // would keep the defaults (rank 0, 1 process) and every reduction guarded by
+    // diag_comm.nproc > 1 would be silently skipped.
+    this->rank_in_pool = wfc_basis->poolrank;
+    this->nproc_in_pool = wfc_basis->poolnproc;
 
     const int npwx = psi.get_nbasis();
     const int nbands = psi.get_nbands();
@@ -47,7 +57,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     {
         ModuleBase::timer::start("HSolverPW_SDFT", "solve_KS");
         pHamilt->updateHk(ik);
-        if (nbands > 0 && PARAM.globalv.ks_run)
+        if (nbands > 0 && this->ks_run)
         {
             /// update psi pointer for each k point
             psi.fix_k(ik);
@@ -59,7 +69,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
         }
 
 #ifdef __MPI
-        if (nbands > 0 && !PARAM.globalv.all_ks_run)
+        if (nbands > 0 && !this->all_ks_run)
         {
             Parallel_Common::bcast_dev<T,Device>(&psi(ik, 0, 0), npwx * nbands, BP_WORLD, 0, &psi_cpu(ik, 0, 0));
             MPI_Bcast(&pes->ekb(ik, 0), nbands, MPI_DOUBLE, 0, BP_WORLD);
@@ -70,7 +80,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
         stoiter.checkemm(ik, istep, iter, stowf); // check and reset emax & emin
     }
 
-    this->output_iterInfo();
+    this->output_iterInfo(log);
 
     for (int ik = 0; ik < nks; ik++)
     {
@@ -91,9 +101,9 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     // calculate eband = \sum_{ik,ib} w(ik)f(ik,ib)e_{ikib}, demet = -TS
     elecstate::ElecStatePW<T, Device>* pes_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(pes);
     elecstate::calEBand(pes_pw->ekb,pes_pw->wg,pes_pw->f_en);
-    if(!PARAM.globalv.all_ks_run)
+    if(!this->all_ks_run)
     {
-        pes->f_en.eband /= PARAM.inp.bndpar;
+        pes->f_en.eband /= this->bndpar;
     }
     stoiter.sum_stoeband(stowf, pes_pw, pHamilt, wfc_basis);
     

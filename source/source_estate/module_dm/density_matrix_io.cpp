@@ -7,6 +7,9 @@
 #include "source_base/tool_title.h"
 #include "source_cell/klist.h"
 
+#include <cstddef>
+#include <stdexcept>
+
 namespace elecstate
 {
 
@@ -21,6 +24,8 @@ void DensityMatrix<TK, TR>::init_DMR(const Grid_Driver* GridD_in, const UnitCell
         delete it;
     }
     this->_DMR.clear();
+    // a newly allocated DMR is not a wavefunction-derived density matrix until cal_DMR()
+    this->_dmr_ready = false;
     // construct a new DMR
     hamilt::HContainer<TR>* tmp_DMR;
     tmp_DMR = new hamilt::HContainer<TR>(this->_paraV);
@@ -76,6 +81,8 @@ void DensityMatrix<TK, TR>::init_DMR(Record_adj& ra, const UnitCell* ucell)
         delete it;
     }
     this->_DMR.clear();
+    // a newly allocated DMR is not a wavefunction-derived density matrix until cal_DMR()
+    this->_dmr_ready = false;
     // construct a new DMR
     hamilt::HContainer<TR>* tmp_DMR;
     tmp_DMR = new hamilt::HContainer<TR>(this->_paraV);
@@ -131,6 +138,8 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TR>& DMR_in)
         delete it;
     }
     this->_DMR.clear();
+    // a newly allocated DMR is not a wavefunction-derived density matrix until cal_DMR()
+    this->_dmr_ready = false;
     // set up a HContainer using another one
     for (int is = 0; is < this->_nspin; ++is) // loop over spin
     {
@@ -153,6 +162,8 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
         delete it;
     }
     this->_DMR.clear();
+    // a newly allocated DMR is not a wavefunction-derived density matrix until cal_DMR()
+    this->_dmr_ready = false;
     // set up a HContainer using another one
     int size_ap = DMR_in.size_atom_pairs();
     if (size_ap > 0)
@@ -185,9 +196,14 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
 template <typename TK, typename TR>
 hamilt::HContainer<TR>* DensityMatrix<TK, TR>::get_DMR_pointer(const int ispin) const
 {
-#ifdef __DEBUG
-    assert(ispin > 0 && ispin <= this->_nspin);
-#endif
+    if (ispin <= 0 || ispin > this->_nspin)
+    {
+        throw std::out_of_range("DensityMatrix::get_DMR_pointer: DMR spin index is out of range");
+    }
+    if (this->_DMR.size() != static_cast<std::size_t>(this->_nspin))
+    {
+        throw std::logic_error("DensityMatrix::get_DMR_pointer: DMR has not been initialized");
+    }
     return this->_DMR[ispin - 1];
 }
 

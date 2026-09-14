@@ -38,12 +38,12 @@ struct parallel_distribution
 {
     parallel_distribution(const int& num_all, const int& np, const int myrank)
     {
-        int num_per = num_all / np;
-        int st_per = num_per * myrank;
+        int num_per_ = num_all / np;
+        int st_per = num_per_ * myrank;
         int re = num_all % np;
         if (myrank < re)
         {
-            ++num_per;
+            ++num_per_;
             st_per += myrank;
         }
         else
@@ -51,7 +51,7 @@ struct parallel_distribution
             st_per += re;
         }
         this->start = st_per;
-        this->num_per = num_per;
+        this->num_per = num_per_;
     }
     int start = 0;
     int num_per = 0;

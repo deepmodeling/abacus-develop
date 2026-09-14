@@ -116,10 +116,10 @@ For general usage requirements, the APNSv1.0 pseudopotential and orbital set is 
 
 ### LATTICE_CONSTANT
 
-  The lattice constant of the system in unit of Bohr.
+  The lattice constant of the system in unit of Bohr. In output structure files (e.g., `STRU`, `STRU1`, `STRU2`), a trailing comment `# in Bohr` is appended to the value line.
 ### LATTICE_VECTORS
 
-  The lattice vectors of the unit cell. It is a 3by3 matrix written in 3 lines. Please note that *the lattice vectors given here are scaled by the lattice constant*. This section must be removed if the type Bravais lattice is specified using the input parameter `latname`. (See [input parameters](input-main.md#latname).)
+  The lattice vectors of the unit cell. It is a 3by3 matrix written in 3 lines. Please note that *the lattice vectors given here are scaled by the lattice constant*. This section must be removed if the type Bravais lattice is specified using the input parameter `latname`. (See [input parameters](input-main.md#latname).) In output structure files, a trailing comment `# in units of lat0` is appended to the section header.
 ### LATTICE_PARAMETERS
 
   This section is only relevant when `latname` (see [input parameters](input-main.md#latname)) is used to specify the Bravais lattice type. The example above is a fcc lattice, where no additional information except the lattice constant is required to determine the geometry of the lattice.

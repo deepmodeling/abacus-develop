@@ -10,7 +10,6 @@
 namespace ModuleNeighList
 {
 
-using GlobalAtomId = std::int64_t;
 using LocalAtomIndex = std::int32_t;
 using NeighborCount = std::int32_t;
 

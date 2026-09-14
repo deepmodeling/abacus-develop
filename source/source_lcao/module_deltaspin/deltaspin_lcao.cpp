@@ -125,7 +125,8 @@ void cal_mi_lcao_wrapper(const int iter, const Input_para& inp)
 template <typename TK>
 bool run_deltaspin_lambda_loop_lcao(const int iter,
                                      const double drho,
-                                     const Input_para& inp)
+                                     const Input_para& inp,
+                                     std::ostream& ofs_running)
 {
     bool skip_solve = false;
 
@@ -136,14 +137,14 @@ bool run_deltaspin_lambda_loop_lcao(const int iter,
         if (!sc.mag_converged() && drho > 0 && drho < inp.sc_scf_thr)
         {
             /// Charge density is stable enough: optimize lambda for the first time
-            sc.run_lambda_loop(iter);
+            sc.run_lambda_loop(iter, true, ofs_running);
             sc.set_mag_converged(true);
             skip_solve = true;
         }
         else if (sc.mag_converged())
         {
             /// Already converged: refine lambda for the current charge density
-            sc.run_lambda_loop(iter);
+            sc.run_lambda_loop(iter, true, ofs_running);
             skip_solve = true;
         }
     }
@@ -174,9 +175,11 @@ template void cal_mi_lcao_wrapper<std::complex<double>>(const int iter, const In
 
 template bool run_deltaspin_lambda_loop_lcao<double>(const int iter,
                                                       const double drho,
-                                                      const Input_para& inp);
+                                                      const Input_para& inp,
+                                                      std::ostream& ofs_running);
 template bool run_deltaspin_lambda_loop_lcao<std::complex<double>>(const int iter,
                                                                       const double drho,
-                                                                      const Input_para& inp);
+                                                                      const Input_para& inp,
+                                                                      std::ostream& ofs_running);
 
 } // namespace ModuleESolver

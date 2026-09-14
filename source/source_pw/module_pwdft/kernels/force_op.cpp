@@ -297,8 +297,8 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int* atom_na,
                     const FPTYPE& tpiba,
                     const FPTYPE* d_wg,
-                    const std::complex<FPTYPE>* vu,
-                    const int* orbital_corr,
+                    const std::complex<FPTYPE>* pot_onsite,
+                    const int* l_channel,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* force)
@@ -307,7 +307,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
         int sum0 = 0;
         for (int it = 0; it < ntype; it++)
         {
-            const int orbital_l = orbital_corr[it];
+            const int orbital_l = l_channel[it];
             const int nproj = atom_nh[it];
             if(orbital_l == -1)
             {
@@ -340,7 +340,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                 std::complex<FPTYPE> ps[4];
                                 for(int i = 0; i < 4; i++)
                                 {
-                                    ps[i] = vu[(i * tlp1_2 + m * tlp1 + m2)];
+                                    ps[i] = pot_onsite[(i * tlp1_2 + m * tlp1 + m2)];
                                 }
 
                                 for (int iforce = 0; iforce < 3; iforce++)
@@ -361,7 +361,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                 {
                                     const int index0 = iforce * nbands * npol * nkb + ib2 * nkb + inkb;
                                     const int index1 = ib2 * nkb + jnkb;
-                                    local_force[iforce] -= fac * (vu[(m * tlp1 + m2)] * conj(dbecp[index0]) * becp[index1]).real();
+                                    local_force[iforce] -= fac * (pot_onsite[(m * tlp1 + m2)] * conj(dbecp[index0]) * becp[index1]).real();
                                 }
                             }
                         }
@@ -371,7 +371,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                         force[iat * forcenl_nc + iforce] += local_force[iforce];
                     }
                 }
-                vu += npol * npol * tlp1_2;// step for vu
+                pot_onsite += npol * npol * tlp1_2;// step for pot_onsite
             } // end ia
             iat0 += atom_na[it];
             sum0 += atom_na[it] * nproj;
@@ -440,7 +440,6 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                          if (isk != nullptr && isk[ik] == 1) {
                              spin_sign = -1;
                          }
-                         for (int ip = 0; ip < nproj; ip++)
                         for (int ip = 0; ip < nproj; ip++)
                         {
                             const int inkb = sum + ip;

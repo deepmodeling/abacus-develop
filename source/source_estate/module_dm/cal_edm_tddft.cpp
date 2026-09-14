@@ -102,7 +102,7 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
         BlasConnector::copy(nloc, h_mat.p, inc, Htmp, inc);
         BlasConnector::copy(nloc, s_mat.p, inc, Sinv, inc);
 
-        vector<int> ipiv(nloc, 0);
+        std::vector<int> ipiv(nloc, 0);
         int info = 0;
         const int one_int = 1;
 

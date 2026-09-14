@@ -19,5 +19,5 @@ void json_output();
 void convert_time(std::time_t time_now, std::string& time_str);
 
 // generate struture wrapper function
-void gen_stru_wrapper(UnitCell *ucell);
+void gen_stru_wrapper(UnitCell *ucell, const Input_para& inp);
 } // namespace Json

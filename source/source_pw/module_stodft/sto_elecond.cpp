@@ -4,7 +4,9 @@
 #include "source_base/constants.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/module_container/ATen/tensor.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_device.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/vector3.h"
@@ -37,7 +39,7 @@ Sto_EleCond<FPTYPE, Device>::Sto_EleCond(UnitCell* p_ucell_in,
     this->nbands_sto = p_stowf_in->nchi;
     this->stofunc.set_E_range(&stoche.emin_sto, &stoche.emax_sto);
     this->cond_dtbatch = PARAM.inp.cond_dtbatch;
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
     if(!std::is_same<FPTYPE, lowTYPE>::value)
     {
         this->hamilt_sto_ = new hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>(p_elec_in->pot, p_wfcpw_in, p_kv_in, p_ppcell_in, p_ucell_in, 1, &this->low_emin_, &this->low_emax_);
@@ -406,7 +408,7 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
                 // {
                 //     j2mat[j] = 0.5f * j2mat[j] + (0.5f * ei - mu) * j1mat[j];
                 // }
-                ModuleBase::vector_add_vector_op<lcomplex, Device>()(allbands_sto, j2mat, j2mat, half, j1mat, half * ei - mu);
+                ModuleBase::vector_add_vector_op<lcomplex, Device, lowTYPE>()(allbands_sto, j2mat, j2mat, half, j1mat, half * ei - mu);
             }
             else
             {
@@ -416,7 +418,7 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
                 //     j2mat[j] = jfac * (0.5f * j2mat[j] + (0.5f * ei - mu) * j1mat[j]);
                 //     j1mat[j] *= jfac;
                 // }
-                ModuleBase::vector_add_vector_op<lcomplex, Device>()(allbands_sto, j2mat, j2mat, half, j1mat, half * ei - mu);
+                ModuleBase::vector_add_vector_op<lcomplex, Device, lowTYPE>()(allbands_sto, j2mat, j2mat, half, j1mat, half * ei - mu);
                 ModuleBase::scal_op<lowTYPE, Device>()(allbands_sto, &jfac, j2mat, 1);
                 ModuleBase::scal_op<lowTYPE, Device>()(allbands_sto, &jfac, j1mat, 1);
             }
@@ -434,7 +436,8 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
                 // {
                 //     j2mat[j] = 0.5f * j2mat[j] + (0.5f * ei - mu) * j1mat[j];
                 // }
-                ModuleBase::vector_add_vector_op<lcomplex, Device>()(perbands_sto, j2mat, j2mat, half, j1mat, half * ei - mu);
+                ModuleBase::vector_add_vector_op<lcomplex, Device, lowTYPE>()(
+                    perbands_sto, j2mat, j2mat, half, j1mat, half * ei - mu);
             }
             else
             {
@@ -444,7 +447,7 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
                 //     j2mat[j] = jfac * (0.5f * j2mat[j] + (0.5f * ei - mu) * j1mat[j]);
                 //     j1mat[j] *= jfac;
                 // }
-                ModuleBase::vector_add_vector_op<lcomplex, Device>()(perbands_sto, j2mat, j2mat, half, j1mat, half * ei - mu);
+                ModuleBase::vector_add_vector_op<lcomplex, Device, lowTYPE>()(perbands_sto, j2mat, j2mat, half, j1mat, half * ei - mu);
                 ModuleBase::scal_op<lowTYPE, Device>()(perbands_sto, &jfac, j2mat, 1);
                 ModuleBase::scal_op<lowTYPE, Device>()(perbands_sto, &jfac, j1mat, 1);
             }
@@ -460,8 +463,8 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<
         // {
         //     j2mat[j] = 0.5f * (j2mat[j] + tmpjmat[j]) - mu * j1mat[j];
         // }
-        ModuleBase::vector_add_vector_op<lcomplex, Device>()(ed, j2mat, j2mat, one, tmpjmat, one);
-        ModuleBase::vector_add_vector_op<lcomplex, Device>()(ed, j2mat, j2mat, half, j1mat, -mu);
+        ModuleBase::vector_add_vector_op<lcomplex, Device, lowTYPE>()(ed, j2mat, j2mat, one, tmpjmat, one);
+        ModuleBase::vector_add_vector_op<lcomplex, Device, lowTYPE>()(ed, j2mat, j2mat, half, j1mat, -mu);
     }
 
 #ifdef __MPI

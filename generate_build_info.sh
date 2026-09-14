@@ -63,7 +63,7 @@ CUDA_FLAGS="${CUDAFLAGS:-}"
 # Detect Platform based on environment variables
 if [ "${USE_ROCM}" == "ON" ]; then PLATFORM_NAME="CPU + AMD ROCm"; fi
 if [ "${USE_CUDA}" == "ON" ]; then PLATFORM_NAME="CPU + NVIDIA CUDA"; fi
-if [ "${USE_ELPA}" == "ON" ] && [ "${ENABLE_LCAO}" == "ON" ]; then PLATFORM_NAME="${PLATFORM_NAME} + ELPA"; fi
+if [ "${ENABLE_ELPA}" == "ON" ] && [ "${ENABLE_LCAO}" == "ON" ]; then PLATFORM_NAME="${PLATFORM_NAME} + ELPA"; fi
 
 # 2. MPI
 MPI_IMPLEMENTATION="no"
@@ -188,7 +188,7 @@ fi
 
 # 9. ELPA
 ELPA_VERSION="no"
-if [ "${USE_ELPA}" == "ON" ] && [ -n "$ELPA_DIR" ]; then
+if [ "${ENABLE_ELPA}" == "ON" ] && [ -n "$ELPA_DIR" ]; then
     ELPA_VERSION="yes (version unknown)"
     if [ -f "$ELPA_DIR/bin/elpa2_print_version" ]; then
         version=$("$ELPA_DIR/bin/elpa2_print_version" 2>/dev/null)
@@ -257,7 +257,8 @@ if [ "${USE_CUDA}" == "ON" ]; then
 fi
 # --- Final File Generation ---
 
-INPUT_FILE="source_io/build_info.h.in"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INPUT_FILE="${SCRIPT_DIR}/source/source_io/build_info.h.in"
 
 # Use sed to replace all placeholders with detected values
 # Note the use of different delimiters (#) for paths to avoid conflicts with /

@@ -8,7 +8,7 @@ OMP_NUM_THREADS=${ABACUS_THREADS} mpirun -np ${ABACUS_NPROCS} ${ABACUS_PATH} | t
 
 if [[ ! -f output ]] || 
    [[ ! -f OUT.autotest/running_get_S.log ]] ||
-   [[ ! -f OUT.autotest/SR.csr ]]
+   [[ ! -f OUT.autotest/sr_nao.csr ]]
 then
 	echo "job failed!"
 	exit 1

@@ -19,10 +19,6 @@ pseudo::~pseudo() {}
 
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
-#endif
 
 void define_fcc_cell(UnitCell& ucell)
 {    

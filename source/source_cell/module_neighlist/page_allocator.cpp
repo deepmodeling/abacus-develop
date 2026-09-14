@@ -4,21 +4,16 @@
 #include <stdexcept>
 #include <utility>
 
-PageAllocator::PageAllocator() : pgsize_(default_pgsize)
+void PageAllocator::initialize(int pgsize)
 {
-    new_page_();
-}
-
-PageAllocator::PageAllocator(int pgsize) : pgsize_(pgsize)
-{
-    if (pgsize_ <= 0)
+    if (pgsize <= 0)
     {
         throw std::invalid_argument("PageAllocator page size must be positive.");
     }
-    new_page_();
-}
 
-PageAllocator::~PageAllocator() = default;
+    pgsize_ = pgsize;
+    pages_.clear();
+}
 
 int* PageAllocator::allocate(int n)
 {
@@ -56,6 +51,11 @@ int* PageAllocator::allocate(int n)
 
 void PageAllocator::reset()
 {
+    if (pages_.empty())
+    {
+        return;
+    }
+
     pages_.resize(1);
     pages_[0].offset = 0;
 }

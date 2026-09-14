@@ -1,7 +1,7 @@
 #ifndef ABFS_H
 #define ABFS_H	
 
-#include "../../source_base/vector3.h"
+#include "source_base/vector3.h"
 
 #include <set>
 #include <vector>

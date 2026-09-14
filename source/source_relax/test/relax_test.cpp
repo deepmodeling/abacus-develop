@@ -1,10 +1,8 @@
 #include "gtest/gtest.h"
 #include <iomanip>
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "../relax_sync.h"
 #include "source_cell/unitcell.h"
+#include "source_io/module_parameter/input_parameter.h"
 #include "relax_test.h"
 #include <fstream>
 
@@ -14,14 +12,14 @@ class Test_SETGRAD : public testing::Test
     protected:
         Relax rl;
         std::vector<double> result;
-        Input_para& input = PARAM.input;
+        Input_para inp;
         UnitCell ucell;
         std::ofstream ofs;
 
         void SetUp()
         {
-            PARAM.input.force_thr  = 0.001;
-            PARAM.input.calculation = "cell-relax";
+            inp.force_thr  = 0.001;
+            inp.calculation = "cell-relax";
 
             ModuleBase::matrix force_in, stress_in;
             int nat = 3;
@@ -52,7 +50,6 @@ class Test_SETGRAD : public testing::Test
             ucell.atoms[0].dis.resize(nat);
             ucell.atoms[0].mag.resize(nat);
             ucell.atoms[0].vel.resize(nat);
-            ucell.lc = new int[3];
 
             ucell.iat2it[0] = 0;
             ucell.iat2it[1] = 0;
@@ -80,11 +77,11 @@ class Test_SETGRAD : public testing::Test
 
             ucell.atoms[0].tau.resize(nat);
 
-            ucell.lc[0] = 1;
-            ucell.lc[1] = 1;
-            ucell.lc[2] = 1;
+            ucell.lat_axis_free[0] = 1;
+            ucell.lat_axis_free[1] = 1;
+            ucell.lat_axis_free[2] = 1;
 
-            rl.init_relax(nat);
+            rl.init_relax(nat, inp);
             rl.relax_step(ucell,force_in,stress_in,0.0, ofs);
 
             for(int i=0;i<3;i++)
@@ -97,27 +94,27 @@ class Test_SETGRAD : public testing::Test
 
             //reset lattice vector
             ucell.latvec.Identity();
-            input.fixed_axes = "shape";
-            rl.init_relax(nat);
+            inp.fixed_axes = "shape";
+            rl.init_relax(nat, inp);
             rl.relax_step(ucell,force_in,stress_in,0.0, ofs);
             push_result();
 
             //reset lattice vector
             ucell.latvec.Identity();
-            input.fixed_axes = "volume";
-            rl.init_relax(nat);
+            inp.fixed_axes = "volume";
+            rl.init_relax(nat, inp);
             rl.relax_step(ucell,force_in,stress_in,0.0, ofs);
             push_result();
 
             //reset lattice vector
             ucell.latvec.Identity();
-            input.fixed_axes = "a"; //anything other than "None"
-            input.fixed_ibrav = true;
+            inp.fixed_axes = "a"; //anything other than "None"
+            inp.fixed_ibrav = true;
             ucell.latName = "sc";
-            ucell.lc[0] = 0;
-            ucell.lc[1] = 0;
-            ucell.lc[2] = 0;
-            rl.init_relax(nat);
+            ucell.lat_axis_free[0] = 0;
+            ucell.lat_axis_free[1] = 0;
+            ucell.lat_axis_free[2] = 0;
+            rl.init_relax(nat, inp);
             rl.relax_step(ucell,force_in,stress_in,0.0, ofs);
             
             push_result();
@@ -172,6 +169,7 @@ class Test_RELAX : public testing::Test
     protected:
         Relax rl;
         std::vector<double> result;
+        Input_para inp;
         UnitCell ucell;
         std::ofstream ofs;
 
@@ -184,7 +182,11 @@ class Test_RELAX : public testing::Test
             int nstep = 3;
             int nat = 5;
             double energy;
-            PARAM.input.stress_thr = 0.01;
+            inp.calculation = "cell-relax";
+            inp.force_thr = 0.001;
+            inp.fixed_axes = "a";
+            inp.stress_thr = 0.01;
+            inp.fixed_ibrav = false;
 
             this->setup_cell();
 
@@ -192,7 +194,7 @@ class Test_RELAX : public testing::Test
             force_in.create(nat,3);
             stress_in.create(3,3);
 
-            rl.init_relax(nat);
+            rl.init_relax(nat, inp);
 
             for(int istep=0;istep<nstep;istep++)
             {
@@ -213,7 +215,7 @@ class Test_RELAX : public testing::Test
 
                 energy_file >> energy;
 
-                PARAM.input.fixed_ibrav = false;
+                inp.fixed_ibrav = false;
                 rl.relax_step(ucell,force_in,stress_in,energy, ofs);
                 result.push_back(ucell.atoms[0].taud[0].x);
                 result.push_back(ucell.atoms[0].taud[0].y);
@@ -290,10 +292,9 @@ class Test_RELAX : public testing::Test
             ucell.atoms[2].taud[1] = {0.5,0  ,0.479348999999274  };
             ucell.atoms[2].taud[2] = {0  ,0  ,0.958854000000429  };
             
-            ucell.lc = new int[3];
-            ucell.lc[0] = 1;
-            ucell.lc[1] = 1;
-            ucell.lc[2] = 1;
+            ucell.lat_axis_free[0] = 1;
+            ucell.lat_axis_free[1] = 1;
+            ucell.lat_axis_free[2] = 1;
 
             ucell.latvec.e11 = 3.96;
             ucell.latvec.e12 = 0;

@@ -60,7 +60,7 @@ not Python documentation dependencies.
    `docs/parameters.yaml` file is created or maintained.
 
    ```bash
-   ./build-rtd-docs/source/abacus_pw_ser --generate-parameters-yaml \
+   ./build-rtd-docs/abacus_pw_ser --generate-parameters-yaml \
      | .venv/bin/python docs/generate_input_main.py - \
          --output docs/advanced/input_files/input-main.md
    ```
@@ -68,7 +68,7 @@ not Python documentation dependencies.
 1. Build the HTML manual:
 
    ```bash
-   ABACUS_BINARY=./build-rtd-docs/source/abacus_pw_ser \
+   ABACUS_BINARY=./build-rtd-docs/abacus_pw_ser \
      .venv/bin/sphinx-build -b html docs build-docs/html
    ```
 
@@ -87,7 +87,7 @@ To refresh only the generated INPUT reference after building ABACUS, pipe the
 transient YAML stream directly into the Markdown generator:
 
 ```bash
-./build-rtd-docs/source/abacus_pw_ser --generate-parameters-yaml \
+./build-rtd-docs/abacus_pw_ser --generate-parameters-yaml \
   | .venv/bin/python docs/generate_input_main.py - \
       --output docs/advanced/input_files/input-main.md
 ```
@@ -126,6 +126,6 @@ docker run --rm --user root -v "$PWD:/project" -w /project \
     -DENABLE_RAPIDJSON=OFF -DENABLE_MLALGO=OFF -DENABLE_FLOAT_FFTW=OFF \
     -DENABLE_CNPY=OFF -DCOMMIT_INFO=OFF -DGIT_SUBMODULE=OFF -DMKLROOT=OFF &&
   cmake --build /tmp/build-rtd-docs --target abacus_pw_ser --parallel 2 &&
-  export READTHEDOCS=True ABACUS_BINARY=/tmp/build-rtd-docs/source/abacus_pw_ser &&
+  export READTHEDOCS=True ABACUS_BINARY=/tmp/build-rtd-docs/abacus_pw_ser &&
   sphinx-build -b html docs /tmp/abacus-docs-html'
 ```

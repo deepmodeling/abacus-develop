@@ -32,6 +32,6 @@ out_current     1
 out_current_k   1
 
 out_wfc_lcao    1
-out_mat_hs      1
+out_hsk         1
 out_app_flag    0
 out_interval    25

@@ -4,7 +4,9 @@
 #include "source_base/module_device/device.h" // use Device
 #include "source_psi/psi.h"                   // define psi
 #include "source_estate/elecstate_lcao.h"     // use pelec
-#include "source_psi/setup_psi_pw.h" // use Setup_Psi class
+#include "source_psi/setup_psi_pw.h"          // use Setup_Psi class
+
+class pseudopot_cell_vnl;
 
 namespace ModuleIO
 {
@@ -24,6 +26,7 @@ void ctrl_scf_pw(const int istep,
         UnitCell& ucell,
         elecstate::ElecState* pelec,
         const Charge &chr,
+        const pseudopot_cell_vnl& ppcell,
         const K_Vectors &kv,
         const ModulePW::PW_Basis_K *pw_wfc,
         const ModulePW::PW_Basis *pw_rho,

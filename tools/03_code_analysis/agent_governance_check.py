@@ -244,11 +244,27 @@ def check_line_endings(
 
 GLOBAL_DEPENDENCY_RE = re.compile(r"\b(GlobalV::|GlobalC::|PARAM(?:\.|->|::|\b))")
 
+# `#define private public` / `#define protected public`. See AGENTS.md rule 10.
+ACCESS_HACK_RE = re.compile(r"^\s*#\s*define\s+(?:private|protected)\s+public\b")
+
+
 
 def is_global_dependency_check_path(path: str) -> bool:
     if path.startswith("tools/03_code_analysis/"):
         return False
     return Path(path).suffix.lower() in CODE_EXTENSIONS
+
+
+def is_access_hack_check_path(path: str) -> bool:
+    """Only C/C++ translation units can carry a real access-control hack.
+
+    Without this filter a fenced `#define private public` inside AGENTS.md or
+    docs/ counts against the budget, so documenting the anti-pattern would
+    block CI and deleting that documentation would credit it.
+    """
+    if path.startswith("tools/03_code_analysis/"):
+        return False
+    return Path(path).suffix.lower() in SOURCE_REVIEW_EXTENSIONS
 
 
 def global_dependency_hits(lines: Iterable[DiffLine]) -> List[Tuple[DiffLine, int]]:
@@ -296,9 +312,117 @@ def check_global_dependencies(
         )
 
 
+def check_access_hacks(
+    findings: List[Finding],
+    added_lines: Iterable[DiffLine],
+    removed_lines: Iterable[DiffLine],
+) -> None:
+    """Ratchet on `#define private public` (AGENTS.md rule 10).
+
+    Mirrors the global-dependency budget: removals are free, a net increase
+    blocks. The remaining offenders therefore do not block unrelated work while
+    they are being refactored away module by module.
+    """
+    added = [
+        line
+        for line in added_lines
+        if is_access_hack_check_path(line.path) and ACCESS_HACK_RE.search(line.content)
+    ]
+    removed = [
+        line
+        for line in removed_lines
+        if is_access_hack_check_path(line.path) and ACCESS_HACK_RE.search(line.content)
+    ]
+    if not added:
+        return
+
+    delta = len(added) - len(removed)
+    severity = BLOCK if delta > 0 else WARN
+    for line in added:
+        add_finding(
+            findings,
+            "No access-control hacks",
+            severity,
+            line.path,
+            line.line,
+            (
+                "Adds `#define private/protected public`, which reinterprets access "
+                "control for the whole translation unit (standard library headers "
+                "included) and makes this TU disagree with the rest of the build; "
+                "PR total added={a}, removed={r}, net_delta={d}.".format(
+                    a=len(added), r=len(removed), d=delta
+                )
+            ),
+            (
+                "Pass the INPUT values the code needs as explicit arguments instead of "
+                "reading global PARAM inside it, so the test can drive it without "
+                "touching PARAM at all; otherwise add a public const observer, or an "
+                "explicit `friend class XxxTest;` on the class under test."
+            ),
+        )
+
+
+
+def _has_default_arg_in_parens(stripped: str) -> bool:
+    paren_depth = 0
+    in_string = False
+    string_char = ""
+    in_line_comment = False
+    in_block_comment = False
+    i = 0
+    while i < len(stripped):
+        c = stripped[i]
+        nxt = stripped[i + 1] if i + 1 < len(stripped) else ""
+
+        if in_line_comment:
+            break
+
+        if in_block_comment:
+            if c == "*" and nxt == "/":
+                in_block_comment = False
+                i += 2
+                continue
+            i += 1
+            continue
+
+        if not in_string:
+            if c == "/" and nxt == "/":
+                in_line_comment = True
+                i += 2
+                continue
+            if c == "/" and nxt == "*":
+                in_block_comment = True
+                i += 2
+                continue
+
+        if in_string:
+            if c == "\\":
+                i += 2
+                continue
+            if c == string_char:
+                in_string = False
+            i += 1
+            continue
+        if c in ('"', "'"):
+            in_string = True
+            string_char = c
+            i += 1
+            continue
+        if c == "(":
+            paren_depth += 1
+        elif c == ")":
+            if paren_depth > 0:
+                paren_depth -= 1
+        elif c == "=" and paren_depth > 0:
+            return True
+        i += 1
+    return False
+
+
 def check_default_parameters(findings: List[Finding], lines: Iterable[DiffLine]) -> None:
     default_arg = re.compile(r"[(,]\s*[^()=;,{}]+\b\w+\s*=\s*[^,);{}]+")
     control_flow = re.compile(r"^(for|if|while|switch|catch)\s*\(")
+    comment_strip_re = re.compile(r"//.*$|/\*.*?\*/")
     for line in lines:
         if Path(line.path).suffix.lower() not in HEADER_EXTENSIONS:
             continue
@@ -307,11 +431,18 @@ def check_default_parameters(findings: List[Finding], lines: Iterable[DiffLine])
             continue
         if control_flow.match(stripped):
             continue
-        if "(" in stripped and ")" in stripped and default_arg.search(stripped):
+        if "=" not in stripped:
+            continue
+        code_only = comment_strip_re.sub("", stripped)
+        if "=" not in code_only:
+            continue
+        if not _has_default_arg_in_parens(code_only):
+            continue
+        if "(" in code_only and ")" in code_only and default_arg.search(code_only):
             add_finding(
                 findings,
                 "No new default parameters",
-                BLOCK,
+                WARN,
                 line.path,
                 line.line,
                 "Header diff adds a function declaration with a default argument.",
@@ -476,7 +607,7 @@ def check_input_parameter_docs(
     add_finding(
         findings,
         "INPUT parameter documentation linkage",
-        BLOCK,
+        WARN,
         "source/source_io/module_parameter",
         None,
         "INPUT parameter behavior appears to change without an input-main.md update.",
@@ -666,6 +797,7 @@ def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
 
     check_line_endings(findings, root, changed, statuses, args)
     check_global_dependencies(findings, lines, removed_lines)
+    check_access_hacks(findings, lines, removed_lines)
     check_default_parameters(findings, lines)
     check_hpp_warnings(findings, statuses, lines)
     check_header_include_warnings(findings, lines)

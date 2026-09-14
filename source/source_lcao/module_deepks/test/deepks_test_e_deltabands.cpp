@@ -1,6 +1,6 @@
 #include "deepks_test_runner.h"
 
-#include "source_lcao/hs_matrix_k.hpp"
+#include "source_hamilt/hs_matrix_k.h"
 #include "source_lcao/module_operator_lcao/deepks_lcao.h"
 
 #include <complex>

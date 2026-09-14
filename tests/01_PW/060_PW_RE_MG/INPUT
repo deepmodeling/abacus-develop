@@ -17,7 +17,7 @@ cal_force         1
 #Parameters (3.Relaxation)
 relax_nmax        2
 force_thr_ev      0.01
-relax_method      cg
+relax_method      cg 1
 
 #Parameters (4.Basis)
 basis_type        pw
@@ -29,5 +29,3 @@ smearing_sigma    0.002
 #Parameters (6.Mixing)
 mixing_type       broyden
 mixing_beta       0.5
-
-relax_new         0

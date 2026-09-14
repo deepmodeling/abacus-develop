@@ -17,6 +17,7 @@ scf_nmax          100
 
 #noncolin         1
 lspinorb          1
+nspin             4
 cal_force         1
 cal_stress        1
 

@@ -66,7 +66,7 @@ void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
         sys.all_ks_run = false;
     }
     // set the has_double_data and has_float_data
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
     bool float_cond = inp.cal_cond && inp.esolver_type == "sdft";
 #else
     bool float_cond = false;

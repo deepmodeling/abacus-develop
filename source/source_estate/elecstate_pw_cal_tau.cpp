@@ -45,7 +45,7 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
 
                 this->basis->recip_to_real(this->ctx, this->wfcr, this->wfcr, ik);
 
-                elecstate_pw_op()(this->ctx, current_spin, this->charge->nrxx, w1, this->kin_r, this->wfcr);
+                elecstate_pw_op()(this->ctx, current_spin, this->charge->nrxx, this->charge->nrxx, w1, this->kin_r, this->wfcr);
             }
         }
     }

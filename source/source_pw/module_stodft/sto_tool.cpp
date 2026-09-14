@@ -1,6 +1,7 @@
 #include "sto_tool.h"
 
 #include "source_base/math_chebyshev.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_device.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
@@ -143,14 +144,14 @@ psi::Psi<std::complex<FPTYPE>, Device>* gatherchi_op<FPTYPE, Device>::operator()
 }
 
 template struct check_che_op<double, base_device::DEVICE_CPU>;
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
 template struct check_che_op<float, base_device::DEVICE_CPU>;
 #endif
 template struct gatherchi_op<double, base_device::DEVICE_CPU>;
 template struct gatherchi_op<float, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template struct check_che_op<double, base_device::DEVICE_GPU>;
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
 template struct check_che_op<float, base_device::DEVICE_GPU>;
 #endif
 template struct gatherchi_op<double, base_device::DEVICE_GPU>;

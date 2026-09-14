@@ -7,8 +7,9 @@ ABACUS_THREADS=$(awk -F "=" '$1=="ABACUS_THREADS"{print $2}' ../../SETENV)
 OMP_NUM_THREADS=${ABACUS_THREADS} mpirun -np ${ABACUS_NPROCS} ${ABACUS_PATH} | tee output
 
 if [[ ! -f output ]] || 
-   [[ ! -f OUT.autotest/running_get_S.log ]] ||
-   [[ ! -f OUT.autotest/SR.csr ]]
+   [[ ! -f OUT.autotest/running_scf.log ]] ||
+   [[ ! -f OUT.autotest/hk1_nao.txt ]] ||
+   [[ ! -f OUT.autotest/sk1_nao.txt ]]
 then
 	echo "job failed!"
 	exit 1

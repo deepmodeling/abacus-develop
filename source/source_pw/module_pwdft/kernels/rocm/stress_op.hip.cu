@@ -311,10 +311,10 @@ __global__ void cal_stress_nl(
             {
                 ps_qq = thrust::complex<FPTYPE>(- ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2], 0.0);
             }
-            const thrust::complex<FPTYPE> ps0 = deeq_nc[((iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
-            const thrust::complex<FPTYPE> ps1 = deeq_nc[((1 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
-            const thrust::complex<FPTYPE> ps2 = deeq_nc[((2 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
-            const thrust::complex<FPTYPE> ps3 = deeq_nc[((3 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
+            const thrust::complex<FPTYPE> ps0 = deeq_nc[((iat) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
+            const thrust::complex<FPTYPE> ps1 = deeq_nc[((1 * deeq_2 + iat) * deeq_3 + ip1) * deeq_4 + ip2];
+            const thrust::complex<FPTYPE> ps2 = deeq_nc[((2 * deeq_2 + iat) * deeq_3 + ip1) * deeq_4 + ip2];
+            const thrust::complex<FPTYPE> ps3 = deeq_nc[((3 * deeq_2 + iat) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
             const int inkb1 = sum + ip1;
             const int inkb2 = sum + ip2;
             //out<<"\n ps = "<<ps;
@@ -925,16 +925,16 @@ __global__ void cal_stress_onsite(
         const int *atom_nh,
         const int *atom_na,
         const FPTYPE *d_wg,
-        const thrust::complex<FPTYPE> *vu,
-        const int* orbital_corr,
+        const thrust::complex<FPTYPE> *pot_onsite,
+        const int* l_channel,
         const thrust::complex<FPTYPE> *becp,
         const thrust::complex<FPTYPE> *dbecp,
         FPTYPE *stress)
 {
     const int ib = blockIdx.x / ntype;
     const int it = blockIdx.x % ntype;
-    if(orbital_corr[it] == -1) return;
-    const int orbital_l = orbital_corr[it];
+    if(l_channel[it] == -1) return;
+    const int orbital_l = l_channel[it];
     const int ip_begin = orbital_l * orbital_l;
     const int tlp1 = 2 * orbital_l + 1;
     const int tlp1_2 = tlp1 * tlp1;
@@ -944,7 +944,7 @@ __global__ void cal_stress_onsite(
     for (int ii = 0; ii < it; ii++) {
         iat += atom_na[ii];
         sum += atom_na[ii] * atom_nh[ii];
-        vu += npol * npol * tlp1_2 * atom_na[ii];
+        pot_onsite += npol * npol * tlp1_2 * atom_na[ii];
     }
 
     FPTYPE stress_var = 0;
@@ -962,7 +962,7 @@ __global__ void cal_stress_onsite(
             const int inkb2 = sum + ip2 + ib2 * nkb;
             if (npol == 2)
             {
-                thrust::complex<FPTYPE> ps[4] = {vu[mm], vu[mm + tlp1_2], vu[mm + 2 * tlp1_2], vu[mm + 3 * tlp1_2]};
+                thrust::complex<FPTYPE> ps[4] = {pot_onsite[mm], pot_onsite[mm + tlp1_2], pot_onsite[mm + 2 * tlp1_2], pot_onsite[mm + 3 * tlp1_2]};
                 const thrust::complex<FPTYPE> dbb0 = conj(dbecp[inkb1]) * becp[inkb2];
                 const thrust::complex<FPTYPE> dbb1 = conj(dbecp[inkb1]) * becp[inkb2 + nkb];
                 const thrust::complex<FPTYPE> dbb2 = conj(dbecp[inkb1 + nkb]) * becp[inkb2];
@@ -971,12 +971,12 @@ __global__ void cal_stress_onsite(
             }
             else
             {
-                stress_var -= fac * (vu[mm] * (conj(dbecp[inkb1]) * becp[inkb2])).real();
+                stress_var -= fac * (pot_onsite[mm] * (conj(dbecp[inkb1]) * becp[inkb2])).real();
             }
         }
         ++iat;
         sum+=nprojs;
-        vu += npol * npol * tlp1_2;
+        pot_onsite += npol * npol * tlp1_2;
     }//ia
     __syncwarp();
     warp_reduce(stress_var);
@@ -1062,8 +1062,8 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
-                    const std::complex<FPTYPE>* vu,
-                    const int* orbital_corr,
+                    const std::complex<FPTYPE>* pot_onsite,
+                    const int* l_channel,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress)
@@ -1078,8 +1078,8 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                  atom_nh,
                  atom_na,
                  d_wg,
-                 reinterpret_cast<const thrust::complex<FPTYPE>*>(vu),
-                 orbital_corr,
+                 reinterpret_cast<const thrust::complex<FPTYPE>*>(pot_onsite),
+                 l_channel,
                  reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
                  reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
                  stress);
@@ -1094,8 +1094,8 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                  atom_nh,
                  atom_na,
                  d_wg,
-                 reinterpret_cast<const thrust::complex<FPTYPE>*>(vu),
-                 orbital_corr,
+                 reinterpret_cast<const thrust::complex<FPTYPE>*>(pot_onsite),
+                 l_channel,
                  reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
                  reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
                  stress);

@@ -6,5 +6,5 @@ AddTest(
 AddTest(
   TARGET MODULE_HAMILT_ewald_rgen
   LIBS parameter base device
-  SOURCES rgen_test.cpp ../module_ewald/H_Ewald_pw.cpp ../module_ewald/dnrm2.cpp
+  SOURCES rgen_test.cpp ../module_ewald/h_ewald_pw.cpp ../module_ewald/dnrm2.cpp
 )

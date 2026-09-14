@@ -33,9 +33,6 @@ public:
     /// Rank-local atom ID used by the neighbor list.
     ModuleNeighList::LocalAtomIndex atom_id;
 
-    /// Global atom ID in the primary cell. Rank-local images share this ID.
-    ModuleNeighList::GlobalAtomId global_id;
-
     /// MPI rank that owns the primary atom.
     int owner_rank;
 
@@ -56,8 +53,7 @@ public:
                  int index,
                  ModuleNeighList::LocalAtomIndex id)
         : position_x(x), position_y(y), position_z(z),
-          atom_type(type), atom_index(index), atom_id(id),
-          global_id(id), owner_rank(0) {}
+          atom_type(type), atom_index(index), atom_id(id), owner_rank(0) {}
 
     NeighborAtom(double x,
                  double y,
@@ -65,7 +61,6 @@ public:
                  int type,
                  int index,
                  ModuleNeighList::LocalAtomIndex id,
-                 ModuleNeighList::GlobalAtomId global_id_in,
                  int owner_rank_in)
         : position_x(x),
           position_y(y),
@@ -73,7 +68,6 @@ public:
           atom_type(type),
           atom_index(index),
           atom_id(id),
-          global_id(global_id_in),
           owner_rank(owner_rank_in)
     {
     }

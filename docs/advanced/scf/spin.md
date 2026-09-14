@@ -30,11 +30,11 @@ If **"nupdown"** is set to non-zero, number of spin-up and spin-down electrons w
 
 ## Noncollinear Spin Polarized Calculations
 The spin non-collinear polarization calculation corresponds to setting **"noncolin 1"**, in which case the coupling between spin up and spin down will be taken into account.
-In this case, nspin is automatically set to 4, which is usually not required to be specified manually.
+In this case, **"nspin 4"** must also be specified. ABACUS reports an input error instead of silently changing an incompatible or omitted nspin value.
 The weight of each band will not change, but the number of occupied states will be double.
 If the nbands parameter is set manually, it is generally set to twice what it would be when nspin<4.
 
-In general, non-collinear magnetic moment settings are often used in calculations considering [SOC effects](#soc-effects). When **"lspinorb 1"** in INPUT file, "nspin" is also automatically set to 4.
+In general, non-collinear magnetic moment settings are often used in calculations considering [SOC effects](#soc-effects). When **"lspinorb 1"** is set in INPUT, **"nspin 4"** is also required.
 
 Note: different settings for "noncolin" and "lspinorb" correspond to different calculations:
 
@@ -119,22 +119,22 @@ Example from a full-relativistic UPF file:
 - **PseudoDOJO**: Provides both scalar and full-relativistic versions
 - **ABACUS official**: [abacus.ustc.edu.cn](http://abacus.ustc.edu.cn/pseudo/list.htm)
 
-## Automatic Parameter Settings
+## Parameter Requirements and Automatic Settings
 
-When using SOC or non-collinear calculations, ABACUS automatically adjusts several parameters:
+When using SOC or non-collinear calculations, set the required spin representation explicitly. ABACUS still derives internal spin state and some related settings after validating the input:
 
 ### When `lspinorb=true`:
-1. **nspin**: Automatically set to 4 (noncollinear spin representation)
+1. **nspin**: Must be explicitly set to 4 (noncollinear spin representation)
 2. **Symmetry**: Automatically disabled (`symm_flag=-1`) because SOC breaks inversion symmetry
 3. **Magnetization**: NOT automatically set when `noncolin=0` (implies non-magnetic material with SOC)
 
 ### When `noncolin=true`:
-1. **nspin**: Automatically set to 4
+1. **nspin**: Must be explicitly set to 4
 2. **npol**: Set to 2 (wave function has two spinor components)
 3. **Magnetization**: Automatically set if user provides zero values (unless `lspinorb=1` and `noncolin=0`)
 
 ### Important Notes:
-- You do NOT need to manually set `nspin=4` when using `lspinorb=1` or `noncolin=1`
+- You must set `nspin=4` when using `lspinorb=1` or `noncolin=1`; missing or incompatible values are rejected during input validation
 - Symmetry operations are incompatible with SOC, so they are automatically turned off
 - For `lspinorb=1, noncolin=0`: This is a special case for non-magnetic materials with SOC, where magnetization is not initialized
 
@@ -172,7 +172,7 @@ basis_type          pw
 ecutwfc             50
 lspinorb            1        # Enable SOC
 noncolin            0        # No non-collinear magnetism
-# nspin will be automatically set to 4
+nspin               4        # Required spinor representation
 # symmetry will be automatically disabled
 ```
 
@@ -185,7 +185,7 @@ calculation         scf
 basis_type          lcao
 lspinorb            0        # No SOC
 noncolin            1        # Enable non-collinear magnetism
-# nspin will be automatically set to 4
+nspin               4        # Required spinor representation
 # Magnetization directions should be specified in STRU file
 ```
 
@@ -199,7 +199,7 @@ basis_type          pw
 ecutwfc             60
 lspinorb            1        # Enable SOC
 noncolin            1        # Enable non-collinear magnetism
-# nspin will be automatically set to 4
+nspin               4        # Required spinor representation
 # symmetry will be automatically disabled
 # Magnetization directions should be specified in STRU file
 ```
@@ -213,6 +213,7 @@ calculation         scf
 basis_type          pw
 ecutwfc             50
 lspinorb            1        # Enable SOC
+nspin               4        # Required spinor representation
 soc_lambda          0.5      # 50% SOC strength
 # Useful when full SOC overestimates or underestimates experimental results
 ```

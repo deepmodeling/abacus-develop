@@ -1,14 +1,17 @@
 #ifndef ESOLVER_KS_H
 #define ESOLVER_KS_H
 
-#include "esolver_fp.h" // first-principles esolver
-#include "source_basis/module_pw/pw_basis_k.h" // use plane wave
-#include "source_cell/klist.h" // use k-points in Brillouin zone
+#include "esolver_fp.h"                                // first-principles esolver
+#include "source_basis/module_pw/pw_basis_k.h"         // use plane wave
+#include "source_cell/klist.h"                         // use k-points in Brillouin zone
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
-#include "source_hamilt/hamilt.h" // use Hamiltonian
-#include "source_hamilt/hamilt_base.h" // use Hamiltonian base class
-#include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
+#include "source_hamilt/hamilt.h"                      // use Hamiltonian
+#include "source_hamilt/hamilt_base.h"                 // use Hamiltonian base class
+#include "source_hamilt/module_xc/general_exx_info.h"  // ESolver owns General_Exx_Info value
+#include "source_pw/module_pwdft/dftu_base.h"          // Plus_U_Base for dftu_ member
 #include "source_pw/module_pwdft/vnl_pw.h"
+
+#include <memory> // std::unique_ptr for dftu_ member
 
 namespace ModuleESolver
 {
@@ -22,11 +25,11 @@ class ESolver_KS : public ESolver_FP
     //! Deconstructor
     virtual ~ESolver_KS();
 
-    virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    virtual void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 
-    virtual void runner(UnitCell& ucell, const int istep) override;
+    virtual void runner(BaseCell& basecell, const int istep) override;
 
-    virtual void after_all_runners(UnitCell& ucell) override;
+    virtual void after_all_runners(BaseCell& basecell) override;
 
   protected:
     //! Something to do before SCF iterations.
@@ -59,20 +62,27 @@ class ESolver_KS : public ESolver_FP
     //! nonlocal pseudopotentials
     pseudopot_cell_vnl ppcell;
 
-    //! DFT+U method, mohan add 2025-11-07
-    Plus_U dftu;
+    //! DFT+U method (PW and LCAO both news Plus_U_Base).
+    //! Owned by ESolver_KS via unique_ptr; released automatically in ~ESolver_KS.
+    std::unique_ptr<Plus_U_Base> dftu_;
 
-    std::string basisname;      //! esolver_ks_lcao.cpp
-    double esolver_KS_ne = 0.0; //! number of electrons
-    double diag_ethr;           //! the threshold for diagonalization
-    double scf_thr;             //! scf density threshold
-    double scf_ene_thr;         //! scf energy threshold
-    double drho;                //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
-    double hsolver_error;       //! the error of HSolver
-    int maxniter;               //! maximum iter steps for scf
-    int niter;                  //! iter steps actually used in scf
+    std::string basisname;          //! esolver_ks_lcao.cpp
+    double esolver_KS_ne = 0.0;     //! number of electrons
+    double diag_ethr;               //! the threshold for diagonalization
+    double scf_thr;                 //! scf density threshold
+    double scf_ene_thr;             //! scf energy threshold
+    double drho;                    //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
+    double hsolver_error;           //! the error of HSolver
+    /// DeltaSpin RMS from the most recent lambda optimization loop; -1.0 means no DeltaSpin.
+    /// Set by ESolver_KS_LCAO after run_lambda_loop, read by ESolver_KS::iter_finish when calling print_etot.
+    double ds_rms_ = -1.0;
+    int maxniter;                   //! maximum iter steps for scf
+    int niter;                      //! iter steps actually used in scf
     bool oscillate_esolver = false; // whether esolver is oscillated
-    bool scf_nmax_flag = false; // whether scf has reached nmax, mohan add 20250921
+    bool scf_nmax_flag = false;     // whether scf has reached nmax, mohan add 20250921
+
+    /// General EXX info owned by ESolver, initialized from input parameters.
+    General_Exx_Info general_exx_info_;
 };
 } // namespace ModuleESolver
 #endif

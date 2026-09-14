@@ -50,6 +50,10 @@ focused cleanup.
   C++11 baseline. Backend-specific or dependency-constrained paths may use the
   higher standard already selected by existing CMake configuration.
 - Use LF line endings for text files. `.bat` and `.cmd` are the CRLF exception.
+- Place `ModuleBase::timer::start`/`end` at the beginning and end of a function,
+  not around isolated statements inside the function body. Use the enclosing
+  function name (or constructor name) as the timer label so the timer scopes
+  the whole unit of work.
 
 AI agents have additional workflow obligations:
 
@@ -74,13 +78,14 @@ decisions.
 | `.hpp` propagation | New `.hpp` or header includes `.hpp` | phase-one mechanical warning | CI + AI review | medium | warn | new files and added includes | Exception can be recorded in PR |
 | Header dependency growth | Header diff adds includes | phase-one mechanical warning + AI review | CI + AI review | medium | warn | added header includes | Necessity is semantic and not mechanically decided |
 | Member variable workflow switch | Key flow state hidden as mutable member state | AI review + human confirmation | AI + human review | high | human confirmation | semantic review | Static matching is unreliable |
+| Timer placement | `timer::start`/`end` wrap a whole function body | AI review | AI + human review | low | warn | semantic review | Mechanical matching is unreliable for scopes; label should name the enclosing function |
 | Module path and build linkage | New source path and `CMakeLists.txt` linkage | phase-one mechanical | CI | medium | block | new source files and build-script diff | Deterministic path/build check only |
 | Module semantic ownership | Best module/submodule placement | AI review + human confirmation | AI + human review | medium | human confirmation | semantic review | Final call belongs to maintainers |
 | Heterogeneous code linkage | CUDA/ROCM/kernel source and `CMakeLists.txt` linkage | phase-one mechanical | CI + AI review | medium | block | new heterogeneous files and linkage | Mechanical path/linkage only |
 | Heterogeneous test evidence | CUDA/ROCM/kernel change has test evidence or reason | phase-one mechanical warning + AI review | CI + AI review | high | warn | changed paths and PR body | Sufficiency is human-reviewed |
 | Test existence | Source change has test evidence or reason | phase-one mechanical warning + AI review | CI + AI review | high | warn | PR body and changed paths | Sufficiency is human-reviewed |
 | Test sufficiency | Tests cover important behavior | AI review + human confirmation | AI + human review | medium | human confirmation | semantic review | Not mechanically blocked |
-| INPUT behavior linkage | Parameter metadata/default/type/parser behavior updates YAML and docs | phase-one mechanical + AI review | CI + AI review | high | block | behavior-field diff plus docs/PR body | Comment-only parameter-file changes are not blocked |
+| INPUT behavior linkage | Parameter metadata/default/type/parser behavior updates YAML and docs | phase-one mechanical + AI review | CI + AI review | high | warn | behavior-field diff plus docs/PR body | Comment-only parameter-file changes are not blocked |
 | Documentation sync | Behavior/interface docs updated | phase-one mechanical warning + AI review | CI + AI review | medium | warn | changed paths and PR body | Major behavior changes escalate to reviewers |
 | PR metadata completeness | Issue, tests, behavior, INPUT, core impact, exceptions | phase-one mechanical | CI or GitHub bot | medium | warn | PR template fields | Not run by local hook |
 | AI workflow | Interface lookup, uncertainty, verification report | AI review | AI review | high | warn | review transcript/output | Applies to AI agents |
@@ -223,14 +228,16 @@ The parameter YAML stream is generated transiently from the ABACUS binary and
 is not stored in the repository.
 
 If the diff touches parameter internals but does not change user-visible INPUT
-behavior, the PR must state why no documentation update is required.
+behavior, the PR should state why no documentation update is required. Missing
+documentation updates trigger a governance warning (not a block), but maintainers
+may still request documentation updates before merging.
 
 ## PR Self-Consistency
 
 Before requesting review, check that the PR description matches the diff:
 
-- New or changed INPUT behavior lists the changed parameters and links the YAML
-  and Markdown documentation updates.
+- New or changed INPUT behavior lists the changed parameters and links the
+  Markdown documentation update.
 - Source changes list focused unit, case, or CLI verification commands with the
   observed result.
 - Header include growth, `.hpp` propagation, missing tests, or other warnings

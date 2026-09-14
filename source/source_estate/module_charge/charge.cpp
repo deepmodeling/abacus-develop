@@ -42,10 +42,6 @@ Charge::Charge()
 Charge::~Charge()
 {
     this->destroy();
-#ifdef __MPI
-    delete[] rec;
-    delete[] dis;
-#endif
 }
 
 void Charge::set_rhopw(ModulePW::PW_Basis* rhopw_in)

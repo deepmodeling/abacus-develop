@@ -19,7 +19,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
     const int nvirt,
     const Parallel_2D& pmat,
     const double factor,
-    const MO_TYPE type)
+    const LR_Util::MO_TYPE type)
 {
     ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_pblas");
     assert(px.comm() == pc.comm() && px.comm() == pmat.comm());
@@ -28,11 +28,12 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
 
     const int nks = c.get_nk();
     const int i1 = 1;
-    const int ivirt = nocc + 1;
-    const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
-    const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
-    const int imo1 = type == MO_TYPE::VV ? ivirt : i1;
-    const int imo2 = type == MO_TYPE::OO ? i1 : ivirt;
+    int nmo1_set, nmo2_set, imo1_set, imo2_set;
+    LR_Util::set_dim(type, nocc, nvirt, nmo1_set, nmo2_set, imo1_set, imo2_set);
+    const int nmo1 = nmo1_set;
+    const int nmo2 = nmo2_set;
+    const int imo1 = imo1_set + 1;
+    const int imo2 = imo2_set + 1;
 
     std::vector<container::Tensor> dm_trans(nks,
         container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pmat.get_col_size(), pmat.get_row_size() }));
@@ -76,7 +77,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
     const int nvirt,
     const Parallel_2D& pmat,
     const std::complex<double> factor,
-    const MO_TYPE type)
+    const LR_Util::MO_TYPE type)
 {
     ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_pblas");
     assert(px.comm() == pc.comm() && px.comm() == pmat.comm());
@@ -84,11 +85,12 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
     assert(pmat.get_local_size() > 0);
     const int nks = c.get_nk();
     const int i1 = 1;
-    const int ivirt = nocc + 1;
-    const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
-    const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
-    const int imo1 = type == MO_TYPE::VV ? ivirt : i1;
-    const int imo2 = type == MO_TYPE::OO ? i1 : ivirt;
+    int nmo1_set, nmo2_set, imo1_set, imo2_set;
+    LR_Util::set_dim(type, nocc, nvirt, nmo1_set, nmo2_set, imo1_set, imo2_set);
+    const int nmo1 = nmo1_set;
+    const int nmo2 = nmo2_set;
+    const int imo1 = imo1_set + 1;
+    const int imo2 = imo2_set + 1;
 
     std::vector<container::Tensor> dm_trans(nks,
         container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, {pmat.get_col_size(), pmat.get_row_size()}));

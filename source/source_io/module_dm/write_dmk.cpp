@@ -4,7 +4,7 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_output/ucell_io.h"
+#include "source_cell/ucell_io.h"
 
 std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, const int nspin, const int ik, const int istep)
 {
@@ -257,7 +257,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 		// information about density matrix at this k-point
 		ofs << " " << nspin << " # number of spin directions" << std::endl;
                 ofs << " " << ispin+1 << " # spin index" << std::endl; 
-		ofs << " " << kv.get_nkstot_full() << " # total k points " << std::endl;
+		ofs << " " << kv.get_nkstot_nospin() << " # total k points " << std::endl;
 		ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
 		ofs << " " << ik+1 << " # k-point index " << std::endl;
                 ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z  

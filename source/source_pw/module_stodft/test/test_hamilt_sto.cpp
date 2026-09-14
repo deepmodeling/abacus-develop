@@ -1,4 +1,5 @@
 #include "../hamilt_sdft_pw.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_hamilt/operator.h"
 
 #include "gtest/gtest.h"
@@ -10,12 +11,13 @@ void elecstate::Potential::cal_fixed_v(double*){}
 
 template <typename T, typename Device>
 hamilt::HamiltPW<T, Device>::HamiltPW(
-		elecstate::Potential* pot_in, 
-		ModulePW::PW_Basis_K* wfc_basis, 
-		K_Vectors* p_kv, 
+		elecstate::Potential* pot_in,
+		ModulePW::PW_Basis_K* wfc_basis,
+		K_Vectors* p_kv,
 		pseudopot_cell_vnl* ppcell,
-        Plus_U* p_dftu, // mohan add 20251108
-		const UnitCell* ucell){}
+        Plus_U_Base* p_dftu,
+		const UnitCell* ucell,
+        const General_Exx_Info* exx_info){}
 
 template <typename T, typename Device>
 hamilt::HamiltPW<T, Device>::~HamiltPW(){

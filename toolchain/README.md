@@ -298,7 +298,7 @@ export CUDA_PATH=/path/to/CUDA
 ```bash
 cmake -B $BUILD_DIR \
     -DUSE_CUDA=ON \
-    -DUSE_ELPA=ON \
+    -DENABLE_ELPA=ON \
     # ... other options
 ```
 

@@ -1,8 +1,10 @@
+#include "source_lcao/module_deltaspin/mi_tools.h"
+
 #include "gtest/gtest.h"
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <vector>
-#include <algorithm>
 
 /***********************************************************************
  * Unit tests for DeltaSpin core algorithms.
@@ -23,8 +25,10 @@ struct Vec3i { int x, y, z; };
 // 1. pauli_to_moment: spinor -> magnetic moment
 //
 // Mx = w * (occ[1] + occ[2]).real()
-// My = w * (occ[1] - occ[2]).imag()
+// My = w * (occ[1] - occ[2]).imag()   (bare; occ is conj-first, occ[1]=conj(c_up)*c_dn,
+//                                      so occ[1]=(Mx+iMy)/2 and the bare Im recovers physical My)
 // Mz = w * (occ[0] - occ[3]).real()
+// (mirrors spin_constrain.h::pauli_to_moment; #7664 flipped My, #7748 reverted the code sign)
 // =====================================================================
 
 static Vec3 pauli_to_moment(const std::complex<double> occ[4], double weight)
@@ -81,20 +85,43 @@ TEST_F(PauliToMomentTest, GeneralCase_AllComponents)
     occ[2] = {0.1, -0.2}; // conj of occ[1]
     occ[3] = {0.4, 0.0};
     auto M = pauli_to_moment(occ, 1.0);
+    // occ[1]=conj(c_up)*c_dn=(Mx+iMy)/2, so physical My=2*Im(occ[1])=0.4
     // Mx = (0.1+0.2i + 0.1-0.2i).real = 0.2
-    // My = (0.1+0.2i - (0.1-0.2i)).imag = (0+0.4i).imag = 0.4
+    // My =  (0.1+0.2i - (0.1-0.2i)).imag = (0+0.4i).imag = 0.4
     // Mz = (0.6 - 0.4) = 0.2
     EXPECT_NEAR(M.x, 0.2, 1e-15);
     EXPECT_NEAR(M.y, 0.4, 1e-15);
     EXPECT_NEAR(M.z, 0.2, 1e-15);
 }
 
+TEST(PauliConventionTest, LambdaExpectationMatchesDotMoment)
+{
+    const double amplitude = 1.0 / std::sqrt(2.0);
+    const std::complex<double> spinor[2] = {{amplitude, 0.0}, {0.0, amplitude}};
+    const std::complex<double> occ[4] = {std::conj(spinor[0]) * spinor[0],
+                                         std::conj(spinor[0]) * spinor[1],
+                                         std::conj(spinor[1]) * spinor[0],
+                                         std::conj(spinor[1]) * spinor[1]};
+    const ModuleBase::Vector3<double> lambda(0.0, 2.0, 0.0);
+    const auto matrix = spinconstrain::pauli_vector_to_spinor(lambda);
+    const auto moment = spinconstrain::pauli_to_moment(occ, 1.0);
+
+    const std::complex<double> h_up = matrix[0] * spinor[0] + matrix[1] * spinor[1];
+    const std::complex<double> h_down = matrix[2] * spinor[0] + matrix[3] * spinor[1];
+    const double expectation = (std::conj(spinor[0]) * h_up + std::conj(spinor[1]) * h_down).real();
+    const double dot_moment = lambda.x * moment.x + lambda.y * moment.y + lambda.z * moment.z;
+
+    EXPECT_NEAR(matrix[1].imag(), -2.0, 1e-15);
+    EXPECT_NEAR(matrix[2].imag(), 2.0, 1e-15);
+    EXPECT_NEAR(expectation, dot_moment, 1e-15);
+}
+
 // =====================================================================
 // 2. calculate_delta_hcc: Pauli matrix expansion
 //
 // npol=2: H += becp^H * lambda * becp
-//   lambda in Pauli basis: |lambda_z    lambda_x+i*lambda_y|
-//                          |lambda_x-i*lambda_y   -lambda_z |
+//   lambda in Pauli basis: |lambda_z                lambda_x-i*lambda_y|
+//                          |lambda_x+i*lambda_y     -lambda_z           |
 //
 // npol=1: H += becp^H * lambda_z * sign * becp
 // =====================================================================

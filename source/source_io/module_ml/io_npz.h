@@ -3,7 +3,7 @@
 
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 
 #include <complex>
 #include <string>

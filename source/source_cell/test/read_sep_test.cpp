@@ -1,17 +1,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <memory>
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_base/global_variable.h"
 
 #ifdef __MPI
 #include <mpi.h>
 #endif // __MPI
 
-#define private public
 #include "source_cell/sep.h"
-#undef private
 
 class ReadSepTest : public testing::Test
 {

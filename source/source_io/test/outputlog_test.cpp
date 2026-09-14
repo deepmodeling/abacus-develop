@@ -150,12 +150,7 @@ UnitCell::~UnitCell()
     if (atoms != nullptr)
         delete[] atoms;
 }
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
+
 Magnetism::Magnetism()
 {
 }

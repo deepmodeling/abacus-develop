@@ -5,6 +5,7 @@ init_wfc          random
 basis_type        pw
 calculation       scf
 noncolin          1
+nspin             4
 symmetry          0
 cal_force         1
 cal_stress        1

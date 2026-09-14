@@ -1,16 +1,11 @@
 #include "diago_elpa.h"
-#include "source_base/global_function.h"
-#include "source_base/module_external/blas_connector.h"
 
-#include "source_io/module_parameter/parameter.h"
 #include "module_genelpa/elpa_solver.h"
 #include "source_base/module_external/blacs_connector.h"
-#include "source_base/global_variable.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #include "source_base/tool_quit.h"
-
-typedef hamilt::MatrixBlock<double> matd;
-typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver {
 #ifdef __MPI
@@ -67,21 +62,19 @@ MPI_Comm DiagoElpa<std::complex<double>>::setmpicomm() {
 #endif
 template <>
 void DiagoElpa<std::complex<double>>::diag(
-    hamilt::Hamilt<std::complex<double>>* phm_in,
+    ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
     psi::Psi<std::complex<double>>& psi,
     Real* eigenvalue_in) {
     ModuleBase::TITLE("DiagoElpa", "diag");
 #ifdef __MPI
-    matcd h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
-
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
 
     bool isReal = false;
     MPI_Comm COMM_DIAG = setmpicomm(); // set mpi_comm needed
     ELPA_Solver es((const bool)isReal,
                    COMM_DIAG,
-                   (const int)PARAM.inp.nbands,
+                   (const int)this->nbands,
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
@@ -97,7 +90,7 @@ void DiagoElpa<std::complex<double>>::diag(
     es.exit();
 
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 #else
     ModuleBase::WARNING_QUIT("DiagoElpa",
                              "DiagoElpa only can be used with macro __MPI");
@@ -105,23 +98,19 @@ void DiagoElpa<std::complex<double>>::diag(
 }
 
 template <>
-void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in,
+void DiagoElpa<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
+                             ModuleBase::MatrixBlock<double>& s_mat,
                              psi::Psi<double>& psi,
                              Real* eigenvalue_in) {
     ModuleBase::TITLE("DiagoElpa", "diag");
 #ifdef __MPI
-    matd h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
-
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
 
     bool isReal = true;
     MPI_Comm COMM_DIAG = setmpicomm(); // set mpi_comm needed
-    // ELPA_Solver es(isReal, COMM_DIAG, PARAM.inp.nbands, h_mat.row, h_mat.col,
-    // h_mat.desc);
     ELPA_Solver es((const bool)isReal,
                    COMM_DIAG,
-                   (const int)PARAM.inp.nbands,
+                   (const int)this->nbands,
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
@@ -135,7 +124,7 @@ void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in,
     es.exit();
 
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 #else
     ModuleBase::WARNING_QUIT("DiagoElpa",
                              "DiagoElpa only can be used with macro __MPI");
@@ -145,17 +134,17 @@ void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in,
 
 #ifdef __MPI
 template <>
-void DiagoElpa<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex<double>>& h_mat,
-    hamilt::MatrixBlock<std::complex<double>>& s_mat,
+void DiagoElpa<std::complex<double>>::diag_pool(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
     psi::Psi<std::complex<double>>& psi,
     Real* eigenvalue_in,
     MPI_Comm& comm)
 {
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
     bool isReal = false;
     ELPA_Solver es((const bool)isReal,
                    comm,
-                   (const int)PARAM.inp.nbands,
+                   (const int)this->nbands,
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
@@ -170,24 +159,22 @@ void DiagoElpa<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex
     ModuleBase::timer::end("DiagoElpa", "elpa_solve");
     es.exit();
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
 
 template <>
-void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
-    hamilt::MatrixBlock<double>& s_mat,
+void DiagoElpa<double>::diag_pool(ModuleBase::MatrixBlock<double>& h_mat,
+    ModuleBase::MatrixBlock<double>& s_mat,
     psi::Psi<double>& psi,
     Real* eigenvalue_in,
     MPI_Comm& comm)
 {
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
 
     bool isReal = true;
-    // ELPA_Solver es(isReal, COMM_DIAG, PARAM.inp.nbands, h_mat.row, h_mat.col,
-    // h_mat.desc);
     ELPA_Solver es((const bool)isReal,
                    comm,
-                   (const int)PARAM.inp.nbands,
+                   (const int)this->nbands,
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
@@ -201,11 +188,7 @@ void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
     es.exit();
 
     const int inc = 1;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                "K-S equation was solved by genelpa2");
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                "eigenvalues were copied to ekb");
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
 #endif
 

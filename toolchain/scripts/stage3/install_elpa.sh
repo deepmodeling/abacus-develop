@@ -109,6 +109,17 @@ case "$with_elpa" in
                     config_flags="--enable-avx-kernels=${has_AVX} --enable-avx2-kernels=${has_AVX2} --enable-avx512-kernels=${has_AVX512}"
                 fi
             fi
+
+            # GCC 15.2 miscompiles ELPA's double-complex AVX/AVX2 BLOCK2
+            # kernels when tree SLP vectorization is enabled.
+            elpa_c_workaround_flags=""
+            cc_version="$("${MPICC}" -dumpfullversion -dumpversion 2>/dev/null || true)"
+            cc_banner="$("${MPICC}" --version 2>/dev/null | head -n 1 || true)"
+            if [[ "${cc_banner}" == *gcc* || "${cc_banner}" == *GCC* ]] &&
+               [[ "${cc_version}" =~ ^15\.2(\.|$) ]]; then
+                elpa_c_workaround_flags="-fno-tree-slp-vectorize"
+            fi
+
             for TARGET in "cpu" "nvidia"; do
                 # Accept both uppercase and lowercase GPU enable flags for compatibility
                 gpu_enabled="${ENABLE_CUDA}"
@@ -140,7 +151,7 @@ case "$with_elpa" in
                         CXX=${MPICXX} \
                         CPP="cpp -E" \
                         FCFLAGS="${FCFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto" \
-                        CFLAGS="${CFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto" \
+                        CFLAGS="${CFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto ${elpa_c_workaround_flags}" \
                         CXXFLAGS="${CXXFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto" \
                         LDFLAGS="${MATH_LDFLAGS} ${SCALAPACK_LDFLAGS} ${cray_ldflags} -lstdc++" \
                         LIBS="${SCALAPACK_LIBS} $(resolve_string "${MATH_LIBS}" "MPI") ${MPI_LIBS}" \
@@ -171,7 +182,7 @@ case "$with_elpa" in
                         CXX=${MPICXX} \
                         CPP="cpp -E" \
                         FCFLAGS="${FCFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto" \
-                        CFLAGS="${CFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto" \
+                        CFLAGS="${CFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto ${elpa_c_workaround_flags}" \
                         CXXFLAGS="${CXXFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto" \
                         LDFLAGS="-Wl,--allow-multiple-definition -Wl,--enable-new-dtags ${MATH_LDFLAGS} ${SCALAPACK_LDFLAGS} ${cray_ldflags} -lstdc++" \
                         LIBS="${SCALAPACK_LIBS} $(resolve_string "${MATH_LIBS}" "MPI")" \

@@ -1,11 +1,15 @@
 #ifndef HSOLVERPW_H
 #define HSOLVERPW_H
 
-#include "source_estate/elecstate.h"
-#include "source_hamilt/hamilt.h"
 #include "source_base/macros.h"
 #include "source_basis/module_pw/pw_basis_k.h"
+#include "source_estate/elecstate.h"
+#include "source_hamilt/hamilt.h"
+
+#include <iosfwd>
 #include <unordered_map>
+
+class TestHSolverPW; // unit-test fixture, see source_hsolver/test/
 
 namespace hsolver
 {
@@ -13,6 +17,10 @@ namespace hsolver
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class HSolverPW
 {
+    /// the unit test drives the protected hamiltSolvePsiK() and
+    /// update_precondition() directly; the fixture is at global scope
+    friend class ::TestHSolverPW;
+
   protected:
     // Note GetTypeReal<T>::type will
     // return T if T is real type(float, double),
@@ -33,10 +41,17 @@ class HSolverPW
               const int diag_iter_max_in,
               const double diag_thr_in,
               const bool need_subspace_in,
+              const int nbands_in,
+              const bool diago_smooth_ethr_in,
+              const int pw_diag_ndim_in,
+              const int diag_subspace_in,
+              const int nb2d_in,
               const bool use_k_continuity_in = false)
         : wfc_basis(wfc_basis_in), calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in),
           use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in),
           diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in), need_subspace(need_subspace_in),
+          nbands(nbands_in), diago_smooth_ethr(diago_smooth_ethr_in), pw_diag_ndim(pw_diag_ndim_in),
+          diag_subspace(diag_subspace_in), nb2d(nb2d_in),
           use_k_continuity(use_k_continuity_in) {};
 
     /// @brief solve function for pw
@@ -51,10 +66,10 @@ class HSolverPW
                double* out_eigenvalues,
                const int rank_in_pool_in,
                const int nproc_in_pool_in,
+               std::ostream& log,
                const bool skip_charge,
                const double tpiba,
                const int nat);
-
 
   protected:
     // diago caller
@@ -67,7 +82,7 @@ class HSolverPW
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);
 
-    void output_iterInfo();
+    void output_iterInfo(std::ostream& log);
 
     ModulePW::PW_Basis_K* wfc_basis = nullptr;
 
@@ -82,6 +97,12 @@ class HSolverPW
     const double diag_thr;   // threshold for diagonalization
 
     const bool need_subspace; // for cg or dav_subspace
+
+    const int nbands;              // global number of bands, may differ from psi.get_nbands() under band parallelism
+    const bool diago_smooth_ethr;  // use a band-wise smoothed threshold for all iter methods
+    const int pw_diag_ndim;        // dimension of the workspace for Davidson-type methods
+    const int diag_subspace;       // subspace eigensolver for dav_subspace: 0 Lapack, 1 elpa, 2 scalapack
+    const int nb2d;                // 2d block size used by the dav_subspace scalapack path
 
     const bool use_k_continuity;
 

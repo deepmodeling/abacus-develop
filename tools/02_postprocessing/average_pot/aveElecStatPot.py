@@ -4,6 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
+input_file = None
+output_file = None
+output_png = None
+
 current_dir = os.getcwd()
 
 if os.path.exists(os.path.join(current_dir, "ElecStaticPot.cube")):
@@ -15,16 +19,20 @@ else:
         dir_path = os.path.join(current_dir, dir_name)
 
         if os.path.isdir(dir_path) and dir_name.startswith("OUT."):
-            input_file = os.path.join(dir_path, "ElecStaticPot.cube")
-            output_file = os.path.join(dir_path, "ElecStaticPot_AVE")
-            output_png = os.path.join(dir_path, "ElecStaticPot-vs-Z.png") 
-            if os.path.exists(input_file):
+            candidate_file = os.path.join(dir_path, "ElecStaticPot.cube")
+            if os.path.exists(candidate_file):
+                input_file = candidate_file
+                output_file = os.path.join(dir_path, "ElecStaticPot_AVE")
+                output_png = os.path.join(dir_path, "ElecStaticPot-vs-Z.png") 
                 print(f"Processeding: {input_file}")
                 break
-            else:
-                print(f"File does not exist: {input_file}")
-                sys.exit()
-                        
+                
+if input_file is None:
+    print("Error: 'ElecStaticPot.cube' was not found in the current directory or any 'OUT.*' subdirectories.", file=sys.stderr)
+    print("Please check if ABACUS has completed successfully with 'out_pot' enabled (e.g., set to 2).", file=sys.stderr)
+    sys.exit(1)
+
+
 with open(input_file, 'r') as inpt:
     temp = inpt.readlines()
 

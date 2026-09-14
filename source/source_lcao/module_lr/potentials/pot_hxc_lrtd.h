@@ -1,5 +1,5 @@
 #pragma once
-#include "source_estate/module_pot/H_Hartree_pw.h"
+#include "source_estate/module_pot/h_hartree_pw.h"
 #include "xc_kernel.h"
 #include <unordered_map>
 #include <memory>

@@ -312,19 +312,19 @@ __global__ void cal_force_onsite(int wg_nc,
                                   int nkb,
                                   const int* atom_nh,
                                   const int* atom_na,
-                                  int tpiba,
+                                  FPTYPE tpiba,
                                   const FPTYPE* d_wg,
-                                  const thrust::complex<FPTYPE>* vu,
-                                  const int* orbital_corr,
+                                  const thrust::complex<FPTYPE>* pot_onsite,
+                                  const int* l_channel,
                                   const thrust::complex<FPTYPE>* becp,
                                   const thrust::complex<FPTYPE>* dbecp,
                                   FPTYPE* force)
 {
     const int ib = blockIdx.x / ntype;
     const int it = blockIdx.x % ntype;
-    if (orbital_corr[it] == -1)
+    if (l_channel[it] == -1)
         return;
-    const int orbital_l = orbital_corr[it];
+    const int orbital_l = l_channel[it];
     const int ip_begin = orbital_l * orbital_l;
     const int tlp1 = 2 * orbital_l + 1;
     const int tlp1_2 = tlp1 * tlp1;
@@ -335,7 +335,7 @@ __global__ void cal_force_onsite(int wg_nc,
     {
         iat += atom_na[ii];
         sum += atom_na[ii] * atom_nh[ii];
-        vu += npol * npol * tlp1_2 * atom_na[ii];
+        pot_onsite += npol * npol * tlp1_2 * atom_na[ii];
     }
 
     const int ib2 = ib * npol;
@@ -357,7 +357,7 @@ __global__ void cal_force_onsite(int wg_nc,
                 FPTYPE tmp = 0;
                 if (npol == 2)
                 {
-                    thrust::complex<FPTYPE> ps[4] = {vu[mm], vu[mm + tlp1_2], vu[mm + 2 * tlp1_2], vu[mm + 3 * tlp1_2]};
+                    thrust::complex<FPTYPE> ps[4] = {pot_onsite[mm], pot_onsite[mm + tlp1_2], pot_onsite[mm + 2 * tlp1_2], pot_onsite[mm + 3 * tlp1_2]};
                     const thrust::complex<FPTYPE> dbb0 = conj(dbecp[inkb0]) * becp[inkb2];
                     const thrust::complex<FPTYPE> dbb1 = conj(dbecp[inkb0]) * becp[inkb2 + nkb];
                     const thrust::complex<FPTYPE> dbb2 = conj(dbecp[inkb0 + nkb]) * becp[inkb2];
@@ -366,14 +366,14 @@ __global__ void cal_force_onsite(int wg_nc,
                 }
                 else
                 {
-                    tmp = -fac * (vu[mm] * conj(dbecp[inkb0]) * becp[inkb2]).real();
+                    tmp = -fac * (pot_onsite[mm] * conj(dbecp[inkb0]) * becp[inkb2]).real();
                 }
                 atomicAdd(force + iat * forcenl_nc + ipol, tmp);
             }
         }
         ++iat;
         sum += nprojs;
-        vu += npol * npol * tlp1_2;
+        pot_onsite += npol * npol * tlp1_2;
     }
 }
 
@@ -387,7 +387,7 @@ __global__ void cal_force_onsite(int wg_nc,
                                  int spin_sign,
                                  const int* atom_nh,
                                  const int* atom_na,
-                                 int tpiba,
+                                 FPTYPE tpiba,
                                  const FPTYPE* d_wg,
                                  const FPTYPE* lambda,
                                  const thrust::complex<FPTYPE>* becp,
@@ -468,8 +468,8 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                    const int* atom_na,
                                                                    const FPTYPE& tpiba,
                                                                    const FPTYPE* d_wg,
-                                                                   const std::complex<FPTYPE>* vu,
-                                                                   const int* orbital_corr,
+                                                                   const std::complex<FPTYPE>* pot_onsite,
+                                                                   const int* l_channel,
                                                                    const std::complex<FPTYPE>* becp,
                                                                    const std::complex<FPTYPE>* dbecp,
                                                                    FPTYPE* force)
@@ -491,8 +491,8 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                            atom_na,
                            tpiba,
                            d_wg,
-                           reinterpret_cast<const thrust::complex<FPTYPE>*>(vu),
-                           orbital_corr,
+                           reinterpret_cast<const thrust::complex<FPTYPE>*>(pot_onsite),
+                           l_channel,
                            reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
                            reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
                            force);
@@ -514,8 +514,8 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                            atom_na,
                            tpiba,
                            d_wg,
-                           reinterpret_cast<const thrust::complex<FPTYPE>*>(vu),
-                           orbital_corr,
+                           reinterpret_cast<const thrust::complex<FPTYPE>*>(pot_onsite),
+                           l_channel,
                            reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
                            reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
                            force);

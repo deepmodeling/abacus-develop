@@ -1,4 +1,5 @@
 #include "source_psi/setup_psi.h"
+#include "source_cell/klist.h"
 #include "source_io/module_parameter/parameter.h" // use parameter
 
 template <typename T>
@@ -12,10 +13,10 @@ Setup_Psi<T>::~Setup_Psi(){}
 // In that case, psi may change its size multiple times during SCF
 template <typename T>
 void Setup_Psi<T>::allocate_psi(
-		psi::Psi<T>* &psi,
-		const K_Vectors &kv,
-        const Parallel_Orbitals &para_orb,
-		const Input_para &inp)
+    psi::Psi<T>* &psi,
+    const K_Vectors &kv,
+    const Parallel_Orbitals &para_orb,
+    const Input_para &inp)
 {
     // init electronic wave function psi
     if (psi == nullptr)
@@ -50,10 +51,10 @@ void Setup_Psi<T>::allocate_psi(
 template <typename T>
 void Setup_Psi<T>::deallocate_psi(psi::Psi<T>* &psi)
 {
-	if(psi!=nullptr)
-	{
-		delete psi;
-	}
+    if(psi!=nullptr)
+    {
+        delete psi;
+    }
 }
 
 template class Setup_Psi<double>;

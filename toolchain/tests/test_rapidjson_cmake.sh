@@ -54,7 +54,7 @@ run_top_level_configure() {
     -DENABLE_RAPIDJSON=ON \
     -DENABLE_LCAO=OFF \
     -DENABLE_MPI=OFF \
-    -DUSE_OPENMP=OFF \
+    -DENABLE_OPENMP=OFF \
     -DMKLROOT="$mkl_root" \
     -DCMAKE_PREFIX_PATH="$prefix" \
     >"${build_dir}.log" 2>&1

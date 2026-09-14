@@ -3,10 +3,10 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_rt/td_info.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 
 template <typename TK, typename TR>
 hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::TD_pot_hybrid(
@@ -293,7 +293,6 @@ template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik) {
     return;
 }
-#include "td_pot_hybrid_force.hpp"
 template class hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<std::complex<double>, double>>;
 template class hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

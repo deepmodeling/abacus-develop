@@ -1,6 +1,6 @@
 #include "pot_hxc_lrtd.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_estate/module_pot/H_Hartree_pw.h"
+#include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include <set>
@@ -45,7 +45,7 @@ namespace LR
             ModuleBase::timer::end("PotHxcLR", "cal_v_eff");
             return; 
         }    // no xc
-#ifdef USE_LIBXC
+#ifdef __LIBXC
         this->kernel_to_potential_[spin_type_](rho[0], v_eff, ispin_op);
 #else
         throw std::domain_error("GlobalV::XC_Functional::get_func_type() =" + std::to_string(XC_Functional::get_func_type())

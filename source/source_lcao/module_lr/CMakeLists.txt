@@ -7,6 +7,9 @@ if(ENABLE_LCAO)
   list(APPEND objects
     utils/lr_util.cpp
     utils/lr_util_hcontainer.cpp
+    utils/lr_io.cpp
+    utils/lr_io_krlist.cpp
+    utils/exciton_plotter.cpp
     ao_to_mo_transformer/ao_to_mo_parallel.cpp
     ao_to_mo_transformer/ao_to_mo_serial.cpp
     dm_trans/dm_trans_parallel.cpp
@@ -17,7 +20,6 @@ if(ENABLE_LCAO)
     lr_spectrum.cpp
     lr_spectrum_velocity.cpp
     hamilt_casida.cpp
-    esolver_lrtd_lcao.cpp
     potentials/xc_kernel.cpp)
 
 add_library(

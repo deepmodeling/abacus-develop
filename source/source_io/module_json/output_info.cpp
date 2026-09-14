@@ -92,15 +92,15 @@ namespace Json
         }
         //add coordinate
         int ntype = ucell->ntype;
-        double lat0 = ucell->lat0;
+        const double lat0_angstrom = ucell->lat0_angstrom;
         for(int i=0;i<ntype;i++){
             ModuleBase::Vector3<double>* tau = ucell->atoms[i].tau.data();
             int na = ucell->atoms[i].na;
             for(int j=0;j<na;j++){
                 Json::jsonValue coordinateArray(JarrayType);
-                coordinateArray.JPushBack(tau[j][0]*lat0);
-                coordinateArray.JPushBack(tau[j][1]*lat0);
-                coordinateArray.JPushBack(tau[j][2]*lat0);
+                coordinateArray.JPushBack(tau[j][0] * lat0_angstrom);
+                coordinateArray.JPushBack(tau[j][1] * lat0_angstrom);
+                coordinateArray.JPushBack(tau[j][2] * lat0_angstrom);
                 Json::AbacusJson::add_json({"output",-1,"coordinate"}, coordinateArray,true);
                 Json::AbacusJson::add_json( {"output",-1,"mag"},ucell->atoms[i].mag[j],true);
             }
@@ -111,15 +111,15 @@ namespace Json
             Json::jsonValue cellArray1(JarrayType);
             Json::jsonValue cellArray2(JarrayType);
             Json::jsonValue cellArray3(JarrayType);
-            cellArray1.JPushBack(ucell->latvec.e11);
-            cellArray1.JPushBack(ucell->latvec.e12);
-            cellArray1.JPushBack(ucell->latvec.e13);
-            cellArray2.JPushBack(ucell->latvec.e21);
-            cellArray2.JPushBack(ucell->latvec.e22);
-            cellArray2.JPushBack(ucell->latvec.e23);
-            cellArray3.JPushBack(ucell->latvec.e31);
-            cellArray3.JPushBack(ucell->latvec.e32);
-            cellArray3.JPushBack(ucell->latvec.e33);
+            cellArray1.JPushBack(ucell->latvec.e11 * lat0_angstrom);
+            cellArray1.JPushBack(ucell->latvec.e12 * lat0_angstrom);
+            cellArray1.JPushBack(ucell->latvec.e13 * lat0_angstrom);
+            cellArray2.JPushBack(ucell->latvec.e21 * lat0_angstrom);
+            cellArray2.JPushBack(ucell->latvec.e22 * lat0_angstrom);
+            cellArray2.JPushBack(ucell->latvec.e23 * lat0_angstrom);
+            cellArray3.JPushBack(ucell->latvec.e31 * lat0_angstrom);
+            cellArray3.JPushBack(ucell->latvec.e32 * lat0_angstrom);
+            cellArray3.JPushBack(ucell->latvec.e33 * lat0_angstrom);
             Json::AbacusJson::add_json({"output",-1,"cell"}, cellArray1,true);
             Json::AbacusJson::add_json({"output",-1,"cell"}, cellArray2,true);
             Json::AbacusJson::add_json({"output",-1,"cell"}, cellArray3,true);

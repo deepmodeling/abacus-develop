@@ -138,6 +138,17 @@ TEST_F(test_para2d, DescReuseCtxt)
         EXPECT_NE(p1.desc[1], p3.desc[1]);
     }
 }
+TEST_F(test_para2d, SerialLayoutInMpiBuild)
+{
+    Parallel_2D p2d;
+    p2d.set_serial(3, 4);
+    EXPECT_EQ(p2d.get_global_row_size(), 3);
+    EXPECT_EQ(p2d.get_global_col_size(), 4);
+    EXPECT_EQ(p2d.get_local_size(), 12);
+    EXPECT_EQ(p2d.owner_processor(2, 3), 0);
+}
+
+
 #else
 TEST_F(test_para2d, Serial)
 {

@@ -1,8 +1,6 @@
+#include "source_base/matrix_block.h"
 #include "source_hsolver/diago_scalapack.h"
 #include "source_hsolver/test/diago_elpa_utils.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "mpi.h"
 #include "string.h"
 
@@ -34,8 +32,10 @@
  * self-realized functions in source_hsolver/test/diago_elpa_utils.h
  */
 
+/// Minimal H(k)/S(k) supplier. The LCAO eigensolvers take the matrix blocks
+/// directly, so this test no longer needs a hamilt::Hamilt subclass.
 template <typename T>
-class HamiltTEST : public hamilt::Hamilt<T>
+class HamiltTEST
 {
   public:
     int desc[9];
@@ -43,17 +43,10 @@ class HamiltTEST : public hamilt::Hamilt<T>
     std::vector<T> h_local;
     std::vector<T> s_local;
 
-    void matrix(hamilt::MatrixBlock<T>& hk_in, hamilt::MatrixBlock<T>& sk_in)
+    void matrix(ModuleBase::MatrixBlock<T>& hk_in, ModuleBase::MatrixBlock<T>& sk_in)
     {
-        hk_in = hamilt::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
-        sk_in = hamilt::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
-    }
-
-    void constructHamilt(const int iter, const hamilt::MatrixBlock<double> rho)
-    {
-    }
-    void updateHk(const int ik)
-    {
+        hk_in = ModuleBase::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
+        sk_in = ModuleBase::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
     }
 };
 
@@ -141,6 +134,21 @@ class DiagoPrepare
         return ok;
     }
 
+    void poison_lower_triangle()
+    {
+        // The distributed solver buffers are column-major. Keep the original
+        // row-major fixtures intact for the independent LAPACK reference.
+        for (int col = 0; col < nlocal; ++col)
+        {
+            for (int row = col + 1; row < nlocal; ++row)
+            {
+                const int index = row + col * nlocal;
+                this->h_local[index] = T(123.0 + row + col);
+                this->s_local[index] = T(0.0);
+            }
+        }
+    }
+
     void print_hs()
     {
         if (!PRINT_HS)
@@ -204,15 +212,16 @@ class DiagoPrepare
 
     void set_env()
     {
-        PARAM.sys.nlocal = nlocal;
-        PARAM.input.nbands = nbands;
-        GlobalV::DSIZE = dsize;
     }
 
     void diago()
     {
         this->pb2d();
         this->distribute_data();
+        if (ks_solver == "cusolver")
+        {
+            this->poison_lower_triangle();
+        }
         this->print_hs();
         this->set_env();
 
@@ -223,17 +232,17 @@ class DiagoPrepare
         {
             hmtest.h_local = this->h_local;
             hmtest.s_local = this->s_local;
+            ModuleBase::MatrixBlock<T> h_mat, s_mat;
+            hmtest.matrix(h_mat, s_mat);
             if (ks_solver == "scalapack_gvx")
             {
-                hsolver::DiagoScalapack<T> dh;
-                dh.diag(&hmtest, psi, e_solver.data());
+                hsolver::DiagoScalapack<T> dh(nlocal, nbands);
+                dh.diag(h_mat, s_mat, psi, e_solver.data());
             }
     #ifdef __CUDA
             else if (ks_solver == "cusolver")
                 {
-                    hsolver::DiagoCusolver<T> dh;
-                    hamilt::MatrixBlock<T> h_mat, s_mat;
-                    hmtest.matrix(h_mat, s_mat);
+                    hsolver::DiagoCusolver<T> dh(nlocal, nbands);
                     dh.diag(h_mat, s_mat, psi, e_solver.data());
                 }
     #endif

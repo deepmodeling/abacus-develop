@@ -3,6 +3,7 @@ INPUT_PARAMETERS
 calculation       scf
 #noncolin           1
 lspinorb          1
+nspin             4
 gamma_only        0
 symmetry          0
 

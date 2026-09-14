@@ -125,8 +125,8 @@ struct cal_force_nl_op
                     const int* atom_na,
                     const FPTYPE& tpiba,
                     const FPTYPE* d_wg,
-                    const std::complex<FPTYPE>* vu,
-                    const int* orbital_corr,
+                    const std::complex<FPTYPE>* pot_onsite,
+                    const int* l_channel,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* force);
@@ -257,8 +257,8 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const int* atom_na,
                     const FPTYPE& tpiba,
                     const FPTYPE* d_wg,
-                    const std::complex<FPTYPE>* vu,
-                    const int* orbital_corr,
+                    const std::complex<FPTYPE>* pot_onsite,
+                    const int* l_channel,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* force);

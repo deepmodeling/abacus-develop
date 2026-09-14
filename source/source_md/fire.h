@@ -13,13 +13,13 @@
 class FIRE : public MD_base
 {
   public:
-    FIRE(const Parameter& param_in, UnitCell& unit_in);
+    FIRE(const Parameter& param_in, MDCell& mdcell_in);
 
     ~FIRE();
 
   private:
 
-    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp);
 
     void first_half(std::ofstream& ofs);
 

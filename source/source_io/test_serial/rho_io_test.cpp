@@ -5,42 +5,21 @@
 #include "source_base/global_variable.h"
 #include "source_io/module_output/cube_io.h"
 #include "prepare_unitcell.h"
-#include "source_pw/module_pwdft/parallel_grid.h"
-
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
-#endif
-
+#include "source_base/parallel_grid.h"
 
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
-    this->start_mag = nullptr;
 }
 
 
 Magnetism::~Magnetism()
 {
-    delete[] this->start_mag;
 }
-Parallel_Grid::~Parallel_Grid() {}
 
 
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
 
 /***************************************************************
  *  unit test of read_rho, write_rho and trilinear_interpolate

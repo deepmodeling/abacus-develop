@@ -1,5 +1,6 @@
 #include "blas_connector.h"
 #include "../macros.h"
+#include "source_base/kernels/math_kernel_op.h"
 
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"
@@ -10,7 +11,6 @@
 #include <base/macros/macros.h>
 #include <cuda_runtime.h>
 #include "cublas_v2.h"
-#include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_device/memory_op.h"
 #endif
 
@@ -363,131 +363,157 @@ void BlasConnector::copy(const int n, const std::complex<double> *a, const int i
 }
 
 
-template <typename T>
-void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vector2, base_device::AbacusDevice_t device_type){
-	using Real = typename GetTypeReal<T>::type;
-	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
-        for (int i = 0; i < dim; i++)
-        {
-            result[i] = vector1[i] * vector2[i];
-        }
-	}
-#ifdef __CUDA
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		ModuleBase::vector_mul_vector_op<T, base_device::DEVICE_GPU>()(dim, result, vector1, vector2);
-	}
-#endif
-	else {
-		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
-	}
-}
-
-
-template <typename T>
-void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vector2, base_device::AbacusDevice_t device_type){
-	using Real = typename GetTypeReal<T>::type;
-	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
-		for (int i = 0; i < dim; i++)
-        {
-            result[i] = vector1[i] / vector2[i];
-        }
-	}
-#ifdef __CUDA
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice) {
-		ModuleBase::vector_div_vector_op<T, base_device::DEVICE_GPU>()(dim, result, vector1, vector2);
-	}
-#endif
-	else {
-		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
-	}
-}
-
-void vector_add_vector(const int& dim, float *result, const float *vector1, const float constant1, const float *vector2, const float constant2, base_device::AbacusDevice_t device_type)
+template <typename T, typename Operand>
+void BlasConnector::vector_mul_vector(const int& dim,
+                                      T* result,
+                                      const T* vector1,
+                                      const Operand* vector2,
+                                      base_device::AbacusDevice_t device_type)
 {
-	if (device_type == base_device::CpuDevice){
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
+    if (device_type == base_device::AbacusDevice_t::CpuDevice)
+    {
+        ModuleBase::vector_mul_vector_op<T, base_device::DEVICE_CPU, Operand>()(
+            dim, result, vector1, vector2, false);
+    }
+#if defined(__CUDA) || defined(__ROCM)
+    else if (device_type == base_device::AbacusDevice_t::GpuDevice)
+    {
+        ModuleBase::vector_mul_vector_op<T, base_device::DEVICE_GPU, Operand>()(
+            dim, result, vector1, vector2, false);
+    }
 #endif
-        for (int i = 0; i < dim; i++)
-        {
-            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
-        }
-	}
-#ifdef __CUDA
-	else if (device_type == base_device::GpuDevice) {
-		ModuleBase::vector_add_vector_op<float, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
-	}
-#endif
-	else {
-		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
-	}
+    else
+    {
+        throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__)
+                                    + " line " + std::to_string(__LINE__));
+    }
 }
 
-void vector_add_vector(const int& dim, double *result, const double *vector1, const double constant1, const double *vector2, const double constant2, base_device::AbacusDevice_t device_type)
+template <typename T, typename Operand>
+void BlasConnector::vector_div_vector(const int& dim,
+                                      T* result,
+                                      const T* vector1,
+                                      const Operand* vector2,
+                                      base_device::AbacusDevice_t device_type)
 {
-	if (device_type == base_device::CpuDevice){
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
+    if (device_type == base_device::AbacusDevice_t::CpuDevice)
+    {
+        ModuleBase::vector_div_vector_op<T, base_device::DEVICE_CPU, Operand>()(dim, result, vector1, vector2);
+    }
+#if defined(__CUDA) || defined(__ROCM)
+    else if (device_type == base_device::AbacusDevice_t::GpuDevice)
+    {
+        ModuleBase::vector_div_vector_op<T, base_device::DEVICE_GPU, Operand>()(dim, result, vector1, vector2);
+    }
 #endif
-        for (int i = 0; i < dim; i++)
-        {
-            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
-        }
-	}
-#ifdef __CUDA
-	else if (device_type == base_device::GpuDevice) {
-		ModuleBase::vector_add_vector_op<double, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
-	}
-#endif
-	else {
-		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
-	}
+    else
+    {
+        throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__)
+                                    + " line " + std::to_string(__LINE__));
+    }
 }
 
-void vector_add_vector(const int& dim, std::complex<float> *result, const std::complex<float> *vector1, const float constant1, const std::complex<float> *vector2, const float constant2, base_device::AbacusDevice_t device_type)
+template <typename T, typename Scalar>
+void BlasConnector::vector_add_vector(const int& dim,
+                                      T* result,
+                                      const T* vector1,
+                                      const Scalar constant1,
+                                      const T* vector2,
+                                      const Scalar constant2,
+                                      base_device::AbacusDevice_t device_type)
 {
-	if (device_type == base_device::CpuDevice){
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
+    if (device_type == base_device::AbacusDevice_t::CpuDevice)
+    {
+        ModuleBase::vector_add_vector_op<T, base_device::DEVICE_CPU, Scalar>()(
+            dim, result, vector1, constant1, vector2, constant2);
+    }
+#if defined(__CUDA) || defined(__ROCM)
+    else if (device_type == base_device::AbacusDevice_t::GpuDevice)
+    {
+        ModuleBase::vector_add_vector_op<T, base_device::DEVICE_GPU, Scalar>()(
+            dim, result, vector1, constant1, vector2, constant2);
+    }
 #endif
-        for (int i = 0; i < dim; i++)
-        {
-            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
-        }
-	}
-#ifdef __CUDA
-	else if (device_type == base_device::GpuDevice) {
-		ModuleBase::vector_add_vector_op<std::complex<float>, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
-	}
-#endif
-	else {
-		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
-	}
+    else
+    {
+        throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__)
+                                    + " line " + std::to_string(__LINE__));
+    }
 }
 
-void vector_add_vector(const int& dim, std::complex<double> *result, const std::complex<double> *vector1, const double constant1, const std::complex<double> *vector2, const double constant2, base_device::AbacusDevice_t device_type)
-{
-	if (device_type == base_device::CpuDevice){
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
-        for (int i = 0; i < dim; i++)
-        {
-            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
-        }
-	}
-#ifdef __CUDA
-	else if (device_type == base_device::GpuDevice) {
-		ModuleBase::vector_add_vector_op<std::complex<double>, base_device::DEVICE_GPU>()(dim, result, vector1, constant1, vector2, constant2);
-	}
-#endif
-	else {
-		throw std::invalid_argument("device_type = " + std::to_string(device_type) + " in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
-	}
-}
+template void BlasConnector::vector_mul_vector<float, float>(
+    const int&, float*, const float*, const float*, base_device::AbacusDevice_t);
+template void BlasConnector::vector_mul_vector<double, double>(
+    const int&, double*, const double*, const double*, base_device::AbacusDevice_t);
+template void BlasConnector::vector_mul_vector<std::complex<float>, float>(
+    const int&, std::complex<float>*, const std::complex<float>*, const float*, base_device::AbacusDevice_t);
+template void BlasConnector::vector_mul_vector<std::complex<double>, double>(
+    const int&, std::complex<double>*, const std::complex<double>*, const double*, base_device::AbacusDevice_t);
+template void BlasConnector::vector_mul_vector<std::complex<float>, std::complex<float>>(
+    const int&,
+    std::complex<float>*,
+    const std::complex<float>*,
+    const std::complex<float>*,
+    base_device::AbacusDevice_t);
+template void BlasConnector::vector_mul_vector<std::complex<double>, std::complex<double>>(
+    const int&,
+    std::complex<double>*,
+    const std::complex<double>*,
+    const std::complex<double>*,
+    base_device::AbacusDevice_t);
+
+template void BlasConnector::vector_div_vector<float, float>(
+    const int&, float*, const float*, const float*, base_device::AbacusDevice_t);
+template void BlasConnector::vector_div_vector<double, double>(
+    const int&, double*, const double*, const double*, base_device::AbacusDevice_t);
+template void BlasConnector::vector_div_vector<std::complex<float>, float>(
+    const int&, std::complex<float>*, const std::complex<float>*, const float*, base_device::AbacusDevice_t);
+template void BlasConnector::vector_div_vector<std::complex<double>, double>(
+    const int&, std::complex<double>*, const std::complex<double>*, const double*, base_device::AbacusDevice_t);
+template void BlasConnector::vector_div_vector<std::complex<float>, std::complex<float>>(
+    const int&,
+    std::complex<float>*,
+    const std::complex<float>*,
+    const std::complex<float>*,
+    base_device::AbacusDevice_t);
+template void BlasConnector::vector_div_vector<std::complex<double>, std::complex<double>>(
+    const int&,
+    std::complex<double>*,
+    const std::complex<double>*,
+    const std::complex<double>*,
+    base_device::AbacusDevice_t);
+
+template void BlasConnector::vector_add_vector<float, float>(
+    const int&, float*, const float*, const float, const float*, const float, base_device::AbacusDevice_t);
+template void BlasConnector::vector_add_vector<double, double>(
+    const int&, double*, const double*, const double, const double*, const double, base_device::AbacusDevice_t);
+template void BlasConnector::vector_add_vector<std::complex<float>, float>(const int&,
+                                                                           std::complex<float>*,
+                                                                           const std::complex<float>*,
+                                                                           const float,
+                                                                           const std::complex<float>*,
+                                                                           const float,
+                                                                           base_device::AbacusDevice_t);
+template void BlasConnector::vector_add_vector<std::complex<double>, double>(const int&,
+                                                                             std::complex<double>*,
+                                                                             const std::complex<double>*,
+                                                                             const double,
+                                                                             const std::complex<double>*,
+                                                                             const double,
+                                                                             base_device::AbacusDevice_t);
+template void BlasConnector::vector_add_vector<std::complex<float>, std::complex<float>>(
+    const int&,
+    std::complex<float>*,
+    const std::complex<float>*,
+    const std::complex<float>,
+    const std::complex<float>*,
+    const std::complex<float>,
+    base_device::AbacusDevice_t);
+template void BlasConnector::vector_add_vector<std::complex<double>, std::complex<double>>(
+    const int&,
+    std::complex<double>*,
+    const std::complex<double>*,
+    const std::complex<double>,
+    const std::complex<double>*,
+    const std::complex<double>,
+    base_device::AbacusDevice_t);

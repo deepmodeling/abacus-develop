@@ -2,7 +2,7 @@
 
 #include "force_stress_arrays.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/LCAO_domain.h"
+#include "source_lcao/lcao_domain.h"
 #include "spar_dh.h"
 #include "spar_hsr.h"
 
@@ -139,8 +139,8 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                         double distance1 = dtau1.norm() * ucell.lat0;
                         double distance2 = dtau2.norm() * ucell.lat0;
 
-                        double rcut1 = orb_cutoff[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = orb_cutoff[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff[T1] + ucell.infoNL->get_rcut_max(T0);
+                        double rcut2 = orb_cutoff[T2] + ucell.infoNL->get_rcut_max(T0);
 
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {

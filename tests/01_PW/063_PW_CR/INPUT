@@ -13,9 +13,8 @@ ecutwfc           20
 scf_nmax          20
 kpar              2
 
-relax_method      cg
+relax_method      cg 1
 relax_nmax        2
-relax_new         0
 
 cal_stress        1
 stress_thr        0.1

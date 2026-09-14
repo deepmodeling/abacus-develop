@@ -29,6 +29,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 		LCAO_Orbitals &orb, // orbital info *
         Setup_DeePKS<TK> &deepks,
         Exx_NAO<TK> &exx_nao,
+        const Exx_Info& exx_info,
         int &iter,
         const int istep,
         bool &conv_esolver,

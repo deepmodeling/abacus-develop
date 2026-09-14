@@ -23,28 +23,29 @@ class Vdwd4 : public Vdw
     double cutoff_disp2_ = 0.0; // Bohr, two-body dispersion cutoff
     double cutoff_disp3_ = 0.0; // Bohr, three-body ATM cutoff
     double cutoff_cn_ = 0.0;    // Bohr, coordination-number cutoff
+    double smooth_width_2b_ = 0.0; // Bohr, two-body cutoff smoothing width
+    double smooth_width_3b_ = 0.0; // Bohr, three-body cutoff smoothing width
     double total_charge_ = 0.0; // e, total system charge (sum zv*na - nelec)
 
-    bool has_force_cache_ = false;
-    bool has_stress_cache_ = false;
+    void evaluate_impl(const VdwRequest& request, VdwResult& result) override;
 
-    void set_force_from_gradient(const std::vector<double>& gradient_ha_bohr);
-    void set_stress_from_sigma(const std::array<double, 9>& sigma_ha);
-
-    void cal_energy() override;
-    void cal_force() override;
-    void cal_stress() override;
+    void set_force_from_gradient(const std::vector<double>& gradient_ha_bohr,
+                                const std::vector<int>& atom_indices,
+                                VdwResult& result) const;
+    void set_stress_from_sigma(const std::array<double, 9>& sigma_ha, VdwResult& result) const;
 
     void build_structure(std::vector<int>& numbers,
                          std::vector<double>& positions,
                          std::vector<double>& lattice,
-                         std::array<bool, 3>& periodic) const;
+                         std::array<bool, 3>& periodic,
+                         std::vector<int>& atom_indices) const;
 
     // Optional output buffers are caller-owned and non-owning here.
     // Vdwd4 writes to them during compute() and never stores their pointers.
     void compute(double& energy_ha,
                  std::vector<double>* gradient_ha_bohr,
-                 std::array<double, 9>* sigma_ha);
+                 std::array<double, 9>* sigma_ha,
+                 std::vector<int>& atom_indices);
 };
 
 } // namespace vdw

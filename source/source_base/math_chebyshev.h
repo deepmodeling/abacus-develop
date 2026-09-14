@@ -253,7 +253,7 @@ class FFTW<double>
     fftw_plan coef_plan;
 };
 
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
 template <>
 class FFTW<float>
 {

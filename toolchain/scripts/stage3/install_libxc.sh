@@ -61,18 +61,16 @@ case "$with_libxc" in
             [ -d libxc-${libxc_ver} ] && rm -rf libxc-${libxc_ver}
             tar -xjf ${libxc_pkg}
             cd libxc-${libxc_ver}
-            # using cmake method to install libxc is neccessary for abacus
             mkdir build 
             cd build
             cmake \
                 -DCMAKE_BUILD_TYPE=Release \
                 -DCMAKE_INSTALL_PREFIX=${pkg_install_dir} \
-                -DBUILD_SHARED_LIBS=YES \
+                -DBUILD_SHARED_LIBS=ON \
                 -DCMAKE_INSTALL_LIBDIR=lib \
                 -DCMAKE_VERBOSE_MAKEFILE=ON \
                 -DENABLE_FORTRAN=ON \
                 -DENABLE_PYTHON=OFF \
-                -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
                 -DBUILD_TESTING=OFF .. \
                 > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
             make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log

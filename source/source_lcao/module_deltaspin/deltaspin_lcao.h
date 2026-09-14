@@ -1,6 +1,8 @@
 #ifndef DELTASPIN_LCAO_H
 #define DELTASPIN_LCAO_H
 
+#include <iosfwd>
+
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
 #include "source_io/module_parameter/input_parameter.h"
@@ -60,7 +62,8 @@ void cal_mi_lcao_wrapper(const int iter, const Input_para& inp);
 template <typename TK>
 bool run_deltaspin_lambda_loop_lcao(const int iter,
                                      const double drho,
-                                     const Input_para& inp);
+                                     const Input_para& inp,
+                                     std::ostream& ofs_running);
 
 } // namespace ModuleESolver
 

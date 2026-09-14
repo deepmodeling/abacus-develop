@@ -1,4 +1,4 @@
-abacus_disable_feature_definitions(USE_LIBXC)
+abacus_disable_feature_definitions(__LIBXC)
 AddTest(
   TARGET MODULE_LR_ao_to_mo_test
   LIBS parameter base container device psi

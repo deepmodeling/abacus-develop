@@ -1,7 +1,7 @@
 #include "velocity_op.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_lcao/module_rt/snap_psibeta_half_tddft.h"
+#include "source_lcao/module_rt/snap_psb_half_tddft.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #include <omp.h>
@@ -71,7 +71,7 @@ void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD, const Paralle
             // When equal, the theoretical value of matrix element is zero, 
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb_.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
+                < orb_.Phi[T1].getRcut() + this->ucell->infoNL->get_rcut_max(T0))
             {
                 is_adj[ad1] = true;
             }

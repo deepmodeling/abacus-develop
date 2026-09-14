@@ -407,19 +407,21 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
             Real* e_temp_gpu = nullptr;
             resmem_var_op()(e_temp_gpu, nbase);
             syncmem_var_h2d_op()(e_temp_gpu, e_temp_cpu.data(), nbase);
-            ModuleBase::vector_mul_vector_op<T, Device>()(nbase,
-                                                          vc_ev_vector + m * nbase,
-                                                          vc_ev_vector + m * nbase,
-                                                          e_temp_gpu);
+            ModuleBase::vector_mul_vector_op<T, Device, Real>()(nbase,
+                                                                vc_ev_vector + m * nbase,
+                                                                vc_ev_vector + m * nbase,
+                                                                e_temp_gpu,
+                                                                false);
             delmem_var_op()(e_temp_gpu);
 #endif
         }
         else
         {
-            ModuleBase::vector_mul_vector_op<T, Device>()(nbase,
-                                                          vc_ev_vector + m * nbase,
-                                                          vc_ev_vector + m * nbase,
-                                                          e_temp_cpu.data());
+            ModuleBase::vector_mul_vector_op<T, Device, Real>()(nbase,
+                                                                vc_ev_vector + m * nbase,
+                                                                vc_ev_vector + m * nbase,
+                                                                e_temp_cpu.data(),
+                                                                false);
         }
     }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -473,18 +475,18 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         if (this->device == base_device::GpuDevice)
         {
 #if defined(__CUDA) || defined(__ROCM)
-            ModuleBase::vector_div_vector_op<T, Device>()(dim,
-                                                          basis + dim * (nbase + m),
-                                                          basis + dim * (nbase + m),
-                                                          this->d_precondition);
+            ModuleBase::vector_div_vector_op<T, Device, Real>()(dim,
+                                                                basis + dim * (nbase + m),
+                                                                basis + dim * (nbase + m),
+                                                                this->d_precondition);
 #endif
         }
         else
         {
-            ModuleBase::vector_div_vector_op<T, Device>()(dim,
-                                                          basis + dim * (nbase + m),
-                                                          basis + dim * (nbase + m),
-                                                          this->precondition);
+            ModuleBase::vector_div_vector_op<T, Device, Real>()(dim,
+                                                                basis + dim * (nbase + m),
+                                                                basis + dim * (nbase + m),
+                                                                this->precondition);
         }
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // for (int ig = 0; ig < dim; ig++)

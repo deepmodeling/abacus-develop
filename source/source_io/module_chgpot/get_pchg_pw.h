@@ -1,247 +1,111 @@
 #ifndef GET_PCHG_PW_H
 #define GET_PCHG_PW_H
 
-#include "source_io/module_output/cube_io.h"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_base/module_parallel/para_band_output.h"
+#include "source_base/parallel_grid.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/klist.h"
+#include "source_cell/unitcell.h"
+#include "source_psi/psi.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
+
+#include <complex>
+#include <string>
+#include <vector>
 
 namespace ModuleIO
 {
-template <typename Device>
-void get_pchg_pw(const std::vector<int>& out_pchg,
-                 const int nbands,
-                 const int nspin,
-                 const int nxyz,
-                 const int chr_ngmc,
-                 UnitCell* ucell,
-                 const psi::Psi<std::complex<double>, Device>* kspw_psi,
-                 const ModulePW::PW_Basis* pw_rhod,
-                 const ModulePW::PW_Basis_K* pw_wfc,
-                 const Device* ctx,
-                 const Parallel_Grid& pgrid,
-                 const std::string& global_out_dir,
-                 const bool if_separate_k,
-                 const K_Vectors& kv,
-                 const int kpar,
-                 const int my_pool,
-                 const Charge* chr) // Charge class is needed for the charge density reduce
+/**
+ * @brief Write band-resolved PW partial charges on the dense real-space grid.
+ *
+ * The caller owns the wavefunction and bases, which must outlive this object.
+ * T follows the solver wavefunction precision; host grid processing uses double.
+ * Scratch buffers are local to each begin() call.
+ */
+template <typename T, typename Device>
+class Get_pchg_pw
 {
-    // Get necessary parameters from kv
-    const int nks = kv.get_nks();       // current process pool k-point count
-    const int nkstot = kv.get_nkstot(); // total k-point count
+  public:
+    /** @brief Bind the wavefunction, grids, and global band/spin configuration. */
+    Get_pchg_pw(const psi::Psi<T, Device>& psi,
+                const ModulePW::PW_Basis_K& pw_wfc,
+                const ModulePW::PW_Basis& pw_rho,
+                const ModulePW::PW_Basis& pw_rhod,
+                const pseudopot_cell_vnl& ppcell,
+                const int nspin,
+                const int global_nbands);
 
-    // Loop over k-parallelism
-    for (int ip = 0; ip < kpar; ++ip)
-    {
-        if (my_pool != ip)
-        {
-            continue;
-        }
+    /**
+     * @brief Write selected bands, either per k-point or after k summation and symmetry.
+     * @param ucell Cell whose symmetry workspace may be updated during symmetrization.
+     * @param noncolin Whether to retain transverse spinor magnetization components.
+     */
+    void begin(UnitCell* ucell,
+               const Parallel_Grid& pgrid,
+               const K_Vectors& kv,
+               const std::vector<int>& out_pchg,
+               const std::string& global_out_dir,
+               const bool if_separate_k,
+               const bool noncolin) const;
 
-        // bands_picked is a vector of 0s and 1s, where 1 means the band is picked to output
-        std::vector<int> bands_picked(nbands, 0);
+  private:
+    const psi::Psi<T, Device>& psi_;
+    const ModulePW::PW_Basis_K& pw_wfc_;
+    const ModulePW::PW_Basis& pw_rho_;
+    const ModulePW::PW_Basis& pw_rhod_;
+    const pseudopot_cell_vnl& ppcell_;
+    const int nspin_;
+    const int global_nbands_;
 
-        // Check if length of out_pchg is valid
-        if (static_cast<int>(out_pchg.size()) > nbands)
-        {
-            ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
-                                     "The number of bands specified by `out_pchg` in the "
-                                     "INPUT file exceeds `nbands`!");
-        }
+    // Defined in the implementation to keep device buffers out of this header.
+    class Workspace;
 
-        // Check if all elements in bands_picked are 0 or 1
-        for (int value: out_pchg)
-        {
-            if (value != 0 && value != 1)
-            {
-                ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
-                                         "The elements of `out_pchg` must be either 0 or 1. "
-                                         "Invalid values found!");
-            }
-        }
+    // Validate the binary selector and return a zero-padded global band mask.
+    std::vector<int> select_bands(const std::vector<int>& selection, const std::string& parameter_name) const;
 
-        // Fill bands_picked with values from out_pchg
-        // Remaining bands are already set to 0
-        int length = std::min(static_cast<int>(out_pchg.size()), nbands);
-        for (int i = 0; i < length; ++i)
-        {
-            // out_pchg rely on function parse_expression
-            bands_picked[i] = static_cast<int>(out_pchg[i]);
-        }
+    // Transform the owner's band and broadcast each local real-space slab.
+    void transform_band(const int global_band, const int ik, const Parallel::ParaBandOutput& band_output, Workspace* work) const;
+    // The returned data belongs to the selected workspace component and is valid
+    // until that component is transformed again or the workspace is destroyed.
+    const std::complex<double>* transform_wfc(const T* coefficients, const int ik, const int component, Workspace* work) const;
 
-        // Allocate host memory
-        std::vector<std::complex<double>> wfcr(nxyz);
-        std::vector<std::vector<double>> rho_band(nspin, std::vector<double>(nxyz));
+    void write_separate(const int band,
+                        const UnitCell& ucell,
+                        const Parallel_Grid& pgrid,
+                        const K_Vectors& kv,
+                        const std::string& out_dir,
+                        const bool noncolin,
+                        const Parallel::ParaBandOutput& band_output,
+                        Workspace* work) const;
+    void write_summed(const int band,
+                      UnitCell* ucell,
+                      const Parallel_Grid& pgrid,
+                      const K_Vectors& kv,
+                      const std::string& out_dir,
+                      const bool noncolin,
+                      const Parallel::ParaBandOutput& band_output,
+                      Workspace* work) const;
 
-        // Allocate device memory
-        std::complex<double>* wfcr_device = nullptr;
-        if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
-        {
-            base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfcr_device, nxyz);
-        }
+    void calc_density(const int spin_index, const double weight, const bool noncolin, const bool accumulate, Workspace* work) const;
+    void accumulate_uspp(const int band,
+                         const int ik,
+                         const int spin,
+                         const double weight,
+                         const Parallel::ParaBandOutput& band_output,
+                         Workspace* work) const;
+    void add_augmentation(const UnitCell& ucell, Workspace* work) const;
+    void sum_pools(const Parallel_Grid& pgrid, Workspace* work) const;
+    void symmetrize(UnitCell* ucell, Workspace* work) const;
 
-        for (int ib = 0; ib < nbands; ++ib)
-        {
-            // Skip the loop iteration if bands_picked[ib] is 0
-            if (!bands_picked[ib])
-            {
-                continue;
-            }
-
-            for (int is = 0; is < nspin; ++is)
-            {
-                std::fill(rho_band[is].begin(), rho_band[is].end(), 0.0);
-            }
-
-            if (if_separate_k)
-            {
-                for (int ik = 0; ik < nks; ++ik)
-                {
-                    const int ikstot = kv.ik2iktot[ik];                 // global k-point index
-                    const int spin_index = kv.isk[ik];                  // spin index
-                    const int k_number = ikstot % (nkstot / nspin) + 1; // k-point number, starting from 1
-
-                    kspw_psi->fix_k(ik);
-
-                    // FFT on device and copy result back to host
-                    if (std::is_same<Device, base_device::DEVICE_CPU>::value)
-                    {
-                        pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr.data(), ik);
-                    }
-                    else
-                    {
-                        pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr_device, ik);
-
-                        base_device::memory::synchronize_memory_op<std::complex<double>,
-                                                                   base_device::DEVICE_CPU,
-                                                                   Device>()(wfcr.data(), wfcr_device, nxyz);
-                    }
-
-                    // To ensure the normalization of charge density in multi-k calculation (if if_separate_k is true)
-                    double wg_sum_k = 0.0;
-                    if (nspin == 1)
-                    {
-                        wg_sum_k = 2.0;
-                    }
-                    else if (nspin == 2)
-                    {
-                        wg_sum_k = 1.0;
-                    }
-                    else
-                    {
-                        ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
-                                                 "Real space partial charge output currently do not support "
-                                                 "noncollinear polarized calculation (nspin = 4)!");
-                    }
-
-                    double w1 = static_cast<double>(wg_sum_k / ucell->omega);
-
-                    for (int i = 0; i < nxyz; ++i)
-                    {
-                        rho_band[spin_index][i] = std::norm(wfcr[i]) * w1;
-                    }
-
-                    std::stringstream ssc;
-                    ssc << global_out_dir << "pchgi" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << ".cube";
-
-                    ModuleIO::write_vdata_palgrid(pgrid,
-                                                  rho_band[spin_index].data(),
-                                                  spin_index,
-                                                  nspin,
-                                                  0,
-                                                  ssc.str(),
-                                                  0.0,
-                                                  ucell,
-                                                  11,
-                                                  1,
-                                                  PARAM.globalv.two_fermi,
-                                                  true); // reduce_all_pool is true
-                }
-            }
-            else
-            {
-                for (int ik = 0; ik < nks; ++ik)
-                {
-                    const int ikstot = kv.ik2iktot[ik];                 // global k-point index
-                    const int spin_index = kv.isk[ik];                  // spin index
-                    const int k_number = ikstot % (nkstot / nspin) + 1; // k-point number, starting from 1
-
-                    kspw_psi->fix_k(ik);
-
-                    // FFT on device and copy result back to host
-                    if (std::is_same<Device, base_device::DEVICE_CPU>::value)
-                    {
-                        pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr.data(), ik);
-                    }
-                    else
-                    {
-                        pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr_device, ik);
-
-                        base_device::memory::synchronize_memory_op<std::complex<double>,
-                                                                   base_device::DEVICE_CPU,
-                                                                   Device>()(wfcr.data(), wfcr_device, nxyz);
-                    }
-
-                    double w1 = static_cast<double>(kv.wk[ik] / ucell->omega);
-
-                    for (int i = 0; i < nxyz; ++i)
-                    {
-                        rho_band[spin_index][i] += std::norm(wfcr[i]) * w1;
-                    }
-                }
-
-#ifdef __MPI
-                // Reduce the charge density across all pools if kpar > 1
-                if (kpar > 1 && chr != nullptr)
-                {
-                    for (int is = 0; is < nspin; ++is)
-                    {
-                        chr->reduce_diff_pools(rho_band[is].data());
-                    }
-                }
-#endif
-
-                // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
-                // std::cout << " Symmetrizing band-decomposed charge density..." << std::endl;
-                Symmetry_rho srho;
-                for (int is = 0; is < nspin; ++is)
-                {
-                    // Use vector instead of raw pointers
-                    std::vector<double*> rho_save_pointers(nspin);
-                    for (int s = 0; s < nspin; ++s)
-                    {
-                        rho_save_pointers[s] = rho_band[s].data();
-                    }
-
-                    std::vector<std::vector<std::complex<double>>> rhog(nspin,
-                                                                        std::vector<std::complex<double>>(chr_ngmc));
-
-                    // Convert vector of vectors to vector of pointers
-                    std::vector<std::complex<double>*> rhog_pointers(nspin);
-                    for (int s = 0; s < nspin; ++s)
-                    {
-                        rhog_pointers[s] = rhog[s].data();
-                    }
-
-                    srho.begin(is,
-                               rho_save_pointers.data(),
-                               rhog_pointers.data(),
-                               chr_ngmc,
-                               nullptr,
-                               pw_rhod,
-                               ucell->symm);
-                }
-
-                for (int is = 0; is < nspin; ++is)
-                {
-                    std::stringstream ssc;
-                    ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
-
-                    ModuleIO::write_vdata_palgrid(pgrid, rho_band[is].data(), is, nspin, 0, ssc.str(), 0.0, ucell, 11, 1, PARAM.globalv.two_fermi, false);
-                }
-            } // else if_separate_k is false
-        } // end of ib loop over nbands
-    } // end of ip loop over kpar
-} // get_pchg_pw
+    void write_cube(const int band,
+                    const int component,
+                    const int k_number,
+                    const UnitCell& ucell,
+                    const Parallel_Grid& pgrid,
+                    const std::string& out_dir,
+                    const bool separate_k,
+                    const std::vector<double>& values) const;
+};
 } // namespace ModuleIO
 
 #endif // GET_PCHG_PW_H

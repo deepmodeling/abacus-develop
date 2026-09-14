@@ -47,16 +47,19 @@ __global__ void kedf_wt_rho_power(
 /// Element-wise multiply: complex array *= real kernel.
 /// Uses double2 (native cuFFT type) instead of thrust::complex.
 __global__ void kedf_wt_recip_multiply(
-    double2* __restrict__ data,
+    const double2* __restrict__ in,
+    double2* __restrict__ out,
     const double* __restrict__ kernel,
+    const int* __restrict__ box_index,
     int npw)
 {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
     for (int i = idx; i < npw; i += stride) {
-        double2 v = data[i];
+        const int box = box_index[i];
+        double2 v = in[box];
         double  k = kernel[i];
-        data[i] = make_double2(v.x * k, v.y * k);
+        out[box] = make_double2(v.x * k, v.y * k);
     }
 }
 
@@ -118,15 +121,15 @@ void KEDF_WT::multi_kernel_gpu(
 
     // ── Lazy allocation of persistent GPU buffers ──
     if (!gpu_allocated_) {
-        resmem_dd_op()(d_rho_, nrxx);
+        resmem_dd_op()(d_rho_, nrxx * 2);  // real input or complex work buffer
         resmem_dd_op()(d_result_, nrxx * 2);  // complex work buffer
         resmem_dd_op()(d_kernel_, npw);
 
         syncmem_d2d_h2d_op()(d_kernel_, this->kernel_, npw);
 
-        // Create cuFFT plans (3D Z2Z, in-place on d_result_)
-        CUFFT_CHECK(cufftPlan3d(&cufft_plan_fwd_, nz, ny, nx, CUFFT_Z2Z));
-        CUFFT_CHECK(cufftPlan3d(&cufft_plan_bwd_, nz, ny, nx, CUFFT_Z2Z));
+        // Match PW_Basis's full-box FFT layout used by ig2ixyz_gpu.
+        CUFFT_CHECK(cufftPlan3d(&cufft_plan_fwd_, nx, ny, nz, CUFFT_Z2Z));
+        CUFFT_CHECK(cufftPlan3d(&cufft_plan_bwd_, nx, ny, nz, CUFFT_Z2Z));
 
         gpu_allocated_ = true;
     }
@@ -136,6 +139,7 @@ void KEDF_WT::multi_kernel_gpu(
 
     // d_result_ is double* but aliased as cuFFT complex buffer.
     auto* d_fft = reinterpret_cast<double2*>(d_result_);
+    auto* d_filtered = reinterpret_cast<double2*>(d_rho_);
 
     for (int is = 0; is < nspin; ++is) {
         // Step 1: Copy input density H→D
@@ -157,24 +161,25 @@ void KEDF_WT::multi_kernel_gpu(
             reinterpret_cast<cufftDoubleComplex*>(d_fft),
             CUFFT_FORWARD));
 
-        // Step 5: Multiply by WT kernel in G-space (double2)
+        // Step 5: Multiply selected plane waves and zero the rest of the FFT box.
+        setmem_dd_op()(d_rho_, 0, nrxx * 2);
         kedf_wt_recip_multiply<<<blocks_g, THREADS_PER_BLOCK>>>(
-            d_fft, d_kernel_, npw);
+            d_fft, d_filtered, d_kernel_, pw_rho->ig2ixyz_gpu, npw);
         CHECK_CUDA_SYNC();
 
-        // Step 6: Inverse FFT (in-place on d_fft)
+        // Step 6: Inverse FFT (in-place on the filtered box)
         CUFFT_CHECK(cufftExecZ2Z(cufft_plan_bwd_,
-            reinterpret_cast<cufftDoubleComplex*>(d_fft),
-            reinterpret_cast<cufftDoubleComplex*>(d_fft),
+            reinterpret_cast<cufftDoubleComplex*>(d_filtered),
+            reinterpret_cast<cufftDoubleComplex*>(d_filtered),
             CUFFT_INVERSE));
 
         // Step 7: Complex → Real with 1/N normalization (double2)
         kedf_wt_complex_to_real_norm<<<blocks_r, THREADS_PER_BLOCK>>>(
-            d_fft, d_rho_, inv_nrxx, nrxx);
+            d_filtered, d_result_, inv_nrxx, nrxx);
         CHECK_CUDA_SYNC();
 
         // Step 8: D → H
-        syncmem_d2d_d2h_op()(rkernel_rho[is], d_rho_, nrxx);
+        syncmem_d2d_d2h_op()(rkernel_rho[is], d_result_, nrxx);
     }
 }
 

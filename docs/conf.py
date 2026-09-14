@@ -140,8 +140,8 @@ def candidate_abacus_binaries(repo_root):
         return [Path(env_binary)]
     candidates = []
     candidates.extend([
-        repo_root / 'build-rtd-docs' / 'source' / 'abacus_pw_ser',
         repo_root / 'build-rtd-docs' / 'abacus_pw_ser',
+        repo_root / 'build-rtd-docs' / 'source' / 'abacus_pw_ser',
     ])
     for binary_name in ['abacus', 'abacus_pw_ser']:
         path_binary = shutil.which(binary_name)

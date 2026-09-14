@@ -3,19 +3,18 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
 Grid_Driver::Grid_Driver(
-	const int &test_d_in, 
-	const int &test_grid_in)
+    const int &test_d_in, 
+    const int &test_grid_in)
 :test_deconstructor(test_d_in),
 Grid(test_grid_in)
 {
-	test_deconstructor	= test_d_in;
+    test_deconstructor    = test_d_in;
 }
 
 Grid_Driver::~Grid_Driver()
@@ -28,7 +27,7 @@ void Grid_Driver::Find_atom(const UnitCell& ucell,
                             AdjacentAtomInfo* adjs) const
 {
     ModuleBase::timer::start("Grid_Driver", "Find_atom");
-    //	std::cout << "lenght in Find atom = " << atomlink[offset].fatom.getAdjacentSet()->getLength() << std::endl;
+    //    std::cout << "lenght in Find atom = " << atomlink[offset].fatom.getAdjacentSet()->getLength() << std::endl;
 
     // store result in member adj_info when parameter adjs is NULL
     AdjacentAtomInfo* local_adjs = adjs == nullptr ? &this->adj_info : adjs;
@@ -47,10 +46,10 @@ void Grid_Driver::Find_atom(const UnitCell& ucell,
     // for some unknown reason, the last neighbour atom must be it self
     // is self must in last, the order cannot be changed.
     // if self not in last, test 701_LJ_MD_Anderson will assert
-	local_adjs->ntype.push_back(ntype);
-	local_adjs->natom.push_back(nnumber);
-	local_adjs->box.push_back(ModuleBase::Vector3<int>(0, 0, 0));
-	local_adjs->adjacent_tau.push_back(ModuleBase::Vector3<double>(ucell.atoms[ntype].tau[nnumber].x, ucell.atoms[ntype].tau[nnumber].y, ucell.atoms[ntype].tau[nnumber].z));
+    local_adjs->ntype.push_back(ntype);
+    local_adjs->natom.push_back(nnumber);
+    local_adjs->box.push_back(ModuleBase::Vector3<int>(0, 0, 0));
+    local_adjs->adjacent_tau.push_back(ModuleBase::Vector3<double>(ucell.atoms[ntype].tau[nnumber].x, ucell.atoms[ntype].tau[nnumber].y, ucell.atoms[ntype].tau[nnumber].z));
     ModuleBase::timer::end("Grid_Driver", "Find_atom");
     return;
 }

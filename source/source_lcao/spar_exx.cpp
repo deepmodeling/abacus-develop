@@ -10,13 +10,13 @@
 #include <RI/ri/Cell_Nearest.h>
 #include <stdexcept>
 
-#include "source_lcao/module_ri/abfs-vector3_order.h"
+#include "source_lcao/module_ri/abfs_vector3_order.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_ri/RI_2D_Comm.h"
-#include "source_lcao/module_ri/RI_Util.hpp"
+#include "source_lcao/module_ri/ri_2d_comm.h"
+#include "source_lcao/module_ri/ri_util.hpp"
 
 // --------------------------------------------------------
 // Implementation of the cal_HR_exx function

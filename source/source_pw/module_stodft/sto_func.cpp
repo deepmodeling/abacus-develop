@@ -224,6 +224,6 @@ REAL Sto_Func<REAL>::nroot_gauss(REAL rawe) const
 
 // we only have two examples: double and float.
 template class Sto_Func<double>;
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
 template class Sto_Func<float>;
 #endif

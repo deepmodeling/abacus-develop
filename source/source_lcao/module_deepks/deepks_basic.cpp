@@ -361,7 +361,7 @@ void DeePKS_domain::prepare_atom(const UnitCell& ucell, torch::Tensor& atom_out)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
         {
-            atom_out[index][0] = AtomInfo.atom_Z[ucell.atom_label[it]];
+            atom_out[index][0] = AtomInfo.atom_Z[ucell.atoms[it].label];
 
             // use bohr as unit
             atom_out[index][1] = ucell.atoms[it].tau[ia].x * ucell.lat0;

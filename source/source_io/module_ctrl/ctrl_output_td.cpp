@@ -23,7 +23,8 @@ void ctrl_output_td(const UnitCell& ucell,
                     hamilt::HamiltLCAO<std::complex<double>, TR>* p_hamilt,
                     Record_adj& RA,
                     TD_info* td_p,
-                    const Exx_NAO<std::complex<double>>& exx_nao
+                    const Exx_NAO<std::complex<double>>& exx_nao,
+                    const Exx_Info& exx_info
                     )
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_td");
@@ -51,7 +52,7 @@ void ctrl_output_td(const UnitCell& ucell,
     }
     else if(TD_info::out_current==2)
     {
-        ModuleIO::write_current(ucell, grid, istep, psi, pelec, kv, pv, orb, td_p, p_hamilt->getSR(), p_hamilt->getHR(), exx_nao);
+        ModuleIO::write_current(ucell, grid, istep, psi, pelec, kv, pv, orb, td_p, p_hamilt->getSR(), p_hamilt->getHR(), exx_nao, exx_info);
     }
     // (3) Output file for restart
     if (PARAM.inp.out_freq_td > 0) // default value of out_freq_td is 0
@@ -87,7 +88,8 @@ template void ctrl_output_td<double>(const UnitCell&,
                                      hamilt::HamiltLCAO<std::complex<double>, double>*,
                                      Record_adj&,
                                      TD_info*,
-                                     const Exx_NAO<std::complex<double>>&
+                                     const Exx_NAO<std::complex<double>>&,
+                                     const Exx_Info&
                                      );
 
 template void ctrl_output_td<std::complex<double>>(const UnitCell&,
@@ -105,7 +107,8 @@ template void ctrl_output_td<std::complex<double>>(const UnitCell&,
                                                    hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*,
                                                    Record_adj&,
                                                    TD_info*,
-                                                   const Exx_NAO<std::complex<double>>&
+                                                   const Exx_NAO<std::complex<double>>&,
+                                                   const Exx_Info&
                                                    );
 
 } // namespace ModuleIO

@@ -1,14 +1,11 @@
 #include "source_base/parallel_global.h"
 #ifdef __PEXSI
-#include "source_io/module_parameter/parameter.h"
 #include "pexsi_solver.h"
-
-#include <mpi.h>
-#include <cstring>
-#include <vector>
-
-#include "source_base/global_variable.h"
 #include "simple_pexsi.h"
+
+#include <cstring>
+#include <mpi.h>
+#include <vector>
 
 extern MPI_Comm DIAG_WORLD;
 namespace pexsi
@@ -44,6 +41,8 @@ void PEXSI_Solver::prepare(const int blacs_text,
                            const int nb,
                            const int nrow,
                            const int ncol,
+                           const int nlocal,
+                           const double nelec,
                            const double* h,
                            const double* s,
                            double*& _DM,
@@ -53,6 +52,8 @@ void PEXSI_Solver::prepare(const int blacs_text,
     this->nb = nb;
     this->nrow = nrow;
     this->ncol = ncol;
+    this->nlocal = nlocal;
+    this->nelec = nelec;
     this->h = const_cast<double*>(h);
     this->s = const_cast<double*>(s);
     this->DM = _DM;
@@ -62,7 +63,7 @@ void PEXSI_Solver::prepare(const int blacs_text,
     this->totalFreeEnergy = 0.0;
 }
 
-int PEXSI_Solver::solve(double mu0)
+int PEXSI_Solver::solve(double mu0, const int world_nproc)
 {
     MPI_Group grid_group;
     int myid, grid_np;
@@ -71,21 +72,21 @@ int PEXSI_Solver::solve(double mu0)
     MPI_Comm_size(DIAG_WORLD, &grid_np);
     MPI_Comm_group(DIAG_WORLD, &world_group);
 
-    int grid_proc_range[3]={0, (GlobalV::NPROC/grid_np)*grid_np-1, GlobalV::NPROC/grid_np};
+    int grid_proc_range[3] = {0, (world_nproc / grid_np) * grid_np - 1, world_nproc / grid_np};
     MPI_Group_range_incl(world_group, 1, &grid_proc_range, &grid_group);
 
     simplePEXSI(DIAG_WORLD,
                 DIAG_WORLD,
                 grid_group,
                 this->blacs_text,
-                PARAM.globalv.nlocal,
+                this->nlocal,
                 this->nb,
                 this->nrow,
                 this->ncol,
                 'c',
                 this->h,
                 this->s,
-                PARAM.inp.nelec,
+                this->nelec,
                 "PEXSIOPTION",
                 this->DM,
                 this->EDM,

@@ -13,6 +13,8 @@
 #include "mpi.h"
 #endif
 
+class PWBasisTEST; // unit-test fixture, see module_pw/test_serial/
+
 namespace ModulePW
 {
 
@@ -54,6 +56,9 @@ namespace ModulePW
  */
 class PW_Basis
 {
+    /// the unit test drives the protected distribute_g(), distribute_r() and
+    /// getstartgr() directly; the fixture is at global scope
+    friend class ::PWBasisTEST;
 
 public:
     std::string classname;

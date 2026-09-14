@@ -4,7 +4,7 @@
 #include <array>
 #include <vector>
 #include <fstream>
-#include "../write_ri_cv.hpp"
+#include "source_lcao/module_ri/write_ri_cv.hpp"
 
 using TC = std::array<int, 3>;
 using TAC = std::pair<int, TC>;

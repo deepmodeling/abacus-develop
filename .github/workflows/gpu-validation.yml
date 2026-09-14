@@ -1,0 +1,257 @@
+name: GPU validation
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: "Approved commit to execute on the remote GPU cluster"
+        required: true
+        type: string
+      project_root:
+        description: "Optional remote project root"
+        required: false
+        type: string
+  schedule:
+    - cron: "30 20 * * *"
+
+permissions: {}
+
+concurrency:
+  group: gpu-validation-${{ github.event_name == 'schedule' && 'daily' || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  admit:
+    name: Authorize request
+    if: >-
+      vars.GPU_VALIDATION_ENABLED == 'true' &&
+      (github.event_name != 'issue_comment' ||
+       (github.event.issue.pull_request &&
+        github.event.comment.body == '/abacus-ci gpu'))
+    runs-on: ubuntu-24.04
+    permissions:
+      checks: write
+      contents: read
+      issues: write
+      pull-requests: write
+    outputs:
+      accepted: ${{ steps.request.outputs.accepted }}
+      check_id: ${{ steps.request.outputs.check_id }}
+      comment_id: ${{ steps.request.outputs.comment_id }}
+      control_sha: ${{ steps.control.outputs.sha }}
+      namespace: ${{ steps.request.outputs.namespace }}
+      pr_number: ${{ steps.request.outputs.pr_number }}
+      source_repository: ${{ steps.request.outputs.source_repository }}
+      source_sha: ${{ steps.request.outputs.source_sha }}
+    steps:
+      - name: Require default branch for manual runs
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: test "$GITHUB_REF_NAME" = "$DEFAULT_BRANCH"
+
+      - name: Checkout trusted control code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+
+      - name: Pin control commit
+        id: control
+        run: echo "sha=$(git -C control rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve candidate
+        id: request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MANUAL_SOURCE_SHA: ${{ inputs.source_sha || '' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          UPSTREAM_REPOSITORY: deepmodeling/abacus-develop
+        run: python3 control/.ci/slurm/runner.py github-admit
+
+  rebuild-and-test:
+    name: Build and run on GPU cluster
+    needs: admit
+    if: needs.admit.outputs.accepted == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    environment:
+      name: ${{ github.event_name == 'schedule' && 'gpu-ci-scheduled' || 'gpu-ci-manual' }}
+    permissions:
+      contents: read
+    outputs:
+      artifact_url: ${{ steps.upload.outputs.artifact-url }}
+      available: ${{ steps.summary.outputs.available }}
+      components: ${{ steps.summary.outputs.components }}
+      failed: ${{ steps.summary.outputs.failed }}
+      infrastructure: ${{ steps.summary.outputs.infrastructure }}
+      passed: ${{ steps.summary.outputs.passed }}
+      total: ${{ steps.summary.outputs.total }}
+    env:
+      CONTROL_SHA: ${{ needs.admit.outputs.control_sha }}
+      PROJECT_ROOT_INPUT: ${{ inputs.project_root || '' }}
+      RUN_NAMESPACE: ${{ needs.admit.outputs.namespace }}
+      SOURCE_REPOSITORY: ${{ needs.admit.outputs.source_repository }}
+      SOURCE_SHA: ${{ needs.admit.outputs.source_sha }}
+    steps:
+      - name: Checkout pinned control code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.CONTROL_SHA }}
+          path: control
+          persist-credentials: false
+
+      - name: Checkout candidate source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ env.SOURCE_REPOSITORY }}
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+          path: source
+          persist-credentials: false
+
+      - name: Read trusted cluster configuration
+        id: cluster
+        run: |
+          config=$(python3 control/.ci/slurm/runner.py config)
+          printf 'config=%s\n' "$config" >> "$GITHUB_OUTPUT"
+
+      - name: Configure SSH
+        env:
+          REMOTE_SSH_HOST: ${{ fromJSON(steps.cluster.outputs.config).remote.host }}
+          REMOTE_SSH_PORT: ${{ fromJSON(steps.cluster.outputs.config).remote.port }}
+          REMOTE_SSH_PRIVATE_KEY: ${{ secrets.REMOTE_SSH_PRIVATE_KEY }}
+          REMOTE_SSH_USER: ${{ fromJSON(steps.cluster.outputs.config).remote.user }}
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/remote-ssh"
+          mkdir -m 700 "$root"
+          printf '%s\n' "$REMOTE_SSH_PRIVATE_KEY" > "$root/id_ed25519"
+          chmod 600 "$root/id_ed25519"
+          cp control/.ci/slurm/known_hosts "$root/known_hosts"
+          chmod 600 "$root/known_hosts"
+          cat > "$root/config" <<EOF
+          Host gpu-ci
+              HostName $REMOTE_SSH_HOST
+              Port $REMOTE_SSH_PORT
+              User $REMOTE_SSH_USER
+              IdentityFile $root/id_ed25519
+              IdentitiesOnly yes
+              StrictHostKeyChecking yes
+              UserKnownHostsFile $root/known_hosts
+              ForwardAgent no
+              ServerAliveInterval 30
+              ServerAliveCountMax 6
+          EOF
+          chmod 600 "$root/config"
+          ssh-keygen -y -f "$root/id_ed25519" >/dev/null
+          echo "REMOTE_SSH_CONFIG=$root/config" >> "$GITHUB_ENV"
+          echo "ARTIFACT_ROOT=$RUNNER_TEMP/gpu-ci-artifacts" >> "$GITHUB_ENV"
+
+      - name: Run shared GPU client
+        id: client
+        continue-on-error: true
+        env:
+          REMOTE_PROJECT_ROOT: ${{ fromJSON(steps.cluster.outputs.config).remote.project_root }}
+        run: |
+          set -euo pipefail
+          project_root=${PROJECT_ROOT_INPUT:-$REMOTE_PROJECT_ROOT}
+          mkdir -p "$ARTIFACT_ROOT"
+          set +e
+          python3 control/.ci/slurm/runner.py run \
+              --ssh-config "$REMOTE_SSH_CONFIG" \
+              --target gpu-ci \
+              --project-root "$project_root" \
+              --source-repository "$GITHUB_WORKSPACE/source" \
+              --source-sha "$SOURCE_SHA" \
+              --namespace "$RUN_NAMESPACE" \
+              --run-id "$GITHUB_RUN_ID" \
+              --run-attempt "$GITHUB_RUN_ATTEMPT" \
+              --artifacts "$ARTIFACT_ROOT" \
+              2>&1 | tee "$ARTIFACT_ROOT/client.log"
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          exit "$rc"
+
+      - name: Publish result summary
+        id: summary
+        if: always()
+        run: |
+          python3 control/.ci/slurm/runner.py report \
+              --result "$ARTIFACT_ROOT/results/result.json" \
+              --output "$GITHUB_OUTPUT" \
+              --summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload raw results
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: gpu-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_ROOT }}
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Remove SSH credentials
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/remote-ssh"
+
+      - name: Validate result protocol
+        if: always()
+        env:
+          AVAILABLE: ${{ steps.summary.outputs.available }}
+        run: |
+          set -euo pipefail
+          test "$AVAILABLE" = true
+
+  component-status:
+    name: GPU / ${{ matrix.component.label }}
+    needs: [admit, rebuild-and-test]
+    if: always() && needs.admit.outputs.accepted == 'true'
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        component: ${{ fromJSON(needs.rebuild-and-test.outputs.components || '[{"name":"infrastructure","label":"Infrastructure","state":"INFRA"}]') }}
+    steps:
+      - name: Report component state
+        env:
+          STATE: ${{ matrix.component.state }}
+        run: test "$STATE" = PASS
+
+  report-pr:
+    name: Report result to pull request
+    needs: [admit, rebuild-and-test, component-status]
+    if: always() && needs.admit.outputs.accepted == 'true' && needs.admit.outputs.pr_number != ''
+    runs-on: ubuntu-24.04
+    permissions:
+      checks: write
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout pinned reporter
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.admit.outputs.control_sha }}
+          path: control
+          persist-credentials: false
+
+      - name: Complete check and comment
+        env:
+          ARTIFACT_URL: ${{ needs.rebuild-and-test.outputs.artifact_url }}
+          CHECK_ID: ${{ needs.admit.outputs.check_id }}
+          COMMENT_ID: ${{ needs.admit.outputs.comment_id }}
+          GH_TOKEN: ${{ github.token }}
+          GPU_FAILED: ${{ needs.rebuild-and-test.outputs.failed }}
+          GPU_INFRASTRUCTURE: ${{ needs.rebuild-and-test.outputs.infrastructure }}
+          GPU_PASSED: ${{ needs.rebuild-and-test.outputs.passed }}
+          PR_NUMBER: ${{ needs.admit.outputs.pr_number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GPU_RESULT: ${{ needs.rebuild-and-test.result == 'success' && needs.component-status.result == 'success' && 'success' || 'failure' }}
+          SOURCE_SHA: ${{ needs.admit.outputs.source_sha }}
+        run: python3 control/.ci/slurm/runner.py github-finish

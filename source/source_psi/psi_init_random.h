@@ -1,14 +1,14 @@
 #ifndef PSI_INIT_RANDOM_H
 #define PSI_INIT_RANDOM_H
 
-#include "source_pw/module_pwdft/vnl_pw.h"
-#include "psi_initializer.h"
+#include <vector>
+#include "psi_base.h"
 
 /*
 Psi (planewave based wavefunction) initializer: random method
 */
 template <typename T>
-class psi_init_random : public psi_initializer<T>
+class psi_init_random : public psi_base<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
@@ -23,13 +23,13 @@ class psi_init_random : public psi_initializer<T>
     /// @param ik kpoint index
     /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
     virtual void init_psig(T* psig, const int& ik) override;
-    /// @brief initialize the psi_init with external data and methods
-    virtual void initialize(const Structure_Factor*,             //< structure factor
-                            const ModulePW::PW_Basis_K*,         //< planewave basis
-                            const UnitCell*,                     //< unit cell
-                            const K_Vectors*,                    //< kpoints
-                            const int& = 1,                      //< random seed
-                            const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
-                            const int& = 0) override;            //< MPI rank
+    virtual void initialize(const Structure_Factor* sf,             //< structure factor
+                            const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
+                            const UnitCell* p_ucell,                     //< unit cell
+                            const std::vector<int>& ik2iktot,             //< ik2iktot: local->global k-point mapping
+                            const int& random_seed,                      //< random seed
+                            const int& rank,                            //< MPI rank
+                            const int& npol,                            //< npol
+                            const int& nbands) override;                //< nbands
 };
 #endif

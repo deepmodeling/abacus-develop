@@ -1,6 +1,10 @@
 #pragma once
+#include <algorithm>
+#include <dirent.h>
 #include "ri_benchmark.h"
 #include "source_base/module_container/base/third_party/blas.h"
+#include "source_psi/psi.h"
+#include "source_base/module_external/scalapack_connector.h"
 namespace RI_Benchmark
 {
     // std::cout << "the size of Cs:" << std::endl;
@@ -51,28 +55,25 @@ namespace RI_Benchmark
         const psi::Psi<TK>& wfc_ks,
         const int& nocc,
         const int& nvirt,
-        const int& occ_first,
-        const bool& read_from_aims,
-        const std::vector<int>& aims_nbasis)
+        const int& occ_first)
     {
         // assert(wfc_ks.get_nk() == 1);   // currently only gamma-only is supported
         assert(nocc + nvirt <= wfc_ks.get_nbands());
-        const bool use_aims_nbasis = (read_from_aims && !aims_nbasis.empty());
         TLRI<TK> Cs_mo;
         int iw1 = 0;
         for (auto& c1 : Cs_ao)
         {
             const int& iat1 = c1.first;
             const int& it1 = ucell.iat2it[iat1];
-            const int& nw1 = (use_aims_nbasis ? aims_nbasis[it1] : ucell.atoms[it1].nw);
-            if (!use_aims_nbasis) { assert(iw1 == ucell.get_iat2iwt()[iat1]); }
+            const int& nw1 = ucell.atoms[it1].nw;
+            assert(iw1 == ucell.get_iat2iwt()[iat1]);
             int iw2 = 0;
             for (auto& c2 : c1.second)
             {
                 const int& iat2 = c2.first.first;
                 const int& it2 = ucell.iat2it[iat2];
-                const int& nw2 = (use_aims_nbasis ? aims_nbasis[it2] : ucell.atoms[it2].nw);
-                if (!use_aims_nbasis) { assert(iw2 == ucell.get_iat2iwt()[iat2]); }
+                const int& nw2 = ucell.atoms[it2].nw;
+                assert(iw2 == ucell.get_iat2iwt()[iat2]);
 
                 const auto& tensor_ao = c2.second;
                 const size_t& nabf = tensor_ao.shape[0];
@@ -117,7 +118,6 @@ namespace RI_Benchmark
         assert(Vs.size() > 0);
         auto& Cs_shape = Cs_a.at(0).begin()->second.shape;
         auto& Vs_shape = Vs.at(0).begin()->second.shape;
-        assert(Cs_shape.size() == 3); // abf, nocc, nvirt
         assert(Cs_shape.size() == 3); // abf, nocc, nvirt
         assert(Vs_shape.size() == 2); // abf, abf
 
@@ -304,6 +304,8 @@ namespace RI_Benchmark
         std::cout << std::endl;
         return bands_final;
     }
+
+    /// @brief  read the eigenvectors from FHI-aims, only for gamma_only and spin degenerate
     template <typename TK>
     void read_aims_eigenvectors(psi::Psi<TK>& wfc_ks, const std::string& file, const int ncore, const int nbands, const int nbasis)
     {
@@ -347,104 +349,7 @@ namespace RI_Benchmark
             std::cout << std::endl;
         }
     }
-    template < typename TR> // only for blocking by atom pairs
-    TLRI<TR> read_coulomb_mat(const std::string& file, const TLRI<TR>& Cs)
-    {   //for gamma_only, V(q)=V(R=0)
-        std::ifstream ifs;
-        ifs.open(file);
-        size_t nks = 0, nabf = 0, istart = 0, jstart = 0, iend = 0, jend = 0;
-        std::string tmp;
-        ifs >> nks;//   nkstot=1
-        if (nks > 1) { std::cout << "Warning: nks>1 is not supported yet!" << std::endl; }
-        TLRI<TR> Vs;
-        const int nat = Cs.size();
-        for (int iat1 = 0;iat1 < nat;++iat1)
-        {
-            const size_t nabf1 = Cs.at(iat1).at({ 0, {0,0,0} }).shape[0];
-            for (int iat2 = 0;iat2 < nat;++iat2)
-            {
-                if (iat1 > iat2)
-                {   // coulomb_mat has only the upper triangle part
-                    Vs[iat1][{iat2, { 0,0,0 }}] = Vs[iat2][{iat1, { 0,0,0 }}].transpose();
-                    continue;
-                }
-                const size_t nabf2 = Cs.at(iat2).at({ 0, {0,0,0} }).shape[0];
-                ifs >> nabf >> istart >> iend >> jstart >> jend >> tmp /*ik*/ >> tmp/*wk*/;
-                assert(nabf1 == iend - istart + 1);
-                assert(nabf2 == jend - jstart + 1);
-                RI::Tensor<TR> t({ nabf1, nabf2 });
-                for (int i = 0;i < nabf1;++i)
-                {
-                    for (int j = 0;j < nabf2;++j)
-                    {
-                        // t(i, j) = Vq[(istart + i) * nabf + jstart + j];
-                        ifs >> t(i, j) >> tmp;
-                    }
-                }
-                Vs[iat1][{iat2, { 0,0,0 }}] = t;
-            }
-        }
-        return Vs;
-    }
-
-    template < typename TR> // any blocking
-    TLRI<TR> read_coulomb_mat_general(const std::string& file, const TLRI<TR>& Cs)
-    {   //for gamma_only, V(q)=V(R=0)
-        std::ifstream ifs;
-        ifs.open(file);
-        size_t nks = 0, nabf = 0, istart = 0, jstart = 0, iend = 0, jend = 0;
-        std::string tmp;
-        ifs >> nks;//   nkstot=1
-        if (nks > 1) { std::cout << "Warning: nks>1 is not supported yet!" << std::endl; }
-        TLRI<TR> Vs;
-        std::vector<TR> Vq;
-        while (ifs.peek() != EOF)
-        {
-            ifs >> nabf >> istart >> iend >> jstart >> jend >> tmp /*ik*/ >> tmp/*wk*/;
-            if (ifs.peek() == EOF) { break; }
-            if (Vq.empty()) { Vq.resize(nabf * nabf, 0.0); }
-            for (int i = istart - 1;i < iend;++i)
-            {
-                for (int j = jstart - 1;j < jend;++j)
-                {
-                    ifs >> Vq[i * nabf + j] >> tmp;
-                }
-            }
-        }
-        const int nat = Cs.size();
-        istart = 0;    // 
-        for (int iat1 = 0;iat1 < nat;++iat1)
-        {
-            const size_t nabf1 = Cs.at(iat1).at({ 0, {0,0,0} }).shape[0];
-            jstart = 0;
-            for (int iat2 = 0;iat2 < nat;++iat2)
-            {
-                const size_t nabf2 = Cs.at(iat2).at({ 0, {0,0,0} }).shape[0];
-                if (iat1 > iat2)
-                {   // coulomb_mat has only the upper triangle part
-                    Vs[iat1][{iat2, { 0,0,0 }}] = Vs[iat2][{iat1, { 0,0,0 }}].transpose();
-                }
-                else
-                {
-                    RI::Tensor<TR> t({ nabf1, nabf2 });
-                    for (int i = 0;i < nabf1;++i)
-                    {
-                        for (int j = 0;j < nabf2;++j)
-                        {
-                            t(i, j) = Vq[(istart + i) * nabf + jstart + j];
-                        }
-                    }
-                    Vs[iat1][{iat2, { 0,0,0 }}] = t;
-                }
-                jstart += nabf2;
-            }
-            assert(jstart == nabf);
-            istart += nabf1;
-        }
-        assert(istart == nabf);
-        return Vs;
-    }
-
+    
     template < typename TR>
     bool compare_Vs(const TLRI<TR>& Vs1, const TLRI<TR>& Vs2, const double thr)
     {
@@ -469,8 +374,9 @@ namespace RI_Benchmark
         }
         return true;
     }
+    // since ucell.nw is updated from aims_nbasis, this function is abandoned 25-05-23
     template <typename TR>
-    std::vector<TLRI<TR>> split_Ds(const std::vector<std::vector<TR>>& Ds, const std::vector<int>& aims_nbasis, const UnitCell& ucell)
+    std::vector<TLRI<TR>> split_Ds(const std::vector<std::vector<TR>>& Ds, const std::vector<int>& aims_nbasis, const UnitCell& ucell) // vector index: ispin
     {
         // Due to the hard-coded constructor of elecstate::DensityMatrix, singlet-triplet with nspin=2 cannot use DM_trans with size 1
         // if(Ds.size()>1) { throw std::runtime_error("split_Ds only supports gamma-only spin-1 Ds now."); }

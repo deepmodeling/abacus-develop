@@ -68,11 +68,11 @@ fftw_main_sha256="5630c24cdeb33b131612f7eb4b1a9934234754f9f388ff8617458d0be6f239
 fftw_alt_ver="3.3.10"
 fftw_alt_sha256="56c932549852cddcfafdab3820b0200c7742675be92179e59e6215b340e26467"
 
-# LibXC (supports dual versions) - main=7.0.0, alt=6.2.2
-libxc_main_ver="7.0.0"
-libxc_main_sha256="e9ae69f8966d8de6b7585abd9fab588794ada1fab8f689337959a35abbf9527d"
-libxc_alt_ver="6.2.2"
-libxc_alt_sha256="f72ed08af7b9dff5f57482c5f97bff22c7dc49da9564bc93871997cbda6dacf3"
+# LibXC (supports dual versions) - main=7.1.0, alt=7.0.0
+libxc_main_ver="7.1.2"
+libxc_main_sha256="3915fac94416e4c415534223ea492ad2663f928acf27e98662c861b094a6c306"
+libxc_alt_ver="7.0.0"
+libxc_alt_sha256="e9ae69f8966d8de6b7585abd9fab588794ada1fab8f689337959a35abbf9527d"
 
 # ScaLAPACK (supports dual versions) - main=2.2.2, alt=2.2.1
 scalapack_main_ver="2.2.3"
@@ -110,8 +110,8 @@ cereal_sha256="a8171736e6b553dd6cd37919c13433b01f499d24d45af502975a9439728803e0"
 libcomm_ver="965bf90"
 libcomm_sha256="d7b991465d98d7b715b484d86880bf3525b9bf0cc62c3e5d38b0f6d140f6b9d4"
 
-libri_ver="e6d78e0"
-libri_sha256="619b49a14047d7a167515d1f1d0fa2d82fbebd63b8cbd3181e07df6ed993a22c"
+libri_ver="b0eff7a"
+libri_sha256="bee9df54e0d827942524640897c3a57c0c738d2db6b2d73a09ab6c054bef94ea"
 
 rapidjson_ver="24b5e7a"
 rapidjson_sha256="dcb57b11036cb8fc6b2a57a6aded68d52e9cfe543811bf4fa8941087f84e72d0"

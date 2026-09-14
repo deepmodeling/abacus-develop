@@ -1,4 +1,5 @@
 #include "../module_parameter/read_input_tool.h"
+
 #include <gtest/gtest.h>
 
 // Test fixture for parse_expression tests
@@ -40,16 +41,15 @@ TEST_F(ReadInputTool, parse_expression)
     }
     // Test case for expressions with one '*'
     {
-        std::vector<std::string> expressions = {"3", "2*4.2", "1*7"};
-        std::vector<double> expected = {3.0, 4.2, 4.2, 7.0};
+        std::vector<std::string> expressions = {"3", "2*4.2", "1*7", "0.18737028625", "2*-0.125"};
+        std::vector<double> expected = {3.0, 4.2, 4.2, 7.0, 0.18737028625, -0.125, -0.125};
         std::vector<double> result;
 
-        
         parse_expression(expressions, result);
         EXPECT_EQ(expected.size(), result.size());
         for (size_t i = 0; i < expected.size(); i++)
         {
-            EXPECT_NEAR(expected[i], result[i], 1e-5);
+            EXPECT_DOUBLE_EQ(expected[i], result[i]);
         }
     }
     // Test case for expressions with more than one '*'
