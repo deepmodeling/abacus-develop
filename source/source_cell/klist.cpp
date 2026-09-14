@@ -335,14 +335,14 @@ bool K_Vectors::read_listed_kpoints(std::ifstream& ifk, const std::string& kword
 {
     if (kword == "Cartesian" || kword == "C") // Cartesian coordinates
     {
-        this->renew(nkstot * this->spin_mult); // mohan fix bug 2009-09-01
+        this->renew(nkstot); // mohan fix bug 2009-09-01; spin_mult doubling done later by set_kup_and_kdw()
         KListIO::read_kpt_list(ifk, nkstot, this->kvec_c, this->wk);
         this->kc_done = true;
         return true;
     }
     if (kword == "Direct" || kword == "D") // Direct coordinates
     {
-        this->renew(nkstot * this->spin_mult); // mohan fix bug 2009-09-01
+        this->renew(nkstot); // mohan fix bug 2009-09-01; spin_mult doubling done later by set_kup_and_kdw()
         KListIO::read_kpt_list(ifk, nkstot, this->kvec_d, this->wk);
         this->kd_done = true;
         return true;
@@ -395,7 +395,7 @@ void K_Vectors::interpolate_k_between(std::ifstream& ifk, std::vector<ModuleBase
     const KListIO::LineK line = KListIO::interp_line(ifk, this->nkstot);
 
     this->nkstot = line.nks_total;
-    this->renew(this->nkstot * this->spin_mult); // mohan fix bug 2009-09-01
+    this->renew(this->nkstot); // mohan fix bug 2009-09-01; spin_mult doubling done later by set_kup_and_kdw()
 
     for (int i = 0; i < this->nkstot; i++)
     {
@@ -421,8 +421,9 @@ void K_Vectors::update_use_ibz(const int& nkstot_ibz,
 
     ModuleBase::GlobalFunc::OUT(ofs_running, "nkstot now", nkstot);
 
-    // qianrui fix a bug 2021-7-13: size for the spin_mult=2 doubling in set_kup_and_kdw()
-    this->kvec_d.resize(this->nkstot * this->spin_mult);
+    // qianrui fix a bug 2021-7-13: shrink kvec_d to the (now smaller) ibz count;
+    // the spin_mult=2 doubling for set_kup_and_kdw() is reserved there, on demand.
+    this->kvec_d.resize(this->nkstot);
 
     for (int i = 0; i < this->nkstot; ++i)
     {
@@ -444,6 +445,12 @@ void K_Vectors::update_use_ibz(const int& nkstot_ibz,
 void K_Vectors::set_kup_and_kdw(std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("K_Vectors", "setup_kup_and_kdw");
+
+    // grow the containers to make room for the down-spin copy expand_spin_kpoints()
+    // is about to append (indices [nkstot, 2*nkstot)); done here, on demand, rather
+    // than speculatively reserved earlier, so nothing upstream of this point ever
+    // sees kvec_d/kvec_c/wk/isk padded with not-yet-meaningful placeholder entries.
+    this->renew(this->nkstot * this->spin_mult);
 
     KListIO::expand_spin_kpoints(this->spin_mult,
                                  this->kvec_c,

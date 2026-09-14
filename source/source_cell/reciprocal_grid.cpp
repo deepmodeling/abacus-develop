@@ -71,8 +71,10 @@ void ReciprocalGrid::Monkhorst_Pack(const int* nmp_in, const double* koffset_in,
     const int mpnz = nmp_in[2];
 
     this->nkstot = mpnx * mpny * mpnz;
-    // only can renew after nkstot is estimated.
-    this->renew(nkstot * spin_factor());
+    // only can renew after nkstot is estimated. The spin_factor() doubling (for
+    // K_Vectors) is applied later, on demand, by set_kup_and_kdw() itself, so it
+    // covers the post-symmetry-reduction k-count rather than this pre-reduction one.
+    this->renew(nkstot);
 
     for (int x = 1; x <= mpnx; x++)
     {
