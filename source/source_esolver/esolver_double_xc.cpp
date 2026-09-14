@@ -152,7 +152,8 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                                                              this->deepks,
                                                              istep,
                                                              this->exx_nao,
-                                                             this->exx_info_);
+                                                             this->exx_info_,
+                                                             *this->inp_);
     }
 
     XC_Functional::set_xc_type(this->inp_->deepks_out_base);
