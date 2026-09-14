@@ -1,6 +1,7 @@
 #include "source_lcao/module_ri/sternheimer_abfs_strict2d.h"
 
 #include "source_base/constants.h"
+#include "source_base/module_external/blas_connector.h"
 
 #include <algorithm>
 #include <array>
@@ -167,6 +168,37 @@ struct FourierFFT
 
 namespace ModuleRI
 {
+std::vector<std::complex<double>> sternheimer_abf_coulomb_panel(
+    const std::vector<std::complex<double>>& density_cm,
+    const std::vector<std::complex<double>>& potential_cm,
+    const std::size_t grid_size, const std::size_t rows, const std::size_t columns,
+    const double volume_element)
+{
+    const auto finite_value = [](Complex value) {
+        return std::isfinite(value.real()) && std::isfinite(value.imag());
+    };
+    const auto extent = [](std::size_t a, std::size_t b) {
+        if (a == 0 || b == 0 || a > static_cast<std::size_t>(std::numeric_limits<int>::max())
+            || b > static_cast<std::size_t>(std::numeric_limits<int>::max())
+            || a > std::numeric_limits<std::size_t>::max()/b)
+            throw std::invalid_argument("Coulomb panel invalid dimensions.");
+        return a*b;
+    };
+    if (density_cm.size() != extent(grid_size, rows) || potential_cm.size() != extent(grid_size, columns)
+        || !std::isfinite(volume_element) || volume_element <= 0
+        || !std::all_of(density_cm.begin(), density_cm.end(), finite_value)
+        || !std::all_of(potential_cm.begin(), potential_cm.end(), finite_value))
+        throw std::invalid_argument("Coulomb panel invalid or nonfinite fields.");
+    std::vector<Complex> result(extent(rows, columns));
+    BlasConnector::gemm_cm('C', 'N', static_cast<int>(rows), static_cast<int>(columns),
+                          static_cast<int>(grid_size), Complex(volume_element), density_cm.data(),
+                          static_cast<int>(grid_size), potential_cm.data(), static_cast<int>(grid_size),
+                          Complex(0), result.data(), static_cast<int>(rows));
+    if (!std::all_of(result.begin(), result.end(), finite_value))
+        throw std::overflow_error("Coulomb panel nonfinite contraction.");
+    return result;
+}
+
 void solve_sternheimer_abf_strict2d_coulomb_in_place(
     std::vector<SternheimerABFBlochGridChannel>& density_channels,
     const SternheimerFDHamiltonian::Grid& grid,

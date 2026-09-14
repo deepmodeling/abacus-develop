@@ -497,6 +497,50 @@ TEST(SternheimerABFSStrict2D, AcceptsLargeFiniteRepresentableDensitiesAndIntegra
     EXPECT_NEAR(std::abs(large[0] / (scale * scale) - baseline[0]), 0.0, 3.0e-11);
 }
 
+#ifdef STERNHEIMER_FULL_COULOMB_PANEL
+TEST(SternheimerABFSStrict2D, FullPanelMatchesComplexSelectedIntegrals)
+{
+    const Grid grid = skew_grid();
+    const std::vector<Channel> rho{density(grid, 0), density(grid, 1)};
+    auto phi = rho;
+    ModuleRI::solve_sternheimer_abf_strict2d_coulomb_in_place(phi, grid, QPoint{0.25, 0.0, 0.0});
+    std::vector<Complex> r, p;
+    for (const auto& c : rho) r.insert(r.end(), c.potential_r.begin(), c.potential_r.end());
+    p = phi[1].potential_r;
+    const auto lattice = ModuleRI::sternheimer_fd_grid_lattice_vectors(grid);
+    const double dv = std::abs(lattice[0][0]*lattice[1][1]-lattice[0][1]*lattice[1][0])
+                      *std::abs(lattice[2][2])/grid.size();
+    const auto full = ModuleRI::sternheimer_abf_coulomb_panel(r, p, grid.size(), 2, 1, dv);
+    const auto selected = ModuleRI::sternheimer_abf_strict2d_selected_coulomb_integrals(rho, phi, grid, {{0,1},{1,1}});
+    ASSERT_EQ(full.size(), selected.size());
+    for (std::size_t i = 0; i < full.size(); ++i) EXPECT_NEAR(std::abs(full[i]-selected[i]), 0.0, 1e-11);
+    p.insert(p.end(), phi[0].potential_r.begin(), phi[0].potential_r.end());
+    const auto both = ModuleRI::sternheimer_abf_coulomb_panel(r, p, grid.size(), 2, 2, dv);
+    const auto other = ModuleRI::sternheimer_abf_strict2d_selected_coulomb_integrals(rho, phi, grid, {{0,0},{1,0}});
+    ASSERT_EQ(both.size(), 4u);
+    for (std::size_t i = 0; i < 2; ++i)
+    {
+        EXPECT_NEAR(std::abs(both[i]-selected[i]), 0.0, 1e-11);
+        EXPECT_NEAR(std::abs(both[i+2]-other[i]), 0.0, 1e-11);
+    }
+}
+
+TEST(SternheimerABFSStrict2D, FullPanelRejectsInvalidInputs)
+{
+    using ModuleRI::sternheimer_abf_coulomb_panel;
+    EXPECT_THROW(sternheimer_abf_coulomb_panel({Complex(1)}, {Complex(1)}, 0, 1, 1, 1), std::invalid_argument);
+    EXPECT_THROW(sternheimer_abf_coulomb_panel({Complex(1)}, {Complex(1)}, 2, 1, 1, 1), std::invalid_argument);
+    EXPECT_THROW(sternheimer_abf_coulomb_panel({Complex(1)}, {Complex(1)}, 1, 1, 1, -1), std::invalid_argument);
+    EXPECT_THROW(sternheimer_abf_coulomb_panel({Complex(std::numeric_limits<double>::infinity())},
+                                             {Complex(1)}, 1, 1, 1, 1), std::invalid_argument);
+}
+#else
+TEST(SternheimerABFSStrict2D, RequiresFullCoulombPanel)
+{
+    FAIL() << "Full density-potential Coulomb matrix panel is not implemented.";
+}
+#endif
+
 #else
 TEST(SternheimerABFSStrict2D, RequiresStrict2DCoulombImplementation)
 {

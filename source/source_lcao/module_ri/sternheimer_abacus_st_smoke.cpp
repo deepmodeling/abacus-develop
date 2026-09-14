@@ -2357,6 +2357,9 @@ void run_sternheimer_weak_q_unit(
     auto records = live_records;
     const auto started = std::chrono::steady_clock::now();
     const bool coulomb_only = env_is_true("ABACUS_STERNHEIMER_WEAK_Q_COULOMB_ONLY");
+    const bool full_coulomb_matrix = env_is_true("WEAK_Q_FULL_COULOMB_MATRIX");
+    if (full_coulomb_matrix && !coulomb_only)
+        throw std::invalid_argument("Full Coulomb matrix audit requires Coulomb-only mode; response unchanged.");
     const int nfreq = static_cast<int>(frequency_grid.omega_ha.size());
     if (nfreq <= 0 || frequency_grid.weights_ha.size() != frequency_grid.omega_ha.size()
         || response_plan.kq_pairs.size() != records.size()
@@ -2749,6 +2752,75 @@ void run_sternheimer_weak_q_unit(
     coulomb.close();
     audit << "coulomb_file " << stem << "_coulomb.dat\nkernel_matched_to_ewald no\n";
     stage("coulomb_samples_complete");
+    if (full_coulomb_matrix)
+    {
+        if (!z_support_contained)
+            throw std::runtime_error("Full Coulomb audit requires contained radial z supports.");
+        const std::size_t ng = fine_potential.size();
+        const std::size_t nc = static_cast<std::size_t>(channels);
+        constexpr std::size_t panel_width = 16;
+        constexpr std::size_t workspace_limit = std::size_t(96)*1024*1024*1024;
+        if (nc == 0 || ng > workspace_limit/sizeof(Complex)/(nc+panel_width))
+            throw std::length_error("Full Coulomb audit exceeds 96 GiB field workspace budget.");
+        Vector densities(ng*nc);
+        for (int i = 0; i < channels; ++i)
+        {
+            const auto sampled = sample_density(i);
+            std::copy(sampled.front().potential_r.begin(), sampled.front().potential_r.end(),
+                      densities.begin()+ng*static_cast<std::size_t>(i));
+            if ((i+1)%32 == 0 || i+1 == channels) stage("full_coulomb_density_"+std::to_string(i+1));
+        }
+        auto full = output(stem+"_full_coulomb.dat");
+        identity(full);
+        full << "input_manifest_sha256 " << input_manifest_sha256
+             << "\nintegral_representation density_potential_Ha\nintegral_occupation_weighted no\nfull_matrix_rows " << channels
+             << "\nfull_matrix_columns " << channels << "\nhermitian_completion no\n";
+        for (std::size_t begin = 0; begin < nc; begin += panel_width)
+        {
+            const std::size_t count = std::min(panel_width, nc-begin);
+            Vector potentials(ng*count);
+            std::exception_ptr sampling_error;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic) num_threads(static_cast<int>(count))
+#endif
+            for (int jj = 0; jj < static_cast<int>(count); ++jj)
+            {
+                try
+                {
+                    std::vector<SternheimerABFBlochGridChannel> single(1);
+                    const std::size_t j = begin+static_cast<std::size_t>(jj);
+                    single[0].potential_r.assign(densities.begin()+ng*j, densities.begin()+ng*(j+1));
+                    solve_sternheimer_abf_strict2d_coulomb_in_place(single, fine_grid.grid, response_plan.qpoint);
+                    std::copy(single[0].potential_r.begin(), single[0].potential_r.end(), potentials.begin()+ng*jj);
+                }
+                catch (...)
+                {
+#ifdef _OPENMP
+#pragma omp critical(sternheimer_full_coulomb_error)
+#endif
+                    { if (!sampling_error) sampling_error = std::current_exception(); }
+                }
+            }
+            if (sampling_error) std::rethrow_exception(sampling_error);
+            const auto matrix = sternheimer_abf_coulomb_panel(densities, potentials, ng, nc, count,
+                                                              fine_grid.volume_element);
+            for (std::size_t j = 0; j < count; ++j)
+                for (std::size_t i = 0; i < nc; ++i)
+                {
+                    const Complex value = matrix[i+nc*j];
+                    full << "coulomb_integral " << i+1 << ' ' << begin+j+1 << ' '
+                         << value.real() << ' ' << value.imag() << '\n';
+                }
+            full.flush();
+            if (!full) throw std::runtime_error("Full Coulomb audit output write failed.");
+            stage("full_coulomb_column_"+std::to_string(begin+count));
+        }
+        full << "full_matrix_complete yes\n";
+        full.close();
+        if (!full) throw std::runtime_error("Full Coulomb audit output close failed.");
+        audit << "full_coulomb_file " << stem << "_full_coulomb.dat\n";
+        stage("full_coulomb_complete");
+    }
     if (coulomb_only)
     {
         audit << "response_equations 0\nunit_complete yes\n";

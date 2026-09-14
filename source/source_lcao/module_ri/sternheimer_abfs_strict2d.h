@@ -9,6 +9,15 @@
 namespace ModuleRI
 {
 
+#define STERNHEIMER_FULL_COULOMB_PANEL 1
+// Complete rectangular density/potential contraction, column-major fields
+// (grid_size x rows/columns) and column-major output (rows x columns).
+// Raw dV*rho^H*phi only: no symmetry completion, filtering, or energy gate.
+std::vector<std::complex<double>> sternheimer_abf_coulomb_panel(
+    const std::vector<std::complex<double>>& density_cm,
+    const std::vector<std::complex<double>>& potential_cm,
+    std::size_t grid_size, std::size_t rows, std::size_t columns, double volume_element);
+
 // Finite-Fourier Galerkin strict-2D Coulomb (atomic units, distances in bohr):
 // The open-z kernel follows from integrating the full Coulomb Fourier symbol:
 // integral dkz/(2*pi) 4*pi*exp[i*kz*(z-z')]/(Q^2+kz^2)
