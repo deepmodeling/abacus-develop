@@ -201,6 +201,11 @@ class FFT_Bundle
     template <typename FPTYPE>
     void fft3D_backward(std::complex<FPTYPE>* in, std::complex<FPTYPE>* out) const;
 
+    /// @brief the device this bundle was configured for, "cpu" or "gpu"
+    std::string get_device() const { return device; }
+    /// @brief the precision this bundle was configured for, "single" or "double"
+    std::string get_precision() const { return precision; }
+
   private:
     int fft_mode = 0;
     bool float_flag = false;

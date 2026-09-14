@@ -11,7 +11,6 @@
  * - Tested Functions:
  *   - Magnetism::Magnetism()
  *   - Magnetism::~Magnetism()
- *   - Magnetism::judge_parallel()
  *   - Magnetism::compute_mag()
  *      - compute mag for spin-polarized system when nspin = 2
  *      - and non-collinear case with nspin = 4
@@ -32,14 +31,6 @@ class MagnetismTest : public ::testing::Test
     {
         delete magnetism;
     }
-
-    // Magnetism declares this fixture a friend, but a TEST_F body lives in a
-    // class derived from it, and friendship is not inherited -- so the call
-    // into the private helper has to happen here.
-    bool judge_parallel(const double a[3], const ModuleBase::Vector3<double>& b) const
-    {
-        return magnetism->judge_parallel(a, b);
-    }
 };
 
 TEST_F(MagnetismTest, Magnetism)
@@ -47,15 +38,6 @@ TEST_F(MagnetismTest, Magnetism)
     EXPECT_EQ(0.0, magnetism->tot_mag);
     EXPECT_EQ(0.0, magnetism->abs_mag);
     EXPECT_TRUE(magnetism->start_mag.empty());
-}
-
-TEST_F(MagnetismTest, JudgeParallel)
-{
-    double a[3] = {1.0, 0.0, 0.0};
-    ModuleBase::Vector3<double> b(1.0, 0.0, 0.0);
-    EXPECT_TRUE(judge_parallel(a, b));
-    b = ModuleBase::Vector3<double>(0.0, 1.0, 0.0);
-    EXPECT_FALSE(judge_parallel(a, b));
 }
 
 TEST_F(MagnetismTest, ComputeMagnetizationS2)

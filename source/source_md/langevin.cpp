@@ -11,16 +11,16 @@ Langevin::Langevin(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param
 
     md_damp = mdp.md_damp / ModuleBase::AU_to_FS;
 
-    total_force.resize(static_cast<std::size_t>(mdcell.nowned_atoms()));
+    total_force.resize(static_cast<std::size_t>(mdcell.owned_atoms().size()));
 }
 
 
-void Langevin::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
+void Langevin::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
 {
     ModuleBase::TITLE("Langevin", "setup");
     ModuleBase::timer::start("Langevin", "setup");
 
-    MD_base::setup(p_esolver, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir, decomp);
 
     post_force();
 
@@ -34,9 +34,9 @@ void Langevin::first_half(std::ofstream& ofs)
     ModuleBase::TITLE("Langevin", "first_half");
     ModuleBase::timer::start("Langevin", "first_half");
 
-    for (int i = 0; i < mdcell.nowned_atoms(); ++i)
+    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        LocalAtom& atom = mdcell.mutable_owned_atoms()[static_cast<std::size_t>(i)];
+        LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
         for (int k = 0; k < 3; ++k)
         {
             if (atom.mbl[k]) atom.vel[k] += 0.5 * total_force[i][k] * md_dt / atom.mass;
@@ -55,9 +55,9 @@ void Langevin::second_half()
     ModuleBase::timer::start("Langevin", "second_half");
 
     post_force();
-    for (int i = 0; i < mdcell.nowned_atoms(); ++i)
+    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
-        LocalAtom& atom = mdcell.mutable_owned_atoms()[static_cast<std::size_t>(i)];
+        LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
         for (int k = 0; k < 3; ++k)
         {
             if (atom.mbl[k]) atom.vel[k] += 0.5 * total_force[i][k] * md_dt / atom.mass;
@@ -93,9 +93,9 @@ void Langevin::restart(const std::string& global_readin_dir)
 void Langevin::post_force()
 {
     double t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
-    total_force.resize(static_cast<std::size_t>(mdcell.nowned_atoms()));
+    total_force.resize(static_cast<std::size_t>(mdcell.owned_atoms().size()));
 
-    for (int i = 0; i < mdcell.nowned_atoms(); ++i)
+    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
         ModuleBase::Vector3<double> random_value;
         for (int k = 0; k < 3; ++k)

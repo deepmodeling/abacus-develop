@@ -12,7 +12,6 @@ list(APPEND objects
     module_dos/cal_ldos.cpp
     module_ml/cal_mlkedf_desc.cpp
     module_dos/write_dos_pw.cpp
-    module_output/band_parallel_output.cpp
     module_energy/write_bands.cpp
     module_energy/nscf_fermi_surf.cpp
     module_energy/write_eig_occ.cpp
@@ -41,6 +40,8 @@ list(APPEND objects
     module_json/para_json.cpp
     parse_args.cpp
     input_help.cpp
+    module_chgpot/get_pchg_pw.cpp
+    module_wf/get_wf_pw.cpp
 )
 
 list(APPEND objects_advanced
@@ -148,9 +149,7 @@ endif()
 if(BUILD_TESTING)
   add_subdirectory(module_parameter/test)
   add_subdirectory(test_serial)
-  if(ENABLE_MPI)
-    add_subdirectory(test)
-  endif()
+  add_subdirectory(test)
 endif()
 
 if(ENABLE_RAPIDJSON)

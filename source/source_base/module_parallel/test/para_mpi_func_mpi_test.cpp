@@ -19,12 +19,12 @@ TEST(ParaMpiFuncMpiTest, ReduceAllSum)
     EXPECT_EQ(v, 1); // serial: size=1
 }
 
-TEST(ParaMpiFuncMpiTest, GatherIntAll)
+TEST(ParaMpiFuncMpiTest, AllgatherIntAll)
 {
     auto world = Parallel::ParaWorld::serial("test");
     int v = world.rank();
     int all[1] = {0};
-    Parallel::gather_int(v, all, world);
+    Parallel::allgather_int(v, all, world);
     EXPECT_EQ(all[0], 0);
 }
 

@@ -544,6 +544,12 @@ TEST_F(UcellTest, JudgeParallel)
     ModuleBase::Vector3<double> b(1.0, 1.0, 1.0);
     double a[3] = {1.0, 1.0, 1.0};
     EXPECT_TRUE(unitcell::judge_parallel(a, b));
+
+    // the negative case, moved here from MagnetismTest.JudgeParallel when the
+    // duplicate Magnetism::judge_parallel was deleted
+    double c[3] = {1.0, 0.0, 0.0};
+    ModuleBase::Vector3<double> d(0.0, 1.0, 0.0);
+    EXPECT_FALSE(unitcell::judge_parallel(c, d));
 }
 
 TEST_F(UcellTest, Index)

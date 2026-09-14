@@ -9,12 +9,18 @@
 #include <iosfwd>
 #include <unordered_map>
 
+class TestHSolverPW; // unit-test fixture, see source_hsolver/test/
+
 namespace hsolver
 {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class HSolverPW
 {
+    /// the unit test drives the protected hamiltSolvePsiK() and
+    /// update_precondition() directly; the fixture is at global scope
+    friend class ::TestHSolverPW;
+
   protected:
     // Note GetTypeReal<T>::type will
     // return T if T is real type(float, double),

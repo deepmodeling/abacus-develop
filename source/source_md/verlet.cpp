@@ -16,12 +16,12 @@ Verlet::~Verlet()
 }
 
 
-void Verlet::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
+void Verlet::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
 {
     ModuleBase::TITLE("Verlet", "setup");
     ModuleBase::timer::start("Verlet", "setup");
 
-    MD_base::setup(p_esolver, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir, decomp);
 
     ModuleBase::timer::end("Verlet", "setup");
 }
@@ -77,7 +77,7 @@ void Verlet::apply_thermostat(void)
     }
     else if (mdp.md_thermostat == "anderson")
     {
-        for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+        for (LocalAtom& atom : mdcell.owned_atoms())
         {
             if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise)
             {
@@ -121,7 +121,7 @@ void Verlet::thermalize(const int& nraise, const double& current_temp, const dou
         fac = sqrt(target_temp / current_temp);
     }
 
-    for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.vel *= fac;
+    for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel *= fac;
 }
 
 
@@ -191,7 +191,7 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
     }
 
     // Apply velocity scaling
-    for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.vel *= scale;
+    for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel *= scale;
 }
 
 
