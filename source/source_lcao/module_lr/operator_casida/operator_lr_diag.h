@@ -10,8 +10,9 @@ namespace LR
     class OperatorLRDiag : public hamilt::Operator<T, Device>
     {
     public:
-        OperatorLRDiag(const double* eig_ks, const Parallel_2D& pX_in, const int& nk_in, const int& nocc_in, const int& nvirt_in)
-            : pX(pX_in), nk(nk_in), nocc(nocc_in), nvirt(nvirt_in)
+        OperatorLRDiag(const double* eig_ks, const Parallel_2D& pX_in, const int& nk_in, const int& nocc_in, const int& nvirt_in,
+            const bool add_on = false)
+            : pX(pX_in), nk(nk_in), nocc(nocc_in), nvirt(nvirt_in), add_on_(add_on)
         {   // calculate the difference of eigenvalues
             ModuleBase::TITLE("OperatorLRDiag", "OperatorLRDiag");
             const int nbands = nocc + nvirt;
@@ -33,8 +34,12 @@ namespace LR
         };
         void init(const int ik_in) override {};
 
-        /// caution: put this operator at the head of the operator list,
-        /// because vector_mul_vector_op directly assign to (rather than add on) psi_out.
+        /// By default this ASSIGNS to `hpsi`, so it has to be the head of its operator list.
+        /// That is fine for a single-chain Hamiltonian, but an open-shell 2x2 spin-block
+        /// operator writes into the same output buffer from four chains: the diagonal block of
+        /// the DOWN channel runs last and its assignment wipes the up->down contribution that
+        /// the off-diagonal chain wrote earlier. Those callers pass `add_on = true` and zero the
+        /// output themselves. 
         virtual void  act(const int nbands,
             const int nbasis,
             const int npol,
@@ -49,7 +54,7 @@ namespace LR
                 hpsi,
                 psi_in,
                 this->eig_ks_diff.c,
-                false);
+                this->add_on_);
             ModuleBase::timer::end("OperatorLRDiag", "act");
         }
     private:
@@ -58,6 +63,7 @@ namespace LR
         const int nk = 1;
         const int nocc = 1;
         const int nvirt = 1;
+        const bool add_on_ = false;
         Device* ctx = {};
     };
 }

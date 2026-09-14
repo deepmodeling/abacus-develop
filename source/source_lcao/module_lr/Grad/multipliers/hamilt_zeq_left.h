@@ -132,9 +132,9 @@ namespace LR
             LR_Util::initialize_DMR(*this->DM_trans, pmat, ucell, gd, orb_cutoff);
 
             // 1. the orbital-energy difference, diagonal blocks only
-            this->ops[0] = new OperatorLRDiag<T>(eig_ks.c, pX[0], this->nk, nocc[0], nvirt[0]);
+            this->ops[0] = new OperatorLRDiag<T>(eig_ks.c, pX[0], this->nk, nocc[0], nvirt[0], /*add_on=*/true);
             this->ops[3] = new OperatorLRDiag<T>(eig_ks.c + this->nk * (nocc[0] + nvirt[0]),
-                pX[1], this->nk, nocc[1], nvirt[1]);
+                pX[1], this->nk, nocc[1], nvirt[1], /*add_on=*/true);
 
             // 2. $H_{ai\sigma}[D^Z]=2\sum_{\sigma'}K_{ai\sigma}[D^Z_{\sigma'}]$
             auto newHxc = [&](const int sl, const int sr)

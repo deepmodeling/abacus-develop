@@ -5,6 +5,9 @@
 #include <cassert>
 #include <cstring>
 #include <vector>
+#include <algorithm>
+#include <cstdlib>
+#include <string>
 
 namespace LR
 {
@@ -44,6 +47,10 @@ namespace LR
             for (int ib = 0;ib < nband;++ib)
             {
                 const int offset_band = ib * ld_psi;
+                // All four spin blocks accumulate into this band's output, and the diagonal
+                // `OperatorLRDiag`s now add rather than assign (see `operator_lr_diag.h`), so the
+                // buffer has to start clean.
+                std::fill(hpsi + offset_band, hpsi + offset_band + ld_psi, T(0));
                 // Terms that are not bilinear in a (out, in) spin pair -- currently only the
                 // $g^{xc}$ term of the right-hand side, which is quadratic in $D^X$ and needs
                 // both transition-density channels on the grid at once.
@@ -58,8 +65,15 @@ namespace LR
                         hamilt::Operator<T>* node(this->ops[(is_out << 1) + is_in]);
                         while (node != nullptr)
                         {
-                            node->act(/*nband=*/1, ldim_is[is_in], /*npol=*/1,
-                                psi_in + offset_in, hpsi + offset_out);
+                            // `is_in` picks the density matrix (already done by `set_dm`), but the
+                            // vector an operator consumes directly belongs to the OUT channel:
+                            //     $R_{ia\sigma}=-2\sum_{\sigma'}\sum_b X_{ib\sigma}
+                            //         K_{ab,\sigma\sigma'}[D^X_{\sigma'}]+\dots$
+                            // -- only $D^X$ carries the summed spin. `OperatorLRHxc`'s CXC branch
+                            // says the same thing in code: it reads `psi_in` through `pX[sl]`, the
+                            // OUT channel's distribution. 
+                            node->act(/*nband=*/1, ldim_is[is_out], /*npol=*/1,
+                                psi_in + offset_out, hpsi + offset_out);
                             node = (hamilt::Operator<T>*)(node->next_op);
                         }
                     }
