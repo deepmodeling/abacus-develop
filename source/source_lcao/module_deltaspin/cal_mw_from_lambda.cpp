@@ -27,7 +27,8 @@
  * Computes the DeltaSpin correction to the subspace Hamiltonian:
  *   H_corrected = H_original + becp^† * delta_lambda * becp
  *
- * For npol=2 (non-collinear), the 2x2 Pauli matrix coefficients are:
+ * For npol=2 (non-collinear), coefficients use the spin-block order
+ * {up-up, down-up, up-down, down-down}:
  *   coeff0 = (lambda_z, 0)        coeff1 = (lambda_x, lambda_y)
  *   coeff2 = (lambda_x, -lambda_y) coeff3 = (-lambda_z, 0)
  * Applied as: ps_up = coeff0 * becp_up + coeff2 * becp_dn
@@ -128,16 +129,6 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
         }
         // Diagonalization without updating charge density (last param = true means skip charge update)
         hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->state_.nspin_, true);
-        elecstate::calculate_weights(this->pelec->ekb,
-                                     this->pelec->wg,
-                                     this->pelec->klist,
-                                     this->pelec->eferm,
-                                     this->pelec->f_en,
-                                     this->pelec->nelec_spin,
-                                     PARAM.inp.nbands,
-                                     this->pelec->skip_weights);
-        elecstate::calEBand(this->pelec->ekb,this->pelec->wg,this->pelec->f_en);
-
         // Note: although update_lambda() modifies lambda in-place above,
         // solve() unconditionally recomputes DM and DMR (via cal_dm_psi +
         // cal_DMR) from the psi obtained by diagonalizing with the new

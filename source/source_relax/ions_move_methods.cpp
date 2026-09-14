@@ -61,24 +61,25 @@ void Ions_Move_Methods::cal_movement(const int &istep,
                                      const double &etot,
                                      UnitCell &ucell,
                                      std::ofstream& ofs,
-                                     std::vector<std::string>& relax_method)
+                                     std::vector<std::string>& relax_method,
+                                    const Relax_Criteria& criteria)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
     if (relax_method[0] == "bfgs" && relax_method[1] != "1")
     {
-        converged_ = bfgs.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_);
+        converged_ = bfgs.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, criteria);
     }
     else if (relax_method[0] == "sd")
     {
-        converged_ = sd.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_);
+        converged_ = sd.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, criteria);
     }
     else if (relax_method[0] == "cg")
     {
-        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, relax_method);
+        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, relax_method, criteria);
     }
     else if (relax_method[0] == "cg_bfgs")
     {
-        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, relax_method);
+        converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, relax_method, criteria);
     }
     else if (relax_method[0] == "bfgs" && relax_method[1] == "1")
     {

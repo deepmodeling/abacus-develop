@@ -1,7 +1,6 @@
 #include "ions_move_bfgs.h"
 
 #include <algorithm>
-#include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -58,7 +57,7 @@ void Ions_Move_BFGS::reset()
     Ions_Move_Basic::trust_radius_old = 0.0;
 }
 
-bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info)
+bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, const Relax_Criteria& criteria)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "start");
 
@@ -73,7 +72,7 @@ bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
         Ions_Move_Basic::setup_gradient(ucell, force, pos_tmp.data(), this->grad.data(), ofs);
     }
     Ions_Move_Basic::setup_etot(energy_in, istep, etot_info);
-    bool converged = Ions_Move_Basic::check_converged(ucell, this->grad.data(), update_iter, ofs, etot_info);
+    bool converged = Ions_Move_Basic::check_converged(ucell, this->grad.data(), update_iter, ofs, etot_info, criteria.force_thr, criteria.force_thr_ev, criteria.out_level, criteria.test_relax_method);
 
     if (converged)
     {
@@ -82,16 +81,16 @@ bool Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
     }
     else
     {
-        this->restart_bfgs(ucell.lat0, update_iter, ofs);
-        this->bfgs_routine(ucell.lat0, istep, update_iter, ofs, etot_info);
+        this->restart_bfgs(ucell.lat0, update_iter, ofs, criteria.test_relax_method);
+        this->bfgs_routine(ucell.lat0, istep, update_iter, ofs, etot_info, criteria.out_level, criteria.test_relax_method);
         this->save_bfgs();
 
-        Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs);
+        Ions_Move_Basic::move_atoms(ucell, move.data(), pos.data(), ofs, criteria.test_relax_method);
         return false;
     }
 }
 
-void Ions_Move_BFGS::restart_bfgs(const double& lat0, int& update_iter, std::ofstream& ofs)
+void Ions_Move_BFGS::restart_bfgs(const double& lat0, int& update_iter, std::ofstream& ofs, const int test_relax_method)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "restart_bfgs");
 
@@ -111,7 +110,7 @@ void Ions_Move_BFGS::restart_bfgs(const double& lat0, int& update_iter, std::ofs
         }
         trust_radius_old = sqrt(trust_radius_old);
 
-        if (PARAM.inp.test_relax_method)
+        if (test_relax_method)
         {
             ModuleBase::GlobalFunc::OUT(ofs, "trust_radius_old (bohr)", trust_radius_old);
         }
@@ -167,7 +166,7 @@ void Ions_Move_BFGS::restart_bfgs(const double& lat0, int& update_iter, std::ofs
     return;
 }
 
-void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info)
+void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, const std::string& out_level, const int test_relax_method)
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "bfgs_routine");
     using namespace Ions_Move_Basic;
@@ -190,7 +189,7 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, int& upda
         {
             trust_radius = -0.5 * dE0s * trust_radius_old / den;
 
-            if (PARAM.inp.test_relax_method)
+            if (test_relax_method)
             {
                 ModuleBase::GlobalFunc::OUT(ofs, "dE0s", dE0s);
                 ModuleBase::GlobalFunc::OUT(ofs, "den", den);
@@ -243,10 +242,10 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0, const int istep, int& upda
     }
     else if (etot_info[0] <= etot_info[1])
     {
-        this->new_step(lat0, update_iter, ofs, etot_info);
+        this->new_step(lat0, update_iter, ofs, etot_info, test_relax_method);
     }
 
-    if (PARAM.inp.out_level == "ie")
+    if (out_level == "ie")
     {
         std::cout << " BFGS TRUST (Bohr)    : " << trust_radius << std::endl;
     }

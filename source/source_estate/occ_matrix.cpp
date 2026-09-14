@@ -4,7 +4,7 @@
 #include "source_cell/unitcell.h"
 
 void OccupationMatrix::init(const UnitCell& cell,
-                            const std::vector<int>& orbital_corr,
+                            const std::vector<int>& l_channel,
                             const int nspin,
                             const int npol)
 {
@@ -25,7 +25,7 @@ void OccupationMatrix::init(const UnitCell& cell,
             occ_save_[iat].resize(cell.atoms[it].nwl + 1);
             iatlnmipol2iwt_[iat].resize(cell.atoms[it].nwl + 1);
 
-            if (orbital_corr[it] == -1)
+            if (l_channel[it] == -1)
             {
                 continue;
             }
@@ -123,11 +123,11 @@ void OccupationMatrix::set_flat(const int iat, const int l, const int spin,
     }
 }
 
-void OccupationMatrix::zero(const UnitCell& cell, const std::vector<int>& orbital_corr)
+void OccupationMatrix::zero(const UnitCell& cell, const std::vector<int>& l_channel)
 {
     for (int T = 0; T < cell.ntype; T++)
     {
-        if (orbital_corr[T] == -1)
+        if (l_channel[T] == -1)
         {
             continue;
         }
@@ -157,14 +157,14 @@ void OccupationMatrix::zero(const UnitCell& cell, const std::vector<int>& orbita
     }
 }
 
-void OccupationMatrix::copy_to_save(const UnitCell& cell, const std::vector<int>& orbital_corr)
+void OccupationMatrix::copy_to_save(const UnitCell& cell, const std::vector<int>& l_channel)
 {
     ModuleBase::TITLE("OccupationMatrix", "copy_to_save");
     ModuleBase::timer::start("OccupationMatrix", "copy_to_save");
 
     for (int T = 0; T < cell.ntype; T++)
     {
-        const int target_l = orbital_corr[T];
+        const int target_l = l_channel[T];
         if (target_l == -1)
         {
             continue;
@@ -189,7 +189,7 @@ void OccupationMatrix::copy_to_save(const UnitCell& cell, const std::vector<int>
 }
 
 void OccupationMatrix::write_to_flat(const UnitCell& cell,
-                                     const std::vector<int>& orbital_corr,
+                                     const std::vector<int>& l_channel,
                                      const std::vector<int>& index,
                                      std::vector<double>& uom) const
 {
@@ -200,7 +200,7 @@ void OccupationMatrix::write_to_flat(const UnitCell& cell,
     for (int iat = 0; iat < cell.nat; iat++)
     {
         const int it = cell.iat2it[iat];
-        const int target_l = orbital_corr[it];
+        const int target_l = l_channel[it];
         if (target_l == -1)
         {
             continue;
@@ -223,13 +223,13 @@ void OccupationMatrix::write_to_flat(const UnitCell& cell,
 }
 
 void OccupationMatrix::read_from_flat(const UnitCell& cell,
-                                      const std::vector<int>& orbital_corr,
+                                      const std::vector<int>& l_channel,
                                       const std::vector<int>& index,
                                       const std::vector<double>& uom)
 {
     for (int T = 0; T < cell.ntype; T++)
     {
-        const int l = orbital_corr[T];
+        const int l = l_channel[T];
         if (l == -1)
         {
             continue;
@@ -261,7 +261,7 @@ void OccupationMatrix::read_from_flat(const UnitCell& cell,
 }
 
 void OccupationMatrix::write_save_to_flat(const UnitCell& cell,
-                                          const std::vector<int>& orbital_corr,
+                                          const std::vector<int>& l_channel,
                                           const std::vector<int>& index,
                                           std::vector<double>& uom_save) const
 {
@@ -271,7 +271,7 @@ void OccupationMatrix::write_save_to_flat(const UnitCell& cell,
     }
     for (int T = 0; T < cell.ntype; T++)
     {
-        const int target_l = orbital_corr[T];
+        const int target_l = l_channel[T];
         if (target_l == -1)
         {
             continue;
@@ -318,13 +318,13 @@ namespace elecstate
 void mix_occ_with_save(std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>>& occ_mat,
                        const std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>>& occ_mat_save,
                        const UnitCell& cell,
-                       const std::vector<int>& orbital_corr,
+                       const std::vector<int>& l_channel,
                        const int nspin,
                        const double beta)
 {
     for (int T = 0; T < cell.ntype; T++)
     {
-        const int target_l = orbital_corr[T];
+        const int target_l = l_channel[T];
         if (target_l == -1)
         {
             continue;

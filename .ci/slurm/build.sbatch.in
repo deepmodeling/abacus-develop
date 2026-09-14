@@ -2,6 +2,7 @@
 #SBATCH --job-name=@JOB_NAME@
 #SBATCH --partition=@PARTITION@
 #SBATCH --qos=@QOS@
+#SBATCH --account=abacus-group
 #SBATCH --nodes=@NODES@
 #SBATCH --ntasks=@TASKS@
 #SBATCH --ntasks-per-node=@TASKS_PER_NODE@

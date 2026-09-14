@@ -1,7 +1,6 @@
 #include "ions_move_sd.h"
 
 #include <algorithm>
-#include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -20,7 +19,7 @@ void Ions_Move_SD::allocate()
     pos_saved.resize(dim, 0.0);
 }
 
-bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info)
+bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, const Relax_Criteria& criteria)
 {
     ModuleBase::TITLE("Ions_Move_SD", "start");
 
@@ -56,7 +55,7 @@ bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         }
     }
 
-    bool converged = Ions_Move_Basic::check_converged(ucell, grad.data(), update_iter, ofs, etot_info);
+    bool converged = Ions_Move_Basic::check_converged(ucell, grad.data(), update_iter, ofs, etot_info, criteria.force_thr, criteria.force_thr_ev, criteria.out_level, criteria.test_relax_method);
     if (converged)
     {
         Ions_Move_Basic::terminate(converged, update_iter, ucell, istep, ofs);
@@ -64,18 +63,18 @@ bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     }
     else
     {
-        this->cal_tradius_sd(istep, etot_info);
+        this->cal_tradius_sd(istep, etot_info, criteria.out_level);
         for (int i = 0; i < dim; i++)
         {
             move[i] = -grad_saved[i] * trust_radius;
         }
-        move_atoms(ucell, move.data(), pos_saved.data(), ofs);
+        move_atoms(ucell, move.data(), pos_saved.data(), ofs, criteria.test_relax_method);
         update_iter++;
         return false;
     }
 }
 
-void Ions_Move_SD::cal_tradius_sd(const int istep, std::vector<double>& etot_info) const
+void Ions_Move_SD::cal_tradius_sd(const int istep, std::vector<double>& etot_info, const std::string& out_level) const
 {
     static int accepted_number = 0;
 
@@ -104,7 +103,7 @@ void Ions_Move_SD::cal_tradius_sd(const int istep, std::vector<double>& etot_inf
     {
         ModuleBase::WARNING_QUIT("Ions_Move_SD::cal_tradius_sd", "istep < 1!");
     }
-    if (PARAM.inp.out_level == "ie")
+    if (out_level == "ie")
     {
         std::cout << " SD RADIUS (Bohr)     : " << trust_radius << std::endl;
     }

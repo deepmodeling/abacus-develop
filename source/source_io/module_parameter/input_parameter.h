@@ -19,6 +19,7 @@ struct Input_para
     std::string calculation = "scf";    ///< "scf" : self consistent calculation.
                                         ///< "nscf" : non-self consistent calculation.
                                         ///< "relax" : cell relaxations
+    bool socket_driver = false;         ///< run ABACUS as an i-PI socket client
     std::string esolver_type = "ksdft"; ///< the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
     /* symmetry level:
       -1, no symmetry at all;
@@ -45,7 +46,8 @@ struct Input_para
     double erf_height = 0;              ///< the height of the energy step for reciprocal vectors
     double erf_sigma = 0.1;             ///< the width of the energy step for reciprocal vectors
     int fft_mode = 0;                   ///< fftw mode 0: estimate, 1: measure, 2: patient, 3: exhaustive
-    std::string init_wfc = "atomic";    ///< "file","atomic","random"
+    std::string init_wfc = "atomic";         ///< "file", "atomic", "random", etc.
+    std::string init_wfc_file_format = "";   ///< normalized file format: "txt" or "binary"
     int pw_seed = 0;                    ///< random seed for initializing wave functions
     std::string init_chg = "atomic";    ///< "file","atomic"
     bool dm_to_rho = false;             ///< read density matrix from npz format and calculate charge density
@@ -387,8 +389,8 @@ struct Input_para
     bool bse_mem_save = false;    ///< whether to save memory by adding V and W to BSE matrix directly
     bool bse_ri_hartree = true; ///< whether to use RI approximation for Hartree term in BSE
     int bse_use_fine_kgrid = 0; ///< 0: coarse k-grid; 1: uniform fine k-grid; 2: non-uniform fine k-grid
-    int bse_q_approx_mode = 0;   ///< q→kpair mapping mode: 0=exact, 1=coarse q grid, 2=mixed
-    double bse_q_approx_threshold = 0.1; ///< threshold radius (Bohr^-1) for exact q in mode 2
+    int bse_q_approx_mode = 0;   ///< q→kpair mapping mode: 0=exact, 1=coarse q grid, 2=mixed, 3=truncate
+    double bse_q_approx_threshold = 0.1; ///< threshold radius (in unit of 2*pi/lat0) for exact q in mode 2, or |q| truncation in mode 3
     bool out_bse_ab = false;    ///< whether to output the AB matrix to file
     int bse_continue = 0; ///< which step to continue from previous BSE calculation
                           ///< 0: new; 1: continue from A_V; 2: A_V and A_W; 3: A_V, A_W and B_V; 4: A_V, A_W, B_V and B_W
@@ -475,7 +477,7 @@ struct Input_para
     bool restart_save = false;               ///< restart //Peize Lin add 2020-04-04
     bool rpa = false;                        ///< rpa calculation
     bool rpa_out_vel = false;                ///< whether to output velocity matrix for librpa
-    std::string rpa_outdir = "./OUT.librpa/";///< output directory for librpa
+    std::string rpa_outdir = "OUT.librpa";   ///< output directory for librpa
     std::vector<int> out_pchg = {};          ///< specify the bands to be calculated for partial charge
     std::vector<int> out_wfc_norm = {};      ///< specify the bands to be calculated for norm of wfc
     std::vector<int> out_wfc_re_im = {};     ///< specify the bands to be calculated for real and imaginary parts of wfc
@@ -639,7 +641,7 @@ struct Input_para
     int occ_mat_ctrl = 0;                  ///< the mode of occupation matrix control
     double onsite_radius = 0.0;            ///< radius of the sphere for onsite projection (Bohr)
     std::vector<double> hubbard_u_eV = {}; ///< Hubbard Coulomb interaction parameter U(ev)
-    std::vector<int> orbital_corr = {};    ///< which correlated orbitals need corrected ; d:2 ,f:3, do not
+    std::vector<int> l_channel = {};    ///< which correlated orbitals need corrected ; d:2 ,f:3, do not
                                            ///< need correction:-1
 
     // ==============   #Parameters (17.non-collinear spin-constrained DFT) =========

@@ -41,23 +41,23 @@ void SparseMatrix<T>::printToCSR(std::ostream& ofs, int precision)
     size_t count1 = 0;
     for (const auto &element : elements)
     {
-	if(count1%6==0) ofs << std::endl;
+	if(count1%6==0) ofs << '\n';
 	count1++;
         ofs << " " << element.second;
     }
-    ofs << std::endl;
+    ofs << '\n';
     // print the CSR column indices
     ofs << " # CSR column indices";
     size_t count2 = 0;
     for (const auto &element : elements)
     {
-	if(count2%16==0) ofs << std::endl;
+	if(count2%16==0) ofs << '\n';
 	count2++;
         ofs << " " << element.first.second;
         int row = element.first.first;
         csr_row_ptr[row + 1]++;
     }
-    ofs << std::endl;
+    ofs << '\n';
 
     // Compute the row pointers
     for (int i = 1; i <= _rows; i++)
@@ -69,10 +69,11 @@ void SparseMatrix<T>::printToCSR(std::ostream& ofs, int precision)
     ofs << " # CSR row pointers";
     for (int i = 0; i < csr_row_ptr.size(); i++)
     {
-        if(i%16==0) ofs << std::endl;
+        if(i%16==0) ofs << '\n';
         ofs << " " << csr_row_ptr[i];
     }
-    ofs << std::endl << std::endl;
+    // Keep the completed CSR payload visible to callers without flushing each line.
+    ofs << '\n' << std::endl;
 }
 
 /**

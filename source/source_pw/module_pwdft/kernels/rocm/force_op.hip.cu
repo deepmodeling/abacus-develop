@@ -315,16 +315,16 @@ __global__ void cal_force_onsite(int wg_nc,
                                   FPTYPE tpiba,
                                   const FPTYPE* d_wg,
                                   const thrust::complex<FPTYPE>* pot_onsite,
-                                  const int* orbital_corr,
+                                  const int* l_channel,
                                   const thrust::complex<FPTYPE>* becp,
                                   const thrust::complex<FPTYPE>* dbecp,
                                   FPTYPE* force)
 {
     const int ib = blockIdx.x / ntype;
     const int it = blockIdx.x % ntype;
-    if (orbital_corr[it] == -1)
+    if (l_channel[it] == -1)
         return;
-    const int orbital_l = orbital_corr[it];
+    const int orbital_l = l_channel[it];
     const int ip_begin = orbital_l * orbital_l;
     const int tlp1 = 2 * orbital_l + 1;
     const int tlp1_2 = tlp1 * tlp1;
@@ -469,7 +469,7 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                    const FPTYPE& tpiba,
                                                                    const FPTYPE* d_wg,
                                                                    const std::complex<FPTYPE>* pot_onsite,
-                                                                   const int* orbital_corr,
+                                                                   const int* l_channel,
                                                                    const std::complex<FPTYPE>* becp,
                                                                    const std::complex<FPTYPE>* dbecp,
                                                                    FPTYPE* force)
@@ -492,7 +492,7 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                            tpiba,
                            d_wg,
                            reinterpret_cast<const thrust::complex<FPTYPE>*>(pot_onsite),
-                           orbital_corr,
+                           l_channel,
                            reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
                            reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
                            force);
@@ -515,7 +515,7 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                            tpiba,
                            d_wg,
                            reinterpret_cast<const thrust::complex<FPTYPE>*>(pot_onsite),
-                           orbital_corr,
+                           l_channel,
                            reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
                            reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
                            force);

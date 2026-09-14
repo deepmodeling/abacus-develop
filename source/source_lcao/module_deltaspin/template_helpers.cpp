@@ -94,10 +94,10 @@ void spinconstrain::print_header<double>(const spinconstrain::SpinConstrain<doub
 /// @brief check_gradient_decay stub (TK=double): always return false (no early termination)
 template <>
 bool spinconstrain::check_gradient_decay<double>(const spinconstrain::SpinConstrain<double>& sc,
-                                                 std::vector<ModuleBase::Vector3<double>> new_spin,
-                                                 std::vector<ModuleBase::Vector3<double>> old_spin,
-                                                 std::vector<ModuleBase::Vector3<double>> new_delta_lambda,
-                                                 std::vector<ModuleBase::Vector3<double>> old_delta_lambda,
+                                                 const std::vector<ModuleBase::Vector3<double>>& new_spin,
+                                                 const std::vector<ModuleBase::Vector3<double>>& old_spin,
+                                                 const std::vector<ModuleBase::Vector3<double>>& new_delta_lambda,
+                                                 const std::vector<ModuleBase::Vector3<double>>& old_delta_lambda,
                                                  bool print,
                                                  std::ostream& ofs_running)
 {

@@ -183,7 +183,7 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_delta_spin(const int npol, const 
 
 // cal_ps_dftu — compute ps = pot_onsite * becp for DFT+U Hamiltonian contribution
 //
-// pot_uterm_pw layout by nspin:
+// uterm_mat layout by nspin:
 //   nspin=1: [iat0_tlp1^2 | iat1_tlp1^2 | ...]
 //            single spin channel, full array uploaded
 //   nspin=2: [iat0_up | iat1_up | ... | iat0_dn | iat1_dn | ...]
@@ -221,7 +221,7 @@ void OnsiteProj<OperatorPW<T, Device>>::setup_pw_dftu_indices() const
     for(int iat=0;iat<this->ucell->nat;iat++)
     {
         const int it = this->ucell->iat2it[iat];
-        const int target_l = this->dftu->get_orbital_corr(it);
+        const int target_l = this->dftu->get_l_channel(it);
         orb_l_iat0[iat] = target_l;
         const int nproj = onsite_p->get_nh(iat);
         if(target_l == -1)
@@ -260,7 +260,7 @@ void OnsiteProj<OperatorPW<T, Device>>::setup_pw_dftu_indices() const
     syncmem_int_h2d_op()(this->ip_m, ip_m0.data(), onsite_p->get_tot_nproj());
     syncmem_int_h2d_op()(this->pot_onsite_begin_iat, pot_onsite_begin_iat0.data(), this->ucell->nat);
 
-    resmem_complex_op()(this->pot_onsite_device, dftu->get_size_pot_uterm_pw());
+    resmem_complex_op()(this->pot_onsite_device, dftu->get_size_uterm_mat());
 }
 
 template<typename T, typename Device>
@@ -291,8 +291,8 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_dftu(
     }
 
     const int isk_val = (PARAM.inp.nspin == 2) ? this->isk[this->ik] : 0;
-    const std::complex<double>* pot_onsite_host = dftu->get_pot_uterm_pw_spin(isk_val);
-    const int pot_onsite_size = dftu->get_size_pot_uterm_pw_spin();
+    const std::complex<double>* pot_onsite_host = dftu->get_uterm_mat_spin(PARAM.inp.nspin, isk_val);
+    const int pot_onsite_size = dftu->get_size_uterm_mat_spin(PARAM.inp.nspin);
     syncmem_complex_h2d_op()(this->pot_onsite_device, pot_onsite_host, pot_onsite_size);
     hamilt::onsite_ps_op<Real, Device>()(
         this->ctx,
@@ -375,7 +375,7 @@ void OnsiteProj<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>::cal_p
 //
 // nspin handling in cal_ps_dftu:
 //   nspin=1 (npol=1): single spin channel, no spin selection needed
-//   nspin=2 (npol=1): pot_uterm_pw uses split layout [all_up | all_dn];
+//   nspin=2 (npol=1): uterm_mat uses split layout [all_up | all_dn];
 //     spin-up  k-points (isk=0) read from the first  half;
 //     spin-down k-points (isk=1) read from the second half.
 //   nspin=4 (npol=2): all 4 Pauli blocks stored per-atom; kernel uses

@@ -104,6 +104,10 @@ Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_pa
     double valence_charge = 0.0;
     for (int it = 0; it < ucell_.ntype; ++it)
     {
+        if (ucell_.atoms[it].flag_empty_element)
+        {
+            continue;
+        }
         valence_charge += ucell_.atoms[it].ncpp.zv * ucell_.atoms[it].na;
     }
     total_charge_ = valence_charge - input.nelec;
@@ -112,18 +116,28 @@ Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_pa
 void Vdwd4::build_structure(std::vector<int>& numbers,
                             std::vector<double>& positions,
                             std::vector<double>& lattice,
-                            std::array<bool, 3>& periodic) const
+                            std::array<bool, 3>& periodic,
+                            std::vector<int>& atom_indices) const
 {
     numbers.clear();
     positions.clear();
     lattice.clear();
+    atom_indices.clear();
 
     numbers.reserve(ucell_.nat);
     positions.reserve(3 * ucell_.nat);
     lattice.reserve(9);
+    atom_indices.reserve(ucell_.nat);
 
+    int iat = 0;
     for (int it = 0; it < ucell_.ntype; ++it)
     {
+        if (ucell_.atoms[it].flag_empty_element)
+        {
+            iat += ucell_.atoms[it].na;
+            continue;
+        }
+
         const int atomic_number = atomic_number_from_symbol(ucell_.atoms[it].ncpp.psd);
 
         for (int ia = 0; ia < ucell_.atoms[it].na; ++ia)
@@ -134,6 +148,8 @@ void Vdwd4::build_structure(std::vector<int>& numbers,
             positions.push_back(position.x);
             positions.push_back(position.y);
             positions.push_back(position.z);
+            atom_indices.push_back(iat);
+            ++iat;
         }
     }
 
@@ -159,7 +175,8 @@ void Vdwd4::build_structure(std::vector<int>& numbers,
 
 void Vdwd4::compute(double& energy_ha,
                     std::vector<double>* gradient_ha_bohr,
-                    std::array<double, 9>* sigma_ha)
+                    std::array<double, 9>* sigma_ha,
+                    std::vector<int>& atom_indices)
 {
 #ifdef __DFTD4
     std::vector<int> numbers;
@@ -167,13 +184,13 @@ void Vdwd4::compute(double& energy_ha,
     std::vector<double> lattice;
     std::array<bool, 3> periodic;
 
-    build_structure(numbers, positions, lattice, periodic);
+    build_structure(numbers, positions, lattice, periodic, atom_indices);
 
     if (gradient_ha_bohr != nullptr
-        && gradient_ha_bohr->size() != static_cast<std::size_t>(3 * ucell_.nat))
+        && gradient_ha_bohr->size() < static_cast<std::size_t>(3 * numbers.size()))
     {
         ModuleBase::WARNING_QUIT("Vdwd4::compute",
-                                 "gradient_ha_bohr must have size 3 * nat when requested.");
+                                 "gradient_ha_bohr is too small for the filtered atom set.");
     }
 
     // These vectors own all arrays passed to DFT-D4. Their data() pointers
@@ -181,7 +198,7 @@ void Vdwd4::compute(double& energy_ha,
     dftd4_error error = dftd4_new_error();
 
     dftd4_structure mol = dftd4_new_structure(error,
-                                              ucell_.nat,
+                                              static_cast<int>(numbers.size()),
                                               numbers.data(),
                                               positions.data(),
                                               &total_charge_,
@@ -240,16 +257,18 @@ void Vdwd4::compute(double& energy_ha,
 }
 
 void Vdwd4::set_force_from_gradient(const std::vector<double>& gradient_ha_bohr,
-                                      VdwResult& result) const
+                                    const std::vector<int>& atom_indices,
+                                    VdwResult& result) const
 {
-    result.force.resize(ucell_.nat);
+    result.force.assign(ucell_.nat, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
 
-    for (int iat = 0; iat < ucell_.nat; ++iat)
+    for (std::size_t index = 0; index < atom_indices.size(); ++index)
     {
+        const int iat = atom_indices[index];
         // DFT-D4 returns dE/dR in Ha/Bohr; ABACUS forces are -dE/dR in Ry/Bohr.
-        result.force[iat].x = -2.0 * gradient_ha_bohr[3 * iat + 0];
-        result.force[iat].y = -2.0 * gradient_ha_bohr[3 * iat + 1];
-        result.force[iat].z = -2.0 * gradient_ha_bohr[3 * iat + 2];
+        result.force[iat].x = -2.0 * gradient_ha_bohr[3 * index + 0];
+        result.force[iat].y = -2.0 * gradient_ha_bohr[3 * index + 1];
+        result.force[iat].z = -2.0 * gradient_ha_bohr[3 * index + 2];
     }
 
     result.has_force = true;
@@ -279,6 +298,7 @@ void Vdwd4::evaluate_impl(const VdwRequest& request, VdwResult& result)
     ModuleBase::timer::start("Vdwd4", "evaluate");
 
     double energy_ha = 0.0;
+    std::vector<int> atom_indices;
     if (request.force || request.stress)
     {
         std::vector<double> gradient(3 * ucell_.nat, 0.0);
@@ -287,11 +307,11 @@ void Vdwd4::evaluate_impl(const VdwRequest& request, VdwResult& result)
 
         // The DFT-D4 C API evaluates energy, gradient and sigma together.
         // Keep all requested quantities from this single call.
-        compute(energy_ha, &gradient, &sigma);
+        compute(energy_ha, &gradient, &sigma, atom_indices);
 
         if (request.force)
         {
-            set_force_from_gradient(gradient, result);
+            set_force_from_gradient(gradient, atom_indices, result);
         }
         if (request.stress)
         {
@@ -300,7 +320,7 @@ void Vdwd4::evaluate_impl(const VdwRequest& request, VdwResult& result)
     }
     else
     {
-        compute(energy_ha, nullptr, nullptr);
+        compute(energy_ha, nullptr, nullptr, atom_indices);
     }
 
     // DFT-D4 returns Hartree; ABACUS vdW energies are stored in Ry.

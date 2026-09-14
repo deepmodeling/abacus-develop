@@ -11,6 +11,10 @@
 #include "source_base/matrix.h"
 #include "source_base/realarray.h"
 
+class AtomPseudoTest;
+class NCPPTest;
+class ReadPPTest;
+
 /**
  * @brief Pseudopot_upf class for reading pseudopotential files.
  *
@@ -19,6 +23,12 @@
  */
 class Pseudopot_upf
 {
+    /// @brief the unit tests drive the private format readers and the
+    /// complete_default_* helpers directly; see source_cell/test/
+    friend class AtomPseudoTest;
+    friend class NCPPTest;
+    friend class ReadPPTest;
+
 public:
     /// PP_INFO
     /// PP_HEADER

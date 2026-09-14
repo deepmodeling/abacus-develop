@@ -21,15 +21,29 @@
  *   - print_pseudo
  */
 
-#define private public
 #include "source_cell/read_pp.h"
 #include "source_cell/atom_pseudo.h"
-#undef private
 class NCPPTest : public testing::Test
 {
 protected:
     std::unique_ptr<Pseudopot_upf> upf{new Pseudopot_upf};
     std::unique_ptr<Atom_pseudo> ncpp{new Atom_pseudo};
+
+    // Pseudopot_upf declares this fixture a friend, but a TEST_F body lives in
+    // a class derived from it, and friendship is not inherited -- so the calls
+    // into the private reader and the complete_default_* helpers happen here.
+    int read_pseudo_upf201(std::ifstream& ifs, Atom_pseudo& pp) const
+    {
+        return upf->read_pseudo_upf201(ifs, pp);
+    }
+    void complete_default_h(Atom_pseudo& pp) const
+    {
+        upf->complete_default_h(pp);
+    }
+    void complete_default_atom(Atom_pseudo& pp, const double pseudo_rcut) const
+    {
+        upf->complete_default_atom(pp, pseudo_rcut);
+    }
 };
 
 TEST_F(NCPPTest, SetPseudoH)
@@ -37,9 +51,9 @@ TEST_F(NCPPTest, SetPseudoH)
     std::ifstream ifs;
     //set
     ifs.open("./support/C.upf");
-    upf->read_pseudo_upf201(ifs, *ncpp);
+    read_pseudo_upf201(ifs, *ncpp);
     //set_pseudo_h
-    upf->complete_default_h(*ncpp);
+    complete_default_h(*ncpp);
 
     if(!ncpp->has_so)
     {
@@ -62,10 +76,10 @@ TEST_F(NCPPTest, SetPseudoAtom)
     //set
     ifs.open("./support/C.upf");
     const double pseudo_rcut = 15.0;
-    upf->read_pseudo_upf201(ifs, *ncpp);
+    read_pseudo_upf201(ifs, *ncpp);
     //set_pseudo_atom
-    upf->complete_default_h(*ncpp);
-    upf->complete_default_atom(*ncpp, pseudo_rcut);
+    complete_default_h(*ncpp);
+    complete_default_atom(*ncpp, pseudo_rcut);
     EXPECT_EQ(ncpp->rcut,pseudo_rcut);
 
     if(!ncpp->nlcc)
@@ -86,12 +100,12 @@ TEST_F(NCPPTest, SetPseudoNC)
     ifs.open("./support/C.upf");
     const double pseudo_rcut = 15.0;
     // set pseudo nbeta = 0
-    upf->read_pseudo_upf201(ifs, *ncpp);
+    read_pseudo_upf201(ifs, *ncpp);
     ncpp->nbeta = 0;
     upf->complete_default(*ncpp, pseudo_rcut);
     EXPECT_EQ(ncpp->nh,0);
     // set pseudo nbeta > 0
-    upf->read_pseudo_upf201(ifs, *ncpp);
+    read_pseudo_upf201(ifs, *ncpp);
     upf->complete_default(*ncpp, pseudo_rcut);
     EXPECT_EQ(ncpp->nh,14);
     EXPECT_EQ(ncpp->kkbeta,132);
@@ -105,7 +119,7 @@ TEST_F(NCPPTest, PrintNC)
     //set
     ifs.open("./support/C.upf");
     const double pseudo_rcut = 15.0;
-    upf->read_pseudo_upf201(ifs, *ncpp);
+    read_pseudo_upf201(ifs, *ncpp);
     upf->complete_default(*ncpp, pseudo_rcut);
     ifs.close();
     //print

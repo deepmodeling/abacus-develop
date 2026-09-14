@@ -1,6 +1,8 @@
 #include "source_base/module_out/sparse_matrix.h"
 
 #include <complex>
+#include <iomanip>
+#include <sstream>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -40,6 +42,105 @@ class SparseMatrixTest : public ::testing::Test
 
 using MyTypes = ::testing::Types<double, std::complex<double>>;
 TYPED_TEST_SUITE(SparseMatrixTest, MyTypes);
+
+namespace
+{
+class CountingBuffer : public std::stringbuf
+{
+  public:
+    int sync_count = 0;
+    bool fail_sync = false;
+
+  protected:
+    int sync() override
+    {
+        ++sync_count;
+        return fail_sync ? -1 : std::stringbuf::sync();
+    }
+};
+
+double csr_value(double value)
+{
+    return value;
+}
+
+std::complex<double> csr_value(std::complex<double> value)
+{
+    return value + std::complex<double>(0.0, -0.25);
+}
+} // namespace
+
+TYPED_TEST(SparseMatrixTest, BufferedCSRPreservesWrappingPrecisionAndFinalFlush)
+{
+    // Cross both wrapping boundaries (6 values, 16 indices) with an empty row.
+    ModuleIO::SparseMatrix<TypeParam> matrix(18, 18);
+    std::vector<TypeParam> values;
+    for (int row = 16; row >= 0; --row)
+    {
+        matrix.insert(row, 17 - row, csr_value(TypeParam(row + 0.125)));
+    }
+    matrix.insert(17, 0, TypeParam(1e-10)); // Equality to the threshold stays absent.
+    for (int row = 0; row < 17; ++row)
+    {
+        values.push_back(csr_value(TypeParam(row + 0.125)));
+    }
+    const auto original = matrix.getElements();
+    for (const int precision : {2, 8, 16})
+    {
+        CountingBuffer buffer;
+        std::ostream output(&buffer);
+        matrix.printToCSR(output, precision);
+
+        std::ostringstream expected;
+        expected << std::scientific << std::setprecision(precision) << " # CSR values";
+        for (int row = 0; row < 17; ++row)
+        {
+            if (row == 0 || row == 6 || row == 12) expected << '\n';
+            expected << ' ' << values[row];
+        }
+        expected << "\n # CSR column indices\n";
+        for (int col = 17; col > 0; --col)
+        {
+            if (col == 1) expected << '\n';
+            expected << ' ' << col;
+        }
+        expected << "\n # CSR row pointers\n";
+        for (int row = 0; row <= 18; ++row)
+        {
+            if (row == 16) expected << '\n';
+            expected << ' ' << (row < 17 ? row : 17);
+        }
+        expected << "\n\n";
+        EXPECT_EQ(buffer.str(), expected.str());
+        EXPECT_EQ(buffer.sync_count, 1);
+        EXPECT_EQ(matrix.getElements(), original);
+        EXPECT_TRUE(output.good());
+
+        matrix.printToCSR(output, precision);
+        EXPECT_EQ(buffer.str(), expected.str() + expected.str());
+        EXPECT_EQ(buffer.sync_count, 2);
+    }
+}
+
+TYPED_TEST(SparseMatrixTest, EmptyCSRAndFlushFailure)
+{
+    CountingBuffer buffer;
+    std::ostream output(&buffer);
+    this->sm.printToCSR(output, 8);
+    EXPECT_EQ(buffer.str(), " # CSR values\n # CSR column indices\n # CSR row pointers\n 0 0 0 0 0\n\n");
+    EXPECT_EQ(buffer.sync_count, 1);
+
+    CountingBuffer failing_buffer;
+    failing_buffer.fail_sync = true;
+    std::ostream failing_output(&failing_buffer);
+    this->sm.printToCSR(failing_output, 8);
+    EXPECT_TRUE(failing_output.bad());
+    EXPECT_EQ(failing_buffer.sync_count, 1);
+
+    std::ostream throwing_output(&failing_buffer);
+    throwing_output.exceptions(std::ios::badbit);
+    EXPECT_THROW(this->sm.printToCSR(throwing_output, 8), std::ios_base::failure);
+}
 
 TYPED_TEST(SparseMatrixTest, Insert)
 {

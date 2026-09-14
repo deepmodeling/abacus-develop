@@ -15,7 +15,7 @@
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/lcao_domain.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_lcao/module_dftu/dftu_nao.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 
@@ -99,7 +99,12 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                               this->pw_big->nbzp,
                                               orb_.Phi,
                                               ucell,
-                                              this->gd));
+                                              this->gd,
+                                              this->inp_->nspin,
+                                              gamma_only_local,
+                                              PARAM.globalv.domag,
+                                              this->inp_->device == "gpu",
+                                              this->inp_->nstream));
     ModuleGint::Gint::set_gint_info(gint_info_.get());
 
     // (2)For each atom, calculate the adjacent atoms in different cells
@@ -133,11 +138,12 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                                         two_center_bundle_,
                                                         orb_,
                                                         this->dmat.dm,
-                                                        &this->dftu,
+                                                        this->dftu_.get(),
                                                         this->deepks,
                                                         istep,
                                                         this->exx_nao,
-                                                        this->exx_info_);
+                                                        this->exx_info_,
+                                                        *this->inp_);
     }
 
     // for each ionic step, the overlap <phi|alpha> must be rebuilt

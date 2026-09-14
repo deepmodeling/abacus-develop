@@ -470,7 +470,12 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
         this->pw_big->nbzp,
         orb.Phi,
         ucell,
-        this->gd));
+        this->gd,
+        this->inp_->nspin,
+        PARAM.globalv.gamma_only_local,
+        PARAM.globalv.domag,
+        this->inp_->device == "gpu",
+        this->inp_->nstream));
     ModuleGint::Gint::set_gint_info(gint_info_.get());
     // if EXX from scratch, init 2-center integral and calculate Cs, Vs 
 #ifdef __EXX
@@ -506,7 +511,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
     this->pelec->ekb.create(nspin, this->nstates);
 
     auto efile_out = [&](const std::string& label)->std::string {return this->out_dir + "Excitation_Energy_" + label + ".dat";};
-    auto vfile_out = [&](const std::string& label)->std::string {return this->out_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK) + ".dat";};
+    auto vfile_out = [&](const std::string& label)->std::string {return this->out_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK+1) + ".dat";};
     if (this->inp_->lr_solver == "elpa")
     {
         ModuleBase::WARNING_QUIT("ESolver_LR", "ESolver_LR doesn't support elpa now.");
@@ -587,6 +592,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
                                 this->paraC_,
                                 this->paraMat_,
                                 spin_types[is],
+                                this->in_dir,
                                 this->out_dir,
                                 this->inp_->ri_hartree_benchmark,
                                 (this->inp_->ri_hartree_benchmark == "aims" ? this->inp_->aims_nbasis : std::vector<int>({})));
@@ -603,7 +609,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
     else    // lr_solver == "spectrum", read the eigenvalues
     {
         auto efile_in = [&](const std::string& label)->std::string {return this->in_dir + "Excitation_Energy_" + label + ".dat";};
-        auto vfile_in = [&](const std::string& label)->std::string {return this->in_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK) + ".dat";};
+        auto vfile_in = [&](const std::string& label)->std::string {return this->in_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK+1) + ".dat";};
     
         auto read_states = [&](const std::string& label, Real<T>* e, T* v, const int& dim, const int& nst)->void
             {
@@ -805,6 +811,7 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
 				this->kv.ik2iktot,
 				this->kv.get_nkstot(),
                 this->inp_->nspin,
+				this->inp_->init_wfc_file_format == "binary",
 				/*skip_bands=*/this->nocc_max - this->nocc_in)) {
         ModuleBase::WARNING_QUIT("ESolver_LR", "read ground-state wavefunction failed.");
     }

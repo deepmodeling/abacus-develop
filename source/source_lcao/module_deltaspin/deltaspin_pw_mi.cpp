@@ -168,9 +168,10 @@ void calculate_delta_hcc(ScState& state,
         // =============================================================
         // nspin=4 (non-collinear): full Pauli matrix treatment
         // =============================================================
-        // For each atom, construct 2x2 coefficients:
-        //   | lambda_z      lambda_x + i*lambda_y |
-        //   | lambda_x - i*lambda_y   -lambda_z   |
+        // For each atom, construct lambda dot sigma:
+        //   | lambda_z                  lambda_x - i*lambda_y |
+        //   | lambda_x + i*lambda_y    -lambda_z              |
+        // The coefficient array uses {up-up, down-up, up-down, down-down}.
         // Then: ps_up = coeff0 * becp_up + coeff2 * becp_dn
         //        ps_dn = coeff1 * becp_up + coeff3 * becp_dn
         for (size_t iat = 0; iat < state.Mi_.size(); iat++)

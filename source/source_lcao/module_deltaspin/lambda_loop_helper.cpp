@@ -219,10 +219,9 @@ double cal_alpha_opt(const SpinConstrain<TK>& sc,
  * @par Algorithm
  * 1. Compute spin_change = new_spin - spin (change in magnetic moments)
  * 2. Compute nu_change = delta_lambda - dnu_last_step (change in lambda)
- * 3. Compute full gradient matrix: dM[ia][ic]/dlambda[ja][jc] = spin_change[ia][ic] / nu_change[ja][jc]
- * 4. Extract diagonal: dM[ia][ic]/dlambda[ia][ic] (self-susceptibility)
- * 5. Find max diagonal gradient per atom type
- * 6. If max_gradient[itype] < decay_grad[itype], return true (early termination)
+ * 3. Compute the diagonal self-response dM[ia][ic]/dlambda[ia][ic]
+ * 4. Find the maximum diagonal response per atom type
+ * 5. If max_gradient[itype] < decay_grad[itype], return true (early termination)
  *
  * @par Physical meaning
  * The diagonal gradient dM/dlambda represents how sensitive the magnetic moment
@@ -235,10 +234,10 @@ double cal_alpha_opt(const SpinConstrain<TK>& sc,
  */
 template <typename TK>
 bool check_gradient_decay(const SpinConstrain<TK>& sc,
-                          std::vector<ModuleBase::Vector3<double>> new_spin,
-                          std::vector<ModuleBase::Vector3<double>> spin,
-                          std::vector<ModuleBase::Vector3<double>> delta_lambda,
-                          std::vector<ModuleBase::Vector3<double>> dnu_last_step,
+                          const std::vector<ModuleBase::Vector3<double>>& new_spin,
+                          const std::vector<ModuleBase::Vector3<double>>& spin,
+                          const std::vector<ModuleBase::Vector3<double>>& delta_lambda,
+                          const std::vector<ModuleBase::Vector3<double>>& dnu_last_step,
                           bool print,
                           std::ostream& ofs_running)
 {
@@ -251,12 +250,6 @@ bool check_gradient_decay(const SpinConstrain<TK>& sc,
     std::vector<ModuleBase::Vector3<double>> spin_change(nat, 0.0);
     std::vector<ModuleBase::Vector3<double>> nu_change(nat, 1.0);
 
-    // Full gradient matrix: dM[ia][ic]/dlambda[ja][jc]
-    std::vector<std::vector<std::vector<std::vector<double>>>> spin_nu_gradient(
-        nat,
-        std::vector<std::vector<std::vector<double>>>(
-            3,
-            std::vector<std::vector<double>>(nat, std::vector<double>(3, 0.0))));
     // Diagonal gradient: dM[ia][ic]/dlambda[ia][ic] (self-susceptibility)
     std::vector<ModuleBase::Vector3<double>> spin_nu_gradient_diag(nat, 0.0);
     std::vector<std::pair<int, int>> max_gradient_index(ntype, std::make_pair(0, 0));
@@ -270,43 +263,37 @@ bool check_gradient_decay(const SpinConstrain<TK>& sc,
     where_fill_scalar_2d(constrain, 0, zero, spin_change);
     where_fill_scalar_2d(constrain, 0, one, nu_change);
 
-    // Calculate full gradient matrix
-    for (int ia = 0; ia < nat; ia++)
-    {
-        for (int ic = 0; ic < 3; ic++)
-        {
-            for (int ja = 0; ja < nat; ja++)
-            {
-                for (int jc = 0; jc < 3; jc++)
-                {
-                    if (std::abs(nu_change[ja][jc]) < 1e-30) {
-                        printf("[GRAD-DECAY] WARNING: nu_change[%d][%d] too small! delta_lambda=(%.6e,%.6e,%.6e) dnu_last=(%.6e,%.6e,%.6e)\n",
-                               ja, jc, delta_lambda[ja].x, delta_lambda[ja].y, delta_lambda[ja].z,
-                               dnu_last_step[ja].x, dnu_last_step[ja].y, dnu_last_step[ja].z);
-                        fflush(stdout);
-                        nu_change[ja][jc] = 1e-30;
-                    }
-                    spin_nu_gradient[ia][ic][ja][jc] = spin_change[ia][ic] / nu_change[ja][jc];
-                }
-            }
-        }
-    }
-
     const auto& atom_counts = sc.get_atomCounts();
     const auto& decay_grad = sc.get_decay_grad();
     const int nspin = sc.get_nspin();
 
     // Extract diagonal gradient and find max per atom type
+    int iat_offset = 0;
     for (const auto& sc_elem: atom_counts)
     {
         int it = sc_elem.first;
         int nat_it = sc_elem.second;
         max_gradient[it] = 0.0;
-        for (int ia = 0; ia < nat_it; ia++)
+        for (int ia_local = 0; ia_local < nat_it; ia_local++)
         {
+            const int ia = iat_offset + ia_local;
             for (int ic = 0; ic < 3; ic++)
             {
-                spin_nu_gradient_diag[ia][ic] = spin_nu_gradient[ia][ic][ia][ic];
+                if (std::abs(nu_change[ia][ic]) < 1e-30)
+                {
+                    printf("[GRAD-DECAY] WARNING: nu_change[%d][%d] too small! delta_lambda=(%.6e,%.6e,%.6e) dnu_last=(%.6e,%.6e,%.6e)\n",
+                           ia,
+                           ic,
+                           delta_lambda[ia].x,
+                           delta_lambda[ia].y,
+                           delta_lambda[ia].z,
+                           dnu_last_step[ia].x,
+                           dnu_last_step[ia].y,
+                           dnu_last_step[ia].z);
+                    fflush(stdout);
+                    nu_change[ia][ic] = 1e-30;
+                }
+                spin_nu_gradient_diag[ia][ic] = spin_change[ia][ic] / nu_change[ia][ic];
                 if (std::abs(spin_nu_gradient_diag[ia][ic]) > std::abs(max_gradient[it]))
                 {
                     max_gradient[it] = spin_nu_gradient_diag[ia][ic];
@@ -315,6 +302,7 @@ bool check_gradient_decay(const SpinConstrain<TK>& sc,
                 }
             }
         }
+        iat_offset += nat_it;
     }
 
     if (print)
@@ -473,10 +461,10 @@ template double cal_alpha_opt<std::complex<double>>(const SpinConstrain<std::com
                                                     std::vector<ModuleBase::Vector3<double>>,
                                                     const double);
 template bool check_gradient_decay<std::complex<double>>(const SpinConstrain<std::complex<double>>&,
-                                                          std::vector<ModuleBase::Vector3<double>>,
-                                                          std::vector<ModuleBase::Vector3<double>>,
-                                                          std::vector<ModuleBase::Vector3<double>>,
-                                                          std::vector<ModuleBase::Vector3<double>>,
+                                                          const std::vector<ModuleBase::Vector3<double>>&,
+                                                          const std::vector<ModuleBase::Vector3<double>>&,
+                                                          const std::vector<ModuleBase::Vector3<double>>&,
+                                                          const std::vector<ModuleBase::Vector3<double>>&,
                                                           bool, std::ostream&);
 
 // print_Mi / print_Mag_Force are generic (no per-TK stub needed): the

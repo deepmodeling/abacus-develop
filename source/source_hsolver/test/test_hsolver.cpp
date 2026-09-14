@@ -1,17 +1,15 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <vector>
-#define protected public
 
 #include "hsolver_supplementary_mock.h"
 #include "source_hamilt/hamilt.h"
 #include "source_hsolver/hsolver.h"
 
-#include <source_base/macros.h>
 
 // template class hsolver::HSolver<std::complex<float>, base_device::DEVICE_CPU>;
 // template class hsolver::HSolver<std::complex<double>, base_device::DEVICE_CPU>;
-
+#include <source_base/macros.h>
 /************************************************
  *  unit test of HSolver base class
  ***********************************************/

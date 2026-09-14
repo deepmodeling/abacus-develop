@@ -1,25 +1,12 @@
-/// @file dftu_nao_str_r.h
-/// @brief DFT+U stress calculation in real space (r-space)
-///
-/// This file provides the real-space implementation of DFT+U stress contribution
-/// from a single atom pair (I,J,R). It is independent of k-point sampling because
-/// the real-space density matrix (DMR) already contains the Brillouin-zone integration.
-///
-/// Naming convention: _r suffix denotes real-space implementation,
-/// corresponding to _k suffix for k-space (legacy) implementation.
-///
-/// The stress formula for atom pair (I,J,R) is:
-///
-///   sigma_{alpha,beta} += -(1/Omega) * sum_{m,m'} V_U_{mm'}(I) * DMR_{mu,nu}(J1,J2,R) * [
-///       d<phi_{mu,0}|chi_m(I)>/d tau_{J1,alpha} * <chi_m'(I)|phi_{nu,R}> * R_{J1,beta}
-///     + <phi_{mu,0}|chi_m(I)> * d<chi_m'(I)|phi_{nu,R}>/d tau_{J2,alpha} * R_{J2,beta}
-///   ]
-///
-/// where R_{J1} and R_{J2} are the position vectors of atoms J1 and J2 relative to
-/// the on-site atom I, and Omega is the unit cell volume.
-
 #ifndef DFTU_NAO_STR_R_H
 #define DFTU_NAO_STR_R_H
+
+/// @file dftu_nao_str_r.h
+/// @brief DFT+U stress contribution from a single atom pair (I,J,R) in real space
+///
+/// Per-pair kernel invoked by the unified entry cal_fs_nao_r (dftu_nao_fs_r.h).
+/// Naming convention: _r suffix denotes the real-space implementation,
+/// corresponding to _k for the k-space (legacy) one.
 
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_base/vector3.h"
@@ -28,15 +15,8 @@
 #include <unordered_map>
 #include <vector>
 
-namespace hamilt
+namespace DFTU_LCAO
 {
-
-// Forward declarations to avoid circular dependency with dftu_lcao_op.h
-template <typename TK, typename TR>
-class OperatorLCAO;
-
-template <typename T>
-class DFTU;
 
 /**
  * @brief Compute DFT+U stress contribution from a single atom pair (I,J,R) in real space
@@ -63,14 +43,14 @@ class DFTU;
  * @param nlm2_all    [in] pre-computed <phi|chi> and derivatives for atom J2
  * @param pot_onsite  [in] flattened V_U matrix
  * @param dmR_pointer [in] pointer to DMR matrix blocks for each spin
- * @param nspin       [in] number of spin channels
+ * @param nspin       [in] number of spin channels (1, 2, or 4); the spinor
+ *                     polarization count is derived as npol = 2 for nspin=4
+ *                     (non-collinear) and npol = 1 otherwise
  * @param dis1        [in] position vector of J1 relative to I
  * @param dis2        [in] position vector of J2 relative to I
  * @param stress      [out] stress accumulator (6 components in Voigt notation)
  */
-template <typename TK, typename TR>
-void cal_str_IJR_nao_r(const DFTU<OperatorLCAO<TK, TR>>* dftu_op,
-                      const int& iat1,
+void cal_str_IJR_nao_r(const int& iat1,
                       const int& iat2,
                       const Parallel_Orbitals* pv,
                       const std::unordered_map<int, std::vector<double>>& nlm1_all,
@@ -82,6 +62,6 @@ void cal_str_IJR_nao_r(const DFTU<OperatorLCAO<TK, TR>>* dftu_op,
                       const ModuleBase::Vector3<double>& dis2,
                       double* stress);
 
-} // namespace hamilt
+} // namespace DFTU_LCAO
 
 #endif // DFTU_NAO_STR_R_H

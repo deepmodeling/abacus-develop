@@ -64,7 +64,7 @@ class OccMatMixerTest : public ::testing::Test
             cell.itia2iat(0, iat) = iat;
         }
 
-        orbital_corr = {l_corr};
+        l_channel = {l_corr};
 
         // per-atom offset table matching Plus_U_Base::init_base layout
         flat_index.resize(cell.nat);
@@ -81,7 +81,7 @@ class OccMatMixerTest : public ::testing::Test
 
     UnitCell cell;
     std::vector<Atom> atoms_storage;  ///< backing store for cell.atoms
-    std::vector<int> orbital_corr;
+    std::vector<int> l_channel;
     std::vector<int> flat_index;
 };
 
@@ -97,10 +97,10 @@ TEST_F(OccMatMixerTest, MixPlainNspin1)
     const int nspin = 1;
     const int npol = 1;
     OccupationMatrix occmat;
-    occmat.init(cell, orbital_corr, nspin, npol);
+    occmat.init(cell, l_channel, nspin, npol);
 
     OccMatMixer mixer;
-    mixer.init(&cell, &orbital_corr, &flat_index, nspin, total_size(nspin));
+    mixer.init(&cell, &l_channel, &flat_index, nspin, total_size(nspin));
 
     // fill occ and occ_save with known distinct values
     for (int iat = 0; iat < cell.nat; iat++)
@@ -130,10 +130,10 @@ TEST_F(OccMatMixerTest, MixPlainNspin2BothChannels)
     const int nspin = 2;
     const int npol = 1;
     OccupationMatrix occmat;
-    occmat.init(cell, orbital_corr, nspin, npol);
+    occmat.init(cell, l_channel, nspin, npol);
 
     OccMatMixer mixer;
-    mixer.init(&cell, &orbital_corr, &flat_index, nspin, total_size(nspin));
+    mixer.init(&cell, &l_channel, &flat_index, nspin, total_size(nspin));
 
     for (int iat = 0; iat < cell.nat; iat++)
     {
@@ -171,10 +171,10 @@ TEST_F(OccMatMixerTest, FlatRoundtripNspin2)
     const int nspin = 2;
     const int npol = 1;
     OccupationMatrix occmat;
-    occmat.init(cell, orbital_corr, nspin, npol);
+    occmat.init(cell, l_channel, nspin, npol);
 
     OccMatMixer mixer;
-    mixer.init(&cell, &orbital_corr, &flat_index, nspin, total_size(nspin));
+    mixer.init(&cell, &l_channel, &flat_index, nspin, total_size(nspin));
     EXPECT_EQ(mixer.flat_size(), total_size(nspin));
 
     // distinct value per (iat, spin, m) to detect layout mistakes
@@ -192,7 +192,7 @@ TEST_F(OccMatMixerTest, FlatRoundtripNspin2)
 
     mixer.collect(occmat);   // occ -> uom_
     // scramble the nested matrix, then restore it from the flat buffer
-    occmat.zero(cell, orbital_corr);
+    occmat.zero(cell, l_channel);
     mixer.write_back(occmat); // uom_ -> occ
 
     for (int iat = 0; iat < cell.nat; iat++)
@@ -216,10 +216,10 @@ TEST_F(OccMatMixerTest, BeginIterFlattensSave)
     const int nspin = 1;
     const int npol = 1;
     OccupationMatrix occmat;
-    occmat.init(cell, orbital_corr, nspin, npol);
+    occmat.init(cell, l_channel, nspin, npol);
 
     OccMatMixer mixer;
-    mixer.init(&cell, &orbital_corr, &flat_index, nspin, total_size(nspin));
+    mixer.init(&cell, &l_channel, &flat_index, nspin, total_size(nspin));
 
     for (int m = 0; m < block; m++)
     {

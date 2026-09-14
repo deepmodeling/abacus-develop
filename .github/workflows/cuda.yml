@@ -3,6 +3,9 @@ name: CUDA Test
 on:
   workflow_dispatch:
   pull_request:
+  push:
+    branches:
+      - develop
 
 defaults:
   run:
@@ -19,10 +22,12 @@ jobs:
     if: github.repository_owner == 'deepmodeling'
     container:
       image: ghcr.io/deepmodeling/abacus-cuda
-      volumes:
-        - /tmp/ccache:/github/home/.ccache
       options: --gpus all
-      
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_COMPRESS: "true"
+      CCACHE_MAXSIZE: 8G
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -33,6 +38,26 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ccache xz-utils ninja-build pkg-config
+
+      - name: Calculate compiler cache fingerprint
+        id: compiler
+        run: |
+          fingerprint="$({ c++ --version; nvcc --version; ccache --version; } | sha256sum | cut -d' ' -f1)"
+          echo "fingerprint=${fingerprint}" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: abacus-cuda-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
+          restore-keys: |
+            abacus-cuda-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-
+
+      - name: Prepare compiler cache
+        run: |
+          mkdir -p "${CCACHE_DIR}"
+          ccache --set-config="max_size=${CCACHE_MAXSIZE}"
+          ccache --zero-stats
 
       - name: Install external tools from toolchain
         run: |
@@ -50,6 +75,12 @@ jobs:
             -DCMAKE_CUDA_ARCHITECTURES=70
           cmake --build build -j "$(nproc)"
           cmake --install build
+
+      - name: Report compiler cache
+        if: always()
+        run: |
+          ccache --show-stats
+          ccache --show-stats >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Module_LCAO CUDA Unittests
         env:

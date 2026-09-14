@@ -32,6 +32,8 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 {
     this->classname = "ESolver_KS_PW";
     this->basisname = "PW";
+    // PW basis: the DFT+U object is the base class (no LCAO orbitals).
+    this->dftu_.reset(new Plus_U_Base());
 }
 
 template <typename T, typename Device>
@@ -65,7 +67,7 @@ void ESolver_KS_PW<T, Device>::allocate_hamilt(const UnitCell& ucell)
                                                      this->pw_wfc,
                                                      &this->kv,
                                                      &this->ppcell,
-                                                     &this->dftu,
+                                                     this->dftu_.get(),
                                                      &ucell,
                                                      &this->general_exx_info_);
 }
@@ -171,7 +173,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
                   this->chr,
                   this->locpp,
                   this->ppcell,
-                  this->dftu,
+                  *this->dftu_,
                   this->vsep_cell,
                   this->stp.template get_psi_t<T, Device>(),
                   this->p_hamilt,
@@ -194,7 +196,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 {
     ESolver_KS::iter_init(ucell, istep, iter);
 
-    module_charge::chgmixing_ks_pw(iter, this->p_chgmix, this->dftu, *this->inp_);
+    module_charge::chgmixing_ks_pw(iter, this->p_chgmix, *this->dftu_, *this->inp_);
 
     // mohan move harris functional here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
@@ -204,7 +206,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
     // should before lambda loop in DeltaSpin
     DFTU_BASE::iter_init_dftu_pw(iter,
                           istep,
-                          this->dftu,
+                          *this->dftu_,
                           this->stp.template get_psi_t<T, Device>(),
                           this->pelec->wg,
                           ucell,
@@ -214,7 +216,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
     // mohan add 2025-11: push DFT+U energy from Plus_U instance to ElecState
     if (this->inp_->dft_plus_u)
     {
-        this->pelec->set_dftu_energy(this->dftu.get_energy());
+        this->pelec->set_dftu_energy(this->dftu_->get_energy());
     }
 }
 
@@ -383,7 +385,7 @@ void ESolver_KS_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matrix&
                  &ucell.symm,
                  &this->sf,
                  this->solvent,
-                 &this->dftu,
+                 this->dftu_.get(),
                  &this->locpp,
                  &this->ppcell,
                  &this->kv,
@@ -405,7 +407,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matrix
     ss.cal_stress(stress,
                   ucell,
                   this->get_vdw_result(),
-                  this->dftu,
+                  *this->dftu_,
                   this->locpp,
                   this->ppcell,
                   this->pw_rhod,

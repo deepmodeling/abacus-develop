@@ -43,7 +43,6 @@ if(ENABLE_LCAO)
         spar_exx.cpp
         spar_hsr.cpp
         spar_st.cpp
-        spar_u.cpp
         lcao_set.cpp
 		lcao_set_fs.cpp
 		lcao_set_st.cpp
