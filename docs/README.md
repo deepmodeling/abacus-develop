@@ -14,7 +14,8 @@ Run the following commands from the repository root.
 1. Create a Python virtual environment with `uv`:
 
    ```bash
-   uv venv --python python3 .venv
+   python3 -m venv .venv
+   source .venv/bin/activate
    ```
 
 1. Install the documentation requirements:
