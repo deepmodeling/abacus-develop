@@ -5,7 +5,7 @@ void Pseudopot_upf::complete_default(Atom_pseudo& pp, const double pseudo_rcut)
     ModuleBase::TITLE("Pseudopot_upf", "complete_default");
 
     // call subroutines
-    this->complete_default_h(pp);
+    pseudopot::complete_default_h(pp);
     this->complete_default_atom(pp, pseudo_rcut);
     this->complete_default_vl(pp);
 
@@ -28,7 +28,7 @@ void Pseudopot_upf::complete_default(Atom_pseudo& pp, const double pseudo_rcut)
     return;
 }
 
-void Pseudopot_upf::complete_default_h(Atom_pseudo& pp)
+void pseudopot::complete_default_h(Atom_pseudo& pp)
 {
     ModuleBase::TITLE("Pseudopot_upf","complete_default_h");
     

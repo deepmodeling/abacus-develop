@@ -48,7 +48,6 @@
  *     - find the type of pp, upf201 or upf
  *   - Trim
  *     - trim: an iterative function to delete all tab and space in a string
- *     - trimend: trim tab and space and space at two ends of a string
  *   - InitReader
  *     - init_pseudo_reader: actual pseudo reader
  *   - SetEmptyElement
@@ -70,7 +69,9 @@ protected:
 
     // Pseudopot_upf declares this fixture a friend, but a TEST_F body lives in
     // a class derived from it, and friendship is not inherited -- so every call
-    // into a private format reader or helper is routed through these wrappers.
+    // into a private format reader is routed through these wrappers. The
+    // stateless helpers (set_pseudo_type, trim, setqfnew) are plain functions
+    // in namespace pseudopot and are called directly.
     int read_pseudo_upf(std::ifstream& ifs, Atom_pseudo& pp) const
     {
         return read_pp->read_pseudo_upf(ifs, pp);
@@ -86,28 +87,6 @@ protected:
     int read_pseudo_blps(std::ifstream& ifs, Atom_pseudo& pp) const
     {
         return read_pp->read_pseudo_blps(ifs, pp);
-    }
-    int set_pseudo_type(const std::string& fn, std::string& type) const
-    {
-        return read_pp->set_pseudo_type(fn, type);
-    }
-    void setqfnew(const int& nqf,
-                  const int& mesh,
-                  const int& l,
-                  const int& n,
-                  const double* qfcoef,
-                  const double* r,
-                  double* rho) const
-    {
-        read_pp->setqfnew(nqf, mesh, l, n, qfcoef, r, rho);
-    }
-    std::string& trim(std::string& in_str) const
-    {
-        return read_pp->trim(in_str);
-    }
-    std::string trimend(std::string& in_str) const
-    {
-        return read_pp->trimend(in_str);
     }
 };
 
@@ -652,21 +631,18 @@ TEST_F(ReadPPTest, SetPseudoType)
 {
     std::string pp_address = "./support/Cu_ONCV_PBE-1.0.upf";
     std::string type = "auto";
-    set_pseudo_type(pp_address,type);
+    pseudopot::set_pseudo_type(pp_address,type);
     EXPECT_EQ(type,"upf201");
     pp_address = "./support/Te.pbe-rrkj.UPF";
-    set_pseudo_type(pp_address,type);
+    pseudopot::set_pseudo_type(pp_address,type);
     EXPECT_EQ(type,"upf");
 }
 
 TEST_F(ReadPPTest, Trim)
 {
     std::string tmp_string = "   aaa   \t  bbb\t  ";
-    output = trim(tmp_string);
+    output = pseudopot::trim(tmp_string);
     EXPECT_EQ(output,"aaabbb");
-    tmp_string = "   \taaa\tbbb\t   ";
-    output = trimend(tmp_string);
-    EXPECT_EQ(output,"aaa\tbbb");
 }
 
 TEST_F(ReadPPTest, SetEmptyElement)
@@ -731,7 +707,7 @@ TEST_F(ReadPPTest, SetQfNew)
     }
 
     // Call the function under test
-    setqfnew(nqf, mesh, l, n, qfcoef, r, rho);
+    pseudopot::setqfnew(nqf, mesh, l, n, qfcoef, r, rho);
 
     // Validate the output
     for (int ir = 0; ir < mesh; ++ir)

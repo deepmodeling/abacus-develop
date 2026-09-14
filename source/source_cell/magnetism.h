@@ -5,16 +5,11 @@
 #include "source_base/vector3.h"
 #include <vector>
 
-class MagnetismTest;
-
 /**
  * @brief Class for magnetism calculations.
  */
 class Magnetism
 {
-    /// @brief the unit test drives the private judge_parallel() helper directly
-    friend class MagnetismTest;
-
 public:
     /// @brief Constructor
     Magnetism();
@@ -59,16 +54,6 @@ public:
 
     /// @brief lsign_
     bool lsign_=false;
-
-private:
-    /**
-     * @brief Judge if two vectors are parallel.
-     *
-     * @param a first vector
-     * @param b second vector
-     * @return true if vectors are parallel
-     */
-    bool judge_parallel(const double a[3], const ModuleBase::Vector3<double> &b);
 
 };
 
