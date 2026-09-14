@@ -15,9 +15,6 @@
 #include <cassert>
 #include <cstring>
 
-typedef ModuleBase::MatrixBlock<double> matd;
-typedef ModuleBase::MatrixBlock<std::complex<double>> matcd;
-
 namespace hsolver
 {
 namespace
@@ -33,11 +30,12 @@ int blacs_grid_size(const int* const desc)
 } // namespace
 
     template<>
-    void DiagoScalapack<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, Real* eigenvalue_in)
+    void DiagoScalapack<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
+    ModuleBase::MatrixBlock<double>& s_mat,
+    psi::Psi<double>& psi,
+    Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoScalapack", "diag");
-    matd h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(this->nlocal, 0.0);
     this->pdsygvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
@@ -45,11 +43,12 @@ int blacs_grid_size(const int* const desc)
     BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
     template<>
-    void DiagoScalapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in, psi::Psi<std::complex<double>>& psi, Real* eigenvalue_in)
+    void DiagoScalapack<std::complex<double>>::diag(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
+    psi::Psi<std::complex<double>>& psi,
+    Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoScalapack", "diag");
-    matcd h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(this->nlocal, 0.0);
     this->pzhegvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);

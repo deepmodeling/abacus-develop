@@ -36,16 +36,15 @@ void Parallel_K2D<TK>::set_para_env(int nks,
 }
 
 template <typename TK>
-void Parallel_K2D<TK>::distribute_hsk(hamilt::Hamilt<TK>* pHamilt,
+void Parallel_K2D<TK>::distribute_hsk(const typename Parallel_K2D<TK>::HskFunc& get_hsk,
                                       const std::vector<int>& ik_kpar,
                                       const int& nw) {
 #ifdef __MPI
     ModuleBase::timer::start("Parallel_K2D", "distribute_hsk");
     for (int ipool = 0; ipool < ik_kpar.size(); ++ipool)
     {
-        pHamilt->updateHk(ik_kpar[ipool]);
         ModuleBase::MatrixBlock<TK> HK_global, SK_global;
-        pHamilt->matrix(HK_global, SK_global);
+        get_hsk(ik_kpar[ipool], HK_global, SK_global);
         if (this->MY_POOL == this->Pkpoints->whichpool[ik_kpar[ipool]]) {
             this->hk_pool.resize(this->P2D_pool->get_local_size(), 0.0);
             this->sk_pool.resize(this->P2D_pool->get_local_size(), 0.0);

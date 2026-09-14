@@ -7,6 +7,7 @@
 #include <cstring>
 #include <vector>
 
+#include "source_base/matrix_block.h"
 #include "source_hsolver/diago_lapack.h"
 
 #define PASSTHRESHOLD 1e-5
@@ -16,8 +17,10 @@
 
 // A hamilt class used for test. It will be removed in the future.
 
+/// Minimal H(k)/S(k) supplier. The LCAO eigensolvers take the matrix blocks
+/// directly, so this test no longer needs a hamilt::Hamilt subclass.
 template <typename T>
-class HamiltTEST : public hamilt::Hamilt<T>
+class HamiltTEST
 {
   public:
     int desc[9];
@@ -25,17 +28,10 @@ class HamiltTEST : public hamilt::Hamilt<T>
     std::vector<T> h_local;
     std::vector<T> s_local;
 
-    void matrix(hamilt::MatrixBlock<T>& hk_in, hamilt::MatrixBlock<T>& sk_in)
+    void matrix(ModuleBase::MatrixBlock<T>& hk_in, ModuleBase::MatrixBlock<T>& sk_in)
     {
-        hk_in = hamilt::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
-        sk_in = hamilt::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
-    }
-
-    void constructHamilt(const int iter, const hamilt::MatrixBlock<double> rho)
-    {
-    }
-    void updateHk(const int ik)
-    {
+        hk_in = ModuleBase::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
+        sk_in = ModuleBase::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
     }
 };
 
@@ -186,10 +182,12 @@ class DiagoLapackPrepare
         this->pb2d();
         this->print_hs();
 
+        ModuleBase::MatrixBlock<T> h_mat, s_mat;
+        hmtest.matrix(h_mat, s_mat);
         for (int i = 0; i < REPEATRUN; i++)
         {
             hsolver::DiagoLapack<T> dh(nlocal, nbands);
-            dh.diag(&hmtest, psi, e_solver.data());
+            dh.diag(h_mat, s_mat, psi, e_solver.data());
             // dh->diag(&hmtest, psi, e_solver.data());
         }
         // delete dh;

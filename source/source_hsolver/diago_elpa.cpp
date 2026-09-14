@@ -7,9 +7,6 @@
 #include "source_base/tool_title.h"
 #include "source_base/tool_quit.h"
 
-typedef ModuleBase::MatrixBlock<double> matd;
-typedef ModuleBase::MatrixBlock<std::complex<double>> matcd;
-
 namespace hsolver {
 #ifdef __MPI
 template <>
@@ -65,14 +62,12 @@ MPI_Comm DiagoElpa<std::complex<double>>::setmpicomm() {
 #endif
 template <>
 void DiagoElpa<std::complex<double>>::diag(
-    hamilt::Hamilt<std::complex<double>>* phm_in,
+    ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
     psi::Psi<std::complex<double>>& psi,
     Real* eigenvalue_in) {
     ModuleBase::TITLE("DiagoElpa", "diag");
 #ifdef __MPI
-    matcd h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
-
     std::vector<double> eigen(this->nlocal, 0.0);
 
     bool isReal = false;
@@ -103,14 +98,12 @@ void DiagoElpa<std::complex<double>>::diag(
 }
 
 template <>
-void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in,
+void DiagoElpa<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
+                             ModuleBase::MatrixBlock<double>& s_mat,
                              psi::Psi<double>& psi,
                              Real* eigenvalue_in) {
     ModuleBase::TITLE("DiagoElpa", "diag");
 #ifdef __MPI
-    matd h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
-
     std::vector<double> eigen(this->nlocal, 0.0);
 
     bool isReal = true;

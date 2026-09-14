@@ -1,12 +1,15 @@
 #ifndef PARALLEL_K2D_H
 #define PARALLEL_K2D_H
 
+#include "source_base/matrix_block.h"
 #include "source_base/parallel_2d.h"
 #include "source_cell/parallel_kpoints.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "source_hamilt/hamilt.h"
+
+#include <functional>
+#include <vector>
 
 /***
  * This is a class to realize k-points parallelism in LCAO code.
@@ -32,8 +35,14 @@ class Parallel_K2D {
                     const int& my_rank,
                     const int& nspin);
 
+    /// Supplies H(k) and S(k) for one k point. The caller owns whatever has
+    /// to happen before the blocks are valid (updating the Hamiltonian for
+    /// that k point, for instance); this class only redistributes them.
+    using HskFunc = std::function<
+        void(int ik, ModuleBase::MatrixBlock<TK>& hk, ModuleBase::MatrixBlock<TK>& sk)>;
+
     /// this function distributes the Hk and Sk matrices to hk_pool and sk_pool
-    void distribute_hsk(hamilt::Hamilt<TK>* pHamilt,
+    void distribute_hsk(const HskFunc& get_hsk,
                         const std::vector<int>& ik_kpar,
                         const int& nw);
 

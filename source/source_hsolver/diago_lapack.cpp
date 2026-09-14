@@ -8,9 +8,6 @@
 
 #include <cstring>
 
-typedef ModuleBase::MatrixBlock<double> matd;
-typedef ModuleBase::MatrixBlock<std::complex<double>> matcd;
-
 namespace hsolver
 {
 namespace
@@ -32,13 +29,12 @@ void check_lapack_layout(const ModuleBase::MatrixBlock<T>& h_mat,
 }
 } // namespace
 template <>
-void DiagoLapack<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, Real* eigenvalue_in)
+void DiagoLapack<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
+                               ModuleBase::MatrixBlock<double>& s_mat,
+                               psi::Psi<double>& psi,
+                               Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoLapack", "diag");
-    // Prepare H and S matrix
-    matd h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
-
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(this->nlocal, 0.0);
     check_lapack_layout(h_mat, s_mat, eigen.size());
@@ -51,13 +47,12 @@ void DiagoLapack<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>&
 }
 
 template <>
-void DiagoLapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in,
+void DiagoLapack<std::complex<double>>::diag(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+                                             ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
                                              psi::Psi<std::complex<double>>& psi,
                                              Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoLapack", "diag");
-    matcd h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(this->nlocal, 0.0);
     check_lapack_layout(h_mat, s_mat, eigen.size());

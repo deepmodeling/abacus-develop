@@ -6,7 +6,6 @@
 #include "source_lcao/module_rt/td_info.h"
 #include "spar_dh.h"
 #include "spar_exx.h"
-#include "spar_u.h"
 
 #ifdef __MPI
 void sparse_format::sync_all_R_coor(std::set<Abfs::Vector3_Order<int>>& all_R_coor, MPI_Comm comm)

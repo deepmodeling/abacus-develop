@@ -2431,7 +2431,7 @@
 - **Type**: String
 - **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: The directory to save files for LibRPA.
-- **Default**: "./OUT.librpa/"
+- **Default**: "OUT.librpa"
 
 ### out_pchg
 
@@ -5190,13 +5190,13 @@
 ### bse_q_approx_mode
 
 - **Type**: Integer
-- **Description**: q-to-k-pair mapping mode: 0 uses exact mapping, 1 uses the coarse q-grid approximation, and 2 uses exact for Γ-close q-points and coarse for other q-points.
+- **Description**: q-to-k-pair mapping mode for W: 0=exact, 1=coarse q grid, 2=mixed, 3=truncate pairs with |q|&gt;threshold (W elements dropped)
 - **Default**: 0
 
 ### bse_q_approx_threshold
 
 - **Type**: Real
-- **Description**: Threshold radius in Bohr^-1 for exact q-to-k-pair mapping when bse_q_approx_mode is 2.
+- **Description**: Threshold radius in unit of 2*pi/lat0 (same unit system as kvec_c) for exact q-to-k-pair mapping when bse_q_approx_mode is 2; in mode 3 pairs with larger |q| are dropped entirely.
 - **Default**: 0.1
 
 ### out_bse_ab

@@ -80,8 +80,18 @@ by per-rule severity within each group:
     - tab indentation: -1 per line (cap 5)
     - `using namespace std;`: -1 per occurrence (cap 5)
     - `goto` keyword: -2 per occurrence (cap 5)
+    - `auto` keyword: -1 per occurrence (cap 10). Counted after
+      comments and string literals are stripped; `auto_ptr` does not
+      match. Prefer explicit types for readability.
     - line longer than 120 chars: -1 per line (cap 5)
     - Chinese characters in comments/code: -1 per line (cap 5)
+    - preprocessor directive not at column 0 (indented #if/#include/...):
+      -1 per line (cap 5)
+    - comment block above the first include guard of a .h file: -1 per
+      contiguous comment block (a file-header is one block, so typically -1)
+    - `@file` name does not match the actual filename: -1
+    - comment text duplicated across comment blocks (same >=40-char line
+      appearing in two or more blocks): -1 per duplicated line (cap 5)
 
 Usage:
     python3 code_quality_score.py source/source_base
@@ -150,7 +160,12 @@ WEIGHTS = {
     "post_cpp11_feature": 40,
     "post_cpp11_per_feature": 8,
     "goto_keyword": 2,
+    "auto_keyword": 1,
     "static_member_variable": 1,
+    "indented_preprocessor": 1,
+    "comment_above_guard": 1,
+    "doc_file_mismatch": 1,
+    "duplicate_doc_block": 1,
 }
 
 CAPS = {
@@ -169,7 +184,11 @@ CAPS = {
     "high_cyclomatic_complexity": 30,
     "post_cpp11_per_feature": 5,
     "goto_keyword": 5,
+    "auto_keyword": 10,
     "static_member_variable": 10,
+    "indented_preprocessor": 5,
+    "comment_above_guard": 3,
+    "duplicate_doc_block": 5,
 }
 
 FUNCTION_LENGTH_THRESHOLD = 50
@@ -221,6 +240,23 @@ _OWNED_NEW_SHAPES = [
 ]
 OWNED_NEW_RE = re.compile("|".join(f"(?:{p})" for p in _OWNED_NEW_SHAPES))
 GOTO_RE = re.compile(r"\bgoto\b")
+# `auto` type deduction keyword. `\bauto\b` does not match `auto_ptr`
+# (`_` is a word character, so there is no boundary before it).
+AUTO_RE = re.compile(r"\bauto\b")
+
+# Preprocessor directive that does not start at column 0 (leading spaces/tabs
+# before the '#'). Matched against raw lines; string literals virtually never
+# contain a line-start '#', so no string stripping is needed here.
+INDENTED_PREPROC_RE = re.compile(
+    r"^[ \t]+#\s*(?:if|ifdef|ifndef|define|endif|include|undef|pragma|else|elif)\b"
+)
+# First include guard / pragma-once line of a header.
+GUARD_RE = re.compile(r"^\s*#\s*(?:ifndef|pragma\s+once)\b")
+# `@file name` inside a doxygen comment.
+DOC_FILE_RE = re.compile(r"@file\s+(\S+)")
+# Comment-only line (/// ... or a line inside a /* */ block is not fully
+# distinguishable line-wise, so we only treat leading // or /* as comment).
+COMMENT_LINE_RE = re.compile(r"^\s*(?://|/\*|\*)")
 
 DEFAULT_PARAM_RE = re.compile(
     r"\b\w+\s*\([^();]*\b\w+\s*=(?![=>])[^();]*\)\s*"
@@ -649,6 +685,102 @@ def strip_strings(content: str) -> str:
         out.append(c)
         i += 1
     return "".join(out)
+
+
+def extract_comment_blocks(content: str) -> List[List[str]]:
+    """Extract normalised comment lines, grouped by comment block.
+
+    Returns a list of blocks; each block is a list of normalised comment
+    lines (comment markers stripped, whitespace collapsed, empty lines
+    dropped). A 'block' is a maximal run of `///` lines, or one `/* ... */`
+    region. String literals are respected so that `//` inside a string is
+    not treated as a comment opener.
+    """
+    blocks: List[List[str]] = []
+    current: List[str] = []
+    i = 0
+    n = len(content)
+    in_string = False
+    in_char = False
+
+    def flush() -> None:
+        nonlocal current
+        if current:
+            blocks.append(current)
+            current = []
+
+    while i < n:
+        c = content[i]
+        if in_string:
+            if c == "\\" and i + 1 < n:
+                i += 2
+                continue
+            if c == '"':
+                in_string = False
+            i += 1
+            continue
+        if in_char:
+            if c == "\\" and i + 1 < n:
+                i += 2
+                continue
+            if c == "'":
+                in_char = False
+            i += 1
+            continue
+        if c == '"':
+            in_string = True
+            i += 1
+            continue
+        if c == "'":
+            if _is_digit_separator(content, i):
+                i += 1
+                continue
+            in_char = True
+            i += 1
+            continue
+        if c == "/" and i + 1 < n and content[i + 1] == "/":
+            # line comment: collect the text after // (or /// for doxygen)
+            j = content.find("\n", i)
+            if j < 0:
+                j = n
+            text = content[i + 2:j].lstrip("/ \t").strip()
+            if text:
+                current.append(" ".join(text.split()))
+            i = j
+            continue
+        if c == "/" and i + 1 < n and content[i + 1] == "*":
+            # block comment: collect until */
+            j = content.find("*/", i + 2)
+            if j < 0:
+                j = n - 2
+            body = content[i + 2:j]
+            block: List[str] = []
+            for ln in body.split("\n"):
+                # strip leading comment markers: '*', '/', whitespace, and
+                # any leftover '///' from doxygen-style lines
+                ln = re.sub(r"^[\s*/]+", "", ln).strip()
+                if ln:
+                    block.append(" ".join(ln.split()))
+            if block:
+                flush()
+                blocks.append(block)
+            i = j + 2
+            continue
+        if c == "\n":
+            # a blank/non-comment line ends a /// run; check next non-empty
+            # cheaply by flushing on newline only when current is non-empty
+            # and the following line does not start with optional ws + //
+            rest = content[i + 1:i + 200]
+            m = re.match(r"\s*//", rest)
+            if not m:
+                flush()
+            i += 1
+            continue
+        if not c.isspace():
+            flush()
+        i += 1
+    flush()
+    return blocks
 
 
 def find_class_blocks(code: str) -> List[Tuple[int, int, str, str]]:
@@ -1546,6 +1678,9 @@ def analyze_file(path: Path) -> FileReport:
     hpp_include_count = sum(1 for l in lines if HPP_INCLUDE_RE.match(l))
     friend_count = len(FRIEND_RE.findall(stripped_content))
     goto_count = len(GOTO_RE.findall(stripped_content))
+    # `auto` keyword: counted on comment-and-string-stripped content so
+    # occurrences inside comments or string literals do not deduct points.
+    auto_count = len(AUTO_RE.findall(stripped_for_upper))
 
     # default parameter: scan the full stripped content so multi-line
     # declarations (parameter list spanning multiple lines) are detected;
@@ -1602,6 +1737,71 @@ def analyze_file(path: Path) -> FileReport:
     append_capped("unpaired_new_delete", unpaired_new)
     append_capped("raw_new_keyword", raw_new_count)
     append_capped("goto_keyword", goto_count)
+    append_capped("auto_keyword", auto_count)
+
+    # --- documentation style rules -------------------------------------
+    # indented preprocessor directive (raw lines, `#` not at column 0)
+    indented_preproc_count = sum(1 for l in lines if INDENTED_PREPROC_RE.match(l))
+    append_capped("indented_preprocessor", indented_preproc_count)
+
+    # comment block(s) above the first include guard (headers only). One
+    # contiguous comment block counts once regardless of its length.
+    if path.suffix == ".h":
+        comment_above_guard = 0
+        in_block = False
+        for l in lines:
+            if GUARD_RE.match(l):
+                break
+            if COMMENT_LINE_RE.match(l):
+                if not in_block:
+                    comment_above_guard += 1
+                    in_block = True
+            elif l.strip():
+                in_block = False
+        append_capped("comment_above_guard", comment_above_guard)
+
+    # `@file xxx` name vs the actual filename
+    doc_file_match = DOC_FILE_RE.search(content)
+    if doc_file_match and doc_file_match.group(1) != path.name:
+        findings.append(Finding(
+            rule="doc_file_mismatch",
+            line=None,
+            reason=(
+                f"@file names '{doc_file_match.group(1)}' but the file is "
+                f"'{path.name}'"
+            ),
+            deduction=WEIGHTS["doc_file_mismatch"],
+        ))
+
+    # duplicated comment text across comment blocks (e.g. the same formula
+    # repeated in the file-header and in a function doxygen block). Only
+    # lines of >= 40 chars are compared. Excluded from comparison:
+    #   - doxygen command lines (@param/@return/...): repeated `@param pv`
+    #     across overloads is normal, not redundant prose;
+    #   - decorative separator lines (=== Part N ===): >50% non-alnum chars;
+    #   - ALL-CAPS banner lines: visual section headers, not content.
+    def _is_dup_candidate(l: str) -> bool:
+        if len(l) < 40 or re.match(r"@\w+", l):
+            return False
+        alnum = sum(1 for ch in l if ch.isalnum())
+        if alnum * 2 < len(l):
+            return False
+        if l.isupper():
+            return False
+        return True
+
+    comment_blocks = extract_comment_blocks(content)
+    if len(comment_blocks) > 1:
+        seen: dict = {}
+        duplicate_doc_lines = 0
+        for block in comment_blocks:
+            block_lines = set(l for l in block if _is_dup_candidate(l))
+            for l in block_lines:
+                if l in seen:
+                    duplicate_doc_lines += 1
+                else:
+                    seen[l] = True
+        append_capped("duplicate_doc_block", duplicate_doc_lines)
 
     # too-many-parameters rule: each function's deduction is capped
     # individually (per-function cap, not per-file). A file with many

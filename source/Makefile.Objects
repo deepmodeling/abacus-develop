@@ -537,7 +537,10 @@ OBJS_PW=fft_bundle.o\
 OBJS_RELAXATION=relax_data.o\
     socket_ipi.o\
     socket_frame.o\
+    socket_frame_utils.o\
     socket_driver.o\
+    socket_utils.o\
+    socket_handlers.o\
     cg_base.o\
     bfgs_basic.o\
     relax_driver.o\
@@ -750,7 +753,6 @@ OBJS_LCAO=evolve_elec.o\
       spar_exx.o\
       spar_hsr.o\
       spar_st.o\
-      spar_u.o\
       lcao_set.o\
       lcao_set_fs.o\
       lcao_set_st.o\
@@ -916,8 +918,7 @@ OBJS_VDW=vdw.o\
     vdwd3_evaluator.o\
     vdw_xcname.o
 
-OBJS_DFTU=dftu_nao.o\
-      dftu_nao_fs_k.o\
+OBJS_DFTU=dftu_nao_fs_k.o\
       dftu_nao_for_r.o\
       dftu_nao_fs_r.o\
       dftu_nao_str_r.o\
@@ -925,8 +926,8 @@ OBJS_DFTU=dftu_nao.o\
       dftu_nao_pots.o\
       dftu_nao_energy.o\
       dftu_nao_op_legacy.o\
-      dftu_nao_occ.o\
-      dftu_hamilt.o
+      dftu_nao_adj.o\
+      dftu_nao_occ.o
 
 OBJS_DELTASPIN=basic_funcs.o\
       cal_mw_from_lambda.o\

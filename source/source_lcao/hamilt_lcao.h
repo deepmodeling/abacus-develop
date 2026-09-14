@@ -32,6 +32,9 @@ template <typename TK> class Exx_NAO;
 /// Exx_Info forward declaration, full definition in exx_info.h
 struct Exx_Info;
 
+// Input_para forward declaration, full definition in input_parameter.h
+struct Input_para;
+
 namespace hamilt
 {
 
@@ -64,7 +67,8 @@ class HamiltLCAO : public Hamilt<TK>
                Setup_DeePKS<TK> &deepks,
                const int istep,
                Exx_NAO<TK> &exx_nao,
-               const Exx_Info& exx_info);
+               const Exx_Info& exx_info,
+               const Input_para& inp);
 
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer

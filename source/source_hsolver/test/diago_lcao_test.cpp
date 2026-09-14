@@ -1,3 +1,4 @@
+#include "source_base/matrix_block.h"
 #include "source_hsolver/diago_scalapack.h"
 #include "source_hsolver/diago_lapack.h"
 #include "source_hsolver/test/diago_elpa_utils.h"
@@ -8,6 +9,7 @@
 #include <vector>
 #ifdef __ELPA
 #include "source_hsolver/diago_elpa.h"
+#include "source_hsolver/module_genelpa/elpa_solver.h"
 #endif
 #include "source_base/module_external/scalapack_connector.h"
 
@@ -29,8 +31,10 @@
  * self-realized functions in source_hsolver/test/diago_elpa_utils.h
  */
 
+/// Minimal H(k)/S(k) supplier. The LCAO eigensolvers take the matrix blocks
+/// directly, so this test no longer needs a hamilt::Hamilt subclass.
 template <typename T>
-class HamiltTEST : public hamilt::Hamilt<T>
+class HamiltTEST
 {
   public:
     int desc[9];
@@ -38,17 +42,10 @@ class HamiltTEST : public hamilt::Hamilt<T>
     std::vector<T> h_local;
     std::vector<T> s_local;
 
-    void matrix(hamilt::MatrixBlock<T>& hk_in, hamilt::MatrixBlock<T>& sk_in)
+    void matrix(ModuleBase::MatrixBlock<T>& hk_in, ModuleBase::MatrixBlock<T>& sk_in)
     {
-        hk_in = hamilt::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
-        sk_in = hamilt::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
-    }
-
-    void constructHamilt(const int iter, const hamilt::MatrixBlock<double> rho)
-    {
-    }
-    void updateHk(const int ik)
-    {
+        hk_in = ModuleBase::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
+        sk_in = ModuleBase::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
     }
 };
 
@@ -218,21 +215,23 @@ class DiagoPrepare
         {
             hmtest.h_local = this->h_local;
             hmtest.s_local = this->s_local;
+            ModuleBase::MatrixBlock<T> h_mat, s_mat;
+            hmtest.matrix(h_mat, s_mat);
             if (ks_solver == "scalapack_gvx")
             {
                 hsolver::DiagoScalapack<T> dh(nlocal, nbands);
-                dh.diag(&hmtest, psi, e_solver.data());
+                dh.diag(h_mat, s_mat, psi, e_solver.data());
             }
             else if (ks_solver == "lapack")
             {
                 hsolver::DiagoLapack<T> la(nlocal, nbands);
-                la.diag(&hmtest, psi, e_solver.data());
+                la.diag(h_mat, s_mat, psi, e_solver.data());
             }
     #ifdef __ELPA
             else if (ks_solver == "genelpa")
             {
                 hsolver::DiagoElpa<T> dh(nlocal, nbands);
-                dh.diag(&hmtest, psi, e_solver.data());
+                dh.diag(h_mat, s_mat, psi, e_solver.data());
             }
     #endif
             // dh.diag(&hmtest, psi, e_solver.data());
@@ -370,6 +369,93 @@ INSTANTIATE_TEST_SUITE_P(
         // DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "genelpa", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat"),
         DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "scalapack_gvx", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
         DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "scalapack_gvx", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat")));
+
+#ifdef __ELPA
+TEST(DiagoElpaComplexTest, UsesAuthoritativeUpperTriangle)
+{
+    std::stringstream out_info;
+    DiagoPrepare<std::complex<double>> dp(0, 0, 1, 0, "genelpa", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat");
+    ASSERT_TRUE(dp.produce_HS());
+
+    if (dp.myrank == 0)
+    {
+        dp.diago_lapack();
+        for (int row = 1; row < dp.nlocal; ++row)
+        {
+            for (int col = 0; col < row; ++col)
+            {
+                dp.h[row * dp.nlocal + col] = std::complex<double>(17.0 + row + col, -13.0);
+            }
+        }
+    }
+
+    dp.diago();
+    if (dp.myrank == 0)
+    {
+        EXPECT_TRUE(dp.compare_eigen(out_info)) << out_info.str();
+    }
+}
+
+TEST(DiagoElpaComplexTest, FallbackUsesAuthoritativeUpperTriangle)
+{
+    std::stringstream out_info;
+    DiagoPrepare<std::complex<double>> dp(0, 0, 1, 0, "genelpa", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat");
+    ASSERT_TRUE(dp.produce_HS());
+
+    // Supply a precomputed, non-diagonal S^{-1/2} to exercise
+    // DecomposedState == 3 directly, without relying on Cholesky failure.
+    if (dp.myrank == 0)
+    {
+        std::vector<std::complex<double>> inverse_sqrt(dp.s.size(), 0.0);
+        std::fill(dp.s.begin(), dp.s.end(), 0.0);
+        for (int i = 0; i < dp.nlocal; ++i)
+        {
+            inverse_sqrt[i * dp.nlocal + i] = 1.0;
+            dp.s[i * dp.nlocal + i] = 1.0;
+        }
+        const double off_diagonal = 0.25;
+        const double denominator = 1.0 - off_diagonal * off_diagonal;
+        inverse_sqrt[1] = off_diagonal;
+        inverse_sqrt[dp.nlocal] = off_diagonal;
+        // For the leading 2-by-2 block B = S^{-1/2}, S = B^{-2}.
+        dp.s[0] = (1.0 + off_diagonal * off_diagonal) / (denominator * denominator);
+        dp.s[1] = -2.0 * off_diagonal / (denominator * denominator);
+        dp.s[dp.nlocal] = dp.s[1];
+        dp.s[dp.nlocal + 1] = dp.s[0];
+        dp.diago_lapack();
+        for (int row = 1; row < dp.nlocal; ++row)
+        {
+            for (int col = 0; col < row; ++col)
+            {
+                dp.h[row * dp.nlocal + col] = std::complex<double>(17.0 + row + col, -13.0);
+            }
+        }
+        dp.s = inverse_sqrt;
+    }
+
+    dp.pb2d();
+    dp.distribute_data();
+    int decomposed_state = 3;
+    ELPA_Solver solver(false,
+                       MPI_COMM_WORLD,
+                       dp.nbands,
+                       dp.hmtest.nrow,
+                       dp.hmtest.ncol,
+                       dp.hmtest.desc);
+    solver.generalized_eigenvector(dp.h_local.data(),
+                                   dp.s_local.data(),
+                                   decomposed_state,
+                                   dp.e_solver.data(),
+                                   dp.psi.get_pointer());
+    solver.exit();
+
+    EXPECT_EQ(decomposed_state, 3);
+    if (dp.myrank == 0)
+    {
+        EXPECT_TRUE(dp.compare_eigen(out_info)) << out_info.str();
+    }
+}
+#endif
 
 int main(int argc, char** argv)
 {
