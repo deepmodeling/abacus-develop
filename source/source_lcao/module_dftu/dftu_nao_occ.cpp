@@ -34,6 +34,7 @@ void accumulate_occ_over_kstar(OccupationMatrix& occmat,
                                const std::vector<std::complex<double>>& srho_ibz,
                                const int ik_ibz,
                                const int spin,
+                               const int nspin,
                                const std::vector<int>& l_channel)
 {
     const int nsym = ucell.symm.nrotk;
@@ -50,7 +51,7 @@ void accumulate_occ_over_kstar(OccupationMatrix& occmat,
         else
         { // antiunitary element: TRS * (spatial operation), see restore_dm
             const int isym_M = ucell.symm.magnetic_nspin4 ? isym : (isym - nsym);
-            if (PARAM.inp.nspin == 4)
+            if (nspin == 4)
             {
                 if (sigma_y.empty()) { sigma_y = dftu_occ_symrot.set_sigma_y_2d(pv); }
                 srho_rot = dftu_occ_symrot.trs_spin_rotate(
@@ -101,7 +102,7 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
     // (symmetry) when crystal symmetry reduces the k-mesh, each ik below is only
     // the irreducible representative; build the AO rotation machinery once so
     // its k-star can be correctly re-expanded (see accumulate_occ_over_kstar).
-    const bool dftu_spacegroup_symmetry = (ModuleSymmetry::Symmetry::symm_flag == 1);
+    const bool dftu_spacegroup_symmetry = (ModuleSymmetry::Symmetry::symm_flag == 1) && !kv.kstars.empty();
     if (dftu_spacegroup_symmetry && !dftu_occ_symrot_built)
     {
         const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
@@ -153,11 +154,13 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
         // Walk (it, ia, l, n=0) and accumulate each qualifying channel
         if (dftu_spacegroup_symmetry)
         {
-            // kv.kstars/Ms_ are sized per spin (kv.kstars.size() == nks_ibz); ik
-            // ranges over both spin blocks when nspin==2, so wrap it back down
-            // (mirrors RI_2D_Comm::split_m2D_ktoR_k's "ik % ik_list.size()").
-            const int ik_ibz = ik % static_cast<int>(kv.kstars.size());
-            accumulate_occ_over_kstar(dftu.occmat(), ucell, *pv, kv, srho, ik_ibz, spin, l_channel);
+            // kv.kstars/Ms_ are sized per spin and indexed by GLOBAL ibz position
+            // (kv.kstars.size() == nks_ibz); ik is local to this k-point pool, so
+            // map it to the global k index first (kv.ik2iktot), then wrap into the
+            // per-spin ibz range (mirrors RI_2D_Comm::split_m2D_ktoR_k's
+            // "ik % ik_list.size()", but on the global index rather than the local one).
+            const int ik_ibz = kv.ik2iktot[ik] % static_cast<int>(kv.kstars.size());
+            accumulate_occ_over_kstar(dftu.occmat(), ucell, *pv, kv, srho, ik_ibz, spin, nspin, l_channel);
         }
         else
         {

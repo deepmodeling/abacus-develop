@@ -135,7 +135,8 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     // atom below) via the same D(k) restoration EXX already uses for its own
     // real-space density matrix (ModuleSymmetry::Symmetry_rotation::restore_dm).
     std::unique_ptr<elecstate::DensityMatrix<TK, double>> dmr_sym;
-    if (!this->dftu->is_occmat_ready() && this->kv_ != nullptr && ModuleSymmetry::Symmetry::symm_flag == 1)
+    if (!this->dftu->is_occmat_ready() && this->kv_ != nullptr && ModuleSymmetry::Symmetry::symm_flag == 1
+        && !this->kv_->kstars.empty())
     {
         if (!this->symrot_built_)
         {
@@ -153,7 +154,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             for (auto& isym_kvd : this->kv_->kstars[ik_ibz]) { kvec_d_full.push_back(isym_kvd.second); }
         }
         const std::vector<std::vector<TK>> dmk_full = this->symrot_.restore_dm(*this->kv_, this->dm_->get_DMK_vector(), *pv);
-        dmr_sym = std::make_unique<elecstate::DensityMatrix<TK, double>>(pv, nspin0, kvec_d_full, static_cast<int>(kvec_d_full.size()));
+        dmr_sym.reset(new elecstate::DensityMatrix<TK, double>(pv, nspin0, kvec_d_full, static_cast<int>(kvec_d_full.size())));
         dmr_sym->init_DMR(*this->dm_->get_DMR_pointer(1));
         dmr_sym->get_DMK_vector() = dmk_full;
         dmr_sym->cal_DMR();
