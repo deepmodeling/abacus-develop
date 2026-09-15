@@ -166,11 +166,16 @@ inline bool sternheimer_weak_q_z_support_contained(double center, double radius,
     return center - radius > margin && center + radius < height - margin;
 }
 
-inline void validate_sternheimer_weak_q_residual(bool converged, double relative, double absolute)
+inline void validate_sternheimer_weak_q_residual(bool converged,
+                                                 double relative,
+                                                 double absolute,
+                                                 double tolerance)
 {
-    if (!converged || !std::isfinite(relative) || relative < 0 || relative > 1e-8
+    if (!std::isfinite(tolerance) || tolerance <= 0)
+        throw std::invalid_argument("Weak q unit residual tolerance must be finite and positive.");
+    if (!converged || !std::isfinite(relative) || relative < 0 || relative > tolerance
         || !std::isfinite(absolute) || absolute < 0)
-        throw std::runtime_error("Weak q unit original augmented residual did not pass 1e-8.");
+        throw std::runtime_error("Weak q unit original augmented residual did not pass requested tolerance.");
 }
 
 // Each column already contains the Ha left-vertex contraction of ONE signed solve.

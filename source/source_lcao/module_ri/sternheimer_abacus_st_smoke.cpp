@@ -3078,7 +3078,10 @@ void run_sternheimer_weak_q_unit(
                           << " worker " << worker_index << '\n';
                     audit.flush();
                     }
-                    validate_sternheimer_weak_q_residual(result.converged, result.relative_residual, result.absolute_residual);
+                    validate_sternheimer_weak_q_residual(result.converged,
+                                                         result.relative_residual,
+                                                         result.absolute_residual,
+                                                         options.residual_tol);
                     if (result.coefficients.size() != static_cast<std::size_t>(nvirtual) + ncoarse
                         || !std::all_of(result.coefficients.begin(), result.coefficients.end(), finite_complex))
                         throw std::runtime_error("Weak q unit nonfinite or incomplete response coefficients.");

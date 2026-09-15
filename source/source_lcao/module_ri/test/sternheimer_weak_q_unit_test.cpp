@@ -115,12 +115,25 @@ TEST(SternheimerWeakQUnit, HaRyAndSpinWeightedColumnMajorSignedSum)
 
 TEST(SternheimerWeakQUnit, OriginalResidualMustBeFiniteAndWithinTolerance)
 {
-    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_weak_q_residual(true, 1e-8, 2e-8));
-    EXPECT_THROW(ModuleRI::validate_sternheimer_weak_q_residual(false, 0, 0), std::runtime_error);
-    EXPECT_THROW(ModuleRI::validate_sternheimer_weak_q_residual(true, 1.01e-8, 1e-9), std::runtime_error);
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_weak_q_residual(true, 1e-8, 2e-8, 1e-8));
+    EXPECT_THROW(ModuleRI::validate_sternheimer_weak_q_residual(false, 0, 0, 1e-8), std::runtime_error);
+    EXPECT_THROW(ModuleRI::validate_sternheimer_weak_q_residual(true, 1.01e-8, 1e-9, 1e-8),
+                 std::runtime_error);
     EXPECT_THROW(ModuleRI::validate_sternheimer_weak_q_residual(
-        true, std::numeric_limits<double>::quiet_NaN(), 0), std::runtime_error);
-    EXPECT_THROW(ModuleRI::validate_sternheimer_weak_q_residual(true, 0, -1), std::runtime_error);
+        true, std::numeric_limits<double>::quiet_NaN(), 0, 1e-8), std::runtime_error);
+    EXPECT_THROW(ModuleRI::validate_sternheimer_weak_q_residual(true, 0, -1, 1e-8), std::runtime_error);
+}
+
+TEST(SternheimerWeakQUnit, OriginalResidualUsesRequestedTolerance)
+{
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_weak_q_residual(true, 5e-7, 2e-8, 1e-6));
+    EXPECT_THROW(ModuleRI::validate_sternheimer_weak_q_residual(true, 1.01e-6, 1e-9, 1e-6),
+                 std::runtime_error);
+    EXPECT_THROW(ModuleRI::validate_sternheimer_weak_q_residual(
+                     true, 1e-8, 1e-9, std::numeric_limits<double>::quiet_NaN()),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::validate_sternheimer_weak_q_residual(true, 1e-8, 1e-9, 0),
+                 std::invalid_argument);
 }
 
 TEST(SternheimerWeakQUnit, ActualCompactDensitySupportIncludesLastInterpolationInterval)
@@ -167,7 +180,7 @@ TEST(SternheimerWeakQUnit, BothSignedSolvesMatchDirectResolventWithUnrotatedSour
                 const auto solved = worker.solve({vertices[j], {}}, options);
                 ASSERT_TRUE(solved.converged);
                 ModuleRI::validate_sternheimer_weak_q_residual(
-                    solved.converged, solved.relative_residual, solved.absolute_residual);
+                    solved.converged, solved.relative_residual, solved.absolute_residual, options.residual_tol);
                 Blocks::Vector column(2, 0.0);
                 for (int i = 0; i != 2; ++i)
                     for (int a = 0; a != 2; ++a)
