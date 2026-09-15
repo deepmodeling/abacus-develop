@@ -5,9 +5,7 @@
 #include <fstream>
 #include <iomanip>
 
-#define private public
 #include "source_basis/module_ao/orb_nonlocal_lm.h"
-#undef private
 
 
 #ifdef __MPI
@@ -65,6 +63,17 @@ protected:
     size_t calc_nk(double const& ecutwfc, double const& dk);
     void change_k(Numerical_Nonlocal_Lm&, double const& ecut, double const& dk);
     bool check_file_match(size_t const& nline, double const* col1, double const* col2, double const& tol, std::string const& fname);
+
+    // Numerical_Nonlocal_Lm declares this fixture a friend, but a TEST_F body
+    // lives in a class derived from it and friendship is not inherited. These
+    // reach the members that have no public accessor, and the private methods.
+    // Everything with an accessor is read through it instead.
+    static const std::string& label_of(const Numerical_Nonlocal_Lm& o) { return o.label; }
+    static int index_proj_of(const Numerical_Nonlocal_Lm& o) { return o.index_proj; }
+    static double kcut_of(const Numerical_Nonlocal_Lm& o) { return o.kcut; }
+    static const double* rab_of(const Numerical_Nonlocal_Lm& o) { return o.rab; }
+    static void freemem(Numerical_Nonlocal_Lm& o) { o.freemem(); }
+    static void renew(Numerical_Nonlocal_Lm& o) { o.renew(); }
 
     // number of beta projectors
     size_t nproj_;
@@ -380,27 +389,27 @@ TEST_F(NumericalNonlocalLmTest, Init) {
     this->init();
 
     for (size_t ip = 0; ip != nproj_; ++ip) {
-        EXPECT_EQ(elem_label_, nnl[ip].label);
-        EXPECT_EQ(index_atom_type_, nnl[ip].index_atom_type);
-        EXPECT_EQ(l_[ip], nnl[ip].angular_momentum_l);
+        EXPECT_EQ(elem_label_, label_of(nnl[ip]));
+        EXPECT_EQ(index_atom_type_, nnl[ip].getType());
+        EXPECT_EQ(l_[ip], nnl[ip].getL());
         EXPECT_EQ(dr_uniform_, nnl[ip].dr_uniform);
-        EXPECT_EQ(nr_[ip], nnl[ip].nr);
-        EXPECT_EQ(r_radial_[nr_[ip]-1], nnl[ip].rcut);
-        EXPECT_EQ(nk_, nnl[ip].nk);
-        EXPECT_EQ(dk_, nnl[ip].dk);
-        
+        EXPECT_EQ(nr_[ip], nnl[ip].getNr());
+        EXPECT_EQ(r_radial_[nr_[ip]-1], nnl[ip].getRcut());
+        EXPECT_EQ(nk_, nnl[ip].getNk());
+        EXPECT_EQ(dk_, nnl[ip].getDk());
+
         // freemem() & renew() will be tested elsewhere
 
         for (int ir = 0; ir != nr_[ip]; ++ir) {
-            EXPECT_EQ(r_radial_[ir], nnl[ip].r_radial[ir]);
-            EXPECT_EQ(rab_[ir], nnl[ip].rab[ir]);
-            EXPECT_EQ(beta_r_[ip][ir], nnl[ip].beta_r[ir]);
+            EXPECT_EQ(r_radial_[ir], nnl[ip].getRadial(ir));
+            EXPECT_EQ(rab_[ir], rab_of(nnl[ip])[ir]);
+            EXPECT_EQ(beta_r_[ip][ir], nnl[ip].getBeta_r(ir));
         }
 
         for (size_t ik = 0; ik != nk_; ++ik) {
-            EXPECT_EQ(ik*dk_, nnl[ip].k_radial[ik]);
+            EXPECT_EQ(ik*dk_, nnl[ip].getKpoint(ik));
         }
-        EXPECT_EQ((nk_-1)*dk_, nnl[ip].kcut);
+        EXPECT_EQ((nk_-1)*dk_, kcut_of(nnl[ip]));
 
         // get_kradial() will be tested elsewhere
     }
@@ -422,13 +431,13 @@ TEST_F(NumericalNonlocalLmTest, Getters) {
         ASSERT_NE(nnl[iproj].getBeta_r(), nullptr);
         ASSERT_NE(nnl[iproj].getBeta_k(), nullptr);
 
-        for (int ir = 0; ir != nnl[iproj].nr; ++ir) {
+        for (int ir = 0; ir != nnl[iproj].getNr(); ++ir) {
             EXPECT_DOUBLE_EQ(nnl[iproj].getRadial(ir), 0.01*ir);
             EXPECT_DOUBLE_EQ(nnl[iproj].getRadial()[ir], 0.01*ir);
             EXPECT_DOUBLE_EQ(nnl[iproj].getBeta_r()[ir], nnl[iproj].getBeta_r(ir));
         }
 
-        for (int ik = 0; ik != nnl[iproj].nk; ++ik) {
+        for (int ik = 0; ik != nnl[iproj].getNk(); ++ik) {
             EXPECT_DOUBLE_EQ(nnl[iproj].getKpoint(ik), ik*0.01);
             EXPECT_DOUBLE_EQ(nnl[iproj].getKpoint()[ik], ik*0.01);
             EXPECT_DOUBLE_EQ(nnl[iproj].getBeta_k()[ik], nnl[iproj].getBeta_k(ik));
@@ -479,31 +488,31 @@ TEST_F(NumericalNonlocalLmTest, DeepCopy) {
     size_t iproj = 3;
     tmp = nnl[iproj];
 
-    EXPECT_EQ(tmp.label, nnl[iproj].label);
-    EXPECT_EQ(tmp.index_atom_type, nnl[iproj].index_atom_type);
-    EXPECT_EQ(tmp.angular_momentum_l, nnl[iproj].angular_momentum_l);
-    EXPECT_EQ(tmp.nr, nnl[iproj].nr);
-    EXPECT_EQ(tmp.nk, nnl[iproj].nk);
-    EXPECT_EQ(tmp.index_proj, nnl[iproj].index_proj);
+    EXPECT_EQ(label_of(tmp), label_of(nnl[iproj]));
+    EXPECT_EQ(tmp.getType(), nnl[iproj].getType());
+    EXPECT_EQ(tmp.getL(), nnl[iproj].getL());
+    EXPECT_EQ(tmp.getNr(), nnl[iproj].getNr());
+    EXPECT_EQ(tmp.getNk(), nnl[iproj].getNk());
+    EXPECT_EQ(index_proj_of(tmp), index_proj_of(nnl[iproj]));
 
-    EXPECT_DOUBLE_EQ(tmp.rcut, nnl[iproj].rcut);
-    EXPECT_DOUBLE_EQ(tmp.kcut, nnl[iproj].kcut);
-    EXPECT_DOUBLE_EQ(tmp.dk, nnl[iproj].dk);
+    EXPECT_DOUBLE_EQ(tmp.getRcut(), nnl[iproj].getRcut());
+    EXPECT_DOUBLE_EQ(kcut_of(tmp), kcut_of(nnl[iproj]));
+    EXPECT_DOUBLE_EQ(tmp.getDk(), nnl[iproj].getDk());
 
     ASSERT_NE(tmp.getRadial(), nullptr);
     ASSERT_NE(tmp.getKpoint(), nullptr);
     ASSERT_NE(tmp.getBeta_k(), nullptr);
     ASSERT_NE(tmp.getBeta_r(), nullptr);
 
-    for (int ir = 0; ir != nnl[iproj].nr; ++ir) {
-        EXPECT_DOUBLE_EQ(tmp.r_radial[ir], nnl[iproj].r_radial[ir]);
-        EXPECT_DOUBLE_EQ(tmp.rab[ir], nnl[iproj].rab[ir]);
-        EXPECT_DOUBLE_EQ(tmp.beta_r[ir], nnl[iproj].beta_r[ir]);
+    for (int ir = 0; ir != nnl[iproj].getNr(); ++ir) {
+        EXPECT_DOUBLE_EQ(tmp.getRadial(ir), nnl[iproj].getRadial(ir));
+        EXPECT_DOUBLE_EQ(rab_of(tmp)[ir], rab_of(nnl[iproj])[ir]);
+        EXPECT_DOUBLE_EQ(tmp.getBeta_r(ir), nnl[iproj].getBeta_r(ir));
     }
 
-    for (int ik = 0; ik != nnl[iproj].nk; ++ik) {
-        EXPECT_DOUBLE_EQ(tmp.k_radial[ik], nnl[iproj].k_radial[ik]);
-        EXPECT_DOUBLE_EQ(tmp.beta_k[ik], nnl[iproj].beta_k[ik]);
+    for (int ik = 0; ik != nnl[iproj].getNk(); ++ik) {
+        EXPECT_DOUBLE_EQ(tmp.getKpoint(ik), nnl[iproj].getKpoint(ik));
+        EXPECT_DOUBLE_EQ(tmp.getBeta_k(ik), nnl[iproj].getBeta_k(ik));
     }
 }
 
@@ -535,7 +544,7 @@ TEST_F(NumericalNonlocalLmTest, R2K2RConsistency) {
     for (size_t iproj = 0; iproj != nnl.size(); ++iproj) {
         Numerical_Nonlocal_Lm tmp;
         tmp = nnl[iproj];
-        this->change_k(tmp, ecut, tmp.dk);
+        this->change_k(tmp, ecut, tmp.getDk());
         EXPECT_LT(err_r2k2r(tmp), 1e-6);
     }
 }
@@ -554,11 +563,11 @@ TEST_F(NumericalNonlocalLmTest, R2K2RConsistencyMany) {
         for (size_t ie = 0; ie != ecut_list.size(); ++ie) {
             Numerical_Nonlocal_Lm tmp;
             tmp = nnl[iproj];
-            this->change_k(tmp, ecut_list[ie], tmp.dk);
+            this->change_k(tmp, ecut_list[ie], tmp.getDk());
             double err = err_r2k2r(tmp);
             std::cout << "proj = " << iproj
                 << "    ecut = "  << std::setw(8) << ecut_list[ie]
-                << "    dk = "    << std::setw(6) << tmp.dk
+                << "    dk = "    << std::setw(6) << tmp.getDk()
                 << "    error = " << std::setw(10) << err 
                 << std::endl;
         }
@@ -584,7 +593,7 @@ TEST_F(NumericalNonlocalLmTest, R2K2RConsistencyMany) {
                 << "    ecut = "  << std::setw(6)  << ecut
                 << "    dk = "    << std::setw(6)  << dk_list[idk]
                 << "    error = " << std::setw(12) << err
-                << "    nk = "    << std::setw(5)  << tmp.nr
+                << "    nk = "    << std::setw(5)  << tmp.getNr()
                 << std::endl;
         }
         std::cout << std::endl;
@@ -597,48 +606,48 @@ TEST_F(NumericalNonlocalLmTest, FreeAndRenew) {
 
     this->init();
 
-    EXPECT_NE(nnl[0].r_radial, nullptr);
-    EXPECT_NE(nnl[0].rab, nullptr);
-    EXPECT_NE(nnl[0].beta_r, nullptr);
+    EXPECT_NE(nnl[0].getRadial(), nullptr);
+    EXPECT_NE(rab_of(nnl[0]), nullptr);
+    EXPECT_NE(nnl[0].getBeta_r(), nullptr);
     EXPECT_NE(nnl[0].beta_uniform, nullptr);
     EXPECT_NE(nnl[0].dbeta_uniform, nullptr);
-    EXPECT_NE(nnl[0].k_radial, nullptr);
-    EXPECT_NE(nnl[0].beta_k, nullptr);
+    EXPECT_NE(nnl[0].getKpoint(), nullptr);
+    EXPECT_NE(nnl[0].getBeta_k(), nullptr);
 
-    nnl[0].freemem();
+    freemem(nnl[0]);
 
-    EXPECT_EQ(nnl[0].r_radial, nullptr);
-    EXPECT_EQ(nnl[0].rab, nullptr);
-    EXPECT_EQ(nnl[0].beta_r, nullptr);
+    EXPECT_EQ(nnl[0].getRadial(), nullptr);
+    EXPECT_EQ(rab_of(nnl[0]), nullptr);
+    EXPECT_EQ(nnl[0].getBeta_r(), nullptr);
     EXPECT_EQ(nnl[0].beta_uniform, nullptr);
     EXPECT_EQ(nnl[0].dbeta_uniform, nullptr);
-    EXPECT_EQ(nnl[0].k_radial, nullptr);
-    EXPECT_EQ(nnl[0].beta_k, nullptr);
+    EXPECT_EQ(nnl[0].getKpoint(), nullptr);
+    EXPECT_EQ(nnl[0].getBeta_k(), nullptr);
 
-    nnl[0].renew();
+    renew(nnl[0]);
 
-    ASSERT_NE(nnl[0].r_radial, nullptr);
-    ASSERT_NE(nnl[0].rab, nullptr);
-    ASSERT_NE(nnl[0].beta_r, nullptr);
+    ASSERT_NE(nnl[0].getRadial(), nullptr);
+    ASSERT_NE(rab_of(nnl[0]), nullptr);
+    ASSERT_NE(nnl[0].getBeta_r(), nullptr);
     ASSERT_NE(nnl[0].beta_uniform, nullptr);
     ASSERT_NE(nnl[0].dbeta_uniform, nullptr);
-    ASSERT_NE(nnl[0].k_radial, nullptr);
-    ASSERT_NE(nnl[0].beta_k, nullptr);
+    ASSERT_NE(nnl[0].getKpoint(), nullptr);
+    ASSERT_NE(nnl[0].getBeta_k(), nullptr);
 
-    for (int ir = 0; ir != nnl[0].nr; ++ir) {
-        EXPECT_DOUBLE_EQ(nnl[0].r_radial[ir], 0.0);
-        EXPECT_DOUBLE_EQ(nnl[0].rab[ir], 0.0);
-        EXPECT_DOUBLE_EQ(nnl[0].beta_r[ir], 0.0);
+    for (int ir = 0; ir != nnl[0].getNr(); ++ir) {
+        EXPECT_DOUBLE_EQ(nnl[0].getRadial(ir), 0.0);
+        EXPECT_DOUBLE_EQ(rab_of(nnl[0])[ir], 0.0);
+        EXPECT_DOUBLE_EQ(nnl[0].getBeta_r(ir), 0.0);
     }
 
     for (int ir = 0; ir != nnl[0].nr_uniform; ++ir) {
         EXPECT_DOUBLE_EQ(nnl[0].beta_uniform[ir], 0.0);
         EXPECT_DOUBLE_EQ(nnl[0].dbeta_uniform[ir], 0.0);
     }
-        
-    for (int ik = 0; ik != nnl[0].nk; ++ik) {
-        EXPECT_DOUBLE_EQ(nnl[0].k_radial[ik], 0.0);
-        EXPECT_DOUBLE_EQ(nnl[0].beta_k[ik], 0.0);
+
+    for (int ik = 0; ik != nnl[0].getNk(); ++ik) {
+        EXPECT_DOUBLE_EQ(nnl[0].getKpoint(ik), 0.0);
+        EXPECT_DOUBLE_EQ(nnl[0].getBeta_k(ik), 0.0);
     }
 }
 
@@ -709,10 +718,10 @@ TEST_F(NumericalNonlocalLmTest, BetaSave) {
         std::string betak_fname = dir+"/O-" + orb[i] + "-proj-k.dat";
         std::string betaru_fname = dir+"/O-" + orb[i] + "-proj-ru.dat";
 
-        EXPECT_EQ(true, this->check_file_match(nnl[i].nr, 
-                    nnl[i].r_radial, nnl[i].beta_r, tol, betar_fname));
-        EXPECT_EQ(true, this->check_file_match(nnl[i].nk, 
-                    nnl[i].k_radial, nnl[i].beta_k, tol, betak_fname));
+        EXPECT_EQ(true, this->check_file_match(nnl[i].getNr(),
+                    nnl[i].getRadial(), nnl[i].getBeta_r(), tol, betar_fname));
+        EXPECT_EQ(true, this->check_file_match(nnl[i].getNk(),
+                    nnl[i].getKpoint(), nnl[i].getBeta_k(), tol, betak_fname));
 
         double* r_uniform_mesh = new double[nnl[i].nr_uniform];
         for (int ir = 0; ir != nnl[i].nr_uniform; ++ir) {

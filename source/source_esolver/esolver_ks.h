@@ -62,7 +62,7 @@ class ESolver_KS : public ESolver_FP
     //! nonlocal pseudopotentials
     pseudopot_cell_vnl ppcell;
 
-    //! DFT+U method (base-class pointer; PW news Plus_U_Base, LCAO news Plus_U).
+    //! DFT+U method (PW and LCAO both news Plus_U_Base).
     //! Owned by ESolver_KS via unique_ptr; released automatically in ~ESolver_KS.
     std::unique_ptr<Plus_U_Base> dftu_;
 

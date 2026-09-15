@@ -16,6 +16,13 @@ namespace Parallel
  */
 ParaWorld make_pw_world();
 
+/**
+ * @brief Wrap the legacy BP_WORLD as a band domain, or return a serial domain.
+ * The caller must keep the underlying communicator alive while using the domain.
+ * Remove this bridge once callers receive the domain from driver initialization.
+ */
+ParaWorld make_band_world();
+
 } // namespace Parallel
 
 #endif // PARA_BRIDGE_H

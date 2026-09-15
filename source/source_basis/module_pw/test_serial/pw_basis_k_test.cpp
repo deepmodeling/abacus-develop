@@ -26,13 +26,9 @@
  *     - collect_local_pw: get gk2, gcar for local npw plane waves
  */
 
-#define protected public
-#define private public
 #include "../pw_basis_k.h"
 #include "../pw_basis.h"
 #include "../pw_gatherscatter.h"
-#undef private
-#undef protected
 
 class PWBasisKTEST: public testing::Test
 {
@@ -47,13 +43,13 @@ TEST_F(PWBasisKTEST,Constructor)
 {
 	ModulePW::PW_Basis_K basis_k2(device_flag, precision_double);
 	EXPECT_EQ(basis_k2.classname,"PW_Basis_K");
-	EXPECT_EQ(basis_k2.device,"cpu");
-	EXPECT_EQ(basis_k2.fft_bundle.device,"cpu");
-	EXPECT_EQ(basis_k2.precision,"double");
-	EXPECT_EQ(basis_k2.fft_bundle.precision,"double");
+	EXPECT_EQ(basis_k2.get_device(),"cpu");
+	EXPECT_EQ(basis_k2.fft_bundle.get_device(),"cpu");
+	EXPECT_EQ(basis_k2.get_precision(),"double");
+	EXPECT_EQ(basis_k2.fft_bundle.get_precision(),"double");
 	ModulePW::PW_Basis_K basis_k3(device_flag, precision_single);
-	EXPECT_EQ(basis_k3.precision,"single");
-	EXPECT_EQ(basis_k3.fft_bundle.precision,"single");
+	EXPECT_EQ(basis_k3.get_precision(),"single");
+	EXPECT_EQ(basis_k3.fft_bundle.get_precision(),"single");
 }
 
 TEST_F(PWBasisKTEST,Initgrids1)

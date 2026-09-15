@@ -31,14 +31,12 @@ protected:
 
     // Pseudopot_upf declares this fixture a friend, but a TEST_F body lives in
     // a class derived from it, and friendship is not inherited -- so the calls
-    // into the private reader and the complete_default_* helpers happen here.
+    // into the private reader and complete_default_atom happen here.
+    // complete_default_h holds no state and is a plain function in namespace
+    // pseudopot, so it is called directly.
     int read_pseudo_upf201(std::ifstream& ifs, Atom_pseudo& pp) const
     {
         return upf->read_pseudo_upf201(ifs, pp);
-    }
-    void complete_default_h(Atom_pseudo& pp) const
-    {
-        upf->complete_default_h(pp);
     }
     void complete_default_atom(Atom_pseudo& pp, const double pseudo_rcut) const
     {
@@ -53,7 +51,7 @@ TEST_F(NCPPTest, SetPseudoH)
     ifs.open("./support/C.upf");
     read_pseudo_upf201(ifs, *ncpp);
     //set_pseudo_h
-    complete_default_h(*ncpp);
+    pseudopot::complete_default_h(*ncpp);
 
     if(!ncpp->has_so)
     {
@@ -78,7 +76,7 @@ TEST_F(NCPPTest, SetPseudoAtom)
     const double pseudo_rcut = 15.0;
     read_pseudo_upf201(ifs, *ncpp);
     //set_pseudo_atom
-    complete_default_h(*ncpp);
+    pseudopot::complete_default_h(*ncpp);
     complete_default_atom(*ncpp, pseudo_rcut);
     EXPECT_EQ(ncpp->rcut,pseudo_rcut);
 

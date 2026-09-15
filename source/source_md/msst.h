@@ -19,7 +19,7 @@ class MSST : public MD_base
     ~MSST();
 
   private:
-    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp);
     void first_half(std::ofstream& ofs);
     void second_half();
     void print_md(std::ofstream& ofs, const bool& cal_stress);

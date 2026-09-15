@@ -19,7 +19,7 @@ class Langevin : public MD_base
     Langevin(const Parameter& param_in, MDCell& mdcell_in);
 
   private:
-    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp);
 
     void first_half(std::ofstream& ofs);
 

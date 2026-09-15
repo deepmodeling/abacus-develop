@@ -19,6 +19,10 @@ class Lattice_Change_CG : public CG_Base
     bool start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot, std::ofstream& ofs, std::vector<double>& etot_info, const Relax_Criteria& criteria);
 
   private:
+    // Unit tests need to inspect the saved previous-step state and to seed
+    // move0 in order to drive the trial/no-trial branches of start().
+    friend class LatticeChangeCGTest;
+
     std::vector<double> lat0;
     std::vector<double> grad0;
     std::vector<double> cg_grad0;

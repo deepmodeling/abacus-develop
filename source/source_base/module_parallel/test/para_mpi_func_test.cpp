@@ -80,12 +80,12 @@ TEST(ParaMpiFuncTest, ReduceMinMaxSerial)
     EXPECT_DOUBLE_EQ(v, 7.5);
 }
 
-TEST(ParaMpiFuncTest, GatherIntSerial)
+TEST(ParaMpiFuncTest, AllgatherIntSerial)
 {
     auto world = Parallel::ParaWorld::serial("test");
     int v = 99;
     int all[1] = {0};
-    Parallel::gather_int(v, all, world);
+    Parallel::allgather_int(v, all, world);
     EXPECT_EQ(all[0], 99);
 }
 

@@ -199,12 +199,14 @@ template <>
 void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
 {
     DensityMatrix_Tools::cal_DMR(*this, this->_DMR, ik_in);
+    this->_dmr_ready = true;
 }
 
 template <>
 void DensityMatrix<std::complex<double>, std::complex<double>>::cal_DMR(const int ik_in)
 {
     DensityMatrix_Tools::cal_DMR(*this, this->_DMR, ik_in);
+    this->_dmr_ready = true;
 }
 
 
@@ -363,12 +365,14 @@ template <>
 void DensityMatrix<std::complex<double>, double>::cal_DMR_td(const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid, const ModuleBase::Vector3<double> At, const int ik_in)
 {
     DensityMatrix_Tools::cal_DMR_td(*this, this->_DMR, phase_hybrid, At, ik_in);
+    this->_dmr_ready = true;
 }
 
 template <>
 void DensityMatrix<std::complex<double>, std::complex<double>>::cal_DMR_td(const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid, const ModuleBase::Vector3<double> At, const int ik_in)
 {
     DensityMatrix_Tools::cal_DMR_td(*this, this->_DMR, phase_hybrid, At, ik_in);
+    this->_dmr_ready = true;
 }
 
 
@@ -544,6 +548,7 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
         }
     }
     ModuleBase::timer::end("DensityMatrix", "cal_DMR");
+    this->_dmr_ready = true;
 }
 
 

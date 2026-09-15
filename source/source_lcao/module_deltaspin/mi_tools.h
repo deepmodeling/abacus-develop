@@ -1,10 +1,11 @@
 #ifndef MI_TOOLS_H
 #define MI_TOOLS_H
 
+#include "source_base/vector3.h"
+
+#include <array>
 #include <complex>
 #include <vector>
-
-#include "source_base/vector3.h"
 
 /**
  * @file mi_tools.h
@@ -24,16 +25,31 @@ namespace spinconstrain
 {
 
 /**
+ * @brief Convert a Cartesian Pauli vector to a spinor-space operator.
+ *
+ * For sigma_y = [[0, -i], [i, 0]], lambda dot sigma is stored in row-major
+ * order as {lambda_z, lambda_x - i lambda_y,
+ *           lambda_x + i lambda_y, -lambda_z}.
+ */
+inline std::array<std::complex<double>, 4> pauli_vector_to_spinor(const ModuleBase::Vector3<double>& lambda)
+{
+    return {{std::complex<double>(lambda.z, 0.0),
+             std::complex<double>(lambda.x, -lambda.y),
+             std::complex<double>(lambda.x, lambda.y),
+             std::complex<double>(-lambda.z, 0.0)}};
+}
+
+/**
  * @brief Convert spinor occupation matrix to magnetic moment vector using Pauli matrices.
  *
- * @details For a two-component spinor wavefunction, the spin density matrix is:
- *   rho = |a|^2    a*b  |   = | (1+Mz)/2    (Mx-iMy)/2 |
- *         |b*a    |b|^2  |     | (Mx+iMy)/2   (1-Mz)/2  |
- * The magnetic moment components are extracted via Pauli matrix traces:
- *   Mx = Tr(rho * sigma_x) = occ[1] + occ[2]           (real part)
- *   My = Tr(rho * sigma_y) = -Im(occ[1] - occ[2])      (from sigma_y = [[0,-i],[i,0]])
- *   Mz = Tr(rho * sigma_z) = occ[0] - occ[3]            (real part)
- * where occ = {|a|^2, a*b, b*a, |b|^2} from becp coefficients.
+ * @details For a two-component spinor wavefunction, the occupation array is:
+ *   occ = |a|^2    a^*b  |   = | (1+Mz)/2    (Mx+iMy)/2 |
+ *         |b^*a    |b|^2 |     | (Mx-iMy)/2   (1-Mz)/2  |
+ * In this bra-first storage convention, the magnetic moment components are:
+ *   Mx = occ[1] + occ[2]           (real part)
+ *   My = Im(occ[1] - occ[2])
+ *   Mz = occ[0] - occ[3]           (real part)
+ * where occ = {|a|^2, a^*b, b^*a, |b|^2} from becp coefficients.
  *
  * @param occ 4-element array of occupation matrix elements (complex)
  * @param weight k-point weight for integration
