@@ -45,7 +45,7 @@ namespace LR
 #ifdef __EXX
                 exx_lri, exx_alpha,
 #endif
-                pot, kv, pX, pc, pmat, spin_type, PARAM.globalv.global_out_dir)
+                pot, kv, pX, pc, pmat, spin_type, PARAM.globalv.global_readin_dir, PARAM.globalv.global_out_dir)
         {
             ModuleBase::TITLE("Z_vector_R", "Z_vector_R");
 

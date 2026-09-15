@@ -43,7 +43,7 @@ namespace LR
 #ifdef __EXX
                 exx_lri, exx_alpha,
 #endif
-                pot_hxc_gs, kv, pX, pc, pmat, spin_type, PARAM.globalv.global_out_dir)
+                pot_hxc_gs, kv, pX, pc, pmat, spin_type, PARAM.globalv.global_readin_dir, PARAM.globalv.global_out_dir)
         {
             ModuleBase::TITLE("Z_vector_L", "Z_vector_L");
             this->DM_trans = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
