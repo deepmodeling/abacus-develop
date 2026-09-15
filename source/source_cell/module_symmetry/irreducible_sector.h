@@ -54,8 +54,12 @@ namespace ModuleSymmetry
 
         //--------------------------------------------------------------------------------
         /// The main function to find irreducible sector: {abR}
+        /// @param output_dir  if non-empty, write_irreducible_sector() dumps a debug listing to
+        ///                    <output_dir>/irreducible_sector.txt (callers pass PARAM.globalv.global_out_dir;
+        ///                    kept as an explicit argument rather than a PARAM read so this LibRI-free
+        ///                    class has no module_parameter link dependency).
         void find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st,
-            const std::vector<TC>& Rs, const TC& period, const Lattice& lat);
+            const std::vector<TC>& Rs, const TC& period, const Lattice& lat, const std::string& output_dir = "");
         const std::map<Tap, std::set<TC>>& get_irreducible_sector()const { return this->irreducible_sector_; }
         // const std::map<int, std::set<std::pair<int, TC>>> convirt_irreducible_sector() {};
         //--------------------------------------------------------------------------------
@@ -104,7 +108,7 @@ namespace ModuleSymmetry
 
         void output_full_map_to_irreducible_sector(const int nat);
         void output_sector_star();
-        void write_irreducible_sector();
+        void write_irreducible_sector(const std::string& output_dir);
 
         //--------------------------------------------------------------------------------
         /// The sub functions judge special symmetry

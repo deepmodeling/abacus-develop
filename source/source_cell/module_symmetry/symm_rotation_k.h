@@ -42,9 +42,9 @@ namespace ModuleSymmetry
         //--------------------------------------------------------------------------------
         // setters
         void find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st,
-            const std::vector<TC>& Rs, const TC& period, const Lattice& lat)
+            const std::vector<TC>& Rs, const TC& period, const Lattice& lat, const std::string& output_dir = "")
         {
-            this->irs_.find_irreducible_sector(symm, atoms, st, Rs, period, lat);
+            this->irs_.find_irreducible_sector(symm, atoms, st, Rs, period, lat, output_dir);
         }
         void set_abfs_Lmax(const int l) { this->abfs_Lmax_ = l; }
         //--------------------------------------------------------------------------------
@@ -53,8 +53,11 @@ namespace ModuleSymmetry
         /// The top-level calculation interface of this class. calculate the rotation matrix in AO representation: M
         /// only need once call in each ion step (decided by the configuration)
         /// @param kstars  equal k points to each ibz-kpont, corresponding to a certain symmetry operations.
+        /// @param nspin  stored as a member so restore_dm()/contruct_2d_rot_mat_ao() do not each
+        ///               need PARAM.inp.nspin (keeps this LibRI-free class free of a module_parameter
+        ///               link dependency; every existing caller already has nspin in scope).
         void cal_Ms(const K_Vectors& kv,
-            const UnitCell& ucell, const Parallel_2D& pv);
+            const UnitCell& ucell, const Parallel_2D& pv, const int nspin);
 
         /// Use calculated M matrix to recover D(k) from D(k_ibz): D(k) = M(R, k)^\dagger D(k_ibz) M(R, k)
         /// the link "ik_ibz-isym-ik" can be found in kstars: k_bz = gmat[isym](k)
@@ -109,11 +112,12 @@ namespace ModuleSymmetry
         /// test-only: inject Ms_/little_groups_/nsym_ directly, bypassing cal_Ms(), so restore_dm()
         /// can be unit-tested against synthetic k-stars without a real UnitCell/K_Vectors setup.
         void set_density_rotations_for_testing(const std::vector<std::map<int, std::vector<std::complex<double>>>>& Ms,
-            const std::vector<std::vector<int>>& little_groups, const int nsym)
+            const std::vector<std::vector<int>>& little_groups, const int nsym, const int nspin)
         {
             this->Ms_ = Ms;
             this->little_groups_ = little_groups;
             this->nsym_ = nsym;
+            this->nspin_ = nspin;
         }
 
         //--------------------------------------------------------------------------------
@@ -122,6 +126,11 @@ namespace ModuleSymmetry
         static std::vector<TC> get_bvk_cells(const TC& period);
 
     protected:
+        /// set by cal_Ms() (or set_density_rotations_for_testing()); avoids a PARAM.inp.nspin
+        /// read in restore_dm()/contruct_2d_rot_mat_ao(), which would otherwise pull a
+        /// module_parameter link dependency into every target that links this LibRI-free class.
+        int nspin_ = 1;
+
         int nsym_ = 1;
         /// (nspin=4, magnetic) number of ANTIUNITARY elements Theta*g of the Shubnikov group.
         /// Their orbital rotations / return lattices / Ms are appended after the nsym_ unitary

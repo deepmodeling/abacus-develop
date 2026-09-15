@@ -1,6 +1,5 @@
 #include "symm_rotation_k.h"
 #include "source_base/constants.h"
-#include "source_io/module_parameter/parameter.h"
 #include <cmath>
 #include "source_base/parallel_reduce.h"
 #include "source_base/parallel_global.h"
@@ -23,11 +22,12 @@ namespace ModuleSymmetry
     }
 
     void Symmetry_rotation_k::cal_Ms(const K_Vectors& kv,
-        const UnitCell& ucell, const Parallel_2D& pv)
+        const UnitCell& ucell, const Parallel_2D& pv, const int nspin)
     {
         ModuleBase::TITLE("Symmetry_rotation_k", "cal_Ms");
         ModuleBase::timer::start("Symmetry_rotation_k", "cal_Ms");
 
+        this->nspin_ = nspin;
         this->nsym_ = ucell.symm.nrotk;
         this->nanti_ = ucell.symm.nrotk_anti;
         this->magnetic_nspin4_ = ucell.symm.magnetic_nspin4;
@@ -51,7 +51,7 @@ namespace ModuleSymmetry
         // For an antiunitary element Theta*g only the spatial part g enters M here; the Theta
         // (sigma_y (.)^* sigma_y) is applied afterwards in restore_dm.
         std::vector<SpinRotation::Su2> spin_U(nop_tot, SpinRotation::Su2{ 1.0, 0.0, 0.0, 1.0 });
-        if (PARAM.inp.nspin == 4)
+        if (this->nspin_ == 4)
         {
             for (int i = 0;i < nop_tot;++i) { spin_U[i] = SpinRotation::so3_to_su2(gmatc[i]); }
         }
@@ -124,13 +124,13 @@ namespace ModuleSymmetry
         ModuleBase::TITLE("Symmetry_rotation_k", "restore_dm");
         ModuleBase::timer::start("Symmetry_rotation_k", "restore_dm");
         std::vector<std::vector<std::complex<double>>> dm_k_full;
-        int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;
+        int nspin0 = this->nspin_ == 2 ? 2 : 1;
         dm_k_full.reserve(kv.get_nkstot_nospin() * nspin0); //nkstot_nospin didn't doubled by spin
         int nk = kv.get_nkstot() / nspin0;
 
         // (nspin=4) Sigma_y = I (x) sigma_y for the time-reversal spin flip; k-independent, build once.
         std::vector<std::complex<double>> sigma_y;
-        if (PARAM.inp.nspin == 4) { sigma_y = this->set_sigma_y_2d(pv); }
+        if (this->nspin_ == 4) { sigma_y = this->set_sigma_y_2d(pv); }
 
         for (int is = 0;is < nspin0;++is)
         {
@@ -181,7 +181,7 @@ namespace ModuleSymmetry
                         //  - otherwise (grey group / nspin<4): index i+nsym_ is Theta*gmatrix[i],
                         //    i.e. the unitary operation i, whose Ms is stored under key i.
                         const int isym_M = this->magnetic_nspin4_ ? isym_kvd.first : (isym_kvd.first - nsym_);
-                        if (PARAM.inp.nspin == 4)
+                        if (this->nspin_ == 4)
                         {
                             // m=0: gray group: the space-group part of anti-unitary elements are the same of the unitary elements, isym_M < nsym_
                             // m!=0: Shubnikov group: using different space-group part of anti-unitary elements stored in gmatrix_anti with isym_M >= nsym_
@@ -378,7 +378,7 @@ namespace ModuleSymmetry
     std::vector<std::complex<double>> Symmetry_rotation_k::contruct_2d_rot_mat_ao(const Symmetry& symm, const Atom* atoms, const Statistics& cell_st,
         const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv, const SpinRotation::Su2& spin_U) const
     {
-        const bool soc = (PARAM.inp.nspin == 4);
+        const bool soc = (this->nspin_ == 4);
         const int npol = soc ? 2 : 1;  // spinor: global AO index is spin-fast interleaved, I = npol*iw_orb + s
         std::vector<std::complex<double>> M_isym(pv.get_local_size(), 0.0);
         // isym >= symm.nrotk addresses the antiunitary coset (spatial part gmatrix_anti[isym-nrotk]),

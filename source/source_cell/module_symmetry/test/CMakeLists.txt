@@ -4,12 +4,12 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 AddTest(
   TARGET MODULE_CELL_SYMMETRY_analysis
-  LIBS parameter base device symmetry
+  LIBS base device symmetry
   SOURCES symm_test.cpp symm_test_analysis.cpp
 )
 AddTest(
   TARGET MODULE_CELL_SYMMETRY_symtrz
-  LIBS parameter base device symmetry
+  LIBS base device symmetry
   SOURCES symm_test.cpp symm_test_symtrz.cpp
 )
 AddTest(

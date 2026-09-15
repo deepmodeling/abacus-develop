@@ -107,7 +107,7 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
         const std::array<int, 3> period{ kv.nmp[0], kv.nmp[1], kv.nmp[2] };
         dftu_occ_symrot.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
             ModuleSymmetry::Symmetry_rotation_k::get_bvk_cells(period), period, ucell.lat);
-        dftu_occ_symrot.cal_Ms(kv, ucell, *pv);
+        dftu_occ_symrot.cal_Ms(kv, ucell, *pv, nspin);
         dftu_occ_symrot_built = true;
     }
 

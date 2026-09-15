@@ -143,7 +143,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             // for return_lattice to calculate Ms
             this->symrot_.find_irreducible_sector(this->ucell->symm, this->ucell->atoms, this->ucell->st,
                 ModuleSymmetry::Symmetry_rotation_k::get_bvk_cells(period), period, this->ucell->lat);
-            this->symrot_.cal_Ms(*this->kv_, *this->ucell, *pv);
+            this->symrot_.cal_Ms(*this->kv_, *this->ucell, *pv, this->nspin);
             this->symrot_built_ = true;
         }
         const int nspin0 = (this->nspin == 2) ? 2 : 1;
