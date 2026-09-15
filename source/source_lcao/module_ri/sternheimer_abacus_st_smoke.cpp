@@ -2547,6 +2547,8 @@ void run_sternheimer_weak_q_unit(
     const auto weak_preconditioner_mode = sternheimer_weak_preconditioner_mode();
     const double weak_residual_tolerance = sternheimer_weak_residual_tolerance();
     const auto& pair = response_plan.kq_pairs.at(unit.source_k - 1);
+    const int coulomb_reader_iq
+        = sternheimer_coulomb_reader_q_index_one_based(records, response_plan.iq);
     if (pair.source_index != unit.source_k - 1)
         throw std::invalid_argument("Weak q unit full-k source does not match the response plan.");
     const auto& source_record = records.at(response_plan.record_index_by_global_k.at(pair.source_index));
@@ -2659,7 +2661,8 @@ void run_sternheimer_weak_q_unit(
     manifest << "slab_z_length_bohr " << slab_height << "\nz_support_contained "
              << (z_support_contained ? "yes" : "no") << "\nz_support_treatment no_atom_rewrapping\n"
              << support_report.str();
-    for (const auto& generated_path : find_coulomb_v1_rank_files(response_plan.iq, GlobalV::NPROC))
+    manifest << "coulomb_reader_iq " << coulomb_reader_iq << '\n';
+    for (const auto& generated_path : find_coulomb_v1_rank_files(coulomb_reader_iq, GlobalV::NPROC))
     {
         std::string path = generated_path;
         if (const char* directory = std::getenv("WEAK_Q_COULOMB_REFERENCE_DIR"))
@@ -2744,7 +2747,8 @@ void run_sternheimer_weak_q_unit(
     // Coulomb-only mode stops here, before NAO blocks or any response equation.
     auto coulomb = output(stem + "_coulomb.dat");
     identity(coulomb);
-    coulomb << "input_manifest_sha256 " << input_manifest_sha256
+    coulomb << "coulomb_reader_iq " << coulomb_reader_iq
+            << "\ninput_manifest_sha256 " << input_manifest_sha256
             << "\nintegral_representation density_potential_Ha\n"
             << "integral_occupation_weighted no\nkernel_matched_to_ewald no\nz_support_contained "
             << (z_support_contained ? "yes" : "no") << '\n';

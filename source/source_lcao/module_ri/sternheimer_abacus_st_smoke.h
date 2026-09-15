@@ -277,6 +277,35 @@ inline std::vector<int> sternheimer_canonical_q_indices_one_based(
     return representatives;
 }
 
+inline int sternheimer_coulomb_reader_q_index_one_based(
+    const std::vector<SternheimerLCAOOccupiedKPoint>& records,
+    const int full_q_index)
+{
+    if (records.empty() || full_q_index <= 0
+        || full_q_index > static_cast<int>(records.size()))
+    {
+        throw std::invalid_argument("Cannot map an invalid full-q index to the Coulomb reader-v1 star.");
+    }
+    const int global_q_index = full_q_index - 1;
+    const SternheimerLCAOOccupiedKPoint* selected = nullptr;
+    for (const auto& record : records)
+    {
+        if (record.global_k_index == global_q_index)
+        {
+            if (selected != nullptr)
+            {
+                throw std::invalid_argument("Coulomb reader-v1 q mapping found a duplicate full-q record.");
+            }
+            selected = &record;
+        }
+    }
+    if (selected == nullptr || selected->zero_order_k_index < 0)
+    {
+        throw std::invalid_argument("Coulomb reader-v1 q mapping found incomplete zero-order metadata.");
+    }
+    return selected->zero_order_k_index + 1;
+}
+
 inline bool sternheimer_lcao_sos_diagnostic_enabled()
 {
     const char* raw = std::getenv("ABACUS_STERNHEIMER_LCAO_SOS_DIAG");

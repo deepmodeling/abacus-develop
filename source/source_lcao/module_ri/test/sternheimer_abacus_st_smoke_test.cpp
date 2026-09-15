@@ -428,7 +428,26 @@ TEST(SternheimerABACUSSTSmoke, SelectsZeroOrderSourceByResponseMode)
     EXPECT_TRUE(ModuleRI::sternheimer_uses_lcao_zero_order(true));
 }
 
-TEST(SternheimerABACUSSTSmoke, SelectsExplicitABFSForPerturbationChannels)
+TEST(SternheimerABACUSSTSmoke, MapsCanonicalFullQIndexToReaderV1StarIndex)
+{
+    auto q0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 0.25);
+    auto qx = make_occupied_kpoint(1, 1, 0, {0.25, 0.0, 0.0}, 0.25);
+    auto qx_partner = make_occupied_kpoint(2, 2, 0, {-0.25, 0.0, 0.0}, 0.25);
+    auto qy = make_occupied_kpoint(3, 3, 0, {0.0, 0.25, 0.0}, 0.25);
+    qx_partner.zero_order_k_index = 1;
+    qx_partner.symmetry_spatial_isym = 2;
+    qy.zero_order_k_index = 2;
+
+    const std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> records{
+        q0, qx, qx_partner, qy};
+    EXPECT_EQ(ModuleRI::sternheimer_coulomb_reader_q_index_one_based(records, 1), 1);
+    EXPECT_EQ(ModuleRI::sternheimer_coulomb_reader_q_index_one_based(records, 2), 2);
+    EXPECT_EQ(ModuleRI::sternheimer_coulomb_reader_q_index_one_based(records, 4), 3);
+    EXPECT_THROW(ModuleRI::sternheimer_coulomb_reader_q_index_one_based(records, 0),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, SelectsEveryGammaSpinRecordForMolecularResponse)
 {
     EXPECT_EQ(ModuleRI::sternheimer_abfs_perturbation_source({}), "product_pca");
     EXPECT_EQ(ModuleRI::sternheimer_abfs_perturbation_source({"H-fixed.abfs"}), "explicit_abfs");
