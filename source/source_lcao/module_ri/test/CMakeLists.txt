@@ -185,6 +185,12 @@ AddTest(
   SOURCES sternheimer_weak_augmented_test.cpp ../sternheimer_weak_augmented.cpp ../sternheimer_rpa.cpp ../../../source_base/module_external/blas_connector_matrix.cpp
 )
 AddTest(
+  TARGET MODULE_RI_sternheimer_weak_preconditioner_test
+  LIBS ${STERNHEIMER_RPA_TEST_LIBS}
+  SOURCES sternheimer_weak_preconditioner_test.cpp ../sternheimer_weak_preconditioner.cpp
+          ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_kq.cpp
+)
+AddTest(
   TARGET MODULE_RI_sternheimer_weak_q_unit_test
   LIBS ${STERNHEIMER_RPA_TEST_LIBS}
   SOURCES sternheimer_weak_q_unit_test.cpp ../sternheimer_kq.cpp
