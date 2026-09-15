@@ -1,22 +1,4 @@
-// Pull the whole standard-library closure in before the private->public
-// define below: the cell/qlist headers drag in <sstream> and friends whose
-// internals break when compiled with `private` redefined (same pattern as
-// the test translation units themselves).
-#include <algorithm>
-#include <cmath>
-#include <complex>
-#include <fstream>
-#include <functional>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <sstream>
-#include <string>
-#include <vector>
-
-#define private public
 #include "dfpt_serial_fixture.h"
-#undef private
 
 #include "source_base/constants.h"
 

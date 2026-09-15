@@ -2,20 +2,18 @@
 #include "gtest/gtest.h"
 #include <iostream>
 #include <streambuf>
-#define private public
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
+#include "source_cell/magnetism.h"
 #include "source_cell/pseudo.h"
 #include "source_cell/qlist.h"
 #include "source_cell/unitcell.h"
-#include "source_cell/magnetism.h"
-#undef private
-#include "source_base/parallel_global.h"
-#include "source_base/global_variable.h"
-#include "source_estate/module_charge/charge_mixing.h"
-#include "source_pw/module_pwdft/dftu_base.h"
-#include "source_pw/module_dfpt/dfpt_pw.h"
 #include "dfpt_stru_fixture.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_global.h"
+#include "source_estate/module_charge/charge_mixing.h"
+#include "source_pw/module_dfpt/dfpt_pw.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 
 // ctor/dtor stubs for the cell/spepot/charge link closures live in the
 // shared dfpt_test_mocks.cpp compiled into every DFPT test binary.
@@ -66,8 +64,18 @@ TEST_F(DFPT_PWRunTest, RunsPerIrrepLoopForAllQ)
     dfpt.set_max_iter(10);
     psi::Psi<std::complex<double>> psi;
     // skeleton mode: no bases wired (design-phase fallback of the irrep loop)
-    dfpt.init(ucell, psi, nullptr, nullptr, nullptr, std::vector<double>(),
-              ModuleBase::matrix(), ModuleBase::matrix(), nullptr, 1.0, 15.0, nullptr);
+    dfpt.init(ucell,
+              psi,
+              nullptr,
+              nullptr,
+              nullptr,
+              std::vector<double>(),
+              ModuleBase::matrix(),
+              ModuleBase::matrix(),
+              nullptr,
+              1.0,
+              15.0,
+              nullptr);
     dfpt.run();
 
     // each of the 4 irreducible q points must expose 3*nat phonon modes
@@ -82,8 +90,18 @@ TEST_F(DFPT_PWRunTest, DielectricAndBornAreExposed)
 {
     dfpt.set_qmesh(1, 1, 1); // Gamma-only q mesh
     psi::Psi<std::complex<double>> psi;
-    dfpt.init(ucell, psi, nullptr, nullptr, nullptr, std::vector<double>(),
-              ModuleBase::matrix(), ModuleBase::matrix(), nullptr, 1.0, 15.0, nullptr);
+    dfpt.init(ucell,
+              psi,
+              nullptr,
+              nullptr,
+              nullptr,
+              std::vector<double>(),
+              ModuleBase::matrix(),
+              ModuleBase::matrix(),
+              nullptr,
+              1.0,
+              15.0,
+              nullptr);
     dfpt.run();
 
     // design-phase stubs return default-constructed matrices
@@ -116,9 +134,22 @@ TEST_F(DFPT_PWRunTest, DftuReservationWithProviderRejectsInit)
     psi::Psi<std::complex<double>> psi;
     // death tests match the child's stderr, while WARNING_QUIT writes the
     // NOTICE block to std::cout; bridge the two inside the statement
-    EXPECT_EXIT({
-        std::cout.rdbuf(std::cerr.rdbuf());
-        dfpt.init(ucell, psi, nullptr, nullptr, nullptr, std::vector<double>(),
-                  ModuleBase::matrix(), ModuleBase::matrix(), nullptr, 1.0, 15.0, &dftu);
-    }, ::testing::ExitedWithCode(1), "DFT\\+U with DFPT is not supported");
+    EXPECT_EXIT(
+        {
+            std::cout.rdbuf(std::cerr.rdbuf());
+            dfpt.init(ucell,
+                      psi,
+                      nullptr,
+                      nullptr,
+                      nullptr,
+                      std::vector<double>(),
+                      ModuleBase::matrix(),
+                      ModuleBase::matrix(),
+                      nullptr,
+                      1.0,
+                      15.0,
+                      &dftu);
+        },
+        ::testing::ExitedWithCode(1),
+        "DFT\\+U with DFPT is not supported");
 }

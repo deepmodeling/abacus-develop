@@ -4,8 +4,9 @@
 #include <vector>
 #include <memory>
 #include "source_base/macros.h"   // GetRealType
-#include "source_hamilt/hamilt.h"
+#include "source_base/matrix_block.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_psi/psi.h"
 #include "module_pexsi/pexsi_solver.h"
 
 namespace hsolver
@@ -19,8 +20,15 @@ class DiagoPexsi
     static std::vector<double> mu_buffer;
 
   public:
-    DiagoPexsi(const Parallel_Orbitals* ParaV_in, const int nspin_in, const int nlocal_in, const double nelec_in);
-    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
+    DiagoPexsi(const Parallel_Orbitals* ParaV_in,
+               const int nspin_in,
+               const int nlocal_in,
+               const double nelec_in,
+               const int world_nproc_in);
+    void diag(ModuleBase::MatrixBlock<T>& h_mat,
+              ModuleBase::MatrixBlock<T>& s_mat,
+              psi::Psi<T>& psi,
+              Real* eigenvalue_in);
     const Parallel_Orbitals* ParaV = nullptr;
     std::vector<T*> DM;
     std::vector<T*> EDM;
@@ -37,6 +45,7 @@ class DiagoPexsi
     /// global dimension of the NAO Hamiltonian
     int nlocal = 0;
     double nelec = 0.0;
+    int world_nproc = 1;
 };
 } // namespace hsolver
 

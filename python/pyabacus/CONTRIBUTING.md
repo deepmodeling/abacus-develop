@@ -375,7 +375,7 @@ To contribute to the `pyabacus` project, follow these steps:
            
        @staticmethod
        def sphbes_zeros(l: int, n: int, zeros: NDArray[np.float64]) -> None: 
-           super().sphbes_zeros(l, n, zeros)
+           _Sphbes.sphbes_zeros(l, n, zeros)
    ```
 
 ## Conclusion

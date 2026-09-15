@@ -38,7 +38,7 @@ ESolver_DoubleXC<TK, TR>::~ESolver_DoubleXC()
 template <typename TK, typename TR>
 void ESolver_DoubleXC<TK, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_DoubleXC", "before_all_runners");
@@ -148,11 +148,12 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                                                              this->two_center_bundle_,
                                                              this->orb_,
                                                              this->dmat_base.dm,
-                                                             &this->dftu,
+                                                             this->dftu_.get(),
                                                              this->deepks,
                                                              istep,
                                                              this->exx_nao,
-                                                             this->exx_info_);
+                                                             this->exx_info_,
+                                                             *this->inp_);
     }
 
     XC_Functional::set_xc_type(this->inp_->deepks_out_base);
@@ -377,7 +378,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
 template <typename TK, typename TR>
 void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_DoubleXC", "cal_force");
@@ -413,7 +414,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
                        this->kv,
                        this->pw_rho,
                        this->solvent,
-                       this->dftu,
+                       *this->dftu_,
                        this->deepks,
                        this->exx_nao,
                        &ucell.symm,

@@ -1,10 +1,11 @@
 #ifndef DFPT_STRU_FIXTURE_H
 #define DFPT_STRU_FIXTURE_H
 
+#include "source_cell/unitcell.h"
+
+#include "gtest/gtest.h"
 #include <string>
 #include <vector>
-#include "source_cell/unitcell.h"
-#include "gtest/gtest.h"
 
 // Shared gtest fixture for building a minimal cubic UnitCell from a
 // hand-written structure table (abbreviated from
@@ -12,11 +13,9 @@
 // MPI-side DFPT tests that drive the QList / DFPT_PW wiring
 // (dfpt_pw_data_test.cpp, dfpt_pw_run_test.cpp).
 //
-// NOTE ON INCLUDE ORDER: every test that needs UnitCell private members
-// includes the cell headers with `#define private public` BEFORE this
-// header; the include guards then keep the fixture header's own includes
-// inert. The fixture implementation (dfpt_stru_fixture.cpp) only touches
-// public members, so it compiles without the define.
+// All members touched by construct_ucell (UnitCell geometry fields and
+// the Atom label/na/tau/taud vectors) are public, so tests include the
+// cell headers normally.
 
 struct atomtype_
 {

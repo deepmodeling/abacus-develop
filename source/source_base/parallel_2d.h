@@ -5,7 +5,9 @@
 #include <cstdint>
 #include <vector>
 
-#include "source_base/parallel_comm.h"
+#ifdef __MPI
+#include <mpi.h>
+#endif
 
 /// @brief  This class packs the basic information of
 /// 2D-block-cyclic parallel distribution of an arbitrary matrix.

@@ -11,15 +11,12 @@
  * - Tested Functions:
  *   - Magnetism::Magnetism()
  *   - Magnetism::~Magnetism()
- *   - Magnetism::judge_parallel()
  *   - Magnetism::compute_mag()
  *      - compute mag for spin-polarized system when nspin = 2
  *      - and non-collinear case with nspin = 4
 */
 
-#define private public
 #include "source_cell/magnetism.h"
-#undef private
 
 
 class MagnetismTest : public ::testing::Test
@@ -41,15 +38,6 @@ TEST_F(MagnetismTest, Magnetism)
     EXPECT_EQ(0.0, magnetism->tot_mag);
     EXPECT_EQ(0.0, magnetism->abs_mag);
     EXPECT_TRUE(magnetism->start_mag.empty());
-}
-
-TEST_F(MagnetismTest, JudgeParallel)
-{
-    double a[3] = {1.0, 0.0, 0.0};
-    ModuleBase::Vector3<double> b(1.0, 0.0, 0.0);
-    EXPECT_TRUE(magnetism->judge_parallel(a, b));
-    b = ModuleBase::Vector3<double>(0.0, 1.0, 0.0);
-    EXPECT_FALSE(magnetism->judge_parallel(a, b));
 }
 
 TEST_F(MagnetismTest, ComputeMagnetizationS2)

@@ -6,7 +6,10 @@
 #define PRINT_CELL_H
 
 #include "atom_spec.h"
+#include "source_cell/strumeta.h"
 #include "source_cell/unitcell.h"
+
+class MDCell;
 
 namespace unitcell
 {
@@ -63,6 +66,15 @@ namespace unitcell
      * @param ofs output file stream [in]
      */
     void print_cell(const UnitCell& ucell, std::ofstream& ofs);
+
+    StruMeta make_stru_meta(const UnitCell& ucell);
+}
+
+namespace mdcell
+{
+void print_stru_file(const MDCell& mdcell,
+                     const StruMeta& stru_meta,
+                     const std::string& fn);
 }
 
 #endif

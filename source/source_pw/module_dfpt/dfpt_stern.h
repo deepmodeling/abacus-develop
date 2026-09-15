@@ -1,18 +1,11 @@
-// ============================================================
-// This code is added by Mohan Chen on 2026-05-18.
-// This code is currently in the design phase and has not been
-// put into production yet. It may change in the future.
-// Please use this code with caution. Only developers who know
-// what they are doing should use this code.
-// ============================================================
-
 #ifndef DFPT_STERN_H
 #define DFPT_STERN_H
 
 #include <complex>
 #include <vector>
 
-namespace ModuleDFPT {
+namespace ModuleDFPT
+{
 
 /**
  * @brief Projected conjugate-gradient solver of the Sternheimer equation (C2).
@@ -28,15 +21,17 @@ namespace ModuleDFPT {
  * production adapter reuses hamilt::Hamilt::ops->hPsi at the k+q point
  * (wired in C7), while unit tests supply analytic operators.
  */
-class DFPT_Stern {
-public:
+class DFPT_Stern
+{
+  public:
     DFPT_Stern();
     ~DFPT_Stern();
 
     /// Hermitian linear action y = (H(k+q) - eps) x on the k+q basis; the
     /// eigenvalue shift is carried inside the implementation.
-    class LinearOperator {
-    public:
+    class LinearOperator
+    {
+      public:
         virtual ~LinearOperator() = default;
         virtual int dimension() const = 0;
         virtual void apply(const std::complex<double>* x, std::complex<double>* y) const = 0;
@@ -62,7 +57,7 @@ public:
               std::vector<std::complex<double>>& dpsi,
               double& residual) const;
 
-private:
+  private:
     /// P_c x by modified Gram-Schmidt against the occupied states; safe for
     /// px to alias x (projection coefficients are collected before subtracting)
     void apply_pv(const std::vector<std::vector<std::complex<double>>>& occ_kq,

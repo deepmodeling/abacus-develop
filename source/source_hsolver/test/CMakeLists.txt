@@ -78,7 +78,7 @@ if (ENABLE_MPI)
     LIBS parameter  psi device base container symmetry
     SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../hsolver_lcaopw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_lin_tf.cpp
   ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
-  ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/k_vector_utils.cpp ../../source_cell/reciprocal_grid.cpp
+  ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
   )
 
   AddTest(
@@ -93,7 +93,7 @@ if (ENABLE_MPI)
     AddTest(
       TARGET MODULE_HSOLVER_LCAO
       LIBS parameter  ELPA::ELPA base genelpa psi device
-      SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
+      SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_elpa_native.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
     )
     else()
       AddTest(

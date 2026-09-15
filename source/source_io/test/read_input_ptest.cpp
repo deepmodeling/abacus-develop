@@ -275,7 +275,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(std::stod(param.inp.vdw_cutoff_radius), 56.6918);
     EXPECT_EQ(param.inp.vdw_radius_unit, "Bohr");
     EXPECT_DOUBLE_EQ(param.inp.vdw_cutoff_width2, 0.05);
-    EXPECT_DOUBLE_EQ(param.inp.vdw_cutoff_width3, 0.05);
+    EXPECT_DOUBLE_EQ(param.inp.vdw_cutoff_width3, 0.0);
     EXPECT_DOUBLE_EQ(param.inp.vdw_cn_thr, 40.0);
     EXPECT_EQ(param.inp.vdw_cn_thr_unit, "Bohr");
     EXPECT_EQ(param.inp.vdw_C6_file, "default");
@@ -362,7 +362,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.dft_plus_dmft);
     EXPECT_FALSE(param.inp.rpa);
     EXPECT_FALSE(param.inp.rpa_out_vel);
-    EXPECT_EQ(param.inp.rpa_outdir, "./OUT.librpa/");
+    EXPECT_EQ(param.inp.rpa_outdir, "OUT.librpa/");
     EXPECT_EQ(param.inp.imp_sol, 0);
     EXPECT_DOUBLE_EQ(param.inp.eb_k, 80.0);
     EXPECT_DOUBLE_EQ(param.inp.tau, 1.0798 * 1e-5);
@@ -389,7 +389,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.device, "cpu");
     EXPECT_NEAR(param.inp.force_thr_ev, 0.025711245953622324, 1e-8);
     EXPECT_DOUBLE_EQ(param.globalv.hubbard_u[0], 0);
-    EXPECT_EQ(param.inp.orbital_corr[0], -1);
+    EXPECT_EQ(param.inp.l_channel[0], -1);
     EXPECT_EQ(param.inp.mdp.lj_rule, 2);
     EXPECT_FALSE(param.inp.mdp.lj_eshift);
     EXPECT_NEAR(param.inp.mdp.lj_epsilon[0], 0.01032, 1e-7);
@@ -411,6 +411,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.mdp.md_pmode, "iso");
     EXPECT_EQ(param.inp.mdp.md_restart, 0);
     EXPECT_EQ(param.inp.mdp.md_restartfreq, 5);
+    EXPECT_FALSE(param.inp.mdp.md_out_force);
     EXPECT_EQ(param.inp.mdp.md_seed, -1);
     EXPECT_EQ(param.inp.mdp.md_prec_level, 0);
     EXPECT_DOUBLE_EQ(param.inp.ref_cell_factor, 1.2);

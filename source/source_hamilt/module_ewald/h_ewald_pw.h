@@ -1,9 +1,10 @@
 #ifndef H_EWALD_PW_H
 #define H_EWALD_PW_H
 
-#include "source_base/global_function.h"
 #include "source_cell/unitcell.h"
 #include "source_basis/module_pw/pw_basis.h"
+
+#include <fstream>
 
 class H_Ewald_pw 
 {
@@ -14,7 +15,9 @@ class H_Ewald_pw
     // compute the Ewald energy
     static double compute_ewald(const UnitCell& cell,
                                 const ModulePW::PW_Basis* rho_basis,
-                                const ModuleBase::ComplexMatrix& strucFac);
+                                const ModuleBase::ComplexMatrix& strucFac,
+                                int test_energy,
+                                std::ofstream& output_stream);
 
   public:
     static int estimate_mxr(const double &rmax, const ModuleBase::Matrix3 &bg);
@@ -28,7 +31,8 @@ class H_Ewald_pw
         ModuleBase::Vector3<double> *r,
         double *r2,
       const int mxr,
-        int  &nrm
+        int  &nrm,
+        int test_energy
     );
 
 	// the coefficient of ewald method

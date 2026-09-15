@@ -103,11 +103,10 @@ void Parallel_Grid::z_distribution()
 {
     assert(!this->numz.empty());
 
-    int* startp = new int[GlobalV::KPAR];
+    std::vector<int> startp(GlobalV::KPAR);
     startp[0] = 0;
     for (int ip = 0; ip < GlobalV::KPAR; ip++)
     {
-        //		GlobalV::ofs_running << "\n now POOL=" << ip;
         const int nproc = nproc_in_pool[ip];
 
         if (ip > 0)
@@ -122,22 +121,12 @@ void Parallel_Grid::z_distribution()
             numz[ip][proc] += bz;
         }
 
-        //		for(int proc=0; proc<nproc; proc++)
-        //		{
-        //			GlobalV::ofs_running << "\n proc=" << proc << " numz=" << numz[ip][proc];
-        //		}
-
         // (2) start position of z in each 'proc' in each 'pool'
         startz[ip][0] = 0;
         for (int proc = 1; proc < nproc; proc++)
         {
             startz[ip][proc] = startz[ip][proc - 1] + numz[ip][proc - 1];
         }
-
-        //		for(int proc=0; proc<nproc; proc++)
-        //		{
-        //			GlobalV::ofs_running << "\n proc=" << proc << " startz=" << startz[ip][proc];
-        //		}
 
         // (3) each z belongs to which 'proc' ( global index )
         for (int iz = 0; iz < ncz; iz++)
@@ -158,14 +147,8 @@ void Parallel_Grid::z_distribution()
                 }
             }
         }
-
-        //		for(int iz=0; iz<ncz; iz++)
-        //		{
-        //			GlobalV::ofs_running << "\n iz=" << iz << " whichpro=" << whichpro[ip][iz];
-        //		}
     }
 
-    delete[] startp;
     return;
 }
 
@@ -278,29 +261,35 @@ void Parallel_Grid::bcast(const double* const data_global, double* data_local, c
         }
         if (is_sdft)
         {
-            this->zpiece_to_stogroup(zpiece.data(), iz, data_local);
+            this->zpiece_distribute(zpiece.data(), iz, data_local, true);
         }
         else
         {
-            this->zpiece_to_all(zpiece.data(), iz, data_local);
+            this->zpiece_distribute(zpiece.data(), iz, data_local, false);
         }
     }
 }
 
-void Parallel_Grid::zpiece_to_all(double* zpiece, const int& iz, double* rho) const
+void Parallel_Grid::zpiece_distribute(double* zpiece, const int& iz, double* rho, const bool is_sdft) const
 {
     assert(!this->numz.empty());
-    // ModuleBase::TITLE("Parallel_Grid","zpiece_to_all");
     MPI_Status ierror;
+
+    // Distribute one xy-plane (z-slice) of the grid from the root rank to
+    // the owner rank in every pool. The two historical variants differ only
+    // in the communicator (world vs. band-group) and the identity of the
+    // root rank inside it; both are selected by is_sdft.
+    const MPI_Comm comm = is_sdft ? INT_BGROUP : MPI_COMM_WORLD;
+    const int rank_in_comm = is_sdft ? GlobalV::RANK_IN_BPGROUP : GlobalV::MY_RANK;
 
     const int znow = iz - this->startz[GlobalV::MY_POOL][GlobalV::RANK_IN_POOL];
     const int proc = this->whichpro[GlobalV::MY_POOL][iz];
 
     if (GlobalV::MY_POOL == 0)
     {
-        // case 1: the first part of rho in processor 0.
-        // and send zpeice to to other pools.
-        if (proc == 0 && GlobalV::MY_RANK == 0)
+        // case 1: the first part of rho in processor 0,
+        // and send zpiece to the other pools.
+        if (proc == 0 && rank_in_comm == 0)
         {
             for (int ir = 0; ir < ncxy; ir++)
             {
@@ -308,41 +297,39 @@ void Parallel_Grid::zpiece_to_all(double* zpiece, const int& iz, double* rho) co
             }
             for (int ipool = 1; ipool < GlobalV::KPAR; ipool++)
             {
-                MPI_Send(zpiece, ncxy, MPI_DOUBLE, this->whichpro[ipool][iz], iz, MPI_COMM_WORLD);
+                MPI_Send(zpiece, ncxy, MPI_DOUBLE, this->whichpro[ipool][iz], iz, comm);
             }
         }
 
-        // case 2: processor n (n!=0) receive rho from processor 0.
-        // and the receive tag is iz.
+        // case 2: processor n (n!=0) receives rho from processor 0.
+        // The receive tag is iz.
         else if (proc == GlobalV::RANK_IN_POOL)
         {
-            MPI_Recv(zpiece, ncxy, MPI_DOUBLE, 0, iz, MPI_COMM_WORLD, &ierror);
+            MPI_Recv(zpiece, ncxy, MPI_DOUBLE, 0, iz, comm, &ierror);
             for (int ir = 0; ir < ncxy; ir++)
             {
                 rho[ir * nczp + znow] = zpiece[ir];
             }
         }
 
-        // case 2: > first part rho: processor 0 send the rho
-        // to all pools. The tag is iz, because processor may
-        // send more than once, and the only tag to distinguish
-        // them is iz.
+        // case 3: pool root (not owning iz) forwards rho to all pools.
+        // The tag is iz, because a processor may send more than once, and
+        // the only tag to distinguish them is iz.
         else if (GlobalV::RANK_IN_POOL == 0)
         {
             for (int ipool = 0; ipool < GlobalV::KPAR; ipool++)
             {
-                MPI_Send(zpiece, ncxy, MPI_DOUBLE, this->whichpro[ipool][iz], iz, MPI_COMM_WORLD);
+                MPI_Send(zpiece, ncxy, MPI_DOUBLE, this->whichpro[ipool][iz], iz, comm);
             }
         }
     } // GlobalV::MY_POOL == 0
     else
     {
-        // GlobalV::ofs_running << "\n Receive charge density iz=" << iz << std::endl;
-        //  the processors in other pools always receive rho from
-        //  processor 0. the tag is 'iz'
-        if (proc == GlobalV::MY_RANK)
+        // The processors in other pools always receive rho from
+        // processor 0. The tag is 'iz'.
+        if (proc == rank_in_comm)
         {
-            MPI_Recv(zpiece, ncxy, MPI_DOUBLE, 0, iz, MPI_COMM_WORLD, &ierror);
+            MPI_Recv(zpiece, ncxy, MPI_DOUBLE, 0, iz, comm, &ierror);
             for (int ir = 0; ir < ncxy; ir++)
             {
                 rho[ir * nczp + znow] = zpiece[ir];
@@ -350,79 +337,11 @@ void Parallel_Grid::zpiece_to_all(double* zpiece, const int& iz, double* rho) co
         }
     }
 
-    // GlobalV::ofs_running << "\n iz = " << iz << " Done.";
     return;
 }
 #endif
 
 #ifdef __MPI
-void Parallel_Grid::zpiece_to_stogroup(double* zpiece, const int& iz, double* rho) const
-{
-    assert(!this->numz.empty());
-    // TITLE("Parallel_Grid","zpiece_to_all");
-    MPI_Status ierror;
-
-    const int znow = iz - this->startz[GlobalV::MY_POOL][GlobalV::RANK_IN_POOL];
-    const int proc = this->whichpro[GlobalV::MY_POOL][iz];
-
-    if (GlobalV::MY_POOL == 0)
-    {
-        // case 1: the first part of rho in processor 0.
-        // and send zpeice to to other pools.
-        if (proc == 0 && GlobalV::RANK_IN_BPGROUP == 0)
-        {
-            for (int ir = 0; ir < ncxy; ir++)
-            {
-                rho[ir * nczp + znow] = zpiece[ir];
-            }
-            for (int ipool = 1; ipool < GlobalV::KPAR; ipool++)
-            {
-                MPI_Send(zpiece, ncxy, MPI_DOUBLE, this->whichpro[ipool][iz], iz, INT_BGROUP);
-            }
-        }
-
-        // case 2: processor n (n!=0) receive rho from processor 0.
-        // and the receive tag is iz.
-        else if (proc == GlobalV::RANK_IN_POOL)
-        {
-            MPI_Recv(zpiece, ncxy, MPI_DOUBLE, 0, iz, INT_BGROUP, &ierror);
-            for (int ir = 0; ir < ncxy; ir++)
-            {
-                rho[ir * nczp + znow] = zpiece[ir];
-            }
-        }
-
-        // case 2: > first part rho: processor 0 send the rho
-        // to all pools. The tag is iz, because processor may
-        // send more than once, and the only tag to distinguish
-        // them is iz.
-        else if (GlobalV::RANK_IN_POOL == 0)
-        {
-            for (int ipool = 0; ipool < GlobalV::KPAR; ipool++)
-            {
-                MPI_Send(zpiece, ncxy, MPI_DOUBLE, this->whichpro[ipool][iz], iz, INT_BGROUP);
-            }
-        }
-    } // MY_POOL == 0
-    else
-    {
-        // ofs_running << "\n Receive charge density iz=" << iz << endl;
-        //  the processors in other pools always receive rho from
-        //  processor 0. the tag is 'iz'
-        if (proc == GlobalV::RANK_IN_BPGROUP)
-        {
-            MPI_Recv(zpiece, ncxy, MPI_DOUBLE, 0, iz, INT_BGROUP, &ierror);
-            for (int ir = 0; ir < ncxy; ir++)
-            {
-                rho[ir * nczp + znow] = zpiece[ir];
-            }
-        }
-    }
-
-    // ofs_running << "\n iz = " << iz << " Done.";
-    return;
-}
-
 // Taoni modified on 2026-08-21, fixed BPCG out_chg MPI_ERR_RANK
 void Parallel_Grid::reduce(double* rhotot, const double* const rhoin, const bool reduce_all_pool) const
 {

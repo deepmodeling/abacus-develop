@@ -1,32 +1,31 @@
-// ============================================================
-// This code is added by Mohan Chen on 2026-05-18.
-// This code is currently in design phase and has not been
-// put into production yet.
-// It may change in the future.
-// Please use this code with caution.
-// Only developers who know
-// what they are doing should use this code.
-// ============================================================
-
 #include "dfpt_kq_basis.h"
 
 #include "source_base/global_function.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 
 #include <set>
 
-namespace ModuleDFPT {
+namespace ModuleDFPT
+{
 
-DFPT_KQ_Basis::DFPT_KQ_Basis() {}
+DFPT_KQ_Basis::DFPT_KQ_Basis()
+{
+}
 
-DFPT_KQ_Basis::~DFPT_KQ_Basis() {}
+DFPT_KQ_Basis::~DFPT_KQ_Basis()
+{
+}
 
 void DFPT_KQ_Basis::init(const ModulePW::PW_Basis_K* pw_wfc,
                          const ModulePW::PW_Basis* pw_rho,
                          const ModuleBase::Vector3<double>& q_cart,
                          int ik)
 {
+    ModuleBase::TITLE("DFPT_KQ_Basis", "init");
+    ModuleBase::timer::start("DFPT_KQ_Basis", "init");
     pw_wfc_ = pw_wfc;
     npwk_ = 0;
     ig_rho_.clear();
@@ -35,6 +34,7 @@ void DFPT_KQ_Basis::init(const ModulePW::PW_Basis_K* pw_wfc,
 
     if (pw_wfc_ == nullptr || pw_rho == nullptr)
     {
+        ModuleBase::timer::end("DFPT_KQ_Basis", "init");
         return;
     }
 
@@ -49,8 +49,7 @@ void DFPT_KQ_Basis::init(const ModulePW::PW_Basis_K* pw_wfc,
     }
 
     // the two bases exchange G vectors through the shared FFT cell position
-    if (pw_wfc_->nx != pw_rho->nx || pw_wfc_->ny != pw_rho->ny
-        || pw_wfc_->nz != pw_rho->nz)
+    if (pw_wfc_->nx != pw_rho->nx || pw_wfc_->ny != pw_rho->ny || pw_wfc_->nz != pw_rho->nz)
     {
         ModuleBase::WARNING_QUIT("DFPT_KQ_Basis",
                                  "DFPT requires the wavefunction and charge FFT grids to share "
@@ -75,7 +74,9 @@ void DFPT_KQ_Basis::init(const ModulePW::PW_Basis_K* pw_wfc,
     }
 
     std::set<int> taken;
-    auto try_push = [&](const int ix_in, const int iy_in, const int iz_in,
+    auto try_push = [&](const int ix_in,
+                        const int iy_in,
+                        const int iz_in,
                         const ModuleBase::Matrix3& gbase,
                         const int ig_rho_hint) {
         int ix = ix_in;
@@ -93,8 +94,7 @@ void DFPT_KQ_Basis::init(const ModulePW::PW_Basis_K* pw_wfc,
         {
             iz -= pw_wfc_->nz;
         }
-        const ModuleBase::Vector3<double> gcar
-            = ModuleBase::Vector3<double>(ix, iy, iz) * gbase;
+        const ModuleBase::Vector3<double> gcar = ModuleBase::Vector3<double>(ix, iy, iz) * gbase;
         const ModuleBase::Vector3<double> gpluskq = gcar + kplusq_c_;
         const double gk2 = gpluskq * gpluskq;
         if (gk2 > pw_wfc_->gk_ecut)
@@ -137,16 +137,20 @@ void DFPT_KQ_Basis::init(const ModulePW::PW_Basis_K* pw_wfc,
         try_push(ix, iy, iz, pw_rho->G, ig);
     }
     npwk_ = static_cast<int>(gcar_.size());
+    ModuleBase::timer::end("DFPT_KQ_Basis", "init");
 }
 
 void DFPT_KQ_Basis::clear()
 {
+    ModuleBase::TITLE("DFPT_KQ_Basis", "clear");
+    ModuleBase::timer::start("DFPT_KQ_Basis", "clear");
     pw_wfc_ = nullptr;
     kplusq_c_ = ModuleBase::Vector3<double>();
     npwk_ = 0;
     ig_rho_.clear();
     gk2_.clear();
     gcar_.clear();
+    ModuleBase::timer::end("DFPT_KQ_Basis", "clear");
 }
 
 } // namespace ModuleDFPT

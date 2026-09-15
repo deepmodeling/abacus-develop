@@ -134,7 +134,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     if (PARAM.inp.imp_sol)
     {
         forcesol.create(this->nat, 3);
-        solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, forcesol);
+        solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, PARAM.inp.nspin, forcesol);
         if (PARAM.inp.test_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "IMP_SOL      FORCE (Ry/Bohr)", forcesol);
@@ -686,7 +686,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
                     {
                         ModuleBase::Vector3<double> d_tau
                             = ucell.atoms[T1].tau[I1] - ucell.atoms[T2].tau[I2];
-                        H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), mxr, nrm);
+                        H_Ewald_pw::rgen(d_tau, rmax, irr.data(), ucell.latvec, ucell.G, r.data(), r2.data(), mxr, nrm, PARAM.inp.test_energy);
 
                         for (int n = 0; n < nrm; n++)
                         {

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include "ions_move_basic.h"
+#include "relax_criteria.h"
 #include "ions_move_bfgs.h"
 #include "ions_move_cg.h"
 #include "ions_move_sd.h"
@@ -24,7 +25,8 @@ class Ions_Move_Methods
                       const double &etot,
                       UnitCell &ucell,
                       std::ofstream& ofs,
-                      std::vector<std::string>& relax_method);
+                      std::vector<std::string>& relax_method,
+                      const Relax_Criteria& criteria);
     void reset_after_cell_change(const std::vector<std::string>& relax_method, std::ofstream& ofs);
 
     bool get_converged() const

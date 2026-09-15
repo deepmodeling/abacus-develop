@@ -3,6 +3,25 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
+AddTest(
+  TARGET MODULE_IO_write_bands
+  LIBS parameter base device symmetry
+  SOURCES write_bands_test.cpp ../module_energy/write_bands.cpp
+    ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp
+    ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
+)
+
+if(NOT ENABLE_MPI)
+  return()
+endif()
+
+add_test(NAME MODULE_IO_write_bands_parallel
+  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+    $<TARGET_FILE:MODULE_IO_write_bands> ${MPIEXEC_POSTFLAGS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+set_tests_properties(MODULE_IO_write_bands_parallel PROPERTIES PROCESSORS 4 TIMEOUT 120)
+
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 configure_file(INPUTs ${CMAKE_CURRENT_BINARY_DIR}/INPUTs COPYONLY)
 
@@ -63,7 +82,7 @@ add_test(
 AddTest(
   TARGET MODULE_IO_write_eig_occ_test
   LIBS parameter  base device symmetry
-  SOURCES write_eig_occ_test.cpp ../module_output/band_parallel_output.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
+  SOURCES write_eig_occ_test.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp
 		../../source_cell/cif_io.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
@@ -76,13 +95,13 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_dos_pw
   LIBS parameter  base device symmetry
-  SOURCES write_dos_pw_test.cpp ../module_dos/cal_dos.cpp ../module_dos/write_dos_pw.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../module_energy/nscf_fermi_surf.cpp ../../source_cell/k_vector_utils.cpp ../../source_cell/reciprocal_grid.cpp
+  SOURCES write_dos_pw_test.cpp ../module_dos/cal_dos.cpp ../module_dos/write_dos_pw.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../module_energy/nscf_fermi_surf.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_print_info
   LIBS parameter  base device symmetry cell_info
-  SOURCES print_info_test.cpp ../module_output/print_info.cpp ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/k_vector_utils.cpp ../../source_cell/reciprocal_grid.cpp
+  SOURCES print_info_test.cpp ../module_output/print_info.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 AddTest(
@@ -140,12 +159,6 @@ AddTest(
   SOURCES ../module_output/output_log.cpp outputlog_test.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
-AddTest(
-  TARGET MODULE_IO_read_rhog_test
-  LIBS parameter  base device planewave
-  SOURCES read_rhog_test.cpp ../module_chgpot/rhog_io.cpp ../../source_basis/module_pw/test/test_tool.cpp
-)
-
 if(ENABLE_LCAO)
 AddTest(
   TARGET MODULE_IO_to_qo_test
@@ -177,7 +190,7 @@ AddTest(
   TARGET MODULE_IO_read_wf2rho_pw_test
   LIBS parameter base device planewave psi symmetry
   SOURCES read_wf2rho_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_wf/read_wf2rho_pw.cpp ../../source_basis/module_pw/test/test_tool.cpp  ../../source_estate/module_charge/charge_mpi.cpp ../module_wf/write_wfc_pw.cpp
-  ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/k_vector_utils.cpp ../../source_cell/reciprocal_grid.cpp
+  ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 add_test(NAME MODULE_IO_read_wf2rho_pw_parallel
@@ -186,6 +199,7 @@ add_test(NAME MODULE_IO_read_wf2rho_pw_parallel
 )
 
 
+if(ENABLE_LCAO)
 AddTest(
   TARGET MODULE_IO_numerical_basis_test
   LIBS parameter  base device numerical_atomic_orbitals container orb
@@ -193,6 +207,7 @@ AddTest(
           ../module_bessel/numerical_basis_jyjy.cpp
           ../../source_lcao/center2orb.cpp
 )
+endif()
 
 
 AddTest(
@@ -232,7 +247,7 @@ AddTest(
   TARGET MODULE_IO_write_dmk
   LIBS parameter base device cell_info symmetry
   SOURCES ../module_dm/test/write_dmk_test.cpp ../module_dm/write_dmk.cpp ../../source_cell/ucell_io.cpp
-  ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/k_vector_utils.cpp ../../source_cell/reciprocal_grid.cpp
+  ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 add_test(
@@ -244,7 +259,7 @@ add_test(
 AddTest(
   TARGET MODULE_IO_read_wfc_nao_test
   LIBS parameter base device
-  SOURCES read_wfc_nao_test.cpp ../module_wf/read_wfc_nao.cpp ../../source_psi/psi.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
+  SOURCES read_wfc_nao_test.cpp ../module_wf/read_wfc_nao.cpp ../module_wf/write_wfc_nao.cpp ../../source_psi/psi.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
 )
 
 add_test(

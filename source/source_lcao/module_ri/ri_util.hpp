@@ -82,7 +82,7 @@ namespace RI_Util
 				{
 					// 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
 					const int nspin0 = (PARAM.inp.nspin==2) ? 2 : 1;
-					const double Rcut = std::pow(0.75 * p_kv->get_nkstot_full() * ucell.omega / (ModuleBase::PI), 1.0/3.0);
+					const double Rcut = std::pow(0.75 * p_kv->get_nkstot_nospin() * ucell.omega / (ModuleBase::PI), 1.0/3.0);
 					param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(Rcut);
 				}
                 else if(param.at("singularity_correction") == "revised_spencer")

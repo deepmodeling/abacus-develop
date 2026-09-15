@@ -56,7 +56,7 @@ ESolver_OF::~ESolver_OF()
 
 void ESolver_OF::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ESolver_FP::before_all_runners(ucell, inp);
@@ -133,7 +133,7 @@ void ESolver_OF::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
 void ESolver_OF::runner(BaseCell& basecell, const int istep)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::timer::start("ESolver_OF", "runner");
@@ -518,7 +518,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
  */
 void ESolver_OF::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ESolver_FP::after_all_runners(ucell);
@@ -556,7 +556,7 @@ double ESolver_OF::cal_energy()
  */
 void ESolver_OF::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     Forces<double> ff(ucell.nat);
@@ -574,7 +574,7 @@ void ESolver_OF::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
  */
 void ESolver_OF::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::matrix kinetic_stress_;

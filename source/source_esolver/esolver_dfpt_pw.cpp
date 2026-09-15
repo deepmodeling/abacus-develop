@@ -189,7 +189,7 @@ ESolver_DFPT_PW::~ESolver_DFPT_PW()
 
 void ESolver_DFPT_PW::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_DFPT_PW", "before_all_runners");
@@ -218,7 +218,7 @@ void ESolver_DFPT_PW::before_all_runners(BaseCell& basecell, const Input_para& i
 
 void ESolver_DFPT_PW::runner(BaseCell& basecell, const int istep)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_DFPT_PW", "runner");
@@ -244,7 +244,7 @@ void ESolver_DFPT_PW::runner(BaseCell& basecell, const int istep)
 
 void ESolver_DFPT_PW::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_DFPT_PW", "after_all_runners");
@@ -354,7 +354,7 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
 
     dfpt_->init(ucell, *this->stp.psi_cpu, this->pw_rho, this->pw_wfc, &this->sf, veff_r,
                 this->pelec->wg, this->pelec->ekb, xc_adapter_, nelec_, ecutwfc_,
-                dft_plus_u_ ? &this->dftu : nullptr);
+                dft_plus_u_ ? this->dftu_.get() : nullptr);
 }
 
 void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)

@@ -7,6 +7,7 @@ list(APPEND objects
     elecstate_print.cpp
     elecstate_tools.cpp
     elecstate_pw.cpp
+    uspp_density.cpp
     elecstate_pw_sdft.cpp
     elecstate_pw_cal_tau.cpp
     makov_payne.cpp
@@ -40,8 +41,13 @@ list(APPEND objects
     module_charge/charge_mixing_uspp.cpp
     module_charge/symm_rho.cpp
     module_charge/symm_rhog.cpp
+    rhog_io.cpp
+    write_elecstat_pot.cpp
+    write_init.cpp
     fp_energy.cpp
     occupy.cpp
+    occ_matrix.cpp
+    occ_mixer.cpp
     param_update.cpp
     setup_estate_pw.cpp
     update_pot.cpp
@@ -71,7 +77,6 @@ endif()
 if(BUILD_TESTING)
   if(ENABLE_MPI)
     add_subdirectory(test)
-    add_subdirectory(test_mpi)
   endif()
 endif()
 

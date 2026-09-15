@@ -3,10 +3,13 @@
 
 #include "source_estate/elecstate_lcao.h"
 
+struct Input_para;
+
 namespace ModuleIO
 {
 
 void ctrl_output_fp(UnitCell& ucell,
+                    const Input_para& inp,
                     elecstate::ElecState* pelec,
                     ModulePW::PW_Basis_Big* pw_big,
                     ModulePW::PW_Basis* pw_rhod,

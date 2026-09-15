@@ -8,7 +8,7 @@
 struct Input_para;
 class Plus_U_Base; // mohan add 2025-11-06
 
-namespace pw
+namespace DFTU_BASE
 {
 
 void iter_init_dftu_pw(const int iter,

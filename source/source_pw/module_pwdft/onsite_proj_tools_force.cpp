@@ -18,18 +18,18 @@ template <typename FPTYPE, typename Device>
 void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dftu(int ik,
                                                        int npm,
                                                        FPTYPE* force,
-                                                       const int* orbital_corr,
+                                                       const int* l_channel,
                                                        const std::complex<FPTYPE>* pot_onsite,
                                                        const int size_pot_onsite,
                                                        const FPTYPE* h_wg)
 {
-    int* orbital_corr_tmp = nullptr;
+    int* l_channel_tmp = nullptr;
     std::complex<FPTYPE>* pot_onsite_tmp = nullptr;
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == base_device::GpuDevice)
     {
-        resmem_int_op()(orbital_corr_tmp, this->ucell_->ntype);
-        syncmem_int_h2d_op()(orbital_corr_tmp, orbital_corr, this->ucell_->ntype);
+        resmem_int_op()(l_channel_tmp, this->ucell_->ntype);
+        syncmem_int_h2d_op()(l_channel_tmp, l_channel, this->ucell_->ntype);
         resmem_complex_op()(pot_onsite_tmp, size_pot_onsite);
         syncmem_complex_h2d_op()(pot_onsite_tmp, pot_onsite, size_pot_onsite);
         syncmem_var_h2d_op()(d_wg, h_wg, this->nbands * (ik+1));
@@ -37,7 +37,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dftu(int ik,
     else
 #endif
     {
-        orbital_corr_tmp = const_cast<int*>(orbital_corr);
+        l_channel_tmp = const_cast<int*>(l_channel);
         pot_onsite_tmp = const_cast<std::complex<FPTYPE>*>(pot_onsite);
         d_wg = const_cast<FPTYPE*>(h_wg);
     }
@@ -57,7 +57,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dftu(int ik,
                                       this->ucell_->tpiba,
                                       d_wg,
                                       pot_onsite_tmp,
-                                      orbital_corr_tmp,
+                                      l_channel_tmp,
                                       becp,
                                       dbecp,
                                       force);
@@ -65,7 +65,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dftu(int ik,
     if (this->device == base_device::GpuDevice)
     {
         delmem_complex_op()(pot_onsite_tmp);
-        delmem_int_op()(orbital_corr_tmp);
+        delmem_int_op()(l_channel_tmp);
     }
 #endif
 }

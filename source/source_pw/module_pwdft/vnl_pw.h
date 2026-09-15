@@ -145,6 +145,12 @@ class pseudopot_cell_vnl
                       const double* qnorm,
                       const ModuleBase::matrix ylm,
                       std::complex<double>* qg) const;
+
+    /**
+     * @brief Compute the radial Fourier transform using raw CPU pointers
+     *
+     * This template is instantiated for CPU float and double precision only.
+     */
     template <typename FPTYPE, typename Device>
     void radial_fft_q(Device* ctx,
                       const int ng,

@@ -48,8 +48,7 @@ class Parallel_Grid
     void z_distribution(void);
 
 #ifdef __MPI
-    void zpiece_to_all(double* zpiece, const int& iz, double* rho) const;
-    void zpiece_to_stogroup(double* zpiece, const int& iz, double* rho) const; //qainrui add for sto-dft 2021-7-21
+    void zpiece_distribute(double* zpiece, const int& iz, double* rho, const bool is_sdft) const;
 #endif
 
     std::vector<int> nproc_in_pool;

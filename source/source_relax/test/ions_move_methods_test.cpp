@@ -1,3 +1,4 @@
+#include "source_relax/relax_criteria.h"
 #include "for_test.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -92,6 +93,9 @@ namespace unitcell
 // Define a fixture for the tests
 class IonsMoveMethodsTest : public ::testing::Test
 {
+  public:
+    Relax_Criteria criteria;
+
   protected:
     Ions_Move_Methods imm;
     const int natom = 2;
@@ -153,19 +157,19 @@ TEST_F(IonsMoveMethodsTest, CalMovement)
 
     relax_method = {"bfgs", "1"};
     imm.allocate(natom, "bfgs", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
     relax_method = {"sd", "1"};
     imm.allocate(natom, "sd", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
     relax_method = {"cg", "1"};
     imm.allocate(natom, "cg", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
     relax_method = {"cg_bfgs", "1"};
     imm.allocate(natom, "cg_bfgs", "1");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 }
 
 // Test the cal_movement() function warning quit
@@ -181,7 +185,7 @@ TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
     imm.allocate(natom, "none", "1");
 
     GlobalV::ofs_warning.open("log");
-    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method);
+    imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
     GlobalV::ofs_warning.close();
 
     std::ifstream ifs("log");

@@ -1,8 +1,9 @@
+#include "source_pw/module_dfpt/dfpt_stern.h"
+
 #include "gtest/gtest.h"
 #include <cmath>
 #include <complex>
 #include <vector>
-#include "source_pw/module_dfpt/dfpt_stern.h"
 
 /************************************************
  *  unit test of DFPT_Stern (C2)
@@ -24,7 +25,8 @@
  *   3. projection properties and degenerate right-hand sides.
  */
 
-namespace {
+namespace
+{
 
 unsigned g_seed = 20260814u;
 double test_rand()

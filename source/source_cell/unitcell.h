@@ -6,7 +6,7 @@
 #include "source_cell/sep_cell.h"
 #include "source_cell/magnetism.h"
 #include "module_symmetry/symmetry.h"
-#include "source_cell/base_cell.h"
+#include "source_cell/basecell.h"
 #include "source_cell/nonlocal_info_base.h"
 
 /**
@@ -16,21 +16,6 @@ class UnitCell : public BaseCell {
   public:
     UnitCell();
     ~UnitCell();
-
-    double get_lat0() const override
-    {
-        return lat0;
-    }
-
-    double get_omega() const override
-    {
-        return omega;
-    }
-
-    const ModuleBase::Matrix3& get_latvec() const override
-    {
-        return latvec;
-    }
 
     /// @brief Initialize basic cell parameters (latname, ntype, lmaxmax, init_vel)
     ///        from INPUT and parse fixed_axes into lat_axis_free flags.
@@ -228,29 +213,42 @@ class UnitCell : public BaseCell {
   private:
     // --------------------- Private Data ---------------------
 
-    std::vector<int> iat2iwt; ///< iat ==> iwt, the first global index for orbital of this atom
-    int npol = 1; ///< number of spin polarizations, initialized in set_iat2iwt
-                  /// ----------------- END of iat2iwt part -----------------
-
-    ModuleBase::Matrix3 stress; ///< calculate stress on the cell
-
-    /// @name BaseCell private overrides
-    /// @{
     Kind get_kind() const override
     {
-        return Kind::unit_cell;
+        return Kind::unitcell;
     }
 
-    int get_nat() const override
+    std::int64_t get_nat() const override
     {
         return nat;
+    }
+
+    double get_lat0() const override
+    {
+        return lat0;
+    }
+
+    double get_omega() const override
+    {
+        return omega;
+    }
+
+    const ModuleBase::Matrix3& get_latvec() const override
+    {
+        return latvec;
     }
 
     const ModuleBase::Matrix3& get_GT() const override
     {
         return GT;
     }
-    /// @}
+
+    std::vector<int> iat2iwt; ///< iat ==> iwt, the first global index for orbital of this atom
+    int npol = 1; ///< number of spin polarizations, initialized in set_iat2iwt
+                  /// ----------------- END of iat2iwt part -----------------
+
+    ModuleBase::Matrix3 stress; ///< calculate stress on the cell
+
 };
 
 #endif // unitcell class

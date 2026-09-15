@@ -8,15 +8,13 @@ class PageAllocator
 public:
     enum { default_pgsize = 1024 };
 
-    PageAllocator();
-    explicit PageAllocator(int pgsize);
-    ~PageAllocator();
-
+    PageAllocator() = default;
     PageAllocator(const PageAllocator&) = delete;
     PageAllocator& operator=(const PageAllocator&) = delete;
     PageAllocator(PageAllocator&&) = default;
     PageAllocator& operator=(PageAllocator&&) = default;
 
+    void initialize(int pgsize);
     int* allocate(int n);
     void reset();
     int get_pgsize() const;
@@ -30,7 +28,7 @@ private:
     };
 
     std::vector<Page> pages_;
-    int pgsize_ = 0;
+    int pgsize_ = default_pgsize;
 
     void new_page_();
 };

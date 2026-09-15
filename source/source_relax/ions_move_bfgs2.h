@@ -20,6 +20,10 @@ public:
     
 
 private:
+    // The unit test drives the private step machinery directly (seeding the
+    // Hessian and the previous-step state, then calling one stage at a time).
+    friend class BFGSTest;
+
     bool sign;//check if this is the first iteration
     double alpha;//initialize H,diagonal element is alpha
     double maxstep;//every movement smaller than maxstep

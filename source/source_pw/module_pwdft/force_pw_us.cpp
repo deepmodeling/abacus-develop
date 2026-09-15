@@ -1,3 +1,6 @@
+#include <cassert>
+#include <cstddef>
+
 #include "force_pw.h"
 #include "source_base/parallel_reduce.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
@@ -29,11 +32,15 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
     const int nh_tot = nlpp.nhm * (nlpp.nhm + 1) / 2;
     const std::complex<double> fac = ModuleBase::NEG_IMAG_UNIT * ucell.tpiba;
     const std::complex<double> ci_tpi = ModuleBase::IMAG_UNIT * ModuleBase::TWO_PI;
-    double* becsum = static_cast<const elecstate::ElecStatePW<std::complex<FPTYPE>, Device>&>(elec).becsum;
+    ModuleBase::matrix veff = elec.pot->get_eff_v();
+    const std::vector<double>* becsum_vector = elecstate::get_becsum<Device>(elec);
+    assert(becsum_vector != nullptr);
+    const std::size_t becsum_size = static_cast<std::size_t>(veff.nr) * static_cast<std::size_t>(ucell.nat) * nh_tot;
+    assert(becsum_vector->size() == becsum_size);
+    const double* becsum = becsum_vector->data();
 
     ModuleBase::matrix forceq(ucell.nat, 3);
 
-    ModuleBase::matrix veff = elec.pot->get_eff_v();
     ModuleBase::ComplexMatrix vg(PARAM.inp.nspin, npw);
     // fourier transform of the total effective potential
     for (int is = 0; is < PARAM.inp.nspin; is++)

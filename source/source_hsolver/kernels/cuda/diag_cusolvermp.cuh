@@ -35,7 +35,6 @@ class Diag_CusolverMP_gvd
                                 outputT* EigenValue,
                                 inputT* EigenVector);
     ~Diag_CusolverMP_gvd();
-    void outputParameters();
   private:
 
     int nFull;

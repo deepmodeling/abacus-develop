@@ -8,6 +8,24 @@
 
 namespace unitcell {
 
+int cal_nlocal(const Atom* atoms, const int ntype, const int nspin)
+{
+    int nlocal = 0;
+    for (int it = 0; it < ntype; ++it)
+    {
+        const int nlocal_it = atoms[it].nw * atoms[it].na;
+        if (nspin != 4)
+        {
+            nlocal += nlocal_it;
+        }
+        else
+        {
+            nlocal += nlocal_it * 2; // zhengdy-soc
+        }
+    }
+    return nlocal;
+}
+
 void cal_nelec(const Atom* atoms, const int& ntype, double& nelec, const double nelec_delta)
 {
     ModuleBase::TITLE("UnitCell", "cal_nelec");

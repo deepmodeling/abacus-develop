@@ -1,5 +1,6 @@
 #pragma once
 #include "source_io/module_parameter/parameter.h"
+#include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_david.h"
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_cg.h"
@@ -7,6 +8,7 @@
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"
 #include "source_base/module_container/ATen/core/tensor_map.h"
+#include "source_base/parallel_comm.h"
 
 namespace LR
 {

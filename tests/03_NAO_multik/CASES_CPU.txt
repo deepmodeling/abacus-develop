@@ -65,3 +65,5 @@ get_wf0
 get_pchg
 get_pchg_k
 get_s
+scf_deltaspin2
+scf_deltaspin4

@@ -151,71 +151,51 @@ protected:
 
 TEST_F(CG_test, Stand_Solve_LinearEq)
 {
-#ifdef __MPI
-#undef __MPI
     CG_Solve_LinearEq();
     EXPECT_NEAR(x[0], 0.5, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], 1.6429086563584579739e-18, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 1.5, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 4);
     ASSERT_EQ(cg.get_iter(), 4);
-#define __MPI
-#endif
 }
 
 TEST_F(CG_test, PR_Solve_LinearEq)
 {
-#ifdef __MPI
-#undef __MPI
     Solve(1, 0);
     EXPECT_NEAR(x[0], 0.50000000000003430589, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], -3.4028335704761047964e-14, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 1.5000000000000166533, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 3);
     ASSERT_EQ(cg.get_iter(), 3);
-#define __MPI
-#endif
 }
 
 TEST_F(CG_test, HZ_Solve_LinearEq)
 {
-#ifdef __MPI
-#undef __MPI
     Solve(2, 0);
     EXPECT_NEAR(x[0], 0.49999999999999944489, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], -9.4368957093138305936e-16, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 1.5000000000000011102, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 3);
     ASSERT_EQ(cg.get_iter(), 3);
-#define __MPI
-#endif
 }
 
 TEST_F(CG_test, PR_Min_Func)
 {
-#ifdef __MPI
-#undef __MPI
     Solve(1, 1);
     EXPECT_NEAR(x[0], 4.0006805979150792396, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], 2.0713759992720870429, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 9.2871067233169171118, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 18);
     ASSERT_EQ(cg.get_iter(), 18);
-#define __MPI
-#endif
 }
 
 TEST_F(CG_test, HZ_Min_Func)
 {
-#ifdef __MPI
-#undef __MPI
     Solve(2, 1);
     EXPECT_NEAR(x[0], 4.0006825378033568086, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], 2.0691732100663737803, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[2], 9.2780872787668311474, DOUBLETHRESHOLD);
     ASSERT_EQ(final_iter, 18);
     ASSERT_EQ(cg.get_iter(), 18);
-#define __MPI
-#endif
 }
 // g++ -std=c++11 ../opt_CG.cpp ../opt_DCsrch.cpp ./CG_test.cpp ./test_tools.cpp  -lgtest -lpthread -lgtest_main -o test.exe

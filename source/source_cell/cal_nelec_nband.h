@@ -15,6 +15,29 @@ namespace unitcell {
     void cal_nelec(const Atom* atoms, const int& ntype, double& nelec, const double nelec_delta);
 
     /**
+     * @brief Calculate the total number of local numerical atomic orbitals.
+     *
+     * nlocal = sum over all atom types of (atoms[it].nw * atoms[it].na).
+     * For nspin == 4 (non-collinear) each basis function carries 2 polarizations,
+     * so nlocal is doubled.
+     *
+     * Shared by cal_atoms_info() (which stores the result in PARAM.globalv.nlocal)
+     * and GintInfo::init_trace_lo_(), so those two can no longer drift apart.
+     * cal_wfc() still repeats the loop inline because it also needs the per-type
+     * prefix sums for Atom::stapos_wf, and asserts its own total against the value
+     * cal_atoms_info() produced.
+     *
+     * @note atoms[it].nw must already be populated, i.e. Atom::set_index() must have
+     *       run for every type before calling this.
+     *
+     * @param atoms [in] atom pointer
+     * @param ntype [in] number of atom types
+     * @param nspin [in] number of spin components
+     * @return total number of local basis functions
+     */
+    int cal_nlocal(const Atom* atoms, const int ntype, const int nspin);
+
+    /**
      * @brief Calculate the number of bands.
      *
      * IMPORTANT: The nbands parameter must be the user-specified value from INPUT file.

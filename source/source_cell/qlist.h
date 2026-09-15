@@ -11,10 +11,14 @@
 
 #include "source_base/vector3.h"
 #include "module_symmetry/little_group.h"
-#include "module_symmetry/symmetry.h"
-#include "unitcell.h"
 #include "reciprocal_grid.h"
 #include <vector>
+
+class UnitCell;
+namespace ModuleSymmetry
+{
+class Symmetry;
+}
 
 namespace ModuleCell {
 
@@ -80,9 +84,16 @@ public:
     /**
      * @brief Get q-point at given index.
      * @param idx q-point index
-     * @return q-point vector (direct coordinates)
+     * @return q-point vector (direct coordinates); zero vector if idx is out of range
      */
-    ModuleBase::Vector3<double> get_q(int idx) const { return this->kvec_d[idx]; }
+    ModuleBase::Vector3<double> get_q(int idx) const
+    {
+        if (idx < 0 || idx >= static_cast<int>(this->kvec_d.size()))
+        {
+            return ModuleBase::Vector3<double>();
+        }
+        return this->kvec_d[idx];
+    }
 
     /**
      * @brief Get the number of irreps at given q-point.
@@ -124,7 +135,9 @@ public:
                             const ModuleSymmetry::Symmetry& symm,
                             bool use_symm,
                             std::string& skpt,
-                            bool& match) override;
+                            bool& match,
+                            const int my_rank,
+                            std::ofstream& ofs_running) override;
 
 private:
     std::vector<int> nirr_; ///< number of irreps for each q-point

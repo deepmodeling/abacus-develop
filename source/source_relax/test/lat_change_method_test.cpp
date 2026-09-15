@@ -25,7 +25,7 @@ void Lattice_Change_CG::allocate(void)
 {
 }
 
-bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in, std::ofstream& ofs, std::vector<double>& etot_info)
+bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in, std::ofstream& ofs, std::vector<double>& etot_info, const Relax_Criteria& criteria)
 {
     return false;
 }
@@ -66,7 +66,8 @@ TEST_F(LatticeChangeMethodsTest, CalLatticeChange)
     UnitCell ucell;
     std::ofstream ofs("/dev/null");
 
-    lcm.cal_lattice_change(istep, stress_step, stress, etot, ucell, ofs);
+    Relax_Criteria criteria;
+    lcm.cal_lattice_change(istep, stress_step, stress, etot, ucell, ofs, criteria);
 
     // Assert that the static variable stress_step is set correctly
     EXPECT_EQ(Lattice_Change_Basic::stress_step, stress_step);

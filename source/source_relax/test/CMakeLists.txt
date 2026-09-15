@@ -6,6 +6,33 @@ abacus_disable_feature_definitions(__ROCM)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+
+AddTest(
+  TARGET MODULE_RELAX_socket_ipi_test
+  SOURCES test_socket_ipi.cpp ../socket_ipi.cpp
+)
+
+AddTest(
+  TARGET MODULE_RELAX_socket_frame_test
+  SOURCES test_socket_frame.cpp ../socket_frame.cpp ../socket_frame_utils.cpp
+)
+
+AddTest(
+  TARGET MODULE_RELAX_socket_driver_test
+  LIBS MPI::MPI_CXX base device
+  KEEP_FEATURE_DEFINITIONS __MPI
+  SOURCES test_socket_driver.cpp
+          ../socket_driver.cpp
+          ../socket_utils.cpp
+          ../socket_handlers.cpp
+          ../socket_frame_utils.cpp
+          ../socket_frame.cpp
+          ../socket_ipi.cpp
+          ../../source_cell/update_cell.cpp
+          ../../source_cell/bcast_cell.cpp
+)
+set_tests_properties(MODULE_RELAX_socket_driver_test PROPERTIES TIMEOUT 15)
+
 AddTest(
   TARGET MODULE_RELAX_relax_new_line_search
   LIBS parameter

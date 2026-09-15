@@ -1,8 +1,8 @@
 /**
  * @file reciprocal_grid.cpp
  * @brief Implementation of the ModuleCell::ReciprocalGrid base class.
- * @note Spin-free logic migrated from K_Vectors (klist.cpp) and
- *       KVectorUtils (k_vector_utils.cpp) on 2026-08-14.
+ * @note Spin-free logic migrated from K_Vectors (klist.cpp) on 2026-08-14;
+ *       the intermediate KVectorUtils shim was removed on 2026-09-02.
  */
 #include "reciprocal_grid.h"
 
@@ -17,6 +17,27 @@
 
 namespace ModuleCell
 {
+
+void restrict_kpt(ModuleBase::Vector3<double>& kvec, double epsilon)
+{
+    // fold into (-0.5, 0.5]; the epsilon shift keeps points sitting on the
+    // boundary consistent with the epsilon-based equivalence checks
+    kvec.x = fmod(kvec.x + 100.5 - 0.5 * epsilon, 1) - 0.5 + 0.5 * epsilon;
+    kvec.y = fmod(kvec.y + 100.5 - 0.5 * epsilon, 1) - 0.5 + 0.5 * epsilon;
+    kvec.z = fmod(kvec.z + 100.5 - 0.5 * epsilon, 1) - 0.5 + 0.5 * epsilon;
+    if (std::abs(kvec.x) < epsilon)
+    {
+        kvec.x = 0.0;
+    }
+    if (std::abs(kvec.y) < epsilon)
+    {
+        kvec.y = 0.0;
+    }
+    if (std::abs(kvec.z) < epsilon)
+    {
+        kvec.z = 0.0;
+    }
+}
 
 void ReciprocalGrid::renew(const int& kpoint_number)
 {
@@ -146,31 +167,35 @@ void ReciprocalGrid::kvec_c2d(const ModuleBase::Matrix3& latvec)
     }
 }
 
-void ReciprocalGrid::set_both_kvec(const ModuleBase::Matrix3& G, const ModuleBase::Matrix3& R, std::string& skpt)
+void ReciprocalGrid::set_both_kvec(const ModuleBase::Matrix3& G,
+                                   const ModuleBase::Matrix3& R,
+                                   std::string& skpt,
+                                   std::ofstream& ofs_running,
+                                   std::ofstream& ofs_warning)
 {
-    if (true) // once-per-run gate (the FINAL_SCF hole is irrelevant here)
+    // Re-derive the "which representation was read from file" flags.
+    // For auto-generated meshes (k_nkstot == 0) the direct coordinates
+    // are always available.
+    if (this->k_nkstot == 0)
     {
-        if (this->k_nkstot == 0)
+        this->kd_done = true;
+        this->kc_done = false;
+    }
+    else
+    {
+        if (this->k_kword == "Cartesian" || this->k_kword == "C")
+        {
+            this->kc_done = true;
+            this->kd_done = false;
+        }
+        else if (this->k_kword == "Direct" || this->k_kword == "D")
         {
             this->kd_done = true;
             this->kc_done = false;
         }
         else
         {
-            if (this->k_kword == "Cartesian" || this->k_kword == "C")
-            {
-                this->kc_done = true;
-                this->kd_done = false;
-            }
-            else if (this->k_kword == "Direct" || this->k_kword == "D")
-            {
-                this->kd_done = true;
-                this->kc_done = false;
-            }
-            else
-            {
-                GlobalV::ofs_warning << " Error : neither Cartesian nor Direct kpoint." << std::endl;
-            }
+            ofs_warning << " Error : neither Cartesian nor Direct kpoint." << std::endl;
         }
     }
 
@@ -199,7 +224,7 @@ void ReciprocalGrid::set_both_kvec(const ModuleBase::Matrix3& G, const ModuleBas
                                  this->kvec_d[i].z,
                                  this->wk[i]);
     }
-    GlobalV::ofs_running << table << std::endl;
+    ofs_running << table << std::endl;
     if (GlobalV::MY_RANK == 0)
     {
         std::stringstream ss;
@@ -303,25 +328,6 @@ void ReciprocalGrid::reduce_ibz(const ModuleBase::Matrix3* rot_ops,
                                 std::vector<int>& ibz2bz)
 {
     auto equal = [epsilon](double m, double n) { return fabs(m - n) < epsilon; };
-    // restrict a vector to (-0.5, 0.5]
-    auto restrict_kpt = [epsilon](ModuleBase::Vector3<double>& kvec) {
-        kvec.x = fmod(kvec.x + 100.5 - 0.5 * epsilon, 1) - 0.5 + 0.5 * epsilon;
-        kvec.y = fmod(kvec.y + 100.5 - 0.5 * epsilon, 1) - 0.5 + 0.5 * epsilon;
-        kvec.z = fmod(kvec.z + 100.5 - 0.5 * epsilon, 1) - 0.5 + 0.5 * epsilon;
-        if (std::abs(kvec.x) < epsilon)
-        {
-            kvec.x = 0.0;
-        }
-        if (std::abs(kvec.y) < epsilon)
-        {
-            kvec.y = 0.0;
-        }
-        if (std::abs(kvec.z) < epsilon)
-        {
-            kvec.z = 0.0;
-        }
-        return;
-    };
 
     // direct coordinates of points in the k-lattice
     std::vector<ModuleBase::Vector3<double>> kvec_d_k(this->nkstot);
@@ -335,7 +341,10 @@ void ReciprocalGrid::reduce_ibz(const ModuleBase::Matrix3* rot_ops,
 
     int nkstot_ibz = 0;
 
-    assert(this->nkstot > 0);
+    if (this->nkstot <= 0)
+    {
+        ModuleBase::WARNING_QUIT("ReciprocalGrid::reduce_ibz", "no points to reduce (nkstot <= 0).");
+    }
     std::vector<ModuleBase::Vector3<double>> kvec_d_ibz(this->nkstot);
     std::vector<double> wk_ibz_tmp(this->nkstot); // ibz point weight
     ibz2bz.resize(this->nkstot);
@@ -347,14 +356,14 @@ void ReciprocalGrid::reduce_ibz(const ModuleBase::Matrix3* rot_ops,
     ModuleBase::Vector3<double> kvec_rot_k;
 
     // update map k -> irreducible k
-    ibz_index.assign(this->nkstot_full, -1); // -1 means not in ibz list
+    ibz_index.assign(this->nkstot_nospin, -1); // -1 means not in ibz list
     // search in all k-points.
     for (int i = 0; i < this->nkstot; ++i)
     {
         if (!this->is_mp) { weight = this->wk[i]; } // use the input weight, instead of 1/nkstot
 
         // restrict to (-0.5, 0.5]
-        restrict_kpt(this->kvec_d[i]);
+        restrict_kpt(this->kvec_d[i], epsilon);
 
         bool already_exist = false;
         int exist_number = -1;
@@ -364,12 +373,12 @@ void ReciprocalGrid::reduce_ibz(const ModuleBase::Matrix3* rot_ops,
             if (!already_exist)
             {
                 kvec_rot = this->kvec_d[i] * rot_ops[j]; // wrong for total energy, but correct for nonlocal force.
-                restrict_kpt(kvec_rot);
+                restrict_kpt(kvec_rot, epsilon);
                 if (this->is_mp)
                 {
                     kvec_rot_k = kvec_d_k[i] * kkmatrix[j];              // k-lattice rotation
                     kvec_rot_k = kvec_rot_k * k_lattice * G.Inverse();   // convert to recip lattice
-                    restrict_kpt(kvec_rot_k);
+                    restrict_kpt(kvec_rot_k, epsilon);
 
                     assert(equal(kvec_rot.x, kvec_rot_k.x));
                     assert(equal(kvec_rot.y, kvec_rot_k.y));
@@ -524,7 +533,10 @@ bool ReciprocalGrid::build_star_ops(const UnitCell& ucell,
                                  << std::endl;
             GlobalV::ofs_running << "ibrav of real space lattice: " << symm.ilattname << std::endl;
             GlobalV::ofs_running << "ibrav of reciprocal lattice: " << recip_brav_name << std::endl;
-            GlobalV::ofs_running << "(which should be " << ibrav_a2b[symm.real_brav - 1] << ")." << std::endl;
+            if (symm.real_brav >= 1 && symm.real_brav <= 14)
+            {
+                GlobalV::ofs_running << "(which should be " << ibrav_a2b[symm.real_brav - 1] << ")." << std::endl;
+            }
             return false;
         }
 
@@ -552,7 +564,12 @@ bool ReciprocalGrid::build_star_ops(const UnitCell& ucell,
         // point-group analysis of reciprocal lattice
         ModuleBase::Matrix3 bsymop[48];
         int bnop = 0;
-        // search again
+        // Search again on the vectors possibly replaced in place by the
+        // first lattice_type call (it swaps in the shortest basis and may
+        // swap in higher-symmetry optimized vectors). This second pass
+        // re-derives the (Bravais type, standard-orientation vectors) pair
+        // consistently for the final vectors, which the setgroup +
+        // gmatrix_convert calls below rely on. Do not remove this call.
         symm.lattice_type(recip_vec1,
                           recip_vec2,
                           recip_vec3,

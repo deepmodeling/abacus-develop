@@ -242,6 +242,7 @@ TEST_F(ElecStatePWTest, ConstructorDouble)
     EXPECT_EQ(elecstate_pw_d->charge, chg);
     EXPECT_EQ(elecstate_pw_d->klist, klist);
     EXPECT_EQ(elecstate_pw_d->bigpw, bigpw);
+    EXPECT_TRUE(elecstate_pw_d->get_becsum().empty());
 }
 
 TEST_F(ElecStatePWTest, ConstructorSingle)
@@ -257,6 +258,7 @@ TEST_F(ElecStatePWTest, ConstructorSingle)
     EXPECT_EQ(elecstate_pw_s->charge, chg);
     EXPECT_EQ(elecstate_pw_s->klist, klist);
     EXPECT_EQ(elecstate_pw_s->bigpw, bigpw);
+    EXPECT_TRUE(elecstate_pw_s->get_becsum().empty());
 }
 
 TEST_F(ElecStatePWTest, InitRhoDataDouble)

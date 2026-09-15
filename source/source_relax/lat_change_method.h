@@ -1,6 +1,7 @@
 #ifndef LAT_CHANGE_METHOD_H
 #define LAT_CHANGE_METHOD_H
 
+#include "relax_criteria.h"
 #include <fstream>
 #include <vector>
 #include "lattice_change_basic.h"
@@ -20,7 +21,8 @@ class Lattice_Change_Methods
                             const ModuleBase::matrix &stress,
                             const double &etot,
                             UnitCell &ucell,
-                            std::ofstream& ofs);
+                            std::ofstream& ofs,
+                            const Relax_Criteria& criteria);
 
     bool get_converged(void) const
     {

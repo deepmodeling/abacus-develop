@@ -32,8 +32,16 @@ endif()
 
  function(AddTest) # function for UT
     cmake_parse_arguments(UT "DYN" "TARGET"
-                          "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS" ${ARGN})
+                          "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS;KEEP_FEATURE_DEFINITIONS" ${ARGN})
     add_executable(${UT_TARGET} ${UT_SOURCES})
+
+    # Let this target keep feature definitions (e.g. __MPI) that its source
+    # directory disables via abacus_disable_feature_definitions(). Needed by
+    # tests that genuinely exercise the feature.
+    if(UT_KEEP_FEATURE_DEFINITIONS)
+      set_property(TARGET ${UT_TARGET} PROPERTY
+        ABACUS_KEPT_FEATURE_DEFINITIONS ${UT_KEEP_FEATURE_DEFINITIONS})
+    endif()
 
     if(ENABLE_COVERAGE)
       add_coverage(${UT_TARGET})

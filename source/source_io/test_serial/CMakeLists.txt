@@ -55,13 +55,6 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_IO_write_bands
-  LIBS parameter base device symmetry
-  SOURCES write_bands_test.cpp ../module_output/band_parallel_output.cpp ../module_energy/write_bands.cpp
-  ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/k_vector_utils.cpp ../../source_cell/reciprocal_grid.cpp
-)
-
-AddTest(
   TARGET MODULE_IO_system_variable_test
   LIBS parameter base device io_input_serial
   SOURCES io_sys_var_test.cpp

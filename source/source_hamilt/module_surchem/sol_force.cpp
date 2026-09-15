@@ -1,7 +1,6 @@
 #include "surchem.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 
 void surchem::force_cor_one(const UnitCell& cell,
                             const ModulePW::PW_Basis* rho_basis,
@@ -66,7 +65,10 @@ void surchem::force_cor_one(const UnitCell& cell,
 
 }
 
-void surchem::force_cor_two(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol)
+void surchem::force_cor_two(const UnitCell& cell,
+                            const ModulePW::PW_Basis* rho_basis,
+                            const int nspin,
+                            ModuleBase::matrix& forcesol)
 {
    
     std::complex<double> *n_pseudo = new std::complex<double>[rho_basis->npw];
@@ -80,7 +82,7 @@ void surchem::force_cor_two(const UnitCell& cell, const ModulePW::PW_Basis* rho_
     std::complex<double> *Vel_g = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(Vcav_g, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(Vel_g, rho_basis->npw);
-    for(int is=0; is<PARAM.inp.nspin; is++)
+    for(int is=0; is<nspin; is++)
 	{
 		for (int ir=0; ir<rho_basis->nrxx; ir++)
 		{
@@ -150,6 +152,7 @@ void surchem::force_cor_two(const UnitCell& cell, const ModulePW::PW_Basis* rho_
 void surchem::cal_force_sol(const UnitCell& cell,
                             const ModulePW::PW_Basis* rho_basis,
                             const ModuleBase::matrix& vloc,
+                            const int nspin,
                             ModuleBase::matrix& forcesol)
 {
     ModuleBase::TITLE("surchem", "cal_force_sol");
@@ -160,7 +163,7 @@ void surchem::cal_force_sol(const UnitCell& cell,
     ModuleBase::matrix force2(nat, 3);
     
     force_cor_one(cell, rho_basis, vloc, force1);
-    force_cor_two(cell, rho_basis,force2);
+    force_cor_two(cell, rho_basis, nspin, force2);
     
     int iat = 0;
     for (int it = 0;it < cell.ntype;it++)

@@ -196,7 +196,7 @@ auto RI_2D_Comm::split_m2D_ktoR_k(const UnitCell& ucell,
                         const Tdata_m frac = SPIN_multiple
                             * RI::Global_Func::convert<Tdata_m>(std::exp(
                                 -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell) * ucell.latvec))));
-                        if (static_cast<int>(std::round(SPIN_multiple * kv.wk[ik] * kv.get_nkstot_full())) == 2)
+                        if (static_cast<int>(std::round(SPIN_multiple * kv.wk[ik] * kv.get_nkstot_nospin())) == 2)
                             { set_mR_2D(mk_2D * (frac * 0.5) + tensor_conj(mk_2D * (frac * 0.5))); }
                         else
                             { set_mR_2D(mk_2D * frac); }
@@ -205,7 +205,7 @@ auto RI_2D_Comm::split_m2D_ktoR_k(const UnitCell& ucell,
                     { // traverse kstar, ik means ik_ibz
                         for (auto& isym_kvd : kv.kstars[ik % ik_list.size()])
                         {
-                            RI::Tensor<Tdata_m> mk_2D = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[ik_full + is_k * kv.get_nkstot_full()], pv.get_col_size(), pv.get_row_size());
+                            RI::Tensor<Tdata_m> mk_2D = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[ik_full + is_k * kv.get_nkstot_nospin()], pv.get_col_size(), pv.get_row_size());
                             const Tdata_m frac = SPIN_multiple
                                 * RI::Global_Func::convert<Tdata_m>(std::exp(
                                     -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * ((isym_kvd.second * ucell.G) * (RI_Util::array3_to_Vector3(cell) * ucell.latvec))));

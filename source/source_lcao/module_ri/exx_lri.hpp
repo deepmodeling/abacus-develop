@@ -364,7 +364,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		std::cout << "Coulomb: number of atom-pairs inside atomic overlap is " << flag << ". " << std::endl;
 		if (this->info.coul_moment == true)
 		{
-			double hf_Rcut = std::pow(0.75 * this->p_kv->get_nkstot_full() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
+			double hf_Rcut = std::pow(0.75 * this->p_kv->get_nkstot_nospin() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
 			// To cal Cs, we still cal all Vs(R) in r space
 			// moment_abfs->cal_VR(ucell,
 			//					 this->abfs,
@@ -532,7 +532,7 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(
 		std::cout << "Coulomb: number of atom-pairs inside atomic overlap is " << flag << ". " << std::endl;
 		if (this->info.coul_moment == true)
 		{
-			double hf_Rcut = std::pow(0.75 * this->p_kv->get_nkstot_full() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
+			double hf_Rcut = std::pow(0.75 * this->p_kv->get_nkstot_nospin() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
 			// To cal Cs, we still cal all Vs(R) in r space
 			// moment_abfs->cal_VR(ucell,
 			//					 this->abfs,

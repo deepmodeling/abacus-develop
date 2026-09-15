@@ -1,9 +1,14 @@
 abacus_disable_feature_definitions(__MPI)
 install(DIRECTORY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
+  TARGET MODULE_BASE_additional_coverage
+  LIBS parameter base device container
+  SOURCES additional_coverage_test.cpp
+)
+AddTest(
   TARGET MODULE_BASE_blas_connector
   LIBS parameter  base device
-  SOURCES blas_connector_test.cpp
+  SOURCES blas_connector_test.cpp blas_connector_additional_test.cpp
 )
 AddTest(
   TARGET MODULE_BASE_atom_in
@@ -145,13 +150,13 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_opt_cg
   LIBS parameter  base device
-  SOURCES opt_cg_test.cpp opt_test_tools.cpp
+  SOURCES opt_cg_test.cpp opt_test_tools.cpp mpi_test_main.cpp
 )
 
 AddTest(
   TARGET MODULE_BASE_opt_tn
   LIBS parameter  base device
-  SOURCES opt_tn_test.cpp opt_test_tools.cpp
+  SOURCES opt_tn_test.cpp opt_test_tools.cpp mpi_test_main.cpp
 )
 
 AddTest(
@@ -194,6 +199,24 @@ AddTest(
   TARGET MODULE_BASE_cubic_spline
   SOURCES cubic_spline_test.cpp
   LIBS parameter  base device
+)
+
+AddTest(
+  TARGET MODULE_BASE_math_erf_complex
+  SOURCES math_erf_complex_test.cpp
+  LIBS parameter base device
+)
+
+AddTest(
+  TARGET MODULE_BASE_math_lib_info
+  SOURCES math_lib_info_test.cpp
+  LIBS parameter base device
+)
+
+AddTest(
+  TARGET MODULE_BASE_projgen
+  SOURCES projgen_test.cpp
+  LIBS parameter base device
 )
 
 AddTest(

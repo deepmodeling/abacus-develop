@@ -16,7 +16,7 @@ namespace ExxLriDetail
 
 double default_spencer_rcut(const UnitCell& ucell, const K_Vectors& kv)
 {
-    return std::pow(0.75 * kv.get_nkstot_full() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
+    return std::pow(0.75 * kv.get_nkstot_nospin() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
 }
 
 CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_param,

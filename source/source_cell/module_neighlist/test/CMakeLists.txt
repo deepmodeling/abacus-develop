@@ -36,9 +36,13 @@ AddTest(
 
 if(ENABLE_MPI)
   add_executable(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
-    md_cell_migrate_mpi_test.cpp
-    ../../md_cell.cpp
+    mdcell_migrate_mpi_test.cpp
+    test_domain_decomposition.cpp
+    ../../mdcell.cpp
     ../domain_decomposition.cpp
+    ../neighbor_search.cpp
+    ../bin_manager.cpp
+    ../page_allocator.cpp
   )
   target_link_libraries(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
     PRIVATE
@@ -50,28 +54,43 @@ if(ENABLE_MPI)
             $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi>
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
-
-  add_executable(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader
-    distributed_mdcell_reader_test.cpp
-    ../../distributed_mdcell_reader.cpp
-    ../../md_cell.cpp
-    ../domain_decomposition.cpp
-    ../../../source_base/global_variable.cpp
-    ../../../source_base/communication_domain.cpp
-    ../../../source_base/matrix.cpp
-    ../../../source_base/matrix3.cpp
-    ../../../source_base/tool_quit.cpp
+  add_test(NAME MODULE_CELL_NEIGHBOR_domain_decomposition_np1
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1
+            $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi>
+            --gtest_filter=DomainDecompositionTest.*
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
-  target_include_directories(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader PRIVATE ${ABACUS_SOURCE_DIR})
-  target_compile_definitions(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader PRIVATE __NORMAL)
-  target_link_libraries(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader
-    PRIVATE
-    Threads::Threads MPI::MPI_CXX GTest::gtest GTest::gmock
-  )
-  install(TARGETS MODULE_CELL_NEIGHBOR_distributed_mdcell_reader DESTINATION ${CMAKE_BINARY_DIR}/tests)
-  add_test(NAME MODULE_CELL_NEIGHBOR_distributed_mdcell_reader_np4
+  add_test(NAME MODULE_CELL_NEIGHBOR_domain_decomposition_np4
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
-            $<TARGET_FILE:MODULE_CELL_NEIGHBOR_distributed_mdcell_reader>
+            $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi>
+            --gtest_filter=DomainDecompositionTest.*
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+  set_tests_properties(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
+    MODULE_CELL_NEIGHBOR_domain_decomposition_np1
+    MODULE_CELL_NEIGHBOR_domain_decomposition_np4
+    PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60)
+
+  add_executable(MODULE_CELL_NEIGHBOR_mdcell_reader
+    mdcell_reader_test.cpp
+    ../../mdcell_reader.cpp
+    ../../mdcell.cpp
+    ../../print_cell.cpp
+    ../domain_decomposition.cpp
+    ../neighbor_search.cpp
+    ../bin_manager.cpp
+    ../page_allocator.cpp
+  )
+  target_include_directories(MODULE_CELL_NEIGHBOR_mdcell_reader PRIVATE ${ABACUS_SOURCE_DIR})
+  target_compile_definitions(MODULE_CELL_NEIGHBOR_mdcell_reader PRIVATE __NORMAL)
+  target_link_libraries(MODULE_CELL_NEIGHBOR_mdcell_reader
+    PRIVATE
+    parameter base device Threads::Threads MPI::MPI_CXX GTest::gtest GTest::gmock abacus::linalg_libs
+  )
+  install(TARGETS MODULE_CELL_NEIGHBOR_mdcell_reader DESTINATION ${CMAKE_BINARY_DIR}/tests)
+  add_test(NAME MODULE_CELL_NEIGHBOR_mdcell_reader_np4
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
+            $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_reader>
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
 

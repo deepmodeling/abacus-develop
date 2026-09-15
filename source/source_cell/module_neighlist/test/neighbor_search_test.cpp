@@ -71,7 +71,7 @@ TEST(NeighborSearchTest, TwoAtomsNeighbor)
     ns.build_neighbors();
 
     const NeighborList& list = ns.get_neighbor_list();
-    ASSERT_EQ(list.get_nlocal(), 2);
+    ASSERT_EQ(list.get_ncentral_atoms(), 2);
     EXPECT_EQ(list.get_numneigh(0), 8);
     EXPECT_EQ(list.get_numneigh(1), 8);
 }
@@ -92,7 +92,7 @@ TEST(NeighborSearchTest, NoNeighbor)
     ns.build_neighbors();
 
     const NeighborList& list = ns.get_neighbor_list();
-    ASSERT_EQ(list.get_nlocal(), 2);
+    ASSERT_EQ(list.get_ncentral_atoms(), 2);
     EXPECT_EQ(list.get_numneigh(0), 0);
     EXPECT_EQ(list.get_numneigh(1), 0);
 }
@@ -112,7 +112,7 @@ TEST(NeighborSearchTest, SerialInitOwnsCentralAtomsAndBuildsImages)
     ns.init(ucell, 1.0);
 
     EXPECT_EQ(ns.get_inside_atoms().size(), 2U);
-    EXPECT_EQ(ns.get_neighbor_list().get_nlocal(), 2);
+    EXPECT_EQ(ns.get_neighbor_list().get_ncentral_atoms(), 2);
     EXPECT_EQ(ns.get_all_atoms().size(), 54U);
 
     const std::vector<NeighborAtom>& all_atoms = ns.get_all_atoms();

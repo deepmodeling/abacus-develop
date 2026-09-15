@@ -45,8 +45,9 @@ void setup_gradient(const UnitCell &ucell, const ModuleBase::matrix &force, doub
  * @param move Displacement vector (dimension: dim)
  * @param pos Current position array (dimension: dim)
  * @param ofs Output stream for logging
+ * @param test_relax_method Verbosity level for relaxation debug output
  */
-void move_atoms(UnitCell &ucell, double *move, double *pos, std::ofstream& ofs);
+void move_atoms(UnitCell &ucell, double *move, double *pos, std::ofstream& ofs, const int test_relax_method);
 
 /**
  * @brief Check convergence based on gradient threshold.
@@ -55,9 +56,21 @@ void move_atoms(UnitCell &ucell, double *move, double *pos, std::ofstream& ofs);
  * @param update_iter Number of successfully updated iterations (will be incremented if converged)
  * @param ofs Output stream for logging
  * @param etot_info Energy information array [etot, etot_p, ediff]
+ * @param force_thr Force convergence threshold in Ry/Bohr
+ * @param force_thr_ev The same threshold in eV/Angstrom, as reconciled by ReadInput
+ * @param out_level Output verbosity level ("ie" prints per-step energy to stdout)
+ * @param test_relax_method Verbosity level for relaxation debug output
  * @return true if converged, false otherwise
  */
-bool check_converged(const UnitCell &ucell, const double *grad, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info);
+bool check_converged(const UnitCell &ucell,
+                     const double *grad,
+                     int& update_iter,
+                     std::ofstream& ofs,
+                     std::vector<double>& etot_info,
+                     const double& force_thr,
+                     const double& force_thr_ev,
+                     const std::string& out_level,
+                     const int test_relax_method);
 
 /**
  * @brief Terminate geometry optimization and output results.

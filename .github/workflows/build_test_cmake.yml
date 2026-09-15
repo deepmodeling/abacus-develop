@@ -24,7 +24,7 @@ jobs:
 
           - tag: gnu
             external_toolchain_args: ""
-            build_args: "-DENABLE_LIBXC=ON -DENABLE_MLALGO=ON -DENABLE_LIBRI=ON -DENABLE_DFTD4=ON"
+            build_args: "-DENABLE_LIBXC=ON -DENABLE_MLALGO=ON -DENABLE_LIBRI=ON -DENABLE_DFTD4=ON -DENABLE_PEXSI=ON"
             name: "Build extra components with GNU toolchain"
           - tag: intel
             external_toolchain_args: "--with-intel"
