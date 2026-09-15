@@ -13,9 +13,23 @@ SETUPFILE=${SETUPFILE:-"${INSTALLDIR}/setup"}
 ARCH_FILE_TEMPLATE=${ARCH_FILE_TEMPLATE:-"${SCRIPTDIR}/arch_base.tmpl"}
 VERSION_FILE=${VERSION_FILE:-"${SCRIPTDIR}/VERSION"}
 
-# system arch gotten from OpenBLAS prebuild
-OPENBLAS_ARCH=${OPENBLAS_ARCH:-''}
-OPENBLAS_LIBCORE=${OPENBLAS_LIBCORE:-''}
+# host architecture
+SYSTEM_ARCH=${SYSTEM_ARCH:-"$(uname -m)"}
+case "${SYSTEM_ARCH}" in
+  x86_64 | amd64)
+    SYSTEM_ARCH="x86_64"
+    ;;
+  aarch64 | arm64)
+    SYSTEM_ARCH="arm64"
+    ;;
+  i?86)
+    SYSTEM_ARCH="i386"
+    ;;
+  *)
+    # Keep other architectures as reported by uname.
+    ;;
+esac
+export SYSTEM_ARCH
 
 # search paths
 SYS_INCLUDE_PATH=${SYS_INCLUDE_PATH:-'/usr/local/include:/usr/include'}
