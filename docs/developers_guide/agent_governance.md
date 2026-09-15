@@ -220,14 +220,12 @@ setup workflows and should be added only through a later governance change.
 ## INPUT Parameter Changes
 
 Changes to parameter metadata, default values, type, availability, description,
-or parsing behavior should include both:
+or parsing behavior must include:
 
-- `docs/parameters.yaml`
 - `docs/advanced/input_files/input-main.md`
 
-These files are generated artifacts, not additional sources of truth. Update
-the C++ `Input_Item` registrations and regenerate both files; do not edit the
-YAML or Markdown output by hand.
+The parameter YAML stream is generated transiently from the ABACUS binary and
+is not stored in the repository.
 
 If the diff touches parameter internals but does not change user-visible INPUT
 behavior, the PR should state why no documentation update is required. Missing
@@ -238,8 +236,8 @@ may still request documentation updates before merging.
 
 Before requesting review, check that the PR description matches the diff:
 
-- New or changed INPUT behavior lists the changed parameters and links the YAML
-  and Markdown documentation updates.
+- New or changed INPUT behavior lists the changed parameters and links the
+  Markdown documentation update.
 - Source changes list focused unit, case, or CLI verification commands with the
   observed result.
 - Header include growth, `.hpp` propagation, missing tests, or other warnings
