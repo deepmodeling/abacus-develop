@@ -587,6 +587,9 @@ OBJS_SYMMETRY=symm_other.o\
     symm_rho.o\
     little_group.o\
     symmetry.o\
+    irreducible_sector.o\
+    irred_sec_bvk.o\
+    symm_rotation_k.o\
 
 OBJS_XC=xc_functional.o\
     xc_functional_op.o\

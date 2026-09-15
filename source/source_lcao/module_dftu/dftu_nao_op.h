@@ -5,12 +5,14 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_lcao/module_dftu/dftu_nao_adj.h"
+#include "source_cell/module_symmetry/symm_rotation_k.h" // ModuleSymmetry::Symmetry_rotation_k (value member); LibRI-free
 
 #include <vector>
 
 class Plus_U_Base;
 class TwoCenterIntegrator;
 class UnitCell;
+class K_Vectors;
 
 namespace elecstate
 {
@@ -62,6 +64,12 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void contributeHR() override;
 
+    /// @brief provide the K_Vectors needed to restore the full-BZ density matrix
+    /// under crystal symmetry (kv.kstars); set once after construction from
+    /// HamiltLCAO. When left null, contributeHR() falls back to the
+    /// unsymmetrized DMR (previous behavior).
+    void set_kv(const K_Vectors* kv_in) { this->kv_ = kv_in; }
+
   private:
     const UnitCell* ucell = nullptr;
 
@@ -83,6 +91,17 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /// @brief cached <phi|alpha^I> overlap values; structure snapshot computed
     /// once in the constructor, reused across SCF iterations of one ionic step
     DFTU_LCAO::NlmTot nlm_tot;
+
+    /// @brief K_Vectors of the current run; only used (when non-null) to restore
+    /// the full-BZ density matrix under crystal symmetry before it is read into
+    /// the DFT+U occupation matrix. Set via set_kv() after construction.
+    const K_Vectors* kv_ = nullptr;
+
+    /// @brief LibRI-independent k-space rotation machinery (shared base of EXX's own
+    /// Symmetry_rotation) to reconstruct D(k) at every k-star member from D(k_ibz);
+    /// built lazily (once) the first time it is needed (rebuilt every ionic step).
+    ModuleSymmetry::Symmetry_rotation_k symrot_;
+    bool symrot_built_ = false;
 };
 
 } // namespace hamilt

@@ -6,10 +6,66 @@
 #include "source_base/parallel_reduce.h"
 #include "source_estate/occ_matrix.h"
 #include "source_lcao/hamilt_lcao.h"
+#include "source_cell/module_symmetry/symmetry.h"
+#include "source_cell/module_symmetry/symm_rotation_k.h"
 
 // cal_occ_mat_k / cal_occ_mat_gamma take Plus_U_Base& dftu directly and read all
 // occupation-matrix state (occ/save arrays, lookup table, nspin/npol, and the
 // occmat_ready flag) from dftu.occmat() and the Plus_U_Base accessors.
+
+namespace
+{
+// (symmetry) lazily-built rotation machinery, shared across SCF iterations
+// of one run: process-lifetime static since cal_occ_mat_k has no natural
+// per-ion-step owning object to hang this off (unlike the dft_plus_u=1
+// operator path, which owns its own copy).
+ModuleSymmetry::Symmetry_rotation_k dftu_occ_symrot;
+bool dftu_occ_symrot_built = false;
+
+/// @brief accumulate one k-star member's rotated S*DM product into occmat,
+///        redistributing the ibz k-point's full weight (already baked into
+///        srho_ibz) across all kstar_size members via Symmetry_rotation's
+///        built-in 1/kstar_size scaling (see restore_dm/rot_matrix_ao).
+void accumulate_occ_over_kstar(OccupationMatrix& occmat,
+                               const UnitCell& ucell,
+                               const Parallel_Orbitals& pv,
+                               const K_Vectors& kv,
+                               const std::vector<std::complex<double>>& srho_ibz,
+                               const int ik_ibz,
+                               const int spin,
+                               const int nspin,
+                               const std::vector<int>& l_channel)
+{
+    const int nsym = ucell.symm.nrotk;
+    const size_t kstar_size = kv.kstars[ik_ibz].size();
+    std::vector<std::complex<double>> sigma_y;
+    for (auto& isym_kvd : kv.kstars[ik_ibz])
+    {
+        const int isym = isym_kvd.first;
+        std::vector<std::complex<double>> srho_rot;
+        if (isym < nsym)
+        { // unitary space-group operation (isym==0 is the identity)
+            srho_rot = dftu_occ_symrot.rot_matrix_ao(srho_ibz, ik_ibz, kstar_size, isym, pv);
+        }
+        else
+        { // antiunitary element: TRS * (spatial operation), see restore_dm
+            const int isym_M = ucell.symm.magnetic_nspin4 ? isym : (isym - nsym);
+            if (nspin == 4)
+            {
+                if (sigma_y.empty()) { sigma_y = dftu_occ_symrot.set_sigma_y_2d(pv); }
+                srho_rot = dftu_occ_symrot.trs_spin_rotate(
+                    dftu_occ_symrot.rot_matrix_ao(srho_ibz, ik_ibz, kstar_size, isym_M, pv, false),
+                    sigma_y, pv, 1.0);
+            }
+            else
+            {
+                srho_rot = dftu_occ_symrot.rot_matrix_ao(srho_ibz, ik_ibz, kstar_size, isym_M, pv, true);
+            }
+        }
+        DFTU_LCAO::accumulate_occ_k_for_ik(occmat, ucell, pv, srho_rot.data(), spin, l_channel);
+    }
+}
+} // namespace
 
 
 void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
@@ -41,6 +97,22 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
     const std::complex<double> beta(0.0,0.0), alpha(1.0,0.0);
 
     std::vector<std::complex<double>> srho(pv->nloc);
+
+    // (symmetry) when crystal symmetry reduces the k-mesh, each ik below is only
+    // the irreducible representative; build the AO rotation machinery once so
+    // its k-star can be correctly re-expanded (see accumulate_occ_over_kstar).
+    // Symmetry is analyzed once at the beginning and preserved by symmetrization.
+    // Accordingly, symrot_, dftu_occ_symrot, and the cached Ms_ remain valid and 
+    // do not need to be rebuilt each ionic step.
+    const bool dftu_spacegroup_symmetry = (ModuleSymmetry::Symmetry::symm_flag == 1) && !kv.kstars.empty();
+    if (dftu_spacegroup_symmetry && !dftu_occ_symrot_built)
+    {
+        const std::array<int, 3> period{ kv.nmp[0], kv.nmp[1], kv.nmp[2] };
+        dftu_occ_symrot.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
+            ModuleSymmetry::Symmetry_rotation_k::get_bvk_cells(period), period, ucell.lat);
+        dftu_occ_symrot.cal_Ms(kv, ucell, *pv, nspin);
+        dftu_occ_symrot_built = true;
+    }
 
     for (int ik = 0; ik < kv.get_nks(); ik++)
     {
@@ -82,7 +154,20 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
 
         const int spin = kv.isk[ik];
         // Walk (it, ia, l, n=0) and accumulate each qualifying channel
-        accumulate_occ_k_for_ik(dftu.occmat(), ucell, *pv, srho.data(), spin, l_channel);
+        if (dftu_spacegroup_symmetry)
+        {
+            // kv.kstars/Ms_ are sized per spin and indexed by GLOBAL ibz position
+            // (kv.kstars.size() == nks_ibz); ik is local to this k-point pool, so
+            // map it to the global k index first (kv.ik2iktot), then wrap into the
+            // per-spin ibz range (mirrors RI_2D_Comm::split_m2D_ktoR_k's
+            // "ik % ik_list.size()", but on the global index rather than the local one).
+            const int ik_ibz = kv.ik2iktot[ik] % static_cast<int>(kv.kstars.size());
+            accumulate_occ_over_kstar(dftu.occmat(), ucell, *pv, kv, srho, ik_ibz, spin, nspin, l_channel);
+        }
+        else
+        {
+            accumulate_occ_k_for_ik(dftu.occmat(), ucell, *pv, srho.data(), spin, l_channel);
+        }
     } // ik
 
     // MPI Allreduce + symmetrize per (iat, l, n=0) channel across all ranks

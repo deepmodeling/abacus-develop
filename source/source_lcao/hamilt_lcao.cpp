@@ -196,6 +196,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                                       two_center_bundle.overlap_orb_onsite.get(),
                                                       orb.cutoffs(), p_dftu,
                                                       inp.nspin, inp.onsite_radius, DM_in);
+                static_cast<DFTU<OperatorLCAO<TK, TR>>*>(plus_u)->set_kv(this->kv);
             }
             this->getOperator()->add(plus_u);
         }
@@ -321,6 +322,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                                       two_center_bundle.overlap_orb_onsite.get(),
                                                       orb.cutoffs(), p_dftu,
                                                       inp.nspin, inp.onsite_radius, DM_in);
+                static_cast<DFTU<OperatorLCAO<TK, TR>>*>(plus_u)->set_kv(this->kv);
             }
             this->getOperator()->add(plus_u);
         }
