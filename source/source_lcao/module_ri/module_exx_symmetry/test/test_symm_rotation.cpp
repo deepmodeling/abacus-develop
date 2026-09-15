@@ -85,6 +85,11 @@ void check_little_group_restoration(const int nspin)
     K_Vectors kv;
     kv.set_nkstot(channels);
     kv.set_nkstot_nospin(2);
+    // Single-pool (KPAR=1) scenario: kv.get_nks() (local) equals kv.get_nkstot() (global),
+    // and ik2iktot is the identity map. With only one global ibz-k here, any value mod
+    // kv.kstars.size()==1 is 0, so the exact ik2iktot values don't matter, only its size.
+    kv.set_nks(channels);
+    kv.ik2iktot.assign(channels, 0);
     kv.kstars = {{{0, {0.25, 0.0, 0.0}}, {2, {0.0, 0.25, 0.0}}}};
     std::vector<std::vector<Complex>> inputs;
     std::vector<std::vector<Complex>> expected;

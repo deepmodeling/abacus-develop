@@ -147,9 +147,18 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             this->symrot_built_ = true;
         }
         const int nspin0 = (this->nspin == 2) ? 2 : 1;
+        // (k-point pools, KPAR>1) restore_dm() now returns only the stars of THIS pool's own
+        // local irreducible k-points (see its definition for why that's enough); kvec_d_full
+        // must be built the same way -- one entry per star member of each local ibz-k,
+        // enumerated in the same order restore_dm uses for its spin-0 block (kv.ik2iktot maps
+        // the spin-0 and spin-1 blocks to the same sequence of global ibz indices, so a single
+        // list built from the spin-0 mapping is valid for the whole nspin0-block DensityMatrix).
+        const int nk_local = this->kv_->get_nks() / nspin0;
+        const int nks_ibz_global = static_cast<int>(this->kv_->kstars.size());
         std::vector<ModuleBase::Vector3<double>> kvec_d_full;
-        for (int ik_ibz = 0; ik_ibz < static_cast<int>(this->kv_->kstars.size()); ++ik_ibz)
+        for (int ik_local = 0; ik_local < nk_local; ++ik_local)
         {
+            const int ik_ibz = this->kv_->ik2iktot[ik_local] % nks_ibz_global;
             for (auto& isym_kvd : this->kv_->kstars[ik_ibz]) { kvec_d_full.push_back(isym_kvd.second); }
         }
         const std::vector<std::vector<TK>> dmk_full = this->symrot_.restore_dm(*this->kv_, this->dm_->get_DMK_vector(), *pv);

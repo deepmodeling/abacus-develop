@@ -536,8 +536,9 @@ void K_Vectors::reduce_by_symmetry(const UnitCell& ucell,
                      ibz2bz);
     const int nkstot_ibz = kvec_d_ibz.size();
 
-#ifdef __EXX
     // setup kstars according to the final (max-norm) kvec_d_ibz
+    // (used by both EXX and DFT+U's crystal-symmetry density-matrix restoration;
+    // no LibRI dependency, so this must not be gated behind __EXX)
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         KListIO::build_kstars(this->kvec_d,
@@ -548,7 +549,6 @@ void K_Vectors::reduce_by_symmetry(const UnitCell& ucell,
                               [&symm](double a, double b) { return symm.equal(a, b); },
                               this->kstars);
     }
-#endif
 
     // output in kpoints file
     skpt = KListIO::ibz_kpt_table(this->nkstot, this->kvec_d, this->ibz_index, kvec_d_ibz);
@@ -678,12 +678,12 @@ void K_Vectors::mpi_k(std::ofstream& ofs_running, const int my_rank, const int m
                          this->kvec_d,
                          this->kvec_c_full);
 
-#ifdef __EXX
     // bcast kstars (rank 0 holds the filled maps; other ranks rebuild them)
+    // (no LibRI dependency; needed by DFT+U's symmetry restoration too, so this
+    // must not be gated behind __EXX)
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         KListIO::bcast_kstars(this->kstars, this->nkstot, my_rank);
     }
-#endif
 } // END SUBROUTINE mpi_k
 #endif

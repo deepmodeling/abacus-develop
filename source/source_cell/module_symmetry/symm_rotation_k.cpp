@@ -125,8 +125,19 @@ namespace ModuleSymmetry
         ModuleBase::timer::start("Symmetry_rotation_k", "restore_dm");
         std::vector<std::vector<std::complex<double>>> dm_k_full;
         int nspin0 = this->nspin_ == 2 ? 2 : 1;
-        dm_k_full.reserve(kv.get_nkstot_nospin() * nspin0); //nkstot_nospin didn't doubled by spin
-        int nk = kv.get_nkstot() / nspin0;
+        // (k-point pools, KPAR>1) dm_k_ibz (elecstate::DensityMatrix::_DMK) only ever holds
+        // the irreducible k-points owned by THIS pool (_nk = kv.get_nks()/nspin, see
+        // setup_dm.cpp), never the global set -- so nk here must be the local count, and
+        // kv.kstars (which is global, identical on every pool) must be indexed via the
+        // local-to-global map kv.ik2iktot, not via the local loop variable directly.
+        // This is safe: D(k) -> D(R) (or, for DFT+U, the occupation matrix built from it)
+        // is a linear sum over k, so each pool returning only the stars of its own local
+        // irreducible k-points, to be combined by the caller's existing cross-pool
+        // reduction (e.g. compute_occ_from_dmr's Parallel_Reduce::reduce_all), gives the
+        // exact same total as if every pool held the full global k-set -- no pool needs
+        // (or has to pay for gathering) the complete global D(k) at any point.
+        int nk = kv.get_nks() / nspin0;
+        const int nks_ibz_global = static_cast<int>(this->little_groups_.size());
 
         // (nspin=4) Sigma_y = I (x) sigma_y for the time-reversal spin flip; k-independent, build once.
         std::vector<std::complex<double>> sigma_y;
@@ -134,21 +145,22 @@ namespace ModuleSymmetry
 
         for (int is = 0;is < nspin0;++is)
         {
-            for (int ik_ibz = 0;ik_ibz < nk;++ik_ibz)
+            for (int ik_local = 0;ik_local < nk;++ik_local)
             {
+                const int ik_ibz = kv.ik2iktot[ik_local + is * nk] % nks_ibz_global;
                 // P_k D = |G_k|^{-1} sum_g M_g^T D M_g^*. This preserves
                 // Hermiticity and makes restoration independent of the chosen
                 // star representative; rotating just one arbitrary D does not.
                 const auto& little_group = this->little_groups_.at(ik_ibz);
                 assert(!little_group.empty());
-                std::vector<std::complex<double>> projected = dm_k_ibz[ik_ibz + is * nk];
+                std::vector<std::complex<double>> projected = dm_k_ibz[ik_local + is * nk];
                 if (little_group.size() > 1)
                 {
                     std::fill(projected.begin(), projected.end(), 0.0);
                     for (const int op : little_group)
                     {
                         const auto rotated = this->rot_matrix_ao(
-                            dm_k_ibz[ik_ibz + is * nk], ik_ibz, little_group.size(), op, pv);
+                            dm_k_ibz[ik_local + is * nk], ik_ibz, little_group.size(), op, pv);
                         for (size_t i = 0; i < projected.size(); ++i)
                         {
                             projected[i] += rotated[i];
