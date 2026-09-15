@@ -101,6 +101,9 @@ void DFTU_LCAO::cal_occ_mat_k(const Parallel_Orbitals* pv,
     // (symmetry) when crystal symmetry reduces the k-mesh, each ik below is only
     // the irreducible representative; build the AO rotation machinery once so
     // its k-star can be correctly re-expanded (see accumulate_occ_over_kstar).
+    // Symmetry is analyzed once at the beginning and preserved by symmetrization.
+    // Accordingly, symrot_, dftu_occ_symrot, and the cached Ms_ remain valid and 
+    // do not need to be rebuilt each ionic step.
     const bool dftu_spacegroup_symmetry = (ModuleSymmetry::Symmetry::symm_flag == 1) && !kv.kstars.empty();
     if (dftu_spacegroup_symmetry && !dftu_occ_symrot_built)
     {

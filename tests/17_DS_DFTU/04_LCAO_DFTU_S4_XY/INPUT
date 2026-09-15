@@ -17,6 +17,7 @@ mixing_type    broyden
 mixing_beta    0.4
 ks_solver    genelpa
 symmetry    1
+kpar        4
 
 # DFT+U parameters
 dft_plus_u    1

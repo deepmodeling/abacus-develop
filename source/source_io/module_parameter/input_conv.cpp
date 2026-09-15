@@ -256,6 +256,14 @@ void Input_Conv::Convert()
         ModuleBase::WARNING_QUIT("Input_Conv", "EXX stress is not supported for basis_type = lcao_in_pw");
     }
 
+    if (cal_exx && inp.basis_type == "lcao" && inp.kpar != 1)
+    {
+        // module_ri's real-space D(R)/Ds construction (RI_2D_Comm::split_m2D_ktoR_k) only
+        // sums each pool's local k-points, with no reduce_pool/reduce_all afterwards, so
+        // E_exx/H_exx(R)/forces would silently be built from a single pool's k-points.
+        ModuleBase::WARNING_QUIT("Input_Conv", "EXX (basis_type = lcao) does not support k-point parallelism (kpar > 1)");
+    }
+
     //----------------------------------------------------------
     // reset symmetry flag to avoid error
     //----------------------------------------------------------
