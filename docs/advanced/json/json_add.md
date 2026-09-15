@@ -8,7 +8,7 @@
      - [Object Type](#object-type)
      - [Array Type](#array-type)
    - [Array Modification Instructions](#array-modification-instructions)
-2. [Json Codes Addition Guidelines](#2-json-codes-addition-guidelines)
+2. [Json Codes Addition Guidelines](#2-abacus-json-codes-addition-guidelines)
    - [Abacus JSON Functionality Code Structure](#abacus-json-functionality-code-structure)
    - [Add JSON code principles](#add-json-code-principles)
 
