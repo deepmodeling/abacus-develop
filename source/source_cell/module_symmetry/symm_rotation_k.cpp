@@ -4,6 +4,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/parallel_global.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
 
@@ -483,13 +484,27 @@ namespace ModuleSymmetry
         if (TRS_conj)
         {
             // D^T* = M^T [M^T (D^T)^T]^\dagger
+#ifdef __MPI
             ScalapackConnector::gemm(transpose, transpose, nbasis, nbasis, nbasis,
                 alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc, DMkibz.data(), i1, i1, pv.desc,
                 beta, DMkibz_M.data(), i1, i1, pv.desc);
+#else
+            // without MPI, pv holds the whole (non-block-cyclic) dense matrix locally,
+            // so the 2D-block-cyclic pdgemm/pzgemm degenerates to a plain col-major gemm.
+            BlasConnector::gemm_cm(transpose, transpose, nbasis, nbasis, nbasis,
+                alpha, this->Ms_[ik_ibz].at(isym).data(), nbasis, DMkibz.data(), nbasis,
+                beta, DMkibz_M.data(), nbasis);
+#endif
             alpha.real(1.0 / static_cast<double>(kstar_size));
+#ifdef __MPI
             ScalapackConnector::gemm(transpose, dagger, nbasis, nbasis, nbasis,
                 alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc, DMkibz_M.data(), i1, i1, pv.desc,
                 beta, DMk.data(), i1, i1, pv.desc);
+#else
+            BlasConnector::gemm_cm(transpose, dagger, nbasis, nbasis, nbasis,
+                alpha, this->Ms_[ik_ibz].at(isym).data(), nbasis, DMkibz_M.data(), nbasis,
+                beta, DMk.data(), nbasis);
+#endif
         }
         else
         {
@@ -499,13 +514,25 @@ namespace ModuleSymmetry
             const std::vector<std::complex<double>>& Mref = this->Ms_[ik_ibz].at(isym);
             std::vector<std::complex<double>> Mc(Mref.size());
             for (size_t i = 0; i < Mref.size(); ++i) { Mc[i] = std::conj(Mref[i]); }
+#ifdef __MPI
             ScalapackConnector::gemm(dagger, notrans, nbasis, nbasis, nbasis,
                 alpha, Mc.data(), i1, i1, pv.desc, DMkibz.data(), i1, i1, pv.desc,
                 beta, DMkibz_M.data(), i1, i1, pv.desc);
+#else
+            BlasConnector::gemm_cm(dagger, notrans, nbasis, nbasis, nbasis,
+                alpha, Mc.data(), nbasis, DMkibz.data(), nbasis,
+                beta, DMkibz_M.data(), nbasis);
+#endif
             alpha.real(1.0 / static_cast<double>(kstar_size));
+#ifdef __MPI
             ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
                 alpha, DMkibz_M.data(), i1, i1, pv.desc, Mc.data(), i1, i1, pv.desc,
                 beta, DMk.data(), i1, i1, pv.desc);
+#else
+            BlasConnector::gemm_cm(notrans, notrans, nbasis, nbasis, nbasis,
+                alpha, DMkibz_M.data(), nbasis, Mc.data(), nbasis,
+                beta, DMk.data(), nbasis);
+#endif
         }
         return DMk;
     }
@@ -549,13 +576,27 @@ namespace ModuleSymmetry
         std::vector<std::complex<double>> tmp(pv.get_local_size(), 0.0);
         std::vector<std::complex<double>> out(pv.get_local_size(), 0.0);
         // tmp = Sigma_y * conj(X)
+#ifdef __MPI
         ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
             one, sigma_y.data(), i1, i1, pv.desc, Xc.data(), i1, i1, pv.desc,
             beta, tmp.data(), i1, i1, pv.desc);
+#else
+        // without MPI, pv holds the whole (non-block-cyclic) dense matrix locally,
+        // so the 2D-block-cyclic pzgemm degenerates to a plain col-major gemm.
+        BlasConnector::gemm_cm(notrans, notrans, nbasis, nbasis, nbasis,
+            one, sigma_y.data(), nbasis, Xc.data(), nbasis,
+            beta, tmp.data(), nbasis);
+#endif
         // out = scale * tmp * Sigma_y
+#ifdef __MPI
         ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
             std::complex<double>(scale, 0.0), tmp.data(), i1, i1, pv.desc, sigma_y.data(), i1, i1, pv.desc,
             beta, out.data(), i1, i1, pv.desc);
+#else
+        BlasConnector::gemm_cm(notrans, notrans, nbasis, nbasis, nbasis,
+            std::complex<double>(scale, 0.0), tmp.data(), nbasis, sigma_y.data(), nbasis,
+            beta, out.data(), nbasis);
+#endif
         return out;
     }
 }

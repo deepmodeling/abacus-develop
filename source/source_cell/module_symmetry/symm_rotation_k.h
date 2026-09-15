@@ -54,8 +54,9 @@ namespace ModuleSymmetry
         /// only need once call in each ion step (decided by the configuration)
         /// @param kstars  equal k points to each ibz-kpont, corresponding to a certain symmetry operations.
         /// @param nspin  stored as a member so restore_dm()/contruct_2d_rot_mat_ao() do not each
-        ///               need PARAM.inp.nspin (keeps this LibRI-free class free of a module_parameter
-        ///               link dependency; every existing caller already has nspin in scope).
+        ///               need to read the global nspin config setting (keeps this LibRI-free class
+        ///               free of a module_parameter link dependency; every existing caller already
+        ///               has nspin in scope).
         void cal_Ms(const K_Vectors& kv,
             const UnitCell& ucell, const Parallel_2D& pv, const int nspin);
 
@@ -126,9 +127,9 @@ namespace ModuleSymmetry
         static std::vector<TC> get_bvk_cells(const TC& period);
 
     protected:
-        /// set by cal_Ms() (or set_density_rotations_for_testing()); avoids a PARAM.inp.nspin
-        /// read in restore_dm()/contruct_2d_rot_mat_ao(), which would otherwise pull a
-        /// module_parameter link dependency into every target that links this LibRI-free class.
+        /// set by cal_Ms() (or set_density_rotations_for_testing()); avoids reading the global
+        /// nspin config setting in restore_dm()/contruct_2d_rot_mat_ao(), which would otherwise
+        /// pull a module_parameter link dependency into every target that links this LibRI-free class.
         int nspin_ = 1;
 
         int nsym_ = 1;
