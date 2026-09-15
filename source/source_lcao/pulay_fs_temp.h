@@ -65,15 +65,15 @@ namespace PulayForceStress
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 for (int cb = 0; cb < ra->na_each[iat]; ++cb)
                 {
-                    const int T2 = ra->info[iat][cb][3];
-                    const int I2 = ra->info[iat][cb][4];
+                    const int T2 = ra->get_info(iat, cb)[3];
+                    const int I2 = ra->get_info(iat, cb)[4];
                     const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
                     Atom* atom2 = &ucell.atoms[T2];
                     // get iat2
                     int iat2 = ucell.itia2iat(T2, I2);
-                    double Rx = ra->info[iat][cb][0];
-                    double Ry = ra->info[iat][cb][1];
-                    double Rz = ra->info[iat][cb][2];
+                    double Rx = ra->get_info(iat, cb)[0];
+                    double Ry = ra->get_info(iat, cb)[1];
+                    double Rz = ra->get_info(iat, cb)[2];
                     // get BaseMatrix
                     if (pv.is_invalid_atom_pair(iat1, iat2)) { continue; }
                     std::vector<hamilt::BaseMatrix<double>*> tmp_matrix;

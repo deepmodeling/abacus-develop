@@ -155,7 +155,12 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                          this->inp_->test_atom_input);
 
     Record_adj RA;
-    RA.for_2d(ucell, gd, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    RA.for_2d(ucell, gd, this->pv, PARAM.globalv.gamma_only_local, PARAM.globalv.npol, orb_.cutoffs());
+    // xiaohui add "OUT_LEVEL", 2015-09-16
+    if (this->inp_->out_level != "m" && !PARAM.globalv.gamma_only_local)
+    {
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", this->pv.nnr);
+    }
 
     if (this->p_hamilt == nullptr)
     {

@@ -1,4 +1,5 @@
 #include "stress_func.h"
+#include "source_pw/module_pwdft/vl_pw.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/math_integral.h"
 #include "source_io/module_parameter/parameter.h"
@@ -296,6 +297,46 @@ void Stress_Func<FPTYPE, Device>::dvloc_coulomb(const UnitCell& ucell,
         dvloc[i] = ModuleBase::FOUR_PI * zp * ModuleBase::e2 / ucell.omega
                    / pow((ucell.tpiba2 * rho_basis->gg_uniq[i]), 2);
     }
+
+    return;
+}
+
+// plane-wave-basis stress terms shared by PW and LCAO:
+// vlocal, hartree, ewald, non-linear core correction and exchange-correlation.
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::stress_pw_terms(UnitCell& ucell,
+                                                  ModuleBase::matrix& sigmadvl,
+                                                  ModuleBase::matrix& sigmahar,
+                                                  ModuleBase::matrix& sigmaewa,
+                                                  ModuleBase::matrix& sigmacc,
+                                                  ModuleBase::matrix& sigmaxc,
+                                                  const double& etxc,
+                                                  const Charge* const chr,
+                                                  ModulePW::PW_Basis* rhopw,
+                                                  const pseudopot_cell_vl& locpp,
+                                                  const Structure_Factor& sf)
+{
+    ModuleBase::TITLE("Stress", "stress_pw_terms");
+
+    // local pseudopotential stress:
+    this->stress_loc(ucell, sigmadvl, rhopw, locpp.vloc, &sf, 0, chr);
+
+    // hartree term
+    this->stress_har(ucell, sigmahar, rhopw, 0, chr);
+
+    // ewald stress: use plane wave only.
+    this->stress_ewa(ucell, sigmaewa, rhopw, 0); // remain problem
+
+    // stress due to core correlation.
+    this->stress_cc(sigmacc, rhopw, ucell, &sf, 0, locpp.numeric, chr);
+
+    // stress due to self-consistent charge.
+    for (int i = 0; i < 3; i++)
+    {
+        sigmaxc(i, i) = -etxc / ucell.omega;
+    }
+    // Exchange-correlation for PBE
+    this->stress_gga(ucell, sigmaxc, rhopw, chr);
 
     return;
 }

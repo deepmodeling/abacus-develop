@@ -57,18 +57,28 @@ class Setup_DeePKS
         elecstate::fenergy &f_en,
 		const Input_para &inp);
 
-    void write_forces(
-		const ModuleBase::matrix &fcs,
-		const ModuleBase::matrix &fvnl_dalpha,
-		const Input_para &inp);
-
-    void write_stress(
-		const ModuleBase::matrix &scs,
-		const ModuleBase::matrix &svnl_dalpha,
-		const double &omega,
-		const Input_para &inp);
-
 };
+
+// Free functions that write the DeePKS force/stress labels to .npy files.
+// They are independent of the electronic type TK, so they live outside
+// Setup_DeePKS and only need the output-type selector dpks_out_type.
+namespace DeePKS_domain
+{
+
+void write_forces(
+	const ModuleBase::matrix &fcs,
+	const ModuleBase::matrix &fvnl_dalpha,
+	const std::string &dpks_out_type,
+	const Input_para &inp);
+
+void write_stress(
+	const ModuleBase::matrix &scs,
+	const ModuleBase::matrix &svnl_dalpha,
+	const double &omega,
+	const std::string &dpks_out_type,
+	const Input_para &inp);
+
+} // namespace DeePKS_domain
 
 
 #endif

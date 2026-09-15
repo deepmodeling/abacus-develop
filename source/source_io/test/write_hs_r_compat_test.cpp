@@ -40,7 +40,10 @@ void cal_dH(const UnitCell&,
             const LCAO_Orbitals&,
             const int&,
             const double&,
-            const ModuleBase::matrix&)
+            const ModuleBase::matrix&,
+            const bool,
+            const int,
+            const int)
 {
     FAIL() << "cal_dH should not be called by writer compatibility tests.";
 }
@@ -51,7 +54,10 @@ void cal_dS(const UnitCell&,
             const Grid_Driver&,
             const TwoCenterBundle&,
             const LCAO_Orbitals&,
-            const double&)
+            const double&,
+            const bool,
+            const int,
+            const int)
 {
     FAIL() << "cal_dS should not be called by writer compatibility tests.";
 }
@@ -79,7 +85,7 @@ void cal_SR(const Parallel_Orbitals&,
     FAIL() << "cal_SR should not be called by writer compatibility tests.";
 }
 
-void destroy_dH_R_sparse(LCAO_HS_Arrays&) {}
+void destroy_dH_R_sparse(LCAO_HS_Arrays&, const int) {}
 void destroy_HS_R_sparse(LCAO_HS_Arrays&) {}
 void destroy_T_R_sparse(LCAO_HS_Arrays&) {}
 

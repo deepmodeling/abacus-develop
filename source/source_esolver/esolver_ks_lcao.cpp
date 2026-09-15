@@ -20,6 +20,7 @@
 #include "source_lcao/module_rdmft/rdmft.h"
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006
 #include "source_estate/module_dm/init_dm.h" // init dm from electronic wave functions
+#include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/module_ctrl/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 #include "source_io/module_ctrl/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
@@ -150,7 +151,12 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // 7) For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    this->RA.for_2d(ucell, this->gd, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    this->RA.for_2d(ucell, this->gd, this->pv, PARAM.globalv.gamma_only_local, PARAM.globalv.npol, orb_.cutoffs());
+    // xiaohui add "OUT_LEVEL", 2015-09-16
+    if (this->inp_->out_level != "m" && !PARAM.globalv.gamma_only_local)
+    {
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", this->pv.nnr);
+    }
 
     // 8) initialize the Hamiltonian operators
     // if atom moves, then delete old pointer and add a new one
@@ -163,7 +169,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
-            two_center_bundle_, orb_, this->dmat.dm, this->dftu_.get(), this->deepks, istep, exx_nao, this->exx_info_, *this->inp_);
+            two_center_bundle_, orb_, this->dmat.dm, this->dftu_.get(), this->deepks, istep, exx_nao, this->exx_info_, *this->inp_,
+            !GlobalC::restart.info_load.restart_exx && GlobalC::restart.info_load.load_H);
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -264,7 +271,10 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
                        two_center_bundle_, orb_, force, this->scs,
                        this->locpp, this->sf, this->kv,
                        this->pw_rho, this->solvent, *this->dftu_, this->deepks,
-                       this->exx_nao, &ucell.symm, this->exx_info_, this->inp_->td_stype,
+                       this->exx_nao, &ucell.symm, this->exx_info_,
+                       FSCalcConfig{this->inp_->nspin, this->inp_->nbands, this->inp_->t_in_h,
+                                    this->inp_->sc_mag_switch, this->inp_->device},
+                       this->inp_->td_stype,
                        static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt));
 
     // delete RA after cal_force

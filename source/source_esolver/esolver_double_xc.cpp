@@ -14,6 +14,7 @@
 #include "source_estate/elecstate_tools.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/setup_deepks.h" // use deepks, mohan add 2025-10-10
 
@@ -153,7 +154,9 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                                                              istep,
                                                              this->exx_nao,
                                                              this->exx_info_,
-                                                             *this->inp_);
+                                                             *this->inp_,
+                                                             !GlobalC::restart.info_load.restart_exx
+                                                                 && GlobalC::restart.info_load.load_H);
     }
 
     XC_Functional::set_xc_type(this->inp_->deepks_out_base);
@@ -418,7 +421,9 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
                        this->deepks,
                        this->exx_nao,
                        &ucell.symm,
-                       this->exx_info_);
+                       this->exx_info_,
+                       FSCalcConfig{this->inp_->nspin, this->inp_->nbands, this->inp_->t_in_h,
+                                    this->inp_->sc_mag_switch, this->inp_->device});
 
     // restore to original xc
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);

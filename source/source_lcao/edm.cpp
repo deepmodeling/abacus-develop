@@ -1,10 +1,10 @@
-#include "force_lcao.h"
+#include "edm.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_base/memory_recorder.h"
 #include "source_io/module_parameter/parameter.h"
 template<>
-elecstate::DensityMatrix<double, double> Force_LCAO<double>::cal_edm(const elecstate::ElecState* pelec,
+elecstate::DensityMatrix<double, double> CalEDM<double>::cal_edm(const elecstate::ElecState* pelec,
     const psi::Psi<double>& psi,
     const elecstate::DensityMatrix<double, double>& dm,
     const K_Vectors& kv,
@@ -49,7 +49,7 @@ elecstate::DensityMatrix<double, double> Force_LCAO<double>::cal_edm(const elecs
 }
 
 template<>
-elecstate::DensityMatrix<std::complex<double>, double> Force_LCAO<std::complex<double>>::cal_edm(
+elecstate::DensityMatrix<std::complex<double>, double> CalEDM<std::complex<double>>::cal_edm(
     const elecstate::ElecState* pelec,
     const psi::Psi<std::complex<double>>& psi,
     const elecstate::DensityMatrix<std::complex<double>, double>& dm,

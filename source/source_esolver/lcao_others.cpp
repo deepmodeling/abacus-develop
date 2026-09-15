@@ -11,6 +11,7 @@
 #include "source_io/module_chgpot/get_pchg_lcao.h"
 #include "source_io/module_hs/write_hs_r.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_io/module_wf/get_wf_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/lcao_domain.h"
@@ -110,7 +111,12 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    this->RA.for_2d(ucell, this->gd, this->pv, gamma_only_local, orb_.cutoffs());
+    this->RA.for_2d(ucell, this->gd, this->pv, gamma_only_local, PARAM.globalv.npol, orb_.cutoffs());
+    // xiaohui add "OUT_LEVEL", 2015-09-16
+    if (this->inp_->out_level != "m" && !gamma_only_local)
+    {
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", this->pv.nnr);
+    }
 
     // 2. density matrix extrapolation
 
@@ -143,7 +149,9 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                                         istep,
                                                         this->exx_nao,
                                                         this->exx_info_,
-                                                        *this->inp_);
+                                                        *this->inp_,
+                                                        !GlobalC::restart.info_load.restart_exx
+                                                            && GlobalC::restart.info_load.load_H);
     }
 
     // for each ionic step, the overlap <phi|alpha> must be rebuilt
