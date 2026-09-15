@@ -9,6 +9,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace
@@ -356,6 +357,120 @@ TEST(SternheimerWeakAugmented, SchurRhsReconstructionAndSolveMatchDenseAtMultipl
     }
 }
 
+TEST(SternheimerWeakAugmented, SolveInvokesUnnormalizedComplementPreconditioner)
+{
+    const Model model;
+    const auto blocks = std::make_shared<const Blocks>(model.data);
+    int calls = 0;
+    Blocks::Apply precondition = [&calls](const Vector& input, Vector& output) {
+        ++calls;
+        output = input;
+    };
+    Worker worker(blocks,
+                  model.callback(),
+                  0.6,
+                  0.2,
+                  512ULL * 1024 * 1024,
+                  std::move(precondition));
+    ModuleRI::SternheimerRPA::SolverOptions options;
+    options.max_iter = 20;
+    options.residual_tol = 1.0e-11;
+
+    const auto result = worker.solve(vertices(model), options, model.nc);
+
+    EXPECT_GT(calls, 0);
+    EXPECT_TRUE(result.converged);
+}
+
+TEST(SternheimerWeakAugmented, PreconditionedSolveMatchesIndependentDenseReference)
+{
+    const Model model;
+    const auto blocks = std::make_shared<const Blocks>(model.data);
+    Blocks::Apply precondition = [](const Vector& input, Vector& output) {
+        output.resize(input.size());
+        for (std::size_t i = 0; i < input.size(); ++i)
+        {
+            output[i] = input[i] / (1.3 + 0.4 * i);
+        }
+    };
+    Worker worker(blocks,
+                  model.callback(),
+                  0.6,
+                  0.7,
+                  512ULL * 1024 * 1024,
+                  std::move(precondition));
+    ModuleRI::SternheimerRPA::SolverOptions options;
+    options.max_iter = 20;
+    options.residual_tol = 1.0e-11;
+    const auto g = vertices(model);
+    Vector rhs = joined(g);
+    for (auto& value : rhs)
+    {
+        value = -value;
+    }
+
+    const auto result = worker.solve(g, options, model.nc);
+
+    ASSERT_TRUE(result.converged) << result.relative_residual;
+    expect_vector(result.coefficients, direct_solve(model.shifted(0.6, 0.7), rhs), 2.0e-10);
+}
+
+TEST(SternheimerWeakAugmented, NormalizedPreconditionerUsesMetricSquareRootOnBothSides)
+{
+    const Model model;
+    const auto blocks = std::make_shared<const Blocks>(model.data);
+    Blocks::Apply diagonal = [](const Vector& input, Vector& output) {
+        output.resize(input.size());
+        for (std::size_t i = 0; i < input.size(); ++i)
+        {
+            output[i] = input[i] / (1.7 + 0.3 * i);
+        }
+    };
+    Worker worker(blocks,
+                  model.callback(),
+                  0.6,
+                  0.2,
+                  512ULL * 1024 * 1024,
+                  diagonal);
+    const Vector input = probe(model.nc, 0.45);
+    Vector rooted;
+    blocks->apply_complement_sqrt(input, rooted);
+    Vector diagonal_result;
+    diagonal(rooted, diagonal_result);
+    Vector expected;
+    blocks->apply_complement_sqrt(diagonal_result, expected);
+
+    Vector actual;
+    worker.apply_normalized_preconditioner(input, actual);
+
+    expect_vector(actual, expected);
+}
+
+TEST(SternheimerWeakAugmented, RejectsMalformedPreconditionerOutput)
+{
+    const Model model;
+    const auto blocks = std::make_shared<const Blocks>(model.data);
+    const auto g = vertices(model);
+    ModuleRI::SternheimerRPA::SolverOptions options;
+    Worker wrong_size(blocks,
+                      model.callback(),
+                      0.6,
+                      0.2,
+                      512ULL * 1024 * 1024,
+                      [](const Vector&, Vector& output) { output.assign(1, 0.0); });
+    EXPECT_THROW(wrong_size.solve(g, options, model.nc), std::invalid_argument);
+
+    Worker nonfinite(blocks,
+                     model.callback(),
+                     0.6,
+                     0.2,
+                     512ULL * 1024 * 1024,
+                     [](const Vector& input, Vector& output) {
+                         output.assign(input.size(), std::numeric_limits<double>::quiet_NaN());
+                     });
+    EXPECT_THROW(nonfinite.solve(g, options, model.nc), std::invalid_argument);
+}
+
 TEST(SternheimerWeakAugmented, ProjectsBothVerticesAndReconstructsFineResponseWithoutWeights)
 {
     const Model model;
@@ -669,6 +784,20 @@ TEST(SternheimerWeakAugmented, InverseMetricRootNormalizesComplexOverlapAndPrese
     Vector invalid = x;
     invalid[0] = std::numeric_limits<double>::quiet_NaN();
     EXPECT_THROW(blocks.apply_complement_inverse_sqrt(invalid, normalized), std::invalid_argument);
+}
+
+TEST(SternheimerWeakAugmented, ComplementSquareRootFollowedByInverseReturnsInput)
+{
+    const Model model;
+    const Blocks blocks(model.data);
+    const Vector input = probe(model.nc, -0.7);
+    Vector square_rooted;
+    blocks.apply_complement_sqrt(input, square_rooted);
+
+    Vector recovered;
+    blocks.apply_complement_inverse_sqrt(square_rooted, recovered);
+
+    expect_vector(recovered, input);
 }
 
 TEST(SternheimerWeakAugmented, InverseMetricRootHandlesIdentityAndEmptyComplement)

@@ -282,6 +282,15 @@ void SternheimerWeakAugmented::apply_complement_inverse_sqrt(const Vector& x, Ve
     output = std::move(result);
 }
 
+void SternheimerWeakAugmented::apply_complement_sqrt(const Vector& x, Vector& output) const
+{
+    validate(x, ncoarse(), "metric square root input");
+    Vector inverse_rooted;
+    apply_complement_inverse_sqrt(x, inverse_rooted);
+    apply_complement_metric(inverse_rooted, output);
+    validate(output, ncoarse(), "metric square root output");
+}
+
 void SternheimerWeakAugmented::apply_b(const Vector& x, Vector& output) const
 {
     const Vector lx = multiply(data_.l, nu_, ncoarse(), x);
@@ -347,9 +356,11 @@ SternheimerWeakAugmented::Expansion SternheimerWeakAugmented::expand_coordinates
 
 SternheimerWeakAugmented::Worker::Worker(std::shared_ptr<const SternheimerWeakAugmented> blocks,
                                         Apply ce, const double eps_source, const double omega,
-                                        const std::size_t max_workspace_bytes)
-    : blocks_(std::move(blocks)), ce_(std::move(ce)), z_(eps_source, -omega),
-      max_workspace_bytes_(max_workspace_bytes)
+                                        const std::size_t max_workspace_bytes,
+                                        Apply complement_preconditioner)
+    : blocks_(std::move(blocks)), ce_(std::move(ce)),
+      complement_preconditioner_(std::move(complement_preconditioner)),
+      z_(eps_source, -omega), max_workspace_bytes_(max_workspace_bytes)
 {
     if (!blocks_ || (blocks_->ncoarse() != 0 && !ce_) || !finite(z_))
     {
@@ -539,6 +550,23 @@ void SternheimerWeakAugmented::Worker::apply_schur(const Vector& x, Vector& outp
     output = std::move(c);
 }
 
+void SternheimerWeakAugmented::Worker::apply_normalized_preconditioner(const Vector& x,
+                                                                       Vector& output) const
+{
+    validate(x, blocks_->ncoarse(), "normalized preconditioner input");
+    if (!complement_preconditioner_)
+    {
+        output = x;
+        return;
+    }
+    Vector rooted;
+    blocks_->apply_complement_sqrt(x, rooted);
+    Vector preconditioned(blocks_->ncoarse(), 0.0);
+    complement_preconditioner_(rooted, preconditioned);
+    validate(preconditioned, blocks_->ncoarse(), "complement preconditioner output");
+    blocks_->apply_complement_sqrt(preconditioned, output);
+}
+
 void SternheimerWeakAugmented::Worker::validate_vertices(const Vertices& g) const
 {
     validate(g.f, blocks_->nvirtual(), "gF");
@@ -612,6 +640,12 @@ SternheimerWeakAugmented::Worker::SolveResult SternheimerWeakAugmented::Worker::
             apply_schur(original, applied);
             blocks_->apply_complement_inverse_sqrt(applied, output);
         };
+        if (complement_preconditioner_)
+        {
+            problem.precondition = [this](const Vector& input, Vector& output) {
+                apply_normalized_preconditioner(input, output);
+            };
+        }
         problem.dot = euclidean_dot;
         Vector normalized_x(blocks_->ncoarse(), 0.0);
         result.schur = SternheimerRPA::solve_gmres(problem, normalized_rhs, normalized_x, normalized_options, restart_dimension);

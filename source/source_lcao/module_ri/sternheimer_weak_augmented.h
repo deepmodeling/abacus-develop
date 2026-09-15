@@ -73,6 +73,9 @@ class SternheimerWeakAugmented
     // Exact positive-metric coordinate normalization T=(I-L*L)^(-1/2).
     // Low-rank application; no coarse square matrix, shift or mode removal.
     void apply_complement_inverse_sqrt(const Vector& x, Vector& output) const;
+    // Exact inverse coordinate map S_W^(1/2)=S_W S_W^(-1/2), applied
+    // through the same low-rank factors without a dense coarse matrix.
+    void apply_complement_sqrt(const Vector& x, Vector& output) const;
     // gF=(gU)_F; gW=gE-L* gU. Inputs are already projected fine-grid vertices.
     Vertices project_vertices(const Vector& g_u, const Vector& g_e) const;
     Expansion expand_coordinates(const Vector& coefficients) const;
@@ -105,21 +108,26 @@ class SternheimerWeakAugmented
                Apply ce,
                double eps_source,
                double omega,
-               std::size_t max_workspace_bytes = 512ULL * 1024 * 1024);
+               std::size_t max_workspace_bytes = 512ULL * 1024 * 1024,
+               Apply complement_preconditioner = {});
         Worker(const Worker&) = delete;
         Worker& operator=(const Worker&) = delete;
 
         void apply_hamiltonian(const Vector& coefficients, Vector& output) const;
         void apply_shifted(const Vector& coefficients, Vector& output) const;
         void apply_schur(const Vector& x, Vector& output) const;
+        // Maps an unnormalized complement preconditioner D^-1 into the
+        // normalized Schur coordinates as S_W^(1/2) D^-1 S_W^(1/2).
+        void apply_normalized_preconditioner(const Vector& x, Vector& output) const;
         Vector schur_rhs(const Vertices& g) const;
         Vector reconstruct(const Vertices& g, const Vector& x) const;
 
         // Starts at zero and uses GMRES on T Q T p = T b, x=T p, where T is
         // the exact inverse square root of the complement overlap. Residuals
         // are still checked in the original untransformed equations.
-        // No kinetic preconditioner is used. Nonconvergence is explicit; numerical
-        // breakdown, invalid/nonfinite data and singular LU raise exceptions.
+        // An optional unnormalized complement preconditioner is mapped into
+        // these coordinates. Nonconvergence is explicit; numerical breakdown,
+        // invalid/nonfinite data and singular LU raise exceptions.
         SolveResult solve(const Vertices& g,
                           const SternheimerRPA::SolverOptions& options,
                           int restart_dimension = 50) const;
@@ -137,6 +145,7 @@ class SternheimerWeakAugmented
 
         std::shared_ptr<const SternheimerWeakAugmented> blocks_;
         Apply ce_;
+        Apply complement_preconditioner_;
         Complex z_;
         std::size_t max_workspace_bytes_;
         Vector lu_;
