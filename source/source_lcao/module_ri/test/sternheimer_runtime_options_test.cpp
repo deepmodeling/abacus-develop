@@ -12,6 +12,10 @@ namespace
 
 constexpr const char* kTestFlag = "ABACUS_STERNHEIMER_TEST_FLAG";
 constexpr const char* kBatchWidth = "ABACUS_STERNHEIMER_CHANNEL_BATCH_WIDTH";
+constexpr const char* kWeakPreconditioner
+    = "ABACUS_STERNHEIMER_WEAK_PRECONDITIONER";
+constexpr const char* kWeakResidualTolerance
+    = "ABACUS_STERNHEIMER_WEAK_RESIDUAL_TOL";
 
 class SternheimerRuntimeOptionsTest : public ::testing::Test
 {
@@ -20,6 +24,8 @@ class SternheimerRuntimeOptionsTest : public ::testing::Test
     {
         unsetenv(kTestFlag);
         unsetenv(kBatchWidth);
+        unsetenv(kWeakPreconditioner);
+        unsetenv(kWeakResidualTolerance);
     }
 };
 
@@ -108,5 +114,59 @@ TEST_F(SternheimerRuntimeOptionsTest, RejectsEmptyAndUnknownBooleanText)
     {
         setenv(kTestFlag, value, 1);
         EXPECT_THROW(ModuleRI::sternheimer_environment_flag(kTestFlag, true), std::invalid_argument) << value;
+    }
+}
+
+TEST_F(SternheimerRuntimeOptionsTest, DefaultsWeakSolveToSpectralAndOnePartPerMillion)
+{
+    unsetenv(kWeakPreconditioner);
+    unsetenv(kWeakResidualTolerance);
+
+    const auto mode = ModuleRI::sternheimer_weak_preconditioner_mode();
+    EXPECT_EQ(mode, ModuleRI::SternheimerWeakPreconditionerMode::Spectral);
+    EXPECT_STREQ(ModuleRI::sternheimer_weak_preconditioner_name(mode), "spectral");
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_weak_residual_tolerance(), 1.0e-6);
+}
+
+TEST_F(SternheimerRuntimeOptionsTest, ParsesWeakPreconditionerModeCaseInsensitively)
+{
+    setenv(kWeakPreconditioner, "NoNe", 1);
+    auto mode = ModuleRI::sternheimer_weak_preconditioner_mode();
+    EXPECT_EQ(mode, ModuleRI::SternheimerWeakPreconditionerMode::None);
+    EXPECT_STREQ(ModuleRI::sternheimer_weak_preconditioner_name(mode), "none");
+
+    setenv(kWeakPreconditioner, "SpEcTrAl", 1);
+    mode = ModuleRI::sternheimer_weak_preconditioner_mode();
+    EXPECT_EQ(mode, ModuleRI::SternheimerWeakPreconditionerMode::Spectral);
+    EXPECT_STREQ(ModuleRI::sternheimer_weak_preconditioner_name(mode), "spectral");
+}
+
+TEST_F(SternheimerRuntimeOptionsTest, RejectsUnknownWeakPreconditionerModes)
+{
+    for (const char* value: {"", "fd_spectral", "maybe"})
+    {
+        setenv(kWeakPreconditioner, value, 1);
+        EXPECT_THROW(ModuleRI::sternheimer_weak_preconditioner_mode(),
+                     std::invalid_argument)
+            << value;
+    }
+}
+
+TEST_F(SternheimerRuntimeOptionsTest, ParsesFinitePositiveWeakResidualTolerance)
+{
+    setenv(kWeakResidualTolerance, "1e-8", 1);
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_weak_residual_tolerance(), 1.0e-8);
+    setenv(kWeakResidualTolerance, "0.000001", 1);
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_weak_residual_tolerance(), 1.0e-6);
+}
+
+TEST_F(SternheimerRuntimeOptionsTest, RejectsInvalidWeakResidualTolerance)
+{
+    for (const char* value: {"", "0", "-1e-6", "nan", "inf", "1e-6x"})
+    {
+        setenv(kWeakResidualTolerance, value, 1);
+        EXPECT_THROW(ModuleRI::sternheimer_weak_residual_tolerance(),
+                     std::invalid_argument)
+            << value;
     }
 }

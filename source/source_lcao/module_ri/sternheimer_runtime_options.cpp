@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
+#include <cmath>
 #include <cstdlib>
 #include <limits>
 #include <stdexcept>
@@ -99,6 +100,66 @@ int sternheimer_channel_batch_width()
         throw std::invalid_argument("Invalid channel batch width in " + std::string(name) + ": " + raw);
     }
     return static_cast<int>(parsed);
+}
+
+SternheimerWeakPreconditionerMode sternheimer_weak_preconditioner_mode()
+{
+    constexpr const char* name = "ABACUS_STERNHEIMER_WEAK_PRECONDITIONER";
+    const char* raw = std::getenv(name);
+    if (raw == nullptr)
+    {
+        return SternheimerWeakPreconditionerMode::Spectral;
+    }
+
+    std::string value(raw);
+    std::transform(value.begin(), value.end(), value.begin(), [](const unsigned char character) {
+        return static_cast<char>(std::tolower(character));
+    });
+    if (value == "none")
+    {
+        return SternheimerWeakPreconditionerMode::None;
+    }
+    if (value == "spectral")
+    {
+        return SternheimerWeakPreconditionerMode::Spectral;
+    }
+    throw std::invalid_argument("Invalid weak preconditioner in "
+                                + std::string(name) + ": " + value);
+}
+
+const char* sternheimer_weak_preconditioner_name(
+    const SternheimerWeakPreconditionerMode mode) noexcept
+{
+    switch (mode)
+    {
+        case SternheimerWeakPreconditionerMode::None:
+            return "none";
+        case SternheimerWeakPreconditionerMode::Spectral:
+            return "spectral";
+    }
+    return "invalid";
+}
+
+double sternheimer_weak_residual_tolerance()
+{
+    constexpr const char* name = "ABACUS_STERNHEIMER_WEAK_RESIDUAL_TOL";
+    constexpr double default_tolerance = 1.0e-6;
+    const char* raw = std::getenv(name);
+    if (raw == nullptr)
+    {
+        return default_tolerance;
+    }
+
+    errno = 0;
+    char* end = nullptr;
+    const double parsed = std::strtod(raw, &end);
+    if (errno != 0 || end == raw || end == nullptr || *end != '\0'
+        || !std::isfinite(parsed) || parsed <= 0.0)
+    {
+        throw std::invalid_argument("Invalid weak residual tolerance in "
+                                    + std::string(name) + ": " + raw);
+    }
+    return parsed;
 }
 
 } // namespace ModuleRI

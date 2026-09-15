@@ -31,6 +31,7 @@
 #include "source_lcao/module_ri/sternheimer_weak_grid.h"
 #include "source_lcao/module_ri/sternheimer_weak_augmented.h"
 #include "source_lcao/module_ri/sternheimer_weak_matrix_audit.h"
+#include "source_lcao/module_ri/sternheimer_weak_preconditioner.h"
 #include "source_lcao/module_ri/sternheimer_weak_q_unit.h"
 #include "source_lcao/module_ri/sternheimer_weak_q_dispatch.h"
 #include "source_lcao/module_ri/sternheimer_weak_q_reference.h"
@@ -2543,6 +2544,8 @@ void run_sternheimer_weak_q_unit(
         positive_int_from_env("WEAK_Q_WORKERS", 1),
         positive_int_from_env("WEAK_Q_INNER_THREADS", allocated_threads), allocated_threads};
     layout.validate();
+    const auto weak_preconditioner_mode = sternheimer_weak_preconditioner_mode();
+    const double weak_residual_tolerance = sternheimer_weak_residual_tolerance();
     const auto& pair = response_plan.kq_pairs.at(unit.source_k - 1);
     if (pair.source_index != unit.source_k - 1)
         throw std::invalid_argument("Weak q unit full-k source does not match the response plan.");
@@ -2968,13 +2971,16 @@ void run_sternheimer_weak_q_unit(
                                   Vector(elements(channels, owned_columns.size()), Complex(0)));
     SternheimerRPA::SolverOptions options;
     options.max_iter = positive_int_from_env("ABACUS_STERNHEIMER_WEAK_AUDIT_MAX_ITER", 300);
-    options.residual_tol = 1e-8;
+    options.residual_tol = weak_residual_tolerance;
     options.use_fd_spectral_preconditioner = false;
     std::uint64_t equations = 0;
     std::uint64_t fine_checked_equations = 0;
     std::uint64_t fine_vertex_checks = 0;
     audit << "fine_check_policy first_last_owned_columns_each_band_frequency_sign\n"
-          << "fine_check_tolerance 1e-9\noriginal_residual_tolerance 1e-8\n";
+          << "fine_check_tolerance 1e-9\nweak_preconditioner "
+          << sternheimer_weak_preconditioner_name(weak_preconditioner_mode)
+          << "\nweak_preconditioner_regularization_Ry 0\noriginal_residual_tolerance "
+          << options.residual_tol << '\n';
     for (int ib = unit.band_begin; ib <= unit.band_end; ++ib)
     {
         if (parallel_benchmark && ib != unit.band_begin && ib != unit.band_end) continue;
@@ -3030,12 +3036,28 @@ void run_sternheimer_weak_q_unit(
                 const auto batch_started = std::chrono::steady_clock::now();
                 FFTWidthRestore restore_width{allocated_threads};
                 plan_threads(layout.inner_threads);
+                const double signed_omega = sign * sternheimer_weak_q_omega_ry(
+                    frequency_grid.omega_ha.at(ifrequency - 1));
                 const auto task_counts = run_sternheimer_weak_q_tasks(owned_columns.size(), layout,
                     [&](int worker_index) {
                         auto worker_op = worker_ops.at(worker_index);
+                        Blocks::Apply apply_preconditioner;
+                        if (weak_preconditioner_mode
+                            == SternheimerWeakPreconditionerMode::Spectral)
+                        {
+                            auto preconditioner = std::make_shared<
+                                SternheimerWeakSpectralPreconditioner>(
+                                coarse_grid.grid, h->kinetic_prefactor(), epsilon,
+                                signed_omega, 0.0);
+                            apply_preconditioner
+                                = [preconditioner](const Vector& x, Vector& y) {
+                                      preconditioner->apply(x, y);
+                                  };
+                        }
                         return std::unique_ptr<Blocks::Worker>(new Blocks::Worker(blocks,
-                            [worker_op](const Vector& x, Vector& y) { worker_op->apply(x, y); }, epsilon,
-                            sign * sternheimer_weak_q_omega_ry(frequency_grid.omega_ha.at(ifrequency - 1))));
+                            [worker_op](const Vector& x, Vector& y) { worker_op->apply(x, y); },
+                            epsilon, signed_omega, 512ULL * 1024 * 1024,
+                            std::move(apply_preconditioner)));
                     }, [&](std::size_t owned, std::unique_ptr<Blocks::Worker>& worker, int worker_index)
                 {
                     const int j = owned_columns[owned];
