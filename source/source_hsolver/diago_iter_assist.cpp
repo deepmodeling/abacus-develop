@@ -20,7 +20,8 @@ namespace hsolver
 //----------------------------------------------------------------------
 template <typename T, typename Device>
 void DiagoIterAssist<T, Device>::diag_subspace(
-    const hamilt::Hamilt<T, Device>* const pHamilt, // hamiltonian operator carrier
+    const HPsiFunc& hpsi_func,                      // applies H to a block of vectors
+    const SPsiFunc& spsi_func,                      // applies S to a block of vectors
     const psi::Psi<T, Device>& psi,                 // [in] wavefunction
     psi::Psi<T, Device>& evc,                       // [out] wavefunction, eigenvectors
     Real* en,                                       // [out] eigenvalues
@@ -83,9 +84,7 @@ void DiagoIterAssist<T, Device>::diag_subspace(
 
         T *hpsi = temp;
         // do hPsi for all bands
-        psi::Range all_bands_range(1, psi.get_current_k(), 0, nstart - 1);
-        hpsi_info hpsi_in(&psi, all_bands_range, hpsi);
-        pHamilt->ops->hPsi(hpsi_in);
+        hpsi_func(psi.get_pointer(), hpsi, dmax, psi.get_current_nbas(), nstart);
 
         ModuleBase::gemm_op<T, Device>()('C',
                                          'N',
@@ -105,7 +104,7 @@ void DiagoIterAssist<T, Device>::diag_subspace(
             // Only calculate S_sub if not orthogonal
             T *spsi = temp;
             // do sPsi for all bands
-            pHamilt->sPsi(psi.get_pointer(), spsi, dmax, dmin, nstart);
+            spsi_func(psi.get_pointer(), spsi, dmax, dmin, nstart);
 
             ModuleBase::gemm_op<T, Device>()('C',
                                             'N',
@@ -176,7 +175,8 @@ void DiagoIterAssist<T, Device>::diag_subspace(
 
 template <typename T, typename Device>
 void DiagoIterAssist<T, Device>::diag_subspace_init(
-    hamilt::Hamilt<T, Device>* pHamilt,
+    const HPsiFunc& hpsi_func,
+    const SPsiFunc& spsi_func,
     const T* psi,
     int psi_nr,
     int psi_nc,
@@ -200,8 +200,8 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(
     const int dmax = evc.get_nbasis();
     const int dmin = evc.get_current_ngk();
 
-    // skip the diagonalization if the operators are not allocated
-    if (pHamilt->ops == nullptr)
+    // skip the diagonalization if the caller has no operators allocated
+    if (!hpsi_func)
     {
         ModuleBase::WARNING(
             "DiagoIterAssist::diag_subspace_init",
@@ -247,11 +247,9 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(
         {
             // psi_temp is one band psi, psi is all bands psi, the range always is 1 for the only band in psi_temp
             syncmem_complex_op()(ppsi, psi + i * psi_nc, psi_nc);
-            psi::Range band_by_band_range(true, 0, 0, 0);
-            hpsi_info hpsi_in(&psi_temp, band_by_band_range, hpsi);
 
             // H|Psi> to get hpsi for target band
-            pHamilt->ops->hPsi(hpsi_in);
+            hpsi_func(ppsi, hpsi, psi_temp.get_nbasis(), psi_temp.get_current_nbas(), 1);
 
             // calculate the related elements in hcc <Psi|H|Psi>
             ModuleBase::gemv_op<T, Device>()('C', psi_nc, nstart, &one, psi, psi_nc, hpsi, 1, &zero, hcc + i * nstart, 1);
@@ -262,7 +260,7 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(
         for (int i = 0; i < nstart; i++)
         {
             syncmem_complex_op()(ppsi, psi + i * psi_nc, psi_nc);
-            pHamilt->sPsi(ppsi, spsi, dmin, dmin, 1);
+            spsi_func(ppsi, spsi, dmin, dmin, 1);
 
             ModuleBase::gemv_op<T, Device>()('C',
                                              psi_nc,
@@ -295,15 +293,13 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(
 
         T* hpsi = temp;
         // do hPsi for all bands
-        psi::Range all_bands_range(true, 0, 0, nstart - 1);
-        hpsi_info hpsi_in(&psi_temp, all_bands_range, hpsi);
-        pHamilt->ops->hPsi(hpsi_in);
+        hpsi_func(ppsi, hpsi, psi_temp.get_nbasis(), psi_temp.get_current_nbas(), nstart);
 
         ModuleBase::gemm_op<T, Device>()('C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, hpsi, dmax, &zero, hcc, nstart);
 
         T* spsi = temp;
         // do sPsi for all bands
-        pHamilt->sPsi(ppsi, spsi, psi_temp.get_nbasis(), psi_temp.get_nbasis(), psi_temp.get_nbands());
+        spsi_func(ppsi, spsi, psi_temp.get_nbasis(), psi_temp.get_nbasis(), psi_temp.get_nbands());
 
         ModuleBase::gemm_op<T, Device>()('C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, spsi, dmax, &zero, scc, nstart);
         delmem_complex_op()(temp);
@@ -488,8 +484,9 @@ void DiagoIterAssist<T, Device>::diag_hegvd(const int nstart,
 
 template <typename T, typename Device>
 void DiagoIterAssist<T, Device>::cal_hs_subspace(
-    const hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
-    const psi::Psi<T, Device>& psi,           // [in] wavefunction
+    const HPsiFunc& hpsi_func,      // applies H to a block of vectors
+    const SPsiFunc& spsi_func,      // applies S to a block of vectors
+    const psi::Psi<T, Device>& psi, // [in] wavefunction
     T* hcc,
     T* scc,
     const diag_comm_info& diag_comm)
@@ -511,9 +508,7 @@ void DiagoIterAssist<T, Device>::cal_hs_subspace(
 
         T* hpsi = temp;
         // do hPsi for all bands
-        psi::Range all_bands_range(1, psi.get_current_k(), 0, nstart - 1);
-        hpsi_info hpsi_in(&psi, all_bands_range, hpsi);
-        pHamilt->ops->hPsi(hpsi_in);
+        hpsi_func(psi.get_pointer(), hpsi, dmax, psi.get_current_nbas(), nstart);
 
         ModuleBase::gemm_op<T, Device>()('C',
                                          'N',
@@ -531,7 +526,7 @@ void DiagoIterAssist<T, Device>::cal_hs_subspace(
 
         T* spsi = temp;
         // do sPsi for all bands
-        pHamilt->sPsi(psi.get_pointer(), spsi, dmax, dmin, nstart);
+        spsi_func(psi.get_pointer(), spsi, dmax, dmin, nstart);
 
         ModuleBase::gemm_op<T, Device>()('C',
                                          'N',
