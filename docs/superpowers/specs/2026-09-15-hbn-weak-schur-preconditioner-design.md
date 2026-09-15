@@ -24,13 +24,13 @@ Add an analytic coarse-grid kinetic preconditioner whose Fourier denominator is
 
 using the same lattice, Bloch label, kinetic prefactor, and exact spectral wave vector as the weak-grid kinetic term. `r` is a non-negative numerical regularization and remains zero for admitted production inputs.
 
-The low-level preconditioner acts in the unnormalized complement coordinate `x`. The worker converts it into the correct right preconditioner for normalized GMRES:
+The analytic coarse-grid preconditioner is a physical approximate inverse of the shifted operator and acts directly on the regular-grid vector represented by the normalized Schur coordinate `p`. Therefore the normalized GMRES right preconditioner is
 
 \[
-  M_p^{-1}=S_W^{1/2}D^{-1}S_W^{1/2}.
+  M_p^{-1}=D^{-1}.
 \]
 
-`S_W^{1/2}` is evaluated without a dense coarse matrix as `S_W T`; both operations already have low-rank forms in the augmented blocks. The preconditioner changes only the Krylov basis. Final convergence remains determined from the recomputed original augmented residual.
+It must not be wrapped in additional `S_W^(1/2)` factors. The first hBN+H2O A/B test exposed why: `min eig(S_W)=3.0814849782956344e-08`, so two extra square-root factors attenuated the corresponding direction by approximately `3e-8` and made the right-preconditioned system effectively singular. The `S_W^(-1/2)` construction itself was independently checked against a non-diagonal dense reference; a remote RED test then isolated the callback-coordinate mismatch. The preconditioner changes only the Krylov basis. Final convergence remains determined from the recomputed original augmented residual.
 
 ## Runtime Contract
 
@@ -42,7 +42,7 @@ The low-level preconditioner acts in the unnormalized complement coordinate `x`.
 
 ## Verification Gates
 
-1. Unit tests prove the complement square-root map, normalized-coordinate callback, output validation, analytic Fourier symbol, Bloch phase, and signed-frequency behavior.
+1. Unit tests prove the complement inverse-square-root map, direct normalized-coordinate callback, output validation, analytic Fourier symbol, Bloch phase, and signed-frequency behavior.
 2. Remote ABACUS build on `df_iopcas_ghj` passes the affected tests and existing Sternheimer regression set. No native ABACUS or LibRPA compilation occurs locally.
 3. At `1e-8`, preconditioned and unpreconditioned fixed-input hBN+H2O responses must have matching metadata, finite values, and relative Frobenius difference at most `1e-8`; all original augmented residuals must pass `1e-8`.
 4. At `1e-6`, the same fixed-input response is compared with the `1e-8` result. All original residuals must pass `1e-6`, and the measured single-q/frequency weighted RPA contribution change must be at most `1 meV`.

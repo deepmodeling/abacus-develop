@@ -4,7 +4,9 @@
 
 **Goal:** Add a metric-compatible analytic spectral preconditioner to the fine-integral/coarse-response weak Schur solver, validate `1e-6` production accuracy, and continue the hBN adsorption campaign only after fixed-input gates pass.
 
-**Architecture:** A new FFT preconditioner approximates the inverse analytic coarse kinetic shift in unnormalized complement coordinates. `SternheimerWeakAugmented::Worker` wraps it with complement square-root maps before exposing it to normalized-coordinate GMRES, while original-equation residuals remain the convergence authority.
+**Architecture:** A new FFT preconditioner approximates the inverse analytic coarse kinetic shift in the physical regular-grid representation of the normalized Schur coordinates. `SternheimerWeakAugmented::Worker` exposes it directly to normalized-coordinate GMRES, while original-equation residuals remain the convergence authority.
+
+**A/B correction:** The initial implementation wrapped the physical preconditioner in two complement square-root maps. The first remote hBN+H2O batch did not converge in 300 iterations, while the no-preconditioner control converged. A dedicated remote RED test proved that the physical callback must act directly in normalized coordinates; the complement square-root eigensolver separately passed a non-diagonal dense-reference test.
 
 **Tech Stack:** C++17, FFTW3, BLAS/LAPACK, GoogleTest, ABACUS, Slurm on `df_iopcas_ghj`, LibRPA reader-v1 analysis.
 
@@ -27,7 +29,7 @@ Run `MODULE_RI_sternheimer_weak_augmented_test` in a clean remote build on `df_i
 
 - [ ] **Step 3: Implement the low-rank square-root map and worker callback**
 
-Expose `apply_complement_sqrt`. Implement it as `S_W * S_W^(-1/2)` without a coarse square matrix. Accept an optional unnormalized-complement preconditioner callback in `Worker`; install a normalized right-preconditioner callback that applies square root, caller callback, then square root. Validate each output.
+Expose `apply_complement_sqrt` for coordinate diagnostics and implement it as `S_W * S_W^(-1/2)` without a coarse square matrix. Accept an optional physical preconditioner callback in `Worker`; install it directly as the normalized right-preconditioner and validate each output. Do not add complement metric factors around the callback.
 
 - [ ] **Step 4: Run the remote test and verify GREEN**
 
@@ -82,7 +84,7 @@ Run `MODULE_RI_sternheimer_abacus_st_smoke_test`. Expected: the new weak-q runti
 
 - [ ] **Step 3: Connect the preconditioner and tolerance**
 
-Construct one analytic spectral preconditioner per weak worker and signed frequency, pass its unnormalized callback to `Worker`, and write mode, regularization, tolerance, iteration, Schur residual, and original residual to the audit. Keep `none` as a strict identity path.
+Construct one analytic spectral preconditioner per weak worker and signed frequency, pass its physical regular-grid callback directly to `Worker`, and write mode, regularization, tolerance, iteration, Schur residual, and original residual to the audit. Keep `none` as a strict identity path.
 
 - [ ] **Step 4: Run focused remote tests**
 

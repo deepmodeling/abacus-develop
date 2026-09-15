@@ -559,12 +559,10 @@ void SternheimerWeakAugmented::Worker::apply_normalized_preconditioner(const Vec
         output = x;
         return;
     }
-    Vector rooted;
-    blocks_->apply_complement_sqrt(x, rooted);
     Vector preconditioned(blocks_->ncoarse(), 0.0);
-    complement_preconditioner_(rooted, preconditioned);
+    complement_preconditioner_(x, preconditioned);
     validate(preconditioned, blocks_->ncoarse(), "complement preconditioner output");
-    blocks_->apply_complement_sqrt(preconditioned, output);
+    output = std::move(preconditioned);
 }
 
 void SternheimerWeakAugmented::Worker::validate_vertices(const Vertices& g) const

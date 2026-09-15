@@ -266,6 +266,47 @@ TEST(SternheimerWeakAugmented, MetricAndHamiltonianMatchIndependentFineSpace)
     expect_vector(output, multiply(model.s, v));
 }
 
+TEST(SternheimerWeakAugmented, ComplementInverseSqrtMatchesNonDiagonalMetricReference)
+{
+    Blocks::Data data;
+    data.nocc = 0;
+    data.nvirtual = 2;
+    data.ncoarse = 2;
+    data.hu = {Complex(2.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(3.0, 0.0)};
+    data.l = {Complex(0.4, 0.0), Complex(0.2, 0.0), Complex(0.1, 0.0), Complex(0.3, 0.0)};
+    data.k.assign(4, Complex(0.0, 0.0));
+
+    const Blocks blocks(data);
+    const Vector input = {Complex(0.7, -0.2), Complex(-0.1, 0.6)};
+    Vector actual;
+    blocks.apply_complement_inverse_sqrt(input, actual);
+
+    // The reference evaluates f(G) from the closed-form 2x2 Hermitian
+    // spectrum, where G=L L* and f(lambda)=((1-lambda)^(-1/2)-1)/lambda.
+    const double g00 = 0.17;
+    const double g11 = 0.13;
+    const double g01 = 0.11;
+    const double trace = g00 + g11;
+    const double gap = std::sqrt((g00 - g11) * (g00 - g11) + 4.0 * g01 * g01);
+    const double low = 0.5 * (trace - gap);
+    const double high = 0.5 * (trace + gap);
+    const auto factor = [](const double lambda) {
+        const double root = std::sqrt(1.0 - lambda);
+        return 1.0 / (root * (1.0 + root));
+    };
+    const double flow = factor(low);
+    const double fhigh = factor(high);
+    const double slope = (fhigh - flow) / (high - low);
+    const double intercept = flow - slope * low;
+
+    const Vector lx = {0.4 * input[0] + 0.1 * input[1], 0.2 * input[0] + 0.3 * input[1]};
+    const Vector flx = {slope * (g00 * lx[0] + g01 * lx[1]) + intercept * lx[0],
+                        slope * (g01 * lx[0] + g11 * lx[1]) + intercept * lx[1]};
+    const Vector expected = {input[0] + 0.4 * flx[0] + 0.2 * flx[1],
+                             input[1] + 0.1 * flx[0] + 0.3 * flx[1]};
+    expect_vector(actual, expected, 3.0e-12);
+}
+
 TEST(SternheimerWeakAugmented, HermitianAdjointsAndFrequencySignArePreserved)
 {
     const Model model;
@@ -357,7 +398,7 @@ TEST(SternheimerWeakAugmented, SchurRhsReconstructionAndSolveMatchDenseAtMultipl
     }
 }
 
-TEST(SternheimerWeakAugmented, SolveInvokesUnnormalizedComplementPreconditioner)
+TEST(SternheimerWeakAugmented, SolveInvokesNormalizedPhysicalPreconditioner)
 {
     const Model model;
     const auto blocks = std::make_shared<const Blocks>(model.data);
@@ -415,7 +456,7 @@ TEST(SternheimerWeakAugmented, PreconditionedSolveMatchesIndependentDenseReferen
     expect_vector(result.coefficients, direct_solve(model.shifted(0.6, 0.7), rhs), 2.0e-10);
 }
 
-TEST(SternheimerWeakAugmented, NormalizedPreconditionerUsesMetricSquareRootOnBothSides)
+TEST(SternheimerWeakAugmented, NormalizedPhysicalPreconditionerDoesNotApplyMetricFactors)
 {
     const Model model;
     const auto blocks = std::make_shared<const Blocks>(model.data);
@@ -433,12 +474,8 @@ TEST(SternheimerWeakAugmented, NormalizedPreconditionerUsesMetricSquareRootOnBot
                   512ULL * 1024 * 1024,
                   diagonal);
     const Vector input = probe(model.nc, 0.45);
-    Vector rooted;
-    blocks->apply_complement_sqrt(input, rooted);
-    Vector diagonal_result;
-    diagonal(rooted, diagonal_result);
     Vector expected;
-    blocks->apply_complement_sqrt(diagonal_result, expected);
+    diagonal(input, expected);
 
     Vector actual;
     worker.apply_normalized_preconditioner(input, actual);

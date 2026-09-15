@@ -116,8 +116,9 @@ class SternheimerWeakAugmented
         void apply_hamiltonian(const Vector& coefficients, Vector& output) const;
         void apply_shifted(const Vector& coefficients, Vector& output) const;
         void apply_schur(const Vector& x, Vector& output) const;
-        // Maps an unnormalized complement preconditioner D^-1 into the
-        // normalized Schur coordinates as S_W^(1/2) D^-1 S_W^(1/2).
+        // Applies a physical/coarse-grid approximate inverse directly in the
+        // normalized Schur coordinates. The callback must not add complement
+        // metric factors; original-equation residuals remain authoritative.
         void apply_normalized_preconditioner(const Vector& x, Vector& output) const;
         Vector schur_rhs(const Vertices& g) const;
         Vector reconstruct(const Vertices& g, const Vector& x) const;
@@ -125,8 +126,8 @@ class SternheimerWeakAugmented
         // Starts at zero and uses GMRES on T Q T p = T b, x=T p, where T is
         // the exact inverse square root of the complement overlap. Residuals
         // are still checked in the original untransformed equations.
-        // An optional unnormalized complement preconditioner is mapped into
-        // these coordinates. Nonconvergence is explicit; numerical breakdown,
+        // An optional physical preconditioner acts directly in these normalized
+        // coordinates. Nonconvergence is explicit; numerical breakdown,
         // invalid/nonfinite data and singular LU raise exceptions.
         SolveResult solve(const Vertices& g,
                           const SternheimerRPA::SolverOptions& options,
