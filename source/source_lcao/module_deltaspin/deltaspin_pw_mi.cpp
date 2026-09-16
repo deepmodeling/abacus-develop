@@ -30,6 +30,7 @@
 #include "mi_tools.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hsolver/diago_iter_assist.h"
+#include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_estate/elecstate.h"
 #include "source_estate/elecstate_pw.h"
@@ -376,7 +377,8 @@ void update_psi_charge_pw_cpu(ScState& state,
             PARAM.inp.nb2d,
             PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(hamilt_t,
+        hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_CPU> op(hamilt_t, pw_wfc);
+        hsolver_pw_obj.solve(op,
                              psi_t[0],
                              pelec,
                              pelec->ekb.c,
@@ -490,7 +492,8 @@ void update_psi_charge_pw_gpu(ScState& state,
             PARAM.inp.nb2d,
             PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(hamilt_t,
+        hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_GPU> op(hamilt_t, pw_wfc);
+        hsolver_pw_obj.solve(op,
                              psi_t[0],
                              pelec,
                              pelec->ekb.c,

@@ -39,7 +39,7 @@ namespace hsolver
 {
 
 template <typename TK>
-void HSolverLCAO<TK>::solve(hamilt::Hamilt<TK>* pHamilt,
+void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
                                    psi::Psi<TK>& psi,
 								   elecstate::ElecState* pes,
 								   elecstate::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
@@ -56,13 +56,13 @@ void HSolverLCAO<TK>::solve(hamilt::Hamilt<TK>* pHamilt,
     #ifdef __CUDA
         if (this->method == "cusolver" && this->world_nproc > 1)
         {
-            this->parakSolve_cusolver(pHamilt, psi, pes);
+            this->parakSolve_cusolver(hs, psi, pes);
         }else 
     #endif
         if (this->kpar_lcao > 1
             && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx" || this->method == "lapack"))
         {
-            this->parakSolve(pHamilt, psi, pes, this->kpar_lcao, nspin);
+            this->parakSolve(hs, psi, pes, this->kpar_lcao, nspin);
         } else
     #endif
         if (this->kpar_lcao == 1)
@@ -70,14 +70,15 @@ void HSolverLCAO<TK>::solve(hamilt::Hamilt<TK>* pHamilt,
             /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
             for (int ik = 0; ik < psi.get_nk(); ++ik)
             {
-                /// update H(k) for each k point
-                pHamilt->updateHk(ik);
+                /// H(k) and S(k) are all the eigensolvers need from the Hamiltonian
+                ModuleBase::MatrixBlock<TK> hk, sk;
+                hs.hs_at_k(ik, hk, sk);
 
                 /// find psi pointer for each k point
                 psi.fix_k(ik);
 
                 /// solve eigenvector and eigenvalue for H(k)
-                this->hamiltSolvePsiK(pHamilt, psi, &(pes->ekb(ik, 0)));
+                this->hamiltSolvePsiK(hk, sk, psi, &(pes->ekb(ik, 0)));
             }
         }
         else
@@ -117,11 +118,9 @@ void HSolverLCAO<TK>::solve(hamilt::Hamilt<TK>* pHamilt,
         DiagoPexsi<TK> pe(ParaV, nspin, this->nlocal, this->nelec, this->world_nproc);
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
-            /// update H(k) for each k point
-            pHamilt->updateHk(ik);
             psi.fix_k(ik);
             ModuleBase::MatrixBlock<TK> hk, sk;
-            pHamilt->matrix(hk, sk);
+            hs.hs_at_k(ik, hk, sk);
             // solve eigenvector and eigenvalue for H(k)
             pe.diag(hk, sk, psi, nullptr);
         }
@@ -137,15 +136,13 @@ void HSolverLCAO<TK>::solve(hamilt::Hamilt<TK>* pHamilt,
 }
 
 template <typename T>
-void HSolverLCAO<T>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue)
+void HSolverLCAO<T>::hamiltSolvePsiK(ModuleBase::MatrixBlock<T>& hk,
+                                     ModuleBase::MatrixBlock<T>& sk,
+                                     psi::Psi<T>& psi,
+                                     double* eigenvalue)
 {
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
     ModuleBase::timer::start("HSolverLCAO", "hamiltSolvePsiK");
-
-    // H(k) and S(k) are all the eigensolvers need from the Hamiltonian, so
-    // fetch them once here rather than once inside each solver.
-    ModuleBase::MatrixBlock<T> hk, sk;
-    hm->matrix(hk, sk);
 
     if (this->method == "scalapack_gvx")
     {
@@ -195,7 +192,7 @@ void HSolverLCAO<T>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, do
 }
 
 template <typename T>
-void HSolverLCAO<T>::parakSolve(hamilt::Hamilt<T>* pHamilt,
+void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
                                         psi::Psi<T>& psi,
                                         elecstate::ElecState* pes,
                                         const int kpar,
@@ -215,12 +212,6 @@ void HSolverLCAO<T>::parakSolve(hamilt::Hamilt<T>* pHamilt,
     int coord_col = k2d.get_p2D_pool()->get_coord_col();
     int ncol_bands_pool
         = numroc_(&(nbands), &(nb2d), &coord_col, &zero, &(k2d.get_p2D_pool()->dim1));
-    /// Parallel_K2D only redistributes H(k)/S(k); updating the Hamiltonian
-    /// for a given k point stays here, where the Hamiltonian is known.
-    auto get_hsk = [pHamilt](int ik, ModuleBase::MatrixBlock<T>& hk, ModuleBase::MatrixBlock<T>& sk) {
-        pHamilt->updateHk(ik);
-        pHamilt->matrix(hk, sk);
-    };
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < k2d.get_pKpoints()->get_max_nks_pool(); ++ik)
     {
@@ -246,7 +237,7 @@ void HSolverLCAO<T>::parakSolve(hamilt::Hamilt<T>* pHamilt,
                 ik_kpar[i] = ik + k2d.get_pKpoints()->startk_pool[i];
             }
         }
-        k2d.distribute_hsk(get_hsk, ik_kpar, nrow);
+        k2d.distribute_hsk(hs, ik_kpar, nrow);
         /// global index of k point
         int ik_global = ik + k2d.get_pKpoints()->startk_pool[k2d.get_my_pool()];
         auto psi_pool = psi::Psi<T>(1, ncol_bands_pool, k2d.get_p2D_pool()->nrow, k2d.get_p2D_pool()->nrow, true);
@@ -327,7 +318,7 @@ void HSolverLCAO<T>::parakSolve(hamilt::Hamilt<T>* pHamilt,
 
 #if defined (__MPI) && defined (__CUDA)
 template <typename T>
-void HSolverLCAO<T>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
+void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
                                             psi::Psi<T>& psi,
                                             elecstate::ElecState* pes)
 {
@@ -414,9 +405,8 @@ void HSolverLCAO<T>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
                 hk_mat.resize(nrow * ncol);
                 sk_mat.resize(nrow * ncol);
             }
-            pHamilt->updateHk(ik);
             ModuleBase::MatrixBlock<T> hk_2D, sk_2D;
-            pHamilt->matrix(hk_2D, sk_2D);
+            hs.hs_at_k(ik, hk_2D, sk_2D);
             int desc_tmp[9];
             T* hk_local_ptr = hk_mat.data();
             T* sk_local_ptr = sk_mat.data();

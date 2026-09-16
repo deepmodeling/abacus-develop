@@ -4,6 +4,7 @@
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
+#include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/force_pw.h"
@@ -264,7 +265,9 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      this->inp_->nb2d,
                                                      this->inp_->use_k_continuity);
 
-        hsolver_pw_obj.solve(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt),
+        // the iterative eigensolvers see the Hamiltonian only through this operator
+        hamilt::HamiltHSOperator<T, Device> op(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), this->pw_wfc);
+        hsolver_pw_obj.solve(op,
                              *this->stp.template get_psi_t<T, Device>(),
                              this->pelec,
                              this->pelec->ekb.c,

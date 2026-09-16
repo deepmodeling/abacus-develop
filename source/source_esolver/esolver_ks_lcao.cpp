@@ -13,6 +13,7 @@
 #include "source_hamilt/module_gint/gint.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
+#include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/hsolver_lcao.h"
 #ifdef __EXX
 #include "../source_lcao/module_ri/exx_opt_orb.h"
@@ -480,7 +481,9 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
                                                   this->inp_->device == "gpu",
                                                   GlobalV::NPROC,
                                                   GlobalV::MY_RANK);
-        hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt), this->psi[0], this->pelec, *this->dmat.dm, 
+        // the eigensolvers only ever ask the Hamiltonian for H(k) and S(k)
+        hamilt::HamiltHSMatrix<TK> hs(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt));
+        hsolver_lcao_obj.solve(hs, this->psi[0], this->pelec, *this->dmat.dm, 
           this->chr, this->inp_->nspin, skip_charge);
     }
     else

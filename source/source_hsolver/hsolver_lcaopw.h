@@ -3,11 +3,8 @@
 
 #include "source_base/macros.h"
 #include "source_estate/elecstate.h"
-#include "source_hamilt/hamilt.h"
+#include "source_hsolver/hs_operator.h"
 #include <iosfwd>
-
-/// General_Exx_Info forward declaration, full definition in general_exx_info.h
-struct General_Exx_Info;
 
 namespace hsolver
 {
@@ -34,12 +31,12 @@ class HSolverLIP
           global_nbands(global_nbands_in) {};
 
     /// @brief solve function for lcao_in_pw
-    /// @param pHamilt interface to hamilt
+    /// @param op the H and S operator of the Hamiltonian; its subspace hooks carry the EXX term
     /// @param psi reference to psi
     /// @param pes interface to elecstate
     /// @param transform transformation matrix between lcao and pw
     /// @param skip_charge
-    void solve(hamilt::Hamilt<T>* pHamilt,
+    void solve(HSOperator<T>& op,
                psi::Psi<T>& psi,
                elecstate::ElecState* pes,
                psi::Psi<T>& transform,
@@ -47,8 +44,7 @@ class HSolverLIP
                std::ostream& log,
                const bool skip_charge,
                const double tpiba,
-               const int nat,
-               const General_Exx_Info& exx_info);
+               const int nat);
 
   private:
     ModulePW::PW_Basis_K* wfc_basis = nullptr;

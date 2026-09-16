@@ -5,16 +5,10 @@
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/elecstate_tools.h"
-#include "source_hamilt/module_xc/general_exx_info.h"
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_iter_assist.h"
-#include "source_pw/module_pwdft/hamilt_pw.h"
 
 #include <ostream>
-
-#ifdef __EXX
-#include "source_pw/module_pwdft/hamilt_lcaopw.h"
-#endif
 
 namespace hsolver
 {
@@ -23,7 +17,7 @@ namespace hsolver
     lcao_in_pw
 */
 template <typename T>
-void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
+void HSolverLIP<T>::solve(HSOperator<T>& op,       // ESolver_KS_PW::p_hamilt behind the operator interface
                           psi::Psi<T>& psi,           // ESolver_KS_PW::kspw_psi
                           elecstate::ElecState* pes,  // ESolver_KS_PW::pes
                           psi::Psi<T>& transform,
@@ -31,8 +25,7 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
                           std::ostream& log,
                           const bool skip_charge,
                           const double tpiba,
-                          const int nat,
-                          const General_Exx_Info& exx_info)
+                          const int nat)
 {
     ModuleBase::TITLE("HSolverLIP", "solve");
     ModuleBase::timer::start("HSolverLIP", "solve");
@@ -40,37 +33,13 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
     for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
     {
         /// update H(k) for each k point
-        pHamilt->updateHk(ik);
+        op.update_k(ik);
 
         psi.fix_k(ik);
         transform.fix_k(ik);
 
-#ifdef __EXX
-        auto& exx_lip = dynamic_cast<hamilt::HamiltLIP<T>*>(pHamilt)->exx_lip;
-        bool cal_exx = exx_info.cal_exx;
-        double hybrid_alpha = exx_info.hybrid_alpha;
-        auto add_exx_to_subspace_hamilt = [&ik, &exx_lip, cal_exx, hybrid_alpha](T* hcc, const int naos) -> void {
-            if (cal_exx)
-            {
-                for (int n = 0; n < naos; ++n)
-                {
-                    for (int m = 0; m < naos; ++m)
-                    {
-                        hcc[n * naos + m]
-                            += (T)hybrid_alpha * exx_lip.get_exx_matrix()[ik][m][n];
-                    }
-                }
-            }
-        };
-        auto set_exxlip_lcaowfc = [&ik, &exx_lip, cal_exx](const T* const vcc, const int naos, const int nbands) -> void {
-            if (cal_exx)
-            {
-                exx_lip.set_hvec(ik, vcc, naos, nbands);
-            }
-        };
-#endif
         /// solve eigenvector and eigenvalue for H(k)
-        hsolver::DiagoIterAssist<T>::diag_subspace_init(pHamilt,                 // interface to hamilt
+        hsolver::DiagoIterAssist<T>::diag_subspace_init(op,
                                                         transform.get_pointer(), // transform matrix between lcao and pw
                                                         transform.get_nbands(),
                                                         transform.get_nbasis(),
@@ -78,13 +47,7 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
                                                         eigenvalues.data() + ik * pes->ekb.nc, // eigenvalues
                                                         this->basis_type,
                                                         this->calculation,
-                                                        diag_comm
-#ifdef __EXX
-                                                        ,
-                                                        add_exx_to_subspace_hamilt,
-                                                        set_exxlip_lcaowfc
-#endif
-        );
+                                                        diag_comm);
 
         if (skip_charge)
         {
