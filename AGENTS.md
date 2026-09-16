@@ -53,9 +53,6 @@ rules. Read the complete governance document before making or reviewing changes:
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.
-- INPUT parameter behavior changes must update `docs/parameters.yaml` and
-  `docs/advanced/input_files/input-main.md`, or the PR must state why no update
-  is required.
 - Report the exact verification performed. Do not claim completion without
   fresh test or check output.
 - For multi-step refactors (e.g., splitting a large `.cpp` into several
@@ -72,8 +69,8 @@ rules. Read the complete governance document before making or reviewing changes:
 - Core C++ implementation lives under `source/`; source additions must be wired
   through the relevant `CMakeLists.txt`.
 - INPUT parsing and help metadata live under `source/source_io/`; user-facing
-  INPUT docs live in `docs/parameters.yaml` and
-  `docs/advanced/input_files/input-main.md`.
+  INPUT reference is generated from that metadata during the documentation
+  build.
 - Unit tests are colocated under module `test/` directories such as
   `source/source_md/test/`; integration and workflow tests are selected through
   CTest labels and patterns.

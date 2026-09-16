@@ -14,7 +14,7 @@ It is suggested to [submit new issues](https://github.com/deepmodeling/abacus-de
 Before implementation and review, read [`AGENTS.md`](../../AGENTS.md) and the
 [ABACUS Agent Governance](../developers_guide/agent_governance.md) guide. New
 code is reviewed against the shared rules for global dependencies, default
-parameters, header dependencies, tests, INPUT documentation linkage, LF line
+parameters, header dependencies, tests, INPUT metadata changes, LF line
 endings, C++11 compatibility, and exception handling.
 
 - **Open a pull request.** The ABACUS developers review the pull request (PR) list regularly. If the work is not ready, convert it to draft until finished, then you can mark it as "Ready for review". It is suggested to open a new PR through forking a repo and creating a new branch on you Github account. A new PR should include as much information as possible in `description` when submmited. Unittests or CI tests are required for new PRs.
