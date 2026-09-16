@@ -236,7 +236,7 @@ namespace LR
         using ATYPE_EXX = typename OperatorLREXX<T>::MO_TO_AO_TYPE;
 #endif
         const int nk = kv.get_nks() / nspin;
-        const std::vector<int> ld_x = { nk * px[0].get_local_size(), nk * px[1].get_local_size() };
+        const std::vector<int> ld_x = { static_cast<int>(nk * px[0].get_local_size()), static_cast<int>(nk * px[1].get_local_size()) };
         const std::vector<int> off_x = { 0, ld_x[0] };
         const int nband_window = nocc[0] + nvirt[0];
 

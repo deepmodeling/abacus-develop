@@ -43,7 +43,7 @@ namespace LR
         void hPsi(const T* const psi_in, T* const hpsi, const int ld_psi, const int nband) const
         {
             assert(ld_psi == this->ldim);
-            const std::vector<int> ldim_is = { nk * pX[0].get_local_size(), nk * pX[1].get_local_size() };
+            const std::vector<int> ldim_is = { static_cast<int>(nk * pX[0].get_local_size()), static_cast<int>(nk * pX[1].get_local_size()) };
             for (int ib = 0;ib < nband;++ib)
             {
                 const int offset_band = ib * ld_psi;
@@ -86,7 +86,7 @@ namespace LR
         {
             ModuleBase::TITLE("ZeqULR", "matrix");
             const std::vector<int> npairs = { nocc[0] * nvirt[0], nocc[1] * nvirt[1] };
-            const std::vector<int> ldim_is = { nk * pX[0].get_local_size(), nk * pX[1].get_local_size() };
+            const std::vector<int> ldim_is = { static_cast<int>(nk * pX[0].get_local_size()), static_cast<int>(nk * pX[1].get_local_size()) };
             const std::vector<int> gdim_is = { nk * npairs[0], nk * npairs[1] };
             std::vector<T> mat_full(static_cast<std::size_t>(gdim) * gdim, T(0));
             for (int is_in : {0, 1})

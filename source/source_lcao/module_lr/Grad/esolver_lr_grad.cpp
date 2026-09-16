@@ -538,8 +538,8 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
 
     const ct::Tensor& Z = this->solve_zvector_eqation(0, istate_only, Xz);
 
-    const std::vector<int> ld_x = { this->nk * paraX_g[0].get_local_size(),
-                                    this->nk * paraX_g[1].get_local_size() };
+    const std::vector<int> ld_x = { static_cast<int>(this->nk * paraX_g[0].get_local_size()),
+                                    static_cast<int>(this->nk * paraX_g[1].get_local_size()) };
     const std::vector<int> off_x = { 0, ld_x[0] };
     std::vector<psi::Psi<T>> c_spin;
     for (int is : {0, 1}) { c_spin.push_back(LR_Util::get_psi_spin(*this->psi_ks_z_, is, this->nk)); }

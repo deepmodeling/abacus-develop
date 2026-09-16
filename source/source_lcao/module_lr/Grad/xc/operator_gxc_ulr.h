@@ -60,8 +60,8 @@ namespace LR
         {
             ModuleBase::TITLE("OperatorGxcULR", "act");
             ModuleBase::timer::start("OperatorGxcULR", "act");
-            const std::vector<int> off_x = { 0, nk_ * pX_[0].get_local_size() };
-            const std::vector<int> off_out = { 0, nk_ * pout_[0].get_local_size() };
+            const std::vector<int> off_x = { 0, static_cast<int>(nk_ * pX_[0].get_local_size()) };
+            const std::vector<int> off_out = { 0, static_cast<int>(nk_ * pout_[0].get_local_size()) };
 
             // 1. the two transition-density channels, on the grid together
             std::vector<std::vector<ct::Tensor>> dmk(2);
