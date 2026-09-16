@@ -572,9 +572,13 @@ template <typename T, typename Device>
 void DiagoCG<T, Device>::diag_subspace(const T* psi_in, T* psi_out, const int dim, const int nband, const bool S_orth)
 {
     // subspace diagonalization of the current nband vectors, packed with leading dimension dim;
-    // the eigenvalues it produces are not needed, CG recomputes them
+    // the eigenvalues it produces are not needed, CG recomputes them.
+    // The generalized problem is always solved: the S-orthogonal shortcut (heevx instead of
+    // hegvd) changes eigenvector phases and, for vectors that are only approximately
+    // S-orthonormal after a CG restart, the results; wavefunction-sensitive outputs such as
+    // the Wannier90 projections rely on the generalized path.
     std::vector<Real> eigen(nband, 0.0);
-    DiagoIterAssist<T, Device>::diag_subspace(*op_, psi_in, psi_out, nband, nband, dim, dim, eigen.data(), diag_comm_, S_orth);
+    DiagoIterAssist<T, Device>::diag_subspace(*op_, psi_in, psi_out, nband, nband, dim, dim, eigen.data(), diag_comm_, false);
 }
 
 template <typename T, typename Device>
