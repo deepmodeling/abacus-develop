@@ -120,14 +120,14 @@ Local hooks:
 CI:
 
 - Run diff-level governance checks with PR base/head SHAs.
-- Check PR body completeness and INPUT documentation linkage.
+- Check PR body completeness and INPUT metadata changes.
 - Publish Markdown summaries that humans and AI reviewers can consume.
 
 AI review:
 
 - Explain governance findings in actionable terms.
 - Add semantic review for module ownership, header dependency growth, test
-  sufficiency, documentation sync, and AI workflow discipline.
+  sufficiency, INPUT metadata consistency, and AI workflow discipline.
 - Use the output format below for actionable findings.
 
 Human review:
@@ -220,26 +220,21 @@ setup workflows and should be added only through a later governance change.
 ## INPUT Parameter Changes
 
 Changes to parameter metadata, default values, type, availability, description,
-or parsing behavior should include both:
+or parsing behavior should update the corresponding C++ `Input_Item`
+registrations. The generated YAML and Markdown documentation are build artifacts
+and should not be edited or committed.
 
-- `docs/parameters.yaml`
-- `docs/advanced/input_files/input-main.md`
-
-These files are generated artifacts, not additional sources of truth. Update
-the C++ `Input_Item` registrations and regenerate both files; do not edit the
-YAML or Markdown output by hand.
-
-If the diff touches parameter internals but does not change user-visible INPUT
-behavior, the PR should state why no documentation update is required. Missing
-documentation updates trigger a governance warning (not a block), but maintainers
-may still request documentation updates before merging.
+If the diff touches parameter internals but does not require an `Input_Item`
+metadata change, the PR should state why. Missing metadata updates trigger a
+governance warning (not a block), but maintainers may still request updates
+before merging.
 
 ## PR Self-Consistency
 
 Before requesting review, check that the PR description matches the diff:
 
-- New or changed INPUT behavior lists the changed parameters and links the YAML
-  and Markdown documentation updates.
+- New or changed INPUT behavior lists the changed parameters and any corresponding
+  `Input_Item` metadata updates.
 - Source changes list focused unit, case, or CLI verification commands with the
   observed result.
 - Header include growth, `.hpp` propagation, missing tests, or other warnings
