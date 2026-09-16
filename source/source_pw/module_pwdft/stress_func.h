@@ -16,6 +16,8 @@
 #include "source_psi/psi.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 
+class pseudopot_cell_vl;
+
 //-------------------------------------------------------------------
 // mohan reconstruction note: 2021-02-07
 // the stress code needs reconstructions (by Daye Zheng)
@@ -143,6 +145,26 @@ class Stress_Func
                      K_Vectors* p_kv,
                      ModulePW::PW_Basis_K* wfc_basis,
                      const psi::Psi <std::complex<FPTYPE>, Device>* psi_in); // gga part in PW basis
+
+    /**
+     * @brief Compute the plane-wave-basis stress terms shared by PW and LCAO:
+     * vlocal, hartree, ewald, non-linear core correction and exchange-correlation.
+     *
+     * This is the former LCAO_domain::cal_stress_pw, moved here so the PW-part
+     * stress assembly lives in the PW module. All terms are double precision and
+     * independent of the electronic template type T used by LCAO.
+     */
+    void stress_pw_terms(UnitCell& ucell,
+                         ModuleBase::matrix& sigmadvl,
+                         ModuleBase::matrix& sigmahar,
+                         ModuleBase::matrix& sigmaewa,
+                         ModuleBase::matrix& sigmacc,
+                         ModuleBase::matrix& sigmaxc,
+                         const double& etxc,
+                         const Charge* const chr,
+                         ModulePW::PW_Basis* rhopw,
+                         const pseudopot_cell_vl& locpp,
+                         const Structure_Factor& sf);
 
     // 7) the stress from the non-local pseudopotentials
     /**

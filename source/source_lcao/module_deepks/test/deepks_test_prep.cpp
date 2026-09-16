@@ -282,7 +282,7 @@ void test_deepks<T>::set_orbs(const bool use_modern_orbital_reader)
 
     auto* lcao_nl = new LCAONonlocalInfo();
     lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB,
-                           basis_type, out_element_info, lspinorb, nspin);
+                           basis_type, out_element_info, lspinorb, nspin, GlobalV::MY_RANK);
     ucell.infoNL.reset(lcao_nl);
 
     double rmax = std::max(orb_.rcut_max(), alpha_.rcut_max());

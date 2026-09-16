@@ -166,6 +166,15 @@ class Grid_Driver : public Grid
         return adj_info.box[i];
     }
 
+    /**
+     * @brief Get the whole adjacent atom information.
+     * @return adjacent atom information
+     */
+    const AdjacentAtomInfo& getAdjacentInfo() const
+    {
+        return adj_info;
+    }
+
   private:
     mutable AdjacentAtomInfo adj_info; ///< adjacent atom information
     bool test_deconstructor;           ///< test deconstructor flag

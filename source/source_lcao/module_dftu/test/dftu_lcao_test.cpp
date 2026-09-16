@@ -160,7 +160,7 @@ TEST_F(DFTUTest, constructHRd2d)
         HR->get_wrapper()[i] = 0.0;
     }
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
-    hamilt::DFTU<hamilt::OperatorLCAO<double, double>>
+    hamilt::DFTU_onsite<hamilt::OperatorLCAO<double, double>>
         op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu, nspin, onsite_radius_test, &dm);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time
@@ -239,7 +239,7 @@ TEST_F(DFTUTest, constructHRd2cd)
     {
         HR->get_wrapper()[i] = 0.0;
     }
-    hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, double>>
+    hamilt::DFTU_onsite<hamilt::OperatorLCAO<std::complex<double>, double>>
         op(&hsk, kvec_d_in, HR, ucell, &gd, &intor_, {1.0}, &dftu, nspin, onsite_radius_test, &dm);
     op.contributeHR();
     // check the occupations of dftu for spin-up

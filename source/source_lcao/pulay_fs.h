@@ -54,5 +54,5 @@ namespace PulayForceStress
         const bool& isstress,
         const bool& set_dmr_gint = true);
 }
-#include "pulay_fs_temp.hpp"
-#include "pulay_fs_gint.hpp"
+#include "pulay_fs_temp.h"
+#include "pulay_fs_gint.h"

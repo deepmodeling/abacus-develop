@@ -202,15 +202,10 @@ Numerical_Nonlocal::~Numerical_Nonlocal() {}
 
 #include "../../setup_nonlocal.h"
 InfoNonlocal::InfoNonlocal() {
-    this->Beta = new Numerical_Nonlocal[1];
-    this->nproj = nullptr;
     this->nprojmax = 0;
     this->rcutmax_Beta = 0.0;
 }
-InfoNonlocal::~InfoNonlocal() {
-    delete[] Beta;
-    delete[] nproj;
-}
+InfoNonlocal::~InfoNonlocal() = default;
 
 Numerical_Orbital::Numerical_Orbital() { this->rcut = 1.0; }
 Numerical_Orbital::~Numerical_Orbital() {}

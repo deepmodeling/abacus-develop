@@ -11,6 +11,7 @@ if(ENABLE_LCAO)
     add_subdirectory(module_operator_lcao)
     list(APPEND objects
         hamilt_lcao.cpp
+        hamilt_lcao_factory.cpp
         module_operator_lcao/operator_lcao.cpp
         module_operator_lcao/veff_lcao.cpp
         module_operator_lcao/veff_dh.cpp
@@ -35,8 +36,8 @@ if(ENABLE_LCAO)
         setup_dftu_lcao.cpp
         pulay_fs_center2.cpp
         force_stress_lcao.cpp
-        force_lcao_gamma.cpp
-        force_lcao_k.cpp
+        force_stress_assemble.cpp
+        force_stress_terms.cpp
         stress_tools.cpp
         edm.cpp
         spar_dh.cpp
