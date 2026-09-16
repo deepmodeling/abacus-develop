@@ -1,173 +1,102 @@
 #include "init_info.h"
 
-#include "source_io/module_parameter/input_parameter.h"
-#include "para_json.h"
 #include "abacusjson.h"
+#include "source_cell/atom_spec.h"
+#include "source_cell/unitcell.h"
+#include "source_io/module_parameter/input_parameter.h"
 
-// Add json objects to init
+#ifdef __JSON
+#include <nlohmann/json.hpp>
+#include <utility>
+
 namespace Json
 {
-
-#ifdef __RAPIDJSON
+namespace
+{
+// Structure, k-point metadata and calculation metadata share the init section.
+// Replace only the fields built by this generator, not the entire section.
+void set_init_fields(jsonValue fields)
+{
+    for (jsonValue::iterator field = fields.begin(); field != fields.end(); ++field)
+    {
+        AbacusJson::set_json({"init", field.key()}, std::move(field.value()));
+    }
+}
+} // namespace
 
 void gen_init(UnitCell* ucell, const Input_para& inp)
 {
-    std::string pgname = ucell->symm.pgname;
-    std::string spgname = ucell->symm.spgname;
-    AbacusJson::add_json({"init", "point_group"}, pgname, false);
-    AbacusJson::add_json({"init", "point_group_in_space"}, spgname, false);
+    jsonValue info = {{"point_group", ucell->symm.pgname},
+                      {"point_group_in_space", ucell->symm.spgname},
+                      {"natom", ucell->nat},
+                      {"nband", inp.nbands}};
 
-    // Json::AbacusJson::add_Json(pgname,false,"init", "point_group");
-    // Json::AbacusJson::add_Json(spgname,false,"init","point_group_in_space");
-
-    int numAtoms = ucell->nat;
-    AbacusJson::add_json({"init", "natom"}, numAtoms, false);
-    AbacusJson::add_json({"init", "nband"}, inp.nbands, false);
-
-    // Json::AbacusJson::add_Json(numAtoms,false,"init", "natom");
-    // Json::AbacusJson::add_Json(PARAM.inp.nbands,false,"init", "nband");
-
-    int ntype = ucell->ntype, nelec_total = 0;
-    for (int it = 0; it < ntype; it++)
+    int nelec_total = 0;
+    for (int it = 0; it < ucell->ntype; ++it)
     {
-        std::string label = ucell->atoms[it].label;
-        int atom_number = ucell->atoms[it].na;
-        double number = ucell->atoms[it].ncpp.zv;
-
-        nelec_total += ucell->atoms[it].ncpp.zv * ucell->atoms[it].na;
-        AbacusJson::add_json({"init", "natom_each_type", label}, atom_number, false);
-        AbacusJson::add_json({"init", "nelectron_each_type", label}, number, false);
-
-        // Json::AbacusJson::add_Json(number,false,"init", "nelectron_each_type",label);
+        const Atom& atom = ucell->atoms[it];
+        nelec_total += atom.ncpp.zv * atom.na;
+        info["natom_each_type"][atom.label] = atom.na;
+        info["nelectron_each_type"][atom.label] = atom.ncpp.zv;
     }
 
-    AbacusJson::add_json({"init", "nelectron"}, nelec_total, false);
-
-    // Json::AbacusJson::add_Json(nelec_total,false,"init", "nelectron");
-
-    // energy cutoff for wavefunctions (Ry)
-    AbacusJson::add_json({"init", "ecutwfc"}, inp.ecutwfc, false);
-    AbacusJson::add_json({"init", "ecutwfc_unit"}, "Ry", false);
-
-    // smearing method and sigma (Ry)
-    AbacusJson::add_json({"init", "smearing_method"}, inp.smearing_method, false);
-    AbacusJson::add_json({"init", "smearing_sigma"}, inp.smearing_sigma, false);
-    AbacusJson::add_json({"init", "smearing_sigma_unit"}, "Ry", false);
-
-    // k-point mesh generation parameters
-    AbacusJson::add_json({"init", "kmesh_type"}, inp.kmesh_type, false);
-    Json::jsonValue kspacing_array(JarrayType);
-    kspacing_array.JPushBack(inp.kspacing[0]);
-    kspacing_array.JPushBack(inp.kspacing[1]);
-    kspacing_array.JPushBack(inp.kspacing[2]);
-    AbacusJson::add_json({"init", "kspacing"}, kspacing_array, false);
-    Json::jsonValue koffset_array(JarrayType);
-    koffset_array.JPushBack(inp.koffset[0]);
-    koffset_array.JPushBack(inp.koffset[1]);
-    koffset_array.JPushBack(inp.koffset[2]);
-    AbacusJson::add_json({"init", "koffset"}, koffset_array, false);
+    info["nelectron"] = nelec_total;
+    info["ecutwfc"] = inp.ecutwfc;
+    info["ecutwfc_unit"] = "Ry";
+    info["smearing_method"] = inp.smearing_method;
+    info["smearing_sigma"] = inp.smearing_sigma;
+    info["smearing_sigma_unit"] = "Ry";
+    info["kmesh_type"] = inp.kmesh_type;
+    info["kspacing"] = jsonValue::array({inp.kspacing[0], inp.kspacing[1], inp.kspacing[2]});
+    info["koffset"] = jsonValue::array({inp.koffset[0], inp.koffset[1], inp.koffset[2]});
+    set_init_fields(std::move(info));
 }
 
 void add_nkstot(int nkstot)
 {
-    Json::AbacusJson::add_json({"init", "nkstot"}, nkstot, false);
-
-    // Json::AbacusJson::add_Json(nkstot,false,"init", "nkstot");
-    // Json::AbacusJson::add_Json(nkstot_ibz,false,"init", "nkstot_ibz");
+    AbacusJson::set_json({"init", "nkstot"}, nkstot);
 }
 
 void gen_stru(UnitCell* ucell, const Input_para& inp)
 {
-    AbacusJson::add_json({"comment"},
-                         "Unless otherwise specified, the unit of energy is eV and the unit of length is Angstrom",
-                         false);
+    AbacusJson::set_json({"comment"},
+                         "Unless otherwise specified, the unit of energy is eV and the unit of length is Angstrom");
 
-    int ntype = ucell->ntype;
-
-    // array of pseudopotential file
-    std::string* pseudo_fn = ucell->pseudo_fn.data();
-
-    // array of orbital file
-    std::string* orbital_fn = ucell->orbital_fn.data();
-
-    // add atom element,orbital file and pseudopotential file
-    for (int i = 0; i < ntype; i++)
+    jsonValue info = jsonValue::object();
+    for (int it = 0; it < ucell->ntype; ++it)
     {
-        std::string atom_label = ucell->atoms[i].label;
-
-        std::string atom_element = ucell->atoms[i].ncpp.psd;
-
-        Json::AbacusJson::add_json({"init", "element", atom_label}, atom_element, false);
-
-        std::string orbital_str = inp.orbital_dir + orbital_fn[i];
-        if (!orbital_str.compare(""))
-        {
-            Json::jsonValue nullValue;
-            nullValue.SetNull();
-            Json::AbacusJson::add_json({"init", "orb", atom_label}, nullValue, false);
-
-            // Json::AbacusJson::add_Json(nullValue,false,"init","orb",atom_label);
-        }
-        else
-        {
-            Json::AbacusJson::add_json({"init", "orb", atom_label}, orbital_str, false);
-            // Json::AbacusJson::add_Json(orbital_str,false,"init","orb",atom_label);
-        }
-        std::string pseudo_str = pseudo_fn[i];
-        Json::AbacusJson::add_json({"init", "pp", atom_label}, pseudo_str, false);
-
-        // Json::AbacusJson::add_Json(pseudo_str,false,"init","pp",atom_label);
+        const Atom& atom = ucell->atoms[it];
+        info["element"][atom.label] = atom.ncpp.psd;
+        const std::string orbital = inp.orbital_dir + ucell->orbital_fn[it];
+        info["orb"][atom.label] = orbital.empty() ? jsonValue(nullptr) : jsonValue(orbital);
+        info["pp"][atom.label] = ucell->pseudo_fn[it];
     }
 
-    // atom coordinate, mag and label
     const double lat0_angstrom = ucell->lat0_angstrom;
-    for (int i = 0; i < ntype; i++)
+    for (int it = 0; it < ucell->ntype; ++it)
     {
-        ModuleBase::Vector3<double>* tau = ucell->atoms[i].tau.data();
-        int na = ucell->atoms[i].na;
-        for (int j = 0; j < na; j++)
+        const Atom& atom = ucell->atoms[it];
+        for (int ia = 0; ia < atom.na; ++ia)
         {
-            Json::jsonValue coordinateArray(JarrayType);
-            coordinateArray.JPushBack(tau[j][0] * lat0_angstrom);
-            coordinateArray.JPushBack(tau[j][1] * lat0_angstrom);
-            coordinateArray.JPushBack(tau[j][2] * lat0_angstrom);
-            Json::AbacusJson::add_json({"init", "coordinate"}, coordinateArray, true);
-            // Json::AbacusJson::add_Json(coordinateArray,true,"init","coordinate");
-
-            Json::AbacusJson::add_json({"init", "mag"}, ucell->atoms[i].mag[j], true);
-
-            // Json::AbacusJson::add_Json(ucell->atoms[i].mag[j],true,"init","mag");
-
-            std::string str = ucell->atoms[i].label;
-            Json::AbacusJson::add_json({"init", "label"}, str, true);
-            // Json::AbacusJson::add_Json(str,true,"init","label");
+            const ModuleBase::Vector3<double>& tau = atom.tau[ia];
+            info["coordinate"].push_back(jsonValue::array({tau[0] * lat0_angstrom,
+                                                         tau[1] * lat0_angstrom,
+                                                         tau[2] * lat0_angstrom}));
+            info["mag"].push_back(atom.mag[ia]);
+            info["label"].push_back(atom.label);
         }
     }
-
-    // cell
-    {
-        Json::jsonValue cellArray1(JarrayType);
-        Json::jsonValue cellArray2(JarrayType);
-        Json::jsonValue cellArray3(JarrayType);
-        cellArray1.JPushBack(ucell->latvec.e11 * lat0_angstrom);
-        cellArray1.JPushBack(ucell->latvec.e12 * lat0_angstrom);
-        cellArray1.JPushBack(ucell->latvec.e13 * lat0_angstrom);
-        cellArray2.JPushBack(ucell->latvec.e21 * lat0_angstrom);
-        cellArray2.JPushBack(ucell->latvec.e22 * lat0_angstrom);
-        cellArray2.JPushBack(ucell->latvec.e23 * lat0_angstrom);
-        cellArray3.JPushBack(ucell->latvec.e31 * lat0_angstrom);
-        cellArray3.JPushBack(ucell->latvec.e32 * lat0_angstrom);
-        cellArray3.JPushBack(ucell->latvec.e33 * lat0_angstrom);
-        Json::AbacusJson::add_json({"init", "cell"}, cellArray1, true);
-        Json::AbacusJson::add_json({"init", "cell"}, cellArray2, true);
-        Json::AbacusJson::add_json({"init", "cell"}, cellArray3, true);
-
-        // Json::AbacusJson::add_Json(cellArray1,true,"init","cell");
-        // Json::AbacusJson::add_Json(cellArray2,true,"init","cell");
-        // Json::AbacusJson::add_Json(cellArray3,true,"init","cell");
-    }
-    return;
+    info["cell"] = {{ucell->latvec.e11 * lat0_angstrom,
+                     ucell->latvec.e12 * lat0_angstrom,
+                     ucell->latvec.e13 * lat0_angstrom},
+                    {ucell->latvec.e21 * lat0_angstrom,
+                     ucell->latvec.e22 * lat0_angstrom,
+                     ucell->latvec.e23 * lat0_angstrom},
+                    {ucell->latvec.e31 * lat0_angstrom,
+                     ucell->latvec.e32 * lat0_angstrom,
+                     ucell->latvec.e33 * lat0_angstrom}};
+    set_init_fields(std::move(info));
 }
 
-#endif
 } // namespace Json
+#endif // __JSON

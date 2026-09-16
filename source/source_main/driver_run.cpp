@@ -87,7 +87,7 @@ void Driver::driver_run()
         unitcell::check_atomic_stru(ucell, input.min_dist_coef);
         ucell_initialized = true;
 
-#ifdef __RAPIDJSON
+#ifdef __JSON
         Json::gen_stru_wrapper(&ucell, input);
 #endif
     };

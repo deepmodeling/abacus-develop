@@ -288,13 +288,13 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     dkin, duration, diag_ethr, 0, true, this->ds_rms_);
 
 
-#ifdef __RAPIDJSON
+#ifdef __JSON
     // add Json of scf mag
     Json::add_output_scf_mag(ucell.magnet.tot_mag, ucell.magnet.abs_mag,
                              this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
                              this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
                              drho, duration);
-#endif //__RAPIDJSON
+#endif //__JSON
 
 }
 

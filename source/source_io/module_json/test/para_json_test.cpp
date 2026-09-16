@@ -1,255 +1,141 @@
 #include "gtest/gtest.h"
 
-#define private public
+#include <nlohmann/json.hpp>
+
+#include <cstdio>
+#include <fstream>
+#include <limits>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+#include "source_base/constants.h"
+#include "source_base/matrix.h"
+#include "source_base/matrix3.h"
+#include "source_base/parallel_global.h"
+#include "source_base/vector3.h"
+#include "source_cell/atom_spec.h"
+#include "source_cell/magnetism.h"
+#include "source_cell/unitcell.h"
 #include "source_io/module_json/abacusjson.h"
 #include "source_io/module_json/general_info.h"
 #include "source_io/module_json/init_info.h"
-#include "source_io/module_json/readin_info.h"
+#include "source_io/module_json/output_info.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_json/para_json.h"
-#include "source_base/constants.h"
 #include "source_main/version.h"
-#undef private
-/************************************************
- *  unit test of json output module
- ************************************************
-/**
- * - Tested Functions:
- * - AddJson()
- * - Verify the normal addition of json structure parameters in the json function.
- * - OutputJson()
- * - Verify the correctness of the json output.
- * - GeneralInfo()
- * - Test the correctness of the json output of the General Info module.
- * - InitInfo()
- * - Test the correctness of the json output of the Init info module.
- */
 
-TEST(AbacusJsonTest, AddJson)
+namespace Json
 {
-    Json::AbacusJson::doc.SetObject();
-
-    // add a string
-    Json::AbacusJson::add_json({"key1"}, "value1", false);
-    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key1"));
-    ASSERT_TRUE(Json::AbacusJson::doc["key1"].IsString());
-    ASSERT_STREQ(Json::AbacusJson::doc["key1"].GetString(), "value1");
-
-    // add a string to a nested object
-    Json::AbacusJson::add_json({"key2", "key3"}, "value2", false);
-    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key2"));
-    ASSERT_TRUE(Json::AbacusJson::doc["key2"].IsObject());
-    ASSERT_TRUE(Json::AbacusJson::doc["key2"].HasMember("key3"));
-    ASSERT_TRUE(Json::AbacusJson::doc["key2"]["key3"].IsString());
-    ASSERT_STREQ(Json::AbacusJson::doc["key2"]["key3"].GetString(), "value2");
-
-    // add an int
-    Json::AbacusJson::add_json({"key2"}, 123, false);
-    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key2"));
-    ASSERT_TRUE(Json::AbacusJson::doc["key2"].IsInt());
-    ASSERT_EQ(Json::AbacusJson::doc["key2"].GetInt(), 123);
-
-    // add a bool
-    Json::AbacusJson::add_json({"key3"}, true, false);
-    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key3"));
-    ASSERT_TRUE(Json::AbacusJson::doc["key3"].IsBool());
-    ASSERT_EQ(Json::AbacusJson::doc["key3"].GetBool(), true);
-
-    // add a double
-    Json::AbacusJson::add_json({"key4"}, 1.23, false);
-    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("key4"));
-    ASSERT_TRUE(Json::AbacusJson::doc["key4"].IsDouble());
-    ASSERT_EQ(Json::AbacusJson::doc["key4"].GetDouble(), 1.23);
-
-    // modify a value
-    Json::AbacusJson::add_json({"key4"}, 4.56, false);
-    ASSERT_EQ(Json::AbacusJson::doc["key4"].GetDouble(), 4.56);
-
-    // array test
-    Json::AbacusJson::add_json({"key6", "key7"}, true, true);
-    Json::AbacusJson::add_json({"key6", "key7"}, false, true);
-
-    // add key-val to a object array
-    for (int i = 0; i < 3; i++)
+class AbacusJsonTestAccess
+{
+  public:
+    static void reset()
     {
-        Json::jsonValue object(JobjectType);
-        object.JaddNormal("int", i);
-
-        std::string str = std::to_string(i * 100);
-        std::string str2 = "Kstring";
-
-        object.JaddStringV("string", str);
-        object.JaddStringK(str, "string");
-        object.JaddStringKV(str2, str);
-        object.JaddNormal("double", 0.01 * i);
-        Json::AbacusJson::add_json({"array"}, object, true);
+        AbacusJson::doc = jsonValue::object();
     }
-    Json::AbacusJson::add_json({"array", 1, "new_add_notLast"}, "correct1", false);
-    Json::AbacusJson::add_json({"array", -1, "new_add_Last"}, "correct2", false);
 
-    // Validate json parameters in doc objects
+    static const jsonValue& document()
+    {
+        return AbacusJson::doc;
+    }
+};
+} // namespace Json
 
-    ASSERT_EQ(Json::AbacusJson::doc["array"][0]["int"].GetInt(), 0);
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["string"].GetString(), "0");
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["0"].GetString(), "string");
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][0]["Kstring"].GetString(), "0");
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["new_add_notLast"].GetString(), "correct1");
+class AbacusJsonTest : public testing::Test
+{
+  protected:
+    void SetUp() override
+    {
+        Json::AbacusJsonTestAccess::reset();
+    }
 
-    ASSERT_EQ(Json::AbacusJson::doc["array"][0]["double"].GetDouble(), 0.0);
+    const Json::jsonValue& document() const
+    {
+        return Json::AbacusJsonTestAccess::document();
+    }
+};
 
-    ASSERT_EQ(Json::AbacusJson::doc["array"][1]["int"].GetInt(), 1);
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["string"].GetString(), "100");
+TEST_F(AbacusJsonTest, SetAndAppendJson)
+{
+    Json::AbacusJson::set_json({"key"}, "value");
+    Json::AbacusJson::set_json({"nested", "value"}, 1);
+    Json::AbacusJson::set_json({"nested", "value"}, 2);
+    Json::AbacusJson::append_json({"array"}, Json::jsonValue{{"index", 0}});
+    Json::AbacusJson::append_json({"array"}, Json::jsonValue{{"index", 1}});
+    Json::AbacusJson::set_json({"array", -1, "label"}, "last");
 
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["100"].GetString(), "string");
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][1]["Kstring"].GetString(), "100");
-
-    ASSERT_EQ(Json::AbacusJson::doc["array"][1]["double"].GetDouble(), 0.01);
-
-    ASSERT_EQ(Json::AbacusJson::doc["array"][2]["int"].GetInt(), 2);
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["string"].GetString(), "200");
-
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["200"].GetString(), "string");
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["Kstring"].GetString(), "200");
-    ASSERT_EQ(Json::AbacusJson::doc["array"][2]["double"].GetDouble(), 0.02);
-
-    ASSERT_STREQ(Json::AbacusJson::doc["array"][2]["new_add_Last"].GetString(), "correct2");
-
-    // add array in array
-    Json::jsonValue object0(JarrayType);
-
-    object0.JPushBack(1);
-    object0.JPushBack(2);
-    object0.JPushBack(3);
-
-    Json::jsonValue object1(JarrayType);
-
-    object1.JPushBack(2.1);
-    object1.JPushBack(3.1);
-    object1.JPushBack(4.1);
-
-    Json::jsonValue object2(JarrayType);
-
-    object2.JPushBack("str1");
-    object2.JPushBack("str2");
-    object2.JPushBack("str3");
-
-    Json::jsonValue object3(JarrayType);
-
-    std::string astr1 = "string1";
-    std::string astr2 = "string2";
-    std::string astr3 = "string3";
-    object3.JPushBackString(astr1);
-    object3.JPushBackString(astr2);
-    object3.JPushBackString(astr3);
-
-    Json::AbacusJson::add_json({"Darray"}, object0, true);
-    Json::AbacusJson::add_json({"Darray"}, object1, true);
-    Json::AbacusJson::add_json({"Darray"}, object2, true);
-    Json::AbacusJson::add_json({"Darray"}, object3, true);
-
-    Json::AbacusJson::add_json({"Darray", 1, 0}, "new_add_method", false);
-    Json::AbacusJson::add_json({"Darray", 1, -2}, 40, false);
-
-    ASSERT_EQ(Json::AbacusJson::doc["Darray"][1][0].GetString(), "new_add_method");
-
-    ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][0].GetInt(), 1);
-    ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][1].GetInt(), 2);
-    ASSERT_EQ(Json::AbacusJson::doc["Darray"][0][2].GetInt(), 3);
-
-    ASSERT_EQ(Json::AbacusJson::doc["Darray"][1][1].GetDouble(), 40);
-    ASSERT_EQ(Json::AbacusJson::doc["Darray"][1][2].GetDouble(), 4.1);
-
-    ASSERT_STREQ(Json::AbacusJson::doc["Darray"][2][0].GetString(), "str1");
-    ASSERT_STREQ(Json::AbacusJson::doc["Darray"][2][1].GetString(), "str2");
-    ASSERT_STREQ(Json::AbacusJson::doc["Darray"][2][2].GetString(), "str3");
-
-    ASSERT_STREQ(Json::AbacusJson::doc["Darray"][3][0].GetString(), "string1");
-    ASSERT_STREQ(Json::AbacusJson::doc["Darray"][3][1].GetString(), "string2");
-    ASSERT_STREQ(Json::AbacusJson::doc["Darray"][3][2].GetString(), "string3");
+    const Json::jsonValue& root = document();
+    EXPECT_EQ(root["key"], "value");
+    EXPECT_EQ(root["nested"]["value"], 2);
+    ASSERT_EQ(root["array"].size(), 2u);
+    EXPECT_EQ(root["array"][0]["index"], 0);
+    EXPECT_EQ(root["array"][1]["index"], 1);
+    EXPECT_EQ(root["array"][1]["label"], "last");
 }
 
-TEST(AbacusJsonTest, OutputJson)
+TEST_F(AbacusJsonTest, OutputJson)
 {
-    Json::AbacusJson::doc.SetObject();
+    Json::AbacusJson::set_json({"key"}, "value");
+    Json::AbacusJson::set_json(
+        {"nested"}, Json::jsonValue{{"value", 1}, {"array", Json::jsonValue::array({1, 2, 3})}});
 
-    Json::AbacusJson::add_json({"key1"}, "value1", false);
-    Json::AbacusJson::add_json({"key2", "key3"}, 1, false);
-    Json::AbacusJson::add_json({"key4"}, 0.1, false);
-    Json::AbacusJson::add_json({"key5"}, true, false);
-
-    Json::jsonValue object(JobjectType);
-    object.JaddNormal("int", 1);
-    Json::jsonValue object2(JarrayType);
-
-    object.JaddNormal("arr", object2);
-
-    // array test
-    Json::AbacusJson::add_json({"key6", "key7"}, object, true);
-    Json::AbacusJson::add_json({"key6", "key7", 0, "arr"}, 13, true);
-    Json::AbacusJson::add_json({"key6", "key7", 0, "arr"}, 14, true);
-    Json::AbacusJson::add_json({"key6", "key7", 0, "arr", 0}, 1, true);
-
-    std::string filename = "test.json";
+    const std::string filename = "test.json";
     Json::AbacusJson::write_to_json(filename);
 
     std::ifstream file(filename);
     ASSERT_TRUE(file.is_open());
-
-    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    ASSERT_NE(content.find("\"key1\": \"value1\","), std::string::npos);
-    ASSERT_NE(content.find("\"key2\": {"), std::string::npos);
-    ASSERT_NE(content.find("\"key3\": 1"), std::string::npos);
-    ASSERT_NE(content.find("\"key4\": 0.1"), std::string::npos);
-    ASSERT_NE(content.find("\"key5\": true"), std::string::npos);
-
+    const Json::jsonValue result = Json::jsonValue::parse(file);
+    EXPECT_EQ(result, document());
     file.close();
+    EXPECT_EQ(std::remove(filename.c_str()), 0);
 }
 
-TEST(AbacusJsonTest, GeneralInfo)
+TEST_F(AbacusJsonTest, GeneralInfo)
 {
-    std::time_t time_now = std::time(nullptr);
-    std::string start_time_str;
-    Json::convert_time(time_now, start_time_str);
-
     Parameter param;
-    param.sys.start_time = time_now;
-    param.input.device = "cpu";
-    param.input.pseudo_dir = "./abacus/test/pseudo_dir";
-    param.input.orbital_dir = "./abacus/test/orbital_dir";
-    param.sys.global_in_stru = "./abacus/test/stru_file";
-    param.input.kpoint_file = "./abacus/test/kpoint_file";
-    // output the json file
-    Json::AbacusJson::doc.Parse("{}");
     Json::gen_general_info(param);
-    Json::json_output();
 
-    std::string filename = "abacus.json";
-    std::ifstream file(filename);
-    ASSERT_TRUE(file.is_open());
-
-    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-
-    ASSERT_NE(content.find(VERSION), std::string::npos);
-    ASSERT_NE(content.find("\"device\": \"cpu\","), std::string::npos);
-    ASSERT_NE(content.find("\"omp_num\": 0,"), std::string::npos);
-    ASSERT_NE(content.find("\"mpi_num\": 0,"), std::string::npos);
-    ASSERT_NE(content.find("\"orbital_dir\": \"./abacus/test/orbital_dir\","), std::string::npos);
-    ASSERT_NE(content.find("\"pseudo_dir\": \"./abacus/test/pseudo_dir\","), std::string::npos);
-    ASSERT_NE(content.find("\"stru_file\": \"./abacus/test/stru_file\","), std::string::npos);
-    ASSERT_NE(content.find("\"kpt_file\": \"./abacus/test/kpoint_file\","), std::string::npos);
-    ASSERT_NE(content.find(start_time_str), std::string::npos);
+    const Json::jsonValue& info = document().at("general_info");
+    EXPECT_EQ(info["version"], VERSION);
+    EXPECT_EQ(info["device"], param.inp.device);
+#ifdef __MPI
+    EXPECT_EQ(info["mpi_num"], Parallel_Global::mpi_number);
+    EXPECT_EQ(info["omp_num"], Parallel_Global::omp_number);
+#else
+    EXPECT_EQ(info["mpi_num"], 1);
+    EXPECT_EQ(info["omp_num"], 1);
+#endif
+    EXPECT_EQ(info["orbital_dir"], param.inp.orbital_dir);
+    EXPECT_EQ(info["pseudo_dir"], param.inp.pseudo_dir);
+    EXPECT_EQ(info["stru_file"], param.globalv.global_in_stru);
+    EXPECT_EQ(info["kpt_file"], param.inp.kpoint_file);
+    EXPECT_TRUE(info["start_time"].is_string());
+    EXPECT_TRUE(info["end_time"].is_string());
+    std::vector<std::string> keys;
+    for (Json::jsonValue::const_iterator field = info.begin(); field != info.end(); ++field)
+    {
+        keys.push_back(field.key());
+    }
+    EXPECT_EQ(keys, (std::vector<std::string>{"version", "commit", "device", "mpi_num", "omp_num",
+                                            "pseudo_dir", "orbital_dir", "stru_file", "kpt_file",
+                                            "start_time", "end_time"}));
+    Json::AbacusJson::set_json({"init", "nkstot"}, 2);
+    Json::gen_general_info(param);
+    EXPECT_EQ(document()["init"]["nkstot"], 2);
+    EXPECT_EQ(document()["general_info"].size(), keys.size());
 }
-
 
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
 }
+
 Magnetism::~Magnetism()
 {
 }
-TEST(AbacusJsonTest, InitInfo)
+
+TEST_F(AbacusJsonTest, InitInfo)
 {
     UnitCell ucell;
     Atom atomlist[3];
@@ -258,6 +144,7 @@ TEST(AbacusJsonTest, InitInfo)
     ucell.symm.spgname = "O_h";
     ucell.atoms = atomlist;
     ucell.ntype = 3;
+
     Input_para inp;
     inp.nbands = 10;
     inp.ecutwfc = 50.0;
@@ -276,132 +163,336 @@ TEST(AbacusJsonTest, InitInfo)
     ucell.atoms[2].label = "O";
     ucell.atoms[2].ncpp.zv = 5;
     ucell.atoms[2].na = 3;
-    ucell.nat = 0;
-    for (int i = 0; i < ucell.ntype; i++)
-    {
-        ucell.nat += ucell.atoms[i].na;
-    }
-    // init the doc allocator
-    Json::AbacusJson::doc.Parse("{}");
-    int Jnkstot = 1;
 
-    Json::add_nkstot(Jnkstot);
+    ucell.nat = 6;
+
+    Json::add_nkstot(1);
     Json::gen_init(&ucell, inp);
 
-    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("init"));
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["nkstot"].GetInt(), 1);
-
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["natom"].GetInt(), 6);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["nband"].GetInt(), 10);
-
-    ASSERT_STREQ(Json::AbacusJson::doc["init"]["point_group"].GetString(), "T_d");
-    ASSERT_STREQ(Json::AbacusJson::doc["init"]["point_group_in_space"].GetString(), "O_h");
-
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["Si"].GetDouble(), 3);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["C"].GetDouble(), 4);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["O"].GetDouble(), 5);
-
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["Si"].GetInt(), 1);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["C"].GetInt(), 2);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["O"].GetInt(), 3);
-
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["ecutwfc"].GetDouble(), 50.0);
-    ASSERT_STREQ(Json::AbacusJson::doc["init"]["ecutwfc_unit"].GetString(), "Ry");
-    ASSERT_STREQ(Json::AbacusJson::doc["init"]["smearing_method"].GetString(), "gauss");
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["smearing_sigma"].GetDouble(), 0.015);
-    ASSERT_STREQ(Json::AbacusJson::doc["init"]["smearing_sigma_unit"].GetString(), "Ry");
-    ASSERT_STREQ(Json::AbacusJson::doc["init"]["kmesh_type"].GetString(), "gamma");
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["kspacing"][0].GetDouble(), 0.04);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["kspacing"][1].GetDouble(), 0.04);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["kspacing"][2].GetDouble(), 0.04);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["koffset"][0].GetDouble(), 0.0);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["koffset"][1].GetDouble(), 0.0);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["koffset"][2].GetDouble(), 0.0);
+    const Json::jsonValue& init = document().at("init");
+    EXPECT_EQ(init["nkstot"], 1);
+    EXPECT_EQ(init["natom"], 6);
+    EXPECT_EQ(init["nband"], 10);
+    EXPECT_EQ(init["point_group"], "T_d");
+    EXPECT_EQ(init["point_group_in_space"], "O_h");
+    EXPECT_EQ(init.at("nelectron_each_type"), (Json::jsonValue{{"Si", 3.0}, {"C", 4.0}, {"O", 5.0}}));
+    EXPECT_EQ(init.at("natom_each_type"), (Json::jsonValue{{"Si", 1}, {"C", 2}, {"O", 3}}));
+    EXPECT_EQ(init.at("nelectron"), 26);
+    EXPECT_TRUE(init.at("nelectron").is_number_integer());
+    EXPECT_TRUE(init.at("nelectron_each_type").at("C").is_number_float());
+    EXPECT_EQ(init["ecutwfc"], 50.0);
+    EXPECT_EQ(init["ecutwfc_unit"], "Ry");
+    EXPECT_EQ(init["smearing_method"], "gauss");
+    EXPECT_EQ(init["smearing_sigma"], 0.015);
+    EXPECT_EQ(init["smearing_sigma_unit"], "Ry");
+    EXPECT_EQ(init["kmesh_type"], "gamma");
+    EXPECT_EQ(init["kspacing"], Json::jsonValue::array({0.04, 0.04, 0.04}));
+    EXPECT_EQ(init["koffset"], Json::jsonValue::array({0.0, 0.0, 0.0}));
 }
 
-TEST(AbacusJsonTest, Init_stru_test)
+TEST_F(AbacusJsonTest, InitStructure)
 {
-    // init ucell
     UnitCell ucell;
+    Atom atom;
 
-    Atom atomlist[1];
-    std::string label[1];
-
-    ModuleBase::Matrix3 latvec;
-    latvec.e11 = 0.1;
-    latvec.e12 = 0.1;
-    latvec.e13 = 0.1;
-
-    latvec.e21 = 0.2;
-    latvec.e22 = 0.2;
-    latvec.e23 = 0.2;
-
-    latvec.e31 = 0.3;
-    latvec.e32 = 0.3;
-    latvec.e33 = 0.3;
-    ucell.latvec = latvec;
-
-    double lat0 = 10.0;
+    ucell.latvec = ModuleBase::Matrix3(0.1, 0.1, 0.1,
+                                       0.2, 0.2, 0.2,
+                                       0.3, 0.3, 0.3);
     ucell.ntype = 1;
-    ucell.pseudo_fn.resize(1);
-    ucell.orbital_fn.resize(1);
-    ucell.atoms = atomlist;
-    ucell.lat0 = lat0;
-    ucell.lat0_angstrom = lat0 * ModuleBase::BOHR_TO_A;
+    ucell.nat = 2;
+    ucell.pseudo_fn = {"si.ufp"};
+    ucell.orbital_fn = {""};
+    ucell.atoms = &atom;
+    ucell.lat0 = 10.0;
+    ucell.lat0_angstrom = ucell.lat0 * ModuleBase::BOHR_TO_A;
 
-    ModuleBase::Vector3<double> tau[2];
+    atom.label = "Si";
+    atom.na = 2;
+    atom.ncpp.zv = 4.0;
+    atom.tau = {ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                ModuleBase::Vector3<double>(0.1, 0.1, 0.1)};
+    atom.mag = {0.0, 131.0};
 
-    Json::AbacusJson::doc.Parse("{}");
+    Input_para inp;
+    Json::gen_stru(&ucell, inp);
 
-    double mag[2];
-    // fill ucell
-    for (int i = 0; i < 1; i++)
+    const Json::jsonValue& init = document().at("init");
+    EXPECT_EQ(init["mag"], Json::jsonValue::array({0.0, 131.0}));
+    EXPECT_EQ(init["pp"]["Si"], "si.ufp");
+    EXPECT_TRUE(init["orb"]["Si"].is_null());
+    EXPECT_EQ(init["label"][0], "Si");
+    EXPECT_EQ(init["element"]["Si"], "");
+    EXPECT_EQ(init["coordinate"][0], Json::jsonValue::array({0.0, 0.0, 0.0}));
+    for (int i = 0; i < 3; ++i)
     {
-        ucell.atoms[i].label = "Si";
-        atomlist[i].na = 2;
-        ucell.pseudo_fn[i] = "si.ufp";
-        ucell.atoms[i].tau.resize(2);
-        atomlist[i].mag.resize(2);
-        for (int j = 0; j < atomlist[i].na; j++)
+        EXPECT_NEAR(init["coordinate"][1][i].get<double>(), ModuleBase::BOHR_TO_A, 1.0e-12);
+        for (int j = 0; j < 3; ++j)
         {
-            atomlist[i].mag[j] = j * 131;
-            ucell.atoms[i].tau[j] = 0.1 * j;
+            EXPECT_NEAR(init["cell"][i][j].get<double>(), (i + 1) * ModuleBase::BOHR_TO_A, 1.0e-12);
         }
     }
-    Json::gen_stru(&ucell, Input_para{});
 
-    std::string filename = "readin.json";
-    Json::AbacusJson::write_to_json(filename);
-    // compare result
-    ASSERT_TRUE(Json::AbacusJson::doc.HasMember("init"));
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["mag"][0].GetDouble(), 0);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["mag"][1].GetDouble(), 131.0);
+    // Reuse the cell to check shared init fields and repeated generation.
+    ucell.orbital_fn[0] = "Si.orb";
+    inp.orbital_dir = "orbitals/";
+    inp.kspacing = {0.1, 0.2, 0.3};
+    inp.koffset = {0.0, 0.5, 0.0};
+    Json::gen_stru(&ucell, inp);
+    Json::add_nkstot(3);
+    Json::gen_init(&ucell, inp);
+    const Json::jsonValue first = document();
+    EXPECT_EQ(first["init"]["orb"]["Si"], "orbitals/Si.orb");
+    EXPECT_EQ(first["init"]["nkstot"], 3);
+    EXPECT_EQ(first["init"]["natom"], 2);
+    Json::gen_init(&ucell, inp);
+    Json::gen_stru(&ucell, inp);
+    EXPECT_EQ(document(), first);
+    EXPECT_EQ(document().dump(), first.dump()); // Preserve key order, too.
+}
 
-    ASSERT_STREQ(Json::AbacusJson::doc["init"]["pp"]["Si"].GetString(), "si.ufp");
-    ASSERT_STREQ(Json::AbacusJson::doc["init"]["label"][0].GetString(), "Si");
-    ASSERT_STREQ(Json::AbacusJson::doc["init"]["element"]["Si"].GetString(), "");
+TEST_F(AbacusJsonTest, NullAndEmptyContainers)
+{
+    Json::AbacusJson::set_json({"null"}, nullptr);
+    Json::AbacusJson::set_json({"object"}, Json::jsonValue::object());
+    Json::AbacusJson::set_json({"array"}, Json::jsonValue::array());
+    Json::AbacusJson::append_json({"wrapped"}, Json::jsonValue::array());
 
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][0][0].GetDouble(), 0);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][0][1].GetDouble(), 0);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][0][2].GetDouble(), 0);
+    const Json::jsonValue& root = document();
+    EXPECT_TRUE(root.at("null").is_null());
+    EXPECT_EQ(root.at("object"), Json::jsonValue::object());
+    EXPECT_EQ(root.at("array"), Json::jsonValue::array());
+    EXPECT_EQ(root.at("wrapped"), Json::jsonValue::array({Json::jsonValue::array()}));
+}
 
-    EXPECT_NEAR(Json::AbacusJson::doc["init"]["coordinate"][1][0].GetDouble(),
-                ModuleBase::BOHR_TO_A,
-                1.0e-12);
-    EXPECT_NEAR(Json::AbacusJson::doc["init"]["coordinate"][1][1].GetDouble(),
-                ModuleBase::BOHR_TO_A,
-                1.0e-12);
-    EXPECT_NEAR(Json::AbacusJson::doc["init"]["coordinate"][1][2].GetDouble(),
-                ModuleBase::BOHR_TO_A,
-                1.0e-12);
+TEST_F(AbacusJsonTest, SetReplacesContainers)
+{
+    Json::AbacusJson::set_json({"value"}, Json::jsonValue::array({1, 2}));
+    Json::AbacusJson::set_json({"value"}, Json::jsonValue::array({3}));
+    EXPECT_EQ(document()["value"], Json::jsonValue::array({3}));
 
+    Json::AbacusJson::set_json({"value"}, Json::jsonValue{{"old", 1}});
+    Json::AbacusJson::set_json({"value"}, Json::jsonValue{{"new", 2}});
+    EXPECT_EQ(document()["value"], (Json::jsonValue{{"new", 2}}));
+    Json::AbacusJson::set_json({"value"}, true);
+    EXPECT_TRUE(document()["value"].is_boolean());
+    EXPECT_EQ(document()["value"], true);
+    Json::AbacusJson::set_json({"value"}, 1.25);
+    EXPECT_TRUE(document()["value"].is_number_float());
+    EXPECT_DOUBLE_EQ(document()["value"].get<double>(), 1.25);
+}
+
+TEST_F(AbacusJsonTest, ArrayAppendAndIndexedReplacement)
+{
+    Json::AbacusJson::append_json({"array"}, 1);
+    Json::AbacusJson::append_json({"array"}, 2);
+    Json::AbacusJson::set_json({"array", -1}, 3);
+    Json::AbacusJson::set_json({"array", -2}, Json::jsonValue::array({4, 5}));
+    Json::AbacusJson::append_json({"array", 0}, 6);
+    EXPECT_EQ(document()["array"][0], Json::jsonValue::array({4, 5, 6}));
+    Json::AbacusJson::set_json({"array", 0}, 6);
+    EXPECT_EQ(document()["array"], Json::jsonValue::array({6, 3}));
+
+    // Numeric strings and empty strings are object keys, not array indices.
+    Json::AbacusJson::set_json({"object", "0"}, 7);
+    Json::AbacusJson::set_json({"object", ""}, 8);
+    EXPECT_EQ(document()["object"]["0"], 7);
+    EXPECT_EQ(document()["object"][""], 8);
+}
+
+TEST_F(AbacusJsonTest, AppendRejectsNonArrays)
+{
+    Json::AbacusJson::set_json({"null"}, nullptr);
+    Json::AbacusJson::set_json({"object"}, Json::jsonValue::object());
+    Json::AbacusJson::set_json({"scalar"}, 1);
+    Json::AbacusJson::set_json({"array"}, Json::jsonValue::array({2}));
+    const Json::jsonValue before = document();
+
+    for (const char* key : {"null", "object", "scalar"})
+    {
+        EXPECT_THROW(Json::AbacusJson::append_json({key}, 3), std::invalid_argument);
+    }
+    EXPECT_THROW(Json::AbacusJson::append_json({"array", 0}, 3), std::invalid_argument);
+    EXPECT_EQ(document(), before);
+}
+
+TEST_F(AbacusJsonTest, InvalidPathsDoNotGrowArrays)
+{
+    Json::AbacusJson::append_json({"array"}, 1);
+    Json::AbacusJson::set_json({"empty"}, Json::jsonValue::array());
+    Json::AbacusJson::set_json({"scalar"}, 2);
+
+    for (const int index : {1, -2, std::numeric_limits<int>::min()})
+    {
+        EXPECT_THROW(Json::AbacusJson::set_json({"array", index}, 3), std::out_of_range);
+        EXPECT_THROW(Json::AbacusJson::append_json({"array", index}, 3), std::out_of_range);
+    }
+    EXPECT_THROW(Json::AbacusJson::set_json({"empty", -1}, 3), std::out_of_range);
+    EXPECT_THROW(Json::AbacusJson::append_json({"empty", -1}, 3), std::out_of_range);
+    EXPECT_THROW(Json::AbacusJson::set_json({"array", "key"}, 3), std::invalid_argument);
+    EXPECT_THROW(Json::AbacusJson::set_json({"scalar", "key"}, 3), std::invalid_argument);
+    EXPECT_THROW(Json::AbacusJson::set_json({0}, 3), std::invalid_argument);
+    EXPECT_THROW(Json::AbacusJson::append_json({0}, 3), std::invalid_argument);
+    EXPECT_EQ(document()["array"], Json::jsonValue::array({1}));
+    EXPECT_TRUE(document()["empty"].empty());
+
+    const Json::jsonValue before = document();
+    Json::AbacusJson::set_json({}, 9);
+    Json::AbacusJson::append_json({}, 9);
+    EXPECT_EQ(document(), before);
+}
+
+TEST_F(AbacusJsonTest, OwnedValuesAndStringEscaping)
+{
+    Json::jsonValue original = {{"value", "original"}};
+    Json::AbacusJson::set_json({"copy"}, original);
+    original["value"] = "changed";
+    EXPECT_EQ(document()["copy"]["value"], "original");
+
+    const std::string text = "quote: \"; slash: \\; newline: \n; UTF-8: \xCE\xB1";
+    const std::string embedded_nul("a\0b", 3);
+    Json::AbacusJson::set_json({"text"}, text);
+    Json::AbacusJson::set_json({"embedded_nul"}, embedded_nul);
+    const Json::jsonValue result = Json::jsonValue::parse(document().dump(4));
+    EXPECT_EQ(result["text"], text);
+    EXPECT_EQ(result["embedded_nul"].get<std::string>(), embedded_nul);
+}
+
+TEST_F(AbacusJsonTest, PreservesInsertionOrder)
+{
+    Json::AbacusJson::set_json({"z"}, 1);
+    Json::AbacusJson::set_json({"a"}, 2);
+    Json::AbacusJson::set_json({"m"}, 3);
+    Json::AbacusJson::set_json({"a"}, 4);
+
+    const Json::jsonValue result = Json::jsonValue::parse(document().dump());
+    std::vector<std::string> keys;
+    for (Json::jsonValue::const_iterator it = result.begin(); it != result.end(); ++it)
+    {
+        keys.push_back(it.key());
+    }
+    EXPECT_EQ(keys, (std::vector<std::string>{"z", "a", "m"}));
+    EXPECT_EQ(result["a"], 4);
+}
+
+TEST_F(AbacusJsonTest, OutputRecords)
+{
+    EXPECT_THROW(Json::add_output_energy(-1.0), std::invalid_argument);
+    Json::AbacusJson::set_json({"output"}, Json::jsonValue::array());
+    EXPECT_THROW(Json::add_output_energy(-1.0), std::out_of_range);
+    Json::init_output_array_obj();
+    ASSERT_EQ(document().at("output").size(), 1u);
+    const Json::jsonValue initial = document()["output"][0];
+    for (const char* key : {"e_fermi", "energy", "scf_converge", "force", "stress"})
+    {
+        EXPECT_TRUE(initial[key].is_null());
+    }
+    for (const char* key : {"coordinate", "mag", "cell"})
+    {
+        EXPECT_TRUE(initial[key].is_array());
+        EXPECT_TRUE(initial[key].empty());
+    }
+
+    Json::add_output_efermi_converge(1.5, true);
+    Json::add_output_energy(-10.0);
+    Json::add_output_scf_mag(1.0, 2.0, -9.0, -0.2, 1.0e-3, 0.5);
+    Json::add_output_scf_mag(1.0, 2.0, -10.0, -1.0, 1.0e-5, 0.6);
+
+    const Json::jsonValue first = document()["output"][0];
+    EXPECT_EQ(first["e_fermi"], 1.5);
+    EXPECT_EQ(first["energy"], -10.0);
+    EXPECT_EQ(first["scf_converge"], true);
+    EXPECT_EQ(first["total_mag"], 1.0);
+    EXPECT_EQ(first["absolute_mag"], 2.0);
+    ASSERT_EQ(first["scf"].size(), 2u);
+    EXPECT_EQ(first["scf"][1]["energy"], -10.0);
+    EXPECT_EQ(first["scf"][1]["ediff"], -1.0);
+    EXPECT_EQ(first["scf"][1]["drho"], 1.0e-5);
+    EXPECT_EQ(first["scf"][1]["time"], 0.6);
+
+    Json::init_output_array_obj();
+    Json::add_output_energy(-11.0);
+    ASSERT_EQ(document()["output"].size(), 2u);
+    EXPECT_EQ(document()["output"][0], first);
+    EXPECT_EQ(document()["output"][1]["energy"], -11.0);
+}
+
+TEST_F(AbacusJsonTest, OutputStructureForceAndStress)
+{
+    UnitCell ucell;
+    Atom atom;
+    ucell.atoms = &atom;
+    ucell.ntype = 1;
+    ucell.nat = 1;
+    ucell.lat0_angstrom = 2.0;
+    ucell.latvec = ModuleBase::Matrix3(1.0, 0.0, 0.0,
+                                       0.0, 2.0, 0.0,
+                                       0.0, 0.0, 3.0);
+    atom.na = 1;
+    atom.tau = {ModuleBase::Vector3<double>(0.25, -0.5, 0.75)};
+    atom.mag = {1.5};
+
+    ModuleBase::matrix force(1, 3);
+    force(0, 0) = 0.5e-8;
+    force(0, 1) = 2.0;
+    force(0, 2) = -3.0;
+
+    ModuleBase::matrix stress(3, 3);
     for (int i = 0; i < 3; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
-            EXPECT_NEAR(Json::AbacusJson::doc["init"]["cell"][i][j].GetDouble(),
-                        (i + 1) * ModuleBase::BOHR_TO_A,
-                        1.0e-12);
+            stress(i, j) = 3 * i + j + 1;
         }
     }
+
+    Json::init_output_array_obj();
+    Json::add_output_cell_coo_stress_force(ucell, force, 2.0, stress, 0.5, true, true);
+    const Json::jsonValue first = document()["output"][0];
+    ASSERT_EQ(first["force"].size(), 1u);
+    EXPECT_EQ(first["force"][0], Json::jsonValue::array({0.0, 4.0, -6.0}));
+    EXPECT_EQ(first["coordinate"][0], Json::jsonValue::array({0.5, -1.0, 1.5}));
+    EXPECT_EQ(first["mag"], Json::jsonValue::array({1.5}));
+    ASSERT_EQ(first["stress"].size(), 3u);
+    ASSERT_EQ(first["cell"].size(), 3u);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            EXPECT_DOUBLE_EQ(first["stress"][i][j].get<double>(), stress(i, j) * 0.5);
+            EXPECT_DOUBLE_EQ(first["cell"][i][j].get<double>(), i == j ? 2.0 * (i + 1) : 0.0);
+        }
+    }
+
+    // Replacing the same step's data must not append extra rows or nested arrays.
+    Json::add_output_cell_coo_stress_force(ucell, force, 2.0, stress, 0.5, true, true);
+    EXPECT_EQ(document()["output"][0], first);
+
+    Json::init_output_array_obj();
+    Json::add_output_cell_coo_stress_force(ucell, force, 2.0, stress, 0.5, false, false);
+    EXPECT_EQ(document()["output"][0], first);
+    const Json::jsonValue& second = document()["output"][1];
+    EXPECT_TRUE(second["force"].is_null());
+    EXPECT_TRUE(second["stress"].is_null());
+    EXPECT_EQ(second["coordinate"], first["coordinate"]);
+    EXPECT_EQ(second["cell"], first["cell"]);
+}
+
+TEST_F(AbacusJsonTest, NonFiniteNumbersSerializeAsNull)
+{
+    Json::AbacusJson::set_json({"nan"}, std::numeric_limits<double>::quiet_NaN());
+    Json::AbacusJson::set_json({"inf"}, std::numeric_limits<double>::infinity());
+    const Json::jsonValue result = Json::jsonValue::parse(document().dump());
+    EXPECT_TRUE(result["nan"].is_null());
+    EXPECT_TRUE(result["inf"].is_null());
+}
+
+TEST_F(AbacusJsonTest, FileOpenFailureIsReported)
+{
+    const std::string blocker = "json-output-not-a-directory";
+    {
+        std::ofstream file(blocker);
+        ASSERT_TRUE(file.is_open());
+    }
+    EXPECT_THROW(Json::AbacusJson::write_to_json(blocker + "/abacus.json"), std::runtime_error);
+    EXPECT_EQ(std::remove(blocker.c_str()), 0);
 }

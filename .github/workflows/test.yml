@@ -93,7 +93,7 @@ jobs:
             -DENABLE_LIBXC=ON \
             -DENABLE_LIBRI=ON \
             -DENABLE_GOOGLEBENCH=ON \
-            -DENABLE_RAPIDJSON=ON \
+            -DENABLE_JSON=ON \
             -DENABLE_FLOAT_FFTW=ON \
             -DENABLE_DFTD4=ON \
             -DENABLE_PEXSI=ON \

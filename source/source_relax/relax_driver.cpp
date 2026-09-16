@@ -101,8 +101,13 @@ void Relax_Driver::iter_info(const std::vector<int>& steps, const Input_para& in
         ModuleIO::print_screen(steps[2], steps[1], steps[0]+1);
     }
 
-#ifdef __RAPIDJSON
-    Json::init_output_array_obj();
+#ifdef __JSON
+    // ks-lr runs an embedded KS calculation in before_all_runners(), which
+    // already starts the first output record.
+    if (inp.esolver_type != "ks-lr" || steps[0] != 0)
+    {
+        Json::init_output_array_obj();
+    }
 #endif
 }
 
@@ -270,12 +275,18 @@ void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& 
 
 void Relax_Driver::json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress)
 {
-#ifdef __RAPIDJSON
+#ifdef __JSON
     Json::add_output_energy(p_esolver->cal_energy() * ModuleBase::Ry_to_eV);
 
     double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     double fac = ModuleBase::Ry_to_eV / 0.529177;
-    Json::add_output_cell_coo_stress_force(&ucell, force, fac, stress, unit_transform);
+    Json::add_output_cell_coo_stress_force(ucell,
+                                           force,
+                                           fac,
+                                           stress,
+                                           unit_transform,
+                                           inp.cal_force,
+                                           inp.cal_stress);
 #endif
 }
 

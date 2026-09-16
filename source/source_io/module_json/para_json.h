@@ -1,23 +1,21 @@
+#ifndef PARA_JSON_H
+#define PARA_JSON_H
+
 #include <ctime>
 #include <string>
 
-#include "source_cell/module_symmetry/symmetry.h"
-#include "source_cell/atom_spec.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_cell/unitcell.h"
+class Parameter;
+class UnitCell;
+struct Input_para;
+
 namespace Json
 {
 
-// void create_Json(ModuleSymmetry::Symmetry *symm,Atom *atoms,Input *input);
-
-void create_Json(UnitCell *ucell, const Parameter& input);
-
-// Output the json to abacus.json file
+void create_Json(UnitCell* ucell, const Parameter& param);
 void json_output();
-
-// Convert time_t to string
 void convert_time(std::time_t time_now, std::string& time_str);
+void gen_stru_wrapper(UnitCell* ucell, const Input_para& inp);
 
-// generate struture wrapper function
-void gen_stru_wrapper(UnitCell *ucell, const Input_para& inp);
 } // namespace Json
+
+#endif
