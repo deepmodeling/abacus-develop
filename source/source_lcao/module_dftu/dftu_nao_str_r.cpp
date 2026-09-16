@@ -21,9 +21,7 @@ void cal_str_IJR_nao_r(const int& iat1,
                       const ModuleBase::Vector3<double>& dis2,
                       double* stress)
 {
-#ifdef __DEBUG
     assert(nspin == 1 || nspin == 2 || nspin == 4);
-#endif
     // npol is the number of spinor polarizations:
     // 1 for nspin=1 (non-spin-polarized) and nspin=2 (collinear magnetic),
     // 2 for nspin=4 (non-collinear, one matrix holds both spin-up and spin-down)
@@ -59,9 +57,7 @@ void cal_str_IJR_nao_r(const int& iat1,
             for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
             {
                 const std::vector<double>& nlm2 = nlm2_all.find(col_indexes[iw2l])->second;
-#ifdef __DEBUG
                 assert(nlm1.size() == nlm2.size());
-#endif
                 for (int m1 = 0; m1 < m_size; m1++)
                 {
                     for (int m2 = 0; m2 < m_size; m2++)

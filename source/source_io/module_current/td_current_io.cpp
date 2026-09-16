@@ -96,8 +96,8 @@ void ModuleIO::write_current(const UnitCell& ucell,
             const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
             for (int cb = 0; cb < ra.na_each[iat]; ++cb)
             {
-                const int T2 = ra.info[iat][cb][3];
-                const int I2 = ra.info[iat][cb][4];
+                const int T2 = ra.get_info(iat, cb)[3];
+                const int I2 = ra.get_info(iat, cb)[4];
 
                 const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
 
@@ -105,9 +105,9 @@ void ModuleIO::write_current(const UnitCell& ucell,
 
                 // get iat2
                 int iat2 = ucell.itia2iat(T2, I2);
-                double Rx = ra.info[iat][cb][0];
-                double Ry = ra.info[iat][cb][1];
-                double Rz = ra.info[iat][cb][2];
+                double Rx = ra.get_info(iat, cb)[0];
+                double Ry = ra.get_info(iat, cb)[1];
+                double Rz = ra.get_info(iat, cb)[2];
                 //std::cout<< "iat1: " << iat1 << " iat2: " << iat2 << " Rx: " << Rx << " Ry: " << Ry << " Rz:" << Rz << std::endl;
                 //  get BaseMatrix
                 hamilt::BaseMatrix<std::complex<double>>* tmp_matrix
@@ -274,8 +274,8 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
                     const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                     for (int cb = 0; cb < ra.na_each[iat]; ++cb)
                     {
-                        const int T2 = ra.info[iat][cb][3];
-                        const int I2 = ra.info[iat][cb][4];
+                        const int T2 = ra.get_info(iat, cb)[3];
+                        const int I2 = ra.get_info(iat, cb)[4];
 
                         const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
 
@@ -283,9 +283,9 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
 
                         // get iat2
                         int iat2 = ucell.itia2iat(T2, I2);
-                        double Rx = ra.info[iat][cb][0];
-                        double Ry = ra.info[iat][cb][1];
-                        double Rz = ra.info[iat][cb][2];
+                        double Rx = ra.get_info(iat, cb)[0];
+                        double Ry = ra.get_info(iat, cb)[1];
+                        double Rz = ra.get_info(iat, cb)[2];
                         //std::cout<< "iat1: " << iat1 << " iat2: " << iat2 << " Rx: " << Rx << " Ry: " << Ry << " Rz:" << Rz << std::endl;
                         //  get BaseMatrix
                         hamilt::BaseMatrix<std::complex<double>>* tmp_matrix

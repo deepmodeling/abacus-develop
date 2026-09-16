@@ -302,7 +302,7 @@ void cal_force_gamma(const DftuFsEnv& env,
     const UnitCell& ucell = env.ucell();
     const int npol = env.npol();
     const int nlocal = pv.get_global_row_size();
-    double* const dsloc[3] = {env.fsr().DSloc_x, env.fsr().DSloc_y, env.fsr().DSloc_z};
+    double* const dsloc[3] = {env.fsr().DSloc_x.data(), env.fsr().DSloc_y.data(), env.fsr().DSloc_z.data()};
 
     const char transN = 'N';
     const char transT = 'T';
@@ -384,10 +384,10 @@ void cal_stress_gamma(const DftuFsEnv& env,
     const std::string& ks_solver = env.ks_solver();
     const std::vector<double>& orb_cutoff = env.orb_cutoff();
     const int nlocal = pv.get_global_row_size();
-    double* dsloc_x = fsr.DSloc_x;
-    double* dsloc_y = fsr.DSloc_y;
-    double* dsloc_z = fsr.DSloc_z;
-    double* dh_r = fsr.DH_r;
+    double* dsloc_x = fsr.DSloc_x.data();
+    double* dsloc_y = fsr.DSloc_y.data();
+    double* dsloc_z = fsr.DSloc_z.data();
+    double* dh_r = fsr.DH_r.data();
 
     // shared folding context: read-only params bundled for fold_dSR_gamma
     DFTU_LCAO::FoldingCtx fold_ctx{npol, ks_solver, orb_cutoff, &ucell, &pv, &gd};
@@ -447,27 +447,26 @@ void check_folded_arrays(const ForceStressArrays& fsr,
                          const bool cal_stress,
                          const bool gamma_only_local)
 {
-    const double* ds0 = gamma_only_local ? fsr.DSloc_x : fsr.DSloc_Rx;
-    const double* ds1 = gamma_only_local ? fsr.DSloc_y : fsr.DSloc_Ry;
-    const double* ds2 = gamma_only_local ? fsr.DSloc_z : fsr.DSloc_Rz;
-    const bool missing_ds = ds0 == nullptr || ds1 == nullptr || ds2 == nullptr;
+    const bool missing_ds = gamma_only_local
+        ? (fsr.DSloc_x.empty() || fsr.DSloc_y.empty() || fsr.DSloc_z.empty())
+        : (fsr.DSloc_Rx.empty() || fsr.DSloc_Ry.empty() || fsr.DSloc_Rz.empty());
 
     if (cal_force && missing_ds)
     {
         const char* message = gamma_only_local
-            ? "fsr.DSloc_x/y/z are nullptr in gamma_only path; the caller must allocate and fill them. "
+            ? "fsr.DSloc_x/y/z are empty in gamma_only path; the caller must allocate and fill them. "
               "See notes in source/source_lcao/force_stress_lcao.cpp."
-            : "fsr.DSloc_Rx/Ry/Rz are nullptr in multik path; the caller must allocate and fill them. "
+            : "fsr.DSloc_Rx/Ry/Rz are empty in multik path; the caller must allocate and fill them. "
               "See notes in source/source_lcao/force_stress_lcao.cpp.";
         ModuleBase::WARNING_QUIT("DFTU_LCAO::force_stress", message);
     }
-    if (cal_stress && (missing_ds || fsr.DH_r == nullptr))
+    if (cal_stress && (missing_ds || fsr.DH_r.empty()))
     {
         const char* message = gamma_only_local
-            ? "fsr.DSloc_x/y/z or fsr.DH_r is nullptr in gamma_only path; "
+            ? "fsr.DSloc_x/y/z or fsr.DH_r is empty in gamma_only path; "
               "the caller must allocate and fill them. "
               "See notes in source/source_lcao/force_stress_lcao.cpp."
-            : "fsr.DSloc_Rx/Ry/Rz or fsr.DH_r is nullptr in multik path; "
+            : "fsr.DSloc_Rx/Ry/Rz or fsr.DH_r is empty in multik path; "
               "the caller must allocate and fill them. "
               "See notes in source/source_lcao/force_stress_lcao.cpp.";
         ModuleBase::WARNING_QUIT("DFTU_LCAO::force_stress", message);

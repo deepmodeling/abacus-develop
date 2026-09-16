@@ -24,6 +24,11 @@ public:
 	Numerical_Nonlocal();
 	~Numerical_Nonlocal();
 
+	// This class owns the raw Proj array; copying it would alias the buffer
+	// and cause double free, so copy semantics are explicitly forbidden.
+	Numerical_Nonlocal(const Numerical_Nonlocal&) = delete;
+	Numerical_Nonlocal& operator=(const Numerical_Nonlocal&) = delete;
+
 	const int& getLmax() const { return this->lmax; }
 
    	const int& getType() const { return this->type; }

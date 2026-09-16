@@ -94,8 +94,8 @@ void DensityMatrix<TK, TR>::init_DMR(Record_adj& ra, const UnitCell* ucell)
         ucell->iat2iait(iat1, &I1, &T1);
         for (int ad = 0; ad < ra.na_each[iat1]; ++ad)
         {
-            const int T2 = ra.info[iat1][ad][3];
-            const int I2 = ra.info[iat1][ad][4];
+            const int T2 = ra.get_info(iat1, ad)[3];
+            const int I2 = ra.get_info(iat1, ad)[4];
             int iat2 = ucell->itia2iat(T2, I2);
             if (this->_paraV->is_invalid_atom_pair(iat1, iat2))
             {
@@ -103,9 +103,9 @@ void DensityMatrix<TK, TR>::init_DMR(Record_adj& ra, const UnitCell* ucell)
             }
             hamilt::AtomPair<TR> tmp_ap(iat1,
                                         iat2,
-                                        ra.info[iat1][ad][0],
-                                        ra.info[iat1][ad][1],
-                                        ra.info[iat1][ad][2],
+                                        ra.get_info(iat1, ad)[0],
+                                        ra.get_info(iat1, ad)[1],
+                                        ra.get_info(iat1, ad)[2],
                                         this->_paraV);
             tmp_DMR->insert_pair(tmp_ap);
         }
