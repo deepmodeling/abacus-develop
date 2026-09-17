@@ -16,7 +16,7 @@ namespace DFTU_LCAO {
  *   pot_onsite(m,m') = U_eff * (0.5 * delta_{m,m'} - occ(m,m'))
  *   EU = (U_eff / 2) * sum_{m,m'} occ(m,m') * (delta_{m,m'} - occ(m',m))
  *
- * Non-template core extracted from DFTU<OperatorLCAO<TK,TR>>::cal_pot_onsite.
+ * Non-template core extracted from DFTU_onsite<OperatorLCAO<TK,TR>>::cal_pot_onsite.
  *
  * @param occ         flattened occupation matrix, size m_size*m_size*spin_fold
  * @param m_size      number of magnetic quantum states (2*l+1)

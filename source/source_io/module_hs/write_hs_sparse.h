@@ -2,7 +2,7 @@
 #define WRITE_HS_SPARSE_H
 
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_lcao/lcao_hs_arrays.hpp"
+#include "source_lcao/lcao_hs_arrays.h"
 
 #include <cstddef>
 #include <map>

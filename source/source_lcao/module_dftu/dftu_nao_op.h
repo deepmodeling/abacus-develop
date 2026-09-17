@@ -21,16 +21,16 @@ class DensityMatrix;
 namespace hamilt
 {
 
-/// The DFTU class template inherits from class T
-/// it is used to calculate the non-local pseudopotential of wavefunction basis
+/// The DFTU_onsite class template inherits from class T
+/// it is used to calculate the DFT+U on-site correction of wavefunction basis
 /// Template parameters:
 /// - T: base class, it would be OperatorLCAO<TK, TR> or OperatorPW<TK>
 template <class T>
-class DFTU : public T
+class DFTU_onsite : public T
 {
 };
 
-/// DFTU class template specialization for OperatorLCAO<TK, TR> base class.
+/// DFTU_onsite class template specialization for OperatorLCAO<TK, TR> base class.
 /// Adds the DFT+U on-site correction to the real-space Hamiltonian, which is
 /// then folded to k-space by the OperatorLCAO machinery:
 ///   HR(mu,nu;I,J,R) = <phi_{mu,I,0}|chi_m> pot_onsite(m,m') <chi_m'|phi_{nu,J,R}>
@@ -40,21 +40,21 @@ class DFTU : public T
 /// - TK: data type of k-space Hamiltonian
 /// - TR: data type of real space Hamiltonian
 template <typename TK, typename TR>
-class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
+class DFTU_onsite<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    DFTU(HS_Matrix_K<TK>* hsk_in,
-         const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-         hamilt::HContainer<TR>* hR_in,
-         const UnitCell& ucell_in,
-         const Grid_Driver* gridD_in,
-         const TwoCenterIntegrator* intor,
-         const std::vector<double>& orb_cutoff,
-         Plus_U_Base* p_dftu,
-         const int nspin_in,
-         const double onsite_radius,
-         const elecstate::DensityMatrix<TK, double>* dm_in);
-    ~DFTU() = default;
+    DFTU_onsite(HS_Matrix_K<TK>* hsk_in,
+                const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                hamilt::HContainer<TR>* hR_in,
+                const UnitCell& ucell_in,
+                const Grid_Driver* gridD_in,
+                const TwoCenterIntegrator* intor,
+                const std::vector<double>& orb_cutoff,
+                Plus_U_Base* p_dftu,
+                const int nspin_in,
+                const double onsite_radius,
+                const elecstate::DensityMatrix<TK, double>* dm_in);
+    ~DFTU_onsite() = default;
 
     /**
      * @brief contributeHR() calculates the HR matrix

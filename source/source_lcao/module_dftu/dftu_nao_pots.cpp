@@ -8,6 +8,8 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
 
+#include <algorithm>
+
 /// On-site potential and Hubbard energy for one correlated shell:
 ///   pot_onsite(m,m') = U_eff * (0.5 * delta_{m,m'} - occ(m,m'))
 ///   EU = (U_eff / 2) * sum_{m,m'} occ(m,m') * (delta_{m,m'} - occ(m',m))
@@ -62,7 +64,7 @@ void DFTU_LCAO::cal_pot_onsite(const Plus_U_Base& dftu,
                            T* pot_onsite)
 {
     ModuleBase::TITLE("DFTU_LCAO", "pot_onsite");
-    ModuleBase::GlobalFunc::ZEROS(pot_onsite, pv->nloc);
+    std::fill(pot_onsite, pot_onsite + pv->nloc, T(0));
 
     const int npol = dftu.occmat().npol();
     const std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& iatlnmipol2iwt
@@ -154,7 +156,7 @@ void DFTU_LCAO::cal_pot_uterm(Plus_U_Base& dftu,
     ModuleBase::timer::start("DFTU_LCAO", "cal_pot_uterm");
 
     const int nlocal = pv->get_global_row_size();
-    ModuleBase::GlobalFunc::ZEROS(pot_uterm, pv->nloc);
+    std::fill(pot_uterm, pot_uterm + pv->nloc, T(0));
 
     //=============================================================
     //   PART2: call pblas to calculate effective potential matrix

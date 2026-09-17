@@ -141,11 +141,11 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
                 }
             }
         }
-        double* work = new double[ndim_cal_dF];   // workspace
-        int* iwork = new int[ndim_cal_dF];   // ipiv
+        double* work = new double[std::max(1, 3 * ndim_cal_dF - 1)];   // workspace
         char uu = 'U';
+        char vv = 'V';
         int info = 0;
-        int m = 1;
+        int lwork = std::max(1, 3 * ndim_cal_dF - 1);
         // gamma means the coeficients for mixing
         // but now gamma store <dFi|Fm>, namely c
         std::vector<double> gamma(ndim_cal_dF);
@@ -155,23 +155,45 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
             gamma[i] = inner_product(dFi, FP_F);
         }
 
-		// solve aG = c 
-		dsysv_(&uu, 
-				&ndim_cal_dF, 
-				&m, 
-				beta_tmp.c, 
-				&ndim_cal_dF, 
-				iwork, 
-				gamma.data(), 
-				&ndim_cal_dF, 
-				work, 
-				&ndim_cal_dF, 
-				&info);
-
-		if (info != 0)
-		{
-			ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when DSYSV.");
-		}
+        // solve aG = c with a truncated pseudo-inverse
+        std::vector<double> eigenvalues(ndim_cal_dF);
+        dsyev_(&vv,
+               &uu,
+               &ndim_cal_dF,
+               beta_tmp.c,
+               &ndim_cal_dF,
+               eigenvalues.data(),
+               work,
+               &lwork,
+               &info);
+        if (info != 0)
+        {
+            ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when DSYEV.");
+        }
+        std::vector<double> gamma_eigen(ndim_cal_dF);
+        for (int i = 0; i < ndim_cal_dF; ++i)
+        {
+            for (int j = 0; j < ndim_cal_dF; ++j)
+            {
+                gamma_eigen[i] += beta_tmp(i, j) * gamma[j];
+            }
+            if (eigenvalues[i] > 1.0e-12 * eigenvalues[ndim_cal_dF - 1])
+            {
+                gamma_eigen[i] /= eigenvalues[i];
+            }
+            else
+            {
+                gamma_eigen[i] = 0.0;
+            }
+        }
+        std::fill(gamma.begin(), gamma.end(), 0.0);
+        for (int i = 0; i < ndim_cal_dF; ++i)
+        {
+            for (int j = 0; j < ndim_cal_dF; ++j)
+            {
+                gamma[i] += beta_tmp(j, i) * gamma_eigen[j];
+            }
+        }
 
         // after solving, gamma store the coeficients for mixing
         coef[mdata.start] = 1 + gamma[dFindex_move(0)];
@@ -182,7 +204,6 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
         coef[mdata.index_move(-ndim_cal_dF)] = -gamma[dFindex_move(-ndim_cal_dF + 1)];
 
         delete[] work;
-        delete[] iwork;
     }
     else
     {

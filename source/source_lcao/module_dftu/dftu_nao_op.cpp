@@ -16,7 +16,7 @@
 #include "dftu_nao_pots.h"
 
 template <typename TK, typename TR>
-hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
+hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::DFTU_onsite(HS_Matrix_K<TK>* hsk_in,
                                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                                  hamilt::HContainer<TR>* hR_in,
                                                  const UnitCell& ucell_in,
@@ -35,7 +35,7 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
       orb_cutoff_(orb_cutoff),
       nspin(nspin_in)
 {
-    ModuleBase::timer::start("DFTU", "DFTU");
+    ModuleBase::timer::start("DFTU_onsite", "DFTU_onsite");
     this->cal_type = calculation_type::lcao_dftu;
 
     assert(this->ucell != nullptr);
@@ -49,7 +49,7 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
     const Parallel_Orbitals* pv = this->hR->get_atom_pair(0).get_paraV();
     this->nlm_tot = DFTU_LCAO::cal_nlm_all(*this->ucell, *this->dftu, *this->intor_, this->adjs_all, *pv);
 
-    ModuleBase::timer::end("DFTU", "DFTU");
+    ModuleBase::timer::end("DFTU_onsite", "DFTU_onsite");
 }
 
 // contributeHR()
@@ -103,9 +103,9 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
  *          for better parallel performance instead of critical section.
  */
 template <typename TK, typename TR>
-void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
+void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
-    ModuleBase::TITLE("DFTU", "contributeHR");
+    ModuleBase::TITLE("DFTU_onsite", "contributeHR");
     // Early exit: DMR not available (first SCF iteration before the first
     // diagonalization) AND occ_mat not yet initialized
     const bool dmr_null = (this->dm_ == nullptr || !this->dm_->is_dmr_ready());
@@ -119,7 +119,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     {
         this->dftu->set_energy(0.0);
     }
-    ModuleBase::timer::start("DFTU", "contributeHR");
+    ModuleBase::timer::start("DFTU_onsite", "contributeHR");
 
     const Parallel_Orbitals* pv = this->hR->get_atom_pair(0).get_paraV();
     // nlm_tot is precomputed in the constructor (structure snapshot)
@@ -195,9 +195,9 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->current_spin = 1 - this->current_spin;
     }
 
-    ModuleBase::timer::end("DFTU", "contributeHR");
+    ModuleBase::timer::end("DFTU_onsite", "contributeHR");
 }
 
-template class hamilt::DFTU<hamilt::OperatorLCAO<double, double>>;
-template class hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, double>>;
-template class hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;
+template class hamilt::DFTU_onsite<hamilt::OperatorLCAO<double, double>>;
+template class hamilt::DFTU_onsite<hamilt::OperatorLCAO<std::complex<double>, double>>;
+template class hamilt::DFTU_onsite<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

@@ -399,6 +399,7 @@ OBJS_DFPT=dfpt_hamilt_shift.o\
     dfpt_stern.o
 
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
+    hamilt_lcao_factory.o\
     operator_lcao.o\
     ekinetic.o\
     ekinetic_fs.o\
@@ -746,8 +747,8 @@ OBJS_LCAO=evolve_elec.o\
       boundary_fix.o\
       upsi.o\
       force_stress_lcao.o\
-      force_lcao_gamma.o\
-      force_lcao_k.o\
+      force_stress_assemble.o\
+      force_stress_terms.o\
       stress_tools.o\
       edm.o\
       pulay_fs_center2.o\
