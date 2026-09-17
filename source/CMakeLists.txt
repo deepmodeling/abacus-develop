@@ -527,7 +527,6 @@ set(ABACUS_BIN_PATH ${PROJECT_BINARY_DIR}/${ABACUS_BIN_NAME})
 if(USE_CUDA)
   set_property(TARGET ${ABACUS_BIN_NAME}
     PROPERTY CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
-  target_compile_definitions(${ABACUS_BIN_NAME} PRIVATE __USE_NVTX)
 endif()
 
 if(ENABLE_COVERAGE)
@@ -562,6 +561,20 @@ add_library(
   OBJECT
   source_main/driver.cpp
   source_main/driver_run.cpp)
+
+# __USE_NVTX gates the NVTX code in source_base/timer.cpp (target base) and
+# source_main/driver.cpp (target driver), so it must be defined on those
+# OBJECT libraries, not only on the final executable (whose sole TU, main.cpp,
+# contains no NVTX code). Defining it only on the executable silently dropped
+# every NVTX range and kept timer_enable_nvtx ineffective.
+if(USE_CUDA)
+  target_compile_definitions(base PRIVATE __USE_NVTX)
+  target_compile_definitions(driver PRIVATE __USE_NVTX)
+  # NVTX is header-only since CUDA 12.9; older toolkits need libnvToolsExt.
+  if(CUDAToolkit_VERSION VERSION_LESS 12.9)
+    target_link_libraries(${ABACUS_BIN_NAME} PRIVATE CUDA::nvToolsExt)
+  endif()
+endif()
 
 list(APPEND device_srcs
   source_pw/module_pwdft/kernels/nonlocal_op.cpp
