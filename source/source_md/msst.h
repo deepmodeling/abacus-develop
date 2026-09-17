@@ -22,6 +22,36 @@ class MSST : public MD_base
          MDCell& mdcell_in);
     ~MSST();
 
+    /// @brief time derivative of the volume, per lattice direction
+    const ModuleBase::Vector3<double>& get_omega() const
+    {
+        return omega;
+    }
+
+    /// @brief energy of the initial configuration
+    double get_e0() const
+    {
+        return e0;
+    }
+
+    /// @brief volume of the initial configuration
+    double get_v0() const
+    {
+        return v0;
+    }
+
+    /// @brief pressure of the initial configuration
+    double get_p0() const
+    {
+        return p0;
+    }
+
+    /// @brief Lagrangian location of the cell
+    double get_lag_pos() const
+    {
+        return lag_pos;
+    }
+
   private:
     void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp);
     void first_half(std::ofstream& ofs);

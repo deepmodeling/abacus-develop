@@ -1,8 +1,6 @@
 #include "source_cell/module_neighlist/domain_decomposition.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#define protected public
 #include "setcell.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_md/nhchain.h"
@@ -185,30 +183,30 @@ TEST_F(NHC_test, restart)
 
     Nose_Hoover* nhc = dynamic_cast<Nose_Hoover*>(mdrun);
     EXPECT_EQ(mdrun->step_rst_, 3);
-    EXPECT_EQ(mdrun->mdp.md_tchain, 4);
-    EXPECT_EQ(mdrun->mdp.md_pchain, 4);
-    EXPECT_EQ(nhc->eta[0], -0.0626326);
-    EXPECT_EQ(nhc->eta[1], -0.578523);
-    EXPECT_EQ(nhc->eta[2], -0.462472);
-    EXPECT_EQ(nhc->eta[3], -0.424503);
-    EXPECT_EQ(nhc->v_eta[0], -0.00658882);
-    EXPECT_EQ(nhc->v_eta[1], -0.0304055);
-    EXPECT_EQ(nhc->v_eta[2], -0.0188618);
-    EXPECT_EQ(nhc->v_eta[3], -0.0175663);
-    EXPECT_EQ(nhc->v_omega[0], 0.583152);
-    EXPECT_EQ(nhc->v_omega[1], -0.106519);
-    EXPECT_EQ(nhc->v_omega[2], -0.895936);
-    EXPECT_EQ(nhc->v_omega[3], -0.634424);
-    EXPECT_EQ(nhc->v_omega[4], 0.627532);
-    EXPECT_EQ(nhc->v_omega[5], -0.473422);
-    EXPECT_EQ(nhc->peta[0], -6.08823);
-    EXPECT_EQ(nhc->peta[1], -0.525329);
-    EXPECT_EQ(nhc->peta[2], 0.121814);
-    EXPECT_EQ(nhc->peta[3], 4771.79);
-    EXPECT_EQ(nhc->v_peta[0], 255.853);
-    EXPECT_EQ(nhc->v_peta[1], -0.266732);
-    EXPECT_EQ(nhc->v_peta[2], 0);
-    EXPECT_EQ(nhc->v_peta[3], 226.197);
+    EXPECT_EQ(inp.mdp.md_tchain, 4);
+    EXPECT_EQ(inp.mdp.md_pchain, 4);
+    EXPECT_EQ(nhc->get_eta()[0], -0.0626326);
+    EXPECT_EQ(nhc->get_eta()[1], -0.578523);
+    EXPECT_EQ(nhc->get_eta()[2], -0.462472);
+    EXPECT_EQ(nhc->get_eta()[3], -0.424503);
+    EXPECT_EQ(nhc->get_v_eta()[0], -0.00658882);
+    EXPECT_EQ(nhc->get_v_eta()[1], -0.0304055);
+    EXPECT_EQ(nhc->get_v_eta()[2], -0.0188618);
+    EXPECT_EQ(nhc->get_v_eta()[3], -0.0175663);
+    EXPECT_EQ(nhc->get_v_omega()[0], 0.583152);
+    EXPECT_EQ(nhc->get_v_omega()[1], -0.106519);
+    EXPECT_EQ(nhc->get_v_omega()[2], -0.895936);
+    EXPECT_EQ(nhc->get_v_omega()[3], -0.634424);
+    EXPECT_EQ(nhc->get_v_omega()[4], 0.627532);
+    EXPECT_EQ(nhc->get_v_omega()[5], -0.473422);
+    EXPECT_EQ(nhc->get_peta()[0], -6.08823);
+    EXPECT_EQ(nhc->get_peta()[1], -0.525329);
+    EXPECT_EQ(nhc->get_peta()[2], 0.121814);
+    EXPECT_EQ(nhc->get_peta()[3], 4771.79);
+    EXPECT_EQ(nhc->get_v_peta()[0], 255.853);
+    EXPECT_EQ(nhc->get_v_peta()[1], -0.266732);
+    EXPECT_EQ(nhc->get_v_peta()[2], 0);
+    EXPECT_EQ(nhc->get_v_peta()[3], 226.197);
 }
 
 TEST_F(NHC_test, print_md)

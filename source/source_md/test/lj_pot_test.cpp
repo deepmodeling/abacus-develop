@@ -25,7 +25,7 @@ class LJ_pot_test : public testing::Test
     double potential;
     int natom;
     UnitCell ucell;
-    Parameter param;
+    Input_para inp;
 
     void SetUp()
     {
@@ -34,7 +34,7 @@ class LJ_pot_test : public testing::Test
         natom = ucell.nat;
         stress.create(3, 3);
 
-        Setcell::parameters(param.input);
+        Setcell::parameters(inp);
     }
 
     void TearDown()
@@ -49,7 +49,7 @@ TEST_F(LJ_pot_test, potential)
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
-    p_esolver->before_all_runners(mdcell, param.inp);
+    p_esolver->before_all_runners(mdcell, inp);
     MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress, false);
     EXPECT_NEAR(potential, -0.011957818623534381, doublethreshold);
 }
@@ -57,7 +57,7 @@ TEST_F(LJ_pot_test, potential)
 TEST_F(LJ_pot_test, unitcell_compatibility)
 {
     ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-    p_esolver->before_all_runners(ucell, param.inp);
+    p_esolver->before_all_runners(ucell, inp);
     p_esolver->runner(ucell, 0);
     p_esolver->cal_force(ucell, stress);
 
@@ -74,7 +74,7 @@ TEST_F(LJ_pot_test, force)
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
-    p_esolver->before_all_runners(mdcell, param.inp);
+    p_esolver->before_all_runners(mdcell, inp);
     MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress, false);
     const std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
     EXPECT_NEAR(atoms[0].force.x, 0.00049817733089377704, doublethreshold);
@@ -98,7 +98,7 @@ TEST_F(LJ_pot_test, mdcell_cal_force)
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
-    p_esolver.before_all_runners(mdcell, param.inp);
+    p_esolver.before_all_runners(mdcell, inp);
     decomp.prepare_neighbors(mdcell);
     p_esolver.runner(mdcell, 0);
 
@@ -120,7 +120,7 @@ TEST_F(LJ_pot_test, stress)
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
-    p_esolver->before_all_runners(mdcell, param.inp);
+    p_esolver->before_all_runners(mdcell, inp);
     MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress, false);
     EXPECT_NEAR(stress(0, 0), 8.0360222227631859e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 1), 1.7207745586539077e-07, doublethreshold);
@@ -140,7 +140,7 @@ TEST_F(LJ_pot_test, mdcell_stress_includes_external_pressure)
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
-    Input_para input = param.inp;
+    Input_para input = inp;
     p_esolver.before_all_runners(mdcell, input);
     decomp.prepare_neighbors(mdcell);
     p_esolver.runner(mdcell, 0);

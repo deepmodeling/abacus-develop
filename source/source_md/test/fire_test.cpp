@@ -1,8 +1,6 @@
 #include "source_cell/module_neighlist/domain_decomposition.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#define protected public
 #include "setcell.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_md/fire.h"
@@ -173,10 +171,10 @@ TEST_F(FIREtest, Restart)
 
     FIRE* fire = dynamic_cast<FIRE*>(mdrun);
     EXPECT_EQ(mdrun->step_rst_, 3);
-    EXPECT_EQ(fire->alpha, 0.1);
-    EXPECT_EQ(fire->negative_count, 0);
-    EXPECT_EQ(fire->dt_max, -1);
-    EXPECT_EQ(fire->md_dt, 41.3414);
+    EXPECT_EQ(fire->get_alpha(), 0.1);
+    EXPECT_EQ(fire->get_negative_count(), 0);
+    EXPECT_EQ(fire->get_dt_max(), -1);
+    EXPECT_EQ(fire->get_md_dt(), 41.3414);
 }
 
 TEST_F(FIREtest, PrintMD)

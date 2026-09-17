@@ -1,8 +1,6 @@
 #include "source_cell/module_neighlist/domain_decomposition.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#define protected public
 #include "setcell.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_md/msst.h"
@@ -214,11 +212,11 @@ TEST_F(MSST_test, restart)
 
     MSST* msst = dynamic_cast<MSST*>(mdrun);
     EXPECT_EQ(mdrun->step_rst_, 3);
-    EXPECT_EQ(msst->omega[mdrun->mdp.msst_direction], -0.00977662);
-    EXPECT_EQ(msst->e0, -0.00768262);
-    EXPECT_EQ(msst->v0, 1000);
-    EXPECT_EQ(msst->p0, 1.60606e-06);
-    EXPECT_EQ(msst->lag_pos, 0);
+    EXPECT_EQ(msst->get_omega()[inp.mdp.msst_direction], -0.00977662);
+    EXPECT_EQ(msst->get_e0(), -0.00768262);
+    EXPECT_EQ(msst->get_v0(), 1000);
+    EXPECT_EQ(msst->get_p0(), 1.60606e-06);
+    EXPECT_EQ(msst->get_lag_pos(), 0);
 }
 
 TEST_F(MSST_test, print_md)

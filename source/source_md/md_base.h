@@ -94,6 +94,12 @@ class MD_base
     virtual void update_vel();
 
   public:
+    /// @brief the time increment in a.u., converted from mdp.md_dt
+    double get_md_dt() const
+    {
+        return md_dt;
+    }
+
     bool stop;                          ///< MD stop or not
     double t_current;                   ///< current temperature
     int step_;                          ///< the MD step finished in current calculation

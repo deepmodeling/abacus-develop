@@ -19,6 +19,40 @@ class Nose_Hoover : public MD_base
                 MDCell& mdcell_in);
     ~Nose_Hoover();
 
+    /// @brief positions of the thermostats coupled with the particles
+    ///        (md_tchain entries)
+    const double* get_eta() const
+    {
+        return eta;
+    }
+
+    /// @brief velocities of the thermostats coupled with the particles
+    ///        (md_tchain entries)
+    const double* get_v_eta() const
+    {
+        return v_eta;
+    }
+
+    /// @brief positions of the thermostats coupled with the barostat
+    ///        (md_pchain entries)
+    const double* get_peta() const
+    {
+        return peta;
+    }
+
+    /// @brief velocities of the thermostats coupled with the barostat
+    ///        (md_pchain entries)
+    const double* get_v_peta() const
+    {
+        return v_peta;
+    }
+
+    /// @brief velocities of the six lattice components
+    const double* get_v_omega() const
+    {
+        return v_omega;
+    }
+
   private:
     void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp);
     void first_half(std::ofstream& ofs);

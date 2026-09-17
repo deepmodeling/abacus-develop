@@ -1,8 +1,6 @@
 #include "source_cell/module_neighlist/domain_decomposition.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#define protected public
 #include "md_test_fixture.h"
 #include "source_md/md_func.h"
 

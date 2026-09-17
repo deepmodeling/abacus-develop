@@ -23,6 +23,24 @@ class FIRE : public MD_base
 
     ~FIRE();
 
+    /// @brief mixing coefficient of the FIRE velocity update
+    double get_alpha() const
+    {
+        return alpha;
+    }
+
+    /// @brief largest time step the adaptive scheme is allowed to reach
+    double get_dt_max() const
+    {
+        return dt_max;
+    }
+
+    /// @brief number of consecutive steps with negative power
+    int get_negative_count() const
+    {
+        return negative_count;
+    }
+
   private:
 
     void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp);
