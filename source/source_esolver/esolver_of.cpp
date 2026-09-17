@@ -18,7 +18,6 @@ namespace ModuleESolver
 ESolver_OF::ESolver_OF()
 {
     this->classname = "ESolver_OF";
-    this->task_ = new char[60];
 }
 
 ESolver_OF::~ESolver_OF()
@@ -43,7 +42,6 @@ ESolver_OF::~ESolver_OF()
 
     delete[] this->nelec_;
     delete[] this->theta_;
-    delete[] this->task_;
     delete this->ptemp_rho_;
 
     delete this->kedf_manager_;
