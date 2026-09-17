@@ -48,6 +48,8 @@ class Vdwd2Parameters : public VdwParameters
     inline const std::map<std::string, double> R0() const { return R0_; }
     inline double damping() const { return damping_; }
     inline double scaling() const { return scaling_; }
+    /// @brief cutoff radius of the D2 summation, in Bohr
+    inline double radius() const { return radius_; }
 
   private:
     double scaling_;
