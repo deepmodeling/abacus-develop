@@ -1,8 +1,5 @@
 #include "source_base/global_variable.h"
 
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <streambuf>
@@ -43,17 +40,18 @@ class IstateInfoTest : public ::testing::Test
 
 TEST_F(IstateInfoTest, OutIstateInfoS1)
 {
-    // Global variables 
+    // Global variables
     GlobalV::KPAR = 1;
-    PARAM.input.nbands = 4;
-    PARAM.sys.nbands_l = 4;
-    PARAM.input.nspin = 1;
-    PARAM.sys.global_out_dir = "./";
+    const int nbands = 4;
+    const int nspin = 1;
+    const std::string out_dir = "./";
+    // Mirrors the Input_para default (bndpar = 1) so the test does not depend on it.
+    const int bndpar = 1;
 
     // MPI setting
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
-                                PARAM.input.bndpar,
+                                bndpar,
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_BNDGROUP,
                                 GlobalV::RANK_IN_BPGROUP,
@@ -65,8 +63,8 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     const int nkstot_init = 10;
     kv->set_nkstot(nkstot_init);
     int nkstot = kv->get_nkstot();
-    kv->para_k.kinfo(nkstot, GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::RANK_IN_POOL, 
-    GlobalV::NPROC_IN_POOL, PARAM.input.nspin);
+    kv->para_k.kinfo(nkstot, GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::RANK_IN_POOL,
+    GlobalV::NPROC_IN_POOL, nspin);
     kv->set_nks(kv->para_k.nks_pool[GlobalV::MY_POOL]);
 
     // The number of plane waves for each k point
@@ -79,8 +77,8 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     }
 
     // Initialize the number of bands
-    ekb.create(kv->get_nks(), PARAM.input.nbands);
-    wg.create(kv->get_nks(), PARAM.input.nbands);
+    ekb.create(kv->get_nks(), nbands);
+    wg.create(kv->get_nks(), nbands);
 
     // fill the eigenvalues
     ekb.fill_out(0.15);
@@ -103,8 +101,8 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     }
 
     // A new calculation truncates stale output, then later ionic steps append.
-    ModuleIO::write_eig_file(ekb, wg, *kv, 0);
-    ModuleIO::write_eig_file(ekb, wg, *kv, 1);
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 0);
+    ModuleIO::write_eig_file(ekb, wg, *kv, nbands, nspin, out_dir, 1);
 
     // check the output files
     std::ifstream ifs;

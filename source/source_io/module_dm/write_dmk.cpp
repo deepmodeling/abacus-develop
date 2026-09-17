@@ -3,7 +3,6 @@
 #include "source_base/parallel_common.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_cell/ucell_io.h"
 
 std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, const int nspin, const int ik, const int istep)
@@ -186,6 +185,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 		const std::vector<double>& efs,
 		const UnitCell* ucell,
 		const Parallel_2D& pv,
+		const std::string& dmk_dir,
 		const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "write_dmk");
@@ -236,7 +236,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 
             if (my_rank == 0)
             {
-                std::string fn = PARAM.globalv.global_out_dir 
+                std::string fn = dmk_dir
 			+ dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
 
                 std::ofstream ofs(fn.c_str());
@@ -342,6 +342,7 @@ template void ModuleIO::write_dmk<double>(const std::vector<std::vector<double>>
 		const std::vector<double>& efs,
 		const UnitCell* ucell,
 		const Parallel_2D& pv,
+		const std::string& dmk_dir,
 		const int istep);
 
 template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dmk,
@@ -350,5 +351,6 @@ template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::v
 		const std::vector<double>& efs,
 		const UnitCell* ucell,
 		const Parallel_2D& pv,
+		const std::string& dmk_dir,
 		const int istep);
 
