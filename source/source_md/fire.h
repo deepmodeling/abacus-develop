@@ -13,7 +13,13 @@
 class FIRE : public MD_base
 {
   public:
-    FIRE(const Parameter& param_in, MDCell& mdcell_in);
+    /// @param force_thr_in force convergence threshold used by the FIRE descent
+    FIRE(const MD_para& mdp_in,
+         const bool cal_stress_in,
+         const bool init_vel,
+         const int my_rank_in,
+         const double force_thr_in,
+         MDCell& mdcell_in);
 
     ~FIRE();
 

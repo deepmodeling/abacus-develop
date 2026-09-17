@@ -12,7 +12,11 @@
 class Nose_Hoover : public MD_base
 {
   public:
-    Nose_Hoover(const Parameter& param_in, MDCell& mdcell_in);
+    Nose_Hoover(const MD_para& mdp_in,
+                const bool cal_stress_in,
+                const bool init_vel,
+                const int my_rank_in,
+                MDCell& mdcell_in);
     ~Nose_Hoover();
 
   private:

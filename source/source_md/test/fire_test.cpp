@@ -2,9 +2,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
-#define private public
 #define protected public
 #include "setcell.h"
 #include "source_esolver/esolver_lj.h"
@@ -43,20 +40,23 @@ class FIREtest : public testing::Test
     UnitCell ucell;
     MDCell mdcell;
     DomainDecomposition decomp;
-    Parameter param_in;
+    Input_para inp;
     ModuleESolver::ESolver* p_esolver;
+    /// the md writers take the directory explicitly, so the test owns it
+    const std::string out_dir = "./";
+    const std::string readin_dir = "./";
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
+        Setcell::parameters(inp);
 
         p_esolver = new ModuleESolver::ESolver_LJ();
         mdcell = Setcell::setup_mdcell(ucell);
         decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
-        p_esolver->before_all_runners(mdcell, param_in.inp);
-        mdrun = new FIRE(param_in, mdcell);
-        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir, decomp);
+        p_esolver->before_all_runners(mdcell, inp);
+        mdrun = new FIRE(inp.mdp, inp.cal_stress, inp.init_vel, /*my_rank=*/0, inp.force_thr, mdcell);
+        mdrun->setup(p_esolver, readin_dir, decomp);
     }
 
     void TearDown()
@@ -147,7 +147,7 @@ TEST_F(FIREtest, WriteRestart)
 {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(PARAM.sys.global_out_dir);
+    mdrun->write_restart(out_dir);
 
     std::ifstream ifs("Restart_md.txt");
     std::string output_str;
@@ -168,7 +168,7 @@ TEST_F(FIREtest, WriteRestart)
 
 TEST_F(FIREtest, Restart)
 {
-    mdrun->restart(PARAM.sys.global_readin_dir);
+    mdrun->restart(readin_dir);
     remove("Restart_md.txt");
 
     FIRE* fire = dynamic_cast<FIRE*>(mdrun);

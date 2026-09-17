@@ -4,7 +4,6 @@
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_io/module_output/output_log.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <cerrno>
 #include <cstring>
@@ -411,7 +410,8 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
 void dump_info(const int& step,
                const std::string& global_out_dir,
                const MDCell& mdcell,
-               const Parameter& param_in,
+               const MD_para& mdp,
+               const bool cal_stress,
                const ModuleBase::matrix& virial)
 {
     std::stringstream file;
@@ -426,15 +426,15 @@ void dump_info(const int& step,
     header << "  " << mdcell.latvec().e11 << "  " << mdcell.latvec().e12 << "  " << mdcell.latvec().e13 << "\n";
     header << "  " << mdcell.latvec().e21 << "  " << mdcell.latvec().e22 << "  " << mdcell.latvec().e23 << "\n";
     header << "  " << mdcell.latvec().e31 << "  " << mdcell.latvec().e32 << "  " << mdcell.latvec().e33 << "\n";
-    if (param_in.inp.cal_stress && param_in.mdp.dump_virial)
+    if (cal_stress && mdp.dump_virial)
     {
         header << "VIRIAL (kbar)\n";
         for (int i = 0; i < 3; ++i)
             header << "  " << virial(i, 0) * unit_virial << "  " << virial(i, 1) * unit_virial << "  " << virial(i, 2) * unit_virial << "\n";
     }
     header << "INDEX    LABEL    POSITION (Angstrom)";
-    if (param_in.mdp.dump_force) header << "    FORCE (eV/Angstrom)";
-    if (param_in.mdp.dump_vel) header << "    VELOCITY (Angstrom/fs)";
+    if (mdp.dump_force) header << "    FORCE (eV/Angstrom)";
+    if (mdp.dump_vel) header << "    VELOCITY (Angstrom/fs)";
     header << "\n";
     std::vector<std::int64_t> type_offsets(mdcell.type_atom_counts().size() + 1, 0);
     for (std::size_t it = 0; it < mdcell.type_atom_counts().size(); ++it)
@@ -449,9 +449,9 @@ void dump_info(const int& step,
         local << "  " << type_offsets[static_cast<std::size_t>(atom.type)] + atom.type_index
               << "  " << mdcell.type_labels()[static_cast<std::size_t>(atom.type)]
               << "  " << atom.cart.x * unit_pos << "  " << atom.cart.y * unit_pos << "  " << atom.cart.z * unit_pos;
-        if (param_in.mdp.dump_force)
+        if (mdp.dump_force)
             local << "  " << atom.force.x * unit_force << "  " << atom.force.y * unit_force << "  " << atom.force.z * unit_force;
-        if (param_in.mdp.dump_vel)
+        if (mdp.dump_vel)
             local << "  " << atom.vel.x * unit_vel << "  " << atom.vel.y * unit_vel << "  " << atom.vel.z * unit_vel;
         local << "\n";
     }

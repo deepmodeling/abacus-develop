@@ -10,7 +10,11 @@
 class Verlet : public MD_base
 {
   public:
-    Verlet(const Parameter& param_in, MDCell& mdcell_in);
+    Verlet(const MD_para& mdp_in,
+           const bool cal_stress_in,
+           const bool init_vel,
+           const int my_rank_in,
+           MDCell& mdcell_in);
     ~Verlet();
 
   private:

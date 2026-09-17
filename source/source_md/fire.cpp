@@ -6,9 +6,15 @@
 #endif
 #include "source_base/timer.h"
 
-FIRE::FIRE(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdcell_in)
+FIRE::FIRE(const MD_para& mdp_in,
+           const bool cal_stress_in,
+           const bool init_vel,
+           const int my_rank_in,
+           const double force_thr_in,
+           MDCell& mdcell_in)
+    : MD_base(mdp_in, cal_stress_in, init_vel, my_rank_in, mdcell_in)
 {
-    force_thr = param_in.inp.force_thr;
+    force_thr = force_thr_in;
     dt_max = -1.0;
     alpha_start = 0.10;
     alpha = alpha_start;
