@@ -211,6 +211,16 @@ if(NOT MSVC)
   list(APPEND _abacus_linalg_libs m)
 endif()
 
+# The mtblas archives bundle their own OpenBLAS objects. They must come after
+# the standalone BLAS/LAPACK/ScaLAPACK above so that the linker resolves the
+# BLAS symbols from the standalone BLAS instead of the bundled copy.
+if(USE_DSP)
+  list(APPEND _abacus_linalg_libs
+    ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblas.a
+    ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblasdev.a
+    ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtfft.a)
+endif()
+
 target_link_libraries(abacus_linalg_libs INTERFACE ${_abacus_linalg_libs})
 target_include_directories(abacus_linalg_libs INTERFACE ${_abacus_linalg_include_dirs})
 
