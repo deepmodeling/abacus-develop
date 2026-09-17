@@ -121,26 +121,18 @@ jobs:
           ccache --show-stats
           ccache --show-stats >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Check documentation consistency
+      - name: Check INPUT documentation generation
         run: |
           ABACUS_BIN=$(find build -name "abacus_*" -type f -executable | head -1)
           echo "Using binary: ${ABACUS_BIN}"
 
-          # Generate transient parameter metadata from C++ Input_Item definitions
-          ${ABACUS_BIN} --generate-parameters-yaml > /tmp/parameters_generated.yaml
-
-          # Check: input-main.md matches regenerated markdown
+          # Verify the INPUT reference can be generated from C++ Input_Item definitions
           pip install -q pyyaml
-          python docs/generate_input_main.py \
-            /tmp/parameters_generated.yaml \
+          ${ABACUS_BIN} --generate-parameters-yaml \
+            | python docs/generate_input_main.py - \
             --output /tmp/input-main-generated.md
-          if ! diff -q docs/advanced/input_files/input-main.md /tmp/input-main-generated.md; then
-            echo "error: input-main.md is out of sync"
-            echo "Fix: ${ABACUS_BIN} --generate-parameters-yaml | python docs/generate_input_main.py - --output docs/advanced/input_files/input-main.md"
-            diff docs/advanced/input_files/input-main.md /tmp/input-main-generated.md || true
-            exit 1
-          fi
-          echo "  input-main.md: OK"
+          test -s /tmp/input-main-generated.md
+          echo "  INPUT reference generation: OK"
 
       - name: Integrated Tests Preparation
         env:

@@ -53,16 +53,17 @@ not Python documentation dependencies.
    cmake --build build-rtd-docs --target abacus_pw_ser --parallel 2
    ```
 
-1. (Optional) Refresh the checked-in INPUT reference manually:
+1. (Optional) Generate the INPUT reference manually for inspection:
 
    The ABACUS executable emits the parameter metadata as a transient YAML
-   stream. Pipe that stream directly to the Markdown generator; no
-   `docs/parameters.yaml` file is created or maintained.
+   stream. Pipe that stream directly to the Markdown generator; neither
+   `docs/parameters.yaml` nor `docs/advanced/input_files/input-main.md` is
+   maintained in the repository.
 
    ```bash
    ./build-rtd-docs/abacus_pw_ser --generate-parameters-yaml \
      | .venv/bin/python docs/generate_input_main.py - \
-         --output docs/advanced/input_files/input-main.md
+         --output /tmp/input-main.md
    ```
 
 1. Build the HTML manual:
@@ -77,9 +78,9 @@ not Python documentation dependencies.
 
 1. Open `build-docs/html/index.html` in a browser.
 
-For local builds, if no ABACUS executable is available, the Sphinx build still
-continues with the checked-in `docs/advanced/input_files/input-main.md` and
-prints a warning that the INPUT parameter reference may not be up to date.
+Every documentation build requires an ABACUS executable. If no executable is
+available, or if parameter generation fails, Sphinx stops with an error rather
+than publishing incomplete or stale INPUT documentation.
 
 ## Regenerate Only the INPUT Reference
 
@@ -89,7 +90,7 @@ transient YAML stream directly into the Markdown generator:
 ```bash
 ./build-rtd-docs/abacus_pw_ser --generate-parameters-yaml \
   | .venv/bin/python docs/generate_input_main.py - \
-      --output docs/advanced/input_files/input-main.md
+      --output /tmp/input-main.md
 ```
 
 ## INPUT Parameter Reference
@@ -99,13 +100,13 @@ The INPUT parameter reference is generated from metadata registered in
 
 - `abacus --generate-parameters-yaml` produces a transient YAML stream; it is
   not stored in the repository.
-- `docs/advanced/input_files/input-main.md` is generated from that metadata.
-- `docs/conf.py` refreshes `input-main.md` automatically when it can find an
-  ABACUS executable.
+- `docs/advanced/input_files/input-main.md` is generated from that metadata
+  during every Sphinx build and is not stored in the repository.
+- `docs/conf.py` requires an ABACUS executable and fails the build if the INPUT
+  reference cannot be generated.
 
-Keep `docs/advanced/input_files/input-main.md` in PRs that change INPUT
-metadata. The YAML dump is intentionally transient so there is only one
-generated reference file to maintain.
+PRs that change INPUT metadata only update the C++ `Input_Item` registrations.
+The YAML stream and Markdown reference are both transient build artifacts.
 
 ## Optional Read the Docs Container Test
 

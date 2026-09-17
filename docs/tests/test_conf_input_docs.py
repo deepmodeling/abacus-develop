@@ -22,11 +22,6 @@ parameters:
 
 
 class InputDocsGenerationTest(unittest.TestCase):
-    def test_readthedocs_environment_requires_fresh_input_docs(self):
-        self.assertTrue(conf.input_docs_refresh_required({"READTHEDOCS": "True"}))
-        self.assertFalse(conf.input_docs_refresh_required({"READTHEDOCS": "False"}))
-        self.assertFalse(conf.input_docs_refresh_required({}))
-
     def test_explicit_abacus_binary_path_disables_fallback_search(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_root = Path(tmpdir)
@@ -54,11 +49,9 @@ class InputDocsGenerationTest(unittest.TestCase):
             )
             fake_abacus.chmod(fake_abacus.stat().st_mode | stat.S_IXUSR)
 
-            warnings = []
             refreshed = conf.refresh_input_docs(
                 docs_dir=docs_dir,
                 abacus_binary=fake_abacus,
-                warn=warnings.append,
             )
 
             output = docs_dir / "advanced" / "input_files" / "input-main.md"
@@ -66,43 +59,22 @@ class InputDocsGenerationTest(unittest.TestCase):
             self.assertTrue(output.exists())
             self.assertIn("ecutwfc", output.read_text())
             self.assertFalse((docs_dir / "parameters.yaml").exists())
-            self.assertEqual([], warnings)
 
-    def test_warns_when_abacus_binary_is_not_available(self):
+    def test_refresh_raises_when_abacus_binary_is_not_available(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             docs_dir = Path(tmpdir) / "docs"
             docs_dir.mkdir()
-            warnings = []
-
-            refreshed = conf.refresh_input_docs(
-                docs_dir=docs_dir,
-                abacus_binary=docs_dir / "missing-abacus",
-                warn=warnings.append,
-            )
-
-            self.assertFalse(refreshed)
-            self.assertEqual([], list(docs_dir.rglob("input-main.md")))
-            self.assertEqual(1, len(warnings))
-            self.assertIn("may not be up to date", warnings[0])
-
-    def test_required_refresh_raises_when_abacus_binary_is_not_available(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            docs_dir = Path(tmpdir) / "docs"
-            docs_dir.mkdir()
-            warnings = []
 
             with self.assertRaises(RuntimeError) as caught:
                 conf.refresh_input_docs(
                     docs_dir=docs_dir,
                     abacus_binary=docs_dir / "missing-abacus",
-                    warn=warnings.append,
-                    fail_on_error=True,
                 )
 
-            self.assertIn("may not be up to date", str(caught.exception))
-            self.assertEqual([], warnings)
+            self.assertIn("ABACUS executable not found", str(caught.exception))
+            self.assertEqual([], list(docs_dir.rglob("input-main.md")))
 
-    def test_required_refresh_raises_when_abacus_metadata_generation_fails(self):
+    def test_refresh_raises_when_abacus_metadata_generation_fails(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
             docs_dir = tmp_path / "docs"
@@ -114,19 +86,14 @@ class InputDocsGenerationTest(unittest.TestCase):
                 "exit 2\n"
             )
             fake_abacus.chmod(fake_abacus.stat().st_mode | stat.S_IXUSR)
-            warnings = []
-
             with self.assertRaises(RuntimeError) as caught:
                 conf.refresh_input_docs(
                     docs_dir=docs_dir,
                     abacus_binary=fake_abacus,
-                    warn=warnings.append,
-                    fail_on_error=True,
                 )
 
             self.assertIn("could not generate INPUT parameter metadata", str(caught.exception))
             self.assertIn("metadata generation failed", str(caught.exception))
-            self.assertEqual([], warnings)
 
 
 if __name__ == "__main__":

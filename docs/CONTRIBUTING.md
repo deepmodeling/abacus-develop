@@ -174,14 +174,14 @@ An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abac
 
 ABACUS includes a built-in help system that allows users to query INPUT parameters directly from the command line (e.g., `abacus -h ecutwfc`). Parameter metadata is defined inline in the C++ source files under `source/source_io/module_parameter/` using `Input_Item` registrations.
 
-The C++ `Input_Item` registrations are the source of truth for parameter metadata. A checked-in file `docs/advanced/input_files/input-main.md` contains the generated INPUT parameter reference; do not edit it manually. Sphinx refreshes this file from an ABACUS executable when the executable is available.
+The C++ `Input_Item` registrations are the source of truth for parameter metadata. Sphinx generates `docs/advanced/input_files/input-main.md` from an ABACUS executable during every documentation build. The generated YAML stream and Markdown file are not stored in the repository.
 
 Availability expressions follow the grammar and invariants in
 [`developers_guide/input_availability.md`](developers_guide/input_availability.md).
 
-### When to Update `input-main.md`
+### When INPUT Documentation Changes
 
-You **must** regenerate `docs/advanced/input_files/input-main.md` whenever you:
+Update the relevant C++ `Input_Item` registration whenever you:
 
 - Add a new INPUT parameter
 - Remove an existing INPUT parameter
@@ -189,12 +189,12 @@ You **must** regenerate `docs/advanced/input_files/input-main.md` whenever you:
 
 ### How to Regenerate
 
-After building ABACUS, run:
+After building ABACUS, preview the generated reference with:
 
 ```bash
 abacus --generate-parameters-yaml \
   | python3 docs/generate_input_main.py - \
-      --output docs/advanced/input_files/input-main.md
+      --output /tmp/input-main.md
 ```
 
 You can also let Sphinx refresh the page during a documentation build:
@@ -203,9 +203,7 @@ You can also let Sphinx refresh the page during a documentation build:
 ABACUS_BINARY=/path/to/abacus sphinx-build -b html docs build-docs/html
 ```
 
-If no ABACUS executable is available, Sphinx emits a warning and continues with the checked-in `input-main.md`, which may not be up to date.
-
-**Important:** Include the updated `input-main.md` in your commit when submitting a PR that modifies INPUT parameters. CI regenerates this file from the built binary and rejects any mismatch. Do not fix a documentation mismatch by editing the generated file by hand; update the C++ `Input_Item` registration and regenerate it instead.
+If no ABACUS executable is available, or if generation fails, Sphinx stops with an error. Do not add generated YAML or `input-main.md` files to a commit; update the C++ `Input_Item` registration instead. CI verifies that the reference can be generated successfully.
 
 ### Parameter Documentation Format
 
