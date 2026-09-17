@@ -120,6 +120,13 @@ public:
         this->nkstot_nospin = value;
     }
 
+    /// @brief Set the spin multiplicity: 1 (no doubling, also for non-collinear
+    ///        nspin=4) or 2 (LSDA, k points split into up/down).
+    void set_spin_mult(int value)
+    {
+        this->spin_mult = value;
+    }
+
     bool get_is_mp() const
     {
         return is_mp;

@@ -1,5 +1,5 @@
-#ifndef HAMILT_LCAO_H 
-#define HAMILT_LCAO_H 
+#ifndef HAMILT_LCAO_H
+#define HAMILT_LCAO_H
 
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/klist.h"
@@ -12,21 +12,17 @@
 #include <vector>
 
 // elecstate::Potential forward declaration, full definition in potential_new.h (moved to .cpp)
-// mohan add 20260605
 namespace elecstate { class Potential; }
 
 // elecstate::DensityMatrix forward declaration, full definition in density_matrix.h (moved to .cpp)
-// mohan add 20260605
 namespace elecstate { template <typename TK, typename TR> class DensityMatrix; }
 
 // Setup_DeePKS forward declaration, full definition in setup_deepks.h (moved to .cpp)
-// mohan add 20260605
 template <typename TK> class Setup_DeePKS;
 // Plus_U_Base forward declaration, full definition in source_pw/module_pwdft/dftu_base.h
 class Plus_U_Base;
 
 // Exx_NAO forward declaration, full definition in setup_exx.h (moved to .cpp)
-// mohan add 20260605
 template <typename TK> class Exx_NAO;
 
 /// Exx_Info forward declaration, full definition in exx_info.h
@@ -38,6 +34,10 @@ struct Input_para;
 namespace hamilt
 {
 
+// OperatorLCAO forward declaration, full definition in
+// module_operator_lcao/operator_lcao.h (moved to .cpp)
+template <typename TK, typename TR> class OperatorLCAO;
+
 // template first for type of k space H matrix elements
 // template second for type of temporary matrix, 
 // gamma_only fix-gamma-matrix + S-gamma, 
@@ -46,10 +46,6 @@ template <typename TK, typename TR>
 class HamiltLCAO : public Hamilt<TK>
 {
   public:
-
-
-    using TAC = std::pair<int, std::array<int, 3>>;
-
 
     /**
      * @brief Constructor of Hamiltonian for LCAO base
@@ -68,7 +64,8 @@ class HamiltLCAO : public Hamilt<TK>
                const int istep,
                Exx_NAO<TK> &exx_nao,
                const Exx_Info& exx_info,
-               const Input_para& inp);
+               const Input_para& inp,
+               const bool load_exx_flag);
 
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
@@ -82,13 +79,7 @@ class HamiltLCAO : public Hamilt<TK>
 
     ~HamiltLCAO()
     {
-        if (this->ops != nullptr)
-        {
-            delete this->ops;
-        }
-        delete this->hR;
-        delete this->sR;
-        delete this->hsk;
+        delete this->ops;
     }
 
     /// get pointer of Operator<TK> ops
@@ -106,29 +97,24 @@ class HamiltLCAO : public Hamilt<TK>
         return this->hsk->get_sk();
     }
 
-    int get_size_hsk() const
-    {
-        return this->hsk->get_size();
-    }
-
     /// get HR pointer of *this->hR, which is a HContainer<TR> and contains H(R)
-    HContainer<TR>*& getHR()
+    HContainer<TR>* getHR()
     {
-        return this->hR;
+        return this->hR.get();
     }
     const HContainer<TR>* getHR() const
     {
-        return this->hR;
+        return this->hR.get();
     }
 
     /// get SR pointer of *this->sR, which is a HContainer<TR> and contains S(R)
-    HContainer<TR>*& getSR()
+    HContainer<TR>* getSR()
     {
-        return this->sR;
+        return this->sR.get();
     }
     const HContainer<TR>* getSR() const
     {
-        return this->sR;
+        return this->sR.get();
     }
 
 #ifdef __MLALGO
@@ -151,7 +137,7 @@ class HamiltLCAO : public Hamilt<TK>
     void refresh(bool yes) override;
 
     // for target K point, update consequence of hPsi() and matrix()
-    virtual void updateHk(const int ik) override;
+    void updateHk(const int ik) override;
 
     /**
      * @brief special for LCAO, update SK only
@@ -161,7 +147,7 @@ class HamiltLCAO : public Hamilt<TK>
      * @param hk_type 0: SK is row-major, 1: SK is collumn-major
      * @return void
      */
-    void updateSk(const int ik, const int hk_type = 0);
+    void updateSk(const int ik, const int hk_type);
 
     // core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
     // not used in PW base
@@ -172,17 +158,17 @@ class HamiltLCAO : public Hamilt<TK>
     const K_Vectors* kv = nullptr;
 
     //! Real space Hamiltonian H(R), where R is the Bravis lattice vector
-    HContainer<TR>* hR = nullptr;
+    std::unique_ptr<HContainer<TR>> hR;
 
     //! Real space overlap matrix S(R), where R is the Bravis lattice vector
-    HContainer<TR>* sR = nullptr;
+    std::unique_ptr<HContainer<TR>> sR;
 
 #ifdef __MLALGO
     HContainer<TR>* V_delta_R = nullptr;
 #endif
 
     //! Hamiltonian and overlap matrices for a specific k point
-    HS_Matrix_K<TK>* hsk = nullptr;
+    std::unique_ptr<HS_Matrix_K<TK>> hsk;
 
     // special case for NSPIN=2 , data of HR should be separated into two parts
     // save them in this->hRS2;
@@ -200,7 +186,18 @@ class HamiltLCAO : public Hamilt<TK>
     //! 1: Hamiltonian for spin down
     int current_spin = 0;
 
-    const int istep = 0;
+    //! snapshot of inp.nspin taken at construction; avoids PARAM dependency
+    int nspin = 1;
+
+    //! snapshot of inp.vl_in_h taken at construction; avoids PARAM dependency
+    bool vl_in_h = true;
+
+    //! cached downcast of this->ops to OperatorLCAO, filled on first use
+    //! to avoid repeating dynamic_cast in updateHk/refresh
+    OperatorLCAO<TK, TR>* ops_lcao_ = nullptr;
+
+    /// get this->ops downcast to OperatorLCAO<TK, TR>*, cached in ops_lcao_
+    OperatorLCAO<TK, TR>* getOperatorLCAO();
 };
 
 } // namespace hamilt

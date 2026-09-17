@@ -87,6 +87,13 @@ class Memory
         return total;
     }
 
+    /// @brief Whether the record tables are currently allocated. record()
+    ///        allocates them on first use and finish() releases them again.
+    static bool is_initialized(void)
+    {
+        return init_flag;
+    }
+
     static void finish(std::ofstream &ofs);
 
     /**

@@ -1,5 +1,6 @@
 #include <chrono>
 
+#include <array>
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
@@ -136,30 +137,36 @@ TEST_F(DMTest, DMInit2)
     // initialize Record_adj using Grid_Driver
     Grid_Driver gd(0,0);
     Record_adj ra;
-    ra.na_each = new int[ucell.nat];
-    ra.info = new int**[ucell.nat];
+    ra.na_each.resize(ucell.nat);
+    ra.info_offset.resize(ucell.nat);
+    // count adjacent atoms for each atom first to lay out the flat info
+    std::vector<AdjacentAtomInfo> all_adjs(ucell.nat);
+    int total = 0;
     for (int iat1 = 0; iat1 < ucell.nat; iat1++)
     {
         auto tau1 = ucell.get_tau(iat1);
         int T1, I1;
         ucell.iat2iait(iat1, &I1, &T1);
-        AdjacentAtomInfo adjs;
-        gd.Find_atom(ucell, tau1, T1, I1, &adjs);
-        ra.na_each[iat1] = adjs.adj_num + 1;
-        ra.info[iat1] = new int*[ra.na_each[iat1]];
+        gd.Find_atom(ucell, tau1, T1, I1, &all_adjs[iat1]);
+        ra.na_each[iat1] = all_adjs[iat1].adj_num + 1;
+        ra.info_offset[iat1] = total;
+        total += ra.na_each[iat1];
+    }
+    ra.info.resize(total);
+    for (int iat1 = 0; iat1 < ucell.nat; iat1++)
+    {
+        const AdjacentAtomInfo& adjs = all_adjs[iat1];
         for (int ad = 0; ad < ra.na_each[iat1]; ++ad)
         {
-            ra.info[iat1][ad] = new int[5];
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
-            ra.info[iat1][ad][3] = T2;
-            ra.info[iat1][ad][4] = I2;
-            ModuleBase::Vector3<int>& R_index = adjs.box[ad];
-            ra.info[iat1][ad][0] = R_index.x;
-            ra.info[iat1][ad][1] = R_index.y;
-            ra.info[iat1][ad][2] = R_index.z;
-            ra.info[iat1][ad][3] = T2;
-            ra.info[iat1][ad][4] = I2;
+            const ModuleBase::Vector3<int>& R_index = adjs.box[ad];
+            std::array<int, 5>& rec = ra.info[ra.info_offset[iat1] + ad];
+            rec[0] = R_index.x;
+            rec[1] = R_index.y;
+            rec[2] = R_index.z;
+            rec[3] = T2;
+            rec[4] = I2;
         }
     }
     DM.init_DMR(ra, &ucell);
@@ -171,15 +178,6 @@ TEST_F(DMTest, DMInit2)
     EXPECT_EQ(DM.get_DMR_pointer(1)->get_atom_pair(2, 2).get_col_size(), paraV->get_ncol_atom(2));
     // release memory
     delete kv;
-    for (int iat1 = 0; iat1 < ucell.nat; iat1++)
-    {
-        for (int ad = 0; ad < ra.na_each[iat1]; ++ad)
-        {
-            delete[] ra.info[iat1][ad];
-        }
-        delete[] ra.info[iat1];
-    }
-    delete[] ra.info;
 }
 
 // test for construct DMR from another HContainer<double>
