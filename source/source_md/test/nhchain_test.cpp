@@ -1,11 +1,6 @@
 #include "source_cell/module_neighlist/domain_decomposition.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
-#define private public
-#define protected public
 #include "setcell.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_md/nhchain.h"
@@ -41,24 +36,27 @@ class NHC_test : public testing::Test
     UnitCell ucell;
     MDCell mdcell;
     DomainDecomposition decomp;
-    Parameter param_in;
+    Input_para inp;
     ModuleESolver::ESolver* p_esolver;
+    /// the md writers take the directory explicitly, so the test owns it
+    const std::string out_dir = "./";
+    const std::string readin_dir = "./";
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
+        Setcell::parameters(inp);
 
         p_esolver = new ModuleESolver::ESolver_LJ();
-        param_in.input.mdp.md_type = "npt";
-        param_in.input.mdp.md_pmode = "tri";
-        param_in.input.mdp.md_pfirst = 1;
-        param_in.input.mdp.md_plast = 1;
+        inp.mdp.md_type = "npt";
+        inp.mdp.md_pmode = "tri";
+        inp.mdp.md_pfirst = 1;
+        inp.mdp.md_plast = 1;
         mdcell = Setcell::setup_mdcell(ucell);
         decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
-        p_esolver->before_all_runners(mdcell, param_in.inp);
-        mdrun = new Nose_Hoover(param_in, mdcell);
-        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir, decomp);
+        p_esolver->before_all_runners(mdcell, inp);
+        mdrun = new Nose_Hoover(inp.mdp, inp.cal_stress, inp.init_vel, /*my_rank=*/0, mdcell);
+        mdrun->setup(p_esolver, readin_dir, decomp);
     }
 
     void TearDown()
@@ -152,7 +150,7 @@ TEST_F(NHC_test, write_restart)
 
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(PARAM.sys.global_out_dir);
+    mdrun->write_restart(out_dir);
 
     std::ifstream ifs("Restart_md.txt");
     std::string output_str;
@@ -180,35 +178,35 @@ TEST_F(NHC_test, write_restart)
 
 TEST_F(NHC_test, restart)
 {
-    mdrun->restart(PARAM.sys.global_readin_dir);
+    mdrun->restart(readin_dir);
     remove("Restart_md.txt");
 
     Nose_Hoover* nhc = dynamic_cast<Nose_Hoover*>(mdrun);
     EXPECT_EQ(mdrun->step_rst_, 3);
-    EXPECT_EQ(mdrun->mdp.md_tchain, 4);
-    EXPECT_EQ(mdrun->mdp.md_pchain, 4);
-    EXPECT_EQ(nhc->eta[0], -0.0626326);
-    EXPECT_EQ(nhc->eta[1], -0.578523);
-    EXPECT_EQ(nhc->eta[2], -0.462472);
-    EXPECT_EQ(nhc->eta[3], -0.424503);
-    EXPECT_EQ(nhc->v_eta[0], -0.00658882);
-    EXPECT_EQ(nhc->v_eta[1], -0.0304055);
-    EXPECT_EQ(nhc->v_eta[2], -0.0188618);
-    EXPECT_EQ(nhc->v_eta[3], -0.0175663);
-    EXPECT_EQ(nhc->v_omega[0], 0.583152);
-    EXPECT_EQ(nhc->v_omega[1], -0.106519);
-    EXPECT_EQ(nhc->v_omega[2], -0.895936);
-    EXPECT_EQ(nhc->v_omega[3], -0.634424);
-    EXPECT_EQ(nhc->v_omega[4], 0.627532);
-    EXPECT_EQ(nhc->v_omega[5], -0.473422);
-    EXPECT_EQ(nhc->peta[0], -6.08823);
-    EXPECT_EQ(nhc->peta[1], -0.525329);
-    EXPECT_EQ(nhc->peta[2], 0.121814);
-    EXPECT_EQ(nhc->peta[3], 4771.79);
-    EXPECT_EQ(nhc->v_peta[0], 255.853);
-    EXPECT_EQ(nhc->v_peta[1], -0.266732);
-    EXPECT_EQ(nhc->v_peta[2], 0);
-    EXPECT_EQ(nhc->v_peta[3], 226.197);
+    EXPECT_EQ(inp.mdp.md_tchain, 4);
+    EXPECT_EQ(inp.mdp.md_pchain, 4);
+    EXPECT_EQ(nhc->get_eta()[0], -0.0626326);
+    EXPECT_EQ(nhc->get_eta()[1], -0.578523);
+    EXPECT_EQ(nhc->get_eta()[2], -0.462472);
+    EXPECT_EQ(nhc->get_eta()[3], -0.424503);
+    EXPECT_EQ(nhc->get_v_eta()[0], -0.00658882);
+    EXPECT_EQ(nhc->get_v_eta()[1], -0.0304055);
+    EXPECT_EQ(nhc->get_v_eta()[2], -0.0188618);
+    EXPECT_EQ(nhc->get_v_eta()[3], -0.0175663);
+    EXPECT_EQ(nhc->get_v_omega()[0], 0.583152);
+    EXPECT_EQ(nhc->get_v_omega()[1], -0.106519);
+    EXPECT_EQ(nhc->get_v_omega()[2], -0.895936);
+    EXPECT_EQ(nhc->get_v_omega()[3], -0.634424);
+    EXPECT_EQ(nhc->get_v_omega()[4], 0.627532);
+    EXPECT_EQ(nhc->get_v_omega()[5], -0.473422);
+    EXPECT_EQ(nhc->get_peta()[0], -6.08823);
+    EXPECT_EQ(nhc->get_peta()[1], -0.525329);
+    EXPECT_EQ(nhc->get_peta()[2], 0.121814);
+    EXPECT_EQ(nhc->get_peta()[3], 4771.79);
+    EXPECT_EQ(nhc->get_v_peta()[0], 255.853);
+    EXPECT_EQ(nhc->get_v_peta()[1], -0.266732);
+    EXPECT_EQ(nhc->get_v_peta()[2], 0);
+    EXPECT_EQ(nhc->get_v_peta()[3], 226.197);
 }
 
 TEST_F(NHC_test, print_md)

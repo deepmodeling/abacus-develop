@@ -66,6 +66,7 @@ bool read_dmk(const int nspin,
  * size as the number of SPIN.
  * @param ucell A pointer to the UnitCell object.
  * @param pv The Parallel_2D object. The 2d-block parallel information of DMK.
+ * @param dmk_dir The directory the DMK files are written into.
  */
 template <typename T>
 void write_dmk(const std::vector<std::vector<T>>& dmk,
@@ -74,6 +75,7 @@ void write_dmk(const std::vector<std::vector<T>>& dmk,
                const std::vector<double>& efs,
                const UnitCell* ucell,
                const Parallel_2D& pv,
+	       const std::string& dmk_dir,
                const int istep);
 
 } // namespace ModuleIO

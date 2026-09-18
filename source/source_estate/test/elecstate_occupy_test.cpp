@@ -1,9 +1,7 @@
 #include <string>
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
 
 /***************************************************************
  *  unit test of class Occupy
@@ -14,9 +12,7 @@
  *   - Occupy::Occupy()
  *   - Occupy::decision()
  */
-#define private public
 #include "source_estate/occupy.h"
-#undef private
 class OccupyTest : public ::testing::Test
 {
 protected:
@@ -182,21 +178,19 @@ TEST_F(OccupyTest, DecisionArbitrary)
 
 TEST_F(OccupyTest, IweightsNOSPIN)
 {
-  PARAM.input.nspin = 1;
   double ef = 0.0;
   ModuleBase::matrix wg(1, 1);
   std::vector<double> wk(1, 2.0);
   ModuleBase::matrix ekb(1, 1);
   std::vector<int> isk(1);
   ekb(0, 0) = 0.1;
-  occupy.iweights(1, wk, 1, 0, 2.0, ekb, ef, wg, 0, isk);
+  occupy.iweights(1, wk, 1, 0, 2.0, ekb, ef, wg, 0, isk, /*nspin=*/1);
   EXPECT_DOUBLE_EQ(wg(0, 0), 2.0);
   EXPECT_DOUBLE_EQ(ef, 0.1);
 }
 
 TEST_F(OccupyTest, IweightsSPIN)
 {
-  PARAM.input.nspin = 2;
   double ef_up = 0.0;
   double ef_dw = 0.0;
   ModuleBase::matrix wg(2, 1);
@@ -207,8 +201,8 @@ TEST_F(OccupyTest, IweightsSPIN)
   isk[1] = 1;
   ekb(0, 0) = 0.1;
   ekb(1, 0) = 0.2;
-  occupy.iweights(2, wk, 1, 0, 1.0, ekb, ef_up, wg, 0, isk);
-  occupy.iweights(2, wk, 1, 0, 1.0, ekb, ef_dw, wg, 1, isk);
+  occupy.iweights(2, wk, 1, 0, 1.0, ekb, ef_up, wg, 0, isk, /*nspin=*/2);
+  occupy.iweights(2, wk, 1, 0, 1.0, ekb, ef_dw, wg, 1, isk, /*nspin=*/2);
   EXPECT_DOUBLE_EQ(wg(0, 0), 1.0);
   EXPECT_DOUBLE_EQ(wg(1, 0), 1.0);
   EXPECT_DOUBLE_EQ(ef_up, 0.1);
@@ -217,7 +211,6 @@ TEST_F(OccupyTest, IweightsSPIN)
 
 TEST_F(OccupyTest, IweightsWarning)
 {
-  PARAM.input.nspin = 1;
   double ef = 0.0;
   ModuleBase::matrix wg(1, 1);
   std::vector<double> wk(1, 2.0);
@@ -226,28 +219,28 @@ TEST_F(OccupyTest, IweightsWarning)
   ekb(0, 0) = 0.1;
 
   testing::internal::CaptureStdout();
-  EXPECT_EXIT(occupy.iweights(1, wk, 1, 0, 1.0, ekb, ef, wg, -1, isk);, ::testing::ExitedWithCode(1), "");
+  EXPECT_EXIT(occupy.iweights(1, wk, 1, 0, 1.0, ekb, ef, wg, -1, isk, /*nspin=*/1);, ::testing::ExitedWithCode(1), "");
   output = testing::internal::GetCapturedStdout();
   EXPECT_THAT(output, testing::HasSubstr("It is not a semiconductor or insulator. Please do not set 'smearing_method=fixed', and try other options."));
 }
 
 TEST_F(OccupyTest, Wgauss)
 {
-  EXPECT_DOUBLE_EQ(occupy.wgauss(0.0, 0), 0.5);
-  EXPECT_DOUBLE_EQ(occupy.wgauss(0.0, -1), 0.4006259784506005);
-  EXPECT_DOUBLE_EQ(occupy.wgauss(0.0, -99), 0.5);
-  EXPECT_DOUBLE_EQ(occupy.wgauss(0.0, 1), 0.5);
-  EXPECT_DOUBLE_EQ(occupy.wgauss(0.0, 2), 0.5);
-  EXPECT_DOUBLE_EQ(occupy.wgauss(10, 0), 1.0);
+  EXPECT_DOUBLE_EQ(occupy_smearing::wgauss(0.0, 0), 0.5);
+  EXPECT_DOUBLE_EQ(occupy_smearing::wgauss(0.0, -1), 0.4006259784506005);
+  EXPECT_DOUBLE_EQ(occupy_smearing::wgauss(0.0, -99), 0.5);
+  EXPECT_DOUBLE_EQ(occupy_smearing::wgauss(0.0, 1), 0.5);
+  EXPECT_DOUBLE_EQ(occupy_smearing::wgauss(0.0, 2), 0.5);
+  EXPECT_DOUBLE_EQ(occupy_smearing::wgauss(10, 0), 1.0);
 }
 
 TEST_F(OccupyTest, W1gauss)
 {
-  EXPECT_DOUBLE_EQ(occupy.w1gauss(0.0, 0), -0.28209479177387814);
-  EXPECT_DOUBLE_EQ(occupy.w1gauss(0.0, -1), -0.1710991401561083);
-  EXPECT_DOUBLE_EQ(occupy.w1gauss(0.0, -99), -0.69314718055994529);
-  EXPECT_DOUBLE_EQ(occupy.w1gauss(0.0, 1), -0.14104739588693907);
-  EXPECT_DOUBLE_EQ(occupy.w1gauss(0.0, 2), -0.10578554691520431);
+  EXPECT_DOUBLE_EQ(occupy_smearing::w1gauss(0.0, 0), -0.28209479177387814);
+  EXPECT_DOUBLE_EQ(occupy_smearing::w1gauss(0.0, -1), -0.1710991401561083);
+  EXPECT_DOUBLE_EQ(occupy_smearing::w1gauss(0.0, -99), -0.69314718055994529);
+  EXPECT_DOUBLE_EQ(occupy_smearing::w1gauss(0.0, 1), -0.14104739588693907);
+  EXPECT_DOUBLE_EQ(occupy_smearing::w1gauss(0.0, 2), -0.10578554691520431);
 }
 
 TEST_F(OccupyTest, Sumkg)
@@ -260,7 +253,7 @@ TEST_F(OccupyTest, Sumkg)
   double e = 0.0;
   int is = 0;
   std::vector<int> isk = {0, 0};
-  EXPECT_DOUBLE_EQ(occupy.sumkg(ekb, 1, 1, wk, smearing_sigma, ngauss, e, is, isk), 1.0);
+  EXPECT_DOUBLE_EQ(occupy_smearing::sumkg(ekb, 1, 1, wk, smearing_sigma, ngauss, e, is, isk), 1.0);
 }
 
 TEST_F(OccupyTest, Efermig)
@@ -274,7 +267,7 @@ TEST_F(OccupyTest, Efermig)
   int is = 0;
   std::vector<int> isk = {0, 0};
   double ef = 0.0;
-  occupy.efermig(ekb, 1, 1, 1.0, wk, smearing_sigma, ngauss, ef, is, isk);
+  occupy_smearing::efermig(ekb, 1, 1, 1.0, wk, smearing_sigma, ngauss, ef, is, isk);
   EXPECT_NEAR(ef, -0.5, 1e-13);
 }
 

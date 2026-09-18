@@ -81,7 +81,7 @@ void Occupy::decision(const std::string& name, const std::string& smearing_metho
         }
         else if (smearing_method == "mp3")
         {
-            // acually any order Methfessel-Paxton method can be supported in Occupy::w1gauss()
+            // acually any order Methfessel-Paxton method can be supported in occupy_smearing::w1gauss()
             // however the parameter is string instead of int
             ModuleBase::WARNING_QUIT(
                 "occupy",
@@ -128,6 +128,8 @@ void Occupy::decision(const std::string& name, const std::string& smearing_metho
  * @param wg output: weight for each k, each band.
  * @param is the spin index now.
  * @param isk distinguish k point belong to which spin.
+ * @param nspin number of spin channels; 2 selects a single spin through isk when
+ *              is != -1, and 4 halves the spin degeneracy.
  */
 void Occupy::iweights(
     const int nks,
@@ -139,11 +141,12 @@ void Occupy::iweights(
     double& ef,
     ModuleBase::matrix& wg,
     const int& is, //<- is should be -1, 0, or 1. -1 means set all spins, and 0 means spin up, 1 means spin down.
-    const std::vector<int>& isk)
+    const std::vector<int>& isk,
+    const int nspin)
 {
     assert(is < 2);
     double degspin = 2.0;
-    if (PARAM.inp.nspin == 4) {
+    if (nspin == 4) {
         degspin = 1.0;
 }
     if (is != -1) {
@@ -163,7 +166,7 @@ void Occupy::iweights(
     for (int ik = 0; ik < nks; ++ik)
     {
         // when NSPIN=2, only calculate spin up or spin down with TWO_FERMI mode(nupdown != 0)
-        if (PARAM.inp.nspin == 2 && isk[ik] != is && is != -1)
+        if (nspin == 2 && isk[ik] != is && is != -1)
         {
             continue;
         }
@@ -222,7 +225,7 @@ void Occupy::gweights(const int nks,
     //  Calculate the Fermi energy ef
     //===============================
     //  call efermig
-    Occupy::efermig(ekb, nband, nks, nelec, wk, smearing_sigma, ngauss, ef, is, isk);
+    occupy_smearing::efermig(ekb, nband, nks, nelec, wk, smearing_sigma, ngauss, ef, is, isk);
     demet = 0.0;
 
     for (int ik = 0; ik < nks; ik++)
@@ -238,7 +241,7 @@ void Occupy::gweights(const int nks,
             // Calculate the gaussian weights
             //================================
             // call wgauss
-            wg(ik, ib) = wk[ik] * Occupy::wgauss((ef - ekb(ik, ib)) / smearing_sigma, ngauss);
+            wg(ik, ib) = wk[ik] * occupy_smearing::wgauss((ef - ekb(ik, ib)) / smearing_sigma, ngauss);
 
             //====================================================================
             // The correct form of the band energy is  \int e n(e) de   for e<ef
@@ -246,7 +249,7 @@ void Occupy::gweights(const int nks,
             //====================================================================
             // Mohan fix bug 2010-1-9
             // call w1gauss
-            demet += wk[ik] * smearing_sigma * Occupy::w1gauss((ef - ekb(ik, ib)) / smearing_sigma, ngauss);
+            demet += wk[ik] * smearing_sigma * occupy_smearing::w1gauss((ef - ekb(ik, ib)) / smearing_sigma, ngauss);
         }
     }
 
@@ -267,7 +270,7 @@ void Occupy::gweights(const int nks,
  * @param is spin
  * @param isk array to point out each k belong to which spin
  */
-void Occupy::efermig(const ModuleBase::matrix& ekb,
+void occupy_smearing::efermig(const ModuleBase::matrix& ekb,
                      const int nband,
                      const int nks,
                      const double& nelec,
@@ -320,8 +323,8 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
     int changetime = 0;
     while (true)
     {
-        const double sumkup = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, eup, is, isk);
-        const double sumklw = Occupy::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, elw, is, isk);
+        const double sumkup = occupy_smearing::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, eup, is, isk);
+        const double sumklw = occupy_smearing::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, elw, is, isk);
 
         if (changetime > 1000)
         {
@@ -335,7 +338,7 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
             std::cout << " sumklw = " << sumklw << std::endl;
             std::cout << " sumkup - nelec = " << sumkup - nelec << std::endl;
             std::cout << " sumklw - nelec = " << sumklw - nelec << std::endl;
-            ModuleBase::WARNING_QUIT("Occupy::efermig", "ERROS in SMEARING");
+            ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "ERROS in SMEARING");
             // no need to break; quit directly
         }
         else if ((sumkup - nelec) < -eps)
@@ -360,7 +363,7 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
         // change ef value
         //======================
         ef = (eup + elw) / 2.0;
-        const double sumkmid = sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, ef, is, isk);
+        const double sumkmid = occupy_smearing::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, ef, is, isk);
 
         if (std::abs(sumkmid - nelec) < eps)
         {
@@ -392,7 +395,7 @@ void Occupy::efermig(const ModuleBase::matrix& ekb,
  * @param isk array to point out each k belong to which spin
  * @return (double) the number of states
  */
-double Occupy::sumkg(const ModuleBase::matrix& ekb,
+double occupy_smearing::sumkg(const ModuleBase::matrix& ekb,
                      const int nband,
                      const int nks,
                      const std::vector<double>& wk,
@@ -416,7 +419,7 @@ double Occupy::sumkg(const ModuleBase::matrix& ekb,
             //===========================
             // call wgauss
             //===========================
-            sum1 += Occupy::wgauss((e - ekb(ik, ib)) / smearing_sigma, ngauss);
+            sum1 += occupy_smearing::wgauss((e - ekb(ik, ib)) / smearing_sigma, ngauss);
         }
         sum2 += wk[ik] * sum1;
     }
@@ -433,7 +436,7 @@ double Occupy::sumkg(const ModuleBase::matrix& ekb,
     return sum2;
 }
 
-double Occupy::wgauss(const double& x, const int n)
+double occupy_smearing::wgauss(const double& x, const int n)
 {
     // ModuleBase::TITLE("Occupy","wgauss");
     //=====================================================================
@@ -515,7 +518,7 @@ double Occupy::wgauss(const double& x, const int n)
     return wga;
 } // end function wgauss
 
-double Occupy::w1gauss(const double& x, const int n)
+double occupy_smearing::w1gauss(const double& x, const int n)
 {
     //========================================================================
     //    w1gauss(x,n) = \int_{-\infty}^x   y delta(y) dy

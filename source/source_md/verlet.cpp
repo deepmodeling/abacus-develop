@@ -7,7 +7,12 @@
 #include <mpi.h>
 #endif
 
-Verlet::Verlet(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdcell_in)
+Verlet::Verlet(const MD_para& mdp_in,
+               const bool cal_stress_in,
+               const bool init_vel,
+               const int my_rank_in,
+               MDCell& mdcell_in)
+    : MD_base(mdp_in, cal_stress_in, init_vel, my_rank_in, mdcell_in)
 {
 }
 

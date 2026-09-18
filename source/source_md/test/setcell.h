@@ -10,7 +10,7 @@
 #include "source_cell/unitcell.h"
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/input_parameter.h"
 
 #include <cmath>
 #include <cstdint>
@@ -98,13 +98,16 @@ class Setcell
         ucell.set_iat2itia();
     };
 
+    /// @brief fill an Input_para with the settings the md tests share.
+    ///        Only the passed-in object is touched: no source compiled by any
+    ///        MODULE_MD target reads esolver_type, search_radius or cal_stress
+    ///        from the global parameter singleton, and the output/readin
+    ///        directories are passed explicitly to setup(), write_restart()
+    ///        and restart().
     static void parameters(Input_para& input)
     {
-        PARAM.sys.global_out_dir = "./";
-        PARAM.sys.global_readin_dir = "./";
-        PARAM.input.search_radius = 8.5 * ModuleBase::ANGSTROM_AU;
-        PARAM.input.cal_stress = true;
-
+        input.search_radius = 8.5 * ModuleBase::ANGSTROM_AU;
+        input.esolver_type = "lj";
 
         input.mdp.dump_virial = true;
         input.mdp.dump_force = true;
@@ -116,7 +119,6 @@ class Setcell
         input.mdp.md_dt = 1;
         input.mdp.md_tfirst = input.mdp.md_tlast = 300;
 
-        PARAM.input.esolver_type = "lj";
         input.mdp.lj_rcut = {8.5};
         input.mdp.lj_epsilon = {0.01032};
         input.mdp.lj_sigma = {3.405};

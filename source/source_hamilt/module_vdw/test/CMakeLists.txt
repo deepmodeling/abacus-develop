@@ -4,6 +4,7 @@ abacus_disable_feature_definitions(__ROCM)
 
 install(FILES c6.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES r0.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(FILES r0_zero.txt DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET MODULE_HAMILT_vdwTest

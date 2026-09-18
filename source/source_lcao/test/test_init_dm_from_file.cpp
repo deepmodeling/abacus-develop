@@ -5,13 +5,11 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_hamilt/module_hcontainer/read_hcontainer.h"
 #include "source_lcao/setup_dm.h"
 #include "source_cell/klist.h"
-#undef private
 #include "source_io/module_dm/write_dmr.h"
 
 /************************************************
@@ -146,7 +144,7 @@ TEST_F(InitDMFileTest, Nspin1_ReadSingleFile)
     write_test_csr("./test_dm_dir/dmrs1_nao.csr", 1.0, 0, 1);
 
     auto* dm = create_dm(1);
-    ASSERT_EQ(dm->_DMR.size(), 1);
+    ASSERT_EQ(dm->get_DMR_vector().size(), 1);
 
     hamilt::HContainer<double>* dmr0 = dm->get_DMR_vector()[0];
     hamilt::Read_HContainer<double> reader(dmr0, "./test_dm_dir/dmrs1_nao.csr", nlocal, &ucell, 0);
@@ -179,7 +177,7 @@ TEST_F(InitDMFileTest, Nspin2_ReadTwoFiles)
     write_test_csr("./test_dm_dir/dmrs2_nao.csr", 0.5, 1, 2);  // spin-down
 
     auto* dm = create_dm(2);
-    ASSERT_EQ(dm->_DMR.size(), 2);
+    ASSERT_EQ(dm->get_DMR_vector().size(), 2);
 
     // Read spin-up
     hamilt::HContainer<double>* dmr0 = dm->get_DMR_vector()[0];
@@ -222,17 +220,17 @@ TEST_F(InitDMFileTest, Nspin2_ReadTwoFiles)
 TEST_F(InitDMFileTest, Nspin2_DMRVectorSize)
 {
     auto* dm = create_dm(2);
-    EXPECT_EQ(dm->_DMR.size(), 2);
-    EXPECT_NE(dm->_DMR[0], nullptr);
-    EXPECT_NE(dm->_DMR[1], nullptr);
+    EXPECT_EQ(dm->get_DMR_vector().size(), 2);
+    EXPECT_NE(dm->get_DMR_vector()[0], nullptr);
+    EXPECT_NE(dm->get_DMR_vector()[1], nullptr);
     delete dm;
 }
 
 TEST_F(InitDMFileTest, Nspin1_DMRVectorSize)
 {
     auto* dm = create_dm(1);
-    EXPECT_EQ(dm->_DMR.size(), 1);
-    EXPECT_NE(dm->_DMR[0], nullptr);
+    EXPECT_EQ(dm->get_DMR_vector().size(), 1);
+    EXPECT_NE(dm->get_DMR_vector()[0], nullptr);
     delete dm;
 }
 

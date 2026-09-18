@@ -83,25 +83,30 @@ void md_line(MDCell& mdcell,
     ModuleBase::timer::start("Run_MD", "md_line");
     /// determine the md_type
     MD_base* mdrun = nullptr;
+    /// the integrators take the values they use, not the whole Parameter
+    const MD_para& mdp = param_in.mdp;
+    const bool cal_stress = param_in.inp.cal_stress;
+    const bool init_vel = param_in.inp.init_vel;
+    const int my_rank = param_in.globalv.myrank;
     if (param_in.mdp.md_type == "fire")
     {
-        mdrun = new FIRE(param_in, mdcell);
+        mdrun = new FIRE(mdp, cal_stress, init_vel, my_rank, param_in.inp.force_thr, mdcell);
     }
     else if ((param_in.mdp.md_type == "nvt" && param_in.mdp.md_thermostat == "nhc") || param_in.mdp.md_type == "npt")
     {
-        mdrun = new Nose_Hoover(param_in, mdcell);
+        mdrun = new Nose_Hoover(mdp, cal_stress, init_vel, my_rank, mdcell);
     }
     else if (param_in.mdp.md_type == "nve" || param_in.mdp.md_type == "nvt")
     {
-        mdrun = new Verlet(param_in, mdcell);
+        mdrun = new Verlet(mdp, cal_stress, init_vel, my_rank, mdcell);
     }
     else if (param_in.mdp.md_type == "langevin")
     {
-        mdrun = new Langevin(param_in, mdcell);
+        mdrun = new Langevin(mdp, cal_stress, init_vel, my_rank, mdcell);
     }
     else if (param_in.mdp.md_type == "msst")
     {
-        mdrun = new MSST(param_in, mdcell);
+        mdrun = new MSST(mdp, cal_stress, init_vel, my_rank, mdcell);
     }
     else
     {
@@ -152,7 +157,8 @@ void md_line(MDCell& mdcell,
             MD_func::dump_info(mdrun->step_ + mdrun->step_rst_,
                                PARAM.globalv.global_out_dir,
                                mdcell,
-                               param_in,
+                               mdp,
+                               cal_stress,
                                mdrun->virial);
         }
 

@@ -1,5 +1,7 @@
 #include "force_stress_terms.h"
 
+#include <iostream>
+
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
@@ -136,6 +138,10 @@ void cal_exx_fs(const UnitCell& ucell,
 
     if (cal_exx)
     {
+        if (isforce || isstress)
+        {
+            std::cout << " >> NOTICE: calculating EXX force/stress, which may be time-consuming" << std::endl;
+        }
         if (isforce)
         {
             if (real_number)
