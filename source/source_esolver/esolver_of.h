@@ -1,7 +1,7 @@
 #ifndef ESOLVER_OF_H
 #define ESOLVER_OF_H
 
-#include <array>
+#include <string>
 
 #include "esolver_fp.h"
 #include "source_base/opt_dcsrch.h"
@@ -60,7 +60,7 @@ class ESolver_OF : public ESolver_FP
     double** pdEdphi_ = nullptr;                  // dE/dphi
     double** pdLdphi_ = nullptr;                  // dL/dphi
     double** pphi_ = nullptr;                     // pphi[i] = ppsi.get_pointer(i), which will be freed in ~Psi().
-    std::array<char, 60> task_{};                 // used in line search
+    std::string task_;                 // used in line search
     int tn_spin_flag_ = -1;                       // spin flag used in cal_potential, which will be called by opt_tn
     int max_dcsrch_ = 200;                        // max no. of line search
     int flag_ = -1;                               // flag of TN
