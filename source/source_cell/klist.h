@@ -171,6 +171,61 @@ public:
      */
     void set_after_vc(const ModuleBase::Matrix3& G, std::ofstream& ofs_running);
 
+    //====================================================================
+    // Test seam.
+    //
+    // set() is the single production entry point: it drives read_kpoints(),
+    // reduce_by_symmetry(), set_kup_and_kdw() and renew() in order. The unit
+    // tests exercise those stages one at a time -- most of the KPT-file parsing
+    // paths are only reachable that way -- so each one is called through the
+    // wrappers here rather than by reinterpreting the access specifiers.
+    //
+    // Production code must keep going through set(); nothing outside the tests
+    // should call the *_for_testing() wrappers.
+    //====================================================================
+
+    bool read_kpoints_for_testing(const UnitCell& ucell,
+                                  const std::string& fn,
+                                  const bool gamma_only_local,
+                                  const double kspacing[3],
+                                  const std::string& kmesh_type,
+                                  const double koffset_in[3],
+                                  std::ofstream& ofs_running,
+                                  std::ofstream& ofs_warning,
+                                  const int my_rank)
+    {
+        return read_kpoints(ucell,
+                            fn,
+                            gamma_only_local,
+                            kspacing,
+                            kmesh_type,
+                            koffset_in,
+                            ofs_running,
+                            ofs_warning,
+                            my_rank);
+    }
+
+    void renew_for_testing(const int& kpoint_number)
+    {
+        renew(kpoint_number);
+    }
+
+    void reduce_by_symmetry_for_testing(const UnitCell& ucell,
+                                        const ModuleSymmetry::Symmetry& symm,
+                                        bool use_symm,
+                                        std::string& skpt,
+                                        bool& match,
+                                        const int my_rank,
+                                        std::ofstream& ofs_running)
+    {
+        reduce_by_symmetry(ucell, symm, use_symm, skpt, match, my_rank, ofs_running);
+    }
+
+    void set_kup_and_kdw_for_testing(std::ofstream& ofs_running)
+    {
+        set_kup_and_kdw(ofs_running);
+    }
+
   private:
     /// Spin multiplicity used to size the k-point list: 1 for input nspin 1
     /// or 4 (non-collinear k points are not doubled) and 2 for input nspin 2
