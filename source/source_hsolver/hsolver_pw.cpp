@@ -70,9 +70,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
                                  const int rank_in_pool_in,
                                  const int nproc_in_pool_in,
                                  std::ostream& log,
-                                 const bool skip_charge,
-                                 const double tpiba,
-                                 const int nat)
+                                 const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
     ModuleBase::timer::start("HSolverPW", "solve");

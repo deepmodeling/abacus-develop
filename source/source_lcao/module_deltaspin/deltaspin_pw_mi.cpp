@@ -385,9 +385,7 @@ void update_psi_charge_pw_cpu(ScState& state,
                              GlobalV::RANK_IN_POOL,
                              GlobalV::NPROC_IN_POOL,
                              GlobalV::ofs_running,
-                             false,
-                             state.tpiba,
-                             state.get_nat());
+                             false);
     }
     else
     {
@@ -500,9 +498,7 @@ void update_psi_charge_pw_gpu(ScState& state,
                              GlobalV::RANK_IN_POOL,
                              GlobalV::NPROC_IN_POOL,
                              GlobalV::ofs_running,
-                             false,
-                             state.tpiba,
-                             state.get_nat());
+                             false);
     }
     else
     {

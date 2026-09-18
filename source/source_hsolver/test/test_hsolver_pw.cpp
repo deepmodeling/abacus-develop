@@ -436,9 +436,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
                    transform_test_cf,
                    diag_comm,
                    log,
-                   true,
-                   0.0,
-                   0);
+                   true);
     EXPECT_NE(log.str().find("Average iterative diagonalization steps"), std::string::npos);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
     check_orthonormal(psi_test_cf, 1e-5);
@@ -453,9 +451,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
                    transform_test_cd,
                    diag_comm,
                    log,
-                   true,
-                   0.0,
-                   0);
+                   true);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     check_orthonormal(psi_test_cd, 1e-10);
     EXPECT_NEAR(elecstate_test.ekb.c[0], 1.0, 1e-10);

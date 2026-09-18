@@ -23,9 +23,7 @@ void HSolverLIP<T>::solve(HSOperator<T>& op,       // ESolver_KS_PW::p_hamilt be
                           psi::Psi<T>& transform,
                           const diag_comm_info& diag_comm,
                           std::ostream& log,
-                          const bool skip_charge,
-                          const double tpiba,
-                          const int nat)
+                          const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverLIP", "solve");
     ModuleBase::timer::start("HSolverLIP", "solve");

@@ -66,9 +66,7 @@ class HSolverPW
                const int rank_in_pool_in,
                const int nproc_in_pool_in,
                std::ostream& log,
-               const bool skip_charge,
-               const double tpiba,
-               const int nat);
+               const bool skip_charge);
 
   protected:
     // diago caller

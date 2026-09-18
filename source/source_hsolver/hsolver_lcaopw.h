@@ -42,9 +42,7 @@ class HSolverLIP
                psi::Psi<T>& transform,
                const diag_comm_info& diag_comm,
                std::ostream& log,
-               const bool skip_charge,
-               const double tpiba,
-               const int nat);
+               const bool skip_charge);
 
   private:
     ModulePW::PW_Basis_K* wfc_basis = nullptr;

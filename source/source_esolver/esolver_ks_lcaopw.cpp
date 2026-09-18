@@ -167,9 +167,7 @@ namespace ModuleESolver
                               *this->psi_local,
                               diag_comm,
                               GlobalV::ofs_running,
-                              skip_charge,
-                              ucell.tpiba,
-                              ucell.nat);
+                              skip_charge);
 
         // add exx
 #ifdef __EXX
