@@ -89,6 +89,77 @@ class Charge_Extra
      */
     void update_delta_rho(const UnitCell& ucell, const Charge* chr, const Structure_Factor* sf);
 
+    //====================================================================
+    // Test seam.
+    //
+    // Init_CE() and extrapolate_charge() are the production entry points. The
+    // unit tests seed the step counter and the displacement history to reach
+    // each extrapolation order, then check what the algorithm derived, so the
+    // pieces they touch are reachable here rather than by reinterpreting the
+    // access specifiers.
+    //
+    // Production code must keep using the private names directly; nothing
+    // outside the tests should call find_alpha_and_beta_for_testing().
+    //====================================================================
+
+    /// @brief the current step
+    int& get_istep()
+    {
+        return istep;
+    }
+    /// @brief the extrapolation method requested by INPUT
+    int& get_pot_order()
+    {
+        return pot_order;
+    }
+    /// @brief the extrapolation order actually used this step
+    int& get_rho_extr()
+    {
+        return rho_extr;
+    }
+    /// @brief pos_now - pos_old1
+    ModuleBase::Vector3<double>* get_dis_old1()
+    {
+        return dis_old1;
+    }
+    /// @brief pos_old1 - pos_old2
+    ModuleBase::Vector3<double>* get_dis_old2()
+    {
+        return dis_old2;
+    }
+    /// @brief pos_next - pos_now
+    ModuleBase::Vector3<double>* get_dis_now()
+    {
+        return dis_now;
+    }
+    /// @brief last step difference of rho and atomic_rho
+    std::vector<std::vector<double>>& get_delta_rho1()
+    {
+        return delta_rho1;
+    }
+    /// @brief second last step difference of rho and atomic_rho
+    std::vector<std::vector<double>>& get_delta_rho2()
+    {
+        return delta_rho2;
+    }
+    /// @brief first parameter of the second order extrapolation
+    double& get_alpha()
+    {
+        return alpha;
+    }
+    /// @brief second parameter of the second order extrapolation
+    double& get_beta()
+    {
+        return beta;
+    }
+
+    void find_alpha_and_beta_for_testing(const int& natom,
+                                         std::ofstream& ofs_running,
+                                         std::ofstream& ofs_warning)
+    {
+        find_alpha_and_beta(natom, ofs_running, ofs_warning);
+    }
+
   private:
     int istep = 0; ///< the current step
     int pot_order; ///< the specified charge extrapolation method
