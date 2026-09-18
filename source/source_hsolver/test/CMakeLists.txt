@@ -13,40 +13,30 @@ if (ENABLE_MPI)
     LIBS parameter  base psi device container
     SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp ../para_lin_tf.cpp  ../diago_iter_assist.cpp  
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_cg
     LIBS parameter  base psi device container
     SOURCES diago_cg_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_cg_float
     LIBS parameter  base psi device container
     SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_dav
     LIBS parameter  base psi device
     SOURCES diago_david_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_dav_float
     LIBS parameter  base psi device
     SOURCES diago_david_float_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   if(ENABLE_LCAO)
   AddTest(
@@ -54,16 +44,12 @@ if (ENABLE_MPI)
     LIBS parameter  base psi device container
     SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_dav_real
     LIBS parameter  base psi device
     SOURCES diago_david_real_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   endif()
 

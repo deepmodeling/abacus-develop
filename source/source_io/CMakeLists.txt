@@ -152,6 +152,6 @@ if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 
-if(ENABLE_RAPIDJSON)
+if(ENABLE_JSON)
   add_subdirectory(module_json)
 endif()

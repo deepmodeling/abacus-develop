@@ -1,85 +1,79 @@
-# JSON Configuration Parameters Documentation
+# JSON Output Documentation
 
-- [JSON Configuration Parameters Documentation](#json-configuration-parameters-documentation)
+- [JSON Output Documentation](#json-output-documentation)
   - [Overview](#overview)
   - [General Information](#general-information)
-  - [Input](#input)
-  - [Init](#init)
+  - [Initialization Information](#initialization-information)
   - [Output](#output)
-  - [Final Structure](#final-structure)
 
 ## Overview
 
-This JSON template provides input and output configurations for ABACUS. It contains parameters for the execution of the program and the output of results, primarily for recording computational processes and outcomes for post processing. 
+When JSON support is enabled, ABACUS writes calculation metadata and results to `abacus.json` for post-processing.
 
-Notice: one need to add the option `-DENABLE_RAPIDJSON=ON` when compiling ABACUS to enable the output of "abacus.json".
-
+The current top-level JSON members are `comment`, `init`, `output`, and `general_info`. Some fields are populated only when the corresponding calculation data are available.
 
 ## General Information
 
-- `version` - [str] The version number of ABACUS.
-- `commit` - [str] The commit hash of ABACUS code at the time of computation.
-- `start_time` - [str] The start time of the computation.
-- `end_time` - [str] The end time of the computation.
-- `device` - [str] The name of the hardware device on which the computation was run.
-- `omp_number` - [int] The number of OpenMP threads.
-- `mpi_number` - [int] The number of MPI processes.
-- `out_dir` - [str] The output directory, e.g., "OUT.ABACUS".
-- `log_file` - [str] The name of the log file, e.g., "running_scf.log".
-- `pseudo_dir` - [str] The directory where pseudopotential files are stored.
-- `orbital_dir` - [str] The directory where atomic orbital files are stored.
-- `stru_file` - [str] The name of the structure file.
-- `kpt_file` - [str] The name of the k-point file.
+The `general_info` object records basic build and runtime metadata:
 
-## Input
-- A dictionary of parameters and their values as defined by the user in the INPUT file. (This part of the content will not be output in the current version yet.)
+- `version` - [string] ABACUS version.
+- `commit` - [string] Git commit information when available at build time.
+- `device` - [string] Hardware device selected for the calculation.
+- `mpi_num` - [int] Number of MPI processes.
+- `omp_num` - [int] Number of OpenMP threads.
+- `pseudo_dir` - [string] Pseudopotential directory.
+- `orbital_dir` - [string] Numerical atomic orbital directory.
+- `stru_file` - [string] Structure input file.
+- `kpt_file` - [string] K-point input file.
+- `start_time` - [string] Calculation start time.
+- `end_time` - [string] Time at which the JSON output is finalized.
 
+## Initialization Information
 
-## Init
+The top-level `comment` describes the default units used by the JSON output. The `init` object records the initial structure and calculation settings. Depending on the calculation path, it can contain:
 
-
-- `Input` - Lists the value of all input parameters. (This part of the content will not be output in the current version yet.)
-- `point_group` - [str] the Schoenflies name of the point group.
-- `point_group_in_space` - [str] the Schoenflies name of the point group in the space group.
-- `nkstot`, `nkstot_ibz` - [int] Total number of k-points and total number of irreducible k-points.
-- `nelectron_each_type` - [object(str-int)] The number of valence electron for each atom type, e.g., `{"C": 2, "H":1}`.
-- `nelectron` - [int] Total number of electrons.
-- `nband` - [int] Number of bands.
+- `element` - [object(string:string)] Element/pseudopotential element information keyed by atom label.
+- `orb` - [object(string:string/null)] Numerical orbital file for each atom type; `null` when no orbital file is used.
+- `pp` - [object(string:string)] Pseudopotential file for each atom type.
+- `coordinate` - [array(array(double))] Initial Cartesian coordinates in Angstrom.
+- `mag` - [array(double)] Initial magnetic moment for each atom.
+- `label` - [array(string)] Atomic labels.
+- `cell` - [array(array(double))] Initial lattice vectors in Angstrom.
+- `point_group` - [string] Schoenflies name of the point group.
+- `point_group_in_space` - [string] Schoenflies name of the point group in the space group.
 - `natom` - [int] Total number of atoms.
-- `natom_each_type` - [object(str-int)] The atom number of each atom type, e.g., `{"C": 2, "H":1}`.
-- `label` - [array(str)] An array of atomic labels.
-- `element` - [array(object(str:str))] The element of each atom type.
-- `cell` - [array(array(double))] The lattice vector. Unit in Angstrom.
-- `coordinate` - [array(array(double))] The cartesian coordinates of each atom. Unit in Angstrom.
-- `mag` - [array(double)] The magnetic moments for each atom. 
-- `pp` - [object(str-str)] The pseudopotential file of each atom type.
-- `orb` - [object(str-str)] The orbital file of each atom type.
-
+- `nband` - [int] Number of bands.
+- `natom_each_type` - [object(string:int)] Number of atoms of each type.
+- `nelectron_each_type` - [object(string:double)] Number of valence electrons for each atom type.
+- `nelectron` - [int] Total number of electrons.
+- `ecutwfc` - [double] Wavefunction energy cutoff.
+- `ecutwfc_unit` - [string] Unit of `ecutwfc`, currently `Ry`.
+- `smearing_method` - [string] Smearing method.
+- `smearing_sigma` - [double] Smearing width.
+- `smearing_sigma_unit` - [string] Unit of `smearing_sigma`, currently `Ry`.
+- `kmesh_type` - [string] K-point mesh type.
+- `kspacing` - [array(double)] K-point spacing parameters.
+- `koffset` - [array(double)] K-point mesh offsets.
+- `nkstot` - [int] Total number of k-points, when available on the calculation path.
 
 ## Output
 
-An array of dicts, including information about each self-consistent field (SCF) step, such as energy, convergence, and configuration:
+`output` is an array. Each element represents one calculation/ionic-step output record. Fields are filled as the corresponding results become available:
 
-- `energy`, `e_fermi` - [double] The total energy and Fermi energy. Unit in eV.
-- `force` -  [array(array(double))] The forces calculated on each atom. Unit in eV/Angstrom.
-- `stress` - [array(array(double))] The stress tensor. Unit in Kbar.
-- `cell` - [array(array(double))] The cell parameters. Unit in Angstrom.
-- `coordinate` - [array(array(double))] The coordinates of the atoms in the box after the simulation. Unit in Angstrom.
-- `total_mag` , `absolute_mag` , `mag` - [double] The total magnetic moment; total absolute magnetic moment; and a list of magnetic moments for each atom, respectively.
-- `scf_converge` - [bool] A boolean indicating whether the scf optimization has converged.
-- `scf` - [array(object(str:double)] A list of each scf step, each item contains:
-  - `energy` - [double] The total energy. Unit in eV. 
-  - `ediff` - [double] The energy difference between the current and previous step. Unit in eV.
-  - `drho` - [double] The charge density difference between the current and previous step.
-  - `time` - [double] The time used for the current step. Unit in seconds.
+- `energy` - [double/null] Total energy in eV.
+- `e_fermi` - [double/null] Fermi energy in eV.
+- `scf_converge` - [bool/null] Whether the SCF calculation converged.
+- `force` - [array(array(double))/null] Atomic forces in eV/Angstrom when force calculation is enabled.
+- `stress` - [array(array(double))/null] Stress tensor in kbar when stress calculation is enabled.
+- `coordinate` - [array(array(double))] Cartesian coordinates in Angstrom.
+- `mag` - [array(double)] Magnetic moment for each atom.
+- `cell` - [array(array(double))] Lattice vectors in Angstrom.
+- `total_mag` - [double] Total magnetic moment when available.
+- `absolute_mag` - [double] Absolute magnetic moment when available.
+- `scf` - [array(object)] SCF iteration history. Each entry contains:
+  - `energy` - [double] Total energy in eV.
+  - `ediff` - [double] Energy change from the previous SCF step in eV.
+  - `drho` - [double] Charge-density difference.
+  - `time` - [double] Time used by the SCF step in seconds.
 
-## Final Structure
-Parameters regarding the final converged results and the optimized geometry:
-
-- `energy` - [double] The final energy.
-- `label` - [str] An array of atomic labels.
-- `cell` - [array(array(double))] The resulting cell parameters.
-- `coordinate` - [array(array(double))] The final atomic coordinates.
-- `relax_converge` - [bool] A boolean indicating whether the geometry optimization has converged.
-- `dos` - [array(array(array(double)))] The state energy, and the dimension is NSPIN\*NKPOINT\*NBAND. 
-- `dos_weight` - [array(array(array(double)))] The weight of each state, and the dimension is same as `dos`.
+JSON numbers are intended to be consumed as numeric values. Their textual representation (for example, decimal versus scientific notation) is not part of the output schema.

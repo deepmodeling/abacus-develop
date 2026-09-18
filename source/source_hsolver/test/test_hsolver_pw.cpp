@@ -5,10 +5,31 @@
 
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
-#include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
 #include "source_hsolver/diag_comm_info.h"
+#include "source_hsolver/hs_operator.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/hsolver_pw.h"
+
+#include <algorithm>
+#include <complex>
+
+/// H = S = identity: the simplest operator the solvers can be handed
+template <typename T>
+class IdentityHSOperator : public hsolver::HSOperator<T, base_device::DEVICE_CPU>
+{
+  public:
+    void update_k(const int ik) override
+    {
+    }
+    void hpsi(const T* x, T* hx, const int ld, const int nvec) const override
+    {
+        std::copy(x, x + static_cast<size_t>(ld) * nvec, hx);
+    }
+    void spsi(const T* x, T* sx, const int ld, const int nvec) const override
+    {
+        std::copy(x, x + static_cast<size_t>(ld) * nvec, sx);
+    }
+};
 
 // Mock implementations for the template functions causing linking errors
 namespace ModulePW {
@@ -152,13 +173,13 @@ class TestHSolverPW : public ::testing::Test {
     // the protected hamiltSolvePsiK() is routed through here.
     template <typename T, typename Device>
     static void hamiltSolvePsiK(hsolver::HSolverPW<T, Device>& hs,
-                                hamilt::Hamilt<T, Device>* h,
+                                const hsolver::HSOperator<T, Device>& op,
                                 psi::Psi<T, Device>& ps,
                                 std::vector<typename GetTypeReal<T>::type>& pre,
                                 typename GetTypeReal<T>::type* eig,
                                 const int ntry)
     {
-        hs.hamiltSolvePsiK(h, ps, pre, eig, ntry);
+        hs.hamiltSolvePsiK(op, ps, pre, eig, ntry);
     }
 
     ModulePW::PW_Basis_K pwbk;
@@ -197,8 +218,8 @@ class TestHSolverPW : public ::testing::Test {
             0,
             0);
 
-    hamilt::Hamilt<std::complex<double>> hamilt_test_d;
-    hamilt::Hamilt<std::complex<float>> hamilt_test_f;
+    IdentityHSOperator<std::complex<double>> hamilt_test_d;
+    IdentityHSOperator<std::complex<float>> hamilt_test_f;
 
     psi::Psi<std::complex<double>> psi_test_cd;
     psi::Psi<std::complex<float>> psi_test_cf;
@@ -364,26 +385,41 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     transform_test_cd.resize(1, 3, 3);
     transform_test_cf.resize(1, 3, 3);
 
-    std::complex<double> psi_value_d = {0.0, 0.0};
-    std::complex<float> psi_value_f = {0.0, 0.0};
+    // 1, 2, 3 / 4, 5, 6 / 7, 8, 9 would be rank deficient, so the diagonal is
+    // lifted to keep the three subspace vectors linearly independent
     for (int iband = 0; iband < transform_test_cd.get_nbands(); iband++) {
         for (int ibasis = 0; ibasis < transform_test_cd.get_nbasis();
              ibasis++) {
+            const double value = iband * transform_test_cd.get_nbasis() + ibasis + 1 + (iband == ibasis ? 10.0 : 0.0);
             transform_test_cd
                 .get_pointer()[iband * transform_test_cd.get_nbasis() + ibasis]
-                = psi_value_d;
+                = std::complex<double>(value, 0.0);
             transform_test_cf
                 .get_pointer()[iband * transform_test_cf.get_nbasis() + ibasis]
-                = psi_value_f;
-            psi_value_d += std::complex<double>(1.0, 0.0);
-            psi_value_f += std::complex<float>(1.0, 0.0);
+                = std::complex<float>(value, 0.0);
         }
     }
+    // with H = S = 1 every subspace eigenvalue is 1 and the rotated psi must
+    // come out orthonormal
+    auto check_orthonormal = [](const auto& p, const double tol) {
+        const int nb = p.get_nbands();
+        const int nbasis = p.get_nbasis();
+        for (int i = 0; i < nb; i++) {
+            for (int j = 0; j < nb; j++) {
+                std::complex<double> dot = 0.0;
+                for (int ig = 0; ig < nbasis; ig++) {
+                    dot += std::conj(std::complex<double>(p.get_pointer()[i * nbasis + ig]))
+                           * std::complex<double>(p.get_pointer()[j * nbasis + ig]);
+                }
+                EXPECT_NEAR(dot.real(), i == j ? 1.0 : 0.0, tol);
+                EXPECT_NEAR(dot.imag(), 0.0, tol);
+            }
+        }
+    };
     // check solve()
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
 
-    General_Exx_Info exx_info_local;
     hsolver::HSolverLIP<std::complex<float>> hs_f_lip
         = hsolver::HSolverLIP<std::complex<float>>(&pwbk, false, "pw", "scf", elecstate_test.ekb.nc);
     hsolver::HSolverLIP<std::complex<double>> hs_d_lip
@@ -394,44 +430,32 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     const hsolver::diag_comm_info diag_comm(0, 1);
 #endif
     std::ostringstream log;
-    hs_f_lip.solve(&hamilt_test_f,
+    hs_f_lip.solve(hamilt_test_f,
                    psi_test_cf,
                    &elecstate_test,
                    transform_test_cf,
                    diag_comm,
                    log,
-                   true,
-                   0.0,
-                   0,
-                   exx_info_local);
+                   true);
     EXPECT_NE(log.str().find("Average iterative diagonalization steps"), std::string::npos);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
-    for (int i = 0; i < psi_test_cf.size(); i++)
-    {
-        EXPECT_DOUBLE_EQ(psi_test_cf.get_pointer()[i].real(), i);
-    }
-    EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 0.0);
-    EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 0.0);
+    check_orthonormal(psi_test_cf, 1e-5);
+    EXPECT_NEAR(elecstate_test.ekb.c[0], 1.0, 1e-5);
+    EXPECT_NEAR(elecstate_test.ekb.c[1], 1.0, 1e-5);
 
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-    hs_d_lip.solve(&hamilt_test_d,
+    hs_d_lip.solve(hamilt_test_d,
                    psi_test_cd,
                    &elecstate_test,
                    transform_test_cd,
                    diag_comm,
                    log,
-                   true,
-                   0.0,
-                   0,
-                   exx_info_local);
+                   true);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
-    for (int i = 0; i < psi_test_cd.size(); i++)
-    {
-        EXPECT_DOUBLE_EQ(psi_test_cd.get_pointer()[i].real(), i);
-    }
-    EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 0.0);
-    EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 0.0);
+    check_orthonormal(psi_test_cd, 1e-10);
+    EXPECT_NEAR(elecstate_test.ekb.c[0], 1.0, 1e-10);
+    EXPECT_NEAR(elecstate_test.ekb.c[1], 1.0, 1e-10);
 }
 
 // Test that the program exits with an error when npwx < nbands,
@@ -444,7 +468,7 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
     std::vector<double> eigenvalues(5, 0.0);
     // Expect death from WARNING_QUIT due to npwx < nbands
     EXPECT_EXIT(
-        hamiltSolvePsiK(hs_d, &hamilt_test_d, psi_test_cd, precond, eigenvalues.data(), 1),
+        hamiltSolvePsiK(hs_d, hamilt_test_d, psi_test_cd, precond, eigenvalues.data(), 1),
         ::testing::ExitedWithCode(1),
         ".*"
     );

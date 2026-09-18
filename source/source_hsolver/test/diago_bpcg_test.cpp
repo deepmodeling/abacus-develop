@@ -2,8 +2,6 @@
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/parallel_comm.h"
 #include "source_psi/psi.h"
-#include "source_hamilt/hamilt.h"
-#include "source_pw/module_pwdft/hamilt_pw.h"
 #include "../diago_iter_assist.h"
 #include "../diago_bpcg.h"
 #include "diago_mock.h"
@@ -99,8 +97,7 @@ class DiagoBPCGPrepare
 	//======================================================================
         double *en = new double[npw];
         int ik = 1;
-	    hamilt::Hamilt<std::complex<double>>* ha;
-	    ha =new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+	    HSOperatorMock<std::complex<double>> ha;
 	    int* ngk = new int [1];
 	    //psi::Psi<std::complex<double>> psi(ngk,ik,nband,npw);
 	    psi::Psi<std::complex<double>> psi;
@@ -133,35 +130,13 @@ class DiagoBPCGPrepare
         psi_local.fix_k(0);
         double start, end;
         start = MPI_Wtime();
-        using T = std::complex<double>;
-        const int dim = DIAGOTEST::npw;
-        const std::vector<T> &h_mat = DIAGOTEST::hmatrix_local;
-        auto hpsi_func = [h_mat, dim](T *psi_in, T *hpsi_out,
-                                const int ld_psi, const int nvec) {
-            const T one(1.0);
-            const T zero(0.0);
-
-            base_device::DEVICE_CPU *ctx = {};
-            // hpsi_out(dim * nvec) = h_mat(dim * dim) * psi_in(dim * nvec)
-            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()(
-                'N', 'N',
-                dim, nvec, dim,
-                &one,
-                h_mat.data(), dim,
-                psi_in, ld_psi,
-                &zero,
-                hpsi_out, ld_psi);
-        };
-        auto spsi_func = [](const T* psi_in, T* spsi_out, const int ld_psi, const int nvec) {
-            std::copy(psi_in, psi_in + ld_psi * nvec, spsi_out);
-        };
         const int ndim = psi_local.get_current_ngk();
         bpcg.init_iter(nband, nband, npw, ndim);
         std::vector<double> ethr_band(nband, 1e-5);
-        bpcg.diag(hpsi_func, spsi_func, psi_local.get_pointer(), en, ethr_band);
-        bpcg.diag(hpsi_func, spsi_func, psi_local.get_pointer(), en, ethr_band);
-        bpcg.diag(hpsi_func, spsi_func, psi_local.get_pointer(), en, ethr_band);
-        bpcg.diag(hpsi_func, spsi_func, psi_local.get_pointer(), en, ethr_band);
+        bpcg.diag(ha, psi_local.get_pointer(), en, ethr_band);
+        bpcg.diag(ha, psi_local.get_pointer(), en, ethr_band);
+        bpcg.diag(ha, psi_local.get_pointer(), en, ethr_band);
+        bpcg.diag(ha, psi_local.get_pointer(), en, ethr_band);
         end = MPI_Wtime();
         //if(mypnum == 0) printf("diago time:%7.3f\n",end-start);
         delete [] DIAGOTEST::npw_local;
@@ -174,7 +149,6 @@ class DiagoBPCGPrepare
 
         delete[] en;
         delete[] e_lapack;
-        delete ha;
     }
 };
 

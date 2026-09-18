@@ -1,5 +1,4 @@
-#include "source_lcao/module_ri/module_exx_symmetry/irreducible_sector.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_cell/module_symmetry/irreducible_sector.h"
 namespace ModuleSymmetry
 {
     // Raw-index dispatch shared by the real-space sector helpers, matching the convention used
@@ -62,7 +61,7 @@ namespace ModuleSymmetry
         }
     }
 
-    // Perfoming {R|t} to atom position r in the R=0 lattice, we get Rr+t, which may get out of R=0 lattice, 
+    // Perfoming {R|t} to atom position r in the R=0 lattice, we get Rr+t, which may get out of R=0 lattice,
     // whose image in R=0 lattice is r'=Rr+t-O. This function is to get O for each atom and each symmetry operation.
     // the range of direct position is [-0.5, 0.5).
     TCdouble Irreducible_Sector::get_return_lattice(const Symmetry& symm,
@@ -109,7 +108,7 @@ namespace ModuleSymmetry
         ModuleBase::TITLE("Symmetry_rotation", "cal_return_lattice_all");
         // Columns [0, nrotk) are the unitary operations; columns [nrotk, nrotk+nrotk_anti) are the
         // spatial parts of the antiunitary elements Theta*g of the Shubnikov group (nspin=4 magnetic),
-        // so that Symmetry_rotation can address both with one raw index. 
+        // so that Symmetry_rotation can address both with one raw index.
         this->return_lattice_.resize(st.nat, std::vector<TCdouble>(symm.nrotk + symm.nrotk_anti));
         for (int iat1 = 0;iat1 < st.nat;++iat1)
         {
@@ -170,12 +169,12 @@ namespace ModuleSymmetry
             std::cout << std::endl;
         }
     }
-    void Irreducible_Sector::write_irreducible_sector()
+    void Irreducible_Sector::write_irreducible_sector(const std::string& output_dir)
     {
-        if(GlobalV::MY_RANK == 0)
+        if(GlobalV::MY_RANK == 0 && !output_dir.empty())
         {
             std::ofstream ofs;
-            ofs.open(PARAM.globalv.global_out_dir + "irreducible_sector.txt");
+            ofs.open(output_dir + "irreducible_sector.txt");
             for (auto& irap_irR : this->irreducible_sector_)
             {
                 for (auto& irR : irap_irR.second){ofs << "atompair (" << irap_irR.first.first << ", " << irap_irR.first.second << "), R = (" << irR[0] << ", " << irR[1] << ", " << irR[2] << ") \n";}
@@ -184,7 +183,7 @@ namespace ModuleSymmetry
         }
     }
 
-    void Irreducible_Sector::find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st, const std::vector<TC>& Rs, const TC& period, const Lattice& lat)
+    void Irreducible_Sector::find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st, const std::vector<TC>& Rs, const TC& period, const Lattice& lat, const std::string& output_dir)
     {
         this->full_map_to_irreducible_sector_.clear();
         this->irreducible_sector_.clear();
@@ -277,6 +276,6 @@ namespace ModuleSymmetry
         assert(total_apR_in_star == this->full_map_to_irreducible_sector_.size());
         // this->output_full_map_to_irreducible_sector(st.nat);
         // this->output_sector_star();
-        this->write_irreducible_sector();
+        this->write_irreducible_sector(output_dir);
     }
 }

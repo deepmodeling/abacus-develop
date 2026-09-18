@@ -1,21 +1,5 @@
 #include "../symm_rotation.h"
-#include "source_io/module_parameter/parameter.h"
 #include "gtest/gtest.h"
-
-class TestParameters
-{
-  public:
-    TestParameters(Parameter& parameters, const int nspin)
-        : parameters_(parameters), original_nspin_(parameters.inp.nspin)
-    {
-        parameters_.input.nspin = nspin;
-    }
-    ~TestParameters() { parameters_.input.nspin = original_nspin_; }
-
-  private:
-    Parameter& parameters_;
-    const int original_nspin_;
-};
 
 // K-point generation is outside this test: use explicit stars, but provide
 // the virtual symbols needed by the existing lightweight rotation test target.
@@ -62,7 +46,6 @@ std::vector<Complex> rotate_reference(const std::vector<Complex>& density,
 
 void check_little_group_restoration(const int nspin)
 {
-    const TestParameters parameters(PARAM, nspin);
     const int channels = nspin == 2 ? 2 : 1;
     const int n = 4;
     Parallel_2D pv;
@@ -98,10 +81,15 @@ void check_little_group_restoration(const int nspin)
     };
     rotation.set_density_rotations_for_testing(
         {{{0, local(identity)}, {1, local(little)}, {2, local(representative)}, {3, local(alternate)}}},
-        {{0, 1}}, 4);
+        {{0, 1}}, 4, nspin);
     K_Vectors kv;
     kv.set_nkstot(channels);
     kv.set_nkstot_nospin(2);
+    // Single-pool (KPAR=1) scenario: kv.get_nks() (local) equals kv.get_nkstot() (global),
+    // and ik2iktot is the identity map. With only one global ibz-k here, any value mod
+    // kv.kstars.size()==1 is 0, so the exact ik2iktot values don't matter, only its size.
+    kv.set_nks(channels);
+    kv.ik2iktot.assign(channels, 0);
     kv.kstars = {{{0, {0.25, 0.0, 0.0}}, {2, {0.0, 0.25, 0.0}}}};
     std::vector<std::vector<Complex>> inputs;
     std::vector<std::vector<Complex>> expected;

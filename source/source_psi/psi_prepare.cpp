@@ -11,6 +11,7 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/unitcell.h"
 #include "source_hsolver/diag_comm_info.h"
+#include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi_init_atomic.h"
@@ -221,6 +222,9 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         }
     }
 
+    // the subspace diagonalization sees the Hamiltonian only through this operator
+    hamilt::HamiltHSOperator<T, Device> op(p_hamilt, &this->pw_wfc);
+
     // loop over kpoints, make it possible to only allocate memory for psig at the only one kpt
     // like (1, nbands, npwx), in which npwx is the maximal npw of all kpoints
     for (int ik = 0; ik < this->pw_wfc.nks; ik++)
@@ -231,7 +235,7 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         kspw_psi->fix_k(ik);
 
         //! Update Hamiltonian from other kpoint to the given one
-        p_hamilt->updateHk(ik);
+        op.update_k(ik);
         if (fill)
         {
             //! initialize psi_cpu
@@ -249,7 +253,7 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                 {
                     // for diagH_subspace_init, psi_device->get_pointer() and kspw_psi->get_pointer() should be
                     // different
-                    hsolver::DiagoIterAssist<T, Device>::diag_subspace_init(p_hamilt,
+                    hsolver::DiagoIterAssist<T, Device>::diag_subspace_init(op,
                                                                             psi_device->get_pointer(),
                                                                             nbands_start,
                                                                             nbasis,
@@ -262,7 +266,7 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                 else
                 {
                     // for diagH_subspace, psi_device->get_pointer() and kspw_psi->get_pointer() can be the same
-                    hsolver::DiagoIterAssist<T, Device>::diag_subspace(p_hamilt,
+                    hsolver::DiagoIterAssist<T, Device>::diag_subspace(op,
                                                                        *psi_device,
                                                                        *kspw_psi,
                                                                        etatom.data(),

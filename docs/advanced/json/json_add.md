@@ -1,219 +1,182 @@
-# Table of Contents
+# ABACUS JSON Development Guide
 
-1. [Abacus-Json Usage Instructions](#1-abacus-json-usage-instructions)
-   - [Normal Usage](#normal-usage)
-     - [Add/Modify a value to object json node](#addmodify-a-value-to-object-json-node-key2-is-a-object-node)
-     - [Pushback a value to array json node](#pushback-a-value-to-array-json-node-key2-is-a-array-node)
-   - [Initialization and Assignment Functions for Different Value Types in Arrays](#initialization-and-assignment-functions-for-different-value-types-in-arrays)
-     - [Object Type](#object-type)
-     - [Array Type](#array-type)
-   - [Array Modification Instructions](#array-modification-instructions)
-2. [Json Codes Addition Guidelines](#2-json-codes-addition-guidelines)
-   - [Abacus JSON Functionality Code Structure](#abacus-json-functionality-code-structure)
-   - [Add JSON code principles](#add-json-code-principles)
+## Overview
 
+ABACUS uses [nlohmann-json](https://github.com/nlohmann/json) as the backend for its optional JSON output. The JSON implementation is kept under `source/source_io/module_json`, with `AbacusJson` providing the small interface used to build and write `abacus.json`.
 
-
-# 1. Abacus-Json Usage Instructions
-
-In Abacus, the main utility functions for manipulating JSON trees are outlined below. These functions are used to add objects to Abacus JSON trees.
-
-Function signature:
-void AbacusJson::add_json (std::vector<std::string> keys, const T& value,bool IsArray)
-Where:
-- `keys` is a vector of string dictionaries, representing the node paths where values are to be added in the JSON tree.
-- `value` is a generic value type, including int, bool, double, string, or rapidjson value type, indicating the value to be added to the Abacus JSON.
-- `IsArray` is a boolean object, indicating whether the current node being added is an array. `true` represents an array node, while `false` represents a non-array node.
-
-Example usage:
-const std::string version = "v3.5.2";
-AbacusJson::add_json({"general_info", "version"}, version, false);
-
-
-
-## Normal usage
-
-### Add/Modify a value to object json node (key2 is a object node): 
-```cpp
-Json::AbacusJson::add_json({"key1","key2"}, 3.1415,false);
-```
-
-### Pushback a value to array json node (key2 is a array node):
-```cpp
-Json::AbacusJson::add_json({"key1","key2"}, 3.1415,true);
-```
-
-Through this function alone, the addition of the majority of JSON parameters can be achieved. However, for complex array types, additional operations are required.
-
-
-## Initialization and Assignment Functions for Different Value Types in Arrays
-
-### Object Type:
-Since the object type consists of key-value pairs, four member functions are divided based on whether key and val are of type std::string.
-
-- JaddStringV(str,val): key is not string, val is string
-- JaddStringK(str,val): key is string, val is not string
-- JaddStringKV(str,val): both key and val are string
-- JaddNormal(str,val): both key and val are not string
-
-
-### Array Type:
-For array types, the following member functions are used directly.
-
-- JPushBack(val): val is not string
-- JPushBackString(val): val is string
-
-For example, to add nodes to a JSON tree with multiple arrays in Abacus, the following code is needed:
+The public alias and mutation interfaces are:
 
 ```cpp
-// add key-val to an object array
-for(int i=0;i<1;i++){
-    Json::jsonValue object(JobjectType);
-    std::string str = std::to_string(i*100);  
-    
-    object.JaddNormal("int",i);
-    object.JaddStringV("string", str);
-    Json::AbacusJson::add_json({"array"}, object,true);
-}
+using jsonValue = nlohmann::ordered_json;
+
+// Public static members of Json::AbacusJson:
+static void set_json(const std::vector<jsonKeyNode>& keys, jsonValue value);
+static void append_json(const std::vector<jsonKeyNode>& keys, jsonValue value);
 ```
+
+`jsonValue` uses `nlohmann::ordered_json` so that object keys are written in insertion order. `jsonKeyNode` accepts either a string key or an integer array index, so paths can mix JSON objects and arrays.
+
+`abacusjson.h` includes only `nlohmann/json_fwd.hpp`. A source file that constructs or operates on `jsonValue` must include `<nlohmann/json.hpp>` itself, inside the `__JSON` guard. Callers of the higher-level functions in `init_info.h` and `output_info.h` do not need the backend header.
+
+## Adding values
+
+### Add or replace an object member
+
+Use `set_json()` to assign a value at a path:
 
 ```cpp
-// add array in array
-Json::jsonValue object0(JarrayType);
-
-object0.JPushBack(1);
-object0.JPushBack(2);
-object0.JPushBack(3);
-
-Json::AbacusJson::add_json({"Darray"}, object0,true);
+Json::AbacusJson::set_json({"general_info", "version"}, version);
 ```
 
-
-
-
-
-## Array Modification Instructions
-
-For values that need to be modified in arrays, the following method can be used:
-- The index number of the array starts at 0, if it's negative, it's going from back to front. eg. If the index is -1, it means that the last element of the array is modified:
-- If the path contains an array, use the array index directly.
+Missing intermediate named nodes are created as objects. The final value is replaced regardless of its previous type, including when it is an array or an object. For example, setting a complete coordinate array replaces the old coordinates rather than adding another nested array:
 
 ```cpp
-AbacusJson::add_json({"path",index }, value, is_array);
+Json::AbacusJson::set_json({"init", "coordinate"}, coordinates);
 ```
 
-Here, index is a number. index >= 0 indicates the index from the beginning of the array, while index < 0 indicates traversal from the end of the array.
+Replacing a complete object also replaces all of its members; this is not a merge operation.
 
-For example, to modify the value of "vasp" to "cp2k" in the following JSON tree:
+### Append to an array
+
+Use `append_json()` to append one value to an array:
+
+```cpp
+Json::AbacusJson::append_json({"init", "label"}, label);
+```
+
+A missing final named member is created as an array. An existing destination must already be an array: appending to a scalar, an object, or `null` is an error rather than an implicit conversion.
+
+For nested arrays, construct the value with `jsonValue::array()`:
+
+```cpp
+Json::jsonValue coordinate = Json::jsonValue::array({x, y, z});
+Json::AbacusJson::append_json({"init", "coordinate"}, coordinate);
+```
+
+The coordinate is appended as **one row**; its elements are not flattened into the destination array. An empty path is a no-op for both `set_json()` and `append_json()`.
+
+### Construct objects and arrays
+
+Use the nlohmann-json initializer syntax through the `Json::jsonValue` alias. There is no need for backend-specific helper macros.
+
+Object example:
+
+```cpp
+Json::jsonValue scf = {
+    {"energy", energy},
+    {"ediff", ediff},
+    {"drho", drho},
+    {"time", time},
+};
+```
+
+Array example:
+
+```cpp
+Json::jsonValue row = Json::jsonValue::array({x, y, z});
+```
+
+Append a completed SCF record with:
+
+```cpp
+Json::AbacusJson::append_json({"output", -1, "scf"}, scf);
+```
+
+Construct complete sections or arrays locally before storing them where practical. `gen_general_info()` assigns its complete section once. `gen_stru()` constructs each structure field locally, and `gen_init()` does the same for calculation metadata. These two generators share `init` with `add_nkstot()`, so they replace only their own fields through a file-local helper; they must not replace the entire `init` object and discard fields written by another generator.
+
+For a current output record, coordinates, magnetic moments, the cell, forces, and stress are replaced as complete arrays. Repeating the geometry update for the same record therefore does not accumulate extra rows. Only genuinely sequential data, such as `output` records and `scf` iteration records, use `append_json()`.
+
+## Addressing array elements
+
+Integer path components address existing array elements. Non-negative indices count from the beginning, while negative indices count from the end (`-1` is the last element). Indexed traversal never grows an array.
+
+For example, given:
 
 ```json
-"Json":{
-    "key6": {
-        "key7": [
-            {
-                "a":1,
-                "new":2
-            }
-            "vasp",
-            "abacus"
-        ]
+{
+    "Json": {
+        "key6": {
+            "key7": [
+                {"a": 1, "new": 2},
+                "vasp",
+                "abacus"
+            ]
+        }
     }
 }
 ```
-The relative path of "vasp" in layman's terms is Json - key6 - key7[0]. To use the JSON modification method in abacus, simply change the index [0] to "0".
+
+replace `"vasp"` with `"cp2k"` using either its forward index:
 
 ```cpp
-AbacusJson::add_json({"Json","key6","key7",1}, "cp2k" , false);
+Json::AbacusJson::set_json({"Json", "key6", "key7", 1}, "cp2k");
 ```
 
-If traversal is done from the end:
+or the corresponding negative index:
+
 ```cpp
-AbacusJson::add_json({"Json","key6","key7",-2}, "cp2k", false);
+Json::AbacusJson::set_json({"Json", "key6", "key7", -2}, "cp2k");
 ```
 
-An error is reported if index exceeds the array length!
-```cpp
-AbacusJson::add_json({"Json","key6","key7",3}, "cp2k", false);
+When the destination selected by an integer is itself an array, `append_json()` appends to that nested array; it does not replace the selected element. Out-of-range indices and mismatched object/array path components are errors.
+
+The workflow must call `init_output_array_obj()` before filling the corresponding calculation/ionic-step record. `set_json()` and `append_json()` do not create an implicit current output record when traversing `{"output", -1, ...}`. Record initialization remains the responsibility of the existing driver/solver entry points, not the generic path interface.
+
+## Migrating older JSON call sites
+
+The former `add_json(keys, value, is_array)` interface has been removed. Choose the new operation by intent, not just by the old boolean:
+
+- Use `set_json()` for scalar assignments, whole-container replacement, and replacement of an indexed element.
+- Use `append_json()` for adding one element to a named or indexed array.
+
+The old interface appended to an existing named array even when `is_array` was `false`, and it replaced an indexed element even when the flag was `true`. Neither implicit behavior is retained by the new operation names.
+
+## Code structure
+
+The JSON implementation is organized as follows:
+
+```text
+source/source_io/module_json/
+├── abacusjson.cpp/.h   # set/append path handling and file output
+├── json_node.h         # object-key / array-index path component
+├── general_info.cpp/.h # general_info section
+├── init_info.cpp/.h    # comment and init sections
+├── output_info.cpp/.h  # output section
+├── para_json.cpp/.h    # integration-facing wrappers
+└── test/              # focused unit tests
 ```
 
+JSON support is compiled under `__JSON`, which is enabled by the CMake option `ENABLE_JSON`.
 
+## Guidelines for extending JSON output
 
+When adding JSON output:
 
-# 2. Abacus Json Codes Addition Guidelines
+1. Keep JSON construction in `source/source_io/module_json` whenever practical, rather than spreading nlohmann-json details into unrelated modules.
+2. Pass the data required for output explicitly through function parameters. Do not add new `GlobalV`, `GlobalC`, or `PARAM` accesses merely to obtain a value for JSON output.
+3. Prefer existing domain objects or small scalar/reference parameters over introducing new cross-module dependencies.
+4. Use `Json::jsonValue` for compound JSON values, `set_json()` for assignment, and `append_json()` for sequence growth.
+5. Preserve the existing JSON schema unless the change intentionally modifies the public output format.
+6. Add or update focused tests under `source/source_io/module_json/test` for new fields and for array/object behavior.
 
-## Abacus JSON Functionality Code Structure
-
-The current code structure of JSON functionality in Abacus is roughly as follows:
-
-- source/source_io
-  - para_json.cpp: Contains JSON generation and output interfaces directly called by the device in Abacus.
-  - json_output/: Contains the functionality encapsulation class `abacusjson.cpp` of RapidJSON in Abacus and code classes for parameter generation in various JSON modules.
-    - test: Code testing files in `json_output`.
-
-
-## Add JSON code principles:
-In Abacus JSON addition, the following principles need to be followed:
-
-1. Whenever possible, code to be added in the module should be written in the `json_output` module (there may also be cases where parameters cannot be directly obtained through parameter passing in `json_output`), and then called in the path `para_json.cpp` -> `device.cpp` or other main execution paths. (Ensure minimal impact on other modules as much as possible)
-   
-2. For parameters that can be obtained without depending on other modules, do not reference parameter values saved in other modules. (Such as `mpi_num`, `start_time`)
-
-3. Use classes as function parameters as much as possible instead of using global classes for obtained parameters. (For example, in `gen_general_info`, `Input`)
-
-4. After adding parameters, supplement test code in `source_io/json_output/test`.
-
-For the current JSON file, there are two JSON modules: `init` and `general_info`,  `output_info`.
-Taking `general_info` as an example, the code to be added is as follows:
+For example, `output_info` receives the required values as function arguments and adds them to the current output record:
 
 ```cpp
-namespace Json
+void add_output_scf_mag(const double total_mag,
+                        const double absolute_mag,
+                        const double energy,
+                        const double ediff,
+                        const double drho,
+                        const double time)
 {
-
-#ifdef __RAPIDJSON
-void gen_general_info(const Parameter& param)
-{
-
-#ifdef VERSION
-    const std::string version = VERSION;
-#else
-    const std::string version = "unknown";
-#endif
-#ifdef COMMIT
-    const std::string commit = COMMIT;
-#else
-    const std::string commit = "unknown";
-#endif
-
-    // start_time
-    std::time_t start_time = input->get_start_time();
-    std::string start_time_str;
-    convert_time(start_time, start_time_str);
-
-    // end_time
-    std::time_t time_now = std::time(NULL);
-    std::string end_time_str;
-    convert_time(time_now, end_time_str);
-
-#ifdef __MPI
-    int mpi_num = Parallel_Global::mpi_number;
-    int omp_num = Parallel_Global::omp_number;
-#elif
-    int mpi_num = 1;
-    int omp_num = 1;
-#endif
-
-    AbacusJson::add_json({"general_info", "version"}, version,false);
-    AbacusJson::add_json({"general_info", "commit"}, commit,false);
-    AbacusJson::add_json({"general_info", "device"}, input->device,false);
-    AbacusJson::add_json({"general_info", "mpi_num"}, mpi_num,false);
-    AbacusJson::add_json({"general_info", "omp_num"}, omp_num,false);
-    AbacusJson::add_json({"general_info", "pseudo_dir"}, input->pseudo_dir,false);
-    AbacusJson::add_json({"general_info", "orbital_dir"}, input->orbital_dir,false);
-    AbacusJson::add_json({"general_info", "stru_file"}, input->stru_file,false);
-    AbacusJson::add_json({"general_info", "kpt_file"}, input->kpoint_file,false);
-    AbacusJson::add_json({"general_info", "start_time"}, start_time_str,false);
-    AbacusJson::add_json({"general_info", "end_time"}, end_time_str,false);
+    AbacusJson::set_json({"output", -1, "total_mag"}, total_mag);
+    AbacusJson::set_json({"output", -1, "absolute_mag"}, absolute_mag);
+    AbacusJson::append_json({"output", -1, "scf"},
+                            {{"energy", energy},
+                             {"ediff", ediff},
+                             {"drho", drho},
+                             {"time", time}});
 }
-#endif
-} // namespace Json
 ```
+
+This keeps the JSON layer explicit and avoids introducing additional global dependencies into the output path.

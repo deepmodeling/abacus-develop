@@ -155,16 +155,19 @@ namespace ModuleESolver
 #else
         const hsolver::diag_comm_info diag_comm(0, 1);
 #endif
-        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt),
+        // the solver sees the Hamiltonian only through this operator; the EXX
+        // subspace hooks live in the adapter, not in the solver
+        hamilt::HamiltLIPHSOperator<T> op(dynamic_cast<hamilt::HamiltLIP<T>*>(this->p_hamilt),
+                                          this->pw_wfc,
+                                          this->general_exx_info_.cal_exx,
+                                          this->general_exx_info_.hybrid_alpha);
+        hsolver_lip_obj.solve(op,
                               *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
                               this->pelec,
                               *this->psi_local,
                               diag_comm,
                               GlobalV::ofs_running,
-                              skip_charge,
-                              ucell.tpiba,
-                              ucell.nat,
-                              this->general_exx_info_);
+                              skip_charge);
 
         // add exx
 #ifdef __EXX

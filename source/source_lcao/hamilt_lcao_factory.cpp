@@ -58,6 +58,7 @@ void add_dftu_op(Operator<TK>*& ops,
                                                 two_center_bundle.overlap_orb_onsite.get(),
                                                 orb.cutoffs(), p_dftu,
                                                 inp.nspin, inp.onsite_radius, DM_in);
+        static_cast<DFTU_onsite<OperatorLCAO<TK, TR>>*>(plus_u)->set_kv(kv);
     }
     else if (inp.dft_plus_u == 2)
     {

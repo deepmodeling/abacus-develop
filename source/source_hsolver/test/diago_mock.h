@@ -1,7 +1,14 @@
 #include<random>
 #include "mpi.h"
 #include "source_base/parallel_reduce.h"
-#include "source_pw/module_pwdft/hamilt_pw.h"
+#include "source_hsolver/hs_operator.h"
+#include "source_psi/psi.h"
+
+#include <algorithm>
+#include <complex>
+#include <fstream>
+#include <iostream>
+#include <vector>
 
 namespace DIAGOTEST
 {
@@ -210,8 +217,6 @@ class HPsi
     //ModuleBase::ComplexMatrix psi() {return psimatrix;}
     psi::Psi<T> psi()
     {
-        Structure_Factor* sf;
-        int* ngk = nullptr;
         psi::Psi<T> psitmp(1, nband, npw, npw, true);
         for(int i=0;i<nband;i++)
 	    {
@@ -401,234 +406,58 @@ template class HPsi<double>;
 template class HPsi<std::complex<double>>;
 template class HPsi<std::complex<float>>;
 
-//totally same as the original function
-template <>
-void hamilt::HamiltPW<double, base_device::DEVICE_CPU>::sPsi(const double* psi_in,
-                                                             double* spsi,
-                                                             const int nrow,
-                                                             const int npw,
-                                                             const int nbands) const
+namespace DIAGOTEST
 {
-    for (size_t i = 0; i < static_cast<size_t>(nbands * nrow); i++)
-    {
-        spsi[i] = psi_in[i];
-    }
-    return;
-}
-template <>
-void hamilt::HamiltPW<std::complex<double>, base_device::DEVICE_CPU>::sPsi(const std::complex<double>* psi_in,
-                                                                           std::complex<double>* spsi,
-                                                                           const int nrow,
-                                                                           const int npw,
-                                                                           const int nbands) const
-{
-    for (size_t i = 0; i < static_cast<size_t>(nbands * nrow); i++)
-    {
-        spsi[i] = psi_in[i];
-    }
-    return;
-}
-template <>
-void hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_CPU>::sPsi(const std::complex<float>* psi_in,
-                                                                          std::complex<float>* spsi,
-                                                                          const int nrow,
-                                                                          const int npw,
-                                                                          const int nbands) const
-{
-    for (size_t i = 0; i < static_cast<size_t>(nbands * nrow); i++)
-    {
-        spsi[i] = psi_in[i];
-    }
-    return;
+    /// the process-local slice of the test matrix for each scalar type
+    template <typename T> std::vector<T>& hmatrix_local_of();
+    template <> std::vector<double>& hmatrix_local_of<double>() { return hmatrix_local_d; }
+    template <> std::vector<std::complex<double>>& hmatrix_local_of<std::complex<double>>() { return hmatrix_local; }
+    template <> std::vector<std::complex<float>>& hmatrix_local_of<std::complex<float>>() { return hmatrix_local_f; }
 }
 
-//Mock function h_psi
-#include "source_pw/module_pwdft/op_pw.h"
-template<typename T>
-class OperatorMock : public hamilt::Operator<T>
+/**
+ * The test matrix seen through hsolver::HSOperator, which is all the iterative
+ * eigensolvers need. H is the dense (distributed) matrix DIAGOTEST::hmatrix_local,
+ * S is the identity.
+ *
+ * Every process holds npw_local[mypnum] columns of H, so H*x is formed as a
+ * partial product, reduced over the pool and redistributed like psi.
+ */
+template <typename T>
+class HSOperatorMock : public hsolver::HSOperator<T, base_device::DEVICE_CPU>
 {
-    ~OperatorMock()
+  public:
+    void update_k(const int ik) override
     {
-        if(this->hpsi != nullptr) 
+    }
+
+    void hpsi(const T* x, T* hx, const int ld, const int nvec) const override
+    {
+        int mypnum = 0;
+#ifdef __MPI
+        MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
+#endif
+        const std::vector<T>& hmat = DIAGOTEST::hmatrix_local_of<T>();
+        const int npw = DIAGOTEST::npw;
+        const int ncol = DIAGOTEST::npw_local[mypnum];
+        std::vector<T> hx_full(npw);
+        for (int m = 0; m < nvec; m++)
         {
-            delete this->hpsi;
-            this->hpsi = nullptr;
+            for (int i = 0; i < npw; i++)
+            {
+                hx_full[i] = T(0);
+                for (int j = 0; j < ncol; j++)
+                {
+                    hx_full[i] += hmat[i * DIAGOTEST::h_nc + j] * x[m * ld + j];
+                }
+            }
+            Parallel_Reduce::reduce_pool(hx_full.data(), npw);
+            DIAGOTEST::divide_psi<T>(hx_full.data(), hx + m * ld);
         }
     }
-    virtual void act
-    (
-        const int nbands,
-        const int nbasis,
-        const int npol,
-        const T* tmpsi_in,
-        T* tmhpsi,
-        const int ngk_ik = 0,
-        const bool is_first_node = false)const;
+
+    void spsi(const T* x, T* sx, const int ld, const int nvec) const override
+    {
+        std::copy(x, x + static_cast<size_t>(ld) * nvec, sx);
+    }
 };
-template<>
-void OperatorMock<double>::act(
-    const int nbands,
-    const int nbasis,
-    const int npol,
-    const double* tmpsi_in,
-    double* tmhpsi,
-    const int ngk_ik,
-    const bool is_first_node)const
-{
-    int nprocs = 1, mypnum = 0;
-#ifdef __MPI    
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
-#endif        
-
-    double* hpsi0 = new double[DIAGOTEST::npw];
-    for (int m = 0; m < nbands; m++)
-    {
-        for (int i = 0;i < DIAGOTEST::npw;i++)
-        {
-            hpsi0[i] = 0.0;
-            for (int j = 0;j < (DIAGOTEST::npw_local[mypnum]);j++)
-            {
-                hpsi0[i] += DIAGOTEST::hmatrix_local_d[i * DIAGOTEST::h_nc + j] * tmpsi_in[j];
-            }
-        }
-        Parallel_Reduce::reduce_pool(hpsi0, DIAGOTEST::npw);
-        DIAGOTEST::divide_psi<double>(hpsi0, tmhpsi);
-        tmhpsi += nbasis;
-        tmpsi_in += nbasis;
-    }
-    delete[] hpsi0;
-}
-template<>
-void OperatorMock<std::complex<double>>::act(
-    const int nbands,
-    const int nbasis,
-    const int npol,
-    const std::complex<double>* tmpsi_in,
-    std::complex<double>* tmhpsi,
-    const int ngk_ik,
-    const bool is_first_node)const
-{
-    int nprocs = 1, mypnum = 0;
-#ifdef __MPI    
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
-#endif        
-
-    std::complex<double>* hpsi0 = new std::complex<double>[DIAGOTEST::npw];
-    for (int m = 0; m < nbands; m++)
-    {
-        for (int i = 0;i < DIAGOTEST::npw;i++)
-        {
-            hpsi0[i] = 0.0;
-            for (int j = 0;j < (DIAGOTEST::npw_local[mypnum]);j++)
-            {
-                hpsi0[i] += DIAGOTEST::hmatrix_local[i * DIAGOTEST::h_nc + j] * tmpsi_in[j];
-            }
-        }
-        Parallel_Reduce::reduce_pool(hpsi0, DIAGOTEST::npw);
-        DIAGOTEST::divide_psi<std::complex<double>>(hpsi0, tmhpsi);
-        tmhpsi += nbasis;
-        tmpsi_in += nbasis;
-    }
-    delete[] hpsi0;
-}
-template<>
-void OperatorMock<std::complex<float>>::act(
-    const int nbands,
-    const int nbasis,
-    const int npol,
-    const std::complex<float>* tmpsi_in,
-    std::complex<float>* tmhpsi,
-    const int ngk_ik,
-    const bool is_first_node)const
-{
-    int nprocs = 1, mypnum = 0;
-#ifdef __MPI    
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
-#endif        
-
-    std::complex<float>* hpsi0 = new std::complex<float>[DIAGOTEST::npw];
-    for (int m = 0; m < nbands; m++)
-    {
-        for (int i = 0;i < DIAGOTEST::npw;i++)
-        {
-            hpsi0[i] = 0.0;
-            for (int j = 0;j < (DIAGOTEST::npw_local[mypnum]);j++)
-            {
-                hpsi0[i] += DIAGOTEST::hmatrix_local_f[i * DIAGOTEST::h_nc + j] * tmpsi_in[j];
-            }
-        }
-        Parallel_Reduce::reduce_pool(hpsi0, DIAGOTEST::npw);
-        DIAGOTEST::divide_psi<std::complex<float>>(hpsi0, tmhpsi);
-        tmhpsi += nbasis;
-        tmpsi_in += nbasis;
-    }
-    delete[] hpsi0;
-}
-template<> void hamilt::HamiltPW<double>::updateHk(const int ik)
-{
-    return;
-}
-
-template<> hamilt::HamiltPW<double>::HamiltPW(
-		elecstate::Potential* pot_in,
-		ModulePW::PW_Basis_K* wfc_basis,
-		K_Vectors* pkv,
-		pseudopot_cell_vnl* ppcell,
-		Plus_U_Base* p_dftu,
-		const UnitCell* ucell,
-		const General_Exx_Info* exx_info)
-{
-    this->ops = new OperatorMock<double>;
-}
-
-template<> hamilt::HamiltPW<double>::~HamiltPW()
-{
-    delete this->ops;
-}
-
-template<> void hamilt::HamiltPW<std::complex<double>>::updateHk(const int ik)
-{
-    return;
-}
-
-template<> hamilt::HamiltPW<std::complex<double>>::HamiltPW(
-		elecstate::Potential* pot_in,
-		ModulePW::PW_Basis_K* wfc_basis,
-		K_Vectors* pkv,
-		pseudopot_cell_vnl* ppcell,
-		Plus_U_Base* p_dftu,
-		const UnitCell* ucell,
-		const General_Exx_Info* exx_info)
-{
-    this->ops = new OperatorMock<std::complex<double>>;
-}
-
-template<> hamilt::HamiltPW<std::complex<double>>::~HamiltPW()
-{
-    delete this->ops;
-}
-
-template<> void hamilt::HamiltPW<std::complex<float>>::updateHk(const int ik)
-{
-    return;
-}
-
-template<> hamilt::HamiltPW<std::complex<float>>::HamiltPW(
-		elecstate::Potential* pot_in,
-		ModulePW::PW_Basis_K* wfc_basis,
-		K_Vectors* pkv,
-		pseudopot_cell_vnl* ppcell,
-		Plus_U_Base* p_dftu,
-		const UnitCell* ucell,
-		const General_Exx_Info* exx_info)
-{
-    this->ops = new OperatorMock<std::complex<float>>;
-}
-
-template<> hamilt::HamiltPW<std::complex<float>>::~HamiltPW()
-{
-    delete this->ops;
-}

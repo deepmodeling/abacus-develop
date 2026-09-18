@@ -1,21 +1,23 @@
 #ifndef JSON_NODE_H
 #define JSON_NODE_H
 
+#include <string>
+
 namespace Json
 {
 
-    class jsonKeyNode{
-        public:
-            jsonKeyNode(int i): i(i) {};
-            jsonKeyNode(const std::string& s): key(s) {};
+class jsonKeyNode
+{
+  public:
+    jsonKeyNode(int index) : i(index), is_index(true) {}
+    jsonKeyNode(const std::string& name) : key(name) {}
+    jsonKeyNode(const char* name) : key(name) {}
 
-            template<size_t N>
-            jsonKeyNode(const char (&s)[N]): key(s) {};
-        
-            int i=0;
-            std::string key;
-    };
+    int i = 0;
+    std::string key;
+    bool is_index = false;
+};
 
-}
+} // namespace Json
 
 #endif
