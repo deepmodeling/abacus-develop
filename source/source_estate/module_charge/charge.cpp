@@ -86,7 +86,7 @@ void Charge::destroy()
     }
 }
 
-void Charge::allocate(const int& nspin_in, const bool kin_den)
+void Charge::allocate(const int& nspin_in, const bool kin_den, const int test_charge, const double& nelec_in)
 {
     ModuleBase::TITLE("Charge", "allocate");
 
@@ -110,8 +110,9 @@ void Charge::allocate(const int& nspin_in, const bool kin_den)
 
     //  mohan add 2021-02-20
     this->nspin = nspin_in;
+    this->nelec = nelec_in;
 
-    if (PARAM.inp.test_charge > 1)
+    if (test_charge > 1)
     {
         std::cout << "\n spin_number = " << nspin << " real_point_number = " << nrxx << std::endl;
     }
@@ -217,7 +218,7 @@ void Charge::renormalize_rho()
     const double sr = this->sum_rho();
     GlobalV::ofs_warning << std::setprecision(15);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge before normalized", sr);
-    const double normalize_factor = PARAM.inp.nelec / sr;
+    const double normalize_factor = this->nelec / sr;
 
     for (int is = 0; is < nspin; is++)
     {
@@ -651,9 +652,9 @@ void Charge::atomic_rho(const int spin_number_need,
     return;
 }
 
-void Charge::save_rho_before_sum_band()
+void Charge::save_rho_before_sum_band(const int nspin)
 {
-    for (int is = 0; is < PARAM.inp.nspin; is++)
+    for (int is = 0; is < nspin; is++)
     {
         ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is], this->rhopw->nrxx);
         if (XC_Functional::get_ked_flag())
@@ -687,7 +688,7 @@ void Charge::check_rho()
     {
         double ne = 0.0;
         ne = this->cal_rho2ne(rho[0]);
-        if (std::abs(ne - PARAM.inp.nelec) > 1.0e-6)
+        if (std::abs(ne - this->nelec) > 1.0e-6)
         {
             ModuleBase::WARNING("Charge", "Charge is not equal to the number of electrons!");
         }
@@ -709,7 +710,7 @@ void Charge::check_rho()
             ModuleBase::WARNING_QUIT("Charge", "Number of spin-up electrons set in starting magnetization exceeds all available.");
         }
         // for total charge
-        if (std::abs(ne_up + ne_dn - PARAM.inp.nelec) > 1.0e-6)
+        if (std::abs(ne_up + ne_dn - this->nelec) > 1.0e-6)
         {
             ModuleBase::WARNING("Charge", "Charge is not equal to the number of electrons!");
         }
@@ -717,23 +718,23 @@ void Charge::check_rho()
 }
 
 // LiuXh add 20180619
-void Charge::init_final_scf()
+void Charge::init_final_scf(const int nspin, const int test_charge)
 {
     ModuleBase::TITLE("Charge", "init_after_scf");
 
     assert(allocate_rho_final_scf == false);
-    if (PARAM.inp.test_charge > 1)
+    if (test_charge > 1)
     {
-        std::cout << "\n spin_number = " << PARAM.inp.nspin << " real_point_number = " << this->rhopw->nrxx << std::endl;
+        std::cout << "\n spin_number = " << nspin << " real_point_number = " << this->rhopw->nrxx << std::endl;
     }
 
     // allocate memory
-    rho = new double*[PARAM.inp.nspin];
-    rhog = new std::complex<double>*[PARAM.inp.nspin];
-    rho_save = new double*[PARAM.inp.nspin];
-    rhog_save = new std::complex<double>*[PARAM.inp.nspin];
+    rho = new double*[nspin];
+    rhog = new std::complex<double>*[nspin];
+    rho_save = new double*[nspin];
+    rhog_save = new std::complex<double>*[nspin];
 
-    for (int is = 0; is < PARAM.inp.nspin; is++)
+    for (int is = 0; is < nspin; is++)
     {
         rho[is] = new double[this->rhopw->nrxx];
         rhog[is] = new std::complex<double>[this->rhopw->npw];
@@ -745,10 +746,10 @@ void Charge::init_final_scf()
         ModuleBase::GlobalFunc::ZEROS(rhog_save[is], this->rhopw->npw);
     }
 
-    ModuleBase::Memory::record("Chg::rho", sizeof(double) * PARAM.inp.nspin * this->rhopw->nrxx);
-    ModuleBase::Memory::record("Chg::rho_save", sizeof(double) * PARAM.inp.nspin * this->rhopw->nrxx);
-    ModuleBase::Memory::record("Chg::rhog", sizeof(double) * PARAM.inp.nspin * this->rhopw->npw);
-    ModuleBase::Memory::record("Chg::rhog_save", sizeof(double) * PARAM.inp.nspin * this->rhopw->npw);
+    ModuleBase::Memory::record("Chg::rho", sizeof(double) * nspin * this->rhopw->nrxx);
+    ModuleBase::Memory::record("Chg::rho_save", sizeof(double) * nspin * this->rhopw->nrxx);
+    ModuleBase::Memory::record("Chg::rhog", sizeof(double) * nspin * this->rhopw->npw);
+    ModuleBase::Memory::record("Chg::rhog_save", sizeof(double) * nspin * this->rhopw->npw);
 
     this->rho_core = new double[this->rhopw->nrxx]; // core charge in real space
     ModuleBase::GlobalFunc::ZEROS(rho_core, this->rhopw->nrxx);

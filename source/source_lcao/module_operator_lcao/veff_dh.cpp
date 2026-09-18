@@ -176,7 +176,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
         // a charge buffer to hold the orbital-pair density rho(r) = phi_Umu * phi_Vnu
         Charge chr;
         chr.set_rhopw(const_cast<ModulePW::PW_Basis*>(rho_basis));
-        chr.allocate(PARAM.inp.nspin, false);
+        chr.allocate(PARAM.inp.nspin, false, PARAM.inp.test_charge, PARAM.inp.nelec);
 
         // cal_force_loc returns the local Hellmann-Feynman force on every atom:
         //   F_I = -Omega * sum_G e^{iG.tau_I} iG . V^{L,Z_I}(G) rho*(G)
@@ -420,7 +420,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
         for (int d = 0; d < 3; ++d)
         {
             chg_drho[d].set_rhopw(const_cast<ModulePW::PW_Basis*>(rho_basis));
-            chg_drho[d].allocate(chg->nspin, false);
+            chg_drho[d].allocate(chg->nspin, false, /*test_charge=*/0, chg->nelec);
 
         }
 

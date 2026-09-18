@@ -90,7 +90,7 @@ void ESolver_OF::allocate_array()
     this->ptemp_rho_ = new Charge();
     this->ptemp_rho_->set_rhopw(this->pw_rho);
     const bool kin_den = this->ptemp_rho_->kin_density(); // mohan add 20251202
-    this->ptemp_rho_->allocate(this->inp_->nspin, kin_den);
+    this->ptemp_rho_->allocate(this->inp_->nspin, kin_den, this->inp_->test_charge, this->inp_->nelec);
 
     this->theta_ = new double[this->inp_->nspin];
     this->pdLdphi_ = new double*[this->inp_->nspin];

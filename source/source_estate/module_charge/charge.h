@@ -86,7 +86,11 @@ class Charge
     // mohan add 2025-12-02
     bool kin_density() const;
 
-    void allocate(const int &nspin_in, const bool kin_den);
+    /// @param test_charge INPUT verbosity for charge diagnostics
+    /// @param nelec target number of electrons; kept as state, like nspin,
+    ///        because renormalize_rho() and check_rho() need it long after
+    ///        allocate() has returned
+    void allocate(const int &nspin_in, const bool kin_den, const int test_charge, const double& nelec_in);
 
     void atomic_rho(const int spin_number_need,
                     const double& omega,
@@ -102,7 +106,8 @@ class Charge
 
     double sum_rho() const;
 
-    void save_rho_before_sum_band();
+    /// @param nspin number of spin channels to copy
+    void save_rho_before_sum_band(const int nspin);
 
 	// for non-linear core correction
     void non_linear_core_correction
@@ -121,7 +126,25 @@ class Charge
 
     void check_rho(); // to check whether the charge density is normal
 
-    void init_final_scf(); //LiuXh add 20180619
+    /// @param nspin number of spin channels to allocate
+    /// @param test_charge INPUT verbosity for charge diagnostics
+    void init_final_scf(const int nspin, const int test_charge); //LiuXh add 20180619
+
+    //====================================================================
+    // Test seam: the two allocation flags are read-only state that
+    // charge_test checks after each allocate()/init_final_scf() call.
+    //====================================================================
+
+    /// @brief whether allocate() has claimed the rho arrays
+    bool get_allocate_rho() const
+    {
+        return allocate_rho;
+    }
+    /// @brief whether init_final_scf() has claimed the rho arrays
+    bool get_allocate_rho_final_scf() const
+    {
+        return allocate_rho_final_scf;
+    }
 
 	public:
     /**
@@ -152,6 +175,7 @@ class Charge
     int nxyz = 0; // total number of r vectors
     int ngmc=0; // number of g vectors in this processor
     int nspin=0; // number of spins
+    double nelec=0.0; // target number of electrons, set by allocate()
     ModulePW::PW_Basis* rhopw = nullptr;// When double_grid is used, rhopw = rhodpw (dense grid)
     bool cal_elf = false; // whether to calculate electron localization function (ELF)
 

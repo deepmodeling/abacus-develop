@@ -210,7 +210,7 @@ void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
     }
 
     // save input charge density (rho)
-    this->chr.save_rho_before_sum_band();
+    this->chr.save_rho_before_sum_band(this->inp_->nspin);
 }
 
 void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)

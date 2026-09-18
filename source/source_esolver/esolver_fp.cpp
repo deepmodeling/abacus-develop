@@ -148,7 +148,7 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     // then we can call chr.allocate()
 	this->chr.set_rhopw(this->pw_rhod); // mohan add 20251130
     const bool kin_den = this->chr.kin_density(); // mohan add 20251202
-	this->chr.allocate(inp.nspin, kin_den); // mohan move this from setup_estate_pw, 20251128
+	this->chr.allocate(inp.nspin, kin_den, inp.test_charge, inp.nelec); // mohan move this from setup_estate_pw, 20251128
 
 
     return;

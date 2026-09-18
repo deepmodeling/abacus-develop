@@ -823,7 +823,7 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
 {
     chg_gs.set_rhopw(this->pw_rho);
     const bool kin_den = chg_gs.kin_density(); // mohan add 20251202
-    chg_gs.allocate(this->nspin, kin_den);
+    chg_gs.allocate(this->nspin, kin_den, this->inp_->test_charge, this->inp_->nelec);
     GlobalV::ofs_running << " try to read charge from file : ";
     for (int is = 0; is < this->nspin; ++is)
     {

@@ -1,8 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
-#define private public
-#define protected public
 #include "source_cell/unitcell.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_hamilt/module_xc/xc_functional.h"
@@ -26,13 +24,16 @@ namespace elecstate
 {
 double tmp_ucell_omega = 500.0;
 double tmp_gridecut = 80.0;
-void Set_GlobalV_Default()
-{
-    PARAM.input.nspin = 1;
-    PARAM.input.test_charge = 0;
-    PARAM.input.nelec = 8;
-}
 } // namespace elecstate
+
+/// The Charge methods under test take nspin, test_charge and nelec as
+/// arguments, so the fixture owns them instead of writing the global singleton.
+namespace
+{
+constexpr int test_nspin = 1;
+constexpr int test_charge_verbosity = 0;
+constexpr double test_nelec = 8.0;
+} // namespace
 
 /************************************************
  *  unit test of module_charge/charge.cpp
@@ -67,14 +68,14 @@ class ChargeTest : public ::testing::Test
     std::string output;
     void SetUp() override
     {
-        elecstate::Set_GlobalV_Default();
         ucell = utp.SetUcellInfo();
         charge = new Charge;
         rhopw = new ModulePW::PW_Basis;
         rhopw->initgrids(ucell->lat0, ucell->latvec, elecstate::tmp_gridecut);
-        rhopw->distribute_r();
         rhopw->initparameters(false, elecstate::tmp_gridecut);
-        rhopw->distribute_g();
+        // the documented public sequence (see pw_basis.h): setuptransform()
+        // performs distribute_r() and distribute_g() itself
+        rhopw->setuptransform();
     }
     void TearDown() override
     {
@@ -85,8 +86,8 @@ class ChargeTest : public ::testing::Test
 
 TEST_F(ChargeTest, Constructor)
 {
-    EXPECT_FALSE(charge->allocate_rho);
-    EXPECT_FALSE(charge->allocate_rho_final_scf);
+    EXPECT_FALSE(charge->get_allocate_rho());
+    EXPECT_FALSE(charge->get_allocate_rho_final_scf());
 }
 
 TEST_F(ChargeTest, Allocate)
@@ -102,28 +103,27 @@ TEST_F(ChargeTest, Allocate)
     EXPECT_EQ(rhopw->nrxx, 13824);
     EXPECT_EQ(rhopw->npw, 3143);
     EXPECT_EQ(rhopw->npwtot, 3143);
-    // call Charge::allocate()
-    PARAM.input.test_charge = 2;
-    XC_Functional::func_type = 3;
-    XC_Functional::ked_flag = true;
+    // call Charge::allocate() with the verbose diagnostics branch enabled
+    XC_Functional::set_func_type(3);
+    XC_Functional::set_ked_flag(true);
     charge->set_rhopw(rhopw);
-    EXPECT_FALSE(charge->allocate_rho);
+    EXPECT_FALSE(charge->get_allocate_rho());
     const bool kin_den = charge->kin_density();
-    charge->allocate(PARAM.input.nspin, kin_den);
-    EXPECT_TRUE(charge->allocate_rho);
+    charge->allocate(test_nspin, kin_den, /*test_charge=*/2, test_nelec);
+    EXPECT_TRUE(charge->get_allocate_rho());
     // test if Charge::allocate() be called twice
-    EXPECT_NO_THROW(charge->allocate(PARAM.input.nspin, kin_den));
-    EXPECT_TRUE(charge->allocate_rho);
+    EXPECT_NO_THROW(charge->allocate(test_nspin, kin_den, /*test_charge=*/2, test_nelec));
+    EXPECT_TRUE(charge->get_allocate_rho());
 }
 
 TEST_F(ChargeTest, SumRho)
 {
     charge->set_rhopw(rhopw);
-    EXPECT_FALSE(charge->allocate_rho);
+    EXPECT_FALSE(charge->get_allocate_rho());
     const bool kin_den = charge->kin_density();
-    charge->allocate(PARAM.input.nspin, kin_den);
-    EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
+    charge->allocate(test_nspin, kin_den, test_charge_verbosity, test_nelec);
+    EXPECT_TRUE(charge->get_allocate_rho());
+    int nspin = (test_nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -138,11 +138,11 @@ TEST_F(ChargeTest, SumRho)
 TEST_F(ChargeTest, RenormalizeRho)
 {
     charge->set_rhopw(rhopw);
-    EXPECT_FALSE(charge->allocate_rho);
+    EXPECT_FALSE(charge->get_allocate_rho());
     const bool kin_den = charge->kin_density();
-    charge->allocate(PARAM.input.nspin, kin_den);
-    EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
+    charge->allocate(test_nspin, kin_den, test_charge_verbosity, test_nelec);
+    EXPECT_TRUE(charge->get_allocate_rho());
+    int nspin = (test_nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -150,7 +150,8 @@ TEST_F(ChargeTest, RenormalizeRho)
             charge->rho[is][ir] = 0.1;
         }
     }
-    EXPECT_EQ(PARAM.input.nelec, 8);
+    // guards the 8.0 the assertions below expect from renormalize_rho()
+    EXPECT_DOUBLE_EQ(test_nelec, 8.0);
     charge->set_omega(&ucell->omega);;
     charge->renormalize_rho();
     EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
@@ -159,11 +160,11 @@ TEST_F(ChargeTest, RenormalizeRho)
 TEST_F(ChargeTest, CheckNe)
 {
     charge->set_rhopw(rhopw);
-    EXPECT_FALSE(charge->allocate_rho);
+    EXPECT_FALSE(charge->get_allocate_rho());
     const bool kin_den = charge->kin_density();
-    charge->allocate(PARAM.input.nspin, kin_den);
-    EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
+    charge->allocate(test_nspin, kin_den, test_charge_verbosity, test_nelec);
+    EXPECT_TRUE(charge->get_allocate_rho());
+    int nspin = (test_nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -171,7 +172,8 @@ TEST_F(ChargeTest, CheckNe)
             charge->rho[is][ir] = 0.1;
         }
     }
-    EXPECT_EQ(PARAM.input.nelec, 8);
+    // guards the 8.0 the assertions below expect from renormalize_rho()
+    EXPECT_DOUBLE_EQ(test_nelec, 8.0);
     charge->set_omega(&ucell->omega);;
     charge->renormalize_rho();
     EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
@@ -181,11 +183,11 @@ TEST_F(ChargeTest, CheckNe)
 TEST_F(ChargeTest, SaveRhoBeforeSumBand)
 {
     charge->set_rhopw(rhopw);
-    EXPECT_FALSE(charge->allocate_rho);
+    EXPECT_FALSE(charge->get_allocate_rho());
     const bool kin_den = charge->kin_density();
-    charge->allocate(PARAM.input.nspin, kin_den);
-    EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
+    charge->allocate(test_nspin, kin_den, test_charge_verbosity, test_nelec);
+    EXPECT_TRUE(charge->get_allocate_rho());
+    int nspin = (test_nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -193,22 +195,22 @@ TEST_F(ChargeTest, SaveRhoBeforeSumBand)
             charge->rho[is][ir] = 0.1;
         }
     }
-    EXPECT_EQ(PARAM.input.nelec, 8);
-    XC_Functional::func_type = 3;
-    XC_Functional::ked_flag = true;
+    // guards the 8.0 the assertions below expect from renormalize_rho()
+    EXPECT_DOUBLE_EQ(test_nelec, 8.0);
+    XC_Functional::set_func_type(3);
+    XC_Functional::set_ked_flag(true);
     charge->set_omega(&ucell->omega);;
     charge->renormalize_rho();
-    charge->save_rho_before_sum_band();
+    charge->save_rho_before_sum_band(test_nspin);
     EXPECT_NEAR(charge->cal_rho2ne(charge->rho_save[0]), 8.0, 1e-10);
 }
 
 TEST_F(ChargeTest, InitFinalScf)
 {
     charge->set_rhopw(rhopw);
-    XC_Functional::func_type = 1;
-    XC_Functional::ked_flag = false;
-    PARAM.input.test_charge = 2;
-    charge->init_final_scf();
-    EXPECT_TRUE(charge->allocate_rho_final_scf);
+    XC_Functional::set_func_type(1);
+    XC_Functional::set_ked_flag(false);
+    charge->init_final_scf(test_nspin, /*test_charge=*/2);
+    EXPECT_TRUE(charge->get_allocate_rho_final_scf());
 }
 
