@@ -22,6 +22,7 @@
 #include <pybind11/stl.h>
 
 #include "source_hsolver/diago_david.h"
+#include "source_hsolver/hs_operator.h"
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_cg.h"
 #include "source_base/module_device/memory_op.h"
@@ -384,52 +385,53 @@ struct DiagoCGTraits
 #endif // __ENABLE_ATEN
 
 // ============================================================================
-// Helper Functions for Creating HPsi/SPsi Lambdas
+// HSOperator view of a Python callable, plus tensor helpers for the ATen CG path
 // ============================================================================
 
 /**
- * @brief Create hpsi_func lambda for raw pointer interface (F-style)
+ * @brief The Python matrix-vector callable seen through hsolver::HSOperator.
  *
- * Wraps a Python callable to work with ABACUS raw pointer interface.
- * Handles array layout conversion between Python (row-major) and
- * ABACUS (column-major for Davidson methods).
+ * H is applied by the Python callable mm_op on a column-major (ld_psi x nvec)
+ * array; S is the identity. This is all the Davidson-type solvers need.
  */
 template <typename T>
-auto make_hpsi_func_fstyle(
-    std::function<py::array_t<T>(py::array_t<T>)> mm_op)
+class PyHSOperator : public ::hsolver::HSOperator<T, base_device::DEVICE_CPU>
 {
-    return [mm_op](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
+public:
+    explicit PyHSOperator(std::function<py::array_t<T>(py::array_t<T>)> mm_op)
+        : mm_op_(std::move(mm_op))
+    {
+    }
+
+    void update_k(const int ik) override
+    {
+    }
+
+    void hpsi(const T* x, T* hx, const int ld, const int nvec) const override
+    {
         // Create F-style numpy array (column-major)
-        py::array_t<T, py::array::f_style> psi({ld_psi, nvec});
+        py::array_t<T, py::array::f_style> psi({ld, nvec});
         py::buffer_info buf = psi.request();
         T* ptr = static_cast<T*>(buf.ptr);
-        std::copy(psi_in, psi_in + nvec * ld_psi, ptr);
+        std::copy(x, x + static_cast<size_t>(nvec) * ld, ptr);
 
         // Call Python function
-        py::array_t<T, py::array::f_style> hpsi = mm_op(psi);
+        py::array_t<T, py::array::f_style> hpsi_arr = mm_op_(psi);
 
         // Copy result back
-        py::buffer_info hpsi_buf = hpsi.request();
-        T* hpsi_ptr = static_cast<T*>(hpsi_buf.ptr);
-        std::copy(hpsi_ptr, hpsi_ptr + nvec * ld_psi, hpsi_out);
-    };
-}
+        py::buffer_info hpsi_buf = hpsi_arr.request();
+        const T* hpsi_ptr = static_cast<const T*>(hpsi_buf.ptr);
+        std::copy(hpsi_ptr, hpsi_ptr + static_cast<size_t>(nvec) * ld, hx);
+    }
 
-/**
- * @brief Create spsi_func lambda for raw pointer interface (identity)
- *
- * For non-orthogonal basis, S*psi = psi (identity operation).
- */
-template <typename Traits>
-auto make_spsi_func_identity()
-{
-    using T = typename Traits::T;
-    using syncmem_op = typename Traits::syncmem_op;
+    void spsi(const T* x, T* sx, const int ld, const int nvec) const override
+    {
+        std::copy(x, x + static_cast<size_t>(nvec) * ld, sx);
+    }
 
-    return [](const T* psi_in, T* spsi_out, const int nrow, const int nbands) {
-        syncmem_op()(spsi_out, psi_in, static_cast<size_t>(nbands * nrow));
-    };
-}
+private:
+    std::function<py::array_t<T>(py::array_t<T>)> mm_op_;
+};
 
 #ifdef __ENABLE_ATEN
 /**

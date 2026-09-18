@@ -22,7 +22,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
       - name: Build
+        # TODO: Remove nlohmann-json installation here since Dockerfile will have installed it.
         run: |
+          apt update && apt install -y nlohmann-json3-dev
           export I_MPI_CXX=icpx
           chmod a+x generate_build_info.sh
           cd source

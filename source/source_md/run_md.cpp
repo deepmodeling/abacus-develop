@@ -13,6 +13,9 @@
 #include "md_func.h"
 #include "source_base/global_file.h"
 #include "source_base/timer.h"
+#ifdef __JSON
+#include "source_io/module_json/output_info.h"
+#endif
 #include "source_io/module_output/print_info.h"
 #include "msst.h"
 #include "nhchain.h"
@@ -116,6 +119,15 @@ void md_line(MDCell& mdcell,
     /// md cycle, mohan update 2026-01-04, change '<=' to '<'
     while ((mdrun->step_ + mdrun->step_rst_) < param_in.mdp.md_nstep && !mdrun->stop)
     {
+#ifdef __JSON
+        // JSON output currently follows the UnitCell-backed electronic-structure path.
+        // Start one output record before the solver appends SCF information for this MD step.
+        if (mdcell.has_backing_unitcell())
+        {
+            Json::init_output_array_obj();
+        }
+#endif
+
         if (mdrun->step_ == 0)
         {
             mdrun->setup(p_esolver, param_in.globalv.global_readin_dir, decomp);

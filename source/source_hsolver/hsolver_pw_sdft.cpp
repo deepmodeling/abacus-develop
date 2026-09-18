@@ -7,6 +7,7 @@
 #include "source_base/tool_title.h"
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_estate/elecstate_tools.h"
+#include "source_hamilt/hamilt_hs_adapter.h"
 
 #include <algorithm>
 
@@ -52,11 +53,14 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This type of eigensolver is not supported!");
     }
 
+    // the iterative eigensolvers see the Hamiltonian only through this operator
+    hamilt::HamiltHSOperator<T, Device> op(pHamilt, wfc_basis);
+
     // part of KSDFT to get KS orbitals
     for (int ik = 0; ik < nks; ++ik)
     {
         ModuleBase::timer::start("HSolverPW_SDFT", "solve_KS");
-        pHamilt->updateHk(ik);
+        op.update_k(ik);
         if (nbands > 0 && this->ks_run)
         {
             /// update psi pointer for each k point
@@ -65,7 +69,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
             this->update_precondition(precondition, ik, this->wfc_basis->npwk[ik], pes->pot->get_vl_of_0());
             /// solve eigenvector and eigenvalue for H(k)
             double* p_eigenvalues = &(pes->ekb(ik, 0));
-            this->hamiltSolvePsiK(pHamilt, psi, precondition, p_eigenvalues, nks);
+            this->hamiltSolvePsiK(op, psi, precondition, p_eigenvalues, nks);
         }
 
 #ifdef __MPI

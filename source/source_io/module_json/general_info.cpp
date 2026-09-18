@@ -2,14 +2,18 @@
 
 #include "para_json.h"
 #include "abacusjson.h"
+#include "source_io/module_parameter/parameter.h"
+
+#ifdef __JSON
+#include <nlohmann/json.hpp>
+#endif
 #include "source_base/parallel_global.h"
 #include "source_main/version.h"
 
-// Add json objects to gener_info
 namespace Json
 {
 
-#ifdef __RAPIDJSON
+#ifdef __JSON
 void gen_general_info(const Parameter& param)
 {
 
@@ -43,29 +47,18 @@ void gen_general_info(const Parameter& param)
     int omp_num = 1;
 #endif
 
-    AbacusJson::add_json({"general_info", "version"}, version, false);
-    AbacusJson::add_json({"general_info", "commit"}, commit, false);
-    AbacusJson::add_json({"general_info", "device"}, param.inp.device, false);
-    AbacusJson::add_json({"general_info", "mpi_num"}, mpi_num, false);
-    AbacusJson::add_json({"general_info", "omp_num"}, omp_num, false);
-    AbacusJson::add_json({"general_info", "pseudo_dir"}, param.inp.pseudo_dir, false);
-    AbacusJson::add_json({"general_info", "orbital_dir"}, param.inp.orbital_dir, false);
-    AbacusJson::add_json({"general_info", "stru_file"}, param.globalv.global_in_stru, false);
-    AbacusJson::add_json({"general_info", "kpt_file"}, param.inp.kpoint_file, false);
-    AbacusJson::add_json({"general_info", "start_time"}, start_time_str, false);
-    AbacusJson::add_json({"general_info", "end_time"}, end_time_str, false);
-
-    // AbacusJson::add_Json(version,false,"general_info", "version");
-    // AbacusJson::add_Json(commit,false,"general_info", "commit");
-    // AbacusJson::add_Json(param.inp.device,false,"general_info", "device");
-    // AbacusJson::add_Json(mpi_num,false,"general_info", "mpi_num");
-    // AbacusJson::add_Json(omp_num,false,"general_info", "omp_num");
-    // AbacusJson::add_Json(param.inp.pseudo_dir,false,"general_info", "pseudo_dir");
-    // AbacusJson::add_Json(param.inp.orbital_dir,false,"general_info", "orbital_dir");
-    // AbacusJson::add_Json(param.inp.stru_file,false,"general_info", "stru_file");
-    // AbacusJson::add_Json(param.inp.kpoint_file,false,"general_info", "kpt_file");
-    // AbacusJson::add_Json(start_time_str,false,"general_info", "start_time");
-    // AbacusJson::add_Json(end_time_str,false,"general_info", "end_time");
+    AbacusJson::set_json({"general_info"},
+                         {{"version", version},
+                          {"commit", commit},
+                          {"device", param.inp.device},
+                          {"mpi_num", mpi_num},
+                          {"omp_num", omp_num},
+                          {"pseudo_dir", param.inp.pseudo_dir},
+                          {"orbital_dir", param.inp.orbital_dir},
+                          {"stru_file", param.globalv.global_in_stru},
+                          {"kpt_file", param.inp.kpoint_file},
+                          {"start_time", start_time_str},
+                          {"end_time", end_time_str}});
 }
 #endif
 } // namespace Json

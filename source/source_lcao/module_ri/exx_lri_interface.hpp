@@ -121,9 +121,9 @@ void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
         const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
         this->symrot_.find_irreducible_sector(
             ucell.symm, ucell.atoms, ucell.st,
-            RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
+            RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat, PARAM.globalv.global_out_dir);
         this->symrot_.set_abfs_Lmax(Exx_Abfs::Construct_Orbs::get_Lmax(this->exx_ptr->abfs));
-        this->symrot_.cal_Ms(kv, ucell, pv);
+        this->symrot_.cal_Ms(kv, ucell, pv, PARAM.inp.nspin);
     }
 }
 

@@ -99,6 +99,10 @@ vdw_d4_model d4    # or d4s for the smooth D4S model
 
 If `vdw_d4_xc` is set to `default`, ABACUS will infer the functional name from `dft_functional` or pseudopotential metadata and pass it to the DFT-D4 library. The `vdw_d4_model` keyword selects the dispersion model inside the DFT-D4 library; the default is `d4`, while `d4s` enables the smooth D4S model.
 
+## Build with JSON support
+
+ABACUS uses [nlohmann-json](https://github.com/nlohmann/json) for optional JSON output. To build ABACUS with JSON support, pass `-DENABLE_JSON=ON` to CMake.
+
 ## Build Unit Tests
 
 To build tests for ABACUS, define `BUILD_TESTING` flag. You can also specify path to local installation of [Googletest](https://github.com/google/googletest) by setting `GTEST_DIR` flags. If not found in local, the configuration process will try to download it automatically.

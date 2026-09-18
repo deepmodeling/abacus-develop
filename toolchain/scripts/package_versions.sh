@@ -113,8 +113,8 @@ libcomm_sha256="d7b991465d98d7b715b484d86880bf3525b9bf0cc62c3e5d38b0f6d140f6b9d4
 libri_ver="b0eff7a"
 libri_sha256="bee9df54e0d827942524640897c3a57c0c738d2db6b2d73a09ab6c054bef94ea"
 
-rapidjson_ver="24b5e7a"
-rapidjson_sha256="dcb57b11036cb8fc6b2a57a6aded68d52e9cfe543811bf4fa8941087f84e72d0"
+json_ver="3.12.0"
+json_sha256="42f6e95cad6ec532fd372391373363b62a14af6d771056dbfc86160e6dfff7aa"
 
 # NEP (Neural Evolution Potential) - CPU version
 nep_ver="629ec5d"
@@ -260,9 +260,9 @@ load_package_vars() {
             libri_ver="${libri_ver}"
             libri_sha256="${libri_sha256}"
             ;;
-        "rapidjson")
-            rapidjson_ver="${rapidjson_ver}"
-            rapidjson_sha256="${rapidjson_sha256}"
+        "json")
+            json_ver="${json_ver}"
+            json_sha256="${json_sha256}"
             ;;
         "nep")
             nep_ver="${nep_ver}"

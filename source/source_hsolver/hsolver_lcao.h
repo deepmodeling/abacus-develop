@@ -2,7 +2,7 @@
 #define HSOLVERLCAO_H
 
 #include "source_estate/elecstate.h"
-#include "source_hamilt/hamilt.h"
+#include "source_hsolver/hs_matrix.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
 #include "source_estate/module_charge/charge.h" // mohan add 20251024
@@ -27,7 +27,8 @@ class HSolverLCAO
         : ParaV(ParaV_in), method(method_in), kpar_lcao(kpar_lcao_in), nlocal(nlocal_in), nbands(nbands_in),
           nelec(nelec_in), use_gpu(use_gpu_in), world_nproc(world_nproc_in), world_rank(world_rank_in){};
 
-    void solve(hamilt::Hamilt<TK>* pHamilt,
+    /// @param hs supplies H(k) and S(k) of the Hamiltonian for each k point
+    void solve(HSMatrix<TK>& hs,
                psi::Psi<TK>& psi,
                elecstate::ElecState* pes,
 			   elecstate::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
@@ -36,16 +37,19 @@ class HSolverLCAO
 			   const bool skip_charge);
 
   private:
-    void hamiltSolvePsiK(hamilt::Hamilt<TK>* hm, psi::Psi<TK>& psi, double* eigenvalue); // for kpar_lcao == 1
+    void hamiltSolvePsiK(ModuleBase::MatrixBlock<TK>& hk,
+                         ModuleBase::MatrixBlock<TK>& sk,
+                         psi::Psi<TK>& psi,
+                         double* eigenvalue); // for kpar_lcao == 1
 
-    void parakSolve(hamilt::Hamilt<TK>* pHamilt,
+    void parakSolve(HSMatrix<TK>& hs,
                     psi::Psi<TK>& psi,
                     elecstate::ElecState* pes,
                     const int kpar,
                     const int nspin); // for kpar_lcao > 1
 
     // The solving algorithm using cusolver is different from others, so a separate function is needed
-    void parakSolve_cusolver(hamilt::Hamilt<TK>* pHamilt,
+    void parakSolve_cusolver(HSMatrix<TK>& hs,
                              psi::Psi<TK>& psi,
                              elecstate::ElecState* pes);
 

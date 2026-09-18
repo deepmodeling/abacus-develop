@@ -2,7 +2,7 @@
 #include <vector>
 #include <map>
 #include <set>
-#include "source_lcao/module_ri/abfs_vector3_order.h"
+#include "source_base/vector3.h"
 #include "source_base/matrix3.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_cell/klist.h"
@@ -12,7 +12,7 @@ namespace ModuleSymmetry
     using Tap = std::pair<int, int>;
     using TC = std::array<int, 3>;
     using TapR = std::pair<Tap, TC>;
-    using TCdouble = Abfs::Vector3_Order<double>;
+    using TCdouble = ModuleBase::Vector3<double>;
 
     class Irreducible_Sector
     {
@@ -54,13 +54,18 @@ namespace ModuleSymmetry
 
         //--------------------------------------------------------------------------------
         /// The main function to find irreducible sector: {abR}
+        /// @param output_dir  if non-empty, write_irreducible_sector() dumps a debug listing to
+        ///                    <output_dir>/irreducible_sector.txt (callers pass the run's global
+        ///                    output directory setting); kept as an explicit argument rather than
+        ///                    reading the global config directly so this LibRI-free class has no
+        ///                    module_parameter link dependency.
         void find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st,
-            const std::vector<TC>& Rs, const TC& period, const Lattice& lat);
+            const std::vector<TC>& Rs, const TC& period, const Lattice& lat, const std::string& output_dir = "");
         const std::map<Tap, std::set<TC>>& get_irreducible_sector()const { return this->irreducible_sector_; }
         // const std::map<int, std::set<std::pair<int, TC>>> convirt_irreducible_sector() {};
         //--------------------------------------------------------------------------------
 
-        /// Perfoming {R|t} to atom position r in the R=0 lattice, we get Rr+t, which may get out of R=0 lattice, 
+        /// Perfoming {R|t} to atom position r in the R=0 lattice, we get Rr+t, which may get out of R=0 lattice,
         /// whose image in R=0 lattice is r'=Rr+t-O. This function is to get O for each atom and each symmetry operation.
         /// the range of direct position is [-0.5, 0.5).
         TCdouble get_return_lattice(const Symmetry& symm,
@@ -104,7 +109,7 @@ namespace ModuleSymmetry
 
         void output_full_map_to_irreducible_sector(const int nat);
         void output_sector_star();
-        void write_irreducible_sector();
+        void write_irreducible_sector(const std::string& output_dir);
 
         //--------------------------------------------------------------------------------
         /// The sub functions judge special symmetry
@@ -140,5 +145,6 @@ namespace ModuleSymmetry
         int bvk_nsym_;
 
         friend class Symmetry_rotation;
+        friend class Symmetry_rotation_k;
     };
 }

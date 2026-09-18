@@ -49,6 +49,7 @@ double& PW_Basis_K::getgk2(const int ik, const int igl) const {
 
 #include "source_hsolver/diago_cg.h"
 #include "source_hsolver/diago_david.h"
+#include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_iter_assist.h"
 
 
@@ -56,7 +57,13 @@ namespace hsolver {
 
 template <typename T, typename Device>
 DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
-                            const std::string& calculation) {
+                            const std::string& calculation)
+#ifdef __MPI
+    : diag_comm_(MPI_COMM_SELF, 0, 1)
+#else
+    : diag_comm_(0, 1)
+#endif
+{
     basis_type_ = basis_type;
     calculation_ = calculation;
     this->one_ = new T(static_cast<T>(1.0));
@@ -68,17 +75,15 @@ template <typename T, typename Device>
 DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
                             const std::string& calculation,
                             const bool& need_subspace,
-                            const SubspaceFunc& subspace_func,
+                            const diag_comm_info& diag_comm,
                             const Real& pw_diag_thr,
-                            const int& pw_diag_nmax,
-                            const int& nproc_in_pool) {
+                            const int& pw_diag_nmax)
+    : diag_comm_(diag_comm) {
     basis_type_ = basis_type;
     calculation_ = calculation;
     need_subspace_ = need_subspace;
-    subspace_func_ = subspace_func;
     pw_diag_thr_ = pw_diag_thr;
     pw_diag_nmax_ = pw_diag_nmax;
-    nproc_in_pool_ = nproc_in_pool;
     this->one_ = new T(static_cast<T>(1.0));
     this->zero_ = new T(static_cast<T>(0.0));
     this->neg_one_ = new T(static_cast<T>(-1.0));
@@ -92,8 +97,7 @@ DiagoCG<T, Device>::~DiagoCG() {
 }
 
 template <typename T, typename Device>
-double DiagoCG<T, Device>::diag(const HPsiFunc& hpsi_func,
-                                const SPsiFunc& spsi_func,
+double DiagoCG<T, Device>::diag(const HSOperator<T, Device>& op,
                                 const int ld_psi,
                                 const int nband,
                                 const int dim,
@@ -146,8 +150,7 @@ DiagoDavid<T, Device>::~DiagoDavid() {
 }
 
 template <typename T, typename Device>
-int DiagoDavid<T, Device>::diag(const std::function<void(T*, T*, const int, const int)>& hpsi_func,
-                                const std::function<void(T*, T*, const int, const int)>& spsi_func,
+int DiagoDavid<T, Device>::diag(const HSOperator<T, Device>& op,
                                 const int ld_psi,
                                 T* psi_in,
                                 Real* eigenvalue_in,

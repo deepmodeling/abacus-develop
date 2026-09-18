@@ -6,6 +6,38 @@
 #include <RI/physics/symmetry/Symmetry_Rotation.h>
 namespace ModuleSymmetry
 {
+    /// rotmat_Slm_ (inherited from Symmetry_rotation_k, shared with the LibRI-free k-space
+    /// restoration) is stored as ModuleBase::ComplexMatrix; convert to RI::Tensor here, at the
+    /// boundary of the real-space (RI::Tensor atom-pair) rotation code that needs that type.
+    inline RI::Tensor<std::complex<double>> rotmat_Slm_to_tensor(const ModuleBase::ComplexMatrix& block)
+    {
+        RI::Tensor<std::complex<double>> t({ static_cast<size_t>(block.nr), static_cast<size_t>(block.nc) });
+        for (int i = 0; i < block.nr; ++i) {
+            for (int j = 0; j < block.nc; ++j) {
+                t(i, j) = block(i, j);
+        } }
+        return t;
+    }
+
+    /// Cached (isym, l) lookup into rotmat_Slm_tensor_: rebuilt only when rotmat_Slm_version_
+    /// (bumped by cal_rotmat_Slm, i.e. once per ion step) changes, instead of reconverting the
+    /// same block on every set_rotation_matrix/set_rotation_matrix_abf call (once per atom pair).
+    inline const RI::Tensor<std::complex<double>>& Symmetry_rotation::get_rotmat_Slm_tensor(const int isym, const int l)const
+    {
+        if (this->rotmat_Slm_tensor_version_ != this->rotmat_Slm_version_)
+        {
+            this->rotmat_Slm_tensor_.resize(this->rotmat_Slm_.size());
+            for (size_t is = 0; is < this->rotmat_Slm_.size(); ++is)
+            {
+                this->rotmat_Slm_tensor_[is].resize(this->rotmat_Slm_[is].size());
+                for (size_t il = 0; il < this->rotmat_Slm_[is].size(); ++il) {
+                    this->rotmat_Slm_tensor_[is][il] = rotmat_Slm_to_tensor(this->rotmat_Slm_[is][il]);
+            } }
+            this->rotmat_Slm_tensor_version_ = this->rotmat_Slm_version_;
+        }
+        return this->rotmat_Slm_tensor_[isym][l];
+    }
+
     /// Elementwise complex conjugation used by the time-reversal branch of restore_HR_nspin4.
     /// Overloaded (not specialized) so a real Tdata compiles to the identity.
     inline float conj_elem(const float v) { return v; }
@@ -268,7 +300,7 @@ namespace ModuleSymmetry
         {
             int l = a.iw2l[iw];
             int nm = 2 * l + 1;
-            set_block(iw, iw, this->rotmat_Slm_[isym][l], T);
+            set_block(iw, iw, this->get_rotmat_Slm_tensor(isym, l), T);
             iw += nm;
         }
         return T;
@@ -328,7 +360,7 @@ namespace ModuleSymmetry
             int nm = 2 * L + 1;
             for (int N = 0;N < this->abfs_l_nchi_[type][L];++N)
             {
-                set_block(iw, iw, this->rotmat_Slm_[isym][L], T);
+                set_block(iw, iw, this->get_rotmat_Slm_tensor(isym, L), T);
                 iw += nm;
                 // std::cout << "L=" << L << ", N=" << N << ", iw=" << iw << "\n";
             }
