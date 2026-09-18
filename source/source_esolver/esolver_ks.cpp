@@ -289,7 +289,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     // print energies
     elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho,
-    dkin, duration, diag_ethr, 0, true, this->ds_rms_);
+    dkin, duration, *this->inp_, PARAM.globalv.two_fermi, diag_ethr, 0, true, this->ds_rms_);
 
 
 #ifdef __RAPIDJSON
