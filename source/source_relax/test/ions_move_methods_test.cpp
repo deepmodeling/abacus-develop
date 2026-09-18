@@ -8,11 +8,7 @@
 #include <iterator>
 #include <string>
 #include <vector>
-#define private public
-#define protected public
 #include "source_relax/ions_move_methods.h"
-#undef protected
-#undef private
 /************************************************
  *  unit tests of class Ions_Move_Methods
  ***********************************************/
@@ -223,7 +219,7 @@ TEST_F(IonsMoveMethodsTest, GetTrustRadius)
 // Test the get_update_iter() function
 TEST_F(IonsMoveMethodsTest, GetUpdateIter)
 {
-    imm.update_iter_ = 4;
+    imm.set_update_iter(4);
 
     EXPECT_EQ(imm.get_update_iter(), 4);
 }
@@ -234,58 +230,59 @@ TEST_F(IonsMoveMethodsTest, ResetAfterCellChange)
     std::ofstream ofs(log_file);
 
     imm.allocate(natom, "bfgs", "2");
-    imm.converged_ = true;
-    imm.update_iter_ = 4;
-    imm.etot_info_ = {-1.0, -2.0};
-    imm.bfgs.first_step = false;
-    imm.bfgs.save_flag = true;
-    imm.bfgs.tr_min_hit = true;
-    std::fill(imm.bfgs.pos.begin(), imm.bfgs.pos.end(), 1.0);
-    std::fill(imm.bfgs.pos_p.begin(), imm.bfgs.pos_p.end(), 2.0);
-    std::fill(imm.bfgs.grad.begin(), imm.bfgs.grad.end(), 3.0);
-    std::fill(imm.bfgs.grad_p.begin(), imm.bfgs.grad_p.end(), 4.0);
-    std::fill(imm.bfgs.move.begin(), imm.bfgs.move.end(), 5.0);
-    std::fill(imm.bfgs.move_p.begin(), imm.bfgs.move_p.end(), 6.0);
+    imm.set_converged(true);
+    imm.set_update_iter(4);
+    imm.get_etot_info() = {-1.0, -2.0};
+    Ions_Move_BFGS& bfgs = imm.get_bfgs();
+    bfgs.get_first_step() = false;
+    bfgs.get_save_flag() = true;
+    bfgs.get_tr_min_hit() = true;
+    std::fill(bfgs.get_pos().begin(), bfgs.get_pos().end(), 1.0);
+    std::fill(bfgs.get_pos_p().begin(), bfgs.get_pos_p().end(), 2.0);
+    std::fill(bfgs.get_grad().begin(), bfgs.get_grad().end(), 3.0);
+    std::fill(bfgs.get_grad_p().begin(), bfgs.get_grad_p().end(), 4.0);
+    std::fill(bfgs.get_move().begin(), bfgs.get_move().end(), 5.0);
+    std::fill(bfgs.get_move_p().begin(), bfgs.get_move_p().end(), 6.0);
     Ions_Move_Basic::trust_radius = 0.3;
     Ions_Move_Basic::trust_radius_old = 0.2;
 
     imm.reset_after_cell_change({"bfgs", "2"}, ofs);
 
-    EXPECT_FALSE(imm.converged_);
-    EXPECT_EQ(imm.update_iter_, 0);
-    EXPECT_THAT(imm.etot_info_, testing::Each(0.0));
-    EXPECT_TRUE(imm.bfgs.first_step);
-    EXPECT_FALSE(imm.bfgs.save_flag);
-    EXPECT_FALSE(imm.bfgs.tr_min_hit);
-    EXPECT_THAT(imm.bfgs.pos, testing::Each(0.0));
-    EXPECT_THAT(imm.bfgs.pos_p, testing::Each(0.0));
-    EXPECT_THAT(imm.bfgs.grad, testing::Each(0.0));
-    EXPECT_THAT(imm.bfgs.grad_p, testing::Each(0.0));
-    EXPECT_THAT(imm.bfgs.move, testing::Each(0.0));
-    EXPECT_THAT(imm.bfgs.move_p, testing::Each(0.0));
+    EXPECT_FALSE(imm.get_converged());
+    EXPECT_EQ(imm.get_update_iter(), 0);
+    EXPECT_THAT(imm.get_etot_info(), testing::Each(0.0));
+    EXPECT_TRUE(bfgs.get_first_step());
+    EXPECT_FALSE(bfgs.get_save_flag());
+    EXPECT_FALSE(bfgs.get_tr_min_hit());
+    EXPECT_THAT(bfgs.get_pos(), testing::Each(0.0));
+    EXPECT_THAT(bfgs.get_pos_p(), testing::Each(0.0));
+    EXPECT_THAT(bfgs.get_grad(), testing::Each(0.0));
+    EXPECT_THAT(bfgs.get_grad_p(), testing::Each(0.0));
+    EXPECT_THAT(bfgs.get_move(), testing::Each(0.0));
+    EXPECT_THAT(bfgs.get_move_p(), testing::Each(0.0));
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
     {
         for (int j = 0; j < Ions_Move_Basic::dim; ++j)
         {
-            EXPECT_DOUBLE_EQ(imm.bfgs.inv_hess(i, j), i == j ? 1.0 : 0.0);
+            EXPECT_DOUBLE_EQ(bfgs.get_inv_hess()(i, j), i == j ? 1.0 : 0.0);
         }
     }
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, 0.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius_old, 0.0);
 
     imm.allocate(natom, "bfgs", "1");
-    imm.converged_ = true;
-    imm.update_iter_ = 3;
-    imm.etot_info_ = {-3.0, -4.0};
-    ASSERT_TRUE(imm.bfgs_trad.is_initialized);
+    imm.set_converged(true);
+    imm.set_update_iter(3);
+    imm.get_etot_info() = {-3.0, -4.0};
+    ASSERT_TRUE(imm.get_bfgs_trad().get_is_initialized());
 
     imm.reset_after_cell_change({"bfgs", "1"}, ofs);
     ofs.close();
 
-    EXPECT_FALSE(imm.converged_);
-    EXPECT_EQ(imm.update_iter_, 0);
-    EXPECT_THAT(imm.etot_info_, testing::Each(0.0));
-    EXPECT_FALSE(imm.bfgs_trad.is_initialized);
+    EXPECT_FALSE(imm.get_converged());
+    EXPECT_EQ(imm.get_update_iter(), 0);
+    EXPECT_THAT(imm.get_etot_info(), testing::Each(0.0));
+    EXPECT_FALSE(imm.get_bfgs_trad().get_is_initialized());
 
     std::ifstream ifs(log_file);
     const std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
