@@ -2524,6 +2524,103 @@ void run_sternheimer_weak_q_unit(
     raw.shard_count = std::getenv("WEAK_Q_SHARD_COUNT");
     const auto unit = SternheimerWeakQUnit::parse(raw, occupied_counts, nfreq, channels);
     const bool parallel_benchmark = env_is_true("WEAK_Q_PARALLEL_BENCHMARK");
+    const bool use_weak_q_spacegroup = env_is_true("WEAK_Q_USE_SPACEGROUP_SYMMETRY");
+    if (use_weak_q_spacegroup && parallel_benchmark)
+        throw std::invalid_argument("Weak-q space-group reduction is incompatible with the parallel benchmark.");
+    std::vector<SternheimerFixedQKRoute> weak_symmetry_routes;
+    SternheimerWeakQSymmetrySource weak_symmetry_source;
+    int weak_discrete_spatial_order = 1;
+    int weak_fixed_q_little_group_order = 1;
+    if (use_weak_q_spacegroup)
+    {
+        if (PARAM.inp.symmetry != "1")
+            throw std::invalid_argument("Weak-q space-group reduction requires PBE symmetry=1.");
+        std::vector<SternheimerFDReducedRotation> reduced_rotations;
+        reduced_rotations.reserve(static_cast<std::size_t>(ucell.symm.nrotk));
+        for (int isym = 0; isym != ucell.symm.nrotk; ++isym)
+        {
+            const auto& rotation = ucell.symm.gmatrix[isym];
+            reduced_rotations.push_back({{{rotation.e11, rotation.e12, rotation.e13},
+                                          {rotation.e21, rotation.e22, rotation.e23},
+                                          {rotation.e31, rotation.e32, rotation.e33}}});
+        }
+        const auto fine_grid_operations
+            = sternheimer_fd_stencil_symmetry_indices(fine_grid.grid,
+                                                       PARAM.inp.sternheimer_fd_order,
+                                                       reduced_rotations);
+        const auto coarse_grid_operations
+            = sternheimer_fd_stencil_symmetry_indices(coarse_grid.grid,
+                                                       PARAM.inp.sternheimer_fd_order,
+                                                       reduced_rotations);
+        std::vector<int> discrete_spatial_operations;
+        std::copy_if(fine_grid_operations.begin(),
+                     fine_grid_operations.end(),
+                     std::back_inserter(discrete_spatial_operations),
+                     [&](const int isym) {
+                         return std::find(coarse_grid_operations.begin(),
+                                          coarse_grid_operations.end(),
+                                          isym)
+                                != coarse_grid_operations.end();
+                     });
+        weak_discrete_spatial_order = static_cast<int>(discrete_spatial_operations.size());
+        const auto permutations = build_sternheimer_fixed_q_little_group_permutations(
+            ucell, records, response_plan.qpoint, discrete_spatial_operations);
+        weak_fixed_q_little_group_order = static_cast<int>(permutations.size());
+        std::vector<std::vector<int>> index_permutations;
+        index_permutations.reserve(permutations.size());
+        for (const auto& permutation : permutations)
+            index_permutations.push_back(permutation.mapped_index_by_full_k);
+        const auto orbits = build_sternheimer_fixed_q_k_orbits_from_permutations(
+            static_cast<int>(records.size()), index_permutations);
+        for (const auto& orbit : orbits)
+        {
+            for (const int member_ik_full : orbit.members)
+            {
+                const auto route = std::find_if(
+                    permutations.begin(), permutations.end(), [&](const auto& operation) {
+                        return operation.mapped_index_by_full_k[
+                                   static_cast<std::size_t>(member_ik_full)]
+                               == orbit.representative_ik_full;
+                    });
+                if (route == permutations.end())
+                    throw std::runtime_error(
+                        "A weak-q space-group orbit member has no inverse route to its representative.");
+                weak_symmetry_routes.push_back(
+                    {response_plan.iq,
+                     orbit.representative_ik_full,
+                     member_ik_full,
+                     route->spatial_isym,
+                     route->time_reversal,
+                     route->fold_G_by_full_k[static_cast<std::size_t>(member_ik_full)]});
+            }
+        }
+        weak_symmetry_source = select_sternheimer_weak_q_symmetry_source(
+            response_plan.iq, unit.source_k, orbits, weak_symmetry_routes);
+        validate_sternheimer_weak_q_symmetry_band_coverage(
+            unit.band_begin, unit.band_end, occupied_counts.at(static_cast<std::size_t>(unit.source_k - 1)));
+        if (!weak_symmetry_source.source_is_representative)
+        {
+            const std::string skipped_stem = unit.stem(response_plan.iq);
+            std::ofstream skipped(skipped_stem + "_unit.dat");
+            if (!skipped)
+                throw std::runtime_error("Cannot open weak-q nonrepresentative skip audit.");
+            skipped << "format_version 1\nstatus diagnostic_only\nphysical_result no\n"
+                    << "full_q_response no\nreader_v1 no\nsymmetry_skipped_nonrepresentative yes\n"
+                    << "iq " << response_plan.iq << "\nsource_k " << unit.source_k
+                    << "\nrepresentative_k " << weak_symmetry_source.representative_ik_full + 1
+                    << "\norbit_size " << weak_symmetry_source.orbit_size
+                    << "\ndiscrete_spatial_group_order " << weak_discrete_spatial_order
+                    << "\nfixed_q_little_group_order " << weak_fixed_q_little_group_order
+                    << "\nresponse_equations 0\nunit_complete yes\n";
+            for (const auto& route : weak_symmetry_source.inverse_routes)
+                skipped << "fixed_q_route " << route.iq << ' ' << route.representative_ik_full << ' '
+                        << route.member_ik_full << ' ' << route.spatial_isym << ' '
+                        << static_cast<int>(route.time_reversal) << ' ' << route.fold_G[0] << ' '
+                        << route.fold_G[1] << ' ' << route.fold_G[2] << '\n';
+            skipped.close();
+            return;
+        }
+    }
     auto owned_columns = unit.columns();
     if (parallel_benchmark)
     {
@@ -2590,6 +2687,20 @@ void run_sternheimer_weak_q_unit(
             << "\ncoulomb_singular_component "
             << (gamma_finite_part ? "removed_2pi_over_q_planar_constant" : "none")
             << "\nanalytic_gamma_head_required " << (gamma_finite_part ? "yes" : "no") << '\n';
+        if (use_weak_q_spacegroup)
+        {
+            out << "weak_q_spacegroup yes\ndiscrete_spatial_group_order "
+                << weak_discrete_spatial_order << "\nfixed_q_little_group_order "
+                << weak_fixed_q_little_group_order << "\nsource_k_is_representative "
+                << (weak_symmetry_source.source_is_representative ? "yes" : "no")
+                << "\nrepresentative_k " << weak_symmetry_source.representative_ik_full + 1
+                << "\norbit_size " << weak_symmetry_source.orbit_size << '\n';
+            for (const auto& route : weak_symmetry_source.inverse_routes)
+                out << "fixed_q_route " << route.iq << ' ' << route.representative_ik_full << ' '
+                    << route.member_ik_full << ' ' << route.spatial_isym << ' '
+                    << static_cast<int>(route.time_reversal) << ' ' << route.fold_G[0] << ' '
+                    << route.fold_G[1] << ' ' << route.fold_G[2] << '\n';
+        }
     };
     const auto reference_sha256 = reference_digest.finish();
     siab::Sha256 auxiliary_digest;
@@ -4088,7 +4199,13 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
     const SternheimerABACUSFDGridData grid_data
         = use_parallel_grid_mpi ? make_sternheimer_fd_full_grid(response_pw_basis)
                                 : make_sternheimer_fd_grid(response_pw_basis);
-    const bool use_symmetry_partial_response = PARAM.inp.symmetry == "1" && !use_weak_q_unit;
+    // Keep PBE/KS symmetry independent from response-equation symmetry.  This
+    // switch makes A/B validation compare the same KS reference on both arms;
+    // it is also useful when an external driver must disable only response
+    // representative reduction without changing the SCF calculation.
+    const bool response_symmetry_disabled = env_is_true("ABACUS_STERNHEIMER_DISABLE_RESPONSE_SYMMETRY");
+    const bool use_symmetry_partial_response
+        = PARAM.inp.symmetry == "1" && !use_weak_q_unit && !response_symmetry_disabled;
     const bool write_kresolved_diagnostic
         = !use_weak_q_unit && !use_symmetry_partial_response && env_is_true(kKResolvedDiagnosticEnv);
     const bool write_partial_kresolved = use_symmetry_partial_response || write_kresolved_diagnostic;
@@ -4112,8 +4229,9 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                           {rotation.e31, rotation.e32, rotation.e33}}});
         }
         const auto discrete_spatial_operations
-            = sternheimer_fd_second_order_stencil_symmetry_indices(grid_data.grid,
-                                                                    reduced_rotations);
+            = sternheimer_fd_stencil_symmetry_indices(grid_data.grid,
+                                                       PARAM.inp.sternheimer_fd_order,
+                                                       reduced_rotations);
         fixed_q_discrete_spatial_order = static_cast<int>(discrete_spatial_operations.size());
         const auto qstar_permutations = build_sternheimer_discrete_qstar_permutations(
             ucell, response_kpoints, discrete_spatial_operations);
@@ -4184,9 +4302,13 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
         = std::all_of(response_plan.qpoint.begin(), response_plan.qpoint.end(), [q_tolerance](const double coordinate) {
               return std::abs(coordinate) <= q_tolerance;
           });
-    const double massidda_chi = gamma_qpoint
-                                    ? Singular_Value::cal_massidda(ucell, response_kmesh, 2, 1.0, 5, 1.0e-4)
-                                    : 0.0;
+    const double massidda_chi = !gamma_qpoint
+                                    ? 0.0
+                                    : (sternheimer_periodic_gamma_uses_2d_massidda(
+                                           response_plan.qpoint, PARAM.inp.exx_ewald_dimension)
+                                           ? Singular_Value::cal_massidda_2d(ucell, response_kmesh, 1.0, 5, 1.0e-4)
+                                           : Singular_Value::cal_massidda(
+                                                 ucell, response_kmesh, 2, 1.0, 5, 1.0e-4));
     const double gamma_inverse_k2
         = sternheimer_periodic_gamma_inverse_k2(response_plan.qpoint,
                                                  PARAM.inp.exx_singularity_correction,

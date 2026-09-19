@@ -525,6 +525,133 @@ inline std::vector<SternheimerFixedQKOrbit> build_sternheimer_fixed_q_k_orbits_f
     return orbits;
 }
 
+struct SternheimerWeakQSymmetrySource
+{
+    int iq = 0;
+    int source_ik_full = -1;
+    int representative_ik_full = -1;
+    bool source_is_representative = false;
+    int orbit_size = 0;
+    std::vector<SternheimerFixedQKRoute> inverse_routes;
+};
+
+inline SternheimerWeakQSymmetrySource select_sternheimer_weak_q_symmetry_source(
+    const int iq,
+    const int source_k_one_based,
+    const std::vector<SternheimerFixedQKOrbit>& orbits,
+    const std::vector<SternheimerFixedQKRoute>& routes)
+{
+    if (iq <= 0 || source_k_one_based <= 0 || orbits.empty() || routes.empty())
+    {
+        throw std::invalid_argument(
+            "Weak-q Sternheimer symmetry requires a positive q/source-k index and nonempty routes.");
+    }
+
+    std::vector<int> member_to_representative;
+    for (const auto& orbit: orbits)
+    {
+        if (orbit.representative_ik_full < 0 || orbit.members.empty()
+            || std::find(orbit.members.begin(), orbit.members.end(), orbit.representative_ik_full)
+                   == orbit.members.end())
+        {
+            throw std::invalid_argument("Invalid weak-q Sternheimer symmetry orbit.");
+        }
+        const int largest_member = *std::max_element(orbit.members.begin(), orbit.members.end());
+        if (largest_member < 0)
+        {
+            throw std::invalid_argument("Invalid weak-q Sternheimer symmetry orbit member.");
+        }
+        if (member_to_representative.size() <= static_cast<std::size_t>(largest_member))
+        {
+            member_to_representative.resize(static_cast<std::size_t>(largest_member + 1), -1);
+        }
+        for (const int member: orbit.members)
+        {
+            if (member < 0
+                || member_to_representative[static_cast<std::size_t>(member)] >= 0)
+            {
+                throw std::invalid_argument("Weak-q Sternheimer symmetry orbits overlap.");
+            }
+            member_to_representative[static_cast<std::size_t>(member)]
+                = orbit.representative_ik_full;
+        }
+    }
+
+    std::vector<int> route_count(member_to_representative.size(), 0);
+    for (const auto& route: routes)
+    {
+        if (route.iq != iq)
+        {
+            continue;
+        }
+        if (route.member_ik_full < 0
+            || static_cast<std::size_t>(route.member_ik_full) >= member_to_representative.size()
+            || member_to_representative[static_cast<std::size_t>(route.member_ik_full)] < 0
+            || route.representative_ik_full
+                   != member_to_representative[static_cast<std::size_t>(route.member_ik_full)]
+            || route.spatial_isym < 0)
+        {
+            throw std::invalid_argument("Invalid weak-q Sternheimer inverse route.");
+        }
+        if (++route_count[static_cast<std::size_t>(route.member_ik_full)] != 1)
+        {
+            throw std::invalid_argument("Duplicate weak-q Sternheimer inverse route.");
+        }
+    }
+    for (std::size_t member = 0; member != member_to_representative.size(); ++member)
+    {
+        if (member_to_representative[member] >= 0 && route_count[member] != 1)
+        {
+            throw std::invalid_argument("Incomplete weak-q Sternheimer inverse routes.");
+        }
+    }
+
+    const int source_ik_full = source_k_one_based - 1;
+    const auto orbit = std::find_if(orbits.begin(), orbits.end(), [&](const auto& candidate) {
+        return std::find(candidate.members.begin(), candidate.members.end(), source_ik_full)
+               != candidate.members.end();
+    });
+    if (orbit == orbits.end())
+    {
+        throw std::invalid_argument("Weak-q Sternheimer source k point is outside the symmetry orbits.");
+    }
+
+    SternheimerWeakQSymmetrySource selection;
+    selection.iq = iq;
+    selection.source_ik_full = source_ik_full;
+    selection.representative_ik_full = orbit->representative_ik_full;
+    selection.source_is_representative = source_ik_full == orbit->representative_ik_full;
+    selection.orbit_size = static_cast<int>(orbit->members.size());
+    for (const auto& route: routes)
+    {
+        if (route.iq == iq && route.representative_ik_full == orbit->representative_ik_full)
+        {
+            selection.inverse_routes.push_back(route);
+        }
+    }
+    std::sort(selection.inverse_routes.begin(), selection.inverse_routes.end(),
+              [](const auto& lhs, const auto& rhs) {
+                  return lhs.member_ik_full < rhs.member_ik_full;
+              });
+    if (selection.inverse_routes.size() != orbit->members.size())
+    {
+        throw std::invalid_argument("Weak-q Sternheimer source orbit has incomplete inverse routes.");
+    }
+    return selection;
+}
+
+inline void validate_sternheimer_weak_q_symmetry_band_coverage(const int band_begin_one_based,
+                                                                const int band_end_one_based,
+                                                                const int occupied_band_count)
+{
+    if (occupied_band_count <= 0 || band_begin_one_based != 1
+        || band_end_one_based != occupied_band_count)
+    {
+        throw std::invalid_argument(
+            "Weak-q Sternheimer symmetry restoration requires the complete occupied subspace.");
+    }
+}
+
 inline std::vector<SternheimerQStarRoute> build_sternheimer_qstar_routes_from_permutations(
     const int full_qpoint_count,
     const std::vector<SternheimerQStarPermutation>& permutations)
@@ -889,7 +1016,7 @@ inline double sternheimer_periodic_gamma_inverse_k2(const SternheimerReducedKPoi
                                                      const double massidda_chi)
 {
     constexpr double tolerance = 1.0e-10;
-    const bool gamma = std::all_of(qpoint.begin(), qpoint.end(), [](const double coordinate) {
+    const bool gamma = std::all_of(qpoint.begin(), qpoint.end(), [tolerance](const double coordinate) {
         return std::abs(coordinate) <= tolerance;
     });
     if (!gamma)
@@ -905,6 +1032,21 @@ inline double sternheimer_periodic_gamma_inverse_k2(const SternheimerReducedKPoi
         throw std::invalid_argument("Periodic Sternheimer q=0 requires a positive finite Massidda value.");
     }
     return massidda_chi;
+}
+
+inline bool sternheimer_periodic_gamma_uses_2d_massidda(
+    const SternheimerReducedKPoint& qpoint,
+    const int ewald_dimension)
+{
+    if (ewald_dimension != 2 && ewald_dimension != 3)
+    {
+        throw std::invalid_argument("Periodic Sternheimer Ewald dimension must be 2 or 3.");
+    }
+    constexpr double tolerance = 1.0e-10;
+    const bool gamma = std::all_of(qpoint.begin(), qpoint.end(), [tolerance](const double coordinate) {
+        return std::abs(coordinate) <= tolerance;
+    });
+    return gamma && ewald_dimension == 2;
 }
 
 inline int sternheimer_kpoint_owner_group(const int global_kpoint_index,

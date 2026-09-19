@@ -204,7 +204,8 @@ def read_full_coulomb_text(path):
     return matrix
 
 
-def package_matrix(matrix, output, *, iq, ifrequency, omega, weight, atom_naux):
+def package_matrix(matrix, output, *, iq, ifrequency, omega, weight, atom_naux,
+                   hermitian_mode="project"):
     output = Path(output)
     if output.exists():
         raise FileExistsError(output)
@@ -219,7 +220,9 @@ def package_matrix(matrix, output, *, iq, ifrequency, omega, weight, atom_naux):
     _require(matrix.shape == (offsets[-1], offsets[-1]), "matrix dimension does not match atom_naux")
     _require(np.isfinite(matrix).all(), "matrix values must be finite")
 
-    hermitian = 0.5 * (matrix + matrix.conj().T)
+    _require(hermitian_mode in ("project", "sum"), "invalid Hermitian completion mode")
+    hermitian = (0.5 * (matrix + matrix.conj().T)
+                 if hermitian_mode == "project" else matrix + matrix.conj().T)
     pairs = _pairs(len(atom_naux))
     header_size = 7 * 4 + 2 * 8 + 4 * len(atom_naux) + 12 * len(pairs)
     records = []
@@ -259,11 +262,354 @@ def package_matrix(matrix, output, *, iq, ifrequency, omega, weight, atom_naux):
         "matrix_kind": "potential_potential_response",
         "mathematical_object": "M = V chi0 V",
         "coulomb_transform": "none",
-        "projection": "(M + M^H) / 2",
+        "projection": "(M + M^H) / 2" if hermitian_mode == "project" else "M + M^H",
         "raw": _matrix_summary(matrix),
         "packaged": _matrix_summary(restored.matrix),
         "round_trip_relative_frobenius": round_trip,
     }
+
+
+def _fixed_q_routes(routes, *, iq, full_kpoint_count):
+    _require(iq > 0 and full_kpoint_count > 0, "partial routes require positive q and full-k dimensions")
+    by_member = {}
+    representatives = set()
+    normalized = []
+    for raw in routes:
+        _require(isinstance(raw, dict), "fixed-q route must be a mapping")
+        try:
+            representative = int(raw["representative_ik_full"])
+            member = int(raw["member_ik_full"])
+            spatial_isym = int(raw["spatial_isym"])
+            time_reversal = bool(raw["time_reversal"])
+            fold = tuple(int(value) for value in raw["fold_G"])
+        except (KeyError, TypeError, ValueError) as error:
+            raise ValueError("invalid fixed-q route") from error
+        _require(0 <= representative < full_kpoint_count and 0 <= member < full_kpoint_count,
+                 "fixed-q route k index is outside the full grid")
+        _require(spatial_isym >= 0 and len(fold) == 3, "invalid fixed-q route symmetry metadata")
+        _require(member not in by_member, "duplicate fixed-q route member")
+        item = {
+            "representative_ik_full": representative,
+            "member_ik_full": member,
+            "spatial_isym": spatial_isym,
+            "time_reversal": time_reversal,
+            "fold_G": fold,
+        }
+        by_member[member] = item
+        representatives.add(representative)
+        normalized.append(item)
+    _require(set(by_member) == set(range(full_kpoint_count)),
+             "fixed-q routes do not cover the full k grid")
+    for representative in representatives:
+        _require(representative in by_member
+                 and by_member[representative]["representative_ik_full"] == representative,
+                 "fixed-q route has no representative identity member")
+    return tuple(sorted(normalized, key=lambda item: item["member_ik_full"])), tuple(sorted(representatives))
+
+
+def _write_full_kpoints(path, full_kpoints):
+    with Path(path).open("x", encoding="utf-8") as stream:
+        stream.write("# ik_full kx ky kz\n")
+        for ik, point in enumerate(full_kpoints):
+            stream.write(f"{ik} {point[0]:.17g} {point[1]:.17g} {point[2]:.17g}\n")
+
+
+def _write_fixed_q_routes(path, *, iq, routes):
+    with Path(path).open("x", encoding="utf-8") as stream:
+        stream.write("version 1\n")
+        stream.write("# iq representative_ik member_ik spatial_isym time_reversal fold_Gx fold_Gy fold_Gz\n")
+        for route in routes:
+            fold = route["fold_G"]
+            stream.write(
+                f"{iq} {route['representative_ik_full']} {route['member_ik_full']} "
+                f"{route['spatial_isym']} {int(route['time_reversal'])} {fold[0]} {fold[1]} {fold[2]}\n")
+
+
+def package_partial_k_response(matrices, output_dir, *, iq, frequencies, atom_naux,
+                               full_kpoints, fixed_q_routes, qpoint, qweight):
+    """Write a fixed-q representative-k response bundle for LibRPA restoration.
+
+    `matrices[(ik_full, ifrequency)]` must contain only full occupied-subspace
+    contributions from fixed-q representatives.  The caller is responsible for
+    combining weak-unit band and column shards before invoking this function.
+    """
+    output_dir = Path(output_dir)
+    _require(not output_dir.exists(), f"output directory already exists: {output_dir}")
+    _require(isinstance(matrices, dict) and matrices, "partial response matrices are empty")
+    _require(isinstance(frequencies, dict) and frequencies, "partial response frequencies are empty")
+    _require(len(qpoint) == 3 and all(math.isfinite(float(value)) for value in qpoint),
+             "qpoint must contain three finite coordinates")
+    _require(math.isfinite(qweight) and qweight > 0.0, "qweight must be finite and positive")
+    full_kpoints = tuple(tuple(float(value) for value in point) for point in full_kpoints)
+    _require(full_kpoints and all(len(point) == 3 and all(math.isfinite(value) for value in point)
+                                  for point in full_kpoints),
+             "full k-point manifest is invalid")
+    routes, representatives = _fixed_q_routes(
+        fixed_q_routes, iq=iq, full_kpoint_count=len(full_kpoints))
+    normalized_frequencies = {}
+    for ifrequency, values in frequencies.items():
+        ifrequency = int(ifrequency)
+        _require(ifrequency > 0 and len(values) == 2, "invalid partial response frequency metadata")
+        omega, weight = float(values[0]), float(values[1])
+        _require(math.isfinite(omega) and omega >= 0 and math.isfinite(weight) and weight > 0,
+                 "non-finite partial response frequency metadata")
+        normalized_frequencies[ifrequency] = (omega, weight)
+    expected = {(representative, ifrequency)
+                for representative in representatives for ifrequency in normalized_frequencies}
+    supplied = {(int(key[0]), int(key[1])) for key in matrices}
+    _require(supplied == expected,
+             "partial response matrices must cover every frequency of each representative and no nonrepresentative k point")
+
+    output_dir.mkdir(parents=True, exist_ok=False)
+    try:
+        records = []
+        reports = []
+        for ik_full, ifrequency in sorted(expected):
+            matrix = matrices[(ik_full, ifrequency)]
+            omega, weight = normalized_frequencies[ifrequency]
+            filename = f"v1_sternheimer_chi0_iq_{iq}_ik_{ik_full}_ifreq_{ifrequency}.dat"
+            report = package_matrix(matrix, output_dir / filename, iq=iq,
+                                    ifrequency=ifrequency, omega=omega, weight=weight,
+                                    atom_naux=atom_naux, hermitian_mode="sum")
+            report.update({"ik_full": ik_full, "ifrequency": ifrequency, "file": filename})
+            reports.append(report)
+            records.append((ik_full, ifrequency, filename))
+
+        manifest = output_dir / f"v1_sternheimer_partial_manifest_iq_{iq}.dat"
+        with manifest.open("x", encoding="utf-8") as stream:
+            stream.write("# iq ik_full ifreq response_file\n")
+            for ik_full, ifrequency, filename in records:
+                stream.write(f"{iq} {ik_full} {ifrequency} {filename}\n")
+        _write_full_kpoints(output_dir / "v1_sternheimer_full_kpoints.dat", full_kpoints)
+        _write_fixed_q_routes(output_dir / f"v1_sternheimer_symmetry_routes_iq_{iq}.dat",
+                              iq=iq, routes=routes)
+        qpoint_path = output_dir / f"v1_sternheimer_qpoint_iq_{iq}.dat"
+        with qpoint_path.open("x", encoding="utf-8") as stream:
+            stream.write(f"{iq} {qpoint[0]:.17g} {qpoint[1]:.17g} {qpoint[2]:.17g} {qweight:.17g}\n")
+    except Exception:
+        for path in output_dir.glob("*"):
+            path.unlink()
+        output_dir.rmdir()
+        raise
+
+    return {
+        "partial_response_complete": True,
+        "physical_result": False,
+        "iq": iq,
+        "representative_kpoints": list(representatives),
+        "full_kpoint_count": len(full_kpoints),
+        "frequency_count": len(normalized_frequencies),
+        "fixed_q_route_count": len(routes),
+        "partial_manifest": manifest.name,
+        "symmetry_routes": f"v1_sternheimer_symmetry_routes_iq_{iq}.dat",
+        "full_kpoints_manifest": "v1_sternheimer_full_kpoints.dat",
+        "qpoint_fragment": qpoint_path.name,
+        "outputs": reports,
+    }
+
+
+def _read_audit_records(path):
+    values = {}
+    lists = {}
+    with Path(path).open(encoding="utf-8") as stream:
+        for line in stream:
+            fields = line.split()
+            if not fields or fields[0].startswith("#"):
+                continue
+            key = fields[0]
+            if key in {"column_file", "fixed_q_route"}:
+                lists.setdefault(key, []).append(fields[1:])
+            else:
+                _require(len(fields) >= 2, f"invalid audit record: {path}")
+                values[key] = fields[1:]
+    return values, lists
+
+
+def _audit_value(values, key, path):
+    _require(key in values and len(values[key]) == 1, f"missing audit field {key}: {path}")
+    return values[key][0]
+
+
+def _read_weak_columns(path, channels):
+    values, _ = _read_audit_records(path)
+    ifrequency = int(_audit_value(values, "ifrequency", path))
+    omega = float(_audit_value(values, "omega_Ha", path))
+    weight = float(_audit_value(values, "weight_Ha", path))
+    input_hash = _audit_value(values, "input_manifest_sha256", path)
+    matrices = {}
+    current_column = None
+    seen = set()
+    with Path(path).open(encoding="utf-8") as stream:
+        for line in stream:
+            fields = line.split()
+            if not fields or fields[0].startswith("#"):
+                continue
+            if fields[0] == "owned_column":
+                _require(len(fields) == 2, f"invalid owned column record: {path}")
+                current_column = int(fields[1]) - 1
+                _require(0 <= current_column < channels and current_column not in matrices,
+                         f"invalid or duplicate owned column: {path}")
+                matrices[current_column] = np.zeros((channels, channels), dtype=np.complex128)
+            elif fields[0] == "response":
+                _require(current_column is not None and len(fields) == 5,
+                         f"response appears outside an owned column block: {path}")
+                row, column = int(fields[1]) - 1, int(fields[2]) - 1
+                _require(column == current_column and 0 <= row < channels,
+                         f"invalid response column or row: {path}")
+                key = (current_column, row)
+                _require(key not in seen, f"duplicate weak response element: {path}")
+                value = complex(float(fields[3]), float(fields[4]))
+                _require(math.isfinite(value.real) and math.isfinite(value.imag),
+                         f"non-finite weak response element: {path}")
+                matrices[current_column][row, current_column] = value
+                seen.add(key)
+            elif fields[0] == "columns_complete":
+                _require(fields == ["columns_complete", "yes"],
+                         f"invalid weak column completion marker: {path}")
+    for column in matrices:
+        _require(sum(1 for item in seen if item[0] == column) == channels,
+                 f"weak column coverage is incomplete: {path}")
+    return ifrequency, omega, weight, input_hash, matrices
+
+
+def _read_weak_input_manifest(path):
+    values, _ = _read_audit_records(path)
+    full_kpoint_count = int(_audit_value(values, "full_kpoints", path))
+    iq = int(_audit_value(values, "iq", path))
+    qpoint = tuple(float(value) for value in values["qpoint"])
+    _require(len(qpoint) == 3 and all(math.isfinite(value) for value in qpoint),
+             f"invalid input-manifest q point: {path}")
+    kpoints = {}
+    channel_atoms = {}
+    with Path(path).open(encoding="utf-8") as stream:
+        for line in stream:
+            fields = line.split()
+            if not fields or fields[0].startswith("#"):
+                continue
+            if fields[0] == "kpoint":
+                _require(len(fields) >= 5, f"invalid input-manifest k point: {path}")
+                ik = int(fields[1]) - 1
+                _require(0 <= ik < full_kpoint_count and ik not in kpoints,
+                         f"invalid or duplicate input-manifest k point: {path}")
+                point = tuple(float(value) for value in fields[2:5])
+                _require(all(math.isfinite(value) for value in point),
+                         f"non-finite input-manifest k point: {path}")
+                kpoints[ik] = point
+            elif fields[0] == "auxiliary_channel":
+                _require(len(fields) >= 4 and fields[2] == "atom_index",
+                         f"invalid auxiliary-channel manifest record: {path}")
+                channel = int(fields[1]) - 1
+                atom = int(fields[3])
+                _require(channel >= 0 and atom >= 0 and channel not in channel_atoms,
+                         f"invalid or duplicate auxiliary channel: {path}")
+                channel_atoms[channel] = atom
+    _require(set(kpoints) == set(range(full_kpoint_count)),
+             f"input-manifest k-point coverage is incomplete: {path}")
+    _require(channel_atoms and set(channel_atoms) == set(range(len(channel_atoms))),
+             f"input-manifest auxiliary-channel coverage is incomplete: {path}")
+    ordered_atoms = [channel_atoms[index] for index in range(len(channel_atoms))]
+    _require(ordered_atoms == sorted(ordered_atoms),
+             "auxiliary channels are not ordered by atom in the input manifest")
+    atom_naux = []
+    for atom in sorted(set(ordered_atoms)):
+        _require(ordered_atoms.count(atom) > 0, "empty atom auxiliary block in input manifest")
+        atom_naux.append(ordered_atoms.count(atom))
+    return {
+        "iq": iq,
+        "qpoint": qpoint,
+        "full_kpoints": tuple(kpoints[index] for index in range(full_kpoint_count)),
+        "atom_naux": tuple(atom_naux),
+        "channels": len(channel_atoms),
+    }
+
+
+def merge_weak_q_unit_columns(unit_audits, output_dir, *, qweight):
+    """Merge complete occupied-band WEAK_Q units into representative-k v1 files."""
+    _require(unit_audits, "at least one weak-q unit audit is required")
+    bundles = []
+    for audit_path in map(Path, unit_audits):
+        values, lists = _read_audit_records(audit_path)
+        _require(_audit_value(values, "unit_complete", audit_path) == "yes",
+                 f"weak unit is incomplete: {audit_path}")
+        _require(_audit_value(values, "all_source_bands", audit_path) == "yes",
+                 f"weak unit does not contain the complete occupied subspace: {audit_path}")
+        _require(values.get("symmetry_skipped_nonrepresentative", ["no"]) != ["yes"],
+                 f"nonrepresentative weak unit cannot be merged: {audit_path}")
+        input_path = audit_path.parent / _audit_value(values, "input_manifest", audit_path)
+        input_manifest = _read_weak_input_manifest(input_path)
+        source_k = int(_audit_value(values, "source_k", audit_path)) - 1
+        iq = int(_audit_value(values, "iq", audit_path))
+        routes = []
+        for fields in lists.get("fixed_q_route", []):
+            _require(len(fields) == 8, f"invalid fixed-q route in audit: {audit_path}")
+            routes.append({
+                "representative_ik_full": int(fields[1]),
+                "member_ik_full": int(fields[2]),
+                "spatial_isym": int(fields[3]),
+                "time_reversal": bool(int(fields[4])),
+                "fold_G": tuple(int(value) for value in fields[5:8]),
+            })
+        _require(routes, f"weak unit has no fixed-q symmetry routes: {audit_path}")
+        column_files = lists.get("column_file", [])
+        _require(column_files, f"weak unit has no column files: {audit_path}")
+        columns = []
+        for fields in column_files:
+            _require(len(fields) == 2, f"invalid weak column-file record: {audit_path}")
+            column_path = audit_path.parent / fields[1]
+            columns.append(_read_weak_columns(column_path, input_manifest["channels"]))
+        bundles.append((audit_path, values, input_manifest, source_k, iq, routes, columns))
+
+    first = bundles[0]
+    iq = first[4]
+    input_manifest = first[2]
+    _require(all(bundle[4] == iq and bundle[2] == input_manifest for bundle in bundles),
+             "weak units do not share one physical q/input manifest")
+    frequencies = {}
+    matrices = {}
+    matrix_columns = {}
+    all_routes = {}
+    for audit_path, values, _, source_k, _, routes, columns in bundles:
+        _require(source_k >= 0, f"invalid weak source k: {audit_path}")
+        for route in routes:
+            key = route["member_ik_full"]
+            _require(key not in all_routes or all_routes[key] == route,
+                     f"conflicting fixed-q route: {audit_path}")
+            all_routes[key] = route
+        for ifrequency, omega, weight, input_hash, column_map in columns:
+            expected_hash = _audit_value(values, "input_manifest_sha256", audit_path)
+            _require(input_hash == expected_hash, f"column/input manifest mismatch: {audit_path}")
+            _require(ifrequency not in frequencies or frequencies[ifrequency] == (omega, weight),
+                     "conflicting weak frequency metadata")
+            frequencies[ifrequency] = (omega, weight)
+            key = (source_k, ifrequency)
+            matrix = matrices.setdefault(
+                key, np.zeros((input_manifest["channels"], input_manifest["channels"]), dtype=np.complex128))
+            seen_columns = matrix_columns.setdefault(key, set())
+            for column, values_by_row in column_map.items():
+                _require(column not in seen_columns, "duplicate weak response column bundle")
+                matrix[:, column] = values_by_row[:, column]
+                seen_columns.add(column)
+    for key, seen_columns in matrix_columns.items():
+        _require(seen_columns == set(range(input_manifest["channels"])),
+                 f"weak response column coverage is incomplete for source/frequency {key}")
+    routes = tuple(all_routes.values())
+    _require(routes, "weak merged route set is empty")
+    report = package_partial_k_response(
+        matrices,
+        output_dir,
+        iq=iq,
+        frequencies=frequencies,
+        atom_naux=input_manifest["atom_naux"],
+        full_kpoints=input_manifest["full_kpoints"],
+        fixed_q_routes=routes,
+        qpoint=input_manifest["qpoint"],
+        qweight=qweight,
+    )
+    report["unit_audits"] = [str(Path(path).resolve()) for path in unit_audits]
+    report["unit_count"] = len(unit_audits)
+    (Path(output_dir) / "PARTIAL_K_PACKAGING_COMPLETE.json").write_text(
+        json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+    return report
 
 
 def package_coulomb_matrix(matrix, output, *, iq, atom_naux):
@@ -440,14 +786,25 @@ def package_summary(summary_path, coulomb_path, output_dir, threshold=1.0e-10,
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--summary", required=True)
-    parser.add_argument("--coulomb", required=True)
+    parser.add_argument("--summary")
+    parser.add_argument("--coulomb")
+    parser.add_argument("--unit-audit", action="append", default=[])
     parser.add_argument("--output", required=True)
     parser.add_argument("--sqrt-coulomb-threshold", type=float, default=1.0e-10)
     parser.add_argument("--energy-gate-ev", type=float, default=1.0e-6)
+    parser.add_argument("--qweight", type=float)
     args = parser.parse_args(argv)
-    package_summary(args.summary, args.coulomb, args.output,
-                    threshold=args.sqrt_coulomb_threshold, energy_gate_ev=args.energy_gate_ev)
+    if args.unit_audit:
+        _require(not args.summary and not args.coulomb,
+                 "--unit-audit mode cannot be combined with --summary or --coulomb")
+        _require(args.qweight is not None and math.isfinite(args.qweight) and args.qweight > 0,
+                 "--unit-audit mode requires a positive finite --qweight")
+        merge_weak_q_unit_columns(args.unit_audit, args.output, qweight=args.qweight)
+    else:
+        _require(args.summary and args.coulomb and args.qweight is None,
+                 "summary mode requires --summary and --coulomb and forbids --qweight")
+        package_summary(args.summary, args.coulomb, args.output,
+                        threshold=args.sqrt_coulomb_threshold, energy_gate_ev=args.energy_gate_ev)
     return 0
 
 

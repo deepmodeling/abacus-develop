@@ -119,7 +119,7 @@ SternheimerWeakPreconditionerMode sternheimer_weak_preconditioner_mode()
     {
         return SternheimerWeakPreconditionerMode::None;
     }
-    if (value == "spectral")
+    if (value == "spectral" || value == "fd_spectral")
     {
         return SternheimerWeakPreconditionerMode::Spectral;
     }
@@ -135,7 +135,7 @@ const char* sternheimer_weak_preconditioner_name(
         case SternheimerWeakPreconditionerMode::None:
             return "none";
         case SternheimerWeakPreconditionerMode::Spectral:
-            return "spectral";
+            return "fd_spectral";
     }
     return "invalid";
 }

@@ -659,6 +659,73 @@ TEST(SternheimerABACUSSTSmoke, RejectsNonBijectiveFixedQOperation)
                  std::invalid_argument);
 }
 
+TEST(SternheimerABACUSSTSmoke, SelectsWeakQRepresentativeAndCompleteInverseRoutes)
+{
+    const std::vector<ModuleRI::SternheimerFixedQKOrbit> orbits = {
+        {0, {0}},
+        {1, {1, 3}},
+        {2, {2}},
+    };
+    const std::vector<ModuleRI::SternheimerFixedQKRoute> routes = {
+        {2, 0, 0, 0, false, {0, 0, 0}},
+        {2, 1, 1, 0, false, {0, 0, 0}},
+        {2, 1, 3, 4, true, {1, 0, 0}},
+        {2, 2, 2, 0, false, {0, 0, 0}},
+    };
+
+    const auto representative
+        = ModuleRI::select_sternheimer_weak_q_symmetry_source(2, 2, orbits, routes);
+    EXPECT_EQ(representative.iq, 2);
+    EXPECT_EQ(representative.source_ik_full, 1);
+    EXPECT_EQ(representative.representative_ik_full, 1);
+    EXPECT_TRUE(representative.source_is_representative);
+    EXPECT_EQ(representative.orbit_size, 2);
+    ASSERT_EQ(representative.inverse_routes.size(), 2U);
+    EXPECT_EQ(representative.inverse_routes[0].member_ik_full, 1);
+    EXPECT_EQ(representative.inverse_routes[1].member_ik_full, 3);
+
+    const auto member
+        = ModuleRI::select_sternheimer_weak_q_symmetry_source(2, 4, orbits, routes);
+    EXPECT_EQ(member.source_ik_full, 3);
+    EXPECT_EQ(member.representative_ik_full, 1);
+    EXPECT_FALSE(member.source_is_representative);
+    EXPECT_EQ(member.orbit_size, 2);
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsIncompleteWeakQSymmetryRoutes)
+{
+    const std::vector<ModuleRI::SternheimerFixedQKOrbit> orbits = {
+        {0, {0, 2}},
+        {1, {1}},
+    };
+    const std::vector<ModuleRI::SternheimerFixedQKRoute> missing_member = {
+        {1, 0, 0, 0, false, {0, 0, 0}},
+        {1, 1, 1, 0, false, {0, 0, 0}},
+    };
+    EXPECT_THROW(ModuleRI::select_sternheimer_weak_q_symmetry_source(
+                     1, 1, orbits, missing_member),
+                 std::invalid_argument);
+
+    auto duplicate_member = missing_member;
+    duplicate_member.push_back({1, 0, 0, 0, false, {0, 0, 0}});
+    duplicate_member.push_back({1, 0, 2, 3, false, {0, 0, 0}});
+    EXPECT_THROW(ModuleRI::select_sternheimer_weak_q_symmetry_source(
+                     1, 1, orbits, duplicate_member),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, WeakQSymmetryRestorationRequiresAllOccupiedBands)
+{
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_weak_q_symmetry_band_coverage(
+        1, 5, 5));
+    EXPECT_THROW(ModuleRI::validate_sternheimer_weak_q_symmetry_band_coverage(
+                     1, 3, 5),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::validate_sternheimer_weak_q_symmetry_band_coverage(
+                     2, 5, 5),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerABACUSSTSmoke, FormatsExplicitInverseRoutesForLibRPA)
 {
     const std::vector<ModuleRI::SternheimerFixedQKRoute> routes = {
@@ -915,6 +982,15 @@ TEST(SternheimerABACUSSTSmoke, SelectsMassiddaFactorOnlyForPeriodicGamma)
                  std::invalid_argument);
     EXPECT_THROW(ModuleRI::sternheimer_periodic_gamma_inverse_k2(
                      {0.0, 0.0, 0.0}, "massidda", 0.0),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, UsesTheTwoDimensionalMassiddaIntegralForTwoDimensionalGamma)
+{
+    EXPECT_TRUE(ModuleRI::sternheimer_periodic_gamma_uses_2d_massidda({0.0, 0.0, 0.0}, 2));
+    EXPECT_FALSE(ModuleRI::sternheimer_periodic_gamma_uses_2d_massidda({0.25, 0.0, 0.0}, 2));
+    EXPECT_FALSE(ModuleRI::sternheimer_periodic_gamma_uses_2d_massidda({0.0, 0.0, 0.0}, 3));
+    EXPECT_THROW(ModuleRI::sternheimer_periodic_gamma_uses_2d_massidda({0.0, 0.0, 0.0}, 1),
                  std::invalid_argument);
 }
 

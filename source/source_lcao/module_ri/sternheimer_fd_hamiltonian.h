@@ -114,6 +114,94 @@ class SternheimerFDHamiltonian
 using SternheimerFDLatticeVectors = std::array<std::array<double, 3>, 3>;
 using SternheimerFDReducedRotation = std::array<std::array<double, 3>, 3>;
 
+struct SternheimerFDStencilWeights
+{
+    int radius = 0;
+    std::array<double, 5> second{};
+    std::array<double, 4> first{};
+};
+
+inline SternheimerFDStencilWeights sternheimer_fd_stencil_weights(const int order)
+{
+    SternheimerFDStencilWeights weights;
+    weights.radius = order / 2;
+    switch (order)
+    {
+    case 2:
+        weights.second = {{-2.0, 1.0, 0.0, 0.0, 0.0}};
+        weights.first = {{1.0 / 2.0, 0.0, 0.0, 0.0}};
+        break;
+    case 4:
+        weights.second = {{-5.0 / 2.0, 4.0 / 3.0, -1.0 / 12.0, 0.0, 0.0}};
+        weights.first = {{2.0 / 3.0, -1.0 / 12.0, 0.0, 0.0}};
+        break;
+    case 6:
+        weights.second = {{-49.0 / 18.0, 3.0 / 2.0, -3.0 / 20.0, 1.0 / 90.0, 0.0}};
+        weights.first = {{3.0 / 4.0, -3.0 / 20.0, 1.0 / 60.0, 0.0}};
+        break;
+    case 8:
+        weights.second = {{-205.0 / 72.0, 8.0 / 5.0, -1.0 / 5.0, 8.0 / 315.0, -1.0 / 560.0}};
+        weights.first = {{4.0 / 5.0, -1.0 / 5.0, 4.0 / 105.0, -1.0 / 280.0}};
+        break;
+    default:
+        throw std::invalid_argument("Unsupported Sternheimer finite-difference order.");
+    }
+    return weights;
+}
+
+inline bool sternheimer_fd_grid_rotation_is_permutation(
+    const SternheimerFDHamiltonian::Grid& grid,
+    const SternheimerFDReducedRotation& rotation,
+    const double tolerance = 1.0e-10)
+{
+    if (grid.nx <= 0 || grid.ny <= 0 || grid.nz <= 0 || tolerance <= 0.0)
+    {
+        throw std::invalid_argument("Invalid grid or tolerance for Sternheimer FD grid symmetry.");
+    }
+    const std::array<int, 3> dimensions{grid.nx, grid.ny, grid.nz};
+    std::vector<bool> seen(static_cast<std::size_t>(grid.size()), false);
+    const auto flatten = [&dimensions](const std::array<int, 3>& point) {
+        return point[0] + dimensions[0] * (point[1] + dimensions[1] * point[2]);
+    };
+    for (int iz = 0; iz != grid.nz; ++iz)
+    {
+        for (int iy = 0; iy != grid.ny; ++iy)
+        {
+            for (int ix = 0; ix != grid.nx; ++ix)
+            {
+                const std::array<int, 3> source{ix, iy, iz};
+                std::array<int, 3> mapped{};
+                for (int target = 0; target != 3; ++target)
+                {
+                    double mapped_coordinate = 0.0;
+                    for (int source_direction = 0; source_direction != 3; ++source_direction)
+                    {
+                        mapped_coordinate += static_cast<double>(source[source_direction])
+                                             / static_cast<double>(dimensions[source_direction])
+                                             * rotation[source_direction][target]
+                                             * static_cast<double>(dimensions[target]);
+                    }
+                    const int rounded = static_cast<int>(std::llround(mapped_coordinate));
+                    if (std::abs(mapped_coordinate - static_cast<double>(rounded)) > tolerance)
+                    {
+                        return false;
+                    }
+                    const int dimension = dimensions[target];
+                    mapped[target] = ((rounded % dimension) + dimension) % dimension;
+                }
+                const int mapped_index = flatten(mapped);
+                if (mapped_index < 0 || mapped_index >= grid.size()
+                    || seen[static_cast<std::size_t>(mapped_index)])
+                {
+                    return false;
+                }
+                seen[static_cast<std::size_t>(mapped_index)] = true;
+            }
+        }
+    }
+    return true;
+}
+
 inline SternheimerFDLatticeVectors sternheimer_fd_grid_lattice_vectors(const SternheimerFDHamiltonian::Grid& grid)
 {
     bool has_explicit_lattice = false;
@@ -155,8 +243,9 @@ inline SternheimerFDLatticeVectors sternheimer_fd_grid_dual_vectors(const Sternh
     return dual;
 }
 
-inline std::vector<int> sternheimer_fd_second_order_stencil_symmetry_indices(
+inline std::vector<int> sternheimer_fd_stencil_symmetry_indices(
     const SternheimerFDHamiltonian::Grid& grid,
+    const int finite_difference_order,
     const std::vector<SternheimerFDReducedRotation>& rotations,
     const double tolerance = 1.0e-10)
 {
@@ -171,6 +260,8 @@ inline std::vector<int> sternheimer_fd_second_order_stencil_symmetry_indices(
     const std::array<double, 3> dimensions{static_cast<double>(grid.nx),
                                            static_cast<double>(grid.ny),
                                            static_cast<double>(grid.nz)};
+    const SternheimerFDStencilWeights fd_weights
+        = sternheimer_fd_stencil_weights(finite_difference_order);
     std::array<std::array<double, 3>, 3> coefficients{};
     for (int left = 0; left != 3; ++left)
     {
@@ -186,25 +277,39 @@ inline std::vector<int> sternheimer_fd_second_order_stencil_symmetry_indices(
     const auto add = [&stencil](const Offset& offset, const double weight) { stencil[offset] += weight; };
     for (int direction = 0; direction != 3; ++direction)
     {
-        Offset positive{0, 0, 0};
-        Offset negative{0, 0, 0};
-        positive[direction] = 1;
-        negative[direction] = -1;
-        add(positive, coefficients[direction][direction]);
-        add(negative, coefficients[direction][direction]);
+        for (int offset = 1; offset <= fd_weights.radius; ++offset)
+        {
+            Offset positive{0, 0, 0};
+            Offset negative{0, 0, 0};
+            positive[direction] = offset;
+            negative[direction] = -offset;
+            const double weight = fd_weights.second[static_cast<std::size_t>(offset)]
+                                  * coefficients[direction][direction];
+            add(positive, weight);
+            add(negative, weight);
+        }
     }
     for (int left = 0; left != 3; ++left)
     {
         for (int right = left + 1; right != 3; ++right)
         {
-            for (const int left_sign: {-1, 1})
+            for (int left_offset = 1; left_offset <= fd_weights.radius; ++left_offset)
             {
-                for (const int right_sign: {-1, 1})
+                for (int right_offset = 1; right_offset <= fd_weights.radius; ++right_offset)
                 {
-                    Offset offset{0, 0, 0};
-                    offset[left] = left_sign;
-                    offset[right] = right_sign;
-                    add(offset, 0.5 * coefficients[left][right] * static_cast<double>(left_sign * right_sign));
+                    const double weight = 2.0 * coefficients[left][right]
+                                          * fd_weights.first[static_cast<std::size_t>(left_offset - 1)]
+                                          * fd_weights.first[static_cast<std::size_t>(right_offset - 1)];
+                    for (const int left_sign: {-1, 1})
+                    {
+                        for (const int right_sign: {-1, 1})
+                        {
+                            Offset offset{0, 0, 0};
+                            offset[left] = left_sign * left_offset;
+                            offset[right] = right_sign * right_offset;
+                            add(offset, weight * static_cast<double>(left_sign * right_sign));
+                        }
+                    }
                 }
             }
         }
@@ -231,6 +336,10 @@ inline std::vector<int> sternheimer_fd_second_order_stencil_symmetry_indices(
     for (std::size_t isym = 0; isym != rotations.size(); ++isym)
     {
         bool valid = true;
+        if (!sternheimer_fd_grid_rotation_is_permutation(grid, rotations[isym], tolerance))
+        {
+            continue;
+        }
         std::set<Offset> mapped_offsets;
         for (const auto& entry: stencil)
         {
@@ -274,6 +383,14 @@ inline std::vector<int> sternheimer_fd_second_order_stencil_symmetry_indices(
         }
     }
     return preserving;
+}
+
+inline std::vector<int> sternheimer_fd_second_order_stencil_symmetry_indices(
+    const SternheimerFDHamiltonian::Grid& grid,
+    const std::vector<SternheimerFDReducedRotation>& rotations,
+    const double tolerance = 1.0e-10)
+{
+    return sternheimer_fd_stencil_symmetry_indices(grid, 2, rotations, tolerance);
 }
 
 inline std::array<double, 3> sternheimer_fd_grid_cartesian_position(const SternheimerFDHamiltonian::Grid& grid,

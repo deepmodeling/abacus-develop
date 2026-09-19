@@ -40,7 +40,8 @@ class WeakQUnitRoute(unittest.TestCase):
     def test_opt_in_bypasses_response_symmetry_not_pbe_symmetry(self):
         text = CPP.read_text()
         self.assertTrue('env_is_true("ABACUS_STERNHEIMER_WEAK_Q_UNIT")' in text)
-        self.assertTrue('PARAM.inp.symmetry == "1" && !use_weak_q_unit' in text)
+        self.assertTrue('PARAM.inp.symmetry == "1"' in text)
+        self.assertTrue('env_is_true("ABACUS_STERNHEIMER_DISABLE_RESPONSE_SYMMETRY")' in text)
         self.assertNotIn('PARAM.inp.symmetry = "-1"', text)
         self.assertIn('env_is_true("ABACUS_STERNHEIMER_WEAK_Q_UNIT")', text[text.rindex("catch (const std::exception& error)"):])
 
@@ -114,7 +115,7 @@ class WeakQUnitRoute(unittest.TestCase):
         self.assertIn('sternheimer_weak_q_radial_support', route)
         self.assertIn('sternheimer_weak_q_z_support_contained', route)
         self.assertIn('coulomb_reference_file', route)
-        self.assertIn('find_coulomb_v1_rank_files(response_plan.iq', route)
+        self.assertIn('find_coulomb_v1_rank_files(coulomb_reader_iq', route)
         self.assertLess(route.index('if (!z_support_contained)'), route.index('op->assemble_blocks('))
 
     def test_fine_checks_only_first_last_owned_column_all_block_columns_remain(self):
@@ -126,6 +127,21 @@ class WeakQUnitRoute(unittest.TestCase):
         self.assertLess(route.index("BlasConnector::gemv('C'"), selected)
         self.assertIn('fine_checked_equations', route)
         self.assertIn('fine_vertex_checks', route)
+
+    def test_spacegroup_unit_reduction_is_explicit_and_precedes_channel_work(self):
+        route = self.route()
+        for required in (
+                'env_is_true("WEAK_Q_USE_SPACEGROUP_SYMMETRY")',
+                "build_sternheimer_fixed_q_little_group_permutations",
+                "build_sternheimer_fixed_q_k_orbits_from_permutations",
+                "select_sternheimer_weak_q_symmetry_source",
+                "validate_sternheimer_weak_q_symmetry_band_coverage",
+                "symmetry_skipped_nonrepresentative",
+                "fixed_q_route ",
+                "coarse_grid.grid"):
+            self.assertIn(required, route)
+        self.assertLess(route.index("symmetry_skipped_nonrepresentative"),
+                        route.index("const auto sample_density"))
 
 
 if __name__ == "__main__":

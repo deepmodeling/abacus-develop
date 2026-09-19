@@ -124,7 +124,7 @@ TEST_F(SternheimerRuntimeOptionsTest, DefaultsWeakSolveToSpectralAndOnePartPerMi
 
     const auto mode = ModuleRI::sternheimer_weak_preconditioner_mode();
     EXPECT_EQ(mode, ModuleRI::SternheimerWeakPreconditionerMode::Spectral);
-    EXPECT_STREQ(ModuleRI::sternheimer_weak_preconditioner_name(mode), "spectral");
+    EXPECT_STREQ(ModuleRI::sternheimer_weak_preconditioner_name(mode), "fd_spectral");
     EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_weak_residual_tolerance(), 1.0e-6);
 }
 
@@ -138,12 +138,17 @@ TEST_F(SternheimerRuntimeOptionsTest, ParsesWeakPreconditionerModeCaseInsensitiv
     setenv(kWeakPreconditioner, "SpEcTrAl", 1);
     mode = ModuleRI::sternheimer_weak_preconditioner_mode();
     EXPECT_EQ(mode, ModuleRI::SternheimerWeakPreconditionerMode::Spectral);
-    EXPECT_STREQ(ModuleRI::sternheimer_weak_preconditioner_name(mode), "spectral");
+    EXPECT_STREQ(ModuleRI::sternheimer_weak_preconditioner_name(mode), "fd_spectral");
+
+    setenv(kWeakPreconditioner, "Fd_SpEcTrAl", 1);
+    mode = ModuleRI::sternheimer_weak_preconditioner_mode();
+    EXPECT_EQ(mode, ModuleRI::SternheimerWeakPreconditionerMode::Spectral);
+    EXPECT_STREQ(ModuleRI::sternheimer_weak_preconditioner_name(mode), "fd_spectral");
 }
 
 TEST_F(SternheimerRuntimeOptionsTest, RejectsUnknownWeakPreconditionerModes)
 {
-    for (const char* value: {"", "fd_spectral", "maybe"})
+    for (const char* value: {"", "maybe"})
     {
         setenv(kWeakPreconditioner, value, 1);
         EXPECT_THROW(ModuleRI::sternheimer_weak_preconditioner_mode(),

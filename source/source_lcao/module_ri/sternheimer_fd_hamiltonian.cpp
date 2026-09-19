@@ -12,46 +12,6 @@
 #include <omp.h>
 #endif
 
-namespace
-{
-
-struct FiniteDifferenceWeights
-{
-    int radius = 0;
-    std::array<double, 5> second{};
-    std::array<double, 4> first{};
-};
-
-FiniteDifferenceWeights finite_difference_weights(const int order)
-{
-    FiniteDifferenceWeights weights;
-    weights.radius = order / 2;
-    switch (order)
-    {
-    case 2:
-        weights.second = {{-2.0, 1.0, 0.0, 0.0, 0.0}};
-        weights.first = {{1.0 / 2.0, 0.0, 0.0, 0.0}};
-        break;
-    case 4:
-        weights.second = {{-5.0 / 2.0, 4.0 / 3.0, -1.0 / 12.0, 0.0, 0.0}};
-        weights.first = {{2.0 / 3.0, -1.0 / 12.0, 0.0, 0.0}};
-        break;
-    case 6:
-        weights.second = {{-49.0 / 18.0, 3.0 / 2.0, -3.0 / 20.0, 1.0 / 90.0, 0.0}};
-        weights.first = {{3.0 / 4.0, -3.0 / 20.0, 1.0 / 60.0, 0.0}};
-        break;
-    case 8:
-        weights.second = {{-205.0 / 72.0, 8.0 / 5.0, -1.0 / 5.0, 8.0 / 315.0, -1.0 / 560.0}};
-        weights.first = {{4.0 / 5.0, -1.0 / 5.0, 4.0 / 105.0, -1.0 / 280.0}};
-        break;
-    default:
-        throw std::logic_error("Unsupported Sternheimer finite-difference order.");
-    }
-    return weights;
-}
-
-} // namespace
-
 namespace ModuleRI
 {
 
@@ -104,7 +64,7 @@ SternheimerFDHamiltonian::SternheimerFDHamiltonian(
 
 void SternheimerFDHamiltonian::initialize_operator_cache()
 {
-    const FiniteDifferenceWeights weights = finite_difference_weights(finite_difference_order_);
+    const SternheimerFDStencilWeights weights = sternheimer_fd_stencil_weights(finite_difference_order_);
     fd_radius_ = weights.radius;
     fd_second_weights_ = weights.second;
     fd_first_weights_ = weights.first;
