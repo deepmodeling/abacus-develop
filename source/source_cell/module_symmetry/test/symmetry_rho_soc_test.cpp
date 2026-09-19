@@ -1,11 +1,14 @@
 #include <gtest/gtest.h>
+#include <algorithm>
+#include <array>
+#include <cmath>
 #include <complex>
 #include <vector>
-#include <array>
 
 #include "../symmetry.h"
 #include "../symmetry_rotation_spin.h"
 #include "source_cell/unitcell.h"
+#include "source_estate/module_dm/density_matrix.h"
 
 /************************************************
  *  unit test of Symmetry::rhog_symmetry_nspin4
@@ -107,6 +110,58 @@ void fill_density(std::vector<std::complex<double>>& x,
         z[idx] = std::complex<double>(0.11 * ((idx * 3) % 6), -0.4 * ((idx * 5) % 7) + 1.0);
     }
 }
+
+// ---------------------------------------------------------------------
+// Hexagonal C3z (120-degree rotation) group, exercised in the exact
+// geometry used by psymmg_soc(): integer direct-lattice matrices gmatrix,
+// reciprocal reduced matrices kgmatrix = (gmatrix^-1)^T, and the cartesian
+// spin rotation W = spin_so3(ilatvec * gmatrix * latvec).
+// ---------------------------------------------------------------------
+constexpr double SQ3 = 1.7320508075688772;
+
+// hexagonal direct lattice (rows = a1, a2, a3), a1=(1,0,0), a2=(-1/2,sqrt3/2,0)
+ModuleBase::Matrix3 latvec_hex()
+{
+    return ModuleBase::Matrix3(1.0, 0.0, 0.0,
+                               -0.5, SQ3 / 2.0, 0.0,
+                               0.0, 0.0, 1.0);
+}
+
+// 120-degree rotation about z in the direct (row-vector) basis: a1->a2, a2->-a1-a2
+ModuleBase::Matrix3 gdirect_c3z()
+{
+    return ModuleBase::Matrix3(0.0, 1.0, 0.0,
+                               -1.0, -1.0, 0.0,
+                               0.0, 0.0, 1.0);
+}
+
+// build the C3z = {E, C3z, C3z^2} group (hexagonal direct basis) and the
+// per-operation spin-rotation matrices exactly as psymmg_soc() does
+void build_group_c3z(ModuleSymmetry::Symmetry& symm, std::vector<ModuleBase::Matrix3>& wspin)
+{
+    symm.epsilon = 1e-6;
+    symm.nrot = 3;
+    symm.nrotk = 3;
+    symm.ncell = 1;
+    symm.ptrans = {ModuleBase::Vector3<double>(0.0, 0.0, 0.0)};
+    ModuleSymmetry::Symmetry::pricell_loop = false;
+    wspin.resize(3);
+    const ModuleBase::Matrix3 E(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    const ModuleBase::Matrix3 G = gdirect_c3z();
+    const ModuleBase::Matrix3 G2 = G * G;
+    const ModuleBase::Matrix3 gmat[3] = {E, G, G2};
+    const ModuleBase::Matrix3 lat = latvec_hex();
+    const ModuleBase::Matrix3 ilat = lat.Inverse();
+    for (int g = 0; g < 3; ++g)
+    {
+        symm.gmatrix[g] = gmat[g];
+        symm.kgmatrix[g] = gmat[g].Inverse().Transpose();
+        symm.gtrans[g] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
+        // direct -> cartesian conversion, same formula as psymmg_soc()
+        const ModuleBase::Matrix3 gmatc = ilat * gmat[g] * lat;
+        wspin[g] = ModuleSymmetry::SpinRotation::spin_so3(gmatc);
+    }
+}
 } // namespace
 
 TEST(RhogSymmetrySoc, Idempotence)
@@ -182,6 +237,238 @@ TEST(RhogSymmetrySoc, GroupInvariance)
                     EXPECT_NEAR(z[idx2].imag(), ez.imag(), TOL) << "g=" << g << " idx=" << idx;
                 }
             }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------
+// Hexagonal C3z (120-degree rotation) cases with nonzero m_y.
+// ---------------------------------------------------------------------
+
+// The 120-degree spin rotation of a pure y-magnetization:
+// W(C3z) * (0,1,0) = (-sqrt3/2, -1/2, 0): m_y stays nonzero and mixes into
+// m_x. Also pins the direct->cartesian conversion used by psymmg_soc()
+// (gmatc = ilatvec * gmatrix * latvec) and the reciprocal relation
+// kgmatrix = (gmatrix^-1)^T for a non-orthogonal lattice.
+TEST(RhogSymmetrySoc, C3zHexSpinRotation)
+{
+    ModuleSymmetry::Symmetry symm;
+    std::vector<ModuleBase::Matrix3> wspin;
+    build_group_c3z(symm, wspin);
+
+    // W(C3z) is the column-vector +120deg rotation about z
+    const ModuleBase::Matrix3& W = wspin[1];
+    EXPECT_NEAR(W.e11, -0.5, 1e-12);
+    EXPECT_NEAR(W.e12, -SQ3 / 2.0, 1e-12);
+    EXPECT_NEAR(W.e21, SQ3 / 2.0, 1e-12);
+    EXPECT_NEAR(W.e22, -0.5, 1e-12);
+    EXPECT_NEAR(W.e33, 1.0, 1e-12);
+    // W * (0,1,0) = (W12, W22, W32): nonzero m_y under a 120-degree rotation
+    EXPECT_NEAR(W.e12, -SQ3 / 2.0, 1e-12);
+    EXPECT_NEAR(W.e22, -0.5, 1e-12);
+    EXPECT_NEAR(std::abs(W.e32), 0.0, 1e-12);
+
+    // kgmatrix(C3z) = (gmatrix^-1)^T for the hexagonal direct basis
+    EXPECT_NEAR(symm.kgmatrix[1].e11, -1.0, 1e-12);
+    EXPECT_NEAR(symm.kgmatrix[1].e12, 1.0, 1e-12);
+    EXPECT_NEAR(symm.kgmatrix[1].e21, -1.0, 1e-12);
+    EXPECT_NEAR(symm.kgmatrix[1].e22, 0.0, 1e-12);
+
+    // gmatc(C3z) = ilatvec * gmatrix * latvec is the row-vector +120deg matrix
+    const ModuleBase::Matrix3 lat = latvec_hex();
+    const ModuleBase::Matrix3 gmatc = lat.Inverse() * gdirect_c3z() * lat;
+    EXPECT_NEAR(gmatc.e11, -0.5, 1e-12);
+    EXPECT_NEAR(gmatc.e12, SQ3 / 2.0, 1e-12);
+    EXPECT_NEAR(gmatc.e21, -SQ3 / 2.0, 1e-12);
+    EXPECT_NEAR(gmatc.e22, -0.5, 1e-12);
+}
+
+// Group invariance of rhog_symmetry_nspin4 under the hexagonal C3z group:
+// the symmetrized density must satisfy m(G * kg(g)) = W(g) m(G) for all g,
+// verified with the independent oracle. The D4 test above covers 90-degree
+// rotations; this locks the 120-degree case (spin mixing with nonzero m_y)
+// on a non-orthogonal lattice.
+TEST(RhogSymmetrySoc, C3zHexGroupInvariance)
+{
+    ModuleSymmetry::Symmetry symm;
+    std::vector<ModuleBase::Matrix3> wspin;
+    build_group_c3z(symm, wspin);
+
+    std::vector<int> ixyz2ipw(NXYZ);
+    for (int i = 0; i < NXYZ; ++i) { ixyz2ipw[i] = i; }
+
+    std::vector<std::complex<double>> x(NXYZ), y(NXYZ), z(NXYZ);
+    fill_density(x, y, z);
+
+    // non-triviality guard on the INPUT: nonzero m_y present
+    double max_my_in = 0.0;
+    for (int i = 0; i < NXYZ; ++i) { max_my_in = std::max(max_my_in, std::abs(y[i])); }
+    EXPECT_GT(max_my_in, 0.1);
+
+    symm.rhog_symmetry_nspin4(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N, nullptr, nullptr, nullptr, -1);
+    std::vector<std::complex<double>> x1 = x, y1 = y, z1 = z;
+    symm.rhog_symmetry_nspin4(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N, nullptr, nullptr, nullptr, -1);
+
+    // idempotence
+    for (int i = 0; i < NXYZ; ++i)
+    {
+        EXPECT_NEAR(x[i].real(), x1[i].real(), TOL); EXPECT_NEAR(x[i].imag(), x1[i].imag(), TOL);
+        EXPECT_NEAR(y[i].real(), y1[i].real(), TOL); EXPECT_NEAR(y[i].imag(), y1[i].imag(), TOL);
+        EXPECT_NEAR(z[i].real(), z1[i].real(), TOL); EXPECT_NEAR(z[i].imag(), z1[i].imag(), TOL);
+    }
+
+    // non-triviality guard on the OUTPUT
+    double maxabs = 0.0;
+    for (int i = 0; i < NXYZ; ++i)
+    {
+        maxabs = std::max(maxabs, std::abs(x[i]));
+        maxabs = std::max(maxabs, std::abs(y[i]));
+        maxabs = std::max(maxabs, std::abs(z[i]));
+    }
+    EXPECT_GT(maxabs, 0.1);
+
+    // independent oracle: m(G * kg(g)) = W(g) m(G) for all g, G
+    for (int g = 0; g < 3; ++g)
+    {
+        const ModuleBase::Matrix3& W = wspin[g];
+        for (int i = 0; i < N; ++i)
+        {
+            for (int j = 0; j < N; ++j)
+            {
+                for (int k = 0; k < N; ++k)
+                {
+                    const int idx = (i * N + j) * N + k;
+                    int ii, jj, kk;
+                    rotate_index(symm.kgmatrix[g], i, j, k, ii, jj, kk);
+                    const int idx2 = (ii * N + jj) * N + kk;
+                    const std::complex<double> ex = W.e11 * x[idx] + W.e12 * y[idx] + W.e13 * z[idx];
+                    const std::complex<double> ey = W.e21 * x[idx] + W.e22 * y[idx] + W.e23 * z[idx];
+                    const std::complex<double> ez = W.e31 * x[idx] + W.e32 * y[idx] + W.e33 * z[idx];
+                    EXPECT_NEAR(x[idx2].real(), ex.real(), TOL) << "g=" << g << " idx=" << idx;
+                    EXPECT_NEAR(x[idx2].imag(), ex.imag(), TOL) << "g=" << g << " idx=" << idx;
+                    EXPECT_NEAR(y[idx2].real(), ey.real(), TOL) << "g=" << g << " idx=" << idx;
+                    EXPECT_NEAR(y[idx2].imag(), ey.imag(), TOL) << "g=" << g << " idx=" << idx;
+                    EXPECT_NEAR(z[idx2].real(), ez.real(), TOL) << "g=" << g << " idx=" << idx;
+                    EXPECT_NEAR(z[idx2].imag(), ez.imag(), TOL) << "g=" << g << " idx=" << idx;
+                }
+            }
+        }
+    }
+}
+
+// Physical 120-degree covariance with nonzero m_y: a constant in-plane
+// magnetization m = (0,1,0) is incompatible with the threefold rotation and
+// must be symmetrized away to zero, while the out-of-plane moment (0,0,1)
+// is invariant and must survive unchanged.
+TEST(RhogSymmetrySoc, C3zAnnihilatesNetInPlaneMoment)
+{
+    ModuleSymmetry::Symmetry symm;
+    std::vector<ModuleBase::Matrix3> wspin;
+    build_group_c3z(symm, wspin);
+
+    std::vector<int> ixyz2ipw(NXYZ);
+    for (int i = 0; i < NXYZ; ++i) { ixyz2ipw[i] = i; }
+
+    {
+        std::vector<std::complex<double>> x(NXYZ, 0.0), y(NXYZ, 1.0), z(NXYZ, 0.0);
+        symm.rhog_symmetry_nspin4(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N, nullptr, nullptr, nullptr, -1);
+        for (int i = 0; i < NXYZ; ++i)
+        {
+            EXPECT_NEAR(x[i].real(), 0.0, TOL);
+            EXPECT_NEAR(y[i].real(), 0.0, TOL);
+            EXPECT_NEAR(z[i].real(), 0.0, TOL);
+        }
+    }
+    {
+        std::vector<std::complex<double>> x(NXYZ, 0.0), y(NXYZ, 0.0), z(NXYZ, 1.0);
+        symm.rhog_symmetry_nspin4(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N, nullptr, nullptr, nullptr, -1);
+        for (int i = 0; i < NXYZ; ++i)
+        {
+            EXPECT_NEAR(x[i].real(), 0.0, TOL);
+            EXPECT_NEAR(y[i].real(), 0.0, TOL);
+            EXPECT_NEAR(z[i].real(), 1.0, TOL);
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Coupling test (nonzero m_y): the spin-density rotation W=spin_so3 used by psymmg_soc for the
+// grid symmetrization MUST agree with the SU(2) rotation of the physical spinor state followed by
+// the REAL func_xyz_to_updown extraction (which reads the conj-first stored DM, DM=conj(P), and
+// uses the bare +Im(ud)-Im(du)). This test now calls the actual func_xyz_to_updown rather than a
+// local re-implementation, so the grid-rotation and DM-extraction conventions cannot drift apart
+// silently (it fails on the #7664 m_y flip). The self-referential GroupInvariance test above
+// cannot catch this because it uses the same wspin as its own oracle.
+// ---------------------------------------------------------------------------
+namespace
+{
+using cd = std::complex<double>;
+// PHYSICAL spinor block P = r0*I + m.sigma  (sigma_y = [[0,-i],[i,0]]); layout {uu,ud,du,dd}
+ModuleSymmetry::SpinRotation::Su2 block_from_pauli(double r0, double mx, double my, double mz)
+{
+    return {cd(r0 + mz, 0.0), cd(mx, -my), cd(mx, my), cd(r0 - mz, 0.0)};
+}
+// The runtime stores the DM conj-first (DM = conj(P), cal_dm_psi); this is what func_xyz_to_updown
+// actually consumes. Given a physical block P, the stored block is its element-wise conjugate.
+ModuleSymmetry::SpinRotation::Su2 stored_dm_from_phys(const ModuleSymmetry::SpinRotation::Su2& P)
+{
+    return {std::conj(P[0]), std::conj(P[1]), std::conj(P[2]), std::conj(P[3])};
+}
+// call the REAL func_xyz_to_updown on a 2x2 stored-DM block; return (m_x, m_y, m_z)
+ModuleBase::Vector3<double> real_extract(const ModuleSymmetry::SpinRotation::Su2& Dstored)
+{
+    const cd tmp[4] = {Dstored[0], Dstored[1], Dstored[2], Dstored[3]}; // {uu,ud,du,dd}
+    const int col_size = 2;
+    const int step_trace[4] = {0, 1, col_size, col_size + 1};
+    double out[4] = {0.0, 0.0, 0.0, 0.0}; // rho0/x/y/z written at icol=0
+    elecstate::DensityMatrix_Tools::func_xyz_to_updown<double>(tmp, 0, step_trace, out);
+    return ModuleBase::Vector3<double>(out[step_trace[1]], out[step_trace[2]], out[step_trace[3]]);
+}
+} // namespace
+
+TEST(RhogSymmetrySoc, SpinConventionCoupling)
+{
+    // representative magnetizations, all with a nonzero y-component
+    const double mtest[4][3] = {{0.4, 0.7, -0.5}, {0.0, 1.0, 0.0}, {-0.3, 0.6, 0.9}, {1.0, -0.8, 0.2}};
+
+    for (int g = 0; g < 8; ++g)
+    {
+        const ModuleBase::Matrix3 gc = gmatc_of(g);
+        const ModuleSymmetry::SpinRotation::Su2 U = ModuleSymmetry::SpinRotation::so3_to_su2(gc);
+        const ModuleBase::Matrix3 Wgrid = ModuleSymmetry::SpinRotation::spin_so3(gc);
+        const ModuleBase::Matrix3 Wpauli = ModuleSymmetry::SpinRotation::pauli_rotation_matrix(U);
+
+        // (1) the geometric grid rotation and the SU(2)-induced Pauli rotation must coincide
+        EXPECT_NEAR(Wgrid.e11, Wpauli.e11, TOL) << "g=" << g; EXPECT_NEAR(Wgrid.e12, Wpauli.e12, TOL) << "g=" << g;
+        EXPECT_NEAR(Wgrid.e13, Wpauli.e13, TOL) << "g=" << g; EXPECT_NEAR(Wgrid.e21, Wpauli.e21, TOL) << "g=" << g;
+        EXPECT_NEAR(Wgrid.e22, Wpauli.e22, TOL) << "g=" << g; EXPECT_NEAR(Wgrid.e23, Wpauli.e23, TOL) << "g=" << g;
+        EXPECT_NEAR(Wgrid.e31, Wpauli.e31, TOL) << "g=" << g; EXPECT_NEAR(Wgrid.e32, Wpauli.e32, TOL) << "g=" << g;
+        EXPECT_NEAR(Wgrid.e33, Wpauli.e33, TOL) << "g=" << g;
+
+        // (2) End-to-end with the REAL func_xyz_to_updown, exactly the runtime data flow:
+        //   physical block P(m) --conj--> stored DM (conj-first) --func_xyz_to_updown--> grid m.
+        //   Rotate the PHYSICAL block by the spinor SU(2) U (U P U^dagger, i.e. the physical state
+        //   rotation), conj to the stored block, extract again -> m'. psymmg_soc rotates the grid
+        //   components with Wgrid=spin_so3, so we must have  m' == Wgrid * m.  This catches any
+        //   mismatch (e.g. the #7664 m_y flip) between func_xyz_to_updown and spin_so3.
+        for (const auto& m : mtest)
+        {
+            const ModuleSymmetry::SpinRotation::Su2 P  = block_from_pauli(2.0, m[0], m[1], m[2]);
+            const ModuleSymmetry::SpinRotation::Su2 Pp = ModuleSymmetry::SpinRotation::rotate_spin_block(P, U);
+
+            const ModuleBase::Vector3<double> mF  = real_extract(stored_dm_from_phys(P));
+            const ModuleBase::Vector3<double> mFp = real_extract(stored_dm_from_phys(Pp));
+
+            // (2a) extraction recovers the physical magnetization (block carries 2*m)
+            EXPECT_NEAR(mF.x, 2.0 * m[0], TOL) << "g=" << g;
+            EXPECT_NEAR(mF.y, 2.0 * m[1], TOL) << "g=" << g << " (m_y extraction)";
+            EXPECT_NEAR(mF.z, 2.0 * m[2], TOL) << "g=" << g;
+
+            // (2b) grid rotation spin_so3 agrees with the SU(2) block rotation + real extraction
+            const ModuleBase::Vector3<double> mrot = Wgrid * mF;
+            EXPECT_NEAR(mFp.x, mrot.x, TOL) << "g=" << g;
+            EXPECT_NEAR(mFp.y, mrot.y, TOL) << "g=" << g << " (y-channel handedness)";
+            EXPECT_NEAR(mFp.z, mrot.z, TOL) << "g=" << g;
         }
     }
 }
