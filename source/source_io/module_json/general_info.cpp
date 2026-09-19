@@ -47,18 +47,18 @@ void gen_general_info(const Parameter& param)
     int omp_num = 1;
 #endif
 
-    AbacusJson::set_json({"general_info"},
-                         {{"version", version},
-                          {"commit", commit},
-                          {"device", param.inp.device},
-                          {"mpi_num", mpi_num},
-                          {"omp_num", omp_num},
-                          {"pseudo_dir", param.inp.pseudo_dir},
-                          {"orbital_dir", param.inp.orbital_dir},
-                          {"stru_file", param.globalv.global_in_stru},
-                          {"kpt_file", param.inp.kpoint_file},
-                          {"start_time", start_time_str},
-                          {"end_time", end_time_str}});
+    AbacusJson::document()["general_info"] = {
+        {"version", version},
+        {"commit", commit},
+        {"device", param.inp.device},
+        {"mpi_num", mpi_num},
+        {"omp_num", omp_num},
+        {"pseudo_dir", param.inp.pseudo_dir},
+        {"orbital_dir", param.inp.orbital_dir},
+        {"stru_file", param.globalv.global_in_stru},
+        {"kpt_file", param.inp.kpoint_file},
+        {"start_time", start_time_str},
+        {"end_time", end_time_str}};
 }
 #endif
 } // namespace Json

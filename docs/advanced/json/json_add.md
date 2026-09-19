@@ -2,181 +2,133 @@
 
 ## Overview
 
-ABACUS uses [nlohmann-json](https://github.com/nlohmann/json) as the backend for its optional JSON output. The JSON implementation is kept under `source/source_io/module_json`, with `AbacusJson` providing the small interface used to build and write `abacus.json`.
+ABACUS uses [nlohmann-json](https://github.com/nlohmann/json) for its optional JSON output. The implementation lives in `source/source_io/module_json` and uses `Json::jsonValue`, an alias for `nlohmann::ordered_json`, to retain object-key insertion order.
 
-The public alias and mutation interfaces are:
+`AbacusJson` provides access to the shared document and writes it to a file. Its declarations are in namespace `Json`:
 
 ```cpp
 using jsonValue = nlohmann::ordered_json;
 
-// Public static members of Json::AbacusJson:
-static void set_json(const std::vector<jsonKeyNode>& keys, jsonValue value);
-static void append_json(const std::vector<jsonKeyNode>& keys, jsonValue value);
-```
+class AbacusJson
+{
+  public:
+    static jsonValue& document();
+    static void write_to_json(const std::string& filename);
 
-`jsonValue` uses `nlohmann::ordered_json` so that object keys are written in insertion order. `jsonKeyNode` accepts either a string key or an integer array index, so paths can mix JSON objects and arrays.
-
-`abacusjson.h` includes only `nlohmann/json_fwd.hpp`. A source file that constructs or operates on `jsonValue` must include `<nlohmann/json.hpp>` itself, inside the `__JSON` guard. Callers of the higher-level functions in `init_info.h` and `output_info.h` do not need the backend header.
-
-## Adding values
-
-### Add or replace an object member
-
-Use `set_json()` to assign a value at a path:
-
-```cpp
-Json::AbacusJson::set_json({"general_info", "version"}, version);
-```
-
-Missing intermediate named nodes are created as objects. The final value is replaced regardless of its previous type, including when it is an array or an object. For example, setting a complete coordinate array replaces the old coordinates rather than adding another nested array:
-
-```cpp
-Json::AbacusJson::set_json({"init", "coordinate"}, coordinates);
-```
-
-Replacing a complete object also replaces all of its members; this is not a merge operation.
-
-### Append to an array
-
-Use `append_json()` to append one value to an array:
-
-```cpp
-Json::AbacusJson::append_json({"init", "label"}, label);
-```
-
-A missing final named member is created as an array. An existing destination must already be an array: appending to a scalar, an object, or `null` is an error rather than an implicit conversion.
-
-For nested arrays, construct the value with `jsonValue::array()`:
-
-```cpp
-Json::jsonValue coordinate = Json::jsonValue::array({x, y, z});
-Json::AbacusJson::append_json({"init", "coordinate"}, coordinate);
-```
-
-The coordinate is appended as **one row**; its elements are not flattened into the destination array. An empty path is a no-op for both `set_json()` and `append_json()`.
-
-### Construct objects and arrays
-
-Use the nlohmann-json initializer syntax through the `Json::jsonValue` alias. There is no need for backend-specific helper macros.
-
-Object example:
-
-```cpp
-Json::jsonValue scf = {
-    {"energy", energy},
-    {"ediff", ediff},
-    {"drho", drho},
-    {"time", time},
+  private:
+    static jsonValue doc;
 };
 ```
 
-Array example:
+Keep the document root an object. Its state remains shared within each process; this change does not introduce independent output contexts or make concurrent writes safe. The mutable accessor is for the schema generators and tests in `module_json`. Other modules should continue to pass data to functions such as `add_output_energy()` instead of directly editing the document.
+
+The old path-component type and generic set/append interface have been removed. Use native object assignment, shallow `update()`, and array `push_back()` inside the schema generators; do not introduce another generic path wrapper.
+
+`abacusjson.h` includes only `nlohmann/json_fwd.hpp`. Source files that construct or manipulate JSON values must include `nlohmann/json.hpp` under `__JSON`. The existing CMake option `ENABLE_JSON` controls this feature. Callers using only the higher-level declarations in `init_info.h` or `output_info.h` do not need the backend header.
+
+## Constructing metadata
+
+`gen_general_info()` owns the whole `general_info` section and assigns it as a complete object:
 
 ```cpp
-Json::jsonValue row = Json::jsonValue::array({x, y, z});
+AbacusJson::document()["general_info"] = {
+    {"version", version},
+    {"commit", commit},
+    {"device", param.inp.device},
+    {"mpi_num", mpi_num},
+    {"omp_num", omp_num},
+    {"pseudo_dir", param.inp.pseudo_dir},
+    {"orbital_dir", param.inp.orbital_dir},
+    {"stru_file", param.globalv.global_in_stru},
+    {"kpt_file", param.inp.kpoint_file},
+    {"start_time", start_time_str},
+    {"end_time", end_time_str}};
 ```
 
-Append a completed SCF record with:
+The `init` section is shared by `gen_stru()`, `gen_init()`, and `add_nkstot()`. The first two construct the fields they own in a local object, then apply a **shallow** update:
 
 ```cpp
-Json::AbacusJson::append_json({"output", -1, "scf"}, scf);
+// Inside init_info.cpp; init_section() is local to this source file.
+init_section().update(info);
 ```
 
-Construct complete sections or arrays locally before storing them where practical. `gen_general_info()` assigns its complete section once. `gen_stru()` constructs each structure field locally, and `gen_init()` does the same for calculation metadata. These two generators share `init` with `add_nkstot()`, so they replace only their own fields through a file-local helper; they must not replace the entire `init` object and discard fields written by another generator.
+The local helper creates a missing `init` object but rejects an existing non-object, including `null`. The update preserves fields supplied by the other generators and replaces each supplied value as a whole. In particular, per-species maps and coordinate arrays must not retain stale entries or accumulate on repeated generation. Do not assign a newly generated object to the entire `init` section, and do not enable recursive object merging here.
 
-For a current output record, coordinates, magnetic moments, the cell, forces, and stress are replaced as complete arrays. Repeating the geometry update for the same record therefore does not accumulate extra rows. Only genuinely sequential data, such as `output` records and `scf` iteration records, use `append_json()`.
+`add_nkstot()` only sets its own field:
 
-## Addressing array elements
+```cpp
+init_section()["nkstot"] = nkstot;
+```
 
-Integer path components address existing array elements. Non-negative indices count from the beginning, while negative indices count from the end (`-1` is the last element). Indexed traversal never grows an array.
+## Output-record lifecycle
 
-For example, given:
+The workflow starts each record with `init_output_array_obj()` **before** the corresponding solver writes SCF or other result data. That function alone creates the `output` array and appends the initial record. It rejects an existing `output` value that is not an array; an explicit `null` is not treated as a missing field.
 
-```json
+The existing workflow entry points own this initialization:
+
+| Workflow | Record initialization |
+| --- | --- |
+| SCF/relaxation | `Relax_Driver::iter_info()` starts the record, except for the first `ks-lr` step described below. |
+| `ks-lr` | `ESolver_LR::before_all_runners()` starts the record before its embedded KS calculation; the first relaxation-driver step reuses it. |
+| UnitCell-backed MD | `Run_MD::md_line()` starts a record at the beginning of each MD iteration when `mdcell.has_backing_unitcell()` is true. |
+| Socket/i-PI | `SocketHandlers::handle_posdata()` starts a record before running the solver for the received `POSDATA` frame. |
+
+Do not move record creation into individual field writers, create a second record for the same step, or reset the whole document to start a new step.
+
+The result writers use `current_output()`, a helper local to `output_info.cpp`. It rejects a missing or non-array `output`, an empty array, or a final element that is not an object. It never creates a record as a side effect of writing a result.
+
+For example, inside namespace `Json` in `output_info.cpp`:
+
+```cpp
+void add_output_energy(const double energy)
 {
-    "Json": {
-        "key6": {
-            "key7": [
-                {"a": 1, "new": 2},
-                "vasp",
-                "abacus"
-            ]
-        }
-    }
+    current_output()["energy"] = energy;
 }
 ```
 
-replace `"vasp"` with `"cp2k"` using either its forward index:
+Coordinate, force, stress, magnetic-moment, and cell arrays are built locally and assigned as complete arrays. Repeatedly updating the same record must replace these arrays rather than append rows.
+
+SCF iterations are different: they form a history and must be appended. `add_output_scf_mag()` creates a missing `scf` array, rejects an existing non-array history, and appends one iteration object. Its implementation uses:
 
 ```cpp
-Json::AbacusJson::set_json({"Json", "key6", "key7", 1}, "cp2k");
+jsonValue& output = current_output();
+output["total_mag"] = total_mag;
+output["absolute_mag"] = absolute_mag;
+jsonValue& scf = *output.emplace("scf", jsonValue::array()).first;
+if (!scf.is_array())
+{
+    throw std::invalid_argument("JSON SCF history must be an array");
+}
+scf.push_back({{"energy", energy}, {"ediff", ediff},
+               {"drho", drho}, {"time", time}});
 ```
 
-or the corresponding negative index:
+`ordered_json` may invalidate references to child values when new members are inserted into their parent object. Acquire the `scf` reference after inserting `total_mag` and `absolute_mag`, and do not retain a record reference across appending another `output` record. The same caution applies to references to root sections when new root keys are inserted.
 
-```cpp
-Json::AbacusJson::set_json({"Json", "key6", "key7", -2}, "cp2k");
-```
+## Serialization and tests
 
-When the destination selected by an integer is itself an array, `append_json()` appends to that nested array; it does not replace the selected element. Out-of-range indices and mismatched object/array path components are errors.
+`document()` and `write_to_json()` do not perform MPI rank filtering. The existing `json_output()` wrapper writes `abacus.json` only on rank 0 in MPI builds; callers outside `module_json` should retain the existing integration wrappers.
 
-The workflow must call `init_output_array_obj()` before filling the corresponding calculation/ionic-step record. `set_json()` and `append_json()` do not create an implicit current output record when traversing `{"output", -1, ...}`. Record initialization remains the responsibility of the existing driver/solver entry points, not the generic path interface.
+`write_to_json()` preserves the existing four-space formatting and reports file-open and write/close failures. It serializes the document before opening the destination, so a serialization error does not first truncate the file. Non-finite numbers serialize as JSON `null`; decimal versus scientific float notation is not part of the schema contract.
 
-## Migrating older JSON call sites
-
-The former `add_json(keys, value, is_array)` interface has been removed. Choose the new operation by intent, not just by the old boolean:
-
-- Use `set_json()` for scalar assignments, whole-container replacement, and replacement of an indexed element.
-- Use `append_json()` for adding one element to a named or indexed array.
-
-The old interface appended to an existing named array even when `is_array` was `false`, and it replaced an indexed element even when the flag was `true`. Neither implicit behavior is retained by the new operation names.
+The tests reset the shared document through `document()` in their fixture; no access-control macro or friend accessor is needed. Focus coverage on ABACUS behavior: generated fields and units, repeated metadata updates, record initialization and SCF accumulation, invalid section types, insertion order, escaping and non-finite values through the real writer, and file errors. Do not replace removed path-walker tests with tests of nlohmann-json's generic container API.
 
 ## Code structure
 
-The JSON implementation is organized as follows:
-
 ```text
 source/source_io/module_json/
-├── abacusjson.cpp/.h   # set/append path handling and file output
-├── json_node.h         # object-key / array-index path component
+├── abacusjson.cpp/.h   # shared document and file output
 ├── general_info.cpp/.h # general_info section
 ├── init_info.cpp/.h    # comment and init sections
-├── output_info.cpp/.h  # output section
+├── output_info.cpp/.h  # output records and lifecycle checks
 ├── para_json.cpp/.h    # integration-facing wrappers
 └── test/              # focused unit tests
 ```
 
-JSON support is compiled under `__JSON`, which is enabled by the CMake option `ENABLE_JSON`.
+`init_section()` and `current_output()` are file-local helpers, not public interfaces for workflow callers.
 
 ## Guidelines for extending JSON output
 
-When adding JSON output:
+Keep construction in the existing schema generator, pass its required data explicitly, and avoid adding `GlobalV`, `GlobalC`, or `PARAM` access. Preserve field names, value types, units, and order unless a schema change is intentional. Add focused tests for new fields and lifecycle behavior, and update the [JSON output reference](json_para.md) when the public schema changes.
 
-1. Keep JSON construction in `source/source_io/module_json` whenever practical, rather than spreading nlohmann-json details into unrelated modules.
-2. Pass the data required for output explicitly through function parameters. Do not add new `GlobalV`, `GlobalC`, or `PARAM` accesses merely to obtain a value for JSON output.
-3. Prefer existing domain objects or small scalar/reference parameters over introducing new cross-module dependencies.
-4. Use `Json::jsonValue` for compound JSON values, `set_json()` for assignment, and `append_json()` for sequence growth.
-5. Preserve the existing JSON schema unless the change intentionally modifies the public output format.
-6. Add or update focused tests under `source/source_io/module_json/test` for new fields and for array/object behavior.
-
-For example, `output_info` receives the required values as function arguments and adds them to the current output record:
-
-```cpp
-void add_output_scf_mag(const double total_mag,
-                        const double absolute_mag,
-                        const double energy,
-                        const double ediff,
-                        const double drho,
-                        const double time)
-{
-    AbacusJson::set_json({"output", -1, "total_mag"}, total_mag);
-    AbacusJson::set_json({"output", -1, "absolute_mag"}, absolute_mag);
-    AbacusJson::append_json({"output", -1, "scf"},
-                            {{"energy", energy},
-                             {"ediff", ediff},
-                             {"drho", drho},
-                             {"time", time}});
-}
-```
-
-This keeps the JSON layer explicit and avoids introducing additional global dependencies into the output path.
+Keep examples and new implementation code compatible with the C++11 baseline. Include complete domain-type definitions in the source or test file that needs them, keep public header dependencies minimal, and do not reintroduce access-control macros for testing.
