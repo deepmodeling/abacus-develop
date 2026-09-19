@@ -5,12 +5,13 @@
   - [General Information](#general-information)
   - [Initialization Information](#initialization-information)
   - [Output](#output)
+  - [Serialization](#serialization)
 
 ## Overview
 
-When JSON support is enabled, ABACUS writes calculation metadata and results to `abacus.json` for post-processing.
+When JSON support is enabled with the CMake option `ENABLE_JSON`, ABACUS writes calculation metadata and results to `abacus.json` for post-processing using nlohmann-json. In MPI builds, the output wrapper writes this file only on rank 0.
 
-The current top-level JSON members are `comment`, `init`, `output`, and `general_info`. Some fields are populated only when the corresponding calculation data are available.
+The current top-level JSON members are `comment`, `init`, `output`, and `general_info`. Some fields are populated only when the corresponding calculation data are available. The native-schema refactor changes the internal construction API, not these field names or their units. See the [JSON development guide](json_add.md) for implementation details.
 
 ## General Information
 
@@ -33,7 +34,7 @@ The `general_info` object records basic build and runtime metadata:
 The top-level `comment` describes the default units used by the JSON output. The `init` object records the initial structure and calculation settings. Depending on the calculation path, it can contain:
 
 - `element` - [object(string:string)] Element/pseudopotential element information keyed by atom label.
-- `orb` - [object(string:string/null)] Numerical orbital file for each atom type; `null` when no orbital file is used.
+- `orb` - [object(string:string/null)] Numerical orbital path for each atom type, formed by concatenating the configured orbital-directory string and the per-type filename; `null` when that combined string is empty.
 - `pp` - [object(string:string)] Pseudopotential file for each atom type.
 - `coordinate` - [array(array(double))] Initial Cartesian coordinates in Angstrom.
 - `mag` - [array(double)] Initial magnetic moment for each atom.
@@ -58,7 +59,9 @@ The top-level `comment` describes the default units used by the JSON output. The
 
 ## Output
 
-`output` is an array. Each element represents one calculation/ionic-step output record. Fields are filled as the corresponding results become available:
+`output` is an array. Each element represents one calculation/ionic-step output record, initialized before its results are written. A newly initialized record has `null` values for `e_fermi`, `energy`, `scf_converge`, `force`, and `stress`, and empty arrays for `coordinate`, `mag`, and `cell`. The `total_mag`, `absolute_mag`, and `scf` members are added by the SCF writer.
+
+Fields are filled as the corresponding results become available; not every workflow populates all of them:
 
 - `energy` - [double/null] Total energy in eV.
 - `e_fermi` - [double/null] Fermi energy in eV.
@@ -75,5 +78,11 @@ The top-level `comment` describes the default units used by the JSON output. The
   - `ediff` - [double] Energy change from the previous SCF step in eV.
   - `drho` - [double] Charge-density difference.
   - `time` - [double] Time used by the SCF step in seconds.
+
+Updating geometry data for an existing record replaces its coordinate, magnetic-moment, and cell arrays, together with force and stress arrays when requested; it does not append duplicate rows. SCF iterations are appended to that record's `scf` history, while starting a new calculation/ionic step appends a new `output` record.
+
+## Serialization
+
+The writer uses four-space indentation and retains object-key insertion order. Non-finite floating-point values (NaN and positive or negative infinity) are serialized as `null`, not as nonstandard JSON numeric tokens. A `null` numeric field can therefore mean either that no value has been written or that the stored value was non-finite; it should not be interpreted as zero.
 
 JSON numbers are intended to be consumed as numeric values. Their textual representation (for example, decimal versus scientific notation) is not part of the output schema.
