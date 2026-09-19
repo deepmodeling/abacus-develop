@@ -5,7 +5,7 @@
 #include "source_base/timer_wrapper.h"
 #include "source_basis/module_pw/pw_basis.h"          // plane wave basis
 #include "source_estate/elecstate.h"                  // electronic states
-#include "source_estate/module_charge/charge_extra.h" // charge extrapolation
+#include "source_estate/module_charge/chg_extra.h" // charge extrapolation
 #include "source_hamilt/module_surchem/surchem.h"     // solvation model
 #include "source_base/parallel_grid.h"     // Parallel_Grid (value member below)
 #include "source_pw/module_pwdft/stru_fac.h"  // structure factor
@@ -81,7 +81,7 @@ class ESolver_FP : public ESolver
     pseudopot_cell_vl locpp;
 
     //! charge extrapolation method
-    Charge_Extra CE;
+    module_charge::Charge_Extra CE;
 
     //! solvent model
     surchem solvent;

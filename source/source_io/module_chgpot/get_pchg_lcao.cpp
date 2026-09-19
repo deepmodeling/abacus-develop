@@ -1,6 +1,6 @@
 #include "get_pchg_lcao.h"
 
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_hamilt/module_gint/gint_interface.h"
 #include "source_io/module_output/cube_io.h"
@@ -191,17 +191,16 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
             // Symmetrize only the merged density, using coupled spin rotations for nspin=4.
             if (needs_symmetry)
             {
-                Symmetry_rho srho;
                 if (nspin_ == 4)
                 {
-                    srho.begin(0, rho_pointers.data(), rhog_pointers.data(), rho_pw.npw, nullptr, &rho_pw, ucell.symm);
-                    srho.begin_soc(rho_pointers.data(), rhog_pointers.data(), &rho_pw, ucell.symm);
+                    module_charge::cal_rhog_symm(0, rho_pointers.data(), rhog_pointers.data(), rho_pw.npw, nullptr, &rho_pw, ucell.symm);
+                    module_charge::cal_rhog_symm_soc(rho_pointers.data(), rhog_pointers.data(), &rho_pw, ucell.symm);
                 }
                 else
                 {
                     for (int is = 0; is < nspin_; ++is)
                     {
-                        srho.begin(is, rho_pointers.data(), rhog_pointers.data(), rho_pw.npw, nullptr, &rho_pw, ucell.symm);
+                        module_charge::cal_rhog_symm(is, rho_pointers.data(), rhog_pointers.data(), rho_pw.npw, nullptr, &rho_pw, ucell.symm);
                     }
                 }
             }

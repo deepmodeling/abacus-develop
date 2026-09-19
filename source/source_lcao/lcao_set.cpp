@@ -161,7 +161,8 @@ void LCAO_domain::init_chg_dm(
     LCAO_domain::init_dm_from_file<TK>(readin_dir, nspin, dmat, ucell, pv);
 
     // Step 2: Convert density matrix to charge density
-    LCAO_domain::dm2rho(dmat.dm->get_DMR_vector(), nspin, chr, true);
+    // skip_normalize=true here (loaded DM is already normalized), so omega is unused.
+    LCAO_domain::dm2rho(dmat.dm->get_DMR_vector(), nspin, chr, PARAM.inp.nelec, ucell.omega, true);
 
     return;
 }
@@ -254,7 +255,7 @@ void LCAO_domain::init_chg_hr(
                                               GlobalV::NPROC,
                                               GlobalV::MY_RANK);
     hamilt::HamiltHSMatrix<TK> hs(p_hamilt);
-    hsolver_lcao_obj.solve(hs, psi, pelec, dm, chr, nspin, 0);
+    hsolver_lcao_obj.solve(hs, psi, pelec, dm, chr, nspin, ucell.omega, 0);
 }
 
 

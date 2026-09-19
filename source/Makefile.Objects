@@ -330,6 +330,7 @@ OBJS_GINT=batch_biggrid.o\
       gint_fvl.o\
       gint_info.o\
       gint_interface.o\
+      gint_prec_ctrl.o\
       gint_rho.o\
       gint_drho.o\
       gint_tau.o\
@@ -825,19 +826,25 @@ OBJS_SRCPW=h_ewald_pw.o\
     vnl_pw_grad.o\
     vnl_pw_init_vnl.o\
     vnl_pw_qrad.o\
-    chgmixing.o\
-    gint_prec_ctrl.o\
+    chg_routine.o\
     charge.o\
-    charge_init.o\
-    charge_mpi.o\
-    charge_extra.o\
-    charge_mixing.o\
-    charge_mixing_dmr.o\
-    mix_resid.o\
-    mix_precond.o\
-    charge_mixing_rho.o\
-    charge_mixing_uspp.o\
-    rhog_io.o\
+    chg_atomic.o\
+    chg_atomic_inner.o\
+    chg_init.o\
+    chg_tools.o\
+    chg_parallel.o\
+    chg_extra.o\
+    chg_mix.o\
+    chg_mix_rho.o\
+    chg_dmr.o\
+    chg_drho.o\
+    chg_drho_inner.o\
+    chg_precond.o\
+    chg_tau.o\
+    chg_symm.o\
+    chg_symm_detail.o\
+    chg_uspp.o\
+    chg_rhog_io.o\
     write_elecstat_pot.o\
     write_init.o\
     fp_energy.o\
@@ -894,8 +901,6 @@ OBJS_SRCPW=h_ewald_pw.o\
     stress_pw.o\
     of_stress_pw.o\
     of_print_info.o\
-    symm_rho_charge.o\
-    symm_rhog.o\
     setup_psi_pw.o\
     setup_psi.o\
     psi_prepare.o\

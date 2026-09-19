@@ -7,7 +7,7 @@
 bool ModuleIO::read_vdata_palgrid(
     const Parallel_Grid& pgrid,
     const int my_rank,
-    std::ofstream& ofs_running,
+    std::ostream& ofs_running,
     const std::string& fn,
     double* const data,
     const int natom)

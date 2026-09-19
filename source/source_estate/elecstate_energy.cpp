@@ -279,6 +279,11 @@ double ElecState::cal_delta_escf() const
 
     assert(this->charge->rhopw->nxyz > 0);
 
+    // BUG(investigate): rhopw->omega is stale in variable-cell calculations
+    // (NPT): pw_rho/pw_rhod are not rebuilt on cell change, so this uses the
+    // initial cell volume. Should use ucell.omega instead. The descf term is
+    // typically small, so the impact may be minor, but it should be verified
+    // for NPT calculations.
     descf *= this->charge->rhopw->omega / this->charge->rhopw->nxyz;
 
 // mohan move the code here, 2025-11-28

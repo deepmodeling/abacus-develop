@@ -49,7 +49,8 @@ void PotXC_FDM::cal_v_eff(
 
 	Charge chg_01;
 	chg_01.set_rhopw(chg_1->rhopw);
-	chg_01.allocate(chg_1->nspin, chg_01.kin_density());
+	chg_01.allocate(chg_1->nspin, XC_Functional::get_ked_flag() || (PARAM.inp.out_elf[0] > 0),
+	                XC_Functional::get_ked_flag(), PARAM.inp.test_charge);
 
 	for(int ir=0; ir<chg_01.nrxx; ++ir)
 	{

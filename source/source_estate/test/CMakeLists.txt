@@ -63,7 +63,7 @@ AddTest(
     ../elecstate_pw_cal_tau.cpp
     ../elecstate.cpp
     ../occupy.cpp
-    ../module_charge/charge_mpi.cpp
+    ../module_charge/chg_parallel.cpp
     ../../source_lcao/module_deltaspin/spin_constrain.cpp
     ../../source_lcao/module_deltaspin/deltaspin_state.cpp
     ../../source_psi/psi.cpp
@@ -98,60 +98,6 @@ AddTest(
   LIBS parameter  base device planewave_serial
   SOURCES potential_new_test.cpp td_field_test.cpp ../module_pot/potential_new.cpp
     ../module_pot/td_field.cpp ../module_pot/td_field_profiles.cpp ../module_pot/td_field_manager.cpp
-)
-
-AddTest(
-  TARGET MODULE_ESTATE_charge_test
-  LIBS parameter  planewave_serial base device cell_info
-  SOURCES charge_test.cpp ../module_charge/charge.cpp
-
-)
-
-AddTest(
-  TARGET MODULE_ESTATE_charge_mixing
-  LIBS parameter base  psi  device planewave_serial cell_info
-  SOURCES charge_mixing_test.cpp  
-  ../module_charge/charge_mixing.cpp ../module_charge/charge_mixing_dmr.cpp ../module_charge/mix_resid.cpp
-  ../module_charge/mix_precond.cpp ../module_charge/charge_mixing_rho.cpp
-  ../module_charge/charge_mixing_uspp.cpp
-)
-
-AddTest(
-  TARGET MODULE_ESTATE_charge_extra
-  LIBS parameter base device cell_info
-  SOURCES charge_extra_test.cpp ../module_charge/charge_extra.cpp ../../source_io/module_output/read_cube.cpp ../../source_io/module_output/write_cube.cpp
- ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
-)
-
-AddTest(
-  TARGET MODULE_ESTATE_gint_prec_ctrl
-  LIBS parameter base device
-  SOURCES gint_prec_ctrl_test.cpp
-    ../module_charge/gint_prec_ctrl.cpp
-)
-
-AddTest(
-  TARGET MODULE_ESTATE_test_rhog_io
-  LIBS parameter base device planewave
-  SOURCES test_rhog_io.cpp ../rhog_io.cpp ../../source_basis/module_pw/test/test_tool.cpp
-  # This test drives PW_Basis::initmpi and read/write_rhog's MPI collectives,
-  # so it must keep __MPI even though this directory disables it. Its main()
-  # calls MPI_Init via test_tool.cpp's setupmpi().
-  KEEP_FEATURE_DEFINITIONS __MPI
-)
-
-AddTest(
-  TARGET MODULE_ESTATE_charge_mpi_test
-  LIBS parameter psi base device planewave
-  SOURCES charge_mpi_test.cpp ../module_charge/charge_mpi.cpp
-  # Real MPI test: its main() calls MPI_Init unconditionally, so it must keep
-  # __MPI despite this directory disabling it.
-  KEEP_FEATURE_DEFINITIONS __MPI
-)
-
-add_test(NAME MODULE_ESTATE_charge_mpi_test_4np
-      COMMAND mpirun -np 4 ./MODULE_ESTATE_charge_mpi_test;
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 endif()

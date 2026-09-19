@@ -45,7 +45,7 @@ class XC_First_Order_FDM : public ModuleDFPT::XC_First_Order
         fdm_ = new elecstate::PotXC_FDM(rho_basis, chg0, ucell);
         chg1_ = new Charge();
         chg1_->set_rhopw(rho_basis);
-        chg1_->allocate(chg0->nspin, false);
+        chg1_->allocate(chg0->nspin, false, false, PARAM.inp.test_charge);
         veff_1_.create(chg0->nspin, chg0->nrxx);
     }
 

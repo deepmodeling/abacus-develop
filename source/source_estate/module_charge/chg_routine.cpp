@@ -1,0 +1,230 @@
+#include "source_estate/module_charge/chg_routine.h"
+#include "source_estate/module_charge/chg_dmr.h"
+
+#include "source_base/parallel_comm.h"
+#include "source_pw/module_pwdft/dftu_base.h" // Plus_U_Base members used below
+#include "source_estate/update_pot.h"
+
+void module_charge::chgmixing_ks(const int iter,
+        UnitCell& ucell,
+        elecstate::ElecState* pelec,
+        Charge &chr,
+        const ModulePW::PW_Basis& rhopw,
+        Charge_Mixing* p_chgmix,
+        ScfMixingCtx& ctx,
+        const Input_para& inp)
+{
+    const double& hsolver_error = ctx.hsolver_error;
+    const double& scf_thr = ctx.scf_thr;
+    const double& scf_ene_thr = ctx.scf_ene_thr;
+    const bool& converged_u = ctx.converged_u;
+    double& drho = ctx.drho;
+    bool& oscillate_esolver = ctx.oscillate_esolver;
+    bool& conv_esolver = ctx.conv_esolver;
+    const int nrxx = rhopw.nrxx;
+
+    if (ctx.ks_run)
+    {
+        // mixing will restart at p_chgmix->mixing_restart steps
+        if (drho <= inp.mixing_restart && inp.mixing_restart > 0.0
+            && p_chgmix->mixing_restart_step > iter)
+        {
+            p_chgmix->mixing_restart_step = iter + 1;
+        }
+
+        if (inp.scf_os_stop) // if oscillation is detected, SCF will stop
+        {
+            oscillate_esolver = p_chgmix->if_scf_oscillate(iter, drho, 
+               inp.scf_os_ndim, inp.scf_os_thr);
+        }
+
+        // drho will be 0 at p_chgmix->mixing_restart step, which is
+        // not ground state
+        bool not_restart_step = !(iter == p_chgmix->mixing_restart_step && inp.mixing_restart > 0.0);
+
+        conv_esolver = (drho < scf_thr && not_restart_step && converged_u);
+
+        // add energy threshold for SCF convergence
+        if (scf_ene_thr > 0.0)
+        {
+            // calculate energy of output charge density
+            elecstate::update_pot(ucell, pelec, chr, conv_esolver);
+            pelec->cal_energies(2); // 2 means Kohn-Sham functional
+            // now, etot_old is the energy of input density, while etot is the energy of output density
+            pelec->f_en.etot_delta = pelec->f_en.etot - pelec->f_en.etot_old;
+            // output etot_delta
+            GlobalV::ofs_running << " DeltaE_womix = " << pelec->f_en.etot_delta * ModuleBase::Ry_to_eV << " eV"
+                                 << std::endl;
+            if (iter > 1 && conv_esolver == 1) // only check when density is converged
+            {
+                // update the convergence flag
+                conv_esolver
+                    = (std::abs(pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < scf_ene_thr);
+            }
+        }
+
+        // If drho < hsolver_error in the first iter or drho < scf_thr, we
+        // do not change rho.
+        if (drho < hsolver_error || conv_esolver || inp.calculation == "nscf")
+        {
+            if (drho < hsolver_error)
+            {
+                GlobalV::ofs_warning << " drho < hsolver_error, keep "
+                                        "charge density unchanged."
+                                     << std::endl;
+            }
+        }
+        else
+        {
+            //----------charge mixing---------------
+            // mixing will restart after p_chgmix->mixing_restart
+            // steps
+            if (inp.mixing_restart > 0 && iter == p_chgmix->mixing_restart_step - 1
+                && drho <= inp.mixing_restart)
+            {
+                // do not mix charge density
+            }
+            else
+            {
+                p_chgmix->mix_rho(&chr); // update chr->rho by mixing
+            }
+            if (inp.scf_thr_type == 2)
+            {
+                chr.renormalize_rho(inp.nelec, ucell.omega); // renormalize rho in R-space would
+                                                  // induce a error in K-space
+            }
+            //----------charge mixing done-----------
+        }
+    }
+
+#ifdef __MPI
+    MPI_Bcast(&drho, 1, MPI_DOUBLE, 0, BP_WORLD);
+
+    // change MPI_DOUBLE to MPI_C_BOOL, mohan 2025-04-13
+    MPI_Bcast(&conv_esolver, 1, MPI_C_BOOL, 0, BP_WORLD);
+
+    assert(nrxx>=0); // mohan add 2025-10-18
+    MPI_Bcast(chr.rho[0], nrxx, MPI_DOUBLE, 0, BP_WORLD);
+#endif
+
+    // mohan move the following code here, 2025-10-18
+    // SCF restart information
+    if (inp.mixing_restart > 0
+        && iter == p_chgmix->mixing_restart_step - 1
+        && iter != inp.scf_nmax)
+    {
+        p_chgmix->mixing_restart_last = iter;
+        std::cout << " SCF restart after this step!" << std::endl;
+    }
+
+    return;
+}
+
+
+void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
+        Charge_Mixing* p_chgmix, // charge mixing class
+        Plus_U_Base& dftu,
+        const bool mag_converged, ///< whether DeltaSpin magnetization converged (true when disabled)
+        const Input_para& inp) // input parameters
+{
+    ModuleBase::TITLE("module_charge", "chgmixing_ks_pw");
+
+    if (iter == 1)
+    {
+        p_chgmix->init_mixing();
+        p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
+        if (inp.dft_plus_u && dftu.has_occ_mixer())
+        {
+            // allocate memory for uom_mdata sized to the flat occupation buffer
+            p_chgmix->allocate_mixing_uom(dftu.occ_mixer().flat_size());
+        }
+    }
+
+    // For mixing restart
+    if (iter == p_chgmix->mixing_restart_step && inp.mixing_restart > 0.0)
+    {
+        p_chgmix->init_mixing();
+        p_chgmix->mixing_restart_count++;
+
+        if (inp.dft_plus_u)
+        {
+            if (dftu.get_uramping() > 0.01 && !dftu.u_converged())
+            {
+                p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
+            }
+            if (dftu.get_uramping() > 0.01)
+            {
+                if (mag_converged) // skip uramping if mag not converged
+                {
+                    dftu.uramping_update(); // update U by uramping if uramping > 0.01
+                    std::cout << " U-Ramping! Current U = ";
+                    for (int i = 0; i < dftu.get_num_u_types(); i++)
+                    {
+                        std::cout << dftu.get_u_current(i) * ModuleBase::Ry_to_eV << " ";
+                    }
+                    std::cout << " eV " << std::endl;
+                }
+            }
+        }
+    }
+
+    return;
+}
+
+void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
+        Charge_Mixing* p_chgmix, // charge mixing class
+        Plus_U_Base& dftu,
+        const int nnr, // dimension of density matrix
+        const Input_para& inp) // input parameters
+{
+    ModuleBase::TITLE("module_charge", "chgmixing_ks_lcao");
+
+    if (iter == 1)
+    {
+        p_chgmix->mix_reset(); // init mixing
+        p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
+        p_chgmix->mixing_restart_count = 0;
+        // this output will be removed once the feeature is stable
+        if (dftu.get_uramping() > 0.01)
+        {
+            std::cout << " U-Ramping! Current U = ";
+            for (int i = 0; i < dftu.get_num_u_types(); i++)
+            {
+                std::cout << dftu.get_u_current(i) * ModuleBase::Ry_to_eV << " ";
+            }
+            std::cout << " eV " << std::endl;
+        }
+    }
+
+    // for mixing restart
+    if (iter == p_chgmix->mixing_restart_step && inp.mixing_restart > 0.0)
+    {
+        p_chgmix->init_mixing();
+        p_chgmix->mixing_restart_count++;
+        if (inp.dft_plus_u)
+        {
+            dftu.uramping_update(); // update U by uramping if uramping > 0.01
+            if (dftu.get_uramping() > 0.01)
+            {
+                std::cout << " U-Ramping! Current U = ";
+                for (int i = 0; i < dftu.get_num_u_types(); i++)
+                {
+                    std::cout << dftu.get_u_current(i) * ModuleBase::Ry_to_eV << " ";
+                }
+                std::cout << " eV " << std::endl;
+            }
+            if (dftu.get_uramping() > 0.01 && !dftu.u_converged())
+            {
+                p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
+            }
+        }
+        if (inp.mixing_dmr) // for mixing_dmr
+        {
+            // allocate memory for dmr_mdata
+            module_charge::init_mixing_dmr(p_chgmix->get_mixing(),
+                                           p_chgmix->get_dmr_mdata(),
+                                           nnr,
+                                           p_chgmix->get_mixing_config());
+        }
+    }
+}

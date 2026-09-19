@@ -41,7 +41,8 @@ class ElecStateLCAO : public ElecState
      */
 	void dm2rho(std::vector<TK*> pexsi_DM,
 			std::vector<TK*> pexsi_EDM,
-			DensityMatrix<TK, double>* dm);
+			DensityMatrix<TK, double>* dm,
+			const double omega);
 
     /**
      * @brief calculate electronic charge density from the density matrix (DMR)
@@ -50,10 +51,14 @@ class ElecStateLCAO : public ElecState
      * charge-density calculation through the ElecState interface, mirroring the
      * plane-wave path (ElecStatePW::psiToRho) and the pexsi branch above. This
      * keeps the source_lcao dependency out of source_hsolver.
+     *
+     * @param omega current unit-cell volume (ucell.omega). Must not be
+     *        rhopw->omega, which is stale in variable-cell calculations.
      */
     void dmToRho(std::vector<hamilt::HContainer<double>*>& dmr,
                  int nspin,
                  Charge* chr,
+                 const double omega,
                  bool skip_charge = false);
 
 };

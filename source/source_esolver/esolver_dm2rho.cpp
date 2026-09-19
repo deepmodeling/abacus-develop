@@ -66,7 +66,7 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
 
     // it's dangerous to design psiToRho function like this, mohan note 20251024
     // this->pelec->psiToRho(*this->psi);
-    LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), this->inp_->nspin, &this->chr);
+    LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), this->inp_->nspin, &this->chr, this->inp_->nelec, ucell.omega, false);
 
     int nspin0 = this->inp_->nspin == 2 ? 2 : 1;
 

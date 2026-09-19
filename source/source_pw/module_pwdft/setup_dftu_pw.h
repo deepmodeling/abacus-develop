@@ -3,7 +3,7 @@
 
 #include "source_cell/unitcell.h"
 #include "source_base/matrix.h"
-#include "source_estate/module_charge/charge_mixing.h"
+#include "source_estate/module_charge/chg_mix.h"
 
 struct Input_para;
 class Plus_U_Base; // mohan add 2025-11-06

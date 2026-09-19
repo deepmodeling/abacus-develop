@@ -259,14 +259,6 @@ ${OBJ_DIR}/parse_args.o: $(ABACUS_ROOT)source_io/parse_args.cpp $(BUILD_INFO_DIR
 	@mkdir -p $(dir $@)
 	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
 
-# Explicit rule: source_cell/module_symmetry and source_estate/module_charge
-# both contain a symm_rho.cpp. VPATH resolves symm_rho.o to the source_cell
-# one (listed first), so the Symmetry_rho implementation needs an explicit
-# object name to be compiled from the correct source.
-${OBJ_DIR}/symm_rho_charge.o: $(ABACUS_ROOT)source_estate/module_charge/symm_rho.cpp
-	@mkdir -p $(dir $@)
-	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
-
 ###### END of ABACUS INFO PART ######
 
 #==========================

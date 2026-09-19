@@ -5,6 +5,7 @@
 #include "source_base/module_device/device.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_estate/module_charge/chg_parallel.h"
 #include "source_estate/uspp_density.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
@@ -171,7 +172,11 @@ template <typename T, typename Device>
 void ElecStatePW<T, Device>::parallelK()
 {
 #ifdef __MPI
-    this->charge->rho_mpi();
+    module_charge::rho_mpi(*this->charge,
+                           GlobalV::KPAR,
+                           PARAM.globalv.all_ks_run,
+                           PARAM.inp.bndpar,
+                           PARAM.inp.nspin);
 #endif
 }
 

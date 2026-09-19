@@ -12,6 +12,8 @@
 //-----HSolver ElecState Hamilt--------
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/elecstate_tools.h"
+#include "source_estate/module_charge/chg_init.h"
+#include "source_estate/module_charge/chg_tools.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
@@ -90,11 +92,26 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(BaseCell& basecell, const Inpu
     this->dmat_base.allocate_dm(&this->kv, &this->pv, this->inp_->nspin);
 
     // 10) inititlize the charge density
+    module_charge::InitRhoCfg init_rho_cfg;
+    init_rho_cfg.init_chg = this->inp_->init_chg;
+    init_rho_cfg.suffix = this->inp_->suffix;
+    init_rho_cfg.esolver_type = this->inp_->esolver_type;
+    init_rho_cfg.global_readin_dir = PARAM.globalv.global_readin_dir;
+    init_rho_cfg.nelec = this->inp_->nelec;
+    init_rho_cfg.nbands = this->inp_->nbands;
+    init_rho_cfg.test_charge = this->inp_->test_charge;
+    init_rho_cfg.domag = PARAM.globalv.domag;
+    init_rho_cfg.domag_z = PARAM.globalv.domag_z;
+    init_rho_cfg.npol = PARAM.globalv.npol;
+    init_rho_cfg.meta_gga = XC_Functional::get_ked_flag();
     this->chr_base.set_rhopw(this->pw_rhod);           // mohan add 20251130
-    const bool kin_den = this->chr_base.kin_density(); // mohan add 20251202
-    this->chr_base.allocate(this->inp_->nspin, kin_den);
-    this->chr_base.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv);
-    this->chr_base.check_rho();
+    const bool kin_den = XC_Functional::get_ked_flag() || (this->inp_->out_elf[0] > 0); // mohan add 20251202
+    this->chr_base.allocate(this->inp_->nspin, kin_den, XC_Functional::get_ked_flag(),
+                            this->inp_->test_charge);
+    this->chr_base.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv, nullptr, init_rho_cfg);
+    module_charge::check_rho(this->chr_base.rho, this->chr_base.nspin,
+                             this->chr_base.rhopw->nrxx, ucell.omega,
+                             this->chr_base.rhopw->nxyz, this->inp_->nelec);
 
     // 11) initialize the potential
     if (this->pelec_base->pot == nullptr)

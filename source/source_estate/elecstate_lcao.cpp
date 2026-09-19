@@ -33,7 +33,8 @@ double ElecStateLCAO<std::complex<double>>::get_spin_constrain_energy()
 template <>
 void ElecStateLCAO<double>::dm2rho(std::vector<double*> pexsi_DM, 
 		std::vector<double*> pexsi_EDM,
-		DensityMatrix<double, double>* dm)
+		DensityMatrix<double, double>* dm,
+		const double omega)
 {
     ModuleBase::timer::start("ElecStateLCAO", "dm2rho");
 
@@ -70,7 +71,7 @@ void ElecStateLCAO<double>::dm2rho(std::vector<double*> pexsi_DM,
         ModuleGint::cal_gint_tau(dm->get_DMR_vector(), PARAM.inp.nspin, this->charge->kin_r);
     }
 
-    this->charge->renormalize_rho();
+    this->charge->renormalize_rho(PARAM.inp.nelec, omega);
 
     ModuleBase::timer::end("ElecStateLCAO", "dm2rho");
     return;
@@ -79,7 +80,8 @@ void ElecStateLCAO<double>::dm2rho(std::vector<double*> pexsi_DM,
 template <>
 void ElecStateLCAO<std::complex<double>>::dm2rho(std::vector<std::complex<double>*> pexsi_DM,
 		std::vector<std::complex<double>*> pexsi_EDM,
-		DensityMatrix<std::complex<double>, double>* dm)
+		DensityMatrix<std::complex<double>, double>* dm,
+		const double omega)
 {
     ModuleBase::WARNING_QUIT("ElecStateLCAO", "pexsi is not completed for multi-k case");
 }
@@ -89,9 +91,10 @@ template <typename TK>
 void ElecStateLCAO<TK>::dmToRho(std::vector<hamilt::HContainer<double>*>& dmr,
                                 int nspin,
                                 Charge* chr,
+                                const double omega,
                                 bool skip_charge)
 {
-    LCAO_domain::dm2rho(dmr, nspin, chr, skip_charge);
+    LCAO_domain::dm2rho(dmr, nspin, chr, PARAM.inp.nelec, omega, skip_charge);
 }
 
 template class ElecStateLCAO<double>;               // Gamma_only case

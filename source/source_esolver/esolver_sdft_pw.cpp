@@ -3,7 +3,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/parallel_comm.h"
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
 #include "source_io/module_parameter/parameter.h"
@@ -193,7 +193,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
 
     if (PARAM.globalv.ks_run)
     {
-        Symmetry_rho::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rho, ucell.symm);
+        module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rho, ucell.symm);
         this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
     }
     else

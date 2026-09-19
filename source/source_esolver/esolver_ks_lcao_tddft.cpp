@@ -13,7 +13,8 @@
 #include "source_io/module_wf/read_wfc_nao.h"
 //------LCAO HSolver ElecState-------
 #include "source_estate/elecstate_tools.h"
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_atomic.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/cal_edm_tddft.h"
 #include "source_estate/module_pot/h_tddft_pw.h"
@@ -204,7 +205,15 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
         if (estep != 0)
         {
             this->CE.update_all_dis(ucell);
-            this->CE.extrapolate_charge(&this->Pgrid, ucell, &this->chr, &this->sf, GlobalV::ofs_running, GlobalV::ofs_warning);
+            const module_charge::AtomicRhoCfg atomic_rho_cfg_tddft{
+                PARAM.inp.nelec,
+                PARAM.inp.test_charge,
+                PARAM.globalv.domag,
+                PARAM.globalv.domag_z,
+                GlobalV::ofs_warning};
+            this->CE.extrapolate_charge(&this->Pgrid, ucell, &this->chr, *this->pw_rhod,
+                                        &this->sf, GlobalV::ofs_running, GlobalV::ofs_warning,
+                                        atomic_rho_cfg_tddft);
             this->exx_nao.before_scf(ucell, this->kv, this->orb_, this->p_chgmix, totstep, *this->inp_, this->exx_info_);
             elecstate::init_scf(ucell,
                                 this->Pgrid,
@@ -374,6 +383,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
                                    *this->dmat.dm,
                                    this->chr,
                                    this->inp_->nspin,
+                                   ucell.omega,
                                    skip_charge);
         }
     }
@@ -381,7 +391,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
     // Symmetrize the charge density only for ground state
     if (istep <= 1)
     {
-        Symmetry_rho::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rho, ucell.symm);
+        module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rho, ucell.symm);
     }
 #ifdef __EXX
     if (this->exx_info_.info_ri.real_number)
@@ -619,7 +629,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::weight_dm_rho(const UnitCell& ucell)
     }
 
     // get the real-space charge density, mohan add 2025-10-24
-    LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), this->inp_->nspin, &this->chr);
+    LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), this->inp_->nspin, &this->chr, this->inp_->nelec, ucell.omega, false);
 }
 
 template class ESolver_KS_LCAO_TDDFT<double, base_device::DEVICE_CPU>;

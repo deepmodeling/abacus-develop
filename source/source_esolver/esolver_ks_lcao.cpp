@@ -7,7 +7,8 @@
 #include "source_lcao/setup_dftu_lcao.h"
 #include "source_pw/module_pwdft/dftu_base.h" // Plus_U_Base (PW and LCAO share it)
 #include "source_hamilt/hs_matrix_k.h"
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_symm.h"
+#include "source_estate/module_charge/chg_dmr.h"
 #include "source_lcao/lcao_domain.h" // need DeePKS_init
 #include "source_lcao/force_stress_lcao.h"
 #include "source_hamilt/module_gint/gint.h"
@@ -19,7 +20,7 @@
 #include "../source_lcao/module_ri/exx_opt_orb.h"
 #endif
 #include "source_lcao/module_rdmft/rdmft.h"
-#include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006
+#include "source_estate/module_charge/chg_routine.h" // use charge mixing, mohan add 20251006
 #include "source_estate/module_dm/init_dm.h" // init dm from electronic wave functions
 #include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
@@ -235,7 +236,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 #endif
 
     // 16) the electron charge density should be symmetrized,
-    Symmetry_rho::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rho, ucell.symm);
+    module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rho, ucell.symm);
 
     // 17) update of RDMFT, added by jghan
     if (this->inp_->rdmft == true)
@@ -484,13 +485,13 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
         // the eigensolvers only ever ask the Hamiltonian for H(k) and S(k)
         hamilt::HamiltHSMatrix<TK> hs(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt));
         hsolver_lcao_obj.solve(hs, this->psi[0], this->pelec, *this->dmat.dm, 
-          this->chr, this->inp_->nspin, skip_charge);
+          this->chr, this->inp_->nspin, ucell.omega, skip_charge);
     }
     else
     {
         // Lambda loop updated the density matrix (DM) but not the real-space charge density.
         // HSolver was skipped, so we need to sync rho from DM manually.
-        LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), this->inp_->nspin, &this->chr);
+        LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), this->inp_->nspin, &this->chr, this->inp_->nelec, ucell.omega, false);
     }
 
     // 4) EXX
@@ -509,7 +510,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
 #endif
 
     // 5) symmetrize the charge density
-    Symmetry_rho::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rho, ucell.symm);
+    module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rho, ucell.symm);
 
     // 6) calculate delta energy
     this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
@@ -567,7 +568,24 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     {
         if (this->inp_->mixing_restart > 0 && this->p_chgmix->mixing_restart_count > 0 && this->inp_->mixing_dmr)
         {
-            this->p_chgmix->mix_dmr(this->dmat.dm);
+            // Extract the contiguous per-spin DMR buffers expected by the
+            // stateless mixing kernel.
+            const std::vector<hamilt::HContainer<double>*>& dmr_containers
+                = this->dmat.dm->get_DMR_vector();
+            const std::vector<std::vector<double>>& dmr_save = this->dmat.dm->get_DMR_save();
+            std::vector<double*> dmr_out;
+            std::vector<const double*> dmr_in;
+            for (std::size_t is = 0; is < dmr_containers.size(); ++is)
+            {
+                dmr_out.push_back(dmr_containers[is]->get_wrapper());
+                dmr_in.push_back(dmr_save[is].data());
+            }
+            module_charge::mix_dmr(dmr_out,
+                                   dmr_in,
+                                   dmr_containers[0]->get_nnr(),
+                                   this->p_chgmix->get_mixing(),
+                                   this->p_chgmix->get_dmr_mdata(),
+                                   this->p_chgmix->get_mixing_config());
         }
     }
 

@@ -5,7 +5,9 @@
 void LCAO_domain::dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
     const int nspin,
     Charge* chr,
-    bool skip_normalize)
+    const double nelec,
+    const double omega,
+    const bool skip_normalize)
 {
     ModuleBase::TITLE("LCAO_domain", "dm2rho");
     ModuleBase::timer::start("LCAO_domain", "dm2rho");
@@ -17,7 +19,10 @@ void LCAO_domain::dm2rho(std::vector<hamilt::HContainer<double>*> &dmr,
 
     ModuleGint::cal_gint_rho(dmr, nspin, chr->rho);
 
-    if(!skip_normalize)chr->renormalize_rho();
+    // omega must be ucell.omega (current cell volume), NOT rhopw->omega which
+    // is stale in variable-cell calculations (pw_rho/pw_rhod are not rebuilt
+    // on cell change). See Charge::renormalize_rho for details.
+    if(!skip_normalize)chr->renormalize_rho(nelec, omega);
 
     // should be moved somewhere else, mohan 20251024
 	if (XC_Functional::get_ked_flag())

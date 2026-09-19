@@ -5,7 +5,10 @@
 #include "source_io/module_json/output_info.h"
 
 #include "source_estate/update_pot.h" // mohan add 20251016
-#include "source_estate/module_charge/chgmixing.h" // mohan add 20251018
+#include "source_estate/module_charge/chg_routine.h" // mohan add 20251018
+#include "source_estate/module_charge/chg_drho.h" // module_charge::cal_drho/cal_dkin
+#include "source_estate/module_charge/chg_init.h" // module_charge::InitRhoCfg
+#include "source_estate/module_charge/chg_tools.h" // module_charge::check_rho
 #include "source_pw/module_pwdft/setup_pwwfc.h" // mohan add 20251018
 #include "source_hsolver/hsolver.h"
 #include "source_io/module_energy/write_eig_occ.h"
@@ -65,9 +68,26 @@ void ESolver_KS::before_all_runners(BaseCell& basecell, const Input_para& inp)
     //! 3) setup charge mixing
     p_chgmix = new Charge_Mixing();
     p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
-    p_chgmix->set_mixing(inp.mixing_mode, inp.mixing_beta, inp.mixing_ndim,
-      inp.mixing_gg0, inp.mixing_tau, inp.mixing_beta_mag, inp.mixing_gg0_mag,
-      inp.mixing_gg0_min, inp.mixing_angle, inp.mixing_dmr, ucell.omega, ucell.tpiba);
+    MixingConfig mix_cfg;
+    mix_cfg.mixing_mode = inp.mixing_mode;
+    mix_cfg.mixing_beta = inp.mixing_beta;
+    mix_cfg.mixing_ndim = inp.mixing_ndim;
+    mix_cfg.mixing_gg0 = inp.mixing_gg0;
+    // tau mixing is only meaningful for kinetic-energy-density functionals
+    mix_cfg.mixing_tau = inp.mixing_tau && XC_Functional::get_ked_flag();
+    mix_cfg.mixing_beta_mag = inp.mixing_beta_mag;
+    mix_cfg.mixing_gg0_mag = inp.mixing_gg0_mag;
+    mix_cfg.mixing_gg0_min = inp.mixing_gg0_min;
+    mix_cfg.mixing_angle = inp.mixing_angle;
+    mix_cfg.mixing_dmr = inp.mixing_dmr;
+    mix_cfg.nspin = inp.nspin;
+    mix_cfg.scf_thr_type = inp.scf_thr_type;
+    mix_cfg.double_grid = PARAM.globalv.double_grid;
+    mix_cfg.gamma_only_pw = PARAM.globalv.gamma_only_pw;
+    mix_cfg.domag = PARAM.globalv.domag;
+    mix_cfg.domag_z = PARAM.globalv.domag_z;
+    mix_cfg.scf_nmax = inp.scf_nmax;
+    p_chgmix->set_mixing(mix_cfg, ucell.omega, ucell.tpiba);
     p_chgmix->init_mixing();
 
     //! 4) setup plane wave for electronic wave functions
@@ -75,8 +95,21 @@ void ESolver_KS::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     //! 5) read in charge density, mohan add 2025-11-28
     //! Inititlize the charge density.
-    this->chr.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv, this->pw_wfc);
-    this->chr.check_rho(); // check the rho
+    module_charge::InitRhoCfg init_rho_cfg;
+    init_rho_cfg.init_chg = inp.init_chg;
+    init_rho_cfg.suffix = inp.suffix;
+    init_rho_cfg.esolver_type = inp.esolver_type;
+    init_rho_cfg.global_readin_dir = PARAM.globalv.global_readin_dir;
+    init_rho_cfg.nelec = inp.nelec;
+    init_rho_cfg.nbands = inp.nbands;
+    init_rho_cfg.test_charge = inp.test_charge;
+    init_rho_cfg.domag = PARAM.globalv.domag;
+    init_rho_cfg.domag_z = PARAM.globalv.domag_z;
+    init_rho_cfg.npol = PARAM.globalv.npol;
+    init_rho_cfg.meta_gga = XC_Functional::get_ked_flag();
+    this->chr.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv, this->pw_wfc, init_rho_cfg);
+    module_charge::check_rho(this->chr.rho, this->chr.nspin, this->chr.rhopw->nrxx, ucell.omega,
+                             this->chr.rhopw->nxyz, inp.nelec); // check the rho
   
 }
 
@@ -97,7 +130,8 @@ void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, co
     // example wavefunctions uses 20 processors while density uses 10.
     if (PARAM.globalv.ks_run)
     {
-        drho = p_chgmix->get_drho(&this->chr, this->inp_->nelec);
+        drho = module_charge::cal_drho(&this->chr, this->inp_->nelec, *this->pw_rho,
+                                       p_chgmix->get_mixing_config(), ucell.omega, ucell.tpiba);
         hsolver_error = 0.0;
         if (iter == 1 && this->inp_->calculation != "nscf")
         {
@@ -114,7 +148,8 @@ void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, co
 
                 this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
-                drho = p_chgmix->get_drho(&this->chr, this->inp_->nelec);
+                drho = module_charge::cal_drho(&this->chr, this->inp_->nelec, *this->pw_rho,
+                                               p_chgmix->get_mixing_config(), ucell.omega, ucell.tpiba);
 
                 hsolver_error = hsolver::cal_hsolve_error(this->inp_->basis_type,
                                 this->inp_->esolver_type, diag_ethr, this->inp_->nelec);
@@ -255,9 +290,20 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     }
 #endif
 
-    module_charge::chgmixing_ks(iter, ucell, this->pelec, this->chr, this->p_chgmix, 
-      this->pw_rhod->nrxx, this->drho, this->oscillate_esolver, conv_esolver, hsolver_error, 
-      this->scf_thr, this->scf_ene_thr, converged_u, *this->inp_);
+    module_charge::ScfMixingCtx ctx;
+    ctx.hsolver_error = hsolver_error;
+    ctx.scf_thr = this->scf_thr;
+    ctx.scf_ene_thr = this->scf_ene_thr;
+    ctx.converged_u = converged_u;
+    ctx.ks_run = PARAM.globalv.ks_run;
+    ctx.drho = this->drho;
+    ctx.oscillate_esolver = this->oscillate_esolver;
+    ctx.conv_esolver = conv_esolver;
+    module_charge::chgmixing_ks(iter, ucell, this->pelec, this->chr,
+        *this->chr.rhopw, this->p_chgmix, ctx, *this->inp_);
+    this->drho = ctx.drho;
+    this->oscillate_esolver = ctx.oscillate_esolver;
+    conv_esolver = ctx.conv_esolver;
 
     // 2.3) Update potentials (should be done every SF iter)
     elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
@@ -277,7 +323,8 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     double dkin = 0.0; // for meta-GGA
     if (XC_Functional::get_ked_flag())
     {
-        dkin = p_chgmix->get_dkin(&this->chr, this->inp_->nelec);
+        dkin = module_charge::cal_dkin(&this->chr, this->inp_->nelec, *this->pw_rho,
+                                       p_chgmix->get_mixing_config(), ucell.omega);
     }
 
     // Iter finish 

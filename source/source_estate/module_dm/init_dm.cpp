@@ -33,7 +33,7 @@ void elecstate::init_dm(UnitCell& ucell,
 		}
 
         // mohan add 2025-11-12, use density matrix to calculate the charge density
-        LCAO_domain::dm2rho(dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &chr);
+        LCAO_domain::dm2rho(dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &chr, PARAM.inp.nelec, ucell.omega, false);
 
 		unitcell::cal_ux(ucell, PARAM.inp.nspin);
 

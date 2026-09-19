@@ -34,6 +34,7 @@ class HSolverLCAO
 			   elecstate::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
 			   Charge &chr, // charge density
 			   const int nspin,
+               const double omega, // current cell volume (ucell.omega), NOT rhopw->omega
 			   const bool skip_charge);
 
   private:

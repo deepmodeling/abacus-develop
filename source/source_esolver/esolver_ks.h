@@ -4,7 +4,7 @@
 #include "esolver_fp.h"                                // first-principles esolver
 #include "source_basis/module_pw/pw_basis_k.h"         // use plane wave
 #include "source_cell/klist.h"                         // use k-points in Brillouin zone
-#include "source_estate/module_charge/charge_mixing.h" // use charge mixing
+#include "source_estate/module_charge/chg_mix.h" // use charge mixing
 #include "source_hamilt/hamilt.h"                      // use Hamiltonian
 #include "source_hamilt/hamilt_base.h"                 // use Hamiltonian base class
 #include "source_hamilt/module_xc/general_exx_info.h"  // ESolver owns General_Exx_Info value

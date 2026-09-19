@@ -7,7 +7,7 @@
 #include "source_lcao/module_rdmft/rdmft_tools.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_hamilt/module_gint/gint_interface.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
@@ -113,7 +113,7 @@ void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
             this->pelec->cal_tau(wfc);
         }
 
-        charge->renormalize_rho();
+        charge->renormalize_rho(PARAM.inp.nelec, ucell.omega);
     }
     else
     {
@@ -135,14 +135,13 @@ void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
             this->pelec->cal_tau(wfc);
         }
 
-        charge->renormalize_rho();
+        charge->renormalize_rho(PARAM.inp.nelec, ucell.omega);
     }
 
     // charge density symmetrization
-    Symmetry_rho srho;
     for (int is = 0; is < nspin; is++)
     {
-        srho.begin(is, *(this->charge), rho_basis, ucell.symm);
+        module_charge::cal_rhog_symm(is, *(this->charge), rho_basis, ucell.symm);
     }
 
 }

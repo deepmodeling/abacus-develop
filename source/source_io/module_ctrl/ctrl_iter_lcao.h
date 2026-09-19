@@ -6,7 +6,7 @@
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecStateLCAO<TK> 
 #include "source_psi/psi.h" // use Psi<TK>
 #include "source_estate/module_charge/charge.h" // use charge
-#include "source_estate/module_charge/charge_mixing.h" // use charge mixing
+#include "source_estate/module_charge/chg_mix.h" // use charge mixing
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_lcao/setup_exx.h" // mohan add 20251008
 #include "source_lcao/setup_deepks.h" // mohan add 20251010

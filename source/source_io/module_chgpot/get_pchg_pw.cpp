@@ -4,7 +4,7 @@
 #include "source_base/module_device/memory_op.h"
 #include "source_base/module_parallel/para_bridge.h"
 #include "source_base/tool_quit.h"
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_estate/uspp_density.h"
 #include "source_io/module_output/cube_io.h"
 
@@ -427,7 +427,6 @@ void Get_pchg_pw<T, Device>::sum_pools(const Parallel_Grid& pgrid, Workspace* wo
 template <typename T, typename Device>
 void Get_pchg_pw<T, Device>::symmetrize(UnitCell* ucell, Workspace* work) const
 {
-    Symmetry_rho srho;
     std::vector<double*> rho_pointers(nspin_);
     std::vector<std::vector<std::complex<double>>> rhog(nspin_, std::vector<std::complex<double>>(pw_rhod_.npw));
     std::vector<std::complex<double>*> rhog_pointers(nspin_);
@@ -441,14 +440,14 @@ void Get_pchg_pw<T, Device>::symmetrize(UnitCell* ucell, Workspace* work) const
     if (work->is_spinor)
     {
         // Charge and magnetization obey different spinor symmetry transformations.
-        srho.begin(0, rho_pointers.data(), rhog_pointers.data(), pw_rhod_.npw, nullptr, &pw_rhod_, ucell->symm);
-        srho.begin_soc(rho_pointers.data(), rhog_pointers.data(), &pw_rhod_, ucell->symm);
+        module_charge::cal_rhog_symm(0, rho_pointers.data(), rhog_pointers.data(), pw_rhod_.npw, nullptr, &pw_rhod_, ucell->symm);
+        module_charge::cal_rhog_symm_soc(rho_pointers.data(), rhog_pointers.data(), &pw_rhod_, ucell->symm);
     }
     else
     {
         for (int is = 0; is < nspin_; ++is)
         {
-            srho.begin(is, rho_pointers.data(), rhog_pointers.data(), pw_rhod_.npw, nullptr, &pw_rhod_, ucell->symm);
+            module_charge::cal_rhog_symm(is, rho_pointers.data(), rhog_pointers.data(), pw_rhod_.npw, nullptr, &pw_rhod_, ucell->symm);
         }
     }
 }

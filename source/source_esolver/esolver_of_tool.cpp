@@ -5,6 +5,7 @@
 #include "source_estate/module_pot/gatefield.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/cal_ux.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 
 namespace ModuleESolver
 {
@@ -89,8 +90,9 @@ void ESolver_OF::allocate_array()
     delete this->ptemp_rho_;
     this->ptemp_rho_ = new Charge();
     this->ptemp_rho_->set_rhopw(this->pw_rho);
-    const bool kin_den = this->ptemp_rho_->kin_density(); // mohan add 20251202
-    this->ptemp_rho_->allocate(this->inp_->nspin, kin_den);
+    const bool kin_den = XC_Functional::get_ked_flag() || (this->inp_->out_elf[0] > 0); // mohan add 20251202
+    this->ptemp_rho_->allocate(this->inp_->nspin, kin_den, XC_Functional::get_ked_flag(),
+                               this->inp_->test_charge);
 
     this->theta_ = new double[this->inp_->nspin];
     this->pdLdphi_ = new double*[this->inp_->nspin];
