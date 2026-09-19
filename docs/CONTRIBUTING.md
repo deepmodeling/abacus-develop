@@ -174,14 +174,14 @@ An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abac
 
 ABACUS includes a built-in help system that allows users to query INPUT parameters directly from the command line (e.g., `abacus -h ecutwfc`). Parameter metadata is defined inline in the C++ source files under `source/source_io/module_parameter/` using `Input_Item` registrations.
 
-The C++ `Input_Item` registrations are the source of truth for parameter metadata. The checked-in `docs/parameters.yaml` and `docs/advanced/input_files/input-main.md` files are generated artifacts: do not edit either file manually. `parameters.yaml` is generated from the binary and is used by Sphinx to produce `input-main.md`.
+The C++ `Input_Item` registrations are the source of truth for parameter metadata. Sphinx generates `docs/advanced/input_files/input-main.md` from an ABACUS executable during every documentation build. The generated YAML stream and Markdown file are not stored in the repository.
 
 Availability expressions follow the grammar and invariants in
 [`developers_guide/input_availability.md`](developers_guide/input_availability.md).
 
-### When to Update `docs/parameters.yaml`
+### When INPUT Documentation Changes
 
-You **must** regenerate `docs/parameters.yaml` whenever you:
+Update the relevant C++ `Input_Item` registration whenever you:
 
 - Add a new INPUT parameter
 - Remove an existing INPUT parameter
@@ -189,25 +189,21 @@ You **must** regenerate `docs/parameters.yaml` whenever you:
 
 ### How to Regenerate
 
-After building and installing ABACUS, run:
+After building ABACUS, preview the generated reference with:
 
 ```bash
-abacus --generate-parameters-yaml > docs/parameters.yaml
+abacus --generate-parameters-yaml \
+  | python3 docs/generate_input_main.py - \
+      --output /tmp/input-main.md
 ```
 
-Then verify the YAML is valid:
+You can also let Sphinx refresh the page during a documentation build:
 
 ```bash
-python3 -c "import yaml; d=yaml.safe_load(open('docs/parameters.yaml')); print(len(d['parameters']), 'parameters')"
+ABACUS_BINARY=/path/to/abacus sphinx-build -b html docs build-docs/html
 ```
 
-Then regenerate the markdown documentation locally:
-
-```bash
-python3 docs/generate_input_main.py docs/parameters.yaml --output docs/advanced/input_files/input-main.md
-```
-
-**Important:** Include the updated `docs/parameters.yaml` and `input-main.md` in your commit when submitting a PR that modifies INPUT parameters. CI regenerates both files from the built binary and rejects any mismatch. Do not fix a documentation mismatch by editing either generated file; update the C++ `Input_Item` registration and regenerate them instead.
+If no ABACUS executable is available, or if generation fails, Sphinx stops with an error. Do not add generated YAML or `input-main.md` files to a commit; update the C++ `Input_Item` registration instead. CI verifies that the reference can be generated successfully.
 
 ### Parameter Documentation Format
 
