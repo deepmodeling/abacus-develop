@@ -6,9 +6,23 @@ version: 2
 
 # Set the OS, Python version and other tools you might need
 build:
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   tools:
-    python: "3.11"
+    python: "3.12"
+  apt_packages:
+    - build-essential
+    - cmake
+    - gfortran
+    - libfftw3-dev
+    - libopenblas-dev
+    - ninja-build
+    - pkg-config
+  jobs:
+    pre_build:
+      - cmake -Bbuild -GNinja -DCMAKE_INSTALL_PREFIX=install -DENABLE_MPI=OFF -DENABLE_LCAO=OFF
+      - cmake --build build --target install -j $(nproc)
+      - install/bin/abacus --generate-parameters-yaml > docs/parameters.yaml
+      - python3 docs/generate_input_main.py docs/parameters.yaml
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:

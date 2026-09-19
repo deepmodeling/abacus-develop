@@ -101,7 +101,7 @@ These rules apply to human contributors, AI agents, GitHub CI, and CodeRabbit.
 
 Pull requests must complete the governance checklist in the PR template,
 including issue linkage, test evidence, behavior-change notes, INPUT parameter
-documentation linkage, core-module impact, and any requested exceptions. Local
+metadata changes, core-module impact, and any requested exceptions. Local
 pre-commit checks cover deterministic rules such as LF line endings and staged
 diff checks; CI repeats the governance check against the PR diff and PR body.
 
@@ -174,40 +174,18 @@ An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abac
 
 ABACUS includes a built-in help system that allows users to query INPUT parameters directly from the command line (e.g., `abacus -h ecutwfc`). Parameter metadata is defined inline in the C++ source files under `source/source_io/module_parameter/` using `Input_Item` registrations.
 
-The C++ `Input_Item` registrations are the source of truth for parameter metadata. The checked-in `docs/parameters.yaml` and `docs/advanced/input_files/input-main.md` files are generated artifacts: do not edit either file manually. `parameters.yaml` is generated from the binary and is used by Sphinx to produce `input-main.md`.
+The C++ `Input_Item` registrations are the source of truth for parameter metadata. `docs/parameters.yaml` and `docs/advanced/input_files/input-main.md` are generated during the documentation build and are not tracked in the repository. Do not edit or commit either generated file.
 
 Availability expressions follow the grammar and invariants in
 [`developers_guide/input_availability.md`](developers_guide/input_availability.md).
 
-### When to Update `docs/parameters.yaml`
+When adding, removing, or changing an INPUT parameter, update its `Input_Item`
+metadata together with the implementation. This includes the description, type,
+default value, unit, category, and availability. The generated YAML and Markdown
+will be refreshed automatically when the documentation is built.
 
-You **must** regenerate `docs/parameters.yaml` whenever you:
-
-- Add a new INPUT parameter
-- Remove an existing INPUT parameter
-- Change a parameter's description, type, default value, unit, category, or availability
-
-### How to Regenerate
-
-After building and installing ABACUS, run:
-
-```bash
-abacus --generate-parameters-yaml > docs/parameters.yaml
-```
-
-Then verify the YAML is valid:
-
-```bash
-python3 -c "import yaml; d=yaml.safe_load(open('docs/parameters.yaml')); print(len(d['parameters']), 'parameters')"
-```
-
-Then regenerate the markdown documentation locally:
-
-```bash
-python3 docs/generate_input_main.py docs/parameters.yaml --output docs/advanced/input_files/input-main.md
-```
-
-**Important:** Include the updated `docs/parameters.yaml` and `input-main.md` in your commit when submitting a PR that modifies INPUT parameters. CI regenerates both files from the built binary and rejects any mismatch. Do not fix a documentation mismatch by editing either generated file; update the C++ `Input_Item` registration and regenerate them instead.
+To preview the generated INPUT reference locally, follow the documentation build
+instructions in [`README.md`](README.md).
 
 ### Parameter Documentation Format
 
