@@ -3800,7 +3800,7 @@
 
 ### cal_syns
 
-- **Type**: Boolean [Integer](optional)
+- **Type**: Boolean \[Integer\](optional)
 - **Description**: Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates &lt;phi(t-1)|phi(t)&gt; by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
 
   - 0 or false: disable
