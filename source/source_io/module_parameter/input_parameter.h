@@ -689,6 +689,7 @@ struct Input_para
         = "ks_bands"; ///< fixed virtual source: complete unoccupied KS bands by default
     int sternheimer_delta_max_states = 0; ///< maximum fixed KS/AO virtual states; 0 means all accepted candidates
     double sternheimer_delta_norm_tol = 1.0e-10; ///< norm threshold for fixed AO virtual-state orthogonalization
+    bool out_librpa_abf_overlap = false; ///< output raw active-ABF overlap for LibRPA v1 diagnostics
     bool exx_coul_moment = false;                 ///< whether to use moment method for Coulomb calculation
     bool exx_rotate_abfs = false;                 ///< whether to rotate auxiliary basis for Coulomb calculation
     double exx_multip_moments_threshold = 1e-10; ///< threshold to screen multipole moments in Coulomb calculation

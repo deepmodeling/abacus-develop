@@ -2170,6 +2170,22 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // out_librpa_abf_overlap
+        auto it = find_label("out_librpa_abf_overlap", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_FALSE(param.input.out_librpa_abf_overlap);
+        it->second.str_values = {"true"};
+        it->second.read_value(it->second, param);
+        EXPECT_TRUE(param.input.out_librpa_abf_overlap);
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("requires rpa=true"));
+        param.input.rpa = true;
+        param.input.out_librpa_reader_version = 1;
+        param.input.shrink_abfs_pca_thr = 0.0;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+    }
     { // berry_phase
         auto it = find_label("berry_phase", readinput.input_lists);
         param.input.berry_phase = true;

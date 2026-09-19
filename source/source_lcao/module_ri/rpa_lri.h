@@ -79,6 +79,9 @@ template <typename T, typename Tdata> class RPA_LRI
                              std::string filename,
                              const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s,
                              const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs);
+    void out_abfs_overlap_raw_v1(const UnitCell& ucell,
+                                 const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& overlap_abfs_abfs,
+                                 const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s);
     void out_eigen_vector(const Parallel_Orbitals& parav, const psi::Psi<T>& psi);
     void out_struc(const UnitCell& ucell);
     void out_bz_sampling();

@@ -204,8 +204,8 @@
     - [out\_element\_info](#out_element_info)
     - [restart\_save](#restart_save)
     - [rpa](#rpa)
-    - [rpa\_out\_vel](#rpa_out_vel)
-    - [rpa\_outdir](#rpa_outdir)
+    - [out\_librpa\_reader\_version](#out_librpa_reader_version)
+    - [out\_librpa\_abf\_overlap](#out_librpa_abf_overlap)
     - [out\_pchg](#out_pchg)
     - [out\_wfc\_norm](#out_wfc_norm)
     - [out\_wfc\_re\_im](#out_wfc_re_im)
@@ -2431,20 +2431,19 @@
   > Note: If symmetry is set to 1, additional files containing the necessary information for exploiting symmetry in the subsequent rpa calculation will be output: irreducible_sector.txt, symrot_k.txt and symrot_R.txt.
 - **Default**: False
 
-### rpa_out_vel
+### out_librpa_reader_version
+
+- **Type**: Integer
+- **Availability**: *Numerical atomic orbital basis with rpa=True.*
+- **Description**: Select the ABACUS output format for files consumed by LibRPA. 0 writes the legacy text files, and 1 writes LibRPA reader-v1 binary files directly.
+- **Default**: 0
+
+### out_librpa_abf_overlap
 
 - **Type**: Boolean
-- **Availability**: *[`basis_type`](#basis_type)==lcao*
-- **Description**: Velocity matrix in KS basis (in unit of eV *Angstrom). Loop layer: spin -&gt; k -&gt; direction -&gt; KS_basis1 -&gt; KS_basis2.
+- **Availability**: *Numerical atomic orbital basis with rpa=True, reader version 1, and shrink ABFs.*
+- **Description**: Writes dense raw active-ABF q-space overlap matrices as `v1_abf_overlap_active_iq_<iq>.dat` for offline PSD diagnostics; this can be high-cost in memory and output size. The writer fails closed if an actually present post-communication `(I,J,R)` key has duplicate MPI contributors, and reports the offending integer key. This check proves uniqueness only for keys present in the post-communication map; it does not assert complete R coverage or pre-communication ownership. The analyzer uses `basis_aux_shrink_out` only to validate per-type shell layout and its declared total; that file does not provide atom-to-type mapping. Full-unshrunk overlap output is not provided because that basis lifecycle is not available safely here.
 - **Default**: False
-- **Unit**: eV * A
-
-### rpa_outdir
-
-- **Type**: String
-- **Availability**: *[`basis_type`](#basis_type)==lcao*
-- **Description**: The directory to save files for LibRPA.
-- **Default**: "OUT.librpa"
 
 ### out_pchg
 

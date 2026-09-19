@@ -3781,23 +3781,23 @@ parameters:
       [NOTE] If symmetry is set to 1, additional files containing the necessary information for exploiting symmetry in the subsequent rpa calculation will be output: irreducible_sector.txt, symrot_k.txt and symrot_R.txt.
     default_value: "False"
     unit: ""
-    availability: basis_type==lcao
-  - name: rpa_out_vel
+    availability: ""
+  - name: out_librpa_reader_version
+    category: Output information
+    type: Integer
+    description: |
+      Select the ABACUS output format for files consumed by LibRPA. 0 writes the legacy text files, and 1 writes LibRPA reader-v1 binary files directly.
+    default_value: "0"
+    unit: ""
+    availability: Numerical atomic orbital basis with rpa=True.
+  - name: out_librpa_abf_overlap
     category: Output information
     type: Boolean
     description: |
-       Velocity matrix in KS basis (in unit of eV *Angstrom). Loop layer: spin -> k -> direction -> KS_basis1 -> KS_basis2.
+      Write dense raw active-ABF q-space overlap matrices as v1_abf_overlap_active_iq_<iq>.dat for PSD diagnostics; this can be high-cost in memory and output size. The writer fail-closes if an actually present post-communication (I,J,R) key has duplicate MPI contributors, and reports the offending integer key. This check proves uniqueness only for keys present in the post-communication map; it does not assert complete R coverage or pre-communication ownership. The analyzer uses basis_aux_shrink_out only for per-type shell-layout and declared-total checks because it has no atom-to-type mapping. Requires rpa=True, out_librpa_reader_version=1, and shrink ABFs; full-unshrunk overlap output is not provided.
     default_value: "False"
-    unit: "eV * A"
-    availability: basis_type==lcao
-  - name: rpa_outdir
-    category: Output information
-    type: String
-    description: |
-      The directory to save files for LibRPA.
-    default_value: "\"OUT.librpa\""
     unit: ""
-    availability: basis_type==lcao
+    availability: Numerical atomic orbital basis with rpa=True, reader version 1, and shrink ABFs.
   - name: out_pchg
     category: Output information
     type: String
