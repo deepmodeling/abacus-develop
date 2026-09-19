@@ -61,7 +61,7 @@ case "${with_openmpi}" in
             [ -d openmpi-${openmpi_ver} ] && rm -rf openmpi-${openmpi_ver}
             tar -xjf ${openmpi_pkg}
             cd openmpi-${openmpi_ver}
-            if [ "${OPENBLAS_ARCH}" = "x86_64" ]; then
+            if [ "${SYSTEM_ARCH}" = "x86_64" ]; then
                 # can have issue with older glibc libraries, in which case
                 # we need to add the -fgnu89-inline to CFLAGS. We can check
                 # the version of glibc using ldd --version, as ldd is part of
