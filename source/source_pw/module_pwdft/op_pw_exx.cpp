@@ -241,7 +241,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
             get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq % nk, false, this->coulomb_param);
             for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
             {
-                double wg_mqb_real = (*wg)(this->ik, m_iband);
+                double wg_mqb_real = (*wg)(iq, m_iband);
                 T wg_mqb = wg_mqb_real;
                 if (wg_mqb_real < 1e-12)
                 {
