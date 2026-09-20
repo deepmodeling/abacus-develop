@@ -3305,7 +3305,10 @@ void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
     const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     const int nspin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
     std::ofstream ofs;
-    ofs.open(outdir + "band_out.txt", std::ios::out);
+    ofs.open(ss.str().c_str(), std::ios::out);
+    // Set precision before the Fermi energy and first occupation are written.
+    // The occupations include k weights; rounding the first row changes the
+    // normalized occupation when LibRPA restores an irreducible k mesh.
     ofs << std::fixed << std::setprecision(15);
     ofs << nks_tot << std::endl;
     ofs << nspin_tmp << std::endl;
