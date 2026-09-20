@@ -143,7 +143,8 @@ void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(
 template<typename T, typename Device>
 void projectors::OnsiteProjector<T, Device>::cal_occupations(
         const psi::Psi<std::complex<T>, Device>* psi_in,
-        const ModuleBase::matrix& wg_in)
+        const ModuleBase::matrix& wg_in,
+        const int nspin_in)
 {
     ModuleBase::timer::start("OnsiteProj", "cal_occupation");
     this->tabulate_atomic(0);
@@ -151,6 +152,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
 
     // loop over k-points to calculate Mi of \sum_{k,i,l,m}<Psi_{k,i}|alpha_{l,m}><alpha_{l,m}|Psi_{k,i}>
     const int nbands = psi_in->get_nbands();
+    const int npol = psi_in->get_npol();
     for(int ik = 0; ik < psi_in->get_nk(); ik++)
     {
         psi_in->fix_k(ik);
@@ -159,16 +161,19 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
             this->tabulate_atomic(ik);
         }
         // std::cout << __FILE__ << ":" << __LINE__ << " nbands = " << nbands << std::endl;
-        this->overlap_proj_psi(
-                        nbands * psi_in->get_npol(),
-                        psi_in->get_pointer());
+        this->overlap_proj_psi(nbands * npol, psi_in->get_pointer());
         const std::complex<double>* becp_p = this->get_h_becp();
         // becp(nbands*npol , nkb)
         // mag = wg * \sum_{nh}becp * becp
         int nkb = this->tot_nproj;
-        //nkb = 18;
-        //std::cout << "at " << __FILE__ << ": " << __LINE__ << " output nbands: " << nbands << std::endl;
-        //std::cout << "at " << __FILE__ << ": " << __LINE__ << " output nkb: " << nkb << std::endl;
+        // nspin=2 (npol=1): the spin-up and spin-down channels are separate
+        // k-points. Store spin-up occupancy in the up-up Pauli block (occ[0])
+        // and spin-down occupancy in the down-down block (occ[3]) so that
+        // print_orb_chg() yields:
+        //   Charge = occ[0] + occ[3], Mag(z) = occ[0] - occ[3]
+        // nspin=1 (npol=1): no spin polarization, split the occupancy evenly
+        // between occ[0] and occ[3] so that the printed magnetization is zero.
+        // nspin=4 (npol=2): both spinor components are interleaved per band.
         for(int ib = 0;ib<nbands;ib++)
         {
             const double weight = wg_in(ik, ib);
@@ -179,11 +184,32 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
                 for(int ih = 0; ih < nh; ih++)
                 {
                     const int occ_index = (begin_ih + ih) * 4;
-                    const int index = ib*2*nkb + begin_ih + ih;
-                    occs[occ_index] += weight * conj(becp_p[index]) * becp_p[index];
-                    occs[occ_index + 1] += weight * conj(becp_p[index]) * becp_p[index + nkb];
-                    occs[occ_index + 2] += weight * conj(becp_p[index + nkb]) * becp_p[index];
-                    occs[occ_index + 3] += weight * conj(becp_p[index + nkb]) * becp_p[index + nkb];
+                    if (npol == 1)
+                    {
+                        const int index = ib * nkb + begin_ih + ih;
+                        const double occ = weight * (conj(becp_p[index]) * becp_p[index]).real();
+                        if (nspin_in == 2 && this->isk_ && this->isk_[ik] == 1)
+                        {
+                            occs[occ_index + 3] += occ;
+                        }
+                        else if (nspin_in == 1)
+                        {
+                            occs[occ_index] += 0.5 * occ;
+                            occs[occ_index + 3] += 0.5 * occ;
+                        }
+                        else
+                        {
+                            occs[occ_index] += occ;
+                        }
+                    }
+                    else
+                    {
+                        const int index = ib * 2 * nkb + begin_ih + ih;
+                        occs[occ_index] += weight * conj(becp_p[index]) * becp_p[index];
+                        occs[occ_index + 1] += weight * conj(becp_p[index]) * becp_p[index + nkb];
+                        occs[occ_index + 2] += weight * conj(becp_p[index + nkb]) * becp_p[index];
+                        occs[occ_index + 3] += weight * conj(becp_p[index + nkb]) * becp_p[index + nkb];
+                    }
                 }
                 begin_ih += nh;
             }
@@ -213,7 +239,8 @@ void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::overlap_proj_
 template
 void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::cal_occupations(
     const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>*,
-    const ModuleBase::matrix&);
+    const ModuleBase::matrix&,
+    const int);
 
 #if ((defined __CUDA) || (defined __ROCM))
 template
@@ -227,5 +254,6 @@ void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::overlap_proj_
 template
 void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::cal_occupations(
     const psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*,
-    const ModuleBase::matrix&);
+    const ModuleBase::matrix&,
+    const int);
 #endif

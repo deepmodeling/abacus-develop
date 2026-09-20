@@ -2,6 +2,7 @@
 #define OPT_DCSRCH_H
 
 #include <iostream>
+#include <string>
 
 #include "constants.h"
 
@@ -64,7 +65,7 @@ class Opt_DCsrch
      * @param g the derivative of the function at 0 on initial entry.
      *          On subsequent entries g is the derivative of the function at x + stp * d.
      * @param rstp the optimized step length, assert the initial value is larger than zero.
-     * @param rtask a character variable of length at least 60.
+     * @param rtask the line-search status string, updated in place.
      *              On initial entry task must be set to 'START'.
      *              On exit task indicates the required action:
      *              If task(1:2) = 'FG' then evaluate the function and derivative at stp and call dcsrch again.
@@ -73,7 +74,7 @@ class Opt_DCsrch
      *                 The exit value of stp contains the best point found during the search.
      *              If task(1:5) = 'ERROR' then there is an error in the input arguments.
      */
-    void dcSrch(double& f, double& g, double& rstp, char* rtask);
+    void dcSrch(double& f, double& g, double& rstp, std::string& rtask);
 
   private:
     double ftol_ = 1e-4;  // nonnegative tolerance for the sufficient decrease condition.

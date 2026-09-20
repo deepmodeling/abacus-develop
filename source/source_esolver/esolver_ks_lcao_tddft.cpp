@@ -19,6 +19,7 @@
 #include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_estate/module_pot/td_field_manager.h"
+#include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/rho_tau_lcao.h"
@@ -365,7 +366,9 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
                                                                         this->inp_->device == "gpu",
                                                                         GlobalV::NPROC,
                                                                         GlobalV::MY_RANK);
-            hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
+            hamilt::HamiltHSMatrix<std::complex<double>> hs(
+                static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt));
+            hsolver_lcao_obj.solve(hs,
                                    this->psi[0],
                                    this->pelec,
                                    *this->dmat.dm,

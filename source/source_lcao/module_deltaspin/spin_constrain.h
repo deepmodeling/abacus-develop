@@ -361,7 +361,7 @@ public:
     /// check atomCounts
     void check_atomCounts() const { state_.check_atomCounts(); }
     /// get iat
-    int get_iat(int itype, int atom_index) { return state_.get_iat(itype, atom_index); }
+    int get_iat(int itype, int atom_index) const { return state_.get_iat(itype, atom_index); }
     /// set nspin
     void set_nspin(int nspin) { state_.set_nspin(nspin); }
     /// get nspin

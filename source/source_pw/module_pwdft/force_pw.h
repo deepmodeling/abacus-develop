@@ -49,6 +49,7 @@ class Forces
                    const bool domag,
                    const bool domag_z,
                    const int gga_grad,
+                   const bool use_onsite_projection,
                    UnitCell& ucell,
                    ModuleBase::matrix& force,
                    const vdw::VdwResult* vdw_result,

@@ -6,7 +6,12 @@
 #endif
 #include "source_base/timer.h"
 
-Nose_Hoover::Nose_Hoover(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdcell_in)
+Nose_Hoover::Nose_Hoover(const MD_para& mdp_in,
+                         const bool cal_stress_in,
+                         const bool init_vel,
+                         const int my_rank_in,
+                         MDCell& mdcell_in)
+    : MD_base(mdp_in, cal_stress_in, init_vel, my_rank_in, mdcell_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
 

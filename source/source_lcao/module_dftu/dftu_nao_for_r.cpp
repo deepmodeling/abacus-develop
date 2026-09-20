@@ -20,11 +20,10 @@ void cal_for_IJR_nao_r(const int& iat1,
                      double* force1,
                      double* force2)
 {
-#ifdef __DEBUG
     assert(nspin == 1 || nspin == 2 || nspin == 4);
     assert(force1 != nullptr);
     assert(force2 != nullptr);
-#endif
+
     // npol is the number of spinor polarizations:
     // 1 for nspin=1 (non-spin-polarized) and nspin=2 (collinear magnetic),
     // 2 for nspin=4 (non-collinear, one matrix holds both spin-up and spin-down)

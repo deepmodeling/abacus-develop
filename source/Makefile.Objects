@@ -399,6 +399,7 @@ OBJS_DFPT=dfpt_hamilt_shift.o\
     dfpt_stern.o
 
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
+    hamilt_lcao_factory.o\
     operator_lcao.o\
     ekinetic.o\
     ekinetic_fs.o\
@@ -587,6 +588,9 @@ OBJS_SYMMETRY=symm_other.o\
     symm_rho.o\
     little_group.o\
     symmetry.o\
+    irreducible_sector.o\
+    irred_sec_bvk.o\
+    symm_rotation_k.o\
 
 OBJS_XC=xc_functional.o\
     xc_functional_ncgga_sf.o\
@@ -678,7 +682,6 @@ OBJS_IO=module_parameter/input_conv.o\
     abacusjson.o\
     general_info.o\
     init_info.o\
-    readin_info.o\
     output_info.o\
     parse_args.o\
     module_parameter/availability.o\
@@ -748,8 +751,8 @@ OBJS_LCAO=evolve_elec.o\
       boundary_fix.o\
       upsi.o\
       force_stress_lcao.o\
-      force_lcao_gamma.o\
-      force_lcao_k.o\
+      force_stress_assemble.o\
+      force_stress_terms.o\
       stress_tools.o\
       edm.o\
       pulay_fs_center2.o\

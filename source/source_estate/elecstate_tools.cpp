@@ -59,15 +59,18 @@ void calculate_weights(const ModuleBase::matrix& ekb,
         const int band_offset = band_output.local_offset();
         if (PARAM.globalv.two_fermi)
         {
-            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[0], ekb, eferm.ef_up, wg, 0, klist->isk);
-            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[1], ekb, eferm.ef_dw, wg, 1, klist->isk);
+            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[0], ekb, eferm.ef_up, wg, 0, klist->isk,
+                             PARAM.inp.nspin);
+            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[1], ekb, eferm.ef_dw, wg, 1, klist->isk,
+                             PARAM.inp.nspin);
             // ef = ( ef_up + ef_dw ) / 2.0_dp need??? mohan add 2012-04-16
             // Keep independent Fermi levels for the two spin channels.
         }
         else
         {
             // A spin selector of -1 requests the combined-spin occupation path.
-            Occupy::iweights(nks, klist->wk, nbands, band_offset, PARAM.inp.nelec, ekb, eferm.ef, wg, -1, klist->isk);
+            Occupy::iweights(nks, klist->wk, nbands, band_offset, PARAM.inp.nelec, ekb, eferm.ef, wg, -1, klist->isk,
+                             PARAM.inp.nspin);
         }
     }
     else if (Occupy::use_gaussian_broadening)

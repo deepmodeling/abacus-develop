@@ -4,6 +4,7 @@
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
+#include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/force_pw.h"
@@ -264,16 +265,16 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      this->inp_->nb2d,
                                                      this->inp_->use_k_continuity);
 
-        hsolver_pw_obj.solve(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt),
+        // the iterative eigensolvers see the Hamiltonian only through this operator
+        hamilt::HamiltHSOperator<T, Device> op(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), this->pw_wfc);
+        hsolver_pw_obj.solve(op,
                              *this->stp.template get_psi_t<T, Device>(),
                              this->pelec,
                              this->pelec->ekb.c,
                              GlobalV::RANK_IN_POOL,
                              GlobalV::NPROC_IN_POOL,
                              GlobalV::ofs_running,
-                             skip_charge,
-                             ucell.tpiba,
-                             ucell.nat);
+                             skip_charge);
     }
 
     // symmetrize the charge density
@@ -379,6 +380,7 @@ void ESolver_KS_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matrix&
 
     // Calculate forces
     ff.cal_force(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
+                 this->inp_->dft_plus_u || this->inp_->sc_mag_switch,
                  ucell,
                  force,
                  this->get_vdw_result(),

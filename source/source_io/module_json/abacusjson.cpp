@@ -1,152 +1,107 @@
 #include "abacusjson.h"
 
+#ifdef __JSON
+#include <nlohmann/json.hpp>
+#include <cstddef>
 #include <fstream>
-#include <iostream>
-#include <string>
-#include <vector>
-#include <sstream>
+#include <stdexcept>
+#include <utility>
+
 namespace Json
 {
-
-#ifdef __RAPIDJSON
-rapidjson::Document AbacusJson::doc;
-
-bool isNum(std::string str)  
-{  
-	std::stringstream sin;  
-    sin<<str;
-	double d;  
-	char c;  
-	if(!(sin >> d))  
-		return false;
-	
-	if (sin >> c) 
-		return false;
-	return true;  
-}
-
-
-void AbacusJson::add_nested_member(std::vector<jsonKeyNode>::iterator begin,
-                                   std::vector<jsonKeyNode>::iterator end,
-                                   rapidjson::Value& val,
-                                   rapidjson::Value& parent,
-                                   rapidjson::Document::AllocatorType& allocator,
-                                   bool IsArray
-                                   )
+namespace
 {
-    if (begin != end)
+// Only missing named nodes are created. Indexed access never grows an array.
+jsonValue* resolve_path(jsonValue& root,
+                        const std::vector<jsonKeyNode>& keys,
+                        jsonValue initial_value)
+{
+    if (keys.empty())
     {
-        jsonKeyNode keyNode = *begin;
-        rapidjson::Value key((*begin).key.c_str(), allocator);
+        return nullptr;
+    }
 
-
-        if (begin + 1 == end)
+    jsonValue* parent = &root;
+    for (std::size_t i = 0; i < keys.size(); ++i)
+    {
+        const jsonKeyNode& key = keys[i];
+        if (key.is_index)
         {
-            
-            if( keyNode.key.empty() && parent.IsArray()){
-                int index = keyNode.i;
-                if(index>=0){
-                    parent[index] = val;
-                }
-                else {
-                    int arr_size = parent.Size();
-                    parent[arr_size+index] = val;
-                }
-            }
-            // if key exists, then overwrite it
-            else if (parent.HasMember(key))
+            if (!parent->is_array())
             {
-                if(parent[key].IsArray()){
-                    parent[key].PushBack(val, allocator);
-                }else{
-                    // if key is an object, then warn the user
-                    if (parent[key].IsObject())
-                    {
-                        std::cout << "Warning: write to json, key " << (*begin).key
-                                << " exist and is an object, and abacus will overwrite it with a value." << std::endl;
-                    }
-                    parent[key] = val;
-                }
+                throw std::invalid_argument("JSON output: an integer path component requires an array");
             }
-            else{
-                if(IsArray==true){
-                    rapidjson::Value arr(rapidjson::kArrayType);
-                    arr.PushBack(val, allocator);
-                    parent.AddMember(key, arr, allocator);
-                } else{
-                    parent.AddMember(key, val, allocator);
-                }
-                
+            const std::ptrdiff_t size = static_cast<std::ptrdiff_t>(parent->size());
+            std::ptrdiff_t index = static_cast<std::ptrdiff_t>(key.i);
+            if (index < 0)
+            {
+                index += size;
             }
+            if (index < 0 || index >= size)
+            {
+                throw std::out_of_range("JSON output: array index out of range");
+            }
+            parent = &parent->at(static_cast<jsonValue::size_type>(index));
         }
         else
         {
-            if( keyNode.key.empty()&&parent.IsArray()){
-                int index = keyNode.i;
-                
-                if(index>=0){
-                    add_nested_member(begin + 1, end, val, parent[index], allocator,IsArray);
-                }
-                else {
-                    int arr_size = parent.Size();
-                    add_nested_member(begin + 1, end, val, parent[arr_size+index], allocator,IsArray);
-                }
-            }
-            // need to check if the key exists
-            else if (parent.HasMember(key))
+            if (!parent->is_object())
             {
-                // this key should be an object
-                if (!parent[key].IsObject()&&!parent[key].IsArray())
-                {
-                    std::cout << "Warning: write to json, key " << (*begin).key
-                              << " exist and is not an object or array, and abacus will add it as a middle node." << std::endl;
-                }
-                add_nested_member(begin + 1, end, val, parent[key], allocator,IsArray);
+                throw std::invalid_argument("JSON output: a named path component requires an object");
             }
-            else
+            jsonValue::iterator child = parent->find(key.key);
+            if (child == parent->end())
             {
-                rapidjson::Value paraent_val(rapidjson::kObjectType);
-                add_nested_member(begin + 1, end, val, paraent_val, allocator,IsArray);
-                parent.AddMember(key, paraent_val, allocator);
+                jsonValue initial = i + 1 == keys.size() ? std::move(initial_value) : jsonValue::object();
+                child = parent->emplace(key.key, std::move(initial)).first;
             }
+            parent = &child.value();
         }
     }
+    return parent;
 }
-// Output the json to a file
-void AbacusJson::write_to_json(std::string filename)
+} // namespace
+
+jsonValue AbacusJson::doc = jsonValue::object();
+
+void AbacusJson::set_json(const std::vector<jsonKeyNode>& keys, jsonValue value)
 {
-    rapidjson::StringBuffer buffer;
-    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
-    doc.Accept(writer);
+    jsonValue* target = resolve_path(doc, keys, nullptr);
+    if (target != nullptr)
+    {
+        *target = std::move(value);
+    }
+}
 
-    std::ofstream ofs(filename);
-    ofs << buffer.GetString();
-    ofs.close();
-};
-  template <>
-  void AbacusJson::add_json(std::vector<jsonKeyNode> keys, const std::string& value,bool IsArray)
-  {
-      if (!doc.IsObject())
-      {
-          doc.SetObject();
-      }
-      rapidjson::Value val(value.c_str(), doc.GetAllocator());
-      add_nested_member(keys.begin(), keys.end(), val, doc, doc.GetAllocator(),IsArray);
-  }
+void AbacusJson::append_json(const std::vector<jsonKeyNode>& keys, jsonValue value)
+{
+    jsonValue* target = resolve_path(doc, keys, jsonValue::array());
+    if (target == nullptr)
+    {
+        return;
+    }
+    if (!target->is_array())
+    {
+        throw std::invalid_argument("JSON output: append requires an array");
+    }
+    target->push_back(std::move(value));
+}
 
+void AbacusJson::write_to_json(const std::string& filename)
+{
+    const auto content = doc.dump(4);
+    std::ofstream file(filename);
+    if (!file)
+    {
+        throw std::runtime_error("Cannot open JSON output file: " + filename);
+    }
+    file << content;
+    file.close();
+    if (!file)
+    {
+        throw std::runtime_error("Cannot write JSON output file: " + filename);
+    }
+}
 
-// Overloaded template functions for json class objects
-  template <>
-  void AbacusJson::add_json(std::vector<jsonKeyNode> keys, const rapidjson::Value& value,bool IsArray)
-  {
-
-        if (!doc.IsObject())
-        {
-            doc.SetObject();
-        }
-
-        rapidjson::Value val(value,doc.GetAllocator());
-        add_nested_member(keys.begin(), keys.end(), val, doc, doc.GetAllocator(),IsArray);
-  }
-#endif
 } // namespace Json
+#endif // __JSON

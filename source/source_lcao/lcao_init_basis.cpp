@@ -58,9 +58,9 @@ void init_basis_lcao(Parallel_Orbitals& pv,
         auto* lcao_nl = new LCAONonlocalInfo();
         lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb,
                                PARAM.inp.basis_type, PARAM.inp.out_element_info,
-                               PARAM.inp.lspinorb, PARAM.inp.nspin);
+                               PARAM.inp.lspinorb, PARAM.inp.nspin, GlobalV::MY_RANK);
         ucell.infoNL.reset(lcao_nl);
-        two_center_bundle.build_beta(ucell.ntype, lcao_nl->get_nonlocal().Beta);
+        two_center_bundle.build_beta(ucell.ntype, lcao_nl->get_nonlocal().get_Beta_data());
     }
 
 #ifdef __FFT_TWO_CENTER

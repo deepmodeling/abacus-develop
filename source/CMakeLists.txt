@@ -31,7 +31,7 @@ include(CompilerConfiguration)
 
 set(_abacus_feature_definitions
   __FFTW3
-  $<$<BOOL:${ENABLE_RAPIDJSON}>:__RAPIDJSON>
+  $<$<BOOL:${ENABLE_JSON}>:__JSON>
   $<$<BOOL:${USE_CUDA_ON_DCU}>:__CUDA_ON_DCU>
   $<$<BOOL:${USE_CUDA_MPI}>:__CUDA_MPI>
   $<$<BOOL:${ENABLE_ABACUS_LIBM}>:__ABACUS_LIBM>
@@ -211,6 +211,16 @@ if(NOT MSVC)
   list(APPEND _abacus_linalg_libs m)
 endif()
 
+# The mtblas archives bundle their own OpenBLAS objects. They must come after
+# the standalone BLAS/LAPACK/ScaLAPACK above so that the linker resolves the
+# BLAS symbols from the standalone BLAS instead of the bundled copy.
+if(USE_DSP)
+  list(APPEND _abacus_linalg_libs
+    ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblas.a
+    ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblasdev.a
+    ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtfft.a)
+endif()
+
 target_link_libraries(abacus_linalg_libs INTERFACE ${_abacus_linalg_libs})
 target_include_directories(abacus_linalg_libs INTERFACE ${_abacus_linalg_include_dirs})
 
@@ -240,7 +250,7 @@ endif()
 # ------------------------------------------------------------------------------
 
 set(_abacus_feature_libs
-  $<$<BOOL:${ENABLE_RAPIDJSON}>:RapidJSON>
+  $<$<BOOL:${ENABLE_JSON}>:nlohmann_json::nlohmann_json>
   $<$<BOOL:${ENABLE_ELPA}>:ELPA::ELPA>
   $<$<BOOL:${ENABLE_PEXSI}>:PEXSI::PEXSI>
   $<$<BOOL:${ENABLE_CNPY}>:cnpy>
@@ -364,7 +374,7 @@ target_compile_options(abacus_compile_requirements INTERFACE
   ${_abacus_feature_compile_options})
 
 foreach(_abacus_feature_target IN ITEMS
-    RapidJSON
+    nlohmann_json::nlohmann_json
     cereal::cereal
     ELPA::ELPA
     Libxc::xc
@@ -734,7 +744,7 @@ endif()
 if(ENABLE_LIBRI)
   target_link_libraries(${ABACUS_BIN_NAME} PRIVATE ri module_exx_symmetry)
 endif()
-if(ENABLE_RAPIDJSON)
+if(ENABLE_JSON)
   target_link_libraries(${ABACUS_BIN_NAME} PRIVATE json_output)
 endif()
 

@@ -5,6 +5,50 @@
 #include "source_base/matrix.h"
 #include "source_base/vector3.h"
 
+/**
+ * @brief Smearing weight functions and the Fermi-level bisection built on them.
+ *
+ * Each of these depends only on its arguments -- none of them reads any of
+ * Occupy's state -- so they are free functions rather than private static
+ * members of that class.
+ */
+namespace occupy_smearing
+{
+/**
+ * @brief smeared occupation of a state, as a function of (ef - e) / sigma
+ * @param n smearing type: -99 Fermi-Dirac, -1 cold, 0 Gaussian,
+ *          n > 0 n-th order Methfessel-Paxton
+ */
+double wgauss(const double& x, const int n);
+
+/// @brief first moment of the smearing function, used for the -TS term
+/// @param n smearing type, as in wgauss()
+double w1gauss(const double& x, const int n);
+
+/// @brief number of electrons below a trial Fermi level e
+double sumkg(const ModuleBase::matrix& ekb,
+             const int nband,
+             const int nks,
+             const std::vector<double>& wk,
+             const double& smearing_sigma,
+             const int ngauss,
+             const double& e,
+             const int& is,
+             const std::vector<int>& isk);
+
+/// @brief find the Fermi level by bisection on sumkg()
+void efermig(const ModuleBase::matrix& ekb,
+             const int nbnd,
+             const int nks,
+             const double& nelec,
+             const std::vector<double>& wk,
+             const double& smearing_sigma,
+             const int ngauss,
+             double& ef,
+             const int& is,
+             const std::vector<int>& isk);
+} // namespace occupy_smearing
+
 class Occupy
 {
 
@@ -35,6 +79,8 @@ public:
     // fixed occupations
     static bool fixed_occupations;
 
+    /// @param nspin number of spin channels; 2 selects a single spin through
+    ///              isk when is != -1, and 4 halves the spin degeneracy
     static void iweights(const int nks,
                          const std::vector<double>& wk,
                          const int nband,
@@ -44,7 +90,8 @@ public:
                          double& ef,
                          ModuleBase::matrix& wg,
                          const int& is,
-                         const std::vector<int>& isk);
+                         const std::vector<int>& isk,
+                         const int nspin);
 
     static void gweights(const int nks,
                          const std::vector<double>& wk,
@@ -66,31 +113,6 @@ public:
     static double wsweight(const ModuleBase::Vector3<double> &r, ModuleBase::Vector3<double> *rws,const int nrws);
 
 private:
-  static void efermig(const ModuleBase::matrix& ekb,
-                      const int nbnd,
-                      const int nks,
-                      const double& nelec,
-                      const std::vector<double>& wk,
-                      const double& smearing_sigma,
-                      const int ngauss,
-                      double& ef,
-                      const int& is,
-                      const std::vector<int>& isk);
-
-  static double sumkg(const ModuleBase::matrix& ekb,
-                      const int nband,
-                      const int nks,
-                      const std::vector<double>& wk,
-                      const double& smearing_sigma,
-                      const int ngauss,
-                      const double& e,
-                      const int& is,
-                      const std::vector<int>& isk);
-
-  static double wgauss(const double& x, const int n);
-
-  static double w1gauss(const double& x, const int n);
-
   //============================
   // Needed in tweights
   //============================

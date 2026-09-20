@@ -18,7 +18,6 @@ namespace ModuleESolver
 ESolver_OF::ESolver_OF()
 {
     this->classname = "ESolver_OF";
-    this->task_ = new char[60];
 }
 
 ESolver_OF::~ESolver_OF()
@@ -43,7 +42,6 @@ ESolver_OF::~ESolver_OF()
 
     delete[] this->nelec_;
     delete[] this->theta_;
-    delete[] this->task_;
     delete this->ptemp_rho_;
 
     delete this->kedf_manager_;
@@ -564,6 +562,7 @@ void ESolver_OF::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
     // here nullptr is for DFT+U, which may cause bugs, mohan note 2025-11-07
     // solvent can be used? mohan ask 2025-11-07
     ff.cal_force(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
+                 this->inp_->dft_plus_u || this->inp_->sc_mag_switch,
                  ucell, force, this->get_vdw_result(), *pelec, this->pw_rho, &ucell.symm, &sf,
                  this->solvent, nullptr, &this->locpp);
 }

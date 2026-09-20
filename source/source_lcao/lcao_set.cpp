@@ -6,6 +6,7 @@
 #include "source_hamilt/module_hcontainer/read_hcontainer.h"
 #include "source_lcao/rho_tau_lcao.h" // use dm2rho
 #include "source_lcao/hamilt_lcao.h" // use HamiltLCAO for init_chg_hr
+#include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/hsolver_lcao.h" // use HSolverLCAO for init_chg_hr
 #include "source_pw/module_pwdft/dftu_base.h" // use Plus_U_Base for the DFT+U init
 
@@ -252,7 +253,8 @@ void LCAO_domain::init_chg_hr(
                                               PARAM.inp.device == "gpu",
                                               GlobalV::NPROC,
                                               GlobalV::MY_RANK);
-    hsolver_lcao_obj.solve(p_hamilt, psi, pelec, dm, chr, nspin, 0);
+    hamilt::HamiltHSMatrix<TK> hs(p_hamilt);
+    hsolver_lcao_obj.solve(hs, psi, pelec, dm, chr, nspin, 0);
 }
 
 

@@ -4,7 +4,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/lcao_hs_arrays.hpp"
+#include "source_lcao/lcao_hs_arrays.h"
 #include "source_lcao/spar_dh.h"
 #include "source_lcao/spar_hsr.h"
 #include "source_lcao/spar_st.h"
@@ -37,12 +37,13 @@ void ModuleIO::output_dSR(const int& istep,
     ModuleBase::TITLE("ModuleIO", "output_dSR");
     ModuleBase::timer::start("ModuleIO", "output_dSR");
 
-    sparse_format::cal_dS(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, sparse_thr);
+    sparse_format::cal_dS(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, sparse_thr,
+                          PARAM.globalv.gamma_only_local, PARAM.inp.nspin, PARAM.globalv.npol);
 
     // mohan update 2024-04-01
     ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "s", precision);
 
-    sparse_format::destroy_dH_R_sparse(HS_Arrays);
+    sparse_format::destroy_dH_R_sparse(HS_Arrays, PARAM.inp.nspin);
 
     ModuleBase::timer::end("ModuleIO", "output_dSR");
     return;
@@ -71,25 +72,29 @@ void ModuleIO::output_dHR(const int& istep,
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
     const int nspin = PARAM.inp.nspin;
+    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
+    const int npol = PARAM.globalv.npol;
 
     if (nspin == 1 || nspin == 4)
     {
         // mohan add 2024-04-01
         const int cspin = 0;
 
-        sparse_format::cal_dH(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, cspin, sparse_thr, v_eff);
+        sparse_format::cal_dH(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, cspin, sparse_thr, v_eff,
+                              gamma_only_local, nspin, npol);
     }
     else if (nspin == 2)
     {
         for (int cspin = 0; cspin < 2; cspin++)
         {
-            sparse_format::cal_dH(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, cspin, sparse_thr, v_eff);
+            sparse_format::cal_dH(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, cspin, sparse_thr, v_eff,
+                                  gamma_only_local, nspin, npol);
         }
     }
     // mohan update 2024-04-01
     ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "h", precision);
 
-    sparse_format::destroy_dH_R_sparse(HS_Arrays);
+    sparse_format::destroy_dH_R_sparse(HS_Arrays, nspin);
 
     ModuleBase::timer::end("ModuleIO", "output_dHR");
     return;

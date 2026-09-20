@@ -32,11 +32,13 @@ void print_orb_chg(
                    /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
     // parameters for mag output
     int occ_index = 0;
+    std::vector<std::string> atom_labels_iat(ucell->nat);
     for(int iat=0; iat<ucell->nat; iat++)
     {
         const int it = ucell->iat2it[iat];
         std::string atom_label = atom_labels[it];
         int ia = ucell->iat2ia[iat];
+        atom_labels_iat[iat] = atom_label + std::to_string(ia+1);
         GlobalV::ofs_running << FmtCore::format("%-20s", atom_label+std::to_string(ia+1)) << std::endl;
         std::vector<double> sum(4, 0.0);
         int current_l = 1;
@@ -72,7 +74,7 @@ void print_orb_chg(
     GlobalV::ofs_running << std::endl;
     
     // Print magnetism table
-    print_mag_table(atom_labels, mag_x, mag_y, mag_z);
+    print_mag_table(atom_labels_iat, mag_x, mag_y, mag_z);
 }
 
 void print_mag_table(

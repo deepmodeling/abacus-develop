@@ -231,7 +231,11 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     {
         if (iter % this->inp_->out_freq_elec == 0 || iter == this->inp_->scf_nmax || conv_esolver)
         {
-            ModuleIO::write_eig_iter(this->pelec->ekb,this->pelec->wg,*this->pelec->klist);
+            ModuleIO::write_eig_iter(this->pelec->ekb,
+                                     this->pelec->wg,
+                                     *this->pelec->klist,
+                                     this->inp_->nbands,
+                                     this->inp_->nspin);
         }
     }
 
@@ -285,16 +289,16 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     // print energies
     elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho,
-    dkin, duration, diag_ethr, 0, true, this->ds_rms_);
+    dkin, duration, *this->inp_, PARAM.globalv.two_fermi, diag_ethr, 0, true, this->ds_rms_);
 
 
-#ifdef __RAPIDJSON
+#ifdef __JSON
     // add Json of scf mag
     Json::add_output_scf_mag(ucell.magnet.tot_mag, ucell.magnet.abs_mag,
                              this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
                              this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
                              drho, duration);
-#endif //__RAPIDJSON
+#endif //__JSON
 
 }
 
@@ -316,7 +320,13 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
     // 3) write eigenvalues and occupations to eig_occ.txt
-    ModuleIO::write_eig_file(this->pelec->ekb, this->pelec->wg, this->kv, istep);
+    ModuleIO::write_eig_file(this->pelec->ekb,
+                             this->pelec->wg,
+                             this->kv,
+                             this->inp_->nbands,
+                             this->inp_->nspin,
+                             PARAM.globalv.global_out_dir,
+                             istep);
 
     // 4) write band information to band.txt
     ModuleIO::write_bands(*this->inp_, this->pelec->ekb, this->kv);

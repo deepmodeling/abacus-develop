@@ -51,7 +51,7 @@ template <typename TK, typename TR>
 class OperatorLCAO;
 
 template <typename T>
-class DFTU;
+class DFTU_onsite;
 
 template <typename T>
 class HContainer;

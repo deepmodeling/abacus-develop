@@ -1,12 +1,11 @@
 #ifndef DIAGOITERASSIST_H
 #define DIAGOITERASSIST_H
 
-#include "source_base/complexmatrix.h"
 #include "source_base/macros.h"
-#include "source_hamilt/hamilt.h"
+#include "source_base/module_device/memory_op.h"
+#include "source_hsolver/hs_operator.h"
 #include "source_psi/psi.h"
 
-#include <functional>
 #include <string>
 
 namespace hsolver
@@ -30,24 +29,38 @@ class DiagoIterAssist
 
     static int SCF_ITER;
 
-    // for psi::Psi structure
-     /**
-     * @brief Diagonalizes the Hamiltonian in a subspace defined by the given wavefunction.
+    /**
+     * @brief Diagonalizes H in the subspace spanned by nstart vectors.
      *
-     * This static function computes the eigenvalues and eigenvectors of the Hamiltonian
-     * within the subspace spanned by the provided wavefunction `psi`. The resulting eigenvectors
-     * are stored in `evc`, and the corresponding eigenvalues are written to `en`.
+     * Builds the nstart*nstart matrices <psi|H|psi> (and <psi|S|psi> unless the
+     * input is S-orthogonal), solves the small eigenproblem and rotates psi
+     * into the lowest n_band eigenvectors, written to evc.
      *
-     * @tparam T      Data type for computation (e.g., float, double).
-     * @tparam Device Device type for computation (e.g., CPU, GPU).
-     * @param pHamilt Pointer to the Hamiltonian object.
-     * @param psi     Input wavefunction defining the subspace.
-     * @param evc     Output container for computed eigenvectors.
-     * @param en      Output array for computed eigenvalues.
-     * @param n_band  Number of bands (eigenvalues/eigenvectors) to compute. Default is 0 (all).
-     * @param is_S_orthogonal If true, assumes the input wavefunction is already orthogonalized.
+     * @param op      applies H and S to block vectors
+     * @param psi     [in]  nstart vectors, leading dimension dmax
+     * @param evc     [out] n_band vectors, leading dimension dmax; may alias psi
+     * @param nstart  number of input vectors
+     * @param n_band  number of eigenvectors wanted (<= nstart)
+     * @param dmin    active length of each vector
+     * @param dmax    leading dimension of psi and evc
+     * @param en      [out] n_band eigenvalues (host memory)
+     * @param is_S_orthogonal if true, psi is already S-orthonormal and the
+     *        standard eigenproblem is solved instead of the generalized one
      */
-    static void diag_subspace(const hamilt::Hamilt<T, Device>* const pHamilt,
+    static void diag_subspace(const HSOperator<T, Device>& op,
+                              const T* psi,
+                              T* evc,
+                              const int nstart,
+                              const int n_band,
+                              const int dmin,
+                              const int dmax,
+                              Real* en,
+                              const diag_comm_info& diag_comm,
+                              const bool is_S_orthogonal = false);
+
+    /// psi::Psi flavour of diag_subspace(): nstart = psi.get_nbands(),
+    /// n_band = 0 means all of them, dimensions taken from psi.
+    static void diag_subspace(const HSOperator<T, Device>& op,
                               const psi::Psi<T, Device>& psi,
                               psi::Psi<T, Device>& evc,
                               Real* en,
@@ -55,9 +68,10 @@ class DiagoIterAssist
                               int n_band = 0,
                               const bool is_S_orthogonal = false);
 
-    /// @brief use LAPACK to diagonalize the Hamiltonian matrix
-    /// @param pHamilt interface to hamiltonian
-    /// @param psi wavefunction to diagonalize
+    /// @brief subspace diagonalization used to build the starting wavefunction
+    /// @param op interface to H and S; op.add_to_subspace_h() and
+    /// op.export_subspace_vec() are called around the small eigenproblem
+    /// @param psi vectors spanning the subspace
     /// @param psi_nr number of rows (nbands)
     /// @param psi_nc number of columns (nbasis)
     /// @param evc new wavefunction
@@ -65,21 +79,15 @@ class DiagoIterAssist
     /// @param basis_type "lcao", "lcao_in_pw" or "pw"; together with calculation it selects
     /// how the rotation matrix is applied to psi
     /// @param calculation "scf", "nscf", "md", "relax", ...
-    /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc,
-    /// and return all - zero eigenenergies.
-    static void diag_subspace_init(
-        hamilt::Hamilt<T, Device>* pHamilt,
-        const T* psi,
-        int psi_nr,
-        int psi_nc,
-        psi::Psi<T, Device>& evc,
-        Real* en,
-        const std::string& basis_type,
-        const std::string& calculation,
-        const diag_comm_info& diag_comm,
-        const std::function<void(T*, const int)>& add_to_hcc = [](T* null, const int n) {},
-        const std::function<void(const T* const, const int, const int)>& export_vcc
-        = [](const T* null, const int n, const int m) {});
+    static void diag_subspace_init(const HSOperator<T, Device>& op,
+                                   const T* psi,
+                                   int psi_nr,
+                                   int psi_nc,
+                                   psi::Psi<T, Device>& evc,
+                                   Real* en,
+                                   const std::string& basis_type,
+                                   const std::string& calculation,
+                                   const diag_comm_info& diag_comm);
 
     static void diag_heevx(const int nstart,
                             const int nbands,
@@ -96,12 +104,12 @@ class DiagoIterAssist
                             T *vcc);
 
     /// @brief calculate Hamiltonian and overlap matrix in subspace spanned by nstart states psi
-    /// @param pHamilt : hamiltonian operator carrier
+    /// @param op : applies H and S
     /// @param psi : wavefunction
     /// @param hcc : Hamiltonian matrix
     /// @param scc : overlap matrix
-    static void cal_hs_subspace(const hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
-                                const psi::Psi<T, Device>& psi,           // [in] wavefunction
+    static void cal_hs_subspace(const HSOperator<T, Device>& op,
+                                const psi::Psi<T, Device>& psi, // [in] wavefunction
                                 T* hcc,
                                 T* scc,
                                 const diag_comm_info& diag_comm);
@@ -131,8 +139,6 @@ class DiagoIterAssist
 
   private:
     constexpr static const Device* ctx = {};
-
-    using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
 
     using setmem_var_op = base_device::memory::set_memory_op<Real, Device>;
     using resmem_var_op = base_device::memory::resize_memory_op<Real, Device>;

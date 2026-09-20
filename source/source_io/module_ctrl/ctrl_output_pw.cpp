@@ -227,7 +227,8 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     { // float type has not been implemented
         auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
         onsite_p->cal_occupations(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(stp.template get_psi_t<T, Device>()),
-                                  pelec->wg);
+                                  pelec->wg,
+                                  inp.nspin);
     }
 
     ModuleBase::timer::end("ModuleIO", "ctrl_scf_pw");

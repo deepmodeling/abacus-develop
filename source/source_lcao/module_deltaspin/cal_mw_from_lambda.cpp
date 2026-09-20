@@ -7,6 +7,7 @@
 #include "source_base/tool_title.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_hsolver/diag_comm_info.h"
+#include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_io/module_parameter/parameter.h"
@@ -128,7 +129,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 ->update_lambda();
         }
         // Diagonalization without updating charge density (last param = true means skip charge update)
-        hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->state_.nspin_, true);
+        hamilt::HamiltHSMatrix<std::complex<double>> hs(hamilt_t);
+        hsolver_t.solve(hs, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->state_.nspin_, true);
         // Note: although update_lambda() modifies lambda in-place above,
         // solve() unconditionally recomputes DM and DMR (via cal_dm_psi +
         // cal_DMR) from the psi obtained by diagonalizing with the new
@@ -155,6 +157,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 // =============================================================
                 psi::Psi<std::complex<double>>* psi_t = static_cast<psi::Psi<std::complex<double>>*>(this->psi);
                 hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>*>(this->p_hamilt);
+                hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_CPU> op(hamilt_t, this->pw_wfc_);
                 auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
                 nbands = psi_t->get_nbands();
                 npol = psi_t->get_npol();
@@ -183,8 +186,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     if(initial_hs)
                     {
                         /// Compute H(k) and extract subspace matrices for this k-point
-                        hamilt_t->updateHk(ik);
-                        hsolver::DiagoIterAssist<std::complex<double>>::cal_hs_subspace(hamilt_t,
+                        op.update_k(ik);
+                        hsolver::DiagoIterAssist<std::complex<double>>::cal_hs_subspace(op,
                                                                                         psi_t[0],
                                                                                         h_k,
                                                                                         s_k,
@@ -214,6 +217,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 // =============================================================
                 psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(this->psi);
                 hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*>(this->p_hamilt);
+                hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_GPU> op(hamilt_t, this->pw_wfc_);
                 auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
                 nbands = psi_t->get_nbands();
                 npol = psi_t->get_npol();
@@ -244,9 +248,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     std::complex<double>* becp_k = this->pw_cache_.becp_k(ik, size_becp);
                     if(initial_hs)
                     {
-                        hamilt_t->updateHk(ik);
+                        op.update_k(ik);
                         hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::cal_hs_subspace(
-                            hamilt_t,
+                            op,
                             psi_t[0],
                             h_k,
                             s_k,

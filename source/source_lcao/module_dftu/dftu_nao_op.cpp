@@ -9,6 +9,10 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 #include "source_base/parallel_reduce.h"
+#include "source_cell/klist.h"
+#include "source_cell/module_symmetry/symmetry.h"
+
+#include <memory>
 
 #include "dftu_nao_adj.h"
 #include "dftu_nao_fs_r.h"
@@ -16,7 +20,7 @@
 #include "dftu_nao_pots.h"
 
 template <typename TK, typename TR>
-hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
+hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::DFTU_onsite(HS_Matrix_K<TK>* hsk_in,
                                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                                  hamilt::HContainer<TR>* hR_in,
                                                  const UnitCell& ucell_in,
@@ -35,7 +39,7 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
       orb_cutoff_(orb_cutoff),
       nspin(nspin_in)
 {
-    ModuleBase::timer::start("DFTU", "DFTU");
+    ModuleBase::timer::start("DFTU_onsite", "DFTU_onsite");
     this->cal_type = calculation_type::lcao_dftu;
 
     assert(this->ucell != nullptr);
@@ -49,7 +53,7 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
     const Parallel_Orbitals* pv = this->hR->get_atom_pair(0).get_paraV();
     this->nlm_tot = DFTU_LCAO::cal_nlm_all(*this->ucell, *this->dftu, *this->intor_, this->adjs_all, *pv);
 
-    ModuleBase::timer::end("DFTU", "DFTU");
+    ModuleBase::timer::end("DFTU_onsite", "DFTU_onsite");
 }
 
 // contributeHR()
@@ -103,9 +107,9 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
  *          for better parallel performance instead of critical section.
  */
 template <typename TK, typename TR>
-void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
+void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
-    ModuleBase::TITLE("DFTU", "contributeHR");
+    ModuleBase::TITLE("DFTU_onsite", "contributeHR");
     // Early exit: DMR not available (first SCF iteration before the first
     // diagonalization) AND occ_mat not yet initialized
     const bool dmr_null = (this->dm_ == nullptr || !this->dm_->is_dmr_ready());
@@ -119,10 +123,50 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     {
         this->dftu->set_energy(0.0);
     }
-    ModuleBase::timer::start("DFTU", "contributeHR");
+    ModuleBase::timer::start("DFTU_onsite", "contributeHR");
 
     const Parallel_Orbitals* pv = this->hR->get_atom_pair(0).get_paraV();
     // nlm_tot is precomputed in the constructor (structure snapshot)
+
+    // (symmetry) when crystal symmetry reduces the k-mesh, dm_->get_DMR_pointer()
+    // was Fourier-transformed from the irreducible k-points only and is not
+    // actually symmetric; reconstruct the full-BZ DMR once here (reused by every
+    // atom below) via the same D(k) restoration EXX already uses for its own
+    // real-space density matrix (ModuleSymmetry::Symmetry_rotation::restore_dm).
+    std::unique_ptr<elecstate::DensityMatrix<TK, double>> dmr_sym;
+    if (!this->dftu->is_occmat_ready() && this->kv_ != nullptr && ModuleSymmetry::Symmetry::symm_flag == 1
+        && !this->kv_->kstars.empty())
+    {
+        if (!this->symrot_built_)
+        {
+            const std::array<int, 3> period{ this->kv_->nmp[0], this->kv_->nmp[1], this->kv_->nmp[2] };
+            // for return_lattice to calculate Ms
+            this->symrot_.find_irreducible_sector(this->ucell->symm, this->ucell->atoms, this->ucell->st,
+                ModuleSymmetry::Symmetry_rotation_k::get_bvk_cells(period), period, this->ucell->lat);
+            this->symrot_.cal_Ms(*this->kv_, *this->ucell, *pv, this->nspin);
+            this->symrot_built_ = true;
+        }
+        const int nspin0 = (this->nspin == 2) ? 2 : 1;
+        // (k-point pools, KPAR>1) restore_dm() now returns only the stars of THIS pool's own
+        // local irreducible k-points (see its definition for why that's enough); kvec_d_full
+        // must be built the same way -- one entry per star member of each local ibz-k,
+        // enumerated in the same order restore_dm uses for its spin-0 block (kv.ik2iktot maps
+        // the spin-0 and spin-1 blocks to the same sequence of global ibz indices, so a single
+        // list built from the spin-0 mapping is valid for the whole nspin0-block DensityMatrix).
+        const int nk_local = this->kv_->get_nks() / nspin0;
+        const int nks_ibz_global = static_cast<int>(this->kv_->kstars.size());
+        std::vector<ModuleBase::Vector3<double>> kvec_d_full;
+        for (int ik_local = 0; ik_local < nk_local; ++ik_local)
+        {
+            const int ik_ibz = this->kv_->ik2iktot[ik_local] % nks_ibz_global;
+            for (const std::pair<const int, ModuleBase::Vector3<double>>& isym_kvd : this->kv_->kstars[ik_ibz]) { kvec_d_full.push_back(isym_kvd.second); }
+        }
+        const std::vector<std::vector<TK>> dmk_full = this->symrot_.restore_dm(*this->kv_, this->dm_->get_DMK_vector(), *pv);
+        dmr_sym.reset(new elecstate::DensityMatrix<TK, double>(pv, nspin0, kvec_d_full, static_cast<int>(kvec_d_full.size())));
+        dmr_sym->init_DMR(*this->dm_->get_DMR_pointer(1));
+        dmr_sym->get_DMK_vector() = dmk_full;
+        dmr_sym->cal_DMR();
+    }
 
     // loop over all Hubbard-projector center atoms (iat0)
     int atom_index = 0;
@@ -148,6 +192,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             // DMR is guaranteed ready here: otherwise the early exit above
             // would have returned. DMR index is 1-based, hence +1.
             const hamilt::HContainer<double>* dmr = this->dm_->get_DMR_pointer(this->current_spin + 1);
+            if (dmr_sym) { dmr = dmr_sym->get_DMR_pointer(this->current_spin + 1); }
             DFTU_LCAO::compute_occ_from_dmr(*this->ucell,
                                             *this->dftu,
                                             iat0,
@@ -195,9 +240,9 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->current_spin = 1 - this->current_spin;
     }
 
-    ModuleBase::timer::end("DFTU", "contributeHR");
+    ModuleBase::timer::end("DFTU_onsite", "contributeHR");
 }
 
-template class hamilt::DFTU<hamilt::OperatorLCAO<double, double>>;
-template class hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, double>>;
-template class hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;
+template class hamilt::DFTU_onsite<hamilt::OperatorLCAO<double, double>>;
+template class hamilt::DFTU_onsite<hamilt::OperatorLCAO<std::complex<double>, double>>;
+template class hamilt::DFTU_onsite<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

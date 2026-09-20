@@ -13,6 +13,7 @@
 #include "source_hamilt/module_gint/gint.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
+#include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/hsolver_lcao.h"
 #ifdef __EXX
 #include "../source_lcao/module_ri/exx_opt_orb.h"
@@ -20,8 +21,9 @@
 #include "source_lcao/module_rdmft/rdmft.h"
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006
 #include "source_estate/module_dm/init_dm.h" // init dm from electronic wave functions
-#include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
-#include "source_io/module_ctrl/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
+#include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
+#include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao()
+#include "source_io/module_ctrl/ctrl_iter_lcao.h" // use ctrl_iter_lcao()
 #include "source_io/module_ctrl/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
 #include "source_io/module_output/print_info.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
@@ -150,7 +152,11 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // 7) For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    this->RA.for_2d(ucell, this->gd, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    this->RA.for_2d(ucell, this->gd, this->pv, PARAM.globalv.gamma_only_local, PARAM.globalv.npol, orb_.cutoffs());
+    if (this->inp_->out_level != "m" && !PARAM.globalv.gamma_only_local)
+    {
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", this->pv.nnr);
+    }
 
     // 8) initialize the Hamiltonian operators
     // if atom moves, then delete old pointer and add a new one
@@ -161,9 +167,12 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
     if (this->p_hamilt == nullptr)
     {
+        const bool load_exx_flag = !GlobalC::restart.info_load.restart_exx
+                                   && GlobalC::restart.info_load.load_H;
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
-            two_center_bundle_, orb_, this->dmat.dm, this->dftu_.get(), this->deepks, istep, exx_nao, this->exx_info_, *this->inp_);
+            two_center_bundle_, orb_, this->dmat.dm, this->dftu_.get(), this->deepks, istep, exx_nao, this->exx_info_, *this->inp_,
+            load_exx_flag);
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -258,15 +267,20 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
 
     deepks.dpks_out_type = "tot";  // for deepks method
 
-    fsl.getForceStress(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z,
-                       this->inp_->gga_grad, PARAM.globalv.gamma_only_pw,
-                       ucell, this->get_vdw_result(), this->inp_->cal_force, this->inp_->cal_stress,
+    const FSCalcConfig fs_cfg{this->inp_->nspin, this->inp_->nbands, this->inp_->t_in_h,
+                        this->inp_->sc_mag_switch, this->inp_->device,
+                        PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
+                        PARAM.globalv.gamma_only_pw};
+
+    fsl.getForceStress(ucell, this->get_vdw_result(), this->inp_->cal_force, this->inp_->cal_stress,
                        this->inp_->test_force, this->inp_->test_stress,
                        this->gd, this->pv, this->pelec, this->dmat, this->psi,
                        two_center_bundle_, orb_, force, this->scs,
                        this->locpp, this->sf, this->kv,
                        this->pw_rho, this->solvent, *this->dftu_, this->deepks,
-                       this->exx_nao, &ucell.symm, this->exx_info_, this->inp_->td_stype,
+                       this->exx_nao, &ucell.symm, this->exx_info_,
+                       fs_cfg,
+                       this->inp_->td_stype,
                        static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt));
 
     // delete RA after cal_force
@@ -317,7 +331,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(BaseCell& basecell)
     }
 
     ModuleIO::ctrl_runner_lcao<TK, TR>(ucell,
-		    *this->inp_, this->kv, this->pelec, this->dmat, this->pv, this->Pgrid, 
+		    *this->inp_, this->kv, this->pelec, this->dmat, this->pv, this->Pgrid,
 		    this->gd, this->psi, this->chr, hamilt_lcao,
 		    this->two_center_bundle_,
 		    this->orb_, this->pw_rho, this->pw_rhod,
@@ -342,8 +356,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // call iter_init() of ESolver_KS
     ESolver_KS::iter_init(ucell, istep, iter);
 
-    module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, *this->dftu_, 
-      this->dmat.dm->get_DMR_pointer(1)->get_nnr(), *this->inp_); 
+    module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, *this->dftu_,
+      this->dmat.dm->get_DMR_pointer(1)->get_nnr(), *this->inp_);
 
     if (iter == 1)
     {
@@ -374,7 +388,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 		{
 			// the following steps are only needed in the first outer exx loop
 			exx_two_level_step
-				= exx_info_.info_ri.real_number ? 
+				= exx_info_.info_ri.real_number ?
                   this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
 		}
 #endif
@@ -469,7 +483,9 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
                                                   this->inp_->device == "gpu",
                                                   GlobalV::NPROC,
                                                   GlobalV::MY_RANK);
-        hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt), this->psi[0], this->pelec, *this->dmat.dm, 
+        // the eigensolvers only ever ask the Hamiltonian for H(k) and S(k)
+        hamilt::HamiltHSMatrix<TK> hs(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt));
+        hsolver_lcao_obj.solve(hs, this->psi[0], this->pelec, *this->dmat.dm,
           this->chr, this->inp_->nspin, skip_charge);
     }
     else
@@ -535,7 +551,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 
     // call iter_finish() of ESolver_KS, where band gap is printed,
     // eig and occ are printed, magnetization is calculated,
-    // charge mixing is performed, potential is updated, 
+    // charge mixing is performed, potential is updated,
     // HF and kS energies are computed, meta-GGA, Jason and restart
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
     const bool precision_switched = this->gint_precision_controller_.update_after_iteration(this->drho, this->scf_thr);
@@ -559,8 +575,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 
     // control the output related to the finished iteration
     ModuleIO::ctrl_iter_lcao<TK, TR>(ucell, *this->inp_, this->kv, this->pelec, *this->dmat.dm,
-      this->pv, this->gd, this->psi, this->chr, this->p_chgmix, 
-      hamilt_lcao, this->orb_, this->deepks, 
+      this->pv, this->gd, this->psi, this->chr, this->p_chgmix,
+      hamilt_lcao, this->orb_, this->deepks,
       this->exx_nao, this->exx_info_, iter, istep, conv_esolver, this->scf_ene_thr);
 }
 

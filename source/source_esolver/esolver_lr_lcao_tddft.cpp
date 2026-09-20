@@ -17,6 +17,9 @@
 #include "source_lcao/module_lr/utils/lr_util_print.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_io/module_parameter/parameter.h"
+#ifdef __JSON
+#include "source_io/module_json/output_info.h"
+#endif
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h" // for precondition
 #ifdef __EXX
@@ -83,9 +86,9 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_2center_table(TwoCenterBundle& two_
         auto* lcao_nl = new LCAONonlocalInfo();
         lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb,
                                this->inp_->basis_type, this->inp_->out_element_info,
-                               this->inp_->lspinorb, this->inp_->nspin);
+                               this->inp_->lspinorb, this->inp_->nspin, GlobalV::MY_RANK);
         ucell.infoNL.reset(lcao_nl);
-        two_center_bundle.build_beta(ucell.ntype, lcao_nl->get_nonlocal().Beta);
+        two_center_bundle.build_beta(ucell.ntype, lcao_nl->get_nonlocal().get_Beta_data());
     }
 }
 
@@ -222,6 +225,10 @@ void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, co
     this->inp_ = &inp;
     if (inp.esolver_type == "ks-lr")
     {
+#ifdef __JSON
+        // The embedded KS run happens before Relax_Driver starts its first step.
+        Json::init_output_array_obj();
+#endif
         ModuleESolver::ESolver_KS_LCAO<T, TR> ks_solver;
         ks_solver.before_all_runners(basecell, inp);
         ks_solver.runner(basecell, 0);
