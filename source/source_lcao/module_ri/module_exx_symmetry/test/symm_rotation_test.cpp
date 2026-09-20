@@ -131,7 +131,7 @@ TEST_F(SymmetryRotationTest, RotMat)
 TEST_F(SymmetryRotationTest, RotMatHighLIdentityFinite)
 {
     ModuleBase::Matrix3 identity(1, 0, 0, 0, 1, 0, 0, 0, 1);
-    symrot.cal_rotmat_Slm(&identity, 8);
+    symrot.cal_rotmat_Slm(&identity, 8, -1);
     RI::Tensor<std::complex<double>>& rotmat = symrot.get_rotmat_Slm()[0][8];
     const int dim = 2 * 8 + 1;
     for (int i = 0; i < dim; ++i)
