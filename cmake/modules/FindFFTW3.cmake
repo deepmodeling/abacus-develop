@@ -4,6 +4,7 @@
 #  FFTW3_INCLUDE_DIRS  - Where to find FFTW3 headers.
 #  FFTW3_LIBRARIES     - List of libraries when using FFTW3.
 #  FFTW3_FOUND         - True if FFTW3 is found.
+#  FFTW3_VERSION       - Version from matching pkg-config metadata, if available.
 #
 
 find_path(FFTW3_INCLUDE_DIR
@@ -47,6 +48,7 @@ endif()
 find_package_handle_standard_args(FFTW3 DEFAULT_MSG ${_fftw3_required_vars})
 
 # Copy the results to the output variables and target.
+set(FFTW3_VERSION "")
 if(FFTW3_FOUND)
     set(FFTW3_LIBRARIES ${FFTW3_LIBRARY})
     if (ENABLE_OPENMP)
@@ -55,13 +57,16 @@ if(FFTW3_FOUND)
 
     set(FFTW3_INCLUDE_DIRS ${FFTW3_INCLUDE_DIR})
 
-    # Try to extract FFTW version from header
-    if(FFTW3_INCLUDE_DIR AND EXISTS "${FFTW3_INCLUDE_DIR}/fftw3.h")
-        file(STRINGS "${FFTW3_INCLUDE_DIR}/fftw3.h" _fftw_ver_line REGEX "^#define[\t ]+FFTW_VERSION[\t ]+\"[^\"]+\"")
-        if(_fftw_ver_line)
-            string(REGEX REPLACE "^#define[\t ]+FFTW_VERSION[\t ]+\"([^\"]+)\"" "\\1" FFTW3_VERSION "${_fftw_ver_line}")
-        endif()
+  # FFTW has no version macro; use pkg-config metadata for the selected installation.
+  find_package(PkgConfig QUIET)
+  if(PKG_CONFIG_FOUND)
+    pkg_check_modules(PC_FFTW3 QUIET fftw3)
+    get_filename_component(_fftw3_library_dir "${FFTW3_LIBRARY}" DIRECTORY)
+    if(PC_FFTW3_FOUND AND PC_FFTW3_INCLUDEDIR STREQUAL FFTW3_INCLUDE_DIR
+       AND PC_FFTW3_LIBDIR STREQUAL _fftw3_library_dir)
+      set(FFTW3_VERSION "${PC_FFTW3_VERSION}")
     endif()
+  endif()
 
     if(NOT TARGET FFTW3::FFTW3)
         add_library(FFTW3::FFTW3 UNKNOWN IMPORTED)
