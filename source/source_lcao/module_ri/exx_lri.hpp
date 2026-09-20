@@ -1663,7 +1663,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 			{RI::Label::ab::a, RI::Label::ab::b},
 			{{"flag_period", false}, {"flag_comm", false}, {"flag_filter", false}},
 			"Cs_long");
-		this->exx_lri.flag_finish.Cs = true;
+		this->exx_lri.flag_finish.C = true;
 	}
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold, this->use_rotated_n0_long_range ? "short" : "");
     ExxLriDetail::maybe_set_weighted_short_config(this->exx_lri, this->info);
