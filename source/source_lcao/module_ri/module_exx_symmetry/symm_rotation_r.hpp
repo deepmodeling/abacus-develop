@@ -546,7 +546,13 @@ namespace ModuleSymmetry
             {
                 if (!has_valid_matrix_shape(tmp2.second))
                 {
-                    continue;
+                    // Silent skipping would drop H(R) blocks from the restored
+                    // tensor. Make the defect detectable instead.
+                    std::ostringstream oss;
+                    oss << "restore_HR_abf: invalid tensor shape for irreducible atom pair ("
+                        << irap1 << "," << tmp2.first.first << "), R=(" << tmp2.first.second[0]
+                        << "," << tmp2.first.second[1] << "," << tmp2.first.second[2] << ").";
+                    throw std::runtime_error(oss.str());
                 }
                 const int& irap2 = tmp2.first.first;
                 const Tap& irap = {irap1, irap2};
@@ -563,7 +569,17 @@ namespace ModuleSymmetry
                         const int& ap1 = apR.first.first;
                         const int& ap2 = apR.first.second;
                         const TC& R = apR.second;
-                        HR_full[ap1][{ap2, R}]
+                        const std::pair<int, TC> target_key = {ap2, R};
+                        if (HR_full[ap1].count(target_key) != 0)
+                        {
+                            std::ostringstream oss;
+                            oss << "restore_HR_abf: duplicate target key (ap1=" << ap1
+                                << ", ap2=" << ap2 << ", R=(" << R[0] << "," << R[1] << ","
+                                << R[2] << ")) produced by more than one symmetry operation;"
+                                << " refusing to silently overwrite.";
+                            throw std::runtime_error(oss.str());
+                        }
+                        HR_full[ap1][target_key]
                             = rotate_atompair_serial_abf(tmp2.second, isym, type1, type2);
                     }
                 }
