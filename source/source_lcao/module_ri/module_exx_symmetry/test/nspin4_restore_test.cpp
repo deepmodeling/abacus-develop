@@ -14,6 +14,7 @@
 #include <vector>
 #define private public
 #define protected public
+#include "source_io/module_parameter/parameter.h"
 #include "../symmetry_rotation.h"
 #undef private
 #undef protected
@@ -29,9 +30,8 @@ antiunitary sigma_y (.)^* sigma_y channel remap (real AND complex inputs).
 COVERAGE BOUNDARY (honest): this suite tests the restore_HR_nspin4 helper
 directly. The production caller chain Exx_LRI::cal_exx_elec_soc (per-Coulomb-
 channel single restore, short/long accumulation) is NOT unit-tested here; it
-depends on the full SCF/EXX environment and is covered only indirectly by the
-SCF-level cross-feature runs. That call-chain coverage gap is recorded in
-MERGE_AUDIT.md.
+depends on the full SCF/EXX environment and requires separate
+SCF-level cross-feature validation.
 
 Conventions (from symmetry_rotation_R.hpp restore_HR_nspin4):
 
@@ -57,8 +57,8 @@ Test matrices (nw = 3; T = rot-90 about z, real Y_l^1 basis):
     (real; conjugation then acts as identity, keeping the remap check exact)
 
     Non-trivial SU(2): U = {a,b,-b,a} with a=b=1/sqrt(2) (real, 90 deg):
-      Hout[00] = 0.5*(G00 + G01 - G10 - G11)
-      Hout[01] = 0.5*(G01 + G00 - G11 - G10)   (same by symmetry)
+      Hout[00] = 0.5*(G00 - G01 - G10 + G11)
+      Hout[01] = 0.5*(G00 + G01 - G10 - G11)
 */
 
 // mocks
@@ -70,6 +70,8 @@ Atom_pseudo::Atom_pseudo() {}
 Atom_pseudo::~Atom_pseudo() {}
 UnitCell::UnitCell() {}
 UnitCell::~UnitCell() {}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
 SepPot::SepPot() {}
@@ -390,6 +392,85 @@ TEST_F(Nspin4RestoreTest, HermiticityPreservedForUnitaryMember)
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
             EXPECT_NEAR(std::abs(Hout(i, j) - std::conj(Hout(j, i))), 0.0, DOUBLETHRESHOLD);
+}
+
+// Build the AO matrix from an antiunitary-only star entry. A grey-group
+// Theta*g must cache g even when that unitary member was not selected in the star.
+TEST(SOCBranchCompatibility, GreyStarBuildsTheSpatialMatrixForScalarAndSpinor)
+{
+    const int saved_nspin = PARAM.input.nspin;
+    for (const int nspin : {1, 4})
+    {
+        PARAM.input.nspin = nspin;
+        const int npol = nspin == 4 ? 2 : 1;
+        UnitCell cell;
+        Atom atom;
+        atom.nw = 1;
+        atom.na = 1;
+        atom.stapos_wf = 0;
+        atom.iw2l = {0};
+        cell.atoms = &atom;
+        cell.st.nat = 1;
+        cell.st.iat2it = new int[1]{0};
+        cell.st.iat2ia = new int[1]{0};
+        cell.latvec = ModuleBase::Matrix3(1,0,0,0,1,0,0,0,1);
+        cell.symm.nrotk = 1;
+        cell.symm.gmatrix[0] = cell.latvec;
+        cell.symm.nrotk_anti = 0;
+        cell.symm.magnetic_nspin4 = false;
+        cell.symm.isym_rotiat_ = {{0}};
+        K_Vectors kv;
+        kv.kvec_d = {{0.25, 0, 0}};
+        kv.kstars = {{{1, {-0.25, 0, 0}}}};
+        ModuleSymmetry::Symmetry_rotation rotation;
+        rotation.irs_.return_lattice_ = {{{0, 0, 0}}};
+        Parallel_2D pv;
+        pv.init(npol, npol, 1, MPI_COMM_WORLD);
+        rotation.cal_Ms(kv, cell, pv);
+        const std::vector<std::vector<std::complex<double>>> input(
+            1, std::vector<std::complex<double>>(npol, {1, 2}));
+        const auto output = rotation.rotate_ao_coefficients(input, 0, 0, pv);
+        ASSERT_EQ(output.size(), 1u);
+        for (int i = 0; i < npol; ++i)
+        {
+            EXPECT_NEAR(std::abs(output[0][i] - input[0][i]), 0.0, 1e-12);
+        }
+    }
+    PARAM.input.nspin = saved_nspin;
+}
+
+TEST(SOCBranchCompatibility, ScalarDensityRetainsComplexReturnLatticePhase)
+{
+    const int saved_nspin = PARAM.input.nspin;
+    const int saved_nlocal = PARAM.sys.nlocal;
+    PARAM.input.nspin = 1;
+    PARAM.sys.nlocal = 2;
+    Parallel_2D pv;
+    pv.init(2, 2, 1, MPI_COMM_WORLD);
+    ModuleSymmetry::Symmetry_rotation rotation;
+    std::vector<std::complex<double>> matrix(pv.get_local_size(), 0.0);
+    const std::complex<double> phase[2] = {{1, 0}, {0, 1}};
+    for (int j = 0; j < pv.get_col_size(); ++j)
+        for (int i = 0; i < pv.get_row_size(); ++i)
+            if (pv.local2global_row(i) == pv.local2global_col(j))
+                matrix[j * pv.get_row_size() + i] = phase[pv.local2global_row(i)];
+    rotation.Ms_ = {{{0, matrix}}};
+    const std::vector<std::vector<std::complex<double>>> input = {{{1,0}, {1,0}}};
+    const auto output = rotation.rotate_ao_coefficients(input, 0, 0, pv);
+    EXPECT_NEAR(std::abs(output[0][0] - phase[0]), 0.0, 1e-12);
+    EXPECT_NEAR(std::abs(output[0][1] - phase[1]), 0.0, 1e-12);
+    // ABACUS's conjugate-first stored density is c_i^* c_j.
+    const auto density = rotation.rot_matrix_ao(
+        std::vector<std::complex<double>>(pv.get_local_size(), {1,0}), 0, 1, 0, pv);
+    for (int j = 0; j < pv.get_col_size(); ++j)
+        for (int i = 0; i < pv.get_row_size(); ++i)
+        {
+            const auto expected = std::conj(output[0][pv.local2global_row(i)])
+                                  * output[0][pv.local2global_col(j)];
+            EXPECT_NEAR(std::abs(density[j * pv.get_row_size() + i] - expected), 0.0, 1e-12);
+        }
+    PARAM.input.nspin = saved_nspin;
+    PARAM.sys.nlocal = saved_nlocal;
 }
 
 int main(int argc, char** argv)

@@ -15,6 +15,7 @@
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
+#include "source_lcao/module_ri/serialization_cereal.h"
 #include "source_lcao/module_ri/Mix_DMk_2D.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_io/module_parameter/parameter.h"
@@ -2359,37 +2360,64 @@ void Exx_LRI<Tdata>::cal_exx_elec_soc(
 	const ModuleSymmetry::Symmetry_rotation* p_symrot)
 {
 	ModuleBase::TITLE("Exx_LRI", "cal_exx_elec_soc");
-	this->Hexxs.resize(PARAM.inp.nspin);   // nspin==4
-	this->Eexx = 0;
-
-	// pass 1: compute the irreducible-sector Hs of all 4 spin channels.
-	// distinct suffix per channel keeps all 4 "Ds_*" saves alive for the energy in pass 3.
-	std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, 4> Hs_irr;
-	std::array<std::string, 4> suffix;
-	for (int is = 0; is < 4; ++is)
+	if (Ds.size() != 4 || p_symrot == nullptr)
 	{
-		suffix[is] = std::to_string(is);
-		this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, suffix[is]);
-		this->exx_lri.cal_Hs({ "","",suffix[is] });
-		Hs_irr[is] = this->exx_lri.post_2D.set_tensors_map2(this->exx_lri.Hs);
+		throw std::invalid_argument("Exx_LRI::cal_exx_elec_soc requires four spinor channels and symmetry metadata.");
 	}
 
-	// pass 2: spinor-coupled rotation of the 4 channels from the irreducible sector to the full BZ
-	std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, 4> Hs_full =
-		p_symrot->restore_HR_nspin4(ucell.symm, ucell.atoms, ucell.st, 'H', Hs_irr);
+	this->Hexxs.assign(4, {});
+	this->Eexx = 0.0;
 
-	// pass 3: per-channel energy (full Hs, no repeat), then gather the repeated full Hs for abacus
-	for (int is = 0; is < 4; ++is)
+	struct ChannelSpec
 	{
-		this->exx_lri.energy = this->exx_lri.post_2D.cal_energy(
-			this->exx_lri.post_2D.saves["Ds_" + suffix[is]],
-			this->exx_lri.post_2D.set_tensors_map2(Hs_full[is]));
-		this->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
-			this->mpi_comm, std::move(Hs_full[is]), std::get<0>(judge[is]), std::get<1>(judge[is]));
-		this->Eexx += std::real(this->exx_lri.energy);
-		post_process_Hexx(this->Hexxs[is]);
+		std::string cv_suffix;
+		std::string ds_tail;
+	};
+	std::vector<ChannelSpec> channels;
+	channels.push_back({this->use_rotated_n0_long_range ? "short" : "", ""});
+	if (this->use_rotated_n0_long_range)
+	{
+		channels.push_back({"long", "_lr"});
 	}
-	this->Eexx = post_process_Eexx(this->Eexx);
+
+	for (const ChannelSpec& channel : channels)
+	{
+		std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, 4> Hs_irreducible;
+		std::array<std::string, 4> ds_suffix;
+		for (int is = 0; is < 4; ++is)
+		{
+			ds_suffix[is] = std::to_string(is) + channel.ds_tail;
+			this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, ds_suffix[is]);
+			this->exx_lri.cal_Hs({channel.cv_suffix, channel.cv_suffix, ds_suffix[is]});
+			ExxLriDetail::maybe_print_weighted_short_stats(
+				this->exx_lri, this->info, ds_suffix[is], channel.cv_suffix);
+			Hs_irreducible[is] = this->exx_lri.post_2D.set_tensors_map2(this->exx_lri.Hs);
+		}
+
+		auto Hs_full = p_symrot->restore_HR_nspin4(
+			ucell.symm, ucell.atoms, ucell.st, 'H', Hs_irreducible);
+		for (int is = 0; is < 4; ++is)
+		{
+			this->exx_lri.energy = this->exx_lri.post_2D.cal_energy(
+				this->exx_lri.post_2D.saves["Ds_" + ds_suffix[is]],
+				this->exx_lri.post_2D.set_tensors_map2(Hs_full[is]));
+			auto Hs_channel = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+				this->mpi_comm,
+				std::move(Hs_full[is]),
+				std::get<0>(judge[is]),
+				std::get<1>(judge[is]));
+			this->Hexxs[is] = this->Hexxs[is].empty()
+				? std::move(Hs_channel)
+				: LRI_CV_Tools::add(this->Hexxs[is], Hs_channel);
+			this->Eexx += std::real(this->exx_lri.energy);
+		}
+	}
+
+	for (auto& Hexx : this->Hexxs)
+	{
+		this->post_process_Hexx(Hexx);
+	}
+	this->Eexx = this->post_process_Eexx(this->Eexx);
 }
 
 template<typename Tdata>
