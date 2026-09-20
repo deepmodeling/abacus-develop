@@ -505,6 +505,18 @@ namespace ModuleSymmetry
 
         RI::Tensor<Tdata> TAT(A.shape);
         RI::Sym::T1_HR_T2(TAT.ptr(), A.ptr(), T1, T2);
+        // An auxiliary-basis scalar has no spin indices. Antiunitary
+        // restoration therefore adds complex conjugation, without sigma_y.
+        if (isym >= this->nsym_)
+        {
+            for (int i = 0; i < TAT.shape[0]; ++i)
+            {
+                for (int j = 0; j < TAT.shape[1]; ++j)
+                {
+                    TAT(i, j) = ModuleSymmetry::conj_elem(TAT(i, j));
+                }
+            }
+        }
         if (output)
         {
             print_tensor(A, "A_abf");
