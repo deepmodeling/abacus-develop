@@ -237,16 +237,17 @@ class XCTest_GRADCORR_HF : public XCTest
             XC_Functional::set_xc_type("PBE");
             XC_Functional::set_xc_type("HF");
 
+            const int gga_grad = 0;
             const double hybrid_alpha = 1.0;
             const double hse_omega = 0.0;
-            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,false,nspin1,domag,domag_z,0,hybrid_alpha,hse_omega);
-            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,true, nspin1,domag,domag_z,0,hybrid_alpha,hse_omega);
+            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,false,nspin1,domag,domag_z,gga_grad,hybrid_alpha,hse_omega);
+            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,true, nspin1,domag,domag_z,gga_grad,hybrid_alpha,hse_omega);
 
-            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,false,nspin2,domag,domag_z,0,hybrid_alpha,hse_omega);
-            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,true, nspin2,domag,domag_z,0,hybrid_alpha,hse_omega);
+            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,false,nspin2,domag,domag_z,gga_grad,hybrid_alpha,hse_omega);
+            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,true, nspin2,domag,domag_z,gga_grad,hybrid_alpha,hse_omega);
 
-            XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,false,nspin4,domag_true,domag_z,0,hybrid_alpha,hse_omega);
-            XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,true, nspin4,domag_true,domag_z,0,hybrid_alpha,hse_omega);
+            XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,false,nspin4,domag_true,domag_z,gga_grad,hybrid_alpha,hse_omega);
+            XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,true, nspin4,domag_true,domag_z,gga_grad,hybrid_alpha,hse_omega);
         }
 };
 

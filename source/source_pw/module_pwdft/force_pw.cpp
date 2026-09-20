@@ -26,7 +26,11 @@
 
 
 template <typename FPTYPE, typename Device>
-void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
+void Forces<FPTYPE, Device>::cal_force(const int nspin,
+                                       const bool domag,
+                                       const bool domag_z,
+                                       const int gga_grad,
+                                       UnitCell& ucell,
                                        ModuleBase::matrix& force,
                                        const vdw::VdwResult* vdw_result,
                                        const elecstate::ElecState& elec,
@@ -41,8 +45,6 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                                        ModulePW::PW_Basis_K* wfc_basis,
                                        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in)
 {
-    const auto& xc_input = PARAM.inp;
-    const auto& xc_spin = PARAM.globalv;
     ModuleBase::timer::start("Forces", "cal_force");
     ModuleBase::TITLE("Forces", "init");
     this->device = base_device::get_device_type(this->ctx);
@@ -86,7 +88,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
 
     // non-linear core correction
     Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, ucell,
-        xc_input.nspin, xc_spin.domag, xc_spin.domag_z, xc_input.gga_grad);
+        nspin, domag, domag_z, gga_grad);
 
     // force due to core charge
     this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp->numeric, ucell);
@@ -137,7 +139,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     if (PARAM.inp.imp_sol)
     {
         forcesol.create(this->nat, 3);
-        solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, PARAM.inp.nspin, forcesol);
+        solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, nspin, forcesol);
         if (PARAM.inp.test_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "IMP_SOL      FORCE (Ry/Bohr)", forcesol);

@@ -38,7 +38,12 @@ class Force_Stress_LCAO
     Force_Stress_LCAO(Record_adj& ra, const int nat_in);
     ~Force_Stress_LCAO();
 
-    void getForceStress(UnitCell& ucell,
+    void getForceStress(const int nspin,
+                        const bool domag,
+                        const bool domag_z,
+                        const int gga_grad,
+                        const bool gamma_only_pw,
+                        UnitCell& ucell,
                         const vdw::VdwResult* vdw_result,
                         const bool isforce,
                         const bool isstress,
@@ -74,7 +79,11 @@ class Force_Stress_LCAO
 
     void forceSymmetry(const UnitCell& ucell, ModuleBase::matrix& fcs, ModuleSymmetry::Symmetry* symm);
 
-    void calForcePwPart(UnitCell& ucell,
+    void calForcePwPart(const int nspin,
+                        const bool domag,
+                        const bool domag_z,
+                        const int gga_grad,
+                        UnitCell& ucell,
                         ModuleBase::matrix& fvl_dvl,
                         ModuleBase::matrix& fewalds,
                         ModuleBase::matrix& fcc,
@@ -112,7 +121,12 @@ class Force_Stress_LCAO
                        const Parallel_Orbitals& pv,
                        const K_Vectors& kv);
 
-    void calStressPwPart(UnitCell& ucell,
+    void calStressPwPart(const int nspin,
+                         const bool domag,
+                         const bool domag_z,
+                         const int gga_grad,
+                         const bool gamma_only_pw,
+                         UnitCell& ucell,
                          ModuleBase::matrix& sigmadvl,
                          ModuleBase::matrix& sigmahar,
                          ModuleBase::matrix& sigmaewa,

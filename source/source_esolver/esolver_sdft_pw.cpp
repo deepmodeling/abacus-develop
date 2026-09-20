@@ -225,7 +225,8 @@ void ESolver_SDFT_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matri
 
     Sto_Forces<double, Device> ff(ucell.nat);
 
-    ff.cal_stoforce(force,
+    ff.cal_stoforce(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
+                 force,
                     *this->pelec,
                     this->pw_rho,
                     &ucell.symm,
@@ -246,7 +247,9 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matr
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     Sto_Stress_PW<double, Device> ss;
-    ss.cal_stress(stress,
+    ss.cal_stress(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z,
+                       this->inp_->gga_grad, PARAM.globalv.gamma_only_pw,
+                       stress,
                   *this->pelec,
                   this->pw_rho,
                   &ucell.symm,

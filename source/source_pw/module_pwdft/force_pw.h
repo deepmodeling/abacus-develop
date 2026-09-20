@@ -45,7 +45,11 @@ class Forces
     Forces(const int nat_in) : nat(nat_in){};
     ~Forces(){};
 
-    void cal_force(UnitCell& ucell,
+    void cal_force(const int nspin,
+                   const bool domag,
+                   const bool domag_z,
+                   const int gga_grad,
+                   UnitCell& ucell,
                    ModuleBase::matrix& force,
                    const vdw::VdwResult* vdw_result,
                    const elecstate::ElecState& elec,

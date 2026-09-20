@@ -5,18 +5,20 @@
 
 #include "pot_xc_fdm.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_parameter/parameter.h"
 
 namespace elecstate
 {
 
 PotXC_FDM::PotXC_FDM(
+    const int nspin,
+          const bool domag,
+          const bool domag_z,
+          const int gga_grad,
 	const ModulePW::PW_Basis* rho_basis_in,
 	const Charge*const chg_0_in,
 	const UnitCell*const ucell)
-	: chg_0(chg_0_in)
+	: chg_0(chg_0_in), nspin_(nspin), domag_(domag), domag_z_(domag_z), gga_grad_(gga_grad)
 {
-    const Parameter& parameters = PARAM;
 	this->rho_basis_ = rho_basis_in;
 	this->dynamic_mode = true;
 	this->fixed_mode = false;
@@ -29,10 +31,10 @@ PotXC_FDM::PotXC_FDM(
 #endif
 	const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v_0
 		= XC_Functional::v_xc(this->chg_0->nrxx, this->chg_0, ucell,
-							  parameters.inp.nspin,
-							  parameters.globalv.domag,
-							  parameters.globalv.domag_z,
-							  parameters.inp.gga_grad,
+							  nspin_,
+							  domag_,
+							  domag_z_,
+							  gga_grad_,
 							  hybrid_alpha,
 							  hse_omega);
 	this->v_xc_0 = std::get<2>(etxc_vtxc_v_0);
@@ -43,7 +45,6 @@ void PotXC_FDM::cal_v_eff(
 	const UnitCell*const ucell,
 	ModuleBase::matrix& v_eff)
 {
-    const Parameter& parameters = PARAM;
 	ModuleBase::TITLE("PotXC_FDM", "cal_veff");
 	ModuleBase::timer::start("PotXC_FDM", "cal_veff");
 
@@ -69,10 +70,10 @@ void PotXC_FDM::cal_v_eff(
 #endif
 	const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v_01
 		= XC_Functional::v_xc(chg_01.nrxx, &chg_01, ucell,
-							  parameters.inp.nspin,
-							  parameters.globalv.domag,
-							  parameters.globalv.domag_z,
-							  parameters.inp.gga_grad,
+							  nspin_,
+							  domag_,
+							  domag_z_,
+							  gga_grad_,
 							  hybrid_alpha,
 							  hse_omega);
 	const ModuleBase::matrix &v_xc_01 = std::get<2>(etxc_vtxc_v_01);

@@ -1,3 +1,4 @@
+#include <functional>
 #include "../libxc_abacus.h"
 
 #include "gtest/gtest.h"
@@ -19,7 +20,8 @@ TEST(LibxcSanitizer, FullPolarizationUsesTheWeightedEnergyDerivative)
         ASSERT_EQ(xc_func_init(&func, functional_ids[ifunc], XC_POLARIZED), 0);
         xc_func_set_dens_threshold(&func, 1.0e-6);
 
-        const auto evaluate = [&func](const double rho_up,
+        const std::function<double(double, double, XC_Functional_Libxc::LibxcWeightedDerivatives*)> evaluate
+            = [&func](const double rho_up,
                                       const double rho_down,
                                       XC_Functional_Libxc::LibxcWeightedDerivatives* const weighted) {
             const std::vector<double> rho = {rho_up, rho_down};
@@ -91,7 +93,8 @@ TEST(LibxcSanitizer, GgaSigmaReverseMatchesTheWeightedEnergy)
                                                                 {{0.040, -0.200, 0.030}},
                                                                 {{0.5 * sigma_floor, 0.200, 0.030}}}};
 
-    const auto evaluate = [&func, &mask](const std::vector<double>& rho,
+    const std::function<double(const std::vector<double>&, const std::vector<double>&, XC_Functional_Libxc::LibxcWeightedDerivatives*)> evaluate
+        = [&func, &mask](const std::vector<double>& rho,
                                          const std::vector<double>& sigma,
                                          XC_Functional_Libxc::LibxcWeightedDerivatives* const weighted) {
         std::vector<double> exc(1, 0.0);
@@ -170,7 +173,8 @@ TEST(LibxcSanitizer, UnpolarizedSelfSigmaReverseMatchesTheWeightedEnergy)
     const std::vector<double> density = {0.40};
     const double sigma_floor = func.sigma_threshold * func.sigma_threshold;
 
-    const auto evaluate = [&func, &mask, &density](const double sigma_value,
+    const std::function<double(double, XC_Functional_Libxc::LibxcWeightedDerivatives*)> evaluate
+        = [&func, &mask, &density](const double sigma_value,
                                                    XC_Functional_Libxc::LibxcWeightedDerivatives* const weighted) {
         const std::vector<double> sigma = {sigma_value};
         std::vector<double> exc(1, 0.0);

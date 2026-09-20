@@ -394,7 +394,9 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
 
     this->deepks.dpks_out_type = "base"; // for deepks method
 
-    fsl.getForceStress(ucell,
+    fsl.getForceStress(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z,
+                       this->inp_->gga_grad, PARAM.globalv.gamma_only_pw,
+                       ucell,
                        this->get_vdw_result(),
                        this->inp_->cal_force,
                        this->inp_->cal_stress,

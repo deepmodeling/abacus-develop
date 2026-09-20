@@ -21,8 +21,13 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
     Stress_PW(const elecstate::ElecState* pelec_in) : pelec(pelec_in){};
 
     // calculate the stress in PW basis
-    void cal_stress(ModuleBase::matrix& smearing_sigmatot,
-			UnitCell& ucell,
+    void cal_stress(const int nspin,
+                    const bool domag,
+                    const bool domag_z,
+                    const int gga_grad,
+                    const bool gamma_only_pw,
+                    ModuleBase::matrix& smearing_sigmatot,
+                    UnitCell& ucell,
             const vdw::VdwResult* vdw_result,
 			Plus_U_Base& dftu,
 			const pseudopot_cell_vl& locpp,

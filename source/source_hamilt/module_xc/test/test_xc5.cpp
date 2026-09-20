@@ -9,6 +9,7 @@
 #include "../../../source_base/parallel_reduce.h"
 
 #include <cstdlib>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <map>
@@ -558,7 +559,7 @@ TEST(GgaGradTools, ConvertVNspin4HasMag)
 // gga_grad=0 keeps the original built-in algorithm and must not crash
 TEST(GgaGradVxc, BuiltinOriginalAlgorithmRuns)
 {
-    const auto r0 = run_vxc_nspin4("PBE", 1, 0);
+    const std::tuple<double, double, ModuleBase::matrix> r0 = run_vxc_nspin4("PBE", 1, 0);
     EXPECT_EQ(std::get<2>(r0).nr, 4);
     EXPECT_TRUE(std::isfinite(std::get<0>(r0)));
     EXPECT_TRUE(std::isfinite(std::get<1>(r0)));
@@ -653,7 +654,7 @@ TEST(GgaGradVxc, LibxcNspin4NearSaturationDifferentiatesTheWeightedEnergy)
     const int gga_grad_modes[] = {2};
     for (const int gga_grad : gga_grad_modes)
     {
-        const auto evaluate = [&, gga_grad]()
+        const std::function<std::tuple<double, double, ModuleBase::matrix>()> evaluate = [&, gga_grad]()
         {
             return XC_Functional_Libxc::v_xc_libxc(func_ids,
                                                    gga_grad_nrxx,
@@ -669,7 +670,7 @@ TEST(GgaGradVxc, LibxcNspin4NearSaturationDifferentiatesTheWeightedEnergy)
                                                    0.0);
         };
 
-        const auto reference = evaluate();
+        const std::tuple<double, double, ModuleBase::matrix> reference = evaluate();
         const int components[] = {0, 3};
         const double steps[] = {8.0e-8, 4.0e-8, 2.0e-8};
         for (const int component : components)
@@ -722,8 +723,8 @@ TEST(GgaGradVxc, LibxcNspin4NearSaturationDifferentiatesTheWeightedEnergy)
 // for LIBXC, gga_grad=0 and 1 both keep the original collinear algorithm
 TEST(GgaGradVxc, LibxcZeroEqualsOne)
 {
-    const auto r0 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 1, 0);
-    const auto r1 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 1, 1);
+    const std::tuple<double, double, ModuleBase::matrix> r0 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 1, 0);
+    const std::tuple<double, double, ModuleBase::matrix> r1 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 1, 1);
     expect_vxc_equal(r0, r1, 1e-12);
 }
 

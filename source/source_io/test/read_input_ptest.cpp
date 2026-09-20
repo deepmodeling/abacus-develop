@@ -490,7 +490,7 @@ TEST_F(InputParaTest, GgaGradAcceptedRange)
 {
     ModuleIO::ReadInput readinput(0);
     bool found = false;
-    for (const auto& entry: readinput.get_input_lists())
+    for (const std::pair<std::string, ModuleIO::Input_Item>& entry: readinput.get_input_lists())
     {
         if (entry.first != "gga_grad")
         {

@@ -17,7 +17,12 @@ class Sto_Stress_PW : public Stress_Func<FPTYPE, Device>
     ~Sto_Stress_PW(){};
 
     // calculate the stress in PW basis
-    void cal_stress(ModuleBase::matrix& sigmatot,
+    void cal_stress(const int nspin,
+                    const bool domag,
+                    const bool domag_z,
+                    const int gga_grad,
+                    const bool gamma_only_pw,
+                    ModuleBase::matrix& sigmatot,
                     const elecstate::ElecState& elec,
                     ModulePW::PW_Basis* rho_basis,
                     ModuleSymmetry::Symmetry* p_symm,
