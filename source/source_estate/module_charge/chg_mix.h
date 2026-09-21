@@ -94,9 +94,34 @@ class Charge_Mixing
     Base_Mixing::Mixing_Data& get_dmr_mdata() {return dmr_mdata;}
 
     /**
+     * @brief mutable access to the charge-density mixing history
+     *
+     * Same ownership story as get_dmr_mdata(): the buffer belongs to
+     * Charge_Mixing but is driven through Base_Mixing::Mixing, so callers
+     * that reset or inspect the history need a handle on it.
+     */
+    Base_Mixing::Mixing_Data& get_rho_mdata() {return rho_mdata;}
+
+    /**
+     * @brief mutable access to the kinetic-energy-density mixing history
+     */
+    Base_Mixing::Mixing_Data& get_tau_mdata() {return tau_mdata;}
+
+    /**
      * @brief read-only access to the aggregated mixing config set by set_mixing()
      */
     const MixingConfig& get_mixing_config() const {return cfg_;}
+
+    /**
+     * @brief replace the aggregated mixing config without re-running set_mixing()
+     *
+     * set_mixing() both stores the config and rebuilds the mixing objects. This
+     * setter is for callers that need to update the snapshot alone - typically
+     * because a derived runtime global (nspin, domag, ...) changed after the
+     * mixing objects were already built - and must not disturb the mixing
+     * history. Pair it with get_mixing_config() to amend individual fields.
+     */
+    void set_mixing_config(const MixingConfig& cfg) {cfg_ = cfg;}
 
     // for mixing restart
     /// which step to restart mixing during SCF

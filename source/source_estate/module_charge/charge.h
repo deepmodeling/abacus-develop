@@ -135,6 +135,11 @@ class Charge
 
     void save_rho_before_sum_band();
 
+    /// @brief whether allocate() has already claimed the density buffers
+    /// @return true once allocate() has run; allocate() is idempotent and
+    ///         returns early when this is already true
+    bool get_allocate_rho() const { return allocate_rho; }
+
     // mohan add 2021-02-20
     int nrxx=0; // number of r vectors in this processor
     int nxyz = 0; // total number of r vectors

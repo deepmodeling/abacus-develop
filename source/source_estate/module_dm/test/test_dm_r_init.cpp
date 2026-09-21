@@ -3,11 +3,9 @@
 #include <array>
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_cell/klist.h"
-#undef private
 /************************************************
  *  unit test of DensityMatrix constructor
  ***********************************************/
@@ -285,14 +283,14 @@ TEST_F(DMTest, saveDMR)
     DM_test.init_DMR(*DM.get_DMR_pointer(1));
     DM_test.save_DMR();
     EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM.get_DMR_pointer(1)->get_nnr());
-    EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM_test._DMR_save[0].size());
+    EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM_test.get_DMR_save()[0].size());
     // add a new AtomPair, act as a relaxation
     hamilt::AtomPair<double> tmp_ap(9, 9, 1, 0, 0, paraV);
     DM_test.get_DMR_pointer(1)->insert_pair(tmp_ap);
     DM_test.get_DMR_pointer(1)->allocate();
     // update DMR_save
     DM_test.save_DMR();
-    EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM_test._DMR_save[0].size());
+    EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM_test.get_DMR_save()[0].size());
     // delete 
     delete kv;   
 }
