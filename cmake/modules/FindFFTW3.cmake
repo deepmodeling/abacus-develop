@@ -4,7 +4,7 @@
 #  FFTW3_INCLUDE_DIRS  - Where to find FFTW3 headers.
 #  FFTW3_LIBRARIES     - List of libraries when using FFTW3.
 #  FFTW3_FOUND         - True if FFTW3 is found.
-#  FFTW3_VERSION       - Version from matching pkg-config metadata, if available.
+#  FFTW3_VERSION       - Version from the selected library's pkgconfig/fftw3.pc, if available.
 #
 
 find_path(FFTW3_INCLUDE_DIR
@@ -57,14 +57,14 @@ if(FFTW3_FOUND)
 
     set(FFTW3_INCLUDE_DIRS ${FFTW3_INCLUDE_DIR})
 
-  # FFTW has no version macro; use pkg-config metadata for the selected installation.
-  find_package(PkgConfig QUIET)
-  if(PKG_CONFIG_FOUND)
-    pkg_check_modules(PC_FFTW3 QUIET fftw3)
-    get_filename_component(_fftw3_library_dir "${FFTW3_LIBRARY}" DIRECTORY)
-    if(PC_FFTW3_FOUND AND PC_FFTW3_INCLUDEDIR STREQUAL FFTW3_INCLUDE_DIR
-       AND PC_FFTW3_LIBDIR STREQUAL _fftw3_library_dir)
-      set(FFTW3_VERSION "${PC_FFTW3_VERSION}")
+  # Read the literal version from metadata beside the selected library.
+  get_filename_component(_fftw3_library_dir "${FFTW3_LIBRARY}" DIRECTORY)
+  set(_fftw3_pc "${_fftw3_library_dir}/pkgconfig/fftw3.pc")
+  if(EXISTS "${_fftw3_pc}")
+    file(STRINGS "${_fftw3_pc}" _fftw3_version_line REGEX "^Version:[ \t]*[0-9]")
+    if(_fftw3_version_line)
+      string(REGEX REPLACE "^Version:[ \t]*" "" FFTW3_VERSION "${_fftw3_version_line}")
+      string(STRIP "${FFTW3_VERSION}" FFTW3_VERSION)
     endif()
   endif()
 
