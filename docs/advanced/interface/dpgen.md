@@ -170,7 +170,7 @@ Next, for the "dpgen run" step, the following `run_param.json` should be provide
     "fp_orb_files": ["Al_gga_9au_100Ry_4s4p1d.orb"],
     "_comment": "k-mesh setting",
     "k_points":[2, 2, 2, 0, 0, 0],
-    "_comment": "All the ABACUS input paramters are defined through user_fp_params",
+    "_comment": "All the ABACUS input paramters are defined through user_fp_params, and defining input parameters from INPUT files is not supported yet.",
     "user_fp_params":{
     "ntype": 1,
     "ecutwfc": 80,      
@@ -272,7 +272,7 @@ This example can be found in examples/dpgen-example/autotest directory.
         "remote_profile":{
           "email": "xxx@xxx.xxx",
           "password": "xxx",
-          "program_id": 000,
+          "program_id": "000",
             "input_data":{
                 "api_version":2,
                 "job_type": "indicate",
@@ -306,7 +306,7 @@ This example can be found in examples/dpgen-example/autotest directory.
         "remote_profile":{
           "email": "xxx@xxx.xxx",
           "password": "xxx",
-          "program_id": 000,
+          "program_id": "000",
             "input_data":{
               "api_version":2,
               "job_type": "indicate",
@@ -340,7 +340,7 @@ This example can be found in examples/dpgen-example/autotest directory.
         "remote_profile":{
           "email": "xxx@xxx.xxx",
           "password": "xxx",
-         "program_id": 000,
+         "program_id": "000",
             "input_data":{
               "api_version":2,
               "job_type": "indicate",
