@@ -4,7 +4,11 @@
 #include "esolver.h"
 #ifdef __NEP
 #include "nep.h"
+#ifdef ABACUS_NEP_GPU
+#include "source_esolver/nep_gpu/nep_gpu_backend.h"
 #endif
+#endif
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -19,6 +23,9 @@ class ESolver_NEP : public ESolver
     {
         classname = "ESolver_NEP";
         nep_file = pot_file;
+#ifdef ABACUS_NEP_GPU
+        nep_gpu_backend_.reset(new NEP_GPU_Backend());
+#endif
     }
 #else
     ESolver_NEP(const std::string& pot_file)
@@ -92,6 +99,9 @@ class ESolver_NEP : public ESolver
      */
 #ifdef __NEP
     NEP nep; ///< NEP object for NEP calculations
+#ifdef ABACUS_NEP_GPU
+    std::unique_ptr<NEP_GPU_Backend> nep_gpu_backend_;
+#endif
 #endif
 
     std::string nep_file;          ///< directory of NEP model file

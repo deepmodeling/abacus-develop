@@ -1,4 +1,5 @@
 #include "source_cell/module_neighlist/neighbor_search.h"
+#include "source_base/timer.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/unitcell.h"
 
@@ -35,6 +36,10 @@ NeighborList& NeighborSearch::get_neighbor_list() {
 
 const NeighborList& NeighborSearch::get_neighbor_list() const {
     return neighbor_list_;
+}
+
+const NeighborList& NeighborSearch::get_all_neighbor_list() const {
+    return all_neighbor_list_;
 }
 
 // ========== Main public interface ==========
@@ -95,6 +100,11 @@ void NeighborSearch::init_from_mdcell_(const MDCell& cell, double sr)
                                                                         "NeighborSearch page size");
     neighbor_list_.initialize(inside_atoms_.size(), page_size);
     candidate_neighbor_list_.initialize(inside_atoms_.size(), page_size);
+    const std::size_t all_page_size = ModuleNeighList::checked_size_product(all_atoms_.size(),
+                                                                             neighbor_reserve_factor,
+                                                                             "NeighborSearch all-atom page size");
+    all_neighbor_list_.initialize(all_atoms_.size(), all_page_size);
+    candidate_all_neighbor_list_.initialize(all_atoms_.size(), all_page_size);
 }
 
 void NeighborSearch::init_from_unitcell_(const UnitCell& ucell, double sr)
@@ -142,6 +152,11 @@ void NeighborSearch::init_from_unitcell_(const UnitCell& ucell, double sr)
                                                                         "NeighborSearch page size");
     neighbor_list_.initialize(inside_atoms_.size(), page_size);
     candidate_neighbor_list_.initialize(inside_atoms_.size(), page_size);
+    const std::size_t all_page_size = ModuleNeighList::checked_size_product(all_atoms_.size(),
+                                                                             neighbor_reserve_factor,
+                                                                             "NeighborSearch all-atom page size");
+    all_neighbor_list_.initialize(all_atoms_.size(), all_page_size);
+    candidate_all_neighbor_list_.initialize(all_atoms_.size(), all_page_size);
 }
 
 void NeighborSearch::init(BaseCell& cell, double sr)
@@ -160,10 +175,14 @@ void NeighborSearch::init(BaseCell& cell, double sr)
 
 void NeighborSearch::build_neighbors()
 {
+    ModuleBase::timer::start("NeighborSearch", "build_neighbors");
     bin_manager_.init_bins(search_radius_, all_atoms_);
     bin_manager_.do_binning(all_atoms_);
     bin_manager_.build_atom_neighbors(candidate_neighbor_list_, inside_atoms_, all_atoms_);
     bin_manager_.build_atom_neighbors(neighbor_list_, inside_atoms_, all_atoms_);
+    bin_manager_.build_atom_neighbors(candidate_all_neighbor_list_, all_atoms_, all_atoms_);
+    bin_manager_.build_atom_neighbors(all_neighbor_list_, all_atoms_, all_atoms_);
+    ModuleBase::timer::end("NeighborSearch", "build_neighbors");
 }
 
 void NeighborSearch::refresh_mdcell(const MDCell& cell, double cutoff)
@@ -199,16 +218,28 @@ void NeighborSearch::refresh_mdcell(const MDCell& cell, double cutoff)
 
 void NeighborSearch::filter_candidate_neighbors_(double cutoff, double lat0)
 {
+    ModuleBase::timer::start("NeighborSearch", "filter_candidate_neighbors_");
+    filter_candidate_neighbors_(cutoff, lat0, candidate_neighbor_list_, neighbor_list_, inside_atoms_);
+    filter_candidate_neighbors_(cutoff, lat0, candidate_all_neighbor_list_, all_neighbor_list_, all_atoms_);
+    ModuleBase::timer::end("NeighborSearch", "filter_candidate_neighbors_");
+}
+
+void NeighborSearch::filter_candidate_neighbors_(double cutoff,
+                                                  double lat0,
+                                                  const NeighborList& candidate_list,
+                                                  NeighborList& neighbor_list,
+                                                  const std::vector<NeighborAtom>& centers)
+{
     const double cutoff2 = cutoff * cutoff;
-    neighbor_list_.reset();
+    neighbor_list.reset();
     std::vector<int> active;
-    for (int i = 0; i < candidate_neighbor_list_.get_ncentral_atoms(); ++i)
+    for (int i = 0; i < candidate_list.get_ncentral_atoms(); ++i)
     {
         active.clear();
-        const NeighborAtom& center = all_atoms_[static_cast<std::size_t>(i)];
-        for (int j = 0; j < candidate_neighbor_list_.get_numneigh(i); ++j)
+        const NeighborAtom& center = centers[static_cast<std::size_t>(i)];
+        for (int j = 0; j < candidate_list.get_numneigh(i); ++j)
         {
-            const int index = candidate_neighbor_list_.get_firstneigh(i)[j];
+            const int index = candidate_list.get_firstneigh(i)[j];
             const NeighborAtom& neighbor = all_atoms_[static_cast<std::size_t>(index)];
             const double dx = (center.position_x - neighbor.position_x) * lat0;
             const double dy = (center.position_y - neighbor.position_y) * lat0;
@@ -218,7 +249,7 @@ void NeighborSearch::filter_candidate_neighbors_(double cutoff, double lat0)
                 active.push_back(index);
             }
         }
-        neighbor_list_.set_neighbors(i, active);
+        neighbor_list.set_neighbors(i, active);
     }
 }
 

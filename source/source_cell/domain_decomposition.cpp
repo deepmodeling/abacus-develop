@@ -1,5 +1,6 @@
-#include "source_cell/module_neighlist/domain_decomposition.h"
+#include "source_cell/domain_decomposition.h"
 #include "source_base/parallel_cell.h"
+#include "source_base/timer.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
@@ -80,6 +81,7 @@ void DomainDecomposition::init(const ModuleBase::CommunicationDomain& comm_domai
 
 void DomainDecomposition::migrate_owned_atoms(MDCell& cell)
 {
+    ModuleBase::timer::start("DomainDecomposition", "migrate_owned_atoms");
     synchronize_geometry_(cell);
     std::vector<LocalAtom>& owned_atoms = cell.owned_atoms_;
     const int direction_count = 6;
@@ -167,10 +169,12 @@ void DomainDecomposition::migrate_owned_atoms(MDCell& cell)
 
     owned_atoms.swap(retained_atoms);
     exchange_ghost_atoms(cell);
+    ModuleBase::timer::end("DomainDecomposition", "migrate_owned_atoms");
 }
 
 void DomainDecomposition::exchange_ghost_atoms(MDCell& cell)
 {
+    ModuleBase::timer::start("DomainDecomposition", "exchange_ghost_atoms");
     synchronize_geometry_(cell);
     const std::vector<LocalAtom>& owned_atoms = cell.owned_atoms_;
     std::vector<LocalAtom>& ghost_atoms = cell.ghost_atoms_;
@@ -303,14 +307,17 @@ void DomainDecomposition::exchange_ghost_atoms(MDCell& cell)
     ghost_layout_valid_ = true;
     cell.clear_forces_(ghost_atoms);
     cell.neighbor_layout_valid_ = false;
+    ModuleBase::timer::end("DomainDecomposition", "exchange_ghost_atoms");
 }
 
 void DomainDecomposition::update_ghost_atom_positions(MDCell& cell)
 {
+    ModuleBase::timer::start("DomainDecomposition", "update_ghost_atom_positions");
     synchronize_geometry_(cell);
     if (!ghost_layout_valid_)
     {
         exchange_ghost_atoms(cell);
+        ModuleBase::timer::end("DomainDecomposition", "update_ghost_atom_positions");
         return;
     }
 
@@ -346,10 +353,12 @@ void DomainDecomposition::update_ghost_atom_positions(MDCell& cell)
         }
     }
     cell.clear_forces_(ghost_atoms);
+    ModuleBase::timer::end("DomainDecomposition", "update_ghost_atom_positions");
 }
 
 void DomainDecomposition::accumulate_ghost_forces(MDCell& cell)
 {
+    ModuleBase::timer::start("DomainDecomposition", "accumulate_ghost_forces");
     // Do not recreate geometry or ghost mappings between force evaluation and return.
     if (!initialized_ || !ghost_layout_valid_)
     {
@@ -453,10 +462,17 @@ void DomainDecomposition::accumulate_ghost_forces(MDCell& cell)
             atom.force.z += record.force[2];
         }
     }
+    ModuleBase::timer::end("DomainDecomposition", "accumulate_ghost_forces");
+}
+
+void DomainDecomposition::set_neighbor_list_mode(NeighborListMode mode)
+{
+    neighbor_list_mode_ = mode;
 }
 
 void DomainDecomposition::prepare_neighbors(MDCell& cell)
 {
+    ModuleBase::timer::start("DomainDecomposition", "prepare_neighbors");
     if (cell.cutoff_ <= 0.0)
     {
         throw std::runtime_error("MDCell neighbors must be initialized before use.");
@@ -487,21 +503,33 @@ void DomainDecomposition::prepare_neighbors(MDCell& cell)
     if (rebuild)
     {
         migrate_owned_atoms(cell);
-        cell.neighbor_search_.reset(new NeighborSearch);
-        cell.neighbor_search_->init(cell, cell.cutoff_ + cell.skin_);
-        cell.neighbor_search_->build_neighbors();
-        cell.neighbor_search_->refresh_mdcell(cell, cell.cutoff_);
+        if (neighbor_list_mode_ == NeighborListMode::cpu)
+        {
+            cell.neighbor_search_.reset(new NeighborSearch);
+            cell.neighbor_search_->init(cell, cell.cutoff_ + cell.skin_);
+            cell.neighbor_search_->build_neighbors();
+            cell.neighbor_search_->refresh_mdcell(cell, cell.cutoff_);
+        }
+        else
+        {
+            cell.neighbor_search_.reset();
+        }
         cell.neighbor_reference_frac_.resize(cell.owned_atoms_.size());
         for (std::size_t i = 0; i < cell.owned_atoms_.size(); ++i)
         {
             cell.neighbor_reference_frac_[i] = cell.owned_atoms_[i].frac;
         }
         cell.neighbor_layout_valid_ = true;
+        ModuleBase::timer::end("DomainDecomposition", "prepare_neighbors");
         return;
     }
 
     update_ghost_atom_positions(cell);
-    cell.neighbor_search_->refresh_mdcell(cell, cell.cutoff_);
+    if (neighbor_list_mode_ == NeighborListMode::cpu)
+    {
+        cell.neighbor_search_->refresh_mdcell(cell, cell.cutoff_);
+    }
+    ModuleBase::timer::end("DomainDecomposition", "prepare_neighbors");
 }
 
 const std::array<int, 3>& DomainDecomposition::dims() const

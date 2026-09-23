@@ -35,6 +35,7 @@ project(
 option(ENABLE_MPI "Enable MPI" ON)
 option(ENABLE_OPENMP "Enable OpenMP" ON)
 option(USE_CUDA "Enable CUDA" OFF)
+option(ENABLE_NEP_GPU "Enable the CUDA NEP backend" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
@@ -620,6 +621,15 @@ endif()
 
 if(DEFINED NEP_DIR)
   find_package(NEP REQUIRED)
+endif()
+
+if(ENABLE_NEP_GPU)
+  if(NOT USE_CUDA)
+    message(FATAL_ERROR "ENABLE_NEP_GPU requires USE_CUDA=ON")
+  endif()
+  if(NOT DEFINED NEP_DIR)
+    message(FATAL_ERROR "ENABLE_NEP_GPU requires NEP_DIR")
+  endif()
 endif()
 
 if(DEFINED TensorFlow_DIR)

@@ -43,8 +43,28 @@ void ESolver_NEP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 #ifdef __NEP
         const double cutoff = std::max(nep.paramb.rc_radial_max, nep.paramb.rc_angular_max)
                               * ModuleBase::ANGSTROM_AU;
-        mdcell.set_neighbor_cutoff(cutoff);
+        const double neighbor_cutoff = inp.device == "gpu" ? 2.0 * cutoff : cutoff;
+        mdcell.set_neighbor_cutoff(neighbor_cutoff);
         initialize_type_map_(mdcell.type_labels());
+#ifdef ABACUS_NEP_GPU
+        if (inp.device == "gpu")
+        {
+            int local_rank = 0;
+#ifdef __MPI
+            local_rank = mdcell.mpi_rank();
+#endif
+            std::string error;
+            if (!nep_gpu_backend_->initialize(nep, local_rank, error))
+            {
+                ModuleBase::WARNING_QUIT("ESolver_NEP", ("GPU NEP initialization failed: " + error).c_str());
+            }
+        }
+#else
+        if (inp.device == "gpu")
+        {
+            ModuleBase::WARNING_QUIT("ESolver_NEP", "device=gpu requires an ABACUS build with ENABLE_NEP_GPU=ON.");
+        }
+#endif
 #else
         ModuleBase::WARNING_QUIT("ESolver_NEP", "Please recompile with -D__NEP");
 #endif
@@ -81,7 +101,9 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
 #else
         static_cast<void>(istep);
         MDCell& mdcell = static_cast<MDCell&>(basecell);
-        if (!mdcell.has_neighbor_search())
+        const bool use_gpu_neighbor_list = inp_->device == "gpu"
+                                           && inp_->esolver_type == "nep";
+        if (!use_gpu_neighbor_list && !mdcell.has_neighbor_search())
         {
             ModuleBase::WARNING_QUIT("ESolver", "MDCell neighbors must be prepared by the caller before runner().");
         }
@@ -117,33 +139,83 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
             force_ptrs[static_cast<std::size_t>(iat)] = force[static_cast<std::size_t>(iat)].data();
         }
 
-        const NeighborList& neighbor_list = mdcell.neighbor_search().get_neighbor_list();
-        std::vector<int> ilist(static_cast<std::size_t>(nowned_atoms), 0);
-        std::vector<int> numneigh(static_cast<std::size_t>(natom), 0);
-        std::vector<int*> firstneigh(static_cast<std::size_t>(natom), NULL);
-        for (int iat = 0; iat < nowned_atoms; ++iat)
-        {
-            ilist[static_cast<std::size_t>(iat)] = iat;
-            numneigh[static_cast<std::size_t>(iat)] = neighbor_list.get_numneigh(iat);
-            firstneigh[static_cast<std::size_t>(iat)] = const_cast<int*>(neighbor_list.get_firstneigh(iat));
-        }
-
         double local_energy = 0.0;
         double local_virial[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
         ModuleBase::timer::start("ESolver_NEP", "compute");
-        nep.compute_for_lammps(nowned_atoms,
-                               nowned_atoms,
-                               nowned_atoms > 0 ? ilist.data() : NULL,
-                               numneigh.data(),
-                               firstneigh.data(),
-                               local_type.data(),
-                               md_type_to_nep_type_.data(),
-                               position_ptrs.data(),
-                               local_energy,
-                               local_virial,
-                               NULL,
-                               force_ptrs.data(),
-                               NULL);
+#ifdef ABACUS_NEP_GPU
+        if (inp_->device == "gpu")
+        {
+            std::vector<int> gpu_type(static_cast<std::size_t>(natom), 0);
+            std::vector<double> gpu_position(static_cast<std::size_t>(3 * natom), 0.0);
+            for (int iat = 0; iat < natom; ++iat)
+            {
+                gpu_type[static_cast<std::size_t>(iat)]
+                    = md_type_to_nep_type_[static_cast<std::size_t>(local_type[static_cast<std::size_t>(iat)])];
+                gpu_position[static_cast<std::size_t>(iat)] = position[static_cast<std::size_t>(iat)][0];
+                gpu_position[static_cast<std::size_t>(natom + iat)] = position[static_cast<std::size_t>(iat)][1];
+                gpu_position[static_cast<std::size_t>(2 * natom + iat)] = position[static_cast<std::size_t>(iat)][2];
+            }
+            std::vector<double> gpu_energy;
+            std::vector<double> gpu_force;
+            std::vector<double> gpu_virial;
+            std::string error;
+            const double cutoff = std::max(nep.paramb.rc_radial_max,
+                                           nep.paramb.rc_angular_max);
+            if (!nep_gpu_backend_->compute(nowned_atoms,
+                                           natom,
+                                           cutoff,
+                                           inp_->mdp.md_neighbor_skin,
+                                           gpu_type,
+                                           gpu_position,
+                                           gpu_energy,
+                                           gpu_force,
+                                           gpu_virial,
+                                           error))
+            {
+                ModuleBase::timer::end("ESolver_NEP", "compute");
+                ModuleBase::WARNING_QUIT("ESolver_NEP", ("GPU NEP compute failed: " + error).c_str());
+            }
+            for (int iat = 0; iat < nowned_atoms; ++iat)
+            {
+                local_energy += gpu_energy[static_cast<std::size_t>(iat)];
+                force[static_cast<std::size_t>(iat)][0] = gpu_force[static_cast<std::size_t>(iat)];
+                force[static_cast<std::size_t>(iat)][1] = gpu_force[static_cast<std::size_t>(nowned_atoms + iat)];
+                force[static_cast<std::size_t>(iat)][2] = gpu_force[static_cast<std::size_t>(2 * nowned_atoms + iat)];
+                local_virial[0] += gpu_virial[static_cast<std::size_t>(iat)];
+                local_virial[1] += gpu_virial[static_cast<std::size_t>(nowned_atoms + iat)];
+                local_virial[2] += gpu_virial[static_cast<std::size_t>(2 * nowned_atoms + iat)];
+                local_virial[3] += gpu_virial[static_cast<std::size_t>(3 * nowned_atoms + iat)];
+                local_virial[4] += gpu_virial[static_cast<std::size_t>(4 * nowned_atoms + iat)];
+                local_virial[5] += gpu_virial[static_cast<std::size_t>(5 * nowned_atoms + iat)];
+            }
+        }
+        else
+#endif
+        {
+            const NeighborList& neighbor_list = mdcell.neighbor_search().get_neighbor_list();
+            std::vector<int> ilist(static_cast<std::size_t>(nowned_atoms), 0);
+            std::vector<int> numneigh(static_cast<std::size_t>(natom), 0);
+            std::vector<int*> firstneigh(static_cast<std::size_t>(natom), NULL);
+            for (int iat = 0; iat < nowned_atoms; ++iat)
+            {
+                ilist[static_cast<std::size_t>(iat)] = iat;
+                numneigh[static_cast<std::size_t>(iat)] = neighbor_list.get_numneigh(iat);
+                firstneigh[static_cast<std::size_t>(iat)] = const_cast<int*>(neighbor_list.get_firstneigh(iat));
+            }
+            nep.compute_for_lammps(nowned_atoms,
+                                   nowned_atoms,
+                                   nowned_atoms > 0 ? ilist.data() : NULL,
+                                   numneigh.data(),
+                                   firstneigh.data(),
+                                   local_type.data(),
+                                   md_type_to_nep_type_.data(),
+                                   position_ptrs.data(),
+                                   local_energy,
+                                   local_virial,
+                                   NULL,
+                                   force_ptrs.data(),
+                                   NULL);
+        }
         ModuleBase::timer::end("ESolver_NEP", "compute");
 
         std::vector<LocalAtom>& mutable_owned_atoms = mdcell.owned_atoms();

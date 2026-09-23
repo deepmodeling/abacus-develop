@@ -34,6 +34,7 @@ VPATH=./src_global:\
 ./source_basis/module_pw:\
 ./source_base/module_fft:\
 ./source_esolver:\
+./source_esolver/nep_gpu:\
 ./source_hsolver:\
 ./source_hsolver/kernels:\
 ./source_hsolver/module_genelpa:\

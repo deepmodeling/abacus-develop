@@ -1,4 +1,4 @@
-#include "source_cell/module_neighlist/domain_decomposition.h"
+#include "source_cell/domain_decomposition.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "md_test_fixture.h"

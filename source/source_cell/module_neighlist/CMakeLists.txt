@@ -1,6 +1,5 @@
 set(neighbor_search_sources
     bin_manager.cpp
-    domain_decomposition.cpp
     neighbor_search.cpp
     page_allocator.cpp
 )

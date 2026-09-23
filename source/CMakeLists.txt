@@ -50,6 +50,7 @@ set(_abacus_feature_definitions
   $<$<AND:$<NOT:$<BOOL:${USE_KML}>>,$<BOOL:${MKL_FOUND}>>:__MKL>
   $<$<BOOL:${USE_CUDA}>:__CUDA>
   $<$<BOOL:${USE_CUDA}>:__UT_USE_CUDA>
+  $<$<BOOL:${ENABLE_NEP_GPU}>:ABACUS_NEP_GPU>
   $<$<BOOL:${ENABLE_NCCL_PARALLEL_DEVICE}>:__NCCL_PARALLEL_DEVICE>
   $<$<BOOL:${ENABLE_CUSOLVERMP}>:__CUSOLVERMP>
   $<$<BOOL:${ENABLE_CUBLASMP}>:__CUBLASMP>
@@ -640,6 +641,11 @@ if(USE_CUDA)
     source_pw/module_pwdft/kernels/cuda/mul_potential_op.cu
     source_pw/module_pwdft/kernels/cuda/vec_mul_vec_complex.cu
     source_pw/module_pwdft/kernels/cuda/exx_cal_energy_op.cu)
+  if(ENABLE_NEP_GPU)
+    list(APPEND device_srcs
+      source_esolver/nep_gpu/nep_gpu_kernels.cu
+      source_cell/module_neighlist/gpu_neighbor_list.cu)
+  endif()
 endif()
 
 if(USE_ROCM)
@@ -671,6 +677,11 @@ if(USE_DSP)
 endif()
 
 add_library(device OBJECT ${device_srcs})
+
+if(ENABLE_NEP_GPU)
+  target_include_directories(device PRIVATE
+    ${ABACUS_SOURCE_DIR}/source/source_esolver)
+endif()
 
 if(USE_CUDA)
   target_link_libraries(device PRIVATE cusolver cublas cufft)
@@ -716,6 +727,7 @@ target_link_libraries(
     io_input
     surchem
     neighbor_search
+    domain_decomposition
     neighbor
     md
     planewave

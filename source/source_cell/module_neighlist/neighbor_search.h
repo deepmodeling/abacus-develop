@@ -74,6 +74,9 @@ public:
      */
     const NeighborList& get_neighbor_list() const;
 
+    /// Get a neighbor list whose centers include owned and ghost atoms.
+    const NeighborList& get_all_neighbor_list() const;
+
     /**
      * @brief Get the search radius.
      * @return Search radius in lattice units.
@@ -145,11 +148,18 @@ private:
     /// The constructed neighbor list
     NeighborList neighbor_list_;
     NeighborList candidate_neighbor_list_;
+    NeighborList all_neighbor_list_;
+    NeighborList candidate_all_neighbor_list_;
 
     /// Bin manager for efficient neighbor search
     BinManager bin_manager_;
 
     void filter_candidate_neighbors_(double cutoff, double lat0);
+    void filter_candidate_neighbors_(double cutoff,
+                                     double lat0,
+                                     const NeighborList& candidate_list,
+                                     NeighborList& neighbor_list,
+                                     const std::vector<NeighborAtom>& centers);
 
     // ========== Compile-time constants ==========
 

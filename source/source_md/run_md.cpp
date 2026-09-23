@@ -6,7 +6,7 @@
 #include "source_base/parallel_cell.h"
 #include "source_cell/mdcell_reader.h"
 #include "source_cell/mdcell.h"
-#include "source_cell/module_neighlist/domain_decomposition.h"
+#include "source_cell/domain_decomposition.h"
 #include "source_io/module_parameter/parameter.h"
 #include "fire.h"
 #include "langevin.h"
@@ -84,6 +84,11 @@ void md_line(MDCell& mdcell,
 {
     ModuleBase::TITLE("Run_MD", "md_line");
     ModuleBase::timer::start("Run_MD", "md_line");
+    const bool use_gpu_neighbor_list = param_in.inp.device == "gpu"
+                                       && param_in.inp.esolver_type == "nep";
+    decomp.set_neighbor_list_mode(use_gpu_neighbor_list
+                                      ? DomainDecomposition::NeighborListMode::gpu
+                                      : DomainDecomposition::NeighborListMode::cpu);
     /// determine the md_type
     MD_base* mdrun = nullptr;
     /// the integrators take the values they use, not the whole Parameter

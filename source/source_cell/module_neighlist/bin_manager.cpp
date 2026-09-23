@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <stdexcept>
+#include "source_base/timer.h"
 #include "bin_manager.h"
 
 // ========== Bin class implementation ==========
@@ -182,6 +183,7 @@ void BinManager::build_atom_neighbors(
     const std::vector<NeighborAtom>& binned_atoms
 )
 {
+    ModuleBase::timer::start("BinManager", "build_atom_neighbors");
     assert(atoms.size() == static_cast<size_t>(neighbor_list.get_ncentral_atoms()));
 
     double sradius2 = sradius_ * sradius_;
@@ -263,6 +265,7 @@ void BinManager::build_atom_neighbors(
         neighbor_list.firstneigh_[i] = ptr;
         neighbor_list.numneigh_[i] = n;
     }
+    ModuleBase::timer::end("BinManager", "build_atom_neighbors");
 }
 
 void BinManager::clear()

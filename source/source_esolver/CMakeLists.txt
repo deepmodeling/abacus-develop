@@ -15,6 +15,12 @@ list(APPEND objects
     pw_others.cpp
     esolver_dfpt_pw.cpp
 )
+
+if(ENABLE_NEP_GPU)
+  list(APPEND objects
+      nep_gpu/nep_gpu_backend.cpp
+      ../source_cell/module_neighlist/gpu_neighbor_list.cpp)
+endif()
 if(ENABLE_LCAO)
   list(APPEND objects
       esolver_ks_lcao.cpp
@@ -39,6 +45,12 @@ add_library(
         ../source_pw/module_pwdft/exx_helper.cpp
         ../source_pw/module_pwdft/exx_helper.h
 )
+
+if(ENABLE_NEP_GPU)
+  target_include_directories(esolver PRIVATE
+    ${ABACUS_SOURCE_DIR}/source/source_esolver
+    ${ABACUS_SOURCE_DIR}/source)
+endif()
 
 if(ENABLE_COVERAGE)
   add_coverage(esolver)
