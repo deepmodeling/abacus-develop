@@ -330,7 +330,6 @@ OBJS_GINT=batch_biggrid.o\
       gint_fvl.o\
       gint_info.o\
       gint_interface.o\
-      gint_prec_ctrl.o\
       gint_rho.o\
       gint_drho.o\
       gint_tau.o\
@@ -565,6 +564,7 @@ OBJS_RELAXATION=relax_data.o\
 
 OBJS_SURCHEM=surchem.o\
     h_corr_pw.o\
+    h_corr_sccs.o\
     cal_epsilon.o\
     cal_pseudo.o\
     cal_totn.o\
@@ -572,6 +572,23 @@ OBJS_SURCHEM=surchem.o\
     cal_vel.o\
     minimize_cg.o\
     sol_force.o\
+    sccs_cavity.o\
+    sccs_charge.o\
+    sccs_driver.o\
+    sccs_functional.o\
+    sccs_nonel.o\
+    sccs_parameters.o\
+    sccs_pcc.o\
+    sccs_pcc_2d.o\
+    sccs_pcc_2d_coulomb.o\
+    sccs_pcc_coulomb.o\
+    sccs_poisson.o\
+    sccs_pw_coulomb.o\
+    sccs_pw_charge.o\
+    sccs_pw_force.o\
+    sccs_pw_nonel.o\
+    sccs_pw_reduction.o\
+    sccs_periodic.o\
 
 OBJS_SYMMETRY=symm_other.o\
     symm_rot_spin.o\
@@ -826,25 +843,19 @@ OBJS_SRCPW=h_ewald_pw.o\
     vnl_pw_grad.o\
     vnl_pw_init_vnl.o\
     vnl_pw_qrad.o\
-    chg_routine.o\
+    chgmixing.o\
+    gint_prec_ctrl.o\
     charge.o\
-    chg_atomic.o\
-    chg_atomic_inner.o\
-    chg_init.o\
-    chg_tools.o\
-    chg_parallel.o\
-    chg_extra.o\
-    chg_mix.o\
-    chg_mix_rho.o\
-    chg_dmr.o\
-    chg_drho.o\
-    chg_drho_inner.o\
-    chg_precond.o\
-    chg_tau.o\
-    chg_symm.o\
-    chg_symm_detail.o\
-    chg_uspp.o\
-    chg_rhog_io.o\
+    charge_init.o\
+    charge_mpi.o\
+    charge_extra.o\
+    charge_mixing.o\
+    charge_mixing_dmr.o\
+    mix_resid.o\
+    mix_precond.o\
+    charge_mixing_rho.o\
+    charge_mixing_uspp.o\
+    rhog_io.o\
     write_elecstat_pot.o\
     write_init.o\
     fp_energy.o\
@@ -901,6 +912,8 @@ OBJS_SRCPW=h_ewald_pw.o\
     stress_pw.o\
     of_stress_pw.o\
     of_print_info.o\
+    symm_rho_charge.o\
+    symm_rhog.o\
     setup_psi_pw.o\
     setup_psi.o\
     psi_prepare.o\
