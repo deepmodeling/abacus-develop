@@ -213,7 +213,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
                 GlobalV::ofs_warning};
             this->CE.extrapolate_charge(&this->Pgrid, ucell, &this->chr, *this->pw_rhod,
                                         &this->sf, GlobalV::ofs_running, GlobalV::ofs_warning,
-                                        atomic_rho_cfg_tddft);
+                                        atomic_rho_cfg_tddft, PARAM.globalv.has_float_data);
             this->exx_nao.before_scf(ucell, this->kv, this->orb_, this->p_chgmix, totstep, *this->inp_, this->exx_info_);
             elecstate::init_scf(ucell,
                                 this->Pgrid,

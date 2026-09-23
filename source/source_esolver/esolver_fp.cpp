@@ -143,7 +143,7 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
             nprocgroup);
 
     //! 10) calculate the structure factor
-    this->sf.setup(&ucell, Pgrid, this->pw_rhod);
+    this->sf.setup(&ucell, Pgrid, this->pw_rhod, PARAM.globalv.has_float_data);
 
     //! 11) initialize the charge density, we need to first set xc_type,
     // then we can call chr.allocate()
@@ -233,7 +233,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
             GlobalV::ofs_warning};
         this->CE.extrapolate_charge(&this->Pgrid, ucell, &this->chr, *this->pw_rhod,
                                     &this->sf, GlobalV::ofs_running, GlobalV::ofs_warning,
-                                    atomic_rho_cfg_before);
+                                    atomic_rho_cfg_before, PARAM.globalv.has_float_data);
     }
 
     //! Evaluate the vdW correction once for this ionic configuration.
