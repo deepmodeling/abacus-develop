@@ -10,7 +10,7 @@ if(ENABLE_ASAN)
 else()
     add_test(
         NAME 03_NAO_multik
-        COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4
+        COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4 -j auto
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/03_NAO_multik
     )
 endif()
@@ -18,7 +18,7 @@ endif()
 if(ENABLE_CNPY)
     add_test(
         NAME 03_NAO_multik_npz
-        COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4 -f CASES_CNPY.txt
+        COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4 -j auto -f CASES_CNPY.txt
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/03_NAO_multik
     )
 endif()
