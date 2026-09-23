@@ -49,7 +49,11 @@ void module_charge::chgmixing_ks(const int iter,
         {
             // calculate energy of output charge density
             elecstate::update_pot(ucell, pelec, chr, conv_esolver);
-            pelec->cal_energies(2); // 2 means Kohn-Sham functional
+            pelec->cal_energies(2,
+                                inp.imp_sol,
+                                inp.sc_mag_switch,
+                                inp.dft_plus_u,
+                                inp.assume_isolated); // 2 means Kohn-Sham functional
             // now, etot_old is the energy of input density, while etot is the energy of output density
             pelec->f_en.etot_delta = pelec->f_en.etot - pelec->f_en.etot_old;
             // output etot_delta

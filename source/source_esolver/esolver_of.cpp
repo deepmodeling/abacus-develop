@@ -533,7 +533,11 @@ void ESolver_OF::after_all_runners(BaseCell& basecell)
  */
 double ESolver_OF::cal_energy()
 {
-    this->pelec->cal_energies(2);
+    this->pelec->cal_energies(2,
+                              this->inp_->imp_sol,
+                              this->inp_->sc_mag_switch,
+                              this->inp_->dft_plus_u,
+                              this->inp_->assume_isolated);
     double kinetic_energy = this->kedf_manager_->get_energy(); // kinetic energy
     double pseudopot_energy = 0.;                   // electron-ion interaction energy
     for (int is = 0; is < this->inp_->nspin; ++is)

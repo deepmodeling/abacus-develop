@@ -315,8 +315,16 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
 
     // 3.1) calculate energies
-    this->pelec->cal_energies(1); // Harris-Foulkes functional
-    this->pelec->cal_energies(2); // Kohn-Sham functional
+    this->pelec->cal_energies(1,
+                              this->inp_->imp_sol,
+                              this->inp_->sc_mag_switch,
+                              this->inp_->dft_plus_u,
+                              this->inp_->assume_isolated); // Harris-Foulkes functional
+    this->pelec->cal_energies(2,
+                              this->inp_->imp_sol,
+                              this->inp_->sc_mag_switch,
+                              this->inp_->dft_plus_u,
+                              this->inp_->assume_isolated); // Kohn-Sham functional
 
     if (iter == 1)
     {

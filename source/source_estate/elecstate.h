@@ -145,7 +145,17 @@ class ElecState
     ModuleBase::matrix vnew;
     bool vnew_exist = false;
     void cal_converged();
-    void cal_energies(const int type);
+    /// @brief assemble the total energy from its contributions
+    /// @param type 1 means Harris-Foulkes functional, 2 means Kohn-Sham
+    /// @param imp_sol whether the implicit solvation correction contributes
+    /// @param sc_mag_switch whether the spin-constraint energy contributes
+    /// @param dft_plus_u 0 disables the DFT+U energy term
+    /// @param assume_isolated "makov-payne" adds the isolated-system correction
+    void cal_energies(const int type,
+                      const bool imp_sol,
+                      const bool sc_mag_switch,
+                      const int dft_plus_u,
+                      const std::string& assume_isolated);
     void set_exx(const double& Eexx, const bool cal_exx, const double hybrid_alpha);
     void set_exx(const std::complex<double>& Eexx, const bool cal_exx, const double hybrid_alpha);
 
