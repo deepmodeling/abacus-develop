@@ -61,11 +61,35 @@ namespace DFTU_LCAO
 {
 
 /**
+ * @brief Post-process force: MPI Allreduce and spin-degeneracy scaling.
+ *
+ * @param force  [in,out] force matrix (nat, 3), reduced and scaled
+ * @param nspin  [in] number of spin channels (1, 2, or 4)
+ */
+void reduce_force_impl(ModuleBase::matrix& force, int nspin);
+
+/**
+ * @brief Post-process stress: MPI Allreduce and renormalization to
+ *        full 3x3 tensor from Voigt-like 6-component form.
+ *
+ * @param ucell      [in] unit cell (for lat0/omega)
+ * @param stress_tmp [in] Voigt-like 6-component stress, reduced in-place
+ * @param stress     [out] full 3x3 stress tensor
+ */
+void reduce_stress_impl(const UnitCell* ucell,
+                        const std::vector<double>& stress_tmp,
+                        ModuleBase::matrix& stress);
+
+/**
  * @brief Non-template core of DFT+U force/stress in real space.
  *
  * All types are concrete and independent of the operator's k-point type (TK)
  * and real-space type (TR). The template wrapper cal_fs_nao_r only validates
  * the density matrix and forwards arguments here.
+ *
+ * @note Hard to unit-test: requires TwoCenterIntegrator (numerical orbital
+ * radial integration) to build nlm via build_nlm. The inner function
+ * acc_fs_pairs is directly testable with a mock nlm_tot; build_nlm is not.
  *
  * @param ucell       [in] unit cell
  * @param dftu        [in] DFT+U base object (occupation matrix, U values)

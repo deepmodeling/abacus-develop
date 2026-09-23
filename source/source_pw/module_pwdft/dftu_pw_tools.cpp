@@ -171,13 +171,13 @@ void reduce_occ_mat(const UnitCell& cell,
         {
             Parallel_Reduce::reduce_double_allpool(kpar,
                     GlobalV::NPROC_IN_POOL,
-                    occmat.mat(iat, target_l, 0, 0).c,
+                    occmat.mat(iat, target_l, 0).c,
                     size);
             if(nspin == 2)
             {
                 Parallel_Reduce::reduce_double_allpool(kpar,
                         GlobalV::NPROC_IN_POOL,
-                        occmat.mat(iat, target_l, 0, 1).c,
+                        occmat.mat(iat, target_l, 1).c,
                         size);
             }
         }
@@ -185,7 +185,7 @@ void reduce_occ_mat(const UnitCell& cell,
         {
             Parallel_Reduce::reduce_double_allpool(kpar,
                     GlobalV::NPROC_IN_POOL,
-                    occmat.mat(iat, target_l, 0, 0).c,
+                    occmat.mat(iat, target_l, 0).c,
                     size * 4);
         }
     }
@@ -229,7 +229,7 @@ void compute_pot_uterm_and_energy(const UnitCell& cell,
             // contiguously, each of size m_size*m_size.
             energy_u += compute_pot_onsite_spinor(
                 pot_onsite_iat,
-                occmat.mat(iat, target_l, 0, 0).c,
+                occmat.mat(iat, target_l, 0).c,
                 u_value, diag_coeff, weight_eu, m_size);
         }
         else // nspin=1 or nspin=2
@@ -237,7 +237,7 @@ void compute_pot_uterm_and_energy(const UnitCell& cell,
             // spin-up channel
             energy_u += compute_pot_onsite_scalar(
                 pot_onsite_iat,
-                occmat.mat(iat, target_l, 0, 0).c,
+                occmat.mat(iat, target_l, 0).c,
                 u_value, diag_coeff, weight_eu, m_size);
             // spin-down channel for nspin=2
             if(nspin == 2)
@@ -245,7 +245,7 @@ void compute_pot_uterm_and_energy(const UnitCell& cell,
                 std::complex<double>* pot_onsite_iat1 = &(uterm_mat[uterm_mat.size()/2 + uterm_mat_index[iat]]);
                 energy_u += compute_pot_onsite_scalar(
                     pot_onsite_iat1,
-                    occmat.mat(iat, target_l, 0, 1).c,
+                    occmat.mat(iat, target_l, 1).c,
                     u_value, diag_coeff, weight_eu, m_size);
             }
         }

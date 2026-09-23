@@ -932,6 +932,7 @@ OBJS_VDW=vdw.o\
 OBJS_DFTU=dftu_nao_fs_k.o\
       dftu_nao_for_r.o\
       dftu_nao_fs_r.o\
+      dftu_nao_fs_reduce.o\
       dftu_nao_str_r.o\
       dftu_nao_folding.o\
       dftu_nao_pots.o\

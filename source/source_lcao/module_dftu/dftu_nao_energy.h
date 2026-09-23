@@ -23,29 +23,27 @@ void cal_energy_correction(Plus_U_Base& dftu,
 
 /**
  * @brief Accumulate the DFT+U energy term (U_eff / 2) * (n - n^2) for one
- *        (T, iat, l, n=0) channel in the collinear case (nspin=1 or 2).
+ *        (T, iat, l) channel in the collinear case (nspin=1 or 2).
  *        Returns the per-atom contribution to energy_u.
  */
 double calc_energy_u_collinear(const Plus_U_Base& dftu,
                                int T,
                                int iat,
-                               int l,
-                               int n);
+                               int l);
 
 /**
- * @brief Accumulate the DFT+U energy term for one (T, iat, l, n=0) channel
+ * @brief Accumulate the DFT+U energy term for one (T, iat, l) channel
  *        in the noncollinear case (nspin=4). Returns the per-atom
  *        contribution to energy_u.
  */
 double calc_energy_u_noncollinear(const Plus_U_Base& dftu,
                                  int T,
                                  int iat,
-                                 int l,
-                                 int n);
+                                 int l);
 
 /**
  * @brief Accumulate the double-counting correction energy_dc for one
- *        (T, iat, l, n=0) channel:
+ *        (T, iat, l) channel:
  *        E_dc = sum_{m1,ipol1,m2,ipol2} onsite_pot(m1,ipol1;m2,ipol2) * occ(m2,ipol2;m1,ipol1)
  *        Returns the per-atom contribution to energy_dc.
  */
@@ -53,7 +51,6 @@ double calc_energy_dc_block(const Plus_U_Base& dftu,
                             int T,
                             int iat,
                             int l,
-                            int n,
                             int nspin);
 
 } // namespace DFTU_LCAO
