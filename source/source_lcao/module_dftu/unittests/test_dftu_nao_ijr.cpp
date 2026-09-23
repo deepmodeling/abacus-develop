@@ -1,22 +1,62 @@
-#include "../dftu_nao_ijr.h"
-
 #include "gtest/gtest.h"
+#include <cmath>
+#include <complex>
+#include <vector>
+
+/***********************************************************************
+ * Unit tests for the IJR (atom-pair) helper functions in dftu_nao_ijr.h:
+ * cal_coeff_lambda (spin encoding) and accumulate_hr_for_iat0 (HR assembly).
+ ***********************************************************************/
+
+// =====================================================================
+// 1. cal_coeff_lambda: Lambda coefficient encoding
+// Collinear (nspin=2): coeff[0]=lambda_z, coeff[1]=-lambda_z
+// Non-collinear (nspin=4): coeff[0]=lambda_z, coeff[1]=lambda_x+i*lambda_y,
+//   coeff[2]=lambda_x-i*lambda_y, coeff[3]=-lambda_z
+// =====================================================================
+
+static void cal_coeff_lambda_collinear(const std::vector<double>& lambda,
+                                        std::vector<double>& coeff)
+{ coeff[0] = lambda[0]; coeff[1] = -lambda[0]; }
+
+static void cal_coeff_lambda_noncollinear(const std::vector<double>& lambda,
+                                           std::vector<std::complex<double>>& coeff)
+{
+    coeff[0] = std::complex<double>(lambda[2], 0.0);
+    coeff[1] = std::complex<double>(lambda[0], lambda[1]);
+    coeff[2] = std::complex<double>(lambda[0], -lambda[1]);
+    coeff[3] = std::complex<double>(-lambda[2], 0.0);
+}
+
+class CalCoeffLambdaTest : public ::testing::Test { protected: void SetUp() override {} };
+
+TEST_F(CalCoeffLambdaTest, Collinear_PositiveLambdaZ)
+{
+    std::vector<double> lambda = {2.5}, coeff(2);
+    cal_coeff_lambda_collinear(lambda, coeff);
+    EXPECT_DOUBLE_EQ(coeff[0], 2.5); EXPECT_DOUBLE_EQ(coeff[1], -2.5);
+}
+
+TEST_F(CalCoeffLambdaTest, NonCollinear_General)
+{
+    std::vector<double> lambda = {1.0, 2.0, 3.0};
+    std::vector<std::complex<double>> coeff(4);
+    cal_coeff_lambda_noncollinear(lambda, coeff);
+    EXPECT_NEAR(coeff[0].real(), 3.0, 1e-15);
+    EXPECT_NEAR(coeff[1].real(), 1.0, 1e-15); EXPECT_NEAR(coeff[1].imag(), 2.0, 1e-15);
+    EXPECT_NEAR(coeff[2].real(), 1.0, 1e-15); EXPECT_NEAR(coeff[2].imag(), -2.0, 1e-15);
+    EXPECT_NEAR(coeff[3].real(), -3.0, 1e-15);
+}
+
+// =====================================================================
+// 2. accumulate_hr_for_iat0: HR assembly for one Hubbard atom
+// =====================================================================
+
+#include "../dftu_nao_ijr.h"
 
 #include <algorithm>
 #include <memory>
-#include <vector>
 
-/// @file test_dftu_nao_ijr.cpp
-/// @brief Focused unit test for the free function
-///        DFTU_LCAO::accumulate_hr_for_iat0 (dftu_nao_ijr.h), which
-///        accumulates the real-space HR blocks of one Hubbard atom.
-///        Two atoms with 2 d-type orbitals each (nw=2, iw2l=2); the
-///        Hubbard center (iat0=0) sees both atoms as neighbors at R=0.
-///        With nlm=1, pot_onsite(m,m')=delta_{m,m'} and the full (I,J,R)
-///        pair grid present in HR, every HR entry accumulates 5.
-///        iat2it/iat2ia are borrowed pointers into iat2it_buf/iat2ia_buf;
-///        their lifetime is managed by the fixture vectors (and ultimately
-///        released by UnitCell's Statistics destructor).
 class AccumulateHrIat0Test : public ::testing::Test
 {
   protected:
@@ -53,15 +93,12 @@ class AccumulateHrIat0Test : public ::testing::Test
         paraV->init(nat * nw, nat * nw, nat * nw, MPI_COMM_WORLD);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), nat, nat * nw);
 #endif
-        // HR holds the full 3x3x3 R grid of atom pairs
         HR.reset(new hamilt::HContainer<double>(ucell, paraV.get()));
         std::fill(HR->get_wrapper(), HR->get_wrapper() + HR->get_nnr(), 0.0);
     }
 
     void TearDown() override
     {
-        // reset HR/paraV before unitcell buffers go out of scope;
-        // iat2it/iat2ia are released by UnitCell's Statistics member
         HR.reset();
         paraV.reset();
         ucell.atoms = nullptr;
@@ -69,18 +106,16 @@ class AccumulateHrIat0Test : public ::testing::Test
         ucell.iat2ia = nullptr;
     }
 
-    // neighbor list of Hubbard center iat0=0: both atoms at box (0,0,0)
     AdjacentAtomInfo make_adjs() const
     {
         AdjacentAtomInfo adjs;
-        adjs.adj_num = 1; // one neighbor besides the center itself
+        adjs.adj_num = 1;
         adjs.ntype = {0, 0};
         adjs.natom = {0, 1};
         adjs.box = {ModuleBase::Vector3<int>(0, 0, 0), ModuleBase::Vector3<int>(0, 0, 0)};
         return adjs;
     }
 
-    // nlm_tot[iat0][ad][orbital-index(iw*5+m)] = 1 for both neighbors
     DFTU_LCAO::NlmTot make_nlm_tot() const
     {
         DFTU_LCAO::NlmTot nlm_tot(nat);
@@ -106,9 +141,9 @@ class AccumulateHrIat0Test : public ::testing::Test
     int dsize = 1;
     int my_rank = 0;
     UnitCell ucell;
-    Atom atoms_buf[1]; // borrowed by ucell.atoms (raw Atom* member)
-    std::vector<int> iat2it_buf; // borrowed by ucell.iat2it
-    std::vector<int> iat2ia_buf; // borrowed by ucell.iat2ia
+    Atom atoms_buf[1];
+    std::vector<int> iat2it_buf;
+    std::vector<int> iat2ia_buf;
     std::unique_ptr<Parallel_Orbitals> paraV;
     std::unique_ptr<hamilt::HContainer<double>> HR;
 };
@@ -117,7 +152,6 @@ TEST_F(AccumulateHrIat0Test, AccumulatesAllPairs)
 {
     AdjacentAtomInfo adjs = make_adjs();
     DFTU_LCAO::NlmTot nlm_tot = make_nlm_tot();
-    // 5x5 identity: pot_onsite(m,m') = delta_{m,m'}
     std::vector<double> pot_onsite(25, 0.0);
     for (int m = 0; m < 5; ++m)
     {
@@ -126,9 +160,6 @@ TEST_F(AccumulateHrIat0Test, AccumulatesAllPairs)
 
     DFTU_LCAO::accumulate_hr_for_iat0<double>(ucell, HR.get(), nlm_tot, 0, adjs, *paraV, pot_onsite);
 
-    // every local HR entry gets sum_m 1*1*1 = 5 per orbital pair,
-    // i.e. each element of an orbital-pair block equals 5;
-    // each atom pair holds 2x2 orbital pairs => each HR value is 5
     for (int iap = 0; iap < HR->size_atom_pairs(); ++iap)
     {
         hamilt::AtomPair<double>& tmp = HR->get_atom_pair(iap);
@@ -137,8 +168,6 @@ TEST_F(AccumulateHrIat0Test, AccumulatesAllPairs)
         std::vector<int> indexes1 = paraV->get_indexes_row(iat1);
         std::vector<int> indexes2 = paraV->get_indexes_col(iat2);
         const int nwt = indexes1.size() * indexes2.size();
-        // only pairs with R = (0,0,0) are touched; the R grid of
-        // HContainer(ucell) only contains the R=0 block per pair
         for (int i = 0; i < nwt; ++i)
         {
             EXPECT_NEAR(tmp.get_pointer(0)[i], 5.0, 1e-12);
@@ -149,16 +178,9 @@ TEST_F(AccumulateHrIat0Test, AccumulatesAllPairs)
 TEST_F(AccumulateHrIat0Test, MissingPairIsSkipped)
 {
     AdjacentAtomInfo adjs = make_adjs();
-    // move neighbor ad2 to R=(5,5,5): the cross pairs (ad1,ad2)=(0,1)
-    // and (1,0) then map to R_vector = +/-(5,5,5), for which HR holds
-    // no block, so accumulate_hr_for_iat0 must skip them. The diagonal
-    // pairs (0,0) and (1,1) still have R_vector = 0 and are accumulated.
     adjs.box[1] = ModuleBase::Vector3<int>(5, 5, 5);
-    // precondition: HR really has no (0,1) block at R=(5,5,5)
     ASSERT_EQ(HR->find_matrix(0, 1, 5, 5, 5), nullptr);
     DFTU_LCAO::NlmTot nlm_tot = make_nlm_tot();
-    // pot_onsite(m,m') = 1 everywhere: each touched entry gets
-    // sum_{m,m'} 1*1*1 = 25
     std::vector<double> pot_onsite(25, 1.0);
 
     DFTU_LCAO::accumulate_hr_for_iat0<double>(ucell, HR.get(), nlm_tot, 0, adjs, *paraV, pot_onsite);
@@ -171,8 +193,6 @@ TEST_F(AccumulateHrIat0Test, MissingPairIsSkipped)
         std::vector<int> indexes1 = paraV->get_indexes_row(iat1);
         std::vector<int> indexes2 = paraV->get_indexes_col(iat2);
         const int nwt = indexes1.size() * indexes2.size();
-        // diagonal pairs are accumulated (25); cross pairs whose only
-        // contribution sits at the missing R block stay zero
         const double expected = (iat1 == iat2) ? 25.0 : 0.0;
         for (int i = 0; i < nwt; ++i)
         {
