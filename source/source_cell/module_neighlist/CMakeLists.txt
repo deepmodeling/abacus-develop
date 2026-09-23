@@ -1,9 +1,12 @@
 set(neighbor_search_sources
     bin_manager.cpp
-    domain_decomposition.cpp
     neighbor_search.cpp
     page_allocator.cpp
 )
+
+if(USE_CUDA AND ENABLE_GPU_NEIGHBOR_LIST)
+  list(APPEND neighbor_search_sources gpu_neighbor_list.cpp)
+endif()
 
 add_library(
     neighbor_search

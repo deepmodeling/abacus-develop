@@ -1,4 +1,4 @@
-#include "source_cell/module_neighlist/domain_decomposition.h"
+#include "source_cell/domain_decomposition.h"
 #include "gtest/gtest.h"
 #include "setcell.h"
 #include "source_esolver/esolver_lj.h"

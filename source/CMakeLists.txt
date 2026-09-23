@@ -640,6 +640,10 @@ if(USE_CUDA)
     source_pw/module_pwdft/kernels/cuda/mul_potential_op.cu
     source_pw/module_pwdft/kernels/cuda/vec_mul_vec_complex.cu
     source_pw/module_pwdft/kernels/cuda/exx_cal_energy_op.cu)
+  if(USE_CUDA AND ENABLE_GPU_NEIGHBOR_LIST)
+    list(APPEND device_srcs
+      source_cell/module_neighlist/gpu_neighbor_list.cu)
+  endif()
 endif()
 
 if(USE_ROCM)
@@ -716,6 +720,7 @@ target_link_libraries(
     io_input
     surchem
     neighbor_search
+    domain_decomposition
     neighbor
     md
     planewave

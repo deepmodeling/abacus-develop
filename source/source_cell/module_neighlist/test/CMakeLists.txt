@@ -12,7 +12,7 @@ AddTest(
   SOURCES
     neighbor_search_test.cpp
   ../neighbor_search.cpp
-  ../domain_decomposition.cpp
+  ../../domain_decomposition.cpp
   ../bin_manager.cpp
   ../page_allocator.cpp
 )
@@ -39,7 +39,7 @@ if(ENABLE_MPI)
     mdcell_migrate_mpi_test.cpp
     test_domain_decomposition.cpp
     ../../mdcell.cpp
-    ../domain_decomposition.cpp
+    ../../domain_decomposition.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp
     ../page_allocator.cpp
@@ -76,7 +76,7 @@ if(ENABLE_MPI)
     ../../mdcell_reader.cpp
     ../../mdcell.cpp
     ../../print_cell.cpp
-    ../domain_decomposition.cpp
+    ../../domain_decomposition.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp
     ../page_allocator.cpp
