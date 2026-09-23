@@ -77,6 +77,8 @@ class Charge_Extra
      * @param ofs_running the output stream
      * @param ofs_warning the output stream
      * @param atomic_rho_cfg configuration for atomic_rho (nelec, magnetism, verbosity)
+     * @param has_float_data whether the Hamiltonian carries float data; forwarded
+     *        to Structure_Factor::setup() when the structure factor is refreshed
      */
     void extrapolate_charge(
         Parallel_Grid* Pgrid,
@@ -86,7 +88,8 @@ class Charge_Extra
         Structure_Factor* sf,
         std::ofstream& ofs_running,
         std::ofstream& ofs_warning,
-        const AtomicRhoCfg& atomic_rho_cfg);
+        const AtomicRhoCfg& atomic_rho_cfg,
+        const bool has_float_data);
 
     /**
      * @brief update displacements
@@ -112,6 +115,55 @@ class Charge_Extra
                           const ModulePW::PW_Basis& rhopw,
                           const Structure_Factor* sf,
                           const AtomicRhoCfg& atomic_rho_cfg);
+
+    //==========================================================
+    // Accessors over the extrapolation state. The history buffers and the
+    // step bookkeeping are driven by Init_CE()/extrapolate_charge(); these
+    // expose them for inspection and for seeding a known state, which is
+    // what lets callers exercise one extrapolation order at a time.
+    //==========================================================
+
+    /// @brief the current step
+    int get_istep() const { return istep; }
+    void set_istep(const int istep_in) { istep = istep_in; }
+
+    /// @brief the specified charge extrapolation method
+    int get_pot_order() const { return pot_order; }
+    void set_pot_order(const int pot_order_in) { pot_order = pot_order_in; }
+
+    /// @brief the extrapolation order actually used this step, which
+    ///        extrapolate_charge() derives from pot_order and istep
+    int get_rho_extr() const { return rho_extr; }
+
+    /// @brief the number of spins
+    int get_nspin() const { return nspin; }
+
+    /// @brief displacement histories: dis_old2 = pos_old1 - pos_old2,
+    ///        dis_old1 = pos_now - pos_old1, dis_now = pos_next - pos_now
+    std::vector<ModuleBase::Vector3<double>>& get_dis_old1() { return dis_old1; }
+    std::vector<ModuleBase::Vector3<double>>& get_dis_old2() { return dis_old2; }
+    std::vector<ModuleBase::Vector3<double>>& get_dis_now() { return dis_now; }
+
+    /// @brief the last three steps' difference of rho and atomic_rho
+    std::vector<std::vector<double>>& get_delta_rho1() { return delta_rho1; }
+    std::vector<std::vector<double>>& get_delta_rho2() { return delta_rho2; }
+    std::vector<std::vector<double>>& get_delta_rho3() { return delta_rho3; }
+
+    /// @brief parameter used in the second order extrapolation
+    double get_alpha() const { return alpha; }
+
+    /// @brief coefficient for the third delta_rho contribution
+    double get_beta() const { return beta; }
+
+    /// @brief run find_alpha_and_beta() against the displacement histories
+    ///        currently held, so its solution can be checked on its own
+    ///        rather than only through a full extrapolate_charge() step
+    void find_alpha_and_beta_for_testing(const int& natom,
+                                         std::ofstream& ofs_running,
+                                         std::ofstream& ofs_warning)
+    {
+        find_alpha_and_beta(natom, ofs_running, ofs_warning);
+    }
 
   private:
     int istep = 0; ///< the current step

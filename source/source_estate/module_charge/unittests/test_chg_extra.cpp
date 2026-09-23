@@ -1,14 +1,10 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#define protected public
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/module_charge/chg_atomic.h"
 #include "source_estate/module_charge/chg_extra.h"
 #include "prepare_unitcell.h"
 #include "source_base/module_fft/fft_bundle.h"
-#undef private
-#undef protected
 // mock functions for UnitCell
 
 Magnetism::Magnetism()
@@ -88,7 +84,7 @@ Structure_Factor::Structure_Factor()
 Structure_Factor::~Structure_Factor()
 {
 }
-void Structure_Factor::setup(const UnitCell*, const Parallel_Grid&, const ModulePW::PW_Basis*)
+void Structure_Factor::setup(const UnitCell*, const Parallel_Grid&, const ModulePW::PW_Basis*, const bool)
 {
 }
 
@@ -117,10 +113,13 @@ class ChargeExtraTest : public ::testing::Test
     Parallel_Grid* pgrid = nullptr;
     Charge charge;
     Structure_Factor sf;
+    /// Init_CE() takes the spin count and the extrapolation method as
+    /// arguments, so the fixture owns them instead of staging them in the
+    /// global parameter singleton.
+    int nspin = 1;
+    std::string chg_extrap;
     void SetUp() override
     {
-        PARAM.input.nspin = 1;
-        PARAM.sys.global_out_dir = "./support/";
         ucell = utp.SetUcellInfo();
         ucell->omega = 1.0;
     }
@@ -131,9 +130,9 @@ class ChargeExtraTest : public ::testing::Test
 
 TEST_F(ChargeExtraTest, InitCEWarningQuit)
 {
-    PARAM.input.chg_extrap = "wwww";
+    chg_extrap ="wwww";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap),
+    EXPECT_EXIT(CE.Init_CE(nspin, ucell->nat, charge.rhopw->nrxx, chg_extrap),
                 ::testing::ExitedWithCode(1),
                 "");
     std::string output = testing::internal::GetCapturedStdout();
@@ -142,47 +141,47 @@ TEST_F(ChargeExtraTest, InitCEWarningQuit)
 
 TEST_F(ChargeExtraTest, InitCECase1)
 {
-    PARAM.input.chg_extrap = "none";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    EXPECT_EQ(CE.pot_order, 0);
+    chg_extrap ="none";
+    CE.Init_CE(nspin, ucell->nat, charge.rhopw->nrxx, chg_extrap);
+    EXPECT_EQ(CE.get_pot_order(), 0);
 }
 
 TEST_F(ChargeExtraTest, InitCECase2)
 {
-    PARAM.input.chg_extrap = "atomic";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    EXPECT_EQ(CE.pot_order, 1);
+    chg_extrap ="atomic";
+    CE.Init_CE(nspin, ucell->nat, charge.rhopw->nrxx, chg_extrap);
+    EXPECT_EQ(CE.get_pot_order(), 1);
 }
 
 TEST_F(ChargeExtraTest, InitCECase3)
 {
-    PARAM.input.chg_extrap = "first-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    EXPECT_EQ(CE.pot_order, 2);
-    EXPECT_NE(CE.delta_rho1.size(), 0);
-    EXPECT_NE(CE.delta_rho2.size(), 0);
+    chg_extrap ="first-order";
+    CE.Init_CE(nspin, ucell->nat, charge.rhopw->nrxx, chg_extrap);
+    EXPECT_EQ(CE.get_pot_order(), 2);
+    EXPECT_NE(CE.get_delta_rho1().size(), 0);
+    EXPECT_NE(CE.get_delta_rho2().size(), 0);
 }
 
 TEST_F(ChargeExtraTest, InitCECase4)
 {
-    PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    EXPECT_EQ(CE.pot_order, 3);
-    EXPECT_DOUBLE_EQ(CE.alpha, 1.0);
-    EXPECT_DOUBLE_EQ(CE.beta, 0.0);
-    EXPECT_NE(CE.delta_rho1.size(), 0);
-    EXPECT_NE(CE.delta_rho2.size(), 0);
-    EXPECT_EQ(CE.dis_old1.size(), static_cast<size_t>(ucell->nat));
-    EXPECT_EQ(CE.dis_old2.size(), static_cast<size_t>(ucell->nat));
-    EXPECT_EQ(CE.dis_now.size(), static_cast<size_t>(ucell->nat));
+    chg_extrap ="second-order";
+    CE.Init_CE(nspin, ucell->nat, charge.rhopw->nrxx, chg_extrap);
+    EXPECT_EQ(CE.get_pot_order(), 3);
+    EXPECT_DOUBLE_EQ(CE.get_alpha(), 1.0);
+    EXPECT_DOUBLE_EQ(CE.get_beta(), 0.0);
+    EXPECT_NE(CE.get_delta_rho1().size(), 0);
+    EXPECT_NE(CE.get_delta_rho2().size(), 0);
+    EXPECT_EQ(CE.get_dis_old1().size(), static_cast<size_t>(ucell->nat));
+    EXPECT_EQ(CE.get_dis_old2().size(), static_cast<size_t>(ucell->nat));
+    EXPECT_EQ(CE.get_dis_now().size(), static_cast<size_t>(ucell->nat));
 }
 
 TEST_F(ChargeExtraTest, ExtrapolateChargeCase1)
 {
-    PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    CE.istep = 0;
-    CE.pot_order = 3;
+    chg_extrap ="second-order";
+    CE.Init_CE(nspin, ucell->nat, charge.rhopw->nrxx, chg_extrap);
+    CE.set_istep(0);
+    CE.set_pot_order(3);
 
     GlobalV::ofs_running.open("log");
     const module_charge::AtomicRhoCfg atomic_rho_cfg_test{
@@ -191,7 +190,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase1)
         PARAM.globalv.domag,
         PARAM.globalv.domag_z,
         GlobalV::ofs_warning};
-    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, *charge.rhopw, &sf, GlobalV::ofs_running, GlobalV::ofs_warning, atomic_rho_cfg_test);
+    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, *charge.rhopw, &sf, GlobalV::ofs_running, GlobalV::ofs_warning, atomic_rho_cfg_test, false);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -202,15 +201,15 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase1)
     std::remove("log");
 
     EXPECT_EQ(output, expected_output);
-    EXPECT_EQ(CE.rho_extr, 0);
+    EXPECT_EQ(CE.get_rho_extr(), 0);
 }
 
 TEST_F(ChargeExtraTest, ExtrapolateChargeCase2)
 {
-    PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    CE.istep = 1;
-    CE.pot_order = 3;
+    chg_extrap ="second-order";
+    CE.Init_CE(nspin, ucell->nat, charge.rhopw->nrxx, chg_extrap);
+    CE.set_istep(1);
+    CE.set_pot_order(3);
 
     GlobalV::ofs_running.open("log");
     const module_charge::AtomicRhoCfg atomic_rho_cfg_test{
@@ -219,7 +218,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase2)
         PARAM.globalv.domag,
         PARAM.globalv.domag_z,
         GlobalV::ofs_warning};
-    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, *charge.rhopw, &sf, GlobalV::ofs_running, GlobalV::ofs_warning, atomic_rho_cfg_test);
+    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, *charge.rhopw, &sf, GlobalV::ofs_running, GlobalV::ofs_warning, atomic_rho_cfg_test, false);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -230,15 +229,15 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase2)
     std::remove("log");
 
     EXPECT_EQ(output, expected_output);
-    EXPECT_EQ(CE.rho_extr, 1);
+    EXPECT_EQ(CE.get_rho_extr(), 1);
 }
 
 TEST_F(ChargeExtraTest, ExtrapolateChargeCase3)
 {
-    PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    CE.istep = 2;
-    CE.pot_order = 3;
+    chg_extrap ="second-order";
+    CE.Init_CE(nspin, ucell->nat, charge.rhopw->nrxx, chg_extrap);
+    CE.set_istep(2);
+    CE.set_pot_order(3);
 
     GlobalV::ofs_running.open("log");
     const module_charge::AtomicRhoCfg atomic_rho_cfg_test{
@@ -247,7 +246,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase3)
         PARAM.globalv.domag,
         PARAM.globalv.domag_z,
         GlobalV::ofs_warning};
-    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, *charge.rhopw, &sf, GlobalV::ofs_running, GlobalV::ofs_warning, atomic_rho_cfg_test);
+    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, *charge.rhopw, &sf, GlobalV::ofs_running, GlobalV::ofs_warning, atomic_rho_cfg_test, false);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -258,14 +257,14 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase3)
     std::remove("log");
 
     EXPECT_EQ(output, expected_output);
-    EXPECT_EQ(CE.rho_extr, 2);
+    EXPECT_EQ(CE.get_rho_extr(), 2);
 }
 
 TEST_F(ChargeExtraTest, ExtrapolateChargeCase4)
 {
-    PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    CE.istep = 3;
+    chg_extrap ="second-order";
+    CE.Init_CE(nspin, ucell->nat, charge.rhopw->nrxx, chg_extrap);
+    CE.set_istep(3);
 
     GlobalV::ofs_running.open("log");
     const module_charge::AtomicRhoCfg atomic_rho_cfg_test{
@@ -274,7 +273,7 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase4)
         PARAM.globalv.domag,
         PARAM.globalv.domag_z,
         GlobalV::ofs_warning};
-    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, *charge.rhopw, &sf, GlobalV::ofs_running, GlobalV::ofs_warning, atomic_rho_cfg_test);
+    CE.extrapolate_charge(pgrid, *ucell.get(), &charge, *charge.rhopw, &sf, GlobalV::ofs_running, GlobalV::ofs_warning, atomic_rho_cfg_test, false);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -285,48 +284,48 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase4)
     std::remove("log");
 
     EXPECT_EQ(output, expected_output);
-    EXPECT_EQ(CE.rho_extr, 3);
+    EXPECT_EQ(CE.get_rho_extr(), 3);
     std::remove("./support/OLD2_SPIN1_CHG.cube");
 }
 
 TEST_F(ChargeExtraTest, UpdateAllDis)
 {
-    PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    CE.istep = 3;
+    chg_extrap ="second-order";
+    CE.Init_CE(nspin, ucell->nat, charge.rhopw->nrxx, chg_extrap);
+    CE.set_istep(3);
     for (int i = 0; i < ucell->nat; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
-            CE.dis_old1[i][j] = i;
-            CE.dis_now[i][j] = j;
+            CE.get_dis_old1()[i][j] = i;
+            CE.get_dis_now()[i][j] = j;
         }
     }
 
     CE.update_all_dis(*ucell.get());
 
-    EXPECT_EQ(CE.istep, 4);
-    EXPECT_DOUBLE_EQ(CE.dis_old2[0][2], 0.0);
-    EXPECT_DOUBLE_EQ(CE.dis_old1[0][2], 2.0);
-    EXPECT_DOUBLE_EQ(CE.dis_now[0][2], 0.0);
+    EXPECT_EQ(CE.get_istep(), 4);
+    EXPECT_DOUBLE_EQ(CE.get_dis_old2()[0][2], 0.0);
+    EXPECT_DOUBLE_EQ(CE.get_dis_old1()[0][2], 2.0);
+    EXPECT_DOUBLE_EQ(CE.get_dis_now()[0][2], 0.0);
 }
 
 TEST_F(ChargeExtraTest, FindAlphaAndBeta)
 {
-    PARAM.input.chg_extrap = "second-order";
-    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
-    CE.istep = 3;
+    chg_extrap ="second-order";
+    CE.Init_CE(nspin, ucell->nat, charge.rhopw->nrxx, chg_extrap);
+    CE.set_istep(3);
     for (int i = 0; i < ucell->nat; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
-            CE.dis_old1[i][j] = i;
-            CE.dis_now[i][j] = j;
+            CE.get_dis_old1()[i][j] = i;
+            CE.get_dis_now()[i][j] = j;
         }
     }
 
-    CE.find_alpha_and_beta(ucell->nat, GlobalV::ofs_running, GlobalV::ofs_warning);
+    CE.find_alpha_and_beta_for_testing(ucell->nat, GlobalV::ofs_running, GlobalV::ofs_warning);
 
-    EXPECT_DOUBLE_EQ(CE.alpha, 1.0);
-    EXPECT_DOUBLE_EQ(CE.beta, 0.0);
+    EXPECT_DOUBLE_EQ(CE.get_alpha(), 1.0);
+    EXPECT_DOUBLE_EQ(CE.get_beta(), 0.0);
 }
