@@ -1,8 +1,10 @@
 # LibRPA exports with SOC and magnetic symmetry
 
 The LCAO RI exporter writes the ABACUS states and auxiliary-basis data needed
-by a compatible LibRPA reader. For SOC, the consumer must support spinor
-wavefunctions and the optional `spin_symmetry` block described below.
+by a compatible LibRPA reader. The reader constructs orbital and k-space
+rotation matrices from the spatial operations, lattice, atomic coordinates,
+and basis-shell conventions; no `symrot_*` sidecar files are part of this
+interface.
 Enabling an export does not certify symmetry equivalence of a downstream
 RPA/GW calculation.
 
@@ -30,7 +32,7 @@ configuration, possibly combined with time reversal. For an on/off comparison,
 use a common converged density and keep the structure, basis, k mesh and
 numerical thresholds fixed.
 
-## Magnetic operation block in `stru_out`
+## Common symmetry operation block in `stru_out`
 
 The existing physical lattice/position units and spatial `row` convention
 are retained. After the atom records, symmetry-enabled output contains:
@@ -38,21 +40,14 @@ are retained. After the atom records, symmetry-enabled output contains:
 ```text
 N row
 <9 integer rotation entries and 3 fractional translations, repeated N times>
-spin_symmetry GREY 2
-<one antiunitary flag per operation>
 ```
 
-For a nonmagnetic SOC system, `GREY=1`; the spatial operations are exported
-once, all with flag `0`, and the consumer generates their time-reversed
-partners. For a magnetic SOC system, `GREY=0`; the unitary operations come
-first with flag `0`, followed by the spatial parts of antiunitary operations
-with flag `1`. The total `N` includes both blocks.
-
-The spin-action source `2` tells the compatible consumer to derive spin
-rotations from the spatial axial-vector rotation. Explicit SU(2) matrix
-entries are therefore not written. The trailer is only added for `nspin=4`
-when the symmetry operation table is exported; ordinary scalar exports retain
-their existing layout.
+The same spatial-operation format is used for scalar space groups and for the
+spatial part of a magnetic group. For `nspin=4`, `stru_out` intentionally does
+not append a spin-action or antiunitary flag trailer. A consumer that needs
+spinor magnetic-group acceleration must obtain and interpret that metadata
+through an explicitly compatible interface; the common `stru_out` format does
+not claim that capability.
 
 ## Optional auxiliary-overlap diagnostic
 
