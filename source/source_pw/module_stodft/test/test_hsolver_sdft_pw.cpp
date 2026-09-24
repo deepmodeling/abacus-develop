@@ -2,12 +2,12 @@
 #include <iostream>
 #include <vector>
 
-#include "hsolver_pw_sup.h"
-#include "hsolver_supplementary_mock.h"
+#include "source_hsolver/test/hsolver_pw_sup.h"
+#include "source_hsolver/test/hsolver_supplementary_mock.h"
 #include "source_base/parallel_comm.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_hsolver/hsolver_pw.h"
-#include "source_hsolver/hsolver_pw_sdft.h"
+#include "source_pw/module_stodft/hsolver_sdft_pw.h"
 
 // mock for module_sdft
 template <typename REAL>
@@ -230,7 +230,7 @@ namespace ModulePW {
         const double factor) const;
 }
 /************************************************
- *  unit test of HSolverPW_SDFT class
+ *  unit test of HSolverSdftPW class
  ***********************************************/
 
 /**
@@ -239,13 +239,13 @@ namespace ModulePW {
  *      - with psi;
  *      - without psi;
  *      - skip charge;
- *  - 2. hsolver::HSolverPW_SDFT::diagethr (for cases below)
+ *  - 2. hsolver::HSolverSdftPW::diagethr (for cases below)
  * 		- set_diagethr, for setting diagethr;
  */
-class TestHSolverPW_SDFT : public ::testing::Test
+class TestHSolverSdftPW : public ::testing::Test
 {
   public:
-    TestHSolverPW_SDFT() : elecstate_test(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
+    TestHSolverSdftPW() : elecstate_test(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
     {
         stoche.nche = 8;
         stoche.method_sto = 1;
@@ -255,8 +255,8 @@ class TestHSolverPW_SDFT : public ::testing::Test
     K_Vectors kv;
     StoChe<double> stoche;
     hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr;
-    hsolver::HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU> hs_d
-        = hsolver::HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU>(
+    hsolver::HSolverSdftPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
+        = hsolver::HSolverSdftPW<std::complex<double>, base_device::DEVICE_CPU>(
             &kv,
             &pwbk,
             stowf,
@@ -292,7 +292,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
     std::ofstream temp_ofs;
 };
 
-// TEST_F(TestHSolverPW_SDFT, solve)
+// TEST_F(TestHSolverSdftPW, solve)
 // {
 //     // initial memory and data
 //     elecstate_test.ekb.create(1, 2);
@@ -328,7 +328,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
 //     std::cout<<__FILE__<<__LINE__<<" "<<elecstate_test.f_en.eband<<std::endl;*/
 // }
 
-// TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
+// TEST_F(TestHSolverSdftPW, solve_noband_skipcharge)
 // {
 //     // initial memory and data
 //     elecstate_test.ekb.create(1, 2);

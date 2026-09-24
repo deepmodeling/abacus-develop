@@ -1,39 +1,39 @@
-#ifndef HSOLVERPW_SDFT_H
-#define HSOLVERPW_SDFT_H
-#include "hsolver_pw.h"
+#ifndef HSOLVER_SDFT_PW_H
+#define HSOLVER_SDFT_PW_H
+#include "source_hsolver/hsolver_pw.h"
 #include "source_pw/module_stodft/hamilt_sdft_pw.h"
 #include "source_pw/module_stodft/sto_iter.h"
 namespace hsolver
 {
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class HSolverPW_SDFT : public HSolverPW<T, Device>
+class HSolverSdftPW : public HSolverPW<T, Device>
 {
   protected:
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    HSolverPW_SDFT(K_Vectors* pkv,
-                   ModulePW::PW_Basis_K* wfc_basis_in,
-                   Stochastic_WF<T, Device>& stowf,
-                   StoChe<Real, Device>& stoche,
-                   hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto,
-                   const std::string calculation_type_in,
-                   const std::string basis_type_in,
-                   const std::string method_in,
-                   const bool use_uspp_in,
-                   const int nspin_in,
-                   const int scf_iter_in,
-                   const int diag_iter_max_in,
-                   const double diag_thr_in,
-                   const bool need_subspace_in,
-                   const int nbands_in,
-                   const bool diago_smooth_ethr_in,
-                   const int pw_diag_ndim_in,
-                   const int diag_subspace_in,
-                   const int nb2d_in,
-                   const bool ks_run_in,
-                   const bool all_ks_run_in,
-                   const int bndpar_in)
+    HSolverSdftPW(K_Vectors* pkv,
+                  ModulePW::PW_Basis_K* wfc_basis_in,
+                  Stochastic_WF<T, Device>& stowf,
+                  StoChe<Real, Device>& stoche,
+                  hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto,
+                  const std::string calculation_type_in,
+                  const std::string basis_type_in,
+                  const std::string method_in,
+                  const bool use_uspp_in,
+                  const int nspin_in,
+                  const int scf_iter_in,
+                  const int diag_iter_max_in,
+                  const double diag_thr_in,
+                  const bool need_subspace_in,
+                  const int nbands_in,
+                  const bool diago_smooth_ethr_in,
+                  const int pw_diag_ndim_in,
+                  const int diag_subspace_in,
+                  const int nb2d_in,
+                  const bool ks_run_in,
+                  const bool all_ks_run_in,
+                  const int bndpar_in)
         : HSolverPW<T, Device>(wfc_basis_in,
                                calculation_type_in,
                                basis_type_in,

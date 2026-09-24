@@ -7,6 +7,7 @@
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_pw/module_stodft/hsolver_sdft_pw.h"
 #include "source_pw/module_stodft/sto_dos.h"
 #include "source_pw/module_stodft/sto_elecond.h"
 #include "source_pw/module_stodft/sto_forces.h"
@@ -153,30 +154,30 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
     bool skip_charge = this->inp_->calculation == "nscf" ? true : false;
 
     // hsolver only exists in this function
-    hsolver::HSolverPW_SDFT<T, Device> hsolver_pw_sdft_obj(&this->kv,
-                                                           this->pw_wfc,
-                                                           this->stowf,
-                                                           this->stoche,
-                                                           this->p_hamilt_sto,
-                                                           this->inp_->calculation,
-                                                           this->inp_->basis_type,
-                                                           this->inp_->ks_solver,
-                                                           PARAM.globalv.use_uspp,
-                                                           this->inp_->nspin,
-                                                           hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-                                                           hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                                                           hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                                           hsolver::DiagoIterAssist<T, Device>::need_subspace,
-                                                           this->inp_->nbands,
-                                                           this->inp_->diago_smooth_ethr,
-                                                           this->inp_->pw_diag_ndim,
-                                                           this->inp_->diag_subspace,
-                                                           this->inp_->nb2d,
-                                                           PARAM.globalv.ks_run,
-                                                           PARAM.globalv.all_ks_run,
-                                                           this->inp_->bndpar);
+    hsolver::HSolverSdftPW<T, Device> hsolver_sdft_pw_obj(&this->kv,
+                                                          this->pw_wfc,
+                                                          this->stowf,
+                                                          this->stoche,
+                                                          this->p_hamilt_sto,
+                                                          this->inp_->calculation,
+                                                          this->inp_->basis_type,
+                                                          this->inp_->ks_solver,
+                                                          PARAM.globalv.use_uspp,
+                                                          this->inp_->nspin,
+                                                          hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                                                          hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                                          hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                                          hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                                                          this->inp_->nbands,
+                                                          this->inp_->diago_smooth_ethr,
+                                                          this->inp_->pw_diag_ndim,
+                                                          this->inp_->diag_subspace,
+                                                          this->inp_->nb2d,
+                                                          PARAM.globalv.ks_run,
+                                                          PARAM.globalv.all_ks_run,
+                                                          this->inp_->bndpar);
 
-    hsolver_pw_sdft_obj.solve(ucell,
+    hsolver_sdft_pw_obj.solve(ucell,
                               static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt),
                               *this->stp.template get_psi_t<T, Device>(),
                               this->stp.psi_cpu[0],
@@ -189,7 +190,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
                               skip_charge);
 
     // set_diagethr need it
-    this->esolver_KS_ne = hsolver_pw_sdft_obj.stoiter.KS_ne;
+    this->esolver_KS_ne = hsolver_sdft_pw_obj.stoiter.KS_ne;
 
     if (PARAM.globalv.ks_run)
     {

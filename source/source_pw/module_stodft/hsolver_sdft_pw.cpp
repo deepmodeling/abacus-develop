@@ -1,4 +1,4 @@
-#include "hsolver_pw_sdft.h"
+#include "hsolver_sdft_pw.h"
 
 #include "source_base/global_function.h"
 #include "source_base/parallel_comm.h"
@@ -14,7 +14,7 @@
 namespace hsolver
 {
 template <typename T, typename Device>
-void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
+void HSolverSdftPW<T, Device>::solve(const UnitCell& ucell,
                                       hamilt::Hamilt<T, Device>* pHamilt,
                                       psi::Psi<T, Device>& psi,
                                       psi::Psi<T>& psi_cpu,
@@ -26,8 +26,8 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
                                       std::ostream& log,
                                       const bool skip_charge)
 {
-    ModuleBase::TITLE("HSolverPW_SDFT", "solve");
-    ModuleBase::timer::start("HSolverPW_SDFT", "solve");
+    ModuleBase::TITLE("HSolverSdftPW", "solve");
+    ModuleBase::timer::start("HSolverSdftPW", "solve");
 
     // This override never calls HSolverPW::solve, which is where the base class
     // normally establishes the pool communication context. Set it up here so that
@@ -59,7 +59,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     // part of KSDFT to get KS orbitals
     for (int ik = 0; ik < nks; ++ik)
     {
-        ModuleBase::timer::start("HSolverPW_SDFT", "solve_KS");
+        ModuleBase::timer::start("HSolverSdftPW", "solve_KS");
         op.update_k(ik);
         if (nbands > 0 && this->ks_run)
         {
@@ -79,7 +79,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
             MPI_Bcast(&pes->ekb(ik, 0), nbands, MPI_DOUBLE, 0, BP_WORLD);
         }
 #endif
-        ModuleBase::timer::end("HSolverPW_SDFT", "solve_KS");
+        ModuleBase::timer::end("HSolverSdftPW", "solve_KS");
         stoiter.orthog(ik, psi, stowf);
         stoiter.checkemm(ik, istep, iter, stowf); // check and reset emax & emin
     }
@@ -116,7 +116,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     // for nscf, skip charge
     if (skip_charge)
     {
-        ModuleBase::timer::end("HSolverPW_SDFT", "solve");
+        ModuleBase::timer::end("HSolverSdftPW", "solve");
         return;
     }
 
@@ -131,14 +131,14 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     stoiter.cal_storho(ucell, stowf, pes_pw,wfc_basis);
 
     // will do rho symmetry and energy calculation in esolver
-    ModuleBase::timer::end("HSolverPW_SDFT", "solve");
+    ModuleBase::timer::end("HSolverSdftPW", "solve");
     return;
 }
 
-// template class HSolverPW_SDFT<std::complex<float>, base_device::DEVICE_CPU>;
-template class HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU>;
+// template class HSolverSdftPW<std::complex<float>, base_device::DEVICE_CPU>;
+template class HSolverSdftPW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-// template class HSolverPW_SDFT<std::complex<float>, base_device::DEVICE_GPU>;
-template class HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_GPU>;
+// template class HSolverSdftPW<std::complex<float>, base_device::DEVICE_GPU>;
+template class HSolverSdftPW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 } // namespace hsolver

@@ -7,7 +7,6 @@ list(APPEND objects
     para_lin_tf.cpp
     hsolver_pw.cpp
     hsolver_lcaopw.cpp
-    hsolver_pw_sdft.cpp
     diago_iter_assist.cpp
     hsolver.cpp
     diago_pxxxgvx.cpp

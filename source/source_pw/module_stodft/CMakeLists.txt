@@ -1,5 +1,6 @@
 list(APPEND hamilt_stodft_srcs
     hamilt_sdft_pw.cpp
+    hsolver_sdft_pw.cpp
     sto_iter.cpp
     sto_che.cpp
     sto_wf.cpp
