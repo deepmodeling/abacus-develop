@@ -136,9 +136,8 @@ TEST(SolForce, ConvertsPointIonPccForceFromHartreeToRydberg)
     ModuleBase::matrix force(2, 3);
     solvent.cal_force_sol(cell, &basis, unused_vloc, 1, force);
 
-    ModuleSccs::PccParameters pcc;
-    pcc.cube_length = length;
-    const ModuleBase::Vector3<double> origin(5.0, 5.0, 5.0);
+    ModuleSccs::PccGeometry geometry
+        = ModuleSccs::pcc_geometry(lattice, length, 1.0e-10);
     for (int atom = 0; atom < 2; ++atom)
     {
         ModuleSccs::PointCharge point;
@@ -147,8 +146,7 @@ TEST(SolForce, ConvertsPointIonPccForceFromHartreeToRydberg)
         const ModuleBase::Vector3<double> expected_hartree
             = ModuleSccs::pcc_point_charge_force(solvent.sccs_result().point_solute_moments,
                                                  point,
-                                                 origin,
-                                                 pcc);
+                                                 geometry);
         EXPECT_NEAR(force(atom, 0), 2.0 * expected_hartree.x, 1.0e-14);
         EXPECT_NEAR(force(atom, 1), 2.0 * expected_hartree.y, 1.0e-14);
         EXPECT_NEAR(force(atom, 2), 2.0 * expected_hartree.z, 1.0e-14);

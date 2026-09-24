@@ -33,7 +33,9 @@ ModuleSccs::SccsResult evaluate_uniform_charge(const double net_charge,
     const std::vector<double> ionic_density(basis.nrxx, ionic_charge / volume);
     const std::vector<ModuleBase::Vector3<double>> positions
         = ModuleSccs::pw_grid_positions(basis, lattice, length);
-    const ModuleBase::Vector3<double> origin = ModuleSccs::cell_center(lattice, length);
+    const ModuleSccs::PccGeometry pcc
+        = ModuleSccs::pcc_geometry(lattice, length, 1.0e-10);
+    const ModuleBase::Vector3<double> origin = pcc.origin;
 
     ModuleSccs::SccsConfig config;
     config.cavity.density_min = 1.0e-2;
@@ -45,8 +47,6 @@ ModuleSccs::SccsResult evaluate_uniform_charge(const double net_charge,
     config.mixing = 0.7;
     config.tolerance_rms = 1.0e-14;
     config.tolerance_max = 1.0e-14;
-    ModuleSccs::PccParameters pcc;
-    pcc.cube_length = length;
     const ModuleSccs::Pcc2dGeometry pcc_2d_geometry;
     const ModuleSccs::SerialChargeReduction charge_reduction;
     const ModuleSccs::SerialPolarizationReduction polarization_reduction;
@@ -110,7 +110,7 @@ TEST(SccsDriver, EvaluatesNeutralAndFixedChargePcc2dSources)
     config.mixing = 0.7;
     config.tolerance_rms = 1.0e-13;
     config.tolerance_max = 1.0e-13;
-    const ModuleSccs::PccParameters pcc;
+    const ModuleSccs::PccGeometry pcc;
     const ModuleSccs::SerialChargeReduction charge_reduction;
     const ModuleSccs::SerialPolarizationReduction polarization_reduction;
     ModuleSccs::SccsState state;

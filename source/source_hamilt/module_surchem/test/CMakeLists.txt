@@ -61,6 +61,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_HAMILT_surchem_sccs_pcc
+  LIBS base device
   SOURCES test_sccs_pcc.cpp ../sccs_pcc.cpp
 )
 

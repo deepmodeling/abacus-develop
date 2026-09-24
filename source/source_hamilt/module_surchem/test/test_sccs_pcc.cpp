@@ -1,6 +1,7 @@
 #include "../sccs_pcc.h"
 
 #include "source_base/constants.h"
+#include "source_base/matrix3.h"
 #include "gtest/gtest.h"
 
 #include <cmath>
@@ -25,6 +26,97 @@ TEST(SccsPcc, AccumulatesPointChargeMomentsAboutTheRequestedOrigin)
     EXPECT_DOUBLE_EQ(moments.dipole.y, -3.0);
     EXPECT_DOUBLE_EQ(moments.dipole.z, 0.0);
     EXPECT_DOUBLE_EQ(moments.quadrupole_trace, 2.0);
+}
+
+TEST(SccsPcc, BuildsGeometryForRotatedCubicCell)
+{
+    const ModuleBase::Matrix3 lattice(0.0, 1.0, 0.0,
+                                      -1.0, 0.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    const ModuleSccs::PccGeometry geometry
+        = ModuleSccs::pcc_geometry(lattice, 10.0, 1.0e-10);
+    EXPECT_DOUBLE_EQ(geometry.parameters.cube_length, 10.0);
+    EXPECT_DOUBLE_EQ(geometry.origin.x, -5.0);
+    EXPECT_DOUBLE_EQ(geometry.origin.y, 5.0);
+    EXPECT_DOUBLE_EQ(geometry.origin.z, 5.0);
+
+    const ModuleBase::Vector3<double> position(
+        geometry.origin.x + 6.0 * geometry.axis_a.x,
+        geometry.origin.y + 6.0 * geometry.axis_a.y,
+        geometry.origin.z + 6.0 * geometry.axis_a.z);
+    const ModuleBase::Vector3<double> relative
+        = ModuleSccs::pcc_relative_position(position, geometry);
+    EXPECT_NEAR(relative.x, -4.0 * geometry.axis_a.x, 1.0e-14);
+    EXPECT_NEAR(relative.y, -4.0 * geometry.axis_a.y, 1.0e-14);
+    EXPECT_NEAR(relative.z, -4.0 * geometry.axis_a.z, 1.0e-14);
+}
+
+TEST(SccsPcc, SystemCenterUnwrapsAtomsAcrossPeriodicBoundaries)
+{
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    const ModuleSccs::PccGeometry geometry
+        = ModuleSccs::pcc_geometry(lattice, 10.0, 1.0e-10);
+    const std::vector<ModuleBase::Vector3<double>> positions{
+        ModuleBase::Vector3<double>(9.8, 9.7, 9.6),
+        ModuleBase::Vector3<double>(0.2, 0.3, 0.4)};
+    const std::vector<double> masses{1.0, 1.0};
+    const ModuleBase::Vector3<double> center
+        = ModuleSccs::pcc_system_center(positions, masses, geometry);
+    EXPECT_NEAR(center.x, 0.0, 1.0e-14);
+    EXPECT_NEAR(center.y, 0.0, 1.0e-14);
+    EXPECT_NEAR(center.z, 0.0, 1.0e-14);
+}
+
+TEST(SccsPcc, SystemCenterMakesWrappedRigidTranslationInvariant)
+{
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    ModuleSccs::PccGeometry first_geometry
+        = ModuleSccs::pcc_geometry(lattice, 10.0, 1.0e-10);
+    std::vector<ModuleSccs::PointCharge> first(2);
+    first[0].charge = 1.2;
+    first[0].position = ModuleBase::Vector3<double>(9.8, 9.6, 0.1);
+    first[1].charge = -0.3;
+    first[1].position = ModuleBase::Vector3<double>(0.3, 0.4, 9.7);
+    const std::vector<double> masses{2.0, 1.0};
+    const std::vector<ModuleBase::Vector3<double>> first_positions{
+        first[0].position, first[1].position};
+    first_geometry.origin
+        = ModuleSccs::pcc_system_center(first_positions, masses, first_geometry);
+
+    std::vector<ModuleSccs::PointCharge> shifted = first;
+    for (std::size_t index = 0; index < shifted.size(); ++index)
+    {
+        shifted[index].position.x = std::fmod(shifted[index].position.x + 1.4, 10.0);
+        shifted[index].position.y = std::fmod(shifted[index].position.y + 1.4, 10.0);
+        shifted[index].position.z = std::fmod(shifted[index].position.z + 1.4, 10.0);
+    }
+    ModuleSccs::PccGeometry shifted_geometry
+        = ModuleSccs::pcc_geometry(lattice, 10.0, 1.0e-10);
+    const std::vector<ModuleBase::Vector3<double>> shifted_positions{
+        shifted[0].position, shifted[1].position};
+    shifted_geometry.origin
+        = ModuleSccs::pcc_system_center(shifted_positions, masses, shifted_geometry);
+
+    const ModuleSccs::MultipoleMoments first_moments
+        = ModuleSccs::point_charge_moments(first, first_geometry);
+    const ModuleSccs::MultipoleMoments shifted_moments
+        = ModuleSccs::point_charge_moments(shifted, shifted_geometry);
+    EXPECT_NEAR(first_moments.charge, shifted_moments.charge, 1.0e-14);
+    EXPECT_NEAR(first_moments.dipole.x, shifted_moments.dipole.x, 1.0e-14);
+    EXPECT_NEAR(first_moments.dipole.y, shifted_moments.dipole.y, 1.0e-14);
+    EXPECT_NEAR(first_moments.dipole.z, shifted_moments.dipole.z, 1.0e-14);
+    EXPECT_NEAR(first_moments.quadrupole_trace,
+                shifted_moments.quadrupole_trace,
+                1.0e-14);
+    EXPECT_NEAR(ModuleSccs::pcc_self_energy(first_moments,
+                                            first_geometry.parameters),
+                ModuleSccs::pcc_self_energy(shifted_moments,
+                                            shifted_geometry.parameters),
+                1.0e-14);
 }
 
 TEST(SccsPcc, PotentialGradientMatchesCentralDifferences)
@@ -177,18 +269,21 @@ TEST(SccsPcc, PointIonVacuumEnergyDerivativeMatchesElectronPotential)
 
 TEST(SccsPcc, PointChargeForceMatchesSelfEnergyFiniteDifference)
 {
-    const ModuleBase::Vector3<double> origin(0.0, 0.0, 0.0);
     std::vector<ModuleSccs::PointCharge> charges(2);
     charges[0].charge = 1.2;
     charges[0].position = ModuleBase::Vector3<double>(0.7, -0.4, 0.2);
     charges[1].charge = -0.3;
     charges[1].position = ModuleBase::Vector3<double>(-0.6, 0.5, 0.9);
-    ModuleSccs::PccParameters parameters;
-    parameters.cube_length = 17.0;
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    ModuleSccs::PccGeometry geometry
+        = ModuleSccs::pcc_geometry(lattice, 17.0, 1.0e-10);
+    geometry.origin = ModuleBase::Vector3<double>();
     const ModuleSccs::MultipoleMoments moments
-        = ModuleSccs::point_charge_moments(charges, origin);
+        = ModuleSccs::point_charge_moments(charges, geometry);
     const ModuleBase::Vector3<double> analytic
-        = ModuleSccs::pcc_point_charge_force(moments, charges[0], origin, parameters);
+        = ModuleSccs::pcc_point_charge_force(moments, charges[0], geometry);
     const double step = 1.0e-5;
 
     for (int direction = 0; direction < 3; ++direction)
@@ -198,11 +293,13 @@ TEST(SccsPcc, PointChargeForceMatchesSelfEnergyFiniteDifference)
         plus[0].position[direction] += step;
         minus[0].position[direction] -= step;
         const double energy_plus
-            = ModuleSccs::pcc_self_energy(ModuleSccs::point_charge_moments(plus, origin),
-                                           parameters);
+            = ModuleSccs::pcc_self_energy(
+                ModuleSccs::point_charge_moments(plus, geometry),
+                geometry.parameters);
         const double energy_minus
-            = ModuleSccs::pcc_self_energy(ModuleSccs::point_charge_moments(minus, origin),
-                                           parameters);
+            = ModuleSccs::pcc_self_energy(
+                ModuleSccs::point_charge_moments(minus, geometry),
+                geometry.parameters);
         const double finite_force = -(energy_plus - energy_minus) / (2.0 * step);
         EXPECT_NEAR(analytic[direction], finite_force, 1.0e-11);
     }

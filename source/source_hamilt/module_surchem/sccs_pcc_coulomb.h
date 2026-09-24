@@ -14,6 +14,13 @@ class PW_Basis;
 namespace ModuleSccs
 {
 
+MultipoleMoments reduced_pcc_density_moments(
+    const std::vector<double>& density,
+    const std::vector<ModuleBase::Vector3<double>>& positions,
+    double volume_element,
+    const PccGeometry& geometry,
+    const ChargeReduction& reduction);
+
 class PccCoulombOperator : public CoulombOperator
 {
   public:
@@ -21,8 +28,7 @@ class PccCoulombOperator : public CoulombOperator
                        double tpiba,
                        const std::vector<ModuleBase::Vector3<double>>& positions,
                        double volume_element,
-                       const ModuleBase::Vector3<double>& origin,
-                       const PccParameters& parameters,
+                       const PccGeometry& geometry,
                        const ChargeReduction& reduction);
 
     void apply(const std::vector<double>& charge, ElectrostaticField& field) const override;
@@ -30,9 +36,9 @@ class PccCoulombOperator : public CoulombOperator
   private:
     PeriodicCoulombOperator periodic_;
     const std::vector<ModuleBase::Vector3<double>>& positions_;
+    std::vector<ModuleBase::Vector3<double>> relative_positions_;
     double volume_element_ = 0.0;
-    ModuleBase::Vector3<double> origin_;
-    PccParameters parameters_;
+    PccGeometry geometry_;
     const ChargeReduction& reduction_;
 };
 

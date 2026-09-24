@@ -33,7 +33,7 @@ struct SccsState
     double tpiba = 0.0;
     double volume_element = 0.0;
     ModuleBase::Vector3<double> origin;
-    PccParameters pcc_parameters;
+    PccGeometry pcc_geometry;
     Pcc2dGeometry pcc_2d_geometry;
     CavityParameters cavity;
     bool valid = false;
@@ -71,7 +71,7 @@ SccsResult evaluate_pw_sccs(
     const std::vector<ModuleBase::Vector3<double>>& positions,
     const ModuleBase::Vector3<double>& origin,
     const SccsConfig& config,
-    const PccParameters& pcc_parameters,
+    const PccGeometry& pcc_geometry,
     const Pcc2dGeometry& pcc_2d_geometry,
     const ModulePW::PW_Basis& basis,
     double tpiba,

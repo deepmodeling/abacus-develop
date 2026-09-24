@@ -29,7 +29,7 @@ bool same_cavity(const CavityParameters& left, const CavityParameters& right)
            && left.epsilon_bulk == right.epsilon_bulk;
 }
 
-bool same_origin(const ModuleBase::Vector3<double>& left,
+bool same_vector(const ModuleBase::Vector3<double>& left,
                  const ModuleBase::Vector3<double>& right)
 {
     return left.x == right.x && left.y == right.y && left.z == right.z;
@@ -61,7 +61,7 @@ std::uint64_t grid_position_signature(
 
 bool same_state_signature(const SccsState& state,
                           const Boundary boundary,
-                          const PccParameters& pcc_parameters,
+                          const PccGeometry& pcc_geometry,
                           const Pcc2dGeometry& pcc_2d_geometry,
                           const CavityParameters& cavity,
                           const ModulePW::PW_Basis& basis,
@@ -78,9 +78,15 @@ bool same_state_signature(const SccsState& state,
            && state.local_plane_start == basis.startz_current
            && state.grid_position_signature == position_signature
            && state.tpiba == tpiba && state.volume_element == volume_element
-           && same_origin(state.origin, origin)
-           && state.pcc_parameters.cube_length == pcc_parameters.cube_length
-           && state.pcc_parameters.madelung == pcc_parameters.madelung
+           && same_vector(state.origin, origin)
+           && state.pcc_geometry.parameters.cube_length
+                  == pcc_geometry.parameters.cube_length
+           && state.pcc_geometry.parameters.madelung
+                  == pcc_geometry.parameters.madelung
+           && same_vector(state.pcc_geometry.origin, pcc_geometry.origin)
+           && same_vector(state.pcc_geometry.axis_a, pcc_geometry.axis_a)
+           && same_vector(state.pcc_geometry.axis_b, pcc_geometry.axis_b)
+           && same_vector(state.pcc_geometry.axis_c, pcc_geometry.axis_c)
            && state.pcc_2d_geometry.parameters.periodic_area
                   == pcc_2d_geometry.parameters.periodic_area
            && state.pcc_2d_geometry.parameters.cell_length_y
@@ -92,7 +98,7 @@ bool same_state_signature(const SccsState& state,
 
 std::vector<double> initial_polarization(const SccsState& state,
                                          const Boundary boundary,
-                                         const PccParameters& pcc_parameters,
+                                         const PccGeometry& pcc_geometry,
                                          const Pcc2dGeometry& pcc_2d_geometry,
                                          const CavityParameters& cavity,
                                          const ModulePW::PW_Basis& basis,
@@ -103,7 +109,7 @@ std::vector<double> initial_polarization(const SccsState& state,
 {
     if (!same_state_signature(state,
                               boundary,
-                              pcc_parameters,
+                              pcc_geometry,
                               pcc_2d_geometry,
                               cavity,
                               basis,
@@ -154,7 +160,7 @@ void SccsState::reset()
     tpiba = 0.0;
     volume_element = 0.0;
     origin = ModuleBase::Vector3<double>();
-    pcc_parameters = PccParameters();
+    pcc_geometry = PccGeometry();
     pcc_2d_geometry = Pcc2dGeometry();
     cavity = CavityParameters();
     valid = false;
@@ -169,7 +175,7 @@ SccsResult evaluate_pw_sccs(
     const std::vector<ModuleBase::Vector3<double>>& positions,
     const ModuleBase::Vector3<double>& origin,
     const SccsConfig& config,
-    const PccParameters& pcc_parameters,
+    const PccGeometry& pcc_geometry,
     const Pcc2dGeometry& pcc_2d_geometry,
     const ModulePW::PW_Basis& basis,
     const double tpiba,
@@ -195,13 +201,12 @@ SccsResult evaluate_pw_sccs(
     std::unique_ptr<CoulombOperator> coulomb;
     if (config.boundary == Boundary::Pcc0d)
     {
-        validate_pcc_parameters(pcc_parameters);
+        validate_pcc_geometry(pcc_geometry);
         coulomb.reset(new PccCoulombOperator(basis,
                                              tpiba,
                                              positions,
                                              volume_element,
-                                             origin,
-                                             pcc_parameters,
+                                             pcc_geometry,
                                              charge_reduction));
     }
     else if (config.boundary == Boundary::Pcc2d)
@@ -232,7 +237,7 @@ SccsResult evaluate_pw_sccs(
     const std::uint64_t position_signature = grid_position_signature(positions);
     const std::vector<double> initial = initial_polarization(state,
                                                              config.boundary,
-                                                             pcc_parameters,
+                                                             pcc_geometry,
                                                              pcc_2d_geometry,
                                                              config.cavity,
                                                              basis,
@@ -282,22 +287,41 @@ SccsResult evaluate_pw_sccs(
               + result.non_electrostatic.density_potential[index];
     }
 
-    result.solute_moments = reduced_density_moments(result.charge.solute,
-                                                    positions,
-                                                    volume_element,
-                                                    origin,
-                                                    charge_reduction);
-    result.polarization_moments
-        = reduced_density_moments(result.response.polarization.polarization_charge,
-                                  positions,
-                                  volume_element,
-                                  origin,
-                                  charge_reduction);
+    if (config.boundary == Boundary::Pcc0d)
+    {
+        result.solute_moments
+            = reduced_pcc_density_moments(result.charge.solute,
+                                          positions,
+                                          volume_element,
+                                          pcc_geometry,
+                                          charge_reduction);
+        result.polarization_moments
+            = reduced_pcc_density_moments(
+                result.response.polarization.polarization_charge,
+                positions,
+                volume_element,
+                pcc_geometry,
+                charge_reduction);
+    }
+    else
+    {
+        result.solute_moments = reduced_density_moments(result.charge.solute,
+                                                        positions,
+                                                        volume_element,
+                                                        origin,
+                                                        charge_reduction);
+        result.polarization_moments
+            = reduced_density_moments(result.response.polarization.polarization_charge,
+                                      positions,
+                                      volume_element,
+                                      origin,
+                                      charge_reduction);
+    }
     result.screened_moments = add_moments(result.solute_moments, result.polarization_moments);
     if (config.boundary == Boundary::Pcc0d)
     {
         result.smooth_vacuum_pcc_energy
-            = pcc_self_energy(result.solute_moments, pcc_parameters);
+            = pcc_self_energy(result.solute_moments, pcc_geometry.parameters);
     }
     else if (config.boundary == Boundary::Pcc2d)
     {
@@ -355,7 +379,7 @@ SccsResult evaluate_pw_sccs(
     state.tpiba = tpiba;
     state.volume_element = volume_element;
     state.origin = origin;
-    state.pcc_parameters = pcc_parameters;
+    state.pcc_geometry = pcc_geometry;
     state.pcc_2d_geometry = pcc_2d_geometry;
     state.cavity = config.cavity;
     state.valid = true;

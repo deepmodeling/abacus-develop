@@ -34,15 +34,15 @@ TEST(SccsPccCoulomb, ChargedUniformDielectricScreensPccPotential)
 
     const double volume_element = volume / static_cast<double>(basis.nxyz);
     const std::vector<ModuleBase::Vector3<double>> positions(basis.nrxx);
-    ModuleSccs::PccParameters pcc;
-    pcc.cube_length = cube_length;
+    ModuleSccs::PccGeometry geometry
+        = ModuleSccs::pcc_geometry(lattice, cube_length, 1.0e-10);
+    geometry.origin = ModuleBase::Vector3<double>();
     const ModuleSccs::SerialChargeReduction charge_reduction;
     const ModuleSccs::PccCoulombOperator coulomb(basis,
                                                  ModuleBase::TWO_PI / cube_length,
                                                  positions,
                                                  volume_element,
-                                                 ModuleBase::Vector3<double>(),
-                                                 pcc,
+                                                 geometry,
                                                  charge_reduction);
 
     const double solute_charge_value = 1.0;
@@ -65,7 +65,8 @@ TEST(SccsPccCoulomb, ChargedUniformDielectricScreensPccPotential)
 
     ASSERT_EQ(result.status, ModuleSccs::PolarizationStatus::Converged);
     const double screened_charge = solute_charge_value / 5.0;
-    const double expected_potential = pcc.madelung * screened_charge / cube_length;
+    const double expected_potential
+        = geometry.parameters.madelung * screened_charge / cube_length;
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         EXPECT_NEAR(result.polarization_charge[ir], -0.8 / volume, 1.0e-14);

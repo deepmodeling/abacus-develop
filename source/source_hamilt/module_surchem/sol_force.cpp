@@ -267,11 +267,7 @@ void surchem::cal_force_sccs(const UnitCell& cell,
         return;
     }
 
-    ModuleSccs::PccParameters parameters;
-    parameters.cube_length
-        = ModuleSccs::validate_cubic_cell(cell.latvec, cell.lat0, 1.0e-10);
-    const ModuleBase::Vector3<double> origin
-        = ModuleSccs::cell_center(cell.latvec, cell.lat0);
+    const ModuleSccs::PccGeometry& geometry = this->sccs_state_.pcc_geometry;
     int atom_index = 0;
     for (int atom_type = 0; atom_type < cell.ntype; ++atom_type)
     {
@@ -283,8 +279,7 @@ void surchem::cal_force_sccs(const UnitCell& cell,
             const ModuleBase::Vector3<double> force_hartree
                 = ModuleSccs::pcc_point_charge_force(this->sccs_result_.point_solute_moments,
                                                      point,
-                                                     origin,
-                                                     parameters);
+                                                     geometry);
             forcesol(atom_index, 0) += 2.0 * force_hartree.x;
             forcesol(atom_index, 1) += 2.0 * force_hartree.y;
             forcesol(atom_index, 2) += 2.0 * force_hartree.z;

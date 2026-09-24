@@ -4975,7 +4975,7 @@
 
 - **Type**: String
 - **Availability**: *[`imp_sol`](#imp_sol)==true and [`solvation_model`](#solvation_model)==sccs*
-- **Description**: Select periodic electrostatics, cubic zero-dimensional PCC (pcc_0d), or slab PCC (pcc_2d). The pcc_2d boundary fixes the open/vacuum direction to the second lattice vector (+y) and requires that vector to be perpendicular to the x-z periodic plane. Neutral and charged slabs are supported. For a charged slab, the open-boundary field energy grows linearly with the y cell length, so absolute total energies at different y cell lengths are not directly comparable. PCC includes the smooth-source solvent response plus the point-ion/electron vacuum correction in the host energy, electronic potential, and ionic forces.
+- **Description**: Select periodic electrostatics, cubic zero-dimensional PCC (pcc_0d), or slab PCC (pcc_2d). The pcc_0d boundary uses the mass-weighted ionic system center as the common multipole origin and minimum-image displacements along all three cubic lattice vectors. The pcc_2d boundary fixes the open/vacuum direction to the second lattice vector (+y) and requires that vector to be perpendicular to the x-z periodic plane. Neutral and charged slabs are supported. For a charged slab, the open-boundary field energy grows linearly with the y cell length, so absolute total energies at different y cell lengths are not directly comparable. PCC includes the smooth-source solvent response plus the point-ion/electron vacuum correction in the host energy, electronic potential, and ionic forces.
 - **Default**: periodic
 
 ### sccs_maxiter
