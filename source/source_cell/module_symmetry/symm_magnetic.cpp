@@ -1,8 +1,8 @@
 #include "symmetry.h"
 using namespace ModuleSymmetry;
 
-#include "symmetry_rotation_spin.h"
-#include "source_io/module_parameter/parameter.h"
+#include "symm_rot_spin.h"
+#include "source_base/global_variable.h"
 
 #include <set>
 #include <vector>
@@ -82,9 +82,9 @@ void Symmetry::analyze_magnetic_group_nspin4(const Atom* atoms, const Statistics
 {
     // Restrict the space group to the unitary magnetic subgroup (nspin=4 / SOC):
     // operation g survives if it preserves the magnetic configuration as a pseudovector,
-    // i.e. W(g) m_i = m_{g(i)} for every atom, with W(g) = spin_so3(gmatc).
-    // Operations that reverse the moment (only symmetries together with time reversal) are dropped,
-    // so they are no longer applied in k-reduction or density symmetrization.
+    // i.e. W(g) m_i = m_{g(i)} for every atom, with W(g) = spin_so3(gmatc). 
+    // Operations that reverse the moment (only symmetries together with time reversal) are dropped, 
+    // so they are no longer applied in k-reduction or density symmetrization. 
     // Non-magnetic (m_i=0) keeps every operation.
     const ModuleBase::Matrix3 ilatvec = latvec.Inverse();
     std::vector<int> keep;
@@ -92,7 +92,7 @@ void Symmetry::analyze_magnetic_group_nspin4(const Atom* atoms, const Statistics
     int nrot_new = 0;
 
     // Is the configuration actually magnetic? For m_i = 0 every operation both "preserves" and
-    // "reverses" the moment, so the antiunitary coset is meaningless there:
+    // "reverses" the moment, so the antiunitary coset is meaningless there: 
     // Theta (TRS) itself is a symmetry and the grey group is handled by the usual -k shortcut in the k-reduction).
     bool has_moment = false;
     for (int iat = 0; iat < this->nat && !has_moment; ++iat)
@@ -178,8 +178,8 @@ void Symmetry::analyze_magnetic_group_nspin4(const Atom* atoms, const Statistics
     this->nrotk = nrotk_new;
 
     // refresh the point-/space-group labels for the reduced (unitary magnetic) group
-    this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, GlobalV::ofs_running);
-    this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, GlobalV::ofs_running);
+    this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, GlobalV::ofs_running, nullptr);
+    this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, GlobalV::ofs_running, nullptr);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "MAGNETIC POINT GROUP (unitary, nspin=4)", this->pgname);
     // space-group-consistent name of the unitary magnetic group (from nrotk, matching "POINT GROUP IN
     // SPACE GROUP"); pgname above is the pure-point-group-block name, which under-detects for hexagonal
@@ -215,7 +215,7 @@ int Symmetry::density_sym_ops(std::vector<ModuleBase::Matrix3>& kgmat,
                               std::vector<double>& trs_inv) const
 {
     // The density must be symmetrized with the SAME group that was used to fold the k-points
-    // (see KVectorUtils::ibz_kpoint): otherwise the density accumulated over the IBZ is not
+    // (see K_Vectors::reduce_by_symmetry): otherwise the density accumulated over the IBZ is not
     // restored to the full BZ result. For nspin=4 with a non-zero moment that group is the
     // Shubnikov group H + Theta*A, so the antiunitary elements' spatial parts are appended here.
     // Theta leaves the charge invariant and reverses the magnetization, which is what `trs_inv`

@@ -5,6 +5,13 @@ abacus_disable_feature_definitions(__EXX)
 
 find_program(BASH bash)
 file(COPY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(bcast_atom_pseudo_test.sh ${CMAKE_CURRENT_BINARY_DIR}/bcast_atom_pseudo_test.sh COPYONLY)
+configure_file(bcast_atom_spec_test.sh ${CMAKE_CURRENT_BINARY_DIR}/bcast_atom_spec_test.sh COPYONLY)
+configure_file(parallel_kpoints_test.sh ${CMAKE_CURRENT_BINARY_DIR}/parallel_kpoints_test.sh COPYONLY)
+configure_file(klist_test_para.sh ${CMAKE_CURRENT_BINARY_DIR}/klist_test_para.sh COPYONLY)
+configure_file(unitcell_test_parallel.sh ${CMAKE_CURRENT_BINARY_DIR}/unitcell_test_parallel.sh COPYONLY)
+configure_file(bcast_read_sep_test.sh ${CMAKE_CURRENT_BINARY_DIR}/bcast_read_sep_test.sh COPYONLY)
+configure_file(bcast_sep_cell_test.sh ${CMAKE_CURRENT_BINARY_DIR}/bcast_sep_cell_test.sh COPYONLY)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES bcast_atom_pseudo_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES bcast_atom_spec_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -107,7 +114,7 @@ AddTest(
 )
 
 add_test(NAME MODULE_CELL_klist_test_para4
-      COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/klist_test_para.sh
+      COMMAND ${BASH} klist_test_para.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 

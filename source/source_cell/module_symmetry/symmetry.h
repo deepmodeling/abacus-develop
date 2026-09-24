@@ -86,7 +86,7 @@ public:
     ModuleBase::Matrix3 gmatrix[48];    ///< the rotation matrices for all space group operations
     ModuleBase::Matrix3 kgmatrix[48];    ///< the rotation matrices in reciprocal space
     ModuleBase::Vector3<double> gtrans[48];
-
+    
     /// (nspin=4, magnetic) Spatial parts of the ANTIUNITARY elements of the Shubnikov (magnetic) group:
     /// operations g that REVERSE the magnetization, so that g alone is not a symmetry but Theta*g is (Theta = time reversal).
     /// Since an operation either preserves or reverses a non-zero moment,
@@ -164,9 +164,16 @@ public:
 
     /// @brief Symmetrize the charge density, the forces, and the stress
 
+    /**
+     * @brief Symmetrize charge density in real space.
+     *
+     * @param rho charge density
+     * @param nr1 number of grid points in x direction
+     * @param nr2 number of grid points in y direction
+     * @param nr3 number of grid points in z direction
+     */
+    void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
 
-    /// symmetrize a vector3 with nat elements, which can be forces or variation of atom positions in relax
-    void symmetrize_vec3_nat(double* v)const;   // force
     /**
      * @brief Assemble the spatial operations used to symmetrize the density.
      *
@@ -185,63 +192,6 @@ public:
     int density_sym_ops(std::vector<ModuleBase::Matrix3>& kgmatrix_in,
             std::vector<ModuleBase::Vector3<double>>& gtrans_in,
             std::vector<double>& trs_inv) const;
-
-    /**
-     * @brief Symmetrize charge density in reciprocal space.
-     *
-     * @param rhogtot charge density in reciprocal space
-     * @param ixyz2ipw index mapping from real to reciprocal space
-     * @param nx grid dimension in x
-     * @param ny grid dimension in y
-     * @param nz grid dimension in z
-     * @param fftnx FFT grid dimension in x
-     * @param fftny FFT grid dimension in y
-     * @param fftnz FFT grid dimension in z
-     * @param gamma_only_pw whether to use gamma-only PW
-     * @param kgmatrix_in,gtrans_in,nop operation set; pass nullptr/nullptr/-1 for the nrotk
-     *        unitary members, or the density_sym_ops() list for the full Shubnikov group.
-     */
-    void rhog_symmetry(std::complex<double> *rhogtot, int* ixyz2ipw, const int &nx,
-            const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz,
-            const bool gamma_only_pw,
-            const ModuleBase::Matrix3* kgmatrix_in,
-            const ModuleBase::Vector3<double>* gtrans_in, const int nop);
-
-    /**
-     * @brief Symmetrize the nspin=4 (non-collinear/SOC) spin density in reciprocal space.
-     *
-     * The three Pauli spin components (rho^x, rho^y, rho^z) are processed TOGETHER because
-     * each symmetry operation g couples the spatial map with a spin rotation W(g):
-     *     m_sym(G) = (1/|G|) sum_g W(g) * m(g^{-1} G) * phase(g).
-     * The spatial bookkeeping (grouping/phase) is identical to rhog_symmetry; the only
-     * difference is that the per-g spin rotation W(g) is applied to the 3-vector.
-     *
-     * @param rhogtot_x x-component of the spin density in reciprocal space
-     * @param rhogtot_y y-component of the spin density in reciprocal space
-     * @param rhogtot_z z-component of the spin density in reciprocal space
-     * @param wspin precomputed spin-rotation matrices (size nrotk), with
-     *        wspin[s] = SpinRotation::spin_so3(direct_to_cartesian(gmatrix[s], latvec)),
-     *        such that m'^i = sum_j wspin[s]_{ij} m^j under symmetry operation s
-     * @param ixyz2ipw index mapping from real to reciprocal space
-     * @param nx grid dimension in x
-     * @param ny grid dimension in y
-     * @param nz grid dimension in z
-     * @param fftnx FFT grid dimension in x
-     * @param fftny FFT grid dimension in y
-     * @param fftnz FFT grid dimension in z
-     * @param trs_inv time-reversal sign per operation (+1 unitary, -1 antiunitary Theta*g), from
-     *        density_sym_ops(). Theta flips the magnetization, so the antiunitary elements
-     *        contribute  m -> -W(g) m  instead of  m -> W(g) m. nullptr means all +1.
-     * @param kgmatrix_in,gtrans_in,nop operation set; pass nullptr/nullptr/-1 for the nrotk
-     *        unitary members
-     */
-    void rhog_symmetry_nspin4(std::complex<double>* rhogtot_x, std::complex<double>* rhogtot_y,
-            std::complex<double>* rhogtot_z, const ModuleBase::Matrix3* wspin,
-            int* ixyz2ipw, const int &nx, const int &ny, const int &nz,
-            const int & fftnx, const int &fftny, const int &fftnz,
-            const double* trs_inv,
-            const ModuleBase::Matrix3* kgmatrix_in,
-            const ModuleBase::Vector3<double>* gtrans_in, const int nop);
 
     /**
      * @brief Symmetrize charge density in reciprocal space.

@@ -93,7 +93,12 @@ std::map<int, std::map<int, int>> UnitCell::get_lnchi_Counts() const {
 //==============================================================
 // Calculate various lattice related quantities for given latvec
 //==============================================================
-void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const int symmetry)
+void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, 
+		const int dfthalf_type, const std::string& pseudo_dir, const int nspin,
+    const std::string& basis_type, const std::string& orbital_dir, const std::string& init_wfc,
+    const double onsite_radius, const bool deepks_setorb, const bool rpa,
+    const bool fixed_atoms, const bool noncolin, const std::string& calculation, 
+    const std::string& esolver_type, const int symmetry)
 {
     ModuleBase::TITLE("UnitCell", "setup_cell");
 
@@ -169,7 +174,9 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const int s
             //==========================
             // call read_atom_positions
             //==========================
-            ok2 = unitcell::read_atom_positions(*this, ifa, log, GlobalV::ofs_warning, symmetry);
+            ok2 = unitcell::read_atom_positions(*this, ifa, log, GlobalV::ofs_warning, nspin,
+                basis_type, orbital_dir, init_wfc, onsite_radius, fixed_atoms, noncolin,
+                calculation, esolver_type, symmetry);
         }
     }
 #ifdef __MPI

@@ -15,7 +15,11 @@ add_library(
     symm_pricell.cpp
     symm_rho.cpp
     symmetry.cpp
-    symmetry_rotation_spin.cpp
+    symm_rot_spin.cpp
+    little_group.cpp
+    irreducible_sector.cpp
+    irred_sec_bvk.cpp
+    symm_rotation_k.cpp
 )
 
 if(ENABLE_COVERAGE)

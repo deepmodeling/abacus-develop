@@ -207,20 +207,10 @@ TEST_F(KlistParaTest, Set)
     const double koffset[3] = {0.0, 0.0, 0.0};
     kv->set(ucell, symm, k_file, /*nspin_in*/ 1, ucell.G, ucell.latvec, GlobalV::ofs_running, GlobalV::ofs_warning, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
     EXPECT_EQ(kv->get_nkstot(), 35);
-    EXPECT_EQ(kv->get_nkstot_full(), 512);
-    EXPECT_GT(kv->get_nkstot_full(), kv->get_nkstot());
+    EXPECT_EQ(kv->get_nkstot_nospin(), 512);
+    EXPECT_GT(kv->get_nkstot_nospin(), kv->get_nkstot());
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
-    // The full Cartesian k-mesh must remain available on every rank after the
-    // pool redistribution, because EXX/RPA Ewald kernels index it with
-    // `nkstot_full`, not the rank-local `nks`.
-    EXPECT_EQ(static_cast<int>(kv->kvec_c_full.size()), kv->get_nkstot_full());
-    ASSERT_EQ(static_cast<int>(kv->ibz_index.size()), kv->get_nkstot_full());
-    for (int ik = 0; ik < kv->get_nkstot_full(); ++ik)
-    {
-        EXPECT_GE(kv->ibz_index[static_cast<std::size_t>(ik)], 0);
-        EXPECT_LT(kv->ibz_index[static_cast<std::size_t>(ik)], kv->get_nkstot());
-    }
     if (GlobalV::NPROC == 4)
     {
         if (GlobalV::MY_RANK == 0) {

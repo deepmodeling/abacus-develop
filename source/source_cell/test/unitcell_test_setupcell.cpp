@@ -73,66 +73,78 @@ using UcellDeathTest = UcellTest;
 
 TEST_F(UcellTest,SetupCellS1)
 {
-	std::string fn = "./support/STRU_MgO";
-	std::ofstream ofs_running;
-	ofs_running.open("setup_cell.tmp");
-	PARAM.input.nspin = 1;
-	
-	ucell->setup_cell(fn,ofs_running, 0);
-	ofs_running.close();
-	remove("setup_cell.tmp");
+    std::string fn = "./support/STRU_MgO";
+    std::ofstream ofs_running;
+    ofs_running.open("setup_cell.tmp");
+    const int nspin = 1;
+    
+    ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type, 0);
+    ofs_running.close();
+    remove("setup_cell.tmp");
 }
 
 TEST_F(UcellTest,SetupCellS2)
 {
-	std::string fn = "./support/STRU_MgO";
-	std::ofstream ofs_running;
-	ofs_running.open("setup_cell.tmp");
-	PARAM.input.nspin = 2;
-	
-	ucell->setup_cell(fn,ofs_running, 0);
-	ofs_running.close();
-	remove("setup_cell.tmp");
+    std::string fn = "./support/STRU_MgO";
+    std::ofstream ofs_running;
+    ofs_running.open("setup_cell.tmp");
+    const int nspin = 2;
+    
+    ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type, 0);
+    ofs_running.close();
+    remove("setup_cell.tmp");
 }
 
 TEST_F(UcellTest,SetupCellS4)
 {
-	std::string fn = "./support/STRU_MgO";
-	std::ofstream ofs_running;
-	ofs_running.open("setup_cell.tmp");
-	PARAM.input.nspin = 4;
-	
-	ucell->setup_cell(fn,ofs_running, 0);
-	ofs_running.close();
-	remove("setup_cell.tmp");
+    std::string fn = "./support/STRU_MgO";
+    std::ofstream ofs_running;
+    ofs_running.open("setup_cell.tmp");
+    const int nspin = 4;
+    
+    ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type, 0);
+    ofs_running.close();
+    remove("setup_cell.tmp");
 }
 
 TEST_F(UcellDeathTest,SetupCellWarning1)
 {
-	std::string fn = "./STRU_MgO";
-	std::ofstream ofs_running;
-	ofs_running.open("setup_cell.tmp");
-	
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running, 0),::testing::ExitedWithCode(1),"");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("Can not find the file containing atom positions.!"));
-	ofs_running.close();
-	remove("setup_cell.tmp");
+    std::string fn = "./STRU_MgO";
+    std::ofstream ofs_running;
+    ofs_running.open("setup_cell.tmp");
+    
+    testing::internal::CaptureStdout();
+    const int nspin = 1;
+    EXPECT_EXIT(ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type, 0), ::testing::ExitedWithCode(1), "");
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output,testing::HasSubstr("Can not find the file containing atom positions.!"));
+    ofs_running.close();
+    remove("setup_cell.tmp");
 }
 
 TEST_F(UcellDeathTest,SetupCellWarning2)
 {
-	std::string fn = "./support/STRU_MgO_WarningC2";
-	std::ofstream ofs_running;
-	ofs_running.open("setup_cell.tmp");
-	
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running, 0),::testing::ExitedWithCode(1),"");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("Something wrong during read_atom_positions"));
-	ofs_running.close();
-	remove("setup_cell.tmp");
+    std::string fn = "./support/STRU_MgO_WarningC2";
+    std::ofstream ofs_running;
+    ofs_running.open("setup_cell.tmp");
+    
+    testing::internal::CaptureStdout();
+    const int nspin = 1;
+    EXPECT_EXIT(ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type, 0), ::testing::ExitedWithCode(1), "");
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output,testing::HasSubstr("Something wrong during read_atom_positions"));
+    ofs_running.close();
+    remove("setup_cell.tmp");
 }
 
 TEST_F(UcellTest,SetupCellAfterVC)
@@ -142,37 +154,38 @@ TEST_F(UcellTest,SetupCellAfterVC)
     ofs_running.open("setup_cell.tmp");
     const int nspin = 1;
 
-	
-	ucell->setup_cell(fn,ofs_running, 0);
-	ucell->lat0 = 1.0;
-	ucell->latvec.Zero();
-	ucell->latvec.e11 = 10.0;
-	ucell->latvec.e22 = 10.0;
-	ucell->latvec.e33 = 10.0;
-	for (int i =0;i<ucell->ntype;i++)
-	{
-		ucell->atoms[i].na = 1;
-		ucell->atoms[i].taud.resize(ucell->atoms[i].na);
-		ucell->atoms[i].tau.resize(ucell->atoms[i].na);
-		ucell->atoms[i].taud[0].x = 0.1;
-		ucell->atoms[i].taud[0].y = 0.1;
-		ucell->atoms[i].taud[0].z = 0.1;
-	}
-	
-	unitcell::setup_cell_after_vc(*ucell,ofs_running);
-	EXPECT_EQ(ucell->lat0_angstrom,0.529177);
-	EXPECT_EQ(ucell->tpiba,ModuleBase::TWO_PI);
-	EXPECT_EQ(ucell->tpiba2,ModuleBase::TWO_PI*ModuleBase::TWO_PI);
-	EXPECT_EQ(ucell->a1.x ,10.0);
-	EXPECT_EQ(ucell->a2.y ,10.0);
-	EXPECT_EQ(ucell->a3.z ,10.0);
-	EXPECT_EQ(ucell->omega,1000.0);
-	EXPECT_EQ(ucell->GT.e11,0.1);
-	EXPECT_EQ(ucell->GT.e22,0.1);
-	EXPECT_EQ(ucell->GT.e33,0.1);
-	EXPECT_EQ(ucell->G.e11,0.1);
-	EXPECT_EQ(ucell->G.e22,0.1);
-	EXPECT_EQ(ucell->G.e33,0.1);
+    ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type, 0);
+    ucell->lat0 = 1.0;
+    ucell->latvec.Zero();
+    ucell->latvec.e11 = 10.0;
+    ucell->latvec.e22 = 10.0;
+    ucell->latvec.e33 = 10.0;
+    for (int i =0;i<ucell->ntype;i++)
+    {
+        ucell->atoms[i].na = 1;
+        ucell->atoms[i].taud.resize(ucell->atoms[i].na);
+        ucell->atoms[i].tau.resize(ucell->atoms[i].na);
+        ucell->atoms[i].taud[0].x = 0.1;
+        ucell->atoms[i].taud[0].y = 0.1;
+        ucell->atoms[i].taud[0].z = 0.1;
+    }
+    
+    unitcell::setup_cell_after_vc(*ucell,ofs_running, nspin);
+    EXPECT_EQ(ucell->lat0_angstrom,0.529177);
+    EXPECT_EQ(ucell->tpiba,ModuleBase::TWO_PI);
+    EXPECT_EQ(ucell->tpiba2,ModuleBase::TWO_PI*ModuleBase::TWO_PI);
+    EXPECT_EQ(ucell->a1.x ,10.0);
+    EXPECT_EQ(ucell->a2.y ,10.0);
+    EXPECT_EQ(ucell->a3.z ,10.0);
+    EXPECT_EQ(ucell->omega,1000.0);
+    EXPECT_EQ(ucell->GT.e11,0.1);
+    EXPECT_EQ(ucell->GT.e22,0.1);
+    EXPECT_EQ(ucell->GT.e33,0.1);
+    EXPECT_EQ(ucell->G.e11,0.1);
+    EXPECT_EQ(ucell->G.e22,0.1);
+    EXPECT_EQ(ucell->G.e33,0.1);
 
     for (int it = 0; it < ucell->ntype; it++) {
         Atom* atom = &ucell->atoms[it];

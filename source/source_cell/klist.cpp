@@ -122,17 +122,6 @@ void K_Vectors::set(const UnitCell& ucell,
     // normalize k points weights according to nspin
     this->normalize_wk(deg);
 
-    // Symmetry reduction already populated the full-k -> IBZ map on rank 0.
-    // Non-reduced paths still need the identity map before MPI distribution.
-    if (this->ibz_index.size() != static_cast<std::size_t>(this->nkstot_full))
-    {
-        this->ibz_index.resize(this->nkstot_full);
-        for (int ik = 0; ik < this->nkstot_full; ++ik)
-        {
-            this->ibz_index[ik] = ik;
-        }
-    }
-
     // It's very important in parallel case,
     // firstly do the mpi_k() and then
     // do set_kup_and_kdw()
@@ -150,8 +139,20 @@ void K_Vectors::set(const UnitCell& ucell,
     // set the k vectors for the up and down spin
     this->set_kup_and_kdw(ofs);
 
-    // get ik2iktot
-    this->cal_ik_global();
+    // initialize ibz_index
+    this->ibz_index.resize(this->nkstot_nospin);
+    for (int ik = 0; ik < this->nkstot_nospin; ik++)
+    {
+        this->ibz_index[ik] = ik;
+    }
+    
+    // get ik2iktot: map local k indices to global indices in the pool
+    KListIO::build_ik2iktot(this->para_k.my_pool,
+                            this->para_k.startk_pool,
+                            this->spin_mult,
+                            this->nks,
+                            this->nkstot,
+                            this->ik2iktot);
 
     this->print_klists(ofs);
 
