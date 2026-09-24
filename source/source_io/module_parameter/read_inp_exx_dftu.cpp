@@ -2,8 +2,6 @@
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
-
-#include <cmath>
 namespace ModuleIO
 {
 void ReadInput::item_exx()
@@ -20,7 +18,6 @@ void ReadInput::item_exx()
         item.description = R"(Fraction of full-ranged Fock exchange $1/r$ in range-separated hybrid functionals.)";
         item.default_value = "see hybrid_func_params";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para)
         {
             para.input.exx_fock_alpha = item.str_values;
@@ -69,7 +66,6 @@ void ReadInput::item_exx()
         item.description = R"(Fraction of short-ranged Fock exchange $\mathrm{erfc}(\omega r)/r$ in range-separated hybrid functionals.)";
         item.default_value = "see hybrid_func_params";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para)
         {
             para.input.exx_erfc_alpha = item.str_values;
@@ -119,7 +115,6 @@ void ReadInput::item_exx()
         item.description = R"(Range-separation parameter $\omega$ in the short-ranged Fock term $\mathrm{erfc}(\omega r)/r$.)";
         item.default_value = "see hybrid_func_params";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para)
         {
             para.input.exx_erfc_omega = item.str_values;
@@ -175,7 +170,6 @@ void ReadInput::item_exx()
 * True: A two-step method is employed, i.e. in the inner iterations, density matrix is updated, while in the outer iterations, is calculated based on density matrix that converges in the inner iteration.)";
         item.default_value = "True";
         item.unit = "";
-        item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.esolver_type == "tddft" && para.input.exx_separate_loop)
             {
@@ -195,7 +189,7 @@ void ReadInput::item_exx()
         item.description = "The maximal iteration number of the outer-loop, where the Fock exchange is calculated";
         item.default_value = "100";
         item.unit = "";
-        item.availability = "exx_separate_loop==1";
+        item.set_availability("exx_separate_loop==1");
         read_sync_int(input.exx_hybrid_step);
         item.check_value = [](const Input_Item& item, const Parameter& para) 
         {
@@ -214,7 +208,7 @@ void ReadInput::item_exx()
         item.description = "Mixing parameter for densty matrix in each iteration of the outer-loop";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "exx_separate_loop==1";
+        item.set_availability("exx_separate_loop==1");
         read_sync_double(input.exx_mixing_beta);
         this->add_item(item);
     }
@@ -228,7 +222,7 @@ void ReadInput::item_exx()
         item.description = "It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method.";
         item.default_value = "0.3";
         item.unit = "";
-        item.availability = "basis_type==lcao_in_pw";
+        item.set_availability("basis_type==lcao_in_pw");
         item.read_value = [](const Input_Item& item, Parameter& para)
         {
             para.input.exx_fock_lambda = item.str_values;
@@ -251,7 +245,6 @@ void ReadInput::item_exx()
         item.description = "To accelerate the evaluation of four-center integrals (), the product of atomic orbitals are expanded in the basis of auxiliary basis functions (ABF): . The size of the ABF (i.e. number of ) is reduced using principal component analysis. When a large PCA threshold is used, the number of ABF will be reduced, hence the calculation becomes faster. However, this comes at the cost of computational accuracy. A relatively safe choice of the value is 1e-4.";
         item.default_value = "1E-4";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.exx_pca_threshold);
         this->add_item(item);
     }
@@ -263,7 +256,6 @@ void ReadInput::item_exx()
         item.description = "See also the entry exx_pca_threshold. Smaller components (less than exx_c_threshold) of the matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.";
         item.default_value = "1E-4";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.exx_c_threshold);
         this->add_item(item);
     }
@@ -275,7 +267,6 @@ void ReadInput::item_exx()
         item.description = "By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.";
         item.default_value = "-1";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.exx_cs_inv_thr);
         this->add_item(item);
     }
@@ -287,60 +278,7 @@ void ReadInput::item_exx()
         item.description = "See also the entry exx_pca_threshold. With the approximation , the four-center integral in Fock exchange is expressed as , where is a double-center integral. Smaller values of the V matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 0, i.e. no truncation.";
         item.default_value = "1E-1";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.exx_v_threshold);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_v_threshold_long");
-        item.annotation = "threshold to screen long-range V matrix in exx";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Real";
-        item.description
-            = "Threshold used only for the long-range Coulomb channel in the rotated-ABFS moment workflow. Smaller values of the long-range V matrix can be truncated to accelerate calculation. The default is 0, i.e. no truncation, which preserves the current behavior.";
-        item.default_value = "0";
-        item.unit = "";
-        item.availability = "";
-        read_sync_double(input.exx_v_threshold_long);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_vcd_threshold");
-        item.annotation = "dynamic C/D-weighted threshold for merged-short EXX";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Real";
-        item.description
-            = "Optional second-stage screen applied during EXX short-channel contractions. A positive value enables dynamic path screening using current-step C/D/V block magnitudes. Non-positive values disable this feature and preserve the current behavior.";
-        item.default_value = "-1";
-        item.unit = "";
-        item.availability = "";
-        read_sync_double(input.exx_vcd_threshold);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_vcd_stats_only");
-        item.annotation = "collect dynamic merged-short screening stats only";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Bool";
-        item.description
-            = "When true, collect C/D-weighted short-screening statistics without skipping any EXX contraction paths. Useful for calibrating the dynamic threshold before enabling it.";
-        item.default_value = "0";
-        item.unit = "";
-        item.availability = "";
-        read_sync_bool(input.exx_vcd_stats_only);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_vcd_short_only");
-        item.annotation = "apply dynamic screening only to merged-short EXX";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Bool";
-        item.description
-            = "When true, the C/D-weighted dynamic screen is restricted to the split merged-short EXX channel and does not affect full or long-range channels.";
-        item.default_value = "1";
-        item.unit = "";
-        item.availability = "";
-        read_sync_bool(input.exx_vcd_short_only);
         this->add_item(item);
     }
     {
@@ -351,7 +289,6 @@ void ReadInput::item_exx()
         item.description = "The Fock exchange can be expressed as where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.";
         item.default_value = "1E-4";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.exx_dm_threshold);
         this->add_item(item);
     }
@@ -363,7 +300,6 @@ void ReadInput::item_exx()
         item.description = "See also the entry exx_pca_threshold. is used in force. Smaller components (less than exx_c_grad_threshold) of the matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.";
         item.default_value = "1E-4";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.exx_c_grad_threshold);
         this->add_item(item);
     }
@@ -375,7 +311,6 @@ void ReadInput::item_exx()
         item.description = "See also the entry exx_pca_threshold. With the approximation , the four-center integral in Fock exchange is expressed as , where is a double-center integral. is used in force. Smaller values of the V matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 0, i.e. no truncation.";
         item.default_value = "1E-1";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.exx_v_grad_threshold);
         this->add_item(item);
     }
@@ -387,7 +322,6 @@ void ReadInput::item_exx()
         item.description = "See also the entry exx_pca_threshold. is used in stress. Smaller components (less than exx_c_grad_r_threshold) of the matrix are neglected to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.";
         item.default_value = "1E-4";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.exx_c_grad_r_threshold);
         this->add_item(item);
     }
@@ -399,7 +333,6 @@ void ReadInput::item_exx()
         item.description = "See also the entry exx_pca_threshold. With the approximation , the four-center integral in Fock exchange is expressed as , where is a double-center integral. is used in force and stress. Smaller values of the V matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 0, i.e. no truncation.";
         item.default_value = "1E-1";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.exx_v_grad_r_threshold);
         this->add_item(item);
     }
@@ -413,7 +346,6 @@ void ReadInput::item_exx()
         item.description = "This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. The value should be larger than 0. Reducing this value can effectively increase the speed of self-consistent calculations using hybrid functionals.";
         item.default_value = "";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.exx_ccp_rmesh_times);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_ccp_rmesh_times == "default")
@@ -458,116 +390,6 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
-        Input_Item item("exx_ewald_lambda");
-        item.annotation = "Gaussian decay coefficient for Ewald full Coulomb in RI-EXX";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Real";
-        item.description = "This parameter controls the Gaussian auxiliary functions used in the Ewald split of the full Coulomb matrix in RI-EXX. The real-space Gaussian cutoff is proportional to sqrt(35/exx_ewald_lambda).";
-        item.default_value = "1.0";
-        item.unit = "";
-        item.availability = "";
-        read_sync_double(input.exx_ewald_lambda);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ewald_lambda <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_lambda must > 0");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_ewald_tail_check");
-        item.annotation = "Ewald short-range Gaussian-tail handling mode";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "String";
-        item.description = "Check the outer real-space shell of Vbare-Vgauss. off disables the probe, warn reports without changing the production range, enlarge expands until converged, and strict also aborts on incomplete or unconverged coverage.";
-        item.default_value = "warn";
-        read_sync_string(input.exx_ewald_tail_check);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::string& mode = para.input.exx_ewald_tail_check;
-            if (mode != "off" && mode != "warn" && mode != "enlarge" && mode != "strict")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_check must be off, warn, enlarge, or strict");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_ewald_tail_abs_tol");
-        item.annotation = "absolute Ewald short-range guard-shell tolerance";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Real";
-        item.default_value = "1e-12";
-        read_sync_double(input.exx_ewald_tail_abs_tol);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ewald_tail_abs_tol < 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_abs_tol must be non-negative");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_ewald_tail_rel_tol");
-        item.annotation = "relative Ewald short-range guard-shell maximum tolerance";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Real";
-        item.default_value = "1e-10";
-        read_sync_double(input.exx_ewald_tail_rel_tol);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ewald_tail_rel_tol < 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_rel_tol must be non-negative");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_ewald_tail_sum_rel_tol");
-        item.annotation = "relative Ewald short-range guard-shell summed tolerance";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Real";
-        item.default_value = "1e-8";
-        read_sync_double(input.exx_ewald_tail_sum_rel_tol);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ewald_tail_sum_rel_tol < 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_sum_rel_tol must be non-negative");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_ewald_tail_guard_cells");
-        item.annotation = "number of lattice-cell layers in the Ewald tail probe";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Integer";
-        item.default_value = "1";
-        read_sync_int(input.exx_ewald_tail_guard_cells);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ewald_tail_guard_cells < 1)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_guard_cells must be at least one");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("exx_ewald_tail_max_expansions");
-        item.annotation = "maximum adaptive Ewald real-space range expansions";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Integer";
-        item.default_value = "3";
-        read_sync_int(input.exx_ewald_tail_max_expansions);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ewald_tail_max_expansions < 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_max_expansions must be non-negative");
-            }
-        };
-        this->add_item(item);
-    }
-    {
         Input_Item item("exx_opt_orb_lmax");
         item.annotation = "the maximum l of the spherical Bessel functions for opt ABFs";
         item.category = "Exact Exchange (LCAO)";
@@ -575,7 +397,7 @@ void ReadInput::item_exx()
         item.description = "The maximum l of the spherical Bessel functions, when the radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. A reasonable choice is 2.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "calculation==gen_opt_abfs";
+        item.set_availability("calculation==gen_opt_abfs");
         read_sync_int(input.exx_opt_orb_lmax);
         this->add_item(item);
     }
@@ -587,7 +409,7 @@ void ReadInput::item_exx()
         item.description = "The cut-off of plane wave expansion, when the plane wave basis is used to optimize the radial ABFs. A reasonable choice is 60.";
         item.default_value = "0";
         item.unit = "Ry";
-        item.availability = "calculation==gen_opt_abfs";
+        item.set_availability("calculation==gen_opt_abfs");
         read_sync_double(input.exx_opt_orb_ecut);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.exx_opt_orb_ecut < 0)
@@ -606,7 +428,7 @@ void ReadInput::item_exx()
         item.description = "The threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.";
         item.default_value = "1E-12";
         item.unit = "";
-        item.availability = "calculation==gen_opt_abfs";
+        item.set_availability("calculation==gen_opt_abfs");
         read_sync_double(input.exx_opt_orb_tolerence);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.exx_opt_orb_tolerence < 0)
@@ -625,7 +447,6 @@ void ReadInput::item_exx()
 * False: Enforce LibRI to use complex data type. Setting it to True can effectively improve the speed of self-consistent calculations with hybrid functionals.)";
         item.default_value = "depends on the gamma_only option";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.exx_real_number);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_real_number == "default")
@@ -651,16 +472,10 @@ void ReadInput::item_exx()
 * revised_spencer: see Phys. Rev. Mater. 5, 013807 (2021). Set the scheme of Coulomb singularity correction.)";
         item.default_value = "default";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.exx_singularity_correction);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_singularity_correction == "default")
             {  
-                if (para.input.rpa)
-                {
-                    para.input.exx_singularity_correction = "massidda";
-                    return;
-                }
                 std::string& dft_functional = para.input.dft_functional;
                 std::string dft_functional_lower = dft_functional;
                 std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
@@ -686,24 +501,6 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
-        Input_Item item("exx_ewald_dimension");
-        item.annotation = "dimensionality used by Ewald Coulomb singularity correction";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Integer";
-        item.description = "Set to 3 for the original 3D Ewald Coulomb correction, or 2 for the slab 2D Ewald Coulomb correction.";
-        item.default_value = "3";
-        item.unit = "";
-        item.availability = "exx_singularity_correction==massidda or carrier";
-        read_sync_int(input.exx_ewald_dimension);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ewald_dimension != 2 && para.input.exx_ewald_dimension != 3)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_dimension must be 2 or 3");
-            }
-        };
-        this->add_item(item);
-    }
-    {
         Input_Item item("rpa_ccp_rmesh_times");
         item.annotation = "how many times larger the radial mesh required for "
                           "calculating Columb potential is to that "
@@ -713,7 +510,6 @@ void ReadInput::item_exx()
         item.description = "How many times larger the radial mesh required is to that of atomic orbitals in the postprocess calculation of the bare Coulomb matrix for RPA, GW, etc.";
         item.default_value = "10";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.rpa_ccp_rmesh_times);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.rpa_ccp_rmesh_times < 1)
@@ -724,58 +520,16 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
-        Input_Item item("rpa_abfs_preorth");
-        item.annotation = "on-site Coulomb-metric preorthogonalization for RPA auxiliary bases";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "String";
-        item.description = "Select none for the legacy RPA auxiliary basis or onsite_coulomb to Coulomb-orthonormalize each atom-type and angular-momentum radial channel before RPA producer and Sternheimer output.";
-        item.default_value = "none";
-        item.unit = "";
-        item.availability = "rpa=True or out_sternheimer_librpa=True";
-        read_sync_string(input.rpa_abfs_preorth);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.rpa_abfs_preorth != "none"
-                && para.input.rpa_abfs_preorth != "onsite_coulomb")
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "rpa_abfs_preorth must be none or onsite_coulomb");
-            }
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("rpa_abfs_preorth_threshold");
-        item.annotation = "residual Coulomb-norm threshold for RPA auxiliary preorthogonalization";
-        item.category = "Exact Exchange (LCAO)";
-        item.type = "Real";
-        item.description = "Reject a radial auxiliary candidate when its squared residual on-site Coulomb norm is no larger than this value.";
-        item.default_value = "1e-2";
-        item.unit = "";
-        item.availability = "rpa_abfs_preorth==onsite_coulomb";
-        read_sync_double(input.rpa_abfs_preorth_threshold);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!std::isfinite(para.input.rpa_abfs_preorth_threshold)
-                || para.input.rpa_abfs_preorth_threshold <= 0.0
-                || para.input.rpa_abfs_preorth_threshold >= 1.0)
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "rpa_abfs_preorth_threshold must be finite and strictly between 0 and 1");
-            }
-        };
-        this->add_item(item);
-    }
-    {
         Input_Item item("exx_symmetry_realspace");
         item.annotation = "whether to reduce real-space sector in Hexx calculation";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Boolean";
         item.description = R"(* False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
-* True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation)";
+* True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
+For multi-k calculations, D(k) is averaged over the unitary little group of each irreducible k point before star expansion, for either setting.)";
         item.default_value = "True";
         item.unit = "";
-        item.availability = "symmetry==1 and exx calculation (dft_fuctional==hse/hf/pbe0/scan0 or rpa==True)";
+        item.set_availability("symmetry==1 and (dft_functional in [hse, hf, pbe0, scan0] or (basis_type==lcao and rpa==true))");
         read_sync_bool(input.exx_symmetry_realspace);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.symmetry != "1") { para.input.exx_symmetry_realspace = false; }
@@ -790,7 +544,6 @@ void ReadInput::item_exx()
         item.description = "Whether to output the coefficient tensor C(R) and ABFs-representation Coulomb matrix V(R) for each atom pair and cell in real space.";
         item.default_value = "false";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_ri_cv);
         this->add_item(item);
     }
@@ -848,7 +601,6 @@ void ReadInput::item_dftu()
 * 0: Do not calculate plus U correction.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.dft_plus_u);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             bool all_minus1 = true;
@@ -889,7 +641,7 @@ void ReadInput::item_dftu()
         item.description = "Whether to enable DFT+DMFT calculation. True: DFT+DMFT; False: standard DFT calculation.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "basis_type==lcao";
+        item.set_availability("basis_type==lcao");
         read_sync_bool(input.dft_plus_dmft);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type != "lcao" && para.input.dft_plus_dmft)
@@ -912,12 +664,11 @@ void ReadInput::item_dftu()
 * 3: For f-electron orbits, the plus U correction is needed.)";
         item.default_value = "-1";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
-                para.input.orbital_corr.push_back(std::stoi(item.str_values[i]));
+                para.input.l_channel.push_back(std::stoi(item.str_values[i]));
             }
         };
 
@@ -926,13 +677,13 @@ void ReadInput::item_dftu()
             {
                 return;
             }
-            if (para.input.orbital_corr.size() != para.input.ntype)
+            if (para.input.l_channel.size() != para.input.ntype)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "orbital_corr should have the same "
                                          "number of elements as ntype");
             }
-            for (auto& val: para.input.orbital_corr)
+            for (auto& val: para.input.l_channel)
             {
                 if (val < -1 || val > 3)
                 {
@@ -940,7 +691,7 @@ void ReadInput::item_dftu()
                 }
             }
         };
-        sync_intvec(input.orbital_corr, para.input.ntype, -1);
+        sync_intvec(input.l_channel, para.input.ntype, -1);
         this->add_item(item);
     }
     {
@@ -953,7 +704,6 @@ void ReadInput::item_dftu()
 [NOTE] Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.)";
         item.default_value = "0.0";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
@@ -995,7 +745,16 @@ void ReadInput::item_dftu()
 * False: hubbard_u does need to be specified.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (!item.is_read()) { return; }
+            if (para.inp.yukawa_potential && para.globalv.uramping > 0.01)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "yukawa_potential and uramping cannot be used together. "
+                                         "yukawa_potential calculates U directly from charge density every iteration, "
+                                         "while uramping gradually increases U from 0. Please set only one of them.");
+            }
+        };
         read_sync_bool(input.yukawa_potential);
         this->add_item(item);
     }
@@ -1007,7 +766,7 @@ void ReadInput::item_dftu()
         item.description = "The screen length of Yukawa potential. If left to default, the screen length will be calculated as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.";
         item.default_value = "Calculated on the fly.";
         item.unit = "";
-        item.availability = "DFT+U with yukawa_potential = True.";
+        item.set_availability("dft_plus_u==1 and yukawa_potential==true");
         read_sync_double(input.yukawa_lambda);
         this->add_item(item);
     }
@@ -1019,14 +778,14 @@ void ReadInput::item_dftu()
         item.description = "Once uramping > 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when drho<mixing_restart, U value will increase by uramping eV. SCF will repeat above calcuations until U values reach target defined in hubbard_u. As for uramping=1.0 eV, the recommendations of mixing_restart is around 5e-4.";
         item.default_value = "-1.0.";
         item.unit = "eV";
-        item.availability = "DFT+U calculations with mixing_restart > 0.";
+        item.set_availability("dft_plus_u==1 and mixing_restart>0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.uramping_eV = doublevalue;
             para.sys.uramping = para.input.uramping_eV / ModuleBase::Ry_to_eV;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             bool all_minus1 = true;
-            for (auto& val: para.input.orbital_corr)
+            for (auto& val: para.input.l_channel)
             {
                 if (val != -1)
                 {
@@ -1054,14 +813,13 @@ void ReadInput::item_dftu()
         item.type = "Integer";
         item.description = R"(The parameter controls the form of occupation matrix control used.
 * 0: No occupation matrix control is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step.
-* 1: The first SCF step will use an initial density matrix read from a file named initial_onsite.dm, but for later steps, the onsite density matrix will be updated.
-* 2: The same onsite density matrix from initial_onsite.dm will be used throughout the entire calculation.
+* 1: The first SCF step will use an initial density matrix read from a file named dm_onsite_ini.txt, but for later steps, the onsite density matrix will be updated.
+* 2: The same onsite density matrix from dm_onsite_ini.txt will be used throughout the entire calculation.
 
-[NOTE] The easiest way to create initial_onsite.dm is to run a DFT+U calculation, look for a file named onsite.dm in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.)";
+[NOTE] The easiest way to create dm_onsite_ini.txt is to run a DFT+U calculation with out_chg=1, look for a file named dm_onsite.txt in the OUT.prefix directory, copy and rename it to dm_onsite_ini.txt. The file dm_onsite_ini.txt should be placed in the directory specified by read_file_dir. The format of the file is rather straight-forward.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
-        read_sync_int(input.omc);
+        read_sync_int(input.occ_mat_ctrl);
         this->add_item(item);
     }
     {
@@ -1073,7 +831,7 @@ void ReadInput::item_dftu()
 * The modulation algorithm applies a smooth truncation to the orbital tail followed by normalization. A representative profile is $f(r)=\frac{1}{2}\left[1+\operatorname{erf}\!\left(\frac{r_c-r}{\sigma}\right)\right]$, where $r_c$ is the cutoff radius and $\sigma=\gamma r_c$ controls smoothness.)";
         item.default_value = "3.0";
         item.unit = "Bohr";
-        item.availability = "dft_plus_u is set to 1";
+        item.set_availability("dft_plus_u==1");
         read_sync_double(input.onsite_radius);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if ((para.input.dft_plus_u == 1 || para.input.sc_mag_switch) && para.input.onsite_radius == 0.0)

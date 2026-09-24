@@ -45,7 +45,7 @@ public:
     using TAC = std::pair<TA, TC>;
 
     /// @brief  Constructor for Exx_LRI_Interface
-    Exx_LRI_Interface(const Exx_Info_RI& info_ri, const Exx_Info_Global& info_global)
+    Exx_LRI_Interface(const Exx_Info::Exx_Info_RI& info_ri, const Exx_Info_Global& info_global)
     {
         this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info_ri);
         this->info_global = info_global;
@@ -155,7 +155,9 @@ public:
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
 
 private:
-    Mix_DMk_2D mix_DMk_2D;
+    Mix_DMk_2D<T> mix_DMk_2D;
+    Exx_Info_Global info_global;
+    size_t hybrid_step_ = 1;
     // non-owning ptr to Charge_Mixing captured in exx_beforescf, used to refresh the
     // borrowed mixing pointer in exx_eachiterinit (mixing_restart reallocates it via init_mixing)
     const Charge_Mixing* p_chgmix_ = nullptr;

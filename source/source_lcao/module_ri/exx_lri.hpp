@@ -54,7 +54,7 @@ inline void trim_malloc_cache()
 
 inline double default_spencer_rcut(const UnitCell& ucell, const K_Vectors& kv)
 {
-    return std::pow(0.75 * kv.get_nkstot_full() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
+    return std::pow(0.75 * kv.get_nkstot_nospin() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
 }
 
 inline bool rotate_abfs_in_place_for_current_full_matrix(const Exx_Info::Exx_Info_RI&)
@@ -1246,8 +1246,7 @@ void Exx_LRI<Tdata>::init_spencer(
 	const MPI_Comm& mpi_comm_in,
 	const UnitCell& ucell,
 	const K_Vectors& kv_in,
-	const LCAO_Orbitals& orb,
-	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in)
+	const LCAO_Orbitals& orb)
 {
 	ModuleBase::TITLE("Exx_LRI", "init_spencer");
 	ModuleBase::timer::start("Exx_LRI", "init_spencer");
@@ -1668,7 +1667,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold, this->use_rotated_n0_long_range ? "short" : "");
     ExxLriDetail::maybe_set_weighted_short_config(this->exx_lri, this->info);
 
-    if (cal_dCV)
+	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
 	{
 		std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
 			dCs_order = LRI_CV_Tools::change_order(std::move(dCs));
@@ -2081,6 +2080,8 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tda
                                        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
                                        const UnitCell& ucell,
                                        const bool write_cv,
+                                       std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_short_IJR,
+                                       std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_long_IJR,
                                        EwaldCoulombComponents* components)
 {
 	ModuleBase::TITLE("Exx_LRI", "cal_ewald_coulomb");
@@ -2116,7 +2117,7 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tda
 	// Keep the complete real-space image set together so the later atom-pair
 	// gather preserves V(q) Hermiticity.
 	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
-		= RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
+		= RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs_requested, 2, false);
 
 	for (const auto& settings_list : this->coulomb_settings)
 	{
@@ -2165,9 +2166,17 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tda
 				switch (param_list.first)
 				{
 				case Conv_Coulomb_Pot_K::Coulomb_Type::Fock:
-				{
-					double chi = this->exx_objs[settings_list.first].evq.get_singular_chi(ucell, param_list.second, 2.0);
-					Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
+					{
+						double chi = this->exx_objs[settings_list.first].evq.get_singular_chi(ucell, param_list.second, 2.0);
+						Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
+						if (Vs_short_IJR != nullptr || Vs_long_IJR != nullptr)
+						{
+							auto Vs_split = this->exx_objs[settings_list.first].evq.cal_Vs_split(ucell, chi, Vs_temp);
+							Vs_ewald_short = Vs_ewald_short.empty() ? Vs_split.first
+							                                      : LRI_CV_Tools::add(Vs_ewald_short, Vs_split.first);
+							Vs_ewald_long = Vs_ewald_long.empty() ? Vs_split.second
+							                                     : LRI_CV_Tools::add(Vs_ewald_long, Vs_split.second);
+						}
 					if (components != nullptr)
 					{
 						auto bare_periodic = this->exx_objs[settings_list.first].evq.cal_bare_periodic_Vs(
@@ -2515,6 +2524,45 @@ void Exx_LRI<Tdata>::cal_exx_stress(const double& omega, const double& lat0)
 	this->stress_exx *= frac;
 
 	ModuleBase::timer::end("Exx_LRI", "cal_exx_stress");
+}
+
+template<typename Tdata>
+void Exx_LRI<Tdata>::cal_exx_dHs(
+    const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+    const UnitCell& ucell,
+    const Parallel_Orbitals& pv)
+{
+    ModuleBase::TITLE("Exx_LRI", "cal_exx_dHs");
+    ModuleBase::timer::start("Exx_LRI", "cal_exx_dHs");
+#ifdef __EXX_DEV
+    const auto judge = RI_2D_Comm::get_2D_judge(ucell, pv);
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
+        this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, std::to_string(is));
+        this->exx_lri.cal_dHs({"", "", std::to_string(is), "", ""});
+        for (int ipos = 0; ipos < 3; ++ipos)
+        {
+            if (this->dHexxs[ipos].size() != static_cast<std::size_t>(ucell.nat))
+                this->dHexxs[ipos].resize(ucell.nat);
+            for (int iat = 0; iat < ucell.nat; ++iat)
+            {
+                if (this->dHexxs[ipos][iat].size() != static_cast<std::size_t>(PARAM.inp.nspin))
+                    this->dHexxs[ipos][iat].resize(PARAM.inp.nspin);
+                auto dH = this->exx_lri.dHs[ipos][0][iat];
+                dH = dH + this->exx_lri.dHs_HF[ipos][iat];
+                this->dHexxs[ipos][iat][is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+                    this->mpi_comm, std::move(dH), std::get<0>(judge[is]), std::get<1>(judge[is]));
+                this->post_process_Hexx(this->dHexxs[ipos][iat][is]);
+            }
+        }
+    }
+#else
+    (void)Ds;
+    (void)ucell;
+    (void)pv;
+    ModuleBase::WARNING("Exx_LRI", "cal_exx_dHs requires LibRI with EXX_DEV; leaving dHexxs empty.");
+#endif
+    ModuleBase::timer::end("Exx_LRI", "cal_exx_dHs");
 }
 
 template<typename Tdata>

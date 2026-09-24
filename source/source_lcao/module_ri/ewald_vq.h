@@ -126,6 +126,19 @@ class Ewald_Vq
         const double& chi,
         const std::array<Tcell, Ndim>& period_Vs_NAO);
 
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_realspace_difference(
+        const UnitCell& ucell,
+        const std::vector<TA>& list_A0,
+        const std::vector<TAC>& list_A1,
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in,
+        bool truncate_analytic_tail);
+    inline EwaldVqDetail::TailStats cal_short_range_tail_stats(
+        const UnitCell& ucell,
+        const std::vector<EwaldVqDetail::TailKey>& local_keys,
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_bare,
+        std::size_t local_production_blocks,
+        double local_reference_norm);
+
   private:
     double ccp_rmesh_times;
     double exact_ccp_rmesh_times;
@@ -139,6 +152,7 @@ class Ewald_Vq
     std::array<Tcell, Ndim> nmp;
     double ewald_lambda = 1.0;
     int ewald_dimension = 3;
+    int abfs_Lmax = 0;
 
     std::vector<std::vector<std::vector<double>>> multipole;
     ModuleBase::Element_Basis_Index::IndexLNM index_abfs;

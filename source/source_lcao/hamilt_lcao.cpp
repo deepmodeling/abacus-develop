@@ -3,10 +3,11 @@
 #include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/dftu_base.h"
-#include "source_io/module_parameter/parameter.h"
-
-#include <cstdlib>
-#include <string>
+#include "source_lcao/setup_exx.h"
+#include "source_lcao/setup_deepks.h"
+#include "source_estate/module_dm/density_matrix.h"
+#include "source_estate/module_pot/potential_new.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include <vector>
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/lcao_deepks.h"
@@ -22,21 +23,6 @@
 
 namespace hamilt
 {
-
-namespace
-{
-bool hamilt_lcao_debug_dump_exx_ao_enabled()
-{
-    const char* env = std::getenv("ABACUS_DUMP_EXX_AO");
-    if (env == nullptr)
-    {
-        return false;
-    }
-    const std::string value(env);
-    return !(value.empty() || value == "0" || value == "f" || value == "F"
-             || value == "false" || value == "FALSE");
-}
-}
 
 template <typename TK, typename TR>
 HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
@@ -128,46 +114,19 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
 #endif
 
 #ifdef __EXX
-    if (GlobalC::exx_info.info_global.cal_exx
-        || (PARAM.inp.calculation == "nscf" && hamilt_lcao_debug_dump_exx_ao_enabled()))
+    if (exx_info.info_global.cal_exx)
     {
         // Peize Lin add 2016-12-03
         // set xc type before the first cal of xc in pelec->init_scf
         // and calculate Cs, Vs
-        Operator<TK>* exx;
-        if (PARAM.inp.esolver_type == "tddft")
-        {
-            exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
-                                                        this->hR,
-                                                        ucell,
-                                                        *this->kv,
-                                                        Hexxd,
-                                                        Hexxc,
-                                                        Add_Hexx_Type::k,
-                                                        istep,
-                                                        exx_two_level_step,
-                                                        !GlobalC::restart.info_load.restart_exx
-                                                        && GlobalC::restart.info_load.load_H);
-        }
-        else
-        {
-            const Add_Hexx_Type exx_add_type =
-                (PARAM.inp.calculation == "nscf"
-                 && hamilt_lcao_debug_dump_exx_ao_enabled())
-                    ? Add_Hexx_Type::k
-                    : Add_Hexx_Type::R;
-            exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
-                                                        this->hR,
-                                                        ucell,
-                                                        *kv,
-                                                        Hexxd,
-                                                        Hexxc,
-                                                        exx_add_type,
-                                                        istep,
-                                                        exx_two_level_step,
-                                                        !GlobalC::restart.info_load.restart_exx
-                                                        && GlobalC::restart.info_load.load_H);
-        }
+        // Keep exact exchange in H(R) for every workflow. For RT-TDDFT the
+        // factory selects complex H(R) when EXX is active, so the operator
+        // chain folds the complete Hamiltonian with one common TD phase.
+        Operator<TK>* exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk.get(),
+                                                                  this->hR.get(), ucell, *this->kv,
+                                                                  exx_nao.exd.get(), exx_nao.exc.get(),
+                                                                  exx_info, Add_Hexx_Type::R, istep,
+                                                                  load_exx_flag);
         this->getOperator()->add(exx);
     }
 #endif

@@ -39,6 +39,10 @@ class timer
     static void start(const std::string &class_name_in, const std::string &name_in);
     static void end(const std::string &class_name_in, const std::string &name_in);
 
+    // Compatibility for RI code written before start/end replaced the toggle API.
+    // Keep the legacy behavior until those call sites are migrated individually.
+    static void tick(const std::string &class_name_in, const std::string &name_in);
+
     /**
      * @brief Start total time calculation
      *

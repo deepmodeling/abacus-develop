@@ -251,11 +251,11 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
     elecstate::init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep, PARAM.globalv.global_out_dir, *this->inp_, this->pelec);
 
-    Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rho, ucell.symm);
-
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    const int nspin = this->inp_->nspin;
+    if (this->inp_->init_chg == "file")
     {
-        if (PARAM.inp.init_chg != "file")
+        module_charge::symmetrize_rho(nspin, this->chr, this->pw_rho, ucell.symm);
+        for (int is = 0; is < nspin; ++is)
         {
             for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
             {

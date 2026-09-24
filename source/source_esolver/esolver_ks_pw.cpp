@@ -25,13 +25,6 @@
 #include "source_pw/module_pwdft/update_cell_pw.h" // mohan add 20250309
 #include "source_pw/module_pwdft/setup_dftu_pw.h"  // mohan add 20250309
 
-#if defined(__EXX)
-#include "source_lcao/module_ri/sternheimer_abacus_fd_smoke.h"
-#endif
-#if defined(__EXX) && defined(__LCAO)
-#include "source_lcao/module_ri/sternheimer_abacus_st_smoke.h"
-#endif
-
 namespace ModuleESolver
 {
 
@@ -294,7 +287,7 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
     }
 
     // symmetrize the charge density
-    Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rhod, ucell.symm);
+    module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
 
     ModuleBase::timer::end("ESolver_KS_PW", "hamilt2rho_single");
 }
@@ -374,30 +367,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                                      this->Pgrid,
                                      *this->inp_);
 
-#ifdef __EXX
-    if (this->pelec != nullptr && this->pelec->pot != nullptr && this->pw_rho != nullptr)
-    {
-        ModuleRI::run_sternheimer_fd_zero_order_smoke(*(this->pelec->pot),
-                                                      *(this->pw_rho),
-                                                      ucell,
-                                                      *(this->pelec),
-                                                      PARAM.globalv.global_out_dir);
-#if defined(__LCAO)
-        ModuleRI::run_sternheimer_abacus_st_smoke(*(this->pelec->pot),
-                                                  *(this->pw_rho),
-                                                  ucell,
-                                                  *(this->pelec),
-                                                  PARAM.globalv.global_out_dir);
-        ModuleRI::run_sternheimer_abacus_chi0_output(*(this->pelec->pot),
-                                                     *(this->pw_rho),
-                                                     ucell,
-                                                     *(this->pelec),
-                                                     PARAM.globalv.global_out_dir);
-#endif
-    }
-#endif
-
-    ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
+    ModuleBase::timer::end("ESolver_KS_PW", "after_scf");
 }
 
 template <typename T, typename Device>

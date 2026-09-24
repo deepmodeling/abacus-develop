@@ -99,6 +99,11 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
                                                         this->exact_ccp_rmesh_times);
     this->multipole = Exx_Abfs::Construct_Orbs::get_multipole(abfs_in);
     this->abfs = abfs_in;
+    this->abfs_Lmax = 0;
+    for (const auto& type_orbs : abfs_in)
+    {
+        this->abfs_Lmax = std::max(this->abfs_Lmax, static_cast<int>(type_orbs.size()) - 1);
+    }
     this->abfs_old_to_new = abfs_old_to_new;
     this->bare_multipole_scale = 0.0;
     const auto fock_params = this->coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);

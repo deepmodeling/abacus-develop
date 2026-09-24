@@ -7,6 +7,7 @@
 #define RPA_LRI_H
 
 #include "lri_cv.h"
+#include "source_hamilt/module_xc/exx_info.h"
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 #include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
@@ -39,7 +40,7 @@ template <typename T, typename Tdata> class RPA_LRI
     using TatomR = std::array<double, Ndim>; // tmp
 
   public:
-    RPA_LRI(const Exx_Info_RI &info_in) : info(info_in)
+    RPA_LRI(const Exx_Info::Exx_Info_RI &info_in) : info(info_in)
     {
     }
     ~RPA_LRI();
@@ -116,6 +117,7 @@ template <typename T, typename Tdata> class RPA_LRI
     Conv_Coulomb_Pot_K::Coulomb_Method select_coulomb_basis_method_(Exx_LRI<double>* exx_lri) const;
     std::vector<int> collect_atom_naux_(const UnitCell& ucell, Exx_LRI<double>* exx_lri) const;
 
+    const std::string& outdir = PARAM.inp.rpa_outdir;
     const Exx_Info::Exx_Info_RI &info;
     const K_Vectors *p_kv=nullptr;
     MPI_Comm mpi_comm;

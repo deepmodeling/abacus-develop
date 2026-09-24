@@ -104,6 +104,8 @@ public:
 		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
 		const UnitCell& ucell,
 		const bool write_cv = false,
+		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_short_IJR = nullptr,
+		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_long_IJR = nullptr,
 		EwaldCoulombComponents* components = nullptr);
 	void cal_exx_elec(
 		const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
@@ -121,6 +123,10 @@ public:
 		const ModuleSymmetry::Symmetry_rotation* p_symrot);
 	void cal_exx_force(const int& nat);
 	void cal_exx_stress(const double& omega, const double& lat0);
+	void cal_exx_dHs(
+		const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+		const UnitCell& ucell,
+		const Parallel_Orbitals& pv);
 
 	void reset_Cs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in) { this->exx_lri.set_Cs(Cs_in, this->info.C_threshold); }
 	void reset_Vs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in) { this->exx_lri.set_Vs(Vs_in, this->info.V_threshold); }
@@ -128,6 +134,7 @@ public:
 	std::vector<std::vector<int>> get_abfs_nchis() const;
 
 	std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
+	std::array<std::vector<std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>>, 3> dHexxs;
 	double Eexx;
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;

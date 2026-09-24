@@ -1004,7 +1004,7 @@ inline std::vector<std::string> collect_atom_type_labels(const UnitCell& ucell)
     std::vector<std::string> labels(static_cast<std::size_t>(ucell.ntype));
     for (int itype = 0; itype < ucell.ntype; ++itype)
     {
-        labels[static_cast<std::size_t>(itype)] = ucell.atom_label[itype];
+        labels[static_cast<std::size_t>(itype)] = ucell.atoms[itype].label;
     }
     return labels;
 }
@@ -1179,10 +1179,10 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     this->p_kv = &kv;
     this->orb_cutoff_ = orb.cutoffs();
 
-    Mix_DMk_2D mix_DMk_2D;
+    Mix_DMk_2D<Tdata> mix_DMk_2D;
     this->use_spacegroup_symmetry_ = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
     if (this->use_spacegroup_symmetry_)
-        {mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
+        {mix_DMk_2D.set_nks(kv.get_nkstot() * (PARAM.inp.nspin == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
     else
         {mix_DMk_2D.set_nks(kv.get_nks());}
         
@@ -1210,7 +1210,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     // coulomb_param from construction time, so those writes are redundant and removed.
     this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times;
     // Using rpa_ccp_rmesh_times to calculate cut Coulomb this->Vs_period
-    Exx_Info_RI local_info = this->info;
+    Exx_Info::Exx_Info_RI local_info = this->info;
     local_info.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
     if (!exx_cut_coulomb)
         exx_cut_coulomb.reset(new Exx_LRI<double>(local_info));
@@ -1387,7 +1387,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     ModuleBase::TITLE("RPA_LRI", "output_ewald_coulomb");
     ModuleBase::timer::start("RPA_LRI", "output_ewald_coulomb");
 
-    Exx_Info_RI local_info = this->info;
+    Exx_Info::Exx_Info_RI local_info = this->info;
     local_info.ccp_rmesh_times = this->ccp_rmesh_times_ewald;
     if (!exx_full_coulomb)
         exx_full_coulomb.reset(new Exx_LRI<double>(local_info));
@@ -1496,6 +1496,9 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         return;
     }
 
+    // Split Ewald component dumps remain opt-in through the reader-v1 path;
+    // keep the legacy split files disabled by default.
+    const bool dump_split = false;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_full_IJR;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Cs;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> tmp;
@@ -1505,6 +1508,8 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
                                         Cs,
                                         ucell,
                                         PARAM.inp.out_ri_cv,
+                                        &Vs_short_IJR,
+                                        &Vs_long_IJR,
                                         output_ewald_components ? &ewald_components : nullptr);
     // MPI: {ia0, {ia1, R}} to {ia0, ia1}
     std::vector<TA> atoms(ucell.nat);
@@ -1906,48 +1911,12 @@ void RPA_LRI<T, Tdata>::output_symmetry_sidecars(const UnitCell& ucell,
                                                  const K_Vectors& kv,
                                                  const elecstate::DensityMatrix<T, Tdata>& dm)
 {
-    const bool exx_spacegroup_symmetry =
-        (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
-    if (!exx_spacegroup_symmetry)
-    {
-        return;
-    }
-    if (GlobalV::MY_RANK != 0)
-    {
-        return;
-    }
-
-    std::vector<std::vector<std::vector<int>>> abf_layout_candidates;
-    if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
-    {
-        RpaLriDetail::append_unique_abfs_layout_candidates(abf_layout_candidates, this->abfs_shrink);
-        RpaLriDetail::append_unique_abfs_layout_candidates(abf_layout_candidates, this->abfs);
-    }
-    else
-    {
-        RpaLriDetail::append_unique_abfs_layout_candidates(abf_layout_candidates, this->abfs);
-    }
-
-    ModuleSymmetry::Symmetry_rotation symrot;
-    const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);
-    const auto& Rs = RI_Util::get_Born_von_Karmen_cells(period);
-    symrot.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st, Rs, period, ucell.lat);
-
-    const int abf_lmax = RpaLriDetail::max_layout_lmax(abf_layout_candidates);
-    if (abf_lmax >= 0)
-    {
-        symrot.set_abfs_Lmax(abf_lmax);
-    }
-    else
-    {
-        symrot.set_abfs_Lmax(GlobalC::exx_info.info_ri.abfs_Lmax);
-    }
-    symrot.cal_Ms(kv, ucell, *dm.get_paraV_pointer());
-
-    ModuleSymmetry::print_symrot_info_R(symrot, ucell.symm, ucell.lmax, Rs);
-    ModuleSymmetry::print_symrot_info_k(symrot, kv, ucell);
-    ModuleSymmetry::print_symrot_info_abf_k(
-        symrot, kv, ucell, RpaLriDetail::collect_atom_type_labels(ucell), abf_layout_candidates);
+    // LibRPA reconstructs symmetry rotations from the exported STRU data.
+    // Do not emit the obsolete symrot_*.txt sidecar files (and never append
+    // spin/magnetic symmetry metadata to stru_out).
+    (void)ucell;
+    (void)kv;
+    (void)dm;
 }
 
 template <typename T, typename Tdata>
@@ -2848,6 +2817,105 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
     const int nbasis = parav.get_wfc_global_nbasis();
     const std::size_t values_per_iw = static_cast<std::size_t>(nbands) * npsin_tmp;
 
+#ifdef __MPI
+    const MPI_Comm mpi_comm = parav.comm();
+    const int mpi_rank = parav.get_coord_row() * parav.get_dim1() + parav.get_coord_col();
+    const int mpi_size = parav.get_dim0() * parav.get_dim1();
+    const auto check_mpi = [mpi_comm](const int local_error, const std::string& context) {
+        const int local_failed = local_error == MPI_SUCCESS ? 0 : 1;
+        int any_failed = 0;
+        if (MPI_Allreduce(&local_failed, &any_failed, 1, MPI_INT, MPI_MAX, mpi_comm) != MPI_SUCCESS
+            || any_failed != 0)
+        {
+            throw std::runtime_error(context);
+        }
+    };
+    std::vector<int> output_basis_counts(mpi_size, nbasis / mpi_size);
+    for (int ip = 0; ip < nbasis % mpi_size; ++ip)
+    {
+        ++output_basis_counts[ip];
+    }
+    std::vector<int> output_basis_offsets(mpi_size + 1, 0);
+    std::vector<int> output_basis_owner(nbasis);
+    for (int ip = 0; ip < mpi_size; ++ip)
+    {
+        output_basis_offsets[ip + 1] = output_basis_offsets[ip] + output_basis_counts[ip];
+        std::fill(output_basis_owner.begin() + output_basis_offsets[ip],
+                  output_basis_owner.begin() + output_basis_offsets[ip + 1], ip);
+    }
+    const int local_nw = output_basis_counts[mpi_rank];
+#else
+    const int mpi_rank = 0;
+    const int local_nw = nbasis;
+#endif
+    const std::size_t local_size = static_cast<std::size_t>(local_nw) * values_per_iw;
+    std::vector<std::complex<double>> local_wfc(local_size);
+#ifdef __MPI
+    struct WfcPackIndex
+    {
+        int spin;
+        int band;
+        int basis;
+    };
+    const int local_band_count = parav.ncol_bands;
+    const unsigned long long send_size_wide
+        = static_cast<unsigned long long>(local_band_count) * psi.get_nbasis() * npsin_tmp;
+    const unsigned long long recv_size_wide = static_cast<unsigned long long>(local_nw) * values_per_iw;
+    const unsigned long long max_alltoallv_count = std::numeric_limits<int>::max();
+    check_mpi(send_size_wide <= max_alltoallv_count && recv_size_wide <= max_alltoallv_count
+                  ? MPI_SUCCESS
+                  : MPI_ERR_COUNT,
+              "RPA eigenvector buffer exceeds MPI_Alltoallv count range.");
+    std::vector<int> send_counts(mpi_size, 0);
+    for (int ib = 0; ib < nbands; ++ib)
+    {
+        if (parav.global2local_col(ib) < 0)
+            continue;
+        for (int ir = 0; ir < psi.get_nbasis(); ++ir)
+            send_counts[output_basis_owner[parav.local2global_row(ir)]] += npsin_tmp;
+    }
+    std::vector<int> send_displacements(mpi_size, 0), recv_counts(mpi_size), recv_displacements(mpi_size, 0);
+    for (int ip = 1; ip < mpi_size; ++ip)
+        send_displacements[ip] = send_displacements[ip - 1] + send_counts[ip - 1];
+    check_mpi(MPI_Alltoall(send_counts.data(), 1, MPI_INT, recv_counts.data(), 1, MPI_INT, mpi_comm),
+              "Failed to exchange RPA eigenvector redistribution counts.");
+    for (int ip = 1; ip < mpi_size; ++ip)
+        recv_displacements[ip] = recv_displacements[ip - 1] + recv_counts[ip - 1];
+    const int send_size = static_cast<int>(send_size_wide);
+    const int recv_size = static_cast<int>(recv_size_wide);
+    check_mpi(recv_displacements.back() + recv_counts.back() == recv_size ? MPI_SUCCESS : MPI_ERR_COUNT,
+              "RPA eigenvector Alltoallv redistribution map is inconsistent.");
+    std::vector<WfcPackIndex> pack_indices(send_size);
+    std::vector<unsigned long long> send_targets(send_size), recv_targets(recv_size);
+    std::vector<int> send_positions = send_displacements;
+    for (int ib = 0; ib < nbands; ++ib)
+    {
+        const int ib_local = parav.global2local_col(ib);
+        if (ib_local < 0)
+            continue;
+        for (int ir = 0; ir < psi.get_nbasis(); ++ir)
+        {
+            const int iw = parav.local2global_row(ir);
+            const int destination = output_basis_owner[iw];
+            for (int is = 0; is < npsin_tmp; ++is)
+            {
+                const int position = send_positions[destination]++;
+                pack_indices[position] = {is, ib_local, ir};
+                send_targets[position] = static_cast<unsigned long long>(iw - output_basis_offsets[destination])
+                    * values_per_iw + ib * npsin_tmp + is;
+            }
+        }
+    }
+    std::complex<double> dummy(0.0, 0.0);
+    unsigned long long dummy_target = 0;
+    check_mpi(MPI_Alltoallv(send_size > 0 ? send_targets.data() : &dummy_target,
+                            send_counts.data(), send_displacements.data(), MPI_UNSIGNED_LONG_LONG,
+                            recv_size > 0 ? recv_targets.data() : &dummy_target,
+                            recv_counts.data(), recv_displacements.data(), MPI_UNSIGNED_LONG_LONG, mpi_comm),
+              "Failed to exchange RPA eigenvector destination indices.");
+    std::vector<std::complex<double>> send_wfc(send_size), recv_wfc(recv_size);
+#endif
+
     if (PARAM.inp.out_librpa_reader_version == 1)
     {
 #ifdef __MPI
@@ -3015,6 +3083,22 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
 #endif
         return;
     }
+
+    std::string output_buffer;
+    constexpr std::size_t output_line_bytes = 61;
+    output_buffer.reserve(local_size * output_line_bytes + 32);
+    const std::string filename = outdir + "KS_eigenvector.txt";
+#ifdef __MPI
+    MPI_File file = MPI_FILE_NULL;
+    unsigned long long total_file_bytes = 0;
+    const unsigned long long max_mpi_offset = static_cast<unsigned long long>(std::numeric_limits<MPI_Offset>::max());
+    const char dummy_buffer = '\0';
+    check_mpi(MPI_File_open(mpi_comm, filename.c_str(), MPI_MODE_CREATE | MPI_MODE_WRONLY,
+                            MPI_INFO_NULL, &file), "Failed to open " + filename + ".");
+    check_mpi(MPI_File_set_size(file, 0), "Failed to truncate " + filename + ".");
+#else
+    std::ofstream ofs(filename.c_str(), std::ios::out);
+#endif
 
     for (int ik = 0; ik < nks_tot; ik++)
     {

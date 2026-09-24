@@ -106,6 +106,28 @@ void timer::start(const std::string &class_name,const std::string &name)
     #endif
 }
 
+void timer::tick(const std::string &class_name, const std::string &name)
+{
+    if (disabled)
+    {
+        return;
+    }
+#ifdef _OPENMP
+    if (omp_get_thread_num())
+    {
+        return;
+    }
+#endif
+    if (timer_pool[class_name][name].start_flag)
+    {
+        timer::start(class_name, name);
+    }
+    else
+    {
+        timer::end(class_name, name);
+    }
+}
+
 void timer::end(const std::string &class_name,const std::string &name)
 {
 //----------------------------------------------------------
