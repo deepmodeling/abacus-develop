@@ -3243,7 +3243,7 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
     std::stringstream ss;
     ss << "stru_out";
     std::ofstream ofs;
-    ofs.open(ss.str().c_str(), std::ios::out);
+    ofs.open(outdir + "band_out.txt", std::ios::out);
     const auto write_scientific_triplet = [&ofs](const double x, const double y, const double z) {
         ofs << std::setw(24) << std::scientific << std::setprecision(15) << x
             << std::setw(24) << std::scientific << std::setprecision(15) << y
