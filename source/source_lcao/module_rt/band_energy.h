@@ -1,5 +1,5 @@
 /**
- * @file bandenegy.h
+ * @file band_energy.h
  * @brief compute band energy ekb
  *  This file originally belonged to file LCAO_evolve.cpp
  */
