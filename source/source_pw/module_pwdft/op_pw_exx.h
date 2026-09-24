@@ -133,11 +133,17 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     // All EXX PW entry points (act_op, act_op_kpar,
     // cal_exx_energy_op) share one code path built on these primitives; the
     // batched kernels are a specialization of the per-band operations,
-    // selected inside the primitives (batch_active). The active real-space
+    // selected inside the primitives (exx_grid_active). The active real-space
     // grid is the small ecut_exx box when usable, else the wfcpw box;
     // callers must not branch on this themselves.
     void maybe_setup_exx_grid() const;
-    bool batch_active() const;
+    // whether the map-based (batched-kernel) path can run at all: the small
+    // grid is usable, or the full box is local to this rank
+    bool exx_grid_active() const;
+    // band chunk width of one batched round, 1..nbands: the exx_batch_size
+    // INPUT (0 = all bands). Only meaningful when exx_grid_active(); the
+    // result is independent of the chunking.
+    int exx_band_chunk(const int nbands) const;
     int exx_grid_size() const { return exx_sg_ok ? sg_nxyz : wfcpw->nrxx; }
     // G-vector -> active FFT box index maps, hiding the grid choice: the
     // small-grid maps when exx_sg_ok, the basis's own ig2ixyz arrays on CUDA,
@@ -153,9 +159,10 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     // tmhpsi += factor * V_x|psi> for all bands; needs psi_nk_real_cache and
     // psi_mq_real filled, and `pot` holding the Coulomb kernel for (ik, iq)
     void apply_fock_all_bands(const int nbands, const int nbasis, const int iq, const Real factor, T* tmhpsi) const;
-    // pair densities psi_nk* psi_mq of all bands in the rhopw_dev G-space;
-    // pair_density(n) then returns band n without recomputation
-    void prepare_pair_densities(const int nbands) const;
+    // pair densities psi_nk* psi_mq of bands [start, start+count) in the
+    // rhopw_dev G-space; pair_density(n) then returns band n (global index)
+    // without recomputation
+    void prepare_pair_densities(const int start, const int count) const;
     const T* pair_density(const int n) const;
 
     // Small EXX FFT grid sized by ecut_exx (like QE's dfftt): when usable, the
@@ -186,18 +193,19 @@ class OperatorEXXPW : public OperatorPW<T, Device>
                             const Real factor,
                             T* tmhpsi) const;
 
-    // reciprocal-space density of all bands (rhopw_dev G-space), ends up in
-    // dens_pw_batch
-    void calc_density_pw_nbatched(const int nbands, const T* psi_mq_real) const;
+    // reciprocal-space density of bands [0, nbands) of the nk_real block
+    // (rhopw_dev G-space), ends up in dens_pw_batch
+    void calc_density_pw_nbatched(const int nbands, const T* nk_real, const T* psi_mq_real) const;
 
     mutable void* exx_fft_plan = nullptr;   // batched FFT plan (void* to keep FFTW/cuFFT out of the header)
     mutable void* exx_fft_plan1 = nullptr;  // batch-1 FFT plan (psi_mq on the active grid)
     mutable int exx_fft_plan_nx = 0;        // grid dims the plans were created for
     mutable int exx_fft_plan_ny = 0;
     mutable int exx_fft_plan_nz = 0;
-    mutable T* dens_box_batch = nullptr;    // nbands * nxyz box buffer
-    mutable T* dens_pw_batch = nullptr;     // nbands * npw (rhopw_dev) plane-wave buffer
-    mutable int exx_batch_alloc = 0;        // nbands the buffers/plan are allocated for
+    mutable T* dens_box_batch = nullptr;    // band-chunk * nxyz box buffer
+    mutable T* dens_pw_batch = nullptr;     // band-chunk * npw (rhopw_dev) plane-wave buffer
+    mutable int exx_batch_alloc = 0;        // band chunk width the buffers/plan are allocated for
+    mutable int dens_chunk_base = 0;        // global band index of dens_pw_batch[0]
 
     // create/recreate the batched FFT plans and work buffers for the active grid
     void ensure_exx_batch(const int nbands) const;

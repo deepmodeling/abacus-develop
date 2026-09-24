@@ -5283,6 +5283,14 @@ parameters:
     default_value: same as ecutrho
     unit: Ry
     availability: ""
+  - name: exx_batch_size
+    category: Exact Exchange (PW)
+    type: Integer
+    description: |
+      Number of bands processed per round of the EXX batched FFT path. 0 (the default) processes all bands in one round, which is fastest but needs nbands * nxyz work buffers; a positive value processes the bands in chunks of that width, trading some performance for a proportionally smaller memory footprint. The result is independent of the chunking.
+    default_value: 0
+    unit: ""
+    availability: ""
   - name: exx_thr_type
     category: Exact Exchange (PW)
     type: String

@@ -897,7 +897,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.annotation = "energy cutoff for exx calculation, Ry";
         item.category = "Exact Exchange (PW)";
         item.type = "Real";
-        item.description = "The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. Reducing ecutexx below ecutrho may significantly accelerate EXX computations. This speed improvement comes with a reduced numerical accuracy in the exchange energy calculation.";
+        item.description = "The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. The pair-density G-sphere of the exchange operator, the EXX energy, and the EXX stress are all truncated at this value. If ecutexx yields a smaller FFT box and every |k+G|^2 of the wavefunctions fits inside it (i.e. ecutexx should not be smaller than ecutwfc), all EXX FFTs run on that smaller grid (QE ecutfock-style), which can significantly accelerate EXX computations. If the small grid is not usable (box not smaller, wavefunctions do not fit, or the FFT box is distributed over MPI), a warning is printed and the full grid is used. Reducing ecutexx below ecutrho reduces the numerical accuracy of the exchange contribution.";
         item.default_value = "same as ecutrho";
         item.unit = "Ry";
         read_sync_double(input.ecutexx);
@@ -905,6 +905,23 @@ When false (default), both the direction and magnitude of the magnetic moment ar
             if (para.input.ecutexx < 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ecutexx must >= 0");
+            }
+        };
+        this->add_item(item);
+    }
+
+    {
+        Input_Item item("exx_batch_size");
+        item.annotation = "band chunk width of the EXX batched path, 0 = all bands";
+        item.category = "Exact Exchange (PW)";
+        item.type = "Integer";
+        item.description = "Number of bands processed per round of the EXX batched FFT path. 0 (the default) processes all bands in one round, which is fastest but needs nbands * nxyz work buffers; a positive value processes the bands in chunks of that width, trading some performance for a proportionally smaller memory footprint. The result is independent of the chunking.";
+        item.default_value = "0";
+        read_sync_int(input.exx_batch_size);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_batch_size < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_batch_size must >= 0");
             }
         };
         this->add_item(item);

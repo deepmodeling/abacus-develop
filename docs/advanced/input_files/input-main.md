@@ -345,6 +345,7 @@
     - [exxace](#exxace)
     - [exx\_gamma\_extrapolation](#exx_gamma_extrapolation)
     - [ecutexx](#ecutexx)
+    - [exx\_batch\_size](#exx_batch_size)
     - [exx\_thr\_type](#exx_thr_type)
     - [exx\_ene\_thr](#exx_ene_thr)
   - [Molecular dynamics](#molecular-dynamics)
@@ -3453,6 +3454,12 @@
 - **Description**: The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. The pair-density G-sphere of the exchange operator, the EXX energy, and the EXX stress are all truncated at this value. If ecutexx yields a smaller FFT box and every |k+G|^2 of the wavefunctions fits inside it (i.e. ecutexx should not be smaller than ecutwfc), all EXX FFTs run on that smaller grid (QE ecutfock-style), which can significantly accelerate EXX computations. If the small grid is not usable (box not smaller, wavefunctions do not fit, or the FFT box is distributed over MPI), a warning is printed and the full grid is used. Reducing ecutexx below ecutrho reduces the numerical accuracy of the exchange contribution.
 - **Default**: same as ecutrho
 - **Unit**: Ry
+
+### exx_batch_size
+
+- **Type**: Integer
+- **Description**: Number of bands processed per round of the EXX batched FFT path. 0 (the default) processes all bands in one round, which is fastest but needs nbands * nxyz work buffers; a positive value processes the bands in chunks of that width, trading some performance for a proportionally smaller memory footprint. The result is independent of the chunking.
+- **Default**: 0
 
 ### exx_thr_type
 

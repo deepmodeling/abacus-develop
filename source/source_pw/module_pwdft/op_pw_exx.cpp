@@ -19,6 +19,7 @@
 #include "source_pw/module_pwdft/kernels/vec_mul_cx_op.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <cstdlib>
@@ -396,7 +397,7 @@ void OperatorEXXPW<T, Device>::maybe_setup_exx_grid() const
 }
 
 template <typename T, typename Device>
-bool OperatorEXXPW<T, Device>::batch_active() const
+bool OperatorEXXPW<T, Device>::exx_grid_active() const
 {
 #if !defined(__CUDA)
     if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
@@ -404,12 +405,22 @@ bool OperatorEXXPW<T, Device>::batch_active() const
         return false; // ROCm GPU
     }
 #endif
-    // batched FFTs need the whole box local to this rank; on CPU the small
-    // grid additionally cuts the FFT work, the full-grid batch mainly keeps
-    // the code path unified
+    // the map-based FFT path needs the whole box local to this rank; the
+    // small grid additionally cuts the FFT work, the full-grid path mainly
+    // keeps the code path unified
     return exx_sg_ok
            || (wfcpw->nrxx == rhopw_dev->nrxx && wfcpw->nxyz == rhopw_dev->nxyz
                && wfcpw->nrxx == wfcpw->nxyz);
+}
+
+template <typename T, typename Device>
+int OperatorEXXPW<T, Device>::exx_band_chunk(const int nbands) const
+{
+    if (PARAM.inp.exx_batch_size > 0 && PARAM.inp.exx_batch_size < nbands)
+    {
+        return PARAM.inp.exx_batch_size;
+    }
+    return nbands;
 }
 
 template <typename T, typename Device>
@@ -453,20 +464,27 @@ void OperatorEXXPW<T, Device>::cache_psi_nk_real(const int nbands, const int nba
         resmem_complex_op()(psi_nk_real_cache, nbands * exx_grid_size());
         psi_nk_cache_size = nbands;
     }
-    if (batch_active())
+    if (exx_grid_active())
     {
-        // scatter the PW coefficients into the active box and do one batched
-        // backward FFT (unnormalized, like recip_to_real)
-        ensure_exx_batch(nbands);
-        setmem_complex_op()(psi_nk_real_cache, 0, nbands * exx_grid_size());
-        exx_batch_scatter_wfc<T, Device>(nbands,
-                                         wfcpw->npwk[ik],
-                                         exx_grid_size(),
-                                         active_map_wfc(ik),
-                                         psi_in,
-                                         nbasis,
-                                         psi_nk_real_cache);
-        exx_batch_fft_exec<T, Device>(exx_fft_plan, psi_nk_real_cache, false);
+        // scatter the PW coefficients into the active box and do batched
+        // backward FFTs (unnormalized, like recip_to_real), one band chunk
+        // at a time; the full cache stays valid for reuse over (iq, m)
+        const int chunk = exx_band_chunk(nbands);
+        for (int n0 = 0; n0 < nbands; n0 += chunk)
+        {
+            const int bn = std::min(chunk, nbands - n0);
+            ensure_exx_batch(bn);
+            T* cache_n = psi_nk_real_cache + n0 * exx_grid_size();
+            setmem_complex_op()(cache_n, 0, bn * exx_grid_size());
+            exx_batch_scatter_wfc<T, Device>(bn,
+                                             wfcpw->npwk[ik],
+                                             exx_grid_size(),
+                                             active_map_wfc(ik),
+                                             psi_in + n0 * nbasis,
+                                             nbasis,
+                                             cache_n);
+            exx_batch_fft_exec<T, Device>(exx_fft_plan, cache_n, false);
+        }
         return;
     }
     for (int n = 0; n < nbands; n++)
@@ -478,7 +496,7 @@ void OperatorEXXPW<T, Device>::cache_psi_nk_real(const int nbands, const int nba
 template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::wfc_to_real_exx(const T* psi_m, const int iq, const int psi_stride) const
 {
-    if (batch_active())
+    if (exx_grid_active())
     {
         // scatter + backward FFT on the active grid
         setmem_complex_op()(psi_mq_real, 0, exx_grid_size());
@@ -502,9 +520,8 @@ void OperatorEXXPW<T, Device>::apply_fock_all_bands(const int nbands,
                                                     const Real factor,
                                                     T* tmhpsi) const
 {
-    if (batch_active())
+    if (exx_grid_active())
     {
-        ensure_exx_batch(nbands);
         apply_exx_nbatched(nbands, nbasis, psi_mq_real, factor, tmhpsi);
         return;
     }
@@ -529,22 +546,23 @@ void OperatorEXXPW<T, Device>::apply_fock_all_bands(const int nbands,
 
 
 template <typename T, typename Device>
-void OperatorEXXPW<T, Device>::prepare_pair_densities(const int nbands) const
+void OperatorEXXPW<T, Device>::prepare_pair_densities(const int start, const int count) const
 {
-    if (batch_active())
+    if (exx_grid_active())
     {
-        // pair densities of all bands in one batched round, rhopw_dev G-space
-        ensure_exx_batch(nbands);
-        calc_density_pw_nbatched(nbands, psi_mq_real);
+        // pair densities of one band chunk in one batched round, rhopw_dev G-space
+        dens_chunk_base = start;
+        ensure_exx_batch(count);
+        calc_density_pw_nbatched(count, psi_nk_real_cache + start * exx_grid_size(), psi_mq_real);
     }
 }
 
 template <typename T, typename Device>
 const T* OperatorEXXPW<T, Device>::pair_density(const int n) const
 {
-    if (batch_active())
+    if (exx_grid_active())
     {
-        return dens_pw_batch + n * rhopw_dev->npw;
+        return dens_pw_batch + (n - dens_chunk_base) * rhopw_dev->npw;
     }
     cal_density_recip(psi_nk_real_cache + n * wfcpw->nrxx, psi_mq_real, ucell->omega);
     return density_recip;
@@ -776,7 +794,6 @@ void OperatorEXXPW<T, Device>::apply_exx_nbatched(const int nbands,
                                                   const Real factor,
                                                   T* tmhpsi) const
 {
-    ensure_exx_batch(nbands);
     // active FFT grid: the small ecut_exx grid when usable, else the wfcpw grid
     const int nxyz = exx_sg_ok ? sg_nxyz : wfcpw->nxyz;
     const int nrxx = nxyz; // batched path requires the whole box to be local
@@ -785,25 +802,38 @@ void OperatorEXXPW<T, Device>::apply_exx_nbatched(const int nbands,
     const int* map_rho = active_map_rho();
     const int* map_wfc = active_map_wfc(this->ik);
 
-    // 1. reciprocal-space density of all bands, ends up in dens_pw_batch
-    calc_density_pw_nbatched(nbands, psi_mq_real);
-    // 2. multiply by the Coulomb potential in recip space
-    exx_batch_mul_pot<T, Real, Device>(nbands, npw_rho, pot, dens_pw_batch);
-    // 3. scatter back to the (pre-zeroed) box
-    setmem_complex_op()(dens_box_batch, 0, nbands * nxyz);
-    exx_batch_scatter_pw<T, Device>(nbands, npw_rho, nxyz, map_rho, dens_pw_batch, dens_box_batch);
-    // 4. batched backward FFT (unnormalized, matching recip2real)
-    exx_batch_fft_exec<T, Device>(exx_fft_plan, dens_box_batch, false);
-    // 5. multiply by psi_mq(r) in real space
-    exx_batch_mul_real<T, Device>(nbands, nrxx, psi_mq_real, dens_box_batch);
-    // 6. batched forward FFT
-    exx_batch_fft_exec<T, Device>(exx_fft_plan, dens_box_batch, true);
-    // 7. gather and accumulate into hpsi with the EXX weight
-    exx_batch_gather_accum<T, Real, Device>(nbands, npwk, nxyz, map_wfc, dens_box_batch, factor, tmhpsi, nbasis);
+    const int chunk = exx_band_chunk(nbands);
+    for (int n0 = 0; n0 < nbands; n0 += chunk)
+    {
+        const int bn = std::min(chunk, nbands - n0);
+        ensure_exx_batch(bn);
+        // 1. reciprocal-space density of this band chunk, ends up in dens_pw_batch
+        calc_density_pw_nbatched(bn, psi_nk_real_cache + n0 * exx_grid_size(), psi_mq_real);
+        // 2. multiply by the Coulomb potential in recip space
+        exx_batch_mul_pot<T, Real, Device>(bn, npw_rho, pot, dens_pw_batch);
+        // 3. scatter back to the (pre-zeroed) box
+        setmem_complex_op()(dens_box_batch, 0, bn * nxyz);
+        exx_batch_scatter_pw<T, Device>(bn, npw_rho, nxyz, map_rho, dens_pw_batch, dens_box_batch);
+        // 4. batched backward FFT (unnormalized, matching recip2real)
+        exx_batch_fft_exec<T, Device>(exx_fft_plan, dens_box_batch, false);
+        // 5. multiply by psi_mq(r) in real space
+        exx_batch_mul_real<T, Device>(bn, nrxx, psi_mq_real, dens_box_batch);
+        // 6. batched forward FFT
+        exx_batch_fft_exec<T, Device>(exx_fft_plan, dens_box_batch, true);
+        // 7. gather and accumulate into hpsi with the EXX weight
+        exx_batch_gather_accum<T, Real, Device>(bn,
+                                                npwk,
+                                                nxyz,
+                                                map_wfc,
+                                                dens_box_batch,
+                                                factor,
+                                                tmhpsi + n0 * nbasis,
+                                                nbasis);
+    }
 }
 
 template <typename T, typename Device>
-void OperatorEXXPW<T, Device>::calc_density_pw_nbatched(const int nbands, const T* psi_mq_real) const
+void OperatorEXXPW<T, Device>::calc_density_pw_nbatched(const int nbands, const T* nk_real, const T* psi_mq_real) const
 {
     // active FFT grid: the small ecut_exx grid when usable, else the wfcpw grid
     const int nxyz = exx_sg_ok ? sg_nxyz : wfcpw->nxyz;
@@ -812,7 +842,7 @@ void OperatorEXXPW<T, Device>::calc_density_pw_nbatched(const int nbands, const 
     const int* map_rho = active_map_rho();
 
     // 1. density_real(r) = psi_nk(r) * conj(psi_mq(r)) / omega for all bands at once
-    exx_batch_density_real<T, Device>(nbands, nrxx, psi_nk_real_cache, psi_mq_real, ucell->omega, dens_box_batch);
+    exx_batch_density_real<T, Device>(nbands, nrxx, nk_real, psi_mq_real, ucell->omega, dens_box_batch);
     // 2. batched forward FFT to the box
     exx_batch_fft_exec<T, Device>(exx_fft_plan, dens_box_batch, true);
     // 3. gather the PW components (with the 1/nxyz of real_to_recip)
@@ -996,21 +1026,26 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
                 psi_.fix_kb(iq, m_iband);
                 wfc_to_real_exx(psi_.get_pointer(), iq, nbasis);
 
-                // pair densities of all bands on the active grid; with the
-                // batched path this is one round for all bands, and the
-                // energy kernel below works purely in the G-space
-                prepare_pair_densities(nb);
-                for (int n_iband = 0; n_iband < nb; n_iband++)
+                // pair densities on the active grid, one band chunk per
+                // batched round; the energy kernel works purely in G-space
+                const int chunk = exx_grid_active() ? exx_band_chunk(nb) : nb;
+                for (int n0 = 0; n0 < nb; n0 += chunk)
                 {
-                    const double wg_ikb_real = (*wg)(ik, n_iband);
-                    if (wg_ikb_real < 1e-12)
+                    const int bn = std::min(chunk, nb - n0);
+                    prepare_pair_densities(n0, bn);
+                    for (int nn = 0; nn < bn; nn++)
                     {
-                        continue;
+                        const int n_iband = n0 + nn;
+                        const double wg_ikb_real = (*wg)(ik, n_iband);
+                        if (wg_ikb_real < 1e-12)
+                        {
+                            continue;
+                        }
+                        Eexx_ik_real += exx_cal_energy_op<T, Device>()(pair_density(n_iband),
+                                                                       pot,
+                                                                       wg_iqb_real / nqs * wg_ikb_real / kv->wk[ik],
+                                                                       npw);
                     }
-                    Eexx_ik_real += exx_cal_energy_op<T, Device>()(pair_density(n_iband),
-                                                                   pot,
-                                                                   wg_iqb_real / nqs * wg_ikb_real / kv->wk[ik],
-                                                                   npw);
                 }
             } // m_iband
         } // iq
