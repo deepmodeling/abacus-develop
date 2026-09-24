@@ -1,1 +1,12 @@
 LCAO neutral water with native SCCS and the second lattice vector (+y) as the 2D-PCC open direction.
+
+Reference provenance (regenerated 2026-09-24):
+- ABACUS commit: ba49891f2f1eb6532e79955429817ed6156d8fd7
+- ABACUS version: v3.11.0-beta9
+- executable SHA256: d5789959f3f3dbc59c65fc197f3c26ff2eff00316d67c80e244bb33b43382bb7
+- parallel layout: 4 MPI ranks x 1 OpenMP thread
+- result.ref is an ABACUS regression baseline, not an external QE/Environ reference.
+- two independent clean runs produced identical energy, force, and solvation values.
+
+Repository harness regeneration command, run from tests/02_NAO_Gamma:
+  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 4 -o 1 -r '^scf_sccs_pcc2d$' -g
