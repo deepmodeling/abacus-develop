@@ -76,11 +76,10 @@ When performing spin-orbit coupling (SOC) calculations with `lspinorb=1`, specif
 Full-relativistic pseudopotentials suitable for SOC calculations can be identified by checking the UPF file header (`PP_HEADER` section):
 
 ```xml
+<!-- Other attributes omitted -->
 <PP_HEADER
-   ...
    relativistic="full"
    has_so="T"
-   ...
 />
 ```
 

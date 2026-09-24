@@ -71,6 +71,17 @@ void pw::setup_pwrho(
     }
 
     //! initialize the FFT grid
+    // NOTE(liuyu): ref_cell_factor is currently forced to 1.0 in
+    // read_input_item_md.cpp because the reference-cell mechanism is
+    // disabled. When ref_cell_factor != 1, the PW_Basis lattice members
+    // (lat0/tpiba/G/GGT/omega) become stale relative to ucell in NPT,
+    // breaking sum_rho/get_local_pp_energy/cal_delta_escf/makov_payne.
+    // If the reference-cell feature is re-enabled in the future, this
+    // call site (and the equivalent in setup_pwwfc.cpp) MUST be updated
+    // to use the proposed initgrids_ref/initgrids_actual split so that
+    // only nx/ny/nz come from the reference cell while lat0/tpiba/G/GGT/omega
+    // track the physical cell. Until then, ref_cell_factor * ucell.lat0
+    // below is effectively just ucell.lat0.
     if (inp.nx * inp.ny * inp.nz == 0)
     {
         pw_rho->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, 4.0 * inp.ecutwfc);
@@ -97,6 +108,7 @@ void pw::setup_pwrho(
         {
             pw_rhod->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
         }
+        // NOTE(liuyu): same ref_cell_factor warning applies to pw_rhod.
         if (inp.ndx * inp.ndy * inp.ndz == 0)
         {
             pw_rhod->initgrids(inp.ref_cell_factor * ucell.lat0, ucell.latvec, inp.ecutrho);

@@ -31,7 +31,7 @@
 #include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_lcao.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_dm/dm_from_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hsolver/parallel_k2d.h"
 
@@ -42,7 +42,7 @@ template <typename TK>
 void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
                                    psi::Psi<TK>& psi,
 								   elecstate::ElecState* pes,
-								   elecstate::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
+								   module_dm::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
 								   Charge &chr,
                                    const int nspin,
                                    const double omega,
@@ -98,15 +98,15 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
                                      pes->skip_weights);
 
         elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
-        elecstate::cal_dm_psi(dm.get_paraV_pointer(), pes->wg, psi, dm);
-        dm.cal_DMR();
+        module_dm::dm_from_psi(this->ParaV, pes->wg, psi, dm);
+        dm.cal_dmr(-1);
 
         if (!skip_charge)
         {
             // compute charge density from density matrix, mohan update 20251024
             // delegate to ElecStateLCAO to keep the source_lcao dependency out of
             // source_hsolver (mirrors the pexsi branch below and the PW psiToRho path)
-            dynamic_cast<elecstate::ElecStateLCAO<TK>*>(pes)->dmToRho(dm.get_DMR_vector(), nspin, &chr, omega);
+            dynamic_cast<elecstate::ElecStateLCAO<TK>*>(pes)->dmToRho(dm.get_dmr_vec(), nspin, &chr, omega);
         }
         else
         {

@@ -45,6 +45,7 @@ the developments and applications of novel machine-learning-assisted DFT methods
    advanced/interface/index
    advanced/input_files/index
    advanced/windows_installer
+   advanced/json/index
 
 .. toctree::
    :maxdepth: 2

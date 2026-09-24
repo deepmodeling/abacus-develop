@@ -1,5 +1,6 @@
 #include "dftu_nao_fs_k.h"
 #include "dftu_nao_folding.h"
+#include "dftu_nao_fs_accum.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 #include "dftu_nao_pots.h"
 #include "source_lcao/force_stress_arrays.h"
@@ -17,59 +18,6 @@ namespace DFTU_LCAO {
 
 namespace
 {
-
-/// @brief Add the real part of diagonal local-block entries to one force component.
-///
-/// Sums dm(ir, ic) over local block pairs whose global orbital indices
-/// coincide, attributing each entry to the atom owning the orbital along
-/// Cartesian component dim.
-template <typename T>
-void accumulate_diag_force(const Parallel_Orbitals& pv,
-                           const UnitCell& ucell,
-                           const T* dm,
-                           const int dim,
-                           ModuleBase::matrix& force_dftu)
-{
-    assert(dm != nullptr);
-    assert(dim >= 0 && dim < 3);
-    for (int ir = 0; ir < pv.nrow; ir++)
-    {
-        const int iwt1 = pv.local2global_row(ir);
-        const int iat1 = ucell.iwt2iat[iwt1];
-        for (int ic = 0; ic < pv.ncol; ic++)
-        {
-            if (pv.local2global_col(ic) == iwt1)
-            {
-                force_dftu(iat1, dim) += std::real(dm[ic * pv.nrow + ir]);
-            }
-        }
-    }
-}
-
-/// @brief Add the real part of diagonal local-block entries to one stress pair.
-template <typename T>
-void accumulate_diag_stress(const Parallel_Orbitals& pv,
-                            const T* dm,
-                            const int dim1,
-                            const int dim2,
-                            const double factor,
-                            ModuleBase::matrix& stress_dftu)
-{
-    assert(dm != nullptr);
-    assert(dim1 >= 0 && dim1 < 3);
-    assert(dim2 >= 0 && dim2 < 3);
-    for (int ir = 0; ir < pv.nrow; ir++)
-    {
-        const int iwt1 = pv.local2global_row(ir);
-        for (int ic = 0; ic < pv.ncol; ic++)
-        {
-            if (pv.local2global_col(ic) == iwt1)
-            {
-                stress_dftu(dim1, dim2) += factor * std::real(dm[ic * pv.nrow + ir]);
-            }
-        }
-    }
-}
 
 /// @brief Whether atom type it carries a usable correlated channel.
 ///
@@ -106,8 +54,6 @@ void accumulate_onsite_force(Plus_U_Base& dftu,
     assert(dim >= 0 && dim < 3);
     assert(npol == 1 || npol == 2);
     const std::vector<int>& l_channel = dftu.get_l_channel_vec();
-    const std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& iatlnmipol2iwt
-        = dftu.occmat().iatlnmipol2iwt();
     for (int it = 0; it < ucell.ntype; it++)
     {
         if (!has_valid_correlated_channel(ucell, l_channel, it))
@@ -122,7 +68,7 @@ void accumulate_onsite_force(Plus_U_Base& dftu,
             {
                 for (int ipol = 0; ipol < npol; ipol++)
                 {
-                    const int iwt = iatlnmipol2iwt[iat][lc][0][m][ipol];
+                    const int iwt = dftu.occmat().corr_iwt(iat, lc, m, ipol);
                     const int mu = pv.global2local_row(iwt);
                     const int nu = pv.global2local_col(iwt);
                     if (mu < 0 || nu < 0)
@@ -173,6 +119,12 @@ void cal_force_k(const DftuFsEnv& env,
     for (int dim = 0; dim < 3; dim++)
     {
         DFTU_LCAO::folding_matrix_k(fold_ctx, fsr, ik, dim + 1, 0, &dSm_k[0], kvec_d);
+
+        // DFT+U force at k-point: F_dim = Tr[dS_k/dR_dim * (DM_k * V_onsite)]
+        // rho_pot_onsite = DM_k * V_onsite is a non-symmetric complex matrix.
+        // Two different contractions are needed:
+        //   diag   contribution: dS/dR * rho^C  (conjugate transpose)
+        //   onsite contribution: dS/dR * rho^N  (no transpose)
 
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
@@ -316,6 +268,15 @@ void cal_force_gamma(const DftuFsEnv& env,
     {
         double* tmp_ptr = dsloc[dim];
 
+        // DFT+U force: F_dim = Tr[dS/dR_dim * (DM * V_onsite)]
+        // where rho_pot_onsite = DM * V_onsite is generally NOT symmetric
+        // (product of two symmetric matrices). Two different contractions
+        // are needed:
+        //   diag   contribution: dS/dR * rho^T  (row-indexed trace)
+        //   onsite contribution: dS/dR * rho^N  (no transpose)
+        // This mirrors cal_force_k, which uses rho^C and rho^N for the
+        // complex case.
+
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
                 transT,
@@ -342,7 +303,7 @@ void cal_force_gamma(const DftuFsEnv& env,
 
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
-                transT,
+                transN,
                 nlocal,
                 nlocal,
                 nlocal,
@@ -507,7 +468,6 @@ void run_gamma_loop(const DftuFsEnv& env,
     Plus_U_Base& dftu = env.dftu();
     const UnitCell& ucell = env.ucell();
     const Parallel_Orbitals& pv = env.pv();
-    const int npol = env.npol();
     const int nlocal = pv.get_global_row_size();
 
     const char transN = 'N';
@@ -556,7 +516,6 @@ void run_k_loop(const DftuFsEnv& env,
     Plus_U_Base& dftu = env.dftu();
     const UnitCell& ucell = env.ucell();
     const Parallel_Orbitals& pv = env.pv();
-    const int npol = env.npol();
     const int nlocal = pv.get_global_row_size();
 
     const char transN = 'N';

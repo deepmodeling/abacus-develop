@@ -325,7 +325,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
             // (cal_gint_drho/dm_2d_to_gint looks up every overlapping pair), so we mirror
             // D's atom pairs and only fill the atom-I rows.
             // Block (I,L,R) value = D(I,L,R) + D(L,I,-R)^T. For the collinear DM (nspin 1/2,
-            // the only case routed here) DMK is Hermitian, so cal_DMR yields the exact symmetry
+            // the only case routed here) DMK is Hermitian, so cal_dmr yields the exact symmetry
             // D(L,I,-R)[l,k] = D(I,L,R)[k,l]; hence the symmetrized block is simply 2*D(I,L,R).
             // We use only the *local* block D(I,L,R): the reverse pair (L,I,-R) lives on a
             // different rank under 2D block-cyclic, so reading it directly (the old code) silently

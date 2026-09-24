@@ -99,18 +99,14 @@ void Plus_U_Base::init_base(UnitCell& cell,
 
             for (int l = 0; l <= cell.atoms[it].nwl; l++)
             {
-                const int N = cell.atoms[it].l_nchi[l];
-
-                for (int n = 0; n < N; n++)
+                // only the first radial channel (n=0) of each l is stored
+                if (nspin == 1 || nspin == 2)
                 {
-                    if (nspin == 1 || nspin == 2)
-                    {
-                        num_locale += (2 * l + 1) * (2 * l + 1) * 2;
-                    }
-                    else if (nspin == 4)
-                    {
-                        num_locale += (2 * l + 1) * (2 * l + 1) * npol * npol;
-                    }
+                    num_locale += (2 * l + 1) * (2 * l + 1) * 2;
+                }
+                else if (nspin == 4)
+                {
+                    num_locale += (2 * l + 1) * (2 * l + 1) * npol * npol;
                 }
             }
         }

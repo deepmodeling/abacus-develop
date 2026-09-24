@@ -77,8 +77,8 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
 
     if (!this->bse_ri_hartree && this->ri_hartree_benchmark == "none")
     {
-        this->DM_trans = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(&pmat, 1/*nspin*/, kv_in.kvec_d, nk);
-        this->DM_trans->set_DMK_zero();
+        this->DM_trans = LR_Util::make_unique<module_dm::DensityMatrix<T, T>>(&pmat, 1/*nspin*/, kv_in.kvec_d, nk);
+        this->DM_trans->set_dmk_zero();
         LR_Util::initialize_DMR(*this->DM_trans, this->pmat, this->ucell, this->gd, this->orb_cutoff);
     }
     if (this->bse_mem_save) { assert(this->bse_continue == 0 && this->bse_ri_hartree); }
@@ -505,9 +505,9 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
                     BSE_Util::cal_dm_trans_onebase_blas(psi_is, ik2, naos, imo1, imo2, (T)1.0 / (T)nk);
     #endif
                 // LR_Util::print_tensor<T>(dm_trans_2d, "dm_trans_2d", &pmat);
-                this->DM_trans->set_DMK_pointer(ik2, dm_trans_2d.data<T>());
+                this->DM_trans->set_dmk_ptr(ik2, dm_trans_2d.data<T>());
                 // 3. D(k)→D(R)
-                this->DM_trans->cal_DMR(ik2);
+                this->DM_trans->cal_dmr(ik2);
                 // LR_Util::print_DMR(*DM_trans, ucell.nat, "DMR");
 
                 // 4. D(R)→V(R)
@@ -553,7 +553,7 @@ void HamiltBSE<double>::grid_calculation(hamilt::HContainer<double>& VR) const
 
     LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, nrxx); // nspin=1 for transition density
     ModuleBase::GlobalFunc::ZEROS(rho_trans[0], nrxx);
-    ModuleGint::cal_gint_rho(this->DM_trans->get_DMR_vector(), 1, rho_trans, false);
+    ModuleGint::cal_gint_rho(this->DM_trans->get_dmr_vec(), 1, rho_trans, false);
 
     // 4.2. v_hxc = f_hxc * rho_trans
     ModuleBase::matrix vr_hxc(1, nrxx);   //grid
@@ -575,8 +575,8 @@ void HamiltBSE<std::complex<double>>::grid_calculation(hamilt::HContainer<std::c
     ModuleBase::TITLE("HamiltBSE", "grid_calculation(complex)");
     ModuleBase::timer::start("HamiltBSE", "grid_calculation(complex)");
 
-    elecstate::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(&this->pmat, 1, this->kv.kvec_d, this->nk);
-    DM_trans_real_imag.init_DMR(VR);
+    module_dm::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(&this->pmat, 1, this->kv.kvec_d, this->nk);
+    DM_trans_real_imag.init_dmr(VR);
     hamilt::HContainer<double> HR_real_imag(ucell, &this->pmat);
     LR_Util::initialize_HR<std::complex<double>, double>(HR_real_imag, ucell, gd, orb_cutoff);
 
@@ -591,7 +591,7 @@ void HamiltBSE<std::complex<double>>::grid_calculation(hamilt::HContainer<std::c
 
             LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, nrxx); // nspin=1 for transition density
             ModuleBase::GlobalFunc::ZEROS(rho_trans[0], nrxx);
-            ModuleGint::cal_gint_rho(DM_trans_real_imag.get_DMR_vector(), 1, rho_trans, false);
+            ModuleGint::cal_gint_rho(DM_trans_real_imag.get_dmr_vec(), 1, rho_trans, false);
 
             // 4.2. v_hxc = f_hxc * rho_trans
             ModuleBase::matrix vr_hxc(1, nrxx);   //grid

@@ -21,13 +21,14 @@
 #endif
 #include "source_lcao/module_rdmft/rdmft.h"
 #include "source_estate/module_charge/chg_routine.h" // use charge mixing, mohan add 20251006
-#include "source_estate/module_dm/init_dm.h" // init dm from electronic wave functions
+#include "source_estate/module_dm/dm_routine.h" // init dm from electronic wave functions
 #include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/module_ctrl/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 #include "source_io/module_ctrl/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
 #include "source_io/module_output/print_info.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
+#include "source_lcao/module_rt/td_info.h" // TD_info for init_dm config
 #include "source_lcao/lcao_set.h" // mohan add 20251111
 #include "source_psi/setup_psi.h" // use Setup_Psi for deallocate_psi
 
@@ -199,7 +200,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf","p_hamilt does not exist");
     }
-    this->dmat.dm->init_DMR(*hamilt_lcao->getHR());
+    this->dmat.dm->init_dmr(*hamilt_lcao->getHR());
 
     // 13.1) decide the strategy for initializing DMR and HR
     if(istep == 0)//if the first scf step, readin DMR from file,
@@ -224,7 +225,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         // 13.1.2) two cases are considered:
         // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
         // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
-        this->dmat.dm->cal_DMR();
+        this->dmat.dm->cal_dmr(-1);
     }
     // 13.2) init_scf, should be before_scf? mohan add 2025-03-10
     elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric,
@@ -232,7 +233,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
 #ifdef __MLALGO
     // 14) initialize DM2(R) of DeePKS, the DM2(R) is different from DM(R)
-    this->deepks.ld.init_DMR(ucell, orb_, this->pv, this->gd);
+    this->deepks.ld.init_dmr(ucell, orb_, this->pv, this->gd);
 #endif
 
     // 16) the electron charge density should be symmetrized,
@@ -356,7 +357,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     ESolver_KS::iter_init(ucell, istep, iter);
 
     module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, *this->dftu_, 
-      this->dmat.dm->get_DMR_pointer(1)->get_nnr(), *this->inp_); 
+      this->dmat.dm->get_dmr_ptr(1)->get_nnr(), *this->inp_); 
 
     if (iter == 1)
     {
@@ -391,7 +392,19 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
                   this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
 		}
 #endif
-		elecstate::init_dm<TK>(ucell, this->pelec, this->dmat, this->psi, this->chr, iter, exx_two_level_step);
+		module_dm::Init_DM_Config init_dm_cfg;
+	init_dm_cfg.esolver_type = PARAM.inp.esolver_type;
+	init_dm_cfg.td_stype = PARAM.inp.td_stype;
+	init_dm_cfg.nspin = PARAM.inp.nspin;
+	init_dm_cfg.nelec = PARAM.inp.nelec;
+	init_dm_cfg.td_phase_hybrid = (PARAM.inp.td_stype == 2 && PARAM.inp.esolver_type != "tddft")
+		? &TD_info::td_vel_op->get_phase_hybrid()
+		: nullptr;
+	init_dm_cfg.td_cart_At = (PARAM.inp.td_stype == 2 && PARAM.inp.esolver_type != "tddft")
+		? TD_info::cart_At
+		: ModuleBase::Vector3<double>();
+	init_dm_cfg.dm2rho_func = &LCAO_domain::dm2rho;
+	module_dm::init_dm<TK>(ucell, this->pelec, this->dmat, this->psi, this->chr, this->pv, iter, exx_two_level_step, init_dm_cfg);
 	}
 
 #ifdef __EXX
@@ -400,11 +413,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     {
         if (exx_info_.info_ri.real_number)
         {
-            this->exx_nao.exd->exx_eachiterinit(istep, ucell, *this->dmat.dm, this->kv, iter);
+            this->exx_nao.exd->exx_eachiterinit(istep, ucell, *this->dmat.dm, this->kv, this->pv, iter);
         }
         else
         {
-            this->exx_nao.exc->exx_eachiterinit(istep, ucell, *this->dmat.dm, this->kv, iter);
+            this->exx_nao.exc->exx_eachiterinit(istep, ucell, *this->dmat.dm, this->kv, this->pv, iter);
         }
     }
 #endif
@@ -431,7 +444,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // save density matrix DMR for mixing
     if (this->inp_->mixing_restart > 0 && this->inp_->mixing_dmr && this->p_chgmix->mixing_restart_count > 0)
     {
-        this->dmat.dm->save_DMR();
+        this->dmat.dm->save_dmr();
     }
 }
 
@@ -491,7 +504,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     {
         // Lambda loop updated the density matrix (DM) but not the real-space charge density.
         // HSolver was skipped, so we need to sync rho from DM manually.
-        LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), this->inp_->nspin, &this->chr, this->inp_->nelec, ucell.omega, false);
+        LCAO_domain::dm2rho(this->dmat.dm->get_dmr_vec(), this->inp_->nspin, &this->chr, this->inp_->nelec, ucell.omega, false);
     }
 
     // 4) EXX
@@ -529,7 +542,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::iter_finish","p_hamilt does not exist");
     }
 
-	const std::vector<std::vector<TK>>& dm_vec = this->dmat.dm->get_DMK_vector();
+	const std::vector<std::vector<TK>>& dm_vec = this->dmat.dm->get_dmk_vec();
 
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
     finish_dftu_lcao<TK>(conv_esolver, this->inp_->dft_plus_u, this->inp_->out_chg[0], this->dftu_.get(), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao, PARAM.globalv.global_out_dir, this->inp_->nspin, PARAM.globalv.npol, PARAM.globalv.gamma_only_local);
@@ -571,8 +584,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
             // Extract the contiguous per-spin DMR buffers expected by the
             // stateless mixing kernel.
             const std::vector<hamilt::HContainer<double>*>& dmr_containers
-                = this->dmat.dm->get_DMR_vector();
-            const std::vector<std::vector<double>>& dmr_save = this->dmat.dm->get_DMR_save();
+                = this->dmat.dm->get_dmr_vec();
+            const std::vector<std::vector<double>>& dmr_save = this->dmat.dm->get_dmr_save();
             std::vector<double*> dmr_out;
             std::vector<const double*> dmr_in;
             for (std::size_t is = 0; is < dmr_containers.size(); ++is)
@@ -611,7 +624,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
     if (this->inp_->out_elf[0] > 0)
 	{
-		LCAO_domain::dm2tau(this->dmat.dm->get_DMR_vector(), this->inp_->nspin, this->pelec->charge);
+		LCAO_domain::dm2tau(this->dmat.dm->get_dmr_vec(), this->inp_->nspin, this->pelec->charge);
 	}
 
     //! 1) call after_scf() of ESolver_KS

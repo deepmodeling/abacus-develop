@@ -41,7 +41,7 @@ inline void trim_malloc_cache()
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
                                 const MPI_Comm& mpi_comm_in,
-                                const elecstate::DensityMatrix<T, Tdata>& dm,
+                                const module_dm::DensityMatrix<T, Tdata>& dm,
                                 const elecstate::ElecState* pelec,
                                 const K_Vectors& kv,
                                 const LCAO_Orbitals& orb,
@@ -52,7 +52,7 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
     ModuleBase::timer::start("RPA_LRI", "postSCF");
     ModuleBase::GlobalFunc::MAKE_DIR(outdir);
 
-    this->cal_postSCF_exx(dm, mpi_comm_in, ucell, kv, orb);
+    this->cal_postSCF_exx(dm, mpi_comm_in, ucell, kv, orb, parav);
     this->init(mpi_comm_in, kv, orb.cutoffs());
     this->out_bands(pelec);
     this->out_eigen_vector(parav, psi);
@@ -106,11 +106,12 @@ void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in
 }
 
 template <typename T, typename Tdata>
-void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>& dm,
+void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>& dm,
                                         const MPI_Comm& mpi_comm_in,
                                         const UnitCell& ucell,
                                         const K_Vectors& kv,
-                                        const LCAO_Orbitals& orb)
+                                        const LCAO_Orbitals& orb,
+                                        const Parallel_Orbitals& parav)
 {
     ModuleBase::TITLE("RPA_LRI", "cal_postSCF_exx");
     ModuleBase::timer::start("RPA_LRI", "cal_postSCF_exx");
@@ -166,20 +167,20 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
         // instead of relying on exx_cut_coulomb->abfs_Lmax() (not yet initialized) or
         // this->info.abfs_Lmax (defaults to 0). This ensures correct Lmax for symmetry rotation.
         symrot.set_abfs_Lmax(Exx_Abfs::Construct_Orbs::get_Lmax(abfs_for_lmax));
-        symrot.cal_Ms(kv, ucell, *dm.get_paraV_pointer(), PARAM.inp.nspin);
+        symrot.cal_Ms(kv, ucell, parav, PARAM.inp.nspin);
         // output Ts (symrot_R.txt) and Ms (symrot_k.txt)
         ModuleSymmetry::print_symrot_info_R(symrot, ucell.symm, ucell.lmax, Rs);
         ModuleSymmetry::print_symrot_info_k(symrot, kv, ucell);
-        mix_DMk_2D.mix(symrot.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), true);
+        mix_DMk_2D.mix(symrot.restore_dm(kv, dm.get_dmk_vec(), parav), true);
     }
-    else { mix_DMk_2D.mix(dm.get_DMK_vector(), true); }
+    else { mix_DMk_2D.mix(dm.get_dmk_vec(), true); }
     
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
         Ds = RI_2D_Comm::split_m2D_ktoR<Tdata>(
             ucell,
             kv,
             mix_DMk_2D.get_DMk_out(),
-            *dm.get_paraV_pointer(),
+            parav,
             PARAM.inp.nspin,
             exx_spacegroup_symmetry);
     
@@ -211,11 +212,11 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     // cal CVCD
     if (exx_spacegroup_symmetry && PARAM.inp.exx_symmetry_realspace)
     {
-        exx_cut_coulomb->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer(), &symrot);
+        exx_cut_coulomb->cal_exx_elec(Ds, ucell, parav, &symrot);
     }
     else
     {
-        exx_cut_coulomb->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer());
+        exx_cut_coulomb->cal_exx_elec(Ds, ucell, parav);
     }
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
     ModuleBase::timer::end("RPA_LRI", "cal_postSCF_exx");

@@ -11,7 +11,7 @@ if(ENABLE_ASAN)
 else()
     add_test(
         NAME 09_DeePKS
-        COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4
+        COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4 -j auto
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/09_DeePKS
     )
 endif()

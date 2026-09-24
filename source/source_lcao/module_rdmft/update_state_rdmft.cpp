@@ -5,7 +5,7 @@
 
 #include "rdmft.h"
 #include "source_lcao/module_rdmft/rdmft_tools.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_dm/dm_from_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_hamilt/module_gint/gint_interface.h"
@@ -97,16 +97,16 @@ void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
     if( PARAM.inp.gamma_only )
     {
         // calculate DMK and DMR
-        elecstate::DensityMatrix<TK, double> DM_gamma_only(ParaV, nspin);
-        elecstate::cal_dm_psi(ParaV, wg, wfc, DM_gamma_only);
-        DM_gamma_only.init_DMR(this->gd, &ucell);
-        DM_gamma_only.cal_DMR();
+        module_dm::DensityMatrix<TK, double> DM_gamma_only(ParaV, nspin);
+        module_dm::dm_from_psi(ParaV, wg, wfc, DM_gamma_only);
+        DM_gamma_only.init_dmr(this->gd, &ucell);
+        DM_gamma_only.cal_dmr(-1);
 
         for (int is = 0; is < nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(charge->rho[is], charge->nrxx);
         }
-        ModuleGint::cal_gint_rho(DM_gamma_only.get_DMR_vector(), nspin, charge->rho);
+        ModuleGint::cal_gint_rho(DM_gamma_only.get_dmr_vec(), nspin, charge->rho);
 
         if (XC_Functional::get_ked_flag())
         {
@@ -118,17 +118,17 @@ void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
     else
     {
         // calculate DMK and DMR
-        elecstate::DensityMatrix<TK, double> DM(ParaV, nspin, kv->kvec_d, nk_total);
-        elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
-        DM.init_DMR(this->gd, &ucell);
-        DM.cal_DMR();
+        module_dm::DensityMatrix<TK, double> DM(ParaV, nspin, kv->kvec_d, nk_total);
+        module_dm::dm_from_psi(ParaV, wg, wfc, DM);
+        DM.init_dmr(this->gd, &ucell);
+        DM.cal_dmr(-1);
 
         for (int is = 0; is < nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(charge->rho[is], charge->nrxx);
         }
 
-        ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin, charge->rho);
+        ModuleGint::cal_gint_rho(DM.get_dmr_vec(), nspin, charge->rho);
 
         if (XC_Functional::get_ked_flag())
         {

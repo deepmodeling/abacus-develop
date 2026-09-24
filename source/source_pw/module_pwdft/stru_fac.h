@@ -23,9 +23,13 @@ public:
 	// structure factor (ntype, ngmc)
     ModuleBase::ComplexMatrix strucFac;
 
+	/// @brief Calculate structure factors
+	/// @param has_float_data whether the Hamiltonian carries float data, which
+	///        decides if the single-precision eigts copies are built as well
 	void setup(const UnitCell* Ucell,
 			const Parallel_Grid& pgrid,
-			const ModulePW::PW_Basis* rho_basis); // Calculate structure factors
+			const ModulePW::PW_Basis* rho_basis,
+			const bool has_float_data);
 
     /// calculate structure factors through Cardinal B-spline interpolation
     void bspline_sf(

@@ -28,7 +28,7 @@ namespace module_charge
  *
  * The buffer cannot be allocated in Charge_Mixing::set_mixing(): its length
  * nnr (number of non-zero R-matrix elements) is only known after
- * DensityMatrix::init_DMR(), which runs later in beforescf().
+ * DensityMatrix::init_dmr(), which runs later in beforescf().
  *
  * @param mixing    mixing strategy object, non-null
  * @param mdata     mixing history buffer for DMR, resized and reset in place

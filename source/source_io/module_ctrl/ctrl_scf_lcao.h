@@ -26,7 +26,7 @@ void ctrl_scf_lcao(UnitCell& ucell,
                    const Input_para& inp,
                    K_Vectors& kv,
                    elecstate::ElecState* pelec,
-                   elecstate::DensityMatrix<TK, double>* dm, // mohan add 2025-11-04
+                   module_dm::DensityMatrix<TK, double>* dm, // mohan add 2025-11-04
                    Parallel_Orbitals& pv,
                    Grid_Driver& gd,
                    psi::Psi<TK>* psi,

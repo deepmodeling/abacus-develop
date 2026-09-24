@@ -16,7 +16,7 @@
 
 #ifdef __LCAO
 #include "source_estate/elecstate_lcao.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_dm/dm_from_psi.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
 #endif
 
@@ -134,8 +134,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
         hamilt::HamiltHSMatrix<std::complex<double>> hs(hamilt_t);
         hsolver_t.solve(hs, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->state_.nspin_, this->pelec->charge->rhopw->omega, true);
         // Note: although update_lambda() modifies lambda in-place above,
-        // solve() unconditionally recomputes DM and DMR (via cal_dm_psi +
-        // cal_DMR) from the psi obtained by diagonalizing with the new
+        // solve() unconditionally recomputes DM and DMR (via dm_from_psi +
+        // cal_dmr) from the psi obtained by diagonalizing with the new
         // lambda. Therefore the DMR used inside cal_mi_lcao() is consistent
         // with the updated lambda and is NOT stale.
         this->cal_mi_lcao(i_step);

@@ -68,7 +68,7 @@ class test_deepks
 
     std::vector<TH> dm;
     std::vector<std::vector<T>> dm_new;
-    elecstate::DensityMatrix<T, double>* p_elec_DM = nullptr;
+    module_dm::DensityMatrix<T, double>* p_elec_DM = nullptr;
 
     // preparation
     void preparation(bool use_modern_orbital_reader);

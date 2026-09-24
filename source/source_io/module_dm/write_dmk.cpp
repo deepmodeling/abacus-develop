@@ -62,12 +62,12 @@ void ModuleIO::dmk_readData(std::ifstream& ifs, std::complex<double>& data)
 
 template <typename T>
 bool ModuleIO::read_dmk(const int nspin,
-		const int nk,
-		const K_Vectors &kv,
-		const Parallel_2D& pv,
-		const std::string& dmk_dir,
-		std::vector<std::vector<T>>& dmk,
-		std::ofstream &ofs_running)
+        const int nk,
+        const K_Vectors &kv,
+        const Parallel_2D& pv,
+        const std::string& dmk_dir,
+        std::vector<std::vector<T>>& dmk,
+        std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "read_dmk");
     ModuleBase::timer::start("ModuleIO", "read_dmk");
@@ -180,13 +180,13 @@ bool ModuleIO::read_dmk(const int nspin,
 
 template <typename T>
 void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
-		const K_Vectors &kv,
-		const int precision,
-		const std::vector<double>& efs,
-		const UnitCell* ucell,
-		const Parallel_2D& pv,
-		const std::string& dmk_dir,
-		const int istep)
+        const K_Vectors &kv,
+        const int precision,
+        const std::vector<double>& efs,
+        const UnitCell* ucell,
+        const Parallel_2D& pv,
+        const std::string& dmk_dir,
+        const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "write_dmk");
     ModuleBase::timer::start("ModuleIO", "write_dmk");
@@ -237,7 +237,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
             if (my_rank == 0)
             {
                 std::string fn = dmk_dir
-			+ dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
+                    + dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
 
                 std::ofstream ofs(fn.c_str());
 
@@ -254,24 +254,24 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                 }
 
 
-		// information about density matrix at this k-point
-		ofs << " " << nspin << " # number of spin directions" << std::endl;
-                ofs << " " << ispin+1 << " # spin index" << std::endl; 
-		ofs << " " << kv.get_nkstot_nospin() << " # total k points " << std::endl;
-		ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
-		ofs << " " << ik+1 << " # k-point index " << std::endl;
-                ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z  
-			<< " # k point coordinate (Cartesian) " << std::endl;
-                ofs << " " << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z  
-			<< " # k point coordinate (direct) " << std::endl;
-		ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
+                // information about density matrix at this k-point
+                ofs << " " << nspin << " # number of spin directions" << std::endl;
+                ofs << " " << ispin+1 << " # spin index" << std::endl;
+                ofs << " " << kv.get_nkstot_nospin() << " # total k points " << std::endl;
+                ofs << " " << kv.get_nkstot() << " # total k points after symmetrized (if open) " << std::endl;
+                ofs << " " << ik+1 << " # k-point index " << std::endl;
+                ofs << " " << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z
+                    << " # k point coordinate (Cartesian) " << std::endl;
+                ofs << " " << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y << " " << kv.kvec_d[ik].z
+                    << " # k point coordinate (direct) " << std::endl;
+                ofs << " " << kv.wk[ik] << " # weight of this k point" << std::endl;
                 ofs << " " << efs[ispin] << " # Fermi energy in Ry " << std::endl;
-		ofs << " " << nlocal << " # number of localized basis " << std::endl;
-		ofs << " " << nlocal << " " << nlocal << " # size of this matrix " << std::endl; 
-		ofs << std::endl;
+                ofs << " " << nlocal << " # number of localized basis " << std::endl;
+                ofs << " " << nlocal << " " << nlocal << " # size of this matrix " << std::endl;
+                ofs << std::endl;
 
-		// write ucell
-		ModuleIO::UcellIO::write_ucell(ofs, ucell);
+                // write ucell
+                ModuleIO::UcellIO::write_ucell(ofs, ucell);
 
                 ofs << std::fixed;
                 ofs << std::scientific;
@@ -279,7 +279,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                 ofs << std::right;
                 for (int i = 0; i < nlocal; ++i)
                 {
-		    const size_t ii = i * nlocal;
+                    const size_t ii = i * nlocal;
                     for (int j = 0; j < nlocal; ++j)
                     {
                         if (std::is_same<double, T>::value)
@@ -321,36 +321,36 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 }
 
 template bool ModuleIO::read_dmk<double>(const int nspin,
-		const int nk,
-		const K_Vectors &kv,
-		const Parallel_2D& pv,
-		const std::string& dmk_dir,
-		std::vector<std::vector<double>>& dmk,
-		std::ofstream &ofs);
+        const int nk,
+        const K_Vectors &kv,
+        const Parallel_2D& pv,
+        const std::string& dmk_dir,
+        std::vector<std::vector<double>>& dmk,
+        std::ofstream &ofs);
 
 template bool ModuleIO::read_dmk<std::complex<double>>(const int nspin,
-		const int nk,
-		const K_Vectors &kv,
-		const Parallel_2D& pv,
-		const std::string& dmk_dir,
-		std::vector<std::vector<std::complex<double>>>& dmk,
-		std::ofstream &ofs);
+        const int nk,
+        const K_Vectors &kv,
+        const Parallel_2D& pv,
+        const std::string& dmk_dir,
+        std::vector<std::vector<std::complex<double>>>& dmk,
+        std::ofstream &ofs);
 
 template void ModuleIO::write_dmk<double>(const std::vector<std::vector<double>>& dmk,
-		const K_Vectors &kv,
-		const int precision,
-		const std::vector<double>& efs,
-		const UnitCell* ucell,
-		const Parallel_2D& pv,
-		const std::string& dmk_dir,
-		const int istep);
+        const K_Vectors &kv,
+        const int precision,
+        const std::vector<double>& efs,
+        const UnitCell* ucell,
+        const Parallel_2D& pv,
+        const std::string& dmk_dir,
+        const int istep);
 
 template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dmk,
-		const K_Vectors &kv,
-		const int precision,
-		const std::vector<double>& efs,
-		const UnitCell* ucell,
-		const Parallel_2D& pv,
-		const std::string& dmk_dir,
-		const int istep);
+        const K_Vectors &kv,
+        const int precision,
+        const std::vector<double>& efs,
+        const UnitCell* ucell,
+        const Parallel_2D& pv,
+        const std::string& dmk_dir,
+        const int istep);
 

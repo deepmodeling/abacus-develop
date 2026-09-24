@@ -85,7 +85,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              const Input_para& inp,
                              K_Vectors& kv,
                              elecstate::ElecState* pelec,
-                             elecstate::DensityMatrix<TK, double>* dm, // mohan add 2025-11-04
+                             module_dm::DensityMatrix<TK, double>* dm, // mohan add 2025-11-04
                              Parallel_Orbitals& pv,
                              Grid_Driver& gd,
                              psi::Psi<TK>* psi,
@@ -180,7 +180,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     {
         const int precision = inp.out_dmr[1];
 
-        ModuleIO::write_dmr(dm->get_DMR_vector(), &ucell, precision, pv, out_app_flag, 
+        ModuleIO::write_dmr(dm->get_dmr_vec(), &ucell, precision, pv, out_app_flag, 
 			ucell.get_iat2iwt(), ucell.nat, istep);
     }
 
@@ -196,7 +196,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         }
         const int precision = inp.out_dmk[1];
 
-        ModuleIO::write_dmk(dm->get_DMK_vector(), kv, precision, efermis, &(ucell), pv, global_out_dir, istep);
+        ModuleIO::write_dmk(dm->get_dmk_vec(), kv, precision, efermis, &(ucell), pv, global_out_dir, istep);
     }
 
     //------------------------------------------------------------------
@@ -303,7 +303,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
     if (inp.out_dm_npz)
     {
-        const std::vector<hamilt::HContainer<double>*>& dmr_vec = dm->get_DMR_vector();
+        const std::vector<hamilt::HContainer<double>*>& dmr_vec = dm->get_dmr_vec();
         for (int ispin = 0; ispin < dmr_vec.size(); ++ispin)
         {
             std::string zipname
@@ -401,7 +401,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
             // The Veff Hellmann-Feynman terms need these (V^H sums spins, V^XC is spin-resolved).
             for (int is = 1; is <= PARAM.inp.nspin; ++is)
             {
-                dh_params.dmR.push_back(dm->get_DMR_pointer(is));
+                dh_params.dmR.push_back(dm->get_dmr_ptr(is));
             }
         }
 #ifdef __EXX
@@ -621,7 +621,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     // mohan add 2025-10-24
     //    if (inp.out_elf[0] > 0)
     //	{
-    //		LCAO_domain::dm2tau(pelec->DM->get_DMR_vector(), inp.nspin, pelec->charge);
+    //		LCAO_domain::dm2tau(pelec->DM->get_dmr_vec(), inp.nspin, pelec->charge);
     //	}
 
 #ifdef __EXX
@@ -747,7 +747,7 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
     const Input_para& inp,
     K_Vectors& kv,
     elecstate::ElecState* pelec,
-    elecstate::DensityMatrix<double, double>* dm, // mohan add 2025-11-04
+    module_dm::DensityMatrix<double, double>* dm, // mohan add 2025-11-04
     Parallel_Orbitals& pv,
     Grid_Driver& gd,
     psi::Psi<double>* psi,
@@ -776,7 +776,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
     const Input_para& inp,
     K_Vectors& kv,
     elecstate::ElecState* pelec,
-    elecstate::DensityMatrix<std::complex<double>, double>* dm, // mohan add 2025-11-04
+    module_dm::DensityMatrix<std::complex<double>, double>* dm, // mohan add 2025-11-04
     Parallel_Orbitals& pv,
     Grid_Driver& gd,
     psi::Psi<std::complex<double>>* psi,
@@ -804,7 +804,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
     const Input_para& inp,
     K_Vectors& kv,
     elecstate::ElecState* pelec,
-    elecstate::DensityMatrix<std::complex<double>, double>* dm, // mohan add 2025-11-04
+    module_dm::DensityMatrix<std::complex<double>, double>* dm, // mohan add 2025-11-04
     Parallel_Orbitals& pv,
     Grid_Driver& gd,
     psi::Psi<std::complex<double>>* psi,

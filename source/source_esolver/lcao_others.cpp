@@ -6,7 +6,7 @@
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_charge/chg_symm.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_dm/dm_from_psi.h"
 #include "source_hamilt/module_gint/gint.h"
 #include "source_io/module_chgpot/get_pchg_lcao.h"
 #include "source_io/module_hs/write_hs_r.h"

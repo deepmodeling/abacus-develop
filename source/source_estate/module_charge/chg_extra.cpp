@@ -77,7 +77,8 @@ void Charge_Extra::extrapolate_charge(
     Structure_Factor* sf,
     std::ofstream& ofs_running,
     std::ofstream& ofs_warning,
-    const AtomicRhoCfg& atomic_rho_cfg)
+    const AtomicRhoCfg& atomic_rho_cfg,
+    const bool has_float_data)
 {
     ModuleBase::TITLE("Charge_Extra","extrapolate_charge");
     ModuleBase::timer::start("Charge_Extra", "extrapolate_charge");
@@ -104,7 +105,7 @@ void Charge_Extra::extrapolate_charge(
     rho_extr = std::min(istep, pot_order);
     if(rho_extr == 0)
     {
-        sf->setup(&ucell, *Pgrid, &rhopw);
+        sf->setup(&ucell, *Pgrid, &rhopw, has_float_data);
         ofs_running << " charge density from previous step !" << std::endl;
         ModuleBase::timer::end("Charge_Extra", "extrapolate_charge");
         return;
@@ -167,7 +168,7 @@ void Charge_Extra::extrapolate_charge(
         }
     }
 
-    sf->setup(&ucell, *Pgrid, &rhopw);
+    sf->setup(&ucell, *Pgrid, &rhopw, has_float_data);
     std::vector<std::vector<double>> rho_atom(this->nspin,
         std::vector<double>(rhopw.nrxx));
     std::vector<double*> rho_atom_ptr(this->nspin);

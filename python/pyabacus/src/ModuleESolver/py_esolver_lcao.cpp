@@ -346,7 +346,7 @@ template class PyHamiltonianAccessor<std::complex<double>, double>;
 // ============================================================================
 
 template <typename TK, typename TR>
-void PyDensityMatrixAccessor<TK, TR>::set_from_dm(elecstate::DensityMatrix<TK, TR>* dm)
+void PyDensityMatrixAccessor<TK, TR>::set_from_dm(module_dm::DensityMatrix<TK, TR>* dm)
 {
     dm_ptr_ = dm;
 
@@ -358,9 +358,9 @@ void PyDensityMatrixAccessor<TK, TR>::set_from_dm(elecstate::DensityMatrix<TK, T
         return;
     }
 
-    nks_ = dm->get_DMK_nks();
-    nrow_ = dm->get_DMK_nrow();
-    ncol_ = dm->get_DMK_ncol();
+    nks_ = dm->get_dmk_nks();
+    nrow_ = dm->get_dmk_nrow();
+    ncol_ = dm->get_dmk_ncol();
 
     // Initialize pointer arrays for compatibility mode
     dmk_ptrs_.resize(nks_, nullptr);
@@ -385,7 +385,7 @@ void PyDensityMatrixAccessor<TK, TR>::set_DMK_data(int ik, const TK* data)
 }
 
 template <typename TK, typename TR>
-py::array_t<TK> PyDensityMatrixAccessor<TK, TR>::get_DMK(int ik) const
+py::array_t<TK> PyDensityMatrixAccessor<TK, TR>::get_dmk(int ik) const
 {
     if (!is_valid() || ik < 0 || ik >= nks_)
     {
@@ -414,7 +414,7 @@ std::vector<py::array_t<TK>> PyDensityMatrixAccessor<TK, TR>::get_DMK_all() cons
     std::vector<py::array_t<TK>> result;
     for (int ik = 0; ik < nks_; ++ik)
     {
-        result.push_back(get_DMK(ik));
+        result.push_back(get_dmk(ik));
     }
     return result;
 }
@@ -797,7 +797,7 @@ void bind_density_matrix_accessor(py::module& m, const std::string& suffix)
             "Number of rows in density matrix")
         .def_property_readonly("ncol", &DMAccessor::get_ncol,
             "Number of columns in density matrix")
-        .def("get_DMK", &DMAccessor::get_DMK,
+        .def("get_dmk", &DMAccessor::get_dmk,
             R"pbdoc(
             Get DM(k) for specific k-point.
 
