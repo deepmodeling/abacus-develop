@@ -23,8 +23,8 @@
 #include "source_estate/module_charge/chg_routine.h" // use charge mixing, mohan add 20251006
 #include "source_estate/module_dm/dm_routine.h" // init dm from electronic wave functions
 #include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
-#include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
-#include "source_io/module_ctrl/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
+#include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao()
+#include "source_io/module_ctrl/ctrl_iter_lcao.h" // use ctrl_iter_lcao()
 #include "source_io/module_ctrl/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
 #include "source_io/module_output/print_info.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
@@ -269,8 +269,10 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
 
     deepks.dpks_out_type = "tot";  // for deepks method
 
-    FSCalcConfig fs_cfg{this->inp_->nspin, this->inp_->nbands, this->inp_->t_in_h,
-                        this->inp_->sc_mag_switch, this->inp_->device};
+    const FSCalcConfig fs_cfg{this->inp_->nspin, this->inp_->nbands, this->inp_->t_in_h,
+                        this->inp_->sc_mag_switch, this->inp_->device,
+                        PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
+                        PARAM.globalv.gamma_only_pw};
 
     fsl.getForceStress(ucell, this->get_vdw_result(), this->inp_->cal_force, this->inp_->cal_stress,
                        this->inp_->test_force, this->inp_->test_stress,
@@ -331,7 +333,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(BaseCell& basecell)
     }
 
     ModuleIO::ctrl_runner_lcao<TK, TR>(ucell,
-		    *this->inp_, this->kv, this->pelec, this->dmat, this->pv, this->Pgrid, 
+		    *this->inp_, this->kv, this->pelec, this->dmat, this->pv, this->Pgrid,
 		    this->gd, this->psi, this->chr, hamilt_lcao,
 		    this->two_center_bundle_,
 		    this->orb_, this->pw_rho, this->pw_rhod,
@@ -388,7 +390,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 		{
 			// the following steps are only needed in the first outer exx loop
 			exx_two_level_step
-				= exx_info_.info_ri.real_number ? 
+				= exx_info_.info_ri.real_number ?
                   this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
 		}
 #endif
@@ -563,7 +565,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 
     // call iter_finish() of ESolver_KS, where band gap is printed,
     // eig and occ are printed, magnetization is calculated,
-    // charge mixing is performed, potential is updated, 
+    // charge mixing is performed, potential is updated,
     // HF and kS energies are computed, meta-GGA, Jason and restart
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
     const bool precision_switched = this->gint_precision_controller_.update_after_iteration(this->drho, this->scf_thr);
@@ -604,8 +606,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 
     // control the output related to the finished iteration
     ModuleIO::ctrl_iter_lcao<TK, TR>(ucell, *this->inp_, this->kv, this->pelec, *this->dmat.dm,
-      this->pv, this->gd, this->psi, this->chr, this->p_chgmix, 
-      hamilt_lcao, this->orb_, this->deepks, 
+      this->pv, this->gd, this->psi, this->chr, this->p_chgmix,
+      hamilt_lcao, this->orb_, this->deepks,
       this->exx_nao, this->exx_info_, iter, istep, conv_esolver, this->scf_ene_thr);
 }
 

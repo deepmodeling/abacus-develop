@@ -27,7 +27,12 @@
 
 
 template <typename FPTYPE, typename Device>
-void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
+void Forces<FPTYPE, Device>::cal_force(const int nspin,
+                                       const bool domag,
+                                       const bool domag_z,
+                                       const int gga_grad,
+                   const bool use_onsite_projection,
+                                       UnitCell& ucell,
                                        ModuleBase::matrix& force,
                                        const vdw::VdwResult* vdw_result,
                                        const elecstate::ElecState& elec,
@@ -77,14 +82,15 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
 
         // DFT+U and DeltaSpin
         // here maybe a bug when OFDFT calls +U, mohan add 20251107
-        if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+        if(use_onsite_projection)
         {
             this->cal_force_onsite(forceonsite, wg, wfc_basis, ucell, *p_dftu, psi_in);
         }
     }
 
     // non-linear core correction
-    Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, ucell);
+    Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, ucell,
+        nspin, domag, domag_z, gga_grad);
 
     // force due to core charge
     this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp->numeric, ucell);
@@ -135,7 +141,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     if (PARAM.inp.imp_sol)
     {
         forcesol.create(this->nat, 3);
-        solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, PARAM.inp.nspin, forcesol);
+        solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, nspin, forcesol);
         if (PARAM.inp.test_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "IMP_SOL      FORCE (Ry/Bohr)", forcesol);
@@ -174,7 +180,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                     force(iat, ipol) = force(iat, ipol) + forcesol(iat, ipol);
                 }
 
-                if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+                if(use_onsite_projection)
                 {
                     force(iat, ipol) += forceonsite(iat, ipol);
                 }
@@ -261,7 +267,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                                   forcesol,
                                   false);
         }
-        if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+        if (use_onsite_projection)
         {
             ModuleIO::print_force(GlobalV::ofs_running,
                                   ucell,

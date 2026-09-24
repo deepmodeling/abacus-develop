@@ -2,6 +2,8 @@ add_library(
     xc_
     OBJECT
     xc_functional.cpp
+    xc_functional_ncgga_sf.cpp
+    xc_ncgga_radial.cpp
     xc_pot.cpp
     xc_grad.cpp
     xc_grad_prepare.cpp

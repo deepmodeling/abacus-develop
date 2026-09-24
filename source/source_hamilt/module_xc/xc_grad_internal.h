@@ -41,6 +41,7 @@ struct GradCorrParams
     bool igcc_is_lyp;
     bool domag;
     bool domag_z;
+    int gga_grad;
     double hybrid_alpha;
     double hse_omega;
     bool use_libxc;

@@ -39,6 +39,10 @@ struct FSCalcConfig
     bool t_in_h;
     bool sc_mag_switch;
     std::string device;
+    bool domag;
+    bool domag_z;
+    int gga_grad;
+    bool gamma_only_pw;
 };
 
 // Force/stress component matrices assembled by getForceStress. Grouping them
@@ -168,7 +172,7 @@ class Force_Stress_LCAO
                         ModulePW::PW_Basis* rhopw,
                         const pseudopot_cell_vl& locpp,
                         const Structure_Factor& sf,
-                        const std::string& device);
+                        const FSCalcConfig& cfg);
 
     static double force_invalid_threshold_ev;
 };

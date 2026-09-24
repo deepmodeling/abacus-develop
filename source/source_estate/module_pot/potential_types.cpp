@@ -33,7 +33,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     }
     else if (pot_type == "xc")
     {
-        return new PotXC(this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
+        return new PotXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
     }
     else if (pot_type == "surchem")
     {
