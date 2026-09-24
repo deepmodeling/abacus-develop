@@ -25,7 +25,7 @@ class Matrix_Orbs21
         const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A2,
         const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B,
         const UnitCell& ucell,
-        const LCAO_Orbitals& orb, 
+        const LCAO_Orbitals& orb,
         const double kmesh_times);       // extend Kcut, keep dK
 
     void init_radial_table();
@@ -67,7 +67,7 @@ class Matrix_Orbs21
                                const ModuleBase::Element_Basis_Index::IndexLNM& index_A1,
                                const ModuleBase::Element_Basis_Index::IndexLNM& index_A2,
                                const ModuleBase::Element_Basis_Index::IndexLNM& index_B) const;
-    
+
     std::shared_ptr<ORB_gaunt_table> MGT;
 
   private:

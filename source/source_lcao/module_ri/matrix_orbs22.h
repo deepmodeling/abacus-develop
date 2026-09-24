@@ -90,7 +90,7 @@ class Matrix_Orbs22
         const ModuleBase::Element_Basis_Index::IndexLNM& index_A2,
         const ModuleBase::Element_Basis_Index::IndexLNM& index_B1,
         const ModuleBase::Element_Basis_Index::IndexLNM& index_B2) const;
-    
+
     std::shared_ptr<ORB_gaunt_table> MGT;
 
   private:
