@@ -148,11 +148,11 @@ auto Gaussian_Abfs::get_Vq_2d(const int& lp_max,
                               const ModuleBase::realArray& gaunt) -> RI::Tensor<std::complex<double>>
 {
     ModuleBase::TITLE("Gaussian_Abfs", "get_Vq_2d");
-    ModuleBase::timer::tick("Gaussian_Abfs", "get_Vq_2d");
+    ModuleBase::timer::start("Gaussian_Abfs", "get_Vq_2d");
 
     auto res = this->DPcal_Vq_2d(lp_max, lq_max, ik, chi2d, tau, gaunt);
 
-    ModuleBase::timer::tick("Gaussian_Abfs", "get_Vq_2d");
+    ModuleBase::timer::end("Gaussian_Abfs", "get_Vq_2d");
     return res;
 }
 

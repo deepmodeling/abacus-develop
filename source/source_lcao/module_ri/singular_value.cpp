@@ -272,7 +272,7 @@ double cal_massidda_2d(const UnitCell& ucell,
                        const double& eps)
 {
     ModuleBase::TITLE("Singular_Value", "cal_massidda_2d");
-    ModuleBase::timer::tick("Singular_Value", "cal_massidda_2d");
+    ModuleBase::timer::start("Singular_Value", "cal_massidda_2d");
 
     if (nmp[2] != 1)
     {
@@ -317,7 +317,7 @@ double cal_massidda_2d(const UnitCell& ucell,
         ModuleBase::WARNING_QUIT("Singular_Value::cal_massidda_2d", "not converged!");
     }
 
-    ModuleBase::timer::tick("Singular_Value", "cal_massidda_2d");
+    ModuleBase::timer::end("Singular_Value", "cal_massidda_2d");
     return val_extra;
 }
 

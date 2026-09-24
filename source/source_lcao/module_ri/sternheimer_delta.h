@@ -270,9 +270,11 @@ std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_ma
     const SternheimerFDHamiltonian::Vector& occupied_wavefunction,
     double volume_element);
 
-SternheimerDeltaFixedSubspace build_delta_sternheimer_fixed_subspace(
-    const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
-    const std::vector<SternheimerDeltaVirtualState>& virtual_states);
+std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_matrix_elements(
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const SternheimerFDHamiltonian::Vector& perturbation_potential,
+    const SternheimerFDHamiltonian::Vector& occupied_wavefunction,
+    double volume_element);
 
 SternheimerDeltaFixedSubspace build_delta_sternheimer_fixed_subspace(
     const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
@@ -283,9 +285,8 @@ SternheimerDeltaFixedSubspace build_delta_sternheimer_fixed_subspace(
 SternheimerFDHamiltonian::Vector build_delta_sternheimer_sos_wavefunction(
     const std::vector<SternheimerDeltaVirtualState>& virtual_states,
     const std::vector<SternheimerFDHamiltonian::Complex>& perturbation_matrix_elements,
-    double omega,
-    double volume_element,
-    const SternheimerRPA::SolverOptions& options = SternheimerRPA::SolverOptions());
+    double occupied_eigenvalue,
+    double omega);
 
 // All overloads use the supplied perturbation elements for the AO-block rhs (-g).
 // Only Q*rhs is taken from the grid. The reconstructed residual checks this hybrid equation.

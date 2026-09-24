@@ -13,7 +13,7 @@ struct Exx_Info
 
     struct Exx_Info_RI
     {
-        const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param;
+        std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>> coulomb_param;
 
         bool real_number = false;
         bool coul_moment = false;
@@ -53,13 +53,17 @@ struct Exx_Info
 
         int abfs_Lmax = 0; // tmp
 
-        Exx_Info_RI(const Exx_Info::Exx_Info_Global& info_global)
+        Exx_Info_RI(const Exx_Info_Global& info_global)
             : coulomb_param(info_global.coulomb_param)
         {
         }
     };
     Exx_Info_RI info_ri;
     Exx_Info_Opt_ABFs info_opt_abfs;
+
+    Exx_Info() : info_global(), info_lip(), info_ri(info_global), info_opt_abfs()
+    {
+    }
 
     void sync_from_global()
     {
@@ -75,5 +79,10 @@ struct Input_para;
 /// Initialize an Exx_Info object from input parameters.
 /// Returns true if opt_orb mode is requested (generate_opt_orb).
 bool init_exx_info(Exx_Info& exx_info, const Input_para& inp);
+
+namespace GlobalC
+{
+extern Exx_Info exx_info;
+}
 
 #endif

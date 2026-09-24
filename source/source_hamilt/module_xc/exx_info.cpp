@@ -1,6 +1,11 @@
 #include "exx_info.h"
 #include "general_exx_info.h"
 
+namespace GlobalC
+{
+Exx_Info exx_info;
+}
+
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_quit.h"

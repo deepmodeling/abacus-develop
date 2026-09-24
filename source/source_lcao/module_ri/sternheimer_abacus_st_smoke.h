@@ -61,133 +61,12 @@ struct SternheimerLCAOOccupiedKPoint
     std::vector<double> eigenvalues;
     std::vector<double> occupations;
     std::vector<std::vector<std::complex<double>>> coefficients;
+    std::vector<double> unoccupied_eigenvalues;
     std::vector<std::vector<std::complex<double>>> unoccupied_coefficients;
 };
 
-enum class SternheimerLCAOVirtualSource
-{
-    ProjectedAO,
-    KSBands
-};
-
-inline SternheimerLCAOVirtualSource parse_sternheimer_lcao_virtual_source(std::string value)
-{
-    std::transform(value.begin(), value.end(), value.begin(), [](const unsigned char character) {
-        return static_cast<char>(std::tolower(character));
-    });
-    if (value.empty() || value == "ks_bands")
-    {
-        return SternheimerLCAOVirtualSource::KSBands;
-    }
-    if (value == "projected_ao")
-    {
-        return SternheimerLCAOVirtualSource::ProjectedAO;
-    }
-    throw std::invalid_argument(
-        "Sternheimer LCAO virtual source must be projected_ao or ks_bands.");
-}
-
-inline int expected_sternheimer_ks_virtual_states(const int unoccupied_bands, const int max_virtual_states)
-{
-    if (unoccupied_bands <= 0 || max_virtual_states < 0)
-    {
-        throw std::invalid_argument("Sternheimer KS virtual-state dimensions must be positive and non-negative.");
-    }
-    return max_virtual_states > 0 ? std::min(unoccupied_bands, max_virtual_states) : unoccupied_bands;
-}
-
-inline void validate_sternheimer_ks_virtual_subspace(const int spin_index_one_based,
-                                                      const int expected_states,
-                                                      const int accepted_candidates,
-                                                      const int virtual_states)
-{
-    if (expected_states <= 0 || accepted_candidates != expected_states || virtual_states != expected_states)
-    {
-        std::ostringstream message;
-        message << "Sternheimer ks_bands virtual subspace dimension mismatch for spin " << spin_index_one_based
-                << ": expected " << expected_states << ", accepted " << accepted_candidates << ", built "
-                << virtual_states << ". Refusing to continue with a silently incomplete or overcomplete subspace.";
-        throw std::runtime_error(message.str());
-    }
-}
-
-inline std::string sternheimer_lcao_virtual_source_name(const SternheimerLCAOVirtualSource source)
-{
-    switch (source)
-    {
-    case SternheimerLCAOVirtualSource::ProjectedAO:
-        return "projected_ao";
-    case SternheimerLCAOVirtualSource::KSBands:
-        return "ks_bands";
-    }
-    throw std::invalid_argument("Unknown Sternheimer LCAO virtual source.");
-}
-
-inline bool sternheimer_uses_lcao_zero_order(const bool use_delta_sternheimer)
-{
-    return use_delta_sternheimer;
-}
-
-inline bool sternheimer_builds_product_pca_auxiliary_basis(
-    const std::vector<std::string>& explicit_abfs_files)
-{
-    return explicit_abfs_files.empty();
-}
-
-inline std::string sternheimer_abfs_perturbation_source(
-    const std::vector<std::string>& explicit_abfs_files)
-{
-    return sternheimer_builds_product_pca_auxiliary_basis(explicit_abfs_files) ? "product_pca"
-                                                                               : "explicit_abfs";
-}
-
-inline int sternheimer_lcao_physical_spin_channel_count(const int nspin)
-{
-    if (nspin == 1)
-    {
-        return 1;
-    }
-    if (nspin == 2)
-    {
-        return 2;
-    }
-    throw std::invalid_argument("Sternheimer LCAO response supports only collinear nspin=1 or nspin=2.");
-}
-
-inline void validate_sternheimer_lcao_gamma_layout(const int nspin,
-                                                   const int local_k_rows,
-                                                   const int total_k_rows,
-                                                   const std::vector<std::array<double, 3>>& reduced_kpoints,
-                                                   const double tolerance = 1.0e-10)
-{
-    if (tolerance < 0.0)
-    {
-        throw std::invalid_argument("Sternheimer LCAO Gamma-point tolerance must be non-negative.");
-    }
-    const int expected_rows = sternheimer_lcao_physical_spin_channel_count(nspin);
-    if (local_k_rows != expected_rows || total_k_rows != expected_rows
-        || reduced_kpoints.size() != static_cast<std::size_t>(expected_rows))
-    {
-        throw std::invalid_argument(
-            "Sternheimer LCAO response currently requires exactly one Gamma point per physical spin channel.");
-    }
-    for (const auto& kpoint: reduced_kpoints)
-    {
-        for (const double component: kpoint)
-        {
-            if (!std::isfinite(component) || std::abs(component - std::round(component)) > tolerance)
-            {
-                throw std::invalid_argument(
-                    "Sternheimer LCAO response currently supports only Gamma-point calculations.");
-            }
-        }
-    }
-}
-
-inline void validate_sternheimer_lcao_occupied_channels(
-    const std::vector<SternheimerLCAOOccupiedChannel>& channels,
-    const int spin_channel_count,
-    const int basis_size)
+inline const SternheimerReducedKPoint& sternheimer_lcao_grid_kpoint(
+    const SternheimerLCAOOccupiedKPoint& record)
 {
     return record.has_grid_kpoint_override ? record.grid_kpoint : record.kpoint;
 }
@@ -1409,15 +1288,23 @@ inline void validate_sternheimer_lcao_occupied_kpoints(
     }
 }
 
-inline int sternheimer_lcao_total_unoccupied_bands(
-    const std::vector<SternheimerLCAOOccupiedChannel>& channels)
+inline void validate_sternheimer_full_lcao_occupied_kpoints(
+    const std::vector<SternheimerLCAOOccupiedKPoint>& records,
+    const int zero_order_kpoint_count,
+    const int spin_channel_count,
+    const int basis_size)
 {
-    int count = 0;
-    for (const SternheimerLCAOOccupiedChannel& channel: channels)
+    if (zero_order_kpoint_count <= 0)
     {
-        count += static_cast<int>(channel.unoccupied_coefficients.size());
+        throw std::invalid_argument("Sternheimer LCAO zero-order k-point count must be positive.");
     }
-    return count;
+    const int full_kpoint_count = static_cast<int>(records.size());
+    validate_sternheimer_lcao_occupied_kpoints(records,
+                                               full_kpoint_count,
+                                               full_kpoint_count,
+                                               spin_channel_count,
+                                               basis_size,
+                                               zero_order_kpoint_count);
 }
 
 inline int sternheimer_lcao_total_occupied_bands(
@@ -1431,38 +1318,34 @@ inline int sternheimer_lcao_total_occupied_bands(
     return count;
 }
 
-inline std::vector<int> sternheimer_lcao_spin_indices(
-    const std::vector<SternheimerLCAOOccupiedChannel>& channels)
+inline double sternheimer_lcao_weighted_occupation(const SternheimerLCAOOccupiedKPoint& record,
+                                                   const int band_index)
 {
-    std::vector<int> indices;
-    indices.reserve(channels.size());
-    for (const SternheimerLCAOOccupiedChannel& channel: channels)
+    if (band_index < 0 || band_index >= static_cast<int>(record.occupations.size()))
     {
-        indices.push_back(channel.spin_index);
+        throw std::out_of_range("Sternheimer LCAO occupied band index is out of range.");
     }
-    return indices;
+    return record.kweight * record.occupations[static_cast<std::size_t>(band_index)];
 }
 
-inline std::vector<int> sternheimer_lcao_occupied_bands_per_spin(
-    const std::vector<SternheimerLCAOOccupiedChannel>& channels)
+inline double sternheimer_supercell_sector_kweight(const double supercell_kweight,
+                                                   const int primitive_cell_count)
 {
-    std::vector<int> counts;
-    counts.reserve(channels.size());
-    for (const SternheimerLCAOOccupiedChannel& channel: channels)
+    if (!std::isfinite(supercell_kweight) || supercell_kweight <= 0.0
+        || primitive_cell_count <= 0)
     {
-        counts.push_back(static_cast<int>(channel.coefficients.size()));
+        throw std::invalid_argument("Invalid supercell translation-sector k-point weight.");
     }
-    return counts;
+    return supercell_kweight / static_cast<double>(primitive_cell_count);
 }
 
-inline std::vector<int> sternheimer_lcao_unoccupied_bands_per_spin(
-    const std::vector<SternheimerLCAOOccupiedChannel>& channels)
+inline double sternheimer_supercell_response_matrix_scale(
+    const bool full_supercell_response,
+    const int primitive_cell_count)
 {
-    std::vector<int> counts;
-    counts.reserve(channels.size());
-    for (const SternheimerLCAOOccupiedChannel& channel: channels)
+    if (!full_supercell_response)
     {
-        counts.push_back(static_cast<int>(channel.unoccupied_coefficients.size()));
+        return 1.0;
     }
     if (primitive_cell_count <= 0)
     {

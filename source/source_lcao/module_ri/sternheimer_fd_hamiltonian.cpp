@@ -53,7 +53,15 @@ SternheimerFDHamiltonian::SternheimerFDHamiltonian(
     bool has_nonzero_twist = false;
     for (const double coordinate: grid_.kpoint)
     {
-        throw std::invalid_argument("SternheimerFDHamiltonian finite-difference order must be 2, 4, 6, or 8.");
+        if (!std::isfinite(coordinate))
+        {
+            throw std::invalid_argument("SternheimerFDHamiltonian requires finite reduced k-point coordinates.");
+        }
+        has_nonzero_twist = has_nonzero_twist || coordinate != 0.0;
+    }
+    if (!grid_.periodic && has_nonzero_twist)
+    {
+        throw std::invalid_argument("SternheimerFDHamiltonian nonperiodic grids cannot use a Bloch twist.");
     }
     if (nonlocal_projector_ != nullptr && nonlocal_projector_->grid_size() != grid_.size())
     {
@@ -135,7 +143,7 @@ int SternheimerFDHamiltonian::finite_difference_order() const
 
 const SternheimerReducedKPoint& SternheimerFDHamiltonian::kpoint() const
 {
-    return finite_difference_order_;
+    return grid_.kpoint;
 }
 
 const SternheimerFDNonlocalProjector* SternheimerFDHamiltonian::nonlocal_projector() const
@@ -662,7 +670,7 @@ void SternheimerFDHamiltonian::apply_nonlocal(const Vector& psi, Vector& nonloca
     nonlocal_psi.assign(psi.size(), Complex(0.0, 0.0));
     if (nonlocal_projector_ != nullptr)
     {
-        nonlocal_projector_->add_to(psi, hpsi);
+        nonlocal_projector_->add_to(psi, nonlocal_psi);
     }
 }
 

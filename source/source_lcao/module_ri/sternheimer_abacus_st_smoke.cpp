@@ -61,7 +61,8 @@
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
-#include <memory>
+#include <iterator>
+#include <limits>
 #include <map>
 #include <memory>
 #include <limits>
@@ -924,7 +925,8 @@ void read_sternheimer_orbitals(const UnitCell& ucell, LCAO_Orbitals& orb)
              PARAM.inp.lcao_dr,
              PARAM.inp.lcao_rmax,
              PARAM.globalv.deepks_setorb,
-             PARAM.inp.out_mat_r,
+             PARAM.inp.out_mat_r[0],
+             PARAM.inp.out_element_info,
              PARAM.inp.cal_force,
              GlobalV::MY_RANK);
 }
@@ -937,114 +939,12 @@ std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std
 
 struct SternheimerABFSInput
 {
-    std::vector<SternheimerABFGridChannel> channels;
-    std::vector<double> full_coulomb_metric;
     std::vector<std::vector<SternheimerRadialPerturbation>> radials_by_type;
     std::vector<int> atom_types;
     std::vector<ModuleBase::Vector3<double>> atom_positions;
 };
 
-std::vector<double> build_molecular_coulomb_metric(
-    const UnitCell& ucell,
-    const LCAO_Orbitals& orb,
-    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_ccp,
-    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs,
-    const std::vector<SternheimerABFGridChannel>& channels)
-{
-    const ModuleBase::Element_Basis_Index::Range range_ccp
-        = ModuleBase::Element_Basis_Index::construct_range(abfs_ccp);
-    const ModuleBase::Element_Basis_Index::Range range_abfs
-        = ModuleBase::Element_Basis_Index::construct_range(abfs);
-    const ModuleBase::Element_Basis_Index::IndexLNM index_ccp
-        = ModuleBase::Element_Basis_Index::construct_index(range_ccp);
-    const ModuleBase::Element_Basis_Index::IndexLNM index_abfs
-        = ModuleBase::Element_Basis_Index::construct_index(range_abfs);
-    if (index_ccp.size() != index_abfs.size())
-    {
-        throw std::runtime_error("Sternheimer Coulomb metric ABFS type counts do not match.");
-    }
-    for (std::size_t type = 0; type != index_ccp.size(); ++type)
-    {
-        if (index_ccp[type].count_size != index_abfs[type].count_size)
-        {
-            throw std::runtime_error("Sternheimer Coulomb metric ABFS channel counts do not match.");
-        }
-    }
-
-    std::vector<std::size_t> atom_offsets;
-    std::vector<int> atom_types;
-    std::vector<int> atom_local_indices;
-    atom_offsets.reserve(static_cast<std::size_t>(ucell.nat));
-    atom_types.reserve(static_cast<std::size_t>(ucell.nat));
-    atom_local_indices.reserve(static_cast<std::size_t>(ucell.nat));
-    std::size_t total_dimension = 0;
-    for (int type = 0; type != ucell.ntype; ++type)
-    {
-        for (int atom = 0; atom != ucell.atoms[type].na; ++atom)
-        {
-            atom_offsets.push_back(total_dimension);
-            atom_types.push_back(type);
-            atom_local_indices.push_back(atom);
-            total_dimension += index_abfs[static_cast<std::size_t>(type)].count_size;
-        }
-    }
-    if (total_dimension != channels.size())
-    {
-        throw std::runtime_error("Sternheimer Coulomb metric dimension does not match sampled ABFS channels.");
-    }
-    for (const SternheimerABFGridChannel& channel: channels)
-    {
-        const std::size_t atom = static_cast<std::size_t>(channel.atom_index);
-        if (atom >= atom_offsets.size()
-            || atom_offsets[atom] + static_cast<std::size_t>(channel.atom_local_index)
-                   != static_cast<std::size_t>(channel.channel_index))
-        {
-            throw std::runtime_error("Sternheimer Coulomb metric channel ordering is inconsistent with ABFS indices.");
-        }
-    }
-
-    Matrix_Orbs11 metric_builder;
-    metric_builder.init(abfs_ccp, abfs, ucell, orb, GlobalC::exx_info.info_ri.kmesh_times);
-    metric_builder.init_radial_table();
-    std::vector<double> metric(total_dimension * total_dimension, 0.0);
-    for (std::size_t atom_a = 0; atom_a != atom_offsets.size(); ++atom_a)
-    {
-        const std::size_t type_a = static_cast<std::size_t>(atom_types[atom_a]);
-        const auto& tau_a = ucell.atoms[type_a].tau[static_cast<std::size_t>(atom_local_indices[atom_a])];
-        const std::size_t count_a = index_ccp[type_a].count_size;
-        for (std::size_t atom_b = 0; atom_b != atom_offsets.size(); ++atom_b)
-        {
-            const std::size_t type_b = static_cast<std::size_t>(atom_types[atom_b]);
-            const auto& tau_b = ucell.atoms[type_b].tau[static_cast<std::size_t>(atom_local_indices[atom_b])];
-            const std::size_t count_b = index_abfs[type_b].count_size;
-            const RI::Tensor<double> block
-                = metric_builder.cal_overlap_matrix<double>(type_a,
-                                                             type_b,
-                                                             tau_a,
-                                                             tau_b,
-                                                             index_ccp,
-                                                             index_abfs,
-                                                             Matrix_Orbs11::Matrix_Order::AB);
-            for (std::size_t local_a = 0; local_a != count_a; ++local_a)
-            {
-                for (std::size_t local_b = 0; local_b != count_b; ++local_b)
-                {
-                    metric[(atom_offsets[atom_a] + local_a) * total_dimension
-                           + atom_offsets[atom_b] + local_b]
-                        = block(local_a, local_b);
-                }
-            }
-        }
-    }
-    return metric;
-}
-
-SternheimerABFBuildData build_abfs_ccp_data(const UnitCell& ucell,
-                                             const SternheimerFDHamiltonian::Grid& grid,
-                                             const int max_channels,
-                                             const double pca_threshold,
-                                             const double ccp_rmesh_times,
-                                             const bool build_coulomb_metric)
+SternheimerOrbitalSet build_sternheimer_abfs(const UnitCell& ucell, const double pca_threshold)
 {
     LCAO_Orbitals orb;
     read_sternheimer_orbitals(ucell, orb);
@@ -1471,26 +1371,21 @@ std::vector<SternheimerABFGridChannel> build_abfs_ccp_grid_channels(const UnitCe
                                                                     const double pca_threshold,
                                                                     const double ccp_rmesh_times)
 {
-    return build_abfs_ccp_data(ucell, grid, max_channels, pca_threshold, ccp_rmesh_times, false).channels;
+    const SternheimerABFSInput input = build_abfs_ccp_input(ucell, pca_threshold, ccp_rmesh_times);
+    return sample_sternheimer_abf_grid_channels(
+        input.radials_by_type, input.atom_types, input.atom_positions, grid, max_channels);
 }
 
-struct SIABPrimitiveExportData
+struct SternheimerPeriodicABFGridData
 {
-    std::vector<siab::PrimitiveBlock> blocks;
-    std::vector<std::complex<double>> reciprocal_matrix;
-    std::vector<std::complex<double>> overlap_s;
-    std::unique_ptr<ModulePW::PW_Basis_K> serial_pw_basis;
-    int primitive_count = 0;
-    int reciprocal_count = 0;
+    std::vector<SternheimerABFBlochGridChannel> densities;
+    std::vector<SternheimerABFBlochGridChannel> potentials;
 };
 
-SIABPrimitiveExportData build_siab_primitive_export_data(const ModulePW::PW_Basis& response_pw_basis,
-                                                         const Structure_Factor& structure_factor,
-                                                         const UnitCell& ucell)
+void broadcast_periodic_abf_channels(std::vector<SternheimerABFBlochGridChannel>& channels,
+                                     const int grid_size,
+                                     const bool enabled)
 {
-    siab::require_single_primitive_rcut(PARAM.inp.bessel_nao_rcuts);
-    SIABPrimitiveExportData result;
-    result.serial_pw_basis.reset(new ModulePW::PW_Basis_K("cpu", "double"));
 #ifdef __MPI
     if (!enabled || GlobalV::NPROC <= 1)
     {
@@ -1680,43 +1575,77 @@ SternheimerPeriodicABFGridData build_supercell_translation_full_response_abfs(
         max_channels_per_atom);
 }
 
-siab::Provenance make_siab_production_provenance(const UnitCell& ucell,
-                                                 const std::string& auxiliary_basis_sha256,
-                                                 const SternheimerRPA::FrequencyGrid& frequency_grid,
-                                                 const double pca_threshold,
-                                                 const SternheimerCoulombWhitening& whitening)
+std::vector<std::string> find_coulomb_v1_rank_files(const int iq, const int mpi_ranks)
 {
-    siab::Provenance provenance;
-    provenance.abacus_commit = siab::require_source_commit(compiled_commit_metadata());
-    provenance.auxiliary_basis_sha256 = auxiliary_basis_sha256;
-    provenance.cell_bohr = cell_vectors_bohr(ucell);
-    provenance.ecut_ry = PARAM.inp.ecutwfc;
-    provenance.kernel = "full_coulomb";
-    const std::vector<std::string> orbital_files
-        = siab::resolve_required_input_files(orbital_dir_from_env_or_input(),
-                                             orbital_files_from_env_or_cell(ucell),
-                                             "initial orbital");
-    const std::vector<std::string> pseudopotential_files
-        = siab::resolve_required_input_files(PARAM.inp.pseudo_dir, ucell.pseudo_fn, "pseudopotential");
-    provenance.orbital_sha256 = siab::sha256_file_manifest(orbital_files);
-    provenance.pseudopotential_sha256 = siab::sha256_file_manifest(pseudopotential_files);
-    provenance.spin_convention = "spin_resolved_occupation_in_reference_rows";
-    provenance.executable_sha256 = siab::sha256_file(siab::resolve_executable_path());
-    provenance.exx_pca_thr = pca_threshold;
-    provenance.sternheimer_nfreq = static_cast<int>(frequency_grid.omega_ha.size());
-    provenance.frequency_ha = frequency_grid.omega_ha;
-    provenance.frequency_weights_ha = frequency_grid.weights_ha;
-    provenance.mpi_ranks = GlobalV::NPROC;
-    provenance.omp_threads = PARAM.globalv.nthread_per_proc;
-    provenance.auxiliary_whitening = "global_full_coulomb_v1";
-    provenance.raw_auxiliary_dimension = whitening.raw_dimension;
-    provenance.whitened_auxiliary_rank = whitening.retained_rank;
-    provenance.discarded_auxiliary_rank = whitening.discarded_rank;
-    provenance.coulomb_relative_threshold = whitening.relative_threshold;
-    provenance.coulomb_eigenvalues = whitening.eigenvalues;
-    provenance.coulomb_max_orthonormality_error = whitening.max_orthonormality_error;
-    provenance.coulomb_transform_sha256 = hash_coulomb_whitening_transform(whitening);
-    return provenance;
+    std::vector<std::string> filenames;
+    for (int rank = 0; rank != mpi_ranks; ++rank)
+    {
+        const std::string filename = "v1_coulomb_full_iq_" + std::to_string(iq)
+                                     + "_rank" + std::to_string(rank) + ".dat";
+        std::ifstream input(filename.c_str(), std::ios::binary);
+        if (input.good())
+        {
+            filenames.push_back(filename);
+        }
+    }
+    if (filenames.empty())
+    {
+        throw std::runtime_error("Periodic Gamma Sternheimer requires the full-Coulomb reader-v1 rank files.");
+    }
+    return filenames;
+}
+
+std::vector<int> atom_auxiliary_sizes(const std::vector<SternheimerABFBlochGridChannel>& channels,
+                                      const int natom)
+{
+    std::vector<int> sizes(static_cast<std::size_t>(natom), 0);
+    for (const SternheimerABFBlochGridChannel& channel: channels)
+    {
+        if (channel.atom_index < 0 || channel.atom_index >= natom || channel.atom_local_index < 0)
+        {
+            throw std::runtime_error("Periodic Gamma Sternheimer found invalid auxiliary channel metadata.");
+        }
+        int& size = sizes[static_cast<std::size_t>(channel.atom_index)];
+        size = std::max(size, channel.atom_local_index + 1);
+    }
+    return sizes;
+}
+
+void write_sternheimer_grid_coulomb_diagnostic(
+    const std::string& filename,
+    const std::vector<SternheimerABFBlochGridChannel>& densities,
+    const std::vector<SternheimerABFBlochGridChannel>& potentials,
+    const double volume_element)
+{
+    if (densities.size() != potentials.size())
+    {
+        throw std::invalid_argument("Sternheimer grid Coulomb density/potential channel counts differ.");
+    }
+    std::ofstream out(filename.c_str());
+    if (!out)
+    {
+        throw std::runtime_error("Failed to open Sternheimer grid Coulomb diagnostic: " + filename);
+    }
+    out << std::setprecision(16);
+    out << "# row col real imag\n";
+    out << "naux " << densities.size() << '\n';
+    for (std::size_t row = 0; row != densities.size(); ++row)
+    {
+        for (std::size_t col = 0; col != potentials.size(); ++col)
+        {
+            if (densities[row].potential_r.size() != potentials[col].potential_r.size())
+            {
+                throw std::invalid_argument("Sternheimer grid Coulomb channel sizes differ.");
+            }
+            SternheimerRPA::Complex value(0.0, 0.0);
+            for (std::size_t ir = 0; ir != densities[row].potential_r.size(); ++ir)
+            {
+                value += std::conj(densities[row].potential_r[ir]) * potentials[col].potential_r[ir];
+            }
+            value *= volume_element;
+            out << row << ' ' << col << ' ' << value.real() << ' ' << value.imag() << '\n';
+        }
+    }
 }
 
 std::vector<SternheimerDeltaGridFunction> build_lcao_candidate_grid_functions(
@@ -1808,9 +1737,9 @@ std::vector<SternheimerDeltaGridFunction> build_lcao_candidate_grid_functions(
                         const std::array<double, 3> translation
                             = sternheimer_fd_grid_lattice_translation(grid, image);
                         coordinates[static_cast<std::size_t>(local)]
-                            = ModuleGint::Vec3d(ix * grid.hx - atom_position.x - image[0] * lx,
-                                                iy * grid.hy - atom_position.y - image[1] * ly,
-                                                iz * grid.hz - atom_position.z - image[2] * lz);
+                            = ModuleGint::Vec3d(position[0] - atom_position.x - translation[0],
+                                               position[1] - atom_position.y - translation[1],
+                                               position[2] - atom_position.z - translation[2]);
                     }
                     sampler.set_phi_dphi(coordinates,
                                          orbital_count,
@@ -3689,23 +3618,16 @@ std::vector<std::vector<double>> collect_channel_potentials(const std::vector<St
     return potentials;
 }
 
-std::vector<std::vector<double>> transform_channel_potentials(
-    SternheimerABFBuildData& abfs_data,
-    const SternheimerFDHamiltonian::Grid& grid,
-    const SternheimerCoulombWhitening& whitening)
+std::vector<SternheimerFDHamiltonian::Vector> collect_channel_potentials(
+    const std::vector<SternheimerABFBlochGridChannel>& channels)
 {
-    if (abfs_data.channels.size() != static_cast<std::size_t>(whitening.raw_dimension)
-        || abfs_data.channels.empty())
+    std::vector<SternheimerFDHamiltonian::Vector> potentials;
+    potentials.reserve(channels.size());
+    for (const SternheimerABFBlochGridChannel& channel: channels)
     {
-        throw std::invalid_argument("Sternheimer Coulomb transform does not match the raw ABFS channel count.");
+        potentials.push_back(channel.potential_r);
     }
-    return sample_sternheimer_abf_grid_channel_transform(abfs_data.radials_by_type,
-                                                          abfs_data.atom_types,
-                                                          abfs_data.atom_positions,
-                                                          grid,
-                                                          abfs_data.channels,
-                                                          whitening.transform,
-                                                          whitening.retained_rank);
+    return potentials;
 }
 
 std::vector<double> scale_potential(const std::vector<double>& potential, const double factor)
@@ -3733,18 +3655,8 @@ std::vector<std::vector<Scalar>> scale_potentials(const std::vector<std::vector<
     return scaled;
 }
 
-void scale_potentials_in_place(std::vector<std::vector<double>>& potentials, const double factor)
-{
-    for (std::vector<double>& potential: potentials)
-    {
-        for (double& value: potential)
-        {
-            value *= factor;
-        }
-    }
-}
-
-void write_abfs_channel_diagnostic(const std::string& filename, const std::vector<SternheimerABFGridChannel>& channels)
+template <typename Channel>
+void write_abfs_channel_diagnostic(const std::string& filename, const std::vector<Channel>& channels)
 {
     std::ofstream out(filename.c_str(), std::ios::out | std::ios::trunc);
     if (!out)
@@ -3789,6 +3701,7 @@ void write_coulomb_whitening_diagnostic(const std::string& filename,
     }
 }
 
+template <typename Channel>
 SternheimerRPA::Chi0V1Metadata make_chi0_v1_metadata(const UnitCell& ucell,
                                                      const std::vector<Channel>& channels,
                                                      const int iq,
@@ -6766,65 +6679,28 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                 throw std::runtime_error(
                     "Sternheimer LCAO zero-order input currently requires sternheimer_delta=true.");
             }
-            if (PARAM.inp.nspin != 1 && PARAM.inp.nspin != 2)
+            if (std::any_of(response_kpoints.begin(), response_kpoints.end(), [](const auto* record) {
+                    return record->coefficients.empty();
+                }))
             {
-                throw std::runtime_error("Sternheimer LCAO zero-order input currently supports Gamma-point nspin=1 or "
-                                         "nspin=2 calculations.");
-            }
-            for (std::size_t ispin = 0; ispin != lcao_occupied_channels->size(); ++ispin)
-            {
-                if ((*lcao_occupied_channels)[ispin].coefficients.size()
-                    != static_cast<std::size_t>(occupied_band_counts[ispin]))
-                {
-                    throw std::runtime_error("Sternheimer LCAO occupied coefficient count does not match occupations.");
-                }
-                if (lcao_virtual_source == SternheimerLCAOVirtualSource::KSBands)
-                {
-                    const auto& channel = (*lcao_occupied_channels)[ispin];
-                    const std::size_t available_bands
-                        = channel.coefficients.size() + channel.unoccupied_coefficients.size();
-                    if (available_bands != static_cast<std::size_t>(PARAM.globalv.nlocal))
-                    {
-                        throw std::runtime_error(
-                            "Sternheimer ks_bands virtual source requires nbands=nlocal so the LCAO virtual space is "
-                            "complete.");
-                    }
-                    if (channel.unoccupied_coefficients.empty())
-                    {
-                        throw std::runtime_error("Sternheimer ks_bands virtual source found no unoccupied KS bands.");
-                    }
-                }
+                throw std::runtime_error("Sternheimer LCAO response record has no occupied coefficients.");
             }
         }
 
-        std::vector<SternheimerRPA::TransitionEnergyWindow> spin_transition_windows;
-        spin_transition_windows.reserve(response_spin_indices.size());
-        bool transition_window_available = true;
-        for (const int spin_index: response_spin_indices)
-        {
-            const std::vector<double> eigenvalues_ry = eigenvalues_ry_from_elec_state(elec_state, spin_index);
-            const std::vector<double> occupations = occupations_from_elec_state(elec_state, spin_index);
-            SternheimerRPA::TransitionEnergyWindow spin_window;
-            if (SternheimerRPA::try_transition_energy_window_from_eigenvalues_ry(eigenvalues_ry,
-                                                                                 occupations,
-                                                                                 spin_window))
-            {
-                spin_transition_windows.push_back(spin_window);
-            }
-            else
-            {
-                transition_window_available = false;
-            }
-        }
-        if (!use_frequency_grid_file && !transition_window_available)
-        {
-            throw std::runtime_error("Sternheimer GreenX minimax grid requires a positive occupied-to-empty "
-                                     "transition in every response spin channel.");
-        }
         SternheimerRPA::TransitionEnergyWindow transition_window;
-        if (transition_window_available)
+        transition_window.emin_ha = std::numeric_limits<double>::infinity();
+        transition_window.emax_ha = 0.0;
+        for (const SternheimerLCAOOccupiedKPoint* response_kpoint: response_kpoints)
         {
-            transition_window = SternheimerRPA::merge_transition_energy_windows(spin_transition_windows);
+            const int response_k_index = response_kpoint == nullptr ? 0 : response_kpoint->local_k_index;
+            const std::vector<double> eigenvalues_ry
+                = eigenvalues_ry_from_elec_state(elec_state, response_k_index);
+            const std::vector<double> occupations
+                = occupations_from_elec_state(elec_state, response_k_index);
+            const SternheimerRPA::TransitionEnergyWindow spin_window
+                = SternheimerRPA::transition_energy_window_from_eigenvalues_ry(eigenvalues_ry, occupations);
+            transition_window.emin_ha = std::min(transition_window.emin_ha, spin_window.emin_ha);
+            transition_window.emax_ha = std::max(transition_window.emax_ha, spin_window.emax_ha);
         }
         const std::string frequency_grid_source = use_frequency_grid_file ? "file" : "greenx_minimax";
         const SternheimerRPA::FrequencyGrid frequency_grid
@@ -6926,7 +6802,8 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                    -1.0,
                                    elapsed_seconds_since(chi0_start_time),
                                    "raw_channels=" + std::to_string(raw_num_channels)
-                                       + " response_channels=" + std::to_string(num_channels));
+                                       + " response_channels=" + std::to_string(num_channels)
+                                       + " user_cap=" + std::to_string(channel_worker_user_cap));
 
         SIABPrimitiveExportData siab_primitives;
         SternheimerSIABMemoryEstimate siab_memory_estimate;
@@ -7023,29 +6900,6 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         if (sternheimer_abfs_diag_only_enabled())
         {
             return;
-        }
-
-        std::vector<std::vector<double>> potentials;
-        std::vector<std::vector<double>> perturbations_ry;
-        if (write_librpa)
-        {
-            potentials = collect_channel_potentials(channels);
-            // Raw ABFS Coulomb potentials are retained in Ha for M=V chi0 V output.
-            perturbations_ry = scale_potentials(potentials, kHartreeToRydberg);
-        }
-        else
-        {
-            perturbations_ry = transform_channel_potentials(abfs_data, grid_data.grid, coulomb_whitening);
-            scale_potentials_in_place(perturbations_ry, kHartreeToRydberg);
-            if (GlobalV::MY_RANK == 0)
-            {
-                write_abfs_channel_diagnostic("STERNHEIMER_ABFS_CHANNELS.dat", channels);
-            }
-            for (SternheimerABFGridChannel& channel: channels)
-            {
-                channel.potential_r.clear();
-                channel.potential_r.shrink_to_fit();
-            }
         }
 
         std::vector<SternheimerDeltaGridFunction> sampled_ao_functions;
@@ -7481,7 +7335,10 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
 
                 for (int ib = 0; ib != static_cast<int>(states.wavefunctions.size()); ++ib)
                 {
-                    const double occupation = elec_state.wg(spin_index, ib);
+                    const double occupation
+                        = use_lcao_zero_order
+                              ? sternheimer_lcao_weighted_occupation(*response_kpoint, ib)
+                              : elec_state.wg(response_k_index, ib);
                     if (occupation <= 1.0e-8)
                     {
                         continue;
@@ -7830,8 +7687,8 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                                    &result.solver,
                                                    result.equation_residual_norm,
                                                    elapsed_seconds_since(chi0_start_time),
-                                                   "spin=" + std::to_string(spin_index + 1)
-                                                       + " mode=" + (use_delta_sternheimer ? "delta" : "standard"));
+                                                   "spin=" + std::to_string(response_spin_index + 1) + " "
+                                                       + (use_delta_sternheimer ? "delta" : "standard"));
                     }
                 }
             }
@@ -8142,65 +7999,30 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         out << "sternheimer_response_spin_channels";
         for (const SternheimerLCAOOccupiedKPoint* response_kpoint: response_kpoints)
         {
-            out << "sternheimer_lcao_virtual_source "
-                << sternheimer_lcao_virtual_source_name(lcao_virtual_source) << '\n';
-            out << "sternheimer_lcao_unoccupied_bands_per_spin";
-            for (const int count: sternheimer_lcao_unoccupied_bands_per_spin(*lcao_occupied_channels))
+            out << ' ' << (response_kpoint == nullptr ? 1 : response_kpoint->spin_index + 1);
+        }
+        out << '\n';
+        if (response_count == 1)
+        {
+            const SternheimerLCAOOccupiedKPoint* response_kpoint = response_kpoints.front();
+            out << "sternheimer_response_spin_channel "
+                << (response_kpoint == nullptr ? 1 : response_kpoint->spin_index + 1) << '\n';
+            out << "sternheimer_response_local_k_index "
+                << (response_kpoint == nullptr ? 1 : response_kpoint->local_k_index + 1) << '\n';
+            if (response_kpoint != nullptr)
             {
-                out << ' ' << count;
+                out << "sternheimer_response_global_k_index " << response_kpoint->global_k_index + 1 << '\n';
+                out << "sternheimer_response_kpoint " << response_kpoint->kpoint[0] << ' '
+                    << response_kpoint->kpoint[1] << ' ' << response_kpoint->kpoint[2] << '\n';
+                out << "sternheimer_response_kweight " << response_kpoint->kweight << '\n';
             }
-            out << '\n';
         }
-        out << "sternheimer_response_spin_channels " << spin_diagnostics.size() << '\n';
-        out << "sternheimer_response_spin_indices";
-        for (const SpinResponseDiagnostics& diagnostics: spin_diagnostics)
+        std::size_t occupied_bands_total = 0;
+        std::size_t occupied_projector_total = 0;
+        for (std::size_t response_index = 0; response_index != response_count; ++response_index)
         {
-            out << ' ' << diagnostics.spin_index + 1;
-        }
-        out << '\n';
-        if (spin_diagnostics.size() == 1)
-        {
-            out << "sternheimer_response_spin_channel " << spin_diagnostics.front().spin_index + 1 << '\n';
-        }
-        int total_occupied_bands = 0;
-        out << "occupied_bands_per_spin";
-        for (const SpinResponseDiagnostics& diagnostics: spin_diagnostics)
-        {
-            out << ' ' << diagnostics.occupied_bands;
-            total_occupied_bands += diagnostics.occupied_bands;
-        }
-        out << '\n';
-        out << "occupied_bands " << total_occupied_bands << '\n';
-        out << "occupied_projector_dimensions_per_spin";
-        for (const SpinResponseDiagnostics& diagnostics: spin_diagnostics)
-        {
-            out << ' ' << diagnostics.occupied_projector_dimension;
-        }
-        out << '\n';
-        if (spin_diagnostics.size() == 1)
-        {
-            out << "occupied_projector_dimension " << spin_diagnostics.front().occupied_projector_dimension << '\n';
-        }
-        out << "abfs_channels " << raw_num_channels << '\n';
-        out << "response_channels " << num_channels << '\n';
-        out << "abfs_source " << abfs_source << '\n';
-        if (write_siab)
-        {
-            out << "auxiliary_basis_sha256 " << auxiliary_basis_sha256 << '\n';
-            out << "raw_auxiliary_dimension " << raw_num_channels << '\n';
-            out << "whitened_auxiliary_rank " << coulomb_whitening.retained_rank << '\n';
-            out << "discarded_auxiliary_rank " << coulomb_whitening.discarded_rank << '\n';
-            out << "coulomb_relative_threshold " << coulomb_whitening.relative_threshold << '\n';
-            out << "coulomb_max_orthonormality_error " << coulomb_whitening.max_orthonormality_error << '\n';
-            out << "coulomb_transform_sha256 " << hash_coulomb_whitening_transform(coulomb_whitening) << '\n';
-            out << "coulomb_whitening_diagnostic STERNHEIMER_SIAB_COULOMB_WHITENING.dat\n";
-            out << "primitive_representation serial_reciprocal_pw_v1\n";
-            out << "primitive_count " << siab_primitives.primitive_count << '\n';
-            out << "primitive_reciprocal_count " << siab_primitives.reciprocal_count << '\n';
-            out << "estimated_dense_memory_bytes " << siab_memory_estimate.total_bytes << '\n';
-            out << "slurm_memory_per_node_bytes " << siab_slurm_memory_bytes << '\n';
-            out << "memory_diagnostic STERNHEIMER_SIAB_MEMORY.dat\n";
-            out << "target_file sternheimer_matrix.dat\n";
+            occupied_bands_total += occupied_by_response[response_index].size();
+            occupied_projector_total += occupied_projector_by_response[response_index].size();
         }
         out << "occupied_bands " << occupied_bands_total << '\n';
         out << "occupied_bands_per_spin";
@@ -8239,32 +8061,22 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
             out << "sternheimer_delta_backend " << sternheimer_delta_a_block_mode_name(delta_a_block_mode) << '\n';
             out << "sternheimer_delta_max_states " << PARAM.inp.sternheimer_delta_max_states << '\n';
             out << "sternheimer_delta_norm_tol " << PARAM.inp.sternheimer_delta_norm_tol << '\n';
-            out << "sternheimer_delta_virtual_states_per_spin";
-            for (const SpinResponseDiagnostics& diagnostics: spin_diagnostics)
+            std::size_t virtual_states_total = 0;
+            int accepted_candidates_total = 0;
+            int discarded_candidates_total = 0;
+            for (std::size_t response_index = 0; response_index != response_count; ++response_index)
             {
-                out << ' ' << diagnostics.delta_virtual_states;
+                virtual_states_total += delta_subspaces[response_index].virtual_states.size();
+                accepted_candidates_total += delta_subspaces[response_index].accepted_candidates;
+                discarded_candidates_total += delta_subspaces[response_index].discarded_candidates;
+                out << "sternheimer_delta_spin " << response_index + 1 << " virtual_states "
+                    << delta_subspaces[response_index].virtual_states.size() << " accepted_candidates "
+                    << delta_subspaces[response_index].accepted_candidates << " discarded_candidates "
+                    << delta_subspaces[response_index].discarded_candidates << '\n';
             }
-            out << '\n';
-            out << "sternheimer_delta_accepted_candidates_per_spin";
-            for (const SpinResponseDiagnostics& diagnostics: spin_diagnostics)
-            {
-                out << ' ' << diagnostics.delta_accepted_candidates;
-            }
-            out << '\n';
-            out << "sternheimer_delta_discarded_candidates_per_spin";
-            for (const SpinResponseDiagnostics& diagnostics: spin_diagnostics)
-            {
-                out << ' ' << diagnostics.delta_discarded_candidates;
-            }
-            out << '\n';
-            if (spin_diagnostics.size() == 1)
-            {
-                out << "sternheimer_delta_virtual_states " << spin_diagnostics.front().delta_virtual_states << '\n';
-                out << "sternheimer_delta_accepted_candidates " << spin_diagnostics.front().delta_accepted_candidates
-                    << '\n';
-                out << "sternheimer_delta_discarded_candidates " << spin_diagnostics.front().delta_discarded_candidates
-                    << '\n';
-            }
+            out << "sternheimer_delta_virtual_states " << virtual_states_total << '\n';
+            out << "sternheimer_delta_accepted_candidates " << accepted_candidates_total << '\n';
+            out << "sternheimer_delta_discarded_candidates " << discarded_candidates_total << '\n';
         }
         out << "solved_equations " << solved_equations << '\n';
         out << "all_converged " << (all_converged ? "yes" : "no") << '\n';
