@@ -94,6 +94,14 @@ class XC_Functional
         return func_type;
     };
 
+    /// @brief Set the functional class directly. set_xc_type() derives this from
+    ///        a functional name and is what production code uses; this is for
+    ///        callers that need to select a branch without configuring libxc.
+    static void set_func_type(const int func_type_in)
+    {
+        func_type = func_type_in;
+    };
+
     static void set_xc_type(const std::string xc_func_in);
 
     // For hybrid functional
@@ -121,6 +129,12 @@ class XC_Functional
     static bool get_ked_flag()
     {
         return ked_flag;
+    };
+
+    /// @brief Set whether the functional needs the kinetic energy density.
+    static void set_ked_flag(const bool ked_flag_in)
+    {
+        ked_flag = ked_flag_in;
     };
 
     static bool get_need_laplacian()

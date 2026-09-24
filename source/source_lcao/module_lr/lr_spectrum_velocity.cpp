@@ -84,7 +84,7 @@ namespace LR
     ModuleBase::Vector3<T> LR::LR_Spectrum<T>::cal_transition_dipole_istate_velocity_R(const int istate, const Velocity_op<std::complex<double>>& vR)
     {
         // transition density matrix D(R)
-        const elecstate::DensityMatrix<T, T>& DM_trans = this->cal_transition_density_matrix(istate);
+        const module_dm::DensityMatrix<T, T>& DM_trans = this->cal_transition_density_matrix(istate);
 
         std::vector<std::complex<double>> trans_dipole(3, 0.0);    // $=\sum_{uvR} v(R) D(R) = \sum_{aik}X_{aik}<ik|v|ak>$
         const std::complex<double> fac = ModuleBase::IMAG_UNIT / (omega[istate] / ModuleBase::e2);    // Ry to Hartree
@@ -92,7 +92,7 @@ namespace LR
         {
             for (int is = 0;is < this->nspin_x; ++is)
             {
-                trans_dipole[i] += LR_Util::dot_R_matrix(*vR.get_current_term_pointer(i), *DM_trans.get_DMR_pointer(is + 1), ucell.nat) * fac;
+                trans_dipole[i] += LR_Util::dot_R_matrix(*vR.get_current_term_pointer(i), *DM_trans.get_dmr_ptr(is + 1), ucell.nat) * fac;
             }   // end for spin_x, only matter in open-shell system
             trans_dipole[i] *= static_cast<double>(this->nk);  // nk is divided inside DM_trans, now recover it
             if (this->nspin_x == 1) { trans_dipole[i] *= sqrt(2.0); } // *2 for 2 spins, /sqrt(2) for the halfed dimension of X in the normalizaiton
@@ -106,7 +106,7 @@ namespace LR
     ModuleBase::Vector3<T> LR::LR_Spectrum<T>::cal_transition_dipole_istate_velocity_k(const int istate, const Velocity_op<std::complex<double>>& vR)
     {
         // transition density matrix D(R)
-        const elecstate::DensityMatrix<T, T>& DM_trans = this->cal_transition_density_matrix(istate, this->X, false);
+        const module_dm::DensityMatrix<T, T>& DM_trans = this->cal_transition_density_matrix(istate, this->X, false);
 
         std::vector<std::complex<double>> trans_dipole(3, 0.0);    // $=\sum_{uvk} v(k) D(k) = \sum_{aik}X_{aik}<ik|v|ak>$
         const std::complex<double> fac = ModuleBase::IMAG_UNIT / (omega[istate] / ModuleBase::e2);    // Ry to Hartree
@@ -118,7 +118,7 @@ namespace LR
                 {
                     std::vector<std::complex<double>> vk(pmat.get_local_size(), 0.0);
                     hamilt::folding_HR(*vR.get_current_term_pointer(i), vk.data(), kv.kvec_d[ik], pmat.get_row_size(), 1);
-                    trans_dipole[i] += std::inner_product(vk.begin(), vk.end(), DM_trans.get_DMK_pointer(is * nk + ik), std::complex<double>(0., 0.)) * fac;
+                    trans_dipole[i] += std::inner_product(vk.begin(), vk.end(), DM_trans.get_dmk_ptr(is * nk + ik), std::complex<double>(0., 0.)) * fac;
                 }
             }   // end for spin_x, only matter in open-shell system
             trans_dipole[i] *= static_cast<double>(this->nk);  // nk is divided inside DM_trans, now recover it

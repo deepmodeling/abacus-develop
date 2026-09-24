@@ -64,7 +64,7 @@ void init_deltaspin_lcao(const UnitCell& ucell,
                inp.sccut, inp.sc_drop_thr, ucell, inp.sc_direction_only,
                static_cast<Parallel_Orbitals*>(pv),
                inp.nspin, kv, p_hamilt, psi,
-               static_cast<elecstate::DensityMatrix<TK, double>*>(dm),
+               static_cast<module_dm::DensityMatrix<TK, double>*>(dm),
                static_cast<elecstate::ElecState*>(pelec));
 #else
     // Non-LCAO build: no density matrix

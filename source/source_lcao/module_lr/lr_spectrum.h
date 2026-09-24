@@ -72,7 +72,7 @@ namespace LR
         void cal_transition_dipoles_velocity(const double* const eig_ks);
         double cal_mean_squared_dipole(ModuleBase::Vector3<T> dipole);
         /// calculate the transition density matrix
-        elecstate::DensityMatrix<T, T> cal_transition_density_matrix(const int istate, const T* X_in = nullptr, const bool need_R = true);
+        module_dm::DensityMatrix<T, T> cal_transition_density_matrix(const int istate, const T* X_in = nullptr, const bool need_R = true);
         
         const int my_rank;
         const int nspin_x = 1;   ///< 1 for singlet/triplet, 2 for updown(openshell)

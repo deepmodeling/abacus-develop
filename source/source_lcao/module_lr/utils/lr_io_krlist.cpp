@@ -1,6 +1,6 @@
 #include "lr_io_krlist.h"
 #include "lr_io.h"
-#include "source_lcao/module_ri/ri_util.h"
+#include "source_lcao/module_ri/ri_util_bvk.h"
 #include "source_base/constants.h"
 #include <cassert>
 #include <fstream>

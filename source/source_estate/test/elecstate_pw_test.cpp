@@ -123,24 +123,19 @@ Fcoef::~Fcoef()
 }
 #include "source_cell/klist.h"
 
-void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
-{
-}
 void Charge::init_rho(const UnitCell&,
                       const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,
                       ModuleSymmetry::Symmetry& symm,
                       const void*,
-                      const void*)
+                      const void*,
+                      const module_charge::InitRhoCfg&)
 {
 }
 void Charge::set_rhopw(ModulePW::PW_Basis*)
 {
 }
-void Charge::renormalize_rho()
-{
-}
-void Charge::check_rho()
+void Charge::renormalize_rho(const double, const double)
 {
 }
 

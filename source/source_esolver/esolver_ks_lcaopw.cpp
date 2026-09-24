@@ -4,7 +4,7 @@
 #include <iostream>
 
 //--------------temporary----------------------------
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_ewald/h_ewald_pw.h"
 //-----force-------------------
@@ -179,7 +179,7 @@ namespace ModuleESolver
         }
 #endif
 
-        Symmetry_rho::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
+        module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
 
         // deband is calculated from "output" charge density calculated
         // in sum_band

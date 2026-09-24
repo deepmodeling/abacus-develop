@@ -298,7 +298,7 @@ int main(int argc, char** argv)
     if (GlobalV::MY_RANK == 0 && result != 0)
     {
         std::cout << "ERROR:some tests are not passed" << std::endl;
-	}
+    }
 
     MPI_Finalize();
     return result;

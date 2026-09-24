@@ -12,6 +12,8 @@
 //-----HSolver ElecState Hamilt--------
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/elecstate_tools.h"
+#include "source_estate/module_charge/chg_init.h"
+#include "source_estate/module_charge/chg_tools.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
@@ -87,14 +89,29 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(BaseCell& basecell, const Inpu
     }
 
     // 6) initialize the density matrix
-    this->dmat_base.allocate_dm(&this->kv, &this->pv, this->inp_->nspin);
+    LCAO_domain::allocate_dm(this->dmat_base, &this->kv, &this->pv, this->inp_->nspin);
 
     // 10) inititlize the charge density
+    module_charge::InitRhoCfg init_rho_cfg;
+    init_rho_cfg.init_chg = this->inp_->init_chg;
+    init_rho_cfg.suffix = this->inp_->suffix;
+    init_rho_cfg.esolver_type = this->inp_->esolver_type;
+    init_rho_cfg.global_readin_dir = PARAM.globalv.global_readin_dir;
+    init_rho_cfg.nelec = this->inp_->nelec;
+    init_rho_cfg.nbands = this->inp_->nbands;
+    init_rho_cfg.test_charge = this->inp_->test_charge;
+    init_rho_cfg.domag = PARAM.globalv.domag;
+    init_rho_cfg.domag_z = PARAM.globalv.domag_z;
+    init_rho_cfg.npol = PARAM.globalv.npol;
+    init_rho_cfg.meta_gga = XC_Functional::get_ked_flag();
     this->chr_base.set_rhopw(this->pw_rhod);           // mohan add 20251130
-    const bool kin_den = this->chr_base.kin_density(); // mohan add 20251202
-    this->chr_base.allocate(this->inp_->nspin, kin_den);
-    this->chr_base.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv);
-    this->chr_base.check_rho();
+    const bool kin_den = XC_Functional::get_ked_flag() || (this->inp_->out_elf[0] > 0); // mohan add 20251202
+    this->chr_base.allocate(this->inp_->nspin, kin_den, XC_Functional::get_ked_flag(),
+                            this->inp_->test_charge);
+    this->chr_base.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv, nullptr, init_rho_cfg);
+    module_charge::check_rho(this->chr_base.rho, this->chr_base.nspin,
+                             this->chr_base.rhopw->nrxx, ucell.omega,
+                             this->chr_base.rhopw->nxyz, this->inp_->nelec);
 
     // 11) initialize the potential
     if (this->pelec_base->pot == nullptr)
@@ -172,11 +189,11 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
 
     // DMR should be same size with Hamiltonian(R)
-    this->dmat_base.dm->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt_base)->getHR()));
+    this->dmat_base.dm->init_dmr(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt_base)->getHR()));
 
     if (istep > 0)
     {
-        this->dmat_base.dm->cal_DMR();
+        this->dmat_base.dm->cal_dmr(-1);
     }
 
     ModuleBase::timer::end("ESolver_DoubleXC", "before_scf");
@@ -214,7 +231,11 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         // get etot of output charge density, now the etot is of density after charge mixing
         this->pelec->pot->update_from_charge(&this->chr_base, &ucell);
         this->pelec->f_en.descf = 0.0;
-        this->pelec->cal_energies(2);
+        this->pelec->cal_energies(2,
+                                  this->inp_->imp_sol,
+                                  this->inp_->sc_mag_switch,
+                                  this->inp_->dft_plus_u,
+                                  this->inp_->assume_isolated);
         // std::cout<<"in deepks etot------"<<std::endl;
         // this->pelec->f_en.print_all();
         // std::cout<<"in deepks etot------"<<std::endl;
@@ -279,7 +300,11 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         this->pelec_base->f_en.deband = this->pelec->f_en.deband;
         this->pelec_base->f_en.demet = this->pelec->f_en.demet;
         this->pelec_base->f_en.descf = 0.0; // set descf to 0
-        this->pelec_base->cal_energies(2);  // 2 means Kohn-Sham functional
+        this->pelec_base->cal_energies(2,
+                                       this->inp_->imp_sol,
+                                       this->inp_->sc_mag_switch,
+                                       this->inp_->dft_plus_u,
+                                       this->inp_->assume_isolated);  // 2 means Kohn-Sham functional
                                             // std::cout<<"in double_xc------"<<std::endl;
                                             // this->pelec_base->f_en.print_all();
                                             // std::cout<<"in double_xc------"<<std::endl;
@@ -366,12 +391,12 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
             for (int ik = 0; ik < nks; ik++)
             {
                 // mohan update 2025-11-03
-                this->dmat_base.dm->set_DMK_pointer(ik, this->dmat.dm->get_DMK_pointer(ik));
-                //                _pes_lcao_base->get_DM()->set_DMK_pointer(ik,
-                //                _pes_lcao->get_DM()->get_DMK_pointer(ik));
+                this->dmat_base.dm->set_dmk_ptr(ik, this->dmat.dm->get_dmk_ptr(ik));
+                //                _pes_lcao_base->get_DM()->set_dmk_ptr(ik,
+                //                _pes_lcao->get_DM()->get_dmk_ptr(ik));
             }
-            this->dmat_base.dm->cal_DMR();
-            //            _pes_lcao_base->get_DM()->cal_DMR();
+            this->dmat_base.dm->cal_dmr(-1);
+            //            _pes_lcao_base->get_DM()->cal_dmr(-1);
             _pes_lcao_base->ekb = _pes_lcao->ekb;
             _pes_lcao_base->wg = _pes_lcao->wg;
         }

@@ -27,21 +27,25 @@ list(APPEND objects
     module_pot/td_field.cpp
     module_pot/td_field_profiles.cpp
     module_pot/td_field_manager.cpp
-    module_charge/chgmixing.cpp
-    module_charge/gint_prec_ctrl.cpp
+    module_charge/chg_routine.cpp
     module_charge/charge.cpp
-    module_charge/charge_init.cpp
-    module_charge/charge_mpi.cpp
-    module_charge/charge_extra.cpp
-    module_charge/charge_mixing.cpp
-    module_charge/charge_mixing_dmr.cpp
-    module_charge/mix_resid.cpp
-    module_charge/mix_precond.cpp
-    module_charge/charge_mixing_rho.cpp
-    module_charge/charge_mixing_uspp.cpp
-    module_charge/symm_rho.cpp
-    module_charge/symm_rhog.cpp
-    rhog_io.cpp
+    module_charge/chg_atomic.cpp
+    module_charge/chg_atomic_inner.cpp
+    module_charge/chg_init.cpp
+    module_charge/chg_tools.cpp
+    module_charge/chg_parallel.cpp
+    module_charge/chg_extra.cpp
+    module_charge/chg_mix.cpp
+    module_charge/chg_mix_rho.cpp
+    module_charge/chg_dmr.cpp
+    module_charge/chg_drho.cpp
+    module_charge/chg_drho_inner.cpp
+    module_charge/chg_precond.cpp
+    module_charge/chg_tau.cpp
+    module_charge/chg_symm.cpp
+    module_charge/chg_uspp.cpp
+    module_charge/chg_symm_detail.cpp
+    module_charge/chg_rhog_io.cpp
     write_elecstat_pot.cpp
     write_init.cpp
     fp_energy.cpp
@@ -56,11 +60,19 @@ list(APPEND objects
 if(ENABLE_LCAO)
   list(APPEND objects
       elecstate_lcao.cpp
-      module_dm/init_dm.cpp
+      module_dm/dm_routine.cpp
       module_dm/density_matrix.cpp
-      module_dm/density_matrix_io.cpp
-      module_dm/cal_dm_psi.cpp
-      module_dm/cal_edm_tddft.cpp
+      module_dm/dmr_gamma.cpp
+      module_dm/dm_tools.cpp
+      module_dm/dmr_k.cpp
+      module_dm/dmr_td.cpp
+      module_dm/dmr_full.cpp
+      module_dm/dmr_init.cpp
+      module_dm/dm_setter.cpp
+      module_dm/dm_getter.cpp
+      module_dm/dm_from_psi.cpp
+      module_dm/edm_tddft.cpp
+      module_dm/edm_tddft_lapack.cpp
   )
 endif()
 
@@ -77,9 +89,15 @@ endif()
 if(BUILD_TESTING)
   if(ENABLE_MPI)
     add_subdirectory(test)
+    add_subdirectory(module_charge/unittests)
   endif()
 endif()
 
 if(ENABLE_LCAO)
   add_subdirectory(module_dm)
+  if(BUILD_TESTING)
+    if(ENABLE_MPI)
+      add_subdirectory(module_dm/unittests)
+    endif()
+  endif()
 endif()

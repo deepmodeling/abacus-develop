@@ -41,18 +41,19 @@ template <typename T, typename Tdata> class RPA_LRI
     ~RPA_LRI(){};
     void postSCF(const UnitCell& ucell,
         const MPI_Comm& mpi_comm_in,
-        const elecstate::DensityMatrix<T, Tdata>& dm,
+        const module_dm::DensityMatrix<T, Tdata>& dm,
         const elecstate::ElecState* pelec,
         const K_Vectors& kv,
         const LCAO_Orbitals& orb,
         const Parallel_Orbitals& parav,
         const psi::Psi<T>& psi);
     void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in, const std::vector<double>& orb_cutoff);
-    void cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>& dm,
+    void cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>& dm,
         const MPI_Comm& mpi_comm_in,
         const UnitCell& ucell,
         const K_Vectors& kv,
-        const LCAO_Orbitals& orb);
+        const LCAO_Orbitals& orb,
+        const Parallel_Orbitals& parav);
     void output_ewald_coulomb(const UnitCell& ucell, const K_Vectors& kv, const LCAO_Orbitals& orb);
     void cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals& orb, const K_Vectors& kv);
     void cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbitals& orb, const K_Vectors& kv);

@@ -24,7 +24,7 @@ namespace LR
         const int& sl = ispin_ks[0];
         const auto psil_ks = LR_Util::get_psi_spin(psi_ks, sl, nk);
 
-        this->DM_trans->cal_DMR();  //DM_trans->get_DMR_vector() is 2d-block parallized
+        this->DM_trans->cal_dmr(-1);  //DM_trans->get_dmr_vec() is 2d-block parallized
         // LR_Util::print_DMR(*DM_trans, ucell.nat, "DMR");
 
         // ========================= begin grid calculation=========================
@@ -67,7 +67,7 @@ namespace LR
         const int& nrxx = this->pot.lock()->nrxx;
         LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, nrxx); // currently gint_kernel_rho uses PARAM.inp.nspin, it needs refactor
         ModuleBase::GlobalFunc::ZEROS(rho_trans[0], nrxx);
-        ModuleGint::cal_gint_rho(this->DM_trans->get_DMR_vector(), 1, rho_trans, false);
+        ModuleGint::cal_gint_rho(this->DM_trans->get_dmr_vec(), 1, rho_trans, false);
         // 3. v_hxc = f_hxc * rho_trans
         ModuleBase::matrix vr_hxc(1, nrxx);   //grid
         this->pot.lock()->cal_v_eff(rho_trans, ucell, vr_hxc, ispin_ks);
@@ -85,8 +85,8 @@ namespace LR
         ModuleBase::TITLE("OperatorLRHxc", "grid_calculation(complex)");
         ModuleBase::timer::start("OperatorLRHxc", "grid_calculation");
 
-        elecstate::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(&pmat, 1, kv.kvec_d, kv.get_nks() / nspin);
-        DM_trans_real_imag.init_DMR(*this->hR);
+        module_dm::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(&pmat, 1, kv.kvec_d, kv.get_nks() / nspin);
+        DM_trans_real_imag.init_dmr(*this->hR);
         hamilt::HContainer<double> HR_real_imag(ucell, &this->pmat);
         LR_Util::initialize_HR<std::complex<double>, double>(HR_real_imag, ucell, gd, orb_cutoff_);
 
@@ -102,7 +102,7 @@ namespace LR
 
                 LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, nrxx); // nspin=1 for transition density
                 ModuleBase::GlobalFunc::ZEROS(rho_trans[0], nrxx);
-                ModuleGint::cal_gint_rho(DM_trans_real_imag.get_DMR_vector(), 1, rho_trans, false);
+                ModuleGint::cal_gint_rho(DM_trans_real_imag.get_dmr_vec(), 1, rho_trans, false);
                 // print_grid_nonzero(rho_trans[0], nrxx, 10, "rho_trans");
 
                 // 3. v_hxc = f_hxc * rho_trans

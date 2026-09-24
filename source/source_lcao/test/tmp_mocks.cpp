@@ -43,7 +43,7 @@ void UnitCell::set_iat2iwt(const int& npol_in)
     return;
 }
 
-// stub for Grid_Driver::Find_atom (used by density_matrix_io.cpp but not exercised in test)
+// stub for Grid_Driver::Find_atom (used by dmr_init.cpp but not exercised in test)
 void Grid_Driver::Find_atom(const UnitCell& ucell,
                             const ModuleBase::Vector3<double>& tau,
                             const int& T,

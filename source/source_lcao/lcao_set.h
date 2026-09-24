@@ -7,7 +7,7 @@
 #include "source_estate/elecstate.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hamilt/hamilt.h"
-#include "source_lcao/setup_dm.h"
+#include "source_lcao/allocate_dm.h"
 #include "source_pw/module_pwdft/stru_fac.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_surchem/surchem.h"
@@ -31,7 +31,7 @@ void set_psi_occ_dm_chg(
 		psi::Psi<TK>* &psi, // coefficients of NAO basis
 		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
 		elecstate::ElecState* pelec, // eigen values and weights
-		LCAO_domain::Setup_DM<TK> &dmat, // density matrix 
+		module_dm::Setup_DM<TK> &dmat, // density matrix 
 		Charge &chr, // charge density 
 		const Input_para& inp); // input parameters
 
@@ -66,7 +66,7 @@ template <typename TK>
 void init_dm_from_file(
 	const std::string& readin_dir,
 	const int nspin,
-	LCAO_domain::Setup_DM<TK>& dmat,
+	module_dm::Setup_DM<TK>& dmat,
 	const UnitCell& ucell,
 	const Parallel_Orbitals* pv);
 
@@ -84,7 +84,7 @@ template <typename TK>
 void init_chg_dm(
 	const std::string& readin_dir,
 	const int nspin,
-	LCAO_domain::Setup_DM<TK>& dmat,
+	module_dm::Setup_DM<TK>& dmat,
 	const UnitCell& ucell,
 	const Parallel_Orbitals* pv,
 	Charge* chr);
@@ -126,7 +126,7 @@ void init_chg_hr(
 	const Parallel_Orbitals* pv,
 	psi::Psi<TK>& psi,
 	elecstate::ElecState* pelec,
-	elecstate::DensityMatrix<TK, double>& dm,
+	module_dm::DensityMatrix<TK, double>& dm,
 	Charge& chr,
 	const std::string& ks_solver);
 } // end namespace

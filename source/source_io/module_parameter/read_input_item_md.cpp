@@ -310,6 +310,30 @@ Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to
         item.default_value = "1.0";
         item.unit = "";
         read_sync_double(input.ref_cell_factor);
+        // Disable the reference cell feature for now, because the PW_Basis
+        // internal lat0/tpiba/G/GGT/omega members become stale when
+        // ref_cell_factor > 1, leading to wrong charge/energy integration
+        // (sum_rho, get_local_pp_energy, cal_delta_escf, makov_payne)
+        // in NPT and other variable-cell calculations. The reference cell
+        // mechanism leaks into external code (wfc IO, DFPT, OFDFT) in
+        // ways that are mathematically incorrect.
+        // TODO(liuyu): re-enable after PW_Basis is refactored to separate
+        // the reference-cell grid (FFT dims nx/ny/nz) from the physical-cell
+        // lattice quantities (lat0/tpiba/G/GGT/omega). Until then, refuse
+        // any non-1.0 value so users get a clear error instead of silently
+        // wrong results.
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.ref_cell_factor != 1.0)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "ref_cell_factor != 1.0 is currently disabled because the "
+                    "reference-cell mechanism produces wrong charge/energy "
+                    "integration in variable-cell calculations. Set "
+                    "ref_cell_factor = 1.0 (the default) or remove the line. "
+                    "See input_parameter.h ref_cell_factor comment.");
+            }
+        };
         this->add_item(item);
     }
     {

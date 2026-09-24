@@ -261,6 +261,10 @@ MakovPayneResult makov_payne_correction(const UnitCell& ucell,
     }
 
     const ModulePW::PW_Basis* rhopw = charge.rhopw;
+    // BUG(investigate): rhopw->omega is stale in variable-cell calculations
+    // (NPT): pw_rho/pw_rhod are not rebuilt on cell change, so this uses the
+    // initial cell volume. Makov-Payne correction only applies to low-dimensional
+    // systems; verify whether NPT is supported for those cases before fixing.
     const double dv = rhopw->omega / static_cast<double>(rhopw->nxyz);
     double electron_number = 0.0;
     ModuleBase::Vector3<double> dipole_el(0.0, 0.0, 0.0);

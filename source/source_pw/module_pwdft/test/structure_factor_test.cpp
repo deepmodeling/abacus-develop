@@ -4,11 +4,9 @@
 #include <cmath>
 #include <complex>
 #include "source_cell/unitcell.h"
-#include "source_estate/module_dm/test/prepare_unitcell.h"
-#define private public
+#include "source_estate/module_dm/unittests/prepare_unitcell.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/stru_fac.h"
-#undef private
 /************************************************
  *  unit test of class Structure_factor and 
  ***********************************************/
@@ -70,49 +68,49 @@ TEST_F(StructureFactorTest, set)
 TEST_F(StructureFactorTest, setup_structure_factor_double)
 {
     rho_basis->npw = 10;
-    SF.setup(ucell,*pgrid,rho_basis);  
+    SF.setup(ucell,*pgrid,rho_basis,false);
 
     for (int i=0;i< ucell->nat * (2 * rho_basis->nx + 1);i++) 
     {
-       EXPECT_EQ(SF.z_eigts1[i].real(),1);
-       EXPECT_EQ(SF.z_eigts1[i].imag(),0);
+       EXPECT_EQ(SF.get_eigts1_data<double>()[i].real(),1);
+       EXPECT_EQ(SF.get_eigts1_data<double>()[i].imag(),0);
     }
 
     for (int i=0;i< ucell->nat * (2 * rho_basis->ny + 1);i++) 
     {
-       EXPECT_EQ(SF.z_eigts2[i].real(),1);
-       EXPECT_EQ(SF.z_eigts2[i].imag(),0);
+       EXPECT_EQ(SF.get_eigts2_data<double>()[i].real(),1);
+       EXPECT_EQ(SF.get_eigts2_data<double>()[i].imag(),0);
     }
 
     for (int i=0;i< ucell->nat * (2 * rho_basis->nz + 1);i++) 
     {
-       EXPECT_EQ(SF.z_eigts3[i].real(),1);
-       EXPECT_EQ(SF.z_eigts3[i].imag(),0);
+       EXPECT_EQ(SF.get_eigts3_data<double>()[i].real(),1);
+       EXPECT_EQ(SF.get_eigts3_data<double>()[i].imag(),0);
     }
 }
 
 TEST_F(StructureFactorTest, setup_structure_factor_float)
 {
-    PARAM.sys.has_float_data = true;
+    // the float eigts copies are what this case checks, so ask setup() for them
     rho_basis->npw = 10;
-    SF.setup(ucell,*pgrid,rho_basis);  
+    SF.setup(ucell,*pgrid,rho_basis,true);
 
     for (int i=0;i< ucell->nat * (2 * rho_basis->nx + 1);i++) 
     {
-       EXPECT_EQ(SF.c_eigts1[i].real(),1);
-       EXPECT_EQ(SF.c_eigts1[i].imag(),0);
+       EXPECT_EQ(SF.get_eigts1_data<float>()[i].real(),1);
+       EXPECT_EQ(SF.get_eigts1_data<float>()[i].imag(),0);
     }
 
     for (int i=0;i< ucell->nat * (2 * rho_basis->ny + 1);i++) 
     {
-       EXPECT_EQ(SF.c_eigts2[i].real(),1);
-       EXPECT_EQ(SF.c_eigts2[i].imag(),0);
+       EXPECT_EQ(SF.get_eigts2_data<float>()[i].real(),1);
+       EXPECT_EQ(SF.get_eigts2_data<float>()[i].imag(),0);
     }
 
     for (int i=0;i< ucell->nat * (2 * rho_basis->nz + 1);i++) 
     {
-       EXPECT_EQ(SF.c_eigts3[i].real(),1);
-       EXPECT_EQ(SF.c_eigts3[i].imag(),0);
+       EXPECT_EQ(SF.get_eigts3_data<float>()[i].real(),1);
+       EXPECT_EQ(SF.get_eigts3_data<float>()[i].imag(),0);
     }
 }
 

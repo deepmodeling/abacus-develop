@@ -30,7 +30,7 @@
 #include "deltaspin_state.h"
 
 class Parallel_Orbitals;
-namespace elecstate
+namespace module_dm
 {
 template <typename TK, typename TR>
 class DensityMatrix;
@@ -57,7 +57,7 @@ namespace lcao
  */
 void cal_mi_lcao(ScState& state,
                  hamilt::Operator<std::complex<double>>* p_operator,
-                 elecstate::DensityMatrix<std::complex<double>, double>* dm,
+                 module_dm::DensityMatrix<std::complex<double>, double>* dm,
                  const int& step,
                  bool print = false);
 

@@ -1,5 +1,7 @@
 #include "elecstate_pw.h"
 
+#include "source_estate/module_charge/chg_parallel.h"
+
 namespace elecstate {
 
 template<typename T, typename Device>
@@ -55,7 +57,11 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
         }
     }
 #ifdef __MPI
-    this->charge->kin_r_mpi();
+    module_charge::kin_r_mpi(*this->charge,
+                             GlobalV::KPAR,
+                             PARAM.globalv.all_ks_run,
+                             PARAM.inp.bndpar,
+                             PARAM.inp.nspin);
 #endif
     ModuleBase::TITLE("ElecStatePW", "cal_tau");
 }

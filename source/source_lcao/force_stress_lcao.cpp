@@ -38,22 +38,22 @@
 // mohan add 2025-11-04
 template <>
 void assign_dmk_ptr<double>(
-    elecstate::DensityMatrix<double,double>* dm,
+    module_dm::DensityMatrix<double,double>* dm,
     std::vector<std::vector<double>>*& dmk_d,
     std::vector<std::vector<std::complex<double>>>*& dmk_c
 ) {
-    std::vector<std::vector<double>>& dmk_tmp = dm->get_DMK_vector();
+    std::vector<std::vector<double>>& dmk_tmp = dm->get_dmk_vec();
     dmk_d = &dmk_tmp;
     dmk_c = nullptr;
 }
 
 template <>
 void assign_dmk_ptr<std::complex<double>>(
-    elecstate::DensityMatrix<std::complex<double>,double>* dm,
+    module_dm::DensityMatrix<std::complex<double>,double>* dm,
     std::vector<std::vector<double>>*& dmk_d,
     std::vector<std::vector<std::complex<double>>>*& dmk_c
 ) {
-    std::vector<std::vector<std::complex<double>>>& dmk_tmp = dm->get_DMK_vector();
+    std::vector<std::vector<std::complex<double>>>& dmk_tmp = dm->get_dmk_vec();
     dmk_c = &dmk_tmp;
     dmk_d = nullptr;
 }
@@ -78,7 +78,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           const Grid_Driver& gd,
                                           Parallel_Orbitals& pv,
                                           const elecstate::ElecState* pelec,
-                                          LCAO_domain::Setup_DM<T> &dmat, // mohan add 2025-11-03
+                                          module_dm::Setup_DM<T> &dmat, // mohan add 2025-11-03
                                           const psi::Psi<T>* psi,
                                           const TwoCenterBundle& two_center_bundle,
                                           const LCAO_Orbitals& orb,
@@ -226,7 +226,7 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
                                              const Grid_Driver& gd,
                                              Parallel_Orbitals& pv,
                                              const elecstate::ElecState* pelec,
-                                             LCAO_domain::Setup_DM<T>& dmat,
+                                             module_dm::Setup_DM<T>& dmat,
                                              const psi::Psi<T>* psi,
                                              const TwoCenterBundle& two_center_bundle,
                                              const LCAO_Orbitals& orb,
@@ -243,7 +243,7 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
     // Calculate forces and stresses using new operator-based methods
     // Step 1: Calculate Energy Density Matrix (EDM) for overlap force
     // EDM = Σ_k w_k * ε_k * |ψ_k><ψ_k|
-    elecstate::DensityMatrix<T, double> edm = edm_cal.cal_edm(pelec, *psi, *dmat.dm, kv, pv,
+    module_dm::DensityMatrix<T, double> edm = edm_cal.cal_edm(pelec, *psi, *dmat.dm, kv, pv,
                                                            cfg.nspin, cfg.nbands, ucell, *this->RA);
 
     // Step 2: Handle different spin cases
@@ -257,8 +257,8 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
             edm.switch_dmr(1);
         }
 
-        const hamilt::HContainer<double>* dmR = dmat.dm->get_DMR_pointer(1);
-        const hamilt::HContainer<double>* edmR = edm.get_DMR_pointer(1);
+        const hamilt::HContainer<double>* dmR = dmat.dm->get_dmr_ptr(1);
+        const hamilt::HContainer<double>* edmR = edm.get_dmr_ptr(1);
 
         // Calculate kinetic force/stress (uses DM)
         if (cfg.t_in_h)
@@ -302,7 +302,7 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
 
         // Calculate local potential force/stress (vl_dphi)
         // This uses grid integration, not operator-based method
-        edm_cal.ParaV = dmat.dm->get_paraV_pointer();
+        edm_cal.ParaV = &pv;
         PulayForceStress::cal_pulay_fs(parts.fvl_dphi, sparts.svl_dphi, *dmat.dm, ucell, pelec->pot,
                                        isforce, isstress, false /*reset dm to gint*/);
     }
@@ -315,7 +315,7 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
             hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_ekinetic(
                 nullptr, kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd,
                 two_center_bundle.kinetic_orb.get());
-            tmp_ekinetic.cal_force_stress(isforce, isstress, dmat.dm->get_DMR_pointer(1), parts.ftvnl_dphi,
+            tmp_ekinetic.cal_force_stress(isforce, isstress, dmat.dm->get_dmr_ptr(1), parts.ftvnl_dphi,
                                           sparts.stvnl_dphi);
         }
 
@@ -323,15 +323,15 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
         hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_overlap(
             nullptr, kv.kvec_d, nullptr, nullptr, &ucell, orb.cutoffs(), &gd,
             two_center_bundle.overlap_orb.get());
-        tmp_overlap.cal_force_stress(isforce, isstress, edm.get_DMR_pointer(1), parts.foverlap, sparts.soverlap);
+        tmp_overlap.cal_force_stress(isforce, isstress, edm.get_dmr_ptr(1), parts.foverlap, sparts.soverlap);
 
         // For nspin=4 (non-collinear), need complex DMR
         // Create temporary complex DMR for DM
-        hamilt::HContainer<std::complex<double>> tmp_dmr(dmat.dm->get_DMR_pointer(1)->get_paraV());
-        std::vector<int> ijrs = dmat.dm->get_DMR_pointer(1)->get_ijr_info();
+        hamilt::HContainer<std::complex<double>> tmp_dmr(dmat.dm->get_dmr_ptr(1)->get_paraV());
+        std::vector<int> ijrs = dmat.dm->get_dmr_ptr(1)->get_ijr_info();
         tmp_dmr.insert_ijrs(&ijrs);
         tmp_dmr.allocate();
-        dmat.dm->cal_DMR_full(&tmp_dmr);
+        dmat.dm->cal_dmr_full(&tmp_dmr, -1);
         // Nonlocal force/stress from the temporary complex DMR
         hamilt::Nonlocal<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_nonlocal(
             nullptr, kv.kvec_d, nullptr, &ucell, orb.cutoffs(), &gd,
@@ -339,7 +339,7 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
         tmp_nonlocal.cal_force_stress(isforce, isstress, &tmp_dmr, parts.fvnl_dbeta, sparts.svnl_dbeta);
 
         // Local-potential (vl_dphi) Pulay term via grid integration
-        edm_cal.ParaV = dmat.dm->get_paraV_pointer();
+        edm_cal.ParaV = &pv;
         PulayForceStress::cal_pulay_fs(parts.fvl_dphi, sparts.svl_dphi, *dmat.dm, ucell, pelec->pot,
                                        isforce, isstress, false);
     }
@@ -368,7 +368,7 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
         {
             dmat.dm->switch_dmr(2);
         }
-        const hamilt::HContainer<double>* dmr = dmat.dm->get_DMR_pointer(1);
+        const hamilt::HContainer<double>* dmr = dmat.dm->get_dmr_ptr(1);
         tmp_dspin.cal_force_stress(isforce, isstress, dmr, parts.force_dspin, sparts.stress_dspin);
         if (cfg.nspin == 2)
         {

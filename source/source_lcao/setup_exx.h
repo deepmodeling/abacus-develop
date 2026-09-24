@@ -6,7 +6,7 @@
 #include "source_io/module_parameter/input_parameter.h" // Input_para
 #include "source_basis/module_ao/parallel_orbitals.h" // parallel orbitals
 #include "source_basis/module_ao/orb_read.h" // orb
-#include "source_estate/module_charge/charge_mixing.h" // use charge mixing
+#include "source_estate/module_charge/chg_mix.h" // use charge mixing
 #include "source_hamilt/module_xc/exx_info.h" // for Exx_Info
 
 // for EXX

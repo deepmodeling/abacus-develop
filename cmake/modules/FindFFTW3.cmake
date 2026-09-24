@@ -4,6 +4,7 @@
 #  FFTW3_INCLUDE_DIRS  - Where to find FFTW3 headers.
 #  FFTW3_LIBRARIES     - List of libraries when using FFTW3.
 #  FFTW3_FOUND         - True if FFTW3 is found.
+#  FFTW3_VERSION       - Version from the selected library's pkgconfig/fftw3.pc, if available.
 #
 
 find_path(FFTW3_INCLUDE_DIR
@@ -47,6 +48,7 @@ endif()
 find_package_handle_standard_args(FFTW3 DEFAULT_MSG ${_fftw3_required_vars})
 
 # Copy the results to the output variables and target.
+set(FFTW3_VERSION "")
 if(FFTW3_FOUND)
     set(FFTW3_LIBRARIES ${FFTW3_LIBRARY})
     if (ENABLE_OPENMP)
@@ -55,13 +57,16 @@ if(FFTW3_FOUND)
 
     set(FFTW3_INCLUDE_DIRS ${FFTW3_INCLUDE_DIR})
 
-    # Try to extract FFTW version from header
-    if(FFTW3_INCLUDE_DIR AND EXISTS "${FFTW3_INCLUDE_DIR}/fftw3.h")
-        file(STRINGS "${FFTW3_INCLUDE_DIR}/fftw3.h" _fftw_ver_line REGEX "^#define[\t ]+FFTW_VERSION[\t ]+\"[^\"]+\"")
-        if(_fftw_ver_line)
-            string(REGEX REPLACE "^#define[\t ]+FFTW_VERSION[\t ]+\"([^\"]+)\"" "\\1" FFTW3_VERSION "${_fftw_ver_line}")
-        endif()
+  # Read the literal version from metadata beside the selected library.
+  get_filename_component(_fftw3_library_dir "${FFTW3_LIBRARY}" DIRECTORY)
+  set(_fftw3_pc "${_fftw3_library_dir}/pkgconfig/fftw3.pc")
+  if(EXISTS "${_fftw3_pc}")
+    file(STRINGS "${_fftw3_pc}" _fftw3_version_line REGEX "^Version:[ \t]*[0-9]")
+    if(_fftw3_version_line)
+      string(REGEX REPLACE "^Version:[ \t]*" "" FFTW3_VERSION "${_fftw3_version_line}")
+      string(STRIP "${FFTW3_VERSION}" FFTW3_VERSION)
     endif()
+  endif()
 
     if(NOT TARGET FFTW3::FFTW3)
         add_library(FFTW3::FFTW3 UNKNOWN IMPORTED)

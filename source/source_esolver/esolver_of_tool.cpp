@@ -5,6 +5,7 @@
 #include "source_estate/module_pot/gatefield.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/cal_ux.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 
 namespace ModuleESolver
 {
@@ -89,8 +90,9 @@ void ESolver_OF::allocate_array()
     delete this->ptemp_rho_;
     this->ptemp_rho_ = new Charge();
     this->ptemp_rho_->set_rhopw(this->pw_rho);
-    const bool kin_den = this->ptemp_rho_->kin_density(); // mohan add 20251202
-    this->ptemp_rho_->allocate(this->inp_->nspin, kin_den);
+    const bool kin_den = XC_Functional::get_ked_flag() || (this->inp_->out_elf[0] > 0); // mohan add 20251202
+    this->ptemp_rho_->allocate(this->inp_->nspin, kin_den, XC_Functional::get_ked_flag(),
+                               this->inp_->test_charge);
 
     this->theta_ = new double[this->inp_->nspin];
     this->pdLdphi_ = new double*[this->inp_->nspin];
@@ -370,7 +372,11 @@ void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& 
                 ptemp_rho_->rho[0][ir] = ptemp_phi[0][ir] * ptemp_phi[0][ir];
             }
             this->cal_dEdtheta(ptemp_phi, ptemp_rho_, ucell, this->theta_, dEdtheta);
-            this->pelec->cal_energies(2);
+            this->pelec->cal_energies(2,
+                                      this->inp_->imp_sol,
+                                      this->inp_->sc_mag_switch,
+                                      this->inp_->dft_plus_u,
+                                      this->inp_->assume_isolated);
             temp_energy = this->pelec->f_en.etot;
             double kinetic_energy = 0.;
             double pseudopot_energy = 0.;

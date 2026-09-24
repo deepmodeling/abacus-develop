@@ -10,15 +10,15 @@ template <typename TK>
 class Output_DMK
 {
   public:
-    Output_DMK(elecstate::DensityMatrix<TK, double>* p_DM, 
+    Output_DMK(module_dm::DensityMatrix<TK, double>* p_DM, 
 		    Parallel_Orbitals* ParaV, 
 		    int nspin, 
 		    int nks);
 
-    TK* get_DMK(int ik);
+    TK* get_dmk(int ik);
 
   private:
-    elecstate::DensityMatrix<TK, double>* p_DM_ = nullptr;
+    module_dm::DensityMatrix<TK, double>* p_DM_ = nullptr;
     Parallel_Orbitals* ParaV_ = nullptr;
     int nks_;
     int nspin_;

@@ -1219,6 +1219,10 @@ updates structures smoothly enough for second-order extrapolation.)";
         item.default_value = "0";
         read_sync_int(input.ndx);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
+            // TODO: unlike the ecutrho/ecutwfc path, enabling double_grid here
+            // (and in the ndy/ndz blocks below) is not rejected for LCAO. It is
+            // currently harmless only because LCAO rejects USPP separately in
+            // uspp_support.cpp; revisit if LCAO gains USPP support.
             if (para.input.ndx > para.input.nx)
             {
                 para.sys.double_grid = true;

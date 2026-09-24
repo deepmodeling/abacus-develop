@@ -8,6 +8,7 @@
 
 #include "source_cell/klist.h"
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
+#include "source_lcao/module_ri/ri_util_bvk.h"
 
 #include <RI/global/Array_Operator.h>
 #include <RI/global/Global_Func-2.h>
@@ -20,13 +21,6 @@
 
 namespace RI_Util
 {
-	inline extern std::array<int,3>
-	get_Born_vonKarmen_period(const K_Vectors &kv);
-
-	template<typename Tcell, size_t Ndim>
-	extern std::vector<std::array<Tcell,Ndim>>
-	get_Born_von_Karmen_cells( const std::array<Tcell,Ndim> &Born_von_Karman_period );
-
 	template<typename Tcell>
 	inline std::array<Tcell,3>
 	Vector3_to_array3(const ModuleBase::Vector3<Tcell> &v)

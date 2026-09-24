@@ -1,4 +1,5 @@
 #include "elecstate.h"
+#include "source_estate/module_charge/chg_tools.h"
 #include "source_estate/write_init.h"
 
 namespace elecstate
@@ -14,12 +15,17 @@ void init_scf(const UnitCell& ucell,
               ElecState* pelec)
 {
     //! core correction potential.
-    pelec->charge->set_rho_core(ucell, strucfac, numeric);
+    module_charge::set_rho_core(ucell,
+                              strucfac,
+                              numeric,
+                              pelec->charge->rho_core,
+                              pelec->charge->rhog_core,
+                              *pelec->charge->rhopw);
 
     //! renormalize the charge density
     if(PARAM.inp.init_chg != "dm_no_renormalize")
     {
-        pelec->charge->renormalize_rho();
+        pelec->charge->renormalize_rho(inp.nelec, ucell.omega);
     }
 
     //! initialize the potential

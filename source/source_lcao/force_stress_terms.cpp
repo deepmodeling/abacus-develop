@@ -178,7 +178,7 @@ void cal_dftu_fs(UnitCell& ucell,
                  Parallel_Orbitals& pv,
                  const LCAO_Orbitals& orb,
                  const K_Vectors& kv,
-                 LCAO_domain::Setup_DM<T>& dmat,
+                 module_dm::Setup_DM<T>& dmat,
                  const TwoCenterBundle& two_center_bundle,
                  Plus_U_Base& dftu,
                  const bool isforce,
@@ -245,13 +245,13 @@ void cal_dftu_fs(UnitCell& ucell,
 
             // The DensityMatrix holds nspin_dm = (nspin==2 ? 2 : 1) real-space DMR
             // channels: nspin=4 (non-collinear) packs all four Pauli components
-            // into a single complex DMR, so only one channel exists (cf. setup_dm.cpp
+            // into a single complex DMR, so only one channel exists (cf. allocate_dm.cpp
             // and the is0 = nspin==2 ? is : 0 indexing in cal_for/str_IJR_nao_r).
             const int nspin_dm = (PARAM.inp.nspin == 2) ? 2 : 1;
             std::vector<const hamilt::HContainer<double>*> dmR_tmp(nspin_dm, nullptr);
             for (int is = 0; is < nspin_dm; ++is)
             {
-                dmR_tmp[is] = dmat.dm->get_DMR_pointer(is + 1);
+                dmR_tmp[is] = dmat.dm->get_dmr_ptr(is + 1);
             }
 
             DFTU_LCAO::cal_fs_nao_r(&ucell, &dftu,
@@ -338,11 +338,11 @@ template void cal_exx_fs<std::complex<double>>(const UnitCell&, const bool, cons
                                                Exx_NAO<std::complex<double>>&, LCAOForceParts&, LCAOStressParts&);
 
 template void cal_dftu_fs<double>(UnitCell&, const Grid_Driver&, Parallel_Orbitals&, const LCAO_Orbitals&,
-                                  const K_Vectors&, LCAO_domain::Setup_DM<double>&, const TwoCenterBundle&,
+                                  const K_Vectors&, module_dm::Setup_DM<double>&, const TwoCenterBundle&,
                                   Plus_U_Base&, const bool, const bool, LCAOForceParts&, LCAOStressParts&);
 template void cal_dftu_fs<std::complex<double>>(UnitCell&, const Grid_Driver&, Parallel_Orbitals&,
                                                 const LCAO_Orbitals&, const K_Vectors&,
-                                                LCAO_domain::Setup_DM<std::complex<double>>&, const TwoCenterBundle&,
+                                                module_dm::Setup_DM<std::complex<double>>&, const TwoCenterBundle&,
                                                 Plus_U_Base&, const bool, const bool, LCAOForceParts&,
                                                 LCAOStressParts&);
 

@@ -2,7 +2,7 @@
 
 #include "cal_dos.h"
 #include "../module_output/cube_io.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_dm/dm_from_psi.h"
 #include "source_hamilt/module_gint/gint_interface.h"
 #include "source_base/module_device/memory_op.h"
 
@@ -16,12 +16,13 @@ template <typename T>
 void Cal_ldos<T>::cal_ldos_lcao(
         const elecstate::Efermi &eferm, // mohan add 2025-11-02
         const Charge &chr, // mohan add add 2025-11-02
-        const LCAO_domain::Setup_DM<T> &dmat, // mohan add 2025-11-02 
+        const module_dm::Setup_DM<T> &dmat, // mohan add 2025-11-02 
 		const K_Vectors &kv, // k points, mohan add 2025-11-02
         const ModuleBase::matrix &ekb, // mohan add 2025-11-02
         const ModuleBase::matrix &wg, // mohan add 2025-11-02
 		const psi::Psi<T>& psi,
 		const Parallel_Grid& pgrid,
+		const Parallel_Orbitals& pv,
 		const Grid_Driver& grid_driver,
 		const UnitCell& ucell)
 {
@@ -50,14 +51,14 @@ void Cal_ldos<T>::cal_ldos_lcao(
 
         // calculate dm-like for ldos
         const int nspin_dm = PARAM.inp.nspin == 2 ? 2 : 1;
-        elecstate::DensityMatrix<T, double> dm_ldos(dmat.dm->get_paraV_pointer(),
+        module_dm::DensityMatrix<T, double> dm_ldos(&pv,
                                                     nspin_dm,
                                                     kv.kvec_d,
                                                     kv.get_nks() / nspin_dm);
 
-        elecstate::cal_dm_psi(dmat.dm->get_paraV_pointer(), weight, psi, dm_ldos);
-        dm_ldos.init_DMR(&grid_driver, &ucell);
-        dm_ldos.cal_DMR();
+        module_dm::dm_from_psi(&pv, weight, psi, dm_ldos);
+        dm_ldos.init_dmr(&grid_driver, &ucell);
+        dm_ldos.cal_dmr(-1);
 
         // allocate ldos space
         std::vector<double> ldos_space(PARAM.inp.nspin * chr.nrxx);
@@ -68,7 +69,7 @@ void Cal_ldos<T>::cal_ldos_lcao(
         }
 
     // calculate ldos
-        ModuleGint::cal_gint_rho(dm_ldos.get_DMR_vector(), PARAM.inp.nspin, ldos);
+        ModuleGint::cal_gint_rho(dm_ldos.get_dmr_vec(), PARAM.inp.nspin, ldos);
 
         // I'm not sure whether ldos should be output for each spin or not
         // ldos[0] += ldos[1] for nspin_dm == 2

@@ -99,6 +99,11 @@ class DftuFsEnv
 };
 
 /// @brief Top-level entry: drives force/stress from DFT+U.
+///
+/// @note Hard to unit-test: requires DftuFsEnv which bundles Grid_Driver
+/// (neighbor search), Parallel_Orbitals (BLACS), ForceStressArrays (folded
+/// matrices), and TwoCenterIntegrator. The inner functions cal_force_k/gamma
+/// and cal_stress_k/gamma are testable with a mock DftuFsEnv.
 void force_stress(const DftuFsEnv& env,
                   const bool cal_force,
                   const bool cal_stress,

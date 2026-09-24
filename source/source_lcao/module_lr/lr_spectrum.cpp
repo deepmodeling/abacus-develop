@@ -9,11 +9,11 @@
 #include "source_hamilt/module_gint/gint_interface.h"
 
 template <typename T>
-elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix(const int istate, const T* X_in, const bool need_R)
+module_dm::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix(const int istate, const T* X_in, const bool need_R)
 {
     const T* const X = X_in == nullptr ? this->X : X_in;
     const int offset_b = istate * ldim;    //start index of band istate
-    elecstate::DensityMatrix<T, T> DM_trans(&this->pmat, this->nspin_x, this->kv.kvec_d, this->nk);
+    module_dm::DensityMatrix<T, T> DM_trans(&this->pmat, this->nspin_x, this->kv.kvec_d, this->nk);
     for (int is = 0;is < this->nspin_x; ++is)
     {
         const int offset_x = offset_b + is * nk * this->pX[0].get_local_size();
@@ -25,12 +25,12 @@ elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix
         std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(X + offset_x, this->psi_ks_vec[is], this->nocc[is], this->nvirt[is], (T)1.0 / (T)nk);
         // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
 #endif
-        for (int ik = 0;ik < this->nk;++ik) { DM_trans.set_DMK_pointer(ik + is * nk, dm_trans_2d[ik].data<T>()); }
+        for (int ik = 0;ik < this->nk;++ik) { DM_trans.set_dmk_ptr(ik + is * nk, dm_trans_2d[ik].data<T>()); }
     }
     if (need_R)
     {
         LR_Util::initialize_DMR(DM_trans, this->pmat, this->ucell, this->gd_, this->orb_cutoff_);
-        DM_trans.cal_DMR();
+        DM_trans.cal_dmr(-1);
     }
     return DM_trans;
 }
@@ -50,14 +50,14 @@ ModuleBase::Vector3<double> LR::LR_Spectrum<double>::cal_transition_dipole_istat
 {
     ModuleBase::Vector3<double> trans_dipole(0.0, 0.0, 0.0);
     // 1. transition density matrix
-    const elecstate::DensityMatrix<double, double> DM_trans = this->cal_transition_density_matrix(istate);
+    const module_dm::DensityMatrix<double, double> DM_trans = this->cal_transition_density_matrix(istate);
     for (int is = 0;is < this->nspin_x;++is)
     {
         // 2. transition density
         double** rho_trans = nullptr;
         LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, this->rho_basis.nrxx);
         ModuleBase::GlobalFunc::ZEROS(rho_trans[0], this->rho_basis.nrxx);
-        ModuleGint::cal_gint_rho({ DM_trans.get_DMR_vector().at(is) }, 1, rho_trans, false);
+        ModuleGint::cal_gint_rho({ DM_trans.get_dmr_vec().at(is) }, 1, rho_trans, false);
 
         // 3. transition dipole moment
         for (int ir = 0; ir < rho_basis.nrxx; ++ir)
@@ -87,7 +87,7 @@ ModuleBase::Vector3<std::complex<double>> LR::LR_Spectrum<std::complex<double>>:
 
     //1. transition density matrix
     ModuleBase::Vector3<std::complex<double>> trans_dipole(0.0, 0.0, 0.0);
-    const elecstate::DensityMatrix<std::complex<double>, std::complex<double>> DM_trans = this->cal_transition_density_matrix(istate);
+    const module_dm::DensityMatrix<std::complex<double>, std::complex<double>> DM_trans = this->cal_transition_density_matrix(istate);
     for (int is = 0;is < this->nspin_x;++is)
     {
         // 2. transition density
@@ -96,19 +96,19 @@ ModuleBase::Vector3<std::complex<double>> LR::LR_Spectrum<std::complex<double>>:
         LR_Util::_allocate_2order_nested_ptr(rho_trans_real, 1, this->rho_basis.nrxx);
         LR_Util::_allocate_2order_nested_ptr(rho_trans_imag, 1, this->rho_basis.nrxx);
 
-        elecstate::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(&this->pmat, 1, this->kv.kvec_d, this->nk);
+        module_dm::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(&this->pmat, 1, this->kv.kvec_d, this->nk);
         LR_Util::initialize_DMR(DM_trans_real_imag, this->pmat, this->ucell, this->gd_, this->orb_cutoff_);
 
         // real part
         LR_Util::get_DMR_real_imag_part(DM_trans, DM_trans_real_imag, ucell.nat, 'R');
         ModuleBase::GlobalFunc::ZEROS(rho_trans_real[0], this->rho_basis.nrxx);
-        ModuleGint::cal_gint_rho(DM_trans_real_imag.get_DMR_vector(), 1, rho_trans_real, false);
+        ModuleGint::cal_gint_rho(DM_trans_real_imag.get_dmr_vec(), 1, rho_trans_real, false);
         // LR_Util::print_grid_nonzero(rho_trans_real[0], this->rho_basis.nrxx, 10, "rho_trans");
 
         // imag part
         LR_Util::get_DMR_real_imag_part(DM_trans, DM_trans_real_imag, ucell.nat, 'I');
         ModuleBase::GlobalFunc::ZEROS(rho_trans_imag[0], this->rho_basis.nrxx);
-        ModuleGint::cal_gint_rho(DM_trans_real_imag.get_DMR_vector(), 1, rho_trans_imag, false);
+        ModuleGint::cal_gint_rho(DM_trans_real_imag.get_dmr_vec(), 1, rho_trans_imag, false);
         // LR_Util::print_grid_nonzero(rho_trans_imag[0], this->rho_basis.nrxx, 10, "rho_trans");
 
         // 3. transition dipole moment

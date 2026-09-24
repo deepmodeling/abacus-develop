@@ -1,123 +1,230 @@
 #ifndef DENSITY_MATRIX_H
 #define DENSITY_MATRIX_H
 
+#include <complex>
+#include <map>
 #include <string>
+#include <vector>
 
+#include "source_base/vector3.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_lcao/record_adj.h"
+#include "source_cell/record_adj.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 
-namespace elecstate
+namespace module_dm
 {
+/**
+ * @brief map a real/complex type to the opposite one
+ * ShiftRealComplex<double>::type = std::complex<double>
+ * ShiftRealComplex<std::complex<double>>::type = double
+ */
+template <typename T> struct ShiftRealComplex
+{
+    using type = void;
+};
+
+template <>
+struct ShiftRealComplex<double>
+{
+    using type = std::complex<double>;
+};
+
+template <>
+struct ShiftRealComplex<std::complex<double>>
+{
+    using type = double;
+};
+
 /**
  * @brief DensityMatrix Class
  * <TK,TR> = <double,double> for Gamma-only calculation
  * <TK,TR> = <std::complex<double>,double> for multi-k calculation
  */
-template<typename T> struct ShiftRealComplex
-{
-    using type = void;
-};
-
-template<>
-struct ShiftRealComplex<double> 
-{
-	using type = std::complex<double>;
-};
-
-template<>
-struct ShiftRealComplex<std::complex<double>> 
-{
-	using type = double;
-};
-
-
     template <typename TK, typename TR> class DensityMatrix;
 
-// DensityMatrix<complex<double>,TR>::cal_DMR() is illegal in C++, so DensityMatrix_Tools is used instead.
-namespace DensityMatrix_Tools
-{
+// DensityMatrix<complex<double>,TR>::cal_dmr() is illegal in C++, so module_dm is used instead.
     template <typename TK, typename TR_in, typename TR_out>
-    extern void cal_DMR(
-        const DensityMatrix<TK, TR_in> &dm,
+    extern void cal_dmr(
+        DensityMatrix<TK, TR_in> &dm,
         std::vector<hamilt::HContainer<TR_out>*> &dmR_out,
         const int ik_in);
 
     template <typename TK, typename TR_in, typename TR_out>
-    extern void cal_DMR_td(
-        const DensityMatrix<TK, TR_in> &dm,
+    extern void cal_dmr_td(
+        DensityMatrix<TK, TR_in> &dm,
         std::vector<hamilt::HContainer<TR_out>*> &dmR_out,
         const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
         const ModuleBase::Vector3<double> At,
         const int ik_in);
 
     template <typename TK, typename TR_in, typename TR_out>
-    extern void cal_DMR_full(
-        const DensityMatrix<TK, TR_in> &dm, 
+    extern void cal_dmr_full(
+        const DensityMatrix<TK, TR_in> &dm,
         hamilt::HContainer<TR_out>* dmR_out,
         const int ik_in);
 
-    template <typename TR>
-    extern void func_exp_mul_dmk(const std::complex<double> kphase, const std::vector<std::complex<double>> &DMK_mat_trans, TR* target_DMR_mat);
+    /**
+     * @brief shared inner loop of cal_dmr / cal_dmr_td: for each spin channel,
+     * zero the DMR HContainer and accumulate kphase * DMK into DMR blocks.
+     * Pass an empty phase_hybrid map for the non-TD (cal_dmr) case.
+     */
+    template <typename TK, typename TR_in, typename TR_out>
+    extern void accumulate_dmr(
+        DensityMatrix<TK, TR_in> &dm,
+        std::vector<hamilt::HContainer<TR_out>*> &dmR_out,
+        const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
+        const int ik_in,
+        const char* func_name);
 
     template <typename TR>
-    extern void func_xyz_to_updown(const std::complex<double> tmp[4], const int icol, const int step_trace[4], TR* target_DMR_mat);
-}
+    extern void exp_mul_dmk(const std::complex<double> kphase,
+                                const std::vector<std::complex<double>>& dmk_row,
+                                TR* dmr_mat);
 
+    template <typename TR>
+    extern void xyz_to_updown(const std::complex<double> spin_block[4],
+                                  const int icol,
+                                  const int spin_stride[4],
+                                  TR* dmr_mat);
+
+    /**
+     * @brief geometry of one atom-pair sub-block within the global DMK matrix
+     * row0/col0: global index of the block's top-left element in the 2D block-cyclic DMK
+     * nrows/ncols: orbital dimensions of the two atoms
+     */
+    struct DmrBlock
+    {
+        int row0;
+        int col0;
+        int nrows;
+        int ncols;
+        int size() const { return nrows * ncols; }
+    };
+
+    /// @brief extract the block geometry for atom pair (iat1, iat2) from the parallel orbitals layout
+    DmrBlock get_dmr_block(const Parallel_Orbitals* pv, const int iat1, const int iat2);
+
+    /**
+     * @brief precompute k-phase factors e^{ikR} and collect DMR block pointers for one atom pair
+     * @param atom_pair the atom pair whose R-vectors and matrices are used
+     * @param kvec_d direct coordinates of k-points
+     * @param nk number of k-points
+     * @param phase_hybrid additional hybrid-gauge phase per R (empty map = no extra phase)
+     * @param kphase_vec output: kphase_vec[ik][iR]
+     * @param dmr_mats output: dmr_mats[iR] points to the DMR block for R-vector iR
+     */
+    template <typename TK, typename TR>
+    extern void build_kphase(hamilt::AtomPair<TR>& atom_pair,
+                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                             const int nk,
+                             const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
+                             std::vector<std::vector<TK>>& kphase_vec,
+                             std::vector<TR*>& dmr_mats);
+
+    /// @brief transpose a col-major DMK sub-block into row-major order
+    template <typename TK>
+    extern void transpose_dmk_block(const TK* dmk_col_major,
+                                    const int ld_hk,
+                                    const DmrBlock& block,
+                                    TK* dmk_row);
+
+    /**
+     * @brief nspin=1/2: accumulate Re(kphase * DMK) into DMR blocks
+     *
+     * Formula: DMR_ij(R) += Re[ e^{ik·R} * DMK_ij(k) ]
+     * If ik_in >= 0, only that k-point contributes; if ik_in < 0, sum over all k-points.
+     */
+    template <typename TK, typename TR>
+    extern void add_dmr_real(const DensityMatrix<TK, TR>& dm,
+                             const DmrBlock& block,
+                             const int ik_begin,
+                             const std::vector<std::vector<TK>>& kphase_vec,
+                             const int ld_hk,
+                             const int ik_in,
+                             std::vector<TR*>& dmr_mats);
+
+    /**
+     * @brief nspin==4 (SOC): accumulate k-phase * DMK into a per-R complex buffer,
+     * then transform 2x2 spin blocks from (upup, updown, downup, downdown) to
+     * (rho_0, rho_x, rho_y, rho_z) via xyz_to_updown.
+     *
+     * Formula:
+     *   S_ij(R) = sum_k e^{ik·R} * DMK_ij(k)
+     *   rho_0 = rho_upup + rho_downdown
+     *   rho_x = rho_updown + rho_downup
+     *   rho_y = Im(rho_updown) - Im(rho_downup)   (sign for conjugated stored DM)
+     *   rho_z = rho_upup - rho_downdown
+     * Each orbital corresponds to a 2x2 spin block, so rows/cols step by 2.
+     * If ik_in >= 0, only that k-point contributes; if ik_in < 0, sum over all k-points.
+     */
+    template <typename TK, typename TR>
+    extern void add_dmr_soc(const DensityMatrix<TK, TR>& dm,
+                            const DmrBlock& block,
+                            const int ik_begin,
+                            const std::vector<std::vector<TK>>& kphase_vec,
+                            const int ld_hk,
+                            const int ik_in,
+                            const int col_stride,
+                            std::vector<TR*>& dmr_mats);
 
 template <typename TK, typename TR>
 class DensityMatrix
 {
-	using TRShift = typename ShiftRealComplex<TR>::type;
+    using TRShift = typename ShiftRealComplex<TR>::type;
 
-	public:
-	/**
-	 * @brief Destructor of class DensityMatrix
-	 */
-	~DensityMatrix();
+    public:
+    /**
+     * @brief Destructor of class DensityMatrix
+     */
+    ~DensityMatrix();
 
     /**
      * @brief Constructor of class DensityMatrix for multi-k calculation
-     * @param _paraV pointer of Parallel_Orbitals object
-     * @param nspin number of spin of the density matrix, set by user according to global nspin
-     *  (usually {nspin_global -> nspin_dm} = {1->1, 2->2, 4->1}, but sometimes 2->1 like in LR-TDDFT)
+     * @param pv pointer of Parallel_Orbitals object
+     * @param spin_mult spin multiplicity used to size the DM: 1 for input nspin 1 or 4
+     *  (non-collinear k points are not doubled), 2 for input nspin 2 (LSDA up/down).
+     *  This is NOT the physical nspin (1/2/4); it matches K_Vectors::spin_mult.
      * @param kvec_d direct coordinates of kpoints
-     * @param nk number of k-points, not always equal to K_Vectors::get_nks()/nspin_dm.
+     * @param nk number of k-points, not always equal to K_Vectors::get_nks()/spin_mult.
      *               it will be set to kvec_d.size() if the value is invalid
+     * @param nspin the global physical nspin from INPUT (1/2/4); defaults to spin_mult for
+     *               non-SOC cases where they coincide. Pass 4 explicitly for SOC/noncollinear
+     *               calculations so that cal_dmr selects the spin-resolved (Pauli) branch.
      */
-	DensityMatrix(const Parallel_Orbitals* _paraV, 
-			const int nspin, 
-			const std::vector<ModuleBase::Vector3<double>>& kvec_d, 
-			const int nk);
+    DensityMatrix(const Parallel_Orbitals* pv,
+            const int spin_mult,
+            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+            const int nk,
+            const int nspin = 0);
 
     /**
      * @brief Constructor of class DensityMatrix for gamma-only calculation, where kvector is not required
-     * @param _paraV pointer of Parallel_Orbitals object
-     * @param nspin number of spin of the density matrix, set by user according to global nspin
-     *  (usually {nspin_global -> nspin_dm} = {1->1, 2->2, 4->1}, but sometimes 2->1 like in LR-TDDFT)
+     * @param pv pointer of Parallel_Orbitals object
+     * @param spin_mult spin multiplicity of the density matrix (1 or 2); NOT the physical nspin
+     * @param nspin the global physical nspin from INPUT (1/2/4); defaults to spin_mult.
      */
-    DensityMatrix(const Parallel_Orbitals* _paraV, const int nspin);
+    DensityMatrix(const Parallel_Orbitals* pv, const int spin_mult, const int nspin = 0);
 
     /**
      * @brief initialize density matrix DMR from UnitCell
      * @param GridD_in pointer of Grid_Driver object (used to find ajacent atoms)
      * @param ucell pointer of UnitCell object
      */
-    void init_DMR(const Grid_Driver* GridD_in, const UnitCell* ucell);
+    void init_dmr(const Grid_Driver* GridD_in, const UnitCell* ucell);
 
     /**
      * @brief initialize density matrix DMR from UnitCell and RA
      * @param ra pointer of Record_adj object (used to find ajacent atoms)
      * @param ucell pointer of UnitCell object
      */
-    void init_DMR(Record_adj& ra, const UnitCell* ucell);
+    void init_dmr(Record_adj& ra, const UnitCell* ucell);
 
     /**
      * @brief initialize density matrix DMR from another HContainer
      * now only support HContainer<double>
      * @param _DMR_in pointer of another HContainer object
      */
-    void init_DMR(const hamilt::HContainer<TR>& _DMR_in);
+    void init_dmr(const hamilt::HContainer<TR>& _DMR_in);
 
     /// @brief initialize density matrix DMR from another HContainer
     /// this is a temprory function for NSPIN=4 case 
@@ -125,22 +232,22 @@ class DensityMatrix
     /// would be refactor in the future
     /// @param _DMR_in 
     // the old input type ``:HContainer<complex<double>` causes redefination error if TR = complex<double>
-    void init_DMR(const hamilt::HContainer<TRShift>& _DMR_in);
+    void init_dmr(const hamilt::HContainer<TRShift>& _DMR_in);
 
     /**
-     * @brief set _DMK element directly
+     * @brief set dmk element directly
      * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
      * @param ik k-point index
      * @param i row index
      * @param j column index
      * @param value value to be set
      */
-    void set_DMK(const int ispin, const int ik, const int i, const int j, const TK value);
+    void set_dmk(const int ispin, const int ik, const int i, const int j, const TK value);
 
     /**
-     * @brief set _DMK element to zero
+     * @brief set dmk element to zero
     */
-    void set_DMK_zero();
+    void set_dmk_zero();
     
     /**
      * @brief get a matrix element of density matrix dm(k)
@@ -150,75 +257,89 @@ class DensityMatrix
      * @param j column index
      * @return T a matrix element of density matrix dm(k)
      */
-    TK get_DMK(const int ispin, const int ik, const int i, const int j) const;
+    TK get_dmk(const int ispin, const int ik, const int i, const int j) const;
 
     /**
      * @brief get total number of k-points of density matrix dm(k)
      */
-    int get_DMK_nks() const;
-    int get_DMK_size() const;
+    int get_dmk_nks() const;
+    int get_dmk_size() const;
 
     /**
      * @brief get number of rows of density matrix dm(k)
      */
-    int get_DMK_nrow() const;
+    int get_dmk_nrow() const;
 
     /**
      * @brief get number of columns of density matrix dm(k)
      */
-    int get_DMK_ncol() const;
+    int get_dmk_ncol() const;
 
     /**
      * @brief get pointer of DMR
      * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
      * @return HContainer<TR>* pointer of DMR
      */
-    hamilt::HContainer<TR>* get_DMR_pointer(const int ispin) const;
+    hamilt::HContainer<TR>* get_dmr_ptr(const int ispin) const;
 
     /**
      * @brief check whether the stored DMR is a valid density matrix calculated from DMK
-     * init_DMR() resets the flag and cal_DMR()/cal_DMR_td() set it, so a freshly
+     * init_dmr() resets the flag and cal_dmr()/cal_dmr_td() set it, so a freshly
      * allocated, zeroed or file-read DMR is reported as not ready until the first
      * wavefunction-derived calculation
      * @return true if DMR is ready for Hamiltonian construction
      */
-    bool is_dmr_ready() const { return this->_dmr_ready; }
+    bool is_dmr_ready() const
+    {
+        return this->_dmr_ready;
+    }
 
     /**
      * @brief get pointer vector of DMR
      * @return HContainer<TR>* vector of DMR
      */
-    const std::vector<hamilt::HContainer<TR>*>& get_DMR_vector() const {return this->_DMR;}
-    std::vector<hamilt::HContainer<TR>*>& get_DMR_vector() {return this->_DMR;}
+    const std::vector<hamilt::HContainer<TR>*>& get_dmr_vec() const
+    {
+        return this->dmr;
+    }
+    std::vector<hamilt::HContainer<TR>*>& get_dmr_vec()
+    {
+        return this->dmr;
+    }
 
-    const std::vector<std::vector<TR>>& get_DMR_save() const {return this->_DMR_save;}
-    std::vector<std::vector<TR>>& get_DMR_save() {return this->_DMR_save;}
+    const std::vector<std::vector<TR>>& get_dmr_save() const
+    {
+        return this->dmr_save;
+    }
+    std::vector<std::vector<TR>>& get_dmr_save()
+    {
+        return this->dmr_save;
+    }
 
     /**
      * @brief get pointer of DMK
-     * @param ik k-point index, which is the index of _DMK
+     * @param ik k-point index, which is the index of dmk
      * @return TK* pointer of DMK
      */
-    TK* get_DMK_pointer(const int ik) const;
+    TK* get_dmk_ptr(const int ik) const;
 
     /**
      * @brief get pointer vector of DMK
     */
-    const std::vector<std::vector<TK>>& get_DMK_vector() const {return this->_DMK;}
-    std::vector<std::vector<TK>>& get_DMK_vector() {return this->_DMK;}
+    const std::vector<std::vector<TK>>& get_dmk_vec() const
+    {
+        return this->dmk;
+    }
+    std::vector<std::vector<TK>>& get_dmk_vec()
+    {
+        return this->dmk;
+    }
 
     /**
-     * @brief set _DMK using a input TK* pointer
+     * @brief set dmk using a input TK* pointer
      * please make sure the size of TK* is correct
     */
-    void set_DMK_pointer(const int ik, TK* DMK_in);
-
-    /**
-     * @brief get pointer of paraV
-     */
-    const Parallel_Orbitals* get_paraV_pointer() const {return this->_paraV;}
-
-    const std::vector<ModuleBase::Vector3<double>>& get_kvec_d() const { return this->_kvec_d; }
+    void set_dmk_ptr(const int ik, TK* DMK_in);
 
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
@@ -226,15 +347,17 @@ class DensityMatrix
      * if ik_in < 0, calculate all k-points
      * if ik_in >= 0, calculate only one k-point without summing over k-points
      */
-    void cal_DMR(const int ik_in = -1);
+    void cal_dmr(const int ik_in);
 
     /**
      * @brief calculate density matrix DMR with additional vector potential phase, used for hybrid gauge tddft
      * @param ik_in
      * if ik_in < 0, calculate all k-points
-     * if ik_in >= 0, calculate only one k-point without summing over k-points
+     * if ik_in >= 0, calculate only one k-point
      */
-    void cal_DMR_td(const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid, const ModuleBase::Vector3<double> At, const int ik_in = -1);
+    void cal_dmr_td(const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
+                    const ModuleBase::Vector3<double> At,
+                    const int ik_in);
 
     /**
      * @brief calculate complex density matrix DMR with both real and imaginary part for noncollinear-spin calculation
@@ -242,9 +365,9 @@ class DensityMatrix
      * @param dmR_out pointer of HContainer object to store the calculated complex DMR
      * @param ik_in
      * if ik_in < 0, calculate all k-points
-     * if ik_in >= 0, calculate only one k-point without summing over k-points
+     * if ik_in >= 0, calculate only one k-point
      */
-    void cal_DMR_full(hamilt::HContainer<std::complex<double>>* dmR_out, const int ik_in = -1) const;
+    void cal_dmr_full(hamilt::HContainer<std::complex<double>>* dmR_out, const int ik_in) const;
 
     /**
      * @brief (Only nspin=2) switch DMR to total density matrix or magnetization density matrix
@@ -253,62 +376,50 @@ class DensityMatrix
     void switch_dmr(const int mode);
 
     /**
-     * @brief write density matrix dm(ik) into *.dmk
-     * @param directory directory of *.dmk files
-     * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
-     * @param ik k-point index
+     * @brief save dmr into dmr_save
      */
-    void write_DMK(const std::string directory, const int ispin, const int ik);
-
-    /**
-     * @brief read *.dmk into density matrix dm(ik)
-     * @param directory directory of *.dmk files
-     * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
-     * @param ik k-point index
-     */
-    void read_DMK(const std::string directory, const int ispin, const int ik);
-
-    /**
-     * @brief save _DMR into _DMR_save
-     */
-    void save_DMR();
+    void save_dmr();
     
-    std::vector<ModuleBase::ComplexMatrix> EDMK; // for TD-DFT
+    std::vector<ModuleBase::ComplexMatrix> edmk; // for TD-DFT
 
 #ifdef __PEXSI
     /**
      * @brief EDM storage for PEXSI
      * used in MD calculation
      */
-    std::vector<TK*> pexsi_EDM;
+    std::vector<TK*> edm_pexsi;
 #endif
 
   private:
+    /**
+     * @brief delete all HContainer objects in dmr and clear the vector
+     */
+    void clear_dmr();
+
     /**
      * @brief HContainer for density matrix in real space for 2D parallelization
      * vector.size() = 1 for non-polarization and SOC
      * vector.size() = 2 for spin-polarization
      */
-    std::vector<hamilt::HContainer<TR>*> _DMR;
-    std::vector<std::vector<TR>> _DMR_save;
+    std::vector<hamilt::HContainer<TR>*> dmr;
+    std::vector<std::vector<TR>> dmr_save;
 
-    /// @brief whether _DMR holds a density matrix calculated from DMK (reset by init_DMR, set by cal_DMR)
+    /// @brief whether dmr holds a density matrix calculated from DMK (reset by init_dmr, set by cal_dmr)
     bool _dmr_ready = false;
 
     /**
-     * @brief HContainer for density matrix in real space for gird parallelization
-     * vector.size() = 1 for non-polarization and SOC
-     * vector.size() = 2 for spin-polarization
+     * @brief HContainer for density matrix in real space for grid parallelization
+     * same size semantics as dmr
      */
-    std::vector<hamilt::HContainer<TR>*> _DMR_grid;
+    std::vector<hamilt::HContainer<TR>*> dmr_grid;
 
     /**
      * @brief density matrix in k space, which is a vector[ik]
-     * DMK should be a [_nspin][_nk][i][j] matrix,
-     * whose size is _nspin * _nk * _paraV->get_nrow() * _paraV->get_ncol()
+     * DMK should be a [spin_mult][_nk][i][j] matrix,
+     * whose size is spin_mult * _nk * pv->get_nrow() * pv->get_ncol()
      */
-    // std::vector<ModuleBase::ComplexMatrix> _DMK;
-    std::vector<std::vector<TK>> _DMK;
+    // std::vector<ModuleBase::ComplexMatrix> dmk;
+    std::vector<std::vector<TK>> dmk;
 
     /**
      * @brief K_Vectors object, which is used to get k-point information
@@ -318,14 +429,23 @@ class DensityMatrix
     /**
      * @brief Parallel_Orbitals object, which contain all information of 2D block cyclic distribution
      */
-    const Parallel_Orbitals* _paraV = nullptr;
+    const Parallel_Orbitals* pv = nullptr;
 
     /**
-     * @brief spin-polarization index (1 - none spin and SOC ; 2 - spin polarization)
-     * Attention: this is not as same as GlovalV::NSPIN
-     * _nspin means the number of isolated spin-polarization states
+     * @brief spin multiplicity used to size the density matrix (1 - none spin and SOC ;
+     * 2 - spin polarization). This is NOT the physical nspin (1/2/4); it matches
+     * K_Vectors::spin_mult.
      */
-    int _nspin = 1;
+    int spin_mult = 1;
+
+    /**
+     * @brief the global physical nspin from INPUT (1/2/4).
+     * For SOC/noncollinear (nspin==4) the density matrix is stored with spin_mult==1
+     * (a single 2x2 spin-block matrix), but cal_dmr/cal_dmr_td must still take the
+     * spin-resolved (Pauli) branch. spin_mult cannot distinguish this, so keep the
+     * global value here. Equals spin_mult for non-SOC cases.
+     */
+    int nspin = 1;
 
     /**
      * @brief real number of k-points
@@ -335,14 +455,49 @@ class DensityMatrix
     int _nk = 0;
 
     /// temporary pointers for switch DMR, only used with nspin=2
-    std::vector<TR> dmr_origin_;
-    TR* dmr_tmp_ = nullptr;
+    std::vector<TR> dmr_origin;
+    std::vector<TR> dmr_tmp;
 
-    friend void DensityMatrix_Tools::cal_DMR<TK,TR>(const DensityMatrix<TK, TR> &dm, std::vector<hamilt::HContainer<TR>*> &dmR_out, const int ik_in);
-    friend void DensityMatrix_Tools::cal_DMR_td<TK,TR>(const DensityMatrix<TK, TR> &dm, std::vector<hamilt::HContainer<TR>*> &dmR_out, const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid, const ModuleBase::Vector3<double> At, const int ik_in);
-    friend void DensityMatrix_Tools::cal_DMR_full<TK,TR>(const DensityMatrix<TK, TR> &dm, hamilt::HContainer<std::complex<double>>* dmR_out, const int ik_in);
+    friend void module_dm::cal_dmr<TK, TR>(
+        DensityMatrix<TK, TR>& dm,
+        std::vector<hamilt::HContainer<TR>*>& dmR_out,
+        const int ik_in);
+    friend void module_dm::cal_dmr_td<TK, TR>(
+        DensityMatrix<TK, TR>& dm,
+        std::vector<hamilt::HContainer<TR>*>& dmR_out,
+        const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
+        const ModuleBase::Vector3<double> At,
+        const int ik_in);
+    friend void module_dm::cal_dmr_full<TK, TR>(
+        const DensityMatrix<TK, TR>& dm,
+        hamilt::HContainer<std::complex<double>>* dmR_out,
+        const int ik_in);
+    friend void module_dm::accumulate_dmr<TK, TR>(
+        DensityMatrix<TK, TR>& dm,
+        std::vector<hamilt::HContainer<TR>*>& dmR_out,
+        const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
+        const int ik_in,
+        const char* func_name);
+    friend void module_dm::add_dmr_real<TK, TR>(
+        const DensityMatrix<TK, TR>& dm,
+        const DmrBlock& block,
+        const int ik_begin,
+        const std::vector<std::vector<TK>>& kphase_vec,
+        const int ld_hk,
+        const int ik_in,
+        std::vector<TR*>& dmr_mats);
+
+    friend void module_dm::add_dmr_soc<TK, TR>(
+        const DensityMatrix<TK, TR>& dm,
+        const DmrBlock& block,
+        const int ik_begin,
+        const std::vector<std::vector<TK>>& kphase_vec,
+        const int ld_hk,
+        const int ik_in,
+        const int col_stride,
+        std::vector<TR*>& dmr_mats);
 };
 
-} // namespace elecstate
+} // namespace module_dm
 
 #endif

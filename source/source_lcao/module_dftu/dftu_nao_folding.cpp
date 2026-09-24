@@ -89,7 +89,8 @@ void fold_dSR_gamma(const FoldingCtx& ctx,
     }
 
     int nnr = 0;
-    ModuleBase::Vector3<double> tau1, tau2;
+    ModuleBase::Vector3<double> tau1;
+    ModuleBase::Vector3<double> tau2;
 
     for (int T1 = 0; T1 < ucell.ntype; ++T1)
     {
@@ -154,7 +155,7 @@ void folding_matrix_k(const FoldingCtx& ctx,
                       const ModuleBase::Vector3<double>& kvec_d)
 {
     ModuleBase::TITLE("Plus_U", "folding_matrix_k");
-    ModuleBase::timer::start("Plus_U", "folding_matrix_k");
+    ModuleBase::timer::start("DFTU_LCAO", "folding_matrix_k");
     const int npol = ctx.npol;
     const std::string& ks_solver = ctx.ks_solver;
     const std::vector<double>& orb_cutoff = ctx.orb_cutoff;
@@ -255,7 +256,7 @@ void folding_matrix_k(const FoldingCtx& ctx,
             } // ad
         } // I1
     } // T1
-    ModuleBase::timer::end("Plus_U", "folding_matrix_k");
+    ModuleBase::timer::end("DFTU_LCAO", "folding_matrix_k");
 
     return;
 }
@@ -267,7 +268,7 @@ void folding_matrix_k_new(const std::string& ks_solver,
                           hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("Plus_U", "folding_matrix_k_new");
-    ModuleBase::timer::start("Plus_U", "folding_matrix_k_new");
+    ModuleBase::timer::start("DFTU_LCAO", "folding_matrix_k_new");
 
     int hk_type = 0;
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver))
@@ -295,7 +296,7 @@ void folding_matrix_k_new(const std::string& ks_solver,
         }
     }
 
-    ModuleBase::timer::end("Plus_U", "folding_matrix_k_new");
+    ModuleBase::timer::end("DFTU_LCAO", "folding_matrix_k_new");
 }
 
 } // namespace DFTU_LCAO

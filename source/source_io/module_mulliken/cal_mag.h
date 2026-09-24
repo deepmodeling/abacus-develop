@@ -26,7 +26,7 @@ template <typename TK>
 void cal_mag(Parallel_Orbitals* pv,
              hamilt::Hamilt<TK>* p_ham,
              K_Vectors& kv,
-             elecstate::DensityMatrix<TK,double>* dm,
+             module_dm::DensityMatrix<TK,double>* dm,
              const TwoCenterBundle& two_center_bundle,
              const LCAO_Orbitals& orb,
              UnitCell& ucell,
@@ -58,7 +58,7 @@ void cal_mag(Parallel_Orbitals* pv,
     {
         std::vector<std::vector<double>> atom_mag(ucell.nat, std::vector<double>(PARAM.inp.nspin, 0.0));
         std::vector<ModuleBase::Vector3<int>> constrain(ucell.nat, ModuleBase::Vector3<int>(1, 1, 1));
-        const hamilt::HContainer<double>* dmr = dm->get_DMR_pointer(1);
+        const hamilt::HContainer<double>* dmr = dm->get_dmr_ptr(1);
         std::vector<double> moments;
         std::vector<double> mag_x(ucell.nat, 0.0);
         std::vector<double> mag_y(ucell.nat, 0.0);

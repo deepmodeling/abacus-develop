@@ -30,7 +30,7 @@ hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::DFTU_onsite(HS_Matrix_K<TK>* 
                                                  Plus_U_Base* p_dftu,
                                                  const int nspin_in,
                                                  const double onsite_radius,
-                                                 const elecstate::DensityMatrix<TK, double>* dm_in)
+                                                 const module_dm::DensityMatrix<TK, double>* dm_in)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
       ucell(&ucell_in),
       dftu(p_dftu),
@@ -67,7 +67,7 @@ hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::DFTU_onsite(HS_Matrix_K<TK>* 
  * 
  * Case 1: Occ_mat NOT ready (!is_occmat_ready)
  *   - First electronic iteration: calculates occupation matrix from density matrix (DMR)
- *     * Fetches the real-space DMR via dm_->get_DMR_pointer()
+ *     * Fetches the real-space DMR via dm_->get_dmr_ptr()
  *     * Accumulates contributions from all atom pairs via DFTU_LCAO::cal_occ_ijr()
  *     * Performs MPI reduction to sum occ across processes
  *     * Stores result via set_occ_mat_flat() for use in pot_onsite calculation
@@ -128,12 +128,12 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     const Parallel_Orbitals* pv = this->hR->get_atom_pair(0).get_paraV();
     // nlm_tot is precomputed in the constructor (structure snapshot)
 
-    // (symmetry) when crystal symmetry reduces the k-mesh, dm_->get_DMR_pointer()
+    // (symmetry) when crystal symmetry reduces the k-mesh, dm_->get_dmr_ptr()
     // was Fourier-transformed from the irreducible k-points only and is not
     // actually symmetric; reconstruct the full-BZ DMR once here (reused by every
     // atom below) via the same D(k) restoration EXX already uses for its own
     // real-space density matrix (ModuleSymmetry::Symmetry_rotation::restore_dm).
-    std::unique_ptr<elecstate::DensityMatrix<TK, double>> dmr_sym;
+    std::unique_ptr<module_dm::DensityMatrix<TK, double>> dmr_sym;
     if (!this->dftu->is_occmat_ready() && this->kv_ != nullptr && ModuleSymmetry::Symmetry::symm_flag == 1
         && !this->kv_->kstars.empty())
     {
@@ -161,11 +161,11 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             const int ik_ibz = this->kv_->ik2iktot[ik_local] % nks_ibz_global;
             for (const std::pair<const int, ModuleBase::Vector3<double>>& isym_kvd : this->kv_->kstars[ik_ibz]) { kvec_d_full.push_back(isym_kvd.second); }
         }
-        const std::vector<std::vector<TK>> dmk_full = this->symrot_.restore_dm(*this->kv_, this->dm_->get_DMK_vector(), *pv);
-        dmr_sym.reset(new elecstate::DensityMatrix<TK, double>(pv, nspin0, kvec_d_full, static_cast<int>(kvec_d_full.size())));
-        dmr_sym->init_DMR(*this->dm_->get_DMR_pointer(1));
-        dmr_sym->get_DMK_vector() = dmk_full;
-        dmr_sym->cal_DMR();
+        const std::vector<std::vector<TK>> dmk_full = this->symrot_.restore_dm(*this->kv_, this->dm_->get_dmk_vec(), *pv);
+        dmr_sym.reset(new module_dm::DensityMatrix<TK, double>(pv, nspin0, kvec_d_full, static_cast<int>(kvec_d_full.size())));
+        dmr_sym->init_dmr(*this->dm_->get_dmr_ptr(1));
+        dmr_sym->get_dmk_vec() = dmk_full;
+        dmr_sym->cal_dmr(-1);
     }
 
     // loop over all Hubbard-projector center atoms (iat0)
@@ -191,8 +191,8 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         {
             // DMR is guaranteed ready here: otherwise the early exit above
             // would have returned. DMR index is 1-based, hence +1.
-            const hamilt::HContainer<double>* dmr = this->dm_->get_DMR_pointer(this->current_spin + 1);
-            if (dmr_sym) { dmr = dmr_sym->get_DMR_pointer(this->current_spin + 1); }
+            const hamilt::HContainer<double>* dmr = this->dm_->get_dmr_ptr(this->current_spin + 1);
+            if (dmr_sym) { dmr = dmr_sym->get_dmr_ptr(this->current_spin + 1); }
             DFTU_LCAO::compute_occ_from_dmr(*this->ucell,
                                             *this->dftu,
                                             iat0,

@@ -176,7 +176,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
         // a charge buffer to hold the orbital-pair density rho(r) = phi_Umu * phi_Vnu
         Charge chr;
         chr.set_rhopw(const_cast<ModulePW::PW_Basis*>(rho_basis));
-        chr.allocate(PARAM.inp.nspin, false);
+        chr.allocate(PARAM.inp.nspin, false, false, PARAM.inp.test_charge);
 
         // cal_force_loc returns the local Hellmann-Feynman force on every atom:
         //   F_I = -Omega * sum_G e^{iG.tau_I} iG . V^{L,Z_I}(G) rho*(G)
@@ -325,7 +325,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
             // (cal_gint_drho/dm_2d_to_gint looks up every overlapping pair), so we mirror
             // D's atom pairs and only fill the atom-I rows.
             // Block (I,L,R) value = D(I,L,R) + D(L,I,-R)^T. For the collinear DM (nspin 1/2,
-            // the only case routed here) DMK is Hermitian, so cal_DMR yields the exact symmetry
+            // the only case routed here) DMK is Hermitian, so cal_dmr yields the exact symmetry
             // D(L,I,-R)[l,k] = D(I,L,R)[k,l]; hence the symmetrized block is simply 2*D(I,L,R).
             // We use only the *local* block D(I,L,R): the reverse pair (L,I,-R) lives on a
             // different rank under 2D block-cyclic, so reading it directly (the old code) silently
@@ -421,7 +421,7 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
         for (int d = 0; d < 3; ++d)
         {
             chg_drho[d].set_rhopw(const_cast<ModulePW::PW_Basis*>(rho_basis));
-            chg_drho[d].allocate(chg->nspin, false);
+            chg_drho[d].allocate(chg->nspin, false, false, PARAM.inp.test_charge);
 
         }
 

@@ -27,6 +27,8 @@ class Parallel_Orbitals;
 namespace elecstate {
     struct fenergy;
     class ElecState;
+}
+namespace module_dm {
     template <typename TK, typename TR> class DensityMatrix;
 }
 namespace hamilt {
@@ -225,7 +227,7 @@ public:
     PyDensityMatrixAccessor() = default;
 
     /// Set from DensityMatrix object
-    void set_from_dm(elecstate::DensityMatrix<TK, TR>* dm);
+    void set_from_dm(module_dm::DensityMatrix<TK, TR>* dm);
 
     /// Set dimensions directly (for compatibility)
     void set_dimensions(int nks, int nrow, int ncol);
@@ -234,7 +236,7 @@ public:
     void set_DMK_data(int ik, const TK* data);
 
     /// Get DM(k) for specific k-point
-    py::array_t<TK> get_DMK(int ik) const;
+    py::array_t<TK> get_dmk(int ik) const;
 
     /// Get all DM(k) matrices
     std::vector<py::array_t<TK>> get_DMK_all() const;
@@ -255,7 +257,7 @@ public:
     bool is_valid() const { return (dm_ptr_ != nullptr || nks_ > 0); }
 
 private:
-    elecstate::DensityMatrix<TK, TR>* dm_ptr_ = nullptr;
+    module_dm::DensityMatrix<TK, TR>* dm_ptr_ = nullptr;
     int nks_ = 0;
     int nrow_ = 0;
     int ncol_ = 0;

@@ -40,7 +40,7 @@ class LCAO_Deepks_Interface
                            const Grid_Driver& GridD,
                            const Parallel_Orbitals* ParaV,
                            const psi::Psi<TK>& psid,
-                           const elecstate::DensityMatrix<TK, double>* dm,
+                           const module_dm::DensityMatrix<TK, double>* dm,
                            hamilt::HamiltLCAO<TK, TR>* p_ham,
                            const int& iter,
                            const bool& conv_esolver,

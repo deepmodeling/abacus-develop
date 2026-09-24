@@ -23,7 +23,7 @@ namespace LR
             const int& nvirt,
             const UnitCell& ucell_in,
             const psi::Psi<T>& psi_ks_in,
-            std::unique_ptr<elecstate::DensityMatrix<T, T>>& DM_trans_in,
+            std::unique_ptr<module_dm::DensityMatrix<T, T>>& DM_trans_in,
             // HContainer<double>* hR_in,
             std::weak_ptr<Exx_LRI<T>> exx_lri_in,
             const K_Vectors& kv_in,
@@ -82,12 +82,12 @@ namespace LR
         psi::Psi<T> psi_ks_full;
 
         /// transition density matrix 
-        std::unique_ptr<elecstate::DensityMatrix<T, T>>& DM_trans;
+        std::unique_ptr<module_dm::DensityMatrix<T, T>>& DM_trans;
 
         /// density matrix of a certain (i, a, k), with full naos*naos size for each key
         /// D^{iak}_{\mu\nu}(k): 1/N_k * c_{ak,\mu} c^*_{ik,\nu}
         /// D^{iak}_{\mu\nu}(R): D^{iak}_{\mu\nu}(k)e^{-ikR}
-        // elecstate::DensityMatrix<T, double>* DM_onebase;
+        // module_dm::DensityMatrix<T, double>* DM_onebase;
         mutable std::map<TA, std::map<TAC, RI::Tensor<T>>> Ds_onebase;
 
         // cells in the Born von Karmen supercell (direct)

@@ -95,7 +95,7 @@ scf_out_chg_tau
 092_PW_CR_VDW3
 093_PW_MSST
 094_PW_MSST2
-095_PW_NPT
+#095_PW_NPT  # disabled: uses ref_cell_factor=1.05 which is currently blocked
 096_PW_NVT
 097_PW_PBE0
 097_PW_PBE0_AFM

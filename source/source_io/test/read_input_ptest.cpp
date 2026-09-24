@@ -416,7 +416,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.mdp.md_out_force);
     EXPECT_EQ(param.inp.mdp.md_seed, -1);
     EXPECT_EQ(param.inp.mdp.md_prec_level, 0);
-    EXPECT_DOUBLE_EQ(param.inp.ref_cell_factor, 1.2);
+    EXPECT_DOUBLE_EQ(param.inp.ref_cell_factor, 1.0);
     EXPECT_EQ(param.inp.mdp.md_tchain, 1);
     EXPECT_DOUBLE_EQ(param.inp.mdp.md_tfirst, -1);
     EXPECT_DOUBLE_EQ(param.inp.mdp.md_tfreq, 0);

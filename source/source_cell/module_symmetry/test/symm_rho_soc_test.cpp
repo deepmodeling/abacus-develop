@@ -6,7 +6,7 @@
 #include "../symmetry.h"
 #include "../symm_rot_spin.h"
 #include "source_cell/unitcell.h"
-#include "source_estate/module_dm/density_matrix.h" // real func_xyz_to_updown
+#include "source_estate/module_dm/density_matrix.h" // real xyz_to_updown
 
 /************************************************
  *  unit test of Symmetry::rhog_symmetry_nspin4
@@ -190,8 +190,8 @@ TEST(RhogSymmetrySoc, GroupInvariance)
 // ---------------------------------------------------------------------------
 // Coupling test (nonzero m_y): the spin-density rotation W=spin_so3 used by psymmg_soc for the
 // grid symmetrization MUST agree with the SU(2) rotation of the physical spinor state followed by
-// the REAL func_xyz_to_updown extraction (which reads the conj-first stored DM, DM=conj(P), and
-// uses the bare +Im(ud)-Im(du)). This test now calls the actual func_xyz_to_updown rather than a
+// the REAL xyz_to_updown extraction (which reads the conj-first stored DM, DM=conj(P), and
+// uses the bare +Im(ud)-Im(du)). This test now calls the actual xyz_to_updown rather than a
 // local re-implementation, so the grid-rotation and DM-extraction conventions cannot drift apart
 // silently (it fails on the #7664 m_y flip). The self-referential GroupInvariance test above
 // cannot catch this because it uses the same wspin as its own oracle.
@@ -204,20 +204,20 @@ ModuleSymmetry::SpinRotation::Su2 block_from_pauli(double r0, double mx, double 
 {
     return {cd(r0 + mz, 0.0), cd(mx, -my), cd(mx, my), cd(r0 - mz, 0.0)};
 }
-// The runtime stores the DM conj-first (DM = conj(P), cal_dm_psi); this is what func_xyz_to_updown
+// The runtime stores the DM conj-first (DM = conj(P), dm_from_psi); this is what xyz_to_updown
 // actually consumes. Given a physical block P, the stored block is its element-wise conjugate.
 ModuleSymmetry::SpinRotation::Su2 stored_dm_from_phys(const ModuleSymmetry::SpinRotation::Su2& P)
 {
     return {std::conj(P[0]), std::conj(P[1]), std::conj(P[2]), std::conj(P[3])};
 }
-// call the REAL func_xyz_to_updown on a 2x2 stored-DM block; return (m_x, m_y, m_z)
+// call the REAL xyz_to_updown on a 2x2 stored-DM block; return (m_x, m_y, m_z)
 ModuleBase::Vector3<double> real_extract(const ModuleSymmetry::SpinRotation::Su2& Dstored)
 {
     const cd tmp[4] = {Dstored[0], Dstored[1], Dstored[2], Dstored[3]}; // {uu,ud,du,dd}
     const int col_size = 2;
     const int step_trace[4] = {0, 1, col_size, col_size + 1};
     double out[4] = {0.0, 0.0, 0.0, 0.0}; // rho0/x/y/z written at icol=0
-    elecstate::DensityMatrix_Tools::func_xyz_to_updown<double>(tmp, 0, step_trace, out);
+    module_dm::xyz_to_updown<double>(tmp, 0, step_trace, out);
     return ModuleBase::Vector3<double>(out[step_trace[1]], out[step_trace[2]], out[step_trace[3]]);
 }
 } // namespace
@@ -241,12 +241,12 @@ TEST(RhogSymmetrySoc, SpinConventionCoupling)
         EXPECT_NEAR(Wgrid.e31, Wpauli.e31, TOL) << "g=" << g; EXPECT_NEAR(Wgrid.e32, Wpauli.e32, TOL) << "g=" << g;
         EXPECT_NEAR(Wgrid.e33, Wpauli.e33, TOL) << "g=" << g;
 
-        // (2) End-to-end with the REAL func_xyz_to_updown, exactly the runtime data flow:
-        //   physical block P(m) --conj--> stored DM (conj-first) --func_xyz_to_updown--> grid m.
+        // (2) End-to-end with the REAL xyz_to_updown, exactly the runtime data flow:
+        //   physical block P(m) --conj--> stored DM (conj-first) --xyz_to_updown--> grid m.
         //   Rotate the PHYSICAL block by the spinor SU(2) U (U P U^dagger, i.e. the physical state
         //   rotation), conj to the stored block, extract again -> m'. psymmg_soc rotates the grid
         //   components with Wgrid=spin_so3, so we must have  m' == Wgrid * m.  This catches any
-        //   mismatch (e.g. the #7664 m_y flip) between func_xyz_to_updown and spin_so3.
+        //   mismatch (e.g. the #7664 m_y flip) between xyz_to_updown and spin_so3.
         for (const auto& m : mtest)
         {
             const ModuleSymmetry::SpinRotation::Su2 P  = block_from_pauli(2.0, m[0], m[1], m[2]);

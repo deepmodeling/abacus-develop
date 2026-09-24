@@ -154,7 +154,7 @@ public:
                void* p_hamilt_in,
                void* psi_in,
 #ifdef __LCAO
-			   elecstate::DensityMatrix<TK, double> *dm_in, // mohan add 2025-11-02
+			   module_dm::DensityMatrix<TK, double> *dm_in, // mohan add 2025-11-02
 #endif
 			   elecstate::ElecState* pelec_in,
                ModulePW::PW_Basis_K* pw_wfc_in = nullptr);
@@ -303,7 +303,7 @@ public:
     elecstate::ElecState* pelec = nullptr;  ///< Electronic state: ekb, wg, charge, klist
     ModulePW::PW_Basis_K* pw_wfc_ = nullptr; ///< PW basis for wavefunction storage (PW only)
 #ifdef __LCAO
-    elecstate::DensityMatrix<TK, double>* dm_; ///< Density matrix pointer (LCAO only)
+    module_dm::DensityMatrix<TK, double>* dm_; ///< Density matrix pointer (LCAO only)
 #endif
     const double meV_to_Ry = 7.349864435130999e-05; ///< Conversion factor
     K_Vectors kv_; ///< K-point vector list

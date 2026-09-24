@@ -39,7 +39,7 @@ namespace lcao
 
 void cal_mi_lcao(ScState& state,
                  hamilt::Operator<std::complex<double>>* p_operator,
-                 elecstate::DensityMatrix<std::complex<double>, double>* dm,
+                 module_dm::DensityMatrix<std::complex<double>, double>* dm,
                  const int& step,
                  bool print)
 {
@@ -47,7 +47,7 @@ void cal_mi_lcao(ScState& state,
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "cal_mi_lcao");
     // Reset Mi before calculation
     state.zero_Mi();
-    const hamilt::HContainer<double>* dmr = dm->get_DMR_pointer(1);
+    const hamilt::HContainer<double>* dmr = dm->get_dmr_ptr(1);
     std::vector<double> moments;
     if (state.nspin_ == 2)
     {

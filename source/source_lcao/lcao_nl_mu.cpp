@@ -7,7 +7,7 @@ namespace LCAO_domain
 
 typedef std::tuple<int, int, int, int> key_tuple;
 
-#include "record_adj.h" //mohan add 2012-07-06
+#include "source_cell/record_adj.h" //mohan add 2012-07-06
 
 // Per-neighbour context for Step 2 of build_Nonlocal_mu_new: everything that
 // is fixed once the projector atom (T0, slot iat) and the two basis centres

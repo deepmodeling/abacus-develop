@@ -107,7 +107,7 @@ namespace LR
 
         // 1. set_Ds (once)
         // convert to vector<T*> for the interface of RI_2D_Comm::split_m2D_ktoR (interface will be unified to ct::Tensor)
-        std::vector<std::vector<T>> DMk_trans_vector = this->DM_trans->get_DMK_vector();
+        std::vector<std::vector<T>> DMk_trans_vector = this->DM_trans->get_dmk_vec();
         // assert(DMk_trans_vector.size() == nk);
         std::vector<const std::vector<T>*> DMk_trans_pointer(nk);
         for (int ik = 0;ik < nk;++ik) { DMk_trans_pointer[ik] = &DMk_trans_vector[ik]; }

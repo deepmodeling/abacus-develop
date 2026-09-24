@@ -130,8 +130,8 @@ HSolverLCAO          hamiltSolvePsiK              3.90        1764   0.00    16.
 DiagoElpa            elpa_solve                   3.33        1764   0.00    13.86
 ElecStateLCAO        psiToRho                     8.12          14   0.58    33.78
 elecstate            cal_dm                       0.07          14   0.01     0.31
-psiMulPsiMpi         pdgemm                       0.07        1764   0.00     0.29
-DensityMatrix        cal_DMR                      0.40          14   0.03     1.68
+cal_dmk_psi         pdgemm                       0.07        1764   0.00     0.29
+DensityMatrix        cal_dmr                      0.40          14   0.03     1.68
  Local_Orbital_wfc   wfc_2d_to_grid               0.12        1890   0.00     0.50
 Gint                 transfer_DMR                 0.23          14   0.02     0.94
 Gint_interface       cal_gint_rho                 7.10          14   0.51    29.56

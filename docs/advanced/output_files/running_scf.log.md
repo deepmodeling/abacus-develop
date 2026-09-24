@@ -1289,8 +1289,8 @@ TIME STATISTICS
  HSolverLCAO           hamiltSolvePsiK            90.50  17       5.32   18.07  
  ElecStateLCAO         psiToRho                   132.45 17       7.79   26.45  
  elecstate             cal_dm                     2.02   18       0.11   0.40   
- psiMulPsiMpi          pdgemm                     2.01   18       0.11   0.40   
- DensityMatrix         cal_DMR                    0.13   18       0.01   0.03   
+ cal_dmk_psi          pdgemm                     2.01   18       0.11   0.40   
+ DensityMatrix         cal_dmr                    0.13   18       0.01   0.03   
  Gint                  transfer_DMR               2.98   17       0.18   0.60   
  Gint_interface        cal_gint_rho               127.22 17       7.48   25.40  
  Charge_Mixing         get_drho                   0.07   17       0.00   0.01   

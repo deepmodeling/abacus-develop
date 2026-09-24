@@ -32,7 +32,7 @@ void Evolve_OFDFT::cal_Hpsi(elecstate::ElecState* pelec,
             chr.rho[is][ir] = std::norm(psi_[is * nrxx + ir]);
         }
     }
-    this->renormalize_psi(chr, pw_rho, psi_);
+    this->renormalize_psi(chr, pw_rho, psi_, ucell.omega);
 
     pelec->pot->update_from_charge(&chr, &ucell); // Hartree + XC + external
     this->cal_tf_potential(chr.rho, pw_rho, pelec->pot->get_eff_v()); // TF potential
@@ -55,9 +55,9 @@ void Evolve_OFDFT::cal_Hpsi(elecstate::ElecState* pelec,
     this->cal_vw_potential_phi(psi_, pw_rho, Hpsi);
 }
 
-void Evolve_OFDFT::renormalize_psi(Charge& chr, ModulePW::PW_Basis* pw_rho, std::vector<std::complex<double>>& pphi_)
+void Evolve_OFDFT::renormalize_psi(Charge& chr, ModulePW::PW_Basis* pw_rho, std::vector<std::complex<double>>& pphi_, const double omega)
 {
-    const double sr = chr.sum_rho();
+    const double sr = chr.sum_rho(omega);
     const double normalize_factor = PARAM.inp.nelec / sr;
     const int nspin = PARAM.inp.nspin;
     const int nrxx = pw_rho->nrxx;
@@ -311,7 +311,7 @@ void Evolve_OFDFT::propagate_psi_RK4(elecstate::ElecState* pelec,
             chr.rho[is][ir] = abs(pphi_[is * nrxx + ir])*abs(pphi_[is * nrxx + ir]);
         }
     }
-    this->renormalize_psi(chr, pw_rho, pphi_);
+    this->renormalize_psi(chr, pw_rho, pphi_, ucell.omega);
 
     ModuleBase::timer::end("ESolver_OF_TDDFT", "propagate_psi_RK4");
 }
@@ -369,7 +369,7 @@ void Evolve_OFDFT::propagate_psi_RK2(elecstate::ElecState* pelec,
         }
     }
 
-    this->renormalize_psi(chr, pw_rho, pphi_);
+    this->renormalize_psi(chr, pw_rho, pphi_, ucell.omega);
 
     ModuleBase::timer::end("ESolver_OF_TDDFT", "propagate_psi_RK2");
 }

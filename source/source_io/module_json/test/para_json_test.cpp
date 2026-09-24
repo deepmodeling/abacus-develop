@@ -24,70 +24,40 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_main/version.h"
 
-namespace Json
-{
-class AbacusJsonTestAccess
-{
-  public:
-    static void reset()
-    {
-        AbacusJson::doc = jsonValue::object();
-    }
-
-    static const jsonValue& document()
-    {
-        return AbacusJson::doc;
-    }
-};
-} // namespace Json
-
 class AbacusJsonTest : public testing::Test
 {
   protected:
     void SetUp() override
     {
-        Json::AbacusJsonTestAccess::reset();
+        Json::AbacusJson::document() = Json::jsonValue::object();
+    }
+
+    void TearDown() override
+    {
+        std::remove("test.json");
+        std::remove("json-output-not-a-directory");
     }
 
     const Json::jsonValue& document() const
     {
-        return Json::AbacusJsonTestAccess::document();
+        return Json::AbacusJson::document();
     }
 };
 
-TEST_F(AbacusJsonTest, SetAndAppendJson)
-{
-    Json::AbacusJson::set_json({"key"}, "value");
-    Json::AbacusJson::set_json({"nested", "value"}, 1);
-    Json::AbacusJson::set_json({"nested", "value"}, 2);
-    Json::AbacusJson::append_json({"array"}, Json::jsonValue{{"index", 0}});
-    Json::AbacusJson::append_json({"array"}, Json::jsonValue{{"index", 1}});
-    Json::AbacusJson::set_json({"array", -1, "label"}, "last");
-
-    const Json::jsonValue& root = document();
-    EXPECT_EQ(root["key"], "value");
-    EXPECT_EQ(root["nested"]["value"], 2);
-    ASSERT_EQ(root["array"].size(), 2u);
-    EXPECT_EQ(root["array"][0]["index"], 0);
-    EXPECT_EQ(root["array"][1]["index"], 1);
-    EXPECT_EQ(root["array"][1]["label"], "last");
-}
-
 TEST_F(AbacusJsonTest, OutputJson)
 {
-    Json::AbacusJson::set_json({"key"}, "value");
-    Json::AbacusJson::set_json(
-        {"nested"}, Json::jsonValue{{"value", 1}, {"array", Json::jsonValue::array({1, 2, 3})}});
-
-    const std::string filename = "test.json";
-    Json::AbacusJson::write_to_json(filename);
-
-    std::ifstream file(filename);
+    // Exercise our writer, including escaping, number types and insertion order.
+    Json::AbacusJson::document() = {
+        {"z", "quote: \"; slash: \\; newline: \n; UTF-8: \xCE\xB1"},
+        {"a", std::string("a\0b", 3)},
+        {"nested", {{"int", 1}, {"float", 0.1}, {"bool", true}, {"null", nullptr},
+                    {"array", Json::jsonValue::array({1, 2, 3})}}}};
+    Json::AbacusJson::write_to_json("test.json");
+    std::ifstream file("test.json");
     ASSERT_TRUE(file.is_open());
     const Json::jsonValue result = Json::jsonValue::parse(file);
     EXPECT_EQ(result, document());
-    file.close();
-    EXPECT_EQ(std::remove(filename.c_str()), 0);
+    EXPECT_EQ(result.dump(), document().dump());
 }
 
 TEST_F(AbacusJsonTest, GeneralInfo)
@@ -119,7 +89,7 @@ TEST_F(AbacusJsonTest, GeneralInfo)
     EXPECT_EQ(keys, (std::vector<std::string>{"version", "commit", "device", "mpi_num", "omp_num",
                                             "pseudo_dir", "orbital_dir", "stru_file", "kpt_file",
                                             "start_time", "end_time"}));
-    Json::AbacusJson::set_json({"init", "nkstot"}, 2);
+    Json::add_nkstot(2);
     Json::gen_general_info(param);
     EXPECT_EQ(document()["init"]["nkstot"], 2);
     EXPECT_EQ(document()["general_info"].size(), keys.size());
@@ -188,6 +158,14 @@ TEST_F(AbacusJsonTest, InitInfo)
     EXPECT_EQ(init["kmesh_type"], "gamma");
     EXPECT_EQ(init["kspacing"], Json::jsonValue::array({0.04, 0.04, 0.04}));
     EXPECT_EQ(init["koffset"], Json::jsonValue::array({0.0, 0.0, 0.0}));
+
+    // Rebuild the per-species maps rather than retaining entries from a previous call.
+    ucell.ntype = 2;
+    ucell.nat = 3;
+    Json::gen_init(&ucell, inp);
+    EXPECT_EQ(init.at("natom_each_type"), (Json::jsonValue{{"Si", 1}, {"C", 2}}));
+    EXPECT_EQ(init.at("nelectron_each_type"), (Json::jsonValue{{"Si", 3.0}, {"C", 4.0}}));
+    EXPECT_EQ(init.at("nkstot"), 1);
 }
 
 TEST_F(AbacusJsonTest, InitStructure)
@@ -250,134 +228,11 @@ TEST_F(AbacusJsonTest, InitStructure)
     EXPECT_EQ(document().dump(), first.dump()); // Preserve key order, too.
 }
 
-TEST_F(AbacusJsonTest, NullAndEmptyContainers)
-{
-    Json::AbacusJson::set_json({"null"}, nullptr);
-    Json::AbacusJson::set_json({"object"}, Json::jsonValue::object());
-    Json::AbacusJson::set_json({"array"}, Json::jsonValue::array());
-    Json::AbacusJson::append_json({"wrapped"}, Json::jsonValue::array());
-
-    const Json::jsonValue& root = document();
-    EXPECT_TRUE(root.at("null").is_null());
-    EXPECT_EQ(root.at("object"), Json::jsonValue::object());
-    EXPECT_EQ(root.at("array"), Json::jsonValue::array());
-    EXPECT_EQ(root.at("wrapped"), Json::jsonValue::array({Json::jsonValue::array()}));
-}
-
-TEST_F(AbacusJsonTest, SetReplacesContainers)
-{
-    Json::AbacusJson::set_json({"value"}, Json::jsonValue::array({1, 2}));
-    Json::AbacusJson::set_json({"value"}, Json::jsonValue::array({3}));
-    EXPECT_EQ(document()["value"], Json::jsonValue::array({3}));
-
-    Json::AbacusJson::set_json({"value"}, Json::jsonValue{{"old", 1}});
-    Json::AbacusJson::set_json({"value"}, Json::jsonValue{{"new", 2}});
-    EXPECT_EQ(document()["value"], (Json::jsonValue{{"new", 2}}));
-    Json::AbacusJson::set_json({"value"}, true);
-    EXPECT_TRUE(document()["value"].is_boolean());
-    EXPECT_EQ(document()["value"], true);
-    Json::AbacusJson::set_json({"value"}, 1.25);
-    EXPECT_TRUE(document()["value"].is_number_float());
-    EXPECT_DOUBLE_EQ(document()["value"].get<double>(), 1.25);
-}
-
-TEST_F(AbacusJsonTest, ArrayAppendAndIndexedReplacement)
-{
-    Json::AbacusJson::append_json({"array"}, 1);
-    Json::AbacusJson::append_json({"array"}, 2);
-    Json::AbacusJson::set_json({"array", -1}, 3);
-    Json::AbacusJson::set_json({"array", -2}, Json::jsonValue::array({4, 5}));
-    Json::AbacusJson::append_json({"array", 0}, 6);
-    EXPECT_EQ(document()["array"][0], Json::jsonValue::array({4, 5, 6}));
-    Json::AbacusJson::set_json({"array", 0}, 6);
-    EXPECT_EQ(document()["array"], Json::jsonValue::array({6, 3}));
-
-    // Numeric strings and empty strings are object keys, not array indices.
-    Json::AbacusJson::set_json({"object", "0"}, 7);
-    Json::AbacusJson::set_json({"object", ""}, 8);
-    EXPECT_EQ(document()["object"]["0"], 7);
-    EXPECT_EQ(document()["object"][""], 8);
-}
-
-TEST_F(AbacusJsonTest, AppendRejectsNonArrays)
-{
-    Json::AbacusJson::set_json({"null"}, nullptr);
-    Json::AbacusJson::set_json({"object"}, Json::jsonValue::object());
-    Json::AbacusJson::set_json({"scalar"}, 1);
-    Json::AbacusJson::set_json({"array"}, Json::jsonValue::array({2}));
-    const Json::jsonValue before = document();
-
-    for (const char* key : {"null", "object", "scalar"})
-    {
-        EXPECT_THROW(Json::AbacusJson::append_json({key}, 3), std::invalid_argument);
-    }
-    EXPECT_THROW(Json::AbacusJson::append_json({"array", 0}, 3), std::invalid_argument);
-    EXPECT_EQ(document(), before);
-}
-
-TEST_F(AbacusJsonTest, InvalidPathsDoNotGrowArrays)
-{
-    Json::AbacusJson::append_json({"array"}, 1);
-    Json::AbacusJson::set_json({"empty"}, Json::jsonValue::array());
-    Json::AbacusJson::set_json({"scalar"}, 2);
-
-    for (const int index : {1, -2, std::numeric_limits<int>::min()})
-    {
-        EXPECT_THROW(Json::AbacusJson::set_json({"array", index}, 3), std::out_of_range);
-        EXPECT_THROW(Json::AbacusJson::append_json({"array", index}, 3), std::out_of_range);
-    }
-    EXPECT_THROW(Json::AbacusJson::set_json({"empty", -1}, 3), std::out_of_range);
-    EXPECT_THROW(Json::AbacusJson::append_json({"empty", -1}, 3), std::out_of_range);
-    EXPECT_THROW(Json::AbacusJson::set_json({"array", "key"}, 3), std::invalid_argument);
-    EXPECT_THROW(Json::AbacusJson::set_json({"scalar", "key"}, 3), std::invalid_argument);
-    EXPECT_THROW(Json::AbacusJson::set_json({0}, 3), std::invalid_argument);
-    EXPECT_THROW(Json::AbacusJson::append_json({0}, 3), std::invalid_argument);
-    EXPECT_EQ(document()["array"], Json::jsonValue::array({1}));
-    EXPECT_TRUE(document()["empty"].empty());
-
-    const Json::jsonValue before = document();
-    Json::AbacusJson::set_json({}, 9);
-    Json::AbacusJson::append_json({}, 9);
-    EXPECT_EQ(document(), before);
-}
-
-TEST_F(AbacusJsonTest, OwnedValuesAndStringEscaping)
-{
-    Json::jsonValue original = {{"value", "original"}};
-    Json::AbacusJson::set_json({"copy"}, original);
-    original["value"] = "changed";
-    EXPECT_EQ(document()["copy"]["value"], "original");
-
-    const std::string text = "quote: \"; slash: \\; newline: \n; UTF-8: \xCE\xB1";
-    const std::string embedded_nul("a\0b", 3);
-    Json::AbacusJson::set_json({"text"}, text);
-    Json::AbacusJson::set_json({"embedded_nul"}, embedded_nul);
-    const Json::jsonValue result = Json::jsonValue::parse(document().dump(4));
-    EXPECT_EQ(result["text"], text);
-    EXPECT_EQ(result["embedded_nul"].get<std::string>(), embedded_nul);
-}
-
-TEST_F(AbacusJsonTest, PreservesInsertionOrder)
-{
-    Json::AbacusJson::set_json({"z"}, 1);
-    Json::AbacusJson::set_json({"a"}, 2);
-    Json::AbacusJson::set_json({"m"}, 3);
-    Json::AbacusJson::set_json({"a"}, 4);
-
-    const Json::jsonValue result = Json::jsonValue::parse(document().dump());
-    std::vector<std::string> keys;
-    for (Json::jsonValue::const_iterator it = result.begin(); it != result.end(); ++it)
-    {
-        keys.push_back(it.key());
-    }
-    EXPECT_EQ(keys, (std::vector<std::string>{"z", "a", "m"}));
-    EXPECT_EQ(result["a"], 4);
-}
-
 TEST_F(AbacusJsonTest, OutputRecords)
 {
     EXPECT_THROW(Json::add_output_energy(-1.0), std::invalid_argument);
-    Json::AbacusJson::set_json({"output"}, Json::jsonValue::array());
+    EXPECT_FALSE(document().contains("output"));
+    Json::AbacusJson::document()["output"] = Json::jsonValue::array();
     EXPECT_THROW(Json::add_output_energy(-1.0), std::out_of_range);
     Json::init_output_array_obj();
     ASSERT_EQ(document().at("output").size(), 1u);
@@ -414,6 +269,44 @@ TEST_F(AbacusJsonTest, OutputRecords)
     ASSERT_EQ(document()["output"].size(), 2u);
     EXPECT_EQ(document()["output"][0], first);
     EXPECT_EQ(document()["output"][1]["energy"], -11.0);
+}
+
+TEST_F(AbacusJsonTest, RejectsInvalidSections)
+{
+    for (const Json::jsonValue& invalid : {Json::jsonValue(nullptr), Json::jsonValue(1),
+                                           Json::jsonValue("invalid"), Json::jsonValue::array()})
+    {
+        Json::AbacusJson::document()["init"] = invalid;
+        EXPECT_THROW(Json::add_nkstot(1), std::invalid_argument);
+        EXPECT_EQ(document().at("init"), invalid);
+    }
+    for (const Json::jsonValue& invalid : {Json::jsonValue(nullptr), Json::jsonValue(1),
+                                           Json::jsonValue("invalid"), Json::jsonValue::object()})
+    {
+        Json::AbacusJson::document()["output"] = invalid;
+        EXPECT_THROW(Json::init_output_array_obj(), std::invalid_argument);
+        EXPECT_THROW(Json::add_output_energy(-1.0), std::invalid_argument);
+        EXPECT_EQ(document().at("output"), invalid);
+    }
+}
+
+TEST_F(AbacusJsonTest, RejectsInvalidRecordsAndScfHistory)
+{
+    for (const Json::jsonValue& invalid : {Json::jsonValue(nullptr), Json::jsonValue(1),
+                                           Json::jsonValue::array()})
+    {
+        Json::AbacusJson::document()["output"] = Json::jsonValue::array({invalid});
+        EXPECT_THROW(Json::add_output_energy(-1.0), std::invalid_argument);
+        EXPECT_EQ(document().at("output").at(0), invalid);
+    }
+    Json::init_output_array_obj();
+    for (const Json::jsonValue& invalid : {Json::jsonValue(nullptr), Json::jsonValue(1),
+                                           Json::jsonValue::object()})
+    {
+        Json::AbacusJson::document()["output"].back()["scf"] = invalid;
+        EXPECT_THROW(Json::add_output_scf_mag(0.0, 0.0, -1.0, 0.0, 0.1, 0.1), std::invalid_argument);
+        EXPECT_EQ(document().at("output").back().at("scf"), invalid);
+    }
 }
 
 TEST_F(AbacusJsonTest, OutputStructureForceAndStress)
@@ -479,11 +372,15 @@ TEST_F(AbacusJsonTest, OutputStructureForceAndStress)
 
 TEST_F(AbacusJsonTest, NonFiniteNumbersSerializeAsNull)
 {
-    Json::AbacusJson::set_json({"nan"}, std::numeric_limits<double>::quiet_NaN());
-    Json::AbacusJson::set_json({"inf"}, std::numeric_limits<double>::infinity());
-    const Json::jsonValue result = Json::jsonValue::parse(document().dump());
-    EXPECT_TRUE(result["nan"].is_null());
-    EXPECT_TRUE(result["inf"].is_null());
+    Json::init_output_array_obj();
+    Json::add_output_energy(std::numeric_limits<double>::quiet_NaN());
+    Json::add_output_efermi_converge(std::numeric_limits<double>::infinity(), false);
+    Json::AbacusJson::write_to_json("test.json");
+    std::ifstream file("test.json");
+    ASSERT_TRUE(file.is_open());
+    const Json::jsonValue result = Json::jsonValue::parse(file);
+    EXPECT_TRUE(result.at("output").at(0).at("energy").is_null());
+    EXPECT_TRUE(result.at("output").at(0).at("e_fermi").is_null());
 }
 
 TEST_F(AbacusJsonTest, FileOpenFailureIsReported)

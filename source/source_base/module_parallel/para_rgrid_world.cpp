@@ -77,7 +77,10 @@ void ParaRgridWorld::reduce_across_pools(double* data, const ParaWorld& kmesh_wo
     if (!kmesh_world.valid()) return;
     if (kmesh_world.size() <= 1) return;
 
-    assert(data != nullptr);
+    // A rank may own zero real-space grid points (nrxx == 0); the buffer is
+    // legitimately null in that case. MPI_Allreduce below uses count 0 and
+    // ignores the buffer. Only a null buffer with a non-zero nrxx is a bug.
+    assert(data != nullptr || nrxx() == 0);
 
     // Equal-sized pools: corresponding ranks have identical z-slab layouts,
     // so local buffers can be summed directly without redistribution.

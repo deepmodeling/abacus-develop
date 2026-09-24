@@ -5,7 +5,7 @@
 #include "source_pw/module_pwdft/dftu_base_io.h"
 #include "source_pw/module_pwdft/onsite_proj.h"
 #include "source_cell/unitcell.h"
-#include "source_estate/module_charge/charge_mixing.h"
+#include "source_estate/module_charge/chg_mix.h"
 #include "source_base/timer.h"
 
 namespace DFTU_BASE {
@@ -50,14 +50,14 @@ void accumulate_occ_one_k(const void* psi_in,
             if(nspin == 4)
             {
                 pw::accumulate_occ_spinor(
-                    occmat.mat(iat, target_l, 0, 0).c,
+                    occmat.mat(iat, target_l, 0).c,
                     becp, nbands, npol, nkb, begin_ih, m_begin, tlp1,
                     wg_in, ik);
             }
             else // nspin=1 or nspin=2
             {
                 pw::accumulate_occ_scalar(
-                    occmat.mat(iat, target_l, 0, is).c,
+                    occmat.mat(iat, target_l, is).c,
                     becp, nbands, nkb, begin_ih, m_begin, tlp1,
                     wg_in, ik);
             }

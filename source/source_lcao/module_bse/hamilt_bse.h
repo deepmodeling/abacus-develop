@@ -131,6 +131,6 @@ private:
     const int nproc;
     const std::string ri_hartree_benchmark;
 
-    std::unique_ptr<elecstate::DensityMatrix<T, T>> DM_trans = nullptr;
+    std::unique_ptr<module_dm::DensityMatrix<T, T>> DM_trans = nullptr;
 };
 } // namespace BSE

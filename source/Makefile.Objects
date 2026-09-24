@@ -216,6 +216,7 @@ OBJS_CELL=atom_pseudo.o\
     reciprocal_grid.o\
     cell_index.o\
     cell_tools.o\
+    record_adj.o\
     check_atomic_stru.o\
     update_cell.o\
     bcast_cell.o\
@@ -288,11 +289,19 @@ OBJS_ELECSTAT=elecstate.o\
     occ_mixer.o
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
-      init_dm.o\
+      dm_routine.o\
       density_matrix.o\
-      density_matrix_io.o\
-      cal_dm_psi.o\
-      cal_edm_tddft.o\
+      dmr_init.o\
+      dm_setter.o\
+      dm_getter.o\
+      dmr_gamma.o\
+      dmr_k.o\
+      dmr_td.o\
+      dmr_full.o\
+      dm_tools.o\
+      dm_from_psi.o\
+      edm_tddft.o\
+      edm_tddft_lapack.o\
 
 OBJS_ESOLVER=esolver_factory.o\
     esolver_ks.o\
@@ -330,6 +339,7 @@ OBJS_GINT=batch_biggrid.o\
       gint_fvl.o\
       gint_info.o\
       gint_interface.o\
+      gint_prec_ctrl.o\
       gint_rho.o\
       gint_drho.o\
       gint_tau.o\
@@ -770,13 +780,12 @@ OBJS_LCAO=evolve_elec.o\
       lcao_init_basis.o\
       setup_exx.o\
       setup_deepks.o\
-      setup_dm.o\
+      allocate_dm.o\
       rho_tau_lcao.o\
       center2orb.o\
       center2orb_orb11.o\
       center2orb_orb21.o\
       center2orb_orb22.o\
-      record_adj.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       exx_abfs-abfs_index.o\
@@ -827,19 +836,25 @@ OBJS_SRCPW=h_ewald_pw.o\
     vnl_pw_grad.o\
     vnl_pw_init_vnl.o\
     vnl_pw_qrad.o\
-    chgmixing.o\
-    gint_prec_ctrl.o\
+    chg_routine.o\
     charge.o\
-    charge_init.o\
-    charge_mpi.o\
-    charge_extra.o\
-    charge_mixing.o\
-    charge_mixing_dmr.o\
-    mix_resid.o\
-    mix_precond.o\
-    charge_mixing_rho.o\
-    charge_mixing_uspp.o\
-    rhog_io.o\
+    chg_atomic.o\
+    chg_atomic_inner.o\
+    chg_init.o\
+    chg_tools.o\
+    chg_parallel.o\
+    chg_extra.o\
+    chg_mix.o\
+    chg_mix_rho.o\
+    chg_dmr.o\
+    chg_drho.o\
+    chg_drho_inner.o\
+    chg_precond.o\
+    chg_tau.o\
+    chg_symm.o\
+    chg_symm_detail.o\
+    chg_uspp.o\
+    chg_rhog_io.o\
     write_elecstat_pot.o\
     write_init.o\
     fp_energy.o\
@@ -896,8 +911,6 @@ OBJS_SRCPW=h_ewald_pw.o\
     stress_pw.o\
     of_stress_pw.o\
     of_print_info.o\
-    symm_rho_charge.o\
-    symm_rhog.o\
     setup_psi_pw.o\
     setup_psi.o\
     psi_prepare.o\
@@ -929,6 +942,7 @@ OBJS_VDW=vdw.o\
 OBJS_DFTU=dftu_nao_fs_k.o\
       dftu_nao_for_r.o\
       dftu_nao_fs_r.o\
+      dftu_nao_fs_reduce.o\
       dftu_nao_str_r.o\
       dftu_nao_folding.o\
       dftu_nao_pots.o\
