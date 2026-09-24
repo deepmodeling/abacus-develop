@@ -6,8 +6,8 @@
 #ifndef LRI_CV_TOOLS_H
 #define LRI_CV_TOOLS_H
 
-#include "Inverse_Matrix.h"
-#include "source_base/abfs-vector3_order.h"
+#include "invmat_ri.h"
+#include "source_lcao/module_ri/abfs_vector3_order.h"
 #include "source_lcao/module_ri/abfs.h"
 
 #include <RI/global/Array_Operator.h>
@@ -275,6 +275,6 @@ struct plus
 };
 } // namespace LRI_CV_Tools
 
-#include "LRI_CV_Tools.hpp"
+#include "lri_cv_tools.hpp"
 #include "write_ri_cv.hpp"
 #endif

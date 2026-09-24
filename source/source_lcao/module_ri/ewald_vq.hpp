@@ -16,7 +16,7 @@
 #include "ri_util.h"
 #include "conv_coulomb_pot_k.h"
 #include "ewald_mpi_utils.h"
-#include "exx_abfs-construct_orbs.h"
+#include "exx_abfs_ctor_orbs.h"
 #include "exx_rotate_abfs.h"
 #include "gaussian_abfs.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"

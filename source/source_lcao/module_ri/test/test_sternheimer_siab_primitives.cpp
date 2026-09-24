@@ -7,7 +7,7 @@
 #include "source_io/module_bessel/bessel_basis.h"
 #include "source_io/module_bessel/numerical_basis.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 
 #include <algorithm>
 #include <cmath>

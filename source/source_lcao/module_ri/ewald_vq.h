@@ -6,7 +6,7 @@
 #ifndef EWALD_VQ_H
 #define EWALD_VQ_H
 
-#include "LRI_CV.h"
+#include "lri_cv.h"
 #include "direct_2d_coulomb.h"
 #include "ewald_tail_utils.h"
 #include "gaussian_abfs.h"

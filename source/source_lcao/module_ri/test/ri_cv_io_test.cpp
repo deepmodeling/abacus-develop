@@ -5,7 +5,7 @@
 #include <fstream>
 #include <map>
 #include <vector>
-#include "../LRI_CV_Tools.h"
+#include "../lri_cv_tools.h"
 
 using TC = std::array<int, 3>;
 using TAC = std::pair<int, TC>;

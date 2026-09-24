@@ -6,9 +6,9 @@
 #ifndef RPA_LRI_H
 #define RPA_LRI_H
 
-#include "LRI_CV.h"
+#include "lri_cv.h"
 #include "source_esolver/esolver_ks_lcao.h"
-#include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
+#include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 #include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
 // #include "module_xc/exx_info.h"
 // #include "source_basis/module_ao/orb_atomic_lm.h"

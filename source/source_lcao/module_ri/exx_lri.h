@@ -6,10 +6,10 @@
 #ifndef EXX_LRI_H
 #define EXX_LRI_H
 
-#include "LRI_CV.h"
-#include "ewald_Vq.h"
+#include "lri_cv.h"
+#include "ewald_vq.h"
 #include "source_hamilt/module_xc/exx_info.h"
-#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/orb_atomic_lm.h"
 #include "source_base/matrix.h"
 #include <RI/physics/Exx.h>
 
@@ -19,7 +19,7 @@
 #include <deque>
 #include <mpi.h>
 
-#include "module_exx_symmetry/symmetry_rotation.h"
+#include "module_exx_symmetry/symm_rotation.h"
 
 	class Parallel_Orbitals;
 
@@ -165,6 +165,6 @@ private:
 	friend class LR::OperatorLREXX<std::complex<double>>;
 };
 
-#include "Exx_LRI.hpp"
+#include "exx_lri.hpp"
 
 #endif

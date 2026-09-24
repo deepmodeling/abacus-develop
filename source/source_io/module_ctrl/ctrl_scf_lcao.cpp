@@ -38,10 +38,10 @@
 #include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #endif
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
-#include "source_lcao/module_ri/RPA_LRI.h"           // use RPA code
-#include "source_lcao/module_ri/RI_Util.h"
-#include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
+#include "source_lcao/module_ri/exx_lri_interface.h" // use EXX codes
+#include "source_lcao/module_ri/rpa_lri.h"           // use RPA code
+#include "source_lcao/module_ri/ri_util.h"
+#include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 #include "source_lcao/module_ri/sternheimer_abacus_st_smoke.h"
 #endif
 #include "../module_qo/to_qo.h"                // use toQO

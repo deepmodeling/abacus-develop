@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "ABFs_Construct-PCA.h"
+#include "abfs_construct_pca.h"
 
 #include <RI/global/Tensor.h>
 #include <vector>
@@ -34,4 +34,4 @@ class Inverse_Matrix
     RI::Tensor<Tdata> A;
 };
 
-#include "Inverse_Matrix.hpp"
+#include "invmat_ri.hpp"

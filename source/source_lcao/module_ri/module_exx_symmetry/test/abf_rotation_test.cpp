@@ -13,11 +13,11 @@
 #include <sstream>
 #include <string>
 #include <vector>
-// symmetry_rotation.h pulls in symmetry_rotation_R.hpp (no include guard);
+// symm_rotation.h pulls in symmetry_rotation_R.hpp (no include guard);
 // standard-library headers must all be included before `private public`.
 #define private public
 #define protected public
-#include "../symmetry_rotation.h"
+#include "../symm_rotation.h"
 #undef private
 #undef protected
 using namespace std::complex_literals; // for the `1i` literal used below

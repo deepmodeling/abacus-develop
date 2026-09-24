@@ -6,10 +6,10 @@
 #ifndef LRI_CV_H
 #define LRI_CV_H
 
-#include "Matrix_Orbs11.h"
-#include "Matrix_Orbs21.h"
-#include "source_basis/module_ao/ORB_atomic_lm.h"
-#include "source_base/abfs-vector3_order.h"
+#include "matrix_orbs11.h"
+#include "matrix_orbs21.h"
+#include "source_basis/module_ao/orb_atomic_lm.h"
+#include "source_lcao/module_ri/abfs_vector3_order.h"
 #include "source_base/element_basis_index.h"
 
 #include <RI/global/Tensor.h>
@@ -139,6 +139,6 @@ private:
 		const Tfunc &func_cal_o11);
 };
 
-#include "LRI_CV.hpp"
+#include "lri_cv.hpp"
 
 #endif

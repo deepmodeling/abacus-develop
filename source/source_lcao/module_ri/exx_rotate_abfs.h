@@ -2,7 +2,7 @@
 #ifndef EXX_ROTATE_ABFS_H
 #define EXX_ROTATE_ABFS_H
 
-#include "LRI_CV.h"
+#include "lri_cv.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #include "source_base/element_basis_index.h"
 #include "source_base/matrix.h"

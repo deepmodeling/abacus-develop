@@ -15,7 +15,7 @@
 #define private public
 #define protected public
 #include "source_io/module_parameter/parameter.h"
-#include "../symmetry_rotation.h"
+#include "../symm_rotation.h"
 #undef private
 #undef protected
 #define DOUBLETHRESHOLD 1e-8

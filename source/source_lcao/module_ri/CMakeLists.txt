@@ -6,12 +6,12 @@ if (ENABLE_LIBRI)
   endif()
   
   list(APPEND objects
-        Matrix_Orbs11.cpp
-        Matrix_Orbs21.cpp
-        Matrix_Orbs22.cpp
-        RI_2D_Comm.cpp
-        Mix_DMk_2D.cpp
-        Mix_Matrix.cpp
+        matrix_orbs11.cpp
+        matrix_orbs21.cpp
+        matrix_orbs22.cpp
+        ri_2d_comm.cpp
+        mix_dmk_2d.cpp
+        mix_matrix.cpp
         rpa_abfs_preorthogonalization.cpp
         direct_2d_coulomb.cpp
         sternheimer_abacus_dft_zero_order.cpp
@@ -59,11 +59,11 @@ if (ENABLE_LIBRI)
     list(APPEND objects
         conv_coulomb_pot_k.cpp
         sternheimer_abacus_st_smoke.cpp
-        exx_abfs-construct_orbs.cpp
-        exx_abfs-io.cpp
-        exx_abfs-jle.cpp
-        ABFs_Construct-PCA.cpp
-        exx_opt_orb-print.cpp
+        exx_abfs_ctor_orbs.cpp
+        exx_abfs_io.cpp
+        exx_abfs_jle.cpp
+        abfs_construct_pca.cpp
+        exx_opt_orb_print.cpp
         exx_opt_orb.cpp
         gaussian_abfs.cpp
         singular_value.cpp

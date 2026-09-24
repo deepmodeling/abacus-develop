@@ -3,7 +3,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <string>
-#include "./symmetry_rotation.h"
+#include "./symm_rotation.h"
 namespace ModuleSymmetry
 {
     namespace

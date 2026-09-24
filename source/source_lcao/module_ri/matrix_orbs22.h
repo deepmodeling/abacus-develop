@@ -8,9 +8,9 @@
 
 #include "source_base/element_basis_index.h"
 #include "source_base/vector3.h"
-#include "source_basis/module_ao/ORB_gaunt_table.h"
-#include "source_basis/module_ao/ORB_read.h"
-#include "source_lcao/center2_orb-orb22.h"
+#include "source_basis/module_ao/orb_gaunt_table.h"
+#include "source_basis/module_ao/orb_read.h"
+#include "source_lcao/center2orb_orb22.h"
 #include "source_cell/unitcell.h"
 
 #include <RI/global/Tensor.h>
@@ -113,6 +113,6 @@ class Matrix_Orbs22
     // this->center2_orb22_s[TA][TB][LA1][NA1][LA2][NA2][LB1][NB1][LB2][NB2]
 };
 
-#include "Matrix_Orbs22.hpp"
+#include "matrix_orbs22.hpp"
 
 #endif

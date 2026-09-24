@@ -1,7 +1,7 @@
 #ifndef MODULE_RI_RPA_ABFS_PREORTHOGONALIZATION_H
 #define MODULE_RI_RPA_ABFS_PREORTHOGONALIZATION_H
 
-#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/orb_atomic_lm.h"
 #include "source_io/module_parameter/input_parameter.h"
 
 #include <string>
