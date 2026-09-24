@@ -41,8 +41,8 @@ void SparseMatrix<T>::printToCSR(std::ostream& ofs, int precision)
     size_t count1 = 0;
     for (const auto &element : elements)
     {
-	if(count1%6==0) ofs << '\n';
-	count1++;
+    if(count1%6==0) ofs << '\n';
+    count1++;
         ofs << " " << element.second;
     }
     ofs << '\n';
@@ -51,8 +51,8 @@ void SparseMatrix<T>::printToCSR(std::ostream& ofs, int precision)
     size_t count2 = 0;
     for (const auto &element : elements)
     {
-	if(count2%16==0) ofs << '\n';
-	count2++;
+    if(count2%16==0) ofs << '\n';
+    count2++;
         ofs << " " << element.first.second;
         int row = element.first.first;
         csr_row_ptr[row + 1]++;

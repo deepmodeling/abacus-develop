@@ -52,8 +52,8 @@ void output_mat_sparse(const bool& out_mat_dh,
                        UnitCell& ucell,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
-					   hamilt::Hamilt<T>* p_ham,
-					   Plus_U_Base* p_dftu);
+                       hamilt::Hamilt<T>* p_ham,
+                       Plus_U_Base* p_dftu);
 } // namespace ModuleIO
 
 #endif // OUTPUT_MAT_SPARSE_H

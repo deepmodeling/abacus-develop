@@ -90,23 +90,23 @@ void init_sc_state(const ScInitParams& params, const UnitCell& ucell, ScState& s
 
 template <typename TK>
 void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
-		int nsc_in,
-		int nsc_min_in,
-		double alpha_trial_in,
-		double sccut_in,
-		double sc_drop_thr_in,
-		const UnitCell& ucell,
-		bool direction_only_in,
-		Parallel_Orbitals* ParaV_in,
-		int nspin_in,
-		const K_Vectors& kv_in,
-		void* p_hamilt_in,
-		void* psi_in,
+        int nsc_in,
+        int nsc_min_in,
+        double alpha_trial_in,
+        double sccut_in,
+        double sc_drop_thr_in,
+        const UnitCell& ucell,
+        bool direction_only_in,
+        Parallel_Orbitals* ParaV_in,
+        int nspin_in,
+        const K_Vectors& kv_in,
+        void* p_hamilt_in,
+        void* psi_in,
 #ifdef __LCAO
-		module_dm::DensityMatrix<TK, double>* dm_in, // mohan add 2025-11-03
+        module_dm::DensityMatrix<TK, double>* dm_in, // mohan add 2025-11-03
 #endif
-		elecstate::ElecState* pelec_in,
-		ModulePW::PW_Basis_K* pw_wfc_in)
+        elecstate::ElecState* pelec_in,
+        ModulePW::PW_Basis_K* pw_wfc_in)
 {
     // Steps 1-6: solver-independent state initialization
     const spinconstrain::ScInitParams params{sc_thr_in, nsc_in, nsc_min_in,

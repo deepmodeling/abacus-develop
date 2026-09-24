@@ -113,8 +113,8 @@ public:
     this->latvec = latvec_in;
     this->omega = std::abs(latvec.Det()) * lat0 * lat0 * lat0;
     this->GT = latvec.Inverse();
-	this->G  = GT.Transpose();
-	this->GGT = G * GT;
+    this->G  = GT.Transpose();
+    this->GGT = G * GT;
 
     //------------------------------------------------------------
     //-------------------------init grids-------------------------
@@ -174,45 +174,45 @@ public:
     // Find the minimal FFT box size the factors into the primes (2,3,5,7).
     for (int i = 0; i < 3; i++)
     {
-    	int b = 0;
+        int b = 0;
         int n2 = 0;
         int n3 = 0;
         int n5 = 0;
         //int n7 = 0;
         bool done_factoring = false;
-	
+    
         // increase ibox[i] by 1 until it is totally factorizable by (2,3,5,7) 
         do
         {
-			b = ibox[i];   
+            b = ibox[i];   
 
-			//n2 = n3 = n5 = n7 = 0;
-			n2 = n3 = n5 = 0;
-			done_factoring = false;
+            //n2 = n3 = n5 = n7 = 0;
+            n2 = n3 = n5 = 0;
+            done_factoring = false;
             if ((this->full_pw && this->full_pw_dim == 2) && b % 2 != 0) done_factoring = true; // full_pw_dim = 2 means FFT dimensions should be even.
-			while (!done_factoring)
-			{
-				if (b % 2 == 0 && (!this->full_pw || this->full_pw_dim != 1)) // full_pw_dim = 1 means FFT dimension should be odd.
-				{
-					n2++;
-					b /= 2;
-					continue;
-				}
-				if (b % 3 == 0) 
-				{
-					n3++;
-					b /= 3;
-					continue;
-				}
-				if (b % 5 == 0) 
-				{
-					n5++;
-					b /= 5;
-					continue;
-				}
-				//if (b%7==0) { n7++; b /= 7; continue; }
-				done_factoring = true;
-			}
+            while (!done_factoring)
+            {
+                if (b % 2 == 0 && (!this->full_pw || this->full_pw_dim != 1)) // full_pw_dim = 1 means FFT dimension should be odd.
+                {
+                    n2++;
+                    b /= 2;
+                    continue;
+                }
+                if (b % 3 == 0) 
+                {
+                    n3++;
+                    b /= 3;
+                    continue;
+                }
+                if (b % 5 == 0) 
+                {
+                    n5++;
+                    b /= 5;
+                    continue;
+                }
+                //if (b%7==0) { n7++; b /= 7; continue; }
+                done_factoring = true;
+            }
             ibox[i] += 1;
         }
         while (b != 1);
@@ -279,8 +279,8 @@ public:
         this->latvec = latvec_in;
         this->omega = std::abs(latvec.Det()) * lat0 * lat0 * lat0;
         this->GT = latvec.Inverse();
-    	this->G  = GT.Transpose();
-    	this->GGT = G * GT;
+        this->G  = GT.Transpose();
+        this->GGT = G * GT;
         this->nx = nx_in;
         this->ny = ny_in;
         this->nz = nz_in;

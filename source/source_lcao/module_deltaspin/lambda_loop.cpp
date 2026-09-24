@@ -100,9 +100,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
 
     // Timer initialization (MPI or CPU)
 #ifdef __MPI
-	auto iterstart = MPI_Wtime();
+    auto iterstart = MPI_Wtime();
 #else
-	auto iterstart = std::chrono::system_clock::now();
+    auto iterstart = std::chrono::system_clock::now();
 #endif
 
     double inner_loop_duration = 0.0;
@@ -179,9 +179,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
                 add_scalar_multiply_2d(initial_lambda, dnu_last_step, one, this->state_.lambda_);
                 this->update_psi_charge(dnu_last_step.data(), true, true);
 #ifdef __MPI
-		        duration = (double)(MPI_Wtime() - iterstart);
+                duration = (double)(MPI_Wtime() - iterstart);
 #else
-			    duration =
+                duration =
                     (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now()
                     - iterstart)).count() / static_cast<double>(1e6);
 #endif
@@ -253,9 +253,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         // CHECK CONVERGENCE
         // =============================================================
 #ifdef __MPI
-			duration = (double)(MPI_Wtime() - iterstart);
+            duration = (double)(MPI_Wtime() - iterstart);
 #else
-			duration =
+            duration =
                (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now()
                 - iterstart)).count() / static_cast<double>(1e6);
 #endif
@@ -299,9 +299,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
 
         // Reset timer for next iteration
 #ifdef __MPI
-		iterstart = MPI_Wtime();
+        iterstart = MPI_Wtime();
 #else
-		iterstart = std::chrono::system_clock::now();
+        iterstart = std::chrono::system_clock::now();
 #endif
 
         // =============================================================

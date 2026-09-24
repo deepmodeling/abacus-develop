@@ -13,7 +13,7 @@ public:
     KEDF_ML()
     {
         this->energy_prefactor = 3. /10. * std::pow(3*std::pow(M_PI, 2.0), 2.0/3.0) * 2; 
-	// 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
+    // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
         this->energy_exponent = 5. / 3.;
     }
 

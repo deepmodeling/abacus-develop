@@ -590,17 +590,17 @@ void Simpson_Integral
     assert(mesh&1);
 
     asum = 0.00;
-	const size_t end = mesh-2;
+    const size_t end = mesh-2;
     for( size_t i=1; i!=end; i+=2 )
     {
-		const double f1 = func[i]*rab[i];
-		asum += f1 + f1 + func[i+1]*rab[i+1];
+        const double f1 = func[i]*rab[i];
+        asum += f1 + f1 + func[i+1]*rab[i+1];
     }
-	const double f1 = func[mesh-2]*rab[mesh-2];
-	asum += f1+f1;
-	asum += asum;
-	asum += func[0]*rab[0] + func[mesh-1]*rab[mesh-1];
-	asum /= 3.0;
+    const double f1 = func[mesh-2]*rab[mesh-2];
+    asum += f1+f1;
+    asum += asum;
+    asum += func[0]*rab[0] + func[mesh-1]*rab[mesh-1];
+    asum /= 3.0;
     return;
 }// end subroutine simpson
 

@@ -27,13 +27,13 @@ namespace LCAO_domain
  */
 template <typename TK>
 void set_psi_occ_dm_chg(
-		const K_Vectors &kv, // k-points
-		psi::Psi<TK>* &psi, // coefficients of NAO basis
-		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
-		elecstate::ElecState* pelec, // eigen values and weights
-		module_dm::Setup_DM<TK> &dmat, // density matrix 
-		Charge &chr, // charge density 
-		const Input_para& inp); // input parameters
+        const K_Vectors &kv, // k-points
+        psi::Psi<TK>* &psi, // coefficients of NAO basis
+        const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        elecstate::ElecState* pelec, // eigen values and weights
+        module_dm::Setup_DM<TK> &dmat, // density matrix 
+        Charge &chr, // charge density 
+        const Input_para& inp); // input parameters
 
 /**
  * @brief set up potentials, including local pseudopotentials,
@@ -42,14 +42,14 @@ void set_psi_occ_dm_chg(
 template <typename TK>
 void set_pot(
         UnitCell &ucell,
-		K_Vectors &kv,
-	    Structure_Factor& sf,
-		const ModulePW::PW_Basis &pw_rho,
-		const ModulePW::PW_Basis &pw_rhod,
-		elecstate::ElecState* pelec,
-		const LCAO_Orbitals& orb,
-		Parallel_Orbitals &pv,
-		pseudopot_cell_vl &locpp,
+        K_Vectors &kv,
+        Structure_Factor& sf,
+        const ModulePW::PW_Basis &pw_rho,
+        const ModulePW::PW_Basis &pw_rhod,
+        elecstate::ElecState* pelec,
+        const LCAO_Orbitals& orb,
+        Parallel_Orbitals &pv,
+        pseudopot_cell_vl &locpp,
         Plus_U_Base &dftu,
         surchem& solvent,
         Exx_NAO<TK> &exx_nao,
@@ -64,11 +64,11 @@ void set_pot(
  */
 template <typename TK>
 void init_dm_from_file(
-	const std::string& readin_dir,
-	const int nspin,
-	module_dm::Setup_DM<TK>& dmat,
-	const UnitCell& ucell,
-	const Parallel_Orbitals* pv);
+    const std::string& readin_dir,
+    const int nspin,
+    module_dm::Setup_DM<TK>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv);
 
 /**
  * @brief initialize charge density from density matrix file (init_chg=dm)
@@ -82,22 +82,22 @@ void init_dm_from_file(
  */
 template <typename TK>
 void init_chg_dm(
-	const std::string& readin_dir,
-	const int nspin,
-	module_dm::Setup_DM<TK>& dmat,
-	const UnitCell& ucell,
-	const Parallel_Orbitals* pv,
-	Charge* chr);
+    const std::string& readin_dir,
+    const int nspin,
+    module_dm::Setup_DM<TK>& dmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    Charge* chr);
 
 /**
  * @brief read in HR from file, and save it into hmat
  */
 template <typename TK>
 void init_hr_from_file(
-	const std::string hrfile,
-	hamilt::HContainer<TK>* hmat,
-	const UnitCell& ucell,
-	const Parallel_Orbitals* pv);
+    const std::string hrfile,
+    hamilt::HContainer<TK>* hmat,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv);
 
 /**
  * @brief initialize charge density from Hamiltonian matrix file (init_chg=hr)
@@ -119,16 +119,16 @@ void init_hr_from_file(
  */
 template <typename TK, typename TR>
 void init_chg_hr(
-	const std::string& readin_dir,
-	const int nspin,
-	hamilt::Hamilt<TK>* p_hamilt,
-	const UnitCell& ucell,
-	const Parallel_Orbitals* pv,
-	psi::Psi<TK>& psi,
-	elecstate::ElecState* pelec,
-	module_dm::DensityMatrix<TK, double>& dm,
-	Charge& chr,
-	const std::string& ks_solver);
+    const std::string& readin_dir,
+    const int nspin,
+    hamilt::Hamilt<TK>* p_hamilt,
+    const UnitCell& ucell,
+    const Parallel_Orbitals* pv,
+    psi::Psi<TK>& psi,
+    elecstate::ElecState* pelec,
+    module_dm::DensityMatrix<TK, double>& dm,
+    Charge& chr,
+    const std::string& ks_solver);
 } // end namespace
 
 #endif

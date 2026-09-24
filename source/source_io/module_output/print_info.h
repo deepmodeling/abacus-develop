@@ -10,8 +10,8 @@ namespace ModuleIO
 {
 // print out to screen about the readin parameters
 void print_parameters(
-	const UnitCell& ucell, 
-	K_Vectors& kv,
+    const UnitCell& ucell, 
+    K_Vectors& kv,
     const Input_para& inp);
 
 void print_time(time_t& time_start, time_t& time_finish);

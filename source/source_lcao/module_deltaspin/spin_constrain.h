@@ -154,9 +154,9 @@ public:
                void* p_hamilt_in,
                void* psi_in,
 #ifdef __LCAO
-			   module_dm::DensityMatrix<TK, double> *dm_in, // mohan add 2025-11-02
+               module_dm::DensityMatrix<TK, double> *dm_in, // mohan add 2025-11-02
 #endif
-			   elecstate::ElecState* pelec_in,
+               elecstate::ElecState* pelec_in,
                ModulePW::PW_Basis_K* pw_wfc_in = nullptr);
 
   /**
@@ -198,7 +198,7 @@ public:
    * @param delta_lambda Change in lambda from previous step (for incremental H correction)
    */
   void cal_mw_from_lambda(int i_step,
-		  const ModuleBase::Vector3<double>* delta_lambda = nullptr);
+          const ModuleBase::Vector3<double>* delta_lambda = nullptr);
 
   /**
    * @brief Calculate the spin constraint energy contribution: E_scon = -sum(lambda_i . Mi_i).
@@ -228,8 +228,8 @@ public:
    * @param rerun If true, use full PW solver for final charge update
    */
   void run_lambda_loop(int outer_step,
-		  bool rerun,
-		  std::ostream& ofs_running);
+          bool rerun,
+          std::ostream& ofs_running);
 
   /// @brief RMS error of the most recent lambda optimization loop (-1.0 if none has run).
   double get_last_rms_error() const { return last_rms_error_; }

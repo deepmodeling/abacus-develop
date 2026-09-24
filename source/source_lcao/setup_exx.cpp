@@ -42,12 +42,12 @@ void Exx_NAO<TK>::init(const UnitCell& ucell, Exx_Info& exx_info)
 
 template <typename TK>
 void Exx_NAO<TK>::before_runner(
-		UnitCell& ucell, // unitcell
-		K_Vectors &kv, // k points
+        UnitCell& ucell, // unitcell
+        K_Vectors &kv, // k points
         const LCAO_Orbitals &orb, // orbital info
         const Parallel_Orbitals &pv, // parallel orbitals
-		const Input_para& inp,
-		Exx_Info& exx_info)
+        const Input_para& inp,
+        Exx_Info& exx_info)
 {
 #ifdef __EXX
     if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax"
@@ -94,13 +94,13 @@ void Exx_NAO<TK>::before_runner(
 
 template <typename TK>
 void Exx_NAO<TK>::before_scf(
-		const UnitCell &ucell, // unitcell
-		const K_Vectors &kv,
-		const LCAO_Orbitals &orb, // orbital info
-		Charge_Mixing* p_chgmix,
-		const int istep,
-		const Input_para& inp,
-		Exx_Info& exx_info)
+        const UnitCell &ucell, // unitcell
+        const K_Vectors &kv,
+        const LCAO_Orbitals &orb, // orbital info
+        Charge_Mixing* p_chgmix,
+        const int istep,
+        const Input_para& inp,
+        Exx_Info& exx_info)
 {
 #ifdef __EXX
     if (inp.calculation != "nscf")
@@ -113,11 +113,11 @@ void Exx_NAO<TK>::before_scf(
         {
             this->exc->exx_beforescf(istep, kv, *p_chgmix, ucell, orb);
         }
-	}
-	else
-	{
-		// do nothing
-	}
+    }
+    else
+    {
+        // do nothing
+    }
 #endif
 }
 
