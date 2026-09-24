@@ -10,7 +10,7 @@ AddTest(
   TARGET MODULE_CELL_NEIGHBOR_neighbor_search
   LIBS parameter base device cell symmetry
   SOURCES
-    neighbor_search_test.cpp
+    test_neighbor_search.cpp
   ../neighbor_search.cpp
   ../../domain_decomposition.cpp
   ../bin_manager.cpp
@@ -21,7 +21,7 @@ AddTest(
   TARGET MODULE_CELL_NEIGHBOR_bin_manager
   LIBS parameter base device
   SOURCES
-    bin_manager_test.cpp
+    test_bin_manager.cpp
     ../bin_manager.cpp
     ../page_allocator.cpp
 )
@@ -30,7 +30,7 @@ AddTest(
   TARGET MODULE_CELL_NEIGHBOR_allocator_and_list
   LIBS parameter base device
   SOURCES
-  neighbor_list_test.cpp
+  test_neighbor_list.cpp
   ../page_allocator.cpp
 )
 
@@ -55,7 +55,7 @@ endif()
 
 if(ENABLE_MPI)
   add_executable(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
-    mdcell_migrate_mpi_test.cpp
+    test_mdcell_migrate_mpi.cpp
     test_domain_decomposition.cpp
     ../../mdcell.cpp
     ../../domain_decomposition.cpp
@@ -91,7 +91,7 @@ if(ENABLE_MPI)
     PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60)
 
   add_executable(MODULE_CELL_NEIGHBOR_mdcell_reader
-    mdcell_reader_test.cpp
+    test_mdcell_reader.cpp
     ../../mdcell_reader.cpp
     ../../mdcell.cpp
     ../../print_cell.cpp
