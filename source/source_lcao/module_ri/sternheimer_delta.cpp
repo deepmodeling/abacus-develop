@@ -2254,13 +2254,70 @@ std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_ma
     return elements;
 }
 
-SternheimerDeltaFixedSubspace build_delta_sternheimer_fixed_subspace(
-    const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
-    const std::vector<SternheimerDeltaVirtualState>& virtual_states)
+std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_matrix_elements(
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const SternheimerFDHamiltonian::Vector& perturbation_potential,
+    const SternheimerFDHamiltonian::Vector& occupied_wavefunction,
+    const double volume_element)
 {
-    SternheimerDeltaFixedSubspace fixed_subspace;
-    fixed_subspace.functions = collect_fixed_subspace(occupied_wavefunctions, virtual_states);
-    return fixed_subspace;
+    if (volume_element <= 0.0)
+    {
+        throw std::invalid_argument("Sternheimer delta perturbation elements require a positive grid volume element.");
+    }
+    if (perturbation_potential.size() != occupied_wavefunction.size())
+    {
+        throw std::invalid_argument("Sternheimer delta perturbation potential size does not match wavefunction.");
+    }
+    validate_virtual_states(virtual_states, occupied_wavefunction.size());
+
+    std::vector<Complex> elements(virtual_states.size(), Complex(0.0, 0.0));
+#pragma omp parallel for schedule(static)
+    for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
+    {
+        Complex value(0.0, 0.0);
+        for (std::size_t ir = 0; ir != occupied_wavefunction.size(); ++ir)
+        {
+            value += std::conj(virtual_states[ia].orbital[ir]) * perturbation_potential[ir]
+                * occupied_wavefunction[ir];
+        }
+        elements[ia] = volume_element * value;
+    }
+    return elements;
+}
+
+SternheimerFDHamiltonian::Vector build_delta_sternheimer_sos_wavefunction(
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const std::vector<SternheimerFDHamiltonian::Complex>& perturbation_matrix_elements,
+    const double occupied_eigenvalue,
+    const double omega)
+{
+    if (virtual_states.empty())
+    {
+        throw std::invalid_argument("Sternheimer direct SOS requires at least one virtual state.");
+    }
+    if (virtual_states.size() != perturbation_matrix_elements.size())
+    {
+        throw std::invalid_argument(
+            "Sternheimer direct SOS requires one perturbation matrix element per virtual state.");
+    }
+
+    const std::size_t grid_size = virtual_states.front().orbital.size();
+    if (grid_size == 0)
+    {
+        throw std::invalid_argument("Sternheimer direct SOS virtual states must be non-empty.");
+    }
+    Vector response(grid_size, Complex(0.0, 0.0));
+    for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
+    {
+        check_vector_size(virtual_states[ia].orbital, grid_size, "Sternheimer direct SOS virtual state");
+        const Complex denominator(occupied_eigenvalue - virtual_states[ia].eigenvalue, -omega);
+        if (std::abs(denominator) < 1.0e-30)
+        {
+            throw std::runtime_error("Sternheimer direct SOS found a singular virtual-state denominator.");
+        }
+        axpy(perturbation_matrix_elements[ia] / denominator, virtual_states[ia].orbital, response);
+    }
+    return response;
 }
 
 SternheimerDeltaFixedSubspace build_delta_sternheimer_fixed_subspace(
