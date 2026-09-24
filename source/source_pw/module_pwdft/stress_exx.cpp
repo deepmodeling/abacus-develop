@@ -42,6 +42,15 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
     double tpiba2 = ucell.tpiba2;
     double omega_inv = 1.0 / omega;
 
+    // Consistent with OperatorEXXPW: the EXX pair density only carries the
+    // ecut_exx G-sphere (rhopw_dev there), so truncate the stress sum to the
+    // same sphere. gg is in lat0^-2 units and ggecut = ecut / tpiba2.
+    double ggecut_exx = PARAM.inp.ecutexx / tpiba2;
+    if (ggecut_exx <= 0.0)
+    {
+        ggecut_exx = PARAM.inp.ecutrho / tpiba2;
+    }
+
     // allocate space
     T* psi_nk_real = nullptr;
     T* psi_mq_real = nullptr;
@@ -108,6 +117,10 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
                             #endif
                             for (int ig = 0; ig < rhopw->npw; ig++)
                             {
+                                if (rhopw->gg[ig] > ggecut_exx)
+                                {
+                                    continue; // outside the ecut_exx sphere, see above
+                                }
                                 const ModuleBase::Vector3<double> kqg = wfcpw->kvec_c[ik] - wfcpw->kvec_c[iq] + rhopw->gcar[ig];
                                 double kqg_alpha = kqg[alpha] * tpiba;
                                 double kqg_beta = kqg[beta] * tpiba;
