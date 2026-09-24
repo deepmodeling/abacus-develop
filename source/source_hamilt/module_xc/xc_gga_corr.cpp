@@ -237,9 +237,9 @@ void XC_Functional::perdew86_spin(
 
     //SdG: in the original paper 1.745*0.11=0.19195 is used
     double dd = pow((2.0) , third) * sqrt(pow(((1.0 + zeta) * 0.50) , (5.0 / 3.0)) 
-		     + pow(((1.0 - zeta) * 0.50) , (5.0 / 3.0)));
+             + pow(((1.0 - zeta) * 0.50) , (5.0 / 3.0)));
     double ddd = pow((2.0) , (- 4.0 / 3.0)) * 5.0 * (pow(((1.0 + zeta) * 0.50) , (2.0 / 3.0)) 
-		    - pow(((1.0 - zeta) * 0.50) , (2.0 / 3.0))) / (3.0 * dd);
+            - pow(((1.0 - zeta) * 0.50) , (2.0 / 3.0))) / (3.0 * dd);
     double ephi = exp(- phi);
     sc = grho / rho43 * cn * ephi / dd;
     v1cup = sc * ((1.0 + phi) * dcn / cn - ((4.0 / 3.0) -
@@ -401,9 +401,9 @@ void XC_Functional::pbec_spin(
     double dh0up = be[iflag] * t * t * fz3 / s1 * (- 7.0 / 3.0 * xy - qy * (af * bfup / be[iflag] - 7.0 / 3.0));
     double dh0dw = be[iflag] * t * t * fz3 / s1 * (- 7.0 / 3.0 * xy - qy * (af * bfdw / be[iflag] - 7.0 / 3.0));
     double dh0zup = (3.0 * h0 / fz - be[iflag] * t * t * fz2 
-		    / s1 * (2.0 * xy - qy * (3.0 * af * expe * ec / fz3 / be[iflag] + 2.0))) * dfz * (1.0 - zeta);
+            / s1 * (2.0 * xy - qy * (3.0 * af * expe * ec / fz3 / be[iflag] + 2.0))) * dfz * (1.0 - zeta);
     double dh0zdw = - (3.0 * h0 / fz - be[iflag] * t * t * fz2 
-		    / s1 * (2.0 * xy - qy * (3.0 * af * expe * ec / fz3 / be[iflag] + 2.0))) * dfz * (1.0 + zeta);
+            / s1 * (2.0 * xy - qy * (3.0 * af * expe * ec / fz3 / be[iflag] + 2.0))) * dfz * (1.0 + zeta);
     double ddh0 = be[iflag] * fz / (2.0 * ks * ks * rho) * (xy - qy) / s1;
     sc = rho * h0;
     v1cup = h0 + dh0up + dh0zup;

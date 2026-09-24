@@ -10,10 +10,10 @@ namespace ModuleBase
 class PolyInt
 {
 
-	public:
+    public:
 
-	PolyInt();
-	~PolyInt();
+    PolyInt();
+    ~PolyInt();
 
     //========================================================
     // Polynomial_Interpolation
@@ -98,8 +98,8 @@ class PolyInt
      * @param x [in] the position to be predicted
      * @return double the predicted value
      */
-	static double Polynomial_Interpolation
-	(
+    static double Polynomial_Interpolation
+    (
         const double *table,
         const int &table_length,
         const double &table_interval,

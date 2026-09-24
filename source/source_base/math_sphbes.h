@@ -11,7 +11,7 @@ namespace ModuleBase
 
 class Sphbes 
 {
-	public:
+    public:
 
     Sphbes();
     ~Sphbes();
@@ -62,25 +62,25 @@ class Sphbes
      * @param jl [out] jl spherical bessel function
      * @param sjp [out] sjp[i] is assigned to be 1.0. i < msh.
      */
-	static void Spherical_Bessel
-	(           
-	    const int &msh, 
-		const double *r,
-		const double &q, 
-		const int &l,  
-		double *sj,    
-		double *sjp
-	);
+    static void Spherical_Bessel
+    (           
+        const int &msh, 
+        const double *r,
+        const double &q, 
+        const int &l,  
+        double *sj,    
+        double *sjp
+    );
 
-	/**
-	 * @brief return num eigenvalues of spherical bessel function
-	 * 
-	 * @param num [in] the number of eigenvalues
-	 * @param l [in] angular number
-	 * @param epsilon [in] the accuracy 
-	 * @param eigenvalue [out] the calculated eigenvalues
-	 * @param rcut [in] the cutoff the radial function
-	 */
+    /**
+     * @brief return num eigenvalues of spherical bessel function
+     * 
+     * @param num [in] the number of eigenvalues
+     * @param l [in] angular number
+     * @param epsilon [in] the accuracy 
+     * @param eigenvalue [out] the calculated eigenvalues
+     * @param rcut [in] the cutoff the radial function
+     */
     static void Spherical_Bessel_Roots
     (
         const int &num,
@@ -144,7 +144,7 @@ private:
 
     static double Spherical_Bessel_7(const int n, const double &x);
 
-	// Peize Lin change double to void 2019-05-01
+    // Peize Lin change double to void 2019-05-01
     static void BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, double *ryp);
 
     static void BESCHB(double x, double *gam1, double *gam2, double *gampl, double *gammi);

@@ -124,7 +124,7 @@ public:
     //real space
     int nrxx=0; //num. of real space grids
     int *startz=nullptr; //startz[ip]: starting z plane in the ip-th proc. in current POOL_WORLD
-	int *numz=nullptr; //numz[ip]: num. of z planes in the ip-th proc. in current POOL_WORLD
+    int *numz=nullptr; //numz[ip]: num. of z planes in the ip-th proc. in current POOL_WORLD
     int *numg=nullptr; //numg[ip] :  nst_per[poolrank] * numz[ip]
     int *numr=nullptr; //numr[ip] :  numz[poolrank] * nst_per[ip]
     int *startg=nullptr;  // startg[ip] = numg[ip-1] + startg[ip-1]
@@ -136,7 +136,7 @@ public:
     ModuleBase::Vector3<double> *gcar=nullptr;   			//G vectors in cartesian corrdinate
     double *gg=nullptr;       	// modulus (G^2) of G vectors [npw]
     //gg[ng]=ig[ng]*GGT*ig[ng]/(lat0*lat0)=g[ng]*g[ng] (/lat0*lat0)
-	// gg_global dimension: [cutgg_num_now] (save memory skill is used)
+    // gg_global dimension: [cutgg_num_now] (save memory skill is used)
     int ig_gge0=-1;    //ig when gg == 0
 
     //distribute plane waves and grids and set up fft
@@ -239,8 +239,8 @@ protected:
 //                  FFT
 //===============================================
 public:
-	// FFT dimensions for wave functions.
-	int fftnx=0, fftny=0, fftnz=0, fftnxyz=0, fftnxy=0;
+    // FFT dimensions for wave functions.
+    int fftnx=0, fftny=0, fftnz=0, fftnxyz=0, fftnxy=0;
     int nx=0, ny=0, nz=0, nxyz=0, nxy=0; // Gamma_only: fftny = int(ny/2)-1 , others: fftny = ny
     int liy=0, riy=0;// liy: the left edge of the pw ball; riy: the right edge of the pw ball in the y direction
     int lix=0, rix=0;// lix: the left edge of the pw ball; rix: the right edge of the pw ball in the x direction

@@ -9,9 +9,9 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
 {
     ModuleBase::TITLE("ElecStatePW", "cal_tau");
     for(int is=0; is<PARAM.inp.nspin; is++)
-	{
+    {
         setmem_var_op()(this->kin_r[is], 0,  this->charge->nrxx);
-	}
+    }
 
     for (int ik = 0; ik < psi.get_nk(); ++ik)
     {

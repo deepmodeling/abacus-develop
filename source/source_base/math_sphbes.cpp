@@ -41,9 +41,9 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
 
     if (x <= 0.0 || xnu < 0.0)
     {
-		std::cout << "Sphbes::BESSJY, bad arguments" << std::endl;
+        std::cout << "Sphbes::BESSJY, bad arguments" << std::endl;
         //ModuleBase::WARNING_QUIT("Sphbes::BESSJY","bad arguments");
-		exit(0); // mohan add 2021-05-06
+        exit(0); // mohan add 2021-05-06
     }
 
 
@@ -57,9 +57,9 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
     h = xnu * xi;
 
     if (h < FPMIN)
-	{
-		h = FPMIN;
-	}
+    {
+        h = FPMIN;
+    }
 
     b = xi2 * xnu;
 
@@ -90,9 +90,9 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
     }
 
     if (i > MAXIT)
-	{
-		std::cout << "x too large in bessjy; try asymptotic expansion" << std::endl;
-	}
+    {
+        std::cout << "x too large in bessjy; try asymptotic expansion" << std::endl;
+    }
 
     rjl = isign * FPMIN;
 
@@ -113,9 +113,9 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
     }
 
     if (rjl == 0.0)
-	{
-		rjl = EPS;
-	}
+    {
+        rjl = EPS;
+    }
 
     f = rjpl / rjl;
 
@@ -285,16 +285,16 @@ void Sphbes::BESCHB(double x, double *gam1, double *gam2, double *gampl, double 
 double Sphbes::CHEBEV(double a, double b, double c[], int m, double x)
 {
     double d = 0.0;
-	double dd = 0.0;
-	double sv = 0.0;
-	double y = 0.0;
-	double y2 = 0.0;
+    double dd = 0.0;
+    double sv = 0.0;
+    double y = 0.0;
+    double y2 = 0.0;
     int j=0;
 
     if ((x - a)*(x - b) > 0.0)
-	{
-		std::cout << "x not in range in routine chebev" << std::endl;
-	}
+    {
+        std::cout << "x not in range in routine chebev" << std::endl;
+    }
 
     y2 = 2.0 * (y = (2.0 * x - a - b) / (b - a));
 
@@ -320,9 +320,9 @@ double Sphbes::Spherical_Bessel_7(const int n, const double &x)
 
     if (n < 0 || x <= 0.0)
     {
-		std::cout << "Spherical_Bessel_7, bad arguments in sphbes" << std::endl;
+        std::cout << "Spherical_Bessel_7, bad arguments in sphbes" << std::endl;
         //ModuleBase::WARNING_QUIT("Sphbes::Spherical_Bessel_7","bad arguments in sphbes");
-		exit(0);
+        exit(0);
     }
 
     order = n + 0.5;
@@ -349,17 +349,17 @@ void Sphbes::Spherical_Bessel_Roots
 {
     //ModuleBase::TITLE("Sphbes","Spherical_Bessel_Roots");
     if (num<=0)
-	{
-		std::cout << "Spherical_Bessel_Roots, num<=0" << std::endl;
-		//ModuleBase::WARNING_QUIT("Sphbes::Spherical_Bessel_Roots","num<=0");
-		exit(0);
-	}
+    {
+        std::cout << "Spherical_Bessel_Roots, num<=0" << std::endl;
+        //ModuleBase::WARNING_QUIT("Sphbes::Spherical_Bessel_Roots","num<=0");
+        exit(0);
+    }
     if (rcut<=0.0)
-	{
-		std::cout << "Spherical_Bessel_Roots, rcut<=0" << std::endl;
-		//ModuleBase::WARNING_QUIT("Sphbes::Spherical_Bessel_Roots","rcut<=0.0");
-		exit(0);
-	}
+    {
+        std::cout << "Spherical_Bessel_Roots, rcut<=0" << std::endl;
+        //ModuleBase::WARNING_QUIT("Sphbes::Spherical_Bessel_Roots","rcut<=0.0");
+        exit(0);
+    }
 
     double min = 0.0;
     double max = 2*ModuleBase::PI + (num + (l+0.5)/2 + 0.75)*ModuleBase::PI/2 +
@@ -443,8 +443,8 @@ void Sphbes::Spherical_Bessel
     double x1=0.0;
 
     int i=0;
-	int ir=0;
-	int ir0=0;
+    int ir=0;
+    int ir0=0;
 
     if (l>=7)
     {
@@ -608,7 +608,7 @@ void Sphbes::Spherical_Bessel
         else
         {
             std::cout << "\n error in sph_bes, l out of {-1 ... 6},l = " << l ;
-			exit(0);
+            exit(0);
         }
     }
 
@@ -618,23 +618,23 @@ void Sphbes::Spherical_Bessel
 
 void Sphbes::Spherical_Bessel
 (
-	const int &msh, //number of grid points
-	const double *r,//radial grid
-	const double &q,    //
-	const int &l,   //angular momentum
-	double *sj,     //jl(1:msh) = j_l(q*r(i)),spherical bessel function
-	double *sjp
+    const int &msh, //number of grid points
+    const double *r,//radial grid
+    const double &q,    //
+    const int &l,   //angular momentum
+    double *sj,     //jl(1:msh) = j_l(q*r(i)),spherical bessel function
+    double *sjp
 )
 {
 
-	//calculate jlx first
-	Spherical_Bessel (msh, r, q, l, sj);
+    //calculate jlx first
+    Spherical_Bessel (msh, r, q, l, sj);
 
-	for (int ir = 0; ir < msh; ir++)
-	{
-		sjp[ir] = 1.0;
-	}
-	return;
+    for (int ir = 0; ir < msh; ir++)
+    {
+        sjp[ir] = 1.0;
+    }
+    return;
 }
 
 void Sphbes::dSpherical_Bessel_dx
@@ -648,8 +648,8 @@ void Sphbes::dSpherical_Bessel_dx
 {
     if (l < 0 )
     {
-		std::cout << "We temporarily only calculate derivative of l >= 0." << std::endl;
-		exit(0);
+        std::cout << "We temporarily only calculate derivative of l >= 0." << std::endl;
+        exit(0);
     }
 
     double djl0 = 0;

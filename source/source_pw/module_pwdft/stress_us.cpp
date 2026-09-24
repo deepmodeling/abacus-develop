@@ -210,10 +210,10 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl& nlpp,
                                          const ModuleBase::matrix& dylmk0,
                                          std::complex<FPTYPE>* dqg)
 {
-	if (PARAM.inp.test_pp) 
-	{
-		ModuleBase::TITLE("Stress", "dqvan2");
-	}
+    if (PARAM.inp.test_pp) 
+    {
+        ModuleBase::TITLE("Stress", "dqvan2");
+    }
 
     // computes the indices which correspond to ih,jh
     const int nb = nlpp.indv(itype, ih);

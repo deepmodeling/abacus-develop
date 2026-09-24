@@ -40,10 +40,10 @@ class FFT_CPU : public FFT_BASE<FPTYPE>
                  bool gamma_only_in, 
                  bool xprime_in = true) override;
                  
-	ABACUS_FFT_WEAK 
+    ABACUS_FFT_WEAK 
     void setupFFT() override; 
 
-	// void initplan(const unsigned int& flag = 0);
+    // void initplan(const unsigned int& flag = 0);
     ABACUS_FFT_WEAK 
     void cleanFFT() override;
 

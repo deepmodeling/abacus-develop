@@ -161,15 +161,15 @@ bool SCAN_LINE_BEGIN(std::ifstream &ifs,
         std::istringstream iss(line);
         std::string SearchName;
         while (iss >> SearchName)
-		{
-			if (SearchName == TargetName)
-			{
-				find = true;
-				//std::cout << " search name = " << SearchName << std::endl;
-				return find;
-			}
-		}
-	}
+        {
+            if (SearchName == TargetName)
+            {
+                find = true;
+                //std::cout << " search name = " << SearchName << std::endl;
+                return find;
+            }
+        }
+    }
 
     if (!find && ifwarn)
     {
@@ -225,16 +225,16 @@ void OUT_TIME(const std::string &name, time_t &start, time_t &end)
     double mini = difftime(end, start) / 60.0;
     if (mini > 0.1)
     {
-	if(GlobalV::ofs_warning)
-	{
-        	GlobalV::ofs_warning << std::setprecision(2);
-        	GlobalV::ofs_warning << " -------------------------------------------------------" << std::endl;
-        	GlobalV::ofs_warning << " NAME < " << name << " > = " << std::endl;
-        	GlobalV::ofs_warning << " -> " << ctime(&start) << " -> " << ctime(&end);
-        	GlobalV::ofs_warning << " TIME = " << mini << " [Minutes]" << std::endl;
-        	GlobalV::ofs_warning << " -------------------------------------------------------" << std::endl;
-        	GlobalV::ofs_warning << std::setprecision(6);
-	}
+    if(GlobalV::ofs_warning)
+    {
+            GlobalV::ofs_warning << std::setprecision(2);
+            GlobalV::ofs_warning << " -------------------------------------------------------" << std::endl;
+            GlobalV::ofs_warning << " NAME < " << name << " > = " << std::endl;
+            GlobalV::ofs_warning << " -> " << ctime(&start) << " -> " << ctime(&end);
+            GlobalV::ofs_warning << " TIME = " << mini << " [Minutes]" << std::endl;
+            GlobalV::ofs_warning << " -------------------------------------------------------" << std::endl;
+            GlobalV::ofs_warning << std::setprecision(6);
+    }
     }
 }
 

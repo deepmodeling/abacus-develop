@@ -21,8 +21,8 @@
 template <class T>
 void ModuleBase::GlobalFunc::AUTO_SET(std::ofstream &ofs,const std::string &name,const T &a)
 {
-	ofs<<" AUTO_SET "<<name<<" : "<<a << std::endl;
-	return;
+    ofs<<" AUTO_SET "<<name<<" : "<<a << std::endl;
+    return;
 }
 
 //===================
@@ -32,19 +32,19 @@ void ModuleBase::GlobalFunc::AUTO_SET(std::ofstream &ofs,const std::string &name
 template <class T>
 void IF_MATCH(const T &a,const T &b)
 {
-	if(a!=b)
-	{
-		if(GlobalV::MY_RANK == 0)
-		{
-			std::cout<<"\n Can not match : "<<a<<"  "<<b<<std::endl;
-		}
+    if(a!=b)
+    {
+        if(GlobalV::MY_RANK == 0)
+        {
+            std::cout<<"\n Can not match : "<<a<<"  "<<b<<std::endl;
+        }
 #ifdef __MPI
-		MPI_Finalize();
+        MPI_Finalize();
 #endif
-		exit(0);
-	}
-	//std::cout<<std::setw(12)<<a<<std::endl;
-	return;
+        exit(0);
+    }
+    //std::cout<<std::setw(12)<<a<<std::endl;
+    return;
 }
 
 void IF_MATCH(const std::string &name,const std::string &name2);

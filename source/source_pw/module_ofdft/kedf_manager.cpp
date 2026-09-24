@@ -292,7 +292,7 @@ double KEDF_Manager::get_energy() const
         {
             GlobalV::ofs_running << " WARNING: ML >= TF" << std::endl;
             GlobalV::ofs_running << " ML Term = " << this->ml_->ml_energy 
-		    << " Ry, TF Term = " << this->tf_->tf_energy << " Ry." << std::endl;
+            << " Ry, TF Term = " << this->tf_->tf_energy << " Ry." << std::endl;
         }
     }
 #endif

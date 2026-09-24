@@ -99,15 +99,15 @@ In molecular dynamics simulations, the output frequency is controlled by out_fre
 [NOTE] In the 3.10-LTS version, the file names are SPIN1_CHG.cube and SPIN1_CHG_INI.cube, etc.)";
         item.default_value = "0 3";
         item.unit = "";
-			item.read_value = [](const Input_Item& item, Parameter& para) {
-				const size_t count = item.get_size();
-				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_chg needs at least 1 value");
-				para.input.out_chg[0] = std::stoi(item.str_values[0]);
+            item.read_value = [](const Input_Item& item, Parameter& para) {
+                const size_t count = item.get_size();
+                if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_chg needs at least 1 value");
+                para.input.out_chg[0] = std::stoi(item.str_values[0]);
             para.input.out_chg[1] = 3;
-			if (count >= 2) try { para.input.out_chg[1] = std::stoi(item.str_values[1]); }
-			catch (const std::invalid_argument&) { /* do nothing */ }
-			catch (const std::out_of_range&) {/* do nothing */}
-		};
+            if (count >= 2) try { para.input.out_chg[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) {/* do nothing */}
+        };
         // reset value in some special case
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
@@ -187,15 +187,15 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.default_value = "False";
         item.unit = "";
         item.set_availability("basis_type==lcao");
-			item.read_value = [](const Input_Item& item, Parameter& para) {
-				const size_t count = item.get_size();
-				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmk needs at least 1 value");
-				para.input.out_dmk[0] = assume_as_boolean(item.str_values[0]);
+            item.read_value = [](const Input_Item& item, Parameter& para) {
+                const size_t count = item.get_size();
+                if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmk needs at least 1 value");
+                para.input.out_dmk[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_dmk[1] = 8;
-			if (count >= 2) try { para.input.out_dmk[1] = std::stoi(item.str_values[1]); }
-			catch (const std::invalid_argument&) { /* do nothing */ }
-			catch (const std::out_of_range&) {/* do nothing */}
-			};
+            if (count >= 2) try { para.input.out_dmk[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) {/* do nothing */}
+            };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
             {
@@ -207,7 +207,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
     }
     {
         Input_Item item("out_dmr");
-	    item.annotation = "output density matrix DM(R) with respect to lattice vector R (with precision 8)";
+        item.annotation = "output density matrix DM(R) with respect to lattice vector R (with precision 8)";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
         item.description = R"(Whether to output the density matrix with Bravias lattice vector R index into files in the folder OUT.${suffix}. The files are named as dmr{s}{spin index}{g}{geometry index}{_nao} + {".csr"}. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and the sparse matrix format 'csr' is mentioned in out_hsr. Finally, if out_app_flag is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if out_app_flag is set to true, the density matrix with respect to Bravias lattice vector R accumulates during ionic steps:
@@ -219,29 +219,29 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.unit = "";
         item.set_availability("basis_type==lcao and gamma_only==0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
-		    const size_t count = item.get_size();
-		    if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmr needs at least 1 value");
-		    para.input.out_dmr[0] = assume_as_boolean(item.str_values[0]);
-		    para.input.out_dmr[1] = 8;
-		    if (count >= 2) try { para.input.out_dmr[1] = std::stoi(item.str_values[1]); }
-		    catch (const std::invalid_argument&) { /* do nothing */ }
-		    catch (const std::out_of_range&) {/* do nothing */}
-	    };
+            const size_t count = item.get_size();
+            if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmr needs at least 1 value");
+            para.input.out_dmr[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_dmr[1] = 8;
+            if (count >= 2) try { para.input.out_dmr[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) {/* do nothing */}
+        };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
             {
                 para.input.out_dmr[0] = 0;
             }
         };
-	    item.check_value = [](const Input_Item& item, const Parameter& para) {
-		    if (para.sys.gamma_only_local == true && para.input.out_dmr[0])
-		    {
-			    ModuleBase::WARNING_QUIT("ReadInput", "out_dmr is only valid for multi-k calculation");
-		    }
-	    };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.sys.gamma_only_local == true && para.input.out_dmr[0])
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_dmr is only valid for multi-k calculation");
+            }
+        };
 
-	    sync_intvec(input.out_dmr, 2, 0);
-	    this->add_item(item);
+        sync_intvec(input.out_dmr, 2, 0);
+        this->add_item(item);
     }
     {
         Input_Item item("out_wfc_pw");
@@ -695,14 +695,14 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.default_value = "False [8]";
         item.unit = "Ry";
         item.set_availability("basis_type==lcao");
-			item.read_value = [](const Input_Item& item, Parameter& para) {
-				const size_t count = item.get_size();
-				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk needs at least 1 value");
-				para.input.out_mat_tk[0] = assume_as_boolean(item.str_values[0]);
+            item.read_value = [](const Input_Item& item, Parameter& para) {
+                const size_t count = item.get_size();
+                if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk needs at least 1 value");
+                para.input.out_mat_tk[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_mat_tk[1] = 8;
-			if (count >= 2) try { para.input.out_mat_tk[1] = std::stoi(item.str_values[1]); }
-			catch (const std::invalid_argument&) { /* do nothing */ }
-			catch (const std::out_of_range&) {/* do nothing */}
+            if (count >= 2) try { para.input.out_mat_tk[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) {/* do nothing */}
         };
         sync_intvec(input.out_mat_tk, 2, 0);
         this->add_item(item);
@@ -1258,14 +1258,14 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.default_value = "False 8";
         item.unit = "";
         item.set_availability("basis_type==lcao");
-			item.read_value = [](const Input_Item& item, Parameter& para) {
-				const size_t count = item.get_size();
-				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l needs at least 1 value");
-				para.input.out_mat_l[0] = assume_as_boolean(item.str_values[0]);
+            item.read_value = [](const Input_Item& item, Parameter& para) {
+                const size_t count = item.get_size();
+                if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l needs at least 1 value");
+                para.input.out_mat_l[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_mat_l[1] = 8;
-			if (count >= 2) try { para.input.out_mat_l[1] = std::stoi(item.str_values[1]); }
-			catch (const std::invalid_argument&) { /* do nothing */ }
-			catch (const std::out_of_range&) {/* do nothing */}
+            if (count >= 2) try { para.input.out_mat_l[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) {/* do nothing */}
         };
         sync_intvec(input.out_mat_l, 2, 0);
         this->add_item(item);

@@ -196,9 +196,9 @@ void PhiOperator::phi_mul_phi(
             constexpr Tin alpha=1, beta=1;
             BlasConnector::gemm(
                 'T', 'N', n_i, n_j, len,
-		        alpha, phi_i + start_idx * cols_ + atoms_startidx_[i], cols_,
+                alpha, phi_i + start_idx * cols_ + atoms_startidx_[i], cols_,
                        phi_j + start_idx * cols_ + atoms_startidx_[j], cols_,
-		        beta, tmp_hr.data(), n_j,
+                beta, tmp_hr.data(), n_j,
                 base_device::AbacusDevice_t::CpuDevice);
 
             result->add_array_ts(tmp_hr.data());

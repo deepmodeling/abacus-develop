@@ -27,7 +27,7 @@ void ML_Base::set_device(const std::string& device_inpt, std::ostream& ofs_runni
         }
         else
         {
-	    std::cout << "--------------- Warning: GPU is unavailable ---------------" << std::endl;
+        std::cout << "--------------- Warning: GPU is unavailable ---------------" << std::endl;
 
             ofs_running << "--------------- Warning: GPU is unavailable ---------------" << std::endl;
             ofs_running << "------------------- Running Neural Network on CPU -------------------" << std::endl;
@@ -264,9 +264,9 @@ void ML_Base::get_potential_(const double * const * prho, const ModulePW::PW_Bas
 
         pauli_potential[ir] += factor *
                       (this->energy_exponent * this->enhancement_cpu_ptr[ir] 
-		       + this->pot_gamma_term(ir) + this->pot_p_term_1(ir) + this->pot_q_term_1(ir)
+               + this->pot_gamma_term(ir) + this->pot_p_term_1(ir) + this->pot_q_term_1(ir)
                       + this->pot_xi_term_1(ir) + this->pot_tanhxi_term_1(ir) 
-		      + this->pot_tanhp_term_1(ir) + this->pot_tanhq_term_1(ir));
+              + this->pot_tanhp_term_1(ir) + this->pot_tanhq_term_1(ir));
 
         rpotential(0, ir) += pauli_potential[ir];
     }

@@ -344,7 +344,7 @@ __global__ void cal_stress_nl(
     {
         for (int ii = threadIdx.x; ii < nproj * nproj; ii += blockDim.x) {
             const int ip1 = ii / nproj;
-	        const int ip2 = ii % nproj;
+            const int ip2 = ii % nproj;
             thrust::complex<FPTYPE> ps_qq = 0;
             if(ekb_now != 0)
             {

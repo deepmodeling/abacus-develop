@@ -89,8 +89,8 @@
  */
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
-		int i_step,
-		const ModuleBase::Vector3<double>* delta_lambda)
+        int i_step,
+        const ModuleBase::Vector3<double>* delta_lambda)
 {
     ModuleBase::TITLE("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "cal_mw_from_lambda");
