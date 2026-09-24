@@ -15,6 +15,7 @@ class PoolPolarizationReduction : public PolarizationReduction
     void reduce_residual(double& square_sum,
                          double& maximum,
                          double& point_count) const override;
+    void reduce_sum(double& value) const override;
 
   private:
     int process_count_ = 0;

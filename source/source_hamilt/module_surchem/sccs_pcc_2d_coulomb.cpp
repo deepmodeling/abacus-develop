@@ -7,16 +7,12 @@
 
 namespace ModuleSccs
 {
-
-Pcc2dMoments reduced_pcc_2d_density_moments(
-    const std::vector<double>& density,
-    const std::vector<ModuleBase::Vector3<double>>& positions,
-    const double volume_element,
-    const double origin_y,
-    const ChargeReduction& reduction)
+namespace
 {
-    Pcc2dMoments moments
-        = pcc_2d_density_moments(density, positions, volume_element, origin_y);
+
+Pcc2dMoments reduce_pcc_2d_moments(Pcc2dMoments moments,
+                                    const ChargeReduction& reduction)
+{
     double values[3] = {moments.charge, moments.dipole_y, moments.quadrupole_yy};
     reduction.reduce_sum(values, 3);
     if (!std::isfinite(values[0]) || !std::isfinite(values[1])
@@ -28,6 +24,20 @@ Pcc2dMoments reduced_pcc_2d_density_moments(
     moments.dipole_y = values[1];
     moments.quadrupole_yy = values[2];
     return moments;
+}
+
+} // namespace
+
+Pcc2dMoments reduced_pcc_2d_density_moments(
+    const std::vector<double>& density,
+    const std::vector<ModuleBase::Vector3<double>>& positions,
+    const double volume_element,
+    const Pcc2dGeometry& geometry,
+    const ChargeReduction& reduction)
+{
+    return reduce_pcc_2d_moments(
+        pcc_2d_density_moments(density, positions, volume_element, geometry),
+        reduction);
 }
 
 std::vector<double> pcc_2d_plane_average(const std::vector<double>& values,
@@ -83,6 +93,7 @@ Pcc2dCoulombOperator::Pcc2dCoulombOperator(
     const ChargeReduction& reduction)
     : periodic_(basis, tpiba),
       positions_(positions),
+      relative_y_(positions.size()),
       volume_element_(volume_element),
       geometry_(geometry),
       reduction_(reduction)
@@ -99,24 +110,30 @@ Pcc2dCoulombOperator::Pcc2dCoulombOperator(
         throw std::invalid_argument(
             "two-dimensional SCCS PCC integration geometry must be finite and positive");
     }
+    for (std::size_t index = 0; index < positions_.size(); ++index)
+    {
+        relative_y_[index] = pcc_2d_relative_y(positions_[index].y, geometry_);
+    }
 }
 
 void Pcc2dCoulombOperator::apply(const std::vector<double>& charge,
                                  ElectrostaticField& field) const
 {
     periodic_.apply(charge, field);
-    const Pcc2dMoments moments = reduced_pcc_2d_density_moments(charge,
-                                                               positions_,
-                                                               volume_element_,
-                                                               geometry_.origin_y,
-                                                               reduction_);
+    const Pcc2dMoments moments
+        = reduce_pcc_2d_moments(
+            pcc_2d_density_moments_from_relative_y(charge,
+                                                   relative_y_,
+                                                   volume_element_),
+            reduction_);
     for (std::size_t index = 0; index < charge.size(); ++index)
     {
-        const double relative_y = positions_[index].y - geometry_.origin_y;
         field.potential[index]
-            += pcc_2d_potential(moments, relative_y, geometry_.parameters);
+            += pcc_2d_potential(moments, relative_y_[index], geometry_.parameters);
         field.gradient[index].y
-            += pcc_2d_potential_gradient(moments, relative_y, geometry_.parameters).y;
+            += pcc_2d_potential_gradient(moments,
+                                         relative_y_[index],
+                                         geometry_.parameters).y;
     }
 }
 

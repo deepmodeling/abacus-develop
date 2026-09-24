@@ -38,13 +38,24 @@ Pcc2dGeometry pcc_2d_geometry(const ModuleBase::Matrix3& lattice_vectors,
 
 void validate_pcc_2d_parameters(const Pcc2dParameters& parameters);
 
+double pcc_2d_relative_y(double position_y, const Pcc2dGeometry& geometry);
+
+double pcc_2d_system_center_y(const std::vector<double>& positions_y,
+                              const std::vector<double>& weights,
+                              double cell_length_y);
+
 Pcc2dMoments pcc_2d_point_charge_moments(const std::vector<PointCharge>& charges,
-                                          double origin_y);
+                                          const Pcc2dGeometry& geometry);
 
 Pcc2dMoments pcc_2d_density_moments(const std::vector<double>& density,
                                     const std::vector<ModuleBase::Vector3<double>>& positions,
                                     double volume_element,
-                                    double origin_y);
+                                    const Pcc2dGeometry& geometry);
+
+Pcc2dMoments pcc_2d_density_moments_from_relative_y(
+    const std::vector<double>& density,
+    const std::vector<double>& relative_y,
+    double volume_element);
 
 double pcc_2d_potential(const Pcc2dMoments& moments,
                         double relative_y,
@@ -58,8 +69,7 @@ ModuleBase::Vector3<double> pcc_2d_potential_gradient(
 ModuleBase::Vector3<double> pcc_2d_point_charge_force(
     const Pcc2dMoments& total_moments,
     const PointCharge& point,
-    double origin_y,
-    const Pcc2dParameters& parameters);
+    const Pcc2dGeometry& geometry);
 
 double pcc_2d_bilinear_energy(const Pcc2dMoments& left,
                               const Pcc2dMoments& right,
@@ -69,8 +79,8 @@ double pcc_2d_self_energy(const Pcc2dMoments& moments,
                           const Pcc2dParameters& parameters);
 
 double pcc_2d_ionic_shape_energy(double polarization_charge,
-                                 double smooth_solute_quadrupole_yy,
-                                 double point_solute_quadrupole_yy,
+                                 const Pcc2dMoments& smooth_ionic_moments,
+                                 const Pcc2dMoments& point_ionic_moments,
                                  const Pcc2dParameters& parameters);
 
 } // namespace ModuleSccs

@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 
 namespace ModuleSccs
@@ -83,7 +84,337 @@ void evaluate_field(const std::vector<double>& solute_charge,
     coulomb.apply(total_charge, field);
 }
 
+double global_dot(const std::vector<double>& left,
+                  const std::vector<double>& right,
+                  const PolarizationReduction& reduction)
+{
+    double value = 0.0;
+    for (std::size_t index = 0; index < left.size(); ++index)
+    {
+        value += left[index] * right[index];
+    }
+    reduction.reduce_sum(value);
+    return value;
+}
+
+bool solve_dense_system(std::vector<double>& matrix,
+                        std::vector<double>& right_hand_side,
+                        const int dimension)
+{
+    for (int column = 0; column < dimension; ++column)
+    {
+        int pivot = column;
+        double pivot_magnitude = std::abs(matrix[column * dimension + column]);
+        for (int row = column + 1; row < dimension; ++row)
+        {
+            const double magnitude = std::abs(matrix[row * dimension + column]);
+            if (magnitude > pivot_magnitude)
+            {
+                pivot = row;
+                pivot_magnitude = magnitude;
+            }
+        }
+        if (!std::isfinite(pivot_magnitude)
+            || pivot_magnitude <= 100.0 * std::numeric_limits<double>::epsilon())
+        {
+            return false;
+        }
+        if (pivot != column)
+        {
+            for (int entry = column; entry < dimension; ++entry)
+            {
+                std::swap(matrix[column * dimension + entry],
+                          matrix[pivot * dimension + entry]);
+            }
+            std::swap(right_hand_side[column], right_hand_side[pivot]);
+        }
+        const double diagonal = matrix[column * dimension + column];
+        for (int row = column + 1; row < dimension; ++row)
+        {
+            const double factor = matrix[row * dimension + column] / diagonal;
+            matrix[row * dimension + column] = 0.0;
+            for (int entry = column + 1; entry < dimension; ++entry)
+            {
+                matrix[row * dimension + entry]
+                    -= factor * matrix[column * dimension + entry];
+            }
+            right_hand_side[row] -= factor * right_hand_side[column];
+        }
+    }
+    for (int row = dimension - 1; row >= 0; --row)
+    {
+        double value = right_hand_side[row];
+        for (int column = row + 1; column < dimension; ++column)
+        {
+            value -= matrix[row * dimension + column] * right_hand_side[column];
+        }
+        const double diagonal = matrix[row * dimension + row];
+        if (!std::isfinite(diagonal)
+            || std::abs(diagonal) <= 100.0 * std::numeric_limits<double>::epsilon())
+        {
+            return false;
+        }
+        right_hand_side[row] = value / diagonal;
+        if (!std::isfinite(right_hand_side[row]))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+void linear_mixing_step(const std::vector<double>& current,
+                        const std::vector<double>& residual,
+                        const double mixing,
+                        std::vector<double>& next)
+{
+    for (std::size_t index = 0; index < current.size(); ++index)
+    {
+        next[index] = current[index] + mixing * residual[index];
+    }
+}
+
+bool safe_coefficients(const std::vector<double>& coefficients, const int count)
+{
+    const double coefficient_limit = 20.0;
+    for (int index = 0; index < count; ++index)
+    {
+        if (!std::isfinite(coefficients[index])
+            || std::abs(coefficients[index]) > coefficient_limit)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool pulay_mixing_step(const std::vector<std::vector<double>>& values,
+                       const std::vector<std::vector<double>>& residuals,
+                       const double mixing,
+                       const PolarizationReduction& reduction,
+                       std::vector<double>& next)
+{
+    const int history_size = static_cast<int>(values.size());
+    if (history_size < 2)
+    {
+        return false;
+    }
+    double scale = 0.0;
+    std::vector<double> gram(history_size * history_size, 0.0);
+    for (int row = 0; row < history_size; ++row)
+    {
+        for (int column = row; column < history_size; ++column)
+        {
+            const double value = global_dot(residuals[row], residuals[column], reduction);
+            gram[row * history_size + column] = value;
+            gram[column * history_size + row] = value;
+        }
+        scale = std::max(scale, std::abs(gram[row * history_size + row]));
+    }
+    if (!std::isfinite(scale) || scale <= std::numeric_limits<double>::min())
+    {
+        return false;
+    }
+    const int dimension = history_size + 1;
+    std::vector<double> matrix(dimension * dimension, 0.0);
+    std::vector<double> coefficients(dimension, 0.0);
+    const double regularization = 1.0e-10;
+    for (int row = 0; row < history_size; ++row)
+    {
+        for (int column = 0; column < history_size; ++column)
+        {
+            matrix[row * dimension + column]
+                = gram[row * history_size + column] / scale;
+        }
+        matrix[row * dimension + row] += regularization;
+        matrix[row * dimension + history_size] = 1.0;
+        matrix[history_size * dimension + row] = 1.0;
+    }
+    coefficients[history_size] = 1.0;
+    if (!solve_dense_system(matrix, coefficients, dimension)
+        || !safe_coefficients(coefficients, history_size))
+    {
+        return false;
+    }
+    std::fill(next.begin(), next.end(), 0.0);
+    for (int history = 0; history < history_size; ++history)
+    {
+        for (std::size_t index = 0; index < next.size(); ++index)
+        {
+            next[index] += coefficients[history]
+                           * (values[history][index] + mixing * residuals[history][index]);
+        }
+    }
+    return true;
+}
+
+bool anderson_mixing_step(const std::vector<std::vector<double>>& values,
+                          const std::vector<std::vector<double>>& residuals,
+                          const double mixing,
+                          const PolarizationReduction& reduction,
+                          std::vector<double>& next)
+{
+    const int history_size = static_cast<int>(values.size());
+    if (history_size < 2)
+    {
+        return false;
+    }
+    const int difference_count = history_size - 1;
+    std::vector<std::vector<double>> value_differences(
+        difference_count, std::vector<double>(next.size(), 0.0));
+    std::vector<std::vector<double>> residual_differences(
+        difference_count, std::vector<double>(next.size(), 0.0));
+    for (int history = 0; history < difference_count; ++history)
+    {
+        for (std::size_t index = 0; index < next.size(); ++index)
+        {
+            value_differences[history][index]
+                = values[history + 1][index] - values[history][index];
+            residual_differences[history][index]
+                = residuals[history + 1][index] - residuals[history][index];
+        }
+    }
+    double scale = 0.0;
+    std::vector<double> matrix(difference_count * difference_count, 0.0);
+    for (int row = 0; row < difference_count; ++row)
+    {
+        for (int column = row; column < difference_count; ++column)
+        {
+            const double value = global_dot(residual_differences[row],
+                                            residual_differences[column],
+                                            reduction);
+            matrix[row * difference_count + column] = value;
+            matrix[column * difference_count + row] = value;
+        }
+        scale = std::max(scale, std::abs(matrix[row * difference_count + row]));
+    }
+    if (!std::isfinite(scale) || scale <= std::numeric_limits<double>::min())
+    {
+        return false;
+    }
+    std::vector<double> coefficients(difference_count, 0.0);
+    const std::vector<double>& current_residual = residuals.back();
+    const double regularization = 1.0e-10;
+    for (int row = 0; row < difference_count; ++row)
+    {
+        coefficients[row]
+            = global_dot(residual_differences[row], current_residual, reduction) / scale;
+        for (int column = 0; column < difference_count; ++column)
+        {
+            matrix[row * difference_count + column] /= scale;
+        }
+        matrix[row * difference_count + row] += regularization;
+    }
+    if (!solve_dense_system(matrix, coefficients, difference_count)
+        || !safe_coefficients(coefficients, difference_count))
+    {
+        return false;
+    }
+    linear_mixing_step(values.back(), current_residual, mixing, next);
+    for (int history = 0; history < difference_count; ++history)
+    {
+        for (std::size_t index = 0; index < next.size(); ++index)
+        {
+            next[index]
+                -= coefficients[history]
+                   * (value_differences[history][index]
+                      + mixing * residual_differences[history][index]);
+        }
+    }
+    return true;
+}
+
+bool finite_vector(const std::vector<double>& values)
+{
+    for (std::size_t index = 0; index < values.size(); ++index)
+    {
+        if (!std::isfinite(values[index]))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+struct AdaptiveMixingState
+{
+    double previous_residual_rms = std::numeric_limits<double>::infinity();
+    double current_mixing = 0.0;
+    int rapid_decrease_count = 0;
+    int residual_rise_count = 0;
+};
+
+bool update_adaptive_mixing(
+    const PolarizationSolverParameters& parameters,
+    const double residual_rms,
+    AdaptiveMixingState& state,
+    std::vector<std::vector<double>>& value_history,
+    std::vector<std::vector<double>>& residual_history,
+    int& restart_count)
+{
+    if (!parameters.adaptive_mixing
+        || !std::isfinite(state.previous_residual_rms))
+    {
+        return false;
+    }
+    const double residual_ratio = residual_rms / state.previous_residual_rms;
+    if (residual_ratio < 0.7)
+    {
+        ++state.rapid_decrease_count;
+        state.residual_rise_count = 0;
+        if (state.rapid_decrease_count >= 3)
+        {
+            state.current_mixing = std::min(parameters.mixing_max,
+                                            1.1 * state.current_mixing);
+            state.rapid_decrease_count = 0;
+        }
+        return false;
+    }
+    state.rapid_decrease_count = 0;
+    if (residual_ratio <= 1.1)
+    {
+        state.residual_rise_count = 0;
+        return false;
+    }
+    ++state.residual_rise_count;
+    if (residual_ratio <= 2.0 && state.residual_rise_count < 2)
+    {
+        return false;
+    }
+    state.current_mixing = std::max(parameters.mixing_min,
+                                    0.5 * state.current_mixing);
+    value_history.clear();
+    residual_history.clear();
+    ++restart_count;
+    state.residual_rise_count = 0;
+    return true;
+}
+
+bool valid_mixing_controls(const PolarizationSolverParameters& parameters)
+{
+    const bool mixing_valid = std::isfinite(parameters.mixing)
+                              && parameters.mixing > 0.0
+                              && parameters.mixing <= 1.0;
+    const bool bounds_valid = std::isfinite(parameters.mixing_min)
+                              && std::isfinite(parameters.mixing_max)
+                              && parameters.mixing_min > 0.0
+                              && parameters.mixing_min <= parameters.mixing_max
+                              && parameters.mixing_max <= 1.0;
+    const bool initial_value_valid = !parameters.adaptive_mixing
+                                     || (parameters.mixing >= parameters.mixing_min
+                                         && parameters.mixing <= parameters.mixing_max);
+    return mixing_valid && bounds_valid && initial_value_valid;
+}
+
 } // namespace
+
+void PolarizationReduction::reduce_sum(double& value) const
+{
+    if (!std::isfinite(value))
+    {
+        throw std::domain_error("SCCS reduction input must be finite");
+    }
+}
 
 void validate_polarization_solver_parameters(const PolarizationSolverParameters& parameters)
 {
@@ -91,10 +422,20 @@ void validate_polarization_solver_parameters(const PolarizationSolverParameters&
     {
         throw std::invalid_argument("SCCS polarization maximum iteration count must be positive");
     }
-    if (!std::isfinite(parameters.mixing) || parameters.mixing <= 0.0
-        || parameters.mixing > 1.0)
+    if (parameters.mixing_method != "linear" && parameters.mixing_method != "pulay"
+        && parameters.mixing_method != "anderson")
     {
-        throw std::invalid_argument("SCCS polarization mixing must be in the interval (0, 1]");
+        throw std::invalid_argument("unknown SCCS polarization mixing method: "
+                                    + parameters.mixing_method);
+    }
+    if (parameters.mixing_history < 2)
+    {
+        throw std::invalid_argument("SCCS accelerated-mixing history must be at least two");
+    }
+    if (!valid_mixing_controls(parameters))
+    {
+        throw std::invalid_argument(
+            "SCCS mixing must satisfy 0 < min <= initial <= max <= 1 when adaptive mixing is enabled");
     }
     if (!std::isfinite(parameters.tolerance_rms) || parameters.tolerance_rms <= 0.0
         || !std::isfinite(parameters.tolerance_max) || parameters.tolerance_max <= 0.0)
@@ -146,12 +487,19 @@ PolarizationResult solve_polarization(
     const std::size_t size = solute_charge.size();
     PolarizationResult result;
     result.polarization_charge.assign(size, 0.0);
+    result.final_mixing = parameters.mixing;
     if (!initial_polarization_charge.empty())
     {
         result.polarization_charge = initial_polarization_charge;
     }
 
     std::vector<double> trial(size, 0.0);
+    std::vector<double> residual(size, 0.0);
+    std::vector<double> next(size, 0.0);
+    std::vector<std::vector<double>> value_history;
+    std::vector<std::vector<double>> residual_history;
+    AdaptiveMixingState mixing_state;
+    mixing_state.current_mixing = parameters.mixing;
     for (int iteration = 1; iteration <= parameters.max_iterations; ++iteration)
     {
         evaluate_field(solute_charge, result.polarization_charge, coulomb, result.field);
@@ -172,14 +520,14 @@ PolarizationResult solve_polarization(
             const double screening_source
                 = -(epsilon[index] - 1.0) * solute_charge[index] / epsilon[index];
             trial[index] = dielectric_source + screening_source;
-            const double residual = trial[index] - result.polarization_charge[index];
-            if (!std::isfinite(trial[index]) || !std::isfinite(residual))
+            residual[index] = trial[index] - result.polarization_charge[index];
+            if (!std::isfinite(trial[index]) || !std::isfinite(residual[index]))
             {
                 result.status = PolarizationStatus::NonFinite;
                 return result;
             }
-            residual_square_sum += residual * residual;
-            result.residual_max = std::max(result.residual_max, std::abs(residual));
+            residual_square_sum += residual[index] * residual[index];
+            result.residual_max = std::max(result.residual_max, std::abs(residual[index]));
         }
         double point_count = static_cast<double>(size);
         reduction.reduce_residual(residual_square_sum, result.residual_max, point_count);
@@ -204,11 +552,60 @@ PolarizationResult solve_polarization(
             return result;
         }
 
-        for (std::size_t index = 0; index < size; ++index)
+        const bool accelerated = parameters.mixing_method != "linear";
+        const bool force_linear_step
+            = update_adaptive_mixing(parameters,
+                                     result.residual_rms,
+                                     mixing_state,
+                                     value_history,
+                                     residual_history,
+                                     result.mixing_restarts);
+        if (!parameters.adaptive_mixing && accelerated
+            && result.residual_rms > 4.0 * mixing_state.previous_residual_rms)
         {
-            result.polarization_charge[index]
-                += parameters.mixing * (trial[index] - result.polarization_charge[index]);
+            value_history.clear();
+            residual_history.clear();
         }
+        value_history.push_back(result.polarization_charge);
+        residual_history.push_back(residual);
+        if (static_cast<int>(value_history.size()) > parameters.mixing_history)
+        {
+            value_history.erase(value_history.begin());
+            residual_history.erase(residual_history.begin());
+        }
+
+        bool mixed = false;
+        if (!force_linear_step && parameters.mixing_method == "pulay")
+        {
+            mixed = pulay_mixing_step(value_history,
+                                      residual_history,
+                                      mixing_state.current_mixing,
+                                      reduction,
+                                      next);
+        }
+        else if (!force_linear_step && parameters.mixing_method == "anderson")
+        {
+            mixed = anderson_mixing_step(value_history,
+                                         residual_history,
+                                         mixing_state.current_mixing,
+                                         reduction,
+                                         next);
+        }
+        if (!mixed || !finite_vector(next))
+        {
+            linear_mixing_step(result.polarization_charge,
+                               residual,
+                               mixing_state.current_mixing,
+                               next);
+            if (accelerated && !finite_vector(next))
+            {
+                result.status = PolarizationStatus::NonFinite;
+                return result;
+            }
+        }
+        result.polarization_charge.swap(next);
+        result.final_mixing = mixing_state.current_mixing;
+        mixing_state.previous_residual_rms = result.residual_rms;
     }
 
     result.status = PolarizationStatus::MaxIterations;

@@ -221,7 +221,12 @@ SccsResult evaluate_pw_sccs(
 
     PolarizationSolverParameters solver_parameters;
     solver_parameters.max_iterations = config.max_iterations;
+    solver_parameters.mixing_method = config.mixing_method;
+    solver_parameters.mixing_history = config.mixing_history;
     solver_parameters.mixing = config.mixing;
+    solver_parameters.adaptive_mixing = config.adaptive_mixing;
+    solver_parameters.mixing_min = config.mixing_min;
+    solver_parameters.mixing_max = config.mixing_max;
     solver_parameters.tolerance_rms = config.tolerance_rms;
     solver_parameters.tolerance_max = config.tolerance_max;
     const std::uint64_t position_signature = grid_position_signature(positions);
@@ -300,13 +305,13 @@ SccsResult evaluate_pw_sccs(
             = reduced_pcc_2d_density_moments(result.charge.solute,
                                              positions,
                                              volume_element,
-                                             pcc_2d_geometry.origin_y,
+                                             pcc_2d_geometry,
                                              charge_reduction);
         result.polarization_moments_2d
             = reduced_pcc_2d_density_moments(result.response.polarization.polarization_charge,
                                              positions,
                                              volume_element,
-                                             pcc_2d_geometry.origin_y,
+                                             pcc_2d_geometry,
                                              charge_reduction);
         result.screened_moments_2d = add_moments_2d(result.solute_moments_2d,
                                                     result.polarization_moments_2d);

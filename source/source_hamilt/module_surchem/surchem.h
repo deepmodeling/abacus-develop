@@ -37,6 +37,7 @@ struct SurchemParameters
     int pool_process_count = 1;
     double start_drho = 0.0;
     int start_nmax = 30;
+    bool debug = false;
 };
 
 class surchem

@@ -364,13 +364,19 @@ sccs_rho_max                   0.005
 sccs_gamma                     0.0
 sccs_pressure                  0.0
 sccs_mixing                    0.5
+sccs_mixing_adaptive           1
+sccs_mixing_min                0.15
+sccs_mixing_max                0.75
 sccs_tol_rms                   1.0e-10
 sccs_tol_max                   1.0e-8
 sccs_surface_eta               1.0e-8
 sccs_start_drho                0.0
 sccs_start_nmax                30
+sccs_debug                     1
 sccs_boundary                  periodic
 sccs_maxiter                   200
+sccs_mixing_type               pulay
+sccs_mixing_ndim               8
 
 #Parameters (19.orbital free density functional theory)
 of_kinetic                     vw #kinetic energy functional, such as tf, vw, wt

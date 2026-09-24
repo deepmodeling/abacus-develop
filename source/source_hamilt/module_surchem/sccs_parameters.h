@@ -31,7 +31,12 @@ struct SccsConfig
     double surface_regularization = 0.0;
     Boundary boundary = Boundary::Periodic;
     int max_iterations = 0;
+    std::string mixing_method = "linear";
+    int mixing_history = 8;
     double mixing = 0.0;
+    bool adaptive_mixing = false;
+    double mixing_min = 0.1;
+    double mixing_max = 0.8;
     double tolerance_rms = 0.0;
     double tolerance_max = 0.0;
 };

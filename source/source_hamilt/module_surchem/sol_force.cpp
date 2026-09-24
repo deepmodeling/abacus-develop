@@ -243,8 +243,8 @@ void surchem::cal_force_sccs(const UnitCell& cell,
 
     if (config.boundary == ModuleSccs::Boundary::Pcc2d)
     {
-        const ModuleSccs::Pcc2dGeometry geometry
-            = ModuleSccs::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
+        const ModuleSccs::Pcc2dGeometry& geometry
+            = this->sccs_state_.pcc_2d_geometry;
         int atom_index = 0;
         for (int atom_type = 0; atom_type < cell.ntype; ++atom_type)
         {
@@ -257,8 +257,7 @@ void surchem::cal_force_sccs(const UnitCell& cell,
                     = ModuleSccs::pcc_2d_point_charge_force(
                         this->sccs_result_.point_solute_moments_2d,
                         point,
-                        geometry.origin_y,
-                        geometry.parameters);
+                        geometry);
                 forcesol(atom_index, 0) += 2.0 * force_hartree.x;
                 forcesol(atom_index, 1) += 2.0 * force_hartree.y;
                 forcesol(atom_index, 2) += 2.0 * force_hartree.z;

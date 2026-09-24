@@ -90,16 +90,41 @@ void check_sccs_boundary(const Input_para& input)
     }
 }
 
+void check_sccs_mixing_type(const Input_para& input)
+{
+    const std::vector<std::string> allowed = {"linear", "pulay", "anderson"};
+    if (std::find(allowed.begin(), allowed.end(), input.sccs_mixing_type) == allowed.end())
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", nofound_str(allowed, "sccs_mixing_type"));
+    }
+}
+
+void check_sccs_mixing_parameters(const Input_para& input)
+{
+    if (input.sccs_mixing_ndim < 2 || !std::isfinite(input.sccs_mixing)
+        || input.sccs_mixing <= 0.0 || input.sccs_mixing > 1.0
+        || !std::isfinite(input.sccs_mixing_min)
+        || !std::isfinite(input.sccs_mixing_max)
+        || input.sccs_mixing_min <= 0.0 || input.sccs_mixing_max > 1.0
+        || input.sccs_mixing_min > input.sccs_mixing_max
+        || (input.sccs_mixing_adaptive
+            && (input.sccs_mixing < input.sccs_mixing_min
+                || input.sccs_mixing > input.sccs_mixing_max)))
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", "invalid SCCS mixing parameters");
+    }
+}
+
 void check_sccs_numerical_parameters(const Input_para& input)
 {
+    check_sccs_mixing_parameters(input);
     if (input.sccs_maxiter <= 0 || !std::isfinite(input.sccs_epsilon)
         || input.sccs_epsilon < 1.0 || !std::isfinite(input.sccs_rho_min)
         || !std::isfinite(input.sccs_rho_max) || input.sccs_rho_min <= 0.0
         || input.sccs_rho_max <= input.sccs_rho_min
         || !std::isfinite(input.sccs_gamma)
         || !std::isfinite(input.sccs_pressure)
-        || !std::isfinite(input.sccs_mixing) || input.sccs_mixing <= 0.0
-        || input.sccs_mixing > 1.0 || !std::isfinite(input.sccs_tol_rms)
+        || !std::isfinite(input.sccs_tol_rms)
         || input.sccs_tol_rms <= 0.0 || !std::isfinite(input.sccs_tol_max)
         || input.sccs_tol_max <= 0.0
         || !std::isfinite(input.sccs_surface_eta)
@@ -159,7 +184,18 @@ void ReadInput::item_sccs()
     ADD_SCCS_REAL_ITEM("sccs_rho_max", sccs_rho_max, "SCCS upper cavity-density threshold", "5.0e-3", "bohr^-3")
     ADD_SCCS_REAL_ITEM("sccs_gamma", sccs_gamma, "SCCS effective surface coefficient", "0.0", "dyn/cm")
     ADD_SCCS_REAL_ITEM("sccs_pressure", sccs_pressure, "SCCS effective volume coefficient", "0.0", "GPa")
-    ADD_SCCS_REAL_ITEM("sccs_mixing", sccs_mixing, "SCCS polarization linear mixing", "0.5", "")
+    ADD_SCCS_REAL_ITEM("sccs_mixing", sccs_mixing, "SCCS polarization damping factor used by all inner mixing methods", "0.5", "")
+    ADD_SCCS_REAL_ITEM("sccs_mixing_min",
+                       sccs_mixing_min,
+                       "Lower bound for adaptive SCCS polarization mixing; "
+                       "must be positive and no greater than sccs_mixing_max",
+                       "0.1",
+                       "")
+    ADD_SCCS_REAL_ITEM("sccs_mixing_max",
+                       sccs_mixing_max,
+                       "Upper bound for adaptive SCCS polarization mixing; must not exceed one",
+                       "0.8",
+                       "")
     ADD_SCCS_REAL_ITEM("sccs_tol_rms", sccs_tol_rms, "SCCS polarization RMS residual tolerance", "1.0e-10", "e/bohr^3")
     ADD_SCCS_REAL_ITEM("sccs_tol_max", sccs_tol_max, "SCCS polarization maximum residual tolerance", "1.0e-8", "e/bohr^3")
     ADD_SCCS_REAL_ITEM("sccs_surface_eta", sccs_surface_eta, "SCCS surface regularization", "1.0e-8", "bohr^-1")
@@ -195,6 +231,21 @@ void ReadInput::item_sccs()
         this->add_item(item);
     }
     {
+        Input_Item item("sccs_debug");
+        item.annotation = "detailed SCCS diagnostics";
+        item.category = "Implicit solvation model";
+        item.type = "Boolean";
+        item.description
+            = "Print detailed per-SCF-step PCC moments and energy components, "
+              "followed by final SCCS diagnostics. The compact SCCS iteration "
+              "summary is always printed.";
+        item.default_value = "0";
+        item.unit = "";
+        item.set_availability("imp_sol==true and solvation_model==sccs");
+        read_sync_bool(input.sccs_debug);
+        this->add_item(item);
+    }
+    {
         Input_Item item("sccs_boundary");
         item.annotation = "SCCS electrostatic boundary condition";
         item.category = "Implicit solvation model";
@@ -219,6 +270,61 @@ void ReadInput::item_sccs()
         item.unit = "";
         item.set_availability("imp_sol==true and solvation_model==sccs");
         read_sync_int(input.sccs_maxiter);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            check_sccs_numerical_parameters(para.input);
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_mixing_adaptive");
+        item.annotation = "adaptive SCCS polarization mixing";
+        item.category = "Implicit solvation model";
+        item.type = "Boolean";
+        item.description
+            = "Adapt the SCCS polarization damping factor within sccs_mixing_min "
+              "and sccs_mixing_max. The initial value is sccs_mixing. Three "
+              "consecutive residual ratios below 0.7 increase the factor by "
+              "10%. A ratio above 2.0, or two consecutive ratios above 1.1, "
+              "halves the factor, clears the acceleration history, and forces "
+              "one linear recovery step.";
+        item.default_value = "0";
+        item.unit = "";
+        item.set_availability("imp_sol==true and solvation_model==sccs");
+        read_sync_bool(input.sccs_mixing_adaptive);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            check_sccs_numerical_parameters(para.input);
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_mixing_type");
+        item.annotation = "SCCS polarization mixing method";
+        item.category = "Implicit solvation model";
+        item.type = "String";
+        item.description
+            = "Select linear, Pulay DIIS, or Anderson mixing for the inner "
+              "SCCS polarization iteration.";
+        item.default_value = "linear";
+        item.unit = "";
+        item.set_availability("imp_sol==true and solvation_model==sccs");
+        read_sync_string(input.sccs_mixing_type);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            check_sccs_mixing_type(para.input);
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_mixing_ndim");
+        item.annotation = "SCCS accelerated-mixing history length";
+        item.category = "Implicit solvation model";
+        item.type = "Integer";
+        item.description
+            = "Number of residual-history vectors retained by Pulay or Anderson "
+              "SCCS mixing.";
+        item.default_value = "8";
+        item.unit = "";
+        item.set_availability("imp_sol==true and solvation_model==sccs");
+        read_sync_int(input.sccs_mixing_ndim);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             check_sccs_numerical_parameters(para.input);
         };

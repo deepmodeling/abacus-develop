@@ -62,12 +62,18 @@ SurchemParameters make_surchem_parameters(const Input_para& inp,
     }
     parameters.sccs_config.boundary = ModuleSccs::parse_boundary(inp.sccs_boundary);
     parameters.sccs_config.max_iterations = inp.sccs_maxiter;
+    parameters.sccs_config.mixing_method = inp.sccs_mixing_type;
+    parameters.sccs_config.mixing_history = inp.sccs_mixing_ndim;
     parameters.sccs_config.mixing = inp.sccs_mixing;
+    parameters.sccs_config.adaptive_mixing = inp.sccs_mixing_adaptive;
+    parameters.sccs_config.mixing_min = inp.sccs_mixing_min;
+    parameters.sccs_config.mixing_max = inp.sccs_mixing_max;
     parameters.sccs_config.tolerance_rms = inp.sccs_tol_rms;
     parameters.sccs_config.tolerance_max = inp.sccs_tol_max;
     parameters.sccs_config.surface_regularization = inp.sccs_surface_eta;
     parameters.start_drho = inp.sccs_start_drho;
     parameters.start_nmax = inp.sccs_start_nmax;
+    parameters.debug = inp.sccs_debug;
     parameters.expected_electron_count = atoms_info.nelec;
     for (int atom_type = 0; atom_type < ucell.ntype; ++atom_type)
     {

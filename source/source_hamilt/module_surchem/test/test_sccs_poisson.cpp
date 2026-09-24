@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <limits>
+#include <string>
 #include <vector>
 
 namespace
@@ -117,6 +118,108 @@ TEST(SccsPoisson, VariableDielectricFixedPointMatchesAnalyticLocalModel)
     }
 }
 
+TEST(SccsPoisson, AcceleratedMixingReducesIterationCount)
+{
+    const std::vector<double> solute_charge = {0.4, -0.2, 0.1};
+    const std::vector<double> epsilon(solute_charge.size(), 2.0);
+    std::vector<ModuleBase::Vector3<double>> grad_log_epsilon(solute_charge.size());
+    for (std::size_t index = 0; index < grad_log_epsilon.size(); ++index)
+    {
+        grad_log_epsilon[index].x = 1.0;
+    }
+    const double response = 0.95;
+    const LocalResponseOperator coulomb(response);
+    ModuleSccs::PolarizationSolverParameters parameters = converged_parameters();
+    parameters.max_iterations = 1000;
+    parameters.mixing = 0.5;
+    parameters.mixing_history = 6;
+    parameters.tolerance_rms = 1.0e-8;
+    parameters.tolerance_max = 1.0e-8;
+
+    parameters.mixing_method = "linear";
+    const ModuleSccs::PolarizationResult linear
+        = ModuleSccs::solve_polarization(solute_charge,
+                                         epsilon,
+                                         grad_log_epsilon,
+                                         std::vector<double>(),
+                                         parameters,
+                                         coulomb);
+    ASSERT_EQ(linear.status, ModuleSccs::PolarizationStatus::Converged);
+    EXPECT_GT(linear.iterations, 500);
+    EXPECT_DOUBLE_EQ(linear.final_mixing, parameters.mixing);
+    EXPECT_EQ(linear.mixing_restarts, 0);
+
+    const std::vector<std::string> accelerated_methods = {"pulay", "anderson"};
+    for (std::size_t method = 0; method < accelerated_methods.size(); ++method)
+    {
+        parameters.mixing_method = accelerated_methods[method];
+        const ModuleSccs::PolarizationResult accelerated
+            = ModuleSccs::solve_polarization(solute_charge,
+                                             epsilon,
+                                             grad_log_epsilon,
+                                             std::vector<double>(),
+                                             parameters,
+                                             coulomb);
+        EXPECT_EQ(accelerated.status, ModuleSccs::PolarizationStatus::Converged)
+            << accelerated_methods[method];
+        EXPECT_LT(accelerated.iterations, linear.iterations)
+            << accelerated_methods[method];
+        EXPECT_LT(accelerated.iterations, 20)
+            << accelerated_methods[method];
+        for (std::size_t index = 0; index < solute_charge.size(); ++index)
+        {
+            EXPECT_NEAR(accelerated.polarization_charge[index],
+                        linear.polarization_charge[index],
+                        3.0e-7)
+                << accelerated_methods[method];
+        }
+    }
+}
+
+TEST(SccsPoisson, AdaptiveMixingRaisesAndLowersTheDampingFactor)
+{
+    const std::vector<double> solute_charge(1, 1.0);
+    const std::vector<double> epsilon(1, 2.0);
+    std::vector<ModuleBase::Vector3<double>> gradient(1);
+    ModuleSccs::PolarizationSolverParameters parameters = converged_parameters();
+    parameters.mixing_method = "linear";
+    parameters.adaptive_mixing = true;
+    parameters.mixing = 0.5;
+    parameters.mixing_min = 0.1;
+    parameters.mixing_max = 0.8;
+    parameters.max_iterations = 8;
+    parameters.tolerance_rms = 1.0e-30;
+    parameters.tolerance_max = 1.0e-30;
+
+    const LocalResponseOperator contractive_coulomb(0.0);
+    const ModuleSccs::PolarizationResult contractive
+        = ModuleSccs::solve_polarization(solute_charge,
+                                         epsilon,
+                                         gradient,
+                                         std::vector<double>(),
+                                         parameters,
+                                         contractive_coulomb);
+    EXPECT_EQ(contractive.status, ModuleSccs::PolarizationStatus::MaxIterations);
+    EXPECT_GT(contractive.final_mixing, parameters.mixing);
+    EXPECT_LE(contractive.final_mixing, parameters.mixing_max);
+    EXPECT_EQ(contractive.mixing_restarts, 0);
+
+    gradient[0].x = 1.0;
+    const LocalResponseOperator divergent_coulomb(4.0);
+    parameters.max_iterations = 4;
+    const ModuleSccs::PolarizationResult divergent
+        = ModuleSccs::solve_polarization(solute_charge,
+                                         epsilon,
+                                         gradient,
+                                         std::vector<double>(),
+                                         parameters,
+                                         divergent_coulomb);
+    EXPECT_EQ(divergent.status, ModuleSccs::PolarizationStatus::MaxIterations);
+    EXPECT_LT(divergent.final_mixing, parameters.mixing);
+    EXPECT_GE(divergent.final_mixing, parameters.mixing_min);
+    EXPECT_EQ(divergent.mixing_restarts, 2);
+}
+
 TEST(SccsPoisson, ResidualIsMeasuredBeforeMixing)
 {
     const std::vector<double> solute_charge(1, 1.0);
@@ -204,6 +307,36 @@ TEST(SccsPoisson, RejectsInvalidInputs)
                                                 converged_parameters(),
                                                 coulomb),
                  std::domain_error);
+
+    ModuleSccs::PolarizationSolverParameters invalid_parameters = converged_parameters();
+    invalid_parameters.mixing_method = "unknown";
+    EXPECT_THROW(ModuleSccs::solve_polarization(solute_charge,
+                                                std::vector<double>(1, 1.0),
+                                                gradient,
+                                                std::vector<double>(),
+                                                invalid_parameters,
+                                                coulomb),
+                 std::invalid_argument);
+    invalid_parameters = converged_parameters();
+    invalid_parameters.mixing_history = 1;
+    EXPECT_THROW(ModuleSccs::solve_polarization(solute_charge,
+                                                std::vector<double>(1, 1.0),
+                                                gradient,
+                                                std::vector<double>(),
+                                                invalid_parameters,
+                                                coulomb),
+                 std::invalid_argument);
+    invalid_parameters = converged_parameters();
+    invalid_parameters.adaptive_mixing = true;
+    invalid_parameters.mixing_min = 0.8;
+    invalid_parameters.mixing_max = 0.2;
+    EXPECT_THROW(ModuleSccs::solve_polarization(solute_charge,
+                                                std::vector<double>(1, 1.0),
+                                                gradient,
+                                                std::vector<double>(),
+                                                invalid_parameters,
+                                                coulomb),
+                 std::invalid_argument);
 }
 
 } // namespace

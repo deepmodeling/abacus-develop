@@ -25,6 +25,11 @@ void PoolPolarizationReduction::reduce_residual(double& square_sum,
     Parallel_Reduce::reduce_pool(point_count);
 }
 
+void PoolPolarizationReduction::reduce_sum(double& value) const
+{
+    Parallel_Reduce::reduce_pool(value);
+}
+
 void PoolChargeReduction::reduce_sum(double& value) const
 {
     Parallel_Reduce::reduce_pool(value);

@@ -532,11 +532,19 @@
     - [sccs\_gamma](#sccs_gamma)
     - [sccs\_pressure](#sccs_pressure)
     - [sccs\_mixing](#sccs_mixing)
+    - [sccs\_mixing\_min](#sccs_mixing_min)
+    - [sccs\_mixing\_max](#sccs_mixing_max)
     - [sccs\_tol\_rms](#sccs_tol_rms)
     - [sccs\_tol\_max](#sccs_tol_max)
     - [sccs\_surface\_eta](#sccs_surface_eta)
+    - [sccs\_start\_drho](#sccs_start_drho)
+    - [sccs\_start\_nmax](#sccs_start_nmax)
+    - [sccs\_debug](#sccs_debug)
     - [sccs\_boundary](#sccs_boundary)
     - [sccs\_maxiter](#sccs_maxiter)
+    - [sccs\_mixing\_adaptive](#sccs_mixing_adaptive)
+    - [sccs\_mixing\_type](#sccs_mixing_type)
+    - [sccs\_mixing\_ndim](#sccs_mixing_ndim)
   - [Quasiatomic Orbital (QO) analysis](#quasiatomic-orbital-qo-analysis)
     - [qo\_switch](#qo_switch)
     - [qo\_basis](#qo_basis)
@@ -4848,7 +4856,7 @@
 ### solvation_model
 
 - **Type**: String
-- **Description**: Select legacy or the native SCCS implementation. SCCS is enabled only together with imp_sol=true and supports scf or fixed-cell relax calculations. During every electronic SCF iteration, the screen output reports the SCCS inner-iteration count, SCCS wall time, and current total solvation energy in Ry. Cell relaxation and molecular dynamics are not supported.
+- **Description**: Select legacy or the native SCCS implementation. SCCS is enabled only together with imp_sol=true and supports scf or fixed-cell relax calculations.
 - **Default**: legacy
 
 ### sccs_preset
@@ -4901,8 +4909,22 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==true and [`solvation_model`](#solvation_model)==sccs*
-- **Description**: SCCS polarization linear mixing
+- **Description**: SCCS polarization damping factor used by all inner mixing methods
 - **Default**: 0.5
+
+### sccs_mixing_min
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==true and [`solvation_model`](#solvation_model)==sccs*
+- **Description**: Lower bound for adaptive SCCS polarization mixing; must be positive and no greater than sccs_mixing_max
+- **Default**: 0.1
+
+### sccs_mixing_max
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==true and [`solvation_model`](#solvation_model)==sccs*
+- **Description**: Upper bound for adaptive SCCS polarization mixing; must not exceed one
+- **Default**: 0.8
 
 ### sccs_tol_rms
 
@@ -4932,15 +4954,22 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==true and [`solvation_model`](#solvation_model)==sccs*
-- **Description**: Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately. Once activated, SCCS remains active for all later electronic and ionic steps. Activating SCCS resets the charge-mixing history and forces at least one further electronic iteration.
+- **Description**: Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately. Once activated, SCCS remains active for all later electronic and ionic steps.
 - **Default**: 0.0
 
 ### sccs_start_nmax
 
 - **Type**: Integer
 - **Availability**: *[`imp_sol`](#imp_sol)==true and [`solvation_model`](#solvation_model)==sccs*
-- **Description**: Force delayed SCCS activation at this electronic iteration if the SCCS start DRHO threshold has not yet been reached. This value must be smaller than scf_nmax when delayed start is enabled so at least one subsequent electronic iteration uses the SCCS Hamiltonian.
+- **Description**: Force delayed SCCS activation at this electronic iteration if the SCCS start DRHO threshold has not yet been reached. The value must be smaller than scf_nmax so a later iteration uses the SCCS Hamiltonian.
 - **Default**: 30
+
+### sccs_debug
+
+- **Type**: Boolean
+- **Availability**: *[`imp_sol`](#imp_sol)==true and [`solvation_model`](#solvation_model)==sccs*
+- **Description**: Print detailed per-SCF-step PCC moments and energy components, followed by final SCCS diagnostics. The compact SCCS iteration summary is always printed.
+- **Default**: 0
 
 ### sccs_boundary
 
@@ -4955,6 +4984,27 @@
 - **Availability**: *[`imp_sol`](#imp_sol)==true and [`solvation_model`](#solvation_model)==sccs*
 - **Description**: Maximum number of inner SCCS polarization iterations.
 - **Default**: 200
+
+### sccs_mixing_adaptive
+
+- **Type**: Boolean
+- **Availability**: *[`imp_sol`](#imp_sol)==true and [`solvation_model`](#solvation_model)==sccs*
+- **Description**: Adapt the SCCS polarization damping factor within sccs_mixing_min and sccs_mixing_max. The initial value is sccs_mixing. Three consecutive residual ratios below 0.7 increase the factor by 10%. A ratio above 2.0, or two consecutive ratios above 1.1, halves the factor, clears the acceleration history, and forces one linear recovery step.
+- **Default**: 0
+
+### sccs_mixing_type
+
+- **Type**: String
+- **Availability**: *[`imp_sol`](#imp_sol)==true and [`solvation_model`](#solvation_model)==sccs*
+- **Description**: Select linear, Pulay DIIS, or Anderson mixing for the inner SCCS polarization iteration.
+- **Default**: linear
+
+### sccs_mixing_ndim
+
+- **Type**: Integer
+- **Availability**: *[`imp_sol`](#imp_sol)==true and [`solvation_model`](#solvation_model)==sccs*
+- **Description**: Number of residual-history vectors retained by Pulay or Anderson SCCS mixing.
+- **Default**: 8
 
 [back to top](#full-list-of-input-keywords)
 

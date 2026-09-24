@@ -91,15 +91,52 @@ void surchem::write_sccs_iteration(std::ostream& output) const
                  + result.non_electrostatic.surface_energy
                  + result.non_electrostatic.volume_energy);
     const std::streamsize previous_precision = output.precision();
-    output << std::setprecision(8)
-           << " SCCS_ITER " << result.response.polarization.iterations
-           << " SCCS_TIME/s " << this->sccs_elapsed_seconds_
-           << " E_SOL/Ry " << solvation_energy_rydberg << '\n';
+    const std::ios_base::fmtflags previous_flags = output.flags();
+    output << " SCCS_ITER " << result.response.polarization.iterations
+           << " SCCS_TIME/s " << std::fixed << std::setprecision(2)
+           << this->sccs_elapsed_seconds_
+           << " E_SOL/Ry " << std::defaultfloat << std::setprecision(8)
+           << solvation_energy_rydberg << '\n';
+
+    if (this->parameters_.debug)
+    {
+        output << " SCCS_MIXING VALUE "
+               << result.response.polarization.final_mixing
+               << " RESTARTS "
+               << result.response.polarization.mixing_restarts << '\n';
+    }
+
+    if (this->parameters_.debug
+        && this->parameters_.sccs_config.boundary == ModuleSccs::Boundary::Pcc2d)
+    {
+        output << std::setprecision(12)
+               << " PCC2D_MOMENTS"
+               << " Q_SMOOTH/e " << result.solute_moments_2d.charge
+               << " PY_SMOOTH/eBohr " << result.solute_moments_2d.dipole_y
+               << " QYY_SMOOTH/eBohr2 " << result.solute_moments_2d.quadrupole_yy
+               << " Q_POINT/e " << result.point_solute_moments_2d.charge
+               << " PY_POINT/eBohr " << result.point_solute_moments_2d.dipole_y
+               << " QYY_POINT/eBohr2 " << result.point_solute_moments_2d.quadrupole_yy
+               << '\n';
+        output << " PCC2D_ENERGY"
+               << " REACTION/Ha " << result.electrostatic.reaction_energy
+               << " PCC_SMOOTH/Ha " << result.smooth_vacuum_pcc_energy
+               << " PCC_POINT/Ha " << result.vacuum_pcc_energy
+               << " PCC_ION_SHAPE/Ha " << result.ionic_shape_pcc_energy
+               << " PCC_USED/Ry "
+               << 2.0 * (result.vacuum_pcc_energy + result.ionic_shape_pcc_energy)
+               << '\n';
+    }
+    output.flags(previous_flags);
     output.precision(previous_precision);
 }
 
 void surchem::write_sccs_diagnostics(std::ostream& output) const
 {
+    if (!this->parameters_.debug)
+    {
+        return;
+    }
     const ModuleSccs::SccsResult& result = this->sccs_result();
     const std::streamsize previous_precision = output.precision();
     output << std::setprecision(16);

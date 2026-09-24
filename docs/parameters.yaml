@@ -4286,126 +4286,6 @@ parameters:
     default_value: "0.00037"
     unit: ""
     availability: ""
-  - name: solvation_model
-    category: Implicit solvation model
-    type: String
-    description: |
-      Select legacy or the native SCCS implementation. SCCS is enabled only together with imp_sol=true and supports scf or fixed-cell relax calculations. During every electronic SCF iteration, the screen output reports the SCCS inner-iteration count, SCCS wall time, and current total solvation energy in Ry. Cell relaxation and molecular dynamics are not supported.
-    default_value: legacy
-    unit: ""
-    availability: ""
-  - name: sccs_preset
-    category: Implicit solvation model
-    type: String
-    description: |
-      Select custom, water-neutral, water-cation, or water-anion parameters. Numerical cavity and non-electrostatic inputs are used only by custom.
-    default_value: custom
-    unit: ""
-    availability: imp_sol==true and solvation_model==sccs
-  - name: sccs_epsilon
-    category: Implicit solvation model
-    type: Real
-    description: |
-      SCCS bulk relative permittivity
-    default_value: "78.3"
-    unit: ""
-    availability: imp_sol==true and solvation_model==sccs
-  - name: sccs_rho_min
-    category: Implicit solvation model
-    type: Real
-    description: |
-      SCCS lower cavity-density threshold
-    default_value: "1.0e-4"
-    unit: bohr^-3
-    availability: imp_sol==true and solvation_model==sccs
-  - name: sccs_rho_max
-    category: Implicit solvation model
-    type: Real
-    description: |
-      SCCS upper cavity-density threshold
-    default_value: "5.0e-3"
-    unit: bohr^-3
-    availability: imp_sol==true and solvation_model==sccs
-  - name: sccs_gamma
-    category: Implicit solvation model
-    type: Real
-    description: |
-      SCCS effective surface coefficient
-    default_value: "0.0"
-    unit: dyn/cm
-    availability: imp_sol==true and solvation_model==sccs
-  - name: sccs_pressure
-    category: Implicit solvation model
-    type: Real
-    description: |
-      SCCS effective volume coefficient
-    default_value: "0.0"
-    unit: GPa
-    availability: imp_sol==true and solvation_model==sccs
-  - name: sccs_mixing
-    category: Implicit solvation model
-    type: Real
-    description: |
-      SCCS polarization linear mixing
-    default_value: "0.5"
-    unit: ""
-    availability: imp_sol==true and solvation_model==sccs
-  - name: sccs_tol_rms
-    category: Implicit solvation model
-    type: Real
-    description: |
-      SCCS polarization RMS residual tolerance
-    default_value: "1.0e-10"
-    unit: e/bohr^3
-    availability: imp_sol==true and solvation_model==sccs
-  - name: sccs_tol_max
-    category: Implicit solvation model
-    type: Real
-    description: |
-      SCCS polarization maximum residual tolerance
-    default_value: "1.0e-8"
-    unit: e/bohr^3
-    availability: imp_sol==true and solvation_model==sccs
-  - name: sccs_surface_eta
-    category: Implicit solvation model
-    type: Real
-    description: |
-      SCCS surface regularization
-    default_value: "1.0e-8"
-    unit: bohr^-1
-    availability: imp_sol==true and solvation_model==sccs
-  - name: sccs_start_drho
-    category: Implicit solvation model
-    type: Real
-    description: |
-      Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately. Once activated, SCCS remains active for all later electronic and ionic steps. Activating SCCS resets the charge-mixing history and forces at least one further electronic iteration.
-    default_value: "0.0"
-    unit: ""
-    availability: imp_sol==true and solvation_model==sccs
-  - name: sccs_start_nmax
-    category: Implicit solvation model
-    type: Integer
-    description: |
-      Force delayed SCCS activation at this electronic iteration if the SCCS start DRHO threshold has not yet been reached. This value must be smaller than scf_nmax when delayed start is enabled so at least one subsequent electronic iteration uses the SCCS Hamiltonian.
-    default_value: "30"
-    unit: ""
-    availability: imp_sol==true and solvation_model==sccs
-  - name: sccs_boundary
-    category: Implicit solvation model
-    type: String
-    description: |
-      Select periodic electrostatics, cubic zero-dimensional PCC (pcc_0d), or slab PCC (pcc_2d). The pcc_2d boundary fixes the open/vacuum direction to the second lattice vector (+y) and requires that vector to be perpendicular to the x-z periodic plane. Neutral and charged slabs are supported. For a charged slab, the open-boundary field energy grows linearly with the y cell length, so absolute total energies at different y cell lengths are not directly comparable. PCC includes the smooth-source solvent response plus the point-ion/electron vacuum correction in the host energy, electronic potential, and ionic forces.
-    default_value: periodic
-    unit: ""
-    availability: imp_sol==true and solvation_model==sccs
-  - name: sccs_maxiter
-    category: Implicit solvation model
-    type: Integer
-    description: |
-      Maximum number of inner SCCS polarization iterations.
-    default_value: "200"
-    unit: ""
-    availability: imp_sol==true and solvation_model==sccs
   - name: vdw_method
     category: vdW correction
     type: String
@@ -4607,6 +4487,174 @@ parameters:
     default_value: Bohr
     unit: ""
     availability: ""
+  - name: solvation_model
+    category: Implicit solvation model
+    type: String
+    description: |
+      Select legacy or the native SCCS implementation. SCCS is enabled only together with imp_sol=true and supports scf or fixed-cell relax calculations.
+    default_value: legacy
+    unit: ""
+    availability: ""
+  - name: sccs_preset
+    category: Implicit solvation model
+    type: String
+    description: |
+      Select custom, water-neutral, water-cation, or water-anion parameters. Numerical cavity and non-electrostatic inputs are used only by custom.
+    default_value: custom
+    unit: ""
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_epsilon
+    category: Implicit solvation model
+    type: Real
+    description: |
+      SCCS bulk relative permittivity
+    default_value: "78.3"
+    unit: ""
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_rho_min
+    category: Implicit solvation model
+    type: Real
+    description: |
+      SCCS lower cavity-density threshold
+    default_value: "1.0e-4"
+    unit: bohr^-3
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_rho_max
+    category: Implicit solvation model
+    type: Real
+    description: |
+      SCCS upper cavity-density threshold
+    default_value: "5.0e-3"
+    unit: bohr^-3
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_gamma
+    category: Implicit solvation model
+    type: Real
+    description: |
+      SCCS effective surface coefficient
+    default_value: "0.0"
+    unit: dyn/cm
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_pressure
+    category: Implicit solvation model
+    type: Real
+    description: |
+      SCCS effective volume coefficient
+    default_value: "0.0"
+    unit: GPa
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_mixing
+    category: Implicit solvation model
+    type: Real
+    description: |
+      SCCS polarization damping factor used by all inner mixing methods
+    default_value: "0.5"
+    unit: ""
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_mixing_min
+    category: Implicit solvation model
+    type: Real
+    description: |
+      Lower bound for adaptive SCCS polarization mixing; must be positive and no greater than sccs_mixing_max
+    default_value: "0.1"
+    unit: ""
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_mixing_max
+    category: Implicit solvation model
+    type: Real
+    description: |
+      Upper bound for adaptive SCCS polarization mixing; must not exceed one
+    default_value: "0.8"
+    unit: ""
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_tol_rms
+    category: Implicit solvation model
+    type: Real
+    description: |
+      SCCS polarization RMS residual tolerance
+    default_value: "1.0e-10"
+    unit: e/bohr^3
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_tol_max
+    category: Implicit solvation model
+    type: Real
+    description: |
+      SCCS polarization maximum residual tolerance
+    default_value: "1.0e-8"
+    unit: e/bohr^3
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_surface_eta
+    category: Implicit solvation model
+    type: Real
+    description: |
+      SCCS surface regularization
+    default_value: "1.0e-8"
+    unit: bohr^-1
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_start_drho
+    category: Implicit solvation model
+    type: Real
+    description: |
+      Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately. Once activated, SCCS remains active for all later electronic and ionic steps.
+    default_value: "0.0"
+    unit: ""
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_start_nmax
+    category: Implicit solvation model
+    type: Integer
+    description: |
+      Force delayed SCCS activation at this electronic iteration if the SCCS start DRHO threshold has not yet been reached. The value must be smaller than scf_nmax so a later iteration uses the SCCS Hamiltonian.
+    default_value: "30"
+    unit: ""
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_debug
+    category: Implicit solvation model
+    type: Boolean
+    description: |
+      Print detailed per-SCF-step PCC moments and energy components, followed by final SCCS diagnostics. The compact SCCS iteration summary is always printed.
+    default_value: "0"
+    unit: ""
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_boundary
+    category: Implicit solvation model
+    type: String
+    description: |
+      Select periodic electrostatics, cubic zero-dimensional PCC (pcc_0d), or slab PCC (pcc_2d). The pcc_2d boundary fixes the open/vacuum direction to the second lattice vector (+y) and requires that vector to be perpendicular to the x-z periodic plane. Neutral and charged slabs are supported. For a charged slab, the open-boundary field energy grows linearly with the y cell length, so absolute total energies at different y cell lengths are not directly comparable. PCC includes the smooth-source solvent response plus the point-ion/electron vacuum correction in the host energy, electronic potential, and ionic forces.
+    default_value: periodic
+    unit: ""
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_maxiter
+    category: Implicit solvation model
+    type: Integer
+    description: |
+      Maximum number of inner SCCS polarization iterations.
+    default_value: "200"
+    unit: ""
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_mixing_adaptive
+    category: Implicit solvation model
+    type: Boolean
+    description: |
+      Adapt the SCCS polarization damping factor within sccs_mixing_min and sccs_mixing_max. The initial value is sccs_mixing. Three consecutive residual ratios below 0.7 increase the factor by 10%. A ratio above 2.0, or two consecutive ratios above 1.1, halves the factor, clears the acceleration history, and forces one linear recovery step.
+    default_value: "0"
+    unit: ""
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_mixing_type
+    category: Implicit solvation model
+    type: String
+    description: |
+      Select linear, Pulay DIIS, or Anderson mixing for the inner SCCS polarization iteration.
+    default_value: linear
+    unit: ""
+    availability: imp_sol==true and solvation_model==sccs
+  - name: sccs_mixing_ndim
+    category: Implicit solvation model
+    type: Integer
+    description: |
+      Number of residual-history vectors retained by Pulay or Anderson SCCS mixing.
+    default_value: "8"
+    unit: ""
+    availability: imp_sol==true and solvation_model==sccs
   - name: exx_fock_alpha
     category: Exact Exchange (Common)
     type: Real

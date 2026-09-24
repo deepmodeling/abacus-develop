@@ -4,6 +4,8 @@
 #endif
 
 #include "../surchem.h"
+#include "../sccs_pcc_2d_coulomb.h"
+#include "../sccs_pw_charge.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
@@ -86,6 +88,7 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     cell.nat = 1;
     cell.atoms = new Atom[1];
     cell.atoms[0].na = 1;
+    cell.atoms[0].mass = 1.0;
     cell.atoms[0].ncpp.zv = 1.0;
     cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.5, 0.5, 0.5));
 
@@ -102,7 +105,6 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     parameters.sccs_config.mixing = 0.7;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
     parameters.sccs_config.tolerance_max = 1.0e-14;
-
     surchem solvent;
     solvent.set_parameters(parameters);
     std::vector<double> electron_density(basis.nrxx, 0.0);
@@ -166,6 +168,7 @@ TEST(HCorrSccs, AppliesNeutralPcc2dPointIonEnergyAndPotential)
     cell.nat = 1;
     cell.atoms = new Atom[1];
     cell.atoms[0].na = 1;
+    cell.atoms[0].mass = 1.0;
     cell.atoms[0].ncpp.zv = 1.0;
     cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.4, 0.78, 0.5));
 
@@ -185,7 +188,20 @@ TEST(HCorrSccs, AppliesNeutralPcc2dPointIonEnergyAndPotential)
 
     surchem solvent;
     solvent.set_parameters(parameters);
-    std::vector<double> electron_density(basis.nrxx, 1.0 / volume);
+    const double volume_element = volume / static_cast<double>(basis.nxyz);
+    const int electron_plane_y = basis.ny / 2;
+    std::vector<double> electron_density(basis.nrxx, 0.0);
+    for (int ix = 0; ix < basis.nx; ++ix)
+    {
+        for (int iz_local = 0; iz_local < basis.nplane; ++iz_local)
+        {
+            const int index
+                = (ix * basis.ny + electron_plane_y) * basis.nplane + iz_local;
+            electron_density[index]
+                = 1.0
+                  / (static_cast<double>(basis.nx * basis.nz) * volume_element);
+        }
+    }
     const double* density_channels[1] = {electron_density.data()};
     std::vector<double> local_potential(basis.nrxx, 0.0);
     ModuleBase::matrix potential;
@@ -197,7 +213,15 @@ TEST(HCorrSccs, AppliesNeutralPcc2dPointIonEnergyAndPotential)
                               potential);
 
     const ModuleSccs::SccsResult& result = solvent.sccs_result();
-    const double dipole_y = (0.78 - 0.6) * scale;
+    ModuleSccs::Pcc2dGeometry geometry
+        = ModuleSccs::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
+    geometry.origin_y = cell.atoms[0].tau[0].y * cell.lat0;
+    const double electron_y
+        = geometry.parameters.cell_length_y
+          * (static_cast<double>(electron_plane_y) + 0.5)
+          / static_cast<double>(basis.ny);
+    const double dipole_y
+        = -ModuleSccs::pcc_2d_relative_y(electron_y, geometry);
     const double expected_energy = 2.0 * ModuleBase::PI * dipole_y * dipole_y / volume;
     EXPECT_NEAR(result.charge.net_charge, 0.0, 1.0e-12);
     EXPECT_NEAR(result.point_solute_moments_2d.charge, 0.0, 1.0e-12);
@@ -240,6 +264,7 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     cell.nat = 1;
     cell.atoms = new Atom[1];
     cell.atoms[0].na = 1;
+    cell.atoms[0].mass = 1.0;
     cell.atoms[0].ncpp.zv = 1.0;
     cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.4, 0.78, 0.5));
 
@@ -247,6 +272,7 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     parameters.use_sccs = true;
     parameters.expected_electron_count = 0.8;
     parameters.expected_ionic_charge = 1.0;
+    parameters.debug = true;
     parameters.normalization_tolerance = 1.0e-10;
     parameters.sccs_config.cavity.density_min = 1.0e-2;
     parameters.sccs_config.cavity.density_max = 2.0e-2;
@@ -279,13 +305,30 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     EXPECT_NEAR(result.screened_moments_2d.charge, 0.04, 1.0e-12);
     EXPECT_TRUE(std::isfinite(result.vacuum_pcc_energy));
     EXPECT_TRUE(std::isfinite(result.electrostatic.reaction_energy));
-    const ModuleSccs::Pcc2dParameters pcc_parameters
-        = ModuleSccs::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10).parameters;
+    ModuleSccs::Pcc2dGeometry pcc_geometry
+        = ModuleSccs::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
+    pcc_geometry.origin_y = cell.atoms[0].tau[0].y * cell.lat0;
+    const std::vector<ModuleBase::Vector3<double>> grid_positions
+        = ModuleSccs::pw_grid_positions(basis, cell.latvec, cell.lat0);
+    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModuleSccs::Pcc2dMoments smooth_ionic_moments
+        = ModuleSccs::reduced_pcc_2d_density_moments(result.charge.ionic,
+                                                     grid_positions,
+                                                     cell.omega / basis.nxyz,
+                                                     pcc_geometry,
+                                                     charge_reduction);
+    std::vector<ModuleSccs::PointCharge> ionic_points(1);
+    ionic_points[0].charge = cell.atoms[0].ncpp.zv;
+    ionic_points[0].position = cell.atoms[0].tau[0] * cell.lat0;
+    const ModuleSccs::Pcc2dMoments point_ionic_moments
+        = ModuleSccs::pcc_2d_point_charge_moments(ionic_points,
+                                                  pcc_geometry);
     const double expected_ionic_shape_energy
-        = ModuleBase::PI * result.polarization_moments_2d.charge
-          * (result.solute_moments_2d.quadrupole_yy
-             - result.point_solute_moments_2d.quadrupole_yy)
-          / (pcc_parameters.periodic_area * pcc_parameters.cell_length_y);
+        = ModuleSccs::pcc_2d_ionic_shape_energy(
+            result.polarization_moments_2d.charge,
+            smooth_ionic_moments,
+            point_ionic_moments,
+            pcc_geometry.parameters);
     EXPECT_NEAR(result.ionic_shape_pcc_energy,
                 expected_ionic_shape_energy,
                 1.0e-14);
@@ -315,6 +358,21 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     EXPECT_NE(iteration_text.find("SCCS_ITER "), std::string::npos);
     EXPECT_NE(iteration_text.find("SCCS_TIME/s "), std::string::npos);
     EXPECT_NE(iteration_text.find("E_SOL/Ry "), std::string::npos);
+    EXPECT_NE(iteration_text.find("SCCS_MIXING VALUE "), std::string::npos);
+    EXPECT_NE(iteration_text.find("RESTARTS "), std::string::npos);
+    EXPECT_NE(iteration_text.find("PCC2D_MOMENTS "), std::string::npos);
+    EXPECT_NE(iteration_text.find("Q_SMOOTH/e "), std::string::npos);
+    EXPECT_NE(iteration_text.find("PY_SMOOTH/eBohr "), std::string::npos);
+    EXPECT_NE(iteration_text.find("QYY_SMOOTH/eBohr2 "), std::string::npos);
+    EXPECT_NE(iteration_text.find("Q_POINT/e "), std::string::npos);
+    EXPECT_NE(iteration_text.find("PY_POINT/eBohr "), std::string::npos);
+    EXPECT_NE(iteration_text.find("QYY_POINT/eBohr2 "), std::string::npos);
+    EXPECT_NE(iteration_text.find("PCC2D_ENERGY "), std::string::npos);
+    EXPECT_NE(iteration_text.find("REACTION/Ha "), std::string::npos);
+    EXPECT_NE(iteration_text.find("PCC_SMOOTH/Ha "), std::string::npos);
+    EXPECT_NE(iteration_text.find("PCC_POINT/Ha "), std::string::npos);
+    EXPECT_NE(iteration_text.find("PCC_ION_SHAPE/Ha "), std::string::npos);
+    EXPECT_NE(iteration_text.find("PCC_USED/Ry "), std::string::npos);
     EXPECT_NE(iteration_text.find(
                   "SCCS_ITER "
                   + std::to_string(result.response.polarization.iterations)),
@@ -333,8 +391,36 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     EXPECT_EQ(iteration_count, result.response.polarization.iterations);
     EXPECT_EQ(time_label, "SCCS_TIME/s");
     EXPECT_GE(elapsed_seconds, 0.0);
+    const std::size_t time_begin = iteration_text.find("SCCS_TIME/s ") + 12;
+    const std::size_t time_end = iteration_text.find(' ', time_begin);
+    const std::string time_value = iteration_text.substr(time_begin, time_end - time_begin);
+    const std::size_t decimal_point = time_value.find('.');
+    ASSERT_NE(decimal_point, std::string::npos);
+    EXPECT_EQ(time_value.size() - decimal_point - 1, 2);
     EXPECT_EQ(energy_label, "E_SOL/Ry");
     EXPECT_NEAR(solvation_energy_rydberg, surchem::Ael + surchem::Acav, 1.0e-7);
+
+    parameters.debug = false;
+    surchem quiet_solvent;
+    quiet_solvent.set_parameters(parameters);
+    ModuleBase::matrix quiet_potential;
+    quiet_solvent.v_correction_sccs(cell,
+                                    basis,
+                                    1,
+                                    density_channels,
+                                    local_potential.data(),
+                                    quiet_potential);
+    std::ostringstream quiet_iteration_output;
+    quiet_solvent.write_sccs_iteration(quiet_iteration_output);
+    const std::string quiet_iteration_text = quiet_iteration_output.str();
+    EXPECT_NE(quiet_iteration_text.find("SCCS_ITER "), std::string::npos);
+    EXPECT_EQ(quiet_iteration_text.find("SCCS_MIXING "), std::string::npos);
+    EXPECT_EQ(quiet_iteration_text.find("PCC2D_MOMENTS "), std::string::npos);
+    EXPECT_EQ(quiet_iteration_text.find("PCC2D_ENERGY "), std::string::npos);
+    std::ostringstream quiet_diagnostics;
+    quiet_solvent.write_sccs_diagnostics(quiet_diagnostics);
+    EXPECT_TRUE(quiet_diagnostics.str().empty());
+
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         EXPECT_TRUE(std::isfinite(potential(0, ir)));

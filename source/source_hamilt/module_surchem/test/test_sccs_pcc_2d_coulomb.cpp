@@ -137,7 +137,7 @@ TEST_F(SccsPcc2dCoulombTest, ReducesYMomentsAndBuildsPlaneAverages)
         = ModuleSccs::reduced_pcc_2d_density_moments(uniform,
                                                      positions_,
                                                      volume_element_,
-                                                     geometry_.origin_y,
+                                                     geometry_,
                                                      reduction_);
     EXPECT_NEAR(moments.charge, 1.0, 1.0e-12);
     EXPECT_NEAR(moments.dipole_y, 0.0, 1.0e-14);
@@ -161,6 +161,13 @@ TEST_F(SccsPcc2dCoulombTest, ReducesYMomentsAndBuildsPlaneAverages)
 
 TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentsWithoutChangingYProfiles)
 {
+    const auto fragment_geometry = [](const double origin_y) {
+        ModuleSccs::Pcc2dGeometry value;
+        value.parameters.periodic_area = 10.0;
+        value.parameters.cell_length_y = 20.0;
+        value.origin_y = origin_y;
+        return value;
+    };
     std::vector<double> local_density;
     std::vector<double> remote_density;
     std::vector<ModuleBase::Vector3<double>> local_positions;
@@ -198,7 +205,7 @@ TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentsWithoutChangingYProfil
         = ModuleSccs::pcc_2d_density_moments(remote_density,
                                              remote_positions,
                                              fragment_volume_element,
-                                             3.0);
+                                             fragment_geometry(3.0));
     const std::vector<double> remote_values{remote_moments.charge,
                                             remote_moments.dipole_y,
                                             remote_moments.quadrupole_yy};
@@ -207,7 +214,7 @@ TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentsWithoutChangingYProfil
         = ModuleSccs::reduced_pcc_2d_density_moments(local_density,
                                                      local_positions,
                                                      fragment_volume_element,
-                                                     3.0,
+                                                     fragment_geometry(3.0),
                                                      moment_reduction);
     std::vector<double> full_density = local_density;
     std::vector<ModuleBase::Vector3<double>> full_positions = local_positions;
@@ -217,7 +224,7 @@ TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentsWithoutChangingYProfil
         = ModuleSccs::pcc_2d_density_moments(full_density,
                                              full_positions,
                                              fragment_volume_element,
-                                             3.0);
+                                             fragment_geometry(3.0));
     EXPECT_NEAR(reduced.charge, expected.charge, 1.0e-12);
     EXPECT_NEAR(reduced.dipole_y, expected.dipole_y, 1.0e-12);
     EXPECT_NEAR(reduced.quadrupole_yy, expected.quadrupole_yy, 1.0e-11);
@@ -261,7 +268,7 @@ TEST_F(SccsPcc2dCoulombTest, AddsCorrectionFromCurrentChargeOnEveryApplication)
     std::vector<double> charge(basis_.nrxx);
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
-        const double relative_y = positions_[ir].y - geometry_.origin_y;
+        const double relative_y = ModuleSccs::pcc_2d_relative_y(positions_[ir].y, geometry_);
         charge[ir] = 2.0e-3 * std::exp(-relative_y * relative_y / 3.0)
                      - 7.0e-4 * relative_y * std::exp(-relative_y * relative_y / 2.0);
     }
@@ -281,11 +288,11 @@ TEST_F(SccsPcc2dCoulombTest, AddsCorrectionFromCurrentChargeOnEveryApplication)
         = ModuleSccs::reduced_pcc_2d_density_moments(charge,
                                                      positions_,
                                                      volume_element_,
-                                                     geometry_.origin_y,
+                                                     geometry_,
                                                      reduction_);
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
-        const double relative_y = positions_[ir].y - geometry_.origin_y;
+        const double relative_y = ModuleSccs::pcc_2d_relative_y(positions_[ir].y, geometry_);
         EXPECT_NEAR(field.potential[ir] - periodic_field.potential[ir],
                     ModuleSccs::pcc_2d_potential(moments,
                                                  relative_y,
@@ -378,7 +385,7 @@ TEST_F(SccsPcc2dCoulombTest, SmoothLayeredDielectricMatchesOpenOneDimensionalFie
     std::vector<double> reference_polarization(basis_.nrxx);
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
-        const double y = positions_[ir].y - geometry_.origin_y;
+        const double y = ModuleSccs::pcc_2d_relative_y(positions_[ir].y, geometry_);
         const double source_exponential
             = std::exp(-y * y / (source_width * source_width));
         solute_charge[ir] = amplitude * y * source_exponential;
@@ -442,7 +449,7 @@ TEST_F(SccsPcc2dCoulombTest, NonuniformCavityEnergyMatchesNeutralDensityDerivati
     std::vector<double> direction(basis_.nrxx);
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
-        const double y = positions_[ir].y - geometry_.origin_y;
+        const double y = ModuleSccs::pcc_2d_relative_y(positions_[ir].y, geometry_);
         electron_density[ir] = 4.0e-3 + 2.5e-2 * std::exp(-y * y / 4.0);
         const double solute_charge = 2.0e-3 * y * std::exp(-y * y / 2.25);
         ionic_density[ir] = electron_density[ir] + solute_charge;
@@ -502,7 +509,7 @@ TEST_F(SccsPcc2dCoulombTest, NonuniformCavityEnergyMatchesFixedChargeDensityDeri
     double net_charge = 0.0;
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
-        const double y = positions_[ir].y - geometry_.origin_y;
+        const double y = ModuleSccs::pcc_2d_relative_y(positions_[ir].y, geometry_);
         electron_density[ir] = 4.0e-3 + 2.5e-2 * std::exp(-y * y / 4.0);
         const double solute_charge
             = 2.0e-3 * (0.4 + y) * std::exp(-y * y / 2.25);

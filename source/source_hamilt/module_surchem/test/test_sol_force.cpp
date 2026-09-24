@@ -100,6 +100,7 @@ TEST(SolForce, ConvertsPointIonPccForceFromHartreeToRydberg)
     cell.nat = 2;
     cell.atoms = new Atom[1];
     cell.atoms[0].na = 2;
+    cell.atoms[0].mass = 1.0;
     cell.atoms[0].ncpp.zv = 0.5;
     cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.4, 0.5, 0.5));
     cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.6, 0.5, 0.5));
@@ -198,6 +199,7 @@ TEST(SolForce, ConvertsPointIonPcc2dForceFromHartreeToRydberg)
     cell.nat = 2;
     cell.atoms = new Atom[1];
     cell.atoms[0].na = 2;
+    cell.atoms[0].mass = 1.0;
     cell.atoms[0].ncpp.zv = 0.5;
     cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.4, 0.4, 0.5));
     cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.6, 0.6, 0.5));
@@ -234,8 +236,14 @@ TEST(SolForce, ConvertsPointIonPcc2dForceFromHartreeToRydberg)
     ModuleBase::matrix force(2, 3);
     solvent.cal_force_sol(cell, &basis, unused_vloc, 1, force);
 
-    const ModuleSccs::Pcc2dGeometry geometry
+    ModuleSccs::Pcc2dGeometry geometry
         = ModuleSccs::pcc_2d_geometry(lattice, length, 1.0e-10);
+    const std::vector<double> positions_y{4.0, 6.0};
+    const std::vector<double> masses{1.0, 1.0};
+    geometry.origin_y = ModuleSccs::pcc_2d_system_center_y(
+        positions_y,
+        masses,
+        geometry.parameters.cell_length_y);
     for (int atom = 0; atom < 2; ++atom)
     {
         ModuleSccs::PointCharge point;
@@ -245,8 +253,7 @@ TEST(SolForce, ConvertsPointIonPcc2dForceFromHartreeToRydberg)
             = ModuleSccs::pcc_2d_point_charge_force(
                 solvent.sccs_result().point_solute_moments_2d,
                 point,
-                geometry.origin_y,
-                geometry.parameters);
+                geometry);
         EXPECT_NEAR(force(atom, 0), 2.0 * expected_hartree.x, 1.0e-14);
         EXPECT_NEAR(force(atom, 1), 2.0 * expected_hartree.y, 1.0e-14);
         EXPECT_NEAR(force(atom, 2), 2.0 * expected_hartree.z, 1.0e-14);
@@ -279,6 +286,7 @@ TEST(SolForce, MatchesFixedElectronDensityReactionEnergyDerivative)
     cell.nat = 1;
     cell.atoms = new Atom[1];
     cell.atoms[0].na = 1;
+    cell.atoms[0].mass = 1.0;
     cell.atoms[0].ncpp.zv = 1.0;
     cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.38, 0.47, 0.51));
 
@@ -388,6 +396,7 @@ TEST(SolForce, NeutralAndChargedPcc2dMatchFixedDensityTotalEnergyDerivativeInXyz
     cell.nat = 1;
     cell.atoms = new Atom[1];
     cell.atoms[0].na = 1;
+    cell.atoms[0].mass = 1.0;
     cell.atoms[0].ncpp.zv = 1.0;
     cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.38, 0.47, 0.51));
 

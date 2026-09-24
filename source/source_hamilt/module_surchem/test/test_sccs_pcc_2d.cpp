@@ -20,6 +20,14 @@ ModuleSccs::Pcc2dParameters parameters()
     return value;
 }
 
+ModuleSccs::Pcc2dGeometry geometry(const double origin_y)
+{
+    ModuleSccs::Pcc2dGeometry value;
+    value.parameters = parameters();
+    value.origin_y = origin_y;
+    return value;
+}
+
 TEST(SccsPcc2d, BuildsGeometryForCubicCell)
 {
     const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
@@ -79,6 +87,52 @@ TEST(SccsPcc2d, GeometryRejectsUnsupportedSlabOrientations)
                  std::invalid_argument);
 }
 
+TEST(SccsPcc2d, SystemCenterUnwrapsAcrossYBoundary)
+{
+    const std::vector<double> positions_y{9.8, 0.2};
+    const std::vector<double> weights{1.0, 3.0};
+    EXPECT_NEAR(ModuleSccs::pcc_2d_system_center_y(positions_y, weights, 10.0),
+                0.1,
+                1.0e-14);
+
+    ModuleSccs::Pcc2dGeometry value = geometry(0.1);
+    value.parameters.cell_length_y = 10.0;
+    EXPECT_NEAR(ModuleSccs::pcc_2d_relative_y(9.8, value), -0.3, 1.0e-14);
+    EXPECT_NEAR(ModuleSccs::pcc_2d_relative_y(0.2, value), 0.1, 1.0e-14);
+}
+
+TEST(SccsPcc2d, MomentsRemainInvariantWhenChargesCrossYBoundary)
+{
+    std::vector<ModuleSccs::PointCharge> original(2);
+    original[0].charge = 1.2;
+    original[0].position.y = 9.8;
+    original[1].charge = -0.4;
+    original[1].position.y = 0.2;
+    const std::vector<double> weights{1.0, 3.0};
+    const std::vector<double> original_y{9.8, 0.2};
+    ModuleSccs::Pcc2dGeometry first = geometry(
+        ModuleSccs::pcc_2d_system_center_y(original_y, weights, 10.0));
+    first.parameters.cell_length_y = 10.0;
+
+    std::vector<ModuleSccs::PointCharge> shifted = original;
+    shifted[0].position.y = 3.5;
+    shifted[1].position.y = 3.9;
+    const std::vector<double> shifted_y{3.5, 3.9};
+    ModuleSccs::Pcc2dGeometry second = geometry(
+        ModuleSccs::pcc_2d_system_center_y(shifted_y, weights, 10.0));
+    second.parameters.cell_length_y = 10.0;
+
+    const ModuleSccs::Pcc2dMoments original_moments
+        = ModuleSccs::pcc_2d_point_charge_moments(original, first);
+    const ModuleSccs::Pcc2dMoments shifted_moments
+        = ModuleSccs::pcc_2d_point_charge_moments(shifted, second);
+    EXPECT_NEAR(shifted_moments.charge, original_moments.charge, 1.0e-15);
+    EXPECT_NEAR(shifted_moments.dipole_y, original_moments.dipole_y, 1.0e-14);
+    EXPECT_NEAR(shifted_moments.quadrupole_yy,
+                original_moments.quadrupole_yy,
+                1.0e-14);
+}
+
 TEST(SccsPcc2d, AccumulatesOnlyYMoments)
 {
     std::vector<ModuleSccs::PointCharge> charges(2);
@@ -88,7 +142,7 @@ TEST(SccsPcc2d, AccumulatesOnlyYMoments)
     charges[1].position = ModuleBase::Vector3<double>(-8.0, -1.0, 9.0);
 
     const ModuleSccs::Pcc2dMoments moments
-        = ModuleSccs::pcc_2d_point_charge_moments(charges, 1.0);
+        = ModuleSccs::pcc_2d_point_charge_moments(charges, geometry(1.0));
     EXPECT_DOUBLE_EQ(moments.charge, 1.0);
     EXPECT_DOUBLE_EQ(moments.dipole_y, 6.0);
     EXPECT_DOUBLE_EQ(moments.quadrupole_yy, 4.0);
@@ -101,7 +155,7 @@ TEST(SccsPcc2d, DensityMomentsIncludeTheVolumeElement)
         ModuleBase::Vector3<double>(7.0, 1.0, -4.0),
         ModuleBase::Vector3<double>(-2.0, 3.0, 6.0)};
     const ModuleSccs::Pcc2dMoments moments
-        = ModuleSccs::pcc_2d_density_moments(density, positions, 2.0, 0.0);
+        = ModuleSccs::pcc_2d_density_moments(density, positions, 2.0, geometry(0.0));
     EXPECT_DOUBLE_EQ(moments.charge, 0.5);
     EXPECT_DOUBLE_EQ(moments.dipole_y, -0.5);
     EXPECT_DOUBLE_EQ(moments.quadrupole_yy, -3.5);
@@ -119,7 +173,7 @@ TEST(SccsPcc2d, MomentPotentialMatchesIndependentPlanarGreenFunctions)
         points[index].position.y = locations[index];
     }
     const ModuleSccs::Pcc2dMoments moments
-        = ModuleSccs::pcc_2d_point_charge_moments(points, 0.0);
+        = ModuleSccs::pcc_2d_point_charge_moments(points, geometry(0.0));
     const std::vector<double> evaluation_points{-5.2, -0.8, 1.4, 5.1};
 
     for (std::size_t evaluation = 0; evaluation < evaluation_points.size(); ++evaluation)
@@ -244,9 +298,9 @@ TEST(SccsPcc2d, PotentialAndEnergyAreIndependentOfMomentOrigin)
     const double shifted_origin = 0.7;
     const double evaluation_y = 2.1;
     const ModuleSccs::Pcc2dMoments first
-        = ModuleSccs::pcc_2d_point_charge_moments(charges, 0.0);
+        = ModuleSccs::pcc_2d_point_charge_moments(charges, geometry(0.0));
     const ModuleSccs::Pcc2dMoments second
-        = ModuleSccs::pcc_2d_point_charge_moments(charges, shifted_origin);
+        = ModuleSccs::pcc_2d_point_charge_moments(charges, geometry(shifted_origin));
     const ModuleSccs::Pcc2dParameters value = parameters();
 
     EXPECT_NEAR(ModuleSccs::pcc_2d_potential(first, evaluation_y, value),
@@ -275,7 +329,7 @@ TEST(SccsPcc2d, DensityDerivativeMatchesPotential)
         charges[1].charge = -density * volume_element;
         charges[1].position.y = electron_y;
         const ModuleSccs::Pcc2dMoments moments
-            = ModuleSccs::pcc_2d_point_charge_moments(charges, origin_y);
+            = ModuleSccs::pcc_2d_point_charge_moments(charges, geometry(origin_y));
         return ModuleSccs::pcc_2d_self_energy(moments, value);
     };
 
@@ -285,7 +339,7 @@ TEST(SccsPcc2d, DensityDerivativeMatchesPotential)
     center_charges[1].charge = -electron_density * volume_element;
     center_charges[1].position.y = electron_y;
     const ModuleSccs::Pcc2dMoments center
-        = ModuleSccs::pcc_2d_point_charge_moments(center_charges, origin_y);
+        = ModuleSccs::pcc_2d_point_charge_moments(center_charges, geometry(origin_y));
     const double analytic = -volume_element
                             * ModuleSccs::pcc_2d_potential(center, electron_y, value);
     const double finite = (energy(electron_density + step)
@@ -298,23 +352,70 @@ TEST(SccsPcc2d, IonicShapeEnergyMatchesAppendixA2)
 {
     const ModuleSccs::Pcc2dParameters value = parameters();
     const double polarization_charge = -0.8;
-    const double smooth_quadrupole = 2.5;
-    const double point_quadrupole = 1.2;
+    ModuleSccs::Pcc2dMoments smooth_ionic;
+    smooth_ionic.charge = 2.0;
+    smooth_ionic.dipole_y = 6.0;
+    smooth_ionic.quadrupole_yy = 6.5;
+    ModuleSccs::Pcc2dMoments point_ionic;
+    point_ionic.charge = 2.0;
+    point_ionic.dipole_y = 6.0;
+    point_ionic.quadrupole_yy = 5.2;
     const double expected = ModuleBase::PI * polarization_charge
-                            * (smooth_quadrupole - point_quadrupole)
+                            * (smooth_ionic.quadrupole_yy
+                               - point_ionic.quadrupole_yy)
                             / (value.periodic_area * value.cell_length_y);
     EXPECT_NEAR(ModuleSccs::pcc_2d_ionic_shape_energy(polarization_charge,
-                                                       smooth_quadrupole,
-                                                       point_quadrupole,
+                                                       smooth_ionic,
+                                                       point_ionic,
                                                        value),
                 expected,
                 1.0e-15);
     EXPECT_THROW(ModuleSccs::pcc_2d_ionic_shape_energy(
                      std::numeric_limits<double>::infinity(),
-                     smooth_quadrupole,
-                     point_quadrupole,
+                     smooth_ionic,
+                     point_ionic,
                      value),
                  std::domain_error);
+    point_ionic.charge = 0.0;
+    EXPECT_THROW(ModuleSccs::pcc_2d_ionic_shape_energy(polarization_charge,
+                                                       smooth_ionic,
+                                                       point_ionic,
+                                                       value),
+                 std::domain_error);
+}
+
+TEST(SccsPcc2d, IonicShapeEnergyIsInvariantUnderRigidTranslation)
+{
+    const ModuleSccs::Pcc2dParameters value = parameters();
+    ModuleSccs::Pcc2dMoments smooth_ionic;
+    smooth_ionic.charge = 4.0;
+    smooth_ionic.dipole_y = -2.0;
+    smooth_ionic.quadrupole_yy = 7.5;
+    ModuleSccs::Pcc2dMoments point_ionic;
+    point_ionic.charge = 4.0;
+    point_ionic.dipole_y = -2.4;
+    point_ionic.quadrupole_yy = 5.1;
+    const double reference
+        = ModuleSccs::pcc_2d_ionic_shape_energy(-0.7,
+                                                smooth_ionic,
+                                                point_ionic,
+                                                value);
+    const double translation = 3.2;
+    const auto translate = [translation](const ModuleSccs::Pcc2dMoments& moments) {
+        ModuleSccs::Pcc2dMoments shifted;
+        shifted.charge = moments.charge;
+        shifted.dipole_y = moments.dipole_y + translation * moments.charge;
+        shifted.quadrupole_yy
+            = moments.quadrupole_yy + 2.0 * translation * moments.dipole_y
+              + translation * translation * moments.charge;
+        return shifted;
+    };
+    EXPECT_NEAR(ModuleSccs::pcc_2d_ionic_shape_energy(-0.7,
+                                                       translate(smooth_ionic),
+                                                       translate(point_ionic),
+                                                       value),
+                reference,
+                1.0e-15);
 }
 
 TEST(SccsPcc2d, PointChargeForceMatchesSelfEnergyFiniteDifference)
@@ -327,9 +428,11 @@ TEST(SccsPcc2d, PointChargeForceMatchesSelfEnergyFiniteDifference)
     charges[1].position = ModuleBase::Vector3<double>(-0.6, 0.5, 0.9);
     const ModuleSccs::Pcc2dParameters value = parameters();
     const ModuleSccs::Pcc2dMoments moments
-        = ModuleSccs::pcc_2d_point_charge_moments(charges, origin_y);
+        = ModuleSccs::pcc_2d_point_charge_moments(charges, geometry(origin_y));
     const ModuleBase::Vector3<double> analytic
-        = ModuleSccs::pcc_2d_point_charge_force(moments, charges[0], origin_y, value);
+        = ModuleSccs::pcc_2d_point_charge_force(moments,
+                                                charges[0],
+                                                geometry(origin_y));
     const double step = 1.0e-5;
 
     std::vector<ModuleSccs::PointCharge> plus = charges;
@@ -337,13 +440,13 @@ TEST(SccsPcc2d, PointChargeForceMatchesSelfEnergyFiniteDifference)
     plus[0].position.y += step;
     minus[0].position.y -= step;
     const double energy_plus
-        = ModuleSccs::pcc_2d_self_energy(ModuleSccs::pcc_2d_point_charge_moments(plus,
-                                                                                origin_y),
-                                         value);
+        = ModuleSccs::pcc_2d_self_energy(
+            ModuleSccs::pcc_2d_point_charge_moments(plus, geometry(origin_y)),
+            value);
     const double energy_minus
-        = ModuleSccs::pcc_2d_self_energy(ModuleSccs::pcc_2d_point_charge_moments(minus,
-                                                                                 origin_y),
-                                         value);
+        = ModuleSccs::pcc_2d_self_energy(
+            ModuleSccs::pcc_2d_point_charge_moments(minus, geometry(origin_y)),
+            value);
     const double finite_force = -(energy_plus - energy_minus) / (2.0 * step);
     EXPECT_DOUBLE_EQ(analytic.x, 0.0);
     EXPECT_NEAR(analytic.y, finite_force, 1.0e-11);

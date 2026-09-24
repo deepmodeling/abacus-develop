@@ -3,6 +3,7 @@
 
 #include "source_base/vector3.h"
 
+#include <string>
 #include <vector>
 
 namespace ModuleSccs
@@ -30,6 +31,7 @@ class PolarizationReduction
     virtual void reduce_residual(double& square_sum,
                                  double& maximum,
                                  double& point_count) const = 0;
+    virtual void reduce_sum(double& value) const;
 };
 
 class SerialPolarizationReduction : public PolarizationReduction
@@ -43,7 +45,12 @@ class SerialPolarizationReduction : public PolarizationReduction
 struct PolarizationSolverParameters
 {
     int max_iterations = 0;
+    std::string mixing_method = "linear";
+    int mixing_history = 8;
     double mixing = 0.0;
+    bool adaptive_mixing = false;
+    double mixing_min = 0.1;
+    double mixing_max = 0.8;
     double tolerance_rms = 0.0;
     double tolerance_max = 0.0;
 };
@@ -61,6 +68,8 @@ struct PolarizationResult
     int iterations = 0;
     double residual_rms = 0.0;
     double residual_max = 0.0;
+    double final_mixing = 0.0;
+    int mixing_restarts = 0;
     std::vector<double> polarization_charge;
     ElectrostaticField field;
 };

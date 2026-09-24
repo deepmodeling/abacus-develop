@@ -29,7 +29,12 @@ SccsConfig common_water_config()
     config.surface_regularization = 1.0e-8;
     config.boundary = Boundary::Periodic;
     config.max_iterations = 200;
+    config.mixing_method = "linear";
+    config.mixing_history = 8;
     config.mixing = 0.5;
+    config.adaptive_mixing = false;
+    config.mixing_min = 0.1;
+    config.mixing_max = 0.8;
     config.tolerance_rms = 1.0e-10;
     config.tolerance_max = 1.0e-8;
     return config;
@@ -124,9 +129,30 @@ void validate_config(const SccsConfig& config)
     {
         throw std::invalid_argument("SCCS maximum iteration count must be positive");
     }
+    if (config.mixing_method != "linear" && config.mixing_method != "pulay"
+        && config.mixing_method != "anderson")
+    {
+        throw std::invalid_argument("unknown SCCS polarization mixing method: "
+                                    + config.mixing_method);
+    }
+    if (config.mixing_history < 2)
+    {
+        throw std::invalid_argument("SCCS accelerated-mixing history must be at least two");
+    }
     if (!std::isfinite(config.mixing) || config.mixing <= 0.0 || config.mixing > 1.0)
     {
         throw std::invalid_argument("SCCS mixing must be in the interval (0, 1]");
+    }
+    if (!std::isfinite(config.mixing_min) || !std::isfinite(config.mixing_max)
+        || config.mixing_min <= 0.0 || config.mixing_max > 1.0
+        || config.mixing_min > config.mixing_max)
+    {
+        throw std::invalid_argument("SCCS adaptive-mixing bounds must satisfy 0 < min <= max <= 1");
+    }
+    if (config.adaptive_mixing
+        && (config.mixing < config.mixing_min || config.mixing > config.mixing_max))
+    {
+        throw std::invalid_argument("SCCS initial mixing must lie within the adaptive-mixing bounds");
     }
     if (!std::isfinite(config.tolerance_rms) || config.tolerance_rms <= 0.0
         || !std::isfinite(config.tolerance_max) || config.tolerance_max <= 0.0)

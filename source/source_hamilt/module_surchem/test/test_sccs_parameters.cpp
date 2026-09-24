@@ -49,6 +49,13 @@ TEST(SccsParameters, RejectsInvalidSolverControls)
     config.mixing = 0.5;
     config.max_iterations = 0;
     EXPECT_THROW(ModuleSccs::validate_config(config), std::invalid_argument);
+    config.max_iterations = 200;
+    config.adaptive_mixing = true;
+    config.mixing_min = 0.6;
+    config.mixing_max = 0.8;
+    EXPECT_THROW(ModuleSccs::validate_config(config), std::invalid_argument);
+    config.mixing = 0.7;
+    EXPECT_NO_THROW(ModuleSccs::validate_config(config));
 }
 
 } // namespace

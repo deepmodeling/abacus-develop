@@ -37,6 +37,25 @@ ModuleSccs::Pcc2dMoments add_moments_2d(const ModuleSccs::Pcc2dMoments& left,
     return result;
 }
 
+double ionic_system_center_y(const UnitCell& cell, const double cell_length_y)
+{
+    std::vector<double> positions_y;
+    std::vector<double> masses;
+    positions_y.reserve(cell.nat);
+    masses.reserve(cell.nat);
+    for (int atom_type = 0; atom_type < cell.ntype; ++atom_type)
+    {
+        for (int atom = 0; atom < cell.atoms[atom_type].na; ++atom)
+        {
+            positions_y.push_back(cell.atoms[atom_type].tau[atom].y * cell.lat0);
+            masses.push_back(cell.atoms[atom_type].mass);
+        }
+    }
+    return ModuleSccs::pcc_2d_system_center_y(positions_y,
+                                               masses,
+                                               cell_length_y);
+}
+
 std::vector<ModuleSccs::PointCharge> ionic_point_charges(const UnitCell& cell)
 {
     std::vector<ModuleSccs::PointCharge> charges;
@@ -105,6 +124,9 @@ void surchem::v_correction_sccs(const UnitCell& cell,
         pcc_2d_geometry = ModuleSccs::pcc_2d_geometry(cell.latvec,
                                                       cell.lat0,
                                                       1.0e-10);
+        pcc_2d_geometry.origin_y
+            = ionic_system_center_y(cell,
+                                    pcc_2d_geometry.parameters.cell_length_y);
     }
 
     const double volume_element = cell.omega / static_cast<double>(rho_basis.nxyz);
@@ -177,11 +199,18 @@ void surchem::v_correction_sccs(const UnitCell& cell,
             = ModuleSccs::reduced_pcc_2d_density_moments(electronic_charge,
                                                          positions,
                                                          volume_element,
-                                                         pcc_2d_geometry.origin_y,
+                                                         pcc_2d_geometry,
                                                          charge_reduction);
         const ModuleSccs::Pcc2dMoments ionic_moments
             = ModuleSccs::pcc_2d_point_charge_moments(ionic_point_charges(cell),
-                                                      pcc_2d_geometry.origin_y);
+                                                      pcc_2d_geometry);
+        const ModuleSccs::Pcc2dMoments smooth_ionic_moments
+            = ModuleSccs::reduced_pcc_2d_density_moments(
+                this->sccs_result_.charge.ionic,
+                positions,
+                volume_element,
+                pcc_2d_geometry,
+                charge_reduction);
         this->sccs_result_.point_solute_moments_2d = add_moments_2d(ionic_moments,
                                                                    electronic_moments);
         if (std::abs(this->sccs_result_.point_solute_moments_2d.charge
@@ -196,15 +225,16 @@ void surchem::v_correction_sccs(const UnitCell& cell,
         this->sccs_result_.ionic_shape_pcc_energy
             = ModuleSccs::pcc_2d_ionic_shape_energy(
                 this->sccs_result_.polarization_moments_2d.charge,
-                this->sccs_result_.solute_moments_2d.quadrupole_yy,
-                this->sccs_result_.point_solute_moments_2d.quadrupole_yy,
+                smooth_ionic_moments,
+                ionic_moments,
                 pcc_2d_geometry.parameters);
         for (std::size_t index = 0; index < positions.size(); ++index)
         {
             this->sccs_result_.electron_potential_hartree[index]
                 -= ModuleSccs::pcc_2d_potential(this->sccs_result_.point_solute_moments_2d,
-                                                 positions[index].y
-                                                     - pcc_2d_geometry.origin_y,
+                                                 ModuleSccs::pcc_2d_relative_y(
+                                                     positions[index].y,
+                                                     pcc_2d_geometry),
                                                  pcc_2d_geometry.parameters);
         }
     }

@@ -569,12 +569,18 @@ struct Input_para
     double sccs_pressure = 0.0;               ///< SCCS volume coefficient, GPa
     std::string sccs_boundary = "periodic";  ///< periodic, pcc_0d, or pcc_2d electrostatics
     int sccs_maxiter = 200;                   ///< polarization iteration limit
+    std::string sccs_mixing_type = "linear"; ///< linear, pulay, or anderson
+    int sccs_mixing_ndim = 8;                 ///< accelerated-mixing history length
     double sccs_mixing = 0.5;                 ///< polarization linear mixing
+    bool sccs_mixing_adaptive = false;         ///< adapt the polarization mixing factor
+    double sccs_mixing_min = 0.1;              ///< adaptive polarization-mixing lower bound
+    double sccs_mixing_max = 0.8;              ///< adaptive polarization-mixing upper bound
     double sccs_tol_rms = 1.0e-10;            ///< polarization RMS residual tolerance
     double sccs_tol_max = 1.0e-8;             ///< polarization maximum residual tolerance
     double sccs_surface_eta = 1.0e-8;         ///< regularized surface norm, bohr^-1
     double sccs_start_drho = 0.0;              ///< delayed-start density threshold; zero starts immediately
     int sccs_start_nmax = 30;                  ///< forced delayed-start electronic iteration
+    bool sccs_debug = false;                   ///< print detailed SCCS and PCC diagnostics
 
     // ==============  #Parameters (14.vdW Correction) ===========================
     // ==========================================================
