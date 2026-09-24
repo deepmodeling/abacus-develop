@@ -34,6 +34,25 @@ AddTest(
   ../page_allocator.cpp
 )
 
+AddTest(
+  TARGET MODULE_CELL_NEIGHBOR_page_allocator
+  LIBS parameter base device
+  SOURCES
+    test_page_allocator.cpp
+    ../page_allocator.cpp
+)
+
+if(USE_CUDA AND ENABLE_GPU_NEIGHBOR_LIST)
+  AddTest(
+    TARGET MODULE_CELL_NEIGHBOR_gpu_neighbor_list
+    LIBS parameter base device
+    SOURCES
+      test_gpu_neighbor_list.cpp
+      ../gpu_neighbor_list.cpp
+  )
+  target_compile_definitions(MODULE_CELL_NEIGHBOR_gpu_neighbor_list PRIVATE __CUDA)
+endif()
+
 if(ENABLE_MPI)
   add_executable(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
     mdcell_migrate_mpi_test.cpp
