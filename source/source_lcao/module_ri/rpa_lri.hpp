@@ -26,6 +26,7 @@
 #include "RPA_LRI.h"
 #include "librpa_2d_coulomb_head.h"
 #include "librpa_bz_sampling.h"
+#include "librpa_stru_symmetry.h"
 #include "librpa_stru_units.h"
 #include "rpa_abfs_preorthogonalization.h"
 #include "source_basis/module_ao/element_basis_index-ORB.h"
@@ -789,16 +790,6 @@ inline void write_ks_eigenvector_v1_mpi(const MPI_Comm mpi_comm,
     }
 }
 #endif
-
-inline int checked_near_int(const double value, const std::string& context)
-{
-    const double rounded = std::round(value);
-    if (std::abs(value - rounded) > 1e-8)
-    {
-        throw std::runtime_error(context + " is not close to an integer.");
-    }
-    return static_cast<int>(rounded);
-}
 
 inline int sum_int_vector(const std::vector<int>& values)
 {
@@ -3203,30 +3194,18 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
         // these operations, the lattice, and the exported basis-shell conventions;
         // no spin-specific trailer belongs in stru_out.
         const int n_anti = symm.magnetic_nspin4 ? symm.nrotk_anti : 0;
-        const auto write_op = [&ofs](const ModuleBase::Matrix3& rot, const ModuleBase::Vector3<double>& trans) {
-            ofs << std::setw(4) << RpaLriDetail::checked_near_int(rot.e11, "symmetry rotation e11")
-                << std::setw(4) << RpaLriDetail::checked_near_int(rot.e12, "symmetry rotation e12")
-                << std::setw(4) << RpaLriDetail::checked_near_int(rot.e13, "symmetry rotation e13")
-                << std::setw(4) << RpaLriDetail::checked_near_int(rot.e21, "symmetry rotation e21")
-                << std::setw(4) << RpaLriDetail::checked_near_int(rot.e22, "symmetry rotation e22")
-                << std::setw(4) << RpaLriDetail::checked_near_int(rot.e23, "symmetry rotation e23")
-                << std::setw(4) << RpaLriDetail::checked_near_int(rot.e31, "symmetry rotation e31")
-                << std::setw(4) << RpaLriDetail::checked_near_int(rot.e32, "symmetry rotation e32")
-                << std::setw(4) << RpaLriDetail::checked_near_int(rot.e33, "symmetry rotation e33")
-                << std::setw(24) << std::scientific << std::setprecision(15) << trans.x
-                << std::setw(24) << std::scientific << std::setprecision(15) << trans.y
-                << std::setw(24) << std::scientific << std::setprecision(15) << trans.z
-                << std::endl;
-        };
-        ofs << (symm.nrotk + n_anti) << " row" << std::endl;
+        std::vector<RpaLriDetail::LibRpaSymmetryOperation> unitary(symm.nrotk);
         for (int isym = 0; isym < symm.nrotk; ++isym)
         {
-            write_op(symm.gmatrix[isym], symm.gtrans[isym]);
+            unitary[isym] = RpaLriDetail::make_librpa_symmetry_operation(symm.gmatrix[isym], symm.gtrans[isym]);
         }
-        for (int j = 0; j < n_anti; ++j)
+        std::vector<RpaLriDetail::LibRpaSymmetryOperation> antiunitary(n_anti);
+        for (int isym = 0; isym < n_anti; ++isym)
         {
-            write_op(symm.gmatrix_anti[j], symm.gtrans_anti[j]);
+            antiunitary[isym]
+                = RpaLriDetail::make_librpa_symmetry_operation(symm.gmatrix_anti[isym], symm.gtrans_anti[isym]);
         }
+        RpaLriDetail::write_librpa_symmetry_rows(ofs, unitary, antiunitary);
     }
     ofs.close();
     return;
