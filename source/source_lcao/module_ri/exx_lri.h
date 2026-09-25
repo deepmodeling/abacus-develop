@@ -141,7 +141,11 @@ public:
 
 
 private:
-	const Exx_Info::Exx_Info_RI &info;
+	// Keep an owned copy: RPA_LRI may construct Exx_LRI from a temporary
+	// local Exx_Info_RI when the cut/full Coulomb settings are adjusted.
+	// Storing a reference here leaves a dangling reference after that caller
+	// returns and can corrupt the subsequent RI matrix construction.
+	Exx_Info::Exx_Info_RI info;
 	int abfs_Lmax_ = 0;
 	MPI_Comm mpi_comm;
 	const K_Vectors *p_kv = nullptr;
