@@ -642,7 +642,7 @@ if(USE_CUDA)
     source_pw/module_pwdft/kernels/cuda/exx_cal_energy_op.cu)
   if(USE_CUDA AND ENABLE_GPU_NEIGHBOR_LIST)
     list(APPEND device_srcs
-      source_cell/module_neighlist/kernels/cuda/gpu_neighbor_list.cu)
+      source_cell/kernels/cuda/gpu_neighbor_list.cu)
   endif()
 endif()
 
