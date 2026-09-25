@@ -30,6 +30,7 @@
 #include "librpa_stru_units.h"
 #include "rpa_abfs_preorthogonalization.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
+#include "source_lcao/module_lr/utils/spectrum_mo.hpp"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart_exx_csr.h"
@@ -1179,14 +1180,17 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     this->p_kv = &kv;
     this->orb_cutoff_ = orb.cutoffs();
 
-    Mix_DMk_2D<Tdata> mix_DMk_2D;
+    Mix_DMk_2D<T> mix_DMk_2D;
     this->use_spacegroup_symmetry_ = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
     if (this->use_spacegroup_symmetry_)
-        {mix_DMk_2D.set_nks(kv.get_nkstot() * (PARAM.inp.nspin == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
+        {mix_DMk_2D.set_nks(kv.get_nkstot_nospin() * (PARAM.inp.nspin == 2 ? 2 : 1));}
     else
         {mix_DMk_2D.set_nks(kv.get_nks());}
         
-    mix_DMk_2D.set_mixing(nullptr);
+    // The post-SCF density is only initialized through restart_all().  That
+    // path still needs a live mixing engine to initialize per-k-point state;
+    // no subsequent mixing step is performed here.
+    mix_DMk_2D.set_mixing_plain(0.0);
     if (this->use_spacegroup_symmetry_)
     {
         const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);
@@ -1194,15 +1198,18 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
         this->symmetry_rotation_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st, Rs, period, ucell.lat);
         // set Lmax of the rotation matrices to max(l_ao, l_abf), to support rotation under ABF
         this->symmetry_rotation_.set_abfs_Lmax(GlobalC::exx_info.info_ri.abfs_Lmax);
-        this->symmetry_rotation_.cal_Ms(kv, ucell, *dm.get_paraV_pointer());
+        this->symmetry_rotation_.cal_Ms(kv, ucell, *dm.get_paraV_pointer(), PARAM.inp.nspin);
         mix_DMk_2D.mix(this->symmetry_rotation_.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), true);
     }
     else { mix_DMk_2D.mix(dm.get_DMK_vector(), true); }
     
-    const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
-		Ds = PARAM.globalv.gamma_only_local
-        ? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,kv, mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin)
-        : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin, this->use_spacegroup_symmetry_);
+    const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds
+        = RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,
+                                            kv,
+                                            mix_DMk_2D.get_DMk_out(),
+                                            *dm.get_paraV_pointer(),
+                                            PARAM.inp.nspin,
+                                            this->use_spacegroup_symmetry_);
     
     // reserve exx_ccp_rmesh_times to calculate full Coulomb
     // Note: ccp_type=Hf and hybrid_alpha=1 were previously set on the global Exx_Info
@@ -1252,7 +1259,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
         // is finalized by `init_spencer()`. The earlier `cal_Ms()` call only guaranteed the AO
         // rotation blocks needed for density-matrix restoration.
         this->symmetry_rotation_.set_Cs_rotation(exx_cut_coulomb->get_abfs_nchis());
-        this->symmetry_rotation_.cal_Ms(kv, ucell, *dm.get_paraV_pointer());
+        this->symmetry_rotation_.cal_Ms(kv, ucell, *dm.get_paraV_pointer(), PARAM.inp.nspin);
     }
 
     // cal C and V for exx
@@ -1311,7 +1318,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     this->Vs_period = RI::RI_Tools::cal_period(Vs_cut_IJ, period);
     if (PARAM.inp.out_librpa_reader_version == 1)
     {
-        const bool use_shrink = GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0;
+        const bool use_shrink = this->info.shrink_abfs_pca_thr >= 0.0;
         this->out_librpa_basis_v1(ucell,
                                   exx_lri_rpa,
                                   use_shrink ? "basis_aux_shrink_out" : "basis_aux_out",
@@ -1330,7 +1337,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
 
     if (PARAM.inp.out_librpa_reader_version == 1)
     {
-        if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+        if (this->info.shrink_abfs_pca_thr >= 0.0)
         {
             this->out_Cs_v1(ucell, this->Cs_period, "v1_Cs_shrinked_data_");
         }
@@ -1341,7 +1348,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     }
     else
     {
-        if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+        if (this->info.shrink_abfs_pca_thr >= 0.0)
             this->out_Cs(ucell, this->Cs_period, "Cs_shrinked_data_");
         else
             this->out_Cs(ucell, this->Cs_period, "Cs_data_");
@@ -1463,7 +1470,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
                 "Direct Coulomb output is incompatible with legacy Ewald split diagnostics.");
         }
 
-        const bool use_shrink = GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0;
+        const bool use_shrink = this->info.shrink_abfs_pca_thr >= 0.0;
         this->out_librpa_basis_v1(ucell,
                                   exx_full_coulomb.get(),
                                   use_shrink ? "basis_aux_shrink_out" : "basis_aux_out",
@@ -1573,7 +1580,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     }
     if (PARAM.inp.out_librpa_reader_version == 1)
     {
-        const bool use_shrink = GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0;
+        const bool use_shrink = this->info.shrink_abfs_pca_thr >= 0.0;
         this->out_librpa_basis_v1(ucell,
                                   exx_full_coulomb.get(),
                                   use_shrink ? "basis_aux_shrink_out" : "basis_aux_out",
@@ -1621,7 +1628,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     ModuleBase::TITLE("RPA_LRI", "cal_large_Cs");
     ModuleBase::timer::start("RPA_LRI", "cal_large_Cs");
     if (!exx_cut_coulomb)
-        exx_cut_coulomb.reset(new Exx_LRI<double>(GlobalC::exx_info.info_ri));
+        exx_cut_coulomb.reset(new Exx_LRI<double>(this->info));
     this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
     Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
     this->abfs = ExxLriDetail::prepare_abfs(
@@ -1666,7 +1673,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     const std::array<Tcell, Ndim> period_Vs
         = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, orb_cutoff_);
     std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
-        = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2, false);
+        = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_large_Vs start");
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_cut_IJR
         = center2_obj_it->second.cv.cal_Vs(ucell, list_As_Vs.first, list_As_Vs.second[0], {{"writable_Vws", true}});
@@ -1674,7 +1681,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
 
     const std::array<Tcell, Ndim> period_Cs = LRI_CV_Tools::cal_latvec_range<Tcell>(2, ucell, orb_cutoff_);
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Cs
-        = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Cs, 2, false);
+        = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Cs, 2, false);
     std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
               std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>>
         Cs_dCs = center2_obj_it->second.cv.cal_Cs_dCs(ucell,
@@ -3240,10 +3247,8 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
     const auto unit_scales = RpaLriDetail::librpa_stru_unit_scales(ucell.lat0);
     const ModuleBase::Matrix3 lat = ucell.latvec * unit_scales.real_space_bohr;
     const ModuleBase::Matrix3 G_RPA = ucell.G * unit_scales.reciprocal_space_bohr_inv;
-    std::stringstream ss;
-    ss << "stru_out";
     std::ofstream ofs;
-    ofs.open(outdir + "band_out.txt", std::ios::out);
+    ofs.open(outdir + "stru_out.txt", std::ios::out);
     const auto write_scientific_triplet = [&ofs](const double x, const double y, const double z) {
         ofs << std::setw(24) << std::scientific << std::setprecision(15) << x
             << std::setw(24) << std::scientific << std::setprecision(15) << y
@@ -3638,6 +3643,58 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
     }
     ofs.close();
     ModuleBase::timer::end("RPA_LRI", "out_coulomb_k");
+}
+
+template <typename T, typename Tdata>
+void RPA_LRI<T, Tdata>::out_velocity(const UnitCell& ucell,
+                                     const Grid_Driver& gd,
+                                     const TwoCenterBundle& two_center_bundle,
+                                     const Parallel_Orbitals& parav,
+                                     const psi::Psi<T>& psi,
+                                     const elecstate::ElecState* pelec)
+{
+    ModuleBase::TITLE("DFT_RPA_interface", "out_velocity");
+    ModuleBase::timer::start("RPA_LRI", "out_velocity");
+
+    Parallel_2D parac;
+    LR_Util::setup_2d_division(parac, parav.get_block_size(), PARAM.globalv.nlocal, PARAM.inp.nbands
+#ifdef __MPI
+                               , parav.blacs_ctxt
+#endif
+    );
+
+    const int nk = PARAM.inp.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int nspin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
+    const int nbands = parav.get_wfc_global_nbands();
+    const int nbasis = parav.get_wfc_global_nbasis();
+
+    std::vector<int> nocc(2, nbands);
+    std::vector<int> nvirt(2, 0);
+    const std::vector<std::complex<double>> velocity_mo
+        = LR_Util::cal_velocity_mo(ucell,
+                                   gd,
+                                   two_center_bundle,
+                                   parav,
+                                   parac,
+                                   *this->p_kv,
+                                   psi,
+                                   nk,
+                                   nspin_tmp,
+                                   PARAM.globalv.nlocal,
+                                   nocc,
+                                   nvirt);
+    if (GlobalV::MY_RANK == 0)
+    {
+        LR_Util::output_spectrum_mo_librpa(velocity_mo,
+                                           outdir + "velocity_matrix",
+                                           nk,
+                                           nspin_tmp,
+                                           nbands,
+                                           nbasis,
+                                           nbands,
+                                           *this->p_kv);
+    }
+    ModuleBase::timer::end("RPA_LRI", "out_velocity");
 }
 
 template <typename T, typename Tdata>

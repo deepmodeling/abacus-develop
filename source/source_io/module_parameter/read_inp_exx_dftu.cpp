@@ -464,6 +464,23 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_ewald_dimension");
+        item.annotation = "dimensionality used by the Ewald Coulomb singularity correction";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Integer";
+        item.description = "Use 3 for periodic three-dimensional Coulomb and 2 for isolated-layer Coulomb.";
+        item.default_value = "3";
+        item.unit = "";
+        read_sync_int(input.exx_ewald_dimension);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.input.exx_ewald_dimension != 2 && para.input.exx_ewald_dimension != 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_dimension must be 2 or 3");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_singularity_correction");
         item.annotation = "set the scheme of Coulomb singularity correction";
         item.category = "Exact Exchange (LCAO)";

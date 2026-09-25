@@ -134,6 +134,8 @@ void csrFileReader<T>::parseFile()
         ModuleBase::WARNING_QUIT("csrFileReader::parseFile", "File is not open");
     }
 
+    std::string tmp_string;
+
     readLine();
     step = parse_last_integer(ss.str(), "csrFileReader::parseFile");
 

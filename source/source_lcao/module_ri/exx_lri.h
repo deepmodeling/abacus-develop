@@ -142,6 +142,7 @@ public:
 
 private:
 	const Exx_Info::Exx_Info_RI &info;
+	int abfs_Lmax_ = 0;
 	MPI_Comm mpi_comm;
 	const K_Vectors *p_kv = nullptr;
 	std::shared_ptr<ORB_gaunt_table> MGT;

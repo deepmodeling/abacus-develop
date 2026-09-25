@@ -87,6 +87,12 @@ template <typename T, typename Tdata> class RPA_LRI
     void out_struc(const UnitCell& ucell);
     void out_bz_sampling();
     void out_bands(const elecstate::ElecState *pelec);
+    void out_velocity(const UnitCell& ucell,
+        const Grid_Driver& gd,
+        const TwoCenterBundle& two_center_bundle,
+        const Parallel_Orbitals& parav,
+        const psi::Psi<T>& psi,
+        const elecstate::ElecState* pelec);
 
     ModuleRI::SternheimerOrbitalSet take_sternheimer_abfs();
     static void trim_process_heap();

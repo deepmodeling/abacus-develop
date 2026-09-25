@@ -232,6 +232,7 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
         exx_info.info_ri.C_grad_R_threshold = inp.exx_c_grad_r_threshold;
         exx_info.info_ri.V_grad_R_threshold = inp.exx_v_grad_r_threshold;
         exx_info.info_ri.ccp_rmesh_times = std::stod(inp.exx_ccp_rmesh_times);
+        exx_info.info_ri.ewald_dimension = inp.exx_ewald_dimension;
         exx_info.info_ri.exx_symmetry_realspace = inp.exx_symmetry_realspace;
         exx_info.info_ri.Cs_inv_thr = inp.exx_cs_inv_thr;
         exx_info.info_ri.shrink_abfs_pca_thr = inp.shrink_abfs_pca_thr;

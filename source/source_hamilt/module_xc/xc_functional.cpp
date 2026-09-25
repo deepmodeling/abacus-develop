@@ -31,6 +31,16 @@ void XC_Functional::set_hybrid_alpha(const double alpha_in)
     hybrid_alpha = alpha_in;
 }
 
+void XC_Functional::set_hse_omega(const double omega_in)
+{
+    hse_omega = omega_in;
+}
+
+void XC_Functional::set_runtime_parameters(const XCFunctionalParameters& parameters)
+{
+    runtime_parameters = parameters;
+}
+
 std::string XC_Functional::resolve_runtime_xc_type(const std::string& input_xc_func,
                                                    const std::string& pseudo_xc_func)
 {
