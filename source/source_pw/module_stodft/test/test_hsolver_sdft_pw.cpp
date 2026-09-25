@@ -92,7 +92,7 @@ void Stochastic_Iter<T, Device>::init(K_Vectors* pkv_in,
                                       ModulePW::PW_Basis_K* wfc_basis,
                                       Stochastic_WF<T, Device>& stowf,
                                       StoChe<Real, Device>& stoche,
-                                      hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto)
+                                      StoHamiltPW<T, Device>* p_hamilt_sto)
 {
     this->nchip = stowf.nchip;
     ;
@@ -254,7 +254,7 @@ class TestHSolverSdftPW : public ::testing::Test
     Stochastic_WF<std::complex<double>> stowf;
     K_Vectors kv;
     StoChe<double> stoche;
-    hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr;
+    StoHamiltPW<std::complex<double>>* p_hamilt_sto = nullptr;
     hsolver::HSolverSdftPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
         = hsolver::HSolverSdftPW<std::complex<double>, base_device::DEVICE_CPU>(
             &kv,

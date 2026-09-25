@@ -101,15 +101,15 @@ void ESolver_SDFT_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     ESolver_KS_PW<T, Device>::before_scf(ucell, istep);
     delete reinterpret_cast<hamilt::HamiltPW<double>*>(this->p_hamilt);
-    this->p_hamilt = new hamilt::HamiltSdftPW<T, Device>(this->pelec->pot,
-                                                         this->pw_wfc,
-                                                         &this->kv,
-                                                         &this->ppcell,
-                                                         &ucell,
-                                                         PARAM.globalv.npol,
-                                                         &this->stoche.emin_sto,
-                                                         &this->stoche.emax_sto);
-    this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<T, Device>*>(this->p_hamilt);
+    this->p_hamilt = new StoHamiltPW<T, Device>(this->pelec->pot,
+                                                this->pw_wfc,
+                                                &this->kv,
+                                                &this->ppcell,
+                                                &ucell,
+                                                PARAM.globalv.npol,
+                                                &this->stoche.emin_sto,
+                                                &this->stoche.emax_sto);
+    this->p_hamilt_sto = static_cast<StoHamiltPW<T, Device>*>(this->p_hamilt);
 
     if (istep > 0 && this->inp_->nbands_sto != 0 && this->inp_->initsto_freq > 0 && istep % this->inp_->initsto_freq == 0)
     {

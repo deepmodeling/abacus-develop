@@ -346,7 +346,7 @@ OBJS_GINT=batch_biggrid.o\
 
 OBJS_HAMILT=hamilt_pw.o\
     hs_matrix_k.o\
-    hamilt_sdft_pw.o\
+    sto_hamilt_pw.o\
     operator.o\
     op_pw.o\
     op_pw_exx.o\

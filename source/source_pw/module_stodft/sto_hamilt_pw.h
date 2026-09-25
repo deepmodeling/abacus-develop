@@ -1,18 +1,15 @@
-#ifndef HAMILTSDFTPW_H
-#define HAMILTSDFTPW_H
+#ifndef STO_HAMILT_PW_H
+#define STO_HAMILT_PW_H
 
 #include "source_pw/module_pwdft/hamilt_pw.h"
 
-namespace hamilt
-{
-
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class HamiltSdftPW : public HamiltPW<T, Device>
+class StoHamiltPW : public hamilt::HamiltPW<T, Device>
 {
   public:
     using Real = typename GetTypeReal<T>::type;
     /**
-     * @brief Construct a new HamiltSdftPW object
+     * @brief Construct a new StoHamiltPW object
      *
      * @param pot_in potential
      * @param wfc_basis pw basis for wave functions
@@ -21,19 +18,19 @@ class HamiltSdftPW : public HamiltPW<T, Device>
      * @param emin_in Emin of the Hamiltonian
      * @param emax_in Emax of the Hamiltonian
      */
-    HamiltSdftPW(elecstate::Potential* pot_in,
-                 ModulePW::PW_Basis_K* wfc_basis,
-                 K_Vectors* p_kv,
-                 pseudopot_cell_vnl* nlpp,
-                 const UnitCell* ucell,
-				 const int& npol,
-                 Real* emin_in,
-                 Real* emax_in);
+    StoHamiltPW(elecstate::Potential* pot_in,
+                ModulePW::PW_Basis_K* wfc_basis,
+                K_Vectors* p_kv,
+                pseudopot_cell_vnl* nlpp,
+                const UnitCell* ucell,
+                const int& npol,
+                Real* emin_in,
+                Real* emax_in);
     /**
-     * @brief Destroy the HamiltSdftPW object
+     * @brief Destroy the StoHamiltPW object
      *
      */
-    ~HamiltSdftPW(){};
+    ~StoHamiltPW(){};
 
     /**
      * @brief Calculate \hat{H}|psi>
@@ -61,7 +58,5 @@ class HamiltSdftPW : public HamiltPW<T, Device>
     int npol = 0;          ///< number of polarizations
     std::vector<int>& ngk; ///< number of G vectors
 };
-
-} // namespace hamilt
 
 #endif

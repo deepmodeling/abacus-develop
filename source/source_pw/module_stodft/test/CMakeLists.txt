@@ -9,7 +9,7 @@ AddTest(
 AddTest(
   TARGET MODULE_PW_Sto_Hamilt_UTs
   LIBS parameter psi base device planewave_serial symmetry
-  SOURCES ../hamilt_sdft_pw.cpp test_hamilt_sto.cpp ../../../source_hamilt/operator.cpp
+  SOURCES ../sto_hamilt_pw.cpp test_sto_hamilt_pw.cpp ../../../source_hamilt/operator.cpp
   ../../../source_cell/klist.cpp ../../../source_cell/klist_io.cpp ../../../source_cell/parallel_kpoints.cpp ../../../source_cell/reciprocal_grid.cpp
 )
 

@@ -1,7 +1,7 @@
 #ifndef HSOLVER_SDFT_PW_H
 #define HSOLVER_SDFT_PW_H
 #include "source_hsolver/hsolver_pw.h"
-#include "source_pw/module_stodft/hamilt_sdft_pw.h"
+#include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_pw/module_stodft/sto_iter.h"
 namespace hsolver
 {
@@ -16,7 +16,7 @@ class HSolverSdftPW : public HSolverPW<T, Device>
                   ModulePW::PW_Basis_K* wfc_basis_in,
                   Stochastic_WF<T, Device>& stowf,
                   StoChe<Real, Device>& stoche,
-                  hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto,
+                  StoHamiltPW<T, Device>* p_hamilt_sto,
                   const std::string calculation_type_in,
                   const std::string basis_type_in,
                   const std::string method_in,

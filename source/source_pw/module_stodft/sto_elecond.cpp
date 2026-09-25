@@ -33,7 +33,7 @@ Sto_EleCond<FPTYPE, Device>::Sto_EleCond(UnitCell* p_ucell_in,
     : EleCond<FPTYPE, Device>(p_ucell_in, p_kv_in, p_elec_in, p_wfcpw_in, p_psi_in, p_ppcell_in)
 {
     this->p_hamilt = p_hamilt_in;
-    this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>*>(p_hamilt_in);
+    this->p_hamilt_sto = static_cast<StoHamiltPW<std::complex<FPTYPE>, Device>*>(p_hamilt_in);
     this->p_stowf = p_stowf_in;
     this->nbands_ks = p_psi_in->get_nbands();
     this->nbands_sto = p_stowf_in->nchi;
@@ -42,7 +42,7 @@ Sto_EleCond<FPTYPE, Device>::Sto_EleCond(UnitCell* p_ucell_in,
 #ifdef __FLOAT_FFTW
     if(!std::is_same<FPTYPE, lowTYPE>::value)
     {
-        this->hamilt_sto_ = new hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>(p_elec_in->pot, p_wfcpw_in, p_kv_in, p_ppcell_in, p_ucell_in, 1, &this->low_emin_, &this->low_emax_);
+        this->hamilt_sto_ = new StoHamiltPW<std::complex<lowTYPE>, Device>(p_elec_in->pot, p_wfcpw_in, p_kv_in, p_ppcell_in, p_ucell_in, 1, &this->low_emin_, &this->low_emax_);
     }
 #endif
 }
@@ -149,33 +149,33 @@ loop:
 }
 
 template <typename FPTYPE, typename Device>
-void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>* hamilt,
-                                              const psi::Psi<std::complex<lowTYPE>, Device>& kspsi_all,
-                                              const psi::Psi<std::complex<lowTYPE>, Device>& vkspsi,
-                                              const double* en,
-                                              const double* en_all,
-                                              std::complex<FPTYPE>* leftfact,
-                                              std::complex<FPTYPE>* rightfact,
-                                              psi::Psi<std::complex<lowTYPE>, Device>& leftchi,
-                                              psi::Psi<std::complex<lowTYPE>, Device>& rightchi,
-                                              psi::Psi<std::complex<lowTYPE>, Device>& left_hchi,
-                                              psi::Psi<std::complex<lowTYPE>, Device>& right_hchi,
-                                              psi::Psi<std::complex<lowTYPE>, Device>& batch_vchi,
-                                              psi::Psi<std::complex<lowTYPE>, Device>& batch_vhchi,
+void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(StoHamiltPW<std::complex<lowTYPE>, Device>* hamilt,
+                                     const psi::Psi<std::complex<lowTYPE>, Device>& kspsi_all,
+                                     const psi::Psi<std::complex<lowTYPE>, Device>& vkspsi,
+                                     const double* en,
+                                     const double* en_all,
+                                     std::complex<FPTYPE>* leftfact,
+                                     std::complex<FPTYPE>* rightfact,
+                                     psi::Psi<std::complex<lowTYPE>, Device>& leftchi,
+                                     psi::Psi<std::complex<lowTYPE>, Device>& rightchi,
+                                     psi::Psi<std::complex<lowTYPE>, Device>& left_hchi,
+                                     psi::Psi<std::complex<lowTYPE>, Device>& right_hchi,
+                                     psi::Psi<std::complex<lowTYPE>, Device>& batch_vchi,
+                                     psi::Psi<std::complex<lowTYPE>, Device>& batch_vhchi,
 #ifdef __MPI
-                                              psi::Psi<std::complex<lowTYPE>, Device>& chi_all,
-                                              psi::Psi<std::complex<lowTYPE>, Device>& hchi_all,
-                                              void* gatherinfo_ks,
-                                              void* gatherinfo_sto,
+                                     psi::Psi<std::complex<lowTYPE>, Device>& chi_all,
+                                     psi::Psi<std::complex<lowTYPE>, Device>& hchi_all,
+                                     void* gatherinfo_ks,
+                                     void* gatherinfo_sto,
 #endif
-                                              const int& bsize_psi,
-                                              std::complex<lowTYPE>* j1,
-                                              std::complex<lowTYPE>* j2,
-                                              std::complex<lowTYPE>* tmpj,
-                                              hamilt::Velocity<lowTYPE, Device>& velop,
-                                              const int& ik,
-                                              const std::complex<lowTYPE>& factor,
-                                              const int bandinfo[6])
+                                     const int& bsize_psi,
+                                     std::complex<lowTYPE>* j1,
+                                     std::complex<lowTYPE>* j2,
+                                     std::complex<lowTYPE>* tmpj,
+                                     hamilt::Velocity<lowTYPE, Device>& velop,
+                                     const int& ik,
+                                     const std::complex<lowTYPE>& factor,
+                                     const int bandinfo[6])
 {
     ModuleBase::timer::start("Sto_EleCond", "cal_jmatrix");
     const std::complex<lowTYPE> float_factor = factor;
@@ -556,14 +556,14 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
     this->low_emin_ = static_cast<lowTYPE>(*this->stofunc.Emin);
     this->low_emax_ = static_cast<lowTYPE>(*this->stofunc.Emax);
     lowfunc.set_E_range(&low_emin_, &low_emax_);
-    hamilt::HamiltSdftPW<lcomplex, Device>* p_low_hamilt = nullptr;
+    StoHamiltPW<lcomplex, Device>* p_low_hamilt = nullptr;
     if(hamilt_sto_ != nullptr)
     {
         p_low_hamilt = hamilt_sto_;
     }
     else
     {
-        p_low_hamilt = reinterpret_cast<hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>*>(this->p_hamilt_sto);
+        p_low_hamilt = reinterpret_cast<StoHamiltPW<std::complex<lowTYPE>, Device>*>(this->p_hamilt_sto);
     }
 
     // Init Chebyshev
@@ -794,12 +794,12 @@ void Sto_EleCond<FPTYPE, Device>::sKG(const int& smear_type,
 
         auto nroot_fd = std::bind(&Sto_Func<FPTYPE>::nroot_fd, &this->stofunc, std::placeholders::_1);
         che.calcoef_real(nroot_fd);
-        auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>::hPsi_norm,
+        auto hchi_norm = std::bind(&StoHamiltPW<std::complex<FPTYPE>, Device>::hPsi_norm,
                                    p_hamilt_sto,
                                    std::placeholders::_1,
                                    std::placeholders::_2,
                                    std::placeholders::_3);
-        auto hchi_norm_low = std::bind(&hamilt::HamiltSdftPW<lcomplex, Device>::hPsi_norm,
+        auto hchi_norm_low = std::bind(&StoHamiltPW<lcomplex, Device>::hPsi_norm,
                                        p_low_hamilt,
                                        std::placeholders::_1,
                                        std::placeholders::_2,

@@ -18,7 +18,7 @@ void check_che_op<FPTYPE, Device>::operator()(const int& nche_in,
                                               const int& nbands_sto,
                                               K_Vectors* p_kv,
                                               Stochastic_WF<std::complex<FPTYPE>, Device>* p_stowf,
-                                              hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>* p_hamilt_sto)
+                                              StoHamiltPW<std::complex<FPTYPE>, Device>* p_hamilt_sto)
 {
     //------------------------------
     //      Convergence test
@@ -78,7 +78,7 @@ void check_che_op<FPTYPE, Device>::operator()(const int& nche_in,
             while (true)
             {
                 bool converge;
-                auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>::hPsi_norm,
+                auto hchi_norm = std::bind(&StoHamiltPW<std::complex<FPTYPE>, Device>::hPsi_norm,
                                            p_hamilt_sto,
                                            std::placeholders::_1,
                                            std::placeholders::_2,
