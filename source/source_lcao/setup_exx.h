@@ -31,22 +31,22 @@ class Exx_NAO
 
     void init(const UnitCell& ucell, Exx_Info& exx_info);
 
-	void before_runner(
-			UnitCell& ucell, // unitcell
-			K_Vectors &kv, // k points
+    void before_runner(
+            UnitCell& ucell, // unitcell
+            K_Vectors &kv, // k points
             const LCAO_Orbitals &orb, // orbital info
-			const Parallel_Orbitals &pv, // parallel orbitals
-			const Input_para& inp,
-			Exx_Info& exx_info);
+            const Parallel_Orbitals &pv, // parallel orbitals
+            const Input_para& inp,
+            Exx_Info& exx_info);
 
-	void before_scf(
-			const UnitCell &ucell, // unitcell
-			const K_Vectors &kv,
-			const LCAO_Orbitals &orb, // orbital info
-			Charge_Mixing* p_chgmix,
-			const int istep,
-			const Input_para& inp,
-			Exx_Info& exx_info);
+    void before_scf(
+            const UnitCell &ucell, // unitcell
+            const K_Vectors &kv,
+            const LCAO_Orbitals &orb, // orbital info
+            Charge_Mixing* p_chgmix,
+            const int istep,
+            const Input_para& inp,
+            Exx_Info& exx_info);
 
 };
 

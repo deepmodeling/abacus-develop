@@ -1,5 +1,5 @@
 /**
- * @file NDArray.h
+ * @file ndarray.h
  * @author your name (you@domain.com)
  * @brief under the restriction of C++11, a simple alternative to std::vector<T> + std::mdspan. In source_base/module_container/ATen/tensor.h, tensor class provides a cross-device container, but std::string is not supported. Therefore, this class is to provide a general (but CPU-only) container for multi-dimensional data. It can easily convert to ontainer::Tensor.
  * @version 0.1

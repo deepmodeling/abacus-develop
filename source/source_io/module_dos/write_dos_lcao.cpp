@@ -11,12 +11,12 @@ namespace ModuleIO
 template <typename T>
 void write_dos_lcao(
         const psi::Psi<T>* psi,
-		hamilt::Hamilt<T>* p_ham,
+        hamilt::Hamilt<T>* p_ham,
         const Parallel_Orbitals &pv, 
         const UnitCell& ucell,
-		const K_Vectors& kv,
-		const int nbands,
-		const elecstate::Efermi &energy_fermi,
+        const K_Vectors& kv,
+        const int nbands,
+        const elecstate::Efermi &energy_fermi,
         const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,
         const double& dos_edelta_ev,
@@ -33,15 +33,15 @@ void write_dos_lcao(
     double emax = 0.0;
     double emin = 0.0;
 
-	prepare_dos(ofs_running,
-			energy_fermi,
-			ekb,
-			kv.get_nks(),
-			nbands,
-			dos_edelta_ev,
-			dos_scale,
-			emax,
-			emin);
+    prepare_dos(ofs_running,
+            energy_fermi,
+            ekb,
+            kv.get_nks(),
+            nbands,
+            dos_edelta_ev,
+            dos_scale,
+            emax,
+            emin);
 
     // output the DOS file.
     for (int is = 0; is < nspin0; ++is)
@@ -50,44 +50,44 @@ void write_dos_lcao(
 
         ss << PARAM.globalv.global_out_dir << "doss" << is + 1;
 
-		if(istep>=0)
-		{
+        if(istep>=0)
+        {
             ss << "g" << istep+1;
-		}
+        }
 
         ss << "_nao.txt";
 
-		ModuleIO::cal_dos(is,
-				ss.str(),
-				dos_edelta_ev,
-				emax,
-				emin,
-				bcoeff,
-				kv.get_nks(),
-				kv.get_nkstot(),
-				kv.wk,
-				kv.isk,
-				nbands,
-				ekb,
-				wg,
-				istep);
-	}
+        ModuleIO::cal_dos(is,
+                ss.str(),
+                dos_edelta_ev,
+                emax,
+                emin,
+                bcoeff,
+                kv.get_nks(),
+                kv.get_nkstot(),
+                kv.wk,
+                kv.isk,
+                nbands,
+                ekb,
+                wg,
+                istep);
+    }
 
 
     if (PARAM.inp.out_dos == 2)
     {
-		cal_pdos(psi,
-				p_ham,
-				pv,
-				ucell,
-				kv,
-				nspin0,
-				nbands,
-				ekb,
-				emax,
-				emin,
-				dos_edelta_ev,
-				bcoeff);
+        cal_pdos(psi,
+                p_ham,
+                pv,
+                ucell,
+                kv,
+                nspin0,
+                nbands,
+                ekb,
+                emax,
+                emin,
+                dos_edelta_ev,
+                bcoeff);
     }
 
     if(PARAM.inp.out_dos == 3)
@@ -108,12 +108,12 @@ void write_dos_lcao(
 
 template void write_dos_lcao(
         const psi::Psi<double>* psi,
-		hamilt::Hamilt<double>* p_ham,
+        hamilt::Hamilt<double>* p_ham,
         const Parallel_Orbitals &pv, 
         const UnitCell& ucell,
-		const K_Vectors& kv,
-		const int nbands,
-		const elecstate::Efermi &energy_fermi,
+        const K_Vectors& kv,
+        const int nbands,
+        const elecstate::Efermi &energy_fermi,
         const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,
         const double& dos_edelta_ev,
@@ -126,12 +126,12 @@ template void write_dos_lcao(
 
 template void write_dos_lcao(
         const psi::Psi<std::complex<double>>* psi,
-		hamilt::Hamilt<std::complex<double>>* p_ham,
+        hamilt::Hamilt<std::complex<double>>* p_ham,
         const Parallel_Orbitals &pv, 
         const UnitCell& ucell,
-		const K_Vectors& kv,
-		const int nbands,
-		const elecstate::Efermi &energy_fermi,
+        const K_Vectors& kv,
+        const int nbands,
+        const elecstate::Efermi &energy_fermi,
         const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,
         const double& dos_edelta_ev,

@@ -104,11 +104,11 @@ bool ModuleIO::read_wfc_nao(
     const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<T>& psid,
-	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& ekb,
     ModuleBase::matrix& wg,
-	const std::vector<int> &ik2iktot,
-	const int nkstot,
-	const int nspin,
+    const std::vector<int> &ik2iktot,
+    const int nkstot,
+    const int nspin,
     const bool binary,
     const int skip_band,
     const int istep)
@@ -154,10 +154,10 @@ bool ModuleIO::read_wfc_nao(
     }
 
     // lambda function to read one file
-	auto read_one_file = [&](const std::string& ss, 
-			std::stringstream& error_message, 
-			const int ik, 
-			std::vector<T>& ctot)
+    auto read_one_file = [&](const std::string& ss, 
+            std::stringstream& error_message, 
+            const int ik, 
+            std::vector<T>& ctot)
     {
         std::ifstream ifs;
         const std::ios_base::openmode mode
@@ -169,9 +169,9 @@ bool ModuleIO::read_wfc_nao(
             return false;
         }
         else
-		{
+        {
             std::cout << " Read NAO wave functions from " << ss << std::endl;
-		}
+        }
 
         const auto incomplete_file = [&](const std::string& field) {
             error_message << "The wave function file is incomplete or corrupted while reading "
@@ -183,9 +183,9 @@ bool ModuleIO::read_wfc_nao(
         if (!gamma_only)
         {
             int ik_file = 0;
-			double kx = 0.0;
-			double ky = 0.0;
-			double kz = 0.0;
+            double kx = 0.0;
+            double ky = 0.0;
+            double kz = 0.0;
             if (!read_record_value(ifs, ik_file, binary))
             {
                 return incomplete_file("the k-point index");
@@ -282,15 +282,15 @@ bool ModuleIO::read_wfc_nao(
 
     std::string errors;
 
-	std::vector<T> ctot;
-	if (myrank == 0) 
-	{
-		ctot.resize(nbands * nlocal);
-	}
-	else
-	{
-		ctot.resize(0);
-	}
+    std::vector<T> ctot;
+    if (myrank == 0) 
+    {
+        ctot.resize(nbands * nlocal);
+    }
+    else
+    {
+        ctot.resize(0);
+    }
 
     for(int ik=0;ik<nk;ik++)
     {
@@ -351,11 +351,11 @@ bool ModuleIO::read_wfc_nao(
 template bool ModuleIO::read_wfc_nao<double>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<double>& psid,
-	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& ekb,
     ModuleBase::matrix& wg,
-	const std::vector<int> &ik2iktot,
-	const int nkstot,
-	const int nspin,
+    const std::vector<int> &ik2iktot,
+    const int nkstot,
+    const int nspin,
     const bool binary,
     const int skip_band,
     const int istep);
@@ -364,36 +364,36 @@ template bool ModuleIO::read_wfc_nao<double>(const std::string& global_readin_di
 template bool ModuleIO::read_wfc_nao<float>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
     psi::Psi<float>& psid,
-	ModuleBase::matrix& ekb,
+    ModuleBase::matrix& ekb,
     ModuleBase::matrix& wg,
-	const std::vector<int> &ik2iktot,
-	const int nkstot,
-	const int nspin,
+    const std::vector<int> &ik2iktot,
+    const int nkstot,
+    const int nspin,
     const bool binary,
     const int skip_band,
     const int istep);
 
 template bool ModuleIO::read_wfc_nao<std::complex<double>>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
-	psi::Psi<std::complex<double>>& psid,
-	ModuleBase::matrix& ekb,
+    psi::Psi<std::complex<double>>& psid,
+    ModuleBase::matrix& ekb,
     ModuleBase::matrix& wg,
-	const std::vector<int> &ik2iktot,
-	const int nkstot,
-	const int nspin,
+    const std::vector<int> &ik2iktot,
+    const int nkstot,
+    const int nspin,
     const bool binary,
-	const int skip_band,
+    const int skip_band,
     const int istep);
 
 // mohan add 2025-10-19
 template bool ModuleIO::read_wfc_nao<std::complex<float>>(const std::string& global_readin_dir,
     const Parallel_Orbitals& ParaV,
-	psi::Psi<std::complex<float>>& psid,
-	ModuleBase::matrix& ekb,
+    psi::Psi<std::complex<float>>& psid,
+    ModuleBase::matrix& ekb,
     ModuleBase::matrix& wg,
-	const std::vector<int> &ik2iktot,
-	const int nkstot,
-	const int nspin,
+    const std::vector<int> &ik2iktot,
+    const int nkstot,
+    const int nspin,
     const bool binary,
-	const int skip_band,
+    const int skip_band,
     const int istep);

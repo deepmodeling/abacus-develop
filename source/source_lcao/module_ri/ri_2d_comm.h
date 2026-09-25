@@ -54,8 +54,8 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
     const int nspin,
     const bool spgsym = false);
 
-	// judge[is] = {s0, s1}
-	extern std::vector<std::tuple<std::set<TA>, std::set<TA>>>
+    // judge[is] = {s0, s1}
+    extern std::vector<std::tuple<std::set<TA>, std::set<TA>>>
         get_2D_judge(const UnitCell& ucell, const Parallel_2D& pv);
 
     template<typename Tdata, typename TK>
@@ -78,19 +78,19 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
                       hamilt::HContainer<TR>& HlocR,
                       const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest = nullptr);
 
-	template<typename Tdata>
-	extern std::vector<std::vector<Tdata>> Hexxs_to_Hk(
-			const K_Vectors &kv,
-			const Parallel_Orbitals &pv,
-			const std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
-			const int ik);
-	template<typename Tdata>
-	std::vector<std::vector<Tdata>> pulay_mixing(
-		const Parallel_Orbitals &pv,
-		std::deque<std::vector<std::vector<Tdata>>> &Hk_seq,
-		const std::vector<std::vector<Tdata>> &Hk_new,
-		const double mixing_beta,
-		const std::string mixing_mode);
+    template<typename Tdata>
+    extern std::vector<std::vector<Tdata>> Hexxs_to_Hk(
+            const K_Vectors &kv,
+            const Parallel_Orbitals &pv,
+            const std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
+            const int ik);
+    template<typename Tdata>
+    std::vector<std::vector<Tdata>> pulay_mixing(
+        const Parallel_Orbitals &pv,
+        std::deque<std::vector<std::vector<Tdata>>> &Hk_seq,
+        const std::vector<std::vector<Tdata>> &Hk_new,
+        const double mixing_beta,
+        const std::string mixing_mode);
 
     // DM(R) format conversion: the real-space (DM(R)) counterpart of split_m2D_ktoR,
     // and the inverse of add_HexxR. dm_container is DensityMatrix::get_dmr_vec():
@@ -105,11 +105,11 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
         const int nspin);
 
 //private:
-	extern std::vector<int> get_ik_list(const K_Vectors &kv, const int is_k);
-	extern inline std::tuple<int,int,int> get_iat_iw_is_block(const UnitCell& ucell,const int& iwt);
-	extern inline int get_is_block(const int is_k, const int is_row_b, const int is_col_b);
-	extern inline std::tuple<int,int> split_is_block(const int is_b);
-	extern inline int get_iwt(const UnitCell& ucell, const int iat, const int iw_b, const int is_b);
+    extern std::vector<int> get_ik_list(const K_Vectors &kv, const int is_k);
+    extern inline std::tuple<int,int,int> get_iat_iw_is_block(const UnitCell& ucell,const int& iwt);
+    extern inline int get_is_block(const int is_k, const int is_row_b, const int is_col_b);
+    extern inline std::tuple<int,int> split_is_block(const int is_b);
+    extern inline int get_iwt(const UnitCell& ucell, const int iat, const int iw_b, const int is_b);
 
     template <typename TA, typename TAC, typename T>
     extern std::map<TA, std::map<TAC, T>> comm_map2_first(const MPI_Comm& mpi_comm,

@@ -13,7 +13,7 @@ __global__ void xc_functional_grad_wfc(
     const int pol,
     const int npw,
     const int npwx,
-	const T tpiba,
+    const T tpiba,
     const T* gcar,
     const T* kvec_c,
     const thrust::complex<T>* rhog,
@@ -21,12 +21,12 @@ __global__ void xc_functional_grad_wfc(
 {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
     if (idx >= npw) { return; }
-	// the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
-	// double kplusg = wfc_basis->getgpluskcar(ik,ig)[ipol] * tpiba;
+    // the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
+    // double kplusg = wfc_basis->getgpluskcar(ik,ig)[ipol] * tpiba;
     T kplusg = (gcar[(ik * npwx + idx) * 3 + pol] +
                    kvec_c[ik * 3 + pol]) * tpiba;
-	// calculate the charge density gradient in reciprocal space.
-	porter[idx] = thrust::complex<T>(0.0, kplusg) * rhog[idx];
+    // calculate the charge density gradient in reciprocal space.
+    porter[idx] = thrust::complex<T>(0.0, kplusg) * rhog[idx];
 }
 
 template <typename T>
@@ -47,7 +47,7 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
     const int& pol,
     const int& npw,
     const int& npwx,
-	const Real& tpiba,
+    const Real& tpiba,
     const Real * gcar,
     const Real * kvec_c,
     const T * rhog,

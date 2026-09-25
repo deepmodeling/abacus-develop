@@ -23,220 +23,220 @@ void YlmReal::rlylm
     const int lmax, 	
     const double& x,				
     const double& y,
-	const double& z, // g_cartesian_vec(x,y,z)
+    const double& z, // g_cartesian_vec(x,y,z)
     double* rly 	 // output
 )
 {
-	ModuleBase::timer::start("YlmReal","rlylm");
+    ModuleBase::timer::start("YlmReal","rlylm");
 
-	assert(lmax >= 0);
+    assert(lmax >= 0);
 
-	//get xy_dependence
-	assert(lmax <= 19);
-	
-	double Am[20];
-	double Bm[20];
+    //get xy_dependence
+    assert(lmax <= 19);
+    
+    double Am[20];
+    double Bm[20];
 
-	// mohan add 2021-05-07
-	for(int i=0; i<20; ++i)
-	{
-		Am[i]=0.0;
-		Bm[i]=0.0;
-	}
-	
-	//ZEROS(Am, 20);
-	//ZEROS(Bm, 20);
-	
-	double x2, x3, x4, x5;
-	double y2, y3, y4, y5;
-	
-	x2 = x * x;
-	x3 = x2 * x;
-	x4 = x3 * x;
-	x5 = x4 * x;
+    // mohan add 2021-05-07
+    for(int i=0; i<20; ++i)
+    {
+        Am[i]=0.0;
+        Bm[i]=0.0;
+    }
+    
+    //ZEROS(Am, 20);
+    //ZEROS(Bm, 20);
+    
+    double x2, x3, x4, x5;
+    double y2, y3, y4, y5;
+    
+    x2 = x * x;
+    x3 = x2 * x;
+    x4 = x3 * x;
+    x5 = x4 * x;
 
-	y2 = y * y;
-	y3 = y2 * y;
-	y4 = y3 * y;
-	y5 = y4 * y;
-		
-	//x-y dependence
-	//Am
-	//Bm
-	for(int im = 0; im < lmax+1; im++)
-	{
-		if(im == 0)
-		{
-			Am[0] = 1.0; 
-			Bm[0] = 0.0;
-		}
-		else if(im == 1)
-		{
-			Am[1] = x; 
-			Bm[1] = y;
-		}
-		else if(im == 2)
-		{
-			Am[2] = x2- y2; 
-			Bm[2] = 2.0 * x * y;
-		}
-		else if(im == 3)
-		{
-			Am[3] = x3 - 3.0 * x * y2;
-			Bm[3] = 3.0 * x2 * y - y3;
-		}
-		else if(im == 4)
-		{
-			Am[4] = x4 - 6.0 * x2 * y2 + y4;
-			Bm[4] = 4.0 * (x3 * y - x * y3);
-		}
-		else if(im == 5)
-		{
-			Am[5] = x5 - 10.0 * x3 * y2 + 5.0 * x * y4;
-			Bm[5] = 5.0 * x4 * y - 10.0 * x2 * y3 + y5;
-		}
-		else
-		{
-			for(int ip = 0; ip <= im; ip++)
-			{
-				double aux = Fact(im) / Fact(ip) / Fact(im - ip);
-				Am[im] += aux * pow(x, ip) * pow(y, im-ip) * cos( (im-ip) * ModuleBase::PI / 2.0 );
-				Bm[im] += aux * pow(x, ip) * pow(y, im-ip) * sin( (im-ip) * ModuleBase::PI / 2.0 );
-			}
-		}
-	}
-			
-	//z dependence
-	double zdep[20][20];
-	
-	for(int il = 0; il < 20; il++)
-	{
-		for(int jl=0; jl < 20; jl++)
-		{
-			zdep[il][jl]=0.0; // mohan add 2021-05-07
-		}
+    y2 = y * y;
+    y3 = y2 * y;
+    y4 = y3 * y;
+    y5 = y4 * y;
+        
+    //x-y dependence
+    //Am
+    //Bm
+    for(int im = 0; im < lmax+1; im++)
+    {
+        if(im == 0)
+        {
+            Am[0] = 1.0; 
+            Bm[0] = 0.0;
+        }
+        else if(im == 1)
+        {
+            Am[1] = x; 
+            Bm[1] = y;
+        }
+        else if(im == 2)
+        {
+            Am[2] = x2- y2; 
+            Bm[2] = 2.0 * x * y;
+        }
+        else if(im == 3)
+        {
+            Am[3] = x3 - 3.0 * x * y2;
+            Bm[3] = 3.0 * x2 * y - y3;
+        }
+        else if(im == 4)
+        {
+            Am[4] = x4 - 6.0 * x2 * y2 + y4;
+            Bm[4] = 4.0 * (x3 * y - x * y3);
+        }
+        else if(im == 5)
+        {
+            Am[5] = x5 - 10.0 * x3 * y2 + 5.0 * x * y4;
+            Bm[5] = 5.0 * x4 * y - 10.0 * x2 * y3 + y5;
+        }
+        else
+        {
+            for(int ip = 0; ip <= im; ip++)
+            {
+                double aux = Fact(im) / Fact(ip) / Fact(im - ip);
+                Am[im] += aux * pow(x, ip) * pow(y, im-ip) * cos( (im-ip) * ModuleBase::PI / 2.0 );
+                Bm[im] += aux * pow(x, ip) * pow(y, im-ip) * sin( (im-ip) * ModuleBase::PI / 2.0 );
+            }
+        }
+    }
+            
+    //z dependence
+    double zdep[20][20];
+    
+    for(int il = 0; il < 20; il++)
+    {
+        for(int jl=0; jl < 20; jl++)
+        {
+            zdep[il][jl]=0.0; // mohan add 2021-05-07
+        }
 //		ZEROS(zdep[il], 20);
-	}
+    }
 
-	double z2 = z * z;
-	double z3 = z2 * z;
-	double z4 = z3 * z;
-	//double z5 = z4 * z;
-	
-	double r = sqrt(x*x + y*y + z*z);
-	double r2 = r * r;
-	double r3 = r2 * r;
-	double r4 = r3 * r;
-	
-	for(int il = 0; il < lmax + 1; il++)
-	{
-		if(il == 0)
-		{
-			zdep[0][0] = 1.0;
-		}
-		else if(il == 1)
-		{
-			zdep[1][0] = z;
-			zdep[1][1] = 1.0;
-		}
-		else if(il == 2)
-		{
-			zdep[2][0] = 0.5 * (3.0 * z2 - r2);
-			zdep[2][1] = sqrt(3.0) * z;
-			zdep[2][2] = sqrt(3.0) * 0.5;
-		}
-		else if(il == 3)
-		{
-			zdep[3][0] = 2.5 * z3 - 1.5 * z * r2;
-			zdep[3][1] = 0.25 * sqrt(6.0) * (5.0 * z2 - r2);
-			zdep[3][2] = 0.5 * sqrt(15.0) * z;
-			zdep[3][3] = 0.25 * sqrt(10.0);
-		}
-		else if(il == 4)
-		{
-			zdep[4][0] = 0.125 * (35.0 * z4 - 30.0 * r2 * z2 + 3.0 * r4);
-			zdep[4][1] = sqrt(10.0) * 0.25 * z * (7.0 * z2 - 3.0 * r2);
-			zdep[4][2] = sqrt(5.0) * 0.25 * (7.0 * z2 - r2);
-			zdep[4][3] = sqrt(70.0) * 0.25 * z;
-			zdep[4][4] = sqrt(35.0) * 0.125;
-		}
-		else if(il == 5)
-		{
-			zdep[5][0] = 0.125 * z *( 63.0 * z4 - 70.0 * z2 * r2 + 15.0 * r4);
-			zdep[5][1] = 0.125 * sqrt(15.0) * (21.0 * z4 - 14.0 * z2 * r2 + r4);
-			zdep[5][2] = 0.25 * sqrt(105.0) * z * (3.0 * z2 - r2);
-			zdep[5][3] = 0.0625 * sqrt(70.0) * (9.0 * z2 - r2);
-			zdep[5][4] = 0.375 * sqrt(35.0) * z;
-			zdep[5][5] = 0.1875 * sqrt(14.0);
-		}
-		else
-		{
-			for(int im = 0; im <= il; im++)
-			{
-				int kmax = static_cast<int>( (il - im) / 2 );
-				for(int ik = 0; ik <= kmax; ik++)
-				{
-					int twok = 2 * ik;
-				
-					double gamma = 0.0;
-					double aux0, aux1, aux2, aux3;
-				
-					aux0 = pow(-1.0, ik) * pow(2.0, -il);
-					aux1 = Fact(il) / Fact(ik) / Fact(il-ik);
-					aux2 = Fact(2*il - twok) / Fact(il) / Fact(il - twok);
-					aux3 = Fact(il - twok) / Fact(il - twok - im);
-				
-					gamma = aux0 * aux1 * aux2 * aux3;
-					
-					assert(il - twok - im >= 0);
-					zdep[il][im] += pow(r, twok) * pow(z, il-twok-im) * gamma;
-				}
+    double z2 = z * z;
+    double z3 = z2 * z;
+    double z4 = z3 * z;
+    //double z5 = z4 * z;
+    
+    double r = sqrt(x*x + y*y + z*z);
+    double r2 = r * r;
+    double r3 = r2 * r;
+    double r4 = r3 * r;
+    
+    for(int il = 0; il < lmax + 1; il++)
+    {
+        if(il == 0)
+        {
+            zdep[0][0] = 1.0;
+        }
+        else if(il == 1)
+        {
+            zdep[1][0] = z;
+            zdep[1][1] = 1.0;
+        }
+        else if(il == 2)
+        {
+            zdep[2][0] = 0.5 * (3.0 * z2 - r2);
+            zdep[2][1] = sqrt(3.0) * z;
+            zdep[2][2] = sqrt(3.0) * 0.5;
+        }
+        else if(il == 3)
+        {
+            zdep[3][0] = 2.5 * z3 - 1.5 * z * r2;
+            zdep[3][1] = 0.25 * sqrt(6.0) * (5.0 * z2 - r2);
+            zdep[3][2] = 0.5 * sqrt(15.0) * z;
+            zdep[3][3] = 0.25 * sqrt(10.0);
+        }
+        else if(il == 4)
+        {
+            zdep[4][0] = 0.125 * (35.0 * z4 - 30.0 * r2 * z2 + 3.0 * r4);
+            zdep[4][1] = sqrt(10.0) * 0.25 * z * (7.0 * z2 - 3.0 * r2);
+            zdep[4][2] = sqrt(5.0) * 0.25 * (7.0 * z2 - r2);
+            zdep[4][3] = sqrt(70.0) * 0.25 * z;
+            zdep[4][4] = sqrt(35.0) * 0.125;
+        }
+        else if(il == 5)
+        {
+            zdep[5][0] = 0.125 * z *( 63.0 * z4 - 70.0 * z2 * r2 + 15.0 * r4);
+            zdep[5][1] = 0.125 * sqrt(15.0) * (21.0 * z4 - 14.0 * z2 * r2 + r4);
+            zdep[5][2] = 0.25 * sqrt(105.0) * z * (3.0 * z2 - r2);
+            zdep[5][3] = 0.0625 * sqrt(70.0) * (9.0 * z2 - r2);
+            zdep[5][4] = 0.375 * sqrt(35.0) * z;
+            zdep[5][5] = 0.1875 * sqrt(14.0);
+        }
+        else
+        {
+            for(int im = 0; im <= il; im++)
+            {
+                int kmax = static_cast<int>( (il - im) / 2 );
+                for(int ik = 0; ik <= kmax; ik++)
+                {
+                    int twok = 2 * ik;
+                
+                    double gamma = 0.0;
+                    double aux0, aux1, aux2, aux3;
+                
+                    aux0 = pow(-1.0, ik) * pow(2.0, -il);
+                    aux1 = Fact(il) / Fact(ik) / Fact(il-ik);
+                    aux2 = Fact(2*il - twok) / Fact(il) / Fact(il - twok);
+                    aux3 = Fact(il - twok) / Fact(il - twok - im);
+                
+                    gamma = aux0 * aux1 * aux2 * aux3;
+                    
+                    assert(il - twok - im >= 0);
+                    zdep[il][im] += pow(r, twok) * pow(z, il-twok-im) * gamma;
+                }
 
-				if(im >= 1)
-				{
-					zdep[il][im] *= sqrt(2 * Fact(il - im) / Fact(il + im));
-					
-				}
-			}
-		}			
-	}
+                if(im >= 1)
+                {
+                    zdep[il][im] *= sqrt(2 * Fact(il - im) / Fact(il + im));
+                    
+                }
+            }
+        }			
+    }
 
-	//calc
-	int ic = 0;
+    //calc
+    int ic = 0;
 
-	//special case for r=0
-	double rpi = r;
-	const double tiny =  1.0E-10;
-	if (rpi < tiny) rpi += tiny;
-	
-	for(int il = 0; il <= lmax; il++)
-	{
-		double fac = sqrt( (2.0 * il + 1.0) / ModuleBase::FOUR_PI );
+    //special case for r=0
+    double rpi = r;
+    const double tiny =  1.0E-10;
+    if (rpi < tiny) rpi += tiny;
+    
+    for(int il = 0; il <= lmax; il++)
+    {
+        double fac = sqrt( (2.0 * il + 1.0) / ModuleBase::FOUR_PI );
 
-		double rl = pow(rpi, il);
-			
-		//m=0
-		rly[ic] = Am[0] * zdep[il][0] * fac / rl;
-		
-		ic++;
-		
-		//m ! = 0
-		for(int im = 1; im <= il; im++)
-		{
-			//m>0
-			rly[ic] = Am[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
-			
-			ic++;
-			
-			//m<0
-			rly[ic] = Bm[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
+        double rl = pow(rpi, il);
+            
+        //m=0
+        rly[ic] = Am[0] * zdep[il][0] * fac / rl;
+        
+        ic++;
+        
+        //m ! = 0
+        for(int im = 1; im <= il; im++)
+        {
+            //m>0
+            rly[ic] = Am[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
+            
+            ic++;
+            
+            //m<0
+            rly[ic] = Bm[im] * zdep[il][im] * pow(-1.0, im) * fac / rl;
 
-			ic++;
-		}
-	}
+            ic++;
+        }
+    }
 
-	ModuleBase::timer::end("YlmReal","rlylm");
-	return;
+    ModuleBase::timer::end("YlmReal","rlylm");
+    return;
 }
 
 
@@ -276,19 +276,19 @@ void YlmReal::Ylm_Real2
 //----------------------------------------------------------
 //	Start CALC
 //----------------------------------------------------------
-	std::vector<double> rly(lmax2);
-	
-	for (int ig = 0; ig < ng; ig++)
-	{
-		rlylm (lmax, g[ig].x, g[ig].y, g[ig].z, rly.data());
-		
-		for (int lm = 0; lm < lmax2; lm++)
-		{
-			ylm (lm, ig) = rly[lm];
-		}
-	}
+    std::vector<double> rly(lmax2);
+    
+    for (int ig = 0; ig < ng; ig++)
+    {
+        rlylm (lmax, g[ig].x, g[ig].y, g[ig].z, rly.data());
+        
+        for (int lm = 0; lm < lmax2; lm++)
+        {
+            ylm (lm, ig) = rly[lm];
+        }
+    }
 
-	return;
+    return;
 }
 
 //==========================================================
@@ -406,8 +406,8 @@ void YlmReal::Ylm_Real
 // NAME : cost = cos(theta),theta and phi are polar angles
 // NAME : phi
 //----------------------------------------------------------
-	std::vector <double> cost(ng);
-	std::vector <double> phi(ng);
+    std::vector <double> cost(ng);
+    std::vector <double> phi(ng);
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -529,10 +529,10 @@ void YlmReal::Ylm_Real
 #endif
             for (int i=0;i<ng;i++)
             {
-				double sinp, cosp;
+                double sinp, cosp;
                 ModuleBase::libm::sincos(m * phi[i], &sinp, &cosp);
                 ylm(lm, i) = same * p(m,l,i) * cosp;
-				ylm(lm + 1, i) = same * p(m,l,i) * sinp;
+                ylm(lm + 1, i) = same * p(m,l,i) * sinp;
             }
 
             // Y_lm, m < 0
@@ -543,20 +543,20 @@ void YlmReal::Ylm_Real
              *
             if(l==9 && m==8)
             {
-            	if(my_rank==0)
-            	{
-            		std::ofstream ofs("Log2.txt");
-            		for(int ig=0; ig<ng; ig++)
-            		{
-            			if(ig%1==0) ofs << "\n";
-            			ofs << std::setw(20) << same
-            				<< std::setw(20) << Fact(l - m)
-            				<< std::setw(20) << Fact(l + m)
-            				<< std::setw(20) << ylm(lm, ig);
-            		}
-            	}
-            	MPI_Barrier(MPI_COMM_WORLD);
-            	ModuleBase::QUIT();
+                if(my_rank==0)
+                {
+                    std::ofstream ofs("Log2.txt");
+                    for(int ig=0; ig<ng; ig++)
+                    {
+                        if(ig%1==0) ofs << "\n";
+                        ofs << std::setw(20) << same
+                            << std::setw(20) << Fact(l - m)
+                            << std::setw(20) << Fact(l + m)
+                            << std::setw(20) << ylm(lm, ig);
+                    }
+                }
+                MPI_Barrier(MPI_COMM_WORLD);
+                ModuleBase::QUIT();
             }
             */
 
@@ -566,33 +566,33 @@ void YlmReal::Ylm_Real
 
 
     /*	GlobalV::ofs_running<<"\n Unit Condition About Ylm_Real"<<std::endl;
-    	int count=0;
-    	for(int l=0; l<=lmax; l++)
-    	{
-    		for(int m=0; m<2*l+1; m++)
-    		{
-    			//  mohan debug 2009-03-03
-    			if(l==9 && m==15)
-    			{
-    				if(my_rank==0)
-    				{
-    					std::ofstream ofs("Log1.txt");
-    					for(int ig=0; ig<ng; ig++)
-    					{
-    						if(ig%6==0) ofs << "\n";
-    						ofs << std::setw(20) << ylm(count, ig);
-    					}
-    				}
-    				MPI_Barrier(MPI_COMM_WORLD);
-    				ModuleBase::QUIT();
-    			}
-    			double sum_before = 0.0;
-    			for(int ig=0; ig<ng; ig++)
-    			{
-    				sum_before += ylm(count, ig) * ylm(count, ig);
-    			}
-    			sum_before *= ModuleBase::FOUR_PI/ng;
-    			GlobalV::ofs_running<<std::setw(5)<<l<<std::setw(5)<<m<<std::setw(15)<<sum_before;
+        int count=0;
+        for(int l=0; l<=lmax; l++)
+        {
+            for(int m=0; m<2*l+1; m++)
+            {
+                //  mohan debug 2009-03-03
+                if(l==9 && m==15)
+                {
+                    if(my_rank==0)
+                    {
+                        std::ofstream ofs("Log1.txt");
+                        for(int ig=0; ig<ng; ig++)
+                        {
+                            if(ig%6==0) ofs << "\n";
+                            ofs << std::setw(20) << ylm(count, ig);
+                        }
+                    }
+                    MPI_Barrier(MPI_COMM_WORLD);
+                    ModuleBase::QUIT();
+                }
+                double sum_before = 0.0;
+                for(int ig=0; ig<ng; ig++)
+                {
+                    sum_before += ylm(count, ig) * ylm(count, ig);
+                }
+                sum_before *= ModuleBase::FOUR_PI/ng;
+                GlobalV::ofs_running<<std::setw(5)<<l<<std::setw(5)<<m<<std::setw(15)<<sum_before;
 
 
     //			for(int ig=0; ig<ng; ig++)
@@ -607,10 +607,10 @@ void YlmReal::Ylm_Real
     //			count++;
     //			GlobalV::ofs_running<<std::setw(15)<<sum*ModuleBase::FOUR_PI/ng;
 
-    			GlobalV::ofs_running<<std::endl;
-    		}
-    	}
-    	GlobalV::ofs_running<<std::endl;
+                GlobalV::ofs_running<<std::endl;
+            }
+        }
+        GlobalV::ofs_running<<std::endl;
     */
 
 
@@ -622,51 +622,51 @@ void YlmReal::grad_Ylm_Real
         const int lmax2, 		
         const int ng,				
         const ModuleBase::Vector3<double> *g, 
-		matrix &ylm,
+        matrix &ylm,
         matrix &dylmx,
-		matrix &dylmy,
-		matrix &dylmz	
+        matrix &dylmy,
+        matrix &dylmz	
     )
 {
-	ModuleBase::Ylm::set_coefficients();
-	const int lmax = int(sqrt( double(lmax2) ) + 0.1) - 1;
-	std::vector<double> tmpylm((lmax2+1) * (lmax2+1));
-	std::vector<double> tmpgylm((lmax2+1) * (lmax2+1) * 3);
+    ModuleBase::Ylm::set_coefficients();
+    const int lmax = int(sqrt( double(lmax2) ) + 0.1) - 1;
+    std::vector<double> tmpylm((lmax2+1) * (lmax2+1));
+    std::vector<double> tmpgylm((lmax2+1) * (lmax2+1) * 3);
 
-	for (int ig = 0;ig < ng;ig++)
+    for (int ig = 0;ig < ng;ig++)
     {
-		ModuleBase::Vector3<double> gg = g[ig];
+        ModuleBase::Vector3<double> gg = g[ig];
         double gmod = gg.norm();
         if (gmod < 1.0e-9)
         {
-			for(int lm = 0 ; lm < lmax2 ; ++lm)
-			{
-				if(lm == 0) 
-					ylm(lm,ig) = ModuleBase::SQRT_INVERSE_FOUR_PI;
-				else	
-					ylm(lm,ig) = 0;
-				dylmx(lm,ig) = dylmy(lm,ig) = dylmz(lm,ig) = 0;
-			}
-		}
-		else
-		{
-			Ylm::grad_rl_sph_harm(lmax2, gg.x, gg.y, gg.z, tmpylm.data(), tmpgylm.data());
-			int lm = 0;
-			for(int il = 0 ; il <= lmax ; ++il)
-			{
-				for(int im = 0; im < 2*il+1; ++im, ++lm)
-				{
-					double rlylm = tmpylm[lm];
-					ylm(lm,ig) = rlylm / pow(gmod,il);
-					dylmx(lm,ig) = ( tmpgylm[lm*3]     - il*rlylm * gg.x / pow(gmod,2) )/pow(gmod,il);
-					dylmy(lm,ig) = ( tmpgylm[lm*3 + 1] - il*rlylm * gg.y / pow(gmod,2) )/pow(gmod,il);
-					dylmz(lm,ig) = ( tmpgylm[lm*3 + 2] - il*rlylm * gg.z / pow(gmod,2) )/pow(gmod,il);
-				}
-			}
-			
-		}
-	}
-	return;
+            for(int lm = 0 ; lm < lmax2 ; ++lm)
+            {
+                if(lm == 0) 
+                    ylm(lm,ig) = ModuleBase::SQRT_INVERSE_FOUR_PI;
+                else	
+                    ylm(lm,ig) = 0;
+                dylmx(lm,ig) = dylmy(lm,ig) = dylmz(lm,ig) = 0;
+            }
+        }
+        else
+        {
+            Ylm::grad_rl_sph_harm(lmax2, gg.x, gg.y, gg.z, tmpylm.data(), tmpgylm.data());
+            int lm = 0;
+            for(int il = 0 ; il <= lmax ; ++il)
+            {
+                for(int im = 0; im < 2*il+1; ++im, ++lm)
+                {
+                    double rlylm = tmpylm[lm];
+                    ylm(lm,ig) = rlylm / pow(gmod,il);
+                    dylmx(lm,ig) = ( tmpgylm[lm*3]     - il*rlylm * gg.x / pow(gmod,2) )/pow(gmod,il);
+                    dylmy(lm,ig) = ( tmpgylm[lm*3 + 1] - il*rlylm * gg.y / pow(gmod,2) )/pow(gmod,il);
+                    dylmz(lm,ig) = ( tmpgylm[lm*3 + 2] - il*rlylm * gg.z / pow(gmod,2) )/pow(gmod,il);
+                }
+            }
+            
+        }
+    }
+    return;
 }
 
 

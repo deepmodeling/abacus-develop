@@ -80,21 +80,21 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
                                         psi_input->get_nbasis(),
                                         true);
 
-		switch (op->get_act_type())
-		{
-			case 2:
-				op->act(psi_wrapper, *this->hpsi, nbands);
-				break;
-			default:
-				op->act(nbands,
-						psi_input->get_nbasis(),
-						psi_input->get_npol(),
-						tmpsi_in,
-						this->hpsi->get_pointer(),
-						psi_input->get_current_nbas(),
-						is_first_node);
-				break;
-		}
+        switch (op->get_act_type())
+        {
+            case 2:
+                op->act(psi_wrapper, *this->hpsi, nbands);
+                break;
+            default:
+                op->act(nbands,
+                        psi_input->get_nbasis(),
+                        psi_input->get_npol(),
+                        tmpsi_in,
+                        this->hpsi->get_pointer(),
+                        psi_input->get_current_nbas(),
+                        is_first_node);
+                break;
+        }
     };
 
     ModuleBase::timer::start("Operator", "hPsi");

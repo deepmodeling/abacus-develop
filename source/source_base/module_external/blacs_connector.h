@@ -33,16 +33,16 @@
 
 extern "C"
 {
-	void Cblacs_pinfo(int *myid, int *nprocs);
-	void Cblacs_get(int icontxt, int what, int *val);
-	void Cblacs_gridmap(int* icontxt, int *usermap, int ldumap, int nprow, int npcol);
-		// Informational and Miscellaneous
-	void Cblacs_gridinfo(int icontxt, int* nprow, int *npcol, int *myprow, int *mypcol);
+    void Cblacs_pinfo(int *myid, int *nprocs);
+    void Cblacs_get(int icontxt, int what, int *val);
+    void Cblacs_gridmap(int* icontxt, int *usermap, int ldumap, int nprow, int npcol);
+        // Informational and Miscellaneous
+    void Cblacs_gridinfo(int icontxt, int* nprow, int *npcol, int *myprow, int *mypcol);
     void Cblacs_gridinit(int* icontxt, char* layout, int nprow, int npcol);
     void Cblacs_gridexit(int icontxt);
     int Cblacs_pnum(int icontxt, int prow, int pcol);
     void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
-	void Cblacs_exit(int icontxt);
+    void Cblacs_exit(int icontxt);
 
     // broadcast (send/recv)
     void Cigebs2d(int ConTxt, char *scope, char *top, int m, int n, int *A, int lda);
@@ -73,19 +73,19 @@ void Cxgebs2d(int ConTxt, char *scope, char *top, int m, int n, T *A, int lda)
         std::is_same<T,std::complex<double>>::value,
         "Type not supported");
 
-	if (std::is_same<T, int>::value) {
+    if (std::is_same<T, int>::value) {
         Cigebs2d(ConTxt, scope, top, m, n, reinterpret_cast<int*>(A), lda);
     }
-	if (std::is_same<T, float>::value) {
+    if (std::is_same<T, float>::value) {
         Csgebs2d(ConTxt, scope, top, m, n, reinterpret_cast<float*>(A), lda);
     }
-	if (std::is_same<T, double>::value) {
+    if (std::is_same<T, double>::value) {
         Cdgebs2d(ConTxt, scope, top, m, n, reinterpret_cast<double*>(A), lda);
     }
-	if (std::is_same<T, std::complex<float>>::value) {
+    if (std::is_same<T, std::complex<float>>::value) {
         Ccgebs2d(ConTxt, scope, top, m, n, reinterpret_cast<std::complex<float>*>(A), lda);
     }
-	if (std::is_same<T, std::complex<double>>::value) {
+    if (std::is_same<T, std::complex<double>>::value) {
         Czgebs2d(ConTxt, scope, top, m, n, reinterpret_cast<std::complex<double>*>(A), lda);
     }
 }
@@ -101,19 +101,19 @@ void Cxgebr2d(int ConTxt, char *scope, char *top, int m, int n, T *A, int lda, i
         std::is_same<T,std::complex<double>>::value,
         "Type not supported");
 
-	if (std::is_same<T, int>::value) {
+    if (std::is_same<T, int>::value) {
         Cigebr2d(ConTxt, scope, top, m, n, reinterpret_cast<int*>(A), lda, rsrc, csrc);
     }
-	if (std::is_same<T, float>::value) {
+    if (std::is_same<T, float>::value) {
         Csgebr2d(ConTxt, scope, top, m, n, reinterpret_cast<float*>(A), lda, rsrc, csrc);
     }
-	if (std::is_same<T, double>::value) {
+    if (std::is_same<T, double>::value) {
         Cdgebr2d(ConTxt, scope, top, m, n, reinterpret_cast<double*>(A), lda, rsrc, csrc);
     }
-	if (std::is_same<T, std::complex<float>>::value) {
+    if (std::is_same<T, std::complex<float>>::value) {
         Ccgebr2d(ConTxt, scope, top, m, n, reinterpret_cast<std::complex<float>*>(A), lda, rsrc, csrc);
     }
-	if (std::is_same<T, std::complex<double>>::value) {
+    if (std::is_same<T, std::complex<double>>::value) {
         Czgebr2d(ConTxt, scope, top, m, n, reinterpret_cast<std::complex<double>*>(A), lda, rsrc, csrc);
     }
 }

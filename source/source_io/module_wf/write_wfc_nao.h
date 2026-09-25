@@ -9,7 +9,7 @@
 namespace ModuleIO
 {
 
-	/**
+    /**
  * Writes the wavefunction coefficients for the LCAO method to a file.
  * Will loop all k-points by psi.get_nk().
  * The nbands are determined by ekb.nc.
@@ -25,16 +25,16 @@ namespace ModuleIO
  */
 template <typename T>
 void write_wfc_nao(const int out_type,
-			const bool out_app_flag,
-			const psi::Psi<T>& psi,
-			const ModuleBase::matrix& ekb,
-			const ModuleBase::matrix& wg,
-			const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-			const std::vector<int> &ik2iktot,
-			const int nkstot,
-			const Parallel_Orbitals& pv,
-			const int nspin,
-			const int istep=-1) ;
+            const bool out_app_flag,
+            const psi::Psi<T>& psi,
+            const ModuleBase::matrix& ekb,
+            const ModuleBase::matrix& wg,
+            const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+            const std::vector<int> &ik2iktot,
+            const int nkstot,
+            const Parallel_Orbitals& pv,
+            const int nspin,
+            const int istep=-1) ;
 
 void wfc_nao_write2file(const std::string& name,
                         const double* ctot,

@@ -35,8 +35,8 @@ class H_Ewald_pw
         int test_energy
     );
 
-	// the coefficient of ewald method
-	static double alpha;
+    // the coefficient of ewald method
+    static double alpha;
     static int mxr;
 
 };

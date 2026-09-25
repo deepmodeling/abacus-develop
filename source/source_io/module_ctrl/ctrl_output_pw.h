@@ -48,7 +48,7 @@ void ctrl_runner_pw(UnitCell& ucell,
         Setup_Psi_pw &stp,
         Structure_Factor &sf,
         pseudopot_cell_vnl &ppcell,
-		surchem &solvent,
+        surchem &solvent,
         Parallel_Grid &para_grid,
         const Input_para& inp);
 

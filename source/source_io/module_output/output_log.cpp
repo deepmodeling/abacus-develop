@@ -262,17 +262,17 @@ void print_force(std::ofstream& ofs_running,
                  /*nrows=*/atom_label.size(), 
                  /*formats=*/{"%8s", "%20.10f", "%20.10f", "%20.10f"}, 
                  /*indent*/1,
-			     {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
+                 {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
 
 
-	fmt << atom_label << force_x << force_y << force_z;
-	table = fmt.str();
+    fmt << atom_label << force_x << force_y << force_z;
+    table = fmt.str();
     ofs_running << table; 
 
-	if (PARAM.inp.test_force) 
-	{ 
-		std::cout << table;
-	}
+    if (PARAM.inp.test_force) 
+    { 
+        std::cout << table;
+    }
 }
 
 void print_force(std::ofstream& ofs, const MDCell& cell, const std::string& name)

@@ -42,10 +42,10 @@ void Nonlocal<OperatorPW<T, Device>>::init(const int ik_in)
     ModuleBase::timer::start("Nonlocal", "getvnl");
     this->ik = ik_in;
     // Calculate nonlocal pseudopotential vkb
-	if(this->ppcell->nkb > 0) //xiaohui add 2013-09-02. Attention...
-	{
-		this->ppcell->getvnl(this->ctx, *this->ucell, this->ik, this->vkb);
-	}
+    if(this->ppcell->nkb > 0) //xiaohui add 2013-09-02. Attention...
+    {
+        this->ppcell->getvnl(this->ctx, *this->ucell, this->ik, this->vkb);
+    }
 
     if(this->next_op != nullptr)
     {

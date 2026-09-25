@@ -131,54 +131,54 @@ void csrFileReader<T>::parseFile()
         // std::cout << " ss1: " << ss.str() << std::endl;
 
         readLine();
-	size_t count1 = 0;
+    size_t count1 = 0;
         while (count1 < nonZero)
         {
             if (ss.eof() || ss.fail())
             {
                 readLine();
-	    }
+        }
             if (ss >> csr_values[count1])
             {
                 count1++;
             }
-	}
+    }
         // std::cout << "count1=" << count1 << std::endl;
 
         // read CSR column indices
         readLine();
         // std::cout << " ss2: " << ss.str() << std::endl;
 
-	size_t count2 = 0;
+    size_t count2 = 0;
         while (count2 < nonZero)
         {
             if (ss.eof() || ss.fail())
             {
                 readLine();
-	    }
+        }
             if (ss >> csr_col_ind[count2])
             {
                 count2++;
             }
-	}
+    }
         // std::cout << "count2=" << count2 << std::endl;
 
         // read row pointers
         readLine();
         // std::cout << " ss3: " << ss.str() << std::endl;
 
-	size_t count3 = 0;
+    size_t count3 = 0;
         while (count3 < matrixDimension + 1)
         {
             if (ss.eof() || ss.fail())
             {
                 readLine();
-	    }
+        }
             if (ss >> csr_row_ptr[count3])
             {
                 count3++;
             }
-	}
+    }
         // std::cout << "count3=" << count3 << std::endl;
 
         // create sparse matrix

@@ -519,12 +519,12 @@ void berryphase::Macroscopic_polarization(const UnitCell& ucell,
 
     // calculate Macroscopic polarization modulus because berry phase
     int modulus = 0;
-	if ((!lodd) && (PARAM.inp.nspin == 1)) 
-	{
-		modulus = 2;
-	} else {
-		modulus = 1;
-	}
+    if ((!lodd) && (PARAM.inp.nspin == 1)) 
+    {
+        modulus = 2;
+    } else {
+        modulus = 1;
+    }
 
     // test by jingan
     // GlobalV::ofs_running << "ion polarization end" << std::endl;

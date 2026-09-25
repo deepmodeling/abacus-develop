@@ -20,7 +20,7 @@ class FFT_DSP : public FFT_BASE<FPTYPE>
         FFT_DSP(){};
         ~FFT_DSP(){}; 
         
-	    void setupFFT() override; 
+        void setupFFT() override; 
 
         void clear() override;
 

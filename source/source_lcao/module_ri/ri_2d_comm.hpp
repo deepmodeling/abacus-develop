@@ -44,15 +44,15 @@ auto RI_2D_Comm::split_m2D_ktoR(const UnitCell& ucell,
                                 const bool spgsym)
 -> std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
 {
-	ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR");
-	ModuleBase::timer::start("RI_2D_Comm", "split_m2D_ktoR");
-	const TC period = RI_Util::get_Born_vonKarmen_period(kv);
+    ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR");
+    ModuleBase::timer::start("RI_2D_Comm", "split_m2D_ktoR");
+    const TC period = RI_Util::get_Born_vonKarmen_period(kv);
     std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> mRs_a2D
         = (period == TC{1, 1, 1})
               ? RI_2D_Comm::split_m2D_ktoR_gamma<Tdata, Tmatrix>(ucell, mks_2D, pv, nspin)
               : RI_2D_Comm::split_m2D_ktoR_k<Tdata, Tmatrix>(ucell, kv, mks_2D, pv, nspin, spgsym);
-	ModuleBase::timer::end("RI_2D_Comm", "split_m2D_ktoR");
-	return mRs_a2D;
+    ModuleBase::timer::end("RI_2D_Comm", "split_m2D_ktoR");
+    return mRs_a2D;
 }
 
 template<typename Tdata, typename Tmatrix>
@@ -62,10 +62,10 @@ auto RI_2D_Comm::split_m2D_ktoR_gamma(const UnitCell& ucell,
                                         const int nspin)
 -> std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
 {
-	ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR_gamma");
-	ModuleBase::timer::start("RI_2D_Comm", "split_m2D_ktoR_gamma");
+    ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR_gamma");
+    ModuleBase::timer::start("RI_2D_Comm", "split_m2D_ktoR_gamma");
 
-	const std::map<int,int> nspin_k = {{1,1}, {2,2}, {4,1}};
+    const std::map<int,int> nspin_k = {{1,1}, {2,2}, {4,1}};
     const double SPIN_multiple = std::map<int, double>{ {1,0.5}, {2,1}, {4,1} }.at(nspin);							// why?
     const TC cell = {0, 0, 0};
 
@@ -144,8 +144,8 @@ auto RI_2D_Comm::split_m2D_ktoR_gamma(const UnitCell& ucell,
             }
     #endif
 
-	ModuleBase::timer::end("RI_2D_Comm", "split_m2D_ktoR_gamma");
-	return mRs_a2D;
+    ModuleBase::timer::end("RI_2D_Comm", "split_m2D_ktoR_gamma");
+    return mRs_a2D;
 }
 
 template<typename Tdata, typename Tmatrix>
@@ -157,11 +157,11 @@ auto RI_2D_Comm::split_m2D_ktoR_k(const UnitCell& ucell,
                                         const bool spgsym)
 -> std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
 {
-	ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR_k");
-	ModuleBase::timer::start("RI_2D_Comm", "split_m2D_ktoR_k");
+    ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR_k");
+    ModuleBase::timer::start("RI_2D_Comm", "split_m2D_ktoR_k");
 
-	const TC period = RI_Util::get_Born_vonKarmen_period(kv);
-	const std::map<int,int> nspin_k = {{1,1}, {2,2}, {4,1}};
+    const TC period = RI_Util::get_Born_vonKarmen_period(kv);
+    const std::map<int,int> nspin_k = {{1,1}, {2,2}, {4,1}};
     const double SPIN_multiple = std::map<int, double>{ {1,0.5}, {2,1}, {4,1} }.at(nspin);							// why?
 
     std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> mRs_a2D(nspin);
@@ -258,100 +258,100 @@ auto RI_2D_Comm::split_m2D_ktoR_k(const UnitCell& ucell,
                     }
         }
     } // end #pragma omp parallel
-	ModuleBase::timer::end("RI_2D_Comm", "split_m2D_ktoR_k");
-	return mRs_a2D;
+    ModuleBase::timer::end("RI_2D_Comm", "split_m2D_ktoR_k");
+    return mRs_a2D;
 }
 
 
 template<typename Tdata, typename TK>
 void RI_2D_Comm::add_Hexx(
     const UnitCell &ucell,
-	const K_Vectors &kv,
-	const int ik,
+    const K_Vectors &kv,
+    const int ik,
     const double alpha,
-	const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
+    const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
     const Parallel_Orbitals& pv,
     TK* hk)
 {
-	ModuleBase::TITLE("RI_2D_Comm","add_Hexx");
-	ModuleBase::timer::start("RI_2D_Comm", "add_Hexx");
+    ModuleBase::TITLE("RI_2D_Comm","add_Hexx");
+    ModuleBase::timer::start("RI_2D_Comm", "add_Hexx");
 
-	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{kv.isk[ik]}}, {4,{0,1,2,3}}};
-	for(const int is_b : is_list.at(PARAM.inp.nspin))
-	{
-		int is0_b, is1_b;
-		std::tie(is0_b,is1_b) = RI_2D_Comm::split_is_block(is_b);
-		for(const auto &Hs_tmpA : Hs[is_b])
-		{
-			const TA &iat0 = Hs_tmpA.first;
-			for(const auto &Hs_tmpB : Hs_tmpA.second)
-			{
-				const TA &iat1 = Hs_tmpB.first.first;
-				const TC &cell1 = Hs_tmpB.first.second;
+    const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{kv.isk[ik]}}, {4,{0,1,2,3}}};
+    for(const int is_b : is_list.at(PARAM.inp.nspin))
+    {
+        int is0_b, is1_b;
+        std::tie(is0_b,is1_b) = RI_2D_Comm::split_is_block(is_b);
+        for(const auto &Hs_tmpA : Hs[is_b])
+        {
+            const TA &iat0 = Hs_tmpA.first;
+            for(const auto &Hs_tmpB : Hs_tmpA.second)
+            {
+                const TA &iat1 = Hs_tmpB.first.first;
+                const TC &cell1 = Hs_tmpB.first.second;
                 const std::complex<double> frac = alpha
-					* std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*ucell.latvec)) );
-				const RI::Tensor<Tdata> &H = Hs_tmpB.second;
-				for(size_t iw0_b=0; iw0_b<H.shape[0]; ++iw0_b)
-				{
-					const int iwt0 = RI_2D_Comm::get_iwt(ucell,iat0, iw0_b, is0_b);
+                    * std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*ucell.latvec)) );
+                const RI::Tensor<Tdata> &H = Hs_tmpB.second;
+                for(size_t iw0_b=0; iw0_b<H.shape[0]; ++iw0_b)
+                {
+                    const int iwt0 = RI_2D_Comm::get_iwt(ucell,iat0, iw0_b, is0_b);
                     if (pv.global2local_row(iwt0) < 0) {
                         continue;
                     }
                     for(size_t iw1_b=0; iw1_b<H.shape[1]; ++iw1_b)
-					{
-						const int iwt1 = RI_2D_Comm::get_iwt(ucell,iat1, iw1_b, is1_b);
+                    {
+                        const int iwt1 = RI_2D_Comm::get_iwt(ucell,iat1, iw1_b, is1_b);
                         if (pv.global2local_col(iwt1) < 0) {
                             continue;
                         }
                         LCAO_domain::set_mat2d(iwt0, iwt1, RI::Global_Func::convert<TK>(H(iw0_b, iw1_b)) * RI::Global_Func::convert<TK>(frac), pv, hk);
-					}
-				}
-			}
-		}
-	}
-	ModuleBase::timer::end("RI_2D_Comm", "add_Hexx");
+                    }
+                }
+            }
+        }
+    }
+    ModuleBase::timer::end("RI_2D_Comm", "add_Hexx");
 }
 
 
 std::tuple<int,int,int>
 RI_2D_Comm::get_iat_iw_is_block(const UnitCell& ucell,const int& iwt)
 {
-	const int iat = ucell.iwt2iat[iwt];
-	const int iw = ucell.iwt2iw[iwt];
-	switch(PARAM.inp.nspin)
-	{
-		case 1: case 2:
-			return std::make_tuple(iat, iw, 0);
-		case 4:
-			return std::make_tuple(iat, iw/2, iw%2);
-		default:
-			throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
-	}
+    const int iat = ucell.iwt2iat[iwt];
+    const int iw = ucell.iwt2iw[iwt];
+    switch(PARAM.inp.nspin)
+    {
+        case 1: case 2:
+            return std::make_tuple(iat, iw, 0);
+        case 4:
+            return std::make_tuple(iat, iw/2, iw%2);
+        default:
+            throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    }
 }
 
 int RI_2D_Comm::get_is_block(const int is_k, const int is_row_b, const int is_col_b)
 {
-	switch(PARAM.inp.nspin)
-	{
-		case 1:		return 0;
-		case 2:		return is_k;
-		case 4:		return is_row_b*2+is_col_b;
-		default:	throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
-	}
+    switch(PARAM.inp.nspin)
+    {
+        case 1:		return 0;
+        case 2:		return is_k;
+        case 4:		return is_row_b*2+is_col_b;
+        default:	throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    }
 }
 
 std::tuple<int,int>
 RI_2D_Comm::split_is_block(const int is_b)
 {
-	switch(PARAM.inp.nspin)
-	{
-		case 1:	case 2:
-			return std::make_tuple(0, 0);
-		case 4:
-			return std::make_tuple(is_b/2, is_b%2);
-		default:
-			throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
-	}
+    switch(PARAM.inp.nspin)
+    {
+        case 1:	case 2:
+            return std::make_tuple(0, 0);
+        case 4:
+            return std::make_tuple(is_b/2, is_b%2);
+        default:
+            throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    }
 }
 
 
@@ -361,20 +361,20 @@ int RI_2D_Comm::get_iwt(const UnitCell& ucell,
                         const int iw_b, 
                         const int is_b)
 {
-	const int it = ucell.iat2it[iat];
-	const int ia = ucell.iat2ia[iat];
-	int iw=-1;
-	switch(PARAM.inp.nspin)
-	{
-		case 1: case 2:
-			iw = iw_b;			break;
-		case 4:
-			iw = iw_b*2+is_b;	break;
-		default:
-			throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
-	}
-	const int iwt = ucell.itiaiw2iwt(it,ia,iw);
-	return iwt;
+    const int it = ucell.iat2it[iat];
+    const int ia = ucell.iat2ia[iat];
+    int iw=-1;
+    switch(PARAM.inp.nspin)
+    {
+        case 1: case 2:
+            iw = iw_b;			break;
+        case 4:
+            iw = iw_b*2+is_b;	break;
+        default:
+            throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    }
+    const int iwt = ucell.itiaiw2iwt(it,ia,iw);
+    return iwt;
 }
 
 template<typename Tdata, typename TR>

@@ -67,10 +67,10 @@ namespace ModuleIO
         assert(nbands >= 0);
 #endif
         std::vector<FPTYPE> e(nbands, 0.0);
-		for (int i = 0; i < nbands; ++i) 
-		{
-			e[i] = get_real(mat_mo[i * nbands + i]);
-		}
+        for (int i = 0; i < nbands; ++i) 
+        {
+            e[i] = get_real(mat_mo[i * nbands + i]);
+        }
         return e;
     }
 
@@ -79,11 +79,11 @@ namespace ModuleIO
     const std::vector<std::complex<FPTYPE>>& mat_mo, const ModuleBase::matrix& wg)
     {
         FPTYPE e = 0.0;
-		for (int i = 0; i < nbands; ++i) 
-		{
-			e += get_real(mat_mo[i * nbands + i]) * (FPTYPE)wg(ik, i);
-		}
-		return e;
+        for (int i = 0; i < nbands; ++i) 
+        {
+            e += get_real(mat_mo[i * nbands + i]) * (FPTYPE)wg(ik, i);
+        }
+        return e;
     }
 
     template <typename FPTYPE>
@@ -91,11 +91,11 @@ namespace ModuleIO
     const ModuleBase::matrix& wg)
     {
         FPTYPE e = 0.0;
-		for (int i = 0; i < orbital_energy.size(); ++i) 
-		{
-			e += orbital_energy[i] * (FPTYPE)wg(ik, i);
-		}
-		return e;
+        for (int i = 0; i < orbital_energy.size(); ++i) 
+        {
+            e += orbital_energy[i] * (FPTYPE)wg(ik, i);
+        }
+        return e;
     }
 
     /// @brief  write the Vxc matrix in KS orbital representation, usefull for GW calculation
@@ -189,14 +189,14 @@ namespace ModuleIO
 #if((defined __LCAO)&&(defined __EXX) && !(defined __CUDA)&& !(defined __ROCM))
             if (cal_exx)
             {
-				for (int n = 0; n < naos; ++n) 
-				{
-					for (int m = 0; m < naos; ++m) 
-					{
-						vexx_k_ao[n * naos + m] += (T)hybrid_alpha 
-							* exx_lip.get_exx_matrix()[ik][m][n];
-					}
-				}
+                for (int n = 0; n < naos; ++n) 
+                {
+                    for (int m = 0; m < naos; ++m) 
+                    {
+                        vexx_k_ao[n * naos + m] += (T)hybrid_alpha 
+                            * exx_lip.get_exx_matrix()[ik][m][n];
+                    }
+                }
                 std::vector<T> vexx_k_mo = cVc(vexx_k_ao.data(), &(exx_lip.get_hvec()(ik, 0, 0)), naos, nbands);
                 Parallel_Reduce::reduce_pool(vexx_k_mo.data(), nbands * nbands);
                 e_orb_exx.emplace_back(orbital_energy(ik, nbands, vexx_k_mo));
@@ -217,9 +217,9 @@ namespace ModuleIO
                 out_label,out_app_flag,gamma_only,istep);
              
             ModuleIO::save_mat(istep, vxc_tot_k_mo.data(), nbands, 
-		    false, PARAM.inp.out_ndigits, true, 
-		    out_app_flag, vxc_file, 
-		    p2d_serial, drank, false);
+            false, PARAM.inp.out_ndigits, true, 
+            out_app_flag, vxc_file, 
+            p2d_serial, drank, false);
 
             e_orb_tot.emplace_back(orbital_energy(ik, nbands, vxc_tot_k_mo));
         }

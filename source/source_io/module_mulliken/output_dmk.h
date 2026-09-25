@@ -11,9 +11,9 @@ class Output_DMK
 {
   public:
     Output_DMK(module_dm::DensityMatrix<TK, double>* p_DM, 
-		    Parallel_Orbitals* ParaV, 
-		    int nspin, 
-		    int nks);
+            Parallel_Orbitals* ParaV, 
+            int nspin, 
+            int nks);
 
     TK* get_dmk(int ik);
 

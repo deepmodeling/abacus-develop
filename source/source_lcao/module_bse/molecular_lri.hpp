@@ -62,7 +62,7 @@ void MolecularLRI<T>::init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in, const
         {
             for (const TC R_original : this->kRlist.Rlist)
             {
-				const TC R = cell_nearest.cell_nearest_direction(i, j, R_original, dist);
+                const TC R = cell_nearest.cell_nearest_direction(i, j, R_original, dist);
                 if (R != R_original)
                 {
                     BSE_Util::move_R_tensor(Cs_in, i, j, R_original, R);

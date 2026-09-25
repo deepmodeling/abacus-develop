@@ -57,13 +57,13 @@ void psi_init_file<T>::init_psig(T* psig, const int& ik)
     const int istep = -1;
 
     std::string fn = ModuleIO::filename_output(this->global_readin_dir_,"wf","pw",
-			ik,this->ik2iktot_,this->nspin_,nkstot,
-			out_type,out_app_flag,gamma_only,istep);
+            ik,this->ik2iktot_,this->nspin_,nkstot,
+            out_type,out_app_flag,gamma_only,istep);
 
     ModuleIO::read_wfc_pw(fn, this->pw_wfc_, 
-			this->rank_in_pool_, this->nproc_in_pool_,
-			this->nbands_start_, this->npol_,
-			ik, ik_tot, nkstot, wfcatom);
+            this->rank_in_pool_, this->nproc_in_pool_,
+            this->nbands_start_, this->npol_,
+            ik, ik_tot, nkstot, wfcatom);
 
     assert(this->nbands_start_ <= wfcatom.nr);
     for (int ib = 0; ib < this->nbands_start_; ib++)

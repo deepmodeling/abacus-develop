@@ -2,8 +2,8 @@
 #include "source_cell/cal_ux.h"
 
 void elecstate::update_pot(UnitCell& ucell, // unitcell 
-		elecstate::ElecState* &pelec, // pointer of electrons
-		const Charge &chr,
+        elecstate::ElecState* &pelec, // pointer of electrons
+        const Charge &chr,
         const bool conv_esolver
          ) // charge density
 {

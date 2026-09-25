@@ -10,8 +10,8 @@ HamiltSdftPW<T, Device>::HamiltSdftPW(elecstate::Potential* pot_in,
                                       ModulePW::PW_Basis_K* wfc_basis,
                                       K_Vectors* p_kv,
                                       pseudopot_cell_vnl* nlpp,
-									  const UnitCell* ucell,
-									  const int& npol,
+                                      const UnitCell* ucell,
+                                      const int& npol,
                                       Real* emin_in,
                                       Real* emax_in)
     : HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp, nullptr, ucell, nullptr), ngk(p_kv->ngk)

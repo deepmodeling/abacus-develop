@@ -92,8 +92,8 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
         {
             Vec3d fraction;
             fraction.x = atom.taud[j].x * unitcell_info_->get_nbx();
-			fraction.y = atom.taud[j].y * unitcell_info_->get_nby();
-			fraction.z = atom.taud[j].z * unitcell_info_->get_nbz();
+            fraction.y = atom.taud[j].y * unitcell_info_->get_nby();
+            fraction.z = atom.taud[j].z * unitcell_info_->get_nbz();
             const Vec3i atom_bgrid_idx(static_cast<int>(fraction.x),
                                        static_cast<int>(fraction.y),
                                        static_cast<int>(fraction.z));

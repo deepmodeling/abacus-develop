@@ -23,7 +23,7 @@ namespace ModuleBase
 {
 void ModuleBase::Global_File::make_dir_out(
     const std::string &suffix,
-	const std::string &calculation,
+    const std::string &calculation,
     const bool &out_dir,
     const bool &out_wfc_dir,
     const int rank,
@@ -48,40 +48,40 @@ void ModuleBase::Global_File::make_dir_out(
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     int make_dir = 0;
-	// mohan update 2011-05-03
+    // mohan update 2011-05-03
 
-	int times = 0;
-	while(times<GlobalV::NPROC)
-	{
-		if(rank==times)
-		{
+    int times = 0;
+    while(times<GlobalV::NPROC)
+    {
+        if(rank==times)
+        {
             int ret = ModuleBase::make_directory(global_out_dir);
-			if ( ret == 0 || errno == EEXIST )
-			{
-				std::cout << " MAKE THE DIR         : " << global_out_dir << std::endl;
-				make_dir = 1;
-			}
-			else
-			{
-				std::cout << " PROC " << rank << " Please delete the file named by OUT.suffix !!! " << std::endl;
-				make_dir = 0;
-			}
+            if ( ret == 0 || errno == EEXIST )
+            {
+                std::cout << " MAKE THE DIR         : " << global_out_dir << std::endl;
+                make_dir = 1;
+            }
+            else
+            {
+                std::cout << " PROC " << rank << " Please delete the file named by OUT.suffix !!! " << std::endl;
+                make_dir = 0;
+            }
         }
 #ifdef __MPI
         Parallel_Reduce::reduce_all(make_dir);
 #endif
-		if(make_dir>0) {break;
+        if(make_dir>0) {break;
 }
-		++times;
-	}
+        ++times;
+    }
 
 #ifdef __MPI
-	if(make_dir==0)
-	{
-		std::cout << " CAN NOT MAKE THE OUT DIR......." << std::endl;
-		ModuleBase::QUIT();
-	}
-	MPI_Barrier(MPI_COMM_WORLD);
+    if(make_dir==0)
+    {
+        std::cout << " CAN NOT MAKE THE OUT DIR......." << std::endl;
+        ModuleBase::QUIT();
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
     if(calculation == "md")
@@ -287,20 +287,20 @@ void ModuleBase::Global_File::make_dir_out(
     // mohan add 2010-09-12
     if(out_alllog)
     {
-	    open_log(GlobalV::ofs_running, log_file, calculation, restart, global_out_dir);
+        open_log(GlobalV::ofs_running, log_file, calculation, restart, global_out_dir);
         #if defined(__CUDA) || defined(__ROCM)
         open_log(GlobalV::ofs_device, "device" + std::to_string(rank) + ".log", calculation, restart, global_out_dir);
         #endif
     }
     else
     {
-	    if(rank==0)
-	    {
-		    open_log(GlobalV::ofs_running, log_file, calculation, restart, global_out_dir);
+        if(rank==0)
+        {
+            open_log(GlobalV::ofs_running, log_file, calculation, restart, global_out_dir);
             #if defined(__CUDA) || defined(__ROCM)
             open_log(GlobalV::ofs_device, "device.log", calculation, restart, global_out_dir);
             #endif
-	    }
+        }
     }
 
     if(rank==0)
@@ -350,10 +350,10 @@ void ModuleBase::Global_File::open_log(std::ofstream &ofs, const std::string &fn
 
 void ModuleBase::Global_File::close_log( std::ofstream &ofs,const std::string &fn)
 {
-	if(ofs)
-	{
-    	ofs.close();
-	}
+    if(ofs)
+    {
+        ofs.close();
+    }
     //ofs << "CLOSE "<<fn<<".log"<<" DONE."<<std::endl;
     return;
 }
@@ -369,27 +369,27 @@ void ModuleBase::Global_File::close_all_log(const int rank, const bool out_alllo
 // NAME : ofs_build
 //----------------------------------------------------------
 
-	// mohan update 2011-01-13
+    // mohan update 2011-01-13
     std::stringstream ss;
-	if(out_alllog)
-	{
-    	ss << "running_" << calculation << "_cpu" << rank << ".log";
-    	close_log(GlobalV::ofs_running,ss.str());
+    if(out_alllog)
+    {
+        ss << "running_" << calculation << "_cpu" << rank << ".log";
+        close_log(GlobalV::ofs_running,ss.str());
         #if defined(__CUDA) || defined(__ROCM)
         close_log(GlobalV::ofs_device, "device" + std::to_string(rank));
         #endif
-	}
-	else
-	{
-		if(rank==0)
-		{
-    		ss << "running_" << calculation << ".log";
-    		close_log(GlobalV::ofs_running,ss.str());
+    }
+    else
+    {
+        if(rank==0)
+        {
+            ss << "running_" << calculation << ".log";
+            close_log(GlobalV::ofs_running,ss.str());
             #if defined(__CUDA) || defined(__ROCM)
             close_log(GlobalV::ofs_device, "device");
             #endif
-		}
-	}
+        }
+    }
 
     if (rank==0)
     {

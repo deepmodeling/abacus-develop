@@ -88,8 +88,8 @@ void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress)
 
     const double max_force = max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;
 
-	ofs << " LARGEST FORCE (eV/A)      : " << max_force << std::endl;
-	std::cout << " LARGEST FORCE (eV/A)  : " << max_force << std::endl;
+    ofs << " LARGEST FORCE (eV/A)      : " << max_force << std::endl;
+    std::cout << " LARGEST FORCE (eV/A)  : " << max_force << std::endl;
 
     return;
 }

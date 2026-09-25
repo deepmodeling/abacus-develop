@@ -2,7 +2,7 @@
 #define RADIAL_PROJECTION_H
 
 /**
- * @file radial_projection.h
+ * @file radial_proj.h
  * 
  * project any atom-centered function that has seperatable radial and angular parts
  * or any function can expanded with spherical harmonics onto the planewave basis,
