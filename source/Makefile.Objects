@@ -728,6 +728,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_inp_dfpt.o\
     module_parameter/read_inp_other.o\
     module_parameter/read_inp_out.o\
+    module_parameter/read_inp_sccs.o\
     module_parameter/read_set_globalv.o\
     module_hs/cal_plpr.o\
 
