@@ -19,7 +19,7 @@ surchem::surchem()
 
 void surchem::set_parameters(const SurchemParameters& parameters)
 {
-    if (parameters.use_sccs)
+    if (parameters.use_sccs || parameters.pcc_boundary != ModuleSccs::Boundary::Periodic)
     {
         if (parameters.expected_electron_count < 0.0
             || parameters.expected_ionic_charge < 0.0
@@ -29,7 +29,7 @@ void surchem::set_parameters(const SurchemParameters& parameters)
             || parameters.start_drho < 0.0
             || parameters.start_nmax <= 0)
         {
-            throw std::invalid_argument("SCCS system and reduction parameters are invalid");
+            throw std::invalid_argument("SCCS/PCC system and reduction parameters are invalid");
         }
     }
     this->parameters_ = parameters;
@@ -37,12 +37,19 @@ void surchem::set_parameters(const SurchemParameters& parameters)
     this->sccs_active_ = parameters.use_sccs && parameters.start_drho <= 0.0;
     this->sccs_state_ = ModuleSccs::SccsState();
     this->sccs_result_ = ModuleSccs::SccsResult();
+    this->pcc_result_valid_ = false;
     this->sccs_elapsed_seconds_ = 0.0;
 }
 
 bool surchem::uses_sccs() const
 {
     return this->parameters_set_ && this->parameters_.use_sccs;
+}
+
+bool surchem::uses_pcc() const
+{
+    return this->parameters_set_
+           && this->parameters_.pcc_boundary != ModuleSccs::Boundary::Periodic;
 }
 
 bool surchem::sccs_is_active() const
@@ -64,6 +71,7 @@ bool surchem::try_activate_sccs(const int electronic_iteration, const double drh
     this->sccs_active_ = true;
     this->sccs_state_ = ModuleSccs::SccsState();
     this->sccs_result_ = ModuleSccs::SccsResult();
+    this->pcc_result_valid_ = false;
     this->sccs_elapsed_seconds_ = 0.0;
     return true;
 }
@@ -104,6 +112,40 @@ void surchem::write_sccs_iteration(std::ostream& output) const
                << result.response.polarization.final_mixing
                << " RESTARTS "
                << result.response.polarization.mixing_restarts << '\n';
+    }
+
+    if (this->parameters_.debug
+        && this->parameters_.sccs_config.boundary == ModuleSccs::Boundary::Pcc0d)
+    {
+        const ModuleBase::Vector3<double>& origin = this->sccs_state_.pcc_geometry.origin;
+        output << std::setprecision(12)
+               << " PCC0D_ORIGIN X/Bohr " << origin.x
+               << " Y/Bohr " << origin.y
+               << " Z/Bohr " << origin.z << '\n';
+        const ModuleSccs::MultipoleMoments* moments[] = {
+            &result.solute_moments,
+            &result.point_solute_moments,
+            &result.polarization_moments,
+            &result.screened_moments};
+        const char* labels[] = {"SMOOTH", "POINT", "POLARIZATION", "SCREENED"};
+        for (int index = 0; index < 4; ++index)
+        {
+            output << " PCC0D_MOMENTS " << labels[index]
+                   << " Q/e " << moments[index]->charge
+                   << " PX/eBohr " << moments[index]->dipole.x
+                   << " PY/eBohr " << moments[index]->dipole.y
+                   << " PZ/eBohr " << moments[index]->dipole.z
+                   << " QRR/eBohr2 " << moments[index]->quadrupole_trace
+                   << '\n';
+        }
+        output << " PCC0D_ENERGY"
+               << " REACTION/Ha " << result.electrostatic.reaction_energy
+               << " PCC_SMOOTH/Ha " << result.smooth_vacuum_pcc_energy
+               << " PCC_POINT/Ha " << result.vacuum_pcc_energy
+               << " PCC_ION_SHAPE/Ha " << result.ionic_shape_pcc_energy
+               << " PCC_USED/Ry "
+               << 2.0 * (result.vacuum_pcc_energy + result.ionic_shape_pcc_energy)
+               << '\n';
     }
 
     if (this->parameters_.debug
@@ -215,6 +257,7 @@ void surchem::allocate(const int &nrxx, const int &nspin)
 
 void surchem::clear()
 {
+    this->pcc_result_valid_ = false;
     delete[] TOTN_real;
     delete[] delta_phi;
     delete[] epspot;

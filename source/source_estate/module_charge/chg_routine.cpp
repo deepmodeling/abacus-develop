@@ -50,7 +50,7 @@ void module_charge::chgmixing_ks(const int iter,
             // calculate energy of output charge density
             elecstate::update_pot(ucell, pelec, chr, conv_esolver);
             pelec->cal_energies(2,
-                                inp.imp_sol,
+                                inp.uses_surchem_correction(),
                                 inp.sc_mag_switch,
                                 inp.dft_plus_u,
                                 inp.assume_isolated); // 2 means Kohn-Sham functional

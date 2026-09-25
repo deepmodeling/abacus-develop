@@ -328,12 +328,12 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     // 3.1) calculate energies
     this->pelec->cal_energies(1,
-                              this->inp_->imp_sol,
+                              this->inp_->uses_surchem_correction(),
                               this->inp_->sc_mag_switch,
                               this->inp_->dft_plus_u,
                               this->inp_->assume_isolated); // Harris-Foulkes functional
     this->pelec->cal_energies(2,
-                              this->inp_->imp_sol,
+                              this->inp_->uses_surchem_correction(),
                               this->inp_->sc_mag_switch,
                               this->inp_->dft_plus_u,
                               this->inp_->assume_isolated); // Kohn-Sham functional

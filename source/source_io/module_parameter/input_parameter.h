@@ -571,6 +571,8 @@ struct Input_para
     double sigma_k = 0.6;    ///< the width of the diffuse cavity
     double nc_k = 0.00037;   ///< the cut-off charge density
     std::string solvation_model = "legacy"; ///< implicit-solvent implementation
+    std::string pcc_boundary = "none"; ///< independent vacuum/legacy-solvent PCC
+    bool uses_surchem_correction() const { return imp_sol || pcc_boundary != "none"; }
     std::string sccs_preset = "custom";     ///< SCCS parameter preset
     double sccs_epsilon = 78.3;              ///< SCCS bulk relative permittivity
     double sccs_rho_min = 1.0e-4;            ///< lower cavity-density threshold, bohr^-3

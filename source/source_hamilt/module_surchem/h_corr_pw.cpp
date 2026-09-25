@@ -33,6 +33,11 @@ void surchem::v_correction(const UnitCell& cell,
         }
         return;
     }
+    if (this->uses_pcc() && !this->parameters_.use_legacy_solvent)
+    {
+        this->v_correction_pcc(cell, *rho_basis, nspin, rho, v);
+        return;
+    }
     ModuleBase::TITLE("surchem", "v_cor");
     ModuleBase::timer::start("surchem", "v_cor");
 
@@ -74,6 +79,16 @@ void surchem::v_correction(const UnitCell& cell,
 
     cal_vel(cell, rho_basis, total_n, ps_totn, nspin, v);
     cal_vcav(cell, rho_basis, ps_totn, nspin, v);
+    if (this->uses_pcc())
+    {
+        ModuleBase::matrix pcc_potential(nspin, rho_basis->nrxx);
+        const double legacy_energy = surchem::Ael;
+        const double legacy_cavitation = surchem::Acav;
+        this->v_correction_pcc(cell, *rho_basis, nspin, rho, pcc_potential);
+        v += pcc_potential;
+        surchem::Ael += legacy_energy;
+        surchem::Acav = legacy_cavitation;
+    }
 
     delete[] porter;
     delete[] porter_g;

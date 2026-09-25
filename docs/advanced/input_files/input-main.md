@@ -525,6 +525,7 @@
     - [sigma\_k](#sigma_k)
     - [nc\_k](#nc_k)
     - [solvation\_model](#solvation_model)
+    - [pcc\_boundary](#pcc_boundary)
     - [sccs\_preset](#sccs_preset)
     - [sccs\_epsilon](#sccs_epsilon)
     - [sccs\_rho\_min](#sccs_rho_min)
@@ -4859,11 +4860,17 @@
 - **Description**: Select legacy or the native SCCS implementation. SCCS is enabled only together with imp_sol=true and supports scf or fixed-cell relax calculations.
 - **Default**: legacy
 
+### pcc_boundary
+
+- **Type**: String
+- **Description**: Independent point-ion/electron PCC boundary: `none` (default), `pcc_0d` for a cubic cell, or `pcc_2d` for a slab open along y. It works with `imp_sol 0` or `imp_sol 1` and `solvation_model legacy`. With the legacy solvent, PCC corrects the bare solute while the legacy solvent polarization remains periodic. For fully coupled solvent-boundary electrostatics use SCCS with `sccs_boundary`. The correction contributes to the self-consistent potential, total energy, and fixed-cell ionic forces; stress is not supported. For charged slabs, compare energies only at the same y cell length.
+- **Default**: none
+
 ### sccs_preset
 
 - **Type**: String
 - **Availability**: *[`imp_sol`](#imp_sol)==true and [`solvation_model`](#solvation_model)==sccs*
-- **Description**: Select custom, water-neutral, water-cation, or water-anion parameters. Numerical cavity and non-electrostatic inputs are used only by custom.
+- **Description**: Select `vacuum`, `custom`, `water-neutral`, `water-cation`, or `water-anion` parameters. `vacuum` sets ε=1, surface tension=0, and pressure=0; `sccs_boundary` can still enable PCC. Numerical cavity and non-electrostatic inputs are used only by `custom`.
 - **Default**: custom
 
 ### sccs_epsilon
@@ -4968,7 +4975,7 @@
 
 - **Type**: Boolean
 - **Availability**: *[`imp_sol`](#imp_sol)==true and [`solvation_model`](#solvation_model)==sccs*
-- **Description**: Print detailed per-SCF-step PCC moments and energy components, followed by final SCCS diagnostics. The compact SCCS iteration summary is always printed.
+- **Description**: Print detailed per-SCF-step PCC moments and energy components for pcc_0d and pcc_2d, followed by final SCCS diagnostics. For pcc_0d, the output includes the system-center origin, smooth/point/polarization/screened multipoles, and correction energies. The compact SCCS iteration summary is always printed.
 - **Default**: 0
 
 ### sccs_boundary

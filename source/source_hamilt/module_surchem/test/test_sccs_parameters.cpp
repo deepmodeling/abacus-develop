@@ -10,9 +10,21 @@ namespace
 TEST(SccsParameters, ParsesNamesCaseInsensitively)
 {
     EXPECT_EQ(ModuleSccs::parse_preset("WATER-CATION"), ModuleSccs::Preset::WaterCation);
+    EXPECT_EQ(ModuleSccs::parse_preset("VACUUM"), ModuleSccs::Preset::Vacuum);
     EXPECT_EQ(ModuleSccs::parse_boundary("PCC_0D"), ModuleSccs::Boundary::Pcc0d);
     EXPECT_EQ(ModuleSccs::parse_boundary("PCC-2D"), ModuleSccs::Boundary::Pcc2d);
     EXPECT_THROW(ModuleSccs::parse_preset("automatic"), std::invalid_argument);
+}
+
+TEST(SccsParameters, VacuumPresetHasNoSolventResponse)
+{
+    const ModuleSccs::SccsConfig vacuum = ModuleSccs::vacuum_preset();
+    EXPECT_DOUBLE_EQ(vacuum.cavity.epsilon_bulk, 1.0);
+    EXPECT_DOUBLE_EQ(vacuum.surface_tension, 0.0);
+    EXPECT_DOUBLE_EQ(vacuum.pressure, 0.0);
+    EXPECT_DOUBLE_EQ(vacuum.cavity.density_min, 1.0e-4);
+    EXPECT_DOUBLE_EQ(vacuum.cavity.density_max, 5.0e-3);
+    EXPECT_NO_THROW(ModuleSccs::validate_config(vacuum));
 }
 
 TEST(SccsParameters, ReproducesPinnedEnvironWaterPresets)

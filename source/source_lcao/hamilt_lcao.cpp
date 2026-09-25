@@ -86,7 +86,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         if (inp.vion_in_h) { pot_register_in.push_back("local"); }
         if (inp.vh_in_h)   { pot_register_in.push_back("hartree"); }
         pot_register_in.push_back("xc");
-        if (inp.imp_sol)     { pot_register_in.push_back("surchem"); }
+        if (inp.uses_surchem_correction()) { pot_register_in.push_back("surchem"); }
         if (inp.efield_flag) { pot_register_in.push_back("efield"); }
         if (inp.gate_flag)   { pot_register_in.push_back("gatefield"); }
         if (inp.esolver_type == "tddft") { pot_register_in.push_back("tddft"); }

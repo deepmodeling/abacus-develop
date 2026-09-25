@@ -4495,11 +4495,19 @@ parameters:
     default_value: legacy
     unit: ""
     availability: ""
+  - name: pcc_boundary
+    category: Implicit solvation model
+    type: String
+    description: |
+      Independent point-ion/electron PCC boundary: none (default), pcc_0d for a cubic cell, or pcc_2d for a slab open along y. Can be used with imp_sol=0 or imp_sol=1 and solvation_model=legacy. With the legacy solvent, PCC corrects the bare solute while the legacy solvent polarization remains periodic. For fully coupled solvent-boundary electrostatics use SCCS with sccs_boundary. The correction enters the self-consistent potential, total energy, and fixed-cell ionic forces; stress is not supported. A charged pcc_2d slab's field energy depends on the y cell length; compare energies only at the same cell size.
+    default_value: none
+    unit: ""
+    availability: ""
   - name: sccs_preset
     category: Implicit solvation model
     type: String
     description: |
-      Select custom, water-neutral, water-cation, or water-anion parameters. Numerical cavity and non-electrostatic inputs are used only by custom.
+      Select vacuum, custom, water-neutral, water-cation, or water-anion parameters. Vacuum sets epsilon=1, surface tension=0, and pressure=0; sccs_boundary can still enable PCC. Numerical cavity and non-electrostatic inputs are used only by custom.
     default_value: custom
     unit: ""
     availability: imp_sol==true and solvation_model==sccs
@@ -4611,7 +4619,7 @@ parameters:
     category: Implicit solvation model
     type: Boolean
     description: |
-      Print detailed per-SCF-step PCC moments and energy components, followed by final SCCS diagnostics. The compact SCCS iteration summary is always printed.
+      Print detailed per-SCF-step PCC moments and energy components for pcc_0d and pcc_2d, followed by final SCCS diagnostics. For pcc_0d, the output includes the system-center origin, smooth/point/polarization/screened multipoles, and correction energies. The compact SCCS iteration summary is always printed.
     default_value: "0"
     unit: ""
     availability: imp_sol==true and solvation_model==sccs

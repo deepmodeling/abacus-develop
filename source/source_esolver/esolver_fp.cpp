@@ -40,11 +40,35 @@ SurchemParameters make_surchem_parameters(const Input_para& inp,
     parameters.sigma_k = inp.sigma_k;
     parameters.nc_k = inp.nc_k;
     parameters.use_sccs = inp.solvation_model == "sccs";
-    if (!parameters.use_sccs)
+    parameters.use_legacy_solvent = inp.imp_sol && !parameters.use_sccs;
+    if (inp.pcc_boundary != "none")
+    {
+        parameters.pcc_boundary = ModuleSccs::parse_boundary(inp.pcc_boundary);
+    }
+    if (!parameters.use_sccs && parameters.pcc_boundary == ModuleSccs::Boundary::Periodic)
     {
         return parameters;
     }
-
+    parameters.debug = inp.sccs_debug;
+    parameters.expected_electron_count = atoms_info.nelec;
+    for (int atom_type = 0; atom_type < ucell.ntype; ++atom_type)
+    {
+        parameters.expected_ionic_charge
+            += ucell.atoms[atom_type].ncpp.zv * ucell.atoms[atom_type].na;
+    }
+    if (!parameters.use_sccs)
+    {
+        if (parameters.pcc_boundary == ModuleSccs::Boundary::Pcc2d
+            && std::abs(parameters.expected_ionic_charge
+                        - parameters.expected_electron_count)
+                   > parameters.normalization_tolerance)
+        {
+            ModuleBase::WARNING(
+                "ESolver_FP",
+                "charged pcc_2d slab: absolute energies at different y cell lengths are not directly comparable");
+        }
+        return parameters;
+    }
     const ModuleSccs::Preset preset = ModuleSccs::parse_preset(inp.sccs_preset);
     if (preset == ModuleSccs::Preset::Custom)
     {
@@ -55,6 +79,10 @@ SurchemParameters make_surchem_parameters(const Input_para& inp,
             = ModuleSccs::dyn_per_cm_to_hartree_per_bohr2(inp.sccs_gamma);
         parameters.sccs_config.pressure
             = ModuleSccs::gpa_to_hartree_per_bohr3(inp.sccs_pressure);
+    }
+    else if (preset == ModuleSccs::Preset::Vacuum)
+    {
+        parameters.sccs_config = ModuleSccs::vacuum_preset();
     }
     else
     {
@@ -73,13 +101,6 @@ SurchemParameters make_surchem_parameters(const Input_para& inp,
     parameters.sccs_config.surface_regularization = inp.sccs_surface_eta;
     parameters.start_drho = inp.sccs_start_drho;
     parameters.start_nmax = inp.sccs_start_nmax;
-    parameters.debug = inp.sccs_debug;
-    parameters.expected_electron_count = atoms_info.nelec;
-    for (int atom_type = 0; atom_type < ucell.ntype; ++atom_type)
-    {
-        parameters.expected_ionic_charge
-            += ucell.atoms[atom_type].ncpp.zv * ucell.atoms[atom_type].na;
-    }
     ModuleSccs::validate_config(parameters.sccs_config);
 
     const double net_charge
@@ -100,7 +121,7 @@ void finalize_surchem_parameters(const bool use_uspp,
                                   const int pool_process_count,
                                   SurchemParameters& parameters)
 {
-    if (!parameters.use_sccs)
+    if (!parameters.use_sccs && parameters.pcc_boundary == ModuleSccs::Boundary::Periodic)
     {
         return;
     }
@@ -108,7 +129,7 @@ void finalize_surchem_parameters(const bool use_uspp,
     {
         ModuleBase::WARNING_QUIT(
             "ESolver_FP",
-            "the first SCCS implementation supports only norm-conserving pseudopotentials");
+            "SCCS/PCC currently supports only norm-conserving pseudopotentials");
     }
     parameters.pool_process_count = pool_process_count;
 }
@@ -116,8 +137,9 @@ void finalize_surchem_parameters(const bool use_uspp,
 void validate_sccs_kpoints(const SurchemParameters& parameters,
                            const K_Vectors& kv)
 {
-    if (!parameters.use_sccs
-        || parameters.sccs_config.boundary != ModuleSccs::Boundary::Pcc2d)
+    const ModuleSccs::Boundary boundary
+        = parameters.use_sccs ? parameters.sccs_config.boundary : parameters.pcc_boundary;
+    if (boundary != ModuleSccs::Boundary::Pcc2d)
     {
         return;
     }
@@ -133,7 +155,7 @@ void validate_sccs_kpoints(const SurchemParameters& parameters,
     {
         ModuleBase::WARNING_QUIT(
             "ESolver_FP",
-            "SCCS pcc_2d requires Gamma-only sampling along the second lattice direction");
+            "pcc_2d requires Gamma-only sampling along the second lattice direction");
     }
 }
 

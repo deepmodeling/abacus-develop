@@ -49,6 +49,10 @@ Preset parse_preset(const std::string& value)
     {
         return Preset::Custom;
     }
+    if (normalized == "vacuum")
+    {
+        return Preset::Vacuum;
+    }
     if (normalized == "water-neutral")
     {
         return Preset::WaterNeutral;
@@ -110,6 +114,18 @@ SccsConfig water_preset(const Preset preset)
     {
         throw std::invalid_argument("custom SCCS parameters cannot be generated from a water preset");
     }
+    validate_config(config);
+    return config;
+}
+
+SccsConfig vacuum_preset()
+{
+    SccsConfig config = common_water_config();
+    config.cavity.density_min = 1.0e-4;
+    config.cavity.density_max = 5.0e-3;
+    config.cavity.epsilon_bulk = 1.0;
+    config.surface_tension = 0.0;
+    config.pressure = 0.0;
     validate_config(config);
     return config;
 }

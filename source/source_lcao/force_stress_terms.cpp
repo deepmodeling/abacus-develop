@@ -92,7 +92,7 @@ void cal_external_field_forces(UnitCell& ucell,
     }
 
     //! atomic forces from implicit solvation model
-    if (PARAM.inp.imp_sol)
+    if (PARAM.inp.uses_surchem_correction())
     {
         parts.fsol.create(ucell.nat, 3);
         solvent.cal_force_sol(ucell, rhopw, locpp.vloc, PARAM.inp.nspin, parts.fsol);

@@ -11,6 +11,7 @@ namespace ModuleSccs
 enum class Preset
 {
     Custom,
+    Vacuum,
     WaterNeutral,
     WaterCation,
     WaterAnion
@@ -46,6 +47,8 @@ Preset parse_preset(const std::string& value);
 Boundary parse_boundary(const std::string& value);
 
 SccsConfig water_preset(Preset preset);
+
+SccsConfig vacuum_preset();
 
 void validate_config(const SccsConfig& config);
 

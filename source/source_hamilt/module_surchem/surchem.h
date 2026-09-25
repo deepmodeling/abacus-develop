@@ -30,6 +30,8 @@ struct SurchemParameters
     double sigma_k = 0.0; ///< width of the diffuse cavity
     double nc_k = 0.0;    ///< cut-off charge density
     bool use_sccs = false;
+    bool use_legacy_solvent = false;
+    ModuleSccs::Boundary pcc_boundary = ModuleSccs::Boundary::Periodic;
     ModuleSccs::SccsConfig sccs_config;
     double expected_electron_count = 0.0;
     double expected_ionic_charge = 0.0;
@@ -67,6 +69,7 @@ class surchem
     void set_parameters(const SurchemParameters& parameters);
 
     bool uses_sccs() const;
+    bool uses_pcc() const;
 
     bool sccs_is_active() const;
 
@@ -161,6 +164,12 @@ class surchem
                            const double* const* rho,
                            const double* vlocal,
                            ModuleBase::matrix& v);
+    void v_correction_pcc(const UnitCell& cell,
+                          const ModulePW::PW_Basis& rho_basis,
+                          int nspin,
+                          const double* const* rho,
+                          ModuleBase::matrix& v);
+    void cal_force_pcc(const UnitCell& cell, ModuleBase::matrix& force) const;
 
     void test_V_to_N(ModuleBase::matrix& v,
                      const UnitCell& cell,
@@ -198,6 +207,11 @@ class surchem
     bool sccs_active_ = false;
     ModuleSccs::SccsState sccs_state_;
     ModuleSccs::SccsResult sccs_result_;
+    ModuleSccs::PccGeometry pcc_geometry_;
+    ModuleSccs::Pcc2dGeometry pcc_2d_geometry_;
+    ModuleSccs::MultipoleMoments pcc_moments_;
+    ModuleSccs::Pcc2dMoments pcc_2d_moments_;
+    bool pcc_result_valid_ = false;
     double sccs_elapsed_seconds_ = 0.0;
 };
 

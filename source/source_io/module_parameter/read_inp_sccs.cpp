@@ -51,7 +51,7 @@ void check_solvation_model(const Input_para& input)
 void check_sccs_preset(const Input_para& input)
 {
     const std::vector<std::string> allowed
-        = {"custom", "water-neutral", "water-cation", "water-anion"};
+        = {"custom", "vacuum", "water-neutral", "water-cation", "water-anion"};
     if (std::find(allowed.begin(), allowed.end(), input.sccs_preset) == allowed.end())
     {
         ModuleBase::WARNING_QUIT("ReadInput", nofound_str(allowed, "sccs_preset"));
@@ -87,6 +87,35 @@ void check_sccs_boundary(const Input_para& input)
     if (std::find(allowed.begin(), allowed.end(), input.sccs_boundary) == allowed.end())
     {
         ModuleBase::WARNING_QUIT("ReadInput", nofound_str(allowed, "sccs_boundary"));
+    }
+}
+
+void check_pcc_boundary(const Input_para& input)
+{
+    const std::vector<std::string> allowed = {"none", "pcc_0d", "pcc_2d"};
+    if (std::find(allowed.begin(), allowed.end(), input.pcc_boundary) == allowed.end())
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", nofound_str(allowed, "pcc_boundary"));
+    }
+    if (input.pcc_boundary == "none")
+    {
+        return;
+    }
+    if (input.imp_sol && input.solvation_model == "sccs")
+    {
+        ModuleBase::WARNING_QUIT("ReadInput",
+                                 "use sccs_boundary for SCCS+PCC; pcc_boundary is for vacuum or legacy solvent");
+    }
+    if (input.nspin == 4 || input.device == "gpu" || input.esolver_type != "ksdft"
+        || (input.basis_type != "pw" && input.basis_type != "lcao")
+        || (input.calculation != "scf" && input.calculation != "relax")
+        || input.efield_flag || input.gate_flag || input.assume_isolated != "none"
+        || input.cal_stress
+        || input.dfthalf_type != 0
+        || input.deepks_out_base != "none" || input.dm_to_rho)
+    {
+        ModuleBase::WARNING_QUIT("ReadInput",
+                                 "standalone PCC requires CPU KS-DFT PW/LCAO scf or fixed-cell relax, nspin=1/2, without stress, other field, or isolation corrections");
     }
 }
 
@@ -152,11 +181,25 @@ void ReadInput::item_sccs()
         this->add_item(item);
     }
     {
+        Input_Item item("pcc_boundary");
+        item.annotation = "independent PCC boundary condition";
+        item.category = "Implicit solvation model";
+        item.type = "String";
+        item.description = "Apply point-ion/electron PCC without SCCS: none, cubic pcc_0d, or slab pcc_2d with open y direction. Works with imp_sol=0 or legacy solvent; the latter retains periodic solvent polarization. For coupled SCCS boundaries use sccs_boundary. PCC contributes to self-consistent potential, total energy, and fixed-cell ionic forces.";
+        item.default_value = "none";
+        item.unit = "";
+        read_sync_string(input.pcc_boundary);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            check_pcc_boundary(para.input);
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("sccs_preset");
         item.annotation = "SCCS parameter preset";
         item.category = "Implicit solvation model";
         item.type = "String";
-        item.description = "Select custom, water-neutral, water-cation, or water-anion parameters. Numerical cavity and non-electrostatic inputs are used only by custom.";
+        item.description = "Select vacuum, custom, water-neutral, water-cation, or water-anion parameters. Vacuum sets epsilon=1, surface tension=0, and pressure=0; sccs_boundary can still enable PCC. Numerical cavity and non-electrostatic inputs are used only by custom.";
         item.default_value = "custom";
         item.unit = "";
         item.set_availability("imp_sol==true and solvation_model==sccs");
@@ -236,9 +279,11 @@ void ReadInput::item_sccs()
         item.category = "Implicit solvation model";
         item.type = "Boolean";
         item.description
-            = "Print detailed per-SCF-step PCC moments and energy components, "
-              "followed by final SCCS diagnostics. The compact SCCS iteration "
-              "summary is always printed.";
+            = "Print detailed per-SCF-step PCC moments and energy components for "
+              "pcc_0d and pcc_2d, followed by final SCCS diagnostics. For "
+              "pcc_0d, the output includes the system-center origin, "
+              "smooth/point/polarization/screened multipoles, and correction "
+              "energies. The compact SCCS iteration summary is always printed.";
         item.default_value = "0";
         item.unit = "";
         item.set_availability("imp_sol==true and solvation_model==sccs");

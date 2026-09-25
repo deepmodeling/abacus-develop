@@ -181,6 +181,13 @@ void surchem::cal_force_sol(const UnitCell& cell,
         ModuleBase::timer::end("surchem", "cal_force_sol");
         return;
     }
+    if (this->uses_pcc() && !this->parameters_.use_legacy_solvent)
+    {
+        ModuleBase::GlobalFunc::ZEROS(forcesol.c, forcesol.nr * forcesol.nc);
+        this->cal_force_pcc(cell, forcesol);
+        ModuleBase::timer::end("surchem", "cal_force_sol");
+        return;
+    }
 
     int nat = cell.nat;
 	ModuleBase::matrix force1(nat, 3);
@@ -204,6 +211,10 @@ void surchem::cal_force_sol(const UnitCell& cell,
     }
     
     Parallel_Reduce::reduce_pool(forcesol.c, forcesol.nr * forcesol.nc);
+    if (this->uses_pcc())
+    {
+        this->cal_force_pcc(cell, forcesol);
+    }
     ModuleBase::timer::end("surchem", "cal_force_sol");
     return;
 }
