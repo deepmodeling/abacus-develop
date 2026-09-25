@@ -1,4 +1,4 @@
-#include "../hamilt_sdft_pw.h"
+#include "../sto_hamilt_pw.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 #include "source_hamilt/operator.h"
 
@@ -77,7 +77,7 @@ class TestHamiltSto : public ::testing::Test
         p_kv = new K_Vectors();
         std::vector<int> ngk = {2};
         p_kv->ngk = ngk;
-        hamilt_sto = new hamilt::HamiltSdftPW<std::complex<double>, base_device::DEVICE_CPU>(pot, wfc_basis, p_kv, nullptr, nullptr, npol, &emin, &emax);
+        hamilt_sto = new StoHamiltPW<std::complex<double>, base_device::DEVICE_CPU>(pot, wfc_basis, p_kv, nullptr, nullptr, npol, &emin, &emax);
         hamilt_sto->ops = new TestOp<std::complex<double>, base_device::DEVICE_CPU>();
     }
 
@@ -92,7 +92,7 @@ class TestHamiltSto : public ::testing::Test
     elecstate::Potential* pot;
     ModulePW::PW_Basis_K* wfc_basis;
     K_Vectors* p_kv;
-    hamilt::HamiltSdftPW<std::complex<double>, base_device::DEVICE_CPU>* hamilt_sto;
+    StoHamiltPW<std::complex<double>, base_device::DEVICE_CPU>* hamilt_sto;
     double emin = -2.0;
     double emax = 2.0;
 };

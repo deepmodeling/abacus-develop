@@ -1,7 +1,7 @@
 #ifndef STO_TOOL_H
 #define STO_TOOL_H
 #include "source_cell/klist.h"
-#include "source_pw/module_stodft/hamilt_sdft_pw.h"
+#include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_pw/module_stodft/sto_wf.h"
 #include "source_base/module_device/memory_op.h"
 #include "source_psi/psi.h"
@@ -24,7 +24,7 @@ struct check_che_op
                     const int& nbands_sto,
                     K_Vectors* p_kv,
                     Stochastic_WF<std::complex<FPTYPE>, Device>* p_stowf,
-                    hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>* p_hamilt_sto);
+                    StoHamiltPW<std::complex<FPTYPE>, Device>* p_hamilt_sto);
 };
 
 /**

@@ -355,7 +355,7 @@ OBJS_GINT=batch_biggrid.o\
 
 OBJS_HAMILT=hamilt_pw.o\
     hs_matrix_k.o\
-    hamilt_sdft_pw.o\
+    sto_hamilt_pw.o\
     operator.o\
     op_pw.o\
     op_pw_exx.o\
@@ -452,7 +452,6 @@ OBJS_HSOLVER=diago_cg.o\
     hsolver.o\
     hsolver_pw.o\
     hsolver_lcaopw.o\
-    hsolver_pw_sdft.o\
     diago_iter_assist.o\
     hegvd_op.o\
     bpcg_kernel_op.o\
@@ -889,6 +888,7 @@ OBJS_SRCPW=h_ewald_pw.o\
     stru_fac.o\
     stru_fac_k.o\
     soc.o\
+    sto_hsolver_pw.o\
     sto_iter.o\
     sto_che.o\
     sto_wf.o\
