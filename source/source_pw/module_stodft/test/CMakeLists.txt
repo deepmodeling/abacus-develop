@@ -16,7 +16,7 @@ AddTest(
 AddTest(
   TARGET MODULE_PW_Sto_HSolver_UTs
   LIBS parameter psi device base container MPI::MPI_CXX
-  SOURCES test_hsolver_sdft_pw.cpp ../hsolver_sdft_pw.cpp
+  SOURCES test_sto_hsolver_pw.cpp ../sto_hsolver_pw.cpp
   ../../../source_hsolver/hsolver_pw.cpp ../../../source_hsolver/diago_bpcg.cpp
   ../../../source_hsolver/diago_dav_subspace.cpp ../../../source_hsolver/diag_const_nums.cpp
   ../../../source_hsolver/diago_iter_assist.cpp ../../../source_hsolver/para_lin_tf.cpp
