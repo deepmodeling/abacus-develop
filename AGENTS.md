@@ -50,6 +50,12 @@ rules. Read the complete governance document before making or reviewing changes:
       initializer list to direct parameter passthrough. Perform multi-step
       computations in the constructor body instead, so failures are easy to
       debug and each intermediate result is inspectable.
+  14. Do not write conditional or computed expressions in a function's
+      argument list; first assign the value to a named local variable, then
+      pass that variable. This keeps each argument inspectable and makes the
+      call site self-documenting. For example, prefer
+      `const int isk = (nspin == 2 && isk_ptr) ? isk_ptr[ik] : 0;`
+      followed by `f(..., isk, ...)` over inlining the ternary into the call.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.

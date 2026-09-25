@@ -201,7 +201,7 @@ void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
 {
 #ifdef __MPI
     ModuleBase::timer::start("HSolverLCAO", "parakSolve");
-    auto k2d = Parallel_K2D<T>();
+    Parallel_K2D<T> k2d;
     k2d.set_kpar(kpar);
     int nbands = this->ParaV->get_nbands();
     int nks = psi.get_nk();

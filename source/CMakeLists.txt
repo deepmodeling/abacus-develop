@@ -705,6 +705,7 @@ target_link_libraries(
     hamilt_general
     elecstate
     module_pwdft
+    module_proj
     module_ofdft
     module_stodft
     module_dfpt

@@ -25,31 +25,26 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
     // allocate matrix
     const long nloc = pv.nloc;
     const int nrow = pv.nrow;
-    std::complex<double>* Htmp = new std::complex<double>[nloc];
-    std::complex<double>* Sinv = new std::complex<double>[nloc];
-    std::complex<double>* dsxk = new std::complex<double>[nloc];
-    std::complex<double>* pdsxk = new std::complex<double>[nloc];
-    std::complex<double>* tmp1 = new std::complex<double>[nloc];
-    std::complex<double>* tmp2 = new std::complex<double>[nloc];
-    std::complex<double>* tmp3 = new std::complex<double>[nloc];
-    std::complex<double>* Hybridtmp = new std::complex<double>[nloc];
-    std::vector<std::complex<double>*> tmp_out = {nullptr, nullptr, nullptr};
-    for (int dir = 0; dir < 3; dir++)
-    {
-        tmp_out[dir] = new std::complex<double>[nloc];
-        ModuleBase::GlobalFunc::ZEROS(tmp_out[dir], nloc);
-    }
+    std::vector<std::complex<double>> Htmp(nloc);
+    std::vector<std::complex<double>> Sinv(nloc);
+    std::vector<std::complex<double>> dsxk(nloc);
+    std::vector<std::complex<double>> pdsxk(nloc);
+    std::vector<std::complex<double>> tmp1(nloc);
+    std::vector<std::complex<double>> tmp2(nloc);
+    std::vector<std::complex<double>> tmp3(nloc);
+    std::vector<std::complex<double>> Hybridtmp(nloc);
+    std::vector<std::vector<std::complex<double>>> tmp_out(3, std::vector<std::complex<double>>(nloc, 0.0));
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
         p_hamilt->updateHk(ik);
         // get dmk
         std::complex<double>* tmp_dmk = dmat.dm->get_dmk_ptr(ik);
 
-        ModuleBase::GlobalFunc::ZEROS(Htmp, nloc);
-        ModuleBase::GlobalFunc::ZEROS(Sinv, nloc);
-        ModuleBase::GlobalFunc::ZEROS(tmp1, nloc);
-        ModuleBase::GlobalFunc::ZEROS(tmp2, nloc);
-        ModuleBase::GlobalFunc::ZEROS(Hybridtmp, nloc);
+        ModuleBase::GlobalFunc::ZEROS(Htmp.data(), nloc);
+        ModuleBase::GlobalFunc::ZEROS(Sinv.data(), nloc);
+        ModuleBase::GlobalFunc::ZEROS(tmp1.data(), nloc);
+        ModuleBase::GlobalFunc::ZEROS(tmp2.data(), nloc);
+        ModuleBase::GlobalFunc::ZEROS(Hybridtmp.data(), nloc);
 
         const int inc = 1;
 
@@ -57,8 +52,8 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
         hamilt::MatrixBlock<std::complex<double>> s_mat;
         // get Hk Sk
         p_hamilt->matrix(h_mat, s_mat);
-        BlasConnector::copy(nloc, h_mat.p, inc, Htmp, inc);
-        BlasConnector::copy(nloc, s_mat.p, inc, Sinv, inc);
+        BlasConnector::copy(nloc, h_mat.p, inc, Htmp.data(), inc);
+        BlasConnector::copy(nloc, s_mat.p, inc, Sinv.data(), inc);
 
         vector<int> ipiv(nloc, 0);
         int info = 0;
@@ -68,7 +63,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
         const std::complex<double> mone_complex = {-1.0, 0.0};
         const std::complex<double> zero_complex = {0.0, 0.0};
 
-        ScalapackConnector::getrf(nlocal, nlocal, Sinv, one_int, one_int, pv.desc, ipiv.data(), &info);
+        ScalapackConnector::getrf(nlocal, nlocal, Sinv.data(), one_int, one_int, pv.desc, ipiv.data(), &info);
 
         int lwork = -1;
         int liwork = -1;
@@ -79,14 +74,14 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
         // if liwork = -1, then the size of iwork is (at least) of length 1.
         std::vector<int> iwork(1, 0);
 
-        ScalapackConnector::getri(nlocal, Sinv, one_int, one_int, pv.desc, ipiv.data(), work.data(), &lwork, iwork.data(), &liwork, &info);
+        ScalapackConnector::getri(nlocal, Sinv.data(), one_int, one_int, pv.desc, ipiv.data(), work.data(), &lwork, iwork.data(), &liwork, &info);
 
         lwork = work[0].real();
         work.resize(lwork, 0);
         liwork = iwork[0];
         iwork.resize(liwork, 0);
 
-        ScalapackConnector::getri(nlocal, Sinv, one_int, one_int, pv.desc, ipiv.data(), work.data(), &lwork, iwork.data(), &liwork, &info);
+        ScalapackConnector::getri(nlocal, Sinv.data(), one_int, one_int, pv.desc, ipiv.data(), work.data(), &lwork, iwork.data(), &liwork, &info);
 
         const char N_char = 'N';
         const char T_char = 'T';
@@ -102,12 +97,12 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                  one_int,
                                  one_int,
                                  pv.desc,
-                                 Htmp,
+                                 Htmp.data(),
                                  one_int,
                                  one_int,
                                  pv.desc,
                                  zero_complex,
-                                 tmp1,
+                                 tmp1.data(),
                                  one_int,
                                  one_int,
                                  pv.desc);
@@ -118,27 +113,27 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                  nlocal,
                                  nlocal,
                                  one_complex,
-                                 tmp1,
+                                 tmp1.data(),
                                  one_int,
                                  one_int,
                                  pv.desc,
-                                 Sinv,
+                                 Sinv.data(),
                                  one_int,
                                  one_int,
                                  pv.desc,
                                  zero_complex,
-                                 tmp2,
+                                 tmp2.data(),
                                  one_int,
                                  one_int,
                                  pv.desc);
         for (int dir = 0; dir < 3; dir++)
         {
-            ModuleBase::GlobalFunc::ZEROS(dsxk, nloc);
-            ModuleBase::GlobalFunc::ZEROS(pdsxk, nloc);
-            ModuleBase::GlobalFunc::ZEROS(tmp3, nloc);
-            module_rt::folding_HR_td(*dsxr[dir], dsxk, kv.kvec_d[ik], TD_info::cart_At, TD_info::td_vel_op->get_phase_hybrid(), nrow, 1);
+            ModuleBase::GlobalFunc::ZEROS(dsxk.data(), nloc);
+            ModuleBase::GlobalFunc::ZEROS(pdsxk.data(), nloc);
+            ModuleBase::GlobalFunc::ZEROS(tmp3.data(), nloc);
+            module_rt::folding_HR_td(*dsxr[dir], dsxk.data(), kv.kvec_d[ik], TD_info::cart_At, TD_info::td_vel_op->get_phase_hybrid(), nrow, 1);
             module_rt::folding_partial_dot(*dsxr[dir],
-                                           pdsxk,
+                                           pdsxk.data(),
                                            kv.kvec_d[ik],
                                            nrow,
                                            1,
@@ -152,16 +147,16 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                      nlocal,
                                      nlocal,
                                      two_complex,
-                                     tmp2,
+                                     tmp2.data(),
                                      one_int,
                                      one_int,
                                      pv.desc,
-                                     dsxk,
+                                     dsxk.data(),
                                      one_int,
                                      one_int,
                                      pv.desc,
                                      one_complex,
-                                     tmp_out[dir],
+                                     tmp_out[dir].data(),
                                      one_int,
                                      one_int,
                                      pv.desc);
@@ -176,12 +171,12 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                      one_int,
                                      one_int,
                                      pv.desc,
-                                     pdsxk,
+                                     pdsxk.data(),
                                      one_int,
                                      one_int,
                                      pv.desc,
                                      one_complex,
-                                     tmp3,
+                                     tmp3.data(),
                                      one_int,
                                      one_int,
                                      pv.desc);
@@ -190,23 +185,17 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                       nlocal,
                                       nlocal,
                                       one_complex,
-                                      tmp3,
+                                      tmp3.data(),
                                       one_int,
                                       one_int,
                                       pv.desc,
                                       one_complex,
-                                      tmp_out[dir],
+                                      tmp_out[dir].data(),
                                       one_int,
                                       one_int,
                                       pv.desc);
         }
     }
-    delete[] Htmp;
-    delete[] Sinv;
-    delete[] tmp1;
-    delete[] tmp2;
-    delete[] dsxk;
-    delete[] Hybridtmp;
     // std::string filename = "process_debug_" + std::to_string(GlobalV::MY_RANK) + ".txt";
     // std::ofstream debug_file(filename);
     // debug_file << "=== Process " << GlobalV::MY_RANK << " ===" << std::endl;
@@ -236,7 +225,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
         int row0 = pv.atom_begin_row[iat];
         int col0 = pv.atom_begin_col[iat];
         const int row_size = pv.get_row_size();
-        std::vector<std::complex<double>*> p_diag = {tmp_out[0], tmp_out[1], tmp_out[2]};
+        std::vector<std::complex<double>*> p_diag = {tmp_out[0].data(), tmp_out[1].data(), tmp_out[2].data()};
         for (int mu = 0; mu < pv.get_nrow_atom(iat); ++mu)
         {
             for (int nu = 0; nu < pv.get_ncol_atom(iat); ++nu)
@@ -254,10 +243,6 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
         }
     }
     Parallel_Reduce::reduce_all(foverlap.c, foverlap.nr * foverlap.nc);
-    for (int dir = 0; dir < 3; dir++)
-    {
-        delete[] tmp_out[dir];
-    }
     return;
 #endif
 }
