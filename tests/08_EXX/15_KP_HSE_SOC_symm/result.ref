@@ -1,9 +1,9 @@
-etotref -3419.2070243000000000
-etotperatomref -3419.2070243000
+etotref -3419.2371787940001013
+etotperatomref -3419.2371787940
 totalforceref 0.000000
-totalstressref 20903.561458
+totalstressref 20962.912099
 pointgroupref O_h
 spacegroupref O_h
 nksibzref 3
 magpointgroupref C_4h
-totaltimeref 210.49
+totaltimeref 99.07

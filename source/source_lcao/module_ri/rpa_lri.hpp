@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
+#include "source_cell/module_symmetry/symm_rot_spin.h"
 
 #include "rpa_lri.h"
 #include "librpa_2d_coulomb_head.h"
@@ -1128,7 +1129,6 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
         cal_abfs_overlap(ucell, orb, kv);
         RpaLriDetail::trim_malloc_cache();
     }
-    this->output_symmetry_sidecars(ucell, kv, dm);
     this->output_ewald_coulomb(ucell, kv, orb);
 
     ModuleBase::timer::end("RPA_LRI", "postSCF");
@@ -1429,7 +1429,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         const auto normalization = RpaLriDetail::strict_2d_coulomb_head_normalization(
             (a1_bohr ^ a2_bohr).norm(), s_multipoles_by_type, atoms_per_type);
 
-        const std::string filename = "librpa_2d_coulomb_head.dat";
+        const std::string filename = outdir + "librpa_2d_coulomb_head.dat";
         std::ofstream ofs(filename, std::ios::out | std::ios::trunc);
         if (!ofs.good())
         {
@@ -1915,19 +1915,6 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
 }
 
 template <typename T, typename Tdata>
-void RPA_LRI<T, Tdata>::output_symmetry_sidecars(const UnitCell& ucell,
-                                                 const K_Vectors& kv,
-                                                 const module_dm::DensityMatrix<T, Tdata>& dm)
-{
-    // LibRPA reconstructs symmetry rotations from the exported STRU data.
-    // Do not emit the obsolete symrot_*.txt sidecar files (and never append
-    // spin/magnetic symmetry metadata to stru_out).
-    (void)ucell;
-    (void)kv;
-    (void)dm;
-}
-
-template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
                                          std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& overlap_abfs_abfs,
                                          std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& overlap_abfs_abf,
@@ -2362,7 +2349,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
         {
             continue;
         }
-        const std::string out_name = "v1_abf_overlap_active_iq_" + std::to_string(ik + 1) + ".dat";
+        const std::string out_name = outdir + "v1_abf_overlap_active_iq_" + std::to_string(ik + 1) + ".dat";
         const std::string tmp_name = out_name + ".tmp";
         std::ofstream ofs(tmp_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
         if (!ofs.good())
@@ -2581,7 +2568,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_v1(const UnitCell& ucell,
 
     std::stringstream ss;
     ss << filename << GlobalV::MY_RANK << ".txt";
-    const std::string out_name = ss.str();
+    const std::string out_name = outdir + ss.str();
     std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
     if (!ofs.good())
     {
@@ -2952,7 +2939,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
                                                       PARAM.inp.nspin,
                                                       PARAM.inp.nbands,
                                                       PARAM.globalv.nlocal,
-                                                      "KS_eigenvector_0.dat");
+                                                      outdir + "KS_eigenvector_0.dat");
         }
         catch (...)
         {
@@ -3042,7 +3029,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
 
         if (GlobalV::MY_RANK == 0)
         {
-            const std::string out_name = "KS_eigenvector_0.dat";
+            const std::string out_name = outdir + "KS_eigenvector_0.dat";
             const std::int64_t record_bytes = static_cast<std::int64_t>(sizeof(std::int32_t))
                 + static_cast<std::int64_t>(sizeof(std::int64_t));
             std::int64_t offset = 6 * static_cast<std::int64_t>(sizeof(std::int32_t))
@@ -3280,9 +3267,6 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
     {
         const auto& symm = ucell.symm;
         // Export the spatial parts of the symmetry operations in one common row block.
-        // The current LibRPA reader reconstructs orbital and k-space rotations from
-        // these operations, the lattice, and the exported basis-shell conventions;
-        // no spin-specific trailer belongs in stru_out.
         const int n_anti = symm.magnetic_nspin4 ? symm.nrotk_anti : 0;
         std::vector<RpaLriDetail::LibRpaSymmetryOperation> unitary(symm.nrotk);
         for (int isym = 0; isym < symm.nrotk; ++isym)
@@ -3296,6 +3280,38 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
                 = RpaLriDetail::make_librpa_symmetry_operation(symm.gmatrix_anti[isym], symm.gtrans_anti[isym]);
         }
         RpaLriDetail::write_librpa_symmetry_rows(ofs, unitary, antiunitary);
+
+        if (PARAM.inp.nspin == 4)
+        {
+            // LibRPA consumes the explicit spin-space table for SOC. ABACUS stores
+            // symmetry rotations in fractional row-vector form, so convert each
+            // operation to Cartesian coordinates before constructing its SU(2) part.
+            const auto spin_operation = [&ucell](const ModuleBase::Matrix3& rotation,
+                                                 const int antiunitary) {
+                const ModuleBase::Matrix3 cartesian = ucell.latvec.Inverse() * rotation * ucell.latvec;
+                const auto spin_u = ModuleSymmetry::SpinRotation::so3_to_su2(cartesian);
+                RpaLriDetail::LibRpaSpinSymmetryOperation operation;
+                operation.antiunitary = antiunitary;
+                for (int i = 0; i != 4; ++i)
+                {
+                    operation.spin_u[static_cast<std::size_t>(2 * i)] = spin_u[i].real();
+                    operation.spin_u[static_cast<std::size_t>(2 * i + 1)] = spin_u[i].imag();
+                }
+                return operation;
+            };
+            std::vector<RpaLriDetail::LibRpaSpinSymmetryOperation> spin_operations;
+            spin_operations.reserve(static_cast<std::size_t>(symm.nrotk + n_anti));
+            for (int isym = 0; isym != symm.nrotk; ++isym)
+            {
+                spin_operations.push_back(spin_operation(symm.gmatrix[isym], 0));
+            }
+            for (int isym = 0; isym != n_anti; ++isym)
+            {
+                spin_operations.push_back(spin_operation(symm.gmatrix_anti[isym], 1));
+            }
+            const int grey_group = symm.magnetic_nspin4 ? 0 : 1;
+            RpaLriDetail::write_librpa_spin_symmetry(ofs, grey_group, 1, spin_operations);
+        }
     }
     ofs.close();
     return;
@@ -3310,14 +3326,14 @@ void RPA_LRI<T, Tdata>::out_bz_sampling()
     }
 
     ModuleBase::TITLE("DFT_RPA_interface", "out_bz_sampling");
-    const double TWOPI_Bohr2A = ModuleBase::TWO_PI * ModuleBase::BOHR_TO_A;
     const int nks_tot = PARAM.inp.nspin == 2 ? static_cast<int>(p_kv->get_nks()) / 2 : p_kv->get_nks();
     const int n_coulomb_irreducible = RpaLriDetail::librpa_stored_coulomb_q_count(nks_tot);
 
-    std::ofstream ofs("bz_sampling_out", std::ios::out | std::ios::trunc);
+    const std::string filename = outdir + "bz_sampling_out";
+    std::ofstream ofs(filename, std::ios::out | std::ios::trunc);
     if (!ofs.good())
     {
-        throw std::runtime_error("Failed to open bz_sampling_out");
+        throw std::runtime_error("Failed to open " + filename);
     }
     ofs << p_kv->nmp[0] << std::setw(6) << p_kv->nmp[1] << std::setw(6) << p_kv->nmp[2] << std::endl;
     ofs << nks_tot << std::setw(8) << n_coulomb_irreducible << std::endl;
@@ -3328,7 +3344,7 @@ void RPA_LRI<T, Tdata>::out_bz_sampling()
     }
     if (weight_sum <= 0.0)
     {
-        throw std::runtime_error("Cannot write bz_sampling_out with non-positive total k-point weight.");
+        throw std::runtime_error("Cannot write " + filename + " with non-positive total k-point weight.");
     }
     for (int ik = 0; ik < nks_tot; ++ik)
     {
@@ -3339,9 +3355,9 @@ void RPA_LRI<T, Tdata>::out_bz_sampling()
             << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_d[ik].x
             << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_d[ik].y
             << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_d[ik].z
-            << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_c[ik].x * TWOPI_Bohr2A
-            << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_c[ik].y * TWOPI_Bohr2A
-            << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_c[ik].z * TWOPI_Bohr2A
+            << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_c[ik].x
+            << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_c[ik].y
+            << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_c[ik].z
             << std::setw(8) << stored_q_index.coulomb_irreducible_index
             << std::setw(8) << stored_q_index.representative_scf_index
             << std::endl;
@@ -3521,7 +3537,7 @@ void RPA_LRI<T, Tdata>::out_Cs_v1(const UnitCell& ucell,
 
     std::stringstream ss;
     ss << filename << GlobalV::MY_RANK << ".txt";
-    const std::string out_name = ss.str();
+    const std::string out_name = outdir + ss.str();
     std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
     if (!ofs.good())
     {
@@ -3733,13 +3749,16 @@ void RPA_LRI<T, Tdata>::out_librpa_basis_v1(const UnitCell& ucell,
 
     const auto wfc_l_nchi = RpaLriDetail::collect_wfc_l_nchi(ucell);
     const auto aux_l_nchi = RpaLriDetail::collect_abfs_l_nchi(exx_lri->abfs);
-    RpaLriDetail::write_librpa_split_basis_file(ucell, type_nw, wfc_l_nchi, "basis_wfc_out");
-    RpaLriDetail::write_librpa_split_basis_file(ucell, type_naux, aux_l_nchi, aux_filename);
+    const std::string wfc_filename = outdir + "basis_wfc_out";
+    const std::string aux_output_filename = outdir + aux_filename;
+    const std::string legacy_output_filename = outdir + legacy_filename;
+    RpaLriDetail::write_librpa_split_basis_file(ucell, type_nw, wfc_l_nchi, wfc_filename);
+    RpaLriDetail::write_librpa_split_basis_file(ucell, type_naux, aux_l_nchi, aux_output_filename);
 
-    std::ofstream ofs(legacy_filename, std::ios::out | std::ios::trunc);
+    std::ofstream ofs(legacy_output_filename, std::ios::out | std::ios::trunc);
     if (!ofs.good())
     {
-        throw std::runtime_error("Failed to open " + legacy_filename);
+        throw std::runtime_error("Failed to open " + legacy_output_filename);
     }
     ofs << std::setw(10) << ucell.ntype
         << std::setw(10) << total_wfc
@@ -3887,7 +3906,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k_v1(const UnitCell& ucell,
 
         std::stringstream ss;
         ss << filename << ik + 1 << "_rank" << GlobalV::MY_RANK << ".dat";
-        const std::string out_name = ss.str();
+        const std::string out_name = outdir + ss.str();
         std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
         if (!ofs.good())
         {

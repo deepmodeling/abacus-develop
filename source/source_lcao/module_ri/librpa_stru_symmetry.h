@@ -4,6 +4,7 @@
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
 
+#include <array>
 #include <cmath>
 #include <iomanip>
 #include <ostream>
@@ -17,6 +18,12 @@ struct LibRpaSymmetryOperation
 {
     double rotation[9];
     double translation[3];
+};
+
+struct LibRpaSpinSymmetryOperation
+{
+    int antiunitary = 0;
+    std::array<double, 8> spin_u{};
 };
 
 inline int checked_near_int(const double value, const std::string& context)
@@ -74,6 +81,26 @@ inline void write_librpa_symmetry_rows(std::ostream& output,
     for (const auto& operation: antiunitary)
     {
         write_operation(operation);
+    }
+}
+
+inline void write_librpa_spin_symmetry(std::ostream& output,
+                                       const int grey_group,
+                                       const int spin_source,
+                                       const std::vector<LibRpaSpinSymmetryOperation>& operations)
+{
+    output << "spin_symmetry " << grey_group << " " << spin_source << std::endl;
+    for (const auto& operation : operations)
+    {
+        output << operation.antiunitary;
+        if (spin_source == 1)
+        {
+            for (const double value : operation.spin_u)
+            {
+                output << std::setw(24) << std::scientific << std::setprecision(15) << value;
+            }
+        }
+        output << std::endl;
     }
 }
 } // namespace RpaLriDetail

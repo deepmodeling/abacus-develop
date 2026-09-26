@@ -1473,9 +1473,8 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.category = "Output information";
         item.type = "Boolean";
         item.description = "Generate output files used in rpa calculations."
-                          "\n\n[NOTE] If symmetry is set to 1, additional files containing the necessary information for "
-                          "exploiting symmetry in the subsequent rpa calculation will be output: "
-                          "irreducible_sector.txt, symrot_k.txt and symrot_R.txt.";
+                          "\n\n[NOTE] If symmetry is set to 1, stru_out.txt also contains the spatial and, for nspin=4, "
+                          "magnetic symmetry operations consumed by the subsequent LibRPA calculation.";
         item.default_value = "False";
         item.unit = "";
         item.set_availability("basis_type==lcao");
@@ -2109,7 +2108,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         Input_Item item("sternheimer_delta_norm_tol");
         item.annotation = "norm threshold for Delta-Sternheimer AO virtual-state orthogonalization";
         item.category = "Output information";
-        item.type = "Double";
+        item.type = "Real";
         item.description = "Discard fixed AO/NAO candidate functions whose norm after projection out of occupied "
                            "states and previously accepted candidates is below this threshold.";
         item.default_value = "1e-10";

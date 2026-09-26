@@ -82,11 +82,37 @@ void test_common_spatial_and_magnetic_rows()
     require(serialized.find("spin_symmetry") == std::string::npos,
             "legacy spin-specific trailer must not be emitted");
 }
+
+void test_explicit_spin_rows()
+{
+    std::vector<RpaLriDetail::LibRpaSpinSymmetryOperation> operations(2);
+    operations[0].spin_u = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0};
+    operations[1].antiunitary = 1;
+    operations[1].spin_u = {0.0, 0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0};
+
+    std::ostringstream output;
+    RpaLriDetail::write_librpa_spin_symmetry(output, 0, 1, operations);
+    const auto lines = split_lines(output.str());
+    require(lines.size() == 3, "spin symmetry output must contain one header and one row per operation");
+    require(lines[0] == "spin_symmetry 0 1", "spin symmetry header must identify an explicit magnetic table");
+
+    std::istringstream unitary_row(lines[1]);
+    std::vector<std::string> unitary_fields;
+    std::string field;
+    while (unitary_row >> field)
+    {
+        unitary_fields.push_back(field);
+    }
+    require(unitary_fields.size() == 9, "explicit spin rows must contain an anti flag and eight doubles");
+    require(unitary_fields[0] == "0", "the first spin operation must be unitary");
+    require(lines[2].rfind("1 ", 0) == 0, "the second spin operation must be antiunitary");
+}
 } // namespace
 
 int main()
 {
     test_common_spatial_and_magnetic_rows();
+    test_explicit_spin_rows();
     std::cout << "LibRPA stru_out symmetry tests passed\n";
     return 0;
 }
