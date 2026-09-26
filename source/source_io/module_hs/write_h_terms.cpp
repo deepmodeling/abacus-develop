@@ -8,7 +8,6 @@
 #include "source_io/module_hs/write_hs_r.h"
 #include "source_base/module_out/filename.h"
 #include "source_cell/ucell_io.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_gint/gint_interface.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_hamilt/module_hcontainer/output_hcontainer.h"
@@ -73,7 +72,11 @@ static void gather_and_write(const std::string& prefix,
                              const int istep,
                              const bool append,
                              const int* iat2iwt,
-                             const int nat)
+                             const int nat,
+                             const std::string& calculation,
+                             const bool out_app_flag,
+                             const std::string& global_out_dir,
+                             const std::string& global_matrix_dir)
 {
     const int nbasis = hR.get_nbasis();
 #ifdef __MPI
@@ -85,15 +88,9 @@ static void gather_and_write(const std::string& prefix,
     if (GlobalV::MY_RANK == 0)
 #endif
     {
-        std::string fname;
-        if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
-        {
-            fname = PARAM.globalv.global_matrix_dir + hsr_gen_fname(prefix, ispin, append, istep);
-        }
-        else
-        {
-            fname = PARAM.globalv.global_out_dir + hsr_gen_fname(prefix, ispin, append, istep);
-        }
+        const bool md_no_append = (calculation == "md") && !out_app_flag;
+        const std::string& out_dir = md_no_append ? global_matrix_dir : global_out_dir;
+        const std::string fname = out_dir + hsr_gen_fname(prefix, ispin, append, istep);
 #ifdef __MPI
         write_hcontainer_csr(fname, &ucell, 8, &hr_serial, istep, ispin, nspin, label, "");
 #else
@@ -111,14 +108,16 @@ static void write_hk_common(hamilt::HContainer<double>& hR,
                             const int istep,
                             const bool append,
                             const int* iat2iwt,
-                            const int nat)
+                            const int nat,
+                            const int nlocal,
+                            const bool gamma_only,
+                            const std::string& global_out_dir,
+                            const bool out_app_flag,
+                            const std::string& ks_solver,
+                            const int drank)
 {
     const int nspin_k = (nspin == 2 ? 2 : 1);
     const int nks = kv.get_nks() / nspin_k;
-    const int nlocal = PARAM.globalv.nlocal;
-    const bool gamma_only = PARAM.globalv.gamma_only_local;
-    const std::string global_out_dir = PARAM.globalv.global_out_dir;
-    const bool out_app_flag = PARAM.inp.out_app_flag;
 
     for (int ik = 0; ik < nks; ++ik)
     {
@@ -148,7 +147,8 @@ static void write_hk_common(hamilt::HContainer<double>& hR,
                            out_app_flag,
                            fname,
                            pv,
-                           GlobalV::DRANK);
+                           drank,
+                           ks_solver);
     }
 }
 
@@ -169,6 +169,10 @@ void write_h_t(WriteHParams& params)
     const int* iat2iwt = params.iat2iwt;
     const int nat = params.nat;
     const bool also_hR = params.also_hR;
+    const int nlocal = params.nlocal;
+    const bool gamma_only = params.gamma_only_local;
+    const std::string& global_out_dir = params.global_out_dir;
+    const bool out_app_flag = params.out_app_flag;
 
     const std::vector<double>& orb_cutoff = orb.cutoffs();
     const int nspin_out = (nspin == 2 ? 2 : 1);
@@ -181,11 +185,13 @@ void write_h_t(WriteHParams& params)
             tmp_ekinetic(nullptr, kv.kvec_d, &hR_tmp, &ucell, orb_cutoff, &gd, two_center_bundle.kinetic_orb.get());
         tmp_ekinetic.contributeHR();
 
-        write_hk_common(hR_tmp, "tk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat);
+        write_hk_common(hR_tmp, "tk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat,
+                        nlocal, gamma_only, global_out_dir, out_app_flag, params.ks_solver, params.drank);
 
         if (also_hR)
         {
-            gather_and_write("t", "T", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat);
+            gather_and_write("t", "T", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat,
+                             params.calculation, params.out_app_flag, params.global_out_dir, params.global_matrix_dir);
         }
     }
 
@@ -209,6 +215,10 @@ void write_h_vnl(WriteHParams& params)
     const int* iat2iwt = params.iat2iwt;
     const int nat = params.nat;
     const bool also_hR = params.also_hR;
+    const int nlocal = params.nlocal;
+    const bool gamma_only = params.gamma_only_local;
+    const std::string& global_out_dir = params.global_out_dir;
+    const bool out_app_flag = params.out_app_flag;
 
     const std::vector<double>& orb_cutoff = orb.cutoffs();
     const int nspin_out = (nspin == 2 ? 2 : 1);
@@ -226,11 +236,13 @@ void write_h_vnl(WriteHParams& params)
                                                                             two_center_bundle.overlap_orb_beta.get());
         tmp_nonlocal.contributeHR();
 
-        write_hk_common(hR_tmp, "vnlk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat);
+        write_hk_common(hR_tmp, "vnlk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat,
+                        nlocal, gamma_only, global_out_dir, out_app_flag, params.ks_solver, params.drank);
 
         if (also_hR)
         {
-            gather_and_write("vnl", "V^NL", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat);
+            gather_and_write("vnl", "V^NL", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat,
+                             params.calculation, params.out_app_flag, params.global_out_dir, params.global_matrix_dir);
         }
     }
 
@@ -254,6 +266,10 @@ void write_h_vl(WriteHParams& params)
     const int* iat2iwt = params.iat2iwt;
     const int nat = params.nat;
     const bool also_hR = params.also_hR;
+    const int nlocal = params.nlocal;
+    const bool gamma_only = params.gamma_only_local;
+    const std::string& global_out_dir = params.global_out_dir;
+    const bool out_app_flag = params.out_app_flag;
 
     const std::vector<double>& orb_cutoff = orb.cutoffs();
     const int nspin_out = (nspin == 2 ? 2 : 1);
@@ -266,11 +282,13 @@ void write_h_vl(WriteHParams& params)
         const double* v_local = pot->get_fixed_v(); // local pp, no Hxc
         ModuleGint::cal_gint_vl(v_local, &hR_tmp);
 
-        write_hk_common(hR_tmp, "vlk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat);
+        write_hk_common(hR_tmp, "vlk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat,
+                        nlocal, gamma_only, global_out_dir, out_app_flag, params.ks_solver, params.drank);
 
         if (also_hR)
         {
-            gather_and_write("vl", "V^L", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat);
+            gather_and_write("vl", "V^L", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat,
+                             params.calculation, params.out_app_flag, params.global_out_dir, params.global_matrix_dir);
         }
     }
 
@@ -295,6 +313,10 @@ void write_h_vh(WriteHParams& params)
     const int* iat2iwt = params.iat2iwt;
     const int nat = params.nat;
     const bool also_hR = params.also_hR;
+    const int nlocal = params.nlocal;
+    const bool gamma_only = params.gamma_only_local;
+    const std::string& global_out_dir = params.global_out_dir;
+    const bool out_app_flag = params.out_app_flag;
 
     const std::vector<double>& orb_cutoff = orb.cutoffs();
     const int nspin_out = (nspin == 2 ? 2 : 1);
@@ -309,11 +331,13 @@ void write_h_vh(WriteHParams& params)
 
         ModuleGint::cal_gint_vl(&v_h(ispin, 0), &hR_tmp);
 
-        write_hk_common(hR_tmp, "vhk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat);
+        write_hk_common(hR_tmp, "vhk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat,
+                        nlocal, gamma_only, global_out_dir, out_app_flag, params.ks_solver, params.drank);
 
         if (also_hR)
         {
-            gather_and_write("vh", "V^H", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat);
+            gather_and_write("vh", "V^H", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat,
+                             params.calculation, params.out_app_flag, params.global_out_dir, params.global_matrix_dir);
         }
     }
 
@@ -338,19 +362,24 @@ void write_h_vxc(WriteHParams& params)
     const int* iat2iwt = params.iat2iwt;
     const int nat = params.nat;
     const bool also_hR = params.also_hR;
+    const int nlocal = params.nlocal;
+    const bool gamma_only = params.gamma_only_local;
+    const std::string& global_out_dir = params.global_out_dir;
+    const bool out_app_flag = params.out_app_flag;
 
     const std::vector<double>& orb_cutoff = orb.cutoffs();
     const int nspin_out = (nspin == 2 ? 2 : 1);
 
     ModuleBase::matrix v_xc;
-    double etxc, vtxc;
+    double etxc;
+    double vtxc;
     const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
 #ifdef __EXX
     const double hse_omega = XC_Functional::get_hse_omega();
 #else
     const double hse_omega = 0.0;
 #endif
-    std::tie(etxc, vtxc, v_xc) = XC_Functional::v_xc(nrxx, chg, &ucell, PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, hybrid_alpha, hse_omega);
+    std::tie(etxc, vtxc, v_xc) = XC_Functional::v_xc(nrxx, chg, &ucell, params.nspin, params.domag, params.domag_z, hybrid_alpha, hse_omega);
 
     for (int ispin = 0; ispin < nspin_out; ispin++)
     {
@@ -359,11 +388,13 @@ void write_h_vxc(WriteHParams& params)
 
         ModuleGint::cal_gint_vl(&v_xc(ispin, 0), &hR_tmp);
 
-        write_hk_common(hR_tmp, "vxck", ucell, pv, kv, nspin, istep, append, iat2iwt, nat);
+        write_hk_common(hR_tmp, "vxck", ucell, pv, kv, nspin, istep, append, iat2iwt, nat,
+                        nlocal, gamma_only, global_out_dir, out_app_flag, params.ks_solver, params.drank);
 
         if (also_hR)
         {
-            gather_and_write("vxc", "V^XC", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat);
+            gather_and_write("vxc", "V^XC", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat,
+                             params.calculation, params.out_app_flag, params.global_out_dir, params.global_matrix_dir);
         }
     }
 
@@ -383,6 +414,15 @@ static void write_h_exx_impl(const UnitCell& ucell,
                              const int* iat2iwt,
                              const int nat,
                              const bool also_hR,
+                             const int npol,
+                             const int nlocal,
+                             const bool gamma_only,
+                             const std::string& global_out_dir,
+                             const std::string& global_matrix_dir,
+                             const std::string& calculation,
+                             const bool out_app_flag,
+                             const std::string& ks_solver,
+                             const int drank,
                              const Exx_Info& exx_info)
 {
     const auto& Hexxs = ex->get_Hexxs(); // vector over spin of map<iat, map<(jat,R), Tensor>>
@@ -395,13 +435,15 @@ static void write_h_exx_impl(const UnitCell& ucell,
         // add_HexxR only fills existing matrices, so first allocate the atom-pair structure
         // from the exx-form data (native cells, consistent with the nullptr cell_nearest below).
         hamilt::reallocate_hcontainer(Hexxs, &hR_tmp);
-        RI_2D_Comm::add_HexxR(ispin, alpha, Hexxs, pv, PARAM.globalv.npol, hR_tmp, nullptr);
+        RI_2D_Comm::add_HexxR(ispin, alpha, Hexxs, pv, npol, hR_tmp, nullptr);
 
-        write_hk_common(hR_tmp, "vexxk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat);
+        write_hk_common(hR_tmp, "vexxk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat,
+                        nlocal, gamma_only, global_out_dir, out_app_flag, ks_solver, drank);
 
         if (also_hR)
         {
-            gather_and_write("vexx", "V^EXX", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat);
+            gather_and_write("vexx", "V^EXX", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat,
+                             calculation, out_app_flag, global_out_dir, global_matrix_dir);
         }
     }
 }
@@ -428,14 +470,20 @@ void write_h_exx(WriteHParams& params, const Exx_Info& exx_info)
     {
         if (params.exd != nullptr)
         {
-            write_h_exx_impl(ucell, pv, params.exd, kv, nspin, istep, append, iat2iwt, nat, also_hR, exx_info);
+            write_h_exx_impl(ucell, pv, params.exd, kv, nspin, istep, append, iat2iwt, nat, also_hR,
+                             params.npol, params.nlocal, params.gamma_only_local,
+                             params.global_out_dir, params.global_matrix_dir,
+                             params.calculation, params.out_app_flag, params.ks_solver, params.drank, exx_info);
         }
     }
     else
     {
         if (params.exc != nullptr)
         {
-            write_h_exx_impl(ucell, pv, params.exc, kv, nspin, istep, append, iat2iwt, nat, also_hR, exx_info);
+            write_h_exx_impl(ucell, pv, params.exc, kv, nspin, istep, append, iat2iwt, nat, also_hR,
+                             params.npol, params.nlocal, params.gamma_only_local,
+                             params.global_out_dir, params.global_matrix_dir,
+                             params.calculation, params.out_app_flag, params.ks_solver, params.drank, exx_info);
         }
     }
 

@@ -3,7 +3,6 @@
 #include "source_base/module_out/sparse_matrix.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/lcao_hs_arrays.h"
 #include "source_lcao/spar_dh.h"
 #include "source_lcao/spar_hsr.h"
@@ -32,18 +31,29 @@ void ModuleIO::output_dSR(const int& istep,
                           const K_Vectors& kv,
                           const bool& binary,
                           const double& sparse_thr,
-                          const int precision)
+                          const int precision,
+                          const std::string& global_out_dir,
+                          const std::string& global_matrix_dir,
+                          const std::string& calculation,
+                          const bool out_app_flag,
+                          const int nspin,
+                          const bool gamma_only_local,
+                          const int npol,
+                          const int nlocal)
 {
     ModuleBase::TITLE("ModuleIO", "output_dSR");
     ModuleBase::timer::start("ModuleIO", "output_dSR");
 
     sparse_format::cal_dS(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, sparse_thr,
-                          PARAM.globalv.gamma_only_local, PARAM.inp.nspin, PARAM.globalv.npol);
+                          gamma_only_local, nspin, npol);
 
     // mohan update 2024-04-01
-    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "s", precision);
+    const std::string fileflag_s = "s";
+    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, fileflag_s, precision,
+                             global_out_dir, global_matrix_dir, calculation, out_app_flag,
+                             nspin, nlocal);
 
-    sparse_format::destroy_dH_R_sparse(HS_Arrays, PARAM.inp.nspin);
+    sparse_format::destroy_dH_R_sparse(HS_Arrays, nspin);
 
     ModuleBase::timer::end("ModuleIO", "output_dSR");
     return;
@@ -60,7 +70,15 @@ void ModuleIO::output_dHR(const int& istep,
                           const K_Vectors& kv,
                           const bool& binary,
                           const double& sparse_thr,
-                          const int precision)
+                          const int precision,
+                          const std::string& global_out_dir,
+                          const std::string& global_matrix_dir,
+                          const std::string& calculation,
+                          const bool out_app_flag,
+                          const int nspin,
+                          const bool gamma_only_local,
+                          const int npol,
+                          const int nlocal)
 {
     ModuleBase::TITLE("ModuleIO", "output_dHR");
     ModuleBase::timer::start("ModuleIO", "output_dHR");
@@ -70,10 +88,6 @@ void ModuleIO::output_dHR(const int& istep,
     GlobalV::ofs_running << " |                         #Print out dH/dR#                          |" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-
-    const int nspin = PARAM.inp.nspin;
-    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
-    const int npol = PARAM.globalv.npol;
 
     if (nspin == 1 || nspin == 4)
     {
@@ -92,7 +106,10 @@ void ModuleIO::output_dHR(const int& istep,
         }
     }
     // mohan update 2024-04-01
-    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "h", precision);
+    const std::string fileflag_h = "h";
+    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, fileflag_h, precision,
+                             global_out_dir, global_matrix_dir, calculation, out_app_flag,
+                             nspin, nlocal);
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays, nspin);
 
@@ -107,7 +124,12 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                          const std::string& SR_filename,
                          const bool& binary,
                          const double& sparse_thr,
-                         const int precision)
+                         const int precision,
+                         const std::string& global_out_dir,
+                         const std::string& global_matrix_dir,
+                         const std::string& calculation,
+                         const bool out_app_flag,
+                         const int nspin)
 {
     ModuleBase::TITLE("ModuleIO", "output_SR");
     ModuleBase::timer::start("ModuleIO", "output_SR");
@@ -140,9 +162,11 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
     options.precision = precision;
     options.istep = istep;
     options.reduce = true;
-    options.temp_dir = PARAM.globalv.global_out_dir;
+    options.temp_dir = global_out_dir;
+    options.calculation = calculation;
+    options.out_app_flag = out_app_flag;
 
-    if (PARAM.inp.nspin == 4)
+    if (nspin == 4)
     {
         ModuleIO::save_sparse(HS_Arrays.SR_soc_sparse,
                               HS_Arrays.all_R_coor,
@@ -173,7 +197,12 @@ void ModuleIO::output_TR(const int istep,
                          const std::string& TR_filename,
                          const bool& binary,
                          const double& sparse_thr,
-                         const int precision)
+                         const int precision,
+                         const std::string& global_out_dir,
+                         const std::string& global_matrix_dir,
+                         const std::string& calculation,
+                         const bool out_app_flag,
+                         const int nspin)
 {
     ModuleBase::TITLE("ModuleIO", "output_TR");
     ModuleBase::timer::start("ModuleIO", "output_TR");
@@ -185,14 +214,15 @@ void ModuleIO::output_TR(const int istep,
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
     std::stringstream sst;
-    if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
+    const bool md_no_append = (calculation == "md") && !out_app_flag;
+    if (md_no_append)
     {
-        sst << PARAM.globalv.global_matrix_dir << TR_filename << "g" << istep;
+        sst << global_matrix_dir << TR_filename << "g" << istep;
         GlobalV::ofs_running << " T(R) data are in file: " << sst.str() << std::endl;
     }
     else
     {
-        sst << PARAM.globalv.global_out_dir << TR_filename;
+        sst << global_out_dir << TR_filename;
         GlobalV::ofs_running << " T(R) data are in file: " << sst.str() << std::endl;
     }
 
@@ -205,7 +235,9 @@ void ModuleIO::output_TR(const int istep,
     options.precision = precision;
     options.istep = istep;
     options.reduce = true;
-    options.temp_dir = PARAM.globalv.global_out_dir;
+    options.temp_dir = global_out_dir;
+    options.calculation = calculation;
+    options.out_app_flag = out_app_flag;
 
     ModuleIO::save_sparse(HS_Arrays.TR_sparse,
                           HS_Arrays.all_R_coor,
@@ -224,14 +256,24 @@ template void ModuleIO::output_SR<double>(Parallel_Orbitals& pv,
                                           const std::string& SR_filename,
                                           const bool& binary,
                                           const double& sparse_thr,
-                                          const int precision);
+                                          const int precision,
+                                          const std::string& global_out_dir,
+                                          const std::string& global_matrix_dir,
+                                          const std::string& calculation,
+                                          const bool out_app_flag,
+                                          const int nspin);
 template void ModuleIO::output_SR<std::complex<double>>(Parallel_Orbitals& pv,
                                                         const Grid_Driver& grid,
                                                         hamilt::Hamilt<std::complex<double>>* p_ham,
                                                         const std::string& SR_filename,
                                                         const bool& binary,
                                                         const double& sparse_thr,
-                                                        const int precision);
+                                                        const int precision,
+                                                        const std::string& global_out_dir,
+                                                        const std::string& global_matrix_dir,
+                                                        const std::string& calculation,
+                                                        const bool out_app_flag,
+                                                        const int nspin);
 
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_hamilt/module_hcontainer/output_hcontainer.h"
@@ -497,7 +539,8 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                           const bool gamma_only,
                           const int* iat2iwt,
                           const int nat,
-                          const int istep)
+                          const int istep,
+                          const std::string& global_out_dir)
 {
     if (out_type != 1 && out_type != 2)
     {
@@ -527,7 +570,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 
         if (GlobalV::MY_RANK == 0)
         {
-            std::string fname = PARAM.globalv.global_out_dir
+            std::string fname = global_out_dir
                                 + hsr_gen_fname("hrs", ispin, append, istep, out_type);
             if (out_type == 2)
             {
@@ -557,7 +600,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 
         if (GlobalV::MY_RANK == 0)
         {
-            std::string fname = PARAM.globalv.global_out_dir
+            std::string fname = global_out_dir
                                 + sr_gen_fname(append, istep, out_type);
             if (out_type == 2)
             {
@@ -589,12 +632,14 @@ template void ModuleIO::write_hsr<double>(
     const std::vector<hamilt::HContainer<double>*>&,
     const hamilt::HContainer<double>*,
     const UnitCell*, const int, const int, const Parallel_2D&,
-    const bool, const bool, const int*, const int, const int);
+    const bool, const bool, const int*, const int, const int,
+    const std::string&);
 template void ModuleIO::write_hsr<std::complex<double>>(
     const std::vector<hamilt::HContainer<std::complex<double>>*>&,
     const hamilt::HContainer<std::complex<double>>*,
     const UnitCell*, const int, const int, const Parallel_2D&,
-    const bool, const bool, const int*, const int, const int);
+    const bool, const bool, const int*, const int, const int,
+    const std::string&);
 
 
 template <typename TR>
@@ -607,24 +652,29 @@ void ModuleIO::write_matrix_r(const std::string& matrix_label,
                                const bool append,
                                const int* iat2iwt,
                                const int nat,
-                               const int istep)
+                               const int istep,
+                               const std::string& global_out_dir,
+                               const std::string& global_matrix_dir,
+                               const std::string& calculation,
+                               const bool out_app_flag)
 {
     const int nspin = matrices.size();
     assert(nspin > 0);
-    
+
     for (int ispin = 0; ispin < nspin; ispin++)
     {
         const int nbasis = matrices[ispin]->get_nbasis();
-        
+
         // Generate filename
         std::string fname = dhr_gen_fname(matrix_label, ispin, append, istep);
-        if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
+        const bool md_no_append = (calculation == "md") && !out_app_flag;
+        if (md_no_append)
         {
-            fname = PARAM.globalv.global_matrix_dir + fname;
+            fname = global_matrix_dir + fname;
         }
         else
         {
-            fname = PARAM.globalv.global_out_dir + fname;
+            fname = global_out_dir + fname;
         }
         
         // Gather parallel matrix to serial
@@ -659,7 +709,11 @@ template void ModuleIO::write_matrix_r<double>(
     const bool,
     const int*,
     const int,
-    const int);
+    const int,
+    const std::string&,
+    const std::string&,
+    const std::string&,
+    const bool);
 
 template void ModuleIO::write_matrix_r<std::complex<double>>(
     const std::string&,
@@ -671,4 +725,8 @@ template void ModuleIO::write_matrix_r<std::complex<double>>(
     const bool,
     const int*,
     const int,
-    const int);
+    const int,
+    const std::string&,
+    const std::string&,
+    const std::string&,
+    const bool);

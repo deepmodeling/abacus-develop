@@ -1,0 +1,1 @@
+LR-TDDFT on H2O, multik, nspin=2, lr_nstates=2, lr_solver=dav_subspace.

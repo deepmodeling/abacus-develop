@@ -148,6 +148,7 @@ endif()
 
 if(BUILD_TESTING)
   add_subdirectory(module_parameter/test)
+  add_subdirectory(module_hs/unittests)
   add_subdirectory(test_serial)
   add_subdirectory(test)
 endif()

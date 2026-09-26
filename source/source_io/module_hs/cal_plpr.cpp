@@ -11,7 +11,6 @@
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_io/module_hs/cal_plpr.h"
 #include "source_base/formatter.h"
 #include "source_base/parallel_common.h"
@@ -177,6 +176,8 @@ ModuleIO::AngularMomentumCalculator::AngularMomentumCalculator(
     const int tgrid,
     const int tatom,
     const bool searchpbc,
+    const std::string& out_level,
+    const bool gamma_only,
     std::ofstream* ptr_log,
     const int rank)
 {
@@ -245,10 +246,10 @@ ModuleIO::AngularMomentumCalculator::AngularMomentumCalculator(
         // we don't really set, but use std::max to mask :)
     }
     temp = atom_arrange::set_sr_NL(*ofs_,
-                                   PARAM.inp.out_level,
+                                   out_level,
                                    std::max(search_radius, rcut_max),
                                    ucell.infoNL->get_rcutmax_Beta(),
-                                   PARAM.globalv.gamma_only_local);
+                                   gamma_only);
     temp = std::max(temp, std::max(search_radius, rcut_max));
     this->neighbor_searcher_ = std::unique_ptr<Grid_Driver>(new Grid_Driver(tdestructor, tgrid));
     atom_arrange::search(searchpbc,

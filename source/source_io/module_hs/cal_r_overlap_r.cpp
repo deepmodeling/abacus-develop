@@ -7,7 +7,6 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_cell/nonlocal_info_base.h"
 
 cal_r_overlap_R::cal_r_overlap_R()
@@ -40,7 +39,10 @@ void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell, const LCAO_Orb
     MGT.init_Gaunt(Lmax);
 }
 
-void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell, const LCAO_Orbitals& orb)
+void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell,
+                                               const LCAO_Orbitals& orb,
+                                               const bool cal_force,
+                                               const int nlocal)
 {
     int orb_r_ntype = 0;
     int mat_Nr = orb.Phi[0].PhiLN(0, 0).getNr();
@@ -77,7 +79,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell, const LCAO
                                                orb_origin.getDruniform(),
                                                false,
                                                true,
-                                               PARAM.inp.cal_force);
+                                               cal_force);
             }
         }
     }
@@ -96,7 +98,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell, const LCAO
                            orbs[orb_r_ntype][0][0].getDruniform(),
                            false,
                            true,
-                           PARAM.inp.cal_force);
+                           cal_force);
 
     for (int TA = 0; TA < orb.get_ntype(); ++TA)
     {
@@ -180,7 +182,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell, const LCAO
         }
     }
 
-    int map_size = PARAM.globalv.nlocal;
+    int map_size = nlocal;
     int required_orbitals = 0;
     for (int it = 0; it < ucell.ntype; ++it)
     {
@@ -218,7 +220,10 @@ void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell, const LCAO
     }
 }
 
-void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucell, const LCAO_Orbitals& orb)
+void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucell,
+                                                            const LCAO_Orbitals& orb,
+                                                            const bool cal_force,
+                                                            const int nlocal)
 {
     const NonlocalInfoBase& infoNL_ = *ucell.infoNL;
 
@@ -257,7 +262,7 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
                                                orb_origin.getDruniform(),
                                                false,
                                                true,
-                                               PARAM.inp.cal_force);
+                                               cal_force);
             }
         }
     }
@@ -276,7 +281,7 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
                            orbs[orb_r_ntype][0][0].getDruniform(),
                            false,
                            true,
-                           PARAM.inp.cal_force);
+                           cal_force);
 
     orbs_nonlocal.resize(orb.get_ntype());
     for (int T = 0; T < orb.get_ntype(); ++T)
@@ -344,7 +349,7 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
                                                   infoNL_.get_proj_dr_uniform(T, ip),
                                                   false,
                                                   true,
-                                                  PARAM.inp.cal_force);
+                                                  cal_force);
 
             delete[] rad;
             delete[] rab;
@@ -424,7 +429,7 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
         }
     }
 
-    int map_size = PARAM.globalv.nlocal;
+    int map_size = nlocal;
     int required_orbitals = 0;
     for (int it = 0; it < ucell.ntype; ++it)
     {
@@ -462,27 +467,35 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
     }
 }
 
-void cal_r_overlap_R::init(const UnitCell& ucell, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
+void cal_r_overlap_R::init(const UnitCell& ucell,
+                           const Parallel_Orbitals& pv,
+                           const LCAO_Orbitals& orb,
+                           const bool cal_force,
+                           const int nlocal)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "init");
     ModuleBase::timer::start("cal_r_overlap_R", "init");
     this->ParaV = &pv;
 
     initialize_orb_table(ucell, orb);
-    construct_orbs_and_orb_r(ucell, orb);
+    construct_orbs_and_orb_r(ucell, orb, cal_force, nlocal);
 
     ModuleBase::timer::end("cal_r_overlap_R", "init");
     return;
 }
 
-void cal_r_overlap_R::init_nonlocal(const UnitCell& ucell, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
+void cal_r_overlap_R::init_nonlocal(const UnitCell& ucell,
+                                    const Parallel_Orbitals& pv,
+                                    const LCAO_Orbitals& orb,
+                                    const bool cal_force,
+                                    const int nlocal)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "init_nonlocal");
     ModuleBase::timer::start("cal_r_overlap_R", "init_nonlocal");
     this->ParaV = &pv;
 
     initialize_orb_table(ucell, orb);
-    construct_orbs_and_nonlocal_and_orb_r(ucell, orb);
+    construct_orbs_and_nonlocal_and_orb_r(ucell, orb, cal_force, nlocal);
 
     ModuleBase::timer::end("cal_r_overlap_R", "init_nonlocal");
     return;
@@ -638,7 +651,16 @@ void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
     }
 }
 
-void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep, const int precision)
+void cal_r_overlap_R::out_rR(const UnitCell& ucell,
+                             const Grid_Driver& gd,
+                             const int& istep,
+                             const int precision,
+                             const std::string& global_out_dir,
+                             const std::string& global_matrix_dir,
+                             const std::string& calculation,
+                             const bool out_app_flag,
+                             const int nlocal,
+                             const int npol)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR");
     ModuleBase::timer::start("cal_r_overlap_R", "out_rR");
@@ -676,10 +698,10 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
     single_R_options.binary = binary;
     single_R_options.precision = precision;
     single_R_options.reduce = true;
-    single_R_options.temp_dir = PARAM.globalv.global_out_dir;
+    single_R_options.temp_dir = global_out_dir;
 
     std::stringstream tem1;
-    tem1 << PARAM.globalv.global_out_dir << "tmp-rr.csr";
+    tem1 << global_out_dir << "tmp-rr.csr";
     std::ofstream ofs_tem1;
 
     if (GlobalV::DRANK == 0)
@@ -709,22 +731,22 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
         ModuleBase::Vector3<double> R_car = ModuleBase::Vector3<double>(dRx, dRy, dRz) * ucell.latvec;
 
         int ir, ic;
-        for (int iw1 = 0; iw1 < PARAM.globalv.nlocal; iw1++)
+        for (int iw1 = 0; iw1 < nlocal; iw1++)
         {
             ir = this->ParaV->global2local_row(iw1);
             if (ir >= 0)
             {
-                for (int iw2 = 0; iw2 < PARAM.globalv.nlocal; iw2++)
+                for (int iw2 = 0; iw2 < nlocal; iw2++)
                 {
                     ic = this->ParaV->global2local_col(iw2);
                     if (ic >= 0)
                     {
-                        int orb_index_row = iw1 / PARAM.globalv.npol;
-                        int orb_index_col = iw2 / PARAM.globalv.npol;
+                        int orb_index_row = iw1 / npol;
+                        int orb_index_col = iw2 / npol;
 
                         // The off-diagonal term in SOC calculaiton is zero, and the two diagonal terms are the same
                         int new_index
-                            = iw1 - PARAM.globalv.npol * orb_index_row + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
+                            = iw1 - npol * orb_index_row + (iw2 - npol * orb_index_col) * npol;
 
                         if (new_index == 0 || new_index == 3)
                         {
@@ -848,23 +870,25 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
     if (GlobalV::DRANK == 0)
     {
         std::stringstream ssr;
-        if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
+        const bool md_no_append = (calculation == "md") && !out_app_flag;
+        if (md_no_append)
         {
-            ssr << PARAM.globalv.global_matrix_dir << "rrg" << step << ".csr";
+            ssr << global_matrix_dir << "rrg" << step << ".csr";
         }
         else
         {
-            ssr << PARAM.globalv.global_out_dir << "rr.csr";
+            ssr << global_out_dir << "rr.csr";
         }
 
         ofs_tem1.close();
+        const bool open_in_append = (calculation == "md") && out_app_flag && step;
         ModuleIO::detail::finalize_rr_sparse_file(ssr.str(),
                                                   tem1.str(),
                                                   step,
-                                                  PARAM.globalv.nlocal,
+                                                  nlocal,
                                                   output_R_number,
                                                   binary,
-                                                  PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step,
+                                                  open_in_append,
                                                   "cal_r_overlap_R::out_rR");
 
         std::remove(tem1.str().c_str());
@@ -877,7 +901,13 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
 void cal_r_overlap_R::out_rR_other(const UnitCell& ucell,
                                    const int& istep,
                                    const std::set<Abfs::Vector3_Order<int>>& output_R_coor,
-                                   const int precision)
+                                   const int precision,
+                                   const std::string& global_out_dir,
+                                   const std::string& global_matrix_dir,
+                                   const std::string& calculation,
+                                   const bool out_app_flag,
+                                   const int nlocal,
+                                   const int npol)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR_other");
     ModuleBase::timer::start("cal_r_overlap_R", "out_rR_other");
@@ -893,10 +923,10 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell,
     single_R_options.binary = binary;
     single_R_options.precision = precision;
     single_R_options.reduce = true;
-    single_R_options.temp_dir = PARAM.globalv.global_out_dir;
+    single_R_options.temp_dir = global_out_dir;
 
     std::stringstream tem1;
-    tem1 << PARAM.globalv.global_out_dir << "tmp-rr-other.csr";
+    tem1 << global_out_dir << "tmp-rr-other.csr";
     std::ofstream ofs_tem1;
     if (GlobalV::DRANK == 0)
     {
@@ -915,13 +945,14 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell,
     }
 
     std::stringstream ssr;
-    if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
+    const bool md_no_append = (calculation == "md") && !out_app_flag;
+    if (md_no_append)
     {
-        ssr << PARAM.globalv.global_matrix_dir << "rrg" << step << ".csr";
+        ssr << global_matrix_dir << "rrg" << step << ".csr";
     }
     else
     {
-        ssr << PARAM.globalv.global_out_dir << "rr.csr";
+        ssr << global_out_dir << "rr.csr";
     }
 
     for (auto& R_coor: output_R_coor)
@@ -936,22 +967,22 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell,
 
         int ir = 0;
         int ic = 0;
-        for (int iw1 = 0; iw1 < PARAM.globalv.nlocal; iw1++)
+        for (int iw1 = 0; iw1 < nlocal; iw1++)
         {
             ir = this->ParaV->global2local_row(iw1);
             if (ir >= 0)
             {
-                for (int iw2 = 0; iw2 < PARAM.globalv.nlocal; iw2++)
+                for (int iw2 = 0; iw2 < nlocal; iw2++)
                 {
                     ic = this->ParaV->global2local_col(iw2);
                     if (ic >= 0)
                     {
-                        int orb_index_row = iw1 / PARAM.globalv.npol;
-                        int orb_index_col = iw2 / PARAM.globalv.npol;
+                        int orb_index_row = iw1 / npol;
+                        int orb_index_col = iw2 / npol;
 
                         // The off-diagonal term in SOC calculaiton is zero, and the two diagonal terms are the same
                         int new_index
-                            = iw1 - PARAM.globalv.npol * orb_index_row + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
+                            = iw1 - npol * orb_index_row + (iw2 - npol * orb_index_col) * npol;
 
                         if (new_index == 0 || new_index == 3)
                         {
@@ -1076,13 +1107,14 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell,
     if (GlobalV::DRANK == 0)
     {
         ofs_tem1.close();
+        const bool open_in_append_other = (calculation == "md") && out_app_flag && step;
         ModuleIO::detail::finalize_rr_sparse_file(ssr.str(),
                                                   tem1.str(),
                                                   step,
-                                                  PARAM.globalv.nlocal,
+                                                  nlocal,
                                                   output_R_number,
                                                   binary,
-                                                  PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step,
+                                                  open_in_append_other,
                                                   "cal_r_overlap_R::out_rR_other");
         std::remove(tem1.str().c_str());
     }

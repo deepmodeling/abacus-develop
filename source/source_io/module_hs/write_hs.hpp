@@ -1,6 +1,5 @@
 #include "write_hs.h"
 
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
@@ -23,6 +22,9 @@ void ModuleIO::write_hsk(
         const int istep,
         const int out_type,
         const int precision,
+        const int nlocal,
+        const std::string &ks_solver,
+        const int drank,
         std::ofstream &ofs_running)    
 {
 
@@ -54,14 +56,15 @@ void ModuleIO::write_hsk(
 
         ModuleIO::save_mat(istep,
                 h_mat.p,
-                PARAM.globalv.nlocal,
+                nlocal,
                 binary,
                 precision,
                 1,
                 out_app_flag,
                 h_fn,
                 pv,
-                GlobalV::DRANK);
+                drank,
+                ks_solver);
 
         // mohan note 2025-06-02
         // for overlap matrix, the two spin channels yield the same matrix
@@ -80,14 +83,15 @@ void ModuleIO::write_hsk(
 
         ModuleIO::save_mat(istep,
                 s_mat.p,
-                PARAM.globalv.nlocal,
+                nlocal,
                 binary,
                 precision,
                 1,
                 out_app_flag,
-                s_fn,    
+                s_fn,
                 pv,
-                GlobalV::DRANK);
+                drank,
+                ks_solver);
     } // end ik
 }
 
@@ -104,6 +108,7 @@ void ModuleIO::save_mat(const int istep,
     const std::string& filename,
     const Parallel_2D& pv,
     const int drank,
+    const std::string& ks_solver,
     const bool reduce)
 {
     ModuleBase::TITLE("ModuleIO", "save_mat");
@@ -146,7 +151,7 @@ void ModuleIO::save_mat(const int istep,
                     if (ic >= 0)
                     {
                         int iic;
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver))
                         {
                             iic = ir + ic * pv.nrow;
                         }
@@ -247,7 +252,7 @@ void ModuleIO::save_mat(const int istep,
                     if (ic >= 0)
                     {
                         int iic=0;
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver))
                         {
                             iic = ir + ic * pv.nrow;
                         }

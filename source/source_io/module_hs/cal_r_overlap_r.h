@@ -17,6 +17,7 @@
 
 #include <map>
 #include <set>
+#include <string>
 #include <vector>
 
 // output r_R matrix, added by Jingan
@@ -31,8 +32,16 @@ class cal_r_overlap_R
     double sparse_threshold = 1e-10;
     bool binary = false;
 
-    void init(const UnitCell& ucell, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
-    void init_nonlocal(const UnitCell& ucell, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
+    void init(const UnitCell& ucell,
+              const Parallel_Orbitals& pv,
+              const LCAO_Orbitals& orb,
+              const bool cal_force,
+              const int nlocal);
+    void init_nonlocal(const UnitCell& ucell,
+                       const Parallel_Orbitals& pv,
+                       const LCAO_Orbitals& orb,
+                       const bool cal_force,
+                       const int nlocal);
     ModuleBase::Vector3<double> get_psi_r_psi(const ModuleBase::Vector3<double>& R1,
                                               const int& T1,
                                               const int& L1,
@@ -64,16 +73,37 @@ class cal_r_overlap_R
                         const int& N1,
                         const ModuleBase::Vector3<double>& R2,
                         const int& T2);
-    void out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep, const int precision = 16);
+    void out_rR(const UnitCell& ucell,
+                const Grid_Driver& gd,
+                const int& istep,
+                const int precision,
+                const std::string& global_out_dir,
+                const std::string& global_matrix_dir,
+                const std::string& calculation,
+                const bool out_app_flag,
+                const int nlocal,
+                const int npol);
     void out_rR_other(const UnitCell& ucell,
                       const int& istep,
                       const std::set<Abfs::Vector3_Order<int>>& output_R_coor,
-                      const int precision = 16);
+                      const int precision,
+                      const std::string& global_out_dir,
+                      const std::string& global_matrix_dir,
+                      const std::string& calculation,
+                      const bool out_app_flag,
+                      const int nlocal,
+                      const int npol);
 
   private:
     void initialize_orb_table(const UnitCell& ucell, const LCAO_Orbitals& orb);
-    void construct_orbs_and_orb_r(const UnitCell& ucell, const LCAO_Orbitals& orb);
-    void construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucell, const LCAO_Orbitals& orb);
+    void construct_orbs_and_orb_r(const UnitCell& ucell,
+                                  const LCAO_Orbitals& orb,
+                                  const bool cal_force,
+                                  const int nlocal);
+    void construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucell,
+                                               const LCAO_Orbitals& orb,
+                                               const bool cal_force,
+                                               const int nlocal);
 
     std::vector<int> iw2ia;
     std::vector<int> iw2iL;

@@ -92,7 +92,7 @@ void write_eband_terms(const int nspin,
                     cVc(kinetic_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
 
-            write_orb_energy(kv, nspin0, nbands, e_orb_kinetic, "kinetic", "");
+            write_orb_energy(kv, nspin0, nbands, e_orb_kinetic, "kinetic", "", PARAM.globalv.global_out_dir);
         }
 
         // 2. pp: local
@@ -124,7 +124,7 @@ void write_eband_terms(const int nspin,
                 e_orb_pp_local.emplace_back(orbital_energy(ik, nbands,
                     cVc(v_pp_local_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
-            write_orb_energy(kv, nspin0, nbands, e_orb_pp_local, "vpp_local", "");
+            write_orb_energy(kv, nspin0, nbands, e_orb_pp_local, "vpp_local", "", PARAM.globalv.global_out_dir);
         }
 
         // 3. pp: nonlocal
@@ -144,7 +144,7 @@ void write_eband_terms(const int nspin,
                 e_orb_pp_nonlocal.emplace_back(orbital_energy(ik, nbands,
                     cVc(v_pp_nonlocal_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
-            write_orb_energy(kv, nspin0, nbands, e_orb_pp_nonlocal, "vpp_nonlocal", "");
+            write_orb_energy(kv, nspin0, nbands, e_orb_pp_nonlocal, "vpp_nonlocal", "", PARAM.globalv.global_out_dir);
         }
 
         // 4. hartree
@@ -177,7 +177,7 @@ void write_eband_terms(const int nspin,
                     cVc(v_hartree_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
             for (auto& op : v_hartree_op) { delete op; }
-            write_orb_energy(kv, nspin0, nbands, e_orb_hartree, "vhartree", "");
+            write_orb_energy(kv, nspin0, nbands, e_orb_hartree, "vhartree", "", PARAM.globalv.global_out_dir);
         }
 
         // 5. xc (including exx)
@@ -200,6 +200,11 @@ void write_eband_terms(const int nspin,
                               orb_cutoff,
                               wg,
                               gd,
+                              PARAM.inp.dft_plus_u,
+                              PARAM.globalv.gamma_only_local,
+                              PARAM.globalv.global_out_dir,
+                              PARAM.inp.out_ndigits,
+                              PARAM.inp.ks_solver,
                               cal_exx,
                               exx_info
 #ifdef __EXX

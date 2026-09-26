@@ -512,6 +512,23 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
             this->exx_nao.exc->exx_hamilt2rho(*this->pelec, this->pv, iter);
         }
     }
+    else if (exx_info_.info_global.cal_exx)
+    {
+        // For nscf, Hexx and Eexx have been computed in OperatorEXX constructor.
+        // Sync the energy to f_en.exx so that the output prints the correct E_exx.
+        if (exx_info_.info_ri.real_number)
+        {
+            this->pelec->set_exx(this->exx_nao.exd->get_Eexx(),
+                                 exx_info_.info_global.cal_exx,
+                                 exx_info_.info_global.hybrid_alpha);
+        }
+        else
+        {
+            this->pelec->set_exx(this->exx_nao.exc->get_Eexx(),
+                                 exx_info_.info_global.cal_exx,
+                                 exx_info_.info_global.hybrid_alpha);
+        }
+    }
 #endif
 
     // 5) symmetrize the charge density

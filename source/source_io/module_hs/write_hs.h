@@ -18,8 +18,8 @@ namespace ModuleIO
 		void write_hsk(
 				const std::string &global_out_dir,
 				const int nspin,
-				const int nks, 
-				const int nkstot, 
+				const int nks,
+				const int nkstot,
 				const std::vector<int> &ik2iktot,
 				const std::vector<int> &isk,
 				hamilt::Hamilt<T>* p_hamilt,
@@ -29,7 +29,10 @@ namespace ModuleIO
 				const int istep,
 				const int out_type,
 				const int precision,
-				std::ofstream &ofs_running);	
+			const int nlocal,
+			const std::string &ks_solver,
+			const int drank,
+			std::ofstream &ofs_running);
 
     /// @brief save a square matrix, such as H(k) and S(k)
     /// @param[in] istep : the step of the calculation
@@ -51,6 +54,7 @@ namespace ModuleIO
         const std::string& file_name,
         const Parallel_2D& pv,
         const int drank,
+        const std::string& ks_solver,
         const bool reduce = true);
 
 }

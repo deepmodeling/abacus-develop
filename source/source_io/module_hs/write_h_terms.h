@@ -12,6 +12,7 @@
 #include "source_hamilt/module_xc/exx_info.h"
 
 #include <complex>
+#include <string>
 #include <vector>
 
 template <typename T, typename Tdata>
@@ -38,6 +39,17 @@ struct WriteHParams
     const int* iat2iwt = nullptr;
     int nat = 0;
     bool also_hR = false; // H(k) is always written; H(R) (CSR) only when this is true
+    int nlocal = 0;
+    bool gamma_only_local = false;
+    int npol = 1;
+    bool domag = false;
+    bool domag_z = false;
+    bool out_app_flag = false;
+    std::string calculation;
+    std::string global_out_dir;
+    std::string global_matrix_dir;
+    std::string ks_solver;
+    int drank = 0;
 #ifdef __EXX
     // The gamma-only (TK==double) exx interfaces used by write_h_exx. 
     // Deliberately NOT templated on TK, because it would force WriteHParams, WriteDHParams and

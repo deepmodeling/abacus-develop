@@ -197,7 +197,9 @@ namespace ModuleIO
              * @param tdestructor test flag, for destructor
              * @param tgrid test flag, for grid
              * @param tatom test flag, for atom input
-             * @param searchpbc 
+             * @param searchpbc
+             * @param out_level the output verbosity level
+             * @param gamma_only whether the calculation is gamma-only
              * @param ptr_log pointer to the ofstream object for logging
              */
             AngularMomentumCalculator(
@@ -208,6 +210,8 @@ namespace ModuleIO
                 const int tgrid,
                 const int tatom,
                 const bool searchpbc,
+                const std::string& out_level,
+                const bool gamma_only,
                 std::ofstream* ptr_log = nullptr,
                 const int rank = 0);
             ~AngularMomentumCalculator() = default;

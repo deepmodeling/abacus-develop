@@ -44,7 +44,9 @@ TD_info::TD_info(const UnitCell* ucell_in, const Parallel_Orbitals& pv, const LC
     this->istep += estep_shift;
     if (out_current == 2 || elecstate::H_TDDFT_pw::stype == 2)
     {
-        r_calculator.init(*ucell_in, pv, orb);
+        const bool cal_force = PARAM.inp.cal_force;
+        const int nlocal = PARAM.globalv.nlocal;
+        r_calculator.init(*ucell_in, pv, orb, cal_force, nlocal);
     }
     return;
 }

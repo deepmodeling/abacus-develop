@@ -219,6 +219,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                             istep,
                             hsk_out_type,
                             precision,
+                            PARAM.globalv.nlocal,
+                            PARAM.inp.ks_solver,
+                            GlobalV::DRANK,
                             GlobalV::ofs_running);
     }
 
@@ -277,7 +280,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const hamilt::HContainer<TR>* sr = p_hamilt->getSR();
 
         ModuleIO::write_hsr(hr_vec, sr, &ucell, inp.out_hsr[0], precision, pv,
-                            out_app_flag, gamma_only, ucell.get_iat2iwt(), ucell.nat, istep);
+                            out_app_flag, gamma_only, ucell.get_iat2iwt(), ucell.nat, istep,
+                            PARAM.globalv.global_out_dir);
     }
 
     //------------------------------------------------------------------
@@ -436,6 +440,17 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         h_params.append = out_app_flag;
         h_params.iat2iwt = ucell.get_iat2iwt();
         h_params.nat = ucell.nat;
+        h_params.nlocal = PARAM.globalv.nlocal;
+        h_params.gamma_only_local = gamma_only;
+        h_params.npol = PARAM.globalv.npol;
+        h_params.domag = PARAM.globalv.domag;
+        h_params.domag_z = PARAM.globalv.domag_z;
+        h_params.out_app_flag = out_app_flag;
+        h_params.calculation = inp.calculation;
+        h_params.global_out_dir = global_out_dir;
+        h_params.global_matrix_dir = PARAM.globalv.global_matrix_dir;
+        h_params.ks_solver = PARAM.inp.ks_solver;
+        h_params.drank = GlobalV::DRANK;
         if (inp.out_mat_h_t[0])
         {
             ModuleIO::write_h_t(h_params);
@@ -508,7 +523,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                inp.out_app_flag,
                                t_fn,
                                pv,
-                               GlobalV::DRANK);
+                               GlobalV::DRANK,
+                               PARAM.inp.ks_solver);
         }
 
         delete ekinetic;
@@ -526,6 +542,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                           inp.test_grid,
                                                           inp.test_atom_input,
                                                           PARAM.globalv.search_pbc,
+                                                          PARAM.inp.out_level,
+                                                          PARAM.globalv.gamma_only_local,
                                                           &GlobalV::ofs_running,
                                                           GlobalV::MY_RANK);
         mylcalculator.calculate(inp.suffix, global_out_dir, ucell, inp.out_mat_l[1], GlobalV::MY_RANK);

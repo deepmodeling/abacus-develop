@@ -1,0 +1,55 @@
+ --- Ionic Step 1 ---
+ # print density matrix in real space DM(R)
+ 1 # number of spin directions
+ 1 # spin index
+ 6 # number of localized basis
+ 3 # number of Bravais lattice vector R
+
+ user_defined_lattice
+ 1
+ 10 0 0
+ 0 10 0
+ 0 0 10
+ H O
+ 2 1
+ Direct
+ 0.0979299999999057 0.00422000000071421 0
+ 0.971340000000055 0.0937300000005052 0
+ 0 0 0
+
+ #----------------------------------------------------------------------#
+ #                               CSR Format                             #
+ # The outer loop corresponds to the number of Bravais lattice vectors. #
+ # The first line contains the index of the Bravais lattice vector      #
+ # (Rx, Ry, Rz), followed by the number of non-zero elements.           #
+ # The subsequent lines consist of three blocks of data, which are      #
+ # values, column indices, row pointers.                                #
+ #----------------------------------------------------------------------#
+
+ -1 0 0 4
+ # CSR values
+ -1.74704399e-01 -2.51410026e-01 1.24539629e-01 -7.44890946e-01
+ # CSR column indices
+ 1 1 1 1
+ # CSR row pointers
+ 0 1 1 2 2 3 4
+
+ 0 0 0 18
+ # CSR values
+ 7.33227857e-01 -2.53104629e-01 -7.46329254e-01 -1.07367635e-01 7.23899259e-01 -2.53104629e-01
+ 2.22673723e+00 3.30396323e-01 4.50272155e-01 2.00000000e+00 -7.46329254e-01 3.30396323e-01
+ 7.65000705e-01 1.70944993e-01 -1.07367635e-01 4.50272155e-01 1.70944993e-01 8.87672833e-01
+ # CSR column indices
+ 0 2 4 5 1 0 2 4 5 3 0 2 4 5 0 2
+ 4 5
+ # CSR row pointers
+ 0 4 5 9 10 14 18
+
+ 1 0 0 4
+ # CSR values
+ -1.74704399e-01 -2.51410026e-01 1.24539629e-01 -7.44890946e-01
+ # CSR column indices
+ 0 2 4 5
+ # CSR row pointers
+ 0 0 4 4 4 4 4
+

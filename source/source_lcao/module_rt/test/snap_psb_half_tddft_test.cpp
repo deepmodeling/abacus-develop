@@ -357,7 +357,7 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
 
     void initialize_r_overlap_reference()
     {
-        r_calculator.init_nonlocal(ucell, pv, orb);
+        r_calculator.init_nonlocal(ucell, pv, orb, false, ucell.atoms[0].nw);
     }
 
     ComparisonStats compare_zero_vector_potential(const int radial_grid_num, const int lebedev_grid_points)
@@ -439,7 +439,7 @@ class SnapPsibetaNonuniformHalfTddftTest : public ::testing::Test
         lcao_nl->get_nonlocal().set_rcutmax_Beta(lcao_nl->get_nonlocal().get_Beta(0).get_rcut_max());
         ucell.infoNL.reset(lcao_nl);
 
-        r_calculator.init_nonlocal(ucell, pv, orb);
+        r_calculator.init_nonlocal(ucell, pv, orb, false, atom.nw);
     }
 
     LCAO_Orbitals orb;

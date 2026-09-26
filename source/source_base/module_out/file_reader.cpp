@@ -11,7 +11,7 @@ FileReader::FileReader(std::string filename)
     ifs.open(filename.c_str());
     if (!ifs.is_open())
     {
-        ModuleBase::WARNING_QUIT("FileReader::FileReader", "Error opening file");
+        ModuleBase::WARNING_QUIT("FileReader::FileReader", "Error opening file: " + filename);
     }
 }
 

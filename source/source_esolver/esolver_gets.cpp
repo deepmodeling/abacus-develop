@@ -194,13 +194,38 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
     const std::string fn = PARAM.globalv.global_out_dir + "sr_nao.csr";
 
     auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
-    ModuleIO::output_SR(pv, gd, hamilt_ptr, fn);
+    const bool binary = false;
+    const double sparse_threshold = 1e-10;
+    const int precision = 16;
+    ModuleIO::output_SR(pv,
+                        gd,
+                        hamilt_ptr,
+                        fn,
+                        binary,
+                        sparse_threshold,
+                        precision,
+                        PARAM.globalv.global_out_dir,
+                        PARAM.globalv.global_matrix_dir,
+                        PARAM.inp.calculation,
+                        PARAM.inp.out_app_flag,
+                        PARAM.inp.nspin);
 
     if (this->inp_->out_mat_r[0])
     {
         cal_r_overlap_R r_matrix;
-        r_matrix.init(ucell, pv, orb_);
-        r_matrix.out_rR(ucell, gd, istep, this->inp_->out_mat_r[1]);
+        const bool cal_force = PARAM.inp.cal_force;
+        const int nlocal = PARAM.globalv.nlocal;
+        r_matrix.init(ucell, pv, orb_, cal_force, nlocal);
+        r_matrix.out_rR(ucell,
+                        gd,
+                        istep,
+                        this->inp_->out_mat_r[1],
+                        PARAM.globalv.global_out_dir,
+                        PARAM.globalv.global_matrix_dir,
+                        PARAM.inp.calculation,
+                        PARAM.inp.out_app_flag,
+                        nlocal,
+                        PARAM.globalv.npol);
     }
 
     if (this->inp_->out_mat_ds[0])
@@ -215,9 +240,17 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                              two_center_bundle_,
                              orb_,
                              kv,
-                             false,
-                             1e-10,
-                             this->inp_->out_mat_ds[1]);
+                             binary,
+                             sparse_threshold,
+                             this->inp_->out_mat_ds[1],
+                             PARAM.globalv.global_out_dir,
+                             PARAM.globalv.global_matrix_dir,
+                             PARAM.inp.calculation,
+                             PARAM.inp.out_app_flag,
+                             PARAM.inp.nspin,
+                             PARAM.globalv.gamma_only_local,
+                             PARAM.globalv.npol,
+                             PARAM.globalv.nlocal);
     }
 
     ModuleBase::timer::end("ESolver_GetS", "runner");

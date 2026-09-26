@@ -29,6 +29,10 @@ struct SparseWriteOptions
     int istep = -1;
     bool reduce = true;
     std::string temp_dir;
+    // Runtime flags that decide file-open mode (append on md restart).
+    // Must be provided explicitly by the caller instead of reading PARAM.
+    std::string calculation;
+    bool out_app_flag = false;
 };
 
 void save_dH_sparse(const int& istep,
@@ -36,8 +40,14 @@ void save_dH_sparse(const int& istep,
                     LCAO_HS_Arrays& HS_Arrays,
                     const double& sparse_thr,
                     const bool& binary,
-                    const std::string& fileflag = "h",
-                    const int precision = 16);
+                    const std::string& fileflag,
+                    const int precision,
+                    const std::string& global_out_dir,
+                    const std::string& global_matrix_dir,
+                    const std::string& calculation,
+                    const bool out_app_flag,
+                    const int nspin,
+                    const int nlocal);
 
 template <typename Tdata>
 void save_sparse(const SparseRMatrix<Tdata>& smat,

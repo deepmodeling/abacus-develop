@@ -1,6 +1,5 @@
 #ifndef __WRITE_VXC_LIP_H_
 #define __WRITE_VXC_LIP_H_
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_pw/module_pwdft/op_pw_veff.h"
@@ -115,6 +114,10 @@ namespace ModuleIO
                    const Charge& chg,
                    const K_Vectors& kv,
                    const ModuleBase::matrix& wg,
+                   const bool gamma_only,
+                   const std::string& global_out_dir,
+                   const int out_ndigits,
+                   const std::string& ks_solver,
                    bool cal_exx,
                    double hybrid_alpha
 #ifdef __EXX
@@ -209,17 +212,15 @@ namespace ModuleIO
             const int istep = -1;
             const int out_label = 1; // 1 means .txt while 2 means .dat
             const bool out_app_flag = 0;
-            const bool gamma_only = PARAM.globalv.gamma_only_local;
-
             std::string vxc_file = ModuleIO::filename_output(
-                PARAM.globalv.global_out_dir,
+                global_out_dir,
                 "vxc","nao",ik,kv.ik2iktot,nspin,kv.get_nkstot(),
                 out_label,out_app_flag,gamma_only,istep);
              
-            ModuleIO::save_mat(istep, vxc_tot_k_mo.data(), nbands, 
-		    false, PARAM.inp.out_ndigits, true, 
-		    out_app_flag, vxc_file, 
-		    p2d_serial, drank, false);
+            ModuleIO::save_mat(istep, vxc_tot_k_mo.data(), nbands,
+		    false, out_ndigits, true,
+		    out_app_flag, vxc_file,
+		    p2d_serial, drank, ks_solver, false);
 
             e_orb_tot.emplace_back(orbital_energy(ik, nbands, vxc_tot_k_mo));
         }
@@ -242,13 +243,14 @@ namespace ModuleIO
         //===== test total exx energy =======
         // write the orbital energy for xc and exx in LibRPA format
         const int nspin0 = (nspin == 2) ? 2 : 1;
-        auto write_orb_energy = [&kv, &nspin0, &nbands](const std::vector<std::vector<FPTYPE>>& e_orb,
+        auto write_orb_energy = [&kv, &nspin0, &nbands, &global_out_dir](const std::vector<std::vector<FPTYPE>>& e_orb,
             const std::string& label,
             const bool app = false) {
                 assert(e_orb.size() == kv.get_nks());
                 const int nk = kv.get_nks() / nspin0;
                 std::ofstream ofs;
-                ofs.open(PARAM.globalv.global_out_dir + "vxc_" + (label == "" ? "out.dat" : label + "_out.dat"),
+                const std::string out_name = (label == "") ? "out.dat" : label + "_out.dat";
+                ofs.open(global_out_dir + "vxc_" + out_name,
                     app ? std::ios::app : std::ios::out);
                 ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
                 ofs << std::scientific << std::setprecision(16);

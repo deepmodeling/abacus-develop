@@ -298,6 +298,10 @@ namespace ModuleESolver
                                 this->chr,
                                 this->kv,
                                 this->pelec->wg,
+                                PARAM.globalv.gamma_only_local,
+                                PARAM.globalv.global_out_dir,
+                                this->inp_->out_ndigits,
+                                this->inp_->ks_solver,
                                 cal_exx,
                                 hybrid_alpha
 #ifdef __EXX

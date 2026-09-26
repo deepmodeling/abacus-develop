@@ -74,6 +74,11 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                     orb.cutoffs(),
                                     pelec->wg,
                                     gd,
+                                    inp.dft_plus_u,
+                                    PARAM.globalv.gamma_only_local,
+                                    PARAM.globalv.global_out_dir,
+                                    inp.out_ndigits,
+                                    inp.ks_solver,
                                     cal_exx,
                                     exx_info
 #ifdef __EXX
@@ -101,6 +106,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       kv,
                                       orb.cutoffs(),
                                       gd,
+                                      PARAM.globalv.global_out_dir,
                                       cal_exx,
                                       hybrid_alpha,
                                       real_number

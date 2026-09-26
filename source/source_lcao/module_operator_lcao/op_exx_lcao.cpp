@@ -220,18 +220,37 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 this->exc->cal_exx_ions(ucell, PARAM.inp.out_ri_cv);
             }
 
+#ifdef __MPI
+            // EXX-specific: barrier after cal_exx_ions (pure local tensor calculation with no
+            // internal synchronization) to ensure all ranks reach Read_HContainer together.
+            // Read_HContainer uses fixed MPI tags 0/1; without this barrier, rank 0 can block
+            // in MPI_Send while slower ranks are still inside cal_exx_ions, causing deadlock.
+            MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
             // 2. read DM
             const int nspin_dm = (PARAM.inp.nspin == 2) ? 2 : 1;
             std::vector<hamilt::HContainer<double>*> dmR_vec(nspin_dm);
             for (int is = 0; is < nspin_dm; ++is)
             {
+                // global_readin_dir is normalized by to_dir() and always ends with '/'
                 const std::string dmfile
-                    = PARAM.globalv.global_readin_dir + "/dmrs" + std::to_string(is + 1) + "_nao.csr";
+                    = PARAM.globalv.global_readin_dir + "dmrs" + std::to_string(is + 1) + "_nao.csr";
+                // EXX-specific: add rank guard because OperatorEXX is constructed on all MPI ranks,
+                // unlike most other places where ofs_running is only written on rank 0
+                if (GlobalV::MY_RANK == 0)
+                {
+                    GlobalV::ofs_running << " Read density matrix for EXX from " << dmfile << std::endl;
+                }
                 dmR_vec[is] = new hamilt::HContainer<double>(const_cast<Parallel_Orbitals*>(pv));
                 hamilt::Read_HContainer<double> reader_dm(dmR_vec[is], dmfile, PARAM.globalv.nlocal, &ucell, GlobalV::MY_RANK);
                 reader_dm.read();
             }
-
+#ifdef __MPI
+            // EXX-specific: barrier between Read_HContainer (fixed tags 0/1) and cal_exx_elec
+            // (Comm_Assemble may also use tags 0/1) to prevent internal MPI tag collision
+            MPI_Barrier(MPI_COMM_WORLD);
+#endif
             // 3. DM->Ds->Hexx (do not use symmetry for nscf)
             XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
             if (exx_info_ptr->info_ri.real_number)
@@ -247,6 +266,12 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                                                                                               PARAM.inp.nspin);
                 this->exc->cal_exx_elec(Ds, ucell, *pv);
             }
+#ifdef __MPI
+            // EXX-specific: barrier to ensure all MPI communications (Read_HContainer and cal_exx_elec)
+            // complete before subsequent code (e.g., init_chg_dm) starts its own Read_HContainer with
+            // the same fixed MPI tags, preventing MPI_ERR_TRUNCATE race conditions
+            MPI_Barrier(MPI_COMM_WORLD);
+#endif
         }
         else // need to read HexxR
         {
