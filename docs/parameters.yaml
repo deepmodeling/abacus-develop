@@ -660,7 +660,7 @@ parameters:
     category: Electronic structure
     type: String
     description: |
-      Select an optional nonlocal exchange-correlation correction. `none` disables the correction. `rvv10` adds the rVV10 nonlocal correlation term to the semilocal functional selected by `dft_functional`. The current implementation requires LIBXC, an explicit `GGA_X_RPW86+GGA_C_PBE` base functional, a norm-conserving PW Kohn-Sham SCF calculation in CPU double precision, nspin=1 or nspin=2, and no forces, stress, gamma-only FFT, or pairwise vdW correction. MPI pool-distributed PW FFTs are supported.
+      Select an optional nonlocal exchange-correlation correction. `none` disables the correction. `rvv10` adds the initial rVV10 nonlocal correlation component (b=6.3, C=0.0093) after the semilocal functional selected by `dft_functional`. The semilocal and nonlocal terms are represented independently, but this first parameterization is validated only with an explicit `GGA_X_RPW86+GGA_C_PBE` base functional. The current implementation requires LIBXC, a norm-conserving PW Kohn-Sham SCF calculation in CPU double precision, nspin=1 or nspin=2, and no forces, stress, gamma-only FFT, or pairwise vdW correction. MPI pool-distributed PW FFTs are supported.
     default_value: none
     unit: ""
     availability: ""

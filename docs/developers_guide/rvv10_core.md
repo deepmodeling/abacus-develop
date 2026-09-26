@@ -1,10 +1,12 @@
 # rVV10 implementation
 
 `dft_functional GGA_X_RPW86+GGA_C_PBE` selects the semilocal base and
-`xc_nonlocal rvv10` adds rVV10 nonlocal correlation with b=6.3 and C=0.0093.
-The two choices are intentionally independent: future PBE+rVV10 and
-SCAN+rVV10 combinations can change the semilocal base without changing the
-nonlocal evaluator or potential component.
+`xc_nonlocal rvv10` adds the initial rVV10 parameterization with b=6.3 and
+C=0.0093. The two choices are independent at the ABACUS component boundary:
+the semilocal `PotXC` and nonlocal `PotRvv10` are separate components. This
+first PR validates the RPW86+PBE parameter set only; PBE+rVV10, SCAN+rVV10
+and r2SCAN+rVV10 require their own validated b/C choices and regression data
+before being enabled as user combinations.
 
 The VV10 parameter C=0.0093 was fitted using rPW86-PBE densities to 54
 same-species C6 coefficients; the reported mean absolute percentage error was
