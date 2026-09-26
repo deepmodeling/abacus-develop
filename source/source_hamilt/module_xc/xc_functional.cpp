@@ -8,8 +8,8 @@
 #include <algorithm>
 #include <cctype>
 
-#ifdef USE_LIBXC
-#include "xc_functional_libxc.h"
+#ifdef __LIBXC
+#include "libxc_abacus.h"
 #endif
 
 XC_Functional::XC_Functional(){}
