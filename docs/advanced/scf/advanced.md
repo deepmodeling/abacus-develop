@@ -19,9 +19,6 @@ nc_k                    0.00037
 
 Example of running DFT calculation with the implicit solvation model is provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/implicit_solvation_model/Pt-slab).
 
-For the SCCS model (`imp_sol 2`) and independent PCC corrections, see
-[SCCS and PCC](sccs-pcc.md).
-
 ## External Electric Field 
 
 A saw-like potential simulating an electric field
