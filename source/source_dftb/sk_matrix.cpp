@@ -155,7 +155,7 @@ DftbBlochMatrices assemble_sp_bloch_matrices(const std::vector<DftbSpAtom>& atom
         }
         else
         {
-            validate_pair_directions(*sk.ab, *sk.ba);
+            validate_pair_directions(*sk.ab, *sk.ba, 1.0e-8);
         }
     }
 

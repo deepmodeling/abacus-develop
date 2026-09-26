@@ -87,7 +87,7 @@ struct SkfData
  * used by DFTB+ for the legacy format: matching electronic grid and the same
  * pair repulsive function. Directional electronic integrals are not compared.
  */
-void validate_pair_directions(const SkfData& ab, const SkfData& ba, double tolerance = 1.0e-8);
+void validate_pair_directions(const SkfData& ab, const SkfData& ba, double tolerance);
 
 } // namespace ModuleDFTB
 

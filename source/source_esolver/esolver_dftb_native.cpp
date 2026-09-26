@@ -436,7 +436,9 @@ void ESolver_DFTBNative::load_model(const UnitCell& ucell, const Input_para& inp
     }
     for (std::size_t a = 0; a < ntype; ++a)
         for (std::size_t b = a + 1; b < ntype; ++b)
-            ModuleDFTB::validate_pair_directions(this->skfiles_[a * ntype + b], this->skfiles_[b * ntype + a]);
+            ModuleDFTB::validate_pair_directions(this->skfiles_[a * ntype + b],
+                                                 this->skfiles_[b * ntype + a],
+                                                 1.0e-8);
 
     this->template_ = ModuleDFTB::DftbPeriodicInput();
     this->template_.atoms.resize(static_cast<std::size_t>(ucell.nat));
