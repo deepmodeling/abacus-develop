@@ -23,6 +23,9 @@
 #include "esolver_dp.h"
 #include "esolver_nep.h"
 #include "esolver_lj.h"
+#ifdef __DFTB_NATIVE
+#include "esolver_dftb_native.h"
+#endif
 #include "esolver_of.h"
 #include "esolver_of_tddft.h"
 
@@ -96,7 +99,15 @@ std::string determine_type(const Input_para& inp)
 #endif
     }
 
-    if (inp.esolver_type == "lj")
+    if (inp.esolver_type == "dftbnative")
+    {
+#ifdef __DFTB_NATIVE
+        esolver_type = "dftb_native";
+#else
+        ModuleBase::WARNING_QUIT("ESolver", "dftbnative requires an ABACUS build with ENABLE_DFTB_NATIVE=ON");
+#endif
+    }
+    else if (inp.esolver_type == "lj")
     {
         esolver_type = "lj_pot";
     }
@@ -338,6 +349,14 @@ ESolver* init_esolver(const Input_para& inp)
         }
     }
 #endif
+    else if (esolver_type == "dftb_native")
+    {
+#ifdef __DFTB_NATIVE
+        return new ESolver_DFTBNative();
+#else
+        ModuleBase::WARNING_QUIT("ESolver", "dftbnative requires an ABACUS build with ENABLE_DFTB_NATIVE=ON");
+#endif
+    }
     else if (esolver_type == "ofdft")
     {
         return new ESolver_OF();

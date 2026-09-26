@@ -80,6 +80,7 @@ struct Input_para
     // ==============   #Parameters (2.Electronic structure) ===========================
     std::string ks_solver = "default"; ///< xiaohui add 2013-09-01
     std::string basis_type = "pw";     ///< xiaohui add 2013-09-01, for structural adjustment
+    std::string dftb_native_input = "dftb_native.in"; ///< Native DFTB model and SCC settings
     int nbands = 0;                    ///< number of bands
     double nelec = 0.0;                ///< total number of electrons
     double nelec_delta = 0.0;          ///< change in the number of total electrons

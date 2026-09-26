@@ -232,7 +232,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
     }
     {
         Input_Item item("esolver_type");
-        item.annotation = "the energy solver: ksdft, sdft, ofdft, tdofdft, tddft, lj, dp, ks-lr, lr, dfpt";
+        item.annotation = "the energy solver: ksdft, sdft, ofdft, tdofdft, tddft, lj, dp, nep, ks-lr, lr, dfpt, dftbnative";
         item.category = "System variables";
         item.type = "String";
         item.description = R"(Choose the energy solver.
@@ -246,11 +246,15 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
 * nep: Neuroevolution Potential
 * ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
 * lr: LR-TDDFT with given KS orbitals (Under Development Feature)
-* dfpt: density functional perturbation theory (Under Development Feature))";
+* dfpt: density functional perturbation theory (Under Development Feature)
+* dftbnative: native periodic DFTB0/2/3 solver using Slater-Koster files, without a DFTB+ runtime dependency.)";
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "lr", "ks-lr", "dfpt" };
+            std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "lr", "ks-lr", "dfpt" };
+#ifdef __DFTB_NATIVE
+            esolver_types.push_back("dftbnative");
+#endif
             if (std::find(esolver_types.begin(), esolver_types.end(), para.input.esolver_type) == esolver_types.end())
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
@@ -263,6 +267,24 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
                     ModuleBase::WARNING_QUIT("ReadInput", "Can not find `pot_file` !");
                 }
             }
+            if (para.input.esolver_type == "dftbnative")
+            {
+#ifndef __DFTB_NATIVE
+                ModuleBase::WARNING_QUIT("ReadInput", "esolver_type=dftbnative requires ENABLE_DFTB_NATIVE=ON.");
+#endif
+                if (para.input.basis_type != "dftb")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "dftbnative requires basis_type=dftb; ABACUS UPF and NAO files are not used.");
+                }
+                if (para.input.calculation != "scf")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "The native DFTB solver currently supports calculation=scf only.");
+                }
+                if (para.input.cal_force || para.input.cal_stress)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "Native DFTB force and stress derivatives are not implemented yet.");
+                }
+            }
             // LR reads the ground state wave function from a separate SCF run,
             // so it cannot be combined with a self-consistent calculation.
             if (para.input.esolver_type == "lr" && para.input.calculation == "scf")
@@ -270,6 +292,23 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
                 ModuleBase::WARNING_QUIT("ReadInput",
                     "esolver_type=lr requires calculation=nscf (it reads the ground state "
                     "wave function computed by a separate SCF run); please set calculation=nscf.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dftb_native_input");
+        item.annotation = "path to native DFTB settings";
+        item.category = "Electronic structure";
+        item.type = "String";
+        item.description = R"(Path to the native DFTB configuration file. It supplies the SKF directory, Hubbard derivatives, SCC controls, temperature, and DFTB3 switch; k points are read from the ABACUS KPT file.)";
+        item.default_value = "dftb_native.in";
+        item.set_availability("esolver_type==dftbnative");
+        read_sync_string(input.dftb_native_input);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.input.esolver_type == "dftbnative" && access(para.input.dftb_native_input.c_str(), 0) == -1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "Cannot find native DFTB settings file specified by dftb_native_input.");
             }
         };
         this->add_item(item);

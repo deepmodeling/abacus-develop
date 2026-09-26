@@ -12,13 +12,14 @@ void ReadInput::item_elec_stru()
     // Please preserve this ordering when adding new parameters.
     {
         Input_Item item("basis_type");
-        item.annotation = "PW; LCAO in pw; LCAO";
+        item.annotation = "PW; LCAO in pw; LCAO; native DFTB";
         item.category = "Electronic structure";
         item.type = "String";
         item.description = R"(Choose the basis set.
 * pw: Using plane-wave basis set only.
 * lcao: Using localized atomic orbital sets.
-* lcao_in_pw: Expand the localized atomic set in plane-wave basis, non-self-consistent field calculation not tested.)";
+* lcao_in_pw: Expand the localized atomic set in plane-wave basis, non-self-consistent field calculation not tested.
+* dftb: use the native Slater-Koster DFTB basis and solver; no ABACUS UPF or numerical-orbital files are read.)";
         item.default_value = "pw";
         item.unit = "";
         read_sync_string(input.basis_type);
@@ -32,7 +33,10 @@ void ReadInput::item_elec_stru()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
+            std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
+#ifdef __DFTB_NATIVE
+            basis_types.push_back("dftb");
+#endif
             if (std::find(basis_types.begin(), basis_types.end(), para.input.basis_type) == basis_types.end())
             {
                 const std::string warningstr = nofound_str(basis_types, "basis_type");

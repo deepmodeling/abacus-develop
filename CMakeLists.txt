@@ -46,6 +46,7 @@ option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
+option(ENABLE_DFTB_NATIVE "Build the experimental native DFTB core modules (in progress)" OFF)
 option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)

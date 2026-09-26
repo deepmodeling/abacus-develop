@@ -107,22 +107,27 @@ bool read_atom_species(std::ifstream& ifa,
     // Read the ABFS/JLE orbital filenames (used by LCAO EXX) into the UnitCell.
     // The EXX layer copies these into the global Exx_Info during its own setup, so
     // source_cell does not depend on the XC module. Absent sections are no-ops.
-    if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ABFS_ORBITAL") )
+    // The native DFTB basis does not consume ABACUS exchange orbitals. Avoid
+    // scanning optional orbital blocks in this independent basis path.
+    if (basis_type != "dftb")
     {
-        for(int i=0; i<ntype; i++)
+        if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ABFS_ORBITAL") )
         {
-            std::string ofile;
-            ifa >> ofile;
-            ucell.abfs_orbital_files.push_back(ofile);
+            for(int i=0; i<ntype; i++)
+            {
+                std::string ofile;
+                ifa >> ofile;
+                ucell.abfs_orbital_files.push_back(ofile);
+            }
         }
-    }
-    if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ABFS_JLES_ORBITAL") )
-    {
-        for(int i=0; i<ntype; i++)
+        if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ABFS_JLES_ORBITAL") )
         {
-            std::string ofile;
-            ifa >> ofile;
-            ucell.jle_orbital_files.push_back(ofile);
+            for(int i=0; i<ntype; i++)
+            {
+                std::string ofile;
+                ifa >> ofile;
+                ucell.jle_orbital_files.push_back(ofile);
+            }
         }
     }
     return true;
