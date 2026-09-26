@@ -37,7 +37,8 @@ crash, sanitizer diagnostic or even one started SCF iteration is a failure;
 checking INPUT alone would not test this runtime condition. A sanitizer failure
 must not pass merely because it shares exit code 1 with an expected refusal.
 
-The `all` and `reject` modes accept a parser-level PBE+rVV10 combination,
+The `all` and `reject` modes also reject non-positive or non-finite `rvv10_b`
+and `rvv10_c` values. They accept a parser-level PBE+rVV10 combination,
 then combine `xc_nonlocal=rvv10` with `GGA_XC_BEEF_VDW`, `GGA_XC_VV10` and
 `MGGA_X_SCAN+MGGA_C_SCAN_VV10` through actual initialization. Each of the
 latter must be rejected before SCF because those Libxc functionals already

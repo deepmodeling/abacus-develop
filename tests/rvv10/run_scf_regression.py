@@ -45,6 +45,10 @@ UNSUPPORTED_VARIANTS = (
     ("basis", {"basis_type": "lcao", "ks_solver": "lapack"}),
     ("gpu", {"device": "gpu"}),
 )
+INVALID_PARAMETERS = (
+    ("invalid-b", {"rvv10_b": "0"}, "rvv10_b must be finite and positive"),
+    ("invalid-c", {"rvv10_c": "-1"}, "rvv10_c must be finite and non-negative"),
+)
 
 
 def parse_energy(text):
@@ -166,6 +170,13 @@ def run(args, root, summary):
             check_input_result(text, code, "xc_nonlocal=rvv10 supports CPU double PW nspin=1/2 SCF")
             summary["checks"].append({"case": "reject-" + name, "passed": True})
             print("PASS unsupported INPUT rejected: " + name, flush=True)
+
+        for name, changes, reason in INVALID_PARAMETERS:
+            case = prepare_case(root, "reject-" + name, "he", pseudo_dir, changes)
+            code, text = execute(command, case, ["--check-input"], "check.log", env, 30)
+            check_rejected_run(text, code, reason)
+            summary["checks"].append({"case": "reject-" + name, "passed": True})
+            print("PASS invalid rVV10 parameter rejected: " + name, flush=True)
 
         # The nonlocal component is not coupled to the RPW86+PBE parser path.
         # This is an INPUT-level check only; a production parameter set still

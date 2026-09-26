@@ -6,6 +6,8 @@ device cpu
 precision double
 dft_functional GGA_X_RPW86+GGA_C_PBE
 xc_nonlocal rvv10
+rvv10_b 6.3
+rvv10_c 0.0093
 nspin 1
 ntype 1
 nbands 6
