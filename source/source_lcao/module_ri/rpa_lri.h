@@ -57,8 +57,7 @@ template <typename T, typename Tdata> class RPA_LRI
         const MPI_Comm& mpi_comm_in,
         const UnitCell& ucell,
         const K_Vectors& kv,
-        const LCAO_Orbitals& orb,
-        const Parallel_Orbitals& parav);
+        const LCAO_Orbitals& orb);
     void output_ewald_coulomb(const UnitCell& ucell, const K_Vectors& kv, const LCAO_Orbitals& orb);
     void cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals& orb, const K_Vectors& kv);
     void cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbitals& orb, const K_Vectors& kv);
