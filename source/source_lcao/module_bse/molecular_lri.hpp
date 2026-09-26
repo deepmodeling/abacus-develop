@@ -16,7 +16,8 @@ namespace BSE
 {
 
 template <typename T>
-void MolecularLRI<T>::init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in, const Exx_Info_RI& info_ri)
+void MolecularLRI<T>::init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in,
+                           const Exx_Info::Exx_Info_RI& info_ri)
 {
     ModuleBase::TITLE("MolecularLRI", "init");
     ModuleBase::timer::start("MolecularLRI", "init");

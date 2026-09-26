@@ -10,7 +10,7 @@
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
-#include "source_hamilt/module_xc/exx_info_ri.h"
+#include "source_hamilt/module_xc/exx_info.h"
 #include "source_lcao/module_ri/lri_cv_tools.h"
 #include "source_lcao/module_bse/bse_util.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
@@ -69,7 +69,8 @@ public:
     ~MolecularLRI() {}
 
     /// =============== calculation interface ====================
-    void init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in, const Exx_Info_RI& info_ri);
+    void init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in,
+              const Exx_Info::Exx_Info_RI& info_ri);
 
     void cal_W_for_A(std::vector<T>& m_2d, const Parallel_2D& pm_2d, const double factor=1.0)
     {
