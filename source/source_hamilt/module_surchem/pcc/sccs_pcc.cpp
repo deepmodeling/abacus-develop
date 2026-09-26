@@ -345,13 +345,24 @@ MultipoleMoments density_moments_from_relative_positions(
         throw std::invalid_argument(
             "PCC density integration requires a positive finite volume element");
     }
-    std::vector<PointCharge> charges(density.size());
+    // Accumulate directly: constructing one PointCharge per grid point adds
+    // a full-grid allocation and copy to every polarization iteration.
+    MultipoleMoments moments;
     for (std::size_t index = 0; index < density.size(); ++index)
     {
-        charges[index].charge = density[index] * volume_element;
-        charges[index].position = relative_positions[index];
+        const double charge = density[index] * volume_element;
+        const ModuleBase::Vector3<double>& relative = relative_positions[index];
+        if (!std::isfinite(charge) || !finite_vector(relative))
+        {
+            throw std::domain_error("PCC point charges and positions must be finite");
+        }
+        moments.charge += charge;
+        moments.dipole.x += charge * relative.x;
+        moments.dipole.y += charge * relative.y;
+        moments.dipole.z += charge * relative.z;
+        moments.quadrupole_trace += charge * norm_squared(relative);
     }
-    return moments_from_relative_positions(charges, relative_positions);
+    return moments;
 }
 
 double pcc_potential(const MultipoleMoments& moments,

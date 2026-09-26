@@ -5,6 +5,7 @@
 #include "gtest/gtest.h"
 
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 #include <vector>
 
@@ -174,6 +175,38 @@ TEST(SccsPcc, IntegratesDensityMomentsWithTheVolumeElement)
     EXPECT_DOUBLE_EQ(moments.dipole.x, 1.0);
     EXPECT_DOUBLE_EQ(moments.dipole.y, -1.0);
     EXPECT_DOUBLE_EQ(moments.quadrupole_trace, -1.0);
+}
+
+TEST(SccsPcc, RelativeDensityMomentsMatchPointChargesAndRejectNonfiniteInputs)
+{
+    const std::vector<double> density{0.5, -0.25, 0.125};
+    const std::vector<ModuleBase::Vector3<double>> relative{
+        ModuleBase::Vector3<double>(1.0, -0.5, 0.25),
+        ModuleBase::Vector3<double>(-0.5, 2.0, -1.0),
+        ModuleBase::Vector3<double>(0.25, -1.0, 3.0)};
+    const double dv = 2.0;
+    std::vector<ModuleSccs::PointCharge> points(density.size());
+    for (std::size_t i = 0; i < density.size(); ++i)
+    {
+        points[i].charge = density[i] * dv;
+        points[i].position = relative[i];
+    }
+    const ModuleBase::Vector3<double> origin;
+    const auto expected = ModuleSccs::point_charge_moments(points, origin);
+    const auto actual = ModuleSccs::density_moments_from_relative_positions(density, relative, dv);
+    EXPECT_DOUBLE_EQ(actual.charge, expected.charge);
+    EXPECT_DOUBLE_EQ(actual.dipole.x, expected.dipole.x);
+    EXPECT_DOUBLE_EQ(actual.dipole.y, expected.dipole.y);
+    EXPECT_DOUBLE_EQ(actual.dipole.z, expected.dipole.z);
+    EXPECT_DOUBLE_EQ(actual.quadrupole_trace, expected.quadrupole_trace);
+    auto invalid_density = density;
+    invalid_density[0] = std::numeric_limits<double>::max();
+    EXPECT_THROW(ModuleSccs::density_moments_from_relative_positions(invalid_density, relative, dv),
+                 std::domain_error);
+    auto invalid_relative = relative;
+    invalid_relative[1].z = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_THROW(ModuleSccs::density_moments_from_relative_positions(density, invalid_relative, dv),
+                 std::domain_error);
 }
 
 TEST(SccsPcc, BilinearKernelIsSymmetric)

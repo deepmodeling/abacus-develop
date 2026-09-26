@@ -63,9 +63,11 @@ class AdjointOperator
     {
     }
 
-    std::vector<double> apply(const std::vector<double>& values) const
+    void apply(const std::vector<double>& values,
+               std::vector<ModuleBase::Vector3<double>>& weighted,
+               std::vector<double>& result) const
     {
-        std::vector<ModuleBase::Vector3<double>> weighted(values.size());
+        weighted.resize(values.size());
         for (std::size_t i = 0; i < values.size(); ++i)
         {
             for (int d = 0; d < 3; ++d)
@@ -74,13 +76,11 @@ class AdjointOperator
                                  / ModuleBase::FOUR_PI;
             }
         }
-        std::vector<double> result;
         coulomb_.apply_gradient_adjoint(weighted, result);
         for (std::size_t i = 0; i < values.size(); ++i)
         {
             result[i] = values[i] - result[i];
         }
-        return result;
     }
 
   private:
@@ -97,7 +97,11 @@ AdjointResult solve_adjoint(const std::vector<double>& rhs,
     AdjointResult result;
     result.potential = initial;
     const std::size_t size = rhs.size();
-    std::vector<double> residual = op.apply(result.potential);
+    // Workspace belongs to this solve, so repeated applications reuse storage
+    // without introducing mutable state into the Coulomb operator.
+    std::vector<ModuleBase::Vector3<double>> weighted(size);
+    std::vector<double> residual;
+    op.apply(result.potential, weighted, residual);
     for (std::size_t i = 0; i < size; ++i)
     {
         residual[i] = rhs[i] - residual[i];
@@ -105,6 +109,8 @@ AdjointResult solve_adjoint(const std::vector<double>& rhs,
     std::vector<double> shadow = residual;
     std::vector<double> direction(size, 0.0);
     std::vector<double> image(size, 0.0);
+    std::vector<double> intermediate(size);
+    std::vector<double> intermediate_image;
     double previous_rho = 1.0;
     double alpha = 1.0;
     double omega = 1.0;
@@ -115,7 +121,7 @@ AdjointResult solve_adjoint(const std::vector<double>& rhs,
         result.iterations = iteration;
         if (converged_residual(residual, parameters, reduction, result))
         {
-            residual = op.apply(result.potential);
+            op.apply(result.potential, weighted, residual);
             for (std::size_t i = 0; i < size; ++i)
             {
                 residual[i] = rhs[i] - residual[i];
@@ -145,14 +151,13 @@ AdjointResult solve_adjoint(const std::vector<double>& rhs,
         {
             direction[i] = residual[i] + beta * (direction[i] - omega * image[i]);
         }
-        image = op.apply(direction);
+        op.apply(direction, weighted, image);
         const double denominator = reduced_dot(shadow, image, reduction);
         if (!std::isfinite(denominator) || denominator == 0.0)
         {
             throw std::runtime_error("SCCS adjoint BiCGSTAB singular direction");
         }
         alpha = rho / denominator;
-        std::vector<double> intermediate(size);
         for (std::size_t i = 0; i < size; ++i)
         {
             intermediate[i] = residual[i] - alpha * image[i];
@@ -164,7 +169,7 @@ AdjointResult solve_adjoint(const std::vector<double>& rhs,
             previous_rho = rho;
             continue;
         }
-        const std::vector<double> intermediate_image = op.apply(intermediate);
+        op.apply(intermediate, weighted, intermediate_image);
         const double image_norm = reduced_dot(intermediate_image, intermediate_image, reduction);
         if (!std::isfinite(image_norm) || image_norm == 0.0)
         {
