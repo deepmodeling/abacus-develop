@@ -373,7 +373,7 @@ std::vector<ModuleDFTB::DftbBandKPoint> read_native_band_path(const std::string&
 void ESolver_DFTBNative::before_all_runners(BaseCell& cell, const Input_para& inp)
 {
     this->inp_ = &inp;
-    if (cell.kind() != BaseCell::Kind::unit_cell)
+    if (cell.kind() != BaseCell::Kind::unitcell)
         ModuleBase::WARNING_QUIT("ESolver_DFTBNative", "Native DFTB requires a periodic UnitCell.");
     const UnitCell& ucell = static_cast<const UnitCell&>(cell);
     if (inp.basis_type != "dftb")
@@ -520,7 +520,7 @@ ModuleDFTB::DftbPeriodicInput ESolver_DFTBNative::make_geometry(const UnitCell& 
 void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
 {
     static_cast<void>(istep);
-    if (cell.kind() != BaseCell::Kind::unit_cell)
+    if (cell.kind() != BaseCell::Kind::unitcell)
         ModuleBase::WARNING_QUIT("ESolver_DFTBNative", "Native DFTB requires a periodic UnitCell.");
     const UnitCell& ucell = static_cast<const UnitCell&>(cell);
     const ModuleDFTB::DftbPeriodicInput input = this->make_geometry(ucell);
