@@ -4984,7 +4984,7 @@
 
 - **Type**: String
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Allowed INPUT values are exactly linear, pulay and anderson. linear: damped fixed-point iteration; pulay: Pulay DIIS; anderson: Anderson acceleration using differences of iterates and residuals. These select the inner SCCS polarization solver. Accelerated methods fall back to a linear step when insufficient or unusable history is available. Recommended value: pulay.
+- **Description**: Allowed INPUT values are exactly linear, pulay and anderson. linear: damped fixed-point iteration; pulay: Pulay DIIS; anderson: Anderson acceleration using differences of iterates and residuals. These select the inner SCCS polarization solver. Recommended value: pulay.
 - **Default**: linear
 
 ### sccs_mixing_ndim
