@@ -12,6 +12,16 @@ list(APPEND objects
     op_pw_exx.cpp
     op_pw_exx_ace.cpp
     op_pw_exx_pot.cpp
+    kernels/exx_batch_op.cpp
+)
+
+if(ENABLE_FLOAT_FFTW)
+    list(APPEND objects kernels/exx_batch_op_float.cpp)
+else()
+    list(APPEND objects kernels/exx_batch_op_float_stub.cpp)
+endif()
+
+list(APPEND objects
     dftu_base.cpp
     dftu_base_io.cpp
     dftu_pw.cpp

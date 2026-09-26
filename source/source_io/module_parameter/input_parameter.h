@@ -751,6 +751,7 @@ struct Input_para
     std::string exx_thr_type = "density"; ///< threshold type for exx outer loop
     double exx_ene_thr = 1e-5;            ///< threshold when exx_thr_type = energy
     double ecutexx = 0.0;                 ///< energy cutoff for exx calculation, Ry
+    int exx_batch_size = 0;               ///< band chunk width of the EXX batched path, 0 = all bands
 
     // ====   #Parameters (23.XC external parameterization) ========
     /*
