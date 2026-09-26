@@ -838,19 +838,13 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
         std::stringstream ssc;
         ssc << this->in_dir << "chgs" << is + 1 << ".cube";
         GlobalV::ofs_running << ssc.str() << std::endl;
-        if (ModuleIO::read_vdata_palgrid(Pgrid,
+        ModuleIO::read_vdata_palgrid(Pgrid,
             GlobalV::MY_RANK,
             GlobalV::ofs_running,
             ssc.str(),
             chg_gs.rho[is],
-            this->ucell_->nat)) {
-            GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
-        } else {    // prenspin for nspin=4 is not supported currently
-            ModuleBase::WARNING_QUIT(
-                "init_rho",
-                "!!! Couldn't find the charge file !!! The default directory \n of " + ssc.str() +" is OUT.suffix, "
-                "or you must set read_file_dir \n to a specific directory. ");
-        }
+            this->ucell_->nat);
+        GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
     }
 }
 template class ModuleESolver::ESolver_LR<double, double>;
