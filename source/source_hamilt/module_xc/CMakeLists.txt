@@ -27,6 +27,14 @@ add_library(
     exx_info.cpp
 )
 
+# The external Libxc package exports its own `USING_Libxc` usage definition,
+# while ABACUS source guards use the project-wide `__LIBXC` feature macro.
+# Keep the module self-contained when ENABLE_LIBXC is enabled so the Libxc
+# implementation and its declarations are compiled together.
+if(ENABLE_LIBXC)
+  target_compile_definitions(xc_ PRIVATE __LIBXC)
+endif()
+
 if(ENABLE_COVERAGE)
   add_coverage(xc_)
 endif()
