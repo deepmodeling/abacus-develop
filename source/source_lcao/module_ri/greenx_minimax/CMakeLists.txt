@@ -16,6 +16,14 @@ set_target_properties(abacus_greenx_minimax PROPERTIES
   Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/modules
 )
 
+# The bundled GreenX tables intentionally contain long free-form Fortran
+# literals.  GNU Fortran otherwise truncates them at column 132 (and the CI
+# treats that warning as an error), while Intel Fortran accepts the sources as
+# written.
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(abacus_greenx_minimax PRIVATE -ffree-line-length-none)
+endif()
+
 target_include_directories(abacus_greenx_minimax PUBLIC
   ${CMAKE_CURRENT_BINARY_DIR}/modules
 )
