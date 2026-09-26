@@ -2,6 +2,8 @@ AddTest(
   TARGET MODULE_DFTB_native_eigensolver
   LIBS parameter base device
   SOURCES native_eigensolver_test.cpp
+    native_charge_mixing_test.cpp
+    ../charge_mixing.cpp
     ../eigensolver.cpp
     ../sk_matrix.cpp
     ../sk_block.cpp

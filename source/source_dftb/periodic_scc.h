@@ -59,6 +59,10 @@ struct DftbPeriodicInput
     double mixing_parameter = 0.2;
     std::string mixing_method = "linear";
     int mixing_history = 6;
+    double broyden_inverse_jacobi_weight = 0.01;
+    double broyden_minimal_weight = 1.0;
+    double broyden_maximal_weight = 1.0e5;
+    double broyden_weight_factor = 1.0e-2;
     bool third_order = true;
 };
 

@@ -1,4 +1,5 @@
 #include "source_dftb/periodic_scc.h"
+#include "source_dftb/charge_mixing.h"
 
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
@@ -787,86 +788,6 @@ double quadratic_form(const std::vector<double>& matrix,
     return value;
 }
 
-bool solve_pulay_coefficients(const std::vector<std::vector<double>>& residuals,
-                              std::vector<double>* coefficients)
-{
-    const std::size_t count = residuals.size();
-    if (count < 2 || coefficients == nullptr) return false;
-    const std::size_t n_atoms = residuals.front().size();
-    if (n_atoms == 0) return false;
-    double diagonal_scale = 0.0;
-    std::vector<std::vector<double>> matrix(count + 1, std::vector<double>(count + 1, 0.0));
-    for (std::size_t i = 0; i < count; ++i)
-    {
-        if (residuals[i].size() != n_atoms) return false;
-        for (std::size_t j = 0; j < count; ++j)
-        {
-            double product = 0.0;
-            for (std::size_t atom = 0; atom < n_atoms; ++atom)
-                product += residuals[i][atom] * residuals[j][atom];
-            matrix[i][j] = product / static_cast<double>(n_atoms);
-        }
-        diagonal_scale = std::max(diagonal_scale, matrix[i][i]);
-    }
-    if (!(diagonal_scale > 0.0) || !std::isfinite(diagonal_scale)) return false;
-    for (std::size_t i = 0; i < count; ++i)
-    {
-        for (std::size_t j = 0; j < count; ++j) matrix[i][j] /= diagonal_scale;
-        matrix[i][i] += 1.0e-10;
-        matrix[i][count] = 1.0;
-        matrix[count][i] = 1.0;
-    }
-
-    // Solve the augmented Pulay system with partial-pivot Gaussian elimination.
-    std::vector<double> rhs(count + 1, 0.0);
-    rhs[count] = 1.0;
-    for (std::size_t column = 0; column <= count; ++column)
-    {
-        std::size_t pivot = column;
-        for (std::size_t row = column + 1; row <= count; ++row)
-            if (std::abs(matrix[row][column]) > std::abs(matrix[pivot][column])) pivot = row;
-        if (std::abs(matrix[pivot][column]) < 1.0e-14) return false;
-        std::swap(matrix[pivot], matrix[column]);
-        std::swap(rhs[pivot], rhs[column]);
-        const double pivot_value = matrix[column][column];
-        for (std::size_t j = column; j <= count; ++j) matrix[column][j] /= pivot_value;
-        rhs[column] /= pivot_value;
-        for (std::size_t row = 0; row <= count; ++row)
-        {
-            if (row == column) continue;
-            const double factor = matrix[row][column];
-            for (std::size_t j = column; j <= count; ++j) matrix[row][j] -= factor * matrix[column][j];
-            rhs[row] -= factor * rhs[column];
-        }
-    }
-    coefficients->assign(rhs.begin(), rhs.begin() + count);
-    double coefficient_sum = 0.0;
-    for (const double coefficient : *coefficients)
-    {
-        if (!std::isfinite(coefficient) || std::abs(coefficient) > 20.0) return false;
-        coefficient_sum += coefficient;
-    }
-    if (!std::isfinite(coefficient_sum) || std::abs(coefficient_sum - 1.0) > 1.0e-8) return false;
-    return true;
-}
-
-std::vector<double> linear_mix(const std::vector<double>& charges,
-                              const std::vector<double>& residual,
-                              const double parameter)
-{
-    std::vector<double> mixed(charges.size(), 0.0);
-    for (std::size_t atom = 0; atom < charges.size(); ++atom)
-        mixed[atom] = charges[atom] + parameter * residual[atom];
-    return mixed;
-}
-
-void restore_total_charge(std::vector<double>* charges, const double target_charge)
-{
-    double charge_sum = 0.0;
-    for (const double charge : *charges) charge_sum += charge;
-    const double correction = (target_charge - charge_sum) / static_cast<double>(charges->size());
-    for (double& charge : *charges) charge += correction;
-}
 
 } // namespace
 
@@ -882,8 +803,13 @@ DftbPeriodicResult solve_periodic_dftb(
     if (input.atoms.empty() || input.kpoints.empty() || input.pair_parameters.empty()
         || input.maximum_scc_iterations <= 0 || !(input.scc_tolerance > 0.0)
         || !(input.mixing_parameter > 0.0 && input.mixing_parameter <= 1.0)
-        || (input.mixing_method != "linear" && input.mixing_method != "pulay")
+        || (input.mixing_method != "linear" && input.mixing_method != "pulay"
+            && input.mixing_method != "broyden")
         || input.mixing_history < 2 || input.mixing_history > 20
+        || !(input.broyden_inverse_jacobi_weight > 0.0)
+        || !(input.broyden_minimal_weight > 0.0)
+        || !(input.broyden_maximal_weight >= input.broyden_minimal_weight)
+        || !(input.broyden_weight_factor > 0.0)
         || !(input.total_electrons >= 0.0) || input.hubbard_derivative.empty())
     {
         throw std::invalid_argument("Incomplete or invalid native periodic DFTB input");
@@ -923,13 +849,20 @@ DftbPeriodicResult solve_periodic_dftb(
     }
     const double target_charge = input.total_electrons - neutral_electrons;
     std::vector<double> charges(input.atoms.size(), target_charge / static_cast<double>(input.atoms.size()));
+    DftbChargeMixerParameters mixer_parameters;
+    mixer_parameters.method = input.mixing_method;
+    mixer_parameters.mixing_parameter = input.mixing_parameter;
+    mixer_parameters.history = input.mixing_history;
+    mixer_parameters.inverse_jacobi_weight = input.broyden_inverse_jacobi_weight;
+    mixer_parameters.minimal_weight = input.broyden_minimal_weight;
+    mixer_parameters.maximal_weight = input.broyden_maximal_weight;
+    mixer_parameters.weight_factor = input.broyden_weight_factor;
+    DftbChargeMixer charge_mixer(mixer_parameters);
     const double repulsive_energy_hartree = calculate_repulsive_energy_hartree(input.atoms, pairs,
                                                                                  input.pair_parameters);
 
     DftbPeriodicResult result;
     KPointResult state;
-    std::vector<std::vector<double>> charge_history;
-    std::vector<std::vector<double>> residual_history;
     double previous_band_free_energy = 0.0;
     double previous_electronic_energy = 0.0;
     bool has_previous_energy = false;
@@ -959,14 +892,6 @@ DftbPeriodicResult solve_periodic_dftb(
         }
         result.scc_iterations = iteration;
         result.scc_residual_history.push_back(result.maximum_charge_residual);
-
-        charge_history.push_back(charges);
-        residual_history.push_back(residual);
-        if (charge_history.size() > static_cast<std::size_t>(input.mixing_history))
-        {
-            charge_history.erase(charge_history.begin());
-            residual_history.erase(residual_history.begin());
-        }
 
         const bool converged = result.maximum_charge_residual <= input.scc_tolerance;
         std::vector<double> iteration_gamma_charge;
@@ -1011,29 +936,8 @@ DftbPeriodicResult solve_periodic_dftb(
         }
         else
         {
-            bool used_pulay = false;
-            if (input.mixing_method == "pulay" && charge_history.size() >= 2)
-            {
-                std::vector<double> coefficients;
-                if (solve_pulay_coefficients(residual_history, &coefficients))
-                {
-                    next_charges.assign(charges.size(), 0.0);
-                    for (std::size_t history = 0; history < coefficients.size(); ++history)
-                    {
-                        const std::vector<double> mixed = linear_mix(charge_history[history], residual_history[history],
-                                                                     input.mixing_parameter);
-                        for (std::size_t atom = 0; atom < charges.size(); ++atom)
-                            next_charges[atom] += coefficients[history] * mixed[atom];
-                    }
-                    used_pulay = true;
-                    for (const double charge : next_charges)
-                        if (!std::isfinite(charge)) used_pulay = false;
-                }
-            }
-            if (!used_pulay)
-                next_charges = linear_mix(charges, residual, input.mixing_parameter);
-            restore_total_charge(&next_charges, target_charge);
-            iteration_output.mixing_step = used_pulay ? "Pulay" : (input.mixing_method == "pulay" ? "linear fallback" : "linear");
+            next_charges = charge_mixer.mix(charges, residual, target_charge);
+            iteration_output.mixing_step = charge_mixer.last_step();
         }
         if (on_iteration) on_iteration(iteration_output);
         previous_band_free_energy = state.filling.band_free_energy_hartree;

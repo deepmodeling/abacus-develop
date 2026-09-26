@@ -27,14 +27,20 @@ temperature_kelvin 20
 scc_tolerance 1e-6
 max_scc_iterations 200
 mixing_parameter 0.2
-mixing_method pulay
+mixing_method broyden
 mixing_history 6
+broyden_inverse_jacobi_weight 0.01
+broyden_minimal_weight 1.0
+broyden_maximal_weight 1.0e5
+broyden_weight_factor 1.0e-2
 output_precision 12
 third_order yes
 band_path_file dftb_band_path.in
 ```
 
-`hubbard_deriv` is required for every species when `third_order yes` is selected. Supported mixers are damped linear mixing and charge-residual Pulay/DIIS mixing. Pulay uses a bounded history and falls back to linear mixing if its small history system is ill-conditioned or produces unsafe coefficients. `mixing_history` must be between 2 and 20. `output_precision` controls significant digits in native DFTB output files; the main `running_scf.log` follows ABACUS `out_ndigits`.
+`hubbard_deriv` is required for every species when `third_order yes` is selected. Supported mixers are damped linear, charge-residual Pulay/DIIS, and Johnson modified-Broyden mixing. Broyden uses secant differences of the SCC charge residual and charge updates, with a regularized small history-space solve; its default controls match DFTB+ (`InverseJacobiWeight=0.01`, `MinimalWeight=1`, `MaximalWeight=1e5`, `WeightFactor=1e-2`). `mixing_history` bounds the stored Pulay residuals or Broyden secant vectors and must be between 2 and 20. If an accelerated solve is singular, ill-conditioned, or non-finite, the iteration falls back to linear damping. Each update is projected to preserve total charge. `output_precision` controls significant digits in native DFTB output files; the main `running_scf.log` follows ABACUS `out_ndigits`.
+
+For Broyden, let `r_n = q_out - q_n` be the SCC charge residual. The mixer stores normalized residual differences and corresponding charge-update differences, solves a regularized weighted secant system in the small history space, and applies the resulting multisecant correction to `q_n + beta r_n`. This is distinct from Pulay residual minimization, although both use a bounded history to accelerate the fixed-point iteration.
 
 ## K-point and band inputs
 

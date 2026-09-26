@@ -45,6 +45,10 @@ struct NativeDftbConfig
     double mixing_parameter = 0.2;
     std::string mixing_method = "linear";
     int mixing_history = 6;
+    double broyden_inverse_jacobi_weight = 0.01;
+    double broyden_minimal_weight = 1.0;
+    double broyden_maximal_weight = 1.0e5;
+    double broyden_weight_factor = 1.0e-2;
     int output_precision = 12;
     bool third_order = true;
 };
@@ -125,6 +129,22 @@ NativeDftbConfig read_native_config(const std::string& filename)
         {
             if (!(row >> config.mixing_history)) throw std::runtime_error("Invalid mixing_history value");
         }
+        else if (key == "broyden_inverse_jacobi_weight")
+        {
+            if (!(row >> config.broyden_inverse_jacobi_weight)) throw std::runtime_error("Invalid broyden_inverse_jacobi_weight value");
+        }
+        else if (key == "broyden_minimal_weight")
+        {
+            if (!(row >> config.broyden_minimal_weight)) throw std::runtime_error("Invalid broyden_minimal_weight value");
+        }
+        else if (key == "broyden_maximal_weight")
+        {
+            if (!(row >> config.broyden_maximal_weight)) throw std::runtime_error("Invalid broyden_maximal_weight value");
+        }
+        else if (key == "broyden_weight_factor")
+        {
+            if (!(row >> config.broyden_weight_factor)) throw std::runtime_error("Invalid broyden_weight_factor value");
+        }
         else if (key == "output_precision")
         {
             if (!(row >> config.output_precision)) throw std::runtime_error("Invalid output_precision value");
@@ -146,8 +166,17 @@ NativeDftbConfig read_native_config(const std::string& filename)
     if (config.skf_directory.empty()) throw std::runtime_error("Native DFTB config must define skf_dir");
     if (!(config.temperature_kelvin >= 0.0) || !(config.scc_tolerance > 0.0)
         || config.maximum_scc_iterations <= 0 || !(config.mixing_parameter > 0.0 && config.mixing_parameter <= 1.0)
-        || (config.mixing_method != "linear" && config.mixing_method != "pulay")
+        || (config.mixing_method != "linear" && config.mixing_method != "pulay"
+            && config.mixing_method != "broyden")
         || config.mixing_history < 2 || config.mixing_history > 20
+        || !(config.broyden_inverse_jacobi_weight > 0.0)
+        || !(config.broyden_minimal_weight > 0.0)
+        || !(config.broyden_maximal_weight >= config.broyden_minimal_weight)
+        || !(config.broyden_weight_factor > 0.0)
+        || !std::isfinite(config.broyden_inverse_jacobi_weight)
+        || !std::isfinite(config.broyden_minimal_weight)
+        || !std::isfinite(config.broyden_maximal_weight)
+        || !std::isfinite(config.broyden_weight_factor)
         || config.output_precision < 1 || config.output_precision > 17)
         throw std::runtime_error("Invalid native DFTB temperature or SCC controls");
     return config;
@@ -443,6 +472,10 @@ void ESolver_DFTBNative::load_model(const UnitCell& ucell, const Input_para& inp
     this->template_.mixing_parameter = config.mixing_parameter;
     this->template_.mixing_method = config.mixing_method;
     this->template_.mixing_history = config.mixing_history;
+    this->template_.broyden_inverse_jacobi_weight = config.broyden_inverse_jacobi_weight;
+    this->template_.broyden_minimal_weight = config.broyden_minimal_weight;
+    this->template_.broyden_maximal_weight = config.broyden_maximal_weight;
+    this->template_.broyden_weight_factor = config.broyden_weight_factor;
     this->template_.third_order = config.third_order;
     this->output_precision_ = config.output_precision;
     this->template_.total_electrons = 0.0;
@@ -512,6 +545,10 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
                      << "# SCC threshold: max |delta q| <= " << input.scc_tolerance << " e\n"
                      << "# Mixer: " << input.mixing_method << ", beta=" << input.mixing_parameter
                      << ", history=" << input.mixing_history << "\n"
+                     << "# Broyden weights: inverse-Jacobi=" << input.broyden_inverse_jacobi_weight
+                     << ", minimum=" << input.broyden_minimal_weight
+                     << ", maximum=" << input.broyden_maximal_weight
+                     << ", factor=" << input.broyden_weight_factor << "\n"
                      << "# Each row evaluates the DFTB energy functional on the output Mulliken charges of that iteration.\n"
                      << "# Diff_electronic is the change in that electronic energy; SCC_error is max |delta q|.\n"
                      << "# The converged variational free energy and component decomposition follow the iteration table.\n"
