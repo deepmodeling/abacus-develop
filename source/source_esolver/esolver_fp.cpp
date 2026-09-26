@@ -39,11 +39,11 @@ SurchemParameters make_surchem_parameters(const Input_para& inp,
     parameters.tau = inp.tau;
     parameters.sigma_k = inp.sigma_k;
     parameters.nc_k = inp.nc_k;
-    parameters.use_sccs = inp.solvation_model == "sccs";
-    parameters.use_legacy_solvent = inp.imp_sol && !parameters.use_sccs;
-    if (inp.pcc_boundary != "none")
+    parameters.use_sccs = inp.imp_sol == 2;
+    parameters.use_legacy_solvent = inp.imp_sol == 1;
+    if (inp.assume_isolated == "pcc_0d" || inp.assume_isolated == "pcc_2d")
     {
-        parameters.pcc_boundary = ModuleSccs::parse_boundary(inp.pcc_boundary);
+        parameters.pcc_boundary = ModuleSccs::parse_boundary(inp.assume_isolated);
     }
     if (!parameters.use_sccs && parameters.pcc_boundary == ModuleSccs::Boundary::Periodic)
     {
@@ -88,7 +88,7 @@ SurchemParameters make_surchem_parameters(const Input_para& inp,
     {
         parameters.sccs_config = ModuleSccs::water_preset(preset);
     }
-    parameters.sccs_config.boundary = ModuleSccs::parse_boundary(inp.sccs_boundary);
+    parameters.sccs_config.boundary = parameters.pcc_boundary;
     parameters.sccs_config.max_iterations = inp.sccs_maxiter;
     parameters.sccs_config.mixing_method = inp.sccs_mixing_type;
     parameters.sccs_config.mixing_history = inp.sccs_mixing_ndim;

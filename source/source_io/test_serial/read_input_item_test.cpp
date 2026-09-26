@@ -121,10 +121,9 @@ TEST_F(InputTest, Item_test)
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
 
-    { // solvation_model
-        auto it = find_label("solvation_model", readinput.input_lists);
-        param.input.solvation_model = "sccs";
-        param.input.imp_sol = true;
+    { // SCCS model
+        auto it = find_label("imp_sol", readinput.input_lists);
+        param.input.imp_sol = 2;
         param.input.device = "cpu";
         param.input.nspin = 1;
         param.input.efield_flag = false;
@@ -144,6 +143,45 @@ TEST_F(InputTest, Item_test)
                         ::testing::ExitedWithCode(1),
                         "");
         }
+    }
+
+    { // Unified PCC selector and debug levels
+        param.input.calculation = "scf";
+        param.input.basis_type = "lcao";
+        param.input.esolver_type = "ksdft";
+        param.input.cal_stress = false;
+        auto isolation = find_label("assume_isolated", readinput.input_lists);
+        for (const std::string boundary : {"pcc_0d", "pcc_2d"})
+        {
+            param.input.assume_isolated = boundary;
+            for (int model : {0, 2})
+            {
+                param.input.imp_sol = model;
+                EXPECT_NO_THROW(isolation->second.check_value(isolation->second, param));
+                EXPECT_TRUE(param.input.uses_surchem_correction());
+            }
+            param.input.imp_sol = 1;
+            EXPECT_EXIT(isolation->second.check_value(isolation->second, param),
+                        ::testing::ExitedWithCode(1), "");
+        }
+        param.input.assume_isolated = "none";
+        param.input.imp_sol = 0;
+        EXPECT_FALSE(param.input.uses_surchem_correction());
+        auto debug = find_label("sccs_debug", readinput.input_lists);
+        for (int level : {0, 1, 2})
+        {
+            param.input.sccs_debug = level;
+            EXPECT_NO_THROW(debug->second.check_value(debug->second, param));
+        }
+        param.input.sccs_debug = 3;
+        EXPECT_EXIT(debug->second.check_value(debug->second, param),
+                    ::testing::ExitedWithCode(1), "");
+        param.input.sccs_debug = 0;
+        auto model = find_label("imp_sol", readinput.input_lists);
+        param.input.imp_sol = 3;
+        EXPECT_EXIT(model->second.check_value(model->second, param),
+                    ::testing::ExitedWithCode(1), "");
+        param.input.imp_sol = 0;
     }
 
     { // sccs_start_drho

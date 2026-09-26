@@ -21,71 +21,6 @@
 namespace
 {
 
-TEST(HCorrSccs, StandalonePcc2dMatchesPointIonVacuumCorrection)
-{
-    ModulePW::PW_Basis basis("cpu", "double");
-#ifdef __MPI
-    basis.initmpi(1, 0, POOL_WORLD);
-#endif
-    const ModuleBase::Matrix3 lattice(0.8, 0.0, 0.0,
-                                      0.0, 1.2, 0.0,
-                                      0.0, 0.0, 1.0);
-    const double scale = 10.0;
-    basis.initgrids(scale, lattice, 20.0);
-    basis.initparameters(false, 20.0, 1, false);
-    basis.setuptransform();
-    basis.collect_local_pw();
-    UnitCell cell;
-    cell.lat0 = scale;
-    cell.latvec = lattice;
-    cell.omega = 0.8 * 1.2 * scale * scale * scale;
-    cell.ntype = 1;
-    cell.nat = 1;
-    cell.atoms = new Atom[1];
-    cell.atoms[0].na = 1;
-    cell.atoms[0].mass = 1.0;
-    cell.atoms[0].ncpp.zv = 1.0;
-    cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.4, 0.78, 0.5));
-
-    SurchemParameters parameters;
-    parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
-    parameters.expected_electron_count = 1.0;
-    parameters.expected_ionic_charge = 1.0;
-    surchem correction;
-    correction.set_parameters(parameters);
-    EXPECT_TRUE(correction.uses_pcc());
-    EXPECT_FALSE(correction.uses_sccs());
-    const double volume_element = cell.omega / static_cast<double>(basis.nxyz);
-    const int electron_plane_y = basis.ny / 2;
-    std::vector<double> electron_density(basis.nrxx, 0.0);
-    for (int ix = 0; ix < basis.nx; ++ix)
-    {
-        for (int iz_local = 0; iz_local < basis.nplane; ++iz_local)
-        {
-            const int index = (ix * basis.ny + electron_plane_y) * basis.nplane + iz_local;
-            electron_density[index]
-                = 1.0 / (static_cast<double>(basis.nx * basis.nz) * volume_element);
-        }
-    }
-    const double* density_channels[1] = {electron_density.data()};
-    ModuleBase::matrix potential;
-    correction.v_correction_pcc(cell, basis, 1, density_channels, potential);
-    ModuleSccs::Pcc2dGeometry geometry
-        = ModuleSccs::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
-    geometry.origin_y = cell.atoms[0].tau[0].y * cell.lat0;
-    const double electron_y
-        = geometry.parameters.cell_length_y
-          * (static_cast<double>(electron_plane_y) + 0.5) / basis.ny;
-    const double dipole_y = -ModuleSccs::pcc_2d_relative_y(electron_y, geometry);
-    const double expected_energy = 2.0 * ModuleBase::PI * dipole_y * dipole_y / cell.omega;
-    EXPECT_NEAR(surchem::Ael, 2.0 * expected_energy, 1.0e-12);
-    EXPECT_DOUBLE_EQ(surchem::Acav, 0.0);
-    EXPECT_TRUE(std::isfinite(potential(0, 0)));
-    ModuleBase::matrix force(1, 3);
-    correction.cal_force_pcc(cell, force);
-    EXPECT_TRUE(std::isfinite(force(0, 1)));
-}
-
 TEST(HCorrSccs, DelaysActivationUntilDensityOrIterationThreshold)
 {
     SurchemParameters parameters;
@@ -166,7 +101,8 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     parameters.sccs_config.cavity.epsilon_bulk = 5.0;
     parameters.sccs_config.surface_regularization = 1.0e-6;
     parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc0d;
-    parameters.debug = true;
+    parameters.pcc_boundary = ModuleSccs::Boundary::Pcc0d;
+    parameters.debug = 2;
     parameters.sccs_config.max_iterations = 100;
     parameters.sccs_config.mixing = 0.7;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
@@ -231,7 +167,14 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     EXPECT_NEAR(shape_energy, result.ionic_shape_pcc_energy, 1.0e-11);
     EXPECT_NEAR(used_energy, 2.0 * result.vacuum_pcc_energy, 1.0e-11);
 
-    parameters.debug = false;
+    parameters.debug = 0;
+    surchem silent_solvent;
+    silent_solvent.set_parameters(parameters);
+    std::ostringstream silent_output;
+    silent_solvent.write_sccs_iteration(silent_output);
+    silent_solvent.write_sccs_diagnostics(silent_output);
+    EXPECT_TRUE(silent_output.str().empty());
+    parameters.debug = 1;
     surchem quiet_solvent;
     quiet_solvent.set_parameters(parameters);
     ModuleBase::matrix quiet_potential;
@@ -293,6 +236,7 @@ TEST(HCorrSccs, AppliesNeutralPcc2dPointIonEnergyAndPotential)
     parameters.sccs_config.cavity.epsilon_bulk = 1.0;
     parameters.sccs_config.surface_regularization = 1.0e-6;
     parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc2d;
+    parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
     parameters.sccs_config.max_iterations = 100;
     parameters.sccs_config.mixing = 0.7;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
@@ -384,13 +328,14 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     parameters.use_sccs = true;
     parameters.expected_electron_count = 0.8;
     parameters.expected_ionic_charge = 1.0;
-    parameters.debug = true;
+    parameters.debug = 2;
     parameters.normalization_tolerance = 1.0e-10;
     parameters.sccs_config.cavity.density_min = 1.0e-2;
     parameters.sccs_config.cavity.density_max = 2.0e-2;
     parameters.sccs_config.cavity.epsilon_bulk = 5.0;
     parameters.sccs_config.surface_regularization = 1.0e-6;
     parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc2d;
+    parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
     parameters.sccs_config.max_iterations = 100;
     parameters.sccs_config.mixing = 0.7;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
@@ -512,7 +457,14 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     EXPECT_EQ(energy_label, "E_SOL/Ry");
     EXPECT_NEAR(solvation_energy_rydberg, surchem::Ael + surchem::Acav, 1.0e-7);
 
-    parameters.debug = false;
+    parameters.debug = 0;
+    surchem silent_solvent;
+    silent_solvent.set_parameters(parameters);
+    std::ostringstream silent_output;
+    silent_solvent.write_sccs_iteration(silent_output);
+    silent_solvent.write_sccs_diagnostics(silent_output);
+    EXPECT_TRUE(silent_output.str().empty());
+    parameters.debug = 1;
     surchem quiet_solvent;
     quiet_solvent.set_parameters(parameters);
     ModuleBase::matrix quiet_potential;

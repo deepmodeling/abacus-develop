@@ -161,7 +161,7 @@ AddTest(
 AddTest(
   TARGET MODULE_HAMILT_surchem_h_corr_sccs
   LIBS planewave device base cell symmetry neighbor_search neighbor
-  SOURCES test_h_corr_sccs.cpp ../surchem.cpp ../sccs/h_corr_sccs.cpp
+  SOURCES test_h_corr_sccs.cpp test_h_corr_pcc.cpp ../surchem.cpp ../sccs/h_corr_sccs.cpp ../pcc/h_corr_pcc.cpp
           ../sccs/sccs_cavity.cpp ../sccs/sccs_charge.cpp ../sccs/sccs_driver.cpp
           ../sccs/sccs_functional.cpp ../sccs/sccs_nonel.cpp ../sccs/sccs_parameters.cpp
           ../pcc/sccs_pcc.cpp ../pcc/sccs_pcc_2d.cpp ../pcc/sccs_pcc_2d_coulomb.cpp
@@ -173,7 +173,7 @@ AddTest(
 AddTest(
   TARGET MODULE_HAMILT_surchem_sol_force
   LIBS planewave device base cell symmetry neighbor_search neighbor
-  SOURCES test_sol_force.cpp ../surchem.cpp ../sccs/h_corr_sccs.cpp ../sol_force.cpp
+  SOURCES test_sol_force.cpp ../surchem.cpp ../sccs/h_corr_sccs.cpp ../pcc/h_corr_pcc.cpp ../sol_force.cpp
           ../sccs/sccs_cavity.cpp ../sccs/sccs_charge.cpp ../sccs/sccs_driver.cpp
           ../sccs/sccs_functional.cpp ../sccs/sccs_nonel.cpp ../sccs/sccs_parameters.cpp
           ../pcc/sccs_pcc.cpp ../pcc/sccs_pcc_2d.cpp ../pcc/sccs_pcc_2d_coulomb.cpp

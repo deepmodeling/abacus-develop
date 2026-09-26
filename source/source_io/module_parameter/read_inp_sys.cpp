@@ -506,6 +506,9 @@ Available options are:
 
 Available options are:
 * none: regular periodic calculation without isolated-system correction.
+* pcc_0d: self-consistent PCC for cubic molecular cells. Uses the mass-weighted ionic system center for multipoles.
+* pcc_2d: self-consistent slab PCC, periodic in x-z and open along y. The second lattice vector must be perpendicular to the periodic plane. Charged-slab absolute energies depend on cell length along y.
+PCC works with imp_sol=0 or 2, contributes to energy, potential and fixed-cell forces, and is incompatible with the legacy solvent (imp_sol=1).
 * makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
 
 Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
@@ -518,10 +521,24 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> allowed = {"none", "makov-payne", "m-p", "mp"};
+            const std::vector<std::string> allowed = {"none", "makov-payne", "m-p", "mp", "pcc_0d", "pcc_2d"};
             if (std::find(allowed.begin(), allowed.end(), para.input.assume_isolated) == allowed.end())
             {
                 ModuleBase::WARNING_QUIT("ReadInput", nofound_str(allowed, "assume_isolated"));
+            }
+            const Input_para& input = para.input;
+            const bool use_pcc = input.assume_isolated == "pcc_0d" || input.assume_isolated == "pcc_2d";
+            if (use_pcc && input.imp_sol == 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "PCC is incompatible with the legacy solvent model (imp_sol=1); use imp_sol=0 or 2");
+            }
+            if (use_pcc && (input.nspin == 4 || input.device == "gpu" || input.esolver_type != "ksdft"
+                || (input.basis_type != "pw" && input.basis_type != "lcao")
+                || (input.calculation != "scf" && input.calculation != "relax")
+                || input.efield_flag || input.gate_flag || input.cal_stress
+                || input.dfthalf_type != 0 || input.deepks_out_base != "none" || input.dm_to_rho))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "PCC requires CPU KS-DFT PW/LCAO scf or fixed-cell relax, nspin=1/2, without stress or other fields");
             }
             if ((para.input.assume_isolated == "makov-payne" || para.input.assume_isolated == "m-p"
                  || para.input.assume_isolated == "mp")

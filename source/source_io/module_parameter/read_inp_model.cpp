@@ -184,17 +184,6 @@ void ReadInput::item_model()
 
     // imlicit_solvation
     {
-        Input_Item item("imp_sol");
-        item.annotation = "calculate implicit solvation correction or not";
-        item.category = "Implicit solvation model";
-        item.type = "Boolean";
-        item.description = "Calculate implicit solvation correction";
-        item.default_value = "False";
-        item.unit = "";
-        read_sync_bool(input.imp_sol);
-        this->add_item(item);
-    }
-    {
         Input_Item item("eb_k");
         item.annotation = "the relative permittivity of the bulk solvent";
         item.category = "Implicit solvation model";
@@ -202,7 +191,7 @@ void ReadInput::item_model()
         item.description = "The relative permittivity of the bulk solvent, 80 for water";
         item.default_value = "80";
         item.unit = "";
-        item.set_availability("imp_sol==true");
+        item.set_availability("imp_sol==1");
         read_sync_double(input.eb_k);
         this->add_item(item);
     }

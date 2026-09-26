@@ -13,9 +13,8 @@ scf_thr             1.0e-10
 cal_force           1
 symmetry            0
 
-imp_sol             1
-solvation_model     sccs
-sccs_boundary       pcc_2d
+imp_sol             2
+assume_isolated    pcc_2d
 sccs_preset         custom
 sccs_epsilon        1.1
 sccs_rho_min        1.0e-4

@@ -262,7 +262,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     if (sccs_activated_this_iteration)
     {
         this->p_chgmix->mix_reset();
-        if (is_output_rank)
+        if (is_output_rank && this->inp_->sccs_debug > 0)
         {
             std::cout << " SCCS activated at electronic iteration " << iter
                       << ", previous DRHO = " << this->drho << std::endl;
@@ -366,11 +366,11 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     if (is_output_rank)
     {
-        if (this->solvent.sccs_is_active())
+        if (this->solvent.sccs_is_active() || this->solvent.uses_pcc())
         {
             this->solvent.write_sccs_iteration(std::cout);
         }
-        else if (this->solvent.uses_sccs())
+        else if (this->solvent.uses_sccs() && this->inp_->sccs_debug > 0)
         {
             std::cout << " SCCS_DEFERRED DRHO " << this->drho
                       << " START_DRHO " << this->inp_->sccs_start_drho

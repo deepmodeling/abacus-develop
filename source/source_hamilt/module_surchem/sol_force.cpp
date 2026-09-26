@@ -181,7 +181,7 @@ void surchem::cal_force_sol(const UnitCell& cell,
         ModuleBase::timer::end("surchem", "cal_force_sol");
         return;
     }
-    if (this->uses_pcc() && !this->parameters_.use_legacy_solvent)
+    if (this->uses_pcc())
     {
         ModuleBase::GlobalFunc::ZEROS(forcesol.c, forcesol.nr * forcesol.nc);
         this->cal_force_pcc(cell, forcesol);
@@ -211,10 +211,6 @@ void surchem::cal_force_sol(const UnitCell& cell,
     }
     
     Parallel_Reduce::reduce_pool(forcesol.c, forcesol.nr * forcesol.nc);
-    if (this->uses_pcc())
-    {
-        this->cal_force_pcc(cell, forcesol);
-    }
     ModuleBase::timer::end("surchem", "cal_force_sol");
     return;
 }
@@ -252,49 +248,5 @@ void surchem::cal_force_sccs(const UnitCell& cell,
         return;
     }
 
-    if (config.boundary == ModuleSccs::Boundary::Pcc2d)
-    {
-        const ModuleSccs::Pcc2dGeometry& geometry
-            = this->sccs_state_.pcc_2d_geometry;
-        int atom_index = 0;
-        for (int atom_type = 0; atom_type < cell.ntype; ++atom_type)
-        {
-            for (int atom = 0; atom < cell.atoms[atom_type].na; ++atom)
-            {
-                ModuleSccs::PointCharge point;
-                point.charge = cell.atoms[atom_type].ncpp.zv;
-                point.position = cell.atoms[atom_type].tau[atom] * cell.lat0;
-                const ModuleBase::Vector3<double> force_hartree
-                    = ModuleSccs::pcc_2d_point_charge_force(
-                        this->sccs_result_.point_solute_moments_2d,
-                        point,
-                        geometry);
-                forcesol(atom_index, 0) += 2.0 * force_hartree.x;
-                forcesol(atom_index, 1) += 2.0 * force_hartree.y;
-                forcesol(atom_index, 2) += 2.0 * force_hartree.z;
-                ++atom_index;
-            }
-        }
-        return;
-    }
-
-    const ModuleSccs::PccGeometry& geometry = this->sccs_state_.pcc_geometry;
-    int atom_index = 0;
-    for (int atom_type = 0; atom_type < cell.ntype; ++atom_type)
-    {
-        for (int atom = 0; atom < cell.atoms[atom_type].na; ++atom)
-        {
-            ModuleSccs::PointCharge point;
-            point.charge = cell.atoms[atom_type].ncpp.zv;
-            point.position = cell.atoms[atom_type].tau[atom] * cell.lat0;
-            const ModuleBase::Vector3<double> force_hartree
-                = ModuleSccs::pcc_point_charge_force(this->sccs_result_.point_solute_moments,
-                                                     point,
-                                                     geometry);
-            forcesol(atom_index, 0) += 2.0 * force_hartree.x;
-            forcesol(atom_index, 1) += 2.0 * force_hartree.y;
-            forcesol(atom_index, 2) += 2.0 * force_hartree.z;
-            ++atom_index;
-        }
-    }
+    this->cal_force_pcc(cell, forcesol);
 }

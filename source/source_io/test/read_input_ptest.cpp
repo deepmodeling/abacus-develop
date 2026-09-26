@@ -368,7 +368,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.tau, 1.0798 * 1e-5);
     EXPECT_DOUBLE_EQ(param.inp.sigma_k, 0.6);
     EXPECT_DOUBLE_EQ(param.inp.nc_k, 0.00037);
-    EXPECT_EQ(param.inp.solvation_model, "legacy");
     EXPECT_EQ(param.inp.sccs_preset, "custom");
     EXPECT_DOUBLE_EQ(param.inp.sccs_epsilon, 78.3);
     EXPECT_DOUBLE_EQ(param.inp.sccs_rho_min, 1.0e-4);
@@ -382,7 +381,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.sccs_tol_rms, 1.0e-10);
     EXPECT_DOUBLE_EQ(param.inp.sccs_tol_max, 1.0e-8);
     EXPECT_DOUBLE_EQ(param.inp.sccs_surface_eta, 1.0e-8);
-    EXPECT_EQ(param.inp.sccs_boundary, "periodic");
     EXPECT_EQ(param.inp.sccs_maxiter, 200);
     EXPECT_EQ(param.inp.sccs_mixing_type, "pulay");
     EXPECT_EQ(param.inp.sccs_mixing_ndim, 8);

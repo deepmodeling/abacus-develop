@@ -39,7 +39,7 @@ struct SurchemParameters
     int pool_process_count = 1;
     double start_drho = 0.0;
     int start_nmax = 30;
-    bool debug = false;
+    int debug = 0;
 };
 
 class surchem
@@ -211,6 +211,9 @@ class surchem
     ModuleSccs::Pcc2dGeometry pcc_2d_geometry_;
     ModuleSccs::MultipoleMoments pcc_moments_;
     ModuleSccs::Pcc2dMoments pcc_2d_moments_;
+    ModuleSccs::Pcc2dMoments pcc_ionic_moments_2d_;
+    double pcc_energy_rydberg_ = 0.0;
+    double pcc_elapsed_seconds_ = 0.0;
     bool pcc_result_valid_ = false;
     double sccs_elapsed_seconds_ = 0.0;
 };

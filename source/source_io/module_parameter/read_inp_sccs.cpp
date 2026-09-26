@@ -8,29 +8,24 @@ namespace ModuleIO
 {
 namespace
 {
-void check_solvation_model(const Input_para& input)
+void check_solvation(const Input_para& input)
 {
-    const std::vector<std::string> allowed = {"legacy", "sccs"};
-    if (std::find(allowed.begin(), allowed.end(), input.solvation_model) == allowed.end())
+    if (input.imp_sol < 0 || input.imp_sol > 2)
     {
-        ModuleBase::WARNING_QUIT("ReadInput", nofound_str(allowed, "solvation_model"));
+        ModuleBase::WARNING_QUIT("ReadInput", "imp_sol must be 0 (vacuum), 1 (legacy), or 2 (SCCS)");
     }
-    if (input.solvation_model == "sccs" && !input.imp_sol)
-    {
-        ModuleBase::WARNING_QUIT("ReadInput", "solvation_model=sccs requires imp_sol=true");
-    }
-    if (input.solvation_model == "sccs"
+    if (input.imp_sol == 2
         && (input.efield_flag || input.gate_flag
-            || input.assume_isolated != "none"))
+            || input.assume_isolated == "makov-payne"))
     {
         ModuleBase::WARNING_QUIT("ReadInput",
-                                 "SCCS cannot be combined with electric/gate fields or assume_isolated");
+                                 "SCCS cannot be combined with electric/gate fields or Makov-Payne correction");
     }
-    if (input.solvation_model == "sccs" && input.nspin == 4)
+    if (input.imp_sol == 2 && input.nspin == 4)
     {
         ModuleBase::WARNING_QUIT("ReadInput", "the first SCCS implementation does not support nspin=4");
     }
-    if (input.solvation_model == "sccs"
+    if (input.imp_sol == 2
         && input.calculation != "scf"
         && input.calculation != "relax")
     {
@@ -38,11 +33,11 @@ void check_solvation_model(const Input_para& input)
             "ReadInput",
             "SCCS supports only calculation=scf or fixed-cell calculation=relax");
     }
-    if (input.solvation_model == "sccs" && input.device == "gpu")
+    if (input.imp_sol == 2 && input.device == "gpu")
     {
         ModuleBase::WARNING_QUIT("ReadInput", "the first SCCS implementation supports only device=cpu");
     }
-    if (input.solvation_model == "sccs" && input.dfthalf_type != 0)
+    if (input.imp_sol == 2 && input.dfthalf_type != 0)
     {
         ModuleBase::WARNING_QUIT("ReadInput", "SCCS cannot currently be combined with DFT-1/2");
     }
@@ -78,44 +73,6 @@ void check_sccs_start_nmax(const Input_para& input)
         ModuleBase::WARNING_QUIT(
             "ReadInput",
             "sccs_start_nmax must be positive and smaller than scf_nmax when delayed start is enabled");
-    }
-}
-
-void check_sccs_boundary(const Input_para& input)
-{
-    const std::vector<std::string> allowed = {"periodic", "pcc_0d", "pcc_2d"};
-    if (std::find(allowed.begin(), allowed.end(), input.sccs_boundary) == allowed.end())
-    {
-        ModuleBase::WARNING_QUIT("ReadInput", nofound_str(allowed, "sccs_boundary"));
-    }
-}
-
-void check_pcc_boundary(const Input_para& input)
-{
-    const std::vector<std::string> allowed = {"none", "pcc_0d", "pcc_2d"};
-    if (std::find(allowed.begin(), allowed.end(), input.pcc_boundary) == allowed.end())
-    {
-        ModuleBase::WARNING_QUIT("ReadInput", nofound_str(allowed, "pcc_boundary"));
-    }
-    if (input.pcc_boundary == "none")
-    {
-        return;
-    }
-    if (input.imp_sol && input.solvation_model == "sccs")
-    {
-        ModuleBase::WARNING_QUIT("ReadInput",
-                                 "use sccs_boundary for SCCS+PCC; pcc_boundary is for vacuum or legacy solvent");
-    }
-    if (input.nspin == 4 || input.device == "gpu" || input.esolver_type != "ksdft"
-        || (input.basis_type != "pw" && input.basis_type != "lcao")
-        || (input.calculation != "scf" && input.calculation != "relax")
-        || input.efield_flag || input.gate_flag || input.assume_isolated != "none"
-        || input.cal_stress
-        || input.dfthalf_type != 0
-        || input.deepks_out_base != "none" || input.dm_to_rho)
-    {
-        ModuleBase::WARNING_QUIT("ReadInput",
-                                 "standalone PCC requires CPU KS-DFT PW/LCAO scf or fixed-cell relax, nspin=1/2, without stress, other field, or isolation corrections");
     }
 }
 
@@ -167,30 +124,16 @@ void check_sccs_numerical_parameters(const Input_para& input)
 void ReadInput::item_sccs()
 {
     {
-        Input_Item item("solvation_model");
-        item.annotation = "implicit-solvent implementation";
+        Input_Item item("imp_sol");
+        item.annotation = "implicit solvent model";
         item.category = "Implicit solvation model";
-        item.type = "String";
-        item.description = "Select legacy or the native SCCS implementation. SCCS is enabled only together with imp_sol=true and supports scf or fixed-cell relax calculations.";
-        item.default_value = "legacy";
+        item.type = "Integer";
+        item.description = "Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports scf and fixed-cell relax.";
+        item.default_value = "0";
         item.unit = "";
-        read_sync_string(input.solvation_model);
+        read_sync_int(input.imp_sol);
         item.check_value = [](const Input_Item&, const Parameter& para) {
-            check_solvation_model(para.input);
-        };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("pcc_boundary");
-        item.annotation = "independent PCC boundary condition";
-        item.category = "Implicit solvation model";
-        item.type = "String";
-        item.description = "Apply point-ion/electron PCC without SCCS: none, cubic pcc_0d, or slab pcc_2d with open y direction. Works with imp_sol=0 or legacy solvent; the latter retains periodic solvent polarization. For coupled SCCS boundaries use sccs_boundary. PCC contributes to self-consistent potential, total energy, and fixed-cell ionic forces.";
-        item.default_value = "none";
-        item.unit = "";
-        read_sync_string(input.pcc_boundary);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            check_pcc_boundary(para.input);
+            check_solvation(para.input);
         };
         this->add_item(item);
     }
@@ -199,10 +142,10 @@ void ReadInput::item_sccs()
         item.annotation = "SCCS parameter preset";
         item.category = "Implicit solvation model";
         item.type = "String";
-        item.description = "Select vacuum, custom, water-neutral, water-cation, or water-anion parameters. Vacuum sets epsilon=1, surface tension=0, and pressure=0; sccs_boundary can still enable PCC. Numerical cavity and non-electrostatic inputs are used only by custom.";
+        item.description = "Select vacuum, custom, water-neutral, water-cation, or water-anion parameters. Vacuum sets epsilon=1, surface tension=0, and pressure=0; assume_isolated can still enable PCC. Numerical cavity and non-electrostatic inputs are used only by custom.";
         item.default_value = "custom";
         item.unit = "";
-        item.set_availability("imp_sol==true and solvation_model==sccs");
+        item.set_availability("imp_sol==2");
         read_sync_string(input.sccs_preset);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             check_sccs_preset(para.input);
@@ -218,7 +161,7 @@ void ReadInput::item_sccs()
         item.description = DESCRIPTION; \
         item.default_value = DEFAULT_VALUE; \
         item.unit = UNIT; \
-        item.set_availability("imp_sol==true and solvation_model==sccs"); \
+        item.set_availability("imp_sol==2"); \
         read_sync_double(input.MEMBER); \
         this->add_item(item); \
     }
@@ -251,7 +194,7 @@ void ReadInput::item_sccs()
         item.description = "Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately. Once activated, SCCS remains active for all later electronic and ionic steps.";
         item.default_value = "0.0";
         item.unit = "";
-        item.set_availability("imp_sol==true and solvation_model==sccs");
+        item.set_availability("imp_sol==2");
         read_sync_double(input.sccs_start_drho);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             check_sccs_start_drho(para.input);
@@ -266,7 +209,7 @@ void ReadInput::item_sccs()
         item.description = "Force delayed SCCS activation at this electronic iteration if the SCCS start DRHO threshold has not yet been reached. The value must be smaller than scf_nmax so a later iteration uses the SCCS Hamiltonian.";
         item.default_value = "30";
         item.unit = "";
-        item.set_availability("imp_sol==true and solvation_model==sccs");
+        item.set_availability("imp_sol==2");
         read_sync_int(input.sccs_start_nmax);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             check_sccs_start_nmax(para.input);
@@ -277,31 +220,16 @@ void ReadInput::item_sccs()
         Input_Item item("sccs_debug");
         item.annotation = "detailed SCCS diagnostics";
         item.category = "Implicit solvation model";
-        item.type = "Boolean";
-        item.description
-            = "Print detailed per-SCF-step PCC moments and energy components for "
-              "pcc_0d and pcc_2d, followed by final SCCS diagnostics. For "
-              "pcc_0d, the output includes the system-center origin, "
-              "smooth/point/polarization/screened multipoles, and correction "
-              "energies. The compact SCCS iteration summary is always printed.";
+        item.type = "Integer";
+        item.description = "SCCS/PCC output level: 0 suppresses per-SCF summaries and diagnostics; 1 prints the iteration count, elapsed seconds and correction energy; 2 additionally prints all mixing, multipole and energy diagnostics. Applies to standalone PCC as well as SCCS.";
         item.default_value = "0";
         item.unit = "";
-        item.set_availability("imp_sol==true and solvation_model==sccs");
-        read_sync_bool(input.sccs_debug);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("sccs_boundary");
-        item.annotation = "SCCS electrostatic boundary condition";
-        item.category = "Implicit solvation model";
-        item.type = "String";
-        item.description = "Select periodic electrostatics, cubic zero-dimensional PCC (pcc_0d), or slab PCC (pcc_2d). The pcc_0d boundary uses the mass-weighted ionic system center as the common multipole origin and minimum-image displacements along all three cubic lattice vectors. The pcc_2d boundary fixes the open/vacuum direction to the second lattice vector (+y) and requires that vector to be perpendicular to the x-z periodic plane. Neutral and charged slabs are supported. For a charged slab, the open-boundary field energy grows linearly with the y cell length, so absolute total energies at different y cell lengths are not directly comparable. PCC includes the smooth-source solvent response plus the point-ion/electron vacuum correction in the host energy, electronic potential, and ionic forces.";
-        item.default_value = "periodic";
-        item.unit = "";
-        item.set_availability("imp_sol==true and solvation_model==sccs");
-        read_sync_string(input.sccs_boundary);
+        read_sync_int(input.sccs_debug);
         item.check_value = [](const Input_Item&, const Parameter& para) {
-            check_sccs_boundary(para.input);
+            if (para.input.sccs_debug < 0 || para.input.sccs_debug > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "sccs_debug must be 0, 1, or 2");
+            }
         };
         this->add_item(item);
     }
@@ -313,7 +241,7 @@ void ReadInput::item_sccs()
         item.description = "Maximum number of inner SCCS polarization iterations.";
         item.default_value = "200";
         item.unit = "";
-        item.set_availability("imp_sol==true and solvation_model==sccs");
+        item.set_availability("imp_sol==2");
         read_sync_int(input.sccs_maxiter);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             check_sccs_numerical_parameters(para.input);
@@ -334,7 +262,7 @@ void ReadInput::item_sccs()
               "one linear recovery step.";
         item.default_value = "0";
         item.unit = "";
-        item.set_availability("imp_sol==true and solvation_model==sccs");
+        item.set_availability("imp_sol==2");
         read_sync_bool(input.sccs_mixing_adaptive);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             check_sccs_numerical_parameters(para.input);
@@ -351,7 +279,7 @@ void ReadInput::item_sccs()
               "SCCS polarization iteration.";
         item.default_value = "linear";
         item.unit = "";
-        item.set_availability("imp_sol==true and solvation_model==sccs");
+        item.set_availability("imp_sol==2");
         read_sync_string(input.sccs_mixing_type);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             check_sccs_mixing_type(para.input);
@@ -368,7 +296,7 @@ void ReadInput::item_sccs()
               "SCCS mixing.";
         item.default_value = "8";
         item.unit = "";
-        item.set_availability("imp_sol==true and solvation_model==sccs");
+        item.set_availability("imp_sol==2");
         read_sync_int(input.sccs_mixing_ndim);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             check_sccs_numerical_parameters(para.input);

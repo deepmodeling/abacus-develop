@@ -578,7 +578,7 @@ OBJS_RELAXATION=relax_data.o\
 
 OBJS_SURCHEM=surchem.o\
     h_corr_pw.o\
-    h_corr_sccs.o\
+    h_corr_sccs.o h_corr_pcc.o\
     cal_epsilon.o\
     cal_pseudo.o\
     cal_totn.o\

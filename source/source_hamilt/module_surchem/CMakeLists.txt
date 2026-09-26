@@ -4,6 +4,7 @@ add_library(
     surchem.cpp
     h_corr_pw.cpp
     sccs/h_corr_sccs.cpp
+    pcc/h_corr_pcc.cpp
     cal_epsilon.cpp
     cal_pseudo.cpp
     cal_totn.cpp

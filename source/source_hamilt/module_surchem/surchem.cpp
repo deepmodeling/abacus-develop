@@ -32,6 +32,13 @@ void surchem::set_parameters(const SurchemParameters& parameters)
             throw std::invalid_argument("SCCS/PCC system and reduction parameters are invalid");
         }
     }
+    if (parameters.debug < 0 || parameters.debug > 2
+        || (parameters.use_legacy_solvent && (parameters.use_sccs
+            || parameters.pcc_boundary != ModuleSccs::Boundary::Periodic))
+        || (parameters.use_sccs && parameters.sccs_config.boundary != parameters.pcc_boundary))
+    {
+        throw std::invalid_argument("inconsistent solvent/PCC configuration or debug level");
+    }
     this->parameters_ = parameters;
     this->parameters_set_ = true;
     this->sccs_active_ = parameters.use_sccs && parameters.start_drho <= 0.0;
@@ -87,9 +94,47 @@ const ModuleSccs::SccsResult& surchem::sccs_result() const
 
 void surchem::write_sccs_iteration(std::ostream& output) const
 {
+    if (this->parameters_.debug == 0)
+    {
+        return;
+    }
     if (!this->sccs_is_active())
     {
-        throw std::logic_error("SCCS iteration requested before delayed activation");
+        if (!this->uses_pcc() || !this->pcc_result_valid_)
+        {
+            throw std::logic_error("correction summary requires a current SCCS or PCC result");
+        }
+        const std::streamsize precision = output.precision();
+        const std::ios_base::fmtflags flags = output.flags();
+        output << " PCC_TIME/s " << std::fixed << std::setprecision(2)
+               << this->pcc_elapsed_seconds_ << " E_PCC/Ry " << std::defaultfloat
+               << std::setprecision(12) << this->pcc_energy_rydberg_ << '\n';
+        if (this->parameters_.debug >= 2)
+        {
+            if (this->parameters_.pcc_boundary == ModuleSccs::Boundary::Pcc0d)
+            {
+                output << " PCC0D_ORIGIN X/Bohr " << this->pcc_geometry_.origin.x
+                       << " Y/Bohr " << this->pcc_geometry_.origin.y
+                       << " Z/Bohr " << this->pcc_geometry_.origin.z << '\n'
+                       << " PCC0D_MOMENTS POINT Q/e " << this->pcc_moments_.charge
+                       << " PX/eBohr " << this->pcc_moments_.dipole.x
+                       << " PY/eBohr " << this->pcc_moments_.dipole.y
+                       << " PZ/eBohr " << this->pcc_moments_.dipole.z
+                       << " QRR/eBohr2 " << this->pcc_moments_.quadrupole_trace << '\n';
+            }
+            else
+            {
+                output << " PCC2D_ORIGIN Y/Bohr " << this->pcc_2d_geometry_.origin_y << '\n'
+                       << " PCC2D_MOMENTS Q_POINT/e " << this->pcc_2d_moments_.charge
+                       << " PY_POINT/eBohr " << this->pcc_2d_moments_.dipole_y
+                       << " QYY_POINT/eBohr2 " << this->pcc_2d_moments_.quadrupole_yy << '\n';
+            }
+            output << " PCC_ENERGY PCC_POINT/Ha " << 0.5 * this->pcc_energy_rydberg_
+                   << " PCC_USED/Ry " << this->pcc_energy_rydberg_ << '\n';
+        }
+        output.flags(flags);
+        output.precision(precision);
+        return;
     }
     const ModuleSccs::SccsResult& result = this->sccs_result();
     const double solvation_energy_rydberg
@@ -106,7 +151,7 @@ void surchem::write_sccs_iteration(std::ostream& output) const
            << " E_SOL/Ry " << std::defaultfloat << std::setprecision(8)
            << solvation_energy_rydberg << '\n';
 
-    if (this->parameters_.debug)
+    if (this->parameters_.debug >= 2)
     {
         output << " SCCS_MIXING VALUE "
                << result.response.polarization.final_mixing
@@ -114,7 +159,7 @@ void surchem::write_sccs_iteration(std::ostream& output) const
                << result.response.polarization.mixing_restarts << '\n';
     }
 
-    if (this->parameters_.debug
+    if (this->parameters_.debug >= 2
         && this->parameters_.sccs_config.boundary == ModuleSccs::Boundary::Pcc0d)
     {
         const ModuleBase::Vector3<double>& origin = this->sccs_state_.pcc_geometry.origin;
@@ -148,7 +193,7 @@ void surchem::write_sccs_iteration(std::ostream& output) const
                << '\n';
     }
 
-    if (this->parameters_.debug
+    if (this->parameters_.debug >= 2
         && this->parameters_.sccs_config.boundary == ModuleSccs::Boundary::Pcc2d)
     {
         output << std::setprecision(12)
@@ -175,7 +220,7 @@ void surchem::write_sccs_iteration(std::ostream& output) const
 
 void surchem::write_sccs_diagnostics(std::ostream& output) const
 {
-    if (!this->parameters_.debug)
+    if (this->parameters_.debug < 2)
     {
         return;
     }

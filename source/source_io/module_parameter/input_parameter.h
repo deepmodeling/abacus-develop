@@ -564,22 +564,19 @@ struct Input_para
     double block_height = 0.1; ///< height of the block
 
     //    implicit solvation model       Menglin Sun added on 2022-04-04
-    bool imp_sol = false;    ///< true: implicit solvation correction; false:
+    int imp_sol = 0;         ///< 0: vacuum, 1: legacy solvent, 2: SCCS
                              ///< vacuum calculation(default)
     double eb_k = 80;        ///< the relative permittivity of the bulk solvent
     double tau = 1.0798e-05; ///< the effective surface tension parameter
     double sigma_k = 0.6;    ///< the width of the diffuse cavity
     double nc_k = 0.00037;   ///< the cut-off charge density
-    std::string solvation_model = "legacy"; ///< implicit-solvent implementation
-    std::string pcc_boundary = "none"; ///< independent vacuum/legacy-solvent PCC
-    bool uses_surchem_correction() const { return imp_sol || pcc_boundary != "none"; }
+    bool uses_surchem_correction() const { return imp_sol != 0 || assume_isolated == "pcc_0d" || assume_isolated == "pcc_2d"; }
     std::string sccs_preset = "custom";     ///< SCCS parameter preset
     double sccs_epsilon = 78.3;              ///< SCCS bulk relative permittivity
     double sccs_rho_min = 1.0e-4;            ///< lower cavity-density threshold, bohr^-3
     double sccs_rho_max = 5.0e-3;            ///< upper cavity-density threshold, bohr^-3
     double sccs_gamma = 0.0;                  ///< SCCS surface coefficient, dyn/cm
     double sccs_pressure = 0.0;               ///< SCCS volume coefficient, GPa
-    std::string sccs_boundary = "periodic";  ///< periodic, pcc_0d, or pcc_2d electrostatics
     int sccs_maxiter = 200;                   ///< polarization iteration limit
     std::string sccs_mixing_type = "linear"; ///< linear, pulay, or anderson
     int sccs_mixing_ndim = 8;                 ///< accelerated-mixing history length
@@ -592,7 +589,7 @@ struct Input_para
     double sccs_surface_eta = 1.0e-8;         ///< regularized surface norm, bohr^-1
     double sccs_start_drho = 0.0;              ///< delayed-start density threshold; zero starts immediately
     int sccs_start_nmax = 30;                  ///< forced delayed-start electronic iteration
-    bool sccs_debug = false;                   ///< print detailed SCCS and PCC diagnostics
+    int sccs_debug = 0;                   ///< 0: silent, 1: iteration summary, 2: full diagnostics
 
     // ==============  #Parameters (14.vdW Correction) ===========================
     // ==========================================================
