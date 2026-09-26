@@ -74,7 +74,7 @@ TEST_F(Rvv10PW, RealFFTNormalizationAndSpectralDerivatives)
 }
 TEST_F(Rvv10PW, ConstantDensityEnergyAndValenceContraction)
 {
-    const Rvv10::SerialEvaluator evaluator(6.3, 0.0093);
+    const Rvv10::Evaluator evaluator(6.3, 0.0093);
     std::vector<double> total(pw.nrxx, 0.01);
     std::vector<double> valence(pw.nrxx, 0.006);
     const auto value = evaluator.evaluate(pw, total, valence);
@@ -104,7 +104,7 @@ TEST_F(Rvv10PW, ConstantDensityEnergyAndValenceContraction)
 
 TEST_F(Rvv10PW, NonuniformEnergyVariationWithFixedCore)
 {
-    const Rvv10::SerialEvaluator evaluator(6.3, 0.0093);
+    const Rvv10::Evaluator evaluator(6.3, 0.0093);
     const auto shape = wave();
     std::vector<double> total(pw.nrxx);
     std::vector<double> valence(pw.nrxx);
@@ -148,7 +148,7 @@ TEST_F(Rvv10PW, NonuniformEnergyVariationWithFixedCore)
 
 TEST_F(Rvv10PW, TranslationCovarianceAndRepeatability)
 {
-    const Rvv10::SerialEvaluator evaluator(6.3, 0.0093);
+    const Rvv10::Evaluator evaluator(6.3, 0.0093);
     auto n = wave();
     auto shifted = n;
     for (auto& v: n)
@@ -172,7 +172,7 @@ TEST_F(Rvv10PW, TranslationCovarianceAndRepeatability)
 
 TEST_F(Rvv10PW, RejectUnsupportedLayoutsAndMalformedDensity)
 {
-    const Rvv10::SerialEvaluator evaluator(6.3, 0.0093);
+    const Rvv10::Evaluator evaluator(6.3, 0.0093);
     const std::vector<double> n(pw.nrxx, 0.01);
     const std::vector<double> short_n(1, 0.01);
     EXPECT_THROW(evaluator.evaluate(pw, n, short_n), std::invalid_argument);
@@ -260,7 +260,7 @@ TEST_F(Rvv10VacuumPW, SmallGradientPotentialIsDiscreteEnergyDerivative)
     // Regression for suppressing q0 derivatives when |grad n|^2 <= 1e-12:
     // small absolute gradients do not imply a small |grad n|/n in vacuum.
     // The two scales put the same smooth field below and across that threshold.
-    const Rvv10::SerialEvaluator evaluator(6.3, 0.0093);
+    const Rvv10::Evaluator evaluator(6.3, 0.0093);
     const double scales[] = {1.e-10, 1.e-5};
     const double relative_steps[] = {1.e-3, 3.e-4, 1.e-4};
     const double dv = pw.omega / pw.nxyz;
@@ -339,7 +339,7 @@ TEST_F(Rvv10VacuumPW, InactiveDensityRetainsFiniteBetaEnergyAndPotential)
 {
     // The nonlocal channels vanish below the density cutoff, but beta*n and
     // its constant derivative must remain, even for small negative FFT noise.
-    const Rvv10::SerialEvaluator evaluator(6.3, 0.0093);
+    const Rvv10::Evaluator evaluator(6.3, 0.0093);
     const double density[] = {-1.e-13, 0, 5.e-13, 1.e-12};
     const double beta = std::pow(3.0, 0.75) * std::pow(6.3, -1.5) / 16;
     const double dv = pw.omega / pw.nxyz;
@@ -366,7 +366,7 @@ TEST(Rvv10Vacuum, MaterialAndVacuumShareOnePeriodicDensity)
     // A smooth periodic slab spans ordinary density, small active density and
     // inactive vacuum in the same cell. Missing cross-region coupling or a
     // wrong divergence changes the independent energy finite difference.
-    const Rvv10::SerialEvaluator evaluator(6.3, 0.0093);
+    const Rvv10::Evaluator evaluator(6.3, 0.0093);
     for (int nz: {24, 32})
     {
         SCOPED_TRACE(testing::Message() << "nz=" << nz);

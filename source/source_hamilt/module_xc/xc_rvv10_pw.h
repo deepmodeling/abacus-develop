@@ -36,7 +36,5 @@ class Evaluator
     KernelTable kernel_;
 };
 
-// Kept as an internal compatibility alias for the first implementation name.
-using SerialEvaluator = Evaluator;
 } // namespace Rvv10
 #endif

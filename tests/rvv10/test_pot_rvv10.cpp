@@ -116,7 +116,7 @@ TEST_F(Rvv10Potential, NonlocalComponentOnlyAddsToExistingResults)
         total[i] += charge.rho_core[i];
 
     const Rvv10::Evaluation nonlocal
-        = Rvv10::SerialEvaluator(Rvv10::rvv10_b_default, Rvv10::rvv10_c_default).evaluate(pw, total, valence);
+        = Rvv10::Evaluator(Rvv10::rvv10_b_default, Rvv10::rvv10_c_default).evaluate(pw, total, valence);
     double energy = 1.25;
     double vtxc = -0.75;
     ModuleBase::matrix potential(1, pw.nrxx);
@@ -174,7 +174,7 @@ TEST_F(Rvv10Potential, SpinPolarizedNonlocalPotentialIsSharedByBothChannels)
         total[i] += spin_charge.rho_core[i];
 
     const Rvv10::Evaluation nonlocal
-        = Rvv10::SerialEvaluator(Rvv10::rvv10_b_default, Rvv10::rvv10_c_default).evaluate(pw, total, valence);
+        = Rvv10::Evaluator(Rvv10::rvv10_b_default, Rvv10::rvv10_c_default).evaluate(pw, total, valence);
     double energy = 0;
     double vtxc = 0;
     ModuleBase::matrix potential(2, pw.nrxx);
@@ -217,7 +217,7 @@ TEST_F(Rvv10Potential, MatchesCanonicalSemilocalPlusNonlocalAdapters)
     rvv10.cal_v_eff(&charge, &cell, rvv10_v);
 
     const Rvv10::Evaluation nonlocal
-        = Rvv10::SerialEvaluator(Rvv10::rvv10_b_default, Rvv10::rvv10_c_default).evaluate(pw, total, valence);
+        = Rvv10::Evaluator(Rvv10::rvv10_b_default, Rvv10::rvv10_c_default).evaluate(pw, total, valence);
     EXPECT_NEAR(rvv10_energy, semilocal_energy + nonlocal.energy, 1.e-12);
     EXPECT_NEAR(rvv10_vtxc, semilocal_vtxc + nonlocal.vtxc, 1.e-12);
     for (int i = 0; i < pw.nrxx; ++i)
