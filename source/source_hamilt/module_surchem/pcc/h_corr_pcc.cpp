@@ -125,7 +125,8 @@ void surchem::v_correction_pcc(const UnitCell& cell,
     {
         v.create(nspin, rho_basis.nrxx);
     }
-    ModuleBase::GlobalFunc::ZEROS(v.c, nspin * rho_basis.nrxx);
+    const int potential_size = nspin * rho_basis.nrxx;
+    ModuleBase::GlobalFunc::ZEROS(v.c, potential_size);
     this->pcc_result_valid_ = false;
     double energy_hartree = 0.0;
     if (this->parameters_.pcc_boundary == ModuleSccs::Boundary::Pcc0d)
@@ -141,10 +142,10 @@ void surchem::v_correction_pcc(const UnitCell& cell,
         const ModuleSccs::MultipoleMoments ionic_moments
             = ModuleSccs::point_charge_moments(ions, this->pcc_geometry_);
         this->pcc_moments_ = add_moments(ionic_moments, electronic_moments);
-        if (std::abs(this->pcc_moments_.charge
-                     - (this->parameters_.expected_ionic_charge
-                        - this->parameters_.expected_electron_count))
-            > this->parameters_.normalization_tolerance)
+        const double expected_charge = this->parameters_.expected_ionic_charge
+                                       - this->parameters_.expected_electron_count;
+        const double charge_error = this->pcc_moments_.charge - expected_charge;
+        if (std::abs(charge_error) > this->parameters_.normalization_tolerance)
         {
             throw std::runtime_error("standalone PCC charge does not match the requested electron count");
         }
@@ -180,10 +181,10 @@ void surchem::v_correction_pcc(const UnitCell& cell,
             = ModuleSccs::pcc_2d_point_charge_moments(ions, this->pcc_2d_geometry_);
         this->pcc_ionic_moments_2d_ = ionic_moments;
         this->pcc_2d_moments_ = add_moments_2d(ionic_moments, electronic_moments);
-        if (std::abs(this->pcc_2d_moments_.charge
-                     - (this->parameters_.expected_ionic_charge
-                        - this->parameters_.expected_electron_count))
-            > this->parameters_.normalization_tolerance)
+        const double expected_charge = this->parameters_.expected_ionic_charge
+                                       - this->parameters_.expected_electron_count;
+        const double charge_error = this->pcc_2d_moments_.charge - expected_charge;
+        if (std::abs(charge_error) > this->parameters_.normalization_tolerance)
         {
             throw std::runtime_error("standalone PCC charge does not match the requested electron count");
         }

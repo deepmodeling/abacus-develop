@@ -35,11 +35,13 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     std::vector<std::vector<double>> spin_density(nspin);
     for (int spin = 0; spin < nspin; ++spin)
     {
-        spin_density[spin].assign(rho[spin], rho[spin] + rho_basis.nrxx);
+        const double* spin_density_end = rho[spin] + rho_basis.nrxx;
+        spin_density[spin].assign(rho[spin], spin_density_end);
     }
     const std::vector<double> electron_density
         = ModuleSccs::sum_electron_density(spin_density, nspin);
-    const std::vector<double> local_potential(vlocal, vlocal + rho_basis.nrxx);
+    const double* local_potential_end = vlocal + rho_basis.nrxx;
+    const std::vector<double> local_potential(vlocal, local_potential_end);
     const std::vector<double> ionic_density
         = ModuleSccs::ionic_charge_from_local_potential(local_potential,
                                                         this->parameters_.expected_ionic_charge,
@@ -115,7 +117,8 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     {
         v.create(nspin, rho_basis.nrxx);
     }
-    ModuleBase::GlobalFunc::ZEROS(v.c, nspin * rho_basis.nrxx);
+    const int potential_size = nspin * rho_basis.nrxx;
+    ModuleBase::GlobalFunc::ZEROS(v.c, potential_size);
     for (int spin = 0; spin < nspin; ++spin)
     {
         for (int ir = 0; ir < rho_basis.nrxx; ++ir)
@@ -129,7 +132,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
                           + this->sccs_result_.ionic_shape_pcc_energy);
     surchem::Acav = 2.0 * (this->sccs_result_.non_electrostatic.surface_energy
                            + this->sccs_result_.non_electrostatic.volume_energy);
-    this->sccs_elapsed_seconds_
-        = ModuleBase::get_duration(start_time, ModuleBase::get_time());
+    const ModuleBase::TimePoint end_time = ModuleBase::get_time();
+    this->sccs_elapsed_seconds_ = ModuleBase::get_duration(start_time, end_time);
     ModuleBase::timer::end("surchem", "v_correction_sccs");
 }

@@ -119,8 +119,8 @@ void validate_kpoints(const SurchemParameters& parameters,
     double maximum_open_direction_k = 0.0;
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
-        maximum_open_direction_k
-            = std::max(maximum_open_direction_k, std::abs(kv.kvec_d[ik].y));
+        const double absolute_open_direction_k = std::abs(kv.kvec_d[ik].y);
+        maximum_open_direction_k = std::max(maximum_open_direction_k, absolute_open_direction_k);
     }
     Parallel_Reduce::reduce_max(maximum_open_direction_k);
     if (maximum_open_direction_k > 1.0e-12)

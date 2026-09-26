@@ -521,14 +521,21 @@ TEST(SolForce, RejectsIncorrectOutputShape)
 int main(int argc, char** argv)
 {
 #ifdef __MPI
-    MPI_Init(&argc, &argv);
-    MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD);
+    int process_count = 1;
+    int thread_count = 1;
+    int rank = 0;
+    Parallel_Global::read_pal_param(argc, argv, process_count, thread_count, rank);
+    POOL_WORLD = MPI_COMM_WORLD;
+    KP_WORLD = MPI_COMM_NULL;
+    INT_BGROUP = MPI_COMM_NULL;
+    BP_WORLD = MPI_COMM_NULL;
+    GRID_WORLD = MPI_COMM_NULL;
+    DIAG_WORLD = MPI_COMM_NULL;
 #endif
     testing::InitGoogleTest(&argc, argv);
     const int result = RUN_ALL_TESTS();
 #ifdef __MPI
-    MPI_Comm_free(&POOL_WORLD);
-    MPI_Finalize();
+    Parallel_Global::finalize_mpi();
 #endif
     return result;
 }

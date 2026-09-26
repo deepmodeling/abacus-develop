@@ -1,7 +1,6 @@
 #ifndef SCCS_PCC_COULOMB_H
 #define SCCS_PCC_COULOMB_H
 
-#include "../sccs/sccs_charge.h"
 #include "sccs_pcc.h"
 #include "../sccs/sccs_poisson.h"
 #include "../sccs/sccs_pw_coulomb.h"
@@ -13,6 +12,8 @@ class PW_Basis;
 
 namespace ModuleSccs
 {
+
+class ChargeReduction;
 
 MultipoleMoments reduced_pcc_density_moments(
     const std::vector<double>& density,
