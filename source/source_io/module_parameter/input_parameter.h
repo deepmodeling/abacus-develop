@@ -3,6 +3,7 @@
 #include "md_parameter.h"
 #include "source_base/vector3.h"
 
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -470,7 +471,6 @@ struct Input_para
     bool out_hr_npz = false;                  ///< output H(R) matrix in npz format
     bool out_hsr_npz = false;                 ///< output H(R) and S(R) matrices in npz format
     bool out_dm_npz = false;                  ///< output DM(R) matrix in npz format
-    int out_interval = 1;
     bool out_app_flag = true;                ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
                                              ///< in an append manner during MD liuyu 2023-03-20
     int out_ndigits = 8;                     ///< Assuming 8 digits precision is needed for matrices output

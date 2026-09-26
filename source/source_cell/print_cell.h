@@ -8,6 +8,7 @@
 #include "atom_spec.h"
 #include "source_cell/strumeta.h"
 #include "source_cell/unitcell.h"
+#include "source_base/matrix.h"
 
 class MDCell;
 
@@ -45,6 +46,7 @@ namespace unitcell
      * @param orb true for printing NUMERICAL_ORBITAL section [in]
      * @param dpks_desc true for printing NUMERICAL_DESCRIPTOR section [in]
      * @param iproc GlobalV::MY_RANK [in]
+     * @param force atomic forces in Ry/Bohr, empty matrix means no force output [in]
      */
     void print_stru_file(const UnitCell& ucell,
                          const Atom*     atoms,
@@ -57,7 +59,8 @@ namespace unitcell
                          const bool& magmom = false,
                          const bool& orb = false,
                          const bool& dpks_desc = false,
-                         const int& iproc = 0);
+                         const int& iproc = 0,
+                         const ModuleBase::matrix& force = ModuleBase::matrix());
 
     /**
      * @brief Print basic unitcell information to output stream.

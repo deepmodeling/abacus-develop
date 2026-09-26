@@ -174,7 +174,12 @@ AddTest(
   TARGET MODULE_CELL_unitcell_test
   LIBS base device cell_info symmetry
   SOURCES unitcell_test.cpp ../cal_ux.cpp
+)
 
+AddTest(
+  TARGET MODULE_CELL_print_cell_test
+  LIBS base device cell_info symmetry
+  SOURCES test_print_cell.cpp
 )
 
 AddTest(
