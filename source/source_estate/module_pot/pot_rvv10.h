@@ -9,7 +9,11 @@ namespace elecstate
 class PotRvv10 final : public PotBase
 {
   public:
-    PotRvv10(const ModulePW::PW_Basis* density_basis, double* etxc, double* vtxc);
+    PotRvv10(const ModulePW::PW_Basis* density_basis,
+             double* etxc,
+             double* vtxc,
+             double b = Rvv10::rvv10_b_default,
+             double c = Rvv10::rvv10_c_default);
     void cal_v_eff(const Charge* chg, const UnitCell* cell, ModuleBase::matrix& v_eff) override;
 
   private:

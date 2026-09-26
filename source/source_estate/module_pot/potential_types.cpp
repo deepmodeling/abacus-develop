@@ -41,7 +41,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     {
         if (this->rho_basis_ != this->rho_basis_smooth_)
             ModuleBase::WARNING_QUIT("Potential", "rVV10 currently supports norm-conserving pseudopotentials only");
-        return new PotRvv10(this->rho_basis_, this->etxc_, this->vtxc_);
+        return new PotRvv10(this->rho_basis_, this->etxc_, this->vtxc_, PARAM.inp.rvv10_b, PARAM.inp.rvv10_c);
     }
     else if (pot_type == "surchem")
     {

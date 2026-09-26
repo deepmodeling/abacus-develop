@@ -86,6 +86,8 @@ struct Input_para
     double nupdown = 0.0;
     std::string dft_functional = "default"; ///< input DFT functional.
     std::string xc_nonlocal = "none";      ///< nonlocal XC correction (none; rvv10)
+    double rvv10_b = 6.3;                   ///< rVV10 damping parameter b
+    double rvv10_c = 0.0093;                ///< rVV10 parameter C
     double xc_temperature = 0.0;            ///< only relevant if finite temperature functional is used
     double pseudo_rcut = 15.0;              ///< cut-off radius for calculating msh
     bool pseudo_mesh = false;               ///< 0: use msh to normalize radial wave functions; 1:

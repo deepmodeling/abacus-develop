@@ -37,11 +37,13 @@ crash, sanitizer diagnostic or even one started SCF iteration is a failure;
 checking INPUT alone would not test this runtime condition. A sanitizer failure
 must not pass merely because it shares exit code 1 with an expected refusal.
 
-The `all` and `reject` modes also combine `xc_nonlocal=rvv10` with
-`GGA_XC_BEEF_VDW`, `GGA_XC_VV10` and `MGGA_X_SCAN+MGGA_C_SCAN_VV10` through
-actual initialization. Each must be rejected before SCF because those Libxc
-functionals already contain a nonlocal term and are not valid rVV10 base
-functionals. This protects against silently computing an unintended composite.
+The `all` and `reject` modes accept a parser-level PBE+rVV10 combination,
+then combine `xc_nonlocal=rvv10` with `GGA_XC_BEEF_VDW`, `GGA_XC_VV10` and
+`MGGA_X_SCAN+MGGA_C_SCAN_VV10` through actual initialization. Each of the
+latter must be rejected before SCF because those Libxc functionals already
+contain a nonlocal term. This protects against silently computing an
+unintended composite; a different semilocal base still needs its own validated
+`rvv10_b`/`rvv10_c` regression before being advertised.
 
 For an MPI-enabled CPU/Libxc build, CTest registers serial and two-rank rVV10
 SCFs, serial and two-rank zero-magnetization `nspin=2` SCFs, a two-rank

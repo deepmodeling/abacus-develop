@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 
 namespace ModuleIO
 {
@@ -352,7 +353,7 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.annotation = "none; rvv10";
         item.category = "Electronic structure";
         item.type = "String";
-        item.description = R"(Select an optional nonlocal exchange-correlation correction. `none` disables the correction. `rvv10` adds the rVV10 nonlocal correlation term to the semilocal functional selected by `dft_functional`. The current implementation requires LIBXC, an explicit `GGA_X_RPW86+GGA_C_PBE` base functional, a norm-conserving PW Kohn-Sham SCF calculation in CPU double precision, nspin=1 or nspin=2, and no forces, stress, gamma-only FFT, or pairwise vdW correction. MPI pool-distributed PW FFTs are supported.)";
+        item.description = R"(Select an optional nonlocal exchange-correlation correction. `none` disables the correction. `rvv10` adds the rVV10 nonlocal correlation term, with parameters set by `rvv10_b` and `rvv10_c`, to the semilocal functional selected by `dft_functional`. The current implementation requires LIBXC, an explicit semilocal functional without an embedded vdW/VV10 term, a norm-conserving PW Kohn-Sham SCF calculation in CPU double precision, nspin=1 or nspin=2, and no forces, stress, gamma-only FFT, or pairwise vdW correction. MPI pool-distributed PW FFTs are supported.)";
         item.default_value = "none";
         item.unit = "";
         read_sync_string(input.xc_nonlocal);
@@ -372,14 +373,24 @@ The other way is only available when compiling with LIBXC, and it allows for sup
 #ifndef __LIBXC
             ModuleBase::WARNING_QUIT("ReadInput", "xc_nonlocal=rvv10 requires a LIBXC-enabled build");
 #endif
+            if (!std::isfinite(para.input.rvv10_b) || para.input.rvv10_b <= 0.0 || !std::isfinite(para.input.rvv10_c)
+                || para.input.rvv10_c < 0.0)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput", "rvv10_b must be finite and positive, and rvv10_c must be finite and non-negative");
+            }
             std::string functional = para.input.dft_functional;
             std::transform(functional.begin(), functional.end(), functional.begin(), [](unsigned char c) {
                 return static_cast<char>(std::toupper(c));
             });
-            const auto& p = para.input;
-            if (functional != "GGA_X_RPW86+GGA_C_PBE")
+            if (functional.empty() || functional == "DEFAULT")
                 ModuleBase::WARNING_QUIT(
-                    "ReadInput", "xc_nonlocal=rvv10 currently requires dft_functional=GGA_X_RPW86+GGA_C_PBE");
+                    "ReadInput", "xc_nonlocal=rvv10 requires an explicit semilocal dft_functional");
+            if (functional.find("VV10") != std::string::npos || functional.find("VDW") != std::string::npos)
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "xc_nonlocal=rvv10 cannot be combined with a functional that already contains vdW or VV10");
+            const auto& p = para.input;
             if (p.calculation != "scf" || p.esolver_type != "ksdft" || p.basis_type != "pw" || p.device != "cpu"
                 || p.precision != "double" || (p.nspin != 1 && p.nspin != 2) || p.cal_force || p.cal_stress
                 || p.gamma_only || p.vdw_method != "none" || !p.vl_in_h)
@@ -387,6 +398,40 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                                          "xc_nonlocal=rvv10 supports CPU double PW nspin=1/2 SCF, with optional "
                                          "MPI pool distribution, without forces, stress, gamma_only or other vdW "
                                          "corrections");
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rvv10_b");
+        item.annotation = "positive real";
+        item.category = "Electronic structure";
+        item.type = "Real";
+        item.description
+            = "Damping parameter b of the rVV10 nonlocal correlation model. It is used only when xc_nonlocal=rvv10.";
+        item.default_value = "6.3";
+        item.unit = "dimensionless";
+        read_sync_double(input.rvv10_b);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.input.xc_nonlocal == "rvv10"
+                && (!std::isfinite(para.input.rvv10_b) || para.input.rvv10_b <= 0.0))
+                ModuleBase::WARNING_QUIT("ReadInput", "rvv10_b must be finite and positive");
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rvv10_c");
+        item.annotation = "non-negative real";
+        item.category = "Electronic structure";
+        item.type = "Real";
+        item.description
+            = "Parameter C of the rVV10 nonlocal correlation model. It is used only when xc_nonlocal=rvv10.";
+        item.default_value = "0.0093";
+        item.unit = "dimensionless";
+        read_sync_double(input.rvv10_c);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.input.xc_nonlocal == "rvv10"
+                && (!std::isfinite(para.input.rvv10_c) || para.input.rvv10_c < 0.0))
+                ModuleBase::WARNING_QUIT("ReadInput", "rvv10_c must be finite and non-negative");
         };
         this->add_item(item);
     }

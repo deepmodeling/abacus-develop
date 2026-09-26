@@ -7,8 +7,8 @@
 
 namespace elecstate
 {
-PotRvv10::PotRvv10(const ModulePW::PW_Basis* density_basis, double* etxc, double* vtxc)
-    : etxc_(etxc), vtxc_(vtxc), evaluator_(Rvv10::rvv10_b_default, Rvv10::rvv10_c_default)
+PotRvv10::PotRvv10(const ModulePW::PW_Basis* density_basis, double* etxc, double* vtxc, double b, double c)
+    : etxc_(etxc), vtxc_(vtxc), evaluator_(b, c)
 {
     rho_basis_ = density_basis;
     dynamic_mode = true;

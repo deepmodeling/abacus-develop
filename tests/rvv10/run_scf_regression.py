@@ -167,6 +167,17 @@ def run(args, root, summary):
             summary["checks"].append({"case": "reject-" + name, "passed": True})
             print("PASS unsupported INPUT rejected: " + name, flush=True)
 
+        # The nonlocal component is not coupled to the RPW86+PBE parser path.
+        # This is an INPUT-level check only; a production parameter set still
+        # needs its own numerical regression before being advertised.
+        case = prepare_case(root, "accept-pbe-rvv10", "he", pseudo_dir,
+                            {"dft_functional": "PBE", "xc_nonlocal": "rvv10",
+                             "rvv10_b": "6.3", "rvv10_c": "0.0093"})
+        code, text = execute(command, case, ["--check-input"], "check.log", env, 30)
+        check_input_result(text, code)
+        summary["checks"].append({"case": "accept-pbe-rvv10", "passed": True})
+        print("PASS independent PBE+rVV10 INPUT", flush=True)
+
         # A Libxc functional that already contains a nonlocal term must not be
         # combined with the independent rVV10 component.
         for functional in ("GGA_XC_BEEF_VDW", "GGA_XC_VV10", "MGGA_X_SCAN+MGGA_C_SCAN_VV10"):
@@ -176,7 +187,7 @@ def run(args, root, summary):
             code, text = execute(command, case, [], "run.log", env, args.timeout)
             for log in (case / "OUT.rvv10_regression").glob("*.log"):
                 text += "\n" + log.read_text(errors="replace")
-            check_rejected_run(text, code, "xc_nonlocal=rvv10 currently requires dft_functional=GGA_X_RPW86+GGA_C_PBE")
+            check_rejected_run(text, code, "xc_nonlocal=rvv10 cannot be combined with a functional that already contains vdW or VV10")
             summary["checks"].append({"case": name, "passed": True})
             print("PASS unsupported nonlocal functional rejected: " + functional, flush=True)
 

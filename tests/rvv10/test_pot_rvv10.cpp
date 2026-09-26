@@ -132,6 +132,28 @@ TEST_F(Rvv10Potential, NonlocalComponentOnlyAddsToExistingResults)
         EXPECT_NEAR(potential(0, i), 0.37 + nonlocal.potential[i], 1.e-12);
 }
 
+TEST_F(Rvv10Potential, ExplicitParametersReachTheNonlocalComponent)
+{
+    std::vector<double> valence(charge.rho[0], charge.rho[0] + pw.nrxx);
+    std::vector<double> total = valence;
+    for (int i = 0; i < pw.nrxx; ++i)
+        total[i] += charge.rho_core[i];
+
+    constexpr double b = 8.0;
+    constexpr double c = 0.012;
+    const Rvv10::Evaluation expected = Rvv10::Evaluator(b, c).evaluate(pw, total, valence);
+    double energy = 0.0;
+    double vtxc = 0.0;
+    ModuleBase::matrix potential(1, pw.nrxx);
+    elecstate::PotRvv10 component(&pw, &energy, &vtxc, b, c);
+    component.cal_v_eff(&charge, &cell, potential);
+
+    EXPECT_NEAR(energy, expected.energy, 1.e-12);
+    EXPECT_NEAR(vtxc, expected.vtxc, 1.e-12);
+    for (int i = 0; i < pw.nrxx; ++i)
+        EXPECT_NEAR(potential(0, i), expected.potential[i], 1.e-12);
+}
+
 TEST_F(Rvv10Potential, SpinPolarizedNonlocalPotentialIsSharedByBothChannels)
 {
     Charge spin_charge;
