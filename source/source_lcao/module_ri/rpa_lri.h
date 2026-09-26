@@ -64,7 +64,7 @@ template <typename T, typename Tdata> class RPA_LRI
     void cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbitals& orb, const K_Vectors& kv);
     void output_symmetry_sidecars(const UnitCell& ucell,
                                   const K_Vectors& kv,
-                                  const elecstate::DensityMatrix<T, Tdata>& dm);
+                                  const module_dm::DensityMatrix<T, Tdata>& dm);
     void inverse_olp(const UnitCell& ucell,
                      std::map<TA, std::map<TAq, RI::Tensor<std::complex<double>>>>& overlap_abfs_abfs,
                      const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s);

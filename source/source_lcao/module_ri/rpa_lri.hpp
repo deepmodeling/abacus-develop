@@ -1079,7 +1079,7 @@ RPA_LRI<T, Tdata>::~RPA_LRI() = default;
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
                                 const MPI_Comm& mpi_comm_in,
-                                const elecstate::DensityMatrix<T, Tdata>& dm,
+                                const module_dm::DensityMatrix<T, Tdata>& dm,
                                 const elecstate::ElecState* pelec,
                                 const K_Vectors& kv,
                                 const LCAO_Orbitals& orb,
@@ -1167,7 +1167,7 @@ void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in
 }
 
 template <typename T, typename Tdata>
-void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>& dm,
+void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>& dm,
                                         const MPI_Comm& mpi_comm_in,
                                         const UnitCell& ucell,
                                         const K_Vectors& kv,
@@ -1916,7 +1916,7 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::output_symmetry_sidecars(const UnitCell& ucell,
                                                  const K_Vectors& kv,
-                                                 const elecstate::DensityMatrix<T, Tdata>& dm)
+                                                 const module_dm::DensityMatrix<T, Tdata>& dm)
 {
     // LibRPA reconstructs symmetry rotations from the exported STRU data.
     // Do not emit the obsolete symrot_*.txt sidecar files (and never append
