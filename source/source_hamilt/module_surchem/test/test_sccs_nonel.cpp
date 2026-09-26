@@ -1,5 +1,5 @@
-#include "../sccs_cavity.h"
-#include "../sccs_nonel.h"
+#include "../sccs/sccs_cavity.h"
+#include "../sccs/sccs_nonel.h"
 
 #include "gtest/gtest.h"
 

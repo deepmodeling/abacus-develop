@@ -1,4 +1,4 @@
-#include "../sccs_charge.h"
+#include "../sccs/sccs_charge.h"
 
 #include <gtest/gtest.h>
 

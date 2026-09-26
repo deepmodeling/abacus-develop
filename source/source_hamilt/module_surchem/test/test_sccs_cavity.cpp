@@ -1,4 +1,4 @@
-#include "../sccs_cavity.h"
+#include "../sccs/sccs_cavity.h"
 
 #include "gtest/gtest.h"
 

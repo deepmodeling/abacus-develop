@@ -1,4 +1,4 @@
-#include "../sccs_poisson.h"
+#include "../sccs/sccs_poisson.h"
 
 #include "source_base/constants.h"
 

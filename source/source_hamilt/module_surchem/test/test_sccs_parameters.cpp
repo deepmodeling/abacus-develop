@@ -1,4 +1,4 @@
-#include "../sccs_parameters.h"
+#include "../sccs/sccs_parameters.h"
 
 #include "gtest/gtest.h"
 

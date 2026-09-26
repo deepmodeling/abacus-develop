@@ -3,7 +3,7 @@
 #include <mpi.h>
 #endif
 
-#include "../sccs_periodic.h"
+#include "../sccs/sccs_periodic.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"

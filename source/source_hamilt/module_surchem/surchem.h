@@ -6,7 +6,7 @@
 #include "source_base/matrix.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
-#include "sccs_driver.h"
+#include "sccs/sccs_driver.h"
 
 #include <iosfwd>
 

@@ -1,10 +1,10 @@
 #ifndef SCCS_PCC_2D_COULOMB_H
 #define SCCS_PCC_2D_COULOMB_H
 
-#include "sccs_charge.h"
+#include "../sccs/sccs_charge.h"
 #include "sccs_pcc_2d.h"
-#include "sccs_poisson.h"
-#include "sccs_pw_coulomb.h"
+#include "../sccs/sccs_poisson.h"
+#include "../sccs/sccs_pw_coulomb.h"
 
 namespace ModulePW
 {

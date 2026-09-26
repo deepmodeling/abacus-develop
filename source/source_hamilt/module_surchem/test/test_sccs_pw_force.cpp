@@ -3,8 +3,8 @@
 #include <mpi.h>
 #endif
 
-#include "../sccs_pw_charge.h"
-#include "../sccs_pw_force.h"
+#include "../sccs/sccs_pw_charge.h"
+#include "../sccs/sccs_pw_force.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"

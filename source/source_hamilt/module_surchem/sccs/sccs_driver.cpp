@@ -1,7 +1,7 @@
 #include "sccs_driver.h"
 
-#include "sccs_pcc_2d_coulomb.h"
-#include "sccs_pcc_coulomb.h"
+#include "../pcc/sccs_pcc_2d_coulomb.h"
+#include "../pcc/sccs_pcc_coulomb.h"
 #include "sccs_pw_coulomb.h"
 #include "sccs_pw_nonel.h"
 

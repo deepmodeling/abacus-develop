@@ -1,7 +1,7 @@
-#include "surchem.h"
+#include "../surchem.h"
 
-#include "sccs_pcc_2d_coulomb.h"
-#include "sccs_pcc_coulomb.h"
+#include "../pcc/sccs_pcc_2d_coulomb.h"
+#include "../pcc/sccs_pcc_coulomb.h"
 #include "sccs_pw_charge.h"
 #include "sccs_pw_reduction.h"
 

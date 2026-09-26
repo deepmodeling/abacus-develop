@@ -2,11 +2,11 @@
 #include "source_base/parallel_global.h"
 #endif
 
-#include "../sccs_pcc_2d_coulomb.h"
-#include "../sccs_functional.h"
-#include "../sccs_periodic.h"
-#include "../sccs_pw_charge.h"
-#include "../sccs_pw_reduction.h"
+#include "../pcc/sccs_pcc_2d_coulomb.h"
+#include "../sccs/sccs_functional.h"
+#include "../sccs/sccs_periodic.h"
+#include "../sccs/sccs_pw_charge.h"
+#include "../sccs/sccs_pw_reduction.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"

@@ -4,8 +4,8 @@
 #endif
 
 #include "../surchem.h"
-#include "../sccs_pcc_2d_coulomb.h"
-#include "../sccs_pw_charge.h"
+#include "../pcc/sccs_pcc_2d_coulomb.h"
+#include "../sccs/sccs_pw_charge.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"

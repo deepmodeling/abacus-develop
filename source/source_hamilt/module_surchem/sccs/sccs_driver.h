@@ -5,7 +5,7 @@
 #include "sccs_functional.h"
 #include "sccs_nonel.h"
 #include "sccs_parameters.h"
-#include "sccs_pcc_2d.h"
+#include "../pcc/sccs_pcc_2d.h"
 #include "sccs_periodic.h"
 
 #include <cstdint>

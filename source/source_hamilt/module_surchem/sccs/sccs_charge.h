@@ -1,7 +1,7 @@
 #ifndef SCCS_CHARGE_H
 #define SCCS_CHARGE_H
 
-#include "sccs_pcc.h"
+#include "../pcc/sccs_pcc.h"
 
 #include <vector>
 

@@ -1,7 +1,7 @@
 #include "surchem.h"
-#include "sccs_pcc_2d.h"
-#include "sccs_pw_charge.h"
-#include "sccs_pw_force.h"
+#include "pcc/sccs_pcc_2d.h"
+#include "sccs/sccs_pw_charge.h"
+#include "sccs/sccs_pw_force.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 
