@@ -364,7 +364,7 @@ void ReadInput::item_postprocess()
         item.description = "Input card for Wannier functions (e.g. none or a filename).";
         item.default_value = "none";
         item.unit = "";
-        item.availability = "";
+        item.set_availability("");
         read_sync_string(input.wannier_card);
         this->add_item(item);
     }
