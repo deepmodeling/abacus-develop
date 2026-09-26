@@ -49,7 +49,7 @@ In `INPUT` file we need to set the input parameter [device](../input_files/input
 - **multi-cards**: ABACUS allows for multi-GPU acceleration. If you have multiple GPU cards, you can run ABACUS with several MPI processes, and each process will utilize one GPU card. For example, the command `mpirun -n 2 abacus` will by default launch two GPUs for computation. If you only have one card, this command will only start one GPU. *note: the number of MPI processes SHOULD be equal to the number of GPU cards, unless you are using MPS in your computer.*
 
 ## Examples
-We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/gpu) of gpu calculations.
+We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/34_gpu) of gpu calculations.
 
 ## Known limitations
 PW basis:
