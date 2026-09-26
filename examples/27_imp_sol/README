@@ -58,13 +58,13 @@ Both plane wave (PW) and LCAO basis sets are supported for implicit solvation mo
 - **System**: Neutral water molecule in an x-z periodic slab cell
 - **Basis**: Plane wave (PW)
 - **Purpose**: Demonstrates native SCCS with the second lattice vector (+y) as the open direction
-- **Boundary conditions**: `sccs_boundary pcc_2d`, with Gamma-only sampling along y
+- **Boundary conditions**: `imp_sol 2` and `assume_isolated pcc_2d`, with Gamma-only sampling along y
 
 ### 3. 03_lcao_sccs_pcc2d_water
 - **System**: Neutral water molecule in the same x-z periodic slab cell
 - **Basis**: Numerical atomic orbitals (LCAO)
 - **Purpose**: Demonstrates that native SCCS 2D-PCC contributes to LCAO SCF, energy, potential, and ionic forces
-- **Boundary conditions**: `sccs_boundary pcc_2d`, with Gamma-only sampling along y
+- **Boundary conditions**: `imp_sol 2` and `assume_isolated pcc_2d`, with Gamma-only sampling along y
 
 ## How to Run
 

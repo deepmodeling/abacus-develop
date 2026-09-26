@@ -796,7 +796,7 @@ fi
 #--------------------------------------------
 # implicit solvation model
 #--------------------------------------------
-if ! test -z "$imp_sol" && [ $imp_sol == 1 ]; then
+if [[ "$imp_sol" == "1" || "$imp_sol" == "2" ]]; then
 	esol_el=`grep E_sol_el $running_path | awk '{print $3}'`
 	esol_cav=`grep E_sol_cav $running_path | awk '{print $3}'`
 	echo "esolelref $esol_el" >>$1
