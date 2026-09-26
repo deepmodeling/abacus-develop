@@ -117,12 +117,34 @@ void test_explicit_spin_rows()
     require(unitary_fields[0] == "0", "the first spin operation must be unitary");
     require(lines[2].rfind("1 ", 0) == 0, "the second spin operation must be antiunitary");
 }
+
+void test_production_symmetry_block()
+{
+    ModuleSymmetry::Symmetry symmetry;
+    symmetry.nrotk = 2;
+    symmetry.nrotk_anti = 1;
+    symmetry.magnetic_nspin4 = true;
+    symmetry.gmatrix[0] = ModuleBase::Matrix3();
+    symmetry.gmatrix[1] = ModuleBase::Matrix3(0.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+    symmetry.gtrans[1] = ModuleBase::Vector3<double>(0.5, 0.0, 0.0);
+    symmetry.gmatrix_anti[0] = ModuleBase::Matrix3(0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+    symmetry.gtrans_anti[0] = ModuleBase::Vector3<double>(0.125, 0.25, 0.375);
+
+    std::ostringstream output;
+    RpaLriDetail::write_librpa_symmetry_block(output, ModuleBase::Matrix3(), symmetry, 4);
+    const auto lines = split_lines(output.str());
+    require(lines.size() == 8, "production symmetry block must contain spatial and spin rows");
+    require(lines[0] == "3 row", "production block must export all spatial operations first");
+    require(lines[4] == "spin_symmetry 0 1", "production block must export magnetic metadata for nspin=4");
+    require(lines[7].rfind("1 ", 0) == 0, "production block must preserve the antiunitary flag");
+}
 } // namespace
 
 int main()
 {
     test_common_spatial_and_magnetic_rows();
     test_explicit_spin_rows();
+    test_production_symmetry_block();
     std::cout << "LibRPA stru_out symmetry tests passed\n";
     return 0;
 }

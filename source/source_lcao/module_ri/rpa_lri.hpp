@@ -3266,35 +3266,7 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
     if (ModuleSymmetry::Symmetry::symm_flag == 1 && ucell.symm.nrotk > 0)
     {
         const auto& symm = ucell.symm;
-        // Export the spatial parts of the symmetry operations in one common row block.
-        const int n_anti = symm.magnetic_nspin4 ? symm.nrotk_anti : 0;
-        std::vector<RpaLriDetail::LibRpaSymmetryOperation> unitary(symm.nrotk);
-        for (int isym = 0; isym < symm.nrotk; ++isym)
-        {
-            unitary[isym] = RpaLriDetail::make_librpa_symmetry_operation(symm.gmatrix[isym], symm.gtrans[isym]);
-        }
-        std::vector<RpaLriDetail::LibRpaSymmetryOperation> antiunitary(n_anti);
-        for (int isym = 0; isym < n_anti; ++isym)
-        {
-            antiunitary[isym]
-                = RpaLriDetail::make_librpa_symmetry_operation(symm.gmatrix_anti[isym], symm.gtrans_anti[isym]);
-        }
-        RpaLriDetail::write_librpa_symmetry_rows(ofs, unitary, antiunitary);
-
-        if (PARAM.inp.nspin == 4)
-        {
-            // LibRPA consumes the explicit spin-space table for SOC. The helper
-            // applies ABACUS's fractional row-vector to Cartesian conversion and
-            // constructs the SU(2) part in the same order as the spatial rows.
-            const std::vector<ModuleBase::Matrix3> unitary_rotations(symm.gmatrix,
-                                                                      symm.gmatrix + symm.nrotk);
-            const std::vector<ModuleBase::Matrix3> antiunitary_rotations(symm.gmatrix_anti,
-                                                                          symm.gmatrix_anti + n_anti);
-            const auto spin_operations = RpaLriDetail::make_librpa_spin_symmetry_operations(
-                ucell.latvec, unitary_rotations, antiunitary_rotations);
-            const int grey_group = symm.magnetic_nspin4 ? 0 : 1;
-            RpaLriDetail::write_librpa_spin_symmetry(ofs, grey_group, 1, spin_operations);
-        }
+        RpaLriDetail::write_librpa_symmetry_block(ofs, ucell.latvec, symm, PARAM.inp.nspin);
     }
     ofs.close();
     return;

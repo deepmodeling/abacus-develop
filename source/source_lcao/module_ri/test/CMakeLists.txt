@@ -47,6 +47,7 @@ add_test(
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 add_executable(MODULE_RI_librpa_stru_symmetry_test librpa_stru_symmetry_test.cpp)
+target_link_libraries(MODULE_RI_librpa_stru_symmetry_test PRIVATE base symmetry device ${math_libs})
 install(TARGETS MODULE_RI_librpa_stru_symmetry_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
 add_test(
   NAME MODULE_RI_librpa_stru_symmetry_test

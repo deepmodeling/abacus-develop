@@ -3,6 +3,7 @@
 
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
+#include "source_cell/module_symmetry/symmetry.h"
 #include "source_cell/module_symmetry/symm_rot_spin.h"
 
 #include <array>
@@ -133,6 +134,47 @@ inline void write_librpa_spin_symmetry(std::ostream& output,
             }
         }
         output << std::endl;
+    }
+}
+
+// Serialize the complete symmetry block used by RPA_LRI::out_struc. Keeping the
+// production assembly here makes the SOC/magnetic ordering testable without
+// constructing the full RPA driver or running an electronic-structure job.
+inline void write_librpa_symmetry_block(std::ostream& output,
+                                        const ModuleBase::Matrix3& latvec,
+                                        const ModuleSymmetry::Symmetry& symmetry,
+                                        const int nspin)
+{
+    if (symmetry.nrotk <= 0)
+    {
+        return;
+    }
+
+    const int n_anti = symmetry.magnetic_nspin4 ? symmetry.nrotk_anti : 0;
+    std::vector<LibRpaSymmetryOperation> unitary(static_cast<std::size_t>(symmetry.nrotk));
+    for (int isym = 0; isym < symmetry.nrotk; ++isym)
+    {
+        unitary[static_cast<std::size_t>(isym)]
+            = make_librpa_symmetry_operation(symmetry.gmatrix[isym], symmetry.gtrans[isym]);
+    }
+    std::vector<LibRpaSymmetryOperation> antiunitary(static_cast<std::size_t>(n_anti));
+    for (int isym = 0; isym < n_anti; ++isym)
+    {
+        antiunitary[static_cast<std::size_t>(isym)]
+            = make_librpa_symmetry_operation(symmetry.gmatrix_anti[isym], symmetry.gtrans_anti[isym]);
+    }
+    write_librpa_symmetry_rows(output, unitary, antiunitary);
+
+    if (nspin == 4)
+    {
+        const std::vector<ModuleBase::Matrix3> unitary_rotations(symmetry.gmatrix,
+                                                                  symmetry.gmatrix + symmetry.nrotk);
+        const std::vector<ModuleBase::Matrix3> antiunitary_rotations(symmetry.gmatrix_anti,
+                                                                      symmetry.gmatrix_anti + n_anti);
+        const auto spin_operations
+            = make_librpa_spin_symmetry_operations(latvec, unitary_rotations, antiunitary_rotations);
+        const int grey_group = symmetry.magnetic_nspin4 ? 0 : 1;
+        write_librpa_spin_symmetry(output, grey_group, 1, spin_operations);
     }
 }
 } // namespace RpaLriDetail
