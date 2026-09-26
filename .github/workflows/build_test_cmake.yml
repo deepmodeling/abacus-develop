@@ -70,8 +70,18 @@ jobs:
 
       - name: Build
         run: |
+          set -o pipefail
           git config --global --add safe.directory `pwd`
           source toolchain/install/setup
           rm -rf build
           cmake -B build -G Ninja ${{ matrix.build_args }}
-          cmake --build build -j $(nproc)
+          cmake --build build -j $(nproc) 2>&1 | tee build.log
+
+      - name: Report build diagnostics
+        if: failure()
+        run: |
+          if [[ -f build.log ]]; then
+            message=$(grep -Ein -B 8 -A 8 'error:|fatal error:|undefined reference|FAILED|No rule to make' build.log || true)
+            message=$(printf '%s\n' "$message" | tail -n 120 | tr '\n' ' ' | cut -c1-5000)
+            echo "::error file=build.log,line=1,title=ABACUS build diagnostics::$message"
+          fi
