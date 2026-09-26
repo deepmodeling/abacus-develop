@@ -52,8 +52,7 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
                     const K_Vectors* p_kv,
                     const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in,
                     const UnitCell& ucell,
-                    const double hybrid_alpha,
-                    const CoulombParam& coulomb_param); // exx stress in PW basis
+                    const General_Exx_Info& exx_info); // exx stress in PW basis
 
     const elecstate::ElecState* pelec = nullptr;
 };

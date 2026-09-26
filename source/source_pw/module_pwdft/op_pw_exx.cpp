@@ -1,7 +1,6 @@
 #include "op_pw_exx.h"
 
 #include "source_base/constants.h"
-#include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_device.h"
 #include "source_base/parallel_comm.h" // use KP_WORLD
@@ -11,13 +10,13 @@
 #include "source_base/tool_quit.h"
 #include "source_cell/klist.h"
 #include "source_hamilt/operator.h"
+#include "source_hamilt/module_xc/general_exx_info.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_pwdft/kernels/cal_density_real_op.h"
 #include "source_pw/module_pwdft/kernels/exx_batch_op.h"
 #include "source_pw/module_pwdft/kernels/exx_cal_energy_op.h"
 #include "source_pw/module_pwdft/kernels/mul_potential_op.h"
 #include "source_pw/module_pwdft/kernels/vec_mul_cx_op.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <algorithm>
 #include <cmath>
@@ -39,19 +38,22 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
                                         const ModulePW::PW_Basis* rhopw_in,
                                         K_Vectors *kv_in,
                                         const UnitCell *ucell,
-                                        const bool separate_loop_in,
-                                        const Real hybrid_alpha_in,
-                                        const CoulombParam& coulomb_param_in)
+                                        const General_Exx_Info& exx_info,
+                                        const int nspin_in,
+                                        const int kpar_in,
+                                        const int my_rank_in,
+                                        const int my_pool_in)
     : isk(isk_in), wfcpw(wfcpw_in), rhopw(rhopw_in), kv(kv_in), ucell(ucell),
-      separate_loop(separate_loop_in), hybrid_alpha(hybrid_alpha_in),
-      coulomb_param(coulomb_param_in)
+      separate_loop(exx_info.separate_loop), hybrid_alpha(exx_info.hybrid_alpha),
+      coulomb_param(exx_info.coulomb_param), nspin_(nspin_in), ecut_exx_(exx_info.ecut_exx),
+      ecutexx_user_set_(exx_info.ecutexx_user_set), exx_batch_size_(exx_info.exx_batch_size),
+      exxace_(exx_info.exxace), my_rank_(my_rank_in), my_pool_(my_pool_in)
 {
-    if (GlobalV::KPAR != 1 && PARAM.inp.exxace == false)
+    if (kpar_in != 1 && !exxace_)
     {
-        // GlobalV::ofs_running << "EXX Calculation does not support k-point parallelism" << std::endl;
         ModuleBase::WARNING_QUIT("OperatorEXXPW", "EXX Calculation does not support k-point parallelism when exxace is set to false");
     }
-    gamma_extrapolation = PARAM.inp.exx_gamma_extrapolation;
+    gamma_extrapolation = exx_info.gamma_extrapolation;
     bool is_mp = kv_in->get_is_mp();
 #ifdef __MPI
     Parallel_Common::bcast_bool(is_mp);
@@ -79,28 +81,22 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     // resmem_complex_op()(this->ctx, psi_all_real, wfcpw->nrxx * GlobalV::NBANDS);
 
     int nks = wfcpw->nks;
-    int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+    int nk_fac = nspin_ == 2 ? 2 : 1;
     resmem_real_op()(pot, rhopw->npw);
 
     tpiba = ucell->tpiba;
     Real tpiba2 = tpiba * tpiba;
 
-    // initialize rhopw_dev
-    double ecut_exx = PARAM.inp.ecutexx;
-    if (ecut_exx == 0.0)
-    {
-        ecut_exx = PARAM.inp.ecutrho;
-    }
-
+    // initialize rhopw_dev on the resolved EXX cutoff
     rhopw_dev = new ModulePW::PW_Basis(wfcpw->get_device(), rhopw->get_precision());
     rhopw_dev->fft_bundle.setfft(wfcpw->get_device(), rhopw->get_precision());
 #ifdef __MPI
     rhopw_dev->initmpi(rhopw->poolnproc, rhopw->poolrank, rhopw->pool_world);
 #endif
     // here we can actually use different ecut to init the grids
-    rhopw_dev->initgrids(rhopw->lat0, rhopw->latvec, ecut_exx);
+    rhopw_dev->initgrids(rhopw->lat0, rhopw->latvec, ecut_exx_);
     rhopw_dev->initgrids(rhopw->lat0, rhopw->latvec, rhopw->nx, rhopw->ny, rhopw->nz);
-    rhopw_dev->initparameters(rhopw->gamma_only, ecut_exx, rhopw->distribution_type, rhopw->xprime);
+    rhopw_dev->initparameters(rhopw->gamma_only, ecut_exx_, rhopw->distribution_type, rhopw->xprime);
     rhopw_dev->setuptransform();
     rhopw_dev->collect_local_pw();
 
@@ -219,7 +215,7 @@ void OperatorEXXPW<T, Device>::act(const int nbands,
         setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);
     }
 
-    if (PARAM.inp.exxace && this->separate_loop)
+    if (exxace_ && this->separate_loop)
     {
         act_op_ace(nbands, nbasis, npol, tmpsi_in, tmhpsi, ngk_ik, is_first_node);
     }
@@ -248,7 +244,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
     setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
 
     auto q_points = get_q_points(this->ik);
-    int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+    int nk_fac = nspin_ == 2 ? 2 : 1;
     int nk = wfcpw->nks / nk_fac;
     const Real nqs = q_points.size();
 
@@ -302,7 +298,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
     setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
     setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
     int nqs = kv->get_nkstot_nospin();
-    int nspin_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+    int nspin_fac = nspin_ == 2 ? 2 : 1;
     int ispin = this->ik < (wfcpw->nks / nspin_fac) ? 0 : 1;
 
     maybe_setup_exx_grid();
@@ -329,7 +325,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
         // pool that owns it in a single broadcast
         const int nb = psi.get_nbands();
         std::vector<double> occ_q(nb + 1);
-        if (iq_pool == GlobalV::MY_POOL)
+        if (iq_pool == my_pool_)
         {
             for (int m = 0; m < nb; m++)
             {
@@ -349,7 +345,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
             if (wg_mqb < 1e-12)
                 continue;
 
-            if (iq_pool == GlobalV::MY_POOL)
+            if (iq_pool == my_pool_)
             {
                 wfc_to_real_exx(get_pw(m_iband, iq_loc_spin), iq_loc, nbasis);
             }
@@ -416,9 +412,9 @@ bool OperatorEXXPW<T, Device>::exx_grid_active() const
 template <typename T, typename Device>
 int OperatorEXXPW<T, Device>::exx_band_chunk(const int nbands) const
 {
-    if (PARAM.inp.exx_batch_size > 0 && PARAM.inp.exx_batch_size < nbands)
+    if (exx_batch_size_ > 0 && exx_batch_size_ < nbands)
     {
-        return PARAM.inp.exx_batch_size;
+        return exx_batch_size_;
     }
     return nbands;
 }
@@ -574,8 +570,8 @@ void OperatorEXXPW<T, Device>::setup_exx_small_grid() const
     exx_sg_init = true;
     exx_sg_ok = false;
 
-    const bool user_set = PARAM.inp.ecutexx > 0.0;
-    double ecut_exx = user_set ? PARAM.inp.ecutexx : PARAM.inp.ecutrho;
+    const bool user_set = ecutexx_user_set_;
+    const double ecut_exx = ecut_exx_;
 
     // FFT box dims for ecut_exx, obtained the same way as rhopw_dev
     ModulePW::PW_Basis gridt(wfcpw->get_device(), rhopw->get_precision());
@@ -586,7 +582,7 @@ void OperatorEXXPW<T, Device>::setup_exx_small_grid() const
     gridt.initgrids(rhopw->lat0, rhopw->latvec, ecut_exx);
     if (gridt.nx == wfcpw->nx && gridt.ny == wfcpw->ny && gridt.nz == wfcpw->nz)
     {
-        if (user_set && GlobalV::MY_RANK == 0)
+        if (user_set && my_rank_ == 0)
         {
             ModuleBase::WARNING("OperatorEXXPW",
                                 "ecutexx gives no smaller FFT grid than ecutrho; EXX stays on the full grid");
@@ -595,7 +591,7 @@ void OperatorEXXPW<T, Device>::setup_exx_small_grid() const
     }
     if (rhopw->poolnproc != 1)
     {
-        if (user_set && GlobalV::MY_RANK == 0)
+        if (user_set && my_rank_ == 0)
         {
             ModuleBase::WARNING("OperatorEXXPW",
                                 "ecutexx is set but the FFT box is distributed over the plane-wave pool; "
@@ -614,7 +610,7 @@ void OperatorEXXPW<T, Device>::setup_exx_small_grid() const
         {
             if (wfcpw->gk2[ik * wfcpw->npwk_max + ig] * tpiba2 > ecut_exx)
             {
-                if (user_set && GlobalV::MY_RANK == 0)
+                if (user_set && my_rank_ == 0)
                 {
                     ModuleBase::WARNING("OperatorEXXPW",
                                         "ecutexx is smaller than the wavefunction cutoff |k+G|^2 of some "
@@ -712,7 +708,7 @@ void OperatorEXXPW<T, Device>::setup_exx_small_grid() const
     syncmem_int_h2d_op()(sg_map_wfc, host_map.data(), n_tot);
 
     exx_sg_ok = true;
-    if (GlobalV::MY_RANK == 0)
+    if (my_rank_ == 0)
     {
         std::cout << " EXX small grid enabled: FFT (" << sg_nx << "," << sg_ny << "," << sg_nz << ") instead of ("
                   << wfcpw->nx << "," << wfcpw->ny << "," << wfcpw->nz << ") for ecut_exx = " << ecut_exx << " Ry"
@@ -866,11 +862,11 @@ std::vector<int> OperatorEXXPW<T, Device>::get_q_points(const int ik) const
     {
         for (int iq = 0; iq < wfcpw->nks; iq++)
         {
-            if (PARAM.inp.nspin ==1 )
+            if (nspin_ ==1 )
             {
                 q_points_ik.push_back(iq);
             }
-            else if (PARAM.inp.nspin == 2)
+            else if (nspin_ == 2)
             {
                 int nk_fac = 2;
                 int nk = wfcpw->nks / nk_fac;
@@ -903,7 +899,7 @@ void OperatorEXXPW<T, Device>::multiply_potential(T *density_recip, int ik, int 
     ModuleBase::timer::start("OperatorEXXPW", "multiply_potential");
     int npw = rhopw_dev->npw;
     int nks = wfcpw->nks;
-    int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+    int nk_fac = nspin_ == 2 ? 2 : 1;
     int nk = nks / nk_fac;
 
     mul_potential_op<T, Device>()(pot, density_recip, npw, nks, ik, iq);
@@ -932,6 +928,13 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op
     this->psi = op->psi;
     this->ctx = op->ctx;
     this->cpu_ctx = op->cpu_ctx;
+    this->nspin_ = op->nspin_;
+    this->ecut_exx_ = op->ecut_exx_;
+    this->ecutexx_user_set_ = op->ecutexx_user_set_;
+    this->exx_batch_size_ = op->exx_batch_size_;
+    this->exxace_ = op->exxace_;
+    this->my_rank_ = op->my_rank_;
+    this->my_pool_ = op->my_pool_;
     resmem_complex_op()(this->ctx, psi_nk_real, wfcpw->nrxx);
     resmem_complex_op()(this->ctx, psi_mq_real, wfcpw->nrxx);
     resmem_complex_op()(this->ctx, density_real, rhopw_dev->nrxx);
@@ -946,7 +949,7 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op
 template <typename T, typename Device>
 double OperatorEXXPW<T, Device>::cal_exx_energy(psi::Psi<T, Device> *psi_) const
 {
-    if (PARAM.inp.exxace && this->separate_loop)
+    if (exxace_ && this->separate_loop)
     {
         return cal_exx_energy_ace(psi_);
     }
@@ -971,7 +974,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
     setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
 
     if (wg == nullptr) return 0.0;
-    const int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+    const int nk_fac = nspin_ == 2 ? 2 : 1;
     const int nb = psi.get_nbands();
     const int nbasis = psi_.get_nbasis();
     const int npw = rhopw_dev->npw;
@@ -990,14 +993,14 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
 
         // q points of the same spin channel as ik
         std::vector<int> q_points_ik;
-        if (PARAM.inp.nspin == 1)
+        if (nspin_ == 1)
         {
             for (int iq = 0; iq < wfcpw->nks; iq++)
             {
                 q_points_ik.push_back(iq);
             }
         }
-        else if (PARAM.inp.nspin == 2)
+        else if (nspin_ == 2)
         {
             const int nk = wfcpw->nks / nk_fac;
             const int k_spin = ik / nk;

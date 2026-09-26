@@ -16,6 +16,9 @@
 #include <utility>
 #include <vector>
 
+/// General_Exx_Info forward declaration, full definition in general_exx_info.h
+struct General_Exx_Info;
+
 namespace hamilt
 {
 
@@ -31,9 +34,11 @@ class OperatorEXXPW : public OperatorPW<T, Device>
                   const ModulePW::PW_Basis* rhopw_in,
                   K_Vectors* kv_in,
                   const UnitCell* ucell,
-                  const bool separate_loop_in,
-                  const Real hybrid_alpha_in,
-                  const CoulombParam& coulomb_param_in);
+                  const General_Exx_Info& exx_info,
+                  const int nspin_in,
+                  const int kpar_in,
+                  const int my_rank_in,
+                  const int my_pool_in);
 
     template <typename T_in, typename Device_in = Device>
     explicit OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op_exx);
@@ -70,7 +75,17 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     ModulePW::PW_Basis* rhopw_dev = nullptr; // for device
     const UnitCell *ucell = nullptr;
     Real tpiba = 0;
-    
+
+    // INPUT/runtime configuration snapshotted at construction, so the
+    // operator never touches the global parameter objects itself
+    int nspin_ = 1;
+    double ecut_exx_ = 0.0;         // resolved EXX cutoff (Ry)
+    bool ecutexx_user_set_ = false; // gates the small-grid fallback warnings
+    int exx_batch_size_ = 0;        // band chunk width, 0 = all bands
+    bool exxace_ = false;
+    int my_rank_ = 0;               // world rank, gates the one-time reports
+    int my_pool_ = 0;               // k-point pool of this rank
+
     std::vector<int> get_q_points(const int ik) const;
     const T *get_pw(const int m, const int iq) const;
 

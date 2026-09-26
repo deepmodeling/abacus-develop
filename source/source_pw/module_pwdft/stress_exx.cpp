@@ -2,6 +2,7 @@
 #include "op_pw_exx.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
+#include "source_hamilt/module_xc/general_exx_info.h"
 #include "stress_pw.h"
 
 template <typename FPTYPE, typename Device>
@@ -11,10 +12,9 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
                                            ModulePW::PW_Basis_K* wfcpw,
                                            const K_Vectors *p_kv,
                                            const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in, const UnitCell& ucell,
-                                           const double hybrid_alpha,
-                                           const CoulombParam& coulomb_param)
+                                           const General_Exx_Info& exx_info)
 {
-    bool gamma_extrapolation = PARAM.inp.exx_gamma_extrapolation;
+    bool gamma_extrapolation = exx_info.gamma_extrapolation;
     bool is_mp = p_kv->get_is_mp();
 #ifdef __MPI
     Parallel_Common::bcast_bool(is_mp);
@@ -45,11 +45,8 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
     // Consistent with OperatorEXXPW: the EXX pair density only carries the
     // ecut_exx G-sphere (rhopw_dev there), so truncate the stress sum to the
     // same sphere. gg is in lat0^-2 units and ggecut = ecut / tpiba2.
-    double ggecut_exx = PARAM.inp.ecutexx / tpiba2;
-    if (ggecut_exx <= 0.0)
-    {
-        ggecut_exx = PARAM.inp.ecutrho / tpiba2;
-    }
+    // exx_info.ecut_exx is already resolved: ecutexx when set, else ecutrho.
+    const double ggecut_exx = exx_info.ecut_exx / tpiba2;
 
     // allocate space
     T* psi_nk_real = nullptr;
@@ -84,8 +81,8 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
 
             for (int iq = 0; iq < nqs; iq++)
             {
-                hamilt::get_exx_potential<Real, Device>(p_kv, wfcpw, rhopw, pot, tpiba, gamma_extrapolation, omega, ik, iq, true, coulomb_param);
-                hamilt::get_exx_stress_potential<Real, Device>(p_kv, wfcpw, rhopw, pot_stress, tpiba, gamma_extrapolation, omega, ik, iq, coulomb_param);
+                hamilt::get_exx_potential<Real, Device>(p_kv, wfcpw, rhopw, pot, tpiba, gamma_extrapolation, omega, ik, iq, true, exx_info.coulomb_param);
+                hamilt::get_exx_stress_potential<Real, Device>(p_kv, wfcpw, rhopw, pot_stress, tpiba, gamma_extrapolation, omega, ik, iq, exx_info.coulomb_param);
                 for (int mband = 0; mband < d_psi_in->get_nbands(); mband++)
                 {
                     // psi_mq in real space
@@ -133,7 +130,7 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
 
                             }
 
-                            sigma(alpha, beta) -= hybrid_alpha
+                            sigma(alpha, beta) -= exx_info.hybrid_alpha
                                                   * 0.25 * sigma_ab_loc
                                                   * wg(ik, nband) * wg(iq, mband) / nqs / p_kv->wk[ik];
                         }
