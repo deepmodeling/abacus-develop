@@ -3,6 +3,8 @@
 
 #include "sccs_poisson.h"
 
+#include <complex>
+
 namespace ModulePW
 {
 class PW_Basis;
@@ -37,6 +39,13 @@ class PeriodicCoulombOperator : public CoulombOperator
   private:
     const ModulePW::PW_Basis& basis_;
     double tpiba_ = 0.0;
+
+    // Scratch only: every transform overwrites its inputs before use. Like
+    // the underlying PW_Basis FFT workspace, this operator is not reentrant.
+    // Sharing buffers between forward and adjoint applications bounds memory.
+    mutable std::vector<std::complex<double>> reciprocal_work_;
+    mutable std::vector<std::complex<double>> reciprocal_aux_;
+    mutable std::vector<double> real_work_;
 };
 
 } // namespace ModuleSccs

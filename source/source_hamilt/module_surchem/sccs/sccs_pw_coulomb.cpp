@@ -3,6 +3,7 @@
 #include "source_base/constants.h"
 #include "source_basis/module_pw/pw_basis.h"
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <stdexcept>
@@ -13,20 +14,26 @@ namespace ModuleSccs
 namespace
 {
 
-std::vector<double> adjoint_gradient_transform(
+void adjoint_gradient_transform(
     const std::vector<ModuleBase::Vector3<double>>& field,
     const ModulePW::PW_Basis& basis,
     const double tpiba,
-    const bool apply_coulomb)
+    const bool apply_coulomb,
+    std::vector<double>& component,
+    std::vector<std::complex<double>>& component_g,
+    std::vector<std::complex<double>>& sum)
 {
     if (field.size() != static_cast<std::size_t>(basis.nrxx)
         || !std::isfinite(tpiba) || tpiba <= 0.0)
     {
         throw std::invalid_argument("SCCS gradient adjoint requires a matching PW grid");
     }
-    std::vector<double> component(basis.nrxx);
-    std::vector<std::complex<double>> component_g(basis.npw);
-    std::vector<std::complex<double>> sum(basis.npw);
+    component.resize(basis.nrxx);
+    component_g.resize(basis.npw);
+    sum.resize(basis.npw);
+    // Unlike the transformed component, the divergence is accumulated.
+    const std::complex<double> zero;
+    std::fill(sum.begin(), sum.end(), zero);
     for (int direction = 0; direction < 3; ++direction)
     {
         for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -49,7 +56,6 @@ std::vector<double> adjoint_gradient_transform(
         }
     }
     basis.recip2real(sum.data(), component.data());
-    return component;
 }
 
 } // namespace
@@ -59,14 +65,19 @@ std::vector<double> periodic_negative_divergence(
     const ModulePW::PW_Basis& basis,
     const double tpiba)
 {
-    return adjoint_gradient_transform(field, basis, tpiba, false);
+    std::vector<double> result;
+    std::vector<std::complex<double>> component_g;
+    std::vector<std::complex<double>> sum;
+    adjoint_gradient_transform(field, basis, tpiba, false, result, component_g, sum);
+    return result;
 }
 
 void PeriodicCoulombOperator::apply_gradient_adjoint(
     const std::vector<ModuleBase::Vector3<double>>& field,
     std::vector<double>& result) const
 {
-    result = adjoint_gradient_transform(field, basis_, tpiba_, true);
+    adjoint_gradient_transform(field, basis_, tpiba_, true,
+                               result, reciprocal_aux_, reciprocal_work_);
 }
 
 std::vector<ModuleBase::Vector3<double>> periodic_gradient(
@@ -127,39 +138,39 @@ void PeriodicCoulombOperator::apply(const std::vector<double>& charge,
         throw std::invalid_argument("SCCS charge array does not match the local PW real-space grid");
     }
 
-    std::vector<std::complex<double>> charge_g(basis_.npw);
-    std::vector<std::complex<double>> potential_g(basis_.npw);
-    basis_.real2recip(charge.data(), charge_g.data());
+    reciprocal_work_.resize(basis_.npw);
+    reciprocal_aux_.resize(basis_.npw);
+    real_work_.resize(basis_.nrxx);
+    // Convert charge to potential in place; the original Fourier charge is
+    // not needed after multiplying by the Coulomb kernel.
+    basis_.real2recip(charge.data(), reciprocal_work_.data());
     const double tpiba2 = tpiba_ * tpiba_;
     for (int ig = 0; ig < basis_.npw; ++ig)
     {
         if (ig == basis_.ig_gge0 || basis_.gg[ig] == 0.0)
         {
-            potential_g[ig] = std::complex<double>();
+            reciprocal_work_[ig] = std::complex<double>();
         }
         else
         {
-            potential_g[ig] = ModuleBase::FOUR_PI * charge_g[ig] / (tpiba2 * basis_.gg[ig]);
+            reciprocal_work_[ig] = ModuleBase::FOUR_PI * reciprocal_work_[ig] / (tpiba2 * basis_.gg[ig]);
         }
     }
 
     field.potential.resize(basis_.nrxx);
-    field.gradient.assign(basis_.nrxx, ModuleBase::Vector3<double>());
-    basis_.recip2real(potential_g.data(), field.potential.data());
-
-    std::vector<std::complex<double>> gradient_g(basis_.npw);
-    std::vector<double> gradient_r(basis_.nrxx);
+    field.gradient.resize(basis_.nrxx);
+    basis_.recip2real(reciprocal_work_.data(), field.potential.data());
     for (int direction = 0; direction < 3; ++direction)
     {
         for (int ig = 0; ig < basis_.npw; ++ig)
         {
-            gradient_g[ig] = ModuleBase::IMAG_UNIT * tpiba_ * basis_.gcar[ig][direction]
-                             * potential_g[ig];
+            reciprocal_aux_[ig] = ModuleBase::IMAG_UNIT * tpiba_ * basis_.gcar[ig][direction]
+                                  * reciprocal_work_[ig];
         }
-        basis_.recip2real(gradient_g.data(), gradient_r.data());
+        basis_.recip2real(reciprocal_aux_.data(), real_work_.data());
         for (int ir = 0; ir < basis_.nrxx; ++ir)
         {
-            field.gradient[ir][direction] = gradient_r[ir];
+            field.gradient[ir][direction] = real_work_[ir];
         }
     }
 }
