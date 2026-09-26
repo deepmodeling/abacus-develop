@@ -4827,7 +4827,7 @@
 ### imp_sol
 
 - **Type**: Integer
-- **Description**: Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports scf and fixed-cell relax.
+- **Description**: Select 0 for no solvent, 1 for the original model, or 2 for SCCS. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1.
 - **Default**: 0
 
 ### eb_k
@@ -4859,21 +4859,21 @@
 
 - **Type**: String
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Allowed values: custom, vacuum, water-neutral, water-cation, water-anion (use these exact lowercase names). custom uses sccs_epsilon, sccs_rho_min, sccs_rho_max, sccs_gamma and sccs_pressure from INPUT. Other presets override those five values; their individual parameter descriptions list all effective values. The preset is not chosen automatically from the net charge. Solver controls, surface regularization, delayed start and debug settings remain user-controlled for every preset. Vacuum has no dielectric or non-electrostatic solvent contribution, but assume_isolated can still enable PCC.
+- **Description**: Allowed values: custom, vacuum, water-neutral, water-cation, water-anion (use these exact lowercase names). custom uses sccs_epsilon, sccs_rho_min, sccs_rho_max, sccs_gamma and sccs_pressure from INPUT. Presets other than "custom" will override those five values.
 - **Default**: custom
 
 ### sccs_epsilon
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS bulk relative permittivity (dimensionless, at least 1). For sccs_preset=custom, use this INPUT value (default 78.3). Effective value for vacuum: 1; water-neutral, water-cation and water-anion: 78.3. Non-custom presets override this INPUT value.
+- **Description**: SCCS bulk relative permittivity. Effective value for vacuum: 1; water-neutral, water-cation and water-anion: 78.3. Non-custom presets override this INPUT value. Non-custom presets override this INPUT value.
 - **Default**: 78.3
 
 ### sccs_rho_min
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS lower cavity-density threshold (positive). For sccs_preset=custom, use this INPUT value (default 1.0e-4 bohr^-3). Effective values: vacuum=1.0e-4, water-neutral=1.0e-4, water-cation=2.0e-4, water-anion=2.4e-3 bohr^-3. Non-custom presets override this INPUT value.
+- **Description**: SCCS lower cavity-density threshold. Effective values: vacuum=1.0e-4, water-neutral=1.0e-4, water-cation=2.0e-4, water-anion=2.4e-3 bohr^-3. Non-custom presets override this INPUT value.
 - **Default**: 1.0e-4
 - **Unit**: bohr^-3
 
@@ -4881,7 +4881,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS upper cavity-density threshold (greater than sccs_rho_min). For sccs_preset=custom, use this INPUT value (default 5.0e-3 bohr^-3). Effective values: vacuum=5.0e-3, water-neutral=5.0e-3, water-cation=3.5e-3, water-anion=1.55e-2 bohr^-3. Non-custom presets override this INPUT value.
+- **Description**: SCCS upper cavity-density threshold (greater than sccs_rho_min). Effective values: vacuum=5.0e-3, water-neutral=5.0e-3, water-cation=3.5e-3, water-anion=1.55e-2 bohr^-3. Non-custom presets override this INPUT value.
 - **Default**: 5.0e-3
 - **Unit**: bohr^-3
 
@@ -4889,7 +4889,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS effective surface coefficient. For sccs_preset=custom, use this INPUT value (default 0 dyn/cm). Effective values: vacuum=0, water-neutral=47.9, water-cation=5.0, water-anion=0 dyn/cm. Non-custom presets override this INPUT value.
+- **Description**: SCCS effective surface coefficient. Effective values: vacuum=0, water-neutral=47.9, water-cation=5.0, water-anion=0 dyn/cm. Non-custom presets override this INPUT value.
 - **Default**: 0.0
 - **Unit**: dyn/cm
 
@@ -4897,7 +4897,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS effective volume coefficient. For sccs_preset=custom, use this INPUT value (default 0 GPa). Effective values: vacuum=0, water-neutral=-0.36, water-cation=0.125, water-anion=0.45 GPa. Non-custom presets override this INPUT value.
+- **Description**: SCCS effective volume coefficient. Effective values: vacuum=0, water-neutral=-0.36, water-cation=0.125, water-anion=0.45 GPa. Non-custom presets override this INPUT value.
 - **Default**: 0.0
 - **Unit**: GPa
 
@@ -4950,7 +4950,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately. Once activated, SCCS remains active for all later electronic and ionic steps. PCC remains active during the delay. User-controlled for every sccs_preset, default 0.
+- **Description**: Delay SCCS on a cold start until DRHO is at or below this value. Once activated, SCCS remains active for all later electronic and ionic steps. PCC remains active during the delay. User-controlled for every sccs_preset, default 0. Recommended value: 0.01.
 - **Default**: 0.0
 
 ### sccs_start_nmax
@@ -4984,15 +4984,14 @@
 
 - **Type**: String
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Allowed INPUT values are exactly linear, pulay and anderson. linear: damped fixed-point iteration; pulay: Pulay DIIS; anderson: Anderson acceleration using differences of iterates and residuals. These select the inner SCCS polarization solver, independently of the outer SCF mixing_type. User-controlled for every sccs_preset, default linear. broyden and andersonb are not accepted values. Accelerated methods fall back to a linear step when insufficient or unusable history is available.
+- **Description**: Allowed INPUT values are exactly linear, pulay and anderson. linear: damped fixed-point iteration; pulay: Pulay DIIS; anderson: Anderson acceleration using differences of iterates and residuals. These select the inner SCCS polarization solver. Accelerated methods fall back to a linear step when insufficient or unusable history is available. Recommended value: pulay.
 - **Default**: linear
 
 ### sccs_mixing_ndim
 
 - **Type**: Integer
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Number of history vectors retained by sccs_mixing_type=pulay or anderson. Must be at least 2; user-controlled for every sccs_preset, default 8. Unused by linear mixing, but the value must still satisfy the input range.
-- **Default**: 8
+- **Description**: Number of history vectors retained by sccs_mixing_type=pulay or anderson.
 
 [back to top](#full-list-of-input-keywords)
 
