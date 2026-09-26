@@ -192,6 +192,34 @@ def run(args, root, summary):
         summary["checks"].append({"case": "reject-uspp", "passed": True})
         print("PASS actual USPP rejected before SCF", flush=True)
 
+    if args.mode in ("spin-scf", "mpi-spin-scf"):
+        # A zero-magnetization nspin=2 run should reproduce the nspin=1
+        # reference for the same unpolarized He system.  Running both cases
+        # in one invocation avoids freezing a second absolute reference and
+        # checks the production SCF adapter rather than only the component
+        # unit test.
+        energies = {}
+        for spin in (1, 2):
+            name = "he-rvv10-spin{}".format(spin)
+            case = prepare_case(root, name, "he", pseudo_dir,
+                                {"nspin": str(spin), "nupdown": "0.0"})
+            code, unused = execute(command, case, [], "run.log", env, args.timeout)
+            if code != 0:
+                raise ValueError(name + ": SCF exited with code " + str(code))
+            log = case / "OUT.rvv10_regression" / "running_scf.log"
+            actual = parse_energy(log.read_text(errors="replace"))
+            energies[spin] = actual
+            summary["checks"].append({"case": name, "energy_Ry": actual})
+            print("PASS {}: E = {:.13f} Ry".format(name, actual), flush=True)
+        delta = energies[2] - energies[1]
+        summary["checks"].append({"case": "nspin2-vs-nspin1", "delta_Ry": delta,
+                                  "tolerance_Ry": ENERGY_ATOL_RY})
+        if abs(delta) > ENERGY_ATOL_RY:
+            raise ValueError("nspin=2 and nspin=1 energies differ by {:.9g} Ry (limit {:.3g} Ry)".format(
+                delta, ENERGY_ATOL_RY))
+        print("PASS nspin2-vs-nspin1: delta = {:.3g} Ry".format(delta), flush=True)
+        return
+
     if args.mode in ("all", "scf", "mpi-scf", "mpi-pbe"):
         energies = {}
         if args.mode == "mpi-pbe":
@@ -235,7 +263,8 @@ def main():
     parser.add_argument("--artifacts-dir", help="Parent for a fresh, always-preserved result directory")
     parser.add_argument(
         "--mode",
-        choices=("all", "scf", "reject", "uspp", "no-libxc", "mpi-scf", "mpi-spin-reject", "mpi-pbe"),
+        choices=("all", "scf", "spin-scf", "reject", "uspp", "no-libxc", "mpi-scf",
+                 "mpi-spin-scf", "mpi-spin-reject", "mpi-pbe"),
         default="all",
     )
     parser.add_argument("--timeout", type=int, default=300, help="Maximum seconds per SCF (default: 300)")

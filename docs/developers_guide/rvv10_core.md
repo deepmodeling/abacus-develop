@@ -248,9 +248,10 @@ that unsupported Libxc nonlocal-functional names stop before SCF rather than
 silently receiving only a semilocal contribution. Inputs, logs and a
 JSON summary are preserved. See `tests/rvv10/README.md` for tolerances and launcher
 configuration. The workflow selects serial, no-Libxc and MPI-build tests. The
-MPI build compares a distributed rVV10 SCF with its serial reference and checks
-the controlled unsupported-mode diagnostics. Test counts and hosted CI results
-belong in the PR's fresh verification record.
+MPI build checks a distributed rVV10 SCF against the pinned reference and runs
+the zero-magnetization `nspin=2` path against the matching `nspin=1` run; it
+also checks the controlled unsupported-mode diagnostics. Test counts and
+hosted CI results belong in the PR's fresh verification record.
 
 External comparisons performed on 2026-09-13 used the unchanged QE numerical
 source identified below. On identical synthetic densities and on three

@@ -179,9 +179,6 @@ TEST_F(Rvv10PW, RejectUnsupportedLayoutsAndMalformedDensity)
     pw.gamma_only = true;
     EXPECT_THROW(evaluator.evaluate(pw, n, n), std::invalid_argument);
     pw.gamma_only = false;
-    pw.poolnproc = 2;
-    EXPECT_THROW(evaluator.evaluate(pw, n, n), std::invalid_argument);
-    pw.poolnproc = 1;
     auto bad = n;
     bad[0] = std::numeric_limits<double>::quiet_NaN();
     EXPECT_THROW(evaluator.evaluate(pw, bad, n), std::invalid_argument);

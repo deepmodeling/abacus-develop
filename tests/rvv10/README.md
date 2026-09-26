@@ -44,15 +44,18 @@ functionals already contain a nonlocal term and are not valid rVV10 base
 functionals. This protects against silently computing an unintended composite.
 
 For an MPI-enabled CPU/Libxc build, CTest registers serial and two-rank rVV10
-SCFs, a two-rank noncollinear-spin refusal, and a two-rank He PBE control. It uses CMake's
+SCFs, serial and two-rank zero-magnetization `nspin=2` SCFs, a two-rank
+noncollinear-spin refusal, and a two-rank He PBE control. It uses CMake's
 `MPIEXEC_EXECUTABLE`, `MPIEXEC_NUMPROC_FLAG`, `MPIEXEC_PREFLAGS` and
 `MPIEXEC_POSTFLAGS`; configure launcher options for the test host if needed.
 CTest reserves two processors for the two-rank cases. The driver also accepts
 `--launch` followed by the complete launcher command as its last option. The
 command must include the resolved absolute `--executable` path so that the
 recorded binary hash identifies the program being tested. No shell
-interpretation is used. MPI build compatibility
-checks the distributed rVV10 energy against the serial reference.
+interpretation is used. The two-rank rVV10 SCF uses the same converged
+reference as the serial case; the dedicated spin modes additionally compare
+`nspin=2` with `nspin=1` in the same launcher configuration. These checks
+exercise the production SCF adapter, not only the component unit test.
 
 The He and Si fixtures use 40/160 Ry cutoffs and 45-cubed/30-cubed grids. The
 Si pseudopotential contains NLCC; pseudopotential hashes are checked before
