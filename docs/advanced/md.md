@@ -30,7 +30,7 @@ Furthermore, ABACUS also provides a [list of keywords](./input_files/input-main.
 
 The MD output information will be written into the file `MD_dump`， in which the atomic forces, atomic velocities, and lattice virial are controlled by keyword [dump_force](./input_files/input-main.md#dump_force), [dump_vel](./input_files/input-main.md#dump_vel), and [dump_virial](./input_files/input-main.md#dump_virial), respectively.
 
-[Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/md/lcao_gammaonly_Si8) of MD simulations are also provided.
+[Examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/18_md/01_LCAO_NVE_Si8) of MD simulations are also provided.
 There are eight INPUT files corresponding to eight different MD evolution methods in the directory.
 For examlpe, `INPUT_0` shows how to employ the NVE simulation.
 

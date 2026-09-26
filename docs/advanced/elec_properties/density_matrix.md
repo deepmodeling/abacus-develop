@@ -45,7 +45,7 @@ The following lines are about the elements and coordinates, in order: all elemen
 After a blank line, the output is the values of NSPIN and fermi energy.\
 The following line is dimension of the density matrix, and the rest lines are the value of each matrix element.
 
-The examples can be found in [examples/density_matrix](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/density_matrix)
+The examples can be found in [examples/density_matrix](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/09_density_matrix)
 
 - Note: Version difference summary:
     - develop: `out_dmk` supports both gamma-only and multi-k-point output.

@@ -1,6 +1,6 @@
 # Extracting Band Structure
 
-In ABACUS, in order to obtain the eigenvalues of Hamiltonian, or generally called band structure, examples can be found in [examples/band](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/band).
+In ABACUS, in order to obtain the eigenvalues of Hamiltonian, or generally called band structure, examples can be found in [examples/band](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/12_band).
 Similar to the [DOS case](https://abacus-rtd.readthedocs.io/en/latest/advanced/elec_properties/dos.html), one first needs to perform a ground-state energy calculation ***with one additional keyword "[out_chg](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-chg)" in the INPUT file***:
 
 ```
