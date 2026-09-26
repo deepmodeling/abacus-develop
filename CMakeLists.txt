@@ -46,11 +46,8 @@ option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
-option(USE_ELPA "Enable ELPA for LCAO" ON)
-option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF)
-option(ENABLE_LIBCOMM "Enable LibComm" OFF)
+option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 option(ENABLE_GREENX_MINIMAX "Enable bundled GreenX minimax grids for Sternheimer response" ON)
-option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
 option(DEBUG_INFO "Print message to debug" OFF)
