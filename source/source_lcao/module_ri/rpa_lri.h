@@ -95,6 +95,7 @@ template <typename T, typename Tdata> class RPA_LRI
     MPI_Comm mpi_comm;
     std::vector<double> orb_cutoff_;
     double ccp_rmesh_times_ewald = 0.0;
+    double ccp_rmesh_times_cut = 0.0;
 
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;

@@ -12,9 +12,6 @@
 #include <omp.h>
 #endif
 
-#ifdef __MKL
-#include <mkl_service.h>
-#endif
 namespace BSE
 {
 
