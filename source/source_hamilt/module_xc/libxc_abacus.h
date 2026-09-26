@@ -129,6 +129,18 @@ namespace XC_Functional_Libxc
         const std::vector<double> &rho,
         const std::vector<double> &sigma);
 
+    // threshold masks for the xc potential (Quantum ESPRESSO convention):
+    // the first mask applies to exc and vrho, the second one only to vsigma
+    extern std::pair<std::vector<double>, std::vector<double>> cal_sgn_vxc(
+        const double rho_threshold_vrho,
+        const double rho_threshold_vsigma,
+        const double grho_threshold_vsigma,
+        const xc_func_type &func,
+        const int nspin,
+        const std::size_t nrxx,
+        const std::vector<double> &rho,
+        const std::vector<double> &sigma);
+
     // converting etxc from exc (libxc=>abacus)
     extern double convert_etxc(
         const int nspin,
@@ -142,7 +154,8 @@ namespace XC_Functional_Libxc
         const xc_func_type &func,
         const int nspin,
         const std::size_t nrxx,
-        const std::vector<double> &sgn,
+        const std::vector<double> &sgn_vrho,
+        const std::vector<double> &sgn_vsigma,
         const std::vector<double> &rho,
         const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr,
         const std::vector<double> &vrho,
