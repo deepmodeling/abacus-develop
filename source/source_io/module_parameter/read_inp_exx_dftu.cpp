@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "source_base/constants.h"
 #include "source_base/tool_quit.h"
 #include "read_input.h"
@@ -476,6 +478,159 @@ void ReadInput::item_exx()
             if (para.input.exx_ewald_dimension != 2 && para.input.exx_ewald_dimension != 3)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_dimension must be 2 or 3");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_ewald_lambda");
+        item.annotation = "Gaussian decay coefficient for Ewald full Coulomb in RI-EXX";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description = "This parameter controls the Gaussian auxiliary functions used in the Ewald split of the full Coulomb matrix in RI-EXX. The real-space Gaussian cutoff is proportional to sqrt(35/exx_ewald_lambda).";
+        item.default_value = "1.0";
+        item.unit = "";
+        item.set_availability("");
+        read_sync_double(input.exx_ewald_lambda);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ewald_lambda <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_lambda must > 0");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_ewald_tail_check");
+        item.annotation = "Ewald short-range Gaussian-tail handling mode";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = "Check the outer real-space shell of Vbare-Vgauss. off disables the probe, warn reports without changing the production range, enlarge expands until converged, and strict also aborts on incomplete or unconverged coverage.";
+        item.default_value = "warn";
+        read_sync_string(input.exx_ewald_tail_check);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::string& mode = para.input.exx_ewald_tail_check;
+            if (mode != "off" && mode != "warn" && mode != "enlarge" && mode != "strict")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_check must be off, warn, enlarge, or strict");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_ewald_tail_abs_tol");
+        item.annotation = "absolute Ewald short-range guard-shell tolerance";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.default_value = "1e-12";
+        read_sync_double(input.exx_ewald_tail_abs_tol);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ewald_tail_abs_tol < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_abs_tol must be non-negative");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_ewald_tail_rel_tol");
+        item.annotation = "relative Ewald short-range guard-shell maximum tolerance";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.default_value = "1e-10";
+        read_sync_double(input.exx_ewald_tail_rel_tol);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ewald_tail_rel_tol < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_rel_tol must be non-negative");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_ewald_tail_sum_rel_tol");
+        item.annotation = "relative Ewald short-range guard-shell summed tolerance";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.default_value = "1e-8";
+        read_sync_double(input.exx_ewald_tail_sum_rel_tol);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ewald_tail_sum_rel_tol < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_sum_rel_tol must be non-negative");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_ewald_tail_guard_cells");
+        item.annotation = "number of lattice-cell layers in the Ewald tail probe";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Integer";
+        item.default_value = "1";
+        read_sync_int(input.exx_ewald_tail_guard_cells);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ewald_tail_guard_cells < 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_guard_cells must be at least one");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_ewald_tail_max_expansions");
+        item.annotation = "maximum adaptive Ewald real-space range expansions";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Integer";
+        item.default_value = "3";
+        read_sync_int(input.exx_ewald_tail_max_expansions);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ewald_tail_max_expansions < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_max_expansions must be non-negative");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_abfs_preorth");
+        item.annotation = "on-site Coulomb-metric preorthogonalization for RPA auxiliary bases";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = "Select none for the legacy RPA auxiliary basis or onsite_coulomb to Coulomb-orthonormalize each atom-type and angular-momentum radial channel before RPA producer and Sternheimer output.";
+        item.default_value = "none";
+        item.unit = "";
+        item.set_availability("basis_type==lcao");
+        read_sync_string(input.rpa_abfs_preorth);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.rpa_abfs_preorth != "none"
+                && para.input.rpa_abfs_preorth != "onsite_coulomb")
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "rpa_abfs_preorth must be none or onsite_coulomb");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_abfs_preorth_threshold");
+        item.annotation = "residual Coulomb-norm threshold for RPA auxiliary preorthogonalization";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description = "Reject a radial auxiliary candidate when its squared residual on-site Coulomb norm is no larger than this value.";
+        item.default_value = "1e-2";
+        item.unit = "";
+        item.set_availability("basis_type==lcao and rpa_abfs_preorth==onsite_coulomb");
+        read_sync_double(input.rpa_abfs_preorth_threshold);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (!std::isfinite(para.input.rpa_abfs_preorth_threshold)
+                || para.input.rpa_abfs_preorth_threshold <= 0.0
+                || para.input.rpa_abfs_preorth_threshold >= 1.0)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "rpa_abfs_preorth_threshold must be finite and strictly between 0 and 1");
             }
         };
         this->add_item(item);

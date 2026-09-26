@@ -1098,7 +1098,7 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
                                  "out_librpa_reader_version=1, and shrink ABFs.");
     }
 
-    this->cal_postSCF_exx(dm, mpi_comm_in, ucell, kv, orb);
+    this->cal_postSCF_exx(dm, mpi_comm_in, ucell, kv, orb, parav);
     if (RpaLriDetail::debug_dump_exx_ao_enabled())
     {
         const std::string file_name_exx
@@ -1171,7 +1171,8 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
                                         const MPI_Comm& mpi_comm_in,
                                         const UnitCell& ucell,
                                         const K_Vectors& kv,
-                                        const LCAO_Orbitals& orb)
+                                        const LCAO_Orbitals& orb,
+                                        const Parallel_Orbitals& parav)
 {
     ModuleBase::TITLE("RPA_LRI", "cal_postSCF_exx");
     ModuleBase::timer::start("RPA_LRI", "cal_postSCF_exx");
@@ -1198,8 +1199,8 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         this->symmetry_rotation_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st, Rs, period, ucell.lat);
         // set Lmax of the rotation matrices to max(l_ao, l_abf), to support rotation under ABF
         this->symmetry_rotation_.set_abfs_Lmax(GlobalC::exx_info.info_ri.abfs_Lmax);
-        this->symmetry_rotation_.cal_Ms(kv, ucell, *dm.get_paraV_pointer(), PARAM.inp.nspin);
-        mix_DMk_2D.mix(this->symmetry_rotation_.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), true);
+        this->symmetry_rotation_.cal_Ms(kv, ucell, parav, PARAM.inp.nspin);
+        mix_DMk_2D.mix(this->symmetry_rotation_.restore_dm(kv, dm.get_DMK_vector(), parav), true);
     }
     else { mix_DMk_2D.mix(dm.get_DMK_vector(), true); }
     
@@ -1207,7 +1208,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         = RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,
                                             kv,
                                             mix_DMk_2D.get_DMk_out(),
-                                            *dm.get_paraV_pointer(),
+                                            parav,
                                             PARAM.inp.nspin,
                                             this->use_spacegroup_symmetry_);
     
@@ -1259,7 +1260,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         // is finalized by `init_spencer()`. The earlier `cal_Ms()` call only guaranteed the AO
         // rotation blocks needed for density-matrix restoration.
         this->symmetry_rotation_.set_Cs_rotation(exx_cut_coulomb->get_abfs_nchis());
-        this->symmetry_rotation_.cal_Ms(kv, ucell, *dm.get_paraV_pointer(), PARAM.inp.nspin);
+        this->symmetry_rotation_.cal_Ms(kv, ucell, parav, PARAM.inp.nspin);
     }
 
     // cal C and V for exx
@@ -1267,11 +1268,11 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     // cal CVCD
     if (this->use_spacegroup_symmetry_ && PARAM.inp.exx_symmetry_realspace)
     {
-        exx_cut_coulomb->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer(), &this->symmetry_rotation_);
+        exx_cut_coulomb->cal_exx_elec(Ds, ucell, parav, &this->symmetry_rotation_);
     }
     else
     {
-        exx_cut_coulomb->cal_exx_elec(Ds, ucell, *dm.get_paraV_pointer());
+        exx_cut_coulomb->cal_exx_elec(Ds, ucell, parav);
     }
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
     ModuleBase::timer::end("RPA_LRI", "cal_postSCF_exx");

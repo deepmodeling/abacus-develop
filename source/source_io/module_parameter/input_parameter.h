@@ -681,7 +681,7 @@ struct Input_para
     std::string sternheimer_molecular_coulomb = "none"; ///< none or explicit isolated_ri molecular boundary contract
     std::string sternheimer_ao_potential_file = "";     ///< producer-matched AO Coulomb matrices in Hartree
     bool sternheimer_grid_diagnostics = false; ///< whether to write Delta-Sternheimer grid component diagnostics
-    int sternheimer_fd_order = 8; ///< Cartesian finite-difference Laplacian order: 2, 4, 6, or 8
+    int sternheimer_fd_order = 2; ///< Cartesian finite-difference Laplacian order: 2, 4, 6, or 8
     double sternheimer_response_ecutwfc = 0.0; ///< response-grid cutoff in Ry; 0 reuses the PBE grid
     int sternheimer_response_nx = 0; ///< explicit Delta-Sternheimer response-grid x dimension; 0 disables
     int sternheimer_response_ny = 0; ///< explicit Delta-Sternheimer response-grid y dimension; 0 disables

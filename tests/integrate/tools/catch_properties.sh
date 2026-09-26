@@ -809,14 +809,26 @@ fi
 if ! test -z "$run_rpa" && [ $run_rpa == 1 ]; then
 	Etot_without_rpa=`grep Etot_without_rpa log.txt | awk 'BEGIN{FS=":"} {print $2}' `
 	echo "Etot_without_rpa $Etot_without_rpa" >> $1
+	rpa_outdir=$(get_input_key_value "rpa_outdir" "INPUT")
+	if [ -z "$rpa_outdir" ]; then
+		rpa_outdir="./OUT.librpa"
+	fi
+	rpa_outdir=${rpa_outdir%/}
 	shopt -s nullglob
 	rpa_ref_files=(refcoulomb_*.txt refCs_*.txt refshrink_sinvS_*.txt)
 	if [ ${#rpa_ref_files[@]} -gt 0 ]; then
 		IFS=$'\n' rpa_ref_files=($(printf '%s\n' "${rpa_ref_files[@]}" | LC_ALL=C sort))
 		unset IFS
 		for onref in "${rpa_ref_files[@]}"; do
-			oncal=${onref#ref}
-			compare_key="CompareRPA_$(sanitize_result_key "$oncal")_pass"
+			oncal_name=${onref#ref}
+			oncal="$rpa_outdir/$oncal_name"
+			# Reader-v1 files are emitted in the case directory.  Prefer the
+			# configured RPA directory for legacy output, then accept the new
+			# reader-v1 location when that is the only calculated file present.
+			if [ ! -f "$oncal" ] && [ -f "$oncal_name" ]; then
+				oncal="$oncal_name"
+			fi
+			compare_key="CompareRPA_$(sanitize_result_key "$oncal_name")_pass"
 			record_compare_result "$1" "$compare_key" "$onref" "$oncal" 8 1
 		done
 	fi
