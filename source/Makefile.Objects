@@ -276,6 +276,7 @@ OBJS_ELECSTAT=elecstate.o\
     h_hartree_pw.o\
     h_tddft_pw.o\
     pot_xc.o\
+    pot_rvv10.o\
     pot_ml_exx.o\
     pot_ml_exx_label.o\
     pot_xc_fdm.o\
@@ -605,6 +606,8 @@ OBJS_SYMMETRY=symm_other.o\
     symm_rotation_k.o\
 
 OBJS_XC=xc_functional.o\
+    xc_rvv10.o\
+    xc_rvv10_pw.o\
     xc_functional_op.o\
     xc_pot.o\
     xc_grad.o\

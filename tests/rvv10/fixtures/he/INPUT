@@ -1,0 +1,27 @@
+INPUT_PARAMETERS
+suffix rvv10_regression
+calculation scf
+basis_type pw
+device cpu
+precision double
+dft_functional GGA_X_RPW86+GGA_C_PBE
+xc_nonlocal rvv10
+nspin 1
+ntype 1
+nbands 2
+ecutwfc 40
+ecutrho 160
+nx 45
+ny 45
+nz 45
+scf_thr 1e-12
+scf_nmax 100
+ks_solver cg
+mixing_type plain
+mixing_beta 0.3
+smearing_method fixed
+cal_force 0
+cal_stress 0
+vdw_method none
+symmetry 0
+gamma_only 0

@@ -89,6 +89,7 @@
     - [nelec\_delta](#nelec_delta)
     - [nupdown](#nupdown)
     - [dft\_functional](#dft_functional)
+    - [xc\_nonlocal](#xc_nonlocal)
     - [xc\_temperature](#xc_temperature)
     - [xc\_exch\_ext](#xc_exch_ext)
     - [xc\_corr\_ext](#xc_corr_ext)
@@ -1308,6 +1309,12 @@
 
   The other way is only available when compiling with LIBXC, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by a plus sign, for example, dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'.
 - **Default**: Used the same as DFT functional as specified in the pseudopotential files.
+
+### xc_nonlocal
+
+- **Type**: String
+- **Description**: Select an optional nonlocal exchange-correlation correction. `none` disables the correction. `rvv10` adds the rVV10 nonlocal correlation term to the semilocal functional selected by `dft_functional`. The current implementation requires LIBXC, an explicit `GGA_X_RPW86+GGA_C_PBE` base functional, a norm-conserving PW Kohn-Sham SCF calculation in CPU double precision, nspin=1 or nspin=2, and no forces, stress, gamma-only FFT, or pairwise vdW correction. MPI pool-distributed PW FFTs are supported.
+- **Default**: none
 
 ### xc_temperature
 

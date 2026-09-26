@@ -22,7 +22,8 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
                               pseudopot_cell_vnl* nlpp,
                               Plus_U_Base* p_dftu,
                               const UnitCell* ucell,
-                              const General_Exx_Info* exx_info)
+                              const General_Exx_Info* exx_info,
+                              const bool enable_nonlocal_xc)
     : ucell(ucell)
 {
     this->classname = "HamiltPW";
@@ -62,6 +63,11 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         }
         // no variable can choose xc, maybe it is necessary
         pot_register_in.push_back("xc");
+        // Keep rVV10 as an additive component after the canonical semilocal XC.
+        if (enable_nonlocal_xc)
+        {
+            pot_register_in.push_back("rvv10");
+        }
         if (PARAM.inp.imp_sol)
         {
             pot_register_in.push_back("surchem");

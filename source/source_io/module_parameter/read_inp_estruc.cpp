@@ -3,6 +3,9 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 
+#include <algorithm>
+#include <cctype>
+
 namespace ModuleIO
 {
 void ReadInput::item_elec_stru()
@@ -333,6 +336,58 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.default_value = "Used the same as DFT functional as specified in the pseudopotential files.";
         item.unit = "";
         read_sync_string(input.dft_functional);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            std::string name = para.input.dft_functional;
+            std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) {
+                return static_cast<char>(std::toupper(c));
+            });
+            if (name == "RVV10")
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput", "Use xc_nonlocal=rvv10 with an explicit semilocal dft_functional");
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("xc_nonlocal");
+        item.annotation = "none; rvv10";
+        item.category = "Electronic structure";
+        item.type = "String";
+        item.description = R"(Select an optional nonlocal exchange-correlation correction. `none` disables the correction. `rvv10` adds the rVV10 nonlocal correlation term to the semilocal functional selected by `dft_functional`. The current implementation requires LIBXC, an explicit `GGA_X_RPW86+GGA_C_PBE` base functional, a norm-conserving PW Kohn-Sham SCF calculation in CPU double precision, nspin=1 or nspin=2, and no forces, stress, gamma-only FFT, or pairwise vdW correction. MPI pool-distributed PW FFTs are supported.)";
+        item.default_value = "none";
+        item.unit = "";
+        read_sync_string(input.xc_nonlocal);
+        item.reset_value = [](const Input_Item&, Parameter& para) {
+            std::transform(para.input.xc_nonlocal.begin(), para.input.xc_nonlocal.end(), para.input.xc_nonlocal.begin(),
+                           [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        };
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            std::string nonlocal = para.input.xc_nonlocal;
+            std::transform(nonlocal.begin(), nonlocal.end(), nonlocal.begin(), [](unsigned char c) {
+                return static_cast<char>(std::tolower(c));
+            });
+            if (nonlocal != "none" && nonlocal != "rvv10")
+                ModuleBase::WARNING_QUIT("ReadInput", "xc_nonlocal must be either none or rvv10");
+            if (nonlocal != "rvv10")
+                return;
+#ifndef __LIBXC
+            ModuleBase::WARNING_QUIT("ReadInput", "xc_nonlocal=rvv10 requires a LIBXC-enabled build");
+#endif
+            std::string functional = para.input.dft_functional;
+            std::transform(functional.begin(), functional.end(), functional.begin(), [](unsigned char c) {
+                return static_cast<char>(std::toupper(c));
+            });
+            const auto& p = para.input;
+            if (functional != "GGA_X_RPW86+GGA_C_PBE")
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput", "xc_nonlocal=rvv10 currently requires dft_functional=GGA_X_RPW86+GGA_C_PBE");
+            if (p.calculation != "scf" || p.esolver_type != "ksdft" || p.basis_type != "pw" || p.device != "cpu"
+                || p.precision != "double" || (p.nspin != 1 && p.nspin != 2) || p.cal_force || p.cal_stress
+                || p.gamma_only || p.vdw_method != "none" || !p.vl_in_h)
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "xc_nonlocal=rvv10 supports CPU double PW nspin=1/2 SCF, with optional "
+                                         "MPI pool distribution, without forces, stress, gamma_only or other vdW "
+                                         "corrections");
+        };
         this->add_item(item);
     }
     {

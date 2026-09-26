@@ -2,6 +2,7 @@
 #include "efield.h"
 #include "gatefield.h"
 #include "pot_local.h"
+#include "pot_rvv10.h"
 #include "pot_sep.h"
 #include "pot_surchem.hpp"
 #include "pot_xc.h"
@@ -13,6 +14,7 @@
 #include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
 #include "h_tddft_pw.h"
+
 #ifdef __MLALGO
 #include "pot_ml_exx.h"
 #endif
@@ -34,6 +36,12 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     else if (pot_type == "xc")
     {
         return new PotXC(this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
+    }
+    else if (pot_type == "rvv10")
+    {
+        if (this->rho_basis_ != this->rho_basis_smooth_)
+            ModuleBase::WARNING_QUIT("Potential", "rVV10 currently supports norm-conserving pseudopotentials only");
+        return new PotRvv10(this->rho_basis_, this->etxc_, this->vtxc_);
     }
     else if (pot_type == "surchem")
     {

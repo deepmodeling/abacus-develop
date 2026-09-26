@@ -27,13 +27,15 @@ class HamiltPW : public Hamilt<T, Device>
     using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<T,Device, base_device::DEVICE_CPU>;
 
   public:
+    // Explicit component selection keeps nonlocal XC out of global state.
     HamiltPW(elecstate::Potential* pot_in,
              ModulePW::PW_Basis_K* wfc_basis,
              K_Vectors* p_kv,
              pseudopot_cell_vnl* nlpp,
              Plus_U_Base* p_dftu,
              const UnitCell* ucell,
-             const General_Exx_Info* exx_info);
+             const General_Exx_Info* exx_info,
+             const bool enable_nonlocal_xc = false);
 
     ~HamiltPW();
 

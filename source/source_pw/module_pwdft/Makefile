@@ -99,7 +99,7 @@ ifdef LIBXC_DIR
     ##==========================
     LIBXC_INCLUDE_DIR	= ${LIBXC_DIR}/include 
     LIBXC_LIB_DIR		= ${LIBXC_DIR}/lib
-    HONG                += -DUSE_LIBXC
+    HONG                += -D__LIBXC
     INCLUDES            += -I${LIBXC_INCLUDE_DIR}
     LIBS 			    += -L${LIBXC_LIB_DIR} -Wl,-rpath=${LIBXC_LIB_DIR} -lxc
 endif
