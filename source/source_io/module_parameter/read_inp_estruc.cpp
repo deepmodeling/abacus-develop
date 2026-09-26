@@ -353,7 +353,7 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.annotation = "none; rvv10";
         item.category = "Electronic structure";
         item.type = "String";
-        item.description = R"(Select an optional nonlocal exchange-correlation correction. `none` disables the correction. `rvv10` adds the rVV10 nonlocal correlation term, with parameters set by `rvv10_b` and `rvv10_c`, to the semilocal functional selected by `dft_functional`. The current implementation requires LIBXC, an explicit semilocal functional without an embedded vdW/VV10 term, a norm-conserving PW Kohn-Sham SCF calculation in CPU double precision, nspin=1 or nspin=2, and no forces, stress, gamma-only FFT, or pairwise vdW correction. MPI pool-distributed PW FFTs are supported.)";
+        item.description = R"(Select an optional nonlocal exchange-correlation correction. `none` disables the correction. `rvv10` adds the rVV10 nonlocal correlation component, using `rvv10_b` and `rvv10_c`, after the semilocal functional selected by `dft_functional`. The semilocal and nonlocal terms are represented independently; the default b=6.3, C=0.0093 is the initial RPW86+PBE parameterization, while other semilocal combinations require separately validated parameters. The current implementation requires LIBXC, an explicit semilocal functional without an embedded vdW/VV10 term, a norm-conserving PW Kohn-Sham SCF calculation in CPU double precision, nspin=1 or nspin=2, and no forces, stress, gamma-only FFT, or pairwise vdW correction. MPI pool-distributed PW FFTs are supported.)";
         item.default_value = "none";
         item.unit = "";
         read_sync_string(input.xc_nonlocal);
@@ -406,10 +406,10 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.annotation = "positive real";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description
-            = "Damping parameter b of the rVV10 nonlocal correlation model. It is used only when xc_nonlocal=rvv10.";
+        item.description = "Damping parameter b of the rVV10 nonlocal correlation model. It is used only when `xc_nonlocal=rvv10`. The default 6.3 is the initial RPW86+PBE parameterization; other semilocal combinations require a separately validated parameter set.";
         item.default_value = "6.3";
         item.unit = "dimensionless";
+        item.set_availability("xc_nonlocal==rvv10");
         read_sync_double(input.rvv10_b);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             if (para.input.xc_nonlocal == "rvv10"
@@ -423,10 +423,10 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.annotation = "non-negative real";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description
-            = "Parameter C of the rVV10 nonlocal correlation model. It is used only when xc_nonlocal=rvv10.";
+        item.description = "Parameter C of the rVV10 nonlocal correlation model. It is used only when `xc_nonlocal=rvv10`. The default 0.0093 is the initial RPW86+PBE parameterization; other semilocal combinations require a separately validated parameter set.";
         item.default_value = "0.0093";
         item.unit = "dimensionless";
+        item.set_availability("xc_nonlocal==rvv10");
         read_sync_double(input.rvv10_c);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             if (para.input.xc_nonlocal == "rvv10"

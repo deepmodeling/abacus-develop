@@ -1321,18 +1321,18 @@
 ### rvv10_b
 
 - **Type**: Real
+- **Availability**: *[`xc_nonlocal`](#xc_nonlocal)==rvv10*
 - **Description**: Damping parameter b of the rVV10 nonlocal correlation model. It is used only when `xc_nonlocal=rvv10`. The default 6.3 is the initial RPW86+PBE parameterization; other semilocal combinations require a separately validated parameter set.
 - **Default**: 6.3
 - **Unit**: dimensionless
-- **Availability**: [`xc_nonlocal`](#xc_nonlocal)==rvv10
 
 ### rvv10_c
 
 - **Type**: Real
+- **Availability**: *[`xc_nonlocal`](#xc_nonlocal)==rvv10*
 - **Description**: Parameter C of the rVV10 nonlocal correlation model. It is used only when `xc_nonlocal=rvv10`. The default 0.0093 is the initial RPW86+PBE parameterization; other semilocal combinations require a separately validated parameter set.
 - **Default**: 0.0093
 - **Unit**: dimensionless
-- **Availability**: [`xc_nonlocal`](#xc_nonlocal)==rvv10
 
 ### xc_temperature
 
