@@ -3283,32 +3283,15 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
 
         if (PARAM.inp.nspin == 4)
         {
-            // LibRPA consumes the explicit spin-space table for SOC. ABACUS stores
-            // symmetry rotations in fractional row-vector form, so convert each
-            // operation to Cartesian coordinates before constructing its SU(2) part.
-            const auto spin_operation = [&ucell](const ModuleBase::Matrix3& rotation,
-                                                 const int antiunitary) {
-                const ModuleBase::Matrix3 cartesian = ucell.latvec.Inverse() * rotation * ucell.latvec;
-                const auto spin_u = ModuleSymmetry::SpinRotation::so3_to_su2(cartesian);
-                RpaLriDetail::LibRpaSpinSymmetryOperation operation;
-                operation.antiunitary = antiunitary;
-                for (int i = 0; i != 4; ++i)
-                {
-                    operation.spin_u[static_cast<std::size_t>(2 * i)] = spin_u[i].real();
-                    operation.spin_u[static_cast<std::size_t>(2 * i + 1)] = spin_u[i].imag();
-                }
-                return operation;
-            };
-            std::vector<RpaLriDetail::LibRpaSpinSymmetryOperation> spin_operations;
-            spin_operations.reserve(static_cast<std::size_t>(symm.nrotk + n_anti));
-            for (int isym = 0; isym != symm.nrotk; ++isym)
-            {
-                spin_operations.push_back(spin_operation(symm.gmatrix[isym], 0));
-            }
-            for (int isym = 0; isym != n_anti; ++isym)
-            {
-                spin_operations.push_back(spin_operation(symm.gmatrix_anti[isym], 1));
-            }
+            // LibRPA consumes the explicit spin-space table for SOC. The helper
+            // applies ABACUS's fractional row-vector to Cartesian conversion and
+            // constructs the SU(2) part in the same order as the spatial rows.
+            const std::vector<ModuleBase::Matrix3> unitary_rotations(symm.gmatrix,
+                                                                      symm.gmatrix + symm.nrotk);
+            const std::vector<ModuleBase::Matrix3> antiunitary_rotations(symm.gmatrix_anti,
+                                                                          symm.gmatrix_anti + n_anti);
+            const auto spin_operations = RpaLriDetail::make_librpa_spin_symmetry_operations(
+                ucell.latvec, unitary_rotations, antiunitary_rotations);
             const int grey_group = symm.magnetic_nspin4 ? 0 : 1;
             RpaLriDetail::write_librpa_spin_symmetry(ofs, grey_group, 1, spin_operations);
         }

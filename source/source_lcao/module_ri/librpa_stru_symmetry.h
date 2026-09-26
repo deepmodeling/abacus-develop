@@ -3,6 +3,7 @@
 
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
+#include "source_cell/module_symmetry/symm_rot_spin.h"
 
 #include <array>
 #include <cmath>
@@ -25,6 +26,37 @@ struct LibRpaSpinSymmetryOperation
     int antiunitary = 0;
     std::array<double, 8> spin_u{};
 };
+
+inline std::vector<LibRpaSpinSymmetryOperation> make_librpa_spin_symmetry_operations(
+    const ModuleBase::Matrix3& latvec,
+    const std::vector<ModuleBase::Matrix3>& unitary_rotations,
+    const std::vector<ModuleBase::Matrix3>& antiunitary_rotations)
+{
+    const auto spin_operation = [&latvec](const ModuleBase::Matrix3& rotation, const int antiunitary) {
+        const ModuleBase::Matrix3 cartesian = latvec.Inverse() * rotation * latvec;
+        const auto spin_u = ModuleSymmetry::SpinRotation::so3_to_su2(cartesian);
+        LibRpaSpinSymmetryOperation operation;
+        operation.antiunitary = antiunitary;
+        for (int i = 0; i != 4; ++i)
+        {
+            operation.spin_u[static_cast<std::size_t>(2 * i)] = spin_u[i].real();
+            operation.spin_u[static_cast<std::size_t>(2 * i + 1)] = spin_u[i].imag();
+        }
+        return operation;
+    };
+
+    std::vector<LibRpaSpinSymmetryOperation> operations;
+    operations.reserve(unitary_rotations.size() + antiunitary_rotations.size());
+    for (const auto& rotation : unitary_rotations)
+    {
+        operations.push_back(spin_operation(rotation, 0));
+    }
+    for (const auto& rotation : antiunitary_rotations)
+    {
+        operations.push_back(spin_operation(rotation, 1));
+    }
+    return operations;
+}
 
 inline int checked_near_int(const double value, const std::string& context)
 {

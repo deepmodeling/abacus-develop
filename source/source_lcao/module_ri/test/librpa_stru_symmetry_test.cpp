@@ -85,13 +85,23 @@ void test_common_spatial_and_magnetic_rows()
 
 void test_explicit_spin_rows()
 {
-    std::vector<RpaLriDetail::LibRpaSpinSymmetryOperation> operations(2);
-    operations[0].spin_u = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0};
-    operations[1].antiunitary = 1;
-    operations[1].spin_u = {0.0, 0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0};
+    const std::vector<ModuleBase::Matrix3> unitary_rotations = {
+        ModuleBase::Matrix3(),
+        ModuleBase::Matrix3(0.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0)};
+    const std::vector<ModuleBase::Matrix3> antiunitary_rotations = {
+        ModuleBase::Matrix3(0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0)};
+    const auto operations = RpaLriDetail::make_librpa_spin_symmetry_operations(
+        ModuleBase::Matrix3(), unitary_rotations, antiunitary_rotations);
+    require(operations.size() == 3, "spin operations must preserve unitary and antiunitary order");
+    require(operations[0].antiunitary == 0 && operations[1].antiunitary == 0,
+            "unitary spin operations must precede antiunitary operations");
+    require(operations[2].antiunitary == 1, "antiunitary spin operation must be marked");
+    require(std::abs(operations[0].spin_u[0] - 1.0) < 1e-12
+                && std::abs(operations[0].spin_u[7]) < 1e-12,
+            "identity operation must export the identity SU(2) matrix");
 
     std::ostringstream output;
-    RpaLriDetail::write_librpa_spin_symmetry(output, 0, 1, operations);
+    RpaLriDetail::write_librpa_spin_symmetry(output, 0, 1, {operations[0], operations[2]});
     const auto lines = split_lines(output.str());
     require(lines.size() == 3, "spin symmetry output must contain one header and one row per operation");
     require(lines[0] == "spin_symmetry 0 1", "spin symmetry header must identify an explicit magnetic table");
