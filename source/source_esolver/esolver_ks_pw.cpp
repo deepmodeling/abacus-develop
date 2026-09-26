@@ -64,13 +64,15 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_hamilt(const UnitCell& ucell)
 {
+    const bool enable_nonlocal_xc = this->inp_->xc_nonlocal == "rvv10";
     this->p_hamilt = new hamilt::HamiltPW<T, Device>(this->pelec->pot,
                                                      this->pw_wfc,
                                                      &this->kv,
                                                      &this->ppcell,
                                                      this->dftu_.get(),
                                                      &ucell,
-                                                     &this->general_exx_info_);
+                                                     &this->general_exx_info_,
+                                                     enable_nonlocal_xc);
 }
 
 template <typename T, typename Device>

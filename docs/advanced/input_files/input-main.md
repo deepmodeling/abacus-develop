@@ -89,6 +89,9 @@
     - [nelec\_delta](#nelec_delta)
     - [nupdown](#nupdown)
     - [dft\_functional](#dft_functional)
+    - [xc\_nonlocal](#xc_nonlocal)
+    - [rvv10\_b](#rvv10_b)
+    - [rvv10\_c](#rvv10_c)
     - [xc\_temperature](#xc_temperature)
     - [xc\_exch\_ext](#xc_exch_ext)
     - [xc\_corr\_ext](#xc_corr_ext)
@@ -1308,6 +1311,28 @@
 
   The other way is only available when compiling with LIBXC, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by a plus sign, for example, dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'.
 - **Default**: Used the same as DFT functional as specified in the pseudopotential files.
+
+### xc_nonlocal
+
+- **Type**: String
+- **Description**: Select an optional nonlocal exchange-correlation correction. `none` disables the correction. `rvv10` adds the rVV10 nonlocal correlation component, using `rvv10_b` and `rvv10_c`, after the semilocal functional selected by `dft_functional`. The semilocal and nonlocal terms are represented independently; the default b=6.3, C=0.0093 is the initial RPW86+PBE parameterization, while other semilocal combinations require separately validated parameters. The current implementation requires LIBXC, an explicit semilocal functional without an embedded vdW/VV10 term, a norm-conserving PW Kohn-Sham SCF calculation in CPU double precision, nspin=1 or nspin=2, and no forces, stress, gamma-only FFT, or pairwise vdW correction. MPI pool-distributed PW FFTs are supported.
+- **Default**: none
+
+### rvv10_b
+
+- **Type**: Real
+- **Availability**: *[`xc_nonlocal`](#xc_nonlocal)==rvv10*
+- **Description**: Damping parameter b of the rVV10 nonlocal correlation model. It is used only when `xc_nonlocal=rvv10`. The default 6.3 is the initial RPW86+PBE parameterization; other semilocal combinations require a separately validated parameter set.
+- **Default**: 6.3
+- **Unit**: dimensionless
+
+### rvv10_c
+
+- **Type**: Real
+- **Availability**: *[`xc_nonlocal`](#xc_nonlocal)==rvv10*
+- **Description**: Parameter C of the rVV10 nonlocal correlation model. It is used only when `xc_nonlocal=rvv10`. The default 0.0093 is the initial RPW86+PBE parameterization; other semilocal combinations require a separately validated parameter set.
+- **Default**: 0.0093
+- **Unit**: dimensionless
 
 ### xc_temperature
 

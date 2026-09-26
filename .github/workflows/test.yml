@@ -115,6 +115,36 @@ jobs:
           cmake --build build -j8
           cmake --install build
 
+      - name: Serial rVV10 regression
+        env:
+          OMP_NUM_THREADS: '1'
+          OPENBLAS_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+        run: |
+          source toolchain/install/setup
+          cmake -B build-rvv10 -G Ninja \
+            -DBUILD_TESTING=ON -DENABLE_MPI=OFF -DENABLE_LCAO=OFF \
+            -DENABLE_OPENMP=OFF -DENABLE_LIBXC=ON -Werror=dev
+          cmake --build build-rvv10 -j8 --target abacus_pw_ser \
+            MODULE_HAMILT_XCTest_RVV10_CORE MODULE_HAMILT_XCTest_RVV10_PW \
+            MODULE_ESTATE_RVV10_POTENTIAL
+          ctest --test-dir build-rvv10 --output-on-failure --no-tests=error -R RVV10
+
+      - name: MPI rVV10 compatibility regression
+        run: |
+          source toolchain/install/setup
+          ctest --test-dir build --output-on-failure --no-tests=error -R RVV10
+
+      - name: rVV10 without Libxc
+        run: |
+          source toolchain/install/setup
+          cmake -B build-rvv10-no-libxc -G Ninja \
+            -DBUILD_TESTING=ON -DENABLE_MPI=OFF -DENABLE_LCAO=OFF \
+            -DENABLE_OPENMP=OFF -DENABLE_LIBXC=OFF -Werror=dev
+          cmake --build build-rvv10-no-libxc -j8 --target abacus_pw_ser \
+            MODULE_HAMILT_XCTest_RVV10_CORE MODULE_HAMILT_XCTest_RVV10_PW
+          ctest --test-dir build-rvv10-no-libxc --output-on-failure --no-tests=error -R RVV10
+
       - name: Report compiler cache
         if: always()
         run: |

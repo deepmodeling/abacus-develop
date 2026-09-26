@@ -23,9 +23,11 @@ Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                      surchem* solvent_in,
                      double* etxc_in,
                      double* vtxc_in,
-                     VSep* vsep_cell_in)
+                     VSep* vsep_cell_in,
+                     double rvv10_b_in,
+                     double rvv10_c_in)
     : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), solvent_(solvent_in), vsep_cell(vsep_cell_in),
-      etxc_(etxc_in), vtxc_(vtxc_in)
+      etxc_(etxc_in), vtxc_(vtxc_in), rvv10_b_(rvv10_b_in), rvv10_c_(rvv10_c_in)
 {
     this->rho_basis_ = rho_basis_in;
     this->rho_basis_smooth_ = rho_basis_smooth_in;

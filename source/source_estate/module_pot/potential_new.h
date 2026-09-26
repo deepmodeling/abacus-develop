@@ -65,7 +65,9 @@ class Potential : public PotBase
               surchem* solvent_in,
               double* etxc_in,
               double* vtxc_in,
-              VSep* vsep_cell_in = nullptr);
+              VSep* vsep_cell_in = nullptr,
+              double rvv10_b_in = 6.3,
+              double rvv10_c_in = 0.0093);
     ~Potential();
 
     // initialize potential when SCF begin
@@ -249,6 +251,8 @@ class Potential : public PotBase
     Structure_Factor* structure_factors_ = nullptr;
     surchem* solvent_ = nullptr;
     VSep* vsep_cell = nullptr;
+    double rvv10_b_ = 6.3;
+    double rvv10_c_ = 0.0093;
     bool use_gpu_ = false;
     std::shared_ptr<TDFieldManager> td_field_manager_;
 };
