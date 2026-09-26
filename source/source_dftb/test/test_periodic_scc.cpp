@@ -5,6 +5,43 @@
 #include <array>
 #include <vector>
 
+#ifdef __MPI
+#include <mpi.h>
+
+namespace
+{
+class DftbMpiTestEnvironment : public ::testing::Environment
+{
+  public:
+    void SetUp() override
+    {
+        int initialized = 0;
+        MPI_Initialized(&initialized);
+        if (!initialized)
+        {
+            int argc = 0;
+            char** argv = nullptr;
+            MPI_Init(&argc, &argv);
+            this->owns_mpi_ = true;
+        }
+    }
+
+    void TearDown() override
+    {
+        int finalized = 0;
+        MPI_Finalized(&finalized);
+        if (this->owns_mpi_ && !finalized) MPI_Finalize();
+    }
+
+  private:
+    bool owns_mpi_ = false;
+};
+
+::testing::Environment* const dftb_mpi_test_environment =
+    ::testing::AddGlobalTestEnvironment(new DftbMpiTestEnvironment);
+} // namespace
+#endif
+
 namespace ModuleDFTB
 {
 
