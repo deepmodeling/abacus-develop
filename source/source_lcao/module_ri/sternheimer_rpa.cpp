@@ -1083,13 +1083,16 @@ SternheimerRPA::Complex SternheimerRPA::accumulate_polarizability_grid_element(
     {
         throw std::invalid_argument("SternheimerRPA::accumulate_polarizability_grid_element size mismatch.");
     }
-    Complex value(0.0, 0.0);
-#pragma omp parallel for reduction(+ : value) schedule(static)
+    double real_part = 0.0;
+    double imag_part = 0.0;
+#pragma omp parallel for reduction(+ : real_part, imag_part) schedule(static)
     for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
     {
-        value += std::conj(psi_r[ir]) * std::conj(hartree_potential_r[ir]) * delta_psi_r[ir];
+        const Complex term = std::conj(psi_r[ir]) * std::conj(hartree_potential_r[ir]) * delta_psi_r[ir];
+        real_part += term.real();
+        imag_part += term.imag();
     }
-    return grid_weight * value;
+    return grid_weight * Complex(real_part, imag_part);
 }
 
 void SternheimerRPA::accumulate_chi0_branch_column(const std::vector<std::vector<double>>& hartree_potentials_r,
