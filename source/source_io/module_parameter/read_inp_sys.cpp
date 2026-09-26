@@ -247,7 +247,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
 * ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
 * lr: LR-TDDFT with given KS orbitals (Under Development Feature)
 * dfpt: density functional perturbation theory (Under Development Feature)
-* dftbnative: native periodic DFTB0/2/3 solver using Slater-Koster files, without a DFTB+ runtime dependency.)";
+* dftbnative: native periodic SCC-DFTB2/DFTB3 solver using Slater-Koster files, without a DFTB+ runtime dependency.)";
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {

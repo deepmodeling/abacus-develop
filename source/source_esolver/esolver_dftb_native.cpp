@@ -8,7 +8,6 @@
 #include "source_cell/unitcell.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/input_parameter.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <algorithm>
 #include <array>
@@ -526,7 +525,7 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
     const ModuleDFTB::DftbPeriodicInput input = this->make_geometry(ucell);
     const int rank = Parallel_Common::get_rank();
     std::ostream& running_log = GlobalV::ofs_running;
-    std::string output_dir = PARAM.globalv.global_out_dir;
+    std::string output_dir = this->output_dir_;
     if (!output_dir.empty() && output_dir.back() != '/') output_dir += '/';
     const std::string dftb_log_file = output_dir + "dftb.log";
     std::ofstream dftb_log;
@@ -535,6 +534,7 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
         dftb_log.open(dftb_log_file.c_str());
         if (dftb_log)
         {
+            dftb_log << std::scientific << std::setprecision(this->output_precision_);
             dftb_log << "# Native periodic DFTB SCC calculation log\n"
                      << "# Module: ABACUS source_dftb\n"
                      << "# Method: " << (input.third_order ? "DFTB3" : "DFTB2") << " / SCC\n"
@@ -552,9 +552,43 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
                      << "# Each row evaluates the DFTB energy functional on the output Mulliken charges of that iteration.\n"
                      << "# Diff_electronic is the change in that electronic energy; SCC_error is max |delta q|.\n"
                      << "# The converged variational free energy and component decomposition follow the iteration table.\n"
+                     << "# MPI ranks: " << Parallel_Common::get_size() << "\n"
+                     << "# Slater-Koster files (ordered species pair, A-B, B-A):\n";
+            for (const auto& pair : input.pair_parameters)
+            {
+                dftb_log << "#   " << ucell.atoms[pair.species_a].label << '-'
+                         << ucell.atoms[pair.species_b].label << "  " << pair.ab->filename
+                         << "  " << pair.ba->filename << "\n";
+            }
+            dftb_log << "# Species data (label, neutral valence, Hubbard derivative Ha/e, onsite s/p Ha, Hubbard U s/p Ha):\n";
+            for (int it = 0; it < ucell.ntype; ++it)
+            {
+                const ModuleDFTB::SkfData& data = this->skfiles_[static_cast<std::size_t>(it) * ucell.ntype + it];
+                dftb_log << "#   " << ucell.atoms[it].label << ' ' << data.valence_electron_count() << ' '
+                         << input.hubbard_derivative[static_cast<std::size_t>(it)] << ' '
+                         << data.onsite_hartree[0] << ' ' << data.onsite_hartree[1] << ' '
+                         << data.hubbard_u_hartree[0] << ' ' << data.hubbard_u_hartree[1] << "\n";
+            }
+            dftb_log << "# Lattice vectors (Bohr; row vectors):\n";
+            for (const auto& vector : input.lattice_bohr)
+                dftb_log << "#   " << vector[0] << ' ' << vector[1] << ' ' << vector[2] << "\n";
+            dftb_log << "# Atom positions (index, element, x, y, z in Bohr):\n";
+            for (std::size_t atom = 0; atom < input.atoms.size(); ++atom)
+            {
+                const auto& position = input.atoms[atom].position_bohr;
+                dftb_log << "#   " << atom + 1 << ' ' << ucell.atoms[input.atoms[atom].species].label << ' '
+                         << position[0] << ' ' << position[1] << ' ' << position[2] << "\n";
+            }
+            dftb_log << "# SCC integration k-points (index, direct coordinates, normalized weight):\n";
+            for (std::size_t ik = 0; ik < input.kpoints.size(); ++ik)
+            {
+                const auto& point = input.kpoints[ik];
+                dftb_log << "#   " << ik + 1 << ' ' << point.fractional[0] << ' ' << point.fractional[1] << ' '
+                         << point.fractional[2] << ' ' << point.weight << "\n";
+            }
+            dftb_log << "# Frozen-SCC band path points: " << input.band_kpoints.size() << "\n"
                      << "# iSCC E_electronic(Ha) Diff_electronic(Ha) SCC_error(e) net_electron_excess(e)"
                      << " F_band(Ha) E_Fermi(Ha) mixer\n";
-            dftb_log << std::scientific << std::setprecision(this->output_precision_);
         }
     }
     int log_open_failure = (rank == 0 && !dftb_log) ? 1 : 0;

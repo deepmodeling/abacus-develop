@@ -59,7 +59,7 @@ This makes the implemented DFTB2/DFTB3 charge functional self-consistent within 
 All files are written under `OUT.{suffix}/`:
 
 - `running_scf.log`: ABACUS main log, including a live SCC iteration line with charge residual, band/free-band energy, Fermi level, and mixer choice.
-- `dftb.log`: DFTB+-style SCC iteration table (`E_electronic`, energy change, charge error), settings, final energy decomposition, and atom-resolved Mulliken population/excess charges. The file is flushed each iteration, so it retains the iteration history if SCC fails to converge.
+- `dftb.log`: DFTB+-style run report with the selected SKF file pairs, species parameters, cell and atom coordinates, weighted SCC k points, SCC iteration table (`E_electronic`, energy change, charge error), final energy decomposition, and atom-resolved Mulliken population/excess charges. The file is flushed each iteration, so it retains the iteration history if SCC fails to converge.
 - `eig_occ.txt`: final SCC k-point eigenvalues and occupations.
 - `mulliken.txt`: final atom populations and electron-excess charges.
 - `band.txt`: eigenvalues along the configured frozen-SCC path, when `band_path_file` is set.

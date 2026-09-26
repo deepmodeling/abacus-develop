@@ -51,6 +51,11 @@ jobs:
             external_toolchain_args: ""
             build_args: "-DENABLE_MPI=OFF -DENABLE_LCAO=OFF"
             name: "Build without LCAO and MPI"
+          - tag: gnu
+            external_toolchain_args: ""
+            build_args: "-DENABLE_MPI=OFF -DBUILD_TESTING=ON -DENABLE_DFTB_NATIVE=ON"
+            run_native_dftb_tests: true
+            name: "Build and test native DFTB"
 
     name: ${{ matrix.name }}
     container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
@@ -75,3 +80,7 @@ jobs:
           rm -rf build
           cmake -B build -G Ninja ${{ matrix.build_args }}
           cmake --build build -j $(nproc)
+
+      - name: Test native DFTB
+        if: matrix.run_native_dftb_tests == true
+        run: ctest --test-dir build --output-on-failure --timeout 300 -R '^MODULE_DFTB_native$'

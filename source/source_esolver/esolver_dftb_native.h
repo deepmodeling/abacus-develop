@@ -5,6 +5,7 @@
 #include "source_dftb/periodic_scc.h"
 #include "source_dftb/skf_data.h"
 
+#include <string>
 #include <vector>
 
 namespace ModuleESolver
@@ -12,7 +13,11 @@ namespace ModuleESolver
 class ESolver_DFTBNative : public ESolver
 {
   public:
-    ESolver_DFTBNative() { classname = "ESolver_DFTBNative"; }
+    explicit ESolver_DFTBNative(const std::string& output_dir)
+        : output_dir_(output_dir)
+    {
+        classname = "ESolver_DFTBNative";
+    }
 
     void before_all_runners(BaseCell& cell, const Input_para& inp) override;
     void runner(BaseCell& cell, const int istep) override;
@@ -28,6 +33,7 @@ class ESolver_DFTBNative : public ESolver
     std::vector<ModuleDFTB::SkfData> skfiles_;
     ModuleDFTB::DftbPeriodicInput template_;
     ModuleDFTB::DftbPeriodicResult result_;
+    std::string output_dir_;
     double energy_ry_ = 0.0;
     int output_precision_ = 12;
 };
