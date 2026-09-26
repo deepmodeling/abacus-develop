@@ -1,5 +1,6 @@
 #include "../librpa_bz_sampling.h"
 
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
@@ -28,6 +29,16 @@ void test_stored_irreducible_points_keep_identity_labels()
         require(index.representative_scf_index == ik + 1,
                 "stored SCF representative labels must refer to their own rows");
     }
+}
+
+void test_cartesian_units_are_bohr_inverse()
+{
+    const auto kvec = RpaLriDetail::librpa_cartesian_kvec(ModuleBase::Vector3<double>(0.25, -0.5, 0.0), 2.0);
+    const double scale = ModuleBase::TWO_PI / 2.0;
+    require(std::abs(kvec.x - 0.25 * scale) < 1e-12,
+            "BZ output must convert ABACUS 2*pi/lat0 coordinates to Bohr^-1");
+    require(std::abs(kvec.y + 0.5 * scale) < 1e-12,
+            "BZ output must preserve the Cartesian vector components");
 }
 
 void test_invalid_counts_and_indices_are_rejected()
@@ -63,6 +74,7 @@ int main()
 {
     test_stored_irreducible_points_keep_identity_labels();
     test_invalid_counts_and_indices_are_rejected();
+    test_cartesian_units_are_bohr_inverse();
     std::cout << "LibRPA BZ sampling tests passed\n";
     return 0;
 }
