@@ -36,12 +36,32 @@ class Numerical_Basis
 
     struct SIABPrimitiveParameters
     {
+        SIABPrimitiveParameters()
+            : ecut_ry(0.0), rcut_bohr(0.0), smooth(false), sigma(0.0), tolerance(0.0), lmax(-1)
+        {
+        }
+
+        SIABPrimitiveParameters(const double ecut_ry_in,
+                                const double rcut_bohr_in,
+                                const bool smooth_in,
+                                const double sigma_in,
+                                const double tolerance_in,
+                                const int lmax_in = -1)
+            : ecut_ry(ecut_ry_in),
+              rcut_bohr(rcut_bohr_in),
+              smooth(smooth_in),
+              sigma(sigma_in),
+              tolerance(tolerance_in),
+              lmax(lmax_in)
+        {
+        }
+
         double ecut_ry;
         double rcut_bohr;
         bool smooth;
         double sigma;
         double tolerance;
-        int lmax = -1;
+        int lmax;
     };
 
     struct SIABPrimitiveGridBlock
