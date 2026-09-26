@@ -21,6 +21,23 @@
 namespace
 {
 
+TEST(HCorrSccs, DispatchesDeferredSummaryOnlyWhenRequested)
+{
+    SurchemParameters parameters;
+    parameters.use_sccs = true;
+    parameters.start_drho = 0.01;
+    surchem solvent;
+    solvent.set_parameters(parameters);
+    std::ostringstream silent;
+    solvent.write_iteration(silent, 0.1);
+    EXPECT_TRUE(silent.str().empty());
+    parameters.debug = 1;
+    solvent.set_parameters(parameters);
+    std::ostringstream summary;
+    solvent.write_iteration(summary, 0.1);
+    EXPECT_NE(summary.str().find("SCCS_DEFERRED DRHO 0.1"), std::string::npos);
+}
+
 TEST(HCorrSccs, DelaysActivationUntilDensityOrIterationThreshold)
 {
     SurchemParameters parameters;

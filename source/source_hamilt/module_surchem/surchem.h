@@ -77,6 +77,7 @@ class surchem
 
     const ModuleSccs::SccsResult& sccs_result() const;
 
+    void write_iteration(std::ostream& output, const double drho) const;
     void write_sccs_iteration(std::ostream& output) const;
 
     void write_sccs_diagnostics(std::ostream& output) const;

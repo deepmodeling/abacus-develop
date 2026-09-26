@@ -92,6 +92,24 @@ const ModuleSccs::SccsResult& surchem::sccs_result() const
     return this->sccs_result_;
 }
 
+void surchem::write_iteration(std::ostream& output, const double drho) const
+{
+    if (this->parameters_.debug == 0)
+    {
+        return;
+    }
+    if (this->sccs_is_active() || this->uses_pcc())
+    {
+        this->write_sccs_iteration(output);
+    }
+    else if (this->uses_sccs())
+    {
+        output << " SCCS_DEFERRED DRHO " << drho
+               << " START_DRHO " << this->parameters_.start_drho
+               << " START_NMAX " << this->parameters_.start_nmax << std::endl;
+    }
+}
+
 void surchem::write_sccs_iteration(std::ostream& output) const
 {
     if (this->parameters_.debug == 0)

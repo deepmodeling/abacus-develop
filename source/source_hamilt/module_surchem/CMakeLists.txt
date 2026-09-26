@@ -2,6 +2,7 @@ add_library(
     surchem
     OBJECT
     surchem.cpp
+    surchem_input.cpp
     h_corr_pw.cpp
     sccs/h_corr_sccs.cpp
     pcc/h_corr_pcc.cpp

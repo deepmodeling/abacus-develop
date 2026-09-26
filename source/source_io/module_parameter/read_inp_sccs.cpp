@@ -8,41 +8,6 @@ namespace ModuleIO
 {
 namespace
 {
-void check_solvation(const Input_para& input)
-{
-    if (input.imp_sol < 0 || input.imp_sol > 2)
-    {
-        ModuleBase::WARNING_QUIT("ReadInput", "imp_sol must be 0 (vacuum), 1 (legacy), or 2 (SCCS)");
-    }
-    if (input.imp_sol == 2
-        && (input.efield_flag || input.gate_flag
-            || input.assume_isolated == "makov-payne"))
-    {
-        ModuleBase::WARNING_QUIT("ReadInput",
-                                 "SCCS cannot be combined with electric/gate fields or Makov-Payne correction");
-    }
-    if (input.imp_sol == 2 && input.nspin == 4)
-    {
-        ModuleBase::WARNING_QUIT("ReadInput", "the first SCCS implementation does not support nspin=4");
-    }
-    if (input.imp_sol == 2
-        && input.calculation != "scf"
-        && input.calculation != "relax")
-    {
-        ModuleBase::WARNING_QUIT(
-            "ReadInput",
-            "SCCS supports only calculation=scf or fixed-cell calculation=relax");
-    }
-    if (input.imp_sol == 2 && input.device == "gpu")
-    {
-        ModuleBase::WARNING_QUIT("ReadInput", "the first SCCS implementation supports only device=cpu");
-    }
-    if (input.imp_sol == 2 && input.dfthalf_type != 0)
-    {
-        ModuleBase::WARNING_QUIT("ReadInput", "SCCS cannot currently be combined with DFT-1/2");
-    }
-}
-
 void check_sccs_preset(const Input_para& input)
 {
     const std::vector<std::string> allowed
@@ -123,20 +88,6 @@ void check_sccs_numerical_parameters(const Input_para& input)
 
 void ReadInput::item_sccs()
 {
-    {
-        Input_Item item("imp_sol");
-        item.annotation = "implicit solvent model";
-        item.category = "Implicit solvation model";
-        item.type = "Integer";
-        item.description = "Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports scf and fixed-cell relax.";
-        item.default_value = "0";
-        item.unit = "";
-        read_sync_int(input.imp_sol);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            check_solvation(para.input);
-        };
-        this->add_item(item);
-    }
     {
         Input_Item item("sccs_preset");
         item.annotation = "SCCS parameter preset";

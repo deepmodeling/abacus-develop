@@ -4249,6 +4249,14 @@ parameters:
     default_value: "0.1"
     unit: Rydberg
     availability: ""
+  - name: imp_sol
+    category: Implicit solvation model
+    type: Integer
+    description: |
+      Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports scf and fixed-cell relax.
+    default_value: "0"
+    unit: ""
+    availability: ""
   - name: eb_k
     category: Implicit solvation model
     type: Real
@@ -4480,14 +4488,6 @@ parameters:
       * A(Angstrom)
       * Bohr
     default_value: Bohr
-    unit: ""
-    availability: ""
-  - name: imp_sol
-    category: Implicit solvation model
-    type: Integer
-    description: |
-      Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports scf and fixed-cell relax.
-    default_value: "0"
     unit: ""
     availability: ""
   - name: sccs_preset

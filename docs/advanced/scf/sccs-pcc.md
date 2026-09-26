@@ -67,3 +67,10 @@ and ionic force to both vacuum and SCCS calculations. SCCS additionally uses
 the PCC-aware Coulomb operator during polarization iterations and retains the
 2D ionic-shape correction. Its solvent response is therefore solved with the
 selected boundary condition.
+
+The `surchem_input.cpp` adapter translates explicit INPUT, cell and parallel
+configuration into module settings and validates the open-direction k points.
+The electronic solver only invokes this adapter and the correction hooks.
+`uses_surchem_correction()` is an internal predicate, not an INPUT parameter:
+it is true for either an enabled solvent or a PCC boundary, including
+`imp_sol 0` with `assume_isolated pcc_0d`/`pcc_2d`.

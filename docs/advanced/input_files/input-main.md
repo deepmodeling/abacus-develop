@@ -519,11 +519,11 @@
     - [cond\_fwhm](#cond_fwhm)
     - [cond\_nonlocal](#cond_nonlocal)
   - [Implicit solvation model](#implicit-solvation-model)
+    - [imp\_sol](#imp_sol)
     - [eb\_k](#eb_k)
     - [tau](#tau)
     - [sigma\_k](#sigma_k)
     - [nc\_k](#nc_k)
-    - [imp\_sol](#imp_sol)
     - [sccs\_preset](#sccs_preset)
     - [sccs\_epsilon](#sccs_epsilon)
     - [sccs\_rho\_min](#sccs_rho_min)
@@ -4824,6 +4824,12 @@
 
 ## Implicit solvation model
 
+### imp_sol
+
+- **Type**: Integer
+- **Description**: Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports scf and fixed-cell relax.
+- **Default**: 0
+
 ### eb_k
 
 - **Type**: Real
@@ -4848,12 +4854,6 @@
 - **Type**: Real
 - **Description**: The value of the electron density at which the dielectric cavity forms
 - **Default**: 0.00037
-
-### imp_sol
-
-- **Type**: Integer
-- **Description**: Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports scf and fixed-cell relax.
-- **Default**: 0
 
 ### sccs_preset
 

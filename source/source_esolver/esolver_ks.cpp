@@ -366,16 +366,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     if (is_output_rank)
     {
-        if (this->solvent.sccs_is_active() || this->solvent.uses_pcc())
-        {
-            this->solvent.write_sccs_iteration(std::cout);
-        }
-        else if (this->solvent.uses_sccs() && this->inp_->sccs_debug > 0)
-        {
-            std::cout << " SCCS_DEFERRED DRHO " << this->drho
-                      << " START_DRHO " << this->inp_->sccs_start_drho
-                      << " START_NMAX " << this->inp_->sccs_start_nmax << std::endl;
-        }
+        this->solvent.write_iteration(std::cout, this->drho);
     }
 
 

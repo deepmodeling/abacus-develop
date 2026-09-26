@@ -84,6 +84,25 @@ TEST_F(InputTest, RelaxMethod)
     EXPECT_EQ(find_label("relax_new", readinput.input_lists), readinput.input_lists.end());
 }
 
+TEST(InputOrder, ImpSolIsFirstSolventParameter)
+{
+    ModuleIO::ReadInput reader(0);
+    std::vector<std::string> solvent_parameters;
+    for (const auto& item : reader.get_input_lists())
+    {
+        if (item.second.category == "Implicit solvation model")
+        {
+            solvent_parameters.push_back(item.first);
+        }
+    }
+    ASSERT_GE(solvent_parameters.size(), 5u);
+    const std::vector<std::string> legacy_order = {"imp_sol", "eb_k", "tau", "sigma_k", "nc_k"};
+    for (std::size_t index = 0; index < legacy_order.size(); ++index)
+    {
+        EXPECT_EQ(solvent_parameters[index], legacy_order[index]);
+    }
+}
+
 TEST_F(InputTest, Item_test)
 {
     ModuleIO::ReadInput readinput(0);
