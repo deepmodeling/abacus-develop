@@ -37,6 +37,35 @@ later electronic and ionic steps. Debug level zero also suppresses deferred
 and activation messages. Standalone PCC summaries use `PCC_TIME/s` and
 `E_PCC/Ry`; there is no polarization iteration in this path.
 
+## Preset values and solver choices
+
+Only `custom` uses the five physical parameters supplied in INPUT. The other
+presets replace them with the effective values below, even if INPUT explicitly
+specifies different values. Input range checks still apply to supplied values.
+To change a preset's permittivity or cavity parameters, select `custom` and copy
+the desired row before modifying it.
+
+| sccs_preset | sccs_epsilon | sccs_rho_min (bohr^-3) | sccs_rho_max (bohr^-3) | sccs_gamma (dyn/cm) | sccs_pressure (GPa) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| custom (defaults; INPUT overrides) | 78.3 | 1.0e-4 | 5.0e-3 | 0 | 0 |
+| vacuum | 1 | 1.0e-4 | 5.0e-3 | 0 | 0 |
+| water-neutral | 78.3 | 1.0e-4 | 5.0e-3 | 47.9 | -0.36 |
+| water-cation | 78.3 | 2.0e-4 | 3.5e-3 | 5.0 | 0.125 |
+| water-anion | 78.3 | 2.4e-3 | 1.55e-2 | 0 | 0.45 |
+
+The accepted `sccs_mixing_type` strings are exactly `linear`, `pulay`, and
+`anderson`. They select damped fixed-point, Pulay DIIS and Anderson acceleration,
+respectively. `broyden` and `andersonb` are not accepted INPUT values. This inner
+solver setting is independent of the outer electronic `mixing_type`.
+
+All presets retain user control over mixing, tolerances, maximum iteration
+count, surface regularization, delayed activation and diagnostic output.
+Defaults are `sccs_mixing_type linear`, `sccs_mixing 0.5`,
+`sccs_mixing_ndim 8`, `sccs_mixing_adaptive 0`, `sccs_mixing_min 0.1`,
+`sccs_mixing_max 0.8`, `sccs_tol_rms 1e-10`, `sccs_tol_max 1e-8`,
+`sccs_maxiter 200`, `sccs_surface_eta 1e-8`, `sccs_start_drho 0`,
+`sccs_start_nmax 30`, and `sccs_debug 0`.
+
 ## Migration
 
 `solvation_model`, `sccs_boundary`, and `pcc_boundary` have been removed.
@@ -51,7 +80,10 @@ changing their electrostatics.
   Set `sccs_debug 1` for compact per-step summaries.
 
 PCC supports CPU KS-DFT PW/LCAO SCF and fixed-cell relaxation with
-norm-conserving pseudopotentials and `nspin 1` or `2`. Stress and simultaneous
+`nspin 1` or `2`. SCCS/PCC with ultrasoft pseudopotentials emits a warning and
+continues; its numerical compatibility has not been validated. The host ABACUS
+USPP restrictions still apply, including the current PW-only restriction.
+Stress and simultaneous
 external electric/gate fields are unsupported. The 2D open direction is y;
 charged-slab absolute energies at different y cell lengths are not directly
 comparable. Small FFT grids must be distributed so that each MPI rank has

@@ -4859,21 +4859,21 @@
 
 - **Type**: String
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Select vacuum, custom, water-neutral, water-cation, or water-anion parameters. Vacuum sets epsilon=1, surface tension=0, and pressure=0; assume_isolated can still enable PCC. Numerical cavity and non-electrostatic inputs are used only by custom.
+- **Description**: Allowed values: custom, vacuum, water-neutral, water-cation, water-anion (use these exact lowercase names). custom uses sccs_epsilon, sccs_rho_min, sccs_rho_max, sccs_gamma and sccs_pressure from INPUT. Other presets override those five values; their individual parameter descriptions list all effective values. The preset is not chosen automatically from the net charge. Solver controls, surface regularization, delayed start and debug settings remain user-controlled for every preset. Vacuum has no dielectric or non-electrostatic solvent contribution, but assume_isolated can still enable PCC.
 - **Default**: custom
 
 ### sccs_epsilon
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS bulk relative permittivity
+- **Description**: SCCS bulk relative permittivity (dimensionless, at least 1). For sccs_preset=custom, use this INPUT value (default 78.3). Effective value for vacuum: 1; water-neutral, water-cation and water-anion: 78.3. Non-custom presets override this INPUT value.
 - **Default**: 78.3
 
 ### sccs_rho_min
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS lower cavity-density threshold
+- **Description**: SCCS lower cavity-density threshold (positive). For sccs_preset=custom, use this INPUT value (default 1.0e-4 bohr^-3). Effective values: vacuum=1.0e-4, water-neutral=1.0e-4, water-cation=2.0e-4, water-anion=2.4e-3 bohr^-3. Non-custom presets override this INPUT value.
 - **Default**: 1.0e-4
 - **Unit**: bohr^-3
 
@@ -4881,7 +4881,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS upper cavity-density threshold
+- **Description**: SCCS upper cavity-density threshold (greater than sccs_rho_min). For sccs_preset=custom, use this INPUT value (default 5.0e-3 bohr^-3). Effective values: vacuum=5.0e-3, water-neutral=5.0e-3, water-cation=3.5e-3, water-anion=1.55e-2 bohr^-3. Non-custom presets override this INPUT value.
 - **Default**: 5.0e-3
 - **Unit**: bohr^-3
 
@@ -4889,7 +4889,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS effective surface coefficient
+- **Description**: SCCS effective surface coefficient. For sccs_preset=custom, use this INPUT value (default 0 dyn/cm). Effective values: vacuum=0, water-neutral=47.9, water-cation=5.0, water-anion=0 dyn/cm. Non-custom presets override this INPUT value.
 - **Default**: 0.0
 - **Unit**: dyn/cm
 
@@ -4897,7 +4897,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS effective volume coefficient
+- **Description**: SCCS effective volume coefficient. For sccs_preset=custom, use this INPUT value (default 0 GPa). Effective values: vacuum=0, water-neutral=-0.36, water-cation=0.125, water-anion=0.45 GPa. Non-custom presets override this INPUT value.
 - **Default**: 0.0
 - **Unit**: GPa
 
@@ -4905,28 +4905,28 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS polarization damping factor used by all inner mixing methods
+- **Description**: Initial SCCS polarization damping factor for linear, pulay and anderson; range (0, 1]. User-controlled for every sccs_preset, default 0.5. With sccs_mixing_adaptive=1, it must lie within sccs_mixing_min and sccs_mixing_max. Reducing this value can help difficult inner iterations, at the cost of slower convergence.
 - **Default**: 0.5
 
 ### sccs_mixing_min
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Lower bound for adaptive SCCS polarization mixing; must be positive and no greater than sccs_mixing_max
+- **Description**: Lower bound for adaptive SCCS polarization mixing; must be positive and no greater than sccs_mixing_max. User-controlled for every sccs_preset, default 0.1; inactive when sccs_mixing_adaptive=0
 - **Default**: 0.1
 
 ### sccs_mixing_max
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Upper bound for adaptive SCCS polarization mixing; must not exceed one
+- **Description**: Upper bound for adaptive SCCS polarization mixing; must not exceed one. User-controlled for every sccs_preset, default 0.8; inactive when sccs_mixing_adaptive=0
 - **Default**: 0.8
 
 ### sccs_tol_rms
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS polarization RMS residual tolerance
+- **Description**: Positive SCCS polarization RMS residual tolerance; user-controlled for every sccs_preset, default 1.0e-10 e/bohr^3.
 - **Default**: 1.0e-10
 - **Unit**: e/bohr^3
 
@@ -4934,7 +4934,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS polarization maximum residual tolerance
+- **Description**: Positive SCCS polarization maximum residual tolerance; user-controlled for every sccs_preset, default 1.0e-8 e/bohr^3.
 - **Default**: 1.0e-8
 - **Unit**: e/bohr^3
 
@@ -4942,7 +4942,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: SCCS surface regularization
+- **Description**: Positive SCCS surface regularization; user-controlled for every sccs_preset, default 1.0e-8 bohr^-1.
 - **Default**: 1.0e-8
 - **Unit**: bohr^-1
 
@@ -4950,14 +4950,14 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately. Once activated, SCCS remains active for all later electronic and ionic steps.
+- **Description**: Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately. Once activated, SCCS remains active for all later electronic and ionic steps. PCC remains active during the delay. User-controlled for every sccs_preset, default 0.
 - **Default**: 0.0
 
 ### sccs_start_nmax
 
 - **Type**: Integer
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Force delayed SCCS activation at this electronic iteration if the SCCS start DRHO threshold has not yet been reached. The value must be smaller than scf_nmax so a later iteration uses the SCCS Hamiltonian.
+- **Description**: Force delayed SCCS activation at this electronic iteration if the SCCS start DRHO threshold has not yet been reached. The value must be positive, and smaller than scf_nmax when delayed start is enabled. User-controlled for every sccs_preset, default 30; inactive when sccs_start_drho=0.
 - **Default**: 30
 
 ### sccs_debug
@@ -4970,28 +4970,28 @@
 
 - **Type**: Integer
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Maximum number of inner SCCS polarization iterations.
+- **Description**: Positive maximum number of inner SCCS polarization iterations. User-controlled for every sccs_preset, default 200; failure to converge within this limit terminates the calculation.
 - **Default**: 200
 
 ### sccs_mixing_adaptive
 
 - **Type**: Boolean
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Adapt the SCCS polarization damping factor within sccs_mixing_min and sccs_mixing_max. The initial value is sccs_mixing. Three consecutive residual ratios below 0.7 increase the factor by 10%. A ratio above 2.0, or two consecutive ratios above 1.1, halves the factor, clears the acceleration history, and forces one linear recovery step.
+- **Description**: Allowed values: 0 (fixed damping, default) or 1 (adaptive damping). User-controlled for every sccs_preset. Adapt the damping factor within sccs_mixing_min and sccs_mixing_max. The initial value is sccs_mixing. Three consecutive residual ratios below 0.7 increase the factor by 10%. A ratio above 2.0, or two consecutive ratios above 1.1, halves the factor, clears the acceleration history, and forces one linear recovery step.
 - **Default**: 0
 
 ### sccs_mixing_type
 
 - **Type**: String
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Select linear, Pulay DIIS, or Anderson mixing for the inner SCCS polarization iteration.
+- **Description**: Allowed INPUT values are exactly linear, pulay and anderson. linear: damped fixed-point iteration; pulay: Pulay DIIS; anderson: Anderson acceleration using differences of iterates and residuals. These select the inner SCCS polarization solver, independently of the outer SCF mixing_type. User-controlled for every sccs_preset, default linear. broyden and andersonb are not accepted values. Accelerated methods fall back to a linear step when insufficient or unusable history is available.
 - **Default**: linear
 
 ### sccs_mixing_ndim
 
 - **Type**: Integer
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Number of residual-history vectors retained by Pulay or Anderson SCCS mixing.
+- **Description**: Number of history vectors retained by sccs_mixing_type=pulay or anderson. Must be at least 2; user-controlled for every sccs_preset, default 8. Unused by linear mixing, but the value must still satisfy the input range.
 - **Default**: 8
 
 [back to top](#full-list-of-input-keywords)

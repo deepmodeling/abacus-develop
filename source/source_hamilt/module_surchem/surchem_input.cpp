@@ -33,7 +33,9 @@ SurchemParameters make_parameters(const Input_para& inp,
     }
     if (use_uspp)
     {
-        ModuleBase::WARNING_QUIT("surchem", "SCCS/PCC currently supports only norm-conserving pseudopotentials");
+        ModuleBase::WARNING("surchem",
+                            "SCCS/PCC with ultrasoft pseudopotentials has not been validated; "
+                            "continuing the calculation. Verify energies and forces before production use.");
     }
     parameters.pool_process_count = pool_process_count;
     parameters.debug = inp.sccs_debug;
