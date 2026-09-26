@@ -2027,13 +2027,11 @@
 ### out_dos
 
 - **Type**: Integer
-- **Description**: Whether to output the density of states (DOS). For more information, refer to the dos.md.
+- **Description**: Whether to output the density of states (DOS) and projected density of states (PDOS). For more information, refer to the dos.md.
   - 0: no output
-  - 1: output the density of states (DOS)
-   - nspin=1 or 4: doss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
-   - nspin=2: doss1g{geom}_{basis}.txt and doss2g{geom}_{basis}.txt for two spin channles.
-  - 2: (LCAO) output the density of states (DOS) and the projected density of states (PDOS)
-  - 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen
+  - 1: output the density of states (DOS) and projected density of states (PDOS, LCAO only)
+   - nspin=1 or 4: doss1g{geom}_{basis}.txt and pdoss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
+   - nspin=2: doss1/doss2 and pdoss1/pdoss2 files for two spin channels.
 - **Default**: 0
 
 ### out_ldos
@@ -2513,7 +2511,7 @@
 
 - **Type**: Real
 - **Description**: The step size in writing Density of States (DOS)
-- **Default**: 0.01
+- **Default**: 0.03
 - **Unit**: eV
 
 ### dos_sigma

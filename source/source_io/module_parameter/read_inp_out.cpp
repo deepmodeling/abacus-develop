@@ -324,13 +324,11 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output energy and dos";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = R"(Whether to output the density of states (DOS). For more information, refer to the dos.md.
+        item.description = R"(Whether to output the density of states (DOS) and projected density of states (PDOS). For more information, refer to the dos.md.
 * 0: no output
-* 1: output the density of states (DOS)
- * nspin=1 or 4: doss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
- * nspin=2: doss1g{geom}_{basis}.txt and doss2g{geom}_{basis}.txt for two spin channles.
-* 2: (LCAO) output the density of states (DOS) and the projected density of states (PDOS)
-* 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen)";
+* 1: output the density of states (DOS) and projected density of states (PDOS, LCAO only)
+ * nspin=1 or 4: doss1g{geom}_{basis}.txt and pdoss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
+ * nspin=2: doss1/doss2 and pdoss1/pdoss2 files for two spin channels.)";
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.out_dos);
@@ -341,17 +339,17 @@ Also controled by out_freq_ion and out_app_flag.
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_dos == 3 && para.input.symmetry == "1")
+            if (para.input.out_dos == 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
-                                         "symmetry can't be used for out_dos==3(Fermi Surface "
-                                         "Plotting) by now.");
+                                         "out_dos = 2 has been deprecated. "
+                                         "PDOS is now written automatically with out_dos = 1.");
             }
-            if (para.input.basis_type == "pw" && para.input.out_dos == 3)
+            if (para.input.out_dos == 3)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
-                                         "Fermi Surface Plotting not "
-                                         "implemented for plane wave now.");
+                                         "out_dos = 3 (Fermi surface output) has been removed. "
+                                         "Please use out_dos = 1 for DOS output.");
             }
         };
         this->add_item(item);

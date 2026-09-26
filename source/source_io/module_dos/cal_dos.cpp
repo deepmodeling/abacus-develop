@@ -4,7 +4,6 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
-#include "source_io/module_parameter/parameter.h"
 
 void ModuleIO::prepare_dos(std::ofstream& ofs_running,
 		const elecstate::Efermi &energy_fermi,
@@ -14,7 +13,12 @@ void ModuleIO::prepare_dos(std::ofstream& ofs_running,
 		const double& dos_edelta_ev,
 		const double& dos_scale,
 		double &emax,
-		double &emin)
+		double &emin,
+		const bool dos_setemax,
+		const double dos_emax_ev,
+		const bool dos_setemin,
+		const double dos_emin_ev,
+		const bool two_fermi)
 {
 	ofs_running << "\n >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 	ofs_running << " |                                                                    |" << std::endl;
@@ -30,7 +34,7 @@ void ModuleIO::prepare_dos(std::ofstream& ofs_running,
 
     assert(nbands>0);
 
-    if (PARAM.globalv.two_fermi == false)
+    if (two_fermi == false)
     {
         ModuleBase::GlobalFunc::OUT(ofs_running, "Fermi energy (eV)",
         energy_fermi.ef * ModuleBase::Ry_to_eV);
@@ -63,16 +67,16 @@ void ModuleIO::prepare_dos(std::ofstream& ofs_running,
     emax *= ModuleBase::Ry_to_eV;
     emin *= ModuleBase::Ry_to_eV;
 
-    if (PARAM.globalv.dos_setemax)
+    if (dos_setemax)
     {
-        emax = PARAM.inp.dos_emax_ev;
+        emax = dos_emax_ev;
     }
-    if (PARAM.globalv.dos_setemin)
+    if (dos_setemin)
     {
-        emin = PARAM.inp.dos_emin_ev;
+        emin = dos_emin_ev;
     }
 
-    if (!PARAM.globalv.dos_setemax && !PARAM.globalv.dos_setemin)
+    if (!dos_setemax && !dos_setemin)
     {
         // scale up a little bit so the end peaks are displaced better
         double delta = (emax - emin) * dos_scale;
@@ -101,7 +105,9 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
 		const int& nbands,             // number of bands
 		const ModuleBase::matrix& ekb, // energy for each k point and each band
 		const ModuleBase::matrix& wg,  // weight of k-points and bands 
-        const int istep) // ionic step
+        const int istep, // ionic step
+		const bool out_app_flag,
+		const int bndpar)
 {
     ModuleBase::TITLE("ModuleIO", "cal_dos");
 
@@ -109,7 +115,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
 
     if (GlobalV::MY_RANK == 0)
     {
-		if(PARAM.inp.out_app_flag==true)
+		if(out_app_flag==true)
 		{
 			ofs_dos.open(fn.c_str(), std::ios::app);
 		}
@@ -155,11 +161,12 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
     if (GlobalV::MY_RANK == 0)
     {
         ofs_dos << npoints << " # number of points" << std::endl;
-        ofs_dos << "#" << std::setw(14) << "energy" 
-                 << std::setw(15) << "elec_states" 
-                 << std::setw(15) << "sum_states" 
-                 << std::setw(15) << "states_smear" 
-                 << std::setw(15) << "sum_states" << std::endl;
+        ofs_dos << std::fixed << std::setprecision(6);
+        ofs_dos << "#" << std::setw(12) << "energy(eV)"
+                 << std::setw(12) << "dos(1/eV)"
+                 << std::setw(12) << "dos_int"
+                 << std::setw(17) << "dos_smear(1/eV)"
+                 << std::setw(15) << "dos_smear_int" << std::endl;
     }
 
     std::vector<double> e_mod(npoints, 0.0); 
@@ -194,7 +201,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         }
 
 #ifdef __MPI
-        const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
+        const int npool = GlobalV::KPAR * bndpar;
         Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, nstates);
 #endif
 
@@ -239,10 +246,10 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
             }
             sum2 += dos_smear[i] * de_ev;
 
-            ofs_dos << std::setw(15) << ene[i] 
-                 << std::setw(15) << dos[i]
-                 << std::setw(15) << sum_elec[i]
-                 << std::setw(15) << dos_smear[i] 
+            ofs_dos << std::setw(12) << ene[i]
+                 << std::setw(12) << dos[i]
+                 << std::setw(12) << sum_elec[i]
+                 << std::setw(15) << dos_smear[i]
                  << std::setw(15) << sum2 << std::endl;
         }
     }

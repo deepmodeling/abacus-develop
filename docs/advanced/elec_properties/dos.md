@@ -68,52 +68,30 @@ Gamma
 8 8 8 0 0 0
 ```
 
-Run the program, and you will see a file named DOS1_smearing.dat in the output directory. The first two columns in the file are the energy and DOS, respectively, and the third column is the sum of DOS. Plot file DOS1_smearing.dat with graphing software, and you’ll get the DOS.
+Run the program, and you will see a file named doss1g1_nao.txt in the output directory. The columns are: energy(eV), dos(1/eV), dos_int (integrated DOS), dos_smear(1/eV), dos_smear_int (integrated smeared DOS). Plot the file with graphing software, and you'll get the DOS.
 
 ```
-            -5.49311           0.0518133           0.0518133
-            -5.48311           0.0641955            0.116009
-            -5.47311           0.0779299            0.193939
-            -5.46311           0.0926918             0.28663
-            -5.45311            0.108023            0.394653
-            -5.44311            0.123346            0.517999
-            ...
+#   energy(eV)      dos(1/eV)        dos_int  dos_smear(1/eV)  dos_smear_int
+      -5.49311       0.0518133       0.0518133       0.0518133       0.0518133
+      -5.48311       0.0641955        0.116009       0.0641955        0.116009
+      -5.47311       0.0779299        0.193939       0.0779299        0.193939
+      ...
 ```
 
 ## PDOS
 
-Along with the DOS1_smearing.dat file, we also produce the projected density of states (PDOS) in a file called PDOS.
+Along with the DOS files, we also produce the projected density of states (PDOS) in files named pdoss{spin}g{geom}_{basis}.txt (e.g., pdoss1g1_nao.txt).
 
-The PDOS file starts with number of atomic orbitals in the system, then a list of energy values, such as:
-
-```
-<pdos>
-<nspin>1</nspin>
-<norbitals>26</norbitals>
-<energy_values units="eV">
-            -5.50311
-            -5.49311
-            -5.48311
-            -5.47311
-...
+The PDOS file uses a plain-text format. Each row corresponds to one energy point and one atom. Columns: energy(eV), atom (1-based), species, then pdos values ordered as s(1), p(3), d(5), f(7), etc. Zeta components are summed, and values below 1e-6 are zeroed out.
 
 ```
-
-The rest of the fileis arranged in sections, each section with a header such as below:
-
-```
-<orbital
- index="                                       1"
- atom_index="                                       1"
- species="Si"
- l="                                       0"
- m="                                       0"
- z="                                       1"
->
-<data>
-...
-</data>
-
+# istep: 1
+# npoints: 2736
+# energy(eV)  atom  species  pdos(1/eV), columns: s(m=0) p(m=0,+1,-1) d(m=0,+1,-1,+2,-2) f(m=0,+1,-1,+2,-2,+3,-3)
+  -55.607730    1     Fe    0.000000    0.000000    0.000000    0.000000    0.000000    0.000000    0.000000    0.000000    0.000000
+  ...
 ```
 
-which tells the atom and symmetry of the current atomic orbital, and followed by the PDOS values. The values can thus be plotted against the energies. The unit of PDOS is also `(number of states)/(eV * unitcell)`.
+The `# istep:` line is only present for geometry-optimization (istep) output. Within each angular momentum `l`, the `2l+1` columns follow the magnetic-quantum-number order `m = 0, +1, -1, +2, -2, ...`.
+
+For nspin=2, two files are written (pdoss1* and pdoss2*), one per spin channel. For nspin=4, the two spinor components are summed into a single file. The unit of PDOS is also `(number of states)/(eV * unitcell)`.

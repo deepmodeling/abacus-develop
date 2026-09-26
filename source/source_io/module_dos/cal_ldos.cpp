@@ -24,12 +24,17 @@ void Cal_ldos<T>::cal_ldos_lcao(
 		const Parallel_Grid& pgrid,
 		const Parallel_Orbitals& pv,
 		const Grid_Driver& grid_driver,
-		const UnitCell& ucell)
+		const UnitCell& ucell,
+		const std::vector<double>& stm_bias,
+		const int nspin,
+		const std::string& global_out_dir,
+		const bool two_fermi,
+		const int out_ldos_precision)
 {
-    for (int ie = 0; ie < PARAM.inp.stm_bias[2]; ie++)
+    for (int ie = 0; ie < stm_bias[2]; ie++)
     {
         // energy range for ldos (efermi as reference)
-        const double en = PARAM.inp.stm_bias[0] + ie * PARAM.inp.stm_bias[1];
+        const double en = stm_bias[0] + ie * stm_bias[1];
         const double emin = en < 0 ? en : 0;
         const double emax = en > 0 ? en : 0;
 
@@ -50,7 +55,7 @@ void Cal_ldos<T>::cal_ldos_lcao(
         }
 
         // calculate dm-like for ldos
-        const int nspin_dm = PARAM.inp.nspin == 2 ? 2 : 1;
+        const int nspin_dm = nspin == 2 ? 2 : 1;
         module_dm::DensityMatrix<T, double> dm_ldos(&pv,
                                                     nspin_dm,
                                                     kv.kvec_d,
@@ -61,15 +66,15 @@ void Cal_ldos<T>::cal_ldos_lcao(
         dm_ldos.cal_dmr(-1);
 
         // allocate ldos space
-        std::vector<double> ldos_space(PARAM.inp.nspin * chr.nrxx);
-        double** ldos = new double*[PARAM.inp.nspin];
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        std::vector<double> ldos_space(nspin * chr.nrxx);
+        double** ldos = new double*[nspin];
+        for (int is = 0; is < nspin; ++is)
         {
             ldos[is] = &ldos_space[is * chr.nrxx];
         }
 
     // calculate ldos
-        ModuleGint::cal_gint_rho(dm_ldos.get_dmr_vec(), PARAM.inp.nspin, ldos);
+        ModuleGint::cal_gint_rho(dm_ldos.get_dmr_vec(), nspin, ldos);
 
         // I'm not sure whether ldos should be output for each spin or not
         // ldos[0] += ldos[1] for nspin_dm == 2
@@ -80,21 +85,21 @@ void Cal_ldos<T>::cal_ldos_lcao(
 
         // write ldos to cube file
         std::stringstream fn;
-        fn << PARAM.globalv.global_out_dir << "LDOS_" << en << "eV"
+        fn << global_out_dir << "LDOS_" << en << "eV"
            << ".cube";
 
-        const int precision = PARAM.inp.out_ldos[1];
+        const int precision = out_ldos_precision;
         ModuleIO::write_vdata_palgrid(pgrid,
                                       ldos_space.data(),
                                       0,
-                                      PARAM.inp.nspin,
+                                      nspin,
                                       0,
                                       fn.str(),
                                       0,
                                       &ucell,
                                       precision,
                                       0,
-                                      PARAM.globalv.two_fermi,
+                                      two_fermi,
                                       false);
 
         // free memory
@@ -113,15 +118,35 @@ void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                  const psi::Psi<std::complex<double>, Device>& psi,
                  const Device* ctx,
                  const Parallel_Grid& pgrid,
-                 const UnitCell& ucell)
+                 const UnitCell& ucell,
+                 const std::vector<int>& out_ldos,
+                 const std::vector<double>& stm_bias,
+                 const int nspin,
+                 const std::string& global_out_dir,
+                 const bool two_fermi,
+                 const int nbands,
+                 const double dos_edelta_ev,
+                 const double dos_scale,
+                 const bool dos_setemax,
+                 const double dos_emax_ev,
+                 const bool dos_setemin,
+                 const double dos_emin_ev,
+                 const double dos_sigma,
+                 const std::vector<double>& ldos_line)
 {
-    if (PARAM.inp.out_ldos[0] == 1 || PARAM.inp.out_ldos[0] == 3)
+    if (out_ldos[0] == 1 || out_ldos[0] == 3)
     {
-        ModuleIO::stm_mode_pw<Device>(pelec, psi, ctx, pgrid, ucell);
+        const int out_ldos_precision = out_ldos[1];
+        ModuleIO::stm_mode_pw<Device>(pelec, psi, ctx, pgrid, ucell,
+                                      stm_bias, nspin, global_out_dir, two_fermi,
+                                      out_ldos_precision);
     }
-    if (PARAM.inp.out_ldos[0] == 2 || PARAM.inp.out_ldos[0] == 3)
+    if (out_ldos[0] == 2 || out_ldos[0] == 3)
     {
-        ModuleIO::ldos_mode_pw<Device>(pelec, psi, ctx, pgrid, ucell);
+        ModuleIO::ldos_mode_pw<Device>(pelec, psi, ctx, pgrid, ucell,
+                                       global_out_dir, nbands, dos_edelta_ev, dos_scale,
+                                       dos_setemax, dos_emax_ev, dos_setemin, dos_emin_ev,
+                                       two_fermi, dos_sigma, ldos_line);
     }
 }
 
@@ -130,12 +155,17 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                  const psi::Psi<std::complex<double>, Device>& psi,
                  const Device* ctx,
                  const Parallel_Grid& pgrid,
-                 const UnitCell& ucell)
+                 const UnitCell& ucell,
+                 const std::vector<double>& stm_bias,
+                 const int nspin,
+                 const std::string& global_out_dir,
+                 const bool two_fermi,
+                 const int out_ldos_precision)
 {
-    for (int ie = 0; ie < PARAM.inp.stm_bias[2]; ie++)
+    for (int ie = 0; ie < stm_bias[2]; ie++)
     {
         // energy range for ldos (efermi as reference)
-        const double en = PARAM.inp.stm_bias[0] + ie * PARAM.inp.stm_bias[1];
+        const double en = stm_bias[0] + ie * stm_bias[1];
         const double emin = en < 0 ? en : 0;
         const double emax = en > 0 ? en : 0;
 
@@ -191,11 +221,11 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
         }
 
         std::stringstream fn;
-        fn << PARAM.globalv.global_out_dir << "LDOS_" << en << "eV"
+        fn << global_out_dir << "LDOS_" << en << "eV"
            << ".cube";
 
-        const int precision = PARAM.inp.out_ldos[1];
-        ModuleIO::write_vdata_palgrid(pgrid, ldos.data(), 0, PARAM.inp.nspin, 0, fn.str(), 0, &ucell, precision, 0, PARAM.globalv.two_fermi, false);
+        const int precision = out_ldos_precision;
+        ModuleIO::write_vdata_palgrid(pgrid, ldos.data(), 0, nspin, 0, fn.str(), 0, &ucell, precision, 0, two_fermi, false);
     }
 }
 
@@ -204,7 +234,18 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                   const psi::Psi<std::complex<double>, Device>& psi,
                   const Device* ctx,
                   const Parallel_Grid& pgrid,
-                  const UnitCell& ucell)
+                  const UnitCell& ucell,
+                  const std::string& global_out_dir,
+                  const int nbands,
+                  const double dos_edelta_ev,
+                  const double dos_scale,
+                  const bool dos_setemax,
+                  const double dos_emax_ev,
+                  const bool dos_setemin,
+                  const double dos_emin_ev,
+                  const bool two_fermi,
+                  const double dos_sigma,
+                  const std::vector<double>& ldos_line)
 {
     double emax = 0.0;
     double emin = 0.0;
@@ -213,20 +254,25 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                 pelec->eferm,
                 pelec->ekb,
                 pelec->klist->get_nks(),
-                PARAM.inp.nbands,
-                PARAM.inp.dos_edelta_ev,
-                PARAM.inp.dos_scale,
+                nbands,
+                dos_edelta_ev,
+                dos_scale,
                 emax,
-                emin);
+                emin,
+                dos_setemax,
+                dos_emax_ev,
+                dos_setemin,
+                dos_emin_ev,
+                two_fermi);
 
-    const int ndata = static_cast<int>((emax - emin) / PARAM.inp.dos_edelta_ev) + 1;
-    const double sigma = sqrt(2.0) * PARAM.inp.dos_sigma;
+    const int ndata = static_cast<int>((emax - emin) / dos_edelta_ev) + 1;
+    const double sigma = sqrt(2.0) * dos_sigma;
     const double sigma2 = sigma * sigma;
     const double sigma_PI = sqrt(ModuleBase::PI) * sigma;
 
-    std::vector<double> start = {PARAM.inp.ldos_line[0], PARAM.inp.ldos_line[1], PARAM.inp.ldos_line[2]};
-    std::vector<double> end = {PARAM.inp.ldos_line[3], PARAM.inp.ldos_line[4], PARAM.inp.ldos_line[5]};
-    const int npoints = PARAM.inp.ldos_line[6];
+    std::vector<double> start = {ldos_line[0], ldos_line[1], ldos_line[2]};
+    std::vector<double> end = {ldos_line[3], ldos_line[4], ldos_line[5]};
+    const int npoints = ldos_line[6];
 
     // calculate grid points
     std::vector<std::vector<int>> points(npoints, std::vector<int>(3, 0));
@@ -280,7 +326,7 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
 
             for (int ie = 0; ie < ndata; ++ie)
             {
-                const double en = emin + ie * PARAM.inp.dos_edelta_ev;
+                const double en = emin + ie * dos_edelta_ev;
                 const double de = en - eigenval;
                 const double de2 = de * de;
                 const double gauss = exp(-de2 / sigma2) / sigma_PI;
@@ -300,7 +346,7 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
 
     std::ofstream ofs_ldos;
     std::stringstream fn;
-    fn << PARAM.globalv.global_out_dir << "LDOS.txt";
+    fn << global_out_dir << "LDOS.txt";
     if (GlobalV::MY_RANK == 0)
     {
         ofs_ldos.open(fn.str().c_str());
@@ -430,13 +476,41 @@ template void cal_ldos_pw<base_device::DEVICE_CPU>(const elecstate::ElecStatePW<
                                                    const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& psi,
                                                    const base_device::DEVICE_CPU* ctx,
                                                    const Parallel_Grid& pgrid,
-                                                   const UnitCell& ucell);
+                                                   const UnitCell& ucell,
+                                                   const std::vector<int>& out_ldos,
+                                                   const std::vector<double>& stm_bias,
+                                                   const int nspin,
+                                                   const std::string& global_out_dir,
+                                                   const bool two_fermi,
+                                                   const int nbands,
+                                                   const double dos_edelta_ev,
+                                                   const double dos_scale,
+                                                   const bool dos_setemax,
+                                                   const double dos_emax_ev,
+                                                   const bool dos_setemin,
+                                                   const double dos_emin_ev,
+                                                   const double dos_sigma,
+                                                   const std::vector<double>& ldos_line);
 #if defined(__CUDA) || defined(__ROCM)
 template void cal_ldos_pw<base_device::DEVICE_GPU>(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                                                    const psi::Psi<std::complex<double>, base_device::DEVICE_GPU>& psi,
                                                    const base_device::DEVICE_GPU* ctx,
                                                    const Parallel_Grid& pgrid,
-                                                   const UnitCell& ucell);
+                                                   const UnitCell& ucell,
+                                                   const std::vector<int>& out_ldos,
+                                                   const std::vector<double>& stm_bias,
+                                                   const int nspin,
+                                                   const std::string& global_out_dir,
+                                                   const bool two_fermi,
+                                                   const int nbands,
+                                                   const double dos_edelta_ev,
+                                                   const double dos_scale,
+                                                   const bool dos_setemax,
+                                                   const double dos_emax_ev,
+                                                   const bool dos_setemin,
+                                                   const double dos_emin_ev,
+                                                   const double dos_sigma,
+                                                   const std::vector<double>& ldos_line);
 #endif
 
 } // namespace ModuleIO

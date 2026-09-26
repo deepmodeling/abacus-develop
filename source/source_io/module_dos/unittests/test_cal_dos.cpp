@@ -1,12 +1,12 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "source_io/module_dos/cal_dos.h"
+#include "../cal_dos.h"
 #include "source_base/global_variable.h"
 #include <string>
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "dos_test.h"
+#include "./dos_test.h"
 
 /************************************************
  *  unit test of ca_dos
@@ -29,13 +29,15 @@ protected:
 TEST_F(DosTest,Dos)
 {
 	//is,fa,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
-	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",0.005,18,-6,0.07,36,36,8);
+	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",0.005,18,-6,0.07,dos_test_data::nks,dos_test_data::nkstot,dos_test_data::nbands);
 	dosp.set_isk();
-	dosp.read_wk();
-	dosp.read_istate_info();
+	dosp.set_wk();
+	dosp.set_istate_info();
 	EXPECT_EQ(dosp.is,0);
 
     const int istep = 1;
+    const bool out_app_flag = false;
+    const int bndpar = 1;
 	ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
 			dosp.de_ev,
@@ -49,7 +51,9 @@ TEST_F(DosTest,Dos)
 			dosp.nbands,
 			dosp.ekb,
 			dosp.wg,
-			istep);
+			istep,
+			out_app_flag,
+			bndpar);
 
 #ifdef __MPI
 	if(GlobalV::MY_RANK==0)
@@ -59,10 +63,10 @@ TEST_F(DosTest,Dos)
 		ifs.open(dosp.fa.c_str());
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str, testing::HasSubstr("4801 # number of points"));
-		EXPECT_THAT(str, testing::HasSubstr("   -5.390000    0.031250    0.031250       0.178099       0.016070"));
-		EXPECT_THAT(str, testing::HasSubstr("    3.070000    0.187500    5.468750       1.070029       5.377651"));
-		ifs.close();
-		remove("doss1_pw.txt");
+	EXPECT_THAT(str, testing::HasSubstr("   -4.995000    0.500000    0.500000"));
+	EXPECT_THAT(str, testing::HasSubstr("   18.000000    0.000000    8.000000"));
+	ifs.close();
+	remove("doss1_pw.txt");
 #ifdef __MPI
 	}
 #endif
@@ -73,15 +77,17 @@ TEST_F(DosTest,Dos)
 TEST_F(DosTest,DosW1)
 {
 	//is,fa,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
-	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",-0.005,18,-6,0.07,36,36,8);
+	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",-0.005,18,-6,0.07,dos_test_data::nks,dos_test_data::nkstot,dos_test_data::nbands);
 	dosp.set_isk();
-	dosp.read_wk();
-	dosp.read_istate_info();
+	dosp.set_wk();
+	dosp.set_istate_info();
 	EXPECT_EQ(dosp.is,0);
 	EXPECT_LE(dosp.de_ev,0);
 	GlobalV::ofs_warning.open("warning1.log");
 
     const int istep = 1;
+    const bool out_app_flag = false;
+    const int bndpar = 1;
 	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
 			dosp.de_ev,
@@ -95,7 +101,9 @@ TEST_F(DosTest,DosW1)
 			dosp.nbands,
 			dosp.ekb,
 			dosp.wg,
-            istep));
+			istep,
+			out_app_flag,
+			bndpar));
 	GlobalV::ofs_warning.close();
 #ifdef __MPI
 	if(GlobalV::MY_RANK==0)
@@ -117,14 +125,16 @@ TEST_F(DosTest,DosW1)
 TEST_F(DosTest,DosW2)
 {
     //is,fa,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
-	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",0.005,-6,18,0.07,36,36,8);
+	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",0.005,-6,18,0.07,dos_test_data::nks,dos_test_data::nkstot,dos_test_data::nbands);
 	dosp.set_isk();
-	dosp.read_wk();
-	dosp.read_istate_info();
+	dosp.set_wk();
+	dosp.set_istate_info();
 	EXPECT_EQ(dosp.is,0);
 	GlobalV::ofs_warning.open("warning2.log");
 
     const int istep = 1;
+    const bool out_app_flag = false;
+    const int bndpar = 1;
 	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
 			dosp.de_ev,
@@ -138,7 +148,9 @@ TEST_F(DosTest,DosW2)
 			dosp.nbands,
 			dosp.ekb,
 			dosp.wg,
-			istep));
+			istep,
+			out_app_flag,
+			bndpar));
 
 	GlobalV::ofs_warning.close();
 #ifdef __MPI

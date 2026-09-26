@@ -499,7 +499,7 @@ struct Input_para
     // ==============   #Parameters (12.Postprocess) ===========================
     double dos_emin_ev = -15.0;
     double dos_emax_ev = 15.0;
-    double dos_edelta_ev = 0.01;
+    double dos_edelta_ev = 0.03;
     double dos_scale = 0.01;
     double dos_sigma = 0.07;                      ///< pengfei 2014-10-13
     int dos_nche = 100;                           ///< orders of Chebyshev expansions for dos

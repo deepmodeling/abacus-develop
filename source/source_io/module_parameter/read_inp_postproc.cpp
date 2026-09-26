@@ -15,7 +15,7 @@ void ReadInput::item_postprocess()
         item.category = "Density of states";
         item.type = "Real";
         item.description = "The step size in writing Density of States (DOS)";
-        item.default_value = "0.01";
+        item.default_value = "0.03";
         item.unit = "eV";
         read_sync_double(input.dos_edelta_ev);
         this->add_item(item);

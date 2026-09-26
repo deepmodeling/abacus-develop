@@ -153,6 +153,16 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                                    inp.dos_edelta_ev,
                                    inp.dos_scale,
                                    inp.dos_sigma,
+                                   inp.nspin,
+                                   inp.out_dos,
+                                   PARAM.globalv.dos_setemax,
+                                   inp.dos_emax_ev,
+                                   PARAM.globalv.dos_setemin,
+                                   inp.dos_emin_ev,
+                                   PARAM.globalv.two_fermi,
+                                   inp.out_app_flag,
+                                   inp.bndpar,
+                                   PARAM.globalv.global_out_dir,
                                    GlobalV::ofs_running);
         }
     }
@@ -266,7 +276,21 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                               *stp.template get_psi_d<T, Device>(),
                               ctx,
                               para_grid,
-                              ucell);
+                              ucell,
+                              inp.out_ldos,
+                              inp.stm_bias,
+                              inp.nspin,
+                              PARAM.globalv.global_out_dir,
+                              PARAM.globalv.two_fermi,
+                              inp.nbands,
+                              inp.dos_edelta_ev,
+                              inp.dos_scale,
+                              PARAM.globalv.dos_setemax,
+                              inp.dos_emax_ev,
+                              PARAM.globalv.dos_setemin,
+                              inp.dos_emin_ev,
+                              inp.dos_sigma,
+                              inp.ldos_line);
     }
 
     //----------------------------------------------------------

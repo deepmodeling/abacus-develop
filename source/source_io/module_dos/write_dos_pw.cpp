@@ -1,8 +1,6 @@
 #include "write_dos_pw.h"
 #include "cal_dos.h"
-#include "../module_energy/nscf_fermi_surf.h"
 #include "source_base/parallel_reduce.h"
-#include "source_io/module_parameter/parameter.h"
 
 void ModuleIO::write_dos_pw(
 		const UnitCell& ucell,
@@ -10,16 +8,26 @@ void ModuleIO::write_dos_pw(
 		const ModuleBase::matrix& wg,
 		const K_Vectors& kv,
 		const int nbands,
-        const int istep_in,
+		const int istep_in,
 		const elecstate::Efermi &energy_fermi,
 		const double& dos_edelta_ev,
 		const double& dos_scale,
 		const double& bcoeff,
+		const int nspin,
+		const int out_dos,
+		const bool dos_setemax,
+		const double dos_emax_ev,
+		const bool dos_setemin,
+		const double dos_emin_ev,
+		const bool two_fermi,
+		const bool out_app_flag,
+		const int bndpar,
+		const std::string& global_out_dir,
 		std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_dos_pw");
 
-    const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
+    const int nspin0 = (nspin == 2) ? 2 : 1;
 
     double emax = 0.0;
     double emin = 0.0;
@@ -32,13 +40,18 @@ void ModuleIO::write_dos_pw(
 			dos_edelta_ev,
             dos_scale,
 			emax, 
-			emin);
+			emin,
+			dos_setemax,
+			dos_emax_ev,
+			dos_setemin,
+			dos_emin_ev,
+			two_fermi);
 
     for (int is = 0; is < nspin0; ++is)
     {
         // DOS_ispin contains not smoothed dos
 		std::stringstream ss;
-		ss << PARAM.globalv.global_out_dir << "dos";
+		ss << global_out_dir << "dos";
 
 		if(nspin0==2)
 		{
@@ -66,23 +79,15 @@ void ModuleIO::write_dos_pw(
 				nbands,
 				ekb,
 				wg,
-				istep_in);
+				istep_in,
+				out_app_flag,
+				bndpar);
 	}
 
 
-    if (PARAM.inp.out_dos == 2)
+    if (out_dos == 2)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::write_dos_pw","PW basis do not support PDOS calculations yet.");
-    }
-
-    if(PARAM.inp.out_dos == 3)
-    {
-        for (int is = 0; is < nspin0; is++)
-        {
-            std::stringstream ss3;
-            ss3 << PARAM.globalv.global_out_dir << "fermi" << is << ".bxsf";
-            nscf_fermi_surface(ss3.str(), nbands, energy_fermi.ef, kv, ucell, ekb);
-        }
     }
 
     ofs_running << " #DOS CALCULATION ENDS# " << std::endl;

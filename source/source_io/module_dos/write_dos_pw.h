@@ -20,6 +20,16 @@ namespace ModuleIO
 			const double &dos_edelta_ev,
 			const double &dos_scale,
 			const double &bcoeff,
+			const int nspin,
+			const int out_dos,
+			const bool dos_setemax,
+			const double dos_emax_ev,
+			const bool dos_setemin,
+			const double dos_emin_ev,
+			const bool two_fermi,
+			const bool out_app_flag,
+			const int bndpar,
+			const std::string& global_out_dir,
 			std::ofstream& ofs_running);
 }
 #endif

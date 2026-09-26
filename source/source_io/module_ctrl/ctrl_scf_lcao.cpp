@@ -170,6 +170,15 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                  inp.dos_sigma,
                                  out_app_flag,
                                  istep,
+                                 inp.nspin,
+                                 PARAM.globalv.nlocal,
+                                 PARAM.globalv.dos_setemax,
+                                 inp.dos_emax_ev,
+                                 PARAM.globalv.dos_setemin,
+                                 inp.dos_emin_ev,
+                                 PARAM.globalv.two_fermi,
+                                 inp.bndpar,
+                                 PARAM.globalv.global_out_dir,
                                  GlobalV::ofs_running);
     }
 

@@ -13,7 +13,6 @@ list(APPEND objects
     module_ml/cal_mlkedf_desc.cpp
     module_dos/write_dos_pw.cpp
     module_energy/write_bands.cpp
-    module_energy/nscf_fermi_surf.cpp
     module_energy/write_eig_occ.cpp
     module_bessel/numerical_basis.cpp
     module_bessel/numerical_basis_overlap.cpp
@@ -65,6 +64,7 @@ if(ENABLE_LCAO)
       module_dos/write_dos_lcao.cpp
       module_dos/cal_pdos_gamma.cpp
       module_dos/cal_pdos_multik.cpp
+      module_dos/write_pdos_text.cpp
       module_output/write_orb_info.cpp
       module_energy/write_proj_band_lcao.cpp
       module_chgpot/get_pchg_lcao.cpp
@@ -150,6 +150,7 @@ if(BUILD_TESTING)
   add_subdirectory(module_parameter/test)
   add_subdirectory(test_serial)
   add_subdirectory(test)
+  add_subdirectory(module_dos/unittests)
 endif()
 
 if(ENABLE_JSON)

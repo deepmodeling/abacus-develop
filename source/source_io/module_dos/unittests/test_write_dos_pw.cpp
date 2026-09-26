@@ -1,15 +1,11 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "source_io/module_dos/write_dos_pw.h"
+#include "../write_dos_pw.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "for_testing_klist.h"
-#include "dos_test.h"
-
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
+#include "./for_testing_klist.h"
+#include "./dos_test.h"
 
 /************************************************
  *  unit test of write_dos_pw
@@ -42,17 +38,12 @@ protected:
 TEST_F(DosPWTest,Dos1)
 {
 	//is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
-	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",0.005,18,-6,0.07,36,36,8);
+	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",0.005,18,-6,0.07,dos_test_data::nks,dos_test_data::nkstot,dos_test_data::nbands);
 	dosp.set_isk();
-	dosp.read_wk();
-	dosp.read_istate_info();
+	dosp.set_wk();
+	dosp.set_istate_info();
 	EXPECT_EQ(dosp.is,0);
 	double dos_scale = 0.01;
-	PARAM.input.nspin = 1;
-	PARAM.input.dos_emax_ev = dosp.emax_ev;
-	PARAM.sys.dos_setemax = true;
-	PARAM.input.dos_emin_ev = dosp.emin_ev;
-	PARAM.sys.dos_setemin = true;
 	kv->set_nks(dosp.nks);
 	kv->set_nkstot(dosp.nkstot);
 	kv->isk.reserve(kv->get_nks());
@@ -62,26 +53,44 @@ TEST_F(DosPWTest,Dos1)
 		kv->isk[ik] = dosp.isk[ik];
 		kv->wk[ik] = dosp.wk[ik];
 	}
-	PARAM.input.nbands = dosp.nbands;
 
     // initialize the Fermi energy
     elecstate::Efermi fermi_energy;
 
 	std::ofstream ofs("write_dos_pw.log");
-    
+
     UnitCell ucell;
+
+    const int nspin = 1;
+    const int out_dos = 1;
+    const bool dos_setemax = true;
+    const bool dos_setemin = true;
+    const bool two_fermi = false;
+    const bool out_app_flag = false;
+    const int bndpar = 1;
+    const std::string global_out_dir = "./";
 
 	ModuleIO::write_dos_pw(
             ucell, // this should be unitcell, 2025-04-12
             dosp.ekb,
 			dosp.wg,
 			*kv,
-			PARAM.inp.nbands,
+			dosp.nbands,
             -1, // istep_in
 			fermi_energy,
 			dosp.de_ev,
 			dos_scale,
 			dosp.bcoeff,
+			nspin,
+			out_dos,
+			dos_setemax,
+			dosp.emax_ev,
+			dos_setemin,
+			dosp.emin_ev,
+			two_fermi,
+			out_app_flag,
+			bndpar,
+			global_out_dir,
 			ofs);
     ofs.close();
     remove("write_dos_pw.log");
@@ -94,8 +103,8 @@ TEST_F(DosPWTest,Dos1)
 		ifs.open("dos.txt");
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str, testing::HasSubstr("4801 # number of points"));
-		EXPECT_THAT(str, testing::HasSubstr("   -4.600000    0.250000    0.281250       1.425152       0.159819"));
-		EXPECT_THAT(str, testing::HasSubstr("   18.000000    0.000000   16.000000       0.000000      16.000000"));
+		EXPECT_THAT(str, testing::HasSubstr("   -4.995000    0.500000    0.500000"));
+		EXPECT_THAT(str, testing::HasSubstr("   18.000000    0.000000    8.000000"));
 		ifs.close();
 		remove("dos.txt");
 #ifdef __MPI
@@ -107,17 +116,12 @@ TEST_F(DosPWTest,Dos1)
 TEST_F(DosPWTest,Dos2)
 {
     //is,fa,fa1,de_ev,emax_ev,emin_ev,bcoeff,nks,nkstot,nbands
-	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",0.005,18,-6,0.07,36,36,8);
+	DosPrepare dosp = DosPrepare(0,"doss1_pw.txt",0.005,18,-6,0.07,dos_test_data::nks,dos_test_data::nkstot,dos_test_data::nbands);
 	dosp.set_isk();
-	dosp.read_wk();
-	dosp.read_istate_info();
+	dosp.set_wk();
+	dosp.set_istate_info();
 	EXPECT_EQ(dosp.is,0);
 	double dos_scale = 0.01;
-	PARAM.input.nspin = 1;
-	PARAM.input.dos_emax_ev = dosp.emax_ev;
-	PARAM.sys.dos_setemax = false;
-	PARAM.input.dos_emin_ev = dosp.emin_ev;
-	PARAM.sys.dos_setemin = false;
 	kv->set_nks(dosp.nks);
 	kv->set_nkstot(dosp.nkstot);
 	kv->isk.reserve(kv->get_nks());
@@ -127,7 +131,6 @@ TEST_F(DosPWTest,Dos2)
 		kv->isk[ik] = dosp.isk[ik];
 		kv->wk[ik] = dosp.wk[ik];
 	}
-	PARAM.input.nbands = dosp.nbands;
 
     // initialize the Fermi energy
     elecstate::Efermi fermi_energy;
@@ -136,17 +139,36 @@ TEST_F(DosPWTest,Dos2)
 
     UnitCell ucell;
 
+    const int nspin = 1;
+    const int out_dos = 1;
+    const bool two_fermi = false;
+    const bool out_app_flag = false;
+    const int bndpar = 1;
+    const std::string global_out_dir = "./";
+    const bool dos_setemax = false;
+    const bool dos_setemin = false;
+
 	ModuleIO::write_dos_pw(
 			ucell,
 			dosp.ekb,
 			dosp.wg,
 			*kv,
-			PARAM.inp.nbands,
+			dosp.nbands,
 			-1, // istep_in
             fermi_energy,
 			dosp.de_ev,
 			dos_scale,
 			dosp.bcoeff,
+			nspin,
+			out_dos,
+			dos_setemax,
+			dosp.emax_ev,
+			dos_setemin,
+			dosp.emin_ev,
+			two_fermi,
+			out_app_flag,
+			bndpar,
+			global_out_dir,
             ofs);
     ofs.close();
     remove("write_dos_pw.log");
@@ -158,9 +180,9 @@ TEST_F(DosPWTest,Dos2)
 		std::ifstream ifs;
 		ifs.open("dos.txt");
 		std::string str1((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-		EXPECT_THAT(str1, testing::HasSubstr("4532 # number of points"));
-		EXPECT_THAT(str1, testing::HasSubstr("   -5.388110    0.031250    0.031250"));
-		EXPECT_THAT(str1, testing::HasSubstr("    3.071890    0.187500    5.468750"));
+		EXPECT_THAT(str1, testing::HasSubstr("2526 # number of points"));
+		EXPECT_THAT(str1, testing::HasSubstr("   -4.997500    0.500000    0.500000"));
+		EXPECT_THAT(str1, testing::HasSubstr("    7.567500    0.000000    8.000000"));
 		ifs.close();
 		remove("dos.txt");
 #ifdef __MPI

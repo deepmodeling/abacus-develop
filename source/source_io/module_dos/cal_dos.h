@@ -16,7 +16,12 @@ namespace ModuleIO
 			const double& dos_edelta_ev,
             const double& dos_scale,
 			double &emax,
-            double &emin);
+            double &emin,
+			const bool dos_setemax,
+			const double dos_emax_ev,
+			const bool dos_setemin,
+			const double dos_emin_ev,
+			const bool two_fermi);
 
 	bool cal_dos(const int &is,		
 		const std::string &fn,// file address for DOS.
@@ -31,8 +36,9 @@ namespace ModuleIO
 		const int &nbands,// number of bands
 		const ModuleBase::matrix &ekb, //store energy for each k point and each band
 		const ModuleBase::matrix &wg, //weight of (kpoint,bands))
-        const int istep_in); // ionic_step
-
+        const int istep_in, // ionic_step
+		const bool out_app_flag, // whether to append output
+		const int bndpar); // number of band parallel groups
 
 }
 
