@@ -1200,9 +1200,9 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         // set Lmax of the rotation matrices to max(l_ao, l_abf), to support rotation under ABF
         this->symmetry_rotation_.set_abfs_Lmax(GlobalC::exx_info.info_ri.abfs_Lmax);
         this->symmetry_rotation_.cal_Ms(kv, ucell, parav, PARAM.inp.nspin);
-        mix_DMk_2D.mix(this->symmetry_rotation_.restore_dm(kv, dm.get_DMK_vector(), parav), true);
+        mix_DMk_2D.mix(this->symmetry_rotation_.restore_dm(kv, dm.get_dmk_vec(), parav), true);
     }
-    else { mix_DMk_2D.mix(dm.get_DMK_vector(), true); }
+    else { mix_DMk_2D.mix(dm.get_dmk_vec(), true); }
     
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds
         = RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,
