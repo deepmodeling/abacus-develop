@@ -8,3 +8,4 @@ Detailed Introduction of the Input Files
     input-main
     stru
     kpt
+    dftb-native

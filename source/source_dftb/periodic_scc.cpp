@@ -1,12 +1,12 @@
 #include "source_dftb/periodic_scc.h"
 
+#include "source_base/parallel_common.h"
+#include "source_base/parallel_reduce.h"
+
 #include <algorithm>
 #include <cmath>
 #include <complex>
 #include <cstring>
-#ifdef __MPI
-#include <mpi.h>
-#endif
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -591,12 +591,8 @@ KPointResult solve_for_charges(const DftbPeriodicInput& input,
 
     KPointResult result;
     result.spectra.resize(input.kpoints.size());
-    int mpi_rank = 0;
-    int mpi_size = 1;
-#ifdef __MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-#endif
+    const int mpi_rank = Parallel_Common::get_rank();
+    const int mpi_size = Parallel_Common::get_size();
     for (std::size_t ik = 0; ik < input.kpoints.size(); ++ik)
     {
         const auto& kp = input.kpoints[ik];
@@ -634,18 +630,24 @@ KPointResult solve_for_charges(const DftbPeriodicInput& input,
                 std::strncpy(error_message, error.what(), sizeof(error_message) - 1);
             }
         }
-#ifdef __MPI
-        MPI_Bcast(&solve_status, 1, MPI_INT, owner, MPI_COMM_WORLD);
-        MPI_Bcast(error_message, static_cast<int>(sizeof(error_message)), MPI_CHAR, owner, MPI_COMM_WORLD);
-#endif
+        int all_ranks_succeeded = solve_status == 0 ? 1 : 0;
+        Parallel_Reduce::reduce_min(all_ranks_succeeded);
+        solve_status = all_ranks_succeeded == 0 ? 1 : 0;
+        std::vector<int> error_codes(sizeof(error_message), 0);
+        if (mpi_rank == owner)
+        {
+            for (std::size_t i = 0; i < sizeof(error_message); ++i)
+                error_codes[i] = static_cast<unsigned char>(error_message[i]);
+        }
+        Parallel_Reduce::reduce_all(error_codes.data(), static_cast<int>(error_codes.size()));
+        for (std::size_t i = 0; i < sizeof(error_message); ++i)
+            error_message[i] = static_cast<char>(error_codes[i]);
         if (solve_status != 0)
         {
             throw std::runtime_error(std::string("Native DFTB k-point eigensolver failed: ") + error_message);
         }
-#ifdef __MPI
-        MPI_Bcast(result.spectra[ik].solution.eigenvalues_hartree.data(),
-                  static_cast<int>(n_orbitals), MPI_DOUBLE, owner, MPI_COMM_WORLD);
-#endif
+        Parallel_Reduce::reduce_all(result.spectra[ik].solution.eigenvalues_hartree.data(),
+                                    static_cast<int>(n_orbitals));
     }
 
     result.filling = fill_fermi_occupations(result.spectra, input.total_electrons,
@@ -685,10 +687,7 @@ KPointResult solve_for_charges(const DftbPeriodicInput& input,
             result.populations[atom] += kp.weight * mulliken;
         }
     }
-#ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, result.populations.data(), static_cast<int>(n_atoms),
-                  MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-#endif
+    Parallel_Reduce::reduce_all(result.populations.data(), static_cast<int>(n_atoms));
     return result;
 }
 
@@ -708,12 +707,8 @@ std::vector<DftbBandPoint> solve_band_path(const DftbPeriodicInput& input,
         potential[i] += third[i];
     }
 
-    int mpi_rank = 0;
-    int mpi_size = 1;
-#ifdef __MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-#endif
+    const int mpi_rank = Parallel_Common::get_rank();
+    const int mpi_size = Parallel_Common::get_size();
     std::vector<DftbBandPoint> result(input.band_kpoints.size());
     for (std::size_t ik = 0; ik < input.band_kpoints.size(); ++ik)
     {
@@ -749,15 +744,21 @@ std::vector<DftbBandPoint> solve_band_path(const DftbPeriodicInput& input,
                 std::strncpy(error_message, error.what(), sizeof(error_message) - 1);
             }
         }
-#ifdef __MPI
-        MPI_Bcast(&solve_status, 1, MPI_INT, owner, MPI_COMM_WORLD);
-        MPI_Bcast(error_message, static_cast<int>(sizeof(error_message)), MPI_CHAR, owner, MPI_COMM_WORLD);
-#endif
+        int all_ranks_succeeded = solve_status == 0 ? 1 : 0;
+        Parallel_Reduce::reduce_min(all_ranks_succeeded);
+        solve_status = all_ranks_succeeded == 0 ? 1 : 0;
+        std::vector<int> error_codes(sizeof(error_message), 0);
+        if (mpi_rank == owner)
+        {
+            for (std::size_t i = 0; i < sizeof(error_message); ++i)
+                error_codes[i] = static_cast<unsigned char>(error_message[i]);
+        }
+        Parallel_Reduce::reduce_all(error_codes.data(), static_cast<int>(error_codes.size()));
+        for (std::size_t i = 0; i < sizeof(error_message); ++i)
+            error_message[i] = static_cast<char>(error_codes[i]);
         if (solve_status != 0)
             throw std::runtime_error(std::string("Native DFTB band eigensolver failed: ") + error_message);
-#ifdef __MPI
-        MPI_Bcast(result[ik].eigenvalues_hartree.data(), static_cast<int>(n_orbitals), MPI_DOUBLE, owner, MPI_COMM_WORLD);
-#endif
+        Parallel_Reduce::reduce_all(result[ik].eigenvalues_hartree.data(), static_cast<int>(n_orbitals));
         if (ik > 0)
         {
             Vec3 delta{};
@@ -786,13 +787,103 @@ double quadratic_form(const std::vector<double>& matrix,
     return value;
 }
 
+bool solve_pulay_coefficients(const std::vector<std::vector<double>>& residuals,
+                              std::vector<double>* coefficients)
+{
+    const std::size_t count = residuals.size();
+    if (count < 2 || coefficients == nullptr) return false;
+    const std::size_t n_atoms = residuals.front().size();
+    if (n_atoms == 0) return false;
+    double diagonal_scale = 0.0;
+    std::vector<std::vector<double>> matrix(count + 1, std::vector<double>(count + 1, 0.0));
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        if (residuals[i].size() != n_atoms) return false;
+        for (std::size_t j = 0; j < count; ++j)
+        {
+            double product = 0.0;
+            for (std::size_t atom = 0; atom < n_atoms; ++atom)
+                product += residuals[i][atom] * residuals[j][atom];
+            matrix[i][j] = product / static_cast<double>(n_atoms);
+        }
+        diagonal_scale = std::max(diagonal_scale, matrix[i][i]);
+    }
+    if (!(diagonal_scale > 0.0) || !std::isfinite(diagonal_scale)) return false;
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        for (std::size_t j = 0; j < count; ++j) matrix[i][j] /= diagonal_scale;
+        matrix[i][i] += 1.0e-10;
+        matrix[i][count] = 1.0;
+        matrix[count][i] = 1.0;
+    }
+
+    // Solve the augmented Pulay system with partial-pivot Gaussian elimination.
+    std::vector<double> rhs(count + 1, 0.0);
+    rhs[count] = 1.0;
+    for (std::size_t column = 0; column <= count; ++column)
+    {
+        std::size_t pivot = column;
+        for (std::size_t row = column + 1; row <= count; ++row)
+            if (std::abs(matrix[row][column]) > std::abs(matrix[pivot][column])) pivot = row;
+        if (std::abs(matrix[pivot][column]) < 1.0e-14) return false;
+        std::swap(matrix[pivot], matrix[column]);
+        std::swap(rhs[pivot], rhs[column]);
+        const double pivot_value = matrix[column][column];
+        for (std::size_t j = column; j <= count; ++j) matrix[column][j] /= pivot_value;
+        rhs[column] /= pivot_value;
+        for (std::size_t row = 0; row <= count; ++row)
+        {
+            if (row == column) continue;
+            const double factor = matrix[row][column];
+            for (std::size_t j = column; j <= count; ++j) matrix[row][j] -= factor * matrix[column][j];
+            rhs[row] -= factor * rhs[column];
+        }
+    }
+    coefficients->assign(rhs.begin(), rhs.begin() + count);
+    double coefficient_sum = 0.0;
+    for (const double coefficient : *coefficients)
+    {
+        if (!std::isfinite(coefficient) || std::abs(coefficient) > 20.0) return false;
+        coefficient_sum += coefficient;
+    }
+    if (!std::isfinite(coefficient_sum) || std::abs(coefficient_sum - 1.0) > 1.0e-8) return false;
+    return true;
+}
+
+std::vector<double> linear_mix(const std::vector<double>& charges,
+                              const std::vector<double>& residual,
+                              const double parameter)
+{
+    std::vector<double> mixed(charges.size(), 0.0);
+    for (std::size_t atom = 0; atom < charges.size(); ++atom)
+        mixed[atom] = charges[atom] + parameter * residual[atom];
+    return mixed;
+}
+
+void restore_total_charge(std::vector<double>* charges, const double target_charge)
+{
+    double charge_sum = 0.0;
+    for (const double charge : *charges) charge_sum += charge;
+    const double correction = (target_charge - charge_sum) / static_cast<double>(charges->size());
+    for (double& charge : *charges) charge += correction;
+}
+
 } // namespace
 
 DftbPeriodicResult solve_periodic_dftb(const DftbPeriodicInput& input)
 {
+    return solve_periodic_dftb(input, std::function<void(const DftbSccIteration&)>());
+}
+
+DftbPeriodicResult solve_periodic_dftb(
+    const DftbPeriodicInput& input,
+    const std::function<void(const DftbSccIteration&)>& on_iteration)
+{
     if (input.atoms.empty() || input.kpoints.empty() || input.pair_parameters.empty()
         || input.maximum_scc_iterations <= 0 || !(input.scc_tolerance > 0.0)
         || !(input.mixing_parameter > 0.0 && input.mixing_parameter <= 1.0)
+        || (input.mixing_method != "linear" && input.mixing_method != "pulay")
+        || input.mixing_history < 2 || input.mixing_history > 20
         || !(input.total_electrons >= 0.0) || input.hubbard_derivative.empty())
     {
         throw std::invalid_argument("Incomplete or invalid native periodic DFTB input");
@@ -808,10 +899,11 @@ DftbPeriodicResult solve_periodic_dftb(const DftbPeriodicInput& input)
     double weight_sum = 0.0;
     for (const auto& kpoint : input.kpoints)
     {
-        if (!(kpoint.weight > 0.0)) throw std::invalid_argument("DFTB k-point weights must be positive");
+        if (!(kpoint.weight >= 0.0) || !std::isfinite(kpoint.weight))
+            throw std::invalid_argument("DFTB k-point weights must be finite and non-negative");
         weight_sum += kpoint.weight;
     }
-    if (std::abs(weight_sum - 1.0) > 1.0e-10)
+    if (!std::isfinite(weight_sum) || std::abs(weight_sum - 1.0) > 1.0e-10)
     {
         throw std::invalid_argument("DFTB k-point weights must sum to one");
     }
@@ -831,9 +923,16 @@ DftbPeriodicResult solve_periodic_dftb(const DftbPeriodicInput& input)
     }
     const double target_charge = input.total_electrons - neutral_electrons;
     std::vector<double> charges(input.atoms.size(), target_charge / static_cast<double>(input.atoms.size()));
+    const double repulsive_energy_hartree = calculate_repulsive_energy_hartree(input.atoms, pairs,
+                                                                                 input.pair_parameters);
 
     DftbPeriodicResult result;
     KPointResult state;
+    std::vector<std::vector<double>> charge_history;
+    std::vector<std::vector<double>> residual_history;
+    double previous_band_free_energy = 0.0;
+    double previous_electronic_energy = 0.0;
+    bool has_previous_energy = false;
     for (int iteration = 1; iteration <= input.maximum_scc_iterations; ++iteration)
     {
         state = solve_for_charges(input, pairs, reciprocal, gamma, charges);
@@ -848,25 +947,100 @@ DftbPeriodicResult solve_periodic_dftb(const DftbPeriodicInput& input)
         const double charge_correction = (target_charge - charge_sum)
                                          / static_cast<double>(output_charges.size());
         for (double& charge : output_charges) charge += charge_correction;
+        charge_sum = 0.0;
+        for (const double charge : output_charges) charge_sum += charge;
 
+        std::vector<double> residual(charges.size(), 0.0);
         result.maximum_charge_residual = 0.0;
         for (std::size_t atom = 0; atom < charges.size(); ++atom)
         {
-            result.maximum_charge_residual = std::max(result.maximum_charge_residual,
-                                                       std::abs(output_charges[atom] - charges[atom]));
+            residual[atom] = output_charges[atom] - charges[atom];
+            result.maximum_charge_residual = std::max(result.maximum_charge_residual, std::abs(residual[atom]));
         }
         result.scc_iterations = iteration;
         result.scc_residual_history.push_back(result.maximum_charge_residual);
-        if (result.maximum_charge_residual <= input.scc_tolerance)
+
+        charge_history.push_back(charges);
+        residual_history.push_back(residual);
+        if (charge_history.size() > static_cast<std::size_t>(input.mixing_history))
         {
-            charges = std::move(output_charges);
+            charge_history.erase(charge_history.begin());
+            residual_history.erase(residual_history.begin());
+        }
+
+        const bool converged = result.maximum_charge_residual <= input.scc_tolerance;
+        std::vector<double> iteration_gamma_charge;
+        const double iteration_scc_quadratic = quadratic_form(gamma, output_charges, &iteration_gamma_charge);
+        const std::vector<double> iteration_third = third_order_potential(input, pairs, output_charges);
+        double iteration_third_energy = 0.0;
+        double iteration_potential_expectation = 0.0;
+        for (std::size_t atom = 0; atom < output_charges.size(); ++atom)
+        {
+            iteration_third_energy += output_charges[atom] * iteration_third[atom] / 3.0;
+            iteration_potential_expectation += state.populations[atom]
+                                                * (iteration_gamma_charge[atom] + iteration_third[atom]);
+        }
+        const double iteration_h0_energy = state.filling.band_free_energy_hartree
+                                           - iteration_potential_expectation;
+        const double iteration_electronic_energy = iteration_h0_energy + 0.5 * iteration_scc_quadratic
+                                                   + iteration_third_energy;
+        std::vector<double> next_charges;
+        DftbSccIteration iteration_output;
+        iteration_output.iteration = iteration;
+        iteration_output.maximum_charge_residual = result.maximum_charge_residual;
+        iteration_output.net_electron_excess = charge_sum;
+        iteration_output.band_energy_hartree = state.filling.band_energy_hartree;
+        iteration_output.band_free_energy_hartree = state.filling.band_free_energy_hartree;
+        iteration_output.fermi_energy_hartree = state.filling.fermi_energy_hartree;
+        iteration_output.has_previous_energy = has_previous_energy;
+        iteration_output.electronic_energy_hartree = iteration_electronic_energy;
+        iteration_output.total_free_energy_hartree = iteration_electronic_energy + repulsive_energy_hartree;
+        if (has_previous_energy)
+        {
+            iteration_output.band_free_energy_change_hartree = state.filling.band_free_energy_hartree
+                                                                - previous_band_free_energy;
+            iteration_output.electronic_energy_change_hartree = iteration_electronic_energy
+                                                                - previous_electronic_energy;
+        }
+
+        if (converged)
+        {
+            next_charges = output_charges;
+            iteration_output.mixing_step = "converged";
             result.converged = true;
-            break;
         }
-        for (std::size_t atom = 0; atom < charges.size(); ++atom)
+        else
         {
-            charges[atom] += input.mixing_parameter * (output_charges[atom] - charges[atom]);
+            bool used_pulay = false;
+            if (input.mixing_method == "pulay" && charge_history.size() >= 2)
+            {
+                std::vector<double> coefficients;
+                if (solve_pulay_coefficients(residual_history, &coefficients))
+                {
+                    next_charges.assign(charges.size(), 0.0);
+                    for (std::size_t history = 0; history < coefficients.size(); ++history)
+                    {
+                        const std::vector<double> mixed = linear_mix(charge_history[history], residual_history[history],
+                                                                     input.mixing_parameter);
+                        for (std::size_t atom = 0; atom < charges.size(); ++atom)
+                            next_charges[atom] += coefficients[history] * mixed[atom];
+                    }
+                    used_pulay = true;
+                    for (const double charge : next_charges)
+                        if (!std::isfinite(charge)) used_pulay = false;
+                }
+            }
+            if (!used_pulay)
+                next_charges = linear_mix(charges, residual, input.mixing_parameter);
+            restore_total_charge(&next_charges, target_charge);
+            iteration_output.mixing_step = used_pulay ? "Pulay" : (input.mixing_method == "pulay" ? "linear fallback" : "linear");
         }
+        if (on_iteration) on_iteration(iteration_output);
+        previous_band_free_energy = state.filling.band_free_energy_hartree;
+        previous_electronic_energy = iteration_electronic_energy;
+        has_previous_energy = true;
+        charges = std::move(next_charges);
+        if (result.converged) break;
     }
 
     if (!result.converged)
@@ -906,11 +1080,18 @@ DftbPeriodicResult solve_periodic_dftb(const DftbPeriodicInput& input)
     result.fermi_energy_hartree = state.filling.fermi_energy_hartree;
     result.band_energy_hartree = state.filling.band_energy_hartree;
     result.band_free_energy_hartree = state.filling.band_free_energy_hartree;
+    result.kpoint_eigenvalues.resize(state.spectra.size());
+    for (std::size_t ik = 0; ik < state.spectra.size(); ++ik)
+    {
+        result.kpoint_eigenvalues[ik].fractional = input.kpoints[ik].fractional;
+        result.kpoint_eigenvalues[ik].weight = input.kpoints[ik].weight;
+        result.kpoint_eigenvalues[ik].eigenvalues_hartree = state.spectra[ik].solution.eigenvalues_hartree;
+        result.kpoint_eigenvalues[ik].occupations = state.filling.occupations[ik];
+    }
     result.h0_energy_hartree = state.filling.band_free_energy_hartree - potential_expectation;
     result.scc_energy_hartree = 0.5 * scc_quadratic;
     result.third_order_energy_hartree = third_energy;
-    result.repulsive_energy_hartree = calculate_repulsive_energy_hartree(input.atoms, pairs,
-                                                                           input.pair_parameters);
+    result.repulsive_energy_hartree = repulsive_energy_hartree;
     result.total_free_energy_hartree = result.h0_energy_hartree + result.scc_energy_hartree
                                        + result.third_order_energy_hartree
                                        + result.repulsive_energy_hartree;

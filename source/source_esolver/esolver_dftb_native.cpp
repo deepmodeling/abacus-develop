@@ -2,6 +2,8 @@
 
 #include "source_base/constants.h"
 #include "source_base/global_variable.h"
+#include "source_base/parallel_common.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/tool_quit.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_output/output_log.h"
@@ -12,9 +14,6 @@
 #include <array>
 #include <cmath>
 #include <cstring>
-#ifdef __MPI
-#include <mpi.h>
-#endif
 #include <cctype>
 #include <fstream>
 #include <iomanip>
@@ -44,8 +43,31 @@ struct NativeDftbConfig
     double scc_tolerance = 1.0e-6;
     int maximum_scc_iterations = 200;
     double mixing_parameter = 0.2;
+    std::string mixing_method = "linear";
+    int mixing_history = 6;
+    int output_precision = 12;
     bool third_order = true;
 };
+
+std::string lowercase(std::string value)
+{
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char character) {
+        return static_cast<char>(std::tolower(character));
+    });
+    return value;
+}
+
+template <typename T>
+T parse_kpt_value(const std::vector<std::string>& tokens, std::size_t* position, const std::string& description)
+{
+    if (*position >= tokens.size()) throw std::runtime_error("Missing " + description + " in ABACUS KPT file");
+    std::istringstream parser(tokens[(*position)++]);
+    T value{};
+    std::string extra;
+    if (!(parser >> value) || (parser >> extra))
+        throw std::runtime_error("Invalid " + description + " in ABACUS KPT file");
+    return value;
+}
 
 NativeDftbConfig read_native_config(const std::string& filename)
 {
@@ -94,11 +116,24 @@ NativeDftbConfig read_native_config(const std::string& filename)
         {
             if (!(row >> config.mixing_parameter)) throw std::runtime_error("Invalid mixing_parameter value");
         }
+        else if (key == "mixing_method")
+        {
+            if (!(row >> config.mixing_method)) throw std::runtime_error("Missing mixing_method value");
+            config.mixing_method = lowercase(config.mixing_method);
+        }
+        else if (key == "mixing_history")
+        {
+            if (!(row >> config.mixing_history)) throw std::runtime_error("Invalid mixing_history value");
+        }
+        else if (key == "output_precision")
+        {
+            if (!(row >> config.output_precision)) throw std::runtime_error("Invalid output_precision value");
+        }
         else if (key == "third_order")
         {
             std::string value;
             if (!(row >> value)) throw std::runtime_error("Invalid third_order value");
-            std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+            value = lowercase(value);
             if (value == "yes" || value == "true" || value == "1" || value == "on") config.third_order = true;
             else if (value == "no" || value == "false" || value == "0" || value == "off") config.third_order = false;
             else throw std::runtime_error("third_order must be yes/no, true/false, or 1/0");
@@ -110,34 +145,65 @@ NativeDftbConfig read_native_config(const std::string& filename)
     }
     if (config.skf_directory.empty()) throw std::runtime_error("Native DFTB config must define skf_dir");
     if (!(config.temperature_kelvin >= 0.0) || !(config.scc_tolerance > 0.0)
-        || config.maximum_scc_iterations <= 0 || !(config.mixing_parameter > 0.0 && config.mixing_parameter <= 1.0))
+        || config.maximum_scc_iterations <= 0 || !(config.mixing_parameter > 0.0 && config.mixing_parameter <= 1.0)
+        || (config.mixing_method != "linear" && config.mixing_method != "pulay")
+        || config.mixing_history < 2 || config.mixing_history > 20
+        || config.output_precision < 1 || config.output_precision > 17)
         throw std::runtime_error("Invalid native DFTB temperature or SCC controls");
     return config;
 }
 
-std::vector<ModuleDFTB::DftbWeightedKPoint> read_native_kpoints(const std::string& filename)
+std::vector<ModuleDFTB::DftbWeightedKPoint> read_native_kpoints(const std::string& filename, const UnitCell& ucell)
 {
     std::ifstream input(filename.c_str());
     if (!input) throw std::runtime_error("Cannot open ABACUS KPT file: " + filename);
-    std::string header;
-    int count = -1;
-    if (!(input >> header >> count) || header != "K_POINTS" || count < 0)
+    std::vector<std::string> tokens;
+    std::string line;
+    while (std::getline(input, line))
+    {
+        const std::size_t hash_comment = line.find('#');
+        const std::size_t slash_comment = line.find("//");
+        std::size_t comment = std::string::npos;
+        if (hash_comment != std::string::npos) comment = hash_comment;
+        if (slash_comment != std::string::npos) comment = std::min(comment, slash_comment);
+        if (comment != std::string::npos) line.erase(comment);
+        std::istringstream row(line);
+        std::string token;
+        while (row >> token) tokens.push_back(token);
+    }
+    std::size_t header = 0;
+    while (header < tokens.size() && tokens[header] != "K_POINTS" && tokens[header] != "KPOINTS" && tokens[header] != "K")
+        ++header;
+    if (header == tokens.size())
         throw std::runtime_error("Native DFTB expects a valid ABACUS KPT file");
+    std::size_t position = header + 1;
+    const int count = parse_kpt_value<int>(tokens, &position, "k-point count");
+    if (count < 0 || count > 100000) throw std::runtime_error("ABACUS KPT k-point count is outside the supported range");
     std::vector<ModuleDFTB::DftbWeightedKPoint> result;
     if (count == 0)
     {
-        std::string mode;
+        const std::string mode = lowercase(parse_kpt_value<std::string>(tokens, &position, "mesh mode"));
         std::array<int, 3> mesh{};
         std::array<double, 3> offset{{0.0, 0.0, 0.0}};
-        if (!(input >> mode >> mesh[0] >> mesh[1] >> mesh[2]))
-            throw std::runtime_error("Malformed automatic mesh in KPT file");
-        input >> offset[0] >> offset[1] >> offset[2];
-        if (!input) input.clear();
-        if (mode != "Gamma" && mode != "Monkhorst-Pack" && mode != "MP" && mode != "mp")
+        for (int axis = 0; axis < 3; ++axis)
+            mesh[axis] = parse_kpt_value<int>(tokens, &position, "mesh dimension");
+        if (position != tokens.size() && tokens.size() - position != 3)
+            throw std::runtime_error("An automatic ABACUS KPT mesh accepts either zero or three offsets");
+        if (position < tokens.size())
+            for (int axis = 0; axis < 3; ++axis)
+                offset[axis] = parse_kpt_value<double>(tokens, &position, "mesh offset");
+        for (const double value : offset)
+            if (!std::isfinite(value)) throw std::runtime_error("KPT mesh offsets must be finite");
+        if (mode != "gamma" && mode != "monkhorst-pack" && mode != "mp")
             throw std::runtime_error("Native DFTB supports Gamma or Monkhorst-Pack KPT meshes");
         if (mesh[0] <= 0 || mesh[1] <= 0 || mesh[2] <= 0)
             throw std::runtime_error("KPT mesh dimensions must be positive");
-        const bool monkhorst_pack = mode != "Gamma";
+        long long mesh_size = mesh[0];
+        if (mesh[1] > 100000 / mesh_size) throw std::runtime_error("ABACUS KPT mesh exceeds the 100000-point limit");
+        mesh_size *= mesh[1];
+        if (mesh[2] > 100000 / mesh_size) throw std::runtime_error("ABACUS KPT mesh exceeds the 100000-point limit");
+        mesh_size *= mesh[2];
+        const bool monkhorst_pack = mode != "gamma";
         const double weight = 1.0 / static_cast<double>(mesh[0] * mesh[1] * mesh[2]);
         for (int ix = 1; ix <= mesh[0]; ++ix)
         {
@@ -163,19 +229,52 @@ std::vector<ModuleDFTB::DftbWeightedKPoint> read_native_kpoints(const std::strin
     }
     else
     {
+        const std::string mode = lowercase(parse_kpt_value<std::string>(tokens, &position, "explicit coordinate mode"));
+        const bool cartesian = mode == "cartesian" || mode == "c";
+        const bool direct = mode == "direct" || mode == "d";
+        if (!direct && !cartesian)
+        {
+            if (mode == "line" || mode == "line_direct" || mode == "l" || mode == "line_cartesian")
+                throw std::runtime_error("Native DFTB SCC needs weighted integration k-points; ABACUS line-mode points are band paths.\n"
+                                         "Use a Gamma/MP mesh or weighted Direct/Cartesian list in KPT, and set band_path_file in dftb_native.in.");
+            throw std::runtime_error("Explicit native DFTB KPT coordinates must be Direct/D or Cartesian/C");
+        }
         double weight_sum = 0.0;
         for (int i = 0; i < count; ++i)
         {
             ModuleDFTB::DftbWeightedKPoint point;
-            if (!(input >> point.fractional[0] >> point.fractional[1] >> point.fractional[2] >> point.weight)
-                || !(point.weight > 0.0))
+            std::array<double, 3> coordinate{};
+            for (int axis = 0; axis < 3; ++axis)
+                coordinate[axis] = parse_kpt_value<double>(tokens, &position, "explicit k-point coordinate");
+            point.weight = parse_kpt_value<double>(tokens, &position, "explicit k-point weight");
+            if (!(point.weight >= 0.0) || !std::isfinite(point.weight))
                 throw std::runtime_error("Malformed explicit k-point list in KPT file");
+            for (int axis = 0; axis < 3; ++axis)
+                if (!std::isfinite(coordinate[axis])) throw std::runtime_error("KPT coordinates must be finite");
+            if (direct)
+            {
+                point.fractional = coordinate;
+            }
+            else
+            {
+                // ABACUS Cartesian KPT coordinates are expressed in 2pi/a units.
+                // Inverting its direct-to-Cartesian relation k_cart = k_direct * G
+                // gives k_direct = k_cart * latvec^T (latvec is dimensionless here).
+                point.fractional[0] = coordinate[0] * ucell.latvec.e11 + coordinate[1] * ucell.latvec.e12
+                                      + coordinate[2] * ucell.latvec.e13;
+                point.fractional[1] = coordinate[0] * ucell.latvec.e21 + coordinate[1] * ucell.latvec.e22
+                                      + coordinate[2] * ucell.latvec.e23;
+                point.fractional[2] = coordinate[0] * ucell.latvec.e31 + coordinate[1] * ucell.latvec.e32
+                                      + coordinate[2] * ucell.latvec.e33;
+            }
             weight_sum += point.weight;
             result.push_back(point);
         }
+        if (position != tokens.size()) throw std::runtime_error("Unexpected trailing data in ABACUS KPT file");
         if (!(weight_sum > 0.0)) throw std::runtime_error("KPT weights must have a positive sum");
         for (std::size_t i = 0; i < result.size(); ++i) result[i].weight /= weight_sum;
     }
+    if (position != tokens.size()) throw std::runtime_error("Unexpected trailing data in ABACUS KPT file");
     return result;
 }
 
@@ -245,16 +344,18 @@ std::vector<ModuleDFTB::DftbBandKPoint> read_native_band_path(const std::string&
 void ESolver_DFTBNative::before_all_runners(BaseCell& cell, const Input_para& inp)
 {
     this->inp_ = &inp;
-    if (cell.kind() != BaseCell::Kind::unitcell)
+    if (cell.kind() != BaseCell::Kind::unit_cell)
         ModuleBase::WARNING_QUIT("ESolver_DFTBNative", "Native DFTB requires a periodic UnitCell.");
     const UnitCell& ucell = static_cast<const UnitCell&>(cell);
+    if (inp.basis_type != "dftb")
+        ModuleBase::WARNING_QUIT("ESolver_DFTBNative", "Set basis_type=dftb when using esolver_type=dftbnative.");
+    if (inp.calculation != "scf")
+        ModuleBase::WARNING_QUIT("ESolver_DFTBNative", "Native DFTB currently supports calculation=scf only; use band_path_file for frozen-SCC bands.");
     if (inp.nspin != 1 || inp.noncolin)
         ModuleBase::WARNING_QUIT("ESolver_DFTBNative", "Native DFTB currently supports spin-degenerate calculations only.");
 
-    int rank = 0;
-#ifdef __MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+    const int rank = Parallel_Common::get_rank();
+    std::ostream& running_log = GlobalV::ofs_running;
     int local_status = 0;
     char error_message[1024] = {};
     try
@@ -266,25 +367,26 @@ void ESolver_DFTBNative::before_all_runners(BaseCell& cell, const Input_para& in
         local_status = 1;
         std::strncpy(error_message, error.what(), sizeof(error_message) - 1);
     }
-#ifdef __MPI
-    int global_status = 0;
-    MPI_Allreduce(&local_status, &global_status, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    int all_ranks_succeeded = local_status == 0 ? 1 : 0;
+    Parallel_Reduce::reduce_min(all_ranks_succeeded);
+    const int global_status = all_ranks_succeeded == 0 ? 1 : 0;
     if (global_status != 0)
     {
         int error_rank = local_status != 0 ? rank : std::numeric_limits<int>::max();
-        int first_error_rank = 0;
-        MPI_Allreduce(&error_rank, &first_error_rank, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
-        MPI_Bcast(error_message, static_cast<int>(sizeof(error_message)), MPI_CHAR,
-                  first_error_rank, MPI_COMM_WORLD);
+        Parallel_Reduce::reduce_min(error_rank);
+        std::vector<int> error_codes(sizeof(error_message), 0);
+        if (rank == error_rank)
+            for (std::size_t i = 0; i < sizeof(error_message); ++i)
+                error_codes[i] = static_cast<unsigned char>(error_message[i]);
+        Parallel_Reduce::reduce_all(error_codes.data(), static_cast<int>(error_codes.size()));
+        for (std::size_t i = 0; i < sizeof(error_message); ++i)
+            error_message[i] = static_cast<char>(error_codes[i]);
         ModuleBase::WARNING_QUIT("ESolver_DFTBNative", error_message);
     }
-#else
-    if (local_status != 0) ModuleBase::WARNING_QUIT("ESolver_DFTBNative", error_message);
-#endif
     if (rank == 0)
     {
-        GlobalV::ofs_running << " Native periodic DFTB model loaded from " << inp.dftb_native_input
-                             << " (no DFTB+ runtime, UPF, or ABACUS orbital files)." << std::endl;
+        running_log << " Native periodic DFTB model loaded from " << inp.dftb_native_input
+                    << " (no DFTB+ runtime, UPF, or ABACUS orbital files)." << std::endl;
     }
 }
 void ESolver_DFTBNative::load_model(const UnitCell& ucell, const Input_para& inp)
@@ -332,14 +434,17 @@ void ESolver_DFTBNative::load_model(const UnitCell& ucell, const Input_para& inp
             throw std::runtime_error("Missing Hubbard derivative for DFTB3 species " + labels[it]);
         if (derivative != config.hubbard_derivatives.end()) this->template_.hubbard_derivative[it] = derivative->second;
     }
-    this->template_.kpoints = read_native_kpoints(inp.kpoint_file);
+    this->template_.kpoints = read_native_kpoints(inp.kpoint_file, ucell);
     if (!config.band_path_file.empty())
         this->template_.band_kpoints = read_native_band_path(config.band_path_file);
     this->template_.thermal_energy_hartree = config.temperature_kelvin * kelvin_to_hartree;
     this->template_.scc_tolerance = config.scc_tolerance;
     this->template_.maximum_scc_iterations = config.maximum_scc_iterations;
     this->template_.mixing_parameter = config.mixing_parameter;
+    this->template_.mixing_method = config.mixing_method;
+    this->template_.mixing_history = config.mixing_history;
     this->template_.third_order = config.third_order;
+    this->output_precision_ = config.output_precision;
     this->template_.total_electrons = 0.0;
 
     std::size_t atom_index = 0;
@@ -382,26 +487,79 @@ ModuleDFTB::DftbPeriodicInput ESolver_DFTBNative::make_geometry(const UnitCell& 
 void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
 {
     static_cast<void>(istep);
-    if (cell.kind() != BaseCell::Kind::unitcell)
+    if (cell.kind() != BaseCell::Kind::unit_cell)
         ModuleBase::WARNING_QUIT("ESolver_DFTBNative", "Native DFTB requires a periodic UnitCell.");
     const UnitCell& ucell = static_cast<const UnitCell&>(cell);
     const ModuleDFTB::DftbPeriodicInput input = this->make_geometry(ucell);
-    this->result_ = ModuleDFTB::solve_periodic_dftb(input);
+    const int rank = Parallel_Common::get_rank();
+    std::ostream& running_log = GlobalV::ofs_running;
+    std::string output_dir = PARAM.globalv.global_out_dir;
+    if (!output_dir.empty() && output_dir.back() != '/') output_dir += '/';
+    const std::string dftb_log_file = output_dir + "dftb.log";
+    std::ofstream dftb_log;
+    if (rank == 0)
+    {
+        dftb_log.open(dftb_log_file.c_str());
+        if (dftb_log)
+        {
+            dftb_log << "# Native periodic DFTB SCC calculation log\n"
+                     << "# Module: ABACUS source_dftb\n"
+                     << "# Method: " << (input.third_order ? "DFTB3" : "DFTB2") << " / SCC\n"
+                     << "# Settings file: " << this->inp_->dftb_native_input << "\n"
+                     << "# Spin-degenerate occupations, total electrons: " << input.total_electrons << "\n"
+                     << "# K-points: " << input.kpoints.size() << ", temperature: "
+                     << input.thermal_energy_hartree / kelvin_to_hartree << " K\n"
+                     << "# SCC threshold: max |delta q| <= " << input.scc_tolerance << " e\n"
+                     << "# Mixer: " << input.mixing_method << ", beta=" << input.mixing_parameter
+                     << ", history=" << input.mixing_history << "\n"
+                     << "# Each row evaluates the DFTB energy functional on the output Mulliken charges of that iteration.\n"
+                     << "# Diff_electronic is the change in that electronic energy; SCC_error is max |delta q|.\n"
+                     << "# The converged variational free energy and component decomposition follow the iteration table.\n"
+                     << "# iSCC E_electronic(Ha) Diff_electronic(Ha) SCC_error(e) net_electron_excess(e)"
+                     << " F_band(Ha) E_Fermi(Ha) mixer\n";
+            dftb_log << std::scientific << std::setprecision(this->output_precision_);
+        }
+    }
+    int log_open_failure = (rank == 0 && !dftb_log) ? 1 : 0;
+    int all_ranks_opened_log = log_open_failure == 0 ? 1 : 0;
+    Parallel_Reduce::reduce_min(all_ranks_opened_log);
+    log_open_failure = all_ranks_opened_log == 0 ? 1 : 0;
+    if (log_open_failure != 0)
+        ModuleBase::WARNING_QUIT("ESolver_DFTBNative", "Cannot open native DFTB iteration log: " + dftb_log_file);
+
+    const std::function<void(const ModuleDFTB::DftbSccIteration&)> iteration_logger =
+        [this, &dftb_log, &running_log, rank](const ModuleDFTB::DftbSccIteration& iteration) {
+            if (rank != 0) return;
+            running_log << std::setprecision(std::max(1, this->inp_->out_ndigits))
+                                 << " Native DFTB SCC iteration " << std::setw(4) << iteration.iteration
+                                 << ": max |delta q|=" << iteration.maximum_charge_residual << " e"
+                                 << ", net excess=" << iteration.net_electron_excess << " e"
+                                 << ", E_electronic=" << iteration.electronic_energy_hartree << " Ha"
+                                 << ", delta E=";
+            if (iteration.has_previous_energy)
+                running_log << iteration.electronic_energy_change_hartree << " Ha";
+            else
+                running_log << "n/a";
+            running_log << ", F_band=" << iteration.band_free_energy_hartree << " Ha"
+                        << ", E_Fermi=" << iteration.fermi_energy_hartree << " Ha"
+                        << ", mixer=" << iteration.mixing_step << std::endl;
+            running_log.flush();
+            dftb_log << std::setw(6) << iteration.iteration << ' ' << iteration.electronic_energy_hartree << ' ';
+            if (iteration.has_previous_energy) dftb_log << iteration.electronic_energy_change_hartree;
+            else dftb_log << "nan";
+            dftb_log << ' ' << iteration.maximum_charge_residual << ' ' << iteration.net_electron_excess << ' '
+                     << iteration.band_free_energy_hartree << ' ' << iteration.fermi_energy_hartree << ' '
+                     << iteration.mixing_step << std::endl;
+            dftb_log.flush();
+        };
+    this->result_ = ModuleDFTB::solve_periodic_dftb(input, iteration_logger);
     this->conv_esolver = this->result_.converged;
     this->energy_ry_ = 2.0 * this->result_.total_free_energy_hartree;
 
-    int mpi_rank = 0;
-#ifdef __MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-#endif
-    if (mpi_rank != 0) return;
+    if (rank != 0) return;
 
-    GlobalV::ofs_running << std::setprecision(16)
-                         << "\n Native DFTB SCC iteration history (iteration, max |delta q| in e):\n";
-    for (std::size_t i = 0; i < this->result_.scc_residual_history.size(); ++i)
-        GlobalV::ofs_running << "  " << std::setw(4) << i + 1 << "  "
-                             << this->result_.scc_residual_history[i] << "\n";
-    GlobalV::ofs_running << " Native DFTB SCC converged: " << std::boolalpha << this->result_.converged
+    running_log << std::setprecision(16)
+                         << "\n Native DFTB SCC converged: " << std::boolalpha << this->result_.converged
                          << ", iterations=" << this->result_.scc_iterations
                          << ", max |delta q|=" << this->result_.maximum_charge_residual << " e\n"
                          << " Native DFTB Fermi level: " << this->result_.fermi_energy_hartree << " Ha\n"
@@ -416,10 +574,22 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
                          << this->result_.h0_energy_hartree + this->result_.scc_energy_hartree
                             + this->result_.third_order_energy_hartree + this->result_.repulsive_energy_hartree
                          << " Ha\n";
+    dftb_log << "# SCC converged: " << std::boolalpha << this->result_.converged
+             << ", iterations: " << this->result_.scc_iterations
+             << ", maximum charge residual: " << this->result_.maximum_charge_residual << " e\n"
+             << "# Fermi energy: " << this->result_.fermi_energy_hartree << " Ha\n"
+             << "# Band energy: " << this->result_.band_energy_hartree << " Ha\n"
+             << "# Band free energy: " << this->result_.band_free_energy_hartree << " Ha\n"
+             << "# H0 energy: " << this->result_.h0_energy_hartree << " Ha\n"
+             << "# SCC energy: " << this->result_.scc_energy_hartree << " Ha\n"
+             << "# Third-order energy: " << this->result_.third_order_energy_hartree << " Ha\n"
+             << "# Repulsive energy: " << this->result_.repulsive_energy_hartree << " Ha\n"
+             << "# Total free energy: " << this->result_.total_free_energy_hartree << " Ha / "
+             << this->result_.total_free_energy_hartree * 27.211386245988 << " eV\n";
     double total_electron_excess = 0.0;
     std::size_t atom_index = 0;
-    GlobalV::ofs_running << " Native DFTB Mulliken populations and electron excess charges:\n"
-                         << "  atom  element  population(e)  electron_excess(e)\n";
+    running_log << " Native DFTB Mulliken populations and electron excess charges:\n"
+                << "  atom  element  population(e)  electron_excess(e)\n";
     for (int it = 0; it < ucell.ntype; ++it)
     {
         const auto& species = ucell.atoms[it];
@@ -430,28 +600,83 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
             const double population = this->result_.atomic_electron_populations[atom_index];
             species_excess += charge;
             total_electron_excess += charge;
-            GlobalV::ofs_running << "  " << std::setw(4) << atom_index + 1 << "  " << std::setw(7) << species.label
-                                 << "  " << std::setw(18) << population << "  " << charge << "\n";
+            running_log << "  " << std::setw(4) << atom_index + 1 << "  " << std::setw(7) << species.label
+                        << "  " << std::setw(18) << population << "  " << charge << "\n";
         }
         if (species.na > 0)
-            GlobalV::ofs_running << " Native DFTB mean electron excess " << species.label << ": "
-                                 << species_excess / species.na << " e\n";
+            running_log << " Native DFTB mean electron excess " << species.label << ": "
+                        << species_excess / species.na << " e\n";
     }
-    GlobalV::ofs_running << " Native DFTB net electron excess: " << total_electron_excess << " e\n"
-                         << " #TOTAL ENERGY# " << this->energy_ry_ * ModuleBase::Ry_to_eV << " eV (native DFTB)\n";
+    running_log << " Native DFTB net electron excess: " << total_electron_excess << " e\n"
+                << " #TOTAL ENERGY# " << this->energy_ry_ * ModuleBase::Ry_to_eV << " eV (native DFTB)\n";
+    dftb_log << "# Net electron excess: " << total_electron_excess << " e\n"
+             << "# Atomic Mulliken populations and excess charges\n"
+             << "# atom element population(e) electron_excess(e)\n";
+    atom_index = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        const auto& species = ucell.atoms[it];
+        for (int ia = 0; ia < species.na; ++ia, ++atom_index)
+            dftb_log << atom_index + 1 << ' ' << species.label << ' '
+                     << this->result_.atomic_electron_populations[atom_index] << ' '
+                     << this->result_.electron_excess_charges[atom_index] << '\n';
+    }
+    dftb_log.flush();
+
+    const std::string eigen_file = output_dir + "eig_occ.txt";
+    std::ofstream eigenvalues(eigen_file.c_str());
+    if (!eigenvalues)
+        ModuleBase::WARNING_QUIT("ESolver_DFTBNative", "Cannot write native DFTB eigenvalue file: " + eigen_file);
+    eigenvalues << std::setprecision(this->output_precision_)
+                << "# K-point eigenvalues and occupations from the converged native DFTB SCC solution\n"
+                << "# Module: Native DFTB eigensolver\n"
+                << "# Units: energy in eV; occupations are electrons per spin-degenerate state; k-point weights sum to 1\n"
+                << "# k_index weight kx(Direct) ky(Direct) kz(Direct) band_index energy(eV) occupation(e)\n";
+    for (std::size_t ik = 0; ik < this->result_.kpoint_eigenvalues.size(); ++ik)
+    {
+        const auto& point = this->result_.kpoint_eigenvalues[ik];
+        for (std::size_t band = 0; band < point.eigenvalues_hartree.size(); ++band)
+            eigenvalues << ik + 1 << ' ' << point.weight << ' '
+                        << point.fractional[0] << ' ' << point.fractional[1] << ' ' << point.fractional[2] << ' '
+                        << band + 1 << ' ' << point.eigenvalues_hartree[band] * 27.211386245988 << ' '
+                        << point.occupations[band] << '\n';
+    }
+    eigenvalues.close();
+    running_log << " Native DFTB eigenvalues and occupations: wrote " << eigen_file << "\n";
+
+    const std::string mulliken_file = output_dir + "mulliken.txt";
+    std::ofstream mulliken(mulliken_file.c_str());
+    if (!mulliken)
+        ModuleBase::WARNING_QUIT("ESolver_DFTBNative", "Cannot write native DFTB Mulliken file: " + mulliken_file);
+    mulliken << std::setprecision(this->output_precision_)
+             << "# Atomic Mulliken populations from the converged native DFTB SCC solution\n"
+             << "# Module: Native DFTB Mulliken analysis\n"
+             << "# Units: population and electron excess in e; excess = population - SKF neutral valence\n"
+             << "# atom element population(e) electron_excess(e)\n";
+    atom_index = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        const auto& species = ucell.atoms[it];
+        for (int ia = 0; ia < species.na; ++ia, ++atom_index)
+            mulliken << atom_index + 1 << ' ' << species.label << ' '
+                     << this->result_.atomic_electron_populations[atom_index] << ' '
+                     << this->result_.electron_excess_charges[atom_index] << '\n';
+    }
+    mulliken.close();
+    running_log << " Native DFTB Mulliken populations: wrote " << mulliken_file << "\n";
 
     if (!this->result_.band_structure.empty())
     {
-        std::string output_dir = PARAM.globalv.global_out_dir;
-        if (!output_dir.empty() && output_dir.back() != '/') output_dir += '/';
-        const std::string band_file = output_dir + "band_structure.dat";
+        const std::string band_file = output_dir + "band.txt";
         std::ofstream bands(band_file.c_str());
         if (!bands)
             ModuleBase::WARNING_QUIT("ESolver_DFTBNative", "Cannot write native DFTB band file: " + band_file);
-        bands << std::setprecision(16)
-              << "# Native DFTB bands from the converged SCC potential (non-self-consistent path solve)\n"
-              << "# Fermi energy: " << this->result_.fermi_energy_hartree << " Ha\n"
-              << "# Columns: k_index k_distance(bohr^-1) kx ky kz label band_index energy(Ha) energy(eV) E-Ef(eV)\n";
+        bands << std::setprecision(this->output_precision_)
+              << "# Band energies from the converged native DFTB SCC potential (frozen-potential path solve)\n"
+              << "# Module: Native DFTB band structure\n"
+              << "# Units: k_distance in bohr^-1, eigenvalues and E-Ef in eV; coordinates are fractional reciprocal\n"
+              << "# Fermi energy: " << this->result_.fermi_energy_hartree * 27.211386245988 << " eV\n"
+              << "# k_index k_distance(bohr^-1) kx ky kz label band_index energy(eV) E-Ef(eV)\n";
         for (std::size_t ik = 0; ik < this->result_.band_structure.size(); ++ik)
         {
             const auto& point = this->result_.band_structure[ik];
@@ -461,16 +686,17 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
                 bands << ik + 1 << ' ' << point.distance_inverse_bohr << ' '
                       << point.fractional[0] << ' ' << point.fractional[1] << ' ' << point.fractional[2] << ' '
                       << (point.label.empty() ? "-" : point.label) << ' ' << band + 1 << ' '
-                      << energy << ' ' << energy * 27.211386245988 << ' '
+                      << energy * 27.211386245988 << ' '
                       << (energy - this->result_.fermi_energy_hartree) * 27.211386245988 << '\n';
             }
         }
         bands.close();
-        GlobalV::ofs_running << " Native DFTB frozen-potential band structure: "
-                             << this->result_.band_structure.size() << " k-points, "
-                             << (this->result_.band_structure.front().eigenvalues_hartree.size())
-                             << " bands; wrote " << band_file << "\n";
+        running_log << " Native DFTB frozen-potential band structure: "
+                    << this->result_.band_structure.size() << " k-points, "
+                    << (this->result_.band_structure.front().eigenvalues_hartree.size())
+                    << " bands; wrote " << band_file << "\n";
     }
+    dftb_log.close();
 }
 
 double ESolver_DFTBNative::cal_energy()

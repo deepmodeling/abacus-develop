@@ -29,6 +29,7 @@ class ESolver_DFTBNative : public ESolver
     ModuleDFTB::DftbPeriodicInput template_;
     ModuleDFTB::DftbPeriodicResult result_;
     double energy_ry_ = 0.0;
+    int output_precision_ = 12;
 };
 } // namespace ModuleESolver
 

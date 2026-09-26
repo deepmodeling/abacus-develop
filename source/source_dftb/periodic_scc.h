@@ -5,6 +5,7 @@
 
 #include <array>
 #include <cstddef>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -31,11 +32,19 @@ struct DftbBandPoint
     std::vector<double> eigenvalues_hartree;
 };
 
+struct DftbKPointEigenvalues
+{
+    std::array<double, 3> fractional{};
+    double weight = 0.0;
+    std::vector<double> eigenvalues_hartree;
+    std::vector<double> occupations;
+};
+
 struct DftbPeriodicInput
 {
     std::vector<DftbSpAtom> atoms;
     std::vector<DftbPairParameters> pair_parameters;
-    // Lattice vectors are Cartesian Bohr vectors, one vector per column.
+    // Cartesian lattice vectors in Bohr; each row stores one lattice vector.
     std::array<std::array<double, 3>, 3> lattice_bohr{};
     std::vector<DftbWeightedKPoint> kpoints;
     // Optional non-self-consistent band path evaluated at the converged SCC potential.
@@ -48,13 +57,32 @@ struct DftbPeriodicInput
     double scc_tolerance = 1.0e-6;
     int maximum_scc_iterations = 200;
     double mixing_parameter = 0.2;
+    std::string mixing_method = "linear";
+    int mixing_history = 6;
     bool third_order = true;
+};
+
+struct DftbSccIteration
+{
+    int iteration = 0;
+    double maximum_charge_residual = 0.0;
+    double net_electron_excess = 0.0;
+    double band_energy_hartree = 0.0;
+    double band_free_energy_hartree = 0.0;
+    double band_free_energy_change_hartree = 0.0;
+    double electronic_energy_hartree = 0.0;
+    double electronic_energy_change_hartree = 0.0;
+    double total_free_energy_hartree = 0.0;
+    double fermi_energy_hartree = 0.0;
+    bool has_previous_energy = false;
+    std::string mixing_step;
 };
 
 struct DftbPeriodicResult
 {
     std::vector<double> electron_excess_charges;
     std::vector<double> scc_residual_history;
+    std::vector<DftbKPointEigenvalues> kpoint_eigenvalues;
     std::vector<DftbBandPoint> band_structure;
     double fermi_energy_hartree = 0.0;
     double band_energy_hartree = 0.0;
@@ -80,6 +108,10 @@ struct DftbPeriodicResult
  * not yet implemented.
  */
 DftbPeriodicResult solve_periodic_dftb(const DftbPeriodicInput& input);
+
+DftbPeriodicResult solve_periodic_dftb(
+    const DftbPeriodicInput& input,
+    const std::function<void(const DftbSccIteration&)>& on_iteration);
 
 } // namespace ModuleDFTB
 

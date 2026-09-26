@@ -9,6 +9,24 @@
 namespace Parallel_Common
 {
 
+int get_rank()
+{
+    int rank = 0;
+#ifdef __MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+    return rank;
+}
+
+int get_size()
+{
+    int size = 1;
+#ifdef __MPI
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+#endif
+    return size;
+}
+
 #ifdef __MPI
 /// Broadcast a trivially-copyable buffer of type T on MPI_COMM_WORLD from
 /// rank 0. This is the single implementation behind all bcast_* wrappers.
