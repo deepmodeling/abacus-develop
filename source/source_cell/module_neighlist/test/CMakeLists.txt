@@ -10,9 +10,9 @@ AddTest(
   TARGET MODULE_CELL_NEIGHBOR_neighbor_search
   LIBS parameter base device cell neighbor symmetry
   SOURCES
-    neighbor_search_test.cpp
+    test_neighbor_search.cpp
   ../neighbor_search.cpp
-  ../domain_decomposition.cpp
+  ../../domain_decomposition.cpp
   ../bin_manager.cpp
   ../page_allocator.cpp
 )
@@ -21,7 +21,7 @@ AddTest(
   TARGET MODULE_CELL_NEIGHBOR_bin_manager
   LIBS parameter base device
   SOURCES
-    bin_manager_test.cpp
+    test_bin_manager.cpp
     ../bin_manager.cpp
     ../page_allocator.cpp
 )
@@ -30,16 +30,35 @@ AddTest(
   TARGET MODULE_CELL_NEIGHBOR_allocator_and_list
   LIBS parameter base device
   SOURCES
-  neighbor_list_test.cpp
+  test_neighbor_list.cpp
   ../page_allocator.cpp
 )
 
+AddTest(
+  TARGET MODULE_CELL_NEIGHBOR_page_allocator
+  LIBS parameter base device
+  SOURCES
+    test_page_allocator.cpp
+    ../page_allocator.cpp
+)
+
+if(USE_CUDA AND ENABLE_GPU_NEIGHBOR_LIST)
+  AddTest(
+    TARGET MODULE_CELL_NEIGHBOR_gpu_neighbor_list
+    LIBS parameter base device
+    SOURCES
+      test_gpu_neighbor_list.cpp
+      ../gpu_neighbor_list.cpp
+  )
+  target_compile_definitions(MODULE_CELL_NEIGHBOR_gpu_neighbor_list PRIVATE __CUDA)
+endif()
+
 if(ENABLE_MPI)
   add_executable(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
-    mdcell_migrate_mpi_test.cpp
+    test_mdcell_migrate_mpi.cpp
     test_domain_decomposition.cpp
     ../../mdcell.cpp
-    ../domain_decomposition.cpp
+    ../../domain_decomposition.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp
     ../page_allocator.cpp
@@ -72,11 +91,11 @@ if(ENABLE_MPI)
     PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60)
 
   add_executable(MODULE_CELL_NEIGHBOR_mdcell_reader
-    mdcell_reader_test.cpp
+    test_mdcell_reader.cpp
     ../../mdcell_reader.cpp
     ../../mdcell.cpp
     ../../print_cell.cpp
-    ../domain_decomposition.cpp
+    ../../domain_decomposition.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp
     ../page_allocator.cpp

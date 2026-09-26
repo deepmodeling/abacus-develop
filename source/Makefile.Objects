@@ -231,6 +231,7 @@ OBJS_CELL=atom_pseudo.o\
     cal_ux.o\
     mdcell_reader.o\
     mdcell.o\
+    domain_decomposition.o\
     cif_io.o\
     ucell_io.o\
 
@@ -497,7 +498,6 @@ OBJS_NEIGHBOR=sltk_atom.o\
 
 OBJS_NEIGHBOR_SEARCH=neighbor_search.o\
     bin_manager.o\
-    domain_decomposition.o\
     page_allocator.o\
 
 

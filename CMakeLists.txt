@@ -35,6 +35,9 @@ project(
 option(ENABLE_MPI "Enable MPI" ON)
 option(ENABLE_OPENMP "Enable OpenMP" ON)
 option(USE_CUDA "Enable CUDA" OFF)
+cmake_dependent_option(ENABLE_GPU_NEIGHBOR_LIST
+                       "Enable the CUDA GPU neighbor-list implementation"
+                       OFF "USE_CUDA" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
