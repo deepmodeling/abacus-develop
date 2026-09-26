@@ -3,6 +3,7 @@
 #include "../sccs/sccs_charge.h"
 
 #include "source_basis/module_pw/pw_basis.h"
+#include "source_base/constants.h"
 
 #include <cmath>
 #include <stdexcept>
@@ -136,6 +137,26 @@ void Pcc2dCoulombOperator::apply(const std::vector<double>& charge,
             += pcc_2d_potential_gradient(moments,
                                          relative_y_[index],
                                          geometry_.parameters).y;
+    }
+}
+
+void Pcc2dCoulombOperator::apply_gradient_adjoint(
+    const std::vector<ModuleBase::Vector3<double>>& field,
+    std::vector<double>& result) const
+{
+    periodic_.apply_gradient_adjoint(field, result);
+    double moments[2] = {};
+    for (std::size_t i = 0; i < field.size(); ++i)
+    {
+        moments[0] += field[i].y * volume_element_;
+        moments[1] += field[i].y * relative_y_[i] * volume_element_;
+    }
+    reduction_.reduce_sum(moments, 2);
+    const double volume = geometry_.parameters.periodic_area * geometry_.parameters.cell_length_y;
+    const double factor = -ModuleBase::FOUR_PI / volume;
+    for (std::size_t i = 0; i < field.size(); ++i)
+    {
+        result[i] += factor * (moments[1] - relative_y_[i] * moments[0]);
     }
 }
 

@@ -10,6 +10,65 @@
 namespace ModuleSccs
 {
 
+namespace
+{
+
+std::vector<double> adjoint_gradient_transform(
+    const std::vector<ModuleBase::Vector3<double>>& field,
+    const ModulePW::PW_Basis& basis,
+    const double tpiba,
+    const bool apply_coulomb)
+{
+    if (field.size() != static_cast<std::size_t>(basis.nrxx)
+        || !std::isfinite(tpiba) || tpiba <= 0.0)
+    {
+        throw std::invalid_argument("SCCS gradient adjoint requires a matching PW grid");
+    }
+    std::vector<double> component(basis.nrxx);
+    std::vector<std::complex<double>> component_g(basis.npw);
+    std::vector<std::complex<double>> sum(basis.npw);
+    for (int direction = 0; direction < 3; ++direction)
+    {
+        for (int ir = 0; ir < basis.nrxx; ++ir)
+        {
+            component[ir] = field[ir][direction];
+        }
+        basis.real2recip(component.data(), component_g.data());
+        for (int ig = 0; ig < basis.npw; ++ig)
+        {
+            sum[ig] -= ModuleBase::IMAG_UNIT * tpiba * basis.gcar[ig][direction] * component_g[ig];
+        }
+    }
+    if (apply_coulomb)
+    {
+        for (int ig = 0; ig < basis.npw; ++ig)
+        {
+            const double kernel = basis.gg[ig] == 0.0
+                                      ? 0.0 : ModuleBase::FOUR_PI / (tpiba * tpiba * basis.gg[ig]);
+            sum[ig] *= kernel;
+        }
+    }
+    basis.recip2real(sum.data(), component.data());
+    return component;
+}
+
+} // namespace
+
+std::vector<double> periodic_negative_divergence(
+    const std::vector<ModuleBase::Vector3<double>>& field,
+    const ModulePW::PW_Basis& basis,
+    const double tpiba)
+{
+    return adjoint_gradient_transform(field, basis, tpiba, false);
+}
+
+void PeriodicCoulombOperator::apply_gradient_adjoint(
+    const std::vector<ModuleBase::Vector3<double>>& field,
+    std::vector<double>& result) const
+{
+    result = adjoint_gradient_transform(field, basis_, tpiba_, true);
+}
+
 std::vector<ModuleBase::Vector3<double>> periodic_gradient(
     const std::vector<double>& values,
     const ModulePW::PW_Basis& basis,

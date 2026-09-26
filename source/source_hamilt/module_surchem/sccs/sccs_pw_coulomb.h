@@ -16,12 +16,23 @@ std::vector<ModuleBase::Vector3<double>> periodic_gradient(
     const ModulePW::PW_Basis& basis,
     double tpiba);
 
+std::vector<double> periodic_negative_divergence(
+    const std::vector<ModuleBase::Vector3<double>>& field,
+    const ModulePW::PW_Basis& basis,
+    double tpiba);
+
 class PeriodicCoulombOperator : public CoulombOperator
 {
   public:
     PeriodicCoulombOperator(const ModulePW::PW_Basis& basis, double tpiba);
 
     void apply(const std::vector<double>& charge, ElectrostaticField& field) const override;
+
+    // Adjoint of charge -> electrostatic field gradient under the grid inner product.
+    void apply_gradient_adjoint(
+        const std::vector<ModuleBase::Vector3<double>>& field,
+        std::vector<double>& result) const override;
+
 
   private:
     const ModulePW::PW_Basis& basis_;

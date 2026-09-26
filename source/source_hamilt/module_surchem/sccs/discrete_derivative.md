@@ -1,0 +1,77 @@
+# SCCS discrete energy derivatives
+
+The polarization equation is discretized before differentiation. On a fixed
+uniform real-space grid, let `q` be the solute charge, `t = q + p` the screened
+charge, `C` the symmetric Coulomb operator, and `G` its implemented field-gradient
+operator. `G` includes the analytic PCC gradient when PCC is enabled. Let `D` be
+the periodic spectral gradient used for `log(epsilon)`.
+
+The converged polarization equation is
+
+```
+a = D log(epsilon) / (4 pi)
+L = I - a dot G
+L t = q / epsilon.
+```
+
+The electrostatic correction differentiated here is
+
+```
+E = 1/2 <q, C(t-q)> + c <1, t-q>,
+```
+
+where the inner product includes the real-space volume element. The coefficient
+`c` is zero except for the PCC2D ionic-shape correction. The independent vacuum
+PCC energy and non-electrostatic cavity terms retain their separate derivatives.
+
+Solve the discrete adjoint equation
+
+```
+L^T lambda = Cq + 2c,
+L^T lambda = lambda - G^T(a lambda).
+```
+
+The exact derivatives of this discrete energy at a converged polarization state
+are
+
+```
+dE/dq = U = (Ct + lambda/epsilon)/2 - Cq - c
+dE/depsilon = -lambda q/(2 epsilon^2)
+               - div_periodic(lambda Gt)/(8 pi epsilon)
+dE/dn = -U + (d epsilon/dn) (dE/depsilon).
+```
+
+`charge_potential` stores `U` for the explicit ionic force;
+`electron_potential` stores `dE/dn` for the Hamiltonian and LCAO Pulay force.
+`reaction_potential` remains `C(t-q)` for physical diagnostics. At finite grid
+resolution these are distinct: replacing `U` by the reaction potential or using
+the continuum field-squared cavity derivative assumes identities that do not
+hold for the discrete polarization equation.
+
+For PCC2D, the additional explicit ionic derivative of `c` must also be included
+in the force. Differentiating only the polarization charge in `c <1,p>` omits
+the derivative of the centered smooth and point ionic moments.
+
+The periodic part of `G^T` is `C_periodic (-div_periodic)`. The analytic PCC part
+is transposed separately using integrated vector-field moments. Applying a
+periodic FFT derivative to the PCC polynomial would not give this transpose.
+
+The transpose system is nonsymmetric and is solved with BiCGSTAB. Its true
+residual must satisfy both configured SCCS residual tolerances; the configured
+iteration limit also applies to this solve. The existing mixing options control
+the original polarization iteration. A compatible previous adjoint solution is
+reused as the initial guess. `sccs_debug 2` reports the adjoint iteration count
+and residuals. The ordinary SCCS time includes both solves, while `SCCS_ITER`
+continues to count polarization iterations.
+
+This change adds no INPUT parameters and changes no defaults. Existing residual
+and iteration thresholds also govern the adjoint solve. It changes the finite-grid
+electronic potential and therefore can change self-consistent densities and
+energies. It also adds computational cost. It does not establish convergence
+with respect to the grid or eliminate residual grid-dependent translation error.
+For LCAO, the grid convergence parameter in the SN2 validation is `ecutwfc`.
+
+Regression coverage includes the transpose inner-product identity and energy
+directional derivatives for periodic, PCC0D, and PCC2D operators, with a sharp
+water dielectric cavity. Full SCF finite differences are additionally required
+to verify the Hamiltonian/Pulay/ionic-force integration.

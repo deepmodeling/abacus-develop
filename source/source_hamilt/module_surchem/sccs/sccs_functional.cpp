@@ -66,6 +66,7 @@ ElectrostaticFunctionalResult evaluate_electrostatic_functional(
               - depsilon_drho[index] * norm_squared(dielectric_field.gradient[index])
                     / (8.0 * ModuleBase::PI);
     }
+    result.charge_potential = result.reaction_potential;
     reduction.reduce_sum(result.reaction_energy);
     if (!std::isfinite(result.reaction_energy))
     {

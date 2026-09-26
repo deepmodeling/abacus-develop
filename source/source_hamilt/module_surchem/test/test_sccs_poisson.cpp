@@ -29,6 +29,16 @@ class LocalResponseOperator : public ModuleSccs::CoulombOperator
         }
     }
 
+    void apply_gradient_adjoint(const std::vector<ModuleBase::Vector3<double>>& field,
+                                std::vector<double>& result) const override
+    {
+        result.resize(field.size());
+        for (std::size_t i = 0; i < field.size(); ++i)
+        {
+            result[i] = ModuleBase::FOUR_PI * response_ * field[i].x;
+        }
+    }
+
   private:
     double response_ = 0.0;
 };
@@ -36,6 +46,12 @@ class LocalResponseOperator : public ModuleSccs::CoulombOperator
 class NonFiniteOperator : public ModuleSccs::CoulombOperator
 {
   public:
+    void apply_gradient_adjoint(const std::vector<ModuleBase::Vector3<double>>& field,
+                                std::vector<double>& result) const override
+    {
+        result.assign(field.size(), std::numeric_limits<double>::quiet_NaN());
+    }
+
     void apply(const std::vector<double>& charge, ModuleSccs::ElectrostaticField& field) const override
     {
         field.potential.assign(charge.size(), std::numeric_limits<double>::quiet_NaN());

@@ -245,6 +245,9 @@ void surchem::write_sccs_diagnostics(std::ostream& output) const
     const ModuleSccs::SccsResult& result = this->sccs_result();
     const std::streamsize previous_precision = output.precision();
     output << std::setprecision(16);
+    output << " SCCS_DIAGNOSTIC adjoint_iterations " << result.adjoint_iterations << '\n';
+    output << " SCCS_DIAGNOSTIC adjoint_residual_rms " << result.adjoint_residual_rms << '\n';
+    output << " SCCS_DIAGNOSTIC adjoint_residual_max " << result.adjoint_residual_max << '\n';
     output << " SCCS_DIAGNOSTIC reaction_energy_hartree "
            << result.electrostatic.reaction_energy << '\n';
     output << " SCCS_DIAGNOSTIC smooth_vacuum_pcc_energy_hartree "

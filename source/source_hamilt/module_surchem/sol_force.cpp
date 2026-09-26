@@ -2,6 +2,8 @@
 #include "pcc/sccs_pcc_2d.h"
 #include "sccs/sccs_pw_charge.h"
 #include "sccs/sccs_pw_force.h"
+#include "sccs/sccs_pw_reduction.h"
+#include "pcc/sccs_pcc_2d_coulomb.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 
@@ -234,7 +236,7 @@ void surchem::cal_force_sccs(const UnitCell& cell,
         = ModuleSccs::smooth_ionic_force_hartree(cell,
                                                  rho_basis,
                                                  vloc,
-                                                 this->sccs_result_.electrostatic.reaction_potential);
+                                                 this->sccs_result_.electrostatic.charge_potential);
     for (int atom = 0; atom < cell.nat; ++atom)
     {
         for (int direction = 0; direction < 3; ++direction)
@@ -242,7 +244,56 @@ void surchem::cal_force_sccs(const UnitCell& cell,
             forcesol(atom, direction) = 2.0 * smooth_force_hartree(atom, direction);
         }
     }
+    // The 2D ionic-shape coefficient also depends explicitly on ion positions.
+    // Differentiate its centered smooth and point ionic moments at fixed polarization.
+    std::vector<double> point_shape_force_y(cell.nat, 0.0);
+    if (config.boundary == ModuleSccs::Boundary::Pcc2d)
+    {
+        const ModuleSccs::Pcc2dGeometry& geometry = this->pcc_2d_geometry_;
+        const double volume_element = cell.omega / static_cast<double>(rho_basis.nxyz);
+        const std::vector<ModuleBase::Vector3<double>> positions
+            = ModuleSccs::pw_grid_positions(rho_basis, cell.latvec, cell.lat0);
+        const ModuleSccs::PoolChargeReduction reduction;
+        const ModuleSccs::Pcc2dMoments smooth
+            = ModuleSccs::reduced_pcc_2d_density_moments(this->sccs_result_.charge.ionic,
+                                                        positions, volume_element, geometry, reduction);
+        const ModuleSccs::Pcc2dMoments& point = this->pcc_ionic_moments_2d_;
+        const double center = point.dipole_y / point.charge;
+        const double shift = (smooth.dipole_y - point.dipole_y
+                              - center * (smooth.charge - point.charge)) / point.charge;
+        const double factor = ModuleBase::PI * this->sccs_result_.polarization_moments_2d.charge
+                              / (geometry.parameters.periodic_area * geometry.parameters.cell_length_y);
+        std::vector<double> shape_potential(rho_basis.nrxx);
+        for (int ir = 0; ir < rho_basis.nrxx; ++ir)
+        {
+            const double relative_y = ModuleSccs::pcc_2d_relative_y(positions[ir].y, geometry);
+            const double displacement = relative_y - center;
+            shape_potential[ir] = factor * displacement * displacement;
+        }
+        const ModuleBase::matrix shape_force
+            = ModuleSccs::smooth_ionic_force_hartree(cell, rho_basis, vloc, shape_potential);
+        int iat = 0;
+        for (int type = 0; type < cell.ntype; ++type)
+        {
+            for (int atom = 0; atom < cell.atoms[type].na; ++atom)
+            {
+                const double position_y = cell.atoms[type].tau[atom].y * cell.lat0;
+                const double relative_y = ModuleSccs::pcc_2d_relative_y(position_y, geometry);
+                point_shape_force_y[iat]
+                    = 2.0 * factor * cell.atoms[type].ncpp.zv * (relative_y - center + shift);
+                for (int direction = 0; direction < 3; ++direction)
+                {
+                    forcesol(iat, direction) += 2.0 * shape_force(iat, direction);
+                }
+                ++iat;
+            }
+        }
+    }
     Parallel_Reduce::reduce_pool(forcesol.c, forcesol.nr * forcesol.nc);
+    for (int atom = 0; atom < cell.nat; ++atom)
+    {
+        forcesol(atom, 1) += 2.0 * point_shape_force_y[atom];
+    }
     if (config.boundary == ModuleSccs::Boundary::Periodic)
     {
         return;

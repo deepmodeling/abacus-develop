@@ -68,6 +68,16 @@ void surchem::v_correction_sccs(const UnitCell& cell,
 
     const double volume_element = cell.omega / static_cast<double>(rho_basis.nxyz);
     const ModuleSccs::PoolChargeReduction charge_reduction;
+    double ionic_shape_coefficient = 0.0;
+    if (this->parameters_.pcc_boundary == ModuleSccs::Boundary::Pcc2d)
+    {
+        const ModuleSccs::Pcc2dMoments smooth_ionic_moments
+            = ModuleSccs::reduced_pcc_2d_density_moments(ionic_density, positions,
+                                                       volume_element, pcc_2d_geometry,
+                                                       charge_reduction);
+        ionic_shape_coefficient = ModuleSccs::pcc_2d_ionic_shape_energy(
+            1.0, smooth_ionic_moments, this->pcc_ionic_moments_2d_, pcc_2d_geometry.parameters);
+    }
     const ModuleSccs::PoolPolarizationReduction polarization_reduction(
         this->parameters_.pool_process_count);
     this->sccs_result_
@@ -81,6 +91,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
                                        this->parameters_.sccs_config,
                                        pcc_geometry,
                                        pcc_2d_geometry,
+                                       ionic_shape_coefficient,
                                        rho_basis,
                                        cell.tpiba,
                                        volume_element,
@@ -97,20 +108,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
         {
             this->sccs_result_.electron_potential_hartree[ir] += 0.5 * pcc_potential(0, ir);
         }
-        if (this->parameters_.pcc_boundary == ModuleSccs::Boundary::Pcc2d)
-        {
-            const ModuleSccs::Pcc2dMoments smooth_ionic_moments
-                = ModuleSccs::reduced_pcc_2d_density_moments(this->sccs_result_.charge.ionic,
-                                                            positions,
-                                                            volume_element,
-                                                            pcc_2d_geometry,
-                                                            charge_reduction);
-            this->sccs_result_.ionic_shape_pcc_energy
-                = ModuleSccs::pcc_2d_ionic_shape_energy(this->sccs_result_.polarization_moments_2d.charge,
-                                                       smooth_ionic_moments,
-                                                       this->pcc_ionic_moments_2d_,
-                                                       pcc_2d_geometry.parameters);
-        }
+
     }
 
     if (v.nr != nspin || v.nc != rho_basis.nrxx)

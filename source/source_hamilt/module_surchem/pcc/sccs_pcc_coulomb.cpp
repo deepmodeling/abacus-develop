@@ -3,6 +3,7 @@
 #include "../sccs/sccs_charge.h"
 
 #include "source_basis/module_pw/pw_basis.h"
+#include "source_base/constants.h"
 
 #include <cmath>
 #include <stdexcept>
@@ -101,6 +102,32 @@ void PccCoulombOperator::apply(const std::vector<double>& charge,
         field.gradient[index].x += correction.x;
         field.gradient[index].y += correction.y;
         field.gradient[index].z += correction.z;
+    }
+}
+
+void PccCoulombOperator::apply_gradient_adjoint(
+    const std::vector<ModuleBase::Vector3<double>>& field,
+    std::vector<double>& result) const
+{
+    periodic_.apply_gradient_adjoint(field, result);
+    double moments[4] = {};
+    for (std::size_t i = 0; i < field.size(); ++i)
+    {
+        for (int d = 0; d < 3; ++d)
+        {
+            moments[d] += field[i][d] * volume_element_;
+            moments[3] += field[i][d] * relative_positions_[i][d] * volume_element_;
+        }
+    }
+    reduction_.reduce_sum(moments, 4);
+    const double length = geometry_.parameters.cube_length;
+    const double factor = -ModuleBase::FOUR_PI / (3.0 * length * length * length);
+    for (std::size_t i = 0; i < field.size(); ++i)
+    {
+        const double projection = relative_positions_[i].x * moments[0]
+                                  + relative_positions_[i].y * moments[1]
+                                  + relative_positions_[i].z * moments[2];
+        result[i] += factor * (moments[3] - projection);
     }
 }
 

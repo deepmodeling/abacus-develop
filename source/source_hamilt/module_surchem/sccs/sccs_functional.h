@@ -11,6 +11,7 @@ struct ElectrostaticFunctionalResult
 {
     double reaction_energy = 0.0;
     std::vector<double> reaction_potential;
+    std::vector<double> charge_potential;
     std::vector<double> electron_potential;
 };
 

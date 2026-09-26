@@ -16,6 +16,7 @@ add_library(
     sccs/sccs_cavity.cpp
     sccs/sccs_charge.cpp
     sccs/sccs_driver.cpp
+    sccs/sccs_adjoint.cpp
     sccs/sccs_functional.cpp
     sccs/sccs_nonel.cpp
     sccs/sccs_parameters.cpp

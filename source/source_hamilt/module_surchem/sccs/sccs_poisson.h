@@ -21,6 +21,12 @@ class CoulombOperator
     virtual ~CoulombOperator() = default;
 
     virtual void apply(const std::vector<double>& charge, ElectrostaticField& field) const = 0;
+
+    // Adjoint of charge -> electrostatic field gradient under the grid inner product.
+    virtual void apply_gradient_adjoint(
+        const std::vector<ModuleBase::Vector3<double>>& field,
+        std::vector<double>& result) const = 0;
+
 };
 
 class PolarizationReduction

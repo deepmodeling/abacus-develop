@@ -135,8 +135,8 @@ void ReadInput::item_sccs()
                        "User-controlled for every sccs_preset, default 0.8; inactive when sccs_mixing_adaptive=0",
                        "0.8",
                        "")
-    ADD_SCCS_REAL_ITEM("sccs_tol_rms", sccs_tol_rms, "Positive SCCS polarization RMS residual tolerance; user-controlled for every sccs_preset, default 1.0e-10 e/bohr^3.", "1.0e-10", "e/bohr^3")
-    ADD_SCCS_REAL_ITEM("sccs_tol_max", sccs_tol_max, "Positive SCCS polarization maximum residual tolerance; user-controlled for every sccs_preset, default 1.0e-8 e/bohr^3.", "1.0e-8", "e/bohr^3")
+    ADD_SCCS_REAL_ITEM("sccs_tol_rms", sccs_tol_rms, "Positive SCCS polarization RMS residual tolerance; user-controlled for every sccs_preset, default 1.0e-10 e/bohr^3. The discrete-adjoint solve uses the same numerical threshold for its RMS potential residual in atomic units; the two solves are checked separately.", "1.0e-10", "e/bohr^3")
+    ADD_SCCS_REAL_ITEM("sccs_tol_max", sccs_tol_max, "Positive SCCS polarization maximum residual tolerance; user-controlled for every sccs_preset, default 1.0e-8 e/bohr^3. The discrete-adjoint solve uses the same numerical threshold for its maximum potential residual in atomic units; the two solves are checked separately.", "1.0e-8", "e/bohr^3")
     ADD_SCCS_REAL_ITEM("sccs_surface_eta", sccs_surface_eta, "Positive SCCS surface regularization; user-controlled for every sccs_preset, default 1.0e-8 bohr^-1.", "1.0e-8", "bohr^-1")
 #undef ADD_SCCS_REAL_ITEM
     {
@@ -191,7 +191,7 @@ void ReadInput::item_sccs()
         item.annotation = "SCCS polarization iteration limit";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "Positive maximum number of inner SCCS polarization iterations. User-controlled for every sccs_preset, default 200; failure to converge within this limit terminates the calculation.";
+        item.description = "Positive maximum iteration count for each SCCS polarization or discrete-adjoint solve. User-controlled for every sccs_preset, default 200; failure of either solve to converge within this limit terminates the calculation. SCCS_ITER counts polarization iterations only; sccs_debug 2 also reports the adjoint iteration count and residuals.";
         item.default_value = "200";
         item.unit = "";
         item.set_availability("imp_sol==2");

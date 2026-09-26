@@ -4926,7 +4926,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Positive SCCS polarization RMS residual tolerance; user-controlled for every sccs_preset, default 1.0e-10 e/bohr^3.
+- **Description**: Positive SCCS polarization RMS residual tolerance; user-controlled for every sccs_preset, default 1.0e-10 e/bohr^3. The discrete-adjoint solve uses the same numerical threshold for its RMS potential residual in atomic units; the two solves are checked separately.
 - **Default**: 1.0e-10
 - **Unit**: e/bohr^3
 
@@ -4934,7 +4934,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Positive SCCS polarization maximum residual tolerance; user-controlled for every sccs_preset, default 1.0e-8 e/bohr^3.
+- **Description**: Positive SCCS polarization maximum residual tolerance; user-controlled for every sccs_preset, default 1.0e-8 e/bohr^3. The discrete-adjoint solve uses the same numerical threshold for its maximum potential residual in atomic units; the two solves are checked separately.
 - **Default**: 1.0e-8
 - **Unit**: e/bohr^3
 
@@ -4970,7 +4970,7 @@
 
 - **Type**: Integer
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Positive maximum number of inner SCCS polarization iterations. User-controlled for every sccs_preset, default 200; failure to converge within this limit terminates the calculation.
+- **Description**: Positive maximum iteration count for each SCCS polarization or discrete-adjoint solve. User-controlled for every sccs_preset, default 200; failure of either solve to converge within this limit terminates the calculation. SCCS_ITER counts polarization iterations only; sccs_debug 2 also reports the adjoint iteration count and residuals.
 - **Default**: 200
 
 ### sccs_mixing_adaptive

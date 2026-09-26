@@ -1,4 +1,5 @@
 #include "sccs_driver.h"
+#include "sccs_adjoint.h"
 
 #include "../pcc/sccs_pcc_2d_coulomb.h"
 #include "../pcc/sccs_pcc_coulomb.h"
@@ -148,6 +149,7 @@ Pcc2dMoments add_moments_2d(const Pcc2dMoments& left, const Pcc2dMoments& right)
 void SccsState::reset()
 {
     polarization_charge.clear();
+    adjoint_potential.clear();
     local_grid_size = 0;
     global_grid_size = 0;
     nx = 0;
@@ -177,6 +179,7 @@ SccsResult evaluate_pw_sccs(
     const SccsConfig& config,
     const PccGeometry& pcc_geometry,
     const Pcc2dGeometry& pcc_2d_geometry,
+    const double ionic_shape_coefficient,
     const ModulePW::PW_Basis& basis,
     const double tpiba,
     const double volume_element,
@@ -267,6 +270,16 @@ SccsResult evaluate_pw_sccs(
                                                               volume_element,
                                                               charge_reduction);
 
+    const std::vector<double> initial_adjoint
+        = initial.empty() ? std::vector<double>() : state.adjoint_potential;
+    const AdjointResult adjoint = evaluate_discrete_electrostatic_derivative(
+        result.charge.solute, result.response, result.vacuum_field, basis, tpiba,
+        ionic_shape_coefficient, solver_parameters, initial_adjoint, *coulomb,
+        polarization_reduction, result.electrostatic);
+    result.adjoint_iterations = adjoint.iterations;
+    result.adjoint_residual_rms = adjoint.residual_rms;
+    result.adjoint_residual_max = adjoint.residual_max;
+
     NonElectrostaticParameters non_electrostatic_parameters;
     non_electrostatic_parameters.surface_tension = config.surface_tension;
     non_electrostatic_parameters.pressure = config.pressure;
@@ -318,6 +331,7 @@ SccsResult evaluate_pw_sccs(
                                       charge_reduction);
     }
     result.screened_moments = add_moments(result.solute_moments, result.polarization_moments);
+    result.ionic_shape_pcc_energy = ionic_shape_coefficient * result.polarization_moments.charge;
     if (config.boundary == Boundary::Pcc0d)
     {
         result.smooth_vacuum_pcc_energy
@@ -367,6 +381,7 @@ SccsResult evaluate_pw_sccs(
     }
 
     state.polarization_charge = result.response.polarization.polarization_charge;
+    state.adjoint_potential = adjoint.potential;
     state.local_grid_size = basis.nrxx;
     state.global_grid_size = basis.nxyz;
     state.nx = basis.nx;
