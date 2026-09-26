@@ -29,40 +29,11 @@ if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
     version_suffix="${ABACUS_TOOLCHAIN_VERSION_SUFFIX}"
 fi
 
-# Ensure OPENBLAS_ARCH is set before loading package variables
-# This is needed for architecture-specific SHA256 selection
-# In --pack-run mode, openblas_arch file may contain empty values, so we need fallback
-if [ -f "${BUILDDIR}/openblas_arch" ]; then
-    source "${BUILDDIR}/openblas_arch"
-fi
-
-if [ -z "${OPENBLAS_ARCH}" ]; then
-    case "$(uname -m)" in
-        x86_64|amd64) OPENBLAS_ARCH="x86_64" ;;
-        aarch64|arm64) OPENBLAS_ARCH="arm64" ;;
-        *) OPENBLAS_ARCH="x86_64" ;;  # default fallback
-    esac
-    echo "OPENBLAS_ARCH not set, using fallback: ${OPENBLAS_ARCH}"
-fi
-
-# Export OPENBLAS_ARCH to ensure it's available throughout the script
-export OPENBLAS_ARCH
-
 # Load package variables with appropriate version
 load_package_vars "cmake" "$version_suffix"
 
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
-
-# Re-apply architecture detection if OPENBLAS_ARCH is still empty after sourcing
-if [ -z "${OPENBLAS_ARCH}" ]; then
-    case "$(uname -m)" in
-        x86_64|amd64) OPENBLAS_ARCH="x86_64" ;;
-        aarch64|arm64) OPENBLAS_ARCH="arm64" ;;
-        *) OPENBLAS_ARCH="x86_64" ;;  # default fallback
-    esac
-    export OPENBLAS_ARCH
-fi
 
 [ -f "${BUILDDIR}/setup_cmake" ] && rm "${BUILDDIR}/setup_cmake"
 
@@ -71,22 +42,33 @@ cd "${BUILDDIR}"
 case "${with_cmake}" in
     __INSTALL__)
         echo "==================== Installing CMake ===================="
-        if [ "${OPENBLAS_ARCH}" = "arm64" ]; then
-            if [ "$(uname -s)" = "Darwin" ]; then
+        case "$(uname -s):${SYSTEM_ARCH}" in
+            Darwin:x86_64 | Darwin:arm64)
                 cmake_arch="macos-universal"
-            elif [ "$(uname -s)" = "Linux" ]; then
+                cmake_checksum_arch="macos"
+                ;;
+            Linux:x86_64)
+                cmake_arch="linux-x86_64"
+                cmake_checksum_arch="x86_64"
+                ;;
+            Linux:arm64)
                 cmake_arch="linux-aarch64"
-            else
+                cmake_checksum_arch="aarch64"
+                ;;
+            *)
                 report_error ${LINENO} \
-                    "cmake installation for ARCH=${OPENBLAS_ARCH} under $(uname -s) is not supported. You can try to use the system installation using the flag --with-cmake=system instead."
-            fi
-        elif [ "${OPENBLAS_ARCH}" = "x86_64" ]; then
-            cmake_arch="linux-x86_64"
+                    "cmake installation for ARCH=${SYSTEM_ARCH} under $(uname -s) is not supported. You can try to use the system installation using the flag \"--with-cmake=system\" instead."
+                exit 1
+                ;;
+        esac
+
+        if [ "${version_suffix}" = "alt" ]; then
+            cmake_checksum_var="cmake_alt_sha256_${cmake_checksum_arch}"
         else
-            report_error ${LINENO} \
-                "cmake installation for ARCH=${OPENBLAS_ARCH} is not supported. You can try to use the system installation using the flag --with-cmake=system instead."
-            exit 1
+            cmake_checksum_var="cmake_main_sha256_${cmake_checksum_arch}"
         fi
+        cmake_sha256="${!cmake_checksum_var}"
+
         pkg_install_dir="${INSTALLDIR}/cmake-${cmake_ver}"
         #pkg_install_dir="${HOME}/apps/cmake/${cmake_ver}"
         install_lock_file="${pkg_install_dir}/install_successful"
