@@ -352,7 +352,7 @@ ESolver* init_esolver(const Input_para& inp)
     else if (esolver_type == "dftb_native")
     {
 #ifdef __DFTB_NATIVE
-        return new ESolver_DFTBNative(PARAM.globalv.global_out_dir);
+        return new ESolver_DFTBNative("OUT." + inp.suffix + "/");
 #else
         ModuleBase::WARNING_QUIT("ESolver", "dftbnative requires an ABACUS build with ENABLE_DFTB_NATIVE=ON");
 #endif

@@ -1,7 +1,6 @@
 #include "esolver_dftb_native.h"
 
 #include "source_base/constants.h"
-#include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/tool_quit.h"
@@ -16,6 +15,7 @@
 #include <cctype>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <limits>
 #include <map>
 #include <sstream>
@@ -383,7 +383,6 @@ void ESolver_DFTBNative::before_all_runners(BaseCell& cell, const Input_para& in
         ModuleBase::WARNING_QUIT("ESolver_DFTBNative", "Native DFTB currently supports spin-degenerate calculations only.");
 
     const int rank = Parallel_Common::get_rank();
-    std::ostream& running_log = GlobalV::ofs_running;
     int local_status = 0;
     char error_message[1024] = {};
     try
@@ -413,7 +412,7 @@ void ESolver_DFTBNative::before_all_runners(BaseCell& cell, const Input_para& in
     }
     if (rank == 0)
     {
-        running_log << " Native periodic DFTB model loaded from " << inp.dftb_native_input
+        std::cout << " Native periodic DFTB model loaded from " << inp.dftb_native_input
                     << " (no DFTB+ runtime, UPF, or ABACUS orbital files)." << std::endl;
     }
 }
@@ -524,7 +523,7 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
     const UnitCell& ucell = static_cast<const UnitCell&>(cell);
     const ModuleDFTB::DftbPeriodicInput input = this->make_geometry(ucell);
     const int rank = Parallel_Common::get_rank();
-    std::ostream& running_log = GlobalV::ofs_running;
+    std::ostream& running_log = std::cout;
     std::string output_dir = this->output_dir_;
     if (!output_dir.empty() && output_dir.back() != '/') output_dir += '/';
     const std::string dftb_log_file = output_dir + "dftb.log";
@@ -767,6 +766,10 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
                     << (this->result_.band_structure.front().eigenvalues_hartree.size())
                     << " bands; wrote " << band_file << "\n";
     }
+    dftb_log << "#TOTAL ENERGY# " << this->energy_ry_ * ModuleBase::Ry_to_eV << " eV (native DFTB)\n"
+             << "!FINAL_ETOT_IS " << this->energy_ry_ * ModuleBase::Ry_to_eV << " eV (native DFTB)\n"
+             << "# Output files: dftb.log, eig_occ.txt, mulliken.txt"
+             << (this->result_.band_structure.empty() ? "\n" : ", band.txt\n");
     dftb_log.close();
 }
 
@@ -792,9 +795,10 @@ void ESolver_DFTBNative::cal_stress(BaseCell& cell, ModuleBase::matrix& stress)
 void ESolver_DFTBNative::after_all_runners(BaseCell& cell)
 {
     static_cast<void>(cell);
-    GlobalV::ofs_running << std::setprecision(16)
-                         << "\n --------------------------------------------" << std::endl
-                         << " !FINAL_ETOT_IS " << this->energy_ry_ * ModuleBase::Ry_to_eV
-                         << " eV (native DFTB)" << std::endl;
+    if (Parallel_Common::get_rank() != 0) return;
+    std::cout << std::setprecision(16)
+              << "\n --------------------------------------------" << std::endl
+              << " !FINAL_ETOT_IS " << this->energy_ry_ * ModuleBase::Ry_to_eV
+              << " eV (native DFTB)" << std::endl;
 }
 } // namespace ModuleESolver
