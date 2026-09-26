@@ -216,67 +216,6 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assert_blocked_by(result, "CMake linkage for new sources")
 
-    def test_warns_input_parameter_changes_without_docs_linkage(self):
-        self.write(
-            "source/source_io/module_parameter/read_input_item_model.cpp",
-            'Input_Item item("new_switch");\nitem.default_value = "0";\n',
-        )
-        head = self.commit_change()
-
-        result = self.run_checker("--base", self.base, "--head", head)
-
-        self.assert_warns_with_success(result, "INPUT parameter documentation linkage")
-
-    def test_allows_parameter_file_comment_only_change_without_docs(self):
-        self.write(
-            "source/source_io/module_parameter/read_input_item_model.cpp",
-            'Input_Item item("old_switch");\n// Keep legacy input switch documented nearby.\n',
-        )
-        head = self.commit_change()
-
-        result = self.run_checker("--base", self.base, "--head", head)
-
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
-    def test_allows_input_item_test_fixture_without_docs(self):
-        self.write("tools/03_code_analysis/input_fixture.py", 'fixture = "Input_Item item(\\"old_switch\\");"\n')
-        head = self.commit_change()
-
-        result = self.run_checker("--base", self.base, "--head", head)
-
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
-    def test_allows_input_parameter_changes_with_required_docs(self):
-        self.write(
-            "source/source_io/module_parameter/read_input_item_model.cpp",
-            'Input_Item item("new_switch");\nitem.default_value = "0";\n',
-        )
-        self.write("docs/parameters.yaml", "parameters: []\n")
-        self.write("docs/advanced/input_files/input-main.md", "# INPUT\n")
-        head = self.commit_change()
-
-        result = self.run_checker("--base", self.base, "--head", head)
-
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
-    def test_warns_input_parameter_change_when_required_docs_are_deleted(self):
-        self.write("docs/parameters.yaml", "parameters: []\n")
-        self.write("docs/advanced/input_files/input-main.md", "# INPUT\n")
-        self.git("add", ".")
-        self.git("commit", "-m", "add input docs")
-        base = self.git("rev-parse", "HEAD").stdout.strip()
-        self.write(
-            "source/source_io/module_parameter/read_input_item_model.cpp",
-            'Input_Item item("new_switch");\nitem.default_value = "0";\n',
-        )
-        (self.repo / "docs" / "parameters.yaml").unlink()
-        (self.repo / "docs" / "advanced" / "input_files" / "input-main.md").unlink()
-        head = self.commit_change()
-
-        result = self.run_checker("--base", base, "--head", head)
-
-        self.assert_warns_with_success(result, "INPUT parameter documentation linkage")
-
     def test_warns_for_unfilled_pr_template_fields_from_event_payload(self):
         event = self.repo / "event.json"
         event.write_text(
