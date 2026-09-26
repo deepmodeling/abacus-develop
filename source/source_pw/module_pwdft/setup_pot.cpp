@@ -2,7 +2,7 @@
 
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_pw/module_pwdft/onsite_proj.h"
+#include "source_pw/module_proj/onsite_proj.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/dftu_base.h" // mohan add 2025-11-06
 #include "source_pw/module_pwdft/vsep_pw.h"

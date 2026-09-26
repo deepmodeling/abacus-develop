@@ -16,17 +16,6 @@ static inline int localIndex(int globalIndex, int nblk, int nprocs, int& lcoalPr
     return int(globalIndex / (nblk * nprocs)) * nblk + globalIndex % nblk;
 }
 
-#ifdef __MPI
-void initBlacsGrid(int loglevel,
-                   MPI_Comm comm,
-                   int nFull,
-                   int nblk,
-                   int& blacs_ctxt,
-                   int& narows,
-                   int& nacols,
-                   int desc[]);
-#endif
-
 // load matrix from the file
 void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int blacs_ctxt);
 

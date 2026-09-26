@@ -1,3 +1,4 @@
+#include <fstream>
 #include <vector>
 #include <algorithm>
 
@@ -18,6 +19,7 @@
 #include "source_base/module_parallel/para_world.h"
 #include "source_base/module_parallel/para_tag.h"
 #include "source_base/module_parallel/para_bridge.h"
+#include "source_base/parallel_common.h"
 
 // ---------------------------------------------------------------------------
 // Thin member wrapper: Charge::init_rho delegates to the free function in
@@ -58,14 +60,15 @@ struct ReadCfg
  * @param chr [inout] Charge object supplying the rho/rhog buffers
  * @param rhopw [in] plane-wave basis for file decoding and Fourier transforms
  * @param cfg [in] file-reading configuration (suffix, dir, rank, logs)
- * @param read_error [out] whether rho reading failed
+ * @return true if a density source was read; false if neither the restart
+ *         binary nor the cube file exists (caller decides whether to fall
+ *         back to the atomic density)
  */
-void read_rho_file(Charge& chr,
+bool read_rho_file(Charge& chr,
                    const ModulePW::PW_Basis& rhopw,
                    const UnitCell& ucell,
                    const Parallel_Grid& pgrid,
-                   const ReadCfg& cfg,
-                   bool& read_error)
+                   const ReadCfg& cfg)
 {
     const int nspin = chr.nspin;
     std::complex<double>** const rhog = chr.rhog;
@@ -91,63 +94,54 @@ void read_rho_file(Charge& chr,
         {
             rhopw.recip2real(rhog[is], rho[is]);
         }
+        return true;
+    }
+
+    // restart binary is absent; fall back to cube files.
+    // Probe the cube file on the rank that parses it and broadcast the result,
+    // so every rank agrees to skip the read instead of hanging in pgrid.bcast().
+    std::stringstream ssc0;
+    if (nspin == 1)
+    {
+        ssc0 << readin_dir << "chg.cube";
     }
     else
     {
-        for (int is = 0; is < nspin; ++is)
-        {
-            std::stringstream ssc;
-
-            if (nspin == 1)
-            {
-                ssc << readin_dir << "chg.cube";
-            }
-            else
-            {
-                ssc << readin_dir << "chgs" << is + 1 << ".cube";
-            }
-
-            if (ModuleIO::read_vdata_palgrid(pgrid,
-                                             rank,
-                                             ofs_running,
-                                             ssc.str(),
-                                             rho[is],
-                                             ucell.nat))
-            {
-                ofs_running << " Read electron density from file: " << ssc.str() << std::endl;
-            }
-            else if (is > 0)    // nspin=2 or 4
-            {
-                if (is == 1)    // failed at the second spin
-                {
-                    std::cout << " Incomplete electron density file." << std::endl;
-                    read_error = true;
-                    break;
-                }
-                else if (is == 2)   // read 2 files when nspin=4
-                {
-                    ofs_running << " Didn't read in the electron density but would rearrange it later. "
-                                << std::endl;
-                }
-                else if (is == 3)   // read 2 files when nspin=4
-                {
-                    ofs_running << " rearrange electron density " << std::endl;
-                    for (int ir = 0; ir < rhopw.nrxx; ir++)
-                    {
-                        rho[3][ir] = rho[0][ir] - rho[1][ir];
-                        rho[0][ir] = rho[0][ir] + rho[1][ir];
-                        rho[1][ir] = 0.0;
-                        rho[2][ir] = 0.0;
-                    }
-                }
-            }
-            else
-            {
-                read_error = true;
-                break;
-            }
-        }
+        ssc0 << readin_dir << "chgs1.cube";
     }
+    bool cube_exists = false;
+    if (rank == 0)
+    {
+        cube_exists = std::ifstream(ssc0.str()).good();
+    }
+    Parallel_Common::bcast_bool(cube_exists);
+    if (!cube_exists)
+    {
+        return false;
+    }
+
+    for (int is = 0; is < nspin; ++is)
+    {
+        std::stringstream ssc;
+
+        if (nspin == 1)
+        {
+            ssc << readin_dir << "chg.cube";
+        }
+        else
+        {
+            ssc << readin_dir << "chgs" << is + 1 << ".cube";
+        }
+
+        ModuleIO::read_vdata_palgrid(pgrid,
+                                     rank,
+                                     ofs_running,
+                                     ssc.str(),
+                                     rho[is],
+                                     ucell.nat);
+        ofs_running << " Read electron density from file: " << ssc.str() << std::endl;
+    }
+    return true;
 }
 
 /**
@@ -157,19 +151,16 @@ void read_rho_file(Charge& chr,
  *
  * @param chr [inout] Charge object supplying the kin_r buffer
  * @param rhopw [in] plane-wave basis for file decoding and Fourier transforms
- * @param suffix [in] restart file prefix
- * @param readin_dir [in] directory to read from
- * @param rank [in] this processor's rank for palgrid reads
- * @param ofs_running [inout] running log stream
- * @param ofs_warning [inout] warning log stream
- * @param read_kin_error [out] whether kinetic-density reading failed
+ * @param cfg [in] file-reading configuration (suffix, dir, rank, logs)
+ * @return true if a tau source was read; false if neither the restart binary
+ *         nor the SPINX_TAU.cube file exists (caller falls back to the
+ *         Thomas-Fermi tau init)
  */
-void read_kin_file(Charge& chr,
+bool read_kin_file(Charge& chr,
                    const ModulePW::PW_Basis& rhopw,
                    const UnitCell& ucell,
                    const Parallel_Grid& pgrid,
-                   const ReadCfg& cfg,
-                   bool& read_kin_error)
+                   const ReadCfg& cfg)
 {
     const int nspin = chr.nspin;
     double** const kin_r = chr.kin_r;
@@ -197,36 +188,38 @@ void read_kin_file(Charge& chr,
         {
             rhopw.recip2real(kin_g[is], kin_r[is]);
         }
+        return true;
     }
-    else
+
+    // restart binary is absent; fall back to SPINX_TAU.cube files, probing on
+    // the parsing rank and broadcasting so all ranks agree to skip together.
+    std::stringstream ssc0;
+    ssc0 << readin_dir << "SPIN1_TAU.cube";
+    bool cube_exists = false;
+    if (rank == 0)
     {
-        for (int is = 0; is < nspin; is++)
-        {
-            std::stringstream ssc;
-            ssc << readin_dir << "SPIN" << is + 1 << "_TAU.cube";
-            // mohan update 2012-02-10, sunliang update 2023-03-09
-            if (ModuleIO::read_vdata_palgrid(
-                    pgrid,
-                    rank,
-                    ofs_running,
-                    ssc.str(),
-                    kin_r[is],
-                    ucell.nat))
-            {
-                ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
-            }
-            else
-            {
-                read_kin_error = true;
-                std::cout << " WARNING: \"init_chg\" is enabled but ABACUS failed to read kinetic energy "
-                             "density from file.\n"
-                             " Please check if there is SPINX_TAU.cube (X=1,...) or "
-                             "{suffix}-TAU-DENSITY.restart in the directory.\n"
-                          << std::endl;
-                break;
-            }
-        }
+        cube_exists = std::ifstream(ssc0.str()).good();
     }
+    Parallel_Common::bcast_bool(cube_exists);
+    if (!cube_exists)
+    {
+        return false;
+    }
+
+    for (int is = 0; is < nspin; is++)
+    {
+        std::stringstream ssc;
+        ssc << readin_dir << "SPIN" << is + 1 << "_TAU.cube";
+        // mohan update 2012-02-10, sunliang update 2023-03-09
+        ModuleIO::read_vdata_palgrid(pgrid,
+                                     rank,
+                                     ofs_running,
+                                     ssc.str(),
+                                     kin_r[is],
+                                     ucell.nat);
+        ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
+    }
+    return true;
 }
 
 /**
@@ -239,8 +232,9 @@ void read_kin_file(Charge& chr,
  * @param omega [in] unit-cell volume
  * @param init_chg [in] INPUT.init_chg
  * @param meta_gga [in] whether the functional is meta-GGA (tau TF-init needed)
- * @param read_error [in] whether rho reading failed
- * @param read_kin_error [in] whether kinetic-density reading failed
+ * @param read_error [in] rho file reading failed (fall back to atomic)
+ * @param read_kin_error [in] tau file reading failed (fall back to TF tau)
+ * @param atomic_rho_cfg [in] atomic-density configuration
  */
 void init_rho_atomic_and_tau(Charge& chr,
                              const ModulePW::PW_Basis& rhopw,
@@ -322,15 +316,13 @@ void load_rho_from_restart(Charge& chr,
                 // try to load from the output of `out_chg`
                 std::stringstream ssc;
                 ssc << readin_dir << "chgs" << is + 1 << ".cube";
-                if (ModuleIO::read_vdata_palgrid(pgrid,
-                                                 rank,
-                                                 ofs_running,
-                                                 ssc.str(),
-                                                 chr.rho[is],
-                                                 ucell.nat))
-                {
-                    ofs_running << " Read in electron density: " << ssc.str() << std::endl;
-                }
+                ModuleIO::read_vdata_palgrid(pgrid,
+                                             rank,
+                                             ofs_running,
+                                             ssc.str(),
+                                             chr.rho[is],
+                                             ucell.nat);
+                ofs_running << " Read in electron density: " << ssc.str() << std::endl;
             }
         }
         restart.info_load.load_charge_finish = true;
@@ -369,39 +361,33 @@ void init_rho(Charge& chr,
     const std::string& readin_dir = cfg.global_readin_dir;
     const int rank = (cfg.esolver_type == "sdft" ? GlobalV::RANK_IN_BPGROUP : GlobalV::MY_RANK);
 
-    bool read_error = false;
-    bool read_kin_error = false;
     // Capture before the local ReadCfg (also named cfg) shadows the argument.
     const bool meta_gga = cfg.meta_gga;
+    bool read_error = false;
+    bool read_kin_error = false;
     if (init_chg == "file" || init_chg == "auto")
     {
         ReadCfg cfg{suffix, readin_dir, rank,
                     GlobalV::ofs_running, GlobalV::ofs_warning};
-        read_rho_file(chr, rhopw, ucell, pgrid, cfg, read_error);
+        read_error = !read_rho_file(chr, rhopw, ucell, pgrid, cfg);
 
         if (read_error)
         {
-            const std::string warn_msg
-                = " WARNING: \"init_chg\" is enabled but ABACUS failed to read\n charge density from file.\n"
-                  " Please check if there is chg.cube (for nspin=1) or"
-                  " chgsx.cube (x=1,2,etc.) or\n"
-                  " {suffix}-CHARGE-DENSITY.restart in the "
-                  "directory.\n";
-            std::cout << warn_msg;
             if (init_chg == "file")
             {
                 ModuleBase::WARNING_QUIT("Charge::init_rho",
                                          "Failed to read in charge density from file.\n For initializing atomic "
                                          "charge in calculations,\n please set init_chg to atomic in INPUT.");
             }
+            // init_chg == "auto": no density file present, fall back to atomic.
         }
 
-        // If the charge density is not read in, then the kinetic energy density is not read in either
+        // If the charge density is not read in, the tau file is not read either.
         if (meta_gga)
         {
             if (!read_error)
             {
-                read_kin_file(chr, rhopw, ucell, pgrid, cfg, read_kin_error);
+                read_kin_error = !read_kin_file(chr, rhopw, ucell, pgrid, cfg);
             }
             else
             {

@@ -24,6 +24,10 @@ Parallel_Orbitals::~Parallel_Orbitals()
 {
 }
 
+Parallel_2D::~Parallel_2D()
+{
+}
+
 void Parallel_2D::set_serial(const int M_A, const int N_A)
 {
     this->nrow = M_A;

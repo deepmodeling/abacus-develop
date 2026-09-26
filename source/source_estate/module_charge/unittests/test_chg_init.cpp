@@ -103,3 +103,34 @@ TEST_F(ChgInitTest, InitChgAtomicNtypeZeroMetaGgaRuns)
         EXPECT_NEAR(charge.kin_r[0][ir], expected, 1e-6);
     }
 }
+
+TEST_F(ChgInitTest, InitChgAutoMissingFileFallsBackToAtomic)
+{
+    charge.allocate(1, false, false, 0);
+    ModuleSymmetry::Symmetry symm;
+    ModuleBase::ComplexMatrix strucFac(0, pw_basis.npw);
+    module_charge::InitRhoCfg cfg = make_init_cfg("auto", false);
+    // Point the read-in directory at a path that holds no charge files.
+    cfg.global_readin_dir = "no_such_dir/";
+
+    // init_chg == "auto" must not abort when no density file exists; it
+    // returns having taken the atomic-density fallback (ntype==0 keeps it a
+    // no-op, but the run must survive).
+    module_charge::init_rho(charge, pw_basis, ucell, pgrid, strucFac,
+                            symm, nullptr, nullptr, cfg);
+    SUCCEED();
+}
+
+TEST_F(ChgInitTest, InitChgFileMissingFileAborts)
+{
+    charge.allocate(1, false, false, 0);
+    ModuleSymmetry::Symmetry symm;
+    ModuleBase::ComplexMatrix strucFac(0, pw_basis.npw);
+    module_charge::InitRhoCfg cfg = make_init_cfg("file", false);
+    cfg.global_readin_dir = "no_such_dir/";
+
+    // init_chg == "file" must abort when no density source can be read.
+    EXPECT_DEATH(module_charge::init_rho(charge, pw_basis, ucell, pgrid, strucFac,
+                                         symm, nullptr, nullptr, cfg),
+                 "");
+}

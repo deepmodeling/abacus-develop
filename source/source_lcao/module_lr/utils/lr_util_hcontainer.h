@@ -42,6 +42,13 @@ namespace LR_Util
         module_dm::DensityMatrix<std::complex<double>, double>& DMR_real,
         const int& nat,
         const char& type = 'R');
+    /// overload: only copy the `is`-th spin channel of DMR (source) into the (single-channel) DMR_real,
+    /// to avoid mixing/overlapping spin channels when DMR has more than one spin channel
+    void get_DMR_real_imag_part(const module_dm::DensityMatrix<std::complex<double>, std::complex<double>>& DMR,
+        module_dm::DensityMatrix<std::complex<double>, double>& DMR_real,
+        const int& nat,
+        const int& is,
+        const char& type = 'R');
     void set_HR_real_imag_part(const hamilt::HContainer<double>& HR_real,
         hamilt::HContainer<std::complex<double>>& HR,
         const int& nat,

@@ -5,17 +5,15 @@
 #include <map>
 #include <tuple>
 
-#include "source_pw/module_pwdft/onsite_proj.h"
-#include "source_pw/module_pwdft/onsite_proj_print.h"
+#include "source_base/module_out/orb_io.h"
+#include "source_pw/module_proj/onsite_proj.h"
+#include "source_pw/module_proj/onsite_proj_print.h"
+#include "source_pw/module_proj/radial_proj.h"
 #include "source_base/projgen.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/tool_quit.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
-
-#ifdef __MPI
-#include "source_base/parallel_common.h"
-#endif
 
 /**
  * ===============================================================================================
@@ -155,10 +153,9 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
         // CACHE 0 - if cache the irow2it, irow2iproj, irow2m, itiaiprojm2irow, <G+k|p> can be reused for
         //           SCF, RELAX and CELL-RELAX calculation
         // [in] rgrid, projs, lproj, it2ia, it2iproj, nq, dq
-        RadialProjection::RadialProjector::_build_backward_map(it2iproj, lproj, irow2it_, irow2iproj_, irow2m_);
-        RadialProjection::RadialProjector::_build_forward_map(it2ia, it2iproj, lproj, itiaiprojm2irow_);
-        //rp_._build_sbt_tab(rgrid, projs, lproj, nq, dq);
-        rp_._build_sbt_tab(nproj, rgrid, projs, lproj, nq, dq, ucell_in->omega, psi.get_npol(), tab, nhtol);
+        RadialProjection::build_backward_map(it2iproj, lproj, irow2it_, irow2iproj_, irow2m_);
+        RadialProjection::build_forward_map(it2ia, it2iproj, lproj, itiaiprojm2irow_);
+        RadialProjection::build_sbt_tab(nproj, rgrid, projs, lproj, nq, dq, ucell_in->omega, psi.get_npol(), tab, nhtol);
         // For being compatible with present cal_force and cal_stress framework
         // uncomment the following code block if you want to use the Onsite_Proj_tools
         if(this->tab_atomic_ == nullptr)
@@ -218,7 +215,7 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
         double dr_ = -1.0;
         std::vector<int> nzeta; // number of radials for each l
         std::vector<std::vector<double>> radials; // radials arranged in serial
-        this->read_abacus_orb(ifs, elem, ecut, nr_, dr_, nzeta, radials);
+        ModuleIO::read_abacus_orb(ifs, elem, ecut, nr_, dr_, nzeta, radials);
 #ifdef __DEBUG
         assert(elem != "");
         assert(ecut != -1.0);
@@ -255,121 +252,6 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
     std::for_each(rgrid.begin(), rgrid.end(), [dr](double& r_i) { r_i *= dr; });
 }
 
-template<typename T, typename Device>
-void projectors::OnsiteProjector<T, Device>::read_abacus_orb(std::ifstream& ifs,
-                           std::string& elem,
-                           double& ecut,
-                           int& nr,
-                           double& dr,
-                           std::vector<int>& nzeta,
-                           std::vector<std::vector<double>>& radials,
-                           const int rank)
-{
-    nr = 0; // number of grid points
-    dr = 0; // grid spacing
-    int lmax = 0, nchi = 0; // number of radial functions
-    std::vector<std::vector<int>> radial_map_; // build a map from [l][izeta] to 1-d array index
-    std::string tmp;
-    // first read the header
-    if (rank == 0)
-    {
-        if (!ifs.is_open())
-        {
-            ModuleBase::WARNING_QUIT("AtomicRadials::read_abacus_orb", "Couldn't open orbital file.");
-        }
-        while (ifs >> tmp)
-        {
-            if (tmp == "Element")
-            {
-                ifs >> elem;
-            }
-            else if (tmp == "Cutoff(Ry)")
-            {
-                ifs >> ecut;
-            }
-            else if (tmp == "Lmax")
-            {
-                ifs >> lmax;
-                nzeta.resize(lmax + 1);
-                for (int l = 0; l <= lmax; ++l)
-                {
-                    ifs >> tmp >> tmp >> tmp >> nzeta[l];
-                }
-            }
-            else if (tmp == "Mesh")
-            {
-                ifs >> nr;
-                continue;
-            }
-            else if (tmp == "dr")
-            {
-                ifs >> dr;
-                break;
-            }
-        }
-        radial_map_.resize(lmax + 1);
-        for (int l = 0; l <= lmax; ++l)
-        {
-            radial_map_[l].resize(nzeta[l]);
-        }
-        int ichi = 0;
-        for (int l = 0; l <= lmax; ++l)
-        {
-            for (int iz = 0; iz < nzeta[l]; ++iz)
-            {
-                radial_map_[l][iz] = ichi++; // return the value of ichi, then increment
-            }
-        }
-        nchi = ichi; // total number of radial functions
-        radials.resize(nchi);
-        std::for_each(radials.begin(), radials.end(), [nr](std::vector<double>& v) { v.resize(nr); });
-    }
-
-    // broadcast the header information
-#ifdef __MPI
-    Parallel_Common::bcast_string(elem);
-    Parallel_Common::bcast_double(ecut);
-    Parallel_Common::bcast_int(lmax);
-    Parallel_Common::bcast_int(nchi);
-    Parallel_Common::bcast_int(nr);
-    Parallel_Common::bcast_double(dr);
-#endif
-
-    // then adjust the size of the vectors
-    if (rank != 0)
-    {
-        nzeta.resize(lmax + 1);
-        radials.resize(nchi);
-        std::for_each(radials.begin(), radials.end(), [nr](std::vector<double>& v) { v.resize(nr); });
-    }
-    // broadcast the number of zeta functions for each angular momentum
-#ifdef __MPI
-    Parallel_Common::bcast_int(nzeta.data(), lmax + 1);
-#endif
-
-    // read the radial functions by rank0
-    int ichi = 0;
-    for (int i = 0; i != nchi; ++i)
-    {
-        if (rank == 0)
-        {
-            int l = 0, izeta = 0;
-            ifs >> tmp >> tmp >> tmp;
-            ifs >> tmp >> l >> izeta;
-            ichi = radial_map_[l][izeta];
-            for (int ir = 0; ir != nr; ++ir)
-            {
-                ifs >> radials[ichi][ir];
-            }
-        }
-    // broadcast the radial functions
-#ifdef __MPI
-        Parallel_Common::bcast_int(ichi); // let other ranks know where to store the radial function
-        Parallel_Common::bcast_double(radials[ichi].data(), nr);
-#endif
-    }
-} // end of read_abacus_orb
-
 // explicit method instantiation
 template
 void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::init(
@@ -394,17 +276,6 @@ void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::init_proj(
     const std::vector<int>&,
     const std::vector<double>&);
 
-template
-void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::read_abacus_orb(
-    std::ifstream&,
-    std::string&,
-    double&,
-    int&,
-    double&,
-    std::vector<int>&,
-    std::vector<std::vector<double>>&,
-    const int);
-
 #if ((defined __CUDA) || (defined __ROCM))
 template
 void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::init(
@@ -428,15 +299,4 @@ void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::init_proj(
     const std::vector<int>&,
     const std::vector<int>&,
     const std::vector<double>&);
-
-template
-void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::read_abacus_orb(
-    std::ifstream&,
-    std::string&,
-    double&,
-    int&,
-    double&,
-    std::vector<int>&,
-    std::vector<std::vector<double>>&,
-    const int);
 #endif

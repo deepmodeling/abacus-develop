@@ -41,7 +41,7 @@ void wfc_nao_write2file(const std::string& name,
         }
         if (!ofs)
         {
-            ModuleBase::WARNING("ModuleIO::wfc_nao_write2file", "Can't write local orbital wave functions.");
+            ModuleBase::WARNING_QUIT("ModuleIO::wfc_nao_write2file", "Can't write local orbital wave functions.");
         }
 
         ofs << nbands;
@@ -73,7 +73,7 @@ void wfc_nao_write2file(const std::string& name,
         }
         if (!ofs)
         {
-            ModuleBase::WARNING("ModuleIO::wfc_nao_write2file", "Can't write local orbital wave functions.");
+            ModuleBase::WARNING_QUIT("ModuleIO::wfc_nao_write2file", "Can't write local orbital wave functions.");
         }
         ofs << nbands << " (number of bands)" << std::endl;
         ofs << nlocal << " (number of orbitals)";
@@ -132,7 +132,7 @@ void wfc_nao_write2file_complex(const std::string& name,
         }
         if (!ofs)
         {
-            ModuleBase::WARNING("ModuleIO::wfc_nao_write2file_complex", "Can't write local orbital wave functions.");
+            ModuleBase::WARNING_QUIT("ModuleIO::wfc_nao_write2file_complex", "Can't write local orbital wave functions.");
         }
         ofs << ik + 1;
         ofs << kvec_c.x;
@@ -167,7 +167,7 @@ void wfc_nao_write2file_complex(const std::string& name,
         }
         if (!ofs)
         {
-            ModuleBase::WARNING("ModuleIO::wfc_nao_write2file_complex", "Can't write local orbital wave functions.");
+            ModuleBase::WARNING_QUIT("ModuleIO::wfc_nao_write2file_complex", "Can't write local orbital wave functions.");
         }
         ofs << std::setprecision(8);
         ofs << ik + 1 << " (index of k points)" << std::endl;

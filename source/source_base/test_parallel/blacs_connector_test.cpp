@@ -68,6 +68,9 @@ TEST_F(BLACSTest, WorldGrid)
 
     // two BLACS grids should have difference context index
     EXPECT_NE(ictxt_row, ictxt_col);
+
+    Cblacs_gridexit(ictxt_row);
+    Cblacs_gridexit(ictxt_col);
 }
 
 TEST_F(BLACSTest, SplitGrid)
@@ -93,6 +96,8 @@ TEST_F(BLACSTest, SplitGrid)
     // verifies that the BLACS grid is created based on comm_sub instead of MPI_COMM_WORLD
     EXPECT_EQ(iprow, 0);
     EXPECT_EQ(ipcol, rank_sub);
+
+    Cblacs_gridexit(ctxt_sub);
 }
 
 int main(int argc, char** argv)

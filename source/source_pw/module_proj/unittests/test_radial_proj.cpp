@@ -1,4 +1,4 @@
-#include "source_pw/module_pwdft/radial_proj.h"
+#include "source_pw/module_proj/radial_proj.h"
 #include <gtest/gtest.h>
 #include <algorithm>
 #include <numeric>
@@ -18,9 +18,9 @@ TEST(RadialProjectionTest, BuildBackwardMapTest)
     /**
      * a backward map will index irow to (it, iproj, m). For the above example,
      * it is actually the first atom type has two projectors, the first projector
-     * has l = 0, the second has l = 1. The former will have only one channel, 
+     * has l = 0, the second has l = 1. The former will have only one channel,
      * the second will have 3. The second atom type has 4 projectors...
-     * 
+     *
      * Therefore, it is expected there are 1+3+1+3+5+7+1+3+5 = 29 rows in total.
      */
     std::vector<int> itref(4, 0); // four 0, sixteen 1, nine 2
@@ -46,7 +46,7 @@ TEST(RadialProjectionTest, BuildBackwardMapTest)
     mref.insert(mref.end(), {-2, -1, 0, 1, 2});
 
     std::vector<int> irow2it, irow2iproj, irow2m;
-    RadialProjection::RadialProjector::_build_backward_map(it2iproj, iproj2l, irow2it, irow2iproj, irow2m);
+    RadialProjection::build_backward_map(it2iproj, iproj2l, irow2it, irow2iproj, irow2m);
     for(int i = 0; i < 29; ++i)
     {
         EXPECT_EQ(irow2it[i], itref[i]);
@@ -70,7 +70,7 @@ TEST(RadialProjectionTest, BuildForwardMapTest)
     };
     const std::vector<int> iproj2l = {0, 1, 0, 1, 2, 3, 0, 1, 2};
     std::map<std::tuple<int, int, int, int>, int> forward_map;
-    RadialProjection::RadialProjector::_build_forward_map(it2ia, it2iproj, iproj2l, forward_map);
+    RadialProjection::build_forward_map(it2ia, it2iproj, iproj2l, forward_map);
     // this is a terribly large map, for type 0, there are 2 atoms, each atom has two projectors
     // with angular momentum as 0 and 1, respectively. For type 1, there are 3 atoms, each has
     // 4 projectors with angular momentum from 0 to 3...
@@ -120,7 +120,7 @@ TEST(RadialProjectionTest, BuildForwardMapTest)
 TEST(RadialProjectionTest, MaskfunctionGenerationTest)
 {
     std::vector<double> mask;
-    RadialProjection::_mask_func(mask);
+    RadialProjection::mask_func(mask);
     EXPECT_EQ(mask.size(), 201);
     EXPECT_EQ(mask[0], 1.0); // the rescaled value of the mask function, at 0, is 1
     EXPECT_NEAR(mask[200], 0.98138215E-05, 1e-10); // real space cut, at rc, is 0
@@ -132,7 +132,7 @@ TEST(RadialProjectionTest, BuildSbtTabCorrectnessTest)
 
     // use mask function as the example
     std::vector<double> mask;
-    RadialProjection::_mask_func(mask);
+    RadialProjection::mask_func(mask);
     // suppose the r from 0 to 2.0 (inclusive) with 0.01 step
     std::vector<double> r(mask.size());
     std::iota(r.begin(), r.end(), 0);
@@ -147,8 +147,8 @@ TEST(RadialProjectionTest, BuildSbtTabCorrectnessTest)
     std::vector<int> l(1, 0);
 
     // build the interpolation table
-    rp._build_sbt_tab(r, radials, l, 201, 0.01); // build an interpolation table
-    
+    rp.build_sbt_tab(r, radials, l, 201, 0.01); // build an interpolation table
+
     // only one q point: (0, 0, 0), is Gamma
     std::vector<ModuleBase::Vector3<double>> q(1);
     q[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
@@ -162,12 +162,12 @@ TEST(RadialProjectionTest, BuildSbtTabCorrectnessTest)
     // grid from 0 to rc (2.0) with stepsize 0.01.
     rp.sbtft(q, out, 'r', 1.0, 1.0);
     // print, each 5 numbers in a row
-    
+
     /**
      * The following Python code is used to generate the reference data
      * from scipy.integrate import simps
      * import numpy as np
-     * 
+     *
      * r = np.arange(0, 2.01, 0.01)
      * mask = np.array(mask)
      * omega = 1
@@ -183,7 +183,7 @@ TEST(RadialProjectionTest, BuildSbtTabStabilityTest)
 {
     // still use mask function but scale with different Gaussian function
     std::vector<double> mask;
-    RadialProjection::_mask_func(mask);
+    RadialProjection::mask_func(mask);
     // suppose the r from 0 to 2.0 (inclusive) with 0.01 step
     std::vector<double> r(mask.size());
     std::iota(r.begin(), r.end(), 0);
@@ -230,7 +230,7 @@ TEST(RadialProjectionTest, BuildSbtTabStabilityTest)
     std::iota(l.begin(), l.end(), 0);
 
     RadialProjection::RadialProjector rp;
-    rp._build_sbt_tab(r, radials, l, 401, 0.01); // build an interpolation table
+    rp.build_sbt_tab(r, radials, l, 401, 0.01); // build an interpolation table
 
     // then perform the transform
     std::vector<std::complex<double>> out;
@@ -243,9 +243,9 @@ TEST(RadialProjectionTest, BuildSbtTabStabilityTest)
     // check if they are listed in expected sequence, say the first should be
     // Fourier transform of the first function, mask, l = 0, m = 0
     RadialProjection::RadialProjector rp1;
-    rp1._build_sbt_tab(r, 
-                       std::vector<std::vector<double>>(1, mask), 
-                       std::vector<int>(1, 0), 401, 0.01);
+    rp1.build_sbt_tab(r,
+                      std::vector<std::vector<double>>(1, mask),
+                      std::vector<int>(1, 0), 401, 0.01);
     std::vector<std::complex<double>> out1;
     rp1.sbtft(q, out1, 'r', 1.0, 1.0);
     for(int iq = 0; iq < 50; ++iq) // 50 q-points
@@ -254,9 +254,9 @@ TEST(RadialProjectionTest, BuildSbtTabStabilityTest)
         EXPECT_NEAR(out[iq].imag(), out1[iq].imag(), DOUBLETHRESHOLD);
     }
     RadialProjection::RadialProjector rp2;
-    rp2._build_sbt_tab(r, 
-                       std::vector<std::vector<double>>(1, mask1), 
-                       std::vector<int>(1, 1), 401, 0.01);
+    rp2.build_sbt_tab(r,
+                      std::vector<std::vector<double>>(1, mask1),
+                      std::vector<int>(1, 1), 401, 0.01);
     std::vector<std::complex<double>> out2;
     rp2.sbtft(q, out2, 'r', 1.0, 1.0);
     for(int iq = 0; iq < 50*(2*1+1); ++iq) // 50 q-points
@@ -265,9 +265,9 @@ TEST(RadialProjectionTest, BuildSbtTabStabilityTest)
         EXPECT_NEAR(out[iq+50].imag(), out2[iq].imag(), DOUBLETHRESHOLD);
     }
     RadialProjection::RadialProjector rp3;
-    rp3._build_sbt_tab(r, 
-                       std::vector<std::vector<double>>(1, mask2), 
-                       std::vector<int>(1, 2), 401, 0.01);
+    rp3.build_sbt_tab(r,
+                      std::vector<std::vector<double>>(1, mask2),
+                      std::vector<int>(1, 2), 401, 0.01);
     std::vector<std::complex<double>> out3;
     rp3.sbtft(q, out3, 'r', 1.0, 1.0);
     for(int iq = 0; iq < 50*(2*2+1); ++iq) // 50 q-points
@@ -276,9 +276,9 @@ TEST(RadialProjectionTest, BuildSbtTabStabilityTest)
         EXPECT_NEAR(out[iq+50+50*(2*1+1)].imag(), out3[iq].imag(), DOUBLETHRESHOLD);
     }
     RadialProjection::RadialProjector rp4;
-    rp4._build_sbt_tab(r, 
-                       std::vector<std::vector<double>>(1, mask3), 
-                       std::vector<int>(1, 3), 401, 0.01);
+    rp4.build_sbt_tab(r,
+                      std::vector<std::vector<double>>(1, mask3),
+                      std::vector<int>(1, 3), 401, 0.01);
     std::vector<std::complex<double>> out4;
     rp4.sbtft(q, out4, 'r', 1.0, 1.0);
     for(int iq = 0; iq < 50*(2*3+1); ++iq) // 50 q-points

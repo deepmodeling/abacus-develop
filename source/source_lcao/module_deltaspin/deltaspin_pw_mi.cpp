@@ -25,7 +25,7 @@
 #include "source_base/timer.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_device/device.h"
-#include "source_pw/module_pwdft/onsite_proj.h"
+#include "source_pw/module_proj/onsite_proj.h"
 #include "deltaspin_pw_cache.h"
 #include "mi_tools.h"
 #include "source_io/module_parameter/parameter.h"

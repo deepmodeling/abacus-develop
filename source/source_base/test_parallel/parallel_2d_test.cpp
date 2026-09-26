@@ -138,6 +138,57 @@ TEST_F(test_para2d, DescReuseCtxt)
         EXPECT_NE(p1.desc[1], p3.desc[1]);
     }
 }
+TEST_F(test_para2d, SetWithOwnCtxt)
+{
+    // Reusing the context owned by the object itself (as in the block-size
+    // fallback in lcao_init_basis.cpp) must keep the grid alive and valid:
+    // the descriptor must remain usable and ownership must be preserved so
+    // that the destructor releases the grid exactly once.
+    for (auto nb: nbs)
+    {
+        Parallel_2D p2d;
+        const int gr = sizes[0].first;
+        const int gc = sizes[0].second;
+        p2d.init(gr, gc, nb, MPI_COMM_WORLD);
+
+        const int ctxt = p2d.blacs_ctxt;
+        p2d.set(gr, gc, 1, p2d.blacs_ctxt);
+
+        // the grid must survive: context unchanged, descriptor valid
+        EXPECT_EQ(p2d.blacs_ctxt, ctxt);
+        EXPECT_EQ(p2d.desc[0], 1);
+        EXPECT_EQ(p2d.desc[1], ctxt);
+        EXPECT_EQ(p2d.desc[2], gr);
+        EXPECT_EQ(p2d.desc[3], gc);
+        EXPECT_EQ(p2d.desc[4], 1);
+        EXPECT_EQ(p2d.get_block_size(), 1);
+        EXPECT_EQ(p2d.get_row_size() * p2d.get_col_size(), p2d.get_local_size());
+        EXPECT_EQ(p2d.dim0 * p2d.dim1, dsize);
+    }
+}
+
+TEST_F(test_para2d, SetSerialClearsBorrowedCtxt)
+{
+    // Switching to serial mode must drop any reference to a BLACS grid,
+    // including a borrowed one: release_blacs_grid() is a no-op for
+    // borrowers, so without an explicit reset the serial object would keep
+    // a handle that dangles once the owner destroys the grid.
+    Parallel_2D owner;
+    owner.init(sizes[0].first, sizes[0].second, 1, MPI_COMM_WORLD);
+
+    Parallel_2D borrower;
+    borrower.set(sizes[0].first, sizes[0].second, 1, owner.blacs_ctxt);
+    EXPECT_EQ(borrower.blacs_ctxt, owner.blacs_ctxt);
+
+    borrower.set_serial(3, 4);
+    EXPECT_EQ(borrower.blacs_ctxt, -1);
+    EXPECT_EQ(borrower.comm(), MPI_COMM_NULL);
+
+    // the owner's grid must be unaffected by the borrower's mode switch
+    EXPECT_GE(owner.blacs_ctxt, 0);
+    EXPECT_NE(owner.comm(), MPI_COMM_NULL);
+}
+
 TEST_F(test_para2d, SerialLayoutInMpiBuild)
 {
     Parallel_2D p2d;

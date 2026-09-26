@@ -55,6 +55,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_IO_read_cube
+  LIBS parameter base device cell_info
+  SOURCES test_read_cube.cpp ../module_output/read_cube.cpp
+)
+
+AddTest(
   TARGET MODULE_IO_system_variable_test
   LIBS parameter base device io_input_serial
   SOURCES io_sys_var_test.cpp

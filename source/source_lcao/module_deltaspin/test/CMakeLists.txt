@@ -45,6 +45,8 @@ AddTest(
   TARGET deltaspin_core_test
   LIBS base device
   SOURCES deltaspin_core_test.cpp
+    ../mi_tools.cpp
+    ../../../source_estate/occ_comput.cpp
 )
 
 AddTest(

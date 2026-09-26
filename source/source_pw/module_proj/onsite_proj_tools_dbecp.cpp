@@ -1,4 +1,4 @@
-#include "onsite_proj_tools.h"
+#include "source_pw/module_proj/onsite_proj_tools.h"
 
 #include "source_base/math_polyint.h"
 #include "source_base/math_ylmreal.h"
@@ -7,7 +7,7 @@
 #include "source_base/tool_title.h"
 #include "source_pw/module_pwdft/kernels/force_op.h"
 #include "source_io/module_parameter/parameter.h"
-#include "nonlocal_maths.hpp"
+#include "source_pw/module_pwdft/nonlocal_maths.hpp"
 
 namespace hamilt
 {
@@ -167,11 +167,10 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_f(int ik, int npm, int ipol)
     }
     // first refresh the value of gcar_zero_indexes, gcar_zero_counts
     if (this->pre_ik_f != ik)
-    { // the following lines will cause UNDEFINED BEHAVIOR because memory layout of vector3 instance
-      // is assumed to be always contiguous but it is not guaranteed.
+    {
         this->transfer_gcar(npw,
                             this->wfc_basis_->npwk_max,
-                            &(this->wfc_basis_->gcar[ik * this->wfc_basis_->npwk_max].x));
+                            &this->wfc_basis_->gcar[ik * this->wfc_basis_->npwk_max]);
     }
 
     // backup vkb values to vkb_save
@@ -297,11 +296,20 @@ void Onsite_Proj_tools<FPTYPE, Device>::revert_vkb(int npw, int ipol)
 }
 
 template <typename FPTYPE, typename Device>
-void Onsite_Proj_tools<FPTYPE, Device>::transfer_gcar(int npw, int npw_max, const FPTYPE* gcar_in)
+void Onsite_Proj_tools<FPTYPE, Device>::transfer_gcar(int npw,
+                                                      int npw_max,
+                                                      const ModuleBase::Vector3<FPTYPE>* gcar_in)
 {
+    // unpack Vector3 into a contiguous buffer elementwise:
+    // the memory layout of Vector3 is not guaranteed, so copying through
+    // a raw FPTYPE* pointer would be undefined behavior.
     std::vector<FPTYPE> gcar_tmp(3 * npw_max); // [out], will overwritten this->gcar
-    gcar_tmp.assign(gcar_in,
-                    gcar_in + 3 * npw_max); // UNDEFINED BEHAVIOR!!! nobody always knows the memory layout of vector3
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        gcar_tmp[ig * 3] = gcar_in[ig].x;
+        gcar_tmp[ig * 3 + 1] = gcar_in[ig].y;
+        gcar_tmp[ig * 3 + 2] = gcar_in[ig].z;
+    }
     std::vector<int> gcar_zero_indexes_tmp(3 * npw_max); // a "checklist"
 
     int* gcar_zero_ptrs[3];
@@ -358,13 +366,13 @@ template void Onsite_Proj_tools<double, base_device::DEVICE_CPU>::cal_dbecp_s(in
 template void Onsite_Proj_tools<double, base_device::DEVICE_CPU>::cal_dbecp_f(int, int, int);
 template void Onsite_Proj_tools<double, base_device::DEVICE_CPU>::save_vkb(int, int);
 template void Onsite_Proj_tools<double, base_device::DEVICE_CPU>::revert_vkb(int, int);
-template void Onsite_Proj_tools<double, base_device::DEVICE_CPU>::transfer_gcar(int, int, const double*);
+template void Onsite_Proj_tools<double, base_device::DEVICE_CPU>::transfer_gcar(int, int, const ModuleBase::Vector3<double>*);
 #if ((defined __CUDA) || (defined __ROCM))
 template void Onsite_Proj_tools<double, base_device::DEVICE_GPU>::cal_dbecp_s(int, int, int, int);
 template void Onsite_Proj_tools<double, base_device::DEVICE_GPU>::cal_dbecp_f(int, int, int);
 template void Onsite_Proj_tools<double, base_device::DEVICE_GPU>::save_vkb(int, int);
 template void Onsite_Proj_tools<double, base_device::DEVICE_GPU>::revert_vkb(int, int);
-template void Onsite_Proj_tools<double, base_device::DEVICE_GPU>::transfer_gcar(int, int, const double*);
+template void Onsite_Proj_tools<double, base_device::DEVICE_GPU>::transfer_gcar(int, int, const ModuleBase::Vector3<double>*);
 #endif
 
 } // namespace hamilt

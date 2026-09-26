@@ -14,7 +14,7 @@
 #include "source_lcao/module_deltaspin/lambda_loop_helper.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/elecond.h"
-#include "source_pw/module_pwdft/onsite_proj.h" // use projector
+#include "source_pw/module_proj/onsite_proj.h" // use projector
 
 #ifdef __MLALGO
 #include "../module_ml/write_mlkedf_desc.h"

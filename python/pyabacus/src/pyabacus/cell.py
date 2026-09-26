@@ -209,24 +209,24 @@ class Cell:
         for symbol, pos, props in self._atoms:
             if symbol not in species_dict:
                 pp_info = self.pseudo_potentials.get(symbol, {})
-            
-            # Ensure we have a clean filename (remove './' if present)
-            pp_file = pp_info.get('pseudo_file', f"{symbol}.UPF")
-            if pp_file.startswith('./'):
-                pp_file = pp_file[2:]
-            
-            species_dict[symbol] = {
-                'symbol': symbol,
-                'mass': pp_info.get('mass', 1.0),
-                'pp_file': pp_file,  # Store clean filename
-                'natom': 1,
-                'mag_each': props.get('mag', 0.0),
-                'atom': []
-            }
-            if 'pp_type' in pp_info:
-                species_dict[symbol]['pp_type'] = pp_info['pp_type']
-            else:
-                species_dict[symbol]['natom'] += 1
+
+                # Ensure we have a clean filename (remove './' if present)
+                pp_file = pp_info.get('pseudo_file', f"{symbol}.UPF")
+                if pp_file.startswith('./'):
+                    pp_file = pp_file[2:]
+
+                species_dict[symbol] = {
+                    'symbol': symbol,
+                    'mass': pp_info.get('mass', 1.0),
+                    'pp_file': pp_file,  # Store clean filename
+                    'natom': 0,
+                    'mag_each': props.get('mag', 0.0),
+                    'atom': []
+                }
+                if 'pp_type' in pp_info:
+                    species_dict[symbol]['pp_type'] = pp_info['pp_type']
+
+            species_dict[symbol]['natom'] += 1
             
             # Convert coordinates if needed
             coord = pos

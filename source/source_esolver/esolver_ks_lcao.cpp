@@ -331,19 +331,11 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(BaseCell& basecell)
     }
 
     ModuleIO::ctrl_runner_lcao<TK, TR>(ucell,
-		    *this->inp_, this->kv, this->pelec, this->dmat, this->pv, this->Pgrid, 
-		    this->gd, this->psi, this->chr, hamilt_lcao,
-		    this->two_center_bundle_,
-		    this->orb_, this->pw_rho, this->pw_rhod,
-		    this->sf, this->locpp.vloc, this->exx_nao, this->exx_info_, this->solvent);
-
-
-#ifdef __MPI
-#ifdef __LCAO
-    // Exit BLACS environment for LCAO calculations
-    Cblacs_exit(1);
-#endif
-#endif
+	    *this->inp_, this->kv, this->pelec, this->dmat, this->pv, this->Pgrid, 
+	    this->gd, this->psi, this->chr, hamilt_lcao,
+	    this->two_center_bundle_,
+	    this->orb_, this->pw_rho, this->pw_rhod,
+	    this->sf, this->locpp.vloc, this->exx_nao, this->exx_info_, this->solvent);
 
     ModuleBase::timer::end("ESolver_KS_LCAO", "after_all_runners");
 }

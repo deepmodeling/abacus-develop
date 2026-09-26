@@ -1,4 +1,5 @@
 #include "source_io/module_output/cube_io.h"
+#include <cstdint>
 #include <limits>
 #include "source_base/parallel_grid.h"
 #include "source_io/module_parameter/parameter.h"
@@ -14,16 +15,18 @@ bool ModuleIO::read_vdata_palgrid(
 {
     ModuleBase::TITLE("ModuleIO", "read_vdata_palgrid");
 
-    // check if the file exists
+    // Only the root rank parses the file. On failure it must abort the whole
+    // run instead of returning: the other ranks enter pgrid.bcast() below and
+    // would block in MPI_Recv waiting for data that never comes.
     std::ifstream ifs(fn.c_str());
-    if (!ifs)
+    if (my_rank == 0)
     {
-        std::string tmp_warning_info = "!!! Couldn't find the file: " + fn;
-        ofs_running << tmp_warning_info << std::endl;
-        return false;
-    }
-    else
-    {
+        if (!ifs)
+        {
+            ofs_running << " !!! Couldn't find the file: " << fn << std::endl;
+            ModuleBase::WARNING_QUIT("ModuleIO::read_vdata_palgrid",
+                                     "couldn't find the cube file: " + fn);
+        }
         ofs_running << " Find the file " << fn << " , try to read it." << std::endl;
     }
 
@@ -51,9 +54,14 @@ bool ModuleIO::read_vdata_palgrid(
         std::vector<std::vector<double>> atom_pos;
         std::vector<double> data_read;
 
-        // we've already checked the file existence, so we don't need the returned value here
-        ModuleIO::read_cube(fn, comment, natom, origin, nx_read, ny_read, nz_read, 
-			dx, dy, dz, atom_type, atom_charge, atom_pos, data_read);
+        // validate the cube content before copying or interpolating the data
+        if (!ModuleIO::read_cube(fn, comment, natom, origin, nx_read, ny_read, nz_read,
+                                 dx, dy, dz, atom_type, atom_charge, atom_pos, data_read))
+        {
+            ofs_running << " !!! Failed to parse the cube file: " << fn << std::endl;
+            ModuleBase::WARNING_QUIT("ModuleIO::read_vdata_palgrid",
+                                     "failed to parse the cube file: " + fn);
+        }
 
         // if mismatch, trilinear interpolate
         if (nx == nx_read && ny == ny_read && nz == nz_read)
@@ -175,11 +183,19 @@ bool ModuleIO::read_cube(const std::string& file,
     }
 
     ifs >> natom;
+    if (ifs.fail() || natom < 0)
+    {
+        return false;
+    }
 
     origin.resize(3);
-    for (auto& cp : origin) 
-    { 
-	    ifs >> cp; 
+    for (auto& cp : origin)
+    {
+        ifs >> cp;
+    }
+    if (ifs.fail())
+    {
+        return false;
     }
 
     dx.resize(3);
@@ -188,20 +204,38 @@ bool ModuleIO::read_cube(const std::string& file,
     ifs >> nx >> dx[0] >> dx[1] >> dx[2];
     ifs >> ny >> dy[0] >> dy[1] >> dy[2];
     ifs >> nz >> dz[0] >> dz[1] >> dz[2];
+    if (ifs.fail() || nx <= 0 || ny <= 0 || nz <= 0)
+    {
+        return false;
+    }
 
     atom_type.resize(natom);
     atom_charge.resize(natom);
     atom_pos.resize(natom, std::vector<double>(3));
-    for (int i = 0;i < natom;++i)
+    for (int i = 0; i < natom; ++i)
     {
         ifs >> atom_type[i] >> atom_charge[i] >> atom_pos[i][0] >> atom_pos[i][1] >> atom_pos[i][2];
     }
+    if (ifs.fail())
+    {
+        return false;
+    }
 
-    const int nxyz = nx * ny * nz;
+    // guard against int overflow before allocating the data buffer
+    const std::int64_t nxyz_64 = static_cast<std::int64_t>(nx) * ny * nz;
+    if (nxyz_64 > std::numeric_limits<int>::max())
+    {
+        return false;
+    }
+    const int nxyz = static_cast<int>(nxyz_64);
     data.resize(nxyz);
-    for (int i = 0;i < nxyz;++i) 
-    { 
-	    ifs >> data[i]; 
+    for (int i = 0; i < nxyz; ++i)
+    {
+        ifs >> data[i];
+    }
+    if (ifs.fail())
+    {
+        return false;
     }
 
     ifs.close();

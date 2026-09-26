@@ -17,11 +17,10 @@ UnitCell::~UnitCell() {}
 
 #include <string>
 
-// Minimal stubs for Parallel_Orbitals and get_linear_index to keep the
-// link closure small; only the index arithmetic is under test.
-Parallel_Orbitals::Parallel_Orbitals() {}
-Parallel_Orbitals::~Parallel_Orbitals() {}
-
+// Minimal stub for get_linear_index to keep the link closure small; only the
+// index arithmetic is under test. Parallel_Orbitals' ctor/dtor come from the
+// real parallel_orbitals.cpp (wired in via CMakeLists) so the class layout
+// matches the MPI-built base library.
 namespace DFTU_LCAO
 {
 int get_linear_index(const std::string& ks_solver,

@@ -1,4 +1,4 @@
-#include "onsite_proj_tools.h"
+#include "source_pw/module_proj/onsite_proj_tools.h"
 
 #include "source_base/math_polyint.h"
 #include "source_base/math_ylmreal.h"
@@ -7,7 +7,7 @@
 #include "source_base/tool_title.h"
 #include "source_pw/module_pwdft/kernels/force_op.h"
 #include "source_io/module_parameter/parameter.h"
-#include "nonlocal_maths.hpp"
+#include "source_pw/module_pwdft/nonlocal_maths.hpp"
 
 #include <numeric>
 
