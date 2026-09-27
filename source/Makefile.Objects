@@ -34,6 +34,7 @@ VPATH=./src_global:\
 ./source_basis/module_pw:\
 ./source_base/module_fft:\
 ./source_esolver:\
+./source_dftb:\
 ./source_hsolver:\
 ./source_hsolver/kernels:\
 ./source_hsolver/module_genelpa:\
@@ -90,6 +91,7 @@ ${OBJS_BASE}\
 ${OBJS_CELL}\
 ${OBJS_ELECSTAT}\
 ${OBJS_ESOLVER}\
+${OBJS_DFTB_NATIVE}\
 ${OBJS_HAMILT}\
 ${OBJS_HSOLVER}\
 ${OBJS_MD}\
@@ -320,6 +322,16 @@ OBJS_ESOLVER=esolver_factory.o\
     esolver_of_tool.o\
     esolver_dfpt_pw.o\
     pw_others.o\
+
+OBJS_DFTB_NATIVE=esolver_dftb_native.o\
+    esolver_dftb_native_input.o\
+    esolver_dftb_native_output.o\
+    charge_mixing.o\
+    eigensolver.o\
+    periodic_scc.o\
+    sk_block.o\
+    sk_matrix.o\
+    skf_data.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
