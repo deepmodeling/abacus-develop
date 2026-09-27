@@ -33,6 +33,14 @@ namespace
 // pair energies enough to be visible in this regression.
 constexpr double angstrom_to_bohr = 1.8897261254578281;
 const double kelvin_to_hartree = 3.166811563e-6;
+
+bool is_hydrogen_species_label(const std::string& label)
+{
+    if (label.empty() || std::toupper(static_cast<unsigned char>(label[0])) != 'H') return false;
+    if (label.size() == 1) return true;
+    const unsigned char second = static_cast<unsigned char>(label[1]);
+    return !std::islower(second);
+}
 } // namespace
 
 void ESolver_DFTBNative::before_all_runners(BaseCell& cell, const Input_para& inp)
@@ -89,6 +97,10 @@ void ESolver_DFTBNative::load_model(const UnitCell& ucell, const Input_para& inp
     if (ntype == 0 || ucell.nat == 0) throw std::runtime_error("Native DFTB requires at least one species and atom");
     std::vector<std::string> labels(ntype);
     for (std::size_t it = 0; it < ntype; ++it) labels[it] = ucell.atoms[it].label;
+    for (const auto& label : labels)
+        if (is_hydrogen_species_label(label))
+            throw std::runtime_error("Native DFTB currently assumes an undamped short-range gamma model and "
+                                     "cannot reproduce DFTB+ HCorrection=Damping for hydrogen species");
 
     this->skfiles_.resize(ntype * ntype);
     const std::string separator = config.skf_directory[config.skf_directory.size() - 1] == '/' ? "" : "/";
@@ -159,6 +171,33 @@ void ESolver_DFTBNative::load_model(const UnitCell& ucell, const Input_para& inp
     }
     if (atom_index != this->template_.atoms.size())
         throw std::runtime_error("ABACUS atom ordering/total does not match native DFTB species data");
+
+    if (!std::isfinite(inp.nelec) || !std::isfinite(inp.nelec_delta))
+        throw std::runtime_error("Native DFTB requires finite ABACUS nelec and nelec_delta values");
+    const double requested_electrons = (inp.nelec > 0.0 ? inp.nelec : this->template_.total_electrons)
+                                       + inp.nelec_delta;
+    const double electron_tolerance = 1.0e-10 * std::max(1.0, this->template_.total_electrons);
+    if (std::abs(requested_electrons - this->template_.total_electrons) > electron_tolerance)
+        throw std::runtime_error("Native DFTB supports neutral SKF valence counts only; remove charged-system "
+                                 "settings in INPUT (nelec/nelec_delta)");
+
+    if (inp.kspacing.size() != 3 || inp.koffset.size() != 3)
+        throw std::runtime_error("Native DFTB expects three-component kspacing and koffset INPUT values");
+    for (std::size_t axis = 0; axis < 3; ++axis)
+        if (!std::isfinite(inp.kspacing[axis]) || !std::isfinite(inp.koffset[axis])
+            || inp.kspacing[axis] != 0.0 || inp.koffset[axis] != 0.0)
+            throw std::runtime_error("Native DFTB reads integration k points from KPT; do not set "
+                                     "non-zero kspacing or koffset in INPUT");
+
+    // Occupations and electronic temperature are controlled by dftb_native.in.
+    // The standard ABACUS smearing controls are otherwise silently ignored by
+    // this independent solver, so reject non-default settings explicitly.
+    constexpr double default_abacus_smearing_sigma_ry = 0.015;
+    if ((inp.smearing_method != "gauss" && inp.smearing_method != "gaussian")
+        || !std::isfinite(inp.smearing_sigma)
+        || std::abs(inp.smearing_sigma - default_abacus_smearing_sigma_ry) > 1.0e-12)
+        throw std::runtime_error("Native DFTB uses temperature_kelvin in dftb_native.in for Fermi occupations; "
+                                 "ABACUS smearing_method/smearing_sigma settings are not supported");
 }
 
 ModuleDFTB::DftbPeriodicInput ESolver_DFTBNative::make_geometry(const UnitCell& ucell) const
@@ -290,7 +329,20 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
                      << iteration.mixing_step << std::endl;
             dftb_log.flush();
         };
-    this->result_ = ModuleDFTB::solve_periodic_dftb(input, iteration_logger);
+    try
+    {
+        this->result_ = ModuleDFTB::solve_periodic_dftb(input, iteration_logger);
+    }
+    catch (const std::exception& error)
+    {
+        if (rank == 0)
+        {
+            dftb_log << "# SCC failed: " << error.what() << "\n";
+            dftb_log.flush();
+            dftb_log.close();
+        }
+        throw;
+    }
     this->conv_esolver = this->result_.converged;
     this->energy_ry_ = 2.0 * this->result_.total_free_energy_hartree;
 

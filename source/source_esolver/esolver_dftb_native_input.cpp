@@ -8,6 +8,7 @@
 #include <cmath>
 #include <fstream>
 #include <sstream>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -79,6 +80,8 @@ bool parse_path_and_species_option(const std::string& key,
         double value = 0.0;
         if (!(row >> species >> value))
             throw std::runtime_error("Expected 'hubbard_deriv Element value' at line " + std::to_string(line_number));
+        if (!std::isfinite(value))
+            throw std::runtime_error("Non-finite Hubbard derivative at line " + std::to_string(line_number));
         if (!config.hubbard_derivatives.insert(std::make_pair(species, value)).second)
             throw std::runtime_error("Duplicate Hubbard derivative for species " + species);
     }
@@ -212,8 +215,10 @@ void parse_config_option(const std::string& key,
 
 void validate_scc_controls(const NativeDftbConfig& config)
 {
-    if (!(config.temperature_kelvin >= 0.0) || !(config.scc_tolerance > 0.0)
+    if (!std::isfinite(config.temperature_kelvin) || !(config.temperature_kelvin >= 0.0)
+        || !std::isfinite(config.scc_tolerance) || !(config.scc_tolerance > 0.0)
         || config.maximum_scc_iterations <= 0
+        || !std::isfinite(config.mixing_parameter)
         || !(config.mixing_parameter > 0.0 && config.mixing_parameter <= 1.0)
         || (config.mixing_method != "linear" && config.mixing_method != "pulay"
             && config.mixing_method != "broyden")
@@ -238,6 +243,9 @@ void validate_config(const NativeDftbConfig& config)
     validate_broyden_controls(config);
     if (config.output_precision < 1 || config.output_precision > 17)
         throw std::runtime_error("Invalid native DFTB output precision");
+    for (const auto& derivative : config.hubbard_derivatives)
+        if (!std::isfinite(derivative.second))
+            throw std::runtime_error("Non-finite Hubbard derivative for species " + derivative.first);
 }
 
 std::vector<std::string> read_kpt_tokens(const std::string& filename)
@@ -393,7 +401,8 @@ ModuleDFTB::DftbWeightedKPoint read_explicit_kpoint(const std::vector<std::strin
 
 void normalize_kpoint_weights(std::vector<ModuleDFTB::DftbWeightedKPoint>* points, double weight_sum)
 {
-    if (!(weight_sum > 0.0)) throw std::runtime_error("KPT weights must have a positive sum");
+    if (!(weight_sum > 0.0) || !std::isfinite(weight_sum))
+        throw std::runtime_error("KPT weights must have a finite, positive sum");
     for (std::size_t i = 0; i < points->size(); ++i) (*points)[i].weight /= weight_sum;
 }
 
@@ -496,6 +505,7 @@ NativeDftbConfig read_native_config(const std::string& filename)
     std::ifstream input(filename.c_str());
     if (!input) throw std::runtime_error("Cannot open native DFTB configuration: " + filename);
     NativeDftbConfig config;
+    std::set<std::string> scalar_keys;
     std::string line;
     int line_number = 0;
     while (std::getline(input, line))
@@ -506,7 +516,14 @@ NativeDftbConfig read_native_config(const std::string& filename)
         std::istringstream row(line);
         std::string key;
         if (!(row >> key)) continue;
+        if (key != "hubbard_deriv" && !scalar_keys.insert(key).second)
+            throw std::runtime_error("Duplicate native DFTB configuration key at line "
+                                     + std::to_string(line_number) + ": " + key);
         parse_config_option(key, row, config, filename, line_number);
+        std::string extra;
+        if (row >> extra)
+            throw std::runtime_error("Unexpected trailing value at line " + std::to_string(line_number)
+                                     + " in native DFTB configuration: " + extra);
     }
     validate_config(config);
     return config;

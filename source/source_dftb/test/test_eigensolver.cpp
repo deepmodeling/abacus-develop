@@ -53,4 +53,24 @@ TEST(DftbNativeEigensolverTest, FiniteTemperatureFillingConservesElectrons)
     EXPECT_NEAR(weighted_electrons, 2.0, 1.0e-10);
 }
 
+TEST(DftbNativeEigensolverTest, ZeroWeightKPointsDoNotAffectFilling)
+{
+    std::vector<DftbKPointSpectrum> spectra(2);
+    spectra[0].weight = 0.0;
+    spectra[0].solution.dimension = 2;
+    spectra[0].solution.eigenvalues_hartree = {-10.0, -9.0};
+    spectra[1].weight = 1.0;
+    spectra[1].solution.dimension = 2;
+    spectra[1].solution.eigenvalues_hartree = {0.0, 1.0};
+
+    const DftbFermiFilling filling = fill_fermi_occupations(spectra, 2.0, 0.0);
+
+    EXPECT_NEAR(filling.fermi_energy_hartree, 0.0, 1.0e-12);
+    EXPECT_DOUBLE_EQ(filling.occupations[0][0], 0.0);
+    EXPECT_DOUBLE_EQ(filling.occupations[0][1], 0.0);
+    EXPECT_DOUBLE_EQ(filling.occupations[1][0], 2.0);
+    EXPECT_DOUBLE_EQ(filling.occupations[1][1], 0.0);
+    EXPECT_NEAR(filling.band_energy_hartree, 0.0, 1.0e-12);
+}
+
 } // namespace ModuleDFTB

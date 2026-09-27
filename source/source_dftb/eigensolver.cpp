@@ -108,15 +108,22 @@ DftbFermiFilling fill_fermi_occupations(const std::vector<DftbKPointSpectrum>& s
     double max_energy = -std::numeric_limits<double>::infinity();
     for (const auto& spectrum : spectra)
     {
-        if (!(spectrum.weight > 0.0) || spectrum.solution.dimension == 0
+        if (!(spectrum.weight >= 0.0) || !std::isfinite(spectrum.weight) || spectrum.solution.dimension == 0
             || spectrum.solution.eigenvalues_hartree.size() != spectrum.solution.dimension)
         {
             throw std::invalid_argument("Invalid DFTB k-point spectrum or weight");
         }
         weight_sum += spectrum.weight;
         capacity += 2.0 * spectrum.weight * static_cast<double>(spectrum.solution.dimension);
-        min_energy = std::min(min_energy, spectrum.solution.eigenvalues_hartree.front());
-        max_energy = std::max(max_energy, spectrum.solution.eigenvalues_hartree.back());
+        for (const double energy : spectrum.solution.eigenvalues_hartree)
+        {
+            if (!std::isfinite(energy)) throw std::invalid_argument("DFTB eigenvalues must be finite");
+            if (spectrum.weight > 0.0)
+            {
+                min_energy = std::min(min_energy, energy);
+                max_energy = std::max(max_energy, energy);
+            }
+        }
     }
     if (std::abs(weight_sum - 1.0) > 1.0e-10)
     {
@@ -142,6 +149,7 @@ DftbFermiFilling fill_fermi_occupations(const std::vector<DftbKPointSpectrum>& s
         std::vector<std::pair<double, double>> levels;
         for (const auto& spectrum : spectra)
         {
+            if (spectrum.weight == 0.0) continue;
             for (const double energy : spectrum.solution.eigenvalues_hartree)
             {
                 levels.emplace_back(energy, 2.0 * spectrum.weight);
@@ -214,6 +222,7 @@ DftbFermiFilling fill_fermi_occupations(const std::vector<DftbKPointSpectrum>& s
         }
         for (std::size_t k = 0; k < spectra.size(); ++k)
         {
+            if (spectra[k].weight == 0.0) continue;
             for (std::size_t band = 0; band < spectra[k].solution.dimension; ++band)
             {
                 const double energy = spectra[k].solution.eigenvalues_hartree[band];
@@ -244,6 +253,7 @@ DftbFermiFilling fill_fermi_occupations(const std::vector<DftbKPointSpectrum>& s
     std::vector<State> states;
     for (std::size_t k = 0; k < spectra.size(); ++k)
     {
+        if (spectra[k].weight == 0.0) continue;
         for (std::size_t band = 0; band < spectra[k].solution.dimension; ++band)
         {
             states.push_back({spectra[k].solution.eigenvalues_hartree[band], k, band, 2.0 * spectra[k].weight});
