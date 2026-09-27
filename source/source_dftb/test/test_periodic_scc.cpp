@@ -105,6 +105,81 @@ TEST(DftbNativePeriodicSccTest, SolvesNeutralCellAndFrozenPotentialBands)
     EXPECT_NEAR(result.band_structure[1].distance_inverse_bohr, 0.07853981633974483, 1.0e-12);
 }
 
+TEST(DftbNativePeriodicSccTest, IterationEnergyUsesThePotentialThatGeneratedItsDensity)
+{
+    const auto initialize_skf = [](SkfData* data, const std::string& filename, bool homonuclear) {
+        data->filename = filename;
+        data->homonuclear = homonuclear;
+        data->grid_spacing_bohr = 0.1;
+        data->declared_grid_points = 9;
+        data->hamiltonian.resize(8);
+        data->overlap.resize(8);
+        data->has_repulsive_spline = true;
+        data->repulsive.cutoff_bohr = 1.0;
+        data->repulsive.interval_starts_bohr = {0.0, 0.5};
+        data->repulsive.interval_ends_bohr = {0.5, 1.0};
+        data->repulsive.cubic_coefficients.resize(1);
+        if (homonuclear)
+        {
+            data->has_atomic_data = true;
+            data->hubbard_u_hartree = {{0.4, 0.4, 0.4}};
+            data->reference_occupations = {{1.0, 0.0, 0.0}};
+        }
+    };
+
+    SkfData species_a;
+    SkfData species_b;
+    SkfData a_to_b;
+    SkfData b_to_a;
+    initialize_skf(&species_a, "synthetic-A-A.skf", true);
+    initialize_skf(&species_b, "synthetic-B-B.skf", true);
+    initialize_skf(&a_to_b, "synthetic-A-B.skf", false);
+    initialize_skf(&b_to_a, "synthetic-B-A.skf", false);
+    species_a.onsite_hartree = {{-1000.0, -999.0, 0.0}};
+    species_b.onsite_hartree = {{1000.0, 1001.0, 0.0}};
+
+    DftbPeriodicInput input;
+    input.atoms.resize(2);
+    input.atoms[0].species = 0;
+    input.atoms[0].homonuclear_data = &species_a;
+    input.atoms[1].species = 1;
+    input.atoms[1].homonuclear_data = &species_b;
+    input.atoms[1].position_bohr = {{2.0, 0.0, 0.0}};
+    const auto add_pair = [&input](std::size_t a, std::size_t b, const SkfData* ab, const SkfData* ba) {
+        DftbPairParameters pair;
+        pair.species_a = a;
+        pair.species_b = b;
+        pair.ab = ab;
+        pair.ba = ba;
+        input.pair_parameters.push_back(pair);
+    };
+    add_pair(0, 0, &species_a, &species_a);
+    add_pair(0, 1, &a_to_b, &b_to_a);
+    add_pair(1, 1, &species_b, &species_b);
+    input.lattice_bohr[0] = {{40.0, 0.0, 0.0}};
+    input.lattice_bohr[1] = {{0.0, 40.0, 0.0}};
+    input.lattice_bohr[2] = {{0.0, 0.0, 40.0}};
+    DftbWeightedKPoint gamma;
+    gamma.weight = 1.0;
+    input.kpoints.push_back(gamma);
+    input.hubbard_derivative = {0.0, 0.0};
+    input.total_electrons = 2.0;
+    input.maximum_scc_iterations = 4;
+    input.scc_tolerance = 1.0e-10;
+    input.mixing_parameter = 1.0;
+
+    std::vector<DftbSccIteration> iterations;
+    const DftbPeriodicResult result = solve_periodic_dftb(
+        input, [&iterations](const DftbSccIteration& iteration) { iterations.push_back(iteration); });
+
+    ASSERT_TRUE(result.converged);
+    ASSERT_EQ(iterations.size(), 2U);
+    EXPECT_GT(iterations.front().maximum_charge_residual, input.scc_tolerance);
+    EXPECT_NEAR(iterations.front().electronic_energy_hartree,
+                result.h0_energy_hartree + result.scc_energy_hartree,
+                1.0e-10);
+}
+
 TEST(DftbNativePeriodicSccTest, RejectsOverlappingDistinctAtoms)
 {
     SkfData hydrogen_like;

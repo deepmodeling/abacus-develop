@@ -577,6 +577,8 @@ std::vector<double> third_order_potential(const DftbPeriodicInput& input,
 
 struct KPointResult
 {
+    // SCC potential used to construct the Hamiltonian for these eigenstates.
+    std::vector<double> potential;
     std::vector<DftbKPointSpectrum> spectra;
     DftbFermiFilling filling;
     std::vector<double> populations;
@@ -602,6 +604,7 @@ KPointResult solve_for_charges(const DftbPeriodicInput& input,
     }
 
     KPointResult result;
+    result.potential = potential;
     result.spectra.resize(input.kpoints.size());
     const int mpi_rank = Parallel_Common::get_rank();
     const int mpi_size = Parallel_Common::get_size();
@@ -911,16 +914,17 @@ DftbPeriodicResult solve_periodic_dftb(
         result.scc_residual_history.push_back(result.maximum_charge_residual);
 
         const bool converged = result.maximum_charge_residual <= input.scc_tolerance;
-        std::vector<double> iteration_gamma_charge;
-        const double iteration_scc_quadratic = quadratic_form(gamma, output_charges, &iteration_gamma_charge);
+        const double iteration_scc_quadratic = quadratic_form(gamma, output_charges);
         const std::vector<double> iteration_third = third_order_potential(input, pairs, output_charges);
         double iteration_third_energy = 0.0;
         double iteration_potential_expectation = 0.0;
         for (std::size_t atom = 0; atom < output_charges.size(); ++atom)
         {
             iteration_third_energy += output_charges[atom] * iteration_third[atom] / 3.0;
-            iteration_potential_expectation += state.populations[atom]
-                                                * (iteration_gamma_charge[atom] + iteration_third[atom]);
+            // These eigenstates were obtained from the input-charge potential
+            // stored in state.potential. Subtracting the output-charge
+            // potential here makes unconverged iteration energies inconsistent.
+            iteration_potential_expectation += state.populations[atom] * state.potential[atom];
         }
         const double iteration_h0_energy = state.filling.band_free_energy_hartree
                                            - iteration_potential_expectation;
@@ -980,20 +984,17 @@ DftbPeriodicResult solve_periodic_dftb(
         final_charges[atom] = state.populations[atom]
                               - input.atoms[atom].homonuclear_data->valence_electron_count();
     }
-    std::vector<double> gamma_charges;
-    const double scc_quadratic = quadratic_form(gamma, final_charges, &gamma_charges);
+    const double scc_quadratic = quadratic_form(gamma, final_charges);
     const auto third = third_order_potential(input, pairs, final_charges);
     double third_energy = 0.0;
     for (std::size_t atom = 0; atom < final_charges.size(); ++atom)
     {
         third_energy += final_charges[atom] * third[atom] / 3.0;
     }
-    std::vector<double> total_potential = gamma_charges;
     double potential_expectation = 0.0;
     for (std::size_t atom = 0; atom < final_charges.size(); ++atom)
     {
-        total_potential[atom] += third[atom];
-        potential_expectation += state.populations[atom] * total_potential[atom];
+        potential_expectation += state.populations[atom] * state.potential[atom];
     }
 
     result.electron_excess_charges = std::move(final_charges);
