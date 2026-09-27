@@ -294,7 +294,18 @@ std::vector<DftbPairImage> make_pair_images(const DftbPeriodicInput& input,
                         const Vec3 displacement = subtract(add(input.atoms[b].position_bohr, translation),
                                                             input.atoms[a].position_bohr);
                         const double distance = norm(displacement);
-                        if (distance <= cutoff && distance > same_distance_tolerance)
+                        if (distance <= same_distance_tolerance)
+                        {
+                            if (a == b)
+                            {
+                                throw std::runtime_error("A non-zero native DFTB lattice translation is shorter "
+                                                         "than the pair tolerance");
+                            }
+                            throw std::runtime_error("Distinct atoms " + std::to_string(a + 1) + " and "
+                                                     + std::to_string(b + 1)
+                                                     + " overlap within the native DFTB pair tolerance");
+                        }
+                        if (distance <= cutoff)
                         {
                             DftbPairImage pair;
                             pair.atom_a = a;
@@ -820,6 +831,12 @@ DftbPeriodicResult solve_periodic_dftb(
             || atom.species >= input.hubbard_derivative.size())
         {
             throw std::invalid_argument("Each DFTB atom needs homonuclear SKF data and Hubbard parameters");
+        }
+        if (std::abs(atom.homonuclear_data->reference_occupations[2]) > 1.0e-12)
+        {
+            throw std::invalid_argument("Native DFTB uses an s+p basis and cannot represent non-zero d-shell "
+                                        "reference occupations in SKF file: "
+                                        + atom.homonuclear_data->filename);
         }
     }
     double weight_sum = 0.0;

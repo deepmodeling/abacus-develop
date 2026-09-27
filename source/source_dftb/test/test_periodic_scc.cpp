@@ -3,6 +3,7 @@
 #include "gtest/gtest.h"
 
 #include <array>
+#include <stdexcept>
 #include <vector>
 
 #ifdef __MPI
@@ -55,6 +56,7 @@ TEST(DftbNativePeriodicSccTest, SolvesNeutralCellAndFrozenPotentialBands)
     hydrogen_like.has_atomic_data = true;
     hydrogen_like.onsite_hartree = {{-0.5, 0.5, 0.0}};
     hydrogen_like.hubbard_u_hartree = {{0.4, 0.4, 0.4}};
+    // The reader stores SKF homonuclear occupations in s, p, d order.
     hydrogen_like.reference_occupations = {{2.0, 0.0, 0.0}};
 
     DftbPeriodicInput input;
@@ -101,6 +103,72 @@ TEST(DftbNativePeriodicSccTest, SolvesNeutralCellAndFrozenPotentialBands)
     EXPECT_NEAR(result.band_structure[0].eigenvalues_hartree[0], -0.5, 1.0e-12);
     EXPECT_NEAR(result.band_structure[1].eigenvalues_hartree[0], -0.5, 1.0e-12);
     EXPECT_NEAR(result.band_structure[1].distance_inverse_bohr, 0.07853981633974483, 1.0e-12);
+}
+
+TEST(DftbNativePeriodicSccTest, RejectsOverlappingDistinctAtoms)
+{
+    SkfData hydrogen_like;
+    hydrogen_like.filename = "synthetic-H.skf";
+    hydrogen_like.homonuclear = true;
+    hydrogen_like.grid_spacing_bohr = 0.1;
+    hydrogen_like.declared_grid_points = 1;
+    hydrogen_like.has_atomic_data = true;
+    hydrogen_like.onsite_hartree = {{-0.5, 0.5, 0.0}};
+    hydrogen_like.hubbard_u_hartree = {{0.4, 0.4, 0.4}};
+    hydrogen_like.reference_occupations = {{2.0, 0.0, 0.0}};
+
+    DftbPeriodicInput input;
+    input.atoms.resize(2);
+    for (auto& atom : input.atoms)
+    {
+        atom.species = 0;
+        atom.homonuclear_data = &hydrogen_like;
+    }
+    DftbPairParameters pair;
+    pair.species_a = 0;
+    pair.species_b = 0;
+    pair.ab = &hydrogen_like;
+    pair.ba = &hydrogen_like;
+    input.pair_parameters.push_back(pair);
+    input.lattice_bohr[0] = {{40.0, 0.0, 0.0}};
+    input.lattice_bohr[1] = {{0.0, 40.0, 0.0}};
+    input.lattice_bohr[2] = {{0.0, 0.0, 40.0}};
+    DftbWeightedKPoint gamma;
+    gamma.fractional = {{0.0, 0.0, 0.0}};
+    gamma.weight = 1.0;
+    input.kpoints.push_back(gamma);
+    input.hubbard_derivative.push_back(-0.1);
+    input.total_electrons = 4.0;
+
+    EXPECT_THROW(solve_periodic_dftb(input), std::runtime_error);
+}
+
+TEST(DftbNativePeriodicSccTest, RejectsUnsupportedDValenceOccupation)
+{
+    SkfData d_shell_species;
+    d_shell_species.filename = "synthetic-spd.skf";
+    d_shell_species.homonuclear = true;
+    d_shell_species.has_atomic_data = true;
+    d_shell_species.reference_occupations = {{1.0, 0.0, 1.0}};
+
+    DftbPeriodicInput input;
+    input.atoms.resize(1);
+    input.atoms[0].species = 0;
+    input.atoms[0].homonuclear_data = &d_shell_species;
+    DftbPairParameters pair;
+    pair.species_a = 0;
+    pair.species_b = 0;
+    pair.ab = &d_shell_species;
+    pair.ba = &d_shell_species;
+    input.pair_parameters.push_back(pair);
+    input.hubbard_derivative.push_back(0.0);
+    DftbWeightedKPoint gamma;
+    gamma.fractional = {{0.0, 0.0, 0.0}};
+    gamma.weight = 1.0;
+    input.kpoints.push_back(gamma);
+    input.total_electrons = 2.0;
+
+    EXPECT_THROW(solve_periodic_dftb(input), std::invalid_argument);
 }
 
 } // namespace ModuleDFTB
