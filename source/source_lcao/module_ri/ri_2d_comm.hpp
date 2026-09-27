@@ -431,7 +431,7 @@ void RI_2D_Comm::add_HexxR(
 // This is the real-space (DM(R)) counterpart of split_m2D_ktoR (which converts DM(k)),
 // and the inverse of add_HexxR (which converts Ds -> HContainer); it therefore reuses the
 // exact same atom/orbital/spin-block index mapping as add_HexxR.
-// dm_container is the DM(R) vector returned by DensityMatrix::get_DMR_vector():
+// dm_container is the DM(R) vector returned by DensityMatrix::get_dmr_vec():
 //   nspin==1 : size 1 (container 0  -> spin-block 0)
 //   nspin==2 : size 2 (container is -> spin-block is)
 //   nspin==4 : size 1 (container 0 holds the 2x2 npol blocks -> spin-blocks 0,1,2,3)

@@ -190,7 +190,7 @@ md_restartfreq                 5 #The period to output MD restart information
 md_out_force                   0 #output all atomic forces into running_md.log or not
 md_seed                        -1 #random seed for MD
 md_prec_level                  2 #precision level for vc-md
-ref_cell_factor                1.2 #construct a reference cell bigger than the initial cell
+ref_cell_factor                1.0 #construct a reference cell bigger than the initial cell (currently disabled, must be 1.0)
 md_restart                     0 #whether restart
 lj_rule                        2 #combination rules used to construct the parameter matrix for LJ potential
 lj_eshift                      0 #whether to use energy shift for LJ potential

@@ -6012,7 +6012,7 @@
               DiagoElpa          elpa_solve         13.171     25088   0.00052       4.9%
           ElecStateLCAO            psiToRho         3.2479        49     0.066       1.2%
               elecstate              cal_dm        0.23405        49    0.0048     0.087%
-           psiMulPsiMpi              pdgemm        0.10221     25088   4.1e-06     0.038%
+           cal_dmk_psi              pdgemm        0.10221     25088   4.1e-06     0.038%
             LCAO_Charge            cal_dk_k         2.3764        49     0.048      0.88%
          Gint_interface        cal_gint_rho        0.57094        49     0.012      0.21%
                 Exx_LRI        cal_exx_elec         128.96         9       14.       48.%

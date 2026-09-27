@@ -8,7 +8,7 @@ abacus_disable_feature_definitions(__EXX)
 
 AddTest(
   TARGET MODULE_CELL_NEIGHBOR_neighbor_search
-  LIBS parameter base device cell symmetry
+  LIBS parameter base device cell neighbor symmetry
   SOURCES
     neighbor_search_test.cpp
   ../neighbor_search.cpp

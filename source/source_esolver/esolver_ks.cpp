@@ -67,7 +67,6 @@ void ESolver_KS::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     //! 3) setup charge mixing
     p_chgmix = new Charge_Mixing();
-    p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
     // Aggregate-initialize MixingConfig so that adding a field without
     // updating this list is a compile error (-Wmissing-field-initializers
     // promoted to error via pragma). Fields are in declaration order.
@@ -93,7 +92,7 @@ void ESolver_KS::before_all_runners(BaseCell& basecell, const Input_para& inp)
         inp.scf_nmax                                      // scf_nmax
     };
 #pragma GCC diagnostic pop
-    p_chgmix->set_mixing(mix_cfg, ucell.omega, ucell.tpiba);
+    p_chgmix->set_mixing(mix_cfg, this->pw_rho, this->pw_rhod, ucell.omega, ucell.tpiba);
     p_chgmix->init_mixing();
 
     //! 4) setup plane wave for electronic wave functions

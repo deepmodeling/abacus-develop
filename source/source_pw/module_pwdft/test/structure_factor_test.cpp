@@ -4,7 +4,7 @@
 #include <cmath>
 #include <complex>
 #include "source_cell/unitcell.h"
-#include "source_estate/module_dm/test/prepare_unitcell.h"
+#include "source_estate/module_dm/unittests/prepare_unitcell.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/stru_fac.h"
 /************************************************

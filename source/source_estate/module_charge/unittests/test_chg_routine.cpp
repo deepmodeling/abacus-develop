@@ -68,8 +68,7 @@ class ChgRoutineTest : public ::testing::Test
 TEST_F(ChgRoutineTest, ChgmixingKsPwIter1SetsRestartStep)
 {
     Charge_Mixing cm;
-    cm.set_mixing(make_plain_cfg(1), ucell.omega, ucell.tpiba);
-    cm.set_rhopw(&pw_basis, &pw_basis);
+    cm.set_mixing(make_plain_cfg(1), &pw_basis, &pw_basis, ucell.omega, ucell.tpiba);
     Plus_U_Base dftu;
     Input_para inp;
     inp.scf_nmax = 50;
@@ -84,8 +83,7 @@ TEST_F(ChgRoutineTest, ChgmixingKsPwIter1SetsRestartStep)
 TEST_F(ChgRoutineTest, ChgmixingKsLcaoIter1SetsRestartStep)
 {
     Charge_Mixing cm;
-    cm.set_mixing(make_plain_cfg(1), ucell.omega, ucell.tpiba);
-    cm.set_rhopw(&pw_basis, &pw_basis);
+    cm.set_mixing(make_plain_cfg(1), &pw_basis, &pw_basis, ucell.omega, ucell.tpiba);
     Plus_U_Base dftu;
     Input_para inp;
     inp.scf_nmax = 50;
@@ -100,8 +98,7 @@ TEST_F(ChgRoutineTest, ChgmixingKsLcaoIter1SetsRestartStep)
 TEST_F(ChgRoutineTest, ChgmixingKsConvergedSkipsMixing)
 {
     Charge_Mixing cm;
-    cm.set_mixing(make_plain_cfg(1), ucell.omega, ucell.tpiba);
-    cm.set_rhopw(&pw_basis, &pw_basis);
+    cm.set_mixing(make_plain_cfg(1), &pw_basis, &pw_basis, ucell.omega, ucell.tpiba);
     Input_para inp;
     inp.mixing_restart = 0.0;
     inp.scf_os_stop = false;
@@ -132,8 +129,7 @@ TEST_F(ChgRoutineTest, ChgmixingKsConvergedSkipsMixing)
 TEST_F(ChgRoutineTest, ChgmixingKsDrhoBelowHsolverSkipsMixing)
 {
     Charge_Mixing cm;
-    cm.set_mixing(make_plain_cfg(1), ucell.omega, ucell.tpiba);
-    cm.set_rhopw(&pw_basis, &pw_basis);
+    cm.set_mixing(make_plain_cfg(1), &pw_basis, &pw_basis, ucell.omega, ucell.tpiba);
     Input_para inp;
     inp.mixing_restart = 0.0;
     inp.scf_os_stop = false;

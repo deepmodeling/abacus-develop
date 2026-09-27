@@ -103,7 +103,7 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
 		void* p_hamilt_in,
 		void* psi_in,
 #ifdef __LCAO
-		elecstate::DensityMatrix<TK, double>* dm_in, // mohan add 2025-11-03
+		module_dm::DensityMatrix<TK, double>* dm_in, // mohan add 2025-11-03
 #endif
 		elecstate::ElecState* pelec_in,
 		ModulePW::PW_Basis_K* pw_wfc_in)

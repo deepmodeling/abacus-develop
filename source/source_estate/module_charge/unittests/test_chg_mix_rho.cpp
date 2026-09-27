@@ -30,7 +30,7 @@ Magnetism::~Magnetism()
  *   - Charge_Mixing::mix_rho: dispatches to mix_rho_recip (scf_thr_type==1)
  *     or mix_rho_real (scf_thr_type==2), then copies rho->rho_save.
  *     - abort on null chr / null chr->rhopw
- *     - abort when set_rhopw was not called
+ *     - abort when the grid was not set via set_mixing
  *     - abort when double_grid is on but rhodpw is null
  *     - real-space plain mixing: rho = rho_save + beta * (rho_new - rho_save)
  */
@@ -91,13 +91,12 @@ class ChargeMixRhoTest : public ::testing::Test
         MixingConfig cfg = make_cfg(nspin, scf_thr_type, double_grid, false);
         if (double_grid)
         {
-            cm.set_rhopw(&pw_basis, &pw_dbasis);
+            cm.set_mixing(cfg, &pw_basis, &pw_dbasis, omega, tpiba);
         }
         else
         {
-            cm.set_rhopw(&pw_basis, &pw_basis);
+            cm.set_mixing(cfg, &pw_basis, &pw_basis, omega, tpiba);
         }
-        cm.set_mixing(cfg, omega, tpiba);
         cm.init_mixing();
     }
 
@@ -119,8 +118,7 @@ TEST_F(ChargeMixRhoTest, MixRhoNullChrAborts)
 {
     Charge_Mixing cm;
     MixingConfig cfg = make_cfg(1, 2, false, false);
-    cm.set_rhopw(&pw_basis, &pw_basis);
-    cm.set_mixing(cfg, omega, tpiba);
+    cm.set_mixing(cfg, &pw_basis, &pw_basis, omega, tpiba);
     cm.init_mixing();
     EXPECT_DEATH(cm.mix_rho(nullptr), "");
 }
@@ -137,11 +135,12 @@ TEST_F(ChargeMixRhoTest, MixRhoUnsetRhopwAborts)
 {
     Charge_Mixing cm;
     MixingConfig cfg = make_cfg(1, 2, false, false);
+    // Pass rhopw == nullptr to set_mixing to simulate a skipped grid setup.
     // Do NOT call init_mixing() here: init_mixing already WARNING_QUITs when
-    // set_rhopw was skipped, which would kill the death-test parent process
+    // the grid is unset, which would kill the death-test parent process
     // before EXPECT_DEATH runs. The guard under test lives in mix_rho itself
     // and only checks this->rhopw == nullptr, independent of init_mixing.
-    cm.set_mixing(cfg, omega, tpiba);
+    cm.set_mixing(cfg, nullptr, nullptr, omega, tpiba);
     setup_charge(1);
     EXPECT_DEATH(cm.mix_rho(&charge), "");
 }
@@ -150,9 +149,8 @@ TEST_F(ChargeMixRhoTest, MixRhoDoubleGridWithoutRhodpwAborts)
 {
     Charge_Mixing cm;
     MixingConfig cfg = make_cfg(1, 2, true, false);
-    // set_rhopw with rhodpw == nullptr while double_grid is on
-    cm.set_rhopw(&pw_basis, nullptr);
-    cm.set_mixing(cfg, omega, tpiba);
+    // set_mixing with rhodpw == nullptr while double_grid is on
+    cm.set_mixing(cfg, &pw_basis, nullptr, omega, tpiba);
     cm.init_mixing();
     setup_charge(1);
     EXPECT_DEATH(cm.mix_rho(&charge), "");

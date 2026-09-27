@@ -14,11 +14,11 @@ class TwoCenterIntegrator;
 class UnitCell;
 class K_Vectors;
 
-namespace elecstate
+namespace module_dm
 {
 template <typename TK, typename TR>
 class DensityMatrix;
-} // namespace elecstate
+} // namespace module_dm
 
 namespace hamilt
 {
@@ -55,7 +55,7 @@ class DFTU_onsite<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                 Plus_U_Base* p_dftu,
                 const int nspin_in,
                 const double onsite_radius,
-                const elecstate::DensityMatrix<TK, double>* dm_in);
+                const module_dm::DensityMatrix<TK, double>* dm_in);
     ~DFTU_onsite() = default;
 
     /**
@@ -76,7 +76,7 @@ class DFTU_onsite<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     Plus_U_Base* dftu = nullptr;
 
     /// @brief solver-owned density matrix providing DMR; lifetime covers each ionic step
-    const elecstate::DensityMatrix<TK, double>* dm_ = nullptr;
+    const module_dm::DensityMatrix<TK, double>* dm_ = nullptr;
 
     const TwoCenterIntegrator* intor_ = nullptr;
 

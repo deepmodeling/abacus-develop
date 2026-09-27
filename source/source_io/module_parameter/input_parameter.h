@@ -187,6 +187,16 @@ struct Input_para
 
     // ==============   #Parameters (5.Molecular dynamics) ===========================
     MD_para mdp;
+    // FIXME(liuyu): ref_cell_factor is currently DISABLED. Setting any
+    // non-1.0 value triggers WARNING_QUIT in read_input_item_md.cpp.
+    // The reference-cell mechanism has design problems: when
+    // ref_cell_factor > 1, PW_Basis::lat0/tpiba/G/GGT/omega hold
+    // reference-cell values, but external code (sum_rho, get_local_pp_energy,
+    // cal_delta_escf, makov_payne, wfc IO, DFPT, OFDFT) reads them as
+    // physical-cell quantities, producing wrong results in variable-cell
+    // (NPT) calculations. To re-enable, PW_Basis must be refactored to
+    // separate reference-cell grid (FFT dims nx/ny/nz) from physical-cell
+    // lattice quantities (lat0/tpiba/G/GGT/omega).
     double ref_cell_factor = 1;         ///< construct a reference cell bigger than the
                                         ///< initial cell liuyu 2023-03-21
     std::vector<int> cal_syns = {0, 8}; ///< calculate asynchronous S matrix to output {enable, precision}

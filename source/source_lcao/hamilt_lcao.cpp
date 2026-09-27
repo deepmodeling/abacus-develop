@@ -56,7 +56,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                const K_Vectors& kv_in,
                                const TwoCenterBundle& two_center_bundle,
                                const LCAO_Orbitals& orb,
-                               elecstate::DensityMatrix<TK, double>* DM_in,
+                               module_dm::DensityMatrix<TK, double>* DM_in,
                                Plus_U_Base* p_dftu, // mohan add 2025-11-05
                                Setup_DeePKS<TK> &deepks,
                                const int istep,

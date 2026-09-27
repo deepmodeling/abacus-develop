@@ -24,9 +24,9 @@ class CalEDM
 
     elecstate::Potential* pot = nullptr;
 
-    elecstate::DensityMatrix<T, double> cal_edm(const elecstate::ElecState* pelec,
+    module_dm::DensityMatrix<T, double> cal_edm(const elecstate::ElecState* pelec,
                                                 const psi::Psi<T>& psi,
-                                                const elecstate::DensityMatrix<T, double>& dm,
+                                                const module_dm::DensityMatrix<T, double>& dm,
                                                 const K_Vectors& kv,
                                                 const Parallel_Orbitals& pv,
                                                 const int& nspin,
