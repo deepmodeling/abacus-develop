@@ -149,12 +149,12 @@ jobs:
           fi
           echo "  input-main.md: OK"
 
-      - name: Integrated Tests Preparation
+      - name: Integration and native DFTB regression tests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R integrated_test
+          ctest --test-dir build -V --timeout 1700 -R '^(integrated_test|dftb_native_c2n_reference)$'
 
       - name: Module_Base Unittests
         env:

@@ -1,0 +1,6 @@
+# 2D hexagonal C2N high-symmetry path; coordinates are reciprocal-lattice fractions.
+# Format: number_of_segments points_per_segment
+3 40
+Gamma 0.0 0.0 0.0 M 0.5 0.0 0.0
+M 0.5 0.0 0.0 K 0.3333333333333333 0.3333333333333333 0.0
+K 0.3333333333333333 0.3333333333333333 0.0 Gamma 0.0 0.0 0.0

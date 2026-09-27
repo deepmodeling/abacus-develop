@@ -1,0 +1,13 @@
+# Native periodic DFTB3 settings. Energies use DFTB+ atomic units.
+skf_dir parameters
+hubbard_deriv C -0.1492
+hubbard_deriv N -0.1535
+temperature_kelvin 20
+scc_tolerance 1.0e-6
+max_scc_iterations 200
+mixing_parameter 0.2
+mixing_method broyden
+mixing_history 6
+third_order yes
+# Frozen-SCC high-symmetry band path after charge convergence.
+band_path_file dftb_band_path.in
