@@ -580,7 +580,12 @@ void OperatorEXXPW<T, Device>::setup_exx_small_grid() const
     gridt.initmpi(rhopw->poolnproc, rhopw->poolrank, rhopw->pool_world);
 #endif
     gridt.initgrids(rhopw->lat0, rhopw->latvec, ecut_exx);
-    if (gridt.nx == wfcpw->nx && gridt.ny == wfcpw->ny && gridt.nz == wfcpw->nz)
+    // The small grid must be strictly smaller than the wavefunction box:
+    // psi_mq_real and psi_nk_real hold wfcpw->nrxx entries, so any larger
+    // box (e.g. ecutexx > ecutrho) would overflow them. initgrids rounds
+    // dimensions to FFT-friendly sizes, so compare volumes, not dimensions.
+    const long long sg_volume = static_cast<long long>(gridt.nx) * gridt.ny * gridt.nz;
+    if (sg_volume >= wfcpw->nrxx)
     {
         if (user_set && my_rank_ == 0)
         {
