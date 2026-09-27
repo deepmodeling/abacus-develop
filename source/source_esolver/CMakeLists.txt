@@ -33,7 +33,10 @@ if(ENABLE_LCAO)
 endif()
 
 if(ENABLE_DFTB_NATIVE)
-  list(APPEND objects esolver_dftb_native.cpp)
+  list(APPEND objects
+      esolver_dftb_native.cpp
+      esolver_dftb_native_input.cpp
+  )
 endif()
 
 add_library(
