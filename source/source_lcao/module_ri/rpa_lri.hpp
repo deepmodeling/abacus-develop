@@ -18,6 +18,7 @@
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 
 #include "rpa_lri.h"
+#include "exx_lri.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_base/global_function.h"
 #include "source_estate/elecstate_lcao.h"
@@ -36,7 +37,10 @@ inline void trim_malloc_cache()
     malloc_trim(0);
 #endif
 }
-}
+} // namespace RpaLriDetail
+
+template <typename T, typename Tdata>
+RPA_LRI<T, Tdata>::~RPA_LRI() = default;
 
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
@@ -69,8 +73,7 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
     std::cout << "etot(Ha): " << std::fixed << std::setprecision(15) << pelec->f_en.etot / 2.0 << std::endl;
     std::cout << "Etot_without_rpa(Ha): " << std::fixed << std::setprecision(15)
               << (pelec->f_en.etot - pelec->f_en.etxc + exx_cut_coulomb->Eexx) / 2.0 << std::endl;
-    delete exx_cut_coulomb;
-    exx_cut_coulomb = nullptr;
+    exx_cut_coulomb.reset();
     RpaLriDetail::trim_malloc_cache();
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
@@ -191,7 +194,8 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     {
         Exx_Info_RI local_info = this->info;
         local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
-        exx_cut_coulomb = new Exx_LRI<double>(local_info);
+        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
+        exx_cut_coulomb.reset(new_exx);
     }
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
@@ -207,7 +211,8 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         // NOTE: Reuse abfs_for_lmax constructed earlier to avoid redundant ABFs construction.
         exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb, abfs_for_lmax);
     // cal C and V for exx
-    this->output_cut_coulomb_cs(ucell, exx_cut_coulomb);
+    Exx_LRI<double>* cut_coulomb = exx_cut_coulomb.get();
+    this->output_cut_coulomb_cs(ucell, cut_coulomb);
     // cal CVCD
     if (exx_spacegroup_symmetry && PARAM.inp.exx_symmetry_realspace)
     {
@@ -286,7 +291,10 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     Exx_Info_RI local_info = this->info;
     local_info.ccp_rmesh_times = this->ccp_rmesh_times_ewald;
     if (!exx_full_coulomb)
-        exx_full_coulomb = new Exx_LRI<double>(local_info);
+    {
+        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
+        exx_full_coulomb.reset(new_exx);
+    }
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs_shrink);
@@ -322,14 +330,14 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
 
     const std::array<Tcell, Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
     this->Vs_period = RI::RI_Tools::cal_period(Vs_full_IJ, period);
-    this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_", exx_full_coulomb);
+    Exx_LRI<double>* full_coulomb = exx_full_coulomb.get();
+    this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_", full_coulomb);
     Vs_period.clear();
     Vs_period.swap(tmp);
     Cs.clear();
     Cs.swap(tmp);
 
-    delete exx_full_coulomb;
-    exx_full_coulomb = nullptr;
+    exx_full_coulomb.reset();
     RpaLriDetail::trim_malloc_cache();
 
     ModuleBase::timer::end("RPA_LRI", "output_ewald_coulomb");
@@ -344,7 +352,8 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     {
         Exx_Info_RI local_info = this->info;
         local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
-        exx_cut_coulomb = new Exx_LRI<double>(local_info);
+        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
+        exx_cut_coulomb.reset(new_exx);
     }
     exx_cut_coulomb->init_spencer(this->mpi_comm, ucell, kv, orb);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "exx_cut_coulomb->init");
@@ -426,7 +435,8 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
         this->Vs_period = RI_2D_Comm::comm_map2_first(this->mpi_comm, this->Vs_period, atoms00, atoms01);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "Vs_period_comm");
 
-        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_unshrinked_cut_", exx_cut_coulomb);
+        Exx_LRI<double>* cut_coulomb = exx_cut_coulomb.get();
+        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_unshrinked_cut_", cut_coulomb);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "out_large_Vs");
         this->Vs_period.clear();
         this->Vs_period.swap(tmp);
@@ -439,8 +449,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "out_large_Cs");
     this->Cs_period.clear();
     this->Cs_period.swap(tmp);
-    delete exx_cut_coulomb;
-    exx_cut_coulomb = nullptr;
+    exx_cut_coulomb.reset();
     RpaLriDetail::trim_malloc_cache();
 
     ModuleBase::timer::end("RPA_LRI", "cal_large_Cs");
