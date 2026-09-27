@@ -2,7 +2,7 @@
 from pathlib import Path
 import unittest
 
-SOURCE = Path(__file__).resolve().parents[2] / "source/source_lcao/module_ri/sternheimer_abacus_st_smoke.cpp"
+SOURCE = Path(__file__).resolve().parents[2] / "source/source_lcao/module_rpa/module_delta_st/sternheimer_abacus_st_smoke.cpp"
 
 
 class SpectrumAuditRoute(unittest.TestCase):

@@ -3,8 +3,8 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
-CPP = ROOT / "source/source_lcao/module_ri/sternheimer_abacus_st_smoke.cpp"
-HEADER = ROOT / "source/source_lcao/module_ri/sternheimer_weak_q_unit.h"
+CPP = ROOT / "source/source_lcao/module_rpa/module_delta_st/sternheimer_abacus_st_smoke.cpp"
+HEADER = ROOT / "source/source_lcao/module_rpa/module_delta_st/sternheimer_weak_q_unit.h"
 
 
 class WeakQUnitRoute(unittest.TestCase):

@@ -34,7 +34,7 @@
 #endif
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_lri_interface.h" // use EXX codes
-#include "source_lcao/module_ri/rpa_lri.h"           // use RPA code
+#include "source_lcao/module_rpa/rpa_lri.h"           // use RPA code
 #endif
 #include "../module_qo/to_qo.h"                // use toQO
 #include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes

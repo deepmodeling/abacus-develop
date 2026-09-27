@@ -1,0 +1,2063 @@
+#include "source_lcao/module_rpa/module_delta_st/sternheimer_rpa.h"
+#include "source_lcao/module_rpa/module_delta_st/greenx_minimax_adapter.h"
+
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <fstream>
+#include <limits>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
+
+namespace ModuleRI
+{
+
+namespace
+{
+
+constexpr std::int32_t kChi0V1Marker = -41073291;
+constexpr std::int32_t kChi0V1ComplexFlag = 1;
+constexpr std::int32_t kCoulombV1Marker = -20129433;
+
+void assert_same_size(const SternheimerRPA::Vector& lhs, const SternheimerRPA::Vector& rhs, const char* context)
+{
+    if (lhs.size() != rhs.size())
+    {
+        throw std::invalid_argument(std::string(context) + " vector sizes differ.");
+    }
+}
+
+std::vector<const SternheimerRPA::Vector*> make_subspace_views(const std::vector<SternheimerRPA::Vector>& subspace)
+{
+    std::vector<const SternheimerRPA::Vector*> views;
+    views.reserve(subspace.size());
+    for (const SternheimerRPA::Vector& basis: subspace)
+    {
+        views.push_back(&basis);
+    }
+    return views;
+}
+
+double vector_norm(const SternheimerRPA::LinearProblem& problem, const SternheimerRPA::Vector& vec)
+{
+    const auto norm2 = problem.dot(vec, vec);
+    return std::sqrt(std::max(0.0, norm2.real()));
+}
+
+void apply_preconditioner(const SternheimerRPA::LinearProblem& problem,
+                          const SternheimerRPA::Vector& input,
+                          SternheimerRPA::Vector& output)
+{
+    if (problem.precondition)
+    {
+        problem.precondition(input, output);
+    }
+    else
+    {
+        output = input;
+    }
+}
+
+void axpy(const SternheimerRPA::Complex alpha, const SternheimerRPA::Vector& x, SternheimerRPA::Vector& y)
+{
+    assert_same_size(x, y, "SternheimerRPA::axpy");
+#pragma omp parallel for schedule(static)
+    for (std::size_t i = 0; i != y.size(); ++i)
+    {
+        y[i] += alpha * x[i];
+    }
+}
+
+void scale(const SternheimerRPA::Complex alpha, SternheimerRPA::Vector& x)
+{
+#pragma omp parallel for schedule(static)
+    for (std::size_t i = 0; i != x.size(); ++i)
+    {
+        x[i] *= alpha;
+    }
+}
+
+std::vector<SternheimerRPA::Complex> solve_small_dense_system(
+    std::vector<std::vector<SternheimerRPA::Complex>> matrix,
+    std::vector<SternheimerRPA::Complex> rhs)
+{
+    const int size = static_cast<int>(rhs.size());
+    for (int pivot = 0; pivot != size; ++pivot)
+    {
+        int pivot_row = pivot;
+        double pivot_abs = std::abs(matrix[pivot][pivot]);
+        for (int row = pivot + 1; row != size; ++row)
+        {
+            const double candidate_abs = std::abs(matrix[row][pivot]);
+            if (candidate_abs > pivot_abs)
+            {
+                pivot_abs = candidate_abs;
+                pivot_row = row;
+            }
+        }
+        if (pivot_abs < 1.0e-28)
+        {
+            throw std::runtime_error("SternheimerRPA::solve_gmres found a singular least-squares system.");
+        }
+        if (pivot_row != pivot)
+        {
+            std::swap(matrix[pivot], matrix[pivot_row]);
+            std::swap(rhs[pivot], rhs[pivot_row]);
+        }
+
+        const SternheimerRPA::Complex diagonal = matrix[pivot][pivot];
+        for (int col = pivot; col != size; ++col)
+        {
+            matrix[pivot][col] /= diagonal;
+        }
+        rhs[pivot] /= diagonal;
+
+        for (int row = 0; row != size; ++row)
+        {
+            if (row == pivot)
+            {
+                continue;
+            }
+            const SternheimerRPA::Complex factor = matrix[row][pivot];
+            if (std::abs(factor) == 0.0)
+            {
+                continue;
+            }
+            for (int col = pivot; col != size; ++col)
+            {
+                matrix[row][col] -= factor * matrix[pivot][col];
+            }
+            rhs[row] -= factor * rhs[pivot];
+        }
+    }
+    return rhs;
+}
+
+struct LeastSquaresSolution
+{
+    std::vector<SternheimerRPA::Complex> coefficients;
+    double residual_norm = 0.0;
+};
+
+LeastSquaresSolution solve_gmres_least_squares(
+    const std::vector<std::vector<SternheimerRPA::Complex>>& hessenberg,
+    const int rows,
+    const int cols,
+    const double beta)
+{
+    std::vector<std::vector<SternheimerRPA::Complex>> normal_matrix(
+        cols, std::vector<SternheimerRPA::Complex>(cols, SternheimerRPA::Complex(0.0, 0.0)));
+    std::vector<SternheimerRPA::Complex> normal_rhs(cols, SternheimerRPA::Complex(0.0, 0.0));
+
+    for (int col = 0; col != cols; ++col)
+    {
+        normal_rhs[col] = std::conj(hessenberg[0][col]) * beta;
+        for (int other = 0; other != cols; ++other)
+        {
+            for (int row = 0; row != rows; ++row)
+            {
+                normal_matrix[col][other] += std::conj(hessenberg[row][col]) * hessenberg[row][other];
+            }
+        }
+    }
+
+    LeastSquaresSolution result;
+    result.coefficients = solve_small_dense_system(std::move(normal_matrix), std::move(normal_rhs));
+
+    double residual2 = 0.0;
+    for (int row = 0; row != rows; ++row)
+    {
+        SternheimerRPA::Complex value = row == 0 ? SternheimerRPA::Complex(beta, 0.0)
+                                                 : SternheimerRPA::Complex(0.0, 0.0);
+        for (int col = 0; col != cols; ++col)
+        {
+            value -= hessenberg[row][col] * result.coefficients[col];
+        }
+        residual2 += std::norm(value);
+    }
+    result.residual_norm = std::sqrt(residual2);
+    return result;
+}
+
+void add_krylov_update(const std::vector<SternheimerRPA::Vector>& preconditioned_basis,
+                       const std::vector<SternheimerRPA::Complex>& coefficients,
+                       SternheimerRPA::Vector& solution)
+{
+    for (std::size_t basis_index = 0; basis_index != coefficients.size(); ++basis_index)
+    {
+        axpy(coefficients[basis_index], preconditioned_basis[basis_index], solution);
+    }
+}
+
+void checked_write(std::ofstream& ofs, const void* data, const std::size_t bytes, const std::string& filename)
+{
+    const char* ptr = reinterpret_cast<const char*>(data);
+    std::size_t bytes_left = bytes;
+    const std::size_t max_chunk = static_cast<std::size_t>(std::numeric_limits<std::streamsize>::max());
+    while (bytes_left > 0)
+    {
+        const std::size_t chunk = std::min(bytes_left, max_chunk);
+        ofs.write(ptr, static_cast<std::streamsize>(chunk));
+        if (!ofs.good())
+        {
+            throw std::runtime_error("Failed to write " + filename);
+        }
+        ptr += chunk;
+        bytes_left -= chunk;
+    }
+}
+
+template <typename Value>
+void write_scalar(std::ofstream& ofs, const Value& value, const std::string& filename)
+{
+    checked_write(ofs, &value, sizeof(Value), filename);
+}
+
+void checked_read(std::ifstream& in, void* data, const std::size_t bytes, const std::string& filename)
+{
+    in.read(reinterpret_cast<char*>(data), static_cast<std::streamsize>(bytes));
+    if (!in.good())
+    {
+        throw std::runtime_error("Failed to read " + filename);
+    }
+}
+
+template <typename Value>
+Value read_scalar(std::ifstream& in, const std::string& filename)
+{
+    Value value{};
+    checked_read(in, &value, sizeof(Value), filename);
+    return value;
+}
+
+std::int32_t checked_i32_from_size(const std::size_t value, const std::string& context)
+{
+    if (value > static_cast<std::size_t>(std::numeric_limits<std::int32_t>::max()))
+    {
+        throw std::runtime_error(context + " exceeds int32_t range.");
+    }
+    return static_cast<std::int32_t>(value);
+}
+
+std::int64_t checked_i64_from_size(const std::size_t value, const std::string& context)
+{
+    if (value > static_cast<std::size_t>(std::numeric_limits<std::int64_t>::max()))
+    {
+        throw std::runtime_error(context + " exceeds int64_t range.");
+    }
+    return static_cast<std::int64_t>(value);
+}
+
+std::size_t checked_mul_size(const std::size_t lhs, const std::size_t rhs, const std::string& context)
+{
+    if (lhs != 0 && rhs > std::numeric_limits<std::size_t>::max() / lhs)
+    {
+        throw std::runtime_error(context + " exceeds size_t range.");
+    }
+    return lhs * rhs;
+}
+
+int sum_positive_sizes(const std::vector<int>& values, const std::string& context)
+{
+    int sum = 0;
+    for (const int value: values)
+    {
+        if (value <= 0)
+        {
+            throw std::invalid_argument(context + " contains a non-positive atom block size.");
+        }
+        if (value > std::numeric_limits<int>::max() - sum)
+        {
+            throw std::runtime_error(context + " exceeds int range.");
+        }
+        sum += value;
+    }
+    return sum;
+}
+
+std::size_t upper_triangular_pair_index(const std::size_t iatom, const std::size_t jatom, const std::size_t natom)
+{
+    if (iatom > jatom)
+    {
+        throw std::invalid_argument("Sternheimer chi0 v1 writer expects upper-triangular atom pairs.");
+    }
+    return iatom * natom - iatom * (iatom - 1) / 2 + (jatom - iatom);
+}
+
+std::pair<int, int> upper_triangular_pair_from_index(const int pair_index, const int natom)
+{
+    int index = 0;
+    for (int iatom = 0; iatom != natom; ++iatom)
+    {
+        for (int jatom = iatom; jatom != natom; ++jatom)
+        {
+            if (index == pair_index)
+            {
+                return {iatom, jatom};
+            }
+            ++index;
+        }
+    }
+    throw std::runtime_error("Coulomb v1 atom-pair index is out of range.");
+}
+
+std::vector<std::vector<int>> map_atom_local_to_global(
+    const std::vector<SternheimerRPA::AuxiliaryChannel>& channels,
+    const std::vector<int>& atom_naux)
+{
+    std::vector<std::vector<int>> global_index(atom_naux.size());
+    for (std::size_t iatom = 0; iatom != atom_naux.size(); ++iatom)
+    {
+        global_index[iatom].assign(static_cast<std::size_t>(atom_naux[iatom]), -1);
+    }
+
+    for (std::size_t iglobal = 0; iglobal != channels.size(); ++iglobal)
+    {
+        const SternheimerRPA::AuxiliaryChannel& channel = channels[iglobal];
+        if (channel.channel_index != static_cast<int>(iglobal))
+        {
+            throw std::invalid_argument("Sternheimer chi0 v1 channel indices must match matrix ordering.");
+        }
+        if (channel.atom_index < 0 || channel.atom_index >= static_cast<int>(atom_naux.size()))
+        {
+            throw std::invalid_argument("Sternheimer chi0 v1 channel atom index is out of range.");
+        }
+        const int naux = atom_naux[static_cast<std::size_t>(channel.atom_index)];
+        if (channel.atom_local_index < 0 || channel.atom_local_index >= naux)
+        {
+            throw std::invalid_argument("Sternheimer chi0 v1 channel local auxiliary index is out of range.");
+        }
+        int& mapped_index
+            = global_index[static_cast<std::size_t>(channel.atom_index)][static_cast<std::size_t>(
+                channel.atom_local_index)];
+        if (mapped_index != -1)
+        {
+            throw std::invalid_argument("Sternheimer chi0 v1 channel mapping contains a duplicate local index.");
+        }
+        mapped_index = static_cast<int>(iglobal);
+    }
+
+    for (const std::vector<int>& atom_map: global_index)
+    {
+        for (const int mapped_index: atom_map)
+        {
+            if (mapped_index < 0)
+            {
+                throw std::invalid_argument("Sternheimer chi0 v1 channel mapping is incomplete.");
+            }
+        }
+    }
+    return global_index;
+}
+
+struct Chi0Block
+{
+    int pair_index = 0;
+    std::int64_t offset = 0;
+    std::vector<SternheimerRPA::Complex> payload;
+};
+
+struct CoulombFileBlock
+{
+    int pair_index = 0;
+    std::int64_t offset = 0;
+};
+
+} // namespace
+
+SternheimerRPA::CoulombV1Matrix SternheimerRPA::read_coulomb_v1_files(
+    const std::vector<std::string>& filenames)
+{
+    if (filenames.empty())
+    {
+        throw std::invalid_argument("Coulomb v1 reader requires at least one rank file.");
+    }
+
+    CoulombV1Matrix result;
+    int value_flag_reference = -1;
+    std::vector<bool> pair_seen;
+    for (const std::string& filename: filenames)
+    {
+        std::ifstream in(filename.c_str(), std::ios::binary);
+        if (!in.good())
+        {
+            throw std::runtime_error("Failed to open " + filename);
+        }
+        const std::int32_t marker = read_scalar<std::int32_t>(in, filename);
+        const std::int32_t iq = read_scalar<std::int32_t>(in, filename);
+        const std::int32_t naux = read_scalar<std::int32_t>(in, filename);
+        const std::int32_t value_flag = read_scalar<std::int32_t>(in, filename);
+        const std::int32_t natom = read_scalar<std::int32_t>(in, filename);
+        const std::int32_t nblocks = read_scalar<std::int32_t>(in, filename);
+        if (marker != kCoulombV1Marker || iq <= 0 || naux <= 0 || natom <= 0 || nblocks < 0)
+        {
+            throw std::runtime_error("Invalid Coulomb v1 header in " + filename);
+        }
+        std::vector<int> atom_naux(static_cast<std::size_t>(natom));
+        for (int& count: atom_naux)
+        {
+            count = read_scalar<std::int32_t>(in, filename);
+        }
+        if (sum_positive_sizes(atom_naux, "Coulomb v1 atom sizes") != naux)
+        {
+            throw std::runtime_error("Coulomb v1 atom sizes do not sum to naux.");
+        }
+        if (result.iq == 0)
+        {
+            result.iq = iq;
+            result.atom_naux = atom_naux;
+            result.values.assign(static_cast<std::size_t>(naux) * static_cast<std::size_t>(naux), Complex(0.0, 0.0));
+            value_flag_reference = value_flag;
+            pair_seen.assign(static_cast<std::size_t>(natom * (natom + 1) / 2), false);
+        }
+        else if (result.iq != iq || result.atom_naux != atom_naux || value_flag_reference != value_flag)
+        {
+            throw std::runtime_error("Coulomb v1 rank-file metadata are inconsistent.");
+        }
+
+        std::vector<CoulombFileBlock> blocks(static_cast<std::size_t>(nblocks));
+        for (CoulombFileBlock& block: blocks)
+        {
+            block.pair_index = read_scalar<std::int32_t>(in, filename);
+            block.offset = read_scalar<std::int64_t>(in, filename);
+        }
+        std::vector<int> starts(static_cast<std::size_t>(natom), 0);
+        for (int iatom = 1; iatom != natom; ++iatom)
+        {
+            starts[static_cast<std::size_t>(iatom)]
+                = starts[static_cast<std::size_t>(iatom - 1)] + atom_naux[static_cast<std::size_t>(iatom - 1)];
+        }
+        for (const CoulombFileBlock& block: blocks)
+        {
+            if (block.pair_index < 0 || block.pair_index >= static_cast<int>(pair_seen.size())
+                || pair_seen[static_cast<std::size_t>(block.pair_index)])
+            {
+                throw std::runtime_error("Coulomb v1 atom-pair blocks are invalid or duplicated.");
+            }
+            pair_seen[static_cast<std::size_t>(block.pair_index)] = true;
+            const auto pair = upper_triangular_pair_from_index(block.pair_index, natom);
+            const int nrow = atom_naux[static_cast<std::size_t>(pair.first)];
+            const int ncol = atom_naux[static_cast<std::size_t>(pair.second)];
+            in.seekg(block.offset, std::ios::beg);
+            if (!in.good())
+            {
+                throw std::runtime_error("Invalid Coulomb v1 block offset in " + filename);
+            }
+            for (int irow = 0; irow != nrow; ++irow)
+            {
+                for (int icol = 0; icol != ncol; ++icol)
+                {
+                    Complex value;
+                    if (value_flag == 1)
+                    {
+                        value = read_scalar<Complex>(in, filename);
+                    }
+                    else if (value_flag == 0)
+                    {
+                        value = Complex(read_scalar<double>(in, filename), 0.0);
+                    }
+                    else
+                    {
+                        throw std::runtime_error("Unsupported Coulomb v1 value flag.");
+                    }
+                    const int row = starts[static_cast<std::size_t>(pair.first)] + irow;
+                    const int col = starts[static_cast<std::size_t>(pair.second)] + icol;
+                    result.values[static_cast<std::size_t>(row) * static_cast<std::size_t>(naux)
+                                  + static_cast<std::size_t>(col)] = value;
+                    if (pair.first != pair.second)
+                    {
+                        result.values[static_cast<std::size_t>(col) * static_cast<std::size_t>(naux)
+                                      + static_cast<std::size_t>(row)] = std::conj(value);
+                    }
+                }
+            }
+        }
+    }
+    if (std::find(pair_seen.begin(), pair_seen.end(), false) != pair_seen.end())
+    {
+        throw std::runtime_error("Coulomb v1 rank files do not contain every atom-pair block.");
+    }
+    return result;
+}
+
+SternheimerRPA::SolverResult SternheimerRPA::solve_bicgstab(const LinearProblem& problem,
+                                                            const Vector& rhs,
+                                                            Vector& solution)
+{
+    return solve_bicgstab(problem, rhs, solution, SolverOptions{});
+}
+
+SternheimerRPA::SolverResult SternheimerRPA::solve_bicgstab(const LinearProblem& problem,
+                                                            const Vector& rhs,
+                                                            Vector& solution,
+                                                            const SolverOptions& options)
+{
+    if (!problem.apply)
+    {
+        throw std::invalid_argument("SternheimerRPA::solve_bicgstab requires an apply callback.");
+    }
+    if (!problem.dot)
+    {
+        throw std::invalid_argument("SternheimerRPA::solve_bicgstab requires a dot callback.");
+    }
+    if (solution.empty())
+    {
+        solution.assign(rhs.size(), Complex(0.0, 0.0));
+    }
+    assert_same_size(rhs, solution, "SternheimerRPA::solve_bicgstab");
+
+    Vector residual(rhs.size());
+    Vector ax(rhs.size());
+    problem.apply(solution, ax);
+#pragma omp parallel for schedule(static)
+    for (std::size_t i = 0; i != rhs.size(); ++i)
+    {
+        residual[i] = rhs[i] - ax[i];
+    }
+
+    const double rhs_norm = vector_norm(problem, rhs);
+    const double norm_floor = rhs_norm > 0.0 ? rhs_norm : 1.0;
+
+    SolverResult result;
+    result.absolute_residual = vector_norm(problem, residual);
+    result.relative_residual = result.absolute_residual / norm_floor;
+    if (result.relative_residual <= options.residual_tol)
+    {
+        result.converged = true;
+        return result;
+    }
+
+    Vector residual_shadow = residual;
+    Vector p(rhs.size(), Complex(0.0, 0.0));
+    Vector v(rhs.size(), Complex(0.0, 0.0));
+    Vector s(rhs.size());
+    Vector t(rhs.size());
+    Vector p_hat(rhs.size());
+    Vector s_hat(rhs.size());
+
+    Complex rho_old(1.0, 0.0);
+    Complex alpha(1.0, 0.0);
+    Complex omega_old(1.0, 0.0);
+
+    for (int iter = 1; iter <= options.max_iter; ++iter)
+    {
+        const Complex rho_new = problem.dot(residual_shadow, residual);
+        if (std::abs(rho_new) < options.breakdown_tol)
+        {
+            result.iterations = iter - 1;
+            return result;
+        }
+
+        if (iter == 1)
+        {
+            p = residual;
+        }
+        else
+        {
+            const Complex beta = (rho_new / rho_old) * (alpha / omega_old);
+#pragma omp parallel for schedule(static)
+            for (std::size_t i = 0; i != p.size(); ++i)
+            {
+                p[i] = residual[i] + beta * (p[i] - omega_old * v[i]);
+            }
+        }
+
+        apply_preconditioner(problem, p, p_hat);
+        problem.apply(p_hat, v);
+        const Complex rv = problem.dot(residual_shadow, v);
+        if (std::abs(rv) < options.breakdown_tol)
+        {
+            result.iterations = iter - 1;
+            return result;
+        }
+        alpha = rho_new / rv;
+
+#pragma omp parallel for schedule(static)
+        for (std::size_t i = 0; i != s.size(); ++i)
+        {
+            s[i] = residual[i] - alpha * v[i];
+        }
+        const double s_norm = vector_norm(problem, s);
+        if (s_norm / norm_floor <= options.residual_tol)
+        {
+            axpy(alpha, p_hat, solution);
+            result.converged = true;
+            result.iterations = iter;
+            result.absolute_residual = s_norm;
+            result.relative_residual = s_norm / norm_floor;
+            return result;
+        }
+
+        apply_preconditioner(problem, s, s_hat);
+        problem.apply(s_hat, t);
+        const Complex tt = problem.dot(t, t);
+        if (std::abs(tt) < options.breakdown_tol)
+        {
+            result.iterations = iter - 1;
+            return result;
+        }
+        const Complex omega_new = problem.dot(t, s) / tt;
+        if (std::abs(omega_new) < options.breakdown_tol)
+        {
+            result.iterations = iter - 1;
+            return result;
+        }
+
+        axpy(alpha, p_hat, solution);
+        axpy(omega_new, s_hat, solution);
+
+#pragma omp parallel for schedule(static)
+        for (std::size_t i = 0; i != residual.size(); ++i)
+        {
+            residual[i] = s[i] - omega_new * t[i];
+        }
+
+        result.iterations = iter;
+        result.absolute_residual = vector_norm(problem, residual);
+        result.relative_residual = result.absolute_residual / norm_floor;
+        if (result.relative_residual <= options.residual_tol)
+        {
+            result.converged = true;
+            return result;
+        }
+
+        rho_old = rho_new;
+        omega_old = omega_new;
+    }
+
+    return result;
+}
+
+SternheimerRPA::SolverResult SternheimerRPA::solve_gmres(const LinearProblem& problem,
+                                                         const Vector& rhs,
+                                                         Vector& solution,
+                                                         const SolverOptions& options,
+                                                         const int restart_dimension)
+{
+    if (!problem.apply)
+    {
+        throw std::invalid_argument("SternheimerRPA::solve_gmres requires an apply callback.");
+    }
+    if (!problem.dot)
+    {
+        throw std::invalid_argument("SternheimerRPA::solve_gmres requires a dot callback.");
+    }
+    if (restart_dimension <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::solve_gmres requires a positive restart dimension.");
+    }
+    if (solution.empty())
+    {
+        solution.assign(rhs.size(), Complex(0.0, 0.0));
+    }
+    assert_same_size(rhs, solution, "SternheimerRPA::solve_gmres");
+
+    SolverResult result;
+    Vector residual(rhs.size());
+    Vector ax(rhs.size());
+    problem.apply(solution, ax);
+#pragma omp parallel for schedule(static)
+    for (std::size_t i = 0; i != rhs.size(); ++i)
+    {
+        residual[i] = rhs[i] - ax[i];
+    }
+
+    const double rhs_norm = vector_norm(problem, rhs);
+    const double norm_floor = rhs_norm > 0.0 ? rhs_norm : 1.0;
+    double beta = vector_norm(problem, residual);
+    result.absolute_residual = beta;
+    result.relative_residual = beta / norm_floor;
+    if (result.relative_residual <= options.residual_tol)
+    {
+        result.converged = true;
+        return result;
+    }
+
+    while (result.iterations < options.max_iter)
+    {
+        const int max_inner = std::min(restart_dimension, options.max_iter - result.iterations);
+        std::vector<Vector> basis(max_inner + 1, Vector(rhs.size(), Complex(0.0, 0.0)));
+        std::vector<Vector> preconditioned_basis(max_inner, Vector(rhs.size(), Complex(0.0, 0.0)));
+        std::vector<std::vector<Complex>> hessenberg(max_inner + 1,
+                                                     std::vector<Complex>(max_inner, Complex(0.0, 0.0)));
+
+        basis[0] = residual;
+        scale(Complex(1.0 / beta, 0.0), basis[0]);
+
+        LeastSquaresSolution least_squares;
+        int used_inner = 0;
+        for (int inner = 0; inner != max_inner; ++inner)
+        {
+            apply_preconditioner(problem, basis[inner], preconditioned_basis[inner]);
+
+            Vector work;
+            problem.apply(preconditioned_basis[inner], work);
+            for (int basis_index = 0; basis_index <= inner; ++basis_index)
+            {
+                hessenberg[basis_index][inner] = problem.dot(basis[basis_index], work);
+                axpy(-hessenberg[basis_index][inner], basis[basis_index], work);
+            }
+
+            const double next_norm = vector_norm(problem, work);
+            hessenberg[inner + 1][inner] = Complex(next_norm, 0.0);
+            if (next_norm > options.breakdown_tol)
+            {
+                basis[inner + 1] = work;
+                scale(Complex(1.0 / next_norm, 0.0), basis[inner + 1]);
+            }
+
+            used_inner = inner + 1;
+            least_squares = solve_gmres_least_squares(hessenberg, used_inner + 1, used_inner, beta);
+            result.absolute_residual = least_squares.residual_norm;
+            result.relative_residual = result.absolute_residual / norm_floor;
+            result.iterations += 1;
+
+            if (result.relative_residual <= options.residual_tol || next_norm <= options.breakdown_tol)
+            {
+                add_krylov_update(preconditioned_basis, least_squares.coefficients, solution);
+                result.converged = result.relative_residual <= options.residual_tol;
+                return result;
+            }
+        }
+
+        add_krylov_update(preconditioned_basis, least_squares.coefficients, solution);
+        problem.apply(solution, ax);
+#pragma omp parallel for schedule(static)
+        for (std::size_t i = 0; i != rhs.size(); ++i)
+        {
+            residual[i] = rhs[i] - ax[i];
+        }
+        beta = vector_norm(problem, residual);
+        result.absolute_residual = beta;
+        result.relative_residual = result.absolute_residual / norm_floor;
+        if (result.relative_residual <= options.residual_tol)
+        {
+            result.converged = true;
+            return result;
+        }
+    }
+
+    return result;
+}
+
+std::vector<SternheimerRPA::SolverResult> SternheimerRPA::solve_gmres_batch(
+    const BatchLinearProblem& problem,
+    const Matrix& rhs,
+    Matrix& solution,
+    const SolverOptions& options,
+    const int restart_dimension)
+{
+    if (!problem.apply)
+    {
+        throw std::invalid_argument("SternheimerRPA::solve_gmres_batch requires an apply callback.");
+    }
+    if (!problem.dot)
+    {
+        throw std::invalid_argument("SternheimerRPA::solve_gmres_batch requires a dot callback.");
+    }
+    if (restart_dimension <= 0)
+    {
+        throw std::invalid_argument(
+            "SternheimerRPA::solve_gmres_batch requires a positive restart dimension.");
+    }
+    if (rhs.empty())
+    {
+        solution.clear();
+        return {};
+    }
+
+    const std::size_t vector_size = rhs.front().size();
+    for (const Vector& column: rhs)
+    {
+        if (column.size() != vector_size)
+        {
+            throw std::invalid_argument(
+                "SternheimerRPA::solve_gmres_batch right-hand-side vector sizes differ.");
+        }
+    }
+    if (solution.empty())
+    {
+        solution.assign(rhs.size(), Vector(vector_size, Complex(0.0, 0.0)));
+    }
+    if (solution.size() != rhs.size())
+    {
+        throw std::invalid_argument(
+            "SternheimerRPA::solve_gmres_batch solution column count does not match the right-hand side.");
+    }
+    for (std::size_t column = 0; column != rhs.size(); ++column)
+    {
+        if (solution[column].empty())
+        {
+            solution[column].assign(vector_size, Complex(0.0, 0.0));
+        }
+        assert_same_size(rhs[column], solution[column], "SternheimerRPA::solve_gmres_batch");
+    }
+
+    const auto validate_batch_output = [](const Matrix& input, const Matrix& output, const char* context) {
+        if (output.size() != input.size())
+        {
+            throw std::invalid_argument(std::string(context) + " output column count differs.");
+        }
+        for (std::size_t column = 0; column != input.size(); ++column)
+        {
+            assert_same_size(input[column], output[column], context);
+        }
+    };
+    const auto norm = [&problem](const Vector& vector) {
+        const Complex norm2 = problem.dot(vector, vector);
+        return std::sqrt(std::max(0.0, norm2.real()));
+    };
+
+    struct ColumnState
+    {
+        SolverResult result;
+        Vector residual;
+        double norm_floor = 1.0;
+        double beta = 0.0;
+        bool active = true;
+        int max_inner = 0;
+        std::vector<Vector> basis;
+        std::vector<Vector> preconditioned_basis;
+        std::vector<std::vector<Complex>> hessenberg;
+        LeastSquaresSolution least_squares;
+    };
+
+    std::vector<ColumnState> states(rhs.size());
+    Matrix ax;
+    problem.apply(solution, ax);
+    validate_batch_output(solution, ax, "SternheimerRPA::solve_gmres_batch apply");
+    for (std::size_t column = 0; column != rhs.size(); ++column)
+    {
+        ColumnState& state = states[column];
+        state.residual.resize(vector_size);
+#pragma omp parallel for schedule(static)
+        for (std::size_t i = 0; i != vector_size; ++i)
+        {
+            state.residual[i] = rhs[column][i] - ax[column][i];
+        }
+        const double rhs_norm = norm(rhs[column]);
+        state.norm_floor = rhs_norm > 0.0 ? rhs_norm : 1.0;
+        state.beta = norm(state.residual);
+        state.result.absolute_residual = state.beta;
+        state.result.relative_residual = state.beta / state.norm_floor;
+        if (state.result.relative_residual <= options.residual_tol)
+        {
+            state.result.converged = true;
+            state.active = false;
+        }
+    }
+
+    while (true)
+    {
+        std::vector<std::size_t> active_columns;
+        for (std::size_t column = 0; column != states.size(); ++column)
+        {
+            ColumnState& state = states[column];
+            if (!state.active || state.result.iterations >= options.max_iter)
+            {
+                state.active = false;
+                continue;
+            }
+            active_columns.push_back(column);
+            state.max_inner = std::min(restart_dimension, options.max_iter - state.result.iterations);
+            state.basis.assign(static_cast<std::size_t>(state.max_inner + 1),
+                               Vector(vector_size, Complex(0.0, 0.0)));
+            state.preconditioned_basis.assign(static_cast<std::size_t>(state.max_inner),
+                                              Vector(vector_size, Complex(0.0, 0.0)));
+            state.hessenberg.assign(static_cast<std::size_t>(state.max_inner + 1),
+                                    std::vector<Complex>(static_cast<std::size_t>(state.max_inner),
+                                                         Complex(0.0, 0.0)));
+            state.basis[0] = state.residual;
+            scale(Complex(1.0 / state.beta, 0.0), state.basis[0]);
+        }
+        if (active_columns.empty())
+        {
+            break;
+        }
+
+        for (int inner = 0; inner != restart_dimension; ++inner)
+        {
+            std::vector<std::size_t> inner_columns;
+            Matrix precondition_input;
+            for (const std::size_t column: active_columns)
+            {
+                ColumnState& state = states[column];
+                if (state.active && inner < state.max_inner)
+                {
+                    inner_columns.push_back(column);
+                    precondition_input.push_back(state.basis[static_cast<std::size_t>(inner)]);
+                }
+            }
+            if (inner_columns.empty())
+            {
+                break;
+            }
+
+            Matrix preconditioned;
+            if (problem.precondition)
+            {
+                problem.precondition(precondition_input, preconditioned);
+                validate_batch_output(precondition_input,
+                                      preconditioned,
+                                      "SternheimerRPA::solve_gmres_batch precondition");
+            }
+            else
+            {
+                preconditioned = precondition_input;
+            }
+            for (std::size_t active_index = 0; active_index != inner_columns.size(); ++active_index)
+            {
+                states[inner_columns[active_index]].preconditioned_basis[static_cast<std::size_t>(inner)]
+                    = preconditioned[active_index];
+            }
+
+            Matrix work;
+            problem.apply(preconditioned, work);
+            validate_batch_output(preconditioned, work, "SternheimerRPA::solve_gmres_batch apply");
+            for (std::size_t active_index = 0; active_index != inner_columns.size(); ++active_index)
+            {
+                const std::size_t column = inner_columns[active_index];
+                ColumnState& state = states[column];
+                Vector& column_work = work[active_index];
+                for (int basis_index = 0; basis_index <= inner; ++basis_index)
+                {
+                    state.hessenberg[static_cast<std::size_t>(basis_index)][static_cast<std::size_t>(inner)]
+                        = problem.dot(state.basis[static_cast<std::size_t>(basis_index)], column_work);
+                    axpy(-state.hessenberg[static_cast<std::size_t>(basis_index)][static_cast<std::size_t>(inner)],
+                         state.basis[static_cast<std::size_t>(basis_index)],
+                         column_work);
+                }
+
+                const double next_norm = norm(column_work);
+                state.hessenberg[static_cast<std::size_t>(inner + 1)][static_cast<std::size_t>(inner)]
+                    = Complex(next_norm, 0.0);
+                if (next_norm > options.breakdown_tol)
+                {
+                    state.basis[static_cast<std::size_t>(inner + 1)] = column_work;
+                    scale(Complex(1.0 / next_norm, 0.0), state.basis[static_cast<std::size_t>(inner + 1)]);
+                }
+
+                const int used_inner = inner + 1;
+                state.least_squares
+                    = solve_gmres_least_squares(state.hessenberg, used_inner + 1, used_inner, state.beta);
+                state.result.absolute_residual = state.least_squares.residual_norm;
+                state.result.relative_residual = state.result.absolute_residual / state.norm_floor;
+                state.result.iterations += 1;
+                if (state.result.relative_residual <= options.residual_tol
+                    || next_norm <= options.breakdown_tol)
+                {
+                    add_krylov_update(state.preconditioned_basis,
+                                      state.least_squares.coefficients,
+                                      solution[column]);
+                    state.result.converged = state.result.relative_residual <= options.residual_tol;
+                    state.active = false;
+                }
+            }
+        }
+
+        std::vector<std::size_t> restart_columns;
+        Matrix restart_solutions;
+        for (const std::size_t column: active_columns)
+        {
+            ColumnState& state = states[column];
+            if (!state.active)
+            {
+                continue;
+            }
+            add_krylov_update(state.preconditioned_basis, state.least_squares.coefficients, solution[column]);
+            restart_columns.push_back(column);
+            restart_solutions.push_back(solution[column]);
+        }
+        if (restart_columns.empty())
+        {
+            continue;
+        }
+
+        Matrix restart_ax;
+        problem.apply(restart_solutions, restart_ax);
+        validate_batch_output(restart_solutions,
+                              restart_ax,
+                              "SternheimerRPA::solve_gmres_batch restart apply");
+        for (std::size_t active_index = 0; active_index != restart_columns.size(); ++active_index)
+        {
+            ColumnState& state = states[restart_columns[active_index]];
+#pragma omp parallel for schedule(static)
+            for (std::size_t i = 0; i != vector_size; ++i)
+            {
+                state.residual[i] = rhs[restart_columns[active_index]][i] - restart_ax[active_index][i];
+            }
+            state.beta = norm(state.residual);
+            state.result.absolute_residual = state.beta;
+            state.result.relative_residual = state.beta / state.norm_floor;
+            if (state.result.relative_residual <= options.residual_tol)
+            {
+                state.result.converged = true;
+                state.active = false;
+            }
+        }
+    }
+
+    std::vector<SolverResult> results;
+    results.reserve(states.size());
+    for (const ColumnState& state: states)
+    {
+        results.push_back(state.result);
+    }
+    return results;
+}
+
+void SternheimerRPA::build_rhs_from_hartree_perturbation(const std::vector<double>& hartree_potential_r,
+                                                         const Vector& psi_r,
+                                                         Vector& rhs_r)
+{
+    if (hartree_potential_r.size() != psi_r.size())
+    {
+        throw std::invalid_argument("SternheimerRPA::build_rhs_from_hartree_perturbation size mismatch.");
+    }
+    rhs_r.resize(psi_r.size());
+#pragma omp parallel for schedule(static)
+    for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
+    {
+        rhs_r[ir] = -hartree_potential_r[ir] * psi_r[ir];
+    }
+}
+
+void SternheimerRPA::build_rhs_from_hartree_perturbation(const Vector& hartree_potential_r,
+                                                         const Vector& psi_r,
+                                                         Vector& rhs_r)
+{
+    if (hartree_potential_r.size() != psi_r.size())
+    {
+        throw std::invalid_argument("SternheimerRPA::build_rhs_from_hartree_perturbation size mismatch.");
+    }
+    rhs_r.resize(psi_r.size());
+#pragma omp parallel for schedule(static)
+    for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
+    {
+        rhs_r[ir] = -hartree_potential_r[ir] * psi_r[ir];
+    }
+}
+
+SternheimerRPA::Complex SternheimerRPA::accumulate_polarizability_grid_element(
+    const std::vector<double>& hartree_potential_r,
+    const Vector& psi_r,
+    const Vector& delta_psi_r,
+    const double grid_weight)
+{
+    if (hartree_potential_r.size() != psi_r.size() || psi_r.size() != delta_psi_r.size())
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_polarizability_grid_element size mismatch.");
+    }
+    double real_part = 0.0;
+    double imag_part = 0.0;
+#pragma omp parallel for reduction(+ : real_part, imag_part) schedule(static)
+    for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
+    {
+        const Complex term = std::conj(psi_r[ir]) * hartree_potential_r[ir] * delta_psi_r[ir];
+        real_part += term.real();
+        imag_part += term.imag();
+    }
+    return grid_weight * Complex(real_part, imag_part);
+}
+
+SternheimerRPA::Complex SternheimerRPA::accumulate_polarizability_grid_element(
+    const Vector& hartree_potential_r,
+    const Vector& psi_r,
+    const Vector& delta_psi_r,
+    const double grid_weight)
+{
+    if (hartree_potential_r.size() != psi_r.size() || psi_r.size() != delta_psi_r.size())
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_polarizability_grid_element size mismatch.");
+    }
+    double real_part = 0.0;
+    double imag_part = 0.0;
+#pragma omp parallel for reduction(+ : real_part, imag_part) schedule(static)
+    for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
+    {
+        const Complex term = std::conj(psi_r[ir]) * std::conj(hartree_potential_r[ir]) * delta_psi_r[ir];
+        real_part += term.real();
+        imag_part += term.imag();
+    }
+    return grid_weight * Complex(real_part, imag_part);
+}
+
+void SternheimerRPA::accumulate_chi0_branch_column(const std::vector<std::vector<double>>& hartree_potentials_r,
+                                                   const Vector& psi_r,
+                                                   const Vector& delta_psi_r,
+                                                   const double grid_weight,
+                                                   const double occupation,
+                                                   const int column_index,
+                                                   std::vector<Complex>& branch_matrix)
+{
+    const int num_channels = static_cast<int>(hartree_potentials_r.size());
+    if (num_channels <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column requires at least one channel.");
+    }
+    if (column_index < 0 || column_index >= num_channels)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column column index is out of range.");
+    }
+    if (branch_matrix.size()
+        != checked_mul_size(static_cast<std::size_t>(num_channels),
+                            static_cast<std::size_t>(num_channels),
+                            "Sternheimer chi0 branch matrix size"))
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column matrix size mismatch.");
+    }
+
+    for (int row = 0; row != num_channels; ++row)
+    {
+        branch_matrix[static_cast<std::size_t>(row) * static_cast<std::size_t>(num_channels)
+                      + static_cast<std::size_t>(column_index)]
+            += occupation * accumulate_polarizability_grid_element(hartree_potentials_r[static_cast<std::size_t>(row)],
+                                                                   psi_r,
+                                                                   delta_psi_r,
+                                                                   grid_weight);
+    }
+}
+
+void SternheimerRPA::accumulate_chi0_branch_column(const std::vector<Vector>& hartree_potentials_r,
+                                                   const Vector& psi_r,
+                                                   const Vector& delta_psi_r,
+                                                   const double grid_weight,
+                                                   const double occupation,
+                                                   const int column_index,
+                                                   std::vector<Complex>& branch_matrix)
+{
+    const int num_channels = static_cast<int>(hartree_potentials_r.size());
+    if (num_channels <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column requires at least one channel.");
+    }
+    if (column_index < 0 || column_index >= num_channels)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column column index is out of range.");
+    }
+    if (branch_matrix.size()
+        != checked_mul_size(static_cast<std::size_t>(num_channels),
+                            static_cast<std::size_t>(num_channels),
+                            "Sternheimer chi0 branch matrix size"))
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column matrix size mismatch.");
+    }
+
+    for (int row = 0; row != num_channels; ++row)
+    {
+        branch_matrix[static_cast<std::size_t>(row) * static_cast<std::size_t>(num_channels)
+                      + static_cast<std::size_t>(column_index)]
+            += occupation * accumulate_polarizability_grid_element(hartree_potentials_r[static_cast<std::size_t>(row)],
+                                                                   psi_r,
+                                                                   delta_psi_r,
+                                                                   grid_weight);
+    }
+}
+
+void SternheimerRPA::accumulate_chi0_branch_column(const std::vector<SternheimerABFBlochGridChannel>& channels,
+                                                   const Vector& psi_r,
+                                                   const Vector& delta_psi_r,
+                                                   const double grid_weight,
+                                                   const double occupation,
+                                                   const int column_index,
+                                                   std::vector<Complex>& branch_matrix)
+{
+    const int num_channels = static_cast<int>(channels.size());
+    if (num_channels <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column requires at least one channel.");
+    }
+    if (column_index < 0 || column_index >= num_channels)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column column index is out of range.");
+    }
+    if (branch_matrix.size()
+        != checked_mul_size(static_cast<std::size_t>(num_channels),
+                            static_cast<std::size_t>(num_channels),
+                            "Sternheimer chi0 branch matrix size"))
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column matrix size mismatch.");
+    }
+    for (int row = 0; row != num_channels; ++row)
+    {
+        branch_matrix[static_cast<std::size_t>(row) * static_cast<std::size_t>(num_channels)
+                      + static_cast<std::size_t>(column_index)]
+            += occupation
+               * accumulate_polarizability_grid_element(channels[static_cast<std::size_t>(row)].potential_r,
+                                                        psi_r,
+                                                        delta_psi_r,
+                                                        grid_weight);
+    }
+}
+
+void SternheimerRPA::accumulate_chi0_branch_columns(const std::vector<SternheimerABFBlochGridChannel>& channels,
+                                                    const Vector& psi_r,
+                                                    const std::vector<const Vector*>& delta_psi_batch,
+                                                    const double grid_weight,
+                                                    const double occupation,
+                                                    const int column_begin,
+                                                    std::vector<Complex>& branch_matrix)
+{
+    const int num_channels = static_cast<int>(channels.size());
+    const int batch_size = static_cast<int>(delta_psi_batch.size());
+    if (num_channels <= 0 || batch_size <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_columns requires channels and responses.");
+    }
+    if (column_begin < 0 || column_begin + batch_size > num_channels)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_columns column range is out of bounds.");
+    }
+    if (branch_matrix.size()
+        != checked_mul_size(static_cast<std::size_t>(num_channels),
+                            static_cast<std::size_t>(num_channels),
+                            "Sternheimer chi0 branch matrix size"))
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_columns matrix size mismatch.");
+    }
+    for (const Vector* delta_psi_r: delta_psi_batch)
+    {
+        if (delta_psi_r == nullptr)
+        {
+            throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_columns received a null response.");
+        }
+        assert_same_size(psi_r, *delta_psi_r, "SternheimerRPA::accumulate_chi0_branch_columns");
+    }
+    for (const auto& channel: channels)
+    {
+        assert_same_size(channel.potential_r, psi_r, "SternheimerRPA::accumulate_chi0_branch_columns");
+    }
+
+#pragma omp parallel
+    {
+        std::vector<Complex> values(static_cast<std::size_t>(batch_size));
+#pragma omp for schedule(static)
+        for (int row = 0; row != num_channels; ++row)
+        {
+            std::fill(values.begin(), values.end(), Complex(0.0, 0.0));
+            const Vector& potential_r = channels[static_cast<std::size_t>(row)].potential_r;
+            if (batch_size == 2)
+            {
+                Complex first(0.0, 0.0);
+                Complex second(0.0, 0.0);
+                const Vector& first_response = *delta_psi_batch[0];
+                const Vector& second_response = *delta_psi_batch[1];
+                for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
+                {
+                    const Complex probe = std::conj(psi_r[ir]) * std::conj(potential_r[ir]);
+                    first += probe * first_response[ir];
+                    second += probe * second_response[ir];
+                }
+                values[0] = first;
+                values[1] = second;
+            }
+            else
+            {
+                for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
+                {
+                    const Complex probe = std::conj(psi_r[ir]) * std::conj(potential_r[ir]);
+                    for (int offset = 0; offset != batch_size; ++offset)
+                    {
+                        values[static_cast<std::size_t>(offset)]
+                            += probe * (*delta_psi_batch[static_cast<std::size_t>(offset)])[ir];
+                    }
+                }
+            }
+            for (int offset = 0; offset != batch_size; ++offset)
+            {
+                branch_matrix[static_cast<std::size_t>(row) * static_cast<std::size_t>(num_channels)
+                              + static_cast<std::size_t>(column_begin + offset)]
+                    += occupation * (grid_weight * values[static_cast<std::size_t>(offset)]);
+            }
+        }
+    }
+}
+
+std::vector<SternheimerRPA::Complex> SternheimerRPA::symmetrize_chi0_imaginary_frequency(
+    const std::vector<Complex>& branch_matrix,
+    const int num_channels)
+{
+    if (num_channels <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::symmetrize_chi0_imaginary_frequency requires channels.");
+    }
+    if (branch_matrix.size()
+        != checked_mul_size(static_cast<std::size_t>(num_channels),
+                            static_cast<std::size_t>(num_channels),
+                            "Sternheimer chi0 branch matrix size"))
+    {
+        throw std::invalid_argument("SternheimerRPA::symmetrize_chi0_imaginary_frequency matrix size mismatch.");
+    }
+
+    std::vector<Complex> chi0(branch_matrix.size(), Complex(0.0, 0.0));
+    for (int row = 0; row != num_channels; ++row)
+    {
+        for (int col = 0; col != num_channels; ++col)
+        {
+            const std::size_t index
+                = static_cast<std::size_t>(row) * static_cast<std::size_t>(num_channels)
+                  + static_cast<std::size_t>(col);
+            const std::size_t transpose
+                = static_cast<std::size_t>(col) * static_cast<std::size_t>(num_channels)
+                  + static_cast<std::size_t>(row);
+            chi0[index] = branch_matrix[index] + std::conj(branch_matrix[transpose]);
+        }
+    }
+    return chi0;
+}
+
+std::int32_t SternheimerRPA::chi0_v1_marker()
+{
+    return kChi0V1Marker;
+}
+
+int SternheimerRPA::frequency_owner_rank(const int ifrequency_zero_based,
+                                         const int mpi_ranks,
+                                         const int rank_shift)
+{
+    if (ifrequency_zero_based < 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::frequency_owner_rank requires a non-negative frequency index.");
+    }
+    if (mpi_ranks <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::frequency_owner_rank requires a positive MPI rank count.");
+    }
+    if (mpi_ranks == 1)
+    {
+        return 0;
+    }
+
+    int normalized_shift = rank_shift % mpi_ranks;
+    if (normalized_shift < 0)
+    {
+        normalized_shift += mpi_ranks;
+    }
+    return (ifrequency_zero_based + normalized_shift) % mpi_ranks;
+}
+
+SternheimerRPA::FrequencyMPIAssignment SternheimerRPA::frequency_mpi_assignment(
+    const int ifrequency_zero_based,
+    const int frequency_count,
+    const int mpi_ranks,
+    const int mpi_rank,
+    const int rank_shift,
+    const bool use_channel_mpi)
+{
+    if (frequency_count <= 0 || ifrequency_zero_based < 0 || ifrequency_zero_based >= frequency_count)
+    {
+        throw std::invalid_argument(
+            "SternheimerRPA::frequency_mpi_assignment requires a valid frequency index and count.");
+    }
+    if (mpi_ranks <= 0 || mpi_rank < 0 || mpi_rank >= mpi_ranks)
+    {
+        throw std::invalid_argument(
+            "SternheimerRPA::frequency_mpi_assignment requires a valid MPI rank and rank count.");
+    }
+
+    FrequencyMPIAssignment assignment;
+    if (!use_channel_mpi)
+    {
+        assignment.frequency_leader_rank = frequency_owner_rank(ifrequency_zero_based, mpi_ranks, rank_shift);
+        assignment.frequency_group_size = 1;
+        assignment.owns_frequency = mpi_rank == assignment.frequency_leader_rank;
+        assignment.frequency_group_local_rank = assignment.owns_frequency ? 0 : -1;
+        return assignment;
+    }
+
+    if (mpi_ranks < frequency_count || mpi_ranks % frequency_count != 0)
+    {
+        throw std::invalid_argument(
+            "Sternheimer channel MPI requires MPI ranks to be an integer multiple of the frequency count.");
+    }
+
+    assignment.frequency_group_size = mpi_ranks / frequency_count;
+    const int frequency_slot = frequency_owner_rank(ifrequency_zero_based, frequency_count, rank_shift);
+    assignment.frequency_leader_rank = frequency_slot * assignment.frequency_group_size;
+    const int frequency_group_end = assignment.frequency_leader_rank + assignment.frequency_group_size;
+    assignment.owns_frequency
+        = mpi_rank >= assignment.frequency_leader_rank && mpi_rank < frequency_group_end;
+    assignment.frequency_group_local_rank
+        = assignment.owns_frequency ? mpi_rank - assignment.frequency_leader_rank : -1;
+    return assignment;
+}
+
+int SternheimerRPA::channel_group_owner(const int occupied_state,
+                                        const int auxiliary_channel,
+                                        const int auxiliary_channel_count,
+                                        const int frequency_group_size)
+{
+    if (occupied_state < 0 || auxiliary_channel < 0 || auxiliary_channel_count <= 0
+        || auxiliary_channel >= auxiliary_channel_count || frequency_group_size <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::channel_group_owner received invalid dimensions or indices.");
+    }
+    const std::int64_t equation_index = static_cast<std::int64_t>(occupied_state) * auxiliary_channel_count
+                                        + auxiliary_channel;
+    return static_cast<int>(equation_index % frequency_group_size);
+}
+
+int SternheimerRPA::global_equation_owner(const int occupied_state,
+                                          const int frequency_index,
+                                          const int auxiliary_channel,
+                                          const int frequency_count,
+                                          const int auxiliary_channel_count,
+                                          const int mpi_ranks,
+                                          const int rank_shift)
+{
+    if (occupied_state < 0 || frequency_count <= 0 || frequency_index < 0
+        || frequency_index >= frequency_count || auxiliary_channel_count <= 0 || auxiliary_channel < 0
+        || auxiliary_channel >= auxiliary_channel_count || mpi_ranks <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::global_equation_owner received invalid dimensions or indices.");
+    }
+
+    constexpr std::int64_t max_task_index = std::numeric_limits<std::int64_t>::max();
+    if (static_cast<std::int64_t>(occupied_state)
+        > (max_task_index - frequency_index) / frequency_count)
+    {
+        throw std::overflow_error("SternheimerRPA::global_equation_owner task index overflow.");
+    }
+    const std::int64_t occupied_frequency
+        = static_cast<std::int64_t>(occupied_state) * frequency_count + frequency_index;
+    if (occupied_frequency > (max_task_index - auxiliary_channel) / auxiliary_channel_count)
+    {
+        throw std::overflow_error("SternheimerRPA::global_equation_owner task index overflow.");
+    }
+    const std::int64_t task_index = occupied_frequency * auxiliary_channel_count + auxiliary_channel;
+
+    int normalized_shift = rank_shift % mpi_ranks;
+    if (normalized_shift < 0)
+    {
+        normalized_shift += mpi_ranks;
+    }
+    return static_cast<int>((task_index % mpi_ranks + normalized_shift) % mpi_ranks);
+}
+
+void SternheimerRPA::validate_mpi_layout(const std::string& layout,
+                                         const bool use_frequency_mpi,
+                                         const bool use_channel_mpi,
+                                         const bool write_siab,
+                                         const bool write_librpa,
+                                         const int frequency_count,
+                                         const int mpi_ranks)
+{
+    if (layout != "frequency_grouped" && layout != "global_equation")
+    {
+        throw std::invalid_argument("Sternheimer MPI layout must be frequency_grouped or global_equation.");
+    }
+    if (frequency_count <= 0 || mpi_ranks <= 0)
+    {
+        throw std::invalid_argument("Sternheimer MPI layout requires positive frequency and MPI rank counts.");
+    }
+    if (use_channel_mpi && !use_frequency_mpi)
+    {
+        throw std::invalid_argument("sternheimer_channel_mpi requires sternheimer_frequency_mpi=true.");
+    }
+    if (!write_siab && !write_librpa)
+    {
+        throw std::invalid_argument("Sternheimer MPI layout requires an enabled output target.");
+    }
+
+    if (layout == "global_equation")
+    {
+        if (!use_frequency_mpi || !use_channel_mpi)
+        {
+            throw std::invalid_argument(
+                "sternheimer_mpi_layout=global_equation requires frequency MPI and channel MPI.");
+        }
+        return;
+    }
+
+    if (use_channel_mpi && (mpi_ranks < frequency_count || mpi_ranks % frequency_count != 0))
+    {
+        throw std::invalid_argument(
+            "Sternheimer channel MPI requires MPI ranks to be an integer multiple of the frequency count.");
+    }
+}
+
+SternheimerRPA::TransitionEnergyWindow SternheimerRPA::transition_energy_window_from_eigenvalues_ry(
+    const std::vector<double>& eigenvalues_ry,
+    const std::vector<double>& occupations,
+    const double occupation_tolerance)
+{
+    TransitionEnergyWindow window;
+    if (!try_transition_energy_window_from_eigenvalues_ry(eigenvalues_ry,
+                                                           occupations,
+                                                           window,
+                                                           occupation_tolerance))
+    {
+        throw std::runtime_error("Sternheimer minimax window found no positive occupied-to-empty transition.");
+    }
+    return window;
+}
+
+bool SternheimerRPA::try_transition_energy_window_from_eigenvalues_ry(
+    const std::vector<double>& eigenvalues_ry,
+    const std::vector<double>& occupations,
+    TransitionEnergyWindow& window,
+    const double occupation_tolerance)
+{
+    if (eigenvalues_ry.size() != occupations.size())
+    {
+        throw std::invalid_argument("Sternheimer minimax window requires matching eigenvalue and occupation sizes.");
+    }
+    if (eigenvalues_ry.empty())
+    {
+        throw std::invalid_argument("Sternheimer minimax window requires at least one eigenvalue.");
+    }
+    if (occupation_tolerance < 0.0)
+    {
+        throw std::invalid_argument("Sternheimer minimax occupation tolerance must be non-negative.");
+    }
+
+    double emin_ry = std::numeric_limits<double>::max();
+    double emax_ry = 0.0;
+    bool found_transition = false;
+    for (std::size_t iv = 0; iv != eigenvalues_ry.size(); ++iv)
+    {
+        if (occupations[iv] <= occupation_tolerance)
+        {
+            continue;
+        }
+        for (std::size_t ic = 0; ic != eigenvalues_ry.size(); ++ic)
+        {
+            if (occupations[ic] > occupation_tolerance)
+            {
+                continue;
+            }
+            const double transition_ry = eigenvalues_ry[ic] - eigenvalues_ry[iv];
+            if (transition_ry <= 0.0)
+            {
+                continue;
+            }
+            emin_ry = std::min(emin_ry, transition_ry);
+            emax_ry = std::max(emax_ry, transition_ry);
+            found_transition = true;
+        }
+    }
+
+    if (!found_transition)
+    {
+        return false;
+    }
+
+    window.emin_ha = 0.5 * emin_ry;
+    window.emax_ha = 0.5 * emax_ry;
+    return true;
+}
+
+SternheimerRPA::TransitionEnergyWindow SternheimerRPA::merge_transition_energy_windows(
+    const std::vector<TransitionEnergyWindow>& windows)
+{
+    if (windows.empty())
+    {
+        throw std::invalid_argument("Sternheimer minimax window merge requires at least one spin channel.");
+    }
+
+    TransitionEnergyWindow merged = windows.front();
+    for (const TransitionEnergyWindow& window: windows)
+    {
+        if (window.emin_ha <= 0.0 || window.emax_ha < window.emin_ha)
+        {
+            throw std::invalid_argument("Sternheimer minimax spin window is invalid.");
+        }
+        merged.emin_ha = std::min(merged.emin_ha, window.emin_ha);
+        merged.emax_ha = std::max(merged.emax_ha, window.emax_ha);
+    }
+    return merged;
+}
+
+SternheimerRPA::FrequencyGrid SternheimerRPA::generate_greenx_minimax_frequency_grid(const int nfreq,
+                                                                                     const double emin_ha,
+                                                                                     const double emax_ha)
+{
+    if (nfreq <= 0)
+    {
+        throw std::invalid_argument("Sternheimer minimax grid requires nfreq > 0.");
+    }
+    if (emin_ha <= 0.0 || emax_ha <= 0.0 || emax_ha < emin_ha)
+    {
+        throw std::invalid_argument("Sternheimer minimax grid requires 0 < emin <= emax in Hartree.");
+    }
+
+    FrequencyGrid grid;
+    grid.omega_ha.assign(static_cast<std::size_t>(nfreq), 0.0);
+    grid.weights_ha.assign(static_cast<std::size_t>(nfreq), 0.0);
+
+#ifdef __GREENX_MINIMAX
+    int nfreq_c = nfreq;
+    double emin_c = emin_ha;
+    double emax_c = emax_ha;
+    int ierr = -1;
+    gx_minimax_grid_frequency_wrp(&nfreq_c,
+                                  &emin_c,
+                                  &emax_c,
+                                  grid.omega_ha.data(),
+                                  grid.weights_ha.data(),
+                                  &ierr);
+    if (ierr != 0)
+    {
+        throw std::runtime_error("GreenX minimax frequency-grid generation failed with ierr="
+                                 + std::to_string(ierr) + ".");
+    }
+#else
+    throw std::runtime_error("ABACUS was built without ENABLE_GREENX_MINIMAX; Sternheimer minimax is unavailable.");
+#endif
+
+    return grid;
+}
+
+SternheimerRPA::FrequencyGrid SternheimerRPA::read_frequency_grid_file(const std::string& filename,
+                                                                       const int expected_size)
+{
+    if (expected_size <= 0)
+    {
+        throw std::invalid_argument("Sternheimer frequency grid file requires expected_size > 0.");
+    }
+
+    std::ifstream in(filename.c_str());
+    if (!in.good())
+    {
+        throw std::runtime_error("Failed to open Sternheimer frequency grid file " + filename + ".");
+    }
+
+    FrequencyGrid grid;
+    std::string line;
+    int line_number = 0;
+    while (std::getline(in, line))
+    {
+        ++line_number;
+        const std::size_t comment = line.find('#');
+        if (comment != std::string::npos)
+        {
+            line.resize(comment);
+        }
+
+        std::istringstream iss(line);
+        std::vector<double> columns;
+        double value = 0.0;
+        while (iss >> value)
+        {
+            columns.push_back(value);
+        }
+        if (!iss.eof())
+        {
+            throw std::invalid_argument("Invalid token in Sternheimer frequency grid file " + filename
+                                        + " at line " + std::to_string(line_number) + ".");
+        }
+        if (columns.empty())
+        {
+            continue;
+        }
+        if (columns.size() != 2 && columns.size() != 3)
+        {
+            throw std::invalid_argument("Sternheimer frequency grid file " + filename
+                                        + " expects rows with 2 columns (omega_Ha weight_Ha) or 3 columns "
+                                          "(index omega_Ha weight_Ha).");
+        }
+
+        double omega_ha = columns[0];
+        double weight_ha = columns[1];
+        if (columns.size() == 3)
+        {
+            const int expected_index = static_cast<int>(grid.omega_ha.size()) + 1;
+            if (std::abs(columns[0] - static_cast<double>(expected_index)) > 1.0e-10)
+            {
+                throw std::invalid_argument("Sternheimer frequency grid file " + filename
+                                            + " has an unexpected one-based index at line "
+                                            + std::to_string(line_number) + ".");
+            }
+            omega_ha = columns[1];
+            weight_ha = columns[2];
+        }
+        if (omega_ha <= 0.0 || weight_ha <= 0.0)
+        {
+            throw std::invalid_argument("Sternheimer frequency grid file " + filename
+                                        + " requires positive omega_Ha and weight_Ha.");
+        }
+
+        grid.omega_ha.push_back(omega_ha);
+        grid.weights_ha.push_back(weight_ha);
+    }
+
+    if (static_cast<int>(grid.omega_ha.size()) != expected_size)
+    {
+        throw std::runtime_error("Sternheimer frequency grid file " + filename + " contains "
+                                 + std::to_string(grid.omega_ha.size()) + " rows but sternheimer_nfreq is "
+                                 + std::to_string(expected_size) + ".");
+    }
+    return grid;
+}
+
+void SternheimerRPA::write_chi0_v1_file(const std::string& filename,
+                                        const Chi0V1Metadata& metadata,
+                                        const std::vector<AuxiliaryChannel>& channels,
+                                        const std::vector<Complex>& chi0_matrix)
+{
+    if (metadata.iq <= 0 || metadata.ifrequency <= 0)
+    {
+        throw std::invalid_argument("Sternheimer chi0 v1 metadata requires positive iq and frequency indices.");
+    }
+    if (metadata.atom_naux.empty())
+    {
+        throw std::invalid_argument("Sternheimer chi0 v1 metadata requires atom auxiliary sizes.");
+    }
+    const int naux = sum_positive_sizes(metadata.atom_naux, "Sternheimer chi0 v1 atom_naux");
+    if (channels.size() != static_cast<std::size_t>(naux))
+    {
+        throw std::invalid_argument("Sternheimer chi0 v1 channel count does not match atom_naux.");
+    }
+    const std::size_t matrix_size = checked_mul_size(static_cast<std::size_t>(naux),
+                                                     static_cast<std::size_t>(naux),
+                                                     "Sternheimer chi0 v1 matrix size");
+    if (chi0_matrix.size() != matrix_size)
+    {
+        throw std::invalid_argument("Sternheimer chi0 v1 matrix size mismatch.");
+    }
+
+    const std::vector<std::vector<int>> atom_local_to_global
+        = map_atom_local_to_global(channels, metadata.atom_naux);
+    const std::size_t natom = metadata.atom_naux.size();
+    std::vector<Chi0Block> blocks;
+    blocks.reserve(natom * (natom + 1) / 2);
+    for (std::size_t iatom = 0; iatom != natom; ++iatom)
+    {
+        for (std::size_t jatom = iatom; jatom != natom; ++jatom)
+        {
+            Chi0Block block;
+            block.pair_index = checked_i32_from_size(upper_triangular_pair_index(iatom, jatom, natom),
+                                                     "Sternheimer chi0 v1 atom-pair index");
+            const int inaux = metadata.atom_naux[iatom];
+            const int jnaux = metadata.atom_naux[jatom];
+            block.payload.reserve(static_cast<std::size_t>(inaux) * static_cast<std::size_t>(jnaux));
+            for (int imu = 0; imu != inaux; ++imu)
+            {
+                const int iglobal = atom_local_to_global[iatom][static_cast<std::size_t>(imu)];
+                for (int jmu = 0; jmu != jnaux; ++jmu)
+                {
+                    const int jglobal = atom_local_to_global[jatom][static_cast<std::size_t>(jmu)];
+                    block.payload.push_back(chi0_matrix[static_cast<std::size_t>(iglobal)
+                                                            * static_cast<std::size_t>(naux)
+                                                        + static_cast<std::size_t>(jglobal)]);
+                }
+            }
+            blocks.push_back(std::move(block));
+        }
+    }
+
+    const std::int32_t nblocks = checked_i32_from_size(blocks.size(), "Sternheimer chi0 v1 block count");
+    std::int64_t offset = 6 * static_cast<std::int64_t>(sizeof(std::int32_t))
+        + 2 * static_cast<std::int64_t>(sizeof(double))
+        + static_cast<std::int64_t>(sizeof(std::int32_t))
+        + static_cast<std::int64_t>(metadata.atom_naux.size() * sizeof(std::int32_t))
+        + static_cast<std::int64_t>(blocks.size())
+              * static_cast<std::int64_t>(sizeof(std::int32_t) + sizeof(std::int64_t));
+    for (Chi0Block& block: blocks)
+    {
+        block.offset = offset;
+        const std::size_t bytes = checked_mul_size(block.payload.size(),
+                                                   sizeof(Complex),
+                                                   "Sternheimer chi0 v1 block payload");
+        offset += checked_i64_from_size(bytes, "Sternheimer chi0 v1 block payload");
+    }
+
+    static_assert(sizeof(Complex) == 2 * sizeof(double),
+                  "Sternheimer chi0 v1 output expects complex<double> as two doubles.");
+    std::ofstream out(filename.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!out.good())
+    {
+        throw std::runtime_error("Failed to open " + filename);
+    }
+
+    const std::int32_t iq = metadata.iq;
+    const std::int32_t ifrequency = metadata.ifrequency;
+    const std::int32_t naux_i32 = naux;
+    const std::int32_t natom_i32 = checked_i32_from_size(natom, "Sternheimer chi0 v1 atom count");
+    write_scalar(out, kChi0V1Marker, filename);
+    write_scalar(out, iq, filename);
+    write_scalar(out, ifrequency, filename);
+    write_scalar(out, naux_i32, filename);
+    write_scalar(out, kChi0V1ComplexFlag, filename);
+    write_scalar(out, natom_i32, filename);
+    write_scalar(out, metadata.omega, filename);
+    write_scalar(out, metadata.weight, filename);
+    write_scalar(out, nblocks, filename);
+    for (const int atom_aux: metadata.atom_naux)
+    {
+        const std::int32_t atom_aux_i32 = atom_aux;
+        write_scalar(out, atom_aux_i32, filename);
+    }
+    for (const Chi0Block& block: blocks)
+    {
+        const std::int32_t pair_index = block.pair_index;
+        write_scalar(out, pair_index, filename);
+        write_scalar(out, block.offset, filename);
+    }
+    for (const Chi0Block& block: blocks)
+    {
+        checked_write(out, block.payload.data(), block.payload.size() * sizeof(Complex), filename);
+    }
+    out.close();
+}
+
+SternheimerRPA::Complex SternheimerRPA::local_grid_dot(const Vector& lhs, const Vector& rhs, const double grid_weight)
+{
+    assert_same_size(lhs, rhs, "SternheimerRPA::local_grid_dot");
+    double real_part = 0.0;
+    double imag_part = 0.0;
+#pragma omp parallel for reduction(+ : real_part, imag_part) schedule(static)
+    for (std::size_t ir = 0; ir != lhs.size(); ++ir)
+    {
+        const Complex term = std::conj(lhs[ir]) * rhs[ir];
+        real_part += term.real();
+        imag_part += term.imag();
+    }
+    return grid_weight * Complex(real_part, imag_part);
+}
+
+SternheimerSubspaceProjector::SternheimerSubspaceProjector(const std::vector<Vector>& subspace, Dot dot)
+    : SternheimerSubspaceProjector(make_subspace_views(subspace), std::move(dot))
+{
+}
+
+SternheimerSubspaceProjector::SternheimerSubspaceProjector(std::vector<const Vector*> subspace, Dot dot)
+    : subspace_(std::move(subspace)), dot_(std::move(dot))
+{
+    if (!dot_)
+    {
+        throw std::invalid_argument("SternheimerSubspaceProjector requires a dot callback.");
+    }
+    for (const Vector* basis: subspace_)
+    {
+        if (basis == nullptr)
+        {
+            throw std::invalid_argument("SternheimerSubspaceProjector requires non-null basis views.");
+        }
+    }
+    for (const Vector* basis: subspace_)
+    {
+        assert_same_size(*subspace_.front(), *basis, "SternheimerSubspaceProjector basis");
+    }
+    basis_norms_.reserve(subspace_.size());
+    for (const Vector* basis: subspace_)
+    {
+        basis_norms_.push_back(dot_(*basis, *basis));
+    }
+}
+
+SternheimerSubspaceProjector::SternheimerSubspaceProjector(const std::vector<Vector>& subspace,
+                                                           const double grid_weight)
+    : SternheimerSubspaceProjector(make_subspace_views(subspace), grid_weight, false)
+{
+}
+
+SternheimerSubspaceProjector::SternheimerSubspaceProjector(const std::vector<Vector>& subspace,
+                                                           const double grid_weight,
+                                                           const bool orthonormal_batch)
+    : SternheimerSubspaceProjector(make_subspace_views(subspace), grid_weight, orthonormal_batch)
+{
+}
+
+SternheimerSubspaceProjector::SternheimerSubspaceProjector(std::vector<const Vector*> subspace,
+                                                           const double grid_weight)
+    : SternheimerSubspaceProjector(std::move(subspace), grid_weight, false)
+{
+}
+
+SternheimerSubspaceProjector::SternheimerSubspaceProjector(std::vector<const Vector*> subspace,
+                                                           const double grid_weight,
+                                                           const bool orthonormal_batch)
+    : SternheimerSubspaceProjector(std::move(subspace), [grid_weight](const Vector& lhs, const Vector& rhs) {
+          return SternheimerRPA::local_grid_dot(lhs, rhs, grid_weight);
+      })
+{
+    if (grid_weight <= 0.0)
+    {
+        throw std::invalid_argument("SternheimerSubspaceProjector requires a positive grid weight.");
+    }
+    batch_grid_weight_ = grid_weight;
+    use_direct_batch_dot_ = true;
+    use_orthonormal_batch_projection_ = orthonormal_batch;
+    if (use_orthonormal_batch_projection_ && !subspace_.empty())
+    {
+        const std::size_t grid_size = subspace_.front()->size();
+        const std::size_t basis_size = subspace_.size();
+        if (grid_size != 0 && basis_size > basis_by_grid_.max_size() / grid_size)
+        {
+            throw std::overflow_error("SternheimerSubspaceProjector packed basis size overflow.");
+        }
+        basis_by_grid_.resize(grid_size * basis_size);
+#pragma omp parallel for schedule(static)
+        for (std::size_t ir = 0; ir != grid_size; ++ir)
+        {
+            for (std::size_t basis = 0; basis != basis_size; ++basis)
+            {
+                basis_by_grid_[ir * basis_size + basis] = (*subspace_[basis])[ir];
+            }
+        }
+    }
+}
+
+std::size_t SternheimerSubspaceProjector::basis_size() const
+{
+    return subspace_.size();
+}
+
+std::size_t SternheimerSubspaceProjector::storage_bytes() const
+{
+    return subspace_.capacity() * sizeof(const Vector*)
+           + (basis_norms_.capacity() + basis_by_grid_.capacity()) * sizeof(Complex);
+}
+
+void SternheimerSubspaceProjector::project(Vector& vec) const
+{
+    for (std::size_t index = 0; index != subspace_.size(); ++index)
+    {
+        const Vector& basis_vec = *subspace_[index];
+        assert_same_size(basis_vec, vec, "SternheimerSubspaceProjector::project");
+        const Complex norm = basis_norms_[index];
+        if (std::abs(norm) == 0.0)
+        {
+            continue;
+        }
+        const Complex coeff = dot_(basis_vec, vec) / norm;
+#pragma omp parallel for schedule(static)
+        for (std::size_t i = 0; i != vec.size(); ++i)
+        {
+            vec[i] -= coeff * basis_vec[i];
+        }
+    }
+}
+
+void SternheimerSubspaceProjector::project_batch(std::vector<Vector>& vectors) const
+{
+    if (vectors.empty() || subspace_.empty())
+    {
+        return;
+    }
+    for (const Vector& vector: vectors)
+    {
+        assert_same_size(*subspace_.front(), vector, "SternheimerSubspaceProjector::project_batch");
+    }
+    if (use_orthonormal_batch_projection_)
+    {
+        const std::size_t basis_size = subspace_.size();
+        const std::size_t column_size = vectors.size();
+        const std::size_t grid_size = vectors.front().size();
+        std::vector<Complex> coefficients(basis_size * column_size, Complex(0.0, 0.0));
+#pragma omp parallel for schedule(static)
+        for (std::size_t basis = 0; basis != basis_size; ++basis)
+        {
+            Complex* coefficient_row = coefficients.data() + basis * column_size;
+            // The borrowed column is contiguous; the packed transpose is for reconstruction.
+            const Vector& basis_column = *subspace_[basis];
+            for (std::size_t ir = 0; ir != grid_size; ++ir)
+            {
+                const Complex conjugate_basis = std::conj(basis_column[ir]);
+                for (std::size_t column = 0; column != column_size; ++column)
+                {
+                    coefficient_row[column] += conjugate_basis * vectors[column][ir];
+                }
+            }
+            const Complex scale = std::abs(basis_norms_[basis]) == 0.0
+                                      ? Complex(0.0, 0.0)
+                                      : Complex(batch_grid_weight_, 0.0) / basis_norms_[basis];
+            for (std::size_t column = 0; column != column_size; ++column)
+            {
+                coefficient_row[column] *= scale;
+            }
+        }
+#pragma omp parallel for schedule(static)
+        for (std::size_t ir = 0; ir != grid_size; ++ir)
+        {
+            const Complex* basis_row = basis_by_grid_.data() + ir * basis_size;
+            for (std::size_t column = 0; column != column_size; ++column)
+            {
+                Complex correction(0.0, 0.0);
+                for (std::size_t basis = 0; basis != basis_size; ++basis)
+                {
+                    correction += coefficients[basis * column_size + column] * basis_row[basis];
+                }
+                vectors[column][ir] -= correction;
+            }
+        }
+        return;
+    }
+    for (std::size_t index = 0; index != subspace_.size(); ++index)
+    {
+        const Vector& basis_vec = *subspace_[index];
+        const Complex norm = basis_norms_[index];
+        std::vector<Complex> coefficients(vectors.size(), Complex(0.0, 0.0));
+        if (use_direct_batch_dot_)
+        {
+#pragma omp parallel for schedule(static)
+            for (std::size_t column = 0; column != vectors.size(); ++column)
+            {
+                Complex overlap(0.0, 0.0);
+                for (std::size_t i = 0; i != basis_vec.size(); ++i)
+                {
+                    overlap += std::conj(basis_vec[i]) * vectors[column][i];
+                }
+                if (std::abs(norm) != 0.0)
+                {
+                    coefficients[column] = batch_grid_weight_ * overlap / norm;
+                }
+            }
+        }
+        else
+        {
+            for (std::size_t column = 0; column != vectors.size(); ++column)
+            {
+                assert_same_size(basis_vec, vectors[column], "SternheimerSubspaceProjector::project_batch");
+                if (std::abs(norm) != 0.0)
+                {
+                    coefficients[column] = dot_(basis_vec, vectors[column]) / norm;
+                }
+            }
+        }
+        if (std::abs(norm) == 0.0)
+        {
+            continue;
+        }
+#pragma omp parallel for schedule(static)
+        for (std::size_t column = 0; column != vectors.size(); ++column)
+        {
+            for (std::size_t i = 0; i != basis_vec.size(); ++i)
+            {
+                vectors[column][i] -= coefficients[column] * basis_vec[i];
+            }
+        }
+    }
+}
+
+void SternheimerRPA::project_out_subspace(const std::vector<Vector>& subspace,
+                                          const std::function<Complex(const Vector&, const Vector&)>& dot,
+                                          Vector& vec)
+{
+    SternheimerSubspaceProjector(subspace, dot).project(vec);
+}
+
+void SternheimerRPA::apply_kinetic_preconditioner(const std::vector<double>& kinetic_energy,
+                                                  const double eigenvalue,
+                                                  const double omega,
+                                                  const double eta,
+                                                  const Vector& input,
+                                                  Vector& output)
+{
+    if (kinetic_energy.size() != input.size())
+    {
+        throw std::invalid_argument("SternheimerRPA::apply_kinetic_preconditioner size mismatch.");
+    }
+    output.resize(input.size());
+#pragma omp parallel for schedule(static)
+    for (std::size_t ig = 0; ig != input.size(); ++ig)
+    {
+        const Complex denominator(kinetic_energy[ig] - eigenvalue + eta, omega);
+        output[ig] = input[ig] / denominator;
+    }
+}
+
+} // namespace ModuleRI

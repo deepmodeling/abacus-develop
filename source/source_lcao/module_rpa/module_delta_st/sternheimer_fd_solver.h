@@ -1,0 +1,83 @@
+#ifndef STERNHEIMER_FD_SOLVER_H
+#define STERNHEIMER_FD_SOLVER_H
+
+#include "source_lcao/module_rpa/module_delta_st/sternheimer_fd_hamiltonian.h"
+#include "source_lcao/module_rpa/module_delta_st/sternheimer_rpa.h"
+
+#include <complex>
+#include <vector>
+
+namespace ModuleRI
+{
+
+struct SternheimerFDZeroOrderStates
+{
+    std::vector<double> eigenvalues;
+    std::vector<SternheimerFDHamiltonian::Vector> wavefunctions;
+    std::vector<double> residual_norms;
+};
+
+struct SternheimerFDLanczosOptions
+{
+    int max_subspace_size = 120;
+    double residual_tolerance = 1.0e-8;
+    unsigned int initial_seed = 1;
+};
+
+struct SternheimerFDLinearResponse
+{
+    SternheimerFDHamiltonian::Vector delta_wavefunction;
+    SternheimerRPA::SolverResult solver;
+    double residual_norm = 0.0;
+};
+
+SternheimerFDHamiltonian::Complex sternheimer_fd_grid_dot(const SternheimerFDHamiltonian::Vector& lhs,
+                                                          const SternheimerFDHamiltonian::Vector& rhs,
+                                                          double volume_element,
+                                                          int* threads_used = nullptr);
+
+double sternheimer_fd_grid_norm(const SternheimerFDHamiltonian::Vector& wavefunction, double volume_element);
+
+double sternheimer_fd_linear_response_residual_norm(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
+    double reference_eigenvalue,
+    const SternheimerFDHamiltonian::Vector& rhs,
+    const SternheimerFDHamiltonian::Vector& delta_wavefunction,
+    double omega,
+    double volume_element);
+
+SternheimerFDZeroOrderStates solve_sternheimer_fd_zero_order_dense(const SternheimerFDHamiltonian& hamiltonian,
+                                                                   int num_states,
+                                                                   double volume_element,
+                                                                   int max_size = 4096);
+
+SternheimerFDZeroOrderStates solve_sternheimer_fd_zero_order_lanczos(
+    const SternheimerFDHamiltonian& hamiltonian,
+    int num_states,
+    double volume_element,
+    const SternheimerFDLanczosOptions& options = SternheimerFDLanczosOptions());
+
+// Build the exact positive-frequency response in a finite grid from its
+// complete eigenspectrum. This is a small-grid validation reference, not a
+// production replacement for the iterative Sternheimer solve.
+SternheimerFDHamiltonian::Vector build_sternheimer_fd_complete_sos_response(
+    const SternheimerFDZeroOrderStates& complete_states,
+    int occupied_state_count,
+    int occupied_state_index,
+    const SternheimerFDHamiltonian::Vector& rhs,
+    double omega,
+    double volume_element);
+
+SternheimerFDLinearResponse solve_sternheimer_fd_linear_response(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
+    double reference_eigenvalue,
+    const SternheimerFDHamiltonian::Vector& rhs,
+    double omega,
+    double volume_element,
+    const SternheimerRPA::SolverOptions& options = SternheimerRPA::SolverOptions());
+
+} // namespace ModuleRI
+
+#endif

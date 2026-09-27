@@ -3,7 +3,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT/'source/source_lcao/module_ri/sternheimer_abacus_st_smoke.cpp'
+SOURCE = ROOT/'source/source_lcao/module_rpa/module_delta_st/sternheimer_abacus_st_smoke.cpp'
 
 
 class MolecularResponseGridRoute(unittest.TestCase):

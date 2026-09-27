@@ -1,9 +1,6 @@
 if (ENABLE_LIBRI)
 
   add_subdirectory(module_exx_symmetry)
-  if(ENABLE_GREENX_MINIMAX)
-    add_subdirectory(greenx_minimax)
-  endif()
   
   list(APPEND objects
         matrix_orbs11.cpp
@@ -12,53 +9,12 @@ if (ENABLE_LIBRI)
         ri_2d_comm.cpp
         mix_dmk_2d.cpp
         mix_matrix.cpp
-        rpa_abfs_preorthogonalization.cpp
         direct_2d_coulomb.cpp
-        sternheimer_abacus_dft_zero_order.cpp
-        sternheimer_abacus_dft_reference.cpp
-        sternheimer_abfs_perturbation.cpp
-        sternheimer_abfs_strict2d.cpp
-        sternheimer_abacus_fd_bindings.cpp
-        sternheimer_abacus_fd_adapter.cpp
-        sternheimer_abacus_fd_nonlocal.cpp
-        sternheimer_abacus_fd_smoke.cpp
-        sternheimer_channel_resources.cpp
-        sternheimer_chi0_mpi.cpp
-        sternheimer_coulomb_whitening.cpp
-        sternheimer_dft_zero_order.cpp
-        sternheimer_delta.cpp
-        sternheimer_grid_diagnostics.cpp
-        sternheimer_grid_transfer.cpp
-        sternheimer_galerkin_operator.cpp
-        sternheimer_galerkin_audit.cpp
-        sternheimer_weak_grid.cpp
-        sternheimer_weak_augmented.cpp
-        sternheimer_weak_preconditioner.cpp
-        sternheimer_weak_q_reference.cpp
-        sternheimer_fd_hamiltonian.cpp
-        sternheimer_fd_preconditioner.cpp
-        sternheimer_fd_nonlocal_projector.cpp
-        sternheimer_fd_projector_sampler.cpp
-        sternheimer_fd_solver.cpp
-        sternheimer_kq.cpp
-        sternheimer_periodic_solver.cpp
-        sternheimer_rpa.cpp
-        sternheimer_response_grid.cpp
-        sternheimer_runtime_options.cpp
-        sternheimer_siab_mpi.cpp
-        sternheimer_siab_memory.cpp
-        sternheimer_siab_overlap.cpp
-        sternheimer_siab_provenance.cpp
-        sternheimer_siab_writer.cpp
-        sternheimer_supercell_perturbation.cpp
-        sternheimer_supercell_sector.cpp
-        sternheimer_wavefunction_diagnostic.cpp
   )
 
   if(ENABLE_LCAO)
     list(APPEND objects
         conv_coulomb_pot_k.cpp
-        sternheimer_abacus_st_smoke.cpp
         exx_abfs_ctor_orbs.cpp
         exx_abfs_io.cpp
         exx_abfs_jle.cpp
@@ -76,10 +32,6 @@ if (ENABLE_LIBRI)
       ${objects}
   )
 
-  if(TARGET abacus_greenx_minimax)
-    target_link_libraries(ri PUBLIC abacus_greenx_minimax)
-  endif()
-  
   if(BUILD_TESTING)
     if(ENABLE_MPI)
       add_subdirectory(test)

@@ -75,6 +75,9 @@ VPATH=./src_global:\
 ./source_lcao/module_ri:\
 ./source_lcao/module_ri/module_exx_symmetry:\
 ./source_lcao/module_bse:\
+./source_lcao/module_rpa:\
+./source_lcao/module_rpa/module_delta_st:\
+./source_lcao/module_rpa/module_librpa_io:\
 ./source_io/module_parameter:\
 ./source_io/module_efield:\
 ./source_lcao/module_lr:\

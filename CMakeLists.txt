@@ -47,7 +47,6 @@ option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
 option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
-option(ENABLE_GREENX_MINIMAX "Enable bundled GreenX minimax grids for Sternheimer response" ON)
 
 option(BUILD_TESTING "Build unittests" OFF)
 option(DEBUG_INFO "Print message to debug" OFF)
@@ -69,6 +68,10 @@ option(ENABLE_CNPY "Enable cnpy usage" OFF)
 cmake_dependent_option(ENABLE_ELPA "Enable ELPA eigensolver" ON "ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional"
                        OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_GREENX_MINIMAX
+                       "Enable the external GreenX minimax API for Delta-Sternheimer"
+                       OFF "ENABLE_LCAO;ENABLE_MPI;ENABLE_LIBRI" OFF)
+set(GREENX_DIR "" CACHE PATH "GreenX installation prefix or CMake package directory")
 cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
                        OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
@@ -619,9 +622,9 @@ if(ENABLE_LIBCOMM)
   include_directories(${LIBCOMM_DIR}/include)
 endif()
 
-if(ENABLE_LIBRI AND ENABLE_GREENX_MINIMAX)
+if(ENABLE_GREENX_MINIMAX)
   enable_language(Fortran)
-  add_compile_definitions(__GREENX_MINIMAX)
+  find_package(GreenX REQUIRED)
 endif()
 
 if(DEFINED Libxc_DIR)
