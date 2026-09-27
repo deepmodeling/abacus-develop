@@ -281,6 +281,10 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
                     ModuleBase::WARNING_QUIT("ReadInput", "Native DFTB force and stress derivatives are not implemented yet.");
                 }
             }
+            else if (para.input.basis_type == "dftb")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "basis_type=dftb requires esolver_type=dftbnative.");
+            }
             // LR reads the ground state wave function from a separate SCF run,
             // so it cannot be combined with a self-consistent calculation.
             if (para.input.esolver_type == "lr" && para.input.calculation == "scf")

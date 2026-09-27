@@ -1,4 +1,5 @@
 #include "source_dftb/periodic_scc.h"
+#include "source_dftb/sk_matrix.h"
 
 #include "gtest/gtest.h"
 
@@ -7,45 +8,36 @@
 #include <stdexcept>
 #include <vector>
 
-#ifdef __MPI
-#include <mpi.h>
-
-namespace
-{
-class DftbMpiTestEnvironment : public ::testing::Environment
-{
-  public:
-    void SetUp() override
-    {
-        int initialized = 0;
-        MPI_Initialized(&initialized);
-        if (!initialized)
-        {
-            int argc = 0;
-            char** argv = nullptr;
-            MPI_Init(&argc, &argv);
-            this->owns_mpi_ = true;
-        }
-    }
-
-    void TearDown() override
-    {
-        int finalized = 0;
-        MPI_Finalized(&finalized);
-        if (this->owns_mpi_ && !finalized) MPI_Finalize();
-    }
-
-  private:
-    bool owns_mpi_ = false;
-};
-
-::testing::Environment* const dftb_mpi_test_environment =
-    ::testing::AddGlobalTestEnvironment(new DftbMpiTestEnvironment);
-} // namespace
-#endif
-
 namespace ModuleDFTB
 {
+
+TEST(DftbNativePeriodicSccTest, CountsPeriodicSelfImageRepulsionOnce)
+{
+    SkfData hydrogen_like;
+    hydrogen_like.has_repulsive_spline = true;
+    hydrogen_like.repulsive.cutoff_bohr = 2.0;
+    hydrogen_like.repulsive.interval_starts_bohr = {0.0, 1.0};
+    hydrogen_like.repulsive.interval_ends_bohr = {1.0, 2.0};
+    hydrogen_like.repulsive.cubic_coefficients = {{{3.0, 0.0, 0.0, 0.0}}};
+
+    std::vector<DftbSpAtom> atoms(1);
+    atoms[0].species = 0;
+
+    DftbPairParameters parameters;
+    parameters.species_a = 0;
+    parameters.species_b = 0;
+    parameters.ab = &hydrogen_like;
+    parameters.ba = &hydrogen_like;
+    const std::vector<DftbPairParameters> pair_parameters{parameters};
+
+    DftbPairImage self_image;
+    self_image.atom_a = 0;
+    self_image.atom_b = 0;
+    self_image.translation_bohr = {{0.5, 0.0, 0.0}};
+    const std::vector<DftbPairImage> pair_images{self_image};
+
+    EXPECT_DOUBLE_EQ(calculate_repulsive_energy_hartree(atoms, pair_images, pair_parameters), 3.0);
+}
 
 TEST(DftbNativePeriodicSccTest, SolvesNeutralCellAndFrozenPotentialBands)
 {
