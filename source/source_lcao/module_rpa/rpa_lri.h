@@ -6,7 +6,7 @@
 #ifndef RPA_LRI_H
 #define RPA_LRI_H
 
-#include "lri_cv.h"
+#include "source_lcao/module_ri/lri_cv.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
