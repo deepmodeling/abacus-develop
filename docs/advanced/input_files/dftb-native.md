@@ -17,6 +17,8 @@ esolver_type dftbnative
 nspin 1
 ```
 
+The build option defaults to `OFF` because this backend is experimental and its supported scope is narrower than DFTB+. The opt-in keeps standard ABACUS builds unchanged unless users explicitly build and validate the native solver. No compile-time or binary-size benefit is claimed from the default; this is a release and support-boundary choice.
+
 The input file named by `dftb_native_input` (default `dftb_native.in`) selects SKF data and DFTB-specific controls. For example:
 
 ```text
@@ -49,6 +51,8 @@ The SCC integration KPT parser accepts ABACUS `K_POINTS`, `KPOINTS`, or `K` head
 ABACUS `Line`, `Line_Direct`, and `Line_Cartesian` KPT modes describe a path and do not define Brillouin-zone integration weights. They are therefore rejected for SCC. Supply a mesh or weighted integration list in `KPT` and a separate `band_path_file` for the frozen-SCC band solve. The band-path file starts with `<number_of_segments> <intervals_per_segment>`, followed by connected segments of the form `Gamma 0 0 0 M 0.5 0 0`.
 
 ## Method and current scope
+
+This native path is intended for deployments that need ABACUS `INPUT`/`STRU`/`KPT` handling and outputs without a DFTB+ executable or shared-library runtime dependency; SKF parameter files remain required. DFTB+ also provides an in-process API, but using it would still require the external DFTB+ library and an adapter for its API, with HSD translation when using the input-file interface. The native solver is not API-compatible with DFTB+ and does not aim to reproduce all of its methods or features. The reduced runtime dependency therefore comes with an additional maintenance and validation burden, reflected in the limited scope below.
 
 The solver builds non-orthogonal Bloch Hamiltonian and overlap matrices from legacy-format two-centre SKF tables with an `s+p` basis (four orbitals per atom), then solves the generalized Hermitian eigenproblem. SCC charges are Mulliken electron populations relative to the SKF neutral valence. Their electrostatic potential is formed from the periodic gamma matrix; DFTB3 adds the implemented charge-dependent third-order potential. Finite-temperature Fermi filling, SKF repulsive energies, 3D Ewald electrostatics, and a post-SCC frozen-potential band-path eigensolve are included.
 

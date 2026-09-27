@@ -27,6 +27,8 @@ namespace ModuleESolver
 {
 namespace
 {
+constexpr double dftb_hartree_to_ev = 27.211386245988;
+
 // Use the precise conversion used by DFTB+ / GEN geometry handling. ABACUS's
 // legacy ANGSTROM_AU constant is rounded to 1.889727 and shifts short-range
 // pair energies enough to be visible in this regression.
@@ -630,6 +632,7 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
 
     if (rank != 0) return;
 
+    const double total_free_energy_ev = this->result_.total_free_energy_hartree * dftb_hartree_to_ev;
     running_log << std::setprecision(16)
                          << "\n Native DFTB SCC converged: " << std::boolalpha << this->result_.converged
                          << ", iterations=" << this->result_.scc_iterations
@@ -641,7 +644,7 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
                          << " Native DFTB third-order energy: " << this->result_.third_order_energy_hartree << " Ha\n"
                          << " Native DFTB repulsive energy: " << this->result_.repulsive_energy_hartree << " Ha\n"
                          << " Native DFTB total free energy: " << this->result_.total_free_energy_hartree << " Ha\n"
-                         << " Native DFTB total free energy: " << this->result_.total_free_energy_hartree * 27.211386245988 << " eV\n"
+                         << " Native DFTB total free energy: " << total_free_energy_ev << " eV\n"
                          << " Native DFTB component sum: "
                          << this->result_.h0_energy_hartree + this->result_.scc_energy_hartree
                             + this->result_.third_order_energy_hartree + this->result_.repulsive_energy_hartree
@@ -657,7 +660,7 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
              << "# Third-order energy: " << this->result_.third_order_energy_hartree << " Ha\n"
              << "# Repulsive energy: " << this->result_.repulsive_energy_hartree << " Ha\n"
              << "# Total free energy: " << this->result_.total_free_energy_hartree << " Ha / "
-             << this->result_.total_free_energy_hartree * 27.211386245988 << " eV\n";
+             << total_free_energy_ev << " eV\n";
     double total_electron_excess = 0.0;
     std::size_t atom_index = 0;
     running_log << " Native DFTB Mulliken populations and electron excess charges:\n"
@@ -680,7 +683,7 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
                         << species_excess / species.na << " e\n";
     }
     running_log << " Native DFTB net electron excess: " << total_electron_excess << " e\n"
-                << " #TOTAL ENERGY# " << this->energy_ry_ * ModuleBase::Ry_to_eV << " eV (native DFTB)\n";
+                << " #TOTAL ENERGY# " << total_free_energy_ev << " eV (native DFTB)\n";
     dftb_log << "# Net electron excess: " << total_electron_excess << " e\n"
              << "# Atomic Mulliken populations and excess charges\n"
              << "# atom element population(e) electron_excess(e)\n";
@@ -710,7 +713,7 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
         for (std::size_t band = 0; band < point.eigenvalues_hartree.size(); ++band)
             eigenvalues << ik + 1 << ' ' << point.weight << ' '
                         << point.fractional[0] << ' ' << point.fractional[1] << ' ' << point.fractional[2] << ' '
-                        << band + 1 << ' ' << point.eigenvalues_hartree[band] * 27.211386245988 << ' '
+                        << band + 1 << ' ' << point.eigenvalues_hartree[band] * dftb_hartree_to_ev << ' '
                         << point.occupations[band] << '\n';
     }
     eigenvalues.close();
@@ -747,7 +750,7 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
               << "# Band energies from the converged native DFTB SCC potential (frozen-potential path solve)\n"
               << "# Module: Native DFTB band structure\n"
               << "# Units: k_distance in bohr^-1, eigenvalues and E-Ef in eV; coordinates are fractional reciprocal\n"
-              << "# Fermi energy: " << this->result_.fermi_energy_hartree * 27.211386245988 << " eV\n"
+              << "# Fermi energy: " << this->result_.fermi_energy_hartree * dftb_hartree_to_ev << " eV\n"
               << "# k_index k_distance(bohr^-1) kx ky kz label band_index energy(eV) E-Ef(eV)\n";
         for (std::size_t ik = 0; ik < this->result_.band_structure.size(); ++ik)
         {
@@ -758,8 +761,8 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
                 bands << ik + 1 << ' ' << point.distance_inverse_bohr << ' '
                       << point.fractional[0] << ' ' << point.fractional[1] << ' ' << point.fractional[2] << ' '
                       << (point.label.empty() ? "-" : point.label) << ' ' << band + 1 << ' '
-                      << energy * 27.211386245988 << ' '
-                      << (energy - this->result_.fermi_energy_hartree) * 27.211386245988 << '\n';
+                      << energy * dftb_hartree_to_ev << ' '
+                      << (energy - this->result_.fermi_energy_hartree) * dftb_hartree_to_ev << '\n';
             }
         }
         bands.close();
@@ -768,8 +771,8 @@ void ESolver_DFTBNative::runner(BaseCell& cell, const int istep)
                     << (this->result_.band_structure.front().eigenvalues_hartree.size())
                     << " bands; wrote " << band_file << "\n";
     }
-    dftb_log << "#TOTAL ENERGY# " << this->energy_ry_ * ModuleBase::Ry_to_eV << " eV (native DFTB)\n"
-             << "!FINAL_ETOT_IS " << this->energy_ry_ * ModuleBase::Ry_to_eV << " eV (native DFTB)\n"
+    dftb_log << "#TOTAL ENERGY# " << total_free_energy_ev << " eV (native DFTB)\n"
+             << "!FINAL_ETOT_IS " << total_free_energy_ev << " eV (native DFTB)\n"
              << "# Output files: dftb.log, eig_occ.txt, mulliken.txt"
              << (this->result_.band_structure.empty() ? "\n" : ", band.txt\n");
     dftb_log.close();
@@ -800,7 +803,7 @@ void ESolver_DFTBNative::after_all_runners(BaseCell& cell)
     if (Parallel_Common::get_rank() != 0) return;
     std::cout << std::setprecision(16)
               << "\n --------------------------------------------" << std::endl
-              << " !FINAL_ETOT_IS " << this->energy_ry_ * ModuleBase::Ry_to_eV
+              << " !FINAL_ETOT_IS " << this->result_.total_free_energy_hartree * dftb_hartree_to_ev
               << " eV (native DFTB)" << std::endl;
 }
 } // namespace ModuleESolver
