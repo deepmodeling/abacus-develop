@@ -273,7 +273,8 @@ SccsResult evaluate_pw_sccs(
     const std::vector<double> initial_adjoint
         = initial.empty() ? std::vector<double>() : state.adjoint_potential;
     const AdjointResult adjoint = evaluate_discrete_electrostatic_derivative(
-        result.charge.solute, result.response, result.vacuum_field, basis, tpiba,
+        result.charge.electron, config.cavity, result.charge.solute, result.response,
+        result.vacuum_field, basis, tpiba,
         ionic_shape_coefficient, solver_parameters, initial_adjoint, *coulomb,
         polarization_reduction, result.electrostatic);
     result.adjoint_iterations = adjoint.iterations;

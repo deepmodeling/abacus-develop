@@ -58,7 +58,6 @@ PeriodicSccsResult solve_sccs_response(
     result.dsolute_drho.resize(cavity_density.size());
     result.epsilon.resize(cavity_density.size());
     result.depsilon_drho.resize(cavity_density.size());
-    std::vector<double> log_epsilon(cavity_density.size());
     for (std::size_t index = 0; index < cavity_density.size(); ++index)
     {
         const CavityPoint point = evaluate_cavity(cavity_density[index], cavity_parameters);
@@ -66,10 +65,14 @@ PeriodicSccsResult solve_sccs_response(
         result.dsolute_drho[index] = point.dsolute_drho;
         result.epsilon[index] = point.epsilon;
         result.depsilon_drho[index] = point.depsilon_drho;
-        log_epsilon[index] = std::log(point.epsilon);
     }
 
-    result.grad_log_epsilon = periodic_gradient(log_epsilon, basis, tpiba);
+    result.grad_log_epsilon = periodic_gradient(cavity_density, basis, tpiba);
+    for (std::size_t i = 0; i < cavity_density.size(); ++i)
+    {
+        const double factor = result.depsilon_drho[i] / result.epsilon[i];
+        result.grad_log_epsilon[i] *= factor;
+    }
     result.polarization = solve_polarization(solute_charge,
                                              result.epsilon,
                                              result.grad_log_epsilon,

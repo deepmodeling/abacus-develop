@@ -184,10 +184,20 @@ TEST_F(SccsAdjointTest, SharpWaterCavityAndSourceDerivativesMatchEnergy)
         auto functional = ModuleSccs::evaluate_electrostatic_functional(
             charge, response.polarization.field, vacuum, response.depsilon_drho, dv, charge_reduction);
         const auto adjoint = ModuleSccs::evaluate_discrete_electrostatic_derivative(
-            charge, response, vacuum, *basis, tpiba, coefficient, solver, initial,
+            density, cavity, charge, response, vacuum, *basis, tpiba, coefficient, solver, initial,
             *op, polarization_reduction, functional);
         EXPECT_LE(adjoint.residual_rms, solver.tolerance_rms);
         EXPECT_LE(adjoint.residual_max, solver.tolerance_max);
+        auto repeated_functional = functional;
+        const auto warm_adjoint = ModuleSccs::evaluate_discrete_electrostatic_derivative(
+            density, cavity, charge, response, vacuum, *basis, tpiba, coefficient, solver,
+            adjoint.potential, *op, polarization_reduction, repeated_functional);
+        EXPECT_EQ(warm_adjoint.iterations, 0);
+        for (std::size_t i = 0; i < density.size(); ++i)
+        {
+            EXPECT_DOUBLE_EQ(repeated_functional.electron_potential[i], functional.electron_potential[i]);
+            EXPECT_DOUBLE_EQ(repeated_functional.charge_potential[i], functional.charge_potential[i]);
+        }
         for (int mode = 0; mode < 3; ++mode)
         {
             SCOPED_TRACE(mode);

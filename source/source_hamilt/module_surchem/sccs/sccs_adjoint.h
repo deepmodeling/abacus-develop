@@ -15,6 +15,7 @@ class PolarizationReduction;
 struct ElectrostaticField;
 struct ElectrostaticFunctionalResult;
 struct PeriodicSccsResult;
+struct CavityParameters;
 struct PolarizationSolverParameters;
 
 struct AdjointResult
@@ -28,6 +29,8 @@ struct AdjointResult
 // Differentiate the discrete polarization fixed point, including a possible
 // ionic-shape energy coefficient times the integrated polarization charge.
 AdjointResult evaluate_discrete_electrostatic_derivative(
+    const std::vector<double>& cavity_density,
+    const CavityParameters& cavity_parameters,
     const std::vector<double>& solute_charge,
     const PeriodicSccsResult& response,
     const ElectrostaticField& vacuum_field,

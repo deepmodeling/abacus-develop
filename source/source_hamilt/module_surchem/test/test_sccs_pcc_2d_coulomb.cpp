@@ -3,6 +3,7 @@
 #endif
 
 #include "../pcc/sccs_pcc_2d_coulomb.h"
+#include "../sccs/sccs_adjoint.h"
 #include "../sccs/sccs_functional.h"
 #include "../sccs/sccs_periodic.h"
 #include "../sccs/sccs_pw_charge.h"
@@ -112,12 +113,21 @@ class SccsPcc2dCoulombTest : public testing::Test
         }
         ModuleSccs::ElectrostaticField vacuum_field;
         coulomb.apply(solute_charge, vacuum_field);
-        return ModuleSccs::evaluate_electrostatic_functional(solute_charge,
-                                                              response.polarization.field,
-                                                              vacuum_field,
-                                                              response.depsilon_drho,
-                                                              volume_element_,
-                                                              reduction_);
+        ModuleSccs::ElectrostaticFunctionalResult functional
+            = ModuleSccs::evaluate_electrostatic_functional(solute_charge,
+                                                           response.polarization.field,
+                                                           vacuum_field,
+                                                           response.depsilon_drho,
+                                                           volume_element_,
+                                                           reduction_);
+        // Compare the same discrete derivative used by the production driver.
+        const double tpiba = ModuleBase::TWO_PI / lattice_scale_;
+        const std::vector<double> initial_adjoint;
+        ModuleSccs::evaluate_discrete_electrostatic_derivative(
+            electron_density, cavity, solute_charge, response, vacuum_field,
+            basis_, tpiba, 0.0, solver, initial_adjoint, coulomb,
+            polarization_reduction_, functional);
+        return functional;
     }
 
     ModulePW::PW_Basis basis_;

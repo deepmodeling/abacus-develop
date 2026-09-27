@@ -79,6 +79,54 @@ TEST(SccsPeriodic, UniformDielectricScreensSingleFourierShell)
     }
 }
 
+TEST(SccsPeriodic, ChainGradientMatchesAnalyticDensityModeAcrossCavityEdges)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    const double length = 10.0;
+    const double tpiba = ModuleBase::TWO_PI / length;
+    basis.initgrids(length, lattice, 20.0);
+    basis.initparameters(false, 20.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+    ModuleSccs::CavityParameters cavity;
+    cavity.density_min = 0.0024;
+    cavity.density_max = 0.0155;
+    cavity.epsilon_bulk = 78.3;
+    ModuleSccs::PolarizationSolverParameters solver;
+    solver.max_iterations = 100;
+    solver.mixing = 0.5;
+    solver.tolerance_rms = 1.0e-13;
+    solver.tolerance_max = 1.0e-11;
+    std::vector<double> density(basis.nrxx);
+    std::vector<double> expected_gradient(basis.nrxx);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const int ix = ir / (basis.ny * basis.nplane);
+        const double phase = ModuleBase::TWO_PI * ix / basis.nx;
+        density[ir] = 0.009 + 0.008 * std::cos(phase);
+        const ModuleSccs::CavityPoint point = ModuleSccs::evaluate_cavity(density[ir], cavity);
+        expected_gradient[ir] = -0.008 * tpiba * std::sin(phase)
+                                * point.depsilon_drho / point.epsilon;
+    }
+    const std::vector<double> charge(basis.nrxx, 0.0);
+    const std::vector<double> initial;
+    const ModuleSccs::PeriodicSccsResult result
+        = ModuleSccs::solve_periodic_sccs(density, charge, cavity, solver, initial, basis, tpiba, 1);
+    ASSERT_EQ(result.polarization.status, ModuleSccs::PolarizationStatus::Converged);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        EXPECT_NEAR(result.grad_log_epsilon[ir].x, expected_gradient[ir], 1.0e-12);
+        EXPECT_NEAR(result.grad_log_epsilon[ir].y, 0.0, 1.0e-12);
+        EXPECT_NEAR(result.grad_log_epsilon[ir].z, 0.0, 1.0e-12);
+    }
+}
+
 } // namespace
 
 int main(int argc, char** argv)

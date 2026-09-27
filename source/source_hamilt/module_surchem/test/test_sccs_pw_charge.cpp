@@ -133,13 +133,12 @@ TEST(SccsPwCharge, GridCoordinatesMatchInverseFourierPhase)
     for (int ig = 0; ig < basis.npw; ++ig)
     {
         const ModuleBase::Vector3<double>& g = basis.gdirect[ig];
-        if (std::abs(g.x - 1.0) < 1.0e-12 && std::abs(g.y - 1.0) < 1.0e-12
-            && std::abs(g.z - 1.0) < 1.0e-12)
+        // Direct reciprocal coordinates are integer mode indices.
+        if (g.x == 1.0 && g.y == 1.0 && g.z == 1.0)
         {
             coefficients[ig] = std::complex<double>(0.5, -0.2);
         }
-        else if (std::abs(g.x + 1.0) < 1.0e-12 && std::abs(g.y + 1.0) < 1.0e-12
-                 && std::abs(g.z + 1.0) < 1.0e-12)
+        else if (g.x == -1.0 && g.y == -1.0 && g.z == -1.0)
         {
             coefficients[ig] = std::complex<double>(0.5, 0.2);
         }
@@ -152,7 +151,8 @@ TEST(SccsPwCharge, GridCoordinatesMatchInverseFourierPhase)
         const double phase = ModuleBase::TWO_PI
                              * (positions[ir].x + positions[ir].y + positions[ir].z) / length;
         const double expected = std::cos(phase) + 0.4 * std::sin(phase);
-        const double error = std::abs(values[ir] - expected);
+        const double difference = values[ir] - expected;
+        const double error = std::abs(difference);
         maximum_error = std::max(maximum_error, error);
     }
     EXPECT_LT(maximum_error, 1.0e-12);

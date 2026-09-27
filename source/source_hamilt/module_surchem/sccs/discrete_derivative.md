@@ -4,12 +4,14 @@ The polarization equation is discretized before differentiation. On a fixed
 uniform real-space grid, let `q` be the solute charge, `t = q + p` the screened
 charge, `C` the symmetric Coulomb operator, and `G` its implemented field-gradient
 operator. `G` includes the analytic PCC gradient when PCC is enabled. Let `D` be
-the periodic spectral gradient used for `log(epsilon)`.
+the periodic spectral gradient applied to the cavity electron density `n`.
 
 The converged polarization equation is
 
 ```
-a = D log(epsilon) / (4 pi)
+f(n) = log(epsilon(n))
+g = f'(n) D n
+a = g / (4 pi)
 L = I - a dot G
 L t = q / epsilon.
 ```
@@ -36,9 +38,8 @@ are
 
 ```
 dE/dq = U = (Ct + lambda/epsilon)/2 - Cq - c
-dE/depsilon = -lambda q/(2 epsilon^2)
-               - div_periodic(lambda Gt)/(8 pi epsilon)
-dE/dn = -U + (d epsilon/dn) (dE/depsilon).
+dE/dn = -U - lambda q epsilon'(n)/(2 epsilon^2)
+         + [D^T(f'(n) lambda Gt) + f''(n) lambda (Dn dot Gt)]/(8 pi).
 ```
 
 `charge_potential` stores `U` for the explicit ionic force;
@@ -103,3 +104,30 @@ and residual-growth restarts clear the cache together with both histories.
 The dense regularized solve, coefficient safeguards, reduction operation and
 per-product summation order are unchanged. The cache is not retained across
 SCF calls, and linear/Anderson paths are unchanged.
+
+## Chain-gradient discretization
+
+The cavity gradient is evaluated as `(epsilon'(n)/epsilon) Dn`, rather than
+`D log(epsilon)`. These operations are not interchangeable on a finite
+spectral grid. Both the forward polarization equation and its discrete
+adjoint derivative must change together. The divergence in the density
+variation acts on `f'(n) lambda Gt`, and the local `f''(n)` term accounts for
+the density dependence of the chain coefficient. It vanishes outside the
+cavity transition interval. `D^T` is the negative periodic divergence;
+`G` and `G^T` still include the analytic PCC terms.
+
+Cavity density and parameters are passed explicitly to the adjoint routine;
+no new global configuration access or INPUT switch is added. The ionic
+source remains the original local-pseudopotential charge. This change does
+not introduce Gaussian ions, an Environ CG solver, or continuum no-adjoint
+force formulas. The independent PCC correction and non-electrostatic terms
+retain their existing behavior.
+
+INPUT names, meanings and defaults are unchanged, so generated INPUT
+metadata needs no update. Finite-grid self-consistent densities, energies
+and forces can change; older numerical references must be reassessed rather
+than silently reused. Common inner RMS/max thresholds of 1e-11/1e-9 were
+adequate in the tested water cases; this is not a universal grid/SCF accuracy
+guarantee. Focused tests cover analytic density-mode chain gradients,
+source/cavity/coupled energy variations for periodic/PCC0D/PCC2D, and
+reuse of an already-converged adjoint solution.

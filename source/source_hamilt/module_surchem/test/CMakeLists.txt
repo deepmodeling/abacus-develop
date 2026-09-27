@@ -121,7 +121,7 @@ AddTest(
   TARGET MODULE_HAMILT_surchem_sccs_pcc_2d_coulomb
   LIBS planewave device base
   SOURCES test_sccs_pcc_2d_coulomb.cpp ../sccs/sccs_cavity.cpp ../sccs/sccs_charge.cpp
-          ../sccs/sccs_functional.cpp ../pcc/sccs_pcc.cpp ../pcc/sccs_pcc_2d.cpp
+          ../sccs/sccs_adjoint.cpp ../sccs/sccs_functional.cpp ../pcc/sccs_pcc.cpp ../pcc/sccs_pcc_2d.cpp
           ../sccs/sccs_poisson.cpp ../sccs/sccs_periodic.cpp ../sccs/sccs_pw_coulomb.cpp
           ../pcc/sccs_pcc_2d_coulomb.cpp ../sccs/sccs_pw_charge.cpp
           ../sccs/sccs_pw_reduction.cpp

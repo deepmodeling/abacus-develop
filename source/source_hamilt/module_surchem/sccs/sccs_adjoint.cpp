@@ -190,6 +190,8 @@ AdjointResult solve_adjoint(const std::vector<double>& rhs,
 } // namespace
 
 AdjointResult evaluate_discrete_electrostatic_derivative(
+    const std::vector<double>& cavity_density,
+    const CavityParameters& cavity_parameters,
     const std::vector<double>& solute_charge,
     const PeriodicSccsResult& response,
     const ElectrostaticField& vacuum_field,
@@ -202,8 +204,10 @@ AdjointResult evaluate_discrete_electrostatic_derivative(
     const PolarizationReduction& reduction,
     ElectrostaticFunctionalResult& functional)
 {
+    validate_cavity_parameters(cavity_parameters);
     const std::size_t size = solute_charge.size();
-    if (size == 0 || response.epsilon.size() != size || response.depsilon_drho.size() != size
+    if (size == 0 || cavity_density.size() != size || response.epsilon.size() != size
+        || response.depsilon_drho.size() != size
         || response.grad_log_epsilon.size() != size || vacuum_field.potential.size() != size
         || response.polarization.field.potential.size() != size
         || response.polarization.field.gradient.size() != size
@@ -224,13 +228,19 @@ AdjointResult evaluate_discrete_electrostatic_derivative(
     }
     const AdjointOperator op(response, coulomb);
     AdjointResult result = solve_adjoint(rhs, initial, op, parameters, reduction);
+    const std::vector<ModuleBase::Vector3<double>> density_gradient
+        = periodic_gradient(cavity_density, basis, tpiba);
+    const double density_ratio = cavity_parameters.density_max / cavity_parameters.density_min;
+    const double log_width = std::log(density_ratio);
+    const double log_bulk = std::log(cavity_parameters.epsilon_bulk);
     std::vector<ModuleBase::Vector3<double>> weighted_gradient(size);
     for (std::size_t i = 0; i < size; ++i)
     {
         for (int d = 0; d < 3; ++d)
         {
             weighted_gradient[i][d]
-                = result.potential[i] * response.polarization.field.gradient[i][d];
+                = result.potential[i] * response.polarization.field.gradient[i][d]
+                  * response.depsilon_drho[i] / response.epsilon[i];
         }
     }
     const std::vector<double> negative_divergence
@@ -243,12 +253,30 @@ AdjointResult evaluate_discrete_electrostatic_derivative(
         const double charge_derivative
             = 0.5 * (response.polarization.field.potential[i] + result.potential[i] / epsilon)
               - vacuum_field.potential[i] - ionic_shape_coefficient;
-        const double dielectric_derivative
-            = -0.5 * result.potential[i] * solute_charge[i] / (epsilon * epsilon)
-              + negative_divergence[i] / (2.0 * ModuleBase::FOUR_PI * epsilon);
+        double second_log_derivative = 0.0;
+        const double density = cavity_density[i];
+        if (density > cavity_parameters.density_min && density < cavity_parameters.density_max)
+        {
+            const double local_density_ratio = cavity_parameters.density_max / density;
+            const double x = std::log(local_density_ratio) / log_width;
+            const double angle = ModuleBase::TWO_PI * x;
+            second_log_derivative
+                = log_bulk * ((1.0 - std::cos(angle)) / log_width
+                              + ModuleBase::TWO_PI * std::sin(angle) / (log_width * log_width))
+                  / (density * density);
+        }
+        double gradient_dot = 0.0;
+        for (int d = 0; d < 3; ++d)
+        {
+            gradient_dot += density_gradient[i][d] * response.polarization.field.gradient[i][d];
+        }
+        const double cavity_derivative
+            = -0.5 * result.potential[i] * solute_charge[i] * response.depsilon_drho[i]
+                  / (epsilon * epsilon)
+              + (negative_divergence[i] + result.potential[i] * second_log_derivative * gradient_dot)
+                    / (2.0 * ModuleBase::FOUR_PI);
         functional.charge_potential[i] = charge_derivative;
-        functional.electron_potential[i]
-            = -charge_derivative + response.depsilon_drho[i] * dielectric_derivative;
+        functional.electron_potential[i] = -charge_derivative + cavity_derivative;
     }
     return result;
 }
