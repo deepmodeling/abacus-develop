@@ -251,16 +251,9 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.esolver_type == "dftbnative")
-            {
-#ifndef __DFTB_NATIVE
-                ModuleBase::WARNING_QUIT("ReadInput", "esolver_type=dftbnative requires ENABLE_DFTB_NATIVE=ON.");
-#endif
-            }
-            std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "lr", "ks-lr", "dfpt" };
-#ifdef __DFTB_NATIVE
-            esolver_types.push_back("dftbnative");
-#endif
+            const std::vector<std::string> esolver_types = {
+                "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj",
+                "dp", "nep", "lr", "ks-lr", "dfpt", "dftbnative"};
             if (std::find(esolver_types.begin(), esolver_types.end(), para.input.esolver_type) == esolver_types.end())
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");

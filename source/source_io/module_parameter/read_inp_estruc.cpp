@@ -33,10 +33,7 @@ void ReadInput::item_elec_stru()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
-#ifdef __DFTB_NATIVE
-            basis_types.push_back("dftb");
-#endif
+            std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao", "dftb"};
             if (std::find(basis_types.begin(), basis_types.end(), para.input.basis_type) == basis_types.end())
             {
                 const std::string warningstr = nofound_str(basis_types, "basis_type");

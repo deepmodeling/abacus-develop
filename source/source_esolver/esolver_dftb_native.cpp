@@ -78,7 +78,7 @@ void ESolver_DFTBNative::before_all_runners(BaseCell& cell, const Input_para& in
     }
     if (rank == 0)
     {
-        std::cout << " Native periodic DFTB model loaded from " << inp.dftb_native_input
+        std::cout << " Experimental native periodic DFTB model loaded from " << inp.dftb_native_input
                     << " (no DFTB+ runtime, UPF, or ABACUS orbital files)." << std::endl;
     }
 }

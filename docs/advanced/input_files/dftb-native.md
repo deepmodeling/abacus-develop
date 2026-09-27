@@ -1,12 +1,12 @@
 # Native SCC-DFTB in ABACUS
 
-The optional `dftbnative` solver evaluates a periodic SCC-DFTB2 or SCC-DFTB3 model directly in ABACUS. It reads Slater–Koster parameter files and does not launch or link to DFTB+. `basis_type=dftb` selects the SKF minimal basis; UPF pseudopotentials and ABACUS `.orb` files are not used by this solver. The species labels and geometry still come from `STRU`.
+The experimental `dftbnative` solver evaluates a periodic SCC-DFTB2 or SCC-DFTB3 model directly in ABACUS. It reads Slater–Koster parameter files and does not launch or link to DFTB+. `basis_type=dftb` selects the SKF minimal basis; UPF pseudopotentials and ABACUS `.orb` files are not used by this solver. The species labels and geometry still come from `STRU`.
 
 At present, use `calculation=scf`; the SCC solve and optional frozen-potential band path are performed in that run. `nscf`, relaxation, and molecular-dynamics driver modes are rejected or unsupported because native DFTB restart and force/stress interfaces are not implemented.
 
 ## Selecting the solver
 
-Build ABACUS with `-DENABLE_DFTB_NATIVE=ON`, then use:
+Use the runtime solver selector in a normal ABACUS build:
 
 ```text
 INPUT_PARAMETERS
@@ -17,7 +17,7 @@ esolver_type dftbnative
 nspin 1
 ```
 
-The build option defaults to `OFF` because this backend is experimental and its supported scope is narrower than DFTB+. The opt-in keeps standard ABACUS builds unchanged unless users explicitly build and validate the native solver. No compile-time or binary-size benefit is claimed from the default; this is a release and support-boundary choice.
+The solver is included in standard ABACUS builds and activates only when `esolver_type=dftbnative` is set; the default solver remains `ksdft`. Its experimental status and narrower supported scope are runtime/documentation boundaries, not a build-time feature switch.
 
 The input file named by `dftb_native_input` (default `dftb_native.in`) selects SKF data and DFTB-specific controls. For example:
 

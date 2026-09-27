@@ -68,7 +68,6 @@ set(_abacus_feature_definitions
   $<$<BOOL:${ENABLE_EXX_DEV}>:__EXX_DEV>
   $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
   $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
-  $<$<BOOL:${ENABLE_DFTB_NATIVE}>:__DFTB_NATIVE>
   $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
 
 if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
@@ -550,9 +549,7 @@ add_subdirectory(source_basis/module_nao)
 add_subdirectory(source_md)
 add_subdirectory(source_basis/module_pw)
 add_subdirectory(source_esolver)
-if(ENABLE_DFTB_NATIVE)
-  add_subdirectory(source_dftb)
-endif()
+add_subdirectory(source_dftb)
 add_subdirectory(source_io)
 add_subdirectory(source_relax)
 add_subdirectory(source_lcao/module_ri)
@@ -776,9 +773,7 @@ endif()
 # External closure: feature consumers precede numerical providers and runtimes.
 target_link_libraries(${ABACUS_BIN_NAME} PRIVATE abacus::link_libs)
 
-if(ENABLE_DFTB_NATIVE)
-  target_link_libraries(${ABACUS_BIN_NAME} PRIVATE dftb_native)
-endif()
+target_link_libraries(${ABACUS_BIN_NAME} PRIVATE dftb_native)
 
 # Torch includes some LAPACK routines, but with floating-point exceptions.
 if(ENABLE_MLALGO OR DEFINED Torch_DIR)

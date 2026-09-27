@@ -53,7 +53,7 @@ jobs:
             name: "Build without LCAO and MPI"
           - tag: gnu
             external_toolchain_args: ""
-            build_args: "-DENABLE_MPI=OFF -DBUILD_TESTING=ON -DENABLE_DFTB_NATIVE=ON"
+            build_args: "-DENABLE_MPI=OFF -DBUILD_TESTING=ON"
             run_native_dftb_tests: true
             name: "Build and test native DFTB"
 

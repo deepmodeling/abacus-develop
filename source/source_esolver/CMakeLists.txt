@@ -14,6 +14,9 @@ list(APPEND objects
     esolver_of_tool.cpp
     pw_others.cpp
     esolver_dfpt_pw.cpp
+    esolver_dftb_native.cpp
+    esolver_dftb_native_input.cpp
+    esolver_dftb_native_output.cpp
 )
 if(ENABLE_LCAO)
   list(APPEND objects
@@ -30,14 +33,6 @@ if(ENABLE_LCAO)
         esolver_lr_lcao_bse.cpp
     )
   endif()
-endif()
-
-if(ENABLE_DFTB_NATIVE)
-  list(APPEND objects
-      esolver_dftb_native.cpp
-      esolver_dftb_native_input.cpp
-      esolver_dftb_native_output.cpp
-  )
 endif()
 
 add_library(
