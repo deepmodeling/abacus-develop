@@ -777,6 +777,7 @@ TEST(SternheimerRPA, MergeTransitionEnergyWindowsCoversAllSpinChannels)
     EXPECT_THROW(ModuleRI::SternheimerRPA::merge_transition_energy_windows({Window{0.0, 1.0}}), std::invalid_argument);
 }
 
+#ifdef __GREENX_MINIMAX
 TEST(SternheimerRPA, GreenXMinimaxFrequencyGridMatchesReference)
 {
     const auto grid = ModuleRI::SternheimerRPA::generate_greenx_minimax_frequency_grid(10, 2.0, 30.0);
@@ -810,6 +811,7 @@ TEST(SternheimerRPA, GreenXMinimaxFrequencyGridMatchesReference)
         EXPECT_NEAR(grid.weights_ha[i], expected_weights[i], 1.0e-8);
     }
 }
+#endif
 
 TEST(SternheimerRPA, ReadFrequencyGridFileAcceptsTwoAndThreeColumnRows)
 {
