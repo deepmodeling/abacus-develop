@@ -33,7 +33,7 @@ StoHamiltPW<T, Device>::StoHamiltPW(elecstate::Potential* pot_in,
                                     const int& npol,
                                     Real* emin_in,
                                     Real* emax_in)
-    : HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp, nullptr, ucell, nullptr), ngk(p_kv->ngk)
+    : hamilt::HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp, nullptr, ucell, nullptr), ngk(p_kv->ngk)
 {
 }
 
