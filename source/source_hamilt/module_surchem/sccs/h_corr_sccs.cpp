@@ -54,6 +54,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
         = ModuleSccs::pw_grid_positions(rho_basis, cell.latvec, cell.lat0);
     ModuleBase::Vector3<double> origin
         = ModuleSccs::cell_center(cell.latvec, cell.lat0);
+    const ModuleBase::TimePoint preparation_end = ModuleBase::get_time();
     ModuleBase::matrix pcc_potential;
     double vacuum_pcc_energy = 0.0;
     if (this->uses_pcc())
@@ -80,6 +81,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
         ionic_shape_coefficient = ModuleSccs::pcc_2d_ionic_shape_energy(
             1.0, smooth_ionic_moments, this->pcc_ionic_moments_2d_, pcc_2d_geometry.parameters);
     }
+    const ModuleBase::TimePoint pcc_end = ModuleBase::get_time();
     const ModuleSccs::PoolPolarizationReduction polarization_reduction(
         this->parameters_.pool_process_count);
     this->sccs_result_
@@ -100,6 +102,9 @@ void surchem::v_correction_sccs(const UnitCell& cell,
                                        charge_reduction,
                                        polarization_reduction,
                                        this->sccs_state_);
+    this->sccs_result_.preparation_seconds
+        = ModuleBase::get_duration(start_time, preparation_end);
+    this->sccs_result_.pcc_seconds = ModuleBase::get_duration(preparation_end, pcc_end);
 
     if (this->uses_pcc())
     {

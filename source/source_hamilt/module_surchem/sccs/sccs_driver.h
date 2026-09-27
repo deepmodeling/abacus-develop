@@ -44,6 +44,11 @@ struct SccsState
 
 struct SccsResult
 {
+    double preparation_seconds = 0.0;
+    double pcc_seconds = 0.0;
+    double forward_seconds = 0.0;
+    double adjoint_seconds = 0.0;
+    double non_electrostatic_seconds = 0.0;
     ChargeDensity charge;
     PeriodicSccsResult response;
     ElectrostaticField vacuum_field;

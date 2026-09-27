@@ -175,6 +175,11 @@ void surchem::write_sccs_iteration(std::ostream& output) const
                << result.response.polarization.final_mixing
                << " RESTARTS "
                << result.response.polarization.mixing_restarts << '\n';
+        output << " SCCS_TIMING preparation_s " << result.preparation_seconds
+               << " pcc_s " << result.pcc_seconds
+               << " forward_s " << result.forward_seconds
+               << " adjoint_s " << result.adjoint_seconds
+               << " non_electrostatic_s " << result.non_electrostatic_seconds << '\n';
     }
 
     if (this->parameters_.debug >= 2

@@ -9,6 +9,7 @@
 #include "source_basis/module_pw/pw_basis.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -228,6 +229,8 @@ SccsResult evaluate_pw_sccs(
                                                    position_signature);
     const std::vector<double> empty_initial;
     const std::vector<double>& initial = reuse_state ? state.polarization_charge : empty_initial;
+    const std::chrono::steady_clock::time_point forward_start
+        = std::chrono::steady_clock::now();
     result.response = solve_sccs_response(result.charge.electron,
                                           result.charge.solute,
                                           config.cavity,
@@ -241,6 +244,9 @@ SccsResult evaluate_pw_sccs(
     {
         throw std::runtime_error("SCCS polarization iteration did not converge");
     }
+    const std::chrono::steady_clock::time_point forward_end
+        = std::chrono::steady_clock::now();
+    result.forward_seconds = std::chrono::duration<double>(forward_end - forward_start).count();
 
     coulomb->apply(result.charge.solute, result.vacuum_field);
     result.electrostatic = evaluate_electrostatic_functional(result.charge.solute,
@@ -253,6 +259,8 @@ SccsResult evaluate_pw_sccs(
     // Replace the continuum reference potentials with derivatives of the actual
     // discrete fixed point before using them in the Hamiltonian or ionic forces.
     const std::vector<double>& initial_adjoint = reuse_state ? state.adjoint_potential : empty_initial;
+    const std::chrono::steady_clock::time_point adjoint_start
+        = std::chrono::steady_clock::now();
     const AdjointResult adjoint = evaluate_discrete_electrostatic_derivative(
         result.charge.electron, config.cavity, result.charge.solute, result.response,
         result.vacuum_field, basis, tpiba,
@@ -261,11 +269,16 @@ SccsResult evaluate_pw_sccs(
     result.adjoint_iterations = adjoint.iterations;
     result.adjoint_residual_rms = adjoint.residual_rms;
     result.adjoint_residual_max = adjoint.residual_max;
+    const std::chrono::steady_clock::time_point adjoint_end
+        = std::chrono::steady_clock::now();
+    result.adjoint_seconds = std::chrono::duration<double>(adjoint_end - adjoint_start).count();
 
     NonElectrostaticParameters non_electrostatic_parameters;
     non_electrostatic_parameters.surface_tension = config.surface_tension;
     non_electrostatic_parameters.pressure = config.pressure;
     non_electrostatic_parameters.surface_regularization = config.surface_regularization;
+    const std::chrono::steady_clock::time_point non_electrostatic_start
+        = std::chrono::steady_clock::now();
     result.non_electrostatic = evaluate_pw_non_electrostatic(basis,
                                                              tpiba,
                                                              volume_element,
@@ -273,6 +286,10 @@ SccsResult evaluate_pw_sccs(
                                                              result.response.solute,
                                                              result.response.dsolute_drho,
                                                              charge_reduction);
+    const std::chrono::steady_clock::time_point non_electrostatic_end
+        = std::chrono::steady_clock::now();
+    result.non_electrostatic_seconds
+        = std::chrono::duration<double>(non_electrostatic_end - non_electrostatic_start).count();
 
     result.electron_potential_hartree.resize(electron_density.size());
     for (std::size_t index = 0; index < electron_density.size(); ++index)

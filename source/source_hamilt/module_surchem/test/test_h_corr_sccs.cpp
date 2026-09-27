@@ -138,6 +138,11 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
                               potential);
 
     const ModuleSccs::SccsResult& result = solvent.sccs_result();
+    EXPECT_GE(result.preparation_seconds, 0.0);
+    EXPECT_GE(result.pcc_seconds, 0.0);
+    EXPECT_GE(result.forward_seconds, 0.0);
+    EXPECT_GE(result.adjoint_seconds, 0.0);
+    EXPECT_GE(result.non_electrostatic_seconds, 0.0);
     EXPECT_NEAR(result.charge.net_charge, 1.0, 1.0e-12);
     EXPECT_NEAR(result.point_solute_moments.charge, 1.0, 1.0e-12);
     EXPECT_NEAR(result.vacuum_pcc_energy,
@@ -155,6 +160,7 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     std::ostringstream debug_output;
     solvent.write_sccs_iteration(debug_output);
     const std::string debug_text = debug_output.str();
+    EXPECT_NE(debug_text.find("SCCS_TIMING preparation_s "), std::string::npos);
     EXPECT_NE(debug_text.find("PCC0D_ORIGIN X/Bohr 5 Y/Bohr 5 Z/Bohr 5"),
               std::string::npos);
     EXPECT_NE(debug_text.find("PCC0D_MOMENTS SMOOTH Q/e "), std::string::npos);
