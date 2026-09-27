@@ -43,11 +43,14 @@ N row
 ```
 
 The same spatial-operation format is used for scalar space groups and for the
-spatial part of a magnetic group. For `nspin=4`, `stru_out` intentionally does
-not append a spin-action or antiunitary flag trailer. A consumer that needs
-spinor magnetic-group acceleration must obtain and interpret that metadata
-through an explicitly compatible interface; the common `stru_out` format does
-not claim that capability.
+spatial part of a magnetic group. Magnetic operations are written after the
+unitary operations in the same 12-field rows. For `nspin=4`, the producer then
+appends an explicit `spin_symmetry <grey_group> <spin_source>` block. Each row
+contains an antiunitary flag and, when `spin_source=1`, the eight real and
+imaginary components of the corresponding SU(2) spin rotation. This keeps the
+spatial block compatible with scalar and magnetic groups while giving a SOC-
+aware LibRPA reader the complete operation table. Readers that do not consume
+the optional spin block can stop after the spatial rows.
 
 ## Optional auxiliary-overlap diagnostic
 
