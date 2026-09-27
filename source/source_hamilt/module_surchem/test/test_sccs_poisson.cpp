@@ -87,6 +87,18 @@ class NonFiniteOperator : public ModuleSccs::CoulombOperator
     }
 };
 
+class CountingSumReduction : public ModuleSccs::SerialPolarizationReduction
+{
+  public:
+    void reduce_sum(double& value) const override
+    {
+        ++sum_calls;
+        ModuleSccs::PolarizationReduction::reduce_sum(value);
+    }
+
+    mutable int sum_calls = 0;
+};
+
 class TwoDomainReduction : public ModuleSccs::PolarizationReduction
 {
   public:
@@ -216,6 +228,42 @@ TEST(SccsPoisson, AcceleratedMixingReducesIterationCount)
                         linear.polarization_charge[index],
                         3.0e-7)
                 << accelerated_methods[method];
+        }
+    }
+}
+
+TEST(SccsPoisson, PulayReusesHistoricalDotProductsWhenWindowSlides)
+{
+    const std::vector<double> charge{0.4, -0.2, 0.1};
+    const std::vector<double> epsilon(charge.size(), 2.0);
+    const ModuleBase::Vector3<double> gradient_value(1.0, 0.0, 0.0);
+    const std::vector<ModuleBase::Vector3<double>> gradient(charge.size(), gradient_value);
+    const std::vector<double> initial;
+    const LocalResponseOperator coulomb(0.8);
+    auto parameters = converged_parameters();
+    parameters.mixing_method = "pulay";
+    parameters.mixing_history = 2;
+    parameters.max_iterations = 200;
+    parameters.mixing = 0.5;
+    parameters.tolerance_rms = 1.0e-13;
+    parameters.tolerance_max = 1.0e-12;
+    for (int repeat = 0; repeat < 2; ++repeat)
+    {
+        const CountingSumReduction reduction;
+        const auto result = ModuleSccs::solve_polarization(
+            charge, epsilon, gradient, initial, parameters, coulomb, reduction);
+        ASSERT_EQ(result.status, ModuleSccs::PolarizationStatus::Converged);
+        ASSERT_GT(result.iterations, 3);
+        EXPECT_EQ(result.mixing_restarts, 0);
+        // First two-history matrix needs three products. Each subsequent
+        // sliding window reuses its retained diagonal and needs only two.
+        const int updates = result.iterations - 1;
+        const int expected_calls = 3 + 2 * (updates - 2);
+        EXPECT_EQ(reduction.sum_calls, expected_calls);
+        for (std::size_t i = 0; i < charge.size(); ++i)
+        {
+            const double expected = 1.5 * charge[i];
+            EXPECT_NEAR(result.polarization_charge[i], expected, 3.0e-11);
         }
     }
 }

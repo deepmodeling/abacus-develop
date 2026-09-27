@@ -91,3 +91,15 @@ receive the same scalar potential and gradient as before. Gradient sizes and
 finite values are checked every iteration; scalar-potential validity is checked
 when the complete terminal field is constructed. Nonfinite-gradient exits do
 not promise a usable field. Solver tolerances and adjoint equations are unchanged.
+
+
+## Reusing Pulay residual products
+
+Pulay's Gram matrix contains global inner products of immutable residual
+history vectors. A solve-local cache retains products between old vectors;
+only pairs involving a newly appended residual are recomputed. Removing the
+oldest history removes the corresponding matrix row and column. Adaptive
+and residual-growth restarts clear the cache together with both histories.
+The dense regularized solve, coefficient safeguards, reduction operation and
+per-product summation order are unchanged. The cache is not retained across
+SCF calls, and linear/Anderson paths are unchanged.

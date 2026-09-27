@@ -205,10 +205,46 @@ bool safe_coefficients(const std::vector<double>& coefficients, const int count)
     return true;
 }
 
+void update_pulay_gram(const std::vector<std::vector<double>>& residuals,
+                       const bool dropped_oldest,
+                       const PolarizationReduction& reduction,
+                       std::vector<std::vector<double>>& gram)
+{
+    if (dropped_oldest && !gram.empty())
+    {
+        gram.erase(gram.begin());
+        for (auto& row : gram)
+        {
+            row.erase(row.begin());
+        }
+    }
+    const int retained = static_cast<int>(gram.size());
+    const int count = static_cast<int>(residuals.size());
+    gram.resize(count);
+    for (auto& row : gram)
+    {
+        row.resize(count);
+    }
+    // Historical residuals are immutable. Only pairs involving a new
+    // residual need another local dot product and pool reduction.
+    for (int row = 0; row < count; ++row)
+    {
+        const int first_new = std::max(row, retained);
+        for (int column = first_new; column < count; ++column)
+        {
+            const double value = global_dot(residuals[row], residuals[column], reduction);
+            gram[row][column] = value;
+            gram[column][row] = value;
+        }
+    }
+}
+
 bool pulay_mixing_step(const std::vector<std::vector<double>>& values,
                        const std::vector<std::vector<double>>& residuals,
                        const double mixing,
                        const PolarizationReduction& reduction,
+                       const bool dropped_oldest,
+                       std::vector<std::vector<double>>& gram,
                        std::vector<double>& next)
 {
     const int history_size = static_cast<int>(values.size());
@@ -216,17 +252,11 @@ bool pulay_mixing_step(const std::vector<std::vector<double>>& values,
     {
         return false;
     }
+    update_pulay_gram(residuals, dropped_oldest, reduction, gram);
     double scale = 0.0;
-    std::vector<double> gram(history_size * history_size, 0.0);
     for (int row = 0; row < history_size; ++row)
     {
-        for (int column = row; column < history_size; ++column)
-        {
-            const double value = global_dot(residuals[row], residuals[column], reduction);
-            gram[row * history_size + column] = value;
-            gram[column * history_size + row] = value;
-        }
-        scale = std::max(scale, std::abs(gram[row * history_size + row]));
+        scale = std::max(scale, std::abs(gram[row][row]));
     }
     if (!std::isfinite(scale) || scale <= std::numeric_limits<double>::min())
     {
@@ -241,7 +271,7 @@ bool pulay_mixing_step(const std::vector<std::vector<double>>& values,
         for (int column = 0; column < history_size; ++column)
         {
             matrix[row * dimension + column]
-                = gram[row * history_size + column] / scale;
+                = gram[row][column] / scale;
         }
         matrix[row * dimension + row] += regularization;
         matrix[row * dimension + history_size] = 1.0;
@@ -516,6 +546,7 @@ PolarizationResult solve_polarization(
     std::vector<double> next(size, 0.0);
     std::vector<std::vector<double>> value_history;
     std::vector<std::vector<double>> residual_history;
+    std::vector<std::vector<double>> pulay_gram;
     AdaptiveMixingState mixing_state;
     mixing_state.current_mixing = parameters.mixing;
     for (int iteration = 1; iteration <= parameters.max_iterations; ++iteration)
@@ -588,9 +619,17 @@ PolarizationResult solve_polarization(
             value_history.clear();
             residual_history.clear();
         }
+        // Both adaptive and residual-growth restarts clear the histories.
+        // Discard their cached products before inserting the new residual.
+        if (residual_history.empty())
+        {
+            pulay_gram.clear();
+        }
         value_history.push_back(result.polarization_charge);
         residual_history.push_back(residual);
-        if (static_cast<int>(value_history.size()) > parameters.mixing_history)
+        const bool dropped_oldest
+            = static_cast<int>(value_history.size()) > parameters.mixing_history;
+        if (dropped_oldest)
         {
             value_history.erase(value_history.begin());
             residual_history.erase(residual_history.begin());
@@ -603,6 +642,8 @@ PolarizationResult solve_polarization(
                                       residual_history,
                                       mixing_state.current_mixing,
                                       reduction,
+                                      dropped_oldest,
+                                      pulay_gram,
                                       next);
         }
         else if (!force_linear_step && parameters.mixing_method == "anderson")
