@@ -1090,6 +1090,8 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
     ModuleBase::TITLE("RPA_LRI", "postSCF");
     ModuleBase::timer::start("RPA_LRI", "postSCF");
     ModuleBase::GlobalFunc::MAKE_DIR(outdir);
+    this->ccp_rmesh_times_cut = PARAM.inp.rpa_ccp_rmesh_times;
+    this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times;
 
     if (PARAM.inp.out_librpa_abf_overlap
         && (!PARAM.inp.rpa || PARAM.inp.out_librpa_reader_version != 1
@@ -1113,7 +1115,8 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
     this->out_bz_sampling(ucell);
 
     std::cout << "rpa_pca_threshold: " << this->info.pca_threshold << std::endl;
-    std::cout << "rpa_ccp_rmesh_times: " << this->info.ccp_rmesh_times << std::endl;
+    std::cout << "rpa_ccp_rmesh_times_cut: " << this->ccp_rmesh_times_cut << std::endl;
+    std::cout << "rpa_ccp_rmesh_times_ewald: " << this->ccp_rmesh_times_ewald << std::endl;
     std::cout << "rpa_lcao_exx(Ha): " << std::fixed << std::setprecision(15) << exx_cut_coulomb->Eexx / 2.0 << std::endl;
 
     std::cout << "etxc(Ha): " << std::fixed << std::setprecision(15) << pelec->f_en.etxc / 2.0 << std::endl;
@@ -1219,7 +1222,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times;
     // Using rpa_ccp_rmesh_times to calculate cut Coulomb this->Vs_period
     Exx_Info::Exx_Info_RI local_info = this->info;
-    local_info.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
+    local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
     if (!exx_cut_coulomb)
         exx_cut_coulomb.reset(new Exx_LRI<double>(local_info));
 
@@ -1289,7 +1292,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_cut_IJR;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Cs;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> tmp;
-    std::cout << "Use rpa_ccp_rmesh_times=" << this->info.ccp_rmesh_times << " to calculate cut Coulomb" << std::endl;
+    std::cout << "Use rpa_ccp_rmesh_times=" << this->ccp_rmesh_times_cut << " to calculate cut Coulomb" << std::endl;
     // Shrink_ABFS_ORBITAL cannot exceed this angular momentum of MGT
     exx_lri_rpa->cal_cut_coulomb_cs(Vs_cut_IJR, Cs, ucell, PARAM.inp.out_ri_cv);
     // MPI: {ia0, {ia1, R}} to {ia0, ia1}
@@ -1297,7 +1300,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     for (int iat = 0; iat < ucell.nat; ++iat)
         atoms[iat] = iat;
     const std::array<Tcell, Ndim> period_Vs
-        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, this->orb_cutoff_);
+        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->ccp_rmesh_times_cut, ucell, this->orb_cutoff_);
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, TC>>>> list_As_Vs_atoms
         = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2, false);
     const auto list_A0_pair_R = list_As_Vs_atoms.first;
@@ -1629,7 +1632,11 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     ModuleBase::TITLE("RPA_LRI", "cal_large_Cs");
     ModuleBase::timer::start("RPA_LRI", "cal_large_Cs");
     if (!exx_cut_coulomb)
-        exx_cut_coulomb.reset(new Exx_LRI<double>(this->info));
+    {
+        Exx_Info::Exx_Info_RI local_info = this->info;
+        local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
+        exx_cut_coulomb.reset(new Exx_LRI<double>(local_info));
+    }
     this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
     Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
     this->abfs = ExxLriDetail::prepare_abfs(
@@ -1672,7 +1679,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
                                            true);
 
     const std::array<Tcell, Ndim> period_Vs
-        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, orb_cutoff_);
+        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->ccp_rmesh_times_cut, ucell, orb_cutoff_);
     std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
         = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_large_Vs start");
