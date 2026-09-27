@@ -217,6 +217,10 @@ void surchem::cal_force_sol(const UnitCell& cell,
     return;
 }
 
+// Add explicit smooth-ion and PCC ionic-shape derivatives at fixed converged
+// electronic density. Electronic basis/overlap terms remain in the normal
+// PW/LCAO force machinery. Reduce distributed terms before adding replicated
+// point-ion terms, so neither MPI replication nor Ha-to-Ry conversion doubles them.
 void surchem::cal_force_sccs(const UnitCell& cell,
                              const ModulePW::PW_Basis& rho_basis,
                              const ModuleBase::matrix& vloc,

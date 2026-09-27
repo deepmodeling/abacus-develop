@@ -97,33 +97,6 @@ bool same_state_signature(const SccsState& state,
            && state.polarization_charge.size() == static_cast<std::size_t>(basis.nrxx);
 }
 
-std::vector<double> initial_polarization(const SccsState& state,
-                                         const Boundary boundary,
-                                         const PccGeometry& pcc_geometry,
-                                         const Pcc2dGeometry& pcc_2d_geometry,
-                                         const CavityParameters& cavity,
-                                         const ModulePW::PW_Basis& basis,
-                                         const double tpiba,
-                                         const double volume_element,
-                                         const ModuleBase::Vector3<double>& origin,
-                                         const std::uint64_t position_signature)
-{
-    if (!same_state_signature(state,
-                              boundary,
-                              pcc_geometry,
-                              pcc_2d_geometry,
-                              cavity,
-                              basis,
-                              tpiba,
-                              volume_element,
-                              origin,
-                              position_signature))
-    {
-        return std::vector<double>();
-    }
-    return state.polarization_charge;
-}
-
 MultipoleMoments add_moments(const MultipoleMoments& left, const MultipoleMoments& right)
 {
     MultipoleMoments result;
@@ -168,6 +141,9 @@ void SccsState::reset()
     valid = false;
 }
 
+// Assemble q = rho_ion - n, solve polarization and its discrete adjoint, then
+// combine electrostatic and cavity terms. Energies/potentials here are in Ha;
+// the surchem adapter adds the point-ion vacuum PCC and converts to Ry.
 SccsResult evaluate_pw_sccs(
     const std::vector<double>& electron_density,
     const std::vector<double>& ionic_density,
@@ -238,16 +214,20 @@ SccsResult evaluate_pw_sccs(
     solver_parameters.tolerance_rms = config.tolerance_rms;
     solver_parameters.tolerance_max = config.tolerance_max;
     const std::uint64_t position_signature = grid_position_signature(positions);
-    const std::vector<double> initial = initial_polarization(state,
-                                                             config.boundary,
-                                                             pcc_geometry,
-                                                             pcc_2d_geometry,
-                                                             config.cavity,
-                                                             basis,
-                                                             tpiba,
-                                                             volume_element,
-                                                             origin,
-                                                             position_signature);
+    // A changed grid, cavity or PCC origin invalidates both warm-start fields.
+    // Borrow the cache until the solve succeeds; state is updated only below.
+    const bool reuse_state = same_state_signature(state,
+                                                   config.boundary,
+                                                   pcc_geometry,
+                                                   pcc_2d_geometry,
+                                                   config.cavity,
+                                                   basis,
+                                                   tpiba,
+                                                   volume_element,
+                                                   origin,
+                                                   position_signature);
+    const std::vector<double> empty_initial;
+    const std::vector<double>& initial = reuse_state ? state.polarization_charge : empty_initial;
     result.response = solve_sccs_response(result.charge.electron,
                                           result.charge.solute,
                                           config.cavity,
@@ -270,8 +250,9 @@ SccsResult evaluate_pw_sccs(
                                                               volume_element,
                                                               charge_reduction);
 
-    const std::vector<double> initial_adjoint
-        = initial.empty() ? std::vector<double>() : state.adjoint_potential;
+    // Replace the continuum reference potentials with derivatives of the actual
+    // discrete fixed point before using them in the Hamiltonian or ionic forces.
+    const std::vector<double>& initial_adjoint = reuse_state ? state.adjoint_potential : empty_initial;
     const AdjointResult adjoint = evaluate_discrete_electrostatic_derivative(
         result.charge.electron, config.cavity, result.charge.solute, result.response,
         result.vacuum_field, basis, tpiba,

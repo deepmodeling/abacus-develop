@@ -157,6 +157,9 @@ void Pcc2dCoulombOperator::apply_gradient(
     }
 }
 
+// Apply the exact discrete transpose of apply_gradient, including PCC.
+// Moment reductions account for the open y component only; they preserve
+// <u, Gq> = <G^T u, q> with the uniform-grid volume weight.
 void Pcc2dCoulombOperator::apply_gradient_adjoint(
     const std::vector<ModuleBase::Vector3<double>>& field,
     std::vector<double>& result) const

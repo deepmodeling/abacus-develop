@@ -5,7 +5,6 @@
 
 #include "source_basis/module_pw/pw_basis.h"
 
-#include <cmath>
 #include <stdexcept>
 
 namespace ModuleSccs
@@ -34,6 +33,9 @@ PeriodicSccsResult solve_periodic_sccs(
                                reduction);
 }
 
+// Solve the forward polarization problem for the selected Coulomb boundary.
+// On a finite FFT grid, (epsilon'/epsilon) Dn differs from D log(epsilon).
+// This chain-gradient choice must match the derivative in sccs_adjoint.cpp.
 PeriodicSccsResult solve_sccs_response(
     const std::vector<double>& cavity_density,
     const std::vector<double>& solute_charge,

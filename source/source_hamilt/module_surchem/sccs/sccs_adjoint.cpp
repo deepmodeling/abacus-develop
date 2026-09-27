@@ -7,7 +7,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <limits>
 #include <stdexcept>
 
 namespace ModuleSccs
@@ -189,6 +188,10 @@ AdjointResult solve_adjoint(const std::vector<double>& rhs,
 
 } // namespace
 
+// Differentiate the converged discrete polarization equation, not its continuum
+// limit. For L t = q/epsilon, solve L^T lambda = Cq + 2*c, where c is the
+// ionic-shape coefficient. Return dE/dq for ionic forces and dE/dn (including
+// dq/dn = -1) for the electronic Hamiltonian. See discrete_derivative.md.
 AdjointResult evaluate_discrete_electrostatic_derivative(
     const std::vector<double>& cavity_density,
     const CavityParameters& cavity_parameters,
@@ -243,6 +246,8 @@ AdjointResult evaluate_discrete_electrostatic_derivative(
                   * response.depsilon_drho[i] / response.epsilon[i];
         }
     }
+    // For g(n) = f'(n) Dn, delta g = f'(n) D(delta n) + f''(n) Dn delta n.
+    // The first term uses D^T (negative divergence); the second is local below.
     const std::vector<double> negative_divergence
         = periodic_negative_divergence(weighted_gradient, basis, tpiba);
     functional.charge_potential.resize(size);

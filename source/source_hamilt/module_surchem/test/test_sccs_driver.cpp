@@ -12,7 +12,9 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 #include <vector>
 
@@ -208,6 +210,21 @@ TEST(SccsDriver, PreservesChargeAndCombinesPccEnergyPotentialAndState)
         EXPECT_NEAR(reused.electron_potential_hartree[index],
                     reused.electrostatic.electron_potential[index],
                     1.0e-14);
+    }
+
+    // An incompatible grid signature must reject both cached fields, even if
+    // they contain invalid data. The result must match a clean cold start.
+    state.tpiba *= 2.0;
+    const double invalid_value = std::numeric_limits<double>::quiet_NaN();
+    std::fill(state.polarization_charge.begin(), state.polarization_charge.end(), invalid_value);
+    std::fill(state.adjoint_potential.begin(), state.adjoint_potential.end(), invalid_value);
+    const ModuleSccs::SccsResult invalidated
+        = evaluate_uniform_charge(1.0, state, basis, lattice, length);
+    EXPECT_EQ(invalidated.response.polarization.iterations, cation.response.polarization.iterations);
+    EXPECT_DOUBLE_EQ(invalidated.electrostatic.reaction_energy, cation.electrostatic.reaction_energy);
+    for (std::size_t index = 0; index < cation.electron_potential_hartree.size(); ++index)
+    {
+        EXPECT_DOUBLE_EQ(invalidated.electron_potential_hartree[index], cation.electron_potential_hartree[index]);
     }
 
     state.reset();

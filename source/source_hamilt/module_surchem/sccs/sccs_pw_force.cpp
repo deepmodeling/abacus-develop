@@ -12,15 +12,20 @@
 namespace ModuleSccs
 {
 
+// Contract dE/d(rho_ion) with the position derivative of the smooth ionic
+// source reconstructed from vloc (Ry). The input is the adjoint charge
+// derivative, which need not equal the reaction potential on a finite grid.
+// Return this rank's G-space contribution in Ha/bohr; the caller reduces it
+// over the pool and converts once to Ry/bohr. G=0 is position independent.
 ModuleBase::matrix smooth_ionic_force_hartree(
     const UnitCell& cell,
     const ModulePW::PW_Basis& basis,
     const ModuleBase::matrix& radial_local_potential_rydberg,
-    const std::vector<double>& reaction_potential_hartree)
+    const std::vector<double>& charge_derivative_hartree)
 {
     if (cell.nat <= 0 || cell.ntype <= 0 || basis.npw <= 0 || basis.nrxx <= 0
         || basis.gg == nullptr || basis.gcar == nullptr || basis.ig2igg == nullptr
-        || reaction_potential_hartree.size() != static_cast<std::size_t>(basis.nrxx)
+        || charge_derivative_hartree.size() != static_cast<std::size_t>(basis.nrxx)
         || radial_local_potential_rydberg.nr != cell.ntype)
     {
         throw std::invalid_argument("SCCS smooth ionic force inputs are inconsistent");
@@ -31,8 +36,8 @@ ModuleBase::matrix smooth_ionic_force_hartree(
         throw std::invalid_argument("SCCS smooth ionic force requires a valid cell");
     }
 
-    std::vector<std::complex<double>> reaction_potential_g(basis.npw);
-    basis.real2recip(reaction_potential_hartree.data(), reaction_potential_g.data());
+    std::vector<std::complex<double>> charge_derivative_g(basis.npw);
+    basis.real2recip(charge_derivative_hartree.data(), charge_derivative_g.data());
     ModuleBase::matrix force(cell.nat, 3);
     const double tpiba2 = cell.tpiba * cell.tpiba;
     int atom_index = 0;
@@ -60,7 +65,7 @@ ModuleBase::matrix smooth_ionic_force_hartree(
                     = -radial_local_potential_rydberg(atom_type, radial_index) * phase
                       / coulomb_rydberg;
                 const double spectral_derivative
-                    = std::imag(std::conj(reaction_potential_g[ig]) * ionic_charge_g);
+                    = std::imag(std::conj(charge_derivative_g[ig]) * ionic_charge_g);
                 force(atom_index, 0)
                     -= cell.omega * cell.tpiba * basis.gcar[ig][0] * spectral_derivative;
                 force(atom_index, 1)

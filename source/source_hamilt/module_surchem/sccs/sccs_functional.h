@@ -15,6 +15,10 @@ struct ElectrostaticFunctionalResult
     std::vector<double> electron_potential;
 };
 
+// Reaction energy 1/2 integral q (phi_dielectric - phi_vacuum), in Ha.
+// The returned potentials are continuum reference expressions. Production
+// callers must replace charge/electron_potential with the discrete adjoint
+// derivatives before using them for forces or self-consistent electronic steps.
 ElectrostaticFunctionalResult evaluate_electrostatic_functional(
     const std::vector<double>& solute_charge,
     const ElectrostaticField& dielectric_field,

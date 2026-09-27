@@ -19,7 +19,7 @@ ModuleBase::matrix smooth_ionic_force_hartree(
     const UnitCell& cell,
     const ModulePW::PW_Basis& basis,
     const ModuleBase::matrix& radial_local_potential_rydberg,
-    const std::vector<double>& reaction_potential_hartree);
+    const std::vector<double>& charge_derivative_hartree);
 
 } // namespace ModuleSccs
 

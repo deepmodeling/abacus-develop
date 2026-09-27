@@ -9,10 +9,12 @@
 #include "source_base/timer_wrapper.h"
 #include "source_base/tool_title.h"
 
-#include <cmath>
 #include <stdexcept>
 #include <vector>
 
+// Adapt the total spin density and local-pseudopotential ionic source to SCCS.
+// The reaction energy uses smooth ions; standalone PCC supplies the point-ion
+// vacuum correction once. Convert the final Ha quantities to ABACUS Ry units.
 void surchem::v_correction_sccs(const UnitCell& cell,
                                 const ModulePW::PW_Basis& rho_basis,
                                 const int nspin,
@@ -115,8 +117,6 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     {
         v.create(nspin, rho_basis.nrxx);
     }
-    const int potential_size = nspin * rho_basis.nrxx;
-    ModuleBase::GlobalFunc::ZEROS(v.c, potential_size);
     for (int spin = 0; spin < nspin; ++spin)
     {
         for (int ir = 0; ir < rho_basis.nrxx; ++ir)
