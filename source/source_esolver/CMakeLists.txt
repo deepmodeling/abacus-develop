@@ -36,6 +36,7 @@ if(ENABLE_DFTB_NATIVE)
   list(APPEND objects
       esolver_dftb_native.cpp
       esolver_dftb_native_input.cpp
+      esolver_dftb_native_output.cpp
   )
 endif()
 

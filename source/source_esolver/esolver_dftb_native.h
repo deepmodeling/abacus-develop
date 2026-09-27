@@ -5,6 +5,7 @@
 #include "source_dftb/periodic_scc.h"
 #include "source_dftb/skf_data.h"
 
+#include <iosfwd>
 #include <string>
 #include <vector>
 
@@ -29,6 +30,11 @@ class ESolver_DFTBNative : public ESolver
   private:
     void load_model(const UnitCell& ucell, const Input_para& inp);
     ModuleDFTB::DftbPeriodicInput make_geometry(const UnitCell& ucell) const;
+    void write_result_outputs(const UnitCell& ucell,
+                              const ModuleDFTB::DftbPeriodicInput& input,
+                              const std::string& output_dir,
+                              std::ostream& running_log,
+                              std::ostream& dftb_log) const;
 
     std::vector<ModuleDFTB::SkfData> skfiles_;
     ModuleDFTB::DftbPeriodicInput template_;
