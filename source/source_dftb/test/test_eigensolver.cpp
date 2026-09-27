@@ -53,6 +53,64 @@ TEST(DftbNativeEigensolverTest, FiniteTemperatureFillingConservesElectrons)
     EXPECT_NEAR(weighted_electrons, 2.0, 1.0e-10);
 }
 
+TEST(DftbNativeEigensolverTest, FiniteTemperatureEmptyEndpointRemainsEmptyAtHighTemperature)
+{
+    std::vector<DftbKPointSpectrum> spectra(2);
+    spectra[0].weight = 0.25;
+    spectra[0].solution.dimension = 2;
+    spectra[0].solution.eigenvalues_hartree = {-0.2, 0.4};
+    spectra[1].weight = 0.75;
+    spectra[1].solution.dimension = 2;
+    spectra[1].solution.eigenvalues_hartree = {0.1, 0.8};
+
+    const DftbFermiFilling filling = fill_fermi_occupations(spectra, 0.0, 10.0);
+
+    for (const auto& kpoint_occupations : filling.occupations)
+    {
+        for (const double occupation : kpoint_occupations)
+        {
+            EXPECT_DOUBLE_EQ(occupation, 0.0);
+        }
+    }
+    EXPECT_DOUBLE_EQ(filling.band_energy_hartree, 0.0);
+    EXPECT_DOUBLE_EQ(filling.band_free_energy_hartree, 0.0);
+    EXPECT_TRUE(std::isfinite(filling.fermi_energy_hartree));
+}
+
+TEST(DftbNativeEigensolverTest, FiniteTemperatureFullEndpointRemainsFullAtHighTemperature)
+{
+    std::vector<DftbKPointSpectrum> spectra(3);
+    spectra[0].weight = 0.25;
+    spectra[0].solution.dimension = 2;
+    spectra[0].solution.eigenvalues_hartree = {-0.2, 0.4};
+    spectra[1].weight = 0.75;
+    spectra[1].solution.dimension = 2;
+    spectra[1].solution.eigenvalues_hartree = {0.1, 0.8};
+    spectra[2].weight = 0.0;
+    spectra[2].solution.dimension = 2;
+    spectra[2].solution.eigenvalues_hartree = {-100.0, 100.0};
+
+    const DftbFermiFilling filling = fill_fermi_occupations(spectra, 4.0, 10.0);
+
+    double weighted_electrons = 0.0;
+    double expected_band_energy = 0.0;
+    for (std::size_t k = 0; k < spectra.size(); ++k)
+    {
+        for (std::size_t band = 0; band < spectra[k].solution.dimension; ++band)
+        {
+            const double expected_occupation = spectra[k].weight == 0.0 ? 0.0 : 2.0;
+            EXPECT_DOUBLE_EQ(filling.occupations[k][band], expected_occupation);
+            weighted_electrons += spectra[k].weight * filling.occupations[k][band];
+            expected_band_energy += spectra[k].weight * expected_occupation
+                * spectra[k].solution.eigenvalues_hartree[band];
+        }
+    }
+    EXPECT_NEAR(weighted_electrons, 4.0, 1.0e-14);
+    EXPECT_NEAR(filling.band_energy_hartree, expected_band_energy, 1.0e-14);
+    EXPECT_DOUBLE_EQ(filling.band_free_energy_hartree, filling.band_energy_hartree);
+    EXPECT_TRUE(std::isfinite(filling.fermi_energy_hartree));
+}
+
 TEST(DftbNativeEigensolverTest, ZeroWeightKPointsDoNotAffectFilling)
 {
     std::vector<DftbKPointSpectrum> spectra(2);

@@ -142,6 +142,33 @@ DftbFermiFilling fill_fermi_occupations(const std::vector<DftbKPointSpectrum>& s
         result.occupations[k].resize(spectra[k].solution.dimension);
     }
 
+    // The empty and full canonical endpoints have no finite-temperature
+    // chemical potential that produces exactly 0 or 2 electrons per state.
+    // Preserve the requested electron count explicitly; retain the finite
+    // Fermi-energy sentinels as diagnostic values for these endpoints.
+    if (thermal_energy_hartree > 0.0 && electron_count == 0.0)
+    {
+        result.fermi_energy_hartree = min_energy - 1.0;
+        return result;
+    }
+    if (thermal_energy_hartree > 0.0 && electron_count >= capacity - 1.0e-12)
+    {
+        result.fermi_energy_hartree = max_energy + 1.0;
+        for (std::size_t k = 0; k < spectra.size(); ++k)
+        {
+            if (spectra[k].weight == 0.0) continue;
+            for (std::size_t band = 0; band < spectra[k].solution.dimension; ++band)
+            {
+                result.occupations[k][band] = 2.0;
+                result.band_energy_hartree += 2.0 * spectra[k].weight
+                    * spectra[k].solution.eigenvalues_hartree[band];
+            }
+        }
+        // Endpoint occupations have zero electronic entropy.
+        result.band_free_energy_hartree = result.band_energy_hartree;
+        return result;
+    }
+
     bool gap_fermi_found = false;
     double gap_fermi = 0.0;
     if (thermal_energy_hartree > 0.0 && electron_count > 0.0 && electron_count < capacity)
@@ -184,15 +211,7 @@ DftbFermiFilling fill_fermi_occupations(const std::vector<DftbKPointSpectrum>& s
 
     if (thermal_energy_hartree > 0.0)
     {
-        if (electron_count == 0.0)
-        {
-            result.fermi_energy_hartree = min_energy - 1.0;
-        }
-        else if (electron_count >= capacity - 1.0e-12)
-        {
-            result.fermi_energy_hartree = max_energy + 1.0;
-        }
-        else if (gap_fermi_found)
+        if (gap_fermi_found)
         {
             // In a wide-gap system, finite-T occupations are exactly clipped to 0/2
             // in double precision over a range of chemical potentials. Use the
