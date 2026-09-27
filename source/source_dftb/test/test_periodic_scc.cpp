@@ -3,6 +3,7 @@
 #include "gtest/gtest.h"
 
 #include <array>
+#include <limits>
 #include <stdexcept>
 #include <vector>
 
@@ -167,6 +168,10 @@ TEST(DftbNativePeriodicSccTest, IterationEnergyUsesThePotentialThatGeneratedItsD
     input.maximum_scc_iterations = 4;
     input.scc_tolerance = 1.0e-10;
     input.mixing_parameter = 1.0;
+
+    DftbPeriodicInput invalid_input = input;
+    invalid_input.scc_tolerance = std::numeric_limits<double>::infinity();
+    EXPECT_THROW(solve_periodic_dftb(invalid_input), std::invalid_argument);
 
     std::vector<DftbSccIteration> iterations;
     const DftbPeriodicResult result = solve_periodic_dftb(

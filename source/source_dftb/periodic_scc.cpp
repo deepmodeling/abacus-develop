@@ -815,19 +815,31 @@ DftbPeriodicResult solve_periodic_dftb(
     const std::function<void(const DftbSccIteration&)>& on_iteration)
 {
     if (input.atoms.empty() || input.kpoints.empty() || input.pair_parameters.empty()
-        || input.maximum_scc_iterations <= 0 || !(input.scc_tolerance > 0.0)
+        || input.maximum_scc_iterations <= 0 || !std::isfinite(input.scc_tolerance)
+        || !(input.scc_tolerance > 0.0) || !std::isfinite(input.thermal_energy_hartree)
+        || !(input.thermal_energy_hartree >= 0.0)
+        || !std::isfinite(input.total_electrons)
         || !(input.mixing_parameter > 0.0 && input.mixing_parameter <= 1.0)
         || (input.mixing_method != "linear" && input.mixing_method != "pulay"
             && input.mixing_method != "broyden")
         || input.mixing_history < 2 || input.mixing_history > 20
         || !(input.broyden_inverse_jacobi_weight > 0.0)
-        || !(input.broyden_minimal_weight > 0.0)
+        || !std::isfinite(input.broyden_inverse_jacobi_weight)
+        || !(input.broyden_minimal_weight > 0.0) || !std::isfinite(input.broyden_minimal_weight)
         || !(input.broyden_maximal_weight >= input.broyden_minimal_weight)
-        || !(input.broyden_weight_factor > 0.0)
+        || !std::isfinite(input.broyden_maximal_weight)
+        || !(input.broyden_weight_factor > 0.0) || !std::isfinite(input.broyden_weight_factor)
         || !(input.total_electrons >= 0.0) || input.hubbard_derivative.empty())
     {
         throw std::invalid_argument("Incomplete or invalid native periodic DFTB input");
     }
+    for (const auto& vector : input.lattice_bohr)
+        for (const double component : vector)
+            if (!std::isfinite(component))
+                throw std::invalid_argument("DFTB lattice vectors must contain only finite values");
+    for (const double derivative : input.hubbard_derivative)
+        if (!std::isfinite(derivative))
+            throw std::invalid_argument("DFTB Hubbard derivatives must contain only finite values");
     for (const auto& atom : input.atoms)
     {
         if (atom.homonuclear_data == nullptr || !atom.homonuclear_data->has_atomic_data
@@ -835,6 +847,14 @@ DftbPeriodicResult solve_periodic_dftb(
         {
             throw std::invalid_argument("Each DFTB atom needs homonuclear SKF data and Hubbard parameters");
         }
+        for (const double coordinate : atom.position_bohr)
+            if (!std::isfinite(coordinate))
+                throw std::invalid_argument("DFTB atom positions must contain only finite values");
+        const double valence_electrons = atom.homonuclear_data->valence_electron_count();
+        if (!std::isfinite(valence_electrons) || valence_electrons < 0.0
+            || !std::isfinite(atom.homonuclear_data->hubbard_u_hartree[0])
+            || !(atom.homonuclear_data->hubbard_u_hartree[0] > 0.0))
+            throw std::invalid_argument("DFTB SKF valence and Hubbard parameters must be finite and physical");
         if (std::abs(atom.homonuclear_data->reference_occupations[2]) > 1.0e-12)
         {
             throw std::invalid_argument("Native DFTB uses an s+p basis and cannot represent non-zero d-shell "
@@ -847,16 +867,24 @@ DftbPeriodicResult solve_periodic_dftb(
     {
         if (!(kpoint.weight >= 0.0) || !std::isfinite(kpoint.weight))
             throw std::invalid_argument("DFTB k-point weights must be finite and non-negative");
+        for (const double coordinate : kpoint.fractional)
+            if (!std::isfinite(coordinate))
+                throw std::invalid_argument("DFTB k-point coordinates must contain only finite values");
         weight_sum += kpoint.weight;
     }
     if (!std::isfinite(weight_sum) || std::abs(weight_sum - 1.0) > 1.0e-10)
     {
         throw std::invalid_argument("DFTB k-point weights must sum to one");
     }
+    for (const auto& point : input.band_kpoints)
+        for (const double coordinate : point.fractional)
+            if (!std::isfinite(coordinate))
+                throw std::invalid_argument("DFTB band-path coordinates must contain only finite values");
 
     Mat3 lattice = input.lattice_bohr;
     const double volume = std::abs(determinant(lattice));
-    if (!(volume > 1.0e-10)) throw std::invalid_argument("DFTB lattice must have non-zero volume");
+    if (!(volume > 1.0e-10) || !std::isfinite(volume))
+        throw std::invalid_argument("DFTB lattice must have finite, non-zero volume");
     const Mat3 reciprocal = reciprocal_lattice(lattice, determinant(lattice));
     const auto pairs = make_pair_images(input, lattice, reciprocal);
     const double alpha = ewald_alpha(lattice, reciprocal, volume);
