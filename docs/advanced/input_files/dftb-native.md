@@ -69,3 +69,5 @@ All files are written under `OUT.{suffix}/`:
 - `band.txt`: eigenvalues along the configured frozen-SCC path, when `band_path_file` is set.
 
 The final energy is reported as the band free energy corrected for SCC-potential double counting, plus the quadratic SCC term, third-order term, and SKF repulsive energy. A converged SCC solution and an accurate band path do not by themselves establish that the parameter set is transferable to other materials; compare energies, charges, and bands against a DFTB+ reference with the same SKF set, Hubbard derivatives, cell, k-point mesh, temperature, and electrostatics.
+
+DFTB energy and eigenvalue outputs convert Hartree to eV with the same `27.211386245988 eV/Ha` factor, so the component total, ABACUS energy markers, and band outputs use a consistent DFTB unit conversion.
