@@ -30,7 +30,7 @@ struct NativeDftbConfig
     double broyden_maximal_weight = 1.0e5;
     double broyden_weight_factor = 1.0e-2;
     int output_precision = 12;
-    bool third_order = true;
+    bool third_order = false;
 };
 
 NativeDftbConfig read_native_config(const std::string& filename);
