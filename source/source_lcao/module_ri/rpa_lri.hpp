@@ -18,6 +18,7 @@
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 
 #include "rpa_lri.h"
+#include "exx_lri.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_base/global_function.h"
 #include "source_estate/elecstate_lcao.h"
@@ -36,7 +37,10 @@ inline void trim_malloc_cache()
     malloc_trim(0);
 #endif
 }
-}
+} // namespace RpaLriDetail
+
+template <typename T, typename Tdata>
+RPA_LRI<T, Tdata>::~RPA_LRI() = default;
 
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
@@ -51,6 +55,8 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
     ModuleBase::TITLE("RPA_LRI", "postSCF");
     ModuleBase::timer::start("RPA_LRI", "postSCF");
     ModuleBase::GlobalFunc::MAKE_DIR(outdir);
+    this->ccp_rmesh_times_cut = PARAM.inp.rpa_ccp_rmesh_times;
+    this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times; // should be `exx_ccp_rmesh_times`
 
     this->cal_postSCF_exx(dm, mpi_comm_in, ucell, kv, orb, parav);
     this->init(mpi_comm_in, kv, orb.cutoffs());
@@ -59,15 +65,15 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
     this->out_struc(ucell);
 
     std::cout << "rpa_pca_threshold: " << this->info.pca_threshold << std::endl;
-    std::cout << "rpa_ccp_rmesh_times: " << this->info.ccp_rmesh_times << std::endl;
+    std::cout << "rpa_ccp_rmesh_times_cut: " << this->ccp_rmesh_times_cut << std::endl;
+    std::cout << "rpa_ccp_rmesh_times_ewald: " << this->ccp_rmesh_times_ewald << std::endl;
     std::cout << "rpa_lcao_exx(Ha): " << std::fixed << std::setprecision(15) << exx_cut_coulomb->Eexx / 2.0 << std::endl;
 
     std::cout << "etxc(Ha): " << std::fixed << std::setprecision(15) << pelec->f_en.etxc / 2.0 << std::endl;
     std::cout << "etot(Ha): " << std::fixed << std::setprecision(15) << pelec->f_en.etot / 2.0 << std::endl;
     std::cout << "Etot_without_rpa(Ha): " << std::fixed << std::setprecision(15)
               << (pelec->f_en.etot - pelec->f_en.etxc + exx_cut_coulomb->Eexx) / 2.0 << std::endl;
-    delete exx_cut_coulomb;
-    exx_cut_coulomb = nullptr;
+    exx_cut_coulomb.reset();
     RpaLriDetail::trim_malloc_cache();
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
@@ -183,17 +189,14 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
             parav,
             PARAM.inp.nspin,
             exx_spacegroup_symmetry);
-    
-    // reserve exx_ccp_rmesh_times to calculate full Coulomb
-    // Note: ccp_type=Hf and hybrid_alpha=1 were previously set on the global Exx_Info
-    // and sync_from_global() was called, but this->info (value copy) already has the correct
-    // coulomb_param from construction time, so those writes are redundant and removed.
-    this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times;
-    // Using rpa_ccp_rmesh_times to calculate cut Coulomb this->Vs_period
-    Exx_Info_RI local_info = this->info;
-    local_info.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
+
     if (!exx_cut_coulomb)
-        exx_cut_coulomb = new Exx_LRI<double>(local_info);
+    {
+        Exx_Info_RI local_info = this->info;
+        local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
+        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
+        exx_cut_coulomb.reset(new_exx);
+    }
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
     {
@@ -208,7 +211,8 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         // NOTE: Reuse abfs_for_lmax constructed earlier to avoid redundant ABFs construction.
         exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb, abfs_for_lmax);
     // cal C and V for exx
-    this->output_cut_coulomb_cs(ucell, exx_cut_coulomb);
+    Exx_LRI<double>* cut_coulomb = exx_cut_coulomb.get();
+    this->output_cut_coulomb_cs(ucell, cut_coulomb);
     // cal CVCD
     if (exx_spacegroup_symmetry && PARAM.inp.exx_symmetry_realspace)
     {
@@ -233,7 +237,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_cut_IJR;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Cs;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> tmp;
-    std::cout << "Use rpa_ccp_rmesh_times=" << this->info.ccp_rmesh_times << " to calculate cut Coulomb" << std::endl;
+    std::cout << "Use rpa_ccp_rmesh_times=" << this->ccp_rmesh_times_cut << " to calculate cut Coulomb" << std::endl;
     // Shrink_ABFS_ORBITAL cannot exceed this angular momentum of MGT
     exx_lri_rpa->cal_cut_coulomb_cs(Vs_cut_IJR, Cs, ucell, PARAM.inp.out_ri_cv);
     // MPI: {ia0, {ia1, R}} to {ia0, ia1}
@@ -241,7 +245,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     for (int iat = 0; iat < ucell.nat; ++iat)
         atoms[iat] = iat;
     const std::array<Tcell, Ndim> period_Vs
-        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, this->orb_cutoff_);
+        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->ccp_rmesh_times_cut, ucell, this->orb_cutoff_);
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, TC>>>> list_As_Vs_atoms
         = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2, false);
     const auto list_A0_pair_R = list_As_Vs_atoms.first;
@@ -287,7 +291,10 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     Exx_Info_RI local_info = this->info;
     local_info.ccp_rmesh_times = this->ccp_rmesh_times_ewald;
     if (!exx_full_coulomb)
-        exx_full_coulomb = new Exx_LRI<double>(local_info);
+    {
+        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
+        exx_full_coulomb.reset(new_exx);
+    }
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs_shrink);
@@ -323,14 +330,14 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
 
     const std::array<Tcell, Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
     this->Vs_period = RI::RI_Tools::cal_period(Vs_full_IJ, period);
-    this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_", exx_full_coulomb);
+    Exx_LRI<double>* full_coulomb = exx_full_coulomb.get();
+    this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_", full_coulomb);
     Vs_period.clear();
     Vs_period.swap(tmp);
     Cs.clear();
     Cs.swap(tmp);
 
-    delete exx_full_coulomb;
-    exx_full_coulomb = nullptr;
+    exx_full_coulomb.reset();
     RpaLriDetail::trim_malloc_cache();
 
     ModuleBase::timer::end("RPA_LRI", "output_ewald_coulomb");
@@ -342,7 +349,12 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     ModuleBase::TITLE("RPA_LRI", "cal_large_Cs");
     ModuleBase::timer::start("RPA_LRI", "cal_large_Cs");
     if (!exx_cut_coulomb)
-        exx_cut_coulomb = new Exx_LRI<double>(this->info);
+    {
+        Exx_Info_RI local_info = this->info;
+        local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
+        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
+        exx_cut_coulomb.reset(new_exx);
+    }
     exx_cut_coulomb->init_spencer(this->mpi_comm, ucell, kv, orb);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "exx_cut_coulomb->init");
     this->abfs = exx_cut_coulomb->abfs;
@@ -375,7 +387,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
                                            true);
 
     const std::array<Tcell, Ndim> period_Vs
-        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, orb_cutoff_);
+        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->ccp_rmesh_times_cut, ucell, orb_cutoff_);
     std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
         = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_large_Vs start");
@@ -423,7 +435,8 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
         this->Vs_period = RI_2D_Comm::comm_map2_first(this->mpi_comm, this->Vs_period, atoms00, atoms01);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "Vs_period_comm");
 
-        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_unshrinked_cut_", exx_cut_coulomb);
+        Exx_LRI<double>* cut_coulomb = exx_cut_coulomb.get();
+        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_unshrinked_cut_", cut_coulomb);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "out_large_Vs");
         this->Vs_period.clear();
         this->Vs_period.swap(tmp);
@@ -436,8 +449,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "out_large_Cs");
     this->Cs_period.clear();
     this->Cs_period.swap(tmp);
-    delete exx_cut_coulomb;
-    exx_cut_coulomb = nullptr;
+    exx_cut_coulomb.reset();
     RpaLriDetail::trim_malloc_cache();
 
     ModuleBase::timer::end("RPA_LRI", "cal_large_Cs");
