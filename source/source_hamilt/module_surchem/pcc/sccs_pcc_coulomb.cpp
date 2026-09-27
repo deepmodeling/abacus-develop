@@ -105,6 +105,26 @@ void PccCoulombOperator::apply(const std::vector<double>& charge,
     }
 }
 
+void PccCoulombOperator::apply_gradient(
+    const std::vector<double>& charge,
+    std::vector<ModuleBase::Vector3<double>>& gradient) const
+{
+    periodic_.apply_gradient(charge, gradient);
+    const MultipoleMoments local_moments
+        = density_moments_from_relative_positions(charge, relative_positions_, volume_element_);
+    const MultipoleMoments moments = reduce_pcc_moments(local_moments, reduction_);
+    for (std::size_t index = 0; index < charge.size(); ++index)
+    {
+        const ModuleBase::Vector3<double> correction
+            = pcc_potential_gradient(moments,
+                                     relative_positions_[index],
+                                     geometry_.parameters);
+        gradient[index].x += correction.x;
+        gradient[index].y += correction.y;
+        gradient[index].z += correction.z;
+    }
+}
+
 void PccCoulombOperator::apply_gradient_adjoint(
     const std::vector<ModuleBase::Vector3<double>>& field,
     std::vector<double>& result) const

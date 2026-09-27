@@ -133,6 +133,21 @@ PeriodicCoulombOperator::PeriodicCoulombOperator(const ModulePW::PW_Basis& basis
 void PeriodicCoulombOperator::apply(const std::vector<double>& charge,
                                     ElectrostaticField& field) const
 {
+    apply_impl(charge, field.gradient, &field.potential);
+}
+
+void PeriodicCoulombOperator::apply_gradient(
+    const std::vector<double>& charge,
+    std::vector<ModuleBase::Vector3<double>>& gradient) const
+{
+    apply_impl(charge, gradient, nullptr);
+}
+
+void PeriodicCoulombOperator::apply_impl(
+    const std::vector<double>& charge,
+    std::vector<ModuleBase::Vector3<double>>& gradient,
+    std::vector<double>* potential) const
+{
     if (charge.size() != static_cast<std::size_t>(basis_.nrxx))
     {
         throw std::invalid_argument("SCCS charge array does not match the local PW real-space grid");
@@ -157,9 +172,12 @@ void PeriodicCoulombOperator::apply(const std::vector<double>& charge,
         }
     }
 
-    field.potential.resize(basis_.nrxx);
-    field.gradient.resize(basis_.nrxx);
-    basis_.recip2real(reciprocal_work_.data(), field.potential.data());
+    gradient.resize(basis_.nrxx);
+    if (potential != nullptr)
+    {
+        potential->resize(basis_.nrxx);
+        basis_.recip2real(reciprocal_work_.data(), potential->data());
+    }
     for (int direction = 0; direction < 3; ++direction)
     {
         for (int ig = 0; ig < basis_.npw; ++ig)
@@ -170,7 +188,7 @@ void PeriodicCoulombOperator::apply(const std::vector<double>& charge,
         basis_.recip2real(reciprocal_aux_.data(), real_work_.data());
         for (int ir = 0; ir < basis_.nrxx; ++ir)
         {
-            field.gradient[ir][direction] = real_work_[ir];
+            gradient[ir][direction] = real_work_[ir];
         }
     }
 }

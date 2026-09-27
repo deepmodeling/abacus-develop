@@ -55,6 +55,23 @@ void validate_input(const std::vector<double>& solute_charge,
     }
 }
 
+bool valid_gradient(const std::vector<ModuleBase::Vector3<double>>& gradient,
+                    const std::size_t size)
+{
+    if (gradient.size() != size)
+    {
+        throw std::runtime_error("SCCS Coulomb operator returned a gradient with the wrong size");
+    }
+    for (const auto& value : gradient)
+    {
+        if (!finite_vector(value))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool valid_field(const ElectrostaticField& field, const std::size_t size)
 {
     if (field.potential.size() != size || field.gradient.size() != size)
@@ -493,6 +510,7 @@ PolarizationResult solve_polarization(
         result.polarization_charge = initial_polarization_charge;
     }
 
+    std::vector<double> total_charge(size);
     std::vector<double> trial(size, 0.0);
     std::vector<double> residual(size, 0.0);
     std::vector<double> next(size, 0.0);
@@ -502,9 +520,13 @@ PolarizationResult solve_polarization(
     mixing_state.current_mixing = parameters.mixing;
     for (int iteration = 1; iteration <= parameters.max_iterations; ++iteration)
     {
-        evaluate_field(solute_charge, result.polarization_charge, coulomb, result.field);
+        for (std::size_t index = 0; index < size; ++index)
+        {
+            total_charge[index] = solute_charge[index] + result.polarization_charge[index];
+        }
+        coulomb.apply_gradient(total_charge, result.field.gradient);
         result.iterations = iteration;
-        if (!valid_field(result.field, size))
+        if (!valid_gradient(result.field.gradient, size))
         {
             result.status = PolarizationStatus::NonFinite;
             return result;

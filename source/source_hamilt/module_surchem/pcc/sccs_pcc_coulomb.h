@@ -34,6 +34,9 @@ class PccCoulombOperator : public CoulombOperator
 
     void apply(const std::vector<double>& charge, ElectrostaticField& field) const override;
 
+    void apply_gradient(const std::vector<double>& charge,
+                        std::vector<ModuleBase::Vector3<double>>& gradient) const override;
+
     // Adjoint of charge -> electrostatic field gradient under the grid inner product.
     void apply_gradient_adjoint(
         const std::vector<ModuleBase::Vector3<double>>& field,

@@ -43,6 +43,34 @@ class LocalResponseOperator : public ModuleSccs::CoulombOperator
     double response_ = 0.0;
 };
 
+class CountingGradientOperator : public LocalResponseOperator
+{
+  public:
+    CountingGradientOperator() : LocalResponseOperator(0.1)
+    {
+    }
+
+    void apply(const std::vector<double>& charge, ModuleSccs::ElectrostaticField& field) const override
+    {
+        ++full_calls;
+        LocalResponseOperator::apply(charge, field);
+    }
+
+    void apply_gradient(const std::vector<double>& charge,
+                        std::vector<ModuleBase::Vector3<double>>& gradient) const override
+    {
+        ++gradient_calls;
+        gradient.assign(charge.size(), ModuleBase::Vector3<double>());
+        for (std::size_t i = 0; i < charge.size(); ++i)
+        {
+            gradient[i].x = ModuleBase::FOUR_PI * 0.1 * charge[i];
+        }
+    }
+
+    mutable int full_calls = 0;
+    mutable int gradient_calls = 0;
+};
+
 class NonFiniteOperator : public ModuleSccs::CoulombOperator
 {
   public:
@@ -257,6 +285,43 @@ TEST(SccsPoisson, ResidualIsMeasuredBeforeMixing)
     EXPECT_EQ(result.status, ModuleSccs::PolarizationStatus::MaxIterations);
     EXPECT_DOUBLE_EQ(result.residual_rms, 0.5);
     EXPECT_DOUBLE_EQ(result.residual_max, 0.5);
+}
+
+TEST(SccsPoisson, GradientOnlyIterationsRestoreCompleteTerminalField)
+{
+    const std::vector<double> charge{0.2, -0.1};
+    const std::vector<double> epsilon(charge.size(), 5.0);
+    const ModuleBase::Vector3<double> grad_value(0.5, 0.0, 0.0);
+    const std::vector<ModuleBase::Vector3<double>> grad_log(charge.size(), grad_value);
+    const std::vector<double> initial;
+    const LocalResponseOperator fallback(0.1);
+    for (const int max_iterations : {200, 1})
+    {
+        auto parameters = converged_parameters();
+        parameters.max_iterations = max_iterations;
+        const CountingGradientOperator optimized;
+        const auto expected = ModuleSccs::solve_polarization(
+            charge, epsilon, grad_log, initial, parameters, fallback);
+        const auto actual = ModuleSccs::solve_polarization(
+            charge, epsilon, grad_log, initial, parameters, optimized);
+        const auto status = max_iterations == 1 ? ModuleSccs::PolarizationStatus::MaxIterations
+                                               : ModuleSccs::PolarizationStatus::Converged;
+        EXPECT_EQ(actual.status, status);
+        EXPECT_EQ(actual.status, expected.status);
+        EXPECT_EQ(actual.iterations, expected.iterations);
+        EXPECT_EQ(optimized.gradient_calls, actual.iterations);
+        EXPECT_EQ(optimized.full_calls, 1);
+        EXPECT_EQ(actual.polarization_charge, expected.polarization_charge);
+        EXPECT_EQ(actual.field.potential, expected.field.potential);
+        ASSERT_EQ(actual.field.gradient.size(), expected.field.gradient.size());
+        for (std::size_t i = 0; i < charge.size(); ++i)
+        {
+            for (int d = 0; d < 3; ++d)
+            {
+                EXPECT_DOUBLE_EQ(actual.field.gradient[i][d], expected.field.gradient[i][d]);
+            }
+        }
+    }
 }
 
 TEST(SccsPoisson, ReportsNonFiniteCoulombOutput)

@@ -139,6 +139,35 @@ TEST_F(SccsAdjointTest, CoulombGradientAdjointsPreserveInnerProducts)
     }
 }
 
+TEST_F(SccsAdjointTest, GradientOnlyMatchesFullFieldForAllBoundaries)
+{
+    for (int boundary = 0; boundary < 3; ++boundary)
+    {
+        SCOPED_TRACE(boundary);
+        const auto op = make_operator(boundary);
+        ModuleSccs::ElectrostaticField field;
+        std::vector<ModuleBase::Vector3<double>> gradient;
+        for (const double scale : {1.0, 0.0, -0.7})
+        {
+            auto source = charge;
+            for (double& value : source)
+            {
+                value *= scale;
+            }
+            op->apply_gradient(source, gradient);
+            op->apply(source, field);
+            ASSERT_EQ(gradient.size(), field.gradient.size());
+            for (std::size_t i = 0; i < gradient.size(); ++i)
+            {
+                for (int d = 0; d < 3; ++d)
+                {
+                    EXPECT_DOUBLE_EQ(gradient[i][d], field.gradient[i][d]);
+                }
+            }
+        }
+    }
+}
+
 TEST_F(SccsAdjointTest, SharpWaterCavityAndSourceDerivativesMatchEnergy)
 {
     for (int boundary = 0; boundary < 3; ++boundary)

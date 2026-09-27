@@ -75,3 +75,19 @@ Regression coverage includes the transpose inner-product identity and energy
 directional derivatives for periodic, PCC0D, and PCC2D operators, with a sharp
 water dielectric cavity. Full SCF finite differences are additionally required
 to verify the Hamiltonian/Pulay/ionic-force integration.
+
+## Gradient-only polarization iterations
+
+The polarization residual uses `grad(C t)` and does not use the scalar
+potential `C t`. `CoulombOperator::apply_gradient` therefore permits a
+specialized path that omits the scalar-potential inverse FFT and the PCC
+scalar-potential evaluation during inner iterations. Periodic, PCC0D and
+PCC2D implementations preserve the full operator's gradient arithmetic.
+Other operators can use the complete-field fallback.
+
+Both convergence and iteration-limit exits reconstruct the complete field at
+the returned polarization charge. Energy and discrete-adjoint evaluation thus
+receive the same scalar potential and gradient as before. Gradient sizes and
+finite values are checked every iteration; scalar-potential validity is checked
+when the complete terminal field is constructed. Nonfinite-gradient exits do
+not promise a usable field. Solver tolerances and adjoint equations are unchanged.
