@@ -76,7 +76,7 @@ TEST(SccsPwCharge, ReconstructsNonzeroModesAndRestoresPhysicalZeroMode)
     EXPECT_LT(maximum_error, 1.0e-12);
 }
 
-TEST(SccsPwCharge, ValidatesCubeAndBuildsCellCenteredGrid)
+TEST(SccsPwCharge, ValidatesCubeAndBuildsIntegerNodeGrid)
 {
     ModulePW::PW_Basis basis("cpu", "double");
 #ifdef __MPI
@@ -99,15 +99,63 @@ TEST(SccsPwCharge, ValidatesCubeAndBuildsCellCenteredGrid)
     const std::vector<ModuleBase::Vector3<double>> positions
         = ModuleSccs::pw_grid_positions(basis, lattice, 10.0);
     ASSERT_EQ(positions.size(), static_cast<std::size_t>(basis.nrxx));
-    EXPECT_NEAR(positions[0].x, 5.0 / static_cast<double>(basis.nx), 1.0e-14);
-    EXPECT_NEAR(positions[0].y, 5.0 / static_cast<double>(basis.ny), 1.0e-14);
-    EXPECT_NEAR(positions[0].z, 5.0 / static_cast<double>(basis.nz), 1.0e-14);
+    EXPECT_NEAR(positions[0].x, 0.0, 1.0e-14);
+    EXPECT_NEAR(positions[0].y, 0.0, 1.0e-14);
+    EXPECT_NEAR(positions[0].z, 0.0, 1.0e-14);
 
     const ModuleBase::Matrix3 orthorhombic(1.0, 0.0, 0.0,
                                            0.0, 1.1, 0.0,
                                            0.0, 0.0, 1.0);
     EXPECT_THROW(ModuleSccs::validate_cubic_cell(orthorhombic, 10.0, 1.0e-10),
                  std::invalid_argument);
+}
+
+TEST(SccsPwCharge, GridCoordinatesMatchInverseFourierPhase)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    const double length = 10.0;
+    basis.initgrids(length, lattice, 20.0);
+    basis.initparameters(false, 20.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+    const std::vector<ModuleBase::Vector3<double>> positions
+        = ModuleSccs::pw_grid_positions(basis, lattice, length);
+    // Construct cos(G.r) + 0.4 sin(G.r) directly in reciprocal space.
+    // Checking all axes detects a half-grid offset independently of the
+    // coordinate implementation used by PCC moments and correction fields.
+    std::vector<std::complex<double>> coefficients(basis.npw, 0.0);
+    for (int ig = 0; ig < basis.npw; ++ig)
+    {
+        const ModuleBase::Vector3<double>& g = basis.gdirect[ig];
+        if (std::abs(g.x - 1.0) < 1.0e-12 && std::abs(g.y - 1.0) < 1.0e-12
+            && std::abs(g.z - 1.0) < 1.0e-12)
+        {
+            coefficients[ig] = std::complex<double>(0.5, -0.2);
+        }
+        else if (std::abs(g.x + 1.0) < 1.0e-12 && std::abs(g.y + 1.0) < 1.0e-12
+                 && std::abs(g.z + 1.0) < 1.0e-12)
+        {
+            coefficients[ig] = std::complex<double>(0.5, 0.2);
+        }
+    }
+    std::vector<double> values(basis.nrxx);
+    basis.recip2real(coefficients.data(), values.data());
+    double maximum_error = 0.0;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const double phase = ModuleBase::TWO_PI
+                             * (positions[ir].x + positions[ir].y + positions[ir].z) / length;
+        const double expected = std::cos(phase) + 0.4 * std::sin(phase);
+        const double error = std::abs(values[ir] - expected);
+        maximum_error = std::max(maximum_error, error);
+    }
+    EXPECT_LT(maximum_error, 1.0e-12);
 }
 
 TEST(SccsPwCharge, KeepsYCoordinatesIndependentOfDistributedZSlab)
@@ -130,9 +178,9 @@ TEST(SccsPwCharge, KeepsYCoordinatesIndependentOfDistributedZSlab)
     const int iy = 2;
     const int iz_local = 1;
     const int index = (ix * basis.ny + iy) * basis.nplane + iz_local;
-    const double fractional_x = 1.5 / 3.0;
-    const double fractional_y = 2.5 / 4.0;
-    const double fractional_z = 4.5 / 7.0;
+    const double fractional_x = 1.0 / 3.0;
+    const double fractional_y = 2.0 / 4.0;
+    const double fractional_z = 4.0 / 7.0;
     EXPECT_NEAR(positions[index].x,
                 lattice_scale * (2.0 * fractional_x + fractional_z),
                 1.0e-14);

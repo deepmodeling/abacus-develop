@@ -291,7 +291,7 @@ TEST(HCorrSccs, AppliesNeutralPcc2dPointIonEnergyAndPotential)
     geometry.origin_y = cell.atoms[0].tau[0].y * cell.lat0;
     const double electron_y
         = geometry.parameters.cell_length_y
-          * (static_cast<double>(electron_plane_y) + 0.5)
+          * static_cast<double>(electron_plane_y)
           / static_cast<double>(basis.ny);
     const double dipole_y
         = -ModuleSccs::pcc_2d_relative_y(electron_y, geometry);

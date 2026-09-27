@@ -75,7 +75,7 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
     geometry.origin_y = cell.atoms[0].tau[0].y * cell.lat0;
     const double electron_y
         = geometry.parameters.cell_length_y
-          * (static_cast<double>(electron_plane_y) + 0.5) / basis.ny;
+          * static_cast<double>(electron_plane_y) / basis.ny;
     const double dipole_y = -ModuleSccs::pcc_2d_relative_y(electron_y, geometry);
     const double expected_energy = 2.0 * ModuleBase::PI * dipole_y * dipole_y / cell.omega;
     EXPECT_NEAR(surchem::Ael, 2.0 * expected_energy, 1.0e-12);

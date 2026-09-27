@@ -140,7 +140,9 @@ TEST_F(SccsPcc2dCoulombTest, ReducesYMomentsAndBuildsPlaneAverages)
                                                      geometry_,
                                                      reduction_);
     EXPECT_NEAR(moments.charge, 1.0, 1.0e-12);
-    EXPECT_NEAR(moments.dipole_y, 0.0, 1.0e-14);
+    // Integer FFT nodes sample [0, Ly), so their mean is half a step below Ly/2.
+    const double uniform_dipole = -geometry_.parameters.cell_length_y / (2.0 * basis_.ny);
+    EXPECT_NEAR(moments.dipole_y, uniform_dipole, 1.0e-14);
 
     std::vector<double> y_values(positions_.size());
     for (std::size_t index = 0; index < positions_.size(); ++index)
@@ -153,7 +155,7 @@ TEST_F(SccsPcc2dCoulombTest, ReducesYMomentsAndBuildsPlaneAverages)
     for (int iy = 0; iy < basis_.ny; ++iy)
     {
         const double expected = geometry_.parameters.cell_length_y
-                                * (static_cast<double>(iy) + 0.5)
+                                * static_cast<double>(iy)
                                 / static_cast<double>(basis_.ny);
         EXPECT_NEAR(average[iy], expected, 2.0e-13);
     }
@@ -462,6 +464,18 @@ TEST_F(SccsPcc2dCoulombTest, NonuniformCavityEnergyMatchesNeutralDensityDerivati
     cavity.density_min = 5.0e-3;
     cavity.density_max = 2.0e-2;
     cavity.epsilon_bulk = 4.0;
+    // Remove the finite-cell tail imbalance to make this a fixed-charge variation.
+    double direction_integral = 0.0;
+    for (const double value : direction)
+    {
+        direction_integral += value * volume_element_;
+    }
+    reduction_.reduce_sum(direction_integral);
+    const double direction_mean = direction_integral / volume_;
+    for (double& value : direction)
+    {
+        value -= direction_mean;
+    }
     const ModuleSccs::ElectrostaticFunctionalResult center
         = evaluate_reaction(electron_density, ionic_density, cavity, coulomb);
 
@@ -527,6 +541,18 @@ TEST_F(SccsPcc2dCoulombTest, NonuniformCavityEnergyMatchesFixedChargeDensityDeri
     cavity.density_min = 5.0e-3;
     cavity.density_max = 2.0e-2;
     cavity.epsilon_bulk = 4.0;
+    // Remove the finite-cell tail imbalance to make this a fixed-charge variation.
+    double direction_integral = 0.0;
+    for (const double value : direction)
+    {
+        direction_integral += value * volume_element_;
+    }
+    reduction_.reduce_sum(direction_integral);
+    const double direction_mean = direction_integral / volume_;
+    for (double& value : direction)
+    {
+        value -= direction_mean;
+    }
     const ModuleSccs::ElectrostaticFunctionalResult center
         = evaluate_reaction(electron_density, ionic_density, cavity, coulomb);
 

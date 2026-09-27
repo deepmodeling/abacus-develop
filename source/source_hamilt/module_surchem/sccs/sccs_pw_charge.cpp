@@ -104,9 +104,10 @@ std::vector<ModuleBase::Vector3<double>> pw_grid_positions(
         const int ix = ir / (basis.ny * basis.nplane);
         const int iy = ir / basis.nplane - ix * basis.ny;
         const int iz = ir % basis.nplane + basis.startz_current;
-        const double fx = (static_cast<double>(ix) + 0.5) / static_cast<double>(basis.nx);
-        const double fy = (static_cast<double>(iy) + 0.5) / static_cast<double>(basis.ny);
-        const double fz = (static_cast<double>(iz) + 0.5) / static_cast<double>(basis.nz);
+        // FFT samples are at integer grid nodes, not voxel centers.
+        const double fx = static_cast<double>(ix) / static_cast<double>(basis.nx);
+        const double fy = static_cast<double>(iy) / static_cast<double>(basis.ny);
+        const double fz = static_cast<double>(iz) / static_cast<double>(basis.nz);
         positions[ir] = ModuleBase::Vector3<double>(fx * a1.x + fy * a2.x + fz * a3.x,
                                                     fx * a1.y + fy * a2.y + fz * a3.y,
                                                     fx * a1.z + fy * a2.z + fz * a3.z);
