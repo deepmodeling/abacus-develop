@@ -1507,9 +1507,6 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         return;
     }
 
-    // Split Ewald component dumps remain opt-in through the reader-v1 path;
-    // keep the legacy split files disabled by default.
-    const bool dump_split = false;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_full_IJR;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Cs;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> tmp;
@@ -1519,8 +1516,8 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
                                         Cs,
                                         ucell,
                                         PARAM.inp.out_ri_cv,
-                                        &Vs_short_IJR,
-                                        &Vs_long_IJR,
+                                        nullptr,
+                                        nullptr,
                                         output_ewald_components ? &ewald_components : nullptr);
     // MPI: {ia0, {ia1, R}} to {ia0, ia1}
     std::vector<TA> atoms(ucell.nat);
