@@ -3,6 +3,14 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 
 set(STERNHEIMER_RPA_TEST_LIBS ${math_libs})
+set(STERNHEIMER_RPA_TEST_SOURCES
+  sternheimer_rpa_test.cpp
+  sternheimer_projector_locality_test.cpp
+  ../sternheimer_rpa.cpp)
+if(ENABLE_GREENX_MINIMAX)
+  list(APPEND STERNHEIMER_RPA_TEST_LIBS GreenX::MiniMax)
+  list(APPEND STERNHEIMER_RPA_TEST_SOURCES ../greenx_minimax_adapter.f90)
+endif()
 AddTest(
   TARGET MODULE_RPA_sternheimer_runtime_options_test
   LIBS parameter base ${math_libs} device
@@ -11,8 +19,11 @@ AddTest(
 AddTest(
   TARGET MODULE_RPA_sternheimer_rpa_test
   LIBS ${STERNHEIMER_RPA_TEST_LIBS}
-  SOURCES sternheimer_rpa_test.cpp sternheimer_projector_locality_test.cpp ../sternheimer_rpa.cpp
+  SOURCES ${STERNHEIMER_RPA_TEST_SOURCES}
 )
+if(ENABLE_GREENX_MINIMAX)
+  target_compile_definitions(MODULE_RPA_sternheimer_rpa_test PRIVATE __GREENX_MINIMAX)
+endif()
 AddTest(
   TARGET MODULE_RPA_sternheimer_wavefunction_diagnostic_test
   LIBS ${math_libs}
