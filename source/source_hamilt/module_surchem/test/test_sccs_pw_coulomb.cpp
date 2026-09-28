@@ -4,6 +4,10 @@
 #endif
 
 #include "../sccs/sccs_pw_coulomb.h"
+#include "../sccs/sccs_pw_charge.h"
+#include "../sccs/sccs_charge.h"
+#include "../pcc/sccs_pcc_coulomb.h"
+#include "../pcc/sccs_pcc_2d_coulomb.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
@@ -14,6 +18,7 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <memory>
 #include <vector>
 
 #ifdef _OPENMP
@@ -229,6 +234,119 @@ TEST_F(SccsPwCoulombTest, ParallelGridLoopsMatchSerialFields)
     }
 }
 #endif
+
+class SccsCoulombOperatorsTest : public testing::Test
+{
+  protected:
+    void SetUp() override
+    {
+        basis.reset(new ModulePW::PW_Basis("cpu", "double"));
+#ifdef __MPI
+        basis->initmpi(1, 0, POOL_WORLD);
+#endif
+        const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+        const double length = 12.0;
+        basis->initgrids(length, lattice, 30.0);
+        basis->initparameters(false, 30.0, 1, false);
+        basis->setuptransform();
+        basis->collect_local_pw();
+        tpiba = ModuleBase::TWO_PI / length;
+        dv = length * length * length / basis->nxyz;
+        positions = ModuleSccs::pw_grid_positions(*basis, lattice, length);
+        geometry = ModuleSccs::pcc_geometry(lattice, length, 1.0e-10);
+        geometry_2d = ModuleSccs::pcc_2d_geometry(lattice, length, 1.0e-10);
+        charge.resize(basis->nrxx);
+        for (int i = 0; i < basis->nrxx; ++i)
+        {
+            const double x = positions[i].x - 6.0;
+            const double y = positions[i].y - 6.0;
+            const double z = positions[i].z - 6.0;
+            charge[i] = -0.02 * std::exp(-((x - 0.7) * (x - 0.7) + y * y + z * z) / 2.0);
+        }
+    }
+
+    std::unique_ptr<ModuleSccs::CoulombOperator> make_operator(const int boundary)
+    {
+        if (boundary == 0)
+        {
+            return std::unique_ptr<ModuleSccs::CoulombOperator>(
+                new ModuleSccs::PeriodicCoulombOperator(*basis, tpiba));
+        }
+        if (boundary == 1)
+        {
+            return std::unique_ptr<ModuleSccs::CoulombOperator>(
+                new ModuleSccs::PccCoulombOperator(*basis, tpiba, positions, dv, geometry, charge_reduction));
+        }
+        return std::unique_ptr<ModuleSccs::CoulombOperator>(
+            new ModuleSccs::Pcc2dCoulombOperator(*basis, tpiba, positions, dv, geometry_2d, charge_reduction));
+    }
+
+    std::unique_ptr<ModulePW::PW_Basis> basis;
+    std::vector<ModuleBase::Vector3<double>> positions;
+    std::vector<double> charge;
+    ModuleSccs::PccGeometry geometry;
+    ModuleSccs::Pcc2dGeometry geometry_2d;
+    ModuleSccs::SerialChargeReduction charge_reduction;
+    double tpiba = 0.0;
+    double dv = 0.0;
+};
+
+TEST_F(SccsCoulombOperatorsTest, CoulombGradientAdjointsPreserveInnerProducts)
+{
+    for (int boundary = 0; boundary < 3; ++boundary)
+    {
+        SCOPED_TRACE(boundary);
+        const auto op = make_operator(boundary);
+        ModuleSccs::ElectrostaticField field;
+        op->apply(charge, field);
+        std::vector<ModuleBase::Vector3<double>> probe(basis->nrxx);
+        for (int i = 0; i < basis->nrxx; ++i)
+        {
+            probe[i].x = 0.3 + std::sin(positions[i].x);
+            probe[i].y = -0.5 + std::cos(positions[i].y);
+            probe[i].z = positions[i].z - 6.0;
+        }
+        std::vector<double> transpose;
+        op->apply_gradient_adjoint(probe, transpose);
+        double left = 0.0;
+        double right = 0.0;
+        for (int i = 0; i < basis->nrxx; ++i)
+        {
+            left += (field.gradient[i] * probe[i]) * dv;
+            right += charge[i] * transpose[i] * dv;
+        }
+        EXPECT_NEAR(left, right, 2.0e-12);
+    }
+}
+
+TEST_F(SccsCoulombOperatorsTest, GradientOnlyMatchesFullFieldForAllBoundaries)
+{
+    for (int boundary = 0; boundary < 3; ++boundary)
+    {
+        SCOPED_TRACE(boundary);
+        const auto op = make_operator(boundary);
+        ModuleSccs::ElectrostaticField field;
+        std::vector<ModuleBase::Vector3<double>> gradient;
+        for (const double scale : {1.0, 0.0, -0.7})
+        {
+            auto source = charge;
+            for (double& value : source)
+            {
+                value *= scale;
+            }
+            op->apply_gradient(source, gradient);
+            op->apply(source, field);
+            ASSERT_EQ(gradient.size(), field.gradient.size());
+            for (std::size_t i = 0; i < gradient.size(); ++i)
+            {
+                for (int d = 0; d < 3; ++d)
+                {
+                    EXPECT_DOUBLE_EQ(gradient[i][d], field.gradient[i][d]);
+                }
+            }
+        }
+    }
+}
 
 } // namespace
 

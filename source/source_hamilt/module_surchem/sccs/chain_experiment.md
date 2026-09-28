@@ -11,3 +11,19 @@ For reproduction of the historical experiment, sccs_tol_rms is interpreted as th
 The baseline handles an initially zero source without a CG null-residual breakdown. Otherwise its numerical path follows the archived experiment. The retained experimental force checks previously had a nonzero finite-grid analytic-versus-FD discrepancy; speed optimization does not establish or improve variational force consistency.
 
 Baseline and optimization validation, commands, runtime logs and source provenance are recorded under /home/lyt/DFT/abacus_sccs/validation/chain_optimization_20260927. Build directories are independent of the stable executable.
+
+The unused discrete-adjoint solver, its state and diagnostic fields, and its
+finite-grid derivative tests have been removed from this branch. Coulomb-gradient
+transpose operations remain mathematical operator utilities; their inner-product
+and gradient-only tests now live in `test_sccs_pw_coulomb.cpp`. These utilities do
+not introduce an adjoint solve into the chain path. The removed solver and its
+verification remain available in Git history and the stable branch.
+
+Cleanup verification rebuilt ABACUS and five focused test targets. The Coulomb
+operator, PCC2D operator, driver, and potential/debug suites passed. The force
+suite retains two failing finite-difference checks: the periodic reaction-force
+error is 0.0070829526759735306 Ha/bohr, and the largest PCC2D component error is
+0.00014111774946192097 Ha/bohr. Rebuilding the force suite from the pre-cleanup
+commit reproduced all seven reported error values exactly. No force tolerances
+or references were changed. The detailed commands and logs are recorded in
+`/home/lyt/DFT/abacus_sccs/validation/chain_cleanup_20260928/REPORT.md`.

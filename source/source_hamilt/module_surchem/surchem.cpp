@@ -182,25 +182,18 @@ void surchem::write_sccs_iteration(std::ostream& output) const
                << " cached_sources " << result.reused_fixed_sources
                << " pcc_s " << result.pcc_seconds
                << " forward_s " << result.forward_seconds
-               << " adjoint_s " << result.adjoint_seconds
                << " non_electrostatic_s " << result.non_electrostatic_seconds << '\n'
                << std::defaultfloat << std::setprecision(8);
-        const ModuleSccs::CoulombTransformProfile* profiles[]
-            = {&result.forward_transforms, &result.adjoint_transforms};
-        const char* stages[] = {"forward", "adjoint"};
         // Local output-rank timings; FFT calls include PW packing and communication.
-        for (int stage = 0; stage < 2; ++stage)
-        {
-            const ModuleSccs::CoulombTransformProfile& profile = *profiles[stage];
-            output << std::fixed << std::setprecision(2)
-                   << " SCCS_FFT STAGE " << stages[stage]
-                   << " R2G_CALLS " << profile.forward_calls
-                   << " G2R_CALLS " << profile.inverse_calls
-                   << " R2G/s " << profile.forward_seconds
-                   << " G2R/s " << profile.inverse_seconds
-                   << " OTHER/s " << profile.other_seconds << '\n'
-                   << std::defaultfloat << std::setprecision(8);
-        }
+        const ModuleSccs::CoulombTransformProfile& profile = result.forward_transforms;
+        output << std::fixed << std::setprecision(2)
+               << " SCCS_FFT STAGE forward"
+               << " R2G_CALLS " << profile.forward_calls
+               << " G2R_CALLS " << profile.inverse_calls
+               << " R2G/s " << profile.forward_seconds
+               << " G2R/s " << profile.inverse_seconds
+               << " OTHER/s " << profile.other_seconds << '\n'
+               << std::defaultfloat << std::setprecision(8);
     }
 
     if (this->parameters_.debug >= 2
@@ -271,9 +264,6 @@ void surchem::write_sccs_diagnostics(std::ostream& output) const
     const ModuleSccs::SccsResult& result = this->sccs_result();
     const std::streamsize previous_precision = output.precision();
     output << std::setprecision(16);
-    output << " SCCS_DIAGNOSTIC adjoint_iterations " << result.adjoint_iterations << '\n';
-    output << " SCCS_DIAGNOSTIC adjoint_residual_rms " << result.adjoint_residual_rms << '\n';
-    output << " SCCS_DIAGNOSTIC adjoint_residual_max " << result.adjoint_residual_max << '\n';
     output << " SCCS_DIAGNOSTIC reaction_energy_hartree "
            << result.electrostatic.reaction_energy << '\n';
     output << " SCCS_DIAGNOSTIC smooth_vacuum_pcc_energy_hartree "

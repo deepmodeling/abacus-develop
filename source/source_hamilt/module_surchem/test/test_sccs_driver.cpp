@@ -212,12 +212,11 @@ TEST(SccsDriver, PreservesChargeAndCombinesPccEnergyPotentialAndState)
                     1.0e-14);
     }
 
-    // An incompatible grid signature must reject both cached fields, even if
+    // An incompatible grid signature must reject the cached polarization, even if
     // they contain invalid data. The result must match a clean cold start.
     state.tpiba *= 2.0;
     const double invalid_value = std::numeric_limits<double>::quiet_NaN();
     std::fill(state.polarization_charge.begin(), state.polarization_charge.end(), invalid_value);
-    std::fill(state.adjoint_potential.begin(), state.adjoint_potential.end(), invalid_value);
     const ModuleSccs::SccsResult invalidated
         = evaluate_uniform_charge(1.0, state, basis, lattice, length);
     EXPECT_EQ(invalidated.response.polarization.iterations, cation.response.polarization.iterations);

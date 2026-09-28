@@ -142,7 +142,6 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     EXPECT_GE(result.preparation_seconds, 0.0);
     EXPECT_GE(result.pcc_seconds, 0.0);
     EXPECT_GE(result.forward_seconds, 0.0);
-    EXPECT_GE(result.adjoint_seconds, 0.0);
     EXPECT_GE(result.non_electrostatic_seconds, 0.0);
     EXPECT_NEAR(result.charge.net_charge, 1.0, 1.0e-12);
     EXPECT_NEAR(result.point_solute_moments.charge, 1.0, 1.0e-12);
@@ -163,7 +162,12 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     const std::string debug_text = debug_output.str();
     EXPECT_NE(debug_text.find("SCCS_TIMING preparation_s "), std::string::npos);
     EXPECT_NE(debug_text.find("SCCS_FFT STAGE forward R2G_CALLS "), std::string::npos);
-    EXPECT_NE(debug_text.find("SCCS_FFT STAGE adjoint R2G_CALLS "), std::string::npos);
+    EXPECT_EQ(debug_text.find("adjoint"), std::string::npos);
+    std::ostringstream diagnostic_output;
+    solvent.write_sccs_diagnostics(diagnostic_output);
+    EXPECT_EQ(diagnostic_output.str().find("adjoint"), std::string::npos);
+    EXPECT_NE(diagnostic_output.str().find("SCCS_DIAGNOSTIC reaction_energy_hartree "),
+              std::string::npos);
     EXPECT_NE(debug_text.find("PCC0D_ORIGIN X/Bohr 5 Y/Bohr 5 Z/Bohr 5"),
               std::string::npos);
     EXPECT_NE(debug_text.find("PCC0D_MOMENTS SMOOTH Q/e "), std::string::npos);

@@ -13,8 +13,8 @@ namespace ModuleSccs
 {
 
 // Contract dE/d(rho_ion) with the position derivative of the smooth ionic
-// source reconstructed from vloc (Ry). The input is the adjoint charge
-// derivative, which need not equal the reaction potential on a finite grid.
+// source reconstructed from vloc (Ry). The input is the potential derivative
+// with respect to that ionic charge density, in Hartree.
 // Return this rank's G-space contribution in Ha/bohr; the caller reduces it
 // over the pool and converts once to Ry/bohr. G=0 is position independent.
 ModuleBase::matrix smooth_ionic_force_hartree(

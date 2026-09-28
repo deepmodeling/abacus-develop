@@ -21,7 +21,6 @@ namespace ModuleSccs
 struct SccsState
 {
     std::vector<double> polarization_charge;
-    std::vector<double> adjoint_potential;
     int local_grid_size = 0;
     int global_grid_size = 0;
     int nx = 0;
@@ -48,10 +47,8 @@ struct SccsResult
     double preparation_seconds = 0.0;
     double pcc_seconds = 0.0;
     double forward_seconds = 0.0;
-    double adjoint_seconds = 0.0;
     double non_electrostatic_seconds = 0.0;
     CoulombTransformProfile forward_transforms;
-    CoulombTransformProfile adjoint_transforms;
     ChargeDensity charge;
     PeriodicSccsResult response;
     ElectrostaticField vacuum_field;
@@ -69,9 +66,6 @@ struct SccsResult
     Pcc2dMoments point_solute_moments_2d;
     double vacuum_pcc_energy = 0.0;
     double ionic_shape_pcc_energy = 0.0;
-    int adjoint_iterations = 0;
-    double adjoint_residual_rms = 0.0;
-    double adjoint_residual_max = 0.0;
 };
 
 SccsResult evaluate_pw_sccs(

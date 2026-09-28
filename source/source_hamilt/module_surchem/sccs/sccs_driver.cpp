@@ -123,7 +123,6 @@ Pcc2dMoments add_moments_2d(const Pcc2dMoments& left, const Pcc2dMoments& right)
 void SccsState::reset()
 {
     polarization_charge.clear();
-    adjoint_potential.clear();
     local_grid_size = 0;
     global_grid_size = 0;
     nx = 0;
@@ -275,8 +274,8 @@ SccsResult evaluate_pw_sccs(
                                                               volume_element,
                                                               charge_reduction);
 
-    // Experimental continuum chain derivative: the functional supplies the
-    // reaction and cavity potentials directly. No discrete adjoint is solved.
+    // The continuum chain derivative supplies reaction and cavity potentials
+    // directly for the electronic Hamiltonian.
 
     NonElectrostaticParameters non_electrostatic_parameters;
     non_electrostatic_parameters.surface_tension = config.surface_tension;
@@ -388,7 +387,6 @@ SccsResult evaluate_pw_sccs(
     }
 
     state.polarization_charge = result.response.polarization.polarization_charge;
-    state.adjoint_potential.clear();
     state.local_grid_size = basis.nrxx;
     state.global_grid_size = basis.nxyz;
     state.nx = basis.nx;
