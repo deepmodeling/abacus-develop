@@ -113,6 +113,7 @@ struct PolarizationResult
     double residual_max = 0.0;
     double final_mixing = 0.0;
     int mixing_restarts = 0;
+    bool warm_started = false;
     bool fixed_point_checked = false;
     double fixed_point_defect_rms = 0.0;
     double fixed_point_defect_max = 0.0;

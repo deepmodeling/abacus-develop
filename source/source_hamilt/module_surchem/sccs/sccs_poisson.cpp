@@ -541,6 +541,7 @@ PolarizationResult solve_polarization(
     if (!initial_polarization_charge.empty())
     {
         result.polarization_charge = initial_polarization_charge;
+        result.warm_started = true;
     }
 
     std::vector<double> total_charge(size);

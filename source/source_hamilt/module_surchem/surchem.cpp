@@ -178,7 +178,8 @@ void surchem::write_sccs_iteration(std::ostream& output) const
                << " RESTARTS "
                << polarization.mixing_restarts << '\n';
         output << " SCCS_RESIDUAL RMS " << polarization.residual_rms
-               << " MAX " << polarization.residual_max << '\n';
+               << " MAX " << polarization.residual_max
+               << " WARM_START " << polarization.warm_started << '\n';
         if (polarization.fixed_point_checked)
         {
             output << " SCCS_CG_FIXED_POINT_DEFECT RMS " << polarization.fixed_point_defect_rms

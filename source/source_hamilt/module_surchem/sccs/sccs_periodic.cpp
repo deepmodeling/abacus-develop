@@ -109,7 +109,7 @@ PeriodicSccsResult solve_periodic_sccs(
     const std::vector<double>& solute_charge,
     const CavityParameters& cavity_parameters,
     const PolarizationSolverParameters& solver_parameters,
-    const std::vector<double>& initial_polarization_charge,
+    const std::vector<double>& initial_potential,
     const ModulePW::PW_Basis& basis,
     const double tpiba,
     const int pool_process_count)
@@ -120,7 +120,7 @@ PeriodicSccsResult solve_periodic_sccs(
                                solute_charge,
                                cavity_parameters,
                                solver_parameters,
-                               initial_polarization_charge,
+                               initial_potential,
                                basis,
                                tpiba,
                                coulomb,
@@ -153,7 +153,7 @@ PeriodicSccsResult solve_chain_sccs_response(
     const std::vector<double>& charge,
     const ModuleSccs::CavityParameters& cavity,
     const ModuleSccs::PolarizationSolverParameters& solver,
-    const std::vector<double>& initial,
+    const std::vector<double>& initial_potential,
     const ModulePW::PW_Basis& basis,
     const double tpiba,
     const ModuleSccs::CoulombOperator& coulomb,
@@ -228,6 +228,26 @@ PeriodicSccsResult solve_chain_sccs_response(
                && polarization.residual_max <= solver.tolerance_max;
     };
     bool converged = residual_converged();
+    // ENVIRON generalized_sqrt warm start: one preconditioned fixed-point step
+    // v = P(q - K v_old) from the previous potential, whose charge residual is
+    // K (v_old - v). Keep it only when it improves on the cold-start residual.
+    if (!converged && initial_potential.size() == size)
+    {
+        std::vector<double> guess_residual(size);
+        for (std::size_t i = 0; i < size; ++i) guess_residual[i] = charge[i]-coefficient[i]*initial_potential[i];
+        precondition(guess_residual, z);
+        for (std::size_t i = 0; i < size; ++i) guess_residual[i] = coefficient[i]*(initial_potential[i]-z[i]);
+        double guess_rms = 0.0;
+        double guess_max = 0.0;
+        reduced_rms_max(guess_residual, reduction, guess_rms, guess_max);
+        if (guess_rms < polarization.residual_rms)
+        {
+            potential.swap(z);
+            residual.swap(guess_residual);
+            polarization.warm_started = true;
+            converged = residual_converged();
+        }
+    }
     for (int iteration = 1; !converged && iteration <= solver.max_iterations; ++iteration)
     {
         precondition(residual, z);
@@ -281,6 +301,7 @@ PeriodicSccsResult solve_chain_sccs_response(
     for (std::size_t i = 0; i < size; ++i)
         result.polarization.polarization_charge[i] -= charge[i];
     result.polarization.status = ModuleSccs::PolarizationStatus::Converged;
+    result.restart_potential = potential;
     double mean = 0.0;
     for (double value : potential) mean += value;
     reduction.reduce_sum(mean);

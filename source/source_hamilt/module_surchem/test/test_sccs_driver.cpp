@@ -169,6 +169,75 @@ TEST(SccsDriver, EvaluatesNeutralAndFixedChargePcc2dSources)
     EXPECT_TRUE(state.valid);
 }
 
+TEST(SccsDriver, PeriodicSqrtCgWarmStartsFromStoredPotential)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    const double length = 10.0;
+    basis.initgrids(length, lattice, 20.0);
+    basis.initparameters(false, 20.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+
+    const double volume = length * length * length;
+    const double volume_element = volume / static_cast<double>(basis.nxyz);
+    const std::vector<ModuleBase::Vector3<double>> positions
+        = ModuleSccs::pw_grid_positions(basis, lattice, length);
+    const ModuleBase::Vector3<double> origin = ModuleSccs::cell_center(lattice, length);
+    // A cavity-crossing electron mode on a uniform ionic background.
+    std::vector<double> electron_density(basis.nrxx);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const int ix = ir / (basis.ny * basis.nplane);
+        electron_density[ir] = 0.009 + 0.008 * std::cos(ModuleBase::TWO_PI * ix / basis.nx);
+    }
+    const double electron_count = 0.009 * volume;
+    const std::vector<double> ionic_density(basis.nrxx, electron_count / volume);
+
+    ModuleSccs::SccsConfig config;
+    config.cavity.density_min = 2.4e-3;
+    config.cavity.density_max = 1.55e-2;
+    config.cavity.epsilon_bulk = 78.3;
+    config.surface_regularization = 1.0e-6;
+    config.boundary = ModuleSccs::Boundary::Periodic;
+    config.max_iterations = 200;
+    config.mixing = 0.5;
+    config.tolerance_rms = 1.0e-11;
+    config.tolerance_max = 1.0e-10;
+    const ModuleSccs::PccGeometry pcc;
+    const ModuleSccs::Pcc2dGeometry pcc_2d;
+    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModuleSccs::SerialPolarizationReduction polarization_reduction;
+    const double tpiba = ModuleBase::TWO_PI / length;
+    ModuleSccs::SccsState state;
+    const ModuleSccs::SccsResult cold
+        = ModuleSccs::evaluate_pw_sccs(electron_density, ionic_density, electron_count,
+                                       electron_count, 1.0e-10, positions, origin, config,
+                                       pcc, pcc_2d, basis, tpiba, volume_element,
+                                       charge_reduction, polarization_reduction, state);
+    ASSERT_TRUE(state.valid);
+    ASSERT_EQ(state.potential.size(), static_cast<std::size_t>(basis.nrxx));
+    EXPECT_FALSE(cold.response.polarization.warm_started);
+    ASSERT_GT(cold.response.polarization.iterations, 1);
+
+    const ModuleSccs::SccsResult warm
+        = ModuleSccs::evaluate_pw_sccs(electron_density, ionic_density, electron_count,
+                                       electron_count, 1.0e-10, positions, origin, config,
+                                       pcc, pcc_2d, basis, tpiba, volume_element,
+                                       charge_reduction, polarization_reduction, state);
+    EXPECT_TRUE(warm.response.polarization.warm_started);
+    EXPECT_LT(warm.response.polarization.iterations, cold.response.polarization.iterations);
+    EXPECT_NEAR(warm.electrostatic.reaction_energy, cold.electrostatic.reaction_energy, 1.0e-10);
+
+    state.reset();
+    EXPECT_TRUE(state.potential.empty());
+}
+
 TEST(SccsDriver, PreservesChargeAndCombinesPccEnergyPotentialAndState)
 {
     ModulePW::PW_Basis basis("cpu", "double");

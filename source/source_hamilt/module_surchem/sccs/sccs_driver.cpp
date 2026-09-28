@@ -72,6 +72,10 @@ bool same_state_signature(const SccsState& state,
                           const ModuleBase::Vector3<double>& origin,
                           const std::uint64_t position_signature)
 {
+    // PCC restarts from the polarization charge, the periodic sqrt-CG from its potential.
+    const std::size_t warm_start_size = boundary == Boundary::Periodic
+                                            ? state.potential.size()
+                                            : state.polarization_charge.size();
     return state.valid && state.boundary == boundary
            && state.local_grid_size == basis.nrxx
            && state.global_grid_size == basis.nxyz && state.nx == basis.nx
@@ -95,7 +99,7 @@ bool same_state_signature(const SccsState& state,
                   == pcc_2d_geometry.parameters.cell_length_y
            && state.pcc_2d_geometry.origin_y == pcc_2d_geometry.origin_y
            && same_cavity(state.cavity, cavity)
-           && state.polarization_charge.size() == static_cast<std::size_t>(basis.nrxx);
+           && warm_start_size == static_cast<std::size_t>(basis.nrxx);
 }
 
 MultipoleMoments add_moments(const MultipoleMoments& left, const MultipoleMoments& right)
@@ -123,6 +127,7 @@ Pcc2dMoments add_moments_2d(const Pcc2dMoments& left, const Pcc2dMoments& right)
 void SccsState::reset()
 {
     polarization_charge.clear();
+    potential.clear();
     local_grid_size = 0;
     global_grid_size = 0;
     nx = 0;
@@ -227,7 +232,10 @@ SccsResult evaluate_pw_sccs(
                                                    origin,
                                                    position_signature);
     const std::vector<double> empty_initial;
-    const std::vector<double>& initial = reuse_state ? state.polarization_charge : empty_initial;
+    const std::vector<double>& initial_charge
+        = reuse_state ? state.polarization_charge : empty_initial;
+    const std::vector<double>& initial_potential
+        = reuse_state ? state.potential : empty_initial;
     const std::chrono::steady_clock::time_point forward_start
         = std::chrono::steady_clock::now();
     // The periodic CG recovery discards the net-charge mode. PCC instead
@@ -239,7 +247,7 @@ SccsResult evaluate_pw_sccs(
                                                   result.charge.solute,
                                                   config.cavity,
                                                   solver_parameters,
-                                                  initial,
+                                                  initial_potential,
                                                   basis,
                                                   tpiba,
                                                   *coulomb,
@@ -251,7 +259,7 @@ SccsResult evaluate_pw_sccs(
                                                   result.charge.solute,
                                                   config.cavity,
                                                   solver_parameters,
-                                                  initial,
+                                                  initial_charge,
                                                   basis,
                                                   tpiba,
                                                   *coulomb,
@@ -386,6 +394,7 @@ SccsResult evaluate_pw_sccs(
     }
 
     state.polarization_charge = result.response.polarization.polarization_charge;
+    state.potential = result.response.restart_potential;
     state.local_grid_size = basis.nrxx;
     state.global_grid_size = basis.nxyz;
     state.nx = basis.nx;

@@ -131,12 +131,17 @@ class SqrtCgFixture : public testing::Test
         }
     }
 
+    ModuleSccs::PeriodicSccsResult solve_from(const std::vector<double>& initial_potential) const
+    {
+        const double tpiba = ModuleBase::TWO_PI / length;
+        return ModuleSccs::solve_periodic_sccs(density, charge, cavity, solver, initial_potential,
+                                               basis, tpiba, 1);
+    }
+
     ModuleSccs::PeriodicSccsResult solve() const
     {
-        const std::vector<double> initial;
-        const double tpiba = ModuleBase::TWO_PI / length;
-        return ModuleSccs::solve_periodic_sccs(density, charge, cavity, solver, initial,
-                                               basis, tpiba, 1);
+        const std::vector<double> cold_start;
+        return solve_from(cold_start);
     }
 
     const double length = 10.0;
@@ -184,6 +189,54 @@ TEST_F(SqrtCgFixture, VerifiesPreconditionedFixedPointOnlyOnRequest)
     EXPECT_LT(checked.polarization.fixed_point_defect_rms, 1.0e-8);
     EXPECT_LT(checked.polarization.fixed_point_defect_max, 1.0e-7);
     EXPECT_EQ(checked.polarization.iterations, unchecked.polarization.iterations);
+}
+
+TEST_F(SqrtCgFixture, WarmStartFromPreviousPotentialReachesSameSolutionFaster)
+{
+    solver.tolerance_rms = 1.0e-11;
+    solver.tolerance_max = 1.0e-10;
+    const ModuleSccs::PeriodicSccsResult cold = solve();
+    ASSERT_GT(cold.polarization.iterations, 1);
+    EXPECT_FALSE(cold.polarization.warm_started);
+
+    // A slightly changed cavity mimics the next SCF step.
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        density[ir] *= 1.001;
+    }
+    const ModuleSccs::PeriodicSccsResult reference = solve();
+    ASSERT_EQ(cold.restart_potential.size(), static_cast<std::size_t>(basis.nrxx));
+    const ModuleSccs::PeriodicSccsResult warm = solve_from(cold.restart_potential);
+    ASSERT_EQ(warm.polarization.status, ModuleSccs::PolarizationStatus::Converged);
+    EXPECT_TRUE(warm.polarization.warm_started);
+    EXPECT_LT(warm.polarization.iterations, reference.polarization.iterations);
+    EXPECT_LE(warm.polarization.residual_rms, 1.0e-11);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        EXPECT_NEAR(warm.polarization.field.potential[ir],
+                    reference.polarization.field.potential[ir],
+                    1.0e-9);
+    }
+}
+
+TEST_F(SqrtCgFixture, RejectsWarmStartWorseThanColdStart)
+{
+    solver.tolerance_rms = 1.0e-11;
+    solver.tolerance_max = 1.0e-10;
+    const ModuleSccs::PeriodicSccsResult cold = solve();
+    std::vector<double> poor_guess(basis.nrxx);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        poor_guess[ir] = 1.0e3 * std::cos(0.37 * ir);
+    }
+    const ModuleSccs::PeriodicSccsResult rejected = solve_from(poor_guess);
+    EXPECT_FALSE(rejected.polarization.warm_started);
+    EXPECT_EQ(rejected.polarization.iterations, cold.polarization.iterations);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        EXPECT_DOUBLE_EQ(rejected.polarization.field.potential[ir],
+                         cold.polarization.field.potential[ir]);
+    }
 }
 
 TEST(SccsPeriodic, ChainGradientMatchesAnalyticDensityModeAcrossCavityEdges)
