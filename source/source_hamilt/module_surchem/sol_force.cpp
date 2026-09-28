@@ -1,5 +1,6 @@
 #include "surchem.h"
 #include "pcc/sccs_pcc_2d.h"
+#include "pcc/sccs_pcc_coulomb.h"
 #include "sccs/sccs_pw_charge.h"
 #include "sccs/sccs_pw_force.h"
 #include "sccs/experimental_gaussian.h"
@@ -10,6 +11,7 @@
 #include "source_base/timer.h"
 
 #include <stdexcept>
+#include <memory>
 
 void surchem::force_cor_one(const UnitCell& cell,
                             const ModulePW::PW_Basis* rho_basis,
@@ -243,9 +245,28 @@ void surchem::cal_force_sccs(const UnitCell& cell,
     // to phi-phi_vac. This changes the ionic force only, not the energy.
     const std::vector<double> polarization = ModuleSccs::continuum_polarization_charge(
         this->sccs_result_.charge.solute, this->sccs_result_.response);
-    const ModuleSccs::PeriodicCoulombOperator coulomb(rho_basis, cell.tpiba);
+    const double volume_element = cell.omega / static_cast<double>(rho_basis.nxyz);
+    const ModuleSccs::PoolChargeReduction charge_reduction;
+    const std::vector<ModuleBase::Vector3<double>>& positions = this->fixed_source_cache_.positions;
+    std::unique_ptr<ModuleSccs::CoulombOperator> coulomb;
+    if (config.boundary == ModuleSccs::Boundary::Pcc0d)
+    {
+        coulomb.reset(new ModuleSccs::PccCoulombOperator(rho_basis, cell.tpiba,
+                                                        positions, volume_element,
+                                                        this->pcc_geometry_, charge_reduction));
+    }
+    else if (config.boundary == ModuleSccs::Boundary::Pcc2d)
+    {
+        coulomb.reset(new ModuleSccs::Pcc2dCoulombOperator(rho_basis, cell.tpiba,
+                                                          positions, volume_element,
+                                                          this->pcc_2d_geometry_, charge_reduction));
+    }
+    else
+    {
+        coulomb.reset(new ModuleSccs::PeriodicCoulombOperator(rho_basis, cell.tpiba));
+    }
     std::vector<double> polarization_potential;
-    coulomb.apply_potential(polarization, polarization_potential);
+    coulomb->apply_potential(polarization, polarization_potential);
     const double gaussian_width = 0.5;
     const ModuleBase::matrix smooth_force_hartree
         = ModuleSccs::gaussian_ionic_force(cell, rho_basis, gaussian_width,
@@ -284,7 +305,7 @@ void surchem::cal_force_sccs(const UnitCell& cell,
             shape_potential[ir] = factor * displacement * displacement;
         }
         const ModuleBase::matrix shape_force
-            = ModuleSccs::smooth_ionic_force_hartree(cell, rho_basis, vloc, shape_potential);
+            = ModuleSccs::gaussian_ionic_force(cell, rho_basis, gaussian_width, shape_potential);
         int iat = 0;
         for (int type = 0; type < cell.ntype; ++type)
         {

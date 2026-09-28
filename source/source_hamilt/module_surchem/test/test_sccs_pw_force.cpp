@@ -5,6 +5,7 @@
 
 #include "../sccs/sccs_pw_charge.h"
 #include "../sccs/sccs_pw_force.h"
+#include "../sccs/experimental_gaussian.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
@@ -124,6 +125,58 @@ TEST(SccsPwForce, MatchesTranslatedSmoothChargeFiniteDifference)
 
     EXPECT_NEAR(force(0, 0), finite_difference_force, 1.0e-9);
     EXPECT_NEAR(force(0, 1), 0.0, 1.0e-12);
+    EXPECT_NEAR(force(0, 2), 0.0, 1.0e-12);
+}
+
+TEST(SccsPwForce, ChargedGaussianSourceMatchesIonicShapeEnergyDerivative)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    const double length = 10.0;
+    basis.initgrids(length, lattice, 80.0);
+    basis.initparameters(false, 80.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+    UnitCell cell;
+    cell.lat0 = length;
+    cell.latvec = lattice;
+    cell.omega = length * length * length;
+    cell.tpiba = ModuleBase::TWO_PI / length;
+    cell.tpiba2 = cell.tpiba * cell.tpiba;
+    cell.ntype = 1;
+    cell.nat = 1;
+    cell.atoms = new Atom[1];
+    cell.atoms[0].na = 1;
+    cell.atoms[0].ncpp.zv = 2.0;
+    const ModuleBase::Vector3<double> position(0.37, 0.43, 0.52);
+    cell.atoms[0].tau.push_back(position);
+    const double width = 0.5;
+    const double volume_element = cell.omega / basis.nxyz;
+    std::vector<double> shape_potential(basis.nrxx);
+    for (int index = 0; index < basis.nrxx; ++index)
+    {
+        const int iy = (index / basis.nplane) % basis.ny;
+        const double y = length * iy / basis.ny - 0.5 * length;
+        shape_potential[index] = 0.3 * y * y;
+    }
+    const ModuleBase::matrix force
+        = ModuleSccs::gaussian_ionic_force(cell, basis, width, shape_potential);
+    const double displacement = 1.0e-5;
+    cell.atoms[0].tau[0].y += displacement / length;
+    const std::vector<double> plus = ModuleSccs::gaussian_ionic_density(cell, basis, width);
+    cell.atoms[0].tau[0].y -= 2.0 * displacement / length;
+    const std::vector<double> minus = ModuleSccs::gaussian_ionic_density(cell, basis, width);
+    double energy_difference = 0.0;
+    for (int index = 0; index < basis.nrxx; ++index)
+    {
+        energy_difference += (plus[index] - minus[index]) * shape_potential[index] * volume_element;
+    }
+    const double fd = -energy_difference / (2.0 * displacement);
+    EXPECT_NEAR(force(0, 1), fd, 1.0e-8);
+    EXPECT_NEAR(force(0, 0), 0.0, 1.0e-12);
     EXPECT_NEAR(force(0, 2), 0.0, 1.0e-12);
 }
 

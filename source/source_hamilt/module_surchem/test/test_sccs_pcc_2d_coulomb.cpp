@@ -275,6 +275,27 @@ TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentsWithoutChangingYProfil
     }
 }
 
+TEST_F(SccsPcc2dCoulombTest, ScalarPotentialMatchesFullFieldAndAvoidsGradientTransforms)
+{
+    const double tpiba = ModuleBase::TWO_PI / lattice_scale_;
+    const ModuleSccs::Pcc2dCoulombOperator coulomb(basis_, tpiba, positions_,
+                                                 volume_element_, geometry_, reduction_);
+    const std::vector<double> charge(basis_.nrxx, 1.0 / volume_);
+    ModuleSccs::ElectrostaticField field;
+    coulomb.apply(charge, field);
+    std::vector<double> potential;
+    coulomb.apply_potential(charge, potential);
+    EXPECT_EQ(potential, field.potential);
+    EXPECT_EQ(coulomb.transform_profile().forward_calls, 2);
+    EXPECT_EQ(coulomb.transform_profile().inverse_calls, 5);
+    const std::vector<double> zero(basis_.nrxx, 0.0);
+    coulomb.apply_potential(zero, potential);
+    for (double value : potential)
+    {
+        EXPECT_DOUBLE_EQ(value, 0.0);
+    }
+}
+
 TEST_F(SccsPcc2dCoulombTest, AddsCorrectionFromCurrentChargeOnEveryApplication)
 {
     std::vector<double> charge(basis_.nrxx);

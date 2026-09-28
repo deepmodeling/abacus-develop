@@ -38,6 +38,9 @@ class Pcc2dCoulombOperator : public CoulombOperator
 
     void apply(const std::vector<double>& charge, ElectrostaticField& field) const override;
 
+    void apply_potential(const std::vector<double>& charge,
+                         std::vector<double>& potential) const override;
+
     CoulombTransformProfile transform_profile() const override
     {
         return periodic_.transform_profile();

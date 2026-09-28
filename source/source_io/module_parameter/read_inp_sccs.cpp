@@ -135,8 +135,8 @@ void ReadInput::item_sccs()
                        "User-controlled for every sccs_preset, default 0.8; inactive when sccs_mixing_adaptive=0",
                        "0.8",
                        "")
-    ADD_SCCS_REAL_ITEM("sccs_tol_rms", sccs_tol_rms, "Positive SCCS polarization RMS residual tolerance; user-controlled for every sccs_preset, default 1.0e-10 e/bohr^3. The discrete-adjoint solve uses the same numerical threshold for its RMS potential residual in atomic units; the two solves are checked separately.", "1.0e-10", "e/bohr^3")
-    ADD_SCCS_REAL_ITEM("sccs_tol_max", sccs_tol_max, "Positive SCCS polarization maximum residual tolerance; user-controlled for every sccs_preset, default 1.0e-8 e/bohr^3. The discrete-adjoint solve uses the same numerical threshold for its maximum potential residual in atomic units; the two solves are checked separately.", "1.0e-8", "e/bohr^3")
+    ADD_SCCS_REAL_ITEM("sccs_tol_rms", sccs_tol_rms, "Positive inner residual tolerance; user-controlled for every sccs_preset, default 1.0e-10. In this experimental chain branch, assume_isolated=none uses a periodic sqrt-CG solver and interprets this as a sum of squared charge residuals; the retained water benchmark uses 1.0e-18. With pcc_0d or pcc_2d it is the polarization charge RMS tolerance in e/bohr^3. No discrete adjoint is solved in this branch.", "1.0e-10", "e/bohr^3")
+    ADD_SCCS_REAL_ITEM("sccs_tol_max", sccs_tol_max, "Positive SCCS polarization maximum residual tolerance; user-controlled for every sccs_preset, default 1.0e-8 e/bohr^3. Enforced by the PCC polarization solver. The periodic sqrt-CG path reports this residual but stops on its squared-sum criterion; no discrete adjoint is solved in this experimental branch.", "1.0e-8", "e/bohr^3")
     ADD_SCCS_REAL_ITEM("sccs_surface_eta", sccs_surface_eta, "Positive SCCS surface regularization; user-controlled for every sccs_preset, default 1.0e-8 bohr^-1.", "1.0e-8", "bohr^-1")
 #undef ADD_SCCS_REAL_ITEM
     {
@@ -191,7 +191,7 @@ void ReadInput::item_sccs()
         item.annotation = "SCCS polarization iteration limit";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "Positive maximum iteration count for each SCCS polarization or discrete-adjoint solve. User-controlled for every sccs_preset, default 200; failure of either solve to converge within this limit terminates the calculation. SCCS_ITER counts polarization iterations only; sccs_debug 2 also reports the adjoint iteration count and residuals.";
+        item.description = "Positive maximum inner iteration count; user-controlled for every sccs_preset, default 200. In this experimental chain branch SCCS_ITER counts periodic sqrt-CG iterations for assume_isolated=none, or polarization iterations for pcc_0d/pcc_2d. Failure to converge terminates the calculation. No discrete adjoint is solved.";
         item.default_value = "200";
         item.unit = "";
         item.set_availability("imp_sol==2");
@@ -228,14 +228,7 @@ void ReadInput::item_sccs()
         item.annotation = "SCCS polarization mixing method";
         item.category = "Implicit solvation model";
         item.type = "String";
-        item.description
-            = "Allowed INPUT values are exactly linear, pulay and anderson. "
-              "linear: damped fixed-point iteration; pulay: Pulay DIIS; "
-              "anderson: Anderson acceleration using differences of iterates and residuals. "
-              "These select the inner SCCS polarization solver, independently of the outer SCF mixing_type. "
-              "User-controlled for every sccs_preset, default linear. "
-              "broyden and andersonb are not accepted values. Accelerated methods fall back "
-              "to a linear step when insufficient or unusable history is available.";
+        item.description = "Allowed INPUT values are exactly linear, pulay and anderson. linear: damped fixed-point iteration; pulay: Pulay DIIS; anderson: Anderson acceleration using differences of iterates and residuals. In this experimental chain branch these select the PCC inner polarization solver, independently of the outer SCF mixing_type; the periodic sqrt-CG path ignores mixing controls. User-controlled for every sccs_preset, default linear. broyden and andersonb are not accepted values. Accelerated methods fall back to a linear step when insufficient or unusable history is available.";
         item.default_value = "linear";
         item.unit = "";
         item.set_availability("imp_sol==2");

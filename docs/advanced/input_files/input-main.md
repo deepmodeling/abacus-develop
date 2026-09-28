@@ -4926,7 +4926,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Positive SCCS polarization RMS residual tolerance; user-controlled for every sccs_preset, default 1.0e-10 e/bohr^3. The discrete-adjoint solve uses the same numerical threshold for its RMS potential residual in atomic units; the two solves are checked separately.
+- **Description**: Positive inner residual tolerance; user-controlled for every sccs_preset, default 1.0e-10. In this experimental chain branch, assume_isolated=none uses a periodic sqrt-CG solver and interprets this as a sum of squared charge residuals; the retained water benchmark uses 1.0e-18. With pcc_0d or pcc_2d it is the polarization charge RMS tolerance in e/bohr^3. No discrete adjoint is solved in this branch.
 - **Default**: 1.0e-10
 - **Unit**: e/bohr^3
 
@@ -4934,7 +4934,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Positive SCCS polarization maximum residual tolerance; user-controlled for every sccs_preset, default 1.0e-8 e/bohr^3. The discrete-adjoint solve uses the same numerical threshold for its maximum potential residual in atomic units; the two solves are checked separately.
+- **Description**: Positive SCCS polarization maximum residual tolerance; user-controlled for every sccs_preset, default 1.0e-8 e/bohr^3. Enforced by the PCC polarization solver. The periodic sqrt-CG path reports this residual but stops on its squared-sum criterion; no discrete adjoint is solved in this experimental branch.
 - **Default**: 1.0e-8
 - **Unit**: e/bohr^3
 
@@ -4970,7 +4970,7 @@
 
 - **Type**: Integer
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Positive maximum iteration count for each SCCS polarization or discrete-adjoint solve. User-controlled for every sccs_preset, default 200; failure of either solve to converge within this limit terminates the calculation. SCCS_ITER counts polarization iterations only; sccs_debug 2 also reports the adjoint iteration count and residuals.
+- **Description**: Positive maximum inner iteration count; user-controlled for every sccs_preset, default 200. In this experimental chain branch SCCS_ITER counts periodic sqrt-CG iterations for assume_isolated=none, or polarization iterations for pcc_0d/pcc_2d. Failure to converge terminates the calculation. No discrete adjoint is solved.
 - **Default**: 200
 
 ### sccs_mixing_adaptive
@@ -4984,7 +4984,7 @@
 
 - **Type**: String
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Allowed INPUT values are exactly linear, pulay and anderson. linear: damped fixed-point iteration; pulay: Pulay DIIS; anderson: Anderson acceleration using differences of iterates and residuals. These select the inner SCCS polarization solver. Recommended value: pulay.
+- **Description**: Allowed INPUT values are exactly linear, pulay and anderson. linear: damped fixed-point iteration; pulay: Pulay DIIS; anderson: Anderson acceleration using differences of iterates and residuals. In this experimental chain branch these select the PCC inner polarization solver; the periodic sqrt-CG path ignores mixing controls. Recommended PCC value: pulay.
 - **Default**: linear
 
 ### sccs_mixing_ndim

@@ -48,39 +48,14 @@ std::vector<double> continuum_polarization_charge(
     return polarization;
 }
 
-PeriodicSccsResult solve_periodic_sccs(
-    const std::vector<double>& cavity_density,
-    const std::vector<double>& solute_charge,
-    const CavityParameters& cavity_parameters,
-    const PolarizationSolverParameters& solver_parameters,
-    const std::vector<double>& initial_polarization_charge,
-    const ModulePW::PW_Basis& basis,
-    const double tpiba,
-    const int pool_process_count)
+namespace
 {
-    const PeriodicCoulombOperator coulomb(basis, tpiba);
-    const PoolPolarizationReduction reduction(pool_process_count);
-    return solve_sccs_response(cavity_density,
-                               solute_charge,
-                               cavity_parameters,
-                               solver_parameters,
-                               initial_polarization_charge,
-                               basis,
-                               tpiba,
-                               coulomb,
-                               reduction);
-}
 
-PeriodicSccsResult solve_sccs_response(
+PeriodicSccsResult prepare_chain_cavity(
     const std::vector<double>& density,
-    const std::vector<double>& charge,
-    const ModuleSccs::CavityParameters& cavity,
-    const ModuleSccs::PolarizationSolverParameters& solver,
-    const std::vector<double>& initial,
+    const CavityParameters& cavity,
     const ModulePW::PW_Basis& basis,
-    const double tpiba,
-    const ModuleSccs::CoulombOperator& coulomb,
-    const ModuleSccs::PolarizationReduction& reduction)
+    const double tpiba)
 {
     ModuleSccs::PeriodicSccsResult result;
     const auto density_gradient = ModuleSccs::periodic_gradient(density, basis, tpiba);
@@ -102,6 +77,69 @@ PeriodicSccsResult solve_sccs_response(
         for (int d = 0; d < 3; ++d)
             result.grad_log_epsilon[i][d] = coefficient * density_gradient[i][d];
     }
+    return result;
+}
+
+} // namespace
+
+PeriodicSccsResult solve_periodic_sccs(
+    const std::vector<double>& cavity_density,
+    const std::vector<double>& solute_charge,
+    const CavityParameters& cavity_parameters,
+    const PolarizationSolverParameters& solver_parameters,
+    const std::vector<double>& initial_polarization_charge,
+    const ModulePW::PW_Basis& basis,
+    const double tpiba,
+    const int pool_process_count)
+{
+    const PeriodicCoulombOperator coulomb(basis, tpiba);
+    const PoolPolarizationReduction reduction(pool_process_count);
+    return solve_chain_sccs_response(cavity_density,
+                               solute_charge,
+                               cavity_parameters,
+                               solver_parameters,
+                               initial_polarization_charge,
+                               basis,
+                               tpiba,
+                               coulomb,
+                               reduction);
+}
+
+// PCC requires the physical nonzero polarization charge and the analytic
+// polynomial field of the open boundary operator. Solve its fixed point
+// directly instead of recovering charge through a periodic Laplacian.
+PeriodicSccsResult solve_sccs_response(
+    const std::vector<double>& density,
+    const std::vector<double>& charge,
+    const CavityParameters& cavity,
+    const PolarizationSolverParameters& solver,
+    const std::vector<double>& initial,
+    const ModulePW::PW_Basis& basis,
+    const double tpiba,
+    const CoulombOperator& coulomb,
+    const PolarizationReduction& reduction)
+{
+    PeriodicSccsResult result = prepare_chain_cavity(density, cavity, basis, tpiba);
+    result.polarization = solve_polarization(charge, result.epsilon,
+                                             result.grad_log_epsilon, initial,
+                                             solver, coulomb, reduction);
+    return result;
+}
+
+PeriodicSccsResult solve_chain_sccs_response(
+    const std::vector<double>& density,
+    const std::vector<double>& charge,
+    const ModuleSccs::CavityParameters& cavity,
+    const ModuleSccs::PolarizationSolverParameters& solver,
+    const std::vector<double>& initial,
+    const ModulePW::PW_Basis& basis,
+    const double tpiba,
+    const ModuleSccs::CoulombOperator& coulomb,
+    const ModuleSccs::PolarizationReduction& reduction)
+{
+    PeriodicSccsResult result = prepare_chain_cavity(density, cavity, basis, tpiba);
+    const std::vector<ModuleBase::Vector3<double>>& density_gradient = result.density_gradient;
+    const std::size_t size = density.size();
     // Environ dielectric::factsqrt for electronic chain derivatives, in Ha units.
     std::vector<std::complex<double>> density_g(basis.npw);
     basis.real2recip(density.data(), density_g.data());

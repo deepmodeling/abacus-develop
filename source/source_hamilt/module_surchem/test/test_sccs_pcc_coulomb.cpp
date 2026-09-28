@@ -78,6 +78,50 @@ TEST(SccsPccCoulomb, ChargedUniformDielectricScreensPccPotential)
     }
 }
 
+TEST(SccsPccCoulomb, ScalarPotentialMatchesFullFieldAndAvoidsGradientTransforms)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    const double length = 10.0;
+    const double tpiba = ModuleBase::TWO_PI / length;
+    basis.initgrids(length, lattice, 20.0);
+    basis.initparameters(false, 20.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+    const double dv = length * length * length / basis.nxyz;
+    std::vector<ModuleBase::Vector3<double>> positions(basis.nrxx);
+    for (int index = 0; index < basis.nrxx; ++index)
+    {
+        const int ix = index / (basis.ny * basis.nplane);
+        const int iy = (index / basis.nplane) % basis.ny;
+        const int iz = index % basis.nplane + basis.startz_current;
+        const double x = length * ix / basis.nx;
+        const double y = length * iy / basis.ny;
+        const double z = length * iz / basis.nz;
+        positions[index] = ModuleBase::Vector3<double>(x, y, z);
+    }
+    const ModuleSccs::PccGeometry geometry = ModuleSccs::pcc_geometry(lattice, length, 1.0e-10);
+    const ModuleSccs::SerialChargeReduction reduction;
+    const ModuleSccs::PccCoulombOperator coulomb(basis, tpiba, positions, dv, geometry, reduction);
+    const std::vector<double> charge(basis.nrxx, 0.001);
+    ModuleSccs::ElectrostaticField field;
+    coulomb.apply(charge, field);
+    std::vector<double> potential;
+    coulomb.apply_potential(charge, potential);
+    EXPECT_EQ(potential, field.potential);
+    EXPECT_EQ(coulomb.transform_profile().forward_calls, 2);
+    EXPECT_EQ(coulomb.transform_profile().inverse_calls, 5);
+    const std::vector<double> zero(basis.nrxx, 0.0);
+    coulomb.apply_potential(zero, potential);
+    for (double value : potential)
+    {
+        EXPECT_DOUBLE_EQ(value, 0.0);
+    }
+}
+
 } // namespace
 
 int main(int argc, char** argv)

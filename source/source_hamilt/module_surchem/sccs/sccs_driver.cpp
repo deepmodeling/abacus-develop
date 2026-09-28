@@ -165,10 +165,6 @@ SccsResult evaluate_pw_sccs(
     SccsState& state)
 {
     validate_config(config);
-    if (config.boundary != Boundary::Periodic)
-    {
-        throw std::invalid_argument("Experimental Environ chain SCCS supports periodic boundary only");
-    }
     if (positions.size() != static_cast<std::size_t>(basis.nrxx))
     {
         throw std::invalid_argument("SCCS grid positions must match the local PW grid");
@@ -235,15 +231,33 @@ SccsResult evaluate_pw_sccs(
     const std::vector<double>& initial = reuse_state ? state.polarization_charge : empty_initial;
     const std::chrono::steady_clock::time_point forward_start
         = std::chrono::steady_clock::now();
-    result.response = solve_sccs_response(result.charge.electron,
-                                          result.charge.solute,
-                                          config.cavity,
-                                          solver_parameters,
-                                          initial,
-                                          basis,
-                                          tpiba,
-                                          *coulomb,
-                                          polarization_reduction);
+    // The periodic CG recovery discards the net-charge mode. PCC instead
+    // solves directly for polarization charge and keeps its analytic open
+    // boundary field, including the nonzero screening charge of an ion.
+    if (config.boundary == Boundary::Periodic)
+    {
+        result.response = solve_chain_sccs_response(result.charge.electron,
+                                                  result.charge.solute,
+                                                  config.cavity,
+                                                  solver_parameters,
+                                                  initial,
+                                                  basis,
+                                                  tpiba,
+                                                  *coulomb,
+                                                  polarization_reduction);
+    }
+    else
+    {
+        result.response = solve_sccs_response(result.charge.electron,
+                                                  result.charge.solute,
+                                                  config.cavity,
+                                                  solver_parameters,
+                                                  initial,
+                                                  basis,
+                                                  tpiba,
+                                                  *coulomb,
+                                                  polarization_reduction);
+    }
     if (result.response.polarization.status != PolarizationStatus::Converged)
     {
         throw std::runtime_error("SCCS polarization iteration did not converge");

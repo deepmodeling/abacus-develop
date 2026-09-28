@@ -44,10 +44,6 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     }
     const std::vector<double> electron_density
         = ModuleSccs::sum_electron_density(spin_density, nspin);
-    if (this->uses_pcc())
-    {
-        throw std::invalid_argument("Experimental Environ chain SCCS supports periodic boundary only");
-    }
     FixedSourceCache& cache = this->fixed_source_cache_;
     const double* local_potential_end = vlocal + rho_basis.nrxx;
     const bool same_lattice

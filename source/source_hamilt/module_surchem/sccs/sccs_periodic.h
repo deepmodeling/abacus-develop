@@ -52,6 +52,18 @@ PeriodicSccsResult solve_sccs_response(
     const CoulombOperator& coulomb,
     const PolarizationReduction& reduction);
 
+// Periodic-only sqrt-CG path; its residual criterion is a squared sum.
+PeriodicSccsResult solve_chain_sccs_response(
+    const std::vector<double>& cavity_density,
+    const std::vector<double>& solute_charge,
+    const CavityParameters& cavity_parameters,
+    const PolarizationSolverParameters& solver_parameters,
+    const std::vector<double>& initial_polarization_charge,
+    const ModulePW::PW_Basis& basis,
+    double tpiba,
+    const CoulombOperator& coulomb,
+    const PolarizationReduction& reduction);
+
 } // namespace ModuleSccs
 
 #endif

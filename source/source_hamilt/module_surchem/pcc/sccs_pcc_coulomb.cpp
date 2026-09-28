@@ -105,6 +105,21 @@ void PccCoulombOperator::apply(const std::vector<double>& charge,
     }
 }
 
+// Scalar clients retain the same PCC moments and gauge without computing
+// three unused gradient transforms.
+void PccCoulombOperator::apply_potential(const std::vector<double>& charge,
+                                           std::vector<double>& potential) const
+{
+    periodic_.apply_potential(charge, potential);
+    const MultipoleMoments local_moments = density_moments_from_relative_positions(
+        charge, relative_positions_, volume_element_);
+    const MultipoleMoments moments = reduce_pcc_moments(local_moments, reduction_);
+    for (std::size_t index = 0; index < charge.size(); ++index)
+    {
+        potential[index] += pcc_potential(moments, relative_positions_[index], geometry_.parameters);
+    }
+}
+
 void PccCoulombOperator::apply_gradient(
     const std::vector<double>& charge,
     std::vector<ModuleBase::Vector3<double>>& gradient) const
