@@ -179,7 +179,6 @@ void surchem::v_correction_pcc(const UnitCell& cell,
                                                          reduction);
         const ModuleSccs::Pcc2dMoments ionic_moments
             = ModuleSccs::pcc_2d_point_charge_moments(ions, this->pcc_2d_geometry_);
-        this->pcc_ionic_moments_2d_ = ionic_moments;
         this->pcc_2d_moments_ = add_moments_2d(ionic_moments, electronic_moments);
         const double expected_charge = this->parameters_.expected_ionic_charge
                                        - this->parameters_.expected_electron_count;

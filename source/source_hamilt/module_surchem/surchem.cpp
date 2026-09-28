@@ -160,7 +160,6 @@ void surchem::write_sccs_iteration(std::ostream& output) const
     const double solvation_energy_rydberg
         = 2.0 * (result.electrostatic.reaction_energy
                  + result.vacuum_pcc_energy
-                 + result.ionic_shape_pcc_energy
                  + result.non_electrostatic.surface_energy
                  + result.non_electrostatic.volume_energy);
     const std::streamsize previous_precision = output.precision();
@@ -224,9 +223,7 @@ void surchem::write_sccs_iteration(std::ostream& output) const
                << " REACTION/Ha " << result.electrostatic.reaction_energy
                << " PCC_SMOOTH/Ha " << result.smooth_vacuum_pcc_energy
                << " PCC_POINT/Ha " << result.vacuum_pcc_energy
-               << " PCC_ION_SHAPE/Ha " << result.ionic_shape_pcc_energy
-               << " PCC_USED/Ry "
-               << 2.0 * (result.vacuum_pcc_energy + result.ionic_shape_pcc_energy)
+               << " PCC_USED/Ry " << 2.0 * result.vacuum_pcc_energy
                << '\n';
     }
 
@@ -246,9 +243,7 @@ void surchem::write_sccs_iteration(std::ostream& output) const
                << " REACTION/Ha " << result.electrostatic.reaction_energy
                << " PCC_SMOOTH/Ha " << result.smooth_vacuum_pcc_energy
                << " PCC_POINT/Ha " << result.vacuum_pcc_energy
-               << " PCC_ION_SHAPE/Ha " << result.ionic_shape_pcc_energy
-               << " PCC_USED/Ry "
-               << 2.0 * (result.vacuum_pcc_energy + result.ionic_shape_pcc_energy)
+               << " PCC_USED/Ry " << 2.0 * result.vacuum_pcc_energy
                << '\n';
     }
     output.flags(previous_flags);
@@ -270,12 +265,9 @@ void surchem::write_sccs_diagnostics(std::ostream& output) const
            << result.smooth_vacuum_pcc_energy << '\n';
     output << " SCCS_DIAGNOSTIC point_vacuum_pcc_energy_hartree "
            << result.vacuum_pcc_energy << '\n';
-    output << " SCCS_DIAGNOSTIC ionic_shape_pcc_energy_hartree "
-           << result.ionic_shape_pcc_energy << '\n';
     output << " SCCS_DIAGNOSTIC electrostatic_energy_rydberg "
            << 2.0 * (result.electrostatic.reaction_energy
-                     + result.vacuum_pcc_energy
-                     + result.ionic_shape_pcc_energy)
+                     + result.vacuum_pcc_energy)
            << '\n';
 
     if (this->parameters_.sccs_config.boundary == ModuleSccs::Boundary::Pcc2d)

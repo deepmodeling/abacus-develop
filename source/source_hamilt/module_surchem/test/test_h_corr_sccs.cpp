@@ -4,8 +4,6 @@
 #endif
 
 #include "../surchem.h"
-#include "../pcc/sccs_pcc_2d_coulomb.h"
-#include "../sccs/sccs_pw_charge.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
@@ -150,8 +148,7 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
                 1.0e-12);
     EXPECT_NEAR(surchem::Ael,
                 2.0 * (result.electrostatic.reaction_energy
-                       + result.vacuum_pcc_energy
-                       + result.ionic_shape_pcc_energy),
+                       + result.vacuum_pcc_energy),
                 1.0e-14);
     EXPECT_NEAR(surchem::Acav,
                 2.0 * (result.non_electrostatic.surface_energy
@@ -160,6 +157,7 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     std::ostringstream debug_output;
     solvent.write_sccs_iteration(debug_output);
     const std::string debug_text = debug_output.str();
+    EXPECT_EQ(debug_text.find("PCC_ION_SHAPE"), std::string::npos);
     EXPECT_NE(debug_text.find("SCCS_TIMING preparation_s "), std::string::npos);
     EXPECT_NE(debug_text.find("SCCS_FFT STAGE forward R2G_CALLS "), std::string::npos);
     EXPECT_EQ(debug_text.find("adjoint"), std::string::npos);
@@ -185,16 +183,14 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     double reaction_energy = 0.0;
     double smooth_energy = 0.0;
     double point_energy = 0.0;
-    double shape_energy = 0.0;
     double used_energy = 0.0;
     energy_stream >> label >> label >> reaction_energy >> label >> smooth_energy
-                  >> label >> point_energy >> label >> shape_energy
-                  >> label >> used_energy;
+                  >> label >> point_energy >> label >> used_energy;
     EXPECT_FALSE(energy_stream.fail());
+    EXPECT_EQ(label, "PCC_USED/Ry");
     EXPECT_NEAR(reaction_energy, result.electrostatic.reaction_energy, 1.0e-11);
     EXPECT_NEAR(smooth_energy, result.smooth_vacuum_pcc_energy, 1.0e-11);
     EXPECT_NEAR(point_energy, result.vacuum_pcc_energy, 1.0e-11);
-    EXPECT_NEAR(shape_energy, result.ionic_shape_pcc_energy, 1.0e-11);
     EXPECT_NEAR(used_energy, 2.0 * result.vacuum_pcc_energy, 1.0e-11);
 
     parameters.debug = 0;
@@ -410,37 +406,17 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     EXPECT_NEAR(result.screened_moments_2d.charge, 0.04, 1.0e-12);
     EXPECT_TRUE(std::isfinite(result.vacuum_pcc_energy));
     EXPECT_TRUE(std::isfinite(result.electrostatic.reaction_energy));
-    ModuleSccs::Pcc2dGeometry pcc_geometry
+    // Point-ion vacuum PCC in the ENVIRON monopole gauge; no Gaussian-ion shape
+    // term is added because the reaction energy does not depend on the ion width.
+    const ModuleSccs::Pcc2dGeometry pcc_geometry
         = ModuleSccs::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
-    pcc_geometry.origin_y = cell.atoms[0].tau[0].y * cell.lat0;
-    const std::vector<ModuleBase::Vector3<double>> grid_positions
-        = ModuleSccs::pw_grid_positions(basis, cell.latvec, cell.lat0);
-    const ModuleSccs::SerialChargeReduction charge_reduction;
-    const ModuleSccs::Pcc2dMoments smooth_ionic_moments
-        = ModuleSccs::reduced_pcc_2d_density_moments(result.charge.ionic,
-                                                     grid_positions,
-                                                     cell.omega / basis.nxyz,
-                                                     pcc_geometry,
-                                                     charge_reduction);
-    std::vector<ModuleSccs::PointCharge> ionic_points(1);
-    ionic_points[0].charge = cell.atoms[0].ncpp.zv;
-    ionic_points[0].position = cell.atoms[0].tau[0] * cell.lat0;
-    const ModuleSccs::Pcc2dMoments point_ionic_moments
-        = ModuleSccs::pcc_2d_point_charge_moments(ionic_points,
-                                                  pcc_geometry);
-    const double expected_ionic_shape_energy
-        = ModuleSccs::pcc_2d_ionic_shape_energy(
-            result.polarization_moments_2d.charge,
-            smooth_ionic_moments,
-            point_ionic_moments,
-            pcc_geometry.parameters);
-    EXPECT_NEAR(result.ionic_shape_pcc_energy,
-                expected_ionic_shape_energy,
-                1.0e-14);
+    const double expected_vacuum_energy
+        = ModuleSccs::pcc_2d_self_energy(result.point_solute_moments_2d,
+                                         pcc_geometry.parameters);
+    EXPECT_NEAR(result.vacuum_pcc_energy, expected_vacuum_energy, 1.0e-14);
     EXPECT_NEAR(surchem::Ael,
                 2.0 * (result.electrostatic.reaction_energy
-                       + result.vacuum_pcc_energy
-                       + result.ionic_shape_pcc_energy),
+                       + result.vacuum_pcc_energy),
                 1.0e-14);
     std::ostringstream diagnostics;
     solvent.write_sccs_diagnostics(diagnostics);
@@ -451,8 +427,7 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
               std::string::npos);
     EXPECT_NE(diagnostic_text.find("SCCS_DIAGNOSTIC point_vacuum_pcc_energy_hartree"),
               std::string::npos);
-    EXPECT_NE(diagnostic_text.find("SCCS_DIAGNOSTIC ionic_shape_pcc_energy_hartree"),
-              std::string::npos);
+    EXPECT_EQ(diagnostic_text.find("ionic_shape"), std::string::npos);
     EXPECT_NE(diagnostic_text.find("SCCS_DIAGNOSTIC electrostatic_energy_rydberg"),
               std::string::npos);
     EXPECT_NE(diagnostic_text.find("SCCS_DIAGNOSTIC screened_charge"),
@@ -476,7 +451,7 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     EXPECT_NE(iteration_text.find("REACTION/Ha "), std::string::npos);
     EXPECT_NE(iteration_text.find("PCC_SMOOTH/Ha "), std::string::npos);
     EXPECT_NE(iteration_text.find("PCC_POINT/Ha "), std::string::npos);
-    EXPECT_NE(iteration_text.find("PCC_ION_SHAPE/Ha "), std::string::npos);
+    EXPECT_EQ(iteration_text.find("PCC_ION_SHAPE"), std::string::npos);
     EXPECT_NE(iteration_text.find("PCC_USED/Ry "), std::string::npos);
     EXPECT_NE(iteration_text.find(
                   "SCCS_ITER "

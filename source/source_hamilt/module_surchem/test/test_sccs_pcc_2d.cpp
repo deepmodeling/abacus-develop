@@ -161,9 +161,33 @@ TEST(SccsPcc2d, DensityMomentsIncludeTheVolumeElement)
     EXPECT_DOUBLE_EQ(moments.quadrupole_yy, -3.5);
 }
 
-TEST(SccsPcc2d, MomentPotentialMatchesIndependentPlanarGreenFunctions)
+// Planar open kernel -2*pi*|u|/A plus a constant gauge shift, minus the
+// zero-mean periodic planar kernel, summed over sources closer than L_y/2.
+double direct_planar_correction(const std::vector<double>& locations,
+                                const std::vector<double>& charges,
+                                const double y,
+                                const double gauge_shift,
+                                const ModuleSccs::Pcc2dParameters& value)
 {
-    const ModuleSccs::Pcc2dParameters value = parameters();
+    double direct = 0.0;
+    for (std::size_t source = 0; source < charges.size(); ++source)
+    {
+        const double separation = y - locations[source];
+        const double open_kernel
+            = -2.0 * ModuleBase::PI * std::abs(separation) / value.periodic_area
+              + gauge_shift;
+        const double periodic_kernel
+            = 2.0 * ModuleBase::PI / value.periodic_area
+              * (separation * separation / value.cell_length_y
+                 - std::abs(separation) + value.cell_length_y / 6.0);
+        direct += charges[source] * (open_kernel - periodic_kernel);
+    }
+    return direct;
+}
+
+void expect_planar_correction(const ModuleSccs::Pcc2dParameters& value,
+                              const double gauge_shift)
+{
     const std::vector<double> locations{-3.4, -1.1, 0.5, 2.8};
     const std::vector<double> charges{0.7, -0.2, 0.3, -0.1};
     std::vector<ModuleSccs::PointCharge> points(charges.size());
@@ -172,44 +196,52 @@ TEST(SccsPcc2d, MomentPotentialMatchesIndependentPlanarGreenFunctions)
         points[index].charge = charges[index];
         points[index].position.y = locations[index];
     }
+    ModuleSccs::Pcc2dGeometry origin_geometry;
+    origin_geometry.parameters = value;
+    origin_geometry.origin_y = 0.0;
     const ModuleSccs::Pcc2dMoments moments
-        = ModuleSccs::pcc_2d_point_charge_moments(points, geometry(0.0));
+        = ModuleSccs::pcc_2d_point_charge_moments(points, origin_geometry);
     const std::vector<double> evaluation_points{-5.2, -0.8, 1.4, 5.1};
-
     for (std::size_t evaluation = 0; evaluation < evaluation_points.size(); ++evaluation)
     {
         const double y = evaluation_points[evaluation];
-        double direct = 0.0;
-        for (std::size_t source = 0; source < charges.size(); ++source)
+        for (std::size_t source = 0; source < locations.size(); ++source)
         {
-            const double separation = y - locations[source];
-            ASSERT_LE(std::abs(separation), 0.5 * value.cell_length_y);
-            const double gauge_shift
-                = ModuleBase::PI / (3.0 * value.cell_length_y)
-                  + ModuleBase::PI * value.cell_length_y
-                        / (3.0 * value.periodic_area);
-            const double open_kernel
-                = -2.0 * ModuleBase::PI * std::abs(separation) / value.periodic_area
-                  + gauge_shift;
-            const double periodic_kernel
-                = 2.0 * ModuleBase::PI / value.periodic_area
-                  * (separation * separation / value.cell_length_y
-                     - std::abs(separation) + value.cell_length_y / 6.0);
-            direct += charges[source] * (open_kernel - periodic_kernel);
+            ASSERT_LE(std::abs(y - locations[source]), 0.5 * value.cell_length_y);
         }
+        const double direct
+            = direct_planar_correction(locations, charges, y, gauge_shift, value);
         EXPECT_NEAR(ModuleSccs::pcc_2d_potential(moments, y, value), direct, 1.0e-14);
     }
 }
 
-TEST(SccsPcc2d, ChargedMonopoleUsesTheLiteratureGauge)
+TEST(SccsPcc2d, MomentPotentialMatchesIndependentPlanarGreenFunctions)
+{
+    const ModuleSccs::Pcc2dParameters value = parameters();
+    // ENVIRON's monopole constant -pi*q/(3 L_y) equals this shift of the open kernel.
+    const double gauge_shift
+        = ModuleBase::PI * value.cell_length_y / (3.0 * value.periodic_area)
+          - ModuleBase::PI / (3.0 * value.cell_length_y);
+    expect_planar_correction(value, gauge_shift);
+}
+
+TEST(SccsPcc2d, SquareCellCorrectionUsesUnshiftedOpenPlanarKernel)
+{
+    ModuleSccs::Pcc2dParameters value;
+    value.cell_length_y = 17.0;
+    value.periodic_area = value.cell_length_y * value.cell_length_y;
+    expect_planar_correction(value, 0.0);
+}
+
+TEST(SccsPcc2d, ChargedMonopoleUsesTheEnvironGauge)
 {
     ModuleSccs::Pcc2dMoments moments;
     moments.charge = 1.7;
     const ModuleSccs::Pcc2dParameters value = parameters();
     const double expected_potential
-        = ModuleBase::PI * moments.charge / (3.0 * value.cell_length_y);
+        = -ModuleBase::PI * moments.charge / (3.0 * value.cell_length_y);
     const double expected_energy
-        = ModuleBase::PI * moments.charge * moments.charge
+        = -ModuleBase::PI * moments.charge * moments.charge
           / (6.0 * value.cell_length_y);
 
     EXPECT_NEAR(ModuleSccs::pcc_2d_potential(moments, 0.0, value),
@@ -346,76 +378,6 @@ TEST(SccsPcc2d, DensityDerivativeMatchesPotential)
                            - energy(electron_density - step))
                           / (2.0 * step);
     EXPECT_NEAR(analytic, finite, 1.0e-11);
-}
-
-TEST(SccsPcc2d, IonicShapeEnergyMatchesAppendixA2)
-{
-    const ModuleSccs::Pcc2dParameters value = parameters();
-    const double polarization_charge = -0.8;
-    ModuleSccs::Pcc2dMoments smooth_ionic;
-    smooth_ionic.charge = 2.0;
-    smooth_ionic.dipole_y = 6.0;
-    smooth_ionic.quadrupole_yy = 6.5;
-    ModuleSccs::Pcc2dMoments point_ionic;
-    point_ionic.charge = 2.0;
-    point_ionic.dipole_y = 6.0;
-    point_ionic.quadrupole_yy = 5.2;
-    const double expected = ModuleBase::PI * polarization_charge
-                            * (smooth_ionic.quadrupole_yy
-                               - point_ionic.quadrupole_yy)
-                            / (value.periodic_area * value.cell_length_y);
-    EXPECT_NEAR(ModuleSccs::pcc_2d_ionic_shape_energy(polarization_charge,
-                                                       smooth_ionic,
-                                                       point_ionic,
-                                                       value),
-                expected,
-                1.0e-15);
-    EXPECT_THROW(ModuleSccs::pcc_2d_ionic_shape_energy(
-                     std::numeric_limits<double>::infinity(),
-                     smooth_ionic,
-                     point_ionic,
-                     value),
-                 std::domain_error);
-    point_ionic.charge = 0.0;
-    EXPECT_THROW(ModuleSccs::pcc_2d_ionic_shape_energy(polarization_charge,
-                                                       smooth_ionic,
-                                                       point_ionic,
-                                                       value),
-                 std::domain_error);
-}
-
-TEST(SccsPcc2d, IonicShapeEnergyIsInvariantUnderRigidTranslation)
-{
-    const ModuleSccs::Pcc2dParameters value = parameters();
-    ModuleSccs::Pcc2dMoments smooth_ionic;
-    smooth_ionic.charge = 4.0;
-    smooth_ionic.dipole_y = -2.0;
-    smooth_ionic.quadrupole_yy = 7.5;
-    ModuleSccs::Pcc2dMoments point_ionic;
-    point_ionic.charge = 4.0;
-    point_ionic.dipole_y = -2.4;
-    point_ionic.quadrupole_yy = 5.1;
-    const double reference
-        = ModuleSccs::pcc_2d_ionic_shape_energy(-0.7,
-                                                smooth_ionic,
-                                                point_ionic,
-                                                value);
-    const double translation = 3.2;
-    const auto translate = [translation](const ModuleSccs::Pcc2dMoments& moments) {
-        ModuleSccs::Pcc2dMoments shifted;
-        shifted.charge = moments.charge;
-        shifted.dipole_y = moments.dipole_y + translation * moments.charge;
-        shifted.quadrupole_yy
-            = moments.quadrupole_yy + 2.0 * translation * moments.dipole_y
-              + translation * translation * moments.charge;
-        return shifted;
-    };
-    EXPECT_NEAR(ModuleSccs::pcc_2d_ionic_shape_energy(-0.7,
-                                                       translate(smooth_ionic),
-                                                       translate(point_ionic),
-                                                       value),
-                reference,
-                1.0e-15);
 }
 
 TEST(SccsPcc2d, PointChargeForceMatchesSelfEnergyFiniteDifference)

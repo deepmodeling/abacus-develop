@@ -53,8 +53,11 @@ ModuleBase::Vector3<double> cross(const ModuleBase::Vector3<double>& left,
 
 double potential_constant(const Pcc2dParameters& parameters)
 {
-    // Andreussi-Marzari, Phys. Rev. B 90, 245101 (2014), Eq. (88).
-    return ModuleBase::PI / (3.0 * parameters.cell_length_y);
+    // Monopole gauge of ENVIRON core_1da (parabolic, dim=2): -pi*q/(3*L_y).
+    // For A = L_y^2 it equals the planar open kernel -2*pi*|u|/A minus the
+    // zero-mean periodic kernel at u = 0. Andreussi-Marzari, Phys. Rev. B 90,
+    // 245101 (2014), Eq. (88) prints the opposite sign.
+    return -ModuleBase::PI / (3.0 * parameters.cell_length_y);
 }
 
 double inverse_volume_factor(const Pcc2dParameters& parameters)
@@ -361,46 +364,6 @@ double pcc_2d_self_energy(const Pcc2dMoments& moments,
                           const Pcc2dParameters& parameters)
 {
     return 0.5 * pcc_2d_bilinear_energy(moments, moments, parameters);
-}
-
-double pcc_2d_ionic_shape_energy(const double polarization_charge,
-                                 const Pcc2dMoments& smooth_ionic_moments,
-                                 const Pcc2dMoments& point_ionic_moments,
-                                 const Pcc2dParameters& parameters)
-{
-    validate_pcc_2d_parameters(parameters);
-    if (!std::isfinite(polarization_charge)
-        || !std::isfinite(smooth_ionic_moments.charge)
-        || !std::isfinite(smooth_ionic_moments.dipole_y)
-        || !std::isfinite(smooth_ionic_moments.quadrupole_yy)
-        || !std::isfinite(point_ionic_moments.charge)
-        || !std::isfinite(point_ionic_moments.dipole_y)
-        || !std::isfinite(point_ionic_moments.quadrupole_yy))
-    {
-        throw std::domain_error("two-dimensional PCC ionic-shape energy inputs must be finite");
-    }
-    if (point_ionic_moments.charge == 0.0)
-    {
-        throw std::domain_error(
-            "two-dimensional PCC ionic-shape energy requires non-zero ionic charge");
-    }
-    const double ionic_center_y
-        = point_ionic_moments.dipole_y / point_ionic_moments.charge;
-    const double charge_difference
-        = smooth_ionic_moments.charge - point_ionic_moments.charge;
-    const double dipole_difference
-        = smooth_ionic_moments.dipole_y - point_ionic_moments.dipole_y;
-    const double quadrupole_difference
-        = smooth_ionic_moments.quadrupole_yy
-          - point_ionic_moments.quadrupole_yy;
-    const double centered_quadrupole_difference
-        = quadrupole_difference - 2.0 * ionic_center_y * dipole_difference
-          + ionic_center_y * ionic_center_y * charge_difference;
-    // Andreussi-Marzari, Phys. Rev. B 90, 245101 (2014), Eq. (A2).
-    // Its coordinate origin is the center of ionic charge.
-    return ModuleBase::PI * polarization_charge
-           * centered_quadrupole_difference
-           / (parameters.periodic_area * parameters.cell_length_y);
 }
 
 } // namespace ModuleSccs

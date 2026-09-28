@@ -110,16 +110,6 @@ void surchem::v_correction_sccs(const UnitCell& cell,
 
     const double volume_element = cell.omega / static_cast<double>(rho_basis.nxyz);
     const ModuleSccs::PoolChargeReduction charge_reduction;
-    double ionic_shape_coefficient = 0.0;
-    if (this->parameters_.pcc_boundary == ModuleSccs::Boundary::Pcc2d)
-    {
-        const ModuleSccs::Pcc2dMoments smooth_ionic_moments
-            = ModuleSccs::reduced_pcc_2d_density_moments(ionic_density, positions,
-                                                       volume_element, pcc_2d_geometry,
-                                                       charge_reduction);
-        ionic_shape_coefficient = ModuleSccs::pcc_2d_ionic_shape_energy(
-            1.0, smooth_ionic_moments, this->pcc_ionic_moments_2d_, pcc_2d_geometry.parameters);
-    }
     const ModuleBase::TimePoint pcc_end = ModuleBase::get_time();
     const ModuleSccs::PoolPolarizationReduction polarization_reduction(
         this->parameters_.pool_process_count);
@@ -134,7 +124,6 @@ void surchem::v_correction_sccs(const UnitCell& cell,
                                        this->parameters_.sccs_config,
                                        pcc_geometry,
                                        pcc_2d_geometry,
-                                       ionic_shape_coefficient,
                                        rho_basis,
                                        cell.tpiba,
                                        volume_element,
@@ -171,8 +160,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     }
 
     surchem::Ael = 2.0 * (this->sccs_result_.electrostatic.reaction_energy
-                          + this->sccs_result_.vacuum_pcc_energy
-                          + this->sccs_result_.ionic_shape_pcc_energy);
+                          + this->sccs_result_.vacuum_pcc_energy);
     surchem::Acav = 2.0 * (this->sccs_result_.non_electrostatic.surface_energy
                            + this->sccs_result_.non_electrostatic.volume_energy);
     const ModuleBase::TimePoint end_time = ModuleBase::get_time();

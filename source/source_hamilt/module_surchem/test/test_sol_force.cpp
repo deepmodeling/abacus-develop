@@ -71,8 +71,7 @@ double evaluate_total_electrostatic_energy(
                              radial_local_potential,
                              electron_density);
     return solvent.sccs_result().electrostatic.reaction_energy
-           + solvent.sccs_result().vacuum_pcc_energy
-           + solvent.sccs_result().ionic_shape_pcc_energy;
+           + solvent.sccs_result().vacuum_pcc_energy;
 }
 
 TEST(SolForce, ConvertsPointIonPccForceFromHartreeToRydberg)

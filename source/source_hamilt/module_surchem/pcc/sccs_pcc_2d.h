@@ -78,11 +78,6 @@ double pcc_2d_bilinear_energy(const Pcc2dMoments& left,
 double pcc_2d_self_energy(const Pcc2dMoments& moments,
                           const Pcc2dParameters& parameters);
 
-double pcc_2d_ionic_shape_energy(double polarization_charge,
-                                 const Pcc2dMoments& smooth_ionic_moments,
-                                 const Pcc2dMoments& point_ionic_moments,
-                                 const Pcc2dParameters& parameters);
-
 } // namespace ModuleSccs
 
 #endif

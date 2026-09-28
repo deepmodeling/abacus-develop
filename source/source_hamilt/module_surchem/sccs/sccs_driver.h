@@ -65,7 +65,6 @@ struct SccsResult
     MultipoleMoments point_solute_moments;
     Pcc2dMoments point_solute_moments_2d;
     double vacuum_pcc_energy = 0.0;
-    double ionic_shape_pcc_energy = 0.0;
 };
 
 SccsResult evaluate_pw_sccs(
@@ -79,7 +78,6 @@ SccsResult evaluate_pw_sccs(
     const SccsConfig& config,
     const PccGeometry& pcc_geometry,
     const Pcc2dGeometry& pcc_2d_geometry,
-    double ionic_shape_coefficient,
     const ModulePW::PW_Basis& basis,
     double tpiba,
     double volume_element,

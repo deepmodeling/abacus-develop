@@ -128,7 +128,7 @@ TEST(SccsPwForce, MatchesTranslatedSmoothChargeFiniteDifference)
     EXPECT_NEAR(force(0, 2), 0.0, 1.0e-12);
 }
 
-TEST(SccsPwForce, ChargedGaussianSourceMatchesIonicShapeEnergyDerivative)
+TEST(SccsPwForce, GaussianSourceForceMatchesOpenQuadraticPotentialDerivative)
 {
     ModulePW::PW_Basis basis("cpu", "double");
 #ifdef __MPI

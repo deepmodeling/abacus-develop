@@ -155,7 +155,6 @@ SccsResult evaluate_pw_sccs(
     const SccsConfig& config,
     const PccGeometry& pcc_geometry,
     const Pcc2dGeometry& pcc_2d_geometry,
-    const double ionic_shape_coefficient,
     const ModulePW::PW_Basis& basis,
     const double tpiba,
     const double volume_element,
@@ -337,7 +336,6 @@ SccsResult evaluate_pw_sccs(
                                       charge_reduction);
     }
     result.screened_moments = add_moments(result.solute_moments, result.polarization_moments);
-    result.ionic_shape_pcc_energy = ionic_shape_coefficient * result.polarization_moments.charge;
     if (config.boundary == Boundary::Pcc0d)
     {
         result.smooth_vacuum_pcc_energy

@@ -236,7 +236,6 @@ class surchem
     ModuleSccs::Pcc2dGeometry pcc_2d_geometry_;
     ModuleSccs::MultipoleMoments pcc_moments_;
     ModuleSccs::Pcc2dMoments pcc_2d_moments_;
-    ModuleSccs::Pcc2dMoments pcc_ionic_moments_2d_;
     double pcc_energy_rydberg_ = 0.0;
     double pcc_elapsed_seconds_ = 0.0;
     bool pcc_result_valid_ = false;
