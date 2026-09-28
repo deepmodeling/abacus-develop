@@ -603,6 +603,7 @@ OBJS_SURCHEM=surchem.o\
     sccs_pw_force.o\
     sccs_pw_nonel.o\
     sccs_pw_reduction.o\
+    experimental_gaussian.o\
     sccs_periodic.o\
 
 OBJS_SYMMETRY=symm_other.o\
