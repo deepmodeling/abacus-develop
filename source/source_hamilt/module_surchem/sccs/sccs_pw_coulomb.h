@@ -32,6 +32,9 @@ class PeriodicCoulombOperator : public CoulombOperator
 
     void apply(const std::vector<double>& charge, ElectrostaticField& field) const override;
 
+    void apply_potential(const std::vector<double>& charge,
+                         std::vector<double>& potential) const override;
+
     void apply_gradient(const std::vector<double>& charge,
                         std::vector<ModuleBase::Vector3<double>>& gradient) const override;
 
@@ -43,7 +46,7 @@ class PeriodicCoulombOperator : public CoulombOperator
 
   private:
     void apply_impl(const std::vector<double>& charge,
-                    std::vector<ModuleBase::Vector3<double>>& gradient,
+                    std::vector<ModuleBase::Vector3<double>>* gradient,
                     std::vector<double>* potential) const;
 
     const ModulePW::PW_Basis& basis_;

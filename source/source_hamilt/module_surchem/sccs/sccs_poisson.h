@@ -38,6 +38,15 @@ class CoulombOperator
 
     virtual void apply(const std::vector<double>& charge, ElectrostaticField& field) const = 0;
 
+    // Scalar-only clients avoid gradient transforms when the operator supports it.
+    virtual void apply_potential(const std::vector<double>& charge,
+                                 std::vector<double>& potential) const
+    {
+        ElectrostaticField field;
+        apply(charge, field);
+        potential.swap(field.potential);
+    }
+
     // Polarization iterations need only the gradient. Operators without a
     // specialized implementation can use the complete-field fallback.
     virtual void apply_gradient(const std::vector<double>& charge,

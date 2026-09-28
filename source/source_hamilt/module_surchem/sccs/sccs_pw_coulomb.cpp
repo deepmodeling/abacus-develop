@@ -186,19 +186,26 @@ PeriodicCoulombOperator::PeriodicCoulombOperator(const ModulePW::PW_Basis& basis
 void PeriodicCoulombOperator::apply(const std::vector<double>& charge,
                                     ElectrostaticField& field) const
 {
-    apply_impl(charge, field.gradient, &field.potential);
+    apply_impl(charge, &field.gradient, &field.potential);
+}
+
+void PeriodicCoulombOperator::apply_potential(
+    const std::vector<double>& charge,
+    std::vector<double>& potential) const
+{
+    apply_impl(charge, nullptr, &potential);
 }
 
 void PeriodicCoulombOperator::apply_gradient(
     const std::vector<double>& charge,
     std::vector<ModuleBase::Vector3<double>>& gradient) const
 {
-    apply_impl(charge, gradient, nullptr);
+    apply_impl(charge, &gradient, nullptr);
 }
 
 void PeriodicCoulombOperator::apply_impl(
     const std::vector<double>& charge,
-    std::vector<ModuleBase::Vector3<double>>& gradient,
+    std::vector<ModuleBase::Vector3<double>>* gradient,
     std::vector<double>* potential) const
 {
     const ProfileClock::time_point start = ProfileClock::now();
@@ -209,8 +216,6 @@ void PeriodicCoulombOperator::apply_impl(
     }
 
     reciprocal_work_.resize(basis_.npw);
-    reciprocal_aux_.resize(basis_.npw);
-    real_work_.resize(basis_.nrxx);
     // Convert charge to potential in place; the original Fourier charge is
     // not needed after multiplying by the Coulomb kernel.
     profiled_forward(basis_, charge.data(), reciprocal_work_.data(), profile_);
@@ -230,29 +235,34 @@ void PeriodicCoulombOperator::apply_impl(
         }
     }
 
-    gradient.resize(basis_.nrxx);
     if (potential != nullptr)
     {
         potential->resize(basis_.nrxx);
         profiled_inverse(basis_, reciprocal_work_.data(), potential->data(), profile_);
     }
-    for (int direction = 0; direction < 3; ++direction)
+    if (gradient != nullptr)
     {
+        reciprocal_aux_.resize(basis_.npw);
+        real_work_.resize(basis_.nrxx);
+        gradient->resize(basis_.nrxx);
+        for (int direction = 0; direction < 3; ++direction)
+        {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
-        for (int ig = 0; ig < basis_.npw; ++ig)
-        {
-            reciprocal_aux_[ig] = ModuleBase::IMAG_UNIT * tpiba_ * basis_.gcar[ig][direction]
-                                  * reciprocal_work_[ig];
-        }
-        profiled_inverse(basis_, reciprocal_aux_.data(), real_work_.data(), profile_);
+            for (int ig = 0; ig < basis_.npw; ++ig)
+            {
+                reciprocal_aux_[ig] = ModuleBase::IMAG_UNIT * tpiba_ * basis_.gcar[ig][direction]
+                                      * reciprocal_work_[ig];
+            }
+            profiled_inverse(basis_, reciprocal_aux_.data(), real_work_.data(), profile_);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
-        for (int ir = 0; ir < basis_.nrxx; ++ir)
-        {
-            gradient[ir][direction] = real_work_[ir];
+            for (int ir = 0; ir < basis_.nrxx; ++ir)
+            {
+                (*gradient)[ir][direction] = real_work_[ir];
+            }
         }
     }
     const ProfileClock::time_point end = ProfileClock::now();

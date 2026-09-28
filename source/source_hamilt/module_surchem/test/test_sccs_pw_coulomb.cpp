@@ -171,6 +171,31 @@ TEST_F(SccsPwCoulombTest, CountsForwardAndAdjointTransforms)
     EXPECT_GE(profile.other_seconds, 0.0);
 }
 
+TEST_F(SccsPwCoulombTest, ScalarPotentialMatchesFullFieldWithoutGradientTransforms)
+{
+    const double tpiba = ModuleBase::TWO_PI / 10.0;
+    const ModuleSccs::PeriodicCoulombOperator coulomb(basis_, tpiba);
+    std::vector<double> charge(basis_.nrxx);
+    for (int ir = 0; ir < basis_.nrxx; ++ir)
+    {
+        charge[ir] = std::sin(0.13 * ir);
+    }
+    ModuleSccs::ElectrostaticField field;
+    coulomb.apply(charge, field);
+    std::vector<double> potential;
+    coulomb.apply_potential(charge, potential);
+    const ModuleSccs::CoulombTransformProfile profile = coulomb.transform_profile();
+    EXPECT_EQ(profile.forward_calls, 2);
+    EXPECT_EQ(profile.inverse_calls, 5);
+    EXPECT_EQ(potential, field.potential);
+    const std::vector<double> zero(basis_.nrxx, 0.0);
+    coulomb.apply_potential(zero, potential);
+    for (const double value : potential)
+    {
+        EXPECT_DOUBLE_EQ(value, 0.0);
+    }
+}
+
 #ifdef _OPENMP
 TEST_F(SccsPwCoulombTest, ParallelGridLoopsMatchSerialFields)
 {

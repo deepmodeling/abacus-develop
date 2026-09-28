@@ -102,14 +102,16 @@ PeriodicSccsResult solve_sccs_response(
         invsqrt[i] = 1.0/std::sqrt(result.epsilon[i]);
     }
     // P r = epsilon^-1/2 C_PCC epsilon^-1/2 r.
+    // Per-solve scratch is shared by CG applications; the cavity is fixed
+    // throughout this solve. Only the scalar Coulomb potential is needed.
+    std::vector<double> weighted(size);
+    std::vector<double> potential_work;
     const auto precondition = [&](const std::vector<double>& rhs, std::vector<double>& value)
     {
-        std::vector<double> weighted(size);
         for (std::size_t i = 0; i < size; ++i) weighted[i] = rhs[i]*invsqrt[i];
-        ModuleSccs::ElectrostaticField field;
-        coulomb.apply(weighted, field);
+        coulomb.apply_potential(weighted, potential_work);
         value.resize(size);
-        for (std::size_t i = 0; i < size; ++i) value[i] = field.potential[i]*invsqrt[i];
+        for (std::size_t i = 0; i < size; ++i) value[i] = potential_work[i]*invsqrt[i];
     };
     const auto dot = [&](const std::vector<double>& left, const std::vector<double>& right)
     {
