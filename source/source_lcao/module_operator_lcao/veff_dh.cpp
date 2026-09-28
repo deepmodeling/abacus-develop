@@ -415,7 +415,8 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
 
         // finite-difference XC: delta V^XC(r) = V^XC[rho0 + drho](r) - V^XC[rho0](r)
         elecstate::PotXC_FDM dvxcr_fdm_op(chg->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z,
-                                           PARAM.inp.gga_grad, rho_basis, chg, this->ucell);
+                                           PARAM.inp.gga_grad, PARAM.inp.out_elf[0] > 0, PARAM.inp.test_charge,
+                                           rho_basis, chg, this->ucell);
 
         std::vector<Charge> chg_drho(3);
         for (int d = 0; d < 3; ++d)

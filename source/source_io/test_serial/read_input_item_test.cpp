@@ -912,6 +912,8 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("out_stru", readinput.input_lists);
         param.input.calculation = "get_wf";
         param.input.out_stru = 1;
+        // The item is not user-read in this test; the reset rule applies.
+        it->second.str_values.clear();
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.out_stru, 0);
     }
@@ -2382,8 +2384,12 @@ TEST_F(InputTest, OutStru)
         }
     }
 
-    // --- reset_value: calculation in offlist forces out_stru to 0 ---
+    // --- reset_value: offlist calculation forces out_stru to 0 when not user-read ---
     {
+        // str_values is non-empty from previous read_value calls, so
+        // item.is_read() is true here.  Clear it to simulate the default path
+        // where the user did not specify out_stru in INPUT.
+        it->second.str_values.clear();
         param.input.calculation = "get_wf";
         param.input.out_stru = 1;
         it->second.reset_value(it->second, param);
@@ -2399,6 +2405,24 @@ TEST_F(InputTest, OutStru)
         param.input.out_stru = 1;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.out_stru, 1);
+    }
+
+    // --- reset_value: user-read value is preserved even for offlist calculation ---
+    {
+        it->second.str_values = {"1"}; // simulate user-specified out_stru
+        param.input.calculation = "nscf";
+        param.input.out_stru = 1;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 1);
+
+        it->second.str_values = {"2"};
+        param.input.calculation = "get_wf";
+        param.input.out_stru = 2;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 2);
+
+        // Clean up so later tests are not affected.
+        it->second.str_values.clear();
     }
 
     // --- Invalid integer values -> WARNING_QUIT via check_value ---

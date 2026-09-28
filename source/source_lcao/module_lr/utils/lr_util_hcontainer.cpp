@@ -19,6 +19,9 @@ namespace LR_Util
                 {
                     auto ap = dr->find_pair(ia, ja);
                     auto ap_real = dr_real->find_pair(ia, ja);
+                    // under MPI-parallel (2D block-cyclic) HContainer, an atom pair not owned by this rank
+                    // is absent from find_pair() and returns nullptr here; skip it
+                    if (!ap || !ap_real) { continue; }
                     for (int iR = 0;iR < ap->get_R_size();++iR)
                     {
                         // R index may be different between the two HContainers, find by R value instead of R-index
@@ -27,6 +30,39 @@ namespace LR_Util
                         auto ptr_real = ap_real->get_HR_values(dR.x, dR.y, dR.z).get_pointer();
                         for (int i = 0;i < ap->get_size();++i) { ptr_real[i] = (get_imag ? ptr[i].imag() : ptr[i].real()); }
                     }
+                }
+            }
+        }
+    }
+
+    void get_DMR_real_imag_part(const module_dm::DensityMatrix<std::complex<double>, std::complex<double>>& DMR,
+        module_dm::DensityMatrix<std::complex<double>, double>& DMR_real,
+        const int& nat,
+        const int& is,
+        const char& type)
+    {
+        assert(is < DMR.get_dmr_vec().size());
+        assert(DMR_real.get_dmr_vec().size() == 1);
+        bool get_imag = (type == 'I' || type == 'i');
+        auto dr = DMR.get_dmr_vec()[is]; //get_dmr_ptr() has bug when is=0
+        auto dr_real = DMR_real.get_dmr_vec()[0];
+        assert(dr != nullptr);
+        assert(dr_real != nullptr);
+        for (int ia = 0;ia < nat;ia++) {
+            for (int ja = 0;ja < nat;ja++)
+            {
+                auto ap = dr->find_pair(ia, ja);
+                auto ap_real = dr_real->find_pair(ia, ja);
+                // under MPI-parallel (2D block-cyclic) HContainer, an atom pair not owned by this rank
+                // is absent from find_pair() and returns nullptr here; skip it
+                if (!ap || !ap_real) { continue; }
+                for (int iR = 0;iR < ap->get_R_size();++iR)
+                {
+                    // R index may be different between the two HContainers, find by R value instead of R-index
+                    auto dR = ap->get_R_index(iR);
+                    auto ptr = ap->get_HR_values(iR).get_pointer();
+                    auto ptr_real = ap_real->get_HR_values(dR.x, dR.y, dR.z).get_pointer();
+                    for (int i = 0;i < ap->get_size();++i) { ptr_real[i] = (get_imag ? ptr[i].imag() : ptr[i].real()); }
                 }
             }
         }
@@ -43,6 +79,9 @@ namespace LR_Util
             {
                 auto ap = HR.find_pair(ia, ja);
                 auto ap_real = HR_real.find_pair(ia, ja);
+                // under MPI-parallel (2D block-cyclic) HContainer, an atom pair not owned by this rank
+                // is absent from find_pair() and returns nullptr here; skip it
+                if (!ap || !ap_real) { continue; }
                 for (int iR = 0;iR < ap->get_R_size();++iR)
                 {
                     // R index may be different between the two HContainers, find by R value instead of R-index

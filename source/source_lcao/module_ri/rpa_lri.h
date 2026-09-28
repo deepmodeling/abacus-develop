@@ -16,11 +16,13 @@
 #include <RI/ri/RI_Tools.h>
 #include <array>
 #include <map>
+#include <memory>
 #include <mpi.h>
 #include <vector>
 
 class Parallel_Orbitals;
 class K_Vectors;
+template <typename Tdata> class Exx_LRI;
 
 template <typename T, typename Tdata> class RPA_LRI
 {
@@ -38,7 +40,7 @@ template <typename T, typename Tdata> class RPA_LRI
     RPA_LRI(const Exx_Info_RI &info_in) : info(info_in)
     {
     }
-    ~RPA_LRI(){};
+    ~RPA_LRI();
     void postSCF(const UnitCell& ucell,
         const MPI_Comm& mpi_comm_in,
         const module_dm::DensityMatrix<T, Tdata>& dm,
@@ -95,6 +97,7 @@ template <typename T, typename Tdata> class RPA_LRI
     MPI_Comm mpi_comm;
     std::vector<double> orb_cutoff_;
     double ccp_rmesh_times_ewald = 0.0;
+    double ccp_rmesh_times_cut = 0.0;
 
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
@@ -111,8 +114,8 @@ template <typename T, typename Tdata> class RPA_LRI
 
     // Tdata post_process_Erpa( const Tdata &Erpa_in ) const;
 
-    Exx_LRI<double>* exx_cut_coulomb = nullptr;
-    Exx_LRI<double>* exx_full_coulomb = nullptr;
+    std::unique_ptr<Exx_LRI<double>> exx_cut_coulomb;
+    std::unique_ptr<Exx_LRI<double>> exx_full_coulomb;
 };
 #include "rpa_lri.hpp"
 

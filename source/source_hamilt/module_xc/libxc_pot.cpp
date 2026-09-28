@@ -289,15 +289,24 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
 
     for (xc_func_type& func: funcs)
     {
-        // jiyy add for threshold
-        constexpr double rho_threshold = 1E-6;
-        constexpr double grho_threshold = 1E-10;
+        // thresholds: same convention as Quantum ESPRESSO's libxc interface
+        // (XClib/xc_wrapper_gga.f90): exc and vrho are evaluated down to
+        // rho_threshold_lda, while only the vsigma (gradient) term is
+        // suppressed below rho_threshold_gga / grho_threshold_gga
+        constexpr double rho_threshold_lda = 1E-10;
+        constexpr double rho_threshold_gga = 1E-6;
+        constexpr double grho_threshold_gga = 1E-10;
 
-        xc_func_set_dens_threshold(&func, rho_threshold);
+        // Keep the regularized mode's weighted-energy contract. The legacy
+        // path uses upstream's separate density and gradient cutoffs.
+        xc_func_set_dens_threshold(&func, use_lca ? rho_threshold_gga : rho_threshold_lda);
 
-        // sgn for threshold mask
-        const std::vector<double> sgn
-            = XC_Functional_Libxc::cal_sgn(rho_threshold, grho_threshold, func, nspin, nrxx, rho, sigma);
+        // sgn for threshold masks
+        const std::pair<std::vector<double>,std::vector<double>> sgn = XC_Functional_Libxc::cal_sgn_vxc(
+            rho_threshold_lda, rho_threshold_gga, grho_threshold_gga, func, nspin, nrxx, rho, sigma);
+        const std::vector<double> energy_mask = use_lca
+            ? XC_Functional_Libxc::cal_sgn(rho_threshold_gga, grho_threshold_gga, func, nspin, nrxx, rho, sigma)
+            : sgn.first;
 
         std::vector<double> exc(nrxx);
         std::vector<double> vrho(nrxx * nspin);
@@ -364,14 +373,14 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         // Keep the established energy accumulation and reduction order.  In
         // gga_grad=2, reverse every sanitizer now, apply the component scaling,
         // and aggregate before traversing the shared projected graph once.
-        etxc += XC_Functional_Libxc::convert_etxc(nspin, nrxx, sgn, rho, exc) * factor;
+        etxc += XC_Functional_Libxc::convert_etxc(nspin, nrxx, energy_mask, rho, exc) * factor;
         if (use_lca)
         {
             const XC_Functional_Libxc::LibxcWeightedDerivatives weighted
                 = XC_Functional_Libxc::make_libxc_weighted_derivatives(func,
                                                                        nspin,
                                                                        nrxx,
-                                                                       sgn,
+                                                                       energy_mask,
                                                                        rho,
                                                                        sigma,
                                                                        exc,
@@ -389,7 +398,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         else
         {
             const std::pair<double, ModuleBase::matrix> vtxc_v
-                = XC_Functional_Libxc::convert_vtxc_v(func, nspin, nrxx, sgn, rho, gdr, vrho, vsigma, tpiba, chr);
+                = XC_Functional_Libxc::convert_vtxc_v(func, nspin, nrxx, sgn.first, sgn.second, rho, gdr, vrho, vsigma, tpiba, chr);
             vtxc += std::get<0>(vtxc_v) * factor;
             v += std::get<1>(vtxc_v) * factor;
         }

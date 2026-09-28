@@ -41,7 +41,7 @@ void Stochastic_Iter<T, Device>::init(K_Vectors* pkv_in,
                                       ModulePW::PW_Basis_K* wfc_basis,
                                       Stochastic_WF<T, Device>& stowf,
                                       StoChe<Real, Device>& stoche,
-                                      hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto)
+                                      StoHamiltPW<T, Device>* p_hamilt_sto)
 {
     p_che = stoche.p_che.get();
     spolyv = stoche.spolyv.get();
@@ -186,7 +186,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
         while (true)
         {
             bool converge;
-            auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<T, Device>::hPsi_norm,
+            auto hchi_norm = std::bind(&StoHamiltPW<T, Device>::hPsi_norm,
                                        p_hamilt_sto,
                                        std::placeholders::_1,
                                        std::placeholders::_2,
@@ -400,7 +400,7 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
         pchi = stowf.chi0->get_pointer();
     }
 
-    auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<T, Device>::hPsi_norm,
+    auto hchi_norm = std::bind(&StoHamiltPW<T, Device>::hPsi_norm,
                                p_hamilt_sto,
                                std::placeholders::_1,
                                std::placeholders::_2,
@@ -784,7 +784,7 @@ void Stochastic_Iter<T, Device>::calTnchi_ik(const int& ik, Stochastic_WF<T, Dev
         {
             p_hamilt_sto->updateHk(ik); // necessary, because itermu should be called before this function
         }
-        auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<T, Device>::hPsi_norm,
+        auto hchi_norm = std::bind(&StoHamiltPW<T, Device>::hPsi_norm,
                                    p_hamilt_sto,
                                    std::placeholders::_1,
                                    std::placeholders::_2,

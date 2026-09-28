@@ -15,10 +15,10 @@ class Parallel_2D
 {
   public:
     Parallel_2D() = default;
-    ~Parallel_2D() = default;
+    ~Parallel_2D();
 
-    Parallel_2D& operator=(Parallel_2D&& rhs) = default;
-    Parallel_2D(Parallel_2D&& rhs) = default;
+    Parallel_2D(Parallel_2D&& rhs) noexcept;
+    Parallel_2D& operator=(Parallel_2D&& rhs) noexcept;
 
     /// number of local rows
     int get_row_size() const
@@ -195,6 +195,12 @@ class Parallel_2D
 #ifdef __MPI
     void _init_proc_grid(const MPI_Comm comm, const bool mode);
     void _set_dist_info(const int mg, const int ng, const int nb);
+
+    /// Release the BLACS grid if owned by this object
+    void release_blacs_grid();
+
+    /// Whether this object owns the BLACS context (created by init())
+    bool owns_blacs_ctxt_ = false;
 #endif
 };
 #endif

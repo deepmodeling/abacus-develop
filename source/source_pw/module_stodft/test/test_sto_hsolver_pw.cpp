@@ -2,12 +2,12 @@
 #include <iostream>
 #include <vector>
 
-#include "hsolver_pw_sup.h"
-#include "hsolver_supplementary_mock.h"
+#include "source_hsolver/test/hsolver_pw_sup.h"
+#include "source_hsolver/test/hsolver_supplementary_mock.h"
 #include "source_base/parallel_comm.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_hsolver/hsolver_pw.h"
-#include "source_hsolver/hsolver_pw_sdft.h"
+#include "source_pw/module_stodft/sto_hsolver_pw.h"
 
 // mock for module_sdft
 template <typename REAL>
@@ -92,7 +92,7 @@ void Stochastic_Iter<T, Device>::init(K_Vectors* pkv_in,
                                       ModulePW::PW_Basis_K* wfc_basis,
                                       Stochastic_WF<T, Device>& stowf,
                                       StoChe<Real, Device>& stoche,
-                                      hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto)
+                                      StoHamiltPW<T, Device>* p_hamilt_sto)
 {
     this->nchip = stowf.nchip;
     ;
@@ -230,7 +230,7 @@ namespace ModulePW {
         const double factor) const;
 }
 /************************************************
- *  unit test of HSolverPW_SDFT class
+ *  unit test of StoHSolverPW class
  ***********************************************/
 
 /**
@@ -239,13 +239,13 @@ namespace ModulePW {
  *      - with psi;
  *      - without psi;
  *      - skip charge;
- *  - 2. hsolver::HSolverPW_SDFT::diagethr (for cases below)
+ *  - 2. StoHSolverPW::diagethr (for cases below)
  * 		- set_diagethr, for setting diagethr;
  */
-class TestHSolverPW_SDFT : public ::testing::Test
+class TestStoHSolverPW : public ::testing::Test
 {
   public:
-    TestHSolverPW_SDFT() : elecstate_test(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
+    TestStoHSolverPW() : elecstate_test(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
     {
         stoche.nche = 8;
         stoche.method_sto = 1;
@@ -254,9 +254,9 @@ class TestHSolverPW_SDFT : public ::testing::Test
     Stochastic_WF<std::complex<double>> stowf;
     K_Vectors kv;
     StoChe<double> stoche;
-    hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr;
-    hsolver::HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU> hs_d
-        = hsolver::HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU>(
+    StoHamiltPW<std::complex<double>>* p_hamilt_sto = nullptr;
+    StoHSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
+        = StoHSolverPW<std::complex<double>, base_device::DEVICE_CPU>(
             &kv,
             &pwbk,
             stowf,
@@ -292,7 +292,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
     std::ofstream temp_ofs;
 };
 
-// TEST_F(TestHSolverPW_SDFT, solve)
+// TEST_F(TestStoHSolverPW, solve)
 // {
 //     // initial memory and data
 //     elecstate_test.ekb.create(1, 2);
@@ -328,7 +328,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
 //     std::cout<<__FILE__<<__LINE__<<" "<<elecstate_test.f_en.eband<<std::endl;*/
 // }
 
-// TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
+// TEST_F(TestStoHSolverPW, solve_noband_skipcharge)
 // {
 //     // initial memory and data
 //     elecstate_test.ekb.create(1, 2);

@@ -42,7 +42,11 @@ AddTest(
 AddTest(
   TARGET MODULE_DFTU_folding
   LIBS base device
-  SOURCES test_dftu_nao_folding.cpp
+  SOURCES test_dftu_nao_folding.cpp ../../../source_basis/module_ao/parallel_orbitals.cpp
+  # The test instantiates Parallel_Orbitals (a Parallel_2D subclass) and links
+  # the MPI-built base library, so it must keep __MPI to match the layout of
+  # Parallel_2D / Parallel_Orbitals across TUs (otherwise ODR/ABI mismatch).
+  KEEP_FEATURE_DEFINITIONS __MPI
 )
 
 AddTest(

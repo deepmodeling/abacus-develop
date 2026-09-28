@@ -14,10 +14,12 @@ PotXC_FDM::PotXC_FDM(
           const bool domag,
           const bool domag_z,
           const int gga_grad,
+          const bool out_elf,
+          const int test_charge,
 	const ModulePW::PW_Basis* rho_basis_in,
 	const Charge*const chg_0_in,
 	const UnitCell*const ucell)
-	: chg_0(chg_0_in), nspin_(nspin), domag_(domag), domag_z_(domag_z), gga_grad_(gga_grad)
+	: chg_0(chg_0_in), nspin_(nspin), domag_(domag), domag_z_(domag_z), gga_grad_(gga_grad), out_elf_(out_elf), test_charge_(test_charge)
 {
 	this->rho_basis_ = rho_basis_in;
 	this->dynamic_mode = true;
@@ -53,8 +55,8 @@ void PotXC_FDM::cal_v_eff(
 
 	Charge chg_01;
 	chg_01.set_rhopw(chg_1->rhopw);
-	chg_01.allocate(chg_1->nspin, XC_Functional::get_ked_flag() || (PARAM.inp.out_elf[0] > 0),
-	                XC_Functional::get_ked_flag(), PARAM.inp.test_charge);
+	chg_01.allocate(chg_1->nspin, XC_Functional::get_ked_flag() || out_elf_,
+	                XC_Functional::get_ked_flag(), test_charge_);
 
 	for(int ir=0; ir<chg_01.nrxx; ++ir)
 	{

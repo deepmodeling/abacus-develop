@@ -94,6 +94,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_ESTATE_occ_comput
+  LIBS parameter base device
+  SOURCES test_occ_comput.cpp ../occ_comput.cpp
+)
+
+AddTest(
   TARGET MODULE_ESTATE_potentials_new
   LIBS parameter  base device planewave_serial
   SOURCES potential_new_test.cpp td_field_test.cpp ../module_pot/potential_new.cpp

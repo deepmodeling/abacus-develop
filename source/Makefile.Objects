@@ -50,6 +50,7 @@ VPATH=./src_global:\
 ./source_hamilt/module_surchem:\
 ./source_hamilt/module_xc:\
 ./source_hamilt/module_xc/kernels:\
+./source_pw/module_proj:\
 ./source_pw/module_pwdft:\
 ./source_pw/module_ofdft:\
 ./source_pw/module_stodft:\
@@ -286,7 +287,8 @@ OBJS_ELECSTAT=elecstate.o\
     setup_estate_pw.o\
     update_pot.o\
     occ_matrix.o\
-    occ_mixer.o
+    occ_mixer.o\
+    occ_comput.o
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       dm_routine.o\
@@ -355,7 +357,7 @@ OBJS_GINT=batch_biggrid.o\
 
 OBJS_HAMILT=hamilt_pw.o\
     hs_matrix_k.o\
-    hamilt_sdft_pw.o\
+    sto_hamilt_pw.o\
     operator.o\
     op_pw.o\
     op_pw_exx.o\
@@ -378,6 +380,8 @@ OBJS_HAMILT=hamilt_pw.o\
     exx_cal_energy_op.o\
     cal_density_real_op.o\
     mul_potential_op.o\
+    exx_batch_op.o\
+    exx_batch_op_float_stub.o\
 
 OBJS_HAMILT_OF=kedf_tf.o\
     kedf_extwt.o\
@@ -452,7 +456,6 @@ OBJS_HSOLVER=diago_cg.o\
     hsolver.o\
     hsolver_pw.o\
     hsolver_lcaopw.o\
-    hsolver_pw_sdft.o\
     diago_iter_assist.o\
     hegvd_op.o\
     bpcg_kernel_op.o\
@@ -891,6 +894,7 @@ OBJS_SRCPW=h_ewald_pw.o\
     stru_fac.o\
     stru_fac_k.o\
     soc.o\
+    sto_hsolver_pw.o\
     sto_iter.o\
     sto_che.o\
     sto_wf.o\

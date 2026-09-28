@@ -20,6 +20,8 @@ public:
           const bool domag,
           const bool domag_z,
           const int gga_grad,
+          const bool out_elf,
+          const int test_charge,
 		const ModulePW::PW_Basis* rho_basis_in,
 		const Charge*const chg_0_in,
 		const UnitCell*const ucell);
@@ -36,6 +38,8 @@ private:
     const bool domag_;
     const bool domag_z_;
     const int gga_grad_;
+    const bool out_elf_;
+    const int test_charge_;
 };
 
 } // namespace elecstate

@@ -167,7 +167,7 @@ class Onsite_Proj_tools
     int gcar_zero_counts[3] = {0, 0, 0};
     std::complex<FPTYPE>* vkb_save = nullptr;
     /// @brief count zero gcar indexes and prepare zero_indexes, do gcar_y /= gcar_x, gcar_z /= gcar_y
-    void transfer_gcar(int npw, int npw_max, const FPTYPE* gcar_in);
+    void transfer_gcar(int npw, int npw_max, const ModuleBase::Vector3<FPTYPE>* gcar_in);
     /// @brief save the 0-value dvkbs for calculating the dbecp_i in the force calculation
     void save_vkb(int npw, int ipol);
     /// @brief revert the 0-value dvkbs for calculating the dbecp_i in the force calculation

@@ -143,12 +143,9 @@ void Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
     }
 
     // EXX PW stress
-    bool cal_exx = exx_info.cal_exx;
-    double hybrid_alpha = exx_info.hybrid_alpha;
-    auto coulomb_param = exx_info.coulomb_param;
-    if (cal_exx)
+    if (exx_info.cal_exx)
     {
-        this->stress_exx(sigmaexx, this->pelec->wg, rho_basis, wfc_basis, p_kv, d_psi_in, ucell, hybrid_alpha, coulomb_param);
+        this->stress_exx(sigmaexx, this->pelec->wg, rho_basis, wfc_basis, p_kv, d_psi_in, ucell, exx_info);
     }
 
 
@@ -189,7 +186,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
         {
             ModuleIO::print_stress("ONSITE    STRESS", sigmaonsite, screen, ry, GlobalV::ofs_running);
         }
-        if (cal_exx)
+        if (exx_info.cal_exx)
         {
             ModuleIO::print_stress("EXX    STRESS", sigmaexx, screen, ry, GlobalV::ofs_running);
         }

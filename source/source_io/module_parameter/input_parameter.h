@@ -3,6 +3,7 @@
 #include "md_parameter.h"
 #include "source_base/vector3.h"
 
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -471,7 +472,6 @@ struct Input_para
     bool out_hr_npz = false;                  ///< output H(R) matrix in npz format
     bool out_hsr_npz = false;                 ///< output H(R) and S(R) matrices in npz format
     bool out_dm_npz = false;                  ///< output DM(R) matrix in npz format
-    int out_interval = 1;
     bool out_app_flag = true;                ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
                                              ///< in an append manner during MD liuyu 2023-03-20
     int out_ndigits = 8;                     ///< Assuming 8 digits precision is needed for matrices output
@@ -752,6 +752,7 @@ struct Input_para
     std::string exx_thr_type = "density"; ///< threshold type for exx outer loop
     double exx_ene_thr = 1e-5;            ///< threshold when exx_thr_type = energy
     double ecutexx = 0.0;                 ///< energy cutoff for exx calculation, Ry
+    int exx_batch_size = 0;               ///< band chunk width of the EXX batched path, 0 = all bands
 
     // ====   #Parameters (23.XC external parameterization) ========
     /*

@@ -76,7 +76,7 @@ public:
     void cal_V_by_grid(bool is_A);
     void grid_calculation(hamilt::HContainer<T>& VR) const;
     
-    inline void write_AB_matrix(const std::string& file, const int& prec, const T* ptr, const int& size1, const int& size2)
+    inline void write_AB_matrix(const std::string& file, const int& prec, const T* ptr, const Parallel_2D& pM)
     {
         std::ofstream ofs(file);
         if (!ofs.is_open()){
@@ -84,19 +84,19 @@ public:
         }
         ofs << file << "(Ry, transpose) with threshold " << prec << std::endl;
         ofs << std::setprecision(prec) << std::scientific;
-        LR_Util::write_value(ofs, ptr, size1, size2);
+        LR_Util::write_value(ofs, ptr, pM.get_row_size(), pM.get_col_size());
         ofs.close();
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "finish writing " + file);
     }
 
-    inline void read_AB_matrix(const std::string& file, T* ptr, const int& size1, const int& size2)
+    inline void read_AB_matrix(const std::string& file, T* ptr, const Parallel_2D& pM)
     {
         std::ifstream ifs(file);
         if (!ifs.is_open()){
             throw std::runtime_error("Cannot open file " + file);
         }
         ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // skip the first line
-        LR_Util::read_value(ifs, ptr, size1, size2);
+        LR_Util::read_value(ifs, ptr, pM.get_row_size(), pM.get_col_size());
         ifs.close();
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "finish reading " + file);
     }

@@ -4,9 +4,8 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_pw/module_pwdft/stru_fac.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "source_pw/module_pwdft/radial_proj.h"
 #include "source_psi/psi.h"
-#include "source_pw/module_pwdft/onsite_proj_tools.h"
+#include "source_pw/module_proj/onsite_proj_tools.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 
 #include <string>
@@ -52,14 +51,6 @@ namespace projectors
                     const std::complex<double>* ppsi,
                     const int ld_psi = 0
                     );
-        void read_abacus_orb(std::ifstream& ifs,
-                            std::string& elem,
-                            double& ecut,
-                            int& nr,
-                            double& dr,
-                            std::vector<int>& nzeta,
-                            std::vector<std::vector<double>>& radials,
-                            const int rank = 0);
         /// @brief static access to this class instance
         static OnsiteProjector<T, Device>* get_instance();
         void init(const std::string& orbital_dir,
@@ -147,7 +138,6 @@ namespace projectors
         Structure_Factor* sf_ = nullptr;                             // level2: the structure factor calculator
         int ntype = 0;
 
-        RadialProjection::RadialProjector rp_;
         std::vector<int> irow2it_;
         std::vector<int> irow2iproj_;
         std::vector<int> irow2m_;
