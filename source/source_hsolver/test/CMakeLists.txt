@@ -126,24 +126,24 @@ endif()
 AddTest(
   TARGET MODULE_HSOLVER_ppcg
   LIBS ${math_libs} base device container
-  SOURCES diago_ppcg_test.cpp ../diago_ppcg.cpp
+  SOURCES test_diago_ppcg.cpp ../diago_ppcg.cpp
 )
 AddTest(
   TARGET MODULE_HSOLVER_ppcg_float
   LIBS ${math_libs} base device container
-  SOURCES diago_ppcg_float_test.cpp ../diago_ppcg.cpp
+  SOURCES test_diago_ppcg_float.cpp ../diago_ppcg.cpp
 )
 
 if (ENABLE_MPI)
 AddTest(
   TARGET MODULE_HSOLVER_compare
   LIBS parameter base psi device container
-  SOURCES diago_compare_test.cpp ../diago_cg.cpp ../diago_bpcg.cpp ../diago_david.cpp ../diago_ppcg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_lin_tf.cpp ../../source_basis/module_pw/test/test_tool.cpp
+  SOURCES test_diago_compare.cpp ../diago_cg.cpp ../diago_bpcg.cpp ../diago_david.cpp ../diago_ppcg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_lin_tf.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 AddTest(
   TARGET MODULE_HSOLVER_ppcg_parallel
   LIBS parameter base psi device container
-  SOURCES diago_ppcg_parallel_test.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
+  SOURCES test_diago_ppcg_parallel.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 endif()
 

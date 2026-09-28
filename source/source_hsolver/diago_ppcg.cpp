@@ -36,11 +36,7 @@ template <typename Value>
 void reduce_pool_if_mpi_ready(Value& value)
 {
 #ifdef __MPI
-    int initialized = 0;
-    int finalized = 0;
-    MPI_Initialized(&initialized);
-    MPI_Finalized(&finalized);
-    if (initialized && !finalized)
+    if (Parallel_Reduce::mpi_ready())
     {
         Parallel_Reduce::reduce_pool(value);
     }
@@ -51,11 +47,7 @@ template <typename Value>
 void reduce_pool_if_mpi_ready(Value* value, const int n)
 {
 #ifdef __MPI
-    int initialized = 0;
-    int finalized = 0;
-    MPI_Initialized(&initialized);
-    MPI_Finalized(&finalized);
-    if (initialized && !finalized)
+    if (Parallel_Reduce::mpi_ready())
     {
         Parallel_Reduce::reduce_pool(value, n);
     }

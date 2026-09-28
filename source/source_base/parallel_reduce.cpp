@@ -13,6 +13,19 @@ const MPI_Datatype Parallel_Reduce::MPI_Type<std::complex<float>>::value = MPI_C
 const MPI_Datatype Parallel_Reduce::MPI_Type<long long>::value = MPI_LONG_LONG;
 #endif
 
+bool Parallel_Reduce::mpi_ready()
+{
+#ifdef __MPI
+    int initialized = 0;
+    int finalized = 0;
+    MPI_Initialized(&initialized);
+    MPI_Finalized(&finalized);
+    return initialized && !finalized;
+#else
+    return false;
+#endif
+}
+
 template <typename T>
 void Parallel_Reduce::reduce_all(T& object)
 {
