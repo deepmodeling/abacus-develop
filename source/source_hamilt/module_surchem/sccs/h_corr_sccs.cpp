@@ -3,6 +3,7 @@
 #include "../pcc/sccs_pcc_2d_coulomb.h"
 #include "../pcc/sccs_pcc_coulomb.h"
 #include "sccs_pw_charge.h"
+#include "experimental_gaussian.h"
 #include "sccs_pw_reduction.h"
 
 #include "source_base/timer.h"
@@ -43,6 +44,10 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     }
     const std::vector<double> electron_density
         = ModuleSccs::sum_electron_density(spin_density, nspin);
+    if (this->uses_pcc())
+    {
+        throw std::invalid_argument("Experimental Environ chain SCCS supports periodic boundary only");
+    }
     FixedSourceCache& cache = this->fixed_source_cache_;
     const double* local_potential_end = vlocal + rho_basis.nrxx;
     const bool same_lattice
@@ -71,12 +76,8 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     {
         cache.valid = false;
         cache.local_potential.assign(vlocal, local_potential_end);
-        cache.ionic_density
-            = ModuleSccs::ionic_charge_from_local_potential(cache.local_potential,
-                                                            this->parameters_.expected_ionic_charge,
-                                                            cell.omega,
-                                                            cell.tpiba,
-                                                            rho_basis);
+        const double gaussian_width = 0.5;
+        cache.ionic_density = ModuleSccs::gaussian_ionic_density(cell, rho_basis, gaussian_width);
         cache.positions = ModuleSccs::pw_grid_positions(rho_basis, cell.latvec, cell.lat0);
         cache.lattice_vectors = cell.latvec;
         cache.basis = &rho_basis;

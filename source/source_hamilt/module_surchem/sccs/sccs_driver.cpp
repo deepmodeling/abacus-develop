@@ -1,5 +1,4 @@
 #include "sccs_driver.h"
-#include "sccs_adjoint.h"
 
 #include "../pcc/sccs_pcc_2d_coulomb.h"
 #include "../pcc/sccs_pcc_coulomb.h"
@@ -24,17 +23,6 @@ namespace
 
 const double relative_polarization_charge_tolerance = 1.0e-4;
 
-CoulombTransformProfile profile_difference(const CoulombTransformProfile& end,
-                                          const CoulombTransformProfile& start)
-{
-    CoulombTransformProfile difference;
-    difference.forward_calls = end.forward_calls - start.forward_calls;
-    difference.inverse_calls = end.inverse_calls - start.inverse_calls;
-    difference.forward_seconds = end.forward_seconds - start.forward_seconds;
-    difference.inverse_seconds = end.inverse_seconds - start.inverse_seconds;
-    difference.other_seconds = end.other_seconds - start.other_seconds;
-    return difference;
-}
 
 bool same_cavity(const CavityParameters& left, const CavityParameters& right)
 {
@@ -154,7 +142,7 @@ void SccsState::reset()
     valid = false;
 }
 
-// Assemble q = rho_ion - n, solve polarization and its discrete adjoint, then
+// Assemble q = rho_ion - n, solve the experimental chain CG response, then
 // combine electrostatic and cavity terms. Energies/potentials here are in Ha;
 // the surchem adapter adds the point-ion vacuum PCC and converts to Ry.
 SccsResult evaluate_pw_sccs(
@@ -177,6 +165,10 @@ SccsResult evaluate_pw_sccs(
     SccsState& state)
 {
     validate_config(config);
+    if (config.boundary != Boundary::Periodic)
+    {
+        throw std::invalid_argument("Experimental Environ chain SCCS supports periodic boundary only");
+    }
     if (positions.size() != static_cast<std::size_t>(basis.nrxx))
     {
         throw std::invalid_argument("SCCS grid positions must match the local PW grid");
@@ -269,25 +261,8 @@ SccsResult evaluate_pw_sccs(
                                                               volume_element,
                                                               charge_reduction);
 
-    // Replace the continuum reference potentials with derivatives of the actual
-    // discrete fixed point before using them in the Hamiltonian or ionic forces.
-    const std::vector<double>& initial_adjoint = reuse_state ? state.adjoint_potential : empty_initial;
-    const CoulombTransformProfile before_adjoint = coulomb->transform_profile();
-    const std::chrono::steady_clock::time_point adjoint_start
-        = std::chrono::steady_clock::now();
-    const AdjointResult adjoint = evaluate_discrete_electrostatic_derivative(
-        result.charge.electron, config.cavity, result.charge.solute, result.response,
-        result.vacuum_field, basis, tpiba,
-        ionic_shape_coefficient, solver_parameters, initial_adjoint, *coulomb,
-        polarization_reduction, result.electrostatic);
-    result.adjoint_iterations = adjoint.iterations;
-    result.adjoint_residual_rms = adjoint.residual_rms;
-    result.adjoint_residual_max = adjoint.residual_max;
-    const std::chrono::steady_clock::time_point adjoint_end
-        = std::chrono::steady_clock::now();
-    result.adjoint_seconds = std::chrono::duration<double>(adjoint_end - adjoint_start).count();
-    const CoulombTransformProfile after_adjoint = coulomb->transform_profile();
-    result.adjoint_transforms = profile_difference(after_adjoint, before_adjoint);
+    // Experimental continuum chain derivative: the functional supplies the
+    // reaction and cavity potentials directly. No discrete adjoint is solved.
 
     NonElectrostaticParameters non_electrostatic_parameters;
     non_electrostatic_parameters.surface_tension = config.surface_tension;
@@ -399,7 +374,7 @@ SccsResult evaluate_pw_sccs(
     }
 
     state.polarization_charge = result.response.polarization.polarization_charge;
-    state.adjoint_potential = adjoint.potential;
+    state.adjoint_potential.clear();
     state.local_grid_size = basis.nrxx;
     state.global_grid_size = basis.nxyz;
     state.nx = basis.nx;

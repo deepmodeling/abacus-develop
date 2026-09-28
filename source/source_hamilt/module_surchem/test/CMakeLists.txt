@@ -137,7 +137,7 @@ AddTest(
 AddTest(
   TARGET MODULE_HAMILT_surchem_sccs_pw_force
   LIBS planewave device base cell symmetry neighbor_search neighbor
-  SOURCES test_sccs_pw_force.cpp ../sccs/sccs_pw_charge.cpp ../sccs/sccs_pw_force.cpp
+  SOURCES test_sccs_pw_force.cpp ../sccs/sccs_pw_charge.cpp ../sccs/sccs_pw_force.cpp ../sccs/experimental_gaussian.cpp
 )
 
 AddTest(
@@ -167,7 +167,7 @@ AddTest(
           ../pcc/sccs_pcc.cpp ../pcc/sccs_pcc_2d.cpp ../pcc/sccs_pcc_2d_coulomb.cpp
           ../pcc/sccs_pcc_coulomb.cpp ../sccs/sccs_periodic.cpp
           ../sccs/sccs_poisson.cpp ../sccs/sccs_pw_charge.cpp ../sccs/sccs_pw_coulomb.cpp
-          ../sccs/sccs_pw_force.cpp ../sccs/sccs_pw_nonel.cpp ../sccs/sccs_pw_reduction.cpp
+          ../sccs/sccs_pw_force.cpp ../sccs/experimental_gaussian.cpp ../sccs/sccs_pw_nonel.cpp ../sccs/sccs_pw_reduction.cpp
 )
 
 AddTest(
@@ -179,7 +179,7 @@ AddTest(
           ../pcc/sccs_pcc.cpp ../pcc/sccs_pcc_2d.cpp ../pcc/sccs_pcc_2d_coulomb.cpp
           ../pcc/sccs_pcc_coulomb.cpp ../sccs/sccs_periodic.cpp
           ../sccs/sccs_poisson.cpp ../sccs/sccs_pw_charge.cpp ../sccs/sccs_pw_coulomb.cpp
-          ../sccs/sccs_pw_force.cpp ../sccs/sccs_pw_nonel.cpp ../sccs/sccs_pw_reduction.cpp
+          ../sccs/sccs_pw_force.cpp ../sccs/experimental_gaussian.cpp ../sccs/sccs_pw_nonel.cpp ../sccs/sccs_pw_reduction.cpp
 )
 
 AddTest(

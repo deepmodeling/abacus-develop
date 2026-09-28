@@ -2,6 +2,7 @@
 #include "pcc/sccs_pcc_2d.h"
 #include "sccs/sccs_pw_charge.h"
 #include "sccs/sccs_pw_force.h"
+#include "sccs/experimental_gaussian.h"
 #include "sccs/sccs_pw_reduction.h"
 #include "pcc/sccs_pcc_2d_coulomb.h"
 #include "source_base/parallel_reduce.h"
@@ -236,11 +237,10 @@ void surchem::cal_force_sccs(const UnitCell& cell,
         throw std::logic_error("SCCS force requires a converged SCCS state");
     }
 
+    const double gaussian_width = 0.5;
     const ModuleBase::matrix smooth_force_hartree
-        = ModuleSccs::smooth_ionic_force_hartree(cell,
-                                                 rho_basis,
-                                                 vloc,
-                                                 this->sccs_result_.electrostatic.charge_potential);
+        = ModuleSccs::gaussian_ionic_force(cell, rho_basis, gaussian_width,
+                                          this->sccs_result_.electrostatic.charge_potential);
     for (int atom = 0; atom < cell.nat; ++atom)
     {
         for (int direction = 0; direction < 3; ++direction)

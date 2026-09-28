@@ -30,6 +30,7 @@ add_library(
     sccs/sccs_pw_force.cpp
     sccs/sccs_pw_nonel.cpp
     sccs/sccs_pw_reduction.cpp
+    sccs/experimental_gaussian.cpp
     sccs/sccs_periodic.cpp
 )
 
