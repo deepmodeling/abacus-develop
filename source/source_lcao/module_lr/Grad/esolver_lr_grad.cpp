@@ -261,13 +261,13 @@ ct::Tensor ModuleESolver::ESolver_LR<T, TR>::pad_X_to_z_(const int ispin, const 
 }
 
 template<typename T, typename TR>
-ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int ispin, const int istate_only, const ct::Tensor& Xz)
+ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int ispin, const int nst, const ct::Tensor& Xz)
 {
     ModuleBase::TITLE("ESolver_LR", "cal_force");
     ModuleBase::timer::start("ESolver_LR", "solve_zvector_eqation");
-    // `Z_vector_equation` treats X and Z as `nstates` independent blocks of `nloc_per_state`,
-    // so a single state is just the corresponding block with nstates = 1
-    const int nst = (istate_only < 0) ? this->nstates : 1;
+    // `Z_vector_equation` treats X and Z as `nst` independent blocks of `nloc_per_state_z_`,
+    // and the blocks need not be eigenvectors of the Casida equation in the order the
+    // diagonalizer returned them -- `cal_grad_matrix_degenerate` feeds it linear combinations.
     // X arrives already widened into the Z window (`Xz`), which spans every virtual band the
     // ground state produced rather than the `nvirt` window X was solved in -- the Brillouin
     // condition the Z-vector enforces holds in EVERY occupied-virtual rotation. The padded
@@ -294,21 +294,39 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
     if (PARAM.inp.test_force && ispin == 0) { this->test_force(); }
     if (this->openshell) { return this->cal_force_openshell(istate_only); }
 
-    // for each state, calculate dm_trans, dm_relaxed_diff, edm and force
     const int ist_begin = (istate_only < 0) ? 0 : istate_only;
-    const int ist_end = (istate_only < 0) ? this->nstates : istate_only + 1;
-
+    const int nst = (istate_only < 0) ? this->nstates : 1;
     // The whole closed-shell gradient runs in the Z window (every virtual band the ground state
     // produced), not the `nvirt` window X was solved in: only there does the Z-vector enforce
     // the Brillouin condition in every occupied-virtual rotation. X is zero-padded into it, so
     // D^X and T come out bit-identical -- and Omega is untouched, so an existing finite-difference
     // reference stays valid. See `fill_z_window_`.
-    const ct::Tensor Xz = this->pad_X_to_z_(ispin, ist_begin, ist_end - ist_begin);
+    const ct::Tensor Xz = this->pad_X_to_z_(ispin, ist_begin, nst);
+    std::vector<double> omega(nst);
+    for (int i = 0; i < nst; ++i)
+    {
+        omega[i] = this->pelec->ekb.c[ispin * this->nstates + ist_begin + i];
+    }
+    return this->cal_force_Xz(ispin, Xz, omega, ist_begin);
+}
+
+template<typename T, typename TR>
+std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(const int ispin,
+    const ct::Tensor& Xz, const std::vector<double>& omega, const int label_begin)
+{
+    // for each block, calculate dm_trans, dm_relaxed_diff, edm and force
+    const int nst = static_cast<int>(omega.size());
+    assert(static_cast<int>(Xz.shape().dim_size(0)) == nst);
+    // `ist_begin`/`ist_end` label the blocks in the output only; the gradient itself never looks
+    // up a state, it only uses `omega[i]`. That is what lets a caller pass excitation vectors
+    // that are not the stored eigenvectors (see `cal_grad_matrix_degenerate`).
+    const int ist_begin = label_begin;
+    const int ist_end = label_begin + nst;
     const std::vector<int>& nvirt_g = this->nvirt_z_;
     const std::vector<Parallel_2D>& paraX_g = this->paraX_z_;
     const int nloc_g = this->nloc_per_state_z_;
 
-    const ct::Tensor& Z = this->solve_zvector_eqation(ispin, istate_only, Xz);
+    const ct::Tensor& Z = this->solve_zvector_eqation(ispin, nst, Xz);
 
     ModuleBase::TITLE("ESolver_LR", "cal_force");
     ModuleBase::timer::start("ESolver_LR", "cal_force");
@@ -405,7 +423,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
         const std::vector<ct::Tensor>& edm_k =
             cal_edm_from_XZ_istate(Xz.data<T>() + offset,
                 Z.template data<T>() + zoffset,
-                this->pelec->ekb.c[ ispin * nstates + istate],
+                omega[istate - ist_begin],
                 // pack the following as a struct or use parameter package
                 this->eig_ks_z_.c, dm_trans,
                 c, this->nspin, this->nbasis, this->nocc, nvirt_g, (*this->ucell_), this->orb_cutoff_,
@@ -528,16 +546,29 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     // algorithm, X here is normalized over BOTH channels, so it carries no implicit sqrt(2)
     // and none of the collapsed 2/4 factors are needed.
     const int ist_begin_ = (istate_only < 0) ? 0 : istate_only;
-    const int ist_end_ = (istate_only < 0) ? this->nstates : istate_only + 1;
+    const int nst_ = (istate_only < 0) ? this->nstates : 1;
     // Like the closed-shell path, the whole gradient runs in the Z window: X is zero-padded
     // into it (both channels, each re-based -- see `pad_X_to_z_`), so D^X and T are unchanged
     // while the Z-vector gets every occupied-virtual rotation the AO basis supports.
-    const ct::Tensor Xz = this->pad_X_to_z_(0, ist_begin_, ist_end_ - ist_begin_);
+    const ct::Tensor Xz = this->pad_X_to_z_(0, ist_begin_, nst_);
+    std::vector<double> omega_(nst_);
+    for (int i = 0; i < nst_; ++i) { omega_[i] = this->pelec->ekb.c[ist_begin_ + i]; }
+    return this->cal_force_openshell_Xz(Xz, omega_, ist_begin_);
+}
+
+template<typename T, typename TR>
+std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_openshell_Xz(
+    const ct::Tensor& Xz, const std::vector<double>& omega, const int label_begin)
+{
+    const int nst = static_cast<int>(omega.size());
+    assert(static_cast<int>(Xz.shape().dim_size(0)) == nst);
+    const int ist_begin_ = label_begin;
+    const int ist_end_ = label_begin + nst;
     const std::vector<int>& nvirt_g = this->nvirt_z_;
     const std::vector<Parallel_2D>& paraX_g = this->paraX_z_;
     const int nloc_g = this->nloc_per_state_z_;
 
-    const ct::Tensor& Z = this->solve_zvector_eqation(0, istate_only, Xz);
+    const ct::Tensor& Z = this->solve_zvector_eqation(0, nst, Xz);
 
     const std::vector<int> ld_x = { static_cast<int>(this->nk * paraX_g[0].get_local_size()),
                                     static_cast<int>(this->nk * paraX_g[1].get_local_size()) };
@@ -603,7 +634,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
 #endif
         const std::vector<std::vector<ct::Tensor>>& edm_k =
             cal_edm_from_XZ_istate_openshell(X_istate, Z_istate,
-                this->pelec->ekb.c[istate], this->eig_ks_z_.c, dm_trans,
+                omega[istate - ist_begin], this->eig_ks_z_.c, dm_trans,
                 *this->psi_ks_z_, this->nspin, this->nbasis, this->nocc, nvirt_g,
                 (*this->ucell_), this->orb_cutoff_,
 #ifdef __EXX

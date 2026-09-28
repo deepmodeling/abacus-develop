@@ -219,15 +219,32 @@ namespace ModuleESolver
 
         ///========================== for gradient calculation =========================
         void init_pot_groundstate(const Charge& chg_gs);
-        /// Solve the Z-vector equation. `istate_only >= 0` restricts it to that one excited state
-        /// (the returned tensor then holds a single block); -1 solves all `nstates`.
-        ct::Tensor solve_zvector_eqation(const int ispin, const int istate_only, const ct::Tensor& Xz);
-        /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only` as above:
-        /// geometry relaxation follows a single state, and the Z-vector solve dominates the cost.
+        /// Solve the Z-vector equation for `nst` independent blocks of `Xz`.
+        ct::Tensor solve_zvector_eqation(const int ispin, const int nst, const ct::Tensor& Xz);
+        /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only >= 0`
+        /// restricts it to that one state: geometry relaxation follows a single state, and the
+        /// Z-vector solve dominates the cost. -1 does all `nstates`.
         std::vector<ModuleBase::matrix> cal_force(const int ispin, const int istate_only = -1);
         /// open-shell (spin-unrestricted) excited-state force: X holds [up | down] and every
         /// density matrix has two independent channels
         std::vector<ModuleBase::matrix> cal_force_openshell(const int istate_only = -1);
+        /// @brief Gradients for excitation vectors supplied by the caller, already widened into
+        ///        the Z window -- the two functions above are thin wrappers that widen the stored
+        ///        eigenvectors and look up their `omega`.
+        ///
+        /// The blocks of `Xz` need not be the eigenvectors the Casida diagonalizer returned. Any
+        /// normalized vector inside a degenerate multiplet is an eigenvector with the same
+        /// `omega`, so passing a linear combination is what turns the per-state gradient into the
+        /// full degenerate-subspace gradient matrix; see `cal_grad_matrix_degenerate` and
+        /// `Grad/degenerate/grad_matrix_degenerate.h`.
+        ///
+        /// @param omega        excitation energy of each block (Ry); its size sets the block count
+        /// @param label_begin  state index the first block is reported under (labels only)
+        std::vector<ModuleBase::matrix> cal_force_Xz(const int ispin, const ct::Tensor& Xz,
+            const std::vector<double>& omega, const int label_begin);
+        /// open-shell counterpart of `cal_force_Xz`
+        std::vector<ModuleBase::matrix> cal_force_openshell_Xz(const ct::Tensor& Xz,
+            const std::vector<double>& omega, const int label_begin);
         void test_force();   // test: reproduce the force of ground state
         elecstate::DensityMatrix<T, double> cal_dm_gs();  ///< ground-state density matrix
 
