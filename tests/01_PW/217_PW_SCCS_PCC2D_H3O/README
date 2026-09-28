@@ -1,4 +1,6 @@
-LCAO neutral water with native SCCS and the second lattice vector (+y) as the 2D-PCC open direction.
+PW H3O+ (nelec_delta -1) with native SCCS in a weak custom dielectric (epsilon 1.1) and 2D PCC
+along +y: charged-slab ENVIRON monopole constant -pi*Q/(3*L_y) without a Gaussian ionic-shape
+energy, plus potential and ionic force.
 
 Reference provenance (regenerated 2026-09-28):
 - ABACUS source commit: 72e385651a76a7d9ca703da71662c6292e30203e
@@ -8,5 +10,5 @@ Reference provenance (regenerated 2026-09-28):
 - result.ref is an ABACUS regression baseline, not an external QE/Environ reference.
 - two independent clean runs produced identical energy, force, and solvation values.
 
-Repository harness regeneration command, run from tests/02_NAO_Gamma:
-  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 4 -o 1 -r '^scf_sccs_pcc2d$' -g
+Repository harness regeneration command, run from tests/01_PW:
+  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 4 -o 1 -r '^217_PW_SCCS_PCC2D_H3O$' -g

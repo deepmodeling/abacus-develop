@@ -1,9 +1,9 @@
 test neutral PW SCCS with pcc_2d energy, potential, and ionic force
 
-Reference provenance (regenerated 2026-09-24):
-- ABACUS commit: ba49891f2f1eb6532e79955429817ed6156d8fd7
-- ABACUS version: v3.11.0-beta9
-- executable SHA256: d5789959f3f3dbc59c65fc197f3c26ff2eff00316d67c80e244bb33b43382bb7
+Reference provenance (regenerated 2026-09-28):
+- ABACUS source commit: 72e385651a76a7d9ca703da71662c6292e30203e
+- ABACUS version: v3.11.0-beta10
+- executable SHA256: 0dff02a68aa24e984c30a61c3ae7d1d09dfd899ab1f5811eb1ab9b0d2d49d2aa
 - parallel layout: 4 MPI ranks x 1 OpenMP thread
 - result.ref is an ABACUS regression baseline, not an external QE/Environ reference.
 - two independent clean runs produced identical energy, force, and solvation values.

@@ -1,4 +1,6 @@
-LCAO neutral water with native SCCS and the second lattice vector (+y) as the 2D-PCC open direction.
+PW water with native SCCS in a periodic cell (assume_isolated none) and the water-neutral
+preset, so nonzero surface and volume terms enter: periodic sqrt-preconditioned CG, energy,
+potential and ionic force.
 
 Reference provenance (regenerated 2026-09-28):
 - ABACUS source commit: 72e385651a76a7d9ca703da71662c6292e30203e
@@ -8,5 +10,5 @@ Reference provenance (regenerated 2026-09-28):
 - result.ref is an ABACUS regression baseline, not an external QE/Environ reference.
 - two independent clean runs produced identical energy, force, and solvation values.
 
-Repository harness regeneration command, run from tests/02_NAO_Gamma:
-  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 4 -o 1 -r '^scf_sccs_pcc2d$' -g
+Repository harness regeneration command, run from tests/01_PW:
+  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 4 -o 1 -r '^215_PW_SCCS_PERIODIC_WATER$' -g
