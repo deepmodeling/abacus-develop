@@ -104,10 +104,18 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     pw::setup_pwrho(ucell, PARAM.globalv.double_grid, this->pw_rho_flag, 
       this->pw_rho, this->pw_rhod, this->pw_big, this->classname, inp);
 
-    const SurchemParameters surchem_parameters
-        = ModuleSurchem::make_parameters(inp, ucell, atoms_info.nelec,
-                                         atoms_info.use_uspp, this->pw_rhod->poolnproc);
-    this->solvent.set_parameters(surchem_parameters);
+    SurchemParameters surchem_parameters;
+    try
+    {
+        surchem_parameters = ModuleSurchem::make_parameters(inp, ucell, atoms_info.nelec,
+                                                            atoms_info.use_uspp,
+                                                            this->pw_rhod->poolnproc);
+        this->solvent.set_parameters(surchem_parameters);
+    }
+    catch (const std::exception& error)
+    {
+        ModuleBase::WARNING_QUIT("ESolver_FP::before_all_runners", error.what());
+    }
 
     //! 3) setup structure factors
     this->sf.set(this->pw_rhod, inp.nbspline);

@@ -160,6 +160,15 @@ class surchem
                       Structure_Factor* sf,
                       ModuleBase::matrix& v);
 
+    // SCCS/PCC dispatch of v_correction. Kernel exceptions stop the run
+    // through WARNING_QUIT instead of escaping into the SCF loop.
+    void v_correction_solvent(const UnitCell& cell,
+                              const ModulePW::PW_Basis& rho_basis,
+                              int nspin,
+                              const double* const* rho,
+                              const double* vlocal,
+                              ModuleBase::matrix& v);
+
     void v_correction_sccs(const UnitCell& cell,
                            const ModulePW::PW_Basis& rho_basis,
                            int nspin,

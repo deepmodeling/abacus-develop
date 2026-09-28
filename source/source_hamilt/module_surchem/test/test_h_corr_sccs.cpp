@@ -19,6 +19,116 @@
 namespace
 {
 
+// One unit ion at the center of a 10 bohr cubic cell on a 20 Ry grid.
+void setup_single_ion_cell(ModulePW::PW_Basis& basis, UnitCell& cell)
+{
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    const double length = 10.0;
+    basis.initgrids(length, lattice, 20.0);
+    basis.initparameters(false, 20.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+
+    cell.lat0 = length;
+    cell.latvec = lattice;
+    cell.omega = length * length * length;
+    cell.tpiba = ModuleBase::TWO_PI / length;
+    cell.tpiba2 = cell.tpiba * cell.tpiba;
+    cell.ntype = 1;
+    cell.nat = 1;
+    cell.atoms = new Atom[1];
+    cell.atoms[0].na = 1;
+    cell.atoms[0].mass = 1.0;
+    cell.atoms[0].ncpp.zv = 1.0;
+    cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.5, 0.5, 0.5));
+}
+
+SurchemParameters periodic_sccs_parameters()
+{
+    SurchemParameters parameters;
+    parameters.use_sccs = true;
+    parameters.expected_electron_count = 0.0;
+    parameters.expected_ionic_charge = 1.0;
+    parameters.sccs_config.cavity.density_min = 1.0e-2;
+    parameters.sccs_config.cavity.density_max = 2.0e-2;
+    parameters.sccs_config.cavity.epsilon_bulk = 5.0;
+    parameters.sccs_config.surface_regularization = 1.0e-6;
+    parameters.sccs_config.max_iterations = 100;
+    parameters.sccs_config.mixing = 0.7;
+    parameters.sccs_config.tolerance_rms = 1.0e-14;
+    parameters.sccs_config.tolerance_max = 1.0e-14;
+    return parameters;
+}
+
+TEST(HCorrSccs, SolventDispatchReturnsZeroBeforeDelayedActivation)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+    UnitCell cell;
+    setup_single_ion_cell(basis, cell);
+    SurchemParameters parameters = periodic_sccs_parameters();
+    parameters.start_drho = 1.0e-2;
+    surchem solvent;
+    solvent.set_parameters(parameters);
+    ASSERT_FALSE(solvent.sccs_is_active());
+
+    std::vector<double> electron_density(basis.nrxx, 0.0);
+    const double* density_channels[1] = {electron_density.data()};
+    std::vector<double> local_potential(basis.nrxx, 0.0);
+    ModuleBase::matrix potential(1, basis.nrxx);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        potential(0, ir) = 1.0;
+    }
+    surchem::Ael = 1.0;
+    surchem::Acav = 1.0;
+    solvent.v_correction_solvent(cell,
+                                 basis,
+                                 1,
+                                 density_channels,
+                                 local_potential.data(),
+                                 potential);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        EXPECT_EQ(potential(0, ir), 0.0);
+    }
+    EXPECT_EQ(surchem::Ael, 0.0);
+    EXPECT_EQ(surchem::Acav, 0.0);
+}
+
+TEST(HCorrSccs, SolventDispatchStopsThroughWarningQuitOnKernelFailure)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+    UnitCell cell;
+    setup_single_ion_cell(basis, cell);
+    SurchemParameters parameters = periodic_sccs_parameters();
+    // The zero electron density below cannot hold the requested electron.
+    parameters.expected_electron_count = 1.0;
+    surchem solvent;
+    solvent.set_parameters(parameters);
+
+    std::vector<double> electron_density(basis.nrxx, 0.0);
+    const double* density_channels[1] = {electron_density.data()};
+    std::vector<double> local_potential(basis.nrxx, 0.0);
+    ModuleBase::matrix potential;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(solvent.v_correction_solvent(cell,
+                                             basis,
+                                             1,
+                                             density_channels,
+                                             local_potential.data(),
+                                             potential),
+                ::testing::ExitedWithCode(1),
+                "");
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(output.find("SCCS electron density normalization does not match the electron count"),
+              std::string::npos);
+}
+
 TEST(HCorrSccs, DispatchesDeferredSummaryOnlyWhenRequested)
 {
     SurchemParameters parameters;

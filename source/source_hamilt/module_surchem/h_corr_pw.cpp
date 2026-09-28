@@ -15,31 +15,9 @@ void surchem::v_correction(const UnitCell& cell,
                            Structure_Factor* sf,
                            ModuleBase::matrix& v)
 {
-    if (this->uses_sccs())
+    if (this->uses_sccs() || this->uses_pcc())
     {
-        if (this->sccs_is_active())
-        {
-            this->v_correction_sccs(cell, *rho_basis, nspin, rho, vlocal, v);
-        }
-        else if (this->uses_pcc())
-        {
-            this->v_correction_pcc(cell, *rho_basis, nspin, rho, v);
-        }
-        else
-        {
-            if (v.nr != nspin || v.nc != rho_basis->nrxx)
-            {
-                v.create(nspin, rho_basis->nrxx);
-            }
-            ModuleBase::GlobalFunc::ZEROS(v.c, nspin * rho_basis->nrxx);
-            surchem::Ael = 0.0;
-            surchem::Acav = 0.0;
-        }
-        return;
-    }
-    if (this->uses_pcc())
-    {
-        this->v_correction_pcc(cell, *rho_basis, nspin, rho, v);
+        this->v_correction_solvent(cell, *rho_basis, nspin, rho, vlocal, v);
         return;
     }
     ModuleBase::TITLE("surchem", "v_cor");

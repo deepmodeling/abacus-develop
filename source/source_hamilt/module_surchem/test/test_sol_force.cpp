@@ -15,6 +15,7 @@
 #include <complex>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace
@@ -168,8 +169,12 @@ TEST(SolForce, RequiresPwBasis)
     solvent.set_parameters(parameters);
     ModuleBase::matrix unused_vloc;
     ModuleBase::matrix force(1, 3);
-    EXPECT_THROW(solvent.cal_force_sol(cell, nullptr, unused_vloc, 1, force),
-                 std::invalid_argument);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(solvent.cal_force_sol(cell, nullptr, unused_vloc, 1, force),
+                ::testing::ExitedWithCode(1),
+                "");
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(output.find("SCCS force requires an initialized PW basis"), std::string::npos);
 }
 
 TEST(SolForce, ConvertsPointIonPcc2dForceFromHartreeToRydberg)
@@ -536,8 +541,13 @@ TEST(SolForce, RejectsIncorrectOutputShape)
     solvent.set_parameters(parameters);
     ModuleBase::matrix unused_vloc;
     ModuleBase::matrix force(1, 3);
-    EXPECT_THROW(solvent.cal_force_sol(cell, nullptr, unused_vloc, 1, force),
-                 std::invalid_argument);
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(solvent.cal_force_sol(cell, nullptr, unused_vloc, 1, force),
+                ::testing::ExitedWithCode(1),
+                "");
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(output.find("SCCS/PCC force matrix must have nat rows and three columns"),
+              std::string::npos);
 }
 
 } // namespace

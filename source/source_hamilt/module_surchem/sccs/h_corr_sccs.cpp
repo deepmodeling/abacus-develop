@@ -8,6 +8,7 @@
 
 #include "source_base/timer.h"
 #include "source_base/timer_wrapper.h"
+#include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 
 #include <algorithm>
@@ -166,4 +167,39 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     const ModuleBase::TimePoint end_time = ModuleBase::get_time();
     this->sccs_elapsed_seconds_ = ModuleBase::get_duration(start_time, end_time);
     ModuleBase::timer::end("surchem", "v_correction_sccs");
+}
+
+void surchem::v_correction_solvent(const UnitCell& cell,
+                                   const ModulePW::PW_Basis& rho_basis,
+                                   const int nspin,
+                                   const double* const* rho,
+                                   const double* vlocal,
+                                   ModuleBase::matrix& v)
+{
+    try
+    {
+        if (this->sccs_is_active())
+        {
+            this->v_correction_sccs(cell, rho_basis, nspin, rho, vlocal, v);
+        }
+        else if (this->uses_pcc())
+        {
+            this->v_correction_pcc(cell, rho_basis, nspin, rho, v);
+        }
+        else
+        {
+            // Delayed SCCS without PCC contributes nothing before activation.
+            if (v.nr != nspin || v.nc != rho_basis.nrxx)
+            {
+                v.create(nspin, rho_basis.nrxx);
+            }
+            ModuleBase::GlobalFunc::ZEROS(v.c, nspin * rho_basis.nrxx);
+            surchem::Ael = 0.0;
+            surchem::Acav = 0.0;
+        }
+    }
+    catch (const std::exception& error)
+    {
+        ModuleBase::WARNING_QUIT("surchem::v_correction", error.what());
+    }
 }

@@ -5,6 +5,7 @@
 #include "pcc/sccs_pcc_2d_coulomb.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 
 #include <stdexcept>
 #include <memory>
@@ -165,28 +166,33 @@ void surchem::cal_force_sol(const UnitCell& cell,
     ModuleBase::TITLE("surchem", "cal_force_sol");
     ModuleBase::timer::start("surchem", "cal_force_sol");
 
-    if (this->uses_sccs())
+    if (this->uses_sccs() || this->uses_pcc())
     {
+        // Report SCCS/PCC failures through the standard ABACUS error path.
         try
         {
-            if (rho_basis == nullptr)
+            if (forcesol.nr != cell.nat || forcesol.nc != 3)
             {
-                throw std::invalid_argument("SCCS force requires an initialized PW basis");
+                throw std::invalid_argument("SCCS/PCC force matrix must have nat rows and three columns");
             }
-            this->cal_force_sccs(cell, *rho_basis, vloc, forcesol);
+            if (this->uses_sccs())
+            {
+                if (rho_basis == nullptr)
+                {
+                    throw std::invalid_argument("SCCS force requires an initialized PW basis");
+                }
+                this->cal_force_sccs(cell, *rho_basis, vloc, forcesol);
+            }
+            else
+            {
+                ModuleBase::GlobalFunc::ZEROS(forcesol.c, forcesol.nr * forcesol.nc);
+                this->cal_force_pcc(cell, forcesol);
+            }
         }
-        catch (...)
+        catch (const std::exception& error)
         {
-            ModuleBase::timer::end("surchem", "cal_force_sol");
-            throw;
+            ModuleBase::WARNING_QUIT("surchem::cal_force_sol", error.what());
         }
-        ModuleBase::timer::end("surchem", "cal_force_sol");
-        return;
-    }
-    if (this->uses_pcc())
-    {
-        ModuleBase::GlobalFunc::ZEROS(forcesol.c, forcesol.nr * forcesol.nc);
-        this->cal_force_pcc(cell, forcesol);
         ModuleBase::timer::end("surchem", "cal_force_sol");
         return;
     }
