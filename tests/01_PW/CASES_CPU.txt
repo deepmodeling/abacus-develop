@@ -118,6 +118,7 @@ scf_out_chg_tau
 211_PW_BPCG_KB_OCP_CHG
 212_PW_USPP_BPCG
 213_PW_USPP_pchg_wfc
+214_PW_SCAN_NLCC
 801_PW_LT_sc
 802_PW_LT_fcc
 803_PW_LT_bcc

@@ -236,6 +236,14 @@ class XCTest_VXC_meta : public XCTest
         double et2 = 0, vt2 = 0;
         ModuleBase::matrix v2,vtau2;
 
+        // Same libxc input, but with the whole density carried by the NLCC
+        // core charge instead of the valence density.
+        double et1_nlcc = 0, vt1_nlcc = 0;
+        ModuleBase::matrix v1_nlcc;
+
+        double et2_nlcc = 0, vt2_nlcc = 0;
+        ModuleBase::matrix v2_nlcc;
+
         void SetUp()
         {
             // Define variables for parameters
@@ -310,6 +318,29 @@ class XCTest_VXC_meta : public XCTest
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
             vtau2 = std::get<3>(etxc_vtxc_v);
+
+            // Second scenario: drop the valence density and let the NLCC core
+            // charge carry the whole density. The density handed to libxc
+            // (rho, sigma, tau) is left unchanged, but vtxc = \int v_xc *
+            // rho_valence now has to vanish exactly.
+            for(int i=0;i<5;i++)
+            {
+                chr.rho[0][i] = 0;
+                chr.rho[1][i] = 0;
+                chr.rho_core[i] = double(i);
+            }
+
+            etxc_vtxc_v
+                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin1, hybrid_alpha, hse_omega);
+            et1_nlcc = std::get<0>(etxc_vtxc_v);
+            vt1_nlcc = std::get<1>(etxc_vtxc_v);
+            v1_nlcc  = std::get<2>(etxc_vtxc_v);
+
+            etxc_vtxc_v
+                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin2, hybrid_alpha, hse_omega);
+            et2_nlcc = std::get<0>(etxc_vtxc_v);
+            vt2_nlcc = std::get<1>(etxc_vtxc_v);
+            v2_nlcc  = std::get<2>(etxc_vtxc_v);
         }
 };
 
@@ -351,6 +382,28 @@ TEST_F(XCTest_VXC_meta, set_xc_type)
     EXPECT_NEAR(vtau2(1,2),0.07990709956,1.0e-8);
     EXPECT_NEAR(vtau2(1,3),0.04145463825,1.0e-8);
     EXPECT_NEAR(vtau2(1,4),0.0311787189,1.0e-8);
+}
+
+
+// Regression test for the NLCC (non-linear core correction) handling in
+// v_xc_meta. Every contribution to vtxc is weighted by the valence density
+// (chr->rho), i.e. vtxc = \int v_xc * rho_valence, so a zero valence density
+// must give a vanishing vtxc even when the NLCC core charge keeps the density
+// handed to libxc non-trivial. The vsigma (density-gradient) term used to be
+// weighted by the total density instead, which left a spurious non-zero vtxc
+// and hence a wrong analytical stress for meta-GGA + NLCC pseudopotentials.
+TEST_F(XCTest_VXC_meta, vtxc_uses_valence_density)
+{
+    EXPECT_NEAR(vt1_nlcc,0.0,1.0e-12);
+    EXPECT_NEAR(vt2_nlcc,0.0,1.0e-12);
+
+    // The core charge does reach libxc, so the checks above are not vacuous:
+    // for nspin==1 the total density is bit-identical to the first scenario,
+    // hence etxc has to agree with it exactly.
+    EXPECT_GT(std::abs(v1_nlcc(0,1)),1.0e-3);
+    EXPECT_GT(std::abs(v2_nlcc(0,1)),1.0e-3);
+    EXPECT_NEAR(et1_nlcc,et1,1.0e-12);
+    EXPECT_GT(std::abs(et2_nlcc),1.0e-3);
 }
 
 

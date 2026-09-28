@@ -440,7 +440,13 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
         {
             for( int ir=0; ir< nrxx; ++ir )
             {
-                rvtxc += dh[is][ir] * rho[ir*nspin+is];
+                // Use valence-only density (chr->rho), not the total density
+                // (rho, which includes the NLCC core charge). vtxc must be
+                // \int v_xc * rho_valence so that the stress decomposition
+                // -(etxc - vtxc)/omega + stress_cc is consistent; including
+                // the core charge here double-counts the core contribution
+                // in the diagonal analytical stress.
+                rvtxc += dh[is][ir] * chr->rho[is][ir];
                 v(is,ir) -= dh[is][ir];
             }
         }
