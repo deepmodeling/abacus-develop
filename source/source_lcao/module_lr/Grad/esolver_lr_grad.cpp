@@ -2,6 +2,10 @@
 #include "source_lcao/module_lr/Grad/multipliers/zeq_solver.h"
 #include "source_lcao/module_lr/Grad/multipliers/cal_edm_from_multipliers.h"
 #include "source_lcao/module_lr/Grad/force/lr_force.h"
+#include "source_lcao/module_lr/Grad/degenerate/grad_matrix_degenerate.h"
+#include "source_base/parallel_reduce.h"
+#include <complex>
+#include <numeric>
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_io/module_output/output_log.h"
 
@@ -26,6 +30,47 @@ inline void print_force(const std::vector<ModuleBase::matrix>& force, Tstream& o
             ofs << std::endl;
         }
     }
+}
+
+/// @brief Print the degenerate-subspace gradient matrix $G_{kl}$, one $d\times d$ block per
+///        nuclear coordinate, plus the multiplet average on its diagonal.
+///
+/// The individual diagonal entries are basis-dependent: only the eigenvalues of
+/// $M(u)=\sum_a u_aG^{(a)}$ are branch slopes, and only $\operatorname{Tr}G$ is invariant. The
+/// average $\operatorname{Tr}G/d$ is printed because it IS a smooth, basis-independent $3N$ vector
+/// field -- the one a symmetry-constrained relaxation can follow.
+/// (LR-Grad-formulas/2026-09-简并激发态梯度-实测和讨论.md sections 1.1 and 5.3(b).)
+inline void print_grad_matrix(const std::vector<std::vector<ModuleBase::matrix>>& g,
+    const std::vector<int>& group, const UnitCell& ucell, std::ofstream& ofs)
+{
+    const double fac = ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
+    const int d = static_cast<int>(g.size());
+    const int nat = g[0][0].nr;
+    ofs << std::endl << " DEGENERATE-SUBSPACE GRADIENT MATRIX G_kl (eV/Angstrom), states";
+    for (int k = 0; k < d; ++k) { ofs << " " << group[k]; }
+    ofs << std::endl
+        << " Branch slopes along a displacement u are the EIGENVALUES of sum_a u_a G^(a); the"
+        << std::endl
+        << " diagonal entries alone are basis-dependent and only their trace is invariant."
+        << std::endl;
+    ofs << std::setprecision(6);
+    for (int iat = 0; iat < nat; ++iat)
+    {
+        for (int ixyz = 0; ixyz < 3; ++ixyz)
+        {
+            ofs << " atom " << std::setw(5) << iat << " dir " << std::setw(2) << ixyz << std::endl;
+            for (int k = 0; k < d; ++k)
+            {
+                ofs << "     ";
+                for (int l = 0; l < d; ++l) { ofs << std::setw(15) << g[k][l](iat, ixyz) * fac; }
+                ofs << std::endl;
+            }
+        }
+    }
+    ModuleBase::matrix avg(nat, 3);
+    for (int k = 0; k < d; ++k) { avg += g[k][k]; }
+    avg *= 1.0 / static_cast<double>(d);
+    ModuleIO::print_force(ofs, ucell, "MULTIPLET-AVERAGE FORCE Tr(G)/d (eV/Angstrom)", avg, false);
 }
 
 // check C_uaC_va-C_uiC_vi of lumo-homo, nocc=1,  nk=1
@@ -532,6 +577,115 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
     print_force(forces, std::cout, ist_begin);
     print_force(forces, GlobalV::ofs_running, ist_begin);
     return forces;
+}
+
+template<typename T, typename TR>
+void ModuleESolver::ESolver_LR<T, TR>::cal_force_and_grad_matrix_(const int ispin, std::ofstream& ofs)
+{
+    const std::vector<ModuleBase::matrix> forces = this->cal_force(ispin);
+    if (this->inp_->lr_grad_degen_thr <= 0.0) { return; }
+    // The per-state gradients above are the diagonal of the degenerate-subspace gradient matrix in
+    // whatever basis the eigensolver returned, so inside a multiplet only their trace means
+    // anything. `lr_grad_degen_thr` asks for the off-diagonal part too, which is the rest of the
+    // first-order information.
+    const int ekb_off = this->openshell ? 0 : ispin * this->nstates;
+    std::vector<double> omega(this->nstates);
+    for (int ist = 0; ist < this->nstates; ++ist) { omega[ist] = this->pelec->ekb.c[ekb_off + ist]; }
+    const std::vector<std::vector<int>> groups
+        = LR::group_degenerate_states(omega, this->inp_->lr_grad_degen_thr);
+    for (const std::vector<int>& group : groups)
+    {
+        if (group.size() < 2) { continue; }
+        std::vector<ModuleBase::matrix> diag;
+        for (const int ist : group) { diag.push_back(forces[ist]); }
+        this->cal_grad_matrix_degenerate(ispin, group, diag, ofs);
+    }
+}
+
+template<typename T, typename TR>
+std::vector<std::vector<ModuleBase::matrix>>
+ModuleESolver::ESolver_LR<T, TR>::cal_grad_matrix_degenerate(const int ispin,
+    const std::vector<int>& group, const std::vector<ModuleBase::matrix>& diag, std::ofstream& ofs)
+{
+    ModuleBase::TITLE("ESolver_LR", "cal_grad_matrix_degenerate");
+    ModuleBase::timer::start("ESolver_LR", "cal_grad_matrix_degenerate");
+    const int d = static_cast<int>(group.size());
+    assert(d >= 2);
+    assert(static_cast<int>(diag.size()) == d);
+    const std::vector<std::pair<int, int>> pairs = LR::degenerate_pairs(d);
+    const int nloc_g = this->nloc_per_state_z_;
+    const int ekb_off = this->openshell ? 0 : ispin * this->nstates;
+
+    // 1. the multiplet's members, each widened into the Z window. Padded one at a time rather
+    //    than as a range: `group` is sorted, but nothing guarantees the members are contiguous.
+    ct::Tensor Xz = LR_Util::newTensor<T>({ d, nloc_g });
+    Xz.zero();
+    std::vector<double> omega_member(d);
+    for (int k = 0; k < d; ++k)
+    {
+        const ct::Tensor one = this->pad_X_to_z_(ispin, group[k], 1);
+        std::copy(one.template data<T>(), one.template data<T>() + nloc_g,
+            Xz.template data<T>() + static_cast<size_t>(k) * nloc_g);
+        omega_member[k] = this->pelec->ekb.c[ekb_off + group[k]];
+    }
+
+    // 2. the two preconditions of route (A2), reported rather than enforced: the combinations
+    //    $X_\pm$ are normalized eigenvectors only if the members are orthonormal, and the gradient
+    //    is a single quadratic form only if they share one $\Omega$. An accidental near-degeneracy
+    //    passes the grouping threshold but fails the second, and its `omega_spread` says so.
+    double max_ovlp_err = 0.0;
+    for (int k = 0; k < d; ++k)
+    {
+        for (int l = k; l < d; ++l)
+        {
+            const T* const xk = Xz.template data<T>() + static_cast<size_t>(k) * nloc_g;
+            const T* const xl = Xz.template data<T>() + static_cast<size_t>(l) * nloc_g;
+            T loc = static_cast<T>(0);
+            for (int i = 0; i < nloc_g; ++i) { loc += xk[i] * xl[i]; }
+            Parallel_Reduce::reduce_all(loc);
+            const double ref = (k == l) ? 1.0 : 0.0;
+            max_ovlp_err = std::max(max_ovlp_err, std::abs(std::real(loc) - ref));
+        }
+    }
+    const double omega_spread = *std::max_element(omega_member.begin(), omega_member.end())
+        - *std::min_element(omega_member.begin(), omega_member.end());
+    // one $\Omega$ for every combination: the members share it up to `omega_spread`, and the mean
+    // is the neutral choice for a vector that belongs to no single member
+    const double omega_mean
+        = std::accumulate(omega_member.begin(), omega_member.end(), 0.0) / static_cast<double>(d);
+    ofs << " Degenerate multiplet of " << d << " states, Omega = " << omega_mean
+        << " Ry, spread = " << omega_spread << " Ry, max |<X_k|X_l> - delta_kl| = " << max_ovlp_err
+        << std::endl;
+    if (max_ovlp_err > 1e-6)
+    {
+        ofs << " WARNING: this multiplet's eigenvectors are not orthonormal to"
+            " 1e-6, so (X_k+X_l)/sqrt(2) is not normalized and the assembled gradient matrix is"
+            " wrong by that much." << std::endl;
+    }
+
+    // 3. the $d(d-1)/2$ combinations $X_+=(X_k+X_l)/\sqrt2$, all in one Z-vector solve
+    const int npair = static_cast<int>(pairs.size());
+    ct::Tensor Xp = LR_Util::newTensor<T>({ npair, nloc_g });
+    Xp.zero();
+    for (int ip = 0; ip < npair; ++ip)
+    {
+        LR::combine_normalized(
+            Xz.template data<T>() + static_cast<size_t>(pairs[ip].first) * nloc_g,
+            Xz.template data<T>() + static_cast<size_t>(pairs[ip].second) * nloc_g,
+            static_cast<size_t>(nloc_g),
+            Xp.template data<T>() + static_cast<size_t>(ip) * nloc_g);
+    }
+    const std::vector<double> omega_pair(npair, omega_mean);
+    const std::vector<ModuleBase::matrix> plus = this->openshell
+        ? this->cal_force_openshell_Xz(Xp, omega_pair, group[0])
+        : this->cal_force_Xz(ispin, Xp, omega_pair, group[0]);
+
+    // 4. $G_{kl}=\mathcal F[X_+]-\tfrac12(G_{kk}+G_{ll})$
+    const std::vector<std::vector<ModuleBase::matrix>> g
+        = LR::assemble_grad_matrix(diag, plus, pairs);
+    print_grad_matrix(g, group, (*this->ucell_), ofs);
+    ModuleBase::timer::end("ESolver_LR", "cal_grad_matrix_degenerate");
+    return g;
 }
 
 template<typename T, typename TR>

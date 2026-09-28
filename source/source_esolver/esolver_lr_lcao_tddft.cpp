@@ -896,7 +896,7 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
             // }
             // =============================================== for test ====================================================
         }
-        if (PARAM.inp.cal_force && !this->excited_relax_) { this->cal_force(is); }
+        if (PARAM.inp.cal_force && !this->excited_relax_) { this->cal_force_and_grad_matrix_(is, GlobalV::ofs_running); }
     }
 }
 template<typename T, typename TR>

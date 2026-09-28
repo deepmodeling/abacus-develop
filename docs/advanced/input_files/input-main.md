@@ -572,6 +572,7 @@
     - [lr\_nstates](#lr_nstates)
     - [lr\_target\_state](#lr_target_state)
     - [lr\_target\_spin](#lr_target_spin)
+    - [lr\_grad\_degen\_thr](#lr_grad_degen_thr)
     - [lr\_unrestricted](#lr_unrestricted)
     - [abs\_wavelen\_range](#abs_wavelen_range)
     - [out\_wfc\_lr](#out_wfc_lr)
@@ -5166,6 +5167,19 @@
 
   Ignored outside `calculation = relax`.
 - **Default**: singlet
+
+### lr_grad_degen_thr
+
+- **Type**: Real
+- **Unit**: Ry
+- **Description**: Excited states whose excitation energies lie within this threshold of each other are treated as one degenerate multiplet, and the full gradient matrix $G^{(A\alpha)}_{kl}=\langle X_k|\partial A/\partial R_{A\alpha}|X_l\rangle$ is computed for it in addition to the per-state gradients. Zero (the default) disables this and leaves the per-state gradients as the only output.
+
+  At a $d$-fold degeneracy no single state has a gradient vector: the branch slopes along a displacement $u$ are the eigenvalues of $\sum_{A\alpha}u_{A\alpha}G^{(A\alpha)}$, and the eigenvectors that diagonalise it depend on $u$. The per-state gradients are the diagonal of $G$ in whichever basis the eigensolver happened to return, so only their sum (the trace) is basis-independent, while $G$ itself is the complete first-order information -- it is the linear vibronic coupling Hamiltonian of the multiplet. The extra cost is $d(d-1)/2$ further Z-vector solves per multiplet.
+
+  The threshold proposes candidates; it cannot tell a true degeneracy from an accidental near-degeneracy, where the states have genuinely different excitation energies and the construction does not apply. Each multiplet's actual energy spread and the orthonormality of its eigenvectors are reported in the running log so the distinction can be made there.
+
+  A sensible value is a few times the eigensolver threshold [lr_thr](#lr_thr), so that states split by real physics are not merged.
+- **Default**: 0
 
 ### lr_unrestricted
 

@@ -245,6 +245,27 @@ namespace ModuleESolver
         /// open-shell counterpart of `cal_force_Xz`
         std::vector<ModuleBase::matrix> cal_force_openshell_Xz(const ct::Tensor& Xz,
             const std::vector<double>& omega, const int label_begin);
+        /// @brief Per-state gradients of every state, plus the gradient matrix of each degenerate
+        ///        multiplet when `lr_grad_degen_thr` asks for it. The single-point entry point.
+        void cal_force_and_grad_matrix_(const int ispin, std::ofstream& ofs);
+        /// @brief The gradient matrix of one degenerate multiplet,
+        ///        $G^{(A\alpha)}_{kl}=\langle X_k|\partial A/\partial R_{A\alpha}|X_l\rangle$.
+        ///
+        /// At a degeneracy no single state has a gradient vector -- the branch slopes along a
+        /// displacement $u$ are the eigenvalues of $\sum_{A\alpha}u_{A\alpha}G^{(A\alpha)}$, whose
+        /// eigenvectors depend on $u$ -- so this whole matrix, not its diagonal, is the first-order
+        /// information. It is obtained from the polarization identity
+        /// $G_{kl}=\mathcal F[(X_k{+}X_l)/\sqrt2]-\tfrac12(G_{kk}+G_{ll})$, which needs no new
+        /// physics: see `Grad/degenerate/grad_matrix_degenerate.h` and section 5.4 of
+        /// `LR-Grad-formulas/2026-09-简并激发态梯度-实测和讨论.md`.
+        ///
+        /// @param group  state indices of the multiplet, from `LR::group_degenerate_states`
+        /// @param diag   their per-state gradients, i.e. $G_{kk}$, already computed by `cal_force`
+        /// @param ofs    log stream the matrix and the precondition diagnostics are written to
+        /// @return  G[k][l], symmetric, each entry a (nat, 3) force matrix
+        std::vector<std::vector<ModuleBase::matrix>> cal_grad_matrix_degenerate(const int ispin,
+            const std::vector<int>& group, const std::vector<ModuleBase::matrix>& diag,
+            std::ofstream& ofs);
         void test_force();   // test: reproduce the force of ground state
         elecstate::DensityMatrix<T, double> cal_dm_gs();  ///< ground-state density matrix
 

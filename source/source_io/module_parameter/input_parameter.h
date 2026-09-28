@@ -388,6 +388,7 @@ struct Input_para
     int lr_nstates = 1;                              ///< the number of 2-particle states to be solved
     int lr_target_state = 0;                         ///< which excited state the geometry relaxation follows (0-based)
     std::string lr_target_spin = "singlet";          ///< spin channel of that state: singlet / triplet / updown
+    double lr_grad_degen_thr = 0.0;                  ///< max excitation-energy spread of a degenerate multiplet whose gradient matrix is computed (Ry); 0 disables
     std::vector<std::string> lr_init_xc_kernel = {}; ///< The method to initalize the xc kernel
     int nocc = -1;                                   ///< the number of occupied orbitals to form the 2-particle basis
     int nvirt = 1;                              ///< the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)

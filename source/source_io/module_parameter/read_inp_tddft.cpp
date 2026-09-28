@@ -1069,6 +1069,29 @@ Only the gradient of this one state is computed, since solving the Z-vector equa
         this->add_item(item);
     }
     {
+        Input_Item item("lr_grad_degen_thr");
+        item.annotation = "max excitation-energy spread of a degenerate multiplet whose gradient matrix is computed (Ry); 0 disables";
+        item.category = "Linear Response TDDFT";
+        item.type = "Real";
+        item.description = R"(Excited states whose excitation energies lie within this threshold of each other are treated as one degenerate multiplet, and the full gradient matrix $G^{(A\alpha)}_{kl}=\langle X_k|\partial A/\partial R_{A\alpha}|X_l\rangle$ is computed for it in addition to the per-state gradients. Zero (the default) disables this and leaves the per-state gradients as the only output.
+
+At a $d$-fold degeneracy no single state has a gradient vector: the branch slopes along a displacement $u$ are the eigenvalues of $\sum_{A\alpha}u_{A\alpha}G^{(A\alpha)}$, and the eigenvectors that diagonalise it depend on $u$. The per-state gradients are the diagonal of $G$ in whichever basis the eigensolver happened to return, so only their sum (the trace) is basis-independent, while $G$ itself is the complete first-order information -- it is the linear vibronic coupling Hamiltonian of the multiplet. The extra cost is $d(d-1)/2$ further Z-vector solves per multiplet.
+
+The threshold proposes candidates; it cannot tell a true degeneracy from an accidental near-degeneracy, where the states have genuinely different excitation energies and the construction does not apply. Each multiplet's actual energy spread and the orthonormality of its eigenvectors are reported in the running log so the distinction can be made there.
+
+[NOTE] A sensible value is a few times the eigensolver threshold `lr_thr`, so that states split by real physics are not merged.)";
+        item.default_value = "0";
+        item.unit = "Ry";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.lr_grad_degen_thr < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lr_grad_degen_thr must be >= 0");
+            }
+        };
+        read_sync_double(input.lr_grad_degen_thr);
+        this->add_item(item);
+    }
+    {
         Input_Item item("lr_target_spin");
         item.annotation = "spin channel of lr_target_state: singlet, triplet or updown";
         item.category = "Linear Response TDDFT";
