@@ -18,6 +18,27 @@
 namespace
 {
 
+TEST(SccsPeriodic, ContinuumSourceScreensUniformDielectricAndIncludesInterfaceField)
+{
+    const std::vector<double> charge = {1.0, -2.0};
+    ModuleSccs::PeriodicSccsResult response;
+    response.epsilon.assign(2, 5.0);
+    response.grad_log_epsilon.resize(2);
+    response.polarization.field.gradient.resize(2);
+    const std::vector<double> uniform = ModuleSccs::continuum_polarization_charge(charge, response);
+    EXPECT_NEAR(uniform[0], -0.8, 1.0e-15);
+    EXPECT_NEAR(uniform[1], 1.6, 1.0e-15);
+    response.grad_log_epsilon[0].y = ModuleBase::FOUR_PI;
+    response.polarization.field.gradient[0].y = 0.5;
+    const std::vector<double> interface = ModuleSccs::continuum_polarization_charge(charge, response);
+    EXPECT_NEAR(interface[0], -0.3, 1.0e-15);
+    EXPECT_NEAR(interface[1], uniform[1], 1.0e-15);
+    response.epsilon[0] = 0.0;
+    EXPECT_THROW(ModuleSccs::continuum_polarization_charge(charge, response), std::domain_error);
+    response.epsilon.pop_back();
+    EXPECT_THROW(ModuleSccs::continuum_polarization_charge(charge, response), std::invalid_argument);
+}
+
 TEST(SccsPeriodic, UniformDielectricScreensSingleFourierShell)
 {
     ModulePW::PW_Basis basis("cpu", "double");

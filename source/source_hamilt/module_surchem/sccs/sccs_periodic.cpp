@@ -14,6 +14,40 @@
 namespace ModuleSccs
 {
 
+std::vector<double> continuum_polarization_charge(
+    const std::vector<double>& solute_charge,
+    const PeriodicSccsResult& response)
+{
+    const std::size_t size = solute_charge.size();
+    if (response.epsilon.size() != size || response.grad_log_epsilon.size() != size
+        || response.polarization.field.gradient.size() != size)
+    {
+        throw std::invalid_argument("SCCS polarization source arrays must have the same size");
+    }
+    std::vector<double> polarization(size);
+    for (std::size_t index = 0; index < size; ++index)
+    {
+        const double epsilon = response.epsilon[index];
+        if (!std::isfinite(epsilon) || epsilon < 1.0)
+        {
+            throw std::domain_error("SCCS polarization source requires finite epsilon >= 1");
+        }
+        double projection = 0.0;
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            projection += response.grad_log_epsilon[index][direction]
+                          * response.polarization.field.gradient[index][direction];
+        }
+        polarization[index] = projection / ModuleBase::FOUR_PI
+                              + solute_charge[index] * (1.0 / epsilon - 1.0);
+        if (!std::isfinite(polarization[index]))
+        {
+            throw std::domain_error("SCCS polarization source must be finite");
+        }
+    }
+    return polarization;
+}
+
 PeriodicSccsResult solve_periodic_sccs(
     const std::vector<double>& cavity_density,
     const std::vector<double>& solute_charge,

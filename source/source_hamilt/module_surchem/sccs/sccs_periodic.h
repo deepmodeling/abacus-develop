@@ -25,6 +25,12 @@ struct PeriodicSccsResult
     PolarizationResult polarization;
 };
 
+// Continuous dielectric source used by Environ's ionic-force path.
+// On a finite grid it need not equal -laplacian(phi)/(4*pi)-q.
+std::vector<double> continuum_polarization_charge(
+    const std::vector<double>& solute_charge,
+    const PeriodicSccsResult& response);
+
 PeriodicSccsResult solve_periodic_sccs(
     const std::vector<double>& cavity_density,
     const std::vector<double>& solute_charge,
