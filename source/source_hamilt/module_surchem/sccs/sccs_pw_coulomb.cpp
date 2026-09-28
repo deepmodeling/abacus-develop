@@ -4,6 +4,7 @@
 #include "source_basis/module_pw/pw_basis.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <complex>
 #include <stdexcept>
@@ -14,6 +15,34 @@ namespace ModuleSccs
 namespace
 {
 
+typedef std::chrono::steady_clock ProfileClock;
+
+void profiled_forward(const ModulePW::PW_Basis& basis,
+                      const double* real,
+                      std::complex<double>* reciprocal,
+                      CoulombTransformProfile& profile)
+{
+    const ProfileClock::time_point start = ProfileClock::now();
+    basis.real2recip(real, reciprocal);
+    const ProfileClock::time_point end = ProfileClock::now();
+    const ProfileClock::duration elapsed = end - start;
+    profile.forward_seconds += std::chrono::duration<double>(elapsed).count();
+    ++profile.forward_calls;
+}
+
+void profiled_inverse(const ModulePW::PW_Basis& basis,
+                      const std::complex<double>* reciprocal,
+                      double* real,
+                      CoulombTransformProfile& profile)
+{
+    const ProfileClock::time_point start = ProfileClock::now();
+    basis.recip2real(reciprocal, real);
+    const ProfileClock::time_point end = ProfileClock::now();
+    const ProfileClock::duration elapsed = end - start;
+    profile.inverse_seconds += std::chrono::duration<double>(elapsed).count();
+    ++profile.inverse_calls;
+}
+
 void adjoint_gradient_transform(
     const std::vector<ModuleBase::Vector3<double>>& field,
     const ModulePW::PW_Basis& basis,
@@ -21,8 +50,11 @@ void adjoint_gradient_transform(
     const bool apply_coulomb,
     std::vector<double>& component,
     std::vector<std::complex<double>>& component_g,
-    std::vector<std::complex<double>>& sum)
+    std::vector<std::complex<double>>& sum,
+    CoulombTransformProfile& profile)
 {
+    const ProfileClock::time_point start = ProfileClock::now();
+    const double previous_transform_seconds = profile.forward_seconds + profile.inverse_seconds;
     if (field.size() != static_cast<std::size_t>(basis.nrxx)
         || !std::isfinite(tpiba) || tpiba <= 0.0)
     {
@@ -40,7 +72,7 @@ void adjoint_gradient_transform(
         {
             component[ir] = field[ir][direction];
         }
-        basis.real2recip(component.data(), component_g.data());
+        profiled_forward(basis, component.data(), component_g.data(), profile);
         for (int ig = 0; ig < basis.npw; ++ig)
         {
             sum[ig] -= ModuleBase::IMAG_UNIT * tpiba * basis.gcar[ig][direction] * component_g[ig];
@@ -55,7 +87,12 @@ void adjoint_gradient_transform(
             sum[ig] *= kernel;
         }
     }
-    basis.recip2real(sum.data(), component.data());
+    profiled_inverse(basis, sum.data(), component.data(), profile);
+    const ProfileClock::time_point end = ProfileClock::now();
+    const double transform_seconds
+        = profile.forward_seconds + profile.inverse_seconds - previous_transform_seconds;
+    const ProfileClock::duration elapsed = end - start;
+    profile.other_seconds += std::chrono::duration<double>(elapsed).count() - transform_seconds;
 }
 
 } // namespace
@@ -68,7 +105,8 @@ std::vector<double> periodic_negative_divergence(
     std::vector<double> result;
     std::vector<std::complex<double>> component_g;
     std::vector<std::complex<double>> sum;
-    adjoint_gradient_transform(field, basis, tpiba, false, result, component_g, sum);
+    CoulombTransformProfile profile;
+    adjoint_gradient_transform(field, basis, tpiba, false, result, component_g, sum, profile);
     return result;
 }
 
@@ -77,7 +115,7 @@ void PeriodicCoulombOperator::apply_gradient_adjoint(
     std::vector<double>& result) const
 {
     adjoint_gradient_transform(field, basis_, tpiba_, true,
-                               result, reciprocal_aux_, reciprocal_work_);
+                               result, reciprocal_aux_, reciprocal_work_, profile_);
 }
 
 std::vector<ModuleBase::Vector3<double>> periodic_gradient(
@@ -148,6 +186,8 @@ void PeriodicCoulombOperator::apply_impl(
     std::vector<ModuleBase::Vector3<double>>& gradient,
     std::vector<double>* potential) const
 {
+    const ProfileClock::time_point start = ProfileClock::now();
+    const double previous_transform_seconds = profile_.forward_seconds + profile_.inverse_seconds;
     if (charge.size() != static_cast<std::size_t>(basis_.nrxx))
     {
         throw std::invalid_argument("SCCS charge array does not match the local PW real-space grid");
@@ -158,7 +198,7 @@ void PeriodicCoulombOperator::apply_impl(
     real_work_.resize(basis_.nrxx);
     // Convert charge to potential in place; the original Fourier charge is
     // not needed after multiplying by the Coulomb kernel.
-    basis_.real2recip(charge.data(), reciprocal_work_.data());
+    profiled_forward(basis_, charge.data(), reciprocal_work_.data(), profile_);
     const double tpiba2 = tpiba_ * tpiba_;
     for (int ig = 0; ig < basis_.npw; ++ig)
     {
@@ -176,7 +216,7 @@ void PeriodicCoulombOperator::apply_impl(
     if (potential != nullptr)
     {
         potential->resize(basis_.nrxx);
-        basis_.recip2real(reciprocal_work_.data(), potential->data());
+        profiled_inverse(basis_, reciprocal_work_.data(), potential->data(), profile_);
     }
     for (int direction = 0; direction < 3; ++direction)
     {
@@ -185,12 +225,17 @@ void PeriodicCoulombOperator::apply_impl(
             reciprocal_aux_[ig] = ModuleBase::IMAG_UNIT * tpiba_ * basis_.gcar[ig][direction]
                                   * reciprocal_work_[ig];
         }
-        basis_.recip2real(reciprocal_aux_.data(), real_work_.data());
+        profiled_inverse(basis_, reciprocal_aux_.data(), real_work_.data(), profile_);
         for (int ir = 0; ir < basis_.nrxx; ++ir)
         {
             gradient[ir][direction] = real_work_[ir];
         }
     }
+    const ProfileClock::time_point end = ProfileClock::now();
+    const double transform_seconds
+        = profile_.forward_seconds + profile_.inverse_seconds - previous_transform_seconds;
+    const ProfileClock::duration elapsed = end - start;
+    profile_.other_seconds += std::chrono::duration<double>(elapsed).count() - transform_seconds;
 }
 
 } // namespace ModuleSccs

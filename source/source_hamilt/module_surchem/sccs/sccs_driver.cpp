@@ -24,6 +24,18 @@ namespace
 
 const double relative_polarization_charge_tolerance = 1.0e-4;
 
+CoulombTransformProfile profile_difference(const CoulombTransformProfile& end,
+                                          const CoulombTransformProfile& start)
+{
+    CoulombTransformProfile difference;
+    difference.forward_calls = end.forward_calls - start.forward_calls;
+    difference.inverse_calls = end.inverse_calls - start.inverse_calls;
+    difference.forward_seconds = end.forward_seconds - start.forward_seconds;
+    difference.inverse_seconds = end.inverse_seconds - start.inverse_seconds;
+    difference.other_seconds = end.other_seconds - start.other_seconds;
+    return difference;
+}
+
 bool same_cavity(const CavityParameters& left, const CavityParameters& right)
 {
     return left.density_min == right.density_min
@@ -247,6 +259,7 @@ SccsResult evaluate_pw_sccs(
     const std::chrono::steady_clock::time_point forward_end
         = std::chrono::steady_clock::now();
     result.forward_seconds = std::chrono::duration<double>(forward_end - forward_start).count();
+    result.forward_transforms = coulomb->transform_profile();
 
     coulomb->apply(result.charge.solute, result.vacuum_field);
     result.electrostatic = evaluate_electrostatic_functional(result.charge.solute,
@@ -259,6 +272,7 @@ SccsResult evaluate_pw_sccs(
     // Replace the continuum reference potentials with derivatives of the actual
     // discrete fixed point before using them in the Hamiltonian or ionic forces.
     const std::vector<double>& initial_adjoint = reuse_state ? state.adjoint_potential : empty_initial;
+    const CoulombTransformProfile before_adjoint = coulomb->transform_profile();
     const std::chrono::steady_clock::time_point adjoint_start
         = std::chrono::steady_clock::now();
     const AdjointResult adjoint = evaluate_discrete_electrostatic_derivative(
@@ -272,6 +286,8 @@ SccsResult evaluate_pw_sccs(
     const std::chrono::steady_clock::time_point adjoint_end
         = std::chrono::steady_clock::now();
     result.adjoint_seconds = std::chrono::duration<double>(adjoint_end - adjoint_start).count();
+    const CoulombTransformProfile after_adjoint = coulomb->transform_profile();
+    result.adjoint_transforms = profile_difference(after_adjoint, before_adjoint);
 
     NonElectrostaticParameters non_electrostatic_parameters;
     non_electrostatic_parameters.surface_tension = config.surface_tension;

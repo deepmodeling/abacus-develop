@@ -162,6 +162,8 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     solvent.write_sccs_iteration(debug_output);
     const std::string debug_text = debug_output.str();
     EXPECT_NE(debug_text.find("SCCS_TIMING preparation_s "), std::string::npos);
+    EXPECT_NE(debug_text.find("SCCS_FFT STAGE forward R2G_CALLS "), std::string::npos);
+    EXPECT_NE(debug_text.find("SCCS_FFT STAGE adjoint R2G_CALLS "), std::string::npos);
     EXPECT_NE(debug_text.find("PCC0D_ORIGIN X/Bohr 5 Y/Bohr 5 Z/Bohr 5"),
               std::string::npos);
     EXPECT_NE(debug_text.find("PCC0D_MOMENTS SMOOTH Q/e "), std::string::npos);

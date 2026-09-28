@@ -50,6 +50,8 @@ struct SccsResult
     double forward_seconds = 0.0;
     double adjoint_seconds = 0.0;
     double non_electrostatic_seconds = 0.0;
+    CoulombTransformProfile forward_transforms;
+    CoulombTransformProfile adjoint_transforms;
     ChargeDensity charge;
     PeriodicSccsResult response;
     ElectrostaticField vacuum_field;
