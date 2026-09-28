@@ -18,6 +18,9 @@ struct PeriodicSccsResult
     std::vector<double> dsolute_drho;
     std::vector<double> epsilon;
     std::vector<double> depsilon_drho;
+    // Unscaled Dn from this response's cavity density. Keep it for the
+    // discrete derivative, including points where epsilon' is zero.
+    std::vector<ModuleBase::Vector3<double>> density_gradient;
     std::vector<ModuleBase::Vector3<double>> grad_log_epsilon;
     PolarizationResult polarization;
 };

@@ -119,11 +119,18 @@ TEST(SccsPeriodic, ChainGradientMatchesAnalyticDensityModeAcrossCavityEdges)
     const ModuleSccs::PeriodicSccsResult result
         = ModuleSccs::solve_periodic_sccs(density, charge, cavity, solver, initial, basis, tpiba, 1);
     ASSERT_EQ(result.polarization.status, ModuleSccs::PolarizationStatus::Converged);
+    ASSERT_EQ(result.density_gradient.size(), density.size());
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         EXPECT_NEAR(result.grad_log_epsilon[ir].x, expected_gradient[ir], 1.0e-12);
         EXPECT_NEAR(result.grad_log_epsilon[ir].y, 0.0, 1.0e-12);
         EXPECT_NEAR(result.grad_log_epsilon[ir].z, 0.0, 1.0e-12);
+        const int ix = ir / (basis.ny * basis.nplane);
+        const double phase = ModuleBase::TWO_PI * ix / basis.nx;
+        const double expected_density_gradient = -0.008 * tpiba * std::sin(phase);
+        EXPECT_NEAR(result.density_gradient[ir].x, expected_density_gradient, 1.0e-12);
+        EXPECT_NEAR(result.density_gradient[ir].y, 0.0, 1.0e-12);
+        EXPECT_NEAR(result.density_gradient[ir].z, 0.0, 1.0e-12);
     }
 }
 

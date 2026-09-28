@@ -211,6 +211,7 @@ AdjointResult evaluate_discrete_electrostatic_derivative(
     const std::size_t size = solute_charge.size();
     if (size == 0 || cavity_density.size() != size || response.epsilon.size() != size
         || response.depsilon_drho.size() != size
+        || response.density_gradient.size() != size
         || response.grad_log_epsilon.size() != size || vacuum_field.potential.size() != size
         || response.polarization.field.potential.size() != size
         || response.polarization.field.gradient.size() != size
@@ -231,8 +232,10 @@ AdjointResult evaluate_discrete_electrostatic_derivative(
     }
     const AdjointOperator op(response, coulomb);
     AdjointResult result = solve_adjoint(rhs, initial, op, parameters, reduction);
-    const std::vector<ModuleBase::Vector3<double>> density_gradient
-        = periodic_gradient(cavity_density, basis, tpiba);
+    // The forward response already evaluated Dn on this grid. Reuse the raw
+    // gradient; recovering it from grad(log(epsilon)) would divide by zero
+    // outside the cavity transition and lose the original discrete field.
+    const std::vector<ModuleBase::Vector3<double>>& density_gradient = response.density_gradient;
     const double density_ratio = cavity_parameters.density_max / cavity_parameters.density_min;
     const double log_width = std::log(density_ratio);
     const double log_bulk = std::log(cavity_parameters.epsilon_bulk);

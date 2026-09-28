@@ -69,7 +69,8 @@ PeriodicSccsResult solve_sccs_response(
         result.depsilon_drho[index] = point.depsilon_drho;
     }
 
-    result.grad_log_epsilon = periodic_gradient(cavity_density, basis, tpiba);
+    result.density_gradient = periodic_gradient(cavity_density, basis, tpiba);
+    result.grad_log_epsilon = result.density_gradient;
     for (std::size_t i = 0; i < cavity_density.size(); ++i)
     {
         const double factor = result.depsilon_drho[i] / result.epsilon[i];
