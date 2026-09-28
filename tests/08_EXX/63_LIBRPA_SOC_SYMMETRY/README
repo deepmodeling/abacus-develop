@@ -1,0 +1,4 @@
+Check reader-v1 RPA producer output, SOC GW-preprocessor inputs, and serialized
+spatial and spin symmetry tables for a compact full-relativistic two-atom H
+calculation. This is a serialization contract, not a symmetry-on/off
+energy-equivalence comparison.

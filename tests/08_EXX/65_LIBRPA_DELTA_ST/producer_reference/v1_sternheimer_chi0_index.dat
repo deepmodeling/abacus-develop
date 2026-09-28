@@ -1,0 +1,7 @@
+# ABACUS Sternheimer chi0 v1 index
+format_version 1
+marker -41073291
+nq 1
+nfreq 1
+iq ifrequency omega_Ha weight_Ha filename
+1 1 0.5 1 v1_sternheimer_chi0_iq_1_ifreq_1_rank0.dat

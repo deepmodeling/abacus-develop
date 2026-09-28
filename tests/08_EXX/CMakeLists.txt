@@ -13,4 +13,13 @@ else()
         COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4 -j auto
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/08_EXX
     )
+
+    # Independent ABACUS producer checks for the LibRPA interface.  The existing
+    # EXX/BSE cases and their references remain untouched; these compact cases
+    # validate files consumed by the merged LibRPA workflows.
+    add_test(
+        NAME 08_EXX_librpa_producer
+        COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 1 -j auto -f CASES_LIBRPA_PRODUCER.txt
+        WORKING_DIRECTORY ${ABACUS_TEST_DIR}/08_EXX
+    )
 endif()

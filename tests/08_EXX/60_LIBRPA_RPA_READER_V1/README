@@ -1,0 +1,3 @@
+Check reader-v1 RPA producer output, including shrink LRI, Coulomb, and GW
+preprocessor input (`KPT.info`, `vxc_out.dat`, and text LCAO wavefunctions),
+for a compact two-atom H `1x1x2` solid.

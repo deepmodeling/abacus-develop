@@ -1,0 +1,20 @@
+{
+  "output_dir": "OUT.librpa",
+  "reference_dir": "producer_reference",
+  "required": [
+    {"pattern": "stru_out.txt", "kind": "stru", "symmetry_rows": 1, "spin_symmetry_rows": 1, "reference": true, "abs_tol": 1e-7},
+    {"pattern": "band_out.txt", "kind": "band", "reference": true, "abs_tol": 1e-7},
+    {"pattern": "basis_*", "kind": "text", "reference": true, "abs_tol": 1e-7},
+    {"pattern": "bz_sampling_out", "kind": "text", "reference": true, "abs_tol": 1e-7},
+    {"pattern": "v1_Cs_shrinked_data_*.txt", "kind": "lri_coeff_v1", "reference": true, "abs_tol": 1e-7},
+    {"pattern": "v1_Cs_data_*.txt", "kind": "lri_coeff_v1", "reference": true, "abs_tol": 1e-7},
+    {"pattern": "v1_shrink_sinvS_*.txt", "kind": "shrink_sinvs_v1", "reference": true, "abs_tol": 1e-7},
+    {"pattern": "v1_coulomb_cut_iq_*.dat", "kind": "coulomb_v1", "reference": true, "abs_tol": 1e-7},
+    {"pattern": "v1_coulomb_full_iq_*.dat", "kind": "coulomb_v1", "reference": true, "abs_tol": 1e-7},
+    {"pattern": "KS_eigenvector_*.dat", "kind": "gauge"},
+    {"pattern": "velocity_matrix", "kind": "gauge"},
+    {"base_dir": ".", "pattern": "OUT.autotest/vxc_out.dat", "kind": "text", "reference": true, "abs_tol": 1e-7},
+    {"base_dir": ".", "pattern": "OUT.autotest/KPT.info", "kind": "text", "reference": true, "abs_tol": 1e-7},
+    {"base_dir": ".", "pattern": "OUT.autotest/wfk*s4_nao.txt", "kind": "wfc_nao", "expected_count": 2}
+  ]
+}

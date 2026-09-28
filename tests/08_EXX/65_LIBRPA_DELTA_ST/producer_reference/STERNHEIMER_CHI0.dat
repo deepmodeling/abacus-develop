@@ -1,0 +1,70 @@
+# ABACUS Sternheimer chi0 output for LibRPA
+sternheimer_response_ecutwfc_requested_Ry 0
+sternheimer_response_ecutwfc_Ry 20
+sternheimer_response_grid_requested 0 0 0
+sternheimer_response_grid_source pbe
+pbe_grid 12 12 12 size 1728
+response_grid 12 12 12 size 1728 dV 0.02636068165435302
+status success
+RPA_ABFS_PREORTH mode=none threshold=0.01 input_expanded_size=1 output_expanded_size=1
+format librpa_v1
+data_files 1
+index_file v1_sternheimer_chi0_index.dat
+grid 12 12 12 size 1728 dV 0.02636068165435302
+nfreq 1
+frequency_grid_source file
+frequency_grid_file sternheimer_frequency_grid.dat
+transition_window_Ha unavailable_external_grid
+sternheimer_frequency_mpi no
+sternheimer_channel_mpi no
+sternheimer_mpi_layout frequency_grouped
+equation_owner_formula frequency_group_assignment
+frequency_group_size 1
+sternheimer_channel_threads 1
+mpi_ranks 1
+frequency_rank_shift 0
+rank_local_equations_min 2
+rank_local_equations_max 2
+rank_local_iterations_min 16
+rank_local_iterations_max 16
+progress_file_pattern STERNHEIMER_CHI0_PROGRESS_rank*.dat
+ifrequency omega_Ha weight_Ha omega_Ry data_file
+1 0.5 1 1 v1_sternheimer_chi0_iq_1_ifreq_1_rank0.dat
+pca_threshold 0.001
+ccp_rmesh_times 1
+solver_tolerance 1e-06
+sternheimer_zero_order_source lcao_ks
+sternheimer_lcao_virtual_source ks_bands
+analytic_ao_coupling no
+sternheimer_molecular_coulomb none
+molecular_coulomb_tail none
+sternheimer_lcao_unoccupied_bands_per_spin 1
+sternheimer_response_records 1
+sternheimer_response_spin_channels 1
+sternheimer_response_spin_channel 1
+sternheimer_response_local_k_index 1
+sternheimer_response_global_k_index 1
+sternheimer_response_kpoint 0 0 0
+sternheimer_response_kweight 2
+occupied_bands 1
+occupied_bands_per_spin 1
+occupied_projector_dimension 1
+occupied_projector_dimensions_per_spin 1
+abfs_channels 2
+abfs_source product_pca
+sternheimer_delta yes
+sternheimer_grid_diagnostics no
+sternheimer_fd_order 2
+sternheimer_preconditioner fd_spectral
+sternheimer_preconditioner_regularization_Ry 0
+sternheimer_delta_backend reference_value_gradient
+sternheimer_delta_max_states 0
+sternheimer_delta_norm_tol 1e-10
+sternheimer_delta_spin 1 virtual_states 1 accepted_candidates 1 discarded_candidates 1
+sternheimer_delta_virtual_states 1
+sternheimer_delta_accepted_candidates 1
+sternheimer_delta_discarded_candidates 1
+solved_equations 2
+all_converged yes
+max_solver_relative_residual 3.887423758302257e-08
+max_equation_residual_norm 8.187796092962857e-08

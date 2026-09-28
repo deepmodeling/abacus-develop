@@ -3956,6 +3956,9 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                                const std::chrono::steady_clock::time_point& chi0_start_time,
                                                const SternheimerOrbitalSet* reusable_rpa_abfs)
 {
+    const auto output_file = [](const std::string& filename) {
+        return join_output_path(PARAM.inp.rpa_outdir, filename);
+    };
     const bool use_weak_q_unit = env_is_true("ABACUS_STERNHEIMER_WEAK_Q_UNIT");
     if (use_weak_q_unit
         && (GlobalV::NPROC != 1 || use_frequency_mpi || kpoint_groups != 1 || PARAM.inp.sternheimer_channel_mpi
@@ -5602,10 +5605,11 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                             frequency_grid.omega_ha[static_cast<std::size_t>(ifrequency)],
                                             frequency_grid.weights_ha[static_cast<std::size_t>(ifrequency)],
                                             output_atom_count);
+                const std::string data_file = output_file(partial.filename);
                 SternheimerRPA::write_chi0_v1_file(
-                    partial.filename, metadata, auxiliary_channels, partial.matrix);
+                    data_file, metadata, auxiliary_channels, partial.matrix);
                 GlobalV::ofs_running << " Sternheimer periodic partial response: "
-                                     << partial.filename << std::endl;
+                                     << data_file << std::endl;
                 local_partial_records.push_back(std::move(partial));
 
                 if (write_kresolved_diagnostic)
@@ -5759,7 +5763,7 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                         frequency_grid.omega_ha[static_cast<std::size_t>(ifrequency)],
                                         frequency_grid.weights_ha[static_cast<std::size_t>(ifrequency)],
                                         output_atom_count);
-            const std::string data_file = chi0_v1_filename(metadata.iq, metadata.ifrequency);
+            const std::string data_file = output_file(chi0_v1_filename(metadata.iq, metadata.ifrequency));
             SternheimerRPA::write_chi0_v1_file(data_file, metadata, auxiliary_channels, chi0);
             GlobalV::ofs_running << " Sternheimer periodic chi0 v1 output: " << data_file << std::endl;
             if (write_delta_components)
@@ -5768,9 +5772,9 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                                  const std::vector<SternheimerRPA::Complex>& branch) {
                     const std::vector<SternheimerRPA::Complex> matrix
                         = SternheimerRPA::symmetrize_chi0_imaginary_frequency(branch, num_channels);
-                    SternheimerRPA::write_chi0_v1_file(delta_component_v1_filename(name,
-                                                                                    metadata.iq,
-                                                                                    metadata.ifrequency),
+                    SternheimerRPA::write_chi0_v1_file(output_file(delta_component_v1_filename(name,
+                                                                                               metadata.iq,
+                                                                                               metadata.ifrequency)),
                                                        metadata,
                                                        auxiliary_channels,
                                                        matrix);
@@ -5784,7 +5788,7 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                 const std::vector<SternheimerRPA::Complex> lcao_sos
                     = SternheimerRPA::symmetrize_chi0_imaginary_frequency(
                         lcao_sos_branches[static_cast<std::size_t>(ifrequency)], num_channels);
-                SternheimerRPA::write_chi0_v1_file(lcao_sos_v1_filename(metadata.iq, metadata.ifrequency),
+                SternheimerRPA::write_chi0_v1_file(output_file(lcao_sos_v1_filename(metadata.iq, metadata.ifrequency)),
                                                    metadata,
                                                    auxiliary_channels,
                                                    lcao_sos);
@@ -6001,7 +6005,7 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                   frequency_owners[static_cast<std::size_t>(ifrequency)]),
                  metadata});
         }
-        write_chi0_index_file("v1_sternheimer_chi0_index.dat", index_entries);
+        write_chi0_index_file(output_file("v1_sternheimer_chi0_index.dat"), index_entries);
     }
 
     out << "status success\n";
@@ -6382,6 +6386,13 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
     {
         return;
     }
+
+    // Store all LibRPA producer artifacts below the selected ABACUS output
+    // directory.  Indexes/manifests continue to contain basenames so that
+    // LibRPA can resolve them relative to that directory.
+    const auto output_file = [&output_dir](const std::string& filename) {
+        return join_output_path(output_dir, filename);
+    };
 
     const bool use_frequency_mpi = PARAM.inp.sternheimer_frequency_mpi;
     const bool use_channel_mpi = PARAM.inp.sternheimer_channel_mpi;
@@ -7784,7 +7795,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                                 ifrequency + 1,
                                                 omega_ha,
                                                 frequency_grid.weights_ha[static_cast<std::size_t>(ifrequency)]);
-                    const std::string data_file = chi0_v1_filename(metadata.iq, metadata.ifrequency);
+                    const std::string data_file = output_file(chi0_v1_filename(metadata.iq, metadata.ifrequency));
                     if (write_grid_diagnostics)
                     {
                         const std::vector<SternheimerRPA::Complex> chi0_sos
@@ -7807,11 +7818,11 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                             = std::max(max_component_reconstruction_error, reconstruction_error);
                         SternheimerRPA::write_chi0_v1_file(data_file, metadata, auxiliary_channels, chi0);
                         const std::string sos_file
-                            = sternheimer_component_v1_filename("sos", metadata.iq, metadata.ifrequency, GlobalV::MY_RANK);
+                            = output_file(sternheimer_component_v1_filename("sos", metadata.iq, metadata.ifrequency, GlobalV::MY_RANK));
                         const std::string pulay_file
-                            = sternheimer_component_v1_filename("pulay", metadata.iq, metadata.ifrequency, GlobalV::MY_RANK);
+                            = output_file(sternheimer_component_v1_filename("pulay", metadata.iq, metadata.ifrequency, GlobalV::MY_RANK));
                         const std::string qspace_file
-                            = sternheimer_component_v1_filename("qspace", metadata.iq, metadata.ifrequency, GlobalV::MY_RANK);
+                            = output_file(sternheimer_component_v1_filename("qspace", metadata.iq, metadata.ifrequency, GlobalV::MY_RANK));
                         SternheimerRPA::write_chi0_v1_file(sos_file, metadata, auxiliary_channels, chi0_sos);
                         SternheimerRPA::write_chi0_v1_file(pulay_file, metadata, auxiliary_channels, chi0_pulay);
                         SternheimerRPA::write_chi0_v1_file(qspace_file, metadata, auxiliary_channels, chi0_qspace);
@@ -7919,7 +7930,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                 const int owner_rank = frequency_assignment(ifrequency).frequency_leader_rank;
                 index_entries.push_back({chi0_v1_filename(metadata.iq, metadata.ifrequency, owner_rank), metadata});
             }
-            write_chi0_index_file("v1_sternheimer_chi0_index.dat", index_entries);
+            write_chi0_index_file(output_file("v1_sternheimer_chi0_index.dat"), index_entries);
         }
 
         const int grid_size = grid_data.grid.nx * grid_data.grid.ny * grid_data.grid.nz;
