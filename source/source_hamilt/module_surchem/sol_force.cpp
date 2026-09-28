@@ -240,33 +240,40 @@ void surchem::cal_force_sccs(const UnitCell& cell,
         throw std::logic_error("SCCS force requires a converged SCCS state");
     }
 
-    // Reproduce Environ's continuous dielectric polarization charge.
-    // Finite-grid chain discretization does not make C[rho_pol] identical
-    // to phi-phi_vac. This changes the ionic force only, not the energy.
-    const std::vector<double> polarization = ModuleSccs::continuum_polarization_charge(
-        this->sccs_result_.charge.solute, this->sccs_result_.response);
-    const double volume_element = cell.omega / static_cast<double>(rho_basis.nxyz);
-    const ModuleSccs::PoolChargeReduction charge_reduction;
-    const std::vector<ModuleBase::Vector3<double>>& positions = this->fixed_source_cache_.positions;
-    std::unique_ptr<ModuleSccs::CoulombOperator> coulomb;
-    if (config.boundary == ModuleSccs::Boundary::Pcc0d)
+    std::vector<double> polarization_potential;
+    if (config.boundary == ModuleSccs::Boundary::Periodic)
     {
-        coulomb.reset(new ModuleSccs::PccCoulombOperator(rho_basis, cell.tpiba,
-                                                        positions, volume_element,
-                                                        this->pcc_geometry_, charge_reduction));
-    }
-    else if (config.boundary == ModuleSccs::Boundary::Pcc2d)
-    {
-        coulomb.reset(new ModuleSccs::Pcc2dCoulombOperator(rho_basis, cell.tpiba,
-                                                          positions, volume_element,
-                                                          this->pcc_2d_geometry_, charge_reduction));
+        // The symmetric sqrt-CG response defines the reaction energy. Its
+        // derivative with respect to the ionic source is the solved reaction
+        // potential; reconstructing a continuous polarization source instead
+        // changes the force on a finite grid.
+        polarization_potential = this->sccs_result_.electrostatic.reaction_potential;
     }
     else
     {
-        coulomb.reset(new ModuleSccs::PeriodicCoulombOperator(rho_basis, cell.tpiba));
+        // Retain the Environ-style continuous polarization force for PCC.
+        // This is a continuum approximation, not an exact finite-grid energy
+        // derivative of the charge fixed-point solve.
+        const std::vector<double> polarization = ModuleSccs::continuum_polarization_charge(
+            this->sccs_result_.charge.solute, this->sccs_result_.response);
+        const double volume_element = cell.omega / static_cast<double>(rho_basis.nxyz);
+        const ModuleSccs::PoolChargeReduction charge_reduction;
+        const std::vector<ModuleBase::Vector3<double>>& positions = this->fixed_source_cache_.positions;
+        std::unique_ptr<ModuleSccs::CoulombOperator> coulomb;
+        if (config.boundary == ModuleSccs::Boundary::Pcc0d)
+        {
+            coulomb.reset(new ModuleSccs::PccCoulombOperator(rho_basis, cell.tpiba,
+                                                            positions, volume_element,
+                                                            this->pcc_geometry_, charge_reduction));
+        }
+        else
+        {
+            coulomb.reset(new ModuleSccs::Pcc2dCoulombOperator(rho_basis, cell.tpiba,
+                                                              positions, volume_element,
+                                                              this->pcc_2d_geometry_, charge_reduction));
+        }
+        coulomb->apply_potential(polarization, polarization_potential);
     }
-    std::vector<double> polarization_potential;
-    coulomb->apply_potential(polarization, polarization_potential);
     const double gaussian_width = 0.5;
     const ModuleBase::matrix smooth_force_hartree
         = ModuleSccs::gaussian_ionic_force(cell, rho_basis, gaussian_width,

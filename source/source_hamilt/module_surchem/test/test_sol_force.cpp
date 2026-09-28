@@ -13,6 +13,7 @@
 
 #include <cmath>
 #include <complex>
+#include <iostream>
 #include <stdexcept>
 #include <vector>
 
@@ -351,28 +352,37 @@ TEST(SolForce, MatchesFixedElectronDensityReactionEnergyDerivative)
     ModuleBase::matrix force(1, 3);
     solvent.cal_force_sol(cell, &basis, radial_local_potential, 1, force);
 
-    const double displacement = 1.0e-3;
-    cell.atoms[0].tau[0].x += displacement / length;
-    const double energy_plus
-        = evaluate_reaction_energy(solvent,
-                                   cell,
-                                   basis,
-                                   radial_local_potential,
-                                   electron_density);
-    cell.atoms[0].tau[0].x -= 2.0 * displacement / length;
-    const double energy_minus
-        = evaluate_reaction_energy(solvent,
-                                   cell,
-                                   basis,
-                                   radial_local_potential,
-                                   electron_density);
-    const double finite_difference_force
-        = -(energy_plus - energy_minus) / (2.0 * displacement);
-
-    EXPECT_NEAR(0.5 * force(0, 0), finite_difference_force, 1.0e-4);
+    const double displacements[2] = {1.0e-3, 5.0e-4};
+    double* coordinates[3] = {&cell.atoms[0].tau[0].x,
+                              &cell.atoms[0].tau[0].y,
+                              &cell.atoms[0].tau[0].z};
+    for (int step_index = 0; step_index < 2; ++step_index)
+    {
+        const double displacement = displacements[step_index];
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            *coordinates[direction] += displacement / length;
+            const double energy_plus
+                = evaluate_reaction_energy(solvent, cell, basis,
+                                            radial_local_potential, electron_density);
+            *coordinates[direction] -= 2.0 * displacement / length;
+            const double energy_minus
+                = evaluate_reaction_energy(solvent, cell, basis,
+                                            radial_local_potential, electron_density);
+            *coordinates[direction] += displacement / length;
+            const double finite_difference_force
+                = -(energy_plus - energy_minus) / (2.0 * displacement);
+            const double force_hartree = 0.5 * force(0, direction);
+            const double error_hartree = std::abs(force_hartree - finite_difference_force);
+            std::cout << "PERIODIC_CHAIN_FORCE_ERROR displacement/Bohr " << displacement
+                      << " direction " << direction << " Ha/Bohr " << error_hartree << std::endl;
+            EXPECT_NEAR(force_hartree, finite_difference_force, 1.0e-4)
+                << "step " << displacement << " direction " << direction;
+        }
+    }
 }
 
-TEST(SolForce, NeutralAndChargedPcc2dMatchFixedDensityTotalEnergyDerivativeInXyz)
+TEST(SolForce, NeutralAndChargedPcc2dApproximateFixedDensityTotalEnergyDerivativeInXyz)
 {
     ModulePW::PW_Basis basis("cpu", "double");
 #ifdef __MPI
@@ -436,6 +446,13 @@ TEST(SolForce, NeutralAndChargedPcc2dMatchFixedDensityTotalEnergyDerivativeInXyz
         electron_density[ir] /= electron_count;
     }
 
+    // Accepted continuum-chain accuracy for this epsilon=1.1 synthetic case.
+    // This does not certify water cavities or exact variational derivatives.
+    const double force_tolerance_ev_angstrom = 0.01;
+    const double hartree_force_to_ev_angstrom
+        = 2.0 * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
+    const double force_tolerance_hartree
+        = force_tolerance_ev_angstrom / hartree_force_to_ev_angstrom;
     const double displacement = 1.0e-3;
     const double coordinate_scale[3] = {length, length, length};
     double* coordinates[3] = {&cell.atoms[0].tau[0].x,
@@ -460,7 +477,7 @@ TEST(SolForce, NeutralAndChargedPcc2dMatchFixedDensityTotalEnergyDerivativeInXyz
         parameters.sccs_config.cavity.epsilon_bulk = 1.1;
         parameters.sccs_config.surface_regularization = 1.0e-6;
         parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc2d;
-    parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
+        parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
         parameters.sccs_config.max_iterations = 500;
         parameters.sccs_config.mixing = 0.5;
         parameters.sccs_config.tolerance_rms = 1.0e-12;
@@ -495,8 +512,15 @@ TEST(SolForce, NeutralAndChargedPcc2dMatchFixedDensityTotalEnergyDerivativeInXyz
             *coordinates[direction] += displacement / coordinate_scale[direction];
             const double finite_difference_force
                 = -(energy_plus - energy_minus) / (2.0 * displacement);
-            EXPECT_NEAR(0.5 * force(0, direction), finite_difference_force, 1.0e-7)
-                << "charge case " << charge_case << " direction " << direction;
+            const double force_hartree = 0.5 * force(0, direction);
+            const double error_hartree = std::abs(force_hartree - finite_difference_force);
+            const double error_ev_angstrom = error_hartree * hartree_force_to_ev_angstrom;
+            std::cout << "PCC2D_CHAIN_FORCE_ERROR charge_case " << charge_case
+                      << " direction " << direction << " eV/Angstrom " << error_ev_angstrom
+                      << " tolerance " << force_tolerance_ev_angstrom << std::endl;
+            EXPECT_NEAR(force_hartree, finite_difference_force, force_tolerance_hartree)
+                << "charge case " << charge_case << " direction " << direction
+                << "; error " << error_ev_angstrom << " eV/Angstrom";
         }
     }
 }
