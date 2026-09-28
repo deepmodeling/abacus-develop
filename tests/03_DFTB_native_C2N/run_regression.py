@@ -64,15 +64,83 @@ def read_abacus_bands(path):
     return bands
 
 
+def reverse_stru_species_order(path):
+    lines = path.read_text().splitlines()
+    species_header = lines.index("ATOMIC_SPECIES")
+    positions_header = lines.index("ATOMIC_POSITIONS")
+
+    species_end = species_header + 1
+    while species_end < positions_header and lines[species_end].strip():
+        species_end += 1
+    species_records = lines[species_header + 1 : species_end]
+    species_names = [record.split()[0] for record in species_records]
+    if len(species_names) < 2 or len(set(species_names)) != len(species_names):
+        raise ValueError("Cannot reverse an invalid ATOMIC_SPECIES table")
+
+    cursor = positions_header + 1
+    while cursor < len(lines) and not lines[cursor].strip():
+        cursor += 1
+    if cursor >= len(lines):
+        raise ValueError("STRU has no ATOMIC_POSITIONS mode")
+    mode = lines[cursor]
+    cursor += 1
+
+    atom_blocks = []
+    while cursor < len(lines):
+        while cursor < len(lines) and not lines[cursor].strip():
+            cursor += 1
+        if cursor == len(lines):
+            break
+        block_start = cursor
+        species = lines[cursor].split()[0]
+        if species not in species_names:
+            raise ValueError(f"Unexpected species block in STRU: {species}")
+        if cursor + 2 >= len(lines):
+            raise ValueError(f"Incomplete STRU block for {species}")
+        try:
+            atom_count = int(lines[cursor + 2].split()[0])
+        except (IndexError, ValueError) as error:
+            raise ValueError(f"Invalid atom count for STRU species {species}") from error
+        cursor += 3 + atom_count
+        if cursor > len(lines):
+            raise ValueError(f"Incomplete atom coordinates for STRU species {species}")
+        atom_blocks.append((species, lines[block_start:cursor]))
+
+    block_names = [species for species, _ in atom_blocks]
+    if block_names != species_names:
+        raise ValueError(
+            "This regression expects ATOMIC_POSITIONS blocks to follow ATOMIC_SPECIES order"
+        )
+
+    reordered_species = list(reversed(species_records))
+    updated_lines = lines[: species_header + 1] + reordered_species + lines[species_end:]
+    positions_header = updated_lines.index("ATOMIC_POSITIONS")
+    reordered_blocks = list(reversed(atom_blocks))
+    rebuilt_positions = updated_lines[: positions_header + 1] + [mode, ""]
+    for index, (_, block) in enumerate(reordered_blocks):
+        if index:
+            rebuilt_positions.append("")
+        rebuilt_positions.extend(block)
+
+    return "\n".join(rebuilt_positions) + "\n"
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--abacus", required=True, type=Path)
     parser.add_argument("--case-dir", required=True, type=Path)
     parser.add_argument("--mpi-exec")
     parser.add_argument("--mpi-num-procs-flag")
+    parser.add_argument("--mpi-num-procs", type=int, default=1)
     parser.add_argument("--mpi-preflag", action="append", default=[])
     parser.add_argument("--mpi-postflag", action="append", default=[])
+    parser.add_argument("--reverse-species-order", action="store_true")
     args = parser.parse_args()
+
+    if args.mpi_num_procs < 1:
+        raise ValueError("--mpi-num-procs must be positive")
+    if args.mpi_num_procs > 1 and not args.mpi_exec:
+        raise ValueError("Multiple MPI ranks require --mpi-exec")
 
     executable = args.abacus.resolve()
     case_dir = args.case_dir.resolve()
@@ -89,6 +157,9 @@ def main():
         for filename in ("INPUT", "STRU", "KPT", "dftb_native.in", "dftb_band_path.in"):
             shutil.copy2(case_dir / filename, working_directory / filename)
         shutil.copytree(case_dir / "parameters", working_directory / "parameters")
+        if args.reverse_species_order:
+            stru_file = working_directory / "STRU"
+            stru_file.write_text(reverse_stru_species_order(stru_file))
 
         command = [str(executable)]
         if args.mpi_exec:
@@ -97,9 +168,13 @@ def main():
             command = (
                 [args.mpi_exec]
                 + args.mpi_preflag
-                + [args.mpi_num_procs_flag, "1", str(executable)]
+                + [args.mpi_num_procs_flag, str(args.mpi_num_procs), str(executable)]
                 + args.mpi_postflag
             )
+        print(
+            f"Running C2N regression with {args.mpi_num_procs if args.mpi_exec else 1} MPI rank(s); "
+            f"reversed species order={args.reverse_species_order}"
+        )
         try:
             result = subprocess.run(
                 command,

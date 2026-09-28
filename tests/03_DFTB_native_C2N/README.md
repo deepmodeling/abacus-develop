@@ -15,8 +15,12 @@ Run the regression after configuring and building ABACUS with testing enabled:
 
 ```bash
 ctest --test-dir <build-directory> --output-on-failure \
-  -R '^dftb_native_c2n_reference$'
+  -R '^dftb_native_c2n_'
 ```
+
+MPI-enabled builds also run the reference with two MPI ranks. A separate run
+reverses the C/N blocks in `STRU` and checks that the band reference is
+unchanged, covering species-order independence.
 
 The reference contains 17,424 eigenvalues (121 k-points × 144 bands) rounded
 to 1 meV by DFTB+. The recorded comparison gives a maximum absolute difference

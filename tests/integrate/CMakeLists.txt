@@ -15,18 +15,28 @@ if(ENABLE_MPI)
     endforeach()
 endif()
 
-add_test(
-    NAME dftb_native_c2n_reference
-    COMMAND ${Python3_EXECUTABLE}
-        ${ABACUS_TEST_DIR}/03_DFTB_native_C2N/run_regression.py
-        --abacus ${ABACUS_BIN_PATH}
-        --case-dir ${ABACUS_TEST_DIR}/03_DFTB_native_C2N
-        ${_dftb_native_mpi_args}
-)
-set_tests_properties(dftb_native_c2n_reference PROPERTIES
-    TIMEOUT 900
-    LABELS "integration;dftb"
-)
+function(add_dftb_native_c2n_test test_name mpi_process_count)
+    add_test(
+        NAME ${test_name}
+        COMMAND ${Python3_EXECUTABLE}
+            ${ABACUS_TEST_DIR}/03_DFTB_native_C2N/run_regression.py
+            --abacus ${ABACUS_BIN_PATH}
+            --case-dir ${ABACUS_TEST_DIR}/03_DFTB_native_C2N
+            ${_dftb_native_mpi_args}
+            --mpi-num-procs ${mpi_process_count}
+            ${ARGN}
+    )
+    set_tests_properties(${test_name} PROPERTIES
+        TIMEOUT 900
+        LABELS "integration;dftb"
+    )
+endfunction()
+
+add_dftb_native_c2n_test(dftb_native_c2n_reference 1)
+add_dftb_native_c2n_test(dftb_native_c2n_reversed_species_order 1 --reverse-species-order)
+if(ENABLE_MPI)
+    add_dftb_native_c2n_test(dftb_native_c2n_mpi_2rank 2)
+endif()
    
 if(ENABLE_ASAN)
     add_test(

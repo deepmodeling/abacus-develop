@@ -154,7 +154,7 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R '^(integrated_test|dftb_native_c2n_reference)$'
+          ctest --test-dir build -V --timeout 1700 -R '^(integrated_test|dftb_native_c2n_reference|dftb_native_c2n_mpi_2rank|dftb_native_c2n_reversed_species_order)$'
 
       - name: Module_Base Unittests
         env:
