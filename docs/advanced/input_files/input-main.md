@@ -4827,7 +4827,7 @@
 ### imp_sol
 
 - **Type**: Integer
-- **Description**: Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports scf and fixed-cell relax.
+- **Description**: Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. The former Boolean values true and false are read as 1 and 0. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports scf and fixed-cell relax without stress.
 - **Default**: 0
 
 ### eb_k
@@ -4950,7 +4950,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately. Once activated, SCCS remains active for all later electronic and ionic steps. PCC remains active during the delay. User-controlled for every sccs_preset, default 0.
+- **Description**: Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately; a positive value must exceed scf_thr so that the SCF cannot converge before SCCS starts. Once activated, SCCS remains active for all later electronic and ionic steps. PCC remains active during the delay. User-controlled for every sccs_preset, default 0.
 - **Default**: 0.0
 
 ### sccs_start_nmax

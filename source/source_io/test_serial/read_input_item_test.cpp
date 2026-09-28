@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <fstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -162,6 +163,40 @@ TEST_F(InputTest, Item_test)
                         ::testing::ExitedWithCode(1),
                         "");
         }
+        param.input.calculation = "scf";
+        param.input.cal_stress = true;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param),
+                    ::testing::ExitedWithCode(1),
+                    "");
+        const std::string stress_output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(stress_output, testing::HasSubstr("SCCS provides no stress contribution"));
+        param.input.cal_stress = false;
+    }
+
+    { // imp_sol keeps the former Boolean spellings
+        auto it = find_label("imp_sol", readinput.input_lists);
+        const std::vector<std::pair<std::string, int>> cases
+            = {{"0", 0}, {"1", 1}, {"2", 2}, {"true", 1}, {"False", 0},
+               {".TRUE.", 1}, {"f", 0}, {"yes", 1}, {"7", -1}, {"-1", -1}};
+        for (const std::pair<std::string, int>& value : cases)
+        {
+            it->second.str_values = {value.first};
+            it->second.read_value(it->second, param);
+            EXPECT_EQ(param.input.imp_sol, value.second) << value.first;
+        }
+        param.input.imp_sol = 7;
+        EXPECT_EXIT(it->second.check_value(it->second, param),
+                    ::testing::ExitedWithCode(1),
+                    "");
+        it->second.str_values = {"maybe"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param),
+                    ::testing::ExitedWithCode(1),
+                    "");
+        const std::string imp_sol_output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(imp_sol_output, testing::HasSubstr("imp_sol must be 0, 1 or 2"));
+        param.input.imp_sol = 0;
     }
 
     { // Unified PCC selector and debug levels
@@ -205,6 +240,8 @@ TEST_F(InputTest, Item_test)
 
     { // sccs_start_drho
         auto it = find_label("sccs_start_drho", readinput.input_lists);
+        const double scf_thr = param.input.scf_thr;
+        param.input.scf_thr = 1.0e-7;
         param.input.sccs_start_drho = 0.0;
         EXPECT_NO_THROW(it->second.check_value(it->second, param));
         param.input.sccs_start_drho = 1.0e-2;
@@ -213,6 +250,19 @@ TEST_F(InputTest, Item_test)
         EXPECT_EXIT(it->second.check_value(it->second, param),
                     ::testing::ExitedWithCode(1),
                     "");
+        // The SCF could converge before a delayed start at or below scf_thr.
+        for (const double threshold : {1.0e-8, 1.0e-7})
+        {
+            param.input.sccs_start_drho = threshold;
+            testing::internal::CaptureStdout();
+            EXPECT_EXIT(it->second.check_value(it->second, param),
+                        ::testing::ExitedWithCode(1),
+                        "");
+            const std::string drho_output = testing::internal::GetCapturedStdout();
+            EXPECT_THAT(drho_output,
+                        testing::HasSubstr("sccs_start_drho must be zero or larger than scf_thr"));
+        }
+        param.input.scf_thr = scf_thr;
         param.input.sccs_start_drho = 0.0;
         param.input.sccs_start_nmax = 30;
         param.input.scf_nmax = 100;

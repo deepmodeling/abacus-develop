@@ -27,6 +27,13 @@ void check_sccs_start_drho(const Input_para& input)
             "ReadInput",
             "sccs_start_drho must be finite and non-negative");
     }
+    // A threshold at or below scf_thr lets the SCF converge before SCCS starts.
+    if (input.sccs_start_drho > 0.0 && input.sccs_start_drho <= input.scf_thr)
+    {
+        ModuleBase::WARNING_QUIT(
+            "ReadInput",
+            "sccs_start_drho must be zero or larger than scf_thr");
+    }
 }
 
 void check_sccs_start_nmax(const Input_para& input)
@@ -144,7 +151,7 @@ void ReadInput::item_sccs()
         item.annotation = "SCCS delayed-start density threshold";
         item.category = "Implicit solvation model";
         item.type = "Real";
-        item.description = "Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately. Once activated, SCCS remains active for all later electronic and ionic steps. PCC remains active during the delay. User-controlled for every sccs_preset, default 0.";
+        item.description = "Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately; a positive value must exceed scf_thr so that the SCF cannot converge before SCCS starts. Once activated, SCCS remains active for all later electronic and ionic steps. PCC remains active during the delay. User-controlled for every sccs_preset, default 0.";
         item.default_value = "0.0";
         item.unit = "";
         item.set_availability("imp_sol==2");

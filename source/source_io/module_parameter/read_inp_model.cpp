@@ -1,12 +1,45 @@
+#include "source_base/formatter.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
 
+#include <algorithm>
+#include <cstdlib>
+#include <string>
+#include <vector>
+
 namespace ModuleIO
 {
 namespace
 {
+// imp_sol was Boolean before SCCS was added: keep true/false as 1/0.
+// Out-of-range integers map to -1 and are rejected by check_solvation.
+int parse_imp_sol(const std::string& value)
+{
+    char* end = nullptr;
+    const long number = std::strtol(value.c_str(), &end, 10);
+    if (!value.empty() && *end == '\0')
+    {
+        const bool in_range = number >= 0 && number <= 2;
+        return in_range ? static_cast<int>(number) : -1;
+    }
+    const std::string lowered = FmtCore::lower(value);
+    const std::vector<std::string> true_values = {"true", "t", "yes", "y", "on", ".true."};
+    const std::vector<std::string> false_values = {"false", "f", "no", "n", "off", ".false."};
+    if (std::find(true_values.begin(), true_values.end(), lowered) != true_values.end())
+    {
+        return 1;
+    }
+    if (std::find(false_values.begin(), false_values.end(), lowered) != false_values.end())
+    {
+        return 0;
+    }
+    ModuleBase::WARNING_QUIT("ReadInput",
+                             "imp_sol must be 0, 1 or 2; true and false are read as 1 and 0");
+    return -1;
+}
+
 void check_solvation(const Input_para& input)
 {
     if (input.imp_sol < 0 || input.imp_sol > 2)
@@ -39,6 +72,11 @@ void check_solvation(const Input_para& input)
     if (input.imp_sol == 2 && input.dfthalf_type != 0)
     {
         ModuleBase::WARNING_QUIT("ReadInput", "SCCS cannot currently be combined with DFT-1/2");
+    }
+    if (input.imp_sol == 2 && input.cal_stress)
+    {
+        ModuleBase::WARNING_QUIT("ReadInput",
+                                 "SCCS provides no stress contribution; set cal_stress 0");
     }
 }
 
@@ -227,10 +265,13 @@ void ReadInput::item_model()
         item.annotation = "implicit solvent model";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports scf and fixed-cell relax.";
+        item.description = "Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. The former Boolean values true and false are read as 1 and 0. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports scf and fixed-cell relax without stress.";
         item.default_value = "0";
         item.unit = "";
-        read_sync_int(input.imp_sol);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.imp_sol = parse_imp_sol(item.str_values[0]);
+        };
+        sync_int(input.imp_sol);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             check_solvation(para.input);
         };
