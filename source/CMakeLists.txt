@@ -643,7 +643,9 @@ if(USE_CUDA)
     source_pw/module_pwdft/kernels/cuda/exx_batch_op.cu)
   if(USE_CUDA AND ENABLE_GPU_NEIGHBOR_LIST)
     list(APPEND device_srcs
-      source_cell/kernels/cuda/gpu_neighbor_list.cu)
+      source_cell/kernels/cuda/gpu_neighlist_kernels.cu
+      source_cell/kernels/cuda/gpu_neighlist_host.cu
+      source_cell/kernels/cuda/gpu_neighlist_device.cu)
   endif()
 endif()
 
