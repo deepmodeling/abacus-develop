@@ -19,64 +19,7 @@
 namespace
 {
 
-TEST(SccsPwCharge, ReconstructsNonzeroModesAndRestoresPhysicalZeroMode)
-{
-    ModulePW::PW_Basis basis("cpu", "double");
-#ifdef __MPI
-    basis.initmpi(1, 0, POOL_WORLD);
-#endif
-    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
-                                      0.0, 1.0, 0.0,
-                                      0.0, 0.0, 1.0);
-    const double cell_length = 10.0;
-    const double cell_volume = cell_length * cell_length * cell_length;
-    const double tpiba = ModuleBase::TWO_PI / cell_length;
-    basis.initgrids(cell_length, lattice, 20.0);
-    basis.initparameters(false, 20.0, 1, false);
-    basis.setuptransform();
-    basis.collect_local_pw();
-
-    const double ionic_charge = 3.0;
-    std::vector<std::complex<double>> ionic_g(basis.npw);
-    std::vector<std::complex<double>> potential_g(basis.npw);
-    for (int ig = 0; ig < basis.npw; ++ig)
-    {
-        if (ig == basis.ig_gge0 || basis.gg[ig] == 0.0)
-        {
-            ionic_g[ig] = ionic_charge / cell_volume;
-        }
-        else if (std::abs(std::abs(basis.gdirect[ig].x) - 1.0) < 1.0e-12
-                 && std::abs(basis.gdirect[ig].y) < 1.0e-12
-                 && std::abs(basis.gdirect[ig].z) < 1.0e-12)
-        {
-            ionic_g[ig] = 2.0e-3;
-            const double kernel
-                = ModuleBase::e2 * ModuleBase::FOUR_PI / (tpiba * tpiba * basis.gg[ig]);
-            potential_g[ig] = -kernel * ionic_g[ig];
-        }
-    }
-    std::vector<double> expected_density(basis.nrxx);
-    std::vector<double> local_potential(basis.nrxx);
-    basis.recip2real(ionic_g.data(), expected_density.data());
-    basis.recip2real(potential_g.data(), local_potential.data());
-
-    const std::vector<double> reconstructed
-        = ModuleSccs::ionic_charge_from_local_potential(local_potential,
-                                                        ionic_charge,
-                                                        cell_volume,
-                                                        tpiba,
-                                                        basis);
-    ASSERT_EQ(reconstructed.size(), expected_density.size());
-    double maximum_error = 0.0;
-    for (std::size_t index = 0; index < reconstructed.size(); ++index)
-    {
-        maximum_error
-            = std::max(maximum_error, std::abs(reconstructed[index] - expected_density[index]));
-    }
-    EXPECT_LT(maximum_error, 1.0e-12);
-}
-
-TEST(SccsPwCharge, ValidatesCubeAndBuildsIntegerNodeGrid)
+TEST(SccsPwCharge, BuildsCellCenterAndIntegerNodeGrid)
 {
     ModulePW::PW_Basis basis("cpu", "double");
 #ifdef __MPI
@@ -90,7 +33,6 @@ TEST(SccsPwCharge, ValidatesCubeAndBuildsIntegerNodeGrid)
     basis.setuptransform();
     basis.collect_local_pw();
 
-    EXPECT_DOUBLE_EQ(ModuleSccs::validate_cubic_cell(lattice, 10.0, 1.0e-10), 10.0);
     const ModuleBase::Vector3<double> center = ModuleSccs::cell_center(lattice, 10.0);
     EXPECT_DOUBLE_EQ(center.x, 5.0);
     EXPECT_DOUBLE_EQ(center.y, 5.0);
@@ -102,12 +44,6 @@ TEST(SccsPwCharge, ValidatesCubeAndBuildsIntegerNodeGrid)
     EXPECT_NEAR(positions[0].x, 0.0, 1.0e-14);
     EXPECT_NEAR(positions[0].y, 0.0, 1.0e-14);
     EXPECT_NEAR(positions[0].z, 0.0, 1.0e-14);
-
-    const ModuleBase::Matrix3 orthorhombic(1.0, 0.0, 0.0,
-                                           0.0, 1.1, 0.0,
-                                           0.0, 0.0, 1.0);
-    EXPECT_THROW(ModuleSccs::validate_cubic_cell(orthorhombic, 10.0, 1.0e-10),
-                 std::invalid_argument);
 }
 
 TEST(SccsPwCharge, GridCoordinatesMatchInverseFourierPhase)

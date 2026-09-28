@@ -13,6 +13,7 @@
 
 #include <cmath>
 #include <complex>
+#include <stdexcept>
 #include <vector>
 
 namespace
@@ -102,6 +103,83 @@ TEST(SccsPwNonel, EnergyDerivativeMatchesPotential)
            - (minus_result.surface_energy + minus_result.volume_energy))
           / (2.0 * step);
     EXPECT_NEAR(finite_difference, analytic, 1.0e-7);
+}
+
+void setup_cubic_basis(ModulePW::PW_Basis& basis, const double length)
+{
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    basis.initgrids(length, lattice, 30.0);
+    basis.initparameters(false, 30.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+}
+
+TEST(SccsPwNonel, UniformSoluteHasNoRegularizedSurface)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+    const double length = 10.0;
+    setup_cubic_basis(basis, length);
+    const double volume = length * length * length;
+    const double volume_element = volume / static_cast<double>(basis.nxyz);
+    ModuleSccs::NonElectrostaticParameters parameters;
+    parameters.surface_tension = 0.02;
+    parameters.pressure = 0.003;
+    parameters.surface_regularization = 1.0e-6;
+    const ModuleSccs::SerialChargeReduction reduction;
+    const std::vector<double> solute(basis.nrxx, 1.0);
+    const std::vector<double> derivative(basis.nrxx, 0.0);
+    const ModuleSccs::NonElectrostaticResult result
+        = ModuleSccs::evaluate_pw_non_electrostatic(basis,
+                                                    ModuleBase::TWO_PI / length,
+                                                    volume_element,
+                                                    parameters,
+                                                    solute,
+                                                    derivative,
+                                                    reduction);
+    EXPECT_NEAR(result.surface, 0.0, 1.0e-12);
+    EXPECT_NEAR(result.volume, volume, 1.0e-9);
+    EXPECT_NEAR(result.surface_energy, 0.0, 1.0e-14);
+    EXPECT_NEAR(result.volume_energy, parameters.pressure * volume, 1.0e-10);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        EXPECT_EQ(result.density_potential[ir], 0.0);
+    }
+}
+
+TEST(SccsPwNonel, RejectsMismatchedArraysAndRegularization)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+    const double length = 10.0;
+    setup_cubic_basis(basis, length);
+    const double volume_element = length * length * length / static_cast<double>(basis.nxyz);
+    ModuleSccs::NonElectrostaticParameters parameters;
+    parameters.surface_regularization = 1.0e-6;
+    const ModuleSccs::SerialChargeReduction reduction;
+    const std::vector<double> solute(basis.nrxx, 1.0);
+    const std::vector<double> short_derivative(basis.nrxx - 1, 0.0);
+    EXPECT_THROW(ModuleSccs::evaluate_pw_non_electrostatic(basis,
+                                                           ModuleBase::TWO_PI / length,
+                                                           volume_element,
+                                                           parameters,
+                                                           solute,
+                                                           short_derivative,
+                                                           reduction),
+                 std::invalid_argument);
+    const std::vector<double> derivative(basis.nrxx, 0.0);
+    parameters.surface_regularization = 0.0;
+    EXPECT_THROW(ModuleSccs::evaluate_pw_non_electrostatic(basis,
+                                                           ModuleBase::TWO_PI / length,
+                                                           volume_element,
+                                                           parameters,
+                                                           solute,
+                                                           derivative,
+                                                           reduction),
+                 std::invalid_argument);
 }
 
 } // namespace

@@ -591,7 +591,6 @@ OBJS_SURCHEM=surchem.o\
     sccs_charge.o\
     sccs_driver.o\
     sccs_functional.o\
-    sccs_nonel.o\
     sccs_parameters.o\
     sccs_pcc.o\
     sccs_pcc_2d.o\
@@ -600,7 +599,6 @@ OBJS_SURCHEM=surchem.o\
     sccs_poisson.o\
     sccs_pw_coulomb.o\
     sccs_pw_charge.o\
-    sccs_pw_force.o\
     sccs_pw_nonel.o\
     sccs_pw_reduction.o\
     experimental_gaussian.o\

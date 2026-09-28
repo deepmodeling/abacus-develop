@@ -18,11 +18,6 @@ std::vector<ModuleBase::Vector3<double>> periodic_gradient(
     const ModulePW::PW_Basis& basis,
     double tpiba);
 
-std::vector<double> periodic_negative_divergence(
-    const std::vector<ModuleBase::Vector3<double>>& field,
-    const ModulePW::PW_Basis& basis,
-    double tpiba);
-
 class PeriodicCoulombOperator : public CoulombOperator
 {
   public:

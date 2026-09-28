@@ -47,7 +47,6 @@ void adjoint_gradient_transform(
     const std::vector<ModuleBase::Vector3<double>>& field,
     const ModulePW::PW_Basis& basis,
     const double tpiba,
-    const bool apply_coulomb,
     std::vector<double>& component,
     std::vector<std::complex<double>>& component_g,
     std::vector<std::complex<double>>& sum,
@@ -84,17 +83,14 @@ void adjoint_gradient_transform(
             sum[ig] -= ModuleBase::IMAG_UNIT * tpiba * basis.gcar[ig][direction] * component_g[ig];
         }
     }
-    if (apply_coulomb)
-    {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
-        for (int ig = 0; ig < basis.npw; ++ig)
-        {
-            const double kernel = basis.gg[ig] == 0.0
-                                      ? 0.0 : ModuleBase::FOUR_PI / (tpiba * tpiba * basis.gg[ig]);
-            sum[ig] *= kernel;
-        }
+    for (int ig = 0; ig < basis.npw; ++ig)
+    {
+        const double kernel = basis.gg[ig] == 0.0
+                                  ? 0.0 : ModuleBase::FOUR_PI / (tpiba * tpiba * basis.gg[ig]);
+        sum[ig] *= kernel;
     }
     profiled_inverse(basis, sum.data(), component.data(), profile);
     const ProfileClock::time_point end = ProfileClock::now();
@@ -106,24 +102,11 @@ void adjoint_gradient_transform(
 
 } // namespace
 
-std::vector<double> periodic_negative_divergence(
-    const std::vector<ModuleBase::Vector3<double>>& field,
-    const ModulePW::PW_Basis& basis,
-    const double tpiba)
-{
-    std::vector<double> result;
-    std::vector<std::complex<double>> component_g;
-    std::vector<std::complex<double>> sum;
-    CoulombTransformProfile profile;
-    adjoint_gradient_transform(field, basis, tpiba, false, result, component_g, sum, profile);
-    return result;
-}
-
 void PeriodicCoulombOperator::apply_gradient_adjoint(
     const std::vector<ModuleBase::Vector3<double>>& field,
     std::vector<double>& result) const
 {
-    adjoint_gradient_transform(field, basis_, tpiba_, true,
+    adjoint_gradient_transform(field, basis_, tpiba_,
                                result, reciprocal_aux_, reciprocal_work_, profile_);
 }
 

@@ -73,8 +73,8 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     {
         cache.valid = false;
         cache.local_potential.assign(vlocal, local_potential_end);
-        const double gaussian_width = 0.5;
-        cache.ionic_density = ModuleSccs::gaussian_ionic_density(cell, rho_basis, gaussian_width);
+        cache.ionic_density
+            = ModuleSccs::gaussian_ionic_density(cell, rho_basis, ModuleSccs::gaussian_ion_spread);
         cache.positions = ModuleSccs::pw_grid_positions(rho_basis, cell.latvec, cell.lat0);
         cache.lattice_vectors = cell.latvec;
         cache.basis = &rho_basis;

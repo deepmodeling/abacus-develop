@@ -17,7 +17,6 @@ add_library(
     sccs/sccs_charge.cpp
     sccs/sccs_driver.cpp
     sccs/sccs_functional.cpp
-    sccs/sccs_nonel.cpp
     sccs/sccs_parameters.cpp
     pcc/sccs_pcc.cpp
     pcc/sccs_pcc_2d.cpp
@@ -26,7 +25,6 @@ add_library(
     sccs/sccs_poisson.cpp
     sccs/sccs_pw_coulomb.cpp
     sccs/sccs_pw_charge.cpp
-    sccs/sccs_pw_force.cpp
     sccs/sccs_pw_nonel.cpp
     sccs/sccs_pw_reduction.cpp
     sccs/experimental_gaussian.cpp

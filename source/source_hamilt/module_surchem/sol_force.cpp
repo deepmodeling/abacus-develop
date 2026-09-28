@@ -278,9 +278,8 @@ void surchem::cal_force_sccs(const UnitCell& cell,
         }
         coulomb->apply_potential(polarization, polarization_potential);
     }
-    const double gaussian_width = 0.5;
     const ModuleBase::matrix smooth_force_hartree
-        = ModuleSccs::gaussian_ionic_force(cell, rho_basis, gaussian_width,
+        = ModuleSccs::gaussian_ionic_force(cell, rho_basis, ModuleSccs::gaussian_ion_spread,
                                           polarization_potential);
     for (int atom = 0; atom < cell.nat; ++atom)
     {

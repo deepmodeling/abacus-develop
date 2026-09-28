@@ -6,16 +6,6 @@
 namespace ModuleSccs
 {
 
-struct UniformGrid
-{
-    int nx = 0;
-    int ny = 0;
-    int nz = 0;
-    double spacing_x = 0.0;
-    double spacing_y = 0.0;
-    double spacing_z = 0.0;
-};
-
 struct NonElectrostaticParameters
 {
     double surface_tension = 0.0;
@@ -31,11 +21,6 @@ struct NonElectrostaticResult
     double volume_energy = 0.0;
     std::vector<double> density_potential;
 };
-
-NonElectrostaticResult evaluate_non_electrostatic(const UniformGrid& grid,
-                                                  const NonElectrostaticParameters& parameters,
-                                                  const std::vector<double>& solute,
-                                                  const std::vector<double>& dsolute_drho);
 
 } // namespace ModuleSccs
 
