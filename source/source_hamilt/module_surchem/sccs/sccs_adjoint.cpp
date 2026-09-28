@@ -67,6 +67,9 @@ class AdjointOperator
                std::vector<double>& result) const
     {
         weighted.resize(values.size());
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (std::size_t i = 0; i < values.size(); ++i)
         {
             for (int d = 0; d < 3; ++d)
@@ -76,6 +79,9 @@ class AdjointOperator
             }
         }
         coulomb_.apply_gradient_adjoint(weighted, result);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (std::size_t i = 0; i < values.size(); ++i)
         {
             result[i] = values[i] - result[i];
@@ -101,6 +107,9 @@ AdjointResult solve_adjoint(const std::vector<double>& rhs,
     std::vector<ModuleBase::Vector3<double>> weighted(size);
     std::vector<double> residual;
     op.apply(result.potential, weighted, residual);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
     for (std::size_t i = 0; i < size; ++i)
     {
         residual[i] = rhs[i] - residual[i];
@@ -121,6 +130,9 @@ AdjointResult solve_adjoint(const std::vector<double>& rhs,
         if (converged_residual(residual, parameters, reduction, result))
         {
             op.apply(result.potential, weighted, residual);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
             for (std::size_t i = 0; i < size; ++i)
             {
                 residual[i] = rhs[i] - residual[i];
@@ -146,6 +158,9 @@ AdjointResult solve_adjoint(const std::vector<double>& rhs,
             throw std::runtime_error("SCCS adjoint BiCGSTAB breakdown");
         }
         const double beta = (rho / previous_rho) * (alpha / omega);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (std::size_t i = 0; i < size; ++i)
         {
             direction[i] = residual[i] + beta * (direction[i] - omega * image[i]);
@@ -157,6 +172,9 @@ AdjointResult solve_adjoint(const std::vector<double>& rhs,
             throw std::runtime_error("SCCS adjoint BiCGSTAB singular direction");
         }
         alpha = rho / denominator;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (std::size_t i = 0; i < size; ++i)
         {
             intermediate[i] = residual[i] - alpha * image[i];
@@ -176,6 +194,9 @@ AdjointResult solve_adjoint(const std::vector<double>& rhs,
         }
         const double projection = reduced_dot(intermediate_image, intermediate, reduction);
         omega = projection / image_norm;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (std::size_t i = 0; i < size; ++i)
         {
             result.potential[i] += omega * intermediate[i];
@@ -223,6 +244,9 @@ AdjointResult evaluate_discrete_electrostatic_derivative(
     validate_polarization_solver_parameters(parameters);
     std::vector<double> rhs(size);
     std::vector<double> initial(size);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
     for (std::size_t i = 0; i < size; ++i)
     {
         rhs[i] = vacuum_field.potential[i] + 2.0 * ionic_shape_coefficient;
@@ -240,6 +264,9 @@ AdjointResult evaluate_discrete_electrostatic_derivative(
     const double log_width = std::log(density_ratio);
     const double log_bulk = std::log(cavity_parameters.epsilon_bulk);
     std::vector<ModuleBase::Vector3<double>> weighted_gradient(size);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
     for (std::size_t i = 0; i < size; ++i)
     {
         for (int d = 0; d < 3; ++d)
@@ -255,6 +282,9 @@ AdjointResult evaluate_discrete_electrostatic_derivative(
         = periodic_negative_divergence(weighted_gradient, basis, tpiba);
     functional.charge_potential.resize(size);
     functional.electron_potential.resize(size);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
     for (std::size_t i = 0; i < size; ++i)
     {
         const double epsilon = response.epsilon[i];

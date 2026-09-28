@@ -185,6 +185,9 @@ void linear_mixing_step(const std::vector<double>& current,
                         const double mixing,
                         std::vector<double>& next)
 {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
     for (std::size_t index = 0; index < current.size(); ++index)
     {
         next[index] = current[index] + mixing * residual[index];
@@ -551,6 +554,9 @@ PolarizationResult solve_polarization(
     mixing_state.current_mixing = parameters.mixing;
     for (int iteration = 1; iteration <= parameters.max_iterations; ++iteration)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (std::size_t index = 0; index < size; ++index)
         {
             total_charge[index] = solute_charge[index] + result.polarization_charge[index];

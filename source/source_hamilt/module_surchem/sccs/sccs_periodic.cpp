@@ -71,6 +71,9 @@ PeriodicSccsResult solve_sccs_response(
 
     result.density_gradient = periodic_gradient(cavity_density, basis, tpiba);
     result.grad_log_epsilon = result.density_gradient;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
     for (std::size_t i = 0; i < cavity_density.size(); ++i)
     {
         const double factor = result.depsilon_drho[i] / result.epsilon[i];

@@ -308,6 +308,9 @@ SccsResult evaluate_pw_sccs(
         = std::chrono::duration<double>(non_electrostatic_end - non_electrostatic_start).count();
 
     result.electron_potential_hartree.resize(electron_density.size());
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
     for (std::size_t index = 0; index < electron_density.size(); ++index)
     {
         result.electron_potential_hartree[index]

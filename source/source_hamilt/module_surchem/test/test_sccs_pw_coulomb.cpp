@@ -16,6 +16,10 @@
 #include <complex>
 #include <vector>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace
 {
 
@@ -166,6 +170,40 @@ TEST_F(SccsPwCoulombTest, CountsForwardAndAdjointTransforms)
     EXPECT_GE(profile.inverse_seconds, 0.0);
     EXPECT_GE(profile.other_seconds, 0.0);
 }
+
+#ifdef _OPENMP
+TEST_F(SccsPwCoulombTest, ParallelGridLoopsMatchSerialFields)
+{
+    const int previous_threads = omp_get_max_threads();
+    const double tpiba = ModuleBase::TWO_PI / 10.0;
+    const ModuleSccs::PeriodicCoulombOperator coulomb(basis_, tpiba);
+    std::vector<double> charge(basis_.nrxx);
+    for (int ir = 0; ir < basis_.nrxx; ++ir)
+    {
+        charge[ir] = std::sin(0.13 * ir);
+    }
+    ModuleSccs::ElectrostaticField serial;
+    std::vector<double> serial_adjoint;
+    omp_set_num_threads(1);
+    coulomb.apply(charge, serial);
+    coulomb.apply_gradient_adjoint(serial.gradient, serial_adjoint);
+    ModuleSccs::ElectrostaticField parallel;
+    std::vector<double> parallel_adjoint;
+    omp_set_num_threads(2);
+    coulomb.apply(charge, parallel);
+    coulomb.apply_gradient_adjoint(parallel.gradient, parallel_adjoint);
+    omp_set_num_threads(previous_threads);
+    for (int ir = 0; ir < basis_.nrxx; ++ir)
+    {
+        EXPECT_DOUBLE_EQ(serial.potential[ir], parallel.potential[ir]);
+        EXPECT_DOUBLE_EQ(serial_adjoint[ir], parallel_adjoint[ir]);
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            EXPECT_DOUBLE_EQ(serial.gradient[ir][direction], parallel.gradient[ir][direction]);
+        }
+    }
+}
+#endif
 
 } // namespace
 

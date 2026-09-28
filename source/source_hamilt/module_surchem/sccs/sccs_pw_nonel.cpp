@@ -65,11 +65,17 @@ NonElectrostaticResult evaluate_pw_non_electrostatic(
     std::vector<double> component_r(solute.size());
     for (int direction = 0; direction < 3; ++direction)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (std::size_t index = 0; index < solute.size(); ++index)
         {
             component_r[index] = unit_gradient[index][direction];
         }
         basis.real2recip(component_r.data(), component_g.data());
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (int ig = 0; ig < basis.npw; ++ig)
         {
             divergence_g[ig] += ModuleBase::IMAG_UNIT * tpiba
@@ -81,6 +87,9 @@ NonElectrostaticResult evaluate_pw_non_electrostatic(
 
     result.surface_energy = parameters.surface_tension * result.surface;
     result.volume_energy = parameters.pressure * result.volume;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
     for (std::size_t index = 0; index < solute.size(); ++index)
     {
         result.density_potential[index]

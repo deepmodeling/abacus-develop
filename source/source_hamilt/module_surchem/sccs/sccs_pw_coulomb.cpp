@@ -68,11 +68,17 @@ void adjoint_gradient_transform(
     std::fill(sum.begin(), sum.end(), zero);
     for (int direction = 0; direction < 3; ++direction)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (int ir = 0; ir < basis.nrxx; ++ir)
         {
             component[ir] = field[ir][direction];
         }
         profiled_forward(basis, component.data(), component_g.data(), profile);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (int ig = 0; ig < basis.npw; ++ig)
         {
             sum[ig] -= ModuleBase::IMAG_UNIT * tpiba * basis.gcar[ig][direction] * component_g[ig];
@@ -80,6 +86,9 @@ void adjoint_gradient_transform(
     }
     if (apply_coulomb)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (int ig = 0; ig < basis.npw; ++ig)
         {
             const double kernel = basis.gg[ig] == 0.0
@@ -140,12 +149,18 @@ std::vector<ModuleBase::Vector3<double>> periodic_gradient(
     std::vector<ModuleBase::Vector3<double>> gradient(basis.nrxx);
     for (int direction = 0; direction < 3; ++direction)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (int ig = 0; ig < basis.npw; ++ig)
         {
             gradient_g[ig]
                 = ModuleBase::IMAG_UNIT * tpiba * basis.gcar[ig][direction] * values_g[ig];
         }
         basis.recip2real(gradient_g.data(), gradient_r.data());
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (int ir = 0; ir < basis.nrxx; ++ir)
         {
             gradient[ir][direction] = gradient_r[ir];
@@ -200,6 +215,9 @@ void PeriodicCoulombOperator::apply_impl(
     // not needed after multiplying by the Coulomb kernel.
     profiled_forward(basis_, charge.data(), reciprocal_work_.data(), profile_);
     const double tpiba2 = tpiba_ * tpiba_;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
     for (int ig = 0; ig < basis_.npw; ++ig)
     {
         if (ig == basis_.ig_gge0 || basis_.gg[ig] == 0.0)
@@ -220,12 +238,18 @@ void PeriodicCoulombOperator::apply_impl(
     }
     for (int direction = 0; direction < 3; ++direction)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (int ig = 0; ig < basis_.npw; ++ig)
         {
             reciprocal_aux_[ig] = ModuleBase::IMAG_UNIT * tpiba_ * basis_.gcar[ig][direction]
                                   * reciprocal_work_[ig];
         }
         profiled_inverse(basis_, reciprocal_aux_.data(), real_work_.data(), profile_);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (int ir = 0; ir < basis_.nrxx; ++ir)
         {
             gradient[ir][direction] = real_work_[ir];
