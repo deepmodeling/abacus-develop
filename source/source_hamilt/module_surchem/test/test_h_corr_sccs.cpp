@@ -129,6 +129,39 @@ TEST(HCorrSccs, SolventDispatchStopsThroughWarningQuitOnKernelFailure)
               std::string::npos);
 }
 
+TEST(HCorrSccs, PeriodicDebugReportsResidualAndFixedPointWithoutKernelOutput)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+    UnitCell cell;
+    setup_single_ion_cell(basis, cell);
+    SurchemParameters parameters = periodic_sccs_parameters();
+    parameters.debug = 2;
+    parameters.sccs_config.check_fixed_point = true;
+    surchem solvent;
+    solvent.set_parameters(parameters);
+
+    std::vector<double> electron_density(basis.nrxx, 0.0);
+    const double* density_channels[1] = {electron_density.data()};
+    std::vector<double> local_potential(basis.nrxx, 0.0);
+    ModuleBase::matrix potential;
+    testing::internal::CaptureStdout();
+    solvent.v_correction_sccs(cell,
+                              basis,
+                              1,
+                              density_channels,
+                              local_potential.data(),
+                              potential);
+    const std::string kernel_output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(kernel_output.find("FIXED_POINT"), std::string::npos);
+    EXPECT_TRUE(solvent.sccs_result().response.polarization.fixed_point_checked);
+
+    std::ostringstream iteration_output;
+    solvent.write_sccs_iteration(iteration_output);
+    const std::string iteration_text = iteration_output.str();
+    EXPECT_NE(iteration_text.find("SCCS_RESIDUAL RMS "), std::string::npos);
+    EXPECT_NE(iteration_text.find("SCCS_CG_FIXED_POINT_DEFECT RMS "), std::string::npos);
+}
+
 TEST(HCorrSccs, DispatchesDeferredSummaryOnlyWhenRequested)
 {
     SurchemParameters parameters;

@@ -52,7 +52,7 @@ PeriodicSccsResult solve_sccs_response(
     const CoulombOperator& coulomb,
     const PolarizationReduction& reduction);
 
-// Periodic-only sqrt-CG path; its residual criterion is a squared sum.
+// Periodic sqrt-CG path; it stops on the RMS and maximum charge residual.
 PeriodicSccsResult solve_chain_sccs_response(
     const std::vector<double>& cavity_density,
     const std::vector<double>& solute_charge,

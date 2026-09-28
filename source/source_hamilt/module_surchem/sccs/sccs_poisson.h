@@ -94,6 +94,8 @@ struct PolarizationSolverParameters
     double mixing_max = 0.8;
     double tolerance_rms = 0.0;
     double tolerance_max = 0.0;
+    // Periodic sqrt-CG only: verify v = P(q - K v) after convergence.
+    bool check_fixed_point = false;
 };
 
 enum class PolarizationStatus
@@ -111,6 +113,9 @@ struct PolarizationResult
     double residual_max = 0.0;
     double final_mixing = 0.0;
     int mixing_restarts = 0;
+    bool fixed_point_checked = false;
+    double fixed_point_defect_rms = 0.0;
+    double fixed_point_defect_max = 0.0;
     std::vector<double> polarization_charge;
     ElectrostaticField field;
 };

@@ -100,6 +100,92 @@ TEST(SccsPeriodic, UniformDielectricScreensSingleFourierShell)
     }
 }
 
+// A y charge mode inside an x-modulated dielectric needs several CG steps.
+class SqrtCgFixture : public testing::Test
+{
+  protected:
+    void SetUp() override
+    {
+#ifdef __MPI
+        basis.initmpi(1, 0, POOL_WORLD);
+#endif
+        const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                          0.0, 1.0, 0.0,
+                                          0.0, 0.0, 1.0);
+        basis.initgrids(length, lattice, 20.0);
+        basis.initparameters(false, 20.0, 1, false);
+        basis.setuptransform();
+        basis.collect_local_pw();
+        cavity.density_min = 0.0024;
+        cavity.density_max = 0.0155;
+        cavity.epsilon_bulk = 78.3;
+        solver.max_iterations = 200;
+        density.resize(basis.nrxx);
+        charge.resize(basis.nrxx);
+        for (int ir = 0; ir < basis.nrxx; ++ir)
+        {
+            const int ix = ir / (basis.ny * basis.nplane);
+            const int iy = ir / basis.nplane - ix * basis.ny;
+            density[ir] = 0.009 + 0.008 * std::cos(ModuleBase::TWO_PI * ix / basis.nx);
+            charge[ir] = 1.0e-3 * std::cos(ModuleBase::TWO_PI * iy / basis.ny);
+        }
+    }
+
+    ModuleSccs::PeriodicSccsResult solve() const
+    {
+        const std::vector<double> initial;
+        const double tpiba = ModuleBase::TWO_PI / length;
+        return ModuleSccs::solve_periodic_sccs(density, charge, cavity, solver, initial,
+                                               basis, tpiba, 1);
+    }
+
+    const double length = 10.0;
+    ModulePW::PW_Basis basis{"cpu", "double"};
+    ModuleSccs::CavityParameters cavity;
+    ModuleSccs::PolarizationSolverParameters solver;
+    std::vector<double> density;
+    std::vector<double> charge;
+};
+
+TEST_F(SqrtCgFixture, StopsOnlyWhenRmsAndMaximumResidualsPass)
+{
+    // The initial residual has maximum 1e-3, so every case needs CG steps.
+    solver.tolerance_rms = 1.0e-5;
+    solver.tolerance_max = 1.0e-5;
+    const ModuleSccs::PeriodicSccsResult loose = solve();
+    solver.tolerance_max = 1.0e-11;
+    const ModuleSccs::PeriodicSccsResult tight_maximum = solve();
+    solver.tolerance_rms = 1.0e-11;
+    solver.tolerance_max = 1.0;
+    const ModuleSccs::PeriodicSccsResult tight_rms = solve();
+
+    ASSERT_EQ(loose.polarization.status, ModuleSccs::PolarizationStatus::Converged);
+    ASSERT_EQ(tight_maximum.polarization.status, ModuleSccs::PolarizationStatus::Converged);
+    ASSERT_EQ(tight_rms.polarization.status, ModuleSccs::PolarizationStatus::Converged);
+    EXPECT_LE(loose.polarization.residual_rms, 1.0e-5);
+    EXPECT_LE(loose.polarization.residual_max, 1.0e-5);
+    EXPECT_LE(tight_maximum.polarization.residual_max, 1.0e-11);
+    EXPECT_LE(tight_rms.polarization.residual_rms, 1.0e-11);
+    EXPECT_GT(loose.polarization.iterations, 0);
+    EXPECT_GT(tight_maximum.polarization.iterations, loose.polarization.iterations);
+    EXPECT_GT(tight_rms.polarization.iterations, loose.polarization.iterations);
+}
+
+TEST_F(SqrtCgFixture, VerifiesPreconditionedFixedPointOnlyOnRequest)
+{
+    solver.tolerance_rms = 1.0e-11;
+    solver.tolerance_max = 1.0e-10;
+    const ModuleSccs::PeriodicSccsResult unchecked = solve();
+    EXPECT_FALSE(unchecked.polarization.fixed_point_checked);
+
+    solver.check_fixed_point = true;
+    const ModuleSccs::PeriodicSccsResult checked = solve();
+    ASSERT_TRUE(checked.polarization.fixed_point_checked);
+    EXPECT_LT(checked.polarization.fixed_point_defect_rms, 1.0e-8);
+    EXPECT_LT(checked.polarization.fixed_point_defect_max, 1.0e-7);
+    EXPECT_EQ(checked.polarization.iterations, unchecked.polarization.iterations);
+}
+
 TEST(SccsPeriodic, ChainGradientMatchesAnalyticDensityModeAcrossCavityEdges)
 {
     ModulePW::PW_Basis basis("cpu", "double");

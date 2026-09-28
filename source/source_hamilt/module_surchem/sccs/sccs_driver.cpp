@@ -212,6 +212,7 @@ SccsResult evaluate_pw_sccs(
     solver_parameters.mixing_max = config.mixing_max;
     solver_parameters.tolerance_rms = config.tolerance_rms;
     solver_parameters.tolerance_max = config.tolerance_max;
+    solver_parameters.check_fixed_point = config.check_fixed_point;
     const std::uint64_t position_signature = grid_position_signature(positions);
     // A changed grid, cavity or PCC origin invalidates both warm-start fields.
     // Borrow the cache until the solve succeeds; state is updated only below.

@@ -40,6 +40,7 @@ struct SccsConfig
     double mixing_max = 0.8;
     double tolerance_rms = 0.0;
     double tolerance_max = 0.0;
+    bool check_fixed_point = false;
 };
 
 Preset parse_preset(const std::string& value);

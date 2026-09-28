@@ -142,8 +142,8 @@ void ReadInput::item_sccs()
                        "User-controlled for every sccs_preset, default 0.8; inactive when sccs_mixing_adaptive=0",
                        "0.8",
                        "")
-    ADD_SCCS_REAL_ITEM("sccs_tol_rms", sccs_tol_rms, "Positive inner residual tolerance; user-controlled for every sccs_preset, default 1.0e-10. In this experimental chain branch, assume_isolated=none uses a periodic sqrt-CG solver and interprets this as a sum of squared charge residuals; the retained water benchmark uses 1.0e-18. With pcc_0d or pcc_2d it is the polarization charge RMS tolerance in e/bohr^3. No discrete adjoint is solved in this branch.", "1.0e-10", "e/bohr^3")
-    ADD_SCCS_REAL_ITEM("sccs_tol_max", sccs_tol_max, "Positive SCCS polarization maximum residual tolerance; user-controlled for every sccs_preset, default 1.0e-8 e/bohr^3. Enforced by the PCC polarization solver. The periodic sqrt-CG path reports this residual but stops on its squared-sum criterion; no discrete adjoint is solved in this experimental branch.", "1.0e-8", "e/bohr^3")
+    ADD_SCCS_REAL_ITEM("sccs_tol_rms", sccs_tol_rms, "Positive RMS tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-10. assume_isolated=none applies it to the periodic sqrt-preconditioned CG solution of the generalized Poisson equation, and pcc_0d/pcc_2d to the polarization-charge fixed point. ENVIRON stops its CG when the unnormalized sum of squared residuals falls below its tol; the corresponding RMS is sqrt(tol/N) for N FFT grid points.", "1.0e-10", "e/bohr^3")
+    ADD_SCCS_REAL_ITEM("sccs_tol_max", sccs_tol_max, "Positive maximum tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-8. The periodic sqrt-CG and PCC polarization solvers stop only when both sccs_tol_rms and sccs_tol_max are satisfied.", "1.0e-8", "e/bohr^3")
     ADD_SCCS_REAL_ITEM("sccs_surface_eta", sccs_surface_eta, "Positive SCCS surface regularization; user-controlled for every sccs_preset, default 1.0e-8 bohr^-1.", "1.0e-8", "bohr^-1")
 #undef ADD_SCCS_REAL_ITEM
     {
@@ -181,7 +181,7 @@ void ReadInput::item_sccs()
         item.annotation = "detailed SCCS diagnostics";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "SCCS/PCC output level: 0 suppresses per-SCF summaries and diagnostics; 1 prints the iteration count, elapsed seconds and correction energy; 2 additionally prints all mixing, multipole and energy diagnostics. Applies to standalone PCC as well as SCCS.";
+        item.description = "SCCS/PCC output level: 0 suppresses per-SCF summaries and diagnostics; 1 prints the iteration count, elapsed seconds and correction energy; 2 additionally prints mixing, residual, multipole and energy diagnostics, and verifies the periodic sqrt-CG fixed point with one extra Poisson solve per SCCS evaluation. Applies to standalone PCC as well as SCCS.";
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.sccs_debug);

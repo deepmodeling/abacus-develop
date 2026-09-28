@@ -4926,7 +4926,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Positive inner residual tolerance; user-controlled for every sccs_preset, default 1.0e-10. In this experimental chain branch, assume_isolated=none uses a periodic sqrt-CG solver and interprets this as a sum of squared charge residuals; the retained water benchmark uses 1.0e-18. With pcc_0d or pcc_2d it is the polarization charge RMS tolerance in e/bohr^3. No discrete adjoint is solved in this branch.
+- **Description**: Positive RMS tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-10. assume_isolated=none applies it to the periodic sqrt-preconditioned CG solution of the generalized Poisson equation, and pcc_0d/pcc_2d to the polarization-charge fixed point. ENVIRON stops its CG when the unnormalized sum of squared residuals falls below its tol; the corresponding RMS is sqrt(tol/N) for N FFT grid points.
 - **Default**: 1.0e-10
 - **Unit**: e/bohr^3
 
@@ -4934,7 +4934,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Positive SCCS polarization maximum residual tolerance; user-controlled for every sccs_preset, default 1.0e-8 e/bohr^3. Enforced by the PCC polarization solver. The periodic sqrt-CG path reports this residual but stops on its squared-sum criterion; no discrete adjoint is solved in this experimental branch.
+- **Description**: Positive maximum tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-8. The periodic sqrt-CG and PCC polarization solvers stop only when both sccs_tol_rms and sccs_tol_max are satisfied.
 - **Default**: 1.0e-8
 - **Unit**: e/bohr^3
 
@@ -4963,7 +4963,7 @@
 ### sccs_debug
 
 - **Type**: Integer
-- **Description**: SCCS/PCC output level: 0 suppresses per-SCF summaries and diagnostics; 1 prints the iteration count, elapsed seconds and correction energy; 2 additionally prints all mixing, multipole and energy diagnostics. Applies to standalone PCC as well as SCCS.
+- **Description**: SCCS/PCC output level: 0 suppresses per-SCF summaries and diagnostics; 1 prints the iteration count, elapsed seconds and correction energy; 2 additionally prints mixing, residual, multipole and energy diagnostics, and verifies the periodic sqrt-CG fixed point with one extra Poisson solve per SCCS evaluation. Applies to standalone PCC as well as SCCS.
 - **Default**: 0
 
 ### sccs_maxiter

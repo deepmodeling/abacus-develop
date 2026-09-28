@@ -39,6 +39,10 @@ TEST(SurchemInput, TransfersPresetAndSolverControls)
     EXPECT_DOUBLE_EQ(parameters.start_drho, 0.01);
     EXPECT_EQ(parameters.start_nmax, 12);
     EXPECT_EQ(parameters.debug, 2);
+    EXPECT_TRUE(parameters.sccs_config.check_fixed_point);
+    input.sccs_debug = 1;
+    const SurchemParameters summary = ModuleSurchem::make_parameters(input, cell, 0.0, false, 2);
+    EXPECT_FALSE(summary.sccs_config.check_fixed_point);
 }
 
 TEST(SurchemInput, PreservesLegacyParametersAndOrdinaryVacuum)

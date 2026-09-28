@@ -172,10 +172,18 @@ void surchem::write_sccs_iteration(std::ostream& output) const
 
     if (this->parameters_.debug >= 2)
     {
+        const ModuleSccs::PolarizationResult& polarization = result.response.polarization;
         output << " SCCS_MIXING VALUE "
-               << result.response.polarization.final_mixing
+               << polarization.final_mixing
                << " RESTARTS "
-               << result.response.polarization.mixing_restarts << '\n';
+               << polarization.mixing_restarts << '\n';
+        output << " SCCS_RESIDUAL RMS " << polarization.residual_rms
+               << " MAX " << polarization.residual_max << '\n';
+        if (polarization.fixed_point_checked)
+        {
+            output << " SCCS_CG_FIXED_POINT_DEFECT RMS " << polarization.fixed_point_defect_rms
+                   << " MAX " << polarization.fixed_point_defect_max << '\n';
+        }
         output << std::fixed << std::setprecision(2)
                << " SCCS_TIMING preparation_s " << result.preparation_seconds
                << " cached_sources " << result.reused_fixed_sources

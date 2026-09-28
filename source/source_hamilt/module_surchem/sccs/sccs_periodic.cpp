@@ -7,7 +7,6 @@
 
 #include <cmath>
 #include <complex>
-#include <iostream>
 #include <algorithm>
 #include <stdexcept>
 
@@ -78,6 +77,29 @@ PeriodicSccsResult prepare_chain_cavity(
             result.grad_log_epsilon[i][d] = coefficient * density_gradient[i][d];
     }
     return result;
+}
+
+// Pool RMS and maximum absolute value of a distributed grid array.
+void reduced_rms_max(const std::vector<double>& values,
+                     const PolarizationReduction& reduction,
+                     double& rms,
+                     double& maximum)
+{
+    double square = 0.0;
+    double local_maximum = 0.0;
+    double count = static_cast<double>(values.size());
+    for (std::size_t i = 0; i < values.size(); ++i)
+    {
+        square += values[i] * values[i];
+        local_maximum = std::max(local_maximum, std::abs(values[i]));
+    }
+    reduction.reduce_residual(square, local_maximum, count);
+    if (!std::isfinite(square) || !std::isfinite(local_maximum) || count <= 0.0)
+    {
+        throw std::runtime_error("SCCS sqrt-CG residual is not finite");
+    }
+    rms = std::sqrt(square / count);
+    maximum = local_maximum;
 }
 
 } // namespace
@@ -198,13 +220,14 @@ PeriodicSccsResult solve_chain_sccs_response(
     std::vector<double> image(size, 0.0);
     std::vector<double> z;
     double old_rz = 0.0;
-    double initial_square = 0.0;
-    for (const double value : residual)
-    {
-        initial_square += value * value;
-    }
-    reduction.reduce_sum(initial_square);
-    bool converged = initial_square <= solver.tolerance_rms;
+    // Same RMS and maximum charge-residual criteria as the PCC solver.
+    PolarizationResult& polarization = result.polarization;
+    const auto residual_converged = [&]() {
+        reduced_rms_max(residual, reduction, polarization.residual_rms, polarization.residual_max);
+        return polarization.residual_rms <= solver.tolerance_rms
+               && polarization.residual_max <= solver.tolerance_max;
+    };
+    bool converged = residual_converged();
     for (int iteration = 1; !converged && iteration <= solver.max_iterations; ++iteration)
     {
         precondition(residual, z);
@@ -222,47 +245,33 @@ PeriodicSccsResult solve_chain_sccs_response(
         if (!std::isfinite(curvature) || curvature == 0.0)
             throw std::runtime_error("CG sqrt invalid curvature");
         const double alpha = rz/curvature;
-        double square = 0.0;
-        double maximum = 0.0;
-        double count = size;
         for (std::size_t i = 0; i < size; ++i)
         {
             potential[i] += alpha*direction[i];
             residual[i] -= alpha*image[i];
-            square += residual[i]*residual[i];
-            maximum = std::max(maximum, std::abs(residual[i]));
         }
-        reduction.reduce_residual(square, maximum, count);
-        result.polarization.iterations = iteration;
-        const double mean_square = square / count;
-        result.polarization.residual_rms = std::sqrt(mean_square);
-        result.polarization.residual_max = maximum;
-        if (square <= solver.tolerance_rms)
-        {
-            converged = true;
-            break;
-        }
-        if (!std::isfinite(square)) throw std::runtime_error("CG sqrt diverged");
+        polarization.iterations = iteration;
+        converged = residual_converged();
     }
-    if (!converged) throw std::runtime_error("Experimental CG sqrt reached iteration limit");
-    // Independently check the preconditioned equation v=P(q-Kv).
-    std::vector<double> right(size);
-    for (std::size_t i = 0; i < size; ++i) right[i] = charge[i]-coefficient[i]*potential[i];
-    precondition(right, z);
-    double square = 0.0;
-    double maximum = 0.0;
-    double count = size;
-    for (std::size_t i = 0; i < size; ++i)
+    if (!converged)
     {
-        const double defect = potential[i]-z[i];
-        square += defect*defect;
-        maximum = std::max(maximum, std::abs(defect));
+        throw std::runtime_error(
+            "SCCS sqrt-CG did not reach sccs_tol_rms and sccs_tol_max within sccs_maxiter");
     }
-    reduction.reduce_residual(square, maximum, count);
-    const double defect_mean_square = square / count;
-    if (basis.startz_current == 0)
-        std::cout << "CG_FIXED_POINT_DEFECT " << std::sqrt(defect_mean_square)
-                  << " " << maximum << std::endl;
+    if (solver.check_fixed_point)
+    {
+        // Independently check the preconditioned equation v = P(q - K v);
+        // this costs one extra Poisson solve, so it runs only on request.
+        std::vector<double> right(size);
+        for (std::size_t i = 0; i < size; ++i) right[i] = charge[i]-coefficient[i]*potential[i];
+        precondition(right, z);
+        std::vector<double> defect(size);
+        for (std::size_t i = 0; i < size; ++i) defect[i] = potential[i]-z[i];
+        reduced_rms_max(defect, reduction,
+                        polarization.fixed_point_defect_rms,
+                        polarization.fixed_point_defect_max);
+        polarization.fixed_point_checked = true;
+    }
     // Recover induced charge for existing diagnostic/state consumers.
     basis.real2recip(potential.data(), density_g.data());
     for (int ig = 0; ig < basis.npw; ++ig)
