@@ -1,6 +1,8 @@
 #ifndef VELOCITY_PW_H
 #define VELOCITY_PW_H
 #include "op_pw.h"
+#include "source_pw/module_pwdft/velocity_workspace.h"
+#include "source_pw/module_pwdft/projector_gradient.h"
 #include "source_cell/unitcell.h"
 #include "source_base/module_device/types.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
@@ -27,6 +29,16 @@ class Velocity
     ~Velocity();
 
     void init(const int ik_in);
+    /** @brief Refresh momentum and projectors with a Hartree-unit vector potential. */
+    void init(const int ik_in, const ModuleBase::Vector3<double>& vector_potential);
+    /** @brief Refresh borrowed spin and meta-GGA potential views before reuse. */
+    void set_state(const int* isk, const FPTYPE* vtau, const int cols, const int rows)
+    {
+        this->isk = isk;
+        vtau_ = vtau;
+        vtau_col_ = cols;
+        vtau_row_ = rows;
+    }
 
     /**
      * @brief calculate \hat{v}|\psi>
@@ -63,6 +75,11 @@ class Velocity
     int vtau_row_ = 0; ///< number of spin channels stored in vtau_
     mutable std::complex<FPTYPE>* porter1_ = nullptr; ///< workspace on real grid / recip grid
     mutable std::complex<FPTYPE>* porter2_ = nullptr; ///< workspace on real grid / recip grid
+    int momentum_capacity_ = 0;
+    int projector_capacity_ = 0;
+    mutable int porter_capacity_ = 0;
+    ProjectorGradient<FPTYPE, Device> gradient_;
+    mutable VelocityWorkspace<FPTYPE, Device> contraction_;
     Device* ctx = {};
 
   private:
@@ -71,7 +88,6 @@ class Velocity
     FPTYPE* gz_ = nullptr; ///<[Device, npwx] z component of G+K
     std::complex<FPTYPE>* vkb_ = nullptr;     ///<[Device, nkb * npwk_max] nonlocal pseudopotential vkb
     std::complex<FPTYPE>* gradvkb_ = nullptr; ///<[Device, 3*nkb * npwk_max] gradient of nonlocal pseudopotential gradvkb
-    FPTYPE* deeq_ = nullptr;                  ///<[Device] D matrix for nonlocal pseudopotential
     
     using Complex = std::complex<FPTYPE>;
     using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;

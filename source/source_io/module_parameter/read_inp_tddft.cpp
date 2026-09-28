@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <cctype>
 #include <array>
+#include <cmath>
+#include <stdexcept>
 
 namespace ModuleIO
 {
@@ -116,8 +118,19 @@ void check_td_efield_parameters(const Input_para& input)
             ModuleBase::WARNING_QUIT("ReadInput", "td_gauss_sigma must be nonzero.");
         }
     }
+    const std::array<const char*, 3> trape_step_names = {{"td_trape_t1", "td_trape_t2", "td_trape_t3"}};
     for (std::size_t index = 0; index < field_counts[1]; ++index)
     {
+        const std::array<double, 3> steps = {{input.td_trape_t1[index], input.td_trape_t2[index], input.td_trape_t3[index]}};
+        for (std::size_t boundary = 0; boundary < steps.size(); ++boundary)
+        {
+            if (steps[boundary] < 0.0 || steps[boundary] != std::floor(steps[boundary]))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         std::string(trape_step_names[boundary]) + " for trapezoid field "
+                                             + std::to_string(index + 1) + " must be a nonnegative integer value.");
+            }
+        }
         if (input.td_trape_t1[index] > input.td_trape_t2[index]
             || input.td_trape_t2[index] > input.td_trape_t3[index])
         {
@@ -156,9 +169,129 @@ void ReadInput::item_rt_tddft()
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
     {
+        Input_Item item("lin_solver");
+        item.annotation = "linear solver for real-time propagation";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "String";
+        item.description = R"(Iterative linear solver used for PW real-time propagation.
+* bicgstab: Biconjugate gradient stabilized (BiCGSTAB) method.
+* cgs: Conjugate gradient squared (CGS) method.
+
+The initial ground-state diagonalization is controlled by ks_solver.)";
+        item.default_value = "bicgstab";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft");
+        read_sync_string(input.lin_solver);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.inp.lin_solver != "bicgstab" && para.inp.lin_solver != "cgs")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lin_solver must be bicgstab or cgs.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lin_precond");
+        item.annotation = "right preconditioner for PW real-time propagation";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "String";
+        item.description = R"(Right preconditioner used by both PW real-time linear solvers.
+* kinetic: Apply the diagonal inverse $M_{\boldsymbol{G}}^{-1}=(1+\mathrm{i}\Delta t\,T_{\boldsymbol{G}}/2)^{-1}$, where $\Delta t$ is the time step in atomic units and $T_{\boldsymbol{G}}=|\boldsymbol{k}+\boldsymbol{G}+\boldsymbol{A}_{\mathrm{mid}}|^2/2$ is the kinetic energy in Hartree. In the velocity gauge, $\boldsymbol{A}_{\mathrm{mid}}=(\boldsymbol{A}_n+\boldsymbol{A}_{n+1})/2$ is the propagation vector potential in Hartree atomic units; in the length gauge, set $\boldsymbol{A}_{\mathrm{mid}}=0$.
+* none: Disable preconditioning.
+
+Preconditioning changes the convergence rate, while lin_thr still controls the residual of the original equation.)";
+        item.default_value = "kinetic";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft");
+        read_sync_string(input.lin_precond);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.inp.lin_precond != "kinetic" && para.inp.lin_precond != "none")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lin_precond must be kinetic or none.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lin_thr");
+        item.annotation = "residual tolerance of the linear solver";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Real";
+        item.description = R"(Nonnegative finite residual tolerance for each band in a PW real-time linear solve $Ax=b$. A value of 0 selects $\max(10^{-10},100\epsilon)$, where $\epsilon$ is machine epsilon for the wavefunction precision (approximately $1.19209\times10^{-5}$ in single precision and $10^{-10}$ in double precision). A positive value specifies the tolerance $\tau$ directly.
+* bicgstab: Require $\|b-Ax\|_2\leqslant\tau\max(1,\|b\|_2)$.
+* cgs: Require $\|b-Ax\|_2\leqslant\tau\|b\|_2$ for nonzero $b$, or $\|b-Ax\|_2\leqslant\tau$ for zero $b$.
+
+Both methods check the final residual explicitly.)";
+        item.default_value = "0";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft");
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            std::size_t consumed = 0;
+            try
+            {
+                if (item.str_values.size() == 1)
+                {
+                    para.input.lin_thr = std::stod(item.str_values[0], &consumed);
+                    if (consumed == item.str_values[0].size())
+                    {
+                        return;
+                    }
+                }
+            }
+            catch (const std::exception&)
+            {
+            }
+            ModuleBase::WARNING_QUIT("ReadInput", "lin_thr must be a nonnegative finite real number.");
+        };
+        sync_double(input.lin_thr);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (!std::isfinite(para.inp.lin_thr) || para.inp.lin_thr < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lin_thr must be a nonnegative finite real number.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lin_maxiter");
+        item.annotation = "maximum iterations per linear solve";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Integer";
+        item.description = "Positive maximum number of iterations for each PW real-time linear solve. Failure to converge stops the calculation. The number of self-consistency iterations is controlled separately by scf_nmax.";
+        item.default_value = "500";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft");
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            std::size_t consumed = 0;
+            try
+            {
+                if (item.str_values.size() == 1)
+                {
+                    para.input.lin_maxiter = std::stoi(item.str_values[0], &consumed);
+                    if (consumed == item.str_values[0].size())
+                    {
+                        return;
+                    }
+                }
+            }
+            catch (const std::exception&)
+            {
+            }
+            ModuleBase::WARNING_QUIT("ReadInput", "lin_maxiter must be a positive integer.");
+        };
+        sync_int(input.lin_maxiter);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.inp.lin_maxiter <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lin_maxiter must be a positive integer.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("estep_per_md");
         item.annotation = "steps of force change";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
         item.description = "The number of electronic propagation steps between two ionic steps.";
         item.default_value = "1";
@@ -170,7 +303,7 @@ void ReadInput::item_rt_tddft()
     {
         Input_Item item("td_dt");
         item.annotation = "time step for evolving wavefunction";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Real";
         item.description = R"(The time step used for electronic propagation. If td_dt is not specified, it is set to md_dt / estep_per_md. If td_dt is specified explicitly, md_dt is reset to td_dt * estep_per_md.)";
         item.default_value = "md_dt / estep_per_md";
@@ -188,33 +321,35 @@ void ReadInput::item_rt_tddft()
     {
         Input_Item item("td_edm");
         item.annotation = "the method to calculate the energy density matrix";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (LCAO)";
         item.type = "Integer";
         item.description = R"(Method used to calculate the energy-density matrix for the overlap contribution to forces in LCAO RT-TDDFT.
 * 0: Use $\mathrm{EDM}_{\boldsymbol{k}}=\frac{1}{2}\left(S_{\boldsymbol{k}}^{-1}H_{\boldsymbol{k}}\rho_{\boldsymbol{k}}+\rho_{\boldsymbol{k}}H_{\boldsymbol{k}}S_{\boldsymbol{k}}^{-1}\right)$.
 * 1: Use the ground-state eigenvalue-weighted expression $\mathrm{EDM}_{\mu\nu,\boldsymbol{k}}=\sum_i w_{i\boldsymbol{k}}\epsilon_{i\boldsymbol{k}}C_{\mu i,\boldsymbol{k}}C_{\nu i,\boldsymbol{k}}^*$. This expression is deprecated for RT-TDDFT and is generally not valid when the propagated wave functions are not Hamiltonian eigenstates.)";
         item.default_value = "0";
         item.unit = "";
+        item.set_availability("basis_type==lcao and esolver_type==tddft");
         read_sync_int(input.td_edm);
         this->add_item(item);
     }
     {
         Input_Item item("td_print_eij");
         item.annotation = "print eij or not";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (LCAO)";
         item.type = "Real";
         item.description = R"(Controls output of the propagated-state Hamiltonian matrix elements $E_{ij}=\Braket{\psi_i | \hat{H} | \psi_j}$ to the running log. The printed band indices $i$ and $j$ are one-based global indices. Both the threshold and the printed matrix elements are in Ry.
 * $\lt 0$: Disable the output.
 * $\geqslant 0$: Print an element when either $\left|\operatorname{Re}E_{ij}\right|$ or $\left|\operatorname{Im}E_{ij}\right|$ is greater than or equal to td_print_eij.)";
         item.default_value = "-1";
         item.unit = "Ry";
+        item.set_availability("basis_type==lcao and esolver_type==tddft");
         read_sync_double(input.td_print_eij);
         this->add_item(item);
     }
     {
         Input_Item item("td_propagator");
         item.annotation = "method of propagator";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (LCAO)";
         item.type = "Integer";
         item.description = R"(Method used to propagate the electronic states in a nonorthogonal LCAO basis. The formulas below use Hartree atomic units, with $S$, $H$, and $\Delta t=\mathtt{td\_dt}$ evaluated as required by each approximation.
 * 0: Crank-Nicolson through an explicitly constructed evolution matrix, $U=\left[S+\mathrm{i}H\Delta t/2\right]^{-1}\left[S-\mathrm{i}H\Delta t/2\right]$.
@@ -225,13 +360,14 @@ void ReadInput::item_rt_tddft()
 [NOTE] GPU execution currently supports only method 0 in both single-GPU and multi-GPU solver configurations. CPU execution supports methods 0 through 3.)";
         item.default_value = "0";
         item.unit = "";
+        item.set_availability("basis_type==lcao and esolver_type==tddft");
         read_sync_int(input.propagator);
         this->add_item(item);
     }
     {
         Input_Item item("td_vext");
         item.annotation = "add extern potential or not";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
         item.description = R"(Controls whether a time-dependent external electric field is applied.
 * True: Add a laser-material interaction (external electric field).
@@ -244,7 +380,7 @@ void ReadInput::item_rt_tddft()
     {
         Input_Item item("td_vext_dire");
         item.annotation = "extern potential direction";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Integer";
         item.description = R"(Specifies one absolute Cartesian direction for each external electric field when td_vext is enabled. Unlike the ground-state efield_dir parameter, these directions are not defined by lattice or reciprocal-lattice vectors. The number of values must equal that of td_ttype, and repeated directions are allowed; fields assigned to the same direction are added. For example, td_vext_dire 1 2 applies one field along Cartesian x and one along Cartesian y.
 * 1: The external field direction is along the x-axis.
@@ -261,12 +397,12 @@ void ReadInput::item_rt_tddft()
     {
         Input_Item item("td_stype");
         item.annotation = "type of electric field in space domain";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
         item.description = R"(Type of electric field in the space domain, i.e. the gauge of the electric field.
-* 0: Length gauge.
-* 1: Velocity gauge.
-* 2: Hybrid gauge. See J. Chem. Theory Comput. 2025, 21, 3335-3341 for more information.)";
+* 0: Length gauge, available for PW and LCAO.
+* 1: Velocity gauge, available for PW and LCAO.
+* 2: Hybrid gauge, available only for LCAO. See J. Chem. Theory Comput. 2025, 21, 3335-3341 for more information.)";
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.td_stype);
@@ -275,7 +411,7 @@ void ReadInput::item_rt_tddft()
     {
         Input_Item item("td_ttype");
         item.annotation = "type of electric field in time domain";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Integer";
         item.description = R"(Specifies one time-domain type for each external electric field. Its number of values must equal that of td_vext_dire. Parameters belonging to each type must provide exactly one value for every occurrence of that type, in occurrence order; fields with a repeated direction are added.
 
@@ -299,7 +435,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_tstart");
         item.annotation = " number of steps where electric field starts";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
         item.description = R"(First electronic step at which the time-dependent electric field is active. The interval from td_tstart through td_tend includes both endpoints. On each active step $n$, the velocity and hybrid gauges integrate the field over $[n\Delta t,(n+1)\Delta t]$, where $\Delta t=\mathtt{td\_dt}$.)";
         item.default_value = "1";
@@ -310,7 +446,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_tend");
         item.annotation = "number of steps where electric field ends";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
         item.description = R"(Last electronic step at which the time-dependent electric field is active. The interval from td_tstart through td_tend includes both endpoints. On each active step $n$, the velocity and hybrid gauges integrate the field over $[n\Delta t,(n+1)\Delta t]$, where $\Delta t=\mathtt{td\_dt}$.)";
         item.default_value = "1000";
@@ -321,7 +457,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_lcut1");
         item.annotation = "cut1 of interval in length gauge";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Real";
         item.description = R"(Lower fractional-coordinate cutoff for the periodic spatial modulation used in the length gauge. Let $c_1=\mathtt{td\_lcut1}$, $c_2=\mathtt{td\_lcut2}$, $D=c_2-c_1$, and $G=c_1+1-c_2$. For a fractional coordinate $x$, the field factor is $\eta(x)=1$ when $c_1\leqslant x\lt c_2$ and $\eta(x)=-D/G$ elsewhere. The reversed outer interval makes the potential periodic and continuous and gives the field zero cell average.)";
         item.default_value = "0.05";
@@ -332,7 +468,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_lcut2");
         item.annotation = "cut2 of interval in length gauge";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Real";
         item.description = R"(Upper fractional-coordinate cutoff for the periodic spatial modulation used in the length gauge. Let $c_1=\mathtt{td\_lcut1}$, $c_2=\mathtt{td\_lcut2}$, $D=c_2-c_1$, and $G=c_1+1-c_2$. For a fractional coordinate $x$, the field factor is $\eta(x)=1$ when $c_1\leqslant x\lt c_2$ and $\eta(x)=-D/G$ elsewhere. The reversed outer interval makes the potential periodic and continuous and gives the field zero cell average.)";
         item.default_value = "0.95";
@@ -343,7 +479,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_gauss_freq");
         item.annotation = "frequency (freq) of Gauss type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Ordinary frequency $f$ in the Gaussian-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.)";
         item.default_value = "22.13";
@@ -358,7 +494,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_gauss_phase");
         item.annotation = "phase of Gauss type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Carrier phase $\varphi$ in the Gaussian-pulse formula. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.)";
         item.default_value = "0.0";
@@ -373,7 +509,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_gauss_sigma");
         item.annotation = "sigma of Gauss type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Nonzero standard deviation $\sigma$ of the Gaussian envelope. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.)";
         item.default_value = "30.0";
@@ -388,7 +524,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_gauss_t0");
         item.annotation = "step number of time center (t0) of Gauss type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Electronic-step position of the Gaussian center, which defines $t_0=\mathtt{td\_gauss\_t0}\Delta t$. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.)";
         item.default_value = "100";
@@ -403,7 +539,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_gauss_amp");
         item.annotation = "amplitude of Gauss type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Electric-field scale $E_0$ in the Gaussian-pulse formula. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.)";
         item.default_value = "0.25";
@@ -418,7 +554,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_trape_freq");
         item.annotation = "frequency of Trapezoid type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Ordinary carrier frequency $f$ in the trapezoid-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
         item.default_value = "1.60";
@@ -433,7 +569,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_trape_phase");
         item.annotation = "phase of Trapezoid type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Carrier phase $\varphi$ in the trapezoid-pulse formula. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
         item.default_value = "0.0";
@@ -448,9 +584,9 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_trape_t1");
         item.annotation = "t1 of Trapezoid type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
-        item.description = R"(Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
+        item.description = R"(Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as 2.0 are accepted. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
         item.default_value = "1875";
         item.unit = "";
         item.set_availability("td_ttype contains 1");
@@ -463,9 +599,9 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_trape_t2");
         item.annotation = "t2 of Trapezoid type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
-        item.description = R"(Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
+        item.description = R"(Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as 2.0 are accepted. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
         item.default_value = "5625";
         item.unit = "";
         item.set_availability("td_ttype contains 1");
@@ -478,9 +614,9 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_trape_t3");
         item.annotation = "t3 of Trapezoid type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
-        item.description = R"(Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
+        item.description = R"(Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as 2.0 are accepted. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
         item.default_value = "7500";
         item.unit = "";
         item.set_availability("td_ttype contains 1");
@@ -493,7 +629,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_trape_amp");
         item.annotation = "amplitude of Trapezoid type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Electric-field scale $E_0$ in the trapezoid-pulse formula. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
         item.default_value = "2.74";
@@ -508,7 +644,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_trigo_freq1");
         item.annotation = "frequency 1 of Trigonometric type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(First ordinary frequency $f_1$ in the trigonometric-pulse formula, with $\omega_1=2\pi f_1$. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.)";
         item.default_value = "1.164656";
@@ -523,7 +659,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_trigo_freq2");
         item.annotation = "frequency 2 of Trigonometric type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Second ordinary frequency $f_2$ in the trigonometric-pulse formula, with $\omega_2=2\pi f_2$. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.)";
         item.default_value = "0.029116";
@@ -538,7 +674,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_trigo_phase1");
         item.annotation = "phase 1 of Trigonometric type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Carrier phase $\varphi_1$ in the cosine factor of the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.)";
         item.default_value = "0.0";
@@ -553,7 +689,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_trigo_phase2");
         item.annotation = "phase 2 of Trigonometric type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Envelope phase $\varphi_2$ in the sine-squared factor of the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.)";
         item.default_value = "0.0";
@@ -568,7 +704,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_trigo_amp");
         item.annotation = "amplitude of Trigonometric type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Electric-field scale $E_0$ in the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.)";
         item.default_value = "2.74";
@@ -583,7 +719,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_heavi_t0");
         item.annotation = "t0 of Heaviside type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Electronic switch step $n_0$ in the Heaviside-pulse definition. The field is $E_0$ for $n\lt n_0$ and zero for $n\geqslant n_0$. Supply exactly one value for each td_ttype 3 occurrence, in occurrence order.)";
         item.default_value = "100";
@@ -598,7 +734,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_heavi_amp");
         item.annotation = "amplitude of Heaviside type electric field";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Electric-field scale $E_0$ in the Heaviside-pulse definition. Supply exactly one value for each td_ttype 3 occurrence, in occurrence order.)";
         item.default_value = "1.0";
@@ -613,7 +749,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_supsine_amp");
         item.annotation = "carrier electric-field scale of the supersine pulse";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Carrier electric-field scale $E_0$ of each supersine pulse. This is not a normalization of the complete waveform maximum, because the envelope-derivative term also contributes. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.)";
         item.default_value = "0.27";
@@ -628,7 +764,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_supsine_freq");
         item.annotation = "carrier frequency of the supersine pulse";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Nonzero ordinary carrier frequency $f$ of each supersine pulse, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.)";
         item.default_value = "0.18737028625";
@@ -643,7 +779,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_supsine_phase");
         item.annotation = "carrier phase at the center of the supersine pulse";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Electric-field carrier phase $\varphi$ at the center of each supersine envelope. A value of 0 places a cosine carrier maximum at the envelope center. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.)";
         item.default_value = "0.0";
@@ -658,7 +794,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_supsine_sigma");
         item.annotation = "shape parameter of the supersine envelope";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
         item.description = R"(Dimensionless shape parameter $\sigma$ of each supersine envelope. It must satisfy $0\lt\sigma\lt\pi/2$ so that the electric field approaches zero at the pulse boundaries. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.)";
         item.default_value = "0.75";
@@ -673,7 +809,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_supsine_tstart");
         item.annotation = "start boundary step of the supersine pulse";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of String";
         item.description = R"(Integer electronic step at the left, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{s}}=\mathtt{td\_supsine\_tstart}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tstart. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.)";
         item.default_value = "default";
@@ -691,7 +827,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("td_supsine_tend");
         item.annotation = "end boundary step of the supersine pulse";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of String";
         item.description = R"(Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supsine\_tend}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tend. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.)";
         item.default_value = "default";
@@ -709,24 +845,25 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("init_vecpot_file");
         item.annotation = "init vector potential through file or not";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (LCAO)";
         item.type = "Boolean";
         item.description = R"(Selects the source of the Cartesian vector potential used by LCAO RT-TDDFT.
-* True: Read vector_pot.txt from the calculation working directory. Each non-comment line must contain four columns: a conventionally one-based electronic-step label followed by $A_x$, $A_y$, and $A_z$ in atomic units. Rows are consumed sequentially; the first column is read as a label and is not used for lookup. If propagation continues beyond the available rows, the last row is reused.
+* True: Read vector_pot.txt from the calculation working directory. Each non-comment line must contain four columns: a conventionally one-based electronic-step label followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. These are propagation values, not endpoint samples. Rows are consumed sequentially; the first column is read as a label and is not used for lookup. If propagation continues beyond the available rows, the last row is reused.
 * False: Obtain the vector potential by integrating the configured electric field.)";
         item.default_value = "False";
         item.unit = "";
+        item.set_availability("basis_type==lcao and esolver_type==tddft");
         read_sync_bool(input.init_vecpot_file);
         this->add_item(item);
     }
     {
         Input_Item item("ocp");
         item.annotation = "change occupation or not";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
-        item.description = R"(Controls fixed band occupations. In calculations other than LCAO RT-TDDFT, fixed values are applied during electronic-state setup. In LCAO RT-TDDFT, the initial ground-state SCF determines occupations normally, and fixed values from ocp_set are applied during the subsequent real-time propagation steps.
-* True: Use the fixed occupations specified by ocp_set during propagation.
-* False: Keep the occupations determined by the initial SCF.)";
+        item.description = R"(Controls fixed band occupations. In PW RT-TDDFT and calculations other than LCAO RT-TDDFT, fixed values from ocp_set are applied during electronic-state setup. PW real-time propagation preserves these initial occupations. In LCAO RT-TDDFT, the initial ground-state SCF determines occupations normally, and fixed values are applied during the subsequent real-time propagation steps.
+* True: Use the fixed occupations specified by ocp_set at the stage described above.
+* False: Determine occupations normally; real-time propagation preserves the initial SCF occupations.)";
         item.default_value = "False";
         item.unit = "";
         read_sync_bool(input.ocp);
@@ -735,9 +872,9 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     {
         Input_Item item("ocp_set");
         item.annotation = "set occupation";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "String";
-        item.description = R"(Fixed occupation weights used when ocp is true. Values are assigned in band order for each k-point, following k-point order. In LCAO RT-TDDFT, the initial ground-state SCF uses its normally determined occupations, and this array is applied only during subsequent real-time propagation steps. The repetition syntax N*x expands to N copies of x.
+        item.description = R"(Fixed occupation weights used when ocp is true. Values are assigned in band order for each k-point, following k-point order. In PW RT-TDDFT and other calculations outside LCAO RT-TDDFT, this array is applied during electronic-state setup. PW propagation preserves these occupations. In LCAO RT-TDDFT, the initial ground-state SCF uses its normally determined occupations, and this array is applied only during subsequent real-time propagation steps. The repetition syntax N*x expands to N copies of x.
 * Example: 1 10*1 0 1 expands to 13 values, with the 12th value equal to 0 and all other values equal to 1.
 * After expansion, provide one block of nbands values for each k-point. If nspin is 2, provide all k-point blocks for spin up followed by all k-point blocks for spin down; otherwise, provide one block per k-point.
 * The sum of all weights must equal nelec; otherwise the calculation terminates with an error.)";

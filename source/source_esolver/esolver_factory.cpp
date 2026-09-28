@@ -4,6 +4,7 @@
 #include "esolver_ks_pw.h"
 #include "esolver_dfpt_pw.h"
 #include "esolver_sdft_pw.h"
+#include "esolver_ks_pw_tddft.h"
 #include "source_base/module_device/device.h"
 #include "source_hamilt/module_xc/general_exx_info.h"
 #include "source_io/module_parameter/parameter.h"
@@ -55,6 +56,10 @@ std::string determine_type(const Input_para& inp)
         else if (inp.esolver_type == "dfpt")
         {
             esolver_type = "dfpt_pw";
+        }
+        else if (inp.esolver_type == "tddft")
+        {
+            esolver_type = "ksdft_pw_tddft";
         }
     }
     else if (inp.basis_type == "lcao_in_pw")
@@ -167,6 +172,30 @@ ESolver* init_esolver(const Input_para& inp)
     else if (esolver_type == "dfpt_pw")
     {
         return new ESolver_DFPT_PW();
+    }
+    else if (esolver_type == "ksdft_pw_tddft")
+    {
+#if defined(__CUDA) || defined(__ROCM)
+        if (inp.device == "gpu")
+        {
+            if (inp.precision == "single")
+            {
+                return new ESolver_KS_PW_TDDFT<std::complex<float>, base_device::DEVICE_GPU>();
+            }
+            else
+            {
+                return new ESolver_KS_PW_TDDFT<std::complex<double>, base_device::DEVICE_GPU>();
+            }
+        }
+#endif
+        if (inp.precision == "single")
+        {
+            return new ESolver_KS_PW_TDDFT<std::complex<float>, base_device::DEVICE_CPU>();
+        }
+        else
+        {
+            return new ESolver_KS_PW_TDDFT<std::complex<double>, base_device::DEVICE_CPU>();
+        }
     }
     else if (esolver_type == "sdft_pw")
     {

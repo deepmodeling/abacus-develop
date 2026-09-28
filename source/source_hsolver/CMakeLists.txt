@@ -6,13 +6,17 @@ list(APPEND objects
     diago_bpcg.cpp
     para_lin_tf.cpp
     hsolver_pw.cpp
+    hsolver_pw_tddft.cpp
     hsolver_lcaopw.cpp
     diago_iter_assist.cpp
     hsolver.cpp
     diago_pxxxgvx.cpp
     diag_hs_para.cpp
     diago_params.cpp
-
+    linear_bicgstab.cpp
+    linear_cgs.cpp
+    linear_workspace.cpp
+    hsolver_linear.cpp
 )
 
 if(ENABLE_LCAO)

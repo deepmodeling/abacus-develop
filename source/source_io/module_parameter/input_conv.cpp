@@ -120,8 +120,6 @@ void Input_Conv::Convert()
 #ifdef __LCAO
     TD_info::out_current = PARAM.inp.out_current;
     TD_info::out_current_k = PARAM.inp.out_current_k;
-    TD_info::out_vecpot = PARAM.inp.out_vecpot;
-    TD_info::init_vecpot_file = PARAM.inp.init_vecpot_file;
     const int out_hsr_format = PARAM.inp.out_hsr[0];
     TD_info::out_mat_R = (out_hsr_format >= 1 && out_hsr_format <= 3) || PARAM.inp.out_hsr_npz_compat;
 #endif // __LCAO

@@ -315,6 +315,10 @@ struct Input_para
     // ==============   #Parameters (9.rt-tddft) ===========================
     double td_dt = -1.0;       ///< time step for propagation
     int estep_per_md = 1;      ///< number of electronic steps per MD step
+    std::string lin_solver = "bicgstab"; ///< linear solver for real-time propagation
+    std::string lin_precond = "kinetic"; ///< right preconditioner for PW propagation
+    double lin_thr = 0.0;               ///< zero selects the precision-dependent tolerance
+    int lin_maxiter = 500;              ///< maximum iterations per linear solve
     double td_force_dt = 0.02; ///<"fs"
     bool td_vext = false;      ///< add extern potential or not
     // std::string td_vext_dire = "1";   ///< vext direction

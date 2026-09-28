@@ -217,7 +217,7 @@ HONG += -D__SELINV -DMETIS
 
 ifeq ($(MPI), ON)
     ifdef LIBRI_DIR
-        OBJS_ABACUS += $(OBJS_MODULE_RI) ${OBJS_SRC_RI}
+        OBJS_ABACUS += $(OBJS_MODULE_RI) $(OBJS_BSE) ${OBJS_SRC_RI}
     endif
 endif
 

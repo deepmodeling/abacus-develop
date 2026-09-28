@@ -333,7 +333,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     pw::check_deltaspin_oscillation(iter, this->drho, this->p_chgmix, *this->inp_);
 
     // the output quantities
-    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->stp.psi_cpu, this->kv, this->pw_wfc, *this->inp_);
+    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->stp, this->kv, this->pw_wfc, *this->inp_);
 }
 
 template <typename T, typename Device>

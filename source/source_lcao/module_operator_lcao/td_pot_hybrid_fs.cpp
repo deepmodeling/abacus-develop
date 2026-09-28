@@ -15,7 +15,7 @@ void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     {
         return;
     }
-    Et = elecstate::H_TDDFT_pw::Et;
+    Et = elecstate::H_TDDFT_pw::efield_ha * 2.0; // Hamiltonian and forces use Rydberg units.
     const Parallel_Orbitals* paraV = dmR->get_paraV();
     #pragma omp parallel
     {

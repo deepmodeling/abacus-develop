@@ -1,47 +1,22 @@
 #include "td_info.h"
 
-#include "source_base/global_variable.h"
 #include "source_base/libm/libm.h"
 #include "source_estate/module_pot/h_tddft_pw.h"
-#include "source_io/module_efield/td_vector_pot_io.h"
-#include "source_io/module_parameter/parameter.h"
 
 bool TD_info::out_mat_R = false;
-bool TD_info::out_vecpot = false;
 int TD_info::out_current = 0;
 bool TD_info::out_current_k = false;
-bool TD_info::init_vecpot_file = false;
 bool TD_info::evolve_once = false;
 
 TD_info* TD_info::td_vel_op = nullptr;
 
 int TD_info::estep_shift = 0;
 int TD_info::istep = -1;
-int TD_info::max_istep = -1;
-ModuleBase::Vector3<double> TD_info::cart_At;
-std::vector<ModuleBase::Vector3<double>> TD_info::At_from_file;
+ModuleBase::Vector3<double> TD_info::A_prop_ha;
 
-TD_info::TD_info(const UnitCell* ucell_in, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
+TD_info::TD_info(const UnitCell* ucell_in, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb, const int restart_step)
 {
-    if (init_vecpot_file && istep == -1)
-    {
-        At_from_file = ModuleIO::read_td_vector_pot("");
-        max_istep = At_from_file.size() - 1;
-    }
-    // read in restart step
-    if (PARAM.inp.mdp.md_restart)
-    {
-        std::stringstream ssc;
-        ssc << PARAM.globalv.global_readin_dir << "Restart_td.txt";
-        std::ifstream file(ssc.str().c_str());
-        if (!file)
-        {
-            ModuleBase::WARNING_QUIT("TD_info::TD_info", "No Restart_td.txt!");
-        }
-        file >> estep_shift;
-        // std::cout<<"estep_shift"<<estep_shift<<std::endl;
-    }
-    this->istep += estep_shift;
+    estep_shift = restart_step;
     if (out_current == 2 || elecstate::H_TDDFT_pw::stype == 2)
     {
         r_calculator.init(*ucell_in, pv, orb);
@@ -70,23 +45,10 @@ TD_info::~TD_info()
     }
 }
 
-void TD_info::cal_cart_At(const ModuleBase::Vector3<double>& At)
+void TD_info::set_A_prop(const int step, const ModuleBase::Vector3<double>& A_ha)
 {
-    istep++;
-    if (init_vecpot_file)
-    {
-        cart_At = At_from_file[istep > max_istep ? max_istep : istep];
-    }
-    else
-    {
-        // transfrom into atomic unit
-        cart_At = At / 2.0;
-    }
-    // output the vector potential if needed
-    if (out_vecpot && GlobalV::MY_RANK == 0)
-    {
-        ModuleIO::write_td_vector_pot(PARAM.globalv.global_out_dir, istep, cart_At);
-    }
+    istep = step;
+    A_prop_ha = A_ha;
     // update hybrid gauge phase
     if (elecstate::H_TDDFT_pw::stype == 2)
     {
@@ -94,7 +56,7 @@ void TD_info::cal_cart_At(const ModuleBase::Vector3<double>& At)
         {
             const ModuleBase::Vector3<int>& r_index = phase_pair.first;
             ModuleBase::Vector3<double> dR = double(r_index.x) * a1 + double(r_index.y) * a2 + double(r_index.z) * a3;
-            const double arg_td = cart_At * dR * lat0;
+            const double arg_td = A_prop_ha * dR * lat0;
             double sinp, cosp;
             ModuleBase::libm::sincos(arg_td, &sinp, &cosp);
             phase_hybrid[r_index] = std::complex<double>(cosp, sinp);
@@ -102,28 +64,6 @@ void TD_info::cal_cart_At(const ModuleBase::Vector3<double>& At)
     }
 }
 
-void TD_info::out_restart_info(const int nstep,
-                               const ModuleBase::Vector3<double>& At_current,
-                               const ModuleBase::Vector3<double>& At_laststep)
-{
-    if (GlobalV::MY_RANK == 0)
-    {
-        // open file
-        std::string outdir = PARAM.globalv.global_out_dir + "Restart_td.txt";
-        std::ofstream outFile(outdir);
-        if (!outFile)
-        {
-            ModuleBase::WARNING_QUIT("out_restart_info", "no Restart_td.txt!");
-        }
-        // write data
-        outFile << nstep << std::endl;
-        outFile << At_current[0] << " " << At_current[1] << " " << At_current[2] << std::endl;
-        outFile << At_laststep[0] << " " << At_laststep[1] << " " << At_laststep[2] << std::endl;
-        outFile.close();
-    }
-
-    return;
-}
 template <typename TR>
 void TD_info::initialize_phase_hybrid(const UnitCell& ucell, const hamilt::HContainer<TR>* hR)
 {
@@ -141,7 +81,7 @@ void TD_info::initialize_phase_hybrid(const UnitCell& ucell, const hamilt::HCont
                 continue;
 
             ModuleBase::Vector3<double> dR = double(r_index.x) * a1 + double(r_index.y) * a2 + double(r_index.z) * a3;
-            const double arg_td = cart_At * dR * lat0;
+            const double arg_td = A_prop_ha * dR * lat0;
             double sinp, cosp;
             ModuleBase::libm::sincos(arg_td, &sinp, &cosp);
             phase_hybrid[r_index] = std::complex<double>(cosp, sinp);
@@ -334,5 +274,6 @@ void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
     }
     ModuleBase::timer::end("TD_info", "calculate_grad_overlap");
 }
-template void TD_info::initialize_phase_hybrid<std::complex<double>>(const UnitCell& ucell, const hamilt::HContainer<std::complex<double>>* hR);
+template void TD_info::initialize_phase_hybrid<std::complex<double>>(const UnitCell& ucell,
+                                                                     const hamilt::HContainer<std::complex<double>>* hR);
 template void TD_info::initialize_phase_hybrid<double>(const UnitCell& ucell, const hamilt::HContainer<double>* hR);

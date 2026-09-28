@@ -6,9 +6,9 @@
 #include "source_base/intarray.h"
 #include "source_base/realarray.h"
 #include "source_cell/unitcell.h"
+#include "source_psi/psi.h"
 #include "source_pw/module_pwdft/soc.h"
 #include "source_pw/module_pwdft/stru_fac.h"
-#include "source_psi/psi.h"
 
 #include <vector>
 #ifdef __LCAO
@@ -40,16 +40,46 @@ class pseudopot_cell_vnl
 
     void rescale_vnl(const double& omega_in);
 
+    /** @brief Ensure four-point interpolation covers qmax (inverse Bohr), without changing dq. */
+    void ensure_vnl_range(const UnitCell& cell, const double& qmax);
+
+    /** @brief Reject non-finite or out-of-range dimensionless interpolation indices before reading. */
+    void check_vnl_index(const double& index, const bool& derivative) const;
+
+    /** @brief Return the momentum spacing shared by the radial projector and derivative tables. */
+    double table_dq() const
+    {
+        return table_dq_;
+    }
+
+    /**
+     * @brief Build nonlocal projectors at G+k+A; pass zero A for ground-state calculations.
+     *
+     * @param ctx Device context.
+     * @param ucell Unit cell defining reciprocal-space units.
+     * @param ik K-point index.
+     * @param vector_potential Vector potential in Hartree atomic units.
+     * @param vkb_in Output projector buffer.
+     */
     template <typename FPTYPE, typename Device>
-    void getvnl(Device* ctx, const UnitCell& ucell, const int& ik, std::complex<FPTYPE>* vkb_in) const;
+    void getvnl(Device* ctx,
+                const UnitCell& ucell,
+                const int& ik,
+                const ModuleBase::Vector3<double>& vector_potential,
+                std::complex<FPTYPE>* vkb_in) const;
 
     // void getvnl_alpha(const int &ik);
 
     void init_vnl_alpha(const UnitCell& cell);
 
     void initgradq_vnl(const UnitCell& cell);
-
-    void getgradq_vnl(const UnitCell& ucell, const int ik);
+    /** @brief Generation of radial tables, including volume rescaling. */
+    size_t table_version() const
+    {
+        return table_version_;
+    }
+    /** @brief Prepare the derivative table only when the radial table changed. */
+    void ensure_grad_table(const UnitCell& cell);
 
     //===============================================================
     // MEMBER VARIABLES :
@@ -61,6 +91,12 @@ class pseudopot_cell_vnl
     //===============================================================
     // private:
 
+  private:
+    double table_dq_ = 0.0;
+    size_t table_version_ = 1;
+    size_t gradient_version_ = 0;
+
+  public:
     int nhm = 0;
     int nbetam = 0; // max number of beta functions
 
@@ -69,7 +105,7 @@ class pseudopot_cell_vnl
     ModuleBase::matrix indv;   // indes linking  atomic beta's to beta's in the solid
     ModuleBase::matrix nhtol;  // correspondence n <-> angular momentum l
     ModuleBase::matrix nhtolm; // correspondence n <-> combined lm index for (l,m)
-    ModuleBase::matrix nhtoj;  // 
+    ModuleBase::matrix nhtoj;  //
 
     ModuleBase::realArray dvan;       //(:,:,:),  the D functions of the solid
     ModuleBase::ComplexArray dvan_so; //(:,:,:),  spin-orbit case,  added by zhengdy-soc
@@ -104,8 +140,7 @@ class pseudopot_cell_vnl
     std::complex<float>* c_qq_so = nullptr;  // GPU array of qq_so
     std::complex<double>* z_qq_so = nullptr; // GPU array of qq_so
 
-    mutable ModuleBase::ComplexMatrix vkb;    // all beta functions in reciprocal space
-    mutable ModuleBase::ComplexArray gradvkb; // gradient of beta functions
+    mutable ModuleBase::ComplexMatrix vkb; // all beta functions in reciprocal space
     std::complex<double>*** vkb1_alpha;
     std::complex<double>*** vkb_alpha;
     Structure_Factor* psf = nullptr;
@@ -214,6 +249,12 @@ class pseudopot_cell_vnl
 
     double omega_old = 0;
     bool use_gpu_ = false;
+
+    /** @brief Fill the allocated radial projector table using the original Bessel quadrature. */
+    void fill_vnl_table(const UnitCell& cell);
+
+    /** @brief Refresh aliases and allocated precision/device copies after radial-table changes. */
+    void sync_vnl_table();
 
     /**
      * @brief Compute interpolation table qrad

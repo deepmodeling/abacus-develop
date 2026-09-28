@@ -19,7 +19,7 @@ std::string vector_pot_path(const std::string& directory)
 void write_vector_pot_header(std::ofstream& output)
 {
     output << std::left << std::setw(8) << "#istep" << std::setw(15) << "A_x" << std::setw(15) << "A_y" << std::setw(15) << "A_z"
-           << std::endl;
+           << "# propagation values, Hartree atomic units" << std::endl;
 }
 
 bool is_blank_or_comment(const std::string& line)
@@ -109,7 +109,7 @@ void write_td_vector_pot(const std::string& output_dir, const int electronic_ste
     output << std::left << std::setw(8) << electronic_step + 1;
     for (int direction = 0; direction < 3; ++direction)
     {
-        output << std::scientific << std::setprecision(6) << std::setw(15) << vector_pot[direction];
+        output << std::scientific << std::setprecision(16) << std::setw(25) << vector_pot[direction];
     }
     output << std::endl;
 }

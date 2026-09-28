@@ -121,8 +121,18 @@ void ESolver_KS::before_all_runners(BaseCell& basecell, const Input_para& inp)
 void ESolver_KS::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {}
 
+std::string ESolver_KS::diag_policy(const int istep) const
+{
+    if (this->inp_->basis_type == "pw" && this->inp_->esolver_type == "tddft" && istep == 0)
+    {
+        return "ksdft";
+    }
+    return this->inp_->esolver_type;
+}
+
 void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
+    const std::string policy = this->diag_policy(istep);
     // 1) use Hamiltonian to obtain charge density
     this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
@@ -141,14 +151,14 @@ void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, co
         if (iter == 1 && this->inp_->calculation != "nscf")
         {
             hsolver_error
-                = hsolver::cal_hsolve_error(this->inp_->basis_type, this->inp_->esolver_type, diag_ethr, this->inp_->nelec);
+                = hsolver::cal_hsolve_error(this->inp_->basis_type, policy, diag_ethr, this->inp_->nelec);
 
             // The error of HSolver is larger than drho,
             // so a more precise HSolver should be executed.
             if (hsolver_error > drho)
             {
                 diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running, this->inp_->basis_type,
-                            this->inp_->esolver_type, this->inp_->precision, hsolver_error,
+                            policy, this->inp_->precision, hsolver_error,
                             drho, diag_ethr, this->inp_->nelec);
 
                 this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
@@ -157,7 +167,7 @@ void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, co
                                                p_chgmix->get_mixing_config(), ucell.omega, ucell.tpiba);
 
                 hsolver_error = hsolver::cal_hsolve_error(this->inp_->basis_type,
-                                this->inp_->esolver_type, diag_ethr, this->inp_->nelec);
+                                policy, diag_ethr, this->inp_->nelec);
             }
         }
     }
@@ -235,9 +245,10 @@ void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
     // (meaning "lambda loop not yet run this iteration"); otherwise -1 (no RMS column).
     this->ds_rms_ = this->inp_->sc_mag_switch ? 0.0 : -1.0;
 
-    if (this->inp_->esolver_type == "ksdft")
+    const std::string policy = this->diag_policy(istep);
+    if (policy == "ksdft")
     {
-        diag_ethr = hsolver::set_diagethr_ks(this->inp_->basis_type, this->inp_->esolver_type,
+        diag_ethr = hsolver::set_diagethr_ks(this->inp_->basis_type, policy,
           this->inp_->calculation, this->inp_->init_chg, this->inp_->precision, istep, iter,
           drho, this->inp_->pw_diag_thr, diag_ethr, this->inp_->nelec, this->inp_->scf_thr);
     }
@@ -251,6 +262,11 @@ void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
 
     // save input charge density (rho)
     this->chr.save_rho_before_sum_band();
+}
+
+ESolver_KS::DensityStage ESolver_KS::density_stage(const int istep, const int iter) const
+{
+    return DensityStage::standard;
 }
 
 void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
@@ -304,8 +320,19 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     ctx.drho = this->drho;
     ctx.oscillate_esolver = this->oscillate_esolver;
     ctx.conv_esolver = conv_esolver;
-    module_charge::chgmixing_ks(iter, ucell, this->pelec, this->chr,
-        *this->chr.rhopw, this->p_chgmix, ctx, *this->inp_);
+    const DensityStage stage = this->density_stage(istep, iter);
+    if (stage == DensityStage::predictor)
+    {
+        // Build the endpoint potential from the full predicted density, including tau.
+        // Mixing it with the old endpoint would spoil the subsequent midpoint estimate.
+        ctx.conv_esolver = false;
+        ctx.oscillate_esolver = false;
+    }
+    else
+    {
+        module_charge::chgmixing_ks(iter, ucell, this->pelec, this->chr,
+            *this->chr.rhopw, this->p_chgmix, ctx, *this->inp_);
+    }
     this->drho = ctx.drho;
     this->oscillate_esolver = ctx.oscillate_esolver;
     conv_esolver = ctx.conv_esolver;
