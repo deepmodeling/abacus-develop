@@ -356,7 +356,7 @@ TEST_F(Verlet_test, print_md)
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " -0.015365236        -0.023915637        0.0085504016        300                 1.0846391           "));
+            " -0.01536523561      -0.02391563725      0.008550401641      300                 1.0846391           "));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
