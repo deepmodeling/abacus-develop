@@ -191,6 +191,68 @@ std::vector<double> XC_Functional_Libxc::cal_sgn(
 	return sgn;
 }
 
+// threshold masks for the xc potential, following the convention of Quantum
+// ESPRESSO's libxc interface (XClib/xc_wrapper_gga.f90): the first mask
+// applies to exc and vrho (kept down to rho_threshold_vrho), the second one
+// applies only to the vsigma (gradient) term
+std::pair<std::vector<double>, std::vector<double>> XC_Functional_Libxc::cal_sgn_vxc(
+	const double rho_threshold_vrho,
+	const double rho_threshold_vsigma,
+	const double grho_threshold_vsigma,
+	const xc_func_type &func,
+	const int nspin,
+	const std::size_t nrxx,
+	const std::vector<double> &rho,
+	const std::vector<double> &sigma)
+{
+	std::vector<double> sgn_vrho(nrxx*nspin, 1.0);
+	std::vector<double> sgn_vsigma(nrxx*nspin, 1.0);
+	const bool is_gga = (func.info->family == XC_FAMILY_GGA
+	                  || func.info->family == XC_FAMILY_HYB_GGA);
+	if(nspin==1)
+	{
+		#ifdef _OPENMP
+		#pragma omp parallel for schedule(static, 1024)
+		#endif
+		for( std::size_t ir=0; ir<nrxx; ++ir )
+		{
+			if( rho[ir] <= rho_threshold_vrho )
+			{
+				sgn_vrho[ir] = 0.0;
+			}
+			if( is_gga && (rho[ir] <= rho_threshold_vsigma
+				|| std::sqrt(std::abs(sigma[ir])) <= grho_threshold_vsigma) )
+			{
+				sgn_vsigma[ir] = 0.0;
+			}
+		}
+	}
+	else
+	{
+		#ifdef _OPENMP
+		#pragma omp parallel for schedule(static, 512)
+		#endif
+		for( std::size_t ir=0; ir<nrxx; ++ir )
+		{
+			const double rho_up = rho[ir*2];
+			const double rho_dw = rho[ir*2+1];
+			if( rho_up <= rho_threshold_vrho || rho_dw <= rho_threshold_vrho )
+			{
+				sgn_vrho[ir*2]   = 0.0;
+				sgn_vrho[ir*2+1] = 0.0;
+			}
+			if( is_gga && (rho_up <= rho_threshold_vsigma || rho_dw <= rho_threshold_vsigma
+				|| std::sqrt(std::abs(sigma[ir*3]))   <= grho_threshold_vsigma
+				|| std::sqrt(std::abs(sigma[ir*3+2])) <= grho_threshold_vsigma) )
+			{
+				sgn_vsigma[ir*2]   = 0.0;
+				sgn_vsigma[ir*2+1] = 0.0;
+			}
+		}
+	}
+	return std::make_pair(std::move(sgn_vrho), std::move(sgn_vsigma));
+}
+
 // converting etxc from exc (libxc=>abacus)
 double XC_Functional_Libxc::convert_etxc(
 	const int nspin,
@@ -218,7 +280,8 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 	const xc_func_type &func,
 	const int nspin,
 	const std::size_t nrxx,
-	const std::vector<double> &sgn,
+	const std::vector<double> &sgn_vrho,
+	const std::vector<double> &sgn_vsigma,
 	const std::vector<double> &rho,
 	const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr,
 	const std::vector<double> &vrho,
@@ -238,7 +301,7 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 		for( std::size_t ir=0; ir<nrxx; ++ir )
 		{
             const std::size_t index = ir*nspin+is;
-			const double v_tmp = ModuleBase::e2 * vrho[index] * sgn[index];
+			const double v_tmp = ModuleBase::e2 * vrho[index] * sgn_vrho[index];
 			v(is,ir) += v_tmp;
 			vtxc += v_tmp * rho[index];
 		}
@@ -246,7 +309,7 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 
 	if(func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA)
 	{
-		const std::vector<std::vector<double>> dh = XC_Functional_Libxc::cal_dh(nspin, nrxx, sgn, gdr, vsigma, tpiba, chr);
+		const std::vector<std::vector<double>> dh = XC_Functional_Libxc::cal_dh(nspin, nrxx, sgn_vsigma, gdr, vsigma, tpiba, chr);
 
 		double rvtxc = 0.0;
 		#ifdef _OPENMP

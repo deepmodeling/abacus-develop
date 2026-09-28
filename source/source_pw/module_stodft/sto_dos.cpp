@@ -25,7 +25,7 @@ Sto_DOS<FPTYPE, Device>::Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
     this->p_elec = p_elec_in;
     this->p_psi = p_psi_in;
     this->p_hamilt = p_hamilt_in;
-    this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<std::complex<double>>*>(p_hamilt_in);
+    this->p_hamilt_sto = static_cast<StoHamiltPW<std::complex<double>>*>(p_hamilt_in);
     this->p_stowf = p_stowf_in;
     this->nbands_ks = p_psi_in->get_nbands();
     this->nbands_sto = p_stowf_in->nchi;
@@ -51,7 +51,7 @@ void Sto_DOS<FPTYPE, Device>::decide_param(const int& dos_nche,
         this->nbands_sto,
         this->p_kv,
         reinterpret_cast<Stochastic_WF<std::complex<FPTYPE>, Device>*>(this->p_stowf),
-        reinterpret_cast<hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>*>(this->p_hamilt_sto));
+        reinterpret_cast<StoHamiltPW<std::complex<FPTYPE>, Device>*>(this->p_hamilt_sto));
     if (dos_setemax)
     {
         this->emax = dos_emax_ev;
@@ -124,7 +124,7 @@ void Sto_DOS<FPTYPE, Device>::caldos(const double sigmain, const double de, cons
             p_stowf->chi0->fix_k(ik);
             pchi = p_stowf->chi0->get_pointer();
         }
-        auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<double>>::hPsi_norm,
+        auto hchi_norm = std::bind(&StoHamiltPW<std::complex<double>>::hPsi_norm,
                                    p_hamilt_sto,
                                    std::placeholders::_1,
                                    std::placeholders::_2,

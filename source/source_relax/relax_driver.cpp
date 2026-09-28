@@ -42,14 +42,13 @@ void Relax_Driver::relax_driver(
     // so the loop exits after one iteration
     double etot = 0.0;
     ModuleBase::matrix stress(3, 3);
+    ModuleBase::matrix force(ucell.nat, 3);
 
     while (steps[0] < inp.relax_nmax)
     {
-        ModuleBase::matrix force(ucell.nat, 3);
-
         this->iter_info(steps, inp);
         this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot);
-        this->stru_out(steps[0], ucell, inp, etot, stress);
+        this->stru_out(steps[0], ucell, inp, etot, stress, force);
         bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot, ofs_running);
         this->json_out(p_esolver, ucell, inp, force, stress);
 
@@ -68,7 +67,7 @@ void Relax_Driver::relax_driver(
         ++steps[0];
     }
 
-    this->final_out(steps[0], ucell, inp, etot, stress);
+    this->final_out(steps[0], ucell, inp, etot, stress, force);
 
     ModuleBase::timer::end("Relax_Driver", "relax_driver");
     return;
@@ -172,13 +171,16 @@ bool Relax_Driver::relax_step(std::vector<int>& steps,
     return converged;
 }
 
-void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress)
+void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress, const ModuleBase::matrix& force)
 {
-    // Guard: only output structure files for relaxation calculations
-    if (inp.calculation != "relax" && inp.calculation != "cell-relax")
+    // out_stru is effective for scf/nscf/relax/cell-relax (md writes STRU_MD_* via md_restartfreq)
+    if (inp.calculation != "relax" && inp.calculation != "cell-relax"
+        && inp.calculation != "scf" && inp.calculation != "nscf")
     {
         return;
     }
+
+    const bool is_relax = (inp.calculation == "relax" || inp.calculation == "cell-relax");
 
     // out_stru: -1 no output, 0 final only, 1 STRU format, 2 CIF format
     // For -1 and 0, no per-step structure output
@@ -220,32 +222,38 @@ void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& 
     const bool freq_ok = (inp.out_freq_ion > 0 && istep % inp.out_freq_ion == 0);
 
     // STRU_NOW: overwrite each step (for out_stru 1 and 2)
-    if (inp.out_stru == 1)
+    // For scf/nscf the structure is identical to STRU_FINAL; only STRU_FINAL
+    // is written in final_out() to avoid a duplicate file.
+    if (is_relax)
     {
-        unitcell::print_stru_file(ucell,
-                              ucell.atoms,
-                              ucell.latvec,
-                              out_dir + "STRU_NOW",
-                              header,
-                              inp.nspin,
-                              true,
-                              inp.calculation == "md",
-                              inp.out_mul,
-                              need_orb,
-                              deepks_setorb,
-                              GlobalV::MY_RANK);
-    }
-    else if (inp.out_stru == 2)
-    {
-        ModuleIO::CifParser::write(out_dir + "STRU_NOW.cif",
-                                   ucell,
-                                   header,
-                                   "data_?",
-                                   GlobalV::MY_RANK);
+        if (inp.out_stru == 1)
+        {
+            unitcell::print_stru_file(ucell,
+                                  ucell.atoms,
+                                  ucell.latvec,
+                                  out_dir + "STRU_NOW",
+                                  header,
+                                  inp.nspin,
+                                  true,
+                                  inp.calculation == "md",
+                                  inp.out_mul,
+                                  need_orb,
+                                  deepks_setorb,
+                                  GlobalV::MY_RANK,
+                                  force);
+        }
+        else if (inp.out_stru == 2)
+        {
+            ModuleIO::CifParser::write(out_dir + "STRU_NOW.cif",
+                                       ucell,
+                                       header,
+                                       "data_?",
+                                       GlobalV::MY_RANK);
+        }
     }
 
-    // Numbered files per out_freq_ion (for out_stru 1 and 2 only)
-    if (freq_ok)
+    // Numbered files per out_freq_ion: only meaningful for relaxation calculations
+    if (is_relax && freq_ok)
     {
         if (inp.out_stru == 1)
         {
@@ -260,7 +268,8 @@ void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& 
                                   inp.out_mul,
                                   need_orb,
                                   deepks_setorb,
-                                  GlobalV::MY_RANK);
+                                  GlobalV::MY_RANK,
+                                  force);
         }
         else if (inp.out_stru == 2)
         {
@@ -290,16 +299,16 @@ void Relax_Driver::json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, 
 #endif
 }
 
-void Relax_Driver::final_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress)
+void Relax_Driver::final_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress, const ModuleBase::matrix& force)
 {
-    if (inp.calculation != "relax" && inp.calculation != "cell-relax")
-    {
-        return;
-    }
+    // Structure final output is effective for scf/nscf/relax/cell-relax;
+    // relax-specific screen messages remain guarded below.
+    const bool is_relax = (inp.calculation == "relax" || inp.calculation == "cell-relax");
+    const bool stru_effective = is_relax || inp.calculation == "scf" || inp.calculation == "nscf";
 
     // out_stru: 0 no output, 1 STRU format, 2 CIF format
     // 1: write STRU_FINAL; 2: write STRU_FINAL.cif
-    if (inp.out_stru == 1 || inp.out_stru == 2)
+    if (stru_effective && (inp.out_stru == 1 || inp.out_stru == 2))
     {
         // cache global parameters to reduce repeated PARAM access
         const std::string& out_dir = PARAM.globalv.global_out_dir;
@@ -343,7 +352,8 @@ void Relax_Driver::final_out(const int istep, UnitCell& ucell, const Input_para&
                                       inp.out_mul,
                                       need_orb,
                                       deepks_setorb,
-                                      GlobalV::MY_RANK);
+                                      GlobalV::MY_RANK,
+                                      force);
         }
         else if (inp.out_stru == 2)
         {
@@ -357,19 +367,25 @@ void Relax_Driver::final_out(const int istep, UnitCell& ucell, const Input_para&
 
     if (istep == inp.relax_nmax)
     {
-        std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-        std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
-        std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
-        std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+        if (is_relax)
+        {
+            std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+            std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
+            std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
+            std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+        }
     }
     else
     {
-        std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
-        std::cout << " Geometry relaxation thresholds are reached within " << istep << " steps." << std::endl; 
-        std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl; 
+        if (is_relax)
+        {
+            std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+            std::cout << " Geometry relaxation thresholds are reached within " << istep << " steps." << std::endl;
+            std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+        }
     }
 
-    if (inp.relax_nmax == 0)
+    if (is_relax && inp.relax_nmax == 0)
     {
         std::cout << "-----------------------------------------------" << std::endl;
         std::cout << " relax_nmax = 0, DRY RUN TEST SUCCEEDS :)" << std::endl;

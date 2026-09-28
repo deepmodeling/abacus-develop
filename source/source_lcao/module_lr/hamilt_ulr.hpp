@@ -38,9 +38,9 @@ namespace LR
             gdim(nk* std::inner_product(nocc.begin(), nocc.end(), nvirt.begin(), 0))
         {
             ModuleBase::TITLE("HamiltULR", "HamiltULR");
-            this->DM_trans = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(&pmat_in, 1, kv_in.kvec_d, nk);
+            this->DM_trans = LR_Util::make_unique<module_dm::DensityMatrix<T, T>>(&pmat_in, 1, kv_in.kvec_d, nk);
             LR_Util::initialize_DMR(*this->DM_trans, pmat_in, ucell_in, gd_in, orb_cutoff);
-            // this->DM_trans->init_DMR(&gd_in, &ucell_in); // too large due to not restricted by orb_cutoff
+            // this->DM_trans->init_dmr(&gd_in, &ucell_in); // too large due to not restricted by orb_cutoff
             this->ops.resize(4);
 
             this->ops[0] = new OperatorLRDiag<T>(eig_ks.c, pX_in[0], nk, nocc[0], nvirt[0]);
@@ -79,7 +79,7 @@ namespace LR
 #endif
                     // LR_Util::print_tensor<T>(dm_trans_2d[0], "DMtrans(k=0)", &pmat_in);
                     // tensor to vector, then set DMK
-                    for (int ik = 0;ik < nk;++ik) { this->DM_trans->set_DMK_pointer(ik, dm_trans_2d[ik].data<T>()); }
+                    for (int ik = 0;ik < nk;++ik) { this->DM_trans->set_dmk_ptr(ik, dm_trans_2d[ik].data<T>()); }
                 };
         }
         ~HamiltULR()
@@ -220,7 +220,7 @@ namespace LR
         /// transition density matrix in AO representation
         /// Hxc only: size=1, calculate on the same address for each bands
         /// Hxc+Exx: size=nbands, store the result of each bands for common use
-        std::unique_ptr<elecstate::DensityMatrix<T, T>> DM_trans;
+        std::unique_ptr<module_dm::DensityMatrix<T, T>> DM_trans;
 
         std::function<void(const int&, const T* const)> cal_dm_trans;
         const bool tdm_sym = false;     ///< whether to symmetrize the transition density matrix

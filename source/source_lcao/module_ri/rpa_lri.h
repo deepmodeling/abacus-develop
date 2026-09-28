@@ -16,11 +16,13 @@
 #include <RI/ri/RI_Tools.h>
 #include <array>
 #include <map>
+#include <memory>
 #include <mpi.h>
 #include <vector>
 
 class Parallel_Orbitals;
 class K_Vectors;
+template <typename Tdata> class Exx_LRI;
 
 template <typename T, typename Tdata> class RPA_LRI
 {
@@ -38,21 +40,22 @@ template <typename T, typename Tdata> class RPA_LRI
     RPA_LRI(const Exx_Info_RI &info_in) : info(info_in)
     {
     }
-    ~RPA_LRI(){};
+    ~RPA_LRI();
     void postSCF(const UnitCell& ucell,
         const MPI_Comm& mpi_comm_in,
-        const elecstate::DensityMatrix<T, Tdata>& dm,
+        const module_dm::DensityMatrix<T, Tdata>& dm,
         const elecstate::ElecState* pelec,
         const K_Vectors& kv,
         const LCAO_Orbitals& orb,
         const Parallel_Orbitals& parav,
         const psi::Psi<T>& psi);
     void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in, const std::vector<double>& orb_cutoff);
-    void cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>& dm,
+    void cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>& dm,
         const MPI_Comm& mpi_comm_in,
         const UnitCell& ucell,
         const K_Vectors& kv,
-        const LCAO_Orbitals& orb);
+        const LCAO_Orbitals& orb,
+        const Parallel_Orbitals& parav);
     void output_ewald_coulomb(const UnitCell& ucell, const K_Vectors& kv, const LCAO_Orbitals& orb);
     void cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals& orb, const K_Vectors& kv);
     void cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbitals& orb, const K_Vectors& kv);
@@ -94,6 +97,7 @@ template <typename T, typename Tdata> class RPA_LRI
     MPI_Comm mpi_comm;
     std::vector<double> orb_cutoff_;
     double ccp_rmesh_times_ewald = 0.0;
+    double ccp_rmesh_times_cut = 0.0;
 
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
@@ -110,8 +114,8 @@ template <typename T, typename Tdata> class RPA_LRI
 
     // Tdata post_process_Erpa( const Tdata &Erpa_in ) const;
 
-    Exx_LRI<double>* exx_cut_coulomb = nullptr;
-    Exx_LRI<double>* exx_full_coulomb = nullptr;
+    std::unique_ptr<Exx_LRI<double>> exx_cut_coulomb;
+    std::unique_ptr<Exx_LRI<double>> exx_full_coulomb;
 };
 #include "rpa_lri.hpp"
 

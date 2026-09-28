@@ -24,10 +24,7 @@ namespace rdmft
 {
 
 template <>
-void conj_psi<double>(psi::Psi<double>& wfc) {}
-
-template <>
-void HkPsi<double>(const Parallel_Orbitals* ParaV, 
+void HkPsi<double>(const Parallel_Orbitals* ParaV,
                    const double& HK, 
                    const double& wfc, 
                    double& H_wfc)

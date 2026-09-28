@@ -345,6 +345,7 @@
     - [exxace](#exxace)
     - [exx\_gamma\_extrapolation](#exx_gamma_extrapolation)
     - [ecutexx](#ecutexx)
+    - [exx\_batch\_size](#exx_batch_size)
     - [exx\_thr\_type](#exx_thr_type)
     - [exx\_ene\_thr](#exx_ene_thr)
   - [Molecular dynamics](#molecular-dynamics)
@@ -2064,7 +2065,7 @@
 ### out_stru
 
 - **Type**: Integer
-- **Description**: Controls the output of structure files per ionic step in geometry relaxation calculations. The files are written to the OUT.{suffix}/ directory. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. When out_freq_ion is positive, the numbered files STRU{istep} (or STRU{istep}.cif) are written every out_freq_ion steps; when out_freq_ion is 0, no numbered files are output.
+- **Description**: Controls the output of structure files per ionic step. The files are written to the OUT.{suffix}/ directory. Each file corresponds to the structure at RELAX STEP ${istep} (for scf/nscf this is the single step), i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. When out_freq_ion is positive, the numbered files STRU{istep} (or STRU{istep}.cif) are written every out_freq_ion steps during geometry relaxation; when out_freq_ion is 0, no numbered files are output. This parameter is effective for scf/nscf/relax/cell-relax; for scf/nscf only STRU_FINAL (or STRU_FINAL.cif) is written, and structure output is disabled by default unless out_stru is set explicitly. Molecular dynamics structure output is instead controlled by md_restartfreq (STRU_MD_*).
     - 0: No structure files are output.
     - 1: ABACUS STRU format files are output. The latest structure is written to STRU_NOW (overwritten each step), the numbered file STRU{istep} (e.g., STRU1, STRU2) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL. No CIF files are output.
     - 2: CIF format files are output. The latest structure is written to STRU_NOW.cif (overwritten each step), the numbered file STRU{istep}.cif (e.g., STRU1.cif, STRU2.cif) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL.cif. No non-CIF files are output.
@@ -3450,9 +3451,15 @@
 ### ecutexx
 
 - **Type**: Real
-- **Description**: The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. Reducing ecutexx below ecutrho may significantly accelerate EXX computations. This speed improvement comes with a reduced numerical accuracy in the exchange energy calculation.
+- **Description**: The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. The pair-density G-sphere of the exchange operator, the EXX energy, and the EXX stress are all truncated at this value. If ecutexx yields a smaller FFT box and every |k+G|^2 of the wavefunctions fits inside it (i.e. ecutexx should not be smaller than ecutwfc), all EXX FFTs run on that smaller grid (QE ecutfock-style), which can significantly accelerate EXX computations. If the small grid is not usable (box not smaller, wavefunctions do not fit, or the FFT box is distributed over MPI), a warning is printed and the full grid is used. Reducing ecutexx below ecutrho reduces the numerical accuracy of the exchange contribution.
 - **Default**: same as ecutrho
 - **Unit**: Ry
+
+### exx_batch_size
+
+- **Type**: Integer
+- **Description**: Number of bands processed per round of the EXX batched FFT path. 0 (the default) processes all bands in one round, which is fastest but needs nbands * nxyz work buffers; a positive value processes the bands in chunks of that width, trading some performance for a proportionally smaller memory footprint. The result is independent of the chunking.
+- **Default**: 0
 
 ### exx_thr_type
 
@@ -3800,7 +3807,7 @@
 
 ### cal_syns
 
-- **Type**: Boolean [Integer](optional)
+- **Type**: Boolean \[Integer\](optional)
 - **Description**: Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates &lt;phi(t-1)|phi(t)&gt; by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
 
   - 0 or false: disable

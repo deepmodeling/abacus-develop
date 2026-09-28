@@ -9,6 +9,7 @@
 #include "mpi.h"
 #endif
 
+#include <memory>
 #include <vector>
 
 /***
@@ -51,11 +52,11 @@ class Parallel_K2D {
     /// get my pool
     int get_my_pool() const { return this->MY_POOL; }
     /// get pKpoints
-    Parallel_Kpoints* get_pKpoints() const { return this->Pkpoints; }
+    Parallel_Kpoints* get_pKpoints() const { return this->Pkpoints.get(); }
     /// get p2D_global
-    Parallel_2D* get_p2D_global() const { return this->P2D_global; }
+    Parallel_2D* get_p2D_global() const { return this->P2D_global.get(); }
     /// get p2D_pool
-    Parallel_2D* get_p2D_pool() const { return this->P2D_pool; }
+    Parallel_2D* get_p2D_pool() const { return this->P2D_pool.get(); }
 
     /**
      * the local Hk, Sk matrices in POOL_WORLD_K2D
@@ -83,9 +84,9 @@ class Parallel_K2D {
     /**
      * the pointer to Parallel_Kpoints
      */
-    Parallel_Kpoints* Pkpoints = nullptr;
-    Parallel_2D* P2D_global = nullptr;
-    Parallel_2D* P2D_pool = nullptr;
+    std::unique_ptr<Parallel_Kpoints> Pkpoints;
+    std::unique_ptr<Parallel_2D> P2D_global;
+    std::unique_ptr<Parallel_2D> P2D_pool;
 };
 
 #endif

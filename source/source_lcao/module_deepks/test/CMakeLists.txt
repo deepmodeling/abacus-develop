@@ -45,7 +45,19 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     ../../../source_cell/read_orb.cpp
     ../../../source_cell/cal_nelec_nband.cpp
     ../../../source_estate/module_dm/density_matrix.cpp
-    ../../../source_estate/module_dm/density_matrix_io.cpp
+    ../../../source_estate/module_dm/dmr_gamma.cpp
+    ../../../source_estate/module_dm/dmr_init.cpp
+    ../../../source_estate/module_dm/dm_setter.cpp
+    ../../../source_estate/module_dm/dm_getter.cpp
+    ../../../source_estate/module_dm/dm_tools.cpp
+    ../../../source_estate/module_dm/dmr_k.cpp
+    ../../../source_estate/module_dm/dmr_td.cpp
+    ../../../source_estate/module_dm/dmr_full.cpp
+    # dm_from_psi.cpp defines module_dm::dmk_from_psi / dm_from_psi, referenced via
+    # cal_dm.h by deepks_lcao.cpp / operator_lcao.cpp. It was dropped when
+    # density_matrix.cpp was split (dmr_* / dm_*), causing undefined reference
+    # to dmk_from_psi at link time.
+    ../../../source_estate/module_dm/dm_from_psi.cpp
     ../../center2orb.cpp
     ../../center2orb_orb11.cpp
     ../../center2orb_orb21.cpp

@@ -33,13 +33,13 @@ std::string dmr_gen_fname(const int out_type, const int ispin, const bool append
     return fname;
 }
 
-void write_dmr_csr(std::string& fname, 
+void write_dmr_csr(std::string& fname,
                    const UnitCell *ucell,
                    const int precision,
                    hamilt::HContainer<double>* dm_serial,
                    const int istep,
-		   const int ispin,
-		   const int nspin)
+                   const int ispin,
+                   const int nspin)
 {
     // write the head: ION step number, basis number and R loop number
 
@@ -60,10 +60,10 @@ void write_dmr_csr(std::string& fname,
     ofs << " # print density matrix in real space DM(R)" << std::endl;
     ofs << " " << nspin << " # number of spin directions" << std::endl;
     ofs << " " << ispin+1 << " # spin index" << std::endl;
-    ofs << " " << dm_serial->get_nbasis() 
-	    << " # number of localized basis" << std::endl;
-    ofs << " " << dm_serial->size_R_loop() 
-	    << " # number of Bravais lattice vector R" << std::endl;
+    ofs << " " << dm_serial->get_nbasis()
+        << " # number of localized basis" << std::endl;
+    ofs << " " << dm_serial->size_R_loop()
+        << " # number of Bravais lattice vector R" << std::endl;
     ofs << std::endl;
 
     // write ucell

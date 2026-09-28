@@ -24,7 +24,7 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(HS_Matrix_K<TK>* hsk_in,
                                      const TwoCenterIntegrator* intor_orb_alpha,
                                      const LCAO_Orbitals* ptr_orb,
                                      const int& nks_in,
-                                     elecstate::DensityMatrix<TK, double>* DM_in
+                                     module_dm::DensityMatrix<TK, double>* DM_in
 #ifdef __MLALGO
                                      ,
                                      LCAO_Deepks<TK>* ld_in

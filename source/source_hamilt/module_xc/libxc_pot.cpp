@@ -90,14 +90,19 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
 
     for( xc_func_type &func : funcs )
     {
-        // jiyy add for threshold
-        constexpr double rho_threshold = 1E-6;
-        constexpr double grho_threshold = 1E-10;
+        // thresholds: same convention as Quantum ESPRESSO's libxc interface
+        // (XClib/xc_wrapper_gga.f90): exc and vrho are evaluated down to
+        // rho_threshold_lda, while only the vsigma (gradient) term is
+        // suppressed below rho_threshold_gga / grho_threshold_gga
+        constexpr double rho_threshold_lda = 1E-10;
+        constexpr double rho_threshold_gga = 1E-6;
+        constexpr double grho_threshold_gga = 1E-10;
 
-        xc_func_set_dens_threshold(&func, rho_threshold);
+        xc_func_set_dens_threshold(&func, rho_threshold_lda);
 
-        // sgn for threshold mask
-        const std::vector<double> sgn = XC_Functional_Libxc::cal_sgn(rho_threshold, grho_threshold, func, nspin, nrxx, rho, sigma);
+        // sgn for threshold masks
+        const std::pair<std::vector<double>,std::vector<double>> sgn = XC_Functional_Libxc::cal_sgn_vxc(
+            rho_threshold_lda, rho_threshold_gga, grho_threshold_gga, func, nspin, nrxx, rho, sigma);
 
         std::vector<double> exc   ( nrxx                    );
         std::vector<double> vrho  ( nrxx * nspin            );
@@ -166,10 +171,10 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         }
 
         // time factor is added by jghan, 2024-10-10
-        etxc += XC_Functional_Libxc::convert_etxc(nspin, nrxx, sgn, rho, exc) * factor;
+        etxc += XC_Functional_Libxc::convert_etxc(nspin, nrxx, sgn.first, rho, exc) * factor;
         const std::pair<double,ModuleBase::matrix> vtxc_v = XC_Functional_Libxc::convert_vtxc_v(
             func, nspin, nrxx,
-            sgn, rho, gdr,
+            sgn.first, sgn.second, rho, gdr,
             vrho, vsigma,
             tpiba, chr);
         vtxc += std::get<0>(vtxc_v) * factor;

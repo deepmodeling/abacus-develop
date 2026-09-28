@@ -10,7 +10,7 @@ namespace PulayForceStress
     void cal_pulay_fs(
         ModuleBase::matrix& f,  ///< [out] force
         ModuleBase::matrix& s,  ///< [out] stress
-        const elecstate::DensityMatrix<TK, TR>& dm,  ///< [in] density matrix
+        const module_dm::DensityMatrix<TK, TR>& dm,  ///< [in] density matrix
         const UnitCell& ucell,  ///< [in] unit cell
         const elecstate::Potential* pot, ///< [in] potential on grid
         const bool& isforce,
@@ -27,7 +27,7 @@ namespace PulayForceStress
                 vr_eff[is] = pot->get_eff_v(is);
                 vofk_eff[is] = pot->get_eff_vofk(is);
             }
-            ModuleGint::cal_gint_fvl_meta(nspin, vr_eff, vofk_eff, dm.get_DMR_vector(), isforce, isstress, &f, &s);
+            ModuleGint::cal_gint_fvl_meta(nspin, vr_eff, vofk_eff, dm.get_dmr_vec(), isforce, isstress, &f, &s);
         }
         else
         {
@@ -35,7 +35,7 @@ namespace PulayForceStress
             {
                 vr_eff[is] = pot->get_eff_v(is);
             }
-            ModuleGint::cal_gint_fvl(nspin, vr_eff, dm.get_DMR_vector(), isforce, isstress, &f, &s);
+            ModuleGint::cal_gint_fvl(nspin, vr_eff, dm.get_dmr_vec(), isforce, isstress, &f, &s);
         }
 
         if (isstress) { StressTools::stress_fill(-1.0, ucell.omega, s); }

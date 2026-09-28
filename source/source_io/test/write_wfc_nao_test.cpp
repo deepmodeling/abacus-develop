@@ -502,6 +502,61 @@ TEST(ModuleIOTest, WriteWfcNaoComplexBinary)
     }
 }
 
+TEST(ModuleIOTest, WriteWfcNaoBinaryOpenFail)
+{
+#ifdef __MPI
+    int my_rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    if (my_rank != 0)
+    {
+        return;
+    }
+#endif
+    const int nlocal = 2;
+    std::string filename = "/nonexistent_dir/test_wfc_nao.dat";
+    std::vector<double> ctot = {0.1, 0.2, 0.3, 0.4};
+    ModuleBase::matrix ekb(2, 2);
+    ModuleBase::matrix wg(2, 2);
+
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(ModuleIO::wfc_nao_write2file(filename, ctot.data(), nlocal, 0, ekb, wg, true),
+                ::testing::ExitedWithCode(1),
+                "");
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("TIME STATISTICS"));
+}
+
+TEST(ModuleIOTest, WriteWfcNaoComplexBinaryOpenFail)
+{
+#ifdef __MPI
+    int my_rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    if (my_rank != 0)
+    {
+        return;
+    }
+#endif
+    const int nlocal = 3;
+    std::string name = "/nonexistent_dir/test_wfc_nao_complex.dat";
+    int ik = 0;
+    ModuleBase::Vector3<double> kvec_c{0.0, 0.0, 0.0};
+    ModuleBase::matrix ekb(1, 2);
+    ModuleBase::matrix wg(1, 2);
+    std::vector<std::complex<double>> ctot = {std::complex<double>(1.0, 0.0),
+                                              std::complex<double>(2.0, 0.0),
+                                              std::complex<double>(3.0, 0.0),
+                                              std::complex<double>(0.0, 1.0),
+                                              std::complex<double>(0.0, 2.0),
+                                              std::complex<double>(0.0, 3.0)};
+
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(ModuleIO::wfc_nao_write2file_complex(name, ctot.data(), nlocal, ik, kvec_c, ekb, wg, true),
+                ::testing::ExitedWithCode(1),
+                "");
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("TIME STATISTICS"));
+}
+
 int main(int argc, char** argv)
 {
     GlobalV::MY_RANK = 0;
