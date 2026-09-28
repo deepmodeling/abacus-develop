@@ -40,6 +40,7 @@ void surchem::set_parameters(const SurchemParameters& parameters)
         throw std::invalid_argument("inconsistent solvent/PCC configuration or debug level");
     }
     this->parameters_ = parameters;
+    this->fixed_source_cache_ = FixedSourceCache();
     this->parameters_set_ = true;
     this->sccs_active_ = parameters.use_sccs && parameters.start_drho <= 0.0;
     this->sccs_state_ = ModuleSccs::SccsState();
@@ -76,6 +77,7 @@ bool surchem::try_activate_sccs(const int electronic_iteration, const double drh
         return false;
     }
     this->sccs_active_ = true;
+    this->fixed_source_cache_ = FixedSourceCache();
     this->sccs_state_ = ModuleSccs::SccsState();
     this->sccs_result_ = ModuleSccs::SccsResult();
     this->pcc_result_valid_ = false;
@@ -175,11 +177,14 @@ void surchem::write_sccs_iteration(std::ostream& output) const
                << result.response.polarization.final_mixing
                << " RESTARTS "
                << result.response.polarization.mixing_restarts << '\n';
-        output << " SCCS_TIMING preparation_s " << result.preparation_seconds
+        output << std::fixed << std::setprecision(2)
+               << " SCCS_TIMING preparation_s " << result.preparation_seconds
+               << " cached_sources " << result.reused_fixed_sources
                << " pcc_s " << result.pcc_seconds
                << " forward_s " << result.forward_seconds
                << " adjoint_s " << result.adjoint_seconds
-               << " non_electrostatic_s " << result.non_electrostatic_seconds << '\n';
+               << " non_electrostatic_s " << result.non_electrostatic_seconds << '\n'
+               << std::defaultfloat << std::setprecision(8);
     }
 
     if (this->parameters_.debug >= 2
@@ -341,6 +346,7 @@ void surchem::clear()
     this->sccs_state_ = ModuleSccs::SccsState();
     this->sccs_result_ = ModuleSccs::SccsResult();
     this->sccs_elapsed_seconds_ = 0.0;
+    this->fixed_source_cache_ = FixedSourceCache();
 }
 
 surchem::~surchem()

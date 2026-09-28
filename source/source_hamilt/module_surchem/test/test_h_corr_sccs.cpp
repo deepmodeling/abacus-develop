@@ -138,6 +138,7 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
                               potential);
 
     const ModuleSccs::SccsResult& result = solvent.sccs_result();
+    EXPECT_FALSE(result.reused_fixed_sources);
     EXPECT_GE(result.preparation_seconds, 0.0);
     EXPECT_GE(result.pcc_seconds, 0.0);
     EXPECT_GE(result.forward_seconds, 0.0);
@@ -218,6 +219,24 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
         EXPECT_TRUE(std::isfinite(potential(0, ir)));
         EXPECT_NEAR(potential(0, ir), 2.0 * result.electron_potential_hartree[ir], 1.0e-14);
     }
+    const double first_energy = surchem::Ael;
+    solvent.v_correction_sccs(cell,
+                              basis,
+                              1,
+                              density_channels,
+                              local_potential.data(),
+                              potential);
+    EXPECT_TRUE(solvent.sccs_result().reused_fixed_sources);
+    EXPECT_NEAR(surchem::Ael, first_energy, 1.0e-12);
+
+    local_potential[0] = 1.0e-6;
+    solvent.v_correction_sccs(cell,
+                              basis,
+                              1,
+                              density_channels,
+                              local_potential.data(),
+                              potential);
+    EXPECT_FALSE(solvent.sccs_result().reused_fixed_sources);
 }
 
 TEST(HCorrSccs, AppliesNeutralPcc2dPointIonEnergyAndPotential)

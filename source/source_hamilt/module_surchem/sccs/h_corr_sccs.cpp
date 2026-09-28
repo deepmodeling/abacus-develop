@@ -9,6 +9,7 @@
 #include "source_base/timer_wrapper.h"
 #include "source_base/tool_title.h"
 
+#include <algorithm>
 #include <stdexcept>
 #include <vector>
 
@@ -42,16 +43,57 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     }
     const std::vector<double> electron_density
         = ModuleSccs::sum_electron_density(spin_density, nspin);
+    FixedSourceCache& cache = this->fixed_source_cache_;
     const double* local_potential_end = vlocal + rho_basis.nrxx;
-    const std::vector<double> local_potential(vlocal, local_potential_end);
-    const std::vector<double> ionic_density
-        = ModuleSccs::ionic_charge_from_local_potential(local_potential,
-                                                        this->parameters_.expected_ionic_charge,
-                                                        cell.omega,
-                                                        cell.tpiba,
-                                                        rho_basis);
-    const std::vector<ModuleBase::Vector3<double>> positions
-        = ModuleSccs::pw_grid_positions(rho_basis, cell.latvec, cell.lat0);
+    const bool same_lattice
+        = cache.valid && cache.lattice_vectors.e11 == cell.latvec.e11
+          && cache.lattice_vectors.e12 == cell.latvec.e12
+          && cache.lattice_vectors.e13 == cell.latvec.e13
+          && cache.lattice_vectors.e21 == cell.latvec.e21
+          && cache.lattice_vectors.e22 == cell.latvec.e22
+          && cache.lattice_vectors.e23 == cell.latvec.e23
+          && cache.lattice_vectors.e31 == cell.latvec.e31
+          && cache.lattice_vectors.e32 == cell.latvec.e32
+          && cache.lattice_vectors.e33 == cell.latvec.e33;
+    const bool reuse_fixed_sources
+        = cache.valid && cache.basis == &rho_basis
+          && cache.nx == rho_basis.nx && cache.ny == rho_basis.ny
+          && cache.nz == rho_basis.nz && cache.nrxx == rho_basis.nrxx
+          && cache.nplane == rho_basis.nplane
+          && cache.startz == rho_basis.startz_current
+          && cache.lattice_constant == cell.lat0
+          && cache.cell_volume == cell.omega && cache.tpiba == cell.tpiba
+          && cache.ionic_charge == this->parameters_.expected_ionic_charge
+          && same_lattice
+          && cache.local_potential.size() == static_cast<std::size_t>(rho_basis.nrxx)
+          && std::equal(vlocal, local_potential_end, cache.local_potential.begin());
+    if (!reuse_fixed_sources)
+    {
+        cache.valid = false;
+        cache.local_potential.assign(vlocal, local_potential_end);
+        cache.ionic_density
+            = ModuleSccs::ionic_charge_from_local_potential(cache.local_potential,
+                                                            this->parameters_.expected_ionic_charge,
+                                                            cell.omega,
+                                                            cell.tpiba,
+                                                            rho_basis);
+        cache.positions = ModuleSccs::pw_grid_positions(rho_basis, cell.latvec, cell.lat0);
+        cache.lattice_vectors = cell.latvec;
+        cache.basis = &rho_basis;
+        cache.lattice_constant = cell.lat0;
+        cache.cell_volume = cell.omega;
+        cache.tpiba = cell.tpiba;
+        cache.ionic_charge = this->parameters_.expected_ionic_charge;
+        cache.nx = rho_basis.nx;
+        cache.ny = rho_basis.ny;
+        cache.nz = rho_basis.nz;
+        cache.nrxx = rho_basis.nrxx;
+        cache.nplane = rho_basis.nplane;
+        cache.startz = rho_basis.startz_current;
+        cache.valid = true;
+    }
+    const std::vector<double>& ionic_density = cache.ionic_density;
+    const std::vector<ModuleBase::Vector3<double>>& positions = cache.positions;
     ModuleBase::Vector3<double> origin
         = ModuleSccs::cell_center(cell.latvec, cell.lat0);
     const ModuleBase::TimePoint preparation_end = ModuleBase::get_time();
@@ -102,6 +144,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
                                        charge_reduction,
                                        polarization_reduction,
                                        this->sccs_state_);
+    this->sccs_result_.reused_fixed_sources = reuse_fixed_sources;
     this->sccs_result_.preparation_seconds
         = ModuleBase::get_duration(start_time, preparation_end);
     this->sccs_result_.pcc_seconds = ModuleBase::get_duration(preparation_end, pcc_end);

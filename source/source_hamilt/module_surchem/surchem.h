@@ -9,6 +9,7 @@
 #include "sccs/sccs_driver.h"
 
 #include <iosfwd>
+#include <vector>
 
 // forward-declared: used below only as pointer/reference
 class Parallel_Grid;
@@ -203,7 +204,30 @@ class surchem
     void induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, double* induced_rho) const;
 
   private:
+    // Reuse the ion-only source and grid coordinates while the local potential,
+    // cell and local PW decomposition are unchanged across electronic steps.
+    struct FixedSourceCache
+    {
+        std::vector<double> local_potential;
+        std::vector<double> ionic_density;
+        std::vector<ModuleBase::Vector3<double>> positions;
+        ModuleBase::Matrix3 lattice_vectors;
+        const ModulePW::PW_Basis* basis = nullptr;
+        double lattice_constant = 0.0;
+        double cell_volume = 0.0;
+        double tpiba = 0.0;
+        double ionic_charge = 0.0;
+        int nx = 0;
+        int ny = 0;
+        int nz = 0;
+        int nrxx = 0;
+        int nplane = 0;
+        int startz = 0;
+        bool valid = false;
+    };
+
     SurchemParameters parameters_;
+    FixedSourceCache fixed_source_cache_;
     bool parameters_set_ = false;
     bool sccs_active_ = false;
     ModuleSccs::SccsState sccs_state_;
