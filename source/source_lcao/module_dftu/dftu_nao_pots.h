@@ -82,7 +82,6 @@ inline void transfer_pot_onsite<std::complex<double>>(const std::vector<double>&
  * @param T           atom type
  * @param iat         global atom index
  * @param L           angular momentum
- * @param N           radial index
  * @param spin        spin channel
  * @param m0          first magnetic quantum index (packed with polarization)
  * @param m1          second magnetic quantum index (packed with polarization)
@@ -93,7 +92,6 @@ double get_onsite_pot(const Plus_U_Base& dftu,
                       const int T,
                       const int iat,
                       const int L,
-                      const int N,
                       const int spin,
                       const int m0,
                       const int m1,

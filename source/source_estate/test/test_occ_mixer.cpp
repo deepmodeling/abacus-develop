@@ -107,8 +107,8 @@ TEST_F(OccMatMixerTest, MixPlainNspin1)
     {
         for (int m = 0; m < block; m++)
         {
-            occmat.data()[iat][l_corr][0][0].c[m] = 1.0 + m;
-            occmat.data_save()[iat][l_corr][0][0].c[m] = 100.0 + m;
+            occmat.data()[iat][l_corr][0].c[m] = 1.0 + m;
+            occmat.data_save()[iat][l_corr][0].c[m] = 100.0 + m;
         }
     }
 
@@ -120,7 +120,7 @@ TEST_F(OccMatMixerTest, MixPlainNspin1)
         for (int m = 0; m < block; m++)
         {
             const double expect = (1.0 + m) * beta + (100.0 + m) * (1.0 - beta);
-            EXPECT_DOUBLE_EQ(occmat.data()[iat][l_corr][0][0].c[m], expect);
+            EXPECT_DOUBLE_EQ(occmat.data()[iat][l_corr][0].c[m], expect);
         }
     }
 }
@@ -141,8 +141,8 @@ TEST_F(OccMatMixerTest, MixPlainNspin2BothChannels)
         {
             for (int m = 0; m < block; m++)
             {
-                occmat.data()[iat][l_corr][0][is].c[m] = 2.0 + is + m;
-                occmat.data_save()[iat][l_corr][0][is].c[m] = 50.0 + is + m;
+                occmat.data()[iat][l_corr][is].c[m] = 2.0 + is + m;
+                occmat.data_save()[iat][l_corr][is].c[m] = 50.0 + is + m;
             }
         }
     }
@@ -157,7 +157,7 @@ TEST_F(OccMatMixerTest, MixPlainNspin2BothChannels)
             for (int m = 0; m < block; m++)
             {
                 const double expect = (2.0 + is + m) * beta + (50.0 + is + m) * (1.0 - beta);
-                EXPECT_DOUBLE_EQ(occmat.data()[iat][l_corr][0][is].c[m], expect);
+                EXPECT_DOUBLE_EQ(occmat.data()[iat][l_corr][is].c[m], expect);
             }
         }
     }
@@ -184,7 +184,7 @@ TEST_F(OccMatMixerTest, FlatRoundtripNspin2)
         {
             for (int m = 0; m < block; m++)
             {
-                occmat.data()[iat][l_corr][0][is].c[m] =
+                occmat.data()[iat][l_corr][is].c[m] =
                     1000.0 * iat + 100.0 * is + m;
             }
         }
@@ -201,7 +201,7 @@ TEST_F(OccMatMixerTest, FlatRoundtripNspin2)
         {
             for (int m = 0; m < block; m++)
             {
-                EXPECT_DOUBLE_EQ(occmat.data()[iat][l_corr][0][is].c[m],
+                EXPECT_DOUBLE_EQ(occmat.data()[iat][l_corr][is].c[m],
                                  1000.0 * iat + 100.0 * is + m);
             }
         }
@@ -223,7 +223,7 @@ TEST_F(OccMatMixerTest, BeginIterFlattensSave)
 
     for (int m = 0; m < block; m++)
     {
-        occmat.data_save()[0][l_corr][0][0].c[m] = 7.0 + m;
+        occmat.data_save()[0][l_corr][0].c[m] = 7.0 + m;
     }
 
     mixer.begin_iter(occmat);
