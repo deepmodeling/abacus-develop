@@ -595,8 +595,8 @@ OBJS_SURCHEM=surchem.o\
     sccs_driver.o\
     sccs_functional.o\
     sccs_parameters.o\
-    sccs_pcc.o\
-    sccs_pcc_2d.o\
+    pcc_0d.o\
+    pcc_2d.o\
     pcc_moments.o\
     pcc_boundary.o\
     sccs_pcc_2d_coulomb.o\

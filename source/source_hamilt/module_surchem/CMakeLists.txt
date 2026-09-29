@@ -20,8 +20,8 @@ add_library(
     sccs/sccs_driver.cpp
     sccs/sccs_functional.cpp
     sccs/sccs_parameters.cpp
-    pcc/sccs_pcc.cpp
-    pcc/sccs_pcc_2d.cpp
+    pcc/pcc_0d.cpp
+    pcc/pcc_2d.cpp
     pcc/pcc_moments.cpp
     pcc/pcc_boundary.cpp
     sccs/sccs_pcc_2d_coulomb.cpp

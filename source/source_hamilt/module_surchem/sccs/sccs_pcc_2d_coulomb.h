@@ -1,7 +1,7 @@
 #ifndef SCCS_PCC_2D_COULOMB_H
 #define SCCS_PCC_2D_COULOMB_H
 
-#include "../pcc/sccs_pcc_2d.h"
+#include "../pcc/pcc_2d.h"
 #include "sccs_poisson.h"
 #include "sccs_pw_coulomb.h"
 

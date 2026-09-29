@@ -1,8 +1,8 @@
 #ifndef PCC_MOMENTS_H
 #define PCC_MOMENTS_H
 
-#include "sccs_pcc.h"
-#include "sccs_pcc_2d.h"
+#include "pcc_0d.h"
+#include "pcc_2d.h"
 
 #include <vector>
 

@@ -1,7 +1,7 @@
-#ifndef SCCS_PCC_2D_H
-#define SCCS_PCC_2D_H
+#ifndef PCC_2D_H
+#define PCC_2D_H
 
-#include "sccs_pcc.h"
+#include "pcc_0d.h"
 
 #include <vector>
 

@@ -2,7 +2,7 @@
 #define SCCS_CHARGE_H
 
 #include "../common/charge_reduction.h"
-#include "../pcc/sccs_pcc.h"
+#include "../pcc/pcc_0d.h"
 
 #include <vector>
 

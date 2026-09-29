@@ -1,4 +1,4 @@
-#include "sccs_pcc.h"
+#include "pcc_0d.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"

@@ -1,5 +1,5 @@
-#ifndef SCCS_PCC_H
-#define SCCS_PCC_H
+#ifndef PCC_0D_H
+#define PCC_0D_H
 
 #include "source_base/vector3.h"
 
