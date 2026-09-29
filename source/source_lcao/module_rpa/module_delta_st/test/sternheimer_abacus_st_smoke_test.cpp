@@ -1075,3 +1075,5 @@ TEST(SternheimerABACUSSTSmoke, PartitionsResponsePairsBySourceKWithoutOverlap)
     }
     EXPECT_EQ(seen, std::vector<int>(plan.kq_pairs.size(), 1));
 }
+
+} // namespace
