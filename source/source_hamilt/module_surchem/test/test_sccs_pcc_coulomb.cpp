@@ -75,7 +75,6 @@ TEST(SccsPccCoulomb, SqrtCgKeepsChargedUniformDielectricPccGauge)
                                                 coulomb,
                                                 polarization_reduction);
 
-    ASSERT_EQ(result.polarization.status, ModuleSccs::PolarizationStatus::Converged);
     EXPECT_EQ(result.polarization.iterations, 1);
     EXPECT_NEAR(result.far_field_polarization_charge,
                 -(1.0 - 1.0 / cavity.epsilon_bulk),

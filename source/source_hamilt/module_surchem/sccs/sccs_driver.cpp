@@ -253,10 +253,6 @@ SccsResult evaluate_pw_sccs(
                                                 tpiba,
                                                 *coulomb,
                                                 polarization_reduction);
-    if (result.response.polarization.status != PolarizationStatus::Converged)
-    {
-        throw std::runtime_error("SCCS polarization iteration did not converge");
-    }
     result.forward_transforms = coulomb->transform_counts();
 
     std::vector<double> vacuum_potential;

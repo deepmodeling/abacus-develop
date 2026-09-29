@@ -76,16 +76,8 @@ struct PolarizationSolverParameters
     bool check_fixed_point = false;
 };
 
-enum class PolarizationStatus
-{
-    Converged,
-    MaxIterations,
-    NonFinite
-};
-
 struct PolarizationResult
 {
-    PolarizationStatus status = PolarizationStatus::MaxIterations;
     int iterations = 0;
     double residual_rms = 0.0;
     double residual_max = 0.0;

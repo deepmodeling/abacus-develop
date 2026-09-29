@@ -481,7 +481,6 @@ PeriodicSccsResult solve_chain_sccs_response(
                         polarization.fixed_point_defect_max);
         polarization.fixed_point_checked = true;
     }
-    result.polarization.status = ModuleSccs::PolarizationStatus::Converged;
     result.restart_potential = potential;
     // A PCC operator in the preconditioner fixes the physical gauge; only the
     // periodic potential is shifted to zero mean (ENVIRON generalized_sqrt).
