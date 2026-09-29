@@ -81,12 +81,6 @@ SurchemParameters make_parameters(const Input_para& inp,
     parameters.sccs_config.cavity.lowpass_p1 = inp.sccs_lowpass_p1;
     parameters.sccs_config.cavity.lowpass_p2 = inp.sccs_lowpass_p2;
     parameters.sccs_config.max_iterations = inp.sccs_maxiter;
-    parameters.sccs_config.mixing_method = inp.sccs_mixing_type;
-    parameters.sccs_config.mixing_history = inp.sccs_mixing_ndim;
-    parameters.sccs_config.mixing = inp.sccs_mixing;
-    parameters.sccs_config.adaptive_mixing = inp.sccs_mixing_adaptive;
-    parameters.sccs_config.mixing_min = inp.sccs_mixing_min;
-    parameters.sccs_config.mixing_max = inp.sccs_mixing_max;
     parameters.sccs_config.tolerance_rms = inp.sccs_tol_rms;
     parameters.sccs_config.tolerance_max = inp.sccs_tol_max;
     parameters.sccs_config.surface_regularization = inp.sccs_surface_eta;

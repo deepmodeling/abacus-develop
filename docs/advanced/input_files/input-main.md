@@ -530,9 +530,6 @@
     - [sccs\_rho\_max](#sccs_rho_max)
     - [sccs\_gamma](#sccs_gamma)
     - [sccs\_pressure](#sccs_pressure)
-    - [sccs\_mixing](#sccs_mixing)
-    - [sccs\_mixing\_min](#sccs_mixing_min)
-    - [sccs\_mixing\_max](#sccs_mixing_max)
     - [sccs\_tol\_rms](#sccs_tol_rms)
     - [sccs\_tol\_max](#sccs_tol_max)
     - [sccs\_surface\_eta](#sccs_surface_eta)
@@ -542,6 +539,9 @@
     - [sccs\_start\_nmax](#sccs_start_nmax)
     - [sccs\_debug](#sccs_debug)
     - [sccs\_maxiter](#sccs_maxiter)
+    - [sccs\_mixing](#sccs_mixing)
+    - [sccs\_mixing\_min](#sccs_mixing_min)
+    - [sccs\_mixing\_max](#sccs_mixing_max)
     - [sccs\_mixing\_adaptive](#sccs_mixing_adaptive)
     - [sccs\_mixing\_type](#sccs_mixing_type)
     - [sccs\_mixing\_ndim](#sccs_mixing_ndim)
@@ -4903,27 +4903,6 @@
 - **Default**: 0.0
 - **Unit**: GPa
 
-### sccs_mixing
-
-- **Type**: Real
-- **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Accepted for input compatibility but currently has no effect: every assume_isolated value (none, pcc_0d, pcc_2d) solves SCCS with the ENVIRON sqrt-preconditioned CG, which uses no mixing. Range (0, 1], default 0.5; with sccs_mixing_adaptive=1 it must lie within sccs_mixing_min and sccs_mixing_max.
-- **Default**: 0.5
-
-### sccs_mixing_min
-
-- **Type**: Real
-- **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Accepted for input compatibility but currently has no effect: every assume_isolated value (none, pcc_0d, pcc_2d) solves SCCS with the ENVIRON sqrt-preconditioned CG, which uses no mixing. Must be positive and no greater than sccs_mixing_max, default 0.1.
-- **Default**: 0.1
-
-### sccs_mixing_max
-
-- **Type**: Real
-- **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Accepted for input compatibility but currently has no effect: every assume_isolated value (none, pcc_0d, pcc_2d) solves SCCS with the ENVIRON sqrt-preconditioned CG, which uses no mixing. Must not exceed one, default 0.8.
-- **Default**: 0.8
-
 ### sccs_tol_rms
 
 - **Type**: Real
@@ -4989,25 +4968,46 @@
 - **Description**: Positive maximum inner iteration count; user-controlled for every sccs_preset, default 200. SCCS_ITER counts sqrt-preconditioned CG iterations for every assume_isolated value. Failure to converge terminates the calculation. No discrete adjoint is solved.
 - **Default**: 200
 
+### sccs_mixing
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Deprecated and ignored. SCCS is solved with the ENVIRON sqrt-preconditioned CG for every assume_isolated value (none, pcc_0d, pcc_2d), which uses no polarization mixing. The key is still read so that old INPUT files run; setting it only prints a warning. It is independent of the electronic SCF mixing_type and mixing_beta.
+- **Default**: 0.5
+
+### sccs_mixing_min
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Deprecated and ignored. SCCS is solved with the ENVIRON sqrt-preconditioned CG for every assume_isolated value (none, pcc_0d, pcc_2d), which uses no polarization mixing. The key is still read so that old INPUT files run; setting it only prints a warning. It is independent of the electronic SCF mixing_type and mixing_beta.
+- **Default**: 0.1
+
+### sccs_mixing_max
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Deprecated and ignored. SCCS is solved with the ENVIRON sqrt-preconditioned CG for every assume_isolated value (none, pcc_0d, pcc_2d), which uses no polarization mixing. The key is still read so that old INPUT files run; setting it only prints a warning. It is independent of the electronic SCF mixing_type and mixing_beta.
+- **Default**: 0.8
+
 ### sccs_mixing_adaptive
 
 - **Type**: Boolean
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Allowed values: 0 (default) or 1. Accepted for input compatibility but currently has no effect: every assume_isolated value (none, pcc_0d, pcc_2d) solves SCCS with the ENVIRON sqrt-preconditioned CG, which uses no mixing.
+- **Description**: Deprecated and ignored. SCCS is solved with the ENVIRON sqrt-preconditioned CG for every assume_isolated value (none, pcc_0d, pcc_2d), which uses no polarization mixing. The key is still read so that old INPUT files run; setting it only prints a warning. It is independent of the electronic SCF mixing_type and mixing_beta.
 - **Default**: 0
 
 ### sccs_mixing_type
 
 - **Type**: String
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Allowed INPUT values are exactly linear, pulay and anderson (default linear); broyden and andersonb are not accepted. Accepted for input compatibility but currently has no effect: every assume_isolated value (none, pcc_0d, pcc_2d) solves SCCS with the ENVIRON sqrt-preconditioned CG, which uses no mixing. It is independent of the outer SCF mixing_type.
+- **Description**: Deprecated and ignored. SCCS is solved with the ENVIRON sqrt-preconditioned CG for every assume_isolated value (none, pcc_0d, pcc_2d), which uses no polarization mixing. The key is still read so that old INPUT files run; setting it only prints a warning. It is independent of the electronic SCF mixing_type and mixing_beta.
 - **Default**: linear
 
 ### sccs_mixing_ndim
 
 - **Type**: Integer
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Accepted for input compatibility but currently has no effect: every assume_isolated value (none, pcc_0d, pcc_2d) solves SCCS with the ENVIRON sqrt-preconditioned CG, which uses no mixing. Must be at least 2, default 8.
+- **Description**: Deprecated and ignored. SCCS is solved with the ENVIRON sqrt-preconditioned CG for every assume_isolated value (none, pcc_0d, pcc_2d), which uses no polarization mixing. The key is still read so that old INPUT files run; setting it only prints a warning. It is independent of the electronic SCF mixing_type and mixing_beta.
 - **Default**: 8
 
 [back to top](#full-list-of-input-keywords)

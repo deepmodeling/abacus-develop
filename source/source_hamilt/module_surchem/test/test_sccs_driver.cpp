@@ -49,7 +49,6 @@ ModuleSccs::SccsResult evaluate_uniform_charge(const double net_charge,
     config.surface_regularization = 1.0e-6;
     config.boundary = ModuleSccs::Boundary::Pcc0d;
     config.max_iterations = 100;
-    config.mixing = 0.7;
     config.tolerance_rms = 1.0e-14;
     config.tolerance_max = 1.0e-14;
     const ModuleSccs::Pcc2dGeometry pcc_2d_geometry;
@@ -112,7 +111,6 @@ TEST(SccsDriver, EvaluatesNeutralAndFixedChargePcc2dSources)
     config.surface_regularization = 1.0e-6;
     config.boundary = ModuleSccs::Boundary::Pcc2d;
     config.max_iterations = 100;
-    config.mixing = 0.7;
     config.tolerance_rms = 1.0e-13;
     config.tolerance_max = 1.0e-13;
     const ModuleSccs::PccGeometry pcc;
@@ -209,7 +207,6 @@ TEST(SccsDriver, PeriodicSqrtCgWarmStartsFromStoredPotential)
     config.surface_regularization = 1.0e-6;
     config.boundary = ModuleSccs::Boundary::Periodic;
     config.max_iterations = 200;
-    config.mixing = 0.5;
     config.tolerance_rms = 1.0e-11;
     config.tolerance_max = 1.0e-10;
     const ModuleSccs::PccGeometry pcc;
@@ -297,7 +294,6 @@ TEST(SccsDriver, ChargedPcc2dSqrtCgPolarizationSatisfiesGaussLaw)
     config.surface_regularization = 1.0e-6;
     config.boundary = ModuleSccs::Boundary::Pcc2d;
     config.max_iterations = 300;
-    config.mixing = 0.5;
     config.tolerance_rms = 1.0e-12;
     config.tolerance_max = 1.0e-10;
     const ModuleSccs::PccGeometry pcc;
@@ -378,7 +374,6 @@ TEST(SccsDriver, Pcc2dStopsWhenBulkSolventDoesNotReachTheOpenBoundary)
     config.surface_regularization = 1.0e-6;
     config.boundary = ModuleSccs::Boundary::Pcc2d;
     config.max_iterations = 50;
-    config.mixing = 0.5;
     config.tolerance_rms = 1.0e-12;
     config.tolerance_max = 1.0e-10;
     const ModuleSccs::PccGeometry pcc;
@@ -561,7 +556,6 @@ ModuleSccs::SccsResult evaluate_cation(const std::vector<double>& electron_densi
     config.surface_regularization = 1.0e-8;
     config.boundary = boundary;
     config.max_iterations = 500;
-    config.mixing = 0.5;
     config.tolerance_rms = 1.0e-13;
     config.tolerance_max = 1.0e-11;
     ModuleSccs::PccGeometry pcc;
@@ -749,7 +743,6 @@ TEST(SccsDriver, LowpassRequiresPccBoundary)
     config.cavity.lowpass_p2 = test_lowpass_p2;
     config.surface_regularization = 1.0e-8;
     config.max_iterations = 10;
-    config.mixing = 0.5;
     config.tolerance_rms = 1.0e-10;
     config.tolerance_max = 1.0e-8;
     config.boundary = ModuleSccs::Boundary::Periodic;

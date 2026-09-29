@@ -3,7 +3,6 @@
 
 #include "source_base/vector3.h"
 
-#include <string>
 #include <vector>
 
 namespace ModuleSccs
@@ -55,8 +54,8 @@ class CoulombOperator
         potential.swap(field.potential);
     }
 
-    // Polarization iterations need only the gradient. Operators without a
-    // specialized implementation can use the complete-field fallback.
+    // Gradient-only clients. Operators without a specialized implementation
+    // can use the complete-field fallback.
     virtual void apply_gradient(const std::vector<double>& charge,
                                 std::vector<ModuleBase::Vector3<double>>& gradient) const
     {
@@ -91,18 +90,13 @@ class SerialPolarizationReduction : public PolarizationReduction
                          double& point_count) const override;
 };
 
+// Controls of the sqrt-preconditioned CG (solve_chain_sccs_response).
 struct PolarizationSolverParameters
 {
     int max_iterations = 0;
-    std::string mixing_method = "linear";
-    int mixing_history = 8;
-    double mixing = 0.0;
-    bool adaptive_mixing = false;
-    double mixing_min = 0.1;
-    double mixing_max = 0.8;
     double tolerance_rms = 0.0;
     double tolerance_max = 0.0;
-    // Periodic sqrt-CG only: verify v = P(q - K v) after convergence.
+    // Verify v = P(q - K v) after convergence (one extra Poisson solve).
     bool check_fixed_point = false;
 };
 
@@ -119,8 +113,6 @@ struct PolarizationResult
     int iterations = 0;
     double residual_rms = 0.0;
     double residual_max = 0.0;
-    double final_mixing = 0.0;
-    int mixing_restarts = 0;
     bool warm_started = false;
     bool fixed_point_checked = false;
     double fixed_point_defect_rms = 0.0;
@@ -128,23 +120,6 @@ struct PolarizationResult
     std::vector<double> polarization_charge;
     ElectrostaticField field;
 };
-
-void validate_polarization_solver_parameters(const PolarizationSolverParameters& parameters);
-
-PolarizationResult solve_polarization(const std::vector<double>& solute_charge,
-                                      const std::vector<double>& epsilon,
-                                      const std::vector<ModuleBase::Vector3<double>>& grad_log_epsilon,
-                                      const std::vector<double>& initial_polarization_charge,
-                                      const PolarizationSolverParameters& parameters,
-                                      const CoulombOperator& coulomb);
-
-PolarizationResult solve_polarization(const std::vector<double>& solute_charge,
-                                      const std::vector<double>& epsilon,
-                                      const std::vector<ModuleBase::Vector3<double>>& grad_log_epsilon,
-                                      const std::vector<double>& initial_polarization_charge,
-                                      const PolarizationSolverParameters& parameters,
-                                      const CoulombOperator& coulomb,
-                                      const PolarizationReduction& reduction);
 
 } // namespace ModuleSccs
 

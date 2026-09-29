@@ -74,7 +74,6 @@ TEST(SccsPeriodic, UniformDielectricScreensSingleFourierShell)
     cavity.epsilon_bulk = 5.0;
     ModuleSccs::PolarizationSolverParameters solver;
     solver.max_iterations = 100;
-    solver.mixing = 0.7;
     solver.tolerance_rms = 1.0e-12;
     solver.tolerance_max = 1.0e-12;
 
@@ -261,7 +260,6 @@ TEST(SccsPeriodic, ChainGradientMatchesAnalyticDensityModeAcrossCavityEdges)
     cavity.epsilon_bulk = 78.3;
     ModuleSccs::PolarizationSolverParameters solver;
     solver.max_iterations = 100;
-    solver.mixing = 0.5;
     solver.tolerance_rms = 1.0e-13;
     solver.tolerance_max = 1.0e-11;
     std::vector<double> density(basis.nrxx);

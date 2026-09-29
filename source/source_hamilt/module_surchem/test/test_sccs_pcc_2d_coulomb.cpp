@@ -306,50 +306,6 @@ TEST_F(SccsPcc2dCoulombTest, AddsCorrectionFromCurrentChargeOnEveryApplication)
     }
 }
 
-TEST_F(SccsPcc2dCoulombTest, UniformDielectricScreensChargeAndField)
-{
-    const ModuleSccs::Pcc2dCoulombOperator coulomb(basis_,
-                                                   ModuleBase::TWO_PI / lattice_scale_,
-                                                   positions_,
-                                                   volume_element_,
-                                                   geometry_,
-                                                   reduction_);
-    const std::vector<double> solute_charge(basis_.nrxx, 1.0 / volume_);
-    const double epsilon_value = 5.0;
-    const std::vector<double> epsilon(basis_.nrxx, epsilon_value);
-    const std::vector<ModuleBase::Vector3<double>> grad_log_epsilon(basis_.nrxx);
-    ModuleSccs::PolarizationSolverParameters solver;
-    solver.max_iterations = 100;
-    solver.mixing = 0.7;
-    solver.tolerance_rms = 1.0e-14;
-    solver.tolerance_max = 1.0e-14;
-    const ModuleSccs::PolarizationResult result
-        = ModuleSccs::solve_polarization(solute_charge,
-                                         epsilon,
-                                         grad_log_epsilon,
-                                         std::vector<double>(),
-                                         solver,
-                                         coulomb,
-                                         polarization_reduction_);
-    ASSERT_EQ(result.status, ModuleSccs::PolarizationStatus::Converged);
-
-    std::vector<double> screened_charge(solute_charge.size());
-    for (std::size_t index = 0; index < solute_charge.size(); ++index)
-    {
-        screened_charge[index] = solute_charge[index] / epsilon_value;
-        EXPECT_NEAR(result.polarization_charge[index],
-                    -(1.0 - 1.0 / epsilon_value) * solute_charge[index],
-                    1.0e-14);
-    }
-    ModuleSccs::ElectrostaticField expected;
-    coulomb.apply(screened_charge, expected);
-    for (int ir = 0; ir < basis_.nrxx; ++ir)
-    {
-        EXPECT_NEAR(result.field.potential[ir], expected.potential[ir], 2.0e-12);
-        EXPECT_NEAR(result.field.gradient[ir].y, expected.gradient[ir].y, 2.0e-12);
-    }
-}
-
 // The production sqrt-CG solves eps^-1/2 C_PCC eps^-1/2 exactly in one step for
 // a uniform dielectric and keeps the PCC2D gauge instead of the periodic zero mean.
 TEST_F(SccsPcc2dCoulombTest, SqrtCgKeepsChargedUniformDielectricPccGauge)
@@ -541,76 +497,6 @@ TEST(SccsPcc2dSqrtCg, LayeredCavityMatchesOpenOneDimensionalField)
     // The open boundary only weakly pins the constant potential mode; rounding
     // in the source leaves a gauge offset whose far-field trace is 3.4e-5 here.
     EXPECT_NEAR(result.far_field_polarization_charge, 0.0, 1.0e-4);
-}
-
-TEST_F(SccsPcc2dCoulombTest, SmoothLayeredDielectricMatchesOpenOneDimensionalField)
-{
-    const ModuleSccs::Pcc2dCoulombOperator coulomb(basis_,
-                                                   ModuleBase::TWO_PI / lattice_scale_,
-                                                   positions_,
-                                                   volume_element_,
-                                                   geometry_,
-                                                   reduction_);
-    const double width = 2.0;
-    const double source_width = 1.3;
-    const double amplitude = 3.0e-3;
-    const double half_length = 0.5 * geometry_.parameters.cell_length_y;
-    std::vector<double> solute_charge(basis_.nrxx);
-    std::vector<double> epsilon(basis_.nrxx);
-    std::vector<ModuleBase::Vector3<double>> grad_log_epsilon(basis_.nrxx);
-    std::vector<double> reference_gradient(basis_.nrxx);
-    std::vector<double> reference_polarization(basis_.nrxx);
-    for (int ir = 0; ir < basis_.nrxx; ++ir)
-    {
-        const double y = ModuleSccs::pcc_2d_relative_y(positions_[ir].y, geometry_);
-        const double source_exponential
-            = std::exp(-y * y / (source_width * source_width));
-        solute_charge[ir] = amplitude * y * source_exponential;
-        const double dielectric_exponential = std::exp(-y * y / (width * width));
-        epsilon[ir] = 1.0 + 3.0 * (1.0 - dielectric_exponential);
-        const double grad_epsilon
-            = 6.0 * y * dielectric_exponential / (width * width);
-        grad_log_epsilon[ir].y = grad_epsilon / epsilon[ir];
-        const double boundary_exponential
-            = std::exp(-half_length * half_length / (source_width * source_width));
-        const double cumulative
-            = -0.5 * amplitude * source_width * source_width
-              * (source_exponential - boundary_exponential);
-        reference_gradient[ir] = -ModuleBase::FOUR_PI * cumulative / epsilon[ir];
-        reference_polarization[ir]
-            = (1.0 / epsilon[ir] - 1.0) * solute_charge[ir]
-              + grad_log_epsilon[ir].y * reference_gradient[ir] / ModuleBase::FOUR_PI;
-    }
-
-    ModuleSccs::PolarizationSolverParameters solver;
-    solver.max_iterations = 1000;
-    solver.mixing = 0.2;
-    solver.tolerance_rms = 1.0e-12;
-    solver.tolerance_max = 1.0e-11;
-    const ModuleSccs::PolarizationResult result
-        = ModuleSccs::solve_polarization(solute_charge,
-                                         epsilon,
-                                         grad_log_epsilon,
-                                         std::vector<double>(),
-                                         solver,
-                                         coulomb,
-                                         polarization_reduction_);
-    ASSERT_EQ(result.status, ModuleSccs::PolarizationStatus::Converged);
-
-    double maximum_gradient_error = 0.0;
-    double maximum_polarization_error = 0.0;
-    for (int ir = 0; ir < basis_.nrxx; ++ir)
-    {
-        maximum_gradient_error
-            = std::max(maximum_gradient_error,
-                       std::abs(result.field.gradient[ir].y - reference_gradient[ir]));
-        maximum_polarization_error
-            = std::max(maximum_polarization_error,
-                       std::abs(result.polarization_charge[ir]
-                                - reference_polarization[ir]));
-    }
-    EXPECT_LT(maximum_gradient_error, 2.0e-4);
-    EXPECT_LT(maximum_polarization_error, 3.0e-5);
 }
 
 } // namespace

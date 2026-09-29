@@ -56,17 +56,16 @@ TEST(SccsParameters, ConvertsPublishedInputUnitsToAtomicUnits)
 TEST(SccsParameters, RejectsInvalidSolverControls)
 {
     ModuleSccs::SccsConfig config = ModuleSccs::water_preset(ModuleSccs::Preset::WaterNeutral);
-    config.mixing = 0.0;
-    EXPECT_THROW(ModuleSccs::validate_config(config), std::invalid_argument);
-    config.mixing = 0.5;
+    EXPECT_NO_THROW(ModuleSccs::validate_config(config));
     config.max_iterations = 0;
     EXPECT_THROW(ModuleSccs::validate_config(config), std::invalid_argument);
     config.max_iterations = 200;
-    config.adaptive_mixing = true;
-    config.mixing_min = 0.6;
-    config.mixing_max = 0.8;
+    config.tolerance_rms = 0.0;
     EXPECT_THROW(ModuleSccs::validate_config(config), std::invalid_argument);
-    config.mixing = 0.7;
+    config.tolerance_rms = 1.0e-10;
+    config.tolerance_max = -1.0;
+    EXPECT_THROW(ModuleSccs::validate_config(config), std::invalid_argument);
+    config.tolerance_max = 1.0e-8;
     EXPECT_NO_THROW(ModuleSccs::validate_config(config));
 }
 

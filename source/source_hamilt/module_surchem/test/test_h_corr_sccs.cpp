@@ -59,7 +59,6 @@ SurchemParameters periodic_sccs_parameters()
     parameters.sccs_config.cavity.epsilon_bulk = 5.0;
     parameters.sccs_config.surface_regularization = 1.0e-6;
     parameters.sccs_config.max_iterations = 100;
-    parameters.sccs_config.mixing = 0.7;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
     parameters.sccs_config.tolerance_max = 1.0e-14;
     return parameters;
@@ -262,7 +261,6 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     parameters.pcc_boundary = ModuleSccs::Boundary::Pcc0d;
     parameters.debug = 2;
     parameters.sccs_config.max_iterations = 100;
-    parameters.sccs_config.mixing = 0.7;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
     parameters.sccs_config.tolerance_max = 1.0e-14;
     surchem solvent;
@@ -425,7 +423,6 @@ TEST(HCorrSccs, AppliesNeutralPcc2dPointIonEnergyAndPotential)
     parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc2d;
     parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
     parameters.sccs_config.max_iterations = 100;
-    parameters.sccs_config.mixing = 0.7;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
     parameters.sccs_config.tolerance_max = 1.0e-14;
 
@@ -524,7 +521,6 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc2d;
     parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
     parameters.sccs_config.max_iterations = 100;
-    parameters.sccs_config.mixing = 0.7;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
     parameters.sccs_config.tolerance_max = 1.0e-14;
 

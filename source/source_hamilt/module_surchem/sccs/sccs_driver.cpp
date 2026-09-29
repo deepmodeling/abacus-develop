@@ -204,7 +204,6 @@ SccsResult evaluate_pw_sccs(
         coulomb.reset(new PeriodicCoulombOperator(basis, tpiba));
     }
 
-    // The fixed-point mixing controls do not act on the sqrt-CG solver.
     PolarizationSolverParameters solver_parameters;
     solver_parameters.max_iterations = config.max_iterations;
     solver_parameters.tolerance_rms = config.tolerance_rms;

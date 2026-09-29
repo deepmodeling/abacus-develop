@@ -118,7 +118,6 @@ TEST(SolForce, ConvertsPointIonPccForceFromHartreeToRydberg)
     parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc0d;
     parameters.pcc_boundary = ModuleSccs::Boundary::Pcc0d;
     parameters.sccs_config.max_iterations = 20;
-    parameters.sccs_config.mixing = 0.7;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
     parameters.sccs_config.tolerance_max = 1.0e-14;
 
@@ -221,7 +220,6 @@ TEST(SolForce, ConvertsPointIonPcc2dForceFromHartreeToRydberg)
     parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc2d;
     parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
     parameters.sccs_config.max_iterations = 20;
-    parameters.sccs_config.mixing = 0.7;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
     parameters.sccs_config.tolerance_max = 1.0e-14;
 
@@ -342,7 +340,6 @@ TEST(SolForce, MatchesFixedElectronDensityReactionEnergyDerivative)
     parameters.sccs_config.boundary = ModuleSccs::Boundary::Periodic;
     parameters.pcc_boundary = ModuleSccs::Boundary::Periodic;
     parameters.sccs_config.max_iterations = 300;
-    parameters.sccs_config.mixing = 0.5;
     parameters.sccs_config.tolerance_rms = 1.0e-12;
     parameters.sccs_config.tolerance_max = 1.0e-10;
 
@@ -483,7 +480,6 @@ TEST(SolForce, NeutralAndChargedPcc2dMatchFixedDensityTotalEnergyDerivativeInXyz
         parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc2d;
         parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
         parameters.sccs_config.max_iterations = 500;
-        parameters.sccs_config.mixing = 0.5;
         parameters.sccs_config.tolerance_rms = 1.0e-12;
         parameters.sccs_config.tolerance_max = 1.0e-10;
 

@@ -28,16 +28,15 @@ TEST(SurchemInput, TransfersPresetAndSolverControls)
     input.assume_isolated = "pcc_2d";
     input.sccs_preset = "vacuum";
     input.sccs_debug = 2;
+    // The deprecated sccs_mixing* keys are ignored, even with formerly invalid values.
     input.sccs_mixing_type = "pulay";
-    input.sccs_mixing = 0.2;
+    input.sccs_mixing = 0.0;
     input.sccs_start_drho = 0.01;
     input.sccs_start_nmax = 12;
     const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, false, 2);
     EXPECT_TRUE(parameters.use_sccs);
     EXPECT_EQ(parameters.sccs_config.boundary, parameters.pcc_boundary);
     EXPECT_DOUBLE_EQ(parameters.sccs_config.cavity.epsilon_bulk, 1.0);
-    EXPECT_EQ(parameters.sccs_config.mixing_method, "pulay");
-    EXPECT_DOUBLE_EQ(parameters.sccs_config.mixing, 0.2);
     EXPECT_DOUBLE_EQ(parameters.start_drho, 0.01);
     EXPECT_EQ(parameters.start_nmax, 12);
     EXPECT_EQ(parameters.debug, 2);
@@ -133,8 +132,6 @@ TEST(SurchemInput, PresetsOverrideOnlyPhysicalParameters)
         input.sccs_rho_max = 0.02;
         input.sccs_gamma = 2.0;
         input.sccs_pressure = 0.2;
-        input.sccs_mixing_type = "anderson";
-        input.sccs_mixing = 0.25;
         input.sccs_surface_eta = 2.0e-8;
         const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, false, 1);
         const double gamma = ModuleSccs::dyn_per_cm_to_hartree_per_bohr2(preset.gamma);
@@ -144,8 +141,6 @@ TEST(SurchemInput, PresetsOverrideOnlyPhysicalParameters)
         EXPECT_DOUBLE_EQ(parameters.sccs_config.cavity.density_max, preset.rho_max);
         EXPECT_DOUBLE_EQ(parameters.sccs_config.surface_tension, gamma);
         EXPECT_DOUBLE_EQ(parameters.sccs_config.pressure, pressure);
-        EXPECT_EQ(parameters.sccs_config.mixing_method, "anderson");
-        EXPECT_DOUBLE_EQ(parameters.sccs_config.mixing, 0.25);
         EXPECT_DOUBLE_EQ(parameters.sccs_config.surface_regularization, 2.0e-8);
     }
 }

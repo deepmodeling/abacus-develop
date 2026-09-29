@@ -77,11 +77,6 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_HAMILT_surchem_sccs_poisson
-  SOURCES test_sccs_poisson.cpp ../sccs/sccs_poisson.cpp
-)
-
-AddTest(
   TARGET MODULE_HAMILT_surchem_sccs_pw_coulomb
   LIBS planewave device base
   SOURCES test_sccs_pw_coulomb.cpp ../sccs/sccs_pw_coulomb.cpp
