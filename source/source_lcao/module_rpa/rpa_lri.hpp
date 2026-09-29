@@ -1089,12 +1089,12 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
 {
     ModuleBase::TITLE("RPA_LRI", "postSCF");
     ModuleBase::timer::start("RPA_LRI", "postSCF");
-    ModuleBase::GlobalFunc::MAKE_DIR(outdir);
-    this->ccp_rmesh_times_cut = PARAM.inp.rpa_ccp_rmesh_times;
+    ModuleBase::GlobalFunc::MAKE_DIR(this->runtime.input.rpa_outdir);
+    this->ccp_rmesh_times_cut = this->runtime.input.rpa_ccp_rmesh_times;
     this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times;
 
-    if (PARAM.inp.out_librpa_abf_overlap
-        && (!PARAM.inp.rpa || PARAM.inp.out_librpa_reader_version != 1
+    if (this->runtime.input.out_librpa_abf_overlap
+        && (!this->runtime.input.rpa || this->runtime.input.out_librpa_reader_version != 1
             || this->info.shrink_abfs_pca_thr < 0.0))
     {
         throw std::runtime_error("out_librpa_abf_overlap requires rpa=true, "
@@ -1105,7 +1105,7 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
     if (RpaLriDetail::debug_dump_exx_ao_enabled())
     {
         const std::string file_name_exx
-            = PARAM.globalv.global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
+            = this->runtime.global_out_dir + "HexxR" + std::to_string(this->runtime.rank);
         ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_cut_coulomb->Hexxs);
     }
     this->init(mpi_comm_in, kv, orb.cutoffs());
@@ -1185,9 +1185,9 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     this->orb_cutoff_ = orb.cutoffs();
 
     Mix_DMk_2D<T> mix_DMk_2D;
-    this->use_spacegroup_symmetry_ = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
+    this->use_spacegroup_symmetry_ = (this->runtime.input.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
     if (this->use_spacegroup_symmetry_)
-        {mix_DMk_2D.set_nks(kv.get_nkstot_nospin() * (PARAM.inp.nspin == 2 ? 2 : 1));}
+        {mix_DMk_2D.set_nks(kv.get_nkstot_nospin() * (this->runtime.input.nspin == 2 ? 2 : 1));}
     else
         {mix_DMk_2D.set_nks(kv.get_nks());}
         
@@ -1201,8 +1201,8 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         const auto& Rs = RI_Util::get_Born_von_Karmen_cells(period);
         this->symmetry_rotation_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st, Rs, period, ucell.lat);
         // set Lmax of the rotation matrices to max(l_ao, l_abf), to support rotation under ABF
-        this->symmetry_rotation_.set_abfs_Lmax(GlobalC::exx_info.info_ri.abfs_Lmax);
-        this->symmetry_rotation_.cal_Ms(kv, ucell, parav, PARAM.inp.nspin);
+        this->symmetry_rotation_.set_abfs_Lmax(this->runtime.abfs_lmax);
+        this->symmetry_rotation_.cal_Ms(kv, ucell, parav, this->runtime.input.nspin);
         mix_DMk_2D.mix(this->symmetry_rotation_.restore_dm(kv, dm.get_dmk_vec(), parav), true);
     }
     else { mix_DMk_2D.mix(dm.get_dmk_vec(), true); }
@@ -1212,7 +1212,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
                                             kv,
                                             mix_DMk_2D.get_DMk_out(),
                                             parav,
-                                            PARAM.inp.nspin,
+                                            this->runtime.input.nspin,
                                             this->use_spacegroup_symmetry_);
     
     // reserve exx_ccp_rmesh_times to calculate full Coulomb
@@ -1234,10 +1234,10 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
             ucell, orb, this->lcaos, this->info, this->info.shrink_abfs_pca_thr, this->info.files_shrink_abfs);
         const ModuleRI::RpaAbfsPreorthReport preorth_report
             = ModuleRI::finalize_rpa_abfs_from_input(
-                this->abfs_shrink, PARAM.inp, PARAM.inp.cal_force);
-        if (GlobalV::MY_RANK == 0)
+                this->abfs_shrink, this->runtime.input, this->runtime.input.cal_force);
+        if (this->runtime.rank == 0)
         {
-            GlobalV::ofs_running << ModuleRI::format_rpa_abfs_preorth_report(preorth_report);
+            this->runtime.log << ModuleRI::format_rpa_abfs_preorth_report(preorth_report);
         }
         exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb, abfs_shrink);
     }
@@ -1249,10 +1249,10 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
             ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs);
         const ModuleRI::RpaAbfsPreorthReport preorth_report
             = ModuleRI::finalize_rpa_abfs_from_input(
-                this->abfs, PARAM.inp, PARAM.inp.cal_force);
-        if (GlobalV::MY_RANK == 0)
+                this->abfs, this->runtime.input, this->runtime.input.cal_force);
+        if (this->runtime.rank == 0)
         {
-            GlobalV::ofs_running << ModuleRI::format_rpa_abfs_preorth_report(preorth_report);
+            this->runtime.log << ModuleRI::format_rpa_abfs_preorth_report(preorth_report);
         }
         exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb, this->abfs);
     }
@@ -1263,13 +1263,13 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         // is finalized by `init_spencer()`. The earlier `cal_Ms()` call only guaranteed the AO
         // rotation blocks needed for density-matrix restoration.
         this->symmetry_rotation_.set_Cs_rotation(exx_cut_coulomb->get_abfs_nchis());
-        this->symmetry_rotation_.cal_Ms(kv, ucell, parav, PARAM.inp.nspin);
+        this->symmetry_rotation_.cal_Ms(kv, ucell, parav, this->runtime.input.nspin);
     }
 
     // cal C and V for exx
     this->output_cut_coulomb_cs(ucell, exx_cut_coulomb.get());
     // cal CVCD
-    if (this->use_spacegroup_symmetry_ && PARAM.inp.exx_symmetry_realspace)
+    if (this->use_spacegroup_symmetry_ && this->runtime.input.exx_symmetry_realspace)
     {
         exx_cut_coulomb->cal_exx_elec(Ds, ucell, parav, &this->symmetry_rotation_);
     }
@@ -1294,7 +1294,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> tmp;
     std::cout << "Use rpa_ccp_rmesh_times=" << this->ccp_rmesh_times_cut << " to calculate cut Coulomb" << std::endl;
     // Shrink_ABFS_ORBITAL cannot exceed this angular momentum of MGT
-    exx_lri_rpa->cal_cut_coulomb_cs(Vs_cut_IJR, Cs, ucell, PARAM.inp.out_ri_cv);
+    exx_lri_rpa->cal_cut_coulomb_cs(Vs_cut_IJR, Cs, ucell, this->runtime.input.out_ri_cv);
     // MPI: {ia0, {ia1, R}} to {ia0, ia1}
     std::vector<TA> atoms(ucell.nat);
     for (int iat = 0; iat < ucell.nat; ++iat)
@@ -1320,7 +1320,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     Vs_cut_IJR.clear();
     const std::array<Tcell, Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
     this->Vs_period = RI::RI_Tools::cal_period(Vs_cut_IJ, period);
-    if (PARAM.inp.out_librpa_reader_version == 1)
+    if (this->runtime.input.out_librpa_reader_version == 1)
     {
         const bool use_shrink = this->info.shrink_abfs_pca_thr >= 0.0;
         this->out_librpa_basis_v1(ucell,
@@ -1339,7 +1339,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     this->Cs_period = RI::RI_Tools::cal_period(Cs, period);
     this->Cs_period = exx_lri_rpa->exx_lri.post_2D.set_tensors_map2(this->Cs_period);
 
-    if (PARAM.inp.out_librpa_reader_version == 1)
+    if (this->runtime.input.out_librpa_reader_version == 1)
     {
         if (this->info.shrink_abfs_pca_thr >= 0.0)
         {
@@ -1409,7 +1409,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs);
 
     const auto write_strict_2d_coulomb_head_sidecar = [&]() {
-        if (this->info.ewald_dimension != 2 || GlobalV::MY_RANK != 0)
+        if (this->info.ewald_dimension != 2 || this->runtime.rank != 0)
         {
             return;
         }
@@ -1432,7 +1432,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         const auto normalization = RpaLriDetail::strict_2d_coulomb_head_normalization(
             (a1_bohr ^ a2_bohr).norm(), s_multipoles_by_type, atoms_per_type);
 
-        const std::string filename = outdir + "librpa_2d_coulomb_head.txt";
+        const std::string filename = this->runtime.input.rpa_outdir + "librpa_2d_coulomb_head.txt";
         std::ofstream ofs(filename, std::ios::out | std::ios::trunc);
         if (!ofs.good())
         {
@@ -1451,12 +1451,12 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     };
 
     const bool use_direct_2d_coulomb
-        = PARAM.inp.out_librpa_2d_coulomb_method == "direct_mixed_fourier";
+        = this->runtime.input.out_librpa_2d_coulomb_method == "direct_mixed_fourier";
     const bool use_direct_3d_coulomb
-        = PARAM.inp.out_librpa_3d_coulomb_method == "direct_reciprocal";
+        = this->runtime.input.out_librpa_3d_coulomb_method == "direct_reciprocal";
     if (use_direct_2d_coulomb || use_direct_3d_coulomb)
     {
-        if (PARAM.inp.out_librpa_reader_version != 1)
+        if (this->runtime.input.out_librpa_reader_version != 1)
         {
             throw std::invalid_argument(
                 "Direct Coulomb output requires out_librpa_reader_version=1.");
@@ -1490,15 +1490,15 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         {
             ewald_object->second.evq.output_direct_2d_coulomb(
                 ucell,
-                PARAM.inp.out_librpa_2d_direct_ecut,
-                PARAM.inp.out_librpa_2d_direct_kz_order,
-                PARAM.inp.out_librpa_2d_direct_gamma_order);
+                this->runtime.input.out_librpa_2d_direct_ecut,
+                this->runtime.input.out_librpa_2d_direct_kz_order,
+                this->runtime.input.out_librpa_2d_direct_gamma_order);
             write_strict_2d_coulomb_head_sidecar();
         }
         else
         {
             ewald_object->second.evq.output_direct_3d_coulomb(
-                ucell, PARAM.inp.out_librpa_3d_direct_ecut);
+                ucell, this->runtime.input.out_librpa_3d_direct_ecut);
         }
 
         exx_full_coulomb.reset();
@@ -1515,7 +1515,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     exx_full_coulomb->cal_ewald_coulomb(Vs_full_IJR,
                                         Cs,
                                         ucell,
-                                        PARAM.inp.out_ri_cv,
+                                        this->runtime.input.out_ri_cv,
                                         nullptr,
                                         nullptr,
                                         output_ewald_components ? &ewald_components : nullptr);
@@ -1557,7 +1557,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
             this->Vs_period,
             this->symmetry_rotation_.get_irreducible_sector(),
             n_skipped_irreducible_blocks_local);
-        if (GlobalV::NPROC > 1)
+        if (this->runtime.nproc > 1)
         {
             const std::set<TA> all_atoms_set(atoms.begin(), atoms.end());
             Vs_irreducible = RI_2D_Comm::comm_map2_first(
@@ -1566,7 +1566,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         const std::size_t n_skipped_irreducible_blocks
             = RpaLriDetail::sum_skipped_irreducible_blocks(
                 this->mpi_comm, n_skipped_irreducible_blocks_local);
-        if (n_skipped_irreducible_blocks != 0 && GlobalV::MY_RANK == 0)
+        if (n_skipped_irreducible_blocks != 0 && this->runtime.rank == 0)
         {
             std::cout << "Warning: skipped " << n_skipped_irreducible_blocks
                       << " missing irreducible ABF bare-Coulomb blocks during symmetry restoration"
@@ -1574,12 +1574,12 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         }
         this->Vs_period
             = this->symmetry_rotation_.restore_HR_abf(ucell.symm, ucell.atoms, ucell.st, Vs_irreducible);
-        if (GlobalV::NPROC > 1)
+        if (this->runtime.nproc > 1)
         {
             this->Vs_period = RI_2D_Comm::comm_map2_first(this->mpi_comm, this->Vs_period, atoms00, atoms01);
         }
     }
-    if (PARAM.inp.out_librpa_reader_version == 1)
+    if (this->runtime.input.out_librpa_reader_version == 1)
     {
         const bool use_shrink = this->info.shrink_abfs_pca_thr >= 0.0;
         this->out_librpa_basis_v1(ucell,
@@ -1640,13 +1640,13 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
         ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs);
     const ModuleRI::RpaAbfsPreorthReport preorth_report
         = ModuleRI::finalize_rpa_abfs_from_input(
-            this->abfs, PARAM.inp, PARAM.inp.cal_force);
-    if (GlobalV::MY_RANK == 0)
+            this->abfs, this->runtime.input, this->runtime.input.cal_force);
+    if (this->runtime.rank == 0)
     {
-        GlobalV::ofs_running << ModuleRI::format_rpa_abfs_preorth_report(preorth_report);
+        this->runtime.log << ModuleRI::format_rpa_abfs_preorth_report(preorth_report);
     }
     exx_cut_coulomb->init_spencer(this->mpi_comm, ucell, kv, orb, this->abfs);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "exx_cut_coulomb->init");
+    ModuleBase::GlobalFunc::DONE(this->runtime.log, "exx_cut_coulomb->init");
     this->MGT = exx_cut_coulomb->MGT;
     std::vector<TA> atoms(ucell.nat);
     for (int iat = 0; iat < ucell.nat; ++iat)
@@ -1679,10 +1679,10 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
         = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->ccp_rmesh_times_cut, ucell, orb_cutoff_);
     std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
         = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_large_Vs start");
+    ModuleBase::GlobalFunc::DONE(this->runtime.log, "cal_large_Vs start");
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_cut_IJR
         = center2_obj_it->second.cv.cal_Vs(ucell, list_As_Vs.first, list_As_Vs.second[0], {{"writable_Vws", true}});
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_large_Vs end");
+    ModuleBase::GlobalFunc::DONE(this->runtime.log, "cal_large_Vs end");
 
     const std::array<Tcell, Ndim> period_Cs = LRI_CV_Tools::cal_latvec_range<Tcell>(2, ucell, orb_cutoff_);
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Cs
@@ -1697,14 +1697,14 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
                                                        {"writable_dCws", true},
                                                        {"writable_Vws", false},
                                                        {"writable_dVws", false}});
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_large_Cs");
+    ModuleBase::GlobalFunc::DONE(this->runtime.log, "cal_large_Cs");
 
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> tmp;
-    if (PARAM.inp.out_unshrinked_v)
+    if (this->runtime.input.out_unshrinked_v)
     {
         this->Vs_period = RI::RI_Tools::cal_period(Vs_cut_IJR, period);
         Vs_cut_IJR.clear();
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "Vs_period");
+        ModuleBase::GlobalFunc::DONE(this->runtime.log, "Vs_period");
         // MPI: {ia0, {ia1, R}} to {ia0, ia1}
         const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, TC>>>> list_As_Vs_atoms
             = RI::Distribute_Equally::distribute_atoms(this->mpi_comm, atoms, period_Vs, 2, false);
@@ -1722,10 +1722,10 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
         }
 
         this->Vs_period = RI_2D_Comm::comm_map2_first(this->mpi_comm, this->Vs_period, atoms00, atoms01);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "Vs_period_comm");
+        ModuleBase::GlobalFunc::DONE(this->runtime.log, "Vs_period_comm");
 
         this->out_coulomb_k(ucell, this->Vs_period, "coulomb_unshrinked_cut_", exx_cut_coulomb.get());
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "out_large_Vs");
+        ModuleBase::GlobalFunc::DONE(this->runtime.log, "out_large_Vs");
         this->Vs_period.clear();
         this->Vs_period.swap(tmp);
     }
@@ -1733,7 +1733,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs = std::get<0>(Cs_dCs);
     this->Cs_period = RI::RI_Tools::cal_period(Cs, period);
     this->Cs_period = exx_cut_coulomb->exx_lri.post_2D.set_tensors_map2(this->Cs_period);
-    if (PARAM.inp.out_librpa_reader_version == 1)
+    if (this->runtime.input.out_librpa_reader_version == 1)
     {
         this->out_librpa_basis_v1(ucell, exx_cut_coulomb.get());
         this->out_Cs_v1(ucell, this->Cs_period, "v1_Cs_data_");
@@ -1742,7 +1742,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     {
         this->out_Cs(ucell, this->Cs_period, "Cs_data_");
     }
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "out_large_Cs");
+    ModuleBase::GlobalFunc::DONE(this->runtime.log, "out_large_Cs");
     this->Cs_period.clear();
     this->Cs_period.swap(tmp);
     exx_cut_coulomb.reset();
@@ -1794,7 +1794,7 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
 
 // Huanjing Gong debug
 // std::stringstream ss;
-//  ss << "IJR_" << GlobalV::MY_RANK << ".txt";
+//  ss << "IJR_" << this->runtime.rank << ".txt";
 // std::ofstream ofs;
 // ofs.open(ss.str().c_str(), std::ios::out);
 // for (size_t iA = 0; iA < list_As_Vs.first.size(); ++iA)
@@ -1906,7 +1906,7 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
         = RI_2D_Comm::comm_map2_first(mpi_comm, overlap_abfs_abf, atoms00, atoms01);
     overlap_abfs_abf.clear();
 
-    if (PARAM.inp.out_librpa_reader_version == 1)
+    if (this->runtime.input.out_librpa_reader_version == 1)
     {
         out_abfs_overlap_v1(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ,
                             "v1_shrink_sinvS_", index_abfs_s, index_abfs);
@@ -1943,12 +1943,12 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
         all_mu_s += index_abfs_s[ucell.iat2it[I]].count_size;
         all_mu += index_abfs[ucell.iat2it[I]].count_size;
     }
-    const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int nks_tot = this->runtime.input.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     std::stringstream ss;
-    ss << filename << (GlobalV::MY_RANK + 1) << ".txt";
+    ss << filename << (this->runtime.rank + 1) << ".txt";
 
     std::ofstream ofs;
-    ofs.open(outdir + ss.str().c_str(), std::ios::out);
+    ofs.open(this->runtime.input.rpa_outdir + ss.str().c_str(), std::ios::out);
 
     ofs << nks_tot << std::endl;
 
@@ -2058,7 +2058,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
                 size_t nu_num = index_abfs[ucell.iat2it[iJ]].count_size;
                 ofs << all_mu_s << "   " << all_mu << "   " << mu_s_shift[I] + 1 << "   " << mu_s_shift[I] + mu_num_s
                     << "  " << mu_shift[iJ] + 1 << "   " << mu_shift[iJ] + nu_num << std::endl;
-                ofs << ik + 1 << "  " << p_kv->wk[ik] / 2.0 * PARAM.inp.nspin << std::endl;
+                ofs << ik + 1 << "  " << p_kv->wk[ik] / 2.0 * this->runtime.input.nspin << std::endl;
                 for (int i = 0; i != vq_J.data->size(); i++)
                 {
                     // ofs << std::setw(25) << std::fixed << std::setprecision(15) << (*vq_J.data)[i].real()
@@ -2084,7 +2084,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
     const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& overlap_abfs_abfs,
     const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s)
 {
-    if (!PARAM.inp.rpa || PARAM.inp.out_librpa_reader_version != 1
+    if (!this->runtime.input.rpa || this->runtime.input.out_librpa_reader_version != 1
         || this->info.shrink_abfs_pca_thr < 0.0)
     {
         throw std::runtime_error("raw active-ABF overlap writer requires rpa=true, "
@@ -2111,7 +2111,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
         naux += count;
     }
 
-    const int nks_tot = PARAM.inp.nspin == 2 ? static_cast<int>(p_kv->get_nks()) / 2 : p_kv->get_nks();
+    const int nks_tot = this->runtime.input.nspin == 2 ? static_cast<int>(p_kv->get_nks()) / 2 : p_kv->get_nks();
     if (nks_tot <= 0)
     {
         throw std::runtime_error("raw active-ABF overlap writer found no q points.");
@@ -2273,7 +2273,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
     for (int ik = 0; ik < nks_tot; ++ik)
     {
         const auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
-        const double q_weight = p_kv->wk[ik] / 2.0 * PARAM.inp.nspin;
+        const double q_weight = p_kv->wk[ik] / 2.0 * this->runtime.input.nspin;
         if (!std::isfinite(q_weight)
             || !std::isfinite(q[0]) || !std::isfinite(q[1]) || !std::isfinite(q[2]))
         {
@@ -2349,11 +2349,11 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
             throw std::runtime_error("raw active-ABF overlap writer found rank-inconsistent q weight.");
         }
 
-        if (GlobalV::MY_RANK != 0)
+        if (this->runtime.rank != 0)
         {
             continue;
         }
-        const std::string out_name = outdir + "v1_abf_overlap_active_iq_" + std::to_string(ik + 1) + ".dat";
+        const std::string out_name = this->runtime.input.rpa_outdir + "v1_abf_overlap_active_iq_" + std::to_string(ik + 1) + ".dat";
         const std::string tmp_name = out_name + ".tmp";
         std::ofstream ofs(tmp_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
         if (!ofs.good())
@@ -2427,7 +2427,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_v1(const UnitCell& ucell,
         all_mu_s += index_abfs_s[ucell.iat2it[I]].count_size;
         all_mu += index_abfs[ucell.iat2it[I]].count_size;
     }
-    const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int nks_tot = this->runtime.input.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
 
     std::map<TA, std::map<TAq, RI::Tensor<std::complex<double>>>> olp_q_ss;
     std::map<TA, std::map<TAq, RI::Tensor<std::complex<double>>>> olp_q_s;
@@ -2493,7 +2493,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_v1(const UnitCell& ucell,
         }
     }
 
-    if (PARAM.inp.out_librpa_abf_overlap)
+    if (this->runtime.input.out_librpa_abf_overlap)
     {
         out_abfs_overlap_raw_v1(ucell, overlap_abfs_abfs, index_abfs_s);
     }
@@ -2541,7 +2541,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_v1(const UnitCell& ucell,
                 record.end_row = static_cast<std::int32_t>(mu_s_shift[I] + mu_num_s);
                 record.begin_col = static_cast<std::int32_t>(mu_shift[iJ] + 1);
                 record.end_col = static_cast<std::int32_t>(mu_shift[iJ] + nu_num);
-                record.q_weight = p_kv->wk[ik] / 2.0 * PARAM.inp.nspin;
+                record.q_weight = p_kv->wk[ik] / 2.0 * this->runtime.input.nspin;
                 record.payload.reserve(static_cast<std::size_t>(vq_J.shape[0]) *
                                        static_cast<std::size_t>(vq_J.shape[1]));
                 for (int i = 0; i != vq_J.shape[0]; ++i)
@@ -2571,8 +2571,8 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_v1(const UnitCell& ucell,
     }
 
     std::stringstream ss;
-    ss << filename << GlobalV::MY_RANK << ".txt";
-    const std::string out_name = outdir + ss.str();
+    ss << filename << this->runtime.rank << ".txt";
+    const std::string out_name = this->runtime.input.rpa_outdir + ss.str();
     std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
     if (!ofs.good())
     {
@@ -2612,7 +2612,7 @@ void RPA_LRI<T, Tdata>::inverse_olp(const UnitCell& ucell,
 {
     ModuleBase::TITLE("RPA_LRI", "inverse_olp");
     ModuleBase::timer::start("RPA_LRI", "inverse_olp");
-    const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int nks_tot = this->runtime.input.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     size_t all_mu_s = 0;
     std::vector<int> mu_s_shift(ucell.nat);
     for (int I = 0; I != ucell.nat; I++)
@@ -2810,8 +2810,8 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
 {
     ModuleBase::TITLE("DFT_RPA_interface", "out_eigen_vector");
 
-    const int nks_tot = PARAM.inp.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
-    const int npsin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
+    const int nks_tot = this->runtime.input.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int npsin_tmp = this->runtime.input.nspin == 2 ? 2 : 1;
     const int nbands = parav.get_wfc_global_nbands();
     const int nbasis = parav.get_wfc_global_nbasis();
     const std::size_t values_per_iw = static_cast<std::size_t>(nbands) * npsin_tmp;
@@ -2915,7 +2915,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
     std::vector<std::complex<double>> send_wfc(send_size), recv_wfc(recv_size);
 #endif
 
-    if (PARAM.inp.out_librpa_reader_version == 1)
+    if (this->runtime.input.out_librpa_reader_version == 1)
     {
 #ifdef __MPI
         ModuleBase::timer::tick("RPA_LRI", "out_eigen_vector_v1_mpi_io");
@@ -2940,10 +2940,10 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
                                                       psi,
                                                       nks_tot,
                                                       npsin_tmp,
-                                                      PARAM.inp.nspin,
-                                                      PARAM.inp.nbands,
-                                                      PARAM.globalv.nlocal,
-                                                      outdir + "KS_eigenvector_0.dat");
+                                                      this->runtime.input.nspin,
+                                                      this->runtime.input.nbands,
+                                                      this->runtime.nlocal,
+                                                      this->runtime.input.rpa_outdir + "KS_eigenvector_0.dat");
         }
         catch (...)
         {
@@ -2967,10 +2967,10 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
             std::vector<ModuleBase::ComplexMatrix> is_wfc_ib_iw(npsin_tmp);
             for (int is = 0; is < npsin_tmp; is++)
             {
-                is_wfc_ib_iw[is].create(PARAM.inp.nbands, PARAM.globalv.nlocal);
-                for (int ib_global = 0; ib_global < PARAM.inp.nbands; ++ib_global)
+                is_wfc_ib_iw[is].create(this->runtime.input.nbands, this->runtime.nlocal);
+                for (int ib_global = 0; ib_global < this->runtime.input.nbands; ++ib_global)
                 {
-                    std::vector<std::complex<double>> wfc_iks(PARAM.globalv.nlocal, zero);
+                    std::vector<std::complex<double>> wfc_iks(this->runtime.nlocal, zero);
 
                     const int ib_local = parav.global2local_col(ib_global);
 
@@ -2982,30 +2982,30 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
                         }
                     }
 
-                    for (int iw = 0; iw < PARAM.globalv.nlocal; iw++)
+                    for (int iw = 0; iw < this->runtime.nlocal; iw++)
                     {
                         is_wfc_ib_iw[is](ib_global, iw) = wfc_iks[iw];
                     }
                 }
             }
 
-            if (GlobalV::MY_RANK == 0)
+            if (this->runtime.rank == 0)
             {
                 KSEigenRecord record;
                 record.ik = static_cast<std::int32_t>(ik + 1);
                 record.payload.reserve(static_cast<std::size_t>(npsin_tmp)
-                                       * static_cast<std::size_t>(PARAM.inp.nbands)
-                                       * static_cast<std::size_t>(PARAM.globalv.nlocal));
-                if (PARAM.inp.nspin == 4)
+                                       * static_cast<std::size_t>(this->runtime.input.nbands)
+                                       * static_cast<std::size_t>(this->runtime.nlocal));
+                if (this->runtime.input.nspin == 4)
                 {
-                    if (PARAM.globalv.nlocal % 2 != 0)
+                    if (this->runtime.nlocal % 2 != 0)
                     {
                         throw std::runtime_error("SOC KS eigenvector output expects an even basis size.");
                     }
-                    const int nlocal_ao = PARAM.globalv.nlocal / 2;
+                    const int nlocal_ao = this->runtime.nlocal / 2;
                     for (int isoc = 0; isoc < 2; ++isoc)
                     {
-                        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
+                        for (int ib = 0; ib < this->runtime.input.nbands; ++ib)
                         {
                             for (int iw = 0; iw < nlocal_ao; ++iw)
                             {
@@ -3018,9 +3018,9 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
                 {
                     for (int is = 0; is < npsin_tmp; ++is)
                     {
-                        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
+                        for (int ib = 0; ib < this->runtime.input.nbands; ++ib)
                         {
-                            for (int iw = 0; iw < PARAM.globalv.nlocal; ++iw)
+                            for (int iw = 0; iw < this->runtime.nlocal; ++iw)
                             {
                                 record.payload.push_back(is_wfc_ib_iw[is](ib, iw));
                             }
@@ -3031,9 +3031,9 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
             }
         }
 
-        if (GlobalV::MY_RANK == 0)
+        if (this->runtime.rank == 0)
         {
-            const std::string out_name = outdir + "KS_eigenvector_0.dat";
+            const std::string out_name = this->runtime.input.rpa_outdir + "KS_eigenvector_0.dat";
             const std::int64_t record_bytes = static_cast<std::int64_t>(sizeof(std::int32_t))
                 + static_cast<std::int64_t>(sizeof(std::int64_t));
             std::int64_t offset = 6 * static_cast<std::int64_t>(sizeof(std::int32_t))
@@ -3055,9 +3055,9 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
             const std::int32_t nkpoints_local = RpaLriDetail::checked_i32_from_size(records.size(),
                                                                                     "KS eigenvector k-point count");
             const std::int32_t nspins = RpaLriDetail::checked_i32_from_int(npsin_tmp, "KS eigenvector spin count");
-            const std::int32_t nstates = RpaLriDetail::checked_i32_from_int(PARAM.inp.nbands,
+            const std::int32_t nstates = RpaLriDetail::checked_i32_from_int(this->runtime.input.nbands,
                                                                             "KS eigenvector state count");
-            const std::int32_t nbasis_wfc = RpaLriDetail::checked_i32_from_int(PARAM.globalv.nlocal,
+            const std::int32_t nbasis_wfc = RpaLriDetail::checked_i32_from_int(this->runtime.nlocal,
                                                                                "KS eigenvector basis count");
             RpaLriDetail::write_scalar(ofs, marker, out_name);
             RpaLriDetail::write_scalar(ofs, kind, out_name);
@@ -3086,7 +3086,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
     std::string output_buffer;
     constexpr std::size_t output_line_bytes = 61;
     output_buffer.reserve(local_size * output_line_bytes + 32);
-    const std::string filename = outdir + "KS_eigenvector.txt";
+    const std::string filename = this->runtime.input.rpa_outdir + "KS_eigenvector.txt";
 #ifdef __MPI
     MPI_File file = MPI_FILE_NULL;
     unsigned long long total_file_bytes = 0;
@@ -3231,7 +3231,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
 {
-    if (GlobalV::MY_RANK != 0)
+    if (this->runtime.rank != 0)
     {
         return;
     }
@@ -3240,7 +3240,7 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
     const ModuleBase::Matrix3 lat = ucell.latvec * unit_scales.real_space_bohr;
     const ModuleBase::Matrix3 G_RPA = ucell.G * unit_scales.reciprocal_space_bohr_inv;
     std::ofstream ofs;
-    ofs.open(outdir + "stru_out.txt", std::ios::out);
+    ofs.open(this->runtime.input.rpa_outdir + "stru_out.txt", std::ios::out);
     const auto write_scientific_triplet = [&ofs](const double x, const double y, const double z) {
         ofs << std::setw(24) << std::scientific << std::setprecision(15) << x
             << std::setw(24) << std::scientific << std::setprecision(15) << y
@@ -3270,7 +3270,7 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
     if (ModuleSymmetry::Symmetry::symm_flag == 1 && ucell.symm.nrotk > 0)
     {
         const auto& symm = ucell.symm;
-        RpaLriDetail::write_librpa_symmetry_block(ofs, ucell.latvec, symm, PARAM.inp.nspin);
+        RpaLriDetail::write_librpa_symmetry_block(ofs, ucell.latvec, symm, this->runtime.input.nspin);
     }
     ofs.close();
     return;
@@ -3279,16 +3279,16 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::out_bz_sampling(const UnitCell& ucell)
 {
-    if (GlobalV::MY_RANK != 0)
+    if (this->runtime.rank != 0)
     {
         return;
     }
 
     ModuleBase::TITLE("DFT_RPA_interface", "out_bz_sampling");
-    const int nks_tot = PARAM.inp.nspin == 2 ? static_cast<int>(p_kv->get_nks()) / 2 : p_kv->get_nks();
+    const int nks_tot = this->runtime.input.nspin == 2 ? static_cast<int>(p_kv->get_nks()) / 2 : p_kv->get_nks();
     const int n_coulomb_irreducible = RpaLriDetail::librpa_stored_coulomb_q_count(nks_tot);
 
-    const std::string filename = outdir + "bz_sampling_out";
+    const std::string filename = this->runtime.input.rpa_outdir + "bz_sampling_out";
     std::ofstream ofs(filename, std::ios::out | std::ios::trunc);
     if (!ofs.good())
     {
@@ -3331,22 +3331,22 @@ template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("DFT_RPA_interface", "out_bands");
-    if (GlobalV::MY_RANK != 0)
+    if (this->runtime.rank != 0)
     {
         return;
     }
-    const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
-    const int nspin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
+    const int nks_tot = this->runtime.input.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int nspin_tmp = this->runtime.input.nspin == 2 ? 2 : 1;
     std::ofstream ofs;
-    ofs.open(outdir + "band_out.txt", std::ios::out);
+    ofs.open(this->runtime.input.rpa_outdir + "band_out.txt", std::ios::out);
     // Set precision before the Fermi energy and first occupation are written.
     // The occupations include k weights; rounding the first row changes the
     // normalized occupation when LibRPA restores an irreducible k mesh.
     ofs << std::fixed << std::setprecision(15);
     ofs << nks_tot << std::endl;
     ofs << nspin_tmp << std::endl;
-    ofs << PARAM.inp.nbands << std::endl;
-    ofs << PARAM.globalv.nlocal << std::endl;
+    ofs << this->runtime.input.nbands << std::endl;
+    ofs << this->runtime.nlocal << std::endl;
     ofs << (pelec->eferm.ef / 2.0) << std::endl;
 
     for (int ik = 0; ik != nks_tot; ik++)
@@ -3354,7 +3354,7 @@ void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
         for (int is = 0; is != nspin_tmp; is++)
         {
             ofs << std::setw(6) << ik + 1 << std::setw(6) << is + 1 << std::endl;
-            for (int ib = 0; ib != PARAM.inp.nbands; ib++)
+            for (int ib = 0; ib != this->runtime.input.nbands; ib++)
             {
                 ofs << std::setw(5) << ib + 1 << "   " << std::setw(8) << pelec->wg(ik + is * nks_tot, ib) * nks_tot
                     << std::setw(25) << pelec->ekb(ik + is * nks_tot, ib) / 2.0
@@ -3374,9 +3374,9 @@ void RPA_LRI<T, Tdata>::out_Cs(const UnitCell& ucell, std::map<TA, std::map<TAC,
     ModuleBase::timer::start("RPA_LRI", "out_Cs");
 
     std::stringstream ss;
-    ss << filename << (GlobalV::MY_RANK + 1) << ".txt";
+    ss << filename << (this->runtime.rank + 1) << ".txt";
     std::ofstream ofs;
-    ofs.open(outdir + ss.str().c_str(), std::ios::out);
+    ofs.open(this->runtime.input.rpa_outdir + ss.str().c_str(), std::ios::out);
     ofs << ucell.nat << "    " << 0 << std::endl;
     ofs << std::fixed << std::setprecision(15);
     for (auto& Ip: Cs_in)
@@ -3498,8 +3498,8 @@ void RPA_LRI<T, Tdata>::out_Cs_v1(const UnitCell& ucell,
     }
 
     std::stringstream ss;
-    ss << filename << GlobalV::MY_RANK << ".txt";
-    const std::string out_name = outdir + ss.str();
+    ss << filename << this->runtime.rank << ".txt";
+    const std::string out_name = this->runtime.input.rpa_outdir + ss.str();
     std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
     if (!ofs.good())
     {
@@ -3564,12 +3564,12 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
         mu_shift[I] = all_mu;
         all_mu += exx_lri->exx_objs.at(basis_method).cv.get_index_abfs_size(ucell.iat2it[I]);
     }
-    const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int nks_tot = this->runtime.input.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     std::stringstream ss;
-    ss << filename << (GlobalV::MY_RANK + 1) << ".txt";
+    ss << filename << (this->runtime.rank + 1) << ".txt";
 
     std::ofstream ofs;
-    ofs.open(outdir + ss.str().c_str(), std::ios::out);
+    ofs.open(this->runtime.input.rpa_outdir + ss.str().c_str(), std::ios::out);
 
     ofs << nks_tot << std::endl;
     ofs << std::fixed << std::setprecision(15);
@@ -3611,7 +3611,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
                 size_t nu_num = exx_lri->exx_objs.at(basis_method).cv.get_index_abfs_size(ucell.iat2it[iJ]);
                 ofs << all_mu << "   " << mu_shift[I] + 1 << "   " << mu_shift[I] + mu_num << "  " << mu_shift[iJ] + 1
                     << "   " << mu_shift[iJ] + nu_num << std::endl;
-                ofs << ik + 1 << "  " << p_kv->wk[ik] / 2.0 * PARAM.inp.nspin << std::endl;
+                ofs << ik + 1 << "  " << p_kv->wk[ik] / 2.0 * this->runtime.input.nspin << std::endl;
                 for (int i = 0; i != vq_J.data->size(); i++)
                 {
                     ofs << std::setw(25) << (*vq_J.data)[i].real()
@@ -3636,14 +3636,14 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell& ucell,
     ModuleBase::timer::start("RPA_LRI", "out_velocity");
 
     Parallel_2D parac;
-    LR_Util::setup_2d_division(parac, parav.get_block_size(), PARAM.globalv.nlocal, PARAM.inp.nbands
+    LR_Util::setup_2d_division(parac, parav.get_block_size(), this->runtime.nlocal, this->runtime.input.nbands
 #ifdef __MPI
                                , parav.blacs_ctxt
 #endif
     );
 
-    const int nk = PARAM.inp.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
-    const int nspin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
+    const int nk = this->runtime.input.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int nspin_tmp = this->runtime.input.nspin == 2 ? 2 : 1;
     const int nbands = parav.get_wfc_global_nbands();
     const int nbasis = parav.get_wfc_global_nbasis();
 
@@ -3659,13 +3659,13 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell& ucell,
                                    psi,
                                    nk,
                                    nspin_tmp,
-                                   PARAM.globalv.nlocal,
+                                   this->runtime.nlocal,
                                    nocc,
                                    nvirt);
-    if (GlobalV::MY_RANK == 0)
+    if (this->runtime.rank == 0)
     {
         LR_Util::output_spectrum_mo_librpa(velocity_mo,
-                                           outdir + "velocity_matrix",
+                                           this->runtime.input.rpa_outdir + "velocity_matrix",
                                            nk,
                                            nspin_tmp,
                                            nbands,
@@ -3682,7 +3682,7 @@ void RPA_LRI<T, Tdata>::out_librpa_basis_v1(const UnitCell& ucell,
                                             const std::string& aux_filename,
                                             const std::string& legacy_filename)
 {
-    if (GlobalV::MY_RANK != 0)
+    if (this->runtime.rank != 0)
     {
         return;
     }
@@ -3711,9 +3711,9 @@ void RPA_LRI<T, Tdata>::out_librpa_basis_v1(const UnitCell& ucell,
 
     const auto wfc_l_nchi = RpaLriDetail::collect_wfc_l_nchi(ucell);
     const auto aux_l_nchi = RpaLriDetail::collect_abfs_l_nchi(exx_lri->abfs);
-    const std::string wfc_filename = outdir + "basis_wfc_out";
-    const std::string aux_output_filename = outdir + aux_filename;
-    const std::string legacy_output_filename = outdir + legacy_filename;
+    const std::string wfc_filename = this->runtime.input.rpa_outdir + "basis_wfc_out";
+    const std::string aux_output_filename = this->runtime.input.rpa_outdir + aux_filename;
+    const std::string legacy_output_filename = this->runtime.input.rpa_outdir + legacy_filename;
     RpaLriDetail::write_librpa_split_basis_file(ucell, type_nw, wfc_l_nchi, wfc_filename);
     RpaLriDetail::write_librpa_split_basis_file(ucell, type_naux, aux_l_nchi, aux_output_filename);
 
@@ -3771,7 +3771,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k_v1(const UnitCell& ucell,
     const auto basis_method = this->select_coulomb_basis_method_(exx_lri);
     const auto atom_naux = this->collect_atom_naux_(ucell, exx_lri);
     const int all_mu = RpaLriDetail::sum_int_vector(atom_naux);
-    const int nks_tot = PARAM.inp.nspin == 2 ? static_cast<int>(p_kv->get_nks()) / 2 : p_kv->get_nks();
+    const int nks_tot = this->runtime.input.nspin == 2 ? static_cast<int>(p_kv->get_nks()) / 2 : p_kv->get_nks();
     const std::size_t natoms = static_cast<std::size_t>(ucell.nat);
 
     struct V1Block
@@ -3867,8 +3867,8 @@ void RPA_LRI<T, Tdata>::out_coulomb_k_v1(const UnitCell& ucell,
         }
 
         std::stringstream ss;
-        ss << filename << ik + 1 << "_rank" << GlobalV::MY_RANK << ".dat";
-        const std::string out_name = outdir + ss.str();
+        ss << filename << ik + 1 << "_rank" << this->runtime.rank << ".dat";
+        const std::string out_name = this->runtime.input.rpa_outdir + ss.str();
         std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
         if (!ofs.good())
         {

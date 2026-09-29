@@ -800,7 +800,15 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     ModuleRI::SternheimerOrbitalSet sternheimer_rpa_abfs;
     if (inp.rpa)
     {
-        RPA_LRI<TK, double> rpa_lri_double(exx_info.info_ri);
+        const ModuleRI::RpaLriRuntime rpa_runtime = {
+            inp,
+            global_out_dir,
+            pv.get_global_row_size(),
+            GlobalV::MY_RANK,
+            GlobalV::NPROC,
+            exx_info.info_ri.abfs_Lmax,
+            GlobalV::ofs_running};
+        RPA_LRI<TK, double> rpa_lri_double(exx_info.info_ri, rpa_runtime);
         rpa_lri_double.postSCF(ucell, MPI_COMM_WORLD, *dm, pelec, kv, orb, pv, *psi);
         if (inp.out_sternheimer_librpa || inp.out_sternheimer_siab)
         {

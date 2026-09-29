@@ -18,14 +18,35 @@
 // #include <RI/physics/Exx.h>
 #include <RI/ri/RI_Tools.h>
 #include <array>
+#include <iosfwd>
 #include <map>
 #include <memory>
 #include <mpi.h>
+#include <string>
 #include <vector>
 
 class Parallel_Orbitals;
 class K_Vectors;
+class Input_para;
 template <typename Tdata> class Exx_LRI;
+
+namespace ModuleRI
+{
+
+// Runtime values are captured at the SCF/RPA boundary so the producer code
+// does not read process-global state while writing LibRPA artifacts.
+struct RpaLriRuntime
+{
+    const Input_para& input;
+    const std::string& global_out_dir;
+    int nlocal;
+    int rank;
+    int nproc;
+    int abfs_lmax;
+    std::ostream& log;
+};
+
+} // namespace ModuleRI
 
 template <typename T, typename Tdata> class RPA_LRI
 {
@@ -40,7 +61,8 @@ template <typename T, typename Tdata> class RPA_LRI
     using TatomR = std::array<double, Ndim>; // tmp
 
   public:
-    RPA_LRI(const Exx_Info::Exx_Info_RI &info_in) : info(info_in)
+    RPA_LRI(const Exx_Info::Exx_Info_RI& info_in, const ModuleRI::RpaLriRuntime& runtime_in)
+        : runtime(runtime_in), info(info_in)
     {
     }
     ~RPA_LRI();
@@ -120,7 +142,7 @@ template <typename T, typename Tdata> class RPA_LRI
     Conv_Coulomb_Pot_K::Coulomb_Method select_coulomb_basis_method_(Exx_LRI<double>* exx_lri) const;
     std::vector<int> collect_atom_naux_(const UnitCell& ucell, Exx_LRI<double>* exx_lri) const;
 
-    const std::string& outdir = PARAM.inp.rpa_outdir;
+    const ModuleRI::RpaLriRuntime runtime;
     const Exx_Info::Exx_Info_RI &info;
     const K_Vectors *p_kv=nullptr;
     MPI_Comm mpi_comm;
