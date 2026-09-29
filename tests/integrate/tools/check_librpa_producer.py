@@ -228,6 +228,38 @@ def _check_wfc_nao(path):
             )
 
 
+def _check_strict_2d_head(path):
+    """Validate the reader-v1 strict-2D Coulomb-head metadata sidecar."""
+    values = {}
+    for line_number, line in enumerate(path.read_text().splitlines(), 1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if "=" not in stripped:
+            raise ProducerContractError("{} line {} is not a key/value record".format(path, line_number))
+        key, value = (part.strip() for part in stripped.split("=", 1))
+        if not key or key in values:
+            raise ProducerContractError("{} line {} has an invalid or duplicate key".format(path, line_number))
+        values[key] = value
+    required = {
+        "version",
+        "area_parallel_bohr2",
+        "multipole_norm_squared",
+        "strict_2d_coulomb_head_coefficient",
+        "strict_2d_sheet_to_raw_scale",
+    }
+    if set(values) != required:
+        raise ProducerContractError(
+            "{} has metadata keys {}; expected {}".format(path, sorted(values), sorted(required))
+        )
+    if values["version"] != "1":
+        raise ProducerContractError("{} has unsupported metadata version {}".format(path, values["version"]))
+    for key in sorted(required - {"version"}):
+        value = _required_number(path, values[key], key)
+        if value <= 0.0:
+            raise ProducerContractError("{} has non-positive {}".format(path, key))
+
+
 def _upper_pair(pair_index, natom):
     current = 0
     for iatom in range(natom):
@@ -406,6 +438,8 @@ def _check_file(path, entry):
         return
     if kind == "stru":
         _check_stru(path, entry.get("symmetry_rows"), entry.get("spin_symmetry_rows"))
+    elif kind == "strict_2d_head":
+        _check_strict_2d_head(path)
     elif kind == "wfc_nao":
         _check_wfc_nao(path)
     elif kind == "band":

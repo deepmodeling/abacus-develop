@@ -131,6 +131,17 @@ def _write_complex_wfc(path: Path, coefficient_count: int = 4) -> None:
     )
 
 
+def _write_strict_2d_head(path: Path) -> None:
+    path.write_text(
+        "# ABACUS reader-v1 strict 2D Coulomb head normalization\n"
+        "version = 1\n"
+        "area_parallel_bohr2 = 10.0\n"
+        "multipole_norm_squared = 2.0\n"
+        "strict_2d_coulomb_head_coefficient = 3.0\n"
+        "strict_2d_sheet_to_raw_scale = 4.0\n"
+    )
+
+
 class ProducerContractTests(unittest.TestCase):
     def test_checks_required_files_and_symmetry_rows(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -196,6 +207,21 @@ class ProducerContractTests(unittest.TestCase):
                 ],
             }
             self.assertEqual(check_manifest(root, manifest), [])
+
+    def test_checks_strict_2d_head_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            out = root / "OUT.librpa"
+            out.mkdir()
+            _write_strict_2d_head(out / "librpa_2d_coulomb_head.txt")
+            manifest = {
+                "output_dir": "OUT.librpa",
+                "required": [{"pattern": "librpa_2d_coulomb_head.txt", "kind": "strict_2d_head"}],
+            }
+            self.assertEqual(check_manifest(root, manifest), [])
+            (out / "librpa_2d_coulomb_head.txt").write_text("version = 1\n")
+            with self.assertRaises(ProducerContractError):
+                check_manifest(root, manifest)
 
     def test_compares_lri_and_shrink_v1_payloads(self):
         with tempfile.TemporaryDirectory() as tmp:

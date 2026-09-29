@@ -1409,7 +1409,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs);
 
     const auto write_strict_2d_coulomb_head_sidecar = [&]() {
-        if (GlobalC::exx_info.info_ri.ewald_dimension != 2 || GlobalV::MY_RANK != 0)
+        if (this->info.ewald_dimension != 2 || GlobalV::MY_RANK != 0)
         {
             return;
         }
@@ -1432,7 +1432,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         const auto normalization = RpaLriDetail::strict_2d_coulomb_head_normalization(
             (a1_bohr ^ a2_bohr).norm(), s_multipoles_by_type, atoms_per_type);
 
-        const std::string filename = outdir + "librpa_2d_coulomb_head.dat";
+        const std::string filename = outdir + "librpa_2d_coulomb_head.txt";
         std::ofstream ofs(filename, std::ios::out | std::ios::trunc);
         if (!ofs.good())
         {
@@ -1462,7 +1462,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
                 "Direct Coulomb output requires out_librpa_reader_version=1.");
         }
         const int required_dimension = use_direct_2d_coulomb ? 2 : 3;
-        if (GlobalC::exx_info.info_ri.ewald_dimension != required_dimension)
+        if (this->info.ewald_dimension != required_dimension)
         {
             throw std::invalid_argument(
                 "Direct Coulomb output dimension does not match exx_ewald_dimension.");
