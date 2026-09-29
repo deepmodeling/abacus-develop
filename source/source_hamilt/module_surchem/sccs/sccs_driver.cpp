@@ -198,15 +198,15 @@ SccsResult evaluate_pw_sccs(
     {
         cavity_density[index] += cavity_core_density[index];
     }
-    result.response = solve_chain_sccs_response(cavity_density,
-                                                result.charge.solute,
-                                                config.cavity,
-                                                solver_parameters,
-                                                initial_potential,
-                                                basis,
-                                                tpiba,
-                                                *coulomb,
-                                                reduction);
+    result.response = solve_sccs_response(cavity_density,
+                                          result.charge.solute,
+                                          config.cavity,
+                                          solver_parameters,
+                                          initial_potential,
+                                          basis,
+                                          tpiba,
+                                          *coulomb,
+                                          reduction);
     result.forward_transforms = coulomb->transform_counts();
 
     std::vector<double> vacuum_potential;

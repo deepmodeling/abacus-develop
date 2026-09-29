@@ -47,7 +47,7 @@ class CoulombOperator
                                  std::vector<double>& potential) const = 0;
 };
 
-// Controls of the sqrt-preconditioned CG (solve_chain_sccs_response).
+// Controls of the sqrt-preconditioned CG (solve_sccs_response).
 struct PolarizationSolverParameters
 {
     int max_iterations = 0;

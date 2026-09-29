@@ -4,7 +4,7 @@
 
 #include "../pcc/pcc_moments.h"
 #include "../sccs/sccs_pcc_2d_coulomb.h"
-#include "../sccs/sccs_periodic.h"
+#include "../sccs/sccs_response.h"
 #include "../sccs/sccs_pw_coulomb.h"
 #include "../common/pw_grid.h"
 #include "../common/charge_reduction.h"
@@ -269,16 +269,16 @@ TEST_F(SccsPcc2dCoulombTest, SqrtCgKeepsChargedUniformDielectricPccGauge)
     solver.tolerance_rms = 1.0e-14;
     solver.tolerance_max = 1.0e-14;
     const std::vector<double> cold_start;
-    const ModuleSccs::PeriodicSccsResult result
-        = ModuleSccs::solve_chain_sccs_response(cavity_density,
-                                                solute_charge,
-                                                cavity,
-                                                solver,
-                                                cold_start,
-                                                basis_,
-                                                tpiba,
-                                                coulomb,
-                                                reduction_);
+    const ModuleSccs::SccsResponse result
+        = ModuleSccs::solve_sccs_response(cavity_density,
+                                          solute_charge,
+                                          cavity,
+                                          solver,
+                                          cold_start,
+                                          basis_,
+                                          tpiba,
+                                          coulomb,
+                                          reduction_);
     EXPECT_EQ(result.polarization.iterations, 1);
     EXPECT_NEAR(result.far_field_polarization_charge,
                 -(1.0 - 1.0 / cavity.epsilon_bulk),
@@ -377,16 +377,16 @@ TEST(SccsPcc2dSqrtCg, LayeredCavityMatchesOpenOneDimensionalField)
     solver.tolerance_rms = 1.0e-13;
     solver.tolerance_max = 1.0e-12;
     const std::vector<double> cold_start;
-    const ModuleSccs::PeriodicSccsResult result
-        = ModuleSccs::solve_chain_sccs_response(cavity_density,
-                                                solute_charge,
-                                                cavity,
-                                                solver,
-                                                cold_start,
-                                                basis,
-                                                tpiba,
-                                                coulomb,
-                                                charge_reduction);
+    const ModuleSccs::SccsResponse result
+        = ModuleSccs::solve_sccs_response(cavity_density,
+                                          solute_charge,
+                                          cavity,
+                                          solver,
+                                          cold_start,
+                                          basis,
+                                          tpiba,
+                                          coulomb,
+                                          charge_reduction);
     EXPECT_GT(result.polarization.iterations, 1);
 
     // The potential depends on y only; grid index = (ix ny + iy) nplane + iz.

@@ -1,5 +1,5 @@
-#ifndef SCCS_PERIODIC_H
-#define SCCS_PERIODIC_H
+#ifndef SCCS_RESPONSE_H
+#define SCCS_RESPONSE_H
 
 #include "sccs_cavity.h"
 #include "sccs_poisson.h"
@@ -17,7 +17,9 @@ class ChargeReduction;
 namespace ModuleSccs
 {
 
-struct PeriodicSccsResult
+// Dielectric response of one SCCS evaluation: the cavity fields and the
+// sqrt-CG solution for the solute charge.
+struct SccsResponse
 {
     std::vector<double> solute;
     std::vector<double> dsolute_drho;
@@ -41,17 +43,18 @@ struct PeriodicSccsResult
     double far_field_polarization_charge = 0.0;
 };
 
-// Continuous dielectric source used by Environ's ionic-force path.
-// On a finite grid it need not equal -laplacian(phi)/(4*pi)-q.
+// ENVIRON dielectric_of_potential polarization density,
+// grad(ln eps).grad(v)/(4 pi) + q (1/eps - 1). On a finite grid it need not
+// equal -laplacian(v)/(4 pi) - q; ABACUS uses it only for PCC diagnostics.
 std::vector<double> continuum_polarization_charge(
     const std::vector<double>& solute_charge,
-    const PeriodicSccsResult& response);
+    const SccsResponse& response);
 
 // ENVIRON sqrt-preconditioned CG for every boundary: the preconditioner uses
 // coulomb (periodic or PCC-corrected). It stops on the RMS and maximum charge
 // residual and warm-starts from initial_potential (previous solution, or empty)
 // when that helps.
-PeriodicSccsResult solve_chain_sccs_response(
+SccsResponse solve_sccs_response(
     const std::vector<double>& cavity_density,
     const std::vector<double>& solute_charge,
     const CavityParameters& cavity_parameters,

@@ -3,7 +3,7 @@
 #include <mpi.h>
 #endif
 
-#include "../sccs/sccs_periodic.h"
+#include "../sccs/sccs_response.h"
 #include "../sccs/sccs_pw_coulomb.h"
 #include "../common/charge_reduction.h"
 
@@ -22,7 +22,7 @@ namespace
 {
 
 // The SCCS driver's periodic path: plain Coulomb preconditioner, pool reduction.
-ModuleSccs::PeriodicSccsResult solve_periodic(const std::vector<double>& cavity_density,
+ModuleSccs::SccsResponse solve_periodic(const std::vector<double>& cavity_density,
                                               const std::vector<double>& solute_charge,
                                               const ModuleSccs::CavityParameters& cavity,
                                               const ModuleSccs::PolarizationSolverParameters& solver,
@@ -32,21 +32,21 @@ ModuleSccs::PeriodicSccsResult solve_periodic(const std::vector<double>& cavity_
 {
     const ModuleSccs::PeriodicCoulombOperator coulomb(basis, tpiba);
     const ModuleSurchem::PoolChargeReduction reduction(1);
-    return ModuleSccs::solve_chain_sccs_response(cavity_density,
-                                                 solute_charge,
-                                                 cavity,
-                                                 solver,
-                                                 initial_potential,
-                                                 basis,
-                                                 tpiba,
-                                                 coulomb,
-                                                 reduction);
+    return ModuleSccs::solve_sccs_response(cavity_density,
+                                           solute_charge,
+                                           cavity,
+                                           solver,
+                                           initial_potential,
+                                           basis,
+                                           tpiba,
+                                           coulomb,
+                                           reduction);
 }
 
 TEST(SccsPeriodic, ContinuumSourceScreensUniformDielectricAndIncludesInterfaceField)
 {
     const std::vector<double> charge = {1.0, -2.0};
-    ModuleSccs::PeriodicSccsResult response;
+    ModuleSccs::SccsResponse response;
     response.epsilon.assign(2, 5.0);
     response.grad_log_epsilon.resize(2);
     response.polarization.field.gradient.resize(2);
@@ -108,7 +108,7 @@ TEST(SccsPeriodic, UniformDielectricScreensSingleFourierShell)
     const std::vector<double> cavity_density(basis.nrxx, 0.0);
     const std::vector<double> cold_start;
     const double tpiba = ModuleBase::TWO_PI / 10.0;
-    const ModuleSccs::PeriodicSccsResult result
+    const ModuleSccs::SccsResponse result
         = solve_periodic(cavity_density, solute_charge, cavity, solver, cold_start, basis, tpiba);
 
     // A uniform dielectric screens the shell to 4 pi q / (eps G^2).
@@ -157,13 +157,13 @@ class SqrtCgFixture : public testing::Test
         }
     }
 
-    ModuleSccs::PeriodicSccsResult solve_from(const std::vector<double>& initial_potential) const
+    ModuleSccs::SccsResponse solve_from(const std::vector<double>& initial_potential) const
     {
         const double tpiba = ModuleBase::TWO_PI / length;
         return solve_periodic(density, charge, cavity, solver, initial_potential, basis, tpiba);
     }
 
-    ModuleSccs::PeriodicSccsResult solve() const
+    ModuleSccs::SccsResponse solve() const
     {
         const std::vector<double> cold_start;
         return solve_from(cold_start);
@@ -182,12 +182,12 @@ TEST_F(SqrtCgFixture, StopsOnlyWhenRmsAndMaximumResidualsPass)
     // The initial residual has maximum 1e-3, so every case needs CG steps.
     solver.tolerance_rms = 1.0e-5;
     solver.tolerance_max = 1.0e-5;
-    const ModuleSccs::PeriodicSccsResult loose = solve();
+    const ModuleSccs::SccsResponse loose = solve();
     solver.tolerance_max = 1.0e-11;
-    const ModuleSccs::PeriodicSccsResult tight_maximum = solve();
+    const ModuleSccs::SccsResponse tight_maximum = solve();
     solver.tolerance_rms = 1.0e-11;
     solver.tolerance_max = 1.0;
-    const ModuleSccs::PeriodicSccsResult tight_rms = solve();
+    const ModuleSccs::SccsResponse tight_rms = solve();
 
     EXPECT_LE(loose.polarization.residual_rms, 1.0e-5);
     EXPECT_LE(loose.polarization.residual_max, 1.0e-5);
@@ -202,11 +202,11 @@ TEST_F(SqrtCgFixture, VerifiesPreconditionedFixedPointOnlyOnRequest)
 {
     solver.tolerance_rms = 1.0e-11;
     solver.tolerance_max = 1.0e-10;
-    const ModuleSccs::PeriodicSccsResult unchecked = solve();
+    const ModuleSccs::SccsResponse unchecked = solve();
     EXPECT_FALSE(unchecked.polarization.fixed_point_checked);
 
     solver.check_fixed_point = true;
-    const ModuleSccs::PeriodicSccsResult checked = solve();
+    const ModuleSccs::SccsResponse checked = solve();
     ASSERT_TRUE(checked.polarization.fixed_point_checked);
     EXPECT_LT(checked.polarization.fixed_point_defect_rms, 1.0e-8);
     EXPECT_LT(checked.polarization.fixed_point_defect_max, 1.0e-7);
@@ -217,7 +217,7 @@ TEST_F(SqrtCgFixture, WarmStartFromPreviousPotentialReachesSameSolutionFaster)
 {
     solver.tolerance_rms = 1.0e-11;
     solver.tolerance_max = 1.0e-10;
-    const ModuleSccs::PeriodicSccsResult cold = solve();
+    const ModuleSccs::SccsResponse cold = solve();
     ASSERT_GT(cold.polarization.iterations, 1);
     EXPECT_FALSE(cold.polarization.warm_started);
 
@@ -226,9 +226,9 @@ TEST_F(SqrtCgFixture, WarmStartFromPreviousPotentialReachesSameSolutionFaster)
     {
         density[ir] *= 1.001;
     }
-    const ModuleSccs::PeriodicSccsResult reference = solve();
+    const ModuleSccs::SccsResponse reference = solve();
     ASSERT_EQ(cold.restart_potential.size(), static_cast<std::size_t>(basis.nrxx));
-    const ModuleSccs::PeriodicSccsResult warm = solve_from(cold.restart_potential);
+    const ModuleSccs::SccsResponse warm = solve_from(cold.restart_potential);
     EXPECT_TRUE(warm.polarization.warm_started);
     EXPECT_LT(warm.polarization.iterations, reference.polarization.iterations);
     EXPECT_LE(warm.polarization.residual_rms, 1.0e-11);
@@ -244,13 +244,13 @@ TEST_F(SqrtCgFixture, RejectsWarmStartWorseThanColdStart)
 {
     solver.tolerance_rms = 1.0e-11;
     solver.tolerance_max = 1.0e-10;
-    const ModuleSccs::PeriodicSccsResult cold = solve();
+    const ModuleSccs::SccsResponse cold = solve();
     std::vector<double> poor_guess(basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         poor_guess[ir] = 1.0e3 * std::cos(0.37 * ir);
     }
-    const ModuleSccs::PeriodicSccsResult rejected = solve_from(poor_guess);
+    const ModuleSccs::SccsResponse rejected = solve_from(poor_guess);
     EXPECT_FALSE(rejected.polarization.warm_started);
     EXPECT_EQ(rejected.polarization.iterations, cold.polarization.iterations);
     for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -296,7 +296,7 @@ TEST(SccsPeriodic, ChainGradientMatchesAnalyticDensityModeAcrossCavityEdges)
     }
     const std::vector<double> charge(basis.nrxx, 0.0);
     const std::vector<double> initial;
-    const ModuleSccs::PeriodicSccsResult result
+    const ModuleSccs::SccsResponse result
         = solve_periodic(density, charge, cavity, solver, initial, basis, tpiba);
     ASSERT_EQ(result.density_gradient.size(), density.size());
     for (int ir = 0; ir < basis.nrxx; ++ir)

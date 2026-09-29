@@ -1,4 +1,4 @@
-#include "sccs_periodic.h"
+#include "sccs_response.h"
 
 #include "sccs_pw_coulomb.h"
 #include "../common/charge_reduction.h"
@@ -16,7 +16,7 @@ namespace ModuleSccs
 
 std::vector<double> continuum_polarization_charge(
     const std::vector<double>& solute_charge,
-    const PeriodicSccsResult& response)
+    const SccsResponse& response)
 {
     const std::size_t size = solute_charge.size();
     if (response.epsilon.size() != size || response.grad_log_epsilon.size() != size
@@ -51,13 +51,13 @@ std::vector<double> continuum_polarization_charge(
 namespace
 {
 
-PeriodicSccsResult prepare_chain_cavity(
+SccsResponse prepare_cavity(
     const std::vector<double>& density,
     const CavityParameters& cavity,
     const ModulePW::PW_Basis& basis,
     const double tpiba)
 {
-    ModuleSccs::PeriodicSccsResult result;
+    ModuleSccs::SccsResponse result;
     const auto density_gradient = ModuleSccs::periodic_gradient(density, basis, tpiba);
     result.density_gradient = density_gradient;
     const std::size_t size = density.size();
@@ -108,7 +108,7 @@ void reduced_rms_max(const std::vector<double>& values,
 // Environ dielectric::factsqrt for electronic chain derivatives, in Ha units.
 void chain_factsqrt(const std::vector<double>& density,
                     const CavityParameters& cavity,
-                    const PeriodicSccsResult& result,
+                    const SccsResponse& result,
                     const ModulePW::PW_Basis& basis,
                     const double tpiba,
                     std::vector<double>& coefficient)
@@ -242,7 +242,7 @@ void switching_divergence(const std::vector<ModuleBase::Vector3<double>>& field,
 void switching_fft_factsqrt(const CavityParameters& cavity,
                             const ModulePW::PW_Basis& basis,
                             const double tpiba,
-                            PeriodicSccsResult& result,
+                            SccsResponse& result,
                             std::vector<double>& coefficient,
                             std::vector<ModuleBase::Vector3<double>>& solute_gradient)
 {
@@ -268,7 +268,7 @@ void switching_fft_factsqrt(const CavityParameters& cavity,
 
 // Continuum cavity potential -eps'|grad v|^2/(8 pi) of Environ
 // dielectric::de_dboundary, with grad v from the solved potential.
-void continuum_cavity_potential(PeriodicSccsResult& result)
+void continuum_cavity_potential(SccsResponse& result)
 {
     const std::size_t size = result.depsilon_drho.size();
     result.cavity_potential.resize(size);
@@ -299,7 +299,7 @@ void switching_cavity_potential(const std::vector<double>& charge,
                                 const CavityParameters& cavity,
                                 const ModulePW::PW_Basis& basis,
                                 const double tpiba,
-                                PeriodicSccsResult& result)
+                                SccsResponse& result)
 {
     const std::size_t size = charge.size();
     const double log_bulk = std::log(cavity.epsilon_bulk);
@@ -334,7 +334,7 @@ void finish_open_boundary_response(const std::vector<double>& charge,
                                    const CavityParameters& cavity,
                                    const ModulePW::PW_Basis& basis,
                                    const ModuleSurchem::ChargeReduction& reduction,
-                                   PeriodicSccsResult& result)
+                                   SccsResponse& result)
 {
     const std::size_t size = charge.size();
     const std::vector<double>& potential = result.polarization.field.potential;
@@ -359,7 +359,7 @@ void finish_open_boundary_response(const std::vector<double>& charge,
 
 } // namespace
 
-PeriodicSccsResult solve_chain_sccs_response(
+SccsResponse solve_sccs_response(
     const std::vector<double>& density,
     const std::vector<double>& charge,
     const ModuleSccs::CavityParameters& cavity,
@@ -370,8 +370,8 @@ PeriodicSccsResult solve_chain_sccs_response(
     const ModuleSccs::CoulombOperator& coulomb,
     const ModuleSurchem::ChargeReduction& reduction)
 {
-    ModuleBase::timer::start("ModuleSccs", "solve_chain_sccs_response");
-    PeriodicSccsResult result = prepare_chain_cavity(density, cavity, basis, tpiba);
+    ModuleBase::timer::start("ModuleSccs", "solve_sccs_response");
+    SccsResponse result = prepare_cavity(density, cavity, basis, tpiba);
     const std::size_t size = density.size();
     std::vector<double> coefficient(size);
     std::vector<double> invsqrt(size);
@@ -513,7 +513,7 @@ PeriodicSccsResult solve_chain_sccs_response(
     {
         continuum_cavity_potential(result);
     }
-    ModuleBase::timer::end("ModuleSccs", "solve_chain_sccs_response");
+    ModuleBase::timer::end("ModuleSccs", "solve_sccs_response");
     return result;
 }
 

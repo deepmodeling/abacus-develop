@@ -604,7 +604,7 @@ OBJS_SURCHEM=surchem.o\
     sccs_pw_coulomb.o\
     sccs_pw_nonel.o\
     sccs_gaussian_ion.o\
-    sccs_periodic.o\
+    sccs_response.o\
 
 OBJS_SYMMETRY=symm_other.o\
     symm_rot_spin.o\

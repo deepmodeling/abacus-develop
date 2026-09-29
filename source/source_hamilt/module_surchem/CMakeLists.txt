@@ -29,7 +29,7 @@ add_library(
     sccs/sccs_pw_coulomb.cpp
     sccs/sccs_pw_nonel.cpp
     sccs/sccs_gaussian_ion.cpp
-    sccs/sccs_periodic.cpp
+    sccs/sccs_response.cpp
 )
 
 if(ENABLE_COVERAGE)

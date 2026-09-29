@@ -5,7 +5,7 @@
 
 #include "../sccs/sccs_pcc_coulomb.h"
 #include "../sccs/sccs_charge.h"
-#include "../sccs/sccs_periodic.h"
+#include "../sccs/sccs_response.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
@@ -63,16 +63,16 @@ TEST(SccsPccCoulomb, SqrtCgKeepsChargedUniformDielectricPccGauge)
     solver.tolerance_rms = 1.0e-14;
     solver.tolerance_max = 1.0e-14;
     const std::vector<double> cold_start;
-    const ModuleSccs::PeriodicSccsResult result
-        = ModuleSccs::solve_chain_sccs_response(cavity_density,
-                                                solute_charge,
-                                                cavity,
-                                                solver,
-                                                cold_start,
-                                                basis,
-                                                tpiba,
-                                                coulomb,
-                                                charge_reduction);
+    const ModuleSccs::SccsResponse result
+        = ModuleSccs::solve_sccs_response(cavity_density,
+                                          solute_charge,
+                                          cavity,
+                                          solver,
+                                          cold_start,
+                                          basis,
+                                          tpiba,
+                                          coulomb,
+                                          charge_reduction);
 
     EXPECT_EQ(result.polarization.iterations, 1);
     EXPECT_NEAR(result.far_field_polarization_charge,

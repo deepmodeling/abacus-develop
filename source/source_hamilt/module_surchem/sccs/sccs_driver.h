@@ -6,7 +6,7 @@
 #include "sccs_nonel.h"
 #include "sccs_parameters.h"
 #include "../pcc/pcc_2d.h"
-#include "sccs_periodic.h"
+#include "sccs_response.h"
 
 #include <cstdint>
 
@@ -44,7 +44,7 @@ struct SccsResult
     bool reused_fixed_sources = false;
     CoulombTransformCounts forward_transforms;
     ChargeDensity charge;
-    PeriodicSccsResult response;
+    SccsResponse response;
     ElectrostaticFunctionalResult electrostatic;
     NonElectrostaticResult non_electrostatic;
     std::vector<double> electron_potential_hartree;
