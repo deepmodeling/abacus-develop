@@ -199,8 +199,7 @@ TEST_F(ChargeMixingTest, MixResetClearsDmrHistory)
     cfg.mixing_dmr = true;
     cfg.scf_thr_type = 2;
     Charge_Mixing charge_mixing;
-    charge_mixing.set_rhopw(&pw_basis, &pw_basis);
-    charge_mixing.set_mixing(make_cfg(), ucell.omega, ucell.tpiba);
+    charge_mixing.set_mixing(make_cfg(), &pw_basis, &pw_basis, ucell.omega, ucell.tpiba);
     charge_mixing.init_mixing();
 
     Base_Mixing::Mixing_Data& dmr_mdata = charge_mixing.get_dmr_mdata();
