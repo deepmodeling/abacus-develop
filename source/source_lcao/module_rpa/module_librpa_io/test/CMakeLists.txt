@@ -15,7 +15,8 @@ add_executable(
   librpa_stru_symmetry_test.cpp
   ${ABACUS_SOURCE_DIR}/source_cell/module_symmetry/symm_rot_spin.cpp
 )
-target_link_libraries(MODULE_RPA_librpa_stru_symmetry_test PRIVATE base device ${math_libs})
+target_link_libraries(MODULE_RPA_librpa_stru_symmetry_test
+  PRIVATE base device abacus::linalg_libs)
 install(TARGETS MODULE_RPA_librpa_stru_symmetry_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
 add_test(
   NAME MODULE_RPA_librpa_stru_symmetry_test
