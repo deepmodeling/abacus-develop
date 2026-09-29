@@ -77,7 +77,8 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
           * static_cast<double>(electron_plane_y) / basis.ny;
     const double dipole_y = -ModulePcc::pcc_2d_relative_y(electron_y, geometry);
     const double expected_energy = 2.0 * ModuleBase::PI * dipole_y * dipole_y / cell.omega;
-    EXPECT_NEAR(surchem::Ael, 2.0 * expected_energy, 1.0e-12);
+    EXPECT_NEAR(surchem::Epcc, 2.0 * expected_energy, 1.0e-12);
+    EXPECT_DOUBLE_EQ(surchem::Ael, 0.0);
     EXPECT_DOUBLE_EQ(surchem::Acav, 0.0);
     EXPECT_TRUE(std::isfinite(potential(0, 0)));
     ModuleBase::matrix force(1, 3);
@@ -102,7 +103,7 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
     EXPECT_FALSE(correction.sccs_is_active());
     EXPECT_TRUE(correction.uses_pcc());
     correction.v_correction_pcc(cell, basis, 1, density_channels, potential);
-    EXPECT_NEAR(surchem::Ael, 2.0 * expected_energy, 1.0e-12);
+    EXPECT_NEAR(surchem::Epcc, 2.0 * expected_energy, 1.0e-12);
 
 }
 

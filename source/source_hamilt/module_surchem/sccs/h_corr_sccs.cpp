@@ -109,6 +109,10 @@ void surchem::v_correction_sccs(const UnitCell& cell,
             origin = this->pcc_geometry_.origin;
         }
     }
+    else
+    {
+        surchem::Epcc = 0.0;
+    }
     const ModulePcc::PccGeometry& pcc_geometry = this->pcc_geometry_;
     const ModulePcc::Pcc2dGeometry& pcc_2d_geometry = this->pcc_2d_geometry_;
 
@@ -160,8 +164,8 @@ void surchem::v_correction_sccs(const UnitCell& cell,
         }
     }
 
-    surchem::Ael = 2.0 * (this->sccs_result_.electrostatic.reaction_energy
-                          + this->sccs_result_.vacuum_pcc_energy);
+    // The vacuum PCC energy stays in surchem::Epcc, set by v_correction_pcc.
+    surchem::Ael = 2.0 * this->sccs_result_.electrostatic.reaction_energy;
     surchem::Acav = 2.0 * (this->sccs_result_.non_electrostatic.surface_energy
                            + this->sccs_result_.non_electrostatic.volume_energy);
     ModuleBase::timer::end("surchem", "v_correction_sccs");
@@ -194,6 +198,7 @@ void surchem::v_correction_solvent(const UnitCell& cell,
             ModuleBase::GlobalFunc::ZEROS(v.c, nspin * rho_basis.nrxx);
             surchem::Ael = 0.0;
             surchem::Acav = 0.0;
+            surchem::Epcc = 0.0;
         }
     }
     catch (const std::exception& error)

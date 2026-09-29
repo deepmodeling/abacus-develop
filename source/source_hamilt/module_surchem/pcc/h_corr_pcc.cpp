@@ -206,7 +206,8 @@ void surchem::v_correction_pcc(const UnitCell& cell,
         }
     }
     this->pcc_energy_rydberg_ = 2.0 * energy_hartree;
-    surchem::Ael = this->pcc_energy_rydberg_;
+    surchem::Epcc = this->pcc_energy_rydberg_;
+    surchem::Ael = 0.0;
     surchem::Acav = 0.0;
     this->pcc_result_valid_ = true;
     ModuleBase::timer::end("surchem", "v_correction_pcc");

@@ -570,7 +570,8 @@ struct Input_para
     double tau = 1.0798e-05; ///< the effective surface tension parameter
     double sigma_k = 0.6;    ///< the width of the diffuse cavity
     double nc_k = 0.00037;   ///< the cut-off charge density
-    bool uses_surchem_correction() const { return imp_sol != 0 || assume_isolated == "pcc_0d" || assume_isolated == "pcc_2d"; }
+    bool uses_pcc_correction() const { return assume_isolated == "pcc_0d" || assume_isolated == "pcc_2d"; }
+    bool uses_surchem_correction() const { return imp_sol != 0 || uses_pcc_correction(); }
     std::string sccs_preset = "custom";     ///< SCCS parameter preset
     double sccs_epsilon = 78.3;              ///< SCCS bulk relative permittivity
     double sccs_rho_min = 1.0e-4;            ///< lower cavity-density threshold, bohr^-3

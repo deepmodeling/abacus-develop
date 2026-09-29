@@ -85,6 +85,7 @@ TEST(HCorrSccs, SolventDispatchReturnsZeroBeforeDelayedActivation)
     }
     surchem::Ael = 1.0;
     surchem::Acav = 1.0;
+    surchem::Epcc = 1.0;
     solvent.v_correction_solvent(cell,
                                  basis,
                                  1,
@@ -97,6 +98,7 @@ TEST(HCorrSccs, SolventDispatchReturnsZeroBeforeDelayedActivation)
     }
     EXPECT_EQ(surchem::Ael, 0.0);
     EXPECT_EQ(surchem::Acav, 0.0);
+    EXPECT_EQ(surchem::Epcc, 0.0);
 }
 
 TEST(HCorrSccs, SolventDispatchStopsThroughWarningQuitOnKernelFailure)
@@ -283,10 +285,8 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     EXPECT_NEAR(result.vacuum_pcc_energy,
                 0.5 * 2.837297479480619 / length,
                 1.0e-12);
-    EXPECT_NEAR(surchem::Ael,
-                2.0 * (result.electrostatic.reaction_energy
-                       + result.vacuum_pcc_energy),
-                1.0e-14);
+    EXPECT_NEAR(surchem::Ael, 2.0 * result.electrostatic.reaction_energy, 1.0e-14);
+    EXPECT_NEAR(surchem::Epcc, 2.0 * result.vacuum_pcc_energy, 1.0e-14);
     EXPECT_NEAR(surchem::Acav,
                 2.0 * (result.non_electrostatic.surface_energy
                        + result.non_electrostatic.volume_energy),
@@ -464,7 +464,8 @@ TEST(HCorrSccs, AppliesNeutralPcc2dPointIonEnergyAndPotential)
     EXPECT_NEAR(result.point_solute_moments_2d.dipole_y, dipole_y, 1.0e-12);
     EXPECT_NEAR(result.vacuum_pcc_energy, expected_energy, 1.0e-12);
     EXPECT_NEAR(result.electrostatic.reaction_energy, 0.0, 1.0e-14);
-    EXPECT_NEAR(surchem::Ael, 2.0 * expected_energy, 1.0e-12);
+    EXPECT_NEAR(surchem::Ael, 0.0, 1.0e-13);
+    EXPECT_NEAR(surchem::Epcc, 2.0 * expected_energy, 1.0e-12);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         EXPECT_TRUE(std::isfinite(potential(0, ir)));
@@ -549,10 +550,8 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
         = ModulePcc::pcc_2d_self_energy(result.point_solute_moments_2d,
                                          pcc_geometry.parameters);
     EXPECT_NEAR(result.vacuum_pcc_energy, expected_vacuum_energy, 1.0e-14);
-    EXPECT_NEAR(surchem::Ael,
-                2.0 * (result.electrostatic.reaction_energy
-                       + result.vacuum_pcc_energy),
-                1.0e-14);
+    EXPECT_NEAR(surchem::Ael, 2.0 * result.electrostatic.reaction_energy, 1.0e-14);
+    EXPECT_NEAR(surchem::Epcc, 2.0 * result.vacuum_pcc_energy, 1.0e-14);
     std::ostringstream diagnostics;
     solvent.write_sccs_diagnostics(diagnostics);
     const std::string diagnostic_text = diagnostics.str();
@@ -574,6 +573,7 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     const std::string iteration_text = iteration_output.str();
     EXPECT_NE(iteration_text.find("SCCS_ITER "), std::string::npos);
     EXPECT_NE(iteration_text.find("E_SOL/Ry "), std::string::npos);
+    EXPECT_NE(iteration_text.find("E_PCC/Ry "), std::string::npos);
     // Every boundary uses the sqrt-CG, which has no mixing diagnostics.
     EXPECT_EQ(iteration_text.find("SCCS_MIXING"), std::string::npos);
     EXPECT_NE(iteration_text.find("SCCS_RESIDUAL RMS "), std::string::npos);

@@ -279,15 +279,19 @@ void print_etot(const Magnetism& magnet,
         energies_Ry.push_back(elec.f_en.exx);
 
         //! solvation energy
-        if (inp.uses_surchem_correction())
+        if (inp.imp_sol)
         {
-            titles.push_back(inp.imp_sol ? "E_sol_el" : "E_pcc");
+            titles.push_back("E_sol_el");
             energies_Ry.push_back(elec.f_en.esol_el);
-            if (inp.imp_sol)
-            {
-                titles.push_back("E_sol_cav");
-                energies_Ry.push_back(elec.f_en.esol_cav);
-            }
+            titles.push_back("E_sol_cav");
+            energies_Ry.push_back(elec.f_en.esol_cav);
+        }
+
+        //! point-counter-charge open-boundary correction
+        if (inp.uses_pcc_correction())
+        {
+            titles.push_back("E_pcc");
+            energies_Ry.push_back(elec.f_en.correction_el);
         }
 
         //! electric field energy

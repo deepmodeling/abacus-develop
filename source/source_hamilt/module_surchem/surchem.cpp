@@ -6,6 +6,7 @@
 
 double surchem::Acav = 0;
 double surchem::Ael = 0;
+double surchem::Epcc = 0;
 
 surchem::surchem()
 {
@@ -155,13 +156,17 @@ void surchem::write_sccs_iteration(std::ostream& output) const
     const ModuleSccs::SccsResult& result = this->sccs_result();
     const double solvation_energy_rydberg
         = 2.0 * (result.electrostatic.reaction_energy
-                 + result.vacuum_pcc_energy
                  + result.non_electrostatic.surface_energy
                  + result.non_electrostatic.volume_energy);
     const std::streamsize previous_precision = output.precision();
     const std::ios_base::fmtflags previous_flags = output.flags();
     output << " SCCS_ITER " << result.response.polarization.iterations
-           << " E_SOL/Ry " << std::setprecision(8) << solvation_energy_rydberg << '\n';
+           << " E_SOL/Ry " << std::setprecision(8) << solvation_energy_rydberg;
+    if (this->uses_pcc())
+    {
+        output << " E_PCC/Ry " << 2.0 * result.vacuum_pcc_energy;
+    }
+    output << '\n';
 
     if (this->parameters_.debug >= 2)
     {

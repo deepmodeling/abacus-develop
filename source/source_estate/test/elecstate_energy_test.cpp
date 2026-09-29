@@ -36,6 +36,10 @@ double ElecState::get_solvent_model_Acav()
 {
     return 0.5;
 }
+double ElecState::get_pcc_energy()
+{
+    return 0.25;
+}
 double ElecState::get_dftu_energy()
 {
     return 0.6;
@@ -135,6 +139,17 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtotImpSol)
     elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
     // deband + hatree + efiled + gatefield + esol_el + esol_cav + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.6);
+}
+
+TEST_F(ElecStateEnergyTest, CalEnergiesEtotPccIsSeparateFromSolvation)
+{
+    elecstate->f_en.deband = 0.1;
+    assume_isolated = "pcc_0d";
+    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    // deband + hatree + efiled + gatefield + escon + correction_el (PCC)
+    EXPECT_DOUBLE_EQ(elecstate->f_en.correction_el, 0.25);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.esol_el, 0.0);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.95);
 }
 
 TEST_F(ElecStateEnergyTest, CalEnergiesEtotDFTU)

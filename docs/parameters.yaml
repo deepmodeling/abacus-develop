@@ -180,7 +180,7 @@ parameters:
       * none: regular periodic calculation without isolated-system correction.
       * pcc_0d: self-consistent PCC for cubic molecular cells. Uses the mass-weighted ionic system center for multipoles.
       * pcc_2d: self-consistent slab PCC, periodic in x-z and open along y. The second lattice vector must be perpendicular to the periodic plane. Charged slabs use the ENVIRON monopole constant -pi*Q/(3*L_y); their absolute energies depend on the cell length along y.
-      PCC works with imp_sol=0 or 2, contributes to energy, potential and fixed-cell forces, and is incompatible with the legacy solvent (imp_sol=1).
+      PCC works with imp_sol=0 or 2, contributes to energy, potential and fixed-cell forces, and is incompatible with the legacy solvent (imp_sol=1). Its energy is printed as E_pcc, separately from the solvation terms E_sol_el and E_sol_cav.
       * makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
 
       Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).

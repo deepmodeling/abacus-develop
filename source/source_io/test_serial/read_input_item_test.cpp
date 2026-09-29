@@ -213,6 +213,7 @@ TEST_F(InputTest, Item_test)
                 param.input.imp_sol = model;
                 EXPECT_NO_THROW(isolation->second.check_value(isolation->second, param));
                 EXPECT_TRUE(param.input.uses_surchem_correction());
+                EXPECT_TRUE(param.input.uses_pcc_correction());
             }
             param.input.imp_sol = 1;
             EXPECT_EXIT(isolation->second.check_value(isolation->second, param),
@@ -221,6 +222,7 @@ TEST_F(InputTest, Item_test)
         param.input.assume_isolated = "none";
         param.input.imp_sol = 0;
         EXPECT_FALSE(param.input.uses_surchem_correction());
+        EXPECT_FALSE(param.input.uses_pcc_correction());
         auto debug = find_label("sccs_debug", readinput.input_lists);
         for (int level : {0, 1, 2})
         {

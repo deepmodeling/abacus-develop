@@ -18,6 +18,7 @@ TEST(SurchemInput, SelectsVacuumPccIndependentlyOfSolvent)
     EXPECT_EQ(parameters.pcc_boundary, ModulePcc::Boundary::Pcc0d);
     EXPECT_EQ(parameters.pool_process_count, 4);
     EXPECT_TRUE(input.uses_surchem_correction());
+    EXPECT_TRUE(input.uses_pcc_correction());
 }
 
 TEST(SurchemInput, TransfersPresetAndSolverControls)

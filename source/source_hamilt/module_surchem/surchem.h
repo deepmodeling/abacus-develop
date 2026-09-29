@@ -58,6 +58,9 @@ class surchem
 
     static double Acav;
     static double Ael;
+    // PCC open-boundary correction energy (Ry), reported separately from
+    // the solvation terms Ael and Acav; zero without assume_isolated pcc_*.
+    static double Epcc;
 
     // get atom info
     atom_in GetAtom;

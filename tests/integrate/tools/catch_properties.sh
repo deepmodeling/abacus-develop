@@ -104,6 +104,7 @@ out_dm=$(get_input_key_value "out_dm" "INPUT")
 out_mul=$(get_input_key_value "out_mul" "INPUT")
 gamma_only=$(get_input_key_value "gamma_only" "INPUT")
 imp_sol=$(get_input_key_value "imp_sol" "INPUT")
+assume_isolated=$(get_input_key_value "assume_isolated" "INPUT")
 run_rpa=$(get_input_key_value "rpa" "INPUT")
 out_pot=$(get_input_key_value "out_pot" "INPUT")
 out_elf=$(get_input_key_value "out_elf" "INPUT")
@@ -801,6 +802,14 @@ if [[ "$imp_sol" == "1" || "$imp_sol" == "2" ]]; then
 	esol_cav=`grep E_sol_cav $running_path | awk '{print $3}'`
 	echo "esolelref $esol_el" >>$1
 	echo "esolcavref $esol_cav" >>$1
+fi
+
+#--------------------------------------------
+# point-counter-charge open-boundary correction
+#--------------------------------------------
+if [[ "$assume_isolated" == "pcc_0d" || "$assume_isolated" == "pcc_2d" ]]; then
+	epcc=`grep E_pcc $running_path | awk '{print $3}'`
+	echo "epccref $epcc" >>$1
 fi
 
 #--------------------------------------------
