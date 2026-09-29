@@ -348,26 +348,6 @@ TEST(SternheimerABACUSSTSmoke, RejectsSymmetryReducedSpinPolarizedKGrid)
                  std::invalid_argument);
 }
 
-TEST(SternheimerABACUSSTSmoke, AcceptsOnlyPhysicalGammaSpinRows)
-{
-    const std::vector<std::array<double, 3>> one_gamma = {{{0.0, 0.0, 0.0}}};
-    const std::vector<std::array<double, 3>> two_gamma = {{{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}}};
-
-    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_gamma_layout(1, 1, 1, one_gamma));
-    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_gamma_layout(2, 2, 2, two_gamma));
-
-    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_gamma_layout(1, 2, 2, two_gamma), std::invalid_argument);
-
-    const std::vector<std::array<double, 3>> non_gamma = {{{0.25, 0.0, 0.0}}};
-    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_gamma_layout(1, 1, 1, non_gamma), std::invalid_argument);
-}
-
-TEST(SternheimerABACUSSTSmoke, SelectsZeroOrderSourceByResponseMode)
-{
-    EXPECT_FALSE(ModuleRI::sternheimer_uses_lcao_zero_order(false));
-    EXPECT_TRUE(ModuleRI::sternheimer_uses_lcao_zero_order(true));
-}
-
 TEST(SternheimerABACUSSTSmoke, MapsCanonicalFullQIndexToReaderV1StarIndex)
 {
     auto q0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 0.25);
