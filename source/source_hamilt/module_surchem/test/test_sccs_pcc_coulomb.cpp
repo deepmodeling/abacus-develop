@@ -3,7 +3,7 @@
 #include <mpi.h>
 #endif
 
-#include "../pcc/sccs_pcc_coulomb.h"
+#include "../sccs/sccs_pcc_coulomb.h"
 #include "../sccs/sccs_charge.h"
 #include "../sccs/sccs_periodic.h"
 

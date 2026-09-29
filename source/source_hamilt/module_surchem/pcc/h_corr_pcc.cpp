@@ -1,6 +1,5 @@
 #include "../surchem.h"
-#include "sccs_pcc_coulomb.h"
-#include "sccs_pcc_2d_coulomb.h"
+#include "pcc_moments.h"
 #include "../common/charge_reduction.h"
 #include "../common/pw_grid.h"
 #include "source_base/timer.h"

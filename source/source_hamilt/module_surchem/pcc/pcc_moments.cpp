@@ -1,0 +1,75 @@
+#include "pcc_moments.h"
+
+#include "../common/charge_reduction.h"
+
+#include <cmath>
+#include <stdexcept>
+
+namespace ModuleSccs
+{
+
+MultipoleMoments reduce_pcc_moments(MultipoleMoments moments,
+                                     const ChargeReduction& reduction)
+{
+    double values[5] = {moments.charge,
+                        moments.dipole.x,
+                        moments.dipole.y,
+                        moments.dipole.z,
+                        moments.quadrupole_trace};
+    reduction.reduce_sum(values, 5);
+    for (int index = 0; index < 5; ++index)
+    {
+        if (!std::isfinite(values[index]))
+        {
+            throw std::domain_error("zero-dimensional PCC reduced moments must be finite");
+        }
+    }
+    moments.charge = values[0];
+    moments.dipole.x = values[1];
+    moments.dipole.y = values[2];
+    moments.dipole.z = values[3];
+    moments.quadrupole_trace = values[4];
+    return moments;
+}
+
+MultipoleMoments reduced_pcc_density_moments(
+    const std::vector<double>& density,
+    const std::vector<ModuleBase::Vector3<double>>& positions,
+    const double volume_element,
+    const PccGeometry& geometry,
+    const ChargeReduction& reduction)
+{
+    return reduce_pcc_moments(
+        density_moments(density, positions, volume_element, geometry),
+        reduction);
+}
+
+Pcc2dMoments reduce_pcc_2d_moments(Pcc2dMoments moments,
+                                    const ChargeReduction& reduction)
+{
+    double values[3] = {moments.charge, moments.dipole_y, moments.quadrupole_yy};
+    reduction.reduce_sum(values, 3);
+    if (!std::isfinite(values[0]) || !std::isfinite(values[1])
+        || !std::isfinite(values[2]))
+    {
+        throw std::domain_error("two-dimensional PCC reduced moments must be finite");
+    }
+    moments.charge = values[0];
+    moments.dipole_y = values[1];
+    moments.quadrupole_yy = values[2];
+    return moments;
+}
+
+Pcc2dMoments reduced_pcc_2d_density_moments(
+    const std::vector<double>& density,
+    const std::vector<ModuleBase::Vector3<double>>& positions,
+    const double volume_element,
+    const Pcc2dGeometry& geometry,
+    const ChargeReduction& reduction)
+{
+    return reduce_pcc_2d_moments(
+        pcc_2d_density_moments(density, positions, volume_element, geometry),
+        reduction);
+}
+
+} // namespace ModuleSccs

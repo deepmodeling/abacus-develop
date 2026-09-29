@@ -22,8 +22,9 @@ add_library(
     sccs/sccs_parameters.cpp
     pcc/sccs_pcc.cpp
     pcc/sccs_pcc_2d.cpp
-    pcc/sccs_pcc_2d_coulomb.cpp
-    pcc/sccs_pcc_coulomb.cpp
+    pcc/pcc_moments.cpp
+    sccs/sccs_pcc_2d_coulomb.cpp
+    sccs/sccs_pcc_coulomb.cpp
     sccs/sccs_poisson.cpp
     sccs/sccs_pw_coulomb.cpp
     sccs/sccs_pw_nonel.cpp

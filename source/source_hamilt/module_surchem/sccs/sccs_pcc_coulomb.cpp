@@ -1,6 +1,7 @@
 #include "sccs_pcc_coulomb.h"
 
-#include "../sccs/sccs_charge.h"
+#include "../common/charge_reduction.h"
+#include "../pcc/pcc_moments.h"
 
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_base/constants.h"
@@ -10,46 +11,6 @@
 
 namespace ModuleSccs
 {
-namespace
-{
-
-MultipoleMoments reduce_pcc_moments(MultipoleMoments moments,
-                                     const ChargeReduction& reduction)
-{
-    double values[5] = {moments.charge,
-                        moments.dipole.x,
-                        moments.dipole.y,
-                        moments.dipole.z,
-                        moments.quadrupole_trace};
-    reduction.reduce_sum(values, 5);
-    for (int index = 0; index < 5; ++index)
-    {
-        if (!std::isfinite(values[index]))
-        {
-            throw std::domain_error("zero-dimensional PCC reduced moments must be finite");
-        }
-    }
-    moments.charge = values[0];
-    moments.dipole.x = values[1];
-    moments.dipole.y = values[2];
-    moments.dipole.z = values[3];
-    moments.quadrupole_trace = values[4];
-    return moments;
-}
-
-} // namespace
-
-MultipoleMoments reduced_pcc_density_moments(
-    const std::vector<double>& density,
-    const std::vector<ModuleBase::Vector3<double>>& positions,
-    const double volume_element,
-    const PccGeometry& geometry,
-    const ChargeReduction& reduction)
-{
-    return reduce_pcc_moments(
-        density_moments(density, positions, volume_element, geometry),
-        reduction);
-}
 
 PccCoulombOperator::PccCoulombOperator(
     const ModulePW::PW_Basis& basis,

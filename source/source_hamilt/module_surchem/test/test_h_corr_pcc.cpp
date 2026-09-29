@@ -4,7 +4,6 @@
 #endif
 
 #include "../surchem.h"
-#include "../pcc/sccs_pcc_2d_coulomb.h"
 #include "../common/pw_grid.h"
 
 #include "source_base/constants.h"

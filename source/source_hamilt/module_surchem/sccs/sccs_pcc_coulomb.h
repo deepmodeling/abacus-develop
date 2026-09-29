@@ -1,9 +1,9 @@
-#ifndef SCCS_PCC_2D_COULOMB_H
-#define SCCS_PCC_2D_COULOMB_H
+#ifndef SCCS_PCC_COULOMB_H
+#define SCCS_PCC_COULOMB_H
 
-#include "sccs_pcc_2d.h"
-#include "../sccs/sccs_poisson.h"
-#include "../sccs/sccs_pw_coulomb.h"
+#include "../pcc/sccs_pcc.h"
+#include "sccs_poisson.h"
+#include "sccs_pw_coulomb.h"
 
 namespace ModulePW
 {
@@ -15,22 +15,15 @@ namespace ModuleSccs
 
 class ChargeReduction;
 
-Pcc2dMoments reduced_pcc_2d_density_moments(
-    const std::vector<double>& density,
-    const std::vector<ModuleBase::Vector3<double>>& positions,
-    double volume_element,
-    const Pcc2dGeometry& geometry,
-    const ChargeReduction& reduction);
-
-class Pcc2dCoulombOperator : public CoulombOperator
+class PccCoulombOperator : public CoulombOperator
 {
   public:
-    Pcc2dCoulombOperator(const ModulePW::PW_Basis& basis,
-                         double tpiba,
-                         const std::vector<ModuleBase::Vector3<double>>& positions,
-                         double volume_element,
-                         const Pcc2dGeometry& geometry,
-                         const ChargeReduction& reduction);
+    PccCoulombOperator(const ModulePW::PW_Basis& basis,
+                       double tpiba,
+                       const std::vector<ModuleBase::Vector3<double>>& positions,
+                       double volume_element,
+                       const PccGeometry& geometry,
+                       const ChargeReduction& reduction);
 
     bool has_boundary_correction() const override
     {
@@ -59,9 +52,9 @@ class Pcc2dCoulombOperator : public CoulombOperator
   private:
     PeriodicCoulombOperator periodic_;
     const std::vector<ModuleBase::Vector3<double>>& positions_;
-    std::vector<double> relative_y_;
+    std::vector<ModuleBase::Vector3<double>> relative_positions_;
     double volume_element_ = 0.0;
-    Pcc2dGeometry geometry_;
+    PccGeometry geometry_;
     const ChargeReduction& reduction_;
 };
 

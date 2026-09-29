@@ -2,7 +2,8 @@
 #include "source_base/parallel_global.h"
 #endif
 
-#include "../pcc/sccs_pcc_2d_coulomb.h"
+#include "../pcc/pcc_moments.h"
+#include "../sccs/sccs_pcc_2d_coulomb.h"
 #include "../sccs/sccs_periodic.h"
 #include "../sccs/sccs_pw_coulomb.h"
 #include "../common/pw_grid.h"
