@@ -42,20 +42,10 @@ std::vector<double> continuum_polarization_charge(
     const std::vector<double>& solute_charge,
     const PeriodicSccsResult& response);
 
-// initial_potential: previous sqrt-CG potential for the warm start, or empty.
-PeriodicSccsResult solve_periodic_sccs(
-    const std::vector<double>& cavity_density,
-    const std::vector<double>& solute_charge,
-    const CavityParameters& cavity_parameters,
-    const PolarizationSolverParameters& solver_parameters,
-    const std::vector<double>& initial_potential,
-    const ModulePW::PW_Basis& basis,
-    double tpiba,
-    int pool_process_count);
-
 // ENVIRON sqrt-preconditioned CG for every boundary: the preconditioner uses
 // coulomb (periodic or PCC-corrected). It stops on the RMS and maximum charge
-// residual and warm-starts from initial_potential (previous solution) when that helps.
+// residual and warm-starts from initial_potential (previous solution, or empty)
+// when that helps.
 PeriodicSccsResult solve_chain_sccs_response(
     const std::vector<double>& cavity_density,
     const std::vector<double>& solute_charge,

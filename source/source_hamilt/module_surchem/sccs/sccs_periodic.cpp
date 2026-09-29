@@ -1,7 +1,6 @@
 #include "sccs_periodic.h"
 
 #include "sccs_pw_coulomb.h"
-#include "sccs_pw_reduction.h"
 
 #include "source_basis/module_pw/pw_basis.h"
 
@@ -355,29 +354,6 @@ void finish_open_boundary_response(const std::vector<double>& charge,
 }
 
 } // namespace
-
-PeriodicSccsResult solve_periodic_sccs(
-    const std::vector<double>& cavity_density,
-    const std::vector<double>& solute_charge,
-    const CavityParameters& cavity_parameters,
-    const PolarizationSolverParameters& solver_parameters,
-    const std::vector<double>& initial_potential,
-    const ModulePW::PW_Basis& basis,
-    const double tpiba,
-    const int pool_process_count)
-{
-    const PeriodicCoulombOperator coulomb(basis, tpiba);
-    const PoolPolarizationReduction reduction(pool_process_count);
-    return solve_chain_sccs_response(cavity_density,
-                               solute_charge,
-                               cavity_parameters,
-                               solver_parameters,
-                               initial_potential,
-                               basis,
-                               tpiba,
-                               coulomb,
-                               reduction);
-}
 
 PeriodicSccsResult solve_chain_sccs_response(
     const std::vector<double>& density,

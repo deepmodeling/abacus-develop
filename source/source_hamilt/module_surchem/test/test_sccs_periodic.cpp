@@ -4,6 +4,8 @@
 #endif
 
 #include "../sccs/sccs_periodic.h"
+#include "../sccs/sccs_pw_coulomb.h"
+#include "../sccs/sccs_pw_reduction.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
@@ -17,6 +19,28 @@
 
 namespace
 {
+
+// The SCCS driver's periodic path: plain Coulomb preconditioner, pool reduction.
+ModuleSccs::PeriodicSccsResult solve_periodic(const std::vector<double>& cavity_density,
+                                              const std::vector<double>& solute_charge,
+                                              const ModuleSccs::CavityParameters& cavity,
+                                              const ModuleSccs::PolarizationSolverParameters& solver,
+                                              const std::vector<double>& initial_potential,
+                                              const ModulePW::PW_Basis& basis,
+                                              const double tpiba)
+{
+    const ModuleSccs::PeriodicCoulombOperator coulomb(basis, tpiba);
+    const ModuleSccs::PoolPolarizationReduction reduction(1);
+    return ModuleSccs::solve_chain_sccs_response(cavity_density,
+                                                 solute_charge,
+                                                 cavity,
+                                                 solver,
+                                                 initial_potential,
+                                                 basis,
+                                                 tpiba,
+                                                 coulomb,
+                                                 reduction);
+}
 
 TEST(SccsPeriodic, ContinuumSourceScreensUniformDielectricAndIncludesInterfaceField)
 {
@@ -78,15 +102,10 @@ TEST(SccsPeriodic, UniformDielectricScreensSingleFourierShell)
     solver.tolerance_max = 1.0e-12;
 
     const std::vector<double> cavity_density(basis.nrxx, 0.0);
+    const std::vector<double> cold_start;
+    const double tpiba = ModuleBase::TWO_PI / 10.0;
     const ModuleSccs::PeriodicSccsResult result
-        = ModuleSccs::solve_periodic_sccs(cavity_density,
-                                          solute_charge,
-                                          cavity,
-                                          solver,
-                                          std::vector<double>(),
-                                          basis,
-                                          ModuleBase::TWO_PI / 10.0,
-                                          1);
+        = solve_periodic(cavity_density, solute_charge, cavity, solver, cold_start, basis, tpiba);
 
     EXPECT_EQ(result.polarization.status, ModuleSccs::PolarizationStatus::Converged);
     EXPECT_DOUBLE_EQ(result.far_field_polarization_charge, 0.0);
@@ -134,8 +153,7 @@ class SqrtCgFixture : public testing::Test
     ModuleSccs::PeriodicSccsResult solve_from(const std::vector<double>& initial_potential) const
     {
         const double tpiba = ModuleBase::TWO_PI / length;
-        return ModuleSccs::solve_periodic_sccs(density, charge, cavity, solver, initial_potential,
-                                               basis, tpiba, 1);
+        return solve_periodic(density, charge, cavity, solver, initial_potential, basis, tpiba);
     }
 
     ModuleSccs::PeriodicSccsResult solve() const
@@ -276,7 +294,7 @@ TEST(SccsPeriodic, ChainGradientMatchesAnalyticDensityModeAcrossCavityEdges)
     const std::vector<double> charge(basis.nrxx, 0.0);
     const std::vector<double> initial;
     const ModuleSccs::PeriodicSccsResult result
-        = ModuleSccs::solve_periodic_sccs(density, charge, cavity, solver, initial, basis, tpiba, 1);
+        = solve_periodic(density, charge, cavity, solver, initial, basis, tpiba);
     ASSERT_EQ(result.polarization.status, ModuleSccs::PolarizationStatus::Converged);
     ASSERT_EQ(result.density_gradient.size(), density.size());
     for (int ir = 0; ir < basis.nrxx; ++ir)
