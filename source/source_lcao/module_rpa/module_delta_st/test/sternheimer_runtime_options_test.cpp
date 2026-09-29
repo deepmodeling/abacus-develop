@@ -1,8 +1,10 @@
 #include "source_lcao/module_rpa/module_delta_st/sternheimer_runtime_options.h"
+#include "source_lcao/module_rpa/module_delta_st/sternheimer_abacus_st_smoke.h"
 
 #include "source_io/module_parameter/input_parameter.h"
 
 #include <cstdlib>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <string>
@@ -72,6 +74,34 @@ TEST(SternheimerMolecularCoulomb, RequiresExplicitIsolatedContractAndMatchingBas
     input.out_librpa_3d_coulomb_method = "ewald";
     input.shrink_abfs_pca_thr = 1.e-6;
     EXPECT_THROW(ModuleRI::validate_sternheimer_molecular_coulomb(input), std::invalid_argument);
+}
+
+TEST(SternheimerAbacusRuntime, RetainsExplicitProducerState)
+{
+    Input_para input;
+    std::vector<std::string> auxiliary_files = {"auxiliary.orb"};
+    std::vector<int> auxiliary_kmesh = {2, 2, 1};
+    std::ofstream log;
+    const ModuleRI::SternheimerAbacusRuntime runtime = {
+        input,
+        24,
+        3,
+        8,
+        2,
+        false,
+        auxiliary_files,
+        auxiliary_kmesh,
+        log};
+
+    EXPECT_EQ(&runtime.input, &input);
+    EXPECT_EQ(runtime.nlocal, 24);
+    EXPECT_EQ(runtime.rank, 3);
+    EXPECT_EQ(runtime.nproc, 8);
+    EXPECT_EQ(runtime.kpar_lcao, 2);
+    EXPECT_FALSE(runtime.deepks_setorb);
+    EXPECT_EQ(&runtime.abfs_files, &auxiliary_files);
+    EXPECT_EQ(&runtime.abfs_kmesh_times, &auxiliary_kmesh);
+    EXPECT_EQ(&runtime.log, &log);
 }
 
 TEST_F(SternheimerRuntimeOptionsTest, UsesTwoChannelBatchesByDefaultAndOneForRollback)

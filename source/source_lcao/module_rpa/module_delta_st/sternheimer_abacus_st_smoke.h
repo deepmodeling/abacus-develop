@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <iomanip>
+#include <iosfwd>
 #include <limits>
 #include <sstream>
 #include <stdexcept>
@@ -25,6 +26,7 @@
 class UnitCell;
 class LCAO_Orbitals;
 class Structure_Factor;
+class Input_para;
 
 namespace ModulePW
 {
@@ -40,6 +42,19 @@ class Potential;
 
 namespace ModuleRI
 {
+
+struct SternheimerAbacusRuntime
+{
+    const Input_para& input;
+    int nlocal;
+    int rank;
+    int nproc;
+    int kpar_lcao;
+    bool deepks_setorb;
+    const std::vector<std::string>& abfs_files;
+    const std::vector<int>& abfs_kmesh_times;
+    std::ofstream& log;
+};
 
 inline constexpr double default_sternheimer_solver_tolerance() noexcept
 {
