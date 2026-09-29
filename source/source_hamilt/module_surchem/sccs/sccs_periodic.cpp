@@ -489,15 +489,6 @@ PeriodicSccsResult solve_chain_sccs_response(
     // periodic potential is shifted to zero mean (ENVIRON generalized_sqrt).
     if (!open_boundary)
     {
-        // Recover induced charge for diagnostic/state consumers.
-        std::vector<std::complex<double>> density_g(basis.npw);
-        basis.real2recip(potential.data(), density_g.data());
-        for (int ig = 0; ig < basis.npw; ++ig)
-            density_g[ig] *= tpiba*tpiba*basis.gg[ig]/ModuleBase::FOUR_PI;
-        result.polarization.polarization_charge.resize(size);
-        basis.recip2real(density_g.data(), result.polarization.polarization_charge.data());
-        for (std::size_t i = 0; i < size; ++i)
-            result.polarization.polarization_charge[i] -= charge[i];
         double mean = 0.0;
         for (double value : potential) mean += value;
         reduction.reduce_sum(mean);

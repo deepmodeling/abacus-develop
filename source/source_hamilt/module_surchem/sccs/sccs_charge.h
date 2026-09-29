@@ -2,7 +2,6 @@
 #define SCCS_CHARGE_H
 
 #include "../common/charge_reduction.h"
-#include "../pcc/pcc_0d.h"
 
 #include <vector>
 
@@ -28,13 +27,6 @@ ChargeDensity assemble_charge_density(const std::vector<double>& electron_densit
                                       double expected_ionic_charge,
                                       double normalization_tolerance,
                                       const ModuleSurchem::ChargeReduction& reduction);
-
-ModulePcc::MultipoleMoments reduced_density_moments(
-    const std::vector<double>& density,
-    const std::vector<ModuleBase::Vector3<double>>& positions,
-    double volume_element,
-    const ModuleBase::Vector3<double>& origin,
-    const ModuleSurchem::ChargeReduction& reduction);
 
 } // namespace ModuleSccs
 

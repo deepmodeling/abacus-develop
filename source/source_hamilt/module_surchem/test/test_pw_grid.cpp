@@ -19,7 +19,7 @@
 namespace
 {
 
-TEST(SccsPwCharge, BuildsCellCenterAndIntegerNodeGrid)
+TEST(SccsPwCharge, BuildsIntegerNodeGrid)
 {
     ModulePW::PW_Basis basis("cpu", "double");
 #ifdef __MPI
@@ -32,11 +32,6 @@ TEST(SccsPwCharge, BuildsCellCenterAndIntegerNodeGrid)
     basis.initparameters(false, 20.0, 1, false);
     basis.setuptransform();
     basis.collect_local_pw();
-
-    const ModuleBase::Vector3<double> center = ModuleSurchem::cell_center(lattice, 10.0);
-    EXPECT_DOUBLE_EQ(center.x, 5.0);
-    EXPECT_DOUBLE_EQ(center.y, 5.0);
-    EXPECT_DOUBLE_EQ(center.z, 5.0);
 
     const std::vector<ModuleBase::Vector3<double>> positions
         = ModuleSurchem::pw_grid_positions(basis, lattice, 10.0);

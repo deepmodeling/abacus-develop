@@ -95,18 +95,12 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     const std::vector<double>& ionic_density = cache.ionic_density;
     const std::vector<double>& core_density = cache.core_density;
     const std::vector<ModuleBase::Vector3<double>>& positions = cache.positions;
-    ModuleBase::Vector3<double> origin
-        = ModuleSurchem::cell_center(cell.latvec, cell.lat0);
     ModuleBase::matrix pcc_potential;
     double vacuum_pcc_energy = 0.0;
     if (this->uses_pcc())
     {
         this->v_correction_pcc(cell, rho_basis, nspin, rho, pcc_potential);
         vacuum_pcc_energy = 0.5 * this->pcc_energy_rydberg_;
-        if (this->parameters_.pcc_boundary == ModulePcc::Boundary::Pcc0d)
-        {
-            origin = this->pcc_geometry_.origin;
-        }
     }
     else
     {
@@ -125,7 +119,6 @@ void surchem::v_correction_sccs(const UnitCell& cell,
                                        this->parameters_.expected_ionic_charge,
                                        this->parameters_.normalization_tolerance,
                                        positions,
-                                       origin,
                                        this->parameters_.sccs_config,
                                        pcc_geometry,
                                        pcc_2d_geometry,

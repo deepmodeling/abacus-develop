@@ -66,6 +66,8 @@ struct PolarizationResult
     bool fixed_point_checked = false;
     double fixed_point_defect_rms = 0.0;
     double fixed_point_defect_max = 0.0;
+    // Open boundaries only: the ENVIRON dielectric_of_potential polarization
+    // density, for the PCC moment diagnostics. Empty when periodic.
     std::vector<double> polarization_charge;
     ElectrostaticField field;
 };

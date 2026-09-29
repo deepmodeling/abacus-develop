@@ -102,7 +102,7 @@ AddTest(
 AddTest(
   TARGET MODULE_HAMILT_surchem_sccs_charge
   LIBS base device
-  SOURCES test_sccs_charge.cpp ../sccs/sccs_charge.cpp ../pcc/pcc_0d.cpp
+  SOURCES test_sccs_charge.cpp ../sccs/sccs_charge.cpp
           ../common/charge_reduction.cpp
 )
 
@@ -136,7 +136,7 @@ AddTest(
 AddTest(
   TARGET MODULE_HAMILT_surchem_sccs_functional
   LIBS planewave device base
-  SOURCES test_sccs_functional.cpp ../sccs/sccs_charge.cpp ../pcc/pcc_0d.cpp
+  SOURCES test_sccs_functional.cpp ../sccs/sccs_charge.cpp
           ../sccs/sccs_functional.cpp ../sccs/sccs_pw_coulomb.cpp
           ../common/charge_reduction.cpp
 )
@@ -150,7 +150,7 @@ AddTest(
 AddTest(
   TARGET MODULE_HAMILT_surchem_sccs_pw_nonel
   LIBS planewave device base
-  SOURCES test_sccs_pw_nonel.cpp ../sccs/sccs_charge.cpp ../pcc/pcc_0d.cpp
+  SOURCES test_sccs_pw_nonel.cpp ../sccs/sccs_charge.cpp
           ../sccs/sccs_pw_coulomb.cpp ../sccs/sccs_pw_nonel.cpp
           ../common/charge_reduction.cpp
 )

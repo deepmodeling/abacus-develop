@@ -183,12 +183,16 @@ void surchem::write_sccs_iteration(std::ostream& output) const
         {
             // Gauss's law: FAR_FIELD is the solution's net screening charge,
             // DENSITY the dielectric_of_potential integral with its grid error.
+            const bool slab = this->parameters_.sccs_config.boundary == ModulePcc::Boundary::Pcc2d;
+            const double solute_charge
+                = slab ? result.solute_moments_2d.charge : result.solute_moments.charge;
+            const double density_charge
+                = slab ? result.polarization_moments_2d.charge : result.polarization_moments.charge;
             const double epsilon_bulk = this->parameters_.sccs_config.cavity.epsilon_bulk;
-            const double expected_charge
-                = -(1.0 - 1.0 / epsilon_bulk) * result.solute_moments.charge;
+            const double expected_charge = -(1.0 - 1.0 / epsilon_bulk) * solute_charge;
             output << " SCCS_GAUSS Q_POL_FAR_FIELD/e "
                    << result.response.far_field_polarization_charge
-                   << " Q_POL_DENSITY/e " << result.polarization_moments.charge
+                   << " Q_POL_DENSITY/e " << density_charge
                    << " Q_POL_EXPECTED/e " << expected_charge << '\n';
         }
         // Local output-rank FFT counts of the sqrt-CG solve; timings are in

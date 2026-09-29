@@ -72,7 +72,6 @@ bool same_state_signature(const SccsState& state,
                           const ModulePW::PW_Basis& basis,
                           const double tpiba,
                           const double volume_element,
-                          const ModuleBase::Vector3<double>& origin,
                           const std::uint64_t position_signature)
 {
     return state.valid && state.boundary == boundary
@@ -83,7 +82,6 @@ bool same_state_signature(const SccsState& state,
            && state.local_plane_start == basis.startz_current
            && state.grid_position_signature == position_signature
            && state.tpiba == tpiba && state.volume_element == volume_element
-           && same_vector(state.origin, origin)
            && state.pcc_geometry.parameters.cube_length
                   == pcc_geometry.parameters.cube_length
            && state.pcc_geometry.parameters.madelung
@@ -117,7 +115,6 @@ void SccsState::reset()
     boundary = ModulePcc::Boundary::Periodic;
     tpiba = 0.0;
     volume_element = 0.0;
-    origin = ModuleBase::Vector3<double>();
     pcc_geometry = ModulePcc::PccGeometry();
     pcc_2d_geometry = ModulePcc::Pcc2dGeometry();
     cavity = CavityParameters();
@@ -135,7 +132,6 @@ SccsResult evaluate_pw_sccs(
     const double expected_ionic_charge,
     const double normalization_tolerance,
     const std::vector<ModuleBase::Vector3<double>>& positions,
-    const ModuleBase::Vector3<double>& origin,
     const SccsConfig& config,
     const ModulePcc::PccGeometry& pcc_geometry,
     const ModulePcc::Pcc2dGeometry& pcc_2d_geometry,
@@ -198,7 +194,7 @@ SccsResult evaluate_pw_sccs(
     solver_parameters.tolerance_max = config.tolerance_max;
     solver_parameters.check_fixed_point = config.check_fixed_point;
     const std::uint64_t position_signature = grid_position_signature(positions);
-    // A changed grid, cavity or PCC origin invalidates the warm-start potential.
+    // A changed grid, cavity or PCC geometry invalidates the warm-start potential.
     // Borrow the cache until the solve succeeds; state is updated only below.
     const bool reuse_state = same_state_signature(state,
                                                    config.boundary,
@@ -208,7 +204,6 @@ SccsResult evaluate_pw_sccs(
                                                    basis,
                                                    tpiba,
                                                    volume_element,
-                                                   origin,
                                                    position_signature);
     const std::vector<double> empty_initial;
     const std::vector<double>& initial_potential
@@ -266,6 +261,8 @@ SccsResult evaluate_pw_sccs(
               + result.non_electrostatic.density_potential[index];
     }
 
+    // PCC moments of the smooth solute and of the polarization density, for
+    // the Gauss's-law check and the sccs_debug report; none when periodic.
     if (config.boundary == ModulePcc::Boundary::Pcc0d)
     {
         result.solute_moments
@@ -281,24 +278,7 @@ SccsResult evaluate_pw_sccs(
                 volume_element,
                 pcc_geometry,
                 reduction);
-    }
-    else
-    {
-        result.solute_moments = reduced_density_moments(result.charge.solute,
-                                                        positions,
-                                                        volume_element,
-                                                        origin,
-                                                        reduction);
-        result.polarization_moments
-            = reduced_density_moments(result.response.polarization.polarization_charge,
-                                      positions,
-                                      volume_element,
-                                      origin,
-                                      reduction);
-    }
-    result.screened_moments = ModulePcc::sum_moments(result.solute_moments, result.polarization_moments);
-    if (config.boundary == ModulePcc::Boundary::Pcc0d)
-    {
+        result.screened_moments = ModulePcc::sum_moments(result.solute_moments, result.polarization_moments);
         result.smooth_vacuum_pcc_energy
             = ModulePcc::pcc_self_energy(result.solute_moments, pcc_geometry.parameters);
     }
@@ -360,7 +340,6 @@ SccsResult evaluate_pw_sccs(
     state.boundary = config.boundary;
     state.tpiba = tpiba;
     state.volume_element = volume_element;
-    state.origin = origin;
     state.pcc_geometry = pcc_geometry;
     state.pcc_2d_geometry = pcc_2d_geometry;
     state.cavity = config.cavity;

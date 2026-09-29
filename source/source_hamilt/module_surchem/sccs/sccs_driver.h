@@ -33,7 +33,6 @@ struct SccsState
     ModulePcc::Boundary boundary = ModulePcc::Boundary::Periodic;
     double tpiba = 0.0;
     double volume_element = 0.0;
-    ModuleBase::Vector3<double> origin;
     ModulePcc::PccGeometry pcc_geometry;
     ModulePcc::Pcc2dGeometry pcc_2d_geometry;
     CavityParameters cavity;
@@ -51,9 +50,11 @@ struct SccsResult
     ElectrostaticFunctionalResult electrostatic;
     NonElectrostaticResult non_electrostatic;
     std::vector<double> electron_potential_hartree;
+    // PCC0D moments about the PCC origin; zero for other boundaries.
     ModulePcc::MultipoleMoments solute_moments;
     ModulePcc::MultipoleMoments polarization_moments;
     ModulePcc::MultipoleMoments screened_moments;
+    // PCC2D moments along the open direction; zero for other boundaries.
     ModulePcc::Pcc2dMoments solute_moments_2d;
     ModulePcc::Pcc2dMoments polarization_moments_2d;
     ModulePcc::Pcc2dMoments screened_moments_2d;
@@ -73,7 +74,6 @@ SccsResult evaluate_pw_sccs(
     double expected_ionic_charge,
     double normalization_tolerance,
     const std::vector<ModuleBase::Vector3<double>>& positions,
-    const ModuleBase::Vector3<double>& origin,
     const SccsConfig& config,
     const ModulePcc::PccGeometry& pcc_geometry,
     const ModulePcc::Pcc2dGeometry& pcc_2d_geometry,

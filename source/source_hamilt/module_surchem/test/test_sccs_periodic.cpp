@@ -79,6 +79,7 @@ TEST(SccsPeriodic, UniformDielectricScreensSingleFourierShell)
     basis.collect_local_pw();
 
     std::vector<std::complex<double>> charge_g(basis.npw);
+    double shell_gg = 0.0;
     for (int ig = 0; ig < basis.npw; ++ig)
     {
         const double gx = basis.gdirect[ig].x;
@@ -88,8 +89,10 @@ TEST(SccsPeriodic, UniformDielectricScreensSingleFourierShell)
             && std::abs(gz) < 1.0e-12)
         {
             charge_g[ig] = 0.5;
+            shell_gg = basis.gg[ig];
         }
     }
+    ASSERT_GT(shell_gg, 0.0);
     std::vector<double> solute_charge(basis.nrxx);
     basis.recip2real(charge_g.data(), solute_charge.data());
 
@@ -108,11 +111,15 @@ TEST(SccsPeriodic, UniformDielectricScreensSingleFourierShell)
     const ModuleSccs::PeriodicSccsResult result
         = solve_periodic(cavity_density, solute_charge, cavity, solver, cold_start, basis, tpiba);
 
+    // A uniform dielectric screens the shell to 4 pi q / (eps G^2).
+    const double screened_kernel = ModuleBase::FOUR_PI / (5.0 * tpiba * tpiba * shell_gg);
     EXPECT_DOUBLE_EQ(result.far_field_polarization_charge, 0.0);
+    EXPECT_TRUE(result.polarization.polarization_charge.empty());
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
+        const double expected_potential = screened_kernel * solute_charge[ir];
         EXPECT_DOUBLE_EQ(result.epsilon[ir], 5.0);
-        EXPECT_NEAR(result.polarization.polarization_charge[ir], -0.8 * solute_charge[ir], 2.0e-12);
+        EXPECT_NEAR(result.polarization.field.potential[ir], expected_potential, 2.0e-12);
         EXPECT_NEAR(result.grad_log_epsilon[ir].x, 0.0, 1.0e-12);
         EXPECT_NEAR(result.grad_log_epsilon[ir].y, 0.0, 1.0e-12);
         EXPECT_NEAR(result.grad_log_epsilon[ir].z, 0.0, 1.0e-12);

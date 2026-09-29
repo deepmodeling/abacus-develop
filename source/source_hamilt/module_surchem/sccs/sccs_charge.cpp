@@ -90,26 +90,4 @@ ChargeDensity assemble_charge_density(const std::vector<double>& electron_densit
     return result;
 }
 
-ModulePcc::MultipoleMoments reduced_density_moments(
-    const std::vector<double>& density,
-    const std::vector<ModuleBase::Vector3<double>>& positions,
-    const double volume_element,
-    const ModuleBase::Vector3<double>& origin,
-    const ModuleSurchem::ChargeReduction& reduction)
-{
-    ModulePcc::MultipoleMoments moments = ModulePcc::density_moments(density, positions, volume_element, origin);
-    double values[5] = {moments.charge,
-                        moments.dipole.x,
-                        moments.dipole.y,
-                        moments.dipole.z,
-                        moments.quadrupole_trace};
-    reduction.reduce_sum(values, 5);
-    moments.charge = values[0];
-    moments.dipole.x = values[1];
-    moments.dipole.y = values[2];
-    moments.dipole.z = values[3];
-    moments.quadrupole_trace = values[4];
-    return moments;
-}
-
 } // namespace ModuleSccs

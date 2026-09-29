@@ -33,17 +33,6 @@ ModuleBase::Vector3<double> lattice_row(const ModuleBase::Matrix3& lattice,
 
 } // namespace
 
-ModuleBase::Vector3<double> cell_center(const ModuleBase::Matrix3& lattice_vectors,
-                                       const double lattice_scale)
-{
-    const ModuleBase::Vector3<double> a1 = lattice_row(lattice_vectors, 0, lattice_scale);
-    const ModuleBase::Vector3<double> a2 = lattice_row(lattice_vectors, 1, lattice_scale);
-    const ModuleBase::Vector3<double> a3 = lattice_row(lattice_vectors, 2, lattice_scale);
-    return ModuleBase::Vector3<double>(0.5 * (a1.x + a2.x + a3.x),
-                                       0.5 * (a1.y + a2.y + a3.y),
-                                       0.5 * (a1.z + a2.z + a3.z));
-}
-
 std::vector<ModuleBase::Vector3<double>> pw_grid_positions(
     const ModulePW::PW_Basis& basis,
     const ModuleBase::Matrix3& lattice_vectors,

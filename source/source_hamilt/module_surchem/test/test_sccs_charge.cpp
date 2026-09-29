@@ -48,27 +48,6 @@ TEST(SccsCharge, PreservesPositiveAndNegativeNetCharge)
     EXPECT_DOUBLE_EQ(anion.net_charge, -1.0);
 }
 
-TEST(SccsCharge, ReducesAllMultipoleComponents)
-{
-    const std::vector<double> density = {1.0, -0.5};
-    const std::vector<ModuleBase::Vector3<double>> positions
-        = {ModuleBase::Vector3<double>(1.0, 0.0, 0.0),
-           ModuleBase::Vector3<double>(0.0, 2.0, 0.0)};
-    const ModuleSurchem::SerialChargeReduction reduction;
-    const ModulePcc::MultipoleMoments moments
-        = ModuleSccs::reduced_density_moments(density,
-                                              positions,
-                                              2.0,
-                                              ModuleBase::Vector3<double>(),
-                                              reduction);
-
-    EXPECT_DOUBLE_EQ(moments.charge, 1.0);
-    EXPECT_DOUBLE_EQ(moments.dipole.x, 2.0);
-    EXPECT_DOUBLE_EQ(moments.dipole.y, -2.0);
-    EXPECT_DOUBLE_EQ(moments.dipole.z, 0.0);
-    EXPECT_DOUBLE_EQ(moments.quadrupole_trace, -2.0);
-}
-
 TEST(SccsCharge, RejectsNormalizationMismatch)
 {
     const ModuleSurchem::SerialChargeReduction reduction;
