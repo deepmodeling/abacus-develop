@@ -57,7 +57,11 @@ class ESolver_KS : public ESolver_FP
     // calculate electron density from a specific Hamiltonian
     void hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr);
 
-    /** @brief Select the diagonalization policy without changing the requested solver. */
+    /**
+     * @brief Select the diagonalization threshold and error-control policy for the current stage.
+     *
+     * This policy does not change the requested solver type.
+     */
     virtual std::string diag_policy(const int istep) const;
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.

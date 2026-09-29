@@ -248,9 +248,9 @@ void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
           this->inp_->calculation, this->inp_->init_chg, this->inp_->precision, istep, iter,
           drho, this->inp_->pw_diag_thr, diag_ethr, this->inp_->nelec, this->inp_->scf_thr);
     }
-    else if (this->inp_->esolver_type == "sdft")
+    else if (policy == "sdft")
     {
-        diag_ethr = hsolver::set_diagethr_sdft(this->inp_->basis_type, this->inp_->esolver_type,
+        diag_ethr = hsolver::set_diagethr_sdft(this->inp_->basis_type, policy,
           this->inp_->calculation, this->inp_->init_chg, istep, iter, drho,
           this->inp_->pw_diag_thr, diag_ethr, this->inp_->nbands, esolver_KS_ne,
           this->inp_->nelec, this->inp_->scf_thr);
