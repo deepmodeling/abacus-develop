@@ -64,6 +64,7 @@ struct SccsResult
 
 // cavity_core_density: ENVIRON 'full' core-electron Gaussians added to the
 // electron density that defines the cavity (config.core_electrons), else empty.
+// The reciprocal unit tpiba and the volume element omega/nxyz come from basis.
 SccsResult evaluate_pw_sccs(
     const std::vector<double>& electron_density,
     const std::vector<double>& ionic_density,
@@ -76,8 +77,6 @@ SccsResult evaluate_pw_sccs(
     const ModulePcc::PccGeometry& pcc_geometry,
     const ModulePcc::Pcc2dGeometry& pcc_2d_geometry,
     const ModulePW::PW_Basis& basis,
-    double tpiba,
-    double volume_element,
     const ModuleSurchem::ChargeReduction& reduction,
     SccsState& state);
 

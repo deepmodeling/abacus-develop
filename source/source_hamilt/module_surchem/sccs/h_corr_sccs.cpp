@@ -132,7 +132,6 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     const ModulePcc::PccGeometry& pcc_geometry = this->pcc_geometry_;
     const ModulePcc::Pcc2dGeometry& pcc_2d_geometry = this->pcc_2d_geometry_;
 
-    const double volume_element = cell.omega / static_cast<double>(rho_basis.nxyz);
     const ModuleSurchem::PoolChargeReduction reduction(this->parameters_.pool_process_count);
     this->sccs_result_
         = ModuleSccs::evaluate_pw_sccs(electron_density,
@@ -146,8 +145,6 @@ void surchem::v_correction_sccs(const UnitCell& cell,
                                        pcc_geometry,
                                        pcc_2d_geometry,
                                        rho_basis,
-                                       cell.tpiba,
-                                       volume_element,
                                        reduction,
                                        this->sccs_state_);
     this->sccs_result_.reused_fixed_sources = reuse_fixed_sources;

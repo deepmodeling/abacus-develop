@@ -130,12 +130,12 @@ SccsResult evaluate_pw_sccs(
     const ModulePcc::PccGeometry& pcc_geometry,
     const ModulePcc::Pcc2dGeometry& pcc_2d_geometry,
     const ModulePW::PW_Basis& basis,
-    const double tpiba,
-    const double volume_element,
     const ModuleSurchem::ChargeReduction& reduction,
     SccsState& state)
 {
     ModuleBase::timer::start("ModuleSccs", "evaluate_pw_sccs");
+    const double tpiba = basis.tpiba;
+    const double volume_element = basis.omega / static_cast<double>(basis.nxyz);
     validate_config(config);
     if (positions.size() != static_cast<std::size_t>(basis.nrxx))
     {

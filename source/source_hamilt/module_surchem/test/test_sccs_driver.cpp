@@ -44,7 +44,6 @@ ModuleSccs::SccsResult evaluate_uniform_charge(const double net_charge,
                                                const double length)
 {
     const double volume = length * length * length;
-    const double volume_element = volume / static_cast<double>(basis.nxyz);
     const double ionic_charge = 1.0;
     const double electron_count = ionic_charge - net_charge;
     const std::vector<double> electron_density(basis.nrxx, electron_count / volume);
@@ -76,8 +75,6 @@ ModuleSccs::SccsResult evaluate_uniform_charge(const double net_charge,
                                         pcc,
                                         pcc_2d_geometry,
                                         basis,
-                                        ModuleBase::TWO_PI / length,
-                                        volume_element,
                                         charge_reduction,
                                         state);
 }
@@ -98,7 +95,6 @@ TEST(SccsDriver, EvaluatesNeutralAndFixedChargePcc2dSources)
     basis.collect_local_pw();
 
     const double volume = 0.8 * 1.2 * scale * scale * scale;
-    const double volume_element = volume / static_cast<double>(basis.nxyz);
     const std::vector<ModuleBase::Vector3<double>> positions
         = ModuleSurchem::pw_grid_positions(basis, lattice, scale);
     const ModulePcc::Pcc2dGeometry geometry
@@ -137,8 +133,6 @@ TEST(SccsDriver, EvaluatesNeutralAndFixedChargePcc2dSources)
                                        pcc,
                                        geometry,
                                        basis,
-                                       ModuleBase::TWO_PI / scale,
-                                       volume_element,
                                        charge_reduction,
                                        state);
     EXPECT_NEAR(neutral.charge.net_charge, 0.0, 1.0e-12);
@@ -162,8 +156,6 @@ TEST(SccsDriver, EvaluatesNeutralAndFixedChargePcc2dSources)
                                        pcc,
                                        geometry,
                                        basis,
-                                       ModuleBase::TWO_PI / scale,
-                                       volume_element,
                                        charge_reduction,
                                        state);
     EXPECT_NEAR(cation.charge.net_charge, 0.1, 1.0e-12);
@@ -192,7 +184,6 @@ TEST(SccsDriver, PeriodicSqrtCgWarmStartsFromStoredPotential)
     basis.collect_local_pw();
 
     const double volume = length * length * length;
-    const double volume_element = volume / static_cast<double>(basis.nxyz);
     const std::vector<ModuleBase::Vector3<double>> positions
         = ModuleSurchem::pw_grid_positions(basis, lattice, length);
     // A cavity-crossing electron mode on a uniform ionic background.
@@ -217,12 +208,11 @@ TEST(SccsDriver, PeriodicSqrtCgWarmStartsFromStoredPotential)
     const ModulePcc::PccGeometry pcc;
     const ModulePcc::Pcc2dGeometry pcc_2d;
     const ModuleSurchem::SerialChargeReduction charge_reduction;
-    const double tpiba = ModuleBase::TWO_PI / length;
     ModuleSccs::SccsState state;
     const ModuleSccs::SccsResult cold
         = ModuleSccs::evaluate_pw_sccs(electron_density, ionic_density, no_core_density, electron_count,
                                        electron_count, 1.0e-10, positions, config,
-                                       pcc, pcc_2d, basis, tpiba, volume_element,
+                                       pcc, pcc_2d, basis,
                                        charge_reduction, state);
     ASSERT_TRUE(state.valid);
     ASSERT_EQ(state.potential.size(), static_cast<std::size_t>(basis.nrxx));
@@ -232,7 +222,7 @@ TEST(SccsDriver, PeriodicSqrtCgWarmStartsFromStoredPotential)
     const ModuleSccs::SccsResult warm
         = ModuleSccs::evaluate_pw_sccs(electron_density, ionic_density, no_core_density, electron_count,
                                        electron_count, 1.0e-10, positions, config,
-                                       pcc, pcc_2d, basis, tpiba, volume_element,
+                                       pcc, pcc_2d, basis,
                                        charge_reduction, state);
     EXPECT_TRUE(warm.response.polarization.warm_started);
     EXPECT_LT(warm.response.polarization.iterations, cold.response.polarization.iterations);
@@ -306,8 +296,8 @@ TEST(SccsDriver, ChargedPcc2dSqrtCgPolarizationSatisfiesGaussLaw)
     const ModuleSccs::SccsResult result
         = ModuleSccs::evaluate_pw_sccs(electron_density, ionic_density, no_core_density, electron_count,
                                        ionic_charge, 1.0e-10, positions, config,
-                                       pcc, geometry, basis, ModuleBase::TWO_PI / scale,
-                                       volume_element, charge_reduction,
+                                       pcc, geometry, basis,
+                                       charge_reduction,
                                        state);
     const double expected = -(1.0 - 1.0 / config.cavity.epsilon_bulk) * 0.2;
     const double far_field = result.response.far_field_polarization_charge;
@@ -382,13 +372,12 @@ TEST(SccsDriver, Pcc2dStopsWhenBulkSolventDoesNotReachTheOpenBoundary)
     const ModulePcc::PccGeometry pcc;
     const ModuleSurchem::SerialChargeReduction charge_reduction;
     ModuleSccs::SccsState state;
-    const double tpiba = ModuleBase::TWO_PI / scale;
     std::string message;
     try
     {
         ModuleSccs::evaluate_pw_sccs(electron_density, ionic_density, no_core_density, electron_count,
                                      ionic_charge, 1.0e-10, positions, config, pcc,
-                                     geometry, basis, tpiba, volume_element, charge_reduction,
+                                     geometry, basis, charge_reduction,
                                      state);
     }
     catch (const std::runtime_error& error)
@@ -574,10 +563,9 @@ ModuleSccs::SccsResult evaluate_cation(const std::vector<double>& electron_densi
     const ModuleSurchem::SerialChargeReduction charge_reduction;
     // A fresh state keeps every evaluation a cold start.
     ModuleSccs::SccsState state;
-    const double tpiba = ModuleBase::TWO_PI / scale;
     return ModuleSccs::evaluate_pw_sccs(electron_density, ionic_density, no_core_density, 8.0, 9.0, 1.0e-10,
-                                        positions, config, pcc, pcc_2d, basis, tpiba,
-                                        volume_element, charge_reduction,
+                                        positions, config, pcc, pcc_2d, basis,
+                                        charge_reduction,
                                         state);
 }
 
@@ -805,12 +793,11 @@ TEST(SccsDriver, FullSolventModeFillsTheNuclearCavityHole)
     const ModulePcc::PccGeometry pcc;
     const ModulePcc::Pcc2dGeometry pcc_2d;
     const ModuleSurchem::SerialChargeReduction charge_reduction;
-    const double tpiba = ModuleBase::TWO_PI / scale;
     ModuleSccs::SccsState electronic_state;
     const ModuleSccs::SccsResult electronic
         = ModuleSccs::evaluate_pw_sccs(electron_density, ionic_density, no_core_density, valence,
                                        valence, 1.0e-10, positions, config, pcc, pcc_2d,
-                                       basis, tpiba, volume_element, charge_reduction,
+                                       basis, charge_reduction,
                                        electronic_state);
     config.core_electrons = true;
     config.core_spread = core_spread;
@@ -818,7 +805,7 @@ TEST(SccsDriver, FullSolventModeFillsTheNuclearCavityHole)
     const ModuleSccs::SccsResult full
         = ModuleSccs::evaluate_pw_sccs(electron_density, ionic_density, core_density, valence,
                                        valence, 1.0e-10, positions, config, pcc, pcc_2d,
-                                       basis, tpiba, volume_element, charge_reduction,
+                                       basis, charge_reduction,
                                        full_state);
     EXPECT_GT(electronic.response.epsilon[nucleus_index], 10.0);
     EXPECT_DOUBLE_EQ(full.response.epsilon[nucleus_index], 1.0);
@@ -831,7 +818,7 @@ TEST(SccsDriver, FullSolventModeFillsTheNuclearCavityHole)
     ModuleSccs::SccsState mismatched_state;
     EXPECT_THROW(ModuleSccs::evaluate_pw_sccs(electron_density, ionic_density, core_density,
                                               valence, valence, 1.0e-10, positions,
-                                              config, pcc, pcc_2d, basis, tpiba, volume_element,
+                                              config, pcc, pcc_2d, basis,
                                               charge_reduction,
                                               mismatched_state),
                  std::invalid_argument);
