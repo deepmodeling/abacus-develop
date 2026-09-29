@@ -1,4 +1,4 @@
-#include "experimental_gaussian.h"
+#include "sccs_gaussian_ion.h"
 #include "source_base/constants.h"
 #include "source_base/matrix.h"
 #include "source_basis/module_pw/pw_basis.h"
@@ -31,7 +31,7 @@ bool is_hydrogen(const UnitCell& cell, int type)
 std::vector<double> gaussian_density(const UnitCell& cell, const ModulePW::PW_Basis& basis,
                                      double sigma, bool skip_hydrogen)
 {
-    if (basis.gamma_only) throw std::runtime_error("Experimental Gaussian source requires full G basis");
+    if (basis.gamma_only) throw std::runtime_error("SCCS Gaussian ionic source requires the full G basis");
     std::vector<std::complex<double>> charge(basis.npw, 0.0);
     for (int type = 0; type < cell.ntype; ++type)
     {
@@ -50,7 +50,7 @@ ModuleBase::matrix gaussian_force(const UnitCell& cell, const ModulePW::PW_Basis
                                   bool skip_hydrogen)
 {
     if (basis.gamma_only || potential.size() != static_cast<std::size_t>(basis.nrxx))
-        throw std::runtime_error("Experimental Gaussian force input mismatch");
+        throw std::runtime_error("SCCS Gaussian ionic force input mismatch");
     std::vector<std::complex<double>> vg(basis.npw);
     basis.real2recip(potential.data(),vg.data());
     ModuleBase::matrix force(cell.nat,3);

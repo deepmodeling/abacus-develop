@@ -3,7 +3,7 @@
 #include <mpi.h>
 #endif
 
-#include "../sccs/experimental_gaussian.h"
+#include "../sccs/sccs_gaussian_ion.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix.h"
@@ -53,7 +53,7 @@ void setup_single_ion(ModulePW::PW_Basis& basis,
     cell.atoms[0].tau.push_back(tau);
 }
 
-TEST(ExperimentalGaussian, UsesEnvironSpreadConvention)
+TEST(SccsGaussianIon, UsesEnvironSpreadConvention)
 {
     ModulePW::PW_Basis basis("cpu", "double");
     UnitCell cell;
@@ -87,7 +87,7 @@ TEST(ExperimentalGaussian, UsesEnvironSpreadConvention)
     EXPECT_NEAR(charge, 2.0, 1.0e-12);
 }
 
-TEST(ExperimentalGaussian, ForceMatchesOpenQuadraticPotentialDerivative)
+TEST(SccsGaussianIon, ForceMatchesOpenQuadraticPotentialDerivative)
 {
     ModulePW::PW_Basis basis("cpu", "double");
     UnitCell cell;
@@ -122,7 +122,7 @@ TEST(ExperimentalGaussian, ForceMatchesOpenQuadraticPotentialDerivative)
     EXPECT_NEAR(force(0, 2), 0.0, 1.0e-12);
 }
 
-TEST(ExperimentalGaussian, RejectsMismatchedPotential)
+TEST(SccsGaussianIon, RejectsMismatchedPotential)
 {
     ModulePW::PW_Basis basis("cpu", "double");
     UnitCell cell;
@@ -166,7 +166,7 @@ void setup_sulfur_hydrogen(ModulePW::PW_Basis& basis, UnitCell& cell)
     cell.atoms[1].tau.push_back(ModuleBase::Vector3<double>(0.51, 0.43, 0.52));
 }
 
-TEST(ExperimentalGaussian, CoreDensitySkipsHydrogen)
+TEST(SccsGaussianIon, CoreDensitySkipsHydrogen)
 {
     ModulePW::PW_Basis basis("cpu", "double");
     UnitCell cell;
@@ -186,7 +186,7 @@ TEST(ExperimentalGaussian, CoreDensitySkipsHydrogen)
     EXPECT_NEAR(ionic_charge, 7.0, 1.0e-10);
 }
 
-TEST(ExperimentalGaussian, CoreForceMatchesDerivativeAndSkipsHydrogen)
+TEST(SccsGaussianIon, CoreForceMatchesDerivativeAndSkipsHydrogen)
 {
     ModulePW::PW_Basis basis("cpu", "double");
     UnitCell cell;

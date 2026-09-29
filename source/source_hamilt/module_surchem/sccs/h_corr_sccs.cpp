@@ -3,7 +3,7 @@
 #include "../pcc/sccs_pcc_2d_coulomb.h"
 #include "../pcc/sccs_pcc_coulomb.h"
 #include "sccs_pw_charge.h"
-#include "experimental_gaussian.h"
+#include "sccs_gaussian_ion.h"
 #include "sccs_pw_reduction.h"
 
 #include "source_base/timer.h"

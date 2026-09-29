@@ -1,5 +1,5 @@
 #include "surchem.h"
-#include "sccs/experimental_gaussian.h"
+#include "sccs/sccs_gaussian_ion.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"

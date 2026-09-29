@@ -1,5 +1,5 @@
-#ifndef EXPERIMENTAL_GAUSSIAN_H
-#define EXPERIMENTAL_GAUSSIAN_H
+#ifndef SCCS_GAUSSIAN_ION_H
+#define SCCS_GAUSSIAN_ION_H
 #include <vector>
 class UnitCell;
 namespace ModulePW { class PW_Basis; }
