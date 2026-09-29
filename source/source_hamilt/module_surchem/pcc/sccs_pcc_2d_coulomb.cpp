@@ -43,50 +43,6 @@ Pcc2dMoments reduced_pcc_2d_density_moments(
         reduction);
 }
 
-std::vector<double> pcc_2d_plane_average(const std::vector<double>& values,
-                                         const ModulePW::PW_Basis& basis,
-                                         const ChargeReduction& reduction)
-{
-    if (basis.nx <= 0 || basis.ny <= 0 || basis.nz <= 0 || basis.nplane <= 0
-        || basis.startz_current < 0 || basis.startz_current + basis.nplane > basis.nz
-        || basis.nrxx != basis.nx * basis.ny * basis.nplane
-        || values.size() != static_cast<std::size_t>(basis.nrxx))
-    {
-        throw std::invalid_argument(
-            "two-dimensional PCC plane average requires a valid local PW grid");
-    }
-
-    std::vector<double> average(basis.ny, 0.0);
-    for (int ix = 0; ix < basis.nx; ++ix)
-    {
-        for (int iy = 0; iy < basis.ny; ++iy)
-        {
-            for (int iz_local = 0; iz_local < basis.nplane; ++iz_local)
-            {
-                const int index = (ix * basis.ny + iy) * basis.nplane + iz_local;
-                if (!std::isfinite(values[index]))
-                {
-                    throw std::domain_error(
-                        "two-dimensional PCC plane-average values must be finite");
-                }
-                average[iy] += values[index];
-            }
-        }
-    }
-    reduction.reduce_sum(average.data(), basis.ny);
-    const double plane_size = static_cast<double>(basis.nx) * static_cast<double>(basis.nz);
-    for (int iy = 0; iy < basis.ny; ++iy)
-    {
-        average[iy] /= plane_size;
-        if (!std::isfinite(average[iy]))
-        {
-            throw std::domain_error(
-                "two-dimensional PCC reduced plane averages must be finite");
-        }
-    }
-    return average;
-}
-
 Pcc2dCoulombOperator::Pcc2dCoulombOperator(
     const ModulePW::PW_Basis& basis,
     const double tpiba,

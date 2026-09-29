@@ -22,10 +22,6 @@ Pcc2dMoments reduced_pcc_2d_density_moments(
     const Pcc2dGeometry& geometry,
     const ChargeReduction& reduction);
 
-std::vector<double> pcc_2d_plane_average(const std::vector<double>& values,
-                                         const ModulePW::PW_Basis& basis,
-                                         const ChargeReduction& reduction);
-
 class Pcc2dCoulombOperator : public CoulombOperator
 {
   public:

@@ -91,7 +91,7 @@ class SccsPcc2dCoulombTest : public testing::Test
     ModuleSccs::PoolPolarizationReduction polarization_reduction_;
 };
 
-TEST_F(SccsPcc2dCoulombTest, ReducesYMomentsAndBuildsPlaneAverages)
+TEST_F(SccsPcc2dCoulombTest, ReducesYMoments)
 {
     const std::vector<double> uniform(basis_.nrxx, 1.0 / volume_);
     const ModuleSccs::Pcc2dMoments moments
@@ -104,25 +104,9 @@ TEST_F(SccsPcc2dCoulombTest, ReducesYMomentsAndBuildsPlaneAverages)
     // Integer FFT nodes sample [0, Ly), so their mean is half a step below Ly/2.
     const double uniform_dipole = -geometry_.parameters.cell_length_y / (2.0 * basis_.ny);
     EXPECT_NEAR(moments.dipole_y, uniform_dipole, 1.0e-14);
-
-    std::vector<double> y_values(positions_.size());
-    for (std::size_t index = 0; index < positions_.size(); ++index)
-    {
-        y_values[index] = positions_[index].y;
-    }
-    const std::vector<double> average
-        = ModuleSccs::pcc_2d_plane_average(y_values, basis_, reduction_);
-    ASSERT_EQ(average.size(), static_cast<std::size_t>(basis_.ny));
-    for (int iy = 0; iy < basis_.ny; ++iy)
-    {
-        const double expected = geometry_.parameters.cell_length_y
-                                * static_cast<double>(iy)
-                                / static_cast<double>(basis_.ny);
-        EXPECT_NEAR(average[iy], expected, 2.0e-13);
-    }
 }
 
-TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentsWithoutChangingYProfiles)
+TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentMoments)
 {
     const auto fragment_geometry = [](const double origin_y) {
         ModuleSccs::Pcc2dGeometry value;
@@ -191,39 +175,6 @@ TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentsWithoutChangingYProfil
     EXPECT_NEAR(reduced.charge, expected.charge, 1.0e-12);
     EXPECT_NEAR(reduced.dipole_y, expected.dipole_y, 1.0e-12);
     EXPECT_NEAR(reduced.quadrupole_yy, expected.quadrupole_yy, 1.0e-11);
-
-    ModulePW::PW_Basis fragment("cpu", "double");
-    fragment.nx = 3;
-    fragment.ny = 5;
-    fragment.nz = 7;
-    fragment.nplane = 3;
-    fragment.startz_current = 2;
-    fragment.nrxx = fragment.nx * fragment.ny * fragment.nplane;
-    std::vector<double> fragment_values(fragment.nrxx);
-    std::vector<double> remote_plane_sums(fragment.ny);
-    for (int ix = 0; ix < fragment.nx; ++ix)
-    {
-        for (int iy = 0; iy < fragment.ny; ++iy)
-        {
-            const double profile = 0.25 + 0.5 * static_cast<double>(iy);
-            remote_plane_sums[iy]
-                = static_cast<double>(fragment.nx * (fragment.nz - fragment.nplane))
-                  * profile;
-            for (int iz_local = 0; iz_local < fragment.nplane; ++iz_local)
-            {
-                const int index
-                    = (ix * fragment.ny + iy) * fragment.nplane + iz_local;
-                fragment_values[index] = profile;
-            }
-        }
-    }
-    const PresetArrayReduction plane_reduction(remote_plane_sums);
-    const std::vector<double> profile
-        = ModuleSccs::pcc_2d_plane_average(fragment_values, fragment, plane_reduction);
-    for (int iy = 0; iy < fragment.ny; ++iy)
-    {
-        EXPECT_DOUBLE_EQ(profile[iy], 0.25 + 0.5 * static_cast<double>(iy));
-    }
 }
 
 TEST_F(SccsPcc2dCoulombTest, ScalarPotentialMatchesFullFieldAndAvoidsGradientTransforms)
