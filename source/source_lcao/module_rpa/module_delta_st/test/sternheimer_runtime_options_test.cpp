@@ -80,7 +80,6 @@ TEST(SternheimerAbacusRuntime, RetainsExplicitProducerState)
 {
     Input_para input;
     std::vector<std::string> auxiliary_files = {"auxiliary.orb"};
-    std::vector<int> auxiliary_kmesh = {2, 2, 1};
     std::ofstream log;
     const ModuleRI::SternheimerAbacusRuntime runtime = {
         input,
@@ -88,9 +87,10 @@ TEST(SternheimerAbacusRuntime, RetainsExplicitProducerState)
         3,
         8,
         2,
+        4,
         false,
         auxiliary_files,
-        auxiliary_kmesh,
+        4.0,
         log};
 
     EXPECT_EQ(&runtime.input, &input);
@@ -98,9 +98,10 @@ TEST(SternheimerAbacusRuntime, RetainsExplicitProducerState)
     EXPECT_EQ(runtime.rank, 3);
     EXPECT_EQ(runtime.nproc, 8);
     EXPECT_EQ(runtime.kpar_lcao, 2);
+    EXPECT_EQ(runtime.nthread_per_proc, 4);
     EXPECT_FALSE(runtime.deepks_setorb);
     EXPECT_EQ(&runtime.abfs_files, &auxiliary_files);
-    EXPECT_EQ(&runtime.abfs_kmesh_times, &auxiliary_kmesh);
+    EXPECT_DOUBLE_EQ(runtime.abfs_kmesh_times, 4.0);
     EXPECT_EQ(&runtime.log, &log);
 }
 

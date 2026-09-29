@@ -54,7 +54,9 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
     const elecstate::ElecState& elec_state,
     const K_Vectors& kv,
     const Parallel_Orbitals& parallel_orbitals,
-    const psi::Psi<TK>& psi)
+    const psi::Psi<TK>& psi,
+    const Input_para& input,
+    const int nlocal)
 {
     if (kv.get_nks() != kv.get_nkstot()
         || elec_state.wg.nr != kv.get_nks()
@@ -104,7 +106,7 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
         record.occupations.reserve(static_cast<std::size_t>(occupied_count));
         record.coefficients.assign(
             static_cast<std::size_t>(occupied_count),
-            std::vector<std::complex<double>>(static_cast<std::size_t>(PARAM.globalv.nlocal),
+            std::vector<std::complex<double>>(static_cast<std::size_t>(nlocal),
                                               std::complex<double>(0.0, 0.0)));
         for (int ib = 0; ib != occupied_count; ++ib)
         {
@@ -118,7 +120,7 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
             for (int local_basis = 0; local_basis != psi.get_nbasis(); ++local_basis)
             {
                 const int global_basis = parallel_orbitals.local2global_row(local_basis);
-                if (global_basis < 0 || global_basis >= PARAM.globalv.nlocal)
+                if (global_basis < 0 || global_basis >= nlocal)
                 {
                     throw std::runtime_error("Sternheimer solid LCAO global basis index is out of range.");
                 }
@@ -128,7 +130,7 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
 #ifdef __MPI
             MPI_Allreduce(MPI_IN_PLACE,
                           record.coefficients[static_cast<std::size_t>(ib)].data(),
-                          PARAM.globalv.nlocal,
+                          nlocal,
                           MPI_DOUBLE_COMPLEX,
                           MPI_SUM,
                           MPI_COMM_WORLD);
@@ -137,13 +139,13 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
 
         const int unoccupied_count = ModuleRI::sternheimer_lcao_virtual_state_gather_count(
             elec_state.ekb.nc - occupied_count,
-            PARAM.inp.sternheimer_delta,
-            PARAM.inp.sternheimer_delta_virtual_source,
-            PARAM.inp.sternheimer_delta_max_states);
+            input.sternheimer_delta,
+            input.sternheimer_delta_virtual_source,
+            input.sternheimer_delta_max_states);
         record.unoccupied_eigenvalues.reserve(static_cast<std::size_t>(unoccupied_count));
         record.unoccupied_coefficients.assign(
             static_cast<std::size_t>(unoccupied_count),
-            std::vector<std::complex<double>>(static_cast<std::size_t>(PARAM.globalv.nlocal),
+            std::vector<std::complex<double>>(static_cast<std::size_t>(nlocal),
                                               std::complex<double>(0.0, 0.0)));
         for (int ib = occupied_count; ib != occupied_count + unoccupied_count; ++ib)
         {
@@ -157,7 +159,7 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
             for (int local_basis = 0; local_basis != psi.get_nbasis(); ++local_basis)
             {
                 const int global_basis = parallel_orbitals.local2global_row(local_basis);
-                if (global_basis < 0 || global_basis >= PARAM.globalv.nlocal)
+                if (global_basis < 0 || global_basis >= nlocal)
                 {
                     throw std::runtime_error("Sternheimer solid LCAO global unoccupied basis index is out of range.");
                 }
@@ -167,7 +169,7 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
 #ifdef __MPI
             MPI_Allreduce(MPI_IN_PLACE,
                           record.unoccupied_coefficients[virtual_index].data(),
-                          PARAM.globalv.nlocal,
+                          nlocal,
                           MPI_DOUBLE_COMPLEX,
                           MPI_SUM,
                           MPI_COMM_WORLD);
@@ -179,8 +181,8 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
     ModuleRI::validate_sternheimer_lcao_occupied_kpoints(records,
                                                          kv.get_nks(),
                                                          kv.get_nkstot(),
-                                                         PARAM.inp.nspin,
-                                                         PARAM.globalv.nlocal,
+                                                         input.nspin,
+                                                         nlocal,
                                                          -1,
                                                          true);
     return records;
@@ -824,7 +826,19 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         {
             ModuleBase::WARNING_QUIT("ctrl_scf_lcao", "Sternheimer LCAO output requires potential, grid, and KS states.");
         }
-        const auto occupied_kpoints = gather_sternheimer_lcao_occupied_kpoints(*pelec, kv, pv, *psi);
+        const ModuleRI::SternheimerAbacusRuntime sternheimer_runtime = {
+            inp,
+            pv.get_global_row_size(),
+            GlobalV::MY_RANK,
+            GlobalV::NPROC,
+            PARAM.globalv.kpar_lcao,
+            PARAM.globalv.nthread_per_proc,
+            PARAM.globalv.deepks_setorb,
+            exx_info.info_ri.files_abfs,
+            exx_info.info_ri.kmesh_times,
+            GlobalV::ofs_running};
+        const auto occupied_kpoints = gather_sternheimer_lcao_occupied_kpoints(
+            *pelec, kv, pv, *psi, inp, sternheimer_runtime.nlocal);
         ModuleRI::run_sternheimer_abacus_lcao_chi0_output(*(pelec->pot),
                                                           *pw_rho,
                                                           ucell,
@@ -834,7 +848,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                           {kv.nmp[0], kv.nmp[1], kv.nmp[2]},
                                                           pw_wfc,
                                                           &sf,
-                                                          PARAM.inp.rpa_outdir,
+                                                          inp.rpa_outdir,
+                                                          sternheimer_runtime,
                                                           sternheimer_rpa_abfs.empty() ? nullptr
                                                                                        : &sternheimer_rpa_abfs);
     }

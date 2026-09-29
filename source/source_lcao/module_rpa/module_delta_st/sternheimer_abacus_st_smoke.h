@@ -50,9 +50,10 @@ struct SternheimerAbacusRuntime
     int rank;
     int nproc;
     int kpar_lcao;
+    int nthread_per_proc;
     bool deepks_setorb;
     const std::vector<std::string>& abfs_files;
-    const std::vector<int>& abfs_kmesh_times;
+    double abfs_kmesh_times;
     std::ofstream& log;
 };
 
@@ -1687,13 +1688,15 @@ void run_sternheimer_abacus_st_smoke(const elecstate::Potential& potential,
                                      const ModulePW::PW_Basis& pw_basis,
                                      const UnitCell& ucell,
                                      const elecstate::ElecState& elec_state,
-                                     const std::string& output_dir);
+                                     const std::string& output_dir,
+                                     const SternheimerAbacusRuntime& runtime);
 
 void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                                         const ModulePW::PW_Basis& pw_basis,
                                         const UnitCell& ucell,
                                         const elecstate::ElecState& elec_state,
-                                        const std::string& output_dir);
+                                        const std::string& output_dir,
+                                        const SternheimerAbacusRuntime& runtime);
 
 void run_sternheimer_abacus_lcao_chi0_output(const elecstate::Potential& potential,
                                              const ModulePW::PW_Basis& pw_basis,
@@ -1705,6 +1708,7 @@ void run_sternheimer_abacus_lcao_chi0_output(const elecstate::Potential& potenti
                                              const ModulePW::PW_Basis_K* pw_wfc,
                                              const Structure_Factor* structure_factor,
                                              const std::string& output_dir,
+                                             const SternheimerAbacusRuntime& runtime,
                                              const SternheimerOrbitalSet* reusable_rpa_abfs = nullptr);
 
 } // namespace ModuleRI
