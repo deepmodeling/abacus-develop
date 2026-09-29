@@ -120,8 +120,16 @@ jobs:
 
       - name: Build
         run: |
-          cmake --build build -j8
-          cmake --install build
+          set -o pipefail
+          cmake --build build -j8 2>&1 | tee build.log
+          cmake --install build 2>&1 | tee -a build.log
+
+      - name: Report build diagnostics
+        if: failure()
+        run: |
+          message=$(grep -Ein -B 8 -A 8 'error:|fatal error:|undefined reference|FAILED|No rule to make' build.log || true)
+          message=$(printf '%s\n' "$message" | tail -n 120 | tr '\n' ' ' | cut -c1-5000)
+          echo "::error file=build.log,line=1,title=ABACUS build diagnostics::$message"
 
       - name: Report compiler cache
         if: always()
