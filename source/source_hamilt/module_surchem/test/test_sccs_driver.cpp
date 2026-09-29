@@ -5,6 +5,7 @@
 
 #include "../sccs/sccs_driver.h"
 #include "../sccs/sccs_pw_charge.h"
+#include "../sccs/sccs_pw_coulomb.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
@@ -316,10 +317,11 @@ TEST(SccsDriver, ChargedPcc2dSqrtCgPolarizationSatisfiesGaussLaw)
               << density_integral << " expected " << expected << " iterations "
               << result.response.polarization.iterations << std::endl;
     EXPECT_NEAR(result.solute_moments_2d.charge, 0.2, 1.0e-10);
-    // Both converge with the grid: far field 2.6e-5 at 160 Ry and 2e-6 here,
-    // the dielectric_of_potential integral 6.5e-5 at 160 Ry and 5e-6 here.
+    // Far field: 2.6e-5 at 160 Ry and 2e-6 here. The dielectric_of_potential
+    // integral uses the FFT gradient of the corrected potential, as Environ,
+    // which rings at the open boundary: 3.8e-5 here, a diagnostic only.
     EXPECT_NEAR(far_field, expected, 1.0e-5);
-    EXPECT_NEAR(density_integral, expected, 3.0e-5);
+    EXPECT_NEAR(density_integral, expected, 1.0e-4);
     EXPECT_GT(result.response.polarization.iterations, 1);
 }
 
@@ -468,6 +470,294 @@ TEST(SccsDriver, PreservesChargeAndCombinesPccEnergyPotentialAndState)
     EXPECT_NEAR(anion.electrostatic.reaction_energy,
                 cation.electrostatic.reaction_energy,
                 2.0e-12);
+}
+
+// H3O+-like solute for the fixed-density derivative check: eight electrons
+// in a Gaussian at the cell center and nine ionic charges displaced 0.4 bohr
+// along y, so that a shift of the electrons changes the energy at first order.
+struct CationSolute
+{
+    std::vector<double> electron_density;
+    std::vector<double> ionic_density;
+    // Zero-integral density directions: a rigid y shift and a breathing mode.
+    std::vector<double> shift_mode;
+    std::vector<double> breathing_mode;
+};
+
+CationSolute make_cation_solute(const std::vector<ModuleBase::Vector3<double>>& positions,
+                                const ModuleBase::Vector3<double>& center,
+                                const double volume_element)
+{
+    const double electron_count = 8.0;
+    const double ionic_charge = 9.0;
+    const double electron_width = 1.3;
+    const double ion_width = 0.5;
+    const double ion_offset_y = 0.4;
+    const std::size_t size = positions.size();
+    CationSolute solute;
+    solute.electron_density.resize(size);
+    solute.ionic_density.resize(size);
+    solute.shift_mode.resize(size);
+    solute.breathing_mode.resize(size);
+    double electron_sum = 0.0;
+    double ionic_sum = 0.0;
+    for (std::size_t ir = 0; ir < size; ++ir)
+    {
+        const double dx = positions[ir].x - center.x;
+        const double dy = positions[ir].y - center.y;
+        const double dz = positions[ir].z - center.z;
+        const double r2 = dx * dx + dy * dy + dz * dz;
+        const double scaled_r2 = r2 / (electron_width * electron_width);
+        const double gaussian = std::exp(-scaled_r2);
+        solute.electron_density[ir] = gaussian;
+        solute.shift_mode[ir] = 2.0 * dy / (electron_width * electron_width) * gaussian;
+        solute.breathing_mode[ir] = (scaled_r2 - 1.5) * gaussian;
+        const double ion_dy = dy - ion_offset_y;
+        const double ion_r2 = dx * dx + ion_dy * ion_dy + dz * dz;
+        solute.ionic_density[ir] = std::exp(-ion_r2 / (ion_width * ion_width));
+        electron_sum += solute.electron_density[ir] * volume_element;
+        ionic_sum += solute.ionic_density[ir] * volume_element;
+    }
+    const double electron_scale = electron_count / electron_sum;
+    const double ionic_scale = ionic_charge / ionic_sum;
+    double shift_sum = 0.0;
+    double breathing_sum = 0.0;
+    for (std::size_t ir = 0; ir < size; ++ir)
+    {
+        solute.electron_density[ir] *= electron_scale;
+        solute.shift_mode[ir] *= electron_scale;
+        solute.breathing_mode[ir] *= electron_scale;
+        solute.ionic_density[ir] *= ionic_scale;
+        shift_sum += solute.shift_mode[ir] * volume_element;
+        breathing_sum += solute.breathing_mode[ir] * volume_element;
+    }
+    // Remove the grid integral of each mode so the electron count stays fixed.
+    for (std::size_t ir = 0; ir < size; ++ir)
+    {
+        solute.shift_mode[ir] -= shift_sum / electron_count * solute.electron_density[ir];
+        solute.breathing_mode[ir] -= breathing_sum / electron_count * solute.electron_density[ir];
+    }
+    return solute;
+}
+
+ModuleSccs::SccsResult evaluate_cation(const std::vector<double>& electron_density,
+                                       const std::vector<double>& ionic_density,
+                                       const ModuleSccs::Boundary boundary,
+                                       const ModulePW::PW_Basis& basis,
+                                       const std::vector<ModuleBase::Vector3<double>>& positions,
+                                       const ModuleBase::Vector3<double>& center,
+                                       const ModuleBase::Matrix3& lattice,
+                                       const double scale,
+                                       const double volume_element,
+                                       const double lowpass_p1,
+                                       const double lowpass_p2)
+{
+    ModuleSccs::SccsConfig config;
+    config.cavity.density_min = 2.0e-4;
+    config.cavity.density_max = 3.5e-3;
+    config.cavity.epsilon_bulk = 78.3;
+    config.cavity.lowpass_p1 = lowpass_p1;
+    config.cavity.lowpass_p2 = lowpass_p2;
+    config.surface_regularization = 1.0e-8;
+    config.boundary = boundary;
+    config.max_iterations = 500;
+    config.mixing = 0.5;
+    config.tolerance_rms = 1.0e-13;
+    config.tolerance_max = 1.0e-11;
+    ModuleSccs::PccGeometry pcc;
+    ModuleSccs::Pcc2dGeometry pcc_2d;
+    if (boundary == ModuleSccs::Boundary::Pcc0d)
+    {
+        pcc = ModuleSccs::pcc_geometry(lattice, scale, 1.0e-10);
+        pcc.origin = center;
+    }
+    else
+    {
+        pcc_2d = ModuleSccs::pcc_2d_geometry(lattice, scale, 1.0e-10);
+        pcc_2d.origin_y = center.y;
+    }
+    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModuleSccs::SerialPolarizationReduction polarization_reduction;
+    // A fresh state keeps every evaluation a cold start.
+    ModuleSccs::SccsState state;
+    const double tpiba = ModuleBase::TWO_PI / scale;
+    return ModuleSccs::evaluate_pw_sccs(electron_density, ionic_density, 8.0, 9.0, 1.0e-10,
+                                        positions, center, config, pcc, pcc_2d, basis, tpiba,
+                                        volume_element, charge_reduction, polarization_reduction,
+                                        state);
+}
+
+// Environ deriv_lowpass 10/5, validated at ecutrho 300-500 Ry.
+const double test_lowpass_p1 = 10.0;
+const double test_lowpass_p2 = 5.0;
+
+void make_basis(const ModuleBase::Matrix3& lattice,
+                const double scale,
+                const double ecut,
+                ModulePW::PW_Basis& basis)
+{
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    basis.initgrids(scale, lattice, ecut);
+    basis.initparameters(false, ecut, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+}
+
+// With the switching lowpass the electronic potential must be the derivative
+// of the discrete reaction energy at fixed ions: compare int v_el dn with
+// central differences of E_R. Without the filter the same derivative is not
+// grid-converged (pointwise 150-430 Ha at the cavity edge), so the
+// continuum -eps'|grad v|^2/(8 pi) is printed and bounds the filtered one.
+void check_cation_cavity_derivative(const ModuleSccs::Boundary boundary,
+                                    const ModuleBase::Matrix3& lattice,
+                                    const double scale,
+                                    const char* label)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+    // At 400 Ry, as in production, the far-field Gauss check passes for PCC2D.
+    make_basis(lattice, scale, 400.0, basis);
+    const double volume = scale * scale * scale * lattice.Det();
+    const double volume_element = volume / static_cast<double>(basis.nxyz);
+    const std::vector<ModuleBase::Vector3<double>> positions
+        = ModuleSccs::pw_grid_positions(basis, lattice, scale);
+    const ModuleBase::Vector3<double> center = ModuleSccs::cell_center(lattice, scale);
+    const CationSolute solute = make_cation_solute(positions, center, volume_element);
+    const ModuleSccs::SccsResult result
+        = evaluate_cation(solute.electron_density, solute.ionic_density, boundary, basis,
+                          positions, center, lattice, scale, volume_element, test_lowpass_p1,
+                          test_lowpass_p2);
+    double exact_maximum = 0.0;
+    double continuum_maximum = 0.0;
+    for (std::size_t ir = 0; ir < positions.size(); ++ir)
+    {
+        const double gradient_square = result.response.polarization.field.gradient[ir].norm2();
+        const double continuum_cavity
+            = -result.response.depsilon_drho[ir] * gradient_square / (8.0 * ModuleBase::PI);
+        exact_maximum = std::max(exact_maximum, std::abs(result.response.cavity_potential[ir]));
+        continuum_maximum = std::max(continuum_maximum, std::abs(continuum_cavity));
+    }
+    std::cout << "SCCS_CAVITY_POTENTIAL " << label << " max_exact " << exact_maximum
+              << " max_continuum " << continuum_maximum << std::endl;
+    // Measured 7.4 against 6.8 Ha.
+    const double spike_limit = 2.0 * continuum_maximum;
+    EXPECT_LT(exact_maximum, spike_limit);
+    const std::vector<const std::vector<double>*> modes = {&solute.shift_mode,
+                                                           &solute.breathing_mode};
+    const char* mode_names[] = {"shift", "breathing"};
+    // Truncation error O(step^2) is below 1e-8 here; the sqrt-CG residual adds less.
+    const double step = 3.0e-5;
+    for (std::size_t mode = 0; mode < modes.size(); ++mode)
+    {
+        const std::vector<double>& direction = *modes[mode];
+        std::vector<double> plus(direction.size());
+        std::vector<double> minus(direction.size());
+        double exact = 0.0;
+        double continuum = 0.0;
+        for (std::size_t ir = 0; ir < direction.size(); ++ir)
+        {
+            plus[ir] = solute.electron_density[ir] + step * direction[ir];
+            minus[ir] = solute.electron_density[ir] - step * direction[ir];
+            exact += result.electrostatic.electron_potential[ir] * direction[ir] * volume_element;
+            const double gradient_square = result.response.polarization.field.gradient[ir].norm2();
+            const double continuum_potential
+                = -result.electrostatic.reaction_potential[ir]
+                  - result.response.depsilon_drho[ir] * gradient_square / (8.0 * ModuleBase::PI);
+            continuum += continuum_potential * direction[ir] * volume_element;
+        }
+        const double energy_plus
+            = evaluate_cation(plus, solute.ionic_density, boundary, basis, positions, center,
+                              lattice, scale, volume_element, test_lowpass_p1, test_lowpass_p2)
+                  .electrostatic.reaction_energy;
+        const double energy_minus
+            = evaluate_cation(minus, solute.ionic_density, boundary, basis, positions, center,
+                              lattice, scale, volume_element, test_lowpass_p1, test_lowpass_p2)
+                  .electrostatic.reaction_energy;
+        const double finite_difference = (energy_plus - energy_minus) / (2.0 * step);
+        std::cout << "SCCS_CAVITY_DERIVATIVE " << label << ' ' << mode_names[mode]
+                  << " finite_difference " << finite_difference << " exact " << exact
+                  << " error " << exact - finite_difference << " continuum_error "
+                  << continuum - finite_difference << std::endl;
+        // Measured errors are about 1e-9; the continuum potential misses by 1e-3.
+        EXPECT_GT(std::abs(finite_difference), 1.0e-2);
+        EXPECT_NEAR(exact, finite_difference, 1.0e-6);
+    }
+}
+
+TEST(SccsDriver, Pcc0dLowpassElectronPotentialIsExactDerivativeOfDiscreteEnergy)
+{
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    check_cation_cavity_derivative(ModuleSccs::Boundary::Pcc0d, lattice, 12.0, "pcc0d");
+}
+
+TEST(SccsDriver, Pcc2dLowpassElectronPotentialIsExactDerivativeOfDiscreteEnergy)
+{
+    const double long_axis = 20.0 / 12.0;
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, long_axis, 0.0,
+                                      0.0, 0.0, 1.0);
+    check_cation_cavity_derivative(ModuleSccs::Boundary::Pcc2d, lattice, 12.0, "pcc2d");
+}
+
+// Without the lowpass the PCC cavity potential is Environ's continuum
+// -eps'|grad v|^2/(8 pi) with the FFT gradient of the solved potential.
+TEST(SccsDriver, Pcc0dDefaultCavityPotentialIsEnvironContinuum)
+{
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    const double scale = 12.0;
+    ModulePW::PW_Basis basis("cpu", "double");
+    make_basis(lattice, scale, 120.0, basis);
+    const double volume = scale * scale * scale;
+    const double volume_element = volume / static_cast<double>(basis.nxyz);
+    const std::vector<ModuleBase::Vector3<double>> positions
+        = ModuleSccs::pw_grid_positions(basis, lattice, scale);
+    const ModuleBase::Vector3<double> center = ModuleSccs::cell_center(lattice, scale);
+    const CationSolute solute = make_cation_solute(positions, center, volume_element);
+    const ModuleSccs::SccsResult result
+        = evaluate_cation(solute.electron_density, solute.ionic_density,
+                          ModuleSccs::Boundary::Pcc0d, basis, positions, center, lattice, scale,
+                          volume_element, -1.0, -1.0);
+    const double tpiba = ModuleBase::TWO_PI / scale;
+    const std::vector<ModuleBase::Vector3<double>> gradient
+        = ModuleSccs::periodic_gradient(result.response.polarization.field.potential, basis, tpiba);
+    double maximum_cavity = 0.0;
+    for (std::size_t ir = 0; ir < positions.size(); ++ir)
+    {
+        const double gradient_square = gradient[ir].norm2();
+        const double expected
+            = -(result.response.depsilon_drho[ir] * gradient_square / (8.0 * ModuleBase::PI));
+        const double expected_electron = -result.electrostatic.reaction_potential[ir] + expected;
+        EXPECT_DOUBLE_EQ(result.response.cavity_potential[ir], expected);
+        EXPECT_DOUBLE_EQ(result.electrostatic.electron_potential[ir], expected_electron);
+        maximum_cavity = std::max(maximum_cavity, std::abs(expected));
+    }
+    EXPECT_GT(maximum_cavity, 1.0e-3);
+}
+
+TEST(SccsDriver, LowpassRequiresPccBoundary)
+{
+    ModuleSccs::SccsConfig config;
+    config.cavity.density_min = 2.0e-4;
+    config.cavity.density_max = 3.5e-3;
+    config.cavity.epsilon_bulk = 78.3;
+    config.cavity.lowpass_p1 = test_lowpass_p1;
+    config.cavity.lowpass_p2 = test_lowpass_p2;
+    config.surface_regularization = 1.0e-8;
+    config.max_iterations = 10;
+    config.mixing = 0.5;
+    config.tolerance_rms = 1.0e-10;
+    config.tolerance_max = 1.0e-8;
+    config.boundary = ModuleSccs::Boundary::Periodic;
+    EXPECT_THROW(ModuleSccs::validate_config(config), std::invalid_argument);
+    config.boundary = ModuleSccs::Boundary::Pcc0d;
+    EXPECT_NO_THROW(ModuleSccs::validate_config(config));
+    config.cavity.lowpass_p2 = -1.0;
+    EXPECT_THROW(ModuleSccs::validate_config(config), std::invalid_argument);
 }
 
 } // namespace

@@ -23,6 +23,16 @@ void validate_cavity_parameters(const CavityParameters& parameters)
     {
         throw std::invalid_argument("SCCS bulk permittivity must be at least one");
     }
+    if (!std::isfinite(parameters.lowpass_p1) || !std::isfinite(parameters.lowpass_p2)
+        || (parameters.lowpass_p1 > 0.0) != (parameters.lowpass_p2 > 0.0))
+    {
+        throw std::invalid_argument("SCCS lowpass parameters must be finite and both positive or both non-positive");
+    }
+}
+
+bool uses_switching_lowpass(const CavityParameters& parameters)
+{
+    return parameters.lowpass_p1 > 0.0 && parameters.lowpass_p2 > 0.0;
 }
 
 CavityPoint evaluate_cavity(const double density, const CavityParameters& parameters)

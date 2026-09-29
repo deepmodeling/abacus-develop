@@ -78,6 +78,8 @@ SurchemParameters make_parameters(const Input_para& inp,
         parameters.sccs_config = ModuleSccs::water_preset(preset);
     }
     parameters.sccs_config.boundary = parameters.pcc_boundary;
+    parameters.sccs_config.cavity.lowpass_p1 = inp.sccs_lowpass_p1;
+    parameters.sccs_config.cavity.lowpass_p2 = inp.sccs_lowpass_p2;
     parameters.sccs_config.max_iterations = inp.sccs_maxiter;
     parameters.sccs_config.mixing_method = inp.sccs_mixing_type;
     parameters.sccs_config.mixing_history = inp.sccs_mixing_ndim;

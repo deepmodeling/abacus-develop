@@ -369,6 +369,8 @@ sccs_mixing_max                0.75
 sccs_tol_rms                   1.0e-10
 sccs_tol_max                   1.0e-8
 sccs_surface_eta               1.0e-8
+sccs_lowpass_p1                -1
+sccs_lowpass_p2                -1
 sccs_start_drho                0.0
 sccs_start_nmax                30
 sccs_debug                     1

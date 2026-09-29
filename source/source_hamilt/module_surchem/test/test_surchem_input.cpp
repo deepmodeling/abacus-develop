@@ -4,6 +4,8 @@
 
 #include <gtest/gtest.h>
 
+#include <stdexcept>
+
 TEST(SurchemInput, SelectsVacuumPccIndependentlyOfSolvent)
 {
     Input_para input;
@@ -43,6 +45,26 @@ TEST(SurchemInput, TransfersPresetAndSolverControls)
     input.sccs_debug = 1;
     const SurchemParameters summary = ModuleSurchem::make_parameters(input, cell, 0.0, false, 2);
     EXPECT_FALSE(summary.sccs_config.check_fixed_point);
+    EXPECT_DOUBLE_EQ(summary.sccs_config.cavity.lowpass_p1, -1.0);
+    EXPECT_DOUBLE_EQ(summary.sccs_config.cavity.lowpass_p2, -1.0);
+}
+
+// The switching lowpass follows the preset and exists only with PCC.
+TEST(SurchemInput, TransfersSwitchingLowpassOnlyWithPcc)
+{
+    Input_para input;
+    UnitCell cell;
+    input.imp_sol = 2;
+    input.assume_isolated = "pcc_0d";
+    input.sccs_preset = "water-cation";
+    input.sccs_lowpass_p1 = 10.0;
+    input.sccs_lowpass_p2 = 5.0;
+    const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, false, 1);
+    EXPECT_DOUBLE_EQ(parameters.sccs_config.cavity.lowpass_p1, 10.0);
+    EXPECT_DOUBLE_EQ(parameters.sccs_config.cavity.lowpass_p2, 5.0);
+    EXPECT_DOUBLE_EQ(parameters.sccs_config.cavity.epsilon_bulk, 78.3);
+    input.assume_isolated = "none";
+    EXPECT_THROW(ModuleSurchem::make_parameters(input, cell, 0.0, false, 1), std::invalid_argument);
 }
 
 TEST(SurchemInput, PreservesLegacyParametersAndOrdinaryVacuum)

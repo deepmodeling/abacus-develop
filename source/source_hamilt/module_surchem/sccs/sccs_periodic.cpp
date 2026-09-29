@@ -143,27 +143,111 @@ void chain_factsqrt(const std::vector<double>& density,
     }
 }
 
+// Environ 3.1.1 core_fft_lowpass: with lowpass_p1 and lowpass_p2 positive,
+// every switching-function derivative is multiplied by
+// 0.5 erfc(p1 G^2/Gcut^2 - p2), Gcut^2 being the density cutoff; else by one.
+double switching_filter(const double gg,
+                        const CavityParameters& cavity,
+                        const ModulePW::PW_Basis& basis)
+{
+    if (!uses_switching_lowpass(cavity))
+        return 1.0;
+    const double argument = cavity.lowpass_p1 * gg / basis.ggecut - cavity.lowpass_p2;
+    return 0.5 * std::erfc(argument);
+}
+
+// Spectral gradient of the switching function, filtered when requested.
+std::vector<ModuleBase::Vector3<double>> switching_gradient(const std::vector<double>& values,
+                                                            const CavityParameters& cavity,
+                                                            const ModulePW::PW_Basis& basis,
+                                                            const double tpiba)
+{
+    if (!uses_switching_lowpass(cavity))
+        return ModuleSccs::periodic_gradient(values, basis, tpiba);
+    std::vector<std::complex<double>> values_g(basis.npw);
+    basis.real2recip(values.data(), values_g.data());
+    std::vector<std::complex<double>> gradient_g(basis.npw);
+    std::vector<double> gradient_r(values.size());
+    std::vector<ModuleBase::Vector3<double>> gradient(values.size());
+    for (int d = 0; d < 3; ++d)
+    {
+        for (int ig = 0; ig < basis.npw; ++ig)
+        {
+            const double filter = switching_filter(basis.gg[ig], cavity, basis);
+            gradient_g[ig] = ModuleBase::IMAG_UNIT * tpiba * basis.gcar[ig][d] * values_g[ig] * filter;
+        }
+        basis.recip2real(gradient_g.data(), gradient_r.data());
+        for (std::size_t i = 0; i < values.size(); ++i)
+            gradient[i][d] = gradient_r[i];
+    }
+    return gradient;
+}
+
+// Spectral Laplacian of the switching function. It is symmetric under the
+// grid inner product, so it is its own transpose in the cavity derivative.
+void switching_laplacian(const std::vector<double>& values,
+                         const CavityParameters& cavity,
+                         const ModulePW::PW_Basis& basis,
+                         const double tpiba,
+                         std::vector<double>& laplacian)
+{
+    std::vector<std::complex<double>> values_g(basis.npw);
+    basis.real2recip(values.data(), values_g.data());
+    for (int ig = 0; ig < basis.npw; ++ig)
+    {
+        const double filter = switching_filter(basis.gg[ig], cavity, basis);
+        values_g[ig] *= -tpiba * tpiba * basis.gg[ig] * filter;
+    }
+    laplacian.resize(values.size());
+    basis.recip2real(values_g.data(), laplacian.data());
+}
+
+// Spectral divergence matching switching_gradient; minus this divergence is
+// the transpose of switching_gradient.
+void switching_divergence(const std::vector<ModuleBase::Vector3<double>>& field,
+                          const CavityParameters& cavity,
+                          const ModulePW::PW_Basis& basis,
+                          const double tpiba,
+                          std::vector<double>& divergence)
+{
+    const std::size_t size = field.size();
+    std::vector<double> component(size);
+    std::vector<std::complex<double>> component_g(basis.npw);
+    const std::complex<double> zero(0.0, 0.0);
+    std::vector<std::complex<double>> divergence_g(basis.npw, zero);
+    for (int d = 0; d < 3; ++d)
+    {
+        for (std::size_t i = 0; i < size; ++i)
+            component[i] = field[i][d];
+        basis.real2recip(component.data(), component_g.data());
+        for (int ig = 0; ig < basis.npw; ++ig)
+        {
+            const double filter = switching_filter(basis.gg[ig], cavity, basis);
+            divergence_g[ig] += ModuleBase::IMAG_UNIT * tpiba * basis.gcar[ig][d] * component_g[ig] * filter;
+        }
+    }
+    divergence.resize(size);
+    basis.recip2real(divergence_g.data(), divergence.data());
+}
+
 // With PCC the potential at the cavity edge carries the open-boundary monopole
 // and dipole. The chain-rule f drops steeply to zero at density_min, and the
 // sampled f v source then fails to converge with the grid. Differentiate the
 // switching function s on the FFT grid instead (Environ deriv_method 'fft'):
-// ln eps = ln(eps_bulk) (1 - s). grad ln(eps) is replaced consistently.
+// ln eps = ln(eps_bulk) (1 - s). grad ln(eps) is replaced consistently, and
+// grad s is returned for the cavity derivative.
 void switching_fft_factsqrt(const CavityParameters& cavity,
                             const ModulePW::PW_Basis& basis,
                             const double tpiba,
                             PeriodicSccsResult& result,
-                            std::vector<double>& coefficient)
+                            std::vector<double>& coefficient,
+                            std::vector<ModuleBase::Vector3<double>>& solute_gradient)
 {
     const std::size_t size = result.solute.size();
     const double log_bulk = std::log(cavity.epsilon_bulk);
-    const std::vector<ModuleBase::Vector3<double>> solute_gradient
-        = ModuleSccs::periodic_gradient(result.solute, basis, tpiba);
-    std::vector<std::complex<double>> solute_g(basis.npw);
-    basis.real2recip(result.solute.data(), solute_g.data());
-    for (int ig = 0; ig < basis.npw; ++ig)
-        solute_g[ig] *= -tpiba * tpiba * basis.gg[ig];
-    std::vector<double> solute_laplacian(size);
-    basis.recip2real(solute_g.data(), solute_laplacian.data());
+    solute_gradient = switching_gradient(result.solute, cavity, basis, tpiba);
+    std::vector<double> solute_laplacian;
+    switching_laplacian(result.solute, cavity, basis, tpiba, solute_laplacian);
     for (std::size_t i = 0; i < size; ++i)
     {
         double gradient_square = 0.0;
@@ -179,45 +263,84 @@ void switching_fft_factsqrt(const CavityParameters& cavity,
     }
 }
 
-// The CG builds sqrt(eps) v = w = C_PCC(s) with s = (q - f v)/sqrt(eps). The
-// corrected v is not periodic (a dipole step at the open boundary), so the FFT
-// gradient of v rings; differentiate through the operator's analytic
-// correction instead: grad v = (grad w - w grad(ln eps)/2) / sqrt(eps). Then
-// report the ENVIRON dielectric_of_potential polarization density and the
+// Continuum cavity potential -eps'|grad v|^2/(8 pi) of Environ
+// dielectric::de_dboundary, with grad v from the solved potential.
+void continuum_cavity_potential(PeriodicSccsResult& result)
+{
+    const std::size_t size = result.depsilon_drho.size();
+    result.cavity_potential.resize(size);
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        const ModuleBase::Vector3<double>& gradient = result.polarization.field.gradient[i];
+        const double gradient_square
+            = gradient.x * gradient.x + gradient.y * gradient.y + gradient.z * gradient.z;
+        result.cavity_potential[i]
+            = -(result.depsilon_drho[i] * gradient_square / (8.0 * ModuleBase::PI));
+    }
+}
+
+// Exact derivative of the discrete reaction energy through the cavity for the
+// lowpass switching-function factsqrt. The sqrt-CG solves A v = q with
+// A = sqrt(eps) G^-1 sqrt(eps) + F, which is symmetric, so E = q^T A^-1 q / 2
+// changes by dE = -v^T dA v / 2 and needs no adjoint solve. With
+// L = ln(eps_bulk), s the switching function and b = eps v^2/(8 pi), the
+// sqrt(eps) term and the pointwise part of dF add up to q v / 2, and the
+// transposes of the filtered lapl and grad in F give
+// dE/ds = L/2 (q v + lapl b + L div(b grad s)).
+// Its continuum limit is -eps'|grad v|^2/(8 pi). Without the filter the
+// discrete derivative is not grid-converged at the cavity edge and its
+// grid-scale oscillations drive the electronic SCF to diverge.
+void switching_cavity_potential(const std::vector<double>& charge,
+                                const std::vector<double>& potential,
+                                const std::vector<ModuleBase::Vector3<double>>& solute_gradient,
+                                const CavityParameters& cavity,
+                                const ModulePW::PW_Basis& basis,
+                                const double tpiba,
+                                PeriodicSccsResult& result)
+{
+    const std::size_t size = charge.size();
+    const double log_bulk = std::log(cavity.epsilon_bulk);
+    std::vector<double> weight(size);
+    std::vector<ModuleBase::Vector3<double>> weighted_gradient(size);
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        weight[i] = result.epsilon[i] * potential[i] * potential[i] / (8.0 * ModuleBase::PI);
+        for (int d = 0; d < 3; ++d)
+            weighted_gradient[i][d] = weight[i] * solute_gradient[i][d];
+    }
+    std::vector<double> weight_laplacian;
+    switching_laplacian(weight, cavity, basis, tpiba, weight_laplacian);
+    std::vector<double> weighted_divergence;
+    switching_divergence(weighted_gradient, cavity, basis, tpiba, weighted_divergence);
+    result.cavity_potential.resize(size);
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        const double derivative = 0.5 * log_bulk
+                                  * (charge[i] * potential[i] + weight_laplacian[i]
+                                     + log_bulk * weighted_divergence[i]);
+        result.cavity_potential[i] = derivative * result.dsolute_drho[i];
+    }
+}
+
+// The CG builds sqrt(eps) v = w = C_PCC(s) with s = (q - f v)/sqrt(eps).
+// Report the ENVIRON dielectric_of_potential polarization density and the
 // far-field polarization charge int(s)/sqrt(eps_bulk) - int(q).
 void finish_open_boundary_response(const std::vector<double>& charge,
                                    const std::vector<double>& coefficient,
                                    const std::vector<double>& invsqrt,
                                    const CavityParameters& cavity,
                                    const ModulePW::PW_Basis& basis,
-                                   const CoulombOperator& coulomb,
                                    const PolarizationReduction& reduction,
                                    PeriodicSccsResult& result)
 {
     const std::size_t size = charge.size();
     const std::vector<double>& potential = result.polarization.field.potential;
-    std::vector<double> source(size);
     double source_sum = 0.0;
     double solute_sum = 0.0;
     for (std::size_t i = 0; i < size; ++i)
     {
-        source[i] = (charge[i] - coefficient[i] * potential[i]) * invsqrt[i];
-        source_sum += source[i];
+        source_sum += (charge[i] - coefficient[i] * potential[i]) * invsqrt[i];
         solute_sum += charge[i];
-    }
-    ModuleSccs::ElectrostaticField weighted_field;
-    coulomb.apply(source, weighted_field);
-    result.polarization.field.gradient.resize(size);
-    for (std::size_t i = 0; i < size; ++i)
-    {
-        const double weighted_potential = potential[i] / invsqrt[i];
-        for (int d = 0; d < 3; ++d)
-        {
-            result.polarization.field.gradient[i][d]
-                = (weighted_field.gradient[i][d]
-                   - 0.5 * weighted_potential * result.grad_log_epsilon[i][d])
-                  * invsqrt[i];
-        }
     }
     // The corrected potential has no periodic Laplacian inverse; use the
     // ENVIRON dielectric_of_potential polarization charge instead. Its integral
@@ -274,13 +397,14 @@ PeriodicSccsResult solve_chain_sccs_response(
     for (std::size_t i = 0; i < size; ++i)
         invsqrt[i] = 1.0/std::sqrt(result.epsilon[i]);
     const bool open_boundary = coulomb.has_boundary_correction();
+    std::vector<ModuleBase::Vector3<double>> solute_gradient;
     if (!open_boundary)
     {
         chain_factsqrt(density, cavity, result, basis, tpiba, coefficient);
     }
     else
     {
-        switching_fft_factsqrt(cavity, basis, tpiba, result, coefficient);
+        switching_fft_factsqrt(cavity, basis, tpiba, result, coefficient, solute_gradient);
     }
     // P r = epsilon^-1/2 C_PCC epsilon^-1/2 r.
     // Per-solve scratch is shared by CG applications; the cavity is fixed
@@ -401,16 +525,22 @@ PeriodicSccsResult solve_chain_sccs_response(
         for (double& value : potential) value -= mean;
     }
     result.polarization.field.potential = potential;
-    if (!open_boundary)
+    // Environ dielectric::de_dboundary differentiates the solved potential on
+    // its derivative grid, for the continuum cavity potential and diagnostics.
+    result.polarization.field.gradient = ModuleSccs::periodic_gradient(potential, basis, tpiba);
+    if (open_boundary)
     {
-        // Environ dielectric::de_dboundary differentiates the solved potential
-        // on its derivative grid.
-        result.polarization.field.gradient = ModuleSccs::periodic_gradient(potential, basis, tpiba);
+        finish_open_boundary_response(charge, coefficient, invsqrt, cavity, basis, reduction,
+                                      result);
+    }
+    if (uses_switching_lowpass(cavity))
+    {
+        switching_cavity_potential(charge, potential, solute_gradient, cavity, basis, tpiba,
+                                   result);
     }
     else
     {
-        finish_open_boundary_response(charge, coefficient, invsqrt, cavity, basis, coulomb,
-                                      reduction, result);
+        continuum_cavity_potential(result);
     }
     return result;
 }

@@ -73,6 +73,23 @@ void check_sccs_mixing_parameters(const Input_para& input)
     }
 }
 
+void check_sccs_lowpass(const Input_para& input)
+{
+    const bool p1_positive = input.sccs_lowpass_p1 > 0.0;
+    const bool p2_positive = input.sccs_lowpass_p2 > 0.0;
+    if (!std::isfinite(input.sccs_lowpass_p1) || !std::isfinite(input.sccs_lowpass_p2)
+        || p1_positive != p2_positive)
+    {
+        ModuleBase::WARNING_QUIT("ReadInput",
+                                 "sccs_lowpass_p1 and sccs_lowpass_p2 must be finite and both positive or both non-positive");
+    }
+    if (p1_positive && input.assume_isolated != "pcc_0d" && input.assume_isolated != "pcc_2d")
+    {
+        ModuleBase::WARNING_QUIT("ReadInput",
+                                 "sccs_lowpass_p1 and sccs_lowpass_p2 require assume_isolated pcc_0d or pcc_2d");
+    }
+}
+
 void check_sccs_numerical_parameters(const Input_para& input)
 {
     check_sccs_mixing_parameters(input);
@@ -90,6 +107,7 @@ void check_sccs_numerical_parameters(const Input_para& input)
     {
         ModuleBase::WARNING_QUIT("ReadInput", "invalid SCCS numerical parameters");
     }
+    check_sccs_lowpass(input);
 }
 } // namespace
 
@@ -147,6 +165,27 @@ void ReadInput::item_sccs()
     ADD_SCCS_REAL_ITEM("sccs_tol_rms", sccs_tol_rms, "Positive RMS tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-10. It applies to the ENVIRON sqrt-preconditioned CG solution of the generalized Poisson equation for every assume_isolated value; with pcc_0d or pcc_2d the preconditioner Poisson solve includes the analytic open-boundary correction. ENVIRON stops its CG when the unnormalized sum of squared residuals falls below its tol; the corresponding RMS is sqrt(tol/N) for N FFT grid points.", "1.0e-10", "e/bohr^3")
     ADD_SCCS_REAL_ITEM("sccs_tol_max", sccs_tol_max, "Positive maximum tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-8. The sqrt-CG stops only when both sccs_tol_rms and sccs_tol_max are satisfied.", "1.0e-8", "e/bohr^3")
     ADD_SCCS_REAL_ITEM("sccs_surface_eta", sccs_surface_eta, "Positive SCCS surface regularization; user-controlled for every sccs_preset, default 1.0e-8 bohr^-1.", "1.0e-8", "bohr^-1")
+    ADD_SCCS_REAL_ITEM("sccs_lowpass_p1",
+                       sccs_lowpass_p1,
+                       "Low-pass filter of the SCCS switching-function derivatives, as Environ "
+                       "deriv_lowpass_p1 with deriv_method fft: when sccs_lowpass_p1 and "
+                       "sccs_lowpass_p2 are both positive, every Fourier derivative of the "
+                       "switching function is multiplied by 0.5 erfc(p1 G^2/Gcut^2 - p2), Gcut^2 "
+                       "being the ecutrho sphere, and the electronic potential becomes the exact "
+                       "derivative of the discrete SCCS energy, so forces agree with energy "
+                       "differences. Only with assume_isolated pcc_0d or pcc_2d. The default -1 "
+                       "turns it off and reproduces Environ deriv_method fft (continuum cavity "
+                       "potential). 10 with sccs_lowpass_p2 5 was validated at ecutrho 300-500 Ry; "
+                       "the filter changes the model energy (about 10 meV for H3O+).",
+                       "-1",
+                       "")
+    ADD_SCCS_REAL_ITEM("sccs_lowpass_p2",
+                       sccs_lowpass_p2,
+                       "Offset of the SCCS switching-function low-pass filter, as Environ "
+                       "deriv_lowpass_p2; see sccs_lowpass_p1. Both must be positive or both "
+                       "non-positive. Default -1 (off).",
+                       "-1",
+                       "")
 #undef ADD_SCCS_REAL_ITEM
     {
         Input_Item item("sccs_start_drho");

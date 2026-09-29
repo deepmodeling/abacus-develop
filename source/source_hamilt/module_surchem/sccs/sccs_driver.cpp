@@ -28,7 +28,9 @@ bool same_cavity(const CavityParameters& left, const CavityParameters& right)
 {
     return left.density_min == right.density_min
            && left.density_max == right.density_max
-           && left.epsilon_bulk == right.epsilon_bulk;
+           && left.epsilon_bulk == right.epsilon_bulk
+           && left.lowpass_p1 == right.lowpass_p1
+           && left.lowpass_p2 == right.lowpass_p2;
 }
 
 bool same_vector(const ModuleBase::Vector3<double>& left,
@@ -251,12 +253,12 @@ SccsResult evaluate_pw_sccs(
     result.electrostatic = evaluate_electrostatic_functional(result.charge.solute,
                                                               result.response.polarization.field,
                                                               result.vacuum_field,
-                                                              result.response.depsilon_drho,
+                                                              result.response.cavity_potential,
                                                               volume_element,
                                                               charge_reduction);
 
-    // The continuum chain derivative supplies reaction and cavity potentials
-    // directly for the electronic Hamiltonian.
+    // The solver supplies the cavity potential: the exact discrete derivative
+    // with PCC, the continuum chain derivative when periodic.
 
     NonElectrostaticParameters non_electrostatic_parameters;
     non_electrostatic_parameters.surface_tension = config.surface_tension;

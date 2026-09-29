@@ -23,6 +23,11 @@ struct PeriodicSccsResult
     std::vector<ModuleBase::Vector3<double>> density_gradient;
     std::vector<ModuleBase::Vector3<double>> grad_log_epsilon;
     PolarizationResult polarization;
+    // Derivative of the reaction energy with respect to the cavity density
+    // through epsilon, in Ha. With the switching lowpass (PCC only) it is the
+    // exact derivative of the discrete sqrt-CG energy; otherwise it is the
+    // continuum -eps'|grad v|^2/(8 pi) of Environ.
+    std::vector<double> cavity_potential;
     // Unshifted sqrt-CG solution: the fixed point used for the next warm start.
     std::vector<double> restart_potential;
     // Open-boundary (PCC) solutions only: the net polarization charge seen by

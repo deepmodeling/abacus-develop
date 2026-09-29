@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <complex>
+#include <stdexcept>
 #include <vector>
 
 namespace
@@ -103,22 +104,27 @@ TEST(SccsFunctional, FixedDielectricEnergyMatchesElectronPotentialDerivative)
     EXPECT_NEAR(finite_difference, potential_derivative, 1.0e-11);
 }
 
-TEST(SccsFunctional, IncludesDielectricCavityDerivativePotential)
+TEST(SccsFunctional, AddsSolverCavityPotentialToElectronPotential)
 {
     const std::vector<double> charge(1, 0.0);
     ModuleSccs::ElectrostaticField dielectric;
     dielectric.potential.assign(1, 2.0);
-    dielectric.gradient.assign(1, ModuleBase::Vector3<double>(1.0, 2.0, 2.0));
-    ModuleSccs::ElectrostaticField vacuum = dielectric;
+    ModuleSccs::ElectrostaticField vacuum;
+    vacuum.potential.assign(1, 0.5);
     const ModuleSccs::SerialChargeReduction reduction;
     const ModuleSccs::ElectrostaticFunctionalResult result
         = ModuleSccs::evaluate_electrostatic_functional(charge,
                                                         dielectric,
                                                         vacuum,
-                                                        std::vector<double>(1, -4.0),
+                                                        std::vector<double>(1, 0.25),
                                                         1.0,
                                                         reduction);
-    EXPECT_NEAR(result.electron_potential[0], 36.0 / (8.0 * ModuleBase::PI), 1.0e-14);
+    EXPECT_DOUBLE_EQ(result.reaction_potential[0], 1.5);
+    EXPECT_DOUBLE_EQ(result.electron_potential[0], -1.25);
+    const std::vector<double> mismatched(2, 0.0);
+    EXPECT_THROW(ModuleSccs::evaluate_electrostatic_functional(charge, dielectric, vacuum,
+                                                               mismatched, 1.0, reduction),
+                 std::invalid_argument);
 }
 
 } // namespace

@@ -1,39 +1,22 @@
 #include "sccs_functional.h"
 
-#include "source_base/constants.h"
-
 #include <cmath>
 #include <stdexcept>
 
 namespace ModuleSccs
 {
-namespace
-{
-
-bool finite_vector(const ModuleBase::Vector3<double>& value)
-{
-    return std::isfinite(value.x) && std::isfinite(value.y) && std::isfinite(value.z);
-}
-
-double norm_squared(const ModuleBase::Vector3<double>& value)
-{
-    return value.x * value.x + value.y * value.y + value.z * value.z;
-}
-
-} // namespace
 
 ElectrostaticFunctionalResult evaluate_electrostatic_functional(
     const std::vector<double>& solute_charge,
     const ElectrostaticField& dielectric_field,
     const ElectrostaticField& vacuum_field,
-    const std::vector<double>& depsilon_drho,
+    const std::vector<double>& cavity_potential,
     const double volume_element,
     const ChargeReduction& reduction)
 {
     const std::size_t size = solute_charge.size();
     if (size == 0 || dielectric_field.potential.size() != size
-        || dielectric_field.gradient.size() != size || vacuum_field.potential.size() != size
-        || vacuum_field.gradient.size() != size || depsilon_drho.size() != size)
+        || vacuum_field.potential.size() != size || cavity_potential.size() != size)
     {
         throw std::invalid_argument("SCCS electrostatic functional arrays must have the same non-zero size");
     }
@@ -50,9 +33,7 @@ ElectrostaticFunctionalResult evaluate_electrostatic_functional(
         if (!std::isfinite(solute_charge[index])
             || !std::isfinite(dielectric_field.potential[index])
             || !std::isfinite(vacuum_field.potential[index])
-            || !std::isfinite(depsilon_drho[index])
-            || !finite_vector(dielectric_field.gradient[index])
-            || !finite_vector(vacuum_field.gradient[index]))
+            || !std::isfinite(cavity_potential[index]))
         {
             throw std::domain_error("SCCS electrostatic functional inputs must be finite");
         }
@@ -61,10 +42,7 @@ ElectrostaticFunctionalResult evaluate_electrostatic_functional(
         result.reaction_potential[index] = reaction_potential;
         result.reaction_energy
             += 0.5 * solute_charge[index] * reaction_potential * volume_element;
-        result.electron_potential[index]
-            = -reaction_potential
-              - depsilon_drho[index] * norm_squared(dielectric_field.gradient[index])
-                    / (8.0 * ModuleBase::PI);
+        result.electron_potential[index] = -reaction_potential + cavity_potential[index];
     }
     result.charge_potential = result.reaction_potential;
     reduction.reduce_sum(result.reaction_energy);
