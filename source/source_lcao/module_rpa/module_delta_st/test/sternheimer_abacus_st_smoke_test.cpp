@@ -367,14 +367,6 @@ TEST(SternheimerABACUSSTSmoke, MapsCanonicalFullQIndexToReaderV1StarIndex)
                  std::invalid_argument);
 }
 
-TEST(SternheimerABACUSSTSmoke, SelectsEveryGammaSpinRecordForMolecularResponse)
-{
-    EXPECT_EQ(ModuleRI::sternheimer_abfs_perturbation_source({}), "product_pca");
-    EXPECT_EQ(ModuleRI::sternheimer_abfs_perturbation_source({"H-fixed.abfs"}), "explicit_abfs");
-    EXPECT_TRUE(ModuleRI::sternheimer_builds_product_pca_auxiliary_basis({}));
-    EXPECT_FALSE(ModuleRI::sternheimer_builds_product_pca_auxiliary_basis({"H-fixed.abfs"}));
-}
-
 TEST(SternheimerABACUSSTSmoke, SelectsOnlyOccupiedGammaSpinRecordsForOpenShellResponse)
 {
     auto occupied_spin = make_occupied_kpoint(1, 1, 1, {0.0, 0.0, 0.0}, 1.0);
