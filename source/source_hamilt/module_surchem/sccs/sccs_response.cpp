@@ -402,6 +402,52 @@ void switching_cavity_potential(const std::vector<double>& charge,
     }
 }
 
+// Check the preconditioned equation v = P(q - K v) independently of the CG
+// recurrences; this costs one extra Poisson solve.
+void check_fixed_point(const std::vector<double>& charge,
+                       const std::vector<double>& coefficient,
+                       const std::vector<double>& potential,
+                       const ModuleSurchem::ChargeReduction& reduction,
+                       SqrtPreconditioner& preconditioner,
+                       PolarizationResult& polarization)
+{
+    const std::size_t size = potential.size();
+    std::vector<double> right(size);
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        right[i] = charge[i] - coefficient[i] * potential[i];
+    }
+    std::vector<double> image;
+    preconditioner.apply(right, image);
+    std::vector<double> defect(size);
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        defect[i] = potential[i] - image[i];
+    }
+    reduced_rms_max(defect, reduction,
+                    polarization.fixed_point_defect_rms,
+                    polarization.fixed_point_defect_max);
+    polarization.fixed_point_checked = true;
+}
+
+// Shift a periodic potential to zero cell mean (ENVIRON generalized_sqrt).
+void remove_mean(const ModulePW::PW_Basis& basis,
+                 const ModuleSurchem::ChargeReduction& reduction,
+                 std::vector<double>& potential)
+{
+    double mean = 0.0;
+    for (const double value : potential)
+    {
+        mean += value;
+    }
+    reduction.reduce_sum(mean);
+    mean /= basis.nxyz;
+    for (double& value : potential)
+    {
+        value -= mean;
+    }
+}
+
 // The CG builds sqrt(eps) v = w = C_PCC(s) with s = (q - f v)/sqrt(eps).
 // Report the ENVIRON dielectric_of_potential polarization density and the
 // far-field polarization charge int(s)/sqrt(eps_bulk) - int(q).
@@ -537,40 +583,14 @@ SccsResponse solve_sccs_response(
     }
     if (solver.check_fixed_point)
     {
-        // Independently check the preconditioned equation v = P(q - K v);
-        // this costs one extra Poisson solve, so it runs only on request.
-        std::vector<double> right(size);
-        for (std::size_t i = 0; i < size; ++i)
-        {
-            right[i] = charge[i] - coefficient[i] * potential[i];
-        }
-        preconditioner.apply(right, z);
-        std::vector<double> defect(size);
-        for (std::size_t i = 0; i < size; ++i)
-        {
-            defect[i] = potential[i] - z[i];
-        }
-        reduced_rms_max(defect, reduction,
-                        polarization.fixed_point_defect_rms,
-                        polarization.fixed_point_defect_max);
-        polarization.fixed_point_checked = true;
+        check_fixed_point(charge, coefficient, potential, reduction, preconditioner, polarization);
     }
     result.restart_potential = potential;
     // A PCC operator in the preconditioner fixes the physical gauge; only the
-    // periodic potential is shifted to zero mean (ENVIRON generalized_sqrt).
+    // periodic potential is shifted to zero mean.
     if (!open_boundary)
     {
-        double mean = 0.0;
-        for (const double value : potential)
-        {
-            mean += value;
-        }
-        reduction.reduce_sum(mean);
-        mean /= basis.nxyz;
-        for (double& value : potential)
-        {
-            value -= mean;
-        }
+        remove_mean(basis, reduction, potential);
     }
     result.polarization.field.potential = potential;
     // Environ dielectric::de_dboundary differentiates the solved potential on

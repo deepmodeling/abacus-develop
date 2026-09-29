@@ -64,6 +64,37 @@ std::uint64_t grid_position_signature(
     return hash;
 }
 
+bool same_grid(const SccsState& state,
+               const ModulePW::PW_Basis& basis,
+               const double tpiba,
+               const double volume_element,
+               const std::uint64_t position_signature)
+{
+    return state.local_grid_size == basis.nrxx && state.global_grid_size == basis.nxyz
+           && state.nx == basis.nx && state.ny == basis.ny && state.nz == basis.nz
+           && state.local_plane_count == basis.nplane
+           && state.local_plane_start == basis.startz_current
+           && state.grid_position_signature == position_signature
+           && state.tpiba == tpiba && state.volume_element == volume_element;
+}
+
+bool same_pcc_geometry(const ModulePcc::PccGeometry& left, const ModulePcc::PccGeometry& right)
+{
+    return left.parameters.cube_length == right.parameters.cube_length
+           && left.parameters.madelung == right.parameters.madelung
+           && same_vector(left.origin, right.origin) && same_vector(left.axis_a, right.axis_a)
+           && same_vector(left.axis_b, right.axis_b) && same_vector(left.axis_c, right.axis_c);
+}
+
+bool same_pcc_2d_geometry(const ModulePcc::Pcc2dGeometry& left, const ModulePcc::Pcc2dGeometry& right)
+{
+    return left.parameters.periodic_area == right.parameters.periodic_area
+           && left.parameters.cell_length_y == right.parameters.cell_length_y
+           && left.origin_y == right.origin_y;
+}
+
+// The stored potential is a valid warm start only for the same grid, boundary,
+// PCC geometry and cavity parameters.
 bool same_state_signature(const SccsState& state,
                           const ModulePcc::Boundary boundary,
                           const ModulePcc::PccGeometry& pcc_geometry,
@@ -75,26 +106,9 @@ bool same_state_signature(const SccsState& state,
                           const std::uint64_t position_signature)
 {
     return state.valid && state.boundary == boundary
-           && state.local_grid_size == basis.nrxx
-           && state.global_grid_size == basis.nxyz && state.nx == basis.nx
-           && state.ny == basis.ny && state.nz == basis.nz
-           && state.local_plane_count == basis.nplane
-           && state.local_plane_start == basis.startz_current
-           && state.grid_position_signature == position_signature
-           && state.tpiba == tpiba && state.volume_element == volume_element
-           && state.pcc_geometry.parameters.cube_length
-                  == pcc_geometry.parameters.cube_length
-           && state.pcc_geometry.parameters.madelung
-                  == pcc_geometry.parameters.madelung
-           && same_vector(state.pcc_geometry.origin, pcc_geometry.origin)
-           && same_vector(state.pcc_geometry.axis_a, pcc_geometry.axis_a)
-           && same_vector(state.pcc_geometry.axis_b, pcc_geometry.axis_b)
-           && same_vector(state.pcc_geometry.axis_c, pcc_geometry.axis_c)
-           && state.pcc_2d_geometry.parameters.periodic_area
-                  == pcc_2d_geometry.parameters.periodic_area
-           && state.pcc_2d_geometry.parameters.cell_length_y
-                  == pcc_2d_geometry.parameters.cell_length_y
-           && state.pcc_2d_geometry.origin_y == pcc_2d_geometry.origin_y
+           && same_grid(state, basis, tpiba, volume_element, position_signature)
+           && same_pcc_geometry(state.pcc_geometry, pcc_geometry)
+           && same_pcc_2d_geometry(state.pcc_2d_geometry, pcc_2d_geometry)
            && same_cavity(state.cavity, cavity)
            && state.potential.size() == static_cast<std::size_t>(basis.nrxx);
 }
