@@ -111,4 +111,76 @@ namespace LR
         }
         return g;
     }
+
+    /// @brief The outcome of the Jahn-Teller search: the displacement direction that lowers one
+    ///        branch of the multiplet fastest, and the electronic state that follows it.
+    struct JTDirection
+    {
+        std::vector<double> displacement;  ///< the $3N$ direction, normalized, laid out (atom, xyz)
+        std::vector<double> mixing;        ///< $v$, that branch's $d$ coefficients in the multiplet basis
+        double slope = 0.0;                ///< $\|q(v)\|$, the branch's steepest descent rate
+        int restarts_agreeing = 0;         ///< how many starting points reached this same optimum
+        int iterations = 0;                ///< iterations used by the winning start
+    };
+
+    /// @brief Find the Jahn-Teller direction: the displacement that splits the multiplet and lowers
+    ///        one branch as fast as possible.
+    ///
+    /// The Jahn-Teller theorem says a degenerate electronic state of a non-linear molecule is
+    /// unstable against some symmetry-lowering displacement. Finding it is a JOINT optimization over
+    /// the displacement and the mixing inside the subspace -- the two are determined together, which
+    /// is why it cannot be done one Cartesian axis at a time:
+    ///
+    ///     $\min_{\|u\|=1}\lambda_{\min}\big(\sum_a u_a G^{(a)}\big)$.
+    ///
+    /// Written that way it looks like a non-convex problem on the unit sphere in $3N$ dimensions. It
+    /// is not: since $\lambda_{\min}(M)=\min_{\|v\|=1}v^\top Mv$, the two minimizations can be
+    /// swapped, and the inner one over $u$ has a closed form,
+    ///
+    ///     $\min_{\|u\|=1}\ u\cdot q(v)=-\|q(v)\|$, where $q(v)_a=v^\top G^{(a)}v$,
+    ///
+    /// leaving
+    ///
+    ///     $\min_{\|u\|=1}\lambda_{\min}\big(M(u)\big)=-\max_{\|v\|=1}\|q(v)\|$,
+    ///     with the optimal direction $u^*=-q(v^*)/\|q(v^*)\|$.
+    ///
+    /// So the search runs over the $d$-dimensional subspace, not over $3N$ coordinates, and it has a
+    /// plain physical reading: $q(v)$ is the gradient of the mixed state
+    /// $|v\rangle=\sum_kv_k|X_k\rangle$, so the Jahn-Teller direction is the steepest-descent
+    /// direction of whichever state in the multiplet has the largest gradient.
+    ///
+    /// Solved by alternating exact minimization -- $u\leftarrow-q(v)/\|q(v)\|$, then $v\leftarrow$
+    /// the $\lambda_{\min}$ eigenvector of $M(u)$ -- which decreases the joint objective
+    /// monotonically. The objective is homogeneous of degree one and only piecewise smooth, so
+    /// several deterministic starting points are tried and the best kept; `restarts_agreeing`
+    /// reports how many landed on it, which is the practical signal that the optimum is global.
+    ///
+    /// This is first order only. It gives the DIRECTION; the actual distortion amplitude needs the
+    /// harmonic term as well ($Q\approx-g/k$), and a norm that means anything physically should be
+    /// taken in mass-weighted coordinates rather than plain Cartesian ones.
+    ///
+    /// @param gflat  the gradient matrix, flattened as `gflat[a * d * d + k * d + l]`, symmetric in
+    ///               (k, l). The sign convention is the caller's: feeding FORCES
+    ///               ($-\partial\Omega/\partial R$) makes `displacement` point downhill directly,
+    ///               while feeding gradients makes it point uphill.
+    /// @param ncoord $3N$
+    /// @param d      the multiplet's dimension, must be >= 2
+    JTDirection find_jt_direction(const std::vector<double>& gflat, const int ncoord, const int d);
+
+    /// @brief Split a branch gradient into the part shared by the whole multiplet and the part that
+    ///        actually breaks the degeneracy.
+    ///
+    /// $q(v)=\bar q+\big(q(v)-\bar q\big)$ with $\bar q_a=\operatorname{Tr}G^{(a)}/d$. The first term
+    /// is the multiplet average: totally symmetric, common to every branch, and it only relaxes the
+    /// geometry without splitting anything. The second is the Jahn-Teller part. The distinction
+    /// matters when reading the result -- at a stationary point of the average surface, which is
+    /// where an `lr_relax_degen_mode = average` relaxation ends up, the first term vanishes and the
+    /// whole direction is Jahn-Teller.
+    ///
+    /// @return the symmetric part $\bar q$; `jt_part` receives $q(v)-\bar q$
+    std::vector<double> split_symmetric_part(const std::vector<double>& gflat,
+        const int ncoord,
+        const int d,
+        const std::vector<double>& mixing,
+        std::vector<double>& jt_part);
 }
