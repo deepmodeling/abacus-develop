@@ -1,9 +1,10 @@
-test neutral PW SCCS with pcc_2d energy, potential, and ionic force
+PW neutral water with native SCCS in a weak custom dielectric (epsilon 1.1) and 2D PCC along +y:
+sqrt-CG with the PCC correction in the preconditioner; energy, potential and ionic force.
 
-Reference provenance (regenerated 2026-09-28):
-- ABACUS source commit: 72e385651a76a7d9ca703da71662c6292e30203e
+Reference provenance (regenerated 2026-09-28, ecutwfc 100 Ry / ecutrho 400 Ry):
+- ABACUS source commit: 7bef5467f (Solve PCC SCCS with the ENVIRON sqrt-CG)
 - ABACUS version: v3.11.0-beta10
-- executable SHA256: 0dff02a68aa24e984c30a61c3ae7d1d09dfd899ab1f5811eb1ab9b0d2d49d2aa
+- executable SHA256: 08f499b3083312ccacbe21ac9db51d2aad7a5455bbf75cf2c2af25e081548edd
 - parallel layout: 4 MPI ranks x 1 OpenMP thread
 - result.ref is an ABACUS regression baseline, not an external QE/Environ reference.
 - two independent clean runs produced identical energy, force, and solvation values.

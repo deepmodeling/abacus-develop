@@ -1,4 +1,7 @@
-LCAO neutral water with native SCCS and the second lattice vector (+y) as the 2D-PCC open direction.
+PW H3O+ (nelec_delta -1) with native SCCS, the water-cation preset and zero-dimensional PCC
+(pcc_0d) in a 12 bohr cubic cell: charged sqrt-CG with the PCC correction in the preconditioner;
+energy, potential and ionic force. The former polarization-charge fixed point stalled the SCF for
+this system.
 
 Reference provenance (regenerated 2026-09-28, ecutwfc 100 Ry / ecutrho 400 Ry):
 - ABACUS source commit: 7bef5467f (Solve PCC SCCS with the ENVIRON sqrt-CG)
@@ -8,5 +11,5 @@ Reference provenance (regenerated 2026-09-28, ecutwfc 100 Ry / ecutrho 400 Ry):
 - result.ref is an ABACUS regression baseline, not an external QE/Environ reference.
 - two independent clean runs produced identical energy, force, and solvation values.
 
-Repository harness regeneration command, run from tests/02_NAO_Gamma:
-  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 4 -o 1 -r '^scf_sccs_pcc2d$' -g
+Repository harness regeneration command, run from tests/01_PW:
+  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 4 -o 1 -r '^218_PW_SCCS_PCC0D_H3O$' -g

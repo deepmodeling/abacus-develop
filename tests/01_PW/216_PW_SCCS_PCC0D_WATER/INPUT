@@ -6,7 +6,8 @@ basis_type        pw
 init_wfc          random
 pw_seed           1
 nbands            8
-ecutwfc           50
+ecutwfc           100
+ecutrho           400
 scf_nmax          80
 scf_thr           1.0e-8
 cal_force         1
@@ -18,6 +19,3 @@ sccs_maxiter      500
 sccs_tol_rms      1.0e-10
 sccs_tol_max      1.0e-8
 sccs_surface_eta  1.0e-8
-sccs_mixing_type  pulay
-sccs_mixing       0.5
-sccs_mixing_ndim  8

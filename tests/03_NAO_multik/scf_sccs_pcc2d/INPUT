@@ -8,7 +8,8 @@ basis_type          lcao
 gamma_only          0
 kpar                2
 nbands              8
-ecutwfc             60
+ecutwfc             100
+ecutrho             400
 scf_nmax            80
 scf_thr             1.0e-10
 cal_force           1

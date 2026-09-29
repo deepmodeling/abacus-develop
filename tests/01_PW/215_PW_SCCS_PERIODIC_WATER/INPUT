@@ -6,7 +6,8 @@ basis_type        pw
 init_wfc          random
 pw_seed           1
 nbands            8
-ecutwfc           50
+ecutwfc           100
+ecutrho           400
 scf_nmax          80
 scf_thr           1.0e-8
 cal_force         1
