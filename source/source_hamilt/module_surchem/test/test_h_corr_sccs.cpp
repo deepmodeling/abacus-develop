@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -117,18 +118,15 @@ TEST(HCorrSccs, SolventDispatchStopsThroughWarningQuitOnKernelFailure)
     const double* density_channels[1] = {electron_density.data()};
     std::vector<double> local_potential(basis.nrxx, 0.0);
     ModuleBase::matrix potential;
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(solvent.v_correction_solvent(cell,
-                                             basis,
-                                             1,
-                                             density_channels,
-                                             local_potential.data(),
-                                             potential),
-                ::testing::ExitedWithCode(1),
-                "");
-    const std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(output.find("SCCS electron density normalization does not match the electron count"),
-              std::string::npos);
+    // WARNING_QUIT prints to stdout; route it to stderr in the child so the
+    // death-test matcher sees it (thread-safe death tests re-execute the test).
+    EXPECT_EXIT(
+        {
+            std::cout.rdbuf(std::cerr.rdbuf());
+            solvent.v_correction_solvent(cell, basis, 1, density_channels, local_potential.data(), potential);
+        },
+        ::testing::ExitedWithCode(1),
+        "SCCS electron density normalization does not match the electron count");
 }
 
 TEST(HCorrSccs, PeriodicDebugReportsResidualAndFixedPointWithoutKernelOutput)
@@ -666,6 +664,9 @@ int main(int argc, char** argv)
     DIAG_WORLD = MPI_COMM_NULL;
 #endif
     testing::InitGoogleTest(&argc, argv);
+    // The death tests run after SCCS has started OpenMP (and MPI) threads;
+    // fork-based death tests can then deadlock, so re-execute instead.
+    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     // Error-path tests throw inside timed functions and leave their
     // ModuleBase::timer entries running; production turns these exceptions
     // into WARNING_QUIT, so the timers are not under test here.

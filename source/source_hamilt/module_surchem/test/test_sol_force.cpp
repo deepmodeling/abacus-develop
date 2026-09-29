@@ -187,12 +187,15 @@ TEST(SolForce, RequiresPwBasis)
     solvent.set_parameters(parameters);
     ModuleBase::matrix unused_vloc;
     ModuleBase::matrix force(1, 3);
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(solvent.cal_force_sol(cell, nullptr, unused_vloc, 1, force),
-                ::testing::ExitedWithCode(1),
-                "");
-    const std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(output.find("SCCS force requires an initialized PW basis"), std::string::npos);
+    // WARNING_QUIT prints to stdout; route it to stderr in the child so the
+    // death-test matcher sees it (thread-safe death tests re-execute the test).
+    EXPECT_EXIT(
+        {
+            std::cout.rdbuf(std::cerr.rdbuf());
+            solvent.cal_force_sol(cell, nullptr, unused_vloc, 1, force);
+        },
+        ::testing::ExitedWithCode(1),
+        "SCCS force requires an initialized PW basis");
 }
 
 TEST(SolForce, ConvertsPointIonPcc2dForceFromHartreeToRydberg)
@@ -682,13 +685,15 @@ TEST(SolForce, RejectsIncorrectOutputShape)
     solvent.set_parameters(parameters);
     ModuleBase::matrix unused_vloc;
     ModuleBase::matrix force(1, 3);
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(solvent.cal_force_sol(cell, nullptr, unused_vloc, 1, force),
-                ::testing::ExitedWithCode(1),
-                "");
-    const std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(output.find("SCCS/PCC force matrix must have nat rows and three columns"),
-              std::string::npos);
+    // WARNING_QUIT prints to stdout; route it to stderr in the child so the
+    // death-test matcher sees it (thread-safe death tests re-execute the test).
+    EXPECT_EXIT(
+        {
+            std::cout.rdbuf(std::cerr.rdbuf());
+            solvent.cal_force_sol(cell, nullptr, unused_vloc, 1, force);
+        },
+        ::testing::ExitedWithCode(1),
+        "SCCS/PCC force matrix must have nat rows and three columns");
 }
 
 } // namespace
@@ -708,6 +713,9 @@ int main(int argc, char** argv)
     DIAG_WORLD = MPI_COMM_NULL;
 #endif
     testing::InitGoogleTest(&argc, argv);
+    // The death tests run after SCCS has started OpenMP (and MPI) threads;
+    // fork-based death tests can then deadlock, so re-execute instead.
+    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     // Error-path tests throw inside timed functions and leave their
     // ModuleBase::timer entries running; production turns these exceptions
     // into WARNING_QUIT, so the timers are not under test here.
