@@ -148,7 +148,7 @@ TEST(SccsDriver, EvaluatesNeutralAndFixedChargePcc2dSources)
     EXPECT_GT(neutral.smooth_vacuum_pcc_energy, 0.0);
     EXPECT_TRUE(state.valid);
 
-    state.reset();
+    state = ModuleSccs::SccsState();
     ionic_density.assign(basis.nrxx, 1.1 / volume);
     const ModuleSccs::SccsResult cation
         = ModuleSccs::evaluate_pw_sccs(electron_density,
@@ -238,7 +238,7 @@ TEST(SccsDriver, PeriodicSqrtCgWarmStartsFromStoredPotential)
     EXPECT_LT(warm.response.polarization.iterations, cold.response.polarization.iterations);
     EXPECT_NEAR(warm.electrostatic.reaction_energy, cold.electrostatic.reaction_energy, 1.0e-10);
 
-    state.reset();
+    state = ModuleSccs::SccsState();
     EXPECT_TRUE(state.potential.empty());
 }
 
@@ -457,7 +457,7 @@ TEST(SccsDriver, PreservesChargeAndCombinesPccEnergyPotentialAndState)
         EXPECT_DOUBLE_EQ(invalidated.electron_potential_hartree[index], cation.electron_potential_hartree[index]);
     }
 
-    state.reset();
+    state = ModuleSccs::SccsState();
     const ModuleSccs::SccsResult anion
         = evaluate_uniform_charge(-1.0, state, basis, lattice, length);
     EXPECT_NEAR(anion.charge.net_charge, -1.0, 1.0e-12);

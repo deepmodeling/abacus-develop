@@ -101,26 +101,6 @@ bool same_state_signature(const SccsState& state,
 
 } // namespace
 
-void SccsState::reset()
-{
-    potential.clear();
-    local_grid_size = 0;
-    global_grid_size = 0;
-    nx = 0;
-    ny = 0;
-    nz = 0;
-    local_plane_count = 0;
-    local_plane_start = 0;
-    grid_position_signature = 0;
-    boundary = ModulePcc::Boundary::Periodic;
-    tpiba = 0.0;
-    volume_element = 0.0;
-    pcc_geometry = ModulePcc::PccGeometry();
-    pcc_2d_geometry = ModulePcc::Pcc2dGeometry();
-    cavity = CavityParameters();
-    valid = false;
-}
-
 // Assemble q = rho_ion - n, solve the ENVIRON-style sqrt-CG response, then
 // combine electrostatic and cavity terms. Energies/potentials here are in Ha;
 // the surchem adapter adds the point-ion vacuum PCC and converts to Ry.

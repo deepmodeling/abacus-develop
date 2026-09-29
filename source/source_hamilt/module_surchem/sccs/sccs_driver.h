@@ -37,8 +37,6 @@ struct SccsState
     ModulePcc::Pcc2dGeometry pcc_2d_geometry;
     CavityParameters cavity;
     bool valid = false;
-
-    void reset();
 };
 
 struct SccsResult
