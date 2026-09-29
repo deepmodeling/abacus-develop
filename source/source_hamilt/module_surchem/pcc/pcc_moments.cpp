@@ -5,11 +5,11 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace ModuleSccs
+namespace ModulePcc
 {
 
 MultipoleMoments reduce_pcc_moments(MultipoleMoments moments,
-                                     const ChargeReduction& reduction)
+                                     const ModuleSurchem::ChargeReduction& reduction)
 {
     double values[5] = {moments.charge,
                         moments.dipole.x,
@@ -37,7 +37,7 @@ MultipoleMoments reduced_pcc_density_moments(
     const std::vector<ModuleBase::Vector3<double>>& positions,
     const double volume_element,
     const PccGeometry& geometry,
-    const ChargeReduction& reduction)
+    const ModuleSurchem::ChargeReduction& reduction)
 {
     return reduce_pcc_moments(
         density_moments(density, positions, volume_element, geometry),
@@ -45,7 +45,7 @@ MultipoleMoments reduced_pcc_density_moments(
 }
 
 Pcc2dMoments reduce_pcc_2d_moments(Pcc2dMoments moments,
-                                    const ChargeReduction& reduction)
+                                    const ModuleSurchem::ChargeReduction& reduction)
 {
     double values[3] = {moments.charge, moments.dipole_y, moments.quadrupole_yy};
     reduction.reduce_sum(values, 3);
@@ -65,11 +65,11 @@ Pcc2dMoments reduced_pcc_2d_density_moments(
     const std::vector<ModuleBase::Vector3<double>>& positions,
     const double volume_element,
     const Pcc2dGeometry& geometry,
-    const ChargeReduction& reduction)
+    const ModuleSurchem::ChargeReduction& reduction)
 {
     return reduce_pcc_2d_moments(
         pcc_2d_density_moments(density, positions, volume_element, geometry),
         reduction);
 }
 
-} // namespace ModuleSccs
+} // namespace ModulePcc

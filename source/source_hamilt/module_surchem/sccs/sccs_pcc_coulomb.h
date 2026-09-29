@@ -10,10 +10,13 @@ namespace ModulePW
 class PW_Basis;
 }
 
+namespace ModuleSurchem
+{
+class ChargeReduction;
+}
+
 namespace ModuleSccs
 {
-
-class ChargeReduction;
 
 class PccCoulombOperator : public CoulombOperator
 {
@@ -22,8 +25,8 @@ class PccCoulombOperator : public CoulombOperator
                        double tpiba,
                        const std::vector<ModuleBase::Vector3<double>>& positions,
                        double volume_element,
-                       const PccGeometry& geometry,
-                       const ChargeReduction& reduction);
+                       const ModulePcc::PccGeometry& geometry,
+                       const ModuleSurchem::ChargeReduction& reduction);
 
     bool has_boundary_correction() const override
     {
@@ -54,8 +57,8 @@ class PccCoulombOperator : public CoulombOperator
     const std::vector<ModuleBase::Vector3<double>>& positions_;
     std::vector<ModuleBase::Vector3<double>> relative_positions_;
     double volume_element_ = 0.0;
-    PccGeometry geometry_;
-    const ChargeReduction& reduction_;
+    ModulePcc::PccGeometry geometry_;
+    const ModuleSurchem::ChargeReduction& reduction_;
 };
 
 } // namespace ModuleSccs

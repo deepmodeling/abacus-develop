@@ -25,9 +25,9 @@ SurchemParameters make_parameters(const Input_para& inp,
     parameters.use_legacy_solvent = inp.imp_sol == 1;
     if (inp.assume_isolated == "pcc_0d" || inp.assume_isolated == "pcc_2d")
     {
-        parameters.pcc_boundary = ModuleSccs::parse_boundary(inp.assume_isolated);
+        parameters.pcc_boundary = ModulePcc::parse_boundary(inp.assume_isolated);
     }
-    if (!parameters.use_sccs && parameters.pcc_boundary == ModuleSccs::Boundary::Periodic)
+    if (!parameters.use_sccs && parameters.pcc_boundary == ModulePcc::Boundary::Periodic)
     {
         return parameters;
     }
@@ -47,7 +47,7 @@ SurchemParameters make_parameters(const Input_para& inp,
     }
     if (!parameters.use_sccs)
     {
-        if (parameters.pcc_boundary == ModuleSccs::Boundary::Pcc2d
+        if (parameters.pcc_boundary == ModulePcc::Boundary::Pcc2d
             && std::abs(parameters.expected_ionic_charge
                         - parameters.expected_electron_count)
                    > parameters.normalization_tolerance)
@@ -93,7 +93,7 @@ SurchemParameters make_parameters(const Input_para& inp,
 
     const double net_charge
         = parameters.expected_ionic_charge - parameters.expected_electron_count;
-    if (parameters.sccs_config.boundary == ModuleSccs::Boundary::Pcc2d
+    if (parameters.sccs_config.boundary == ModulePcc::Boundary::Pcc2d
         && std::abs(net_charge) > parameters.normalization_tolerance)
     {
         ModuleBase::WARNING(
@@ -108,9 +108,9 @@ SurchemParameters make_parameters(const Input_para& inp,
 void validate_kpoints(const SurchemParameters& parameters,
                            const K_Vectors& kv)
 {
-    const ModuleSccs::Boundary boundary
+    const ModulePcc::Boundary boundary
         = parameters.use_sccs ? parameters.sccs_config.boundary : parameters.pcc_boundary;
-    if (boundary != ModuleSccs::Boundary::Pcc2d)
+    if (boundary != ModulePcc::Boundary::Pcc2d)
     {
         return;
     }

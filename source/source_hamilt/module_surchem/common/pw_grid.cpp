@@ -5,7 +5,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace ModuleSccs
+namespace ModuleSurchem
 {
 namespace
 {
@@ -75,4 +75,4 @@ std::vector<ModuleBase::Vector3<double>> pw_grid_positions(
     return positions;
 }
 
-} // namespace ModuleSccs
+} // namespace ModuleSurchem

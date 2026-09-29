@@ -40,9 +40,9 @@ ModuleSccs::SccsResult evaluate_uniform_charge(const double net_charge,
     const std::vector<double> electron_density(basis.nrxx, electron_count / volume);
     const std::vector<double> ionic_density(basis.nrxx, ionic_charge / volume);
     const std::vector<ModuleBase::Vector3<double>> positions
-        = ModuleSccs::pw_grid_positions(basis, lattice, length);
-    const ModuleSccs::PccGeometry pcc
-        = ModuleSccs::pcc_geometry(lattice, length, 1.0e-10);
+        = ModuleSurchem::pw_grid_positions(basis, lattice, length);
+    const ModulePcc::PccGeometry pcc
+        = ModulePcc::pcc_geometry(lattice, length, 1.0e-10);
     const ModuleBase::Vector3<double> origin = pcc.origin;
 
     ModuleSccs::SccsConfig config;
@@ -50,12 +50,12 @@ ModuleSccs::SccsResult evaluate_uniform_charge(const double net_charge,
     config.cavity.density_max = 2.0e-2;
     config.cavity.epsilon_bulk = 5.0;
     config.surface_regularization = 1.0e-6;
-    config.boundary = ModuleSccs::Boundary::Pcc0d;
+    config.boundary = ModulePcc::Boundary::Pcc0d;
     config.max_iterations = 100;
     config.tolerance_rms = 1.0e-14;
     config.tolerance_max = 1.0e-14;
-    const ModuleSccs::Pcc2dGeometry pcc_2d_geometry;
-    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModulePcc::Pcc2dGeometry pcc_2d_geometry;
+    const ModuleSurchem::SerialChargeReduction charge_reduction;
     const ModuleSccs::SerialPolarizationReduction polarization_reduction;
     return ModuleSccs::evaluate_pw_sccs(electron_density,
                                         ionic_density,
@@ -94,10 +94,10 @@ TEST(SccsDriver, EvaluatesNeutralAndFixedChargePcc2dSources)
     const double volume = 0.8 * 1.2 * scale * scale * scale;
     const double volume_element = volume / static_cast<double>(basis.nxyz);
     const std::vector<ModuleBase::Vector3<double>> positions
-        = ModuleSccs::pw_grid_positions(basis, lattice, scale);
-    const ModuleBase::Vector3<double> origin = ModuleSccs::cell_center(lattice, scale);
-    const ModuleSccs::Pcc2dGeometry geometry
-        = ModuleSccs::pcc_2d_geometry(lattice, scale, 1.0e-10);
+        = ModuleSurchem::pw_grid_positions(basis, lattice, scale);
+    const ModuleBase::Vector3<double> origin = ModuleSurchem::cell_center(lattice, scale);
+    const ModulePcc::Pcc2dGeometry geometry
+        = ModulePcc::pcc_2d_geometry(lattice, scale, 1.0e-10);
     std::vector<double> electron_density(basis.nrxx, 1.0 / volume);
     std::vector<double> ionic_density(basis.nrxx, 0.0);
     for (int index = 0; index < basis.nrxx; ++index)
@@ -113,12 +113,12 @@ TEST(SccsDriver, EvaluatesNeutralAndFixedChargePcc2dSources)
     config.cavity.density_max = 2.0e-2;
     config.cavity.epsilon_bulk = 5.0;
     config.surface_regularization = 1.0e-6;
-    config.boundary = ModuleSccs::Boundary::Pcc2d;
+    config.boundary = ModulePcc::Boundary::Pcc2d;
     config.max_iterations = 100;
     config.tolerance_rms = 1.0e-13;
     config.tolerance_max = 1.0e-13;
-    const ModuleSccs::PccGeometry pcc;
-    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModulePcc::PccGeometry pcc;
+    const ModuleSurchem::SerialChargeReduction charge_reduction;
     const ModuleSccs::SerialPolarizationReduction polarization_reduction;
     ModuleSccs::SccsState state;
     const ModuleSccs::SccsResult neutral
@@ -194,8 +194,8 @@ TEST(SccsDriver, PeriodicSqrtCgWarmStartsFromStoredPotential)
     const double volume = length * length * length;
     const double volume_element = volume / static_cast<double>(basis.nxyz);
     const std::vector<ModuleBase::Vector3<double>> positions
-        = ModuleSccs::pw_grid_positions(basis, lattice, length);
-    const ModuleBase::Vector3<double> origin = ModuleSccs::cell_center(lattice, length);
+        = ModuleSurchem::pw_grid_positions(basis, lattice, length);
+    const ModuleBase::Vector3<double> origin = ModuleSurchem::cell_center(lattice, length);
     // A cavity-crossing electron mode on a uniform ionic background.
     std::vector<double> electron_density(basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -211,13 +211,13 @@ TEST(SccsDriver, PeriodicSqrtCgWarmStartsFromStoredPotential)
     config.cavity.density_max = 1.55e-2;
     config.cavity.epsilon_bulk = 78.3;
     config.surface_regularization = 1.0e-6;
-    config.boundary = ModuleSccs::Boundary::Periodic;
+    config.boundary = ModulePcc::Boundary::Periodic;
     config.max_iterations = 200;
     config.tolerance_rms = 1.0e-11;
     config.tolerance_max = 1.0e-10;
-    const ModuleSccs::PccGeometry pcc;
-    const ModuleSccs::Pcc2dGeometry pcc_2d;
-    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModulePcc::PccGeometry pcc;
+    const ModulePcc::Pcc2dGeometry pcc_2d;
+    const ModuleSurchem::SerialChargeReduction charge_reduction;
     const ModuleSccs::SerialPolarizationReduction polarization_reduction;
     const double tpiba = ModuleBase::TWO_PI / length;
     ModuleSccs::SccsState state;
@@ -264,9 +264,9 @@ TEST(SccsDriver, ChargedPcc2dSqrtCgPolarizationSatisfiesGaussLaw)
     const double volume = 2.0 * scale * scale * scale;
     const double volume_element = volume / static_cast<double>(basis.nxyz);
     const std::vector<ModuleBase::Vector3<double>> positions
-        = ModuleSccs::pw_grid_positions(basis, lattice, scale);
-    const ModuleBase::Vector3<double> origin = ModuleSccs::cell_center(lattice, scale);
-    ModuleSccs::Pcc2dGeometry geometry = ModuleSccs::pcc_2d_geometry(lattice, scale, 1.0e-10);
+        = ModuleSurchem::pw_grid_positions(basis, lattice, scale);
+    const ModuleBase::Vector3<double> origin = ModuleSurchem::cell_center(lattice, scale);
+    ModulePcc::Pcc2dGeometry geometry = ModulePcc::pcc_2d_geometry(lattice, scale, 1.0e-10);
     geometry.origin_y = origin.y;
     const double electron_count = 0.8;
     const double ionic_charge = 1.0;
@@ -298,12 +298,12 @@ TEST(SccsDriver, ChargedPcc2dSqrtCgPolarizationSatisfiesGaussLaw)
     config.cavity.density_max = 5.0e-3;
     config.cavity.epsilon_bulk = 78.3;
     config.surface_regularization = 1.0e-6;
-    config.boundary = ModuleSccs::Boundary::Pcc2d;
+    config.boundary = ModulePcc::Boundary::Pcc2d;
     config.max_iterations = 300;
     config.tolerance_rms = 1.0e-12;
     config.tolerance_max = 1.0e-10;
-    const ModuleSccs::PccGeometry pcc;
-    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModulePcc::PccGeometry pcc;
+    const ModuleSurchem::SerialChargeReduction charge_reduction;
     const ModuleSccs::SerialPolarizationReduction polarization_reduction;
     ModuleSccs::SccsState state;
     const ModuleSccs::SccsResult result
@@ -348,9 +348,9 @@ TEST(SccsDriver, Pcc2dStopsWhenBulkSolventDoesNotReachTheOpenBoundary)
     const double volume = 2.0 * scale * scale * scale;
     const double volume_element = volume / static_cast<double>(basis.nxyz);
     const std::vector<ModuleBase::Vector3<double>> positions
-        = ModuleSccs::pw_grid_positions(basis, lattice, scale);
-    const ModuleBase::Vector3<double> origin = ModuleSccs::cell_center(lattice, scale);
-    ModuleSccs::Pcc2dGeometry geometry = ModuleSccs::pcc_2d_geometry(lattice, scale, 1.0e-10);
+        = ModuleSurchem::pw_grid_positions(basis, lattice, scale);
+    const ModuleBase::Vector3<double> origin = ModuleSurchem::cell_center(lattice, scale);
+    ModulePcc::Pcc2dGeometry geometry = ModulePcc::pcc_2d_geometry(lattice, scale, 1.0e-10);
     geometry.origin_y = origin.y;
     const double uniform_density = 1.0e-2;
     const double electron_count = uniform_density * volume;
@@ -378,12 +378,12 @@ TEST(SccsDriver, Pcc2dStopsWhenBulkSolventDoesNotReachTheOpenBoundary)
     config.cavity.density_max = 5.0e-3;
     config.cavity.epsilon_bulk = 78.3;
     config.surface_regularization = 1.0e-6;
-    config.boundary = ModuleSccs::Boundary::Pcc2d;
+    config.boundary = ModulePcc::Boundary::Pcc2d;
     config.max_iterations = 50;
     config.tolerance_rms = 1.0e-12;
     config.tolerance_max = 1.0e-10;
-    const ModuleSccs::PccGeometry pcc;
-    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModulePcc::PccGeometry pcc;
+    const ModuleSurchem::SerialChargeReduction charge_reduction;
     const ModuleSccs::SerialPolarizationReduction polarization_reduction;
     ModuleSccs::SccsState state;
     const double tpiba = ModuleBase::TWO_PI / scale;
@@ -543,7 +543,7 @@ CationSolute make_cation_solute(const std::vector<ModuleBase::Vector3<double>>& 
 
 ModuleSccs::SccsResult evaluate_cation(const std::vector<double>& electron_density,
                                        const std::vector<double>& ionic_density,
-                                       const ModuleSccs::Boundary boundary,
+                                       const ModulePcc::Boundary boundary,
                                        const ModulePW::PW_Basis& basis,
                                        const std::vector<ModuleBase::Vector3<double>>& positions,
                                        const ModuleBase::Vector3<double>& center,
@@ -564,19 +564,19 @@ ModuleSccs::SccsResult evaluate_cation(const std::vector<double>& electron_densi
     config.max_iterations = 500;
     config.tolerance_rms = 1.0e-13;
     config.tolerance_max = 1.0e-11;
-    ModuleSccs::PccGeometry pcc;
-    ModuleSccs::Pcc2dGeometry pcc_2d;
-    if (boundary == ModuleSccs::Boundary::Pcc0d)
+    ModulePcc::PccGeometry pcc;
+    ModulePcc::Pcc2dGeometry pcc_2d;
+    if (boundary == ModulePcc::Boundary::Pcc0d)
     {
-        pcc = ModuleSccs::pcc_geometry(lattice, scale, 1.0e-10);
+        pcc = ModulePcc::pcc_geometry(lattice, scale, 1.0e-10);
         pcc.origin = center;
     }
     else
     {
-        pcc_2d = ModuleSccs::pcc_2d_geometry(lattice, scale, 1.0e-10);
+        pcc_2d = ModulePcc::pcc_2d_geometry(lattice, scale, 1.0e-10);
         pcc_2d.origin_y = center.y;
     }
-    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModuleSurchem::SerialChargeReduction charge_reduction;
     const ModuleSccs::SerialPolarizationReduction polarization_reduction;
     // A fresh state keeps every evaluation a cold start.
     ModuleSccs::SccsState state;
@@ -610,7 +610,7 @@ void make_basis(const ModuleBase::Matrix3& lattice,
 // central differences of E_R. Without the filter the same derivative is not
 // grid-converged (pointwise 150-430 Ha at the cavity edge), so the
 // continuum -eps'|grad v|^2/(8 pi) is printed and bounds the filtered one.
-void check_cation_cavity_derivative(const ModuleSccs::Boundary boundary,
+void check_cation_cavity_derivative(const ModulePcc::Boundary boundary,
                                     const ModuleBase::Matrix3& lattice,
                                     const double scale,
                                     const char* label)
@@ -621,8 +621,8 @@ void check_cation_cavity_derivative(const ModuleSccs::Boundary boundary,
     const double volume = scale * scale * scale * lattice.Det();
     const double volume_element = volume / static_cast<double>(basis.nxyz);
     const std::vector<ModuleBase::Vector3<double>> positions
-        = ModuleSccs::pw_grid_positions(basis, lattice, scale);
-    const ModuleBase::Vector3<double> center = ModuleSccs::cell_center(lattice, scale);
+        = ModuleSurchem::pw_grid_positions(basis, lattice, scale);
+    const ModuleBase::Vector3<double> center = ModuleSurchem::cell_center(lattice, scale);
     const CationSolute solute = make_cation_solute(positions, center, volume_element);
     const ModuleSccs::SccsResult result
         = evaluate_cation(solute.electron_density, solute.ionic_density, boundary, basis,
@@ -690,7 +690,7 @@ TEST(SccsDriver, Pcc0dLowpassElectronPotentialIsExactDerivativeOfDiscreteEnergy)
     const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
                                       0.0, 1.0, 0.0,
                                       0.0, 0.0, 1.0);
-    check_cation_cavity_derivative(ModuleSccs::Boundary::Pcc0d, lattice, 12.0, "pcc0d");
+    check_cation_cavity_derivative(ModulePcc::Boundary::Pcc0d, lattice, 12.0, "pcc0d");
 }
 
 TEST(SccsDriver, Pcc2dLowpassElectronPotentialIsExactDerivativeOfDiscreteEnergy)
@@ -699,7 +699,7 @@ TEST(SccsDriver, Pcc2dLowpassElectronPotentialIsExactDerivativeOfDiscreteEnergy)
     const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
                                       0.0, long_axis, 0.0,
                                       0.0, 0.0, 1.0);
-    check_cation_cavity_derivative(ModuleSccs::Boundary::Pcc2d, lattice, 12.0, "pcc2d");
+    check_cation_cavity_derivative(ModulePcc::Boundary::Pcc2d, lattice, 12.0, "pcc2d");
 }
 
 // Without the lowpass the PCC cavity potential is Environ's continuum
@@ -715,12 +715,12 @@ TEST(SccsDriver, Pcc0dDefaultCavityPotentialIsEnvironContinuum)
     const double volume = scale * scale * scale;
     const double volume_element = volume / static_cast<double>(basis.nxyz);
     const std::vector<ModuleBase::Vector3<double>> positions
-        = ModuleSccs::pw_grid_positions(basis, lattice, scale);
-    const ModuleBase::Vector3<double> center = ModuleSccs::cell_center(lattice, scale);
+        = ModuleSurchem::pw_grid_positions(basis, lattice, scale);
+    const ModuleBase::Vector3<double> center = ModuleSurchem::cell_center(lattice, scale);
     const CationSolute solute = make_cation_solute(positions, center, volume_element);
     const ModuleSccs::SccsResult result
         = evaluate_cation(solute.electron_density, solute.ionic_density,
-                          ModuleSccs::Boundary::Pcc0d, basis, positions, center, lattice, scale,
+                          ModulePcc::Boundary::Pcc0d, basis, positions, center, lattice, scale,
                           volume_element, -1.0, -1.0);
     const double tpiba = ModuleBase::TWO_PI / scale;
     const std::vector<ModuleBase::Vector3<double>> gradient
@@ -751,9 +751,9 @@ TEST(SccsDriver, LowpassRequiresPccBoundary)
     config.max_iterations = 10;
     config.tolerance_rms = 1.0e-10;
     config.tolerance_max = 1.0e-8;
-    config.boundary = ModuleSccs::Boundary::Periodic;
+    config.boundary = ModulePcc::Boundary::Periodic;
     EXPECT_THROW(ModuleSccs::validate_config(config), std::invalid_argument);
-    config.boundary = ModuleSccs::Boundary::Pcc0d;
+    config.boundary = ModulePcc::Boundary::Pcc0d;
     EXPECT_NO_THROW(ModuleSccs::validate_config(config));
     config.cavity.lowpass_p2 = -1.0;
     EXPECT_THROW(ModuleSccs::validate_config(config), std::invalid_argument);
@@ -773,8 +773,8 @@ TEST(SccsDriver, FullSolventModeFillsTheNuclearCavityHole)
     const double volume = scale * scale * scale;
     const double volume_element = volume / static_cast<double>(basis.nxyz);
     const std::vector<ModuleBase::Vector3<double>> positions
-        = ModuleSccs::pw_grid_positions(basis, lattice, scale);
-    const ModuleBase::Vector3<double> center = ModuleSccs::cell_center(lattice, scale);
+        = ModuleSurchem::pw_grid_positions(basis, lattice, scale);
+    const ModuleBase::Vector3<double> center = ModuleSurchem::cell_center(lattice, scale);
     const double shell_width = 1.2;
     const double core_spread = 0.5;
     std::vector<double> electron_density(basis.nrxx);
@@ -808,9 +808,9 @@ TEST(SccsDriver, FullSolventModeFillsTheNuclearCavityHole)
     ModuleSccs::SccsConfig config = ModuleSccs::water_preset(ModuleSccs::Preset::WaterAnion);
     config.tolerance_rms = 1.0e-12;
     config.tolerance_max = 1.0e-10;
-    const ModuleSccs::PccGeometry pcc;
-    const ModuleSccs::Pcc2dGeometry pcc_2d;
-    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModulePcc::PccGeometry pcc;
+    const ModulePcc::Pcc2dGeometry pcc_2d;
+    const ModuleSurchem::SerialChargeReduction charge_reduction;
     const ModuleSccs::SerialPolarizationReduction polarization_reduction;
     const double tpiba = ModuleBase::TWO_PI / scale;
     ModuleSccs::SccsState electronic_state;

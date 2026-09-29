@@ -10,7 +10,7 @@ namespace ModuleBase
 class Matrix3;
 }
 
-namespace ModuleSccs
+namespace ModulePcc
 {
 
 struct Pcc2dMoments
@@ -78,6 +78,6 @@ double pcc_2d_bilinear_energy(const Pcc2dMoments& left,
 double pcc_2d_self_energy(const Pcc2dMoments& moments,
                           const Pcc2dParameters& parameters);
 
-} // namespace ModuleSccs
+} // namespace ModulePcc
 
 #endif

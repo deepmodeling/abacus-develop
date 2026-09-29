@@ -24,7 +24,7 @@ struct SccsConfig
     double surface_tension = 0.0;
     double pressure = 0.0;
     double surface_regularization = 0.0;
-    Boundary boundary = Boundary::Periodic;
+    ModulePcc::Boundary boundary = ModulePcc::Boundary::Periodic;
     int max_iterations = 0;
     double tolerance_rms = 0.0;
     double tolerance_max = 0.0;

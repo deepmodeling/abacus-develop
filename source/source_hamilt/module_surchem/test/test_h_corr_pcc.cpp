@@ -47,7 +47,7 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
     cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.4, 0.78, 0.5));
 
     SurchemParameters parameters;
-    parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
+    parameters.pcc_boundary = ModulePcc::Boundary::Pcc2d;
     parameters.expected_electron_count = 1.0;
     parameters.expected_ionic_charge = 1.0;
     surchem correction;
@@ -69,13 +69,13 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
     const double* density_channels[1] = {electron_density.data()};
     ModuleBase::matrix potential;
     correction.v_correction_pcc(cell, basis, 1, density_channels, potential);
-    ModuleSccs::Pcc2dGeometry geometry
-        = ModuleSccs::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
+    ModulePcc::Pcc2dGeometry geometry
+        = ModulePcc::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
     geometry.origin_y = cell.atoms[0].tau[0].y * cell.lat0;
     const double electron_y
         = geometry.parameters.cell_length_y
           * static_cast<double>(electron_plane_y) / basis.ny;
-    const double dipole_y = -ModuleSccs::pcc_2d_relative_y(electron_y, geometry);
+    const double dipole_y = -ModulePcc::pcc_2d_relative_y(electron_y, geometry);
     const double expected_energy = 2.0 * ModuleBase::PI * dipole_y * dipole_y / cell.omega;
     EXPECT_NEAR(surchem::Ael, 2.0 * expected_energy, 1.0e-12);
     EXPECT_DOUBLE_EQ(surchem::Acav, 0.0);

@@ -12,7 +12,7 @@ ElectrostaticFunctionalResult evaluate_electrostatic_functional(
     const ElectrostaticField& vacuum_field,
     const std::vector<double>& cavity_potential,
     const double volume_element,
-    const ChargeReduction& reduction)
+    const ModuleSurchem::ChargeReduction& reduction)
 {
     const std::size_t size = solute_charge.size();
     if (size == 0 || dielectric_field.potential.size() != size

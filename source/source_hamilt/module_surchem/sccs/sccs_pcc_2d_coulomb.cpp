@@ -17,8 +17,8 @@ Pcc2dCoulombOperator::Pcc2dCoulombOperator(
     const double tpiba,
     const std::vector<ModuleBase::Vector3<double>>& positions,
     const double volume_element,
-    const Pcc2dGeometry& geometry,
-    const ChargeReduction& reduction)
+    const ModulePcc::Pcc2dGeometry& geometry,
+    const ModuleSurchem::ChargeReduction& reduction)
     : periodic_(basis, tpiba),
       positions_(positions),
       relative_y_(positions.size()),
@@ -26,7 +26,7 @@ Pcc2dCoulombOperator::Pcc2dCoulombOperator(
       geometry_(geometry),
       reduction_(reduction)
 {
-    validate_pcc_2d_parameters(geometry_.parameters);
+    ModulePcc::validate_pcc_2d_parameters(geometry_.parameters);
     if (positions_.size() != static_cast<std::size_t>(basis.nrxx))
     {
         throw std::invalid_argument(
@@ -40,7 +40,7 @@ Pcc2dCoulombOperator::Pcc2dCoulombOperator(
     }
     for (std::size_t index = 0; index < positions_.size(); ++index)
     {
-        relative_y_[index] = pcc_2d_relative_y(positions_[index].y, geometry_);
+        relative_y_[index] = ModulePcc::pcc_2d_relative_y(positions_[index].y, geometry_);
     }
 }
 
@@ -48,18 +48,18 @@ void Pcc2dCoulombOperator::apply(const std::vector<double>& charge,
                                  ElectrostaticField& field) const
 {
     periodic_.apply(charge, field);
-    const Pcc2dMoments moments
-        = reduce_pcc_2d_moments(
-            pcc_2d_density_moments_from_relative_y(charge,
+    const ModulePcc::Pcc2dMoments moments
+        = ModulePcc::reduce_pcc_2d_moments(
+            ModulePcc::pcc_2d_density_moments_from_relative_y(charge,
                                                    relative_y_,
                                                    volume_element_),
             reduction_);
     for (std::size_t index = 0; index < charge.size(); ++index)
     {
         field.potential[index]
-            += pcc_2d_potential(moments, relative_y_[index], geometry_.parameters);
+            += ModulePcc::pcc_2d_potential(moments, relative_y_[index], geometry_.parameters);
         field.gradient[index].y
-            += pcc_2d_potential_gradient(moments,
+            += ModulePcc::pcc_2d_potential_gradient(moments,
                                          relative_y_[index],
                                          geometry_.parameters).y;
     }
@@ -71,12 +71,12 @@ void Pcc2dCoulombOperator::apply_potential(const std::vector<double>& charge,
                                            std::vector<double>& potential) const
 {
     periodic_.apply_potential(charge, potential);
-    const Pcc2dMoments local_moments = pcc_2d_density_moments_from_relative_y(
+    const ModulePcc::Pcc2dMoments local_moments = ModulePcc::pcc_2d_density_moments_from_relative_y(
         charge, relative_y_, volume_element_);
-    const Pcc2dMoments moments = reduce_pcc_2d_moments(local_moments, reduction_);
+    const ModulePcc::Pcc2dMoments moments = ModulePcc::reduce_pcc_2d_moments(local_moments, reduction_);
     for (std::size_t index = 0; index < charge.size(); ++index)
     {
-        potential[index] += pcc_2d_potential(moments, relative_y_[index], geometry_.parameters);
+        potential[index] += ModulePcc::pcc_2d_potential(moments, relative_y_[index], geometry_.parameters);
     }
 }
 
@@ -85,13 +85,13 @@ void Pcc2dCoulombOperator::apply_gradient(
     std::vector<ModuleBase::Vector3<double>>& gradient) const
 {
     periodic_.apply_gradient(charge, gradient);
-    const Pcc2dMoments local_moments
-        = pcc_2d_density_moments_from_relative_y(charge, relative_y_, volume_element_);
-    const Pcc2dMoments moments = reduce_pcc_2d_moments(local_moments, reduction_);
+    const ModulePcc::Pcc2dMoments local_moments
+        = ModulePcc::pcc_2d_density_moments_from_relative_y(charge, relative_y_, volume_element_);
+    const ModulePcc::Pcc2dMoments moments = ModulePcc::reduce_pcc_2d_moments(local_moments, reduction_);
     for (std::size_t index = 0; index < charge.size(); ++index)
     {
         gradient[index].y
-            += pcc_2d_potential_gradient(moments,
+            += ModulePcc::pcc_2d_potential_gradient(moments,
                                          relative_y_[index],
                                          geometry_.parameters).y;
     }

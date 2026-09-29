@@ -6,7 +6,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace ModuleSccs
+namespace ModulePcc
 {
 namespace
 {
@@ -448,4 +448,4 @@ double pcc_self_energy(const MultipoleMoments& moments, const PccParameters& par
     return 0.5 * pcc_bilinear_energy(moments, moments, parameters);
 }
 
-} // namespace ModuleSccs
+} // namespace ModulePcc

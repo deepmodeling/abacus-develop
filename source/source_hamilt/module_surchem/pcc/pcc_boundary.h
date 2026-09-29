@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace ModuleSccs
+namespace ModulePcc
 {
 
 // Electrostatic boundary of the cell: fully periodic, or periodic with the
@@ -18,6 +18,6 @@ enum class Boundary
 // Parse periodic, pcc_0d or pcc_2d (case-insensitive; '-' may replace '_').
 Boundary parse_boundary(const std::string& value);
 
-} // namespace ModuleSccs
+} // namespace ModulePcc
 
 #endif

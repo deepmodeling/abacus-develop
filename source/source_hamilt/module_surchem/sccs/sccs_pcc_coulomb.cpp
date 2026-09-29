@@ -17,8 +17,8 @@ PccCoulombOperator::PccCoulombOperator(
     const double tpiba,
     const std::vector<ModuleBase::Vector3<double>>& positions,
     const double volume_element,
-    const PccGeometry& geometry,
-    const ChargeReduction& reduction)
+    const ModulePcc::PccGeometry& geometry,
+    const ModuleSurchem::ChargeReduction& reduction)
     : periodic_(basis, tpiba),
       positions_(positions),
       relative_positions_(positions.size()),
@@ -26,7 +26,7 @@ PccCoulombOperator::PccCoulombOperator(
       geometry_(geometry),
       reduction_(reduction)
 {
-    validate_pcc_geometry(geometry_);
+    ModulePcc::validate_pcc_geometry(geometry_);
     if (positions_.size() != static_cast<std::size_t>(basis.nrxx))
     {
         throw std::invalid_argument("SCCS PCC positions must match the local PW real-space grid");
@@ -37,7 +37,7 @@ PccCoulombOperator::PccCoulombOperator(
     }
     for (std::size_t index = 0; index < positions_.size(); ++index)
     {
-        relative_positions_[index] = pcc_relative_position(positions_[index], geometry_);
+        relative_positions_[index] = ModulePcc::pcc_relative_position(positions_[index], geometry_);
     }
 }
 
@@ -45,19 +45,19 @@ void PccCoulombOperator::apply(const std::vector<double>& charge,
                                ElectrostaticField& field) const
 {
     periodic_.apply(charge, field);
-    const MultipoleMoments moments = reduce_pcc_moments(
-        density_moments_from_relative_positions(charge,
+    const ModulePcc::MultipoleMoments moments = ModulePcc::reduce_pcc_moments(
+        ModulePcc::density_moments_from_relative_positions(charge,
                                                 relative_positions_,
                                                 volume_element_),
         reduction_);
     for (std::size_t index = 0; index < charge.size(); ++index)
     {
         field.potential[index]
-            += pcc_potential(moments,
+            += ModulePcc::pcc_potential(moments,
                              relative_positions_[index],
                              geometry_.parameters);
         const ModuleBase::Vector3<double> correction
-            = pcc_potential_gradient(moments,
+            = ModulePcc::pcc_potential_gradient(moments,
                                      relative_positions_[index],
                                      geometry_.parameters);
         field.gradient[index].x += correction.x;
@@ -72,12 +72,12 @@ void PccCoulombOperator::apply_potential(const std::vector<double>& charge,
                                            std::vector<double>& potential) const
 {
     periodic_.apply_potential(charge, potential);
-    const MultipoleMoments local_moments = density_moments_from_relative_positions(
+    const ModulePcc::MultipoleMoments local_moments = ModulePcc::density_moments_from_relative_positions(
         charge, relative_positions_, volume_element_);
-    const MultipoleMoments moments = reduce_pcc_moments(local_moments, reduction_);
+    const ModulePcc::MultipoleMoments moments = ModulePcc::reduce_pcc_moments(local_moments, reduction_);
     for (std::size_t index = 0; index < charge.size(); ++index)
     {
-        potential[index] += pcc_potential(moments, relative_positions_[index], geometry_.parameters);
+        potential[index] += ModulePcc::pcc_potential(moments, relative_positions_[index], geometry_.parameters);
     }
 }
 
@@ -86,13 +86,13 @@ void PccCoulombOperator::apply_gradient(
     std::vector<ModuleBase::Vector3<double>>& gradient) const
 {
     periodic_.apply_gradient(charge, gradient);
-    const MultipoleMoments local_moments
-        = density_moments_from_relative_positions(charge, relative_positions_, volume_element_);
-    const MultipoleMoments moments = reduce_pcc_moments(local_moments, reduction_);
+    const ModulePcc::MultipoleMoments local_moments
+        = ModulePcc::density_moments_from_relative_positions(charge, relative_positions_, volume_element_);
+    const ModulePcc::MultipoleMoments moments = ModulePcc::reduce_pcc_moments(local_moments, reduction_);
     for (std::size_t index = 0; index < charge.size(); ++index)
     {
         const ModuleBase::Vector3<double> correction
-            = pcc_potential_gradient(moments,
+            = ModulePcc::pcc_potential_gradient(moments,
                                      relative_positions_[index],
                                      geometry_.parameters);
         gradient[index].x += correction.x;

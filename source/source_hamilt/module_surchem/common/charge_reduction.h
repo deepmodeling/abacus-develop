@@ -1,7 +1,7 @@
 #ifndef SURCHEM_CHARGE_REDUCTION_H
 #define SURCHEM_CHARGE_REDUCTION_H
 
-namespace ModuleSccs
+namespace ModuleSurchem
 {
 
 // Sums local real-space integrals over the processes that share one grid.
@@ -30,6 +30,6 @@ class PoolChargeReduction : public ChargeReduction
     void reduce_sum(double* values, int count) const override;
 };
 
-} // namespace ModuleSccs
+} // namespace ModuleSurchem
 
 #endif

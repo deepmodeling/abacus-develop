@@ -19,7 +19,7 @@ surchem::surchem()
 
 void surchem::set_parameters(const SurchemParameters& parameters)
 {
-    if (parameters.use_sccs || parameters.pcc_boundary != ModuleSccs::Boundary::Periodic)
+    if (parameters.use_sccs || parameters.pcc_boundary != ModulePcc::Boundary::Periodic)
     {
         if (parameters.expected_electron_count < 0.0
             || parameters.expected_ionic_charge < 0.0
@@ -34,7 +34,7 @@ void surchem::set_parameters(const SurchemParameters& parameters)
     }
     if (parameters.debug < 0 || parameters.debug > 2
         || (parameters.use_legacy_solvent && (parameters.use_sccs
-            || parameters.pcc_boundary != ModuleSccs::Boundary::Periodic))
+            || parameters.pcc_boundary != ModulePcc::Boundary::Periodic))
         || (parameters.use_sccs && parameters.sccs_config.boundary != parameters.pcc_boundary))
     {
         throw std::invalid_argument("inconsistent solvent/PCC configuration or debug level");
@@ -56,7 +56,7 @@ bool surchem::uses_sccs() const
 bool surchem::uses_pcc() const
 {
     return this->parameters_set_
-           && this->parameters_.pcc_boundary != ModuleSccs::Boundary::Periodic;
+           && this->parameters_.pcc_boundary != ModulePcc::Boundary::Periodic;
 }
 
 bool surchem::sccs_is_active() const
@@ -127,7 +127,7 @@ void surchem::write_sccs_iteration(std::ostream& output) const
         output << " E_PCC/Ry " << std::setprecision(12) << this->pcc_energy_rydberg_ << '\n';
         if (this->parameters_.debug >= 2)
         {
-            if (this->parameters_.pcc_boundary == ModuleSccs::Boundary::Pcc0d)
+            if (this->parameters_.pcc_boundary == ModulePcc::Boundary::Pcc0d)
             {
                 output << " PCC0D_ORIGIN X/Bohr " << this->pcc_geometry_.origin.x
                        << " Y/Bohr " << this->pcc_geometry_.origin.y
@@ -174,7 +174,7 @@ void surchem::write_sccs_iteration(std::ostream& output) const
             output << " SCCS_CG_FIXED_POINT_DEFECT RMS " << polarization.fixed_point_defect_rms
                    << " MAX " << polarization.fixed_point_defect_max << '\n';
         }
-        if (this->parameters_.sccs_config.boundary != ModuleSccs::Boundary::Periodic)
+        if (this->parameters_.sccs_config.boundary != ModulePcc::Boundary::Periodic)
         {
             // Gauss's law: FAR_FIELD is the solution's net screening charge,
             // DENSITY the dielectric_of_potential integral with its grid error.
@@ -195,14 +195,14 @@ void surchem::write_sccs_iteration(std::ostream& output) const
     }
 
     if (this->parameters_.debug >= 2
-        && this->parameters_.sccs_config.boundary == ModuleSccs::Boundary::Pcc0d)
+        && this->parameters_.sccs_config.boundary == ModulePcc::Boundary::Pcc0d)
     {
         const ModuleBase::Vector3<double>& origin = this->sccs_state_.pcc_geometry.origin;
         output << std::setprecision(12)
                << " PCC0D_ORIGIN X/Bohr " << origin.x
                << " Y/Bohr " << origin.y
                << " Z/Bohr " << origin.z << '\n';
-        const ModuleSccs::MultipoleMoments* moments[] = {
+        const ModulePcc::MultipoleMoments* moments[] = {
             &result.solute_moments,
             &result.point_solute_moments,
             &result.polarization_moments,
@@ -227,7 +227,7 @@ void surchem::write_sccs_iteration(std::ostream& output) const
     }
 
     if (this->parameters_.debug >= 2
-        && this->parameters_.sccs_config.boundary == ModuleSccs::Boundary::Pcc2d)
+        && this->parameters_.sccs_config.boundary == ModulePcc::Boundary::Pcc2d)
     {
         output << std::setprecision(12)
                << " PCC2D_MOMENTS"
@@ -269,7 +269,7 @@ void surchem::write_sccs_diagnostics(std::ostream& output) const
                      + result.vacuum_pcc_energy)
            << '\n';
 
-    if (this->parameters_.sccs_config.boundary == ModuleSccs::Boundary::Pcc2d)
+    if (this->parameters_.sccs_config.boundary == ModulePcc::Boundary::Pcc2d)
     {
         output << " SCCS_DIAGNOSTIC smooth_solute_charge "
                << result.solute_moments_2d.charge << '\n';

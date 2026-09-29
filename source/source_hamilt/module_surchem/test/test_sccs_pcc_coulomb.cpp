@@ -40,10 +40,10 @@ TEST(SccsPccCoulomb, SqrtCgKeepsChargedUniformDielectricPccGauge)
 
     const double volume_element = volume / static_cast<double>(basis.nxyz);
     const std::vector<ModuleBase::Vector3<double>> positions(basis.nrxx);
-    ModuleSccs::PccGeometry geometry
-        = ModuleSccs::pcc_geometry(lattice, cube_length, 1.0e-10);
+    ModulePcc::PccGeometry geometry
+        = ModulePcc::pcc_geometry(lattice, cube_length, 1.0e-10);
     geometry.origin = ModuleBase::Vector3<double>();
-    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModuleSurchem::SerialChargeReduction charge_reduction;
     const ModuleSccs::SerialPolarizationReduction polarization_reduction;
     const ModuleSccs::PccCoulombOperator coulomb(basis,
                                                  tpiba,
@@ -119,8 +119,8 @@ TEST(SccsPccCoulomb, ScalarPotentialMatchesFullFieldAndAvoidsGradientTransforms)
         const double z = length * iz / basis.nz;
         positions[index] = ModuleBase::Vector3<double>(x, y, z);
     }
-    const ModuleSccs::PccGeometry geometry = ModuleSccs::pcc_geometry(lattice, length, 1.0e-10);
-    const ModuleSccs::SerialChargeReduction reduction;
+    const ModulePcc::PccGeometry geometry = ModulePcc::pcc_geometry(lattice, length, 1.0e-10);
+    const ModuleSurchem::SerialChargeReduction reduction;
     const ModuleSccs::PccCoulombOperator coulomb(basis, tpiba, positions, dv, geometry, reduction);
     const std::vector<double> charge(basis.nrxx, 0.001);
     ModuleSccs::ElectrostaticField field;

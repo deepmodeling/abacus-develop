@@ -27,14 +27,14 @@ ChargeDensity assemble_charge_density(const std::vector<double>& electron_densit
                                       double expected_electron_count,
                                       double expected_ionic_charge,
                                       double normalization_tolerance,
-                                      const ChargeReduction& reduction);
+                                      const ModuleSurchem::ChargeReduction& reduction);
 
-MultipoleMoments reduced_density_moments(
+ModulePcc::MultipoleMoments reduced_density_moments(
     const std::vector<double>& density,
     const std::vector<ModuleBase::Vector3<double>>& positions,
     double volume_element,
     const ModuleBase::Vector3<double>& origin,
-    const ChargeReduction& reduction);
+    const ModuleSurchem::ChargeReduction& reduction);
 
 } // namespace ModuleSccs
 

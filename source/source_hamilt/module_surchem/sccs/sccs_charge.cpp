@@ -45,7 +45,7 @@ ChargeDensity assemble_charge_density(const std::vector<double>& electron_densit
                                       const double expected_electron_count,
                                       const double expected_ionic_charge,
                                       const double normalization_tolerance,
-                                      const ChargeReduction& reduction)
+                                      const ModuleSurchem::ChargeReduction& reduction)
 {
     if (electron_density.empty() || electron_density.size() != ionic_density.size())
     {
@@ -90,14 +90,14 @@ ChargeDensity assemble_charge_density(const std::vector<double>& electron_densit
     return result;
 }
 
-MultipoleMoments reduced_density_moments(
+ModulePcc::MultipoleMoments reduced_density_moments(
     const std::vector<double>& density,
     const std::vector<ModuleBase::Vector3<double>>& positions,
     const double volume_element,
     const ModuleBase::Vector3<double>& origin,
-    const ChargeReduction& reduction)
+    const ModuleSurchem::ChargeReduction& reduction)
 {
-    MultipoleMoments moments = density_moments(density, positions, volume_element, origin);
+    ModulePcc::MultipoleMoments moments = ModulePcc::density_moments(density, positions, volume_element, origin);
     double values[5] = {moments.charge,
                         moments.dipole.x,
                         moments.dipole.y,

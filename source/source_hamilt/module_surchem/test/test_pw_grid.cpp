@@ -33,13 +33,13 @@ TEST(SccsPwCharge, BuildsCellCenterAndIntegerNodeGrid)
     basis.setuptransform();
     basis.collect_local_pw();
 
-    const ModuleBase::Vector3<double> center = ModuleSccs::cell_center(lattice, 10.0);
+    const ModuleBase::Vector3<double> center = ModuleSurchem::cell_center(lattice, 10.0);
     EXPECT_DOUBLE_EQ(center.x, 5.0);
     EXPECT_DOUBLE_EQ(center.y, 5.0);
     EXPECT_DOUBLE_EQ(center.z, 5.0);
 
     const std::vector<ModuleBase::Vector3<double>> positions
-        = ModuleSccs::pw_grid_positions(basis, lattice, 10.0);
+        = ModuleSurchem::pw_grid_positions(basis, lattice, 10.0);
     ASSERT_EQ(positions.size(), static_cast<std::size_t>(basis.nrxx));
     EXPECT_NEAR(positions[0].x, 0.0, 1.0e-14);
     EXPECT_NEAR(positions[0].y, 0.0, 1.0e-14);
@@ -61,7 +61,7 @@ TEST(SccsPwCharge, GridCoordinatesMatchInverseFourierPhase)
     basis.setuptransform();
     basis.collect_local_pw();
     const std::vector<ModuleBase::Vector3<double>> positions
-        = ModuleSccs::pw_grid_positions(basis, lattice, length);
+        = ModuleSurchem::pw_grid_positions(basis, lattice, length);
     // Construct cos(G.r) + 0.4 sin(G.r) directly in reciprocal space.
     // Checking all axes detects a half-grid offset independently of the
     // coordinate implementation used by PCC moments and correction fields.
@@ -108,7 +108,7 @@ TEST(SccsPwCharge, KeepsYCoordinatesIndependentOfDistributedZSlab)
                                       1.0, 0.0, 3.0);
     const double lattice_scale = 2.0;
     const std::vector<ModuleBase::Vector3<double>> positions
-        = ModuleSccs::pw_grid_positions(basis, lattice, lattice_scale);
+        = ModuleSurchem::pw_grid_positions(basis, lattice, lattice_scale);
 
     const int ix = 1;
     const int iy = 2;

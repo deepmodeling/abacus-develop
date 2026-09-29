@@ -35,7 +35,7 @@ ModuleSccs::ElectrostaticFunctionalResult fixed_dielectric_functional(
     }
     ModuleSccs::ElectrostaticField dielectric_field;
     coulomb.apply(screened_charge, dielectric_field);
-    const ModuleSccs::SerialChargeReduction reduction;
+    const ModuleSurchem::SerialChargeReduction reduction;
     return ModuleSccs::evaluate_electrostatic_functional(solute_charge,
                                                           dielectric_field,
                                                           vacuum_field,
@@ -111,7 +111,7 @@ TEST(SccsFunctional, AddsSolverCavityPotentialToElectronPotential)
     dielectric.potential.assign(1, 2.0);
     ModuleSccs::ElectrostaticField vacuum;
     vacuum.potential.assign(1, 0.5);
-    const ModuleSccs::SerialChargeReduction reduction;
+    const ModuleSurchem::SerialChargeReduction reduction;
     const ModuleSccs::ElectrostaticFunctionalResult result
         = ModuleSccs::evaluate_electrostatic_functional(charge,
                                                         dielectric,

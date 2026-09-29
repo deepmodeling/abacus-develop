@@ -133,8 +133,8 @@ TEST(SolForce, ConvertsPointIonPccForceFromHartreeToRydberg)
     parameters.sccs_config.cavity.density_max = 2.0e-2;
     parameters.sccs_config.cavity.epsilon_bulk = 1.0;
     parameters.sccs_config.surface_regularization = 1.0e-6;
-    parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc0d;
-    parameters.pcc_boundary = ModuleSccs::Boundary::Pcc0d;
+    parameters.sccs_config.boundary = ModulePcc::Boundary::Pcc0d;
+    parameters.pcc_boundary = ModulePcc::Boundary::Pcc0d;
     parameters.sccs_config.max_iterations = 20;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
     parameters.sccs_config.tolerance_max = 1.0e-14;
@@ -156,15 +156,15 @@ TEST(SolForce, ConvertsPointIonPccForceFromHartreeToRydberg)
     ModuleBase::matrix force(2, 3);
     solvent.cal_force_sol(cell, &basis, unused_vloc, 1, force);
 
-    ModuleSccs::PccGeometry geometry
-        = ModuleSccs::pcc_geometry(lattice, length, 1.0e-10);
+    ModulePcc::PccGeometry geometry
+        = ModulePcc::pcc_geometry(lattice, length, 1.0e-10);
     for (int atom = 0; atom < 2; ++atom)
     {
-        ModuleSccs::PointCharge point;
+        ModulePcc::PointCharge point;
         point.charge = 0.5;
         point.position = cell.atoms[0].tau[atom] * length;
         const ModuleBase::Vector3<double> expected_hartree
-            = ModuleSccs::pcc_point_charge_force(solvent.sccs_result().point_solute_moments,
+            = ModulePcc::pcc_point_charge_force(solvent.sccs_result().point_solute_moments,
                                                  point,
                                                  geometry);
         EXPECT_NEAR(force(atom, 0), 2.0 * expected_hartree.x, 1.0e-14);
@@ -235,8 +235,8 @@ TEST(SolForce, ConvertsPointIonPcc2dForceFromHartreeToRydberg)
     parameters.sccs_config.cavity.density_max = 2.0e-2;
     parameters.sccs_config.cavity.epsilon_bulk = 1.0;
     parameters.sccs_config.surface_regularization = 1.0e-6;
-    parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc2d;
-    parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
+    parameters.sccs_config.boundary = ModulePcc::Boundary::Pcc2d;
+    parameters.pcc_boundary = ModulePcc::Boundary::Pcc2d;
     parameters.sccs_config.max_iterations = 20;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
     parameters.sccs_config.tolerance_max = 1.0e-14;
@@ -258,21 +258,21 @@ TEST(SolForce, ConvertsPointIonPcc2dForceFromHartreeToRydberg)
     ModuleBase::matrix force(2, 3);
     solvent.cal_force_sol(cell, &basis, unused_vloc, 1, force);
 
-    ModuleSccs::Pcc2dGeometry geometry
-        = ModuleSccs::pcc_2d_geometry(lattice, length, 1.0e-10);
+    ModulePcc::Pcc2dGeometry geometry
+        = ModulePcc::pcc_2d_geometry(lattice, length, 1.0e-10);
     const std::vector<double> positions_y{4.0, 6.0};
     const std::vector<double> masses{1.0, 1.0};
-    geometry.origin_y = ModuleSccs::pcc_2d_system_center_y(
+    geometry.origin_y = ModulePcc::pcc_2d_system_center_y(
         positions_y,
         masses,
         geometry.parameters.cell_length_y);
     for (int atom = 0; atom < 2; ++atom)
     {
-        ModuleSccs::PointCharge point;
+        ModulePcc::PointCharge point;
         point.charge = 0.5;
         point.position = cell.atoms[0].tau[atom] * length;
         const ModuleBase::Vector3<double> expected_hartree
-            = ModuleSccs::pcc_2d_point_charge_force(
+            = ModulePcc::pcc_2d_point_charge_force(
                 solvent.sccs_result().point_solute_moments_2d,
                 point,
                 geometry);
@@ -355,8 +355,8 @@ TEST(SolForce, MatchesFixedElectronDensityReactionEnergyDerivative)
     parameters.sccs_config.cavity.density_max = 2.0e-2;
     parameters.sccs_config.cavity.epsilon_bulk = 5.0;
     parameters.sccs_config.surface_regularization = 1.0e-6;
-    parameters.sccs_config.boundary = ModuleSccs::Boundary::Periodic;
-    parameters.pcc_boundary = ModuleSccs::Boundary::Periodic;
+    parameters.sccs_config.boundary = ModulePcc::Boundary::Periodic;
+    parameters.pcc_boundary = ModulePcc::Boundary::Periodic;
     parameters.sccs_config.max_iterations = 300;
     parameters.sccs_config.tolerance_rms = 1.0e-12;
     parameters.sccs_config.tolerance_max = 1.0e-10;
@@ -495,8 +495,8 @@ TEST(SolForce, NeutralAndChargedPcc2dMatchFixedDensityTotalEnergyDerivativeInXyz
         parameters.sccs_config.cavity.density_max = 2.0e-2;
         parameters.sccs_config.cavity.epsilon_bulk = 1.1;
         parameters.sccs_config.surface_regularization = 1.0e-6;
-        parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc2d;
-        parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
+        parameters.sccs_config.boundary = ModulePcc::Boundary::Pcc2d;
+        parameters.pcc_boundary = ModulePcc::Boundary::Pcc2d;
         parameters.sccs_config.max_iterations = 500;
         parameters.sccs_config.tolerance_rms = 1.0e-12;
         parameters.sccs_config.tolerance_max = 1.0e-10;
@@ -631,8 +631,8 @@ TEST(SolForce, FullSolventModeCoreForceMatchesFixedDensityEnergyDerivative)
     parameters.sccs_config.surface_tension = ModuleSccs::dyn_per_cm_to_hartree_per_bohr2(5.0);
     parameters.sccs_config.pressure = ModuleSccs::gpa_to_hartree_per_bohr3(0.125);
     parameters.sccs_config.surface_regularization = 1.0e-8;
-    parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc0d;
-    parameters.pcc_boundary = ModuleSccs::Boundary::Pcc0d;
+    parameters.sccs_config.boundary = ModulePcc::Boundary::Pcc0d;
+    parameters.pcc_boundary = ModulePcc::Boundary::Pcc0d;
     parameters.sccs_config.max_iterations = 500;
     parameters.sccs_config.tolerance_rms = 1.0e-13;
     parameters.sccs_config.tolerance_max = 1.0e-11;

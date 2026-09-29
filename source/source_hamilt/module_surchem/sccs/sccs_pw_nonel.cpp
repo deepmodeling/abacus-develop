@@ -20,7 +20,7 @@ NonElectrostaticResult evaluate_pw_non_electrostatic(
     const NonElectrostaticParameters& parameters,
     const std::vector<double>& solute,
     const std::vector<double>& dsolute_drho,
-    const ChargeReduction& reduction)
+    const ModuleSurchem::ChargeReduction& reduction)
 {
     ModuleBase::timer::start("ModuleSccs", "evaluate_pw_non_electrostatic");
     if (solute.size() != static_cast<std::size_t>(basis.nrxx)

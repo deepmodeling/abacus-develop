@@ -10,7 +10,7 @@ namespace ModuleBase
 class Matrix3;
 }
 
-namespace ModuleSccs
+namespace ModulePcc
 {
 
 struct MultipoleMoments
@@ -103,6 +103,6 @@ double pcc_bilinear_energy(const MultipoleMoments& left,
 
 double pcc_self_energy(const MultipoleMoments& moments, const PccParameters& parameters);
 
-} // namespace ModuleSccs
+} // namespace ModulePcc
 
 #endif

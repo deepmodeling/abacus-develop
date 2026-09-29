@@ -280,7 +280,7 @@ void surchem::cal_force_sccs(const UnitCell& cell,
         }
     }
     Parallel_Reduce::reduce_pool(forcesol.c, forcesol.nr * forcesol.nc);
-    if (config.boundary == ModuleSccs::Boundary::Periodic)
+    if (config.boundary == ModulePcc::Boundary::Periodic)
     {
         return;
     }

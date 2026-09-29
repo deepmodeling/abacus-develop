@@ -4,7 +4,7 @@
 #include <cctype>
 #include <stdexcept>
 
-namespace ModuleSccs
+namespace ModulePcc
 {
 
 Boundary parse_boundary(const std::string& value)
@@ -28,4 +28,4 @@ Boundary parse_boundary(const std::string& value)
     throw std::invalid_argument("unknown PCC boundary: " + value);
 }
 
-} // namespace ModuleSccs
+} // namespace ModulePcc

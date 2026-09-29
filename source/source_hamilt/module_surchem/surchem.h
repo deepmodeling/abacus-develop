@@ -32,7 +32,7 @@ struct SurchemParameters
     double nc_k = 0.0;    ///< cut-off charge density
     bool use_sccs = false;
     bool use_legacy_solvent = false;
-    ModuleSccs::Boundary pcc_boundary = ModuleSccs::Boundary::Periodic;
+    ModulePcc::Boundary pcc_boundary = ModulePcc::Boundary::Periodic;
     ModuleSccs::SccsConfig sccs_config;
     double expected_electron_count = 0.0;
     double expected_ionic_charge = 0.0;
@@ -242,10 +242,10 @@ class surchem
     bool sccs_active_ = false;
     ModuleSccs::SccsState sccs_state_;
     ModuleSccs::SccsResult sccs_result_;
-    ModuleSccs::PccGeometry pcc_geometry_;
-    ModuleSccs::Pcc2dGeometry pcc_2d_geometry_;
-    ModuleSccs::MultipoleMoments pcc_moments_;
-    ModuleSccs::Pcc2dMoments pcc_2d_moments_;
+    ModulePcc::PccGeometry pcc_geometry_;
+    ModulePcc::Pcc2dGeometry pcc_2d_geometry_;
+    ModulePcc::MultipoleMoments pcc_moments_;
+    ModulePcc::Pcc2dMoments pcc_2d_moments_;
     double pcc_energy_rydberg_ = 0.0;
     bool pcc_result_valid_ = false;
 };

@@ -20,7 +20,7 @@ TEST(SccsCharge, SumsOnlyChargeBearingSpinChannels)
 
 TEST(SccsCharge, PreservesPositiveAndNegativeNetCharge)
 {
-    const ModuleSccs::SerialChargeReduction reduction;
+    const ModuleSurchem::SerialChargeReduction reduction;
     const std::vector<double> ionic_density(4, 0.75);
 
     const ModuleSccs::ChargeDensity cation
@@ -54,8 +54,8 @@ TEST(SccsCharge, ReducesAllMultipoleComponents)
     const std::vector<ModuleBase::Vector3<double>> positions
         = {ModuleBase::Vector3<double>(1.0, 0.0, 0.0),
            ModuleBase::Vector3<double>(0.0, 2.0, 0.0)};
-    const ModuleSccs::SerialChargeReduction reduction;
-    const ModuleSccs::MultipoleMoments moments
+    const ModuleSurchem::SerialChargeReduction reduction;
+    const ModulePcc::MultipoleMoments moments
         = ModuleSccs::reduced_density_moments(density,
                                               positions,
                                               2.0,
@@ -71,7 +71,7 @@ TEST(SccsCharge, ReducesAllMultipoleComponents)
 
 TEST(SccsCharge, RejectsNormalizationMismatch)
 {
-    const ModuleSccs::SerialChargeReduction reduction;
+    const ModuleSurchem::SerialChargeReduction reduction;
     EXPECT_THROW(ModuleSccs::assemble_charge_density(std::vector<double>(2, 1.0),
                                                      std::vector<double>(2, 1.0),
                                                      1.0,

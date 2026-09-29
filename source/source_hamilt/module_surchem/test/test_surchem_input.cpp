@@ -15,7 +15,7 @@ TEST(SurchemInput, SelectsVacuumPccIndependentlyOfSolvent)
     const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, false, 4);
     EXPECT_FALSE(parameters.use_sccs);
     EXPECT_FALSE(parameters.use_legacy_solvent);
-    EXPECT_EQ(parameters.pcc_boundary, ModuleSccs::Boundary::Pcc0d);
+    EXPECT_EQ(parameters.pcc_boundary, ModulePcc::Boundary::Pcc0d);
     EXPECT_EQ(parameters.pool_process_count, 4);
     EXPECT_TRUE(input.uses_surchem_correction());
 }
@@ -93,7 +93,7 @@ TEST(SurchemInput, PreservesLegacyParametersAndOrdinaryVacuum)
     const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, false, 1);
     EXPECT_TRUE(parameters.use_legacy_solvent);
     EXPECT_FALSE(parameters.use_sccs);
-    EXPECT_EQ(parameters.pcc_boundary, ModuleSccs::Boundary::Periodic);
+    EXPECT_EQ(parameters.pcc_boundary, ModulePcc::Boundary::Periodic);
     EXPECT_DOUBLE_EQ(parameters.eb_k, input.eb_k);
     EXPECT_DOUBLE_EQ(parameters.tau, input.tau);
 }
@@ -110,14 +110,14 @@ TEST(SurchemInput, UltrasoftPseudopotentialsWarnWithoutRejectingSccsOrPcc)
             input.assume_isolated = boundary;
             const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, true, 1);
             EXPECT_EQ(parameters.use_sccs, model == 2);
-            EXPECT_NE(parameters.pcc_boundary, ModuleSccs::Boundary::Periodic);
+            EXPECT_NE(parameters.pcc_boundary, ModulePcc::Boundary::Periodic);
         }
     }
     Input_para periodic;
     periodic.imp_sol = 2;
     const SurchemParameters parameters = ModuleSurchem::make_parameters(periodic, cell, 0.0, true, 1);
     EXPECT_TRUE(parameters.use_sccs);
-    EXPECT_EQ(parameters.pcc_boundary, ModuleSccs::Boundary::Periodic);
+    EXPECT_EQ(parameters.pcc_boundary, ModulePcc::Boundary::Periodic);
 }
 
 TEST(SurchemInput, PresetsOverrideOnlyPhysicalParameters)

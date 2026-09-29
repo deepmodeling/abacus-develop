@@ -23,7 +23,7 @@ ElectrostaticFunctionalResult evaluate_electrostatic_functional(
     const ElectrostaticField& vacuum_field,
     const std::vector<double>& cavity_potential,
     double volume_element,
-    const ChargeReduction& reduction);
+    const ModuleSurchem::ChargeReduction& reduction);
 
 } // namespace ModuleSccs
 

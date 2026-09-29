@@ -5,7 +5,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace ModuleSccs
+namespace ModuleSurchem
 {
 
 void SerialChargeReduction::reduce_sum(double& value) const
@@ -49,4 +49,4 @@ void PoolChargeReduction::reduce_sum(double* values, const int count) const
     Parallel_Reduce::reduce_pool(values, count);
 }
 
-} // namespace ModuleSccs
+} // namespace ModuleSurchem

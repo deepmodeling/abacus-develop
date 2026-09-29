@@ -78,7 +78,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
             cache.core_density = ModuleSccs::gaussian_core_density(
                 cell, rho_basis, this->parameters_.sccs_config.core_spread);
         }
-        cache.positions = ModuleSccs::pw_grid_positions(rho_basis, cell.latvec, cell.lat0);
+        cache.positions = ModuleSurchem::pw_grid_positions(rho_basis, cell.latvec, cell.lat0);
         cache.lattice_vectors = cell.latvec;
         cache.basis = &rho_basis;
         cache.lattice_constant = cell.lat0;
@@ -97,23 +97,23 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     const std::vector<double>& core_density = cache.core_density;
     const std::vector<ModuleBase::Vector3<double>>& positions = cache.positions;
     ModuleBase::Vector3<double> origin
-        = ModuleSccs::cell_center(cell.latvec, cell.lat0);
+        = ModuleSurchem::cell_center(cell.latvec, cell.lat0);
     ModuleBase::matrix pcc_potential;
     double vacuum_pcc_energy = 0.0;
     if (this->uses_pcc())
     {
         this->v_correction_pcc(cell, rho_basis, nspin, rho, pcc_potential);
         vacuum_pcc_energy = 0.5 * this->pcc_energy_rydberg_;
-        if (this->parameters_.pcc_boundary == ModuleSccs::Boundary::Pcc0d)
+        if (this->parameters_.pcc_boundary == ModulePcc::Boundary::Pcc0d)
         {
             origin = this->pcc_geometry_.origin;
         }
     }
-    const ModuleSccs::PccGeometry& pcc_geometry = this->pcc_geometry_;
-    const ModuleSccs::Pcc2dGeometry& pcc_2d_geometry = this->pcc_2d_geometry_;
+    const ModulePcc::PccGeometry& pcc_geometry = this->pcc_geometry_;
+    const ModulePcc::Pcc2dGeometry& pcc_2d_geometry = this->pcc_2d_geometry_;
 
     const double volume_element = cell.omega / static_cast<double>(rho_basis.nxyz);
-    const ModuleSccs::PoolChargeReduction charge_reduction;
+    const ModuleSurchem::PoolChargeReduction charge_reduction;
     const ModuleSccs::PoolPolarizationReduction polarization_reduction(
         this->parameters_.pool_process_count);
     this->sccs_result_

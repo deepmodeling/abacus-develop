@@ -19,7 +19,7 @@ NonElectrostaticResult evaluate_pw_non_electrostatic(
     const NonElectrostaticParameters& parameters,
     const std::vector<double>& solute,
     const std::vector<double>& dsolute_drho,
-    const ChargeReduction& reduction);
+    const ModuleSurchem::ChargeReduction& reduction);
 
 } // namespace ModuleSccs
 

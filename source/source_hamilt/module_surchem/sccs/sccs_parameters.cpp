@@ -27,7 +27,7 @@ SccsConfig common_water_config()
     SccsConfig config;
     config.cavity.epsilon_bulk = 78.3;
     config.surface_regularization = 1.0e-8;
-    config.boundary = Boundary::Periodic;
+    config.boundary = ModulePcc::Boundary::Periodic;
     config.max_iterations = 200;
     config.tolerance_rms = 1.0e-10;
     config.tolerance_max = 1.0e-8;
@@ -111,7 +111,7 @@ void validate_config(const SccsConfig& config)
     validate_cavity_parameters(config.cavity);
     // The switching lowpass and its exact cavity derivative exist only for the
     // PCC switching-function factsqrt; the periodic path uses the chain rule.
-    if (uses_switching_lowpass(config.cavity) && config.boundary == Boundary::Periodic)
+    if (uses_switching_lowpass(config.cavity) && config.boundary == ModulePcc::Boundary::Periodic)
     {
         throw std::invalid_argument("SCCS lowpass requires assume_isolated pcc_0d or pcc_2d");
     }

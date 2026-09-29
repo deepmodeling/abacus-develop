@@ -28,7 +28,7 @@ namespace
 int test_process_count = 1;
 int test_rank = 0;
 
-class PresetArrayReduction : public ModuleSccs::ChargeReduction
+class PresetArrayReduction : public ModuleSurchem::ChargeReduction
 {
   public:
     explicit PresetArrayReduction(const std::vector<double>& remote) : remote_(remote)
@@ -76,28 +76,28 @@ class SccsPcc2dCoulombTest : public testing::Test
         basis_.initparameters(false, 80.0, 1, false);
         basis_.setuptransform();
         basis_.collect_local_pw();
-        geometry_ = ModuleSccs::pcc_2d_geometry(lattice, lattice_scale_, 1.0e-10);
+        geometry_ = ModulePcc::pcc_2d_geometry(lattice, lattice_scale_, 1.0e-10);
         volume_ = geometry_.parameters.periodic_area
                   * geometry_.parameters.cell_length_y;
         volume_element_ = volume_ / static_cast<double>(basis_.nxyz);
-        positions_ = ModuleSccs::pw_grid_positions(basis_, lattice, lattice_scale_);
+        positions_ = ModuleSurchem::pw_grid_positions(basis_, lattice, lattice_scale_);
     }
 
     ModulePW::PW_Basis basis_;
     double lattice_scale_ = 0.0;
     double volume_ = 0.0;
     double volume_element_ = 0.0;
-    ModuleSccs::Pcc2dGeometry geometry_;
+    ModulePcc::Pcc2dGeometry geometry_;
     std::vector<ModuleBase::Vector3<double>> positions_;
-    ModuleSccs::PoolChargeReduction reduction_;
+    ModuleSurchem::PoolChargeReduction reduction_;
     ModuleSccs::PoolPolarizationReduction polarization_reduction_;
 };
 
 TEST_F(SccsPcc2dCoulombTest, ReducesYMoments)
 {
     const std::vector<double> uniform(basis_.nrxx, 1.0 / volume_);
-    const ModuleSccs::Pcc2dMoments moments
-        = ModuleSccs::reduced_pcc_2d_density_moments(uniform,
+    const ModulePcc::Pcc2dMoments moments
+        = ModulePcc::reduced_pcc_2d_density_moments(uniform,
                                                      positions_,
                                                      volume_element_,
                                                      geometry_,
@@ -111,7 +111,7 @@ TEST_F(SccsPcc2dCoulombTest, ReducesYMoments)
 TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentMoments)
 {
     const auto fragment_geometry = [](const double origin_y) {
-        ModuleSccs::Pcc2dGeometry value;
+        ModulePcc::Pcc2dGeometry value;
         value.parameters.periodic_area = 10.0;
         value.parameters.cell_length_y = 20.0;
         value.origin_y = origin_y;
@@ -150,8 +150,8 @@ TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentMoments)
             }
         }
     }
-    const ModuleSccs::Pcc2dMoments remote_moments
-        = ModuleSccs::pcc_2d_density_moments(remote_density,
+    const ModulePcc::Pcc2dMoments remote_moments
+        = ModulePcc::pcc_2d_density_moments(remote_density,
                                              remote_positions,
                                              fragment_volume_element,
                                              fragment_geometry(3.0));
@@ -159,8 +159,8 @@ TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentMoments)
                                             remote_moments.dipole_y,
                                             remote_moments.quadrupole_yy};
     const PresetArrayReduction moment_reduction(remote_values);
-    const ModuleSccs::Pcc2dMoments reduced
-        = ModuleSccs::reduced_pcc_2d_density_moments(local_density,
+    const ModulePcc::Pcc2dMoments reduced
+        = ModulePcc::reduced_pcc_2d_density_moments(local_density,
                                                      local_positions,
                                                      fragment_volume_element,
                                                      fragment_geometry(3.0),
@@ -169,8 +169,8 @@ TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentMoments)
     std::vector<ModuleBase::Vector3<double>> full_positions = local_positions;
     full_density.insert(full_density.end(), remote_density.begin(), remote_density.end());
     full_positions.insert(full_positions.end(), remote_positions.begin(), remote_positions.end());
-    const ModuleSccs::Pcc2dMoments expected
-        = ModuleSccs::pcc_2d_density_moments(full_density,
+    const ModulePcc::Pcc2dMoments expected
+        = ModulePcc::pcc_2d_density_moments(full_density,
                                              full_positions,
                                              fragment_volume_element,
                                              fragment_geometry(3.0));
@@ -205,7 +205,7 @@ TEST_F(SccsPcc2dCoulombTest, AddsCorrectionFromCurrentChargeOnEveryApplication)
     std::vector<double> charge(basis_.nrxx);
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
-        const double relative_y = ModuleSccs::pcc_2d_relative_y(positions_[ir].y, geometry_);
+        const double relative_y = ModulePcc::pcc_2d_relative_y(positions_[ir].y, geometry_);
         charge[ir] = 2.0e-3 * std::exp(-relative_y * relative_y / 3.0)
                      - 7.0e-4 * relative_y * std::exp(-relative_y * relative_y / 2.0);
     }
@@ -221,23 +221,23 @@ TEST_F(SccsPcc2dCoulombTest, AddsCorrectionFromCurrentChargeOnEveryApplication)
     ModuleSccs::ElectrostaticField periodic_field;
     coulomb.apply(charge, field);
     periodic.apply(charge, periodic_field);
-    const ModuleSccs::Pcc2dMoments moments
-        = ModuleSccs::reduced_pcc_2d_density_moments(charge,
+    const ModulePcc::Pcc2dMoments moments
+        = ModulePcc::reduced_pcc_2d_density_moments(charge,
                                                      positions_,
                                                      volume_element_,
                                                      geometry_,
                                                      reduction_);
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
-        const double relative_y = ModuleSccs::pcc_2d_relative_y(positions_[ir].y, geometry_);
+        const double relative_y = ModulePcc::pcc_2d_relative_y(positions_[ir].y, geometry_);
         EXPECT_NEAR(field.potential[ir] - periodic_field.potential[ir],
-                    ModuleSccs::pcc_2d_potential(moments,
+                    ModulePcc::pcc_2d_potential(moments,
                                                  relative_y,
                                                  geometry_.parameters),
                     2.0e-12);
         EXPECT_NEAR(field.gradient[ir].x - periodic_field.gradient[ir].x, 0.0, 1.0e-14);
         EXPECT_NEAR(field.gradient[ir].y - periodic_field.gradient[ir].y,
-                    ModuleSccs::pcc_2d_potential_gradient(moments,
+                    ModulePcc::pcc_2d_potential_gradient(moments,
                                                           relative_y,
                                                           geometry_.parameters)
                         .y,
@@ -349,12 +349,12 @@ TEST(SccsPcc2dSqrtCg, LayeredCavityMatchesOpenOneDimensionalField)
     basis.initparameters(false, 320.0, 1, false);
     basis.setuptransform();
     basis.collect_local_pw();
-    const ModuleSccs::Pcc2dGeometry geometry = ModuleSccs::pcc_2d_geometry(lattice, scale, 1.0e-10);
+    const ModulePcc::Pcc2dGeometry geometry = ModulePcc::pcc_2d_geometry(lattice, scale, 1.0e-10);
     const double volume = geometry.parameters.periodic_area * geometry.parameters.cell_length_y;
     const double volume_element = volume / static_cast<double>(basis.nxyz);
     const std::vector<ModuleBase::Vector3<double>> positions
-        = ModuleSccs::pw_grid_positions(basis, lattice, scale);
-    const ModuleSccs::SerialChargeReduction charge_reduction;
+        = ModuleSurchem::pw_grid_positions(basis, lattice, scale);
+    const ModuleSurchem::SerialChargeReduction charge_reduction;
     const ModuleSccs::SerialPolarizationReduction polarization_reduction;
     const ModuleSccs::Pcc2dCoulombOperator coulomb(basis,
                                                    tpiba,
@@ -378,7 +378,7 @@ TEST(SccsPcc2dSqrtCg, LayeredCavityMatchesOpenOneDimensionalField)
     std::vector<double> reference_gradient(basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
-        const double y = ModuleSccs::pcc_2d_relative_y(positions[ir].y, geometry);
+        const double y = ModulePcc::pcc_2d_relative_y(positions[ir].y, geometry);
         cavity_density[ir] = density_peak * std::exp(-y * y / (density_width * density_width));
         const double source_exponential = std::exp(-y * y / (source_width * source_width));
         solute_charge[ir] = amplitude * y * source_exponential;
@@ -414,7 +414,7 @@ TEST(SccsPcc2dSqrtCg, LayeredCavityMatchesOpenOneDimensionalField)
     double maximum_transition_fft_error = 0.0;
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
-        const double y = ModuleSccs::pcc_2d_relative_y(positions[ir].y, geometry);
+        const double y = ModulePcc::pcc_2d_relative_y(positions[ir].y, geometry);
         maximum_gradient = std::max(maximum_gradient, std::abs(reference_gradient[ir]));
         const double transverse = std::max(std::abs(result.polarization.field.gradient[ir].x),
                                            std::abs(result.polarization.field.gradient[ir].z));

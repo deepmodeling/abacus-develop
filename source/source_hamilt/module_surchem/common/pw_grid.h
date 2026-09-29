@@ -11,7 +11,7 @@ namespace ModulePW
 class PW_Basis;
 }
 
-namespace ModuleSccs
+namespace ModuleSurchem
 {
 
 ModuleBase::Vector3<double> cell_center(const ModuleBase::Matrix3& lattice_vectors,
@@ -22,6 +22,6 @@ std::vector<ModuleBase::Vector3<double>> pw_grid_positions(
     const ModuleBase::Matrix3& lattice_vectors,
     double lattice_scale);
 
-} // namespace ModuleSccs
+} // namespace ModuleSurchem
 
 #endif

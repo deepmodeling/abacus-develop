@@ -257,8 +257,8 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     parameters.sccs_config.cavity.density_max = 2.0e-2;
     parameters.sccs_config.cavity.epsilon_bulk = 5.0;
     parameters.sccs_config.surface_regularization = 1.0e-6;
-    parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc0d;
-    parameters.pcc_boundary = ModuleSccs::Boundary::Pcc0d;
+    parameters.sccs_config.boundary = ModulePcc::Boundary::Pcc0d;
+    parameters.pcc_boundary = ModulePcc::Boundary::Pcc0d;
     parameters.debug = 2;
     parameters.sccs_config.max_iterations = 100;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
@@ -416,8 +416,8 @@ TEST(HCorrSccs, AppliesNeutralPcc2dPointIonEnergyAndPotential)
     parameters.sccs_config.cavity.density_max = 2.0e-2;
     parameters.sccs_config.cavity.epsilon_bulk = 1.0;
     parameters.sccs_config.surface_regularization = 1.0e-6;
-    parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc2d;
-    parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
+    parameters.sccs_config.boundary = ModulePcc::Boundary::Pcc2d;
+    parameters.pcc_boundary = ModulePcc::Boundary::Pcc2d;
     parameters.sccs_config.max_iterations = 100;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
     parameters.sccs_config.tolerance_max = 1.0e-14;
@@ -449,15 +449,15 @@ TEST(HCorrSccs, AppliesNeutralPcc2dPointIonEnergyAndPotential)
                               potential);
 
     const ModuleSccs::SccsResult& result = solvent.sccs_result();
-    ModuleSccs::Pcc2dGeometry geometry
-        = ModuleSccs::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
+    ModulePcc::Pcc2dGeometry geometry
+        = ModulePcc::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
     geometry.origin_y = cell.atoms[0].tau[0].y * cell.lat0;
     const double electron_y
         = geometry.parameters.cell_length_y
           * static_cast<double>(electron_plane_y)
           / static_cast<double>(basis.ny);
     const double dipole_y
-        = -ModuleSccs::pcc_2d_relative_y(electron_y, geometry);
+        = -ModulePcc::pcc_2d_relative_y(electron_y, geometry);
     const double expected_energy = 2.0 * ModuleBase::PI * dipole_y * dipole_y / volume;
     EXPECT_NEAR(result.charge.net_charge, 0.0, 1.0e-12);
     EXPECT_NEAR(result.point_solute_moments_2d.charge, 0.0, 1.0e-12);
@@ -514,8 +514,8 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     parameters.sccs_config.cavity.density_max = 2.0e-2;
     parameters.sccs_config.cavity.epsilon_bulk = 5.0;
     parameters.sccs_config.surface_regularization = 1.0e-6;
-    parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc2d;
-    parameters.pcc_boundary = ModuleSccs::Boundary::Pcc2d;
+    parameters.sccs_config.boundary = ModulePcc::Boundary::Pcc2d;
+    parameters.pcc_boundary = ModulePcc::Boundary::Pcc2d;
     parameters.sccs_config.max_iterations = 100;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
     parameters.sccs_config.tolerance_max = 1.0e-14;
@@ -543,10 +543,10 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     EXPECT_TRUE(std::isfinite(result.electrostatic.reaction_energy));
     // Point-ion vacuum PCC in the ENVIRON monopole gauge; no Gaussian-ion shape
     // term is added because the reaction energy does not depend on the ion width.
-    const ModuleSccs::Pcc2dGeometry pcc_geometry
-        = ModuleSccs::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
+    const ModulePcc::Pcc2dGeometry pcc_geometry
+        = ModulePcc::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
     const double expected_vacuum_energy
-        = ModuleSccs::pcc_2d_self_energy(result.point_solute_moments_2d,
+        = ModulePcc::pcc_2d_self_energy(result.point_solute_moments_2d,
                                          pcc_geometry.parameters);
     EXPECT_NEAR(result.vacuum_pcc_energy, expected_vacuum_energy, 1.0e-14);
     EXPECT_NEAR(surchem::Ael,

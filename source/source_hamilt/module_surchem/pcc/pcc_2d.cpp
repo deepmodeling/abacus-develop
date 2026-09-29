@@ -6,7 +6,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace ModuleSccs
+namespace ModulePcc
 {
 namespace
 {
@@ -366,4 +366,4 @@ double pcc_2d_self_energy(const Pcc2dMoments& moments,
     return 0.5 * pcc_2d_bilinear_energy(moments, moments, parameters);
 }
 
-} // namespace ModuleSccs
+} // namespace ModulePcc

@@ -30,12 +30,12 @@ struct SccsState
     int local_plane_count = 0;
     int local_plane_start = 0;
     std::uint64_t grid_position_signature = 0;
-    Boundary boundary = Boundary::Periodic;
+    ModulePcc::Boundary boundary = ModulePcc::Boundary::Periodic;
     double tpiba = 0.0;
     double volume_element = 0.0;
     ModuleBase::Vector3<double> origin;
-    PccGeometry pcc_geometry;
-    Pcc2dGeometry pcc_2d_geometry;
+    ModulePcc::PccGeometry pcc_geometry;
+    ModulePcc::Pcc2dGeometry pcc_2d_geometry;
     CavityParameters cavity;
     bool valid = false;
 
@@ -52,15 +52,15 @@ struct SccsResult
     ElectrostaticFunctionalResult electrostatic;
     NonElectrostaticResult non_electrostatic;
     std::vector<double> electron_potential_hartree;
-    MultipoleMoments solute_moments;
-    MultipoleMoments polarization_moments;
-    MultipoleMoments screened_moments;
-    Pcc2dMoments solute_moments_2d;
-    Pcc2dMoments polarization_moments_2d;
-    Pcc2dMoments screened_moments_2d;
+    ModulePcc::MultipoleMoments solute_moments;
+    ModulePcc::MultipoleMoments polarization_moments;
+    ModulePcc::MultipoleMoments screened_moments;
+    ModulePcc::Pcc2dMoments solute_moments_2d;
+    ModulePcc::Pcc2dMoments polarization_moments_2d;
+    ModulePcc::Pcc2dMoments screened_moments_2d;
     double smooth_vacuum_pcc_energy = 0.0;
-    MultipoleMoments point_solute_moments;
-    Pcc2dMoments point_solute_moments_2d;
+    ModulePcc::MultipoleMoments point_solute_moments;
+    ModulePcc::Pcc2dMoments point_solute_moments_2d;
     double vacuum_pcc_energy = 0.0;
 };
 
@@ -76,12 +76,12 @@ SccsResult evaluate_pw_sccs(
     const std::vector<ModuleBase::Vector3<double>>& positions,
     const ModuleBase::Vector3<double>& origin,
     const SccsConfig& config,
-    const PccGeometry& pcc_geometry,
-    const Pcc2dGeometry& pcc_2d_geometry,
+    const ModulePcc::PccGeometry& pcc_geometry,
+    const ModulePcc::Pcc2dGeometry& pcc_2d_geometry,
     const ModulePW::PW_Basis& basis,
     double tpiba,
     double volume_element,
-    const ChargeReduction& charge_reduction,
+    const ModuleSurchem::ChargeReduction& charge_reduction,
     const PolarizationReduction& polarization_reduction,
     SccsState& state);
 

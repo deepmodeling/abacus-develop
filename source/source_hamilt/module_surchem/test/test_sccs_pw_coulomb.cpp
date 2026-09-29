@@ -249,9 +249,9 @@ class SccsCoulombOperatorsTest : public testing::Test
         basis->collect_local_pw();
         tpiba = ModuleBase::TWO_PI / length;
         dv = length * length * length / basis->nxyz;
-        positions = ModuleSccs::pw_grid_positions(*basis, lattice, length);
-        geometry = ModuleSccs::pcc_geometry(lattice, length, 1.0e-10);
-        geometry_2d = ModuleSccs::pcc_2d_geometry(lattice, length, 1.0e-10);
+        positions = ModuleSurchem::pw_grid_positions(*basis, lattice, length);
+        geometry = ModulePcc::pcc_geometry(lattice, length, 1.0e-10);
+        geometry_2d = ModulePcc::pcc_2d_geometry(lattice, length, 1.0e-10);
         charge.resize(basis->nrxx);
         for (int i = 0; i < basis->nrxx; ++i)
         {
@@ -281,9 +281,9 @@ class SccsCoulombOperatorsTest : public testing::Test
     std::unique_ptr<ModulePW::PW_Basis> basis;
     std::vector<ModuleBase::Vector3<double>> positions;
     std::vector<double> charge;
-    ModuleSccs::PccGeometry geometry;
-    ModuleSccs::Pcc2dGeometry geometry_2d;
-    ModuleSccs::SerialChargeReduction charge_reduction;
+    ModulePcc::PccGeometry geometry;
+    ModulePcc::Pcc2dGeometry geometry_2d;
+    ModuleSurchem::SerialChargeReduction charge_reduction;
     double tpiba = 0.0;
     double dv = 0.0;
 };
