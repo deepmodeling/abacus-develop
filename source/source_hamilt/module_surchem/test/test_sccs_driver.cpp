@@ -9,6 +9,7 @@
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
+#include "source_base/timer.h"
 #include "source_basis/module_pw/pw_basis.h"
 
 #include <gtest/gtest.h>
@@ -861,6 +862,10 @@ int main(int argc, char** argv)
     DIAG_WORLD = MPI_COMM_NULL;
 #endif
     testing::InitGoogleTest(&argc, argv);
+    // Error-path tests throw inside timed functions and leave their
+    // ModuleBase::timer entries running; production turns these exceptions
+    // into WARNING_QUIT, so the timers are not under test here.
+    ModuleBase::timer::disable();
     const int result = RUN_ALL_TESTS();
 #ifdef __MPI
     Parallel_Global::finalize_mpi();
