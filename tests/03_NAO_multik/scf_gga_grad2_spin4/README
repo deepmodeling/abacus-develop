@@ -1,0 +1,9 @@
+PBE noncollinear LCAO regression for gga_grad=2, including forces and stress.
+Derived from scf_angle_spin4; pseudopotential and orbitals reuse tests/PP_ORB.
+Uses scalapack_gvx and scf_thr=1e-11 for parallel reference comparisons.
+
+From tests/03_NAO_multik, run:
+  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 4 -r '^scf_gga_grad2_spin4$'
+
+Generate result.ref with the same command using -n 1 -g. Default energy,
+force and stress tolerances apply; no threshold overrides are used.

@@ -7,7 +7,12 @@
 
 // Since the kinetic stress of OFDFT is calculated by kinetic functionals in esolver_of.cpp, here we regard it as an
 // input variable.
-void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
+void OF_Stress_PW::cal_stress(const int nspin,
+                              const bool domag,
+                              const bool domag_z,
+                              const int gga_grad,
+                              const bool gamma_only_pw,
+                              ModuleBase::matrix& sigmatot,
                               ModuleBase::matrix& kinetic_stress,
                               UnitCell& ucell,
                               const vdw::VdwResult* vdw_result,
@@ -74,13 +79,15 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     {
         sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
-    stress_gga(ucell,sigmaxc, this->rhopw, pelec->charge);
+    stress_gga(ucell,sigmaxc, this->rhopw, pelec->charge,
+        nspin, domag, domag_z, gga_grad);
 
     // local contribution
     stress_loc(ucell,sigmaloc, this->rhopw, locpp.vloc, p_sf, true, pelec->charge);
 
     // nlcc
-    stress_cc(sigmaxcc, this->rhopw, ucell, p_sf, true, locpp.numeric, pelec->charge);
+    stress_cc(sigmaxcc, this->rhopw, ucell, p_sf, true, locpp.numeric, pelec->charge,
+        nspin, domag, domag_z, gga_grad, gamma_only_pw);
 
     // vdW term prepared before SCF for this ionic configuration.
     if (vdw_result != nullptr)

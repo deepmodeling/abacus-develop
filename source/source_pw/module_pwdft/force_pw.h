@@ -45,7 +45,12 @@ class Forces
     Forces(const int nat_in) : nat(nat_in){};
     ~Forces(){};
 
-    void cal_force(UnitCell& ucell,
+    void cal_force(const int nspin,
+                   const bool domag,
+                   const bool domag_z,
+                   const int gga_grad,
+                   const bool use_onsite_projection,
+                   UnitCell& ucell,
                    ModuleBase::matrix& force,
                    const vdw::VdwResult* vdw_result,
                    const elecstate::ElecState& elec,
@@ -77,7 +82,11 @@ class Forces
                       const ModulePW::PW_Basis* const rho_basis,
                       const Charge* const chr,
                       const bool* numeric,
-                      UnitCell& ucell_in);
+                      UnitCell& ucell_in,
+                      const int nspin,
+                      const bool domag,
+                      const bool domag_z,
+                      const int gga_grad);
     /**
      * @brief This routine computes the atomic force of non-local pseudopotential
      *    F^{NL}_i = \sum_{n,k}f_{nk}\sum_I \sum_{lm,l'm'}D_{l,l'}^{I} [
