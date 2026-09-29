@@ -45,7 +45,7 @@ add_executable(
   ../direct_2d_coulomb.cpp
 )
 target_include_directories(MODULE_RI_direct_2d_coulomb_test PRIVATE ${CMAKE_SOURCE_DIR}/source)
-target_link_libraries(MODULE_RI_direct_2d_coulomb_test base ${math_libs} device parameter)
+target_link_libraries(MODULE_RI_direct_2d_coulomb_test PRIVATE base ${math_libs} device parameter)
 install(TARGETS MODULE_RI_direct_2d_coulomb_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
 add_test(
   NAME MODULE_RI_direct_2d_coulomb_test
@@ -58,7 +58,7 @@ add_executable(
   ../direct_2d_coulomb.cpp
 )
 target_include_directories(MODULE_RI_direct_3d_coulomb_test PRIVATE ${CMAKE_SOURCE_DIR}/source)
-target_link_libraries(MODULE_RI_direct_3d_coulomb_test base ${math_libs} device parameter)
+target_link_libraries(MODULE_RI_direct_3d_coulomb_test PRIVATE base ${math_libs} device parameter)
 install(TARGETS MODULE_RI_direct_3d_coulomb_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
 add_test(
   NAME MODULE_RI_direct_3d_coulomb_test
@@ -67,7 +67,7 @@ add_test(
 )
 if(ENABLE_MPI)
   add_executable(MODULE_RI_ewald_mpi_distribution_test ewald_mpi_distribution_test.cpp)
-  target_link_libraries(MODULE_RI_ewald_mpi_distribution_test MPI::MPI_CXX)
+  target_link_libraries(MODULE_RI_ewald_mpi_distribution_test PRIVATE MPI::MPI_CXX)
   install(TARGETS MODULE_RI_ewald_mpi_distribution_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
   add_test(
     NAME MODULE_RI_ewald_mpi_distribution_test_parallel
