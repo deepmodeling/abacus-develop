@@ -255,8 +255,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
 
     //! Evaluate the vdW correction once for this ionic configuration.
     this->vdw_result_.reset();
-    std::unique_ptr<vdw::Vdw> vdw_solver
-        = vdw::make_vdw(ucell, *this->inp_, &(GlobalV::ofs_running));
+    auto vdw_solver = vdw::make_vdw(ucell, *this->inp_, &(GlobalV::ofs_running));
     if (vdw_solver != nullptr)
     {
         const vdw::VdwRequest request(this->inp_->cal_force, this->inp_->cal_stress);
