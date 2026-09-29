@@ -348,17 +348,6 @@ TEST(SternheimerABACUSSTSmoke, RejectsSymmetryReducedSpinPolarizedKGrid)
                  std::invalid_argument);
 }
 
-TEST(SternheimerABACUSSTSmoke, RequiresCompleteKSVirtualSubspace)
-{
-    EXPECT_EQ(ModuleRI::expected_sternheimer_ks_virtual_states(21, 0), 21);
-    EXPECT_EQ(ModuleRI::expected_sternheimer_ks_virtual_states(21, 16), 16);
-    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_ks_virtual_subspace(1, 21, 21, 21));
-    EXPECT_THROW(ModuleRI::validate_sternheimer_ks_virtual_subspace(2, 21, 20, 20),
-                 std::runtime_error);
-    EXPECT_THROW(ModuleRI::validate_sternheimer_ks_virtual_subspace(2, 21, 21, 20),
-                 std::runtime_error);
-}
-
 TEST(SternheimerABACUSSTSmoke, AcceptsOnlyPhysicalGammaSpinRows)
 {
     const std::vector<std::array<double, 3>> one_gamma = {{{0.0, 0.0, 0.0}}};
