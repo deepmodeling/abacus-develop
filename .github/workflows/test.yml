@@ -86,6 +86,7 @@ jobs:
       - name: Configure
         run: |
           source toolchain/install/setup
+          set -o pipefail
           cmake -B build -G Ninja \
             -DBUILD_TESTING=ON \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
@@ -97,7 +98,14 @@ jobs:
             -DENABLE_FLOAT_FFTW=ON \
             -DENABLE_DFTD4=ON \
             -DENABLE_PEXSI=ON \
-            -Werror=dev
+            -Werror=dev 2>&1 | tee configure.log
+
+      - name: Report configuration diagnostics
+        if: failure()
+        run: |
+          message=$(grep -Ein -B 8 -A 8 'CMake Error|CMake Warning.*error|fatal error|FAILED' configure.log || true)
+          message=$(printf '%s\n' "$message" | tail -n 120 | tr '\n' ' ' | cut -c1-5000)
+          echo "::error file=configure.log,line=1,title=ABACUS configuration diagnostics::$message"
 
 # Temporarily removed because no one maintains this now.
 # And it will break the CI test workflow.
