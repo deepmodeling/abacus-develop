@@ -123,10 +123,6 @@ void ESolver_KS::hamilt2rho_single(UnitCell& ucell, const int istep, const int i
 
 std::string ESolver_KS::diag_policy(const int istep) const
 {
-    if (this->inp_->basis_type == "pw" && this->inp_->esolver_type == "tddft" && istep == 0)
-    {
-        return "ksdft";
-    }
     return this->inp_->esolver_type;
 }
 

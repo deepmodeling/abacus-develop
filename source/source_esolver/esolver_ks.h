@@ -58,7 +58,7 @@ class ESolver_KS : public ESolver_FP
     void hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr);
 
     /** @brief Select the diagonalization policy without changing the requested solver. */
-    std::string diag_policy(const int istep) const;
+    virtual std::string diag_policy(const int istep) const;
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;

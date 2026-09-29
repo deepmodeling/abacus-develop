@@ -10,6 +10,7 @@
 #include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_efield/td_efield_io.h"
+#include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_pw/module_pwdft/td_pw.h"
@@ -31,10 +32,6 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     this->td_field_manager_ = elecstate::create_td_field_manager(inp);
-    if (inp.out_efield && GlobalV::MY_RANK == 0)
-    {
-        ModuleIO::prepare_td_field_output(PARAM.globalv.global_out_dir, this->td_field_manager_->fields().size(), false);
-    }
     elecstate::H_TDDFT_pw::set_field_state(*this->td_field_manager_);
 
     ESolver_KS_PW<T, Device>::before_all_runners(ucell, inp);
@@ -55,6 +52,11 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
                                                                   comm,
                                                                   GlobalV::ofs_running));
     this->history_.prepare(*this->pelec->pot, XC_Functional::get_ked_flag());
+    // Preserve existing field history until input validation and initialization succeed.
+    if (inp.out_efield && GlobalV::MY_RANK == 0)
+    {
+        ModuleIO::prepare_td_field_output(PARAM.globalv.global_out_dir, this->td_field_manager_->fields().size(), false);
+    }
 }
 
 template <typename T, typename Device>
@@ -99,6 +101,24 @@ void ESolver_KS_PW_TDDFT<T, Device>::prepare_td_step(const int istep)
         ModuleIO::write_td_field_values(*this->td_field_manager_, PARAM.globalv.global_out_dir);
     }
     ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "prepare_td_step");
+}
+
+template <typename T, typename Device>
+std::string ESolver_KS_PW_TDDFT<T, Device>::diag_policy(const int istep) const
+{
+    if (istep == 0)
+    {
+        return "ksdft";
+    }
+    return ESolver_KS::diag_policy(istep);
+}
+
+template <typename T, typename Device>
+void ESolver_KS_PW_TDDFT<T, Device>::iter_init(UnitCell& ucell, const int istep, const int iter)
+{
+    // With estep_per_md=1, the ionic and electronic step indices coincide.
+    ModuleIO::write_head_td(GlobalV::ofs_running, istep, istep, iter, this->basisname);
+    ESolver_KS_PW<T, Device>::iter_init(ucell, istep, iter);
 }
 
 template <typename T, typename Device>
