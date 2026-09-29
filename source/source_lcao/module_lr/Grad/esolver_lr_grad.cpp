@@ -747,10 +747,10 @@ ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_lr_force_relax_(std::of
     {
         return this->cal_force(this->target_is_, this->target_state_)[0];
     }
-    // Regime (b): follow the multiplet average, whose gradient is Tr(G)/d. Only the DIAGONAL of the
-    // gradient matrix is needed for this -- the average is basis-independent by construction, so
-    // the off-diagonal part (and the extra d(d-1)/2 solves it costs) is not involved. The
-    // Jahn-Teller distortion is orthogonal to this direction and does need them.
+    const bool jt_mode = (LR_Util::tolower(this->inp_->lr_relax_degen_mode) == "jt");
+    // `average` needs only the DIAGONAL of the gradient matrix: the average is basis-independent by
+    // construction, so the off-diagonal part (and the extra d(d-1)/2 solves it costs) is not
+    // involved. The Jahn-Teller direction is orthogonal to the average and does need them.
     const int d = static_cast<int>(this->target_group_.size());
     const int ekb_off = this->openshell ? 0 : this->target_is_ * this->nstates;
     const ct::Tensor Xz = this->pad_group_to_z_(this->target_is_, this->target_group_);
@@ -764,10 +764,95 @@ ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_lr_force_relax_(std::of
     {
         if (ist != this->target_state_) { ofs << " " << ist; }
     }
-    ofs << "; lr_relax_degen_mode=average, so the relaxation follows the multiplet average"
-        " (Omega_bar = " << this->target_omega_() << " Ry) and stays on the symmetric"
-        " configuration." << std::endl;
-    return average_forces(forces);
+    ofs << " (Omega_bar = " << this->target_omega_() << " Ry)." << std::endl;
+    if (!jt_mode)
+    {
+        ofs << " lr_relax_degen_mode=average: following the multiplet average, which keeps the"
+            " geometry on the symmetric configuration." << std::endl;
+        return average_forces(forces);
+    }
+    return this->cal_jt_force_(forces, ofs);
+}
+
+template<typename T, typename TR>
+ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_jt_force_(
+    const std::vector<ModuleBase::matrix>& diag, std::ofstream& ofs)
+{
+    // Regime (c): descend the Jahn-Teller branch. This needs the whole gradient matrix, so the
+    // off-diagonal elements are assembled here -- d(d-1)/2 further Z-vector solves on top of the
+    // d diagonal ones already in `diag`.
+    const int d = static_cast<int>(this->target_group_.size());
+    const std::vector<std::vector<ModuleBase::matrix>> g
+        = this->cal_grad_matrix_degenerate(this->target_is_, this->target_group_, diag, ofs);
+    const int nat = diag[0].nr;
+    const int ncoord = nat * 3;
+    // flatten to the layout `find_jt_direction` takes: one d x d block per nuclear coordinate.
+    // FORCES go in, not gradients, so the direction that comes back points downhill.
+    std::vector<double> gflat(static_cast<size_t>(ncoord) * d * d, 0.0);
+    for (int iat = 0; iat < nat; ++iat)
+    {
+        for (int ixyz = 0; ixyz < 3; ++ixyz)
+        {
+            const int a = iat * 3 + ixyz;
+            for (int k = 0; k < d; ++k)
+            {
+                for (int l = 0; l < d; ++l)
+                {
+                    gflat[static_cast<size_t>(a) * d * d + k * d + l] = g[k][l](iat, ixyz);
+                }
+            }
+        }
+    }
+    const LR::JTDirection jt = LR::find_jt_direction(gflat, ncoord, d);
+    std::vector<double> jt_part;
+    const std::vector<double> sym = LR::split_symmetric_part(gflat, ncoord, d, jt.mixing, jt_part);
+
+    const double fac = ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
+    ofs << " lr_relax_degen_mode=jt: descending the steepest branch of the multiplet." << std::endl
+        << "   |F| of that branch  = " << jt.slope * fac << " eV/Angstrom" << std::endl
+        << "   mixing v            =";
+    for (int k = 0; k < d; ++k) { ofs << " " << jt.mixing[k]; }
+    ofs << std::endl
+        << "   starts agreeing     = " << jt.restarts_agreeing << " of "
+        << (d + (1 << (d - 1))) << " (iterations " << jt.iterations << ")" << std::endl;
+    // The two halves matter separately: the symmetric part is common to the whole multiplet and
+    // only relaxes the geometry, while the remainder is what actually breaks the degeneracy. At a
+    // stationary point of the average surface the first is zero and the whole force is Jahn-Teller.
+    double nsym = 0.0;
+    double njt = 0.0;
+    for (int a = 0; a < ncoord; ++a)
+    {
+        nsym += sym[a] * sym[a];
+        njt += jt_part[a] * jt_part[a];
+    }
+    ofs << "   |symmetric part|    = " << std::sqrt(nsym) * fac << " eV/Angstrom (common to the"
+        " multiplet; relaxes the geometry without splitting it)" << std::endl
+        << "   |Jahn-Teller part|  = " << std::sqrt(njt) * fac << " eV/Angstrom (the symmetry-"
+        "breaking remainder)" << std::endl;
+    if (std::sqrt(njt) < 1e-8)
+    {
+        ofs << " WARNING: the symmetry-breaking part vanishes -- every branch of this multiplet has"
+            " the same gradient, so there is no Jahn-Teller direction to descend here. This is the"
+            " expected outcome for a linear molecule, where the effect is second order"
+            " (Renner-Teller) and no first-order term exists." << std::endl;
+    }
+    ofs << " NOTE: this is the first-order DIRECTION only. The distortion amplitude also needs the"
+        " harmonic term, and the step norm is Cartesian rather than mass-weighted." << std::endl;
+
+    // The force handed back is that of the descending branch, q(v) with v the optimal mixing --
+    // i.e. the branch's own gradient, which is what a relaxation must follow. Once a step has
+    // split the multiplet, `resolve_target_multiplet_` finds no group and the ordinary
+    // single-state path takes over, so this mode is self-limiting by construction.
+    ModuleBase::matrix f(nat, 3);
+    for (int iat = 0; iat < nat; ++iat)
+    {
+        for (int ixyz = 0; ixyz < 3; ++ixyz)
+        {
+            const int a = iat * 3 + ixyz;
+            f(iat, ixyz) = sym[a] + jt_part[a];
+        }
+    }
+    return f;
 }
 
 template<typename T, typename TR>

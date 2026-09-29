@@ -2944,11 +2944,25 @@ parameters:
         it keeps the geometry on the symmetric configuration. Both the reported energy and the
         reported gradient switch to the average together, which the energy-based optimisers (`cg`,
         `bfgs`, `lbfgs`) require -- a gradient of one surface line-searched against the energy of
-        another does not converge.
+        another does not converge. This mode deliberately does NOT find the Jahn-Teller
+        distortion, which is orthogonal to the totally symmetric average gradient.
+      * jt: descend the Jahn-Teller branch. Solves
+        $\min_{\|u\|=1}\lambda_{\min}(\sum_{A\alpha}u_{A\alpha}G^{(A\alpha)})$ -- a joint
+        optimisation over the displacement and the mixing inside the multiplet, since the two are
+        determined together -- and follows the force of the resulting branch. This needs the
+        off-diagonal part of the gradient matrix, so it costs $d(d-1)/2$ further Z-vector solves
+        per step on top of the $d$ diagonal ones. The running log reports the branch's force, its
+        mixing coefficients, and its split into the part common to the multiplet and the part that
+        actually breaks the degeneracy.
 
-      `average` deliberately does NOT find the Jahn-Teller distortion: that distortion is
-      orthogonal to the totally symmetric average gradient, and reaching it needs the off-diagonal
-      part of the gradient matrix.
+      The usual sequence is `average` first, to reach the symmetric stationary point, then `jt`
+      from there: at a stationary point of the average surface the common part vanishes and the
+      whole force is Jahn-Teller. `jt` is self-limiting -- once a step has split the multiplet
+      there is no group left and the ordinary single-state gradient takes over.
+
+      `jt` gives the first-order DIRECTION. The distortion amplitude also needs the harmonic term,
+      and the step norm is Cartesian rather than mass-weighted. A linear molecule has no
+      first-order term at all (the effect is second-order Renner-Teller) and the log says so.
     default_value: state
     unit: ""
     availability: ""

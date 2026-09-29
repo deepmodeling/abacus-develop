@@ -297,6 +297,17 @@ namespace ModuleESolver
         /// The LR half of the force for the current geometry, following whichever surface
         /// `lr_relax_degen_mode` selects. `ofs` receives the note when that is not a single state.
         ModuleBase::matrix cal_lr_force_relax_(std::ofstream& ofs);
+        /// @brief The force of the steepest-descending branch of the target multiplet, i.e.
+        ///        `lr_relax_degen_mode = jt`.
+        ///
+        /// Assembles the off-diagonal part of the gradient matrix (which `average` does not need),
+        /// solves the joint direction/mixing optimization in `LR::find_jt_direction`, and returns
+        /// that branch's own force. Once a step has split the multiplet there is no group left and
+        /// the ordinary single-state path takes over, so the mode is self-limiting.
+        ///
+        /// @param diag  the multiplet's per-state forces, already computed
+        ModuleBase::matrix cal_jt_force_(const std::vector<ModuleBase::matrix>& diag,
+            std::ofstream& ofs);
         /// Widen a multiplet's eigenvectors into the Z window, one block each. Members need not be
         /// contiguous, so they are padded one at a time.
         ct::Tensor pad_group_to_z_(const int ispin, const std::vector<int>& group) const;

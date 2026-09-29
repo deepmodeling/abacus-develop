@@ -1099,23 +1099,28 @@ The threshold proposes candidates; it cannot tell a true degeneracy from an acci
         item.description = R"(What `calculation = relax` follows when `lr_target_state` sits inside a degenerate multiplet, as identified by `lr_grad_degen_thr`. It has no effect when the target state is non-degenerate.
 
 * state: follow the gradient of that one state, as returned by the eigensolver. This is the historical behaviour and is what reproduces earlier results, but inside a multiplet it is not a well-defined quantity: the per-state gradients are the diagonal of the subspace gradient matrix in whichever basis the eigensolver happened to return, so they depend on numerical details of the diagonalisation rather than on physics.
-* average: follow the multiplet average $\bar\Omega=\frac{1}{d}\sum_k\Omega_k$, whose gradient is $\operatorname{Tr}G/d$. Unlike the individual states this is a smooth, basis-independent surface, and by symmetry its gradient is totally symmetric, so following it keeps the geometry on the symmetric configuration. Both `cal_energy` and the reported gradient switch to the average together, which the energy-based optimisers (`cg`, `bfgs`, `lbfgs`) require -- a gradient of one surface line-searched against the energy of another does not converge.
+* average: follow the multiplet average $\bar\Omega=\frac{1}{d}\sum_k\Omega_k$, whose gradient is $\operatorname{Tr}G/d$. Unlike the individual states this is a smooth, basis-independent surface, and by symmetry its gradient is totally symmetric, so following it keeps the geometry on the symmetric configuration. Both `cal_energy` and the reported gradient switch to the average together, which the energy-based optimisers (`cg`, `bfgs`, `lbfgs`) require -- a gradient of one surface line-searched against the energy of another does not converge. This mode deliberately does NOT find the Jahn-Teller distortion, which is orthogonal to the totally symmetric average gradient.
+* jt: descend the Jahn-Teller branch. Solves $\min_{\|u\|=1}\lambda_{\min}(\sum_{A\alpha}u_{A\alpha}G^{(A\alpha)})$ -- a joint optimisation over the displacement and the mixing inside the multiplet, since the two are determined together -- and follows the force of the resulting branch. This needs the off-diagonal part of the gradient matrix, so it costs $d(d-1)/2$ further Z-vector solves per step on top of the $d$ diagonal ones. The running log reports the branch's force, its mixing coefficients, and its split into the part common to the multiplet and the part that actually breaks the degeneracy.
 
-[NOTE] `average` deliberately does NOT find the Jahn-Teller distortion: that distortion is orthogonal to the totally symmetric average gradient, and reaching it needs the off-diagonal part of the gradient matrix.)";
+[NOTE] The usual sequence is `average` first, to reach the symmetric stationary point, then `jt` from there: at a stationary point of the average surface the common part vanishes and the whole force is Jahn-Teller. `jt` is self-limiting -- once a step has split the multiplet there is no group left and the ordinary single-state gradient takes over.
+
+[NOTE] `jt` gives the first-order DIRECTION. The distortion amplitude also needs the harmonic term, and the step norm is Cartesian rather than mass-weighted. A linear molecule has no first-order term at all (the effect is second-order Renner-Teller) and the log says so.)";
         item.default_value = "state";
         item.unit = "";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> modes = { "state", "average" };
+            const std::vector<std::string> modes = { "state", "average", "jt" };
             if (std::find(modes.begin(), modes.end(), para.input.lr_relax_degen_mode) == modes.end())
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "lr_relax_degen_mode must be state or average");
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "lr_relax_degen_mode must be state, average or jt");
             }
-            // `average` needs to know which states form the multiplet, and that grouping is what
-            // lr_grad_degen_thr defines; without it there is nothing to average over.
-            if (para.input.lr_relax_degen_mode == "average" && para.input.lr_grad_degen_thr <= 0.0)
+            // Both non-default modes need to know which states form the multiplet, and that
+            // grouping is what lr_grad_degen_thr defines; without it there is nothing to act on.
+            if (para.input.lr_relax_degen_mode != "state" && para.input.lr_grad_degen_thr <= 0.0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
-                    "lr_relax_degen_mode=average requires lr_grad_degen_thr > 0 to define the multiplet");
+                    "lr_relax_degen_mode=" + para.input.lr_relax_degen_mode
+                    + " requires lr_grad_degen_thr > 0 to define the multiplet");
             }
         };
         read_sync_string(input.lr_relax_degen_mode);
