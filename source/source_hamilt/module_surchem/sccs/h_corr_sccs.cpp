@@ -12,6 +12,78 @@
 #include <stdexcept>
 #include <vector>
 
+namespace
+{
+
+bool same_lattice(const ModuleBase::Matrix3& left, const ModuleBase::Matrix3& right)
+{
+    return left.e11 == right.e11 && left.e12 == right.e12 && left.e13 == right.e13
+           && left.e21 == right.e21 && left.e22 == right.e22 && left.e23 == right.e23
+           && left.e31 == right.e31 && left.e32 == right.e32 && left.e33 == right.e33;
+}
+
+} // namespace
+
+bool surchem::FixedSourceCache::matches(const UnitCell& cell,
+                                        const ModulePW::PW_Basis& rho_basis,
+                                        const double* vlocal,
+                                        const double valence_charge) const
+{
+    if (!this->valid || this->basis != &rho_basis
+        || this->local_potential.size() != static_cast<std::size_t>(rho_basis.nrxx))
+    {
+        return false;
+    }
+    const bool same_grid = this->nx == rho_basis.nx && this->ny == rho_basis.ny
+                           && this->nz == rho_basis.nz && this->nrxx == rho_basis.nrxx
+                           && this->nplane == rho_basis.nplane
+                           && this->startz == rho_basis.startz_current;
+    const bool same_cell = this->lattice_constant == cell.lat0 && this->cell_volume == cell.omega
+                           && this->tpiba == cell.tpiba
+                           && same_lattice(this->lattice_vectors, cell.latvec);
+    const double* vlocal_end = vlocal + rho_basis.nrxx;
+    return same_grid && same_cell && this->ionic_charge == valence_charge
+           && std::equal(vlocal, vlocal_end, this->local_potential.begin());
+}
+
+bool surchem::update_fixed_sources(const UnitCell& cell,
+                                   const ModulePW::PW_Basis& rho_basis,
+                                   const double* vlocal)
+{
+    FixedSourceCache& cache = this->fixed_source_cache_;
+    const double valence_charge = this->parameters_.expected_ionic_charge;
+    if (cache.matches(cell, rho_basis, vlocal, valence_charge))
+    {
+        return true;
+    }
+    const double* vlocal_end = vlocal + rho_basis.nrxx;
+    cache.valid = false;
+    cache.local_potential.assign(vlocal, vlocal_end);
+    cache.ionic_density
+        = ModuleSccs::gaussian_ionic_density(cell, rho_basis, ModuleSccs::gaussian_ion_spread);
+    cache.core_density.clear();
+    if (this->parameters_.sccs_config.core_electrons)
+    {
+        cache.core_density = ModuleSccs::gaussian_core_density(
+            cell, rho_basis, this->parameters_.sccs_config.core_spread);
+    }
+    cache.positions = ModuleSurchem::pw_grid_positions(rho_basis, cell.latvec, cell.lat0);
+    cache.lattice_vectors = cell.latvec;
+    cache.basis = &rho_basis;
+    cache.lattice_constant = cell.lat0;
+    cache.cell_volume = cell.omega;
+    cache.tpiba = cell.tpiba;
+    cache.ionic_charge = valence_charge;
+    cache.nx = rho_basis.nx;
+    cache.ny = rho_basis.ny;
+    cache.nz = rho_basis.nz;
+    cache.nrxx = rho_basis.nrxx;
+    cache.nplane = rho_basis.nplane;
+    cache.startz = rho_basis.startz_current;
+    cache.valid = true;
+    return false;
+}
+
 // Adapt the total spin density and local-pseudopotential ionic source to SCCS.
 // The reaction energy uses smooth ions; standalone PCC supplies the point-ion
 // vacuum correction once. Convert the final Ha quantities to ABACUS Ry units.
@@ -41,57 +113,8 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     }
     const std::vector<double> electron_density
         = ModuleSccs::sum_electron_density(spin_density, nspin);
-    FixedSourceCache& cache = this->fixed_source_cache_;
-    const double* local_potential_end = vlocal + rho_basis.nrxx;
-    const bool same_lattice
-        = cache.valid && cache.lattice_vectors.e11 == cell.latvec.e11
-          && cache.lattice_vectors.e12 == cell.latvec.e12
-          && cache.lattice_vectors.e13 == cell.latvec.e13
-          && cache.lattice_vectors.e21 == cell.latvec.e21
-          && cache.lattice_vectors.e22 == cell.latvec.e22
-          && cache.lattice_vectors.e23 == cell.latvec.e23
-          && cache.lattice_vectors.e31 == cell.latvec.e31
-          && cache.lattice_vectors.e32 == cell.latvec.e32
-          && cache.lattice_vectors.e33 == cell.latvec.e33;
-    const bool reuse_fixed_sources
-        = cache.valid && cache.basis == &rho_basis
-          && cache.nx == rho_basis.nx && cache.ny == rho_basis.ny
-          && cache.nz == rho_basis.nz && cache.nrxx == rho_basis.nrxx
-          && cache.nplane == rho_basis.nplane
-          && cache.startz == rho_basis.startz_current
-          && cache.lattice_constant == cell.lat0
-          && cache.cell_volume == cell.omega && cache.tpiba == cell.tpiba
-          && cache.ionic_charge == this->parameters_.expected_ionic_charge
-          && same_lattice
-          && cache.local_potential.size() == static_cast<std::size_t>(rho_basis.nrxx)
-          && std::equal(vlocal, local_potential_end, cache.local_potential.begin());
-    if (!reuse_fixed_sources)
-    {
-        cache.valid = false;
-        cache.local_potential.assign(vlocal, local_potential_end);
-        cache.ionic_density
-            = ModuleSccs::gaussian_ionic_density(cell, rho_basis, ModuleSccs::gaussian_ion_spread);
-        cache.core_density.clear();
-        if (this->parameters_.sccs_config.core_electrons)
-        {
-            cache.core_density = ModuleSccs::gaussian_core_density(
-                cell, rho_basis, this->parameters_.sccs_config.core_spread);
-        }
-        cache.positions = ModuleSurchem::pw_grid_positions(rho_basis, cell.latvec, cell.lat0);
-        cache.lattice_vectors = cell.latvec;
-        cache.basis = &rho_basis;
-        cache.lattice_constant = cell.lat0;
-        cache.cell_volume = cell.omega;
-        cache.tpiba = cell.tpiba;
-        cache.ionic_charge = this->parameters_.expected_ionic_charge;
-        cache.nx = rho_basis.nx;
-        cache.ny = rho_basis.ny;
-        cache.nz = rho_basis.nz;
-        cache.nrxx = rho_basis.nrxx;
-        cache.nplane = rho_basis.nplane;
-        cache.startz = rho_basis.startz_current;
-        cache.valid = true;
-    }
+    const bool reuse_fixed_sources = this->update_fixed_sources(cell, rho_basis, vlocal);
+    const FixedSourceCache& cache = this->fixed_source_cache_;
     const std::vector<double>& ionic_density = cache.ionic_density;
     const std::vector<double>& core_density = cache.core_density;
     const std::vector<ModuleBase::Vector3<double>>& positions = cache.positions;

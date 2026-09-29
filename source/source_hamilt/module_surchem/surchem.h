@@ -237,7 +237,20 @@ class surchem
         int nplane = 0;
         int startz = 0;
         bool valid = false;
+
+        // True when the cell, the local PW decomposition, the valence charge
+        // and the local potential are the ones the sources were built for.
+        bool matches(const UnitCell& cell,
+                     const ModulePW::PW_Basis& rho_basis,
+                     const double* vlocal,
+                     double valence_charge) const;
     };
+
+    // Rebuild the cached ion-only SCCS sources unless they still apply;
+    // returns true when the cached sources were reused.
+    bool update_fixed_sources(const UnitCell& cell,
+                              const ModulePW::PW_Basis& rho_basis,
+                              const double* vlocal);
 
     SurchemParameters parameters_;
     FixedSourceCache fixed_source_cache_;
