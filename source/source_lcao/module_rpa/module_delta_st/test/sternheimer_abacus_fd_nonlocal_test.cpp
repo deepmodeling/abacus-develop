@@ -10,11 +10,6 @@
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
 
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
-#endif
-
 namespace
 {
 
