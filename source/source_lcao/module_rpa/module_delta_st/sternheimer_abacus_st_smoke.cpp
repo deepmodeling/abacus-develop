@@ -1672,13 +1672,14 @@ void write_sternheimer_grid_coulomb_diagnostic(
 std::vector<SternheimerDeltaGridFunction> build_lcao_candidate_grid_functions(
     const UnitCell& ucell,
     const SternheimerFDHamiltonian::Grid& grid,
+    const SternheimerAbacusRuntime& runtime,
     const LCAO_Orbitals* provided_orbitals = nullptr,
     const SternheimerReducedKPoint kpoint = {0.0, 0.0, 0.0})
 {
     LCAO_Orbitals loaded_orbitals;
     if (provided_orbitals == nullptr)
     {
-        read_sternheimer_orbitals(ucell, loaded_orbitals);
+        read_sternheimer_orbitals(ucell, loaded_orbitals, runtime);
         provided_orbitals = &loaded_orbitals;
     }
     const LCAO_Orbitals& orb = *provided_orbitals;
@@ -5025,6 +5026,7 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                 delta_candidates = build_lcao_candidate_grid_functions(
                     ucell,
                     grid_data.grid,
+                    runtime,
                     &orbitals,
                     sternheimer_lcao_grid_kpoint(target_record));
                 candidate_occupied_count = static_cast<int>(target_occupied_projector.size());
@@ -6975,7 +6977,8 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         std::vector<SternheimerDeltaGridFunction> sampled_ao_functions;
         if (use_lcao_zero_order)
         {
-            sampled_ao_functions = build_lcao_candidate_grid_functions(ucell, grid_data.grid, lcao_orbitals);
+            sampled_ao_functions = build_lcao_candidate_grid_functions(
+                ucell, grid_data.grid, runtime, lcao_orbitals);
             if (sampled_ao_functions.empty())
             {
                 throw std::runtime_error("Sternheimer LCAO zero-order input found no sampled AO functions.");
@@ -7188,7 +7191,8 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
             const std::vector<SternheimerDeltaGridFunction>* candidate_functions = &sampled_ao_functions;
             if (candidate_functions->empty())
             {
-                loaded_candidate_functions = build_lcao_candidate_grid_functions(ucell, grid_data.grid);
+                loaded_candidate_functions = build_lcao_candidate_grid_functions(
+                    ucell, grid_data.grid, runtime);
                 candidate_functions = &loaded_candidate_functions;
             }
             if (candidate_functions->empty())
