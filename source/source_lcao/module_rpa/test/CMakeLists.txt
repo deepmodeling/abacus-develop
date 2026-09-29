@@ -7,5 +7,5 @@ AddTest(
   LIBS parameter base ${math_libs} device
   SOURCES rpa_abfs_preorthogonalization_test.cpp
           ../rpa_abfs_preorthogonalization.cpp
-          ../../../source_basis/module_ao/ORB_atomic_lm.cpp
+          ../../../source_basis/module_ao/orb_atomic_lm.cpp
 )

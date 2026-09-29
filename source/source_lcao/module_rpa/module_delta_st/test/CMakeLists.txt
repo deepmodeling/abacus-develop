@@ -179,7 +179,7 @@ AddTest(
   LIBS parameter base ${math_libs} device container
   SOURCES sternheimer_coulomb_tail_test.cpp ../sternheimer_abfs_perturbation.cpp
           ../sternheimer_kq.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp
-          ../../../module_ri/conv_coulomb_pot_k.cpp ../../../../source_basis/module_ao/ORB_atomic_lm.cpp
+          ../../../module_ri/conv_coulomb_pot_k.cpp ../../../../source_basis/module_ao/orb_atomic_lm.cpp
 )
 AddTest(
   TARGET MODULE_RPA_sternheimer_abacus_st_smoke_test
