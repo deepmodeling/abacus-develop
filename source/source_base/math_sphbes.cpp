@@ -2,6 +2,7 @@
 #include "constants.h"
 #include <algorithm>
 #include <iostream>
+#include <vector>
 
 #include <cassert>
 
@@ -844,7 +845,8 @@ void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros, const b
     // to ensure n zeros of j_l; otherwise with a stride of 2 one only
     // needs to start with n+(l+1)/2 zeros of j_0
     int nz = n + ( return_all ? l : (l+1)/2 );
-    double* buffer = new double[nz];
+    std::vector<double> buffer_storage(nz);
+    double* buffer = buffer_storage.data();
 
     // zeros of j_0 = sin(x)/x is just n*pi
     double PI = std::acos(-1.0);
@@ -881,7 +883,6 @@ void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros, const b
     }
 
     std::copy(buffer, buffer + n, zeros + offset);
-    delete[] buffer;
 }
 
 double Sphbes::illinois(std::function<double(double)> func, double x0, double x1, const double tol, const int max_iter)

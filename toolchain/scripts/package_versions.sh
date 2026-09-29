@@ -139,24 +139,10 @@ load_package_vars() {
             fi
             ;;
         "cmake")
-            # Determine architecture for SHA256 selection
-            local arch_suffix=""
-            if [ "${OPENBLAS_ARCH}" = "arm64" ]; then
-                if [ "$(uname -s)" = "Darwin" ]; then
-                    arch_suffix="_macos"
-                else
-                    arch_suffix="_aarch64"
-                fi
-            else
-                arch_suffix="_x86_64"
-            fi
-            
             if [ "${version_suffix}" = "alt" ]; then
                 cmake_ver="${cmake_alt_ver}"
-                eval "cmake_sha256=\${cmake_alt_sha256${arch_suffix}}"
             else
                 cmake_ver="${cmake_main_ver}"
-                eval "cmake_sha256=\${cmake_main_sha256${arch_suffix}}"
             fi
             ;;
         "openmpi")

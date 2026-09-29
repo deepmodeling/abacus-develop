@@ -40,6 +40,7 @@ scf_out_chg_tau
 036_PW_AF
 037_PW_FM
 038_PW_NC
+038_PW_NC_GGA_GRAD2
 039_PW_FD_smear
 040_PW_FX_smear
 041_PW_GA_smear

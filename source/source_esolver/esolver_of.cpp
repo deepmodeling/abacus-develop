@@ -568,7 +568,9 @@ void ESolver_OF::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
  
     // here nullptr is for DFT+U, which may cause bugs, mohan note 2025-11-07
     // solvent can be used? mohan ask 2025-11-07
-    ff.cal_force(ucell, force, this->get_vdw_result(), *pelec, this->pw_rho, &ucell.symm, &sf,
+    ff.cal_force(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
+                 this->inp_->dft_plus_u || this->inp_->sc_mag_switch,
+                 ucell, force, this->get_vdw_result(), *pelec, this->pw_rho, &ucell.symm, &sf,
                  this->solvent, nullptr, &this->locpp);
 }
 
@@ -588,6 +590,8 @@ void ESolver_OF::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
                          this->pphi_, this->pw_rho, kinetic_stress_); // kinetic stress
 
     OF_Stress_PW ss(this->pelec, this->pw_rho);
-    ss.cal_stress(stress, kinetic_stress_, ucell, this->get_vdw_result(), &ucell.symm, this->locpp, &sf, &kv);
+    ss.cal_stress(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z,
+                       this->inp_->gga_grad, PARAM.globalv.gamma_only_pw,
+                       stress, kinetic_stress_, ucell, this->get_vdw_result(), &ucell.symm, this->locpp, &sf, &kv);
 }
 } // namespace ModuleESolver

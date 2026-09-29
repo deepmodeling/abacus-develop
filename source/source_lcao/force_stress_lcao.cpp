@@ -137,7 +137,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         // calculate basic terms in Force, same method with PW base
         this->calForcePwPart(ucell, parts.fvl_dvl, parts.fewalds, parts.fcc, parts.fscc,
                              pelec->f_en.etxc, pelec->vnew, pelec->vnew_exist, pelec->charge, rhopw,
-                             locpp, sf, cfg.device);
+                             locpp, sf, cfg);
     }
 
     // total stress : ModuleBase::matrix scs
@@ -161,7 +161,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         // calculate basic terms in Stress, similar method with PW base
         this->sc_pw.stress_pw_terms(ucell, sparts.sigmadvl, sparts.sigmahar, sparts.sigmaewa,
                                     sparts.sigmacc, sparts.sigmaxc, pelec->f_en.etxc, pelec->charge,
-                                    rhopw, locpp, sf);
+                                    rhopw, locpp, sf, cfg.nspin, cfg.domag, cfg.domag_z, cfg.gga_grad, cfg.gamma_only_pw);
     }
     // Calculate operator-based force/stress terms (kinetic, overlap,
     // nonlocal, rt-TDDFT hybrid gauge, local Pulay term and DeltaSpin).
@@ -394,16 +394,17 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
                                           ModulePW::PW_Basis* rhopw,
                                           const pseudopot_cell_vl& locpp,
                                           const Structure_Factor& sf,
-                                          const std::string& device)
+                                          const FSCalcConfig& cfg)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "calForcePwPart");
 #ifdef __CUDA
-    if (device == "gpu")
+    if (cfg.device == "gpu")
     {
         Forces<double, base_device::DEVICE_GPU> f_pw(nat);
         f_pw.cal_force_loc(ucell, fvl_dvl, rhopw, locpp.vloc, chr);
         f_pw.cal_force_ew(ucell, fewalds, rhopw, &sf);
-        f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell);
+        f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell,
+                          cfg.nspin, cfg.domag, cfg.domag_z, cfg.gga_grad);
         f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist, locpp.numeric, ucell);
     }
     else
@@ -412,7 +413,8 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
         Forces<double, base_device::DEVICE_CPU> f_pw(nat);
         f_pw.cal_force_loc(ucell, fvl_dvl, rhopw, locpp.vloc, chr);
         f_pw.cal_force_ew(ucell, fewalds, rhopw, &sf);
-        f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell);
+        f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell,
+                          cfg.nspin, cfg.domag, cfg.domag_z, cfg.gga_grad);
         f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist, locpp.numeric, ucell);
     }
 

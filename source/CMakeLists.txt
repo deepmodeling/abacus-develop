@@ -639,7 +639,8 @@ if(USE_CUDA)
     source_pw/module_pwdft/kernels/cuda/cal_density_real_op.cu
     source_pw/module_pwdft/kernels/cuda/mul_potential_op.cu
     source_pw/module_pwdft/kernels/cuda/vec_mul_vec_complex.cu
-    source_pw/module_pwdft/kernels/cuda/exx_cal_energy_op.cu)
+    source_pw/module_pwdft/kernels/cuda/exx_cal_energy_op.cu
+    source_pw/module_pwdft/kernels/cuda/exx_batch_op.cu)
 endif()
 
 if(USE_ROCM)

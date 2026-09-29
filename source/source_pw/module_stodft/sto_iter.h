@@ -3,7 +3,7 @@
 #include "source_base/math_chebyshev.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_hamilt/hamilt.h"
-#include "source_pw/module_stodft/hamilt_sdft_pw.h"
+#include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_psi/psi.h"
 #include "sto_che.h"
 #include "sto_func.h"
@@ -42,7 +42,7 @@ class Stochastic_Iter
               ModulePW::PW_Basis_K* wfc_basis,
               Stochastic_WF<T, Device>& stowf,
               StoChe<Real, Device>& stoche,
-              hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto);
+              StoHamiltPW<T, Device>* p_hamilt_sto);
 
     /**
      * @brief sum demet and eband energies for each k point and each band
@@ -117,7 +117,7 @@ class Stochastic_Iter
     ModuleBase::Chebyshev<double, Device>* p_che = nullptr;
 
     Sto_Func<double> stofunc;
-    hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto = nullptr;
+    StoHamiltPW<T, Device>* p_hamilt_sto = nullptr;
 
     double mu0 = 0.0; // chemical potential; unit in Ry
     bool change = false;

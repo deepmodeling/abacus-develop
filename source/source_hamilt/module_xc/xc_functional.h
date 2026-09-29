@@ -72,6 +72,7 @@ class XC_Functional
         const int nspin,
         const bool domag,
         const bool domag_z,
+        const int gga_grad,
         const double hybrid_alpha,
         const double hse_omega);
 
@@ -276,6 +277,7 @@ class XC_Functional
         const int nspin,
         const bool domag,
         const bool domag_z,
+        const int gga_grad,
         const double hybrid_alpha,
         const double hse_omega);
 

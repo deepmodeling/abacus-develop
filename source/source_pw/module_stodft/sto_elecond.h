@@ -2,8 +2,8 @@
 #define STOELECOND_H
 
 #include "source_hamilt/hamilt.h"
-#include "source_hsolver/hsolver_pw_sdft.h"
 #include "source_pw/module_pwdft/elecond.h"
+#include "source_pw/module_stodft/sto_hsolver_pw.h"
 #include "source_pw/module_stodft/sto_wf.h"
 
 template <typename FPTYPE, typename Device>
@@ -82,8 +82,8 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
     Stochastic_WF<std::complex<FPTYPE>, Device>* p_stowf = nullptr;   ///< pointer to the stochastic wavefunctions
     Sto_Func<FPTYPE> stofunc;                                         ///< functions
 
-    hamilt::HamiltSdftPW<std::complex<FPTYPE>, Device>* p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
-    hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>* hamilt_sto_ = nullptr; ///< pointer to the Hamiltonian for sDFT
+    StoHamiltPW<std::complex<FPTYPE>, Device>* p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
+    StoHamiltPW<std::complex<lowTYPE>, Device>* hamilt_sto_ = nullptr; ///< pointer to the Hamiltonian for sDFT
     lowTYPE low_emin_ = 0;                                                      ///< Emin of the Hamiltonian for sDFT
     lowTYPE low_emax_ = 0;                                                      ///< Emax of the Hamiltonian for sDFT
   protected:
@@ -91,7 +91,7 @@ class Sto_EleCond : protected EleCond<FPTYPE, Device>
      * @brief calculate Jmatrix  <leftv|J|rightv>
      *
      */
-    void cal_jmatrix(hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>* hamilt,
+    void cal_jmatrix(StoHamiltPW<std::complex<lowTYPE>, Device>* hamilt,
                      const psi::Psi<std::complex<lowTYPE>, Device>& kspsi_all,
                      const psi::Psi<std::complex<lowTYPE>, Device>& vkspsi,
                      const double* en,

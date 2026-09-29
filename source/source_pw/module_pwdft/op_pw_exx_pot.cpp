@@ -2,8 +2,53 @@
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <cstddef>
+#include <stdexcept>
+#include <vector>
+
+#ifdef __CUDA
+#include <cuda_runtime_api.h>
+#endif
+
 namespace hamilt
 {
+#ifdef __CUDA
+namespace
+{
+class CudaHostRegistration
+{
+  public:
+    CudaHostRegistration(void* data, std::size_t bytes, bool enabled) : data_(data)
+    {
+        if (enabled)
+        {
+            const cudaError_t err = cudaHostRegister(data_, bytes, cudaHostRegisterPortable);
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("failed to register potential CPU memory operations");
+            }
+            registered_ = true;
+        }
+    }
+
+    ~CudaHostRegistration()
+    {
+        if (registered_)
+        {
+            cudaHostUnregister(data_);
+        }
+    }
+
+    CudaHostRegistration(const CudaHostRegistration&) = delete;
+    CudaHostRegistration& operator=(const CudaHostRegistration&) = delete;
+
+  private:
+    void* data_;
+    bool registered_ = false;
+};
+} // namespace
+#endif
+
 extern template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>;
 extern template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
@@ -24,20 +69,15 @@ void get_exx_potential(const K_Vectors* kv,
                        bool is_stress,
                        const CoulombParam& coulomb_param_in)
 {
-    using setmem_real_cpu_op = base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>;
     using syncmem_real_c2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
 
     Real nqs_half1 = 0.5 * kv->nmp[0];
     Real nqs_half2 = 0.5 * kv->nmp[1];
     Real nqs_half3 = 0.5 * kv->nmp[2];
 
-    Real* pot_cpu = nullptr;
-    int nks = wfcpw->nks, npw = rhopw_dev->npw;
+    int nks = wfcpw->nks;
+    int npw = rhopw_dev->npw;
     double tpiba2 = tpiba * tpiba;
-    pot_cpu = new Real[npw];
-    // fill zero
-    setmem_real_cpu_op()(pot_cpu, 0, npw);
-
     std::vector<ModuleBase::Vector3<double>> qvec_c, qvec_d;
 #ifdef __MPI
     kv->para_k.gatherkvec(kv->kvec_c, qvec_c);
@@ -51,6 +91,8 @@ void get_exx_potential(const K_Vectors* kv,
     {
         return;
     }
+
+    std::vector<Real> pot_cpu(npw, 0);
 
     // calculate Fock pot
     auto it_fock = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
@@ -205,24 +247,13 @@ void get_exx_potential(const K_Vectors* kv,
     }
 
     // copy the potential to the device memory
+    Real* pot_cpu_data = pot_cpu.data();
 #ifdef __CUDA
-    if (PARAM.inp.device == "gpu")
-    {
-        cudaError_t err = cudaHostRegister(pot_cpu, sizeof(Real) * npw, cudaHostRegisterPortable);
-        if (err != cudaSuccess) {
-            throw std::runtime_error("failed to register potential CPU memory operations");
-        }
-    }
+    const bool use_gpu = PARAM.inp.device == "gpu";
+    const std::size_t bytes = sizeof(Real) * npw;
+    CudaHostRegistration registration(pot_cpu_data, bytes, use_gpu);
 #endif
-    syncmem_real_c2d_op()(pot, pot_cpu, rhopw_dev->npw);
-#ifdef __CUDA
-    if (PARAM.inp.device == "gpu")
-    {
-        cudaHostUnregister(pot_cpu);
-    }
-#endif
-
-    delete[] pot_cpu;
+    syncmem_real_c2d_op()(pot, pot_cpu_data, npw);
 }
 
 template <typename Real, typename Device>
@@ -237,19 +268,16 @@ void get_exx_stress_potential(const K_Vectors* kv,
                               int iq,
                               const CoulombParam& coulomb_param_in)
 {
-    using setmem_real_cpu_op = base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>;
     using syncmem_real_c2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
 
     Real nqs_half1 = 0.5 * kv->nmp[0];
     Real nqs_half2 = 0.5 * kv->nmp[1];
     Real nqs_half3 = 0.5 * kv->nmp[2];
 
-    Real* pot_cpu = nullptr;
-    int nks = wfcpw->nks, npw = rhopw_dev->npw;
+    int nks = wfcpw->nks;
+    int npw = rhopw_dev->npw;
     double tpiba2 = tpiba * tpiba;
-    pot_cpu = new Real[npw];
-    // fill zero
-    setmem_real_cpu_op()(pot_cpu, 0, npw);
+    std::vector<Real> pot_cpu(npw, 0);
 
     // calculate Fock pot
     auto it_fock = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
@@ -395,24 +423,13 @@ void get_exx_stress_potential(const K_Vectors* kv,
     }
 
     // copy the potential to the device memory
+    Real* pot_cpu_data = pot_cpu.data();
 #ifdef __CUDA
-    if (PARAM.inp.device == "gpu")
-    {
-        cudaError_t err = cudaHostRegister(pot_cpu, sizeof(Real) * npw, cudaHostRegisterPortable);
-        if (err != cudaSuccess) {
-            throw std::runtime_error("failed to register potential CPU memory operations");
-        }
-    }
+    const bool use_gpu = PARAM.inp.device == "gpu";
+    const std::size_t bytes = sizeof(Real) * npw;
+    CudaHostRegistration registration(pot_cpu_data, bytes, use_gpu);
 #endif
-    syncmem_real_c2d_op()(pot, pot_cpu, rhopw_dev->npw);
-#ifdef __CUDA
-    if (PARAM.inp.device == "gpu")
-    {
-        cudaHostUnregister(pot_cpu);
-    }
-#endif
-
-    delete[] pot_cpu;
+    syncmem_real_c2d_op()(pot, pot_cpu_data, npw);
 }
 
 double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,

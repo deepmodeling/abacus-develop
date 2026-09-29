@@ -8,7 +8,7 @@ ABACUS provides two CG implementations for variable-cell relaxation, selected by
 
 - **CG variant 1** (`relax_method = cg 1`): Follows a nested procedure where fixed-cell structural relaxation is performed first, followed by an update of the cell parameters, and the process is repeated until convergence is achieved.
 
-An example of the variable cell relaxation can be found in our [repository](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/relax/pw_al), which is provided with the reference output file log.ref. When using CG variant 1, each ionic step is labelled in the following manner:
+An example of the variable cell relaxation can be found in our [repository](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/17_relax/01_pw_cell_relax_BFGS_Al), which is provided with the reference output file log.ref. When using CG variant 1, each ionic step is labelled in the following manner:
 ```
  -------------------------------------------
  RELAX CELL : 3

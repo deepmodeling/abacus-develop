@@ -87,25 +87,25 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
     if (this->bse_continue >= 1) {
         BSE_Util::print_mem_estimate("V matrix of A", this->pA.get_local_size(), sizeof(T));
         this->VA_local.resize(this->pA.get_local_size(), 0.0);
-        this->read_AB_matrix(this->readin_dir + "A_V_matrix_"+std::to_string(this->my_rank)+".dat", this->VA_local.data(), this->ndim, this->ndim);
+        this->read_AB_matrix(this->readin_dir + "A_V_matrix_"+std::to_string(this->my_rank)+".dat", this->VA_local.data(), this->pA);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read_V_for_A");
     }
     if (this->bse_continue >= 2) {
         BSE_Util::print_mem_estimate("W matrix of A", this->pA.get_local_size(), sizeof(T));
         this->WA_local.resize(this->pA.get_local_size(), 0.0);
-        this->read_AB_matrix(this->readin_dir + "A_W_matrix_"+std::to_string(this->my_rank)+".dat", this->WA_local.data(), this->ndim, this->ndim);
+        this->read_AB_matrix(this->readin_dir + "A_W_matrix_"+std::to_string(this->my_rank)+".dat", this->WA_local.data(), this->pA);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read_W_for_A");
     }
     if (this->bse_continue >= 3) {
         BSE_Util::print_mem_estimate("V matrix of B", this->pA.get_local_size(), sizeof(T));
         this->VB_local.resize(this->pA.get_local_size(), 0.0);
-        this->read_AB_matrix(this->readin_dir + "B_V_matrix_"+std::to_string(this->my_rank)+".dat", this->VB_local.data(), this->ndim, this->ndim);
+        this->read_AB_matrix(this->readin_dir + "B_V_matrix_"+std::to_string(this->my_rank)+".dat", this->VB_local.data(), this->pA);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read_V_for_B");
     }
     if (this->bse_continue >= 4) {
         BSE_Util::print_mem_estimate("W matrix of B", this->pA.get_local_size(), sizeof(T));
         this->WB_local.resize(this->pA.get_local_size(), 0.0);
-        this->read_AB_matrix(this->readin_dir + "B_W_matrix_"+std::to_string(this->my_rank)+".dat", this->WB_local.data(), this->ndim, this->ndim);
+        this->read_AB_matrix(this->readin_dir + "B_W_matrix_"+std::to_string(this->my_rank)+".dat", this->WB_local.data(), this->pA);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read_W_for_B");
     }
     
@@ -163,7 +163,7 @@ void HamiltBSE<T>::cal_V_for_A(){
         this->cal_V_by_grid(true);
     }
     if (this->out_bse_ab){
-        this->write_AB_matrix(this->out_dir+"A_V_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->VA_local.data(), this->ndim, this->ndim);
+        this->write_AB_matrix(this->out_dir+"A_V_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->VA_local.data(), this->pA);
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_V_for_A");
     ModuleBase::timer::end("HamiltBSE", "cal_V_for_A");
@@ -192,7 +192,7 @@ void HamiltBSE<T>::cal_V_for_B(){
         this->cal_V_by_grid(false);
     }
     if (this->out_bse_ab){
-        this->write_AB_matrix(this->out_dir+"B_V_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->VB_local.data(), this->ndim, this->ndim);
+        this->write_AB_matrix(this->out_dir+"B_V_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->VB_local.data(), this->pA);
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_V_for_B");
     ModuleBase::timer::end("HamiltBSE", "cal_V_for_B");
@@ -211,7 +211,7 @@ void HamiltBSE<T>::cal_W_for_A(){
     this->WA_local.resize(this->pA.get_local_size(), 0.0);
     this->mo_lri.cal_W_for_A(this->WA_local, this->pA);    
     if (this->out_bse_ab){
-        this->write_AB_matrix(this->out_dir+"A_W_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->WA_local.data(), this->ndim, this->ndim);
+        this->write_AB_matrix(this->out_dir+"A_W_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->WA_local.data(), this->pA);
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_W_for_A");
     ModuleBase::timer::end("HamiltBSE", "cal_W_for_A");
@@ -231,7 +231,7 @@ void HamiltBSE<T>::cal_W_for_B(){
     this->mo_lri.cal_W_for_B(this->WB_local, this->pA);
     
     if (this->out_bse_ab){
-        this->write_AB_matrix(this->out_dir+"B_W_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->WB_local.data(), this->ndim, this->ndim);
+        this->write_AB_matrix(this->out_dir+"B_W_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->WB_local.data(), this->pA);
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_W_for_B");
     ModuleBase::timer::end("HamiltBSE", "cal_W_for_B");
@@ -336,7 +336,7 @@ void HamiltBSE<T>::init_bse_matrix(const bool is_full, const int & st_index){
     }
     if (this->out_bse_ab)
     {
-        this->write_AB_matrix(this->out_dir+"A_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->BSE_A_local.data(), this->ndim, this->ndim);
+        this->write_AB_matrix(this->out_dir+"A_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->BSE_A_local.data(), this->pA);
     }
 
     if (is_full)
@@ -351,7 +351,7 @@ void HamiltBSE<T>::init_bse_matrix(const bool is_full, const int & st_index){
         }
         if (this->out_bse_ab)
         {
-            this->write_AB_matrix(this->out_dir+"B_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->BSE_B_local.data(), this->ndim, this->ndim);
+            this->write_AB_matrix(this->out_dir+"B_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->BSE_B_local.data(), this->pA);
         }
     }
 
