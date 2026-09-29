@@ -8,6 +8,9 @@ Reference provenance (regenerated 2026-09-29, ecutwfc 100 Ry / ecutrho 400 Ry):
 - parallel layout: 16 MPI ranks x 1 OpenMP thread
 - result.ref is an ABACUS regression baseline, not an external QE/Environ reference.
 - after regeneration, two independent check runs passed every comparison.
+- 2026-09-29: the PCC energy moved from E_sol_el to its own E_pcc line, so esolelref
+  and the new epccref were updated from a check run (old esolelref = esolelref + epccref);
+  every other key is unchanged and still passes.
 
 Repository harness regeneration command, run from tests/02_NAO_Gamma:
   OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 16 -o 1 -r '^scf_sccs_pcc2d$' -g
