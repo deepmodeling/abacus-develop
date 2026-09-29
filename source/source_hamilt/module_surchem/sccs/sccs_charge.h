@@ -27,7 +27,6 @@ class SerialChargeReduction : public ChargeReduction
 struct ChargeDensity
 {
     std::vector<double> electron;
-    std::vector<double> ionic;
     std::vector<double> solute;
     double electron_count = 0.0;
     double ionic_charge = 0.0;

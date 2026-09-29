@@ -84,7 +84,6 @@ ChargeDensity assemble_charge_density(const std::vector<double>& electron_densit
 
     ChargeDensity result;
     result.electron = electron_density;
-    result.ionic = ionic_density;
     result.solute.resize(electron_density.size());
     for (std::size_t index = 0; index < electron_density.size(); ++index)
     {

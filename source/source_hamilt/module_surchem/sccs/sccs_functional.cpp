@@ -44,7 +44,6 @@ ElectrostaticFunctionalResult evaluate_electrostatic_functional(
             += 0.5 * solute_charge[index] * reaction_potential * volume_element;
         result.electron_potential[index] = -reaction_potential + cavity_potential[index];
     }
-    result.charge_potential = result.reaction_potential;
     reduction.reduce_sum(result.reaction_energy);
     if (!std::isfinite(result.reaction_energy))
     {
