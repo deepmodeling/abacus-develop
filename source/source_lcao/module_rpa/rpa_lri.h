@@ -43,7 +43,7 @@ struct RpaLriRuntime
     int rank;
     int nproc;
     int abfs_lmax;
-    std::ostream& log;
+    std::ofstream& log;
 };
 
 } // namespace ModuleRI
