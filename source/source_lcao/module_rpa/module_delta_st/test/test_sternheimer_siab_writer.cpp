@@ -624,7 +624,7 @@ TEST(SternheimerSIABInput, RegisteredCheckEnforcesLcaoDeltaCombination)
     const ModuleIO::Input_Item& item = found->second;
     ASSERT_TRUE(static_cast<bool>(item.check_value));
     EXPECT_NE(item.description.find("basis_type=lcao"), std::string::npos);
-    EXPECT_NE(item.availability.find("basis_type=lcao"), std::string::npos);
+    EXPECT_EQ(item.get_availability(), "basis_type==lcao");
 
     Parameter parameter;
     Input_para& input = const_cast<Input_para&>(parameter.inp);
