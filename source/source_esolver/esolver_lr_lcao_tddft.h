@@ -149,10 +149,26 @@ namespace ModuleESolver
         ModuleBase::matrix force_gs_;  ///< ground-state force of the current step (Ry/Bohr, F = -dE/dR)
         /// The LR part of the excited-state force, -d(Omega)/dR (Ry/Bohr). 
         ModuleBase::matrix lr_force_;
+        /// The state currently being followed, as an index into `X` / `pelec->ekb`.
+        /// Seeded from `lr_target_state` on the first ionic step, then re-chosen at every
+        /// later step by maximum overlap with the previous step's amplitude (below).
+        /// Following a fixed INDEX instead is what makes a relaxation fail near a
+        /// degeneracy: the index always names the n-th lowest root, so as soon as two
+        /// surfaces cross, "the target" jumps to a different diabatic state and the force
+        /// is discontinuous. CG assumes a conservative field and cannot recover from that.
+        int target_state_ = -1;
+        /// Previous ionic step's amplitude for the followed state (local part), the
+        /// reference the overlap is taken against. Empty on the first step.
+        std::vector<T> target_X_prev_;
+        /// Re-select `target_state_` as argmax_j |<X_prev | X_j>| and refresh the reference.
+        /// `ofs` receives the note when the followed root changes index, and the warning when
+        /// no current root resembles the previous one.
+        void follow_target_state_(std::ofstream& ofs);
+
         /// index of the relaxed state inside `pelec->ekb`
         int target_ekb_offset_() const
-        { return this->openshell ? this->inp_->lr_target_state
-                                 : this->target_is_ * this->nstates + this->inp_->lr_target_state; }
+        { return this->openshell ? this->target_state_
+                                 : this->target_is_ * this->nstates + this->target_state_; }
 
         std::vector<std::string> spin_types;
 

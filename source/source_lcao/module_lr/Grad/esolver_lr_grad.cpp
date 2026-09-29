@@ -202,9 +202,79 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_relax_target_()
     }
     this->force_gs_.create(this->ucell_->nat, 3);
     this->lr_force_.create(this->ucell_->nat, 3);
+    this->target_state_ = this->inp_->lr_target_state;   // seed; overlap takes over from step 2
     GlobalV::ofs_running << " Excited-state relaxation follows state " << this->inp_->lr_target_state
         << " of the " << (this->openshell ? "updown" : (this->target_is_ == 1 ? "triplet" : "singlet"))
-        << " channel." << std::endl;
+        << " channel, tracked by amplitude overlap between ionic steps." << std::endl;
+}
+
+/// Choose which root to follow at this geometry by maximum overlap with the previous step's
+/// amplitude, and refresh that reference.
+///
+/// Why this is needed rather than just using `lr_target_state` every step: the index names the
+/// n-th lowest root, which is a property of the ordering, not of the state. Where surfaces are
+/// close -- and near-degenerate excitons are the normal case in a symmetric crystal -- the
+/// ordering swaps as the geometry moves, so a fixed index silently hops between diabatic states.
+/// The energy along the path then is not a single smooth surface and its "gradient" is not
+/// conservative, which is exactly what makes a CG relaxation stall with large, erratic forces.
+///
+/// The overlap is a plain inner product: the Casida eigenvectors returned by the solver are
+/// orthonormal in that metric, and only |<.|.>| is used, so the arbitrary phase (and sign) the
+/// diagonalizer hands back does not matter.
+template<typename T, typename TR>
+void ModuleESolver::ESolver_LR<T, TR>::follow_target_state_(std::ofstream& ofs)
+{
+    if (!this->excited_relax_) { return; }
+    const int is = this->openshell ? 0 : this->target_is_;
+    const int n = this->nloc_per_state;
+    const T* const Xall = this->X[is].template data<T>();
+
+    if (this->target_state_ < 0) { this->target_state_ = this->inp_->lr_target_state; }
+
+    if (!this->target_X_prev_.empty())
+    {
+        std::vector<T> ov(this->nstates, T(0));
+        for (int j = 0; j < this->nstates; ++j)
+        {
+            const T* const Xj = Xall + j * n;
+            T acc = T(0);
+            for (int i = 0; i < n; ++i) { acc += LR_Util::get_conj(this->target_X_prev_[i]) * Xj[i]; }
+            ov[j] = acc;
+        }
+        // X is distributed over the same 2D grid as the particle-hole pairs, so the inner
+        // product is only complete after summing over that grid. Reduce the accumulators
+        // themselves (real and imaginary parts alike) and take the modulus afterwards --
+        // reducing |partial| would be wrong. `reduce_all` is the guarded wrapper and is a no-op
+        // in a serial build, so no `#ifdef __MPI` is needed around it.
+        Parallel_Reduce::reduce_all(ov.data(), this->nstates);
+        int best = 0;
+        double best_ov = -1.0;
+        for (int j = 0; j < this->nstates; ++j)
+        {
+            const double a = std::abs(ov[j]);
+            if (a > best_ov) { best_ov = a; best = j; }
+        }
+
+        if (best != this->target_state_)
+        {
+            ofs << " EXCITED-STATE RELAX: followed root moved from index "
+                << this->target_state_ << " to " << best << " (overlap " << best_ov
+                << "); the states crossed and the index no longer names the same state."
+                << std::endl;
+        }
+        // A low best overlap means no current root resembles the one being followed -- the step
+        // was too large, or the state left the solved window. Say so: the relaxation continues
+        // but the surface it follows is no longer guaranteed continuous.
+        if (best_ov < 0.5)
+        {
+            ofs << " WARNING: largest amplitude overlap with the previous step is"
+                " only " << best_ov << ". The followed state may have left the window spanned by"
+                " lr_nstates; consider raising lr_nstates or reducing the ionic step." << std::endl;
+        }
+        this->target_state_ = best;
+    }
+
+    this->target_X_prev_.assign(Xall + this->target_state_ * n, Xall + (this->target_state_ + 1) * n);
 }
 
 template<typename T, typename TR>
@@ -639,6 +709,9 @@ ct::Tensor ModuleESolver::ESolver_LR<T, TR>::pad_group_to_z_(const int ispin,
 template<typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::resolve_target_multiplet_()
 {
+    // Keyed on `target_state_`, not on `lr_target_state`: the overlap tracking re-chooses the
+    // followed root at every ionic step, and the multiplet has to be the one containing the root
+    // actually being followed. They differ as soon as two surfaces have crossed.
     this->target_group_.clear();
     if (LR_Util::tolower(this->inp_->lr_relax_degen_mode) == "state") { return; }
     const int ekb_off = this->openshell ? 0 : this->target_is_ * this->nstates;
@@ -648,7 +721,7 @@ void ModuleESolver::ESolver_LR<T, TR>::resolve_target_multiplet_()
         = LR::group_degenerate_states(omega, this->inp_->lr_grad_degen_thr);
     for (const std::vector<int>& g : groups)
     {
-        if (std::find(g.begin(), g.end(), this->inp_->lr_target_state) == g.end()) { continue; }
+        if (std::find(g.begin(), g.end(), this->target_state_) == g.end()) { continue; }
         // a one-member group means the target is not degenerate here, and averaging over it would
         // be the single-state path with extra steps
         if (g.size() > 1) { this->target_group_ = g; }
@@ -672,7 +745,7 @@ ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_lr_force_relax_(std::of
     this->resolve_target_multiplet_();
     if (this->target_group_.empty())
     {
-        return this->cal_force(this->target_is_, this->inp_->lr_target_state)[0];
+        return this->cal_force(this->target_is_, this->target_state_)[0];
     }
     // Regime (b): follow the multiplet average, whose gradient is Tr(G)/d. Only the DIAGONAL of the
     // gradient matrix is needed for this -- the average is basis-independent by construction, so
@@ -686,10 +759,10 @@ ModuleBase::matrix ModuleESolver::ESolver_LR<T, TR>::cal_lr_force_relax_(std::of
     const std::vector<ModuleBase::matrix> forces = this->openshell
         ? this->cal_force_openshell_Xz(Xz, omega, this->target_group_.front())
         : this->cal_force_Xz(this->target_is_, Xz, omega, this->target_group_.front());
-    ofs << " Target state " << this->inp_->lr_target_state << " is degenerate with";
+    ofs << " Followed state " << this->target_state_ << " is degenerate with";
     for (const int ist : this->target_group_)
     {
-        if (ist != this->inp_->lr_target_state) { ofs << " " << ist; }
+        if (ist != this->target_state_) { ofs << " " << ist; }
     }
     ofs << "; lr_relax_degen_mode=average, so the relaxation follows the multiplet average"
         " (Omega_bar = " << this->target_omega_() << " Ry) and stays on the symmetric"

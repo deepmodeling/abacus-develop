@@ -802,6 +802,10 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
     }
     if (this->excited_relax_)
     {
+        // Re-select which root to follow BEFORE taking the gradient, so the force belongs to
+        // the same diabatic state as the previous step's.
+        this->follow_target_state_(GlobalV::ofs_running);
+
         // The LR terms only carry the Omega part of the force; the ground-state part is separate
         // and comes straight from the KS solver.
         this->ks_->cal_force(ucell, this->force_gs_);

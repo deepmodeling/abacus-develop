@@ -177,8 +177,6 @@ namespace LR
                     {
                         hpsi[xstart_bk + this->pX.global2local_col(io) * this->pX.get_row_size() + this->pX.global2local_row(iv)] += ene;
                     }
-                    //for debug
-                    GlobalV::ofs_running << "Direct term: ik="<<ik<<"\t io="<<io<<"\t iv="<<iv<<"\t ene="<<ene<<std::endl;
                 }
             }
         }
