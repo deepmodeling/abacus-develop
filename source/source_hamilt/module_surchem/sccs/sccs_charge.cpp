@@ -6,29 +6,6 @@
 namespace ModuleSccs
 {
 
-void SerialChargeReduction::reduce_sum(double& value) const
-{
-    if (!std::isfinite(value))
-    {
-        throw std::domain_error("SCCS charge integral must be finite before reduction");
-    }
-}
-
-void SerialChargeReduction::reduce_sum(double* values, const int count) const
-{
-    if (count < 0 || (count > 0 && values == nullptr))
-    {
-        throw std::invalid_argument("SCCS charge-array reduction requires valid storage and size");
-    }
-    for (int index = 0; index < count; ++index)
-    {
-        if (!std::isfinite(values[index]))
-        {
-            throw std::domain_error("SCCS charge array must be finite before reduction");
-        }
-    }
-}
-
 std::vector<double> sum_electron_density(const std::vector<std::vector<double>>& spin_density,
                                          const int charge_channels)
 {

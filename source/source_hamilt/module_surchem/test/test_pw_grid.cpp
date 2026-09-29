@@ -3,7 +3,7 @@
 #include <mpi.h>
 #endif
 
-#include "../sccs/sccs_pw_charge.h"
+#include "../common/pw_grid.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"

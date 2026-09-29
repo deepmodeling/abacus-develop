@@ -13,6 +13,8 @@ add_library(
     cal_vel.cpp
     minimize_cg.cpp
     sol_force.cpp
+    common/charge_reduction.cpp
+    common/pw_grid.cpp
     sccs/sccs_cavity.cpp
     sccs/sccs_charge.cpp
     sccs/sccs_driver.cpp
@@ -24,7 +26,6 @@ add_library(
     pcc/sccs_pcc_coulomb.cpp
     sccs/sccs_poisson.cpp
     sccs/sccs_pw_coulomb.cpp
-    sccs/sccs_pw_charge.cpp
     sccs/sccs_pw_nonel.cpp
     sccs/sccs_pw_reduction.cpp
     sccs/sccs_gaussian_ion.cpp

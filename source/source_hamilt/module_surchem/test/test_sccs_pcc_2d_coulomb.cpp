@@ -5,7 +5,8 @@
 #include "../pcc/sccs_pcc_2d_coulomb.h"
 #include "../sccs/sccs_periodic.h"
 #include "../sccs/sccs_pw_coulomb.h"
-#include "../sccs/sccs_pw_charge.h"
+#include "../common/pw_grid.h"
+#include "../common/charge_reduction.h"
 #include "../sccs/sccs_pw_reduction.h"
 
 #include "source_base/constants.h"

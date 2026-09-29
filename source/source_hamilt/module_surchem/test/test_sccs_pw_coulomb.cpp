@@ -4,7 +4,7 @@
 #endif
 
 #include "../sccs/sccs_pw_coulomb.h"
-#include "../sccs/sccs_pw_charge.h"
+#include "../common/pw_grid.h"
 #include "../sccs/sccs_charge.h"
 #include "../pcc/sccs_pcc_coulomb.h"
 #include "../pcc/sccs_pcc_2d_coulomb.h"

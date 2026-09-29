@@ -30,22 +30,4 @@ void PoolPolarizationReduction::reduce_sum(double& value) const
     Parallel_Reduce::reduce_pool(value);
 }
 
-void PoolChargeReduction::reduce_sum(double& value) const
-{
-    Parallel_Reduce::reduce_pool(value);
-}
-
-void PoolChargeReduction::reduce_sum(double* values, const int count) const
-{
-    if (count < 0 || (count > 0 && values == nullptr))
-    {
-        throw std::invalid_argument("SCCS pool reduction requires valid array storage and size");
-    }
-    if (count == 0)
-    {
-        return;
-    }
-    Parallel_Reduce::reduce_pool(values, count);
-}
-
 } // namespace ModuleSccs

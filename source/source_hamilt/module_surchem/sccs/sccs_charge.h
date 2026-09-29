@@ -1,28 +1,13 @@
 #ifndef SCCS_CHARGE_H
 #define SCCS_CHARGE_H
 
+#include "../common/charge_reduction.h"
 #include "../pcc/sccs_pcc.h"
 
 #include <vector>
 
 namespace ModuleSccs
 {
-
-class ChargeReduction
-{
-  public:
-    virtual ~ChargeReduction() = default;
-
-    virtual void reduce_sum(double& value) const = 0;
-    virtual void reduce_sum(double* values, int count) const = 0;
-};
-
-class SerialChargeReduction : public ChargeReduction
-{
-  public:
-    void reduce_sum(double& value) const override;
-    void reduce_sum(double* values, int count) const override;
-};
 
 struct ChargeDensity
 {

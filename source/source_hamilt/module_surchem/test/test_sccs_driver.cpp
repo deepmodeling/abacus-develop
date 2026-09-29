@@ -4,7 +4,7 @@
 #endif
 
 #include "../sccs/sccs_driver.h"
-#include "../sccs/sccs_pw_charge.h"
+#include "../common/pw_grid.h"
 #include "../sccs/sccs_pw_coulomb.h"
 
 #include "source_base/constants.h"

@@ -48,6 +48,7 @@ VPATH=./src_global:\
 ./source_hamilt:\
 ./source_hamilt/module_ewald:\
 ./source_hamilt/module_surchem:\
+./source_hamilt/module_surchem/common:\
 ./source_hamilt/module_surchem/sccs:\
 ./source_hamilt/module_surchem/pcc:\
 ./source_hamilt/module_xc:\
@@ -587,6 +588,8 @@ OBJS_SURCHEM=surchem.o\
     cal_vel.o\
     minimize_cg.o\
     sol_force.o\
+    charge_reduction.o\
+    pw_grid.o\
     sccs_cavity.o\
     sccs_charge.o\
     sccs_driver.o\
@@ -598,7 +601,6 @@ OBJS_SURCHEM=surchem.o\
     sccs_pcc_coulomb.o\
     sccs_poisson.o\
     sccs_pw_coulomb.o\
-    sccs_pw_charge.o\
     sccs_pw_nonel.o\
     sccs_pw_reduction.o\
     sccs_gaussian_ion.o\

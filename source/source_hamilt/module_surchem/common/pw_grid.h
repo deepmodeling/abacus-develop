@@ -1,5 +1,5 @@
-#ifndef SCCS_PW_CHARGE_H
-#define SCCS_PW_CHARGE_H
+#ifndef SURCHEM_PW_GRID_H
+#define SURCHEM_PW_GRID_H
 
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
