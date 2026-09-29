@@ -7170,7 +7170,16 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
             }
         }
 
-        const std::vector<std::vector<double>> potentials = collect_channel_potentials(channels);
+        const std::vector<std::vector<double>> potentials
+            = write_siab
+                  ? sample_sternheimer_abf_grid_channel_transform(abfs_data.radials_by_type,
+                                                                  abfs_data.atom_types,
+                                                                  abfs_data.atom_positions,
+                                                                  grid_data.grid,
+                                                                  channels,
+                                                                  coulomb_whitening.transform,
+                                                                  num_channels)
+                  : collect_channel_potentials(channels);
         // ABFS Coulomb potentials are in Ha units; the FD Hamiltonian and omega are in Ry.
         // Keep Ha potentials for M=V chi0 V output, but use Ry perturbations in the linear equation.
         const std::vector<std::vector<double>> perturbations_ry = scale_potentials(potentials, kHartreeToRydberg);

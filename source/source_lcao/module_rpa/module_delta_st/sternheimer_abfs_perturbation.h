@@ -82,6 +82,17 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
     const SternheimerFDHamiltonian::Grid& grid,
     int max_channels = -1);
 
+// Sample Gamma-point raw channels and apply a row-major raw-to-output transform.
+// channel_metadata defines the raw-channel order used by the transform.
+std::vector<std::vector<double>> sample_sternheimer_abf_grid_channel_transform(
+    const std::vector<std::vector<SternheimerRadialPerturbation>>& radials_by_type,
+    const std::vector<int>& atom_types,
+    const std::vector<ModuleBase::Vector3<double>>& atom_positions,
+    const SternheimerFDHamiltonian::Grid& grid,
+    std::vector<SternheimerABFGridChannel>& channel_metadata,
+    const std::vector<double>& raw_to_output_transform,
+    int output_channels);
+
 // max_channels limits the total returned count, not the count per atom.
 // start_channel skips global descriptors without sampling their fine-grid values.
 std::vector<SternheimerABFBlochGridChannel> sample_sternheimer_abf_bloch_grid_channels(

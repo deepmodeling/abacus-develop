@@ -449,6 +449,82 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
     return channels;
 }
 
+std::vector<std::vector<double>> sample_sternheimer_abf_grid_channel_transform(
+    const std::vector<std::vector<SternheimerRadialPerturbation>>& radials_by_type,
+    const std::vector<int>& atom_types,
+    const std::vector<ModuleBase::Vector3<double>>& atom_positions,
+    const SternheimerFDHamiltonian::Grid& grid,
+    std::vector<SternheimerABFGridChannel>& channel_metadata,
+    const std::vector<double>& raw_to_output_transform,
+    const int output_channels)
+{
+    validate_grid(grid);
+    if (channel_metadata.empty() || output_channels <= 0)
+    {
+        throw std::invalid_argument("Sternheimer ABFS channel transform requires positive input and output dimensions.");
+    }
+    const std::size_t raw_channels = channel_metadata.size();
+    const std::size_t expected_transform_size
+        = raw_channels * static_cast<std::size_t>(output_channels);
+    if (raw_to_output_transform.size() != expected_transform_size)
+    {
+        throw std::invalid_argument("Sternheimer ABFS channel transform has inconsistent dimensions.");
+    }
+
+    const std::size_t size = static_cast<std::size_t>(grid_size(grid));
+    std::vector<std::vector<double>> transformed(
+        static_cast<std::size_t>(output_channels), std::vector<double>(size, 0.0));
+    for (std::size_t raw_index = 0; raw_index != raw_channels; ++raw_index)
+    {
+        const std::vector<SternheimerABFBlochGridChannel> sampled
+            = sample_sternheimer_abf_bloch_grid_channels(radials_by_type,
+                                                          atom_types,
+                                                          atom_positions,
+                                                          grid,
+                                                          {0.0, 0.0, 0.0},
+                                                          1,
+                                                          static_cast<int>(raw_index));
+        if (sampled.size() != 1)
+        {
+            throw std::runtime_error("Sternheimer ABFS channel transform could not sample a raw channel.");
+        }
+        SternheimerABFGridChannel& metadata = channel_metadata[raw_index];
+        const SternheimerABFBlochGridChannel& raw_channel = sampled.front();
+        if (metadata.channel_index != raw_channel.channel_index || metadata.atom_index != raw_channel.atom_index
+            || metadata.atom_local_index != raw_channel.atom_local_index || metadata.type_index != raw_channel.type_index
+            || metadata.angular_momentum != raw_channel.angular_momentum
+            || metadata.radial_index != raw_channel.radial_index || metadata.magnetic_index != raw_channel.magnetic_index
+            || metadata.label != raw_channel.label || raw_channel.potential_r.size() != size)
+        {
+            throw std::runtime_error("Sternheimer ABFS channel transform metadata does not match sampled channels.");
+        }
+        metadata.max_abs = raw_channel.max_abs;
+
+        for (std::size_t grid_begin = 0; grid_begin != size;
+             grid_begin += static_cast<std::size_t>(sternheimer_abfs_transform_grid_chunk))
+        {
+            const std::size_t grid_end
+                = std::min(size, grid_begin + static_cast<std::size_t>(sternheimer_abfs_transform_grid_chunk));
+            for (std::size_t ir = grid_begin; ir != grid_end; ++ir)
+            {
+                const std::complex<double>& value = raw_channel.potential_r[ir];
+                if (std::abs(value.imag()) > 1.0e-13 * std::max(1.0, raw_channel.max_abs))
+                {
+                    throw std::runtime_error("Sternheimer ABFS Gamma potential acquired an unexpected imaginary part.");
+                }
+                for (int output = 0; output != output_channels; ++output)
+                {
+                    transformed[static_cast<std::size_t>(output)][ir]
+                        += value.real()
+                           * raw_to_output_transform[raw_index * static_cast<std::size_t>(output_channels)
+                                                     + static_cast<std::size_t>(output)];
+                }
+            }
+        }
+    }
+    return transformed;
+}
+
 void solve_sternheimer_abf_periodic_full_coulomb_in_place(std::vector<SternheimerABFBlochGridChannel>& density_channels,
                                                           const SternheimerFDHamiltonian::Grid& grid,
                                                           const SternheimerReducedKPoint& qpoint,
