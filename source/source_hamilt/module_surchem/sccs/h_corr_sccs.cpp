@@ -7,7 +7,6 @@
 #include "sccs_pw_reduction.h"
 
 #include "source_base/timer.h"
-#include "source_base/timer_wrapper.h"
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 
@@ -27,7 +26,6 @@ void surchem::v_correction_sccs(const UnitCell& cell,
 {
     ModuleBase::TITLE("surchem", "v_correction_sccs");
     ModuleBase::timer::start("surchem", "v_correction_sccs");
-    const ModuleBase::TimePoint start_time = ModuleBase::get_time();
     if (!this->parameters_set_ || !this->parameters_.use_sccs)
     {
         throw std::logic_error("SCCS correction requires an initialized SCCS configuration");
@@ -101,7 +99,6 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     const std::vector<ModuleBase::Vector3<double>>& positions = cache.positions;
     ModuleBase::Vector3<double> origin
         = ModuleSccs::cell_center(cell.latvec, cell.lat0);
-    const ModuleBase::TimePoint preparation_end = ModuleBase::get_time();
     ModuleBase::matrix pcc_potential;
     double vacuum_pcc_energy = 0.0;
     if (this->uses_pcc())
@@ -118,7 +115,6 @@ void surchem::v_correction_sccs(const UnitCell& cell,
 
     const double volume_element = cell.omega / static_cast<double>(rho_basis.nxyz);
     const ModuleSccs::PoolChargeReduction charge_reduction;
-    const ModuleBase::TimePoint pcc_end = ModuleBase::get_time();
     const ModuleSccs::PoolPolarizationReduction polarization_reduction(
         this->parameters_.pool_process_count);
     this->sccs_result_
@@ -140,9 +136,6 @@ void surchem::v_correction_sccs(const UnitCell& cell,
                                        polarization_reduction,
                                        this->sccs_state_);
     this->sccs_result_.reused_fixed_sources = reuse_fixed_sources;
-    this->sccs_result_.preparation_seconds
-        = ModuleBase::get_duration(start_time, preparation_end);
-    this->sccs_result_.pcc_seconds = ModuleBase::get_duration(preparation_end, pcc_end);
 
     if (this->uses_pcc())
     {
@@ -172,8 +165,6 @@ void surchem::v_correction_sccs(const UnitCell& cell,
                           + this->sccs_result_.vacuum_pcc_energy);
     surchem::Acav = 2.0 * (this->sccs_result_.non_electrostatic.surface_energy
                            + this->sccs_result_.non_electrostatic.volume_energy);
-    const ModuleBase::TimePoint end_time = ModuleBase::get_time();
-    this->sccs_elapsed_seconds_ = ModuleBase::get_duration(start_time, end_time);
     ModuleBase::timer::end("surchem", "v_correction_sccs");
 }
 

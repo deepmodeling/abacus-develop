@@ -93,7 +93,7 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
         correction.write_sccs_iteration(output);
         const std::string text = output.str();
         EXPECT_EQ(text.empty(), level == 0);
-        EXPECT_EQ(text.find("PCC_TIME/s") != std::string::npos, level > 0);
+        EXPECT_EQ(text.find("E_PCC/Ry") != std::string::npos, level > 0);
         EXPECT_EQ(text.find("PCC2D_MOMENTS") != std::string::npos, level == 2);
     }
     parameters.use_sccs = true;

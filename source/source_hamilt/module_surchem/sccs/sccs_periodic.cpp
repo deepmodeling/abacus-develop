@@ -2,6 +2,7 @@
 
 #include "sccs_pw_coulomb.h"
 
+#include "source_base/timer.h"
 #include "source_basis/module_pw/pw_basis.h"
 
 #include <cmath>
@@ -366,6 +367,7 @@ PeriodicSccsResult solve_chain_sccs_response(
     const ModuleSccs::CoulombOperator& coulomb,
     const ModuleSccs::PolarizationReduction& reduction)
 {
+    ModuleBase::timer::start("ModuleSccs", "solve_chain_sccs_response");
     PeriodicSccsResult result = prepare_chain_cavity(density, cavity, basis, tpiba);
     const std::size_t size = density.size();
     std::vector<double> coefficient(size);
@@ -518,6 +520,7 @@ PeriodicSccsResult solve_chain_sccs_response(
     {
         continuum_cavity_potential(result);
     }
+    ModuleBase::timer::end("ModuleSccs", "solve_chain_sccs_response");
     return result;
 }
 

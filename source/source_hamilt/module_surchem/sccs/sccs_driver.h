@@ -45,11 +45,7 @@ struct SccsState
 struct SccsResult
 {
     bool reused_fixed_sources = false;
-    double preparation_seconds = 0.0;
-    double pcc_seconds = 0.0;
-    double forward_seconds = 0.0;
-    double non_electrostatic_seconds = 0.0;
-    CoulombTransformProfile forward_transforms;
+    CoulombTransformCounts forward_transforms;
     ChargeDensity charge;
     PeriodicSccsResult response;
     ElectrostaticField vacuum_field;

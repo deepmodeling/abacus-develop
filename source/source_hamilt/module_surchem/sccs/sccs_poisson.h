@@ -14,15 +14,12 @@ struct ElectrostaticField
     std::vector<ModuleBase::Vector3<double>> gradient;
 };
 
-// Local-rank measurements of the periodic part of the Coulomb operator.
-// Transform time includes PW packing and MPI transposes, not just FFT kernels.
-struct CoulombTransformProfile
+// Local-rank FFT counts of the periodic part of the Coulomb operator.
+// Transform time is reported by the PW_Basis timers.
+struct CoulombTransformCounts
 {
     long forward_calls = 0;
     long inverse_calls = 0;
-    double forward_seconds = 0.0;
-    double inverse_seconds = 0.0;
-    double other_seconds = 0.0;
 };
 
 class CoulombOperator
@@ -30,9 +27,9 @@ class CoulombOperator
   public:
     virtual ~CoulombOperator() = default;
 
-    virtual CoulombTransformProfile transform_profile() const
+    virtual CoulombTransformCounts transform_counts() const
     {
-        return CoulombTransformProfile();
+        return CoulombTransformCounts();
     }
 
     // True when an analytic open-boundary (PCC) term is added. Such potentials

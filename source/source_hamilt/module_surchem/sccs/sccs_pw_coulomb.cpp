@@ -4,7 +4,6 @@
 #include "source_basis/module_pw/pw_basis.h"
 
 #include <algorithm>
-#include <chrono>
 #include <cmath>
 #include <complex>
 #include <stdexcept>
@@ -15,32 +14,22 @@ namespace ModuleSccs
 namespace
 {
 
-typedef std::chrono::steady_clock ProfileClock;
-
-void profiled_forward(const ModulePW::PW_Basis& basis,
-                      const double* real,
-                      std::complex<double>* reciprocal,
-                      CoulombTransformProfile& profile)
+void counted_forward(const ModulePW::PW_Basis& basis,
+                     const double* real,
+                     std::complex<double>* reciprocal,
+                     CoulombTransformCounts& counts)
 {
-    const ProfileClock::time_point start = ProfileClock::now();
     basis.real2recip(real, reciprocal);
-    const ProfileClock::time_point end = ProfileClock::now();
-    const ProfileClock::duration elapsed = end - start;
-    profile.forward_seconds += std::chrono::duration<double>(elapsed).count();
-    ++profile.forward_calls;
+    ++counts.forward_calls;
 }
 
-void profiled_inverse(const ModulePW::PW_Basis& basis,
-                      const std::complex<double>* reciprocal,
-                      double* real,
-                      CoulombTransformProfile& profile)
+void counted_inverse(const ModulePW::PW_Basis& basis,
+                     const std::complex<double>* reciprocal,
+                     double* real,
+                     CoulombTransformCounts& counts)
 {
-    const ProfileClock::time_point start = ProfileClock::now();
     basis.recip2real(reciprocal, real);
-    const ProfileClock::time_point end = ProfileClock::now();
-    const ProfileClock::duration elapsed = end - start;
-    profile.inverse_seconds += std::chrono::duration<double>(elapsed).count();
-    ++profile.inverse_calls;
+    ++counts.inverse_calls;
 }
 
 void adjoint_gradient_transform(
@@ -50,10 +39,8 @@ void adjoint_gradient_transform(
     std::vector<double>& component,
     std::vector<std::complex<double>>& component_g,
     std::vector<std::complex<double>>& sum,
-    CoulombTransformProfile& profile)
+    CoulombTransformCounts& counts)
 {
-    const ProfileClock::time_point start = ProfileClock::now();
-    const double previous_transform_seconds = profile.forward_seconds + profile.inverse_seconds;
     if (field.size() != static_cast<std::size_t>(basis.nrxx)
         || !std::isfinite(tpiba) || tpiba <= 0.0)
     {
@@ -74,7 +61,7 @@ void adjoint_gradient_transform(
         {
             component[ir] = field[ir][direction];
         }
-        profiled_forward(basis, component.data(), component_g.data(), profile);
+        counted_forward(basis, component.data(), component_g.data(), counts);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
@@ -92,12 +79,7 @@ void adjoint_gradient_transform(
                                   ? 0.0 : ModuleBase::FOUR_PI / (tpiba * tpiba * basis.gg[ig]);
         sum[ig] *= kernel;
     }
-    profiled_inverse(basis, sum.data(), component.data(), profile);
-    const ProfileClock::time_point end = ProfileClock::now();
-    const double transform_seconds
-        = profile.forward_seconds + profile.inverse_seconds - previous_transform_seconds;
-    const ProfileClock::duration elapsed = end - start;
-    profile.other_seconds += std::chrono::duration<double>(elapsed).count() - transform_seconds;
+    counted_inverse(basis, sum.data(), component.data(), counts);
 }
 
 } // namespace
@@ -107,7 +89,7 @@ void PeriodicCoulombOperator::apply_gradient_adjoint(
     std::vector<double>& result) const
 {
     adjoint_gradient_transform(field, basis_, tpiba_,
-                               result, reciprocal_aux_, reciprocal_work_, profile_);
+                               result, reciprocal_aux_, reciprocal_work_, counts_);
 }
 
 std::vector<ModuleBase::Vector3<double>> periodic_gradient(
@@ -191,8 +173,6 @@ void PeriodicCoulombOperator::apply_impl(
     std::vector<ModuleBase::Vector3<double>>* gradient,
     std::vector<double>* potential) const
 {
-    const ProfileClock::time_point start = ProfileClock::now();
-    const double previous_transform_seconds = profile_.forward_seconds + profile_.inverse_seconds;
     if (charge.size() != static_cast<std::size_t>(basis_.nrxx))
     {
         throw std::invalid_argument("SCCS charge array does not match the local PW real-space grid");
@@ -201,7 +181,7 @@ void PeriodicCoulombOperator::apply_impl(
     reciprocal_work_.resize(basis_.npw);
     // Convert charge to potential in place; the original Fourier charge is
     // not needed after multiplying by the Coulomb kernel.
-    profiled_forward(basis_, charge.data(), reciprocal_work_.data(), profile_);
+    counted_forward(basis_, charge.data(), reciprocal_work_.data(), counts_);
     const double tpiba2 = tpiba_ * tpiba_;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
@@ -221,7 +201,7 @@ void PeriodicCoulombOperator::apply_impl(
     if (potential != nullptr)
     {
         potential->resize(basis_.nrxx);
-        profiled_inverse(basis_, reciprocal_work_.data(), potential->data(), profile_);
+        counted_inverse(basis_, reciprocal_work_.data(), potential->data(), counts_);
     }
     if (gradient != nullptr)
     {
@@ -238,7 +218,7 @@ void PeriodicCoulombOperator::apply_impl(
                 reciprocal_aux_[ig] = ModuleBase::IMAG_UNIT * tpiba_ * basis_.gcar[ig][direction]
                                       * reciprocal_work_[ig];
             }
-            profiled_inverse(basis_, reciprocal_aux_.data(), real_work_.data(), profile_);
+            counted_inverse(basis_, reciprocal_aux_.data(), real_work_.data(), counts_);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
@@ -248,11 +228,6 @@ void PeriodicCoulombOperator::apply_impl(
             }
         }
     }
-    const ProfileClock::time_point end = ProfileClock::now();
-    const double transform_seconds
-        = profile_.forward_seconds + profile_.inverse_seconds - previous_transform_seconds;
-    const ProfileClock::duration elapsed = end - start;
-    profile_.other_seconds += std::chrono::duration<double>(elapsed).count() - transform_seconds;
 }
 
 } // namespace ModuleSccs

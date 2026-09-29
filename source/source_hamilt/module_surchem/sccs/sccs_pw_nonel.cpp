@@ -3,6 +3,7 @@
 #include "sccs_pw_coulomb.h"
 
 #include "source_base/constants.h"
+#include "source_base/timer.h"
 #include "source_basis/module_pw/pw_basis.h"
 
 #include <cmath>
@@ -21,6 +22,7 @@ NonElectrostaticResult evaluate_pw_non_electrostatic(
     const std::vector<double>& dsolute_drho,
     const ChargeReduction& reduction)
 {
+    ModuleBase::timer::start("ModuleSccs", "evaluate_pw_non_electrostatic");
     if (solute.size() != static_cast<std::size_t>(basis.nrxx)
         || dsolute_drho.size() != solute.size() || solute.empty())
     {
@@ -96,6 +98,7 @@ NonElectrostaticResult evaluate_pw_non_electrostatic(
             = (parameters.pressure - parameters.surface_tension * divergence[index])
               * dsolute_drho[index];
     }
+    ModuleBase::timer::end("ModuleSccs", "evaluate_pw_non_electrostatic");
     return result;
 }
 

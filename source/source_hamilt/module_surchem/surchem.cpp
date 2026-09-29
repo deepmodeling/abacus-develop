@@ -46,7 +46,6 @@ void surchem::set_parameters(const SurchemParameters& parameters)
     this->sccs_state_ = ModuleSccs::SccsState();
     this->sccs_result_ = ModuleSccs::SccsResult();
     this->pcc_result_valid_ = false;
-    this->sccs_elapsed_seconds_ = 0.0;
 }
 
 bool surchem::uses_sccs() const
@@ -81,7 +80,6 @@ bool surchem::try_activate_sccs(const int electronic_iteration, const double drh
     this->sccs_state_ = ModuleSccs::SccsState();
     this->sccs_result_ = ModuleSccs::SccsResult();
     this->pcc_result_valid_ = false;
-    this->sccs_elapsed_seconds_ = 0.0;
     return true;
 }
 
@@ -126,9 +124,7 @@ void surchem::write_sccs_iteration(std::ostream& output) const
         }
         const std::streamsize precision = output.precision();
         const std::ios_base::fmtflags flags = output.flags();
-        output << " PCC_TIME/s " << std::fixed << std::setprecision(2)
-               << this->pcc_elapsed_seconds_ << " E_PCC/Ry " << std::defaultfloat
-               << std::setprecision(12) << this->pcc_energy_rydberg_ << '\n';
+        output << " E_PCC/Ry " << std::setprecision(12) << this->pcc_energy_rydberg_ << '\n';
         if (this->parameters_.debug >= 2)
         {
             if (this->parameters_.pcc_boundary == ModuleSccs::Boundary::Pcc0d)
@@ -165,10 +161,7 @@ void surchem::write_sccs_iteration(std::ostream& output) const
     const std::streamsize previous_precision = output.precision();
     const std::ios_base::fmtflags previous_flags = output.flags();
     output << " SCCS_ITER " << result.response.polarization.iterations
-           << " SCCS_TIME/s " << std::fixed << std::setprecision(2)
-           << this->sccs_elapsed_seconds_
-           << " E_SOL/Ry " << std::defaultfloat << std::setprecision(8)
-           << solvation_energy_rydberg << '\n';
+           << " E_SOL/Ry " << std::setprecision(8) << solvation_energy_rydberg << '\n';
 
     if (this->parameters_.debug >= 2)
     {
@@ -193,23 +186,12 @@ void surchem::write_sccs_iteration(std::ostream& output) const
                    << " Q_POL_DENSITY/e " << result.polarization_moments.charge
                    << " Q_POL_EXPECTED/e " << expected_charge << '\n';
         }
-        output << std::fixed << std::setprecision(2)
-               << " SCCS_TIMING preparation_s " << result.preparation_seconds
-               << " cached_sources " << result.reused_fixed_sources
-               << " pcc_s " << result.pcc_seconds
-               << " forward_s " << result.forward_seconds
-               << " non_electrostatic_s " << result.non_electrostatic_seconds << '\n'
-               << std::defaultfloat << std::setprecision(8);
-        // Local output-rank timings; FFT calls include PW packing and communication.
-        const ModuleSccs::CoulombTransformProfile& profile = result.forward_transforms;
-        output << std::fixed << std::setprecision(2)
-               << " SCCS_FFT STAGE forward"
-               << " R2G_CALLS " << profile.forward_calls
-               << " G2R_CALLS " << profile.inverse_calls
-               << " R2G/s " << profile.forward_seconds
-               << " G2R/s " << profile.inverse_seconds
-               << " OTHER/s " << profile.other_seconds << '\n'
-               << std::defaultfloat << std::setprecision(8);
+        // Local output-rank FFT counts of the sqrt-CG solve; timings are in
+        // the ModuleBase::timer summary.
+        const ModuleSccs::CoulombTransformCounts& counts = result.forward_transforms;
+        output << " SCCS_FFT R2G_CALLS " << counts.forward_calls
+               << " G2R_CALLS " << counts.inverse_calls
+               << " CACHED_SOURCES " << result.reused_fixed_sources << '\n';
     }
 
     if (this->parameters_.debug >= 2
@@ -362,7 +344,6 @@ void surchem::clear()
     this->Vel.create(0, 0);
     this->sccs_state_ = ModuleSccs::SccsState();
     this->sccs_result_ = ModuleSccs::SccsResult();
-    this->sccs_elapsed_seconds_ = 0.0;
     this->fixed_source_cache_ = FixedSourceCache();
 }
 

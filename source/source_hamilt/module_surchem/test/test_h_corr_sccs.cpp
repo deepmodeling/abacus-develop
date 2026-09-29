@@ -278,10 +278,6 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
 
     const ModuleSccs::SccsResult& result = solvent.sccs_result();
     EXPECT_FALSE(result.reused_fixed_sources);
-    EXPECT_GE(result.preparation_seconds, 0.0);
-    EXPECT_GE(result.pcc_seconds, 0.0);
-    EXPECT_GE(result.forward_seconds, 0.0);
-    EXPECT_GE(result.non_electrostatic_seconds, 0.0);
     EXPECT_NEAR(result.charge.net_charge, 1.0, 1.0e-12);
     EXPECT_NEAR(result.point_solute_moments.charge, 1.0, 1.0e-12);
     EXPECT_NEAR(result.vacuum_pcc_energy,
@@ -299,8 +295,8 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
     solvent.write_sccs_iteration(debug_output);
     const std::string debug_text = debug_output.str();
     EXPECT_EQ(debug_text.find("PCC_ION_SHAPE"), std::string::npos);
-    EXPECT_NE(debug_text.find("SCCS_TIMING preparation_s "), std::string::npos);
-    EXPECT_NE(debug_text.find("SCCS_FFT STAGE forward R2G_CALLS "), std::string::npos);
+    EXPECT_NE(debug_text.find("SCCS_FFT R2G_CALLS "), std::string::npos);
+    EXPECT_NE(debug_text.find("CACHED_SOURCES 0"), std::string::npos);
     EXPECT_EQ(debug_text.find("adjoint"), std::string::npos);
     std::ostringstream diagnostic_output;
     solvent.write_sccs_diagnostics(diagnostic_output);
@@ -577,7 +573,6 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     solvent.write_sccs_iteration(iteration_output);
     const std::string iteration_text = iteration_output.str();
     EXPECT_NE(iteration_text.find("SCCS_ITER "), std::string::npos);
-    EXPECT_NE(iteration_text.find("SCCS_TIME/s "), std::string::npos);
     EXPECT_NE(iteration_text.find("E_SOL/Ry "), std::string::npos);
     // Every boundary uses the sqrt-CG, which has no mixing diagnostics.
     EXPECT_EQ(iteration_text.find("SCCS_MIXING"), std::string::npos);
@@ -606,23 +601,12 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     std::istringstream iteration_stream(iteration_text);
     std::string iteration_label;
     int iteration_count = 0;
-    std::string time_label;
-    double elapsed_seconds = -1.0;
     std::string energy_label;
     double solvation_energy_rydberg = 0.0;
     iteration_stream >> iteration_label >> iteration_count
-                     >> time_label >> elapsed_seconds
                      >> energy_label >> solvation_energy_rydberg;
     EXPECT_EQ(iteration_label, "SCCS_ITER");
     EXPECT_EQ(iteration_count, result.response.polarization.iterations);
-    EXPECT_EQ(time_label, "SCCS_TIME/s");
-    EXPECT_GE(elapsed_seconds, 0.0);
-    const std::size_t time_begin = iteration_text.find("SCCS_TIME/s ") + 12;
-    const std::size_t time_end = iteration_text.find(' ', time_begin);
-    const std::string time_value = iteration_text.substr(time_begin, time_end - time_begin);
-    const std::size_t decimal_point = time_value.find('.');
-    ASSERT_NE(decimal_point, std::string::npos);
-    EXPECT_EQ(time_value.size() - decimal_point - 1, 2);
     EXPECT_EQ(energy_label, "E_SOL/Ry");
     EXPECT_NEAR(solvation_energy_rydberg, surchem::Ael + surchem::Acav, 1.0e-7);
 

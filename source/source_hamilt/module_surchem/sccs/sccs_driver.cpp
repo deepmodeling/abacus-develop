@@ -5,10 +5,10 @@
 #include "sccs_pw_coulomb.h"
 #include "sccs_pw_nonel.h"
 
+#include "source_base/timer.h"
 #include "source_basis/module_pw/pw_basis.h"
 
 #include <algorithm>
-#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -165,6 +165,7 @@ SccsResult evaluate_pw_sccs(
     const PolarizationReduction& polarization_reduction,
     SccsState& state)
 {
+    ModuleBase::timer::start("ModuleSccs", "evaluate_pw_sccs");
     validate_config(config);
     if (positions.size() != static_cast<std::size_t>(basis.nrxx))
     {
@@ -232,8 +233,6 @@ SccsResult evaluate_pw_sccs(
     const std::vector<double> empty_initial;
     const std::vector<double>& initial_potential
         = reuse_state ? state.potential : empty_initial;
-    const std::chrono::steady_clock::time_point forward_start
-        = std::chrono::steady_clock::now();
     // Every boundary uses the ENVIRON sqrt-CG. With PCC the preconditioner's
     // Poisson solve includes the analytic open-boundary term, so a charged
     // solute keeps its screening charge and the physical potential gauge.
@@ -257,10 +256,7 @@ SccsResult evaluate_pw_sccs(
     {
         throw std::runtime_error("SCCS polarization iteration did not converge");
     }
-    const std::chrono::steady_clock::time_point forward_end
-        = std::chrono::steady_clock::now();
-    result.forward_seconds = std::chrono::duration<double>(forward_end - forward_start).count();
-    result.forward_transforms = coulomb->transform_profile();
+    result.forward_transforms = coulomb->transform_counts();
 
     coulomb->apply(result.charge.solute, result.vacuum_field);
     result.electrostatic = evaluate_electrostatic_functional(result.charge.solute,
@@ -277,8 +273,6 @@ SccsResult evaluate_pw_sccs(
     non_electrostatic_parameters.surface_tension = config.surface_tension;
     non_electrostatic_parameters.pressure = config.pressure;
     non_electrostatic_parameters.surface_regularization = config.surface_regularization;
-    const std::chrono::steady_clock::time_point non_electrostatic_start
-        = std::chrono::steady_clock::now();
     result.non_electrostatic = evaluate_pw_non_electrostatic(basis,
                                                              tpiba,
                                                              volume_element,
@@ -286,10 +280,6 @@ SccsResult evaluate_pw_sccs(
                                                              result.response.solute,
                                                              result.response.dsolute_drho,
                                                              charge_reduction);
-    const std::chrono::steady_clock::time_point non_electrostatic_end
-        = std::chrono::steady_clock::now();
-    result.non_electrostatic_seconds
-        = std::chrono::duration<double>(non_electrostatic_end - non_electrostatic_start).count();
 
     result.electron_potential_hartree.resize(electron_density.size());
 #ifdef _OPENMP
@@ -401,6 +391,7 @@ SccsResult evaluate_pw_sccs(
     state.pcc_2d_geometry = pcc_2d_geometry;
     state.cavity = config.cavity;
     state.valid = true;
+    ModuleBase::timer::end("ModuleSccs", "evaluate_pw_sccs");
     return result;
 }
 

@@ -247,9 +247,7 @@ class surchem
     ModuleSccs::MultipoleMoments pcc_moments_;
     ModuleSccs::Pcc2dMoments pcc_2d_moments_;
     double pcc_energy_rydberg_ = 0.0;
-    double pcc_elapsed_seconds_ = 0.0;
     bool pcc_result_valid_ = false;
-    double sccs_elapsed_seconds_ = 0.0;
 };
 
 #endif

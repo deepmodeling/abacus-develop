@@ -159,21 +159,18 @@ TEST_F(SccsPwCoulombTest, CountsForwardAndAdjointTransforms)
     const std::vector<double> charge(basis_.nrxx, 1.0);
     ModuleSccs::ElectrostaticField field;
     coulomb.apply_gradient(charge, field.gradient);
-    ModuleSccs::CoulombTransformProfile profile = coulomb.transform_profile();
-    EXPECT_EQ(profile.forward_calls, 1);
-    EXPECT_EQ(profile.inverse_calls, 3);
+    ModuleSccs::CoulombTransformCounts counts = coulomb.transform_counts();
+    EXPECT_EQ(counts.forward_calls, 1);
+    EXPECT_EQ(counts.inverse_calls, 3);
     coulomb.apply(charge, field);
-    profile = coulomb.transform_profile();
-    EXPECT_EQ(profile.forward_calls, 2);
-    EXPECT_EQ(profile.inverse_calls, 7);
+    counts = coulomb.transform_counts();
+    EXPECT_EQ(counts.forward_calls, 2);
+    EXPECT_EQ(counts.inverse_calls, 7);
     std::vector<double> adjoint;
     coulomb.apply_gradient_adjoint(field.gradient, adjoint);
-    profile = coulomb.transform_profile();
-    EXPECT_EQ(profile.forward_calls, 5);
-    EXPECT_EQ(profile.inverse_calls, 8);
-    EXPECT_GE(profile.forward_seconds, 0.0);
-    EXPECT_GE(profile.inverse_seconds, 0.0);
-    EXPECT_GE(profile.other_seconds, 0.0);
+    counts = coulomb.transform_counts();
+    EXPECT_EQ(counts.forward_calls, 5);
+    EXPECT_EQ(counts.inverse_calls, 8);
 }
 
 TEST_F(SccsPwCoulombTest, ScalarPotentialMatchesFullFieldWithoutGradientTransforms)
@@ -189,9 +186,9 @@ TEST_F(SccsPwCoulombTest, ScalarPotentialMatchesFullFieldWithoutGradientTransfor
     coulomb.apply(charge, field);
     std::vector<double> potential;
     coulomb.apply_potential(charge, potential);
-    const ModuleSccs::CoulombTransformProfile profile = coulomb.transform_profile();
-    EXPECT_EQ(profile.forward_calls, 2);
-    EXPECT_EQ(profile.inverse_calls, 5);
+    const ModuleSccs::CoulombTransformCounts counts = coulomb.transform_counts();
+    EXPECT_EQ(counts.forward_calls, 2);
+    EXPECT_EQ(counts.inverse_calls, 5);
     EXPECT_EQ(potential, field.potential);
     const std::vector<double> zero(basis_.nrxx, 0.0);
     coulomb.apply_potential(zero, potential);

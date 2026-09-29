@@ -23,7 +23,7 @@ class PeriodicCoulombOperator : public CoulombOperator
   public:
     PeriodicCoulombOperator(const ModulePW::PW_Basis& basis, double tpiba);
 
-    CoulombTransformProfile transform_profile() const override { return profile_; }
+    CoulombTransformCounts transform_counts() const override { return counts_; }
 
     void apply(const std::vector<double>& charge, ElectrostaticField& field) const override;
 
@@ -53,7 +53,7 @@ class PeriodicCoulombOperator : public CoulombOperator
     mutable std::vector<std::complex<double>> reciprocal_work_;
     mutable std::vector<std::complex<double>> reciprocal_aux_;
     mutable std::vector<double> real_work_;
-    mutable CoulombTransformProfile profile_;
+    mutable CoulombTransformCounts counts_;
 };
 
 } // namespace ModuleSccs

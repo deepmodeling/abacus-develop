@@ -188,8 +188,8 @@ TEST_F(SccsPcc2dCoulombTest, ScalarPotentialMatchesFullFieldAndAvoidsGradientTra
     std::vector<double> potential;
     coulomb.apply_potential(charge, potential);
     EXPECT_EQ(potential, field.potential);
-    EXPECT_EQ(coulomb.transform_profile().forward_calls, 2);
-    EXPECT_EQ(coulomb.transform_profile().inverse_calls, 5);
+    EXPECT_EQ(coulomb.transform_counts().forward_calls, 2);
+    EXPECT_EQ(coulomb.transform_counts().inverse_calls, 5);
     const std::vector<double> zero(basis_.nrxx, 0.0);
     coulomb.apply_potential(zero, potential);
     for (double value : potential)

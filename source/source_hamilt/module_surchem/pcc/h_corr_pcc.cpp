@@ -3,7 +3,8 @@
 #include "sccs_pcc_2d_coulomb.h"
 #include "../sccs/sccs_pw_charge.h"
 #include "../sccs/sccs_pw_reduction.h"
-#include "source_base/timer_wrapper.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
 
 #include <cmath>
 #include <stdexcept>
@@ -99,7 +100,8 @@ void surchem::v_correction_pcc(const UnitCell& cell,
                                const double* const* rho,
                                ModuleBase::matrix& v)
 {
-    const ModuleBase::TimePoint start_time = ModuleBase::get_time();
+    ModuleBase::TITLE("surchem", "v_correction_pcc");
+    ModuleBase::timer::start("surchem", "v_correction_pcc");
     if (!this->uses_pcc())
     {
         throw std::logic_error("PCC correction requires a PCC boundary");
@@ -208,8 +210,7 @@ void surchem::v_correction_pcc(const UnitCell& cell,
     surchem::Ael = this->pcc_energy_rydberg_;
     surchem::Acav = 0.0;
     this->pcc_result_valid_ = true;
-    const ModuleBase::TimePoint end_time = ModuleBase::get_time();
-    this->pcc_elapsed_seconds_ = ModuleBase::get_duration(start_time, end_time);
+    ModuleBase::timer::end("surchem", "v_correction_pcc");
 }
 
 void surchem::cal_force_pcc(const UnitCell& cell, ModuleBase::matrix& force) const
