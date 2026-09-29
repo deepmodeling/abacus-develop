@@ -12,6 +12,16 @@ list(APPEND objects
     op_pw_exx.cpp
     op_pw_exx_ace.cpp
     op_pw_exx_pot.cpp
+    kernels/exx_batch_op.cpp
+)
+
+if(ENABLE_FLOAT_FFTW)
+    list(APPEND objects kernels/exx_batch_op_float.cpp)
+else()
+    list(APPEND objects kernels/exx_batch_op_float_stub.cpp)
+endif()
+
+list(APPEND objects
     dftu_base.cpp
     dftu_base_io.cpp
     dftu_pw.cpp
@@ -59,17 +69,7 @@ list(APPEND objects
     fs_nonlocal_tools_stress.cpp
     fs_nonlocal_tools_force.cpp
     fs_kin_tools.cpp
-    radial_proj.cpp
-    onsite_proj.cpp
-    onsite_proj_init.cpp
-    onsite_proj_overlap.cpp
     onsite_proj_force_stress.cpp
-    onsite_proj_tools.cpp
-    onsite_proj_tools_becp.cpp
-    onsite_proj_tools_dbecp.cpp
-    onsite_proj_tools_force.cpp
-    onsite_proj_tools_stress.cpp
-    onsite_proj_print.cpp
     vsep_pw.cpp
 )
 

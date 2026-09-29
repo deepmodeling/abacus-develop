@@ -28,10 +28,14 @@ class Charge_Mixing
     /**
      * @brief Set all private mixing parameters from an aggregated config
      * @param cfg mixing parameters and runtime globals (nspin, scf_thr_type, double_grid)
+     * @param rhopw_in smooth grid
+     * @param rhodpw_in dense grid when double grid is used, otherwise same as rhopw
      * @param omega_in omega for non-linear core correction
      * @param tpiba_in 2*pi/beta for non-linear core correction
      */
     void set_mixing(const MixingConfig& cfg,
+                    ModulePW::PW_Basis* rhopw_in,
+                    ModulePW::PW_Basis* rhodpw_in,
                     double& omega_in,
                     double& tpiba_in);
 
@@ -71,13 +75,6 @@ class Charge_Mixing
      */
     void mix_reset();
     
-    /**
-     * @brief Set the smooth and dense grids
-     * @param rhopw_in smooth grid
-     * @param rhodpw_in dense grid when double grid is used, otherwise same as rhopw
-     */
-    void set_rhopw(ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis* rhodpw_in);
-
     // extracting parameters normally these parameters will not be used outside charge mixing
     // while Exx is using them as well as some other places
     const std::string& get_mixing_mode() const {return cfg_.mixing_mode;}

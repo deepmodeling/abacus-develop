@@ -439,7 +439,7 @@ void Output_Mulliken<TK>::collect_MW(ModuleBase::matrix& MecMulP, const ModuleBa
                     MecMulP(3, j) += mud(ic, ir).real();
                 }
                 // WARNING (pre-existing, predates #7664, since 3.7.0 commit a339356): this M_y sign
-                // is suspect. mud is DM.S with the same conj-first DM convention as cal_dm_psi, so the
+                // is suspect. mud is DM.S with the same conj-first DM convention as dm_from_psi, so the
                 // bare Im formula here likely yields -m_y. It must NOT be used as an oracle for the DM
                 // convention (it is probably why #7664's DM m_y flip went unnoticed). Fix + unit test
                 // should be a separate PR after verifying against a case with nonzero in-plane moment.
@@ -584,7 +584,7 @@ void Output_Mulliken<std::complex<double>>::cal_orbMulP()
     for (size_t ik = 0; ik != this->isk_.size(); ++ik)
     {
         auto p_Sk = this->output_sk_->get_Sk(ik);
-        auto p_DMk = this->output_dmk_->get_DMK(ik);
+        auto p_DMk = this->output_dmk_->get_dmk(ik);
         ModuleBase::ComplexMatrix mud(this->ParaV_->ncol, this->ParaV_->nrow, true);
 #ifdef __MPI
         const char T_char = 'T';
@@ -634,7 +634,7 @@ void Output_Mulliken<double>::cal_orbMulP()
     {
         ModuleBase::matrix mud;
         auto p_Sk = this->output_sk_->get_Sk(is);
-        auto p_DMk = this->output_dmk_->get_DMK(is);
+        auto p_DMk = this->output_dmk_->get_dmk(is);
         mud.create(this->ParaV_->ncol, this->ParaV_->nrow);
 #ifdef __MPI
         const char T_char = 'T';

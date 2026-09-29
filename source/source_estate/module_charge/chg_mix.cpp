@@ -25,6 +25,8 @@ Charge_Mixing::~Charge_Mixing()
 }
 
 void Charge_Mixing::set_mixing(const MixingConfig& cfg,
+                               ModulePW::PW_Basis* rhopw_in,
+                               ModulePW::PW_Basis* rhodpw_in,
                                double& omega_in,
                                double& tpiba_in)
 {
@@ -35,6 +37,9 @@ void Charge_Mixing::set_mixing(const MixingConfig& cfg,
     // snapshot; runtime overrides (e.g. close_kerker_gg0) live as flags on
     // Charge_Mixing itself, never by mutating cfg_.
     this->cfg_ = cfg;
+    // store the smooth and dense grids
+    this->rhopw = rhopw_in;
+    this->rhodpw = rhodpw_in;
     // omega and tpiba are pointers to external runtime state (cell volume
     // and lattice constant) that changes across SCF iterations; they are
     // not INPUT parameters and therefore stay out of MixingConfig.
@@ -98,12 +103,12 @@ void Charge_Mixing::init_mixing()
     ModuleBase::TITLE("Charge_Mixing", "init_mixing");
     ModuleBase::timer::start("Charge_Mixing", "init_mixing");
 
-    /// Fail fast when set_rhopw was skipped: the grid sizes below would
+    /// Fail fast when set_mixing was skipped: the grid sizes below would
     /// otherwise dereference a null pointer.
     if (this->rhopw == nullptr)
     {
         ModuleBase::WARNING_QUIT("Charge_Mixing",
-                                 "set_rhopw must be called before init_mixing");
+                                 "set_mixing must be called before init_mixing");
     }
 
     // (re)construct mixing object
@@ -182,12 +187,6 @@ void Charge_Mixing::init_mixing()
     ModuleBase::timer::end("Charge_Mixing", "init_mixing");
 
     return;
-}
-
-void Charge_Mixing::set_rhopw(ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis* rhodpw_in)
-{
-    this->rhopw = rhopw_in;
-    this->rhodpw = rhodpw_in;
 }
 
 void Charge_Mixing::mix_reset()

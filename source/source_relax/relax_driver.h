@@ -102,7 +102,7 @@ class Relax_Driver
      * @param etot Total energy in Ry corresponding to this structure.
      * @param stress Stress matrix (3x3) in Ry/Bohr^3 corresponding to this structure.
      */
-    void stru_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress);
+    void stru_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress, const ModuleBase::matrix& force);
 
     /**
      * @brief Output JSON format results.
@@ -125,7 +125,7 @@ class Relax_Driver
      * @param etot Total energy of the final step.
      * @param stress Stress tensor of the final step.
      */
-    void final_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress);
+    void final_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress, const ModuleBase::matrix& force);
 };
 
 #endif

@@ -95,6 +95,7 @@
     - [pseudo\_rcut](#pseudo_rcut)
     - [pseudo\_mesh](#pseudo_mesh)
     - [nspin](#nspin)
+    - [gga\_grad](#gga_grad)
     - [smearing\_method](#smearing_method)
     - [smearing\_sigma](#smearing_sigma)
     - [smearing\_sigma\_temp](#smearing_sigma_temp)
@@ -345,6 +346,7 @@
     - [exxace](#exxace)
     - [exx\_gamma\_extrapolation](#exx_gamma_extrapolation)
     - [ecutexx](#ecutexx)
+    - [exx\_batch\_size](#exx_batch_size)
     - [exx\_thr\_type](#exx_thr_type)
     - [exx\_ene\_thr](#exx_ene_thr)
   - [Molecular dynamics](#molecular-dynamics)
@@ -1353,6 +1355,17 @@
   - 4: Noncollinear or spin-orbit calculations. Set nspin to 4 explicitly when noncolin or lspinorb is enabled.
 - **Default**: 1
 
+### gga_grad
+
+- **Type**: Integer
+- **Description**: Selects the local spin mapping for LDA/GGA functionals in magnetic nspin=4 calculations.
+  - 0: preserves the original algorithm (default).
+  - 1: uses the local magnetization magnitude instead of the global quantization axis in the built-in GGA gradient correction. For LIBXC functionals, 0 and 1 are equivalent.
+  - 2: uses a C2-regularized magnetization magnitude with eta = 1e-3 in atomic density units. The spin densities are (abs(n + rho_core) +/- min(S_eta(m), abs(n + rho_core)))/2. GGA gradients are the local-map Jacobian applied to the FFT gradients of the four density channels. The potential reverses this same discrete energy graph, including the radial Hessian and density/sigma clipping branches; the GGA stress uses the corresponding metric derivative.
+  For r = |m| and x = r/eta, S_eta = eta*x^3*(3*x^2 - 8*x + 6) for r &lt; eta, and S_eta = r otherwise. The regularization is part of the functional definition, including its first and second derivatives.
+  Mode 2 also uses this local map for the LDA contribution. Other spin configurations retain their existing behavior.
+- **Default**: 0
+
 ### smearing_method
 
 - **Type**: String
@@ -2064,7 +2077,7 @@
 ### out_stru
 
 - **Type**: Integer
-- **Description**: Controls the output of structure files per ionic step in geometry relaxation calculations. The files are written to the OUT.{suffix}/ directory. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. When out_freq_ion is positive, the numbered files STRU{istep} (or STRU{istep}.cif) are written every out_freq_ion steps; when out_freq_ion is 0, no numbered files are output.
+- **Description**: Controls the output of structure files per ionic step. The files are written to the OUT.{suffix}/ directory. Each file corresponds to the structure at RELAX STEP ${istep} (for scf/nscf this is the single step), i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. When out_freq_ion is positive, the numbered files STRU{istep} (or STRU{istep}.cif) are written every out_freq_ion steps during geometry relaxation; when out_freq_ion is 0, no numbered files are output. This parameter is effective for scf/nscf/relax/cell-relax; for scf/nscf only STRU_FINAL (or STRU_FINAL.cif) is written, and structure output is disabled by default unless out_stru is set explicitly. Molecular dynamics structure output is instead controlled by md_restartfreq (STRU_MD_*).
     - 0: No structure files are output.
     - 1: ABACUS STRU format files are output. The latest structure is written to STRU_NOW (overwritten each step), the numbered file STRU{istep} (e.g., STRU1, STRU2) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL. No CIF files are output.
     - 2: CIF format files are output. The latest structure is written to STRU_NOW.cif (overwritten each step), the numbered file STRU{istep}.cif (e.g., STRU1.cif, STRU2.cif) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL.cif. No non-CIF files are output.
@@ -3450,9 +3463,15 @@
 ### ecutexx
 
 - **Type**: Real
-- **Description**: The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. Reducing ecutexx below ecutrho may significantly accelerate EXX computations. This speed improvement comes with a reduced numerical accuracy in the exchange energy calculation.
+- **Description**: The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. The pair-density G-sphere of the exchange operator, the EXX energy, and the EXX stress are all truncated at this value. If ecutexx yields a smaller FFT box and every |k+G|^2 of the wavefunctions fits inside it (i.e. ecutexx should not be smaller than ecutwfc), all EXX FFTs run on that smaller grid (QE ecutfock-style), which can significantly accelerate EXX computations. If the small grid is not usable (box not smaller, wavefunctions do not fit, or the FFT box is distributed over MPI), a warning is printed and the full grid is used. Reducing ecutexx below ecutrho reduces the numerical accuracy of the exchange contribution.
 - **Default**: same as ecutrho
 - **Unit**: Ry
+
+### exx_batch_size
+
+- **Type**: Integer
+- **Description**: Number of bands processed per round of the EXX batched FFT path. 0 (the default) processes all bands in one round, which is fastest but needs nbands * nxyz work buffers; a positive value processes the bands in chunks of that width, trading some performance for a proportionally smaller memory footprint. The result is independent of the chunking.
+- **Default**: 0
 
 ### exx_thr_type
 
@@ -3800,7 +3819,7 @@
 
 ### cal_syns
 
-- **Type**: Boolean [Integer](optional)
+- **Type**: Boolean \[Integer\](optional)
 - **Description**: Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates &lt;phi(t-1)|phi(t)&gt; by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
 
   - 0 or false: disable

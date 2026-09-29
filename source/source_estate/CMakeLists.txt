@@ -51,6 +51,7 @@ list(APPEND objects
     fp_energy.cpp
     occupy.cpp
     occ_matrix.cpp
+    occ_comput.cpp
     occ_mixer.cpp
     param_update.cpp
     setup_estate_pw.cpp
@@ -60,11 +61,19 @@ list(APPEND objects
 if(ENABLE_LCAO)
   list(APPEND objects
       elecstate_lcao.cpp
-      module_dm/init_dm.cpp
+      module_dm/dm_routine.cpp
       module_dm/density_matrix.cpp
-      module_dm/density_matrix_io.cpp
-      module_dm/cal_dm_psi.cpp
-      module_dm/cal_edm_tddft.cpp
+      module_dm/dmr_gamma.cpp
+      module_dm/dm_tools.cpp
+      module_dm/dmr_k.cpp
+      module_dm/dmr_td.cpp
+      module_dm/dmr_full.cpp
+      module_dm/dmr_init.cpp
+      module_dm/dm_setter.cpp
+      module_dm/dm_getter.cpp
+      module_dm/dm_from_psi.cpp
+      module_dm/edm_tddft.cpp
+      module_dm/edm_tddft_lapack.cpp
   )
 endif()
 
@@ -87,4 +96,9 @@ endif()
 
 if(ENABLE_LCAO)
   add_subdirectory(module_dm)
+  if(BUILD_TESTING)
+    if(ENABLE_MPI)
+      add_subdirectory(module_dm/unittests)
+    endif()
+  endif()
 endif()

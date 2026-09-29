@@ -3,6 +3,7 @@
 #include "md_parameter.h"
 #include "source_base/vector3.h"
 
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -85,6 +86,7 @@ struct Input_para
     double nelec_delta = 0.0;          ///< change in the number of total electrons
     double nupdown = 0.0;
     std::string dft_functional = "default"; ///< input DFT functional.
+    int gga_grad = 0; ///< Noncollinear GGA: 0 original, 1 local axis, 2 regularized projected LCA.
     double xc_temperature = 0.0;            ///< only relevant if finite temperature functional is used
     double pseudo_rcut = 15.0;              ///< cut-off radius for calculating msh
     bool pseudo_mesh = false;               ///< 0: use msh to normalize radial wave functions; 1:
@@ -187,6 +189,16 @@ struct Input_para
 
     // ==============   #Parameters (5.Molecular dynamics) ===========================
     MD_para mdp;
+    // FIXME(liuyu): ref_cell_factor is currently DISABLED. Setting any
+    // non-1.0 value triggers WARNING_QUIT in read_input_item_md.cpp.
+    // The reference-cell mechanism has design problems: when
+    // ref_cell_factor > 1, PW_Basis::lat0/tpiba/G/GGT/omega hold
+    // reference-cell values, but external code (sum_rho, get_local_pp_energy,
+    // cal_delta_escf, makov_payne, wfc IO, DFPT, OFDFT) reads them as
+    // physical-cell quantities, producing wrong results in variable-cell
+    // (NPT) calculations. To re-enable, PW_Basis must be refactored to
+    // separate reference-cell grid (FFT dims nx/ny/nz) from physical-cell
+    // lattice quantities (lat0/tpiba/G/GGT/omega).
     double ref_cell_factor = 1;         ///< construct a reference cell bigger than the
                                         ///< initial cell liuyu 2023-03-21
     std::vector<int> cal_syns = {0, 8}; ///< calculate asynchronous S matrix to output {enable, precision}
@@ -460,7 +472,6 @@ struct Input_para
     bool out_hr_npz = false;                  ///< output H(R) matrix in npz format
     bool out_hsr_npz = false;                 ///< output H(R) and S(R) matrices in npz format
     bool out_dm_npz = false;                  ///< output DM(R) matrix in npz format
-    int out_interval = 1;
     bool out_app_flag = true;                ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
                                              ///< in an append manner during MD liuyu 2023-03-20
     int out_ndigits = 8;                     ///< Assuming 8 digits precision is needed for matrices output
@@ -741,6 +752,7 @@ struct Input_para
     std::string exx_thr_type = "density"; ///< threshold type for exx outer loop
     double exx_ene_thr = 1e-5;            ///< threshold when exx_thr_type = energy
     double ecutexx = 0.0;                 ///< energy cutoff for exx calculation, Ry
+    int exx_batch_size = 0;               ///< band chunk width of the EXX batched path, 0 = all bands
 
     // ====   #Parameters (23.XC external parameterization) ========
     /*

@@ -95,7 +95,7 @@ To help us reproduce and confirm a bug, please provide a test case and building 
 ## Agent governance and automated review
 
 Before coding or requesting review, read the repository governance entry point
-[`AGENTS.md`](../AGENTS.md) and the full
+[`AGENTS.md`](https://github.com/deepmodeling/abacus-develop/blob/develop/AGENTS.md) and the full
 [ABACUS Agent Governance](./developers_guide/agent_governance.md) guide.
 These rules apply to human contributors, AI agents, GitHub CI, and CodeRabbit.
 

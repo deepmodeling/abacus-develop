@@ -31,16 +31,23 @@ namespace LR_Util
             }
     }
     template <typename TK, typename TR>
-    void print_DMR(const elecstate::DensityMatrix<TK, TR>& DMR, const int& nat, const std::string& label, const double& threshold = 1e-10)
+    void print_DMR(const module_dm::DensityMatrix<TK, TR>& DMR, const int& nat, const std::string& label, const double& threshold = 1e-10)
     {
         std::cout << label << "\n";
         int is = 0;
-        for (auto& dr : DMR.get_DMR_vector())
+        for (auto& dr : DMR.get_dmr_vec())
             print_HR(*dr, nat, "DMR[" + std::to_string(is++) + "]", threshold);
     }
-    void get_DMR_real_imag_part(const elecstate::DensityMatrix<std::complex<double>, std::complex<double>>& DMR,
-        elecstate::DensityMatrix<std::complex<double>, double>& DMR_real,
+    void get_DMR_real_imag_part(const module_dm::DensityMatrix<std::complex<double>, std::complex<double>>& DMR,
+        module_dm::DensityMatrix<std::complex<double>, double>& DMR_real,
         const int& nat,
+        const char& type = 'R');
+    /// overload: only copy the `is`-th spin channel of DMR (source) into the (single-channel) DMR_real,
+    /// to avoid mixing/overlapping spin channels when DMR has more than one spin channel
+    void get_DMR_real_imag_part(const module_dm::DensityMatrix<std::complex<double>, std::complex<double>>& DMR,
+        module_dm::DensityMatrix<std::complex<double>, double>& DMR_real,
+        const int& nat,
+        const int& is,
         const char& type = 'R');
     void set_HR_real_imag_part(const hamilt::HContainer<double>& HR_real,
         hamilt::HContainer<std::complex<double>>& HR,
@@ -78,7 +85,7 @@ namespace LR_Util
         if (std::is_same<T, double>::value) { hR.fix_gamma(); }
     }
     template <typename T, typename TR>
-    void initialize_DMR(elecstate::DensityMatrix<T, TR>& dm,
+    void initialize_DMR(module_dm::DensityMatrix<T, TR>& dm,
                         const Parallel_Orbitals& pmat,
                         const UnitCell& ucell,
                         const Grid_Driver& gd,
@@ -86,7 +93,7 @@ namespace LR_Util
     {
         hamilt::HContainer<TR> hR_tmp(&pmat);
         initialize_HR<T, TR>(hR_tmp, ucell, gd, orb_cutoff);
-        dm.init_DMR(hR_tmp);
+        dm.init_dmr(hR_tmp);
     }
 
     /// $\sum_{uvR} H1_{uv}(R) H2_{uv}(R)$

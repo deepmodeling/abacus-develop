@@ -17,7 +17,7 @@
 #include "force_stress_arrays.h"
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251010
-#include "source_lcao/setup_dm.h" // mohan add 2025-11-03
+#include "source_lcao/allocate_dm.h" // mohan add 2025-11-03
 #include "source_pw/module_pwdft/dftu_base.h" // mohan add 2025-11-07
 #include "source_hamilt/hamilt.h"
 #include "source_hamilt/module_xc/exx_info.h"
@@ -39,6 +39,10 @@ struct FSCalcConfig
     bool t_in_h;
     bool sc_mag_switch;
     std::string device;
+    bool domag;
+    bool domag_z;
+    int gga_grad;
+    bool gamma_only_pw;
 };
 
 // Force/stress component matrices assembled by getForceStress. Grouping them
@@ -107,7 +111,7 @@ class Force_Stress_LCAO
                         const Grid_Driver& gd,
                         Parallel_Orbitals& pv,
                         const elecstate::ElecState* pelec,
-                        LCAO_domain::Setup_DM<T> &dmat, // mohan add 2025-11-03
+                        module_dm::Setup_DM<T> &dmat, // mohan add 2025-11-03
                         const psi::Psi<T>* psi,
                         const TwoCenterBundle& two_center_bundle,
                         const LCAO_Orbitals& orb,
@@ -139,7 +143,7 @@ class Force_Stress_LCAO
                          const Grid_Driver& gd,
                          Parallel_Orbitals& pv,
                          const elecstate::ElecState* pelec,
-                         LCAO_domain::Setup_DM<T>& dmat,
+                         module_dm::Setup_DM<T>& dmat,
                          const psi::Psi<T>* psi,
                          const TwoCenterBundle& two_center_bundle,
                          const LCAO_Orbitals& orb,
@@ -168,7 +172,7 @@ class Force_Stress_LCAO
                         ModulePW::PW_Basis* rhopw,
                         const pseudopot_cell_vl& locpp,
                         const Structure_Factor& sf,
-                        const std::string& device);
+                        const FSCalcConfig& cfg);
 
     static double force_invalid_threshold_ev;
 };
@@ -179,7 +183,7 @@ double Force_Stress_LCAO<T>::force_invalid_threshold_ev = 0.00;
 // only for DFT+U, mohan add 2025-11-04
 template <typename T>
 void assign_dmk_ptr(
-    elecstate::DensityMatrix<T,double>* dm,
+    module_dm::DensityMatrix<T,double>* dm,
     std::vector<std::vector<double>>*& dmk_d,
     std::vector<std::vector<std::complex<double>>>*& dmk_c
 );

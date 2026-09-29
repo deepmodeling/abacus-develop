@@ -44,7 +44,7 @@ class ParaPrepare {
 
 class ParallelK2DTest : public ::testing::TestWithParam<ParaPrepare> {
   protected:
-    Parallel_K2D<double> k2d = Parallel_K2D<double>();
+    Parallel_K2D<double> k2d;
     MPIContext mpi;
     int NPROC;
     int MY_RANK;

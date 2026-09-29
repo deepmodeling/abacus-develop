@@ -9,7 +9,12 @@
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
 
 template <typename FPTYPE, typename Device>
-void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
+void Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
+                                           const bool domag,
+                                           const bool domag_z,
+                                           const int gga_grad,
+                                           const bool gamma_only_pw,
+                                           ModuleBase::matrix& sigmatot,
                                            UnitCell& ucell,
                                            const vdw::VdwResult* vdw_result,
                                            Plus_U_Base& dftu,
@@ -91,7 +96,8 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     {
         sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
-    this->stress_gga(ucell, sigmaxc, rho_basis, pelec->charge);
+    this->stress_gga(ucell, sigmaxc, rho_basis, pelec->charge,
+        nspin, domag, domag_z, gga_grad);
     if (XC_Functional::get_ked_flag())
     {
         this->stress_mgga(ucell,
@@ -108,7 +114,8 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_loc(ucell, sigmaloc, rho_basis, locpp.vloc, p_sf, 1, pelec->charge);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, ucell, p_sf, 1, locpp.numeric, pelec->charge);
+    this->stress_cc(sigmaxcc, rho_basis, ucell, p_sf, 1, locpp.numeric, pelec->charge,
+        nspin, domag, domag_z, gga_grad, gamma_only_pw);
 
     // nonlocal
     this->stress_nl(sigmanl, this->pelec->wg, this->pelec->ekb, p_sf, p_kv, p_symm, wfc_basis, d_psi_in, nlpp, ucell);
@@ -136,12 +143,9 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // EXX PW stress
-    bool cal_exx = exx_info.cal_exx;
-    double hybrid_alpha = exx_info.hybrid_alpha;
-    auto coulomb_param = exx_info.coulomb_param;
-    if (cal_exx)
+    if (exx_info.cal_exx)
     {
-        this->stress_exx(sigmaexx, this->pelec->wg, rho_basis, wfc_basis, p_kv, d_psi_in, ucell, hybrid_alpha, coulomb_param);
+        this->stress_exx(sigmaexx, this->pelec->wg, rho_basis, wfc_basis, p_kv, d_psi_in, ucell, exx_info);
     }
 
 
@@ -182,7 +186,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         {
             ModuleIO::print_stress("ONSITE    STRESS", sigmaonsite, screen, ry, GlobalV::ofs_running);
         }
-        if (cal_exx)
+        if (exx_info.cal_exx)
         {
             ModuleIO::print_stress("EXX    STRESS", sigmaexx, screen, ry, GlobalV::ofs_running);
         }

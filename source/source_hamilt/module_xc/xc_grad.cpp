@@ -14,11 +14,13 @@
 // noncolin_rho.
 
 #include "xc_functional.h"
+#include "xc_functional_ncgga_sf.h"
 #include "xc_grad_internal.h"
 #include "source_base/timer.h"
 
 #ifdef __LIBXC
 #include <xc_funcs.h>
+#include "libxc_abacus.h"
 #endif
 
 void XC_Functional::gradcorr(
@@ -33,6 +35,7 @@ void XC_Functional::gradcorr(
     const int nspin,
     const bool domag,
     const bool domag_z,
+    const int gga_grad,
     const double hybrid_alpha_in,
     const double hse_omega_in)
 {
@@ -62,6 +65,32 @@ void XC_Functional::gradcorr(
         }
         return;
     }
+
+    if (is_stress && !use_libxc && nspin == 4 && (domag || domag_z) && gga_grad == 2)
+    {
+        ModuleXC::NCGGA_SF_Builtin::gradcorr_ncgga_lca_builtin(
+            chr, rhopw, ucell->tpiba, stress_gga);
+        return;
+    }
+
+
+
+#ifdef __LIBXC
+    if (is_stress && use_libxc && nspin == 4 && (domag || domag_z)
+        && gga_grad == 2)
+    {
+        XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(
+            func_id,
+            rhopw->nrxx,
+            ucell->tpiba,
+            chr,
+            &scaling_factor_xc,
+            hybrid_alpha_in,
+            hse_omega_in,
+            stress_gga);
+        return;
+    }
+#endif
 
     bool igcc_is_lyp = false;
     // func_id may hold a single entry (e.g. PBE0 -> {XC_HYB_GGA_XC_PBEH}), so guard the index.
@@ -108,6 +137,7 @@ void XC_Functional::gradcorr(
     params.igcc_is_lyp = igcc_is_lyp;
     params.domag = domag;
     params.domag_z = domag_z;
+    params.gga_grad = gga_grad;
     params.hybrid_alpha = hybrid_alpha_in;
     params.hse_omega = hse_omega_in;
     params.use_libxc = use_libxc;

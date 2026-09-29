@@ -122,16 +122,17 @@ TEST_F(DFTUTest, constructHRd2d)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
     const double factor = 1.0 / test_nw / test_nw / test_size / test_size;
-    elecstate::DensityMatrix<double, double> dm(paraV, 1);
-    dm.init_DMR(*HR);
+    module_dm::DensityMatrix<double, double> dm(paraV, 1);
+    dm.init_dmr(*HR);
     for (int i = 0; i < paraV->nrow; i++)
     {
         for (int j = 0; j < paraV->ncol; j++)
         {
-            dm.set_DMK(1, 0, i, j, factor);
+            dm.set_dmk(1, 0, i, j, factor);
         }
     }
-    dm.cal_DMR();
+    dm.cal_dmr(-1);
+    // reset HR
     for (int i = 0; i < HR->get_nnr(); i++)
     {
         HR->get_wrapper()[i] = 0.0;
@@ -176,19 +177,20 @@ TEST_F(DFTUTest, constructHRd2cd)
     Grid_Driver gd(0, 0);
     const double factor = 0.5 / test_nw / test_nw / test_size / test_size;
     std::vector<ModuleBase::Vector3<double>> kvec_d_dm(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    elecstate::DensityMatrix<std::complex<double>, double> dm(paraV, 2, kvec_d_dm, 1);
-    dm.init_DMR(*HR);
+    module_dm::DensityMatrix<std::complex<double>, double> dm(paraV, 2, kvec_d_dm, 1);
+    dm.init_dmr(*HR);
     for (int is = 1; is <= 2; ++is)
     {
         for (int i = 0; i < paraV->nrow; i++)
         {
             for (int j = 0; j < paraV->ncol; j++)
             {
-                dm.set_DMK(is, 0, i, j, std::complex<double>(factor, 0.0));
+                dm.set_dmk(is, 0, i, j, std::complex<double>(factor, 0.0));
             }
         }
     }
-    dm.cal_DMR();
+    dm.cal_dmr(-1);
+    // reset HR
     for (int i = 0; i < HR->get_nnr(); i++)
     {
         HR->get_wrapper()[i] = 0.0;

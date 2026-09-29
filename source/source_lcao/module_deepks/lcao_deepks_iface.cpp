@@ -71,7 +71,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                                       const Grid_Driver& GridD,
                                                       const Parallel_Orbitals* ParaV,
                                                       const psi::Psi<TK>& psi,
-                                                      const elecstate::DensityMatrix<TK, double>* dm,
+                                                      const module_dm::DensityMatrix<TK, double>* dm,
                                                       hamilt::HamiltLCAO<TK, TR>* p_ham,
                                                       const int& iter,
                                                       const bool& conv_esolver,
@@ -116,7 +116,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     //================================================================================
 
     // Update DMR in any case of deepks_out_labels/deepks_scf
-    DeePKS_domain::update_dmr(kvec_d, dm->get_DMK_vector(), ucell, orb, *ParaV, GridD, dmr);
+    DeePKS_domain::update_dmr(kvec_d, dm->get_dmk_vec(), ucell, orb, *ParaV, GridD, dmr);
 
     // Note : update PDM and all other quantities with the current dm
     // DeePKS PDM and descriptor
@@ -137,7 +137,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         std::vector<torch::Tensor> descriptor_mag;
         if (deepks_spin2)
         {
-            DeePKS_domain::update_dmr(kvec_d, dm->get_DMK_vector(), ucell, orb, *ParaV, GridD, ld->dm_r_mag, 2, true);
+            DeePKS_domain::update_dmr(kvec_d, dm->get_dmk_vec(), ucell, orb, *ParaV, GridD, ld->dm_r_mag, 2, true);
             bool init_pdm_mag = false;
             DeePKS_domain::cal_pdm<
                 TK>(init_pdm_mag, deepks_param, kvec_d, ld->dm_r_mag, phialpha, ucell, orb, GridD, *ParaV, ld->pdm_mag);
@@ -794,7 +794,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         /// print out deepks information to the screen
         if (PARAM.inp.deepks_scf)
         {
-            DeePKS_domain::cal_e_delta_band(dm->get_DMK_vector(), *h_delta, nks, nspin, ParaV, e_delta_band);
+            DeePKS_domain::cal_e_delta_band(dm->get_dmk_vec(), *h_delta, nks, nspin, ParaV, e_delta_band);
             if (rank == 0)
             {
                 ofs_running << " DeePKS Energy Correction" << std::endl;
@@ -808,7 +808,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             }
             if (PARAM.inp.deepks_out_unittest)
             {
-                LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, ParaV->nrow, dm->get_DMK_vector());
+                LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, ParaV->nrow, dm->get_dmk_vec());
 
                 DeePKS_domain::check_gedm(deepks_param, ld->gedm);
 

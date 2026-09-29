@@ -287,7 +287,7 @@ When `CXX=mpicxx`, a parallel version will be compiled. When `CXX=g++`, a sequen
 
 Except modifying `Makefile.vars`, you can also directly use
 
-```makefile
+```bash
 make CXX=mpiicpc ELPA_DIR=/public/soft/elpa_21.05.002 \
 ELPA_INCLUDE_DIR=${ELPA_DIR}/include/elpa-2021.05.002 \
 CEREAL_DIR=/public/soft/cereal
@@ -305,7 +305,7 @@ The program compiled using the above instructions do not link with LIBXC and use
 
 To compile ABACUS with LIBXC, you need to define `LIBXC_DIR` in the file `Makefile.vars` or use
 
-```makefile
+```bash
 make LIBXC_DIR=/pulic/soft/libxc
 ```
 
@@ -315,7 +315,7 @@ directly.
 
 To compile ABACUS with machine learning algorithms, you need to set `ENABLE_MLALGO = ON`, and define `LIBTORCH_DIR` and `LIBNPY_DIR` in the file `Makefile.vars` or use
 
-```makefile
+```bash
 make ENABLE_MLALGO=ON LIBTORCH_DIR=/opt/libtorch/ LIBNPY_DIR=/opt/libnpy/
 ```
 
@@ -329,22 +329,22 @@ directly.
 To compile ABACUS with DeePMD-kit, you need to define `DeePMD_DIR` and `TensorFlow_DIR` (TensorFlow Backend, optional) and/or `LIBTORCH_DIR` (PyTorch Backend, optional) in the file `Makefile.vars`.
 
 Or the `tensorflow_cc` and `torch` libraries are in the same directory as the `deepmd_c`/`deepmd_cc` libraries, then
-```makefile
+```bash
 make DeePMD_DIR=/dir_to_deepmd-kit
 ```
 DeePMD-kit supports TensorFlow backend but its libraries are placed at another directory, then
 
-```makefile
+```bash
 make DeePMD_DIR=/dir_to_deepmd-kit TensorFlow_DIR=/dir_to_tensorflow
 ```
 Similarly, DeePMD-kit supports PyTorch backend but its libraries are placed at another directory, then
-```makefile
+```bash
 make DeePMD_DIR=/dir_to_deepmd-kit Torch_DIR=/dir_to_pytorch
 ```
 
 ### Add LibRI Support
 To use new EXX, you need two libraries: [LibRI](https://github.com/abacusmodeling/LibRI) and [LibComm](https://github.com/abacusmodeling/LibComm) and need to define `LIBRI_DIR` and `LIBCOMM_DIR` in the file `Makefile.vars` or use
-```makefile
+```bash
 make LIBRI_DIR=/public/software/LibRI LIBCOMM_DIR=/public/software/LibComm
 ```
 directly.

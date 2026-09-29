@@ -1,7 +1,7 @@
 #include "get_pchg_lcao.h"
 
 #include "source_estate/module_charge/chg_symm.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_dm/dm_from_psi.h"
 #include "source_hamilt/module_gint/gint_interface.h"
 #include "source_io/module_output/cube_io.h"
 
@@ -61,17 +61,17 @@ void Get_pchg_lcao::begin_gamma(const UnitCell& ucell,
         }
 
         // Construct a band-resolved density matrix before evaluating its density on the grid.
-        elecstate::DensityMatrix<double, double> DM(&para_orb_, nspin_);
-        elecstate::cal_dm_psi(&para_orb_, state_weights, *psi_gamma_, DM);
+        module_dm::DensityMatrix<double, double> DM(&para_orb_, nspin_);
+        module_dm::dm_from_psi(&para_orb_, state_weights, *psi_gamma_, DM);
 
         for (int is = 0; is < nspin_; ++is)
         {
             std::fill(rho[is].begin(), rho[is].end(), 0.0);
         }
 
-        DM.init_DMR(&grid_driver, &ucell);
-        DM.cal_DMR();
-        ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin_, rho_pointers.data());
+        DM.init_dmr(&grid_driver, &ucell);
+        DM.cal_dmr(-1);
+        ModuleGint::cal_gint_rho(DM.get_dmr_vec(), nspin_, rho_pointers.data());
 
         for (int is = 0; is < nspin_; ++is)
         {
@@ -147,8 +147,8 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
         // Collinear spin channels are stored as two k blocks; spinors use one block per k point.
         const int nspin_dm = nspin_ == 2 ? 2 : 1;
         const int nk_output = kv.get_nks() / nspin_dm;
-        elecstate::DensityMatrix<std::complex<double>, double> DM(&para_orb_, nspin_dm, kv.kvec_d, nk_output);
-        elecstate::cal_dm_psi(&para_orb_, state_weights, *psi_k_, DM);
+        module_dm::DensityMatrix<std::complex<double>, double> DM(&para_orb_, nspin_dm, kv.kvec_d, nk_output);
+        module_dm::dm_from_psi(&para_orb_, state_weights, *psi_k_, DM);
 
         if (if_separate_k)
         {
@@ -160,10 +160,10 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
                     std::fill(rho[is].begin(), rho[is].end(), 0.0);
                 }
 
-                DM.init_DMR(&grid_driver, &ucell);
+                DM.init_dmr(&grid_driver, &ucell);
                 // Transform only the requested real k point to avoid summing different k contributions.
-                DM.cal_DMR(ik);
-                ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin_, rho_pointers.data());
+                DM.cal_dmr(ik);
+                ModuleGint::cal_gint_rho(DM.get_dmr_vec(), nspin_, rho_pointers.data());
 
                 for (int is = 0; is < nspin_; ++is)
                 {
@@ -183,10 +183,10 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
                 std::fill(rho[is].begin(), rho[is].end(), 0.0);
             }
 
-            DM.init_DMR(&grid_driver, &ucell);
+            DM.init_dmr(&grid_driver, &ucell);
             // The no-argument transform sums all local k-point contributions into one density.
-            DM.cal_DMR();
-            ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin_, rho_pointers.data());
+            DM.cal_dmr(-1);
+            ModuleGint::cal_gint_rho(DM.get_dmr_vec(), nspin_, rho_pointers.data());
 
             // Symmetrize only the merged density, using coupled spin rotations for nspin=4.
             if (needs_symmetry)

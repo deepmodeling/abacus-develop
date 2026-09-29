@@ -350,7 +350,13 @@ void write_h_vxc(WriteHParams& params)
 #else
     const double hse_omega = 0.0;
 #endif
-    std::tie(etxc, vtxc, v_xc) = XC_Functional::v_xc(nrxx, chg, &ucell, PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, hybrid_alpha, hse_omega);
+    std::tie(etxc, vtxc, v_xc) = XC_Functional::v_xc(nrxx, chg, &ucell,
+                                                     PARAM.inp.nspin,
+                                                     PARAM.globalv.domag,
+                                                     PARAM.globalv.domag_z,
+                                                     PARAM.inp.gga_grad,
+                                                     hybrid_alpha,
+                                                     hse_omega);
 
     for (int ispin = 0; ispin < nspin_out; ispin++)
     {

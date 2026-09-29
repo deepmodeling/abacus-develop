@@ -50,6 +50,7 @@ VPATH=./src_global:\
 ./source_hamilt/module_surchem:\
 ./source_hamilt/module_xc:\
 ./source_hamilt/module_xc/kernels:\
+./source_pw/module_proj:\
 ./source_pw/module_pwdft:\
 ./source_pw/module_ofdft:\
 ./source_pw/module_stodft:\
@@ -216,6 +217,7 @@ OBJS_CELL=atom_pseudo.o\
     reciprocal_grid.o\
     cell_index.o\
     cell_tools.o\
+    record_adj.o\
     check_atomic_stru.o\
     update_cell.o\
     bcast_cell.o\
@@ -285,14 +287,23 @@ OBJS_ELECSTAT=elecstate.o\
     setup_estate_pw.o\
     update_pot.o\
     occ_matrix.o\
-    occ_mixer.o
+    occ_mixer.o\
+    occ_comput.o
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
-      init_dm.o\
+      dm_routine.o\
       density_matrix.o\
-      density_matrix_io.o\
-      cal_dm_psi.o\
-      cal_edm_tddft.o\
+      dmr_init.o\
+      dm_setter.o\
+      dm_getter.o\
+      dmr_gamma.o\
+      dmr_k.o\
+      dmr_td.o\
+      dmr_full.o\
+      dm_tools.o\
+      dm_from_psi.o\
+      edm_tddft.o\
+      edm_tddft_lapack.o\
 
 OBJS_ESOLVER=esolver_factory.o\
     esolver_ks.o\
@@ -346,7 +357,7 @@ OBJS_GINT=batch_biggrid.o\
 
 OBJS_HAMILT=hamilt_pw.o\
     hs_matrix_k.o\
-    hamilt_sdft_pw.o\
+    sto_hamilt_pw.o\
     operator.o\
     op_pw.o\
     op_pw_exx.o\
@@ -369,6 +380,8 @@ OBJS_HAMILT=hamilt_pw.o\
     exx_cal_energy_op.o\
     cal_density_real_op.o\
     mul_potential_op.o\
+    exx_batch_op.o\
+    exx_batch_op_float_stub.o\
 
 OBJS_HAMILT_OF=kedf_tf.o\
     kedf_extwt.o\
@@ -443,7 +456,6 @@ OBJS_HSOLVER=diago_cg.o\
     hsolver.o\
     hsolver_pw.o\
     hsolver_lcaopw.o\
-    hsolver_pw_sdft.o\
     diago_iter_assist.o\
     hegvd_op.o\
     bpcg_kernel_op.o\
@@ -594,6 +606,8 @@ OBJS_SYMMETRY=symm_other.o\
     symm_rotation_k.o\
 
 OBJS_XC=xc_functional.o\
+    xc_functional_ncgga_sf.o\
+    xc_ncgga_radial.o\
     xc_functional_op.o\
     xc_pot.o\
     xc_grad.o\
@@ -769,13 +783,12 @@ OBJS_LCAO=evolve_elec.o\
       lcao_init_basis.o\
       setup_exx.o\
       setup_deepks.o\
-      setup_dm.o\
+      allocate_dm.o\
       rho_tau_lcao.o\
       center2orb.o\
       center2orb_orb11.o\
       center2orb_orb21.o\
       center2orb_orb22.o\
-      record_adj.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       exx_abfs-abfs_index.o\
@@ -881,6 +894,7 @@ OBJS_SRCPW=h_ewald_pw.o\
     stru_fac.o\
     stru_fac_k.o\
     soc.o\
+    sto_hsolver_pw.o\
     sto_iter.o\
     sto_che.o\
     sto_wf.o\

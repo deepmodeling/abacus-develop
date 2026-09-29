@@ -4,13 +4,13 @@
   - [no latname](#no-latname)
   - [latname fcc](#latname-fcc)
 - [Structure of the file](#structure-of-the-file)
-  - [ATOMIC_SPECIES](#ATOMIC_SPECIES)
-  - [NUMERICAL_ORBITAL](#NUMERICAL_ORBITAL)
-  - [LATTICE_CONSTANT](#LATTICE_CONSTANT)
-  - [LATTICE_VECTORS](#LATTICE_VECTORS)
-  - [LATTICE_PARAMETERS](#LATTICE_PARAMETERS)
-  - [ATOMIC_POSITIONS](#ATOMIC_POSITIONS)
-  - [More Key Words](#More-Key-Words)
+  - [ATOMIC_SPECIES](#atomic_species)
+  - [NUMERICAL_ORBITAL](#numerical_orbital)
+  - [LATTICE_CONSTANT](#lattice_constant)
+  - [LATTICE_VECTORS](#lattice_vectors)
+  - [LATTICE_PARAMETERS](#lattice_parameters)
+  - [ATOMIC_POSITIONS](#atomic_positions)
+  - [More Key Words](#more-key-words)
 
 ## Examples
 
