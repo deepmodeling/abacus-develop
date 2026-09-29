@@ -57,6 +57,9 @@ Pcc2dMoments pcc_2d_density_moments_from_relative_y(
     const std::vector<double>& relative_y,
     double volume_element);
 
+// Moments of two charge distributions taken about the same plane, added.
+Pcc2dMoments pcc_2d_sum_moments(const Pcc2dMoments& left, const Pcc2dMoments& right);
+
 double pcc_2d_potential(const Pcc2dMoments& moments,
                         double relative_y,
                         const Pcc2dParameters& parameters);

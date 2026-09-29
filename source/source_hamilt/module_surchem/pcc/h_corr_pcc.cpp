@@ -12,28 +12,6 @@
 namespace
 {
 
-ModulePcc::MultipoleMoments add_moments(const ModulePcc::MultipoleMoments& left,
-                                         const ModulePcc::MultipoleMoments& right)
-{
-    ModulePcc::MultipoleMoments result;
-    result.charge = left.charge + right.charge;
-    result.dipole.x = left.dipole.x + right.dipole.x;
-    result.dipole.y = left.dipole.y + right.dipole.y;
-    result.dipole.z = left.dipole.z + right.dipole.z;
-    result.quadrupole_trace = left.quadrupole_trace + right.quadrupole_trace;
-    return result;
-}
-
-ModulePcc::Pcc2dMoments add_moments_2d(const ModulePcc::Pcc2dMoments& left,
-                                       const ModulePcc::Pcc2dMoments& right)
-{
-    ModulePcc::Pcc2dMoments result;
-    result.charge = left.charge + right.charge;
-    result.dipole_y = left.dipole_y + right.dipole_y;
-    result.quadrupole_yy = left.quadrupole_yy + right.quadrupole_yy;
-    return result;
-}
-
 double ionic_system_center_y(const UnitCell& cell, const double cell_length_y)
 {
     std::vector<double> positions_y;
@@ -142,7 +120,7 @@ void surchem::v_correction_pcc(const UnitCell& cell,
                                                       reduction);
         const ModulePcc::MultipoleMoments ionic_moments
             = ModulePcc::point_charge_moments(ions, this->pcc_geometry_);
-        this->pcc_moments_ = add_moments(ionic_moments, electronic_moments);
+        this->pcc_moments_ = ModulePcc::sum_moments(ionic_moments, electronic_moments);
         const double expected_charge = this->parameters_.expected_ionic_charge
                                        - this->parameters_.expected_electron_count;
         const double charge_error = this->pcc_moments_.charge - expected_charge;
@@ -180,7 +158,7 @@ void surchem::v_correction_pcc(const UnitCell& cell,
                                                          reduction);
         const ModulePcc::Pcc2dMoments ionic_moments
             = ModulePcc::pcc_2d_point_charge_moments(ions, this->pcc_2d_geometry_);
-        this->pcc_2d_moments_ = add_moments_2d(ionic_moments, electronic_moments);
+        this->pcc_2d_moments_ = ModulePcc::pcc_2d_sum_moments(ionic_moments, electronic_moments);
         const double expected_charge = this->parameters_.expected_ionic_charge
                                        - this->parameters_.expected_electron_count;
         const double charge_error = this->pcc_2d_moments_.charge - expected_charge;

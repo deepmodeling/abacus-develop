@@ -79,6 +79,9 @@ MultipoleMoments density_moments_from_relative_positions(
     const std::vector<ModuleBase::Vector3<double>>& relative_positions,
     double volume_element);
 
+// Moments of two charge distributions taken about the same origin, added.
+MultipoleMoments sum_moments(const MultipoleMoments& left, const MultipoleMoments& right);
+
 double pcc_potential(const MultipoleMoments& moments,
                      const ModuleBase::Vector3<double>& position,
                      const PccParameters& parameters);

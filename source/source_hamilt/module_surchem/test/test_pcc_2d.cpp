@@ -148,6 +148,29 @@ TEST(SccsPcc2d, AccumulatesOnlyYMoments)
     EXPECT_DOUBLE_EQ(moments.quadrupole_yy, 4.0);
 }
 
+TEST(SccsPcc2d, SumMomentsEqualTheMomentsOfTheCombinedCharges)
+{
+    std::vector<ModulePcc::PointCharge> ions(2);
+    ions[0].charge = 2.0;
+    ions[0].position = ModuleBase::Vector3<double>(4.0, 3.0, -7.0);
+    ions[1].charge = 1.0;
+    ions[1].position = ModuleBase::Vector3<double>(0.5, -2.0, 1.0);
+    std::vector<ModulePcc::PointCharge> electrons(1);
+    electrons[0].charge = -2.5;
+    electrons[0].position = ModuleBase::Vector3<double>(-8.0, 0.5, 9.0);
+    const ModulePcc::Pcc2dGeometry slab = geometry(1.0);
+
+    const ModulePcc::Pcc2dMoments ionic = ModulePcc::pcc_2d_point_charge_moments(ions, slab);
+    const ModulePcc::Pcc2dMoments electronic = ModulePcc::pcc_2d_point_charge_moments(electrons, slab);
+    const ModulePcc::Pcc2dMoments sum = ModulePcc::pcc_2d_sum_moments(ionic, electronic);
+    std::vector<ModulePcc::PointCharge> combined = ions;
+    combined.push_back(electrons[0]);
+    const ModulePcc::Pcc2dMoments expected = ModulePcc::pcc_2d_point_charge_moments(combined, slab);
+    EXPECT_DOUBLE_EQ(sum.charge, expected.charge);
+    EXPECT_DOUBLE_EQ(sum.dipole_y, expected.dipole_y);
+    EXPECT_DOUBLE_EQ(sum.quadrupole_yy, expected.quadrupole_yy);
+}
+
 TEST(SccsPcc2d, DensityMomentsIncludeTheVolumeElement)
 {
     const std::vector<double> density{0.5, -0.25};

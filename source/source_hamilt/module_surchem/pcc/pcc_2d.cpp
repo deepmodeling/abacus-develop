@@ -261,6 +261,15 @@ Pcc2dMoments pcc_2d_density_moments_from_relative_y(
     return moments;
 }
 
+Pcc2dMoments pcc_2d_sum_moments(const Pcc2dMoments& left, const Pcc2dMoments& right)
+{
+    Pcc2dMoments result;
+    result.charge = left.charge + right.charge;
+    result.dipole_y = left.dipole_y + right.dipole_y;
+    result.quadrupole_yy = left.quadrupole_yy + right.quadrupole_yy;
+    return result;
+}
+
 Pcc2dMoments pcc_2d_density_moments(
     const std::vector<double>& density,
     const std::vector<ModuleBase::Vector3<double>>& positions,

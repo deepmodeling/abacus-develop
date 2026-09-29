@@ -365,6 +365,17 @@ MultipoleMoments density_moments_from_relative_positions(
     return moments;
 }
 
+MultipoleMoments sum_moments(const MultipoleMoments& left, const MultipoleMoments& right)
+{
+    MultipoleMoments result;
+    result.charge = left.charge + right.charge;
+    result.dipole.x = left.dipole.x + right.dipole.x;
+    result.dipole.y = left.dipole.y + right.dipole.y;
+    result.dipole.z = left.dipole.z + right.dipole.z;
+    result.quadrupole_trace = left.quadrupole_trace + right.quadrupole_trace;
+    return result;
+}
+
 double pcc_potential(const MultipoleMoments& moments,
                      const ModuleBase::Vector3<double>& position,
                      const PccParameters& parameters)

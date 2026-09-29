@@ -29,6 +29,31 @@ TEST(SccsPcc, AccumulatesPointChargeMomentsAboutTheRequestedOrigin)
     EXPECT_DOUBLE_EQ(moments.quadrupole_trace, 2.0);
 }
 
+TEST(SccsPcc, SumMomentsEqualTheMomentsOfTheCombinedCharges)
+{
+    std::vector<ModulePcc::PointCharge> ions(2);
+    ions[0].charge = 2.0;
+    ions[0].position = ModuleBase::Vector3<double>(2.0, 0.5, -1.0);
+    ions[1].charge = 1.0;
+    ions[1].position = ModuleBase::Vector3<double>(-0.5, 1.5, 0.25);
+    std::vector<ModulePcc::PointCharge> electrons(1);
+    electrons[0].charge = -2.5;
+    electrons[0].position = ModuleBase::Vector3<double>(0.75, 1.0, -0.5);
+    const ModuleBase::Vector3<double> origin(0.5, 1.0, 0.0);
+
+    const ModulePcc::MultipoleMoments ionic = ModulePcc::point_charge_moments(ions, origin);
+    const ModulePcc::MultipoleMoments electronic = ModulePcc::point_charge_moments(electrons, origin);
+    const ModulePcc::MultipoleMoments sum = ModulePcc::sum_moments(ionic, electronic);
+    std::vector<ModulePcc::PointCharge> combined = ions;
+    combined.push_back(electrons[0]);
+    const ModulePcc::MultipoleMoments expected = ModulePcc::point_charge_moments(combined, origin);
+    EXPECT_DOUBLE_EQ(sum.charge, expected.charge);
+    EXPECT_DOUBLE_EQ(sum.dipole.x, expected.dipole.x);
+    EXPECT_DOUBLE_EQ(sum.dipole.y, expected.dipole.y);
+    EXPECT_DOUBLE_EQ(sum.dipole.z, expected.dipole.z);
+    EXPECT_DOUBLE_EQ(sum.quadrupole_trace, expected.quadrupole_trace);
+}
+
 TEST(SccsPcc, BuildsGeometryForRotatedCubicCell)
 {
     const ModuleBase::Matrix3 lattice(0.0, 1.0, 0.0,

@@ -101,26 +101,6 @@ bool same_state_signature(const SccsState& state,
            && state.potential.size() == static_cast<std::size_t>(basis.nrxx);
 }
 
-ModulePcc::MultipoleMoments add_moments(const ModulePcc::MultipoleMoments& left, const ModulePcc::MultipoleMoments& right)
-{
-    ModulePcc::MultipoleMoments result;
-    result.charge = left.charge + right.charge;
-    result.dipole.x = left.dipole.x + right.dipole.x;
-    result.dipole.y = left.dipole.y + right.dipole.y;
-    result.dipole.z = left.dipole.z + right.dipole.z;
-    result.quadrupole_trace = left.quadrupole_trace + right.quadrupole_trace;
-    return result;
-}
-
-ModulePcc::Pcc2dMoments add_moments_2d(const ModulePcc::Pcc2dMoments& left, const ModulePcc::Pcc2dMoments& right)
-{
-    ModulePcc::Pcc2dMoments result;
-    result.charge = left.charge + right.charge;
-    result.dipole_y = left.dipole_y + right.dipole_y;
-    result.quadrupole_yy = left.quadrupole_yy + right.quadrupole_yy;
-    return result;
-}
-
 } // namespace
 
 void SccsState::reset()
@@ -316,7 +296,7 @@ SccsResult evaluate_pw_sccs(
                                       origin,
                                       reduction);
     }
-    result.screened_moments = add_moments(result.solute_moments, result.polarization_moments);
+    result.screened_moments = ModulePcc::sum_moments(result.solute_moments, result.polarization_moments);
     if (config.boundary == ModulePcc::Boundary::Pcc0d)
     {
         result.smooth_vacuum_pcc_energy
@@ -336,8 +316,8 @@ SccsResult evaluate_pw_sccs(
                                              volume_element,
                                              pcc_2d_geometry,
                                              reduction);
-        result.screened_moments_2d = add_moments_2d(result.solute_moments_2d,
-                                                    result.polarization_moments_2d);
+        result.screened_moments_2d = ModulePcc::pcc_2d_sum_moments(result.solute_moments_2d,
+                                                                   result.polarization_moments_2d);
         const double polarization_charge_tolerance
             = std::max(normalization_tolerance,
                        std::max(config.tolerance_max * volume_element
