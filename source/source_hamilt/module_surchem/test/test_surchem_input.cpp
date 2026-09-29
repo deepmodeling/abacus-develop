@@ -46,6 +46,25 @@ TEST(SurchemInput, TransfersPresetAndSolverControls)
     EXPECT_FALSE(summary.sccs_config.check_fixed_point);
     EXPECT_DOUBLE_EQ(summary.sccs_config.cavity.lowpass_p1, -1.0);
     EXPECT_DOUBLE_EQ(summary.sccs_config.cavity.lowpass_p2, -1.0);
+    EXPECT_FALSE(summary.sccs_config.core_electrons);
+}
+
+// Environ solvent_mode full adds core electrons to the cavity for every preset.
+TEST(SurchemInput, TransfersFullSolventModeCoreElectrons)
+{
+    Input_para input;
+    UnitCell cell;
+    input.imp_sol = 2;
+    input.assume_isolated = "pcc_0d";
+    input.sccs_preset = "water-anion";
+    input.sccs_solvent_mode = "full";
+    input.sccs_corespread = 0.6;
+    const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, false, 1);
+    EXPECT_TRUE(parameters.sccs_config.core_electrons);
+    EXPECT_DOUBLE_EQ(parameters.sccs_config.core_spread, 0.6);
+    EXPECT_DOUBLE_EQ(parameters.sccs_config.cavity.density_max, 1.55e-2);
+    input.sccs_corespread = 0.0;
+    EXPECT_THROW(ModuleSurchem::make_parameters(input, cell, 0.0, false, 1), std::invalid_argument);
 }
 
 // The switching lowpass follows the preset and exists only with PCC.

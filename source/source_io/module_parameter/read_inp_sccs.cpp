@@ -85,6 +85,19 @@ void check_sccs_lowpass(const Input_para& input)
     }
 }
 
+void check_sccs_solvent_mode(const Input_para& input)
+{
+    const std::vector<std::string> allowed = {"electronic", "full"};
+    if (std::find(allowed.begin(), allowed.end(), input.sccs_solvent_mode) == allowed.end())
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", nofound_str(allowed, "sccs_solvent_mode"));
+    }
+    if (!std::isfinite(input.sccs_corespread) || input.sccs_corespread <= 0.0)
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", "sccs_corespread must be positive and finite");
+    }
+}
+
 void check_sccs_numerical_parameters(const Input_para& input)
 {
     if (input.sccs_maxiter <= 0 || !std::isfinite(input.sccs_epsilon)
@@ -102,6 +115,7 @@ void check_sccs_numerical_parameters(const Input_para& input)
         ModuleBase::WARNING_QUIT("ReadInput", "invalid SCCS numerical parameters");
     }
     check_sccs_lowpass(input);
+    check_sccs_solvent_mode(input);
 }
 } // namespace
 
@@ -143,6 +157,13 @@ void ReadInput::item_sccs()
     ADD_SCCS_REAL_ITEM("sccs_tol_rms", sccs_tol_rms, "Positive RMS tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-10. It applies to the ENVIRON sqrt-preconditioned CG solution of the generalized Poisson equation for every assume_isolated value; with pcc_0d or pcc_2d the preconditioner Poisson solve includes the analytic open-boundary correction. ENVIRON stops its CG when the unnormalized sum of squared residuals falls below its tol; the corresponding RMS is sqrt(tol/N) for N FFT grid points.", "1.0e-10", "e/bohr^3")
     ADD_SCCS_REAL_ITEM("sccs_tol_max", sccs_tol_max, "Positive maximum tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-8. The sqrt-CG stops only when both sccs_tol_rms and sccs_tol_max are satisfied.", "1.0e-8", "e/bohr^3")
     ADD_SCCS_REAL_ITEM("sccs_surface_eta", sccs_surface_eta, "Positive SCCS surface regularization; user-controlled for every sccs_preset, default 1.0e-8 bohr^-1.", "1.0e-8", "bohr^-1")
+    ADD_SCCS_REAL_ITEM("sccs_corespread",
+                       sccs_corespread,
+                       "Spread of the core-electron Gaussians of sccs_solvent_mode full, as Environ "
+                       "corespread: exp(-r^2/spread^2), positive, default 0.5 bohr. Used only "
+                       "with sccs_solvent_mode full.",
+                       "0.5",
+                       "bohr")
     ADD_SCCS_REAL_ITEM("sccs_lowpass_p1",
                        sccs_lowpass_p1,
                        "Low-pass filter of the SCCS switching-function derivatives, as Environ "
@@ -224,6 +245,31 @@ void ReadInput::item_sccs()
         read_sync_int(input.sccs_maxiter);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             check_sccs_numerical_parameters(para.input);
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_solvent_mode");
+        item.annotation = "density that defines the SCCS cavity";
+        item.category = "Implicit solvation model";
+        item.type = "String";
+        item.description
+            = "Allowed values: electronic (default) and full, as Environ solvent_mode. electronic "
+              "builds the dielectric cavity from the valence electron density. full adds, on "
+              "every atom except hydrogen, a Gaussian of the valence charge with spread "
+              "sccs_corespread, as Environ does for the core electrons. Use full when the "
+              "pseudo-valence density at a nucleus drops below sccs_rho_max (for example "
+              "some S and Cl norm-conserving pseudopotentials with the water-anion or "
+              "water-cation preset): electronic mode then puts dielectric inside the atom and "
+              "the SCF diverges. The Gaussians shape only the cavity, not the solute charge; "
+              "the ionic forces include their cavity term. The published SCCS presets were "
+              "fitted with electronic mode.";
+        item.default_value = "electronic";
+        item.unit = "";
+        item.set_availability("imp_sol==2");
+        read_sync_string(input.sccs_solvent_mode);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            check_sccs_solvent_mode(para.input);
         };
         this->add_item(item);
     }

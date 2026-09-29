@@ -219,6 +219,8 @@ class surchem
     {
         std::vector<double> local_potential;
         std::vector<double> ionic_density;
+        // ENVIRON 'full' core electrons for the cavity; empty otherwise.
+        std::vector<double> core_density;
         std::vector<ModuleBase::Vector3<double>> positions;
         ModuleBase::Matrix3 lattice_vectors;
         const ModulePW::PW_Basis* basis = nullptr;

@@ -381,6 +381,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.sccs_tol_rms, 1.0e-10);
     EXPECT_DOUBLE_EQ(param.inp.sccs_tol_max, 1.0e-8);
     EXPECT_DOUBLE_EQ(param.inp.sccs_surface_eta, 1.0e-8);
+    EXPECT_EQ(param.inp.sccs_solvent_mode, "electronic");
+    EXPECT_DOUBLE_EQ(param.inp.sccs_corespread, 0.5);
     EXPECT_DOUBLE_EQ(param.inp.sccs_lowpass_p1, -1.0);
     EXPECT_DOUBLE_EQ(param.inp.sccs_lowpass_p2, -1.0);
     EXPECT_EQ(param.inp.sccs_maxiter, 200);

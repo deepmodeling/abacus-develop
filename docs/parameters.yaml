@@ -4562,6 +4562,14 @@ parameters:
     default_value: "1.0e-8"
     unit: bohr^-1
     availability: imp_sol==2
+  - name: sccs_corespread
+    category: Implicit solvation model
+    type: Real
+    description: |
+      Spread of the core-electron Gaussians of sccs_solvent_mode full, as Environ corespread: exp(-r^2/spread^2), positive, default 0.5 bohr. Used only with sccs_solvent_mode full.
+    default_value: "0.5"
+    unit: bohr
+    availability: imp_sol==2
   - name: sccs_lowpass_p1
     category: Implicit solvation model
     type: Real
@@ -4608,6 +4616,14 @@ parameters:
     description: |
       Positive maximum inner iteration count; user-controlled for every sccs_preset, default 200. SCCS_ITER counts sqrt-preconditioned CG iterations for every assume_isolated value. Failure to converge terminates the calculation. No discrete adjoint is solved.
     default_value: "200"
+    unit: ""
+    availability: imp_sol==2
+  - name: sccs_solvent_mode
+    category: Implicit solvation model
+    type: String
+    description: |
+      Allowed values: electronic (default) and full, as Environ solvent_mode. electronic builds the dielectric cavity from the valence electron density. full adds, on every atom except hydrogen, a Gaussian of the valence charge with spread sccs_corespread, as Environ does for the core electrons. Use full when the pseudo-valence density at a nucleus drops below sccs_rho_max (for example some S and Cl norm-conserving pseudopotentials with the water-anion or water-cation preset): electronic mode then puts dielectric inside the atom and the SCF diverges. The Gaussians shape only the cavity, not the solute charge; the ionic forces include their cavity term. The published SCCS presets were fitted with electronic mode.
+    default_value: electronic
     unit: ""
     availability: imp_sol==2
   - name: sccs_mixing

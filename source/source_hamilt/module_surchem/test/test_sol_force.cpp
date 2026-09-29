@@ -75,6 +75,24 @@ double evaluate_total_electrostatic_energy(
            + solvent.sccs_result().vacuum_pcc_energy;
 }
 
+// Reaction, vacuum PCC and non-electrostatic energies: everything that moves
+// with the ions at fixed electron density when the cavity has core electrons.
+double evaluate_total_solvation_energy(
+    surchem& solvent,
+    const UnitCell& cell,
+    const ModulePW::PW_Basis& basis,
+    const ModuleBase::matrix& radial_local_potential,
+    const std::vector<double>& electron_density)
+{
+    const double electrostatic = evaluate_total_electrostatic_energy(solvent,
+                                                                     cell,
+                                                                     basis,
+                                                                     radial_local_potential,
+                                                                     electron_density);
+    return electrostatic + solvent.sccs_result().non_electrostatic.surface_energy
+           + solvent.sccs_result().non_electrostatic.volume_energy;
+}
+
 TEST(SolForce, ConvertsPointIonPccForceFromHartreeToRydberg)
 {
     ModulePW::PW_Basis basis("cpu", "double");
@@ -523,6 +541,131 @@ TEST(SolForce, NeutralAndChargedPcc2dMatchFixedDensityTotalEnergyDerivativeInXyz
                 << "charge case " << charge_case << " direction " << direction
                 << "; error " << error_ev_angstrom << " eV/Angstrom";
         }
+    }
+}
+
+// ENVIRON 'full' mode moves core-electron Gaussians, and with them the cavity,
+// with the ions. The electron density here is a shell with a hole at the
+// nucleus, which the core Gaussian fills. With the switching lowpass the cavity
+// potential is the exact derivative, so the force must match the fixed-density
+// derivative of the total solvation energy, cavity terms included.
+TEST(SolForce, FullSolventModeCoreForceMatchesFixedDensityEnergyDerivative)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    const double length = 10.0;
+    basis.initgrids(length, lattice, 120.0);
+    basis.initparameters(false, 120.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+    basis.collect_uniqgg();
+
+    UnitCell cell;
+    cell.lat0 = length;
+    cell.latvec = lattice;
+    cell.omega = length * length * length;
+    cell.tpiba = ModuleBase::TWO_PI / length;
+    cell.tpiba2 = cell.tpiba * cell.tpiba;
+    cell.ntype = 1;
+    cell.nat = 1;
+    cell.atoms = new Atom[1];
+    cell.atoms[0].na = 1;
+    cell.atoms[0].mass = 16.0;
+    cell.atoms[0].ncpp.zv = 1.0;
+    cell.atoms[0].ncpp.psd = "S";
+    // The nucleus sits 0.27 bohr from the center of the electron shell below.
+    cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.51, 0.535, 0.46));
+
+    ModuleBase::matrix radial_local_potential(1, basis.ngg);
+    for (int radial_index = 0; radial_index < basis.ngg; ++radial_index)
+    {
+        const double gg = basis.gg_uniq[radial_index];
+        if (gg == 0.0)
+        {
+            continue;
+        }
+        const double coulomb_rydberg
+            = ModuleBase::e2 * ModuleBase::FOUR_PI / (cell.tpiba2 * gg);
+        radial_local_potential(0, radial_index)
+            = -coulomb_rydberg / cell.omega * std::exp(-0.3 * cell.tpiba2 * gg);
+    }
+
+    // Shell r^2 exp(-r^2/w^2), zero at its center next to the nucleus.
+    const double width = 1.2;
+    std::vector<double> electron_density(basis.nrxx);
+    double electron_count = 0.0;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const int ix = ir / (basis.ny * basis.nplane);
+        const int iy = ir / basis.nplane - ix * basis.ny;
+        const int iz = ir % basis.nplane + basis.startz_current;
+        const double dx = length * (static_cast<double>(ix) / basis.nx - 0.49);
+        const double dy = length * (static_cast<double>(iy) / basis.ny - 0.52);
+        const double dz = length * (static_cast<double>(iz) / basis.nz - 0.47);
+        const double r2 = dx * dx + dy * dy + dz * dz;
+        electron_density[ir] = r2 * std::exp(-r2 / (width * width));
+        electron_count += electron_density[ir];
+    }
+    electron_count *= cell.omega / static_cast<double>(basis.nxyz);
+    const double target_electrons = 0.8;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        electron_density[ir] *= target_electrons / electron_count;
+    }
+
+    SurchemParameters parameters;
+    parameters.use_sccs = true;
+    parameters.expected_electron_count = target_electrons;
+    parameters.expected_ionic_charge = 1.0;
+    parameters.normalization_tolerance = 1.0e-10;
+    parameters.sccs_config.cavity.density_min = 1.0e-3;
+    parameters.sccs_config.cavity.density_max = 2.0e-2;
+    parameters.sccs_config.cavity.epsilon_bulk = 5.0;
+    parameters.sccs_config.cavity.lowpass_p1 = 10.0;
+    parameters.sccs_config.cavity.lowpass_p2 = 5.0;
+    parameters.sccs_config.surface_tension = ModuleSccs::dyn_per_cm_to_hartree_per_bohr2(5.0);
+    parameters.sccs_config.pressure = ModuleSccs::gpa_to_hartree_per_bohr3(0.125);
+    parameters.sccs_config.surface_regularization = 1.0e-8;
+    parameters.sccs_config.boundary = ModuleSccs::Boundary::Pcc0d;
+    parameters.pcc_boundary = ModuleSccs::Boundary::Pcc0d;
+    parameters.sccs_config.max_iterations = 500;
+    parameters.sccs_config.tolerance_rms = 1.0e-13;
+    parameters.sccs_config.tolerance_max = 1.0e-11;
+    parameters.sccs_config.core_electrons = true;
+    parameters.sccs_config.core_spread = 0.5;
+
+    surchem solvent;
+    solvent.set_parameters(parameters);
+    evaluate_total_solvation_energy(solvent, cell, basis, radial_local_potential,
+                                    electron_density);
+    ModuleBase::matrix force(1, 3);
+    solvent.cal_force_sol(cell, &basis, radial_local_potential, 1, force);
+
+    const double displacement = 1.0e-3;
+    double* coordinates[3] = {&cell.atoms[0].tau[0].x,
+                              &cell.atoms[0].tau[0].y,
+                              &cell.atoms[0].tau[0].z};
+    for (int direction = 0; direction < 3; ++direction)
+    {
+        *coordinates[direction] += displacement / length;
+        const double energy_plus = evaluate_total_solvation_energy(
+            solvent, cell, basis, radial_local_potential, electron_density);
+        *coordinates[direction] -= 2.0 * displacement / length;
+        const double energy_minus = evaluate_total_solvation_energy(
+            solvent, cell, basis, radial_local_potential, electron_density);
+        *coordinates[direction] += displacement / length;
+        const double finite_difference_force = -(energy_plus - energy_minus) / (2.0 * displacement);
+        const double force_hartree = 0.5 * force(0, direction);
+        std::cout << "FULL_MODE_FORCE direction " << direction << " analytic " << force_hartree
+                  << " finite_difference " << finite_difference_force << " error "
+                  << force_hartree - finite_difference_force << std::endl;
+        EXPECT_GT(std::abs(finite_difference_force), 1.0e-4);
+        EXPECT_NEAR(force_hartree, finite_difference_force, 1.0e-7);
     }
 }
 

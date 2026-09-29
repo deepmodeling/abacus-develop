@@ -145,6 +145,11 @@ void validate_config(const SccsConfig& config)
     {
         throw std::invalid_argument("SCCS maximum iteration count must be positive");
     }
+    if (config.core_electrons
+        && (!std::isfinite(config.core_spread) || config.core_spread <= 0.0))
+    {
+        throw std::invalid_argument("SCCS core-electron spread must be positive and finite");
+    }
     if (!std::isfinite(config.tolerance_rms) || config.tolerance_rms <= 0.0
         || !std::isfinite(config.tolerance_max) || config.tolerance_max <= 0.0)
     {

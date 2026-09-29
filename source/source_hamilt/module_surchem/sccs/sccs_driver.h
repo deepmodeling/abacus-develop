@@ -68,9 +68,12 @@ struct SccsResult
     double vacuum_pcc_energy = 0.0;
 };
 
+// cavity_core_density: ENVIRON 'full' core-electron Gaussians added to the
+// electron density that defines the cavity (config.core_electrons), else empty.
 SccsResult evaluate_pw_sccs(
     const std::vector<double>& electron_density,
     const std::vector<double>& ionic_density,
+    const std::vector<double>& cavity_core_density,
     double expected_electron_count,
     double expected_ionic_charge,
     double normalization_tolerance,

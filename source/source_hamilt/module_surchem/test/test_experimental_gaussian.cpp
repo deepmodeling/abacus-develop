@@ -134,6 +134,94 @@ TEST(ExperimentalGaussian, RejectsMismatchedPotential)
                  std::runtime_error);
 }
 
+// A sulfur-like atom (zv 6) and a hydrogen (zv 1) in a 10 bohr cubic cell.
+void setup_sulfur_hydrogen(ModulePW::PW_Basis& basis, UnitCell& cell)
+{
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    const double length = 10.0;
+    basis.initgrids(length, lattice, 80.0);
+    basis.initparameters(false, 80.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+    cell.lat0 = length;
+    cell.latvec = lattice;
+    cell.omega = length * length * length;
+    cell.tpiba = ModuleBase::TWO_PI / length;
+    cell.tpiba2 = cell.tpiba * cell.tpiba;
+    cell.ntype = 2;
+    cell.nat = 2;
+    cell.atoms = new Atom[2];
+    cell.atoms[0].na = 1;
+    cell.atoms[0].ncpp.zv = 6.0;
+    cell.atoms[0].ncpp.psd = "S";
+    cell.atoms[0].tau.push_back(ModuleBase::Vector3<double>(0.37, 0.43, 0.52));
+    cell.atoms[1].na = 1;
+    cell.atoms[1].ncpp.zv = 1.0;
+    cell.atoms[1].ncpp.psd = " H ";
+    cell.atoms[1].tau.push_back(ModuleBase::Vector3<double>(0.51, 0.43, 0.52));
+}
+
+TEST(ExperimentalGaussian, CoreDensitySkipsHydrogen)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+    UnitCell cell;
+    setup_sulfur_hydrogen(basis, cell);
+    const std::vector<double> core = ModuleSccs::gaussian_core_density(cell, basis, 0.5);
+    const std::vector<double> ionic
+        = ModuleSccs::gaussian_ionic_density(cell, basis, ModuleSccs::gaussian_ion_spread);
+    const double volume_element = cell.omega / static_cast<double>(basis.nxyz);
+    double core_charge = 0.0;
+    double ionic_charge = 0.0;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        core_charge += core[ir] * volume_element;
+        ionic_charge += ionic[ir] * volume_element;
+    }
+    EXPECT_NEAR(core_charge, 6.0, 1.0e-10);
+    EXPECT_NEAR(ionic_charge, 7.0, 1.0e-10);
+}
+
+TEST(ExperimentalGaussian, CoreForceMatchesDerivativeAndSkipsHydrogen)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+    UnitCell cell;
+    setup_sulfur_hydrogen(basis, cell);
+    const double length = cell.lat0;
+    const double spread = 0.7;
+    const double volume_element = cell.omega / basis.nxyz;
+    std::vector<double> potential(basis.nrxx);
+    for (int index = 0; index < basis.nrxx; ++index)
+    {
+        const int iy = (index / basis.nplane) % basis.ny;
+        const double y = length * iy / basis.ny - 0.5 * length;
+        potential[index] = 0.3 * y * y;
+    }
+    const ModuleBase::matrix force = ModuleSccs::gaussian_core_force(cell, basis, spread, potential);
+    const double displacement = 1.0e-5;
+    cell.atoms[0].tau[0].y += displacement / length;
+    const std::vector<double> plus = ModuleSccs::gaussian_core_density(cell, basis, spread);
+    cell.atoms[0].tau[0].y -= 2.0 * displacement / length;
+    const std::vector<double> minus = ModuleSccs::gaussian_core_density(cell, basis, spread);
+    cell.atoms[0].tau[0].y += displacement / length;
+    double energy_difference = 0.0;
+    for (int index = 0; index < basis.nrxx; ++index)
+    {
+        energy_difference += (plus[index] - minus[index]) * potential[index] * volume_element;
+    }
+    const double finite_difference = -energy_difference / (2.0 * displacement);
+    EXPECT_NEAR(force(0, 1), finite_difference, 1.0e-7);
+    EXPECT_GT(std::abs(force(0, 1)), 1.0e-3);
+    for (int d = 0; d < 3; ++d)
+    {
+        EXPECT_DOUBLE_EQ(force(1, d), 0.0);
+    }
+}
+
 } // namespace
 
 int main(int argc, char** argv)

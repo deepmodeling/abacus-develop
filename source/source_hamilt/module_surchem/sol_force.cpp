@@ -257,6 +257,29 @@ void surchem::cal_force_sccs(const UnitCell& cell,
             forcesol(atom, direction) = 2.0 * smooth_force_hartree(atom, direction);
         }
     }
+    // ENVIRON 'full' mode: the core-electron Gaussians move the cavity with the
+    // ions. Their force contracts the cavity potential, the derivative of the
+    // electrostatic and non-electrostatic energies with respect to the cavity
+    // density, with the Gaussian derivative (ENVIRON dboundary_dions).
+    if (config.core_electrons)
+    {
+        const std::vector<double>& electrostatic_cavity = this->sccs_result_.response.cavity_potential;
+        const std::vector<double>& non_electrostatic = this->sccs_result_.non_electrostatic.density_potential;
+        std::vector<double> cavity_potential(electrostatic_cavity.size());
+        for (std::size_t index = 0; index < cavity_potential.size(); ++index)
+        {
+            cavity_potential[index] = electrostatic_cavity[index] + non_electrostatic[index];
+        }
+        const ModuleBase::matrix core_force_hartree
+            = ModuleSccs::gaussian_core_force(cell, rho_basis, config.core_spread, cavity_potential);
+        for (int atom = 0; atom < cell.nat; ++atom)
+        {
+            for (int direction = 0; direction < 3; ++direction)
+            {
+                forcesol(atom, direction) += 2.0 * core_force_hartree(atom, direction);
+            }
+        }
+    }
     Parallel_Reduce::reduce_pool(forcesol.c, forcesol.nr * forcesol.nc);
     if (config.boundary == ModuleSccs::Boundary::Periodic)
     {

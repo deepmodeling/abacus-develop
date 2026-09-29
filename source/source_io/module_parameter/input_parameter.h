@@ -587,6 +587,8 @@ struct Input_para
     double sccs_tol_rms = 1.0e-10;            ///< sqrt-CG RMS charge-residual tolerance
     double sccs_tol_max = 1.0e-8;             ///< sqrt-CG maximum charge-residual tolerance
     double sccs_surface_eta = 1.0e-8;         ///< regularized surface norm, bohr^-1
+    std::string sccs_solvent_mode = "electronic"; ///< Environ solvent_mode: electronic or full (core electrons in the cavity)
+    double sccs_corespread = 0.5;              ///< Environ corespread of the full-mode core Gaussians, bohr
     double sccs_lowpass_p1 = -1.0;             ///< Environ deriv_lowpass_p1; PCC only, off unless both are positive
     double sccs_lowpass_p2 = -1.0;             ///< Environ deriv_lowpass_p2; PCC only, off unless both are positive
     double sccs_start_drho = 0.0;              ///< delayed-start density threshold; zero starts immediately

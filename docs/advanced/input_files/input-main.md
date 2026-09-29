@@ -533,12 +533,14 @@
     - [sccs\_tol\_rms](#sccs_tol_rms)
     - [sccs\_tol\_max](#sccs_tol_max)
     - [sccs\_surface\_eta](#sccs_surface_eta)
+    - [sccs\_corespread](#sccs_corespread)
     - [sccs\_lowpass\_p1](#sccs_lowpass_p1)
     - [sccs\_lowpass\_p2](#sccs_lowpass_p2)
     - [sccs\_start\_drho](#sccs_start_drho)
     - [sccs\_start\_nmax](#sccs_start_nmax)
     - [sccs\_debug](#sccs_debug)
     - [sccs\_maxiter](#sccs_maxiter)
+    - [sccs\_solvent\_mode](#sccs_solvent_mode)
     - [sccs\_mixing](#sccs_mixing)
     - [sccs\_mixing\_min](#sccs_mixing_min)
     - [sccs\_mixing\_max](#sccs_mixing_max)
@@ -4927,6 +4929,14 @@
 - **Default**: 1.0e-8
 - **Unit**: bohr^-1
 
+### sccs_corespread
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Spread of the core-electron Gaussians of sccs_solvent_mode full, as Environ corespread: exp(-r^2/spread^2), positive, default 0.5 bohr. Used only with sccs_solvent_mode full.
+- **Default**: 0.5
+- **Unit**: bohr
+
 ### sccs_lowpass_p1
 
 - **Type**: Real
@@ -4967,6 +4977,13 @@
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
 - **Description**: Positive maximum inner iteration count; user-controlled for every sccs_preset, default 200. SCCS_ITER counts sqrt-preconditioned CG iterations for every assume_isolated value. Failure to converge terminates the calculation. No discrete adjoint is solved.
 - **Default**: 200
+
+### sccs_solvent_mode
+
+- **Type**: String
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Allowed values: electronic (default) and full, as Environ solvent_mode. electronic builds the dielectric cavity from the valence electron density. full adds, on every atom except hydrogen, a Gaussian of the valence charge with spread sccs_corespread, as Environ does for the core electrons. Use full when the pseudo-valence density at a nucleus drops below sccs_rho_max (for example some S and Cl norm-conserving pseudopotentials with the water-anion or water-cation preset): electronic mode then puts dielectric inside the atom and the SCF diverges. The Gaussians shape only the cavity, not the solute charge; the ionic forces include their cavity term. The published SCCS presets were fitted with electronic mode.
+- **Default**: electronic
 
 ### sccs_mixing
 

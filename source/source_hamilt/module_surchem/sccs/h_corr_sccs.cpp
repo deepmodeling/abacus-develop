@@ -75,6 +75,12 @@ void surchem::v_correction_sccs(const UnitCell& cell,
         cache.local_potential.assign(vlocal, local_potential_end);
         cache.ionic_density
             = ModuleSccs::gaussian_ionic_density(cell, rho_basis, ModuleSccs::gaussian_ion_spread);
+        cache.core_density.clear();
+        if (this->parameters_.sccs_config.core_electrons)
+        {
+            cache.core_density = ModuleSccs::gaussian_core_density(
+                cell, rho_basis, this->parameters_.sccs_config.core_spread);
+        }
         cache.positions = ModuleSccs::pw_grid_positions(rho_basis, cell.latvec, cell.lat0);
         cache.lattice_vectors = cell.latvec;
         cache.basis = &rho_basis;
@@ -91,6 +97,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
         cache.valid = true;
     }
     const std::vector<double>& ionic_density = cache.ionic_density;
+    const std::vector<double>& core_density = cache.core_density;
     const std::vector<ModuleBase::Vector3<double>>& positions = cache.positions;
     ModuleBase::Vector3<double> origin
         = ModuleSccs::cell_center(cell.latvec, cell.lat0);
@@ -117,6 +124,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     this->sccs_result_
         = ModuleSccs::evaluate_pw_sccs(electron_density,
                                        ionic_density,
+                                       core_density,
                                        this->parameters_.expected_electron_count,
                                        this->parameters_.expected_ionic_charge,
                                        this->parameters_.normalization_tolerance,

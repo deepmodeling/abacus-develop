@@ -149,6 +149,7 @@ void SccsState::reset()
 SccsResult evaluate_pw_sccs(
     const std::vector<double>& electron_density,
     const std::vector<double>& ionic_density,
+    const std::vector<double>& cavity_core_density,
     const double expected_electron_count,
     const double expected_ionic_charge,
     const double normalization_tolerance,
@@ -168,6 +169,12 @@ SccsResult evaluate_pw_sccs(
     if (positions.size() != static_cast<std::size_t>(basis.nrxx))
     {
         throw std::invalid_argument("SCCS grid positions must match the local PW grid");
+    }
+    const std::size_t expected_core_size
+        = config.core_electrons ? static_cast<std::size_t>(basis.nrxx) : 0;
+    if (cavity_core_density.size() != expected_core_size)
+    {
+        throw std::invalid_argument("SCCS core-electron density must be given exactly when core_electrons is set");
     }
 
     SccsResult result;
@@ -230,7 +237,14 @@ SccsResult evaluate_pw_sccs(
     // Every boundary uses the ENVIRON sqrt-CG. With PCC the preconditioner's
     // Poisson solve includes the analytic open-boundary term, so a charged
     // solute keeps its screening charge and the physical potential gauge.
-    result.response = solve_chain_sccs_response(result.charge.electron,
+    // The cavity follows the electrons, plus the core electrons in ENVIRON
+    // 'full' mode; the solute charge is unchanged.
+    std::vector<double> cavity_density = result.charge.electron;
+    for (std::size_t index = 0; index < cavity_core_density.size(); ++index)
+    {
+        cavity_density[index] += cavity_core_density[index];
+    }
+    result.response = solve_chain_sccs_response(cavity_density,
                                                 result.charge.solute,
                                                 config.cavity,
                                                 solver_parameters,

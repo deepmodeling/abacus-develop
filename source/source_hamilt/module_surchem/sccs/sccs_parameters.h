@@ -35,6 +35,10 @@ struct SccsConfig
     double tolerance_rms = 0.0;
     double tolerance_max = 0.0;
     bool check_fixed_point = false;
+    // ENVIRON solvent_mode 'full': the cavity density adds a Gaussian of the
+    // valence charge with core_spread (bohr) on every non-hydrogen atom.
+    bool core_electrons = false;
+    double core_spread = 0.5;
 };
 
 Preset parse_preset(const std::string& value);
