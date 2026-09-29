@@ -3,13 +3,14 @@ PW H3O+ (nelec_delta -1) with native SCCS, the water-cation preset and zero-dime
 energy, potential and ionic force. The former polarization-charge fixed point stalled the SCF for
 this system.
 
-Reference provenance (regenerated 2026-09-28, ecutwfc 100 Ry / ecutrho 400 Ry):
-- ABACUS source commit: 7bef5467f (Solve PCC SCCS with the ENVIRON sqrt-CG)
+Reference provenance (regenerated 2026-09-29, ecutwfc 100 Ry / ecutrho 400 Ry):
+- ABACUS source commit: 967753df6 (Environ lowpass with exact PCC cavity derivative);
+  the default PCC cavity potential now uses the Environ FFT gradient
 - ABACUS version: v3.11.0-beta10
-- executable SHA256: 08f499b3083312ccacbe21ac9db51d2aad7a5455bbf75cf2c2af25e081548edd
-- parallel layout: 4 MPI ranks x 1 OpenMP thread
+- executable SHA256: e204808624109bbf6fa02babe1eab38035133714483206bebb4835e82c696c66
+- parallel layout: 16 MPI ranks x 1 OpenMP thread
 - result.ref is an ABACUS regression baseline, not an external QE/Environ reference.
-- two independent clean runs produced identical energy, force, and solvation values.
+- after regeneration, two independent check runs passed every comparison.
 
 Repository harness regeneration command, run from tests/01_PW:
-  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 4 -o 1 -r '^218_PW_SCCS_PCC0D_H3O$' -g
+  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 16 -o 1 -r '^218_PW_SCCS_PCC0D_H3O$' -g
