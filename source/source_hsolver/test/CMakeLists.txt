@@ -56,7 +56,7 @@ if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_base
     LIBS parameter  psi device base
-    SOURCES test_hsolver.cpp 
+    SOURCES test_hsolver.cpp ../hsolver.cpp
   )
 
   AddTest(
