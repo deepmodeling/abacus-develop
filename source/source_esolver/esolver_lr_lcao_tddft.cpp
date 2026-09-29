@@ -805,12 +805,12 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
         // The LR terms only carry the Omega part of the force; the ground-state part is separate
         // and comes straight from the KS solver.
         this->ks_->cal_force(ucell, this->force_gs_);
-        this->lr_force_ = this->cal_force(this->target_is_, this->inp_->lr_target_state)[0];
+        this->lr_force_ = this->cal_lr_force_relax_(GlobalV::ofs_running);
 
         // One line per ionic step with the two halves of the energy and of the gradient. Without
         // it the relaxation only reports a force, and whether E_gs + Omega actually goes down --
         // the thing being minimised -- cannot be read off the log at all.
-        const double omega = this->pelec->ekb.c[this->target_ekb_offset_()];
+        const double omega = this->target_omega_();
         auto max_abs = [](const ModuleBase::matrix& m) -> double
             { double v = 0.0; for (int i = 0;i < m.nr * m.nc;++i) { v = std::max(v, std::abs(m.c[i])); } return v; };
         GlobalV::ofs_running << std::setprecision(8) << std::fixed

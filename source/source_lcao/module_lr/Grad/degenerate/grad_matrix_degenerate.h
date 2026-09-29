@@ -28,9 +28,14 @@
 /// and (A2) reuses the $d$ diagonal gradients the code already computes, so the whole matrix costs
 /// $d(d+1)/2$ evaluations -- exactly its number of independent components.
 ///
-/// Derivation, the self-checks it admits, and why the alternative (an explicitly bilinear Z-vector
-/// right-hand side) is the more expensive route:
-/// `LR-Grad-formulas/2026-09-简并激发态梯度-实测和讨论.md` section 5.4.
+/// The construction admits two checks that need no finite differences and are worth running on
+/// any new case: $\mathcal F[2X]=4\mathcal F[X]$ (it is a quadratic form at all), and
+/// covariance under a rotation of the subspace basis, $\mathcal F[X'_k]=(U^\top GU)_{kk}$ with
+/// $X'_k=\sum_lU_{lk}X_l$. Both are exercised in `test/test_grad_matrix_degenerate.cpp`.
+///
+/// The alternative -- deriving an explicitly bilinear Z-vector right-hand side that takes two
+/// different $X$ -- yields the same $G$, but it has to re-derive every factor and hand-polarize
+/// the $g^{xc}$ potential, so it is the more expensive and more error-prone route.
 ///
 /// This header holds only the basis-independent bookkeeping, so that it is unit-testable without a
 /// ground state: grouping states into multiplets, enumerating the pairs, forming the normalized

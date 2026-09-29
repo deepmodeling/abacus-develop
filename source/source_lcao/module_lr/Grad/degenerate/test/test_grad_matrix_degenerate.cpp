@@ -6,8 +6,8 @@
 #include "source_base/matrix.h"
 #include "../grad_matrix_degenerate.h"
 
-/// Tests for the degenerate-subspace gradient matrix algebra (route A2 of
-/// LR-Grad-formulas/2026-09-简并激发态梯度-实测和讨论.md section 5.4).
+/// Tests for the degenerate-subspace gradient matrix algebra; `../grad_matrix_degenerate.h`
+/// states the identity being exercised.
 ///
 /// The interesting test is not the arithmetic of `assemble_grad_matrix` but whether the route it
 /// implements really recovers the bilinear form: `QuadraticForm` below plays the part of the

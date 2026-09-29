@@ -245,8 +245,49 @@ namespace ModuleESolver
         /// open-shell counterpart of `cal_force_Xz`
         std::vector<ModuleBase::matrix> cal_force_openshell_Xz(const ct::Tensor& Xz,
             const std::vector<double>& omega, const int label_begin);
+        /// @brief The linear vibronic coupling (LVC) data of one degenerate multiplet.
+        ///
+        /// $H(\delta R)=\Omega_0\mathbb{1}+\sum_{A\alpha}\delta R_{A\alpha}G^{(A\alpha)}$ is the
+        /// complete first-order description of a degeneracy, and $G$ is its parameter set. Kept as
+        /// one object rather than as loose force matrices because the excited-state relaxation and
+        /// (later) non-adiabatic dynamics need exactly the same data: near a degeneracy the correct
+        /// propagation is on this coupled $d\times d$ model, not on an adiabatic gradient.
+        struct MultipletLVC
+        {
+            int ispin = 0;                  ///< which spin channel (index into `spin_types`)
+            std::vector<int> states;        ///< the multiplet's state indices, ascending
+            double omega0 = 0.0;            ///< the common excitation energy (Ry)
+            double omega_spread = 0.0;      ///< max - min over the members (Ry); 0 if exact
+            /// G[k][l], symmetric, each a (nat, 3) force matrix -- i.e. the 3N matrices of d x d
+            std::vector<std::vector<ModuleBase::matrix>> g;
+            int dim() const { return static_cast<int>(states.size()); }
+            /// $\operatorname{Tr}G/d$: the one smooth, basis-independent 3N vector field the
+            /// multiplet has. Following it preserves the symmetric configuration.
+            ModuleBase::matrix average_force() const;
+        };
+        /// LVC data of every multiplet found at this geometry, rebuilt on each call of
+        /// `cal_force_and_grad_matrix_`. Empty unless `lr_grad_degen_thr > 0`.
+        std::vector<MultipletLVC> multiplet_lvc_;
+        /// The multiplet `lr_target_state` belongs to, or empty when the target is non-degenerate
+        /// or `lr_relax_degen_mode = state`. Refreshed every ionic step by
+        /// `resolve_target_multiplet_`, and it is what makes `cal_energy` and the reported gradient
+        /// describe the same surface.
+        std::vector<int> target_group_;
+        /// Fill `target_group_` from the excitation energies of the current geometry.
+        void resolve_target_multiplet_();
+        /// The excitation energy the relaxation is minimising: the target state's own, or the
+        /// multiplet average when `target_group_` is set.
+        double target_omega_() const;
+        /// The LR half of the force for the current geometry, following whichever surface
+        /// `lr_relax_degen_mode` selects. `ofs` receives the note when that is not a single state.
+        ModuleBase::matrix cal_lr_force_relax_(std::ofstream& ofs);
+        /// Widen a multiplet's eigenvectors into the Z window, one block each. Members need not be
+        /// contiguous, so they are padded one at a time.
+        ct::Tensor pad_group_to_z_(const int ispin, const std::vector<int>& group) const;
         /// @brief Per-state gradients of every state, plus the gradient matrix of each degenerate
         ///        multiplet when `lr_grad_degen_thr` asks for it. The single-point entry point.
+        ///
+        /// Fills `multiplet_lvc_`.
         void cal_force_and_grad_matrix_(const int ispin, std::ofstream& ofs);
         /// @brief The gradient matrix of one degenerate multiplet,
         ///        $G^{(A\alpha)}_{kl}=\langle X_k|\partial A/\partial R_{A\alpha}|X_l\rangle$.
@@ -256,8 +297,7 @@ namespace ModuleESolver
         /// eigenvectors depend on $u$ -- so this whole matrix, not its diagonal, is the first-order
         /// information. It is obtained from the polarization identity
         /// $G_{kl}=\mathcal F[(X_k{+}X_l)/\sqrt2]-\tfrac12(G_{kk}+G_{ll})$, which needs no new
-        /// physics: see `Grad/degenerate/grad_matrix_degenerate.h` and section 5.4 of
-        /// `LR-Grad-formulas/2026-09-简并激发态梯度-实测和讨论.md`.
+        /// physics. `Grad/degenerate/grad_matrix_degenerate.h` derives why that is exact.
         ///
         /// @param group  state indices of the multiplet, from `LR::group_degenerate_states`
         /// @param diag   their per-state gradients, i.e. $G_{kk}$, already computed by `cal_force`

@@ -573,6 +573,7 @@
     - [lr\_target\_state](#lr_target_state)
     - [lr\_target\_spin](#lr_target_spin)
     - [lr\_grad\_degen\_thr](#lr_grad_degen_thr)
+    - [lr\_relax\_degen\_mode](#lr_relax_degen_mode)
     - [lr\_unrestricted](#lr_unrestricted)
     - [abs\_wavelen\_range](#abs_wavelen_range)
     - [out\_wfc\_lr](#out_wfc_lr)
@@ -5180,6 +5181,16 @@
 
   A sensible value is a few times the eigensolver threshold [lr_thr](#lr_thr), so that states split by real physics are not merged.
 - **Default**: 0
+
+### lr_relax_degen_mode
+
+- **Type**: String
+- **Description**: What `calculation = relax` follows when [lr_target_state](#lr_target_state) sits inside a degenerate multiplet, as identified by [lr_grad_degen_thr](#lr_grad_degen_thr). It has no effect when the target state is non-degenerate.
+  - state: follow the gradient of that one state, as returned by the eigensolver. This is the historical behaviour and is what reproduces earlier results, but inside a multiplet it is not a well-defined quantity: the per-state gradients are the diagonal of the subspace gradient matrix in whichever basis the eigensolver happened to return, so they depend on numerical details of the diagonalisation rather than on physics.
+  - average: follow the multiplet average $\bar\Omega=\frac{1}{d}\sum_k\Omega_k$, whose gradient is $\operatorname{Tr}G/d$. Unlike the individual states this is a smooth, basis-independent surface, and by symmetry its gradient is totally symmetric, so following it keeps the geometry on the symmetric configuration. Both the reported energy and the reported gradient switch to the average together, which the energy-based optimisers (`cg`, `bfgs`, `lbfgs`) require -- a gradient of one surface line-searched against the energy of another does not converge.
+
+  `average` deliberately does NOT find the Jahn-Teller distortion: that distortion is orthogonal to the totally symmetric average gradient, and reaching it needs the off-diagonal part of the gradient matrix.
+- **Default**: state
 
 ### lr_unrestricted
 

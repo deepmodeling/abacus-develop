@@ -1092,6 +1092,36 @@ The threshold proposes candidates; it cannot tell a true degeneracy from an acci
         this->add_item(item);
     }
     {
+        Input_Item item("lr_relax_degen_mode");
+        item.annotation = "what a relaxation follows when the target state is degenerate: state or average";
+        item.category = "Linear Response TDDFT";
+        item.type = "String";
+        item.description = R"(What `calculation = relax` follows when `lr_target_state` sits inside a degenerate multiplet, as identified by `lr_grad_degen_thr`. It has no effect when the target state is non-degenerate.
+
+* state: follow the gradient of that one state, as returned by the eigensolver. This is the historical behaviour and is what reproduces earlier results, but inside a multiplet it is not a well-defined quantity: the per-state gradients are the diagonal of the subspace gradient matrix in whichever basis the eigensolver happened to return, so they depend on numerical details of the diagonalisation rather than on physics.
+* average: follow the multiplet average $\bar\Omega=\frac{1}{d}\sum_k\Omega_k$, whose gradient is $\operatorname{Tr}G/d$. Unlike the individual states this is a smooth, basis-independent surface, and by symmetry its gradient is totally symmetric, so following it keeps the geometry on the symmetric configuration. Both `cal_energy` and the reported gradient switch to the average together, which the energy-based optimisers (`cg`, `bfgs`, `lbfgs`) require -- a gradient of one surface line-searched against the energy of another does not converge.
+
+[NOTE] `average` deliberately does NOT find the Jahn-Teller distortion: that distortion is orthogonal to the totally symmetric average gradient, and reaching it needs the off-diagonal part of the gradient matrix.)";
+        item.default_value = "state";
+        item.unit = "";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> modes = { "state", "average" };
+            if (std::find(modes.begin(), modes.end(), para.input.lr_relax_degen_mode) == modes.end())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lr_relax_degen_mode must be state or average");
+            }
+            // `average` needs to know which states form the multiplet, and that grouping is what
+            // lr_grad_degen_thr defines; without it there is nothing to average over.
+            if (para.input.lr_relax_degen_mode == "average" && para.input.lr_grad_degen_thr <= 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "lr_relax_degen_mode=average requires lr_grad_degen_thr > 0 to define the multiplet");
+            }
+        };
+        read_sync_string(input.lr_relax_degen_mode);
+        this->add_item(item);
+    }
+    {
         Input_Item item("lr_target_spin");
         item.annotation = "spin channel of lr_target_state: singlet, triplet or updown";
         item.category = "Linear Response TDDFT";

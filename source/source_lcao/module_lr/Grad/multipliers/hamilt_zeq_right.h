@@ -94,7 +94,6 @@ namespace LR
             // $K^T_{xc}=f_{uu}-f_{ud}\ne0$ -- exactly what `PotHxcLR`'s `S2_triplet` branch
             // evaluates -- so $\partial K^T$ carries a $g^{xc}$ term too, with the "-" spin
             // combination. `PotGradXCLR` picks it via the `triplet` flag.
-            // (LR-Grad-formulas/GGA-kxc-to-v积分公式.md section 5.)
             if (LR_Util::has_local_xc(xc_kernel))
             {
                 this->pot_grad = std::make_shared<PotGradXCLR>(pot.lock()->xc_kernel_components(), pot.lock()->get_rho_basis(), ucell, pot.lock()->nrxx, spin_type == "triplet");
