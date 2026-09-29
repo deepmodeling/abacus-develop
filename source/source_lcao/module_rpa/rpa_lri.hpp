@@ -1190,7 +1190,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         {mix_DMk_2D.set_nks(kv.get_nkstot_nospin() * (this->runtime.input.nspin == 2 ? 2 : 1));}
     else
         {mix_DMk_2D.set_nks(kv.get_nks());}
-        
+
     // The post-SCF density is only initialized through restart_all().  That
     // path still needs a live mixing engine to initialize per-k-point state;
     // no subsequent mixing step is performed here.
@@ -1206,7 +1206,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         mix_DMk_2D.mix(this->symmetry_rotation_.restore_dm(kv, dm.get_dmk_vec(), parav), true);
     }
     else { mix_DMk_2D.mix(dm.get_dmk_vec(), true); }
-    
+
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds
         = RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,
                                             kv,
@@ -1214,7 +1214,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
                                             parav,
                                             this->runtime.input.nspin,
                                             this->use_spacegroup_symmetry_);
-    
+
     // reserve exx_ccp_rmesh_times to calculate full Coulomb
     // Note: ccp_type=Hf and hybrid_alpha=1 were previously set on the global Exx_Info
     // and sync_from_global() was called, but this->info (value copy) already has the correct
