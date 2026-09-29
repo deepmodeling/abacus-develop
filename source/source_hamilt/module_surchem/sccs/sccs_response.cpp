@@ -6,9 +6,9 @@
 #include "source_base/timer.h"
 #include "source_basis/module_pw/pw_basis.h"
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
-#include <algorithm>
 #include <stdexcept>
 
 namespace ModuleSccs
@@ -57,8 +57,9 @@ SccsResponse prepare_cavity(
     const ModulePW::PW_Basis& basis,
     const double tpiba)
 {
-    ModuleSccs::SccsResponse result;
-    const auto density_gradient = ModuleSccs::periodic_gradient(density, basis, tpiba);
+    SccsResponse result;
+    const std::vector<ModuleBase::Vector3<double>> density_gradient
+        = ModuleSccs::periodic_gradient(density, basis, tpiba);
     result.density_gradient = density_gradient;
     const std::size_t size = density.size();
     result.solute.resize(size);
@@ -68,14 +69,16 @@ SccsResponse prepare_cavity(
     result.grad_log_epsilon.resize(size);
     for (std::size_t i = 0; i < size; ++i)
     {
-        const auto point = ModuleSccs::evaluate_cavity(density[i], cavity);
+        const CavityPoint point = ModuleSccs::evaluate_cavity(density[i], cavity);
         result.solute[i] = point.solute;
         result.dsolute_drho[i] = point.dsolute_drho;
         result.epsilon[i] = point.epsilon;
         result.depsilon_drho[i] = point.depsilon_drho;
         const double coefficient = point.depsilon_drho / point.epsilon;
         for (int d = 0; d < 3; ++d)
+        {
             result.grad_log_epsilon[i][d] = coefficient * density_gradient[i][d];
+        }
     }
     return result;
 }
@@ -105,6 +108,67 @@ void reduced_rms_max(const std::vector<double>& values,
     maximum = local_maximum;
 }
 
+// Update the residual norms of polarization; true when both pass
+// sccs_tol_rms and sccs_tol_max.
+bool residual_converged(const std::vector<double>& residual,
+                        const PolarizationSolverParameters& solver,
+                        const ModuleSurchem::ChargeReduction& reduction,
+                        PolarizationResult& polarization)
+{
+    reduced_rms_max(residual, reduction, polarization.residual_rms, polarization.residual_max);
+    return polarization.residual_rms <= solver.tolerance_rms
+           && polarization.residual_max <= solver.tolerance_max;
+}
+
+// Grid inner product of two distributed arrays.
+double grid_dot(const std::vector<double>& left,
+                const std::vector<double>& right,
+                const ModulePW::PW_Basis& basis,
+                const ModuleSurchem::ChargeReduction& reduction)
+{
+    double value = 0.0;
+    for (std::size_t i = 0; i < left.size(); ++i)
+    {
+        value += left[i] * right[i];
+    }
+    reduction.reduce_sum(value);
+    return value * basis.omega / basis.nxyz;
+}
+
+// P r = eps^-1/2 G eps^-1/2 r with the periodic or PCC-corrected Coulomb
+// operator G. The cavity is fixed during a solve, so the scratch arrays are
+// reused by every application; only the scalar potential is needed.
+class SqrtPreconditioner
+{
+  public:
+    SqrtPreconditioner(const std::vector<double>& invsqrt, const CoulombOperator& coulomb)
+        : invsqrt_(invsqrt), coulomb_(coulomb)
+    {
+        this->weighted_.resize(invsqrt.size());
+    }
+
+    void apply(const std::vector<double>& rhs, std::vector<double>& value)
+    {
+        const std::size_t size = this->invsqrt_.size();
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            this->weighted_[i] = rhs[i] * this->invsqrt_[i];
+        }
+        this->coulomb_.apply_potential(this->weighted_, this->potential_);
+        value.resize(size);
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            value[i] = this->potential_[i] * this->invsqrt_[i];
+        }
+    }
+
+  private:
+    const std::vector<double>& invsqrt_;
+    const CoulombOperator& coulomb_;
+    std::vector<double> weighted_;
+    std::vector<double> potential_;
+};
+
 // Environ dielectric::factsqrt for electronic chain derivatives, in Ha units.
 void chain_factsqrt(const std::vector<double>& density,
                     const CavityParameters& cavity,
@@ -118,7 +182,9 @@ void chain_factsqrt(const std::vector<double>& density,
     std::vector<std::complex<double>> density_g(basis.npw);
     basis.real2recip(density.data(), density_g.data());
     for (int ig = 0; ig < basis.npw; ++ig)
+    {
         density_g[ig] *= -tpiba * tpiba * basis.gg[ig];
+    }
     std::vector<double> laplacian(size);
     basis.recip2real(density_g.data(), laplacian.data());
     const double density_ratio = cavity.density_max / cavity.density_min;
@@ -130,19 +196,20 @@ void chain_factsqrt(const std::vector<double>& density,
         if (density[i] > cavity.density_min && density[i] < cavity.density_max)
         {
             const double local_density_ratio = cavity.density_max / density[i];
-            const double x = std::log(local_density_ratio)/width;
-            const double angle = ModuleBase::TWO_PI*x;
-            second_log = log_bulk*(1.0-std::cos(angle)
-                         + ModuleBase::TWO_PI*std::sin(angle)/width)
-                         /(width*density[i]*density[i]);
+            const double x = std::log(local_density_ratio) / width;
+            const double angle = ModuleBase::TWO_PI * x;
+            second_log = log_bulk * (1.0 - std::cos(angle) + ModuleBase::TWO_PI * std::sin(angle) / width)
+                         / (width * density[i] * density[i]);
         }
-        const double first_log = result.depsilon_drho[i]/result.epsilon[i];
+        const double first_log = result.depsilon_drho[i] / result.epsilon[i];
         double gradient_square = 0.0;
         for (int d = 0; d < 3; ++d)
-            gradient_square += density_gradient[i][d]*density_gradient[i][d];
-        const double lap_log = first_log*laplacian[i]+second_log*gradient_square;
-        coefficient[i] = result.epsilon[i]*(0.5*lap_log
-                         + 0.25*first_log*first_log*gradient_square)/ModuleBase::FOUR_PI;
+        {
+            gradient_square += density_gradient[i][d] * density_gradient[i][d];
+        }
+        const double lap_log = first_log * laplacian[i] + second_log * gradient_square;
+        coefficient[i] = result.epsilon[i] * (0.5 * lap_log + 0.25 * first_log * first_log * gradient_square)
+                         / ModuleBase::FOUR_PI;
     }
 }
 
@@ -154,7 +221,9 @@ double switching_filter(const double gg,
                         const ModulePW::PW_Basis& basis)
 {
     if (!uses_switching_lowpass(cavity))
+    {
         return 1.0;
+    }
     const double argument = cavity.lowpass_p1 * gg / basis.ggecut - cavity.lowpass_p2;
     return 0.5 * std::erfc(argument);
 }
@@ -166,7 +235,9 @@ std::vector<ModuleBase::Vector3<double>> switching_gradient(const std::vector<do
                                                             const double tpiba)
 {
     if (!uses_switching_lowpass(cavity))
+    {
         return ModuleSccs::periodic_gradient(values, basis, tpiba);
+    }
     std::vector<std::complex<double>> values_g(basis.npw);
     basis.real2recip(values.data(), values_g.data());
     std::vector<std::complex<double>> gradient_g(basis.npw);
@@ -181,7 +252,9 @@ std::vector<ModuleBase::Vector3<double>> switching_gradient(const std::vector<do
         }
         basis.recip2real(gradient_g.data(), gradient_r.data());
         for (std::size_t i = 0; i < values.size(); ++i)
+        {
             gradient[i][d] = gradient_r[i];
+        }
     }
     return gradient;
 }
@@ -221,7 +294,9 @@ void switching_divergence(const std::vector<ModuleBase::Vector3<double>>& field,
     for (int d = 0; d < 3; ++d)
     {
         for (std::size_t i = 0; i < size; ++i)
+        {
             component[i] = field[i][d];
+        }
         basis.real2recip(component.data(), component_g.data());
         for (int ig = 0; ig < basis.npw; ++ig)
         {
@@ -309,7 +384,9 @@ void switching_cavity_potential(const std::vector<double>& charge,
     {
         weight[i] = result.epsilon[i] * potential[i] * potential[i] / (8.0 * ModuleBase::PI);
         for (int d = 0; d < 3; ++d)
+        {
             weighted_gradient[i][d] = weight[i] * solute_gradient[i][d];
+        }
     }
     std::vector<double> weight_laplacian;
     switching_laplacian(weight, cavity, basis, tpiba, weight_laplacian);
@@ -376,7 +453,9 @@ SccsResponse solve_sccs_response(
     std::vector<double> coefficient(size);
     std::vector<double> invsqrt(size);
     for (std::size_t i = 0; i < size; ++i)
-        invsqrt[i] = 1.0/std::sqrt(result.epsilon[i]);
+    {
+        invsqrt[i] = 1.0 / std::sqrt(result.epsilon[i]);
+    }
     const bool open_boundary = coulomb.has_boundary_correction();
     std::vector<ModuleBase::Vector3<double>> solute_gradient;
     if (!open_boundary)
@@ -387,48 +466,30 @@ SccsResponse solve_sccs_response(
     {
         switching_fft_factsqrt(cavity, basis, tpiba, result, coefficient, solute_gradient);
     }
-    // P r = epsilon^-1/2 C_PCC epsilon^-1/2 r.
-    // Per-solve scratch is shared by CG applications; the cavity is fixed
-    // throughout this solve. Only the scalar Coulomb potential is needed.
-    std::vector<double> weighted(size);
-    std::vector<double> potential_work;
-    const auto precondition = [&](const std::vector<double>& rhs, std::vector<double>& value)
-    {
-        for (std::size_t i = 0; i < size; ++i) weighted[i] = rhs[i]*invsqrt[i];
-        coulomb.apply_potential(weighted, potential_work);
-        value.resize(size);
-        for (std::size_t i = 0; i < size; ++i) value[i] = potential_work[i]*invsqrt[i];
-    };
-    const auto dot = [&](const std::vector<double>& left, const std::vector<double>& right)
-    {
-        double value = 0.0;
-        for (std::size_t i = 0; i < size; ++i) value += left[i]*right[i];
-        reduction.reduce_sum(value);
-        return value * basis.omega / basis.nxyz;
-    };
+    SqrtPreconditioner preconditioner(invsqrt, coulomb);
     std::vector<double> residual = charge;
     std::vector<double> potential(size, 0.0);
     std::vector<double> direction(size, 0.0);
     std::vector<double> image(size, 0.0);
     std::vector<double> z;
     double old_rz = 0.0;
-    // Stop when both the RMS and maximum charge residual pass (sccs_tol_rms, sccs_tol_max).
     PolarizationResult& polarization = result.polarization;
-    const auto residual_converged = [&]() {
-        reduced_rms_max(residual, reduction, polarization.residual_rms, polarization.residual_max);
-        return polarization.residual_rms <= solver.tolerance_rms
-               && polarization.residual_max <= solver.tolerance_max;
-    };
-    bool converged = residual_converged();
+    bool converged = residual_converged(residual, solver, reduction, polarization);
     // ENVIRON generalized_sqrt warm start: one preconditioned fixed-point step
     // v = P(q - K v_old) from the previous potential, whose charge residual is
     // K (v_old - v). Keep it only when it improves on the cold-start residual.
     if (!converged && initial_potential.size() == size)
     {
         std::vector<double> guess_residual(size);
-        for (std::size_t i = 0; i < size; ++i) guess_residual[i] = charge[i]-coefficient[i]*initial_potential[i];
-        precondition(guess_residual, z);
-        for (std::size_t i = 0; i < size; ++i) guess_residual[i] = coefficient[i]*(initial_potential[i]-z[i]);
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            guess_residual[i] = charge[i] - coefficient[i] * initial_potential[i];
+        }
+        preconditioner.apply(guess_residual, z);
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            guess_residual[i] = coefficient[i] * (initial_potential[i] - z[i]);
+        }
         double guess_rms = 0.0;
         double guess_max = 0.0;
         reduced_rms_max(guess_residual, reduction, guess_rms, guess_max);
@@ -437,33 +498,37 @@ SccsResponse solve_sccs_response(
             potential.swap(z);
             residual.swap(guess_residual);
             polarization.warm_started = true;
-            converged = residual_converged();
+            converged = residual_converged(residual, solver, reduction, polarization);
         }
     }
     for (int iteration = 1; !converged && iteration <= solver.max_iterations; ++iteration)
     {
-        precondition(residual, z);
-        const double rz = dot(residual, z);
+        preconditioner.apply(residual, z);
+        const double rz = grid_dot(residual, z, basis, reduction);
         if (!std::isfinite(rz) || std::abs(rz) < 1e-30)
+        {
             throw std::runtime_error("CG sqrt null/nonfinite preconditioned residual");
-        const double beta = std::abs(old_rz) > 1e-30 ? rz/old_rz : 0.0;
+        }
+        const double beta = std::abs(old_rz) > 1e-30 ? rz / old_rz : 0.0;
         old_rz = rz;
         for (std::size_t i = 0; i < size; ++i)
         {
-            direction[i] = z[i]+beta*direction[i];
-            image[i] = coefficient[i]*z[i]+residual[i]+beta*image[i];
+            direction[i] = z[i] + beta * direction[i];
+            image[i] = coefficient[i] * z[i] + residual[i] + beta * image[i];
         }
-        const double curvature = dot(direction, image);
+        const double curvature = grid_dot(direction, image, basis, reduction);
         if (!std::isfinite(curvature) || curvature == 0.0)
+        {
             throw std::runtime_error("CG sqrt invalid curvature");
-        const double alpha = rz/curvature;
+        }
+        const double alpha = rz / curvature;
         for (std::size_t i = 0; i < size; ++i)
         {
-            potential[i] += alpha*direction[i];
-            residual[i] -= alpha*image[i];
+            potential[i] += alpha * direction[i];
+            residual[i] -= alpha * image[i];
         }
         polarization.iterations = iteration;
-        converged = residual_converged();
+        converged = residual_converged(residual, solver, reduction, polarization);
     }
     if (!converged)
     {
@@ -475,10 +540,16 @@ SccsResponse solve_sccs_response(
         // Independently check the preconditioned equation v = P(q - K v);
         // this costs one extra Poisson solve, so it runs only on request.
         std::vector<double> right(size);
-        for (std::size_t i = 0; i < size; ++i) right[i] = charge[i]-coefficient[i]*potential[i];
-        precondition(right, z);
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            right[i] = charge[i] - coefficient[i] * potential[i];
+        }
+        preconditioner.apply(right, z);
         std::vector<double> defect(size);
-        for (std::size_t i = 0; i < size; ++i) defect[i] = potential[i]-z[i];
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            defect[i] = potential[i] - z[i];
+        }
         reduced_rms_max(defect, reduction,
                         polarization.fixed_point_defect_rms,
                         polarization.fixed_point_defect_max);
@@ -490,10 +561,16 @@ SccsResponse solve_sccs_response(
     if (!open_boundary)
     {
         double mean = 0.0;
-        for (double value : potential) mean += value;
+        for (const double value : potential)
+        {
+            mean += value;
+        }
         reduction.reduce_sum(mean);
         mean /= basis.nxyz;
-        for (double& value : potential) value -= mean;
+        for (double& value : potential)
+        {
+            value -= mean;
+        }
     }
     result.polarization.field.potential = potential;
     // Environ dielectric::de_dboundary differentiates the solved potential on
