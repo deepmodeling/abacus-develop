@@ -88,8 +88,8 @@ AddTest(
   ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
   ../../../source_basis/module_ao/parallel_orbitals.cpp
   ../../../source_basis/module_ao/orb_atomic_lm.cpp
-  ../../../source_io/module_output/file_reader.cpp ../../../source_io/module_output/csr_reader.cpp
-  ../../../source_io/module_output/sparse_matrix.cpp
+  ../../../source_base/module_out/file_reader.cpp ../../../source_base/module_out/csr_reader.cpp
+  ../../../source_base/module_out/sparse_matrix.cpp
   tmp_mocks.cpp ../../../source_hamilt/operator.cpp
 )
 endif()
