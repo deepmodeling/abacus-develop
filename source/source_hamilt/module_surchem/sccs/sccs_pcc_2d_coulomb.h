@@ -33,28 +33,16 @@ class Pcc2dCoulombOperator : public CoulombOperator
         return true;
     }
 
-    void apply(const std::vector<double>& charge, ElectrostaticField& field) const override;
-
-    void apply_potential(const std::vector<double>& charge,
-                         std::vector<double>& potential) const override;
-
     CoulombTransformCounts transform_counts() const override
     {
         return periodic_.transform_counts();
     }
 
-    void apply_gradient(const std::vector<double>& charge,
-                        std::vector<ModuleBase::Vector3<double>>& gradient) const override;
-
-    // Adjoint of charge -> electrostatic field gradient under the grid inner product.
-    void apply_gradient_adjoint(
-        const std::vector<ModuleBase::Vector3<double>>& field,
-        std::vector<double>& result) const override;
-
+    void apply_potential(const std::vector<double>& charge,
+                         std::vector<double>& potential) const override;
 
   private:
     PeriodicCoulombOperator periodic_;
-    const std::vector<ModuleBase::Vector3<double>>& positions_;
     std::vector<double> relative_y_;
     double volume_element_ = 0.0;
     ModulePcc::Pcc2dGeometry geometry_;

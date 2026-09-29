@@ -4,6 +4,7 @@
 #endif
 
 #include "../sccs/sccs_functional.h"
+#include "../common/charge_reduction.h"
 #include "../sccs/sccs_pw_coulomb.h"
 
 #include "source_base/constants.h"
@@ -26,20 +27,21 @@ ModuleSccs::ElectrostaticFunctionalResult fixed_dielectric_functional(
     const double volume_element,
     const ModuleSccs::PeriodicCoulombOperator& coulomb)
 {
-    ModuleSccs::ElectrostaticField vacuum_field;
-    coulomb.apply(solute_charge, vacuum_field);
+    std::vector<double> vacuum_potential;
+    coulomb.apply_potential(solute_charge, vacuum_potential);
     std::vector<double> screened_charge(solute_charge.size());
     for (std::size_t index = 0; index < solute_charge.size(); ++index)
     {
         screened_charge[index] = solute_charge[index] / epsilon;
     }
-    ModuleSccs::ElectrostaticField dielectric_field;
-    coulomb.apply(screened_charge, dielectric_field);
+    std::vector<double> dielectric_potential;
+    coulomb.apply_potential(screened_charge, dielectric_potential);
+    const std::vector<double> no_cavity_potential(solute_charge.size(), 0.0);
     const ModuleSurchem::SerialChargeReduction reduction;
     return ModuleSccs::evaluate_electrostatic_functional(solute_charge,
-                                                          dielectric_field,
-                                                          vacuum_field,
-                                                          std::vector<double>(solute_charge.size(), 0.0),
+                                                          dielectric_potential,
+                                                          vacuum_potential,
+                                                          no_cavity_potential,
                                                           volume_element,
                                                           reduction);
 }
@@ -107,16 +109,15 @@ TEST(SccsFunctional, FixedDielectricEnergyMatchesElectronPotentialDerivative)
 TEST(SccsFunctional, AddsSolverCavityPotentialToElectronPotential)
 {
     const std::vector<double> charge(1, 0.0);
-    ModuleSccs::ElectrostaticField dielectric;
-    dielectric.potential.assign(1, 2.0);
-    ModuleSccs::ElectrostaticField vacuum;
-    vacuum.potential.assign(1, 0.5);
+    const std::vector<double> dielectric(1, 2.0);
+    const std::vector<double> vacuum(1, 0.5);
+    const std::vector<double> cavity(1, 0.25);
     const ModuleSurchem::SerialChargeReduction reduction;
     const ModuleSccs::ElectrostaticFunctionalResult result
         = ModuleSccs::evaluate_electrostatic_functional(charge,
                                                         dielectric,
                                                         vacuum,
-                                                        std::vector<double>(1, 0.25),
+                                                        cavity,
                                                         1.0,
                                                         reduction);
     EXPECT_DOUBLE_EQ(result.reaction_potential[0], 1.5);

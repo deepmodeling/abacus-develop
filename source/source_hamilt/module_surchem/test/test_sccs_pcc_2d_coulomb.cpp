@@ -179,19 +179,16 @@ TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentMoments)
     EXPECT_NEAR(reduced.quadrupole_yy, expected.quadrupole_yy, 1.0e-11);
 }
 
-TEST_F(SccsPcc2dCoulombTest, ScalarPotentialMatchesFullFieldAndAvoidsGradientTransforms)
+TEST_F(SccsPcc2dCoulombTest, PotentialUsesOnePeriodicTransformPair)
 {
     const double tpiba = ModuleBase::TWO_PI / lattice_scale_;
     const ModuleSccs::Pcc2dCoulombOperator coulomb(basis_, tpiba, positions_,
                                                  volume_element_, geometry_, reduction_);
     const std::vector<double> charge(basis_.nrxx, 1.0 / volume_);
-    ModuleSccs::ElectrostaticField field;
-    coulomb.apply(charge, field);
     std::vector<double> potential;
     coulomb.apply_potential(charge, potential);
-    EXPECT_EQ(potential, field.potential);
-    EXPECT_EQ(coulomb.transform_counts().forward_calls, 2);
-    EXPECT_EQ(coulomb.transform_counts().inverse_calls, 5);
+    EXPECT_EQ(coulomb.transform_counts().forward_calls, 1);
+    EXPECT_EQ(coulomb.transform_counts().inverse_calls, 1);
     const std::vector<double> zero(basis_.nrxx, 0.0);
     coulomb.apply_potential(zero, potential);
     for (double value : potential)
@@ -217,10 +214,10 @@ TEST_F(SccsPcc2dCoulombTest, AddsCorrectionFromCurrentChargeOnEveryApplication)
                                                    reduction_);
     const ModuleSccs::PeriodicCoulombOperator periodic(
         basis_, ModuleBase::TWO_PI / lattice_scale_);
-    ModuleSccs::ElectrostaticField field;
-    ModuleSccs::ElectrostaticField periodic_field;
-    coulomb.apply(charge, field);
-    periodic.apply(charge, periodic_field);
+    std::vector<double> potential;
+    std::vector<double> periodic_potential;
+    coulomb.apply_potential(charge, potential);
+    periodic.apply_potential(charge, periodic_potential);
     const ModulePcc::Pcc2dMoments moments
         = ModulePcc::reduced_pcc_2d_density_moments(charge,
                                                      positions_,
@@ -230,19 +227,8 @@ TEST_F(SccsPcc2dCoulombTest, AddsCorrectionFromCurrentChargeOnEveryApplication)
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
         const double relative_y = ModulePcc::pcc_2d_relative_y(positions_[ir].y, geometry_);
-        EXPECT_NEAR(field.potential[ir] - periodic_field.potential[ir],
-                    ModulePcc::pcc_2d_potential(moments,
-                                                 relative_y,
-                                                 geometry_.parameters),
-                    2.0e-12);
-        EXPECT_NEAR(field.gradient[ir].x - periodic_field.gradient[ir].x, 0.0, 1.0e-14);
-        EXPECT_NEAR(field.gradient[ir].y - periodic_field.gradient[ir].y,
-                    ModulePcc::pcc_2d_potential_gradient(moments,
-                                                          relative_y,
-                                                          geometry_.parameters)
-                        .y,
-                    2.0e-12);
-        EXPECT_NEAR(field.gradient[ir].z - periodic_field.gradient[ir].z, 0.0, 1.0e-14);
+        const double correction = ModulePcc::pcc_2d_potential(moments, relative_y, geometry_.parameters);
+        EXPECT_NEAR(potential[ir] - periodic_potential[ir], correction, 2.0e-12);
     }
 
     std::vector<double> opposite(charge.size());
@@ -250,12 +236,11 @@ TEST_F(SccsPcc2dCoulombTest, AddsCorrectionFromCurrentChargeOnEveryApplication)
     {
         opposite[index] = -charge[index];
     }
-    ModuleSccs::ElectrostaticField opposite_field;
-    coulomb.apply(opposite, opposite_field);
+    std::vector<double> opposite_potential;
+    coulomb.apply_potential(opposite, opposite_potential);
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
-        EXPECT_NEAR(opposite_field.potential[ir], -field.potential[ir], 2.0e-12);
-        EXPECT_NEAR(opposite_field.gradient[ir].y, -field.gradient[ir].y, 2.0e-12);
+        EXPECT_NEAR(opposite_potential[ir], -potential[ir], 2.0e-12);
     }
 }
 
@@ -303,13 +288,13 @@ TEST_F(SccsPcc2dCoulombTest, SqrtCgKeepsChargedUniformDielectricPccGauge)
     {
         screened_charge[index] = solute_charge[index] / cavity.epsilon_bulk;
     }
-    ModuleSccs::ElectrostaticField expected;
-    coulomb.apply(screened_charge, expected);
+    std::vector<double> expected;
+    coulomb.apply_potential(screened_charge, expected);
     double local_mean = 0.0;
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
-        local_mean += expected.potential[ir];
-        EXPECT_NEAR(result.polarization.field.potential[ir], expected.potential[ir], 2.0e-12);
+        local_mean += expected[ir];
+        EXPECT_NEAR(result.polarization.field.potential[ir], expected[ir], 2.0e-12);
         EXPECT_DOUBLE_EQ(result.restart_potential[ir], result.polarization.field.potential[ir]);
         EXPECT_NEAR(result.polarization.polarization_charge[ir],
                     -(1.0 - 1.0 / cavity.epsilon_bulk) * solute_charge[ir],

@@ -56,17 +56,13 @@ TEST_F(SccsPwCoulombTest, RemovesConstantPeriodicMode)
 {
     const ModuleSccs::PeriodicCoulombOperator coulomb(basis_, ModuleBase::TWO_PI / 10.0);
     const std::vector<double> charge(basis_.nrxx, 1.0);
-    ModuleSccs::ElectrostaticField field;
-    coulomb.apply(charge, field);
+    std::vector<double> potential;
+    coulomb.apply_potential(charge, potential);
 
-    ASSERT_EQ(field.potential.size(), charge.size());
-    ASSERT_EQ(field.gradient.size(), charge.size());
+    ASSERT_EQ(potential.size(), charge.size());
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
-        EXPECT_NEAR(field.potential[ir], 0.0, 1.0e-12);
-        EXPECT_NEAR(field.gradient[ir].x, 0.0, 1.0e-12);
-        EXPECT_NEAR(field.gradient[ir].y, 0.0, 1.0e-12);
-        EXPECT_NEAR(field.gradient[ir].z, 0.0, 1.0e-12);
+        EXPECT_NEAR(potential[ir], 0.0, 1.0e-12);
     }
 }
 
@@ -93,113 +89,63 @@ TEST_F(SccsPwCoulombTest, SolvesSingleFourierShell)
     const double tpiba = ModuleBase::TWO_PI / 10.0;
     const double factor = ModuleBase::FOUR_PI / (tpiba * tpiba * selected_gg);
     const ModuleSccs::PeriodicCoulombOperator coulomb(basis_, tpiba);
-    ModuleSccs::ElectrostaticField field;
-    coulomb.apply(charge, field);
+    std::vector<double> potential;
+    coulomb.apply_potential(charge, potential);
 
     double maximum_error = 0.0;
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
-        maximum_error = std::max(maximum_error, std::abs(field.potential[ir] - factor * charge[ir]));
+        maximum_error = std::max(maximum_error, std::abs(potential[ir] - factor * charge[ir]));
     }
     EXPECT_LT(maximum_error, 1.0e-11);
 }
 
-TEST_F(SccsPwCoulombTest, ForwardAndAdjointCallsDoNotRetainPreviousFields)
+TEST_F(SccsPwCoulombTest, RepeatedCallsDoNotRetainPreviousPotentials)
 {
     const double tpiba = ModuleBase::TWO_PI / 10.0;
     const ModuleSccs::PeriodicCoulombOperator coulomb(basis_, tpiba);
     std::vector<double> charge(basis_.nrxx);
-    std::vector<ModuleBase::Vector3<double>> probe(basis_.nrxx);
     for (int i = 0; i < basis_.nrxx; ++i)
     {
         charge[i] = std::sin(0.13 * i);
-        probe[i].x = std::cos(0.17 * i);
-        probe[i].y = std::sin(0.19 * i);
-        probe[i].z = std::cos(0.23 * i);
     }
-    ModuleSccs::ElectrostaticField expected;
-    coulomb.apply(charge, expected);
-    std::vector<double> expected_adjoint;
-    coulomb.apply_gradient_adjoint(probe, expected_adjoint);
+    std::vector<double> expected;
+    coulomb.apply_potential(charge, expected);
     const std::vector<double> zero_charge(basis_.nrxx, 0.0);
-    const std::vector<ModuleBase::Vector3<double>> zero_probe(basis_.nrxx);
-    ModuleSccs::ElectrostaticField field;
-    std::vector<double> adjoint;
+    std::vector<double> potential;
     for (int repeat = 0; repeat < 3; ++repeat)
     {
-        coulomb.apply(zero_charge, field);
-        coulomb.apply_gradient_adjoint(zero_probe, adjoint);
+        coulomb.apply_potential(zero_charge, potential);
         for (int i = 0; i < basis_.nrxx; ++i)
         {
-            EXPECT_DOUBLE_EQ(field.potential[i], 0.0);
-            EXPECT_DOUBLE_EQ(adjoint[i], 0.0);
-            for (int d = 0; d < 3; ++d)
-            {
-                EXPECT_DOUBLE_EQ(field.gradient[i][d], 0.0);
-            }
+            EXPECT_DOUBLE_EQ(potential[i], 0.0);
         }
-        coulomb.apply_gradient_adjoint(probe, adjoint);
-        coulomb.apply(charge, field);
+        coulomb.apply_potential(charge, potential);
         for (int i = 0; i < basis_.nrxx; ++i)
         {
-            EXPECT_DOUBLE_EQ(field.potential[i], expected.potential[i]);
-            EXPECT_DOUBLE_EQ(adjoint[i], expected_adjoint[i]);
-            for (int d = 0; d < 3; ++d)
-            {
-                EXPECT_DOUBLE_EQ(field.gradient[i][d], expected.gradient[i][d]);
-            }
+            EXPECT_DOUBLE_EQ(potential[i], expected[i]);
         }
     }
 }
 
-TEST_F(SccsPwCoulombTest, CountsForwardAndAdjointTransforms)
+TEST_F(SccsPwCoulombTest, CountsOneTransformPairPerPotential)
 {
     const double tpiba = ModuleBase::TWO_PI / 10.0;
     const ModuleSccs::PeriodicCoulombOperator coulomb(basis_, tpiba);
     const std::vector<double> charge(basis_.nrxx, 1.0);
-    ModuleSccs::ElectrostaticField field;
-    coulomb.apply_gradient(charge, field.gradient);
-    ModuleSccs::CoulombTransformCounts counts = coulomb.transform_counts();
-    EXPECT_EQ(counts.forward_calls, 1);
-    EXPECT_EQ(counts.inverse_calls, 3);
-    coulomb.apply(charge, field);
-    counts = coulomb.transform_counts();
-    EXPECT_EQ(counts.forward_calls, 2);
-    EXPECT_EQ(counts.inverse_calls, 7);
-    std::vector<double> adjoint;
-    coulomb.apply_gradient_adjoint(field.gradient, adjoint);
-    counts = coulomb.transform_counts();
-    EXPECT_EQ(counts.forward_calls, 5);
-    EXPECT_EQ(counts.inverse_calls, 8);
-}
-
-TEST_F(SccsPwCoulombTest, ScalarPotentialMatchesFullFieldWithoutGradientTransforms)
-{
-    const double tpiba = ModuleBase::TWO_PI / 10.0;
-    const ModuleSccs::PeriodicCoulombOperator coulomb(basis_, tpiba);
-    std::vector<double> charge(basis_.nrxx);
-    for (int ir = 0; ir < basis_.nrxx; ++ir)
-    {
-        charge[ir] = std::sin(0.13 * ir);
-    }
-    ModuleSccs::ElectrostaticField field;
-    coulomb.apply(charge, field);
     std::vector<double> potential;
     coulomb.apply_potential(charge, potential);
-    const ModuleSccs::CoulombTransformCounts counts = coulomb.transform_counts();
+    ModuleSccs::CoulombTransformCounts counts = coulomb.transform_counts();
+    EXPECT_EQ(counts.forward_calls, 1);
+    EXPECT_EQ(counts.inverse_calls, 1);
+    coulomb.apply_potential(charge, potential);
+    counts = coulomb.transform_counts();
     EXPECT_EQ(counts.forward_calls, 2);
-    EXPECT_EQ(counts.inverse_calls, 5);
-    EXPECT_EQ(potential, field.potential);
-    const std::vector<double> zero(basis_.nrxx, 0.0);
-    coulomb.apply_potential(zero, potential);
-    for (const double value : potential)
-    {
-        EXPECT_DOUBLE_EQ(value, 0.0);
-    }
+    EXPECT_EQ(counts.inverse_calls, 2);
 }
 
 #ifdef _OPENMP
-TEST_F(SccsPwCoulombTest, ParallelGridLoopsMatchSerialFields)
+TEST_F(SccsPwCoulombTest, ParallelGridLoopsMatchSerialPotential)
 {
     const int previous_threads = omp_get_max_threads();
     const double tpiba = ModuleBase::TWO_PI / 10.0;
@@ -209,25 +155,16 @@ TEST_F(SccsPwCoulombTest, ParallelGridLoopsMatchSerialFields)
     {
         charge[ir] = std::sin(0.13 * ir);
     }
-    ModuleSccs::ElectrostaticField serial;
-    std::vector<double> serial_adjoint;
+    std::vector<double> serial;
     omp_set_num_threads(1);
-    coulomb.apply(charge, serial);
-    coulomb.apply_gradient_adjoint(serial.gradient, serial_adjoint);
-    ModuleSccs::ElectrostaticField parallel;
-    std::vector<double> parallel_adjoint;
+    coulomb.apply_potential(charge, serial);
+    std::vector<double> parallel;
     omp_set_num_threads(2);
-    coulomb.apply(charge, parallel);
-    coulomb.apply_gradient_adjoint(parallel.gradient, parallel_adjoint);
+    coulomb.apply_potential(charge, parallel);
     omp_set_num_threads(previous_threads);
     for (int ir = 0; ir < basis_.nrxx; ++ir)
     {
-        EXPECT_DOUBLE_EQ(serial.potential[ir], parallel.potential[ir]);
-        EXPECT_DOUBLE_EQ(serial_adjoint[ir], parallel_adjoint[ir]);
-        for (int direction = 0; direction < 3; ++direction)
-        {
-            EXPECT_DOUBLE_EQ(serial.gradient[ir][direction], parallel.gradient[ir][direction]);
-        }
+        EXPECT_DOUBLE_EQ(serial[ir], parallel[ir]);
     }
 }
 #endif
@@ -253,12 +190,15 @@ class SccsCoulombOperatorsTest : public testing::Test
         geometry = ModulePcc::pcc_geometry(lattice, length, 1.0e-10);
         geometry_2d = ModulePcc::pcc_2d_geometry(lattice, length, 1.0e-10);
         charge.resize(basis->nrxx);
+        other_charge.resize(basis->nrxx);
         for (int i = 0; i < basis->nrxx; ++i)
         {
             const double x = positions[i].x - 6.0;
             const double y = positions[i].y - 6.0;
             const double z = positions[i].z - 6.0;
             charge[i] = -0.02 * std::exp(-((x - 0.7) * (x - 0.7) + y * y + z * z) / 2.0);
+            const double shifted_square = x * x + (y + 1.1) * (y + 1.1) + (z - 0.4) * (z - 0.4);
+            other_charge[i] = (0.01 + 0.004 * y) * std::exp(-shifted_square / 3.0);
         }
     }
 
@@ -281,6 +221,7 @@ class SccsCoulombOperatorsTest : public testing::Test
     std::unique_ptr<ModulePW::PW_Basis> basis;
     std::vector<ModuleBase::Vector3<double>> positions;
     std::vector<double> charge;
+    std::vector<double> other_charge;
     ModulePcc::PccGeometry geometry;
     ModulePcc::Pcc2dGeometry geometry_2d;
     ModuleSurchem::SerialChargeReduction charge_reduction;
@@ -288,60 +229,29 @@ class SccsCoulombOperatorsTest : public testing::Test
     double dv = 0.0;
 };
 
-TEST_F(SccsCoulombOperatorsTest, CoulombGradientAdjointsPreserveInnerProducts)
+// The sqrt-CG energy q^T A^-1 q / 2 needs A = sqrt(eps) G^-1 sqrt(eps) + F to
+// be symmetric, so every Coulomb operator G, PCC terms included, must be.
+TEST_F(SccsCoulombOperatorsTest, CoulombOperatorsAreSymmetric)
 {
     for (int boundary = 0; boundary < 3; ++boundary)
     {
         SCOPED_TRACE(boundary);
-        const auto op = make_operator(boundary);
-        ModuleSccs::ElectrostaticField field;
-        op->apply(charge, field);
-        std::vector<ModuleBase::Vector3<double>> probe(basis->nrxx);
-        for (int i = 0; i < basis->nrxx; ++i)
-        {
-            probe[i].x = 0.3 + std::sin(positions[i].x);
-            probe[i].y = -0.5 + std::cos(positions[i].y);
-            probe[i].z = positions[i].z - 6.0;
-        }
-        std::vector<double> transpose;
-        op->apply_gradient_adjoint(probe, transpose);
+        const std::unique_ptr<ModuleSccs::CoulombOperator> op = make_operator(boundary);
+        std::vector<double> potential;
+        std::vector<double> other_potential;
+        op->apply_potential(charge, potential);
+        op->apply_potential(other_charge, other_potential);
         double left = 0.0;
         double right = 0.0;
         for (int i = 0; i < basis->nrxx; ++i)
         {
-            left += (field.gradient[i] * probe[i]) * dv;
-            right += charge[i] * transpose[i] * dv;
+            left += other_charge[i] * potential[i] * dv;
+            right += charge[i] * other_potential[i] * dv;
         }
-        EXPECT_NEAR(left, right, 2.0e-12);
-    }
-}
-
-TEST_F(SccsCoulombOperatorsTest, GradientOnlyMatchesFullFieldForAllBoundaries)
-{
-    for (int boundary = 0; boundary < 3; ++boundary)
-    {
-        SCOPED_TRACE(boundary);
-        const auto op = make_operator(boundary);
-        ModuleSccs::ElectrostaticField field;
-        std::vector<ModuleBase::Vector3<double>> gradient;
-        for (const double scale : {1.0, 0.0, -0.7})
-        {
-            auto source = charge;
-            for (double& value : source)
-            {
-                value *= scale;
-            }
-            op->apply_gradient(source, gradient);
-            op->apply(source, field);
-            ASSERT_EQ(gradient.size(), field.gradient.size());
-            for (std::size_t i = 0; i < gradient.size(); ++i)
-            {
-                for (int d = 0; d < 3; ++d)
-                {
-                    EXPECT_DOUBLE_EQ(gradient[i][d], field.gradient[i][d]);
-                }
-            }
-        }
+        const double scale = std::abs(left);
+        const double tolerance = 1.0e-12 * scale;
+        EXPECT_GT(scale, 1.0e-6);
+        EXPECT_NEAR(left, right, tolerance);
     }
 }
 

@@ -259,16 +259,14 @@ SccsResult evaluate_pw_sccs(
     }
     result.forward_transforms = coulomb->transform_counts();
 
-    coulomb->apply(result.charge.solute, result.vacuum_field);
+    std::vector<double> vacuum_potential;
+    coulomb->apply_potential(result.charge.solute, vacuum_potential);
     result.electrostatic = evaluate_electrostatic_functional(result.charge.solute,
-                                                              result.response.polarization.field,
-                                                              result.vacuum_field,
+                                                              result.response.polarization.field.potential,
+                                                              vacuum_potential,
                                                               result.response.cavity_potential,
                                                               volume_element,
                                                               charge_reduction);
-
-    // The solver supplies the cavity potential: the exact discrete derivative
-    // with PCC, the continuum chain derivative when periodic.
 
     NonElectrostaticParameters non_electrostatic_parameters;
     non_electrostatic_parameters.surface_tension = config.surface_tension;

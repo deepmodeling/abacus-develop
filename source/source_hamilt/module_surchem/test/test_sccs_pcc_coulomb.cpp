@@ -94,7 +94,7 @@ TEST(SccsPccCoulomb, SqrtCgKeepsChargedUniformDielectricPccGauge)
     }
 }
 
-TEST(SccsPccCoulomb, ScalarPotentialMatchesFullFieldAndAvoidsGradientTransforms)
+TEST(SccsPccCoulomb, PotentialUsesOnePeriodicTransformPair)
 {
     ModulePW::PW_Basis basis("cpu", "double");
 #ifdef __MPI
@@ -123,13 +123,18 @@ TEST(SccsPccCoulomb, ScalarPotentialMatchesFullFieldAndAvoidsGradientTransforms)
     const ModuleSurchem::SerialChargeReduction reduction;
     const ModuleSccs::PccCoulombOperator coulomb(basis, tpiba, positions, dv, geometry, reduction);
     const std::vector<double> charge(basis.nrxx, 0.001);
-    ModuleSccs::ElectrostaticField field;
-    coulomb.apply(charge, field);
     std::vector<double> potential;
     coulomb.apply_potential(charge, potential);
-    EXPECT_EQ(potential, field.potential);
-    EXPECT_EQ(coulomb.transform_counts().forward_calls, 2);
-    EXPECT_EQ(coulomb.transform_counts().inverse_calls, 5);
+    EXPECT_EQ(coulomb.transform_counts().forward_calls, 1);
+    EXPECT_EQ(coulomb.transform_counts().inverse_calls, 1);
+    // The uniform charge has no periodic potential, only the PCC monopole term.
+    const ModulePcc::MultipoleMoments moments = ModulePcc::density_moments(charge, positions, dv, geometry);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const ModuleBase::Vector3<double> relative = ModulePcc::pcc_relative_position(positions[ir], geometry);
+        const double expected = ModulePcc::pcc_potential(moments, relative, geometry.parameters);
+        EXPECT_NEAR(potential[ir], expected, 1.0e-12);
+    }
     const std::vector<double> zero(basis.nrxx, 0.0);
     coulomb.apply_potential(zero, potential);
     for (double value : potential)

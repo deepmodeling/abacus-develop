@@ -25,34 +25,16 @@ class PeriodicCoulombOperator : public CoulombOperator
 
     CoulombTransformCounts transform_counts() const override { return counts_; }
 
-    void apply(const std::vector<double>& charge, ElectrostaticField& field) const override;
-
     void apply_potential(const std::vector<double>& charge,
                          std::vector<double>& potential) const override;
 
-    void apply_gradient(const std::vector<double>& charge,
-                        std::vector<ModuleBase::Vector3<double>>& gradient) const override;
-
-    // Adjoint of charge -> electrostatic field gradient under the grid inner product.
-    void apply_gradient_adjoint(
-        const std::vector<ModuleBase::Vector3<double>>& field,
-        std::vector<double>& result) const override;
-
-
   private:
-    void apply_impl(const std::vector<double>& charge,
-                    std::vector<ModuleBase::Vector3<double>>* gradient,
-                    std::vector<double>* potential) const;
-
     const ModulePW::PW_Basis& basis_;
     double tpiba_ = 0.0;
 
-    // Scratch only: every transform overwrites its inputs before use. Like
-    // the underlying PW_Basis FFT workspace, this operator is not reentrant.
-    // Sharing buffers between forward and adjoint applications bounds memory.
+    // Scratch only: every application overwrites it before use. Like the
+    // underlying PW_Basis FFT workspace, this operator is not reentrant.
     mutable std::vector<std::complex<double>> reciprocal_work_;
-    mutable std::vector<std::complex<double>> reciprocal_aux_;
-    mutable std::vector<double> real_work_;
     mutable CoulombTransformCounts counts_;
 };
 

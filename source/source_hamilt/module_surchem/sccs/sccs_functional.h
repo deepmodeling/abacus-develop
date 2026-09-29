@@ -1,8 +1,12 @@
 #ifndef SCCS_FUNCTIONAL_H
 #define SCCS_FUNCTIONAL_H
 
-#include "sccs_charge.h"
-#include "sccs_poisson.h"
+#include <vector>
+
+namespace ModuleSurchem
+{
+class ChargeReduction;
+}
 
 namespace ModuleSccs
 {
@@ -19,8 +23,8 @@ struct ElectrostaticFunctionalResult
 // cavity_potential, the solver's derivative through the dielectric cavity.
 ElectrostaticFunctionalResult evaluate_electrostatic_functional(
     const std::vector<double>& solute_charge,
-    const ElectrostaticField& dielectric_field,
-    const ElectrostaticField& vacuum_field,
+    const std::vector<double>& dielectric_potential,
+    const std::vector<double>& vacuum_potential,
     const std::vector<double>& cavity_potential,
     double volume_element,
     const ModuleSurchem::ChargeReduction& reduction);

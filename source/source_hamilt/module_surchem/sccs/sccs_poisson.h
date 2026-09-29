@@ -22,6 +22,9 @@ struct CoulombTransformCounts
     long inverse_calls = 0;
 };
 
+// Coulomb potential of a grid charge, periodic or with an open-boundary term.
+// The sqrt-CG preconditioner and the vacuum reference need only the scalar
+// potential; field gradients are taken from the solved potential.
 class CoulombOperator
 {
   public:
@@ -40,32 +43,8 @@ class CoulombOperator
         return false;
     }
 
-    virtual void apply(const std::vector<double>& charge, ElectrostaticField& field) const = 0;
-
-    // Scalar-only clients avoid gradient transforms when the operator supports it.
     virtual void apply_potential(const std::vector<double>& charge,
-                                 std::vector<double>& potential) const
-    {
-        ElectrostaticField field;
-        apply(charge, field);
-        potential.swap(field.potential);
-    }
-
-    // Gradient-only clients. Operators without a specialized implementation
-    // can use the complete-field fallback.
-    virtual void apply_gradient(const std::vector<double>& charge,
-                                std::vector<ModuleBase::Vector3<double>>& gradient) const
-    {
-        ElectrostaticField field;
-        apply(charge, field);
-        gradient.swap(field.gradient);
-    }
-
-    // Adjoint of charge -> electrostatic field gradient under the grid inner product.
-    virtual void apply_gradient_adjoint(
-        const std::vector<ModuleBase::Vector3<double>>& field,
-        std::vector<double>& result) const = 0;
-
+                                 std::vector<double>& potential) const = 0;
 };
 
 class PolarizationReduction

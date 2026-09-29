@@ -48,7 +48,6 @@ struct SccsResult
     CoulombTransformCounts forward_transforms;
     ChargeDensity charge;
     PeriodicSccsResult response;
-    ElectrostaticField vacuum_field;
     ElectrostaticFunctionalResult electrostatic;
     NonElectrostaticResult non_electrostatic;
     std::vector<double> electron_potential_hartree;
