@@ -28,9 +28,6 @@ TEST(SurchemInput, TransfersPresetAndSolverControls)
     input.assume_isolated = "pcc_2d";
     input.sccs_preset = "vacuum";
     input.sccs_debug = 2;
-    // The deprecated sccs_mixing* keys are ignored, even with formerly invalid values.
-    input.sccs_mixing_type = "pulay";
-    input.sccs_mixing = 0.0;
     input.sccs_start_drho = 0.01;
     input.sccs_start_nmax = 12;
     const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, false, 2);

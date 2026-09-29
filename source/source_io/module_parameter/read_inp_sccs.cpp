@@ -3,7 +3,6 @@
 #include "read_input_tool.h"
 
 #include <cmath>
-#include <iostream>
 
 namespace ModuleIO
 {
@@ -46,25 +45,6 @@ void check_sccs_start_nmax(const Input_para& input)
         ModuleBase::WARNING_QUIT(
             "ReadInput",
             "sccs_start_nmax must be positive and smaller than scf_nmax when delayed start is enabled");
-    }
-}
-
-// The sqrt-preconditioned CG replaced the polarization fixed point, so the
-// sccs_mixing* keys are read for old inputs but ignored.
-const char* const deprecated_sccs_mixing_description
-    = "Deprecated and ignored. SCCS is solved with the ENVIRON sqrt-preconditioned CG for "
-      "every assume_isolated value (none, pcc_0d, pcc_2d), which uses no polarization "
-      "mixing. The key is still read so that old INPUT files run; setting it only prints a "
-      "warning. It is independent of the electronic SCF mixing_type and mixing_beta.";
-
-// check_value runs on rank 0 before warning.log is opened, so report on stdout.
-void warn_deprecated_sccs_mixing(const Input_Item& item)
-{
-    if (item.is_read())
-    {
-        std::cout << " WARNING: " << item.label
-                  << " is deprecated and ignored; SCCS always uses the sqrt-preconditioned CG"
-                  << std::endl;
     }
 }
 
@@ -273,28 +253,5 @@ void ReadInput::item_sccs()
         };
         this->add_item(item);
     }
-#define ADD_DEPRECATED_SCCS_MIXING_ITEM(NAME, TYPE, DEFAULT_VALUE, READ) \
-    { \
-        Input_Item item(NAME); \
-        item.annotation = "deprecated, ignored"; \
-        item.category = "Implicit solvation model"; \
-        item.type = TYPE; \
-        item.description = deprecated_sccs_mixing_description; \
-        item.default_value = DEFAULT_VALUE; \
-        item.unit = ""; \
-        item.set_availability("imp_sol==2"); \
-        READ; \
-        item.check_value = [](const Input_Item& self, const Parameter&) { \
-            warn_deprecated_sccs_mixing(self); \
-        }; \
-        this->add_item(item); \
-    }
-    ADD_DEPRECATED_SCCS_MIXING_ITEM("sccs_mixing", "Real", "0.5", read_sync_double(input.sccs_mixing))
-    ADD_DEPRECATED_SCCS_MIXING_ITEM("sccs_mixing_min", "Real", "0.1", read_sync_double(input.sccs_mixing_min))
-    ADD_DEPRECATED_SCCS_MIXING_ITEM("sccs_mixing_max", "Real", "0.8", read_sync_double(input.sccs_mixing_max))
-    ADD_DEPRECATED_SCCS_MIXING_ITEM("sccs_mixing_adaptive", "Boolean", "0", read_sync_bool(input.sccs_mixing_adaptive))
-    ADD_DEPRECATED_SCCS_MIXING_ITEM("sccs_mixing_type", "String", "linear", read_sync_string(input.sccs_mixing_type))
-    ADD_DEPRECATED_SCCS_MIXING_ITEM("sccs_mixing_ndim", "Integer", "8", read_sync_int(input.sccs_mixing_ndim))
-#undef ADD_DEPRECATED_SCCS_MIXING_ITEM
 }
 } // namespace ModuleIO

@@ -4626,54 +4626,6 @@ parameters:
     default_value: electronic
     unit: ""
     availability: imp_sol==2
-  - name: sccs_mixing
-    category: Implicit solvation model
-    type: Real
-    description: |
-      Deprecated and ignored. SCCS is solved with the ENVIRON sqrt-preconditioned CG for every assume_isolated value (none, pcc_0d, pcc_2d), which uses no polarization mixing. The key is still read so that old INPUT files run; setting it only prints a warning. It is independent of the electronic SCF mixing_type and mixing_beta.
-    default_value: "0.5"
-    unit: ""
-    availability: imp_sol==2
-  - name: sccs_mixing_min
-    category: Implicit solvation model
-    type: Real
-    description: |
-      Deprecated and ignored. SCCS is solved with the ENVIRON sqrt-preconditioned CG for every assume_isolated value (none, pcc_0d, pcc_2d), which uses no polarization mixing. The key is still read so that old INPUT files run; setting it only prints a warning. It is independent of the electronic SCF mixing_type and mixing_beta.
-    default_value: "0.1"
-    unit: ""
-    availability: imp_sol==2
-  - name: sccs_mixing_max
-    category: Implicit solvation model
-    type: Real
-    description: |
-      Deprecated and ignored. SCCS is solved with the ENVIRON sqrt-preconditioned CG for every assume_isolated value (none, pcc_0d, pcc_2d), which uses no polarization mixing. The key is still read so that old INPUT files run; setting it only prints a warning. It is independent of the electronic SCF mixing_type and mixing_beta.
-    default_value: "0.8"
-    unit: ""
-    availability: imp_sol==2
-  - name: sccs_mixing_adaptive
-    category: Implicit solvation model
-    type: Boolean
-    description: |
-      Deprecated and ignored. SCCS is solved with the ENVIRON sqrt-preconditioned CG for every assume_isolated value (none, pcc_0d, pcc_2d), which uses no polarization mixing. The key is still read so that old INPUT files run; setting it only prints a warning. It is independent of the electronic SCF mixing_type and mixing_beta.
-    default_value: "0"
-    unit: ""
-    availability: imp_sol==2
-  - name: sccs_mixing_type
-    category: Implicit solvation model
-    type: String
-    description: |
-      Deprecated and ignored. SCCS is solved with the ENVIRON sqrt-preconditioned CG for every assume_isolated value (none, pcc_0d, pcc_2d), which uses no polarization mixing. The key is still read so that old INPUT files run; setting it only prints a warning. It is independent of the electronic SCF mixing_type and mixing_beta.
-    default_value: linear
-    unit: ""
-    availability: imp_sol==2
-  - name: sccs_mixing_ndim
-    category: Implicit solvation model
-    type: Integer
-    description: |
-      Deprecated and ignored. SCCS is solved with the ENVIRON sqrt-preconditioned CG for every assume_isolated value (none, pcc_0d, pcc_2d), which uses no polarization mixing. The key is still read so that old INPUT files run; setting it only prints a warning. It is independent of the electronic SCF mixing_type and mixing_beta.
-    default_value: "8"
-    unit: ""
-    availability: imp_sol==2
   - name: exx_fock_alpha
     category: Exact Exchange (Common)
     type: Real
