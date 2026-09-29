@@ -44,6 +44,7 @@ the developments and applications of novel machine-learning-assisted DFT methods
    advanced/output_files/index
    advanced/interface/index
    advanced/input_files/index
+   advanced/molecular_sternheimer_coulomb
    advanced/windows_installer
    advanced/json/index
 

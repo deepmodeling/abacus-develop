@@ -197,7 +197,7 @@ add_executable(
   ../sternheimer_channel_resources.cpp
 )
 if(ENABLE_MPI)
-  target_link_libraries(MODULE_RPA_sternheimer_owned_channel_workers_test MPI::MPI_CXX)
+  target_link_libraries(MODULE_RPA_sternheimer_owned_channel_workers_test PRIVATE MPI::MPI_CXX)
 endif()
 install(TARGETS MODULE_RPA_sternheimer_owned_channel_workers_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
 add_test(
@@ -249,6 +249,7 @@ if(ENABLE_MPI)
   )
   target_link_libraries(
     MODULE_RPA_sternheimer_siab_mpi_test
+    PRIVATE
     parameter
     base
     device
@@ -258,7 +259,7 @@ if(ENABLE_MPI)
     GTest::gtest
   )
   if(USE_OPENMP)
-    target_link_libraries(MODULE_RPA_sternheimer_siab_mpi_test OpenMP::OpenMP_CXX)
+    target_link_libraries(MODULE_RPA_sternheimer_siab_mpi_test PRIVATE OpenMP::OpenMP_CXX)
   endif()
   if(ENABLE_COVERAGE)
     add_coverage(MODULE_RPA_sternheimer_siab_mpi_test)

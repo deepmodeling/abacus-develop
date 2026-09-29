@@ -13,13 +13,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-// symm_rotation.h pulls in symmetry_rotation_R.hpp (no include guard);
-// standard-library headers must all be included before `private public`.
-#define private public
-#define protected public
-#include "../symm_rotation.h"
-#undef private
-#undef protected
+#include "symm_rotation_test_access.h"
 using namespace std::complex_literals; // for the `1i` literal used below
 #define DOUBLETHRESHOLD 1e-8
 
@@ -85,9 +79,9 @@ Sep_Cell::~Sep_Cell() noexcept {}
 namespace
 {
 // real 3x3 rotation about z by 90 deg, l=1 real-spherical-harmonic basis
-RI::Tensor<std::complex<double>> make_T_rot90()
+ModuleBase::ComplexMatrix make_T_rot90()
 {
-    RI::Tensor<std::complex<double>> T({3, 3});
+    ModuleBase::ComplexMatrix T(3, 3);
     const double m[3][3] = {{0, -1, 0}, {1, 0, 0}, {0, 0, 1}};
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
@@ -160,20 +154,19 @@ class AbfRotationTest : public testing::Test
 protected:
     void SetUp() override
     {
-        symrot.reduce_Cs_ = true;
         // type 0: one l=1 ABF channel (3 functions); type 1: one l=0 (1 function)
-        symrot.abfs_l_nchi_ = {{0, 1}, {1, 0}};
-        symrot.nsym_ = 1; // 1 unitary op (identity)
-        symrot.nanti_ = 1; // + 1 antiunitary op with the same spatial rotation
-        symrot.rotmat_Slm_.resize(2);
+        symrot.set_Cs_rotation({{0, 1}, {1, 0}});
+        ModuleSymmetry::SymmetryRotationTestAccess::set_operation_counts(symrot, 1, 1);
+        auto& rotmat = symrot.get_rotmat_Slm();
+        rotmat.resize(2);
         for (int isym = 0; isym < 2; ++isym)
         {
-            symrot.rotmat_Slm_[isym].resize(2);
+            rotmat[isym].resize(2);
             // L=0 block: identity (real)
-            symrot.rotmat_Slm_[isym][0] = RI::Tensor<std::complex<double>>({1, 1});
-            symrot.rotmat_Slm_[isym][0](0, 0) = 1.0;
+            rotmat[isym][0] = ModuleBase::ComplexMatrix(1, 1);
+            rotmat[isym][0](0, 0) = 1.0;
             // L=1 block: rotation by 90 deg about z (real in real-Y basis)
-            symrot.rotmat_Slm_[isym][1] = make_T_rot90();
+            rotmat[isym][1] = make_T_rot90();
         }
     }
     ModuleSymmetry::Symmetry_rotation symrot;
@@ -183,7 +176,7 @@ TEST_F(AbfRotationTest, UnitaryRealTensor)
 {
     // isym=0 < nsym_: TAT = T1^T * A * T2 (T real)
     RI::Tensor<double> A = make_A_real();
-    RI::Tensor<double> TAT = symrot.rotate_atompair_serial_abf(A, 0, 0, 0);
+    RI::Tensor<double> TAT = ModuleSymmetry::SymmetryRotationTestAccess::rotate_atompair_abf(symrot, A, 0, 0, 0);
     EXPECT_TRUE(tensor_close(TAT, expected_unitary(), DOUBLETHRESHOLD));
 }
 
@@ -193,7 +186,7 @@ TEST_F(AbfRotationTest, AntiunitaryRealTensor)
     // the unitary result (conjugation is the identity on reals) - but the
     // result must remain real, and must equal the manual expected matrix.
     RI::Tensor<double> A = make_A_real();
-    RI::Tensor<double> TAT = symrot.rotate_atompair_serial_abf(A, 1, 0, 0);
+    RI::Tensor<double> TAT = ModuleSymmetry::SymmetryRotationTestAccess::rotate_atompair_abf(symrot, A, 1, 0, 0);
     EXPECT_TRUE(tensor_close(TAT, expected_unitary(), DOUBLETHRESHOLD));
     // explicitly verify no stray imaginary part is introduced
     for (size_t i = 0; i < 3; ++i)
@@ -206,7 +199,7 @@ TEST_F(AbfRotationTest, UnitaryComplexTensor)
     // complex A: unitary TAT = T1^T * A * T2, manual expected values
     RI::Tensor<std::complex<double>> A = make_A_complex();
     RI::Tensor<std::complex<double>> TAT
-        = symrot.rotate_atompair_serial_abf<std::complex<double>>(A, 0, 0, 0);
+        = ModuleSymmetry::SymmetryRotationTestAccess::rotate_atompair_abf(symrot, A, 0, 0, 0);
     EXPECT_TRUE(tensor_close(TAT, expected_unitary_complex(), DOUBLETHRESHOLD));
 }
 
@@ -215,7 +208,7 @@ TEST_F(AbfRotationTest, AntiunitaryComplexTensor)
     // antiunitary: TAT = conj(T1^T * A * T2); manual expected = conj(unitary)
     RI::Tensor<std::complex<double>> A = make_A_complex();
     RI::Tensor<std::complex<double>> TAT
-        = symrot.rotate_atompair_serial_abf<std::complex<double>>(A, 1, 0, 0);
+        = ModuleSymmetry::SymmetryRotationTestAccess::rotate_atompair_abf(symrot, A, 1, 0, 0);
     RI::Tensor<std::complex<double>> E = expected_unitary_complex();
     for (size_t i = 0; i < 3; ++i)
         for (size_t j = 0; j < 3; ++j)
@@ -230,7 +223,7 @@ TEST_F(AbfRotationTest, DifferentTypesT1T2)
     // A is 3x1; expected = T1^T * A
     RI::Tensor<double> A({3, 1});
     A(0, 0) = 1; A(1, 0) = 2; A(2, 0) = 3;
-    RI::Tensor<double> TAT = symrot.rotate_atompair_serial_abf(A, 0, 0, 1);
+    RI::Tensor<double> TAT = ModuleSymmetry::SymmetryRotationTestAccess::rotate_atompair_abf(symrot, A, 0, 0, 1);
     // T^T * [1,2,3]^T = [2, -1, 3]^T
     EXPECT_NEAR(TAT(0, 0), 2.0, DOUBLETHRESHOLD);
     EXPECT_NEAR(TAT(1, 0), -1.0, DOUBLETHRESHOLD);
@@ -251,7 +244,7 @@ TEST_F(AbfRotationTest, RestoreHRAbfStarMapping)
     HR_irr[0][{0, {0, 0, 0}}] = A;
 
     ModuleSymmetry::TapR irapR = {{0, 0}, {0, 0, 0}};
-    symrot.irs_.sector_stars_[irapR] = {
+    ModuleSymmetry::SymmetryRotationTestAccess::sector_stars(symrot)[irapR] = {
         {0, {{0, 0}, {0, 0, 0}}},
         {1, {{1, 1}, {1, 0, 0}}},
     };
@@ -282,7 +275,7 @@ TEST_F(AbfRotationTest, RestoreHRAbfInvalidShapeThrows)
     HR_irr[0][{0, {0, 0, 0}}] = bad;
 
     ModuleSymmetry::TapR irapR = {{0, 0}, {0, 0, 0}};
-    symrot.irs_.sector_stars_[irapR] = {{0, {{0, 0}, {0, 0, 0}}}};
+    ModuleSymmetry::SymmetryRotationTestAccess::sector_stars(symrot)[irapR] = {{0, {{0, 0}, {0, 0, 0}}}};
 
     ModuleSymmetry::Symmetry symm;
     Atom atoms[1];
@@ -301,7 +294,7 @@ TEST_F(AbfRotationTest, RestoreHRAbfDuplicateKeyThrows)
     HR_irr[0][{0, {0, 0, 0}}] = A;
 
     ModuleSymmetry::TapR irapR = {{0, 0}, {0, 0, 0}};
-    symrot.irs_.sector_stars_[irapR] = {
+    ModuleSymmetry::SymmetryRotationTestAccess::sector_stars(symrot)[irapR] = {
         {0, {{0, 0}, {0, 0, 0}}},
         {1, {{0, 0}, {0, 0, 0}}}, // duplicate target
     };

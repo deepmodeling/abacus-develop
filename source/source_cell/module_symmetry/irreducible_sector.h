@@ -9,6 +9,8 @@
 
 namespace ModuleSymmetry
 {
+    class SymmetryRotationTestAccess;
+
     using Tap = std::pair<int, int>;
     using TC = std::array<int, 3>;
     using TapR = std::pair<Tap, TC>;
@@ -146,5 +148,6 @@ namespace ModuleSymmetry
 
         friend class Symmetry_rotation;
         friend class Symmetry_rotation_k;
+        friend class SymmetryRotationTestAccess;
     };
 }

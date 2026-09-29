@@ -7,6 +7,8 @@
 
 namespace ModuleSymmetry
 {
+    class SymmetryRotationTestAccess;
+
     /// Real-space (RI::Tensor / HContainer) H(R) and RI-coefficient symmetry restoration for
     /// EXX/RPA, built on top of the LibRI-independent k-space restoration in
     /// ModuleSymmetry::Symmetry_rotation_k (source_cell/module_symmetry/symm_rotation_k.h),
@@ -72,6 +74,8 @@ namespace ModuleSymmetry
         //--------------------------------------------------------------------------------
 
     private:
+        friend class SymmetryRotationTestAccess;
+
         //--------------------------------------------------------------------------------
         std::vector<TC> get_Rs_from_BvK(const K_Vectors& kv)const;
         std::vector<TC> get_Rs_from_adjacent_list(const UnitCell& ucell,

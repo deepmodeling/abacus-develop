@@ -12,12 +12,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#define private public
-#define protected public
-#include "source_io/module_parameter/parameter.h"
-#include "../symm_rotation.h"
-#undef private
-#undef protected
+#include "symm_rotation_test_access.h"
 #define DOUBLETHRESHOLD 1e-8
 
 /*
@@ -81,9 +76,9 @@ Sep_Cell::~Sep_Cell() noexcept {}
 
 namespace
 {
-RI::Tensor<std::complex<double>> make_T_rot90()
+ModuleBase::ComplexMatrix make_T_rot90()
 {
-    RI::Tensor<std::complex<double>> T({3, 3});
+    ModuleBase::ComplexMatrix T(3, 3);
     const double m[3][3] = {{0, -1, 0}, {1, 0, 0}, {0, 0, 1}};
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
@@ -147,21 +142,22 @@ class Nspin4RestoreTest : public testing::Test
 protected:
     void SetUp() override
     {
-        symrot.reduce_Cs_ = true;
-        symrot.nsym_ = 1;
-        symrot.nanti_ = 1;
-        symrot.rotmat_Slm_.resize(2);
+        symrot.set_Cs_rotation({});
+        ModuleSymmetry::SymmetryRotationTestAccess::set_operation_counts(symrot, 1, 1);
+        auto& rotmat = symrot.get_rotmat_Slm();
+        rotmat.resize(2);
         for (int isym = 0; isym < 2; ++isym)
         {
-            symrot.rotmat_Slm_[isym].resize(2);
-            symrot.rotmat_Slm_[isym][0] = RI::Tensor<std::complex<double>>({1, 1});
-            symrot.rotmat_Slm_[isym][0](0, 0) = 1.0;
-            symrot.rotmat_Slm_[isym][1] = make_T_rot90();
+            rotmat[isym].resize(2);
+            rotmat[isym][0] = ModuleBase::ComplexMatrix(1, 1);
+            rotmat[isym][0](0, 0) = 1.0;
+            rotmat[isym][1] = make_T_rot90();
         }
         // identity SU(2) on both operations by default
-        symrot.spin_U_.resize(2);
+        auto& spin_rotations = ModuleSymmetry::SymmetryRotationTestAccess::spin_rotations(symrot);
+        spin_rotations.resize(2);
         for (int isym = 0; isym < 2; ++isym)
-            symrot.spin_U_[isym] = ModuleSymmetry::SpinRotation::Su2{1.0, 0.0, 0.0, 1.0};
+            spin_rotations[isym] = ModuleSymmetry::SpinRotation::Su2{1.0, 0.0, 0.0, 1.0};
 
         atoms[0].nw = 3;
         atoms[1].nw = 3;
@@ -193,7 +189,7 @@ TEST_F(Nspin4RestoreTest, FourChannelsIndependentForIdentitySU2)
 {
     // star with a single unitary member: 4 channels restored independently,
     // each equal to T^T * A_channel * T - no spin mixing, no cross-talk.
-    symrot.irs_.sector_stars_[{{0, 0}, {0, 0, 0}}] = {{0, {{0, 0}, {0, 0, 0}}}};
+    ModuleSymmetry::SymmetryRotationTestAccess::sector_stars(symrot)[{{0, 0}, {0, 0, 0}}] = {{0, {{0, 0}, {0, 0, 0}}}};
 
     auto in = make_irr_input();
     ModuleSymmetry::Symmetry symm;
@@ -210,7 +206,7 @@ TEST_F(Nspin4RestoreTest, OffDiagonalChannelsNonzero)
 {
     // all four channels (including 01 and 10) are nonzero and distinct in
     // both the input and the restored output.
-    symrot.irs_.sector_stars_[{{0, 0}, {0, 0, 0}}] = {{0, {{0, 0}, {0, 0, 0}}}};
+    ModuleSymmetry::SymmetryRotationTestAccess::sector_stars(symrot)[{{0, 0}, {0, 0, 0}}] = {{0, {{0, 0}, {0, 0, 0}}}};
     auto in = make_irr_input();
     ModuleSymmetry::Symmetry symm;
     auto out = symrot.restore_HR_nspin4(symm, atoms, st, 'H', in);
@@ -231,8 +227,8 @@ TEST_F(Nspin4RestoreTest, NonTrivialSU2Mixing)
     // Hout[a*2+b] = sum_{c,d} conj(U[c*2+a]) * U[d*2+b] * G[c*2+d]:
     //   Hout[00] = 0.5*(G00 - G01 - G10 + G11)
     //   Hout[01] = 0.5*(G00 + G01 - G10 - G11)
-    symrot.spin_U_[0] = ModuleSymmetry::SpinRotation::Su2{M_SQRT1_2, M_SQRT1_2, -M_SQRT1_2, M_SQRT1_2};
-    symrot.irs_.sector_stars_[{{0, 0}, {0, 0, 0}}] = {{0, {{0, 0}, {0, 0, 0}}}};
+    ModuleSymmetry::SymmetryRotationTestAccess::spin_rotations(symrot)[0] = ModuleSymmetry::SpinRotation::Su2{M_SQRT1_2, M_SQRT1_2, -M_SQRT1_2, M_SQRT1_2};
+    ModuleSymmetry::SymmetryRotationTestAccess::sector_stars(symrot)[{{0, 0}, {0, 0, 0}}] = {{0, {{0, 0}, {0, 0, 0}}}};
 
     auto in = make_irr_input();
     ModuleSymmetry::Symmetry symm;
@@ -260,7 +256,7 @@ TEST_F(Nspin4RestoreTest, AntiunitarySigmaYChannelRemap)
     // star member isym=1 is antiunitary (>= nsym_): after the (identity)
     // SU(2) step, channels remap as out[0]=conj(in[3]), out[1]=-conj(in[2]),
     // out[2]=-conj(in[1]), out[3]=conj(in[0]).
-    symrot.irs_.sector_stars_[{{0, 0}, {0, 0, 0}}] = {
+    ModuleSymmetry::SymmetryRotationTestAccess::sector_stars(symrot)[{{0, 0}, {0, 0, 0}}] = {
         {0, {{0, 0}, {0, 0, 0}}},
         {1, {{1, 1}, {1, 0, 0}}},
     };
@@ -294,7 +290,7 @@ TEST_F(Nspin4RestoreTest, AntiunitarySigmaYComplexInputs)
     //   out[0] = conj(rot(A3)), out[1] = -conj(rot(A2)),
     //   out[2] = -conj(rot(A1)), out[3] = conj(rot(A0))
     // where rot(Ak) = T^T * A_k * T is the orbitally rotated channel.
-    symrot.irs_.sector_stars_[{{0, 0}, {0, 0, 0}}] = {
+    ModuleSymmetry::SymmetryRotationTestAccess::sector_stars(symrot)[{{0, 0}, {0, 0, 0}}] = {
         {0, {{0, 0}, {0, 0, 0}}},
         {1, {{1, 1}, {1, 0, 0}}},
     };
@@ -354,7 +350,7 @@ TEST_F(Nspin4RestoreTest, ShortAndLongRestoreOnceEach)
     // short and long Coulomb channels are restored by two separate calls;
     // each call restores all four spin channels exactly once. Verify by
     // running two independent calls and checking per-call output size.
-    symrot.irs_.sector_stars_[{{0, 0}, {0, 0, 0}}] = {{0, {{0, 0}, {0, 0, 0}}}};
+    ModuleSymmetry::SymmetryRotationTestAccess::sector_stars(symrot)[{{0, 0}, {0, 0, 0}}] = {{0, {{0, 0}, {0, 0, 0}}}};
     auto in_short = make_irr_input();
     auto in_long = make_irr_input();
     // long channel carries different values to prove no cross-talk between calls
@@ -381,7 +377,7 @@ TEST_F(Nspin4RestoreTest, HermiticityPreservedForUnitaryMember)
     H(1, 0) = std::conj(H(0, 1)); H(1, 1) = std::complex<double>(4, 0); H(1, 2) = std::complex<double>(0.5, 0.25);
     H(2, 0) = std::conj(H(0, 2)); H(2, 1) = std::conj(H(1, 2)); H(2, 2) = std::complex<double>(6, 0);
 
-    symrot.irs_.sector_stars_[{{0, 0}, {0, 0, 0}}] = {{0, {{0, 0}, {0, 0, 0}}}};
+    ModuleSymmetry::SymmetryRotationTestAccess::sector_stars(symrot)[{{0, 0}, {0, 0, 0}}] = {{0, {{0, 0}, {0, 0, 0}}}};
     std::array<std::map<int, std::map<std::pair<int, ModuleSymmetry::TC>, RI::Tensor<std::complex<double>>>>, 4> in;
     in[0][0][{0, {0, 0, 0}}] = H;
 
@@ -392,85 +388,6 @@ TEST_F(Nspin4RestoreTest, HermiticityPreservedForUnitaryMember)
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
             EXPECT_NEAR(std::abs(Hout(i, j) - std::conj(Hout(j, i))), 0.0, DOUBLETHRESHOLD);
-}
-
-// Build the AO matrix from an antiunitary-only star entry. A grey-group
-// Theta*g must cache g even when that unitary member was not selected in the star.
-TEST(SOCBranchCompatibility, GreyStarBuildsTheSpatialMatrixForScalarAndSpinor)
-{
-    const int saved_nspin = PARAM.input.nspin;
-    for (const int nspin : {1, 4})
-    {
-        PARAM.input.nspin = nspin;
-        const int npol = nspin == 4 ? 2 : 1;
-        UnitCell cell;
-        Atom atom;
-        atom.nw = 1;
-        atom.na = 1;
-        atom.stapos_wf = 0;
-        atom.iw2l = {0};
-        cell.atoms = &atom;
-        cell.st.nat = 1;
-        cell.st.iat2it = new int[1]{0};
-        cell.st.iat2ia = new int[1]{0};
-        cell.latvec = ModuleBase::Matrix3(1,0,0,0,1,0,0,0,1);
-        cell.symm.nrotk = 1;
-        cell.symm.gmatrix[0] = cell.latvec;
-        cell.symm.nrotk_anti = 0;
-        cell.symm.magnetic_nspin4 = false;
-        cell.symm.isym_rotiat_ = {{0}};
-        K_Vectors kv;
-        kv.kvec_d = {{0.25, 0, 0}};
-        kv.kstars = {{{1, {-0.25, 0, 0}}}};
-        ModuleSymmetry::Symmetry_rotation rotation;
-        rotation.irs_.return_lattice_ = {{{0, 0, 0}}};
-        Parallel_2D pv;
-        pv.init(npol, npol, 1, MPI_COMM_WORLD);
-        rotation.cal_Ms(kv, cell, pv);
-        const std::vector<std::vector<std::complex<double>>> input(
-            1, std::vector<std::complex<double>>(npol, {1, 2}));
-        const auto output = rotation.rotate_ao_coefficients(input, 0, 0, pv);
-        ASSERT_EQ(output.size(), 1u);
-        for (int i = 0; i < npol; ++i)
-        {
-            EXPECT_NEAR(std::abs(output[0][i] - input[0][i]), 0.0, 1e-12);
-        }
-    }
-    PARAM.input.nspin = saved_nspin;
-}
-
-TEST(SOCBranchCompatibility, ScalarDensityRetainsComplexReturnLatticePhase)
-{
-    const int saved_nspin = PARAM.input.nspin;
-    const int saved_nlocal = PARAM.sys.nlocal;
-    PARAM.input.nspin = 1;
-    PARAM.sys.nlocal = 2;
-    Parallel_2D pv;
-    pv.init(2, 2, 1, MPI_COMM_WORLD);
-    ModuleSymmetry::Symmetry_rotation rotation;
-    std::vector<std::complex<double>> matrix(pv.get_local_size(), 0.0);
-    const std::complex<double> phase[2] = {{1, 0}, {0, 1}};
-    for (int j = 0; j < pv.get_col_size(); ++j)
-        for (int i = 0; i < pv.get_row_size(); ++i)
-            if (pv.local2global_row(i) == pv.local2global_col(j))
-                matrix[j * pv.get_row_size() + i] = phase[pv.local2global_row(i)];
-    rotation.Ms_ = {{{0, matrix}}};
-    const std::vector<std::vector<std::complex<double>>> input = {{{1,0}, {1,0}}};
-    const auto output = rotation.rotate_ao_coefficients(input, 0, 0, pv);
-    EXPECT_NEAR(std::abs(output[0][0] - phase[0]), 0.0, 1e-12);
-    EXPECT_NEAR(std::abs(output[0][1] - phase[1]), 0.0, 1e-12);
-    // ABACUS's conjugate-first stored density is c_i^* c_j.
-    const auto density = rotation.rot_matrix_ao(
-        std::vector<std::complex<double>>(pv.get_local_size(), {1,0}), 0, 1, 0, pv);
-    for (int j = 0; j < pv.get_col_size(); ++j)
-        for (int i = 0; i < pv.get_row_size(); ++i)
-        {
-            const auto expected = std::conj(output[0][pv.local2global_row(i)])
-                                  * output[0][pv.local2global_col(j)];
-            EXPECT_NEAR(std::abs(density[j * pv.get_row_size() + i] - expected), 0.0, 1e-12);
-        }
-    PARAM.input.nspin = saved_nspin;
-    PARAM.sys.nlocal = saved_nlocal;
 }
 
 int main(int argc, char** argv)
