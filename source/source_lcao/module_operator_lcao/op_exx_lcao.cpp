@@ -173,6 +173,12 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
     this->restart = restart_in;
     ModuleBase::TITLE("OperatorEXX", "OperatorEXX");
     const Parallel_Orbitals* const pv = hR_in->get_paraV();
+    const bool zero_koffset
+        = (ModuleBase::Vector3<double>(std::fmod(this->kv.get_koffset(0), 1.0),
+                                       std::fmod(this->kv.get_koffset(1), 1.0),
+                                       std::fmod(this->kv.get_koffset(2), 1.0))
+               .norm()
+           < 1e-10);
 
     if (PARAM.inp.calculation == "nscf" && exx_info_ptr->info_global.cal_exx)
     { // for nscf, calculate HexxR from the read-in DM, or read HexxR in
@@ -206,6 +212,38 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 }
             }
             return true;
+        };
+        auto maybe_remap_wigner_seitz = [&](auto& Hexxs_loaded) {
+            std::array<int, 3> Rs_period = {this->kv.nmp[0], this->kv.nmp[1], this->kv.nmp[2]};
+            const bool period_from_kmesh = Rs_period[0] > 0 && Rs_period[1] > 0 && Rs_period[2] > 0;
+            if (!can_remap_wigner_seitz_for_nscf(this->add_hexx_type, period_from_kmesh, zero_koffset))
+            {
+                return;
+            }
+            if (!period_from_kmesh)
+            {
+                const auto inferred = infer_complete_Rs_period_from_Hexxs(Hexxs_loaded);
+                if (!inferred.first)
+                {
+                    if (GlobalV::MY_RANK == 0)
+                    {
+                        ModuleBase::WARNING(
+                            "OperatorEXX",
+                            "Cannot infer a complete BvK period; HexxR Wigner-Seitz remapping is disabled");
+                    }
+                    return;
+                }
+                Rs_period = inferred.second;
+            }
+
+            const WignerSeitzRemapStats stats = remap_Hexxs_wigner_seitz(ucell, Rs_period, Hexxs_loaded);
+            if (GlobalV::MY_RANK == 0)
+            {
+                std::cout << " NSCF EXX Wigner-Seitz remapping enabled with R period: " << Rs_period[0] << " "
+                          << Rs_period[1] << " " << Rs_period[2] << "; input blocks=" << stats.input_blocks
+                          << "; output blocks=" << stats.output_blocks << "; remapped blocks=" << stats.remapped_blocks
+                          << "; split blocks=" << stats.split_blocks << "; max images=" << stats.max_images << std::endl;
+            }
         };
 
         if (PARAM.inp.init_chg == "dm" || PARAM.inp.init_chg == "dm_no_renormalize")
@@ -262,10 +300,12 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 if (exx_info_ptr->info_ri.real_number)
                 {
                     ModuleIO::read_Hexxs_csr(file_name_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
+                    maybe_remap_wigner_seitz(*Hexxd);
                 }
                 else
                 {
                     ModuleIO::read_Hexxs_csr(file_name_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
+                    maybe_remap_wigner_seitz(*Hexxc);
                 }
             }
             else if (check_exist(file_name_list_cereal()))
@@ -281,10 +321,12 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 if (exx_info_ptr->info_ri.real_number)
                 {
                     ModuleIO::read_Hexxs_cereal(file_name_exx_cereal, *Hexxd);
+                    maybe_remap_wigner_seitz(*Hexxd);
                 }
                 else
                 {
                     ModuleIO::read_Hexxs_cereal(file_name_exx_cereal, *Hexxc);
+                    maybe_remap_wigner_seitz(*Hexxc);
                 }
             }
             else

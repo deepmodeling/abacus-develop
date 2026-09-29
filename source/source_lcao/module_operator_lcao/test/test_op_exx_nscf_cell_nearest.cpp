@@ -103,13 +103,6 @@ class OperatorExxNscfCellNearestTest : public ::testing::Test
 
         hR_ = new hamilt::HContainer<double>(paraV_);
 
-        kv_.set_nks(1);
-        kv_.set_nkstot(1);
-        kv_.set_nkstot_full(1);
-        kv_.kvec_d.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-        kv_.nmp[0] = 0;
-        kv_.nmp[1] = 0;
-        kv_.nmp[2] = 0;
     }
 
     void TearDown() override
@@ -123,7 +116,6 @@ class OperatorExxNscfCellNearestTest : public ::testing::Test
     UnitCell ucell_;
     Parallel_Orbitals* paraV_ = nullptr;
     hamilt::HContainer<double>* hR_ = nullptr;
-    K_Vectors kv_;
 };
 
 TEST_F(OperatorExxNscfCellNearestTest, ReallocatesHexxRWithNearestImageWhenPeriodIsInferredFromFile)
