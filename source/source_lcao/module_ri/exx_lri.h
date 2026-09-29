@@ -17,6 +17,8 @@
 #include <array>
 #include <map>
 #include <deque>
+#include <fstream>
+#include <string>
 #include <mpi.h>
 
 #include "module_exx_symmetry/symm_rotation.h"
@@ -48,6 +50,22 @@ class Exx_Obj
 		std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;
 };
 
+// Runtime state is captured when an EXX object is created.  This keeps the
+// RI kernels independent from process-global input and output state.
+struct ExxLriRuntime
+{
+    bool cal_force;
+    bool cal_stress;
+    bool realtime_tddft;
+    int nspin;
+    int rank;
+    const std::string& output_dir;
+    std::ofstream& log;
+    int* abfs_lmax;
+};
+
+ExxLriRuntime make_exx_lri_runtime();
+
 template<typename Tdata>
 class Exx_LRI
 {
@@ -69,7 +87,8 @@ public:
 		CoulombMap long_range;
 	};
 
-	Exx_LRI(const Exx_Info::Exx_Info_RI& info_in) :info(info_in) {}
+	Exx_LRI(const Exx_Info::Exx_Info_RI& info_in, const ExxLriRuntime& runtime_in)
+        : info(info_in), runtime(runtime_in) {}
 	Exx_LRI operator=(const Exx_LRI&) = delete;
 	Exx_LRI operator=(Exx_LRI&&);
 
@@ -146,6 +165,7 @@ private:
 	// Storing a reference here leaves a dangling reference after that caller
 	// returns and can corrupt the subsequent RI matrix construction.
 	Exx_Info::Exx_Info_RI info;
+	const ExxLriRuntime runtime;
 	int abfs_Lmax_ = 0;
 	MPI_Comm mpi_comm;
 	const K_Vectors *p_kv = nullptr;

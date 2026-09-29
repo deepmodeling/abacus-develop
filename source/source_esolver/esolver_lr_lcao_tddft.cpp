@@ -344,7 +344,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolve
             exx_info.info_ri.files_abfs = ucell.abfs_orbital_files;
             exx_info.info_opt_abfs.files_abfs = ucell.abfs_orbital_files;
             exx_info.info_opt_abfs.files_jles = ucell.jle_orbital_files;
-            this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
+            this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri, make_exx_lri_runtime());
             this->exx_lri->init(MPI_COMM_WORLD, ucell,this->kv, ks_sol.orb_);
             this->exx_lri->cal_exx_ions(ucell,this->inp_->out_ri_cv);
         }
@@ -497,7 +497,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
         exx_info.info_ri.files_abfs = ucell.abfs_orbital_files;
         exx_info.info_opt_abfs.files_abfs = ucell.abfs_orbital_files;
         exx_info.info_opt_abfs.files_jles = ucell.jle_orbital_files;
-        this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
+        this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri, make_exx_lri_runtime());
         this->exx_lri->init(MPI_COMM_WORLD, ucell,this->kv, orb);
         this->exx_lri->cal_exx_ions(ucell,this->inp_->out_ri_cv);
     }

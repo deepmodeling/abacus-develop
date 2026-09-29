@@ -40,6 +40,18 @@
 #include <malloc.h>
 #endif
 
+inline ExxLriRuntime make_exx_lri_runtime()
+{
+    return {PARAM.inp.cal_force,
+            PARAM.inp.cal_stress,
+            PARAM.inp.esolver_type == "tddft",
+            PARAM.inp.nspin,
+            GlobalV::MY_RANK,
+            PARAM.globalv.global_out_dir,
+            GlobalV::ofs_running,
+            &GlobalC::exx_info.info_ri.abfs_Lmax};
+}
+
 namespace ExxLriDetail
 {
 using CoulombParam
@@ -70,15 +82,15 @@ inline bool should_rotate_abfs_for_init(const Exx_Info::Exx_Info_RI& info)
     return info.rotate_abfs && rotate_abfs_in_place_for_current_full_matrix(info);
 }
 
-inline bool allow_rt_tddft_ewald_force_stress_bypass()
+inline bool allow_rt_tddft_ewald_force_stress_bypass(const ExxLriRuntime& runtime)
 {
-    return PARAM.inp.esolver_type == "tddft";
+    return runtime.realtime_tddft;
 }
 
-inline void print_rt_tddft_ewald_force_stress_warning_once()
+inline void print_rt_tddft_ewald_force_stress_warning_once(const ExxLriRuntime& runtime)
 {
     static bool warning_printed = false;
-    if (!warning_printed && GlobalV::MY_RANK == 0)
+    if (!warning_printed && runtime.rank == 0)
     {
         std::cout << "RT-TDDFT Ewald moment/split skips long-range EXX force/stress construction."
                   << std::endl;
@@ -178,10 +190,10 @@ constexpr bool supports_weighted_short_v
     = has_weighted_short_config<Texx>::value && has_set_weighted_short_config<Texx>::value
       && has_weighted_short_stats_member<Texx>::value;
 
-inline void print_weighted_short_old_libri_warning_once(const double threshold)
+inline void print_weighted_short_old_libri_warning_once(const double threshold, const int rank)
 {
     static bool warning_printed = false;
-    if (!warning_printed && GlobalV::MY_RANK == 0)
+    if (!warning_printed && rank == 0)
     {
         std::cout << "EXX weighted short requested with exx_vcd_threshold=" << threshold
                   << ", but the linked LibRI does not provide weighted-short screening. "
@@ -193,7 +205,8 @@ inline void print_weighted_short_old_libri_warning_once(const double threshold)
 template <typename Texx>
 typename std::enable_if<supports_weighted_short_v<Texx>, void>::type maybe_set_weighted_short_config(
     Texx& exx,
-    const Exx_Info::Exx_Info_RI& info)
+    const Exx_Info::Exx_Info_RI& info,
+    const int)
 {
     typename Texx::Weighted_Short_Config weighted_short_cfg;
     weighted_short_cfg.weighted_short_threshold = info.V_cd_threshold;
@@ -205,11 +218,12 @@ typename std::enable_if<supports_weighted_short_v<Texx>, void>::type maybe_set_w
 template <typename Texx>
 typename std::enable_if<!supports_weighted_short_v<Texx>, void>::type maybe_set_weighted_short_config(
     Texx&,
-    const Exx_Info::Exx_Info_RI& info)
+    const Exx_Info::Exx_Info_RI& info,
+    const int rank)
 {
     if (info.V_cd_threshold > 0.0)
     {
-        print_weighted_short_old_libri_warning_once(info.V_cd_threshold);
+        print_weighted_short_old_libri_warning_once(info.V_cd_threshold, rank);
     }
 }
 
@@ -218,9 +232,10 @@ typename std::enable_if<supports_weighted_short_v<Texx>, void>::type maybe_print
     const Texx& exx_channel,
     const Exx_Info::Exx_Info_RI& info,
     const std::string& ds_suffix,
-    const std::string& v_suffix)
+    const std::string& v_suffix,
+    const int rank)
 {
-    if (GlobalV::MY_RANK == 0 && info.V_cd_threshold > 0.0)
+    if (rank == 0 && info.V_cd_threshold > 0.0)
     {
         const auto& vcd_stats = exx_channel.weighted_short_stats;
         const double skip_pct = (vcd_stats.weighted_short_candidates == 0)
@@ -243,7 +258,8 @@ typename std::enable_if<!supports_weighted_short_v<Texx>, void>::type maybe_prin
     const Texx&,
     const Exx_Info::Exx_Info_RI&,
     const std::string&,
-    const std::string&)
+    const std::string&,
+    const int)
 {
 }
 
@@ -317,7 +333,8 @@ inline std::vector<std::vector<double>> build_rotation_rows(const std::vector<do
 inline Numerical_Orbital_Lm combine_orbital_block(
     const std::vector<Numerical_Orbital_Lm>& original_block,
     const std::vector<double>& coeffs,
-    const int output_index)
+    const int output_index,
+    const bool cal_force)
 {
     if (original_block.empty())
     {
@@ -360,15 +377,16 @@ inline Numerical_Orbital_Lm combine_orbital_block(
                              out_ref.getDruniform(),
                              false,
                              true,
-                             PARAM.inp.cal_force);
+                             cal_force);
     return rotated;
 }
 
 inline void rotate_abfs_by_multipole(std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs,
-                                     const double threshold)
+                                     const double threshold,
+                                     const ExxLriRuntime& runtime)
 {
     const auto multipole = Exx_Abfs::Construct_Orbs::get_multipole(abfs);
-    if (GlobalV::MY_RANK == 0)
+    if (runtime.rank == 0)
     {
         std::cout << "\nRotated ABFS multipole summary" << std::endl;
         std::cout << "threshold for displayed zero moments = " << threshold << std::endl;
@@ -385,7 +403,7 @@ inline void rotate_abfs_by_multipole(std::vector<std::vector<std::vector<Numeric
 
             if (abfs[T][L].size() <= 1)
             {
-                if (GlobalV::MY_RANK == 0)
+                if (runtime.rank == 0)
                 {
                     std::cout << "Atom type " << T << ", L " << L << ", N 0"
                               << ", multipole before rotation: " << multipole[T][L][0]
@@ -402,13 +420,13 @@ inline void rotate_abfs_by_multipole(std::vector<std::vector<std::vector<Numeric
                     = std::inner_product(rows[N].begin(), rows[N].end(), multipole[T][L].begin(), 0.0);
                 const double rotated_moment
                     = (std::abs(rotated_moment_raw) <= threshold) ? 0.0 : rotated_moment_raw;
-                if (GlobalV::MY_RANK == 0)
+                if (runtime.rank == 0)
                 {
                     std::cout << "Atom type " << T << ", L " << L << ", N " << N
                               << ", multipole before rotation: " << multipole[T][L][N]
                               << ", multipole after rotation: " << rotated_moment << std::endl;
                 }
-                abfs[T][L][N] = combine_orbital_block(original_block, rows[N], N);
+                abfs[T][L][N] = combine_orbital_block(original_block, rows[N], N, runtime.cal_force);
             }
         }
     }
@@ -420,7 +438,8 @@ inline std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> prepare_abfs(
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& lcaos,
     const Exx_Info::Exx_Info_RI& info,
     const double pca_threshold,
-    const std::vector<std::string>& files_abfs)
+    const std::vector<std::string>& files_abfs,
+    const ExxLriRuntime& runtime)
 {
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs
         = Exx_Abfs::Construct_Orbs::abfs_same_atom(
@@ -436,7 +455,7 @@ inline std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> prepare_abfs(
     Exx_Abfs::Construct_Orbs::filter_empty_orbs(abfs);
     if (should_rotate_abfs_for_init(info))
     {
-        rotate_abfs_by_multipole(abfs, info.multip_moments_threshold);
+        rotate_abfs_by_multipole(abfs, info.multip_moments_threshold, runtime);
     }
     return abfs;
 }
@@ -741,6 +760,7 @@ build_ewald_bare_coulomb_with_moment(
     const ModuleBase::Element_Basis_Index::IndexPermutation& abfs_old_to_new,
     const std::pair<std::vector<int>, std::vector<std::vector<std::pair<int, std::array<int, 3>>>>>& list_As_Vs,
     LRI_CV<Tdata>& cv,
+    const ExxLriRuntime& runtime,
     const bool ignore_upper_coulomb_cutoff = false,
     const bool force_moment_far_field = false,
     const bool diagnostic_only = false)
@@ -755,14 +775,14 @@ build_ewald_bare_coulomb_with_moment(
         return Vs_full;
     }
     if (!diagnostic_only
-        && (PARAM.inp.cal_force || PARAM.inp.cal_stress)
-        && !ExxLriDetail::allow_rt_tddft_ewald_force_stress_bypass())
+        && (runtime.cal_force || runtime.cal_stress)
+        && !ExxLriDetail::allow_rt_tddft_ewald_force_stress_bypass(runtime))
     {
         throw std::invalid_argument("exx_coul_moment for Ewald currently supports energy/SCF only.");
     }
-    if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
+    if (runtime.cal_force || runtime.cal_stress)
     {
-        ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once();
+        ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once(runtime);
     }
     const double moment_value_scale = ExxLriDetail::get_total_fock_alpha(ewald_coulomb_param);
     if (std::abs(moment_value_scale) <= std::numeric_limits<double>::epsilon())
@@ -914,13 +934,14 @@ inline EwaldRealspaceRange<Tdata> select_ewald_realspace_range(
     const std::array<int, 3>& requested_period,
     const MPI_Comm mpi_comm,
     LRI_CV<Tdata>& cv,
-    Ewald_Vq<Tdata>& evq)
+    Ewald_Vq<Tdata>& evq,
+    const ExxLriRuntime& runtime)
 {
     EwaldRealspaceRange<Tdata> selected;
     selected.period = requested_period;
     const auto tail_mode = EwaldVqDetail::parse_tail_mode(info.ewald_tail_check);
     if (EwaldVqDetail::uses_adaptive_realspace_range(tail_mode)
-        && (PARAM.inp.cal_force || PARAM.inp.cal_stress))
+        && (runtime.cal_force || runtime.cal_stress))
     {
         throw std::invalid_argument(
             "Adaptive Ewald tail enlargement currently supports energy/SCF only; "
@@ -953,7 +974,8 @@ inline EwaldRealspaceRange<Tdata> select_ewald_realspace_range(
             abfs,
             abfs_old_to_new,
             selected.distribution,
-            cv);
+            cv,
+            runtime);
         evq.init_ions(ucell, selected.period);
 
         if (tail_mode == EwaldVqDetail::TailMode::Off)
@@ -1067,11 +1089,11 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
 
 	this->abfs = ExxLriDetail::prepare_abfs(
-		ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs);
-	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
+		ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs, this->runtime);
+	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, this->runtime.log);
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
-		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 ); }
+		{ *this->runtime.abfs_lmax = std::max(*this->runtime.abfs_lmax, static_cast<int>(this->abfs[T].size())-1 ); }
 
 		this->exx_objs.clear();
 	    this->abfs_old_to_new_per_type.clear();
@@ -1084,21 +1106,21 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
         this->use_rotated_n0_long_range = rotated_n0_requested;
     if (this->use_rotated_n0_long_range)
     {
-        if ((PARAM.inp.cal_force || PARAM.inp.cal_stress)
-            && !ExxLriDetail::allow_rt_tddft_ewald_force_stress_bypass())
+        if ((this->runtime.cal_force || this->runtime.cal_stress)
+            && !ExxLriDetail::allow_rt_tddft_ewald_force_stress_bypass(this->runtime))
 	        {
 	            throw std::invalid_argument(
 	                "Rotated-ABFS split Ewald currently supports energy/SCF only.");
 	        }
-            if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
+            if (this->runtime.cal_force || this->runtime.cal_stress)
             {
-                ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once();
+                ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once(this->runtime);
             }
 	        const auto permutation = ExxLriDetail::build_long_prefix_permutation(this->abfs,
 	                                                                             this->info.multip_moments_threshold);
 	        this->abfs_old_to_new_per_type = permutation.old_to_new_by_type;
 	        this->abfs_long_prefix_size_per_type = permutation.long_prefix_size_by_type;
-	        if (GlobalV::MY_RANK == 0)
+        if (this->runtime.rank == 0)
 	        {
 	            std::cout << "Rotated ABFS long-prefix sizes by type:";
 	            for (std::size_t T = 0; T != this->abfs_long_prefix_size_per_type.size(); ++T)
@@ -1163,7 +1185,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 
 	this->abfs = abfs_in;
 	Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
-	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
+	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, this->runtime.log);
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
 	{
@@ -1181,21 +1203,21 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
         this->use_rotated_n0_long_range = rotated_n0_requested;
     if (this->use_rotated_n0_long_range)
     {
-        if ((PARAM.inp.cal_force || PARAM.inp.cal_stress)
-            && !ExxLriDetail::allow_rt_tddft_ewald_force_stress_bypass())
+        if ((this->runtime.cal_force || this->runtime.cal_stress)
+            && !ExxLriDetail::allow_rt_tddft_ewald_force_stress_bypass(this->runtime))
 	        {
 	            throw std::invalid_argument(
 	                "Rotated-ABFS split Ewald currently supports energy/SCF only.");
 	        }
-            if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
+            if (this->runtime.cal_force || this->runtime.cal_stress)
             {
-                ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once();
+                ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once(this->runtime);
             }
 	        const auto permutation = ExxLriDetail::build_long_prefix_permutation(this->abfs,
 	                                                                             this->info.multip_moments_threshold);
 	        this->abfs_old_to_new_per_type = permutation.old_to_new_by_type;
 	        this->abfs_long_prefix_size_per_type = permutation.long_prefix_size_by_type;
-	        if (GlobalV::MY_RANK == 0)
+        if (this->runtime.rank == 0)
 	        {
 	            std::cout << "Rotated ABFS long-prefix sizes by type:";
 	            for (std::size_t T = 0; T != this->abfs_long_prefix_size_per_type.size(); ++T)
@@ -1259,8 +1281,8 @@ void Exx_LRI<Tdata>::init_spencer(
     Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
 
     this->abfs = ExxLriDetail::prepare_abfs(
-        ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs);
-    Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
+        ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs, this->runtime);
+    Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, this->runtime.log);
 
 	for (size_t T = 0; T != this->abfs.size(); ++T)
 	{
@@ -1320,12 +1342,12 @@ void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
 
     this->abfs = abfs_in;
     Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
-    Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
+    Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, this->runtime.log);
 
     for (size_t T = 0; T != this->abfs.size(); ++T)
     {
-        GlobalC::exx_info.info_ri.abfs_Lmax
-            = std::max(GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size()) - 1);
+        *this->runtime.abfs_lmax
+            = std::max(*this->runtime.abfs_lmax, static_cast<int>(this->abfs[T].size()) - 1);
     }
 
 	    this->exx_objs.clear();
@@ -1413,7 +1435,8 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 			period_Vs,
 			this->mpi_comm,
 			this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Ewald].cv,
-			this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Ewald].evq);
+			this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Ewald].evq,
+            this->runtime);
 		period_Vs = selected_range.period;
 		list_As_Vs = std::move(selected_range.distribution);
 		selected_ewald_bare = std::move(selected_range.bare_coulomb);
@@ -1438,7 +1461,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 
 		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 		{
-			if (this->info.coul_moment && GlobalV::MY_RANK == 0)
+			if (this->info.coul_moment && this->runtime.rank == 0)
 			{
 				std::cout << "Construct Ewald bare Coulomb blocks directly in the current ABFS basis:"
 						  << " near-field exact + far-field moment."
@@ -1465,7 +1488,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 								auto Vs_bare_root
 									= RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs_temp, all_atoms, all_atoms);
 								MPI_Barrier(this->mpi_comm);
-								if (GlobalV::MY_RANK == 0)
+								if (this->runtime.rank == 0)
 								{
 									Vs_ewald_temp
 										= this->exx_objs[settings_list.first].evq.cal_short_range_Vs_serial_full(
@@ -1502,7 +1525,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 								auto Vs_bare_root
 									= RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs_temp, all_atoms, all_atoms);
 								MPI_Barrier(this->mpi_comm);
-								if (GlobalV::MY_RANK == 0)
+								if (this->runtime.rank == 0)
 								{
 									Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs_serial_full(
 										ucell,
@@ -1534,7 +1557,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 
 		Vs = Vs.empty() ? std::move(Vs_temp) : LRI_CV_Tools::add(Vs, Vs_temp);
 
-		if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
+		if (this->runtime.cal_force || this->runtime.cal_stress)
 		{
 			auto dVs_temp = this->exx_objs[settings_list.first].cv.cal_dVs(
 				ucell,
@@ -1546,12 +1569,12 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		}
 	}
 
-	if (write_cv && GlobalV::MY_RANK == 0)
+	if (write_cv && this->runtime.rank == 0)
 	{
-		LRI_CV_Tools::write_Vs_abf(Vs, PARAM.globalv.global_out_dir + "Vs");
+		LRI_CV_Tools::write_Vs_abf(Vs, this->runtime.output_dir + "Vs");
 		if (this->use_rotated_n0_long_range)
 		{
-			LRI_CV_Tools::write_Vs_abf(Vs_long, PARAM.globalv.global_out_dir + "Vs_long_n0");
+			LRI_CV_Tools::write_Vs_abf(Vs_long, this->runtime.output_dir + "Vs_long_n0");
 		}
 	}
 	if (mpi_size > 1
@@ -1560,7 +1583,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		MPI_Barrier(this->mpi_comm);
 		auto Vs_root = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs, all_atoms, all_atoms);
 		MPI_Barrier(this->mpi_comm);
-		if (GlobalV::MY_RANK != 0)
+		if (this->runtime.rank != 0)
 		{
 			Vs_root.clear();
 		}
@@ -1570,7 +1593,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 			MPI_Barrier(this->mpi_comm);
 			auto Vs_long_root = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs_long, all_atoms, all_atoms);
 			MPI_Barrier(this->mpi_comm);
-			if (GlobalV::MY_RANK != 0)
+			if (this->runtime.rank != 0)
 			{
 				Vs_long_root.clear();
 			}
@@ -1590,12 +1613,12 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 	{
 		this->exx_lri.set_Vs(std::move(Vs_long), this->info.V_threshold_long, "long");
 	}
-	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
+	if(this->runtime.cal_force || this->runtime.cal_stress)
 	{
 		std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
 			dVs_order = LRI_CV_Tools::change_order(std::move(dVs));
 		this->exx_lri.set_dVs(std::move(dVs_order), this->info.V_grad_threshold);
-		if(PARAM.inp.cal_stress)
+		if(this->runtime.cal_stress)
 		{
 			std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dVRs = LRI_CV_Tools::cal_dMRs(ucell,dVs_order);
 			this->exx_lri.set_dVRs(std::move(dVRs), this->info.V_grad_R_threshold);
@@ -1617,7 +1640,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 				ucell,
 				list_As_Cs.first,
 				list_As_Cs.second[0],
-				{{"cal_dC",PARAM.inp.cal_force||PARAM.inp.cal_stress},
+				{{"cal_dC",this->runtime.cal_force || this->runtime.cal_stress},
 				 {"writable_Cws",true},
 				 {"writable_dCws",true},
 				 {"writable_Vws",false},
@@ -1626,7 +1649,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 			this->exx_objs[settings_list.first].cv.Cws = LRI_CV_Tools::get_CVws(ucell, Cs_temp);
 			Cs = Cs.empty() ? Cs_temp : LRI_CV_Tools::add(Cs, Cs_temp);
 
-			if (PARAM.inp.cal_force || PARAM.inp.cal_stress)
+			if (this->runtime.cal_force || this->runtime.cal_stress)
 			{
 				auto& dCs_temp = std::get<1>(Cs_dCs);
 				this->exx_objs[settings_list.first].cv.dCws = LRI_CV_Tools::get_dCVws(ucell, dCs_temp);
@@ -1651,9 +1674,9 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 			this->abfs_long_prefix_size_per_type,
 			Cs_screened_by_full_mask);
 	}
-	if (write_cv && GlobalV::MY_RANK == 0)
+	if (write_cv && this->runtime.rank == 0)
 	{
-		LRI_CV_Tools::write_Cs_ao(Cs, PARAM.globalv.global_out_dir + "Cs");
+		LRI_CV_Tools::write_Cs_ao(Cs, this->runtime.output_dir + "Cs");
 	}
 	if (this->use_rotated_n0_long_range)
 	{
@@ -1665,14 +1688,14 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		this->exx_lri.flag_finish.Cs = true;
 	}
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold, this->use_rotated_n0_long_range ? "short" : "");
-    ExxLriDetail::maybe_set_weighted_short_config(this->exx_lri, this->info);
+    ExxLriDetail::maybe_set_weighted_short_config(this->exx_lri, this->info, this->runtime.rank);
 
-	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
+	if(this->runtime.cal_force || this->runtime.cal_stress)
 	{
 		std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
 			dCs_order = LRI_CV_Tools::change_order(std::move(dCs));
 		this->exx_lri.set_dCs(std::move(dCs_order), this->info.C_grad_threshold);
-		if(PARAM.inp.cal_stress)
+		if(this->runtime.cal_stress)
 		{
 			std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dCRs = LRI_CV_Tools::cal_dMRs(ucell,dCs_order);
 			this->exx_lri.set_dCRs(std::move(dCRs), this->info.C_grad_R_threshold);
@@ -1785,9 +1808,9 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		}
 	}
 
-	if (write_cv && GlobalV::MY_RANK == 0)
+	if (write_cv && this->runtime.rank == 0)
 	{
-		LRI_CV_Tools::write_Vs_abf(Vs_cut, PARAM.globalv.global_out_dir + "Vs_cut");
+		LRI_CV_Tools::write_Vs_abf(Vs_cut, this->runtime.output_dir + "Vs_cut");
 	}
 	this->exx_lri.set_Vs(std::move(Vs_cut), this->info.V_threshold);
 
@@ -1969,9 +1992,9 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(
 		Vs_full = Vs.empty() ? Vs_temp : LRI_CV_Tools::add(Vs_full, Vs_temp);
 	}
 
-	if (write_cv && GlobalV::MY_RANK == 0)
+	if (write_cv && this->runtime.rank == 0)
 	{
-		LRI_CV_Tools::write_Vs_abf(Vs_full, PARAM.globalv.global_out_dir + "Vs_full");
+		LRI_CV_Tools::write_Vs_abf(Vs_full, this->runtime.output_dir + "Vs_full");
 	}
 	// this->exx_lri.set_Vs(std::move(Vs_full), this->info.V_threshold);
 
@@ -2044,9 +2067,9 @@ void Exx_LRI<Tdata>::cal_cut_coulomb_cs(
 		list_As_Vs.second[0],
 		{{"writable_Vws", true}});
 	center2_obj_it->second.cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_cut);
-	if (write_cv && GlobalV::MY_RANK == 0)
+	if (write_cv && this->runtime.rank == 0)
 	{
-		LRI_CV_Tools::write_Vs_abf(Vs_cut, PARAM.globalv.global_out_dir + "Vs_cut");
+		LRI_CV_Tools::write_Vs_abf(Vs_cut, this->runtime.output_dir + "Vs_cut");
 	}
 	this->exx_lri.set_Vs(Vs_cut, this->info.V_threshold);
 
@@ -2066,9 +2089,9 @@ void Exx_LRI<Tdata>::cal_cut_coulomb_cs(
 			 {"writable_dVws", false}});
 	Cs = std::get<0>(Cs_dCs);
 	center2_obj_it->second.cv.Cws = LRI_CV_Tools::get_CVws(ucell, Cs);
-	if (write_cv && GlobalV::MY_RANK == 0)
+	if (write_cv && this->runtime.rank == 0)
 	{
-		LRI_CV_Tools::write_Cs_ao(Cs, PARAM.globalv.global_out_dir + "Cs");
+		LRI_CV_Tools::write_Cs_ao(Cs, this->runtime.output_dir + "Cs");
 	}
 	this->exx_lri.set_Cs(Cs, this->info.C_threshold);
 
@@ -2137,7 +2160,8 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tda
 				period_Vs_requested,
 				this->mpi_comm,
 				this->exx_objs[settings_list.first].cv,
-				this->exx_objs[settings_list.first].evq);
+				this->exx_objs[settings_list.first].evq,
+                this->runtime);
 			period_Vs = selected_range.period;
 			list_As_Vs = std::move(selected_range.distribution);
 			Vs_temp = std::move(selected_range.bare_coulomb);
@@ -2228,9 +2252,9 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tda
 		Vs_full = Vs_full.empty() ? Vs_temp : LRI_CV_Tools::add(Vs_full, Vs_temp);
 	}
 
-	if (write_cv && GlobalV::MY_RANK == 0)
+	if (write_cv && this->runtime.rank == 0)
 	{
-		LRI_CV_Tools::write_Vs_abf(Vs_full, PARAM.globalv.global_out_dir + "Vs_full");
+		LRI_CV_Tools::write_Vs_abf(Vs_full, this->runtime.output_dir + "Vs_full");
 	}
 
 	Cs.clear();
@@ -2275,7 +2299,8 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 		exx_channel.cal_Hs({c_suffix, v_suffix, ds_suffix});
 		const auto cal_hs_t1 = std::chrono::steady_clock::now();
         cal_hs_time_acc += std::chrono::duration<double>(cal_hs_t1 - cal_hs_t0).count();
-        ExxLriDetail::maybe_print_weighted_short_stats(exx_channel, this->info, ds_suffix, v_suffix);
+        ExxLriDetail::maybe_print_weighted_short_stats(
+            exx_channel, this->info, ds_suffix, v_suffix, this->runtime.rank);
 
         if (!p_symrot)
         {
@@ -2303,7 +2328,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 
 	// (nspin=4) the spinor H(R) rotation mixes the 4 spin channels, so they cannot be rotated
 	// independently in the per-spin loop below; hand off to the SOC implementation.
-	if (p_symrot && PARAM.inp.nspin == 4)
+	if (p_symrot && this->runtime.nspin == 4)
 	{
 		this->cal_exx_elec_soc(Ds, ucell, judge, p_symrot);
 		this->exx_lri.set_symmetry(false, {});
@@ -2311,11 +2336,11 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 		return;
 	}
 
-	this->Hexxs.resize(PARAM.inp.nspin);
+	this->Hexxs.resize(this->runtime.nspin);
 	this->Eexx = 0;
-	for(int is=0; is<PARAM.inp.nspin; ++is)
+	for(int is=0; is<this->runtime.nspin; ++is)
 	{
-		const std::string suffix = ((PARAM.inp.cal_force || PARAM.inp.cal_stress) ? std::to_string(is) : "");
+		const std::string suffix = ((this->runtime.cal_force || this->runtime.cal_stress) ? std::to_string(is) : "");
         auto short_channel = run_exx_channel(this->exx_lri,
                                              Ds[is],
                                              is,
@@ -2344,7 +2369,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 	}
 	this->Eexx = post_process_Eexx(this->Eexx);
 	this->exx_lri.set_symmetry(false, {});
-    if (GlobalV::MY_RANK == 0)
+    if (this->runtime.rank == 0)
     {
         if (this->use_rotated_n0_long_range)
         {
@@ -2399,7 +2424,7 @@ void Exx_LRI<Tdata>::cal_exx_elec_soc(
 			this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, ds_suffix[is]);
 			this->exx_lri.cal_Hs({channel.cv_suffix, channel.cv_suffix, ds_suffix[is]});
 			ExxLriDetail::maybe_print_weighted_short_stats(
-				this->exx_lri, this->info, ds_suffix[is], channel.cv_suffix);
+				this->exx_lri, this->info, ds_suffix[is], channel.cv_suffix, this->runtime.rank);
 			Hs_irreducible[is] = this->exx_lri.post_2D.set_tensors_map2(this->exx_lri.Hs);
 		}
 
@@ -2444,7 +2469,7 @@ template<typename Tdata>
 double Exx_LRI<Tdata>::post_process_Eexx(const double& Eexx_in) const
 {
 	ModuleBase::TITLE("Exx_LRI","post_process_Eexx");
-	const double SPIN_multiple = std::map<int, double>{ {1,2}, {2,1}, {4,1} }.at(PARAM.inp.nspin);				// why?
+	const double SPIN_multiple = std::map<int, double>{ {1,2}, {2,1}, {4,1} }.at(this->runtime.nspin);				// why?
 	const double frac = -SPIN_multiple;
 	return frac * Eexx_in;
 }
@@ -2473,14 +2498,14 @@ void Exx_LRI<Tdata>::cal_exx_force(const int& nat)
 	ModuleBase::timer::start("Exx_LRI", "cal_exx_force");
 
 	this->force_exx.create(nat, Ndim);
-    if (PARAM.inp.esolver_type == "tddft" && this->use_rotated_n0_long_range)
+    if (this->runtime.realtime_tddft && this->use_rotated_n0_long_range)
     {
         this->force_exx.zero_out();
-        ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once();
+        ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once(this->runtime);
         ModuleBase::timer::tick("Exx_LRI", "cal_exx_force");
         return;
     }
-	for(int is=0; is<PARAM.inp.nspin; ++is)
+	for(int is=0; is<this->runtime.nspin; ++is)
 	{
 		this->exx_lri.cal_force({"","",std::to_string(is),"",""});
 		for(std::size_t idim=0; idim<Ndim; ++idim) {
@@ -2489,7 +2514,7 @@ void Exx_LRI<Tdata>::cal_exx_force(const int& nat)
 					} 		}
 	}
 
-	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(PARAM.inp.nspin);				// why?
+	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(this->runtime.nspin);				// why?
 	const double frac = -2 * SPIN_multiple;		// why?
 	this->force_exx *= frac;
 	ModuleBase::timer::end("Exx_LRI", "cal_exx_force");
@@ -2503,14 +2528,14 @@ void Exx_LRI<Tdata>::cal_exx_stress(const double& omega, const double& lat0)
 	ModuleBase::timer::start("Exx_LRI", "cal_exx_stress");
 
 	this->stress_exx.create(Ndim, Ndim);
-    if (PARAM.inp.esolver_type == "tddft" && this->use_rotated_n0_long_range)
+    if (this->runtime.realtime_tddft && this->use_rotated_n0_long_range)
     {
         this->stress_exx.zero_out();
-        ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once();
+        ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once(this->runtime);
         ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
         return;
     }
-	for(int is=0; is<PARAM.inp.nspin; ++is)
+	for(int is=0; is<this->runtime.nspin; ++is)
 	{
 		this->exx_lri.cal_stress({"","",std::to_string(is),"",""});
 		for(std::size_t idim0=0; idim0<Ndim; ++idim0) {
@@ -2519,7 +2544,7 @@ void Exx_LRI<Tdata>::cal_exx_stress(const double& omega, const double& lat0)
 				} 	}
 	}
 
-	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(PARAM.inp.nspin);				// why?
+	const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(this->runtime.nspin);				// why?
 	const double frac = 2 * SPIN_multiple / omega * lat0;		// why?
 	this->stress_exx *= frac;
 
@@ -2536,7 +2561,7 @@ void Exx_LRI<Tdata>::cal_exx_dHs(
     ModuleBase::timer::start("Exx_LRI", "cal_exx_dHs");
 #ifdef __EXX_DEV
     const auto judge = RI_2D_Comm::get_2D_judge(ucell, pv);
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < this->runtime.nspin; ++is)
     {
         this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, std::to_string(is));
         this->exx_lri.cal_dHs({"", "", std::to_string(is), "", ""});
@@ -2546,8 +2571,8 @@ void Exx_LRI<Tdata>::cal_exx_dHs(
                 this->dHexxs[ipos].resize(ucell.nat);
             for (int iat = 0; iat < ucell.nat; ++iat)
             {
-                if (this->dHexxs[ipos][iat].size() != static_cast<std::size_t>(PARAM.inp.nspin))
-                    this->dHexxs[ipos][iat].resize(PARAM.inp.nspin);
+                if (this->dHexxs[ipos][iat].size() != static_cast<std::size_t>(this->runtime.nspin))
+                    this->dHexxs[ipos][iat].resize(this->runtime.nspin);
                 auto dH = this->exx_lri.dHs[ipos][0][iat];
                 dH = dH + this->exx_lri.dHs_HF[ipos][iat];
                 this->dHexxs[ipos][iat][is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(

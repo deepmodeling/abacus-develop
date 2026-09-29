@@ -1224,14 +1224,20 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     Exx_Info::Exx_Info_RI local_info = this->info;
     local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
     if (!exx_cut_coulomb)
-        exx_cut_coulomb.reset(new Exx_LRI<double>(local_info));
+        exx_cut_coulomb.reset(new Exx_LRI<double>(local_info, make_exx_lri_runtime()));
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
     {
         this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
         Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
         this->abfs_shrink = ExxLriDetail::prepare_abfs(
-            ucell, orb, this->lcaos, this->info, this->info.shrink_abfs_pca_thr, this->info.files_shrink_abfs);
+            ucell,
+            orb,
+            this->lcaos,
+            this->info,
+            this->info.shrink_abfs_pca_thr,
+            this->info.files_shrink_abfs,
+            make_exx_lri_runtime());
         const ModuleRI::RpaAbfsPreorthReport preorth_report
             = ModuleRI::finalize_rpa_abfs_from_input(
                 this->abfs_shrink, this->runtime.input, this->runtime.input.cal_force);
@@ -1246,7 +1252,13 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
         Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
         this->abfs = ExxLriDetail::prepare_abfs(
-            ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs);
+            ucell,
+            orb,
+            this->lcaos,
+            this->info,
+            this->info.pca_threshold,
+            this->info.files_abfs,
+            make_exx_lri_runtime());
         const ModuleRI::RpaAbfsPreorthReport preorth_report
             = ModuleRI::finalize_rpa_abfs_from_input(
                 this->abfs, this->runtime.input, this->runtime.input.cal_force);
@@ -1401,7 +1413,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     Exx_Info::Exx_Info_RI local_info = this->info;
     local_info.ccp_rmesh_times = this->ccp_rmesh_times_ewald;
     if (!exx_full_coulomb)
-        exx_full_coulomb.reset(new Exx_LRI<double>(local_info));
+        exx_full_coulomb.reset(new Exx_LRI<double>(local_info, make_exx_lri_runtime()));
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs_shrink);
@@ -1632,12 +1644,18 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     {
         Exx_Info::Exx_Info_RI local_info = this->info;
         local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
-        exx_cut_coulomb.reset(new Exx_LRI<double>(local_info));
+        exx_cut_coulomb.reset(new Exx_LRI<double>(local_info, make_exx_lri_runtime()));
     }
     this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
     Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
     this->abfs = ExxLriDetail::prepare_abfs(
-        ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs);
+        ucell,
+        orb,
+        this->lcaos,
+        this->info,
+        this->info.pca_threshold,
+        this->info.files_abfs,
+        make_exx_lri_runtime());
     const ModuleRI::RpaAbfsPreorthReport preorth_report
         = ModuleRI::finalize_rpa_abfs_from_input(
             this->abfs, this->runtime.input, this->runtime.input.cal_force);

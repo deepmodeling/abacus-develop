@@ -164,12 +164,12 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
 
         if (this->exx_info_->info_ri.real_number)
         {
-            Vxc_fromRI_d = new Exx_LRI<double>(this->exx_info_->info_ri);
+            Vxc_fromRI_d = new Exx_LRI<double>(this->exx_info_->info_ri, make_exx_lri_runtime());
             Vxc_fromRI_d->init(MPI_COMM_WORLD, ucell_in,*kv, *orb);
         }
         else
         {
-            Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(this->exx_info_->info_ri);
+            Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(this->exx_info_->info_ri, make_exx_lri_runtime());
             Vxc_fromRI_c->init(MPI_COMM_WORLD, ucell_in,*kv, *orb);
         }
     }
@@ -429,5 +429,4 @@ template class RDMFT<std::complex<double>, double>;
 template class RDMFT<std::complex<double>, std::complex<double>>;
 
 }
-
 

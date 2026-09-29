@@ -47,7 +47,7 @@ public:
     /// @brief  Constructor for Exx_LRI_Interface
     Exx_LRI_Interface(const Exx_Info::Exx_Info_RI& info_ri, const Exx_Info_Global& info_global)
     {
-        this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info_ri);
+        this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info_ri, make_exx_lri_runtime());
         this->info_global = info_global;
         this->hybrid_step_ = info_global.hybrid_step;
     }
