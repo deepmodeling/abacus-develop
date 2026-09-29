@@ -67,8 +67,6 @@ Atom_pseudo::Atom_pseudo() {}
 Atom_pseudo::~Atom_pseudo() {}
 UnitCell::UnitCell() {}
 UnitCell::~UnitCell() {}
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
 SepPot::SepPot() {}
