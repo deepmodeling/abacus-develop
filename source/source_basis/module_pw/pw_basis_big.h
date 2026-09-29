@@ -2,6 +2,7 @@
 #define PW_BASIS_BIG_H
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
+#include "source_basis/module_pw/pw_basis_sup.h"
 
 #ifdef __MPI
 #include "mpi.h"
