@@ -601,10 +601,8 @@ OBJS_SURCHEM=surchem.o\
     pcc_boundary.o\
     sccs_pcc_2d_coulomb.o\
     sccs_pcc_coulomb.o\
-    sccs_poisson.o\
     sccs_pw_coulomb.o\
     sccs_pw_nonel.o\
-    sccs_pw_reduction.o\
     sccs_gaussian_ion.o\
     sccs_periodic.o\
 

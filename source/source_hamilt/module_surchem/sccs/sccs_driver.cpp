@@ -162,8 +162,7 @@ SccsResult evaluate_pw_sccs(
     const ModulePW::PW_Basis& basis,
     const double tpiba,
     const double volume_element,
-    const ModuleSurchem::ChargeReduction& charge_reduction,
-    const PolarizationReduction& polarization_reduction,
+    const ModuleSurchem::ChargeReduction& reduction,
     SccsState& state)
 {
     ModuleBase::timer::start("ModuleSccs", "evaluate_pw_sccs");
@@ -186,7 +185,7 @@ SccsResult evaluate_pw_sccs(
                                             expected_electron_count,
                                             expected_ionic_charge,
                                             normalization_tolerance,
-                                            charge_reduction);
+                                            reduction);
     std::unique_ptr<CoulombOperator> coulomb;
     if (config.boundary == ModulePcc::Boundary::Pcc0d)
     {
@@ -196,7 +195,7 @@ SccsResult evaluate_pw_sccs(
                                              positions,
                                              volume_element,
                                              pcc_geometry,
-                                             charge_reduction));
+                                             reduction));
     }
     else if (config.boundary == ModulePcc::Boundary::Pcc2d)
     {
@@ -206,7 +205,7 @@ SccsResult evaluate_pw_sccs(
                                                positions,
                                                volume_element,
                                                pcc_2d_geometry,
-                                               charge_reduction));
+                                               reduction));
     }
     else
     {
@@ -252,7 +251,7 @@ SccsResult evaluate_pw_sccs(
                                                 basis,
                                                 tpiba,
                                                 *coulomb,
-                                                polarization_reduction);
+                                                reduction);
     result.forward_transforms = coulomb->transform_counts();
 
     std::vector<double> vacuum_potential;
@@ -262,7 +261,7 @@ SccsResult evaluate_pw_sccs(
                                                               vacuum_potential,
                                                               result.response.cavity_potential,
                                                               volume_element,
-                                                              charge_reduction);
+                                                              reduction);
 
     NonElectrostaticParameters non_electrostatic_parameters;
     non_electrostatic_parameters.surface_tension = config.surface_tension;
@@ -274,7 +273,7 @@ SccsResult evaluate_pw_sccs(
                                                              non_electrostatic_parameters,
                                                              result.response.solute,
                                                              result.response.dsolute_drho,
-                                                             charge_reduction);
+                                                             reduction);
 
     result.electron_potential_hartree.resize(electron_density.size());
 #ifdef _OPENMP
@@ -294,14 +293,14 @@ SccsResult evaluate_pw_sccs(
                                           positions,
                                           volume_element,
                                           pcc_geometry,
-                                          charge_reduction);
+                                          reduction);
         result.polarization_moments
             = ModulePcc::reduced_pcc_density_moments(
                 result.response.polarization.polarization_charge,
                 positions,
                 volume_element,
                 pcc_geometry,
-                charge_reduction);
+                reduction);
     }
     else
     {
@@ -309,13 +308,13 @@ SccsResult evaluate_pw_sccs(
                                                         positions,
                                                         volume_element,
                                                         origin,
-                                                        charge_reduction);
+                                                        reduction);
         result.polarization_moments
             = reduced_density_moments(result.response.polarization.polarization_charge,
                                       positions,
                                       volume_element,
                                       origin,
-                                      charge_reduction);
+                                      reduction);
     }
     result.screened_moments = add_moments(result.solute_moments, result.polarization_moments);
     if (config.boundary == ModulePcc::Boundary::Pcc0d)
@@ -330,13 +329,13 @@ SccsResult evaluate_pw_sccs(
                                              positions,
                                              volume_element,
                                              pcc_2d_geometry,
-                                             charge_reduction);
+                                             reduction);
         result.polarization_moments_2d
             = ModulePcc::reduced_pcc_2d_density_moments(result.response.polarization.polarization_charge,
                                              positions,
                                              volume_element,
                                              pcc_2d_geometry,
-                                             charge_reduction);
+                                             reduction);
         result.screened_moments_2d = add_moments_2d(result.solute_moments_2d,
                                                     result.polarization_moments_2d);
         const double polarization_charge_tolerance

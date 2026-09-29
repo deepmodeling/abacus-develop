@@ -9,6 +9,11 @@ namespace ModulePW
 class PW_Basis;
 }
 
+namespace ModuleSurchem
+{
+class ChargeReduction;
+}
+
 namespace ModuleSccs
 {
 
@@ -55,7 +60,7 @@ PeriodicSccsResult solve_chain_sccs_response(
     const ModulePW::PW_Basis& basis,
     double tpiba,
     const CoulombOperator& coulomb,
-    const PolarizationReduction& reduction);
+    const ModuleSurchem::ChargeReduction& reduction);
 
 } // namespace ModuleSccs
 

@@ -94,8 +94,9 @@ AddTest(
 AddTest(
   TARGET MODULE_HAMILT_surchem_sccs_periodic
   LIBS planewave device base
-  SOURCES test_sccs_periodic.cpp ../sccs/sccs_cavity.cpp ../sccs/sccs_poisson.cpp
-          ../sccs/sccs_pw_coulomb.cpp ../sccs/sccs_pw_reduction.cpp ../sccs/sccs_periodic.cpp
+  SOURCES test_sccs_periodic.cpp ../sccs/sccs_cavity.cpp
+          ../sccs/sccs_pw_coulomb.cpp ../sccs/sccs_periodic.cpp
+          ../common/charge_reduction.cpp
 )
 
 AddTest(
@@ -115,8 +116,8 @@ AddTest(
   TARGET MODULE_HAMILT_surchem_sccs_pcc_coulomb
   LIBS planewave device base
   SOURCES test_sccs_pcc_coulomb.cpp ../sccs/sccs_charge.cpp ../pcc/pcc_0d.cpp ../pcc/pcc_2d.cpp
-          ../sccs/sccs_poisson.cpp ../sccs/sccs_pw_coulomb.cpp ../sccs/sccs_pcc_coulomb.cpp
-          ../sccs/sccs_cavity.cpp ../sccs/sccs_periodic.cpp ../sccs/sccs_pw_reduction.cpp
+          ../sccs/sccs_pw_coulomb.cpp ../sccs/sccs_pcc_coulomb.cpp
+          ../sccs/sccs_cavity.cpp ../sccs/sccs_periodic.cpp
           ../common/charge_reduction.cpp
           ../pcc/pcc_moments.cpp
 )
@@ -126,9 +127,8 @@ AddTest(
   LIBS planewave device base
   SOURCES test_sccs_pcc_2d_coulomb.cpp ../sccs/sccs_cavity.cpp ../sccs/sccs_charge.cpp
           ../sccs/sccs_functional.cpp ../pcc/pcc_0d.cpp ../pcc/pcc_2d.cpp
-          ../sccs/sccs_poisson.cpp ../sccs/sccs_periodic.cpp ../sccs/sccs_pw_coulomb.cpp
+          ../sccs/sccs_periodic.cpp ../sccs/sccs_pw_coulomb.cpp
           ../sccs/sccs_pcc_2d_coulomb.cpp ../common/pw_grid.cpp
-          ../sccs/sccs_pw_reduction.cpp
           ../common/charge_reduction.cpp
           ../pcc/pcc_moments.cpp
 )
@@ -162,8 +162,8 @@ AddTest(
           ../sccs/sccs_driver.cpp ../sccs/sccs_functional.cpp
           ../sccs/sccs_parameters.cpp ../pcc/pcc_0d.cpp ../pcc/pcc_2d.cpp
           ../sccs/sccs_pcc_2d_coulomb.cpp ../sccs/sccs_pcc_coulomb.cpp
-          ../sccs/sccs_periodic.cpp ../sccs/sccs_poisson.cpp ../common/pw_grid.cpp
-          ../sccs/sccs_pw_coulomb.cpp ../sccs/sccs_pw_nonel.cpp ../sccs/sccs_pw_reduction.cpp
+          ../sccs/sccs_periodic.cpp ../common/pw_grid.cpp
+          ../sccs/sccs_pw_coulomb.cpp ../sccs/sccs_pw_nonel.cpp
           ../common/charge_reduction.cpp
           ../pcc/pcc_moments.cpp
 )
@@ -176,8 +176,8 @@ AddTest(
           ../sccs/sccs_functional.cpp ../sccs/sccs_parameters.cpp
           ../pcc/pcc_0d.cpp ../pcc/pcc_2d.cpp ../sccs/sccs_pcc_2d_coulomb.cpp
           ../sccs/sccs_pcc_coulomb.cpp ../sccs/sccs_periodic.cpp
-          ../sccs/sccs_poisson.cpp ../common/pw_grid.cpp ../sccs/sccs_pw_coulomb.cpp
-          ../sccs/sccs_gaussian_ion.cpp ../sccs/sccs_pw_nonel.cpp ../sccs/sccs_pw_reduction.cpp
+          ../common/pw_grid.cpp ../sccs/sccs_pw_coulomb.cpp
+          ../sccs/sccs_gaussian_ion.cpp ../sccs/sccs_pw_nonel.cpp
           ../common/charge_reduction.cpp
           ../pcc/pcc_moments.cpp
           ../pcc/pcc_boundary.cpp
@@ -191,8 +191,8 @@ AddTest(
           ../sccs/sccs_functional.cpp ../sccs/sccs_parameters.cpp
           ../pcc/pcc_0d.cpp ../pcc/pcc_2d.cpp ../sccs/sccs_pcc_2d_coulomb.cpp
           ../sccs/sccs_pcc_coulomb.cpp ../sccs/sccs_periodic.cpp
-          ../sccs/sccs_poisson.cpp ../common/pw_grid.cpp ../sccs/sccs_pw_coulomb.cpp
-          ../sccs/sccs_gaussian_ion.cpp ../sccs/sccs_pw_nonel.cpp ../sccs/sccs_pw_reduction.cpp
+          ../common/pw_grid.cpp ../sccs/sccs_pw_coulomb.cpp
+          ../sccs/sccs_gaussian_ion.cpp ../sccs/sccs_pw_nonel.cpp
           ../common/charge_reduction.cpp
           ../pcc/pcc_moments.cpp
 )

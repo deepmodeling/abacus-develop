@@ -44,7 +44,6 @@ TEST(SccsPccCoulomb, SqrtCgKeepsChargedUniformDielectricPccGauge)
         = ModulePcc::pcc_geometry(lattice, cube_length, 1.0e-10);
     geometry.origin = ModuleBase::Vector3<double>();
     const ModuleSurchem::SerialChargeReduction charge_reduction;
-    const ModuleSccs::SerialPolarizationReduction polarization_reduction;
     const ModuleSccs::PccCoulombOperator coulomb(basis,
                                                  tpiba,
                                                  positions,
@@ -73,7 +72,7 @@ TEST(SccsPccCoulomb, SqrtCgKeepsChargedUniformDielectricPccGauge)
                                                 basis,
                                                 tpiba,
                                                 coulomb,
-                                                polarization_reduction);
+                                                charge_reduction);
 
     EXPECT_EQ(result.polarization.iterations, 1);
     EXPECT_NEAR(result.far_field_polarization_charge,

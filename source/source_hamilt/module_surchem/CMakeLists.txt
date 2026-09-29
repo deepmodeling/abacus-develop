@@ -26,10 +26,8 @@ add_library(
     pcc/pcc_boundary.cpp
     sccs/sccs_pcc_2d_coulomb.cpp
     sccs/sccs_pcc_coulomb.cpp
-    sccs/sccs_poisson.cpp
     sccs/sccs_pw_coulomb.cpp
     sccs/sccs_pw_nonel.cpp
-    sccs/sccs_pw_reduction.cpp
     sccs/sccs_gaussian_ion.cpp
     sccs/sccs_periodic.cpp
 )

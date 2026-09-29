@@ -1,6 +1,7 @@
 #include "sccs_periodic.h"
 
 #include "sccs_pw_coulomb.h"
+#include "../common/charge_reduction.h"
 
 #include "source_base/timer.h"
 #include "source_basis/module_pw/pw_basis.h"
@@ -81,7 +82,7 @@ PeriodicSccsResult prepare_chain_cavity(
 
 // Pool RMS and maximum absolute value of a distributed grid array.
 void reduced_rms_max(const std::vector<double>& values,
-                     const PolarizationReduction& reduction,
+                     const ModuleSurchem::ChargeReduction& reduction,
                      double& rms,
                      double& maximum)
 {
@@ -93,7 +94,9 @@ void reduced_rms_max(const std::vector<double>& values,
         square += values[i] * values[i];
         local_maximum = std::max(local_maximum, std::abs(values[i]));
     }
-    reduction.reduce_residual(square, local_maximum, count);
+    reduction.reduce_sum(square);
+    reduction.reduce_max(local_maximum);
+    reduction.reduce_sum(count);
     if (!std::isfinite(square) || !std::isfinite(local_maximum) || count <= 0.0)
     {
         throw std::runtime_error("SCCS sqrt-CG residual is not finite");
@@ -330,7 +333,7 @@ void finish_open_boundary_response(const std::vector<double>& charge,
                                    const std::vector<double>& invsqrt,
                                    const CavityParameters& cavity,
                                    const ModulePW::PW_Basis& basis,
-                                   const PolarizationReduction& reduction,
+                                   const ModuleSurchem::ChargeReduction& reduction,
                                    PeriodicSccsResult& result)
 {
     const std::size_t size = charge.size();
@@ -365,7 +368,7 @@ PeriodicSccsResult solve_chain_sccs_response(
     const ModulePW::PW_Basis& basis,
     const double tpiba,
     const ModuleSccs::CoulombOperator& coulomb,
-    const ModuleSccs::PolarizationReduction& reduction)
+    const ModuleSurchem::ChargeReduction& reduction)
 {
     ModuleBase::timer::start("ModuleSccs", "solve_chain_sccs_response");
     PeriodicSccsResult result = prepare_chain_cavity(density, cavity, basis, tpiba);

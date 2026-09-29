@@ -80,8 +80,7 @@ SccsResult evaluate_pw_sccs(
     const ModulePW::PW_Basis& basis,
     double tpiba,
     double volume_element,
-    const ModuleSurchem::ChargeReduction& charge_reduction,
-    const PolarizationReduction& polarization_reduction,
+    const ModuleSurchem::ChargeReduction& reduction,
     SccsState& state);
 
 } // namespace ModuleSccs

@@ -8,7 +8,6 @@
 #include "../sccs/sccs_pw_coulomb.h"
 #include "../common/pw_grid.h"
 #include "../common/charge_reduction.h"
-#include "../sccs/sccs_pw_reduction.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
@@ -51,6 +50,10 @@ class PresetArrayReduction : public ModuleSurchem::ChargeReduction
         }
     }
 
+    void reduce_max(double&) const override
+    {
+    }
+
   private:
     std::vector<double> remote_;
 };
@@ -59,7 +62,7 @@ class SccsPcc2dCoulombTest : public testing::Test
 {
   protected:
     SccsPcc2dCoulombTest()
-        : basis_("cpu", "double"), polarization_reduction_(test_process_count)
+        : basis_("cpu", "double"), reduction_(test_process_count)
     {
     }
 
@@ -90,7 +93,6 @@ class SccsPcc2dCoulombTest : public testing::Test
     ModulePcc::Pcc2dGeometry geometry_;
     std::vector<ModuleBase::Vector3<double>> positions_;
     ModuleSurchem::PoolChargeReduction reduction_;
-    ModuleSccs::PoolPolarizationReduction polarization_reduction_;
 };
 
 TEST_F(SccsPcc2dCoulombTest, ReducesYMoments)
@@ -276,7 +278,7 @@ TEST_F(SccsPcc2dCoulombTest, SqrtCgKeepsChargedUniformDielectricPccGauge)
                                                 basis_,
                                                 tpiba,
                                                 coulomb,
-                                                polarization_reduction_);
+                                                reduction_);
     EXPECT_EQ(result.polarization.iterations, 1);
     EXPECT_NEAR(result.far_field_polarization_charge,
                 -(1.0 - 1.0 / cavity.epsilon_bulk),
@@ -301,7 +303,7 @@ TEST_F(SccsPcc2dCoulombTest, SqrtCgKeepsChargedUniformDielectricPccGauge)
     }
     // The ENVIRON monopole constant keeps a nonzero cell average, so a
     // periodic zero-mean shift would fail the pointwise comparison above.
-    polarization_reduction_.reduce_sum(local_mean);
+    reduction_.reduce_sum(local_mean);
     const double mean = local_mean / static_cast<double>(basis_.nxyz);
     EXPECT_GT(std::abs(mean), 1.0e-3);
 }
@@ -339,7 +341,6 @@ TEST(SccsPcc2dSqrtCg, LayeredCavityMatchesOpenOneDimensionalField)
     const std::vector<ModuleBase::Vector3<double>> positions
         = ModuleSurchem::pw_grid_positions(basis, lattice, scale);
     const ModuleSurchem::SerialChargeReduction charge_reduction;
-    const ModuleSccs::SerialPolarizationReduction polarization_reduction;
     const ModuleSccs::Pcc2dCoulombOperator coulomb(basis,
                                                    tpiba,
                                                    positions,
@@ -385,7 +386,7 @@ TEST(SccsPcc2dSqrtCg, LayeredCavityMatchesOpenOneDimensionalField)
                                                 basis,
                                                 tpiba,
                                                 coulomb,
-                                                polarization_reduction);
+                                                charge_reduction);
     EXPECT_GT(result.polarization.iterations, 1);
 
     // The potential depends on y only; grid index = (ix ny + iy) nplane + iz.

@@ -120,7 +120,7 @@ void surchem::v_correction_pcc(const UnitCell& cell,
     const std::vector<ModuleBase::Vector3<double>> positions
         = ModuleSurchem::pw_grid_positions(rho_basis, cell.latvec, cell.lat0);
     const double volume_element = cell.omega / static_cast<double>(rho_basis.nxyz);
-    const ModuleSurchem::PoolChargeReduction reduction;
+    const ModuleSurchem::PoolChargeReduction reduction(this->parameters_.pool_process_count);
     const std::vector<ModulePcc::PointCharge> ions = ionic_point_charges(cell);
     if (v.nr != nspin || v.nc != rho_basis.nrxx)
     {

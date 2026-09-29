@@ -47,25 +47,6 @@ class CoulombOperator
                                  std::vector<double>& potential) const = 0;
 };
 
-class PolarizationReduction
-{
-  public:
-    virtual ~PolarizationReduction() = default;
-
-    virtual void reduce_residual(double& square_sum,
-                                 double& maximum,
-                                 double& point_count) const = 0;
-    virtual void reduce_sum(double& value) const;
-};
-
-class SerialPolarizationReduction : public PolarizationReduction
-{
-  public:
-    void reduce_residual(double& square_sum,
-                         double& maximum,
-                         double& point_count) const override;
-};
-
 // Controls of the sqrt-preconditioned CG (solve_chain_sccs_response).
 struct PolarizationSolverParameters
 {

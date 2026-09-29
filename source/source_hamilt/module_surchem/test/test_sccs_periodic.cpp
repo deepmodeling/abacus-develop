@@ -5,7 +5,7 @@
 
 #include "../sccs/sccs_periodic.h"
 #include "../sccs/sccs_pw_coulomb.h"
-#include "../sccs/sccs_pw_reduction.h"
+#include "../common/charge_reduction.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
@@ -31,7 +31,7 @@ ModuleSccs::PeriodicSccsResult solve_periodic(const std::vector<double>& cavity_
                                               const double tpiba)
 {
     const ModuleSccs::PeriodicCoulombOperator coulomb(basis, tpiba);
-    const ModuleSccs::PoolPolarizationReduction reduction(1);
+    const ModuleSurchem::PoolChargeReduction reduction(1);
     return ModuleSccs::solve_chain_sccs_response(cavity_density,
                                                  solute_charge,
                                                  cavity,

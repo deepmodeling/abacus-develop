@@ -3,7 +3,6 @@
 #include "../common/charge_reduction.h"
 #include "../common/pw_grid.h"
 #include "sccs_gaussian_ion.h"
-#include "sccs_pw_reduction.h"
 
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
@@ -117,9 +116,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     const ModulePcc::Pcc2dGeometry& pcc_2d_geometry = this->pcc_2d_geometry_;
 
     const double volume_element = cell.omega / static_cast<double>(rho_basis.nxyz);
-    const ModuleSurchem::PoolChargeReduction charge_reduction;
-    const ModuleSccs::PoolPolarizationReduction polarization_reduction(
-        this->parameters_.pool_process_count);
+    const ModuleSurchem::PoolChargeReduction reduction(this->parameters_.pool_process_count);
     this->sccs_result_
         = ModuleSccs::evaluate_pw_sccs(electron_density,
                                        ionic_density,
@@ -135,8 +132,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
                                        rho_basis,
                                        cell.tpiba,
                                        volume_element,
-                                       charge_reduction,
-                                       polarization_reduction,
+                                       reduction,
                                        this->sccs_state_);
     this->sccs_result_.reused_fixed_sources = reuse_fixed_sources;
 
