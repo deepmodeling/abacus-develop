@@ -205,7 +205,6 @@ class surchem
 
     void cal_force_sccs(const UnitCell& cell,
                         const ModulePW::PW_Basis& rho_basis,
-                        const ModuleBase::matrix& vloc,
                         ModuleBase::matrix& forcesol) const;
 
     void get_totn_reci(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, std::complex<double>* totn_reci);

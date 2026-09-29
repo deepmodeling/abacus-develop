@@ -177,7 +177,7 @@ void surchem::cal_force_sol(const UnitCell& cell,
                 {
                     throw std::invalid_argument("SCCS force requires an initialized PW basis");
                 }
-                this->cal_force_sccs(cell, *rho_basis, vloc, forcesol);
+                this->cal_force_sccs(cell, *rho_basis, forcesol);
             }
             else
             {
@@ -227,7 +227,6 @@ void surchem::cal_force_sol(const UnitCell& cell,
 // point-ion terms, so neither MPI replication nor Ha-to-Ry conversion doubles them.
 void surchem::cal_force_sccs(const UnitCell& cell,
                              const ModulePW::PW_Basis& rho_basis,
-                             const ModuleBase::matrix& vloc,
                              ModuleBase::matrix& forcesol) const
 {
     if (forcesol.nr != cell.nat || forcesol.nc != 3)
