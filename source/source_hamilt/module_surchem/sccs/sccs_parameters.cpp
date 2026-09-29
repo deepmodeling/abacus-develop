@@ -62,24 +62,6 @@ Preset parse_preset(const std::string& value)
     throw std::invalid_argument("unknown SCCS preset: " + value);
 }
 
-Boundary parse_boundary(const std::string& value)
-{
-    const std::string normalized = lower_case(value);
-    if (normalized == "periodic")
-    {
-        return Boundary::Periodic;
-    }
-    if (normalized == "pcc_0d" || normalized == "pcc-0d")
-    {
-        return Boundary::Pcc0d;
-    }
-    if (normalized == "pcc_2d" || normalized == "pcc-2d")
-    {
-        return Boundary::Pcc2d;
-    }
-    throw std::invalid_argument("unknown SCCS boundary: " + value);
-}
-
 SccsConfig water_preset(const Preset preset)
 {
     SccsConfig config = common_water_config();

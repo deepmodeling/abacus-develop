@@ -598,6 +598,7 @@ OBJS_SURCHEM=surchem.o\
     sccs_pcc.o\
     sccs_pcc_2d.o\
     pcc_moments.o\
+    pcc_boundary.o\
     sccs_pcc_2d_coulomb.o\
     sccs_pcc_coulomb.o\
     sccs_poisson.o\

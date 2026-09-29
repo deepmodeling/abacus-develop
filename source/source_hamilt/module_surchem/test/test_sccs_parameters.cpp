@@ -11,8 +11,6 @@ TEST(SccsParameters, ParsesNamesCaseInsensitively)
 {
     EXPECT_EQ(ModuleSccs::parse_preset("WATER-CATION"), ModuleSccs::Preset::WaterCation);
     EXPECT_EQ(ModuleSccs::parse_preset("VACUUM"), ModuleSccs::Preset::Vacuum);
-    EXPECT_EQ(ModuleSccs::parse_boundary("PCC_0D"), ModuleSccs::Boundary::Pcc0d);
-    EXPECT_EQ(ModuleSccs::parse_boundary("PCC-2D"), ModuleSccs::Boundary::Pcc2d);
     EXPECT_THROW(ModuleSccs::parse_preset("automatic"), std::invalid_argument);
 }
 

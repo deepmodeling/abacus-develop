@@ -72,6 +72,11 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_HAMILT_surchem_pcc_boundary
+  SOURCES test_pcc_boundary.cpp ../pcc/pcc_boundary.cpp
+)
+
+AddTest(
   TARGET MODULE_HAMILT_surchem_sccs_parameters
   SOURCES test_sccs_parameters.cpp ../sccs/sccs_cavity.cpp ../sccs/sccs_parameters.cpp
 )
@@ -175,6 +180,7 @@ AddTest(
           ../sccs/sccs_gaussian_ion.cpp ../sccs/sccs_pw_nonel.cpp ../sccs/sccs_pw_reduction.cpp
           ../common/charge_reduction.cpp
           ../pcc/pcc_moments.cpp
+          ../pcc/pcc_boundary.cpp
 )
 
 AddTest(

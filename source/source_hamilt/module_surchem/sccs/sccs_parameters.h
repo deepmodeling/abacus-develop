@@ -1,6 +1,7 @@
 #ifndef SCCS_PARAMETERS_H
 #define SCCS_PARAMETERS_H
 
+#include "../pcc/pcc_boundary.h"
 #include "sccs_cavity.h"
 
 #include <string>
@@ -15,13 +16,6 @@ enum class Preset
     WaterNeutral,
     WaterCation,
     WaterAnion
-};
-
-enum class Boundary
-{
-    Periodic,
-    Pcc0d,
-    Pcc2d
 };
 
 struct SccsConfig
@@ -42,8 +36,6 @@ struct SccsConfig
 };
 
 Preset parse_preset(const std::string& value);
-
-Boundary parse_boundary(const std::string& value);
 
 SccsConfig water_preset(Preset preset);
 
