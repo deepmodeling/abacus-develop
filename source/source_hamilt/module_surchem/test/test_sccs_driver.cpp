@@ -14,8 +14,10 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <limits>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace
@@ -238,6 +240,168 @@ TEST(SccsDriver, PeriodicSqrtCgWarmStartsFromStoredPotential)
     EXPECT_TRUE(state.potential.empty());
 }
 
+// A charged solute inside a resolved cavity: the far field of the PCC sqrt-CG
+// solution must satisfy Gauss's law, -(1 - 1/epsilon) times the solute charge.
+TEST(SccsDriver, ChargedPcc2dSqrtCgPolarizationSatisfiesGaussLaw)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 2.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    const double scale = 10.0;
+    basis.initgrids(scale, lattice, 320.0);
+    basis.initparameters(false, 320.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+
+    const double volume = 2.0 * scale * scale * scale;
+    const double volume_element = volume / static_cast<double>(basis.nxyz);
+    const std::vector<ModuleBase::Vector3<double>> positions
+        = ModuleSccs::pw_grid_positions(basis, lattice, scale);
+    const ModuleBase::Vector3<double> origin = ModuleSccs::cell_center(lattice, scale);
+    ModuleSccs::Pcc2dGeometry geometry = ModuleSccs::pcc_2d_geometry(lattice, scale, 1.0e-10);
+    geometry.origin_y = origin.y;
+    const double electron_count = 0.8;
+    const double ionic_charge = 1.0;
+    const double electron_width = 1.5;
+    const double ion_width = 0.5;
+    std::vector<double> electron_density(basis.nrxx);
+    std::vector<double> ionic_density(basis.nrxx);
+    double electron_sum = 0.0;
+    double ionic_sum = 0.0;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const double dx = positions[ir].x - origin.x;
+        const double dy = positions[ir].y - origin.y;
+        const double dz = positions[ir].z - origin.z;
+        const double r2 = dx * dx + dy * dy + dz * dz;
+        electron_density[ir] = std::exp(-r2 / (electron_width * electron_width));
+        ionic_density[ir] = std::exp(-r2 / (ion_width * ion_width));
+        electron_sum += electron_density[ir] * volume_element;
+        ionic_sum += ionic_density[ir] * volume_element;
+    }
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        electron_density[ir] *= electron_count / electron_sum;
+        ionic_density[ir] *= ionic_charge / ionic_sum;
+    }
+
+    ModuleSccs::SccsConfig config;
+    config.cavity.density_min = 1.0e-4;
+    config.cavity.density_max = 5.0e-3;
+    config.cavity.epsilon_bulk = 78.3;
+    config.surface_regularization = 1.0e-6;
+    config.boundary = ModuleSccs::Boundary::Pcc2d;
+    config.max_iterations = 300;
+    config.mixing = 0.5;
+    config.tolerance_rms = 1.0e-12;
+    config.tolerance_max = 1.0e-10;
+    const ModuleSccs::PccGeometry pcc;
+    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModuleSccs::SerialPolarizationReduction polarization_reduction;
+    ModuleSccs::SccsState state;
+    const ModuleSccs::SccsResult result
+        = ModuleSccs::evaluate_pw_sccs(electron_density, ionic_density, electron_count,
+                                       ionic_charge, 1.0e-10, positions, origin, config,
+                                       pcc, geometry, basis, ModuleBase::TWO_PI / scale,
+                                       volume_element, charge_reduction,
+                                       polarization_reduction, state);
+    const double expected = -(1.0 - 1.0 / config.cavity.epsilon_bulk) * 0.2;
+    const double far_field = result.response.far_field_polarization_charge;
+    const double density_integral = result.polarization_moments_2d.charge;
+    std::cout << "PCC2D_SQRT_CG_GAUSS far_field " << far_field << " density_integral "
+              << density_integral << " expected " << expected << " iterations "
+              << result.response.polarization.iterations << std::endl;
+    EXPECT_NEAR(result.solute_moments_2d.charge, 0.2, 1.0e-10);
+    // Both converge with the grid: far field 2.6e-5 at 160 Ry and 2e-6 here,
+    // the dielectric_of_potential integral 6.5e-5 at 160 Ry and 5e-6 here.
+    EXPECT_NEAR(far_field, expected, 1.0e-5);
+    EXPECT_NEAR(density_integral, expected, 3.0e-5);
+    EXPECT_GT(result.response.polarization.iterations, 1);
+}
+
+// With electron density above density_max everywhere, no bulk solvent reaches
+// the open boundary and Gauss's law for eps_bulk cannot hold: the PCC2D check
+// must stop before the warm-start state is stored.
+TEST(SccsDriver, Pcc2dStopsWhenBulkSolventDoesNotReachTheOpenBoundary)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 2.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    const double scale = 10.0;
+    basis.initgrids(scale, lattice, 40.0);
+    basis.initparameters(false, 40.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+
+    const double volume = 2.0 * scale * scale * scale;
+    const double volume_element = volume / static_cast<double>(basis.nxyz);
+    const std::vector<ModuleBase::Vector3<double>> positions
+        = ModuleSccs::pw_grid_positions(basis, lattice, scale);
+    const ModuleBase::Vector3<double> origin = ModuleSccs::cell_center(lattice, scale);
+    ModuleSccs::Pcc2dGeometry geometry = ModuleSccs::pcc_2d_geometry(lattice, scale, 1.0e-10);
+    geometry.origin_y = origin.y;
+    const double uniform_density = 1.0e-2;
+    const double electron_count = uniform_density * volume;
+    const double ionic_charge = electron_count + 1.0;
+    const double ion_width = 0.5;
+    const std::vector<double> electron_density(basis.nrxx, uniform_density);
+    std::vector<double> ionic_density(basis.nrxx);
+    double ionic_sum = 0.0;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const double dx = positions[ir].x - origin.x;
+        const double dy = positions[ir].y - origin.y;
+        const double dz = positions[ir].z - origin.z;
+        const double r2 = dx * dx + dy * dy + dz * dz;
+        ionic_density[ir] = std::exp(-r2 / (ion_width * ion_width));
+        ionic_sum += ionic_density[ir] * volume_element;
+    }
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        ionic_density[ir] *= ionic_charge / ionic_sum;
+    }
+
+    ModuleSccs::SccsConfig config;
+    config.cavity.density_min = 1.0e-4;
+    config.cavity.density_max = 5.0e-3;
+    config.cavity.epsilon_bulk = 78.3;
+    config.surface_regularization = 1.0e-6;
+    config.boundary = ModuleSccs::Boundary::Pcc2d;
+    config.max_iterations = 50;
+    config.mixing = 0.5;
+    config.tolerance_rms = 1.0e-12;
+    config.tolerance_max = 1.0e-10;
+    const ModuleSccs::PccGeometry pcc;
+    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModuleSccs::SerialPolarizationReduction polarization_reduction;
+    ModuleSccs::SccsState state;
+    const double tpiba = ModuleBase::TWO_PI / scale;
+    std::string message;
+    try
+    {
+        ModuleSccs::evaluate_pw_sccs(electron_density, ionic_density, electron_count,
+                                     ionic_charge, 1.0e-10, positions, origin, config, pcc,
+                                     geometry, basis, tpiba, volume_element, charge_reduction,
+                                     polarization_reduction, state);
+    }
+    catch (const std::runtime_error& error)
+    {
+        message = error.what();
+    }
+    EXPECT_NE(message.find("pcc_2d far-field polarization charge"), std::string::npos)
+        << message;
+    EXPECT_FALSE(state.valid);
+    EXPECT_TRUE(state.potential.empty());
+}
+
 TEST(SccsDriver, PreservesChargeAndCombinesPccEnergyPotentialAndState)
 {
     ModulePW::PW_Basis basis("cpu", "double");
@@ -268,9 +432,12 @@ TEST(SccsDriver, PreservesChargeAndCombinesPccEnergyPotentialAndState)
     EXPECT_NEAR(cation.non_electrostatic.volume_energy, 0.0, 1.0e-14);
     ASSERT_TRUE(state.valid);
 
+    // In a uniform dielectric the preconditioner is exact, so the warm-start
+    // step reproduces the stored solution without any CG iteration.
     const ModuleSccs::SccsResult reused
         = evaluate_uniform_charge(1.0, state, basis, lattice, length);
-    EXPECT_EQ(reused.response.polarization.iterations, 1);
+    EXPECT_TRUE(reused.response.polarization.warm_started);
+    EXPECT_EQ(reused.response.polarization.iterations, 0);
     for (std::size_t index = 0; index < reused.electron_potential_hartree.size(); ++index)
     {
         EXPECT_NEAR(reused.electron_potential_hartree[index],
@@ -278,11 +445,11 @@ TEST(SccsDriver, PreservesChargeAndCombinesPccEnergyPotentialAndState)
                     1.0e-14);
     }
 
-    // An incompatible grid signature must reject the cached polarization, even if
-    // they contain invalid data. The result must match a clean cold start.
+    // An incompatible grid signature must reject the cached potential, even if
+    // it contains invalid data. The result must match a clean cold start.
     state.tpiba *= 2.0;
     const double invalid_value = std::numeric_limits<double>::quiet_NaN();
-    std::fill(state.polarization_charge.begin(), state.polarization_charge.end(), invalid_value);
+    std::fill(state.potential.begin(), state.potential.end(), invalid_value);
     const ModuleSccs::SccsResult invalidated
         = evaluate_uniform_charge(1.0, state, basis, lattice, length);
     EXPECT_EQ(invalidated.response.polarization.iterations, cation.response.polarization.iterations);

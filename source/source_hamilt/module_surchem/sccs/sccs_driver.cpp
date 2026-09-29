@@ -72,10 +72,6 @@ bool same_state_signature(const SccsState& state,
                           const ModuleBase::Vector3<double>& origin,
                           const std::uint64_t position_signature)
 {
-    // PCC restarts from the polarization charge, the periodic sqrt-CG from its potential.
-    const std::size_t warm_start_size = boundary == Boundary::Periodic
-                                            ? state.potential.size()
-                                            : state.polarization_charge.size();
     return state.valid && state.boundary == boundary
            && state.local_grid_size == basis.nrxx
            && state.global_grid_size == basis.nxyz && state.nx == basis.nx
@@ -99,7 +95,7 @@ bool same_state_signature(const SccsState& state,
                   == pcc_2d_geometry.parameters.cell_length_y
            && state.pcc_2d_geometry.origin_y == pcc_2d_geometry.origin_y
            && same_cavity(state.cavity, cavity)
-           && warm_start_size == static_cast<std::size_t>(basis.nrxx);
+           && state.potential.size() == static_cast<std::size_t>(basis.nrxx);
 }
 
 MultipoleMoments add_moments(const MultipoleMoments& left, const MultipoleMoments& right)
@@ -126,7 +122,6 @@ Pcc2dMoments add_moments_2d(const Pcc2dMoments& left, const Pcc2dMoments& right)
 
 void SccsState::reset()
 {
-    polarization_charge.clear();
     potential.clear();
     local_grid_size = 0;
     global_grid_size = 0;
@@ -146,7 +141,7 @@ void SccsState::reset()
     valid = false;
 }
 
-// Assemble q = rho_ion - n, solve the experimental chain CG response, then
+// Assemble q = rho_ion - n, solve the ENVIRON-style sqrt-CG response, then
 // combine electrostatic and cavity terms. Energies/potentials here are in Ha;
 // the surchem adapter adds the point-ion vacuum PCC and converts to Ry.
 SccsResult evaluate_pw_sccs(
@@ -207,19 +202,14 @@ SccsResult evaluate_pw_sccs(
         coulomb.reset(new PeriodicCoulombOperator(basis, tpiba));
     }
 
+    // The fixed-point mixing controls do not act on the sqrt-CG solver.
     PolarizationSolverParameters solver_parameters;
     solver_parameters.max_iterations = config.max_iterations;
-    solver_parameters.mixing_method = config.mixing_method;
-    solver_parameters.mixing_history = config.mixing_history;
-    solver_parameters.mixing = config.mixing;
-    solver_parameters.adaptive_mixing = config.adaptive_mixing;
-    solver_parameters.mixing_min = config.mixing_min;
-    solver_parameters.mixing_max = config.mixing_max;
     solver_parameters.tolerance_rms = config.tolerance_rms;
     solver_parameters.tolerance_max = config.tolerance_max;
     solver_parameters.check_fixed_point = config.check_fixed_point;
     const std::uint64_t position_signature = grid_position_signature(positions);
-    // A changed grid, cavity or PCC origin invalidates both warm-start fields.
+    // A changed grid, cavity or PCC origin invalidates the warm-start potential.
     // Borrow the cache until the solve succeeds; state is updated only below.
     const bool reuse_state = same_state_signature(state,
                                                    config.boundary,
@@ -232,39 +222,22 @@ SccsResult evaluate_pw_sccs(
                                                    origin,
                                                    position_signature);
     const std::vector<double> empty_initial;
-    const std::vector<double>& initial_charge
-        = reuse_state ? state.polarization_charge : empty_initial;
     const std::vector<double>& initial_potential
         = reuse_state ? state.potential : empty_initial;
     const std::chrono::steady_clock::time_point forward_start
         = std::chrono::steady_clock::now();
-    // The periodic CG recovery discards the net-charge mode. PCC instead
-    // solves directly for polarization charge and keeps its analytic open
-    // boundary field, including the nonzero screening charge of an ion.
-    if (config.boundary == Boundary::Periodic)
-    {
-        result.response = solve_chain_sccs_response(result.charge.electron,
-                                                  result.charge.solute,
-                                                  config.cavity,
-                                                  solver_parameters,
-                                                  initial_potential,
-                                                  basis,
-                                                  tpiba,
-                                                  *coulomb,
-                                                  polarization_reduction);
-    }
-    else
-    {
-        result.response = solve_sccs_response(result.charge.electron,
-                                                  result.charge.solute,
-                                                  config.cavity,
-                                                  solver_parameters,
-                                                  initial_charge,
-                                                  basis,
-                                                  tpiba,
-                                                  *coulomb,
-                                                  polarization_reduction);
-    }
+    // Every boundary uses the ENVIRON sqrt-CG. With PCC the preconditioner's
+    // Poisson solve includes the analytic open-boundary term, so a charged
+    // solute keeps its screening charge and the physical potential gauge.
+    result.response = solve_chain_sccs_response(result.charge.electron,
+                                                result.charge.solute,
+                                                config.cavity,
+                                                solver_parameters,
+                                                initial_potential,
+                                                basis,
+                                                tpiba,
+                                                *coulomb,
+                                                polarization_reduction);
     if (result.response.polarization.status != PolarizationStatus::Converged)
     {
         throw std::runtime_error("SCCS polarization iteration did not converge");
@@ -377,13 +350,16 @@ SccsResult evaluate_pw_sccs(
         const double expected_polarization_charge
             = -(1.0 - 1.0 / config.cavity.epsilon_bulk)
               * result.solute_moments_2d.charge;
-        if (std::abs(result.polarization_moments_2d.charge
-                     - expected_polarization_charge)
+        // Gauss's law for the solution's far field. The dielectric_of_potential
+        // density integral (polarization_moments_2d) is only a diagnostic here:
+        // its finite-grid error can exceed this tolerance for sharp cavities.
+        const double far_field_charge = result.response.far_field_polarization_charge;
+        if (std::abs(far_field_charge - expected_polarization_charge)
             > polarization_charge_tolerance)
         {
             std::ostringstream message;
-            message << "SCCS pcc_2d polarization charge "
-                    << result.polarization_moments_2d.charge
+            message << "SCCS pcc_2d far-field polarization charge "
+                    << far_field_charge
                     << " differs from expected " << expected_polarization_charge
                     << " by more than tolerance " << polarization_charge_tolerance;
             throw std::runtime_error(message.str());
@@ -393,7 +369,6 @@ SccsResult evaluate_pw_sccs(
                                  pcc_2d_geometry.parameters);
     }
 
-    state.polarization_charge = result.response.polarization.polarization_charge;
     state.potential = result.response.restart_potential;
     state.local_grid_size = basis.nrxx;
     state.global_grid_size = basis.nxyz;

@@ -5,6 +5,7 @@
 
 #include "../pcc/sccs_pcc_coulomb.h"
 #include "../sccs/sccs_charge.h"
+#include "../sccs/sccs_periodic.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
@@ -12,6 +13,7 @@
 
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <vector>
 
 namespace
@@ -75,6 +77,81 @@ TEST(SccsPccCoulomb, ChargedUniformDielectricScreensPccPotential)
         EXPECT_NEAR(result.field.gradient[ir].x, 0.0, 1.0e-12);
         EXPECT_NEAR(result.field.gradient[ir].y, 0.0, 1.0e-12);
         EXPECT_NEAR(result.field.gradient[ir].z, 0.0, 1.0e-12);
+    }
+}
+
+// The production sqrt-CG keeps the PCC monopole gauge: no zero-mean shift, and
+// the continuum polarization charge of a uniform dielectric is -(1 - 1/eps) q.
+TEST(SccsPccCoulomb, SqrtCgKeepsChargedUniformDielectricPccGauge)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    const double cube_length = 10.0;
+    const double volume = cube_length * cube_length * cube_length;
+    const double tpiba = ModuleBase::TWO_PI / cube_length;
+    basis.initgrids(cube_length, lattice, 20.0);
+    basis.initparameters(false, 20.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+
+    const double volume_element = volume / static_cast<double>(basis.nxyz);
+    const std::vector<ModuleBase::Vector3<double>> positions(basis.nrxx);
+    ModuleSccs::PccGeometry geometry
+        = ModuleSccs::pcc_geometry(lattice, cube_length, 1.0e-10);
+    geometry.origin = ModuleBase::Vector3<double>();
+    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModuleSccs::SerialPolarizationReduction polarization_reduction;
+    const ModuleSccs::PccCoulombOperator coulomb(basis,
+                                                 tpiba,
+                                                 positions,
+                                                 volume_element,
+                                                 geometry,
+                                                 charge_reduction);
+
+    // A zero electron density puts the whole cell in bulk solvent.
+    const std::vector<double> cavity_density(basis.nrxx, 0.0);
+    const std::vector<double> solute_charge(basis.nrxx, 1.0 / volume);
+    ModuleSccs::CavityParameters cavity;
+    cavity.density_min = 1.0e-4;
+    cavity.density_max = 5.0e-3;
+    cavity.epsilon_bulk = 5.0;
+    ModuleSccs::PolarizationSolverParameters solver;
+    solver.max_iterations = 10;
+    solver.tolerance_rms = 1.0e-14;
+    solver.tolerance_max = 1.0e-14;
+    const std::vector<double> cold_start;
+    const ModuleSccs::PeriodicSccsResult result
+        = ModuleSccs::solve_chain_sccs_response(cavity_density,
+                                                solute_charge,
+                                                cavity,
+                                                solver,
+                                                cold_start,
+                                                basis,
+                                                tpiba,
+                                                coulomb,
+                                                polarization_reduction);
+
+    ASSERT_EQ(result.polarization.status, ModuleSccs::PolarizationStatus::Converged);
+    EXPECT_EQ(result.polarization.iterations, 1);
+    EXPECT_NEAR(result.far_field_polarization_charge,
+                -(1.0 - 1.0 / cavity.epsilon_bulk),
+                1.0e-12);
+    const double expected_potential
+        = geometry.parameters.madelung * (1.0 / cavity.epsilon_bulk) / cube_length;
+    ASSERT_GT(std::abs(expected_potential), 1.0e-3);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        EXPECT_NEAR(result.polarization.field.potential[ir], expected_potential, 2.0e-12);
+        EXPECT_DOUBLE_EQ(result.restart_potential[ir], result.polarization.field.potential[ir]);
+        EXPECT_NEAR(result.polarization.polarization_charge[ir], -0.8 / volume, 1.0e-14);
+        EXPECT_NEAR(result.polarization.field.gradient[ir].x, 0.0, 1.0e-12);
+        EXPECT_NEAR(result.polarization.field.gradient[ir].y, 0.0, 1.0e-12);
+        EXPECT_NEAR(result.polarization.field.gradient[ir].z, 0.0, 1.0e-12);
     }
 }
 

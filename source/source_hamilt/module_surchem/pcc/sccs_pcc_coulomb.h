@@ -32,6 +32,11 @@ class PccCoulombOperator : public CoulombOperator
                        const PccGeometry& geometry,
                        const ChargeReduction& reduction);
 
+    bool has_boundary_correction() const override
+    {
+        return true;
+    }
+
     void apply(const std::vector<double>& charge, ElectrostaticField& field) const override;
 
     void apply_potential(const std::vector<double>& charge,

@@ -386,7 +386,7 @@ TEST(SolForce, MatchesFixedElectronDensityReactionEnergyDerivative)
     }
 }
 
-TEST(SolForce, NeutralAndChargedPcc2dApproximateFixedDensityTotalEnergyDerivativeInXyz)
+TEST(SolForce, NeutralAndChargedPcc2dMatchFixedDensityTotalEnergyDerivativeInXyz)
 {
     ModulePW::PW_Basis basis("cpu", "double");
 #ifdef __MPI
@@ -396,8 +396,10 @@ TEST(SolForce, NeutralAndChargedPcc2dApproximateFixedDensityTotalEnergyDerivativ
                                       0.0, 2.0, 0.0,
                                       0.0, 0.0, 1.0);
     const double length = 10.0;
-    basis.initgrids(length, lattice, 30.0);
-    basis.initparameters(false, 30.0, 1, false);
+    // The PCC2D Gauss check tests the far field of the solution; resolving the
+    // 0.5 bohr Gaussian ion keeps its error (1e-5..3e-5 here) below 1e-4.
+    basis.initgrids(length, lattice, 120.0);
+    basis.initparameters(false, 120.0, 1, false);
     basis.setuptransform();
     basis.collect_local_pw();
     basis.collect_uniqgg();
@@ -450,13 +452,11 @@ TEST(SolForce, NeutralAndChargedPcc2dApproximateFixedDensityTotalEnergyDerivativ
         electron_density[ir] /= electron_count;
     }
 
-    // Accepted continuum-chain accuracy for this epsilon=1.1 synthetic case.
-    // This does not certify water cavities or exact variational derivatives.
-    const double force_tolerance_ev_angstrom = 0.01;
+    // The PCC sqrt-CG reaction potential is the exact fixed-density derivative
+    // of the reaction energy, so the original exact-derivative threshold holds.
+    const double force_tolerance_hartree = 1.0e-7;
     const double hartree_force_to_ev_angstrom
         = 2.0 * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
-    const double force_tolerance_hartree
-        = force_tolerance_ev_angstrom / hartree_force_to_ev_angstrom;
     const double displacement = 1.0e-3;
     const double coordinate_scale[3] = {length, length, length};
     double* coordinates[3] = {&cell.atoms[0].tau[0].x,
@@ -520,8 +520,9 @@ TEST(SolForce, NeutralAndChargedPcc2dApproximateFixedDensityTotalEnergyDerivativ
             const double error_hartree = std::abs(force_hartree - finite_difference_force);
             const double error_ev_angstrom = error_hartree * hartree_force_to_ev_angstrom;
             std::cout << "PCC2D_CHAIN_FORCE_ERROR charge_case " << charge_case
-                      << " direction " << direction << " eV/Angstrom " << error_ev_angstrom
-                      << " tolerance " << force_tolerance_ev_angstrom << std::endl;
+                      << " direction " << direction << " Ha/bohr " << error_hartree
+                      << " eV/Angstrom " << error_ev_angstrom
+                      << " tolerance_Ha/bohr " << force_tolerance_hartree << std::endl;
             EXPECT_NEAR(force_hartree, finite_difference_force, force_tolerance_hartree)
                 << "charge case " << charge_case << " direction " << direction
                 << "; error " << error_ev_angstrom << " eV/Angstrom";

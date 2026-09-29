@@ -112,6 +112,7 @@ AddTest(
   LIBS planewave device base
   SOURCES test_sccs_pcc_coulomb.cpp ../sccs/sccs_charge.cpp ../pcc/sccs_pcc.cpp
           ../sccs/sccs_poisson.cpp ../sccs/sccs_pw_coulomb.cpp ../pcc/sccs_pcc_coulomb.cpp
+          ../sccs/sccs_cavity.cpp ../sccs/sccs_periodic.cpp ../sccs/sccs_pw_reduction.cpp
 )
 
 AddTest(

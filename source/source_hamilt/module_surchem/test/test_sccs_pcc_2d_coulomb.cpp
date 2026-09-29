@@ -3,6 +3,8 @@
 #endif
 
 #include "../pcc/sccs_pcc_2d_coulomb.h"
+#include "../sccs/sccs_periodic.h"
+#include "../sccs/sccs_pw_coulomb.h"
 #include "../sccs/sccs_pw_charge.h"
 #include "../sccs/sccs_pw_reduction.h"
 
@@ -14,6 +16,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <stdexcept>
 #include <vector>
 
@@ -345,6 +348,195 @@ TEST_F(SccsPcc2dCoulombTest, UniformDielectricScreensChargeAndField)
         EXPECT_NEAR(result.field.potential[ir], expected.potential[ir], 2.0e-12);
         EXPECT_NEAR(result.field.gradient[ir].y, expected.gradient[ir].y, 2.0e-12);
     }
+}
+
+// The production sqrt-CG solves eps^-1/2 C_PCC eps^-1/2 exactly in one step for
+// a uniform dielectric and keeps the PCC2D gauge instead of the periodic zero mean.
+TEST_F(SccsPcc2dCoulombTest, SqrtCgKeepsChargedUniformDielectricPccGauge)
+{
+    const double tpiba = ModuleBase::TWO_PI / lattice_scale_;
+    const ModuleSccs::Pcc2dCoulombOperator coulomb(basis_,
+                                                   tpiba,
+                                                   positions_,
+                                                   volume_element_,
+                                                   geometry_,
+                                                   reduction_);
+    // A zero electron density puts the whole cell in bulk solvent.
+    const std::vector<double> cavity_density(basis_.nrxx, 0.0);
+    const std::vector<double> solute_charge(basis_.nrxx, 1.0 / volume_);
+    ModuleSccs::CavityParameters cavity;
+    cavity.density_min = 1.0e-4;
+    cavity.density_max = 5.0e-3;
+    cavity.epsilon_bulk = 5.0;
+    ModuleSccs::PolarizationSolverParameters solver;
+    solver.max_iterations = 10;
+    solver.tolerance_rms = 1.0e-14;
+    solver.tolerance_max = 1.0e-14;
+    const std::vector<double> cold_start;
+    const ModuleSccs::PeriodicSccsResult result
+        = ModuleSccs::solve_chain_sccs_response(cavity_density,
+                                                solute_charge,
+                                                cavity,
+                                                solver,
+                                                cold_start,
+                                                basis_,
+                                                tpiba,
+                                                coulomb,
+                                                polarization_reduction_);
+    ASSERT_EQ(result.polarization.status, ModuleSccs::PolarizationStatus::Converged);
+    EXPECT_EQ(result.polarization.iterations, 1);
+    EXPECT_NEAR(result.far_field_polarization_charge,
+                -(1.0 - 1.0 / cavity.epsilon_bulk),
+                1.0e-12);
+
+    std::vector<double> screened_charge(solute_charge.size());
+    for (std::size_t index = 0; index < solute_charge.size(); ++index)
+    {
+        screened_charge[index] = solute_charge[index] / cavity.epsilon_bulk;
+    }
+    ModuleSccs::ElectrostaticField expected;
+    coulomb.apply(screened_charge, expected);
+    double local_mean = 0.0;
+    for (int ir = 0; ir < basis_.nrxx; ++ir)
+    {
+        local_mean += expected.potential[ir];
+        EXPECT_NEAR(result.polarization.field.potential[ir], expected.potential[ir], 2.0e-12);
+        // Analytic PCC gradient, free of ringing at the open-boundary kink.
+        EXPECT_NEAR(result.polarization.field.gradient[ir].y, expected.gradient[ir].y, 2.0e-12);
+        EXPECT_DOUBLE_EQ(result.restart_potential[ir], result.polarization.field.potential[ir]);
+        EXPECT_NEAR(result.polarization.polarization_charge[ir],
+                    -(1.0 - 1.0 / cavity.epsilon_bulk) * solute_charge[ir],
+                    1.0e-14);
+    }
+    // The ENVIRON monopole constant keeps a nonzero cell average, so a
+    // periodic zero-mean shift would fail the pointwise comparison above.
+    polarization_reduction_.reduce_sum(local_mean);
+    const double mean = local_mean / static_cast<double>(basis_.nxyz);
+    EXPECT_GT(std::abs(mean), 1.0e-3);
+}
+
+// Open 1D reference for the production sqrt-CG: a neutral dipolar layer in a
+// cavity uniform in x and z. D = 4 pi int q dy vanishes outside the layer, so
+// dv/dy = -4 pi cumulative(y) / eps(y). The analytic PCC gradient must stay
+// free of ringing in bulk solvent, next to the dipole step of the corrected
+// potential. With the chain-rule factsqrt the sampled f v source (f drops
+// steeply to zero at density_min, v carries the dipole plateau) left a 1.4%
+// field error here that did not converge with the grid; the FFT derivatives
+// of the switching function used with PCC converge.
+TEST(SccsPcc2dSqrtCg, LayeredCavityMatchesOpenOneDimensionalField)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const ModuleBase::Matrix3 lattice(0.4, 0.0, 0.0,
+                                      0.0, 1.2, 0.0,
+                                      0.0, 0.0, 0.4);
+    const double scale = 10.0;
+    const double tpiba = ModuleBase::TWO_PI / scale;
+    basis.initgrids(scale, lattice, 320.0);
+    basis.initparameters(false, 320.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+    const ModuleSccs::Pcc2dGeometry geometry = ModuleSccs::pcc_2d_geometry(lattice, scale, 1.0e-10);
+    const double volume = geometry.parameters.periodic_area * geometry.parameters.cell_length_y;
+    const double volume_element = volume / static_cast<double>(basis.nxyz);
+    const std::vector<ModuleBase::Vector3<double>> positions
+        = ModuleSccs::pw_grid_positions(basis, lattice, scale);
+    const ModuleSccs::SerialChargeReduction charge_reduction;
+    const ModuleSccs::SerialPolarizationReduction polarization_reduction;
+    const ModuleSccs::Pcc2dCoulombOperator coulomb(basis,
+                                                   tpiba,
+                                                   positions,
+                                                   volume_element,
+                                                   geometry,
+                                                   charge_reduction);
+    ModuleSccs::CavityParameters cavity;
+    cavity.density_min = 1.0e-4;
+    cavity.density_max = 5.0e-2;
+    cavity.epsilon_bulk = 5.0;
+    const double density_peak = 5.0e-2;
+    const double density_width = 2.0;
+    const double source_width = 1.3;
+    const double amplitude = 3.0e-3;
+    const double half_length = 0.5 * geometry.parameters.cell_length_y;
+    const double boundary_exponential
+        = std::exp(-half_length * half_length / (source_width * source_width));
+    std::vector<double> cavity_density(basis.nrxx);
+    std::vector<double> solute_charge(basis.nrxx);
+    std::vector<double> reference_gradient(basis.nrxx);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const double y = ModuleSccs::pcc_2d_relative_y(positions[ir].y, geometry);
+        cavity_density[ir] = density_peak * std::exp(-y * y / (density_width * density_width));
+        const double source_exponential = std::exp(-y * y / (source_width * source_width));
+        solute_charge[ir] = amplitude * y * source_exponential;
+        const double cumulative = -0.5 * amplitude * source_width * source_width
+                                  * (source_exponential - boundary_exponential);
+        const ModuleSccs::CavityPoint point = ModuleSccs::evaluate_cavity(cavity_density[ir], cavity);
+        reference_gradient[ir] = -ModuleBase::FOUR_PI * cumulative / point.epsilon;
+    }
+    ModuleSccs::PolarizationSolverParameters solver;
+    solver.max_iterations = 200;
+    solver.tolerance_rms = 1.0e-13;
+    solver.tolerance_max = 1.0e-12;
+    const std::vector<double> cold_start;
+    const ModuleSccs::PeriodicSccsResult result
+        = ModuleSccs::solve_chain_sccs_response(cavity_density,
+                                                solute_charge,
+                                                cavity,
+                                                solver,
+                                                cold_start,
+                                                basis,
+                                                tpiba,
+                                                coulomb,
+                                                polarization_reduction);
+    ASSERT_EQ(result.polarization.status, ModuleSccs::PolarizationStatus::Converged);
+    EXPECT_GT(result.polarization.iterations, 1);
+
+    double maximum_gradient_error = 0.0;
+    double maximum_gradient = 0.0;
+    double maximum_bulk_gradient = 0.0;
+    double maximum_transverse_gradient = 0.0;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const double gradient = result.polarization.field.gradient[ir].y;
+        const double error = std::abs(gradient - reference_gradient[ir]);
+        maximum_gradient_error = std::max(maximum_gradient_error, error);
+        maximum_gradient = std::max(maximum_gradient, std::abs(reference_gradient[ir]));
+        if (cavity_density[ir] <= cavity.density_min)
+        {
+            maximum_bulk_gradient = std::max(maximum_bulk_gradient, std::abs(gradient));
+        }
+        const double transverse = std::max(std::abs(result.polarization.field.gradient[ir].x),
+                                           std::abs(result.polarization.field.gradient[ir].z));
+        maximum_transverse_gradient = std::max(maximum_transverse_gradient, transverse);
+    }
+    const std::vector<ModuleBase::Vector3<double>> fft_gradient
+        = ModuleSccs::periodic_gradient(result.polarization.field.potential, basis, tpiba);
+    double maximum_fft_bulk_gradient = 0.0;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        if (cavity_density[ir] <= cavity.density_min)
+        {
+            maximum_fft_bulk_gradient
+                = std::max(maximum_fft_bulk_gradient, std::abs(fft_gradient[ir].y));
+        }
+    }
+    std::cout << "PCC2D_SQRT_CG_LAYERED max_gradient_error " << maximum_gradient_error
+              << " max_gradient " << maximum_gradient << " bulk_gradient "
+              << maximum_bulk_gradient << " fft_bulk_gradient " << maximum_fft_bulk_gradient
+              << " far_field_polarization_charge " << result.far_field_polarization_charge
+              << " iterations " << result.polarization.iterations << std::endl;
+    // Measured at this grid: field error and bulk gradient 1.7e-4 of the peak
+    // field, while the FFT gradient of the same potential rings at 9x the peak.
+    EXPECT_LT(maximum_gradient_error, 1.0e-3 * maximum_gradient);
+    EXPECT_LT(maximum_bulk_gradient, 1.0e-3 * maximum_gradient);
+    EXPECT_GT(maximum_fft_bulk_gradient, 100.0 * maximum_bulk_gradient);
+    EXPECT_LT(maximum_transverse_gradient, 1.0e-12);
+    // The open boundary only weakly pins the constant potential mode; rounding
+    // in the source leaves a gauge offset whose far-field trace is 3.4e-5 here.
+    EXPECT_NEAR(result.far_field_polarization_charge, 0.0, 1.0e-4);
 }
 
 TEST_F(SccsPcc2dCoulombTest, SmoothLayeredDielectricMatchesOpenOneDimensionalField)

@@ -25,6 +25,10 @@ struct PeriodicSccsResult
     PolarizationResult polarization;
     // Unshifted sqrt-CG solution: the fixed point used for the next warm start.
     std::vector<double> restart_potential;
+    // Open-boundary (PCC) solutions only: the net polarization charge seen by
+    // the far field, which screens the solute to int(s)/sqrt(eps_bulk) because
+    // sqrt(eps) v = C_PCC(s) with s = (q - f v)/sqrt(eps). Zero when periodic.
+    double far_field_polarization_charge = 0.0;
 };
 
 // Continuous dielectric source used by Environ's ionic-force path.
@@ -44,19 +48,9 @@ PeriodicSccsResult solve_periodic_sccs(
     double tpiba,
     int pool_process_count);
 
-PeriodicSccsResult solve_sccs_response(
-    const std::vector<double>& cavity_density,
-    const std::vector<double>& solute_charge,
-    const CavityParameters& cavity_parameters,
-    const PolarizationSolverParameters& solver_parameters,
-    const std::vector<double>& initial_polarization_charge,
-    const ModulePW::PW_Basis& basis,
-    double tpiba,
-    const CoulombOperator& coulomb,
-    const PolarizationReduction& reduction);
-
-// Periodic sqrt-CG path; it stops on the RMS and maximum charge residual and
-// warm-starts from initial_potential (previous solution) when that helps.
+// ENVIRON sqrt-preconditioned CG for every boundary: the preconditioner uses
+// coulomb (periodic or PCC-corrected). It stops on the RMS and maximum charge
+// residual and warm-starts from initial_potential (previous solution) when that helps.
 PeriodicSccsResult solve_chain_sccs_response(
     const std::vector<double>& cavity_density,
     const std::vector<double>& solute_charge,

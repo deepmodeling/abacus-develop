@@ -20,8 +20,7 @@ namespace ModuleSccs
 
 struct SccsState
 {
-    // Warm starts: polarization charge for PCC, unshifted potential for sqrt-CG.
-    std::vector<double> polarization_charge;
+    // Unshifted sqrt-CG solution used for the next warm start.
     std::vector<double> potential;
     int local_grid_size = 0;
     int global_grid_size = 0;

@@ -575,14 +575,21 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
               std::string::npos);
     EXPECT_NE(diagnostic_text.find("SCCS_DIAGNOSTIC screened_charge"),
               std::string::npos);
+    EXPECT_NE(diagnostic_text.find("SCCS_DIAGNOSTIC far_field_polarization_charge"),
+              std::string::npos);
     std::ostringstream iteration_output;
     solvent.write_sccs_iteration(iteration_output);
     const std::string iteration_text = iteration_output.str();
     EXPECT_NE(iteration_text.find("SCCS_ITER "), std::string::npos);
     EXPECT_NE(iteration_text.find("SCCS_TIME/s "), std::string::npos);
     EXPECT_NE(iteration_text.find("E_SOL/Ry "), std::string::npos);
-    EXPECT_NE(iteration_text.find("SCCS_MIXING VALUE "), std::string::npos);
-    EXPECT_NE(iteration_text.find("RESTARTS "), std::string::npos);
+    // Every boundary uses the sqrt-CG, which has no mixing diagnostics.
+    EXPECT_EQ(iteration_text.find("SCCS_MIXING"), std::string::npos);
+    EXPECT_NE(iteration_text.find("SCCS_RESIDUAL RMS "), std::string::npos);
+    EXPECT_NE(iteration_text.find("WARM_START "), std::string::npos);
+    EXPECT_NE(iteration_text.find("SCCS_GAUSS Q_POL_FAR_FIELD/e "), std::string::npos);
+    EXPECT_NE(iteration_text.find("Q_POL_DENSITY/e "), std::string::npos);
+    EXPECT_NE(iteration_text.find("Q_POL_EXPECTED/e "), std::string::npos);
     EXPECT_NE(iteration_text.find("PCC2D_MOMENTS "), std::string::npos);
     EXPECT_NE(iteration_text.find("Q_SMOOTH/e "), std::string::npos);
     EXPECT_NE(iteration_text.find("PY_SMOOTH/eBohr "), std::string::npos);
@@ -644,7 +651,8 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     quiet_solvent.write_sccs_iteration(quiet_iteration_output);
     const std::string quiet_iteration_text = quiet_iteration_output.str();
     EXPECT_NE(quiet_iteration_text.find("SCCS_ITER "), std::string::npos);
-    EXPECT_EQ(quiet_iteration_text.find("SCCS_MIXING "), std::string::npos);
+    EXPECT_EQ(quiet_iteration_text.find("SCCS_RESIDUAL "), std::string::npos);
+    EXPECT_EQ(quiet_iteration_text.find("SCCS_GAUSS "), std::string::npos);
     EXPECT_EQ(quiet_iteration_text.find("PCC2D_MOMENTS "), std::string::npos);
     EXPECT_EQ(quiet_iteration_text.find("PCC2D_ENERGY "), std::string::npos);
     std::ostringstream quiet_diagnostics;

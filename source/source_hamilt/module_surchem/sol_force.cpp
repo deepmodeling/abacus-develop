@@ -1,14 +1,10 @@
 #include "surchem.h"
-#include "pcc/sccs_pcc_coulomb.h"
 #include "sccs/experimental_gaussian.h"
-#include "sccs/sccs_pw_reduction.h"
-#include "pcc/sccs_pcc_2d_coulomb.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 
 #include <stdexcept>
-#include <memory>
 
 void surchem::force_cor_one(const UnitCell& cell,
                             const ModulePW::PW_Basis* rho_basis,
@@ -244,43 +240,16 @@ void surchem::cal_force_sccs(const UnitCell& cell,
         throw std::logic_error("SCCS force requires a converged SCCS state");
     }
 
-    std::vector<double> polarization_potential;
-    if (config.boundary == ModuleSccs::Boundary::Periodic)
-    {
-        // The symmetric sqrt-CG response defines the reaction energy. Its
-        // derivative with respect to the ionic source is the solved reaction
-        // potential; reconstructing a continuous polarization source instead
-        // changes the force on a finite grid.
-        polarization_potential = this->sccs_result_.electrostatic.reaction_potential;
-    }
-    else
-    {
-        // Retain the Environ-style continuous polarization force for PCC.
-        // This is a continuum approximation, not an exact finite-grid energy
-        // derivative of the charge fixed-point solve.
-        const std::vector<double> polarization = ModuleSccs::continuum_polarization_charge(
-            this->sccs_result_.charge.solute, this->sccs_result_.response);
-        const double volume_element = cell.omega / static_cast<double>(rho_basis.nxyz);
-        const ModuleSccs::PoolChargeReduction charge_reduction;
-        const std::vector<ModuleBase::Vector3<double>>& positions = this->fixed_source_cache_.positions;
-        std::unique_ptr<ModuleSccs::CoulombOperator> coulomb;
-        if (config.boundary == ModuleSccs::Boundary::Pcc0d)
-        {
-            coulomb.reset(new ModuleSccs::PccCoulombOperator(rho_basis, cell.tpiba,
-                                                            positions, volume_element,
-                                                            this->pcc_geometry_, charge_reduction));
-        }
-        else
-        {
-            coulomb.reset(new ModuleSccs::Pcc2dCoulombOperator(rho_basis, cell.tpiba,
-                                                              positions, volume_element,
-                                                              this->pcc_2d_geometry_, charge_reduction));
-        }
-        coulomb->apply_potential(polarization, polarization_potential);
-    }
+    // The symmetric sqrt-CG response defines the reaction energy for every
+    // boundary; its derivative with respect to the ionic source is the solved
+    // reaction potential (PCC included through the preconditioner). A
+    // reconstructed continuous polarization source would change the force on
+    // a finite grid.
+    const std::vector<double>& reaction_potential
+        = this->sccs_result_.electrostatic.reaction_potential;
     const ModuleBase::matrix smooth_force_hartree
         = ModuleSccs::gaussian_ionic_force(cell, rho_basis, ModuleSccs::gaussian_ion_spread,
-                                          polarization_potential);
+                                          reaction_potential);
     for (int atom = 0; atom < cell.nat; ++atom)
     {
         for (int direction = 0; direction < 3; ++direction)

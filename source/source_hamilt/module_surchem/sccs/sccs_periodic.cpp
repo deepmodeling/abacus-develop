@@ -102,6 +102,135 @@ void reduced_rms_max(const std::vector<double>& values,
     maximum = local_maximum;
 }
 
+// Environ dielectric::factsqrt for electronic chain derivatives, in Ha units.
+void chain_factsqrt(const std::vector<double>& density,
+                    const CavityParameters& cavity,
+                    const PeriodicSccsResult& result,
+                    const ModulePW::PW_Basis& basis,
+                    const double tpiba,
+                    std::vector<double>& coefficient)
+{
+    const std::size_t size = density.size();
+    const std::vector<ModuleBase::Vector3<double>>& density_gradient = result.density_gradient;
+    std::vector<std::complex<double>> density_g(basis.npw);
+    basis.real2recip(density.data(), density_g.data());
+    for (int ig = 0; ig < basis.npw; ++ig)
+        density_g[ig] *= -tpiba * tpiba * basis.gg[ig];
+    std::vector<double> laplacian(size);
+    basis.recip2real(density_g.data(), laplacian.data());
+    const double density_ratio = cavity.density_max / cavity.density_min;
+    const double width = std::log(density_ratio);
+    const double log_bulk = std::log(cavity.epsilon_bulk);
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        double second_log = 0.0;
+        if (density[i] > cavity.density_min && density[i] < cavity.density_max)
+        {
+            const double local_density_ratio = cavity.density_max / density[i];
+            const double x = std::log(local_density_ratio)/width;
+            const double angle = ModuleBase::TWO_PI*x;
+            second_log = log_bulk*(1.0-std::cos(angle)
+                         + ModuleBase::TWO_PI*std::sin(angle)/width)
+                         /(width*density[i]*density[i]);
+        }
+        const double first_log = result.depsilon_drho[i]/result.epsilon[i];
+        double gradient_square = 0.0;
+        for (int d = 0; d < 3; ++d)
+            gradient_square += density_gradient[i][d]*density_gradient[i][d];
+        const double lap_log = first_log*laplacian[i]+second_log*gradient_square;
+        coefficient[i] = result.epsilon[i]*(0.5*lap_log
+                         + 0.25*first_log*first_log*gradient_square)/ModuleBase::FOUR_PI;
+    }
+}
+
+// With PCC the potential at the cavity edge carries the open-boundary monopole
+// and dipole. The chain-rule f drops steeply to zero at density_min, and the
+// sampled f v source then fails to converge with the grid. Differentiate the
+// switching function s on the FFT grid instead (Environ deriv_method 'fft'):
+// ln eps = ln(eps_bulk) (1 - s). grad ln(eps) is replaced consistently.
+void switching_fft_factsqrt(const CavityParameters& cavity,
+                            const ModulePW::PW_Basis& basis,
+                            const double tpiba,
+                            PeriodicSccsResult& result,
+                            std::vector<double>& coefficient)
+{
+    const std::size_t size = result.solute.size();
+    const double log_bulk = std::log(cavity.epsilon_bulk);
+    const std::vector<ModuleBase::Vector3<double>> solute_gradient
+        = ModuleSccs::periodic_gradient(result.solute, basis, tpiba);
+    std::vector<std::complex<double>> solute_g(basis.npw);
+    basis.real2recip(result.solute.data(), solute_g.data());
+    for (int ig = 0; ig < basis.npw; ++ig)
+        solute_g[ig] *= -tpiba * tpiba * basis.gg[ig];
+    std::vector<double> solute_laplacian(size);
+    basis.recip2real(solute_g.data(), solute_laplacian.data());
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        double gradient_square = 0.0;
+        for (int d = 0; d < 3; ++d)
+        {
+            result.grad_log_epsilon[i][d] = -log_bulk * solute_gradient[i][d];
+            gradient_square += solute_gradient[i][d] * solute_gradient[i][d];
+        }
+        const double lap_log = -log_bulk * solute_laplacian[i];
+        coefficient[i] = result.epsilon[i]
+                         * (0.5 * lap_log + 0.25 * log_bulk * log_bulk * gradient_square)
+                         / ModuleBase::FOUR_PI;
+    }
+}
+
+// The CG builds sqrt(eps) v = w = C_PCC(s) with s = (q - f v)/sqrt(eps). The
+// corrected v is not periodic (a dipole step at the open boundary), so the FFT
+// gradient of v rings; differentiate through the operator's analytic
+// correction instead: grad v = (grad w - w grad(ln eps)/2) / sqrt(eps). Then
+// report the ENVIRON dielectric_of_potential polarization density and the
+// far-field polarization charge int(s)/sqrt(eps_bulk) - int(q).
+void finish_open_boundary_response(const std::vector<double>& charge,
+                                   const std::vector<double>& coefficient,
+                                   const std::vector<double>& invsqrt,
+                                   const CavityParameters& cavity,
+                                   const ModulePW::PW_Basis& basis,
+                                   const CoulombOperator& coulomb,
+                                   const PolarizationReduction& reduction,
+                                   PeriodicSccsResult& result)
+{
+    const std::size_t size = charge.size();
+    const std::vector<double>& potential = result.polarization.field.potential;
+    std::vector<double> source(size);
+    double source_sum = 0.0;
+    double solute_sum = 0.0;
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        source[i] = (charge[i] - coefficient[i] * potential[i]) * invsqrt[i];
+        source_sum += source[i];
+        solute_sum += charge[i];
+    }
+    ModuleSccs::ElectrostaticField weighted_field;
+    coulomb.apply(source, weighted_field);
+    result.polarization.field.gradient.resize(size);
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        const double weighted_potential = potential[i] / invsqrt[i];
+        for (int d = 0; d < 3; ++d)
+        {
+            result.polarization.field.gradient[i][d]
+                = (weighted_field.gradient[i][d]
+                   - 0.5 * weighted_potential * result.grad_log_epsilon[i][d])
+                  * invsqrt[i];
+        }
+    }
+    // The corrected potential has no periodic Laplacian inverse; use the
+    // ENVIRON dielectric_of_potential polarization charge instead. Its integral
+    // carries a finite-grid error; the far field fixes the net screening charge.
+    result.polarization.polarization_charge = continuum_polarization_charge(charge, result);
+    reduction.reduce_sum(source_sum);
+    reduction.reduce_sum(solute_sum);
+    const double volume_element = basis.omega / basis.nxyz;
+    const double bulk_invsqrt = 1.0 / std::sqrt(cavity.epsilon_bulk);
+    result.far_field_polarization_charge
+        = (source_sum * bulk_invsqrt - solute_sum) * volume_element;
+}
+
 } // namespace
 
 PeriodicSccsResult solve_periodic_sccs(
@@ -127,27 +256,6 @@ PeriodicSccsResult solve_periodic_sccs(
                                reduction);
 }
 
-// PCC requires the physical nonzero polarization charge and the analytic
-// polynomial field of the open boundary operator. Solve its fixed point
-// directly instead of recovering charge through a periodic Laplacian.
-PeriodicSccsResult solve_sccs_response(
-    const std::vector<double>& density,
-    const std::vector<double>& charge,
-    const CavityParameters& cavity,
-    const PolarizationSolverParameters& solver,
-    const std::vector<double>& initial,
-    const ModulePW::PW_Basis& basis,
-    const double tpiba,
-    const CoulombOperator& coulomb,
-    const PolarizationReduction& reduction)
-{
-    PeriodicSccsResult result = prepare_chain_cavity(density, cavity, basis, tpiba);
-    result.polarization = solve_polarization(charge, result.epsilon,
-                                             result.grad_log_epsilon, initial,
-                                             solver, coulomb, reduction);
-    return result;
-}
-
 PeriodicSccsResult solve_chain_sccs_response(
     const std::vector<double>& density,
     const std::vector<double>& charge,
@@ -160,40 +268,19 @@ PeriodicSccsResult solve_chain_sccs_response(
     const ModuleSccs::PolarizationReduction& reduction)
 {
     PeriodicSccsResult result = prepare_chain_cavity(density, cavity, basis, tpiba);
-    const std::vector<ModuleBase::Vector3<double>>& density_gradient = result.density_gradient;
     const std::size_t size = density.size();
-    // Environ dielectric::factsqrt for electronic chain derivatives, in Ha units.
-    std::vector<std::complex<double>> density_g(basis.npw);
-    basis.real2recip(density.data(), density_g.data());
-    for (int ig = 0; ig < basis.npw; ++ig)
-        density_g[ig] *= -tpiba * tpiba * basis.gg[ig];
-    std::vector<double> laplacian(size);
-    basis.recip2real(density_g.data(), laplacian.data());
     std::vector<double> coefficient(size);
     std::vector<double> invsqrt(size);
-    const double density_ratio = cavity.density_max / cavity.density_min;
-    const double width = std::log(density_ratio);
-    const double log_bulk = std::log(cavity.epsilon_bulk);
     for (std::size_t i = 0; i < size; ++i)
-    {
-        double second_log = 0.0;
-        if (density[i] > cavity.density_min && density[i] < cavity.density_max)
-        {
-            const double local_density_ratio = cavity.density_max / density[i];
-            const double x = std::log(local_density_ratio)/width;
-            const double angle = ModuleBase::TWO_PI*x;
-            second_log = log_bulk*(1.0-std::cos(angle)
-                         + ModuleBase::TWO_PI*std::sin(angle)/width)
-                         /(width*density[i]*density[i]);
-        }
-        const double first_log = result.depsilon_drho[i]/result.epsilon[i];
-        double gradient_square = 0.0;
-        for (int d = 0; d < 3; ++d)
-            gradient_square += density_gradient[i][d]*density_gradient[i][d];
-        const double lap_log = first_log*laplacian[i]+second_log*gradient_square;
-        coefficient[i] = result.epsilon[i]*(0.5*lap_log
-                         + 0.25*first_log*first_log*gradient_square)/ModuleBase::FOUR_PI;
         invsqrt[i] = 1.0/std::sqrt(result.epsilon[i]);
+    const bool open_boundary = coulomb.has_boundary_correction();
+    if (!open_boundary)
+    {
+        chain_factsqrt(density, cavity, result, basis, tpiba, coefficient);
+    }
+    else
+    {
+        switching_fft_factsqrt(cavity, basis, tpiba, result, coefficient);
     }
     // P r = epsilon^-1/2 C_PCC epsilon^-1/2 r.
     // Per-solve scratch is shared by CG applications; the cavity is fixed
@@ -220,7 +307,7 @@ PeriodicSccsResult solve_chain_sccs_response(
     std::vector<double> image(size, 0.0);
     std::vector<double> z;
     double old_rz = 0.0;
-    // Same RMS and maximum charge-residual criteria as the PCC solver.
+    // Stop when both the RMS and maximum charge residual pass (sccs_tol_rms, sccs_tol_max).
     PolarizationResult& polarization = result.polarization;
     const auto residual_converged = [&]() {
         reduced_rms_max(residual, reduction, polarization.residual_rms, polarization.residual_max);
@@ -292,25 +379,39 @@ PeriodicSccsResult solve_chain_sccs_response(
                         polarization.fixed_point_defect_max);
         polarization.fixed_point_checked = true;
     }
-    // Recover induced charge for existing diagnostic/state consumers.
-    basis.real2recip(potential.data(), density_g.data());
-    for (int ig = 0; ig < basis.npw; ++ig)
-        density_g[ig] *= tpiba*tpiba*basis.gg[ig]/ModuleBase::FOUR_PI;
-    result.polarization.polarization_charge.resize(size);
-    basis.recip2real(density_g.data(), result.polarization.polarization_charge.data());
-    for (std::size_t i = 0; i < size; ++i)
-        result.polarization.polarization_charge[i] -= charge[i];
     result.polarization.status = ModuleSccs::PolarizationStatus::Converged;
     result.restart_potential = potential;
-    double mean = 0.0;
-    for (double value : potential) mean += value;
-    reduction.reduce_sum(mean);
-    mean /= basis.nxyz;
-    for (double& value : potential) value -= mean;
+    // A PCC operator in the preconditioner fixes the physical gauge; only the
+    // periodic potential is shifted to zero mean (ENVIRON generalized_sqrt).
+    if (!open_boundary)
+    {
+        // Recover induced charge for diagnostic/state consumers.
+        std::vector<std::complex<double>> density_g(basis.npw);
+        basis.real2recip(potential.data(), density_g.data());
+        for (int ig = 0; ig < basis.npw; ++ig)
+            density_g[ig] *= tpiba*tpiba*basis.gg[ig]/ModuleBase::FOUR_PI;
+        result.polarization.polarization_charge.resize(size);
+        basis.recip2real(density_g.data(), result.polarization.polarization_charge.data());
+        for (std::size_t i = 0; i < size; ++i)
+            result.polarization.polarization_charge[i] -= charge[i];
+        double mean = 0.0;
+        for (double value : potential) mean += value;
+        reduction.reduce_sum(mean);
+        mean /= basis.nxyz;
+        for (double& value : potential) value -= mean;
+    }
     result.polarization.field.potential = potential;
-    // Environ dielectric::de_dboundary differentiates the solved potential on
-    // its derivative grid, including when the potential contains a PCC term.
-    result.polarization.field.gradient = ModuleSccs::periodic_gradient(potential, basis, tpiba);
+    if (!open_boundary)
+    {
+        // Environ dielectric::de_dboundary differentiates the solved potential
+        // on its derivative grid.
+        result.polarization.field.gradient = ModuleSccs::periodic_gradient(potential, basis, tpiba);
+    }
+    else
+    {
+        finish_open_boundary_response(charge, coefficient, invsqrt, cavity, basis, coulomb,
+                                      reduction, result);
+    }
     return result;
 }
 

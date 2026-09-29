@@ -90,6 +90,7 @@ TEST(SccsPeriodic, UniformDielectricScreensSingleFourierShell)
                                           1);
 
     EXPECT_EQ(result.polarization.status, ModuleSccs::PolarizationStatus::Converged);
+    EXPECT_DOUBLE_EQ(result.far_field_polarization_charge, 0.0);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         EXPECT_DOUBLE_EQ(result.epsilon[ir], 5.0);

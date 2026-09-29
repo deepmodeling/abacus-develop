@@ -173,10 +173,6 @@ void surchem::write_sccs_iteration(std::ostream& output) const
     if (this->parameters_.debug >= 2)
     {
         const ModuleSccs::PolarizationResult& polarization = result.response.polarization;
-        output << " SCCS_MIXING VALUE "
-               << polarization.final_mixing
-               << " RESTARTS "
-               << polarization.mixing_restarts << '\n';
         output << " SCCS_RESIDUAL RMS " << polarization.residual_rms
                << " MAX " << polarization.residual_max
                << " WARM_START " << polarization.warm_started << '\n';
@@ -184,6 +180,18 @@ void surchem::write_sccs_iteration(std::ostream& output) const
         {
             output << " SCCS_CG_FIXED_POINT_DEFECT RMS " << polarization.fixed_point_defect_rms
                    << " MAX " << polarization.fixed_point_defect_max << '\n';
+        }
+        if (this->parameters_.sccs_config.boundary != ModuleSccs::Boundary::Periodic)
+        {
+            // Gauss's law: FAR_FIELD is the solution's net screening charge,
+            // DENSITY the dielectric_of_potential integral with its grid error.
+            const double epsilon_bulk = this->parameters_.sccs_config.cavity.epsilon_bulk;
+            const double expected_charge
+                = -(1.0 - 1.0 / epsilon_bulk) * result.solute_moments.charge;
+            output << " SCCS_GAUSS Q_POL_FAR_FIELD/e "
+                   << result.response.far_field_polarization_charge
+                   << " Q_POL_DENSITY/e " << result.polarization_moments.charge
+                   << " Q_POL_EXPECTED/e " << expected_charge << '\n';
         }
         output << std::fixed << std::setprecision(2)
                << " SCCS_TIMING preparation_s " << result.preparation_seconds
@@ -295,6 +303,8 @@ void surchem::write_sccs_diagnostics(std::ostream& output) const
                << result.point_solute_moments_2d.quadrupole_yy << '\n';
         output << " SCCS_DIAGNOSTIC polarization_charge "
                << result.polarization_moments_2d.charge << '\n';
+        output << " SCCS_DIAGNOSTIC far_field_polarization_charge "
+               << result.response.far_field_polarization_charge << '\n';
         output << " SCCS_DIAGNOSTIC polarization_dipole_y "
                << result.polarization_moments_2d.dipole_y << '\n';
         output << " SCCS_DIAGNOSTIC polarization_quadrupole_yy "

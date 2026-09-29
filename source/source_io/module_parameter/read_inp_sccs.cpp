@@ -128,22 +128,24 @@ void ReadInput::item_sccs()
     ADD_SCCS_REAL_ITEM("sccs_rho_max", sccs_rho_max, "SCCS upper cavity-density threshold (greater than sccs_rho_min). For sccs_preset=custom, use this INPUT value (default 5.0e-3 bohr^-3). Effective values: vacuum=5.0e-3, water-neutral=5.0e-3, water-cation=3.5e-3, water-anion=1.55e-2 bohr^-3. Non-custom presets override this INPUT value.", "5.0e-3", "bohr^-3")
     ADD_SCCS_REAL_ITEM("sccs_gamma", sccs_gamma, "SCCS effective surface coefficient. For sccs_preset=custom, use this INPUT value (default 0 dyn/cm). Effective values: vacuum=0, water-neutral=47.9, water-cation=5.0, water-anion=0 dyn/cm. Non-custom presets override this INPUT value.", "0.0", "dyn/cm")
     ADD_SCCS_REAL_ITEM("sccs_pressure", sccs_pressure, "SCCS effective volume coefficient. For sccs_preset=custom, use this INPUT value (default 0 GPa). Effective values: vacuum=0, water-neutral=-0.36, water-cation=0.125, water-anion=0.45 GPa. Non-custom presets override this INPUT value.", "0.0", "GPa")
-    ADD_SCCS_REAL_ITEM("sccs_mixing", sccs_mixing, "Initial SCCS polarization damping factor for linear, pulay and anderson; range (0, 1]. User-controlled for every sccs_preset, default 0.5. With sccs_mixing_adaptive=1, it must lie within sccs_mixing_min and sccs_mixing_max. Reducing this value can help difficult inner iterations, at the cost of slower convergence.", "0.5", "")
+    ADD_SCCS_REAL_ITEM("sccs_mixing", sccs_mixing, "Accepted for input compatibility but currently has no effect: every assume_isolated value (none, pcc_0d, pcc_2d) solves SCCS with the ENVIRON sqrt-preconditioned CG, which uses no mixing. Range (0, 1], default 0.5; with sccs_mixing_adaptive=1 it must lie within sccs_mixing_min and sccs_mixing_max.", "0.5", "")
     ADD_SCCS_REAL_ITEM("sccs_mixing_min",
                        sccs_mixing_min,
-                       "Lower bound for adaptive SCCS polarization mixing; "
-                       "must be positive and no greater than sccs_mixing_max. User-controlled "
-                       "for every sccs_preset, default 0.1; inactive when sccs_mixing_adaptive=0",
+                       "Accepted for input compatibility but currently has no effect: every "
+                       "assume_isolated value (none, pcc_0d, pcc_2d) solves SCCS with the ENVIRON "
+                       "sqrt-preconditioned CG, which uses no mixing. Must be positive and no "
+                       "greater than sccs_mixing_max, default 0.1.",
                        "0.1",
                        "")
     ADD_SCCS_REAL_ITEM("sccs_mixing_max",
                        sccs_mixing_max,
-                       "Upper bound for adaptive SCCS polarization mixing; must not exceed one. "
-                       "User-controlled for every sccs_preset, default 0.8; inactive when sccs_mixing_adaptive=0",
+                       "Accepted for input compatibility but currently has no effect: every "
+                       "assume_isolated value (none, pcc_0d, pcc_2d) solves SCCS with the ENVIRON "
+                       "sqrt-preconditioned CG, which uses no mixing. Must not exceed one, default 0.8.",
                        "0.8",
                        "")
-    ADD_SCCS_REAL_ITEM("sccs_tol_rms", sccs_tol_rms, "Positive RMS tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-10. assume_isolated=none applies it to the periodic sqrt-preconditioned CG solution of the generalized Poisson equation, and pcc_0d/pcc_2d to the polarization-charge fixed point. ENVIRON stops its CG when the unnormalized sum of squared residuals falls below its tol; the corresponding RMS is sqrt(tol/N) for N FFT grid points.", "1.0e-10", "e/bohr^3")
-    ADD_SCCS_REAL_ITEM("sccs_tol_max", sccs_tol_max, "Positive maximum tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-8. The periodic sqrt-CG and PCC polarization solvers stop only when both sccs_tol_rms and sccs_tol_max are satisfied.", "1.0e-8", "e/bohr^3")
+    ADD_SCCS_REAL_ITEM("sccs_tol_rms", sccs_tol_rms, "Positive RMS tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-10. It applies to the ENVIRON sqrt-preconditioned CG solution of the generalized Poisson equation for every assume_isolated value; with pcc_0d or pcc_2d the preconditioner Poisson solve includes the analytic open-boundary correction. ENVIRON stops its CG when the unnormalized sum of squared residuals falls below its tol; the corresponding RMS is sqrt(tol/N) for N FFT grid points.", "1.0e-10", "e/bohr^3")
+    ADD_SCCS_REAL_ITEM("sccs_tol_max", sccs_tol_max, "Positive maximum tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-8. The sqrt-CG stops only when both sccs_tol_rms and sccs_tol_max are satisfied.", "1.0e-8", "e/bohr^3")
     ADD_SCCS_REAL_ITEM("sccs_surface_eta", sccs_surface_eta, "Positive SCCS surface regularization; user-controlled for every sccs_preset, default 1.0e-8 bohr^-1.", "1.0e-8", "bohr^-1")
 #undef ADD_SCCS_REAL_ITEM
     {
@@ -181,7 +183,7 @@ void ReadInput::item_sccs()
         item.annotation = "detailed SCCS diagnostics";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "SCCS/PCC output level: 0 suppresses per-SCF summaries and diagnostics; 1 prints the iteration count, elapsed seconds and correction energy; 2 additionally prints mixing, residual, multipole and energy diagnostics, and verifies the periodic sqrt-CG fixed point with one extra Poisson solve per SCCS evaluation. Applies to standalone PCC as well as SCCS.";
+        item.description = "SCCS/PCC output level: 0 suppresses per-SCF summaries and diagnostics; 1 prints the iteration count, elapsed seconds and correction energy; 2 additionally prints residual, warm-start, timing, Gauss-law (PCC), multipole and energy diagnostics, and verifies the sqrt-CG fixed point with one extra Poisson solve per SCCS evaluation. Applies to standalone PCC as well as SCCS.";
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.sccs_debug);
@@ -195,10 +197,10 @@ void ReadInput::item_sccs()
     }
     {
         Input_Item item("sccs_maxiter");
-        item.annotation = "SCCS polarization iteration limit";
+        item.annotation = "SCCS sqrt-CG iteration limit";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "Positive maximum inner iteration count; user-controlled for every sccs_preset, default 200. In this experimental chain branch SCCS_ITER counts periodic sqrt-CG iterations for assume_isolated=none, or polarization iterations for pcc_0d/pcc_2d. Failure to converge terminates the calculation. No discrete adjoint is solved.";
+        item.description = "Positive maximum inner iteration count; user-controlled for every sccs_preset, default 200. SCCS_ITER counts sqrt-preconditioned CG iterations for every assume_isolated value. Failure to converge terminates the calculation. No discrete adjoint is solved.";
         item.default_value = "200";
         item.unit = "";
         item.set_availability("imp_sol==2");
@@ -210,17 +212,13 @@ void ReadInput::item_sccs()
     }
     {
         Input_Item item("sccs_mixing_adaptive");
-        item.annotation = "adaptive SCCS polarization mixing";
+        item.annotation = "adaptive SCCS mixing (no effect)";
         item.category = "Implicit solvation model";
         item.type = "Boolean";
         item.description
-            = "Allowed values: 0 (fixed damping, default) or 1 (adaptive damping). "
-              "User-controlled for every sccs_preset. Adapt the damping factor within sccs_mixing_min "
-              "and sccs_mixing_max. The initial value is sccs_mixing. Three "
-              "consecutive residual ratios below 0.7 increase the factor by "
-              "10%. A ratio above 2.0, or two consecutive ratios above 1.1, "
-              "halves the factor, clears the acceleration history, and forces "
-              "one linear recovery step.";
+            = "Allowed values: 0 (default) or 1. Accepted for input compatibility but "
+              "currently has no effect: every assume_isolated value (none, pcc_0d, pcc_2d) "
+              "solves SCCS with the ENVIRON sqrt-preconditioned CG, which uses no mixing.";
         item.default_value = "0";
         item.unit = "";
         item.set_availability("imp_sol==2");
@@ -232,10 +230,10 @@ void ReadInput::item_sccs()
     }
     {
         Input_Item item("sccs_mixing_type");
-        item.annotation = "SCCS polarization mixing method";
+        item.annotation = "SCCS mixing method (no effect)";
         item.category = "Implicit solvation model";
         item.type = "String";
-        item.description = "Allowed INPUT values are exactly linear, pulay and anderson. linear: damped fixed-point iteration; pulay: Pulay DIIS; anderson: Anderson acceleration using differences of iterates and residuals. In this experimental chain branch these select the PCC inner polarization solver, independently of the outer SCF mixing_type; the periodic sqrt-CG path ignores mixing controls. User-controlled for every sccs_preset, default linear. broyden and andersonb are not accepted values. Accelerated methods fall back to a linear step when insufficient or unusable history is available.";
+        item.description = "Allowed INPUT values are exactly linear, pulay and anderson (default linear); broyden and andersonb are not accepted. Accepted for input compatibility but currently has no effect: every assume_isolated value (none, pcc_0d, pcc_2d) solves SCCS with the ENVIRON sqrt-preconditioned CG, which uses no mixing. It is independent of the outer SCF mixing_type.";
         item.default_value = "linear";
         item.unit = "";
         item.set_availability("imp_sol==2");
@@ -247,13 +245,13 @@ void ReadInput::item_sccs()
     }
     {
         Input_Item item("sccs_mixing_ndim");
-        item.annotation = "SCCS accelerated-mixing history length";
+        item.annotation = "SCCS mixing history length (no effect)";
         item.category = "Implicit solvation model";
         item.type = "Integer";
         item.description
-            = "Number of history vectors retained by sccs_mixing_type=pulay or anderson. "
-              "Must be at least 2; user-controlled for every sccs_preset, default 8. "
-              "Unused by linear mixing, but the value must still satisfy the input range.";
+            = "Accepted for input compatibility but currently has no effect: every "
+              "assume_isolated value (none, pcc_0d, pcc_2d) solves SCCS with the ENVIRON "
+              "sqrt-preconditioned CG, which uses no mixing. Must be at least 2, default 8.";
         item.default_value = "8";
         item.unit = "";
         item.set_availability("imp_sol==2");

@@ -36,6 +36,14 @@ class CoulombOperator
         return CoulombTransformProfile();
     }
 
+    // True when an analytic open-boundary (PCC) term is added. Such potentials
+    // keep their physical gauge instead of the periodic zero mean (ENVIRON's
+    // has_corrections criterion in generalized_sqrt).
+    virtual bool has_boundary_correction() const
+    {
+        return false;
+    }
+
     virtual void apply(const std::vector<double>& charge, ElectrostaticField& field) const = 0;
 
     // Scalar-only clients avoid gradient transforms when the operator supports it.
