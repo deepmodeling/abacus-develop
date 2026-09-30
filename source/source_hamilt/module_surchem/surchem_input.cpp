@@ -187,15 +187,19 @@ SurchemParameters make_parameters(const Input_para& inp,
 
     const double net_charge
         = parameters.expected_ionic_charge - parameters.expected_electron_count;
-    // A periodic dielectric cannot screen a net charge: the implicit jellium
-    // background would sit in the solvent and the energy would carry a large
-    // cell-size error. Vacuum (epsilon 1) keeps the usual periodic jellium.
+    // The periodic Poisson solver drops the G = 0 component of the net charge.
+    // In an inhomogeneous dielectric this leaves a cell-size error with no
+    // closed-form correction. Allowed, but warned. Vacuum (epsilon 1) is the
+    // usual periodic charged calculation.
     if (parameters.sccs_config.boundary == ModulePcc::Boundary::Periodic
         && parameters.sccs_config.cavity.epsilon_bulk > 1.0
         && std::abs(net_charge) > parameters.normalization_tolerance)
     {
-        throw std::invalid_argument(
-            "charged SCCS needs an open boundary: set assume_isolated pcc_0d or pcc_2d");
+        ModuleBase::WARNING("surchem",
+                            "charged SCCS with periodic boundaries: the periodic Poisson solver "
+                            "drops the G = 0 component of the net charge, so the energy depends "
+                            "on the cell size. Use assume_isolated pcc_0d or pcc_2d for converged "
+                            "charged energies.");
     }
     return parameters;
 }

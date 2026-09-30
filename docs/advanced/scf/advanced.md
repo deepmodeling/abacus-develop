@@ -23,7 +23,7 @@ Example of running DFT calculation with the implicit solvation model is provided
 
 `imp_sol 2` selects the self-consistent continuum solvation (SCCS) model of [Andreussi, Dabo, and Marzari](https://doi.org/10.1063/1.3676407), following its ENVIRON implementation. The dielectric cavity is a smooth function of the electron density, the generalized Poisson equation is solved with ENVIRON's square-root-preconditioned conjugate gradient, and surface and volume terms describe the non-electrostatic interactions. `sccs_preset` selects the published water parameters for neutral solutes, cations, or anions (`water-neutral`, `water-cation`, `water-anion`), or user values (`custom`).
 
-`assume_isolated pcc_0d` (a molecule in a cubic cell) or `pcc_2d` (a slab open along the lattice vector `pcc_2d_axis`) adds a self-consistent point-counter-charge correction for the open boundary, following [Andreussi and Marzari](https://doi.org/10.1103/PhysRevB.90.245101). It can be used with or without SCCS; a charged solute in a dielectric solvent requires it.
+`assume_isolated pcc_0d` (a molecule in a cubic cell) or `pcc_2d` (a slab open along the lattice vector `pcc_2d_axis`) adds a self-consistent point-counter-charge correction for the open boundary, following [Andreussi and Marzari](https://doi.org/10.1103/PhysRevB.90.245101). It can be used with or without SCCS. Use it for a charged solute in a dielectric solvent: with periodic boundaries such a run continues with a warning, but its energy depends on the cell size.
 
 ```
 INPUT_PARAMETERS
