@@ -154,7 +154,11 @@ void ReadInput::item_sccs()
                        "derivative of the discrete SCCS energy, so forces agree with energy "
                        "differences. Only with assume_isolated pcc_0d or pcc_2d. The default -1 "
                        "turns it off and reproduces Environ deriv_method fft (continuum cavity "
-                       "potential). 10 with sccs_lowpass_p2 5 was validated at ecutrho 300-500 Ry; "
+                       "potential). With lowpass disabled (the default), analytical forces may "
+                       "differ from finite differences of the self-consistent energy. For geometry "
+                       "optimization with PCC, consider enabling lowpass and check force accuracy "
+                       "against finite differences. 10 with sccs_lowpass_p2 5 was validated at "
+                       "ecutrho 300-500 Ry; "
                        "the filter changes the model energy (about 10 meV for H3O+).",
                        "-1",
                        "")
