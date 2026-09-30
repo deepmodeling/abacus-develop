@@ -62,6 +62,13 @@ def _numeric_tokens(path):
 def _compare_text(actual, reference, tolerance):
     actual_lines = actual.read_text().splitlines()
     reference_lines = reference.read_text().splitlines()
+    # Some ABACUS text writers leave an extra blank record at EOF.  It has no
+    # parser-visible meaning, so keep the value comparison strict while
+    # ignoring only trailing empty records.
+    while actual_lines and not actual_lines[-1].strip():
+        actual_lines.pop()
+    while reference_lines and not reference_lines[-1].strip():
+        reference_lines.pop()
     if len(actual_lines) != len(reference_lines):
         raise ProducerContractError(
             "{} has {} lines; reference has {}".format(actual, len(actual_lines), len(reference_lines))

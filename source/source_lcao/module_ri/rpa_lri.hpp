@@ -2704,20 +2704,26 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
         }
     }
 
-    ofs << p_kv->nmp[0] << std::setw(6) << p_kv->nmp[1] << std::setw(6) << p_kv->nmp[2] << std::setw(6) << std::endl;
+    // Reader-v1 stores k-point sampling in bz_sampling_out. Keep the legacy
+    // k-point block in stru_out.txt for reader-v0 consumers.
+    if (this->runtime.input.out_librpa_reader_version != 1)
+    {
+        ofs << p_kv->nmp[0] << std::setw(6) << p_kv->nmp[1] << std::setw(6) << p_kv->nmp[2]
+            << std::setw(6) << std::endl;
 
-    for (int ik = 0; ik != nks_tot; ik++)
-    {
-        const ModuleBase::Vector3<double> kpoint =
-            p_kv->kvec_c[ik] * (ModuleBase::TWO_PI / ucell.lat0); // in unit of 1/Bohr
-        ofs << std::setw(15) << kpoint.x << std::setw(15) << kpoint.y
-            << std::setw(15) << kpoint.z << std::endl;
-    }
-    if (this->runtime.input.symmetry == "-1")
-    {
-        for (int ik = 0; ik != nks_tot; ++ik)
+        for (int ik = 0; ik != nks_tot; ik++)
         {
-            ofs << (ik + 1) << std::endl;
+            const ModuleBase::Vector3<double> kpoint =
+                p_kv->kvec_c[ik] * (ModuleBase::TWO_PI / ucell.lat0); // in unit of 1/Bohr
+            ofs << std::setw(15) << kpoint.x << std::setw(15) << kpoint.y
+                << std::setw(15) << kpoint.z << std::endl;
+        }
+        if (this->runtime.input.symmetry == "-1")
+        {
+            for (int ik = 0; ik != nks_tot; ++ik)
+            {
+                ofs << (ik + 1) << std::endl;
+            }
         }
     }
     ofs.close();
