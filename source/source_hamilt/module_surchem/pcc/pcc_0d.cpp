@@ -1,4 +1,5 @@
 #include "pcc_0d.h"
+#include "../common/lattice_row.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
@@ -24,27 +25,6 @@ double norm_squared(const ModuleBase::Vector3<double>& value)
 double norm(const ModuleBase::Vector3<double>& value)
 {
     return std::sqrt(norm_squared(value));
-}
-
-ModuleBase::Vector3<double> lattice_row(const ModuleBase::Matrix3& lattice,
-                                        const int row,
-                                        const double scale)
-{
-    if (row == 0)
-    {
-        return ModuleBase::Vector3<double>(scale * lattice.e11,
-                                           scale * lattice.e12,
-                                           scale * lattice.e13);
-    }
-    if (row == 1)
-    {
-        return ModuleBase::Vector3<double>(scale * lattice.e21,
-                                           scale * lattice.e22,
-                                           scale * lattice.e23);
-    }
-    return ModuleBase::Vector3<double>(scale * lattice.e31,
-                                       scale * lattice.e32,
-                                       scale * lattice.e33);
 }
 
 ModuleBase::Vector3<double> scaled(const ModuleBase::Vector3<double>& value,
@@ -115,11 +95,11 @@ PccGeometry pcc_geometry(const ModuleBase::Matrix3& lattice_vectors,
             "zero-dimensional PCC geometry requires positive finite scale and tolerance");
     }
     const ModuleBase::Vector3<double> a
-        = lattice_row(lattice_vectors, 0, lattice_scale);
+        = ModuleSurchem::lattice_row(lattice_vectors, 0, lattice_scale);
     const ModuleBase::Vector3<double> b
-        = lattice_row(lattice_vectors, 1, lattice_scale);
+        = ModuleSurchem::lattice_row(lattice_vectors, 1, lattice_scale);
     const ModuleBase::Vector3<double> c
-        = lattice_row(lattice_vectors, 2, lattice_scale);
+        = ModuleSurchem::lattice_row(lattice_vectors, 2, lattice_scale);
     const double length_a = norm(a);
     const double length_b = norm(b);
     const double length_c = norm(c);

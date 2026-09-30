@@ -1,4 +1,5 @@
 #include "pw_grid.h"
+#include "lattice_row.h"
 
 #include "source_basis/module_pw/pw_basis.h"
 
@@ -7,32 +8,6 @@
 
 namespace ModuleSurchem
 {
-namespace
-{
-
-ModuleBase::Vector3<double> lattice_row(const ModuleBase::Matrix3& lattice,
-                                        const int row,
-                                        const double scale)
-{
-    if (row == 0)
-    {
-        return ModuleBase::Vector3<double>(scale * lattice.e11,
-                                           scale * lattice.e12,
-                                           scale * lattice.e13);
-    }
-    if (row == 1)
-    {
-        return ModuleBase::Vector3<double>(scale * lattice.e21,
-                                           scale * lattice.e22,
-                                           scale * lattice.e23);
-    }
-    return ModuleBase::Vector3<double>(scale * lattice.e31,
-                                       scale * lattice.e32,
-                                       scale * lattice.e33);
-}
-
-} // namespace
-
 std::vector<ModuleBase::Vector3<double>> pw_grid_positions(
     const ModulePW::PW_Basis& basis,
     const ModuleBase::Matrix3& lattice_vectors,

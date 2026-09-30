@@ -1,4 +1,5 @@
 #include "pcc_2d.h"
+#include "../common/lattice_row.h"
 
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
@@ -10,27 +11,6 @@ namespace ModulePcc
 {
 namespace
 {
-
-ModuleBase::Vector3<double> lattice_row(const ModuleBase::Matrix3& lattice,
-                                        const int row,
-                                        const double scale)
-{
-    if (row == 0)
-    {
-        return ModuleBase::Vector3<double>(scale * lattice.e11,
-                                           scale * lattice.e12,
-                                           scale * lattice.e13);
-    }
-    if (row == 1)
-    {
-        return ModuleBase::Vector3<double>(scale * lattice.e21,
-                                           scale * lattice.e22,
-                                           scale * lattice.e23);
-    }
-    return ModuleBase::Vector3<double>(scale * lattice.e31,
-                                       scale * lattice.e32,
-                                       scale * lattice.e33);
-}
 
 bool finite_position(const ModuleBase::Vector3<double>& position)
 {
@@ -91,11 +71,11 @@ Pcc2dGeometry pcc_2d_geometry(const ModuleBase::Matrix3& lattice_vectors,
     }
 
     const ModuleBase::Vector3<double> a
-        = lattice_row(lattice_vectors, 0, lattice_scale);
+        = ModuleSurchem::lattice_row(lattice_vectors, 0, lattice_scale);
     const ModuleBase::Vector3<double> b
-        = lattice_row(lattice_vectors, 1, lattice_scale);
+        = ModuleSurchem::lattice_row(lattice_vectors, 1, lattice_scale);
     const ModuleBase::Vector3<double> c
-        = lattice_row(lattice_vectors, 2, lattice_scale);
+        = ModuleSurchem::lattice_row(lattice_vectors, 2, lattice_scale);
     if (!finite_position(a) || !finite_position(b) || !finite_position(c))
     {
         throw std::invalid_argument("two-dimensional PCC lattice vectors must be finite");
