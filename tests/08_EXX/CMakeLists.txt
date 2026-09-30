@@ -13,4 +13,12 @@ else()
         COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4 -j auto
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/08_EXX
     )
+
+    # These compact cases validate only producer artifacts consumed by LibRPA.
+    # They leave the established EXX and BSE regression corpus unchanged.
+    add_test(
+        NAME 08_EXX_librpa_producer
+        COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 1 -j auto -f CASES_LIBRPA_PRODUCER.txt
+        WORKING_DIRECTORY ${ABACUS_TEST_DIR}/08_EXX
+    )
 endif()
