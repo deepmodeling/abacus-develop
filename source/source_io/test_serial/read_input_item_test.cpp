@@ -172,6 +172,35 @@ TEST_F(InputTest, Item_test)
         const std::string stress_output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(stress_output, testing::HasSubstr("SCCS provides no stress contribution"));
         param.input.cal_stress = false;
+
+        param.input.esolver_type = "ksdft";
+        param.input.basis_type = "lcao";
+        param.input.deepks_out_base = "none";
+        param.input.dm_to_rho = false;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        param.input.basis_type = "pw";
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        for (const std::string& unsupported : {"ofdft", "sdft", "tddft", "lj"})
+        {
+            param.input.esolver_type = unsupported;
+            testing::internal::CaptureStdout();
+            EXPECT_EXIT(it->second.check_value(it->second, param),
+                        ::testing::ExitedWithCode(1),
+                        "");
+            const std::string esolver_output = testing::internal::GetCapturedStdout();
+            EXPECT_THAT(esolver_output, testing::HasSubstr("SCCS requires esolver_type ksdft"))
+                << unsupported;
+        }
+        param.input.esolver_type = "ksdft";
+        param.input.basis_type = "lcao_in_pw";
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        param.input.basis_type = "pw";
+        param.input.deepks_out_base = "base";
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        param.input.deepks_out_base = "none";
+        param.input.dm_to_rho = true;
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        param.input.dm_to_rho = false;
     }
 
     { // imp_sol keeps the former Boolean spellings

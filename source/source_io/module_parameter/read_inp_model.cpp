@@ -78,6 +78,16 @@ void check_solvation(const Input_para& input)
         ModuleBase::WARNING_QUIT("ReadInput",
                                  "SCCS provides no stress contribution; set cal_stress 0");
     }
+    // Same scope as PCC (assume_isolated check in read_inp_sys.cpp).
+    if (input.imp_sol == 2
+        && (input.esolver_type != "ksdft"
+            || (input.basis_type != "pw" && input.basis_type != "lcao")
+            || input.deepks_out_base != "none" || input.dm_to_rho))
+    {
+        ModuleBase::WARNING_QUIT("ReadInput",
+                                 "SCCS requires esolver_type ksdft with basis_type pw or lcao, "
+                                 "without deepks output or dm_to_rho");
+    }
 }
 
 } // namespace
@@ -265,7 +275,7 @@ void ReadInput::item_model()
         item.annotation = "implicit solvent model";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. The former Boolean values true and false are read as 1 and 0. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports scf and fixed-cell relax without stress.";
+        item.description = "Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. The former Boolean values true and false are read as 1 and 0. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports KS-DFT (esolver_type ksdft) with basis_type pw or lcao, for scf and fixed-cell relax without stress, deepks output or dm_to_rho.";
         item.default_value = "0";
         item.unit = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
