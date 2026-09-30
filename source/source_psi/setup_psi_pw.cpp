@@ -231,6 +231,18 @@ void Setup_Psi_pw::copy_d2h()
 #endif
 }
 
+void Setup_Psi_pw::sync_cpu()
+{
+    if (this->device_type_ == base_device::GpuDevice)
+    {
+        this->copy_d2h();
+    }
+    else if (this->precision_type_ == PrecisionType::ComplexFloat)
+    {
+        this->copy_d2h_impl<std::complex<float>, base_device::DEVICE_CPU>();
+    }
+}
+
 template <typename T, typename Device>
 void Setup_Psi_pw::castmem_d2h_impl(std::complex<double>* dst, const std::complex<double>* src, const std::size_t size)
 {

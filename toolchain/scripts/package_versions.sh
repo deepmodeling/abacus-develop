@@ -85,8 +85,8 @@ scalapack_alt_sha256="a2f0c9180a210bf7ffe126c9cb81099cf337da1a7120ddb4cbe4894eb7
 # =============================================================================
 
 # DFT-D4 dispersion correction
-dftd4_ver="4.2.0"
-dftd4_sha256="467e024071510ad82b862c66c383c2ebc164fc1140e15dfc79f48d2f999fd184"
+dftd4_ver="4.3.0"
+dftd4_sha256="e94c5d021c0a4b4aa9b5587e36fda2f398271dc2dc1abfbe097fdb04022bef35"
 
 # LibTorch (supports dual versions) - main=2.1.2, alt=1.12.1
 libtorch_main_ver="2.1.2"

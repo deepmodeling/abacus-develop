@@ -1,3 +1,6 @@
-5
-0 0 0
-0 0 0
+# Hartree atomic units; step indices start at 0.
+# gauge: 0=length, 1=velocity, 2=hybrid; source: 0=field, 1=file
+# step  left_step(-1=none)  gauge  dt  source
+5 -1 0 2.0670686668280682 0
+0 0 0  # A_left: x y z
+0 0 0  # A_right: x y z

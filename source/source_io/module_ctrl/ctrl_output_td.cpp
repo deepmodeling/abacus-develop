@@ -1,8 +1,8 @@
 #include "ctrl_output_td.h"
 
 #include "source_base/parallel_global.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_io/module_current/td_current_io.h"
+#include "source_io/module_parameter/parameter.h"
 
 namespace ModuleIO
 {
@@ -24,8 +24,7 @@ void ctrl_output_td(const UnitCell& ucell,
                     Record_adj& RA,
                     TD_info* td_p,
                     const Exx_NAO<std::complex<double>>& exx_nao,
-                    const Exx_Info& exx_info
-                    )
+                    const Exx_Info& exx_info)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_td");
 
@@ -50,25 +49,9 @@ void ctrl_output_td(const UnitCell& ucell,
             ModuleIO::write_current<TR>(ucell, istep, psi, pelec, kv, intor, pv, orb, velocity_mat, td_p, RA);
         }
     }
-    else if(TD_info::out_current==2)
+    else if (TD_info::out_current == 2)
     {
         ModuleIO::write_current(ucell, grid, istep, psi, pelec, kv, pv, orb, td_p, p_hamilt->getSR(), p_hamilt->getHR(), exx_nao, exx_info);
-    }
-    // (3) Output file for restart
-    if (PARAM.inp.out_freq_td > 0) // default value of out_freq_td is 0
-    {
-        if (istep % PARAM.inp.out_freq_td == 0)
-        {
-            if (td_p != nullptr)
-            {
-                td_p->out_restart_info(istep, elecstate::H_TDDFT_pw::At, elecstate::H_TDDFT_pw::At_laststep);
-            }
-            else
-            {
-                ModuleBase::WARNING_QUIT("ModuleIO::ctrl_output_td",
-                                         "TD_info pointer is null, cannot output restart info.");
-            }
-        }
     }
 #endif // __LCAO
 }
@@ -89,8 +72,7 @@ template void ctrl_output_td<double>(const UnitCell&,
                                      Record_adj&,
                                      TD_info*,
                                      const Exx_NAO<std::complex<double>>&,
-                                     const Exx_Info&
-                                     );
+                                     const Exx_Info&);
 
 template void ctrl_output_td<std::complex<double>>(const UnitCell&,
                                                    double**,
@@ -108,7 +90,6 @@ template void ctrl_output_td<std::complex<double>>(const UnitCell&,
                                                    Record_adj&,
                                                    TD_info*,
                                                    const Exx_NAO<std::complex<double>>&,
-                                                   const Exx_Info&
-                                                   );
+                                                   const Exx_Info&);
 
 } // namespace ModuleIO

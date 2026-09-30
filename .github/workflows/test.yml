@@ -63,7 +63,7 @@ jobs:
           echo "fingerprint=${fingerprint}" >> "${GITHUB_OUTPUT}"
 
       - name: Restore compiler cache
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         with:
           path: ${{ env.CCACHE_DIR }}
           key: abacus-gnu-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
@@ -120,6 +120,17 @@ jobs:
         run: |
           ccache --show-stats
           ccache --show-stats >> "${GITHUB_STEP_SUMMARY}"
+
+      # Only develop writes the cache. A cache saved from a pull request is
+      # scoped to that pull request's ref, so no other branch can ever read
+      # it, while it still counts against the repository's 10 GB budget and
+      # evicts the develop entry that every pull request does restore from.
+      - name: Save compiler cache
+        if: github.ref == 'refs/heads/develop'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: abacus-gnu-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
 
       - name: Check documentation consistency
         run: |

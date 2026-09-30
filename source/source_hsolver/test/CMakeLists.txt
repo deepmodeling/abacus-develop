@@ -2,6 +2,31 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
+set(TD_LINEAR_TEST_SOURCES
+  ../hsolver_linear.cpp
+  ../linear_bicgstab.cpp
+  ../linear_cgs.cpp
+  ../linear_workspace.cpp
+)
+AddTest(
+  TARGET MODULE_HSOLVER_linear
+  LIBS parameter base device container
+  SOURCES test_hsolver_linear.cpp ${TD_LINEAR_TEST_SOURCES}
+)
+AddTest(
+  TARGET MODULE_HSOLVER_pw_tddft
+  LIBS parameter base device container psi planewave
+  SOURCES test_hsolver_pw_tddft.cpp ../hsolver_pw_tddft.cpp ${TD_LINEAR_TEST_SOURCES}
+)
+if(ENABLE_MPI)
+  add_test(
+    NAME MODULE_HSOLVER_linear_parallel
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+      $<TARGET_FILE:MODULE_HSOLVER_linear> ${MPIEXEC_POSTFLAGS}
+  )
+  set_tests_properties(MODULE_HSOLVER_linear_parallel PROPERTIES PROCESSORS 2 TIMEOUT 120)
+endif()
+
 if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_parak2d_test
@@ -56,7 +81,7 @@ if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_base
     LIBS parameter  psi device base
-    SOURCES test_hsolver.cpp 
+    SOURCES test_hsolver.cpp ../hsolver.cpp
   )
 
   AddTest(

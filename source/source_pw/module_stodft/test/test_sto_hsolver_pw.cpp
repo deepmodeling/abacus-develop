@@ -8,6 +8,7 @@
 #include "source_estate/elecstate_pw.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_pw/module_stodft/sto_hsolver_pw.h"
+#include "source_pw/module_stodft/sto_wf.h"
 
 // mock for module_sdft
 template <typename REAL>
@@ -15,6 +16,30 @@ Sto_Func<REAL>::Sto_Func()
 {
 }
 template class Sto_Func<double>;
+
+// mock of Stochastic_WF
+template <typename T, typename Device>
+Stochastic_WF<T, Device>::Stochastic_WF()
+{
+    chiortho = nullptr;
+    chi0 = nullptr;
+    shchi = nullptr;
+    nchip = nullptr;
+}
+
+template <typename T, typename Device>
+Stochastic_WF<T, Device>::~Stochastic_WF()
+{
+    delete[] chi0;
+    delete[] shchi;
+    delete[] chiortho;
+    delete[] nchip;
+}
+
+template <typename T, typename Device>
+void Stochastic_WF<T, Device>::init(K_Vectors* p_kv, const int npwx_in)
+{
+}
 
 // mock diago_hs_para
 namespace hsolver {

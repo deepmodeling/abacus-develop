@@ -86,34 +86,4 @@ void Potential::cal_fixed_v(double* vl_pseudo)
 
 } // namespace elecstate
 
-// mock of Stochastic_WF
-#include "source_pw/module_stodft/sto_wf.h"
-template <typename T, typename Device>
-Stochastic_WF<T, Device>::Stochastic_WF()
-{
-    chiortho = nullptr;
-    chi0 = nullptr;
-    shchi = nullptr;
-    nchip = nullptr;
-}
-
-template <typename T, typename Device>
-Stochastic_WF<T, Device>::~Stochastic_WF()
-{
-    delete[] chi0;
-    delete[] shchi;
-    delete[] chiortho;
-    delete[] nchip;
-}
-
-template <typename T, typename Device>
-void Stochastic_WF<T, Device>::init(K_Vectors* p_kv, const int npwx_in)
-{
-    /*chi0 = new ModuleBase::ComplexMatrix[nks_in];
-    shchi = new ModuleBase::ComplexMatrix[nks_in];
-    chiortho = new ModuleBase::ComplexMatrix[nks_in];
-    nchip = new int[nks_in];
-    this->nks = nks_in;*/
-}
-
 #include "source_cell/klist.h"

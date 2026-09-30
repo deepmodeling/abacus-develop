@@ -13,8 +13,8 @@
 #include "source_lcao/module_deltaspin/deltaspin_pw_mi.h"
 #include "source_lcao/module_deltaspin/lambda_loop_helper.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_pw/module_pwdft/elecond.h"
 #include "source_pw/module_proj/onsite_proj.h" // use projector
+#include "source_pw/module_pwdft/elecond.h"
 
 #ifdef __MLALGO
 #include "../module_ml/write_mlkedf_desc.h"
@@ -23,7 +23,7 @@
 void ModuleIO::ctrl_iter_pw(const int istep,
                             const int iter,
                             const double& conv_esolver,
-                            psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
+                            Setup_Psi_pw& stp,
                             const K_Vectors& kv,
                             const ModulePW::PW_Basis_K* pw_wfc,
                             const Input_para& inp)
@@ -57,8 +57,9 @@ void ModuleIO::ctrl_iter_pw(const int istep,
         out_wfc_flag = true;
     }
 
-    if (out_wfc_flag)
+    if (out_wfc_flag && (inp.out_wfc_pw == 1 || inp.out_wfc_pw == 2))
     {
+        stp.sync_cpu();
         ModuleIO::write_wfc_pw(istep_in,
                                iter_in,
                                GlobalV::KPAR,
@@ -72,7 +73,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
                                inp.out_wfc_pw,
                                inp.ecutwfc,
                                PARAM.globalv.global_out_dir,
-                               psi[0],
+                               stp.psi_cpu[0],
                                kv,
                                pw_wfc,
                                GlobalV::ofs_running);
@@ -100,8 +101,11 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_pw");
     ModuleBase::timer::start("ModuleIO", "ctrl_scf_pw");
 
-    // Transfer data from device (GPU) to host (CPU) in pw basis
-    stp.copy_d2h();
+    // Only the following postprocessors consume the double CPU mirror.
+    if (inp.calculation == "nscf" && (inp.towannier90 || (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)))
+    {
+        stp.sync_cpu();
+    }
 
     //----------------------------------------------------------
     //! 4) Compute density of states (DOS)
@@ -164,7 +168,8 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     if (inp.out_pchg.size() > 0)
     {
         // Use the solver's native wavefunction precision for FFT and projector overlaps.
-        ModuleIO::Get_pchg_pw<T, Device> output(*stp.template get_psi_t<T, Device>(), *pw_wfc, *pw_rho, *pw_rhod, ppcell, inp.nspin, inp.nbands);
+        ModuleIO::Get_pchg_pw<T, Device>
+            output(*stp.template get_psi_t<T, Device>(), *pw_wfc, *pw_rho, *pw_rhod, ppcell, inp.nspin, inp.nbands);
         output.begin(&ucell, para_grid, kv, inp.out_pchg, PARAM.globalv.global_out_dir, inp.if_separate_k, inp.noncolin);
     }
 
@@ -278,6 +283,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
         // ! Print out overlap matrices
         if (inp.out_spillage <= 2)
         {
+            stp.sync_cpu();
             for (int i = 0; i < inp.bessel_nao_rcuts.size(); i++)
             {
                 if (GlobalV::MY_RANK == 0)
@@ -298,7 +304,8 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
     {
         using Real = typename GetTypeReal<T>::type;
         EleCond<Real, Device> elec_cond(&ucell, &kv, pelec, pw_wfc, stp.template get_psi_t<T, Device>(), &ppcell);
-        elec_cond.KG(inp.cond_smear, inp.cond_fwhm, inp.cond_wcut, inp.cond_dw, inp.cond_dt, inp.cond_nonlocal, inp.cond_mgga_vel, pelec->wg);
+        elec_cond
+            .KG(inp.cond_smear, inp.cond_fwhm, inp.cond_wcut, inp.cond_dw, inp.cond_dt, inp.cond_nonlocal, inp.cond_mgga_vel, pelec->wg);
     }
 
 #ifdef __MLALGO

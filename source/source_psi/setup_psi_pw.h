@@ -60,6 +60,9 @@ class Setup_Psi_pw
     // Transfer data from device to host in pw basis
     void copy_d2h();
 
+    /** @brief Refresh the double CPU mirror from the native device and precision. */
+    void sync_cpu();
+
     void clean();
 
     //------------
