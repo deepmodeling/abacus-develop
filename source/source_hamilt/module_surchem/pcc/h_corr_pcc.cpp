@@ -183,6 +183,9 @@ void surchem::v_correction_pcc(const UnitCell& cell,
             }
         }
     }
+    const double* electron_potential_begin = v.c;
+    const double* electron_potential_end = v.c + rho_basis.nrxx;
+    this->electrostatic_correction_ry_.assign(electron_potential_begin, electron_potential_end);
     this->pcc_energy_rydberg_ = 2.0 * energy_hartree;
     surchem::Epcc = this->pcc_energy_rydberg_;
     surchem::Ael = 0.0;

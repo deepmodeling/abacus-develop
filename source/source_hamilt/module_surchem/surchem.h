@@ -86,6 +86,11 @@ class surchem
 
     void write_sccs_diagnostics(std::ostream& output) const;
 
+    // Electrostatic part of the last SCCS/PCC electron potential (Ry) on the
+    // local grid: the PCC open-boundary term plus the SCCS reaction potential,
+    // without the cavity derivatives. Empty before the first SCCS/PCC update.
+    const std::vector<double>& electrostatic_correction() const;
+
     void cal_epsilon(const ModulePW::PW_Basis* rho_basis, const double* PS_TOTN_real, double* epsilon, double* epsilon0);
 
     void cal_pseudo(const UnitCell& cell,
@@ -263,6 +268,7 @@ class surchem
     ModulePcc::MultipoleMoments pcc_moments_;
     ModulePcc::Pcc2dMoments pcc_2d_moments_;
     double pcc_energy_rydberg_ = 0.0;
+    std::vector<double> electrostatic_correction_ry_;
     bool pcc_result_valid_ = false;
 };
 

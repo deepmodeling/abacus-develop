@@ -47,6 +47,7 @@ void surchem::set_parameters(const SurchemParameters& parameters)
     this->sccs_state_ = ModuleSccs::SccsState();
     this->sccs_result_ = ModuleSccs::SccsResult();
     this->pcc_result_valid_ = false;
+    this->electrostatic_correction_ry_.clear();
 }
 
 bool surchem::uses_sccs() const
@@ -82,6 +83,11 @@ bool surchem::try_activate_sccs(const int electronic_iteration, const double drh
     this->sccs_result_ = ModuleSccs::SccsResult();
     this->pcc_result_valid_ = false;
     return true;
+}
+
+const std::vector<double>& surchem::electrostatic_correction() const
+{
+    return this->electrostatic_correction_ry_;
 }
 
 const ModuleSccs::SccsResult& surchem::sccs_result() const
@@ -354,6 +360,7 @@ void surchem::clear()
     this->sccs_state_ = ModuleSccs::SccsState();
     this->sccs_result_ = ModuleSccs::SccsResult();
     this->fixed_source_cache_ = FixedSourceCache();
+    this->electrostatic_correction_ry_.clear();
 }
 
 surchem::~surchem()

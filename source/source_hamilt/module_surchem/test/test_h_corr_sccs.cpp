@@ -101,6 +101,12 @@ TEST(HCorrSccs, SolventDispatchReturnsZeroBeforeDelayedActivation)
     EXPECT_EQ(surchem::Ael, 0.0);
     EXPECT_EQ(surchem::Acav, 0.0);
     EXPECT_EQ(surchem::Epcc, 0.0);
+    const std::vector<double>& electrostatic = solvent.electrostatic_correction();
+    ASSERT_EQ(electrostatic.size(), static_cast<std::size_t>(basis.nrxx));
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        EXPECT_EQ(electrostatic[ir], 0.0);
+    }
 }
 
 TEST(HCorrSccs, SolventDispatchStopsThroughWarningQuitOnKernelFailure)
@@ -290,6 +296,17 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
                 2.0 * (result.non_electrostatic.surface_energy
                        + result.non_electrostatic.volume_energy),
                 1.0e-14);
+    // The out_pot 2 electrostatic potential is the electron potential
+    // without the cavity derivatives: reaction plus vacuum PCC potential.
+    const std::vector<double>& electrostatic = solvent.electrostatic_correction();
+    ASSERT_EQ(electrostatic.size(), static_cast<std::size_t>(basis.nrxx));
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const double cavity_part = result.response.cavity_potential[ir]
+                                   + result.non_electrostatic.density_potential[ir];
+        const double expected = 2.0 * (result.electron_potential_hartree[ir] - cavity_part);
+        EXPECT_NEAR(electrostatic[ir], expected, 1.0e-12);
+    }
     std::ostringstream debug_output;
     solvent.write_sccs_iteration(debug_output);
     const std::string debug_text = debug_output.str();

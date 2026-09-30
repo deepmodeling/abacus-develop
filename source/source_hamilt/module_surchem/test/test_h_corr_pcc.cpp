@@ -81,6 +81,13 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
     EXPECT_DOUBLE_EQ(surchem::Ael, 0.0);
     EXPECT_DOUBLE_EQ(surchem::Acav, 0.0);
     EXPECT_TRUE(std::isfinite(potential(0, 0)));
+    // The out_pot 2 electrostatic potential takes the whole PCC potential.
+    const std::vector<double>& electrostatic = correction.electrostatic_correction();
+    ASSERT_EQ(electrostatic.size(), static_cast<std::size_t>(basis.nrxx));
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        EXPECT_DOUBLE_EQ(electrostatic[ir], potential(0, ir));
+    }
     ModuleBase::matrix force(1, 3);
     correction.cal_force_pcc(cell, force);
     EXPECT_TRUE(std::isfinite(force(0, 1)));
