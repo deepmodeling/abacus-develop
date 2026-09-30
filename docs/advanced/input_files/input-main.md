@@ -4844,7 +4844,7 @@
 ### imp_sol
 
 - **Type**: Integer
-- **Description**: Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. The former Boolean values true and false are read as 1 and 0. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports KS-DFT (esolver_type ksdft) with basis_type pw or lcao, for scf and fixed-cell relax without stress, deepks output or dm_to_rho.
+- **Description**: Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. The former Boolean values true and false are read as 1 and 0. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports KS-DFT (esolver_type ksdft) with basis_type pw or lcao, for scf and fixed-cell relax without stress, deepks output or dm_to_rho. A charged system with sccs_epsilon above 1 requires assume_isolated pcc_0d or pcc_2d.
 - **Default**: 0
 
 ### eb_k

@@ -47,6 +47,23 @@ TEST(SurchemInput, TransfersPresetAndSolverControls)
     EXPECT_FALSE(summary.sccs_config.core_electrons);
 }
 
+// A periodic dielectric cannot screen a net charge; PCC or vacuum can.
+TEST(SurchemInput, RejectsChargedPeriodicDielectric)
+{
+    Input_para input;
+    UnitCell cell;
+    input.imp_sol = 2;
+    input.assume_isolated = "none";
+    input.sccs_preset = "water-cation";
+    EXPECT_NO_THROW(ModuleSurchem::make_parameters(input, cell, 0.0, false, 1));
+    EXPECT_THROW(ModuleSurchem::make_parameters(input, cell, 1.0, false, 1), std::invalid_argument);
+    input.assume_isolated = "pcc_0d";
+    EXPECT_NO_THROW(ModuleSurchem::make_parameters(input, cell, 1.0, false, 1));
+    input.assume_isolated = "none";
+    input.sccs_preset = "vacuum";
+    EXPECT_NO_THROW(ModuleSurchem::make_parameters(input, cell, 1.0, false, 1));
+}
+
 // Environ solvent_mode full adds core electrons to the cavity for every preset.
 TEST(SurchemInput, TransfersFullSolventModeCoreElectrons)
 {

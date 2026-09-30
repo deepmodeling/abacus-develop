@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
 
 namespace ModuleSurchem
 {
@@ -93,6 +94,16 @@ SurchemParameters make_parameters(const Input_para& inp,
 
     const double net_charge
         = parameters.expected_ionic_charge - parameters.expected_electron_count;
+    // A periodic dielectric cannot screen a net charge: the implicit jellium
+    // background would sit in the solvent and the energy would carry a large
+    // cell-size error. Vacuum (epsilon 1) keeps the usual periodic jellium.
+    if (parameters.sccs_config.boundary == ModulePcc::Boundary::Periodic
+        && parameters.sccs_config.cavity.epsilon_bulk > 1.0
+        && std::abs(net_charge) > parameters.normalization_tolerance)
+    {
+        throw std::invalid_argument(
+            "charged SCCS needs an open boundary: set assume_isolated pcc_0d or pcc_2d");
+    }
     if (parameters.sccs_config.boundary == ModulePcc::Boundary::Pcc2d
         && std::abs(net_charge) > parameters.normalization_tolerance)
     {
