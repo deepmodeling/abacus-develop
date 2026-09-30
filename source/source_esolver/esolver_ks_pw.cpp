@@ -1,4 +1,12 @@
 #include "esolver_ks_pw.h"
+#include "source_io/module_wf/exx_source_io.h"
+#include "source_io/module_wf/read_wfc_pw.h"
+#include "source_base/module_out/filename.h"
+
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <stdexcept>
 
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/module_charge/chg_symm.h"
@@ -27,6 +35,28 @@
 
 namespace ModuleESolver
 {
+namespace
+{
+std::string exx_restart_configuration(const Input_para& inp, const General_Exx_Info& info)
+{
+    std::ostringstream out;
+    out << std::setprecision(17) << inp.dft_functional << ':' << inp.ecutwfc << ':'
+        << info.ecut_exx << ':' << info.hybrid_alpha << ':' << info.gamma_extrapolation;
+    for (const auto& kernel : info.coulomb_param)
+    {
+        out << ':' << static_cast<int>(kernel.first);
+        for (const auto& term : kernel.second)
+        {
+            for (const auto& parameter : term)
+            {
+                out << ':' << parameter.first << '=' << parameter.second;
+            }
+        }
+    }
+    return out.str();
+}
+}
+
 
 template <typename T, typename Device>
 ESolver_KS_PW<T, Device>::ESolver_KS_PW()
@@ -80,6 +110,17 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ESolver_KS::before_all_runners(ucell, inp);
+
+    if (inp.calculation == "nscf" && this->general_exx_info_.cal_exx)
+    {
+        const auto fock = this->general_exx_info_.coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
+        const bool has_fock = fock != this->general_exx_info_.coulomb_param.end() && !fock->second.empty();
+        if (inp.device != "cpu" || inp.kpar != 1 || inp.bndpar != 1 || inp.nspin == 4 || inp.exxace
+            || inp.exx_gamma_extrapolation || inp.symmetry == "1" || inp.init_wfc == "file" || has_fock)
+        {
+            ModuleBase::WARNING_QUIT("ESolver_KS_PW", "Hybrid NSCF currently requires CPU, kpar=1, nspin=1/2, symmetry=-1/0, exxace=false, exx_gamma_extrapolation=false, screened exchange and fresh target wavefunctions");
+        }
+    }
 
     //! setup and allocation for pelec, potentials, etc.
     elecstate::setup_estate_pw(ucell,
@@ -189,7 +230,74 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     //! Setup EXX helper for Hamiltonian and psi
     exx_helper->before_scf(this->p_hamilt, this->stp.template get_psi_t<T, Device>(), *this->inp_, this->general_exx_info_);
 
+    if (this->inp_->calculation == "nscf" && this->general_exx_info_.cal_exx)
+    {
+        this->prepare_exx_nscf(ucell, PARAM.globalv.global_readin_dir);
+    }
+
     ModuleBase::timer::end("ESolver_KS_PW", "before_scf");
+}
+
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::prepare_exx_nscf(const UnitCell& ucell, const std::string& readin_dir)
+{
+    ModuleBase::timer::start("ESolver_KS_PW", "prepare_exx_nscf");
+    const Input_para& inp = *this->inp_;
+    const std::string configuration = exx_restart_configuration(inp, this->general_exx_info_);
+    const std::string filename = readin_dir + "EXX_SOURCE";
+    std::ifstream in(filename);
+    try
+    {
+        ModuleIO::read_exx_source(in, exx_source_points_, exx_source_weights_, inp.nspin,
+                                 this->pw_wfc->nx, this->pw_wfc->ny, this->pw_wfc->nz, configuration);
+    }
+    catch (const std::exception& error)
+    {
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW", error.what());
+    }
+    const int nqs = exx_source_points_.get_nks();
+    int nq = exx_source_points_.get_nkstot_nospin();
+    exx_source_points_.para_k.kinfo(nq, 1, 0, this->pw_wfc->poolrank, this->pw_wfc->poolnproc, inp.nspin);
+    exx_source_basis_.reset(new ModulePW::PW_Basis_K(inp.device, inp.precision));
+#ifdef __MPI
+    exx_source_basis_->initmpi(this->pw_wfc->poolnproc, this->pw_wfc->poolrank, this->pw_wfc->pool_world);
+#endif
+    exx_source_basis_->initgrids(ucell.lat0, ucell.latvec,
+                               this->pw_wfc->nx, this->pw_wfc->ny, this->pw_wfc->nz);
+    exx_source_basis_->initparameters(false, inp.ecutwfc, nqs, exx_source_points_.kvec_d.data());
+    exx_source_basis_->fft_bundle.initfftmode(inp.fft_mode);
+    exx_source_basis_->setuptransform();
+    exx_source_basis_->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
+    for (int iq = 0; iq < nqs; ++iq)
+    {
+        exx_source_points_.ngk[iq] = exx_source_basis_->npwk[iq];
+        exx_source_points_.kvec_c[iq] = exx_source_points_.kvec_d[iq] * ucell.G;
+    }
+    const int nbands = exx_source_weights_.nc;
+    const int nbasis = exx_source_basis_->npwk_max;
+    exx_source_psi_.reset(new psi::Psi<T, Device>(nqs, nbands, nbasis, exx_source_points_.ngk, true));
+    for (int iq = 0; iq < nqs; ++iq)
+    {
+        const std::string wfc_filename = ModuleIO::filename_output(readin_dir, "wf", "pw", iq,
+            exx_source_points_.ik2iktot, inp.nspin, nqs, 2, false, false, -1);
+        ModuleBase::ComplexMatrix wfc(nbands, nbasis);
+        ModuleIO::read_wfc_pw(wfc_filename, exx_source_basis_.get(), this->pw_wfc->poolrank,
+                             this->pw_wfc->poolnproc, nbands, 1, iq, iq, nqs, wfc);
+        exx_source_psi_->fix_k(iq);
+        std::vector<T> coefficients(nbands * nbasis);
+        for (int ib = 0; ib < nbands; ++ib)
+        {
+            for (int ig = 0; ig < nbasis; ++ig)
+            {
+                coefficients[ib * nbasis + ig] = static_cast<T>(wfc(ib, ig));
+            }
+        }
+        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+            exx_source_psi_->get_pointer(), coefficients.data(), coefficients.size());
+    }
+    auto* helper = static_cast<Exx_Helper<T, Device>*>(this->exx_helper);
+    helper->op_exx->set_source(*exx_source_basis_, exx_source_points_, *exx_source_psi_, exx_source_weights_);
+    ModuleBase::timer::end("ESolver_KS_PW", "prepare_exx_nscf");
 }
 
 template <typename T, typename Device>
@@ -298,7 +406,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // Related to EXX
     bool cal_exx = general_exx_info_.cal_exx;
     double hybrid_alpha = general_exx_info_.hybrid_alpha;
-    if (cal_exx && !exx_helper->get_op_first_iter())
+    if (cal_exx && this->inp_->calculation != "nscf" && !exx_helper->get_op_first_iter())
     {
         this->pelec->set_exx(exx_helper->cal_exx_energy(this->stp.template get_psi_t<T, Device>()),
                              cal_exx,
@@ -366,6 +474,20 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                                      this->stp,
                                      this->Pgrid,
                                      *this->inp_);
+
+    if (conv_esolver && this->inp_->calculation == "scf" && this->general_exx_info_.cal_exx
+        && this->inp_->out_wfc_pw == 2 && this->inp_->out_freq_ion == 0 && this->inp_->kpar == 1
+        && this->inp_->nspin != 4 && this->inp_->symmetry != "1")
+    {
+        if (this->pw_wfc->poolrank == 0)
+        {
+            const std::string filename = PARAM.globalv.global_out_dir + "EXX_SOURCE";
+            const std::string configuration = exx_restart_configuration(*this->inp_, this->general_exx_info_);
+            std::ofstream out(filename);
+            ModuleIO::write_exx_source(out, this->kv, this->pelec->wg, this->inp_->nspin,
+                                      this->pw_wfc->nx, this->pw_wfc->ny, this->pw_wfc->nz, configuration);
+        }
+    }
 
     ModuleBase::timer::end("ESolver_KS_PW", "after_scf");
 }

@@ -49,6 +49,14 @@ class ESolver_KS_PW : public ESolver_KS
 
     virtual void allocate_hamilt(const UnitCell& ucell);
 
+    void prepare_exx_nscf(const UnitCell& ucell, const std::string& readin_dir);
+
+    // Owned SCF ensemble; its lifetime covers every target diagonalization.
+    std::unique_ptr<ModulePW::PW_Basis_K> exx_source_basis_;
+    K_Vectors exx_source_points_;
+    ModuleBase::matrix exx_source_weights_;
+    std::unique_ptr<psi::Psi<T, Device>> exx_source_psi_;
+
     // Electronic wave function psi
     Setup_Psi_pw stp;
 

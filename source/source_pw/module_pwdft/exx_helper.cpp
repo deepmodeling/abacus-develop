@@ -12,7 +12,7 @@ template <typename T, typename Device>
 void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info)
 {
     if (inp.calculation != "scf" && inp.calculation != "relax"
-        && inp.calculation != "cell-relax" && inp.calculation != "md")
+        && inp.calculation != "cell-relax" && inp.calculation != "md" && inp.calculation != "nscf")
     {
         return;
     }
@@ -22,7 +22,7 @@ void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, c
         return;
     }
 
-    if (exx_info.separate_loop)
+    if (exx_info.separate_loop && inp.calculation != "nscf")
     {
         XC_Functional::set_xc_first_loop(ucell);
         this->set_firstiter();
@@ -36,7 +36,7 @@ void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_pa
 {
     /// Return if not a valid calculation type
     if (inp.calculation != "scf" && inp.calculation != "relax"
-        && inp.calculation != "cell-relax" && inp.calculation != "md")
+        && inp.calculation != "cell-relax" && inp.calculation != "md" && inp.calculation != "nscf")
     {
         return;
     }
@@ -60,6 +60,11 @@ bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, void* ps
                                         UnitCell& ucell, const Input_para& inp,
                                         bool& conv_esolver, int& iter)
 {
+    if (inp.calculation == "nscf")
+    {
+        return false;
+    }
+
     /// Return if EXX is not enabled
     if (op_exx == nullptr)
     {

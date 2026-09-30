@@ -274,7 +274,8 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
 
     for (int iq: q_points)
     {
-        get_exx_potential<Real, Device>(source_points_, wfcpw, source_basis_, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq, false, this->coulomb_param);
+        const int iq_nospin = iq % nk;
+        get_exx_potential<Real, Device>(source_points_, wfcpw, source_basis_, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq_nospin, false, this->coulomb_param);
         for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
         {
             // occupation of the source state (m, iq), not of the target k-point

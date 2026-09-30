@@ -22,6 +22,7 @@ list(APPEND objects
     module_bessel/numerical_descriptor.cpp
     module_output/print_info.cpp
     module_output/read_cube.cpp
+    module_wf/exx_source_io.cpp
     module_wf/read_wfc_pw.cpp
     module_wf/read_wf2rho_pw.cpp
     module_restart/restart.cpp
