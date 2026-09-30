@@ -59,6 +59,12 @@ class OperatorEXXPW : public OperatorPW<T, Device>
 
     void set_wg(const ModuleBase::matrix *wg_in) { wg = wg_in; }
 
+    // The source orbitals remain fixed while target states are diagonalized.
+    void set_source(const ModulePW::PW_Basis_K& source_basis,
+                    const K_Vectors& source_points,
+                    const psi::Psi<T, Device>& source_psi,
+                    const ModuleBase::matrix& source_weights);
+
     void construct_ace() const;
 
     bool first_iter = true;
@@ -71,6 +77,8 @@ class OperatorEXXPW : public OperatorPW<T, Device>
   private:
     const int* isk = nullptr;
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
+    const ModulePW::PW_Basis_K* source_basis_ = nullptr;
+    const K_Vectors* source_points_ = nullptr;
     const ModulePW::PW_Basis* rhopw = nullptr;
     ModulePW::PW_Basis* rhopw_dev = nullptr; // for device
     const UnitCell *ucell = nullptr;
@@ -345,6 +353,7 @@ extern template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_GP
 template <typename Real, typename Device>
 void get_exx_potential(const K_Vectors* kv,
                        const ModulePW::PW_Basis_K* wfcpw,
+                       const ModulePW::PW_Basis_K* source_basis,
                        ModulePW::PW_Basis* rhopw_dev,
                        Real* pot,
                        double tpiba,

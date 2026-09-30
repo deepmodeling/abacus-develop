@@ -59,6 +59,7 @@ extern template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_GP
 template <typename Real, typename Device>
 void get_exx_potential(const K_Vectors* kv,
                        const ModulePW::PW_Basis_K* wfcpw,
+                       const ModulePW::PW_Basis_K* source_basis,
                        ModulePW::PW_Basis* rhopw_dev,
                        Real* pot,
                        double tpiba,
@@ -137,7 +138,7 @@ void get_exx_potential(const K_Vectors* kv,
                     }
                 }
 
-                const int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+                const int nk_fac = kv->get_spin_mult();
                 const int nk = nks / nk_fac;
 
                 Real gg = (k_c - q_c + rhopw_dev->gcar[ig]).norm2() * tpiba2;
@@ -171,7 +172,7 @@ void get_exx_potential(const K_Vectors* kv,
             double exx_div = exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc,
                                               erfc_omega,
                                               kv,
-                                              wfcpw,
+                                              source_basis,
                                               rhopw_dev,
                                               tpiba,
                                               gamma_extrapolation,
@@ -210,7 +211,7 @@ void get_exx_potential(const K_Vectors* kv,
                     }
                 }
 
-                const int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+                const int nk_fac = kv->get_spin_mult();
                 const int nk = nks / nk_fac;
                 // const int ig_kq = ik * nks * npw + iq * npw + ig;
 
@@ -329,7 +330,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
                     }
                 }
 
-                const int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+                const int nk_fac = kv->get_spin_mult();
                 const int nk = nks / nk_fac;
                 // const int ig_kq = ik * nks * npw + iq * npw + ig;
 
@@ -396,7 +397,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
                     }
                 }
 
-                const int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+                const int nk_fac = kv->get_spin_mult();
                 const int nk = nks / nk_fac;
                 // const int ig_kq = ik * nks * npw + iq * npw + ig;
 
@@ -447,7 +448,7 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
     double nqs_half2 = 0.5 * kv->nmp[1];
     double nqs_half3 = 0.5 * kv->nmp[2];
 
-    int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+    const int nk_fac = kv->get_spin_mult();
 
     // here we follow the exx_divergence subroutine in q-e (PW/src/exx_base.f90)
     double alpha = 10.0 / wfcpw->gk_ecut;
@@ -557,6 +558,7 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
 }
 template void get_exx_potential<float, base_device::DEVICE_CPU>(const K_Vectors*,
                                                                 const ModulePW::PW_Basis_K*,
+                                                                const ModulePW::PW_Basis_K*,
                                                                 ModulePW::PW_Basis*,
                                                                 float*,
                                                                 double,
@@ -567,6 +569,7 @@ template void get_exx_potential<float, base_device::DEVICE_CPU>(const K_Vectors*
                                                                 bool,
                                                                 const CoulombParam&);
 template void get_exx_potential<double, base_device::DEVICE_CPU>(const K_Vectors*,
+                                                                 const ModulePW::PW_Basis_K*,
                                                                  const ModulePW::PW_Basis_K*,
                                                                  ModulePW::PW_Basis*,
                                                                  double*,
@@ -600,6 +603,7 @@ template void get_exx_stress_potential<double, base_device::DEVICE_CPU>(const K_
 #if ((defined __CUDA) || (defined __ROCM))
 template void get_exx_potential<float, base_device::DEVICE_GPU>(const K_Vectors*,
                                                                 const ModulePW::PW_Basis_K*,
+                                                                const ModulePW::PW_Basis_K*,
                                                                 ModulePW::PW_Basis*,
                                                                 float*,
                                                                 double,
@@ -610,6 +614,7 @@ template void get_exx_potential<float, base_device::DEVICE_GPU>(const K_Vectors*
                                                                 bool,
                                                                 const CoulombParam&);
 template void get_exx_potential<double, base_device::DEVICE_GPU>(const K_Vectors*,
+                                                                 const ModulePW::PW_Basis_K*,
                                                                  const ModulePW::PW_Basis_K*,
                                                                  ModulePW::PW_Basis*,
                                                                  double*,
