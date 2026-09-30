@@ -301,7 +301,7 @@ TEST_F(SccsPcc2dCoulombTest, SqrtCgKeepsChargedUniformDielectricPccGauge)
                     -(1.0 - 1.0 / cavity.epsilon_bulk) * solute_charge[ir],
                     1.0e-14);
     }
-    // The ENVIRON monopole constant keeps a nonzero cell average, so a
+    // The monopole constant of the open planar gauge keeps a nonzero cell average, so a
     // periodic zero-mean shift would fail the pointwise comparison above.
     reduction_.reduce_sum(local_mean);
     const double mean = local_mean / static_cast<double>(basis_.nxyz);
@@ -434,6 +434,71 @@ TEST(SccsPcc2dSqrtCg, LayeredCavityMatchesOpenOneDimensionalField)
     // The open boundary only weakly pins the constant potential mode; rounding
     // in the source leaves a gauge offset whose far-field trace is 3.4e-5 here.
     EXPECT_NEAR(result.far_field_polarization_charge, 0.0, 1.0e-4);
+}
+
+// Periodic Coulomb energy plus the 2D PCC of a charged Gaussian layer in a
+// cell of length cell_length along the open y axis, per cell, in Ha.
+double charged_layer_energy(const double cell_length, const double width, double& layer_charge)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+#ifdef __MPI
+    basis.initmpi(test_process_count, test_rank, POOL_WORLD);
+#endif
+    const double in_plane = 8.0;
+    const ModuleBase::Matrix3 lattice(in_plane, 0.0, 0.0,
+                                      0.0, cell_length, 0.0,
+                                      0.0, 0.0, in_plane);
+    basis.initgrids(1.0, lattice, 80.0);
+    basis.initparameters(false, 80.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+    const double tpiba = ModuleBase::TWO_PI;
+    const double volume_element = in_plane * cell_length * in_plane / static_cast<double>(basis.nxyz);
+    const std::vector<ModuleBase::Vector3<double>> positions
+        = ModuleSurchem::pw_grid_positions(basis, lattice, 1.0);
+    ModulePcc::Pcc2dGeometry geometry = ModulePcc::pcc_2d_geometry(lattice, 1.0, 1, 1.0e-10);
+    geometry.origin = 0.5 * cell_length;
+    const double area = in_plane * in_plane;
+    std::vector<double> charge(basis.nrxx);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const double u = ModulePcc::pcc_2d_relative_coordinate(positions[ir], geometry);
+        charge[ir] = std::exp(-u * u / (width * width)) / (std::sqrt(ModuleBase::PI) * width * area);
+    }
+    const ModuleSurchem::PoolChargeReduction reduction(test_process_count);
+    const ModuleSccs::Pcc2dCoulombOperator coulomb(basis, tpiba, positions, volume_element, geometry,
+                                                   reduction);
+    std::vector<double> potential;
+    coulomb.apply_potential(charge, potential);
+    double energy = 0.0;
+    layer_charge = 0.0;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        energy += 0.5 * charge[ir] * potential[ir] * volume_element;
+        layer_charge += charge[ir] * volume_element;
+    }
+    reduction.reduce_sum(energy);
+    reduction.reduce_sum(layer_charge);
+    return energy;
+}
+
+// With the open planar kernel -2*pi*|u|/A (zero on the source plane) the
+// corrected energy of a charged layer is its open-boundary energy
+// -q^2 w sqrt(2 pi)/A for every cell length; the ENVIRON constant
+// -pi*q/(3*L) would add 0.5*q^2*(pi*L/(3*A) - pi/(3*L)).
+TEST(SccsPcc2dCoulombGauge, ChargedLayerEnergyIsIndependentOfCellLength)
+{
+    const double width = 1.0;
+    const double area = 64.0;
+    for (const double cell_length : {12.0, 20.0, 32.0})
+    {
+        double layer_charge = 0.0;
+        const double energy = charged_layer_energy(cell_length, width, layer_charge);
+        const double open_energy
+            = -layer_charge * layer_charge * width * std::sqrt(ModuleBase::TWO_PI) / area;
+        EXPECT_NEAR(layer_charge, 1.0, 1.0e-10) << cell_length;
+        EXPECT_NEAR(energy, open_energy, 1.0e-9) << cell_length;
+    }
 }
 
 } // namespace

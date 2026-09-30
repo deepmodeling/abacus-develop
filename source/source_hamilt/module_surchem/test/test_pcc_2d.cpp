@@ -292,12 +292,9 @@ void expect_planar_correction(const ModulePcc::Pcc2dParameters& value,
 
 TEST(SccsPcc2d, MomentPotentialMatchesIndependentPlanarGreenFunctions)
 {
+    // The open kernel is zero on the plane of the source for any periodic area.
     const ModulePcc::Pcc2dParameters value = parameters();
-    // ENVIRON's monopole constant -pi*q/(3 L_y) equals this shift of the open kernel.
-    const double gauge_shift
-        = ModuleBase::PI * value.cell_length / (3.0 * value.periodic_area)
-          - ModuleBase::PI / (3.0 * value.cell_length);
-    expect_planar_correction(value, gauge_shift);
+    expect_planar_correction(value, 0.0);
 }
 
 TEST(SccsPcc2d, SquareCellCorrectionUsesUnshiftedOpenPlanarKernel)
@@ -308,16 +305,16 @@ TEST(SccsPcc2d, SquareCellCorrectionUsesUnshiftedOpenPlanarKernel)
     expect_planar_correction(value, 0.0);
 }
 
-TEST(SccsPcc2d, ChargedMonopoleUsesTheEnvironGauge)
+TEST(SccsPcc2d, ChargedMonopoleUsesTheOpenPlanarGauge)
 {
     ModulePcc::Pcc2dMoments moments;
     moments.charge = 1.7;
     const ModulePcc::Pcc2dParameters value = parameters();
     const double expected_potential
-        = -ModuleBase::PI * moments.charge / (3.0 * value.cell_length);
+        = -ModuleBase::PI * moments.charge * value.cell_length / (3.0 * value.periodic_area);
     const double expected_energy
-        = -ModuleBase::PI * moments.charge * moments.charge
-          / (6.0 * value.cell_length);
+        = -ModuleBase::PI * moments.charge * moments.charge * value.cell_length
+          / (6.0 * value.periodic_area);
 
     EXPECT_NEAR(ModulePcc::pcc_2d_potential(moments, 0.0, value),
                 expected_potential,
@@ -436,7 +433,9 @@ TEST(SccsPcc2d, DensityDerivativeMatchesPotential)
     const double electron_y = -0.8;
     const double volume_element = 0.3;
     const double electron_density = 0.7;
-    const double step = 1.0e-6;
+    // The energy is quadratic in the density, so the central difference is
+    // exact for any step; a large step keeps its roundoff small.
+    const double step = 1.0e-3;
     const ModulePcc::Pcc2dParameters value = parameters();
 
     const auto energy = [&](const double density) {

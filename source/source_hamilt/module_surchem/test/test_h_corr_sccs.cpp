@@ -585,7 +585,7 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     EXPECT_NEAR(result.screened_moments_2d.charge, 0.04, 1.0e-12);
     EXPECT_TRUE(std::isfinite(result.vacuum_pcc_energy));
     EXPECT_TRUE(std::isfinite(result.electrostatic.reaction_energy));
-    // Point-ion vacuum PCC in the ENVIRON monopole gauge; no Gaussian-ion shape
+    // Point-ion vacuum PCC in the open planar gauge; no Gaussian-ion shape
     // term is added because the reaction energy does not depend on the ion width.
     const ModulePcc::Pcc2dGeometry pcc_geometry
         = ModulePcc::pcc_2d_geometry(cell.latvec, cell.lat0, 1, 1.0e-10);

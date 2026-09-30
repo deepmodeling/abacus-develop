@@ -38,11 +38,12 @@ double dot(const ModuleBase::Vector3<double>& left, const ModuleBase::Vector3<do
 
 double potential_constant(const Pcc2dParameters& parameters)
 {
-    // Monopole gauge of ENVIRON core_1da (parabolic, dim=2): -pi*q/(3*L).
-    // For A = L^2 it equals the planar open kernel -2*pi*|u|/A minus the
-    // zero-mean periodic kernel at u = 0. Andreussi-Marzari, Phys. Rev. B 90,
-    // 245101 (2014), Eq. (88) prints the opposite sign.
-    return -ModuleBase::PI / (3.0 * parameters.cell_length);
+    // Open planar kernel -2*pi*|u|/A, zero on the plane of the source, minus the
+    // zero-mean periodic kernel, at u = 0. With this gauge the energy of a
+    // charged slab converges with the vacuum size. ENVIRON core_1da
+    // (calc_1da_vperiodic, dim=2) writes -pi*q/(3*L), which agrees only for
+    // A = L^2 and adds a term linear in L to charged-slab energies.
+    return -ModuleBase::PI * parameters.cell_length / (3.0 * parameters.periodic_area);
 }
 
 double inverse_volume_factor(const Pcc2dParameters& parameters)

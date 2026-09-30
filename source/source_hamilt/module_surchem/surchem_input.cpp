@@ -146,15 +146,6 @@ SurchemParameters make_parameters(const Input_para& inp,
     }
     if (!parameters.use_sccs)
     {
-        if (parameters.pcc_boundary == ModulePcc::Boundary::Pcc2d
-            && std::abs(parameters.expected_ionic_charge
-                        - parameters.expected_electron_count)
-                   > parameters.normalization_tolerance)
-        {
-            ModuleBase::WARNING(
-                "surchem",
-                "charged pcc_2d slab: absolute energies at different y cell lengths are not directly comparable");
-        }
         return parameters;
     }
     const ModuleSccs::Preset preset = ModuleSccs::parse_preset(inp.sccs_preset);
@@ -201,15 +192,6 @@ SurchemParameters make_parameters(const Input_para& inp,
     {
         throw std::invalid_argument(
             "charged SCCS needs an open boundary: set assume_isolated pcc_0d or pcc_2d");
-    }
-    if (parameters.sccs_config.boundary == ModulePcc::Boundary::Pcc2d
-        && std::abs(net_charge) > parameters.normalization_tolerance)
-    {
-        ModuleBase::WARNING(
-            "surchem",
-            "charged SCCS pcc_2d slab: the open-boundary field energy grows "
-            "linearly with the cell length, so absolute total energies at "
-            "different y cell lengths are not directly comparable");
     }
     return parameters;
 }
