@@ -1,4 +1,4 @@
-As 218_PW_SCCS_PCC0D_H3O, with the switching-function low-pass filter
+As 224_PW_SCCS_PCC0D_H3O, with the switching-function low-pass filter
 (sccs_lowpass_p1 10, sccs_lowpass_p2 5), which makes the cavity potential the exact
 derivative of the discrete SCCS energy.
 Checks the total energy, forces, E_sol_el, E_sol_cav and E_pcc against an ABACUS baseline.
