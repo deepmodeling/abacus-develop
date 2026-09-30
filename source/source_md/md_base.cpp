@@ -168,9 +168,11 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     }
 
     std::cout << std::endl;
+    std::cout << std::setprecision(10);
     std::cout << " " << std::left << std::setw(20) << 2 * (potential + kinetic) << std::left << std::setw(20)
               << 2 * potential << std::left << std::setw(20) << 2 * kinetic << std::left << std::setw(20)
               << t_current * ModuleBase::Hartree_to_K;
+    std::cout << std::setprecision(8);
 
     if (cal_stress)
     {
@@ -202,9 +204,11 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     }
 
     ofs << std::endl;
+    ofs << std::setprecision(10);
     ofs << " " << std::left << std::setw(20) << 2 * (potential + kinetic) << std::left << std::setw(20) << 2 * potential
         << std::left << std::setw(20) << 2 * kinetic << std::left << std::setw(20)
         << t_current * ModuleBase::Hartree_to_K;
+    ofs << std::setprecision(8);
 
     if (cal_stress)
     {

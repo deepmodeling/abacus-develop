@@ -1,0 +1,11 @@
+Length-gauge PW RT-TDDFT: self-consistent propagation and nonlocal current.
+
+Fixed ions with zero velocities; pw_seed=1 and explicit initialization controls.
+Nine electronic samples cover 0.00--0.08 fs. Compare final energy and current_tot.txt
+with the existing Autotest.sh and CompareFile.py tolerances. Forces and stress are
+not reference observables. GPU references are copied unchanged from the CPU case.
+
+References were generated with 4 MPI ranks and 2 OpenMP threads on CPU;
+the GPU mirror is checked with 2 MPI ranks and 2 OpenMP threads. No GPU-specific
+reference or current-comparison tolerance is used.
+Reference stability was checked with scf_thr=1e-13 and lin_thr=5e-15.

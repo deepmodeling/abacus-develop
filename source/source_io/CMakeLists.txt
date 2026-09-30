@@ -33,6 +33,7 @@ list(APPEND objects
     module_ml/write_mlkedf_desc.cpp
     module_current/td_current_io.cpp
     module_current/td_current_io_comm.cpp
+    module_current/td_current_pw.cpp
     module_efield/td_efield_io.cpp
     module_efield/td_vector_pot_io.cpp
     module_chgpot/write_libxc_r.cpp

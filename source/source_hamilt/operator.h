@@ -12,6 +12,7 @@ enum class calculation_type
 {
     no,
     pw_ekinetic,
+    pw_ekinetic_td,
     pw_nonlocal,
     pw_veff,
     pw_meta,

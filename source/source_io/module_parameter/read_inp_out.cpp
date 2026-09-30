@@ -31,7 +31,7 @@ void ReadInput::item_output()
     {
         Input_Item item("out_freq_td");
         item.annotation = "print information every few completed electronic iterations in RT-TDDFT";
-        item.category = "Output information";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
         item.description = "Controls the output interval in completed electronic evolution steps during RT-TDDFT calculations. When set to a positive integer n, detailed information (see out_freq_ion) is printed every n electron time-evolution steps (i.e., every STEP OF ELECTRON EVOLVE). For example, if you wish to output information once per ionic step, you should set out_freq_td equal to estep_per_md, since one ionic step corresponds to estep_per_md electronic evolution steps."
                           "\n\n[NOTE] This parameter is only active in RT-TDDFT mode (esolver_type = tddft). It has no effect in ground-state calculations.";
@@ -1677,7 +1677,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
     {
         Input_Item item("out_dipole");
         item.annotation = "output dipole or not";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
         item.description = R"(Controls electric-dipole output. In RT-TDDFT, each enabled spin channel is written to OUT.{suffix}/dipole_s[spin].txt using a one-based spin number. Every row contains the one-based electronic-step index followed by the Cartesian electronic-dipole components $P_x$, $P_y$, and $P_z$ in atomic units. The running log additionally reports the electronic, ionic, and total dipoles and the norm of the total dipole.
 * True: Output the electric dipole information.
@@ -1690,36 +1690,36 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
     {
         Input_Item item("out_current");
         item.annotation = "output current or not";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
-        item.description = R"(Controls the current-density output method for LCAO RT-TDDFT. Output rows contain the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units.
+        item.description = R"(Controls the current-density output method for RT-TDDFT. Each row contains the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units; the initial ground state is step 1 and subsequent steps increase by one.
 * 0: Do not output current.
-* 1: Explicitly construct the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center and spherical-grid integrals: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms, such as EXX, are not included explicitly. The total current is written to OUT.{suffix}/current_tot.txt.
-* 2: Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis, $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive. The total current is written to OUT.{suffix}/current_tot_comm.txt.)";
+* 1: Available for PW and LCAO. PW evaluates the occupied-state expectation values of the velocity operator, using plane-wave momentum and nonlocal-projector derivatives; in the velocity gauge these are evaluated at the vector-potential-shifted momentum. In the length gauge, a kinetic-energy-density functional also contributes its velocity term. LCAO explicitly constructs the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center and spherical-grid integrals: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms, such as EXX, are not included explicitly. The total current is written to OUT.{suffix}/current_tot.txt.
+* 2: Available only for LCAO. Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis, $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive. The total current is written to OUT.{suffix}/current_tot_comm.txt.)";
         item.default_value = "0";
         item.unit = "";
-        item.set_availability("basis_type==lcao and esolver_type==tddft");
+        item.set_availability("basis_type in [pw, lcao] and esolver_type==tddft");
         read_sync_int(input.out_current);
         this->add_item(item);
     }
     {
         Input_Item item("out_current_k");
         item.annotation = "output current for each k";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
-        item.description = R"(Controls whether LCAO RT-TDDFT current density is also resolved by spin and k-point. The total-current file is always written when out_current is 1 or 2.
-* True: In addition to the total, out_current=1 writes OUT.{suffix}/current_s[spin]k[kpoint].txt; out_current=2 writes OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt. Both use one-based spin and k-point numbers, with k-points numbered independently within each spin channel. Each row contains the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units.
+        item.description = R"(Controls whether RT-TDDFT current density is also resolved by spin and k-point. PW supports out_current=1; LCAO supports out_current=1 or 2. The total-current file is always written when current output is enabled.
+* True: In addition to the total, out_current=1 writes OUT.{suffix}/current_s[spin]k[kpoint].txt; out_current=2 writes OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt. Both use one-based spin and k-point numbers, with k-points numbered independently within each spin channel. Rows follow the step numbering, atomic units, precision, and append convention described in out_current. These weighted contributions sum to the total current.
 * False: Output only current_tot.txt for out_current=1 or current_tot_comm.txt for out_current=2.)";
         item.default_value = "False";
         item.unit = "";
-        item.set_availability("basis_type==lcao and esolver_type==tddft and out_current>0");
+        item.set_availability("basis_type in [pw, lcao] and esolver_type==tddft and out_current>0");
         read_sync_bool(input.out_current_k);
         this->add_item(item);
     }
     {
         Input_Item item("out_efield");
         item.annotation = "output dipole or not";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
         item.description = R"(Controls time-dependent electric-field output. For each configured field, OUT.{suffix}/efield_[index].txt contains two columns: physical time in fs and the field value in V/Angstrom. The one-based field index follows the occurrence order shared by td_ttype and td_vext_dire, so fields assigned to the same direction remain in separate files. At initialization, a fresh calculation with md_restart=False truncates the files corresponding to the currently configured fields, whereas a calculation with md_restart=True preserves them and appends new samples.
 * True: Output electric-field values on active electronic steps.
@@ -1733,9 +1733,9 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
     {
         Input_Item item("out_vecpot");
         item.annotation = "output TDDFT vector potential or not";
-        item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
+        item.category = "Real-Time TDDFT (LCAO)";
         item.type = "Boolean";
-        item.description = R"(Controls Cartesian vector-potential output for LCAO RT-TDDFT. OUT.{suffix}/vector_pot.txt contains four columns: the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in atomic units. At initialization, a fresh calculation with md_restart=False truncates the file and writes a new header, whereas a calculation with md_restart=True preserves a nonempty existing file and appends new samples. If the restart output file is missing or empty, a new file with a header is created.
+        item.description = R"(Controls Cartesian vector-potential output for LCAO RT-TDDFT. OUT.{suffix}/vector_pot.txt contains four columns: the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The vector potential is the propagation value: the average of interval endpoints for an integrated electric field, or the supplied sample for init_vecpot_file=True. At initialization, a fresh calculation with md_restart=False truncates the file and writes a new header, whereas a calculation with md_restart=True preserves a nonempty existing file and appends new samples. If the restart output file is missing or empty, a new file with a header is created.
 * True: Write vector-potential samples on electronic propagation steps.
 * False: Do not output the vector potential.)";
         item.default_value = "False";

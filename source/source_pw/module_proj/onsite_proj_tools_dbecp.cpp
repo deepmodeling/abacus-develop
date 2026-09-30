@@ -1,12 +1,11 @@
-#include "source_pw/module_proj/onsite_proj_tools.h"
-
 #include "source_base/math_polyint.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_pw/module_pwdft/kernels/force_op.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_pw/module_proj/onsite_proj_tools.h"
+#include "source_pw/module_pwdft/kernels/force_op.h"
 #include "source_pw/module_pwdft/nonlocal_maths.hpp"
 
 namespace hamilt
@@ -80,14 +79,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_s(int ik, int npm, int ipol, i
         int nh = pref.size();
         // prepare indexes for calculate vkb_deri
         this->dvkb_indexes.resize(nh * 4);
-        maths.cal_dvkb_index(this->nproj[it],
-                             this->nhtol->c,
-                             this->nhtol->nc,
-                             npw,
-                             it,
-                             ipol,
-                             jpol,
-                             this->dvkb_indexes.data());
+        maths.cal_dvkb_index(this->nproj[it], this->nhtol->c, this->nhtol->nc, npw, it, ipol, jpol, this->dvkb_indexes.data());
         if (this->device == base_device::GpuDevice)
         {
             syncmem_int_h2d_op()(d_dvkb_indexes, dvkb_indexes.data(), nh * 4);
@@ -126,19 +118,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_s(int ik, int npm, int ipol, i
     const char transa = 'C';
     const char transb = 'N';
 
-    gemm_op()(transa,
-              transb,
-              nkb,
-              npm_npol,
-              npw,
-              &ModuleBase::ONE,
-              ppcell_vkb,
-              npw,
-              ppsi,
-              this->max_npw,
-              &ModuleBase::ZERO,
-              dbecp,
-              nkb);
+    gemm_op()(transa, transb, nkb, npm_npol, npw, &ModuleBase::ONE, ppcell_vkb, npw, ppsi, this->max_npw, &ModuleBase::ZERO, dbecp, nkb);
     ModuleBase::timer::end("Onsite_Proj_tools", "cal_dbecp_s");
 }
 
@@ -163,14 +143,13 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_f(int ik, int npm, int ipol)
     if (this->pre_ik_f == -1) // if it is the very first run, we allocate
     {
         resmem_var_op()(gcar, 3 * this->wfc_basis_->npwk_max);
-        resmem_int_op()(gcar_zero_indexes, 3 * this->wfc_basis_->npwk_max);
+        // Each row stores a count followed by up to npwk_max plane-wave indices.
+        resmem_int_op()(gcar_zero_indexes, 3 * (this->wfc_basis_->npwk_max + 1));
     }
     // first refresh the value of gcar_zero_indexes, gcar_zero_counts
     if (this->pre_ik_f != ik)
     {
-        this->transfer_gcar(npw,
-                            this->wfc_basis_->npwk_max,
-                            &this->wfc_basis_->gcar[ik * this->wfc_basis_->npwk_max]);
+        this->transfer_gcar(npw, this->wfc_basis_->npwk_max, &this->wfc_basis_->gcar[ik * this->wfc_basis_->npwk_max]);
     }
 
     // backup vkb values to vkb_save
@@ -225,10 +204,15 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_f(int ik, int npm, int ipol)
 template <typename FPTYPE, typename Device>
 void Onsite_Proj_tools<FPTYPE, Device>::save_vkb(int npw, int ipol)
 {
+    if (this->gcar_zero_counts[ipol] == 0)
+    {
+        return;
+    }
+    const int index_stride = this->wfc_basis_->npwk_max + 1;
     if (this->device == base_device::CpuDevice)
     {
-        const int gcar_zero_count = this->gcar_zero_indexes[ipol * this->wfc_basis_->npwk_max];
-        const int* gcar_zero_ptrs = &this->gcar_zero_indexes[ipol * this->wfc_basis_->npwk_max + 1];
+        const int gcar_zero_count = this->gcar_zero_indexes[ipol * index_stride];
+        const int* gcar_zero_ptrs = &this->gcar_zero_indexes[ipol * index_stride + 1];
         const std::complex<FPTYPE>* vkb_ptr = this->ppcell_vkb;
         std::complex<FPTYPE>* vkb_save_ptr = this->vkb_save;
         // find the zero indexes to save the vkb values to vkb_save
@@ -252,7 +236,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::save_vkb(int npw, int ipol)
                               this->gcar_zero_counts[ipol],
                               npw,
                               ipol,
-                              this->wfc_basis_->npwk_max);
+                              index_stride);
 #endif
     }
 }
@@ -261,11 +245,16 @@ void Onsite_Proj_tools<FPTYPE, Device>::save_vkb(int npw, int ipol)
 template <typename FPTYPE, typename Device>
 void Onsite_Proj_tools<FPTYPE, Device>::revert_vkb(int npw, int ipol)
 {
+    if (this->gcar_zero_counts[ipol] == 0)
+    {
+        return;
+    }
+    const int index_stride = this->wfc_basis_->npwk_max + 1;
     const std::complex<FPTYPE> coeff = ipol == 0 ? ModuleBase::NEG_IMAG_UNIT : ModuleBase::ONE;
     if (this->device == base_device::CpuDevice)
     {
-        const int gcar_zero_count = this->gcar_zero_indexes[ipol * this->wfc_basis_->npwk_max];
-        const int* gcar_zero_ptrs = &this->gcar_zero_indexes[ipol * this->wfc_basis_->npwk_max + 1];
+        const int gcar_zero_count = this->gcar_zero_indexes[ipol * index_stride];
+        const int* gcar_zero_ptrs = &this->gcar_zero_indexes[ipol * index_stride + 1];
         std::complex<FPTYPE>* vkb_ptr = this->ppcell_vkb;
         const std::complex<FPTYPE>* vkb_save_ptr = this->vkb_save;
         // find the zero indexes to save the vkb values to vkb_save
@@ -289,16 +278,14 @@ void Onsite_Proj_tools<FPTYPE, Device>::revert_vkb(int npw, int ipol)
                                 this->gcar_zero_counts[ipol],
                                 npw,
                                 ipol,
-                                this->wfc_basis_->npwk_max,
+                                index_stride,
                                 coeff);
 #endif
     }
 }
 
 template <typename FPTYPE, typename Device>
-void Onsite_Proj_tools<FPTYPE, Device>::transfer_gcar(int npw,
-                                                      int npw_max,
-                                                      const ModuleBase::Vector3<FPTYPE>* gcar_in)
+void Onsite_Proj_tools<FPTYPE, Device>::transfer_gcar(int npw, int npw_max, const ModuleBase::Vector3<FPTYPE>* gcar_in)
 {
     // unpack Vector3 into a contiguous buffer elementwise:
     // the memory layout of Vector3 is not guaranteed, so copying through
@@ -310,12 +297,13 @@ void Onsite_Proj_tools<FPTYPE, Device>::transfer_gcar(int npw,
         gcar_tmp[ig * 3 + 1] = gcar_in[ig].y;
         gcar_tmp[ig * 3 + 2] = gcar_in[ig].z;
     }
-    std::vector<int> gcar_zero_indexes_tmp(3 * npw_max); // a "checklist"
+    const int index_stride = npw_max + 1;
+    std::vector<int> gcar_zero_indexes_tmp(3 * index_stride);
 
     int* gcar_zero_ptrs[3];
     for (int i = 0; i < 3; i++)
     {
-        gcar_zero_ptrs[i] = &gcar_zero_indexes_tmp[i * npw_max];
+        gcar_zero_ptrs[i] = &gcar_zero_indexes_tmp[i * index_stride];
         gcar_zero_ptrs[i][0] = -1;
         this->gcar_zero_counts[i] = 0;
     }
@@ -358,7 +346,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::transfer_gcar(int npw,
     resmem_complex_op()(this->vkb_save, this->nkb * max_count);
     // transfer the gcar and gcar_zero_indexes to the device
     syncmem_var_h2d_op()(gcar, gcar_tmp.data(), 3 * npw_max);
-    syncmem_int_h2d_op()(gcar_zero_indexes, gcar_zero_indexes_tmp.data(), 3 * npw_max);
+    syncmem_int_h2d_op()(gcar_zero_indexes, gcar_zero_indexes_tmp.data(), 3 * index_stride);
 }
 
 // template instantiation

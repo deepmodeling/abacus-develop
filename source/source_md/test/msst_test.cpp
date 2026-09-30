@@ -252,7 +252,7 @@ TEST_F(MSST_test, print_md)
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " -0.01545074         -0.023915637        0.0084648976        297                 1.0762537           "));
+            " -0.01545073962      -0.02391563725      0.008464897624      297                 1.0762537           "));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,

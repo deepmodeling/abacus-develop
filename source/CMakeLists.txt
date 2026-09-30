@@ -584,6 +584,7 @@ if(USE_CUDA)
 endif()
 
 list(APPEND device_srcs
+  source_pw/module_pwdft/kernels/projector_gradient_op.cpp
   source_pw/module_pwdft/kernels/nonlocal_op.cpp
   source_pw/module_pwdft/kernels/veff_op.cpp
   source_pw/module_pwdft/kernels/ekinetic_op.cpp
@@ -592,6 +593,7 @@ list(APPEND device_srcs
   source_basis/module_pw/kernels/pw_op.cpp
   source_hsolver/kernels/hegvd_op.cpp
   source_hsolver/kernels/bpcg_kernel_op.cpp
+  source_hsolver/kernels/linear_op.cpp
   source_estate/kernels/elecstate_op.cpp
 
   source_base/module_device/device.cpp
@@ -615,6 +617,7 @@ list(APPEND device_srcs
 
 if(USE_CUDA)
   list(APPEND device_srcs
+    source_pw/module_pwdft/kernels/cuda/projector_gradient_op.cu
     source_pw/module_pwdft/kernels/cuda/nonlocal_op.cu
     source_pw/module_pwdft/kernels/cuda/veff_op.cu
     source_pw/module_pwdft/kernels/cuda/ekinetic_op.cu
@@ -624,6 +627,7 @@ if(USE_CUDA)
     source_basis/module_pw/kernels/cuda/pw_op.cu
     source_hsolver/kernels/cuda/hegvd_op.cu
     source_hsolver/kernels/cuda/bpcg_kernel_op.cu
+    source_hsolver/kernels/cuda/linear_op.cu
     source_estate/kernels/cuda/elecstate_op.cu
     source_base/module_device/cuda/memory_op.cu
     source_pw/module_pwdft/kernels/cuda/force_op.cu
@@ -645,6 +649,7 @@ endif()
 
 if(USE_ROCM)
   hip_add_library(device_rocm STATIC
+    source_pw/module_pwdft/kernels/rocm/projector_gradient_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/nonlocal_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/veff_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/ekinetic_op.hip.cu
@@ -654,6 +659,7 @@ if(USE_ROCM)
     source_basis/module_pw/kernels/rocm/pw_op.hip.cu
     source_hsolver/kernels/rocm/hegvd_op.hip.cu
     source_hsolver/kernels/rocm/bpcg_kernel_op.hip.cu
+    source_hsolver/kernels/rocm/linear_op.hip.cu
     source_estate/kernels/rocm/elecstate_op.hip.cu
     source_base/module_device/rocm/memory_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/force_op.hip.cu

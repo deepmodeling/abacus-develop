@@ -53,6 +53,8 @@ class Meta<OperatorPW<T, Device>> : public OperatorPW<T, Device>
       }
     const int * get_isk() const {return this->isk;}
     const Real* get_vk() const {return this->vk;}
+    /** @brief Select the borrowed endpoint or midpoint kinetic-energy-density potential. */
+    void set_vk(const Real* potential) { this->vk = potential; }
     int get_vk_row() const {return this->vk_row;}
     int get_vk_col() const {return this->vk_col;}
     const ModulePW::PW_Basis_K* get_wfcpw() const

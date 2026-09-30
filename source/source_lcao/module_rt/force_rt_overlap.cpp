@@ -131,7 +131,8 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
             ModuleBase::GlobalFunc::ZEROS(dsxk.data(), nloc);
             ModuleBase::GlobalFunc::ZEROS(pdsxk.data(), nloc);
             ModuleBase::GlobalFunc::ZEROS(tmp3.data(), nloc);
-            module_rt::folding_HR_td(*dsxr[dir], dsxk.data(), kv.kvec_d[ik], TD_info::cart_At, TD_info::td_vel_op->get_phase_hybrid(), nrow, 1);
+            module_rt::folding_HR_td(*dsxr[dir], dsxk.data(), kv.kvec_d[ik], TD_info::A_prop_ha, TD_info::td_vel_op->get_phase_hybrid(), nrow, 1);
+            const ModuleBase::Vector3<double> electric_field_ry = elecstate::H_TDDFT_pw::efield_ha * 2.0;
             module_rt::folding_partial_dot(*dsxr[dir],
                                            pdsxk.data(),
                                            kv.kvec_d[ik],
@@ -139,8 +140,8 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                            1,
                                            &ucell,
                                            TD_info::td_vel_op->get_phase_hybrid(),
-                                           TD_info::cart_At,
-                                           elecstate::H_TDDFT_pw::Et);
+                                           TD_info::A_prop_ha,
+                                           electric_field_ry);
             ScalapackConnector::gemm(N_char,
                                      N_char,
                                      nlocal,

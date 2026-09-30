@@ -2473,8 +2473,52 @@ parameters:
     default_value: "False"
     unit: ""
     availability: ""
+  - name: lin_solver
+    category: Real-Time TDDFT (PW)
+    type: String
+    description: |
+      Iterative linear solver used for PW real-time propagation.
+      * bicgstab: Biconjugate gradient stabilized (BiCGSTAB) method.
+      * cgs: Conjugate gradient squared (CGS) method.
+
+      The initial ground-state diagonalization is controlled by ks_solver.
+    default_value: bicgstab
+    unit: ""
+    availability: basis_type==pw and esolver_type==tddft
+  - name: lin_precond
+    category: Real-Time TDDFT (PW)
+    type: String
+    description: |
+      Right preconditioner used by both PW real-time linear solvers.
+      * kinetic: Apply the diagonal inverse $M_{\boldsymbol{G}}^{-1}=(1+\mathrm{i}\Delta t\,T_{\boldsymbol{G}}/2)^{-1}$, where $\Delta t$ is the time step in atomic units and $T_{\boldsymbol{G}}=|\boldsymbol{k}+\boldsymbol{G}+\boldsymbol{A}_{\mathrm{mid}}|^2/2$ is the kinetic energy in Hartree. In the velocity gauge, $\boldsymbol{A}_{\mathrm{mid}}=(\boldsymbol{A}_n+\boldsymbol{A}_{n+1})/2$ is the propagation vector potential in Hartree atomic units; in the length gauge, set $\boldsymbol{A}_{\mathrm{mid}}=0$.
+      * none: Disable preconditioning.
+
+      Preconditioning changes the convergence rate, while lin_thr still controls the residual of the original equation.
+    default_value: kinetic
+    unit: ""
+    availability: basis_type==pw and esolver_type==tddft
+  - name: lin_thr
+    category: Real-Time TDDFT (PW)
+    type: Real
+    description: |
+      Nonnegative finite residual tolerance for each band in a PW real-time linear solve $Ax=b$. A value of 0 selects $\max(10^{-10},100\epsilon)$, where $\epsilon$ is machine epsilon for the wavefunction precision (approximately $1.19209\times10^{-5}$ in single precision and $10^{-10}$ in double precision). A positive value specifies the tolerance $\tau$ directly.
+      * bicgstab: Require $\|b-Ax\|_2\leqslant\tau\max(1,\|b\|_2)$.
+      * cgs: Require $\|b-Ax\|_2\leqslant\tau\|b\|_2$ for nonzero $b$, or $\|b-Ax\|_2\leqslant\tau$ for zero $b$.
+
+      Both methods check the final residual explicitly.
+    default_value: "0"
+    unit: ""
+    availability: basis_type==pw and esolver_type==tddft
+  - name: lin_maxiter
+    category: Real-Time TDDFT (PW)
+    type: Integer
+    description: |
+      Positive maximum number of iterations for each PW real-time linear solve. Failure to converge stops the calculation. The number of self-consistency iterations is controlled separately by scf_nmax.
+    default_value: "500"
+    unit: ""
+    availability: basis_type==pw and esolver_type==tddft
   - name: estep_per_md
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Integer
     description: |
       The number of electronic propagation steps between two ionic steps.
@@ -2482,7 +2526,7 @@ parameters:
     unit: ""
     availability: ""
   - name: td_dt
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Real
     description: |
       The time step used for electronic propagation. If td_dt is not specified, it is set to md_dt / estep_per_md. If td_dt is specified explicitly, md_dt is reset to td_dt * estep_per_md.
@@ -2490,7 +2534,7 @@ parameters:
     unit: fs
     availability: ""
   - name: td_edm
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (LCAO)
     type: Integer
     description: |
       Method used to calculate the energy-density matrix for the overlap contribution to forces in LCAO RT-TDDFT.
@@ -2498,9 +2542,9 @@ parameters:
       * 1: Use the ground-state eigenvalue-weighted expression $\mathrm{EDM}_{\mu\nu,\boldsymbol{k}}=\sum_i w_{i\boldsymbol{k}}\epsilon_{i\boldsymbol{k}}C_{\mu i,\boldsymbol{k}}C_{\nu i,\boldsymbol{k}}^*$. This expression is deprecated for RT-TDDFT and is generally not valid when the propagated wave functions are not Hamiltonian eigenstates.
     default_value: "0"
     unit: ""
-    availability: ""
+    availability: basis_type==lcao and esolver_type==tddft
   - name: td_print_eij
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (LCAO)
     type: Real
     description: |
       Controls output of the propagated-state Hamiltonian matrix elements $E_{ij}=\Braket{\psi_i | \hat{H} | \psi_j}$ to the running log. The printed band indices $i$ and $j$ are one-based global indices. Both the threshold and the printed matrix elements are in Ry.
@@ -2508,9 +2552,9 @@ parameters:
       * $\geqslant 0$: Print an element when either $\left|\operatorname{Re}E_{ij}\right|$ or $\left|\operatorname{Im}E_{ij}\right|$ is greater than or equal to td_print_eij.
     default_value: "-1"
     unit: Ry
-    availability: ""
+    availability: basis_type==lcao and esolver_type==tddft
   - name: td_propagator
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (LCAO)
     type: Integer
     description: |
       Method used to propagate the electronic states in a nonorthogonal LCAO basis. The formulas below use Hartree atomic units, with $S$, $H$, and $\Delta t=\mathtt{td\_dt}$ evaluated as required by each approximation.
@@ -2522,9 +2566,9 @@ parameters:
       [NOTE] GPU execution currently supports only method 0 in both single-GPU and multi-GPU solver configurations. CPU execution supports methods 0 through 3.
     default_value: "0"
     unit: ""
-    availability: ""
+    availability: basis_type==lcao and esolver_type==tddft
   - name: td_vext
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Boolean
     description: |
       Controls whether a time-dependent external electric field is applied.
@@ -2534,7 +2578,7 @@ parameters:
     unit: ""
     availability: ""
   - name: td_vext_dire
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Integer
     description: |
       Specifies one absolute Cartesian direction for each external electric field when td_vext is enabled. Unlike the ground-state efield_dir parameter, these directions are not defined by lattice or reciprocal-lattice vectors. The number of values must equal that of td_ttype, and repeated directions are allowed; fields assigned to the same direction are added. For example, td_vext_dire 1 2 applies one field along Cartesian x and one along Cartesian y.
@@ -2545,18 +2589,18 @@ parameters:
     unit: ""
     availability: ""
   - name: td_stype
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Integer
     description: |
       Type of electric field in the space domain, i.e. the gauge of the electric field.
-      * 0: Length gauge.
-      * 1: Velocity gauge.
-      * 2: Hybrid gauge. See J. Chem. Theory Comput. 2025, 21, 3335-3341 for more information.
+      * 0: Length gauge, available for PW and LCAO.
+      * 1: Velocity gauge, available for PW and LCAO.
+      * 2: Hybrid gauge, available only for LCAO. See J. Chem. Theory Comput. 2025, 21, 3335-3341 for more information.
     default_value: "0"
     unit: ""
     availability: ""
   - name: td_ttype
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Integer
     description: |
       Specifies one time-domain type for each external electric field. Its number of values must equal that of td_vext_dire. Parameters belonging to each type must provide exactly one value for every occurrence of that type, in occurrence order; fields with a repeated direction are added.
@@ -2573,7 +2617,7 @@ parameters:
     unit: ""
     availability: ""
   - name: td_tstart
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Integer
     description: |
       First electronic step at which the time-dependent electric field is active. The interval from td_tstart through td_tend includes both endpoints. On each active step $n$, the velocity and hybrid gauges integrate the field over $[n\Delta t,(n+1)\Delta t]$, where $\Delta t=\mathtt{td\_dt}$.
@@ -2581,7 +2625,7 @@ parameters:
     unit: ""
     availability: ""
   - name: td_tend
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Integer
     description: |
       Last electronic step at which the time-dependent electric field is active. The interval from td_tstart through td_tend includes both endpoints. On each active step $n$, the velocity and hybrid gauges integrate the field over $[n\Delta t,(n+1)\Delta t]$, where $\Delta t=\mathtt{td\_dt}$.
@@ -2589,7 +2633,7 @@ parameters:
     unit: ""
     availability: ""
   - name: td_lcut1
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Real
     description: |
       Lower fractional-coordinate cutoff for the periodic spatial modulation used in the length gauge. Let $c_1=\mathtt{td\_lcut1}$, $c_2=\mathtt{td\_lcut2}$, $D=c_2-c_1$, and $G=c_1+1-c_2$. For a fractional coordinate $x$, the field factor is $\eta(x)=1$ when $c_1\leqslant x\lt c_2$ and $\eta(x)=-D/G$ elsewhere. The reversed outer interval makes the potential periodic and continuous and gives the field zero cell average.
@@ -2597,7 +2641,7 @@ parameters:
     unit: ""
     availability: ""
   - name: td_lcut2
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Real
     description: |
       Upper fractional-coordinate cutoff for the periodic spatial modulation used in the length gauge. Let $c_1=\mathtt{td\_lcut1}$, $c_2=\mathtt{td\_lcut2}$, $D=c_2-c_1$, and $G=c_1+1-c_2$. For a fractional coordinate $x$, the field factor is $\eta(x)=1$ when $c_1\leqslant x\lt c_2$ and $\eta(x)=-D/G$ elsewhere. The reversed outer interval makes the potential periodic and continuous and gives the field zero cell average.
@@ -2605,7 +2649,7 @@ parameters:
     unit: ""
     availability: ""
   - name: td_gauss_freq
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Ordinary frequency $f$ in the Gaussian-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
@@ -2613,7 +2657,7 @@ parameters:
     unit: 1/fs
     availability: td_ttype contains 0
   - name: td_gauss_phase
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Carrier phase $\varphi$ in the Gaussian-pulse formula. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
@@ -2621,7 +2665,7 @@ parameters:
     unit: rad
     availability: td_ttype contains 0
   - name: td_gauss_sigma
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Nonzero standard deviation $\sigma$ of the Gaussian envelope. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
@@ -2629,7 +2673,7 @@ parameters:
     unit: fs
     availability: td_ttype contains 0
   - name: td_gauss_t0
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Electronic-step position of the Gaussian center, which defines $t_0=\mathtt{td\_gauss\_t0}\Delta t$. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
@@ -2637,7 +2681,7 @@ parameters:
     unit: ""
     availability: td_ttype contains 0
   - name: td_gauss_amp
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Electric-field scale $E_0$ in the Gaussian-pulse formula. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
@@ -2645,7 +2689,7 @@ parameters:
     unit: V/Angstrom
     availability: td_ttype contains 0
   - name: td_trape_freq
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Ordinary carrier frequency $f$ in the trapezoid-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
@@ -2653,7 +2697,7 @@ parameters:
     unit: 1/fs
     availability: td_ttype contains 1
   - name: td_trape_phase
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Carrier phase $\varphi$ in the trapezoid-pulse formula. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
@@ -2661,31 +2705,31 @@ parameters:
     unit: rad
     availability: td_ttype contains 1
   - name: td_trape_t1
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
-      Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
+      Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as 2.0 are accepted. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
     default_value: "1875"
     unit: ""
     availability: td_ttype contains 1
   - name: td_trape_t2
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
-      Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
+      Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as 2.0 are accepted. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
     default_value: "5625"
     unit: ""
     availability: td_ttype contains 1
   - name: td_trape_t3
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
-      Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
+      Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as 2.0 are accepted. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
     default_value: "7500"
     unit: ""
     availability: td_ttype contains 1
   - name: td_trape_amp
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Electric-field scale $E_0$ in the trapezoid-pulse formula. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
@@ -2693,7 +2737,7 @@ parameters:
     unit: V/Angstrom
     availability: td_ttype contains 1
   - name: td_trigo_freq1
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       First ordinary frequency $f_1$ in the trigonometric-pulse formula, with $\omega_1=2\pi f_1$. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
@@ -2701,7 +2745,7 @@ parameters:
     unit: 1/fs
     availability: td_ttype contains 2
   - name: td_trigo_freq2
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Second ordinary frequency $f_2$ in the trigonometric-pulse formula, with $\omega_2=2\pi f_2$. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
@@ -2709,7 +2753,7 @@ parameters:
     unit: 1/fs
     availability: td_ttype contains 2
   - name: td_trigo_phase1
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Carrier phase $\varphi_1$ in the cosine factor of the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
@@ -2717,7 +2761,7 @@ parameters:
     unit: rad
     availability: td_ttype contains 2
   - name: td_trigo_phase2
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Envelope phase $\varphi_2$ in the sine-squared factor of the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
@@ -2725,7 +2769,7 @@ parameters:
     unit: rad
     availability: td_ttype contains 2
   - name: td_trigo_amp
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Electric-field scale $E_0$ in the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
@@ -2733,7 +2777,7 @@ parameters:
     unit: V/Angstrom
     availability: td_ttype contains 2
   - name: td_heavi_t0
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Electronic switch step $n_0$ in the Heaviside-pulse definition. The field is $E_0$ for $n\lt n_0$ and zero for $n\geqslant n_0$. Supply exactly one value for each td_ttype 3 occurrence, in occurrence order.
@@ -2741,7 +2785,7 @@ parameters:
     unit: ""
     availability: td_ttype contains 3
   - name: td_heavi_amp
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Electric-field scale $E_0$ in the Heaviside-pulse definition. Supply exactly one value for each td_ttype 3 occurrence, in occurrence order.
@@ -2749,7 +2793,7 @@ parameters:
     unit: V/Angstrom
     availability: td_ttype contains 3
   - name: td_supsine_amp
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Carrier electric-field scale $E_0$ of each supersine pulse. This is not a normalization of the complete waveform maximum, because the envelope-derivative term also contributes. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
@@ -2757,7 +2801,7 @@ parameters:
     unit: V/Angstrom
     availability: td_ttype contains 4
   - name: td_supsine_freq
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Nonzero ordinary carrier frequency $f$ of each supersine pulse, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
@@ -2765,7 +2809,7 @@ parameters:
     unit: 1/fs
     availability: td_ttype contains 4
   - name: td_supsine_phase
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Electric-field carrier phase $\varphi$ at the center of each supersine envelope. A value of 0 places a cosine carrier maximum at the envelope center. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
@@ -2773,7 +2817,7 @@ parameters:
     unit: rad
     availability: td_ttype contains 4
   - name: td_supsine_sigma
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of Real
     description: |
       Dimensionless shape parameter $\sigma$ of each supersine envelope. It must satisfy $0\lt\sigma\lt\pi/2$ so that the electric field approaches zero at the pulse boundaries. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
@@ -2781,7 +2825,7 @@ parameters:
     unit: ""
     availability: td_ttype contains 4
   - name: td_supsine_tstart
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of String
     description: |
       Integer electronic step at the left, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{s}}=\mathtt{td\_supsine\_tstart}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tstart. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
@@ -2789,7 +2833,7 @@ parameters:
     unit: ""
     availability: td_ttype contains 4
   - name: td_supsine_tend
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Vector of String
     description: |
       Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supsine\_tend}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tend. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
@@ -2797,30 +2841,30 @@ parameters:
     unit: ""
     availability: td_ttype contains 4
   - name: init_vecpot_file
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (LCAO)
     type: Boolean
     description: |
       Selects the source of the Cartesian vector potential used by LCAO RT-TDDFT.
-      * True: Read vector_pot.txt from the calculation working directory. Each non-comment line must contain four columns: a conventionally one-based electronic-step label followed by $A_x$, $A_y$, and $A_z$ in atomic units. Rows are consumed sequentially; the first column is read as a label and is not used for lookup. If propagation continues beyond the available rows, the last row is reused.
+      * True: Read vector_pot.txt from the calculation working directory. Each non-comment line must contain four columns: a conventionally one-based electronic-step label followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. These are propagation values, not endpoint samples. Rows are consumed sequentially; the first column is read as a label and is not used for lookup. If propagation continues beyond the available rows, the last row is reused.
       * False: Obtain the vector potential by integrating the configured electric field.
     default_value: "False"
     unit: ""
-    availability: ""
+    availability: basis_type==lcao and esolver_type==tddft
   - name: ocp
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Boolean
     description: |
-      Controls fixed band occupations. In calculations other than LCAO RT-TDDFT, fixed values are applied during electronic-state setup. In LCAO RT-TDDFT, the initial ground-state SCF determines occupations normally, and fixed values from ocp_set are applied during the subsequent real-time propagation steps.
-      * True: Use the fixed occupations specified by ocp_set during propagation.
-      * False: Keep the occupations determined by the initial SCF.
+      Controls fixed band occupations. In PW RT-TDDFT and calculations other than LCAO RT-TDDFT, fixed values from ocp_set are applied during electronic-state setup. PW real-time propagation preserves these initial occupations. In LCAO RT-TDDFT, the initial ground-state SCF determines occupations normally, and fixed values are applied during the subsequent real-time propagation steps.
+      * True: Use the fixed occupations specified by ocp_set at the stage described above.
+      * False: Determine occupations normally; real-time propagation preserves the initial SCF occupations.
     default_value: "False"
     unit: ""
     availability: ""
   - name: ocp_set
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: String
     description: |
-      Fixed occupation weights used when ocp is true. Values are assigned in band order for each k-point, following k-point order. In LCAO RT-TDDFT, the initial ground-state SCF uses its normally determined occupations, and this array is applied only during subsequent real-time propagation steps. The repetition syntax N*x expands to N copies of x.
+      Fixed occupation weights used when ocp is true. Values are assigned in band order for each k-point, following k-point order. In PW RT-TDDFT and other calculations outside LCAO RT-TDDFT, this array is applied during electronic-state setup. PW propagation preserves these occupations. In LCAO RT-TDDFT, the initial ground-state SCF uses its normally determined occupations, and this array is applied only during subsequent real-time propagation steps. The repetition syntax N*x expands to N copies of x.
       * Example: 1 10*1 0 1 expands to 13 values, with the 12th value equal to 0 and all other values equal to 1.
       * After expansion, provide one block of nbands values for each k-point. If nspin is 2, provide all k-point blocks for spin up followed by all k-point blocks for spin down; otherwise, provide one block per k-point.
       * The sum of all weights must equal nelec; otherwise the calculation terminates with an error.
@@ -3153,7 +3197,7 @@ parameters:
     unit: ""
     availability: ""
   - name: out_freq_td
-    category: Output information
+    category: Real-Time TDDFT (Common)
     type: Integer
     description: |
       Controls the output interval in completed electronic evolution steps during RT-TDDFT calculations. When set to a positive integer n, detailed information (see out_freq_ion) is printed every n electron time-evolution steps (i.e., every STEP OF ELECTRON EVOLVE). For example, if you wish to output information once per ionic step, you should set out_freq_td equal to estep_per_md, since one ionic step corresponds to estep_per_md electronic evolution steps.
@@ -3826,7 +3870,7 @@ parameters:
     unit: ""
     availability: esolver_type==ksdft and basis_type==pw
   - name: out_dipole
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Boolean
     description: |
       Controls electric-dipole output. In RT-TDDFT, each enabled spin channel is written to OUT.{suffix}/dipole_s[spin].txt using a one-based spin number. Every row contains the one-based electronic-step index followed by the Cartesian electronic-dipole components $P_x$, $P_y$, and $P_z$ in atomic units. The running log additionally reports the electronic, ionic, and total dipoles and the norm of the total dipole.
@@ -3836,28 +3880,28 @@ parameters:
     unit: ""
     availability: ""
   - name: out_current
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Integer
     description: |
-      Controls the current-density output method for LCAO RT-TDDFT. Output rows contain the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units.
+      Controls the current-density output method for RT-TDDFT. Each row contains the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units; the initial ground state is step 1 and subsequent steps increase by one.
       * 0: Do not output current.
-      * 1: Explicitly construct the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center and spherical-grid integrals: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms, such as EXX, are not included explicitly. The total current is written to OUT.{suffix}/current_tot.txt.
-      * 2: Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis, $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive. The total current is written to OUT.{suffix}/current_tot_comm.txt.
+      * 1: Available for PW and LCAO. PW evaluates the occupied-state expectation values of the velocity operator, using plane-wave momentum and nonlocal-projector derivatives; in the velocity gauge these are evaluated at the vector-potential-shifted momentum. In the length gauge, a kinetic-energy-density functional also contributes its velocity term. LCAO explicitly constructs the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center and spherical-grid integrals: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms, such as EXX, are not included explicitly. The total current is written to OUT.{suffix}/current_tot.txt.
+      * 2: Available only for LCAO. Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis, $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive. The total current is written to OUT.{suffix}/current_tot_comm.txt.
     default_value: "0"
     unit: ""
-    availability: basis_type==lcao and esolver_type==tddft
+    availability: "basis_type in [pw, lcao] and esolver_type==tddft"
   - name: out_current_k
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Boolean
     description: |
-      Controls whether LCAO RT-TDDFT current density is also resolved by spin and k-point. The total-current file is always written when out_current is 1 or 2.
-      * True: In addition to the total, out_current=1 writes OUT.{suffix}/current_s[spin]k[kpoint].txt; out_current=2 writes OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt. Both use one-based spin and k-point numbers, with k-points numbered independently within each spin channel. Each row contains the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units.
+      Controls whether RT-TDDFT current density is also resolved by spin and k-point. PW supports out_current=1; LCAO supports out_current=1 or 2. The total-current file is always written when current output is enabled.
+      * True: In addition to the total, out_current=1 writes OUT.{suffix}/current_s[spin]k[kpoint].txt; out_current=2 writes OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt. Both use one-based spin and k-point numbers, with k-points numbered independently within each spin channel. Rows follow the step numbering, atomic units, precision, and append convention described in out_current. These weighted contributions sum to the total current.
       * False: Output only current_tot.txt for out_current=1 or current_tot_comm.txt for out_current=2.
     default_value: "False"
     unit: ""
-    availability: "basis_type==lcao and esolver_type==tddft and out_current>0"
+    availability: "basis_type in [pw, lcao] and esolver_type==tddft and out_current>0"
   - name: out_efield
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (Common)
     type: Boolean
     description: |
       Controls time-dependent electric-field output. For each configured field, OUT.{suffix}/efield_[index].txt contains two columns: physical time in fs and the field value in V/Angstrom. The one-based field index follows the occurrence order shared by td_ttype and td_vext_dire, so fields assigned to the same direction remain in separate files. At initialization, a fresh calculation with md_restart=False truncates the files corresponding to the currently configured fields, whereas a calculation with md_restart=True preserves them and appends new samples.
@@ -3867,10 +3911,10 @@ parameters:
     unit: ""
     availability: esolver_type==tddft and td_vext==true
   - name: out_vecpot
-    category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
+    category: Real-Time TDDFT (LCAO)
     type: Boolean
     description: |
-      Controls Cartesian vector-potential output for LCAO RT-TDDFT. OUT.{suffix}/vector_pot.txt contains four columns: the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in atomic units. At initialization, a fresh calculation with md_restart=False truncates the file and writes a new header, whereas a calculation with md_restart=True preserves a nonempty existing file and appends new samples. If the restart output file is missing or empty, a new file with a header is created.
+      Controls Cartesian vector-potential output for LCAO RT-TDDFT. OUT.{suffix}/vector_pot.txt contains four columns: the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The vector potential is the propagation value: the average of interval endpoints for an integrated electric field, or the supplied sample for init_vecpot_file=True. At initialization, a fresh calculation with md_restart=False truncates the file and writes a new header, whereas a calculation with md_restart=True preserves a nonempty existing file and appends new samples. If the restart output file is missing or empty, a new file with a header is created.
       * True: Write vector-potential samples on electronic propagation steps.
       * False: Do not output the vector potential.
     default_value: "False"
