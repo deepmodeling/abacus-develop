@@ -110,7 +110,8 @@ template <typename T, typename Tdata> class RPA_LRI
     Conv_Coulomb_Pot_K::Coulomb_Method select_coulomb_basis_method_(Exx_LRI<double>* exx_lri) const;
     std::vector<int> collect_atom_naux_(const UnitCell& ucell, Exx_LRI<double>* exx_lri) const;
 
-    const Exx_Info::Exx_Info_RI &info;
+    const std::string& outdir = PARAM.inp.rpa_outdir;
+    Exx_Info_RI info;
     const K_Vectors *p_kv=nullptr;
     MPI_Comm mpi_comm;
     std::vector<double> orb_cutoff_;
