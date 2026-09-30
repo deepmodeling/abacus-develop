@@ -494,6 +494,7 @@ SccsResponse solve_sccs_response(
     const ModuleSurchem::ChargeReduction& reduction)
 {
     ModuleBase::timer::start("ModuleSccs", "solve_sccs_response");
+    ModuleSccs::validate_cavity_parameters(cavity);
     SccsResponse result = prepare_cavity(density, cavity, basis, tpiba);
     const std::size_t size = density.size();
     std::vector<double> coefficient(size);

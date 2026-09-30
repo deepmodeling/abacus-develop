@@ -49,6 +49,10 @@ void validate_pcc_parameters(const PccParameters& parameters);
 
 void validate_pcc_geometry(const PccGeometry& geometry);
 
+// Per-point functions (pcc_relative_position, pcc_potential,
+// pcc_potential_gradient) do not validate the geometry or parameters; callers
+// validate them once per grid with validate_pcc_geometry or
+// validate_pcc_parameters.
 ModuleBase::Vector3<double> pcc_relative_position(
     const ModuleBase::Vector3<double>& position,
     const PccGeometry& geometry);

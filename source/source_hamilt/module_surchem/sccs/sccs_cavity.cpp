@@ -37,7 +37,6 @@ bool uses_switching_lowpass(const CavityParameters& parameters)
 
 CavityPoint evaluate_cavity(const double density, const CavityParameters& parameters)
 {
-    validate_cavity_parameters(parameters);
     if (!std::isfinite(density))
     {
         throw std::domain_error("SCCS cavity density must be finite");

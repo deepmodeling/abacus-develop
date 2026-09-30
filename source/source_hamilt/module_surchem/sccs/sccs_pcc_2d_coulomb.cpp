@@ -24,14 +24,13 @@ Pcc2dCoulombOperator::Pcc2dCoulombOperator(
       geometry_(geometry),
       reduction_(reduction)
 {
-    ModulePcc::validate_pcc_2d_parameters(geometry_.parameters);
+    ModulePcc::validate_pcc_2d_geometry(geometry_);
     if (positions.size() != static_cast<std::size_t>(basis.nrxx))
     {
         throw std::invalid_argument(
             "two-dimensional SCCS PCC positions must match the local PW grid");
     }
-    if (!std::isfinite(volume_element_) || volume_element_ <= 0.0
-        || !std::isfinite(geometry_.origin_y))
+    if (!std::isfinite(volume_element_) || volume_element_ <= 0.0)
     {
         throw std::invalid_argument(
             "two-dimensional SCCS PCC integration geometry must be finite and positive");

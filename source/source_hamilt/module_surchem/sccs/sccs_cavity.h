@@ -27,6 +27,8 @@ void validate_cavity_parameters(const CavityParameters& parameters);
 
 bool uses_switching_lowpass(const CavityParameters& parameters);
 
+// Per grid point; the caller validates parameters once with
+// validate_cavity_parameters.
 CavityPoint evaluate_cavity(double density, const CavityParameters& parameters);
 
 } // namespace ModuleSccs

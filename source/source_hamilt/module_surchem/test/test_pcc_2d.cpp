@@ -446,7 +446,13 @@ TEST(SccsPcc2d, RejectsInvalidAndNonFiniteInputs)
     value = parameters();
     ModulePcc::Pcc2dMoments moments;
     moments.charge = std::numeric_limits<double>::quiet_NaN();
-    EXPECT_THROW(ModulePcc::pcc_2d_potential(moments, 0.0, value), std::domain_error);
+    ModulePcc::Pcc2dGeometry geometry;
+    geometry.parameters = value;
+    ModulePcc::PointCharge ion;
+    ion.charge = 1.0;
+    EXPECT_THROW(ModulePcc::pcc_2d_point_charge_force(moments, ion, geometry), std::domain_error);
+    geometry.origin_y = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_THROW(ModulePcc::validate_pcc_2d_geometry(geometry), std::invalid_argument);
 }
 
 } // namespace

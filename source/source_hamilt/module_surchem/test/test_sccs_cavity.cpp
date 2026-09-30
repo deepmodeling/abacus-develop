@@ -85,7 +85,7 @@ TEST(SccsCavity, RejectsInvalidInputs)
     ModuleSccs::CavityParameters parameters = water_parameters();
     EXPECT_THROW(ModuleSccs::evaluate_cavity(std::nan(""), parameters), std::domain_error);
     parameters.density_min = parameters.density_max;
-    EXPECT_THROW(ModuleSccs::evaluate_cavity(1.0e-3, parameters), std::invalid_argument);
+    EXPECT_THROW(ModuleSccs::validate_cavity_parameters(parameters), std::invalid_argument);
 }
 
 TEST(SccsCavity, TreatsNegativeGridRingingAsBulkSolvent)

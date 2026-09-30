@@ -38,6 +38,11 @@ Pcc2dGeometry pcc_2d_geometry(const ModuleBase::Matrix3& lattice_vectors,
 
 void validate_pcc_2d_parameters(const Pcc2dParameters& parameters);
 
+void validate_pcc_2d_geometry(const Pcc2dGeometry& geometry);
+
+// Per-point functions (pcc_2d_relative_y, pcc_2d_potential,
+// pcc_2d_potential_gradient) do not validate the geometry, parameters or
+// moments; callers validate them once per grid.
 double pcc_2d_relative_y(double position_y, const Pcc2dGeometry& geometry);
 
 double pcc_2d_system_center_y(const std::vector<double>& positions_y,

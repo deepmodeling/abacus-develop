@@ -144,6 +144,7 @@ void surchem::v_correction_pcc(const UnitCell& cell,
         warn_charge_mismatch(charge_error, this->parameters_.normalization_tolerance);
         energy_hartree = ModulePcc::pcc_self_energy(this->pcc_moments_,
                                                      this->pcc_geometry_.parameters);
+        ModulePcc::validate_pcc_geometry(this->pcc_geometry_);
         for (int ir = 0; ir < rho_basis.nrxx; ++ir)
         {
             const ModuleBase::Vector3<double> relative_position
@@ -179,6 +180,7 @@ void surchem::v_correction_pcc(const UnitCell& cell,
         warn_charge_mismatch(charge_error, this->parameters_.normalization_tolerance);
         energy_hartree = ModulePcc::pcc_2d_self_energy(this->pcc_2d_moments_,
                                                         this->pcc_2d_geometry_.parameters);
+        ModulePcc::validate_pcc_2d_geometry(this->pcc_2d_geometry_);
         for (int ir = 0; ir < rho_basis.nrxx; ++ir)
         {
             const double relative_y
