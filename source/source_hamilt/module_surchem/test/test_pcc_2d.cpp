@@ -104,6 +104,18 @@ TEST(SccsPcc2d, BuildsGeometryForEveryOpenAxis)
     EXPECT_THROW(ModulePcc::pcc_2d_geometry(lattice, 4.0, 3, 1.0e-10), std::invalid_argument);
 }
 
+// A cell rotated by 45 degrees whose vectors were rounded to six digits
+// inconsistently, tilting the open vector by about 7e-7: rejected by the
+// strict tolerance, accepted by the 1e-6 tolerance v_correction_pcc uses.
+TEST(SccsPcc2d, GeometryAcceptsRoundedRotatedCellAtProductionTolerance)
+{
+    const ModuleBase::Matrix3 rotated(0.707107, 0.707107, 0.0,
+                                      -0.707106, 0.707107, 0.0,
+                                      0.0, 0.0, 1.0);
+    EXPECT_THROW(ModulePcc::pcc_2d_geometry(rotated, 10.0, 0, 1.0e-10), std::invalid_argument);
+    EXPECT_NO_THROW(ModulePcc::pcc_2d_geometry(rotated, 10.0, 0, 1.0e-6));
+}
+
 TEST(SccsPcc2d, GeometryRejectsUnsupportedSlabOrientations)
 {
     const ModuleBase::Matrix3 tilted_normal(1.0, 0.0, 0.0,

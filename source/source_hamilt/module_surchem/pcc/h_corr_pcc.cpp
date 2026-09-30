@@ -14,6 +14,10 @@
 namespace
 {
 
+// Relative tolerance for the open lattice vector being perpendicular to the
+// periodic plane; loose enough for lattice vectors typed with rounded digits.
+const double pcc_2d_alignment_tolerance = 1.0e-6;
+
 // The grid density need not integrate to the electron count exactly, e.g.
 // after a very tight CG diagonalization; PCC uses the actual moments, so a
 // mismatch is reported instead of stopping the calculation.
@@ -166,7 +170,7 @@ void surchem::v_correction_pcc(const UnitCell& cell,
         this->pcc_2d_geometry_ = ModulePcc::pcc_2d_geometry(cell.latvec,
                                                             cell.lat0,
                                                             this->parameters_.pcc_2d_axis,
-                                                            1.0e-10);
+                                                            pcc_2d_alignment_tolerance);
         this->pcc_2d_geometry_.origin = ionic_system_center_2d(cell, this->pcc_2d_geometry_);
         const ModulePcc::Pcc2dMoments electronic_moments
             = ModulePcc::reduced_pcc_2d_density_moments(electronic_charge,
