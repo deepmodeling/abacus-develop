@@ -1,8 +1,5 @@
 #ifndef PW_BASIS_K_BIG_H
 #define PW_BASIS_K_BIG_H
-#include "source_base/constants.h"
-#include "source_base/global_function.h"
-
 // temporary class, because previous ABACUS consider big grid for fft grids 
 // which are used for grid integration in LCAO.
 // In fact, it is unnecessary. It will be moved after grid integration is refactored.
