@@ -783,20 +783,20 @@
   Available options are:
 
   - none: regular periodic calculation without isolated-system correction.
-  - pcc_0d: self-consistent PCC for cubic molecular cells. Uses the mass-weighted ionic system center for multipoles. The cell must be primitive: with symmetry 1, an analyzed fractional translation stops the run.
-  - pcc_2d: self-consistent slab PCC, open along the lattice vector selected by pcc_2d_axis (default: the third) and periodic along the other two. The correction depends only on the coordinate along the slab normal, so any lattice vector perpendicular to the periodic plane can be the open one; a cell whose open vector is tilted must first be rewritten as the equivalent perpendicular cell. The k-point sampling along the open vector must be Gamma only. With symmetry 1, every analyzed operation must map the open vector onto plus or minus itself and must not translate by a fraction of it (which would copy the slab within the cell); otherwise the run stops, and a primitive cell with vacuum only along the open vector, or symmetry 0 or -1, is required. The monopole term uses the open planar kernel that vanishes on the plane of the charge, -pi*Q*L/(3*A) with L the cell length along the open vector and A the periodic area, so the energy of a charged slab converges with the vacuum size; it is referenced to zero potential on the plane of the charge, and so is the solvation energy of a charged slab. ENVIRON uses -pi*Q/(3*L), which agrees only for A = L^2, so charged-slab energies differ from ENVIRON otherwise.
-  PCC works with imp_sol=0 or 2, contributes to energy, potential and fixed-cell forces, and is incompatible with the legacy solvent (imp_sol=1). Its energy is printed as E_pcc, separately from the solvation terms E_sol_el and E_sol_cav.
-
+  - pcc_0d: self-consistent point-counter-charge (PCC) correction for a molecule in a cubic cell. The multipoles are taken about the mass-weighted ionic center. The cell must be primitive: with symmetry 1, an analyzed fractional translation stops the run.
+  - pcc_2d: self-consistent PCC correction for a slab, open along the lattice vector selected by pcc_2d_axis (default: the third) and periodic along the other two. The open vector must be perpendicular to the periodic plane (rewrite a tilted cell as the equivalent perpendicular one), and the k-point sampling along it must be Gamma only. The multipoles are taken about the mass-weighted ionic center along the normal, and the correction is cut half a cell length from that center, so this plane must lie in the vacuum. With symmetry 1, every analyzed operation, including the primitive-cell translations used to symmetrize the density, must map the open vector onto plus or minus itself; an operation that keeps its direction must not translate by a fraction of it, which would copy the slab within the cell, whereas a mirror normal to it may. Otherwise the run stops; use a primitive cell with vacuum only along the open vector, or symmetry 0 or -1. The monopole term uses the open planar kernel that vanishes on the plane of the charge, -pi*Q*L/(3*A) with L the cell length along the open vector and A the periodic area, so the energy of a charged slab converges with the vacuum size; it is referenced to zero potential on the plane of the charge, and so is the solvation energy of a charged slab. ENVIRON uses -pi*Q/(3*L), so charged-slab energies agree with ENVIRON only for A = L^2.
   - makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
 
-  Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).
+  pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc, separately from the solvation terms E_sol_el and E_sol_cav. They work with imp_sol 0 or 2, not with the legacy solvent (imp_sol 1), and require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho.
+
+  Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014).
 - **Default**: none
 
 ### pcc_2d_axis
 
 - **Type**: Integer
 - **Availability**: *[`assume_isolated`](#assume_isolated)==pcc_2d*
-- **Description**: Index of the lattice vector along which assume_isolated=pcc_2d is open: 0, 1 or 2 for the first, second or third vector of LATTICE_VECTORS. The default 2 matches efield_dir. The selected vector must be perpendicular to the other two, which span the periodic plane, the k-point sampling along it must be Gamma only, and symmetry operations must keep it (see assume_isolated). For LCAO the real-space grid integration is distributed over planes along the third lattice vector, so an open axis of 0 or 1 keeps the vacuum out of that distribution and balances the load better.
+- **Description**: Index of the lattice vector along which assume_isolated=pcc_2d is open: 0, 1 or 2 for the first, second or third vector of LATTICE_VECTORS. The selected vector must be perpendicular to the other two, which span the periodic plane; the k-point sampling along it must be Gamma only, and symmetry operations must keep it (see assume_isolated). For LCAO the real-space grid integration is distributed over planes along the third lattice vector, so an open axis of 0 or 1 keeps the vacuum out of that distribution and balances the load better.
 - **Default**: 2
 
 ### init_wfc
@@ -4910,7 +4910,7 @@
 ### imp_sol
 
 - **Type**: Integer
-- **Description**: Select 0 for no solvent, 1 for the original ABACUS solvent model, or 2 for SCCS. The former Boolean values true and false are read as 1 and 0. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS supports KS-DFT (esolver_type ksdft) with basis_type pw or lcao, for scf and fixed-cell relax without stress, deepks output or dm_to_rho. A charged system with sccs_epsilon above 1 requires assume_isolated pcc_0d or pcc_2d.
+- **Description**: Select 0 for no solvent, 1 for the original ABACUS solvent model (eb_k, tau, sigma_k, nc_k), or 2 for the self-consistent continuum solvation (SCCS) model (sccs_* keywords). The former Boolean values true and false are read as 1 and 0. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS requires CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or fixed-cell relax, and nspin 1 or 2, without efield_flag, gate_flag, Makov-Payne, cal_stress, DFT-1/2, deepks output or dm_to_rho. A charged system in a dielectric solvent (any water preset, or sccs_preset custom with sccs_epsilon above 1) requires assume_isolated pcc_0d or pcc_2d. SCCS theory: O. Andreussi, I. Dabo and N. Marzari, J. Chem. Phys. 136, 064102 (2012).
 - **Default**: 0
 
 ### eb_k
@@ -5020,7 +5020,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Low-pass filter of the SCCS switching-function derivatives, as Environ deriv_lowpass_p1 with deriv_method fft: when sccs_lowpass_p1 and sccs_lowpass_p2 are both positive, every Fourier derivative of the switching function is multiplied by 0.5 erfc(p1 G^2/Gcut^2 - p2), Gcut^2 being the ecutrho sphere, and the electronic potential becomes the exact derivative of the discrete SCCS energy, so forces agree with energy differences. Only with assume_isolated pcc_0d or pcc_2d. The default -1 turns it off and reproduces Environ deriv_method fft (continuum cavity potential). With lowpass disabled (the default), analytical forces may differ from finite differences of the self-consistent energy. For geometry optimization with PCC, consider enabling lowpass and check force accuracy against finite differences. 10 with sccs_lowpass_p2 5 was validated at ecutrho 300-500 Ry; the filter changes the model energy (about 10 meV for H3O+).
+- **Description**: Low-pass filter of the SCCS switching-function derivatives, as Environ deriv_lowpass_p1 with deriv_method fft: when sccs_lowpass_p1 and sccs_lowpass_p2 are both positive, every Fourier derivative of the switching function is multiplied by 0.5 erfc(p1 G^2/Gcut^2 - p2), Gcut^2 being the ecutrho sphere, and the electronic potential becomes the exact derivative of the discrete SCCS energy, so forces agree with energy differences. Only with assume_isolated pcc_0d or pcc_2d. The default -1 turns it off and reproduces Environ deriv_method fft (continuum cavity potential). With lowpass disabled (the default), analytical forces may differ from finite differences of the self-consistent energy. For geometry optimization with PCC, consider enabling lowpass and check force accuracy against finite differences. With lowpass disabled, the cavity potential uses the FFT gradient of the PCC-corrected potential, which oscillates around the potential step at the cell boundary half a cell from the system center; keep the dielectric transition region several bohr away from that boundary. 10 with sccs_lowpass_p2 5 was validated at ecutrho 300-500 Ry; the filter changes the model energy (about 10 meV for H3O+).
 - **Default**: -1
 
 ### sccs_lowpass_p2
@@ -5034,7 +5034,7 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately; a positive value must exceed scf_thr so that the SCF cannot converge before SCCS starts. Once activated, SCCS remains active for all later electronic and ionic steps. PCC remains active during the delay. User-controlled for every sccs_preset, default 0.
+- **Description**: Delay SCCS at the start of the run until DRHO is at or below this value. Zero starts SCCS immediately; a positive value must exceed scf_thr so that the SCF cannot converge before SCCS starts, and the SCF does not stop in the iteration that activates SCCS. Once activated, SCCS remains active for all later electronic and ionic steps. PCC remains active during the delay. User-controlled for every sccs_preset, default 0.
 - **Default**: 0.0
 
 ### sccs_start_nmax
@@ -5054,7 +5054,7 @@
 
 - **Type**: Integer
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Positive maximum inner iteration count; user-controlled for every sccs_preset, default 200. SCCS_ITER counts sqrt-preconditioned CG iterations for every assume_isolated value. Failure to converge terminates the calculation. No discrete adjoint is solved.
+- **Description**: Positive maximum number of sqrt-preconditioned CG iterations of the SCCS generalized Poisson solve, reported as SCCS_ITER; user-controlled for every sccs_preset, default 200. Failure to converge terminates the calculation.
 - **Default**: 200
 
 ### sccs_solvent_mode

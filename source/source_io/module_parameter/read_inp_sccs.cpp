@@ -160,9 +160,13 @@ void ReadInput::item_sccs()
                        "potential). With lowpass disabled (the default), analytical forces may "
                        "differ from finite differences of the self-consistent energy. For geometry "
                        "optimization with PCC, consider enabling lowpass and check force accuracy "
-                       "against finite differences. 10 with sccs_lowpass_p2 5 was validated at "
-                       "ecutrho 300-500 Ry; "
-                       "the filter changes the model energy (about 10 meV for H3O+).",
+                       "against finite differences. With lowpass disabled, the cavity potential "
+                       "uses the FFT gradient of the PCC-corrected potential, which oscillates "
+                       "around the potential step at the cell boundary half a cell from the system "
+                       "center; keep the dielectric transition region several bohr away from that "
+                       "boundary. 10 with "
+                       "sccs_lowpass_p2 5 was validated at ecutrho 300-500 Ry; the filter changes "
+                       "the model energy (about 10 meV for H3O+).",
                        "-1",
                        "")
     ADD_SCCS_REAL_ITEM("sccs_lowpass_p2",
@@ -179,7 +183,7 @@ void ReadInput::item_sccs()
         item.annotation = "SCCS delayed-start density threshold";
         item.category = "Implicit solvation model";
         item.type = "Real";
-        item.description = "Delay SCCS on a cold start until DRHO is at or below this value. Zero starts SCCS immediately; a positive value must exceed scf_thr so that the SCF cannot converge before SCCS starts. Once activated, SCCS remains active for all later electronic and ionic steps. PCC remains active during the delay. User-controlled for every sccs_preset, default 0.";
+        item.description = "Delay SCCS at the start of the run until DRHO is at or below this value. Zero starts SCCS immediately; a positive value must exceed scf_thr so that the SCF cannot converge before SCCS starts, and the SCF does not stop in the iteration that activates SCCS. Once activated, SCCS remains active for all later electronic and ionic steps. PCC remains active during the delay. User-controlled for every sccs_preset, default 0.";
         item.default_value = "0.0";
         item.unit = "";
         item.set_availability("imp_sol==2");
@@ -226,7 +230,7 @@ void ReadInput::item_sccs()
         item.annotation = "SCCS sqrt-CG iteration limit";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "Positive maximum inner iteration count; user-controlled for every sccs_preset, default 200. SCCS_ITER counts sqrt-preconditioned CG iterations for every assume_isolated value. Failure to converge terminates the calculation. No discrete adjoint is solved.";
+        item.description = "Positive maximum number of sqrt-preconditioned CG iterations of the SCCS generalized Poisson solve, reported as SCCS_ITER; user-controlled for every sccs_preset, default 200. Failure to converge terminates the calculation.";
         item.default_value = "200";
         item.unit = "";
         item.set_availability("imp_sol==2");
