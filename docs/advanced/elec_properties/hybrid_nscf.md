@@ -5,7 +5,7 @@ PW screened hybrid NSCF now reads a **frozen SCF ensemble** on a source q mesh
 and diagonalizes the Hamiltonian on an independent target k list. Increasing
 `nbands` in NSCF changes the target states, not the source ensemble.
 
-This first implementation supports CPU calculations, `kpar 1`, `bndpar 1`,
+This first implementation supports CPU and CUDA GPU calculations, `kpar 1`, `bndpar 1`,
 `nspin 1` or `2`, and a complete, uniformly weighted source mesh without symmetry
 reduction. Set `symmetry -1`, `exxace false` and
 `exx_gamma_extrapolation false` in both calculations. HSE is supported;
@@ -64,8 +64,12 @@ settings. Use a separate NSCF output directory to preserve the SCF files.
 `init_wfc file` is rejected for this initial implementation: binary source
 orbitals are read separately, whereas target orbitals start independently.
 `nbands` may exceed the SCF band count. A different number of MPI processes
-within the single PW pool is supported; binary coefficients are redistributed
-by their Miller indices. Use `OMP_NUM_THREADS=1` for runtime tests.
+within the single PW pool is supported on CPU; binary coefficients are redistributed
+by their Miller indices. CUDA NSCF currently uses one MPI rank. Select
+`device gpu` and `precision double` for the validated CUDA workflow; the source
+SCF may run on CPU or GPU. The binary checkpoint format is shared between
+these devices. ROCm NSCF remains disabled pending backend verification.
+Use `OMP_NUM_THREADS=1` for runtime tests.
 
 Missing, truncated or incompatible companion files and invalid occupations
 produce an error. The existing wavefunction reader additionally verifies k
@@ -96,7 +100,8 @@ the solver owns their lifetime. Coulomb-kernel construction uses target k
 coordinates and source q coordinates, with the screened zero-transfer correction
 computed from the source mesh. The two-basis path currently uses the full FFT
 grid, including for distributed PW transforms. Small-grid acceleration remains
-separate follow-up work. This frozen-source NSCF workflow deliberately uses
+separate follow-up work. CUDA executes the pair-density FFTs and exchange
+application on the GPU with separate source and target PW maps. This frozen-source NSCF workflow deliberately uses
 direct exchange; ACE is not part of its implementation roadmap. The SCF ACE
 projectors are tied to their original target subspace and cannot be reused as a
 validated exchange operator on an independent band path.
@@ -122,6 +127,24 @@ script uses the existing H pseudopotential and structure fixture, performs SCF
 and NSCF, and checks extra target bands, a different target k list, a shared
 Gamma point, MPI redistribution, both collinear spin channels, immutable source
 files, and invalid restart/unsupported-option errors. It needs LibXC and MPI.
+
+For a CUDA build and an available GPU, also run:
+
+```bash
+python3 tests/integrate/tools/test_hybrid_nscf.py ./build/abacus --gpu
+```
+
+This compares CPU and GPU targets using one frozen CPU source on both a mesh
+and an independent path with extra target bands, then checks a GPU-generated
+spin-polarized source with CPU and GPU targets. Source files must remain
+unchanged. The corresponding CTest is `PW_HYBRID_NSCF_GPU`.
+
+On a local RTX 3090 with CUDA 13.1, both CTests passed in a CUDA build.
+The H CPU/GPU mesh, independent path and both spin-channel eigenvalues agreed
+at the printed precision, as did all eight bands at nine Si L-Gamma-X points
+using the same frozen CPU source (`20 Ry`, `2x2x2` source mesh). The Si check
+compared raw eigenvalues without an energy shift. This validates device
+consistency; it does not change the cross-code convergence limits below.
 
 On the initial local two-q-point, 10 Ry test, the same-mesh SCF/NSCF maximum
 band difference was `3.7e-5 eV`; the shared Gamma point and serial/two-rank NSCF

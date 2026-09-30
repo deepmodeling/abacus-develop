@@ -13,6 +13,8 @@ REPO = Path(__file__).resolve().parents[3]
 COMMON = """INPUT_PARAMETERS
 suffix hybrid
 basis_type pw
+device cpu
+precision double
 nbands 3
 ecutwfc 10
 scf_thr 1e-9
@@ -136,19 +138,71 @@ def verify(executable, root, mpi_ranks):
     print("failed SCF invalidates the previous source checkpoint")
 
 
+def verify_gpu(executable, root):
+    """Compare devices using the same frozen ensemble, then reverse the restart."""
+    cpu_scf = create_case(root, "cpu_scf", "calculation scf\nout_chg 1\nout_wfc_pw 2\n")
+    run(executable, cpu_scf, [])
+    source = cpu_scf / "OUT.hybrid"
+    original = digest(source)
+    extra = f"calculation nscf\nread_file_dir {source}\n"
+    for name, points in (("same", MESH), ("path", PATH)):
+        reference = create_case(root, f"cpu_{name}", extra, points)
+        target = create_case(root, f"gpu_{name}", extra, points)
+        for case in (reference, target):
+            text = (case / "INPUT").read_text().replace("nbands 3", "nbands 5")
+            if case == target:
+                text = text.replace("device cpu", "device gpu")
+            (case / "INPUT").write_text(text)
+            run(executable, case, [])
+        delta = max_difference(bands(reference), bands(target))
+        assert delta < 2e-6, f"CPU/GPU {name} mismatch: {delta} eV"
+        print(f"CPU source, CPU/GPU {name} targets: max difference {delta:.3g} eV")
+    assert digest(source) == original, "GPU NSCF modified CPU source files"
+
+    gpu_scf = create_case(root, "gpu_scf", "calculation scf\nout_chg 1\nout_wfc_pw 2\nnspin 2\n")
+    text = (gpu_scf / "INPUT").read_text().replace("device cpu", "device gpu")
+    (gpu_scf / "INPUT").write_text(text)
+    run(executable, gpu_scf, [])
+    source = gpu_scf / "OUT.hybrid"
+    assert (source / "EXX_SOURCE").exists()
+    original = digest(source)
+    targets = []
+    for device in ("cpu", "gpu"):
+        target = create_case(root, f"{device}_spin", f"calculation nscf\nread_file_dir {source}\nnspin 2\n", PATH)
+        text = (target / "INPUT").read_text().replace("device cpu", f"device {device}")
+        (target / "INPUT").write_text(text)
+        run(executable, target, [])
+        targets.append(target)
+    for channel in (1, 2):
+        delta = max_difference(bands(targets[0], channel), bands(targets[1], channel))
+        assert delta < 2e-6, delta
+        gamma_delta = max_difference([bands(gpu_scf, channel)[0]], [bands(targets[1], channel)[0]])
+        assert gamma_delta < 2e-4, gamma_delta
+        print(f"GPU source, spin {channel}, independent CPU/GPU targets: {delta:.3g} eV")
+    assert digest(source) == original, "NSCF modified GPU source files"
+    unsupported = create_case(root, "gpu_unsupported_ace", extra)
+    text = (unsupported / "INPUT").read_text().replace("device cpu", "device gpu")
+    text = text.replace("exxace false", "exxace true")
+    (unsupported / "INPUT").write_text(text)
+    run(executable, unsupported, [], "Hybrid NSCF currently requires")
+    print("CUDA NSCF rejects ACE")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("executable", type=Path)
     parser.add_argument("--workdir", type=Path)
+    parser.add_argument("--gpu", action="store_true", help="verify CUDA using one rank and double precision")
     parser.add_argument("--mpi-ranks", type=int, default=2)
     args = parser.parse_args()
     executable = args.executable.resolve()
+    verify_case = verify_gpu if args.gpu else lambda exe, root: verify(exe, root, args.mpi_ranks)
     if args.workdir:
         args.workdir.mkdir(parents=True, exist_ok=True)
-        verify(executable, args.workdir.resolve(), args.mpi_ranks)
+        verify_case(executable, args.workdir.resolve())
     else:
         with tempfile.TemporaryDirectory(prefix="abacus-hybrid-nscf-") as directory:
-            verify(executable, Path(directory), args.mpi_ranks)
+            verify_case(executable, Path(directory))
     print("PASS: screened hybrid NSCF regression")
 
 

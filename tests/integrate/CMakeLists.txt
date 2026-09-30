@@ -25,3 +25,14 @@ if(ENABLE_LIBXC AND ENABLE_MPI)
         LABELS "PW;EXX;NSCF" PROCESSORS 2 TIMEOUT 300
     )
 endif()
+
+if(ENABLE_LIBXC AND ENABLE_MPI AND USE_CUDA)
+    add_test(
+        NAME PW_HYBRID_NSCF_GPU
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_hybrid_nscf.py
+                ${ABACUS_BIN_PATH} --gpu
+    )
+    set_tests_properties(PW_HYBRID_NSCF_GPU PROPERTIES
+        LABELS "PW;EXX;NSCF;GPU" PROCESSORS 1 TIMEOUT 300 RUN_SERIAL TRUE
+    )
+endif()

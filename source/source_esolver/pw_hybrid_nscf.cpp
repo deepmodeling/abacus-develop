@@ -54,13 +54,17 @@ void validate_hybrid_nscf(const Input_para& inp, const General_Exx_Info& info)
     }
     const auto fock = info.coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
     const bool has_fock = fock != info.coulomb_param.end() && !fock->second.empty();
-    const bool compatible_execution = inp.device == "cpu" && inp.kpar == 1 && inp.bndpar == 1 && inp.nspin != 4;
+    bool compatible_device = inp.device == "cpu";
+#ifdef __CUDA
+    compatible_device = compatible_device || inp.device == "gpu";
+#endif
+    const bool compatible_execution = compatible_device && inp.kpar == 1 && inp.bndpar == 1 && inp.nspin != 4;
     const bool compatible_exchange = !inp.exxace && !inp.exx_gamma_extrapolation && !has_fock;
     const bool compatible_targets = inp.symmetry != "1" && inp.init_wfc != "file" && !inp.cal_force && !inp.cal_stress;
     if (!compatible_execution || !compatible_exchange || !compatible_targets)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW",
-            "Hybrid NSCF currently requires CPU, kpar=bndpar=1, nspin=1/2, symmetry=-1/0, "
+            "Hybrid NSCF currently requires CPU or CUDA GPU, kpar=bndpar=1, nspin=1/2, symmetry=-1/0, "
             "exxace=false, exx_gamma_extrapolation=false, screened exchange, "
             "cal_force=cal_stress=false and fresh target wavefunctions");
     }
