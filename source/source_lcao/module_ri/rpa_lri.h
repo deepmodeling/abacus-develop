@@ -94,7 +94,10 @@ template <typename T, typename Tdata> class RPA_LRI
                           std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs,
                           std::string filename,
                           Exx_LRI<double>* exx_lri);
-    void out_librpa_basis_v1(const UnitCell& ucell, Exx_LRI<double>* exx_lri, const std::string& filename = "basis_out");
+    void out_librpa_basis_v1(const UnitCell& ucell,
+                             Exx_LRI<double>* exx_lri,
+                             const std::string& aux_filename = "basis_aux_out",
+                             const std::string& legacy_filename = "basis_out");
     // void print_matrix(char *desc, const ModuleBase::matrix &mat);
     // void print_complex_matrix(char *desc, const ModuleBase::ComplexMatrix &mat);
     // void init(const MPI_Comm &mpi_comm_in);

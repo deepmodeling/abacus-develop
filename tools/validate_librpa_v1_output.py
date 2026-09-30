@@ -11,11 +11,80 @@ CS_MARKER = -10267453
 SHRINK_SINVS_MARKER = -30241621
 
 
+def parse_int(token, path, label):
+    try:
+        return int(token)
+    except ValueError:
+        raise RuntimeError("{}: invalid {}".format(path, label))
+
+
 def read_exact(handle, nbytes, label):
     data = handle.read(nbytes)
     if len(data) != nbytes:
         raise RuntimeError("truncated {}".format(label))
     return data
+
+
+def validate_basis(path):
+    with open(path, "r") as handle:
+        lines = [line.split() for line in handle if line.split()]
+    if not lines:
+        raise RuntimeError("{}: empty basis file".format(path))
+    header = lines[0]
+    if len(header) != 3:
+        raise RuntimeError("{}: expected split basis header with 3 fields".format(path))
+    ntypes = parse_int(header[0], path, "basis atom-type count")
+    total_basis = parse_int(header[1], path, "basis total size")
+    if ntypes <= 0 or total_basis <= 0:
+        raise RuntimeError("{}: invalid basis header".format(path))
+    if len(lines) < 1 + 2 * ntypes:
+        raise RuntimeError("{}: truncated basis body".format(path))
+
+    type_sizes = [0] * ntypes
+    cursor = 1
+    for _ in range(ntypes):
+        row = lines[cursor]
+        cursor += 1
+        if len(row) != 2:
+            raise RuntimeError("{}: invalid per-type basis row".format(path))
+        itype = parse_int(row[0], path, "basis type index")
+        nbas = parse_int(row[1], path, "per-type basis size")
+        if itype < 1 or itype > ntypes or nbas <= 0:
+            raise RuntimeError("{}: invalid per-type basis metadata".format(path))
+        if type_sizes[itype - 1] != 0:
+            raise RuntimeError("{}: duplicate basis type".format(path))
+        type_sizes[itype - 1] = nbas
+
+    seen_shells = [False] * ntypes
+    for _ in range(ntypes):
+        if cursor >= len(lines):
+            raise RuntimeError("{}: missing shell-layout header".format(path))
+        row = lines[cursor]
+        cursor += 1
+        if len(row) != 2:
+            raise RuntimeError("{}: invalid shell-layout header".format(path))
+        itype = parse_int(row[0], path, "shell-layout type index")
+        nshell = parse_int(row[1], path, "shell count")
+        if itype < 1 or itype > ntypes or nshell < 0:
+            raise RuntimeError("{}: invalid shell-layout metadata".format(path))
+        if seen_shells[itype - 1]:
+            raise RuntimeError("{}: duplicate shell-layout type".format(path))
+        seen_shells[itype - 1] = True
+        shell_size = 0
+        for _ in range(nshell):
+            if cursor >= len(lines) or len(lines[cursor]) != 1:
+                raise RuntimeError("{}: invalid shell-layout body".format(path))
+            lval = parse_int(lines[cursor][0], path, "angular momentum")
+            cursor += 1
+            if lval < 0:
+                raise RuntimeError("{}: negative angular momentum".format(path))
+            shell_size += 2 * lval + 1
+        if shell_size != type_sizes[itype - 1]:
+            raise RuntimeError("{}: shell layout size does not match per-type basis size".format(path))
+
+    if cursor != len(lines):
+        raise RuntimeError("{}: trailing tokens after basis shell layout".format(path))
+    return ntypes
 
 
 def validate_coulomb(path):
@@ -124,6 +193,24 @@ def main():
     coul_prefixes = args.coul_prefix or ["v1_coulomb_full_iq_", "v1_coulomb_cut_iq_"]
     cs_prefixes = args.cs_prefix or ["v1_Cs_data_", "v1_Cs_shrinked_data_"]
     sinvs_prefixes = args.sinvs_prefix or ["v1_shrink_sinvS_"]
+    for name in ("basis_wfc_out", "basis_aux_out"):
+        path = os.path.join(args.directory, name)
+        if not os.path.exists(path):
+            raise RuntimeError("missing required split basis file {}".format(path))
+        ntypes = validate_basis(path)
+        print("OK basis {}: ntypes={}".format(path, ntypes))
+    has_shrink = False
+    for prefix in cs_prefixes:
+        if "shrink" in prefix:
+            has_shrink = has_shrink or bool(glob.glob(os.path.join(args.directory, prefix + "*")))
+    for prefix in sinvs_prefixes:
+        has_shrink = has_shrink or bool(glob.glob(os.path.join(args.directory, prefix + "*")))
+    if has_shrink:
+        path = os.path.join(args.directory, "basis_aux_shrink_out")
+        if not os.path.exists(path):
+            raise RuntimeError("missing required shrink split basis file {}".format(path))
+        ntypes = validate_basis(path)
+        print("OK basis {}: ntypes={}".format(path, ntypes))
     for prefix in coul_prefixes:
         for path in sorted(glob.glob(os.path.join(args.directory, prefix + "*"))):
             blocks = validate_coulomb(path)
