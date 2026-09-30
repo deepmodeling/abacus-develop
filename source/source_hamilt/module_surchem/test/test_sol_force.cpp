@@ -241,6 +241,7 @@ TEST(SolForce, ConvertsPointIonPcc2dForceFromHartreeToRydberg)
     parameters.sccs_config.surface_regularization = 1.0e-6;
     parameters.sccs_config.boundary = ModulePcc::Boundary::Pcc2d;
     parameters.pcc_boundary = ModulePcc::Boundary::Pcc2d;
+    parameters.pcc_2d_axis = 1;
     parameters.sccs_config.max_iterations = 20;
     parameters.sccs_config.tolerance_rms = 1.0e-14;
     parameters.sccs_config.tolerance_max = 1.0e-14;
@@ -501,6 +502,7 @@ TEST(SolForce, NeutralAndChargedPcc2dMatchFixedDensityTotalEnergyDerivativeInXyz
         parameters.sccs_config.surface_regularization = 1.0e-6;
         parameters.sccs_config.boundary = ModulePcc::Boundary::Pcc2d;
         parameters.pcc_boundary = ModulePcc::Boundary::Pcc2d;
+        parameters.pcc_2d_axis = 1;
         parameters.sccs_config.max_iterations = 500;
         parameters.sccs_config.tolerance_rms = 1.0e-12;
         parameters.sccs_config.tolerance_max = 1.0e-10;

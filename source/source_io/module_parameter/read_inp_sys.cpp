@@ -507,7 +507,7 @@ Available options are:
 Available options are:
 * none: regular periodic calculation without isolated-system correction.
 * pcc_0d: self-consistent PCC for cubic molecular cells. Uses the mass-weighted ionic system center for multipoles.
-* pcc_2d: self-consistent slab PCC, periodic in x-z and open along y. The second lattice vector must be perpendicular to the periodic plane. Charged slabs use the ENVIRON monopole constant -pi*Q/(3*L_y); their absolute energies depend on the cell length along y.
+* pcc_2d: self-consistent slab PCC, open along the lattice vector selected by pcc_2d_axis (default: the third) and periodic along the other two. The open vector must be perpendicular to the periodic plane. Charged slabs use the ENVIRON monopole constant -pi*Q/(3*L), L being the cell length along the open vector; their absolute energies depend on L.
 PCC works with imp_sol=0 or 2, contributes to energy, potential and fixed-cell forces, and is incompatible with the legacy solvent (imp_sol=1). Its energy is printed as E_pcc, separately from the solvation terms E_sol_el and E_sol_cav.
 * makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
 
@@ -546,6 +546,24 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "Makov-Payne correction is available only for cubic lattices: latname = sc, fcc, or bcc.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("pcc_2d_axis");
+        item.annotation = "open lattice vector of assume_isolated pcc_2d";
+        item.category = "System variables";
+        item.type = "Integer";
+        item.description = "Index of the lattice vector along which assume_isolated=pcc_2d is open: 0, 1 or 2 for the first, second or third vector of LATTICE_VECTORS. The default 2 matches efield_dir. The selected vector must be perpendicular to the other two, which span the periodic plane, and the k-point sampling along it must be Gamma only. For LCAO the real-space grid integration is distributed over planes along the third lattice vector, so an open axis of 0 or 1 keeps the vacuum out of that distribution and balances the load better.";
+        item.default_value = "2";
+        item.unit = "";
+        item.set_availability("assume_isolated==pcc_2d");
+        read_sync_int(input.pcc_2d_axis);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.pcc_2d_axis < 0 || para.input.pcc_2d_axis > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "pcc_2d_axis must be 0, 1 or 2");
             }
         };
         this->add_item(item);

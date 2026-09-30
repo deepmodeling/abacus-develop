@@ -372,6 +372,7 @@ sccs_lowpass_p2                -1
 sccs_start_drho                0.0
 sccs_start_nmax                30
 sccs_debug                     1
+pcc_2d_axis                    1
 sccs_maxiter                   200
 
 #Parameters (19.orbital free density functional theory)

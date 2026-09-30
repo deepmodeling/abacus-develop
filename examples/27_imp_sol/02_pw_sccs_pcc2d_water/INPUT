@@ -13,6 +13,7 @@ cal_force           1
 
 imp_sol             2
 assume_isolated    pcc_2d
+pcc_2d_axis        1
 sccs_preset         custom
 sccs_epsilon        1.1
 sccs_rho_min        1.0e-4

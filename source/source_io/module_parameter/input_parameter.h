@@ -36,6 +36,7 @@ struct Input_para
     int bndpar = 1;                               ///< parallel for stochastic/deterministic bands
     std::string latname = "user_defined_lattice"; ///< lattice name
     std::string assume_isolated = "none";         ///< isolated-system correction: none or makov-payne
+    int pcc_2d_axis = 2;                          ///< open lattice vector (0, 1 or 2) of assume_isolated pcc_2d
     double ecutwfc = 0;                           ///< energy cutoff for wavefunctions
     double ecutrho = 0;                           ///< energy cutoff for charge/potential
 

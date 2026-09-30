@@ -21,6 +21,18 @@ TEST(SurchemInput, SelectsVacuumPccIndependentlyOfSolvent)
     EXPECT_TRUE(input.uses_pcc_correction());
 }
 
+// pcc_2d_axis defaults to the third lattice vector and is passed through.
+TEST(SurchemInput, TransfersPcc2dOpenAxis)
+{
+    Input_para input;
+    UnitCell cell;
+    input.imp_sol = 0;
+    input.assume_isolated = "pcc_2d";
+    EXPECT_EQ(ModuleSurchem::make_parameters(input, cell, 0.0, false, 1).pcc_2d_axis, 2);
+    input.pcc_2d_axis = 0;
+    EXPECT_EQ(ModuleSurchem::make_parameters(input, cell, 0.0, false, 1).pcc_2d_axis, 0);
+}
+
 TEST(SurchemInput, TransfersPresetAndSolverControls)
 {
     Input_para input;

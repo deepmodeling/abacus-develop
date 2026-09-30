@@ -15,6 +15,7 @@ nelec_delta       -1
 
 imp_sol           2
 assume_isolated   pcc_2d
+pcc_2d_axis       1
 sccs_preset       water-cation
 sccs_maxiter      200
 sccs_tol_rms      1.0e-10

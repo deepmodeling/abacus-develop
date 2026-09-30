@@ -48,6 +48,7 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
 
     SurchemParameters parameters;
     parameters.pcc_boundary = ModulePcc::Boundary::Pcc2d;
+    parameters.pcc_2d_axis = 1;
     parameters.expected_electron_count = 1.0;
     parameters.expected_ionic_charge = 1.0;
     surchem correction;

@@ -387,8 +387,10 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.sccs_start_drho, 0.0);
     EXPECT_EQ(param.inp.sccs_start_nmax, 30);
     EXPECT_TRUE(param.inp.sccs_debug);
+    EXPECT_EQ(param.inp.pcc_2d_axis, 1);
     Input_para default_input;
     EXPECT_FALSE(default_input.sccs_debug);
+    EXPECT_EQ(default_input.pcc_2d_axis, 2);
     EXPECT_EQ(param.inp.of_kinetic, "vw");
     EXPECT_EQ(param.inp.of_method, "tn");
     EXPECT_EQ(param.inp.of_conv, "energy");

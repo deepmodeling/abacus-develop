@@ -248,6 +248,21 @@ TEST_F(InputTest, Item_test)
             EXPECT_EXIT(isolation->second.check_value(isolation->second, param),
                         ::testing::ExitedWithCode(1), "");
         }
+        auto axis = find_label("pcc_2d_axis", readinput.input_lists);
+        for (int value : {0, 1, 2})
+        {
+            param.input.pcc_2d_axis = value;
+            EXPECT_NO_THROW(axis->second.check_value(axis->second, param));
+        }
+        for (int value : {-1, 3})
+        {
+            param.input.pcc_2d_axis = value;
+            testing::internal::CaptureStdout();
+            EXPECT_EXIT(axis->second.check_value(axis->second, param), ::testing::ExitedWithCode(1), "");
+            const std::string axis_output = testing::internal::GetCapturedStdout();
+            EXPECT_THAT(axis_output, testing::HasSubstr("pcc_2d_axis must be 0, 1 or 2"));
+        }
+        param.input.pcc_2d_axis = 2;
         param.input.assume_isolated = "none";
         param.input.imp_sol = 0;
         EXPECT_FALSE(param.input.uses_surchem_correction());

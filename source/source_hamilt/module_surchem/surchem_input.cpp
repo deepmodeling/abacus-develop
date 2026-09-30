@@ -27,6 +27,7 @@ SurchemParameters make_parameters(const Input_para& inp,
     if (inp.assume_isolated == "pcc_0d" || inp.assume_isolated == "pcc_2d")
     {
         parameters.pcc_boundary = ModulePcc::parse_boundary(inp.assume_isolated);
+        parameters.pcc_2d_axis = inp.pcc_2d_axis;
     }
     if (!parameters.use_sccs && parameters.pcc_boundary == ModulePcc::Boundary::Periodic)
     {
@@ -126,10 +127,13 @@ void validate_kpoints(const SurchemParameters& parameters,
         return;
     }
 
+    const int axis = parameters.pcc_2d_axis;
     double maximum_open_direction_k = 0.0;
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
-        const double absolute_open_direction_k = std::abs(kv.kvec_d[ik].y);
+        const ModuleBase::Vector3<double>& k_direct = kv.kvec_d[ik];
+        const double open_component = axis == 0 ? k_direct.x : (axis == 1 ? k_direct.y : k_direct.z);
+        const double absolute_open_direction_k = std::abs(open_component);
         maximum_open_direction_k = std::max(maximum_open_direction_k, absolute_open_direction_k);
     }
     Parallel_Reduce::reduce_max(maximum_open_direction_k);
@@ -137,7 +141,7 @@ void validate_kpoints(const SurchemParameters& parameters,
     {
         ModuleBase::WARNING_QUIT(
             "surchem",
-            "pcc_2d requires Gamma-only sampling along the second lattice direction");
+            "pcc_2d requires Gamma-only sampling along the open lattice vector (pcc_2d_axis)");
     }
 }
 

@@ -1,4 +1,4 @@
 PW H3O+ (nelec_delta -1) with SCCS (imp_sol 2), the water-cation preset and 2D PCC
-(assume_isolated pcc_2d, open along y), 12 x 20 x 12 bohr cell: a charged system with the
+(assume_isolated pcc_2d, pcc_2d_axis 1: open along y), 12 x 20 x 12 bohr cell: a charged system with the
 far-field Gauss-law check.
 Checks the total energy, forces, E_sol_el, E_sol_cav and E_pcc against an ABACUS baseline.
