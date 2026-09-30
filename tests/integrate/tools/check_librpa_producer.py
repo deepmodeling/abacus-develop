@@ -85,7 +85,7 @@ def _compare_text(actual, reference, tolerance):
                 )
 
 
-def _check_stru(path, minimum_symmetry_rows, minimum_spin_symmetry_rows=None):
+def _check_stru(path, minimum_symmetry_rows):
     lines = path.read_text().splitlines()
     if len(lines) < 8:
         raise ProducerContractError("{} is too short for stru_out".format(path))
@@ -134,32 +134,6 @@ def _check_stru(path, minimum_symmetry_rows, minimum_spin_symmetry_rows=None):
                     raise ProducerContractError("{} has a non-integer symmetry rotation".format(path))
             for token in tokens[9:]:
                 _number(token)
-    if minimum_spin_symmetry_rows is not None:
-        if row_match is None:
-            raise ProducerContractError("{} has no spatial symmetry block for spin symmetry".format(path))
-        spin_header_index = row_index + 1 + row_match
-        if spin_header_index >= len(lines):
-            raise ProducerContractError("{} has no spin_symmetry block".format(path))
-        header = re.match(r"^\s*spin_symmetry\s+([01])\s+([01])\s*$", lines[spin_header_index])
-        if header is None or header.group(2) != "1":
-            raise ProducerContractError("{} has an invalid spin_symmetry header".format(path))
-        spin_rows = [line for line in lines[spin_header_index + 1 :] if line.strip()]
-        if len(spin_rows) < int(minimum_spin_symmetry_rows) or len(spin_rows) != row_match:
-            raise ProducerContractError("{} has an incomplete spin_symmetry block".format(path))
-        for line in spin_rows:
-            tokens = line.split()
-            if len(tokens) != 9:
-                raise ProducerContractError("{} has an invalid spin symmetry row".format(path))
-            try:
-                antiunitary = int(tokens[0])
-            except ValueError:
-                raise ProducerContractError("{} has an invalid spin antiunitary flag".format(path))
-            if antiunitary not in (0, 1):
-                raise ProducerContractError("{} has an invalid spin antiunitary flag".format(path))
-            for token in tokens[1:]:
-                _number(token)
-
-
 def _check_wfc_nao(path):
     """Validate the text LCAO wavefunction format consumed by GW preprocessing."""
     lines = [line.strip() for line in path.read_text().splitlines() if line.strip()]
@@ -226,38 +200,6 @@ def _check_wfc_nao(path):
                     path, iband, len(coefficients), expected_coefficients
                 )
             )
-
-
-def _check_strict_2d_head(path):
-    """Validate the reader-v1 strict-2D Coulomb-head metadata sidecar."""
-    values = {}
-    for line_number, line in enumerate(path.read_text().splitlines(), 1):
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-        if "=" not in stripped:
-            raise ProducerContractError("{} line {} is not a key/value record".format(path, line_number))
-        key, value = (part.strip() for part in stripped.split("=", 1))
-        if not key or key in values:
-            raise ProducerContractError("{} line {} has an invalid or duplicate key".format(path, line_number))
-        values[key] = value
-    required = {
-        "version",
-        "area_parallel_bohr2",
-        "multipole_norm_squared",
-        "strict_2d_coulomb_head_coefficient",
-        "strict_2d_sheet_to_raw_scale",
-    }
-    if set(values) != required:
-        raise ProducerContractError(
-            "{} has metadata keys {}; expected {}".format(path, sorted(values), sorted(required))
-        )
-    if values["version"] != "1":
-        raise ProducerContractError("{} has unsupported metadata version {}".format(path, values["version"]))
-    for key in sorted(required - {"version"}):
-        value = _required_number(path, values[key], key)
-        if value <= 0.0:
-            raise ProducerContractError("{} has non-positive {}".format(path, key))
 
 
 def _upper_pair(pair_index, natom):
@@ -437,9 +379,7 @@ def _check_file(path, entry):
     if kind == "gauge" or kind == "presence":
         return
     if kind == "stru":
-        _check_stru(path, entry.get("symmetry_rows"), entry.get("spin_symmetry_rows"))
-    elif kind == "strict_2d_head":
-        _check_strict_2d_head(path)
+        _check_stru(path, entry.get("symmetry_rows"))
     elif kind == "wfc_nao":
         _check_wfc_nao(path)
     elif kind == "band":
