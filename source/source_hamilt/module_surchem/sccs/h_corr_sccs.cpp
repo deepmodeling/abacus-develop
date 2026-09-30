@@ -9,6 +9,8 @@
 #include "source_base/tool_title.h"
 
 #include <algorithm>
+#include <cmath>
+#include <sstream>
 #include <stdexcept>
 #include <vector>
 
@@ -148,6 +150,17 @@ void surchem::v_correction_sccs(const UnitCell& cell,
                                        reduction,
                                        this->sccs_state_);
     this->sccs_result_.reused_fixed_sources = reuse_fixed_sources;
+    // v_correction_pcc already reports the same electron-count mismatch.
+    const double electron_count_error
+        = this->sccs_result_.charge.electron_count - this->parameters_.expected_electron_count;
+    if (!this->uses_pcc()
+        && std::abs(electron_count_error) > this->parameters_.normalization_tolerance)
+    {
+        std::ostringstream message;
+        message << "SCCS grid electron count differs from the expected value by "
+                << electron_count_error << " e; the solute charge uses the grid density";
+        ModuleBase::WARNING("surchem::v_correction_sccs", message.str());
+    }
 
     if (this->uses_pcc())
     {

@@ -152,7 +152,6 @@ SccsResult evaluate_pw_sccs(
     result.charge = assemble_charge_density(electron_density,
                                             ionic_density,
                                             volume_element,
-                                            expected_electron_count,
                                             expected_ionic_charge,
                                             normalization_tolerance,
                                             reduction);

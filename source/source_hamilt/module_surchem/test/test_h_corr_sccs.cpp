@@ -115,8 +115,8 @@ TEST(HCorrSccs, SolventDispatchStopsThroughWarningQuitOnKernelFailure)
     UnitCell cell;
     setup_single_ion_cell(basis, cell);
     SurchemParameters parameters = periodic_sccs_parameters();
-    // The zero electron density below cannot hold the requested electron.
-    parameters.expected_electron_count = 1.0;
+    // The single Gaussian ion carries charge 1, not the requested valence 2.
+    parameters.expected_ionic_charge = 2.0;
     surchem solvent;
     solvent.set_parameters(parameters);
 
@@ -132,7 +132,32 @@ TEST(HCorrSccs, SolventDispatchStopsThroughWarningQuitOnKernelFailure)
             solvent.v_correction_solvent(cell, basis, 1, density_channels, local_potential.data(), potential);
         },
         ::testing::ExitedWithCode(1),
-        "SCCS electron density normalization does not match the electron count");
+        "SCCS ionic density normalization does not match the valence charge");
+}
+
+TEST(HCorrSccs, ContinuesWithGridChargeOnElectronCountMismatch)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+    UnitCell cell;
+    setup_single_ion_cell(basis, cell);
+    SurchemParameters parameters = periodic_sccs_parameters();
+    // The zero electron density below does not hold the requested 1e-3 e.
+    parameters.expected_electron_count = 1.0e-3;
+    surchem solvent;
+    solvent.set_parameters(parameters);
+
+    std::vector<double> electron_density(basis.nrxx, 0.0);
+    const double* density_channels[1] = {electron_density.data()};
+    std::vector<double> local_potential(basis.nrxx, 0.0);
+    ModuleBase::matrix potential;
+    EXPECT_NO_THROW(solvent.v_correction_sccs(cell,
+                                              basis,
+                                              1,
+                                              density_channels,
+                                              local_potential.data(),
+                                              potential));
+    EXPECT_NEAR(solvent.sccs_result().charge.electron_count, 0.0, 1.0e-14);
+    EXPECT_NEAR(solvent.sccs_result().charge.net_charge, 1.0, 1.0e-12);
 }
 
 TEST(HCorrSccs, PeriodicDebugReportsResidualAndFixedPointWithoutKernelOutput)

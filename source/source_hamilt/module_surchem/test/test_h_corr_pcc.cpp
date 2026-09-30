@@ -112,6 +112,13 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
     correction.v_correction_pcc(cell, basis, 1, density_channels, potential);
     EXPECT_NEAR(surchem::Epcc, 2.0 * expected_energy, 1.0e-12);
 
+    // An electron-count mismatch is reported; PCC keeps the grid charge.
+    parameters.use_sccs = false;
+    parameters.start_drho = 0.0;
+    parameters.expected_electron_count = 1.0 + 1.0e-3;
+    correction.set_parameters(parameters);
+    EXPECT_NO_THROW(correction.v_correction_pcc(cell, basis, 1, density_channels, potential));
+    EXPECT_NEAR(surchem::Epcc, 2.0 * expected_energy, 1.0e-12);
 }
 
 } // namespace

@@ -42,7 +42,6 @@ std::vector<double> sum_electron_density(const std::vector<std::vector<double>>&
 ChargeDensity assemble_charge_density(const std::vector<double>& electron_density,
                                       const std::vector<double>& ionic_density,
                                       const double volume_element,
-                                      const double expected_electron_count,
                                       const double expected_ionic_charge,
                                       const double normalization_tolerance,
                                       const ModuleSurchem::ChargeReduction& reduction)
@@ -52,7 +51,6 @@ ChargeDensity assemble_charge_density(const std::vector<double>& electron_densit
         throw std::invalid_argument("SCCS electron and ionic density arrays must have the same non-zero size");
     }
     if (!std::isfinite(volume_element) || volume_element <= 0.0
-        || !std::isfinite(expected_electron_count) || expected_electron_count < 0.0
         || !std::isfinite(expected_ionic_charge) || expected_ionic_charge < 0.0
         || !std::isfinite(normalization_tolerance) || normalization_tolerance <= 0.0)
     {
@@ -77,10 +75,6 @@ ChargeDensity assemble_charge_density(const std::vector<double>& electron_densit
     if (!std::isfinite(result.electron_count) || !std::isfinite(result.ionic_charge))
     {
         throw std::domain_error("SCCS reduced charge integrals must be finite");
-    }
-    if (std::abs(result.electron_count - expected_electron_count) > normalization_tolerance)
-    {
-        throw std::runtime_error("SCCS electron density normalization does not match the electron count");
     }
     if (std::abs(result.ionic_charge - expected_ionic_charge) > normalization_tolerance)
     {

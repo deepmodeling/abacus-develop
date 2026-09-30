@@ -27,7 +27,6 @@ TEST(SccsCharge, PreservesPositiveAndNegativeNetCharge)
         = ModuleSccs::assemble_charge_density(std::vector<double>(4, 0.5),
                                               ionic_density,
                                               1.0,
-                                              2.0,
                                               3.0,
                                               1.0e-12,
                                               reduction);
@@ -41,21 +40,28 @@ TEST(SccsCharge, PreservesPositiveAndNegativeNetCharge)
         = ModuleSccs::assemble_charge_density(std::vector<double>(4, 1.0),
                                               ionic_density,
                                               1.0,
-                                              4.0,
                                               3.0,
                                               1.0e-12,
                                               reduction);
     EXPECT_DOUBLE_EQ(anion.net_charge, -1.0);
 }
 
-TEST(SccsCharge, RejectsNormalizationMismatch)
+TEST(SccsCharge, ReportsElectronCountAndRejectsIonicMismatch)
 {
     const ModuleSurchem::SerialChargeReduction reduction;
+    const ModuleSccs::ChargeDensity charge
+        = ModuleSccs::assemble_charge_density(std::vector<double>(2, 1.0),
+                                              std::vector<double>(2, 1.0),
+                                              1.0,
+                                              2.0,
+                                              1.0e-12,
+                                              reduction);
+    EXPECT_DOUBLE_EQ(charge.electron_count, 2.0);
+    EXPECT_DOUBLE_EQ(charge.net_charge, 0.0);
     EXPECT_THROW(ModuleSccs::assemble_charge_density(std::vector<double>(2, 1.0),
                                                      std::vector<double>(2, 1.0),
                                                      1.0,
                                                      3.0,
-                                                     2.0,
                                                      1.0e-12,
                                                      reduction),
                  std::runtime_error);
