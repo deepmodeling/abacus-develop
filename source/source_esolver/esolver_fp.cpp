@@ -129,6 +129,7 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
         const int cal_symm_repr[2] = {this->inp_->cal_symm_repr[0], this->inp_->cal_symm_repr[1]};
         ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running,
                              this->inp_->symmetry_prec, inp.nspin, this->inp_->calculation, cal_symm_repr);
+        ModuleSurchem::validate_symmetry(surchem_parameters, ucell.symm);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
 
