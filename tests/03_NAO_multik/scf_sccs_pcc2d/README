@@ -1,17 +1,4 @@
-LCAO multi-k neutral water with native SCCS and the second lattice vector (+y) as the 2D-PCC open direction.
-The 2x1x2 mesh keeps the open y direction at Gamma and uses kpar=2 to cover k-point pool parallelism.
-
-Reference provenance (regenerated 2026-09-29, ecutwfc 100 Ry / ecutrho 400 Ry):
-- ABACUS source commit: 967753df6 (Environ lowpass with exact PCC cavity derivative);
-  the default PCC cavity potential now uses the Environ FFT gradient
-- ABACUS version: v3.11.0-beta10
-- executable SHA256: e204808624109bbf6fa02babe1eab38035133714483206bebb4835e82c696c66
-- parallel layout: 16 MPI ranks x 1 OpenMP thread
-- result.ref is an ABACUS regression baseline, not an external QE/Environ reference.
-- after regeneration, two independent check runs passed every comparison.
-- 2026-09-29: the PCC energy moved from E_sol_el to its own E_pcc line, so esolelref
-  and the new epccref were updated from a check run (old esolelref = esolelref + epccref);
-  every other key is unchanged and still passes.
-
-Repository harness regeneration command, run from tests/03_NAO_multik:
-  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 16 -o 1 -r '^scf_sccs_pcc2d$' -g
+LCAO multi-k neutral water with SCCS (imp_sol 2) in a weak custom dielectric
+(sccs_epsilon 1.1) and 2D PCC (assume_isolated pcc_2d, open along y). The 2x1x2 mesh keeps
+Gamma along the open direction, as pcc_2d requires, and kpar 2 covers k-point pools.
+Checks the total energy, forces, E_sol_el, E_sol_cav and E_pcc against an ABACUS baseline.

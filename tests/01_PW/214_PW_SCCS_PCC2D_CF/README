@@ -1,17 +1,3 @@
-PW neutral water with native SCCS in a weak custom dielectric (epsilon 1.1) and 2D PCC along +y:
-sqrt-CG with the PCC correction in the preconditioner; energy, potential and ionic force.
-
-Reference provenance (regenerated 2026-09-29, ecutwfc 100 Ry / ecutrho 400 Ry):
-- ABACUS source commit: 967753df6 (Environ lowpass with exact PCC cavity derivative);
-  the default PCC cavity potential now uses the Environ FFT gradient
-- ABACUS version: v3.11.0-beta10
-- executable SHA256: e204808624109bbf6fa02babe1eab38035133714483206bebb4835e82c696c66
-- parallel layout: 16 MPI ranks x 1 OpenMP thread
-- result.ref is an ABACUS regression baseline, not an external QE/Environ reference.
-- after regeneration, two independent check runs passed every comparison.
-- 2026-09-29: the PCC energy moved from E_sol_el to its own E_pcc line, so esolelref
-  and the new epccref were updated from a check run (old esolelref = esolelref + epccref);
-  every other key is unchanged and still passes.
-
-Repository harness regeneration command, run from tests/01_PW:
-  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 16 -o 1 -r '^214_PW_SCCS_PCC2D_CF$' -g
+PW neutral water with SCCS (imp_sol 2) in a weak custom dielectric (sccs_epsilon 1.1)
+and 2D PCC (assume_isolated pcc_2d, open along y), 10 x 20 x 10 bohr cell.
+Checks the total energy, forces, E_sol_el, E_sol_cav and E_pcc against an ABACUS baseline.

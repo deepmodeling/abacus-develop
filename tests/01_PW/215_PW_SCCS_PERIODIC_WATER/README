@@ -1,14 +1,3 @@
-PW water with native SCCS in a periodic cell (assume_isolated none) and the water-neutral
-preset, so nonzero surface and volume terms enter: periodic sqrt-preconditioned CG, energy,
-potential and ionic force.
-
-Reference provenance (regenerated 2026-09-28, ecutwfc 100 Ry / ecutrho 400 Ry):
-- ABACUS source commit: 7bef5467f (Solve PCC SCCS with the ENVIRON sqrt-CG)
-- ABACUS version: v3.11.0-beta10
-- executable SHA256: 08f499b3083312ccacbe21ac9db51d2aad7a5455bbf75cf2c2af25e081548edd
-- parallel layout: 4 MPI ranks x 1 OpenMP thread
-- result.ref is an ABACUS regression baseline, not an external QE/Environ reference.
-- two independent clean runs produced identical energy, force, and solvation values.
-
-Repository harness regeneration command, run from tests/01_PW:
-  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 4 -o 1 -r '^215_PW_SCCS_PERIODIC_WATER$' -g
+PW neutral water with SCCS (imp_sol 2), the water-neutral preset and a periodic cell
+(assume_isolated none), so the surface and volume terms are nonzero; 12 bohr cubic cell.
+Checks the total energy, forces, E_sol_el and E_sol_cav against an ABACUS baseline.
