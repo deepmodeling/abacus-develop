@@ -83,7 +83,7 @@ AddTest(
 if(ENABLE_LIBRI)
 AddTest(
   TARGET MODULE_LCAO_operator_exx_nscf_cell_nearest_test
-  LIBS parameter ${math_libs} psi base device container
+  LIBS parameter ${math_libs} psi base device container ri module_exx_symmetry
   SOURCES test_op_exx_nscf_cell_nearest.cpp ../op_exx_lcao.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
   ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
   ../../../source_basis/module_ao/parallel_orbitals.cpp
