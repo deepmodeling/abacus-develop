@@ -131,7 +131,7 @@ PccGeometry pcc_geometry(const ModuleBase::Matrix3& lattice_vectors,
         || std::abs(dot_bc) > relative_tolerance * length * length)
     {
         throw std::invalid_argument(
-            "zero-dimensional SCCS PCC requires an orthogonal equal-edge cubic cell");
+            "zero-dimensional PCC requires an orthogonal equal-edge cubic cell");
     }
 
     PccGeometry geometry;

@@ -160,7 +160,6 @@ SccsResult evaluate_pw_sccs(
     std::unique_ptr<CoulombOperator> coulomb;
     if (config.boundary == ModulePcc::Boundary::Pcc0d)
     {
-        ModulePcc::validate_pcc_geometry(pcc_geometry);
         coulomb.reset(new PccCoulombOperator(basis,
                                              tpiba,
                                              positions,
@@ -170,7 +169,6 @@ SccsResult evaluate_pw_sccs(
     }
     else if (config.boundary == ModulePcc::Boundary::Pcc2d)
     {
-        ModulePcc::validate_pcc_2d_parameters(pcc_2d_geometry.parameters);
         coulomb.reset(new Pcc2dCoulombOperator(basis,
                                                tpiba,
                                                positions,

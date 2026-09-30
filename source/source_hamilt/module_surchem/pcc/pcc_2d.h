@@ -31,12 +31,14 @@ struct Pcc2dParameters
 
 // The slab is open along lattice vector `axis` (0, 1 or 2), which must be
 // perpendicular to the two periodic lattice vectors; `normal` is its unit
-// vector and `origin` the reference coordinate along it.
+// vector and `origin` the reference coordinate along it. The multipoles are
+// taken about the origin, and coordinates wrap half a cell length from it, so
+// that plane must lie in the vacuum. The defaults match pcc_2d_axis 2.
 struct Pcc2dGeometry
 {
     Pcc2dParameters parameters;
-    int axis = 1;
-    ModuleBase::Vector3<double> normal = ModuleBase::Vector3<double>(0.0, 1.0, 0.0);
+    int axis = 2;
+    ModuleBase::Vector3<double> normal = ModuleBase::Vector3<double>(0.0, 0.0, 1.0);
     double origin = 0.0;
 };
 

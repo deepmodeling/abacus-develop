@@ -20,10 +20,13 @@ ModulePcc::Pcc2dParameters parameters()
     return value;
 }
 
+// A slab open along y (pcc_2d_axis 1) with its origin at y = origin_y.
 ModulePcc::Pcc2dGeometry geometry(const double origin_y)
 {
     ModulePcc::Pcc2dGeometry value;
     value.parameters = parameters();
+    value.axis = 1;
+    value.normal = ModuleBase::Vector3<double>(0.0, 1.0, 0.0);
     value.origin = origin_y;
     return value;
 }
@@ -271,9 +274,8 @@ void expect_planar_correction(const ModulePcc::Pcc2dParameters& value,
         points[index].charge = charges[index];
         points[index].position.y = locations[index];
     }
-    ModulePcc::Pcc2dGeometry origin_geometry;
+    ModulePcc::Pcc2dGeometry origin_geometry = geometry(0.0);
     origin_geometry.parameters = value;
-    origin_geometry.origin = 0.0;
     const ModulePcc::Pcc2dMoments moments
         = ModulePcc::pcc_2d_point_charge_moments(points, origin_geometry);
     const std::vector<double> evaluation_points{-5.2, -0.8, 1.4, 5.1};
@@ -350,12 +352,11 @@ TEST(SccsPcc2d, GradientFollowsNormalAndMatchesCentralDifference)
     moments.dipole = 0.7;
     moments.quadrupole = 4.1;
     const ModulePcc::Pcc2dParameters value = parameters();
-    ModulePcc::Pcc2dGeometry geometry;
-    geometry.parameters = value;
+    ModulePcc::Pcc2dGeometry slab = geometry(0.0);
     const double y = -1.3;
     const double step = 1.0e-5;
     const ModuleBase::Vector3<double> gradient
-        = ModulePcc::pcc_2d_potential_gradient(moments, y, geometry);
+        = ModulePcc::pcc_2d_potential_gradient(moments, y, slab);
     const double finite
         = (ModulePcc::pcc_2d_potential(moments, y + step, value)
            - ModulePcc::pcc_2d_potential(moments, y - step, value))
@@ -365,10 +366,10 @@ TEST(SccsPcc2d, GradientFollowsNormalAndMatchesCentralDifference)
     EXPECT_NEAR(gradient.y, finite, 1.0e-11);
     EXPECT_DOUBLE_EQ(gradient.z, 0.0);
 
-    geometry.axis = 2;
-    geometry.normal = ModuleBase::Vector3<double>(0.0, 0.0, 1.0);
+    slab.axis = 2;
+    slab.normal = ModuleBase::Vector3<double>(0.0, 0.0, 1.0);
     const ModuleBase::Vector3<double> along_z
-        = ModulePcc::pcc_2d_potential_gradient(moments, y, geometry);
+        = ModulePcc::pcc_2d_potential_gradient(moments, y, slab);
     EXPECT_DOUBLE_EQ(along_z.x, 0.0);
     EXPECT_DOUBLE_EQ(along_z.y, 0.0);
     EXPECT_NEAR(along_z.z, finite, 1.0e-11);
