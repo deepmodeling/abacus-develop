@@ -39,6 +39,8 @@ namespace RpaLriDetail
 constexpr int LIBRPA_COULOMB_V1_MARKER = -20129433;
 constexpr int LIBRPA_LRICOEF_V1_MARKER = -10267453;
 constexpr int LIBRPA_SHRINK_SINVS_V1_MARKER = -30241621;
+constexpr int LIBRPA_KS_EIGENVECTOR_V1_MARKER = -12345679;
+constexpr int LIBRPA_KS_EIGENVECTOR_V1_KIND_COMPLEX_DOUBLE = 28;
 constexpr int LIBRPA_COULOMB_V1_COMPLEX_FLAG = 1;
 
 static_assert(sizeof(std::complex<double>) == 2 * sizeof(double),
@@ -113,6 +115,24 @@ inline std::int64_t checked_i64_from_u64(const unsigned long long value, const s
         throw std::runtime_error(context + " exceeds int64_t range.");
     }
     return static_cast<std::int64_t>(value);
+}
+
+inline std::int32_t checked_i32_from_size(const std::size_t value, const std::string& context)
+{
+    if (value > static_cast<std::size_t>(std::numeric_limits<std::int32_t>::max()))
+    {
+        throw std::runtime_error(context + " exceeds int32_t range.");
+    }
+    return static_cast<std::int32_t>(value);
+}
+
+inline std::int32_t checked_i32_from_int(const int value, const std::string& context)
+{
+    if (value < 0)
+    {
+        throw std::runtime_error(context + " is negative.");
+    }
+    return checked_i32_from_size(static_cast<std::size_t>(value), context);
 }
 
 inline int sum_int_vector(const std::vector<int>& values)
@@ -281,59 +301,6 @@ inline void write_librpa_split_basis_file(const UnitCell& ucell,
     }
 }
 
-inline void append_unique_abfs_layout_candidates(
-    std::vector<std::vector<std::vector<int>>>& candidates_by_type,
-    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs)
-{
-    if (abfs.empty())
-    {
-        return;
-    }
-
-    const auto shell_counts_by_type = collect_abfs_l_nchi(abfs);
-    if (candidates_by_type.empty())
-    {
-        candidates_by_type.resize(shell_counts_by_type.size());
-    }
-    else if (candidates_by_type.size() != shell_counts_by_type.size())
-    {
-        throw std::runtime_error("ABF shell-layout candidates are inconsistent with the atom-type count.");
-    }
-
-    for (std::size_t itype = 0; itype < shell_counts_by_type.size(); ++itype)
-    {
-        const auto& shell_counts = shell_counts_by_type[itype];
-        auto& layouts = candidates_by_type[itype];
-        if (std::find(layouts.begin(), layouts.end(), shell_counts) == layouts.end())
-        {
-            layouts.push_back(shell_counts);
-        }
-    }
-}
-
-inline std::vector<std::string> collect_atom_type_labels(const UnitCell& ucell)
-{
-    std::vector<std::string> labels(static_cast<std::size_t>(ucell.ntype));
-    for (int itype = 0; itype < ucell.ntype; ++itype)
-    {
-        labels[static_cast<std::size_t>(itype)] = ucell.atom_label[itype];
-    }
-    return labels;
-}
-
-inline int max_layout_lmax(const std::vector<std::vector<std::vector<int>>>& candidates_by_type)
-{
-    int lmax = -1;
-    for (const auto& type_candidates : candidates_by_type)
-    {
-        for (const auto& shell_counts : type_candidates)
-        {
-            lmax = std::max(lmax, static_cast<int>(shell_counts.size()) - 1);
-        }
-    }
-    return lmax;
-}
-
 template<typename Tdata>
 inline bool has_valid_matrix_shape(const RI::Tensor<Tdata>& tensor)
 {
@@ -408,6 +375,7 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
     this->out_bands(pelec);
     this->out_eigen_vector(parav, psi);
     this->out_struc(ucell);
+    this->out_bz_sampling(ucell);
 
     std::cout << "rpa_pca_threshold: " << this->info.pca_threshold << std::endl;
     std::cout << "rpa_ccp_rmesh_times_cut: " << this->ccp_rmesh_times_cut << std::endl;
@@ -1377,7 +1345,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_v1(const UnitCell& ucell,
 
     std::stringstream ss;
     ss << filename << GlobalV::MY_RANK << ".txt";
-    const std::string out_name = ss.str();
+    const std::string out_name = outdir + ss.str();
     std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
     if (!ofs.good())
     {
@@ -1621,162 +1589,147 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
     const int nbasis = parav.get_wfc_global_nbasis();
     const std::size_t values_per_iw = static_cast<std::size_t>(nbands) * npsin_tmp;
 
-#ifdef __MPI
-    const MPI_Comm mpi_comm = parav.comm();
-    const int mpi_rank = parav.get_coord_row() * parav.get_dim1() + parav.get_coord_col();
-    const int mpi_size = parav.get_dim0() * parav.get_dim1();
-    const auto check_mpi = [mpi_comm](const int local_error, const std::string& context) {
-        const int local_failed = local_error == MPI_SUCCESS ? 0 : 1;
-        int any_failed = 0;
-        if (MPI_Allreduce(&local_failed, &any_failed, 1, MPI_INT, MPI_MAX, mpi_comm) != MPI_SUCCESS
-            || any_failed != 0)
+    if (PARAM.inp.out_librpa_reader_version == 1)
+    {
+        struct KSEigenRecord
         {
-            throw std::runtime_error(context);
-        }
-    };
-    // 1. Assign a contiguous basis interval to each rank. Rank order also
-    // gives the order of the corresponding text blocks in the output file.
-    std::vector<int> output_basis_counts(mpi_size, nbasis / mpi_size);
-    for (int ip = 0; ip < nbasis % mpi_size; ++ip)
-    {
-        ++output_basis_counts[ip];
-    }
-    std::vector<int> output_basis_offsets(mpi_size + 1, 0);
-    std::vector<int> output_basis_owner(nbasis);
-    for (int ip = 0; ip < mpi_size; ++ip)
-    {
-        output_basis_offsets[ip + 1]
-            = output_basis_offsets[ip] + output_basis_counts[ip];
-        std::fill(output_basis_owner.begin() + output_basis_offsets[ip],
-                  output_basis_owner.begin() + output_basis_offsets[ip + 1],
-                  ip);
-    }
-    const int local_nw = output_basis_counts[mpi_rank];
-#else
-    const int mpi_rank = 0;
-    const int local_nw = nbasis;
-#endif
-    const std::size_t local_size = static_cast<std::size_t>(local_nw) * values_per_iw;
-    std::vector<std::complex<double>> local_wfc(local_size);
-#ifdef __MPI
-    struct WfcPackIndex
-    {
-        int spin;
-        int band;
-        int basis;
-    };
+            std::int32_t ik = 0;
+            std::int64_t payload_offset = 0;
+            std::vector<std::complex<double>> payload;
+        };
 
-    // 2. Build the 2D block-cyclic to contiguous-basis redistribution map.
-    // ncol_bands is the number of wavefunction bands stored on this rank.
-    const int local_band_count = parav.ncol_bands;
-    const unsigned long long send_size_wide
-        = static_cast<unsigned long long>(local_band_count) * psi.get_nbasis() * npsin_tmp;
-    const unsigned long long recv_size_wide
-        = static_cast<unsigned long long>(local_nw) * values_per_iw;
-    const unsigned long long max_alltoallv_count = std::numeric_limits<int>::max();
-    check_mpi(send_size_wide <= max_alltoallv_count && recv_size_wide <= max_alltoallv_count
-                  ? MPI_SUCCESS
-                  : MPI_ERR_COUNT,
-              "RPA eigenvector buffer exceeds MPI_Alltoallv count range.");
+        std::vector<KSEigenRecord> records;
+        records.reserve(static_cast<std::size_t>(nks_tot));
 
-    // Group every locally owned (band, basis, spin) coefficient by destination rank.
-    std::vector<int> send_counts(mpi_size, 0);
-    for (int ib = 0; ib < nbands; ++ib)
-    {
-        if (parav.global2local_col(ib) < 0)
+        for (int ik = 0; ik < nks_tot; ik++)
         {
-            continue;
-        }
-        for (int ir = 0; ir < psi.get_nbasis(); ++ir)
-        {
-            send_counts[output_basis_owner[parav.local2global_row(ir)]] += npsin_tmp;
-        }
-    }
-    std::vector<int> send_displacements(mpi_size, 0);
-    std::vector<int> recv_counts(mpi_size);
-    std::vector<int> recv_displacements(mpi_size, 0);
-    for (int ip = 1; ip < mpi_size; ++ip)
-    {
-        send_displacements[ip] = send_displacements[ip - 1] + send_counts[ip - 1];
-    }
-    check_mpi(MPI_Alltoall(send_counts.data(), 1, MPI_INT, recv_counts.data(), 1, MPI_INT, mpi_comm),
-              "Failed to exchange RPA eigenvector redistribution counts.");
-    for (int ip = 1; ip < mpi_size; ++ip)
-    {
-        recv_displacements[ip] = recv_displacements[ip - 1] + recv_counts[ip - 1];
-    }
-    const int send_size = static_cast<int>(send_size_wide);
-    const int recv_size = static_cast<int>(recv_size_wide);
-    check_mpi(recv_displacements.back() + recv_counts.back() == recv_size
-                  ? MPI_SUCCESS
-                  : MPI_ERR_COUNT,
-              "RPA eigenvector Alltoallv redistribution map is inconsistent.");
-    // Store source-local coordinates and destination-local flat indices in the
-    // same packing order. The map is k-independent, so exchange target indices once.
-    std::vector<WfcPackIndex> pack_indices(send_size);
-    std::vector<unsigned long long> send_targets(send_size);
-    std::vector<unsigned long long> recv_targets(recv_size);
-    std::vector<int> send_positions = send_displacements;
-    for (int ib = 0; ib < nbands; ++ib)
-    {
-        const int ib_local = parav.global2local_col(ib);
-        if (ib_local < 0)
-        {
-            continue;
-        }
-        for (int ir = 0; ir < psi.get_nbasis(); ++ir)
-        {
-            const int iw = parav.local2global_row(ir);
-            const int destination = output_basis_owner[iw];
-            for (int is = 0; is < npsin_tmp; ++is)
+            std::vector<ModuleBase::ComplexMatrix> is_wfc_ib_iw(npsin_tmp);
+            for (int is = 0; is < npsin_tmp; is++)
             {
-                const int position = send_positions[destination]++;
-                pack_indices[position] = {is, ib_local, ir};
-                send_targets[position]
-                    = static_cast<unsigned long long>(iw - output_basis_offsets[destination])
-                          * values_per_iw
-                      + ib * npsin_tmp + is;
+                is_wfc_ib_iw[is].create(PARAM.inp.nbands, PARAM.globalv.nlocal);
+                for (int ib_global = 0; ib_global < PARAM.inp.nbands; ++ib_global)
+                {
+                    std::vector<std::complex<double>> wfc_iks(PARAM.globalv.nlocal, zero);
+
+                    const int ib_local = parav.global2local_col(ib_global);
+
+                    if (ib_local >= 0)
+                    {
+                        for (int ir = 0; ir < psi.get_nbasis(); ir++)
+                        {
+                            wfc_iks[parav.local2global_row(ir)] = psi(ik + nks_tot * is, ib_local, ir);
+                        }
+                    }
+
+                    std::vector<std::complex<double>> tmp = wfc_iks;
+#ifdef __MPI
+                    MPI_Allreduce(&tmp[0],
+                                  &wfc_iks[0],
+                                  PARAM.globalv.nlocal,
+                                  MPI_DOUBLE_COMPLEX,
+                                  MPI_SUM,
+                                  MPI_COMM_WORLD);
+#endif
+                    for (int iw = 0; iw < PARAM.globalv.nlocal; iw++)
+                    {
+                        is_wfc_ib_iw[is](ib_global, iw) = wfc_iks[iw];
+                    }
+                }
+            }
+
+            if (GlobalV::MY_RANK == 0)
+            {
+                KSEigenRecord record;
+                record.ik = static_cast<std::int32_t>(ik + 1);
+                record.payload.reserve(static_cast<std::size_t>(npsin_tmp)
+                                       * static_cast<std::size_t>(PARAM.inp.nbands)
+                                       * static_cast<std::size_t>(PARAM.globalv.nlocal));
+                if (PARAM.inp.nspin == 4)
+                {
+                    if (PARAM.globalv.nlocal % 2 != 0)
+                    {
+                        throw std::runtime_error("SOC KS eigenvector output expects an even basis size.");
+                    }
+                    const int nlocal_ao = PARAM.globalv.nlocal / 2;
+                    for (int isoc = 0; isoc < 2; ++isoc)
+                    {
+                        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
+                        {
+                            for (int iw = 0; iw < nlocal_ao; ++iw)
+                            {
+                                record.payload.push_back(is_wfc_ib_iw[0](ib, iw * 2 + isoc));
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    for (int is = 0; is < npsin_tmp; ++is)
+                    {
+                        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
+                        {
+                            for (int iw = 0; iw < PARAM.globalv.nlocal; ++iw)
+                            {
+                                record.payload.push_back(is_wfc_ib_iw[is](ib, iw));
+                            }
+                        }
+                    }
+                }
+                records.push_back(std::move(record));
             }
         }
-    }
-    std::complex<double> dummy(0.0, 0.0);
-    unsigned long long dummy_target = 0;
-    check_mpi(MPI_Alltoallv(send_size > 0 ? send_targets.data() : &dummy_target,
-                            send_counts.data(),
-                            send_displacements.data(),
-                            MPI_UNSIGNED_LONG_LONG,
-                            recv_size > 0 ? recv_targets.data() : &dummy_target,
-                            recv_counts.data(),
-                            recv_displacements.data(),
-                            MPI_UNSIGNED_LONG_LONG,
-                            mpi_comm),
-              "Failed to exchange RPA eigenvector destination indices.");
-    std::vector<std::complex<double>> send_wfc(send_size);
-    std::vector<std::complex<double>> recv_wfc(recv_size);
-#endif
-    std::string output_buffer;
-    constexpr std::size_t output_line_bytes = 61; // required width: 2 * 30 columns plus '\n'
-    output_buffer.reserve(local_size * output_line_bytes + 32); // 32 bytes for the k-point index and newline
 
-    // 3. Open the unified output file once for all k points.
-    const std::string filename = outdir + "KS_eigenvector.txt";
-#ifdef __MPI
-    MPI_File file = MPI_FILE_NULL;
-    unsigned long long total_file_bytes = 0; // start offset of the current k point
-    const unsigned long long max_mpi_offset
-        = static_cast<unsigned long long>(std::numeric_limits<MPI_Offset>::max());
-    const char dummy_buffer = '\0';
-    check_mpi(MPI_File_open(mpi_comm,
-                            filename.c_str(),
-                            MPI_MODE_CREATE | MPI_MODE_WRONLY,
-                            MPI_INFO_NULL,
-                            &file),
-              "Failed to open " + filename + ".");
-    check_mpi(MPI_File_set_size(file, 0), "Failed to truncate " + filename + ".");
-#else
-    std::ofstream ofs(filename.c_str(), std::ios::out);
-#endif
-    // 4. Process k points in file order; all ranks participate in each iteration.
+        if (GlobalV::MY_RANK == 0)
+        {
+            const std::string out_name = outdir + "KS_eigenvector_0.dat";
+            const std::int64_t record_bytes = static_cast<std::int64_t>(sizeof(std::int32_t))
+                + static_cast<std::int64_t>(sizeof(std::int64_t));
+            std::int64_t offset = 6 * static_cast<std::int64_t>(sizeof(std::int32_t))
+                + static_cast<std::int64_t>(records.size()) * record_bytes;
+            for (auto& record: records)
+            {
+                record.payload_offset = offset;
+                offset += static_cast<std::int64_t>(record.payload.size() * sizeof(std::complex<double>));
+            }
+
+            std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+            if (!ofs.good())
+            {
+                throw std::runtime_error("Failed to open " + out_name);
+            }
+
+            const std::int32_t marker = RpaLriDetail::LIBRPA_KS_EIGENVECTOR_V1_MARKER;
+            const std::int32_t kind = RpaLriDetail::LIBRPA_KS_EIGENVECTOR_V1_KIND_COMPLEX_DOUBLE;
+            const std::int32_t nkpoints_local = RpaLriDetail::checked_i32_from_size(records.size(),
+                                                                                    "KS eigenvector k-point count");
+            const std::int32_t nspins = RpaLriDetail::checked_i32_from_int(npsin_tmp, "KS eigenvector spin count");
+            const std::int32_t nstates = RpaLriDetail::checked_i32_from_int(PARAM.inp.nbands,
+                                                                            "KS eigenvector state count");
+            const std::int32_t nbasis_wfc = RpaLriDetail::checked_i32_from_int(PARAM.globalv.nlocal,
+                                                                               "KS eigenvector basis count");
+            RpaLriDetail::write_scalar(ofs, marker, out_name);
+            RpaLriDetail::write_scalar(ofs, kind, out_name);
+            RpaLriDetail::write_scalar(ofs, nkpoints_local, out_name);
+            RpaLriDetail::write_scalar(ofs, nspins, out_name);
+            RpaLriDetail::write_scalar(ofs, nstates, out_name);
+            RpaLriDetail::write_scalar(ofs, nbasis_wfc, out_name);
+            for (const auto& record: records)
+            {
+                RpaLriDetail::write_scalar(ofs, record.ik, out_name);
+                RpaLriDetail::write_scalar(ofs, record.payload_offset, out_name);
+            }
+            for (const auto& record: records)
+            {
+                RpaLriDetail::checked_write(ofs,
+                                            record.payload.data(),
+                                            record.payload.size() * sizeof(std::complex<double>),
+                                            out_name);
+            }
+            ofs.close();
+        }
+        return;
+    }
+
     for (int ik = 0; ik < nks_tot; ik++)
     {
 #ifdef __MPI
@@ -1948,7 +1901,6 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
         ofs << std::setw(15) << kpoint.x << std::setw(15) << kpoint.y
             << std::setw(15) << kpoint.z << std::endl;
     }
-    // added for BZ to IBZ (actually LibRPA interface only support BZ by 2025/03/30)
     if (PARAM.inp.symmetry == "-1")
     {
         for (int ik = 0; ik != nks_tot; ++ik)
@@ -1958,6 +1910,54 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
     }
     ofs.close();
     return;
+}
+
+template <typename T, typename Tdata>
+void RPA_LRI<T, Tdata>::out_bz_sampling(const UnitCell& ucell)
+{
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
+
+    ModuleBase::TITLE("DFT_RPA_interface", "out_bz_sampling");
+    const int nks_tot = PARAM.inp.nspin == 2 ? static_cast<int>(p_kv->get_nks()) / 2 : p_kv->get_nks();
+    const int n_coulomb_irreducible = nks_tot;
+
+    std::ofstream ofs(outdir + "bz_sampling_out", std::ios::out | std::ios::trunc);
+    if (!ofs.good())
+    {
+        throw std::runtime_error("Failed to open bz_sampling_out");
+    }
+    ofs << p_kv->nmp[0] << std::setw(6) << p_kv->nmp[1] << std::setw(6) << p_kv->nmp[2] << std::endl;
+    ofs << nks_tot << std::setw(8) << n_coulomb_irreducible << std::endl;
+    double weight_sum = 0.0;
+    for (int ik = 0; ik < nks_tot; ++ik)
+    {
+        weight_sum += p_kv->wk[ik];
+    }
+    if (weight_sum <= 0.0)
+    {
+        throw std::runtime_error("Cannot write bz_sampling_out with non-positive total k-point weight.");
+    }
+    for (int ik = 0; ik < nks_tot; ++ik)
+    {
+        const ModuleBase::Vector3<double> kvec_cartesian
+            = p_kv->kvec_c[ik] * (ModuleBase::TWO_PI / ucell.lat0);
+        ofs << std::setw(8) << ik + 1
+            << std::setw(24) << std::scientific << std::setprecision(15)
+            << (p_kv->wk[ik] / weight_sum)
+            << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_d[ik].x
+            << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_d[ik].y
+            << std::setw(24) << std::scientific << std::setprecision(15) << p_kv->kvec_d[ik].z
+            << std::setw(24) << std::scientific << std::setprecision(15) << kvec_cartesian.x
+            << std::setw(24) << std::scientific << std::setprecision(15) << kvec_cartesian.y
+            << std::setw(24) << std::scientific << std::setprecision(15) << kvec_cartesian.z
+            << std::setw(8) << ik + 1
+            << std::setw(8) << ik + 1
+            << std::endl;
+    }
+    ofs.close();
 }
 
 template <typename T, typename Tdata>
@@ -2129,7 +2129,7 @@ void RPA_LRI<T, Tdata>::out_Cs_v1(const UnitCell& ucell,
 
     std::stringstream ss;
     ss << filename << GlobalV::MY_RANK << ".txt";
-    const std::string out_name = ss.str();
+    const std::string out_name = outdir + ss.str();
     std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
     if (!ofs.good())
     {
@@ -2285,13 +2285,16 @@ void RPA_LRI<T, Tdata>::out_librpa_basis_v1(const UnitCell& ucell,
 
     const auto wfc_l_nchi = RpaLriDetail::collect_wfc_l_nchi(ucell);
     const auto aux_l_nchi = RpaLriDetail::collect_abfs_l_nchi(exx_lri->abfs);
-    RpaLriDetail::write_librpa_split_basis_file(ucell, type_nw, wfc_l_nchi, "basis_wfc_out");
-    RpaLriDetail::write_librpa_split_basis_file(ucell, type_naux, aux_l_nchi, aux_filename);
+    const std::string wfc_filename = outdir + "basis_wfc_out";
+    const std::string aux_output_filename = outdir + aux_filename;
+    const std::string legacy_output_filename = outdir + legacy_filename;
+    RpaLriDetail::write_librpa_split_basis_file(ucell, type_nw, wfc_l_nchi, wfc_filename);
+    RpaLriDetail::write_librpa_split_basis_file(ucell, type_naux, aux_l_nchi, aux_output_filename);
 
-    std::ofstream ofs(legacy_filename, std::ios::out | std::ios::trunc);
+    std::ofstream ofs(legacy_output_filename, std::ios::out | std::ios::trunc);
     if (!ofs.good())
     {
-        throw std::runtime_error("Failed to open " + legacy_filename);
+        throw std::runtime_error("Failed to open " + legacy_output_filename);
     }
     ofs << std::setw(10) << ucell.ntype
         << std::setw(10) << total_wfc
@@ -2439,7 +2442,7 @@ void RPA_LRI<T, Tdata>::out_coulomb_k_v1(const UnitCell& ucell,
 
         std::stringstream ss;
         ss << filename << ik + 1 << "_rank" << GlobalV::MY_RANK << ".dat";
-        const std::string out_name = ss.str();
+        const std::string out_name = outdir + ss.str();
         std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
         if (!ofs.good())
         {

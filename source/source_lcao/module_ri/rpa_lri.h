@@ -76,6 +76,7 @@ template <typename T, typename Tdata> class RPA_LRI
                              const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs);
     void out_eigen_vector(const Parallel_Orbitals& parav, const psi::Psi<T>& psi);
     void out_struc(const UnitCell& ucell);
+    void out_bz_sampling(const UnitCell& ucell);
     void out_bands(const elecstate::ElecState *pelec);
     void out_velocity(const UnitCell& ucell,
         const Grid_Driver& gd,
