@@ -193,10 +193,8 @@ void Charge_Mixing::mix_reset()
 {
     this->mixing->reset();
     this->rho_mdata.reset();
-    // mix_dmr applies the Pulay coefficients computed from the rho history to
-    // the density-matrix history, so both must restart together. This matters
-    // when the Hamiltonian changes mid-SCF (delayed SCCS start); at iteration 1
-    // chgmixing_ks_lcao re-initializes the DMR history anyway.
+    // mix_dmr reuses the Pulay coefficients of the rho history, so the
+    // density-matrix history must restart with it.
     this->dmr_mdata.reset();
     // initailize tau_mdata
     if (cfg_.mixing_tau)
