@@ -653,7 +653,14 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.rpa)
     {
-        RPA_LRI<TK, double> rpa_lri_double(exx_info.info_ri);
+        const ModuleRI::RpaLriRuntime rpa_runtime = {
+            inp,
+            global_out_dir,
+            pv.get_global_row_size(),
+            GlobalV::MY_RANK,
+            GlobalV::NPROC,
+            GlobalV::ofs_running};
+        RPA_LRI<TK, double> rpa_lri_double(exx_info.info_ri, rpa_runtime);
         rpa_lri_double.postSCF(ucell, MPI_COMM_WORLD, *dm, pelec, kv, orb, pv, *psi);
         if (inp.rpa_out_vel)
             rpa_lri_double.out_velocity(ucell, gd, two_center_bundle, pv, *psi, pelec);
