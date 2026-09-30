@@ -1,5 +1,6 @@
 #include "esolver_ks.h"
 #include "source_base/timer_wrapper.h"
+#include "source_base/parallel_common.h"
 
 // for jason output information
 #include "source_io/module_json/output_info.h"
@@ -257,15 +258,19 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 {
     const bool is_output_rank
         = this->kv.para_k.my_pool == 0 && this->kv.para_k.rank_in_pool == 0;
+    // chgmixing_ks broadcasts drho only later; decide the delayed SCCS start
+    // on the root value so every rank enters the SCCS reductions together.
+    double sccs_start_drho = this->drho;
+    Parallel_Common::bcast_double(sccs_start_drho);
     const bool sccs_activated_this_iteration
-        = this->solvent.try_activate_sccs(iter, this->drho);
+        = this->solvent.try_activate_sccs(iter, sccs_start_drho);
     if (sccs_activated_this_iteration)
     {
         this->p_chgmix->mix_reset();
         if (is_output_rank && this->inp_->sccs_debug > 0)
         {
             std::cout << " SCCS activated at electronic iteration " << iter
-                      << ", previous DRHO = " << this->drho << std::endl;
+                      << ", DRHO = " << sccs_start_drho << std::endl;
         }
     }
 
