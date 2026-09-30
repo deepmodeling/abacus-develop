@@ -157,6 +157,16 @@ def verify_gpu(executable, root):
         delta = max_difference(bands(reference), bands(target))
         assert delta < 2e-6, f"CPU/GPU {name} mismatch: {delta} eV"
         print(f"CPU source, CPU/GPU {name} targets: max difference {delta:.3g} eV")
+    single = create_case(root, "gpu_single", extra, PATH)
+    text = (single / "INPUT").read_text().replace("device cpu", "device gpu")
+    text = text.replace("precision double", "precision single")
+    text = text.replace("pw_diag_thr 1e-10", "pw_diag_thr 1e-6")
+    (single / "INPUT").write_text(text)
+    run(executable, single, [])
+    reference = [row[:3] for row in bands(root / "cpu_path")]
+    delta = max_difference(reference, bands(single))
+    assert delta < 2e-4, f"Single-precision GPU restart mismatch: {delta} eV"
+    print(f"CPU double source, GPU single 3-band path: max difference {delta:.3g} eV")
     assert digest(source) == original, "GPU NSCF modified CPU source files"
 
     gpu_scf = create_case(root, "gpu_scf", "calculation scf\nout_chg 1\nout_wfc_pw 2\nnspin 2\n")

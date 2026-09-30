@@ -22,6 +22,7 @@
 #include <cmath>
 #include <complex>
 #include <cstdlib>
+#include <string>
 #include <utility>
 
 namespace hamilt
@@ -90,8 +91,12 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     Real tpiba2 = tpiba * tpiba;
 
     // initialize rhopw_dev on the resolved EXX cutoff
-    rhopw_dev = new ModulePW::PW_Basis(wfcpw->get_device(), rhopw->get_precision());
-    rhopw_dev->fft_bundle.setfft(wfcpw->get_device(), rhopw->get_precision());
+    // Pair densities have the wavefunction precision, while the ordinary
+    // charge density may retain double precision in a single-precision run.
+    const std::string exchange_device = wfcpw->get_device();
+    const std::string exchange_precision = wfcpw->get_precision();
+    rhopw_dev = new ModulePW::PW_Basis(exchange_device, exchange_precision);
+    rhopw_dev->fft_bundle.setfft(exchange_device, exchange_precision);
 #ifdef __MPI
     rhopw_dev->initmpi(rhopw->poolnproc, rhopw->poolrank, rhopw->pool_world);
 #endif

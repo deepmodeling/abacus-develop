@@ -132,18 +132,25 @@ For a CUDA build and an available GPU, also run:
 
 ```bash
 python3 tests/integrate/tools/test_hybrid_nscf.py ./build/abacus --gpu
+OMP_NUM_THREADS=1 ctest --test-dir build -V -R '^PW_HYBRID_NSCF(_GPU)?$'
 ```
 
 This compares CPU and GPU targets using one frozen CPU source on both a mesh
 and an independent path with extra target bands, then checks a GPU-generated
 spin-polarized source with CPU and GPU targets. Source files must remain
-unchanged. The corresponding CTest is `PW_HYBRID_NSCF_GPU`.
+unchanged. A three-band single-precision GPU path additionally checks conversion
+from a double-precision CPU source and the full-grid exchange FFT precision.
+Single precision uses the existing looser diagonalization threshold; use
+`precision double` for accurate high-energy target bands. The corresponding CTest is `PW_HYBRID_NSCF_GPU`.
 
 On a local RTX 3090 with CUDA 13.1, both CTests passed in a CUDA build.
 The H CPU/GPU mesh, independent path and both spin-channel eigenvalues agreed
 at the printed precision, as did all eight bands at nine Si L-Gamma-X points
 using the same frozen CPU source (`20 Ry`, `2x2x2` source mesh). The Si check
-compared raw eigenvalues without an energy shift. This validates device
+compared raw eigenvalues without an energy shift. The three-band H
+single-precision GPU path differed by at most `5.76e-5 eV` from double precision.
+The CPU build also passed its checkpoint unit tests and NSCF integration test.
+This validates device
 consistency; it does not change the cross-code convergence limits below.
 
 On the initial local two-q-point, 10 Ry test, the same-mesh SCF/NSCF maximum
