@@ -70,12 +70,12 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
     ModuleBase::matrix potential;
     correction.v_correction_pcc(cell, basis, 1, density_channels, potential);
     ModulePcc::Pcc2dGeometry geometry
-        = ModulePcc::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
-    geometry.origin_y = cell.atoms[0].tau[0].y * cell.lat0;
+        = ModulePcc::pcc_2d_geometry(cell.latvec, cell.lat0, 1, 1.0e-10);
+    geometry.origin = cell.atoms[0].tau[0].y * cell.lat0;
     const double electron_y
-        = geometry.parameters.cell_length_y
+        = geometry.parameters.cell_length
           * static_cast<double>(electron_plane_y) / basis.ny;
-    const double dipole_y = -ModulePcc::pcc_2d_relative_y(electron_y, geometry);
+    const double dipole_y = -ModulePcc::pcc_2d_relative_coordinate(ModuleBase::Vector3<double>(0.0, electron_y, 0.0), geometry);
     const double expected_energy = 2.0 * ModuleBase::PI * dipole_y * dipole_y / cell.omega;
     EXPECT_NEAR(surchem::Epcc, 2.0 * expected_energy, 1.0e-12);
     EXPECT_DOUBLE_EQ(surchem::Ael, 0.0);

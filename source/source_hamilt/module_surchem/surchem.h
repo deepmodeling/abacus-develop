@@ -33,6 +33,7 @@ struct SurchemParameters
     bool use_sccs = false;
     bool use_legacy_solvent = false;
     ModulePcc::Boundary pcc_boundary = ModulePcc::Boundary::Periodic;
+    int pcc_2d_axis = 1;  ///< open lattice vector (0, 1 or 2) of pcc_2d
     ModuleSccs::SccsConfig sccs_config;
     double expected_electron_count = 0.0;
     double expected_ionic_charge = 0.0;

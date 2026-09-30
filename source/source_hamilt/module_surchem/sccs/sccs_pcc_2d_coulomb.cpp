@@ -19,7 +19,7 @@ Pcc2dCoulombOperator::Pcc2dCoulombOperator(
     const ModulePcc::Pcc2dGeometry& geometry,
     const ModuleSurchem::ChargeReduction& reduction)
     : periodic_(basis, tpiba),
-      relative_y_(positions.size()),
+      relative_coordinates_(positions.size()),
       volume_element_(volume_element),
       geometry_(geometry),
       reduction_(reduction)
@@ -37,7 +37,7 @@ Pcc2dCoulombOperator::Pcc2dCoulombOperator(
     }
     for (std::size_t index = 0; index < positions.size(); ++index)
     {
-        relative_y_[index] = ModulePcc::pcc_2d_relative_y(positions[index].y, geometry_);
+        relative_coordinates_[index] = ModulePcc::pcc_2d_relative_coordinate(positions[index], geometry_);
     }
 }
 
@@ -46,12 +46,12 @@ void Pcc2dCoulombOperator::apply_potential(const std::vector<double>& charge,
                                            std::vector<double>& potential) const
 {
     periodic_.apply_potential(charge, potential);
-    const ModulePcc::Pcc2dMoments local_moments = ModulePcc::pcc_2d_density_moments_from_relative_y(
-        charge, relative_y_, volume_element_);
+    const ModulePcc::Pcc2dMoments local_moments = ModulePcc::pcc_2d_density_moments_from_relative_coordinates(
+        charge, relative_coordinates_, volume_element_);
     const ModulePcc::Pcc2dMoments moments = ModulePcc::reduce_pcc_2d_moments(local_moments, reduction_);
     for (std::size_t index = 0; index < charge.size(); ++index)
     {
-        potential[index] += ModulePcc::pcc_2d_potential(moments, relative_y_[index], geometry_.parameters);
+        potential[index] += ModulePcc::pcc_2d_potential(moments, relative_coordinates_[index], geometry_.parameters);
     }
 }
 

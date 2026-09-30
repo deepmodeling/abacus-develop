@@ -491,18 +491,18 @@ TEST(HCorrSccs, AppliesNeutralPcc2dPointIonEnergyAndPotential)
 
     const ModuleSccs::SccsResult& result = solvent.sccs_result();
     ModulePcc::Pcc2dGeometry geometry
-        = ModulePcc::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
-    geometry.origin_y = cell.atoms[0].tau[0].y * cell.lat0;
+        = ModulePcc::pcc_2d_geometry(cell.latvec, cell.lat0, 1, 1.0e-10);
+    geometry.origin = cell.atoms[0].tau[0].y * cell.lat0;
     const double electron_y
-        = geometry.parameters.cell_length_y
+        = geometry.parameters.cell_length
           * static_cast<double>(electron_plane_y)
           / static_cast<double>(basis.ny);
     const double dipole_y
-        = -ModulePcc::pcc_2d_relative_y(electron_y, geometry);
+        = -ModulePcc::pcc_2d_relative_coordinate(ModuleBase::Vector3<double>(0.0, electron_y, 0.0), geometry);
     const double expected_energy = 2.0 * ModuleBase::PI * dipole_y * dipole_y / volume;
     EXPECT_NEAR(result.charge.net_charge, 0.0, 1.0e-12);
     EXPECT_NEAR(result.point_solute_moments_2d.charge, 0.0, 1.0e-12);
-    EXPECT_NEAR(result.point_solute_moments_2d.dipole_y, dipole_y, 1.0e-12);
+    EXPECT_NEAR(result.point_solute_moments_2d.dipole, dipole_y, 1.0e-12);
     EXPECT_NEAR(result.vacuum_pcc_energy, expected_energy, 1.0e-12);
     EXPECT_NEAR(result.electrostatic.reaction_energy, 0.0, 1.0e-14);
     EXPECT_NEAR(surchem::Ael, 0.0, 1.0e-13);
@@ -586,7 +586,7 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     // Point-ion vacuum PCC in the ENVIRON monopole gauge; no Gaussian-ion shape
     // term is added because the reaction energy does not depend on the ion width.
     const ModulePcc::Pcc2dGeometry pcc_geometry
-        = ModulePcc::pcc_2d_geometry(cell.latvec, cell.lat0, 1.0e-10);
+        = ModulePcc::pcc_2d_geometry(cell.latvec, cell.lat0, 1, 1.0e-10);
     const double expected_vacuum_energy
         = ModulePcc::pcc_2d_self_energy(result.point_solute_moments_2d,
                                          pcc_geometry.parameters);
@@ -624,11 +624,11 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
     EXPECT_NE(iteration_text.find("Q_POL_EXPECTED/e "), std::string::npos);
     EXPECT_NE(iteration_text.find("PCC2D_MOMENTS "), std::string::npos);
     EXPECT_NE(iteration_text.find("Q_SMOOTH/e "), std::string::npos);
-    EXPECT_NE(iteration_text.find("PY_SMOOTH/eBohr "), std::string::npos);
-    EXPECT_NE(iteration_text.find("QYY_SMOOTH/eBohr2 "), std::string::npos);
+    EXPECT_NE(iteration_text.find("PN_SMOOTH/eBohr "), std::string::npos);
+    EXPECT_NE(iteration_text.find("QNN_SMOOTH/eBohr2 "), std::string::npos);
     EXPECT_NE(iteration_text.find("Q_POINT/e "), std::string::npos);
-    EXPECT_NE(iteration_text.find("PY_POINT/eBohr "), std::string::npos);
-    EXPECT_NE(iteration_text.find("QYY_POINT/eBohr2 "), std::string::npos);
+    EXPECT_NE(iteration_text.find("PN_POINT/eBohr "), std::string::npos);
+    EXPECT_NE(iteration_text.find("QNN_POINT/eBohr2 "), std::string::npos);
     EXPECT_NE(iteration_text.find("PCC2D_ENERGY "), std::string::npos);
     EXPECT_NE(iteration_text.find("REACTION/Ha "), std::string::npos);
     EXPECT_NE(iteration_text.find("PCC_SMOOTH/Ha "), std::string::npos);

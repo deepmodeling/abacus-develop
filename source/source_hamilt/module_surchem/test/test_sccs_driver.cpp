@@ -98,14 +98,14 @@ TEST(SccsDriver, EvaluatesNeutralAndFixedChargePcc2dSources)
     const std::vector<ModuleBase::Vector3<double>> positions
         = ModuleSurchem::pw_grid_positions(basis, lattice, scale);
     const ModulePcc::Pcc2dGeometry geometry
-        = ModulePcc::pcc_2d_geometry(lattice, scale, 1.0e-10);
+        = ModulePcc::pcc_2d_geometry(lattice, scale, 1, 1.0e-10);
     std::vector<double> electron_density(basis.nrxx, 1.0 / volume);
     std::vector<double> ionic_density(basis.nrxx, 0.0);
     for (int index = 0; index < basis.nrxx; ++index)
     {
         ionic_density[index]
             = (1.0 + 0.4 * std::sin(ModuleBase::TWO_PI * positions[index].y
-                                    / geometry.parameters.cell_length_y))
+                                    / geometry.parameters.cell_length))
               / volume;
     }
 
@@ -138,7 +138,7 @@ TEST(SccsDriver, EvaluatesNeutralAndFixedChargePcc2dSources)
     EXPECT_NEAR(neutral.charge.net_charge, 0.0, 1.0e-12);
     EXPECT_NEAR(neutral.solute_moments_2d.charge, 0.0, 1.0e-12);
     EXPECT_NEAR(neutral.polarization_moments_2d.charge, 0.0, 1.0e-12);
-    EXPECT_GT(std::abs(neutral.solute_moments_2d.dipole_y), 1.0e-3);
+    EXPECT_GT(std::abs(neutral.solute_moments_2d.dipole), 1.0e-3);
     EXPECT_GT(neutral.smooth_vacuum_pcc_energy, 0.0);
     EXPECT_TRUE(state.valid);
 
@@ -254,8 +254,8 @@ TEST(SccsDriver, ChargedPcc2dSqrtCgPolarizationSatisfiesGaussLaw)
     const std::vector<ModuleBase::Vector3<double>> positions
         = ModuleSurchem::pw_grid_positions(basis, lattice, scale);
     const ModuleBase::Vector3<double> origin = cell_center(lattice, scale);
-    ModulePcc::Pcc2dGeometry geometry = ModulePcc::pcc_2d_geometry(lattice, scale, 1.0e-10);
-    geometry.origin_y = origin.y;
+    ModulePcc::Pcc2dGeometry geometry = ModulePcc::pcc_2d_geometry(lattice, scale, 1, 1.0e-10);
+    geometry.origin = origin.y;
     const double electron_count = 0.8;
     const double ionic_charge = 1.0;
     const double electron_width = 1.5;
@@ -337,8 +337,8 @@ TEST(SccsDriver, Pcc2dStopsWhenBulkSolventDoesNotReachTheOpenBoundary)
     const std::vector<ModuleBase::Vector3<double>> positions
         = ModuleSurchem::pw_grid_positions(basis, lattice, scale);
     const ModuleBase::Vector3<double> origin = cell_center(lattice, scale);
-    ModulePcc::Pcc2dGeometry geometry = ModulePcc::pcc_2d_geometry(lattice, scale, 1.0e-10);
-    geometry.origin_y = origin.y;
+    ModulePcc::Pcc2dGeometry geometry = ModulePcc::pcc_2d_geometry(lattice, scale, 1, 1.0e-10);
+    geometry.origin = origin.y;
     const double uniform_density = 1.0e-2;
     const double electron_count = uniform_density * volume;
     const double ionic_charge = electron_count + 1.0;
@@ -557,8 +557,8 @@ ModuleSccs::SccsResult evaluate_cation(const std::vector<double>& electron_densi
     }
     else
     {
-        pcc_2d = ModulePcc::pcc_2d_geometry(lattice, scale, 1.0e-10);
-        pcc_2d.origin_y = center.y;
+        pcc_2d = ModulePcc::pcc_2d_geometry(lattice, scale, 1, 1.0e-10);
+        pcc_2d.origin = center.y;
     }
     const ModuleSurchem::SerialChargeReduction charge_reduction;
     // A fresh state keeps every evaluation a cold start.

@@ -43,7 +43,7 @@ class Pcc2dCoulombOperator : public CoulombOperator
 
   private:
     PeriodicCoulombOperator periodic_;
-    std::vector<double> relative_y_;
+    std::vector<double> relative_coordinates_;
     double volume_element_ = 0.0;
     ModulePcc::Pcc2dGeometry geometry_;
     const ModuleSurchem::ChargeReduction& reduction_;

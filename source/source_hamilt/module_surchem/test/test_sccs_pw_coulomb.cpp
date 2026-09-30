@@ -188,7 +188,7 @@ class SccsCoulombOperatorsTest : public testing::Test
         dv = length * length * length / basis->nxyz;
         positions = ModuleSurchem::pw_grid_positions(*basis, lattice, length);
         geometry = ModulePcc::pcc_geometry(lattice, length, 1.0e-10);
-        geometry_2d = ModulePcc::pcc_2d_geometry(lattice, length, 1.0e-10);
+        geometry_2d = ModulePcc::pcc_2d_geometry(lattice, length, 1, 1.0e-10);
         charge.resize(basis->nrxx);
         other_charge.resize(basis->nrxx);
         for (int i = 0; i < basis->nrxx; ++i)

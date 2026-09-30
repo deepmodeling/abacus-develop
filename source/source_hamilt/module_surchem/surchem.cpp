@@ -147,10 +147,11 @@ void surchem::write_sccs_iteration(std::ostream& output) const
             }
             else
             {
-                output << " PCC2D_ORIGIN Y/Bohr " << this->pcc_2d_geometry_.origin_y << '\n'
+                output << " PCC2D_ORIGIN AXIS " << this->pcc_2d_geometry_.axis
+                       << " COORDINATE/Bohr " << this->pcc_2d_geometry_.origin << '\n'
                        << " PCC2D_MOMENTS Q_POINT/e " << this->pcc_2d_moments_.charge
-                       << " PY_POINT/eBohr " << this->pcc_2d_moments_.dipole_y
-                       << " QYY_POINT/eBohr2 " << this->pcc_2d_moments_.quadrupole_yy << '\n';
+                       << " PN_POINT/eBohr " << this->pcc_2d_moments_.dipole
+                       << " QNN_POINT/eBohr2 " << this->pcc_2d_moments_.quadrupole << '\n';
             }
             output << " PCC_ENERGY PCC_POINT/Ha " << 0.5 * this->pcc_energy_rydberg_
                    << " PCC_USED/Ry " << this->pcc_energy_rydberg_ << '\n';
@@ -247,11 +248,11 @@ void surchem::write_sccs_iteration(std::ostream& output) const
         output << std::setprecision(12)
                << " PCC2D_MOMENTS"
                << " Q_SMOOTH/e " << result.solute_moments_2d.charge
-               << " PY_SMOOTH/eBohr " << result.solute_moments_2d.dipole_y
-               << " QYY_SMOOTH/eBohr2 " << result.solute_moments_2d.quadrupole_yy
+               << " PN_SMOOTH/eBohr " << result.solute_moments_2d.dipole
+               << " QNN_SMOOTH/eBohr2 " << result.solute_moments_2d.quadrupole
                << " Q_POINT/e " << result.point_solute_moments_2d.charge
-               << " PY_POINT/eBohr " << result.point_solute_moments_2d.dipole_y
-               << " QYY_POINT/eBohr2 " << result.point_solute_moments_2d.quadrupole_yy
+               << " PN_POINT/eBohr " << result.point_solute_moments_2d.dipole
+               << " QNN_POINT/eBohr2 " << result.point_solute_moments_2d.quadrupole
                << '\n';
         output << " PCC2D_ENERGY"
                << " REACTION/Ha " << result.electrostatic.reaction_energy
@@ -288,30 +289,30 @@ void surchem::write_sccs_diagnostics(std::ostream& output) const
     {
         output << " SCCS_DIAGNOSTIC smooth_solute_charge "
                << result.solute_moments_2d.charge << '\n';
-        output << " SCCS_DIAGNOSTIC smooth_solute_dipole_y "
-               << result.solute_moments_2d.dipole_y << '\n';
-        output << " SCCS_DIAGNOSTIC smooth_solute_quadrupole_yy "
-               << result.solute_moments_2d.quadrupole_yy << '\n';
+        output << " SCCS_DIAGNOSTIC smooth_solute_dipole_normal "
+               << result.solute_moments_2d.dipole << '\n';
+        output << " SCCS_DIAGNOSTIC smooth_solute_quadrupole_normal "
+               << result.solute_moments_2d.quadrupole << '\n';
         output << " SCCS_DIAGNOSTIC point_solute_charge "
                << result.point_solute_moments_2d.charge << '\n';
-        output << " SCCS_DIAGNOSTIC point_solute_dipole_y "
-               << result.point_solute_moments_2d.dipole_y << '\n';
-        output << " SCCS_DIAGNOSTIC point_solute_quadrupole_yy "
-               << result.point_solute_moments_2d.quadrupole_yy << '\n';
+        output << " SCCS_DIAGNOSTIC point_solute_dipole_normal "
+               << result.point_solute_moments_2d.dipole << '\n';
+        output << " SCCS_DIAGNOSTIC point_solute_quadrupole_normal "
+               << result.point_solute_moments_2d.quadrupole << '\n';
         output << " SCCS_DIAGNOSTIC polarization_charge "
                << result.polarization_moments_2d.charge << '\n';
         output << " SCCS_DIAGNOSTIC far_field_polarization_charge "
                << result.response.far_field_polarization_charge << '\n';
-        output << " SCCS_DIAGNOSTIC polarization_dipole_y "
-               << result.polarization_moments_2d.dipole_y << '\n';
-        output << " SCCS_DIAGNOSTIC polarization_quadrupole_yy "
-               << result.polarization_moments_2d.quadrupole_yy << '\n';
+        output << " SCCS_DIAGNOSTIC polarization_dipole_normal "
+               << result.polarization_moments_2d.dipole << '\n';
+        output << " SCCS_DIAGNOSTIC polarization_quadrupole_normal "
+               << result.polarization_moments_2d.quadrupole << '\n';
         output << " SCCS_DIAGNOSTIC screened_charge "
                << result.screened_moments_2d.charge << '\n';
-        output << " SCCS_DIAGNOSTIC screened_dipole_y "
-               << result.screened_moments_2d.dipole_y << '\n';
-        output << " SCCS_DIAGNOSTIC screened_quadrupole_yy "
-               << result.screened_moments_2d.quadrupole_yy << '\n';
+        output << " SCCS_DIAGNOSTIC screened_dipole_normal "
+               << result.screened_moments_2d.dipole << '\n';
+        output << " SCCS_DIAGNOSTIC screened_quadrupole_normal "
+               << result.screened_moments_2d.quadrupole << '\n';
     }
     output.precision(previous_precision);
 }

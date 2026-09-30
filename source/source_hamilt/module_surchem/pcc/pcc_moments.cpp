@@ -47,7 +47,7 @@ MultipoleMoments reduced_pcc_density_moments(
 Pcc2dMoments reduce_pcc_2d_moments(Pcc2dMoments moments,
                                     const ModuleSurchem::ChargeReduction& reduction)
 {
-    double values[3] = {moments.charge, moments.dipole_y, moments.quadrupole_yy};
+    double values[3] = {moments.charge, moments.dipole, moments.quadrupole};
     reduction.reduce_sum(values, 3);
     if (!std::isfinite(values[0]) || !std::isfinite(values[1])
         || !std::isfinite(values[2]))
@@ -55,8 +55,8 @@ Pcc2dMoments reduce_pcc_2d_moments(Pcc2dMoments moments,
         throw std::domain_error("two-dimensional PCC reduced moments must be finite");
     }
     moments.charge = values[0];
-    moments.dipole_y = values[1];
-    moments.quadrupole_yy = values[2];
+    moments.dipole = values[1];
+    moments.quadrupole = values[2];
     return moments;
 }
 

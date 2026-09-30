@@ -89,8 +89,9 @@ bool same_pcc_geometry(const ModulePcc::PccGeometry& left, const ModulePcc::PccG
 bool same_pcc_2d_geometry(const ModulePcc::Pcc2dGeometry& left, const ModulePcc::Pcc2dGeometry& right)
 {
     return left.parameters.periodic_area == right.parameters.periodic_area
-           && left.parameters.cell_length_y == right.parameters.cell_length_y
-           && left.origin_y == right.origin_y;
+           && left.parameters.cell_length == right.parameters.cell_length
+           && left.axis == right.axis && same_vector(left.normal, right.normal)
+           && left.origin == right.origin;
 }
 
 // The stored potential is a valid warm start only for the same grid, boundary,
