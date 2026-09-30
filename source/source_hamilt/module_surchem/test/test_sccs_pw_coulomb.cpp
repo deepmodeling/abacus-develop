@@ -1,3 +1,4 @@
+#include "../common/charge_reduction.h"
 #ifdef __MPI
 #include "source_base/parallel_global.h"
 #include <mpi.h>

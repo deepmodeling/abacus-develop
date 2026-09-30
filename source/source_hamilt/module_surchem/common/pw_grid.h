@@ -1,10 +1,14 @@
 #ifndef SURCHEM_PW_GRID_H
 #define SURCHEM_PW_GRID_H
 
-#include "source_base/matrix3.h"
 #include "source_base/vector3.h"
 
 #include <vector>
+
+namespace ModuleBase
+{
+class Matrix3;
+}
 
 namespace ModulePW
 {

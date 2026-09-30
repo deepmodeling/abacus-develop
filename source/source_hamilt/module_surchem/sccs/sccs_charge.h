@@ -1,9 +1,12 @@
 #ifndef SCCS_CHARGE_H
 #define SCCS_CHARGE_H
 
-#include "../common/charge_reduction.h"
-
 #include <vector>
+
+namespace ModuleSurchem
+{
+class ChargeReduction;
+}
 
 namespace ModuleSccs
 {

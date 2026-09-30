@@ -1,6 +1,7 @@
 #include "pw_grid.h"
 #include "lattice_row.h"
 
+#include "source_base/matrix3.h"
 #include "source_basis/module_pw/pw_basis.h"
 
 #include <cmath>

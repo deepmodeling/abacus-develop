@@ -2,6 +2,7 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace ModuleIO

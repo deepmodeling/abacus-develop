@@ -1,3 +1,4 @@
+#include "../common/charge_reduction.h"
 #include "sccs_driver.h"
 
 #include "../pcc/pcc_moments.h"

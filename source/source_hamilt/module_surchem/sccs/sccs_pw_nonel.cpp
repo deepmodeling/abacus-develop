@@ -1,6 +1,7 @@
 #include "sccs_pw_nonel.h"
 
 #include "sccs_pw_coulomb.h"
+#include "../common/charge_reduction.h"
 
 #include "source_base/constants.h"
 #include "source_base/timer.h"

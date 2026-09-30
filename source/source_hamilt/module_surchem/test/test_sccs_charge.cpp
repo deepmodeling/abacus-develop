@@ -1,3 +1,4 @@
+#include "../common/charge_reduction.h"
 #include "../sccs/sccs_charge.h"
 
 #include <gtest/gtest.h>

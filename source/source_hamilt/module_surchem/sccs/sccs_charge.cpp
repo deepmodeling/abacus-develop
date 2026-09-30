@@ -1,4 +1,5 @@
 #include "sccs_charge.h"
+#include "../common/charge_reduction.h"
 
 #include <cmath>
 #include <stdexcept>
