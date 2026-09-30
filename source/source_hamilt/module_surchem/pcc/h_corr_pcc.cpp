@@ -45,7 +45,8 @@ double ionic_system_center_2d(const UnitCell& cell, const ModulePcc::Pcc2dGeomet
         for (int atom = 0; atom < cell.atoms[atom_type].na; ++atom)
         {
             const ModuleBase::Vector3<double> position = cell.atoms[atom_type].tau[atom] * cell.lat0;
-            coordinates.push_back(ModulePcc::pcc_2d_coordinate(position, geometry));
+            const double coordinate = ModulePcc::pcc_2d_coordinate(position, geometry);
+            coordinates.push_back(coordinate);
             masses.push_back(cell.atoms[atom_type].mass);
         }
     }

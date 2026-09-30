@@ -20,15 +20,17 @@ bool finite_position(const ModuleBase::Vector3<double>& position)
 
 double norm(const ModuleBase::Vector3<double>& vector)
 {
-    return std::sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+    const double squared_length = vector.x * vector.x + vector.y * vector.y + vector.z * vector.z;
+    return std::sqrt(squared_length);
 }
 
 ModuleBase::Vector3<double> cross(const ModuleBase::Vector3<double>& left,
                                   const ModuleBase::Vector3<double>& right)
 {
-    return ModuleBase::Vector3<double>(left.y * right.z - left.z * right.y,
-                                       left.z * right.x - left.x * right.z,
-                                       left.x * right.y - left.y * right.x);
+    const double component_x = left.y * right.z - left.z * right.y;
+    const double component_y = left.z * right.x - left.x * right.z;
+    const double component_z = left.x * right.y - left.y * right.x;
+    return ModuleBase::Vector3<double>(component_x, component_y, component_z);
 }
 
 double dot(const ModuleBase::Vector3<double>& left, const ModuleBase::Vector3<double>& right)
@@ -54,13 +56,16 @@ double inverse_volume_factor(const Pcc2dParameters& parameters)
 
 double minimum_image(const double displacement, const double cell_length)
 {
-    return displacement
-           - cell_length * std::floor(displacement / cell_length + 0.5);
+    const double fractional_image = displacement / cell_length + 0.5;
+    const double image = std::floor(fractional_image);
+    return displacement - cell_length * image;
 }
 
 double wrap(const double coordinate, const double cell_length)
 {
-    return coordinate - cell_length * std::floor(coordinate / cell_length);
+    const double fractional_coordinate = coordinate / cell_length;
+    const double image = std::floor(fractional_coordinate);
+    return coordinate - cell_length * image;
 }
 
 } // namespace
@@ -85,10 +90,12 @@ Pcc2dGeometry pcc_2d_geometry(const ModuleBase::Matrix3& lattice_vectors,
     // product points along the open vector in a right-handed cell.
     const ModuleBase::Vector3<double> open
         = ModuleSurchem::lattice_row(lattice_vectors, axis, lattice_scale);
+    const int first_axis = (axis + 1) % 3;
+    const int second_axis = (axis + 2) % 3;
     const ModuleBase::Vector3<double> first
-        = ModuleSurchem::lattice_row(lattice_vectors, (axis + 1) % 3, lattice_scale);
+        = ModuleSurchem::lattice_row(lattice_vectors, first_axis, lattice_scale);
     const ModuleBase::Vector3<double> second
-        = ModuleSurchem::lattice_row(lattice_vectors, (axis + 2) % 3, lattice_scale);
+        = ModuleSurchem::lattice_row(lattice_vectors, second_axis, lattice_scale);
     if (!finite_position(open) || !finite_position(first) || !finite_position(second))
     {
         throw std::invalid_argument("two-dimensional PCC lattice vectors must be finite");
@@ -113,10 +120,12 @@ Pcc2dGeometry pcc_2d_geometry(const ModuleBase::Matrix3& lattice_vectors,
             "two-dimensional PCC requires independent periodic lattice vectors");
     }
     const double orientation = dot(plane_normal, open) < 0.0 ? -1.0 : 1.0;
-    const ModuleBase::Vector3<double> normal(orientation * plane_normal.x / periodic_area,
-                                             orientation * plane_normal.y / periodic_area,
-                                             orientation * plane_normal.z / periodic_area);
-    if (norm(cross(open, normal)) > relative_tolerance * length_open)
+    const double normal_x = orientation * plane_normal.x / periodic_area;
+    const double normal_y = orientation * plane_normal.y / periodic_area;
+    const double normal_z = orientation * plane_normal.z / periodic_area;
+    const ModuleBase::Vector3<double> normal(normal_x, normal_y, normal_z);
+    const ModuleBase::Vector3<double> alignment = cross(open, normal);
+    if (norm(alignment) > relative_tolerance * length_open)
     {
         throw std::invalid_argument(
             "two-dimensional PCC requires the open lattice vector perpendicular to the periodic ones");
@@ -127,9 +136,10 @@ Pcc2dGeometry pcc_2d_geometry(const ModuleBase::Matrix3& lattice_vectors,
     geometry.parameters.cell_length = length_open;
     geometry.axis = axis;
     geometry.normal = normal;
-    const ModuleBase::Vector3<double> cell_center(0.5 * (open.x + first.x + second.x),
-                                                  0.5 * (open.y + first.y + second.y),
-                                                  0.5 * (open.z + first.z + second.z));
+    const double cell_center_x = 0.5 * (open.x + first.x + second.x);
+    const double cell_center_y = 0.5 * (open.y + first.y + second.y);
+    const double cell_center_z = 0.5 * (open.z + first.z + second.z);
+    const ModuleBase::Vector3<double> cell_center(cell_center_x, cell_center_y, cell_center_z);
     geometry.origin = dot(cell_center, normal);
     validate_pcc_2d_parameters(geometry.parameters);
     return geometry;
@@ -154,7 +164,8 @@ void validate_pcc_2d_geometry(const Pcc2dGeometry& geometry)
     {
         throw std::invalid_argument("two-dimensional PCC open axis must be 0, 1 or 2");
     }
-    if (!finite_position(geometry.normal) || std::abs(norm(geometry.normal) - 1.0) > 1.0e-10)
+    const double normal_length_error = norm(geometry.normal) - 1.0;
+    if (!finite_position(geometry.normal) || std::abs(normal_length_error) > 1.0e-10)
     {
         throw std::invalid_argument("two-dimensional PCC requires a finite unit normal");
     }
@@ -177,8 +188,8 @@ double pcc_2d_coordinate(const ModuleBase::Vector3<double>& position,
 double pcc_2d_relative_coordinate(const ModuleBase::Vector3<double>& position,
                                   const Pcc2dGeometry& geometry)
 {
-    return minimum_image(pcc_2d_coordinate(position, geometry) - geometry.origin,
-                         geometry.parameters.cell_length);
+    const double displacement = pcc_2d_coordinate(position, geometry) - geometry.origin;
+    return minimum_image(displacement, geometry.parameters.cell_length);
 }
 
 double pcc_2d_system_center(const std::vector<double>& coordinates,
@@ -319,9 +330,10 @@ ModuleBase::Vector3<double> pcc_2d_potential_gradient(
 {
     const double derivative = -2.0 * inverse_volume_factor(geometry.parameters)
                               * (moments.charge * relative_coordinate - moments.dipole);
-    return ModuleBase::Vector3<double>(derivative * geometry.normal.x,
-                                       derivative * geometry.normal.y,
-                                       derivative * geometry.normal.z);
+    const double component_x = derivative * geometry.normal.x;
+    const double component_y = derivative * geometry.normal.y;
+    const double component_z = derivative * geometry.normal.z;
+    return ModuleBase::Vector3<double>(component_x, component_y, component_z);
 }
 
 ModuleBase::Vector3<double> pcc_2d_point_charge_force(
@@ -342,9 +354,10 @@ ModuleBase::Vector3<double> pcc_2d_point_charge_force(
     const double relative = pcc_2d_relative_coordinate(point.position, geometry);
     const ModuleBase::Vector3<double> gradient
         = pcc_2d_potential_gradient(total_moments, relative, geometry);
-    return ModuleBase::Vector3<double>(-point.charge * gradient.x,
-                                       -point.charge * gradient.y,
-                                       -point.charge * gradient.z);
+    const double component_x = -point.charge * gradient.x;
+    const double component_y = -point.charge * gradient.y;
+    const double component_z = -point.charge * gradient.z;
+    return ModuleBase::Vector3<double>(component_x, component_y, component_z);
 }
 
 double pcc_2d_bilinear_energy(const Pcc2dMoments& left,

@@ -14,19 +14,22 @@ inline ModuleBase::Vector3<double> lattice_row(const ModuleBase::Matrix3& lattic
 {
     if (row == 0)
     {
-        return ModuleBase::Vector3<double>(scale * lattice_vectors.e11,
-                                           scale * lattice_vectors.e12,
-                                           scale * lattice_vectors.e13);
+        const double component_x = scale * lattice_vectors.e11;
+        const double component_y = scale * lattice_vectors.e12;
+        const double component_z = scale * lattice_vectors.e13;
+        return ModuleBase::Vector3<double>(component_x, component_y, component_z);
     }
     if (row == 1)
     {
-        return ModuleBase::Vector3<double>(scale * lattice_vectors.e21,
-                                           scale * lattice_vectors.e22,
-                                           scale * lattice_vectors.e23);
+        const double component_x = scale * lattice_vectors.e21;
+        const double component_y = scale * lattice_vectors.e22;
+        const double component_z = scale * lattice_vectors.e23;
+        return ModuleBase::Vector3<double>(component_x, component_y, component_z);
     }
-    return ModuleBase::Vector3<double>(scale * lattice_vectors.e31,
-                                       scale * lattice_vectors.e32,
-                                       scale * lattice_vectors.e33);
+    const double component_x = scale * lattice_vectors.e31;
+    const double component_y = scale * lattice_vectors.e32;
+    const double component_z = scale * lattice_vectors.e33;
+    return ModuleBase::Vector3<double>(component_x, component_y, component_z);
 }
 
 } // namespace ModuleSurchem

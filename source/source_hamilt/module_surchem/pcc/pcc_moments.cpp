@@ -39,9 +39,8 @@ MultipoleMoments reduced_pcc_density_moments(
     const PccGeometry& geometry,
     const ModuleSurchem::ChargeReduction& reduction)
 {
-    return reduce_pcc_moments(
-        density_moments(density, positions, volume_element, geometry),
-        reduction);
+    const MultipoleMoments moments = density_moments(density, positions, volume_element, geometry);
+    return reduce_pcc_moments(moments, reduction);
 }
 
 Pcc2dMoments reduce_pcc_2d_moments(Pcc2dMoments moments,
@@ -67,9 +66,8 @@ Pcc2dMoments reduced_pcc_2d_density_moments(
     const Pcc2dGeometry& geometry,
     const ModuleSurchem::ChargeReduction& reduction)
 {
-    return reduce_pcc_2d_moments(
-        pcc_2d_density_moments(density, positions, volume_element, geometry),
-        reduction);
+    const Pcc2dMoments moments = pcc_2d_density_moments(density, positions, volume_element, geometry);
+    return reduce_pcc_2d_moments(moments, reduction);
 }
 
 } // namespace ModulePcc

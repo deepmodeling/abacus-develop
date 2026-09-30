@@ -24,23 +24,26 @@ double norm_squared(const ModuleBase::Vector3<double>& value)
 
 double norm(const ModuleBase::Vector3<double>& value)
 {
-    return std::sqrt(norm_squared(value));
+    const double squared_length = norm_squared(value);
+    return std::sqrt(squared_length);
 }
 
 ModuleBase::Vector3<double> scaled(const ModuleBase::Vector3<double>& value,
                                    const double factor)
 {
-    return ModuleBase::Vector3<double>(factor * value.x,
-                                       factor * value.y,
-                                       factor * value.z);
+    const double component_x = factor * value.x;
+    const double component_y = factor * value.y;
+    const double component_z = factor * value.z;
+    return ModuleBase::Vector3<double>(component_x, component_y, component_z);
 }
 
 ModuleBase::Vector3<double> add(const ModuleBase::Vector3<double>& left,
                                 const ModuleBase::Vector3<double>& right)
 {
-    return ModuleBase::Vector3<double>(left.x + right.x,
-                                       left.y + right.y,
-                                       left.z + right.z);
+    const double component_x = left.x + right.x;
+    const double component_y = left.y + right.y;
+    const double component_z = left.z + right.z;
+    return ModuleBase::Vector3<double>(component_x, component_y, component_z);
 }
 
 bool finite_vector(const ModuleBase::Vector3<double>& value)
@@ -51,7 +54,9 @@ bool finite_vector(const ModuleBase::Vector3<double>& value)
 
 double minimum_image(const double displacement, const double length)
 {
-    return displacement - length * std::floor(displacement / length + 0.5);
+    const double fractional_image = displacement / length + 0.5;
+    const double image = std::floor(fractional_image);
+    return displacement - length * image;
 }
 
 MultipoleMoments moments_from_relative_positions(
@@ -112,12 +117,18 @@ PccGeometry pcc_geometry(const ModuleBase::Matrix3& lattice_vectors,
             "zero-dimensional PCC lattice vectors must have positive finite lengths");
     }
     const double length = (length_a + length_b + length_c) / 3.0;
-    if (std::abs(length_a - length) > relative_tolerance * length
-        || std::abs(length_b - length) > relative_tolerance * length
-        || std::abs(length_c - length) > relative_tolerance * length
-        || std::abs(dot(a, b)) > relative_tolerance * length * length
-        || std::abs(dot(a, c)) > relative_tolerance * length * length
-        || std::abs(dot(b, c)) > relative_tolerance * length * length)
+    const double length_difference_a = length_a - length;
+    const double length_difference_b = length_b - length;
+    const double length_difference_c = length_c - length;
+    const double dot_ab = dot(a, b);
+    const double dot_ac = dot(a, c);
+    const double dot_bc = dot(b, c);
+    if (std::abs(length_difference_a) > relative_tolerance * length
+        || std::abs(length_difference_b) > relative_tolerance * length
+        || std::abs(length_difference_c) > relative_tolerance * length
+        || std::abs(dot_ab) > relative_tolerance * length * length
+        || std::abs(dot_ac) > relative_tolerance * length * length
+        || std::abs(dot_bc) > relative_tolerance * length * length)
     {
         throw std::invalid_argument(
             "zero-dimensional SCCS PCC requires an orthogonal equal-edge cubic cell");
@@ -125,10 +136,15 @@ PccGeometry pcc_geometry(const ModuleBase::Matrix3& lattice_vectors,
 
     PccGeometry geometry;
     geometry.parameters.cube_length = length;
-    geometry.origin = scaled(add(add(a, b), c), 0.5);
-    geometry.axis_a = scaled(a, 1.0 / length_a);
-    geometry.axis_b = scaled(b, 1.0 / length_b);
-    geometry.axis_c = scaled(c, 1.0 / length_c);
+    const ModuleBase::Vector3<double> sum_ab = add(a, b);
+    const ModuleBase::Vector3<double> sum_abc = add(sum_ab, c);
+    geometry.origin = scaled(sum_abc, 0.5);
+    const double inverse_length_a = 1.0 / length_a;
+    const double inverse_length_b = 1.0 / length_b;
+    const double inverse_length_c = 1.0 / length_c;
+    geometry.axis_a = scaled(a, inverse_length_a);
+    geometry.axis_b = scaled(b, inverse_length_b);
+    geometry.axis_c = scaled(c, inverse_length_c);
     validate_pcc_geometry(geometry);
     return geometry;
 }
@@ -154,12 +170,18 @@ void validate_pcc_geometry(const PccGeometry& geometry)
         throw std::invalid_argument("zero-dimensional PCC geometry must be finite");
     }
     const double tolerance = 1.0e-10;
-    if (std::abs(norm_squared(geometry.axis_a) - 1.0) > tolerance
-        || std::abs(norm_squared(geometry.axis_b) - 1.0) > tolerance
-        || std::abs(norm_squared(geometry.axis_c) - 1.0) > tolerance
-        || std::abs(dot(geometry.axis_a, geometry.axis_b)) > tolerance
-        || std::abs(dot(geometry.axis_a, geometry.axis_c)) > tolerance
-        || std::abs(dot(geometry.axis_b, geometry.axis_c)) > tolerance)
+    const double axis_a_error = norm_squared(geometry.axis_a) - 1.0;
+    const double axis_b_error = norm_squared(geometry.axis_b) - 1.0;
+    const double axis_c_error = norm_squared(geometry.axis_c) - 1.0;
+    const double axis_dot_ab = dot(geometry.axis_a, geometry.axis_b);
+    const double axis_dot_ac = dot(geometry.axis_a, geometry.axis_c);
+    const double axis_dot_bc = dot(geometry.axis_b, geometry.axis_c);
+    if (std::abs(axis_a_error) > tolerance
+        || std::abs(axis_b_error) > tolerance
+        || std::abs(axis_c_error) > tolerance
+        || std::abs(axis_dot_ab) > tolerance
+        || std::abs(axis_dot_ac) > tolerance
+        || std::abs(axis_dot_bc) > tolerance)
     {
         throw std::invalid_argument(
             "zero-dimensional PCC geometry requires orthonormal lattice axes");
@@ -174,15 +196,22 @@ ModuleBase::Vector3<double> pcc_relative_position(
     {
         throw std::domain_error("zero-dimensional PCC positions must be finite");
     }
-    const ModuleBase::Vector3<double> displacement(position.x - geometry.origin.x,
-                                                    position.y - geometry.origin.y,
-                                                    position.z - geometry.origin.z);
+    const double displacement_x = position.x - geometry.origin.x;
+    const double displacement_y = position.y - geometry.origin.y;
+    const double displacement_z = position.z - geometry.origin.z;
+    const ModuleBase::Vector3<double> displacement(displacement_x, displacement_y, displacement_z);
     const double length = geometry.parameters.cube_length;
-    const double a = minimum_image(dot(displacement, geometry.axis_a), length);
-    const double b = minimum_image(dot(displacement, geometry.axis_b), length);
-    const double c = minimum_image(dot(displacement, geometry.axis_c), length);
-    return add(add(scaled(geometry.axis_a, a), scaled(geometry.axis_b, b)),
-               scaled(geometry.axis_c, c));
+    const double projection_a = dot(displacement, geometry.axis_a);
+    const double projection_b = dot(displacement, geometry.axis_b);
+    const double projection_c = dot(displacement, geometry.axis_c);
+    const double a = minimum_image(projection_a, length);
+    const double b = minimum_image(projection_b, length);
+    const double c = minimum_image(projection_c, length);
+    const ModuleBase::Vector3<double> relative_a = scaled(geometry.axis_a, a);
+    const ModuleBase::Vector3<double> relative_b = scaled(geometry.axis_b, b);
+    const ModuleBase::Vector3<double> relative_ab = add(relative_a, relative_b);
+    const ModuleBase::Vector3<double> relative_c = scaled(geometry.axis_c, c);
+    return add(relative_ab, relative_c);
 }
 
 ModuleBase::Vector3<double> pcc_system_center(
@@ -224,15 +253,16 @@ ModuleBase::Vector3<double> pcc_system_center(
     {
         throw std::domain_error("zero-dimensional PCC system center must be finite");
     }
-    const ModuleBase::Vector3<double> unwrapped_center(
-        positions[0].x + weighted_displacement.x / total_weight,
-        positions[0].y + weighted_displacement.y / total_weight,
-        positions[0].z + weighted_displacement.z / total_weight);
+    const double unwrapped_center_x = positions[0].x + weighted_displacement.x / total_weight;
+    const double unwrapped_center_y = positions[0].y + weighted_displacement.y / total_weight;
+    const double unwrapped_center_z = positions[0].z + weighted_displacement.z / total_weight;
+    const ModuleBase::Vector3<double> unwrapped_center(unwrapped_center_x, unwrapped_center_y, unwrapped_center_z);
     const ModuleBase::Vector3<double> centered
         = pcc_relative_position(unwrapped_center, geometry);
-    return ModuleBase::Vector3<double>(geometry.origin.x + centered.x,
-                                       geometry.origin.y + centered.y,
-                                       geometry.origin.z + centered.z);
+    const double component_x = geometry.origin.x + centered.x;
+    const double component_y = geometry.origin.y + centered.y;
+    const double component_z = geometry.origin.z + centered.z;
+    return ModuleBase::Vector3<double>(component_x, component_y, component_z);
 }
 
 MultipoleMoments point_charge_moments(const std::vector<PointCharge>& charges,
@@ -247,10 +277,11 @@ MultipoleMoments point_charge_moments(const std::vector<PointCharge>& charges,
         {
             throw std::domain_error("PCC point charges and positions must be finite");
         }
+        const double component_x = point.position.x - origin.x;
+        const double component_y = point.position.y - origin.y;
+        const double component_z = point.position.z - origin.z;
         relative_positions[index]
-            = ModuleBase::Vector3<double>(point.position.x - origin.x,
-                                          point.position.y - origin.y,
-                                          point.position.z - origin.z);
+            = ModuleBase::Vector3<double>(component_x, component_y, component_z);
     }
     return moments_from_relative_positions(charges, relative_positions);
 }
@@ -375,9 +406,10 @@ ModuleBase::Vector3<double> pcc_potential_gradient(const MultipoleMoments& momen
 {
     const double volume = parameters.cube_length * parameters.cube_length * parameters.cube_length;
     const double factor = -4.0 * ModuleBase::PI / (3.0 * volume);
-    return ModuleBase::Vector3<double>(factor * (moments.charge * position.x - moments.dipole.x),
-                                       factor * (moments.charge * position.y - moments.dipole.y),
-                                       factor * (moments.charge * position.z - moments.dipole.z));
+    const double component_x = factor * (moments.charge * position.x - moments.dipole.x);
+    const double component_y = factor * (moments.charge * position.y - moments.dipole.y);
+    const double component_z = factor * (moments.charge * position.z - moments.dipole.z);
+    return ModuleBase::Vector3<double>(component_x, component_y, component_z);
 }
 
 ModuleBase::Vector3<double> pcc_point_charge_force(
@@ -393,14 +425,16 @@ ModuleBase::Vector3<double> pcc_point_charge_force(
         throw std::domain_error("PCC point charge force requires finite charge and coordinates");
     }
     validate_pcc_parameters(parameters);
-    const ModuleBase::Vector3<double> relative(point.position.x - origin.x,
-                                                point.position.y - origin.y,
-                                                point.position.z - origin.z);
+    const double relative_x = point.position.x - origin.x;
+    const double relative_y = point.position.y - origin.y;
+    const double relative_z = point.position.z - origin.z;
+    const ModuleBase::Vector3<double> relative(relative_x, relative_y, relative_z);
     const ModuleBase::Vector3<double> gradient
         = pcc_potential_gradient(total_moments, relative, parameters);
-    return ModuleBase::Vector3<double>(-point.charge * gradient.x,
-                                       -point.charge * gradient.y,
-                                       -point.charge * gradient.z);
+    const double component_x = -point.charge * gradient.x;
+    const double component_y = -point.charge * gradient.y;
+    const double component_z = -point.charge * gradient.z;
+    return ModuleBase::Vector3<double>(component_x, component_y, component_z);
 }
 
 ModuleBase::Vector3<double> pcc_point_charge_force(
@@ -413,13 +447,13 @@ ModuleBase::Vector3<double> pcc_point_charge_force(
         throw std::domain_error("PCC point charge force requires finite charge and coordinates");
     }
     validate_pcc_geometry(geometry);
+    const ModuleBase::Vector3<double> relative = pcc_relative_position(point.position, geometry);
     const ModuleBase::Vector3<double> gradient
-        = pcc_potential_gradient(total_moments,
-                                 pcc_relative_position(point.position, geometry),
-                                 geometry.parameters);
-    return ModuleBase::Vector3<double>(-point.charge * gradient.x,
-                                       -point.charge * gradient.y,
-                                       -point.charge * gradient.z);
+        = pcc_potential_gradient(total_moments, relative, geometry.parameters);
+    const double component_x = -point.charge * gradient.x;
+    const double component_y = -point.charge * gradient.y;
+    const double component_z = -point.charge * gradient.z;
+    return ModuleBase::Vector3<double>(component_x, component_y, component_z);
 }
 
 double pcc_bilinear_energy(const MultipoleMoments& left,
