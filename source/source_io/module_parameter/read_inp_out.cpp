@@ -1506,6 +1506,25 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         this->add_item(item);
     }
     {
+        Input_Item item("out_librpa_reader_version");
+        item.annotation = "LibRPA output reader version";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output.";
+        item.default_value = "0";
+        item.unit = "";
+        item.set_availability("basis_type==lcao");
+        read_sync_int(input.out_librpa_reader_version);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            const int value = para.input.out_librpa_reader_version;
+            if (value != 0 && value != 1)
+            {
+                ModuleBase::WARNING_QUIT("INPUT", "out_librpa_reader_version must be 0 or 1.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_pchg");
         item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
         item.category = "Output information";

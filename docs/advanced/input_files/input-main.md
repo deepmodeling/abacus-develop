@@ -2444,6 +2444,13 @@
 - **Description**: The directory to save files for LibRPA.
 - **Default**: "OUT.librpa"
 
+### out_librpa_reader_version
+
+- **Type**: Integer
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
+- **Description**: Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output.
+- **Default**: 0
+
 ### out_pchg
 
 - **Type**: String
