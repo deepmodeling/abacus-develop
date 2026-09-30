@@ -58,16 +58,20 @@ CavityPoint evaluate_cavity(const double density, const CavityParameters& parame
         return result;
     }
 
-    const double log_width = std::log(parameters.density_max / parameters.density_min);
-    const double x = std::log(parameters.density_max / density) / log_width;
-    const double solvent = x - std::sin(ModuleBase::TWO_PI * x) / ModuleBase::TWO_PI;
+    const double density_ratio = parameters.density_max / parameters.density_min;
+    const double log_width = std::log(density_ratio);
+    const double relative_density = parameters.density_max / density;
+    const double x = std::log(relative_density) / log_width;
+    const double angle = ModuleBase::TWO_PI * x;
+    const double solvent = x - std::sin(angle) / ModuleBase::TWO_PI;
     const double dsolvent_drho
-        = -(1.0 - std::cos(ModuleBase::TWO_PI * x)) / (log_width * density);
+        = -(1.0 - std::cos(angle)) / (log_width * density);
     const double log_epsilon = std::log(parameters.epsilon_bulk);
+    const double log_epsilon_point = log_epsilon * solvent;
 
     result.solute = 1.0 - solvent;
     result.dsolute_drho = -dsolvent_drho;
-    result.epsilon = std::exp(log_epsilon * solvent);
+    result.epsilon = std::exp(log_epsilon_point);
     result.depsilon_drho = result.epsilon * log_epsilon * dsolvent_drho;
     return result;
 }

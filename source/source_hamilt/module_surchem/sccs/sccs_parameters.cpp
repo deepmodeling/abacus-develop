@@ -59,7 +59,8 @@ Preset parse_preset(const std::string& value)
     {
         return Preset::WaterAnion;
     }
-    throw std::invalid_argument("unknown SCCS preset: " + value);
+    const std::string message = "unknown SCCS preset: " + value;
+    throw std::invalid_argument(message);
 }
 
 SccsConfig water_preset(const Preset preset)

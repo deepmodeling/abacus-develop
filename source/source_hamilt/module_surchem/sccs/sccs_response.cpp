@@ -96,7 +96,8 @@ void reduced_rms_max(const std::vector<double>& values,
     for (std::size_t i = 0; i < values.size(); ++i)
     {
         square += values[i] * values[i];
-        local_maximum = std::max(local_maximum, std::abs(values[i]));
+        const double magnitude = std::abs(values[i]);
+        local_maximum = std::max(local_maximum, magnitude);
     }
     reduction.reduce_sum(square);
     reduction.reduce_max(local_maximum);
@@ -105,7 +106,8 @@ void reduced_rms_max(const std::vector<double>& values,
     {
         throw std::runtime_error("SCCS sqrt-CG residual is not finite");
     }
-    rms = std::sqrt(square / count);
+    const double mean_square = square / count;
+    rms = std::sqrt(mean_square);
     maximum = local_maximum;
 }
 

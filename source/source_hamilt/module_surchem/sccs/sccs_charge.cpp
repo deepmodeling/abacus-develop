@@ -77,7 +77,8 @@ ChargeDensity assemble_charge_density(const std::vector<double>& electron_densit
     {
         throw std::domain_error("SCCS reduced charge integrals must be finite");
     }
-    if (std::abs(result.ionic_charge - expected_ionic_charge) > normalization_tolerance)
+    const double ionic_charge_error = result.ionic_charge - expected_ionic_charge;
+    if (std::abs(ionic_charge_error) > normalization_tolerance)
     {
         throw std::runtime_error("SCCS ionic density normalization does not match the valence charge");
     }

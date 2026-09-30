@@ -293,14 +293,17 @@ SccsResult evaluate_pw_sccs(
                                              reduction);
         result.screened_moments_2d = ModulePcc::pcc_2d_sum_moments(result.solute_moments_2d,
                                                                    result.polarization_moments_2d);
+        const double global_grid_size = static_cast<double>(basis.nxyz);
+        const double grid_charge_tolerance
+            = config.tolerance_max * volume_element * global_grid_size;
+        const double system_charge = std::max(expected_electron_count, expected_ionic_charge);
+        const double charge_scale = std::max(1.0, system_charge);
+        const double relative_charge_tolerance
+            = relative_polarization_charge_tolerance * charge_scale;
+        const double solver_charge_tolerance
+            = std::max(grid_charge_tolerance, relative_charge_tolerance);
         const double polarization_charge_tolerance
-            = std::max(normalization_tolerance,
-                       std::max(config.tolerance_max * volume_element
-                                    * static_cast<double>(basis.nxyz),
-                                relative_polarization_charge_tolerance
-                                    * std::max(1.0,
-                                               std::max(expected_electron_count,
-                                                        expected_ionic_charge))));
+            = std::max(normalization_tolerance, solver_charge_tolerance);
         const double expected_polarization_charge
             = -(1.0 - 1.0 / config.cavity.epsilon_bulk)
               * result.solute_moments_2d.charge;
@@ -308,8 +311,8 @@ SccsResult evaluate_pw_sccs(
         // density integral (polarization_moments_2d) is only a diagnostic here:
         // its finite-grid error can exceed this tolerance for sharp cavities.
         const double far_field_charge = result.response.far_field_polarization_charge;
-        if (std::abs(far_field_charge - expected_polarization_charge)
-            > polarization_charge_tolerance)
+        const double far_field_charge_error = far_field_charge - expected_polarization_charge;
+        if (std::abs(far_field_charge_error) > polarization_charge_tolerance)
         {
             std::ostringstream message;
             message << "SCCS pcc_2d far-field polarization charge "

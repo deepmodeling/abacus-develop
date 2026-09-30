@@ -25,7 +25,8 @@ Boundary parse_boundary(const std::string& value)
     {
         return Boundary::Pcc2d;
     }
-    throw std::invalid_argument("unknown PCC boundary: " + value);
+    const std::string message = "unknown PCC boundary: " + value;
+    throw std::invalid_argument(message);
 }
 
 } // namespace ModulePcc

@@ -49,11 +49,12 @@ NonElectrostaticResult evaluate_pw_non_electrostatic(
         {
             throw std::domain_error("SCCS PW non-electrostatic inputs must be finite");
         }
-        const double norm = std::sqrt(gradient[index].x * gradient[index].x
-                                      + gradient[index].y * gradient[index].y
-                                      + gradient[index].z * gradient[index].z
-                                      + parameters.surface_regularization
-                                            * parameters.surface_regularization);
+        const double norm_squared = gradient[index].x * gradient[index].x
+                                    + gradient[index].y * gradient[index].y
+                                    + gradient[index].z * gradient[index].z
+                                    + parameters.surface_regularization
+                                          * parameters.surface_regularization;
+        const double norm = std::sqrt(norm_squared);
         unit_gradient[index].x = gradient[index].x / norm;
         unit_gradient[index].y = gradient[index].y / norm;
         unit_gradient[index].z = gradient[index].z / norm;

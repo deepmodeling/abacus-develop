@@ -181,7 +181,8 @@ void surchem::cal_force_sol(const UnitCell& cell,
             }
             else
             {
-                ModuleBase::GlobalFunc::ZEROS(forcesol.c, forcesol.nr * forcesol.nc);
+                const int force_size = forcesol.nr * forcesol.nc;
+                ModuleBase::GlobalFunc::ZEROS(forcesol.c, force_size);
                 this->cal_force_pcc(cell, forcesol);
             }
         }
@@ -279,7 +280,8 @@ void surchem::cal_force_sccs(const UnitCell& cell,
             }
         }
     }
-    Parallel_Reduce::reduce_pool(forcesol.c, forcesol.nr * forcesol.nc);
+    const int force_size = forcesol.nr * forcesol.nc;
+    Parallel_Reduce::reduce_pool(forcesol.c, force_size);
     if (config.boundary == ModulePcc::Boundary::Periodic)
     {
         return;

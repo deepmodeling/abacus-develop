@@ -228,7 +228,8 @@ void surchem::v_correction_solvent(const UnitCell& cell,
             {
                 v.create(nspin, rho_basis.nrxx);
             }
-            ModuleBase::GlobalFunc::ZEROS(v.c, nspin * rho_basis.nrxx);
+            const int potential_size = nspin * rho_basis.nrxx;
+            ModuleBase::GlobalFunc::ZEROS(v.c, potential_size);
             this->electrostatic_correction_ry_.assign(rho_basis.nrxx, 0.0);
             surchem::Ael = 0.0;
             surchem::Acav = 0.0;

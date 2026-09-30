@@ -39,7 +39,8 @@ bool is_hydrogen(const UnitCell& cell, const int type)
     {
         return false;
     }
-    const std::string element = label.substr(first, last - first + 1);
+    const std::size_t length = last - first + 1;
+    const std::string element = label.substr(first, length);
     return element == "H";
 }
 
@@ -96,7 +97,9 @@ ModuleBase::matrix gaussian_force(const UnitCell& cell,
                 for (int ig = 0; ig < basis.npw; ++ig)
                 {
                     const std::complex<double> charge = atom_charge(cell, basis, type, atom, ig, spread);
-                    const double derivative = std::imag(std::conj(potential_g[ig]) * charge);
+                    const std::complex<double> potential_conjugate = std::conj(potential_g[ig]);
+                    const std::complex<double> weighted_charge = potential_conjugate * charge;
+                    const double derivative = std::imag(weighted_charge);
                     for (int d = 0; d < 3; ++d)
                     {
                         force(iat, d) -= cell.omega * cell.tpiba * basis.gcar[ig][d] * derivative;
