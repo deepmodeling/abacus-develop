@@ -19,7 +19,7 @@
 namespace
 {
 
-TEST(SccsPwCharge, BuildsIntegerNodeGrid)
+TEST(PwGrid, BuildsIntegerNodeGrid)
 {
     ModulePW::PW_Basis basis("cpu", "double");
 #ifdef __MPI
@@ -41,7 +41,7 @@ TEST(SccsPwCharge, BuildsIntegerNodeGrid)
     EXPECT_NEAR(positions[0].z, 0.0, 1.0e-14);
 }
 
-TEST(SccsPwCharge, GridCoordinatesMatchInverseFourierPhase)
+TEST(PwGrid, GridCoordinatesMatchInverseFourierPhase)
 {
     ModulePW::PW_Basis basis("cpu", "double");
 #ifdef __MPI
@@ -89,7 +89,7 @@ TEST(SccsPwCharge, GridCoordinatesMatchInverseFourierPhase)
     EXPECT_LT(maximum_error, 1.0e-12);
 }
 
-TEST(SccsPwCharge, KeepsYCoordinatesIndependentOfDistributedZSlab)
+TEST(PwGrid, KeepsYCoordinatesIndependentOfDistributedZSlab)
 {
     ModulePW::PW_Basis basis("cpu", "double");
     basis.nx = 3;

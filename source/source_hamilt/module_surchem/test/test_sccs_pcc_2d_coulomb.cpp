@@ -95,7 +95,7 @@ class SccsPcc2dCoulombTest : public testing::Test
     ModuleSurchem::PoolChargeReduction reduction_;
 };
 
-TEST_F(SccsPcc2dCoulombTest, ReducesYMoments)
+TEST_F(SccsPcc2dCoulombTest, ReducesNormalMoments)
 {
     const std::vector<double> uniform(basis_.nrxx, 1.0 / volume_);
     const ModulePcc::Pcc2dMoments moments
@@ -105,17 +105,20 @@ TEST_F(SccsPcc2dCoulombTest, ReducesYMoments)
                                                      geometry_,
                                                      reduction_);
     EXPECT_NEAR(moments.charge, 1.0, 1.0e-12);
-    // Integer FFT nodes sample [0, Ly), so their mean is half a step below Ly/2.
+    // Integer FFT nodes sample [0, L), so their mean is half a step below L/2.
     const double uniform_dipole = -geometry_.parameters.cell_length / (2.0 * basis_.ny);
     EXPECT_NEAR(moments.dipole, uniform_dipole, 1.0e-14);
 }
 
 TEST_F(SccsPcc2dCoulombTest, CombinesDistributedZFragmentMoments)
 {
+    // Open along y, while the grid is distributed over z planes.
     const auto fragment_geometry = [](const double origin_y) {
         ModulePcc::Pcc2dGeometry value;
         value.parameters.periodic_area = 10.0;
         value.parameters.cell_length = 20.0;
+        value.axis = 1;
+        value.normal = ModuleBase::Vector3<double>(0.0, 1.0, 0.0);
         value.origin = origin_y;
         return value;
     };

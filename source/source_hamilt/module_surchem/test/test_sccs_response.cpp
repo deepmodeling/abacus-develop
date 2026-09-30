@@ -43,7 +43,7 @@ ModuleSccs::SccsResponse solve_periodic(const std::vector<double>& cavity_densit
                                            reduction);
 }
 
-TEST(SccsPeriodic, ContinuumSourceScreensUniformDielectricAndIncludesInterfaceField)
+TEST(SccsResponse, ContinuumSourceScreensUniformDielectricAndIncludesInterfaceField)
 {
     const std::vector<double> charge = {1.0, -2.0};
     ModuleSccs::SccsResponse response;
@@ -64,7 +64,7 @@ TEST(SccsPeriodic, ContinuumSourceScreensUniformDielectricAndIncludesInterfaceFi
     EXPECT_THROW(ModuleSccs::continuum_polarization_charge(charge, response), std::invalid_argument);
 }
 
-TEST(SccsPeriodic, UniformDielectricScreensSingleFourierShell)
+TEST(SccsResponse, UniformDielectricScreensSingleFourierShell)
 {
     ModulePW::PW_Basis basis("cpu", "double");
 #ifdef __MPI
@@ -260,7 +260,7 @@ TEST_F(SqrtCgFixture, RejectsWarmStartWorseThanColdStart)
     }
 }
 
-TEST(SccsPeriodic, ChainGradientMatchesAnalyticDensityModeAcrossCavityEdges)
+TEST(SccsResponse, ChainGradientMatchesAnalyticDensityModeAcrossCavityEdges)
 {
     ModulePW::PW_Basis basis("cpu", "double");
 #ifdef __MPI

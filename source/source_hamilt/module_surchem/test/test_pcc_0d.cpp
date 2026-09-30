@@ -12,7 +12,7 @@
 namespace
 {
 
-TEST(SccsPcc, AccumulatesPointChargeMomentsAboutTheRequestedOrigin)
+TEST(Pcc0d, AccumulatesPointChargeMomentsAboutTheRequestedOrigin)
 {
     std::vector<ModulePcc::PointCharge> charges(2);
     charges[0].charge = 2.0;
@@ -29,7 +29,7 @@ TEST(SccsPcc, AccumulatesPointChargeMomentsAboutTheRequestedOrigin)
     EXPECT_DOUBLE_EQ(moments.quadrupole_trace, 2.0);
 }
 
-TEST(SccsPcc, SumMomentsEqualTheMomentsOfTheCombinedCharges)
+TEST(Pcc0d, SumMomentsEqualTheMomentsOfTheCombinedCharges)
 {
     std::vector<ModulePcc::PointCharge> ions(2);
     ions[0].charge = 2.0;
@@ -54,7 +54,7 @@ TEST(SccsPcc, SumMomentsEqualTheMomentsOfTheCombinedCharges)
     EXPECT_DOUBLE_EQ(sum.quadrupole_trace, expected.quadrupole_trace);
 }
 
-TEST(SccsPcc, BuildsGeometryForRotatedCubicCell)
+TEST(Pcc0d, BuildsGeometryForRotatedCubicCell)
 {
     const ModuleBase::Matrix3 lattice(0.0, 1.0, 0.0,
                                       -1.0, 0.0, 0.0,
@@ -77,7 +77,7 @@ TEST(SccsPcc, BuildsGeometryForRotatedCubicCell)
     EXPECT_NEAR(relative.z, -4.0 * geometry.axis_a.z, 1.0e-14);
 }
 
-TEST(SccsPcc, SystemCenterUnwrapsAtomsAcrossPeriodicBoundaries)
+TEST(Pcc0d, SystemCenterUnwrapsAtomsAcrossPeriodicBoundaries)
 {
     const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
                                       0.0, 1.0, 0.0,
@@ -95,7 +95,7 @@ TEST(SccsPcc, SystemCenterUnwrapsAtomsAcrossPeriodicBoundaries)
     EXPECT_NEAR(center.z, 0.0, 1.0e-14);
 }
 
-TEST(SccsPcc, SystemCenterMakesWrappedRigidTranslationInvariant)
+TEST(Pcc0d, SystemCenterMakesWrappedRigidTranslationInvariant)
 {
     const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
                                       0.0, 1.0, 0.0,
@@ -145,7 +145,7 @@ TEST(SccsPcc, SystemCenterMakesWrappedRigidTranslationInvariant)
                 1.0e-14);
 }
 
-TEST(SccsPcc, PotentialGradientMatchesCentralDifferences)
+TEST(Pcc0d, PotentialGradientMatchesCentralDifferences)
 {
     ModulePcc::MultipoleMoments moments;
     moments.charge = -1.2;
@@ -185,7 +185,7 @@ TEST(SccsPcc, PotentialGradientMatchesCentralDifferences)
     }
 }
 
-TEST(SccsPcc, IntegratesDensityMomentsWithTheVolumeElement)
+TEST(Pcc0d, IntegratesDensityMomentsWithTheVolumeElement)
 {
     const std::vector<double> density{0.5, -0.25};
     const std::vector<ModuleBase::Vector3<double>> positions{
@@ -202,7 +202,7 @@ TEST(SccsPcc, IntegratesDensityMomentsWithTheVolumeElement)
     EXPECT_DOUBLE_EQ(moments.quadrupole_trace, -1.0);
 }
 
-TEST(SccsPcc, RelativeDensityMomentsMatchPointChargesAndRejectNonfiniteInputs)
+TEST(Pcc0d, RelativeDensityMomentsMatchPointChargesAndRejectNonfiniteInputs)
 {
     const std::vector<double> density{0.5, -0.25, 0.125};
     const std::vector<ModuleBase::Vector3<double>> relative{
@@ -234,7 +234,7 @@ TEST(SccsPcc, RelativeDensityMomentsMatchPointChargesAndRejectNonfiniteInputs)
                  std::domain_error);
 }
 
-TEST(SccsPcc, BilinearKernelIsSymmetric)
+TEST(Pcc0d, BilinearKernelIsSymmetric)
 {
     ModulePcc::MultipoleMoments left;
     left.charge = 1.0;
@@ -251,7 +251,7 @@ TEST(SccsPcc, BilinearKernelIsSymmetric)
                      ModulePcc::pcc_bilinear_energy(right, left, parameters));
 }
 
-TEST(SccsPcc, SelfEnergyHasExpectedMakovPayneForm)
+TEST(Pcc0d, SelfEnergyHasExpectedMakovPayneForm)
 {
     ModulePcc::MultipoleMoments moments;
     moments.charge = 1.5;
@@ -269,7 +269,7 @@ TEST(SccsPcc, SelfEnergyHasExpectedMakovPayneForm)
     EXPECT_NEAR(ModulePcc::pcc_self_energy(moments, parameters), expected, 1.0e-15);
 }
 
-TEST(SccsPcc, SelfEnergyIsIndependentOfTheMultipoleOrigin)
+TEST(Pcc0d, SelfEnergyIsIndependentOfTheMultipoleOrigin)
 {
     std::vector<ModulePcc::PointCharge> charges(2);
     charges[0].charge = 1.7;
@@ -288,7 +288,7 @@ TEST(SccsPcc, SelfEnergyIsIndependentOfTheMultipoleOrigin)
                 1.0e-15);
 }
 
-TEST(SccsPcc, PointIonVacuumEnergyDerivativeMatchesElectronPotential)
+TEST(Pcc0d, PointIonVacuumEnergyDerivativeMatchesElectronPotential)
 {
     const ModuleBase::Vector3<double> origin(0.0, 0.0, 0.0);
     const ModuleBase::Vector3<double> electron_position(1.1, -0.8, 0.4);
@@ -325,7 +325,7 @@ TEST(SccsPcc, PointIonVacuumEnergyDerivativeMatchesElectronPotential)
     EXPECT_NEAR(analytic, finite, 1.0e-11);
 }
 
-TEST(SccsPcc, PointChargeForceMatchesSelfEnergyFiniteDifference)
+TEST(Pcc0d, PointChargeForceMatchesSelfEnergyFiniteDifference)
 {
     std::vector<ModulePcc::PointCharge> charges(2);
     charges[0].charge = 1.2;
@@ -363,7 +363,7 @@ TEST(SccsPcc, PointChargeForceMatchesSelfEnergyFiniteDifference)
     }
 }
 
-TEST(SccsPcc, RejectsInvalidCubeLength)
+TEST(Pcc0d, RejectsInvalidCubeLength)
 {
     ModulePcc::PccParameters parameters;
     EXPECT_THROW(ModulePcc::pcc_self_energy(ModulePcc::MultipoleMoments(), parameters),

@@ -31,7 +31,7 @@ ModulePcc::Pcc2dGeometry geometry(const double origin_y)
     return value;
 }
 
-TEST(SccsPcc2d, BuildsGeometryForCubicCell)
+TEST(Pcc2d, BuildsGeometryForCubicCell)
 {
     const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
                                       0.0, 1.0, 0.0,
@@ -44,7 +44,7 @@ TEST(SccsPcc2d, BuildsGeometryForCubicCell)
     EXPECT_DOUBLE_EQ(geometry.origin, 5.0);
 }
 
-TEST(SccsPcc2d, BuildsGeometryForNonOrthogonalPeriodicPlane)
+TEST(Pcc2d, BuildsGeometryForNonOrthogonalPeriodicPlane)
 {
     const ModuleBase::Matrix3 lattice(2.0, 0.0, 0.0,
                                       0.0, 5.0, 0.0,
@@ -57,7 +57,7 @@ TEST(SccsPcc2d, BuildsGeometryForNonOrthogonalPeriodicPlane)
     EXPECT_DOUBLE_EQ(geometry.origin, 10.0);
 }
 
-TEST(SccsPcc2d, GeometryAcceptsNumericalAlignmentNoise)
+TEST(Pcc2d, GeometryAcceptsNumericalAlignmentNoise)
 {
     const ModuleBase::Matrix3 lattice(1.0, 1.0e-12, 0.0,
                                       -1.0e-12, 2.0, 1.0e-12,
@@ -67,7 +67,7 @@ TEST(SccsPcc2d, GeometryAcceptsNumericalAlignmentNoise)
 
 // The normal follows the open lattice vector, so a reversed vector only
 // flips the sign convention of the coordinate along it.
-TEST(SccsPcc2d, NormalFollowsReversedOpenVector)
+TEST(Pcc2d, NormalFollowsReversedOpenVector)
 {
     const ModuleBase::Matrix3 reversed_normal(1.0, 0.0, 0.0,
                                               0.0, -2.0, 0.0,
@@ -79,7 +79,7 @@ TEST(SccsPcc2d, NormalFollowsReversedOpenVector)
     EXPECT_DOUBLE_EQ(geometry.parameters.periodic_area, 1.0);
 }
 
-TEST(SccsPcc2d, BuildsGeometryForEveryOpenAxis)
+TEST(Pcc2d, BuildsGeometryForEveryOpenAxis)
 {
     const ModuleBase::Matrix3 lattice(2.0, 0.0, 0.0,
                                       0.0, 5.0, 0.0,
@@ -110,7 +110,7 @@ TEST(SccsPcc2d, BuildsGeometryForEveryOpenAxis)
 // A cell rotated by 45 degrees whose vectors were rounded to six digits
 // inconsistently, tilting the open vector by about 7e-7: rejected by the
 // strict tolerance, accepted by the 1e-6 tolerance v_correction_pcc uses.
-TEST(SccsPcc2d, GeometryAcceptsRoundedRotatedCellAtProductionTolerance)
+TEST(Pcc2d, GeometryAcceptsRoundedRotatedCellAtProductionTolerance)
 {
     const ModuleBase::Matrix3 rotated(0.707107, 0.707107, 0.0,
                                       -0.707106, 0.707107, 0.0,
@@ -119,7 +119,7 @@ TEST(SccsPcc2d, GeometryAcceptsRoundedRotatedCellAtProductionTolerance)
     EXPECT_NO_THROW(ModulePcc::pcc_2d_geometry(rotated, 10.0, 0, 1.0e-6));
 }
 
-TEST(SccsPcc2d, GeometryRejectsUnsupportedSlabOrientations)
+TEST(Pcc2d, GeometryRejectsUnsupportedSlabOrientations)
 {
     const ModuleBase::Matrix3 tilted_normal(1.0, 0.0, 0.0,
                                              0.2, 2.0, 0.0,
@@ -127,9 +127,6 @@ TEST(SccsPcc2d, GeometryRejectsUnsupportedSlabOrientations)
     const ModuleBase::Matrix3 tilted_plane(1.0, 0.1, 0.0,
                                            0.0, 2.0, 0.0,
                                            0.0, 0.0, 1.0);
-    const ModuleBase::Matrix3 reversed_normal(1.0, 0.0, 0.0,
-                                              0.0, -2.0, 0.0,
-                                              0.0, 0.0, 1.0);
     const ModuleBase::Matrix3 degenerate_plane(1.0, 0.0, 0.0,
                                                0.0, 2.0, 0.0,
                                                2.0, 0.0, 0.0);
@@ -142,7 +139,7 @@ TEST(SccsPcc2d, GeometryRejectsUnsupportedSlabOrientations)
                  std::invalid_argument);
 }
 
-TEST(SccsPcc2d, SystemCenterUnwrapsAcrossYBoundary)
+TEST(Pcc2d, SystemCenterUnwrapsAcrossTheCellBoundary)
 {
     const std::vector<double> positions_y{9.8, 0.2};
     const std::vector<double> weights{1.0, 3.0};
@@ -156,7 +153,7 @@ TEST(SccsPcc2d, SystemCenterUnwrapsAcrossYBoundary)
     EXPECT_NEAR(ModulePcc::pcc_2d_relative_coordinate(ModuleBase::Vector3<double>(0.0, 0.2, 0.0), value), 0.1, 1.0e-14);
 }
 
-TEST(SccsPcc2d, MomentsRemainInvariantWhenChargesCrossYBoundary)
+TEST(Pcc2d, MomentsRemainInvariantWhenChargesCrossTheCellBoundary)
 {
     std::vector<ModulePcc::PointCharge> original(2);
     original[0].charge = 1.2;
@@ -188,7 +185,7 @@ TEST(SccsPcc2d, MomentsRemainInvariantWhenChargesCrossYBoundary)
                 1.0e-14);
 }
 
-TEST(SccsPcc2d, AccumulatesOnlyYMoments)
+TEST(Pcc2d, AccumulatesOnlyNormalMoments)
 {
     std::vector<ModulePcc::PointCharge> charges(2);
     charges[0].charge = 2.0;
@@ -203,7 +200,7 @@ TEST(SccsPcc2d, AccumulatesOnlyYMoments)
     EXPECT_DOUBLE_EQ(moments.quadrupole, 4.0);
 }
 
-TEST(SccsPcc2d, SumMomentsEqualTheMomentsOfTheCombinedCharges)
+TEST(Pcc2d, SumMomentsEqualTheMomentsOfTheCombinedCharges)
 {
     std::vector<ModulePcc::PointCharge> ions(2);
     ions[0].charge = 2.0;
@@ -226,7 +223,7 @@ TEST(SccsPcc2d, SumMomentsEqualTheMomentsOfTheCombinedCharges)
     EXPECT_DOUBLE_EQ(sum.quadrupole, expected.quadrupole);
 }
 
-TEST(SccsPcc2d, DensityMomentsIncludeTheVolumeElement)
+TEST(Pcc2d, DensityMomentsIncludeTheVolumeElement)
 {
     const std::vector<double> density{0.5, -0.25};
     const std::vector<ModuleBase::Vector3<double>> positions{
@@ -240,7 +237,7 @@ TEST(SccsPcc2d, DensityMomentsIncludeTheVolumeElement)
 }
 
 // Planar open kernel -2*pi*|u|/A plus a constant gauge shift, minus the
-// zero-mean periodic planar kernel, summed over sources closer than L_y/2.
+// zero-mean periodic planar kernel, summed over sources closer than L/2.
 double direct_planar_correction(const std::vector<double>& locations,
                                 const std::vector<double>& charges,
                                 const double y,
@@ -292,14 +289,14 @@ void expect_planar_correction(const ModulePcc::Pcc2dParameters& value,
     }
 }
 
-TEST(SccsPcc2d, MomentPotentialMatchesIndependentPlanarGreenFunctions)
+TEST(Pcc2d, MomentPotentialMatchesIndependentPlanarGreenFunctions)
 {
     // The open kernel is zero on the plane of the source for any periodic area.
     const ModulePcc::Pcc2dParameters value = parameters();
     expect_planar_correction(value, 0.0);
 }
 
-TEST(SccsPcc2d, SquareCellCorrectionUsesUnshiftedOpenPlanarKernel)
+TEST(Pcc2d, SquareCellCorrectionUsesUnshiftedOpenPlanarKernel)
 {
     ModulePcc::Pcc2dParameters value;
     value.cell_length = 17.0;
@@ -307,7 +304,7 @@ TEST(SccsPcc2d, SquareCellCorrectionUsesUnshiftedOpenPlanarKernel)
     expect_planar_correction(value, 0.0);
 }
 
-TEST(SccsPcc2d, ChargedMonopoleUsesTheOpenPlanarGauge)
+TEST(Pcc2d, ChargedMonopoleUsesTheOpenPlanarGauge)
 {
     ModulePcc::Pcc2dMoments moments;
     moments.charge = 1.7;
@@ -326,7 +323,7 @@ TEST(SccsPcc2d, ChargedMonopoleUsesTheOpenPlanarGauge)
                 1.0e-15);
 }
 
-TEST(SccsPcc2d, PositiveAndNegativeMonopolesHaveOddPotentialAndEqualEnergy)
+TEST(Pcc2d, PositiveAndNegativeMonopolesHaveOddPotentialAndEqualEnergy)
 {
     ModulePcc::Pcc2dMoments positive;
     positive.charge = 0.8;
@@ -345,7 +342,7 @@ TEST(SccsPcc2d, PositiveAndNegativeMonopolesHaveOddPotentialAndEqualEnergy)
                      ModulePcc::pcc_2d_self_energy(positive, value));
 }
 
-TEST(SccsPcc2d, GradientFollowsNormalAndMatchesCentralDifference)
+TEST(Pcc2d, GradientFollowsNormalAndMatchesCentralDifference)
 {
     ModulePcc::Pcc2dMoments moments;
     moments.charge = -1.2;
@@ -375,7 +372,7 @@ TEST(SccsPcc2d, GradientFollowsNormalAndMatchesCentralDifference)
     EXPECT_NEAR(along_z.z, finite, 1.0e-11);
 }
 
-TEST(SccsPcc2d, BilinearKernelIsSymmetric)
+TEST(Pcc2d, BilinearKernelIsSymmetric)
 {
     ModulePcc::Pcc2dMoments left;
     left.charge = 1.0;
@@ -391,7 +388,7 @@ TEST(SccsPcc2d, BilinearKernelIsSymmetric)
                      ModulePcc::pcc_2d_bilinear_energy(right, left, value));
 }
 
-TEST(SccsPcc2d, NeutralSelfEnergyHasExpectedDipoleForm)
+TEST(Pcc2d, NeutralSelfEnergyHasExpectedDipoleForm)
 {
     ModulePcc::Pcc2dMoments moments;
     moments.dipole = 0.7;
@@ -403,7 +400,7 @@ TEST(SccsPcc2d, NeutralSelfEnergyHasExpectedDipoleForm)
     EXPECT_NEAR(ModulePcc::pcc_2d_self_energy(moments, value), expected, 1.0e-15);
 }
 
-TEST(SccsPcc2d, PotentialAndEnergyAreIndependentOfMomentOrigin)
+TEST(Pcc2d, PotentialAndEnergyAreIndependentOfMomentOrigin)
 {
     std::vector<ModulePcc::PointCharge> charges(2);
     charges[0].charge = 1.7;
@@ -428,7 +425,7 @@ TEST(SccsPcc2d, PotentialAndEnergyAreIndependentOfMomentOrigin)
                 1.0e-15);
 }
 
-TEST(SccsPcc2d, DensityDerivativeMatchesPotential)
+TEST(Pcc2d, DensityDerivativeMatchesPotential)
 {
     const double origin_y = 0.0;
     const double electron_y = -0.8;
@@ -465,7 +462,7 @@ TEST(SccsPcc2d, DensityDerivativeMatchesPotential)
     EXPECT_NEAR(analytic, finite, 1.0e-11);
 }
 
-TEST(SccsPcc2d, PointChargeForceMatchesSelfEnergyFiniteDifference)
+TEST(Pcc2d, PointChargeForceMatchesSelfEnergyFiniteDifference)
 {
     const double origin_y = 0.0;
     std::vector<ModulePcc::PointCharge> charges(2);
@@ -500,7 +497,7 @@ TEST(SccsPcc2d, PointChargeForceMatchesSelfEnergyFiniteDifference)
     EXPECT_DOUBLE_EQ(analytic.z, 0.0);
 }
 
-TEST(SccsPcc2d, RejectsInvalidAndNonFiniteInputs)
+TEST(Pcc2d, RejectsInvalidAndNonFiniteInputs)
 {
     ModulePcc::Pcc2dParameters value;
     EXPECT_THROW(ModulePcc::pcc_2d_self_energy(ModulePcc::Pcc2dMoments(), value),
