@@ -89,6 +89,9 @@ class Potential : public PotBase
         this->td_field_manager_ = field_manager;
     }
 
+    // PCC energy from the solvent instance used to construct this potential.
+    double pcc_energy_rydberg() const;
+
     // interfaces to get values
     ModuleBase::matrix& get_eff_v()
     {

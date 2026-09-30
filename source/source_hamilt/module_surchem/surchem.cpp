@@ -1,12 +1,13 @@
 #include "surchem.h"
+#include "source_base/parallel_reduce.h"
 
 #include <iomanip>
 #include <cmath>
 #include <ostream>
+#include <stdexcept>
 
 double surchem::Acav = 0;
 double surchem::Ael = 0;
-double surchem::Epcc = 0;
 
 surchem::surchem()
 {
@@ -61,6 +62,19 @@ bool surchem::uses_pcc() const
            && this->parameters_.pcc_boundary != ModulePcc::Boundary::Periodic;
 }
 
+double surchem::pcc_energy_rydberg() const
+{
+    if (!this->uses_pcc())
+    {
+        return 0.0;
+    }
+    if (!this->pcc_result_valid_)
+    {
+        throw std::logic_error("PCC energy requires a valid potential update for this solvent instance");
+    }
+    return this->pcc_energy_rydberg_;
+}
+
 bool surchem::sccs_is_active() const
 {
     return this->uses_sccs() && this->sccs_active_;
@@ -99,6 +113,17 @@ const ModuleSccs::SccsResult& surchem::sccs_result() const
     return this->sccs_result_;
 }
 
+bool surchem::validate_iteration_result() const
+{
+    int invalid_result = 0;
+    if (this->uses_pcc() && !this->pcc_result_valid_)
+    {
+        invalid_result = 1;
+    }
+    Parallel_Reduce::reduce_all(invalid_result);
+    return invalid_result == 0;
+}
+
 void surchem::write_iteration(std::ostream& output, const double drho) const
 {
     if (this->parameters_.debug == 0)
@@ -127,7 +152,9 @@ void surchem::write_sccs_iteration(std::ostream& output) const
     {
         if (!this->uses_pcc() || !this->pcc_result_valid_)
         {
-            throw std::logic_error("correction summary requires a current SCCS or PCC result");
+            // Computation validates collectively. Printing can also be called
+            // before an update or after clear, so skip unavailable results.
+            return;
         }
         const std::streamsize precision = output.precision();
         const std::ios_base::fmtflags flags = output.flags();
@@ -160,7 +187,7 @@ void surchem::write_sccs_iteration(std::ostream& output) const
         output.precision(precision);
         return;
     }
-    const ModuleSccs::SccsResult& result = this->sccs_result();
+    const ModuleSccs::SccsResult& result = this->sccs_result_;
     const double solvation_energy_rydberg
         = 2.0 * (result.electrostatic.reaction_energy
                  + result.non_electrostatic.surface_energy
@@ -267,11 +294,11 @@ void surchem::write_sccs_iteration(std::ostream& output) const
 
 void surchem::write_sccs_diagnostics(std::ostream& output) const
 {
-    if (this->parameters_.debug < 2)
+    if (this->parameters_.debug < 2 || !this->sccs_is_active())
     {
         return;
     }
-    const ModuleSccs::SccsResult& result = this->sccs_result();
+    const ModuleSccs::SccsResult& result = this->sccs_result_;
     const std::streamsize previous_precision = output.precision();
     output << std::setprecision(16);
     output << " SCCS_DIAGNOSTIC reaction_energy_hartree "

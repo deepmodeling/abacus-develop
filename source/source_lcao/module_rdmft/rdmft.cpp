@@ -345,11 +345,13 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     {
         this->pelec->f_en.deband  = this->pelec->cal_delta_eband(*ucell);
         E_descf = pelec->f_en.descf = 0.0;
+        const double pcc_energy_rydberg = this->pelec->pot->pcc_energy_rydberg();
         this->pelec->cal_energies(2,
                                   PARAM.inp.imp_sol,
                                   PARAM.inp.sc_mag_switch,
                                   PARAM.inp.dft_plus_u,
-                                  PARAM.inp.assume_isolated);
+                                  PARAM.inp.assume_isolated,
+                                  pcc_energy_rydberg);
         Etotal = this->pelec->f_en.etot;
 
             }

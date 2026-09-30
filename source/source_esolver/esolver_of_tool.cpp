@@ -372,11 +372,13 @@ void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& 
                 ptemp_rho_->rho[0][ir] = ptemp_phi[0][ir] * ptemp_phi[0][ir];
             }
             this->cal_dEdtheta(ptemp_phi, ptemp_rho_, ucell, this->theta_, dEdtheta);
+            const double pcc_energy_rydberg = this->pelec->pot->pcc_energy_rydberg();
             this->pelec->cal_energies(2,
                                       this->inp_->imp_sol,
                                       this->inp_->sc_mag_switch,
                                       this->inp_->dft_plus_u,
-                                      this->inp_->assume_isolated);
+                                      this->inp_->assume_isolated,
+                                      pcc_energy_rydberg);
             temp_energy = this->pelec->f_en.etot;
             double kinetic_energy = 0.;
             double pseudopot_energy = 0.;

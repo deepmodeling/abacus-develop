@@ -21,6 +21,29 @@
 namespace
 {
 
+int iteration_validation_rank = 0;
+
+TEST(HCorrSccs, InvalidIterationResultIsReportedOnEveryRank)
+{
+    SurchemParameters parameters;
+    parameters.debug = 2;
+    // Only rank zero lacks a required PCC result. Other ranks have no PCC
+    // requirement, but the collective validation must report failure to all.
+    if (iteration_validation_rank == 0)
+    {
+        parameters.pcc_boundary = ModulePcc::Boundary::Pcc2d;
+    }
+    surchem solvent;
+    solvent.set_parameters(parameters);
+    EXPECT_FALSE(solvent.validate_iteration_result());
+    std::ostringstream summary;
+    EXPECT_NO_THROW(solvent.write_iteration(summary, 0.1));
+    EXPECT_TRUE(summary.str().empty());
+    std::ostringstream diagnostics;
+    EXPECT_NO_THROW(solvent.write_sccs_diagnostics(diagnostics));
+    EXPECT_TRUE(diagnostics.str().empty());
+}
+
 // One unit ion at the center of a 10 bohr cubic cell on a 20 Ry grid.
 void setup_single_ion_cell(ModulePW::PW_Basis& basis, UnitCell& cell)
 {
@@ -87,7 +110,6 @@ TEST(HCorrSccs, SolventDispatchReturnsZeroBeforeDelayedActivation)
     }
     surchem::Ael = 1.0;
     surchem::Acav = 1.0;
-    surchem::Epcc = 1.0;
     solvent.v_correction_solvent(cell,
                                  basis,
                                  1,
@@ -100,7 +122,7 @@ TEST(HCorrSccs, SolventDispatchReturnsZeroBeforeDelayedActivation)
     }
     EXPECT_EQ(surchem::Ael, 0.0);
     EXPECT_EQ(surchem::Acav, 0.0);
-    EXPECT_EQ(surchem::Epcc, 0.0);
+    EXPECT_EQ(solvent.pcc_energy_rydberg(), 0.0);
     const std::vector<double>& electrostatic = solvent.electrostatic_correction();
     ASSERT_EQ(electrostatic.size(), static_cast<std::size_t>(basis.nrxx));
     for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -316,7 +338,7 @@ TEST(HCorrSccs, ConvertsHartreeResultToRydbergPotentialAndEnergy)
                 0.5 * 2.837297479480619 / length,
                 1.0e-12);
     EXPECT_NEAR(surchem::Ael, 2.0 * result.electrostatic.reaction_energy, 1.0e-14);
-    EXPECT_NEAR(surchem::Epcc, 2.0 * result.vacuum_pcc_energy, 1.0e-14);
+    EXPECT_NEAR(solvent.pcc_energy_rydberg(), 2.0 * result.vacuum_pcc_energy, 1.0e-14);
     EXPECT_NEAR(surchem::Acav,
                 2.0 * (result.non_electrostatic.surface_energy
                        + result.non_electrostatic.volume_energy),
@@ -507,7 +529,7 @@ TEST(HCorrSccs, AppliesNeutralPcc2dPointIonEnergyAndPotential)
     EXPECT_NEAR(result.vacuum_pcc_energy, expected_energy, 1.0e-12);
     EXPECT_NEAR(result.electrostatic.reaction_energy, 0.0, 1.0e-14);
     EXPECT_NEAR(surchem::Ael, 0.0, 1.0e-13);
-    EXPECT_NEAR(surchem::Epcc, 2.0 * expected_energy, 1.0e-12);
+    EXPECT_NEAR(solvent.pcc_energy_rydberg(), 2.0 * expected_energy, 1.0e-12);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         EXPECT_TRUE(std::isfinite(potential(0, ir)));
@@ -594,7 +616,7 @@ TEST(HCorrSccs, AppliesChargedPcc2dEnergyAndPotential)
                                          pcc_geometry.parameters);
     EXPECT_NEAR(result.vacuum_pcc_energy, expected_vacuum_energy, 1.0e-14);
     EXPECT_NEAR(surchem::Ael, 2.0 * result.electrostatic.reaction_energy, 1.0e-14);
-    EXPECT_NEAR(surchem::Epcc, 2.0 * result.vacuum_pcc_energy, 1.0e-14);
+    EXPECT_NEAR(solvent.pcc_energy_rydberg(), 2.0 * result.vacuum_pcc_energy, 1.0e-14);
     std::ostringstream diagnostics;
     solvent.write_sccs_diagnostics(diagnostics);
     const std::string diagnostic_text = diagnostics.str();
@@ -700,6 +722,7 @@ int main(int argc, char** argv)
     int thread_count = 1;
     int rank = 0;
     Parallel_Global::read_pal_param(argc, argv, process_count, thread_count, rank);
+    iteration_validation_rank = rank;
     POOL_WORLD = MPI_COMM_WORLD;
     KP_WORLD = MPI_COMM_NULL;
     INT_BGROUP = MPI_COMM_NULL;

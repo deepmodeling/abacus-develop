@@ -32,11 +32,6 @@ double ElecState::get_solvent_model_Acav()
     return surchem::Acav;
 }
 
-double ElecState::get_pcc_energy()
-{
-    return surchem::Epcc;
-}
-
 double ElecState::get_dftu_energy()
 {
     return dftu_energy_;

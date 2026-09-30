@@ -155,6 +155,15 @@ void Potential::allocate()
     }
 }
 
+double Potential::pcc_energy_rydberg() const
+{
+    if (this->solvent_ == nullptr)
+    {
+        return 0.0;
+    }
+    return this->solvent_->pcc_energy_rydberg();
+}
+
 void Potential::update_from_charge(const Charge* const chg, const UnitCell* const ucell)
 {
     ModuleBase::TITLE("Potential", "update_from_charge");

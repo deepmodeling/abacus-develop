@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -84,7 +85,7 @@ StandalonePcc2dResult run_standalone_pcc_2d(const ModuleBase::Matrix3& lattice,
     ModuleBase::matrix potential;
     correction.v_correction_pcc(cell, basis, 1, density_channels, potential);
     StandalonePcc2dResult result;
-    result.energy_rydberg = surchem::Epcc;
+    result.energy_rydberg = correction.pcc_energy_rydberg();
     result.force.create(2, 3);
     correction.cal_force_pcc(cell, result.force);
     return result;
@@ -154,7 +155,8 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
           * static_cast<double>(electron_plane_y) / basis.ny;
     const double dipole_y = -ModulePcc::pcc_2d_relative_coordinate(ModuleBase::Vector3<double>(0.0, electron_y, 0.0), geometry);
     const double expected_energy = 2.0 * ModuleBase::PI * dipole_y * dipole_y / cell.omega;
-    EXPECT_NEAR(surchem::Epcc, 2.0 * expected_energy, 1.0e-12);
+    EXPECT_NEAR(correction.pcc_energy_rydberg(), 2.0 * expected_energy, 1.0e-12);
+    EXPECT_TRUE(correction.validate_iteration_result());
     EXPECT_DOUBLE_EQ(surchem::Ael, 0.0);
     EXPECT_DOUBLE_EQ(surchem::Acav, 0.0);
     EXPECT_TRUE(std::isfinite(potential(0, 0)));
@@ -187,7 +189,7 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
     EXPECT_FALSE(correction.sccs_is_active());
     EXPECT_TRUE(correction.uses_pcc());
     correction.v_correction_pcc(cell, basis, 1, density_channels, potential);
-    EXPECT_NEAR(surchem::Epcc, 2.0 * expected_energy, 1.0e-12);
+    EXPECT_NEAR(correction.pcc_energy_rydberg(), 2.0 * expected_energy, 1.0e-12);
 
     // An electron-count mismatch is reported; PCC keeps the grid charge.
     parameters.use_sccs = false;
@@ -195,7 +197,37 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
     parameters.expected_electron_count = 1.0 + 1.0e-3;
     correction.set_parameters(parameters);
     EXPECT_NO_THROW(correction.v_correction_pcc(cell, basis, 1, density_channels, potential));
-    EXPECT_NEAR(surchem::Epcc, 2.0 * expected_energy, 1.0e-12);
+    EXPECT_NEAR(correction.pcc_energy_rydberg(), 2.0 * expected_energy, 1.0e-12);
+
+    // Interleaved solvents must retain their own energy, including when another
+    // instance is reconfigured or cleared before the electronic-state evaluation.
+    const double first_energy = correction.pcc_energy_rydberg();
+    surchem second;
+    parameters.expected_electron_count = 0.5;
+    second.set_parameters(parameters);
+    EXPECT_THROW(second.pcc_energy_rydberg(), std::logic_error);
+    std::vector<double> second_density = electron_density;
+    for (double& density : second_density)
+    {
+        density *= 0.5;
+    }
+    const double* second_channels[1] = {second_density.data()};
+    second.v_correction_pcc(cell, basis, 1, second_channels, potential);
+    const double second_energy = second.pcc_energy_rydberg();
+    EXPECT_GT(std::abs(second_energy - first_energy), 1.0e-6);
+    EXPECT_DOUBLE_EQ(correction.pcc_energy_rydberg(), first_energy);
+    correction.v_correction_pcc(cell, basis, 1, density_channels, potential);
+    EXPECT_DOUBLE_EQ(second.pcc_energy_rydberg(), second_energy);
+    second.clear();
+    EXPECT_THROW(second.pcc_energy_rydberg(), std::logic_error);
+    EXPECT_FALSE(second.validate_iteration_result());
+    std::ostringstream cleared_summary;
+    EXPECT_NO_THROW(second.write_iteration(cleared_summary, 0.1));
+    EXPECT_TRUE(cleared_summary.str().empty());
+    EXPECT_DOUBLE_EQ(correction.pcc_energy_rydberg(), first_energy);
+    const SurchemParameters disabled_parameters;
+    second.set_parameters(disabled_parameters);
+    EXPECT_DOUBLE_EQ(second.pcc_energy_rydberg(), 0.0);
 }
 
 // The same slab open along y (pcc_2d_axis 1) and, after the cyclic

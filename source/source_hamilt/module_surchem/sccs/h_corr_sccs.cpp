@@ -129,7 +129,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
     }
     else
     {
-        surchem::Epcc = 0.0;
+        this->pcc_energy_rydberg_ = 0.0;
     }
     const ModulePcc::PccGeometry& pcc_geometry = this->pcc_geometry_;
     const ModulePcc::Pcc2dGeometry& pcc_2d_geometry = this->pcc_2d_geometry_;
@@ -197,7 +197,7 @@ void surchem::v_correction_sccs(const UnitCell& cell,
         this->electrostatic_correction_ry_[ir] = pcc_part - 2.0 * reaction_potential[ir];
     }
 
-    // The vacuum PCC energy stays in surchem::Epcc, set by v_correction_pcc.
+    // The instance vacuum PCC energy is set by v_correction_pcc.
     surchem::Ael = 2.0 * this->sccs_result_.electrostatic.reaction_energy;
     surchem::Acav = 2.0 * (this->sccs_result_.non_electrostatic.surface_energy
                            + this->sccs_result_.non_electrostatic.volume_energy);
@@ -232,7 +232,7 @@ void surchem::v_correction_solvent(const UnitCell& cell,
             this->electrostatic_correction_ry_.assign(rho_basis.nrxx, 0.0);
             surchem::Ael = 0.0;
             surchem::Acav = 0.0;
-            surchem::Epcc = 0.0;
+            this->pcc_energy_rydberg_ = 0.0;
         }
     }
     catch (const std::exception& error)

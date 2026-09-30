@@ -72,6 +72,10 @@ surchem::surchem()
 surchem::~surchem()
 {
 }
+double surchem::pcc_energy_rydberg() const
+{
+    return 0.0;
+}
 
 int XC_Functional::func_type = 1;
 bool XC_Functional::ked_flag = false;
