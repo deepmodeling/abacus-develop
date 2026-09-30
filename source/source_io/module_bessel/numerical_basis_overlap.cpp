@@ -390,35 +390,6 @@ ModuleBase::matrix Numerical_Basis::cal_overlap_V(const ModulePW::PW_Basis_K* wf
     return overlap_V;
 }
 
-ModuleBase::realArray Numerical_Basis::cal_flq(const std::vector<ModuleBase::Vector3<double>>& gk,
-                                               const int ucell_lmax) const
-{
-    const int np = gk.size();
-    const int enumber = this->bessel_basis.get_ecut_number();
-
-    // get flq(G) = \int f(r)jl(G*r) from interpolation table.
-    ModuleBase::realArray flq(ucell_lmax + 1, enumber, np);
-    for (int il = 0; il < ucell_lmax + 1; il++)
-    {
-        for (int ie = 0; ie < enumber; ie++)
-        {
-            for (int ig = 0; ig < np; ig++)
-            {
-                flq(il, ie, ig) = this->bessel_basis.Polynomial_Interpolation2(il, ie, gk[ig].norm());
-            }
-        }
-    }
-    return flq;
-}
-
-ModuleBase::matrix Numerical_Basis::cal_ylm(const std::vector<ModuleBase::Vector3<double>>& gk, const int ucell_lmax)
-{
-    const int total_lm = (ucell_lmax + 1) * (ucell_lmax + 1);
-    ModuleBase::matrix ylm(total_lm, gk.size());
-    ModuleBase::YlmReal::Ylm_Real(total_lm, gk.size(), gk.data(), ylm);
-    return ylm;
-}
-
 std::vector<double> Numerical_Basis::cal_gpow(const std::vector<ModuleBase::Vector3<double>>& gk,
                                               const double derivative_order)
 {
