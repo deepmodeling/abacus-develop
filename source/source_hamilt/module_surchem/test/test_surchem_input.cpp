@@ -256,6 +256,41 @@ TEST(SurchemInput, Pcc2dRejectsOperationsThatMoveTheOpenAxis)
     EXPECT_EQ(ModuleSurchem::pcc_symmetry_violation(parameters, symmetry), "");
 }
 
+TEST(SurchemInput, Pcc2dChecksPrimitiveCellTranslationsAndAntiunitaryOperations)
+{
+    SurchemParameters parameters;
+    parameters.pcc_boundary = ModulePcc::Boundary::Pcc2d;
+    parameters.pcc_2d_axis = 2;
+    ModuleSymmetry::Symmetry symmetry;
+    symmetry.nrotk = 1;
+    const ModuleBase::Vector3<double> zero(0.0, 0.0, 0.0);
+    set_operation(symmetry, 0, ModuleBase::Matrix3(), zero);
+    const bool previous_pricell_loop = ModuleSymmetry::Symmetry::pricell_loop;
+    ModuleSymmetry::Symmetry::pricell_loop = true;
+    // An in-plane supercell translation keeps the slab.
+    symmetry.ptrans.push_back(zero);
+    symmetry.ptrans.push_back(ModuleBase::Vector3<double>(0.5, 0.0, 0.0));
+    EXPECT_EQ(ModuleSurchem::pcc_symmetry_violation(parameters, symmetry), "");
+    // Half the open vector would copy the slab within the cell.
+    symmetry.ptrans.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.5));
+    const std::string translation_violation = ModuleSurchem::pcc_symmetry_violation(parameters, symmetry);
+    // rhog_symmetry uses the primitive-cell translations only with pricell_loop.
+    ModuleSymmetry::Symmetry::pricell_loop = false;
+    const std::string translation_without_loop = ModuleSurchem::pcc_symmetry_violation(parameters, symmetry);
+    ModuleSymmetry::Symmetry::pricell_loop = previous_pricell_loop;
+    EXPECT_NE(translation_violation.find("translates"), std::string::npos);
+    EXPECT_EQ(translation_without_loop, "");
+
+    // Antiunitary operations must keep the open axis as well.
+    symmetry.ptrans.clear();
+    symmetry.nrotk_anti = 1;
+    symmetry.gmatrix_anti[0] = ModuleBase::Matrix3(1, 0, 0, 0, 0, 1, 0, 1, 0);
+    symmetry.gtrans_anti[0] = zero;
+    EXPECT_NE(ModuleSurchem::pcc_symmetry_violation(parameters, symmetry).find("mixes"), std::string::npos);
+    symmetry.gmatrix_anti[0] = ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, -1);
+    EXPECT_EQ(ModuleSurchem::pcc_symmetry_violation(parameters, symmetry), "");
+}
+
 TEST(SurchemInput, Pcc0dRejectsOnlyPureFractionalTranslations)
 {
     SurchemParameters parameters;
