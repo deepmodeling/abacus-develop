@@ -3154,6 +3154,58 @@ void RPA_LRI<T, Tdata>::out_coulomb_k_v1(const UnitCell& ucell,
     ModuleBase::timer::tick("RPA_LRI", "out_coulomb_k_v1");
 }
 
+template <typename T, typename Tdata>
+void RPA_LRI<T, Tdata>::out_velocity(const UnitCell& ucell,
+                                     const Grid_Driver& gd,
+                                     const TwoCenterBundle& two_center_bundle,
+                                     const Parallel_Orbitals& parav,
+                                     const psi::Psi<T>& psi,
+                                     const elecstate::ElecState* pelec)
+{
+    ModuleBase::TITLE("DFT_RPA_interface", "out_velocity");
+    ModuleBase::timer::start("RPA_LRI", "out_velocity");
+
+    Parallel_2D parac;
+    LR_Util::setup_2d_division(parac, parav.get_block_size(), PARAM.globalv.nlocal, PARAM.inp.nbands
+#ifdef __MPI
+                               , parav.blacs_ctxt
+#endif
+    );
+
+    const int nk = PARAM.inp.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int nspin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
+    const int nbands = parav.get_wfc_global_nbands();
+    const int nbasis = parav.get_wfc_global_nbasis();
+
+    std::vector<int> nocc(2, nbands);
+    std::vector<int> nvirt(2, 0);
+    const std::vector<std::complex<double>> velocity_mo
+        = LR_Util::cal_velocity_mo(ucell,
+                                   gd,
+                                   two_center_bundle,
+                                   parav,
+                                   parac,
+                                   *this->p_kv,
+                                   psi,
+                                   nk,
+                                   nspin_tmp,
+                                   PARAM.globalv.nlocal,
+                                   nocc,
+                                   nvirt);
+    if (GlobalV::MY_RANK == 0)
+    {
+        LR_Util::output_spectrum_mo_librpa(velocity_mo,
+                                           outdir + "velocity_matrix",
+                                           nk,
+                                           nspin_tmp,
+                                           nbands,
+                                           nbasis,
+                                           nbands,
+                                           *this->p_kv);
+    }
+    ModuleBase::timer::end("RPA_LRI", "out_velocity");
+}
+
 
 // template<typename Tdata>
 // void RPA_LRI<T, Tdata>::init(const MPI_Comm &mpi_comm_in)
