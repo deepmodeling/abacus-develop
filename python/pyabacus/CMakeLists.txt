@@ -67,6 +67,11 @@ else()
   endif()
 endif()
 
+# Reproduce the numerical link interface expected by reusable ABACUS targets.
+add_library(abacus_linalg_libs INTERFACE)
+add_library(abacus::linalg_libs ALIAS abacus_linalg_libs)
+target_link_libraries(abacus_linalg_libs INTERFACE ${math_libs})
+
 # add include directories
 include_directories(
     ${BASE_PATH} 
@@ -112,4 +117,3 @@ if(BUILD_PYABACUS_DRIVER)
     message(STATUS "Building PyABACUS driver module")
     add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleDriver)
 endif()
-
