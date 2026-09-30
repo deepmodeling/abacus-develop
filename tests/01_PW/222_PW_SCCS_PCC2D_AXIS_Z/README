@@ -1,0 +1,5 @@
+Case 214_PW_SCCS_PCC2D_CF relabeled cyclically, (x, y, z) -> (z, x, y), so that the open
+direction is the third lattice vector: pcc_2d_axis 2, 10 x 10 x 20 bohr cell.
+The energies and the permuted forces agree with case 214 to within the SCF convergence
+(at scf_thr 1e-11: energy 1e-8 eV, forces 3e-5 eV/Angstrom).
+Checks the total energy, forces, E_sol_el, E_sol_cav and E_pcc against an ABACUS baseline.

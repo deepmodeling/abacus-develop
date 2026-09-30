@@ -20,6 +20,82 @@
 namespace
 {
 
+struct StandalonePcc2dResult
+{
+    double energy_rydberg = 0.0;
+    ModuleBase::matrix force;
+};
+
+// Standalone pcc_2d for two unit ions and a normalized Gaussian cloud of two
+// electrons, all given in Cartesian bohr.
+StandalonePcc2dResult run_standalone_pcc_2d(const ModuleBase::Matrix3& lattice,
+                                            const std::vector<ModuleBase::Vector3<double>>& ions,
+                                            const ModuleBase::Vector3<double>& cloud_center,
+                                            const int axis)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+#ifdef __MPI
+    basis.initmpi(1, 0, POOL_WORLD);
+#endif
+    const double scale = 1.0;
+    basis.initgrids(scale, lattice, 20.0);
+    basis.initparameters(false, 20.0, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+    UnitCell cell;
+    cell.lat0 = scale;
+    cell.latvec = lattice;
+    cell.omega = std::abs(lattice.Det());
+    cell.ntype = 1;
+    cell.nat = 2;
+    cell.atoms = new Atom[1];
+    cell.atoms[0].na = 2;
+    cell.atoms[0].mass = 1.0;
+    cell.atoms[0].ncpp.zv = 1.0;
+    for (std::size_t ion = 0; ion < ions.size(); ++ion)
+    {
+        cell.atoms[0].tau.push_back(ions[ion]);
+    }
+
+    const std::vector<ModuleBase::Vector3<double>> positions
+        = ModuleSurchem::pw_grid_positions(basis, cell.latvec, cell.lat0);
+    const double volume_element = cell.omega / static_cast<double>(basis.nxyz);
+    std::vector<double> electron_density(basis.nrxx, 0.0);
+    double electron_sum = 0.0;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const ModuleBase::Vector3<double> offset = positions[ir] - cloud_center;
+        electron_density[ir] = std::exp(-offset.norm2());
+        electron_sum += electron_density[ir] * volume_element;
+    }
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        electron_density[ir] *= 2.0 / electron_sum;
+    }
+
+    SurchemParameters parameters;
+    parameters.pcc_boundary = ModulePcc::Boundary::Pcc2d;
+    parameters.pcc_2d_axis = axis;
+    parameters.expected_electron_count = 2.0;
+    parameters.expected_ionic_charge = 2.0;
+    surchem correction;
+    correction.set_parameters(parameters);
+    const double* density_channels[1] = {electron_density.data()};
+    ModuleBase::matrix potential;
+    correction.v_correction_pcc(cell, basis, 1, density_channels, potential);
+    StandalonePcc2dResult result;
+    result.energy_rydberg = surchem::Epcc;
+    result.force.create(2, 3);
+    correction.cal_force_pcc(cell, result.force);
+    return result;
+}
+
+// Cyclic relabeling (x, y, z) -> (z, x, y) that moves the y axis onto z.
+ModuleBase::Vector3<double> y_to_z(const ModuleBase::Vector3<double>& position)
+{
+    return ModuleBase::Vector3<double>(position.z, position.x, position.y);
+}
+
 TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
 {
     ModulePW::PW_Basis basis("cpu", "double");
@@ -120,6 +196,38 @@ TEST(HCorrPcc, StandalonePcc2dMatchesPointIonVacuumCorrection)
     correction.set_parameters(parameters);
     EXPECT_NO_THROW(correction.v_correction_pcc(cell, basis, 1, density_channels, potential));
     EXPECT_NEAR(surchem::Epcc, 2.0 * expected_energy, 1.0e-12);
+}
+
+// The same slab open along y (pcc_2d_axis 1) and, after the cyclic
+// relabeling (x, y, z) -> (z, x, y), along z (pcc_2d_axis 2) must give the
+// same PCC energy and the same forces with permuted components.
+TEST(HCorrPcc, Pcc2dOpenAxisIsEquivalentUnderCyclicRelabeling)
+{
+    const ModuleBase::Matrix3 open_y(8.0, 0.0, 0.0,
+                                     0.0, 12.0, 0.0,
+                                     0.0, 0.0, 10.0);
+    const ModuleBase::Matrix3 open_z(10.0, 0.0, 0.0,
+                                     0.0, 8.0, 0.0,
+                                     0.0, 0.0, 12.0);
+    const std::vector<ModuleBase::Vector3<double>> ions_y
+        = {ModuleBase::Vector3<double>(4.0, 5.1, 5.0), ModuleBase::Vector3<double>(4.6, 7.3, 5.4)};
+    const ModuleBase::Vector3<double> cloud_y(4.2, 6.0, 5.1);
+    const std::vector<ModuleBase::Vector3<double>> ions_z = {y_to_z(ions_y[0]), y_to_z(ions_y[1])};
+    const ModuleBase::Vector3<double> cloud_z = y_to_z(cloud_y);
+
+    const StandalonePcc2dResult along_y = run_standalone_pcc_2d(open_y, ions_y, cloud_y, 1);
+    const StandalonePcc2dResult along_z = run_standalone_pcc_2d(open_z, ions_z, cloud_z, 2);
+
+    EXPECT_GT(std::abs(along_y.energy_rydberg), 1.0e-6);
+    EXPECT_NEAR(along_z.energy_rydberg, along_y.energy_rydberg,
+                1.0e-11 * std::abs(along_y.energy_rydberg));
+    for (int ion = 0; ion < 2; ++ion)
+    {
+        EXPECT_GT(std::abs(along_y.force(ion, 1)), 1.0e-6);
+        EXPECT_NEAR(along_z.force(ion, 2), along_y.force(ion, 1), 1.0e-11);
+        EXPECT_NEAR(along_z.force(ion, 0), along_y.force(ion, 2), 1.0e-14);
+        EXPECT_NEAR(along_z.force(ion, 1), along_y.force(ion, 0), 1.0e-14);
+    }
 }
 
 } // namespace
