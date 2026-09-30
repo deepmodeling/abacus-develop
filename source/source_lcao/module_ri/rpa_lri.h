@@ -79,10 +79,16 @@ template <typename T, typename Tdata> class RPA_LRI
         const elecstate::ElecState* pelec);
     void output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<double>* exx_lri_rpa);
     void out_Cs(const UnitCell& ucell, std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in, std::string filename);
+    void out_Cs_v1(const UnitCell& ucell, std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in, std::string filename);
     void out_coulomb_k(const UnitCell& ucell,
                        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs,
                        std::string filename,
                        Exx_LRI<double>* exx_lri);
+    void out_coulomb_k_v1(const UnitCell& ucell,
+                          std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs,
+                          std::string filename,
+                          Exx_LRI<double>* exx_lri);
+    void out_librpa_basis_v1(const UnitCell& ucell, Exx_LRI<double>* exx_lri);
     // void print_matrix(char *desc, const ModuleBase::matrix &mat);
     // void print_complex_matrix(char *desc, const ModuleBase::ComplexMatrix &mat);
     // void init(const MPI_Comm &mpi_comm_in);
@@ -91,8 +97,10 @@ template <typename T, typename Tdata> class RPA_LRI
     Tdata Erpa;
 
   private:
-    const std::string& outdir = PARAM.inp.rpa_outdir;
-    Exx_Info_RI info;
+    Conv_Coulomb_Pot_K::Coulomb_Method select_coulomb_basis_method_(Exx_LRI<double>* exx_lri) const;
+    std::vector<int> collect_atom_naux_(const UnitCell& ucell, Exx_LRI<double>* exx_lri) const;
+
+    const Exx_Info::Exx_Info_RI &info;
     const K_Vectors *p_kv=nullptr;
     MPI_Comm mpi_comm;
     std::vector<double> orb_cutoff_;
