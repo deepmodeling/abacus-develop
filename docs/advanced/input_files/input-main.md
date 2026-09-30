@@ -633,7 +633,7 @@
 - **Description**: Specify the type of calculation.
 
   - scf: perform self-consistent electronic structure calculations
-  - nscf: perform non-self-consistent electronic structure calculations. A charge density file is required
+  - nscf: perform non-self-consistent electronic structure calculations. A charge density file is required. PW screened hybrid NSCF additionally reads EXX_SOURCE and binary SCF wavefunctions from read_file_dir; see the hybrid NSCF workflow documentation. The initial implementation requires CPU, kpar=bndpar=1, nspin=1/2, symmetry=-1/0, exxace=false, exx_gamma_extrapolation=false and cal_force=cal_stress=false.
   - relax: perform structure relaxation calculations, the relax_nmax parameter depicts the maximal number of ionic iterations
   - cell-relax: perform cell relaxation calculations
   - md: perform molecular dynamics simulations

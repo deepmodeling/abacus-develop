@@ -3,6 +3,8 @@
 #include "source_io/module_wf/read_wfc_pw.h"
 #include "source_base/module_out/filename.h"
 
+#include <cerrno>
+#include <cstdio>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -116,9 +118,9 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
         const auto fock = this->general_exx_info_.coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
         const bool has_fock = fock != this->general_exx_info_.coulomb_param.end() && !fock->second.empty();
         if (inp.device != "cpu" || inp.kpar != 1 || inp.bndpar != 1 || inp.nspin == 4 || inp.exxace
-            || inp.exx_gamma_extrapolation || inp.symmetry == "1" || inp.init_wfc == "file" || has_fock)
+            || inp.cal_force || inp.cal_stress || inp.exx_gamma_extrapolation || inp.symmetry == "1" || inp.init_wfc == "file" || has_fock)
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_PW", "Hybrid NSCF currently requires CPU, kpar=1, nspin=1/2, symmetry=-1/0, exxace=false, exx_gamma_extrapolation=false, screened exchange and fresh target wavefunctions");
+            ModuleBase::WARNING_QUIT("ESolver_KS_PW", "Hybrid NSCF currently requires CPU, kpar=bndpar=1, nspin=1/2, symmetry=-1/0, exxace=false, exx_gamma_extrapolation=false, screened exchange, cal_force=cal_stress=false and fresh target wavefunctions");
         }
     }
 
@@ -137,6 +139,16 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
                                this->pw_big,
                                this->solvent,
                                inp);
+
+    if (inp.calculation == "scf" && this->general_exx_info_.cal_exx && inp.out_wfc_pw == 2
+        && inp.kpar == 1 && inp.bndpar == 1 && this->pw_wfc->poolrank == 0)
+    {
+        const std::string checkpoint = PARAM.globalv.global_out_dir + "EXX_SOURCE";
+        if (std::remove(checkpoint.c_str()) != 0 && errno != ENOENT)
+        {
+            ModuleBase::WARNING_QUIT("ESolver_KS_PW", "Cannot invalidate the previous EXX source checkpoint");
+        }
+    }
 
     this->stp.before_runner(ucell, this->kv, this->sf, *this->pw_wfc, this->ppcell.lmaxkb, *this->inp_);
 
@@ -475,8 +487,10 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                                      this->Pgrid,
                                      *this->inp_);
 
-    if (conv_esolver && this->inp_->calculation == "scf" && this->general_exx_info_.cal_exx
-        && this->inp_->out_wfc_pw == 2 && this->inp_->out_freq_ion == 0 && this->inp_->kpar == 1
+    const bool exchange_converged = !this->exx_helper->get_op_first_iter()
+                                    && this->exx_helper->iteration_count() < this->inp_->exx_hybrid_step;
+    if (conv_esolver && exchange_converged && this->inp_->calculation == "scf" && this->general_exx_info_.cal_exx
+        && this->inp_->out_wfc_pw == 2 && this->inp_->out_freq_ion == 0 && this->inp_->kpar == 1 && this->inp_->bndpar == 1
         && this->inp_->nspin != 4 && this->inp_->symmetry != "1")
     {
         if (this->pw_wfc->poolrank == 0)

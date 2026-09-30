@@ -237,6 +237,14 @@ void OperatorEXXPW<T, Device>::set_source(const ModulePW::PW_Basis_K& source_bas
     {
         ModuleBase::WARNING_QUIT("OperatorEXXPW", "Independent EXX sources require direct exchange without gamma extrapolation, before FFT initialization");
     }
+    if (source_basis.nks != source_points.get_nks() || source_psi.get_nk() != source_basis.nks
+        || source_weights.nr != source_basis.nks || source_weights.nc != source_psi.get_nbands()
+        || source_psi.get_nbasis() != source_basis.npwk_max
+        || source_basis.nx != wfcpw->nx || source_basis.ny != wfcpw->ny || source_basis.nz != wfcpw->nz
+        || source_basis.nrxx != wfcpw->nrxx || source_basis.poolnproc != wfcpw->poolnproc)
+    {
+        ModuleBase::WARNING_QUIT("OperatorEXXPW", "Incompatible EXX source dimensions or FFT distribution");
+    }
     source_basis_ = &source_basis;
     source_points_ = &source_points;
     psi = source_psi;

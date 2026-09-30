@@ -15,3 +15,13 @@ else()
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/integrate
     )
 endif()
+if(ENABLE_LIBXC AND ENABLE_MPI)
+    add_test(
+        NAME PW_HYBRID_NSCF
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_hybrid_nscf.py
+                ${ABACUS_BIN_PATH} --mpi-ranks 2
+    )
+    set_tests_properties(PW_HYBRID_NSCF PROPERTIES
+        LABELS "PW;EXX;NSCF" PROCESSORS 2 TIMEOUT 300
+    )
+endif()

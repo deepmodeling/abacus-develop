@@ -1,0 +1,129 @@
+# Screened hybrid NSCF with plane waves
+
+A hybrid Hamiltonian needs occupied orbitals as well as the charge density.
+PW screened hybrid NSCF now reads a **frozen SCF ensemble** on a source q mesh
+and diagonalizes the Hamiltonian on an independent target k list. Increasing
+`nbands` in NSCF changes the target states, not the source ensemble.
+
+This first implementation supports CPU calculations, `kpar 1`, `bndpar 1`,
+`nspin 1` or `2`, and a complete, uniformly weighted source mesh without symmetry
+reduction. Set `symmetry -1`, `exxace false` and
+`exx_gamma_extrapolation false` in both calculations. HSE is supported;
+unscreened Fock exchange, including PBE0, is rejected pending validation of the
+singularity correction for arbitrary target k points. Forces and stress are
+also rejected in hybrid NSCF. The LCAO workflow is unchanged.
+
+## Prepare the source ensemble
+
+Run a converged hybrid SCF with the normal source `KPT` and these settings:
+
+```text
+calculation scf
+basis_type pw
+dft_functional HSE
+symmetry -1
+kpar 1
+bndpar 1
+exxace false
+exx_gamma_extrapolation false
+out_chg 1
+out_wfc_pw 2
+out_freq_ion 0
+cal_force 0
+cal_stress 0
+```
+
+The output directory contains the charge density, `wfk*_pw.dat` binary
+wavefunctions and `EXX_SOURCE`. The versioned companion file records source
+q coordinates, spin labels, k weights, actual weighted occupations, source band
+count, FFT dimensions and exchange configuration. Fractional occupations are
+preserved. Checkpoints from older runs without `EXX_SOURCE` must be regenerated.
+An existing companion is invalidated before SCF wavefunctions are overwritten;
+an unconverged calculation does not produce a usable new companion. Reaching
+the EXX outer iteration limit is conservatively treated as unconverged here.
+
+## Solve target states
+
+Keep the same structure, pseudopotentials, functional, cutoffs and FFT dimensions.
+Point `read_file_dir` to the SCF output, replace `KPT` with the target mesh or
+band path, and use:
+
+```text
+calculation nscf
+read_file_dir ../scf/OUT.hybrid
+init_wfc random
+nbands 20
+pw_diag_thr 1e-10
+out_band 1
+out_wfc_pw 0
+out_chg 0
+```
+
+Retain the source SCF settings listed above, except its output and calculation
+settings. Use a separate NSCF output directory to preserve the SCF files.
+`init_wfc file` is rejected for this initial implementation: binary source
+orbitals are read separately, whereas target orbitals start independently.
+`nbands` may exceed the SCF band count. A different number of MPI processes
+within the single PW pool is supported; binary coefficients are redistributed
+by their Miller indices. Use `OMP_NUM_THREADS=1` for runtime tests.
+
+Missing, truncated or incompatible companion files and invalid occupations
+produce an error. The existing wavefunction reader additionally verifies k
+coordinates, cell, source band count and plane-wave count. NSCF does not update
+the frozen ensemble or run the EXX SCF outer loop. Its target occupations are
+used for ordinary output only, and its printed total energy is not a new
+self-consistent hybrid total energy.
+
+## Algorithm and implementation boundaries
+
+For each target state, exchange uses
+
+\[
+V_x\psi_{n\mathbf{k}} = -\alpha\sum_{\mathbf{q},m}
+ w_{\mathbf{q}} f_{m\mathbf{q}}\,
+ \psi_{m\mathbf{q}}\,
+ \mathcal{F}^{-1}\!\left[
+ v(\mathbf{k}-\mathbf{q}+\mathbf{G})
+ \mathcal{F}[\psi^*_{m\mathbf{q}}\psi_{n\mathbf{k}}]
+ \right].
+\]
+
+Here the periodic parts of source and target orbitals have separate PW bases.
+The uniform source sum uses the same spin and weighted-occupation convention as
+ABACUS SCF. The target `KPT` weights never define the exchange quadrature.
+`OperatorEXXPW` accepts explicit source basis, points, orbitals and occupations;
+the solver owns their lifetime. Coulomb-kernel construction uses target k
+coordinates and source q coordinates, with the screened zero-transfer correction
+computed from the source mesh. The two-basis path currently uses the full FFT
+grid, including for distributed PW transforms. Small-grid and ACE acceleration
+remain separate follow-up work.
+
+The local `../q-e` implementation was used to analyze periodic pair densities,
+`k-q+G` convolution, occupation normalization and the finite screened
+zero-transfer term (`PW/src/exx.f90`, `exx_base.f90`). Its Fortran module/global
+architecture was not adopted. That checkout explicitly rejects hybrid NSCF in
+`PW/src/setup.f90`, so it cannot provide a direct NSCF reference. Also, its
+built-in HSE screening default is `0.106 bohr^-1`; use
+`screening_parameter=0.11` for comparison with ABACUS HSE06.
+
+## Reproducible verification
+
+```bash
+cmake --build build --target MODULE_IO_exx_source_io -j 8
+OMP_NUM_THREADS=1 ctest --test-dir build -V -R '^MODULE_IO_exx_source_io$'
+python3 tests/integrate/tools/test_hybrid_nscf.py ./build/abacus --mpi-ranks 2
+```
+
+Supply the actual configured executable and build directory. The integration
+script uses the existing H pseudopotential and structure fixture, performs SCF
+and NSCF, and checks extra target bands, a different target k list, a shared
+Gamma point, MPI redistribution, both collinear spin channels, immutable source
+files, and invalid restart/unsupported-option errors. It needs LibXC and MPI.
+
+On the initial local two-q-point, 10 Ry test, the same-mesh SCF/NSCF maximum
+band difference was `3.7e-5 eV`; the shared Gamma point and serial/two-rank NSCF
+results agreed to printed precision. Three checkpoint unit tests passed.
+A QE SCF comparison at this low cutoff showed band differences up to about
+`0.03 eV`; cross-code agreement has **not** been established. In particular,
+this evidence does not validate PBE0, symmetry reconstruction, source q pools,
+GPU execution or ACE for independent target k points.

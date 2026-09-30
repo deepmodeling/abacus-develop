@@ -4,6 +4,7 @@ Electronic Properties and Outputs
 
 .. toctree::
    band
+   hybrid_nscf
    dos
    Mulliken
    potential
