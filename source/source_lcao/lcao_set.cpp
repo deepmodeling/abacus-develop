@@ -12,13 +12,13 @@
 
 template <typename TK>
 void LCAO_domain::set_psi_occ_dm_chg(
-		const K_Vectors &kv, // k-points
-		psi::Psi<TK>* &psi, // coefficients of NAO basis
-		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
-		elecstate::ElecState* pelec, // eigen values and weights
-		module_dm::Setup_DM<TK> &dmat, // density matrix 
-		Charge &chr, // charge density 
-		const Input_para &inp) // input parameters
+        const K_Vectors &kv, // k-points
+        psi::Psi<TK>* &psi, // coefficients of NAO basis
+        const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        elecstate::ElecState* pelec, // eigen values and weights
+        module_dm::Setup_DM<TK> &dmat, // density matrix 
+        Charge &chr, // charge density 
+        const Input_para &inp) // input parameters
 {
 
     //! 1) init electronic wave function psi
@@ -54,14 +54,14 @@ void LCAO_domain::set_psi_occ_dm_chg(
 template <typename TK>
 void LCAO_domain::set_pot(
         UnitCell &ucell, // not const because of dftu
-		K_Vectors &kv, // not const due to exx
-	    Structure_Factor& sf, // will be modified in potential
-		const ModulePW::PW_Basis &pw_rho,
-		const ModulePW::PW_Basis &pw_rhod,
-		elecstate::ElecState* pelec,
-		const LCAO_Orbitals& orb,
-		Parallel_Orbitals &pv, // not const due to deepks
-		pseudopot_cell_vl &locpp,
+        K_Vectors &kv, // not const due to exx
+        Structure_Factor& sf, // will be modified in potential
+        const ModulePW::PW_Basis &pw_rho,
+        const ModulePW::PW_Basis &pw_rhod,
+        elecstate::ElecState* pelec,
+        const LCAO_Orbitals& orb,
+        Parallel_Orbitals &pv, // not const due to deepks
+        pseudopot_cell_vl &locpp,
         Plus_U_Base &dftu,
         surchem& solvent,
         Exx_NAO<TK> &exx_nao,
@@ -261,33 +261,33 @@ void LCAO_domain::init_chg_hr(
 
 
 template void LCAO_domain::set_psi_occ_dm_chg<double>(
-		const K_Vectors &kv, // k-points
-		psi::Psi<double>* &psi, // coefficients of NAO basis
-		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
-		elecstate::ElecState* pelec, // eigen values and weights
-		module_dm::Setup_DM<double> &dmat, // density matrix 
-		Charge &chr, // charge density 
-		const Input_para &inp);
+        const K_Vectors &kv, // k-points
+        psi::Psi<double>* &psi, // coefficients of NAO basis
+        const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        elecstate::ElecState* pelec, // eigen values and weights
+        module_dm::Setup_DM<double> &dmat, // density matrix 
+        Charge &chr, // charge density 
+        const Input_para &inp);
 
 template void LCAO_domain::set_psi_occ_dm_chg<std::complex<double>>(
-		const K_Vectors &kv, // k-points
-		psi::Psi<std::complex<double>>* &psi, // coefficients of NAO basis
-		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
-		elecstate::ElecState* pelec, // eigen values and weights
-		module_dm::Setup_DM<std::complex<double>> &dmat, // density matrix 
-		Charge &chr, // charge density 
-		const Input_para &inp);
+        const K_Vectors &kv, // k-points
+        psi::Psi<std::complex<double>>* &psi, // coefficients of NAO basis
+        const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        elecstate::ElecState* pelec, // eigen values and weights
+        module_dm::Setup_DM<std::complex<double>> &dmat, // density matrix 
+        Charge &chr, // charge density 
+        const Input_para &inp);
 
 template void LCAO_domain::set_pot<double>(
         UnitCell &ucell,
-		K_Vectors &kv,
-	    Structure_Factor& sf,
-		const ModulePW::PW_Basis &pw_rho,
-		const ModulePW::PW_Basis &pw_rhod,
-		elecstate::ElecState* pelec,
-		const LCAO_Orbitals& orb,
-		Parallel_Orbitals &pv,
-		pseudopot_cell_vl &locpp,
+        K_Vectors &kv,
+        Structure_Factor& sf,
+        const ModulePW::PW_Basis &pw_rho,
+        const ModulePW::PW_Basis &pw_rhod,
+        elecstate::ElecState* pelec,
+        const LCAO_Orbitals& orb,
+        Parallel_Orbitals &pv,
+        pseudopot_cell_vl &locpp,
         Plus_U_Base &dftu,
         surchem& solvent,
         Exx_NAO<double> &exx_nao,
@@ -297,14 +297,14 @@ template void LCAO_domain::set_pot<double>(
 
 template void LCAO_domain::set_pot<std::complex<double>>(
         UnitCell &ucell,
-	    K_Vectors &kv,
-	    Structure_Factor& sf,
-		const ModulePW::PW_Basis &pw_rho,
-		const ModulePW::PW_Basis &pw_rhod,
-		elecstate::ElecState* pelec,
-		const LCAO_Orbitals& orb,
-		Parallel_Orbitals &pv,
-		pseudopot_cell_vl &locpp,
+        K_Vectors &kv,
+        Structure_Factor& sf,
+        const ModulePW::PW_Basis &pw_rho,
+        const ModulePW::PW_Basis &pw_rhod,
+        elecstate::ElecState* pelec,
+        const LCAO_Orbitals& orb,
+        Parallel_Orbitals &pv,
+        pseudopot_cell_vl &locpp,
         Plus_U_Base &dftu,
         surchem& solvent,
         Exx_NAO<std::complex<double>> &exx_nao,

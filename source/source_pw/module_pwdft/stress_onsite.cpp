@@ -106,7 +106,7 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(
                     
                     sigma_onsite[idx] += dftu_stress;
 #ifdef __DEBUG
-		    std::cout << " idx=" << idx << " stress=" << sigma_onsite[idx] << std::endl;
+            std::cout << " idx=" << idx << " stress=" << sigma_onsite[idx] << std::endl;
 #endif
                 }
                 
@@ -155,7 +155,7 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(
     // Add to total stress
     for (int idx = 0; idx < 9; idx++)
     {
-	    std::cout << " idx=" << idx << " stress=" << sigma_onsite[idx] << std::endl;
+        std::cout << " idx=" << idx << " stress=" << sigma_onsite[idx] << std::endl;
     }
 #endif
 

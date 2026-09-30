@@ -19,10 +19,10 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
                                               ModulePW::PW_Basis_K* wfc_basis,
                                               const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
 {
-	if (PARAM.inp.nspin == 4) 
-	{
-		ModuleBase::WARNING_QUIT("stress_mgga", "noncollinear stress + mGGA not implemented");
-	}
+    if (PARAM.inp.nspin == 4) 
+    {
+        ModuleBase::WARNING_QUIT("stress_mgga", "noncollinear stress + mGGA not implemented");
+    }
 
     ModuleBase::timer::start("Stress", "stress_mgga");
 
@@ -50,27 +50,27 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
     for (int ik = 0; ik < p_kv->get_nks(); ik++)
     {
         if (PARAM.inp.nspin == 2) 
-		{
-			current_spin = p_kv->isk[ik];
-		}
+        {
+            current_spin = p_kv->isk[ik];
+        }
         const int npw = p_kv->ngk[ik];
 
         for (int ibnd = 0; ibnd < PARAM.inp.nbands; ibnd++)
         {
             const FPTYPE w1 = wg(ik, ibnd) / ucell.omega;
             const std::complex<FPTYPE>* psi = &psi_in[0](ik, ibnd, 0);
-			XC_Functional::grad_wfc<std::complex<FPTYPE>, Device>(ik, 
-					ucell.tpiba, 
-					wfc_basis, 
-					psi, 
-					gradwfc.data<std::complex<FPTYPE>>());
+            XC_Functional::grad_wfc<std::complex<FPTYPE>, Device>(ik, 
+                    ucell.tpiba, 
+                    wfc_basis, 
+                    psi, 
+                    gradwfc.data<std::complex<FPTYPE>>());
 
-			cal_stress_mgga_solver(
-					current_spin, 
-					nrxx, 
-					w1, 
-					gradwfc.data<std::complex<FPTYPE>>(), 
-					crosstaus.data<FPTYPE>());
+            cal_stress_mgga_solver(
+                    current_spin, 
+                    nrxx, 
+                    w1, 
+                    gradwfc.data<std::complex<FPTYPE>>(), 
+                    crosstaus.data<FPTYPE>());
         } // band loop
         // delete[] psi;
     } // k loop
@@ -105,11 +105,11 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
             for (int iy = 0; iy < 3; iy++)
             {
                 FPTYPE delta = 0.0;
-				if (ix == iy) 
-				{
-					delta = 1.0;
-				}
-				for (int ir = 0; ir < nrxx; ir++)
+                if (ix == iy) 
+                {
+                    delta = 1.0;
+                }
+                for (int ir = 0; ir < nrxx; ir++)
                 {
                     FPTYPE x = v_ofk(is, ir) * 
                           (chr->kin_r[is][ir] * delta 

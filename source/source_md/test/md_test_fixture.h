@@ -5,7 +5,7 @@
 #include "source_esolver/esolver_lj.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_md/md_base.h"
-#include "source_cell/module_neighlist/domain_decomposition.h"
+#include "source_cell/domain_decomposition.h"
 #include "setcell.h"
 
 #include <memory>

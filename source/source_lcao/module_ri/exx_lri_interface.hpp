@@ -274,16 +274,16 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2rho(elecstate::ElecState& elec, con
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
-		const UnitCell& ucell,
-		hamilt::Hamilt<T>& hamilt,
-		elecstate::ElecState& elec,
-		module_dm::DensityMatrix<T,double>* dm, // mohan add 2025-11-04
-		const Parallel_Orbitals& pv,
-		Charge_Mixing& chgmix,
-		const double& scf_ene_thr,
-		int& iter,
-		const int istep,
-		bool& conv_esolver)
+        const UnitCell& ucell,
+        hamilt::Hamilt<T>& hamilt,
+        elecstate::ElecState& elec,
+        module_dm::DensityMatrix<T,double>* dm, // mohan add 2025-11-04
+        const Parallel_Orbitals& pv,
+        Charge_Mixing& chgmix,
+        const double& scf_ene_thr,
+        int& iter,
+        const int istep,
+        bool& conv_esolver)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_iter_finish");
     if (GlobalC::restart.info_save.save_H && (this->two_level_step > 0 || istep > 0)

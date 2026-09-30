@@ -215,11 +215,11 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
         hr_mat_p += (npol - 1) * col_indexes.size();
         if (current_mat_p != nullptr)
         {
-			for (int dir = 0; dir < 3; dir++) 
-			{
-				current_mat_p[dir] += (npol - 1) * col_indexes.size();
-			}
-		}
+            for (int dir = 0; dir < 3; dir++) 
+            {
+                current_mat_p[dir] += (npol - 1) * col_indexes.size();
+            }
+        }
     }
 }
 //update vector potential for td_ekintic term

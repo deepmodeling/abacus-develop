@@ -45,30 +45,30 @@ void write_eband_terms(const int nspin,
 
         set_para2d_MO(*pv, nbands, p2d);
 
-		auto if_gamma_fix = [](hamilt::HContainer<TR>& hR) 
-		{
-			if (std::is_same<TK, double>::value) 
-			{ 
-				hR.fix_gamma(); 
-			}
-		};
+        auto if_gamma_fix = [](hamilt::HContainer<TR>& hR) 
+        {
+            if (std::is_same<TK, double>::value) 
+            { 
+                hR.fix_gamma(); 
+            }
+        };
 
-		auto all_band_energy = [&wg](const int ik, const std::vector<double>& e_orb)->double
-		{
-			double e = 0;
-			for (int i = 0; i < e_orb.size(); ++i) { e += e_orb[i] * wg(ik, i); }
-			return e;
-		};
+        auto all_band_energy = [&wg](const int ik, const std::vector<double>& e_orb)->double
+        {
+            double e = 0;
+            for (int i = 0; i < e_orb.size(); ++i) { e += e_orb[i] * wg(ik, i); }
+            return e;
+        };
 
-		auto all_k_all_band_energy = [&wg, &all_band_energy](const std::vector<std::vector<double>>& e_orb)->double
-		{
-			double e = 0;
-			for (int ik = 0; ik < e_orb.size(); ++ik) 
-			{ 
-				e += all_band_energy(ik, e_orb[ik]); 
-			}
-			return e;
-		};
+        auto all_k_all_band_energy = [&wg, &all_band_energy](const std::vector<std::vector<double>>& e_orb)->double
+        {
+            double e = 0;
+            for (int ik = 0; ik < e_orb.size(); ++ik) 
+            { 
+                e += all_band_energy(ik, e_orb[ik]); 
+            }
+            return e;
+        };
 
         // 1. kinetic
         if (PARAM.inp.t_in_h)
@@ -106,15 +106,15 @@ void write_eband_terms(const int nspin,
             if_gamma_fix(v_pp_local_R_ao);
             std::vector<std::vector<double>> e_orb_pp_local;
 
-			hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> v_pp_local_op(
-					&v_pp_local_k_ao, 
-					kv.kvec_d, 
-					&pot_local, 
-					&v_pp_local_R_ao, 
-					&ucell, 
-					orb_cutoff, 
-					&gd, 
-					nspin);
+            hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> v_pp_local_op(
+                    &v_pp_local_k_ao, 
+                    kv.kvec_d, 
+                    &pot_local, 
+                    &v_pp_local_R_ao, 
+                    &ucell, 
+                    orb_cutoff, 
+                    &gd, 
+                    nspin);
 
             v_pp_local_op.contributeHR();
             for (int ik = 0;ik < kv.get_nks();++ik)

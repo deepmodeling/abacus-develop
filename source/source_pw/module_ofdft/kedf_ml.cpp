@@ -109,7 +109,7 @@ void KEDF_ML::set_para(
             }
 
             ofs_running << " feg_net_F = " << this->feg_net_F 
-		    << " (Pauli energy enhancement factor in free electron gas)" << std::endl << std::endl;
+            << " (Pauli energy enhancement factor in free electron gas)" << std::endl << std::endl;
         }
     }
     else
@@ -129,8 +129,8 @@ void KEDF_ML::set_para(
 
         this->cal_tool->set_para(nx, nelec, tf_weight, vw_weight, chi_p, chi_q,
                                 chi_xi, chi_pnl, chi_qnl, nkernel, kernel_type, 
-				kernel_scaling, yukawa_alpha, kernel_file, 
-				this->dV * pw_rho->nxyz, pw_rho, ofs_running);
+                kernel_scaling, yukawa_alpha, kernel_file, 
+                this->dV * pw_rho->nxyz, pw_rho, ofs_running);
     }
     else
     {

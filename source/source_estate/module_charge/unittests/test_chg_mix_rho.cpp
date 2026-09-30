@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 
 #include "source_base/matrix3.h"
-#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_sup.h"
 #include "source_cell/magnetism.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_charge/chg_mix.h"

@@ -87,9 +87,9 @@ void surchem::force_cor_two(const UnitCell& cell,
     ModuleBase::GlobalFunc::ZEROS(Vcav_g, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(Vel_g, rho_basis->npw);
     for(int is=0; is<nspin; is++)
-	{
-		for (int ir=0; ir<rho_basis->nrxx; ir++)
-		{
+    {
+        for (int ir=0; ir<rho_basis->nrxx; ir++)
+        {
             Vcav_sum[ir] += this->Vcav(is, ir);
         }
     }
@@ -195,7 +195,7 @@ void surchem::cal_force_sol(const UnitCell& cell,
     }
 
     int nat = cell.nat;
-	ModuleBase::matrix force1(nat, 3);
+    ModuleBase::matrix force1(nat, 3);
     ModuleBase::matrix force2(nat, 3);
     
     force_cor_one(cell, rho_basis, vloc, force1);
@@ -203,15 +203,15 @@ void surchem::cal_force_sol(const UnitCell& cell,
     
     int iat = 0;
     for (int it = 0;it < cell.ntype;it++)
-	{
-		for (int ia = 0;ia < cell.atoms[it].na;ia++)
-		{
+    {
+        for (int ia = 0;ia < cell.atoms[it].na;ia++)
+        {
             for(int ipol = 0; ipol < 3; ipol++)
             {
                 forcesol(iat, ipol) = 0.5*force1(iat, ipol) + force2 (iat, ipol);
             }
-				
-		    ++iat;
+                
+            ++iat;
         }
     }
     

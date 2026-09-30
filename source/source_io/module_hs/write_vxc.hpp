@@ -246,16 +246,16 @@ void write_Vxc(const int nspin,
 
         // write
 
-		// mohan add 2025-06-02
-		const int istep = -1;
-		const int out_label = 1; // 1 means .txt while 2 means .dat
-		const bool out_app_flag = 0;
+        // mohan add 2025-06-02
+        const int istep = -1;
+        const int out_label = 1; // 1 means .txt while 2 means .dat
+        const bool out_app_flag = 0;
         const bool gamma_only = PARAM.globalv.gamma_only_local;
 
-		std::string vxc_file = ModuleIO::filename_output(
-				PARAM.globalv.global_out_dir,
-				"vxc","nao",ik,kv.ik2iktot,nspin,kv.get_nkstot(),
-				out_label,out_app_flag,gamma_only,istep);
+        std::string vxc_file = ModuleIO::filename_output(
+                PARAM.globalv.global_out_dir,
+                "vxc","nao",ik,kv.ik2iktot,nspin,kv.get_nkstot(),
+                out_label,out_app_flag,gamma_only,istep);
 
         ModuleIO::save_mat(istep,
                            vxc_tot_k_mo.data(),

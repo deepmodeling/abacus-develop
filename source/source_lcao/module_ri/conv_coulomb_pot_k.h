@@ -7,43 +7,43 @@
 
 namespace Conv_Coulomb_Pot_K
 {
-	// Constrains the scalar cal_orbs_ccp/cal_orbs_ccp_spencer overloads below:
-	// icpc cannot order them against the recursive std::vector overloads and
-	// reports an ambiguity, so the scalar overload is disabled for vectors.
-	template<typename T> struct is_std_vector : std::false_type {};
-	template<typename T, typename Alloc> struct is_std_vector<std::vector<T, Alloc>> : std::true_type {};
+    // Constrains the scalar cal_orbs_ccp/cal_orbs_ccp_spencer overloads below:
+    // icpc cannot order them against the recursive std::vector overloads and
+    // reports an ambiguity, so the scalar overload is disabled for vectors.
+    template<typename T> struct is_std_vector : std::false_type {};
+    template<typename T, typename Alloc> struct is_std_vector<std::vector<T, Alloc>> : std::true_type {};
 
-	template<typename T> extern typename std::enable_if<!is_std_vector<T>::value, T>::type cal_orbs_ccp(
-		const T &orbs,
-		const CoulombParam &coulomb_param,
-		const double rmesh_times);
+    template<typename T> extern typename std::enable_if<!is_std_vector<T>::value, T>::type cal_orbs_ccp(
+        const T &orbs,
+        const CoulombParam &coulomb_param,
+        const double rmesh_times);
 
-	template<typename T> extern typename std::enable_if<!is_std_vector<T>::value, T>::type cal_orbs_ccp_spencer(
-		const T &orbs,
-		const CoulombParam &coulomb_param,
-		const double rmesh_times);
-
-  //private:
-	template< typename T > extern double get_rmesh_proportion(
-		const T &orbs,
-		const double psi_threshold);
+    template<typename T> extern typename std::enable_if<!is_std_vector<T>::value, T>::type cal_orbs_ccp_spencer(
+        const T &orbs,
+        const CoulombParam &coulomb_param,
+        const double rmesh_times);
 
   //private:
-	extern std::vector<double> cal_psi_fock_limits(
-		const std::vector<double> & psif);
-	extern std::vector<double> cal_psi_fock_spencer(
-		const std::vector<double> &psif,
-		const std::vector<double> &k_radial,
-		const double rcut);
-	extern std::vector<double> cal_psi_erfc_limits(
-		const std::vector<double> & psif,
-		const std::vector<double> & k_radial,
-		const double erfc_omega);
-	extern std::vector<double> cal_psi_erfc_spencer(
-		const std::vector<double> & psif,
-		const std::vector<double> & k_radial,
-		const double erfc_omega,
-		const double rcut);
+    template< typename T > extern double get_rmesh_proportion(
+        const T &orbs,
+        const double psi_threshold);
+
+  //private:
+    extern std::vector<double> cal_psi_fock_limits(
+        const std::vector<double> & psif);
+    extern std::vector<double> cal_psi_fock_spencer(
+        const std::vector<double> &psif,
+        const std::vector<double> &k_radial,
+        const double rcut);
+    extern std::vector<double> cal_psi_erfc_limits(
+        const std::vector<double> & psif,
+        const std::vector<double> & k_radial,
+        const double erfc_omega);
+    extern std::vector<double> cal_psi_erfc_spencer(
+        const std::vector<double> & psif,
+        const std::vector<double> & k_radial,
+        const double erfc_omega,
+        const double rcut);
 }
 
 #include "conv_coulomb_pot_k.hpp"

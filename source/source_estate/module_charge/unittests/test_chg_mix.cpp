@@ -7,7 +7,7 @@
 #include "../chg_precond.h"
 #include "../chg_uspp.h"
 #include "source_base/module_mixing/broyden_mixing.h"
-#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_sup.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
 #ifdef _OPENMP

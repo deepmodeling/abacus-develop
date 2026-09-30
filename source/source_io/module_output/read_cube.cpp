@@ -173,13 +173,13 @@ bool ModuleIO::read_cube(const std::string& file,
 
     if (!ifs) 
     { 
-	    return false; 
+        return false; 
     }
 
     comment.resize(2);
     for (auto& c : comment) 
     { 
-	    std::getline(ifs, c); 
+        std::getline(ifs, c); 
     }
 
     ifs >> natom;

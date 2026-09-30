@@ -148,7 +148,7 @@ bool Ions_Move_Basic::check_converged(const UnitCell &ucell,
         const double ediff = etot_info[0] - etot_info[1];
         std::cout << " ETOT DIFF (eV)       : " << ediff * ModuleBase::Ry_to_eV << std::endl;
         std::cout << " LARGEST GRAD (eV/Angstrom)  : " 
-		<< Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
+        << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
                 << std::endl;
 
         ofs << "\n Largest force is " << largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A

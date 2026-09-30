@@ -21,28 +21,28 @@
 
 namespace RI_Util
 {
-	template<typename Tcell>
-	inline std::array<Tcell,3>
-	Vector3_to_array3(const ModuleBase::Vector3<Tcell> &v)
-	{
-		return std::array<Tcell,3> {v.x, v.y, v.z};
-	}
-	template<typename Tcell>
-	inline ModuleBase::Vector3<Tcell>
-	array3_to_Vector3(const std::array<Tcell,3> &v)
-	{
-		return ModuleBase::Vector3<Tcell> {v[0], v[1], v[2]};
-	}
+    template<typename Tcell>
+    inline std::array<Tcell,3>
+    Vector3_to_array3(const ModuleBase::Vector3<Tcell> &v)
+    {
+        return std::array<Tcell,3> {v.x, v.y, v.z};
+    }
+    template<typename Tcell>
+    inline ModuleBase::Vector3<Tcell>
+    array3_to_Vector3(const std::array<Tcell,3> &v)
+    {
+        return ModuleBase::Vector3<Tcell> {v[0], v[1], v[2]};
+    }
 
-	template<typename Tdata, typename Tmatrix>
-	RI::Tensor<Tdata>
-	Matrix_to_Tensor(const Tmatrix &m_old)
-	{
-		RI::Tensor<Tdata> m_new({static_cast<size_t>(m_old.nr), static_cast<size_t>(m_old.nc)});
-		for(int ir=0; ir<m_old.nr; ++ir)
-			for(int ic=0; ic<m_old.nc; ++ic)
-				m_new(ir,ic) = RI::Global_Func::convert<Tdata>(m_old(ir,ic));
-		return m_new;
+    template<typename Tdata, typename Tmatrix>
+    RI::Tensor<Tdata>
+    Matrix_to_Tensor(const Tmatrix &m_old)
+    {
+        RI::Tensor<Tdata> m_new({static_cast<size_t>(m_old.nr), static_cast<size_t>(m_old.nc)});
+        for(int ir=0; ir<m_old.nr; ++ir)
+            for(int ic=0; ic<m_old.nc; ++ic)
+                m_new(ir,ic) = RI::Global_Func::convert<Tdata>(m_old(ir,ic));
+        return m_new;
     }
 
     template<typename Tdata>
@@ -57,20 +57,20 @@ namespace RI_Util
         return m_new;
     }
 
-	std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
-	update_coulomb_param(
-		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
-		const UnitCell &ucell,
-		const K_Vectors *p_kv);
+    std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
+    update_coulomb_param(
+        const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
+        const UnitCell &ucell,
+        const K_Vectors *p_kv);
 
-	std::map<Conv_Coulomb_Pot_K::Coulomb_Method,
+    std::map<Conv_Coulomb_Pot_K::Coulomb_Method,
         std::pair<bool,
             std::map<Conv_Coulomb_Pot_K::Coulomb_Type,
                 std::vector<std::map<std::string,std::string>>>>>
-	update_coulomb_settings(
-		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
-		const UnitCell &ucell,
-		const K_Vectors *p_kv);
+    update_coulomb_settings(
+        const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
+        const UnitCell &ucell,
+        const K_Vectors *p_kv);
 }
 
 #include "ri_util.hpp"

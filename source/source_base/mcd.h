@@ -28,100 +28,100 @@ extern "C" {
 #include <stdarg.h>
 
 #ifdef WIN32
-	#define __FUNCTION__ __FILE__
+    #define __FUNCTION__ __FILE__
 #endif
 
 #ifndef MCD_QUIET
-	#ifndef WIN32
-	#warning - Building with memory checking.  
-	#warning   expect lower performance. -
-	#endif
+    #ifndef WIN32
+    #warning - Building with memory checking.  
+    #warning   expect lower performance. -
+    #endif
 #endif
 
 //warn about redefinitions (sometimes these can be #defined)
 
 #ifdef malloc
 #undef malloc
-	#ifndef WIN32
-	#warning ------ Redefining malloc() ------
-	#endif
+    #ifndef WIN32
+    #warning ------ Redefining malloc() ------
+    #endif
 #endif
 
 #ifdef calloc
 #undef calloc
-	#ifndef WIN32
-	#warning ------ Redefining calloc() ------
-	#endif
+    #ifndef WIN32
+    #warning ------ Redefining calloc() ------
+    #endif
 #endif
 
 #ifdef realloc
 #undef realloc
-	#ifndef WIN32
-	#warning ------ Redefining realloc() ------
-	#endif
+    #ifndef WIN32
+    #warning ------ Redefining realloc() ------
+    #endif
 #endif
 
 #ifdef free
 #undef free
-	#ifndef WIN32
-	#warning ------ Redefining free() ------
-	#endif
+    #ifndef WIN32
+    #warning ------ Redefining free() ------
+    #endif
 #endif
 
 #ifdef strdup
 #undef strdup
-	#ifndef WIN32
-	#warning ------- Redefining strdup() --------
-	#endif
+    #ifndef WIN32
+    #warning ------- Redefining strdup() --------
+    #endif
 #endif
 
 #ifdef strndup
 #undef strndup
-	#ifndef WIN32
-	#warning ------- Redefining strndup() -------
-	#endif
+    #ifndef WIN32
+    #warning ------- Redefining strndup() -------
+    #endif
 #endif
 
 #ifdef asprintf
 #undef asprintf
-	#ifndef WIN32
-	#warning ------ Redefining asprintf() ------
-	#endif
+    #ifndef WIN32
+    #warning ------ Redefining asprintf() ------
+    #endif
 #endif
 
 #ifdef vasprintf
 #undef vasprintf
-	#ifndef WIN32
-	#warning ------ Redefining vasprintf() ------
-	#endif
+    #ifndef WIN32
+    #warning ------ Redefining vasprintf() ------
+    #endif
 #endif
 
 #ifdef scanf
 #undef scanf
-	#ifndef WIN32
-	#warning ------ Redefining scanf() ------
-	#endif
+    #ifndef WIN32
+    #warning ------ Redefining scanf() ------
+    #endif
 #endif
 
 #ifdef fscanf
 #undef fscanf
-	#ifndef WIN32
-	#warning ------ Redefining fscanf() ------
-	#endif
+    #ifndef WIN32
+    #warning ------ Redefining fscanf() ------
+    #endif
 #endif
 
 #ifdef sscanf
 #undef sscanf
-	#ifndef WIN32
-	#warning ------ Redefining sscanf() ------
-	#endif
+    #ifndef WIN32
+    #warning ------ Redefining sscanf() ------
+    #endif
 #endif
 
 #ifdef getcwd
 #undef getcwd
-	#ifndef WIN32
-	#warning ------ Redefining getcwd() ------
-	#endif
+    #ifndef WIN32
+    #warning ------ Redefining getcwd() ------
+    #endif
 #endif
 
 #define strdup(p)		MCD_strdup(p,__FUNCTION__,__FILE__,__LINE__)
@@ -180,11 +180,11 @@ void	MCD_free(void *p,char*,char*,int);
 void showMemStats(void);
 
 /* --- to send realtime stats somewhere other than stderr,
-	put an opened fp in here --- */
+    put an opened fp in here --- */
 void _MCD_RealTimeLog(FILE*);
 
 /* --- to send showMemStats() somewhere other than stdout,
-	put an opened fp in here --- */
+    put an opened fp in here --- */
 void _MCD_MemStatLog(FILE*);
 
 #else	//MCD is gone
@@ -204,15 +204,15 @@ void _MCD_MemStatLog(FILE*);
 #ifdef __cplusplus	/* Some C++ new/delete operator overloading */
 
 #ifndef WIN32
-	#warning C++ Extentions Enabled
+    #warning C++ Extentions Enabled
 #endif
 
 #ifdef new
-	#undef new
+    #undef new
 #endif
 
 #ifdef delete
-	#undef delete
+    #undef delete
 #endif
 
 extern char	*_MCD_LastSetFile,*_MCD_LastSetFun;
@@ -220,21 +220,21 @@ extern int	_MCD_LastSetLine;
 
 inline void setFileFunLineState(char*file,char*fun,int line)
 {
-	_MCD_LastSetLine=line;
-	_MCD_LastSetFile=file;
-	_MCD_LastSetFun=fun;
+    _MCD_LastSetLine=line;
+    _MCD_LastSetFile=file;
+    _MCD_LastSetFun=fun;
 }
 
 inline void* operator new	(unsigned int size,char *file,
 char*fun,int line)
 {
-	return MCD_malloc(size,file,fun,line);
+    return MCD_malloc(size,file,fun,line);
 }
 
 inline void* operator new[]	(unsigned int size,char*file, 
 char*fun,int line)
 {
-	return MCD_malloc(size,file,fun,line);
+    return MCD_malloc(size,file,fun,line);
 }
 
 // currently, passing args to delete operator is not working at all...
@@ -246,7 +246,7 @@ char*fun=__FILE__,int line=__LINE__)
 char*fun=__FUNCTION__,int line=__LINE__)
 #endif
 {
-	MCD_free(buf,_MCD_LastSetFile,_MCD_LastSetFun,_MCD_LastSetLine);
+    MCD_free(buf,_MCD_LastSetFile,_MCD_LastSetFun,_MCD_LastSetLine);
 }
 // ...so we have these here for the day they work, which isn't today.
 inline void  operator delete[]	(void * buf,char*file=__FILE__, 
@@ -256,18 +256,18 @@ char*fun=__FILE__,int line=__LINE__)
 char*fun=__FUNCTION__,int line=__LINE__)
 #endif
 {
-	MCD_free(buf,_MCD_LastSetFile,_MCD_LastSetFun,_MCD_LastSetLine);
+    MCD_free(buf,_MCD_LastSetFile,_MCD_LastSetFun,_MCD_LastSetLine);
 }
 #endif	// win32 default delete params
 
 inline void  operator delete	(void * buf)
 {
-	MCD_free(buf,0,0,0);
+    MCD_free(buf,0,0,0);
 }
 
 inline void  operator delete[]	(void * buf)
 {
-	MCD_free(buf,0,0,0);
+    MCD_free(buf,0,0,0);
 }
 
 #ifdef WIN32
