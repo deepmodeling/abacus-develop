@@ -1,3 +1,2 @@
-PW H3O+ (nelec_delta -1) with SCCS (imp_sol 2), the water-cation preset and 0D PCC
-(assume_isolated pcc_0d), 12 bohr cubic cell.
-Checks the total energy, forces, E_sol_el, E_sol_cav and E_pcc against an ABACUS baseline.
+PW H3O+ with SCCS (water-cation preset) and 0D PCC in a cubic cell.
+Checks total energy, forces and SCCS/PCC energy terms for a charged molecule.

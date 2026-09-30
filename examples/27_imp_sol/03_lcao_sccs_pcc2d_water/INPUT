@@ -13,15 +13,6 @@ cal_force           1
 symmetry            0
 
 imp_sol             2
-assume_isolated    pcc_2d
-pcc_2d_axis        1
-sccs_preset         custom
-sccs_epsilon        1.1
-sccs_rho_min        1.0e-4
-sccs_rho_max        5.0e-3
-sccs_gamma          0.0
-sccs_pressure       0.0
-sccs_maxiter        100
-sccs_tol_rms        1.0e-10
-sccs_tol_max        1.0e-8
-sccs_surface_eta    1.0e-8
+sccs_preset         water-neutral
+assume_isolated     pcc_2d
+pcc_2d_axis         1

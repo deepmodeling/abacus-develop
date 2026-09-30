@@ -1,3 +1,2 @@
-PW neutral water with SCCS (imp_sol 2), the water-neutral preset and a periodic cell
-(assume_isolated none), so the surface and volume terms are nonzero; 12 bohr cubic cell.
-Checks the total energy, forces, E_sol_el and E_sol_cav against an ABACUS baseline.
+PW neutral water with periodic SCCS and the water-neutral preset.
+Checks total energy, forces and electrostatic, surface and volume solvation terms.

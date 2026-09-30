@@ -43,6 +43,20 @@ nc_k                    0.00037  # Bulk solvent number density (1/Å³)
 
 Both plane wave (PW) and LCAO basis sets are supported for implicit solvation model calculations.
 
+### SCCS and Open-Boundary Corrections
+
+`imp_sol 2` selects the self-consistent continuum solvation (SCCS) model [2], ported from ENVIRON. The dielectric cavity follows the electron density, and `sccs_preset` selects the published water parameters for neutral solutes, cations or anions:
+
+```
+INPUT_PARAMETERS
+imp_sol                 2
+sccs_preset             water-neutral   # or water-cation, water-anion, custom
+assume_isolated         pcc_2d          # or pcc_0d for a molecule in a cubic cell
+pcc_2d_axis             1               # open lattice vector (default 2)
+```
+
+`assume_isolated pcc_0d` or `pcc_2d` adds a self-consistent open-boundary (point-counter-charge) correction [3]; it can also be used without SCCS, and a charged solute in a dielectric requires it. The output reports `E_sol_el`, `E_sol_cav` and `E_pcc`. See the `imp_sol`, `sccs_*`, `assume_isolated` and `pcc_2d_axis` entries of the INPUT documentation for all options and restrictions.
+
 ## Examples Included
 
 ### 1. 01_pw_Pt_slab
@@ -55,16 +69,16 @@ Both plane wave (PW) and LCAO basis sets are supported for implicit solvation mo
   - `run.sh`: Script to run the calculation
 
 ### 2. 02_pw_sccs_pcc2d_water
-- **System**: Neutral water molecule in an x-z periodic slab cell
+- **System**: One water molecule in a 10 x 20 x 10 bohr cell, periodic along x and z and open along y
 - **Basis**: Plane wave (PW)
-- **Purpose**: Demonstrates native SCCS with the second lattice vector (+y) as the open direction
-- **Boundary conditions**: `imp_sol 2`, `assume_isolated pcc_2d` and `pcc_2d_axis 1` (open along the second lattice vector, y), with Gamma-only sampling along y
+- **Purpose**: Demonstrates SCCS (`imp_sol 2`, `sccs_preset water-neutral`) with the 2D open-boundary correction
+- **Boundary conditions**: `assume_isolated pcc_2d` with `pcc_2d_axis 1`, so the second lattice vector (y) is open; the k-point sampling along it is Gamma only
 
 ### 3. 03_lcao_sccs_pcc2d_water
-- **System**: Neutral water molecule in the same x-z periodic slab cell
-- **Basis**: Numerical atomic orbitals (LCAO)
-- **Purpose**: Demonstrates that native SCCS 2D-PCC contributes to LCAO SCF, energy, potential, and ionic forces
-- **Boundary conditions**: `imp_sol 2`, `assume_isolated pcc_2d` and `pcc_2d_axis 1` (open along the second lattice vector, y), with Gamma-only sampling along y
+- **System**: The same cell as example 2
+- **Basis**: Numerical atomic orbitals (LCAO, `gamma_only 1`)
+- **Purpose**: The same SCCS and 2D PCC calculation with LCAO; the SCCS and PCC terms enter the SCF potential, the energy and the ionic forces
+- **Boundary conditions**: As in example 2. For LCAO an open axis of 0 or 1 keeps the vacuum out of the grid-integration distribution, which runs over planes along the third lattice vector
 
 ## How to Run
 
@@ -89,8 +103,10 @@ After running the calculation, you will find the following key output files in t
 ## Calculating Solvation Energy
 
 The solvation energy is calculated by taking the difference between:
-1. Total energy with implicit solvation model enabled (`imp_sol == 1`)
-2. Total energy with implicit solvation model disabled (`imp_sol == 0`)
+1. Total energy with implicit solvation model enabled (`imp_sol 1` or `imp_sol 2`)
+2. Total energy with implicit solvation model disabled (`imp_sol 0`)
+
+For SCCS, keep the same `assume_isolated` in both calculations, so that only the solvent differs.
 
 A negative solvation energy indicates that the system is stabilized by the solvent.
 
@@ -106,3 +122,7 @@ A negative solvation energy indicates that the system is stabilized by the solve
 ## References
 
 [1] Mathew, N., Sundararaman, R., Letchworth-Weaver, K., Arias, T. A., & Hennig, R. G. (2014). Efficient implicit solvation model for density functional theory calculations. The Journal of Chemical Physics, 140(8), 084106.
+
+[2] Andreussi, O., Dabo, I., & Marzari, N. (2012). Revised self-consistent continuum solvation in electronic-structure calculations. The Journal of Chemical Physics, 136(6), 064102.
+
+[3] Andreussi, O., & Marzari, N. (2014). Electrostatics of solvated systems in periodic boundary conditions. Physical Review B, 90(24), 245101.

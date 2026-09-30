@@ -1,3 +1,2 @@
-LCAO (gamma_only 1) neutral water with SCCS (imp_sol 2) in a weak custom dielectric
-(sccs_epsilon 1.1) and 2D PCC (assume_isolated pcc_2d, pcc_2d_axis 1: open along y).
-Checks the total energy, forces, E_sol_el, E_sol_cav and E_pcc against an ABACUS baseline.
+Gamma-only LCAO neutral water with SCCS (epsilon 1.1) and 2D PCC, open along y.
+Checks total energy, forces and SCCS/PCC energy terms against result.ref.

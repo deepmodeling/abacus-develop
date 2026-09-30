@@ -1,3 +1,2 @@
-PW neutral water with SCCS (imp_sol 2), the water-neutral preset and 0D PCC
-(assume_isolated pcc_0d), 12 bohr cubic cell.
-Checks the total energy, forces, E_sol_el, E_sol_cav and E_pcc against an ABACUS baseline.
+PW neutral water with SCCS (water-neutral preset) and 0D PCC in a cubic cell.
+Checks total energy, forces and SCCS/PCC energy terms against result.ref.
