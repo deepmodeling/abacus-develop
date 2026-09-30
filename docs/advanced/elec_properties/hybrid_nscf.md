@@ -95,8 +95,11 @@ ABACUS SCF. The target `KPT` weights never define the exchange quadrature.
 the solver owns their lifetime. Coulomb-kernel construction uses target k
 coordinates and source q coordinates, with the screened zero-transfer correction
 computed from the source mesh. The two-basis path currently uses the full FFT
-grid, including for distributed PW transforms. Small-grid and ACE acceleration
-remain separate follow-up work.
+grid, including for distributed PW transforms. Small-grid acceleration remains
+separate follow-up work. This frozen-source NSCF workflow deliberately uses
+direct exchange; ACE is not part of its implementation roadmap. The SCF ACE
+projectors are tied to their original target subspace and cannot be reused as a
+validated exchange operator on an independent band path.
 
 The local `../q-e` implementation was used to analyze periodic pair densities,
 `k-q+G` convolution, occupation normalization and the finite screened
@@ -124,6 +127,40 @@ On the initial local two-q-point, 10 Ry test, the same-mesh SCF/NSCF maximum
 band difference was `3.7e-5 eV`; the shared Gamma point and serial/two-rank NSCF
 results agreed to printed precision. Three checkpoint unit tests passed.
 A QE SCF comparison at this low cutoff showed band differences up to about
-`0.03 eV`; cross-code agreement has **not** been established. In particular,
-this evidence does not validate PBE0, symmetry reconstruction, source q pools,
-GPU execution or ACE for independent target k points.
+`0.03 eV`; that H test alone does not establish cross-code agreement.
+
+A separate Si comparison used the same two-atom primitive cell (`a=10.2 bohr`),
+HSE exchange fraction `0.25`, screening `0.11 bohr^-1`, `20 Ry` cutoff,
+`2x2x2` source mesh, eight bands and nine L-Gamma-X target points. VASP 6.2.1
+used `HFSCREEN=0.207869873 Angstrom^-1`, `PRECFOCK=Accurate`, `ISYM=-1`,
+`ALGO=Damped`, `EDIFF=1e-9` and `NELMIN=40`. Its explicit k list contained the
+eight source points and six additional zero-weight points. Target points
+already present in the source mesh were included only once. This follows the
+[VASP hybrid band workflow](https://vasp.at/wiki/Band-structure_calculation_using_hybrid_functionals).
+
+After aligning each code's Gamma valence-band top, the comparison gave:
+
+| Quantity (eV) | ABACUS NSCF | VASP |
+| --- | ---: | ---: |
+| Gamma direct gap | 3.604645 | 3.619060 |
+| Gap on the sampled path | 1.449187 | 1.486063 |
+| L direct gap | 3.967258 | 4.005180 |
+| X direct gap | 4.655743 | 4.681974 |
+
+For bands 2-6 across all nine points, the RMS difference was `0.042351 eV`
+and the maximum difference was `0.086995 eV`. Both codes placed the lowest
+sampled conduction state at fractional `(0.375, 0, 0.375)`.
+ABACUS used `Si_ONCV_PBE-1.0.upf`; VASP used `PAW_PBE Si 05Jan2001`.
+The coarse mesh, sparse path and different pseudopotentials make this a
+qualitative cross-check, not a cutoff or k-grid convergence study.
+
+An initial VASP reference with duplicate zero-weight Gamma points gave an
+inconsistent band-4 eigenvalue: it differed from the weighted source Gamma
+by `0.686083 eV`. Raising `NELMIN` to 60 did not remove that discrepancy.
+The comparison above is from a fresh calculation with unique k coordinates,
+using the weighted mesh result at coincident path points. No eigenvalues were
+edited to align the spectra.
+
+These checks do not validate PBE0, symmetry reconstruction, source q pools
+or GPU execution. Direct exchange remains the NSCF method; ACE is not a
+planned extension of this workflow.
