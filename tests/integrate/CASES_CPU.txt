@@ -99,6 +99,7 @@
 120_PW_KP_MD_NVT
 121_PW_KPAR
 121_PW_kspacing
+122_PW_scan_Si2_nlcc
 127_PW_15_PK_AF
 123_PW_zero_atom
 128_PW_zero_ntype
