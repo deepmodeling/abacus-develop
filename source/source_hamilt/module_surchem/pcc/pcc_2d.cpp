@@ -222,14 +222,16 @@ double pcc_2d_system_center(const std::vector<double>& coordinates,
                 "two-dimensional PCC system-center positions and weights must be finite and positive");
         }
         total_weight += weights[index];
-        weighted_displacement
-            += weights[index] * minimum_image(coordinates[index] - reference, cell_length);
+        const double displacement = coordinates[index] - reference;
+        const double image_displacement = minimum_image(displacement, cell_length);
+        weighted_displacement += weights[index] * image_displacement;
     }
     if (!std::isfinite(total_weight) || !std::isfinite(weighted_displacement))
     {
         throw std::domain_error("two-dimensional PCC system center must be finite");
     }
-    return wrap(reference + weighted_displacement / total_weight, cell_length);
+    const double unwrapped_center = reference + weighted_displacement / total_weight;
+    return wrap(unwrapped_center, cell_length);
 }
 
 Pcc2dMoments pcc_2d_point_charge_moments(const std::vector<PointCharge>& charges,

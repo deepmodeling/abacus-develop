@@ -33,7 +33,9 @@ double vector_component(const ModuleBase::Vector3<double>& vector, const int ind
 
 bool is_lattice_translation(const double fraction)
 {
-    return std::abs(fraction - std::round(fraction)) < symmetry_tolerance;
+    const double nearest_integer = std::round(fraction);
+    const double translation_error = fraction - nearest_integer;
+    return std::abs(translation_error) < symmetry_tolerance;
 }
 
 bool is_identity(const ModuleBase::Matrix3& rotation)
@@ -43,7 +45,9 @@ bool is_identity(const ModuleBase::Matrix3& rotation)
         for (int column = 0; column < 3; ++column)
         {
             const double expected = row == column ? 1.0 : 0.0;
-            if (std::abs(matrix_element(rotation, row, column) - expected) > symmetry_tolerance)
+            const double element = matrix_element(rotation, row, column);
+            const double identity_error = element - expected;
+            if (std::abs(identity_error) > symmetry_tolerance)
             {
                 return false;
             }
