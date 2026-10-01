@@ -21,8 +21,15 @@ project = 'ABACUS'
 copyright = '2024, ABACUS'
 author = 'ABACUS'
 
-# The full version, including alpha/beta/rc tags
-# release = '2.3.5'
+# The full version, including alpha/beta/rc tags, read from the C++ source so
+# it stays in sync with releases. The EPUB3 builder warns when it is empty,
+# which fails the Read the Docs build under fail_on_warning.
+import re
+from pathlib import Path
+
+_version_h = Path(__file__).resolve().parent.parent / 'source' / 'source_main' / 'version.h'
+release = re.search(r'#define\s+VERSION\s+"v?([^"]+)"', _version_h.read_text()).group(1)
+version = release
 
 
 # -- General configuration ---------------------------------------------------
