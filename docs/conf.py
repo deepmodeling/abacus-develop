@@ -18,11 +18,12 @@
 # -- Project information -----------------------------------------------------
 
 project = 'ABACUS'
-copyright = '2024, ABACUS'
+copyright = '%Y, ABACUS'
 author = 'ABACUS'
 
 # The full version, including alpha/beta/rc tags
-# release = '2.3.5'
+version = '3.11.0'
+release = '3.11.0'
 
 
 # -- General configuration ---------------------------------------------------
