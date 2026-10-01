@@ -83,7 +83,7 @@ namespace LR
         {
             // term1: Co -> CvX, i.e. Cv [CvX]^*
             DMBand<std::complex<double>> dm_band1(ucell, pmat, this->kv.kvec_c, this->BvK_cells, this->psi_ks_full, this->cvx_full);
-            dm_band1.eval(io, iv, ik);
+            dm_band1.eval(nocc + iv, io, ik);
             // term2: Cv -> CoX^T, i.e. [CoX^T] Co^*
             DMBand<std::complex<double>> dm_band2(ucell, pmat, this->kv.kvec_c, this->BvK_cells, this->coxt_full, this->psi_ks_full);
             dm_band2.eval(iv, io, ik);
@@ -102,7 +102,7 @@ namespace LR
         {
             // Cv -> CoX^T, i.e. [C_oX^T]  C_o^* (the same as CXC term2 but with positive sign)
             DMBand<std::complex<double>>(ucell, pmat, this->kv.kvec_c, this->BvK_cells, this->coxt_full, this->psi_ks_full)
-                .cal_dm_band(io, iv, ik, this->Ds_onebase);
+                .cal_dm_band(iv, io, ik, this->Ds_onebase);
             break;
         }
         default:
