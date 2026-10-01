@@ -34,7 +34,13 @@ release = '3.11.0'
 extensions = [
         'myst_parser',
         'deepmodeling_sphinx',
+        'sphinx.ext.intersphinx',
 ]
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3" , None),
+    "numpy":  ("https://numpy.org/doc/stable/" , None),
+    "scipy":  ("https://docs.scipy.org/doc/scipy/" , None),
+}
 myst_enable_extensions = [
     "amsmath",
     "colon_fence",
