@@ -58,24 +58,24 @@ myst_enable_extensions = [
 ]
 myst_heading_anchors = 4
 nitpicky = True
-nitpick_ignore_regex = [
-    (r"py:.*", r"abacus\..*"),
-    
-    (r"py:class", r"numpy\..*"),
-    (r"py:class", r"scipy\..*"),
-    (r"py:class", r"ase\..*"),
-    (r"py:.*", r"cython\..*"),
-
-    (r"cpp:.*", r"ModuleBase::.*"),
-    (r"cpp:.*", r"ModuleIO::.*"),
-    (r"cpp:identifier", r".*"),          
-    
-    (r"std:ref", r"input-.*"),
-    (r"std:doc", r"advanced/input_files/.*"),
-
-    (r"myst", r".*"),
-    (r"std:term", r".*"),
-]
+# nitpick_ignore_regex = [
+#     (r"py:.*", r"abacus\..*"),
+#    
+#     (r"py:class", r"numpy\..*"),
+#     (r"py:class", r"scipy\..*"),
+#     (r"py:class", r"ase\..*"),
+#     (r"py:.*", r"cython\..*"),
+#
+#     (r"cpp:.*", r"ModuleBase::.*"),
+#     (r"cpp:.*", r"ModuleIO::.*"),
+#     (r"cpp:identifier", r".*"),          
+#    
+#     (r"std:ref", r"input-.*"),
+#     (r"std:doc", r"advanced/input_files/.*"),
+# 
+#     (r"myst", r".*"),
+#     (r"std:term", r".*"),
+# ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
