@@ -14,7 +14,7 @@ TEST(SurchemInput, SelectsVacuumPccIndependentlyOfSolvent)
     UnitCell cell;
     input.imp_sol = 0;
     input.assume_isolated = "pcc_0d";
-    const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, false, 4);
+    const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, 4);
     EXPECT_FALSE(parameters.use_sccs);
     EXPECT_FALSE(parameters.use_legacy_solvent);
     EXPECT_EQ(parameters.pcc_boundary, ModulePcc::Boundary::Pcc0d);
@@ -30,9 +30,9 @@ TEST(SurchemInput, TransfersPcc2dOpenAxis)
     UnitCell cell;
     input.imp_sol = 0;
     input.assume_isolated = "pcc_2d";
-    EXPECT_EQ(ModuleSurchem::make_parameters(input, cell, 0.0, false, 1).pcc_2d_axis, 2);
+    EXPECT_EQ(ModuleSurchem::make_parameters(input, cell, 0.0, 1).pcc_2d_axis, 2);
     input.pcc_2d_axis = 0;
-    EXPECT_EQ(ModuleSurchem::make_parameters(input, cell, 0.0, false, 1).pcc_2d_axis, 0);
+    EXPECT_EQ(ModuleSurchem::make_parameters(input, cell, 0.0, 1).pcc_2d_axis, 0);
 }
 
 TEST(SurchemInput, TransfersPresetAndSolverControls)
@@ -45,7 +45,7 @@ TEST(SurchemInput, TransfersPresetAndSolverControls)
     input.sccs_debug = 2;
     input.sccs_start_drho = 0.01;
     input.sccs_start_nmax = 12;
-    const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, false, 2);
+    const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, 2);
     EXPECT_TRUE(parameters.use_sccs);
     EXPECT_EQ(parameters.sccs_config.boundary, parameters.pcc_boundary);
     EXPECT_DOUBLE_EQ(parameters.sccs_config.cavity.epsilon_bulk, 1.0);
@@ -54,7 +54,7 @@ TEST(SurchemInput, TransfersPresetAndSolverControls)
     EXPECT_EQ(parameters.debug, 2);
     EXPECT_TRUE(parameters.sccs_config.check_fixed_point);
     input.sccs_debug = 1;
-    const SurchemParameters summary = ModuleSurchem::make_parameters(input, cell, 0.0, false, 2);
+    const SurchemParameters summary = ModuleSurchem::make_parameters(input, cell, 0.0, 2);
     EXPECT_FALSE(summary.sccs_config.check_fixed_point);
     EXPECT_DOUBLE_EQ(summary.sccs_config.cavity.lowpass_p1, -1.0);
     EXPECT_DOUBLE_EQ(summary.sccs_config.cavity.lowpass_p2, -1.0);
@@ -69,14 +69,14 @@ TEST(SurchemInput, AcceptsChargedPeriodicDielectric)
     input.imp_sol = 2;
     input.assume_isolated = "none";
     input.sccs_preset = "water-cation";
-    EXPECT_NO_THROW(ModuleSurchem::make_parameters(input, cell, 0.0, false, 1));
-    const SurchemParameters charged = ModuleSurchem::make_parameters(input, cell, 1.0, false, 1);
+    EXPECT_NO_THROW(ModuleSurchem::make_parameters(input, cell, 0.0, 1));
+    const SurchemParameters charged = ModuleSurchem::make_parameters(input, cell, 1.0, 1);
     EXPECT_EQ(charged.sccs_config.boundary, ModulePcc::Boundary::Periodic);
     input.assume_isolated = "pcc_0d";
-    EXPECT_NO_THROW(ModuleSurchem::make_parameters(input, cell, 1.0, false, 1));
+    EXPECT_NO_THROW(ModuleSurchem::make_parameters(input, cell, 1.0, 1));
     input.assume_isolated = "none";
     input.sccs_preset = "vacuum";
-    EXPECT_NO_THROW(ModuleSurchem::make_parameters(input, cell, 1.0, false, 1));
+    EXPECT_NO_THROW(ModuleSurchem::make_parameters(input, cell, 1.0, 1));
 }
 
 // Environ solvent_mode full adds core electrons to the cavity for every preset.
@@ -89,12 +89,12 @@ TEST(SurchemInput, TransfersFullSolventModeCoreElectrons)
     input.sccs_preset = "water-anion";
     input.sccs_solvent_mode = "full";
     input.sccs_corespread = 0.6;
-    const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, false, 1);
+    const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, 1);
     EXPECT_TRUE(parameters.sccs_config.core_electrons);
     EXPECT_DOUBLE_EQ(parameters.sccs_config.core_spread, 0.6);
     EXPECT_DOUBLE_EQ(parameters.sccs_config.cavity.density_max, 1.55e-2);
     input.sccs_corespread = 0.0;
-    EXPECT_THROW(ModuleSurchem::make_parameters(input, cell, 0.0, false, 1), std::invalid_argument);
+    EXPECT_THROW(ModuleSurchem::make_parameters(input, cell, 0.0, 1), std::invalid_argument);
 }
 
 // The switching lowpass follows the preset and exists only with PCC.
@@ -107,12 +107,12 @@ TEST(SurchemInput, TransfersSwitchingLowpassOnlyWithPcc)
     input.sccs_preset = "water-cation";
     input.sccs_lowpass_p1 = 10.0;
     input.sccs_lowpass_p2 = 5.0;
-    const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, false, 1);
+    const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, 1);
     EXPECT_DOUBLE_EQ(parameters.sccs_config.cavity.lowpass_p1, 10.0);
     EXPECT_DOUBLE_EQ(parameters.sccs_config.cavity.lowpass_p2, 5.0);
     EXPECT_DOUBLE_EQ(parameters.sccs_config.cavity.epsilon_bulk, 78.3);
     input.assume_isolated = "none";
-    EXPECT_THROW(ModuleSurchem::make_parameters(input, cell, 0.0, false, 1), std::invalid_argument);
+    EXPECT_THROW(ModuleSurchem::make_parameters(input, cell, 0.0, 1), std::invalid_argument);
 }
 
 TEST(SurchemInput, PreservesLegacyParametersAndOrdinaryVacuum)
@@ -123,34 +123,12 @@ TEST(SurchemInput, PreservesLegacyParametersAndOrdinaryVacuum)
     input.imp_sol = 1;
     input.eb_k = 80.0;
     input.tau = 0.00002;
-    const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, false, 1);
+    const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, 1);
     EXPECT_TRUE(parameters.use_legacy_solvent);
     EXPECT_FALSE(parameters.use_sccs);
     EXPECT_EQ(parameters.pcc_boundary, ModulePcc::Boundary::Periodic);
     EXPECT_DOUBLE_EQ(parameters.eb_k, input.eb_k);
     EXPECT_DOUBLE_EQ(parameters.tau, input.tau);
-}
-
-TEST(SurchemInput, UltrasoftPseudopotentialsWarnWithoutRejectingSccsOrPcc)
-{
-    UnitCell cell;
-    for (const int model : {0, 2})
-    {
-        for (const std::string boundary : {"pcc_0d", "pcc_2d"})
-        {
-            Input_para input;
-            input.imp_sol = model;
-            input.assume_isolated = boundary;
-            const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, true, 1);
-            EXPECT_EQ(parameters.use_sccs, model == 2);
-            EXPECT_NE(parameters.pcc_boundary, ModulePcc::Boundary::Periodic);
-        }
-    }
-    Input_para periodic;
-    periodic.imp_sol = 2;
-    const SurchemParameters parameters = ModuleSurchem::make_parameters(periodic, cell, 0.0, true, 1);
-    EXPECT_TRUE(parameters.use_sccs);
-    EXPECT_EQ(parameters.pcc_boundary, ModulePcc::Boundary::Periodic);
 }
 
 TEST(SurchemInput, PresetsOverrideOnlyPhysicalParameters)
@@ -182,7 +160,7 @@ TEST(SurchemInput, PresetsOverrideOnlyPhysicalParameters)
         input.sccs_gamma = 2.0;
         input.sccs_pressure = 0.2;
         input.sccs_surface_eta = 2.0e-8;
-        const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, false, 1);
+        const SurchemParameters parameters = ModuleSurchem::make_parameters(input, cell, 0.0, 1);
         const double gamma = ModuleSccs::dyn_per_cm_to_hartree_per_bohr2(preset.gamma);
         const double pressure = ModuleSccs::gpa_to_hartree_per_bohr3(preset.pressure);
         EXPECT_DOUBLE_EQ(parameters.sccs_config.cavity.epsilon_bulk, preset.epsilon);

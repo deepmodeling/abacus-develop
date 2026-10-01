@@ -108,7 +108,6 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     try
     {
         surchem_parameters = ModuleSurchem::make_parameters(inp, ucell, atoms_info.nelec,
-                                                            atoms_info.use_uspp,
                                                             this->pw_rhod->poolnproc);
         this->solvent.set_parameters(surchem_parameters);
     }

@@ -19,7 +19,6 @@ namespace ModuleSurchem
 SurchemParameters make_parameters(const Input_para& input,
                                   const UnitCell& cell,
                                   const double electron_count,
-                                  const bool use_uspp,
                                   const int pool_process_count);
 void validate_kpoints(const SurchemParameters& parameters, const K_Vectors& kpoints);
 

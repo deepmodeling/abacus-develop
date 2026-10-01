@@ -115,7 +115,6 @@ std::string operation_violation(const SurchemParameters& parameters,
 SurchemParameters make_parameters(const Input_para& inp,
                                   const UnitCell& ucell,
                                   const double electron_count,
-                                  const bool use_uspp,
                                   const int pool_process_count)
 {
     SurchemParameters parameters;
@@ -133,12 +132,6 @@ SurchemParameters make_parameters(const Input_para& inp,
     if (!parameters.use_sccs && parameters.pcc_boundary == ModulePcc::Boundary::Periodic)
     {
         return parameters;
-    }
-    if (use_uspp)
-    {
-        ModuleBase::WARNING("surchem",
-                            "SCCS/PCC with ultrasoft pseudopotentials has not been validated; "
-                            "continuing the calculation. Verify energies and forces before production use.");
     }
     parameters.pool_process_count = pool_process_count;
     parameters.debug = inp.sccs_debug;
