@@ -1,4 +1,6 @@
 #include "pot_grad_xc.h"
+#include <iostream>
+#include <cstdlib>
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_lr/potentials/xc_kernel.h"
 #include "source_base/timer.h"

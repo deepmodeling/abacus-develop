@@ -1,5 +1,7 @@
 #pragma once
+#include <fstream>
 #include "zeq_solver.h"
+#include <cstdlib>
 #include "source_base/opt_cg.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"

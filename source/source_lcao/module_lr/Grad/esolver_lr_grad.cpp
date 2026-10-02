@@ -7,6 +7,7 @@
 
 using namespace LR;
 
+
 template <typename Tstream>
 inline void print_force(const std::vector<ModuleBase::matrix>& force, Tstream& ofs, const int istate_begin = 0)
 {

@@ -40,6 +40,7 @@
 #ifdef __EXX
 namespace
 {
+
     /// One `Exx_LRI` carries ONE Coulomb operator, and it may be needed for two different
     /// reasons: the LR kernel (when `xc_kernel` is a hybrid) and the ground-state force (when
     /// `dft_functional` is a hybrid). That operator is NOT chosen here -- `Exx_LRI` reads
@@ -543,6 +544,8 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
                                        this->kv.ngk,
                                        true));
     this->read_ks_wfc();
+
+
     if (nspin == 2)
     {   // `read_ks_wfc` fills `wg_ks`, not `pelec->wg` -- reading the latter here meant nupdown was
         // always 0, so a spin-polarised ground state silently took the closed-shell branch

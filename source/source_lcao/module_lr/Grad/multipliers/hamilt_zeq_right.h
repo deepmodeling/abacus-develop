@@ -123,7 +123,7 @@ namespace LR
                     const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
 #ifdef __MPI
                     std::vector<ct::Tensor> dm_trans_2d = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat);
-                    for (auto& t : dm_trans_2d) LR_Util::mattrans(t.data<T>(), naos, pmat);
+                    for (auto& t : dm_trans_2d) { LR_Util::mattrans(t.data<T>(), naos, pmat); }
 #else
                     std::vector<ct::Tensor> dm_trans_2d = cal_dm_trans_blas(X, psi_ks_is, nocc[is], nvirt[is]);
                     for (auto& t : dm_trans_2d)

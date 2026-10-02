@@ -71,7 +71,6 @@ namespace LR
             cal_X_ao_occ(X + idx_X, px, &c(ik, 0, 0), pc, X_ao_occ.data(), px_ao_occ);
             std::vector<double> eig_ks_plus_ext(nocc, 0.0);
             const int idx_eig_ks = ik * (nocc + nvirt);
-            // for (int i = 0;i < nocc;++i) { eig_ks_plus_ext[i] = eig_ks[idx_eig_ks + i] + eig_ext_istate; }
             std::transform(eig_ks + idx_eig_ks, eig_ks + idx_eig_ks + nocc, eig_ks_plus_ext.begin(), [eig_ext_istate](double x) {return x + eig_ext_istate;});
             edm[ik] = cal_edm_single_kpoint(X_ao_occ.data(), px_ao_occ, eig_ks_plus_ext.data(), pmat);
         }

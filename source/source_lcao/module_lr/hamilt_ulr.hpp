@@ -61,7 +61,7 @@ namespace LR
                 {
                     this->ops[(is << 1) + is]->add(new OperatorLREXX<T>(nspin, naos, nocc[is], nvirt[is], ucell_in, psi_ks_spin[is],
                         *this->DM_trans, exx_lri_in, kv_in, pX_in[is], pc_in, pmat_in,
-                        xc_kernel == "hf" ? 1.0 : exx_alpha));
+                        (xc_kernel == "hf" ? 1.0 : exx_alpha)));
                 }
             }
 #endif

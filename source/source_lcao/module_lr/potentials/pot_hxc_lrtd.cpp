@@ -5,6 +5,8 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include <set>
 #include <algorithm>
+#include <iostream>
+#include <cstdlib>
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_xc.hpp"
 #define FXC_PARA_TYPE const double* const rho, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 }

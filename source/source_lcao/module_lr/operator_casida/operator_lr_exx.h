@@ -6,6 +6,7 @@
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_lr/Grad/dm_diff/dm_diff.h"
+#include <cstdlib>
 namespace LR
 {
 
@@ -16,6 +17,7 @@ namespace LR
 
     /// @brief does the GROUND STATE carry exact exchange, i.e. is `dft_functional` a hybrid?
     inline bool gs_is_hybrid() { return exx_kernel_list().count(LR_Util::tolower(PARAM.inp.dft_functional)) > 0; };
+
     template<typename T = double>
     class OperatorLREXX : public hamilt::Operator<T, base_device::DEVICE_CPU>
     {

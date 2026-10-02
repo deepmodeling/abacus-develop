@@ -1,5 +1,6 @@
 #ifdef __EXX
 #include "operator_lr_exx.h"
+#include <cstdlib>
 #include "source_lcao/module_lr/dm_trans/dm_trans.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"

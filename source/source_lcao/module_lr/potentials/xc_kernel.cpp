@@ -6,7 +6,9 @@
 #include "source_lcao/module_lr/utils/lr_util_xc.hpp"
 #include <set>
 #include <chrono>
-#include <algorithm>
+#include <cstdlib>
+#include <iostream>
+#include <cmath>
 #include "source_io/module_output/cube_io.h"
 #ifdef __LIBXC
 #include <xc.h>
@@ -272,6 +274,8 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
                 for (size_t i = 0; i < sigma.size(); ++i) { sigma_clamped[i] = std::max(sigma[i], sigma_cut); }
                 xc_gga_fxc(&func, nrxx, rho.data(), sigma_clamped.data(), v2rho2_tmp.data(), v2rhosigma_tmp.data(), v2sigma2_tmp.data());
             }
+            // std::cout << "max element of v2sigma2_tmp: " << *std::max_element(v2sigma2_tmp.begin(), v2sigma2_tmp.end()) << std::endl;
+            // std::cout << "rho corresponding to max element of v2sigma2_tmp: " << rho[(std::max_element(v2sigma2_tmp.begin(), v2sigma2_tmp.end()) - v2sigma2_tmp.begin()) / 6] << std::endl;
             // cut off by sgn. nspin=2 only: `cutoff_grid_data_spin2` assumes >1 component per
             // grid point (it asserts on it), and at nspin=1 there is exactly one, for which both
             // of its `for_each` ranges are empty -- the cutoff is a no-op anyway.

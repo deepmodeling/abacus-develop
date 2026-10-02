@@ -1,4 +1,5 @@
 #include "operator_lr_hxc.h"
+#include <cstdlib>
 #include <vector>
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
@@ -60,6 +61,7 @@ namespace LR
 #endif
             break;
         case MO_TO_AO_TYPE::CXC:
+        {
 #ifdef __MPI
             CVCX_virt_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, psi_in, this->pX[sl],
                 this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, this->factor_);
@@ -70,6 +72,7 @@ namespace LR
             CVCX_occ_blas(v_hxc_2d, *this->psi_ks, psi_in_bfirst, this->naos, this->nocc, this->nvirt, hpsi, /*add_on=*/true, -this->factor_);
 #endif
             break;
+        }
         case MO_TO_AO_TYPE::CXC_o:
 #ifdef __MPI
             CVCX_occ_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, psi_in, this->pX[sl],
