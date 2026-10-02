@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'ABACUS'
-copyright = '2024, ABACUS'
+copyright = '%Y, ABACUS'
 author = 'ABACUS'
 
 # The full version, including alpha/beta/rc tags, read from the C++ source so
@@ -40,7 +40,13 @@ version = release
 extensions = [
         'myst_parser',
         'deepmodeling_sphinx',
+        'sphinx.ext.intersphinx',
 ]
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3" , None),
+    "numpy":  ("https://numpy.org/doc/stable/" , None),
+    "scipy":  ("https://docs.scipy.org/doc/scipy/" , None),
+}
 myst_enable_extensions = [
     "amsmath",
     "colon_fence",
@@ -58,6 +64,24 @@ myst_enable_extensions = [
 ]
 myst_heading_anchors = 4
 nitpicky = True
+# nitpick_ignore_regex = [
+#     (r"py:.*", r"abacus\..*"),
+#    
+#     (r"py:class", r"numpy\..*"),
+#     (r"py:class", r"scipy\..*"),
+#     (r"py:class", r"ase\..*"),
+#     (r"py:.*", r"cython\..*"),
+#
+#     (r"cpp:.*", r"ModuleBase::.*"),
+#     (r"cpp:.*", r"ModuleIO::.*"),
+#     (r"cpp:identifier", r".*"),          
+#    
+#     (r"std:ref", r"input-.*"),
+#     (r"std:doc", r"advanced/input_files/.*"),
+# 
+#     (r"myst", r".*"),
+#     (r"std:term", r".*"),
+# ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -102,6 +126,7 @@ if os.environ.get("READTHEDOCS", "") == "True":
 html_static_path = ['_static']
 
 latex_engine = 'xelatex'
+latex_use_xindy = False
 mathjax_path = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.min.js'
 # deepmodeling_current_site = 'Tutorials'
 latex_elements = {
