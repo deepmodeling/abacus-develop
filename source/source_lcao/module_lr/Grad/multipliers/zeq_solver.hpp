@@ -164,6 +164,23 @@ namespace LR
         else { throw std::runtime_error("Unsupported Z-vector solver: " + zvec_solver); }
     }
 
+    /// Builds the Z-vector equation's RHS from `ops_R` and solves it with `ops_L`. Extracted to
+    /// a template function (rather than a generic lambda, which needs C++14) so the closed- and
+    /// open-shell call sites in `Z_vector_equation` -- which pass different `Z_vector_R`/`UR` and
+    /// `Z_vector_L`/`UL` types -- can share this body under the repository's C++11 baseline.
+    template<typename T, typename TOpsR, typename TOpsL>
+    void build_and_solve_zeq(TOpsR& ops_R, TOpsL& ops_L, const int nspin_x,
+        const T* const X, container::Tensor& R, T* const Z,
+        const int nloc_per_band, const int nstates, const std::string& zvec_solver)
+    {
+        ModuleBase::timer::start("Z_vector", "Z_vector_R");
+        ops_R.hPsi(X, R.template data<T>(), nloc_per_band, nstates);  // act each operator on X
+        ModuleBase::timer::end("Z_vector", "Z_vector_R");
+        // std::cout << "The right side of the Z-vector equation:" << std::endl;
+        // LR_Util::print_value(R.template data<T>(), nstates, nloc_per_band);
+        solve_zeq_with(Z, R.template data<T>(), nloc_per_band, nstates, ops_L, nspin_x, zvec_solver);
+    }
+
     template<typename T>
     void Z_vector_equation(const T* const X,
         T* const Z,
@@ -200,16 +217,6 @@ namespace LR
         container::Tensor R = LR_Util::newTensor<T>({ nstates, nloc_per_band });
         R.zero();
 
-        auto build_and_solve = [&](auto& ops_R, auto& ops_L, const int nspin_x)
-            {
-                ModuleBase::timer::start("Z_vector", "Z_vector_R");
-                ops_R.hPsi(X, R.template data<T>(), nloc_per_band, nstates);  // act each operator on X
-                ModuleBase::timer::end("Z_vector", "Z_vector_R");
-                std::cout << "The right side of the Z-vector equation:" << std::endl;
-                LR_Util::print_value(R.template data<T>(), nstates, nloc_per_band);
-                solve_zeq_with(Z, R.template data<T>(), nloc_per_band, nstates, ops_L, nspin_x, zvec_solver);
-            };
-
         if (openshell)
         {
             Z_vector_UR<T> ops_R(xc_kernel, nspin, naos, nocc, nvirt,
@@ -224,7 +231,7 @@ namespace LR
                 exx_lri, exx_alpha,
 #endif
                 pot_hxc_gs, kv, px, pc, pmat);
-            build_and_solve(ops_R, ops_L, /*nspin_x=*/2);
+            build_and_solve_zeq(ops_R, ops_L, /*nspin_x=*/2, X, R, Z, nloc_per_band, nstates, zvec_solver);
         }
         else
         {
@@ -240,7 +247,7 @@ namespace LR
                 exx_lri, exx_alpha,
 #endif
                 pot_hxc_gs, kv, px, pc, pmat, spin_type);
-            build_and_solve(ops_R, ops_L, /*nspin_x=*/1);
+            build_and_solve_zeq(ops_R, ops_L, /*nspin_x=*/1, X, R, Z, nloc_per_band, nstates, zvec_solver);
         }
     }
 }

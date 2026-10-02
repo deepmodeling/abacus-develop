@@ -380,7 +380,7 @@ namespace LR_Util
             int i = 0;
             for (const auto& Rij : smat)
                 non_zero_counts[i++] = std::accumulate(Rij.second.begin(), Rij.second.end(), 0,
-                    [](int sum, const auto& line) { return sum + line.second.size(); });
+                    [](int sum, const std::pair<const size_t, std::map<size_t, TR>>& line) { return sum + line.second.size(); });
             Parallel_Reduce::reduce_all(non_zero_counts.data(), non_zero_counts.size());
 
 

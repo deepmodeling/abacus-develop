@@ -156,7 +156,7 @@ fi
 # force information
 # echo "hasforce:"$has_force
 #----------------------------
-if ! test -z "$has_force" && [ $has_force == 1 ]; then
+if ! test -z "$has_force" && [ $has_force == 1 ] && [ $is_lr == 0 ]; then
 	nn3=`echo "$natom + 3" |bc`
     # echo "nn3=$nn3"
     # check the last step result
@@ -164,6 +164,21 @@ if ! test -z "$has_force" && [ $has_force == 1 ]; then
 	total_force=`sum_file force.txt`
     rm force.txt
 	echo "totalforceref $total_force" >>$1
+fi
+
+#----------------------------
+# excited-state force (LR-TDDFT analytic gradients)
+# ESolver_LR prints its own "Forces (-gradients) of each excited
+# state" table instead of the ground-state TOTAL-FORCE one, so it
+# needs a separate extraction: pull the 3 numbers that follow every
+# literal "force" token, for every state (and every spin channel, for
+# open-shell runs where the table is printed once per channel).
+#----------------------------
+if [ $is_lr == 1 ] && ! test -z "$has_force" && [ $has_force == 1 ]; then
+	awk '/Forces \(-gradients\) of each excited state/{flag=1; next} flag{for(i=1;i<=NF;i++) if($i=="force"){print $(i+1),$(i+2),$(i+3)}}' $running_path > lr_force.txt
+	total_lr_force=`sum_file lr_force.txt`
+	rm lr_force.txt
+	echo "totallrforceref $total_lr_force" >>$1
 fi
 
 #-------------------------------

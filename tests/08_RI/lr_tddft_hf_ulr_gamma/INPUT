@@ -42,3 +42,4 @@ esolver_type      ks-lr
 
 nvirt             2
 nocc              2
+cal_force         1

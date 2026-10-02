@@ -105,6 +105,13 @@ namespace LR
 
         const bool& openshell = openshell_;
         const std::vector<std::vector<ModuleBase::Vector3<double>>>& drho_gs = drho_gs_;
+        /// Whether THIS kernel (built for its own functional name, which may differ from the
+        /// ground state's `dft_functional` in a cross-functional run such as TDLDA@PBE) needs
+        /// the GGA gradient terms. `drho_gs_` is only ever filled when this kernel's own `is_gga`
+        /// was true at construction (see `f_xc_libxc`), so its emptiness is a reliable per-kernel
+        /// proxy -- unlike the global `XC_Functional::get_func_type()`, which reflects the
+        /// ground state's functional and disagrees with this kernel whenever the two differ.
+        bool is_gga() const { return !this->drho_gs_.empty(); }
     private:
 #ifdef __LIBXC
         /// @brief Calculate the XC kernel using libxc.

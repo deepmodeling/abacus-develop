@@ -1029,7 +1029,16 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
     if (PARAM.inp.cal_force)
     {
         this->init_pot_groundstate(chg_gs);
-        const std::string xc_kernel_gs = LR_Util::tolower(this->inp_->dft_functional);
+        // `dft_functional == "default"` leaves the raw INPUT string unresolved (it never gets
+        // overwritten to the actual functional in use); the functional actually read from the
+        // pseudopotential lives in `ucell.atoms[i].ncpp.xc_func` instead. Comparing against the
+        // literal "default" string here would always disagree with `xc_kernel`, forcing a
+        // separate `kernel_gs` with no g^xc even when the ground state and the LR kernel are the
+        // same functional -- and `pot_hxc_gs` (built from that `kernel_gs`) throws the first time
+        // `cal_W_from_Z` asks it for g^xc.
+        const std::string xc_kernel_gs = (this->inp_->dft_functional == "default")
+            ? LR_Util::tolower(this->ucell_->atoms[0].ncpp.xc_func)
+            : LR_Util::tolower(this->inp_->dft_functional);
         // `ST::S1` is only correct when nspin=1. `PotHxcLR` builds its `KernelXC` with
         // `PARAM.inp.nspin`, so at nspin=2 the kernel arrays carry 3 spin components per grid point
         // while the S1 integrand indexes them as if there were 1 -- it does not even read a

@@ -54,7 +54,6 @@ namespace LR
     {
         ModuleBase::TITLE("PotGradXCLR", "cal_v_eff");
         ModuleBase::timer::start("PotGradXCLR", "cal_v_eff");
-        const int func_type = XC_Functional::get_func_type();
         const auto& kxc = this->xc_kernel_components_;
 
         if (kxc.openshell)
@@ -64,7 +63,10 @@ namespace LR
         }
         const auto& g = kxc.gxc(this->triplet_);
 
-        if (func_type == 1) // LDA: only the $g^{\rho\rho\rho}$ term survives
+        // Branch on THIS kernel's own GGA-ness, not the ground state's: in a cross-functional
+        // run (e.g. TDLDA@PBE) `XC_Functional::get_func_type()` reflects `dft_functional` (PBE,
+        // GGA) while `kxc` was built for `xc_kernel` (lda) and never filled `drho_gs_`.
+        if (!kxc.is_gga()) // LDA: only the $g^{\rho\rho\rho}$ term survives
         {
             const double* const a_s2 = g.a_s2.data();
             const double* const r1 = rho[0];
@@ -77,7 +79,7 @@ namespace LR
                 v[ir] += ModuleBase::e2 * a_s2[ir] * r1[ir] * r1[ir];
             }
         }
-        else if (func_type == 2 || func_type == 4)  // GGA or HYB_GGA
+        else  // GGA or HYB_GGA
         {
             scratch().alloc(nrxx_, /*two_channel=*/false, /*gga=*/true);
             Vec3* const drho1 = scratch().drho1[0].data();   // transition density gradient
@@ -127,11 +129,6 @@ namespace LR
             }
             BlasConnector::axpy(nrxx_, ModuleBase::e2, v_tmp, 1, v_eff.c, 1);
         }
-        else
-        {
-            throw std::domain_error("GlobalV::XC_Functional::get_func_type() =" + std::to_string(func_type)
-                + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
-        }
 
         ModuleBase::timer::end("PotGradXCLR", "cal_v_eff");
     }
@@ -159,14 +156,8 @@ namespace LR
         ModuleBase::TITLE("PotGradXCLR", "cal_v_eff_openshell");
         ModuleBase::timer::start("PotGradXCLR", "cal_v_eff_openshell");
         using namespace LR::libxc_idx;
-        const int func_type = XC_Functional::get_func_type();
         const auto& kxc = this->xc_kernel_components_;
         assert(tau == 0 || tau == 1);
-        if (func_type != 1 && func_type != 2 && func_type != 4)
-        {
-            throw std::domain_error("PotGradXCLR: func_type = " + std::to_string(func_type)
-                + " (meta-GGA) is not supported, in " + std::string(__FILE__));
-        }
         const std::vector<double>& v2rs = kxc.v2rhosigma;
         const std::vector<double>& v2s2 = kxc.v2sigma2;
         const std::vector<double>& v3r3 = kxc.v3rho3;
@@ -174,7 +165,8 @@ namespace LR
         const std::vector<double>& v3rs2 = kxc.v3rhosigma2;
         const std::vector<double>& v3s3 = kxc.v3sigma3;
 
-        if (func_type == 1)   // LDA: only $g^{\rho\rho\rho}$ survives
+        // Branch on THIS kernel's own GGA-ness, not the ground state's (see `cal_v_eff`).
+        if (!kxc.is_gga())   // LDA: only $g^{\rho\rho\rho}$ survives
         {
             const double* const r1u = rho1[0]; const double* const r1d = rho1[1];
             const double* const g3 = v3r3.data();
