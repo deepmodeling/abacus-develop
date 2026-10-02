@@ -191,8 +191,10 @@ namespace LR
         const int ld_vo = nk * px[0].get_local_size();
         std::vector<T> K_cvcx(ld_vo, 0.0);
         op_K_cvcx.act(/*nbands=*/1, ld_vo, /*npol=*/1, X, K_cvcx.data());
+#ifdef __EXX
         if (LR::exx_kernel_list().count(xc_kernel))
             op_K_exx.act(/*nbands=*/1, ld_vo, /*npol=*/1, X, K_cvcx.data());
+#endif
 
         return cal_edm_terms_from_XZWK(X, Z, W.data(), K_cvcx.data(), eig_ext_istate, eig_ks, c, nspin, p_occ_occ[0], px[0], pc, pmat);
     }

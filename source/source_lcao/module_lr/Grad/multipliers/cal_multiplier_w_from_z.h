@@ -163,8 +163,10 @@ namespace LR
         op_ht.act(/*nband=*/1, ld_oo, /*npol=*/1, X, W);    //comment out this line to test H[T+Z]=0
         // std::cout << "W (H[T+Z])) local terms: " << std::endl;
         // LR_Util::print_value(W, nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
+#ifdef __EXX
         if (LR::gs_is_hybrid())  // H[T+Z] term depends on ground-state kernel (dft_functional)
             op_ht_exx.act(/*nband=*/1, ld_oo, /*npol=*/1, X, W);
+#endif
         // std::cout << "W (H[T+Z])) local +exx terms: " << std::endl;
         // LR_Util::print_value(W, nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
         // Not singlet-only: $K^T_{xc}=f_{uu}-f_{ud}\ne0$ for a local functional, so $W^{c,T}$ has a

@@ -233,7 +233,15 @@ namespace LR_Util
         auto pv = dm.get_paraV_pointer();
         // 1. transpose dm(k)
         for (auto& dk : dm.get_dmk_vec())
+        {
+#ifdef __MPI
+            // dm(k) is 2D-block-cyclic distributed, so the transpose needs the PBLAS routine
+            // `mattrans` (pdtran_/pztranc_) rather than a plain serial swap.
             LR_Util::mattrans(dk.data(), pv->get_global_row_size(), *pv);
+#else
+            throw std::runtime_error("transpose_DMR requires MPI (PBLAS mattrans) for the 2D-block-cyclic dm(k) transpose.");
+#endif
+        }
 
         // 2. FT
         dm.cal_dmr(-1);
@@ -247,7 +255,13 @@ namespace LR_Util
         auto pv = dm.get_paraV_pointer();
         // 1. dm(k) dagger
         for (auto& dk : dm.get_dmk_vec())
+        {
+#ifdef __MPI
             LR_Util::mattrans(dk.data(), pv->get_global_row_size(), *pv);
+#else
+            throw std::runtime_error("transpose_DMR requires MPI (PBLAS mattrans) for the 2D-block-cyclic dm(k) transpose.");
+#endif
+        }
 
         // 2. FT with the minus sign in the exponent (TO DO)
         dm.cal_dmr(-1);
