@@ -182,7 +182,6 @@
     - [out\_mat\_dh\_vnl](#out_mat_dh_vnl)
     - [out\_mat\_dh\_vh](#out_mat_dh_vh)
     - [out\_mat\_dh\_vxc](#out_mat_dh_vxc)
-    - [out\_mat\_dh\_exx](#out_mat_dh_exx)
     - [out\_mat\_h\_t](#out_mat_h_t)
     - [out\_mat\_h\_vnl](#out_mat_h_vnl)
     - [out\_mat\_h\_vl](#out_mat_h_vl)
@@ -2232,15 +2231,6 @@
 
 - **Type**: Integer
 - **Description**: Whether to print files containing the derivatives of the XC matrix dV^XC/dR.
-
-  See out_mat_dh for format details.
-- **Default**: 0 8
-- **Unit**: Ry/Bohr
-
-### out_mat_dh_exx
-
-- **Type**: Integer
-- **Description**: Whether to print files containing the derivatives of the exact-exchange matrix dV^EXX/dR.
 
   See out_mat_dh for format details.
 - **Default**: 0 8

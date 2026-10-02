@@ -148,10 +148,10 @@ void write_dH_components(WriteDHParams& params, const Exx_Info& exx_info)
     // dH^EXX would be the derivative with respect to every mirror atom, which this output is
     // not meant for. Quit instead of writing a dH sum that silently omits the EXX term.
     if (exx_info.info_global.cal_exx && !PARAM.globalv.gamma_only_local
-        && (PARAM.inp.out_mat_dh[0] || PARAM.inp.out_mat_dh_exx[0]))
+        && PARAM.inp.out_mat_dh[0])
     {
         ModuleBase::WARNING_QUIT("write_dH_components",
-                                 "out_mat_dh (the dH sum) and out_mat_dh_exx are only supported for gamma-only when EXX is on. "
+                                 "out_mat_dh (the dH sum) is only supported for gamma-only when EXX is on. "
                                  "Use gamma_only, or request the individual non-EXX terms (out_mat_dh_t, "
                                  "out_mat_dh_vnl, out_mat_dh_vl, out_mat_dh_vh, out_mat_dh_vxc).");
     }
@@ -194,13 +194,6 @@ void write_dH_components(WriteDHParams& params, const Exx_Info& exx_info)
         write_dH_vxc(params);
         write_dH_vxc_pulay(params);
     }
-
-#ifdef __EXX
-    if (PARAM.inp.out_mat_dh_exx[0])
-    {
-        write_dH_exx(params, exx_info);
-    }
-#endif
 
     ModuleBase::timer::end("ModuleIO", "write_dH_components");
 }
