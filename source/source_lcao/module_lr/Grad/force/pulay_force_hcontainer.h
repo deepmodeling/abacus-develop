@@ -12,7 +12,7 @@ namespace PulayForceStress
 /// for 2-center-integration terms, provided HS derivatives
     template<typename TK>
 ModuleBase::matrix cal_pulay_fs(
-    const elecstate::DensityMatrix<TK, double>& dm,  ///< [in] density matrix or energy density matrix
+    const module_dm::DensityMatrix<TK, double>& dm,  ///< [in] density matrix or energy density matrix
     const UnitCell& ucell,  ///< [in] unit cell
     const std::vector<hamilt::HContainer<double>>& dHS,  ///< [in] dHS x, y, z, for force
     const double& factor_force = 1.0)
@@ -20,7 +20,7 @@ ModuleBase::matrix cal_pulay_fs(
     ModuleBase::matrix f(ucell.nat, 3);
     const Parallel_Orbitals& pv = *dHS[0].get_paraV();
     const int& npol = ucell.get_npol();
-    const int nspin_dmr = dm.get_DMR_vector().size();
+    const int nspin_dmr = dm.get_dmr_vec().size();
     for (int ixyz = 0;ixyz < 3;++ixyz)
     {
         for (int iat0 = 0;iat0 < ucell.nat;++iat0)
@@ -37,7 +37,7 @@ ModuleBase::matrix cal_pulay_fs(
                         std::vector<const hamilt::BaseMatrix<double>*> mat_dmr;
                         for (int is = 0; is < nspin_dmr; ++is)
                         {
-                            mat_dmr.push_back(dm.get_DMR_pointer(is + 1)->find_matrix(iat0, iat1, R.x, R.y, R.z));
+                            mat_dmr.push_back(dm.get_dmr_ptr(is + 1)->find_matrix(iat0, iat1, R.x, R.y, R.z));
                         }
 
                         for (int mu = 0; mu < pv.get_nrow_atom(iat0); mu += npol)
@@ -60,7 +60,7 @@ ModuleBase::matrix cal_pulay_fs(
 /// for grid-integration terms
 template<typename TK>
 ModuleBase::matrix cal_pulay_fs(
-    const elecstate::DensityMatrix<TK, double>& dm,  ///< [in] density matrix or energy density matrix
+    const module_dm::DensityMatrix<TK, double>& dm,  ///< [in] density matrix or energy density matrix
     const UnitCell& ucell,  ///< [in] unit cell
     const LR::PotLRBase* pot ///< [in] potential on grid
 )
@@ -82,7 +82,7 @@ ModuleBase::matrix cal_pulay_fs(
     const int& nrxx = pot->nrxx;
     LR_Util::_allocate_2order_nested_ptr(rho, nspin_gint, nrxx);
     ModuleBase::GlobalFunc::ZEROS(rho[0], nrxx);
-    ModuleGint::cal_gint_rho(dm.get_DMR_vector(), nspin_gint, rho, false);
+    ModuleGint::cal_gint_rho(dm.get_dmr_vec(), nspin_gint, rho, false);
 
     // 2. v_hxc = f_hxc * rho
     ModuleBase::matrix vr_hxc(1, nrxx);   //grid
@@ -91,7 +91,7 @@ ModuleBase::matrix cal_pulay_fs(
 
     // 3. v(r) -> force
     const std::vector<const double*> p_vr_hxc(nspin_gint, &vr_hxc(0, 0));
-    ModuleGint::cal_gint_fvl(nspin_gint, p_vr_hxc, dm.get_DMR_vector(), /*isforce=*/true, /*isstress=*/false, &force, &stress_tmp);
+    ModuleGint::cal_gint_fvl(nspin_gint, p_vr_hxc, dm.get_dmr_vec(), /*isforce=*/true, /*isstress=*/false, &force, &stress_tmp);
     return force;
 }
 
@@ -104,21 +104,21 @@ ModuleBase::matrix cal_pulay_fs(
 /// with `SpinType::S2_updown` selects the $(\sigma,\sigma')$ component via `ispin_op`.
 template<typename TK>
 ModuleBase::matrix cal_pulay_fs_openshell(
-    const elecstate::DensityMatrix<TK, double>& dm,  ///< [in] 2-channel density matrix
+    const module_dm::DensityMatrix<TK, double>& dm,  ///< [in] 2-channel density matrix
     const UnitCell& ucell,
     const LR::PotLRBase* pot)
 {
     ModuleBase::matrix force(ucell.nat, 3);
     ModuleBase::matrix stress_tmp(3, 3);
     constexpr int nspin_dm = 2;
-    assert(dm.get_DMR_vector().size() == nspin_dm);
+    assert(dm.get_dmr_vec().size() == nspin_dm);
 
     // 1. dm -> rho, one channel each
     double** rho;
     const int& nrxx = pot->nrxx;
     LR_Util::_allocate_2order_nested_ptr(rho, nspin_dm, nrxx);
     for (int is = 0; is < nspin_dm; ++is) { ModuleBase::GlobalFunc::ZEROS(rho[is], nrxx); }
-    ModuleGint::cal_gint_rho(dm.get_DMR_vector(), nspin_dm, rho, false);
+    ModuleGint::cal_gint_rho(dm.get_dmr_vec(), nspin_dm, rho, false);
 
     // 2. $v_\sigma=\sum_{\sigma'}f^{\sigma\sigma'}\rho_{\sigma'}$
     std::vector<ModuleBase::matrix> vr_hxc(nspin_dm, ModuleBase::matrix(1, nrxx));
@@ -135,7 +135,7 @@ ModuleBase::matrix cal_pulay_fs_openshell(
     // 3. v(r) -> force, summed over the outer spin by `cal_gint_fvl`
     std::vector<const double*> p_vr_hxc(nspin_dm);
     for (int is = 0; is < nspin_dm; ++is) { p_vr_hxc[is] = &vr_hxc[is](0, 0); }
-    ModuleGint::cal_gint_fvl(nspin_dm, p_vr_hxc, dm.get_DMR_vector(), /*isforce=*/true, false, &force, &stress_tmp);
+    ModuleGint::cal_gint_fvl(nspin_dm, p_vr_hxc, dm.get_dmr_vec(), /*isforce=*/true, false, &force, &stress_tmp);
     return force;
 }
 }

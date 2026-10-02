@@ -142,7 +142,7 @@ namespace LR
         const T* const Z,   //lvirt*locc
         const double eig_ext_istate,    //1, the excitation energy of one state
         const double* const eig_ks,     // gocc+gvirt
-        const elecstate::DensityMatrix<T, T>& dm_trans, // D_X
+        const module_dm::DensityMatrix<T, T>& dm_trans, // D_X
         const psi::Psi<T>& c,
         const int& nspin,
         const int& naos,
@@ -209,7 +209,7 @@ namespace LR
         const T* const Z,
         const double eig_ext_istate,
         const double* const eig_ks,
-        const elecstate::DensityMatrix<T, T>& dm_trans,   // unused, kept for signature symmetry
+        const module_dm::DensityMatrix<T, T>& dm_trans,   // unused, kept for signature symmetry
         const psi::Psi<T>& psi_ks,
         const int& nspin,
         const int& naos,
@@ -256,7 +256,7 @@ namespace LR
         std::vector<std::vector<T>> K_cvcx(2);
         for (int is : {0, 1}) { K_cvcx[is].assign(ld_x[is], T(0.0)); }
 
-        elecstate::DensityMatrix<T, T> DM_trans(&pmat, 1, kv.kvec_d, nk);
+        module_dm::DensityMatrix<T, T> DM_trans(&pmat, 1, kv.kvec_d, nk);
         LR_Util::initialize_DMR(DM_trans, pmat, ucell, gd, orb_cutoff);
         std::vector<std::unique_ptr<OperatorLRHxc<T>>> op_K(4);
         for (int sl : {0, 1})
@@ -305,7 +305,7 @@ namespace LR
                     }
                 }
 #endif
-                for (int ik = 0;ik < nk;++ik) { DM_trans.set_DMK_pointer(ik, dmx_buf[ik].data<T>()); }
+                for (int ik = 0;ik < nk;++ik) { DM_trans.set_dmk_ptr(ik, dmx_buf[ik].data<T>()); }
             };
         for (int sr : {0, 1})
         {

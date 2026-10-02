@@ -49,9 +49,9 @@ namespace LR
         {
             ModuleBase::TITLE("Z_vector_R", "Z_vector_R");
 
-            this->DM_trans = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
+            this->DM_trans = LR_Util::make_unique<module_dm::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
             LR_Util::initialize_DMR(*this->DM_trans, pmat, ucell, gd, orb_cutoff);
-            this->DM_diff = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
+            this->DM_diff = LR_Util::make_unique<module_dm::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
             LR_Util::initialize_DMR(*this->DM_diff, pmat, ucell, gd, orb_cutoff);
 
             // note: calculation_type cannot repeated, or it will be ignored in ops->add()
@@ -131,7 +131,7 @@ namespace LR
                         for (int u = 0;u < naos;++u) { for (int v = u + 1;v < naos;++v) { std::swap(d[u * naos + v], d[v * naos + u]); } }
                     }
 #endif
-                    for (int ik = 0;ik < this->nk;++ik) { this->DM_trans->set_DMK_pointer(ik, dm_trans_2d[ik].data<T>()); }
+                    for (int ik = 0;ik < this->nk;++ik) { this->DM_trans->set_dmk_ptr(ik, dm_trans_2d[ik].data<T>()); }
                 };
 
             this->cal_dm_diff = [&, this](const int& is, const T* const X)->void
@@ -144,7 +144,7 @@ namespace LR
                     std::vector<ct::Tensor> dm_diff_2d = cal_dm_diff_blas(X, psi_ks_is, naos, nocc[is], nvirt[is]);
                     for (auto& t : dm_diff_2d) LR_Util::matsym(t.data<T>(), naos);
 #endif
-                    for (int ik = 0;ik < this->nk;++ik) { this->DM_diff->set_DMK_pointer(ik, dm_diff_2d[ik].data<T>()); }
+                    for (int ik = 0;ik < this->nk;++ik) { this->DM_diff->set_dmk_ptr(ik, dm_diff_2d[ik].data<T>()); }
                     // std::cout << "difference density matrix" << std::endl;
                     // for (int ik = 0;ik < this->nk;++ik) { LR_Util::print_value(dm_diff_2d[ik].data<T>(), naos, naos); }
                     // std::cout << "test: set dm_diff to zero" << std::endl;
@@ -169,7 +169,7 @@ namespace LR
         }
 
     private:
-        std::unique_ptr<elecstate::DensityMatrix<T, T>> DM_diff;
+        std::unique_ptr<module_dm::DensityMatrix<T, T>> DM_diff;
         std::function<void(const int&, const T* const)> cal_dm_diff;
         std::shared_ptr<PotLRBase> pot_grad;
     };
@@ -219,9 +219,9 @@ namespace LR
             naos_(naos), pc_(pc), pmat_(pmat), psi_ks_(psi_ks)
         {
             ModuleBase::TITLE("Z_vector_UR", "Z_vector_UR");
-            this->DM_trans = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
+            this->DM_trans = LR_Util::make_unique<module_dm::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
             LR_Util::initialize_DMR(*this->DM_trans, pmat, ucell, gd, orb_cutoff);
-            this->DM_diff = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
+            this->DM_diff = LR_Util::make_unique<module_dm::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
             LR_Util::initialize_DMR(*this->DM_diff, pmat, ucell, gd, orb_cutoff);
 
             // 1. $\sum_bX_{bi\sigma}H_{ba\sigma}[D^X]-\sum_kX_{ak\sigma}H_{ik\sigma}[D^X]$,
@@ -317,8 +317,8 @@ namespace LR
 #endif
             for (int ik = 0;ik < this->nk;++ik)
             {
-                this->DM_trans->set_DMK_pointer(ik, this->dmx_buf_[ik].template data<T>());
-                this->DM_diff->set_DMK_pointer(ik, this->dmd_buf_[ik].template data<T>());
+                this->DM_trans->set_dmk_ptr(ik, this->dmx_buf_[ik].template data<T>());
+                this->DM_diff->set_dmk_ptr(ik, this->dmd_buf_[ik].template data<T>());
             }
         }
 
@@ -328,8 +328,8 @@ namespace LR
         const Parallel_Orbitals& pmat_;
         const psi::Psi<T>& psi_ks_;
         std::vector<psi::Psi<T>> psi_ks_spin_;
-        std::unique_ptr<elecstate::DensityMatrix<T, T>> DM_trans;
-        std::unique_ptr<elecstate::DensityMatrix<T, T>> DM_diff;
+        std::unique_ptr<module_dm::DensityMatrix<T, T>> DM_trans;
+        std::unique_ptr<module_dm::DensityMatrix<T, T>> DM_diff;
         mutable std::vector<ct::Tensor> dmx_buf_;
         mutable std::vector<ct::Tensor> dmd_buf_;
         std::unique_ptr<OperatorGxcULR<T>> gxc_;

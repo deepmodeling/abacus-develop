@@ -5,7 +5,7 @@
 #include "source_base/macros.h"
 #include <ATen/core/tensor.h>
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_hs/single_r_io.h"
+#include "source_io/module_hs/lat_r_csr.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
 #ifdef __EXX
 #include "source_lcao/module_ri/abfs_vector3_order.h"
@@ -214,11 +214,11 @@ namespace LR_Util
 
 
     template<typename TK, typename TR>
-    void swap_atompair_in_DMR(const elecstate::DensityMatrix<TK, TR>& dm, const int nat)
+    void swap_atompair_in_DMR(const module_dm::DensityMatrix<TK, TR>& dm, const int nat)
     {
         for (int iat1 = 0; iat1 < nat; ++iat1)
             for (int iat2 = iat1 + 1; iat2 < nat; ++iat2)
-                for (auto& dr : dm.get_DMR_vector())
+                for (auto& dr : dm.get_dmr_vec())
                 {
                     auto ap1 = dr->find_pair(iat1, iat2);
                     auto ap2 = dr->find_pair(iat2, iat1);
@@ -228,35 +228,35 @@ namespace LR_Util
     }
 
     template<typename TK>
-    void transpose_DMR(elecstate::DensityMatrix<TK, double>& dm, const int nat)
+    void transpose_DMR(module_dm::DensityMatrix<TK, double>& dm, const int nat)
     {
         auto pv = dm.get_paraV_pointer();
         // 1. transpose dm(k)
-        for (auto& dk : dm.get_DMK_vector())
+        for (auto& dk : dm.get_dmk_vec())
             LR_Util::mattrans(dk.data(), pv->get_global_row_size(), *pv);
 
         // 2. FT
-        dm.cal_DMR();
+        dm.cal_dmr(-1);
         // 3. swap atom pair (iat1, iat2) to (iat2, iat1)
         swap_atompair_in_DMR(dm, nat);
     }
     template<typename TK>
-    void transpose_DMR(elecstate::DensityMatrix<TK, std::complex<double>>& dm, const int nat)
+    void transpose_DMR(module_dm::DensityMatrix<TK, std::complex<double>>& dm, const int nat)
     {
         throw std::runtime_error("transpose_DMR is not implemented for complex DMR, due to the lack of minus-sign FT.");
         auto pv = dm.get_paraV_pointer();
         // 1. dm(k) dagger
-        for (auto& dk : dm.get_DMK_vector())
+        for (auto& dk : dm.get_dmk_vec())
             LR_Util::mattrans(dk.data(), pv->get_global_row_size(), *pv);
 
         // 2. FT with the minus sign in the exponent (TO DO)
-        dm.cal_DMR();
+        dm.cal_dmr(-1);
         // 3. swap atom pair (iat1, iat2) to (iat2, iat1)
         swap_atompair_in_DMR(dm, nat);
     }
 
     template<typename TK, typename TR>
-    elecstate::DensityMatrix<TK, TR> build_dm_from_dmk(const std::vector<ct::Tensor>& dmk,
+    module_dm::DensityMatrix<TK, TR> build_dm_from_dmk(const std::vector<ct::Tensor>& dmk,
         const Parallel_Orbitals& pmat,
         const int& nk,
         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
@@ -267,7 +267,7 @@ namespace LR_Util
         const bool cal_dmr = true,
         const bool transpose = false)
     {
-        elecstate::DensityMatrix<TK, TR> dm(&pmat, 1, kvec_d, nk);
+        module_dm::DensityMatrix<TK, TR> dm(&pmat, 1, kvec_d, nk);
         initialize_DMR(dm, pmat, ucell, gd, orb_cutoff);
 
         if (symmetrize)
@@ -275,11 +275,11 @@ namespace LR_Util
                 LR_Util::matsym(dmk[ik].data<TK>(), pmat.get_global_row_size(), pmat);
 
         for (int ik = 0; ik < nk; ++ik)
-            dm.set_DMK_pointer(ik, dmk[ik].data<TK>());
+            dm.set_dmk_ptr(ik, dmk[ik].data<TK>());
 
         if (cal_dmr)
         {
-            dm.cal_DMR();
+            dm.cal_dmr(-1);
             LR_Util::swap_atompair_in_DMR(dm, ucell.nat);   // make D(R) consistent with the defination: D(R)[iat1][iat2] = \sum_k c1(k)c2^*(k)exp(-ik(R2-R1))
         }
         return dm;
@@ -291,7 +291,7 @@ namespace LR_Util
     /// density matrix all have two independent channels. `DensityMatrix` stores DMK as a flat
     /// `[nspin][nk]` array, so channel `is` starts at `is * nk`.
     template <typename TK, typename TR>
-    elecstate::DensityMatrix<TK, TR> build_dm_from_dmk_spin(const std::vector<std::vector<ct::Tensor>>& dmk,
+    module_dm::DensityMatrix<TK, TR> build_dm_from_dmk_spin(const std::vector<std::vector<ct::Tensor>>& dmk,
         const Parallel_Orbitals& pmat,
         const int& nk,
         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
@@ -302,7 +302,7 @@ namespace LR_Util
         const bool cal_dmr = true)
     {
         const int nspin_dm = static_cast<int>(dmk.size());
-        elecstate::DensityMatrix<TK, TR> dm(&pmat, nspin_dm, kvec_d, nk);
+        module_dm::DensityMatrix<TK, TR> dm(&pmat, nspin_dm, kvec_d, nk);
         initialize_DMR(dm, pmat, ucell, gd, orb_cutoff);
         for (int is = 0; is < nspin_dm; ++is)
         {
@@ -314,11 +314,11 @@ namespace LR_Util
                     LR_Util::matsym(dmk[is][ik].data<TK>(), pmat.get_global_row_size(), pmat);
                 }
             }
-            for (int ik = 0; ik < nk; ++ik) { dm.set_DMK_pointer(is * nk + ik, dmk[is][ik].data<TK>()); }
+            for (int ik = 0; ik < nk; ++ik) { dm.set_dmk_ptr(is * nk + ik, dmk[is][ik].data<TK>()); }
         }
         if (cal_dmr)
         {
-            dm.cal_DMR();
+            dm.cal_dmr(-1);
             LR_Util::swap_atompair_in_DMR(dm, ucell.nat);
         }
         return dm;
@@ -402,7 +402,7 @@ namespace LR_Util
                 ModuleIO::SparseWriteOptions single_R_options;
                 single_R_options.threshold = sparse_thr;
                 single_R_options.binary = false;
-                ModuleIO::output_single_R(ofs, Rij.second, pv, single_R_options);
+                ModuleIO::save_lat_r(ofs, Rij.second, pv, single_R_options);
             }
             if (GlobalV::DRANK == 0) { ofs.close(); }
         }
@@ -422,13 +422,13 @@ namespace LR_Util
     }
 
     template <typename TK, typename TR>
-    void save_DMR(const elecstate::DensityMatrix<TK, TR>& DMR,
+    void save_DMR(const module_dm::DensityMatrix<TK, TR>& DMR,
         const std::string& filename,
         const Parallel_Orbitals& pv,
         const double& sparse_thr = 1e-10)
     {
         int is = 0;
-        for (auto& dr : DMR.get_DMR_vector())
+        for (auto& dr : DMR.get_dmr_vec())
             save_HR(*dr, filename + "_s" + std::to_string(is), pv, sparse_thr);
     }
 
@@ -436,27 +436,27 @@ namespace LR_Util
     // convert DensityMatrix to maps of RI::Tensors
     // return 0.5*D[0]
     template <typename TK, typename TR>
-    auto get_exx_Ds_spin1(const elecstate::DensityMatrix<TK, TR>& dm,
+    auto get_exx_Ds_spin1(const module_dm::DensityMatrix<TK, TR>& dm,
         const UnitCell& ucell, const K_Vectors& kv, const Parallel_Orbitals& pmat)
         -> std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<TK>>>
     {
         const int& nk = dm.get_DMK_nks();   // nks/nspin
         std::vector<const std::vector<TK>*> DMk_trans_pointer(nk);
-        for (int ik = 0;ik < nk;++ik) { DMk_trans_pointer[ik] = &dm.get_DMK_vector()[ik]; }
+        for (int ik = 0;ik < nk;++ik) { DMk_trans_pointer[ik] = &dm.get_dmk_vec()[ik]; }
         return RI_2D_Comm::split_m2D_ktoR<TK>(ucell, kv, DMk_trans_pointer, pmat, /*nspin=*/1)[0];
     }
     // return SPIN_multiple*D[0] as implemented in split_m2D_ktoR
     // SPIN_multiple = map({ {1,0.5}, {2,1}, {4,1} }).at(nspin)
     template <typename TK, typename TR>
-    auto get_exx_Ds_gs(const elecstate::DensityMatrix<TK, TR>& dm,
+    auto get_exx_Ds_gs(const module_dm::DensityMatrix<TK, TR>& dm,
         const UnitCell& ucell, const K_Vectors& kv, const Parallel_Orbitals& pmat)
         -> std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<TK>>>>
     {
-        const int& nspin = dm.get_DMR_vector().size();
+        const int& nspin = dm.get_dmr_vec().size();
         const int& nk = dm.get_DMK_nks() / nspin;   // nks/nspin
         std::vector<const std::vector<TK>*> DMk_trans_pointer(nk);
         for (int iks = 0;iks < dm.get_DMK_nks();++iks)
-            DMk_trans_pointer[iks] = &dm.get_DMK_vector()[iks];
+            DMk_trans_pointer[iks] = &dm.get_dmk_vec()[iks];
         return RI_2D_Comm::split_m2D_ktoR<TK>(ucell, kv, DMk_trans_pointer, pmat, nspin);
     }
 #endif

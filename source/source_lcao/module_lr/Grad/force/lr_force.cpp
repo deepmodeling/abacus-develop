@@ -10,37 +10,36 @@ namespace LR
     /// The LR density matrices ($D^X$, $T+D^Z$, EDM) carry one channel in the closed-shell
     /// singlet/triplet algorithm and two independent channels in the open-shell one.
     template<typename TK>
-    inline bool is_openshell_dm(const elecstate::DensityMatrix<TK, double>& dm)
+    inline bool is_openshell_dm(const module_dm::DensityMatrix<TK, double>& dm)
     {
-        return dm.get_DMR_vector().size() == 2;
+        return dm.get_dmr_vec().size() == 2;
     }
 
     template<typename TK>
-    Charge LR_Force<TK>::dm_to_charge(const elecstate::DensityMatrix<TK, double>& dm)
+    void LR_Force<TK>::dm_to_charge(const module_dm::DensityMatrix<TK, double>& dm, Charge& chr_out)
     {
-        const int& nspin_dm = dm.get_DMR_vector().size();
+        const int& nspin_dm = dm.get_dmr_vec().size();
         const int& nspin_global = PARAM.inp.nspin;
-        Charge chr;
-        chr.set_rhopw(const_cast<ModulePW::PW_Basis*>(&this->rhopw_));
-        chr.allocate(nspin_global, /*kin_den=*/false); //chr still needs global nspin, because Forces (PW) depends on it
+        chr_out.set_rhopw(const_cast<ModulePW::PW_Basis*>(&this->rhopw_));
+        chr_out.allocate(nspin_global, /*kin_den=*/false, /*meta_gga=*/false, /*test_charge=*/0); //chr still needs global nspin, because Forces (PW) depends on it
         // So huge a Charge class...
-        // 1. Using a (private) `allocate_rho` to control whether to delete will definately cause memory leak here. No need for such judgement. 
+        // 1. Using a (private) `allocate_rho` to control whether to delete will definately cause memory leak here. No need for such judgement.
         // 2. Charge-dependent interfaces need refactor: only rhopw_ and rho dependence are enough.
 
-        ModuleGint::cal_gint_rho(dm.get_DMR_vector(), nspin_dm, chr.rho, false);
-        // if (nspin_dm == 1 && nspin_global == 2), chr.rho[1][irxx]=0 has been set in Charge::allocate()
-        return chr;
+        ModuleGint::cal_gint_rho(dm.get_dmr_vec(), nspin_dm, chr_out.rho, false);
+        // if (nspin_dm == 1 && nspin_global == 2), chr_out.rho[1][irxx]=0 has been set in Charge::allocate()
     }
 
     template<typename TK>
-    elecstate::Potential LR_Force<TK>::dm_to_hxc_potential(const elecstate::DensityMatrix<TK, double>& dm)
+    elecstate::Potential LR_Force<TK>::dm_to_hxc_potential(const module_dm::DensityMatrix<TK, double>& dm)
     {
         double etxc = 0.0, vtxc = 0.0;
         elecstate::Potential pot(&this->rhodpw_, &this->rhopw_, &this->ucell_,
             &this->locpp_.vloc, const_cast<Structure_Factor*>(&this->sf_),
             nullptr/*surchem*/, &etxc, &vtxc);
         PARAM.inp.vh_in_h ? pot.pot_register({ "hartree", "xc" }) : pot.pot_register({ "xc" });
-        const Charge& charge = this->dm_to_charge(dm);
+        Charge charge;
+        this->dm_to_charge(dm, charge);
         pot.init_pot(&charge); // call update_from_charge inside
         return pot;
     }
@@ -57,8 +56,8 @@ namespace LR
     }
 
     template<typename TK>
-    ModuleBase::matrix LR_Force<TK>::cal_force_hamilt_gs_dm_relaxed_diff(const elecstate::DensityMatrix<TK, double>& relax_diff_dm,
-        const elecstate::DensityMatrix<TK, double>& dm_gs,
+    ModuleBase::matrix LR_Force<TK>::cal_force_hamilt_gs_dm_relaxed_diff(const module_dm::DensityMatrix<TK, double>& relax_diff_dm,
+        const module_dm::DensityMatrix<TK, double>& dm_gs,
         const bool reproduce_gs,
         const PotHxcLR* pot_hxc_gs)
     {
@@ -67,7 +66,8 @@ namespace LR
         // The closed-shell singlet/triplet algorithm always builds a single-channel LR density
         // matrix, even at nspin=2.
         const bool openshell = is_openshell_dm(relax_diff_dm);
-        const Charge chr_diff_relaxed = dm_to_charge(relax_diff_dm);
+        Charge chr_diff_relaxed;
+        this->dm_to_charge(relax_diff_dm, chr_diff_relaxed);
 
         // 1. local pp (Hellmann-Feynman)(fvl_dvl) + ewald + core correction (+ self-consistent charge)
         ModuleBase::matrix f_pw = PARAM.inp.vl_in_h ?
@@ -80,20 +80,20 @@ namespace LR
         // // 3. local pp (Pulay) + Hartree + xc (grid integration)
         // ModuleBase::matrix fvl_dphi(this->ucell_.nat, 3);
         // ModuleBase::matrix stress_tmp;  // no use now, only for passing into interfaces
-        // PulayForceStress::cal_pulay_fs(relax_diff_dm.get_DMR_vector().size()/*nspin*/, fvl_dphi, stress_tmp,
+        // PulayForceStress::cal_pulay_fs(relax_diff_dm.get_dmr_vec().size()/*nspin*/, fvl_dphi, stress_tmp,
         //     relax_diff_dm, this->ucell_, &pot_gs, true, false);
 
         // 3.1. local pp (Pulay)
         ModuleBase::matrix fvl_dphi(this->ucell_.nat, 3);
         ModuleBase::matrix stress_tmp;  // no use now, only for passing into interfaces
         elecstate::Potential pot_loc = this->local_potential();
-        PulayForceStress::cal_pulay_fs(relax_diff_dm.get_DMR_vector().size()/*nspin*/, fvl_dphi, stress_tmp,
+        PulayForceStress::cal_pulay_fs(relax_diff_dm.get_dmr_vec().size()/*nspin*/, fvl_dphi, stress_tmp,
             relax_diff_dm, this->ucell_, &pot_loc, true, false);
 
         // 3.2. Hartree + xc (Pulay) 
         //  method 1
         // ModuleBase::matrix fgs_dphi(this->ucell_.nat, 3);
-        // PulayForceStress::cal_pulay_fs(relax_diff_dm.get_DMR_vector().size()/*nspin*/, fgs_dphi, stress_tmp,
+        // PulayForceStress::cal_pulay_fs(relax_diff_dm.get_dmr_vec().size()/*nspin*/, fgs_dphi, stress_tmp,
         //     relax_diff_dm, this->ucell_, &pot_gs, true, false);
         // ModuleBase::matrix fhxc_dphi = (fgs_dphi - fvl_dphi) * 0.5; // avoid double count of hxc Pulay term
         // method 2 
@@ -101,7 +101,7 @@ namespace LR
         elecstate::Potential pot_hxc = this->dm_to_hxc_potential(dm_gs);
         // `cal_pulay_fs` calculates 1*Pulay-term. 
         // For ground-state DFT, Pulay term = Hellmann-Feynman term, F = 1/2(Pulay + H-F) = Pulay, so directly call it once gives correct result.
-        PulayForceStress::cal_pulay_fs(relax_diff_dm.get_DMR_vector().size()/*nspin*/, fhxc_dphi, stress_tmp,
+        PulayForceStress::cal_pulay_fs(relax_diff_dm.get_dmr_vec().size()/*nspin*/, fhxc_dphi, stress_tmp,
             relax_diff_dm, this->ucell_, &pot_hxc, true, false);
         if (reproduce_gs) {fhxc_dphi *= 0.5;} // avoid double count
 
@@ -151,7 +151,7 @@ namespace LR
             }
             std::vector<const double*> vr_eff(nspin_dm);
             for (int is = 0; is < nspin_dm; ++is) { vr_eff[is] = v_lin[is].c; }
-            ModuleGint::cal_gint_fvl(nspin_dm, vr_eff, dm_gs.get_DMR_vector(), true, false, &fhxc_dvhxc, &stress_tmp);
+            ModuleGint::cal_gint_fvl(nspin_dm, vr_eff, dm_gs.get_dmr_vec(), true, false, &fhxc_dvhxc, &stress_tmp);
         }
         else
         {
@@ -159,7 +159,7 @@ namespace LR
             double* rho_in[1] = { const_cast<double*>(chr_diff_relaxed.rho[0]) };
             pot_hxc_gs->cal_v_eff(rho_in, this->ucell_, v_lin);
             std::vector<const double*> vr_eff = { v_lin.c };
-            ModuleGint::cal_gint_fvl(1, vr_eff, dm_gs.get_DMR_vector(), true, false, &fhxc_dvhxc, &stress_tmp);
+            ModuleGint::cal_gint_fvl(1, vr_eff, dm_gs.get_dmr_vec(), true, false, &fhxc_dvhxc, &stress_tmp);
             fhxc_dvhxc *= 2;   // for the two channels of the ground-state dm.
             fhxc_dvhxc *= gs_dm_channel_factor();
         }
@@ -182,7 +182,7 @@ namespace LR
         return f_pw + fvnl + ft_dphi + fvl_dphi + fhxc_dphi + fhxc_dvhxc;
     }
     template<typename TK>
-    ModuleBase::matrix LR_Force<TK>::cal_force_hxc_dmtrans(const elecstate::DensityMatrix<TK, double>& dm_trans, const PotHxcLR& pot_hxc)
+    ModuleBase::matrix LR_Force<TK>::cal_force_hxc_dmtrans(const module_dm::DensityMatrix<TK, double>& dm_trans, const PotHxcLR& pot_hxc)
     {
         // `dm_trans` (D^X) must be SYMMETRIZED before entering here: `cal_pulay_fs` builds v from
         // rho[D^X] (which only sees the symmetric part) but contracts with D^X as passed, so an
@@ -206,8 +206,8 @@ namespace LR
     }
 
     template<typename TK>
-    ModuleBase::matrix LR_Force<TK>::cal_force_gxc_dmtrans(const elecstate::DensityMatrix<TK, double>& dm_trans,
-        const elecstate::DensityMatrix<TK, double>& dm_gs, const PotGradXCLR& pot_grad)
+    ModuleBase::matrix LR_Force<TK>::cal_force_gxc_dmtrans(const module_dm::DensityMatrix<TK, double>& dm_trans,
+        const module_dm::DensityMatrix<TK, double>& dm_gs, const PotGradXCLR& pot_grad)
     {
         // The third source of position dependence in
         //     $f^{xc}_{\kappa\lambda,\alpha\beta}
@@ -225,7 +225,8 @@ namespace LR
         // `cal_force_hamilt_gs_dm_relaxed_diff` DOES need a factor 2, but only because it is built
         // from `pot_hxc_gs`, which is normalized as S2_gs = S2_singlet/2.
         // Confirmed numerically on H2/SZ TDLDA (see `cal_multiplier_w_from_z.h`).
-        const Charge chr_x = dm_to_charge(dm_trans);
+        Charge chr_x;
+        this->dm_to_charge(dm_trans, chr_x);
         ModuleBase::matrix v2(1, this->rhopw_.nrxx);   // zero-initialized
         double* rho_in[1] = { const_cast<double*>(chr_x.rho[0]) };
         pot_grad.cal_v_eff(rho_in, this->ucell_, v2);
@@ -233,23 +234,24 @@ namespace LR
         ModuleBase::matrix f(this->ucell_.nat, 3);
         ModuleBase::matrix stress_tmp;
         std::vector<const double*> vr_eff = { v2.c };
-        ModuleGint::cal_gint_fvl(1, vr_eff, dm_gs.get_DMR_vector(), true, false, &f, &stress_tmp);
+        ModuleGint::cal_gint_fvl(1, vr_eff, dm_gs.get_dmr_vec(), true, false, &f, &stress_tmp);
         f *= gs_dm_channel_factor();
         return f;
     }
 
     template<typename TK>
     ModuleBase::matrix LR_Force<TK>::cal_force_gxc_dmtrans_openshell(
-        const elecstate::DensityMatrix<TK, double>& dm_trans,
-        const elecstate::DensityMatrix<TK, double>& dm_gs, const PotGradXCLR& pot_grad)
+        const module_dm::DensityMatrix<TK, double>& dm_trans,
+        const module_dm::DensityMatrix<TK, double>& dm_gs, const PotGradXCLR& pot_grad)
     {
         // Same term as `cal_force_gxc_dmtrans`, spin-resolved: the free index $\tau$ (spin channel)
         // of $v^{(2)}_\tau$ is contracted with $D^\text{gs}_\tau$, and `cal_gint_fvl` does the
         // $\sum_\tau$. No `gs_dm_channel_factor` here -- both ground-state channels are summed
         // explicitly and each carries occupation 1.
         constexpr int nspin_dm = 2;
-        assert(dm_trans.get_DMR_vector().size() == nspin_dm);
-        const Charge chr_x = dm_to_charge(dm_trans);
+        assert(dm_trans.get_dmr_vec().size() == nspin_dm);
+        Charge chr_x;
+        this->dm_to_charge(dm_trans, chr_x);
         const double* rho_in[nspin_dm] = { chr_x.rho[0], chr_x.rho[1] };
 
         std::vector<ModuleBase::matrix> v2(nspin_dm, ModuleBase::matrix(1, this->rhopw_.nrxx));
@@ -259,7 +261,7 @@ namespace LR
         ModuleBase::matrix stress_tmp;
         std::vector<const double*> vr_eff(nspin_dm);
         for (int is = 0; is < nspin_dm; ++is) { vr_eff[is] = v2[is].c; }
-        ModuleGint::cal_gint_fvl(nspin_dm, vr_eff, dm_gs.get_DMR_vector(), true, false, &f, &stress_tmp);
+        ModuleGint::cal_gint_fvl(nspin_dm, vr_eff, dm_gs.get_dmr_vec(), true, false, &f, &stress_tmp);
         return f;
     }
 

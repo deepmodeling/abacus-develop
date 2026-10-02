@@ -26,20 +26,20 @@ namespace LR
         const bool openshell_;
         const std::vector<std::string> spintype_;
         
-        inline void dm_to_density(elecstate::DensityMatrix<double, double>& dm, double** density)
+        inline void dm_to_density(module_dm::DensityMatrix<double, double>& dm, double** density)
         {
             ModuleBase::TITLE("LR_Density", "dm_to_density");
-            ModuleGint::cal_gint_rho(dm.get_DMR_vector(), 1, density, false);
+            ModuleGint::cal_gint_rho(dm.get_dmr_vec(), 1, density, false);
         }
-        inline void dm_to_density(elecstate::DensityMatrix<std::complex<double>, std::complex<double>>& dm, double** density)
+        inline void dm_to_density(module_dm::DensityMatrix<std::complex<double>, std::complex<double>>& dm, double** density)
         {
             ModuleBase::TITLE("LR_Density", "dm_to_density");
             auto dm_to_density_real = [&](const char& part) -> void
                 {
-                    elecstate::DensityMatrix<std::complex<double>, double> dm_real(&pmat_, 1, kv_.kvec_d, nk_);
+                    module_dm::DensityMatrix<std::complex<double>, double> dm_real(&pmat_, 1, kv_.kvec_d, nk_);
                     LR_Util::initialize_DMR<std::complex<double>, double>(dm_real, pmat_, ucell_, gd_, orb_cutoff_);
                     LR_Util::get_DMR_real_imag_part(dm, dm_real, part);
-                    ModuleGint::cal_gint_rho(dm_real.get_DMR_vector(), 1, density, false);  // add-on
+                    ModuleGint::cal_gint_rho(dm_real.get_dmr_vec(), 1, density, false);  // add-on
                 };
             dm_to_density_real('R');
             dm_to_density_real('I');
@@ -77,7 +77,7 @@ namespace LR
             const std::vector<ct::Tensor> dm_diff_k =
                 cal_dm_diff_pblas<T>(X_istate, pX_[ispin], c_spin, pc_, nao_, nocc_[ispin], nvirt_[ispin], pmat_);
             // 2. calculate DM(R)
-            elecstate::DensityMatrix<T, T> dm_diff=
+            module_dm::DensityMatrix<T, T> dm_diff=
                 LR_Util::build_dm_from_dmk<T, T>(dm_diff_k,
                     this->pmat_, this->nk_, this->kv_.kvec_d, this->ucell_, this->gd_, this->orb_cutoff_);
             // 3. calculate electron density from DM(R)

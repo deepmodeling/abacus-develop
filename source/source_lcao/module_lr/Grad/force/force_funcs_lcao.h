@@ -39,7 +39,8 @@ public:
         // force due to core correlation.
         //--------------------------------------------------------
         UnitCell& ucell_noconst = const_cast<UnitCell&>(ucell);
-        f_pw.cal_force_cc(fcc, &rhopw, &chr, locpp.numeric, ucell_noconst); // no problem for nspin=1 and 2
+        f_pw.cal_force_cc(fcc, &rhopw, &chr, locpp.numeric, ucell_noconst,
+            PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad); // no problem for nspin=1 and 2
         //--------------------------------------------------------
         // force due to self-consistent charge (invalid in from-scratch LR case)
         //--------------------------------------------------------
@@ -67,7 +68,7 @@ ModuleBase::matrix cal_force_nonlocal(
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
     const Grid_Driver& gd,
     const TwoCenterBundle& two_center_bundle,
-    const elecstate::DensityMatrix<TK, double>& dm    )
+    const module_dm::DensityMatrix<TK, double>& dm    )
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "cal_force_nonlocal_dvnl");
     std::vector<double> orb_cutoffs(ucell.ntype);
@@ -80,18 +81,18 @@ ModuleBase::matrix cal_force_nonlocal(
         orb_cutoffs,
         &gd,
         two_center_bundle.overlap_orb_beta.get());
-    const int nspin = dm.get_DMR_vector().size();
+    const int nspin = dm.get_dmr_vec().size();
     if(nspin==2)
     {
-        const_cast<elecstate::DensityMatrix<TK, double>*>(&dm)->switch_dmr(1); //spin-up + spin-down
+        const_cast<module_dm::DensityMatrix<TK, double>*>(&dm)->switch_dmr(1); //spin-up + spin-down
     }
-    const hamilt::HContainer<double>* dmr = dm.get_DMR_pointer(1);
+    const hamilt::HContainer<double>* dmr = dm.get_dmr_ptr(1);
     ModuleBase::matrix fvnl(ucell.nat, 3);
     ModuleBase::matrix svnl; // no use now, only for passing into interfaces
     tmp_nonlocal.cal_force_stress(/*force*/true, /*stress*/false, dmr, fvnl, svnl);
     if (nspin == 2)
     {
-        const_cast<elecstate::DensityMatrix<TK, double>*>(&dm)->switch_dmr(0);
+        const_cast<module_dm::DensityMatrix<TK, double>*>(&dm)->switch_dmr(0);
     }
     return fvnl;
 }
@@ -103,7 +104,7 @@ ModuleBase::matrix cal_force_nonlocal_dvnl(
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
     const Grid_Driver& gd,
     const TwoCenterBundle& two_center_bundle,
-    const elecstate::DensityMatrix<TK, std::complex<double>>& dm)
+    const module_dm::DensityMatrix<TK, std::complex<double>>& dm)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "cal_force_nonlocal_dvnl");
 
@@ -119,8 +120,8 @@ ModuleBase::matrix cal_force_nonlocal_dvnl(
         &gd,
         two_center_bundle.overlap_orb_beta.get());
 
-    hamilt::HContainer<std::complex<double>> tmp_dmr(dm.get_DMR_pointer(1)->get_paraV());
-    std::vector<int> ijrs = dm.get_DMR_pointer(1)->get_ijr_info();
+    hamilt::HContainer<std::complex<double>> tmp_dmr(dm.get_dmr_ptr(1)->get_paraV());
+    std::vector<int> ijrs = dm.get_dmr_ptr(1)->get_ijr_info();
     tmp_dmr.insert_ijrs(&ijrs);
     tmp_dmr.allocate();
     dm.cal_DMR_full(&tmp_dmr);

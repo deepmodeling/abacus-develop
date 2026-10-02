@@ -76,13 +76,13 @@ namespace LR
                 for (auto& t : dmk[is]) { LR_Util::matsym(t.template data<T>(), naos_); }
 #endif
             }
-            elecstate::DensityMatrix<T, double> dm = LR_Util::build_dm_from_dmk_spin<T, double>(dmk,
+            module_dm::DensityMatrix<T, double> dm = LR_Util::build_dm_from_dmk_spin<T, double>(dmk,
                 pmat_, nk_, kv_.kvec_d, ucell_, gd_, orb_cutoff_);
 
             double** rho1 = nullptr;
             LR_Util::_allocate_2order_nested_ptr(rho1, 2, nrxx_);
             for (int is : {0, 1}) { ModuleBase::GlobalFunc::ZEROS(rho1[is], nrxx_); }
-            ModuleGint::cal_gint_rho(dm.get_DMR_vector(), 2, rho1, false);
+            ModuleGint::cal_gint_rho(dm.get_dmr_vec(), 2, rho1, false);
 
             // 2. one potential per output spin, then AO -> MO.
             // The V(R) container is real, so for complex T only the gamma-only case is right --

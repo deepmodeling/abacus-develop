@@ -334,7 +334,7 @@ namespace ModuleESolver
             const std::vector<int>& group, const std::vector<ModuleBase::matrix>& diag,
             std::ofstream& ofs);
         void test_force();   // test: reproduce the force of ground state
-        elecstate::DensityMatrix<T, double> cal_dm_gs();  ///< ground-state density matrix
+        module_dm::DensityMatrix<T, double> cal_dm_gs();  ///< ground-state density matrix
 
 #ifdef __EXX
         /// Tdata of Exx_LRI is same as T, for the reason, see operator_lr_exx.h

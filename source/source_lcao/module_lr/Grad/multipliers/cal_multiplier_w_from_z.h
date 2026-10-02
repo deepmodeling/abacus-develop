@@ -87,9 +87,9 @@ namespace LR
 #endif
         const int nk = kv.get_nks() / nspin;
         // allocate memory for DMs
-        elecstate::DensityMatrix<T, T> DM_trans(&pmat, 1, kv.kvec_d, nk);   //DX
+        module_dm::DensityMatrix<T, T> DM_trans(&pmat, 1, kv.kvec_d, nk);   //DX
         LR_Util::initialize_DMR(DM_trans, pmat, ucell, gd, orb_cutoff);
-        elecstate::DensityMatrix<T, T> DM_diff_relaxed(&pmat, 1, kv.kvec_d, nk);    //T+DZ
+        module_dm::DensityMatrix<T, T> DM_diff_relaxed(&pmat, 1, kv.kvec_d, nk);    //T+DZ
         LR_Util::initialize_DMR(DM_diff_relaxed, pmat, ucell, gd, orb_cutoff);
         /// operators
         // 1. 0.5$H_ij[T+Z]$, equals to $K_ij[T+Z]$ when $(T+Z)$ is symmetrized
@@ -129,7 +129,7 @@ namespace LR
                 dm_trans_2d = cal_dm_trans_blas(x_ptr, psi_ks_is, nocc[is], nvirt[is]);
                 for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
 #endif
-                for (int ik = 0;ik < nk;++ik) { DM_trans.set_DMK_pointer(ik, dm_trans_2d[ik].data<T>()); }
+                for (int ik = 0;ik < nk;++ik) { DM_trans.set_dmk_ptr(ik, dm_trans_2d[ik].data<T>()); }
             };
         auto cal_dm_diff_relaxed = [&](const int& is, const T* const x_ptr, const T* const z_ptr)->void  // T+DZ
             {
@@ -150,7 +150,7 @@ namespace LR
                 for (int ik = 0;ik < nk;++ik)
                 {
                     dm_diff_2d[ik] = dm_diff_2d[ik] + z_2d[ik];
-                    DM_diff_relaxed.set_DMK_pointer(ik, dm_diff_2d[ik].data<T>());
+                    DM_diff_relaxed.set_dmk_ptr(ik, dm_diff_2d[ik].data<T>());
                 }
             };
 
@@ -226,7 +226,7 @@ namespace LR
         W.assign(2, {});
         for (int is : {0, 1}) { W[is].assign(ld_oo[is], T(0.0)); }
 
-        elecstate::DensityMatrix<T, T> DM_diff_relaxed(&pmat, 1, kv.kvec_d, nk);   // T+D^Z of one channel
+        module_dm::DensityMatrix<T, T> DM_diff_relaxed(&pmat, 1, kv.kvec_d, nk);   // T+D^Z of one channel
         LR_Util::initialize_DMR(DM_diff_relaxed, pmat, ucell, gd, orb_cutoff);
 
         // $\tfrac12 H_{ij\sigma}[T+D^Z]=K_{ij\sigma}[T+D^Z]$, one operator per (out, in) spin pair
@@ -274,7 +274,7 @@ namespace LR
                 for (int ik = 0;ik < nk;++ik)
                 {
                     dm_buf[ik] = dm_buf[ik] + z_2d[ik];
-                    DM_diff_relaxed.set_DMK_pointer(ik, dm_buf[ik].data<T>());
+                    DM_diff_relaxed.set_dmk_ptr(ik, dm_buf[ik].data<T>());
                 }
             };
 

@@ -10,7 +10,7 @@
 namespace LR
 {
     template<typename TK>
-    ModuleBase::matrix LR_Force<TK>::cal_force_overlap_edm(const elecstate::DensityMatrix<TK, double>& edm)
+    ModuleBase::matrix LR_Force<TK>::cal_force_overlap_edm(const module_dm::DensityMatrix<TK, double>& edm)
     {
         // const double* dS[3] = { dSloc_x,  dSloc_y,  dSloc_z };
         std::vector<hamilt::HContainer<double>>  dS = cal_hs_grad('S', this->ucell_, this->pv_, this->gd_, this->two_center_bundle_);
@@ -27,8 +27,8 @@ namespace LR
 
     template<typename TK>
     ModuleBase::matrix LR_Force<TK>::reproduce_force_gs(const K_Vectors& kv,
-        const elecstate::DensityMatrix<TK, double>& dm_gs,
-        const elecstate::DensityMatrix<TK, double>& edm_gs)
+        const module_dm::DensityMatrix<TK, double>& dm_gs,
+        const module_dm::DensityMatrix<TK, double>& edm_gs)
     {
         const int& nspin = PARAM.inp.nspin;
         // local + Hartree + xc term, including Hellmann-Feynman and Pulay
@@ -58,14 +58,15 @@ namespace LR
 
     template<typename TK>
     ModuleBase::matrix LR_Force<TK>::reproduce_force_gs_loc(
-        const elecstate::DensityMatrix<TK, double>& dm_gs,
+        const module_dm::DensityMatrix<TK, double>& dm_gs,
         const elecstate::Potential& pot_gs)
     {
-        const Charge chr_gs = dm_to_charge(dm_gs);
+        Charge chr_gs;
+        this->dm_to_charge(dm_gs, chr_gs);
         //  local pp (Pulay) + Hartree + xc (grid integration)
         ModuleBase::matrix fvl_dphi(this->ucell_.nat, 3);
         ModuleBase::matrix stress_tmp;  // no use now, only for passing into interfaces
-        PulayForceStress::cal_pulay_fs(dm_gs.get_DMR_vector().size()/*nspin*/, fvl_dphi, stress_tmp,
+        PulayForceStress::cal_pulay_fs(dm_gs.get_dmr_vec().size()/*nspin*/, fvl_dphi, stress_tmp,
             dm_gs, this->ucell_, &pot_gs, true, false);
         return fvl_dphi;
     }
@@ -75,22 +76,22 @@ namespace LR
     {
         GlobalV::ofs_running << "  ==== Test H2_SZ_CENTER2_DERIV dtau(Sij) and dtau(hij) ====" << std::endl;
         const std::vector<ModuleBase::Vector3<double>>& kvd_test = { ModuleBase::Vector3<double>(0.0, 0.0, 0.0) };
-        auto init_dm_eff = [&, this](const int i, const int j) -> elecstate::DensityMatrix<TK, double>
+        auto init_dm_eff = [&, this](const int i, const int j) -> module_dm::DensityMatrix<TK, double>
             {   // dm_{ij}=1, other elements = 0, i,j = 0,1
                 std::vector<TK> dm_2d(4, 0.0);
                 std::cout << "i<<1 + j =" << ((i << 1) + j) << std::endl;
                 dm_2d[i * 2 + j] = 1.0;
                 LR_Util::matsym(dm_2d.data(), 2);   //symmetrization is a must for calling 1-electron Pulay force funcs
-                elecstate::DensityMatrix<TK, double> dm(&this->pv_, 1, kvd_test, 1);
-                dm.set_DMK_pointer(0, dm_2d.data());
+                module_dm::DensityMatrix<TK, double> dm(&this->pv_, 1, kvd_test, 1);
+                dm.set_dmk_ptr(0, dm_2d.data());
                 LR_Util::initialize_DMR(dm, this->pv_, this->ucell_, this->gd_, orb_cutoffs);
-                dm.cal_DMR();
+                dm.cal_dmr(-1);
                 return dm;
             };
         for (auto&& i : { 0, 1 })
             for (auto&& j : { 0, 1 })
             {
-                elecstate::DensityMatrix<TK, double> dm_ij = init_dm_eff(i, j);
+                module_dm::DensityMatrix<TK, double> dm_ij = init_dm_eff(i, j);
                 elecstate::Potential pot_hij = dm_to_hxc_potential(dm_ij);
                 // 1. dtau(S_ij)
                 {
@@ -108,14 +109,15 @@ namespace LR
                     ModuleBase::matrix ft_dphi = PulayForceStress::cal_pulay_fs(dm_ij, this->ucell_, dT);
 
                     // local pp Hellmann-Feynman term (which does not depend on the charge density if Hxc is not included)
-                    const Charge chr_dummy = dm_to_charge(dm_ij);
+                    Charge chr_dummy;
+                    this->dm_to_charge(dm_ij, chr_dummy);
                     ModuleBase::matrix fvl_dvl = PARAM.inp.vl_in_h ?
                         ForcePWTerms<double>()(this->ucell_, chr_dummy, this->rhopw_, this->locpp_, this->sf_, /*with_ewald=*/ false) :
                         ModuleBase::matrix(this->ucell_.nat, 3);
                     // local pp Pulay term
                     ModuleBase::matrix fvl_dphi(this->ucell_.nat, 3);
                     elecstate::Potential pot_loc = this->local_potential();
-                    PulayForceStress::cal_pulay_fs(dm_ij.get_DMR_vector().size()/*nspin*/, fvl_dphi, stress_tmp,
+                    PulayForceStress::cal_pulay_fs(dm_ij.get_dmr_vec().size()/*nspin*/, fvl_dphi, stress_tmp,
                         dm_ij, this->ucell_, &pot_loc, true, false);
 
                     // nonlocal pp term (Hellmann-Feynman + Pulay)
@@ -135,16 +137,16 @@ namespace LR
         const std::string label = is_grad ? "dtau(ij | kl)" : "(ij | kl)";;
         GlobalV::ofs_running << "  ==== Test H2_SZ_CENTER4_HXC " << label << " ====" << std::endl;
         const std::vector<ModuleBase::Vector3<double>>& kvd_test = { ModuleBase::Vector3<double>(0.0, 0.0, 0.0) };
-        auto init_dm_eff = [&, this](const int i, const int j, const bool symmetrize = false) -> elecstate::DensityMatrix<TK, double>
+        auto init_dm_eff = [&, this](const int i, const int j, const bool symmetrize = false) -> module_dm::DensityMatrix<TK, double>
             {   // dm_{ij}=1, other elements = 0, i,j = 0,1
                 std::vector<TK> dm_2d(4, 0.0);
                 std::cout<<"i<<1 + j =" << ((i<<1) + j) << std::endl;
                 dm_2d[i * 2 + j] = 1.0;
                 if (symmetrize) { LR_Util::matsym(dm_2d.data(), 2); }   //symmetrization is a must for calling 1-electron Pulay force funcs
-                elecstate::DensityMatrix<TK, double> dm(&this->pv_, 1, kvd_test, 1);
-                dm.set_DMK_pointer(0, dm_2d.data());
+                module_dm::DensityMatrix<TK, double> dm(&this->pv_, 1, kvd_test, 1);
+                dm.set_dmk_ptr(0, dm_2d.data());
                 LR_Util::initialize_DMR(dm, this->pv_, this->ucell_, this->gd_, orb_cutoffs);
-                dm.cal_DMR();
+                dm.cal_dmr(-1);
                 return dm;
             };
 #ifdef __EXX
@@ -154,19 +156,19 @@ namespace LR
         for (auto&& i : { 0, 1 })
             for (auto&& j : { 0, 1 })
             {
-                elecstate::DensityMatrix<TK, double> dm_ij = init_dm_eff(i, j, false);
+                module_dm::DensityMatrix<TK, double> dm_ij = init_dm_eff(i, j, false);
                 elecstate::Potential pot_hxc_ij = dm_to_hxc_potential(dm_ij);
-                elecstate::DensityMatrix<TK, double> dm_ij_sym = init_dm_eff(i, j, true);
+                module_dm::DensityMatrix<TK, double> dm_ij_sym = init_dm_eff(i, j, true);
                 for (auto&& k : { 0, 1 })
                     for (auto&& l : { 0, 1 })
                     {
                         // 1. build dm(kl)
-                        elecstate::DensityMatrix<TK, double> dm_kl = init_dm_eff(k, l, false);
+                        module_dm::DensityMatrix<TK, double> dm_kl = init_dm_eff(k, l, false);
                         if (is_grad)
                         {
                             // 2. pulay term + Hellmann-Feynman term
                             elecstate::Potential pot_hxc_kl = dm_to_hxc_potential(dm_kl);
-                            elecstate::DensityMatrix<TK, double> dm_kl_sym = init_dm_eff(k, l, true);
+                            module_dm::DensityMatrix<TK, double> dm_kl_sym = init_dm_eff(k, l, true);
                             ModuleBase::matrix fhartree_pulay(this->ucell_.nat, 3), fhartree_h_f(this->ucell_.nat, 3);
                             ModuleBase::matrix stress_tmp;  // dummy
                             PulayForceStress::cal_pulay_fs(1/*nspin*/, fhartree_pulay, stress_tmp, dm_ij_sym, this->ucell_, &pot_hxc_kl, true, false);  // Pulay term
@@ -199,7 +201,8 @@ namespace LR
                         {
                             //2. build charge & potential
                             elecstate::Potential pot_hxc_kl = dm_to_hxc_potential(dm_kl);
-                            const Charge& charge_ij = this->dm_to_charge(dm_ij);
+                            Charge charge_ij;
+                            this->dm_to_charge(dm_ij, charge_ij);
                             // 3. cal energy
                             double e_hxc = std::inner_product(charge_ij.rho[0],
                                 charge_ij.rho[0] + this->rhopw_.nrxx,

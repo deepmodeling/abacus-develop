@@ -46,7 +46,7 @@ namespace LR
                 pot_hxc_gs, kv, pX, pc, pmat, spin_type, PARAM.globalv.global_readin_dir, PARAM.globalv.global_out_dir)
         {
             ModuleBase::TITLE("Z_vector_L", "Z_vector_L");
-            this->DM_trans = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
+            this->DM_trans = LR_Util::make_unique<module_dm::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
             LR_Util::initialize_DMR(*this->DM_trans, pmat, ucell, gd, orb_cutoff);
             // Hessian (A+B) with GS XC kernel 
             // 1. diag term in A
@@ -81,7 +81,7 @@ namespace LR
 #endif
                     // LR_Util::print_tensor<T>(dm_trans_2d[0], "dm_trans_2d[0]", &pmat);
                     // tensor to vector, then set DMK
-                    for (int ik = 0;ik < this->nk;++ik) { this->DM_trans->set_DMK_pointer(ik, dm_trans_2d[ik].data<T>()); }
+                    for (int ik = 0;ik < this->nk;++ik) { this->DM_trans->set_dmk_ptr(ik, dm_trans_2d[ik].data<T>()); }
                 };
         }
     };
@@ -128,7 +128,7 @@ namespace LR
             naos_(naos), pc_(pc), pmat_(pmat), psi_ks_(psi_ks)
         {
             ModuleBase::TITLE("Z_vector_UL", "Z_vector_UL");
-            this->DM_trans = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
+            this->DM_trans = LR_Util::make_unique<module_dm::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
             LR_Util::initialize_DMR(*this->DM_trans, pmat, ucell, gd, orb_cutoff);
 
             // 1. the orbital-energy difference, diagonal blocks only
@@ -182,7 +182,7 @@ namespace LR
 #endif
             for (int ik = 0;ik < this->nk;++ik)
             {
-                this->DM_trans->set_DMK_pointer(ik, this->dm_buf_[ik].template data<T>());
+                this->DM_trans->set_dmk_ptr(ik, this->dm_buf_[ik].template data<T>());
             }
         }
 
@@ -192,7 +192,7 @@ namespace LR
         const Parallel_Orbitals& pmat_;
         const psi::Psi<T>& psi_ks_;
         std::vector<psi::Psi<T>> psi_ks_spin_;
-        std::unique_ptr<elecstate::DensityMatrix<T, T>> DM_trans;
+        std::unique_ptr<module_dm::DensityMatrix<T, T>> DM_trans;
         /// the tensors `DM_trans` points into; kept alive for the whole `act` chain
         mutable std::vector<ct::Tensor> dm_buf_;
     };

@@ -45,7 +45,7 @@ struct ShiftRealComplex<std::complex<double>>
 // DensityMatrix<complex<double>,TR>::cal_dmr() is illegal in C++, so module_dm is used instead.
     template <typename TK, typename TR_in, typename TR_out>
     extern void cal_dmr(
-        DensityMatrix<TK, TR_in> &dm,
+        const DensityMatrix<TK, TR_in> &dm,
         std::vector<hamilt::HContainer<TR_out>*> &dmR_out,
         const int ik_in);
 
@@ -70,7 +70,7 @@ struct ShiftRealComplex<std::complex<double>>
      */
     template <typename TK, typename TR_in, typename TR_out>
     extern void accumulate_dmr(
-        DensityMatrix<TK, TR_in> &dm,
+        const DensityMatrix<TK, TR_in> &dm,
         std::vector<hamilt::HContainer<TR_out>*> &dmR_out,
         const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
         const int ik_in,
@@ -340,14 +340,17 @@ class DensityMatrix
      * please make sure the size of TK* is correct
     */
     void set_dmk_ptr(const int ik, TK* DMK_in);
-    void set_DMK_vector(const int ik, const std::vector<TK>& v) { this->_DMK[ik] = v; }
+    void set_DMK_vector(const int ik, const std::vector<TK>& v) { this->dmk[ik] = v; }
 
     /**
      * @brief get pointer of paraV
      */
-    const Parallel_Orbitals* get_paraV_pointer() const {return this->_paraV;}
+    const Parallel_Orbitals* get_paraV_pointer() const {return this->pv;}
 
     const std::vector<ModuleBase::Vector3<double>>& get_kvec_d() const { return this->_kvec_d; }
+
+    /// number of k-slots stored in `dmk` (spin_mult * _nk, flattened)
+    int get_DMK_nks() const { return static_cast<int>(this->dmk.size()); }
 
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
@@ -469,7 +472,7 @@ class DensityMatrix
     std::vector<TR> dmr_tmp;
 
     friend void module_dm::cal_dmr<TK, TR>(
-        DensityMatrix<TK, TR>& dm,
+        const DensityMatrix<TK, TR>& dm,
         std::vector<hamilt::HContainer<TR>*>& dmR_out,
         const int ik_in);
     friend void module_dm::cal_dmr_td<TK, TR>(
@@ -483,7 +486,7 @@ class DensityMatrix
         hamilt::HContainer<std::complex<double>>* dmR_out,
         const int ik_in);
     friend void module_dm::accumulate_dmr<TK, TR>(
-        DensityMatrix<TK, TR>& dm,
+        const DensityMatrix<TK, TR>& dm,
         std::vector<hamilt::HContainer<TR>*>& dmR_out,
         const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
         const int ik_in,

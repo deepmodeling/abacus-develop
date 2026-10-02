@@ -26,8 +26,8 @@ namespace LR
         const int& sl = ispin_ks[0];
         const auto psil_ks = LR_Util::get_psi_spin(psi_ks, sl, nk);
 
-        this->DM_trans->cal_dmr(-1);  //DM_trans->get_dmr_vec() is 2d-block parallized
-        LR_Util::swap_atompair_in_DMR(*this->DM_trans, ucell.nat);   // make D(R) consistent with the defination: D(R)[iat1][iat2] = \sum_k c1(k)c2^*(k)exp(-ik(R2-R1))
+        this->DM_trans.cal_dmr(-1);  //DM_trans.get_dmr_vec() is 2d-block parallized
+        LR_Util::swap_atompair_in_DMR(this->DM_trans, ucell.nat);   // make D(R) consistent with the defination: D(R)[iat1][iat2] = \sum_k c1(k)c2^*(k)exp(-ik(R2-R1))
 
         // ========================= begin grid calculation=========================
         this->grid_calculation(nbands);   //DM(R) to H(R)
@@ -105,7 +105,7 @@ namespace LR
         const int& nrxx = this->pot.lock()->nrxx;
         LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, nrxx); // currently gint_kernel_rho uses PARAM.inp.nspin, it needs refactor
         ModuleBase::GlobalFunc::ZEROS(rho_trans[0], nrxx);
-        ModuleGint::cal_gint_rho(this->DM_trans->get_dmr_vec(), 1, rho_trans, false);
+        ModuleGint::cal_gint_rho(this->DM_trans.get_dmr_vec(), 1, rho_trans, false);
         // 3. v_hxc = f_hxc * rho_trans
         ModuleBase::matrix vr_hxc(1, nrxx);   //grid
         this->pot.lock()->cal_v_eff(rho_trans, ucell, vr_hxc, ispin_ks);

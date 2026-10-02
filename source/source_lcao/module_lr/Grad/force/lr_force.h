@@ -43,26 +43,26 @@ namespace LR
         }
 
         /// 1. $Tr[H_{GS}^x * (T+D^Z)]$, where GS=groud state and $(T+D^Z)$ is the relaxed difference density matrix
-        ModuleBase::matrix cal_force_hamilt_gs_dm_relaxed_diff(const elecstate::DensityMatrix<TK, double>& relaxed_diff_dm,
-            const elecstate::DensityMatrix<TK, double>& dm_gs, const bool reproduce_gs = false,
+        ModuleBase::matrix cal_force_hamilt_gs_dm_relaxed_diff(const module_dm::DensityMatrix<TK, double>& relaxed_diff_dm,
+            const module_dm::DensityMatrix<TK, double>& dm_gs, const bool reproduce_gs = false,
             const PotHxcLR* pot_hxc_gs = nullptr);
 
         /// 2. $Tr[S^x * (EDM)]
-        ModuleBase::matrix cal_force_overlap_edm(const elecstate::DensityMatrix<TK, double>& edm);
+        ModuleBase::matrix cal_force_overlap_edm(const module_dm::DensityMatrix<TK, double>& edm);
 
         /// 3. $\sum_{mnkl}(mn|f_{Hxc}|kl)^x *D^X *D^X$
-        ModuleBase::matrix cal_force_hxc_dmtrans(const elecstate::DensityMatrix<TK, double>& dm_trans, const PotHxcLR& pot_hxc);
+        ModuleBase::matrix cal_force_hxc_dmtrans(const module_dm::DensityMatrix<TK, double>& dm_trans, const PotHxcLR& pot_hxc);
 
         /// 3b. the $g^{xc}$ half of $\partial_x K^{S/T}[D^X]D^X$:
         ///     $\int v^{(2)}[\rho^X,\rho^X](r)\,\partial_x\rho^\text{gs}(r)|_\text{basis}$
-        ModuleBase::matrix cal_force_gxc_dmtrans(const elecstate::DensityMatrix<TK, double>& dm_trans,
-            const elecstate::DensityMatrix<TK, double>& dm_gs, const PotGradXCLR& pot_grad);
+        ModuleBase::matrix cal_force_gxc_dmtrans(const module_dm::DensityMatrix<TK, double>& dm_trans,
+            const module_dm::DensityMatrix<TK, double>& dm_gs, const PotGradXCLR& pot_grad);
 
         /// 3b'. open-shell version: $\sum_\tau\int v^{(2)}_\tau[\rho^X,\rho^X]\,
         ///      \partial_x\rho^\text{gs}_\tau|_\text{basis}$. Both transition-density channels
         ///      enter each $v^{(2)}_\tau$, so this cannot be a per-channel loop over the above.
-        ModuleBase::matrix cal_force_gxc_dmtrans_openshell(const elecstate::DensityMatrix<TK, double>& dm_trans,
-            const elecstate::DensityMatrix<TK, double>& dm_gs, const PotGradXCLR& pot_grad);
+        ModuleBase::matrix cal_force_gxc_dmtrans_openshell(const module_dm::DensityMatrix<TK, double>& dm_trans,
+            const module_dm::DensityMatrix<TK, double>& dm_gs, const PotGradXCLR& pot_grad);
 
 #ifdef __EXX
         // auto* lrexx_ptr = dynamic_cast<RI::LR<int, std::array<int, 3>, 3, TK>*>(&exx_lri_in.get());
@@ -81,11 +81,11 @@ namespace LR
         // test functions
         /// reproduce the force of the ground state
         ModuleBase::matrix reproduce_force_gs(const K_Vectors& kv,
-            const elecstate::DensityMatrix<TK, double>& dm_gs,
-            const elecstate::DensityMatrix<TK, double>& edm_gs);
+            const module_dm::DensityMatrix<TK, double>& dm_gs,
+            const module_dm::DensityMatrix<TK, double>& edm_gs);
 
         /// repreduce the ground state local term
-        ModuleBase::matrix reproduce_force_gs_loc(const elecstate::DensityMatrix<TK, double>& dm_gs,
+        ModuleBase::matrix reproduce_force_gs_loc(const module_dm::DensityMatrix<TK, double>& dm_gs,
             const elecstate::Potential& pot_gs);
 
         /// derivatives of 2-center integrates: dtau(S_ij) and dtau(h_{ij}) (set vh_in_h=0)
@@ -109,8 +109,8 @@ namespace LR
         const double alpha_;
 #endif
 
-        Charge dm_to_charge(const elecstate::DensityMatrix<TK, double>& dm);
-        elecstate::Potential dm_to_hxc_potential(const elecstate::DensityMatrix<TK, double>& dm);
+        void dm_to_charge(const module_dm::DensityMatrix<TK, double>& dm, Charge& chr_out);
+        elecstate::Potential dm_to_hxc_potential(const module_dm::DensityMatrix<TK, double>& dm);
         elecstate::Potential local_potential();
     };
 }
