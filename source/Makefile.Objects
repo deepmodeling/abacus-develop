@@ -71,6 +71,7 @@ VPATH=./src_global:\
 ./source_hamilt/module_vdw:\
 ./source_io:\
 ./source_io/module_json:\
+./source_io/module_hs:\
 ./src_ri:\
 ./source_lcao/module_ri:\
 ./source_lcao/module_ri/module_exx_symmetry:\
@@ -655,11 +656,11 @@ OBJS_IO=module_parameter/input_conv.o\
     module_bessel/bessel_basis.o\
     module_output/cal_test.o\
     module_dos/write_dos_pw.o\
-    module_energy/nscf_fermi_surf.o\
     module_energy/write_bands.o\
     module_dos/cal_dos.o\
     module_dos/cal_pdos_gamma.o\
     module_dos/cal_pdos_multik.o\
+    module_dos/write_pdos_text.o\
     module_dos/cal_ldos.o\
     module_bessel/numerical_descriptor.o\
     module_bessel/numerical_basis.o\
@@ -733,9 +734,14 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_inp_other.o\
     module_parameter/read_inp_out.o\
     module_parameter/read_set_globalv.o\
-    module_hs/cal_plpr.o\
+    module_hs/angmom_op_mat.o\
 
-OBJS_IO_LCAO=module_hs/cal_r_overlap_r.o\
+OBJS_IO_LCAO=module_hs/pos_op_mat.o\
+      module_hs/pos_op_basis.o\
+      module_hs/pos_op_calc.o\
+      module_hs/pos_op_writer.o\
+      module_hs/vxc_op_mat.o\
+      module_hs/vxc_op_tools.o\
       module_output/write_orb_info.o\
       module_dos/write_dos_lcao.o\
       module_energy/write_proj_band_lcao.o\
@@ -746,9 +752,13 @@ OBJS_IO_LCAO=module_hs/cal_r_overlap_r.o\
       module_unk/unk_overlap_lcao.o\
       module_wf/read_wfc_nao.o\
       module_wf/write_wfc_nao.o\
-      module_hs/write_hs_sparse.o\
-      module_hs/single_r_io.o\
-      module_hs/write_hs_r.o\
+      module_hs/hs_dense_io.o\
+      module_hs/hs_sparse_io.o\
+      module_hs/dhs_sparse_writer.o\
+      module_hs/lat_r_csr.o\
+      module_hs/hsk_writer.o\
+      module_hs/hsr_writer.o\
+      module_hs/hsr_legacy.o\
       module_dm/write_dmr.o\
       module_mulliken/output_mulliken.o\
       module_mulliken/output_sk.o\
@@ -756,8 +766,10 @@ OBJS_IO_LCAO=module_hs/cal_r_overlap_r.o\
       module_ml/io_npz.o\
       module_dhs/write_dh.o\
       module_dhs/write_dh_terms.o\
-      module_hs/write_h_terms.o\
-      module_hs/rr_sparse_writer.o\
+      module_hs/hterm_writer.o\
+      module_hs/pos_op_csr.o\
+      module_hs/vxc_op_r.o\
+      module_hs/vxc_op_lip.o\
 
 OBJS_LCAO=evolve_elec.o\
       force_rt_overlap.o\

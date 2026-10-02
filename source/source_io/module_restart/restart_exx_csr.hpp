@@ -3,7 +3,7 @@
 #include "source_base/global_function.h"
 #include "source_cell/unitcell.h"
 #include "source_base/module_out/csr_reader.h"
-#include "source_io/module_hs/write_hs_sparse.h"
+#include "source_io/module_hs/hs_sparse_io.h"
 #include "source_lcao/module_ri/serialization_cereal.h"
 #include <RI/global/Tensor.h>
 #include <map>
@@ -129,10 +129,6 @@ namespace ModuleIO
         }
         Parallel_Orbitals pv;
         pv.set_serial(matrix_dimension, matrix_dimension);
-        const std::string::size_type last_slash = file_name.find_last_of("/\\");
-        const std::string temp_dir = last_slash == std::string::npos
-                                         ? ""
-                                         : file_name.substr(0, last_slash + 1);
         for (int is = 0;is < Hexxs.size();++is)
         {
             for (const auto& HexxA : Hexxs[is])
@@ -152,7 +148,6 @@ namespace ModuleIO
             options.binary = false;
             options.istep = -1;
             options.reduce = false;
-            options.temp_dir = temp_dir;
             ModuleIO::save_sparse(
                 calculate_RI_Tensor_sparse(sparse_threshold, Hexxs[is], ucell),
                 all_R_coor,

@@ -10,6 +10,8 @@
 #include "source_lcao/module_ri/exx_lri_interface.h"
 #include "source_lcao/module_ri/ri_2d_comm.h"
 
+#include <memory>
+
 namespace hamilt
 {
     RI::Cell_Nearest<int, int, 3, double, 3> init_cell_nearest(const UnitCell& ucell, const std::array<int, 3>& Rs_period)
@@ -222,16 +224,27 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
 
             // 2. read DM
             const int nspin_dm = (PARAM.inp.nspin == 2) ? 2 : 1;
+            // dmR_owner owns the HContainers (RAII); dmR_vec is a non-owning view
+            // passed to dm_container_to_Ds which expects raw pointers.
+            std::vector<std::unique_ptr<hamilt::HContainer<double>>> dmR_owner(nspin_dm);
             std::vector<hamilt::HContainer<double>*> dmR_vec(nspin_dm);
             for (int is = 0; is < nspin_dm; ++is)
             {
+                // global_readin_dir is normalized by to_dir() and always ends with '/'
                 const std::string dmfile
-                    = PARAM.globalv.global_readin_dir + "/dmrs" + std::to_string(is + 1) + "_nao.csr";
-                dmR_vec[is] = new hamilt::HContainer<double>(const_cast<Parallel_Orbitals*>(pv));
+                    = PARAM.globalv.global_readin_dir + "dmrs" + std::to_string(is + 1) + "_nao.csr";
+                // EXX-specific: add rank guard because OperatorEXX is constructed on all MPI ranks,
+                // unlike most other places where ofs_running is only written on rank 0
+                if (GlobalV::MY_RANK == 0)
+                {
+                    GlobalV::ofs_running << " Read density matrix for EXX from " << dmfile << std::endl;
+                }
+                dmR_owner[is] = std::unique_ptr<hamilt::HContainer<double>>(
+                    new hamilt::HContainer<double>(const_cast<Parallel_Orbitals*>(pv)));
+                dmR_vec[is] = dmR_owner[is].get();
                 hamilt::Read_HContainer<double> reader_dm(dmR_vec[is], dmfile, PARAM.globalv.nlocal, &ucell, GlobalV::MY_RANK);
                 reader_dm.read();
             }
-
             // 3. DM->Ds->Hexx (do not use symmetry for nscf)
             XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
             if (exx_info_ptr->info_ri.real_number)

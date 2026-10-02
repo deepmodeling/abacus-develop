@@ -1,7 +1,9 @@
 #include "td_info.h"
 
 #include "source_base/libm/libm.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_estate/module_pot/h_tddft_pw.h"
+#include "source_io/module_parameter/parameter.h"
 
 bool TD_info::out_mat_R = false;
 int TD_info::out_current = 0;
@@ -19,7 +21,9 @@ TD_info::TD_info(const UnitCell* ucell_in, const Parallel_Orbitals& pv, const LC
     estep_shift = restart_step;
     if (out_current == 2 || elecstate::H_TDDFT_pw::stype == 2)
     {
-        r_calculator.init(*ucell_in, pv, orb);
+        const bool cal_force = PARAM.inp.cal_force;
+        const int nlocal = PARAM.globalv.nlocal;
+        r_calculator.init(*ucell_in, pv, orb, cal_force, nlocal);
     }
     return;
 }

@@ -5,7 +5,7 @@
 #include "source_base/parallel_common.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_hs/write_hs_sparse.h"
+#include "source_io/module_hs/hs_sparse_io.h"
 #include "source_base/module_out/csr_reader.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h"

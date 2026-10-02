@@ -324,13 +324,12 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output energy and dos";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = R"(Whether to output the density of states (DOS). For more information, refer to the dos.md.
+        item.description = R"(Whether to output the density of states (DOS) and projected density of states (PDOS). For more information, refer to the dos.md.
 * 0: no output
-* 1: output the density of states (DOS)
- * nspin=1 or 4: doss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
- * nspin=2: doss1g{geom}_{basis}.txt and doss2g{geom}_{basis}.txt for two spin channles.
-* 2: (LCAO) output the density of states (DOS) and the projected density of states (PDOS)
-* 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen)";
+* 1: output the density of states (DOS) and projected density of states (PDOS, LCAO only)
+ * nspin=1 or 4: doss1g{geom}_{basis}.txt and pdoss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
+ * nspin=2: doss1/doss2 and pdoss1/pdoss2 files for two spin channels.
+Note: values 2 and 3 are no longer supported. Setting out_dos to 2 or 3 will raise an error.)";
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.out_dos);
@@ -341,17 +340,17 @@ Also controled by out_freq_ion and out_app_flag.
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_dos == 3 && para.input.symmetry == "1")
+            if (para.input.out_dos == 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
-                                         "symmetry can't be used for out_dos==3(Fermi Surface "
-                                         "Plotting) by now.");
+                                         "out_dos = 2 has been deprecated. "
+                                         "PDOS is now written automatically with out_dos = 1.");
             }
-            if (para.input.basis_type == "pw" && para.input.out_dos == 3)
+            if (para.input.out_dos == 3)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
-                                         "Fermi Surface Plotting not "
-                                         "implemented for plane wave now.");
+                                         "out_dos = 3 (Fermi surface output) has been removed. "
+                                         "Please use out_dos = 1 for DOS output.");
             }
         };
         this->add_item(item);
@@ -754,7 +753,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output T(R) matrix";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Generate files containing the kinetic energy matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_hsr. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
+        item.description = "Generate files containing the kinetic energy matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_hsr. The name of the files will be tr_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.";
         item.default_value = "False 8";
         item.unit = "Ry";
@@ -1257,7 +1256,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output the expectation values of angular momentum operators";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print the expectation value of the angular momentum operator , , and in the basis of the localized atomic orbitals. The files are named OUT.{suffix}_Lx.dat, OUT.{suffix}_Ly.dat, and OUT.{suffix}_Lz.dat. The second integer controls the precision of the output.";
+        item.description = "Whether to print the expectation value of the angular momentum operator , , and in the basis of the localized atomic orbitals. The files are named lx_nao.txt, ly_nao.txt, and lz_nao.txt (or lxg{step+1}_nao.txt etc. when out_freq_ion is set). The second integer controls the precision of the output.";
         item.default_value = "False 8";
         item.unit = "";
         item.set_availability("basis_type==lcao");

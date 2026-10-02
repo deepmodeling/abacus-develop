@@ -1,8 +1,6 @@
 #include "source_io/module_wf/read_wfc_pw.h"
 
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #ifdef __MPI
@@ -10,6 +8,18 @@
 #include "source_basis/module_pw/test/test_tool.h"
 #include "mpi.h"
 #endif
+
+/// @brief Friend helper to mutate PARAM private members in unit tests.
+/// @details Parameter grants friend access to TestParameters so the test can
+/// modify input/sys fields without `#define private public`. The class must
+/// stay at global scope to match the friend declaration in parameter.h;
+/// an anonymous-namespace class would not be the friend.
+class TestParameters
+{
+  public:
+    static Input_para& input() { return PARAM.input; }
+    static System_para& sys() { return PARAM.sys; }
+};
 
 /**
  * - Tested Functions:
@@ -52,13 +62,13 @@ TEST_F(ReadWfcPwTest, ReadWfcPw)
     wfcpw->setuptransform();
     wfcpw->collect_local_pw();
 
-    PARAM.input.nbands = 8;
+    TestParameters::input().nbands = 8;
     const int nbasis = wfcpw->npwk[0];
-    ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
+    ModuleBase::ComplexMatrix wfcatom(TestParameters::input().nbands, nbasis);
 
     const int ik = 0;
     const int ik_tot = 0;
-	ModuleIO::read_wfc_pw(filename, wfcpw, 
+	ModuleIO::read_wfc_pw(filename, wfcpw,
 			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
 			PARAM.inp.nbands, PARAM.globalv.npol,
 			ik, ik_tot, nkstot, wfcatom);
@@ -125,7 +135,7 @@ TEST_F(ReadWfcPwTest, NotFoundFile)
     wfcpw->setuptransform();
     wfcpw->collect_local_pw();
 
-    ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, wfcpw->npwk[0]);
+    ModuleBase::ComplexMatrix wfcatom(TestParameters::input().nbands, wfcpw->npwk[0]);
 
     if(GlobalV::RANK_IN_POOL == 0)
 	{
@@ -185,9 +195,9 @@ TEST_F(ReadWfcPwTest, InconsistentBands)
         wfcpw->setuptransform();
         wfcpw->collect_local_pw();
 
-        PARAM.input.nbands = 4;
+        TestParameters::input().nbands = 4;
         const int nbasis = wfcpw->npwk[0];
-        ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
+        ModuleBase::ComplexMatrix wfcatom(TestParameters::input().nbands, nbasis);
         testing::internal::CaptureStdout();
 
 		const int ik = 0;
@@ -226,15 +236,15 @@ TEST_F(ReadWfcPwTest, InconsistentKvec)
         wfcpw->setuptransform();
         wfcpw->collect_local_pw();
 
-        PARAM.input.nbands = 8;
+        TestParameters::input().nbands = 8;
         const int nbasis = wfcpw->npwk[0];
-        ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
+        ModuleBase::ComplexMatrix wfcatom(TestParameters::input().nbands, nbasis);
         testing::internal::CaptureStdout();
 
         const int ik=0;
         const int ik_tot=0;
 		EXPECT_EXIT(
-				ModuleIO::read_wfc_pw(filename, wfcpw, 
+				ModuleIO::read_wfc_pw(filename, wfcpw,
 					GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
 					PARAM.inp.nbands, PARAM.globalv.npol,
 					ik, ik_tot, nkstot, wfcatom),
@@ -264,9 +274,9 @@ TEST_F(ReadWfcPwTest, InconsistentLat0)
         wfcpw->setuptransform();
         wfcpw->collect_local_pw();
 
-        PARAM.input.nbands = 8;
+        TestParameters::input().nbands = 8;
         const int nbasis = wfcpw->npwk[0];
-        ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
+        ModuleBase::ComplexMatrix wfcatom(TestParameters::input().nbands, nbasis);
         testing::internal::CaptureStdout();
        
         const int ik=0;
@@ -301,9 +311,9 @@ TEST_F(ReadWfcPwTest, InconsistentG)
         wfcpw->setuptransform();
         wfcpw->collect_local_pw();
 
-        PARAM.input.nbands = 8;
+        TestParameters::input().nbands = 8;
         const int nbasis = wfcpw->npwk[0];
-        ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
+        ModuleBase::ComplexMatrix wfcatom(TestParameters::input().nbands, nbasis);
         testing::internal::CaptureStdout();
 
         const int ik=0;

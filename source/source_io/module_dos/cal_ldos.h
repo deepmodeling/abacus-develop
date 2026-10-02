@@ -31,7 +31,12 @@ class Cal_ldos
 		const Parallel_Grid& pgrid,
 		const Parallel_Orbitals& pv,
 		const Grid_Driver& grid_driver,
-		const UnitCell& ucell);
+		const UnitCell& ucell,
+		const std::vector<double>& stm_bias,
+		const int nspin,
+		const std::string& global_out_dir,
+		const bool two_fermi,
+		const int out_ldos_precision);
 
 }; // namespace Cal_ldos
 
@@ -40,21 +45,51 @@ void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                  const psi::Psi<std::complex<double>, Device>& psi,
                  const Device* ctx,
                  const Parallel_Grid& pgrid,
-                 const UnitCell& ucell);
+                 const UnitCell& ucell,
+                 const std::vector<int>& out_ldos,
+                 const std::vector<double>& stm_bias,
+                 const int nspin,
+                 const std::string& global_out_dir,
+                 const bool two_fermi,
+                 const int nbands,
+                 const double dos_edelta_ev,
+                 const double dos_scale,
+                 const bool dos_setemax,
+                 const double dos_emax_ev,
+                 const bool dos_setemin,
+                 const double dos_emin_ev,
+                 const double dos_sigma,
+                 const std::vector<double>& ldos_line);
 
 template <typename Device>
 void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                  const psi::Psi<std::complex<double>, Device>& psi,
                  const Device* ctx,
                  const Parallel_Grid& pgrid,
-                 const UnitCell& ucell);
+                 const UnitCell& ucell,
+                 const std::vector<double>& stm_bias,
+                 const int nspin,
+                 const std::string& global_out_dir,
+                 const bool two_fermi,
+                 const int out_ldos_precision);
 
 template <typename Device>
 void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                   const psi::Psi<std::complex<double>, Device>& psi,
                   const Device* ctx,
                   const Parallel_Grid& pgrid,
-                  const UnitCell& ucell);
+                  const UnitCell& ucell,
+                  const std::string& global_out_dir,
+                  const int nbands,
+                  const double dos_edelta_ev,
+                  const double dos_scale,
+                  const bool dos_setemax,
+                  const double dos_emax_ev,
+                  const bool dos_setemin,
+                  const double dos_emin_ev,
+                  const bool two_fermi,
+                  const double dos_sigma,
+                  const std::vector<double>& ldos_line);
 
 /*
  * @brief Get grid points and shifts for interpolation.

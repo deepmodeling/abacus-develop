@@ -109,7 +109,9 @@ public:
 
     std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
     std::array<std::vector<std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>>, 3> dHexxs; // direction, atom, spin, (i,j,R)
-    double Eexx;
+    double Eexx = 0.0; // initialize: in the HexxR-restart branch (init_chg=file) Eexx is
+                       // never computed, and OperatorEXX still reads get_Eexx() for the NSCF
+                       // energy report; leaving it uninitialized leaked an indeterminate value.
     ModuleBase::matrix force_exx;
     ModuleBase::matrix stress_exx;
 

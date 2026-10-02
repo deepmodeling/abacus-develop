@@ -1,0 +1,2 @@
+HSE NSCF on H2O, multik (gamma_only=0), nspin=1, init_chg=dm (reads dmrs1_nao.csr), exx_separate_loop=1.
+Requires a preceding SCF run with out_dmr=1 to generate the DM file.

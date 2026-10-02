@@ -2,8 +2,8 @@
 
 #include "source_base/global_function.h"
 #include "source_base/timer.h"
-#include "source_io/module_hs/write_hs.h"
-#include "source_io/module_hs/write_hs_r.h"
+#include "source_io/module_hs/hs_dense_io.h"
+#include "source_io/module_hs/hsr_writer.h"
 #include "source_cell/ucell_io.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
@@ -122,7 +122,8 @@ void write_dh_perI(WriteDHParams& params,
                                    out_app_flag,
                                    fk,
                                    pv,
-                                   GlobalV::DRANK);
+                                   GlobalV::DRANK,
+                                   PARAM.inp.ks_solver);
             }
         }
     }
