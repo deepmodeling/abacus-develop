@@ -283,7 +283,8 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
                                          const int nbasis,
                                          const T* tmpsi_in,
                                          T* tmhpsi,
-                                         const int ispin) const
+                                         const int ispin,
+                                         const bool has_kpoint) const
 {
     ModuleBase::timer::start("OperatorEXXPW", "act_op_kpar");
 
@@ -297,7 +298,6 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
     setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
     int nqs = kv->get_nkstot_nospin();
     int nspin_fac = nspin_ == 2 ? 2 : 1;
-    const bool has_kpoint = this->ik < wfcpw->nks;
 
     maybe_setup_exx_grid();
     // psi_nk in real space for all bands once per ik, reused over (iq, m);

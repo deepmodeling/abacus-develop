@@ -138,7 +138,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                 p_psi = psi.get_pointer();
             }
             setmem_complex_op()(h_psi_ace, 0, hpsi_size);
-            act_op_kpar(nbands, nbasis, p_psi, h_psi_ace, ispin);
+            act_op_kpar(nbands, nbasis, p_psi, h_psi_ace, ispin, has_kpoint);
 
             if (has_kpoint)
             {

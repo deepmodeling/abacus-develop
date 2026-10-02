@@ -100,11 +100,13 @@ class OperatorEXXPW : public OperatorPW<T, Device>
                 const bool is_first_node = false) const;
 
     // Both active and idle ACE pools join the same source-q broadcasts.
+    // has_kpoint identifies a local target k point in the current spin channel.
     void act_op_kpar(const int nbands,
                      const int nbasis,
                      const T* tmpsi_in,
                      T* tmhpsi,
-                     const int ispin) const;
+                     const int ispin,
+                     const bool has_kpoint) const;
 
     void act_op_ace(const int nbands,
                     const int nbasis,
