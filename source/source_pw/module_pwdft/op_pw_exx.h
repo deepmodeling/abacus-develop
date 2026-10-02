@@ -99,13 +99,12 @@ class OperatorEXXPW : public OperatorPW<T, Device>
                 const int ngk_ik = 0,
                 const bool is_first_node = false) const;
 
+    // Both active and idle ACE pools join the same source-q broadcasts.
     void act_op_kpar(const int nbands,
-            const int nbasis,
-            const int npol,
-            const T *tmpsi_in,
-            T *tmhpsi,
-            const int ngk_ik = 0,
-            const bool is_first_node = false) const;
+                     const int nbasis,
+                     const T* tmpsi_in,
+                     T* tmhpsi,
+                     const int ispin) const;
 
     void act_op_ace(const int nbands,
                     const int nbasis,
