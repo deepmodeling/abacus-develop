@@ -286,7 +286,11 @@ namespace LR_Util
 
         if (symmetrize)
             for (int ik = 0; ik < nk; ++ik)
+#ifdef __MPI
                 LR_Util::matsym(dmk[ik].data<TK>(), pmat.get_global_row_size(), pmat);
+#else
+                LR_Util::matsym(dmk[ik].data<TK>(), pmat.get_global_row_size());
+#endif
 
         for (int ik = 0; ik < nk; ++ik)
             dm.set_dmk_ptr(ik, dmk[ik].data<TK>());

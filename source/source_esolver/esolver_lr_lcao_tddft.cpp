@@ -479,7 +479,11 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell& ucell)
     ModuleGint::Gint::set_gint_info(this->ks_->gint_info_.get());
 
     // the Z-vector window: after `reset_dim_spin2`, so nocc/nvirt/openshell are final
+#ifdef __MPI
     this->fill_z_window_(ks_sol.pv.desc_wfc);
+#else
+    this->fill_z_window_(nullptr);
+#endif
 }
 
 
@@ -553,7 +557,11 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
         reset_dim_spin2();
     }
     // the Z-vector window: after `reset_dim_spin2`, so nocc/nvirt/openshell are final
+#ifdef __MPI
     this->fill_z_window_(paraMat_all_.desc_wfc);
+#else
+    this->fill_z_window_(nullptr);
+#endif
 
     LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands
 #ifdef __MPI

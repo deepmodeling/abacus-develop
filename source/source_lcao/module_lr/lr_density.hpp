@@ -74,8 +74,13 @@ namespace LR
             ModuleBase::GlobalFunc::ZEROS(density[0], this->pgrid_.get_nrxx());
             // 1. calculate the density matrix in AO basis
             auto c_spin = LR_Util::get_psi_spin(psi_ks_, ispin,nk_);
+#ifdef __MPI
             const std::vector<ct::Tensor> dm_diff_k =
                 cal_dm_diff_pblas<T>(X_istate, pX_[ispin], c_spin, pc_, nao_, nocc_[ispin], nvirt_[ispin], pmat_);
+#else
+            const std::vector<ct::Tensor> dm_diff_k =
+                cal_dm_diff_blas<T>(X_istate, c_spin, nao_, nocc_[ispin], nvirt_[ispin]);
+#endif
             // 2. calculate DM(R)
             module_dm::DensityMatrix<T, T> dm_diff=
                 LR_Util::build_dm_from_dmk<T, T>(dm_diff_k,

@@ -81,9 +81,16 @@ VPATH=./src_global:\
 ./source_lcao/module_lr:\
 ./source_lcao/module_lr/ao_to_mo_transformer:\
 ./source_lcao/module_lr/dm_trans:\
+./source_lcao/module_lr/dm_band:\
 ./source_lcao/module_lr/operator_casida:\
 ./source_lcao/module_lr/potentials:\
 ./source_lcao/module_lr/utils:\
+./source_lcao/module_lr/Grad:\
+./source_lcao/module_lr/Grad/CVCX:\
+./source_lcao/module_lr/Grad/degenerate:\
+./source_lcao/module_lr/Grad/force:\
+./source_lcao/module_lr/Grad/multipliers:\
+./source_lcao/module_lr/Grad/xc:\
 ./source_lcao/module_rdmft:\
 ./\
 
@@ -1037,7 +1044,14 @@ OBJS_TENSOR=tensor.o\
     hamilt_casida.o\
     esolver_lr_lcao_tddft.o\
 
+ifdef LIBRI_DIR
+# BSE-related code: only compiled with LibRI (__EXX), see module_lr/CMakeLists.txt
+OBJS_LR+=utils/lr_io_krlist.o
+endif
+
 OBJS_LR_GRAD=lr_force.o\
+    lr_force_test.o\
+    grad_matrix_degenerate.o\
     CVCX_serial.o\
     CVCX_parallel.o\
     cal_edm_from_multipliers.o\

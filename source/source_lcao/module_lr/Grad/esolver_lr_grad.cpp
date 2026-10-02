@@ -529,18 +529,18 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
         // LR_Util::print_DMR(dm_trans, "dm_trans of istate " + std::to_string(istate));
         // difference density matrix 
         std::vector<ct::Tensor> dm_diff_k = cal_dm_diff_pblas(Xz.data<T>() + offset, paraX_g[ispin], c, this->paraC_z_, this->nbasis, this->nocc[ispin], nvirt_g[ispin], this->paraMat_);
-        std::cout << "dm_diff_k T(k) before symmetrization, istate " + std::to_string(istate) << std::endl;
-        LR_Util::print_value(dm_diff_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
+        // std::cout << "dm_diff_k T(k) before symmetrization, istate " + std::to_string(istate) << std::endl;
+        // LR_Util::print_value(dm_diff_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
         // for (auto& d : dm_diff_k) { LR_Util::matsym(d.data<T>(), this->nbasis, this->paraMat_); }   // symmetrize
         // std::cout << "dm_diff_k T(k) after symmetrization, istate " + std::to_string(istate) << std::endl;
         // LR_Util::print_value(dm_diff_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
 
         const std::vector<ct::Tensor>& dm_relaxed_k = cal_dm_trans_pblas(Z.template data<T>() + zoffset, paraX_g[ispin], c, this->paraC_z_, this->nbasis, this->nocc[ispin], nvirt_g[ispin], this->paraMat_);
-        std::cout << "dm_relaxed_k Z(k) before symmetrization, istate " + std::to_string(istate) << std::endl;
-        LR_Util::print_value(dm_relaxed_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
+        // std::cout << "dm_relaxed_k Z(k) before symmetrization, istate " + std::to_string(istate) << std::endl;
+        // LR_Util::print_value(dm_relaxed_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
         for (auto& d : dm_relaxed_k) { LR_Util::matsym(d.data<T>(), this->nbasis, this->paraMat_); }    // symmetrize
-        std::cout << "dm_relaxed_k Z(k) after symmetrization, istate " + std::to_string(istate) << std::endl;
-        LR_Util::print_value(dm_relaxed_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
+        // std::cout << "dm_relaxed_k Z(k) after symmetrization, istate " + std::to_string(istate) << std::endl;
+        // LR_Util::print_value(dm_relaxed_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
         // relaxed difference density matrix
         const std::vector<ct::Tensor>& relaxed_diff_dm_k = dm_diff_k + dm_relaxed_k;
         const module_dm::DensityMatrix<T, T>& diff_dm =

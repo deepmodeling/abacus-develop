@@ -175,8 +175,8 @@ namespace LR
             exx_lri, exx_alpha,
 #endif
             pot_hxc_gs, kv, px, pc, p_occ_occ, pmat, xc_kernel, spin_type);
-        std::cout << "W: " << std::endl;
-        LR_Util::print_value(W.data(), nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
+        // std::cout << "W: " << std::endl;
+        // LR_Util::print_value(W.data(), nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
 
         // 2. build K_cvcx (nvirt*nocc) = \sum_i X_{ia} K_{ij} = \sum_i X_{ia} \sum_{\mu\nu} c_{\mu i} c_{\nu j} K_{\mu\nu}[D^X]
         // $2\sum_i X_{ai} K_{ij}[D_X]$ (D_X is symmetrized)

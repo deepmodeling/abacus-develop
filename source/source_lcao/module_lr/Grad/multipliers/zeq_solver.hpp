@@ -126,6 +126,7 @@ namespace LR
         LR_Util::print_value(Z_full.data(), nstates, n_global);
 
         // copy the local part of Z_full to Z
+#ifdef __MPI
         for (int istate = 0; istate < nstates; ++istate)
         {
             int loffset = istate * ld;
@@ -142,6 +143,9 @@ namespace LR
                 goffset += gdim_is[is];
             }
         }
+#else
+        std::copy(Z_full.begin(), Z_full.end(), Z);
+#endif
         std::cout << "The local Z-vector solved by LAPACK:" << std::endl;
         LR_Util::print_value(Z, nstates, ld);
     }
