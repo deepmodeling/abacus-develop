@@ -1,3 +1,5 @@
+import os
+import shutil
 import unittest
 import tempfile
 from pathlib import Path
@@ -19,7 +21,12 @@ class TestSCF(unittest.TestCase):
             omp_num_threads=1,
         )
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+        # Use mkdtemp + explicit cleanup so that on failure we can preserve
+        # the whole run directory for post-mortem analysis (issue #7794 is
+        # only reproducible on remote CI; losing the run dir there makes
+        # root-causing impossible).
+        tmpdir = tempfile.mkdtemp(prefix='abacus_ase_scf_')
+        try:
             abacus = Abacus(
                 profile=aprof,
                 directory=tmpdir,
@@ -34,6 +41,16 @@ class TestSCF(unittest.TestCase):
 
             silicon.calc = abacus
             print('Silicon :', silicon.get_potential_energy())
+        except Exception:
+            keep_root = Path(os.environ.get(
+                'ASE_ABACUS_KEEP_DIR', '/tmp/abacus_ase_failure'))
+            keep_root.mkdir(parents=True, exist_ok=True)
+            keep = keep_root / Path(tmpdir).name
+            shutil.copytree(tmpdir, keep, dirs_exist_ok=True)
+            print(f'[ase-test] failure, run dir preserved at {keep}')
+            raise
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
 
 if __name__ == '__main__':
     unittest.main()

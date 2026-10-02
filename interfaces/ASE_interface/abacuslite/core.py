@@ -373,10 +373,23 @@ class AbacusTemplate(CalculatorTemplate):
                         errorfile=self.errorname)
         except SubprocessError:
             message = ['ABACUS Lite calculation failed']
-            with open(directory / self.outputname, 'r') as f:
-                message.append(f.read())
-            with open(directory / self.errorname, 'r') as f:
-                message.append(f.read())
+            for fn in (self.outputname, self.errorname):
+                p = Path(directory) / fn
+                if p.exists():
+                    message.append(f'=== {fn} ===')
+                    message.append(p.read_text())
+            # Also surface the tail of the SCF running log: the per-step
+            # drho history there is usually the key evidence for issues
+            # like #7794 ("Can't find even an electron"), and on remote CI
+            # we cannot inspect the run dir after the fact.
+            scf_log = (Path(directory) / f'OUT.{self.suffix}'
+                       / f'running_{self.calculation}.log')
+            if scf_log.exists():
+                tail = scf_log.read_text().splitlines()[-200:]
+                message.append(
+                    f'=== OUT.{self.suffix}/running_{self.calculation}.log'
+                    ' (last 200 lines) ===')
+                message.append('\n'.join(tail))
             raise SubprocessError('\n'.join(message))
 
     def read_results(self, directory) -> Dict:

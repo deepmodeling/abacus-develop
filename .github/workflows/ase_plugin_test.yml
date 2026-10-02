@@ -74,3 +74,16 @@ jobs:
           cd interfaces/ASE_interface/tests
           chmod +x xtest.sh
           ./xtest.sh
+
+      # When a test fails, scf.py/relax.py/... preserve the whole ABACUS run
+      # directory under /tmp/abacus_ase_failure (see ASE_ABACUS_KEEP_DIR).
+      # Upload it so remote-CI-only failures (e.g. issue #7794) can be
+      # root-caused without needing runner access.
+      - name: Upload ASE failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ase-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/abacus_ase_failure/**
+          if-no-files-found: ignore
+          retention-days: 14
