@@ -10,5 +10,7 @@ uses four. The reference was generated with kpar=1 and four MPI ranks.
 The final total/absolute moments are approximately 0.666667/0.699096
 mu_B per cell (FM). A 12 Ry cutoff and 3.0 Angstrom cell keep this small
 regression test fast; they are not a cutoff/k-point convergence study.
-Energy and forces are checked by the existing integration harness.
+Energy, forces and total/absolute moments are checked by the existing
+integration harness. magnetism.ref opts into the moment comparison
+with a tolerance of 1e-3 mu_B per cell.
 No ELF output or new test driver is required.

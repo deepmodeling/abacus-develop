@@ -152,6 +152,20 @@ if [ $calculation != "get_wf" ]\
 	echo "etotperatomref $etotperatom" >>$1
 fi
 
+# Opt-in collinear magnetic-state check. Comparing both moments distinguishes
+# compensated AFM from NM; the reference tolerance is 1e-3 mu_B per cell.
+if [ "$nspin" = "2" ] && [ -f magnetism.ref ]; then
+    awk '
+        /Total magnetism \(Bohr mag\/cell\)/ {total = $NF; have_total = 1}
+        /Absolute magnetism \(Bohr mag\/cell\)/ {absolute = $NF; have_absolute = 1}
+        END {
+            if (!have_total || !have_absolute) exit 1
+            print total, absolute
+        }
+    ' "$running_path" > magnetism.out
+    record_compare_result "$1" "CompareMagnetism_pass" "magnetism.ref" "magnetism.out" 3
+fi
+
 #----------------------------
 # force information
 # echo "hasforce:"$has_force

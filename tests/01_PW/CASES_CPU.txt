@@ -101,6 +101,7 @@ scf_out_chg_tau
 097_PW_PBE0_AFM
 097_PW_PBE0_FM
 scf_pbe0_spin2_kpar
+scf_pbe0_afm_kpar
 099_PW_15_SO_avg
 100_PW_DJ_SO
 101_PW_W90
