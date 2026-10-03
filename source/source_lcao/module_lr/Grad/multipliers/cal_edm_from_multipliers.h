@@ -1,0 +1,377 @@
+#include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_lcao/module_lr/dm_trans/dm_trans.h"
+#include "source_lcao/module_lr/utils/lr_util.h"
+#include "source_lcao/module_lr/utils/lr_util_print.h"
+#include "cal_multiplier_w_from_z.h"
+#include <ATen/ops/linalg_op.h>
+#ifdef __EXX
+#include "source_lcao/module_lr/operator_casida/operator_lr_exx.h"
+#endif
+namespace LR
+{
+
+    // $X_{\mu i}=\sum_a c_{\mu a} X_{ai}$
+    template <typename T>
+    void cal_X_ao_occ(const T* const X, const Parallel_2D& px,
+        const T* const c, const Parallel_2D& pc,
+        T* const X_ao_occ, const Parallel_2D& px_ao_occ);
+
+    // D=X1*X2^T
+    // $D_{\mu\nu} = \sum_i X1_{\mu i}X2_{\nu i}$
+    template <typename T>
+    void matdot(const T* const vec1, const T* const vec2, const Parallel_2D& pvec,
+        T* const dm, const Parallel_2D& pmat);
+
+    template<typename T>
+    void multiply_eig_onto_vec(const T* const vec, const double* const eig, const Parallel_2D& pvec, T* const evec)
+    {
+        for (int i = 0;i < pvec.get_col_size();++i)
+        {
+            const int gi = pvec.local2global_col(i);
+            for (int j = 0;j < pvec.get_row_size();++j)
+            {
+                const int idx = i * pvec.get_row_size() + j;
+                evec[idx] = vec[idx] * eig[gi];
+            }
+        }
+    }
+
+    template<typename T>
+    ct::Tensor cal_edm_single_kpoint(const T* const vec, const Parallel_2D& pvec, const double* eig, const Parallel_2D& pmat)
+    {
+        const int nocc = pvec.get_global_col_size();
+        const int naos = pvec.get_global_row_size();
+        std::vector<T> eig_times_vec(pvec.get_local_size());
+        multiply_eig_onto_vec(vec, eig, pvec, eig_times_vec.data());
+        ct::Tensor edm_result = LR_Util::newTensor<T>({ pmat.get_col_size(), pmat.get_row_size() });
+        matdot(eig_times_vec.data(), vec, pvec, edm_result.data<T>(), pmat);
+        return edm_result;
+    }
+
+    template <typename T>
+    std::vector<ct::Tensor> cal_edm_term4(const T* X,
+        const double eig_ext_istate,    //1, the excitation energy of one state
+        const double* const eig_ks,     // gocc+gvirt
+        const psi::Psi<T>& c,
+        const Parallel_2D& px,
+        const Parallel_2D& pc, 
+        const Parallel_Orbitals& pmat)
+    {
+        const int& naos = pmat.get_global_row_size();
+        const int& nocc = px.get_global_col_size();
+        const int& nvirt = px.get_global_row_size();
+        // 4. $\sum_i (\Omega + \epsilon_i) \sum_{ab} C_{\mu a} X_{ia} C_{\nu b} X_{ib}$
+        std::vector<ct::Tensor> edm(c.get_nk());
+        Parallel_2D px_ao_occ;
+        LR_Util::setup_2d_division(px_ao_occ, px.get_block_size(), naos, nocc
+#ifdef __MPI
+            , px.blacs_ctxt
+#endif
+        );
+        for (int ik = 0;ik < c.get_nk();++ik)
+        {
+            const int idx_X = ik * px.get_local_size();
+            std::vector<T> X_ao_occ(px_ao_occ.get_local_size());
+            cal_X_ao_occ(X + idx_X, px, &c(ik, 0, 0), pc, X_ao_occ.data(), px_ao_occ);
+            std::vector<double> eig_ks_plus_ext(nocc, 0.0);
+            const int idx_eig_ks = ik * (nocc + nvirt);
+            std::transform(eig_ks + idx_eig_ks, eig_ks + idx_eig_ks + nocc, eig_ks_plus_ext.begin(), [eig_ext_istate](double x) {return x + eig_ext_istate;});
+            edm[ik] = cal_edm_single_kpoint(X_ao_occ.data(), px_ao_occ, eig_ks_plus_ext.data(), pmat);
+        }
+        return edm;
+    }
+
+    // calculate the excited state energy density matrix (for multiplying the overlap gradient in the gradient of lagrangian)
+    // multi-k has not been supported yet
+    template<typename T>
+    std::vector<ct::Tensor> cal_edm_terms_from_XZWK(
+        const T* const X,    //lvirt*locc
+        const T* const Z,   //lvirt*locc
+        const T* const W,   //locc*locc
+        const T* const K_cvcx,   //lvirt*locc
+        const double eig_ext_istate,    //1, the excitation energy of one state
+        const double* const eig_ks,     // gocc+gvirt
+        const psi::Psi<T>& c,
+        const int nspin,
+        const bool test_force,
+        const Parallel_2D& p_occ_occ,
+        const Parallel_2D& p_virt_occ,
+        const Parallel_2D& pc,
+        const Parallel_Orbitals& pmat)
+    {
+        const int& naos = pmat.get_global_col_size();
+        const int& nocc = p_occ_occ.get_global_col_size();
+        const int& nvirt = p_virt_occ.get_global_row_size();
+        const Parallel_2D& px = p_virt_occ;
+
+        // 1. c * W * c
+#ifdef __MPI
+        const std::vector<ct::Tensor> cWc = cal_dm_trans_pblas(W, p_occ_occ, c, pc, naos, nocc, nvirt, pmat, (T)1., LR_Util::MO_TYPE::OO);
+#else
+        const std::vector<ct::Tensor> cWc = cal_dm_trans_blas(W, c, nocc, nvirt, (T)1., LR_Util::MO_TYPE::OO);
+#endif
+
+        // 2. edm of Z : $\sum_i \sum_a c_{\mu a} \epsilon_i Z_{ai} c_{\nu i}$
+        std::vector<T> epsi_Z(px.get_local_size() * c.get_nk());
+        for (int ik = 0;ik < c.get_nk();++ik)
+        {
+            multiply_eig_onto_vec(Z + ik * px.get_local_size(), eig_ks + ik * (nocc + nvirt),
+                px, epsi_Z.data() + ik * px.get_local_size());
+        }
+#ifdef __MPI
+        std::vector<ct::Tensor> cZc = cal_dm_trans_pblas(epsi_Z.data(), px, c, pc, naos, nocc, nvirt, pmat);
+        std::for_each(cZc.begin(), cZc.end(), [&](ct::Tensor& s) { LR_Util::matsym(s.data<T>(), naos, pmat); });
+#else
+        std::vector<ct::Tensor> cZc = cal_dm_trans_blas(epsi_Z.data(), c, nocc, nvirt);
+        std::for_each(cZc.begin(), cZc.end(), [&](ct::Tensor& s) { LR_Util::matsym(s.data<T>(), naos); });
+#endif
+
+        //3. c * K_cvcx * c
+        // $\sum_{kl}K_{kl}[D^X](c_{\kappa k}X_{\lambda l}+X_{\kappa k}c_{\lambda l})$.
+        // `K_cvcx` already carries the factor 2 of $W^X_{ij}=2K_{ij}[D^X]$ (see `op_K_cvcx` above),
+        // `matsym` then supplies the 1/2 that turns $2\,X_\kappa K c_\lambda$ into the symmetric pair above. 
+#ifdef __MPI
+        std::vector<ct::Tensor> cKc = cal_dm_trans_pblas(K_cvcx, px, c, pc, naos, nocc, nvirt, pmat, (T)1.0);
+        std::for_each(cKc.begin(), cKc.end(), [&](ct::Tensor& s) { LR_Util::matsym(s.data<T>(), naos, pmat); });
+#else
+        std::vector<ct::Tensor> cKc = cal_dm_trans_blas(K_cvcx, c, nocc, nvirt, (T)1.0);
+        std::for_each(cKc.begin(), cKc.end(), [&](ct::Tensor& s) { LR_Util::matsym(s.data<T>(), naos); });
+#endif
+
+        // 4. $\sum_i (\Omega + \epsilon_i) \sum_{ab} C_{\mu a} X_{ia} C_{\nu b} X_{ib}$
+        const std::vector<ct::Tensor> edm = cal_edm_term4(X, eig_ext_istate, eig_ks, c, px, pc, pmat);
+
+        if (test_force)
+        {
+            std::cout << "cWc: " << std::endl;
+            LR_Util::print_value(cWc[0].data<T>(), pmat.get_col_size(), pmat.get_row_size());
+            std::cout << "cZc: " << std::endl;
+            LR_Util::print_value(cZc[0].data<T>(), pmat.get_col_size(), pmat.get_row_size());
+            std::cout << "cKc: " << std::endl;
+            LR_Util::print_value(cKc[0].data<T>(), pmat.get_col_size(), pmat.get_row_size());
+            std::cout << "edm term 4: " << std::endl;
+            LR_Util::print_value(edm[0].data<T>(), pmat.get_col_size(), pmat.get_row_size());
+        }
+        return edm + cWc + cZc + cKc;
+    }
+
+    template<typename T>
+    std::vector<ct::Tensor> cal_edm_from_XZ_istate( //for one excited state
+        const T* const X,   //lvirt*locc
+        const T* const Z,   //lvirt*locc
+        const double eig_ext_istate,    //1, the excitation energy of one state
+        const double* const eig_ks,     // gocc+gvirt
+        const module_dm::DensityMatrix<T, T>& dm_trans, // D_X
+        const psi::Psi<T>& c,
+        const int& nspin,
+        const bool test_force,
+        const int& naos,
+        const std::vector<int>& nocc,
+        const std::vector<int>& nvirt,
+        const UnitCell& ucell,
+        const std::vector<double>& orb_cutoff,
+#ifdef __EXX
+        std::weak_ptr<Exx_LRI<T>> exx_lri,
+        const double& exx_alpha,
+#endif 
+        std::weak_ptr<PotHxcLR> pot,
+        std::weak_ptr<PotHxcLR> pot_hxc_gs,
+        const K_Vectors& kv,
+        const Grid_Driver& gd,
+        const std::vector<Parallel_2D>& px,
+        const Parallel_2D& pc,
+        const Parallel_Orbitals& pmat,
+        const std::string xc_kernel,
+        const std::string& dft_functional,
+        const std::string& spin_type = "singlet")
+    {
+        const int nk = kv.get_nks() / nspin;
+        // 1. calculate W multiplier 
+        std::vector<Parallel_2D> p_occ_occ(nspin);
+        for (int is = 0;is < nspin;++is)
+        {
+            LR_Util::setup_2d_division(p_occ_occ[is], 1, nocc[is], nocc[is]
+#ifdef __MPI
+                , px[is].blacs_ctxt
+#endif
+            );
+        }
+        std::vector<T> W(p_occ_occ[0].get_local_size() * nk, 0.0);
+        cal_W_from_Z(W.data(), Z, X, eig_ext_istate, eig_ks, nspin, naos, nocc, nvirt,
+            ucell, orb_cutoff, gd, c,
+#ifdef __EXX
+            exx_lri, exx_alpha,
+#endif
+            pot_hxc_gs, kv, px, pc, p_occ_occ, pmat, xc_kernel, dft_functional, spin_type);
+        // std::cout << "W: " << std::endl;
+        // LR_Util::print_value(W.data(), nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
+
+        // 2. build K_cvcx (nvirt*nocc) = \sum_i X_{ia} K_{ij} = \sum_i X_{ia} \sum_{\mu\nu} c_{\mu i} c_{\nu j} K_{\mu\nu}[D^X]
+        // $2\sum_i X_{ai} K_{ij}[D_X]$ (D_X is symmetrized)
+        OperatorLRHxc<T> op_K_cvcx(nspin, naos, nocc, nvirt, c,
+            dm_trans, pot, ucell, orb_cutoff, gd, kv, px, pc, pmat,
+            { 0 }, T(2.0), OperatorLRHxc<T>::MO_TO_AO_TYPE::CXC_o);
+#ifdef __EXX
+        // this EDM term only runs on the force-calculation path, so cal_force is always true here.
+        OperatorLREXX<T> op_K_exx(nspin, naos, nocc[0], nvirt[0], ucell, c,
+            dm_trans, exx_lri, kv, px[0], pc, pmat,
+            /*cal_force=*/true, 2.0 * exx_alpha, OperatorLREXX<T>::MO_TO_AO_TYPE::CXC_o);
+#endif
+        const int ld_vo = nk * px[0].get_local_size();
+        std::vector<T> K_cvcx(ld_vo, 0.0);
+        op_K_cvcx.act(/*nbands=*/1, ld_vo, /*npol=*/1, X, K_cvcx.data());
+#ifdef __EXX
+        if (LR::exx_kernel_list().count(xc_kernel))
+            op_K_exx.act(/*nbands=*/1, ld_vo, /*npol=*/1, X, K_cvcx.data());
+#endif
+
+        return cal_edm_terms_from_XZWK(X, Z, W.data(), K_cvcx.data(), eig_ext_istate, eig_ks, c, nspin, test_force, p_occ_occ[0], px[0], pc, pmat);
+    }
+
+    /// @brief Open-shell (spin-unrestricted) counterpart of `cal_edm_from_XZ_istate`.
+    /// Returns the energy-weighted density matrix of each spin channel: `[is][ik]`.
+    ///
+    /// The four EDM terms are all spin-diagonal AO outer products; the spin coupling only
+    /// enters when building the two multipliers, $W^c$ (see `cal_W_from_Z_openshell`) and
+    /// $W^X_{ki\sigma}=2K_{ki\sigma}[D^X]$ (the `op_K_cvcx` blocks below).
+    template<typename T>
+    std::vector<std::vector<ct::Tensor>> cal_edm_from_XZ_istate_openshell(
+        const T* const X,
+        const T* const Z,
+        const double eig_ext_istate,
+        const double* const eig_ks,
+        const module_dm::DensityMatrix<T, T>& dm_trans,   // unused, kept for signature symmetry
+        const psi::Psi<T>& psi_ks,
+        const int& nspin,
+        const bool test_force,
+        const int& naos,
+        const std::vector<int>& nocc,
+        const std::vector<int>& nvirt,
+        const UnitCell& ucell,
+        const std::vector<double>& orb_cutoff,
+#ifdef __EXX
+        std::weak_ptr<Exx_LRI<T>> exx_lri,
+        const double& exx_alpha,
+#endif
+        std::weak_ptr<PotHxcLR> pot,
+        std::weak_ptr<PotHxcLR> pot_hxc_gs,
+        const K_Vectors& kv,
+        const Grid_Driver& gd,
+        const std::vector<Parallel_2D>& px,
+        const Parallel_2D& pc,
+        const Parallel_Orbitals& pmat,
+        const std::string xc_kernel,
+        const std::string& ks_solver,
+        const std::string& dft_functional)
+    {
+        using ATYPE = typename OperatorLRHxc<T>::MO_TO_AO_TYPE;
+#ifdef __EXX
+        using ATYPE_EXX = typename OperatorLREXX<T>::MO_TO_AO_TYPE;
+#endif
+        const int nk = kv.get_nks() / nspin;
+        const std::vector<int> ld_x = { static_cast<int>(nk * px[0].get_local_size()), static_cast<int>(nk * px[1].get_local_size()) };
+        const std::vector<int> off_x = { 0, ld_x[0] };
+        const int nband_window = nocc[0] + nvirt[0];
+
+        // 1. the W^c multiplier, one occ-occ block per spin
+        std::vector<Parallel_2D> p_occ_occ(2);
+        for (int is : {0, 1})
+        {
+            LR_Util::setup_2d_division(p_occ_occ[is], 1, nocc[is], nocc[is]
+#ifdef __MPI
+                , px[is].blacs_ctxt
+#endif
+            );
+        }
+        std::vector<std::vector<T>> W;
+        cal_W_from_Z_openshell(W, Z, X, eig_ext_istate, eig_ks, nspin, naos, nocc, nvirt,
+            ucell, orb_cutoff, gd, psi_ks,
+#ifdef __EXX
+            exx_lri, exx_alpha,
+#endif
+            pot_hxc_gs, kv, px, pc, p_occ_occ, pmat, xc_kernel, ks_solver, dft_functional);
+
+        // 2. $W^X_{ai\sigma}=2\sum_j X_{aj\sigma}K_{ji\sigma}[D^X]$.
+        //    The free spin sits on X (hence `psi_in = X + off_x[sl]`, laid out over `px[sl]`),
+        //    the summed spin sits on $D^X$.
+        std::vector<std::vector<T>> K_cvcx(2);
+        for (int is : {0, 1}) { K_cvcx[is].assign(ld_x[is], T(0.0)); }
+
+        module_dm::DensityMatrix<T, T> DM_trans(&pmat, 1, kv.kvec_d, nk);
+        LR_Util::initialize_DMR(DM_trans, pmat, ucell, gd, orb_cutoff);
+        std::vector<std::unique_ptr<OperatorLRHxc<T>>> op_K(4);
+        for (int sl : {0, 1})
+        {
+            for (int sr : {0, 1})
+            {
+                op_K[(sl << 1) + sr] = LR_Util::make_unique<OperatorLRHxc<T>>(nspin, naos, nocc, nvirt, psi_ks,
+                    DM_trans, pot, ucell, orb_cutoff, gd, kv, px, pc, pmat,
+                    std::vector<int>({ sl, sr }), T(2.0), ATYPE::CXC_o);
+            }
+        }
+        std::vector<psi::Psi<T>> psi_ks_spin;
+        for (int is : {0, 1}) { psi_ks_spin.push_back(LR_Util::get_psi_spin(psi_ks, is, nk)); }
+#ifdef __EXX
+        std::vector<std::unique_ptr<OperatorLREXX<T>>> op_K_exx(2);
+        const bool with_exx_lr = LR::exx_kernel_list().count(xc_kernel) > 0;
+        if (with_exx_lr)
+        {
+            for (int is : {0, 1})
+            {
+                op_K_exx[is] = LR_Util::make_unique<OperatorLREXX<T>>(nspin, naos, nocc[is], nvirt[is],
+                    ucell, psi_ks_spin[is], DM_trans, exx_lri, kv, px[is], pc, pmat,
+                    /*cal_force=*/true, 2.0 * exx_alpha, ATYPE_EXX::CXC_o);
+            }
+        }
+#endif
+        // $D^X$ is fed to the CXC_o operators TRANSPOSED, exactly as the closed-shell
+        // `cal_force` does (it hands `cal_edm_from_XZ_istate` a `transpose_DMR`-ed $D^X$):
+        // `CVCX_occ` produces the kernel matrix with its two MO indices in the opposite order
+        // to what $W^X_{ai\sigma}=2\sum_jX_{aj\sigma}K_{ji\sigma}[D^X]$ needs, and since
+        // $(K[D])^T=K[D^T]$, transposing on the way in restores it.
+        std::vector<ct::Tensor> dmx_buf;
+        auto set_dm_trans = [&](const int is)->void
+            {
+#ifdef __MPI
+                dmx_buf = cal_dm_trans_pblas(X + off_x[is], px[is], psi_ks_spin[is], pc, naos, nocc[is], nvirt[is], pmat);
+                for (auto& t : dmx_buf) { LR_Util::mattrans(t.data<T>(), naos, pmat); }
+#else
+                dmx_buf = cal_dm_trans_blas(X + off_x[is], psi_ks_spin[is], nocc[is], nvirt[is]);
+                for (auto& t : dmx_buf)
+                {
+                    T* d = t.data<T>();
+                    for (int u = 0;u < naos;++u)
+                    {
+                        for (int v = u + 1;v < naos;++v) { std::swap(d[u * naos + v], d[v * naos + u]); }
+                    }
+                }
+#endif
+                for (int ik = 0;ik < nk;++ik) { DM_trans.set_dmk_ptr(ik, dmx_buf[ik].data<T>()); }
+            };
+        for (int sr : {0, 1})
+        {
+            set_dm_trans(sr);
+            for (int sl : {0, 1})
+            {
+                op_K[(sl << 1) + sr]->act(/*nbands=*/1, ld_x[sl], /*npol=*/1,
+                    X + off_x[sl], K_cvcx[sl].data());
+            }
+#ifdef __EXX
+            if (with_exx_lr)
+            {
+                op_K_exx[sr]->act(/*nbands=*/1, ld_x[sr], /*npol=*/1, X + off_x[sr], K_cvcx[sr].data());
+            }
+#endif
+        }
+
+        // 3. assemble the four EDM terms, per spin channel
+        std::vector<std::vector<ct::Tensor>> edm(2);
+        for (int is : {0, 1})
+        {
+            edm[is] = cal_edm_terms_from_XZWK(X + off_x[is], Z + off_x[is], W[is].data(), K_cvcx[is].data(),
+                eig_ext_istate, eig_ks + is * nk * nband_window, psi_ks_spin[is], nspin, test_force,
+                p_occ_occ[is], px[is], pc, pmat);
+        }
+        return edm;
+    }
+}

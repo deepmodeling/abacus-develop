@@ -82,7 +82,7 @@ public:
     using type=double;					// Peize Lin add 2022.08.08 for template
 };
 
-
+matrix operator-(const matrix& m1); // unary minus
 matrix operator+(const matrix &m1, const matrix &m2);
 matrix operator-(const matrix &m1, const matrix &m2);
 matrix operator*(const matrix &m1, const matrix &m2);

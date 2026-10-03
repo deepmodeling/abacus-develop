@@ -21,7 +21,8 @@ namespace LR
         const Parallel_2D& pmat_mo,
         double* mat_mo,
         const bool add_on,
-        const LR_Util::MO_TYPE type)
+        const LR_Util::MO_TYPE type,
+        const double factor)
     {
         ModuleBase::TITLE("LR", "ao_to_mo_pblas");
         assert(pmat_ao.comm() == pcoeff.comm() && pmat_ao.comm() == pmat_mo.comm());
@@ -61,7 +62,7 @@ namespace LR
             // mat_mo = c ^ TVc
             // descC puts M(nvirt) to row
             ScalapackConnector::gemm(transa, transb, nmo2, nmo1, naos,
-                alpha, coeff.get_pointer(), i1, imo2, pcoeff.desc,
+                factor, coeff.get_pointer(), i1, imo2, pcoeff.desc,
                 Vc.data<double>(), i1, i1, pVc.desc,
                 beta, mat_mo + start, i1, i1, pmat_mo.desc);
 
@@ -80,7 +81,8 @@ namespace LR
         const Parallel_2D& pmat_mo,
         std::complex<double>* const mat_mo,
         const bool add_on,
-        const LR_Util::MO_TYPE type)
+        const LR_Util::MO_TYPE type,
+        const std::complex<double> factor)
     {
         ModuleBase::TITLE("LR", "ao_to_mo_pblas");
         assert(pmat_ao.comm() == pcoeff.comm() && pmat_ao.comm() == pmat_mo.comm());
@@ -120,7 +122,7 @@ namespace LR
             // mat_mo = c ^ TVc
             // descC puts M(nvirt) to row
             ScalapackConnector::gemm(transa, transb, nmo2, nmo1, naos,
-                alpha, coeff.get_pointer(), i1, imo2, pcoeff.desc,
+                factor, coeff.get_pointer(), i1, imo2, pcoeff.desc,
                 Vc.data<std::complex<double>>(), i1, i1, pVc.desc,
                 beta, mat_mo + start, i1, i1, pmat_mo.desc);
         }

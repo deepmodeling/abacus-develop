@@ -43,7 +43,7 @@ class Parallel_Grid
     int get_nz() const { return ncz; }
     int get_nrxx() const { return nrxx; }
 
-    private:
+	private:
 
     void z_distribution(void);
 

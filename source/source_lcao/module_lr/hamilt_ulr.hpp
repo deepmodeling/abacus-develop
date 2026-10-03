@@ -15,7 +15,7 @@ namespace LR
     class HamiltULR
     {
     public:
-        HamiltULR(std::string& xc_kernel,
+        HamiltULR(const std::string& xc_kernel,
             const int& nspin,
             const int& naos,
             const std::vector<int>& nocc,   ///< {up, down}
@@ -43,25 +43,28 @@ namespace LR
             // this->DM_trans->init_dmr(&gd_in, &ucell_in); // too large due to not restricted by orb_cutoff
             this->ops.resize(4);
 
-            this->ops[0] = new OperatorLRDiag<T>(eig_ks.c, pX_in[0], nk, nocc[0], nvirt[0]);
-            this->ops[3] = new OperatorLRDiag<T>(eig_ks.c + nk * (nocc[0] + nvirt[0]), pX_in[1], nk, nocc[1], nvirt[1]);
+            this->ops[0] = new OperatorLRDiag<T>(eig_ks.c, pX_in[0], nk, nocc[0], nvirt[0], /*add_on=*/true);
+            this->ops[3] = new OperatorLRDiag<T>(eig_ks.c + nk * (nocc[0] + nvirt[0]), pX_in[1], nk, nocc[1], nvirt[1], /*add_on=*/true);
 
             auto newHxc = [&](const int& sl, const int& sr) { return new OperatorLRHxc<T>(nspin, naos, nocc, nvirt, psi_ks_in,
-                this->DM_trans, pot_in[sl], ucell_in, orb_cutoff, gd_in, kv_in, pX_in, pc_in, pmat_in, { sl,sr }); };
+                *this->DM_trans, pot_in[sl], ucell_in, orb_cutoff, gd_in, kv_in, pX_in, pc_in, pmat_in, { sl,sr }); };
             this->ops[0]->add(newHxc(0, 0));
             this->ops[1] = newHxc(0, 1);
             this->ops[2] = newHxc(1, 0);
             this->ops[3]->add(newHxc(1, 1));
 
 #ifdef __EXX
-            if (xc_kernel == "hf" || xc_kernel == "hse")
+            if (exx_kernel_list().count(xc_kernel) )
             {
                 std::vector<psi::Psi<T>> psi_ks_spin = { LR_Util::get_psi_spin(psi_ks_in, 0, nk), LR_Util::get_psi_spin(psi_ks_in, 1, nk) };
                 for (int is : {0, 1})
                 {
+                    // this ground-state Casida operator defaults to MO_TO_AO_TYPE::CC_vo, which
+                    // never reads the force-only coxt_full/cvx_full buffers.
                     this->ops[(is << 1) + is]->add(new OperatorLREXX<T>(nspin, naos, nocc[is], nvirt[is], ucell_in, psi_ks_spin[is],
-                        this->DM_trans, exx_lri_in, kv_in, pX_in[is], pc_in, pmat_in,
-                        xc_kernel == "hf" ? 1.0 : exx_alpha));
+                        *this->DM_trans, exx_lri_in, kv_in, pX_in[is], pc_in, pmat_in,
+                        /*cal_force=*/false,
+                        (xc_kernel == "hf" ? 1.0 : exx_alpha)));
                 }
             }
 #endif
@@ -95,6 +98,9 @@ namespace LR
             for (int ib = 0;ib < nband;++ib)
             {
                 const int offset_band = ib * ld_psi;
+                // every one of the four spin blocks accumulates into this band's output, and the
+                // diagonal `OperatorLRDiag`s now add rather than assign, so clear it first
+                std::fill(hpsi + offset_band, hpsi + offset_band + ld_psi, T(0));
                 for (int is_bj : {0, 1})
                 {
                     const int offset_bj = offset_band + is_bj * xdim_is[0];
@@ -154,12 +160,18 @@ namespace LR
 #ifdef __MPI
                                 for (int ik_ai = 0;ik_ai < this->nk;++ik_ai)
                                 {
+                                    // The block being gathered is the OUT channel's, so its global
+                                    // shape is (nvirt[is_ai], nocc[is_ai]). Passing the IN channel's
+                                    // `nv`/`no` copies the wrong number of elements as soon as the
+                                    // two channels differ in size.
                                     LR_Util::gather_2d_to_full(pax, Aloc_col.data() + loffset_ai + ik_ai * pax.get_local_size(),
                                         Amat_full.data() + gcol * gdim /*col, bj*/ + goffset_ai + ik_ai * npairs[is_ai]/*row, ai*/,
-                                        false, nv, no);
+                                        false, this->nvirt[is_ai], this->nocc[is_ai]);
                                 }
 #else
-                                std::memcpy(Amat_full.data() + gcol * gdim + goffset_ai, Aloc_col.data() + goffset_ai, gdim_is[is_ai] * sizeof(T));
+                                // `Aloc_col` is the LOCAL vector, so it is indexed by `loffset_ai`
+                                // (the two coincide only on one process).
+                                std::memcpy(Amat_full.data() + gcol * gdim + goffset_ai, Aloc_col.data() + loffset_ai, gdim_is[is_ai] * sizeof(T));
 #endif
                             }
                         }

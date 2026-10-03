@@ -31,6 +31,7 @@ module_dm::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix
     {
         LR_Util::initialize_DMR(DM_trans, this->pmat, this->ucell, this->gd_, this->orb_cutoff_);
         DM_trans.cal_dmr(-1);
+        LR_Util::swap_atompair_in_DMR(DM_trans, ucell.nat);   // make D(R) consistent with the defination: D(R)[iat1][iat2] = \sum_k c1(k)c2^*(k)exp(-ik(R2-R1))
     }
     return DM_trans;
 }
@@ -100,13 +101,13 @@ ModuleBase::Vector3<std::complex<double>> LR::LR_Spectrum<std::complex<double>>:
         LR_Util::initialize_DMR(DM_trans_real_imag, this->pmat, this->ucell, this->gd_, this->orb_cutoff_);
 
         // real part
-        LR_Util::get_DMR_real_imag_part(DM_trans, DM_trans_real_imag, ucell.nat, is, 'R');
+        LR_Util::get_DMR_real_imag_part(DM_trans, DM_trans_real_imag, is, 'R');
         ModuleBase::GlobalFunc::ZEROS(rho_trans_real[0], this->rho_basis.nrxx);
         ModuleGint::cal_gint_rho(DM_trans_real_imag.get_dmr_vec(), 1, rho_trans_real, false);
         // LR_Util::print_grid_nonzero(rho_trans_real[0], this->rho_basis.nrxx, 10, "rho_trans");
 
         // imag part
-        LR_Util::get_DMR_real_imag_part(DM_trans, DM_trans_real_imag, ucell.nat, is, 'I');
+        LR_Util::get_DMR_real_imag_part(DM_trans, DM_trans_real_imag, is, 'I');
         ModuleBase::GlobalFunc::ZEROS(rho_trans_imag[0], this->rho_basis.nrxx);
         ModuleGint::cal_gint_rho(DM_trans_real_imag.get_dmr_vec(), 1, rho_trans_imag, false);
         // LR_Util::print_grid_nonzero(rho_trans_imag[0], this->rho_basis.nrxx, 10, "rho_trans");
@@ -121,10 +122,10 @@ ModuleBase::Vector3<std::complex<double>> LR::LR_Spectrum<std::complex<double>>:
             rd -= ModuleBase::Vector3<double>(0.5, 0.5, 0.5);   //shift to the center of the grid (need ?)
             ModuleBase::Vector3<double> rc = rd * ucell.latvec * ucell.lat0; // real coordinate
             ModuleBase::Vector3<std::complex<double>> rc_complex(rc.x, rc.y, rc.z);
-            trans_dipole += rc_complex * std::complex<double>(rho_trans_real[0][ir], rho_trans_imag[0][ir]);
+            trans_dipole += rc_complex * std::complex<double>(rho_trans_real[is][ir], rho_trans_imag[is][ir]);
         }
-        LR_Util::_deallocate_2order_nested_ptr(rho_trans_real, 1);
-        LR_Util::_deallocate_2order_nested_ptr(rho_trans_imag, 1);
+        LR_Util::_deallocate_2order_nested_ptr(rho_trans_real, this->nspin_x);
+        LR_Util::_deallocate_2order_nested_ptr(rho_trans_imag, this->nspin_x);
     }
     trans_dipole *= (ucell.omega / static_cast<double>(rho_basis.nxyz));   // dv
     trans_dipole *= static_cast<double>(this->nk);  // nk is divided inside DM_trans, now recover it

@@ -13,7 +13,7 @@ namespace module_dm
 // shared inner loop of cal_dmr / cal_dmr_td: accumulate kphase * DMK into DMR blocks
 template <typename TK, typename TR_in, typename TR_out>
 void accumulate_dmr(
-    DensityMatrix<TK, TR_in>& dm,
+    const DensityMatrix<TK, TR_in>& dm,
     std::vector<hamilt::HContainer<TR_out>*>& dmR_out,
     const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
     const int ik_in,
@@ -78,7 +78,7 @@ void accumulate_dmr(
 // calculate DMR from DMK using blas for multi-k calculation
 template <typename TK, typename TR_in, typename TR_out>
 void cal_dmr(
-    DensityMatrix<TK, TR_in>& dm,
+    const DensityMatrix<TK, TR_in>& dm,
     std::vector<hamilt::HContainer<TR_out>*>& dmR_out,
     const int ik_in)
 {
@@ -106,13 +106,13 @@ void cal_dmr(
 }
 
 template <>
-void DensityMatrix<std::complex<double>, double>::cal_dmr(const int ik_in)
+void DensityMatrix<std::complex<double>, double>::cal_dmr(const int ik_in) const
 {
     module_dm::cal_dmr(*this, this->dmr, ik_in);
 }
 
 template <>
-void DensityMatrix<std::complex<double>, std::complex<double>>::cal_dmr(const int ik_in)
+void DensityMatrix<std::complex<double>, std::complex<double>>::cal_dmr(const int ik_in) const
 {
     module_dm::cal_dmr(*this, this->dmr, ik_in);
 }
@@ -121,14 +121,14 @@ void DensityMatrix<std::complex<double>, std::complex<double>>::cal_dmr(const in
 // cal_dmr_td in dmr_td.cpp; without these the TD instantiations are missing
 // at link time)
 template void accumulate_dmr<std::complex<double>, double, double>(
-    DensityMatrix<std::complex<double>, double>&,
+    const DensityMatrix<std::complex<double>, double>&,
     std::vector<hamilt::HContainer<double>*>&,
     const std::map<ModuleBase::Vector3<int>, std::complex<double>>&,
     const int,
     const char*);
 
 template void accumulate_dmr<std::complex<double>, std::complex<double>, std::complex<double>>(
-    DensityMatrix<std::complex<double>, std::complex<double>>&,
+    const DensityMatrix<std::complex<double>, std::complex<double>>&,
     std::vector<hamilt::HContainer<std::complex<double>>*>&,
     const std::map<ModuleBase::Vector3<int>, std::complex<double>>&,
     const int,

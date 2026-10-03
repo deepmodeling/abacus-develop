@@ -168,7 +168,7 @@ TEST_F(DMTransTest, DoubleParallel)
                     {
                         X.fix_k(isk);
                         X_full.fix_k(isk);
-                        LR_Util::gather_2d_to_full(px, X.get_pointer(), X_full.get_pointer(), false, dim1, dim2);
+                        LR_Util::gather_2d_to_full(px, X.get_pointer(), X_full.get_pointer());
                     }
                 }
             };
@@ -189,7 +189,7 @@ TEST_F(DMTransTest, DoubleParallel)
             {
                 c.fix_k(isk);
                 c_full.fix_k(isk);
-                LR_Util::gather_2d_to_full(pc, c.get_pointer(), c_full.get_pointer(), false, s.naos, s.nocc + s.nvirt);
+                LR_Util::gather_2d_to_full(pc, c.get_pointer(), c_full.get_pointer());
             }
 
             auto test = [&](psi::Psi<double>& X, psi::Psi<double>& X_full, const Parallel_2D& px, const LR_Util::MO_TYPE type)
@@ -256,7 +256,7 @@ TEST_F(DMTransTest, ComplexParallel)
                     {
                         X.fix_k(isk);
                         X_full.fix_k(isk);
-                        LR_Util::gather_2d_to_full(px, X.get_pointer(), X_full.get_pointer(), false, dim1, dim2);
+                        LR_Util::gather_2d_to_full(px, X.get_pointer(), X_full.get_pointer());
                     }
                 }
             };
@@ -276,7 +276,7 @@ TEST_F(DMTransTest, ComplexParallel)
             {
                 c.fix_k(isk);
                 c_full.fix_k(isk);
-                LR_Util::gather_2d_to_full(pc, c.get_pointer(), c_full.get_pointer(), false, s.naos, s.nocc + s.nvirt);
+                LR_Util::gather_2d_to_full(pc, c.get_pointer(), c_full.get_pointer());
             }
 
             auto test = [&](psi::Psi<std::complex<double>>& X, psi::Psi<std::complex<double>>& X_full, const Parallel_2D& px, const LR_Util::MO_TYPE type)

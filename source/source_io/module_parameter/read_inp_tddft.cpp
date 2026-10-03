@@ -936,7 +936,7 @@ void ReadInput::item_lr_tddft()
         item.annotation = "exchange correlation (XC) kernel for LR-TDDFT";
         item.category = "Linear Response TDDFT";
         item.type = "String";
-        item.description = "The exchange-correlation kernel used in the calculation. Currently supported: RPA, LDA, PBE, HSE, HF.";
+        item.description = "The exchange-correlation kernel used in the calculation. Currently supported: RPA, LDA, PWLDA, PBE, and the hybrids HF, PBE0, HSE, B3LYP, CAM_PBEH, LC_PBE, LC_WPBE, LRC_WPBE, LRC_WPBEH. A hybrid kernel needs the ground state to use the same functional: the exact-exchange operator $[\\alpha+\\beta\\,\\mathrm{erfc}(\\mu r)]/r$ is built from exx_fock_alpha ($\\alpha$), exx_erfc_alpha ($\\beta$) and exx_erfc_omega ($\\mu$), which are keyed off dft_functional, not off this parameter.";
         item.default_value = "LDA";
         item.unit = "";
         read_sync_string(input.xc_kernel);
@@ -1026,6 +1026,120 @@ void ReadInput::item_lr_tddft()
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.lr_nstates);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lr_target_state");
+        item.annotation = "the excited state that geometry relaxation follows (0-based)";
+        item.category = "Linear Response TDDFT";
+        item.type = "Integer";
+        item.description = R"(Index of the excited state whose potential energy surface `calculation = relax` follows, counted from 0 within the spin channel selected by `lr_target_spin`.
+
+Only the gradient of this one state is computed, since solving the Z-vector equation dominates the cost of an excited-state gradient. It also selects the state whose excitation energy is added to the ground-state total energy by `cal_energy`, which is what the energy-based relaxation algorithms (`cg`, `bfgs`, `lbfgs`) line-search on.
+
+[NOTE] The state is followed by index, not by character. If it crosses another state during the relaxation, the optimizer will silently continue on the other surface.)";
+        item.default_value = "0";
+        item.unit = "";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            // Both parameters only steer a relaxation. A single-point run solves and reports every
+            // state, so they are dead there and must not be able to abort it.
+            if (para.input.calculation != "relax") { return; }
+            if (para.input.lr_target_state < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lr_target_state must be >= 0");
+            }
+            // lr_nstates <= 0 means "all particle-hole pairs"; that count is only known once the
+            // ground state has been read, so ESolver_LR::setup_relax_target_() re-checks there
+            if (para.input.lr_nstates > 0 && para.input.lr_target_state >= para.input.lr_nstates)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lr_target_state must be < lr_nstates");
+            }
+            const std::vector<std::string> spins = { "singlet", "triplet", "updown" };
+            if (std::find(spins.begin(), spins.end(), para.input.lr_target_spin) == spins.end())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lr_target_spin must be singlet, triplet or updown");
+            }
+            if (para.input.lr_target_spin == "triplet" && para.input.nspin == 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "lr_target_spin=triplet requires nspin=2: only the singlet channel is built at nspin=1");
+            }
+        };
+        read_sync_int(input.lr_target_state);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lr_grad_degen_thr");
+        item.annotation = "max excitation-energy spread of a degenerate multiplet whose gradient matrix is computed (Ry); 0 disables";
+        item.category = "Linear Response TDDFT";
+        item.type = "Real";
+        item.description = R"(Excited states whose excitation energies lie within this threshold of each other are treated as one degenerate multiplet, and the full gradient matrix $G^{(A\alpha)}_{kl}=\langle X_k|\partial A/\partial R_{A\alpha}|X_l\rangle$ is computed for it in addition to the per-state gradients. Zero (the default) disables this and leaves the per-state gradients as the only output.
+
+At a $d$-fold degeneracy no single state has a gradient vector: the branch slopes along a displacement $u$ are the eigenvalues of $\sum_{A\alpha}u_{A\alpha}G^{(A\alpha)}$, and the eigenvectors that diagonalise it depend on $u$. The per-state gradients are the diagonal of $G$ in whichever basis the eigensolver happened to return, so only their sum (the trace) is basis-independent, while $G$ itself is the complete first-order information -- it is the linear vibronic coupling Hamiltonian of the multiplet. The extra cost is $d(d-1)/2$ further Z-vector solves per multiplet.
+
+The threshold proposes candidates; it cannot tell a true degeneracy from an accidental near-degeneracy, where the states have genuinely different excitation energies and the construction does not apply. Each multiplet's actual energy spread and the orthonormality of its eigenvectors are reported in the running log so the distinction can be made there.
+
+[NOTE] A sensible value is a few times the eigensolver threshold `lr_thr`, so that states split by real physics are not merged.)";
+        item.default_value = "0";
+        item.unit = "Ry";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.lr_grad_degen_thr < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lr_grad_degen_thr must be >= 0");
+            }
+        };
+        read_sync_double(input.lr_grad_degen_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lr_relax_degen_mode");
+        item.annotation = "what a relaxation follows when the target state is degenerate: state or average";
+        item.category = "Linear Response TDDFT";
+        item.type = "String";
+        item.description = R"(What `calculation = relax` follows when `lr_target_state` sits inside a degenerate multiplet, as identified by `lr_grad_degen_thr`. It has no effect when the target state is non-degenerate.
+
+* state: follow the gradient of that one state, as returned by the eigensolver. This is the historical behaviour and is what reproduces earlier results, but inside a multiplet it is not a well-defined quantity: the per-state gradients are the diagonal of the subspace gradient matrix in whichever basis the eigensolver happened to return, so they depend on numerical details of the diagonalisation rather than on physics.
+* average: follow the multiplet average $\bar\Omega=\frac{1}{d}\sum_k\Omega_k$, whose gradient is $\operatorname{Tr}G/d$. Unlike the individual states this is a smooth, basis-independent surface, and by symmetry its gradient is totally symmetric, so following it keeps the geometry on the symmetric configuration. Both `cal_energy` and the reported gradient switch to the average together, which the energy-based optimisers (`cg`, `bfgs`, `lbfgs`) require -- a gradient of one surface line-searched against the energy of another does not converge. This mode deliberately does NOT find the Jahn-Teller distortion, which is orthogonal to the totally symmetric average gradient.
+* jt: descend the Jahn-Teller branch. Solves $\min_{\|u\|=1}\lambda_{\min}(\sum_{A\alpha}u_{A\alpha}G^{(A\alpha)})$ -- a joint optimisation over the displacement and the mixing inside the multiplet, since the two are determined together -- and follows the force of the resulting branch. This needs the off-diagonal part of the gradient matrix, so it costs $d(d-1)/2$ further Z-vector solves per step on top of the $d$ diagonal ones. The running log reports the branch's force, its mixing coefficients, and its split into the part common to the multiplet and the part that actually breaks the degeneracy.
+
+[NOTE] The usual sequence is `average` first, to reach the symmetric stationary point, then `jt` from there: at a stationary point of the average surface the common part vanishes and the whole force is Jahn-Teller. `jt` is self-limiting -- once a step has split the multiplet there is no group left and the ordinary single-state gradient takes over.
+
+[NOTE] `jt` gives the first-order DIRECTION. The distortion amplitude also needs the harmonic term, and the step norm is Cartesian rather than mass-weighted. A linear molecule has no first-order term at all (the effect is second-order Renner-Teller) and the log says so.)";
+        item.default_value = "state";
+        item.unit = "";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> modes = { "state", "average", "jt" };
+            if (std::find(modes.begin(), modes.end(), para.input.lr_relax_degen_mode) == modes.end())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "lr_relax_degen_mode must be state, average or jt");
+            }
+            // Both non-default modes need to know which states form the multiplet, and that
+            // grouping is what lr_grad_degen_thr defines; without it there is nothing to act on.
+            if (para.input.lr_relax_degen_mode != "state" && para.input.lr_grad_degen_thr <= 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "lr_relax_degen_mode=" + para.input.lr_relax_degen_mode
+                    + " requires lr_grad_degen_thr > 0 to define the multiplet");
+            }
+        };
+        read_sync_string(input.lr_relax_degen_mode);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lr_target_spin");
+        item.annotation = "spin channel of lr_target_state: singlet, triplet or updown";
+        item.category = "Linear Response TDDFT";
+        item.type = "String";
+        item.description = R"(Which spin channel `lr_target_state` indexes.
+
+* singlet / triplet: the two closed-shell channels solved at `nspin = 2`. At `nspin = 1` only `singlet` exists.
+* updown: the single spin-unrestricted channel of an open-shell calculation (`lr_unrestricted`, or a spin-polarised ground state with a non-zero moment).
+
+Checked against the actual open/closed-shell character in `ESolver_LR::parameter_check`, which is only known after the ground-state occupations have been read.)";
+        item.default_value = "singlet";
+        item.unit = "";
+        read_sync_string(input.lr_target_spin);
         this->add_item(item);
     }
     {

@@ -2,6 +2,7 @@
 #include "lr_util.h"
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/module_container/base/third_party/lapack.h"
 namespace LR_Util
 {
     /// =================PHYSICS====================
@@ -93,6 +94,61 @@ namespace LR_Util
         const int i1 = 1;
         pztranc_(&n, &n, &alpha, tmp.data(), &i1, &i1, pmat.desc, &beta, inout, &i1, &i1, pmat.desc);
     }
+
+    template<>
+    void mattrans<double>(const double* in, const int n, const Parallel_2D& pmat, double* out)
+    {
+        std::copy(in, in + pmat.get_local_size(), out);
+        const double alpha = 1.0, beta = 0.0;
+        const int i1 = 1;
+        pdtran_(&n, &n, &alpha, in, &i1, &i1, pmat.desc, &beta, out, &i1, &i1, pmat.desc);
+    }
+    template<>
+    void mattrans<double>(double* inout, const int n, const Parallel_2D& pmat)
+    {
+        std::vector<double> tmp(pmat.get_local_size());
+        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        const double alpha = 1.0, beta = 0.0;
+        const int i1 = 1;
+        pdtran_(&n, &n, &alpha, tmp.data(), &i1, &i1, pmat.desc, &beta, inout, &i1, &i1, pmat.desc);
+    }
+    template<>
+    void mattrans<std::complex<double>>(const std::complex<double>* in, const int n, const Parallel_2D& pmat, std::complex<double>* out)
+    {
+        std::copy(in, in + pmat.get_local_size(), out);
+        const std::complex<double> alpha(1.0, 0.0), beta(0.0, 0.0);
+        const int i1 = 1;
+        pztranc_(&n, &n, &alpha, in, &i1, &i1, pmat.desc, &beta, out, &i1, &i1, pmat.desc);
+    }
+    template<>
+    void mattrans<std::complex<double>>(std::complex<double>* inout, const int n, const Parallel_2D& pmat)
+    {
+        std::vector<std::complex<double>> tmp(pmat.get_local_size());
+        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        const std::complex<double> alpha(1.0, 0.0), beta(0.0, 0.0);
+        const int i1 = 1;
+        pztranc_(&n, &n, &alpha, tmp.data(), &i1, &i1, pmat.desc, &beta, inout, &i1, &i1, pmat.desc);
+    }
+
+
+    template<>
+    void matantisym<double>(double* inout, const int n, const Parallel_2D& pmat)
+    {
+        std::vector<double> tmp(pmat.get_local_size());
+        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        const double alpha = -0.5, beta = 0.5;
+        const int i1 = 1;
+        pdtran_(&n, &n, &alpha, tmp.data(), &i1, &i1, pmat.desc, &beta, inout, &i1, &i1, pmat.desc);
+    }
+    template<>
+    void matantisym<std::complex<double>>(std::complex<double>* inout, const int n, const Parallel_2D& pmat)
+    {
+        std::vector<std::complex<double>> tmp(pmat.get_local_size());
+        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        const std::complex<double> alpha(-0.5, 0.0), beta(0.5, 0.0);
+        const int i1 = 1;
+        pztranc_(&n, &n, &alpha, tmp.data(), &i1, &i1, pmat.desc, &beta, inout, &i1, &i1, pmat.desc);
+    }
 #endif
 
     // for the first matrix in the commutator
@@ -115,7 +171,8 @@ namespace LR_Util
     }
 #endif
 
-    void diag_lapack(const int& n, double* mat, double* eig)
+    template<>
+    void diag_lapack<double>(const int& n, double* mat, double* eig)
     {
         ModuleBase::TITLE("LR_Util", "diag_lapack<double>");
         int info = 0;
@@ -129,8 +186,8 @@ namespace LR_Util
         if (info) { std::cout << "ERROR: Lapack solver, info=" << info << std::endl; }
         delete[] work2;
     }
-
-    void diag_lapack(const int& n, std::complex<double>* mat, double* eig)
+    template<>
+    void diag_lapack<std::complex<double>>(const int& n, std::complex<double>* mat, double* eig)
     {
         ModuleBase::TITLE("LR_Util", "diag_lapack <std::complex<double>>");
         int lwork = 2 * n;
@@ -143,8 +200,8 @@ namespace LR_Util
         delete[] rwork;
         delete[] work2;
     }
-
-    void diag_lapack_nh(const int& n, double* mat, std::complex<double>* eig)
+    template<>
+    void diag_lapack_nh<double>(const int& n, double* mat, std::complex<double>* eig)
     {
         ModuleBase::TITLE("LR_Util", "diag_lapack_nh<double>");
         int info = 0;
@@ -164,8 +221,8 @@ namespace LR_Util
         if (info) { std::cout << "ERROR: Lapack solver dgeev, info=" << info << std::endl; }
         for (int i = 0;i < n;++i) { eig[i] = std::complex<double>(eig_real[i], eig_imag[i]); }
     }
-
-    void diag_lapack_nh(const int& n, std::complex<double>* mat, std::complex<double>* eig)
+    template<>
+    void diag_lapack_nh<std::complex<double>>(const int& n, std::complex<double>* mat, std::complex<double>* eig)
     {
         ModuleBase::TITLE("LR_Util", "diag_lapack_nh <std::complex<double>>");
         int lwork = 2 * n;
@@ -178,6 +235,46 @@ namespace LR_Util
         zgeev_(&jobvl, &jobvr, &n, mat, &n, eig,
             vl.data(), &ldvl, vr.data(), &ldvr, work2.data(), &lwork, rwork.data(), &info);
         if (info) { std::cout << "ERROR: Lapack solver zgeev, info=" << info << std::endl; }
+    }
+
+    template<>
+    int lapack_linear_solver<double>(const double* A, double* x, const double* b, const int n, const int nrhs)
+    {
+        ModuleBase::TITLE("LR_Util", "lapack_linear_solver<double>");
+        // 1. copy A to a mutable array
+        std::vector<double> A_copy(A, A + n * n);
+        // copy b to x
+        std::copy(b, b + n * nrhs, x);
+        // 2. LU decomposition: A->LU
+        std::vector<int> ipiv(n);   // pivot indices
+        int info = 0;
+        dgetrf_(&n, &n, A_copy.data(), &n, ipiv.data(), &info);
+        if (info) { std::cout << "ERROR: Lapack solver dgetrf, info=" << info << std::endl; }
+        // 3. Solve Ax=b
+        const char trans = 'N';
+        dgetrs_(&trans, &n, &nrhs, A_copy.data(), &n, ipiv.data(), x, &n, &info);
+        if (info) { std::cout << "ERROR: Lapack solver dgetrs, info=" << info << std::endl; }
+        return info;
+    }
+
+    template<>
+    int lapack_linear_solver<std::complex<double>>(const std::complex<double>* A, std::complex<double>* x, const std::complex<double>* b, const int n, const int nrhs)
+    {
+        ModuleBase::TITLE("LR_Util", "lapack_linear_solver<complex<double>>");
+        // 1. copy A to a mutable array
+        std::vector<std::complex<double>> A_copy(A, A + n * n);
+        // copy b to x
+        std::copy(b, b + n * nrhs, x);
+        // 2. LU decomposition: A->LU
+        std::vector<int> ipiv(n);   // pivot indices, for
+        int info = 0;
+        zgetrf_(&n, &n, A_copy.data(), &n, ipiv.data(), &info);
+        if (info) { std::cout << "ERROR: Lapack solver zgetrf, info=" << info << std::endl; }
+        // 3. Solve Ax=b
+        const char trans = 'N';
+        zgetrs_(&trans, &n, &nrhs, A_copy.data(), &n, ipiv.data(), x, &n, &info);
+        if (info) { std::cout << "ERROR: Lapack solver zgetrs, info=" << info << std::endl; }
+        return info;
     }
 
     std::string tolower(const std::string& str)

@@ -45,7 +45,7 @@ struct ShiftRealComplex<std::complex<double>>
 // DensityMatrix<complex<double>,TR>::cal_dmr() is illegal in C++, so module_dm is used instead.
     template <typename TK, typename TR_in, typename TR_out>
     extern void cal_dmr(
-        DensityMatrix<TK, TR_in> &dm,
+        const DensityMatrix<TK, TR_in> &dm,
         std::vector<hamilt::HContainer<TR_out>*> &dmR_out,
         const int ik_in);
 
@@ -70,7 +70,7 @@ struct ShiftRealComplex<std::complex<double>>
      */
     template <typename TK, typename TR_in, typename TR_out>
     extern void accumulate_dmr(
-        DensityMatrix<TK, TR_in> &dm,
+        const DensityMatrix<TK, TR_in> &dm,
         std::vector<hamilt::HContainer<TR_out>*> &dmR_out,
         const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
         const int ik_in,
@@ -340,6 +340,17 @@ class DensityMatrix
      * please make sure the size of TK* is correct
     */
     void set_dmk_ptr(const int ik, TK* DMK_in);
+    void set_DMK_vector(const int ik, const std::vector<TK>& v) { this->dmk[ik] = v; }
+
+    /**
+     * @brief get pointer of paraV
+     */
+    const Parallel_Orbitals* get_paraV_pointer() const {return this->pv;}
+
+    const std::vector<ModuleBase::Vector3<double>>& get_kvec_d() const { return this->_kvec_d; }
+
+    /// number of k-slots stored in `dmk` (spin_mult * _nk, flattened)
+    int get_DMK_nks() const { return static_cast<int>(this->dmk.size()); }
 
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
@@ -347,7 +358,7 @@ class DensityMatrix
      * if ik_in < 0, calculate all k-points
      * if ik_in >= 0, calculate only one k-point without summing over k-points
      */
-    void cal_dmr(const int ik_in);
+    void cal_dmr(const int ik_in) const;
 
     /**
      * @brief calculate density matrix DMR with additional vector potential phase, used for hybrid gauge tddft
@@ -401,11 +412,13 @@ class DensityMatrix
      * vector.size() = 1 for non-polarization and SOC
      * vector.size() = 2 for spin-polarization
      */
-    std::vector<hamilt::HContainer<TR>*> dmr;
-    std::vector<std::vector<TR>> dmr_save;
+    mutable std::vector<hamilt::HContainer<TR>*> dmr;    // mutable for const function `cal_dmr`, which logically does not change the object
+    mutable std::vector<std::vector<TR>> dmr_save;
 
     /// @brief whether dmr holds a density matrix calculated from DMK (reset by init_dmr, set by cal_dmr)
-    bool _dmr_ready = false;
+    /// mutable for the same reason as `dmr` above: `cal_dmr` is const, and recording that the
+    /// cache is now populated does not change the object logically.
+    mutable bool _dmr_ready = false;
 
     /**
      * @brief HContainer for density matrix in real space for grid parallelization
@@ -459,7 +472,7 @@ class DensityMatrix
     std::vector<TR> dmr_tmp;
 
     friend void module_dm::cal_dmr<TK, TR>(
-        DensityMatrix<TK, TR>& dm,
+        const DensityMatrix<TK, TR>& dm,
         std::vector<hamilt::HContainer<TR>*>& dmR_out,
         const int ik_in);
     friend void module_dm::cal_dmr_td<TK, TR>(
@@ -473,7 +486,7 @@ class DensityMatrix
         hamilt::HContainer<std::complex<double>>* dmR_out,
         const int ik_in);
     friend void module_dm::accumulate_dmr<TK, TR>(
-        DensityMatrix<TK, TR>& dm,
+        const DensityMatrix<TK, TR>& dm,
         std::vector<hamilt::HContainer<TR>*>& dmR_out,
         const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
         const int ik_in,

@@ -924,7 +924,8 @@ void Exx_LRI<Tdata>::cal_exx_force(const int& nat)
     ModuleBase::timer::start("Exx_LRI", "cal_exx_force");
 
     this->force_exx.create(nat, Ndim);
-    for(int is=0; is<PARAM.inp.nspin; ++is)
+    const int& nspin = PARAM.inp.nspin;
+    for(int is=0; is<nspin; ++is)
     {
         this->exx_lri.cal_force({"","",std::to_string(is),"",""});
         for(std::size_t idim=0; idim<Ndim; ++idim) {
@@ -932,9 +933,11 @@ void Exx_LRI<Tdata>::cal_exx_force(const int& nat)
                 this->force_exx(force_item.first, idim) += std::real(force_item.second);
                     } 		}
     }
-
-    const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(PARAM.inp.nspin);				// why?
-    const double frac = -2 * SPIN_multiple;		// why?
+    // SPIN_multiple cancels the one in `split_m2D_ktoR`, which are 0.5*0.5 at nspin=1.
+    // but only u-u and d-d pairs of Ds has contribution, so here's 2 instead of 4.
+    // And -2 is the same as post_process_Hexx (which didn't act on Hs)
+    const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(nspin);
+    const double frac = -2 * SPIN_multiple;
     this->force_exx *= frac;
     ModuleBase::timer::end("Exx_LRI", "cal_exx_force");
 }

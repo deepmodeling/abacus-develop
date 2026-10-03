@@ -580,6 +580,19 @@ namespace LR_Util
         }
         MPI_Allreduce(MPI_IN_PLACE, fullmat, global_nrow * global_ncol, LR_Util::MPIType<T>::value(), MPI_SUM, pv.comm());
     };
-#endif
 
+    template <typename T>
+    void scatter_full_to_2d(const Parallel_2D& pv, const T* fullmat, T* submat, const bool col_first)
+    {
+        ModuleBase::TITLE("LR_Util", "scatter_full_to_2d");
+        const int global_nrow = pv.get_global_row_size();
+        const int global_ncol = pv.get_global_col_size();
+        for (int i = 0;i < pv.get_row_size();++i)
+            for (int j = 0;j < pv.get_col_size();++j)
+                if (col_first)
+                    submat[i * pv.get_col_size() + j] = fullmat[pv.local2global_row(i) * global_ncol + pv.local2global_col(j)];
+                else
+                    submat[j * pv.get_row_size() + i] = fullmat[pv.local2global_col(j) * global_nrow + pv.local2global_row(i)];
+    }
+#endif
 }
