@@ -130,7 +130,14 @@ latex_use_xindy = False
 mathjax_path = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.min.js'
 # deepmodeling_current_site = 'Tutorials'
 latex_elements = {
-    'extraclassoptions':'openany,oneside'
+    'extraclassoptions':'openany,oneside',
+    'preamble': r'''
+\providecommand{\lt}{<}
+\providecommand{\gt}{>}
+\providecommand{\Ket}[1]{\left|#1\right\rangle}
+\providecommand{\Bra}[1]{\left\langle#1\right|}
+\providecommand{\Braket}[1]{\left\langle#1\right\rangle}
+''',
 }
 
 
