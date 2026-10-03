@@ -80,9 +80,9 @@ TEST_F(IonsMoveSDTest, TestStartConverged)
     im_sd.start(ucell, force, etot, istep, update_iter, ofs, etot_info, criteria);
     ofs.close();
 
-    // Check output
-    std::string expected_output = "\n Largest force is 0 eV/Angstrom while threshold is -1 eV/Angstrom\n"
-                                  " largest force is 0, no movement is possible.\n it may converged, otherwise no "
+    // Check output: reporting moved to IonCellOptimizer::relax_step;
+    // check_converged no longer prints "Largest force is ...".
+    std::string expected_output = " largest force is 0, no movement is possible.\n it may converged, otherwise no "
                                   "movement of atom is allowed.\n end of geometry optimization\n                       "
                                   "             istep = 1\n                         update iteration = 5\n";
     std::ifstream ifs("test_sd_start_converged.log");
@@ -132,9 +132,9 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
     im_sd.start(ucell, force, etot, istep, update_iter, ofs, etot_info, criteria);
     ofs.close();
 
-    // Check output
-    std::string expected_output = "\n Largest force is 25.7111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
-                                  " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
+    // Check output: reporting moved to IonCellOptimizer::relax_step;
+    // check_converged prints nothing here anymore.
+    std::string expected_output = "";
     std::ifstream ifs("test_sd_start_not_converged.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();

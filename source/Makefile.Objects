@@ -576,6 +576,7 @@ OBJS_RELAXATION=relax_data.o\
     cg_base.o\
     bfgs_basic.o\
     relax_driver.o\
+    relax_stru_io.o\
     ions_move_basic.o\
     ions_move_bfgs.o\
     ions_move_bfgs2.o\

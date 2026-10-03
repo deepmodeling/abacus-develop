@@ -87,7 +87,7 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     }
     else if (relax_method[0] == "lbfgs")
     {
-        converged_ = lbfgs.relax_step(f, ucell, etot, ofs);        
+        converged_ = lbfgs.relax_step(f, ucell, etot, ofs, criteria);
     }
     else
     {

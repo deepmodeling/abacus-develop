@@ -136,7 +136,10 @@ TEST_F(IonsMoveBFGSTest, StartCase2)
     ifs.close();
     std::remove("test_start_case2.log");
 
-    EXPECT_THAT(output, testing::HasSubstr("Ion relaxation is not converged yet"));
+    // Reporting moved to IonCellOptimizer::relax_step; check_converged no longer
+    // prints convergence info to the log. Assert state instead.
+    EXPECT_THAT(output, testing::Not(testing::HasSubstr("Ion relaxation is not converged yet")));
+    EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 10.0);
 
     // Clean up
     delete[] ucell.atoms;

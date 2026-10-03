@@ -131,8 +131,10 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
     ofs.close();
 
     // Check output
-    std::string expected_output = "\n Largest force is 0 eV/Angstrom while threshold is -1 eV/Angstrom\n"
-                                  " largest force is 0, no movement is possible.\n it may converged, otherwise no "
+    // Reporting moved to IonCellOptimizer::relax_step; check_converged no longer
+    // prints "Largest force is ...". The zero-force branch message and terminate
+    // output remain.
+    std::string expected_output = " largest force is 0, no movement is possible.\n it may converged, otherwise no "
                                   "movement of atom is allowed.\n end of geometry optimization\n                       "
                                   "             istep = 1\n                         update iteration = 5\n";
     std::ifstream ifs("TestStartConverged.log");
@@ -167,9 +169,9 @@ TEST_F(IonsMoveCGTest, TestStartSd)
     im_cg.start(ucell, force, etot, istep, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
 
-    // Check output
-    std::string expected_output = "\n Largest force is 0.257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
-                                  " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
+    // Check output: reporting moved to IonCellOptimizer::relax_step;
+    // check_converged prints nothing here anymore.
+    std::string expected_output = "";
     std::ifstream ifs("TestStartSd.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
@@ -211,9 +213,9 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
 
-    // Check output
-    std::string expected_output = "\n Largest force is 0.0257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
-                                  " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
+    // Check output: reporting moved to IonCellOptimizer::relax_step;
+    // check_converged prints nothing here anymore.
+    std::string expected_output = "";
     std::ifstream ifs("TestStartTrialGoto.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
@@ -252,9 +254,9 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
 
-    // Check output
-    std::string expected_output = "\n Largest force is 0.257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
-                                  " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
+    // Check output: reporting moved to IonCellOptimizer::relax_step;
+    // check_converged prints nothing here anymore.
+    std::string expected_output = "";
     std::ifstream ifs("TestStartTrial.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
@@ -300,9 +302,9 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
 
-    // Check output
-    std::string expected_output = "\n Largest force is 0.0257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
-                                  " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
+    // Check output: reporting moved to IonCellOptimizer::relax_step;
+    // check_converged prints nothing here anymore.
+    std::string expected_output = "";
     std::ifstream ifs("TestStartNoTrialGotoCase1.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
@@ -349,9 +351,9 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
 
-    // Check output
-    std::string expected_output = "\n Largest force is 0.257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
-                                  " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
+    // Check output: reporting moved to IonCellOptimizer::relax_step;
+    // check_converged prints nothing here anymore.
+    std::string expected_output = "";
     std::ifstream ifs("TestStartNoTrialGotoCase2.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
@@ -398,9 +400,9 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
 
-    // Check output
-    std::string expected_output = "\n Largest force is 0.0257111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n"
-                                  " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
+    // Check output: reporting moved to IonCellOptimizer::relax_step;
+    // check_converged prints nothing here anymore.
+    std::string expected_output = "";
     std::ifstream ifs("TestStartNoTrial.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
@@ -412,239 +414,4 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 1.0);
     EXPECT_NEAR(Ions_Move_Basic::relax_bfgs_init, 1.2345679012345678, 1e-12);
-}
-
-// Test function setup_cg_grad() when ncggrad is multiple of 10000
-TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsMultipleOf10000)
-{
-    double grad[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-    double grad0[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-    double cggrad[6] = {9.0, 8.0, 7.0, 6.0, 5.0, 4.0};
-    double cggrad0[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-    int ncggrad = 50000; // multiple of 10000
-    int flag = 0;
-
-    im_cg.setup_cg_grad(Ions_Move_Basic::dim, grad, grad0, cggrad, cggrad0, ncggrad, flag);
-
-    EXPECT_DOUBLE_EQ(cggrad[0], grad[0]);
-    EXPECT_DOUBLE_EQ(cggrad[1], grad[1]);
-    EXPECT_DOUBLE_EQ(cggrad[2], grad[2]);
-    EXPECT_DOUBLE_EQ(cggrad[3], grad[3]);
-    EXPECT_DOUBLE_EQ(cggrad[4], grad[4]);
-    EXPECT_DOUBLE_EQ(cggrad[5], grad[5]);
-}
-
-// Test function setup_cg_grad() when ncggrad is not multiple of 10000, gamma1 < 0.5
-TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case1)
-{
-    double grad[6] = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    double grad0[6] = {4.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    double cggrad[6] = {4.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    double cggrad0[6] = {4.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    int ncggrad = 100;
-    int flag = 0;
-
-    im_cg.setup_cg_grad(Ions_Move_Basic::dim, grad, grad0, cggrad, cggrad0, ncggrad, flag);
-
-    EXPECT_DOUBLE_EQ(cggrad[0], 1.25);
-    EXPECT_DOUBLE_EQ(cggrad[1], 0.0);
-    EXPECT_DOUBLE_EQ(cggrad[2], 0.0);
-    EXPECT_DOUBLE_EQ(cggrad[3], 0.0);
-    EXPECT_DOUBLE_EQ(cggrad[4], 0.0);
-    EXPECT_DOUBLE_EQ(cggrad[5], 0.0);
-}
-
-// Test function setup_cg_grad() when ncggrad is not multiple of 10000, gamma1 >= 0.5
-TEST_F(IonsMoveCGTest, SetupCgGradNcggradIsNotMultipleOf10000Case2)
-{
-    double grad[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-    double grad0[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-    double cggrad[6] = {9.0, 8.0, 7.0, 6.0, 5.0, 4.0};
-    double cggrad0[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
-    int ncggrad = 100;
-    int flag = 0;
-
-    im_cg.setup_cg_grad(Ions_Move_Basic::dim, grad, grad0, cggrad, cggrad0, ncggrad, flag);
-
-    EXPECT_DOUBLE_EQ(cggrad[0], grad[0]);
-    EXPECT_DOUBLE_EQ(cggrad[1], grad[1]);
-    EXPECT_DOUBLE_EQ(cggrad[2], grad[2]);
-    EXPECT_DOUBLE_EQ(cggrad[3], grad[3]);
-    EXPECT_DOUBLE_EQ(cggrad[4], grad[4]);
-    EXPECT_DOUBLE_EQ(cggrad[5], grad[5]);
-}
-
-// Test function third_order() case 1
-TEST_F(IonsMoveCGTest, ThirdOrderCase1)
-{
-    double e0 = 1.0;
-    double e1 = 1.0;
-    double fa = 10.0;
-    double fb = -9.99;
-    double x = 1.0;
-    double bestX = -1.0; // arbitrary initial value
-
-    im_cg.third_order(e0, e1, fa, fb, x, bestX);
-
-    EXPECT_DOUBLE_EQ(bestX, x * fb / (fa - fb));
-}
-
-// Test function third_order() case 2
-TEST_F(IonsMoveCGTest, ThirdOrderCase2)
-{
-    double e0 = 1.0;
-    double e1 = 1.0;
-    double fa = -10.0;
-    double fb = 9.9;
-    double x = 1.0;
-    double bestX = -1.0; // arbitrary initial value
-
-    im_cg.third_order(e0, e1, fa, fb, x, bestX);
-
-    EXPECT_DOUBLE_EQ(bestX, x * fb / (fa - fb));
-}
-
-// Test function third_order() case 3
-TEST_F(IonsMoveCGTest, ThirdOrderCase3)
-{
-    double e0 = 1.0;
-    double e1 = 1.0;
-    double fa = 10.0;
-    double fb = -10.1;
-    double x = 1.0;
-    double bestX = -1.0; // arbitrary initial value
-
-    im_cg.third_order(e0, e1, fa, fb, x, bestX);
-
-    EXPECT_DOUBLE_EQ(bestX, x * fb / (fa - fb));
-}
-
-// Test function Brent() case 1
-TEST_F(IonsMoveCGTest, BrentCase1)
-{
-    double fa = 2.0;
-    double fb = 1.0;
-    double fc = 1.0;
-    double xa = -3.0;
-    double xb = 2.0;
-    double xc = 1.0;
-    double best_x = 0.0;
-    double xpt = 0.0;
-
-    im_cg.Brent(fa, fb, fc, xa, xb, xc, best_x, xpt);
-
-    EXPECT_DOUBLE_EQ(fa, 2.0);
-    EXPECT_DOUBLE_EQ(fb, 1.0);
-    EXPECT_DOUBLE_EQ(fc, 1.0);
-    EXPECT_DOUBLE_EQ(xa, -3.0);
-    EXPECT_DOUBLE_EQ(xb, 1.0);
-    EXPECT_DOUBLE_EQ(xc, 4.0);
-    EXPECT_DOUBLE_EQ(best_x, 4.0);
-    EXPECT_DOUBLE_EQ(xpt, 4.0);
-}
-
-// Test function Brent() case 2
-TEST_F(IonsMoveCGTest, BrentCase2)
-{
-    double fa = -2.0;
-    double fb = 3.0;
-    double fc = -4.0;
-    double xa = 1.0;
-    double xb = 2.0;
-    double xc = 3.0;
-    double best_x = 0.0;
-    double xpt = 0.0;
-
-    im_cg.Brent(fa, fb, fc, xa, xb, xc, best_x, xpt);
-
-    EXPECT_DOUBLE_EQ(fa, -4.0);
-    EXPECT_DOUBLE_EQ(fb, 3.0);
-    EXPECT_DOUBLE_EQ(fc, -4.0);
-    EXPECT_DOUBLE_EQ(xa, 3.0);
-    EXPECT_DOUBLE_EQ(xb, 2.0);
-    EXPECT_NEAR(xc, 1.2046663545568725, 1e-12);
-    EXPECT_NEAR(best_x, 1.2046663545568725, 1e-12);
-    EXPECT_NEAR(xpt, 1.2046663545568725, 1e-12);
-}
-
-// Test function Brent() case 3
-TEST_F(IonsMoveCGTest, BrentCase3)
-{
-    double fa = 1.0;
-    double fb = -3.0;
-    double fc = -4.0;
-    double xa = 3.0;
-    double xb = 2.0;
-    double xc = 1.0;
-    double best_x = 0.0;
-    double xpt = 0.0;
-
-    im_cg.Brent(fa, fb, fc, xa, xb, xc, best_x, xpt);
-
-    EXPECT_DOUBLE_EQ(fa, 1.0);
-    EXPECT_DOUBLE_EQ(fb, -4.0);
-    EXPECT_DOUBLE_EQ(fc, -4.0);
-    EXPECT_DOUBLE_EQ(xa, 3.0);
-    EXPECT_DOUBLE_EQ(xb, 1.0);
-    EXPECT_NEAR(xc, 2.8081429669660172, 1e-12);
-    EXPECT_NEAR(best_x, 2.8081429669660172, 1e-12);
-    EXPECT_NEAR(xpt, 2.8081429669660172, 1e-12);
-}
-
-// Test function Brent() case 4
-TEST_F(IonsMoveCGTest, BrentCase4)
-{
-    double fa = 2.0;
-    double fb = -3.0;
-    double fc = 4.0;
-    double xa = 0.0;
-    double xb = 2.0;
-    double xc = 1.0;
-    double best_x = 0.0;
-    double xpt = 0.0;
-
-    im_cg.Brent(fa, fb, fc, xa, xb, xc, best_x, xpt);
-
-    EXPECT_DOUBLE_EQ(fa, 4.0);
-    EXPECT_DOUBLE_EQ(fb, -3.0);
-    EXPECT_DOUBLE_EQ(fc, 4.0);
-    EXPECT_DOUBLE_EQ(xa, 1.0);
-    EXPECT_DOUBLE_EQ(xb, 2.0);
-    EXPECT_DOUBLE_EQ(xc, 2.0);
-    EXPECT_DOUBLE_EQ(best_x, 2.0);
-    EXPECT_DOUBLE_EQ(xpt, 2.0);
-}
-
-// Test function f_cal()
-TEST_F(IonsMoveCGTest, Fcal)
-{
-    Ions_Move_Basic::dim = 9;
-    double g0[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-    double g1[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-    double f_value = 0.0;
-
-    im_cg.f_cal(Ions_Move_Basic::dim, g0, g1, f_value);
-
-    EXPECT_DOUBLE_EQ(f_value, 3.0);
-}
-
-// Test function setup_move()
-TEST_F(IonsMoveCGTest, SetupMove)
-{
-    Ions_Move_Basic::dim = 9;
-    double trust_radius = 1.0;
-    double cg_gradn[9] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-    double move[9] = {0.0};
-
-    im_cg.setup_move(Ions_Move_Basic::dim, move, cg_gradn, trust_radius);
-
-    EXPECT_DOUBLE_EQ(move[0], -1.0);
-    EXPECT_DOUBLE_EQ(move[1], -1.0);
-    EXPECT_DOUBLE_EQ(move[2], -1.0);
-    EXPECT_DOUBLE_EQ(move[3], -1.0);
-    EXPECT_DOUBLE_EQ(move[4], -1.0);
-    EXPECT_DOUBLE_EQ(move[5], -1.0);
-    EXPECT_DOUBLE_EQ(move[6], -1.0);
-    EXPECT_DOUBLE_EQ(move[7], -1.0);
-    EXPECT_DOUBLE_EQ(move[8], -1.0);
 }

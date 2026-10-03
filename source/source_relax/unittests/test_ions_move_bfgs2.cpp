@@ -1,4 +1,4 @@
-// source/source_relax/test/bfgs_test.cpp
+// source/source_relax/unittests/test_ions_move_bfgs2.cpp
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "for_test.h"
@@ -85,10 +85,6 @@ protected:
     {
         return bfgs.sign;
     }
-    double get_largest_grad() const
-    {
-        return bfgs.largest_grad;
-    }
     bool get_is_initialized() const
     {
         return bfgs.is_initialized;
@@ -155,7 +151,7 @@ TEST_F(BFGSTest, TestAllocate)
     EXPECT_EQ(get_alpha(), 70);
     EXPECT_EQ(get_maxstep(), PARAM.inp.relax_bfgs_rmax);
     EXPECT_TRUE(get_sign());
-    EXPECT_EQ(get_largest_grad(), 0.0);
+    EXPECT_EQ(Ions_Move_Basic::largest_grad, 0.0);
 }
 
 // Test that relax_step will auto-initialize if not already initialized
@@ -328,8 +324,10 @@ TEST_F(BFGSTest, CalculateLargestGrad)
     bfgs.allocate(ucell.nat);
     call_CalculateLargestGrad(force, ucell);
 
-    // expected largest_grad = 3.0 (see calculation above)
-    EXPECT_NEAR(get_largest_grad(), 6.0, 1e-12);
+    // The computed value is stored in Ions_Move_Basic::largest_grad (Ry/Bohr after /lat0).
+    // grad component = -force * lat0; after dividing by lat0 this gives back force in Ry/Bohr.
+    // largest = max(|3.0|, |2.0|) = 3.0; lat0=2.0 => grad before /lat0 = 6.0, after /lat0 = 3.0
+    EXPECT_NEAR(Ions_Move_Basic::largest_grad, 3.0, 1e-12);
 }
 
 // Test relax_step basic functionality

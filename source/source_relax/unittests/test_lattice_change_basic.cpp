@@ -245,9 +245,9 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
 
     // Check the results
     std::ifstream ifs("test_check_converged_case1.log");
-    std::string expected_output = "\n Geometry relaxation is not converged because threshold is 10 kbar\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_EQ(output, expected_output);
+    // Reporting moved to IonCellOptimizer::relax_step; nothing printed here now.
+    EXPECT_EQ(output, "");
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 0);
     EXPECT_NEAR(Lattice_Change_Basic::largest_grad, 1323947.0517790401, 1e-12);
     EXPECT_FALSE(converged);
@@ -319,9 +319,10 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
 
     // Check the results
     std::ifstream ifs("test_check_converged_case3.log");
-    std::string expected_output = "\n Geometry relaxation is converged!\n\n Largest stress is 0.147105 kbar while threshold is 10 kbar\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_EQ(output, expected_output);
+    // Convergence/stress reporting moved to IonCellOptimizer::relax_step;
+    // check_converged itself now emits nothing on this branch.
+    EXPECT_EQ(output, "");
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 1);
     EXPECT_NEAR(Lattice_Change_Basic::largest_grad, 0.14710522797544887, 1e-12);
     EXPECT_TRUE(converged);
@@ -356,9 +357,9 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
 
     // Check the results
     std::ifstream ifs("test_check_converged_case4.log");
-    std::string expected_output = "\n Geometry relaxation is not converged because threshold is 10 kbar\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_EQ(output, expected_output);
+    // Reporting moved to IonCellOptimizer::relax_step; nothing printed here now.
+    EXPECT_EQ(output, "");
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 0);
     EXPECT_NEAR(Lattice_Change_Basic::largest_grad, 147105.22797544891, 1e-12);
     EXPECT_FALSE(converged);
@@ -430,9 +431,9 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
 
     // Check the results
     std::ifstream ifs("test_check_converged_case6.log");
-    std::string expected_output = "\n Geometry relaxation is converged!\n\n Largest stress is 0.147105 kbar while threshold is 10 kbar\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_EQ(output, expected_output);
+    // Reporting moved to IonCellOptimizer::relax_step; nothing printed here now.
+    EXPECT_EQ(output, "");
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 1);
     EXPECT_NEAR(Lattice_Change_Basic::largest_grad, 0.14710522797544887, 1e-12);
     EXPECT_TRUE(converged);

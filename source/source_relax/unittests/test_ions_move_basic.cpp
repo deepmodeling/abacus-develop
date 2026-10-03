@@ -126,7 +126,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     std::string expected_ofs
         = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
           "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0\n\n"
-          " Largest force is 0 eV/Angstrom while threshold is -1 eV/Angstrom\n largest force is 0, no "
+          " largest force is 0, no "
           "movement is possible.\n it may converged, otherwise no movement of atom is allowed.\n";
     std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/Angstrom)  : 0\n";
 
@@ -165,9 +165,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
 
     std::string expected_ofs
         = "                    old total energy (ry) = 0\n                    new total energy (ry) = 0\n              "
-          "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0.1\n\n"
-          " Largest force is 2.57111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n Ion relaxation is "
-          "converged!\n\n Energy difference (Ry) = 0\n";
+          "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0.1\n";
     std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/Angstrom)  : 2.57111\n";
 
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
@@ -205,9 +203,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
 
     std::string expected_ofs
         = "                    old total energy (ry) = 0\n                    new total energy (ry) = 1\n              "
-          "     energy difference (ry) = 1\n               largest gradient (ry/bohr) = 0.1\n\n"
-          " Largest force is 2.57111 eV/Angstrom while threshold is -1 eV/Angstrom\n\n Ion relaxation is not "
-          "converged yet (threshold is 25.7111)\n";
+          "     energy difference (ry) = 1\n               largest gradient (ry/bohr) = 0.1\n";
     std::string expected_std = " ETOT DIFF (eV)       : 13.6057\n LARGEST GRAD (eV/Angstrom)  : 2.57111\n";
 
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
@@ -261,7 +257,7 @@ TEST_F(IonsMoveBasicTest, TerminateNotConverged)
     ifs.close();
     std::remove("test_terminate_not_converged.log");
 
-    std::string expected_ofs = " the maximum number of steps has been reached.\n end of geometry optimization.\n";
+    std::string expected_ofs = " the maximum number of steps has been reached.\n Relaxation is not converged after reaching relax_nmax!\n end of geometry optimization.\n";
 
     EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
 }

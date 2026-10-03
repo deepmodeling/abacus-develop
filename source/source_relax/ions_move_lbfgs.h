@@ -12,6 +12,7 @@
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
 #include "source_esolver/esolver_ks.h"
+#include "relax_criteria.h"
 
 /**
  * @class Ions_Move_LBFGS
@@ -36,7 +37,8 @@ public:
     bool relax_step(const ModuleBase::matrix _force,
                     UnitCell& ucell,
                     const double &etot,
-                    std::ofstream& ofs_running);
+                    std::ofstream& ofs_running,
+                    const Relax_Criteria& criteria);
 
 private:
     //LineSearch l_search;
@@ -77,9 +79,10 @@ private:
 
     /**
      * @brief Judge if the relaxation has converged
+     * @param criteria Convergence thresholds passed from the driver
      * @return true if converged, false otherwise
      */
-    bool is_restrain();
+    bool is_restrain(const Relax_Criteria& criteria);
 
     /**
      * @brief Calculate maximum gradient component

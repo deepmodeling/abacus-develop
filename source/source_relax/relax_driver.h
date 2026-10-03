@@ -9,6 +9,7 @@
 #include "source_base/matrix.h"
 #include <vector>
 #include <fstream>
+#include <string>
 
 /**
  * @brief Driver class for geometry relaxation calculations.
@@ -45,6 +46,13 @@ class Relax_Driver
     Relax rl;
     /// Old relaxation optimizer (IonCellOptimizer class)
     IonCellOptimizer rl_old;
+
+    /// Cached global output directory (read once from PARAM at relax_driver entry)
+    std::string out_dir_;
+    /// Cached DeePKS setorb flag (read once from PARAM at relax_driver entry)
+    bool deepks_setorb_ = false;
+    /// Cached MPI rank (read once at relax_driver entry)
+    int my_rank_ = 0;
 
     /**
      * @brief Initialize the relaxation optimizer.
@@ -125,7 +133,24 @@ class Relax_Driver
      * @param etot Total energy of the final step.
      * @param stress Stress tensor of the final step.
      */
-    void final_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress, const ModuleBase::matrix& force);
+    void final_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress, const ModuleBase::matrix& force, std::ofstream& ofs_running);
+
+    /**
+     * @brief Print the unified not-converged summary to the running log.
+     *
+     * Reports the relaxation method, the number of ionic steps taken and the
+     * per-step largest force / stress history, so ASE and users can diagnose
+     * why the relaxation stopped at relax_nmax.
+     *
+     * @param inp Input parameters (selects the active optimizer and relax_nmax).
+     * @param ofs_running Output stream for the running log.
+     */
+    void print_not_converged_summary(const Input_para& inp, std::ofstream& ofs_running) const;
+
+    /**
+     * @brief Print the dry-run success message to screen.
+     */
+    void print_dry_run_message() const;
 };
 
 #endif
