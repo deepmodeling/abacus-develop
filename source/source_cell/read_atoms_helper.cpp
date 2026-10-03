@@ -563,6 +563,14 @@ bool read_atom_type_header(int it, UnitCell& ucell,
                 ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),ucell.atoms[it].l_nchi[L]);
             }
         }
+    }
+    else if (basis_type == "dftb")
+    {
+        // Keep the generic UnitCell broadcast metadata valid without loading
+        // ABACUS numerical orbitals; the DFTB basis is defined by its SKF files.
+        ucell.atoms[it].nw = 0;
+        ucell.atoms[it].nwl = 0;
+        ucell.atoms[it].l_nchi.assign(1, 0);
     } // end basis type
 #endif
 

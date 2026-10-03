@@ -24,6 +24,7 @@
 #include "esolver_dp.h"
 #include "esolver_nep.h"
 #include "esolver_lj.h"
+#include "esolver_dftb_native.h"
 #include "esolver_of.h"
 #include "esolver_of_tddft.h"
 
@@ -101,7 +102,11 @@ std::string determine_type(const Input_para& inp)
 #endif
     }
 
-    if (inp.esolver_type == "lj")
+    if (inp.esolver_type == "dftbnative")
+    {
+        esolver_type = "dftb_native";
+    }
+    else if (inp.esolver_type == "lj")
     {
         esolver_type = "lj_pot";
     }
@@ -367,6 +372,10 @@ ESolver* init_esolver(const Input_para& inp)
         }
     }
 #endif
+    else if (esolver_type == "dftb_native")
+    {
+        return new ESolver_DFTBNative("OUT." + inp.suffix + "/");
+    }
     else if (esolver_type == "ofdft")
     {
         return new ESolver_OF();

@@ -1,0 +1,6 @@
+k-points: 121
+bands per k-point: 144
+eigenvalues compared: 17424
+max |delta E|: 5.12700e-4 eV
+mean |delta E|: 2.49089e-4 eV
+RMS delta E: 2.87890e-4 eV

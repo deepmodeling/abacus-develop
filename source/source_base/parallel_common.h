@@ -11,6 +11,9 @@
 namespace Parallel_Common
 {
 
+int get_rank();
+int get_size();
+
 //(1) bcast array
 void bcast_complex_double(std::complex<double>* object, const int n);
 void bcast_string(std::string* object, const int n);

@@ -1,0 +1,115 @@
+======================================================================
+3ob-3-1
+======================================================================
+
+(c) 2017, Marcus Elstner, Karlsruher Institut für Technologie
+All rights reserved
+
+This work is licensed under the Creative Commons Attribution-ShareAlike 4.0
+International License. To view a copy of this license, consult the LICENSE file
+or visit http://creativecommons.org/licenses/by-sa/4.0/ .
+
+NOTE: The rights holder(s) for this work explicitly require that the attribution
+conditions of this license are enforced. Use in part or in whole of this data is
+permitted only under the condition that the scientific background of the
+Licensed Material will be CITED IN ANY PUBLICATIONS ARISING FROM ITS USE. The
+required references are specified in this file and must be included in resulting works.
+
+
+Description
+===========
+
+This set of parameters is part of the Third-Order Parametrization for
+Organic and Biological Systems (3OB) has been specifically designed
+for Third Order Density Functional Tight Binding (DFTB3) and super-
+sedes the MIO parameter set. Main improvements over MIO are improved
+geometries for non-covalent bonds as e.g. the hydrogen bond in the
+water dimer, a great reduction of the consistent overbinding and an
+overall improved performance. Comprehensive benchmark tests for
+C-H-N-O can be found in [JCTC2013], for P-S-* in [JCTC2014],
+for Mg-Zn-* in [JCTC2015-1], and for Na-F-K-Ca-Cl-Br-I-* in
+[JCTC2015-2].
+
+----------------------------------------------------------------------
+
+The following parameter should be generally used for DFTB3/3OB
+calculations:
+
+zeta = 4.00 (gamma^h function exponent; DampXHExponent in DFTB+)
+
+----------------------------------------------------------------------
+
+List of all atomic Hubbard derivatives (atomic units):
+Br = -0.0573
+ C = -0.1492
+Ca = -0.0340
+Cl = -0.0697
+ F = -0.1623
+ H = -0.1857
+ I = -0.0433
+ K = -0.0339
+Mg = -0.02
+ N = -0.1535
+Na = -0.0454
+ O = -0.1575
+ P = -0.14
+ S = -0.11
+Zn = -0.03
+
+Maximum angular momenta for calculation input files:
+
+Br = "d"
+ C = "p"
+Ca = "p"
+Cl = "d"
+ F = "p"
+ H = "s"
+ I = "d"
+ K = "p"
+Mg = "p"
+ N = "p"
+Na = "p"
+ O = "p"
+ P = "d"
+ S = "d"
+Zn = "d"
+
+----------------------------------------------------------------------
+
+For the empirical halogend bond correction described in [JCTC2015-2]
+the following parameters are provided:
+
+DFTB3-D3(BJ) Parameters:
+a1 = 0.746
+a2 = 4.191
+s8 = 3.209
+
+General X-Correction parameters (AA and kcal/mol unit system):
+c1 = 7.761
+c2 = 0.050
+c3 = 4.518
+
+Element Pair Parameters (AA and kcal/mol unit system):
+O-Cl = 1.237
+O-Br = 1.099
+O-I  = 1.313
+N-Cl = 1.526
+N-Br = 1.349
+N-I  = 1.521
+
+
+Relevant Publications
+=====================
+
+[JCTC2013] J. Chem. Theory Comput., 2013, 9, 338-354.
+[JCTC2014] J. Chem. Theory Comput., 2014, 10, 1518–1537.
+[JCTC2015-1] J. Phys. Chem. B, 2015, 119, 1062–1082.
+[JCTC2015-2] J. Chem. Theory Comput., 2015, 11, 332–342.
+
+
+Required references
+===================
+O - N - C - H:		[JCTC2013]
+P,S-*:	    		[JCTC2014]
+Mg,Zn-*:		[JCTC2015-1]
+Na,F,K,Ca,Cl,Br,I-*:	[JCTC2015-2]

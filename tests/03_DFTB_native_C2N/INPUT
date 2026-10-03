@@ -1,0 +1,9 @@
+INPUT_PARAMETERS
+suffix dftb_native
+ntype 2
+calculation scf
+basis_type dftb
+esolver_type dftbnative
+nspin 1
+symmetry 0
+dftb_native_input dftb_native.in

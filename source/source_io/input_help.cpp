@@ -458,7 +458,7 @@ void ParameterHelp::show_general_help(std::ostream& os) {
     os << "\n";
     os << "Common INPUT parameters:\n";
     os << "  calculation    - Calculation type (scf, relax, md, nscf, etc.)\n";
-    os << "  basis_type     - Basis set type (pw, lcao)\n";
+    os << "  basis_type     - Basis set type (pw, lcao, dftb)\n";
     os << "  ecutwfc        - Energy cutoff for wavefunctions (Ry)\n";
     os << "  ks_solver      - Kohn-Sham solver (cg, dav, genelpa, etc.)\n";
     os << "  scf_thr        - SCF convergence threshold\n";

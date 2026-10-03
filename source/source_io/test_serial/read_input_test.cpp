@@ -325,6 +325,21 @@ TEST_F(InputTest, ValidateLrRequiresNscf)
     EXPECT_EQ(valid_param.inp.calculation, "nscf");
 }
 
+TEST_F(InputTest, DftbBasisRequiresNativeSolver)
+{
+    expect_invalid_input("dftb_basis_ksdft_INPUT",
+                         "basis_type dftb\n",
+                         "basis_type=dftb requires esolver_type=dftbnative");
+}
+
+TEST_F(InputTest, NativeDftbRemainsOptInByDefault)
+{
+    Parameter param;
+    EXPECT_NO_THROW(read_parameters("dftb_default_solver_INPUT", "", param));
+    EXPECT_EQ(param.inp.esolver_type, "ksdft");
+    EXPECT_EQ(param.inp.basis_type, "pw");
+}
+
 TEST_F(InputTest, ValidateDeepksOutputFrequency)
 {
     Parameter default_param;

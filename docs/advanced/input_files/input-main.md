@@ -82,6 +82,7 @@
     - [elpa\_num\_thread](#elpa_num_thread)
     - [num\_stream](#num_stream)
   - [Electronic structure](#electronic-structure)
+    - [dftb\_native\_input](#dftb_native_input)
     - [basis\_type](#basis_type)
     - [ks\_solver](#ks_solver)
     - [nbands](#nbands)
@@ -675,6 +676,7 @@
   - ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
   - lr: LR-TDDFT with given KS orbitals (Under Development Feature)
   - dfpt: density functional perturbation theory (Under Development Feature)
+  - dftbnative: native periodic SCC-DFTB2/DFTB3 solver using Slater-Koster files, without a DFTB+ runtime dependency.
 - **Default**: ksdft
 
 ### symmetry
@@ -1230,6 +1232,13 @@
 
 ## Electronic structure
 
+### dftb_native_input
+
+- **Type**: String
+- **Availability**: *[`esolver_type`](#esolver_type)==dftbnative*
+- **Description**: Path to the native DFTB configuration file. It supplies the SKF directory, Hubbard derivatives, SCC controls, temperature, and DFTB3 switch; k points are read from the ABACUS KPT file.
+- **Default**: dftb_native.in
+
 ### basis_type
 
 - **Type**: String
@@ -1237,6 +1246,7 @@
   - pw: Using plane-wave basis set only.
   - lcao: Using localized atomic orbital sets.
   - lcao_in_pw: Expand the localized atomic set in plane-wave basis, non-self-consistent field calculation not tested.
+  - dftb: use the native Slater-Koster DFTB basis and solver; no ABACUS UPF or numerical-orbital files are read.
 - **Default**: pw
 
 ### ks_solver

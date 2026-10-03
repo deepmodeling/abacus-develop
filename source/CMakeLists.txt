@@ -549,6 +549,7 @@ add_subdirectory(source_basis/module_nao)
 add_subdirectory(source_md)
 add_subdirectory(source_basis/module_pw)
 add_subdirectory(source_esolver)
+add_subdirectory(source_dftb)
 add_subdirectory(source_io)
 add_subdirectory(source_relax)
 add_subdirectory(source_lcao/module_ri)
@@ -782,6 +783,10 @@ endif()
 if(ENABLE_JSON)
   target_link_libraries(${ABACUS_BIN_NAME} PRIVATE json_output)
 endif()
+
+# The native DFTB object target consumes LAPACK symbols, so keep it ahead of
+# the numerical-provider closure for static linkers.
+target_link_libraries(${ABACUS_BIN_NAME} PRIVATE dftb_native)
 
 # External closure: feature consumers precede numerical providers and runtimes.
 target_link_libraries(${ABACUS_BIN_NAME} PRIVATE abacus::link_libs)
