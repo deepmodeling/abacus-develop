@@ -1,0 +1,16 @@
+PW PBE0 spin-polarized Fe with uneven k-point pools.
+
+Three k points per spin are distributed over kpar=2 pools (2+1), so one
+pool has no local target k point during the last ACE step in each spin
+channel. This exercises the active/idle source-q communication fixed by
+PR #8070; the previous implementation fails with MPI_ERR_TRUNCATE.
+
+Run with an even number of MPI ranks, at least two; the CPU test suite
+uses four. The reference was generated with kpar=1 and four MPI ranks.
+The final total/absolute moments are approximately 0.666667/0.699096
+mu_B per cell (FM). A 12 Ry cutoff and 3.0 Angstrom cell keep this small
+regression test fast; they are not a cutoff/k-point convergence study.
+Energy, forces and total/absolute moments are checked by the existing
+integration harness. magnetism.ref opts into the moment comparison
+with a tolerance of 1e-3 mu_B per cell.
+No ELF output or new test driver is required.
