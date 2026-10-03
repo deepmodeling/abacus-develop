@@ -448,3 +448,4 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
                 io_comm,
                 communicator_relation == MPI_IDENT || communicator_relation == MPI_CONGRUENT,
                 "KS eigenvector wavefunction and RPA communicators are inconsistent");
+#endif

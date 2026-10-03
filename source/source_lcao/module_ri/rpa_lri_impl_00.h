@@ -3,8 +3,6 @@
 // DATE :   2022-12-09
 //=======================
 
-#ifndef RPA_LRI_IMPL_H
-#define RPA_LRI_IMPL_H
 #include <algorithm>
 #include <cmath>
 #include <complex>
@@ -448,3 +446,4 @@ inline KSEigenvectorV1Metadata make_ks_eigenvector_v1_metadata(const int nks_tot
         = checked_mul_u64(static_cast<unsigned long long>(ncomponents),
                           metadata.component_bytes,
                           "KS eigenvector v1 k-point byte size");
+#endif

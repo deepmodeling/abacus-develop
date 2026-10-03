@@ -287,5 +287,3 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell& ucell,
 
 // 	// rpa_lri.set_Cs(Cs);
 // }
-
-#endif

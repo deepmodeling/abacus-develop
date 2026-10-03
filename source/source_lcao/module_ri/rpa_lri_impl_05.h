@@ -1,3 +1,4 @@
+#ifdef __MPI
             RpaLriDetail::write_ks_eigenvector_v1_mpi(io_comm,
                                                       parav,
                                                       psi,
@@ -14,7 +15,8 @@
             throw;
         }
         ModuleBase::timer::end("RPA_LRI", "out_eigen_vector_v1_mpi_io");
-#else
+#endif
+#ifndef __MPI
         struct KSEigenRecord
         {
             std::int32_t ik = 0;

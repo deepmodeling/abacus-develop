@@ -1,3 +1,5 @@
+#ifdef __MPI
+
     const unsigned long long payload_bytes
         = checked_mul_u64(static_cast<unsigned long long>(nks_tot),
                           kpoint_bytes,
