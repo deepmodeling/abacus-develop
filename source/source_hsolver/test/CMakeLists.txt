@@ -125,12 +125,12 @@ if (ENABLE_MPI)
 endif()
 AddTest(
   TARGET MODULE_HSOLVER_ppcg
-  LIBS ${math_libs} base device container
+  LIBS parameter base psi device container
   SOURCES test_diago_ppcg.cpp ../diago_ppcg.cpp
 )
 AddTest(
   TARGET MODULE_HSOLVER_ppcg_float
-  LIBS ${math_libs} base device container
+  LIBS parameter base psi device container
   SOURCES test_diago_ppcg_float.cpp ../diago_ppcg.cpp
 )
 
