@@ -13,21 +13,21 @@ We support stochastic DFT calculation (SDFT) or mixed stochastic-deterministic D
 
 When we have a hamiltonian, the electronic density can be calculated with:
 
-$\rho(\mathbf{r})={\rm Tr}[f(\hat{H})\ket{\mathbf{r}}\bra{\mathbf{r}}]$,
+$\rho(\mathbf{r})={\rm Tr}[f(\hat{H})\left|\mathbf{r}\right\rangle\left\langle\mathbf{r}\right|]$,
 
 where the Fermi-Dirac function $f(\hat{H})=\frac{1}{1+\exp(\frac{\hat{H}-\mu}{kT})}$ and it can be calculated with the Chebyshev expansion. Here we only support the "fd" or "fermi-dirac" `smearing_method`, the parameter `smearing_sigma` is equal the temperature $T$ (in Ry) and `nche_sto` represents the order of the expansion.
 
 For physical quantities represented by operator $\hat{O}$, SDFT calculates its trace with:
 
-${\rm Tr}[\hat{O}]=\sum_{i=1}^{N_\chi}{\bra{\chi_i}\hat{O}\ket{\chi_i}}$,
+${\rm Tr}[\hat{O}]=\sum_{i=1}^{N_\chi}{\left\langle\chi_i\right|\hat{O}\left|\chi_i\right\rangle}$,
 
 while MDFT calculates the trace as:
 
-${\rm Tr}[\hat{O}]=\sum_{n=1}^{N_\phi}{\bra{\phi_n}\hat{O}\ket{\phi_n}}+\sum_{i=1}^{N_\chi}{\bra{\tilde \chi_i}\hat{O}\ket{\tilde \chi_i}}$,
+${\rm Tr}[\hat{O}]=\sum_{n=1}^{N_\phi}{\left\langle\phi_n\right|\hat{O}\left|\phi_n\right\rangle}+\sum_{i=1}^{N_\chi}{\left\langle\tilde \chi_i\right|\hat{O}\left|\tilde \chi_i\right\rangle}$,
 
-where $\{\ket{\tilde\chi_i}\}$ are obtaiend by projecting stochastic orbitals onto the subspace orthogonal to KS orbitals $\{\phi_n\}$:
+where $\{\left|\tilde\chi_i\right\rangle\}$ are obtaiend by projecting stochastic orbitals onto the subspace orthogonal to KS orbitals $\{\phi_n\}$:
 
-$\ket{\tilde\chi_i}=\ket{\chi_i}-\sum_{n=1}^{N_\phi}\braket{\phi_n|\chi_i}\ket{\phi_n}$.
+$\left|\tilde\chi_i\right\rangle=\left|\chi_i\right\rangle-\sum_{n=1}^{N_\phi}\left\langle\phi_n|\chi_i\right\rangle\left|\phi_n\right\rangle$.
 
 Here the number of KS orbitals $N_\phi$ is controlled by the parameter `nbands` while the number of stochastic orbitals $N_\chi$ is controlled by `nbands_sto`.
 
