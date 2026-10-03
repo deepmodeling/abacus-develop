@@ -8,6 +8,7 @@
 
 #include "lri_cv.h"
 #include "source_hamilt/module_xc/exx_info_ri.h"
+#include "source_psi/psi.h"
 // #include "module_xc/exx_info.h"
 // #include "source_basis/module_ao/orb_atomic_lm.h"
 #include "source_base/matrix.h"
@@ -15,6 +16,7 @@
 // #include <RI/physics/Exx.h>
 #include <RI/ri/RI_Tools.h>
 #include <array>
+#include <complex>
 #include <iosfwd>
 #include <map>
 #include <memory>
@@ -24,8 +26,22 @@
 
 class Parallel_Orbitals;
 class K_Vectors;
+class Grid_Driver;
+class TwoCenterBundle;
+class UnitCell;
+class LCAO_Orbitals;
 struct Input_para;
 template <typename Tdata> class Exx_LRI;
+
+namespace elecstate
+{
+class ElecState;
+}
+
+namespace module_dm
+{
+template <typename TK, typename TR> class DensityMatrix;
+}
 
 namespace ModuleRI
 {

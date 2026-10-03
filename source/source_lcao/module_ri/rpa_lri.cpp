@@ -11,7 +11,5 @@
 #include "rpa_lri_impl_06.h"
 #include "rpa_lri_impl_07.h"
 
-#ifdef __EXX
 template class RPA_LRI<double, double>;
 template class RPA_LRI<std::complex<double>, double>;
-#endif
