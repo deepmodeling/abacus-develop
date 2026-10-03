@@ -19,7 +19,7 @@ build:
       - |
         if [ "$READTHEDOCS_VERSION_TYPE" = "external" ]; then
           # sphinx-build -b epub3 docs/ _build/epub --fail-on-warning
-          sphinx-build -b latexpdf docs/ _build/latex --fail-on-warning
+          sphinx-build -M latexpdf docs/ _build --fail-on-warning
         fi
         
 # Build documentation in the "docs/" directory with Sphinx
