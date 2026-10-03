@@ -157,3 +157,10 @@ AddTest(
   LIBS parameter base device
   SOURCES ions_move_sd_test.cpp ../ions_move_sd.cpp ../ions_move_basic.cpp ../relax_data.cpp ${cell_source_files}
 )
+
+AddTest(
+  TARGET MODULE_RELAX_relax_driver_test
+  LIBS parameter base device
+  SOURCES test_relax_driver.cpp
+          ../relax_stru_header.cpp
+)

@@ -48,7 +48,7 @@ TEST_F(PrintCellTest, PrintSTRU_nspin1)
     std::string fn = "C1H2_STRU_nspin1";
 
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 1, false, false, false, false, false, 0, ModuleBase::matrix());
+                              fn, "", 1, false, false, false, false, false, 0, ModuleBase::matrix(), false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -79,6 +79,51 @@ TEST_F(PrintCellTest, PrintSTRU_nspin1)
     remove(fn.c_str());
 }
 
+TEST_F(PrintCellTest, PrintSTRU_zero_force_computed)
+{
+    UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
+    ucell = utp.SetUcellInfo();
+    std::string fn = "C1H2_STRU_zero_force";
+
+    // has_force=true with an all-zero force matrix: genuinely computed zero
+    // forces must still be emitted, unlike "not computed" which omits them.
+    ModuleBase::matrix force(3, 3);
+    force.zero_out();
+
+    unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
+                              fn, "", 2, true, false, false, false, false, 0, force, true);
+    std::ifstream ifs;
+    ifs.open(fn);
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+
+    EXPECT_THAT(str, testing::HasSubstr("Cartesian_angstrom # positions in Angstrom, forces in eV/Angstrom"));
+    EXPECT_THAT(str, testing::HasSubstr(" f 0.000000 0.000000 0.000000"));
+    ifs.close();
+    remove(fn.c_str());
+}
+
+TEST_F(PrintCellTest, PrintSTRU_force_matrix_without_flag)
+{
+    UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
+    ucell = utp.SetUcellInfo();
+    std::string fn = "C1H2_STRU_flag_off";
+
+    // Force matrix is correctly sized but has_force=false: the flag takes
+    // priority and no f fields are emitted.
+    ModuleBase::matrix force(3, 3);
+    force(0, 0) = 0.1; force(0, 1) = 0.2; force(0, 2) = 0.3;
+
+    unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
+                              fn, "", 2, true, false, false, false, false, 0, force, false);
+    std::ifstream ifs;
+    ifs.open(fn);
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+
+    EXPECT_THAT(str, testing::Not(testing::HasSubstr(" f ")));
+    ifs.close();
+    remove(fn.c_str());
+}
+
 TEST_F(PrintCellTest, PrintSTRU_nspin2_no_force)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
@@ -86,7 +131,7 @@ TEST_F(PrintCellTest, PrintSTRU_nspin2_no_force)
     std::string fn = "C1H2_STRU_nspin2";
 
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 2, true, true, false, false, false, 0, ModuleBase::matrix());
+                              fn, "", 2, true, true, false, false, false, 0, ModuleBase::matrix(), false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -118,7 +163,7 @@ TEST_F(PrintCellTest, PrintSTRU_nspin2_with_mag)
     ucell->atoms[1].mag[0] = -0.5;  // H1
     ucell->atoms[1].mag[1] = 2.0;   // H2
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 2, true, false, false, false, false, 0, ModuleBase::matrix());
+                              fn, "", 2, true, false, false, false, false, 0, ModuleBase::matrix(), false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -147,7 +192,7 @@ TEST_F(PrintCellTest, PrintSTRU_nspin2_mulliken)
     ucell->orbital_fn[1] = "__unittest_orbital_fn_1__";
     ucell->atom_mulliken = {{-1, 0.5}, {-1, 0.4}, {-1, 0.3}};
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 2, true, false, true, true, true, 0, ModuleBase::matrix());
+                              fn, "", 2, true, false, true, true, true, 0, ModuleBase::matrix(), false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -176,7 +221,7 @@ TEST_F(PrintCellTest, PrintSTRU_nspin4_initial_mag)
     ucell->atoms[1].m_loc_[0].set(0.0, 1.0, 0.0);   // H1
     ucell->atoms[1].m_loc_[1].set(0.0, 0.0, 1.0);   // H2
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 4, true, false, false, false, false, 0, ModuleBase::matrix());
+                              fn, "", 4, true, false, false, false, false, 0, ModuleBase::matrix(), false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -202,7 +247,7 @@ TEST_F(PrintCellTest, PrintSTRU_nspin4_mulliken)
 
     ucell->atom_mulliken = {{-1, 0.5, 0.1, 0.2}, {-1, 0.4, 0.3, 0.4}, {-1, 0.3, 0.5, 0.6}};
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 4, true, false, true, false, false, 0, ModuleBase::matrix());
+                              fn, "", 4, true, false, true, false, false, 0, ModuleBase::matrix(), false);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -229,7 +274,7 @@ TEST_F(PrintCellTest, PrintSTRU_with_force)
     force(2, 0) = 0.05; force(2, 1) = 0.15; force(2, 2) = -0.25; // H2
 
     unitcell::print_stru_file(*ucell, ucell->atoms, ucell->latvec,
-                              fn, "", 2, true, false, false, false, false, 0, force);
+                              fn, "", 2, true, false, false, false, false, 0, force, true);
     std::ifstream ifs;
     ifs.open(fn);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());

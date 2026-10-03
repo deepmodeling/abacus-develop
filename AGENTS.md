@@ -163,6 +163,12 @@ full mixed-line-ending hook only for intentional repository-wide normalization.
 - Pull requests: https://github.com/deepmodeling/abacus-develop/pulls
 - Upstream PRs are opened from personal fork branches
   (`<fork-owner>:<branch>` into `develop`).
+- When synchronizing a local branch with `upstream/develop`, prefer
+  `git merge upstream/develop` over `git rebase upstream/develop`. Merge
+  preserves the original commit SHAs of the local work, keeps the branch
+  pushable without `--force`, and avoids re-applying a long patch series
+  when conflicts arise. Use rebase only when the user explicitly asks for
+  a linear history.
 - `workflow_dispatch`-only workflows (e.g. `.github/workflows/interface.yml`)
   are not triggered by push/PR events; PR CI cannot verify such fixes, so
   state "manual dispatch run required" in the PR verification notes.

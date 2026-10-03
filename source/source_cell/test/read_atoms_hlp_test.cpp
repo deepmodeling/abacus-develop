@@ -473,6 +473,147 @@ TEST_F(ReadAtomsHelperTest, ParseAtomPropertiesVectorMag)
     std::remove("test_input.tmp");
 }
 
+// Test parse_atom_properties with force field (round-trip compatibility)
+TEST_F(ReadAtomsHelperTest, ParseAtomPropertiesForce)
+{
+    std::string input_str = "1.0 2.0 3.0 m 1 1 1 f 0.5 -0.3 0.2 mag 0.8333\n";
+
+    std::ofstream temp_file("test_input.tmp");
+    temp_file << input_str;
+    temp_file.close();
+
+    std::ifstream ifpos("test_input.tmp");
+
+    Atom atom;
+    atom.label = "C";
+    atom.vel.resize(1);
+    atom.mag.resize(1);
+    atom.m_loc_.resize(1);
+    atom.angle1.resize(1);
+    atom.angle2.resize(1);
+    atom.lambda.resize(1);
+    atom.constrain.resize(1);
+
+    ModuleBase::Vector3<int> mv(1, 1, 1);
+    bool input_vec_mag = false;
+    bool input_angle_mag = false;
+    bool set_element_mag_zero = false;
+
+    // Skip the position coordinates
+    double x, y, z;
+    ifpos >> x >> y >> z;
+
+    bool result = unitcell::parse_atom_properties(ifpos, atom, 0, mv,
+                                                  input_vec_mag, input_angle_mag,
+                                                  set_element_mag_zero);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(mv.x, 1);
+    EXPECT_EQ(mv.y, 1);
+    EXPECT_EQ(mv.z, 1);
+    EXPECT_DOUBLE_EQ(atom.mag[0], 0.8333);
+    EXPECT_TRUE(set_element_mag_zero);
+    EXPECT_FALSE(ifpos.fail());
+
+    ifpos.close();
+    std::remove("test_input.tmp");
+}
+
+// Test parse_atom_properties with negative force values
+TEST_F(ReadAtomsHelperTest, ParseAtomPropertiesNegativeForce)
+{
+    std::string input_str = "1.0 2.0 3.0 m 1 0 1 f -1.0 -2.0 -3.0\n";
+
+    std::ofstream temp_file("test_input.tmp");
+    temp_file << input_str;
+    temp_file.close();
+
+    std::ifstream ifpos("test_input.tmp");
+
+    Atom atom;
+    atom.label = "C";
+    atom.vel.resize(1);
+    atom.mag.resize(1);
+    atom.m_loc_.resize(1);
+    atom.angle1.resize(1);
+    atom.angle2.resize(1);
+    atom.lambda.resize(1);
+    atom.constrain.resize(1);
+
+    ModuleBase::Vector3<int> mv(1, 1, 1);
+    bool input_vec_mag = false;
+    bool input_angle_mag = false;
+    bool set_element_mag_zero = false;
+
+    // Skip the position coordinates
+    double x, y, z;
+    ifpos >> x >> y >> z;
+
+    bool result = unitcell::parse_atom_properties(ifpos, atom, 0, mv,
+                                                  input_vec_mag, input_angle_mag,
+                                                  set_element_mag_zero);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(mv.x, 1);
+    EXPECT_EQ(mv.y, 0);
+    EXPECT_EQ(mv.z, 1);
+    EXPECT_FALSE(ifpos.fail());
+
+    ifpos.close();
+    std::remove("test_input.tmp");
+}
+
+// Round-trip integration: a STRU atom line in the exact format produced by
+// print_stru_file (positions + m + optional f) must be parseable by
+// parse_atom_properties without leaving the stream in a fail state.
+// This catches the round-trip regression reported in issue #8051.
+TEST_F(ReadAtomsHelperTest, RoundTripWriterReaderForce)
+{
+    // Line as written by print_stru_file with has_force=true
+    std::string input_str = "0.000000000000 0.000000000000 0.000000000000 m 1 1 1 f -0.123456000000 0.234567000000 -0.345678000000\n";
+
+    std::ofstream temp_file("test_input.tmp");
+    temp_file << input_str;
+    temp_file.close();
+
+    std::ifstream ifpos("test_input.tmp");
+
+    Atom atom;
+    atom.label = "Fe";
+    atom.vel.resize(1);
+    atom.mag.resize(1);
+    atom.m_loc_.resize(1);
+    atom.angle1.resize(1);
+    atom.angle2.resize(1);
+    atom.lambda.resize(1);
+    atom.constrain.resize(1);
+
+    ModuleBase::Vector3<int> mv(0, 0, 0);
+    bool input_vec_mag = false;
+    bool input_angle_mag = false;
+    bool set_element_mag_zero = false;
+
+    double x, y, z;
+    ifpos >> x >> y >> z;
+
+    bool result = unitcell::parse_atom_properties(ifpos, atom, 0, mv,
+                                                  input_vec_mag, input_angle_mag,
+                                                  set_element_mag_zero);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(mv.x, 1);
+    EXPECT_EQ(mv.y, 1);
+    EXPECT_EQ(mv.z, 1);
+    // Stream must not be in a fail state -- this was the bug in issue #8051:
+    // the reader did not know "f" and consumed the force values as the next
+    // keyword, leaving the stream corrupted for subsequent atoms.
+    EXPECT_FALSE(ifpos.fail());
+    EXPECT_TRUE(ifpos.good() || ifpos.eof());
+
+    ifpos.close();
+    std::remove("test_input.tmp");
+}
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

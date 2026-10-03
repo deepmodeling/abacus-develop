@@ -10,6 +10,7 @@ add_library(
     socket_driver.cpp
     cg_base.cpp
     relax_driver.cpp
+    relax_stru_header.cpp
     relax_sync.cpp
     line_search.cpp
     ions_move_lbfgs.cpp

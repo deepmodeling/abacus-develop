@@ -46,21 +46,23 @@ namespace unitcell
      * @param orb true for printing NUMERICAL_ORBITAL section [in]
      * @param dpks_desc true for printing NUMERICAL_DESCRIPTOR section [in]
      * @param iproc GlobalV::MY_RANK [in]
-     * @param force atomic forces in Ry/Bohr, empty matrix means no force output [in]
+     * @param force atomic forces in Ry/Bohr, used only when has_force is true [in]
+     * @param has_force true to emit per-atom f fields; force matrix must match nat [in]
      */
     void print_stru_file(const UnitCell& ucell,
                          const Atom*     atoms,
                          const ModuleBase::Matrix3& latvec,
                          const std::string& fn,
                          const std::string& header,
-                         const int& nspin = 1,
-                         const bool& direct = false,
-                         const bool& vel = false,
-                         const bool& magmom = false,
-                         const bool& orb = false,
-                         const bool& dpks_desc = false,
-                         const int& iproc = 0,
-                         const ModuleBase::matrix& force = ModuleBase::matrix());
+                         const int& nspin,
+                         const bool& direct,
+                         const bool& vel,
+                         const bool& magmom,
+                         const bool& orb,
+                         const bool& dpks_desc,
+                         const int& iproc,
+                         const ModuleBase::matrix& force,
+                         const bool& has_force);
 
     /**
      * @brief Print basic unitcell information to output stream.

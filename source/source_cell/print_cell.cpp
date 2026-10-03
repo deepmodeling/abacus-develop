@@ -11,6 +11,7 @@
 #include "source_cell/mdcell.h"
 #include "source_base/formatter.h"
 #include "source_base/tool_title.h"
+#include "source_base/tool_quit.h"
 #include "source_base/global_variable.h"
 #include "source_base/output.h"
 
@@ -100,7 +101,8 @@ namespace unitcell
                          const bool& orb,
                          const bool& dpks_desc,
                          const int& iproc,
-                         const ModuleBase::matrix& force)
+                         const ModuleBase::matrix& force,
+                         const bool& has_force)
     {
         ModuleBase::TITLE("UnitCell","print_stru_file");
         if (iproc != 0)
@@ -156,9 +158,14 @@ namespace unitcell
         // ATOMIC_POSITIONS
         str += "\nATOMIC_POSITIONS\n";
         int nat_ = 0; // counter iat, for printing out Mulliken magmom who is indexed by iat
-        // If force is provided, output positions in Angstrom and forces in eV/Angstrom.
-        // Fractional (Direct) positions are only emitted when no force is needed.
-        const bool has_force = (force.nr == ucell.nat && force.nc == 3);
+        // Force output is controlled by the explicit has_force flag rather than
+        // inferred from matrix dimensions, so a zero-allocated matrix is not
+        // mistaken for computed forces.
+        if (has_force && (force.nr != ucell.nat || force.nc != 3))
+        {
+            ModuleBase::WARNING_QUIT("print_stru_file",
+                                     "has_force is true but force matrix dimensions do not match nat x 3");
+        }
         const bool use_cartesian = has_force || !direct;
         const std::string scale = use_cartesian ? "Cartesian_angstrom" : "Direct";
         std::string unit_note = "\n";

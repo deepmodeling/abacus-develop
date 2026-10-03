@@ -710,6 +710,7 @@
 - **Type**: Boolean
 - **Description**: If set to True, calculate the force at the end of the electronic iteration.
   In socket_driver mode, this flag controls whether the returned frame advertises forces; it is not forced on by the socket protocol.
+  When [`out_stru`](#out_stru) is enabled, this flag also controls whether per-atom `f fx fy fz` fields (in eV/Angstrom) are appended to atom lines in the written structure files; see [stru.md](stru.md#header-of-structure-files-written-by-abacus) for the header layout.
 - **Default**: False
 
 ### kpar
@@ -831,6 +832,7 @@
 - **Type**: Boolean
 - **Description**: If set to True, calculate the stress at the end of the electronic iteration.
   In socket_driver mode, this flag independently controls whether the returned frame advertises stress/virial.
+  When [`out_stru`](#out_stru) is enabled, this flag also controls whether the three `# Stress (kbar):` rows in the structure-file header carry numerical values or `N/A N/A N/A`; see [stru.md](stru.md#header-of-structure-files-written-by-abacus) for the header layout.
 - **Default**: False
 
 ### diago_proc
