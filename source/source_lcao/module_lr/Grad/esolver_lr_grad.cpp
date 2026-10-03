@@ -146,7 +146,7 @@ inline void test_edm_H2(const T* const edm, const double* const eig_ks, const ps
 template<typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::setup_relax_target_()
 {
-    this->excited_relax_ = (PARAM.inp.calculation == "relax");
+    this->excited_relax_ = (this->inp_->calculation == "relax");
     if (!this->excited_relax_) { return; }
 
     // The Z-vector equation has no complex solver (see Grad/multipliers/zeq_solver.hpp), so an
@@ -175,7 +175,7 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_relax_target_()
         // intent, and `updown` is already the right name for this channel.
         if (spin == "triplet")
         {
-            GlobalV::ofs_running << " WARNING: lr_target_spin=triplet is ignored. This is an"
+            this->ofs_running_ << " WARNING: lr_target_spin=triplet is ignored. This is an"
                 " open-shell calculation with a single spin-conserving channel (updown), which is"
                 " what the relaxation will follow." << std::endl;
         }
@@ -203,7 +203,7 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_relax_target_()
     this->force_gs_.create(this->ucell_->nat, 3);
     this->lr_force_.create(this->ucell_->nat, 3);
     this->target_state_ = this->inp_->lr_target_state;   // seed; overlap takes over from step 2
-    GlobalV::ofs_running << " Excited-state relaxation follows state " << this->inp_->lr_target_state
+    this->ofs_running_ << " Excited-state relaxation follows state " << this->inp_->lr_target_state
         << " of the " << (this->openshell ? "updown" : (this->target_is_ == 1 ? "triplet" : "singlet"))
         << " channel, tracked by amplitude overlap between ionic steps." << std::endl;
 }
@@ -310,7 +310,7 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force(BaseCell& basecell, ModuleBase:
     // computes (E(-h) - E(+h))/h, which is -d(Omega)/dR, and the two agree in sign.
     force.create(ucell.nat, 3);
     force = this->force_gs_ + this->lr_force_;
-    ModuleIO::print_force(GlobalV::ofs_running, ucell, "EXCITED-STATE TOTAL-FORCE (eV/Angstrom)", force, false);
+    ModuleIO::print_force(this->ofs_running_, ucell, "EXCITED-STATE TOTAL-FORCE (eV/Angstrom)", force, false);
 }
 
 template<typename T, typename TR>
@@ -328,18 +328,21 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge& chg_gs
 {
     ModuleBase::TITLE("ESolver_LR", "init_pot_gs");
     std::vector<std::string> pot_register;
-    if (PARAM.inp.vl_in_h)
+    if (this->inp_->vl_in_h)
     {
         if (!this->ks_)
         {   // on the `ks-lr` path `sfac()`/`vloc()` alias the ground-state solver's, which
             // `ESolver_FP::before_scf` already refreshed for the current geometry
             //! 11) calculate the structure factor
+            // the has_float_data flag below is read the same way core ABACUS reads it at the
+            // analogous call site (source_esolver/esolver_fp.cpp's `this->sf.setup(...)`), so this
+            // mirrors the established convention rather than introducing a new global dependency.
             this->sfac().setup(&(*this->ucell_), pgrid(), this->pw_rhod, PARAM.globalv.has_float_data);
             this->vloc().init_vloc((*this->ucell_), this->pw_rho);
         }
         pot_register.push_back("local");
     }
-    if(PARAM.inp.vh_in_h)
+    if(this->inp_->vh_in_h)
     {
         pot_register.push_back("hartree");
     }
@@ -356,7 +359,7 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge& chg_gs
     {
         XC_Functional::set_xc_type(this->xc_kernel);    // recover the excited state xc kernel type
     }
-    if (PARAM.inp.test_force)
+    if (this->inp_->test_force)
     {
         this->pot_gs_hartree = LR_Util::make_unique<elecstate::Potential>(this->pw_rhod, this->pw_rho,
             &(*this->ucell_), &this->vloc().vloc, &this->sfac(), &this->solvent,
@@ -436,7 +439,8 @@ ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int isp
 #endif
         std::weak_ptr<PotHxcLR>(this->pot[ispin]), std::weak_ptr<PotHxcLR>(this->pot_hxc_gs),
         this->kv, this->paraX_z_, this->paraC_z_,
-        this->paraMat_, this->spin_types[ispin], this->openshell);
+        this->paraMat_, this->spin_types[ispin], this->in_dir, this->out_dir, this->inp_->ks_solver,
+        this->inp_->dft_functional, this->openshell);
     ModuleBase::timer::end("ESolver_LR", "solve_zvector_eqation");
     return Z;
 }
@@ -444,7 +448,7 @@ ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int isp
 template<typename T, typename TR>
 std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(const int ispin, const int istate_only)
 {
-    if (PARAM.inp.test_force && ispin == 0) { this->test_force(); }
+    if (this->inp_->test_force && ispin == 0) { this->test_force(); }
     if (this->openshell) { return this->cal_force_openshell(istate_only); }
 
     const int ist_begin = (istate_only < 0) ? 0 : istate_only;
@@ -494,7 +498,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
         , std::weak_ptr<Exx_LRI<T>>(this->exx_lri), this->exx_info.info_global.hybrid_alpha
 #endif
     );
-    GlobalV::ofs_running << "Start to calculate excited-state force of " << this->spin_types[ispin] << std::endl;
+    this->ofs_running_ << "Start to calculate excited-state force of " << this->spin_types[ispin] << std::endl;
     // ground state dm for currrent spin (only for test the correctness of the force)
     // module_dm::DensityMatrix<T, T> dm_gs(this->paraMat_, 1, this->kv.kvec_d, this->nk);
 
@@ -595,14 +599,14 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
                 omega[istate - ist_begin],
                 // pack the following as a struct or use parameter package
                 this->eig_ks_z_.c, dm_trans,
-                c, this->nspin, this->nbasis, this->nocc, nvirt_g, (*this->ucell_), this->orb_cutoff_,
+                c, this->nspin, this->inp_->test_force, this->nbasis, this->nocc, nvirt_g, (*this->ucell_), this->orb_cutoff_,
 #ifdef __EXX
                 exx_lri_weak, this->exx_info.info_global.hybrid_alpha,
 #endif
                 pot_weak, pot_hxc_gs_weak,
                 this->kv, this->gd(), paraX_g, this->paraC_z_, this->paraMat_,
-                this->xc_kernel, this->spin_types[ispin]);
-        if (PARAM.inp.test_force && nocc[0] == 1 && nvirt_g[0] == 1)
+                this->xc_kernel, this->inp_->dft_functional, this->spin_types[ispin]);
+        if (this->inp_->test_force && nocc[0] == 1 && nvirt_g[0] == 1)
         {
 #ifdef __MPI
             const std::vector<ct::Tensor>& dm_diff = cal_dm_diff_pblas(Xz.data<T>() + offset, paraX_g[0], c, this->paraC_z_, this->nbasis, this->nocc[0], nvirt_g[0], this->paraMat_);
@@ -616,15 +620,15 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
         module_dm::DensityMatrix<T, double> edm_real = LR_Util::build_dm_from_dmk<T, double>(edm_k,
             this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_, /*symmetrize=*/true);
         // print edm_real (R)
-        if (PARAM.inp.test_force)
+        if (this->inp_->test_force)
         {
-            LR_Util::save_DMR(edm_real, "data-EDMR-sparse" + std::string(this->excited_relax_ ? "_state" + std::to_string(istate) : ""), this->paraMat_);
+            LR_Util::save_DMR(edm_real, "data-EDMR-sparse" + std::string(this->excited_relax_ ? "_state" + std::to_string(istate) : ""), this->paraMat_, this->out_dir, this->nbasis, this->my_rank_);
             // LR_Util::print_DMR(edm_real, "edm_real (R) of istate " + std::to_string(istate));
         }
 
         ModuleBase::matrix force_hxc_dmtrans = lr_force.cal_force_hxc_dmtrans(dm_trans_real, *this->pot[ispin]);
-        if (PARAM.inp.test_force)
-            ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "HXC DMTRANS FORCE (eV/Angstrom)", force_hxc_dmtrans, false);
+        if (this->inp_->test_force)
+            ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "HXC DMTRANS FORCE (eV/Angstrom)", force_hxc_dmtrans, false);
 
         const module_dm::DensityMatrix<T, double>& dm_gs = this->cal_dm_gs();
 
@@ -635,29 +639,29 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
             PotGradXCLR pot_grad(this->pot_hxc_gs->xc_kernel_components(), this->pot_hxc_gs->get_rho_basis(),
                 (*this->ucell_), this->pot_hxc_gs->nrxx, this->spin_types[ispin] == "triplet");
             ModuleBase::matrix force_gxc_dmtrans = lr_force.cal_force_gxc_dmtrans(dm_trans_real, dm_gs, pot_grad);
-            if (PARAM.inp.test_force)
-                ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "GXC DMTRANS FORCE (eV/Angstrom)", force_gxc_dmtrans, false);
+            if (this->inp_->test_force)
+                ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "GXC DMTRANS FORCE (eV/Angstrom)", force_gxc_dmtrans, false);
             force_hxc_dmtrans += force_gxc_dmtrans;
         }
         ModuleBase::matrix force_hamiltgs_relaxed_diff = lr_force.cal_force_hamilt_gs_dm_relaxed_diff(relaxed_diff_dm_real, dm_gs, false, this->pot_hxc_gs.get());
-        if (PARAM.inp.test_force)
-            ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "H_GS-(T+Z) FORCE (without EXX) (eV/Angstrom)", force_hamiltgs_relaxed_diff, false);
+        if (this->inp_->test_force)
+            ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "H_GS-(T+Z) FORCE (without EXX) (eV/Angstrom)", force_hamiltgs_relaxed_diff, false);
 
         ModuleBase::matrix force_overlap_edm = lr_force.cal_force_overlap_edm(edm_real);    // "-" sign has been included in the force factor
-        if (PARAM.inp.test_force)
-            ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "OVERLAP-EDM FORCE (eV/Angstrom)", force_overlap_edm, false);
+        if (this->inp_->test_force)
+            ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "OVERLAP-EDM FORCE (eV/Angstrom)", force_overlap_edm, false);
 
-        if (PARAM.inp.test_force)
+        if (this->inp_->test_force)
         {
             // test H[T] force (Z=0), non-EXX part
             module_dm::DensityMatrix<T, double> diff_dm_real(&this->paraMat_, 1, this->kv.kvec_d, this->nk);
             LR_Util::initialize_DMR(diff_dm_real, this->paraMat_, (*this->ucell_), this->gd(), this->orb_cutoff_);
             LR_Util::get_DMR_real_imag_part(diff_dm, diff_dm_real, 'R');
 
-            GlobalV::ofs_running << "========== [TEST H_GS-(T) force (Z=0), non-EXX part] ===========" << std::endl;
+            this->ofs_running_ << "========== [TEST H_GS-(T) force (Z=0), non-EXX part] ===========" << std::endl;
             ModuleBase::matrix force_hamiltgs_diff = lr_force.cal_force_hamilt_gs_dm_relaxed_diff(diff_dm_real, dm_gs);
-            ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "H_GS-T FORCE (without EXX) (eV/Angstrom)", force_hamiltgs_diff, false);
-            GlobalV::ofs_running << "========== [\\TEST H_GS-(T) force (Z=0), non-EXX part] ===========" << std::endl;
+            ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "H_GS-T FORCE (without EXX) (eV/Angstrom)", force_hamiltgs_diff, false);
+            this->ofs_running_ << "========== [\\TEST H_GS-(T) force (Z=0), non-EXX part] ===========" << std::endl;
         }
 
 
@@ -668,13 +672,13 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
         {
             const auto& Ds_trans = LR_Util::get_exx_Ds_spin1(dm_trans, (*this->ucell_), this->kv, this->paraMat_);
             ModuleBase::matrix force_exx_dmtrans = lr_force.cal_force_exx_dm_trans(Ds_trans, alpha * 4.0);  // cancel the two 0.5s in Ds
-            if (PARAM.inp.test_force)
-                ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "EXX DMTRANS FORCE (eV/Angstrom)", force_exx_dmtrans, false);
+            if (this->inp_->test_force)
+                ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "EXX DMTRANS FORCE (eV/Angstrom)", force_exx_dmtrans, false);
             force_hxc_dmtrans += force_exx_dmtrans;
 
         }
 
-        if (LR::gs_is_hybrid())
+        if (LR::gs_is_hybrid(this->inp_->dft_functional))
         {
             const auto& Ds_gs = LR_Util::get_exx_Ds_spin1(dm_gs, (*this->ucell_), this->kv, this->paraMat_);    // returns 0.5*D[0]
             const auto& Ds_relaxed_diff = LR_Util::get_exx_Ds_spin1(relaxed_diff_dm, (*this->ucell_), this->kv, this->paraMat_);   // returns 0.5*D[0]
@@ -682,19 +686,19 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
             // `get_exx_Ds_spin1` feeds `split_m2D_ktoR(..., nspin=1)`, which reads only channel 0
             // with a 0.5 prefactor. For `dm_gs` that channel is $D^\text{gs}_\uparrow$ at nspin=2
             // but the spin-summed $D^\text{gs}$ at nspin=1, i.e. twice as large.
-            ModuleBase::matrix force_exx_gs_relaxed_diff = lr_force.cal_force_exx_gs_dm_relaxed_diff(Ds_gs, Ds_relaxed_diff, alpha * 4.0) * gs_dm_channel_factor();  // cancel the two 0.5s in Ds
-            if (PARAM.inp.test_force)
-                ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "EXX GS-(T+Z) FORCE (eV/Angstrom)", force_exx_gs_relaxed_diff, false);
+            ModuleBase::matrix force_exx_gs_relaxed_diff = lr_force.cal_force_exx_gs_dm_relaxed_diff(Ds_gs, Ds_relaxed_diff, alpha * 4.0) * gs_dm_channel_factor(this->nspin);  // cancel the two 0.5s in Ds
+            if (this->inp_->test_force)
+                ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "EXX GS-(T+Z) FORCE (eV/Angstrom)", force_exx_gs_relaxed_diff, false);
             force_hamiltgs_relaxed_diff += force_exx_gs_relaxed_diff;
 
-            if (PARAM.inp.test_force)
+            if (this->inp_->test_force)
             {
                 // test H[T] force (Z=0), EXX part
                 const auto& Ds_diff = LR_Util::get_exx_Ds_spin1(diff_dm, (*this->ucell_), this->kv, this->paraMat_);   // returns 0.5*D[0]
-                GlobalV::ofs_running << "========== [TEST H_GS-(T) force (Z=0), EXX part] ===========" << std::endl;
-                ModuleBase::matrix force_exx_gs_diff = lr_force.cal_force_exx_gs_dm_relaxed_diff(Ds_gs, Ds_diff, alpha * 4.0) * gs_dm_channel_factor();  // cancel the two 0.5s in Ds
-                ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "H_GS-T EXX FORCE (Z=0) (eV/Angstrom)", force_exx_gs_diff, false);
-                GlobalV::ofs_running << "========== [\\TEST H_GS-(T) force (Z=0), EXX part] ===========" << std::endl;
+                this->ofs_running_ << "========== [TEST H_GS-(T) force (Z=0), EXX part] ===========" << std::endl;
+                ModuleBase::matrix force_exx_gs_diff = lr_force.cal_force_exx_gs_dm_relaxed_diff(Ds_gs, Ds_diff, alpha * 4.0) * gs_dm_channel_factor(this->nspin);  // cancel the two 0.5s in Ds
+                ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "H_GS-T EXX FORCE (Z=0) (eV/Angstrom)", force_exx_gs_diff, false);
+                this->ofs_running_ << "========== [\\TEST H_GS-(T) force (Z=0), EXX part] ===========" << std::endl;
             }
         }
 #endif
@@ -703,7 +707,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
     ModuleBase::timer::end("ESolver_LR", "cal_force");
     // total force
     print_force(forces, std::cout, ist_begin);
-    print_force(forces, GlobalV::ofs_running, ist_begin);
+    print_force(forces, this->ofs_running_, ist_begin);
     return forces;
 }
 
@@ -1054,7 +1058,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
         , std::weak_ptr<Exx_LRI<T>>(this->exx_lri), this->exx_info.info_global.hybrid_alpha
 #endif
     );
-    GlobalV::ofs_running << "Start to calculate excited-state force of updown (open shell)" << std::endl;
+    this->ofs_running_ << "Start to calculate excited-state force of updown (open shell)" << std::endl;
 
     const int ist_begin = ist_begin_;
     const int ist_end = ist_end_;
@@ -1114,21 +1118,22 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
         const std::vector<std::vector<ct::Tensor>>& edm_k =
             cal_edm_from_XZ_istate_openshell(X_istate, Z_istate,
                 omega[istate - ist_begin], this->eig_ks_z_.c, dm_trans,
-                *this->psi_ks_z_, this->nspin, this->nbasis, this->nocc, nvirt_g,
+                *this->psi_ks_z_, this->nspin, this->inp_->test_force, this->nbasis, this->nocc, nvirt_g,
                 (*this->ucell_), this->orb_cutoff_,
 #ifdef __EXX
                 exx_lri_weak, this->exx_info.info_global.hybrid_alpha,
 #endif
                 pot_weak, pot_hxc_gs_weak,
-                this->kv, this->gd(), paraX_g, this->paraC_z_, this->paraMat_, this->xc_kernel);
+                this->kv, this->gd(), paraX_g, this->paraC_z_, this->paraMat_, this->xc_kernel,
+                this->inp_->ks_solver, this->inp_->dft_functional);
         module_dm::DensityMatrix<T, double> edm_real = LR_Util::build_dm_from_dmk_spin<T, double>(edm_k,
             this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd(), this->orb_cutoff_,
             /*symmetrize=*/true);
 
         // 5. the force terms
         ModuleBase::matrix force_hxc_dmtrans = lr_force.cal_force_hxc_dmtrans(dm_trans_real, *this->pot[0]);
-        if (PARAM.inp.test_force)
-            ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "HXC DMTRANS FORCE (eV/Angstrom)", force_hxc_dmtrans, false);
+        if (this->inp_->test_force)
+            ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "HXC DMTRANS FORCE (eV/Angstrom)", force_hxc_dmtrans, false);
 
         const module_dm::DensityMatrix<T, double>& dm_gs = this->cal_dm_gs();
 
@@ -1140,19 +1145,19 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
                 (*this->ucell_), this->pot_hxc_gs->nrxx, /*triplet=*/false);
             ModuleBase::matrix force_gxc_dmtrans =
                 lr_force.cal_force_gxc_dmtrans_openshell(dm_trans_real, dm_gs, pot_grad);
-            if (PARAM.inp.test_force)
-                ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "GXC DMTRANS FORCE (eV/Angstrom)", force_gxc_dmtrans, false);
+            if (this->inp_->test_force)
+                ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "GXC DMTRANS FORCE (eV/Angstrom)", force_gxc_dmtrans, false);
             force_hxc_dmtrans += force_gxc_dmtrans;
         }
 
         ModuleBase::matrix force_hamiltgs_relaxed_diff = lr_force.cal_force_hamilt_gs_dm_relaxed_diff(
             relaxed_diff_dm_real, dm_gs, false, this->pot_hxc_gs.get());
-        if (PARAM.inp.test_force)
-            ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "H_GS-(T+Z) FORCE (without EXX) (eV/Angstrom)", force_hamiltgs_relaxed_diff, false);
+        if (this->inp_->test_force)
+            ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "H_GS-(T+Z) FORCE (without EXX) (eV/Angstrom)", force_hamiltgs_relaxed_diff, false);
 
         ModuleBase::matrix force_overlap_edm = lr_force.cal_force_overlap_edm(edm_real);
-        if (PARAM.inp.test_force)
-            ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "OVERLAP-EDM FORCE (eV/Angstrom)", force_overlap_edm, false);
+        if (this->inp_->test_force)
+            ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "OVERLAP-EDM FORCE (eV/Angstrom)", force_overlap_edm, false);
 
 #ifdef __EXX
         const double& alpha = this->exx_info.info_global.hybrid_alpha;
@@ -1176,11 +1181,11 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
             {
                 force_exx_dmtrans += lr_force.cal_force_exx_dm_trans(Ds_trans[is], alpha, std::to_string(is));
             }
-            if (PARAM.inp.test_force)
-                ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "EXX DMTRANS FORCE (eV/Angstrom)", force_exx_dmtrans, false);
+            if (this->inp_->test_force)
+                ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "EXX DMTRANS FORCE (eV/Angstrom)", force_exx_dmtrans, false);
             force_hxc_dmtrans += force_exx_dmtrans;
         }
-        if (LR::gs_is_hybrid())
+        if (LR::gs_is_hybrid(this->inp_->dft_functional))
         {
             const auto& Ds_gs = LR_Util::get_exx_Ds_gs(dm_gs, (*this->ucell_), this->kv, this->paraMat_);
             const auto& Ds_relaxed_diff = LR_Util::get_exx_Ds_gs(relaxed_diff_dm, (*this->ucell_), this->kv, this->paraMat_);
@@ -1190,8 +1195,8 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
                 force_exx_gs_relaxed_diff += lr_force.cal_force_exx_gs_dm_relaxed_diff(
                     Ds_gs[is], Ds_relaxed_diff[is], alpha, std::to_string(is));
             }
-            if (PARAM.inp.test_force)
-                ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "EXX GS-(T+Z) FORCE (eV/Angstrom)", force_exx_gs_relaxed_diff, false);
+            if (this->inp_->test_force)
+                ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "EXX GS-(T+Z) FORCE (eV/Angstrom)", force_exx_gs_relaxed_diff, false);
             force_hamiltgs_relaxed_diff += force_exx_gs_relaxed_diff;
         }
 #endif
@@ -1199,7 +1204,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     }
     ModuleBase::timer::end("ESolver_LR", "cal_force");
     print_force(forces, std::cout, ist_begin);
-    print_force(forces, GlobalV::ofs_running, ist_begin);
+    print_force(forces, this->ofs_running_, ist_begin);
     return forces;
 }
 
@@ -1236,8 +1241,8 @@ void ModuleESolver::ESolver_LR<T, TR>::test_force()
     ///========================== test 1: reproduce the force of ground state =========================
     // energy density matrix of the ground state
     module_dm::DensityMatrix<T, double> edm_gs(&this->paraMat_, this->nspin, this->kv.kvec_d, this->nk);   //DX
-    ModuleBase::matrix wg_ekb_ks_all(nspin, PARAM.inp.nbands);
-    std::transform(this->wg_ks_all.c, this->wg_ks_all.c + nspin * PARAM.inp.nbands,
+    ModuleBase::matrix wg_ekb_ks_all(nspin, this->inp_->nbands);
+    std::transform(this->wg_ks_all.c, this->wg_ks_all.c + nspin * this->inp_->nbands,
         this->eig_ks_all.c, wg_ekb_ks_all.c, std::multiplies<double>());
     // see `cal_dm_gs()`: `psi_ks_all_` is distributed per `this->ks_->pv` on the ks-lr path,
     // not `this->paraMat_all_`.
@@ -1247,13 +1252,13 @@ void ModuleESolver::ESolver_LR<T, TR>::test_force()
     edm_gs.cal_dmr(-1);
     // ground-state force
     ModuleBase::matrix force_gs = lr_force.reproduce_force_gs(kv, dm_gs, edm_gs);
-    ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "Ground State FORCE (eV/Angstrom)", force_gs, false);
+    ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "Ground State FORCE (eV/Angstrom)", force_gs, false);
     /// ======================================= END test 1 =========================================
     ///========================== test 2: reproduce the DX Hartree term =========================
     ModuleBase::matrix f_hxc_potgs = lr_force.reproduce_force_gs_loc(dm_gs, *this->pot_gs_hartree);
-    ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "GS Hartree force calculated by 'cal_pulay_fs' from potential (eV/Angstrom)", f_hxc_potgs, false);
+    ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "GS Hartree force calculated by 'cal_pulay_fs' from potential (eV/Angstrom)", f_hxc_potgs, false);
     ModuleBase::matrix f_hxc_potlr = lr_force.cal_force_hxc_dmtrans(dm_gs, *this->pot[0]);
-    ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "GS Hxc force calculated by 'LR_Force' from kernel (eV/Angstrom)", f_hxc_potlr, false);
+    ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "GS Hxc force calculated by 'LR_Force' from kernel (eV/Angstrom)", f_hxc_potlr, false);
     // `cal_force_hxc_dmtrans` now includes the Pulay -> Pulay+Hellmann-Feynman factor 2 itself,
     // so this must match the ground-state Hartree force directly (dm_gs is already symmetric).
     /// ======================================= END test 2 =========================================

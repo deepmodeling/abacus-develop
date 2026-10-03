@@ -395,6 +395,9 @@ namespace LR_Util
             // const bool& binary,
             const std::string& filename,
             const Parallel_Orbitals& pv,
+            const std::string& out_dir,
+            const int& nlocal,
+            const int& my_rank,
             const double& sparse_thr = 1e-10)
         {
             // calculate the total number of non-zero elements of the (nbasis, nbasis) matrix for each R
@@ -406,14 +409,14 @@ namespace LR_Util
             Parallel_Reduce::reduce_all(non_zero_counts.data(), non_zero_counts.size());
 
 
-            std::string out_dir = PARAM.globalv.global_out_dir + filename;
+            std::string out_file = out_dir + filename;
             std::ofstream ofs;
-            if (GlobalV::DRANK == 0)
+            if (my_rank == 0)
             {
-                ofs.open(out_dir);
-                // if (binary) ofs.open(out_dir, std::ios::binary);
+                ofs.open(out_file);
+                // if (binary) ofs.open(out_file, std::ios::binary);
                 ofs << "STEP: 0" << std::endl;
-                ofs << "Matrix Dimension: " << PARAM.globalv.nlocal << std::endl;
+                ofs << "Matrix Dimension: " << nlocal << std::endl;
                 ofs << "Matrix number: " << non_zero_counts.size() << std::endl;
             }
             i = 0;
@@ -426,7 +429,7 @@ namespace LR_Util
                 single_R_options.binary = false;
                 ModuleIO::save_lat_r(ofs, Rij.second, pv, single_R_options);
             }
-            if (GlobalV::DRANK == 0) { ofs.close(); }
+            if (my_rank == 0) { ofs.close(); }
         }
     }
 
@@ -437,21 +440,27 @@ namespace LR_Util
         // const bool& binary,
         const std::string& filename,
         const Parallel_Orbitals& pv,
+        const std::string& out_dir,
+        const int& nlocal,
+        const int& my_rank,
         const double& sparse_thr = 1e-10)
     {
         sparse_format::save_sparse(sparse_format::get_sparse_format(hR, pv, sparse_thr),
-            filename, pv, sparse_thr);
+            filename, pv, out_dir, nlocal, my_rank, sparse_thr);
     }
 
     template <typename TK, typename TR>
     void save_DMR(const module_dm::DensityMatrix<TK, TR>& DMR,
         const std::string& filename,
         const Parallel_Orbitals& pv,
+        const std::string& out_dir,
+        const int& nlocal,
+        const int& my_rank,
         const double& sparse_thr = 1e-10)
     {
         int is = 0;
         for (auto& dr : DMR.get_dmr_vec())
-            save_HR(*dr, filename + "_s" + std::to_string(is), pv, sparse_thr);
+            save_HR(*dr, filename + "_s" + std::to_string(is), pv, out_dir, nlocal, my_rank, sparse_thr);
     }
 
 #ifdef __EXX

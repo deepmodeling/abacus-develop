@@ -122,8 +122,11 @@ namespace LR
                     exx_lri_in.lock()->reset_Vs(Vs_read);
                 }
                 // std::cout << "exx_alpha=" << exx_alpha << std::endl; // the default value of exx_alpha is 0.25 when dft_functional is pbe or hse
+                // this ground-state Casida operator is always MO_TO_AO_TYPE::CC_vo, which never
+                // reads the force-only coxt_full/cvx_full buffers, so cal_force is always false.
                 hamilt::Operator<T>* lr_exx = new OperatorLREXX<T>(nspin, naos, nocc[0], nvirt[0], ucell_in, psi_ks_in,
                     *this->DM_trans, exx_lri_in, kv_in, pX_in[0], pc_in, pmat_in,
+                    /*cal_force=*/false,
                     (xc_kernel == "hf" ? 1.0 : exx_alpha), //alpha
                     OperatorLREXX<T>::MO_TO_AO_TYPE::CC_vo,
                     aims_nbasis);

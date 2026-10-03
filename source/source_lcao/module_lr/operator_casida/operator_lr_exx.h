@@ -16,7 +16,7 @@ namespace LR
     inline const std::set<std::string>& exx_kernel_list() { return LR_Util::hybrid_xc_list(); };
 
     /// @brief does the GROUND STATE carry exact exchange, i.e. is `dft_functional` a hybrid?
-    inline bool gs_is_hybrid() { return exx_kernel_list().count(LR_Util::tolower(PARAM.inp.dft_functional)) > 0; };
+    inline bool gs_is_hybrid(const std::string& dft_functional) { return exx_kernel_list().count(LR_Util::tolower(dft_functional)) > 0; };
 
     template<typename T = double>
     class OperatorLREXX : public hamilt::Operator<T, base_device::DEVICE_CPU>
@@ -47,6 +47,7 @@ namespace LR
             const Parallel_2D& pX_in,
             const Parallel_2D& pc_in,
             const Parallel_Orbitals& pmat_in,
+            const bool cal_force,
             const double& alpha = 1.0,
             const MO_TO_AO_TYPE dm_pq_in = MO_TO_AO_TYPE::CC_vo,
             const std::vector<int>& aims_nbasis = {},
@@ -67,7 +68,7 @@ namespace LR
             {
                 LR_Util::gather_2d_to_full(this->pc, &this->psi_ks(ik, 0, 0), &this->psi_ks_full(ik, 0, 0), false, this->naos, nocc + nvirt);
             }
-            if (PARAM.inp.cal_force)
+            if (cal_force)
             {
                 this->coxt_full.resize(this->nk, nvirt, this->naos);
                 this->cvx_full.resize(this->nk, nocc, this->naos);

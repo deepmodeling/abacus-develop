@@ -22,7 +22,7 @@ namespace LR
         ///     The 1/2 on the xc part is not a convention but the chain rule: the derivative is
         ///     taken w.r.t. the *total* density matrix, and $\partial v_u/\partial\rho =
         ///     (f_{uu}+f_{ud})/2$ because $\rho_u=\rho_d=\rho/2$. The Hartree part needs no halving.
-        ///     Do NOT use S1 here when nspin=2: `KernelXC` is built with `PARAM.inp.nspin`, so the
+        ///     Do NOT use S1 here when nspin=2: `KernelXC` is built with the input `nspin`, so the
         ///     kernel arrays carry 3 spin components per grid point while the S1 integrand indexes
         ///     them as if there were 1.
         enum SpinType { S1 = 0, S2_singlet = 1, S2_triplet = 2, S2_updown = 3, S2_gs = 4, S1_gs = 5 };

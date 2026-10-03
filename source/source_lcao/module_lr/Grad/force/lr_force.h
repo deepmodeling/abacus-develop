@@ -13,7 +13,7 @@ namespace LR
     /// bands, so any term that contracts against ONE channel of `dm_gs` needs this factor.
     /// Closed-shell bookkeeping only: the open-shell path sums the two channels explicitly and
     /// must not apply it.
-    inline double gs_dm_channel_factor() { return (PARAM.inp.nspin == 1) ? 0.5 : 1.0; }
+    inline double gs_dm_channel_factor(const int& nspin) { return (nspin == 1) ? 0.5 : 1.0; }
 
     template<typename TK>
     class LR_Force
@@ -108,6 +108,13 @@ namespace LR
         std::weak_ptr<Exx_LRI<TK>> exx_lri_;
         const double alpha_;
 #endif
+        /// cached aliases, read once here instead of at every log/flag check below
+        std::ofstream& ofs_running_ = GlobalV::ofs_running;
+        const int nspin_ = PARAM.inp.nspin;
+        const bool test_force_ = PARAM.inp.test_force;
+        const bool vl_in_h_ = PARAM.inp.vl_in_h;
+        const bool vh_in_h_ = PARAM.inp.vh_in_h;
+        const std::string dft_functional_ = PARAM.inp.dft_functional;
 
         void dm_to_charge(const module_dm::DensityMatrix<TK, double>& dm, Charge& chr_out);
         elecstate::Potential dm_to_hxc_potential(const module_dm::DensityMatrix<TK, double>& dm);

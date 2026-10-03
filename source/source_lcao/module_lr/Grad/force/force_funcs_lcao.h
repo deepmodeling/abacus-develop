@@ -16,10 +16,13 @@ public:
         const ModulePW::PW_Basis& rhopw,
         const pseudopot_cell_vl& locpp,
         const Structure_Factor& sf,
+        const int nspin,
+        const bool test_force,
+        std::ofstream& ofs_running,
         const bool with_ewald = true,
         const elecstate::ElecState* pelec = nullptr)
     {
-        if (PARAM.inp.nspin == 4) { throw std::runtime_error("ForcePWTerms: nspin=4 is not supported."); }
+        if (nspin == 4) { throw std::runtime_error("ForcePWTerms: nspin=4 is not supported."); }
         ModuleBase::TITLE("Force_Stress_LCAO", "cal_force_pw");
         Forces<T> f_pw(ucell.nat);
         ModuleBase::matrix fvl_dvl(ucell.nat, 3), fewalds(ucell.nat, 3), fcc(ucell.nat, 3), fscc(ucell.nat, 3);
@@ -39,8 +42,11 @@ public:
         // force due to core correlation.
         //--------------------------------------------------------
         UnitCell& ucell_noconst = const_cast<UnitCell&>(ucell);
+        // domag/domag_z/gga_grad only matter for the noncollinear (nspin=4) case, which the
+        // throw-guard above already excludes, so they are passed as fixed, inert defaults
+        // here instead of reading the corresponding global flags.
         f_pw.cal_force_cc(fcc, &rhopw, &chr, locpp.numeric, ucell_noconst,
-            PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad); // no problem for nspin=1 and 2
+            nspin, /*domag=*/false, /*domag_z=*/false, /*gga_grad=*/0);
         //--------------------------------------------------------
         // force due to self-consistent charge (invalid in from-scratch LR case)
         //--------------------------------------------------------
@@ -48,12 +54,12 @@ public:
         {
             f_pw.cal_force_scc(fscc, &rhopw, pelec->vnew, pelec->vnew_exist, locpp.numeric, ucell);
         }
-        if (PARAM.inp.test_force)
+        if (test_force)
         {
-            ModuleIO::print_force(GlobalV::ofs_running, ucell, "VL_dVL      FORCE (eV/Angstrom)", fvl_dvl, false);
-            ModuleIO::print_force(GlobalV::ofs_running, ucell, "EWALD      FORCE (eV/Angstrom)", fewalds, false);
-            ModuleIO::print_force(GlobalV::ofs_running, ucell, "NLCC      FORCE (eV/Angstrom)", fcc, false);
-            ModuleIO::print_force(GlobalV::ofs_running, ucell, "SCC      FORCE (eV/Angstrom)", fscc, false);
+            ModuleIO::print_force(ofs_running, ucell, "VL_dVL      FORCE (eV/Angstrom)", fvl_dvl, false);
+            ModuleIO::print_force(ofs_running, ucell, "EWALD      FORCE (eV/Angstrom)", fewalds, false);
+            ModuleIO::print_force(ofs_running, ucell, "NLCC      FORCE (eV/Angstrom)", fcc, false);
+            ModuleIO::print_force(ofs_running, ucell, "SCC      FORCE (eV/Angstrom)", fscc, false);
         }
         return fvl_dvl + fewalds + fcc + fscc;
     }

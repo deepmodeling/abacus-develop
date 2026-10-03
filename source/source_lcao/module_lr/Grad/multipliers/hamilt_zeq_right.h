@@ -40,12 +40,15 @@ namespace LR
             const std::vector<Parallel_2D>& pX,
             const Parallel_2D& pc,
             const Parallel_Orbitals& pmat,
+            const std::string& in_dir,
+            const std::string& out_dir,
+            const std::string& dft_functional,
             const std::string& spin_type = "singlet")
             : HamiltLR<T>(xc_kernel, nspin, naos, nocc, nvirt, ucell, orb_cutoff, gd, psi_ks, eig_ks,
 #ifdef __EXX
                 exx_lri, exx_alpha,
 #endif
-                pot, kv, pX, pc, pmat, spin_type, PARAM.globalv.global_readin_dir, PARAM.globalv.global_out_dir)
+                pot, kv, pX, pc, pmat, spin_type, in_dir, out_dir)
         {
             ModuleBase::TITLE("Z_vector_R", "Z_vector_R");
 
@@ -65,6 +68,7 @@ namespace LR
             {
                 hamilt::Operator<T>* op_hz_exx = new OperatorLREXX<T>(nspin, naos, nocc[0], nvirt[0], ucell, psi_ks,
                     *this->DM_trans, exx_lri, kv, pX[0], pc, pmat,
+                    /*cal_force=*/true,
                     -2.0 * exx_alpha, //alpha; H=2K when D is symmetrized
                     ATYPE_EXX::CXC, {}, hamilt::calculation_type::lr_dmtrans_exx);
                 this->ops->add(op_hz_exx);
@@ -79,10 +83,11 @@ namespace LR
                 { 0 }, T(-4.0), ATYPE::CC_vo, hamilt::calculation_type::lr_dmdiff_hxc);
             this->ops->add(op_ht);
 #ifdef __EXX
-            if (gs_is_hybrid())
+            if (gs_is_hybrid(dft_functional))
             {
                 hamilt::Operator<T>* op_ht_exx = new OperatorLREXX<T>(nspin, naos, nocc[0], nvirt[0], ucell, psi_ks,
                     *this->DM_diff, exx_lri, kv, pX[0], pc, pmat,
+                    /*cal_force=*/true,
                     -2.0 * exx_alpha, //alpha; H=2K when D is symmetrized
                     ATYPE_EXX::CC_vo, {}, hamilt::calculation_type::lr_dmdiff_exx);
                 this->ops->add(op_ht_exx);
@@ -214,7 +219,9 @@ namespace LR
             const K_Vectors& kv,
             const std::vector<Parallel_2D>& pX,
             const Parallel_2D& pc,
-            const Parallel_Orbitals& pmat)
+            const Parallel_Orbitals& pmat,
+            const std::string& ks_solver,
+            const std::string& dft_functional)
             : ZeqULR<T>(nocc, nvirt, pX, kv.get_nks() / nspin),
             naos_(naos), pc_(pc), pmat_(pmat), psi_ks_(psi_ks)
         {
@@ -257,7 +264,7 @@ namespace LR
             {
                 this->gxc_ = LR_Util::make_unique<OperatorGxcULR<T>>(pot.lock()->xc_kernel_components(),
                     pot.lock()->get_rho_basis(), ucell, orb_cutoff, gd, kv, pmat, pc, psi_ks,
-                    nocc, nvirt, naos, pX, pX, LR_Util::MO_TYPE::VO, T(-2.0));
+                    nocc, nvirt, naos, pX, pX, LR_Util::MO_TYPE::VO, T(-2.0), nspin, ks_solver);
             }
 
 #ifdef __EXX
@@ -268,16 +275,16 @@ namespace LR
                 {
                     this->ops[(is << 1) + is]->add(new OperatorLREXX<T>(nspin, naos, nocc[is], nvirt[is],
                         ucell, this->psi_ks_spin_[is], *this->DM_trans, exx_lri, kv, pX[is], pc, pmat,
-                        -2.0 * exx_alpha, ATYPE_EXX::CXC, {}, hamilt::calculation_type::lr_dmtrans_exx));
+                        /*cal_force=*/true, -2.0 * exx_alpha, ATYPE_EXX::CXC, {}, hamilt::calculation_type::lr_dmtrans_exx));
                 }
             }
-            if (gs_is_hybrid())
+            if (gs_is_hybrid(dft_functional))
             {
                 for (int is : {0, 1})
                 {
                     this->ops[(is << 1) + is]->add(new OperatorLREXX<T>(nspin, naos, nocc[is], nvirt[is],
                         ucell, this->psi_ks_spin_[is], *this->DM_diff, exx_lri, kv, pX[is], pc, pmat,
-                        -2.0 * exx_alpha, ATYPE_EXX::CC_vo, {}, hamilt::calculation_type::lr_dmdiff_exx));
+                        /*cal_force=*/true, -2.0 * exx_alpha, ATYPE_EXX::CC_vo, {}, hamilt::calculation_type::lr_dmdiff_exx));
                 }
             }
 #endif

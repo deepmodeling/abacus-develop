@@ -19,7 +19,7 @@ namespace LR
     void LR_Force<TK>::dm_to_charge(const module_dm::DensityMatrix<TK, double>& dm, Charge& chr_out)
     {
         const int& nspin_dm = dm.get_dmr_vec().size();
-        const int& nspin_global = PARAM.inp.nspin;
+        const int& nspin_global = this->nspin_;
         chr_out.set_rhopw(const_cast<ModulePW::PW_Basis*>(&this->rhopw_));
         chr_out.allocate(nspin_global, /*kin_den=*/false, /*meta_gga=*/false, /*test_charge=*/0); //chr still needs global nspin, because Forces (PW) depends on it
         // So huge a Charge class...
@@ -37,7 +37,7 @@ namespace LR
         elecstate::Potential pot(&this->rhodpw_, &this->rhopw_, &this->ucell_,
             &this->locpp_.vloc, const_cast<Structure_Factor*>(&this->sf_),
             nullptr/*surchem*/, &etxc, &vtxc);
-        PARAM.inp.vh_in_h ? pot.pot_register({ "hartree", "xc" }) : pot.pot_register({ "xc" });
+        this->vh_in_h_ ? pot.pot_register({ "hartree", "xc" }) : pot.pot_register({ "xc" });
         Charge charge;
         this->dm_to_charge(dm, charge);
         pot.init_pot(&charge); // call update_from_charge inside
@@ -70,8 +70,9 @@ namespace LR
         this->dm_to_charge(relax_diff_dm, chr_diff_relaxed);
 
         // 1. local pp (Hellmann-Feynman)(fvl_dvl) + ewald + core correction (+ self-consistent charge)
-        ModuleBase::matrix f_pw = PARAM.inp.vl_in_h ?
-            ForcePWTerms<double>()(this->ucell_, chr_diff_relaxed, this->rhopw_, this->locpp_, this->sf_, with_ewald) :
+        ModuleBase::matrix f_pw = this->vl_in_h_ ?
+            ForcePWTerms<double>()(this->ucell_, chr_diff_relaxed, this->rhopw_, this->locpp_, this->sf_,
+                this->nspin_, this->test_force_, this->ofs_running_, with_ewald) :
             ModuleBase::matrix(this->ucell_.nat, 3);
 
         // 2. nonlocal pp (Hellmann-Feynman + Pulay)
@@ -135,7 +136,7 @@ namespace LR
             //`cal_pulay_fs` calculates only one spin channel because `relax_diff_dm` has only one.
             PulayForceStress::cal_pulay_fs(1/*nspin*/, fhxc_dvhxc, stress_tmp,
                 dm_gs, this->ucell_, &pot_hxc_relaxed_diff, true, false);
-            fhxc_dvhxc *= gs_dm_channel_factor();
+            fhxc_dvhxc *= gs_dm_channel_factor(this->nspin_);
         }
         else if (openshell)
         {
@@ -165,7 +166,7 @@ namespace LR
             std::vector<const double*> vr_eff = { v_lin.c };
             ModuleGint::cal_gint_fvl(1, vr_eff, dm_gs.get_dmr_vec(), true, false, &fhxc_dvhxc, &stress_tmp);
             fhxc_dvhxc *= 2;   // for the two channels of the ground-state dm.
-            fhxc_dvhxc *= gs_dm_channel_factor();
+            fhxc_dvhxc *= gs_dm_channel_factor(this->nspin_);
         }
         // all three branches above compute `fhxc_dvhxc` via `cal_gint_fvl`/the grid-based
         // `cal_pulay_fs`, neither of which reduces internally (see `fvl_dphi` above).
@@ -175,14 +176,14 @@ namespace LR
         std::vector<hamilt::HContainer<double>> dT = cal_hs_grad('T', this->ucell_, this->pv_, this->gd_, this->two_center_bundle_);
         ModuleBase::matrix ft_dphi = PulayForceStress::cal_pulay_fs(relax_diff_dm, this->ucell_, dT);
 
-        if (PARAM.inp.test_force)
+        if (this->test_force_)
         {
-            ModuleIO::print_force(GlobalV::ofs_running, this->ucell_, "PW      FORCE (eV/Angstrom)", f_pw, false);
-            ModuleIO::print_force(GlobalV::ofs_running, this->ucell_, "NONLOCAL     FORCE (eV/Angstrom)", fvnl, false);
-            ModuleIO::print_force(GlobalV::ofs_running, this->ucell_, "KINETIC     FORCE (eV/Angstrom)", ft_dphi, false);
-            ModuleIO::print_force(GlobalV::ofs_running, this->ucell_, "LOCAL-PP Pulay FORCE (eV/Angstrom)", fvl_dphi, false);
-            ModuleIO::print_force(GlobalV::ofs_running, this->ucell_, "HARTREE+XC Pulay FORCE (eV/Angstrom)", fhxc_dphi, false);
-            ModuleIO::print_force(GlobalV::ofs_running, this->ucell_, "HARTREE+XC Hellmann-Feynman FORCE (eV/Angstrom)", fhxc_dvhxc, false);
+            ModuleIO::print_force(this->ofs_running_, this->ucell_, "PW      FORCE (eV/Angstrom)", f_pw, false);
+            ModuleIO::print_force(this->ofs_running_, this->ucell_, "NONLOCAL     FORCE (eV/Angstrom)", fvnl, false);
+            ModuleIO::print_force(this->ofs_running_, this->ucell_, "KINETIC     FORCE (eV/Angstrom)", ft_dphi, false);
+            ModuleIO::print_force(this->ofs_running_, this->ucell_, "LOCAL-PP Pulay FORCE (eV/Angstrom)", fvl_dphi, false);
+            ModuleIO::print_force(this->ofs_running_, this->ucell_, "HARTREE+XC Pulay FORCE (eV/Angstrom)", fhxc_dphi, false);
+            ModuleIO::print_force(this->ofs_running_, this->ucell_, "HARTREE+XC Hellmann-Feynman FORCE (eV/Angstrom)", fhxc_dvhxc, false);
         }
 
         // from the formula, we do not need the non-ortho term (overlap*edm) here.
@@ -243,7 +244,7 @@ namespace LR
         std::vector<const double*> vr_eff = { v2.c };
         ModuleGint::cal_gint_fvl(1, vr_eff, dm_gs.get_dmr_vec(), true, false, &f, &stress_tmp);
         Parallel_Reduce::reduce_pool(f.c, f.nr * f.nc);   // see `fvl_dphi` in cal_force_hamilt_gs_dm_relaxed_diff
-        f *= gs_dm_channel_factor();
+        f *= gs_dm_channel_factor(this->nspin_);
         return f;
     }
 

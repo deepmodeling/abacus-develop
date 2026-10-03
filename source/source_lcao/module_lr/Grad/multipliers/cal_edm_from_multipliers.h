@@ -93,6 +93,7 @@ namespace LR
         const double* const eig_ks,     // gocc+gvirt
         const psi::Psi<T>& c,
         const int nspin,
+        const bool test_force,
         const Parallel_2D& p_occ_occ,
         const Parallel_2D& p_virt_occ,
         const Parallel_2D& pc,
@@ -140,7 +141,7 @@ namespace LR
         // 4. $\sum_i (\Omega + \epsilon_i) \sum_{ab} C_{\mu a} X_{ia} C_{\nu b} X_{ib}$
         const std::vector<ct::Tensor> edm = cal_edm_term4(X, eig_ext_istate, eig_ks, c, px, pc, pmat);
 
-        if (PARAM.inp.test_force)
+        if (test_force)
         {
             std::cout << "cWc: " << std::endl;
             LR_Util::print_value(cWc[0].data<T>(), pmat.get_col_size(), pmat.get_row_size());
@@ -163,6 +164,7 @@ namespace LR
         const module_dm::DensityMatrix<T, T>& dm_trans, // D_X
         const psi::Psi<T>& c,
         const int& nspin,
+        const bool test_force,
         const int& naos,
         const std::vector<int>& nocc,
         const std::vector<int>& nvirt,
@@ -180,6 +182,7 @@ namespace LR
         const Parallel_2D& pc,
         const Parallel_Orbitals& pmat,
         const std::string xc_kernel,
+        const std::string& dft_functional,
         const std::string& spin_type = "singlet")
     {
         const int nk = kv.get_nks() / nspin;
@@ -199,7 +202,7 @@ namespace LR
 #ifdef __EXX
             exx_lri, exx_alpha,
 #endif
-            pot_hxc_gs, kv, px, pc, p_occ_occ, pmat, xc_kernel, spin_type);
+            pot_hxc_gs, kv, px, pc, p_occ_occ, pmat, xc_kernel, dft_functional, spin_type);
         // std::cout << "W: " << std::endl;
         // LR_Util::print_value(W.data(), nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
 
@@ -209,9 +212,10 @@ namespace LR
             dm_trans, pot, ucell, orb_cutoff, gd, kv, px, pc, pmat,
             { 0 }, T(2.0), OperatorLRHxc<T>::MO_TO_AO_TYPE::CXC_o);
 #ifdef __EXX
+        // this EDM term only runs on the force-calculation path, so cal_force is always true here.
         OperatorLREXX<T> op_K_exx(nspin, naos, nocc[0], nvirt[0], ucell, c,
             dm_trans, exx_lri, kv, px[0], pc, pmat,
-            2.0 * exx_alpha, OperatorLREXX<T>::MO_TO_AO_TYPE::CXC_o);
+            /*cal_force=*/true, 2.0 * exx_alpha, OperatorLREXX<T>::MO_TO_AO_TYPE::CXC_o);
 #endif
         const int ld_vo = nk * px[0].get_local_size();
         std::vector<T> K_cvcx(ld_vo, 0.0);
@@ -221,7 +225,7 @@ namespace LR
             op_K_exx.act(/*nbands=*/1, ld_vo, /*npol=*/1, X, K_cvcx.data());
 #endif
 
-        return cal_edm_terms_from_XZWK(X, Z, W.data(), K_cvcx.data(), eig_ext_istate, eig_ks, c, nspin, p_occ_occ[0], px[0], pc, pmat);
+        return cal_edm_terms_from_XZWK(X, Z, W.data(), K_cvcx.data(), eig_ext_istate, eig_ks, c, nspin, test_force, p_occ_occ[0], px[0], pc, pmat);
     }
 
     /// @brief Open-shell (spin-unrestricted) counterpart of `cal_edm_from_XZ_istate`.
@@ -239,6 +243,7 @@ namespace LR
         const module_dm::DensityMatrix<T, T>& dm_trans,   // unused, kept for signature symmetry
         const psi::Psi<T>& psi_ks,
         const int& nspin,
+        const bool test_force,
         const int& naos,
         const std::vector<int>& nocc,
         const std::vector<int>& nvirt,
@@ -255,7 +260,9 @@ namespace LR
         const std::vector<Parallel_2D>& px,
         const Parallel_2D& pc,
         const Parallel_Orbitals& pmat,
-        const std::string xc_kernel)
+        const std::string xc_kernel,
+        const std::string& ks_solver,
+        const std::string& dft_functional)
     {
         using ATYPE = typename OperatorLRHxc<T>::MO_TO_AO_TYPE;
 #ifdef __EXX
@@ -282,7 +289,7 @@ namespace LR
 #ifdef __EXX
             exx_lri, exx_alpha,
 #endif
-            pot_hxc_gs, kv, px, pc, p_occ_occ, pmat, xc_kernel);
+            pot_hxc_gs, kv, px, pc, p_occ_occ, pmat, xc_kernel, ks_solver, dft_functional);
 
         // 2. $W^X_{ai\sigma}=2\sum_j X_{aj\sigma}K_{ji\sigma}[D^X]$.
         //    The free spin sits on X (hence `psi_in = X + off_x[sl]`, laid out over `px[sl]`),
@@ -313,7 +320,7 @@ namespace LR
             {
                 op_K_exx[is] = LR_Util::make_unique<OperatorLREXX<T>>(nspin, naos, nocc[is], nvirt[is],
                     ucell, psi_ks_spin[is], DM_trans, exx_lri, kv, px[is], pc, pmat,
-                    2.0 * exx_alpha, ATYPE_EXX::CXC_o);
+                    /*cal_force=*/true, 2.0 * exx_alpha, ATYPE_EXX::CXC_o);
             }
         }
 #endif
@@ -362,7 +369,7 @@ namespace LR
         for (int is : {0, 1})
         {
             edm[is] = cal_edm_terms_from_XZWK(X + off_x[is], Z + off_x[is], W[is].data(), K_cvcx[is].data(),
-                eig_ext_istate, eig_ks + is * nk * nband_window, psi_ks_spin[is], nspin,
+                eig_ext_istate, eig_ks + is * nk * nband_window, psi_ks_spin[is], nspin, test_force,
                 p_occ_occ[is], px[is], pc, pmat);
         }
         return edm;

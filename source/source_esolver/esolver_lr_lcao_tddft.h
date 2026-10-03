@@ -52,6 +52,11 @@ namespace ModuleESolver
         const UnitCell* ucell_ = nullptr;
         std::vector<double> orb_cutoff_;
 
+        /// cached aliases, read once here instead of at every log/print call site below
+        std::ofstream& ofs_running_ = GlobalV::ofs_running;
+        std::ofstream& ofs_warning_ = GlobalV::ofs_warning;
+        const int my_rank_ = GlobalV::MY_RANK;
+
         /// @brief the ground-state solver, kept alive across ionic steps (esolver_type = "ks-lr").
         /// Null on the `lr` path, where the ground state comes from files instead.
         std::unique_ptr<ModuleESolver::ESolver_KS_LCAO<T, TR>> ks_;
@@ -186,7 +191,7 @@ namespace ModuleESolver
         // It should be the whole AO virtual space.
         //
         // These mirror `psi_ks` / `eig_ks` / `paraC_` / `paraX_` / `nvirt` / `nloc_per_state`
-        // but span every virtual band the ground state produced (`PARAM.inp.nbands`), so the
+        // but span every virtual band the ground state produced (the input `nbands`), so the
         // window is widened by raising *nbands*, not `nvirt`. X keeps its own window, so Omega
         // -- and with it any finite-difference reference -- is untouched.
         std::unique_ptr<psi::Psi<T>> psi_ks_z_;

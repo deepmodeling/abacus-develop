@@ -37,7 +37,7 @@ namespace LR
     PotGradXCLR::PotGradXCLR(const KernelXC& xc_kernel, const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell,
         const int& nrxx, const bool triplet)
         :xc_kernel_components_(xc_kernel), triplet_(triplet),
-        PotLRBase(rho_basis, (PARAM.inp.nspin == 1 || (PARAM.inp.nspin == 4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z) ? 1 : 2), nrxx, ucell.tpiba)
+        PotLRBase(rho_basis, LR_Util::kernel_nspin(), nrxx, ucell.tpiba)
     {}
 
     /// $v^{(2)}(r)=\iint dr'dr''\,g^{xc}(r,r',r'')\rho^1(r')\rho^1(r'')$, i.e. the third functional

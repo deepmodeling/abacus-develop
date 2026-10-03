@@ -44,12 +44,14 @@ namespace LR
             const std::vector<Parallel_2D>& pX,       ///< layout of the X blocks (always VO)
             const std::vector<Parallel_2D>& pout,     ///< layout of the output blocks (VO or OO)
             const LR_Util::MO_TYPE mo_type,
-            const T factor)
+            const T factor,
+            const int& nspin,
+            const std::string& ks_solver)
             : pot_grad_(kxc, rho_basis, ucell, rho_basis.nrxx, /*triplet=*/false),
             ucell_(ucell), gd_(gd), kv_(kv), pmat_(pmat), pc_(pc), psi_ks_(psi_ks),
             nocc_(nocc), nvirt_(nvirt), naos_(naos), pX_(pX), pout_(pout),
             orb_cutoff_(orb_cutoff), mo_type_(mo_type), factor_(factor),
-            nk_(kv.get_nks() / PARAM.inp.nspin), nrxx_(rho_basis.nrxx)
+            nk_(kv.get_nks() / nspin), nrxx_(rho_basis.nrxx), ks_solver_(ks_solver)
         {
             for (int is : {0, 1}) { this->psi_spin_.push_back(LR_Util::get_psi_spin(psi_ks, is, this->nk_)); }
             this->hR_ = LR_Util::make_unique<hamilt::HContainer<double>>(&pmat);
@@ -98,7 +100,7 @@ namespace LR
                 ModuleGint::cal_gint_vl(v2.c, this->hR_.get());
                 std::vector<ct::Tensor> v_2d(nk_, LR_Util::newTensor<T>({ pmat_.get_col_size(), pmat_.get_row_size() }));
                 for (auto& v : v_2d) { v.zero(); }
-                const int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)
+                const int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(this->ks_solver_)
                     ? pmat_.get_row_size() : pmat_.get_col_size();
                 for (int ik = 0;ik < nk_;++ik)
                 {
@@ -135,6 +137,7 @@ namespace LR
         const T factor_ = T(1);
         const int nk_ = 1;
         const int nrxx_ = 1;
+        const std::string ks_solver_;
         std::unique_ptr<hamilt::HContainer<double>> hR_;
     };
 }

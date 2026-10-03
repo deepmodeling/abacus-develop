@@ -1,7 +1,17 @@
 #pragma once
 #include "lr_util.h"
+#include "source_io/module_parameter/parameter.h"
 namespace LR_Util
 {
+    /// the `nspin` `KernelXC` (and the LR Hxc/xc potential built on it) is constructed with:
+    /// 1 for a non-magnetic calculation, 2 otherwise. A single shared definition so the several
+    /// consumers of this value cannot drift apart.
+    inline int kernel_nspin()
+    {
+        return (PARAM.inp.nspin == 1
+            || (PARAM.inp.nspin == 4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z)) ? 1 : 2;
+    }
+
     template<typename T>
     void grad(const T* rhor,
         ModuleBase::Vector3<T>* gradrho,

@@ -210,6 +210,10 @@ namespace LR
         const Parallel_2D& pc,
         const Parallel_Orbitals& pmat,
         const std::string& spin_type,
+        const std::string& in_dir,
+        const std::string& out_dir,
+        const std::string& ks_solver,
+        const std::string& dft_functional,
         const bool openshell = false,
         const std::string& zvec_solver = "cg")
     {
@@ -228,13 +232,13 @@ namespace LR
 #ifdef __EXX
                 exx_lri, exx_alpha,
 #endif
-                pot, pot_hxc_gs, kv, px, pc, pmat);
+                pot, pot_hxc_gs, kv, px, pc, pmat, ks_solver, dft_functional);
             Z_vector_UL<T> ops_L(xc_kernel, nspin, naos, nocc, nvirt,
                 ucell, orb_cutoff, gd, psi_ks, eig_ks,
 #ifdef __EXX
                 exx_lri, exx_alpha,
 #endif
-                pot_hxc_gs, kv, px, pc, pmat);
+                pot_hxc_gs, kv, px, pc, pmat, dft_functional);
             build_and_solve_zeq(ops_R, ops_L, /*nspin_x=*/2, X, R, Z, nloc_per_band, nstates, zvec_solver);
         }
         else
@@ -244,13 +248,13 @@ namespace LR
 #ifdef __EXX
                 exx_lri, exx_alpha,
 #endif
-                pot, pot_hxc_gs, kv, px, pc, pmat, spin_type);
+                pot, pot_hxc_gs, kv, px, pc, pmat, in_dir, out_dir, dft_functional, spin_type);
             Z_vector_L<T> ops_L(xc_kernel, nspin, naos, nocc, nvirt,
                 ucell, orb_cutoff, gd, psi_ks, eig_ks,
 #ifdef __EXX
                 exx_lri, exx_alpha,
 #endif
-                pot_hxc_gs, kv, px, pc, pmat, spin_type);
+                pot_hxc_gs, kv, px, pc, pmat, spin_type, in_dir, out_dir, dft_functional);
             build_and_solve_zeq(ops_R, ops_L, /*nspin_x=*/1, X, R, Z, nloc_per_band, nstates, zvec_solver);
         }
     }

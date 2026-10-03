@@ -25,7 +25,10 @@ namespace LR
         const Parallel_Orbitals& pmat_;
         const bool openshell_;
         const std::vector<std::string> spintype_;
-        
+        /// cached aliases, read once here instead of at every call site below
+        const int out_chg_precision_ = PARAM.inp.out_chg[1];
+        const std::string global_out_dir_ = PARAM.globalv.global_out_dir;
+
         inline void dm_to_density(module_dm::DensityMatrix<double, double>& dm, double** density)
         {
             ModuleBase::TITLE("LR_Density", "dm_to_density");
@@ -91,7 +94,7 @@ namespace LR
 
         void write_density_single_state(const double* const* const density, const std::string& filepath)
         {
-            ModuleIO::write_vdata_palgrid(pgrid_, density[0], 0, 1, 0, filepath, 0.0, &ucell_, PARAM.inp.out_chg[1], 0, false, true);
+            ModuleIO::write_vdata_palgrid(pgrid_, density[0], 0, 1, 0, filepath, 0.0, &ucell_, this->out_chg_precision_, 0, false, true);
         }
 
         void output_eh_density_all_states(const T* const X, const int ispin, const int nstate)
@@ -108,7 +111,7 @@ namespace LR
                 if (openshell_)
                     offset += ispin * this->pX_[0].get_local_size();
                 this->cal_eh_density_single_state(X + offset, ispin, density);
-                const std::string filepath = PARAM.globalv.global_out_dir + "LR_e-h_density_" + spintype_[ispin] + "_" + std::to_string(istate + 1) + ".cube";
+                const std::string filepath = this->global_out_dir_ + "LR_e-h_density_" + spintype_[ispin] + "_" + std::to_string(istate + 1) + ".cube";
                 this->write_density_single_state(density, filepath);
             }
             LR_Util::_deallocate_2order_nested_ptr(density, 1);

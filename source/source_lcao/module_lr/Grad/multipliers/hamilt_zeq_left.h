@@ -38,12 +38,15 @@ namespace LR
             const std::vector<Parallel_2D>& pX,
             const Parallel_2D& pc,
             const Parallel_Orbitals& pmat,
-            const std::string& spin_type)
+            const std::string& spin_type,
+            const std::string& in_dir,
+            const std::string& out_dir,
+            const std::string& dft_functional)
             : HamiltLR<T>(xc_kernel, nspin, naos, nocc, nvirt, ucell, orb_cutoff, gd, psi_ks, eig_ks,
 #ifdef __EXX
                 exx_lri, exx_alpha,
 #endif
-                pot_hxc_gs, kv, pX, pc, pmat, spin_type, PARAM.globalv.global_readin_dir, PARAM.globalv.global_out_dir)
+                pot_hxc_gs, kv, pX, pc, pmat, spin_type, in_dir, out_dir)
         {
             ModuleBase::TITLE("Z_vector_L", "Z_vector_L");
             this->DM_trans = LR_Util::make_unique<module_dm::DensityMatrix<T, T>>(&pmat, 1, kv.kvec_d, this->nk);
@@ -60,10 +63,12 @@ namespace LR
                 { 0 }, 4.0, ATYPE::CC_vo);
             this->ops->add(op_hz);
 #ifdef __EXX
-            if (gs_is_hybrid())
+            if (gs_is_hybrid(dft_functional))
             {
+                // Z_vector_L only exists on the force-calculation path, so cal_force is always true here.
                 hamilt::Operator<T>* op_hz_exx = new OperatorLREXX<T>(nspin, naos, nocc[0], nvirt[0], ucell, psi_ks,
                     *this->DM_trans, exx_lri, kv, pX[0], pc, pmat,
+                    /*cal_force=*/true,
                     2.0 * exx_alpha, //alpha; H=2K when D is symmetrized
                     ATYPE_EXX::CC_vo);
                 this->ops->add(op_hz_exx);
@@ -123,7 +128,8 @@ namespace LR
             const K_Vectors& kv,
             const std::vector<Parallel_2D>& pX,
             const Parallel_2D& pc,
-            const Parallel_Orbitals& pmat)
+            const Parallel_Orbitals& pmat,
+            const std::string& dft_functional)
             : ZeqULR<T>(nocc, nvirt, pX, kv.get_nks() / nspin),
             naos_(naos), pc_(pc), pmat_(pmat), psi_ks_(psi_ks)
         {
@@ -152,7 +158,7 @@ namespace LR
             // exchange is spin-diagonal ($\delta_{\sigma\sigma'}$), so only blocks 0 and 3.
             // Factor 2*alpha is unchanged from the closed-shell version: the EXX part of the
             // kernel carries no singlet/triplet combination, only $H=2K$.
-            if (gs_is_hybrid())
+            if (gs_is_hybrid(dft_functional))
             {
                 for (int is : {0, 1})
                 {
@@ -162,7 +168,7 @@ namespace LR
                 {
                     this->ops[(is << 1) + is]->add(new OperatorLREXX<T>(nspin, naos, nocc[is], nvirt[is],
                         ucell, this->psi_ks_spin_[is], *this->DM_trans, exx_lri, kv, pX[is], pc, pmat,
-                        2.0 * exx_alpha, ATYPE_EXX::CC_vo));
+                        /*cal_force=*/true, 2.0 * exx_alpha, ATYPE_EXX::CC_vo));
                 }
             }
 #endif

@@ -13,19 +13,12 @@
 namespace LR
 {
     using Vec3 = ModuleBase::Vector3<double>;
-    /// the `nspin` `KernelXC` is built with: 1 for a non-magnetic calculation, 2 otherwise.
-    /// Kept next to `PotLRBase`'s own expression so `make_kernel` cannot drift away from it.
-    static int kernel_nspin()
-    {
-        return (PARAM.inp.nspin == 1 || (PARAM.inp.nspin == 4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z)) ? 1 : 2;
-    }
-
     std::shared_ptr<const KernelXC> PotHxcLR::make_kernel(const std::string& xc_kernel,
         const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell, const Charge& chg_gs,
         const Parallel_Grid& pgrid, const bool openshell, const int gxc_spin,
         const std::vector<std::string>& lr_init_xc_kernel)
     {   //calls XC_Functional::set_func_type and libxc
-        return std::make_shared<const KernelXC>(rho_basis, ucell, chg_gs, pgrid, kernel_nspin(),
+        return std::make_shared<const KernelXC>(rho_basis, ucell, chg_gs, pgrid, LR_Util::kernel_nspin(),
             xc_kernel, lr_init_xc_kernel, openshell, gxc_spin);
     }
 
@@ -33,7 +26,7 @@ namespace LR
     PotHxcLR::PotHxcLR(const std::string& xc_kernel, const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell,
         const Charge& chg_gs/*ground state*/, const Parallel_Grid& pgrid,
         const SpinType& st, const std::vector<std::string>& lr_init_xc_kernel, const int gxc_spin)
-        :PotLRBase(rho_basis, kernel_nspin(), chg_gs.nrxx, ucell.tpiba),
+        :PotLRBase(rho_basis, LR_Util::kernel_nspin(), chg_gs.nrxx, ucell.tpiba),
         xc_kernel_(xc_kernel), spin_type_(st),
         pot_hartree_(LR_Util::make_unique<elecstate::PotHartree>(&rho_basis)),
         xc_kernel_components_(make_kernel(xc_kernel, rho_basis, ucell, chg_gs, pgrid, (st == SpinType::S2_updown), gxc_spin, lr_init_xc_kernel)),
@@ -44,7 +37,7 @@ namespace LR
 
     PotHxcLR::PotHxcLR(std::shared_ptr<const KernelXC> kernel, const std::string& xc_kernel,
         const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell, const int nrxx, const SpinType& st)
-        :PotLRBase(rho_basis, kernel_nspin(), nrxx, ucell.tpiba),
+        :PotLRBase(rho_basis, LR_Util::kernel_nspin(), nrxx, ucell.tpiba),
         xc_kernel_(xc_kernel), spin_type_(st),
         pot_hartree_(LR_Util::make_unique<elecstate::PotHartree>(&rho_basis)),
         xc_kernel_components_(std::move(kernel)),

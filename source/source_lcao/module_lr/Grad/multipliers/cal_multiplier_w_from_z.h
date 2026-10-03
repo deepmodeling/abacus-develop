@@ -86,6 +86,7 @@ namespace LR
         const std::vector<Parallel_2D>& p_occ_occ,   // < for W
         const Parallel_Orbitals& pmat,
         const std::string xc_kernel,
+        const std::string& dft_functional,
         const std::string& spin_type = "singlet")
     {
         ModuleBase::TITLE("cal_W_from_Z", "cal_W_from_Z");
@@ -106,9 +107,10 @@ namespace LR
             DM_diff_relaxed, pot_hxc_gs, ucell, orb_cutoff, gd, kv, p_occ_occ, pc, pmat,
             { 0 }, T(2.0), ATYPE::CC_oo);
 #ifdef __EXX
+        // cal_W_from_Z only runs on the force-calculation path, so cal_force is always true here.
         OperatorLREXX<T> op_ht_exx(nspin, naos, nocc[0], nvirt[0], ucell, psi_ks,
             DM_diff_relaxed, exx_lri, kv, p_occ_occ[0], pc, pmat,
-            exx_alpha, ATYPE_EXX::CC_oo);
+            /*cal_force=*/true, exx_alpha, ATYPE_EXX::CC_oo);
 #endif
         // 2. $2\sum_{jb,kc} g^{xc}_{ia, jb, kc}X_{jb}X_{kc}$
         // use pointer here for polymorphism
@@ -172,7 +174,7 @@ namespace LR
         // std::cout << "W (H[T+Z])) local terms: " << std::endl;
         // LR_Util::print_value(W, nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
 #ifdef __EXX
-        if (LR::gs_is_hybrid())  // H[T+Z] term depends on ground-state kernel (dft_functional)
+        if (LR::gs_is_hybrid(dft_functional))  // H[T+Z] term depends on ground-state kernel
             op_ht_exx.act(/*nband=*/1, ld_oo, /*npol=*/1, X, W);
 #endif
         // std::cout << "W (H[T+Z])) local +exx terms: " << std::endl;
@@ -220,7 +222,9 @@ namespace LR
         const Parallel_2D& pc,
         const std::vector<Parallel_2D>& p_occ_occ,
         const Parallel_Orbitals& pmat,
-        const std::string xc_kernel)
+        const std::string xc_kernel,
+        const std::string& ks_solver,
+        const std::string& dft_functional)
     {
         ModuleBase::TITLE("cal_W_from_Z_openshell", "cal_W_from_Z_openshell");
         using ATYPE = typename OperatorLRHxc<T>::MO_TO_AO_TYPE;
@@ -254,14 +258,14 @@ namespace LR
         std::vector<psi::Psi<T>> psi_ks_spin;
         for (int is : {0, 1}) { psi_ks_spin.push_back(LR_Util::get_psi_spin(psi_ks, is, nk)); }
         std::vector<std::unique_ptr<OperatorLREXX<T>>> op_ht_exx(2);
-        const bool with_exx = LR::gs_is_hybrid();
+        const bool with_exx = LR::gs_is_hybrid(dft_functional);
         if (with_exx)
         {   // exchange is spin-diagonal
             for (int is : {0, 1})
             {
                 op_ht_exx[is] = LR_Util::make_unique<OperatorLREXX<T>>(nspin, naos, nocc[is], nvirt[is],
                     ucell, psi_ks_spin[is], DM_diff_relaxed, exx_lri, kv, p_occ_occ[is], pc, pmat,
-                    exx_alpha, ATYPE_EXX::CC_oo);
+                    /*cal_force=*/true, exx_alpha, ATYPE_EXX::CC_oo);
             }
         }
 #endif
@@ -314,7 +318,7 @@ namespace LR
         {
             OperatorGxcULR<T> gxc(pot_hxc_gs.lock()->xc_kernel_components(), pot_hxc_gs.lock()->get_rho_basis(),
                 ucell, orb_cutoff, gd, kv, pmat, pc, psi_ks, nocc, nvirt, naos,
-                px, p_occ_occ, LR_Util::MO_TYPE::OO, T(1.0));
+                px, p_occ_occ, LR_Util::MO_TYPE::OO, T(1.0), nspin, ks_solver);
             std::vector<T> w_flat(ld_oo[0] + ld_oo[1], T(0.0));
             gxc.act(X, w_flat.data());
             for (int is : {0, 1})
