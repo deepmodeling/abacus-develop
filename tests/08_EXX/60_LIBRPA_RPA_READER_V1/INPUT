@@ -15,7 +15,7 @@ rpa               1
 rpa_out_vel       1
 out_mat_xc        1
 out_wfc_lcao      1
-out_librpa_reader_version 1
+out_librpa_ver 1
 symmetry          -1
 exx_separate_loop 1
 exx_pca_threshold 1e-3

@@ -117,8 +117,8 @@ template <typename T, typename Tdata> class RPA_LRI
                           Exx_LRI<double>* exx_lri);
     void out_librpa_basis_v1(const UnitCell& ucell,
                              Exx_LRI<double>* exx_lri,
-                             const std::string& aux_filename = "basis_aux_out",
-                             const std::string& legacy_filename = "basis_out");
+                             const std::string& aux_filename,
+                             const std::string& legacy_filename);
     // void print_matrix(char *desc, const ModuleBase::matrix &mat);
     // void print_complex_matrix(char *desc, const ModuleBase::ComplexMatrix &mat);
     // void init(const MPI_Comm &mpi_comm_in);
@@ -156,6 +156,4 @@ template <typename T, typename Tdata> class RPA_LRI
     std::unique_ptr<Exx_LRI<double>> exx_cut_coulomb;
     std::unique_ptr<Exx_LRI<double>> exx_full_coulomb;
 };
-#include "rpa_lri.hpp"
-
 #endif

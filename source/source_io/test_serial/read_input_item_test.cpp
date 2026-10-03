@@ -1805,8 +1805,8 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { // out_librpa_reader_version
-        auto it = find_label("out_librpa_reader_version", readinput.input_lists);
+    { // out_librpa_ver
+        auto it = find_label("out_librpa_ver", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());
         EXPECT_EQ(param.input.out_librpa_reader_version, 0);
 

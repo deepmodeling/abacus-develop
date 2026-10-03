@@ -3798,7 +3798,7 @@ parameters:
     default_value: "\"OUT.librpa\""
     unit: ""
     availability: basis_type==lcao
-  - name: out_librpa_reader_version
+  - name: out_librpa_ver
     category: Output information
     type: Integer
     description: |

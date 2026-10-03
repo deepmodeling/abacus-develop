@@ -206,7 +206,7 @@
     - [rpa](#rpa)
     - [rpa\_out\_vel](#rpa_out_vel)
     - [rpa\_outdir](#rpa_outdir)
-    - [out\_librpa\_reader\_version](#out_librpa_reader_version)
+    - [out\_librpa\_ver](#out_librpa_ver)
     - [out\_pchg](#out_pchg)
     - [out\_wfc\_norm](#out_wfc_norm)
     - [out\_wfc\_re\_im](#out_wfc_re_im)
@@ -2445,7 +2445,7 @@
 - **Description**: The directory to save files for LibRPA.
 - **Default**: "OUT.librpa"
 
-### out_librpa_reader_version
+### out_librpa_ver
 
 - **Type**: Integer
 - **Availability**: *[`basis_type`](#basis_type)==lcao*

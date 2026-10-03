@@ -1506,7 +1506,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         this->add_item(item);
     }
     {
-        Input_Item item("out_librpa_reader_version");
+        Input_Item item("out_librpa_ver");
         item.annotation = "LibRPA output reader version";
         item.category = "Output information";
         item.type = "Integer";
@@ -1519,7 +1519,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
             const int value = para.input.out_librpa_reader_version;
             if (value != 0 && value != 1)
             {
-                ModuleBase::WARNING_QUIT("INPUT", "out_librpa_reader_version must be 0 or 1.");
+                ModuleBase::WARNING_QUIT("INPUT", "out_librpa_ver must be 0 or 1.");
             }
         };
         this->add_item(item);
