@@ -8,7 +8,7 @@
 #include "source_base/math_ylmreal.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_pw.h"
-#include "source_pw/module_pwdft/nonlocal_maths.hpp"
+#include "source_pw/module_pwdft/nonlocal_maths.h"
 #include "stress_pw.h"
 
 // computes the part of the crystal stress which is due

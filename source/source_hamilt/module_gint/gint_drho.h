@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_DRHO_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_DRHO_H
+
 
 #include <vector>
 #include "source_hamilt/module_hcontainer/hcontainer.h"
@@ -50,3 +52,5 @@ class Gint_drho : public Gint
 };
 
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_DRHO_H

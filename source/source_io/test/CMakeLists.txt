@@ -249,6 +249,9 @@ AddTest(
   LIBS parameter base device
   SOURCES
   restart_exx_csr_test.cpp
+  ../module_restart/restart_exx_csr.cpp
+  ../module_hs/hs_sparse_io.cpp
+  ../module_hs/lat_r_csr.cpp
   tmp_mocks.cpp
 )
 endif()

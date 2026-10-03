@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_HSOLVER_LRTD_HPP
+#define ABACUS_SOURCE_LCAO_MODULE_LR_HSOLVER_LRTD_HPP
+
 #include "source_io/module_parameter/parameter.h"
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_david.h"
@@ -179,3 +181,5 @@ namespace LR
         }
     }
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_HSOLVER_LRTD_HPP

@@ -1,10 +1,15 @@
-#pragma once
 #include "restart_exx_csr.h"
+
 #include "source_base/global_function.h"
 #include "source_cell/unitcell.h"
 #include "source_base/module_out/csr_reader.h"
 #include "source_io/module_hs/hs_sparse_io.h"
 #include "source_lcao/module_ri/serialization_cereal.h"
+#include <cereal/types/utility.hpp>
+#include <cereal/types/complex.hpp>
+#include <cereal/types/array.hpp>
+#include <cereal/types/memory.hpp>
+#include <cereal/types/valarray.hpp>
 #include <RI/global/Tensor.h>
 #include <map>
 
@@ -30,9 +35,9 @@ namespace ModuleIO
                         const std::vector<int>& R = csr.getRCoordinate(iR);
                         TC dR({ R[0], R[1], R[2] });
                         Hexxs[is][iat1][{iat2, dR}] = RI::Tensor<Tdata>(
-                                { 
-                                static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw), 
-                                static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw) 
+                                {
+                                static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw),
+                                static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw)
                                 }
                                 );
                     }
@@ -51,9 +56,9 @@ namespace ModuleIO
                     const int& i = ijv.first.first * npol;
                     const int& j = ijv.first.second * npol;
                     Hexxs.at(is).at(ucell.iwt2iat[i]).at(
-                            { 
-                                ucell.iwt2iat[j], 
-                                { R[0], R[1], R[2] } 
+                            {
+                                ucell.iwt2iat[j],
+                                { R[0], R[1], R[2] }
                             }
                             )(ucell.iwt2iw[i] / npol, ucell.iwt2iw[j] / npol) = ijv.second;
                 }
@@ -62,7 +67,7 @@ namespace ModuleIO
     }
 
     template<typename Tdata>
-    void read_Hexxs_cereal(const std::string& file_name, 
+    void read_Hexxs_cereal(const std::string& file_name,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs)
     {
         ModuleBase::TITLE("ModuleIO", "read_Hexxs_cereal");
@@ -155,4 +160,33 @@ namespace ModuleIO
                 options);
         }
     }
-}
+
+template void read_Hexxs_csr<double>(const std::string&,
+                                     const UnitCell&,
+                                     const int,
+                                     const int,
+                                     std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>&);
+template void read_Hexxs_csr<std::complex<double>>(const std::string&,
+                                                   const UnitCell&,
+                                                   const int,
+                                                   const int,
+                                                   std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>&);
+template void read_Hexxs_cereal<double>(const std::string&,
+                                        std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>&);
+template void read_Hexxs_cereal<std::complex<double>>(const std::string&,
+                                                      std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>&);
+template std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>
+    calculate_RI_Tensor_sparse<double>(const double&,
+                                       const std::map<int, std::map<TAC, RI::Tensor<double>>>&,
+                                       const UnitCell&);
+template std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
+    calculate_RI_Tensor_sparse<std::complex<double>>(const double&,
+                                                     const std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>&,
+                                                     const UnitCell&);
+template void write_Hexxs_csr<double>(const std::string&,
+                                      const UnitCell&,
+                                      const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>&);
+template void write_Hexxs_csr<std::complex<double>>(const std::string&,
+                                                    const UnitCell&,
+                                                    const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>&);
+} // namespace ModuleIO

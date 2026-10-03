@@ -1,5 +1,5 @@
 #include "fs_nonlocal_tools.h"
-#include "nonlocal_maths.hpp"
+#include "nonlocal_maths.h"
 #include "source_base/math_polyint.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/parallel_comm.h" // different MPI worlds (POOL_WORLD)

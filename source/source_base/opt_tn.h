@@ -21,10 +21,7 @@ namespace ModuleBase
 class Opt_TN
 {
   public:
-    Opt_TN()
-    {
-        this->mach_prec_ = std::numeric_limits<double>::epsilon(); // get machine precise
-    }
+    Opt_TN();
     ~Opt_TN() {};
 
     /**
@@ -32,17 +29,9 @@ class Opt_TN
      *
      * @param nx length of the solution array x
      */
-    void allocate(int nx)
-    {
-        this->nx_ = nx;
-        this->cg_.allocate(this->nx_);
-    }
+    void allocate(int nx);
 
-    void set_para(double dV)
-    {
-        this->dV_ = dV;
-        this->cg_.set_para(this->dV_);
-    }
+    void set_para(double dV);
 
     /**
      * @brief Refresh the class.
@@ -50,15 +39,7 @@ class Opt_TN
      *
      * @param nx_new length of new x, default 0 means the length doesn't change
      */
-    void refresh(int nx_new = 0)
-    {
-        this->iter_ = 0;
-        if (nx_new != 0)
-        {
-            this->nx_ = nx_new;
-        }
-        this->cg_.refresh(nx_new);
-    }
+    void refresh(int nx_new = 0);
 
     template <class T>
     void next_direct(
@@ -85,12 +66,7 @@ class Opt_TN
     int iter_ = 0;          // number of the iteration
     double mach_prec_ = 0.; // machine precision
 
-    double inner_product(double* pa, double* pb, int length)
-    {
-        double innerproduct = BlasConnector::dot(length, pa, 1, pb, 1);
-        innerproduct *= this->dV_;
-        return innerproduct;
-    }
+    double inner_product(double* pa, double* pb, int length);
 
     /**
      * @brief Get epsilon used in interpolation.
@@ -100,18 +76,7 @@ class Opt_TN
      * @param pcg_direction the direction of cg_
      * @return epsilon
      */
-    double get_epsilon(double* px, double* pcg_direction)
-    {
-        double epsilon = 0.;
-        double xx = this->inner_product(px, px, this->nx_);
-        Parallel_Reduce::reduce_all(xx);
-        double dd = this->inner_product(pcg_direction, pcg_direction, this->nx_);
-        Parallel_Reduce::reduce_all(dd);
-        epsilon = 2 * sqrt(this->mach_prec_) * (1 + sqrt(xx)) / sqrt(dd);
-        // epsilon = 2 * sqrt(this->mach_prec_) * (1 + sqrt(this->inner_product(px, px, this->nx_)))
-        //         / sqrt(this->inner_product(pcg_direction, pcg_direction, this->nx_));
-        return epsilon;
-    }
+    double get_epsilon(double* px, double* pcg_direction);
 };
 
 /**

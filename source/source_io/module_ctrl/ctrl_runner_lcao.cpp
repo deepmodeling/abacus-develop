@@ -6,7 +6,7 @@
 
 #include "../module_energy/write_proj_band_lcao.h" // projcted band structure
 #include "../module_dos/cal_ldos.h" // cal LDOS
-#include "../module_energy/write_eband_terms.hpp"
+#include "../module_energy/write_eband_terms.h"
 #include "source_io/module_hs/vxc_op_mat.h"
 #include "source_io/module_hs/vxc_op_r.h"
 #include "source_io/module_hs/vxc_op_tools.h"

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_CELL_MODULE_SYMMETRY_IRREDUCIBLE_SECTOR_H
+#define ABACUS_SOURCE_CELL_MODULE_SYMMETRY_IRREDUCIBLE_SECTOR_H
+
 #include <vector>
 #include <map>
 #include <set>
@@ -148,3 +150,5 @@ namespace ModuleSymmetry
         friend class Symmetry_rotation_k;
     };
 }
+
+#endif // ABACUS_SOURCE_CELL_MODULE_SYMMETRY_IRREDUCIBLE_SECTOR_H

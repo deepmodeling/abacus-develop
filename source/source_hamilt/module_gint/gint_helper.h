@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_HELPER_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_HELPER_H
+
 
 #include <memory>
 #include <cmath>
@@ -64,3 +66,5 @@ inline int ceil_div(const int a, const int b)
 }
 
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_HELPER_H
