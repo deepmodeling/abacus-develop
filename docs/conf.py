@@ -131,6 +131,7 @@ mathjax_path = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml
 # deepmodeling_current_site = 'Tutorials'
 latex_elements = {
     'extraclassoptions':'openany,oneside',
+    # LaTeX definitions for MathJax-style macros in generated parameter docs.
     'preamble': r'''
 \providecommand{\lt}{<}
 \providecommand{\gt}{>}

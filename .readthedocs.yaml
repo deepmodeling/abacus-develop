@@ -9,18 +9,20 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
+  # Toolchain used by the external-PR PDF check below.
   apt_packages:
-       - texlive-latex-recommended
-       - texlive-fonts-recommended
-       - texlive-latex-extra
-       - texlive-xetex
+    - texlive-latex-recommended
+    - texlive-fonts-recommended
+    - texlive-latex-extra
+    - texlive-xetex
   jobs:
     pre_build:
+      # Run Sphinx's latexpdf make-mode target so external PRs verify PDF output.
       - |
         if [ "$READTHEDOCS_VERSION_TYPE" = "external" ]; then
-          # sphinx-build -b epub3 docs/ _build/epub --fail-on-warning
           sphinx-build -M latexpdf docs/ _build --fail-on-warning
         fi
+
         
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
