@@ -9,19 +9,17 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
-  apt_packages:
-       - texlive-latex-recommended
-       - texlive-fonts-recommended
-       - texlive-latex-extra
-       - texlive-xetex
   jobs:
     pre_build:
+      # PR builds only produce HTML, while the default version also builds
+      # the PDF formats below. Run the LaTeX builder on PRs so Sphinx warnings
+      # that only show up there fail the PR instead of the post-merge build.
+      # TeX compilation itself is left to the post-merge PDF build.
       - |
         if [ "$READTHEDOCS_VERSION_TYPE" = "external" ]; then
-          # sphinx-build -b epub3 docs/ _build/epub --fail-on-warning
-          sphinx-build -b latexpdf docs/ _build/latex --fail-on-warning
+          sphinx-build -W --keep-going -b latex docs/ _build/latex
         fi
-        
+
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
   configuration: docs/conf.py
