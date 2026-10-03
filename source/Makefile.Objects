@@ -48,6 +48,9 @@ VPATH=./src_global:\
 ./source_hamilt:\
 ./source_hamilt/module_ewald:\
 ./source_hamilt/module_surchem:\
+./source_hamilt/module_surchem/common:\
+./source_hamilt/module_surchem/sccs:\
+./source_hamilt/module_surchem/pcc:\
 ./source_hamilt/module_xc:\
 ./source_hamilt/module_xc/kernels:\
 ./source_pw/module_proj:\
@@ -593,7 +596,9 @@ OBJS_RELAXATION=relax_data.o\
 
 
 OBJS_SURCHEM=surchem.o\
+    surchem_input.o\
     h_corr_pw.o\
+    h_corr_sccs.o h_corr_pcc.o\
     cal_epsilon.o\
     cal_pseudo.o\
     cal_totn.o\
@@ -601,6 +606,23 @@ OBJS_SURCHEM=surchem.o\
     cal_vel.o\
     minimize_cg.o\
     sol_force.o\
+    charge_reduction.o\
+    pw_grid.o\
+    sccs_cavity.o\
+    sccs_charge.o\
+    sccs_driver.o\
+    sccs_functional.o\
+    sccs_parameters.o\
+    pcc_0d.o\
+    pcc_2d.o\
+    pcc_moments.o\
+    pcc_boundary.o\
+    sccs_pcc_2d_coulomb.o\
+    sccs_pcc_coulomb.o\
+    sccs_pw_coulomb.o\
+    sccs_pw_nonel.o\
+    sccs_gaussian_ion.o\
+    sccs_response.o\
 
 OBJS_SYMMETRY=symm_other.o\
     symm_rot_spin.o\
@@ -733,6 +755,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_inp_dfpt.o\
     module_parameter/read_inp_other.o\
     module_parameter/read_inp_out.o\
+    module_parameter/read_inp_sccs.o\
     module_parameter/read_set_globalv.o\
     module_hs/angmom_op_mat.o\
 

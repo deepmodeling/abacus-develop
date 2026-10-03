@@ -139,6 +139,8 @@ class ReadInput
     void item_postprocess();
     // items for some models
     void item_model();
+    // items for SCCS implicit solvation
+    void item_sccs();
     // items for exx
     void item_exx();
     // items for dft+u

@@ -356,6 +356,24 @@ eb_k                           80 #the relative permittivity of the bulk solvent
 tau                            1.0798e-05 #the effective surface tension parameter
 sigma_k                        0.6 # the width of the diffuse cavity
 nc_k                           0.00037 # the cut-off charge density
+sccs_preset                    custom
+sccs_epsilon                   78.3
+sccs_rho_min                   0.0001
+sccs_rho_max                   0.005
+sccs_gamma                     0.0
+sccs_pressure                  0.0
+sccs_tol_rms                   1.0e-10
+sccs_tol_max                   1.0e-8
+sccs_surface_eta               1.0e-8
+sccs_solvent_mode              electronic
+sccs_corespread                0.5
+sccs_lowpass_p1                -1
+sccs_lowpass_p2                -1
+sccs_start_drho                0.0
+sccs_start_nmax                30
+sccs_debug                     1
+pcc_2d_axis                    1
+sccs_maxiter                   200
 
 #Parameters (19.orbital free density functional theory)
 of_kinetic                     vw #kinetic energy functional, such as tf, vw, wt

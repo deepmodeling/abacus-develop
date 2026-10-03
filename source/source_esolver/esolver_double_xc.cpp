@@ -231,11 +231,13 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         // get etot of output charge density, now the etot is of density after charge mixing
         this->pelec->pot->update_from_charge(&this->chr_base, &ucell);
         this->pelec->f_en.descf = 0.0;
+        const double pcc_energy_rydberg = this->pelec->pot->pcc_energy_rydberg();
         this->pelec->cal_energies(2,
                                   this->inp_->imp_sol,
                                   this->inp_->sc_mag_switch,
                                   this->inp_->dft_plus_u,
-                                  this->inp_->assume_isolated);
+                                  this->inp_->assume_isolated,
+                                  pcc_energy_rydberg);
         // std::cout<<"in deepks etot------"<<std::endl;
         // this->pelec->f_en.print_all();
         // std::cout<<"in deepks etot------"<<std::endl;
@@ -300,11 +302,13 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         this->pelec_base->f_en.deband = this->pelec->f_en.deband;
         this->pelec_base->f_en.demet = this->pelec->f_en.demet;
         this->pelec_base->f_en.descf = 0.0; // set descf to 0
+        const double base_pcc_energy_rydberg = this->pelec_base->pot->pcc_energy_rydberg();
         this->pelec_base->cal_energies(2,
                                        this->inp_->imp_sol,
                                        this->inp_->sc_mag_switch,
                                        this->inp_->dft_plus_u,
-                                       this->inp_->assume_isolated);  // 2 means Kohn-Sham functional
+                                       this->inp_->assume_isolated,
+                                       base_pcc_energy_rydberg);  // 2 means Kohn-Sham functional
                                             // std::cout<<"in double_xc------"<<std::endl;
                                             // this->pelec_base->f_en.print_all();
                                             // std::cout<<"in double_xc------"<<std::endl;

@@ -55,3 +55,146 @@ AddTest(
   ../../module_xc/xc_gga_corr.cpp ../../module_xc/xc_lda_corr.cpp ../../module_xc/xc_gga_exch.cpp
   ../../module_xc/xc_lda_exch.cpp ../../module_xc/xc_hcth.cpp
 )
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_sccs_cavity
+  SOURCES test_sccs_cavity.cpp ../sccs/sccs_cavity.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_pcc_0d
+  LIBS base device
+  SOURCES test_pcc_0d.cpp ../pcc/pcc_0d.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_pcc_2d
+  LIBS base device
+  SOURCES test_pcc_2d.cpp ../pcc/pcc_0d.cpp ../pcc/pcc_2d.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_pcc_boundary
+  SOURCES test_pcc_boundary.cpp ../pcc/pcc_boundary.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_sccs_parameters
+  SOURCES test_sccs_parameters.cpp ../sccs/sccs_cavity.cpp ../sccs/sccs_parameters.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_sccs_pw_coulomb
+  LIBS planewave device base
+  SOURCES test_sccs_pw_coulomb.cpp ../sccs/sccs_pw_coulomb.cpp
+          ../common/pw_grid.cpp ../sccs/sccs_charge.cpp ../pcc/pcc_0d.cpp
+          ../pcc/pcc_2d.cpp ../sccs/sccs_pcc_coulomb.cpp ../sccs/sccs_pcc_2d_coulomb.cpp
+          ../common/charge_reduction.cpp
+          ../pcc/pcc_moments.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_sccs_response
+  LIBS planewave device base
+  SOURCES test_sccs_response.cpp ../sccs/sccs_cavity.cpp
+          ../sccs/sccs_pw_coulomb.cpp ../sccs/sccs_response.cpp
+          ../common/charge_reduction.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_sccs_charge
+  LIBS base device
+  SOURCES test_sccs_charge.cpp ../sccs/sccs_charge.cpp
+          ../common/charge_reduction.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_pw_grid
+  LIBS planewave device base
+  SOURCES test_pw_grid.cpp ../common/pw_grid.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_sccs_pcc_coulomb
+  LIBS planewave device base
+  SOURCES test_sccs_pcc_coulomb.cpp ../sccs/sccs_charge.cpp ../pcc/pcc_0d.cpp ../pcc/pcc_2d.cpp
+          ../sccs/sccs_pw_coulomb.cpp ../sccs/sccs_pcc_coulomb.cpp
+          ../sccs/sccs_cavity.cpp ../sccs/sccs_response.cpp
+          ../common/charge_reduction.cpp
+          ../pcc/pcc_moments.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_sccs_pcc_2d_coulomb
+  LIBS planewave device base
+  SOURCES test_sccs_pcc_2d_coulomb.cpp ../sccs/sccs_cavity.cpp ../sccs/sccs_charge.cpp
+          ../sccs/sccs_functional.cpp ../pcc/pcc_0d.cpp ../pcc/pcc_2d.cpp
+          ../sccs/sccs_response.cpp ../sccs/sccs_pw_coulomb.cpp
+          ../sccs/sccs_pcc_2d_coulomb.cpp ../common/pw_grid.cpp
+          ../common/charge_reduction.cpp
+          ../pcc/pcc_moments.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_sccs_functional
+  LIBS planewave device base
+  SOURCES test_sccs_functional.cpp ../sccs/sccs_charge.cpp
+          ../sccs/sccs_functional.cpp ../sccs/sccs_pw_coulomb.cpp
+          ../common/charge_reduction.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_sccs_gaussian_ion
+  LIBS planewave device base cell domain_decomposition symmetry neighbor_search neighbor
+  SOURCES test_sccs_gaussian_ion.cpp ../sccs/sccs_gaussian_ion.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_sccs_pw_nonel
+  LIBS planewave device base
+  SOURCES test_sccs_pw_nonel.cpp ../sccs/sccs_charge.cpp
+          ../sccs/sccs_pw_coulomb.cpp ../sccs/sccs_pw_nonel.cpp
+          ../common/charge_reduction.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_sccs_driver
+  LIBS planewave device base
+  SOURCES test_sccs_driver.cpp ../sccs/sccs_cavity.cpp ../sccs/sccs_charge.cpp
+          ../sccs/sccs_driver.cpp ../sccs/sccs_functional.cpp
+          ../sccs/sccs_parameters.cpp ../pcc/pcc_0d.cpp ../pcc/pcc_2d.cpp
+          ../sccs/sccs_pcc_2d_coulomb.cpp ../sccs/sccs_pcc_coulomb.cpp
+          ../sccs/sccs_response.cpp ../common/pw_grid.cpp
+          ../sccs/sccs_pw_coulomb.cpp ../sccs/sccs_pw_nonel.cpp
+          ../common/charge_reduction.cpp
+          ../pcc/pcc_moments.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_h_corr_sccs
+  LIBS planewave device base cell domain_decomposition symmetry neighbor_search neighbor
+  SOURCES test_h_corr_sccs.cpp test_h_corr_pcc.cpp test_surchem_input.cpp ../surchem_input.cpp ../surchem.cpp ../sccs/h_corr_sccs.cpp ../pcc/h_corr_pcc.cpp
+          ../sccs/sccs_cavity.cpp ../sccs/sccs_charge.cpp ../sccs/sccs_driver.cpp
+          ../sccs/sccs_functional.cpp ../sccs/sccs_parameters.cpp
+          ../pcc/pcc_0d.cpp ../pcc/pcc_2d.cpp ../sccs/sccs_pcc_2d_coulomb.cpp
+          ../sccs/sccs_pcc_coulomb.cpp ../sccs/sccs_response.cpp
+          ../common/pw_grid.cpp ../sccs/sccs_pw_coulomb.cpp
+          ../sccs/sccs_gaussian_ion.cpp ../sccs/sccs_pw_nonel.cpp
+          ../common/charge_reduction.cpp
+          ../pcc/pcc_moments.cpp
+          ../pcc/pcc_boundary.cpp
+)
+
+AddTest(
+  TARGET MODULE_HAMILT_surchem_sol_force
+  LIBS planewave device base cell domain_decomposition symmetry neighbor_search neighbor
+  SOURCES test_sol_force.cpp ../surchem.cpp ../sccs/h_corr_sccs.cpp ../pcc/h_corr_pcc.cpp ../sol_force.cpp
+          ../sccs/sccs_cavity.cpp ../sccs/sccs_charge.cpp ../sccs/sccs_driver.cpp
+          ../sccs/sccs_functional.cpp ../sccs/sccs_parameters.cpp
+          ../pcc/pcc_0d.cpp ../pcc/pcc_2d.cpp ../sccs/sccs_pcc_2d_coulomb.cpp
+          ../sccs/sccs_pcc_coulomb.cpp ../sccs/sccs_response.cpp
+          ../common/pw_grid.cpp ../sccs/sccs_pw_coulomb.cpp
+          ../sccs/sccs_gaussian_ion.cpp ../sccs/sccs_pw_nonel.cpp
+          ../common/charge_reduction.cpp
+          ../pcc/pcc_moments.cpp
+)

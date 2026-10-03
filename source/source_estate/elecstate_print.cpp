@@ -287,6 +287,13 @@ void print_etot(const Magnetism& magnet,
             energies_Ry.push_back(elec.f_en.esol_cav);
         }
 
+        //! point-counter-charge open-boundary correction
+        if (inp.uses_pcc_correction())
+        {
+            titles.push_back("E_pcc");
+            energies_Ry.push_back(elec.f_en.correction_el);
+        }
+
         //! electric field energy
         if (inp.efield_flag)
         {

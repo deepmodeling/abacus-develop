@@ -138,7 +138,7 @@ void Forces<FPTYPE, Device>::cal_force(const int nspin,
     }
 
     ModuleBase::matrix forcesol;
-    if (PARAM.inp.imp_sol)
+    if (PARAM.inp.uses_surchem_correction())
     {
         forcesol.create(this->nat, 3);
         solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, nspin, forcesol);
@@ -175,7 +175,7 @@ void Forces<FPTYPE, Device>::cal_force(const int nspin,
                     force(iat, ipol) = force(iat, ipol) + force_gate(iat, ipol);
                 }
 
-                if (PARAM.inp.imp_sol)
+                if (PARAM.inp.uses_surchem_correction())
                 {
                     force(iat, ipol) = force(iat, ipol) + forcesol(iat, ipol);
                 }
@@ -259,7 +259,7 @@ void Forces<FPTYPE, Device>::cal_force(const int nspin,
                                   force_gate,
                                   false);
         }
-        if (PARAM.inp.imp_sol)
+        if (PARAM.inp.uses_surchem_correction())
         {
             ModuleIO::print_force(GlobalV::ofs_running,
                                   ucell,

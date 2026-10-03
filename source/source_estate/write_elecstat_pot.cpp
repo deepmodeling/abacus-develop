@@ -1,11 +1,14 @@
 #include "source_base/element_name.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_io/module_output/cube_io.h"
 #include "source_io/module_output/output_log.h"
 #include "write_elecstat_pot.h"
+
+#include <vector>
 
 namespace ModuleIO
 {
@@ -32,7 +35,15 @@ void write_elecstat_pot(
     const int nspin = PARAM.inp.nspin;
     const int efield = PARAM.inp.efield_flag;
     const int dip_corr = PARAM.inp.dip_cor_flag;
-    const bool imp_sol = PARAM.inp.imp_sol;
+    const bool legacy_solvent = PARAM.inp.imp_sol == 1;
+    // SCCS and PCC store the electrostatic part of their electron potential.
+    const bool sccs_or_pcc = solvent.uses_sccs() || solvent.uses_pcc();
+    const std::vector<double>& solvent_correction = solvent.electrostatic_correction();
+    if (sccs_or_pcc && solvent_correction.size() != static_cast<std::size_t>(rho_basis->nrxx))
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::write_elecstat_pot",
+                                 "the SCCS/PCC electrostatic potential is not available on this grid");
+    }
 
     //==========================================
     // Hartree potential
@@ -66,9 +77,13 @@ void write_elecstat_pot(
         {
             v_elecstat[ir] += v_efield(0, ir);
         }
-        if(imp_sol == true)
+        if (legacy_solvent)
         {
             v_elecstat[ir] += solvent.delta_phi[ir];
+        }
+        if (sccs_or_pcc)
+        {
+            v_elecstat[ir] += solvent_correction[ir];
         }
     }
 

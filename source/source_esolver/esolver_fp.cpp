@@ -21,6 +21,9 @@
 #include "source_base/module_parallel/para_world.h"
 #include "source_base/module_parallel/para_tag.h"
 #include "source_base/module_parallel/para_bridge.h"
+#include "source_hamilt/module_surchem/surchem_input.h"
+
+#include <iostream>
 
 namespace ModuleESolver
 {
@@ -47,13 +50,6 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     this->inp_ = &inp;
 
-    SurchemParameters surchem_parameters;
-    surchem_parameters.eb_k = inp.eb_k;
-    surchem_parameters.tau = inp.tau;
-    surchem_parameters.sigma_k = inp.sigma_k;
-    surchem_parameters.nc_k = inp.nc_k;
-    this->solvent.set_parameters(surchem_parameters);
-
     XCFunctionalParameters xc_parameters;
     xc_parameters.xc_temperature = inp.xc_temperature;
     xc_parameters.exx_fock_alpha = inp.exx_fock_alpha;
@@ -68,7 +64,7 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
     const int npol = PARAM.globalv.npol;
     const bool two_fermi = PARAM.globalv.two_fermi;
-    auto atoms_info = unitcell::read_pseudo(GlobalV::ofs_running,
+    AtomsInfoResult atoms_info = unitcell::read_pseudo(GlobalV::ofs_running,
                                             ucell,
                                             this->inp_->pseudo_dir,
                                             global_out_dir,
@@ -108,6 +104,18 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     pw::setup_pwrho(ucell, PARAM.globalv.double_grid, this->pw_rho_flag, 
       this->pw_rho, this->pw_rhod, this->pw_big, this->classname, inp);
 
+    SurchemParameters surchem_parameters;
+    try
+    {
+        surchem_parameters = ModuleSurchem::make_parameters(inp, ucell, atoms_info.nelec,
+                                                            this->pw_rhod->poolnproc);
+        this->solvent.set_parameters(surchem_parameters);
+    }
+    catch (const std::exception& error)
+    {
+        ModuleBase::WARNING_QUIT("ESolver_FP::before_all_runners", error.what());
+    }
+
     //! 3) setup structure factors
     this->sf.set(this->pw_rhod, inp.nbspline);
 
@@ -120,6 +128,7 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
         const int cal_symm_repr[2] = {this->inp_->cal_symm_repr[0], this->inp_->cal_symm_repr[1]};
         ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running,
                              this->inp_->symmetry_prec, inp.nspin, this->inp_->calculation, cal_symm_repr);
+        ModuleSurchem::validate_symmetry(surchem_parameters, ucell.symm);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
 
@@ -131,6 +140,7 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     const double kspacing[3] = {this->inp_->kspacing[0], this->inp_->kspacing[1], this->inp_->kspacing[2]};
     const double koffset[3] = {this->inp_->koffset[0], this->inp_->koffset[1], this->inp_->koffset[2]};
     this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, GlobalV::ofs_warning, use_ibz, global_out_dir, gamma_only_local, kspacing, this->inp_->kmesh_type, koffset);
+    ModuleSurchem::validate_kpoints(surchem_parameters, this->kv);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     //! 8) print information
@@ -158,6 +168,13 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_FP", "after_scf");
+
+    const bool is_output_rank
+        = this->kv.para_k.my_pool == 0 && this->kv.para_k.rank_in_pool == 0;
+    if (this->solvent.sccs_is_active() && is_output_rank)
+    {
+        this->solvent.write_sccs_diagnostics(std::cout);
+    }
 
     //! Output convergence information
     ModuleIO::output_convergence_after_scf(conv_esolver, this->pelec->f_en.etot);

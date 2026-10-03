@@ -1,0 +1,2 @@
+PW H3O+ with SCCS (water-cation preset) and 2D PCC, open along y (pcc_2d_axis 1).
+Checks total energy, forces and SCCS/PCC energy terms for a charged slab.

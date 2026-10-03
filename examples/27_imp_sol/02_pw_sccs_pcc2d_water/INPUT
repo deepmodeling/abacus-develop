@@ -1,0 +1,17 @@
+INPUT_PARAMETERS
+suffix              ABACUS
+pseudo_dir          ../../../tests/PP_ORB
+calculation         scf
+basis_type          pw
+init_wfc            random
+pw_seed             1
+nbands              8
+ecutwfc             60
+scf_nmax            80
+scf_thr             1.0e-10
+cal_force           1
+
+imp_sol             2
+sccs_preset         water-neutral
+assume_isolated     pcc_2d
+pcc_2d_axis         1

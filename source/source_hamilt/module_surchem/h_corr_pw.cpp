@@ -15,6 +15,11 @@ void surchem::v_correction(const UnitCell& cell,
                            Structure_Factor* sf,
                            ModuleBase::matrix& v)
 {
+    if (this->uses_sccs() || this->uses_pcc())
+    {
+        this->v_correction_solvent(cell, *rho_basis, nspin, rho, vlocal, v);
+        return;
+    }
     ModuleBase::TITLE("surchem", "v_cor");
     ModuleBase::timer::start("surchem", "v_cor");
 
@@ -56,7 +61,6 @@ void surchem::v_correction(const UnitCell& cell,
 
     cal_vel(cell, rho_basis, total_n, ps_totn, nspin, v);
     cal_vcav(cell, rho_basis, ps_totn, nspin, v);
-
     delete[] porter;
     delete[] porter_g;
     delete[] n;

@@ -36,6 +36,7 @@ struct Input_para
     int bndpar = 1;                               ///< parallel for stochastic/deterministic bands
     std::string latname = "user_defined_lattice"; ///< lattice name
     std::string assume_isolated = "none";         ///< isolated-system correction: none or makov-payne
+    int pcc_2d_axis = 2;                          ///< open lattice vector (0, 1 or 2) of assume_isolated pcc_2d
     double ecutwfc = 0;                           ///< energy cutoff for wavefunctions
     double ecutrho = 0;                           ///< energy cutoff for charge/potential
 
@@ -569,12 +570,30 @@ struct Input_para
     double block_height = 0.1; ///< height of the block
 
     //    implicit solvation model       Menglin Sun added on 2022-04-04
-    bool imp_sol = false;    ///< true: implicit solvation correction; false:
-                             ///< vacuum calculation(default)
+    int imp_sol = 0;         ///< 0 (default): vacuum, 1: legacy solvent, 2: SCCS
     double eb_k = 80;        ///< the relative permittivity of the bulk solvent
     double tau = 1.0798e-05; ///< the effective surface tension parameter
     double sigma_k = 0.6;    ///< the width of the diffuse cavity
     double nc_k = 0.00037;   ///< the cut-off charge density
+    bool uses_pcc_correction() const { return assume_isolated == "pcc_0d" || assume_isolated == "pcc_2d"; }
+    bool uses_surchem_correction() const { return imp_sol != 0 || uses_pcc_correction(); }
+    std::string sccs_preset = "custom";           ///< SCCS parameter preset
+    double sccs_epsilon = 78.3;                   ///< SCCS bulk relative permittivity
+    double sccs_rho_min = 1.0e-4;                 ///< lower cavity-density threshold, bohr^-3
+    double sccs_rho_max = 5.0e-3;                 ///< upper cavity-density threshold, bohr^-3
+    double sccs_gamma = 0.0;                      ///< SCCS surface coefficient, dyn/cm
+    double sccs_pressure = 0.0;                   ///< SCCS volume coefficient, GPa
+    int sccs_maxiter = 200;                       ///< sqrt-CG iteration limit
+    double sccs_tol_rms = 1.0e-10;                ///< sqrt-CG RMS charge-residual tolerance
+    double sccs_tol_max = 1.0e-8;                 ///< sqrt-CG maximum charge-residual tolerance
+    double sccs_surface_eta = 1.0e-8;             ///< regularized surface norm, bohr^-1
+    std::string sccs_solvent_mode = "electronic"; ///< Environ solvent_mode: electronic or full (core electrons in the cavity)
+    double sccs_corespread = 0.5;                 ///< Environ corespread of the full-mode core Gaussians, bohr
+    double sccs_lowpass_p1 = -1.0;                ///< Environ deriv_lowpass_p1; PCC only, off unless both are positive
+    double sccs_lowpass_p2 = -1.0;                ///< Environ deriv_lowpass_p2; PCC only, off unless both are positive
+    double sccs_start_drho = 0.0;                 ///< delayed-start density threshold; zero starts immediately
+    int sccs_start_nmax = 30;                     ///< forced delayed-start electronic iteration
+    int sccs_debug = 0;                           ///< 0: silent, 1: iteration summary, 2: full diagnostics
 
     // ==============  #Parameters (14.vdW Correction) ===========================
     // ==========================================================

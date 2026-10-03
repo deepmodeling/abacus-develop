@@ -20,6 +20,7 @@
     - [bndpar](#bndpar)
     - [latname](#latname)
     - [assume\_isolated](#assume_isolated)
+    - [pcc\_2d\_axis](#pcc_2d_axis)
     - [init\_wfc](#init_wfc)
     - [init\_chg](#init_chg)
     - [init\_vel](#init_vel)
@@ -532,6 +533,23 @@
     - [tau](#tau)
     - [sigma\_k](#sigma_k)
     - [nc\_k](#nc_k)
+    - [sccs\_preset](#sccs_preset)
+    - [sccs\_epsilon](#sccs_epsilon)
+    - [sccs\_rho\_min](#sccs_rho_min)
+    - [sccs\_rho\_max](#sccs_rho_max)
+    - [sccs\_gamma](#sccs_gamma)
+    - [sccs\_pressure](#sccs_pressure)
+    - [sccs\_tol\_rms](#sccs_tol_rms)
+    - [sccs\_tol\_max](#sccs_tol_max)
+    - [sccs\_surface\_eta](#sccs_surface_eta)
+    - [sccs\_corespread](#sccs_corespread)
+    - [sccs\_lowpass\_p1](#sccs_lowpass_p1)
+    - [sccs\_lowpass\_p2](#sccs_lowpass_p2)
+    - [sccs\_start\_drho](#sccs_start_drho)
+    - [sccs\_start\_nmax](#sccs_start_nmax)
+    - [sccs\_debug](#sccs_debug)
+    - [sccs\_maxiter](#sccs_maxiter)
+    - [sccs\_solvent\_mode](#sccs_solvent_mode)
   - [Quasiatomic Orbital (QO) analysis](#quasiatomic-orbital-qo-analysis)
     - [qo\_switch](#qo_switch)
     - [qo\_basis](#qo_basis)
@@ -765,10 +783,21 @@
   Available options are:
 
   - none: regular periodic calculation without isolated-system correction.
+  - pcc_0d: self-consistent point-counter-charge (PCC) correction for a molecule in a cubic cell. The multipoles are taken about the mass-weighted ionic center. The cell must be primitive: with symmetry 1, an analyzed fractional translation stops the run.
+  - pcc_2d: self-consistent PCC correction for a slab, open along the lattice vector selected by pcc_2d_axis (default: the third) and periodic along the other two. The open vector must be perpendicular to the periodic plane (rewrite a tilted cell as the equivalent perpendicular one), and the k-point sampling along it must be Gamma only. The multipoles are taken about the mass-weighted ionic center along the normal, and the correction is cut half a cell length from that center, so this plane must lie in the vacuum. With symmetry 1, every analyzed operation, including the primitive-cell translations used to symmetrize the density, must map the open vector onto plus or minus itself; an operation that keeps its direction must not translate by a fraction of it, which would copy the slab within the cell, whereas a mirror normal to it may. Otherwise the run stops; use a primitive cell with vacuum only along the open vector, or symmetry 0 or -1. The monopole term uses the open planar kernel that vanishes on the plane of the charge, -pi*Q*L/(3*A) with L the cell length along the open vector and A the periodic area, so the energy of a charged slab converges with the vacuum size; it is referenced to zero potential on the plane of the charge, and so is the solvation energy of a charged slab. ENVIRON uses -pi*Q/(3*L), so charged-slab energies agree with ENVIRON only for A = L^2.
   - makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
 
-  Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).
+  pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc, separately from the solvation terms E_sol_el and E_sol_cav. They work with imp_sol 0 or 2, not with the legacy solvent (imp_sol 1), and require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho.
+
+  Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014).
 - **Default**: none
+
+### pcc_2d_axis
+
+- **Type**: Integer
+- **Availability**: *[`assume_isolated`](#assume_isolated)==pcc_2d*
+- **Description**: Index of the lattice vector along which assume_isolated=pcc_2d is open: 0, 1 or 2 for the first, second or third vector of LATTICE_VECTORS. The selected vector must be perpendicular to the other two, which span the periodic plane; the k-point sampling along it must be Gamma only, and symmetry operations must keep it (see assume_isolated). For LCAO the real-space grid integration is distributed over planes along the third lattice vector, so an open axis of 0 or 1 keeps the vacuum out of that distribution and balances the load better.
+- **Default**: 2
 
 ### init_wfc
 
@@ -4879,14 +4908,14 @@
 
 ### imp_sol
 
-- **Type**: Boolean
-- **Description**: Calculate implicit solvation correction
-- **Default**: False
+- **Type**: Integer
+- **Description**: Select 0 for no solvent, 1 for the original ABACUS solvent model (eb_k, tau, sigma_k, nc_k), or 2 for the self-consistent continuum solvation (SCCS) model (sccs_* keywords). The former Boolean values true and false are read as 1 and 0. PCC is selected independently by assume_isolated=pcc_0d or pcc_2d and is incompatible with imp_sol=1. SCCS requires CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or fixed-cell relax, and nspin 1 or 2, without efield_flag, gate_flag, Makov-Payne, cal_stress, DFT-1/2, deepks output or dm_to_rho. For a charged system in a dielectric solvent (any water preset, or sccs_preset custom with sccs_epsilon above 1), use assume_isolated pcc_0d or pcc_2d; with periodic boundaries the run continues with a warning, because the periodic Poisson solver drops the G = 0 component of the net charge and the energy depends on the cell size. SCCS theory: O. Andreussi, I. Dabo and N. Marzari, J. Chem. Phys. 136, 064102 (2012).
+- **Default**: 0
 
 ### eb_k
 
 - **Type**: Real
-- **Availability**: *[`imp_sol`](#imp_sol)==true*
+- **Availability**: *[`imp_sol`](#imp_sol)==1*
 - **Description**: The relative permittivity of the bulk solvent, 80 for water
 - **Default**: 80
 
@@ -4907,6 +4936,132 @@
 - **Type**: Real
 - **Description**: The value of the electron density at which the dielectric cavity forms
 - **Default**: 0.00037
+
+### sccs_preset
+
+- **Type**: String
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Allowed values: custom, vacuum, water-neutral, water-cation, water-anion (use these exact lowercase names). custom uses sccs_epsilon, sccs_rho_min, sccs_rho_max, sccs_gamma and sccs_pressure from INPUT. Other presets override those five values; their individual parameter descriptions list all effective values. The preset is not chosen automatically from the net charge. Solver controls, surface regularization, delayed start and debug settings remain user-controlled for every preset. Vacuum has no dielectric or non-electrostatic solvent contribution, but assume_isolated can still enable PCC.
+- **Default**: custom
+
+### sccs_epsilon
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: SCCS bulk relative permittivity (dimensionless, at least 1). For sccs_preset=custom, use this INPUT value (default 78.3). Effective value for vacuum: 1; water-neutral, water-cation and water-anion: 78.3. Non-custom presets override this INPUT value.
+- **Default**: 78.3
+
+### sccs_rho_min
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: SCCS lower cavity-density threshold (positive). For sccs_preset=custom, use this INPUT value (default 1.0e-4 bohr^-3). Effective values: vacuum=1.0e-4, water-neutral=1.0e-4, water-cation=2.0e-4, water-anion=2.4e-3 bohr^-3. Non-custom presets override this INPUT value.
+- **Default**: 1.0e-4
+- **Unit**: bohr^-3
+
+### sccs_rho_max
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: SCCS upper cavity-density threshold (greater than sccs_rho_min). For sccs_preset=custom, use this INPUT value (default 5.0e-3 bohr^-3). Effective values: vacuum=5.0e-3, water-neutral=5.0e-3, water-cation=3.5e-3, water-anion=1.55e-2 bohr^-3. Non-custom presets override this INPUT value.
+- **Default**: 5.0e-3
+- **Unit**: bohr^-3
+
+### sccs_gamma
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: SCCS effective surface coefficient. For sccs_preset=custom, use this INPUT value (default 0 dyn/cm). Effective values: vacuum=0, water-neutral=47.9, water-cation=5.0, water-anion=0 dyn/cm. Non-custom presets override this INPUT value.
+- **Default**: 0.0
+- **Unit**: dyn/cm
+
+### sccs_pressure
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: SCCS effective volume coefficient. For sccs_preset=custom, use this INPUT value (default 0 GPa). Effective values: vacuum=0, water-neutral=-0.36, water-cation=0.125, water-anion=0.45 GPa. Non-custom presets override this INPUT value.
+- **Default**: 0.0
+- **Unit**: GPa
+
+### sccs_tol_rms
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Positive RMS tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-10. It applies to the ENVIRON sqrt-preconditioned CG solution of the generalized Poisson equation for every assume_isolated value; with pcc_0d or pcc_2d the preconditioner Poisson solve includes the analytic open-boundary correction. ENVIRON stops its CG when the unnormalized sum of squared residuals falls below its tol; the corresponding RMS is sqrt(tol/N) for N FFT grid points.
+- **Default**: 1.0e-10
+- **Unit**: e/bohr^3
+
+### sccs_tol_max
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Positive maximum tolerance of the SCCS inner charge residual in e/bohr^3; user-controlled for every sccs_preset, default 1.0e-8. The sqrt-CG stops only when both sccs_tol_rms and sccs_tol_max are satisfied.
+- **Default**: 1.0e-8
+- **Unit**: e/bohr^3
+
+### sccs_surface_eta
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Positive SCCS surface regularization; user-controlled for every sccs_preset, default 1.0e-8 bohr^-1.
+- **Default**: 1.0e-8
+- **Unit**: bohr^-1
+
+### sccs_corespread
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Spread of the core-electron Gaussians of sccs_solvent_mode full, as Environ corespread: exp(-r^2/spread^2), positive, default 0.5 bohr. Used only with sccs_solvent_mode full.
+- **Default**: 0.5
+- **Unit**: bohr
+
+### sccs_lowpass_p1
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Low-pass filter of the SCCS switching-function derivatives, as Environ deriv_lowpass_p1 with deriv_method fft: when sccs_lowpass_p1 and sccs_lowpass_p2 are both positive, every Fourier derivative of the switching function is multiplied by 0.5 erfc(p1 G^2/Gcut^2 - p2), Gcut^2 being the ecutrho sphere, and the electronic potential becomes the exact derivative of the discrete SCCS energy, so forces agree with energy differences. Only with assume_isolated pcc_0d or pcc_2d. The default -1 turns it off and reproduces Environ deriv_method fft (continuum cavity potential). With lowpass disabled (the default), analytical forces may differ from finite differences of the self-consistent energy. For geometry optimization with PCC, consider enabling lowpass and check force accuracy against finite differences. With lowpass disabled, the cavity potential uses the FFT gradient of the PCC-corrected potential, which oscillates around the potential step at the cell boundary half a cell from the system center; keep the dielectric transition region several bohr away from that boundary. 10 with sccs_lowpass_p2 5 was validated at ecutrho 300-500 Ry; the filter changes the model energy (about 10 meV for H3O+).
+- **Default**: -1
+
+### sccs_lowpass_p2
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Offset of the SCCS switching-function low-pass filter, as Environ deriv_lowpass_p2; see sccs_lowpass_p1. Both must be positive or both non-positive. Default -1 (off).
+- **Default**: -1
+
+### sccs_start_drho
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Delay SCCS at the start of the run until DRHO is at or below this value. Zero starts SCCS immediately; a positive value must exceed scf_thr so that the SCF cannot converge before SCCS starts, and the SCF does not stop in the iteration that activates SCCS. Once activated, SCCS remains active for all later electronic and ionic steps. PCC remains active during the delay. User-controlled for every sccs_preset, default 0.
+- **Default**: 0.0
+
+### sccs_start_nmax
+
+- **Type**: Integer
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Force delayed SCCS activation at this electronic iteration if the SCCS start DRHO threshold has not yet been reached. The value must be positive, and smaller than scf_nmax when delayed start is enabled. User-controlled for every sccs_preset, default 30; inactive when sccs_start_drho=0.
+- **Default**: 30
+
+### sccs_debug
+
+- **Type**: Integer
+- **Description**: SCCS/PCC output level: 0 suppresses per-SCF summaries and diagnostics; 1 prints the iteration count and correction energy; 2 additionally prints residual, warm-start, FFT-count, Gauss-law (PCC), multipole and energy diagnostics, and verifies the sqrt-CG fixed point with one extra Poisson solve per SCCS evaluation. Applies to standalone PCC as well as SCCS. Timings appear in the standard ABACUS timer summary.
+- **Default**: 0
+
+### sccs_maxiter
+
+- **Type**: Integer
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Positive maximum number of sqrt-preconditioned CG iterations of the SCCS generalized Poisson solve, reported as SCCS_ITER; user-controlled for every sccs_preset, default 200. Failure to converge terminates the calculation.
+- **Default**: 200
+
+### sccs_solvent_mode
+
+- **Type**: String
+- **Availability**: *[`imp_sol`](#imp_sol)==2*
+- **Description**: Allowed values: electronic (default) and full, as Environ solvent_mode. electronic builds the dielectric cavity from the valence electron density. full adds, on every atom except hydrogen, a Gaussian of the valence charge with spread sccs_corespread, as Environ does for the core electrons. Use full when the pseudo-valence density at a nucleus drops below sccs_rho_max (for example some S and Cl norm-conserving pseudopotentials with the water-anion or water-cation preset): electronic mode then puts dielectric inside the atom and the SCF diverges. The Gaussians shape only the cavity, not the solute charge; the ionic forces include their cavity term. The published SCCS presets were fitted with electronic mode.
+- **Default**: electronic
 
 [back to top](#full-list-of-input-keywords)
 

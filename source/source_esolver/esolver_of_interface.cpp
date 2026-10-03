@@ -111,11 +111,13 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
         while (true)
         {
             // update energy
+            const double pcc_energy_rydberg = this->pelec->pot->pcc_energy_rydberg();
             this->pelec->cal_energies(2,
                                       this->inp_->imp_sol,
                                       this->inp_->sc_mag_switch,
                                       this->inp_->dft_plus_u,
-                                      this->inp_->assume_isolated);
+                                      this->inp_->assume_isolated,
+                                      pcc_energy_rydberg);
             temp_energy = this->pelec->f_en.etot;
             kinetic_energy = this->kedf_manager_->get_energy(); // kinetic energy
             pseudopot_energy = this->inner_product(this->pelec->pot->get_fixed_v(),

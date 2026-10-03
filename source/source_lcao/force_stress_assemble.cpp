@@ -76,7 +76,7 @@ void sum_force_terms(const int iat,
         fcs(iat, i) += parts.fgate(iat, i);
     }
     // implicit solvation model
-    if (PARAM.inp.imp_sol)
+    if (PARAM.inp.uses_surchem_correction())
     {
         fcs(iat, i) += parts.fsol(iat, i);
     }
@@ -176,7 +176,7 @@ void print_force_parts(const UnitCell& ucell,
     {
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "GATEFIELD     FORCE", parts.fgate, false);
     }
-    if (PARAM.inp.imp_sol)
+    if (PARAM.inp.uses_surchem_correction())
     {
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "IMP_SOL     FORCE", parts.fsol, false);
     }

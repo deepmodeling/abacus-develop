@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <fstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -98,6 +99,25 @@ TEST_F(InputTest, RelaxMethod)
     EXPECT_EQ(find_label("relax_new", readinput.input_lists), readinput.input_lists.end());
 }
 
+TEST(InputOrder, ImpSolIsFirstSolventParameter)
+{
+    ModuleIO::ReadInput reader(0);
+    std::vector<std::string> solvent_parameters;
+    for (const auto& item : reader.get_input_lists())
+    {
+        if (item.second.category == "Implicit solvation model")
+        {
+            solvent_parameters.push_back(item.first);
+        }
+    }
+    ASSERT_GE(solvent_parameters.size(), 5u);
+    const std::vector<std::string> legacy_order = {"imp_sol", "eb_k", "tau", "sigma_k", "nc_k"};
+    for (std::size_t index = 0; index < legacy_order.size(); ++index)
+    {
+        EXPECT_EQ(solvent_parameters[index], legacy_order[index]);
+    }
+}
+
 TEST_F(InputTest, Item_test)
 {
     ModuleIO::ReadInput readinput(0);
@@ -133,6 +153,198 @@ TEST_F(InputTest, Item_test)
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+
+    { // SCCS model
+        auto it = find_label("imp_sol", readinput.input_lists);
+        param.input.imp_sol = 2;
+        param.input.device = "cpu";
+        param.input.nspin = 1;
+        param.input.efield_flag = false;
+        param.input.gate_flag = false;
+        param.input.assume_isolated = "none";
+        param.input.dfthalf_type = 0;
+
+        param.input.calculation = "scf";
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        param.input.calculation = "relax";
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+
+        for (const std::string& unsupported : {"cell-relax", "md", "nscf"})
+        {
+            param.input.calculation = unsupported;
+            EXPECT_EXIT(it->second.check_value(it->second, param),
+                        ::testing::ExitedWithCode(1),
+                        "");
+        }
+        param.input.calculation = "scf";
+        param.input.cal_stress = true;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param),
+                    ::testing::ExitedWithCode(1),
+                    "");
+        const std::string stress_output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(stress_output, testing::HasSubstr("SCCS provides no stress contribution"));
+        param.input.cal_stress = false;
+
+        param.input.esolver_type = "ksdft";
+        param.input.basis_type = "lcao";
+        param.input.deepks_out_base = "none";
+        param.input.dm_to_rho = false;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        param.input.basis_type = "pw";
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        for (const std::string& unsupported : {"ofdft", "sdft", "tddft", "lj"})
+        {
+            param.input.esolver_type = unsupported;
+            testing::internal::CaptureStdout();
+            EXPECT_EXIT(it->second.check_value(it->second, param),
+                        ::testing::ExitedWithCode(1),
+                        "");
+            const std::string esolver_output = testing::internal::GetCapturedStdout();
+            EXPECT_THAT(esolver_output, testing::HasSubstr("SCCS requires esolver_type ksdft"))
+                << unsupported;
+        }
+        param.input.esolver_type = "ksdft";
+        param.input.basis_type = "lcao_in_pw";
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        param.input.basis_type = "pw";
+        param.input.deepks_out_base = "base";
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        param.input.deepks_out_base = "none";
+        param.input.dm_to_rho = true;
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        param.input.dm_to_rho = false;
+    }
+
+    { // imp_sol keeps the former Boolean spellings
+        auto it = find_label("imp_sol", readinput.input_lists);
+        const std::vector<std::pair<std::string, int>> cases
+            = {{"0", 0}, {"1", 1}, {"2", 2}, {"true", 1}, {"False", 0},
+               {".TRUE.", 1}, {"f", 0}, {"yes", 1}, {"7", -1}, {"-1", -1}};
+        for (const std::pair<std::string, int>& value : cases)
+        {
+            it->second.str_values = {value.first};
+            it->second.read_value(it->second, param);
+            EXPECT_EQ(param.input.imp_sol, value.second) << value.first;
+        }
+        param.input.imp_sol = 7;
+        EXPECT_EXIT(it->second.check_value(it->second, param),
+                    ::testing::ExitedWithCode(1),
+                    "");
+        it->second.str_values = {"maybe"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param),
+                    ::testing::ExitedWithCode(1),
+                    "");
+        const std::string imp_sol_output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(imp_sol_output, testing::HasSubstr("imp_sol must be 0, 1 or 2"));
+        param.input.imp_sol = 0;
+    }
+
+    { // Unified PCC selector and debug levels
+        param.input.calculation = "scf";
+        param.input.basis_type = "lcao";
+        param.input.esolver_type = "ksdft";
+        param.input.cal_stress = false;
+        auto isolation = find_label("assume_isolated", readinput.input_lists);
+        for (const std::string boundary : {"pcc_0d", "pcc_2d"})
+        {
+            param.input.assume_isolated = boundary;
+            for (int model : {0, 2})
+            {
+                param.input.imp_sol = model;
+                EXPECT_NO_THROW(isolation->second.check_value(isolation->second, param));
+                EXPECT_TRUE(param.input.uses_surchem_correction());
+                EXPECT_TRUE(param.input.uses_pcc_correction());
+            }
+            param.input.imp_sol = 1;
+            EXPECT_EXIT(isolation->second.check_value(isolation->second, param),
+                        ::testing::ExitedWithCode(1), "");
+        }
+        auto axis = find_label("pcc_2d_axis", readinput.input_lists);
+        for (int value : {0, 1, 2})
+        {
+            param.input.pcc_2d_axis = value;
+            EXPECT_NO_THROW(axis->second.check_value(axis->second, param));
+        }
+        for (int value : {-1, 3})
+        {
+            param.input.pcc_2d_axis = value;
+            testing::internal::CaptureStdout();
+            EXPECT_EXIT(axis->second.check_value(axis->second, param), ::testing::ExitedWithCode(1), "");
+            const std::string axis_output = testing::internal::GetCapturedStdout();
+            EXPECT_THAT(axis_output, testing::HasSubstr("pcc_2d_axis must be 0, 1 or 2"));
+        }
+        param.input.pcc_2d_axis = 2;
+        param.input.assume_isolated = "none";
+        param.input.imp_sol = 0;
+        EXPECT_FALSE(param.input.uses_surchem_correction());
+        EXPECT_FALSE(param.input.uses_pcc_correction());
+        auto debug = find_label("sccs_debug", readinput.input_lists);
+        for (int level : {0, 1, 2})
+        {
+            param.input.sccs_debug = level;
+            EXPECT_NO_THROW(debug->second.check_value(debug->second, param));
+        }
+        param.input.sccs_debug = 3;
+        EXPECT_EXIT(debug->second.check_value(debug->second, param),
+                    ::testing::ExitedWithCode(1), "");
+        param.input.sccs_debug = 0;
+        auto model = find_label("imp_sol", readinput.input_lists);
+        param.input.imp_sol = 3;
+        EXPECT_EXIT(model->second.check_value(model->second, param),
+                    ::testing::ExitedWithCode(1), "");
+        param.input.imp_sol = 0;
+    }
+
+    { // sccs_start_drho
+        auto it = find_label("sccs_start_drho", readinput.input_lists);
+        const double scf_thr = param.input.scf_thr;
+        param.input.scf_thr = 1.0e-7;
+        param.input.sccs_start_drho = 0.0;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        param.input.sccs_start_drho = 1.0e-2;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        param.input.sccs_start_drho = -1.0;
+        EXPECT_EXIT(it->second.check_value(it->second, param),
+                    ::testing::ExitedWithCode(1),
+                    "");
+        // The SCF could converge before a delayed start at or below scf_thr.
+        for (const double threshold : {1.0e-8, 1.0e-7})
+        {
+            param.input.sccs_start_drho = threshold;
+            testing::internal::CaptureStdout();
+            EXPECT_EXIT(it->second.check_value(it->second, param),
+                        ::testing::ExitedWithCode(1),
+                        "");
+            const std::string drho_output = testing::internal::GetCapturedStdout();
+            EXPECT_THAT(drho_output,
+                        testing::HasSubstr("sccs_start_drho must be zero or larger than scf_thr"));
+        }
+        param.input.scf_thr = scf_thr;
+        param.input.sccs_start_drho = 0.0;
+        param.input.sccs_start_nmax = 30;
+        param.input.scf_nmax = 100;
+    }
+
+    { // sccs_start_nmax
+        auto it = find_label("sccs_start_nmax", readinput.input_lists);
+        param.input.sccs_start_drho = 1.0e-2;
+        param.input.scf_nmax = 40;
+        param.input.sccs_start_nmax = 30;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        param.input.sccs_start_nmax = 0;
+        EXPECT_EXIT(it->second.check_value(it->second, param),
+                    ::testing::ExitedWithCode(1),
+                    "");
+        param.input.sccs_start_nmax = 40;
+        EXPECT_EXIT(it->second.check_value(it->second, param),
+                    ::testing::ExitedWithCode(1),
+                    "");
+        param.input.sccs_start_drho = 0.0;
+        param.input.sccs_start_nmax = 30;
+        param.input.scf_nmax = 100;
     }
 
     { // socket_driver

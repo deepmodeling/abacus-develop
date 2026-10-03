@@ -506,9 +506,13 @@ Available options are:
 
 Available options are:
 * none: regular periodic calculation without isolated-system correction.
+* pcc_0d: self-consistent point-counter-charge (PCC) correction for a molecule in a cubic cell. The multipoles are taken about the mass-weighted ionic center. The cell must be primitive: with symmetry 1, an analyzed fractional translation stops the run.
+* pcc_2d: self-consistent PCC correction for a slab, open along the lattice vector selected by pcc_2d_axis (default: the third) and periodic along the other two. The open vector must be perpendicular to the periodic plane (rewrite a tilted cell as the equivalent perpendicular one), and the k-point sampling along it must be Gamma only. The multipoles are taken about the mass-weighted ionic center along the normal, and the correction is cut half a cell length from that center, so this plane must lie in the vacuum. With symmetry 1, every analyzed operation, including the primitive-cell translations used to symmetrize the density, must map the open vector onto plus or minus itself; an operation that keeps its direction must not translate by a fraction of it, which would copy the slab within the cell, whereas a mirror normal to it may. Otherwise the run stops; use a primitive cell with vacuum only along the open vector, or symmetry 0 or -1. The monopole term uses the open planar kernel that vanishes on the plane of the charge, -pi*Q*L/(3*A) with L the cell length along the open vector and A the periodic area, so the energy of a charged slab converges with the vacuum size; it is referenced to zero potential on the plane of the charge, and so is the solvation energy of a charged slab. ENVIRON uses -pi*Q/(3*L), so charged-slab energies agree with ENVIRON only for A = L^2.
 * makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
 
-Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
+pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc, separately from the solvation terms E_sol_el and E_sol_cav. They work with imp_sol 0 or 2, not with the legacy solvent (imp_sol 1), and require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho.
+
+Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014).)";
         item.default_value = "none";
         read_sync_string(input.assume_isolated);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -518,10 +522,24 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> allowed = {"none", "makov-payne", "m-p", "mp"};
+            const std::vector<std::string> allowed = {"none", "makov-payne", "m-p", "mp", "pcc_0d", "pcc_2d"};
             if (std::find(allowed.begin(), allowed.end(), para.input.assume_isolated) == allowed.end())
             {
                 ModuleBase::WARNING_QUIT("ReadInput", nofound_str(allowed, "assume_isolated"));
+            }
+            const Input_para& input = para.input;
+            const bool use_pcc = input.assume_isolated == "pcc_0d" || input.assume_isolated == "pcc_2d";
+            if (use_pcc && input.imp_sol == 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "PCC is incompatible with the legacy solvent model (imp_sol=1); use imp_sol=0 or 2");
+            }
+            if (use_pcc && (input.nspin == 4 || input.device == "gpu" || input.esolver_type != "ksdft"
+                || (input.basis_type != "pw" && input.basis_type != "lcao")
+                || (input.calculation != "scf" && input.calculation != "relax")
+                || input.efield_flag || input.gate_flag || input.cal_stress
+                || input.dfthalf_type != 0 || input.deepks_out_base != "none" || input.dm_to_rho))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "PCC requires CPU KS-DFT PW/LCAO scf or fixed-cell relax, nspin=1/2, without stress or other fields");
             }
             if ((para.input.assume_isolated == "makov-payne" || para.input.assume_isolated == "m-p"
                  || para.input.assume_isolated == "mp")
@@ -529,6 +547,24 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "Makov-Payne correction is available only for cubic lattices: latname = sc, fcc, or bcc.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("pcc_2d_axis");
+        item.annotation = "open lattice vector of assume_isolated pcc_2d";
+        item.category = "System variables";
+        item.type = "Integer";
+        item.description = "Index of the lattice vector along which assume_isolated=pcc_2d is open: 0, 1 or 2 for the first, second or third vector of LATTICE_VECTORS. The selected vector must be perpendicular to the other two, which span the periodic plane; the k-point sampling along it must be Gamma only, and symmetry operations must keep it (see assume_isolated). For LCAO the real-space grid integration is distributed over planes along the third lattice vector, so an open axis of 0 or 1 keeps the vacuum out of that distribution and balances the load better.";
+        item.default_value = "2";
+        item.unit = "";
+        item.set_availability("assume_isolated==pcc_2d");
+        read_sync_int(input.pcc_2d_axis);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.pcc_2d_axis < 0 || para.input.pcc_2d_axis > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "pcc_2d_axis must be 0, 1 or 2");
             }
         };
         this->add_item(item);

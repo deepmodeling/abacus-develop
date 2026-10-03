@@ -1,0 +1,3 @@
+Case 220_PW_SCCS_PCC2D_CF cyclically relabeled as (x, y, z) -> (z, x, y),
+with 2D PCC open along z (pcc_2d_axis 2). Checks energies and permuted forces,
+which agree with case 220 to within the SCF convergence.

@@ -1,5 +1,6 @@
 #include "esolver_ks.h"
 #include "source_base/timer_wrapper.h"
+#include "source_base/parallel_common.h"
 
 // for jason output information
 #include "source_io/module_json/output_info.h"
@@ -267,6 +268,30 @@ ESolver_KS::DensityStage ESolver_KS::density_stage(const int istep, const int it
 
 void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
 {
+    const bool is_output_rank
+        = this->kv.para_k.my_pool == 0 && this->kv.para_k.rank_in_pool == 0;
+    double sccs_start_drho = this->drho;
+    bool sccs_activated_this_iteration = false;
+    const bool awaiting_sccs
+        = this->solvent.uses_sccs() && !this->solvent.sccs_is_active();
+    if (awaiting_sccs)
+    {
+        // Configuration and synchronized activation keep this guard identical on
+        // every rank. chgmixing_ks broadcasts drho only later, so use the root
+        // value here before any rank enters the SCCS reductions.
+        Parallel_Common::bcast_double(sccs_start_drho);
+        sccs_activated_this_iteration
+            = this->solvent.try_activate_sccs(iter, sccs_start_drho);
+    }
+    if (sccs_activated_this_iteration)
+    {
+        this->p_chgmix->mix_reset();
+        if (is_output_rank && this->inp_->sccs_debug > 0)
+        {
+            std::cout << " SCCS activated at electronic iteration " << iter
+                      << ", DRHO = " << sccs_start_drho << std::endl;
+        }
+    }
 
     // 1.1) print out band gap 
     if (!PARAM.globalv.two_fermi)
@@ -309,7 +334,9 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     module_charge::ScfMixingCtx ctx;
     ctx.hsolver_error = hsolver_error;
-    ctx.scf_thr = this->scf_thr;
+    // Activation changes the potential; require another iteration with SCCS
+    // before accepting convergence, even if the vacuum density was converged.
+    ctx.scf_thr = sccs_activated_this_iteration ? -1.0 : this->scf_thr;
     ctx.scf_ene_thr = this->scf_ene_thr;
     ctx.converged_u = converged_u;
     ctx.ks_run = PARAM.globalv.ks_run;
@@ -336,17 +363,34 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     // 2.3) Update potentials (should be done every SF iter)
     elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
 
+    // Debug summaries are printed on one rank only. Validate in the computation
+    // path so a missing PCC result makes every rank take the same failure path.
+    const bool validate_correction_summary
+        = this->inp_->sccs_debug > 0 && (this->solvent.uses_sccs() || this->solvent.uses_pcc());
+    if (validate_correction_summary)
+    {
+        const bool correction_result_valid = this->solvent.validate_iteration_result();
+        if (!correction_result_valid)
+        {
+            ModuleBase::WARNING_QUIT("ESolver_KS::iter_finish",
+                                     "correction summary requires a current PCC result on every rank");
+        }
+    }
+
     // 3.1) calculate energies
+    const double pcc_energy_rydberg = this->pelec->pot->pcc_energy_rydberg();
     this->pelec->cal_energies(1,
                               this->inp_->imp_sol,
                               this->inp_->sc_mag_switch,
                               this->inp_->dft_plus_u,
-                              this->inp_->assume_isolated); // Harris-Foulkes functional
+                              this->inp_->assume_isolated,
+                              pcc_energy_rydberg); // Harris-Foulkes functional
     this->pelec->cal_energies(2,
                               this->inp_->imp_sol,
                               this->inp_->sc_mag_switch,
                               this->inp_->dft_plus_u,
-                              this->inp_->assume_isolated); // Kohn-Sham functional
+                              this->inp_->assume_isolated,
+                              pcc_energy_rydberg); // Kohn-Sham functional
 
     if (iter == 1)
     {
@@ -373,6 +417,11 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     // print energies
     elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho,
     dkin, duration, *this->inp_, PARAM.globalv.two_fermi, diag_ethr, 0, true, this->ds_rms_);
+
+    if (is_output_rank)
+    {
+        this->solvent.write_iteration(std::cout, this->drho);
+    }
 
 
 #ifdef __JSON

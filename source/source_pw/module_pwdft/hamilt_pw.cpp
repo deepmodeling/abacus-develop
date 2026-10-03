@@ -81,7 +81,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         }
         // no variable can choose xc, maybe it is necessary
         pot_register_in.push_back("xc");
-        if (PARAM.inp.imp_sol)
+        if (PARAM.inp.uses_surchem_correction())
         {
             pot_register_in.push_back("surchem");
         }

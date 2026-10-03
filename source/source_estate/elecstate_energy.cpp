@@ -319,7 +319,8 @@ void ElecState::cal_energies(const int type,
                              const bool imp_sol,
                              const bool sc_mag_switch,
                              const int dft_plus_u,
-                             const std::string& assume_isolated)
+                             const std::string& assume_isolated,
+                             const double pcc_energy_rydberg)
 {
     //! Hartree energy
     this->f_en.hartree_energy = get_hartree_energy();
@@ -373,6 +374,10 @@ void ElecState::cal_energies(const int type,
             v_elecstat_ptr = v_elecstat.data();
         }
         this->f_en.correction_el = makov_payne_correction(*ucell, *this->charge, v_elecstat_ptr).total;
+    }
+    else if (assume_isolated == "pcc_0d" || assume_isolated == "pcc_2d")
+    {
+        this->f_en.correction_el = pcc_energy_rydberg;
     }
     else
     {

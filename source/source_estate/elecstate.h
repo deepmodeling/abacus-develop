@@ -150,12 +150,14 @@ class ElecState
     /// @param imp_sol whether the implicit solvation correction contributes
     /// @param sc_mag_switch whether the spin-constraint energy contributes
     /// @param dft_plus_u 0 disables the DFT+U energy term
-    /// @param assume_isolated "makov-payne" adds the isolated-system correction
+    /// @param pcc_energy_rydberg PCC energy from the corresponding updated potential
+    /// @param assume_isolated "makov-payne" or "pcc_0d"/"pcc_2d" add the isolated-system correction
     void cal_energies(const int type,
                       const bool imp_sol,
                       const bool sc_mag_switch,
                       const int dft_plus_u,
-                      const std::string& assume_isolated);
+                      const std::string& assume_isolated,
+                      const double pcc_energy_rydberg);
     void set_exx(const double& Eexx, const bool cal_exx, const double hybrid_alpha);
     void set_exx(const std::complex<double>& Eexx, const bool cal_exx, const double hybrid_alpha);
 

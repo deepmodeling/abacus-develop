@@ -19,6 +19,22 @@ nc_k                    0.00037
 
 Example of running DFT calculation with the implicit solvation model is provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/27_imp_sol/01_pw_Pt_slab).
 
+### Self-Consistent Continuum Solvation and Open Boundaries
+
+`imp_sol 2` selects the self-consistent continuum solvation (SCCS) model of [Andreussi, Dabo, and Marzari](https://doi.org/10.1063/1.3676407), following its ENVIRON implementation. The dielectric cavity is a smooth function of the electron density, the generalized Poisson equation is solved with ENVIRON's square-root-preconditioned conjugate gradient, and surface and volume terms describe the non-electrostatic interactions. `sccs_preset` selects the published water parameters for neutral solutes, cations, or anions (`water-neutral`, `water-cation`, `water-anion`), or user values (`custom`).
+
+`assume_isolated pcc_0d` (a molecule in a cubic cell) or `pcc_2d` (a slab open along the lattice vector `pcc_2d_axis`) adds a self-consistent point-counter-charge correction for the open boundary, following [Andreussi and Marzari](https://doi.org/10.1103/PhysRevB.90.245101). It can be used with or without SCCS. Use it for a charged solute in a dielectric solvent: with periodic boundaries such a run continues with a warning, but its energy depends on the cell size.
+
+```
+INPUT_PARAMETERS
+imp_sol                 2
+sccs_preset             water-neutral
+assume_isolated         pcc_2d
+pcc_2d_axis             1
+```
+
+The correction terms are printed as `E_sol_el`, `E_sol_cav`, and `E_pcc`. The solvation energy is the difference between the total energies with `imp_sol 2` and `imp_sol 0`, both with the same `assume_isolated`. Examples for PW and LCAO are provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/27_imp_sol).
+
 ## External Electric Field 
 
 A saw-like potential simulating an electric field

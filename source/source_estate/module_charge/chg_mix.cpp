@@ -193,6 +193,9 @@ void Charge_Mixing::mix_reset()
 {
     this->mixing->reset();
     this->rho_mdata.reset();
+    // mix_dmr reuses the Pulay coefficients of the rho history, so the
+    // density-matrix history must restart with it.
+    this->dmr_mdata.reset();
     // initailize tau_mdata
     if (cfg_.mixing_tau)
     {

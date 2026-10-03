@@ -10,6 +10,7 @@ scf_u_spin4
 scf_u_ramp
 scf_vdw3abc
 scf_solvation
+scf_sccs_pcc2d
 scf_eadd
 scf_eadd_spin2
 scf_eminus

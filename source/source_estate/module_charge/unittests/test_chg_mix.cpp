@@ -1,6 +1,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "../chg_mix.h"
+#include "../chg_dmr.h"
 #include "../chg_drho.h"
 #include "../chg_drho_detail.h"
 #include "../chg_precond.h"
@@ -192,6 +193,28 @@ class ChargeMixingTest : public ::testing::Test
         cm.set_mixing_config(cur);
     }
 };
+
+TEST_F(ChargeMixingTest, MixResetClearsDmrHistory)
+{
+    cfg.mixing_dmr = true;
+    cfg.scf_thr_type = 2;
+    Charge_Mixing charge_mixing;
+    charge_mixing.set_mixing(make_cfg(), &pw_basis, &pw_basis, ucell.omega, ucell.tpiba);
+    charge_mixing.init_mixing();
+
+    Base_Mixing::Mixing_Data& dmr_mdata = charge_mixing.get_dmr_mdata();
+    module_charge::init_mixing_dmr(charge_mixing.get_mixing(), dmr_mdata, 4,
+                                   charge_mixing.get_mixing_config());
+    const double dmr[4] = {1.0, 2.0, 3.0, 4.0};
+    dmr_mdata.push(dmr);
+    ASSERT_EQ(dmr_mdata.ndim_history, 1);
+
+    charge_mixing.mix_reset();
+
+    EXPECT_EQ(dmr_mdata.ndim_use, 0);
+    EXPECT_EQ(dmr_mdata.ndim_history, 0);
+    EXPECT_EQ(dmr_mdata.start, -1);
+}
 
 TEST_F(ChargeMixingTest, SetMixingTest)
 {

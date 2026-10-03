@@ -80,6 +80,7 @@ class ElecStateEnergyTest : public ::testing::Test
     bool sc_mag_switch = true;
     int dft_plus_u = 0;
     std::string assume_isolated = "none";
+    double pcc_energy_rydberg = 0.25;
     /// band count the bandgap cases build their ekb matrix with
     int nbands = 6;
     void SetUp() override
@@ -97,7 +98,7 @@ class ElecStateEnergyTest : public ::testing::Test
 TEST_F(ElecStateEnergyTest, CalEnergiesHarris)
 {
     elecstate->f_en.deband_harris = 0.1;
-    elecstate->cal_energies(1, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    elecstate->cal_energies(1, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated, pcc_energy_rydberg);
     // deband_harris + hatree + efiled + gatefield + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 0.7);
 }
@@ -106,7 +107,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarrisImpSol)
 {
     elecstate->f_en.deband_harris = 0.1;
     imp_sol = true;
-    elecstate->cal_energies(1, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    elecstate->cal_energies(1, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated, pcc_energy_rydberg);
     // deband_harris + hatree + efiled + gatefield + esol_el + esol_cav + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.6);
 }
@@ -115,7 +116,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarrisDFTU)
 {
     elecstate->f_en.deband_harris = 0.1;
     dft_plus_u = 1;
-    elecstate->cal_energies(1, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    elecstate->cal_energies(1, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated, pcc_energy_rydberg);
     // deband_harris + hatree + efiled + gatefield + edftu + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.3);
 }
@@ -123,7 +124,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarrisDFTU)
 TEST_F(ElecStateEnergyTest, CalEnergiesEtot)
 {
     elecstate->f_en.deband = 0.1;
-    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated, pcc_energy_rydberg);
     // deband + hatree + efiled + gatefield + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.7);
 }
@@ -132,16 +133,44 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtotImpSol)
 {
     elecstate->f_en.deband = 0.1;
     imp_sol = true;
-    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated, pcc_energy_rydberg);
     // deband + hatree + efiled + gatefield + esol_el + esol_cav + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.6);
+}
+
+TEST_F(ElecStateEnergyTest, CalEnergiesEtotPccIsSeparateFromSolvation)
+{
+    elecstate->f_en.deband = 0.1;
+    assume_isolated = "pcc_0d";
+    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated, pcc_energy_rydberg);
+    // deband + hatree + efiled + gatefield + escon + correction_el (PCC)
+    EXPECT_DOUBLE_EQ(elecstate->f_en.correction_el, 0.25);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.esol_el, 0.0);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.95);
+}
+
+TEST_F(ElecStateEnergyTest, PccEnergyIsExplicitAndIndependentAcrossElectronicStates)
+{
+    elecstate::MockElecState second;
+    assume_isolated = "pcc_2d";
+    const double first_energy = 0.25;
+    const double second_energy = -0.5;
+    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated, first_energy);
+    second.cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated, second_energy);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.correction_el, first_energy);
+    EXPECT_DOUBLE_EQ(second.f_en.correction_el, second_energy);
+    elecstate->cal_energies(1, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated, first_energy);
+    EXPECT_DOUBLE_EQ(second.f_en.correction_el, second_energy);
+    assume_isolated = "none";
+    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated, first_energy);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.correction_el, 0.0);
 }
 
 TEST_F(ElecStateEnergyTest, CalEnergiesEtotDFTU)
 {
     elecstate->f_en.deband = 0.1;
     dft_plus_u = 1;
-    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated, pcc_energy_rydberg);
     // deband + hatree + efiled + gatefield + edftu + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.3);
 }

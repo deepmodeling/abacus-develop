@@ -6,6 +6,10 @@
 #include "source_base/matrix.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
+#include "sccs/sccs_driver.h"
+
+#include <iosfwd>
+#include <vector>
 
 // forward-declared: used below only as pointer/reference
 class Parallel_Grid;
@@ -26,6 +30,18 @@ struct SurchemParameters
     double tau = 0.0;     ///< effective surface tension parameter
     double sigma_k = 0.0; ///< width of the diffuse cavity
     double nc_k = 0.0;    ///< cut-off charge density
+    bool use_sccs = false;
+    bool use_legacy_solvent = false;
+    ModulePcc::Boundary pcc_boundary = ModulePcc::Boundary::Periodic;
+    int pcc_2d_axis = 2;  ///< open lattice vector (0, 1 or 2) of pcc_2d
+    ModuleSccs::SccsConfig sccs_config;
+    double expected_electron_count = 0.0;
+    double expected_ionic_charge = 0.0;
+    double normalization_tolerance = 1.0e-6;
+    int pool_process_count = 1;
+    double start_drho = 0.0;
+    int start_nmax = 30;
+    int debug = 0;
 };
 
 class surchem
@@ -53,6 +69,31 @@ class surchem
     void clear();
 
     void set_parameters(const SurchemParameters& parameters);
+
+    bool uses_sccs() const;
+    bool uses_pcc() const;
+
+    // Last PCC energy (Ry); zero without PCC, throws if PCC has no valid result.
+    double pcc_energy_rydberg() const;
+
+    bool sccs_is_active() const;
+
+    bool try_activate_sccs(int electronic_iteration, double drho);
+
+    const ModuleSccs::SccsResult& sccs_result() const;
+
+    // Collective over all ranks; call in the computation path, never while printing.
+    bool validate_iteration_result() const;
+
+    void write_iteration(std::ostream& output, const double drho) const;
+    void write_sccs_iteration(std::ostream& output) const;
+
+    void write_sccs_diagnostics(std::ostream& output) const;
+
+    // Electrostatic part of the last SCCS/PCC electron potential (Ry) on the
+    // local grid: the PCC open-boundary term plus the SCCS reaction potential,
+    // without the cavity derivatives. Empty before the first SCCS/PCC update.
+    const std::vector<double>& electrostatic_correction() const;
 
     void cal_epsilon(const ModulePW::PW_Basis* rho_basis, const double* PS_TOTN_real, double* epsilon, double* epsilon0);
 
@@ -131,6 +172,28 @@ class surchem
                       Structure_Factor* sf,
                       ModuleBase::matrix& v);
 
+    // SCCS/PCC dispatch of v_correction. Kernel exceptions stop the run
+    // through WARNING_QUIT instead of escaping into the SCF loop.
+    void v_correction_solvent(const UnitCell& cell,
+                              const ModulePW::PW_Basis& rho_basis,
+                              int nspin,
+                              const double* const* rho,
+                              const double* vlocal,
+                              ModuleBase::matrix& v);
+
+    void v_correction_sccs(const UnitCell& cell,
+                           const ModulePW::PW_Basis& rho_basis,
+                           int nspin,
+                           const double* const* rho,
+                           const double* vlocal,
+                           ModuleBase::matrix& v);
+    void v_correction_pcc(const UnitCell& cell,
+                          const ModulePW::PW_Basis& rho_basis,
+                          int nspin,
+                          const double* const* rho,
+                          ModuleBase::matrix& v);
+    void cal_force_pcc(const UnitCell& cell, ModuleBase::matrix& force) const;
+
     void test_V_to_N(ModuleBase::matrix& v,
                      const UnitCell& cell,
                      const ModulePW::PW_Basis* rho_basis,
@@ -152,13 +215,65 @@ class surchem
                        int nspin,
                        ModuleBase::matrix& forcesol);
 
+    void cal_force_sccs(const UnitCell& cell,
+                        const ModulePW::PW_Basis& rho_basis,
+                        ModuleBase::matrix& forcesol) const;
+
     void get_totn_reci(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, std::complex<double>* totn_reci);
 
     void induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, double* induced_rho) const;
 
   private:
+    // Reuse the ion-only source and grid coordinates while the local potential,
+    // cell and local PW decomposition are unchanged across electronic steps.
+    struct FixedSourceCache
+    {
+        std::vector<double> local_potential;
+        std::vector<double> ionic_density;
+        // ENVIRON 'full' core electrons for the cavity; empty otherwise.
+        std::vector<double> core_density;
+        std::vector<ModuleBase::Vector3<double>> positions;
+        ModuleBase::Matrix3 lattice_vectors;
+        const ModulePW::PW_Basis* basis = nullptr;
+        double lattice_constant = 0.0;
+        double cell_volume = 0.0;
+        double tpiba = 0.0;
+        double ionic_charge = 0.0;
+        int nx = 0;
+        int ny = 0;
+        int nz = 0;
+        int nrxx = 0;
+        int nplane = 0;
+        int startz = 0;
+        bool valid = false;
+
+        // True when the cell, the local PW decomposition, the valence charge
+        // and the local potential are the ones the sources were built for.
+        bool matches(const UnitCell& cell,
+                     const ModulePW::PW_Basis& rho_basis,
+                     const double* vlocal,
+                     double valence_charge) const;
+    };
+
+    // Rebuild the cached ion-only SCCS sources unless they still apply;
+    // returns true when the cached sources were reused.
+    bool update_fixed_sources(const UnitCell& cell,
+                              const ModulePW::PW_Basis& rho_basis,
+                              const double* vlocal);
+
     SurchemParameters parameters_;
+    FixedSourceCache fixed_source_cache_;
     bool parameters_set_ = false;
+    bool sccs_active_ = false;
+    ModuleSccs::SccsState sccs_state_;
+    ModuleSccs::SccsResult sccs_result_;
+    ModulePcc::PccGeometry pcc_geometry_;
+    ModulePcc::Pcc2dGeometry pcc_2d_geometry_;
+    ModulePcc::MultipoleMoments pcc_moments_;
+    ModulePcc::Pcc2dMoments pcc_2d_moments_;
+    double pcc_energy_rydberg_ = 0.0;
+    std::vector<double> electrostatic_correction_ry_;
+    bool pcc_result_valid_ = false;
 };
 
 #endif

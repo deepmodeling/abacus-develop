@@ -179,6 +179,7 @@ ReadInput::ReadInput(const int& rank)
     this->item_output();
     this->item_postprocess();
     this->item_model();
+    this->item_sccs();
     this->item_exx();
     this->item_dftu();
     this->item_others();

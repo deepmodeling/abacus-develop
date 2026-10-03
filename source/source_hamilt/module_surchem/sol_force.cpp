@@ -1,6 +1,10 @@
 #include "surchem.h"
+#include "sccs/sccs_gaussian_ion.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
+
+#include <stdexcept>
 
 void surchem::force_cor_one(const UnitCell& cell,
                             const ModulePW::PW_Basis* rho_basis,
@@ -158,6 +162,38 @@ void surchem::cal_force_sol(const UnitCell& cell,
     ModuleBase::TITLE("surchem", "cal_force_sol");
     ModuleBase::timer::start("surchem", "cal_force_sol");
 
+    if (this->uses_sccs() || this->uses_pcc())
+    {
+        // Report SCCS/PCC failures through the standard ABACUS error path.
+        try
+        {
+            if (forcesol.nr != cell.nat || forcesol.nc != 3)
+            {
+                throw std::invalid_argument("SCCS/PCC force matrix must have nat rows and three columns");
+            }
+            if (this->uses_sccs())
+            {
+                if (rho_basis == nullptr)
+                {
+                    throw std::invalid_argument("SCCS force requires an initialized PW basis");
+                }
+                this->cal_force_sccs(cell, *rho_basis, forcesol);
+            }
+            else
+            {
+                const int force_size = forcesol.nr * forcesol.nc;
+                ModuleBase::GlobalFunc::ZEROS(forcesol.c, force_size);
+                this->cal_force_pcc(cell, forcesol);
+            }
+        }
+        catch (const std::exception& error)
+        {
+            ModuleBase::WARNING_QUIT("surchem::cal_force_sol", error.what());
+        }
+        ModuleBase::timer::end("surchem", "cal_force_sol");
+        return;
+    }
+
     int nat = cell.nat;
     ModuleBase::matrix force1(nat, 3);
     ModuleBase::matrix force2(nat, 3);
@@ -182,4 +218,74 @@ void surchem::cal_force_sol(const UnitCell& cell,
     Parallel_Reduce::reduce_pool(forcesol.c, forcesol.nr * forcesol.nc);
     ModuleBase::timer::end("surchem", "cal_force_sol");
     return;
+}
+
+// Add the smooth-ion reaction derivative and the point-ion vacuum PCC force at
+// fixed converged electronic density. The reaction energy of Gaussian ions is
+// independent of their width while they stay inside the epsilon=1 region, so no
+// ionic-shape term is added. Electronic basis/overlap terms remain in the normal
+// PW/LCAO force machinery. Reduce distributed terms before adding replicated
+// point-ion terms, so neither MPI replication nor Ha-to-Ry conversion doubles them.
+void surchem::cal_force_sccs(const UnitCell& cell,
+                             const ModulePW::PW_Basis& rho_basis,
+                             ModuleBase::matrix& forcesol) const
+{
+    if (forcesol.nr != cell.nat || forcesol.nc != 3)
+    {
+        throw std::invalid_argument("SCCS force matrix must have nat rows and three columns");
+    }
+    const ModuleSccs::SccsConfig& config = this->parameters_.sccs_config;
+    if (!this->sccs_state_.valid)
+    {
+        throw std::logic_error("SCCS force requires a converged SCCS state");
+    }
+
+    // The symmetric sqrt-CG response defines the reaction energy for every
+    // boundary; its derivative with respect to the ionic source is the solved
+    // reaction potential (PCC included through the preconditioner). A
+    // reconstructed continuous polarization source would change the force on
+    // a finite grid.
+    const std::vector<double>& reaction_potential
+        = this->sccs_result_.electrostatic.reaction_potential;
+    const ModuleBase::matrix smooth_force_hartree
+        = ModuleSccs::gaussian_ionic_force(cell, rho_basis, ModuleSccs::gaussian_ion_spread,
+                                          reaction_potential);
+    for (int atom = 0; atom < cell.nat; ++atom)
+    {
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            forcesol(atom, direction) = 2.0 * smooth_force_hartree(atom, direction);
+        }
+    }
+    // ENVIRON 'full' mode: the core-electron Gaussians move the cavity with the
+    // ions. Their force contracts the cavity potential, the derivative of the
+    // electrostatic and non-electrostatic energies with respect to the cavity
+    // density, with the Gaussian derivative (ENVIRON dboundary_dions).
+    if (config.core_electrons)
+    {
+        const std::vector<double>& electrostatic_cavity = this->sccs_result_.response.cavity_potential;
+        const std::vector<double>& non_electrostatic = this->sccs_result_.non_electrostatic.density_potential;
+        std::vector<double> cavity_potential(electrostatic_cavity.size());
+        for (std::size_t index = 0; index < cavity_potential.size(); ++index)
+        {
+            cavity_potential[index] = electrostatic_cavity[index] + non_electrostatic[index];
+        }
+        const ModuleBase::matrix core_force_hartree
+            = ModuleSccs::gaussian_core_force(cell, rho_basis, config.core_spread, cavity_potential);
+        for (int atom = 0; atom < cell.nat; ++atom)
+        {
+            for (int direction = 0; direction < 3; ++direction)
+            {
+                forcesol(atom, direction) += 2.0 * core_force_hartree(atom, direction);
+            }
+        }
+    }
+    const int force_size = forcesol.nr * forcesol.nc;
+    Parallel_Reduce::reduce_pool(forcesol.c, force_size);
+    if (config.boundary == ModulePcc::Boundary::Periodic)
+    {
+        return;
+    }
+
+    this->cal_force_pcc(cell, forcesol);
 }

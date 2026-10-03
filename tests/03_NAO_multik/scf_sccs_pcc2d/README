@@ -1,0 +1,2 @@
+LCAO neutral water with SCCS (epsilon 1.1) and 2D PCC, open along y.
+Checks energies and forces with a 2x1x2 k mesh (Gamma along y) and kpar 2.
