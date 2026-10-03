@@ -394,6 +394,8 @@
     - [md\_nraise](#md_nraise)
     - [cal\_syns](#cal_syns)
     - [dmax](#dmax)
+    - [plumed](#plumed)
+    - [plumed\_file](#plumed_file)
   - [DFT+U correction](#dftu-correction)
     - [dft\_plus\_u](#dft_plus_u)
     - [dft\_plus\_dmft](#dft_plus_dmft)
@@ -3832,6 +3834,19 @@
 - **Description**: The maximum displacement of all atoms in one step. This parameter is useful when cal_syns = True.
 - **Default**: 0.01
 - **Unit**: bohr
+
+### plumed
+
+- **Type**: Boolean
+- **Description**: Whether to use PLUMED (https://www.plumed.org) to compute collective variables, biasing potentials and free-energy methods during an MD run. ABACUS must be compiled with -DENABLE_PLUMED=ON and linked against a PLUMED installation (discovered through pkg-config or PLUMED_ROOT) to enable this feature. The PLUMED interface currently supports a single MPI rank only.
+- **Default**: False
+
+### plumed_file
+
+- **Type**: String
+- **Availability**: *[`plumed`](#plumed)==true*
+- **Description**: The input file of PLUMED, read when `plumed` is enabled. Relative paths are resolved against the working directory of the run.
+- **Default**: plumed.dat
 
 [back to top](#full-list-of-input-keywords)
 

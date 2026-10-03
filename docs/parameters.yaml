@@ -1813,6 +1813,22 @@ parameters:
     default_value: "0.01"
     unit: bohr
     availability: ""
+  - name: plumed
+    category: Molecular dynamics
+    type: Boolean
+    description: |
+      Whether to use PLUMED (https://www.plumed.org) to compute collective variables, biasing potentials and free-energy methods during an MD run. ABACUS must be compiled with -DENABLE_PLUMED=ON and linked against a PLUMED installation (discovered through pkg-config or PLUMED_ROOT) to enable this feature. The PLUMED interface currently supports a single MPI rank only.
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: plumed_file
+    category: Molecular dynamics
+    type: String
+    description: |
+      The input file of PLUMED, read when `plumed` is enabled. Relative paths are resolved against the working directory of the run.
+    default_value: plumed.dat
+    unit: ""
+    availability: plumed==true
   - name: of_kinetic
     category: "OFDFT: orbital free density functional theory"
     type: String
