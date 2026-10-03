@@ -140,7 +140,7 @@ void XC_Functional_Libxc::tau_xc_spin(
             std::array<double, 3> v2xc = {0.0, 0.0, 0.0};
             // call Libxc function: xc_mgga_exc_vxc
             xc_mgga_exc_vxc(&func, 1, rho.data(), grho.data(), lapl.data(), tau.data(), &s, 
-			    v1xc.data(), v2xc.data(), vlapl_out.data(), v3xc.data());
+                v1xc.data(), v2xc.data(), vlapl_out.data(), v3xc.data());
 
 #ifdef __EXX
             if (func.info->number == XC_MGGA_X_SCAN && XC_Functional::get_func_type() == 5)

@@ -1,0 +1,1 @@
+LR-TDDFT HF on H2O, gamma_only, nspin=2, lr_unrestricted=1, lr_nstates=3, lr_solver=lapack.

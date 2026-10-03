@@ -5,7 +5,7 @@
 #include "source_base/parallel_common.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_hs/write_hs_sparse.h"
+#include "source_io/module_hs/hs_sparse_io.h"
 #include "source_base/module_out/csr_reader.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h"
@@ -274,16 +274,16 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2rho(elecstate::ElecState& elec, con
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
-		const UnitCell& ucell,
-		hamilt::Hamilt<T>& hamilt,
-		elecstate::ElecState& elec,
-		module_dm::DensityMatrix<T,double>* dm, // mohan add 2025-11-04
-		const Parallel_Orbitals& pv,
-		Charge_Mixing& chgmix,
-		const double& scf_ene_thr,
-		int& iter,
-		const int istep,
-		bool& conv_esolver)
+        const UnitCell& ucell,
+        hamilt::Hamilt<T>& hamilt,
+        elecstate::ElecState& elec,
+        module_dm::DensityMatrix<T,double>* dm, // mohan add 2025-11-04
+        const Parallel_Orbitals& pv,
+        Charge_Mixing& chgmix,
+        const double& scf_ene_thr,
+        int& iter,
+        const int istep,
+        bool& conv_esolver)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_iter_finish");
     if (GlobalC::restart.info_save.save_H && (this->two_level_step > 0 || istep > 0)

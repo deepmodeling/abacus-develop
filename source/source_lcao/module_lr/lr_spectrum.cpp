@@ -192,10 +192,10 @@ void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& f
     std::vector<double>& osc = this->oscillator_strength_;
     std::ofstream ofs(this->out_dir + "absorption.dat");
 
-	if (this->my_rank == 0)
-	{ 
-		ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; 
-	}
+    if (this->my_rank == 0)
+    { 
+        ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; 
+    }
 
     double FourPI_div_c = ModuleBase::FOUR_PI / 137.036;
     double fac = 4 * M_PI / ucell.omega * ModuleBase::e2 / this->nk;   // e2 for Ry to Hartree in the denominator

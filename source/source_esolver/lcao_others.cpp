@@ -9,7 +9,7 @@
 #include "source_estate/module_dm/dm_from_psi.h"
 #include "source_hamilt/module_gint/gint.h"
 #include "source_io/module_chgpot/get_pchg_lcao.h"
-#include "source_io/module_hs/write_hs_r.h"
+#include "source_io/module_hs/hsr_legacy.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_io/module_wf/get_wf_lcao.h"

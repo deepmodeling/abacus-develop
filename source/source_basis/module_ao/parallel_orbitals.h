@@ -31,8 +31,8 @@ public:
     /// on all adjacent atoms-pairs(2D division)
     ///-------------------------------------
     int nnr=1;
-	std::vector<int> nlocdim;
-	std::vector<int> nlocstart;
+    std::vector<int> nlocdim;
+    std::vector<int> nlocstart;
     
 #ifdef __MPI
     int desc_wfc[9]; //for wfc, nlocal*nbands

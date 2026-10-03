@@ -490,7 +490,7 @@ fi
 #-----------------------------------
 #echo $has_mat_r
 if ! test -z "$has_mat_r"  && [  $has_mat_r == 1 ]; then
-    python3 $COMPARE_SCRIPT rr.csr.ref OUT.autotest/rr.csr 8
+    python3 $COMPARE_SCRIPT rr_nao.txt.ref OUT.autotest/rr_nao.txt 8
     echo "ComparerR_pass $?" >>$1
 fi
 
@@ -499,7 +499,7 @@ fi
 #-----------------------------------
 #echo $has_mat_t
 if ! test -z "$has_mat_t"  && [  $has_mat_t == 1 ]; then
-    python3 $COMPARE_SCRIPT trs1_nao.csr.ref OUT.autotest/trs1_nao.csr 8
+    python3 $COMPARE_SCRIPT tr_nao.csr.ref OUT.autotest/tr_nao.csr 8
     echo "ComparerTR_pass $?" >>$1
 fi
 

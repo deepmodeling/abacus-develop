@@ -2,7 +2,6 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
 #define protected public
 #include "source_estate/elecstate_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
@@ -10,6 +9,18 @@
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/soc.h"
 #include "source_io/module_parameter/parameter.h"
+
+/// @brief Friend helper to mutate PARAM private members in unit tests.
+/// @details Parameter grants friend access to TestParameters so the test can
+/// modify input/sys fields without `#define private public`. The class must
+/// stay at global scope to match the friend declaration in parameter.h;
+/// an anonymous-namespace class would not be the friend.
+class TestParameters
+{
+  public:
+    static Input_para& input() { return PARAM.input; }
+    static System_para& sys() { return PARAM.sys; }
+};
 // mock functions for testing
 int XC_Functional::func_type = 1;
 namespace elecstate
@@ -143,23 +154,23 @@ void Charge::renormalize_rho(const double, const double)
 
 void Set_GlobalV_Default()
 {
-    PARAM.input.device = "cpu";
-    PARAM.input.precision = "double";
-    PARAM.sys.domag = false;
-    PARAM.sys.domag_z = false;
+    TestParameters::input().device = "cpu";
+    TestParameters::input().precision = "double";
+    TestParameters::sys().domag = false;
+    TestParameters::sys().domag_z = false;
     // Base class dependent
-    PARAM.input.nspin = 1;
-    PARAM.input.nelec = 10.0;
-    PARAM.input.nupdown  = 0.0;
-    PARAM.sys.two_fermi = false;
-    PARAM.input.nbands = 6;
-    PARAM.sys.nlocal = 6;
-    PARAM.input.esolver_type = "ksdft";
-    PARAM.input.lspinorb = false;
-    PARAM.input.basis_type = "pw";
+    TestParameters::input().nspin = 1;
+    TestParameters::input().nelec = 10.0;
+    TestParameters::input().nupdown  = 0.0;
+    TestParameters::sys().two_fermi = false;
+    TestParameters::input().nbands = 6;
+    TestParameters::sys().nlocal = 6;
+    TestParameters::input().esolver_type = "ksdft";
+    TestParameters::input().lspinorb = false;
+    TestParameters::input().basis_type = "pw";
     GlobalV::KPAR = 1;
     GlobalV::NPROC_IN_POOL = 1;
-    PARAM.sys.use_uspp = false;
+    TestParameters::sys().use_uspp = false;
 }
 
 /************************************************
@@ -260,7 +271,7 @@ TEST_F(ElecStatePWTest, ConstructorSingle)
 
 TEST_F(ElecStatePWTest, InitRhoDataDouble)
 {
-    XC_Functional::func_type = 3;
+    XC_Functional::set_func_type(3);
     chg->nrxx = 1000;
     elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>(wfcpw,
                                                                                                chg,
@@ -277,9 +288,9 @@ TEST_F(ElecStatePWTest, InitRhoDataDouble)
 
 TEST_F(ElecStatePWTest, InitRhoDataSingle)
 {
-    PARAM.input.precision = "single";
-    XC_Functional::func_type = 3;
-    chg->nspin = PARAM.input.nspin;
+    TestParameters::input().precision = "single";
+    XC_Functional::set_func_type(3);
+    chg->nspin = TestParameters::input().nspin;
     chg->nrxx = 1000;
     elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>(wfcpw,
                                                                                               chg,

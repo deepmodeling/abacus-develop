@@ -1,4 +1,4 @@
-#include "source_cell/module_neighlist/domain_decomposition.h"
+#include "source_cell/domain_decomposition.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_cell/mdcell.h"
 #include "source_base/parallel_cell.h"

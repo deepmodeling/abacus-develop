@@ -219,8 +219,8 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
         reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
     }
 
-	ModuleBase::timer::end("HSolverPW", "solve");
-	return;
+    ModuleBase::timer::end("HSolverPW", "solve");
+    return;
 }
 
 template <typename T, typename Device>

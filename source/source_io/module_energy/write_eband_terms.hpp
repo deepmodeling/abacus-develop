@@ -1,7 +1,7 @@
 #ifndef WRITE_EBAND_TERMS_HPP
 #define WRITE_EBAND_TERMS_HPP
  
-#include "source_io/module_hs/write_vxc.hpp"
+#include "source_io/module_hs/vxc_op_mat.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
@@ -30,8 +30,8 @@ void write_eband_terms(const int nspin,
                        const Exx_Info& exx_info
 #ifdef __EXX
                        ,
-                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
-                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd,
+                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
 #endif
 )
     {
@@ -45,30 +45,30 @@ void write_eband_terms(const int nspin,
 
         set_para2d_MO(*pv, nbands, p2d);
 
-		auto if_gamma_fix = [](hamilt::HContainer<TR>& hR) 
-		{
-			if (std::is_same<TK, double>::value) 
-			{ 
-				hR.fix_gamma(); 
-			}
-		};
+        auto if_gamma_fix = [](hamilt::HContainer<TR>& hR) 
+        {
+            if (std::is_same<TK, double>::value) 
+            { 
+                hR.fix_gamma(); 
+            }
+        };
 
-		auto all_band_energy = [&wg](const int ik, const std::vector<double>& e_orb)->double
-		{
-			double e = 0;
-			for (int i = 0; i < e_orb.size(); ++i) { e += e_orb[i] * wg(ik, i); }
-			return e;
-		};
+        auto all_band_energy = [&wg](const int ik, const std::vector<double>& e_orb)->double
+        {
+            double e = 0;
+            for (int i = 0; i < e_orb.size(); ++i) { e += e_orb[i] * wg(ik, i); }
+            return e;
+        };
 
-		auto all_k_all_band_energy = [&wg, &all_band_energy](const std::vector<std::vector<double>>& e_orb)->double
-		{
-			double e = 0;
-			for (int ik = 0; ik < e_orb.size(); ++ik) 
-			{ 
-				e += all_band_energy(ik, e_orb[ik]); 
-			}
-			return e;
-		};
+        auto all_k_all_band_energy = [&wg, &all_band_energy](const std::vector<std::vector<double>>& e_orb)->double
+        {
+            double e = 0;
+            for (int ik = 0; ik < e_orb.size(); ++ik) 
+            { 
+                e += all_band_energy(ik, e_orb[ik]); 
+            }
+            return e;
+        };
 
         // 1. kinetic
         if (PARAM.inp.t_in_h)
@@ -92,7 +92,7 @@ void write_eband_terms(const int nspin,
                     cVc(kinetic_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
 
-            write_orb_energy(kv, nspin0, nbands, e_orb_kinetic, "kinetic", "");
+            write_orb_energy(kv, nspin0, nbands, e_orb_kinetic, "kinetic", "", PARAM.globalv.global_out_dir);
         }
 
         // 2. pp: local
@@ -106,15 +106,15 @@ void write_eband_terms(const int nspin,
             if_gamma_fix(v_pp_local_R_ao);
             std::vector<std::vector<double>> e_orb_pp_local;
 
-			hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> v_pp_local_op(
-					&v_pp_local_k_ao, 
-					kv.kvec_d, 
-					&pot_local, 
-					&v_pp_local_R_ao, 
-					&ucell, 
-					orb_cutoff, 
-					&gd, 
-					nspin);
+            hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> v_pp_local_op(
+                    &v_pp_local_k_ao, 
+                    kv.kvec_d, 
+                    &pot_local, 
+                    &v_pp_local_R_ao, 
+                    &ucell, 
+                    orb_cutoff, 
+                    &gd, 
+                    nspin);
 
             v_pp_local_op.contributeHR();
             for (int ik = 0;ik < kv.get_nks();++ik)
@@ -124,7 +124,7 @@ void write_eband_terms(const int nspin,
                 e_orb_pp_local.emplace_back(orbital_energy(ik, nbands,
                     cVc(v_pp_local_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
-            write_orb_energy(kv, nspin0, nbands, e_orb_pp_local, "vpp_local", "");
+            write_orb_energy(kv, nspin0, nbands, e_orb_pp_local, "vpp_local", "", PARAM.globalv.global_out_dir);
         }
 
         // 3. pp: nonlocal
@@ -144,7 +144,7 @@ void write_eband_terms(const int nspin,
                 e_orb_pp_nonlocal.emplace_back(orbital_energy(ik, nbands,
                     cVc(v_pp_nonlocal_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
-            write_orb_energy(kv, nspin0, nbands, e_orb_pp_nonlocal, "vpp_nonlocal", "");
+            write_orb_energy(kv, nspin0, nbands, e_orb_pp_nonlocal, "vpp_nonlocal", "", PARAM.globalv.global_out_dir);
         }
 
         // 4. hartree
@@ -177,7 +177,7 @@ void write_eband_terms(const int nspin,
                     cVc(v_hartree_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
             for (auto& op : v_hartree_op) { delete op; }
-            write_orb_energy(kv, nspin0, nbands, e_orb_hartree, "vhartree", "");
+            write_orb_energy(kv, nspin0, nbands, e_orb_hartree, "vhartree", "", PARAM.globalv.global_out_dir);
         }
 
         // 5. xc (including exx)
@@ -200,6 +200,11 @@ void write_eband_terms(const int nspin,
                               orb_cutoff,
                               wg,
                               gd,
+                              PARAM.inp.dft_plus_u,
+                              PARAM.globalv.gamma_only_local,
+                              PARAM.globalv.global_out_dir,
+                              PARAM.inp.out_ndigits,
+                              PARAM.inp.ks_solver,
                               cal_exx,
                               exx_info
 #ifdef __EXX

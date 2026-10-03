@@ -1,0 +1,87 @@
+#ifndef HTERM_WRITER_H
+#define HTERM_WRITER_H
+
+#include "source_basis/module_nao/two_center_bundle.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_cell/klist.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_estate/module_charge/charge.h"
+#include "source_estate/module_pot/potential_new.h"
+#include "source_lcao/lcao_domain.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_xc/exx_info.h"
+
+#include <complex>
+#include <string>
+#include <vector>
+
+template <typename T, typename Tdata>
+class Exx_LRI_Interface;
+
+namespace ModuleIO
+{
+
+struct WriteHParams
+{
+    const UnitCell* ucell = nullptr;
+    const Grid_Driver* gd = nullptr;
+    const Parallel_Orbitals* pv = nullptr;
+    const TwoCenterBundle* two_center_bundle = nullptr;
+    const LCAO_Orbitals* orb = nullptr;
+    const K_Vectors* kv = nullptr;
+    const elecstate::Potential* pot = nullptr;   // used by the local-pp term only
+    const Charge* chg = nullptr;                 // used by the Hartree / XC terms
+    const ModulePW::PW_Basis* rho_basis = nullptr; // used by the Hartree term
+    int nrxx = 0;                                // used by the XC term
+    int nspin = 1;
+    int istep = 0;
+    bool append = false;
+    const int* iat2iwt = nullptr;
+    int nat = 0;
+    bool also_hR = false; // H(k) is always written; H(R) (CSR) only when this is true
+    int nlocal = 0;
+    bool gamma_only_local = false;
+    int npol = 1;
+    bool domag = false;
+    bool domag_z = false;
+    int gga_grad = 0; // used by the XC term
+    bool out_app_flag = false;
+    std::string calculation;
+    std::string global_out_dir;
+    std::string global_matrix_dir;
+    std::string ks_solver;
+    int drank = 0;
+#ifdef __EXX
+    // The gamma-only (TK==double) exx interfaces used by the EXX term.
+    // Deliberately NOT templated on TK, because it would force WriteHParams and
+    //      every free function taking it to become templates as well -- a large,
+    //      purely mechanical change for a case nobody needs.
+    // Multi-k + EXX is therefore rejected up front (see write_h_exx_term)
+    // instead of silently producing output with the EXX term missing.
+    Exx_LRI_Interface<double, double>* exd = nullptr;
+    Exx_LRI_Interface<double, std::complex<double>>* exc = nullptr;
+#endif
+};
+
+// Individual Hamiltonian-term writers. write_h_t/vnl/vl/vh/vxc share a common
+// build -> write H(k) -> optionally write H(R) skeleton (see hterm_writer.cpp);
+// the term-specific part is only how hR_tmp is filled.
+void write_h_t(WriteHParams& params);
+
+void write_h_vnl(WriteHParams& params);
+
+void write_h_vl(WriteHParams& params);
+
+void write_h_vh(WriteHParams& params);
+
+void write_h_vxc(WriteHParams& params);
+
+#ifdef __EXX
+// Build V^EXX(R) into a real HContainer via add_HexxR (from exd/exc->get_Hexxs()) and write it.
+// exd (real Hexx) and exc (complex Hexx) are mutually exclusive; picked by info_ri.real_number.
+void write_h_exx(WriteHParams& params, const Exx_Info& exx_info);
+#endif
+
+} // namespace ModuleIO
+
+#endif

@@ -6,7 +6,7 @@
 #include "source_base/parallel_cell.h"
 #include "source_cell/mdcell_reader.h"
 #include "source_cell/mdcell.h"
-#include "source_cell/module_neighlist/domain_decomposition.h"
+#include "source_cell/domain_decomposition.h"
 #include "source_io/module_parameter/parameter.h"
 #include "fire.h"
 #include "langevin.h"

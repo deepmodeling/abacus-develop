@@ -439,29 +439,29 @@ namespace LapackConnector
         }
     }
 
-	// Peize Lin add 2015-12-27
-	static inline
-	char change_uplo(const char &uplo)
-	{
-		switch(uplo)
-		{
-			case 'U': return 'L';
-			case 'L': return 'U';
-			default: throw std::invalid_argument("uplo must be 'U' or 'L'");
-		}
-	}
+    // Peize Lin add 2015-12-27
+    static inline
+    char change_uplo(const char &uplo)
+    {
+        switch(uplo)
+        {
+            case 'U': return 'L';
+            case 'L': return 'U';
+            default: throw std::invalid_argument("uplo must be 'U' or 'L'");
+        }
+    }
 
-	// Peize Lin add 2019-04-14
-	static inline
-	char change_trans_NC(const char &trans)
-	{
-		switch(trans)
-		{
-			case 'N': return 'C';
-			case 'C': return 'N';
-			default: throw std::invalid_argument("trans must be 'N' or 'C'");
-		}
-	}
+    // Peize Lin add 2019-04-14
+    static inline
+    char change_trans_NC(const char &trans)
+    {
+        switch(trans)
+        {
+            case 'N': return 'C';
+            case 'C': return 'N';
+            default: throw std::invalid_argument("trans must be 'N' or 'C'");
+        }
+    }
 
     // wrap function of fortran lapack routine zheev.
     static inline
@@ -504,95 +504,95 @@ namespace LapackConnector
         return;
     }
 
-	// Peize Lin add 2016-07-09
-	static inline
-	void potrf( const char &uplo, const int &n, float*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		spotrf_( &uplo_changed, &n, A, &lda, &info );
-	}	
-	static inline
-	void potrf( const char &uplo, const int &n, double*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		dpotrf_( &uplo_changed, &n, A, &lda, &info );
-	}	
-	static inline
-	void potrf( const char &uplo, const int &n, std::complex<float>*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		cpotrf_( &uplo_changed, &n, A, &lda, &info );
-	}	
-	static inline
-	void potrf( const char &uplo, const int &n, std::complex<double>*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		zpotrf_( &uplo_changed, &n, A, &lda, &info );
-	}	
+    // Peize Lin add 2016-07-09
+    static inline
+    void potrf( const char &uplo, const int &n, float*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        spotrf_( &uplo_changed, &n, A, &lda, &info );
+    }	
+    static inline
+    void potrf( const char &uplo, const int &n, double*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        dpotrf_( &uplo_changed, &n, A, &lda, &info );
+    }	
+    static inline
+    void potrf( const char &uplo, const int &n, std::complex<float>*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        cpotrf_( &uplo_changed, &n, A, &lda, &info );
+    }	
+    static inline
+    void potrf( const char &uplo, const int &n, std::complex<double>*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        zpotrf_( &uplo_changed, &n, A, &lda, &info );
+    }	
 
-	
-	// Peize Lin add 2016-07-09
-	static inline
-	void potri( const char &uplo, const int &n, float*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		spotri_( &uplo_changed, &n, A, &lda, &info);		
-	}	
-	static inline
-	void potri( const char &uplo, const int &n, double*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		dpotri_( &uplo_changed, &n, A, &lda, &info);		
-	}
-	static inline
-	void potri( const char &uplo, const int &n, std::complex<float>*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		cpotri_( &uplo_changed, &n, A, &lda, &info);		
-	}
-	static inline
-	void potri( const char &uplo, const int &n, std::complex<double>*const A, const int &lda, int &info )
-	{
-		const char uplo_changed = change_uplo(uplo);
-		zpotri_( &uplo_changed, &n, A, &lda, &info);		
-	}
+    
+    // Peize Lin add 2016-07-09
+    static inline
+    void potri( const char &uplo, const int &n, float*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        spotri_( &uplo_changed, &n, A, &lda, &info);		
+    }	
+    static inline
+    void potri( const char &uplo, const int &n, double*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        dpotri_( &uplo_changed, &n, A, &lda, &info);		
+    }
+    static inline
+    void potri( const char &uplo, const int &n, std::complex<float>*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        cpotri_( &uplo_changed, &n, A, &lda, &info);		
+    }
+    static inline
+    void potri( const char &uplo, const int &n, std::complex<double>*const A, const int &lda, int &info )
+    {
+        const char uplo_changed = change_uplo(uplo);
+        zpotri_( &uplo_changed, &n, A, &lda, &info);		
+    }
 
-	// Peize Lin add 2016-07-09
-	static inline
-	void potrf( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
-	{
-		potrf( uplo, n, A.c, lda, info );
-	}	
-	static inline
-	void potrf( const char &uplo, const int &n, ModuleBase::ComplexMatrix &A, const int &lda, int &info )
-	{
-		potrf( uplo, n, A.c, lda, info );
-	}	
-	
-	// Peize Lin add 2016-07-09
-	static inline
-	void potri( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
-	{
-		potri( uplo, n, A.c, lda, info);		
-	}	
-	static inline
-	void potri( const char &uplo, const int &n, ModuleBase::ComplexMatrix &A, const int &lda, int &info )
-	{
-		potri( uplo, n, A.c, lda, info);		
-	}	
-	
-	// Peize Lin add 2019-04-14
-	// if trans=='N':	C = a * A * A.H + b * C
-	// if trans=='C':	C = a * A.H * A + b * C
-	static inline
+    // Peize Lin add 2016-07-09
+    static inline
+    void potrf( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
+    {
+        potrf( uplo, n, A.c, lda, info );
+    }	
+    static inline
+    void potrf( const char &uplo, const int &n, ModuleBase::ComplexMatrix &A, const int &lda, int &info )
+    {
+        potrf( uplo, n, A.c, lda, info );
+    }	
+    
+    // Peize Lin add 2016-07-09
+    static inline
+    void potri( const char &uplo, const int &n, ModuleBase::matrix &A, const int &lda, int &info )
+    {
+        potri( uplo, n, A.c, lda, info);		
+    }	
+    static inline
+    void potri( const char &uplo, const int &n, ModuleBase::ComplexMatrix &A, const int &lda, int &info )
+    {
+        potri( uplo, n, A.c, lda, info);		
+    }	
+    
+    // Peize Lin add 2019-04-14
+    // if trans=='N':	C = a * A * A.H + b * C
+    // if trans=='C':	C = a * A.H * A + b * C
+    static inline
         void herk(const char uplo, const char trans, const int n, const int k,
-		const double alpha, const std::complex<double> *A, const int lda,
-		const double beta, std::complex<double> *C, const int ldc)
-	{
-		const char uplo_changed = change_uplo(uplo);
-		const char trans_changed = change_trans_NC(trans);
-		zherk_(&uplo_changed, &trans_changed, &n, &k, &alpha, A, &lda, &beta, C, &ldc);
-	}
+        const double alpha, const std::complex<double> *A, const int lda,
+        const double beta, std::complex<double> *C, const int ldc)
+    {
+        const char uplo_changed = change_uplo(uplo);
+        const char trans_changed = change_trans_NC(trans);
+        zherk_(&uplo_changed, &trans_changed, &n, &k, &alpha, A, &lda, &beta, C, &ldc);
+    }
     static inline
         void herk(const char uplo, const char trans, const int n, const int k,
             const float alpha, const std::complex<float>* A, const int lda,

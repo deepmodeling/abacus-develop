@@ -12,8 +12,8 @@
 class Abfs
 {
 public:
-	
-	template<typename T> class Vector3_Order;
+    
+    template<typename T> class Vector3_Order;
 };
 
 #endif	// ABFS_H

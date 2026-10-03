@@ -3,7 +3,7 @@
 
 #include "esolver.h"
 #include "source_base/timer_wrapper.h"
-#include "source_basis/module_pw/pw_basis.h"          // plane wave basis
+#include "source_basis/module_pw/pw_basis_sup.h"          // plane wave basis
 #include "source_estate/elecstate.h"                  // electronic states
 #include "source_estate/module_charge/chg_extra.h" // charge extrapolation
 #include "source_hamilt/module_surchem/surchem.h"     // solvation model
