@@ -141,21 +141,34 @@ TEST(PWTDDFT, DenseCNCorrectorsAndConservation)
 #else
     const hsolver::diag_comm_info comm(0, 1);
 #endif
-    for (const std::string method: {"bicgstab", "cgs"})
+    for (const std::string method: {"bicgstab", "cgs", "gmres", "bicgstab_cn"})
     {
-        for (const std::string precond: {"none", "kinetic"})
+        for (const std::string precond: {"none", "kinetic", "kinetic_recycle", "kinetic_subspace"})
         {
+            const bool recycle = precond == "kinetic_recycle";
+            if (method == "bicgstab_cn" && precond != "kinetic")
+            {
+                continue;
+            }
+            if (method != "gmres" && (recycle || precond == "kinetic_subspace"))
+            {
+                continue;
+            }
             SCOPED_TRACE(method + "/" + precond);
             ModulePW::PW_Basis_K basis;
             initialize_basis(sizes, &basis);
             DenseHamiltonian op(sizes);
             std::ostringstream log;
             hsolver::PWLinearOptions options;
-            options.linear.method = hsolver::parse_linear_method(method);
+            const std::string solver_name = method == "bicgstab_cn" ? "bicgstab" : method;
+            options.linear.method = hsolver::parse_linear_method(solver_name);
             options.linear.tolerance = 1e-13;
             options.linear.max_iterations = 100;
             options.preconditioner = hsolver::parse_pw_precond(precond);
             options.kinetic_enabled = true;
+            options.linear.restart = 2;
+            options.linear.reconstruct = method == "gmres" && recycle;
+            options.cn_init = method == "gmres" || method == "bicgstab_cn";
             hsolver::HSolverPWTDDFT<T, Device> solver(basis, options, comm, log);
             psi::Psi<T> previous(2, bands, ld, sizes, true);
             for (int ik = 0; ik < 2; ++ik)
@@ -173,8 +186,39 @@ TEST(PWTDDFT, DenseCNCorrectorsAndConservation)
             psi::Psi<T> current(previous);
             for (int step = 1; step <= 12; ++step)
             {
-                solver.solve(op, previous, &current, dt, shift, step, 1, false, log);
-                check_dense_step(op, previous, current, dt);
+                // A time-step change must invalidate both k-point histories before reuse.
+                const double step_dt = step < 4 ? dt : dt * 0.5;
+                log.str("");
+                log.clear();
+                solver.solve(op, previous, &current, step_dt, shift, step, 1, true, log);
+                check_dense_step(op, previous, current, step_dt);
+                if (recycle)
+                {
+                    std::istringstream records(log.str());
+                    std::string line;
+                    int count = 0;
+                    while (std::getline(records, line))
+                    {
+                        const std::string key = "coarse_rank=";
+                        const std::size_t position = line.find(key);
+                        if (position == std::string::npos)
+                        {
+                            continue;
+                        }
+                        const int rank = std::stoi(line.substr(position + key.size()));
+                        if (step == 1 || step == 4)
+                        {
+                            EXPECT_EQ(rank, 0);
+                        }
+                        else
+                        {
+                            EXPECT_GT(rank, 0);
+                        }
+                        EXPECT_NE(line.find("cn_initial=1"), std::string::npos);
+                        ++count;
+                    }
+                    EXPECT_EQ(count, sizes.size());
+                }
                 if (step == 1)
                 {
                     // A corrector rebuilds the RHS from the fixed previous state, even with a changed H and guess.
@@ -194,8 +238,11 @@ TEST(PWTDDFT, DenseCNCorrectorsAndConservation)
                             }
                         }
                     }
-                    solver.solve(op, previous, &current, dt, shift, step, 2, false, log);
-                    check_dense_step(op, previous, current, dt);
+                    log.str("");
+                    log.clear();
+                    solver.solve(op, previous, &current, step_dt, shift, step, 2, true, log);
+                    check_dense_step(op, previous, current, step_dt);
+                    EXPECT_EQ(log.str().find("cn_initial=1"), std::string::npos);
                 }
                 previous = current;
             }

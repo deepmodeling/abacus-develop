@@ -15,7 +15,7 @@ set(TD_LINEAR_TEST_SOURCES
 AddTest(
   TARGET MODULE_HSOLVER_linear
   LIBS parameter base device container
-  SOURCES test_hsolver_linear.cpp ${TD_LINEAR_TEST_SOURCES}
+  SOURCES test_hsolver_linear.cpp test_cn_subspace.cpp test_linear_low_rank.cpp ${TD_LINEAR_TEST_SOURCES}
 )
 AddTest(
   TARGET MODULE_HSOLVER_pw_tddft
