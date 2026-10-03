@@ -3,16 +3,12 @@
 #include <sstream>
 #include <vector>
 
-#define private public
-#define protected public
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/hsolver_pw.h"
-#undef private
-#undef protected
 
 // Mock implementations for the template functions causing linking errors
 namespace ModulePW {
@@ -151,6 +147,20 @@ template void diago_hs_para<std::complex<float>>(std::complex<float>* h,
 
 class TestHSolverPW : public ::testing::Test {
   public:
+    // HSolverPW declares this fixture a friend, but a TEST_F body lives in a
+    // class derived from it and friendship is not inherited, so the call into
+    // the protected hamiltSolvePsiK() is routed through here.
+    template <typename T, typename Device>
+    static void hamiltSolvePsiK(hsolver::HSolverPW<T, Device>& hs,
+                                hamilt::Hamilt<T, Device>* h,
+                                psi::Psi<T, Device>& ps,
+                                std::vector<typename GetTypeReal<T>::type>& pre,
+                                typename GetTypeReal<T>::type* eig,
+                                const int ntry)
+    {
+        hs.hamiltSolvePsiK(h, ps, pre, eig, ntry);
+    }
+
     ModulePW::PW_Basis_K pwbk;
     hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f
         = hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(
@@ -434,7 +444,7 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
     std::vector<double> eigenvalues(5, 0.0);
     // Expect death from WARNING_QUIT due to npwx < nbands
     EXPECT_EXIT(
-        hs_d.hamiltSolvePsiK(&hamilt_test_d, psi_test_cd, precond, eigenvalues.data(), 1),
+        hamiltSolvePsiK(hs_d, &hamilt_test_d, psi_test_cd, precond, eigenvalues.data(), 1),
         ::testing::ExitedWithCode(1),
         ".*"
     );

@@ -298,7 +298,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const FPTYPE& tpiba,
                     const FPTYPE* d_wg,
                     const std::complex<FPTYPE>* pot_onsite,
-                    const int* orbital_corr,
+                    const int* l_channel,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* force)
@@ -307,7 +307,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
         int sum0 = 0;
         for (int it = 0; it < ntype; it++)
         {
-            const int orbital_l = orbital_corr[it];
+            const int orbital_l = l_channel[it];
             const int nproj = atom_nh[it];
             if(orbital_l == -1)
             {

@@ -50,6 +50,10 @@ focused cleanup.
   C++11 baseline. Backend-specific or dependency-constrained paths may use the
   higher standard already selected by existing CMake configuration.
 - Use LF line endings for text files. `.bat` and `.cmd` are the CRLF exception.
+- Place `ModuleBase::timer::start`/`end` at the beginning and end of a function,
+  not around isolated statements inside the function body. Use the enclosing
+  function name (or constructor name) as the timer label so the timer scopes
+  the whole unit of work.
 
 AI agents have additional workflow obligations:
 
@@ -74,6 +78,7 @@ decisions.
 | `.hpp` propagation | New `.hpp` or header includes `.hpp` | phase-one mechanical warning | CI + AI review | medium | warn | new files and added includes | Exception can be recorded in PR |
 | Header dependency growth | Header diff adds includes | phase-one mechanical warning + AI review | CI + AI review | medium | warn | added header includes | Necessity is semantic and not mechanically decided |
 | Member variable workflow switch | Key flow state hidden as mutable member state | AI review + human confirmation | AI + human review | high | human confirmation | semantic review | Static matching is unreliable |
+| Timer placement | `timer::start`/`end` wrap a whole function body | AI review | AI + human review | low | warn | semantic review | Mechanical matching is unreliable for scopes; label should name the enclosing function |
 | Module path and build linkage | New source path and `CMakeLists.txt` linkage | phase-one mechanical | CI | medium | block | new source files and build-script diff | Deterministic path/build check only |
 | Module semantic ownership | Best module/submodule placement | AI review + human confirmation | AI + human review | medium | human confirmation | semantic review | Final call belongs to maintainers |
 | Heterogeneous code linkage | CUDA/ROCM/kernel source and `CMakeLists.txt` linkage | phase-one mechanical | CI + AI review | medium | block | new heterogeneous files and linkage | Mechanical path/linkage only |

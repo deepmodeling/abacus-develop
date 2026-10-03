@@ -7,6 +7,7 @@ list(APPEND objects
     elecstate_print.cpp
     elecstate_tools.cpp
     elecstate_pw.cpp
+    uspp_density.cpp
     elecstate_pw_sdft.cpp
     elecstate_pw_cal_tau.cpp
     makov_payne.cpp

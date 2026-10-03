@@ -1,19 +1,19 @@
 #ifndef MATRIXBLOCK_H
 #define MATRIXBLOCK_H
 
-#include <cstddef>
+#include "source_base/matrix_block.h"
+
 namespace hamilt
 {
 
-template <typename T> struct MatrixBlock
-{
-    /* this is a simple template block of a matrix
-       would change to Eigen in the future */
-    T* p;
-    size_t row;
-    size_t col;
-    const int* desc;
-};
+/// MatrixBlock only describes a memory layout, so it now lives in source_base
+/// and eigensolvers can use it without including the Hamiltonian interface.
+/// This alias keeps the historical hamilt::MatrixBlock spelling working.
+///
+/// TODO: this header is a temporary compatibility shim. Once every call site
+/// spells the type as ModuleBase::MatrixBlock and includes
+/// source_base/matrix_block.h directly, delete this file.
+using ModuleBase::MatrixBlock;
 
 } // namespace hamilt
 #endif

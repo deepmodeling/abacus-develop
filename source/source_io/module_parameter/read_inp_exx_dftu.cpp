@@ -525,7 +525,8 @@ void ReadInput::item_exx()
         item.category = "Exact Exchange (LCAO)";
         item.type = "Boolean";
         item.description = R"(* False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
-* True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation)";
+* True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
+For multi-k calculations, D(k) is averaged over the unitary little group of each irreducible k point before star expansion, for either setting.)";
         item.default_value = "True";
         item.unit = "";
         item.set_availability("symmetry==1 and (dft_functional in [hse, hf, pbe0, scan0] or (basis_type==lcao and rpa==true))");
@@ -603,7 +604,7 @@ void ReadInput::item_dftu()
         read_sync_int(input.dft_plus_u);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             bool all_minus1 = true;
-            for (auto& val: para.input.orbital_corr)
+            for (auto& val: para.input.l_channel)
             {
                 if (val != -1)
                 {
@@ -667,7 +668,7 @@ void ReadInput::item_dftu()
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
             {
-                para.input.orbital_corr.push_back(std::stoi(item.str_values[i]));
+                para.input.l_channel.push_back(std::stoi(item.str_values[i]));
             }
         };
 
@@ -676,13 +677,13 @@ void ReadInput::item_dftu()
             {
                 return;
             }
-            if (para.input.orbital_corr.size() != para.input.ntype)
+            if (para.input.l_channel.size() != para.input.ntype)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "orbital_corr should have the same "
                                          "number of elements as ntype");
             }
-            for (auto& val: para.input.orbital_corr)
+            for (auto& val: para.input.l_channel)
             {
                 if (val < -1 || val > 3)
                 {
@@ -690,7 +691,7 @@ void ReadInput::item_dftu()
                 }
             }
         };
-        sync_intvec(input.orbital_corr, para.input.ntype, -1);
+        sync_intvec(input.l_channel, para.input.ntype, -1);
         this->add_item(item);
     }
     {
@@ -784,7 +785,7 @@ void ReadInput::item_dftu()
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             bool all_minus1 = true;
-            for (auto& val: para.input.orbital_corr)
+            for (auto& val: para.input.l_channel)
             {
                 if (val != -1)
                 {

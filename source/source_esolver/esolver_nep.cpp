@@ -43,7 +43,7 @@ void ESolver_NEP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 #ifdef __NEP
         const double cutoff = std::max(nep.paramb.rc_radial_max, nep.paramb.rc_angular_max)
                               * ModuleBase::ANGSTROM_AU;
-        mdcell.initialize_neighbors(cutoff);
+        mdcell.set_neighbor_cutoff(cutoff);
         initialize_type_map_(mdcell.type_labels());
 #else
         ModuleBase::WARNING_QUIT("ESolver_NEP", "Please recompile with -D__NEP");
@@ -83,10 +83,10 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
         MDCell& mdcell = static_cast<MDCell&>(basecell);
         if (!mdcell.has_neighbor_search())
         {
-            mdcell.prepare_neighbors();
+            ModuleBase::WARNING_QUIT("ESolver", "MDCell neighbors must be prepared by the caller before runner().");
         }
-        const int nowned_atoms = mdcell.nowned_atoms();
-        const int nghost = mdcell.nghost();
+        const int nowned_atoms = mdcell.owned_atoms().size();
+        const int nghost = mdcell.ghost_atoms().size();
         const int natom = nowned_atoms + nghost;
         if (natom == 0)
         {
@@ -146,8 +146,8 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
                                NULL);
         ModuleBase::timer::end("ESolver_NEP", "compute");
 
-        std::vector<LocalAtom>& mutable_owned_atoms = mdcell.mutable_owned_atoms();
-        std::vector<LocalAtom>& mutable_ghost_atoms = mdcell.mutable_ghost_atoms();
+        std::vector<LocalAtom>& mutable_owned_atoms = mdcell.owned_atoms();
+        std::vector<LocalAtom>& mutable_ghost_atoms = mdcell.ghost_atoms();
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             mutable_owned_atoms[static_cast<std::size_t>(iat)].force.set(force[static_cast<std::size_t>(iat)][0],
@@ -160,7 +160,6 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
                                                                            force[static_cast<std::size_t>(nowned_atoms + iat)][1],
                                                                            force[static_cast<std::size_t>(nowned_atoms + iat)][2]);
         }
-        mdcell.accumulate_ghost_forces();
 
 #ifdef __MPI
         MPI_Allreduce(MPI_IN_PLACE, &local_energy, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
@@ -173,6 +172,10 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             LocalAtom& atom = mutable_owned_atoms[static_cast<std::size_t>(iat)];
+            atom.force *= fact_f;
+        }
+        for (LocalAtom& atom : mutable_ghost_atoms)
+        {
             atom.force *= fact_f;
         }
         nep_virial(0, 0) = local_virial[0] * fact_v;
@@ -277,8 +280,8 @@ void ESolver_NEP::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
     if (basecell.kind() == BaseCell::Kind::mdcell)
     {
         const MDCell& mdcell = static_cast<const MDCell&>(basecell);
-        force.create(mdcell.nowned_atoms(), 3);
-        for (int iat = 0; iat < mdcell.nowned_atoms(); ++iat)
+        force.create(mdcell.owned_atoms().size(), 3);
+        for (int iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
         {
             const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(iat)];
             force(iat, 0) = atom.force.x;

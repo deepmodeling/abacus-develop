@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Plot an ABACUS exciton-density slice.
 
-The current text format is deliberately compact and self-describing::
-
+The data text format is deliberately compact and self-describing:
+  For example:
     # ABACUS_EXCITON_SLICE 1
     # state 0 energy_Ry 0.2265 density_kind conditional_elec
     # fixed_particle hole position_bohr 2.5 2.5 2.5
@@ -22,10 +22,8 @@ The current text format is deliberately compact and self-describing::
     # data
     <nu rows, each containing nv density values>
 
-Files written before format version 1 are still accepted.
-
 Usage:
-    python plot_cond_silce.py FILE.dat [-o FILE.png]
+    python plot_exciton_slice.py FILE.dat [-o FILE.png]
 """
 
 import argparse

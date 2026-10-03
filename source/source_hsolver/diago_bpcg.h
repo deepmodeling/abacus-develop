@@ -7,7 +7,6 @@
 #include "source_base/module_device/memory_op.h"
 #include "source_base/module_device/types.h"
 #include "source_base/para_gemm.h"
-#include "source_hamilt/hamilt.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_hsolver/para_lin_tf.h"
 

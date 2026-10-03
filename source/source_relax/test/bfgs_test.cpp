@@ -3,9 +3,7 @@
 #include "gmock/gmock.h"
 #include "for_test.h"
 
-#define private public
 #include "source_relax/ions_move_bfgs2.h"
-#undef private
 
 #include "source_io/module_parameter/parameter.h"
 
@@ -29,6 +27,112 @@ protected:
     {
         // nothing global to clean here
     }
+
+    // Friendship is not inherited: a TEST_F body lives in a class derived from
+    // this fixture, so the internals of Ions_Move_BFGS2 (which friends the
+    // fixture itself) are reached through these forwarders. They all carry a
+    // get_ / call_ prefix because several tests declare locals named pos,
+    // force, size, steplength, dpos and maxstep.
+    const std::vector<std::vector<double>>& get_H() const
+    {
+        return bfgs.H;
+    }
+    const std::vector<ModuleBase::Vector3<double>>& get_pos() const
+    {
+        return bfgs.pos;
+    }
+    const std::vector<double>& get_pos0() const
+    {
+        return bfgs.pos0;
+    }
+    const std::vector<ModuleBase::Vector3<double>>& get_pos_taud() const
+    {
+        return bfgs.pos_taud;
+    }
+    const std::vector<double>& get_pos_taud0() const
+    {
+        return bfgs.pos_taud0;
+    }
+    const std::vector<ModuleBase::Vector3<double>>& get_force() const
+    {
+        return bfgs.force;
+    }
+    const std::vector<double>& get_force0() const
+    {
+        return bfgs.force0;
+    }
+    const std::vector<double>& get_steplength() const
+    {
+        return bfgs.steplength;
+    }
+    const std::vector<ModuleBase::Vector3<double>>& get_dpos() const
+    {
+        return bfgs.dpos;
+    }
+    int get_size() const
+    {
+        return bfgs.size;
+    }
+    double get_alpha() const
+    {
+        return bfgs.alpha;
+    }
+    double get_maxstep() const
+    {
+        return bfgs.maxstep;
+    }
+    bool get_sign() const
+    {
+        return bfgs.sign;
+    }
+    double get_largest_grad() const
+    {
+        return bfgs.largest_grad;
+    }
+    bool get_is_initialized() const
+    {
+        return bfgs.is_initialized;
+    }
+
+    void set_sign(const bool value)
+    {
+        bfgs.sign = value;
+    }
+    void set_is_initialized(const bool value)
+    {
+        bfgs.is_initialized = value;
+    }
+    void set_force0(const std::vector<double>& value)
+    {
+        bfgs.force0 = value;
+    }
+    void set_pos_taud_x(const int i, const double value)
+    {
+        bfgs.pos_taud[i].x = value;
+    }
+
+    void call_DetermineStep(std::vector<double>& steplength,
+                            std::vector<ModuleBase::Vector3<double>>& dpos,
+                            double& maxstep)
+    {
+        bfgs.DetermineStep(steplength, dpos, maxstep);
+    }
+    void call_Update(std::vector<double>& pos, std::vector<double>& force, UnitCell& ucell)
+    {
+        bfgs.Update(pos, force, bfgs.H, ucell);
+    }
+    void call_GetPos(UnitCell& ucell)
+    {
+        bfgs.GetPos(ucell, bfgs.pos);
+    }
+    void call_GetPostaud(UnitCell& ucell)
+    {
+        bfgs.GetPostaud(ucell, bfgs.pos_taud);
+    }
+    void call_CalculateLargestGrad(const ModuleBase::matrix& force, UnitCell& ucell)
+    {
+        bfgs.CalculateLargestGrad(force, ucell);
+    }
 };
 
 // Test whether the allocate() function can correctly allocate memory space
@@ -38,26 +142,26 @@ TEST_F(BFGSTest, TestAllocate)
     bfgs.allocate(size);
 
     // Check if allocated arrays are not empty
-    EXPECT_FALSE(bfgs.H.empty());
-    EXPECT_FALSE(bfgs.pos.empty());
-    EXPECT_FALSE(bfgs.pos0.empty());
-    EXPECT_FALSE(bfgs.pos_taud.empty());
-    EXPECT_FALSE(bfgs.pos_taud0.empty());
-    EXPECT_FALSE(bfgs.force.empty());
-    EXPECT_FALSE(bfgs.force0.empty());
-    EXPECT_FALSE(bfgs.steplength.empty());
-    EXPECT_FALSE(bfgs.dpos.empty());
-    EXPECT_EQ(bfgs.size, size);
-    EXPECT_EQ(bfgs.alpha,70);
-    EXPECT_EQ(bfgs.maxstep, PARAM.inp.relax_bfgs_rmax);
-    EXPECT_TRUE(bfgs.sign);
-    EXPECT_EQ(bfgs.largest_grad,0.0);
+    EXPECT_FALSE(get_H().empty());
+    EXPECT_FALSE(get_pos().empty());
+    EXPECT_FALSE(get_pos0().empty());
+    EXPECT_FALSE(get_pos_taud().empty());
+    EXPECT_FALSE(get_pos_taud0().empty());
+    EXPECT_FALSE(get_force().empty());
+    EXPECT_FALSE(get_force0().empty());
+    EXPECT_FALSE(get_steplength().empty());
+    EXPECT_FALSE(get_dpos().empty());
+    EXPECT_EQ(get_size(), size);
+    EXPECT_EQ(get_alpha(), 70);
+    EXPECT_EQ(get_maxstep(), PARAM.inp.relax_bfgs_rmax);
+    EXPECT_TRUE(get_sign());
+    EXPECT_EQ(get_largest_grad(), 0.0);
 }
 
 // Test that relax_step will auto-initialize if not already initialized
 TEST_F(BFGSTest, RelaxStepAutoInitialize)
 {
-    bfgs.is_initialized = false;
+    set_is_initialized(false);
 
     UnitCell ucell;
     ucell.nat = 2;
@@ -78,10 +182,10 @@ TEST_F(BFGSTest, RelaxStepAutoInitialize)
     std::ofstream ofs_running;
 
     // Before relax_step, is_initialized should be false
-    EXPECT_FALSE(bfgs.is_initialized);
+    EXPECT_FALSE(get_is_initialized());
     bfgs.relax_step(force, ucell, ofs_running);
     // After relax_step, is_initialized should be true
-    EXPECT_TRUE(bfgs.is_initialized);
+    EXPECT_TRUE(get_is_initialized());
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
@@ -103,7 +207,7 @@ TEST_F(BFGSTest, DetermineStepScaling)
         ModuleBase::Vector3<double>(0.1, 0.1, 0.1)
     };
     double maxstep = 0.5;
-    bfgs.DetermineStep(steplength, dpos, maxstep);
+    call_DetermineStep(steplength, dpos, maxstep);
 
     // first atom scaled down to maxstep
     EXPECT_NEAR(dpos[0][0], 0.5, 1e-12);
@@ -132,17 +236,17 @@ TEST_F(BFGSTest, UpdateUsesAbsoluteDisplacementThreshold)
     ucell.iat2ia[0] = 0;
 
     bfgs.allocate(ucell.nat);
-    bfgs.sign = false;
-    bfgs.pos_taud[0].x = -1.0e-6;
-    bfgs.force0 = {0.0, 0.0, 0.0};
+    set_sign(false);
+    set_pos_taud_x(0, -1.0e-6);
+    set_force0({0.0, 0.0, 0.0});
 
     std::vector<double> pos = {0.0, 0.0, 0.0};
     std::vector<double> force = {1.0, 0.0, 0.0};
-    const double initial_h00 = bfgs.H[0][0];
+    const double initial_h00 = get_H()[0][0];
 
-    bfgs.Update(pos, force, bfgs.H, ucell);
+    call_Update(pos, force, ucell);
 
-    EXPECT_NE(bfgs.H[0][0], initial_h00);
+    EXPECT_NE(get_H()[0][0], initial_h00);
 }
 
 // Test GetPos and GetPostaud without creating extra helper class
@@ -179,12 +283,12 @@ TEST_F(BFGSTest, GetPosAndPostaud)
 
     // allocate bfgs arrays and call getters
     bfgs.allocate(ucell.nat);
-    bfgs.GetPos(ucell, bfgs.pos);
-    bfgs.GetPostaud(ucell, bfgs.pos_taud);
+    call_GetPos(ucell);
+    call_GetPostaud(ucell);
 
     // pos is tau * BOHR_TO_A * lat0
-    EXPECT_DOUBLE_EQ(bfgs.pos[0][0], ucell.atoms[0].tau[0].x * ModuleBase::BOHR_TO_A * ucell.lat0);
-    EXPECT_DOUBLE_EQ(bfgs.pos_taud[1][2], ucell.atoms[0].taud[1].z);
+    EXPECT_DOUBLE_EQ(get_pos()[0][0], ucell.atoms[0].tau[0].x * ModuleBase::BOHR_TO_A * ucell.lat0);
+    EXPECT_DOUBLE_EQ(get_pos_taud()[1][2], ucell.atoms[0].taud[1].z);
 }
 
 // Test CalculateLargestGrad (uses ModuleBase::matrix)
@@ -222,10 +326,10 @@ TEST_F(BFGSTest, CalculateLargestGrad)
     force(1, 2) = 0.0;
 
     bfgs.allocate(ucell.nat);
-    bfgs.CalculateLargestGrad(force, ucell);
+    call_CalculateLargestGrad(force, ucell);
 
     // expected largest_grad = 3.0 (see calculation above)
-    EXPECT_NEAR(bfgs.largest_grad, 6.0, 1e-12);
+    EXPECT_NEAR(get_largest_grad(), 6.0, 1e-12);
 }
 
 // Test relax_step basic functionality
@@ -267,9 +371,9 @@ TEST_F(BFGSTest, RelaxStepBasic)
     // Check that ionic_position_updated is true
     EXPECT_TRUE(ucell.ionic_position_updated);
     // Check that force values are set (converted units)
-    EXPECT_NEAR(bfgs.force[0][0], 0.1 * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A, 1e-12);
-    EXPECT_NEAR(bfgs.force[1][0], -0.1 * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A, 1e-12);
+    EXPECT_NEAR(get_force()[0][0], 0.1 * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A, 1e-12);
+    EXPECT_NEAR(get_force()[1][0], -0.1 * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A, 1e-12);
     // Check that positions are updated (not equal to initial)
-    EXPECT_NEAR(bfgs.pos[0][0], 0.0, 1e-12);
-    EXPECT_NE(bfgs.pos[1][0], 1.0);
+    EXPECT_NEAR(get_pos()[0][0], 0.0, 1e-12);
+    EXPECT_NE(get_pos()[1][0], 1.0);
 }

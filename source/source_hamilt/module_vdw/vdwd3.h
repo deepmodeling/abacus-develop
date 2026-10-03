@@ -26,7 +26,7 @@ class Vdwd3 : public Vdw
     std::string canonical_method_;
 
     void evaluate_impl(const VdwRequest& request, VdwResult& result) override;
-    d3::Structure build_structure() const;
+    d3::Structure build_structure(std::vector<int>& atom_indices) const;
     void write_parameters(std::ofstream* plog) const;
 };
 

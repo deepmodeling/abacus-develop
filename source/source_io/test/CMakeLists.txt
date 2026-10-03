@@ -3,6 +3,25 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
+AddTest(
+  TARGET MODULE_IO_write_bands
+  LIBS parameter base device symmetry
+  SOURCES write_bands_test.cpp ../module_energy/write_bands.cpp
+    ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp
+    ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
+)
+
+if(NOT ENABLE_MPI)
+  return()
+endif()
+
+add_test(NAME MODULE_IO_write_bands_parallel
+  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+    $<TARGET_FILE:MODULE_IO_write_bands> ${MPIEXEC_POSTFLAGS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+set_tests_properties(MODULE_IO_write_bands_parallel PROPERTIES PROCESSORS 4 TIMEOUT 120)
+
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 configure_file(INPUTs ${CMAKE_CURRENT_BINARY_DIR}/INPUTs COPYONLY)
 
@@ -63,7 +82,7 @@ add_test(
 AddTest(
   TARGET MODULE_IO_write_eig_occ_test
   LIBS parameter  base device symmetry
-  SOURCES write_eig_occ_test.cpp ../module_output/band_parallel_output.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp
+  SOURCES write_eig_occ_test.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp
 		../../source_cell/cif_io.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
@@ -180,6 +199,7 @@ add_test(NAME MODULE_IO_read_wf2rho_pw_parallel
 )
 
 
+if(ENABLE_LCAO)
 AddTest(
   TARGET MODULE_IO_numerical_basis_test
   LIBS parameter  base device numerical_atomic_orbitals container orb
@@ -187,6 +207,7 @@ AddTest(
           ../module_bessel/numerical_basis_jyjy.cpp
           ../../source_lcao/center2orb.cpp
 )
+endif()
 
 
 AddTest(
@@ -238,7 +259,7 @@ add_test(
 AddTest(
   TARGET MODULE_IO_read_wfc_nao_test
   LIBS parameter base device
-  SOURCES read_wfc_nao_test.cpp ../module_wf/read_wfc_nao.cpp ../../source_psi/psi.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
+  SOURCES read_wfc_nao_test.cpp ../module_wf/read_wfc_nao.cpp ../module_wf/write_wfc_nao.cpp ../../source_psi/psi.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
 )
 
 add_test(

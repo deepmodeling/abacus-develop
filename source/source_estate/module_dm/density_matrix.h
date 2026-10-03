@@ -176,6 +176,15 @@ class DensityMatrix
     hamilt::HContainer<TR>* get_DMR_pointer(const int ispin) const;
 
     /**
+     * @brief check whether the stored DMR is a valid density matrix calculated from DMK
+     * init_DMR() resets the flag and cal_DMR()/cal_DMR_td() set it, so a freshly
+     * allocated, zeroed or file-read DMR is reported as not ready until the first
+     * wavefunction-derived calculation
+     * @return true if DMR is ready for Hamiltonian construction
+     */
+    bool is_dmr_ready() const { return this->_dmr_ready; }
+
+    /**
      * @brief get pointer vector of DMR
      * @return HContainer<TR>* vector of DMR
      */
@@ -282,6 +291,9 @@ class DensityMatrix
      */
     std::vector<hamilt::HContainer<TR>*> _DMR;
     std::vector<std::vector<TR>> _DMR_save;
+
+    /// @brief whether _DMR holds a density matrix calculated from DMK (reset by init_DMR, set by cal_DMR)
+    bool _dmr_ready = false;
 
     /**
      * @brief HContainer for density matrix in real space for gird parallelization

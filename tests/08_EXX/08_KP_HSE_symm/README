@@ -1,1 +1,36 @@
-HSE calculation on Si, multiple k-points, cal force and stress, exx real number, symmetry=1
+HSE calculation on Si, multiple k-points, force and stress, real EXX, symmetry=1.
+
+The density at each irreducible k point must be averaged over its unitary
+little group before expanding its star. A star stores one representative per
+unique k point; it does not contain all operations fixing that point. On this
+coarse finite grid, omitting that average leaves the EXX density outside the
+space-group-invariant subspace, so rotating irreducible H(R) blocks can produce
+a non-Hermitian Hamiltonian.
+
+In ABACUS's transposed density storage, the average is
+  P_k(D) = sum_{g in G_k} M_g^T D M_g^* / |G_k|,
+where g k = k modulo a reciprocal lattice vector. P_k is a group projector:
+it preserves Hermiticity and removes dependence on the chosen unitary star
+representative. The existing star-size factor is applied only after averaging.
+The unit tests in module_exx_symmetry/test/test_symm_rotation.cpp exercise this
+contract with complex matrices and separate spin channels.
+
+The reference was regenerated after merging upstream develop 54aaffefb,
+including its ELPA fallback correction, on 2026-09-14. It uses the unchanged
+case with the default genelpa solver on one MPI rank. Its total energy is
+-189.4406826032011395 eV. ScaLAPACK runs with 1 and 4 MPI ranks and a full EXX
+contraction run (exx_symmetry_realspace=0, with the same projected density)
+agree within 1.4e-9 eV. All four report totalstressref=2143.792554 and
+totalforceref=0.000000. INPUT, thresholds and the historical timing reference
+are unchanged. This is a fixed-input regression reference, not a claim of
+cutoff or outer-loop convergence.
+
+Verification used GCC, OpenMPI 5.0.10, ELPA 2026.02.001, LibXC 7.0.0 and the
+repository-pinned LibRI on Sai DSPRHBM, with OMP_NUM_THREADS=1. The 12 EXX
+symmetry tests and, on one rank, both complex ELPA upper-triangle tests and
+all three native ELPA block-size tests passed. The complete LCAO solver test
+still crashes inside the installed two-stage ELPA real routine; the four-rank
+complex ELPA tests and HSE case also fail in that library after disabling
+XPMEM to avoid a UCX communication error. These failures remain unresolved,
+and four-rank ELPA is not included in the agreement claim. No solver-stage
+or production INPUT default change is part of this merge.

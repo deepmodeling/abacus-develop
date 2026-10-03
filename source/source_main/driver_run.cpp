@@ -2,6 +2,7 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_cell/check_atomic_stru.h"
 #include "source_cell/mdcell.h"
+#include "source_cell/module_neighlist/domain_decomposition.h"
 #include "source_esolver/esolver_factory.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_io/module_json/para_json.h"
@@ -94,25 +95,20 @@ void Driver::driver_run()
     if (cal == "md")
     {
         MDCell mdcell;
+        DomainDecomposition decomp;
         if (direct_mdcell)
         {
-            Run_MD::prepare_mdcell(mdcell, PARAM);
+            Run_MD::prepare_mdcell(mdcell, PARAM, decomp);
             p_esolver->before_all_runners(mdcell, PARAM.inp);
-        }
-        else
-        {
-            initialize_ucell();
-            Run_MD::prepare_mdcell(mdcell, ucell);
-            p_esolver->before_all_runners(ucell, PARAM.inp);
-        }
-
-        Run_MD::md_line(mdcell, p_esolver, PARAM);
-        if (direct_mdcell)
-        {
+            Run_MD::md_line(mdcell, p_esolver, PARAM, decomp);
             p_esolver->after_all_runners(mdcell);
         }
         else
         {
+            initialize_ucell();
+            Run_MD::prepare_mdcell(mdcell, ucell, decomp);
+            p_esolver->before_all_runners(ucell, PARAM.inp);
+            Run_MD::md_line(mdcell, p_esolver, PARAM, decomp);
             p_esolver->after_all_runners(ucell);
         }
     }

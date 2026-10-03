@@ -1,3 +1,4 @@
+#include "source_cell/module_neighlist/domain_decomposition.h"
 #include <gtest/gtest.h>
 
 #include "source_cell/mdcell_reader.h"
@@ -6,7 +7,6 @@
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/global_variable.h"
-#include "source_cell/module_neighlist/domain_decomposition.h"
 
 #include <cstdio>
 #include <cstdint>
@@ -79,10 +79,11 @@ TEST(MDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     ModuleBase::CommunicationDomain comm_domain;
     comm_domain.initialize(md_comm);
 
+    DomainDecomposition reader_decomp;
     MDCell mdcell = MDCellReader::read_stru(stru_file,
                                              std::vector<int>{1, 1, 1},
                                              0.0,
-                                             comm_domain);
+                                             comm_domain, reader_decomp);
 
     EXPECT_EQ(mdcell.type_labels().size(), 1U);
     EXPECT_EQ(mdcell.type_labels()[0], "He");
@@ -96,7 +97,7 @@ TEST(MDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     EXPECT_EQ(mdcell.nat(), 4);
 
     DomainDecomposition decomp;
-    decomp.init(md_comm, make_lattice(), 1.0, 1.0 * ModuleBase::ANGSTROM_AU, 0.0);
+    decomp.init(comm_domain, make_lattice(), 1.0, 1.0 * ModuleBase::ANGSTROM_AU, 0.0);
 
     long long local_count = static_cast<long long>(mdcell.owned_atoms().size());
     long long global_count = 0;
@@ -228,10 +229,11 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     const std::string output_file = "distributed_mdcell_restart.STRU";
     mdcell::print_stru_file(mdcell, metadata, output_file);
 
+    DomainDecomposition reader_decomp;
     MDCell round_trip = MDCellReader::read_stru(output_file,
                                                  std::vector<int>{1, 1, 1},
                                                  0.0,
-                                                 ModuleBase::world_comm_domain());
+                                                 ModuleBase::world_comm_domain(), reader_decomp);
     double local_positions[4] = {0.0, 0.0, 0.0, 0.0};
     double local_velocities[4] = {0.0, 0.0, 0.0, 0.0};
     int local_mbl_x[4] = {0, 0, 0, 0};

@@ -7,9 +7,7 @@
 #include <mpi.h>
 #endif // __MPI
 
-#define private public
 #include "source_cell/sep.h"
-#undef private
 
 class ReadSepTest : public testing::Test
 {

@@ -1,15 +1,37 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <string>
-#define private public
-#define protected public
+#ifdef __MPI
+#include "source_base/parallel_comm.h"
+
+#include <mpi.h>
+#endif
+#include "source_base/module_fft/fft_bundle.h"
 #include "source_estate/elecstate.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/occupy.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_base/module_fft/fft_bundle.h"
-#undef protected
-#undef private
+
+#ifdef __MPI
+int main(int argc, char** argv)
+{
+    MPI_Init(&argc, &argv);
+    testing::InitGoogleTest(&argc, argv);
+    // These existing fixtures describe one process and one band group.
+    int nproc = 0;
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    if (nproc != 1)
+    {
+        MPI_Finalize();
+        return 1;
+    }
+    BP_WORLD = MPI_COMM_SELF;
+    POOL_WORLD = MPI_COMM_SELF;
+    const int result = RUN_ALL_TESTS();
+    MPI_Finalize();
+    return result;
+}
+#endif
 
 // Mock functions for testing elecstate.cpp
 namespace elecstate
@@ -46,10 +68,18 @@ Magnetism::~Magnetism()
 {
 }
 
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
-Sep_Cell::Sep_Cell() noexcept {}
-Sep_Cell::~Sep_Cell() noexcept {}
+SepPot::SepPot()
+{
+}
+SepPot::~SepPot()
+{
+}
+Sep_Cell::Sep_Cell() noexcept
+{
+}
+Sep_Cell::~Sep_Cell() noexcept
+{
+}
 #include "source_cell/klist.h"
 
 ModulePW::PW_Basis::PW_Basis()
@@ -123,12 +153,11 @@ constexpr int GLOBAL_NBANDS = 6;
  *     - calculate the weights for each electronic state
  */
 
-namespace elecstate
-{
-class MockElecState : public ElecState
+// Parameter already grants this helper access for unit-test setup.
+class TestParameters
 {
   public:
-    void Set_GlobalV_Default()
+    static void reset()
     {
         PARAM.input.nspin = 1;
         PARAM.input.nelec = 10.0;
@@ -140,23 +169,37 @@ class MockElecState : public ElecState
         PARAM.input.esolver_type = "ksdft";
         PARAM.input.lspinorb = false;
         PARAM.input.basis_type = "pw";
-        GlobalV::KPAR = 1;
-        GlobalV::NPROC_IN_POOL = 1;
+    }
+
+    static void set_nspin(const int nspin)
+    {
+        PARAM.input.nspin = nspin;
+    }
+
+    static void set_nelec(const double nelec)
+    {
+        PARAM.input.nelec = nelec;
+    }
+
+    static void set_two_fermi(const bool two_fermi)
+    {
+        PARAM.sys.two_fermi = two_fermi;
     }
 };
-} // namespace elecstate
 
 class ElecStateTest : public ::testing::Test
 {
   protected:
-    elecstate::MockElecState* elecstate;
+    elecstate::ElecState* elecstate = nullptr;
     UnitCell ucell;
     Parallel_Grid pgrid;
     std::string output;
     void SetUp()
     {
-        elecstate = new elecstate::MockElecState;
-        elecstate->Set_GlobalV_Default();
+        elecstate = new elecstate::ElecState;
+        TestParameters::reset();
+        GlobalV::KPAR = 1;
+        GlobalV::NPROC_IN_POOL = 1;
     }
     void TearDown()
     {
@@ -168,7 +211,7 @@ using ElecStateDeathTest = ElecStateTest;
 
 TEST_F(ElecStateTest, InitNelecSpin)
 {
-    PARAM.input.nspin = 2;
+    TestParameters::set_nspin(2);
     elecstate->init_nelec_spin();
     EXPECT_EQ(elecstate->nelec_spin[0], 5.0);
     EXPECT_EQ(elecstate->nelec_spin[1], 5.0);
@@ -200,9 +243,9 @@ TEST_F(ElecStateTest, InitKS)
     EXPECT_EQ(elecstate->bigpw, bigpw);
     EXPECT_EQ(elecstate->klist, klist);
     EXPECT_EQ(elecstate->ekb.nr, nk);
-    EXPECT_EQ(elecstate->ekb.nc, PARAM.input.nbands);
+    EXPECT_EQ(elecstate->ekb.nc, PARAM.inp.nbands);
     EXPECT_EQ(elecstate->wg.nr, nk);
-    EXPECT_EQ(elecstate->wg.nc, PARAM.input.nbands);
+    EXPECT_EQ(elecstate->wg.nc, PARAM.inp.nbands);
     delete klist;
     delete bigpw;
     delete charge;
@@ -215,8 +258,8 @@ TEST_F(ElecStateTest, GetRho)
     K_Vectors* klist = new K_Vectors;
     int nk = 1;
     int nrxx = 100;
-    charge->rho = new double*[PARAM.input.nspin];
-    for (int i = 0; i < PARAM.input.nspin; ++i)
+    charge->rho = new double*[PARAM.inp.nspin];
+    for (int i = 0; i < PARAM.inp.nspin; ++i)
     {
         charge->rho[i] = new double[nrxx];
         for (int j = 0; j < nrxx; ++j)
@@ -227,7 +270,7 @@ TEST_F(ElecStateTest, GetRho)
     elecstate->init_ks(charge, klist, nk, bigpw);
     EXPECT_EQ(elecstate->getRho(0), &(charge->rho[0][0]));
     EXPECT_EQ(elecstate->getRho(0)[nrxx - 1], 1.0);
-    for (int i = 0; i < PARAM.input.nspin; ++i)
+    for (int i = 0; i < PARAM.inp.nspin; ++i)
     {
         delete[] charge->rho[i];
     }
@@ -250,44 +293,44 @@ TEST_F(ElecStateTest, VirtualBaseFuncs)
 
 TEST_F(ElecStateTest, FixedWeights)
 {
-    EXPECT_EQ(PARAM.input.nbands, 6);
-    PARAM.input.nelec = 30;
+    EXPECT_EQ(PARAM.inp.nbands, 6);
+    TestParameters::set_nelec(30.0);
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
     klist->set_nkstot(5);
     klist->ik2iktot = {0, 1, 2, 3, 4};
     elecstate->klist = klist;
-    elecstate->wg.create(klist->get_nks(), PARAM.input.nbands);
+    elecstate->wg.create(klist->get_nks(), PARAM.inp.nbands);
     std::vector<double> ocp_kb;
-    ocp_kb.resize(PARAM.input.nbands * elecstate->klist->get_nks());
+    ocp_kb.resize(PARAM.inp.nbands * elecstate->klist->get_nks());
     for (int i = 0; i < ocp_kb.size(); ++i)
     {
         ocp_kb[i] = 1.0;
     }
-    elecstate::fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec,klist,elecstate->wg,elecstate->skip_weights);
+    elecstate::fixed_weights(ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec, klist, elecstate->wg, elecstate->skip_weights);
     EXPECT_EQ(elecstate->wg(0, 0), 1.0);
-    EXPECT_EQ(elecstate->wg(klist->get_nks() - 1, PARAM.input.nbands - 1), 1.0);
+    EXPECT_EQ(elecstate->wg(klist->get_nks() - 1, PARAM.inp.nbands - 1), 1.0);
     EXPECT_TRUE(elecstate->skip_weights);
 }
 
 TEST_F(ElecStateDeathTest, FixedWeightsWarning1)
 {
-    EXPECT_EQ(PARAM.input.nbands, 6);
-    PARAM.input.nelec = 30;
+    EXPECT_EQ(PARAM.inp.nbands, 6);
+    TestParameters::set_nelec(30.0);
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
     klist->set_nkstot(5);
     klist->ik2iktot = {0, 1, 2, 3, 4};
     elecstate->klist = klist;
-    elecstate->wg.create(klist->get_nks(), PARAM.input.nbands);
+    elecstate->wg.create(klist->get_nks(), PARAM.inp.nbands);
     std::vector<double> ocp_kb;
-    ocp_kb.resize(PARAM.input.nbands * elecstate->klist->get_nks() - 1);
+    ocp_kb.resize(PARAM.inp.nbands * elecstate->klist->get_nks() - 1);
     for (int i = 0; i < ocp_kb.size(); ++i)
     {
         ocp_kb[i] = 1.0;
     }
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec,klist,elecstate->wg,elecstate->skip_weights),
+    EXPECT_EXIT(elecstate::fixed_weights(ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec, klist, elecstate->wg, elecstate->skip_weights),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
@@ -296,22 +339,22 @@ TEST_F(ElecStateDeathTest, FixedWeightsWarning1)
 
 TEST_F(ElecStateDeathTest, FixedWeightsWarning2)
 {
-    EXPECT_EQ(PARAM.input.nbands, 6);
-    PARAM.input.nelec = 29;
+    EXPECT_EQ(PARAM.inp.nbands, 6);
+    TestParameters::set_nelec(29.0);
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
     klist->set_nkstot(5);
     klist->ik2iktot = {0, 1, 2, 3, 4};
     elecstate->klist = klist;
-    elecstate->wg.create(klist->get_nks(), PARAM.input.nbands);
+    elecstate->wg.create(klist->get_nks(), PARAM.inp.nbands);
     std::vector<double> ocp_kb;
-    ocp_kb.resize(PARAM.input.nbands * elecstate->klist->get_nks());
+    ocp_kb.resize(PARAM.inp.nbands * elecstate->klist->get_nks());
     for (int i = 0; i < ocp_kb.size(); ++i)
     {
         ocp_kb[i] = 1.0;
     }
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec,klist,elecstate->wg,elecstate->skip_weights),
+    EXPECT_EXIT(elecstate::fixed_weights(ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec, klist, elecstate->wg, elecstate->skip_weights),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
@@ -320,13 +363,13 @@ TEST_F(ElecStateDeathTest, FixedWeightsWarning2)
 
 TEST_F(ElecStateTest, CalEBand)
 {
-    EXPECT_EQ(PARAM.input.nbands, 6);
+    EXPECT_EQ(PARAM.inp.nbands, 6);
     int nks = 5;
-    elecstate->wg.create(nks, PARAM.input.nbands);
-    elecstate->ekb.create(nks, PARAM.input.nbands);
+    elecstate->wg.create(nks, PARAM.inp.nbands);
+    elecstate->ekb.create(nks, PARAM.inp.nbands);
     for (int ik = 0; ik < nks; ++ik)
     {
-        for (int ib = 0; ib < PARAM.input.nbands; ++ib)
+        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
         {
             elecstate->ekb(ik, ib) = 1.0;
             elecstate->wg(ik, ib) = 2.0;
@@ -388,15 +431,15 @@ TEST_F(ElecStateTest, CalculateWeightsIWeights)
     }
     elecstate->eferm.ef = 0.0;
     elecstate->klist = klist;
-    elecstate->ekb.create(nks, PARAM.input.nbands);
+    elecstate->ekb.create(nks, PARAM.inp.nbands);
     for (int ik = 0; ik < nks; ++ik)
     {
-        for (int ib = 0; ib < PARAM.input.nbands; ++ib)
+        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
         {
             elecstate->ekb(ik, ib) = 100.0;
         }
     }
-    elecstate->wg.create(nks, PARAM.input.nbands);
+    elecstate->wg.create(nks, PARAM.inp.nbands);
     elecstate::calculate_weights(elecstate->ekb,
                                  elecstate->wg,
                                  elecstate->klist,
@@ -406,8 +449,8 @@ TEST_F(ElecStateTest, CalculateWeightsIWeights)
                                  GLOBAL_NBANDS,
                                  elecstate->skip_weights);
     EXPECT_DOUBLE_EQ(elecstate->wg(0, 0), 2.0);
-    EXPECT_DOUBLE_EQ(elecstate->wg(nks - 1, PARAM.input.nelec / 2 - 1), 2.0);
-    EXPECT_DOUBLE_EQ(elecstate->wg(nks - 1, PARAM.input.nbands - 1), 0.0);
+    EXPECT_DOUBLE_EQ(elecstate->wg(nks - 1, PARAM.inp.nelec / 2 - 1), 2.0);
+    EXPECT_DOUBLE_EQ(elecstate->wg(nks - 1, PARAM.inp.nbands - 1), 0.0);
     EXPECT_DOUBLE_EQ(elecstate->eferm.ef, 100.0);
     delete klist;
 }
@@ -415,14 +458,14 @@ TEST_F(ElecStateTest, CalculateWeightsIWeights)
 TEST_F(ElecStateTest, CalculateWeightsIWeightsTwoFermi)
 {
     // get nelec_spin
-    PARAM.sys.two_fermi = true;
-    PARAM.input.nspin = 2;
+    TestParameters::set_two_fermi(true);
+    TestParameters::set_nspin(2);
     elecstate->init_nelec_spin();
     EXPECT_EQ(elecstate->nelec_spin[0], 5.0);
     EXPECT_EQ(elecstate->nelec_spin[1], 5.0);
     //
     EXPECT_FALSE(elecstate->skip_weights);
-    int nks = 5 * PARAM.input.nspin;
+    int nks = 5 * PARAM.inp.nspin;
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(nks);
     klist->wk.resize(nks);
@@ -452,10 +495,10 @@ TEST_F(ElecStateTest, CalculateWeightsIWeightsTwoFermi)
     elecstate->eferm.ef_up = 0.0;
     elecstate->eferm.ef_dw = 0.0;
     elecstate->klist = klist;
-    elecstate->ekb.create(nks, PARAM.input.nbands);
+    elecstate->ekb.create(nks, PARAM.inp.nbands);
     for (int ik = 0; ik < nks; ++ik)
     {
-        for (int ib = 0; ib < PARAM.input.nbands; ++ib)
+        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
         {
             if (ik < 5)
             {
@@ -467,7 +510,7 @@ TEST_F(ElecStateTest, CalculateWeightsIWeightsTwoFermi)
             }
         }
     }
-    elecstate->wg.create(nks, PARAM.input.nbands);
+    elecstate->wg.create(nks, PARAM.inp.nbands);
     elecstate::calculate_weights(elecstate->ekb,
                                  elecstate->wg,
                                  elecstate->klist,
@@ -477,8 +520,8 @@ TEST_F(ElecStateTest, CalculateWeightsIWeightsTwoFermi)
                                  GLOBAL_NBANDS,
                                  elecstate->skip_weights);
     EXPECT_DOUBLE_EQ(elecstate->wg(0, 0), 1.1);
-    EXPECT_DOUBLE_EQ(elecstate->wg(nks - 1, PARAM.input.nelec / 2 - 1), 1.0);
-    EXPECT_DOUBLE_EQ(elecstate->wg(nks - 1, PARAM.input.nbands - 1), 0.0);
+    EXPECT_DOUBLE_EQ(elecstate->wg(nks - 1, PARAM.inp.nelec / 2 - 1), 1.0);
+    EXPECT_DOUBLE_EQ(elecstate->wg(nks - 1, PARAM.inp.nbands - 1), 0.0);
     EXPECT_DOUBLE_EQ(elecstate->eferm.ef_up, 100.0);
     EXPECT_DOUBLE_EQ(elecstate->eferm.ef_dw, 200.0);
     delete klist;
@@ -503,15 +546,15 @@ TEST_F(ElecStateTest, CalculateWeightsGWeights)
     }
     elecstate->eferm.ef = 0.0;
     elecstate->klist = klist;
-    elecstate->ekb.create(nks, PARAM.input.nbands);
+    elecstate->ekb.create(nks, PARAM.inp.nbands);
     for (int ik = 0; ik < nks; ++ik)
     {
-        for (int ib = 0; ib < PARAM.input.nbands; ++ib)
+        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
         {
             elecstate->ekb(ik, ib) = 100.0;
         }
     }
-    elecstate->wg.create(nks, PARAM.input.nbands);
+    elecstate->wg.create(nks, PARAM.inp.nbands);
     elecstate::calculate_weights(elecstate->ekb,
                                  elecstate->wg,
                                  elecstate->klist,
@@ -520,13 +563,13 @@ TEST_F(ElecStateTest, CalculateWeightsGWeights)
                                  elecstate->nelec_spin,
                                  GLOBAL_NBANDS,
                                  elecstate->skip_weights);
-    // PARAM.input.nelec = 10;
-    // PARAM.input.nbands = 6;
+    // nelec = 10;
+    // nbands = 6;
     // nks = 5;
     // wg = 10/(5*6) = 0.33333333333
     EXPECT_NEAR(elecstate->wg(0, 0), 0.33333333333, 1e-10);
-    EXPECT_NEAR(elecstate->wg(nks - 1, PARAM.input.nelec / 2 - 1), 0.33333333333, 1e-10);
-    EXPECT_NEAR(elecstate->wg(nks - 1, PARAM.input.nbands - 1), 0.33333333333, 1e-10);
+    EXPECT_NEAR(elecstate->wg(nks - 1, PARAM.inp.nelec / 2 - 1), 0.33333333333, 1e-10);
+    EXPECT_NEAR(elecstate->wg(nks - 1, PARAM.inp.nbands - 1), 0.33333333333, 1e-10);
     EXPECT_NEAR(elecstate->eferm.ef, 99.993159296503, 1e-10);
     delete klist;
     Occupy::use_gaussian_broadening = false;
@@ -536,14 +579,14 @@ TEST_F(ElecStateTest, CalculateWeightsGWeightsTwoFermi)
 {
     Occupy::use_gaussian_broadening = true;
     // get nelec_spin
-    PARAM.sys.two_fermi = true;
-    PARAM.input.nspin = 2;
+    TestParameters::set_two_fermi(true);
+    TestParameters::set_nspin(2);
     elecstate->init_nelec_spin();
     EXPECT_EQ(elecstate->nelec_spin[0], 5.0);
     EXPECT_EQ(elecstate->nelec_spin[1], 5.0);
     //
     EXPECT_FALSE(elecstate->skip_weights);
-    int nks = 5 * PARAM.input.nspin;
+    int nks = 5 * PARAM.inp.nspin;
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(nks);
     klist->wk.resize(nks);
@@ -573,10 +616,10 @@ TEST_F(ElecStateTest, CalculateWeightsGWeightsTwoFermi)
     elecstate->eferm.ef_up = 0.0;
     elecstate->eferm.ef_dw = 0.0;
     elecstate->klist = klist;
-    elecstate->ekb.create(nks, PARAM.input.nbands);
+    elecstate->ekb.create(nks, PARAM.inp.nbands);
     for (int ik = 0; ik < nks; ++ik)
     {
-        for (int ib = 0; ib < PARAM.input.nbands; ++ib)
+        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
         {
             if (ik < 5)
             {
@@ -588,7 +631,7 @@ TEST_F(ElecStateTest, CalculateWeightsGWeightsTwoFermi)
             }
         }
     }
-    elecstate->wg.create(nks, PARAM.input.nbands);
+    elecstate->wg.create(nks, PARAM.inp.nbands);
     elecstate::calculate_weights(elecstate->ekb,
                                  elecstate->wg,
                                  elecstate->klist,
@@ -597,13 +640,13 @@ TEST_F(ElecStateTest, CalculateWeightsGWeightsTwoFermi)
                                  elecstate->nelec_spin,
                                  GLOBAL_NBANDS,
                                  elecstate->skip_weights);
-    // PARAM.input.nelec = 10;
-    // PARAM.input.nbands = 6;
+    // nelec = 10;
+    // nbands = 6;
     // nks = 10;
     // wg = 10/(10*6) = 0.16666666666
     EXPECT_NEAR(elecstate->wg(0, 0), 0.16666666666, 1e-10);
-    EXPECT_NEAR(elecstate->wg(nks - 1, PARAM.input.nelec / 2 - 1), 0.16666666666, 1e-10);
-    EXPECT_NEAR(elecstate->wg(nks - 1, PARAM.input.nbands - 1), 0.16666666666, 1e-10);
+    EXPECT_NEAR(elecstate->wg(nks - 1, PARAM.inp.nelec / 2 - 1), 0.16666666666, 1e-10);
+    EXPECT_NEAR(elecstate->wg(nks - 1, PARAM.inp.nbands - 1), 0.16666666666, 1e-10);
     EXPECT_NEAR(elecstate->eferm.ef_up, 99.992717105890961, 1e-10);
     EXPECT_NEAR(elecstate->eferm.ef_dw, 199.99315929650351, 1e-10);
     delete klist;

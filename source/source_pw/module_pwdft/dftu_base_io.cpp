@@ -94,7 +94,7 @@ namespace DFTU_BASE
 
 void read_occup_m(const UnitCell& ucell,
                   OccupationMatrix& occ,
-                  const std::vector<int>& orbital_corr,
+                  const std::vector<int>& l_channel,
                   const int occ_mat_ctrl,
                   const std::string& fn,
                   const std::string& init_chg,
@@ -172,7 +172,7 @@ void read_occup_m(const UnitCell& ucell,
 
             for (int l = 0; l < NL; l++)
             {
-                if (l != orbital_corr[T])
+                if (l != l_channel[T])
                 {
                     continue;
                 }
@@ -253,7 +253,7 @@ void read_occup_m(const UnitCell& ucell,
 /// element.
 void local_occup_bcast(const UnitCell& ucell,
                        OccupationMatrix& occ,
-                       const std::vector<int>& orbital_corr,
+                       const std::vector<int>& l_channel,
                        int nspin,
                        int npol)
 {
@@ -261,7 +261,7 @@ void local_occup_bcast(const UnitCell& ucell,
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-        if (orbital_corr[T] == -1)
+        if (l_channel[T] == -1)
         {
             continue;
         }
@@ -269,11 +269,11 @@ void local_occup_bcast(const UnitCell& ucell,
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             const int iat = ucell.itia2iat(T, I);
-            const int L = orbital_corr[T];
+            const int L = l_channel[T];
 
             for (int l = 0; l <= ucell.atoms[T].nwl; l++)
             {
-                if (l != orbital_corr[T])
+                if (l != l_channel[T])
                 {
                     continue;
                 }
@@ -328,9 +328,9 @@ void output(const Plus_U_Base& dftu,
         {
             const int N = ucell.atoms[T].l_nchi[L];
 
-            if (L >= dftu.get_orbital_corr(T) && dftu.has_correlated_orbital(T))
+            if (L >= dftu.get_l_channel(T) && dftu.has_l_channel(T))
             {
-                if (L != dftu.get_orbital_corr(T))
+                if (L != dftu.get_l_channel(T))
                 {
                     continue;
                 }
@@ -399,12 +399,12 @@ void write_occup_m(const Plus_U_Base& dftu,
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-        if (!dftu.has_correlated_orbital(T))
+        if (!dftu.has_l_channel(T))
         {
             continue;
         }
         const int NL = ucell.atoms[T].nwl + 1;
-        const int LC = dftu.get_orbital_corr(T);
+        const int LC = dftu.get_l_channel(T);
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
@@ -412,7 +412,7 @@ void write_occup_m(const Plus_U_Base& dftu,
 
             for (int l = 0; l < NL; l++)
             {
-                if (l != dftu.get_orbital_corr(T))
+                if (l != dftu.get_l_channel(T))
                 {
                     continue;
                 }

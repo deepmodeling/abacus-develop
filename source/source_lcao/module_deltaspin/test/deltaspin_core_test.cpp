@@ -1,8 +1,10 @@
+#include "source_lcao/module_deltaspin/mi_tools.h"
+
 #include "gtest/gtest.h"
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <vector>
-#include <algorithm>
 
 /***********************************************************************
  * Unit tests for DeltaSpin core algorithms.
@@ -92,12 +94,34 @@ TEST_F(PauliToMomentTest, GeneralCase_AllComponents)
     EXPECT_NEAR(M.z, 0.2, 1e-15);
 }
 
+TEST(PauliConventionTest, LambdaExpectationMatchesDotMoment)
+{
+    const double amplitude = 1.0 / std::sqrt(2.0);
+    const std::complex<double> spinor[2] = {{amplitude, 0.0}, {0.0, amplitude}};
+    const std::complex<double> occ[4] = {std::conj(spinor[0]) * spinor[0],
+                                         std::conj(spinor[0]) * spinor[1],
+                                         std::conj(spinor[1]) * spinor[0],
+                                         std::conj(spinor[1]) * spinor[1]};
+    const ModuleBase::Vector3<double> lambda(0.0, 2.0, 0.0);
+    const auto matrix = spinconstrain::pauli_vector_to_spinor(lambda);
+    const auto moment = spinconstrain::pauli_to_moment(occ, 1.0);
+
+    const std::complex<double> h_up = matrix[0] * spinor[0] + matrix[1] * spinor[1];
+    const std::complex<double> h_down = matrix[2] * spinor[0] + matrix[3] * spinor[1];
+    const double expectation = (std::conj(spinor[0]) * h_up + std::conj(spinor[1]) * h_down).real();
+    const double dot_moment = lambda.x * moment.x + lambda.y * moment.y + lambda.z * moment.z;
+
+    EXPECT_NEAR(matrix[1].imag(), -2.0, 1e-15);
+    EXPECT_NEAR(matrix[2].imag(), 2.0, 1e-15);
+    EXPECT_NEAR(expectation, dot_moment, 1e-15);
+}
+
 // =====================================================================
 // 2. calculate_delta_hcc: Pauli matrix expansion
 //
 // npol=2: H += becp^H * lambda * becp
-//   lambda in Pauli basis: |lambda_z    lambda_x+i*lambda_y|
-//                          |lambda_x-i*lambda_y   -lambda_z |
+//   lambda in Pauli basis: |lambda_z                lambda_x-i*lambda_y|
+//                          |lambda_x+i*lambda_y     -lambda_z           |
 //
 // npol=1: H += becp^H * lambda_z * sign * becp
 // =====================================================================

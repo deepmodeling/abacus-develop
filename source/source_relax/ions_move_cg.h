@@ -21,6 +21,10 @@ class Ions_Move_CG : public CG_Base
     static double RELAX_CG_THR;
 
   private:
+    // Unit tests need to inspect the saved previous-step state and to seed
+    // move0 in order to drive the trial/no-trial branches of start().
+    friend class IonsMoveCGTest;
+
     std::vector<double> pos0;
     std::vector<double> grad0;
     std::vector<double> cg_grad0;

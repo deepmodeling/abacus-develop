@@ -24,7 +24,7 @@ struct Lattice
     double omega = 0.0;                ///< the volume of the unit cell
     std::vector<int> lat_axis_free{0, 0, 0};      ///< whether each lattice axis (a,b,c) is allowed to relax (0=fixed, 1=free)
 
-    ModuleBase::Matrix3 latvec = ModuleBase::Matrix3();           ///< Unitcell lattice vectors
+    ModuleBase::Matrix3 latvec = ModuleBase::Matrix3();           ///< Unitcell lattice vectors, in unit of lat0
     ModuleBase::Vector3<double> a1, a2, a3;                       ///< Same as latvec, just at another form
     ModuleBase::Vector3<double> latcenter;                        ///< (a1+a2+a3)/2 the center of vector
     ModuleBase::Matrix3 latvec_supercell = ModuleBase::Matrix3(); ///< Supercell lattice vectors

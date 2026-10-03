@@ -52,28 +52,37 @@ namespace ModuleSymmetry
         }
         this->spin_U_ = spin_U;  // keep for restore_HR_nspin4 (real-space EXX H(R) spin mixing)
 
-        // 2. calculate the rotation matrix in AO-representation for each ibz_kpoint and symmetry operation: M(k, isym)
-        auto restrict_kpt = [](const TCdouble& kvec, const double& symm_prec) -> TCdouble
-            {// in (-0.5, 0.5]
-                TCdouble kvec_res;
-                kvec_res.x = fmod(kvec.x + 100.5 - 0.5 * symm_prec, 1) - 0.5 + 0.5 * symm_prec;
-                kvec_res.y = fmod(kvec.y + 100.5 - 0.5 * symm_prec, 1) - 0.5 + 0.5 * symm_prec;
-                kvec_res.z = fmod(kvec.z + 100.5 - 0.5 * symm_prec, 1) - 0.5 + 0.5 * symm_prec;
-                if (std::abs(kvec_res.x) < symm_prec) { kvec_res.x = 0.0; }
-                if (std::abs(kvec_res.y) < symm_prec) { kvec_res.y = 0.0; }
-                if (std::abs(kvec_res.z) < symm_prec) { kvec_res.z = 0.0; }
-                return kvec_res;
-            };
-        int nks_ibz = kv.kstars.size(); // kv.nks = 2 * kv.nks_ibz when nspin=2
-        this->Ms_.resize(nks_ibz);
-        for (int ik_ibz = 0;ik_ibz < nks_ibz;++ik_ibz)
+        // A k-star contains only one operation per distinct k point. The other
+        // operations fixing k (modulo a reciprocal lattice vector) must still
+        // be averaged: a finite-grid SCF density need not respect this little group.
+        const int nks_ibz = kv.kstars.size();
+        this->Ms_.assign(nks_ibz, {});
+        this->little_groups_.assign(nks_ibz, {});
+        for (int ik_ibz = 0; ik_ibz < nks_ibz; ++ik_ibz)
         {
-            // const TCdouble& kvec_d_ibz = restrict_kpt((*kstars[ik_ibz].begin()).second * ucell.symm.kgmatrix[(*kstars[ik_ibz].begin()).first], ucell.symm.epsilon);
-            for (auto& isym_kvd : kv.kstars[ik_ibz]) {
-                if (isym_kvd.first < nop_tot) {
-                    this->Ms_[ik_ibz][isym_kvd.first] = this->contruct_2d_rot_mat_ao(ucell.symm, ucell.atoms, ucell.st, kv.kvec_d[ik_ibz], isym_kvd.first, pv, spin_U[isym_kvd.first]);
-}
-}
+            std::set<int> needed;
+            for (const auto& member : kv.kstars[ik_ibz])
+            {
+                const int op = (!this->magnetic_nspin4_ && member.first >= nsym_)
+                                   ? member.first - nsym_ : member.first;
+                needed.insert(op);
+            }
+            for (int op = 0; op < nsym_; ++op)
+            {
+                const auto delta = kv.kvec_d[ik_ibz] * ucell.symm.kgmatrix[op] - kv.kvec_d[ik_ibz];
+                if (std::abs(delta.x - std::round(delta.x)) < this->eps_
+                    && std::abs(delta.y - std::round(delta.y)) < this->eps_
+                    && std::abs(delta.z - std::round(delta.z)) < this->eps_)
+                {
+                    this->little_groups_[ik_ibz].push_back(op);
+                    needed.insert(op);
+                }
+            }
+            for (const int op : needed)
+            {
+                this->Ms_[ik_ibz][op] = this->contruct_2d_rot_mat_ao(
+                    ucell.symm, ucell.atoms, ucell.st, kv.kvec_d[ik_ibz], op, pv, spin_U[op]);
+            }
         }
         // output Ms of isym=1
         // std::ofstream ofs("Ms_kibz7_sym7.dat");
@@ -109,18 +118,37 @@ namespace ModuleSymmetry
         {
             for (int ik_ibz = 0;ik_ibz < nk;++ik_ibz) 
             {
+                // P_k D = |G_k|^{-1} sum_g M_g^T D M_g^*. This preserves
+                // Hermiticity and makes restoration independent of the chosen
+                // star representative; rotating just one arbitrary D does not.
+                const auto& little_group = this->little_groups_.at(ik_ibz);
+                assert(!little_group.empty());
+                std::vector<std::complex<double>> projected = dm_k_ibz[ik_ibz + is * nk];
+                if (little_group.size() > 1)
+                {
+                    std::fill(projected.begin(), projected.end(), 0.0);
+                    for (const int op : little_group)
+                    {
+                        const auto rotated = this->rot_matrix_ao(
+                            dm_k_ibz[ik_ibz + is * nk], ik_ibz, little_group.size(), op, pv);
+                        for (size_t i = 0; i < projected.size(); ++i)
+                        {
+                            projected[i] += rotated[i];
+                        }
+                    }
+                }
                 for (auto& isym_kvd : kv.kstars[ik_ibz]) 
                 {
                     if (isym_kvd.first == 0)
                     {
                         double factor = 1.0 / static_cast<double>(kv.kstars[ik_ibz].size());
                         std::vector<std::complex<double>> dm_scaled(pv.get_local_size());
-                        for (int i = 0;i < pv.get_local_size();++i) { dm_scaled[i] = factor * dm_k_ibz[ik_ibz + is * nk][i]; }
+                        for (int i = 0;i < pv.get_local_size();++i) { dm_scaled[i] = factor * projected[i]; }
                         dm_k_full.push_back(dm_scaled);
                     }
                     else if (isym_kvd.first < nsym_)
                     { //space group operations
-                        dm_k_full.push_back(this->rot_matrix_ao(dm_k_ibz[ik_ibz + is * nk], ik_ibz, kv.kstars[ik_ibz].size(), isym_kvd.first, pv));
+                        dm_k_full.push_back(this->rot_matrix_ao(projected, ik_ibz, kv.kstars[ik_ibz].size(), isym_kvd.first, pv));
                     }
                     else
                     {    // antiunitary elements: Theta * (spatial operation)
@@ -140,12 +168,12 @@ namespace ModuleSymmetry
                             // m=0: gray group: the space-group part of anti-unitary elements are the same of the unitary elements, isym_M < nsym_
                             // m!=0: Shubnikov group: using different space-group part of anti-unitary elements stored in gmatrix_anti with isym_M >= nsym_
                             dm_k_full.push_back(this->trs_spin_rotate(
-                                this->rot_matrix_ao(dm_k_ibz[ik_ibz + is * nk], ik_ibz, kv.kstars[ik_ibz].size(), isym_M, pv, false),
+                                this->rot_matrix_ao(projected, ik_ibz, kv.kstars[ik_ibz].size(), isym_M, pv, false),
                                 sigma_y, pv, 1.0));
                         }
                         else
                         {
-                            dm_k_full.push_back(this->rot_matrix_ao(dm_k_ibz[ik_ibz + is * nk], ik_ibz, kv.kstars[ik_ibz].size(), isym_M, pv, true));
+                            dm_k_full.push_back(this->rot_matrix_ao(projected, ik_ibz, kv.kstars[ik_ibz].size(), isym_M, pv, true));
                         }
                     }
                 }
@@ -492,7 +520,7 @@ namespace ModuleSymmetry
         const char notrans = 'N';
         std::complex<double> alpha(1.0, 0.0);
         const std::complex<double> beta(0.0, 0.0);
-        const int nbasis = PARAM.globalv.nlocal;
+        const int nbasis = pv.get_global_row_size();
         const int i1 = 1;
         if (TRS_conj)
         {

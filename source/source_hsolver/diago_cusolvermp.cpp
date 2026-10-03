@@ -2,6 +2,7 @@
 
 #include "diago_cusolvermp.h"
 
+#include "source_base/matrix_block.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
@@ -11,11 +12,12 @@ using complex = std::complex<double>;
 namespace hsolver
 {
 template <typename T>
-void DiagoCusolverMP<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in)
+void DiagoCusolverMP<T>::diag(ModuleBase::MatrixBlock<T>& h_mat,
+                              ModuleBase::MatrixBlock<T>& s_mat,
+                              psi::Psi<T>& psi,
+                              Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoCusolverMP", "diag");
-    hamilt::MatrixBlock<T> h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
 
     std::vector<Real> eigen(this->nlocal, 0.0);
     std::vector<T> eigenvectors(h_mat.row * h_mat.col);

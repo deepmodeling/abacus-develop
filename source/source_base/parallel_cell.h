@@ -16,6 +16,9 @@ public:
     MPI_Comm communicator() const;
 #endif
     int rank() const;
+    int size() const;
+    int max(int value) const;
+    double max(double value) const;
 
 private:
 #ifdef __MPI

@@ -765,7 +765,7 @@
 
 ### init_wfc
 
-- **Type**: String
+- **Type**: Vector of string
 - **Description**: The method used to initialize wavefunction coefficients. The available options and behavior depend on `basis_type`.
 
   For `basis_type=pw`, the available options are:
@@ -775,13 +775,18 @@
   - `random`: Initialize all bands with random coefficients.
   - `nao`: Use numerical atomic orbitals. If the number of NAO states is smaller than `nbands`, the remaining bands are initialized randomly.
   - `nao+random`: Apply an approximately 5% multiplicative random perturbation to the NAO initialization; any bands not covered by NAO states are first initialized randomly.
-  - `file`: Read binary `wf*_pw.dat` files generated with `out_wfc_pw=2` from `read_file_dir`. The files must match the current k points, `nbands`, plane-wave layout, and lattice.
+  - `file binary`: Read binary `wf*_pw.dat` files generated with `out_wfc_pw=2` from `read_file_dir`. The files must match the current k points, `nbands`, plane-wave layout, and lattice. The `txt` format is not supported for PW wavefunctions.
 
-  For `basis_type=lcao`, only `file` triggers reading existing wavefunctions. It reads text `wf*_nao.txt` files generated with `out_wfc_lcao=1` from `read_file_dir`; binary files generated with `out_wfc_lcao=2` are not supported. The files must use a compatible NAO basis, match the current k-point and spin setup, and contain enough bands. Normal `init_wfc=file` reading matches files written with the default `out_app_flag=true`, which have no geometry-step index. Files written under `WFC/` with a `g*` geometry-step index when `out_app_flag=false` are not matched automatically.
+  For `basis_type=lcao`, the file options are:
+
+  - `file txt`: Read text `wf*_nao.txt` files generated with `out_wfc_lcao=1` from `read_file_dir`.
+  - `file binary`: Read binary `wf*_nao.dat` files generated with `out_wfc_lcao=2` from `read_file_dir`.
+
+  The selected format is required; ABACUS does not automatically detect or fall back to the other format. The files must use a compatible NAO basis, match the current k-point and spin setup, and contain enough bands. File initialization matches independent files without geometry-step indices. Files accumulated with `out_app_flag` or files under `WFC/` with a `g*` geometry-step index are not supported.
 
   For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
 
-  > Note: For `calculation=get_wf` or `calculation=get_pchg`, `init_wfc` is automatically set to `file`. If `basis_type=lcao_in_pw` is also used, the final value is `nao`.
+  > Note: For `calculation=get_wf` or `calculation=get_pchg`, non-file initialization choices are automatically changed to the file option appropriate for the selected basis. An explicitly selected file format is preserved. If `basis_type=lcao_in_pw` is also used, the final value is `nao`.
 - **Default**: atomic
 
 ### init_chg
@@ -2004,7 +2009,7 @@
 
   With `out_freq_ion=0`, files are written only when the electronic calculation converges or reaches `scf_nmax`; no `g*` or `e*` index is added. During structural relaxation or molecular dynamics, later ionic steps overwrite the same unindexed files. With `out_freq_ion` &gt; 0, output is restricted to the ionic steps selected by `out_freq_ion` and is written when the electronic iteration is a multiple of `out_freq_elec`, when the calculation converges, or when it reaches `scf_nmax`. Both `g*` and `e*` indices are then added, including for a static `calculation=scf` or `calculation=nscf` run.
 
-  For `init_wfc=file`, ABACUS automatically reads only unindexed binary `wf*_pw.dat` files from `read_file_dir`. Such directly reusable files are normally generated with `out_wfc_pw=2` and `out_freq_ion=0`. Text `wf*_pw.txt` files and files containing `g*` or `e*` indices are not matched automatically.
+  With `init_wfc file binary`, ABACUS reads only unindexed binary `wf*_pw.dat` files from `read_file_dir`. Such directly reusable files are normally generated with `out_wfc_pw=2` and `out_freq_ion=0`. Text `wf*_pw.txt` files and files containing `g*` or `e*` indices are not matched automatically.
 
   > Note: In the 3.10-LTS version, the binary files are named `WAVEFUNC1.dat`, `WAVEFUNC2.dat`, etc.
 - **Default**: 0
@@ -2436,13 +2441,21 @@
 - **Type**: String
 - **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: The directory to save files for LibRPA.
-- **Default**: "./OUT.librpa/"
+- **Default**: "OUT.librpa"
 
 ### out_pchg
 
 - **Type**: String
 - **Availability**: *[`basis_type`](#basis_type)==pw or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_pchg)*
-- **Description**: Selects electronic states for partial (band-decomposed) charge-density output using a space-separated string of `0`s and `1`s, where `1` selects a state and `0` skips it. Repetition follows the `ocp_set` syntax, for example `1 4*0 5*1 0`; the expanded list must not exceed `nbands`. Each output represents a complete one-particle state rather than its SCF occupation. The spin degeneracy is 2 for `nspin=1` and 1 for `nspin=2` or `nspin=4`. For `nspin=1`, `s1` contains the charge density. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down charge densities, respectively. For `nspin=4`, `s1`, `s2`, `s3`, and `s4` respectively contain $\rho_0$, $m_x$, $m_y$, and $m_z$. With `if_separate_k=true`, files are named `pchgi[state]s[component]k[kpoint].cube`; otherwise, the weighted k-point sum is named `pchgi[state]s[component].cube`.
+- **Description**: Selects electronic states for partial (band-decomposed) charge-density output using a space-separated string of `0`s and `1`s, where `1` selects a state and `0` skips it. Repetition follows the `ocp_set` syntax, for example `1 4*0 5*1 0`; the expanded list must not exceed `nbands`. Each output represents a complete one-particle state. The spin degeneracy is 2 for `nspin=1` and 1 for `nspin=2` or `nspin=4`. For `nspin=1`, `s1` contains the charge density. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down charge densities, respectively. For `nspin=4`, `s1`, `s2`, `s3`, and `s4` respectively contain $\rho_0$, $m_x$, $m_y$, and $m_z$. With `if_separate_k=true`, files are named `pchgi[state]s[component]k[kpoint].cube`; otherwise, the weighted k-point sum is named `pchgi[state]s[component].cube`.
+
+  For PW calculations with ultrasoft pseudopotentials (USPP), the single-state valence density includes the augmentation contribution:
+
+  $$
+  \rho_{n\boldsymbol{k}}(\boldsymbol{r})=\left\vert\tilde{\psi}_{n\boldsymbol{k}}(\boldsymbol{r})\right\vert^2+\sum_{Iij}Q_{ij}^{I}(\boldsymbol{r})\Braket{\tilde{\psi}_{n\boldsymbol{k}} | \beta_i^I}\Braket{\beta_j^I | \tilde{\psi}_{n\boldsymbol{k}}}.
+  $$
+
+  Here $\tilde{\psi}$ is the pseudo-wavefunction, $\beta_i^I$ are the atomic projectors, and $Q_{ij}^I$ are the augmentation functions. Each separate-k output has a cell integral equal to the spin degeneracy. The merged output uses k-point weights including spin degeneracy, and its integral equals their sum for the corresponding spin channel.
 
   > Note: Enabling symmetry may produce unintended partial charge densities because of reduced k-point weights and real-space symmetry operations. If the desired symmetry treatment is uncertain, set `symmetry = -1`. Use the same symmetry setting as in the SCF calculation.
 - **Default**: none
@@ -2451,14 +2464,14 @@
 
 - **Type**: String
 - **Availability**: *[`basis_type`](#basis_type)==pw or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_wf)*
-- **Description**: Selects electronic states for real-space wavefunction-modulus output using the selection syntax of `out_pchg`. Each wavefunction is normalized as a single-particle state and does not include SCF occupations or spin-degeneracy factors. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`.
+- **Description**: Selects electronic states for real-space wavefunction-modulus output using the selection syntax of `out_pchg`. Each output contains single-particle wavefunction amplitudes. In PW calculations, norm-conserving pseudo-wavefunctions satisfy $\Braket{\psi_{n\boldsymbol{k}} | \psi_{n\boldsymbol{k}}}=1$, while USPP pseudo-wavefunctions satisfy $\Braket{\tilde{\psi}_{n\boldsymbol{k}} | \hat{S} | \tilde{\psi}_{n\boldsymbol{k}}}=1$, where $\hat{S}=1+\sum_{Iij}q_{ij}^I\Ket{\beta_i^I}\Bra{\beta_j^I}$ is the USPP overlap operator, $q_{ij}^I=\int Q_{ij}^I(\boldsymbol{r})\,\mathrm{d}\boldsymbol{r}$, and $\beta_i^I$ are the atomic projectors. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`.
 - **Default**: none
 
 ### out_wfc_re_im
 
 - **Type**: String
 - **Availability**: *[`basis_type`](#basis_type)==pw or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_wf)*
-- **Description**: Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax of `out_pchg`. Each wavefunction is normalized as a single-particle state and does not include SCF occupations or spin-degeneracy factors. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`.
+- **Description**: Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax of `out_pchg`. Each output contains single-particle wavefunction amplitudes. In PW calculations, norm-conserving pseudo-wavefunctions satisfy $\Braket{\psi_{n\boldsymbol{k}} | \psi_{n\boldsymbol{k}}}=1$, while USPP pseudo-wavefunctions satisfy $\Braket{\tilde{\psi}_{n\boldsymbol{k}} | \hat{S} | \tilde{\psi}_{n\boldsymbol{k}}}=1$, where $\hat{S}=1+\sum_{Iij}q_{ij}^I\Ket{\beta_i^I}\Bra{\beta_j^I}$ is the USPP overlap operator, $q_{ij}^I=\int Q_{ij}^I(\boldsymbol{r})\,\mathrm{d}\boldsymbol{r}$, and $\beta_i^I$ are the atomic projectors. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`.
 - **Default**: none
 
 ### if_separate_k
@@ -3416,6 +3429,7 @@
 - **Availability**: *[`symmetry`](#symmetry)==1 and ([`dft_functional`](#dft_functional) in [hse, hf, pbe0, scan0] or ([`basis_type`](#basis_type)==lcao and [`rpa`](#rpa)==true))*
 - **Description**: - False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
   - True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
+  For multi-k calculations, D(k) is averaged over the unitary little group of each irreducible k point before star expansion, for either setting.
 - **Default**: True
 
 ### out_ri_cv
@@ -5195,13 +5209,13 @@
 ### bse_q_approx_mode
 
 - **Type**: Integer
-- **Description**: q-to-k-pair mapping mode: 0 uses exact mapping, 1 uses the coarse q-grid approximation, and 2 uses exact for Γ-close q-points and coarse for other q-points.
+- **Description**: q-to-k-pair mapping mode for W: 0=exact, 1=coarse q grid, 2=mixed, 3=truncate pairs with |q|&gt;threshold (W elements dropped)
 - **Default**: 0
 
 ### bse_q_approx_threshold
 
 - **Type**: Real
-- **Description**: Threshold radius in Bohr^-1 for exact q-to-k-pair mapping when bse_q_approx_mode is 2.
+- **Description**: Threshold radius in unit of 2*pi/lat0 (same unit system as kvec_c) for exact q-to-k-pair mapping when bse_q_approx_mode is 2; in mode 3 pairs with larger |q| are dropped entirely.
 - **Default**: 0.1
 
 ### out_bse_ab

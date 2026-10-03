@@ -41,6 +41,15 @@ rules. Read the complete governance document before making or reviewing changes:
       `rhog_io.cpp` shall be `test_rhog_io.cpp`. This naming keeps the
       file-to-test relationship discoverable and consistent across the
       repository. Historical tests are not required to be renamed.
+  12. Place `ModuleBase::timer::start`/`end` at the beginning and end of a
+      function, not around isolated statements inside the function body. Use
+      the enclosing function name (or constructor name) as the timer label so
+      the timer scopes the whole unit of work.
+  13. Do not call non-trivial functions inside a constructor's member
+      initializer list (e.g., `member(compute_something(...))`); limit the
+      initializer list to direct parameter passthrough. Perform multi-step
+      computations in the constructor body instead, so failures are easy to
+      debug and each intermediate result is inspectable.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.
@@ -98,6 +107,11 @@ rules. Read the complete governance document before making or reviewing changes:
 - Do not relax existing tests or references merely to make a failure pass.
   Update references only when the intended behavior changed and the PR explains
   why.
+- When mocking `UnitCell` in a test fixture, do not `delete[] iat2it` or
+  `iat2ia` in `TearDown`: they are owned by `UnitCell`'s internal `Statistics`
+  member, whose destructor releases them. Deleting them again causes a double
+  free. Mirror the ownership pattern of existing fixtures such as
+  `source/source_lcao/module_dftu/test/dftu_lcao_test.cpp`.
 
 ## Review And Exception Flow
 
@@ -135,6 +149,17 @@ python3 tools/03_code_analysis/code_quality_score.py $(git diff --name-only upst
 The repository text files have been normalized to LF once. Day-to-day line
 ending enforcement should rely on staged/changed-file hooks and CI; rerun the
 full mixed-line-ending hook only for intentional repository-wide normalization.
+
+## Upstream Repository
+
+- Repository: https://github.com/deepmodeling/abacus-develop
+- Issues: https://github.com/deepmodeling/abacus-develop/issues
+- Pull requests: https://github.com/deepmodeling/abacus-develop/pulls
+- Upstream PRs are opened from personal fork branches
+  (`<fork-owner>:<branch>` into `develop`).
+- `workflow_dispatch`-only workflows (e.g. `.github/workflows/interface.yml`)
+  are not triggered by push/PR events; PR CI cannot verify such fixes, so
+  state "manual dispatch run required" in the PR verification notes.
 
 ## PR Self-Check
 

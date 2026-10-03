@@ -21,8 +21,13 @@ typedef std::vector<FAtom> AtomMap;
  * The algorithm for searching neighboring atoms uses a "box" partitioning method.
  * Each box has an edge length of sradius, and the number of boxes in each direction is recorded.
  */
+class SltkGridTest;
+
 class Grid
 {
+    /// the unit test drives the private setMemberVariables() directly
+    friend class SltkGridTest;
+
   public:
     /**
      * @brief Default constructor.

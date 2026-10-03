@@ -15,8 +15,13 @@
  * DATE : 2008-03-04
  */
 
+class NumericalNonlocalLmTest;
+
 class Numerical_Nonlocal_Lm
 {
+	/// the unit test drives freemem(), renew() and get_kradial() directly, and
+	/// reads label/kcut/index_proj/rab, which have no public accessor
+	friend class NumericalNonlocalLmTest;
 
 	public:
 

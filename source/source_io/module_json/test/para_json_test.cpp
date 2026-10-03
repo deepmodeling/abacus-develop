@@ -8,7 +8,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_json/para_json.h"
 #include "source_base/constants.h"
-#include "source_base/version.h"
+#include "source_main/version.h"
 #undef private
 /************************************************
  *  unit test of json output module

@@ -74,6 +74,7 @@ add_library(
     module_mixing/pulay_mixing.cpp
     module_mixing/broyden_mixing.cpp
     module_parallel/para_world.cpp
+    module_parallel/para_band_output.cpp
     module_parallel/para_collection.cpp
     module_parallel/para_kmesh_world.cpp
     module_parallel/para_pw_world.cpp

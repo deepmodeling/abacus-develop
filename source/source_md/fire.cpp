@@ -30,12 +30,12 @@ FIRE::~FIRE()
 {
 }
 
-void FIRE::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
+void FIRE::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
 {
     ModuleBase::TITLE("FIRE", "setup");
     ModuleBase::timer::start("FIRE", "setup");
 
-    MD_base::setup(p_esolver, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir, decomp);
 
     check_force();
 
@@ -236,7 +236,7 @@ void FIRE::check_fire(void)
     // Compute P, |F| and |v| only on movable degrees of freedom.
     // Fixed atoms/directions may have non-zero raw forces, but they should not
     // affect the FIRE velocity projection or adaptive time-step control.
-    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+    for (LocalAtom& atom : mdcell.owned_atoms())
     {
         for (int j = 0; j < 3; ++j)
         {
@@ -283,7 +283,7 @@ void FIRE::check_fire(void)
     // Avoid 0/0. In a truly converged case check_force() should stop the run.
     if (sumforce > 0.0 && normvel > 0.0)
     {
-        for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+        for (LocalAtom& atom : mdcell.owned_atoms())
         {
             for (int j = 0; j < 3; ++j)
             {
@@ -313,7 +313,7 @@ void FIRE::check_fire(void)
         md_dt *= fdec;
         negative_count = 0;
 
-        for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+        for (LocalAtom& atom : mdcell.owned_atoms())
         {
             for (int j = 0; j < 3; ++j)
             {

@@ -8,7 +8,12 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/lcao_hs_arrays.hpp"
-#include "source_lcao/module_dftu/dftu_nao.h" // mohan add 20251107
+
+namespace hamilt
+{
+template <typename T>
+class HContainer;
+} // namespace hamilt
 
 #ifdef __EXX
 #include "RI/global/Tensor.h" // for RI::Tensor

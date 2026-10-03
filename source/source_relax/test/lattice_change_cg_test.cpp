@@ -2,10 +2,8 @@
 #include "for_test.h"
 #include "gtest/gtest.h"
 #include "mock_remake_cell.h"
-#define private public
 #include "source_relax/lattice_change_basic.h"
 #include "source_relax/lattice_change_cg.h"
-#undef private
 
 /************************************************
  *  unit tests of class Lattice_Change_CG
@@ -34,6 +32,30 @@ class LatticeChangeCGTest : public ::testing::Test
 
     Lattice_Change_CG lc_cg;
     std::vector<double> etot_info;
+
+    // Friendship is not inherited: a TEST_F body lives in a class derived from
+    // this fixture, so the internals of Lattice_Change_CG (which friends the
+    // fixture itself) are reached through these forwarders.
+    const std::vector<double>& get_lat0() const
+    {
+        return lc_cg.lat0;
+    }
+    const std::vector<double>& get_grad0() const
+    {
+        return lc_cg.grad0;
+    }
+    const std::vector<double>& get_cg_grad0() const
+    {
+        return lc_cg.cg_grad0;
+    }
+    const std::vector<double>& get_move0() const
+    {
+        return lc_cg.move0;
+    }
+    void set_move0(const int i, const double value)
+    {
+        lc_cg.move0[i] = value;
+    }
 };
 
 // Test whether the allocate() function can correctly allocate memory space
@@ -43,10 +65,10 @@ TEST_F(LatticeChangeCGTest, TestAllocate)
     lc_cg.allocate();
 
     // Check if allocated vectors are not empty
-    EXPECT_EQ(lc_cg.lat0.size(), 4U);
-    EXPECT_EQ(lc_cg.grad0.size(), 4U);
-    EXPECT_EQ(lc_cg.cg_grad0.size(), 4U);
-    EXPECT_EQ(lc_cg.move0.size(), 4U);
+    EXPECT_EQ(get_lat0().size(), 4U);
+    EXPECT_EQ(get_grad0().size(), 4U);
+    EXPECT_EQ(get_cg_grad0().size(), 4U);
+    EXPECT_EQ(get_move0().size(), 4U);
 }
 
 // Test if a dimension less than or equal to 0 results in an assertion error
@@ -63,10 +85,10 @@ TEST_F(LatticeChangeCGTest, TestAllocateAndInitialize)
     lc_cg.allocate();
 
     // Check that the arrays are correctly initialized to 0
-    EXPECT_DOUBLE_EQ(0.0, lc_cg.lat0[0]);
-    EXPECT_DOUBLE_EQ(0.0, lc_cg.grad0[1]);
-    EXPECT_DOUBLE_EQ(0.0, lc_cg.cg_grad0[2]);
-    EXPECT_DOUBLE_EQ(0.0, lc_cg.move0[0]);
+    EXPECT_DOUBLE_EQ(0.0, get_lat0()[0]);
+    EXPECT_DOUBLE_EQ(0.0, get_grad0()[1]);
+    EXPECT_DOUBLE_EQ(0.0, get_cg_grad0()[2]);
+    EXPECT_DOUBLE_EQ(0.0, get_move0()[0]);
 }
 
 // Test function start() when converged
@@ -138,13 +160,13 @@ TEST_F(LatticeChangeCGTest, TestStartTrialGoto)
     double etot = 0.0;
 
     // call function
-    lc_cg.move0[0] = 1.0;
+    set_move0(0, 1.0);
     std::ofstream ofs1("test_lc_cg_start_trial_goto_temp1.log");
     lc_cg.start(ucell, stress, etot, ofs1, etot_info, criteria);
     ofs1.close();
     std::remove("test_lc_cg_start_trial_goto_temp1.log");
     Lattice_Change_Basic::stress_step = 2;
-    lc_cg.move0[0] = 10.0;
+    set_move0(0, 10.0);
     std::ofstream ofs("test_lc_cg_start_trial_goto.log");
     lc_cg.start(ucell, stress, etot, ofs, etot_info, criteria);
     ofs.close();
@@ -243,7 +265,7 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase2)
     double etot = 0.0;
 
     // call function
-    lc_cg.move0[0] = 0.1;
+    set_move0(0, 0.1);
     std::ofstream ofs1("test_lc_cg_start_notrial_goto_case2_temp1.log");
     lc_cg.start(ucell, stress, etot, ofs1, etot_info, criteria);
     ofs1.close();
@@ -254,7 +276,7 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase2)
     ofs2.close();
     std::remove("test_lc_cg_start_notrial_goto_case2_temp2.log");
     std::ofstream ofs("test_lc_cg_start_notrial_goto_case2.log");
-    lc_cg.move0[0] = 0.1;
+    set_move0(0, 0.1);
     stress(0, 1) = 0.0001;
     lc_cg.start(ucell, stress, etot, ofs, etot_info, criteria);
     ofs.close();
@@ -283,13 +305,13 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrial)
     double etot = 0.0;
 
     // call function
-    lc_cg.move0[0] = 1.0;
+    set_move0(0, 1.0);
     std::ofstream ofs1("test_lc_cg_start_notrial_temp1.log");
     lc_cg.start(ucell, stress, etot, ofs1, etot_info, criteria);
     ofs1.close();
     std::remove("test_lc_cg_start_notrial_temp1.log");
     Lattice_Change_Basic::stress_step = 2;
-    lc_cg.move0[0] = 10.0;
+    set_move0(0, 10.0);
     std::ofstream ofs2("test_lc_cg_start_notrial_temp2.log");
     lc_cg.start(ucell, stress, etot, ofs2, etot_info, criteria);
     ofs2.close();
