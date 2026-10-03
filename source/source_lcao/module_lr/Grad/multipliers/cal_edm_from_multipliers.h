@@ -63,7 +63,11 @@ namespace LR
         // 4. $\sum_i (\Omega + \epsilon_i) \sum_{ab} C_{\mu a} X_{ia} C_{\nu b} X_{ib}$
         std::vector<ct::Tensor> edm(c.get_nk());
         Parallel_2D px_ao_occ;
-        LR_Util::setup_2d_division(px_ao_occ, px.get_block_size(), naos, nocc, px.blacs_ctxt);
+        LR_Util::setup_2d_division(px_ao_occ, px.get_block_size(), naos, nocc
+#ifdef __MPI
+            , px.blacs_ctxt
+#endif
+        );
         for (int ik = 0;ik < c.get_nk();++ik)
         {
             const int idx_X = ik * px.get_local_size();
@@ -100,7 +104,11 @@ namespace LR
         const Parallel_2D& px = p_virt_occ;
 
         // 1. c * W * c
+#ifdef __MPI
         const std::vector<ct::Tensor> cWc = cal_dm_trans_pblas(W, p_occ_occ, c, pc, naos, nocc, nvirt, pmat, (T)1., LR_Util::MO_TYPE::OO);
+#else
+        const std::vector<ct::Tensor> cWc = cal_dm_trans_blas(W, c, nocc, nvirt, (T)1., LR_Util::MO_TYPE::OO);
+#endif
 
         // 2. edm of Z : $\sum_i \sum_a c_{\mu a} \epsilon_i Z_{ai} c_{\nu i}$
         std::vector<T> epsi_Z(px.get_local_size() * c.get_nk());
@@ -109,15 +117,25 @@ namespace LR
             multiply_eig_onto_vec(Z + ik * px.get_local_size(), eig_ks + ik * (nocc + nvirt),
                 px, epsi_Z.data() + ik * px.get_local_size());
         }
+#ifdef __MPI
         std::vector<ct::Tensor> cZc = cal_dm_trans_pblas(epsi_Z.data(), px, c, pc, naos, nocc, nvirt, pmat);
         std::for_each(cZc.begin(), cZc.end(), [&](ct::Tensor& s) { LR_Util::matsym(s.data<T>(), naos, pmat); });
+#else
+        std::vector<ct::Tensor> cZc = cal_dm_trans_blas(epsi_Z.data(), c, nocc, nvirt);
+        std::for_each(cZc.begin(), cZc.end(), [&](ct::Tensor& s) { LR_Util::matsym(s.data<T>(), naos); });
+#endif
 
         //3. c * K_cvcx * c
         // $\sum_{kl}K_{kl}[D^X](c_{\kappa k}X_{\lambda l}+X_{\kappa k}c_{\lambda l})$.
         // `K_cvcx` already carries the factor 2 of $W^X_{ij}=2K_{ij}[D^X]$ (see `op_K_cvcx` above),
         // `matsym` then supplies the 1/2 that turns $2\,X_\kappa K c_\lambda$ into the symmetric pair above. 
+#ifdef __MPI
         std::vector<ct::Tensor> cKc = cal_dm_trans_pblas(K_cvcx, px, c, pc, naos, nocc, nvirt, pmat, (T)1.0);
         std::for_each(cKc.begin(), cKc.end(), [&](ct::Tensor& s) { LR_Util::matsym(s.data<T>(), naos, pmat); });
+#else
+        std::vector<ct::Tensor> cKc = cal_dm_trans_blas(K_cvcx, c, nocc, nvirt, (T)1.0);
+        std::for_each(cKc.begin(), cKc.end(), [&](ct::Tensor& s) { LR_Util::matsym(s.data<T>(), naos); });
+#endif
 
         // 4. $\sum_i (\Omega + \epsilon_i) \sum_{ab} C_{\mu a} X_{ia} C_{\nu b} X_{ib}$
         const std::vector<ct::Tensor> edm = cal_edm_term4(X, eig_ext_istate, eig_ks, c, px, pc, pmat);
@@ -167,7 +185,14 @@ namespace LR
         const int nk = kv.get_nks() / nspin;
         // 1. calculate W multiplier 
         std::vector<Parallel_2D> p_occ_occ(nspin);
-        for (int is = 0;is < nspin;++is) { LR_Util::setup_2d_division(p_occ_occ[is], 1, nocc[is], nocc[is], px[is].blacs_ctxt); }
+        for (int is = 0;is < nspin;++is)
+        {
+            LR_Util::setup_2d_division(p_occ_occ[is], 1, nocc[is], nocc[is]
+#ifdef __MPI
+                , px[is].blacs_ctxt
+#endif
+            );
+        }
         std::vector<T> W(p_occ_occ[0].get_local_size() * nk, 0.0);
         cal_W_from_Z(W.data(), Z, X, eig_ext_istate, eig_ks, nspin, naos, nocc, nvirt,
             ucell, orb_cutoff, gd, c,
@@ -243,7 +268,14 @@ namespace LR
 
         // 1. the W^c multiplier, one occ-occ block per spin
         std::vector<Parallel_2D> p_occ_occ(2);
-        for (int is : {0, 1}) { LR_Util::setup_2d_division(p_occ_occ[is], 1, nocc[is], nocc[is], px[is].blacs_ctxt); }
+        for (int is : {0, 1})
+        {
+            LR_Util::setup_2d_division(p_occ_occ[is], 1, nocc[is], nocc[is]
+#ifdef __MPI
+                , px[is].blacs_ctxt
+#endif
+            );
+        }
         std::vector<std::vector<T>> W;
         cal_W_from_Z_openshell(W, Z, X, eig_ext_istate, eig_ks, nspin, naos, nocc, nvirt,
             ucell, orb_cutoff, gd, psi_ks,

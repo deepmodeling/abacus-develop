@@ -89,6 +89,9 @@ namespace LR
         elecstate::Potential pot_loc = this->local_potential();
         PulayForceStress::cal_pulay_fs(relax_diff_dm.get_dmr_vec().size()/*nspin*/, fvl_dphi, stress_tmp,
             relax_diff_dm, this->ucell_, &pot_loc, true, false);
+        // the grid-based `cal_pulay_fs` only sums this rank's share of the real-space grid;
+        // core ABACUS always reduces right after it (see force_stress_lcao.cpp).
+        Parallel_Reduce::reduce_pool(fvl_dphi.c, fvl_dphi.nr * fvl_dphi.nc);
 
         // 3.2. Hartree + xc (Pulay) 
         //  method 1
@@ -103,6 +106,7 @@ namespace LR
         // For ground-state DFT, Pulay term = Hellmann-Feynman term, F = 1/2(Pulay + H-F) = Pulay, so directly call it once gives correct result.
         PulayForceStress::cal_pulay_fs(relax_diff_dm.get_dmr_vec().size()/*nspin*/, fhxc_dphi, stress_tmp,
             relax_diff_dm, this->ucell_, &pot_hxc, true, false);
+        Parallel_Reduce::reduce_pool(fhxc_dphi.c, fhxc_dphi.nr * fhxc_dphi.nc);   // see `fvl_dphi` above
         if (reproduce_gs) {fhxc_dphi *= 0.5;} // avoid double count
 
         // 3.3 Hartree + xc (Hellmann-Feynman)
@@ -163,6 +167,9 @@ namespace LR
             fhxc_dvhxc *= 2;   // for the two channels of the ground-state dm.
             fhxc_dvhxc *= gs_dm_channel_factor();
         }
+        // all three branches above compute `fhxc_dvhxc` via `cal_gint_fvl`/the grid-based
+        // `cal_pulay_fs`, neither of which reduces internally (see `fvl_dphi` above).
+        Parallel_Reduce::reduce_pool(fhxc_dvhxc.c, fhxc_dvhxc.nr * fhxc_dvhxc.nc);
 
         // 4. kinetic (Pulay)
         std::vector<hamilt::HContainer<double>> dT = cal_hs_grad('T', this->ucell_, this->pv_, this->gd_, this->two_center_bundle_);
@@ -235,6 +242,7 @@ namespace LR
         ModuleBase::matrix stress_tmp;
         std::vector<const double*> vr_eff = { v2.c };
         ModuleGint::cal_gint_fvl(1, vr_eff, dm_gs.get_dmr_vec(), true, false, &f, &stress_tmp);
+        Parallel_Reduce::reduce_pool(f.c, f.nr * f.nc);   // see `fvl_dphi` in cal_force_hamilt_gs_dm_relaxed_diff
         f *= gs_dm_channel_factor();
         return f;
     }
@@ -262,6 +270,7 @@ namespace LR
         std::vector<const double*> vr_eff(nspin_dm);
         for (int is = 0; is < nspin_dm; ++is) { vr_eff[is] = v2[is].c; }
         ModuleGint::cal_gint_fvl(nspin_dm, vr_eff, dm_gs.get_dmr_vec(), true, false, &f, &stress_tmp);
+        Parallel_Reduce::reduce_pool(f.c, f.nr * f.nc);   // see `fvl_dphi` in cal_force_hamilt_gs_dm_relaxed_diff
         return f;
     }
 

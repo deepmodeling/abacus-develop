@@ -11,6 +11,7 @@
 #include "source_lcao/module_lr/operator_casida/operator_lr_exx.h"
 #endif
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/module_external/blas_connector.h"
 
 namespace LR
 {
@@ -44,11 +45,18 @@ namespace LR
                 }
             }
             // 2. matrix multiplication (parallel)
+#ifdef __MPI
             const int i1 = 1;
             ScalapackConnector::gemm('C', 'N', nocc, nocc, nvirt,
                 T(1.0), X + x_start_k, i1, i1, px.desc,
                 wX.data(), i1, i1, px.desc,
                 T(1.0)/*add-on*/, inout + inout_start_k, i1, i1, p_occ_occ.desc);
+#else
+            BlasConnector::gemm_cm('C', 'N', nocc, nocc, nvirt,
+                T(1.0), X + x_start_k, nvirt,
+                wX.data(), nvirt,
+                T(1.0)/*add-on*/, inout + inout_start_k, nocc);
+#endif
         }
     }
 

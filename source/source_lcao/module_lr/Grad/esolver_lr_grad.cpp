@@ -505,7 +505,11 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
         const int zoffset = offset;                         // block of Z
         // The imag part will be cancelled in the force calculation, so we use double DM(R) to calculate force. 
         // But complex transition DM(R) is still used in energy density matrix calculation.
+#ifdef __MPI
         const auto& dm_trans_k = cal_dm_trans_pblas(Xz.data<T>() + offset, paraX_g[ispin], c, this->paraC_z_, this->nbasis, this->nocc[ispin], nvirt_g[ispin], this->paraMat_);
+#else
+        const auto& dm_trans_k = cal_dm_trans_blas(Xz.data<T>() + offset, c, this->nocc[ispin], nvirt_g[ispin]);
+#endif
         // D(X) complex, for the EXX (LibRI) force. Built FIRST and left UN-symmetrized:
         // the exchange kernel (mu kappa | nu lambda) puts the two indices of one D^X into
         // different electron coordinates, so Tr[D^X D^X K_exx] = (aa|ii) requires the full
@@ -528,17 +532,29 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
         LR_Util::transpose_DMR(dm_trans_real, (*this->ucell_).nat);
         // LR_Util::print_DMR(dm_trans, "dm_trans of istate " + std::to_string(istate));
         // difference density matrix 
+#ifdef __MPI
         std::vector<ct::Tensor> dm_diff_k = cal_dm_diff_pblas(Xz.data<T>() + offset, paraX_g[ispin], c, this->paraC_z_, this->nbasis, this->nocc[ispin], nvirt_g[ispin], this->paraMat_);
+#else
+        std::vector<ct::Tensor> dm_diff_k = cal_dm_diff_blas(Xz.data<T>() + offset, c, this->nbasis, this->nocc[ispin], nvirt_g[ispin]);
+#endif
         // std::cout << "dm_diff_k T(k) before symmetrization, istate " + std::to_string(istate) << std::endl;
         // LR_Util::print_value(dm_diff_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
         // for (auto& d : dm_diff_k) { LR_Util::matsym(d.data<T>(), this->nbasis, this->paraMat_); }   // symmetrize
         // std::cout << "dm_diff_k T(k) after symmetrization, istate " + std::to_string(istate) << std::endl;
         // LR_Util::print_value(dm_diff_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
 
+#ifdef __MPI
         const std::vector<ct::Tensor>& dm_relaxed_k = cal_dm_trans_pblas(Z.template data<T>() + zoffset, paraX_g[ispin], c, this->paraC_z_, this->nbasis, this->nocc[ispin], nvirt_g[ispin], this->paraMat_);
+#else
+        const std::vector<ct::Tensor>& dm_relaxed_k = cal_dm_trans_blas(Z.template data<T>() + zoffset, c, this->nocc[ispin], nvirt_g[ispin]);
+#endif
         // std::cout << "dm_relaxed_k Z(k) before symmetrization, istate " + std::to_string(istate) << std::endl;
         // LR_Util::print_value(dm_relaxed_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
+#ifdef __MPI
         for (auto& d : dm_relaxed_k) { LR_Util::matsym(d.data<T>(), this->nbasis, this->paraMat_); }    // symmetrize
+#else
+        for (auto& d : dm_relaxed_k) { LR_Util::matsym(d.data<T>(), this->nbasis); }    // symmetrize
+#endif
         // std::cout << "dm_relaxed_k Z(k) after symmetrization, istate " + std::to_string(istate) << std::endl;
         // LR_Util::print_value(dm_relaxed_k[0].data<T>(), this->paraMat_.get_col_size(), this->paraMat_.get_row_size());
         // relaxed difference density matrix
@@ -588,7 +604,11 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
                 this->xc_kernel, this->spin_types[ispin]);
         if (PARAM.inp.test_force && nocc[0] == 1 && nvirt_g[0] == 1)
         {
+#ifdef __MPI
             const std::vector<ct::Tensor>& dm_diff = cal_dm_diff_pblas(Xz.data<T>() + offset, paraX_g[0], c, this->paraC_z_, this->nbasis, this->nocc[0], nvirt_g[0], this->paraMat_);
+#else
+            const std::vector<ct::Tensor>& dm_diff = cal_dm_diff_blas(Xz.data<T>() + offset, c, this->nbasis, this->nocc[0], nvirt_g[0]);
+#endif
             // test_dm_diff_H2<T>(relaxed_diff_dm.get_dmk_ptr(0), c, this->nbasis);
             test_dm_diff_H2<T>(dm_diff[0].data<T>(), c, this->nbasis);
             test_edm_H2<T>(edm_k[0].data<T>(), this->eig_ks_z_.c, c, this->nbasis);
@@ -1049,6 +1069,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
         std::vector<std::vector<ct::Tensor>> dmx_k(2), dmdiff_k(2), relaxed_k(2);
         for (int is : {0, 1})
         {
+#ifdef __MPI
             dmx_k[is] = cal_dm_trans_pblas(X_istate + off_x[is], paraX_g[is], c_spin[is], this->paraC_z_,
                 this->nbasis, this->nocc[is], nvirt_g[is], this->paraMat_);
             dmdiff_k[is] = cal_dm_diff_pblas(X_istate + off_x[is], paraX_g[is], c_spin[is], this->paraC_z_,
@@ -1056,6 +1077,12 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
             std::vector<ct::Tensor> dmz_k = cal_dm_trans_pblas(Z_istate + off_x[is], paraX_g[is], c_spin[is],
                 this->paraC_z_, this->nbasis, this->nocc[is], nvirt_g[is], this->paraMat_);
             for (auto& d : dmz_k) { LR_Util::matsym(d.template data<T>(), this->nbasis, this->paraMat_); }
+#else
+            dmx_k[is] = cal_dm_trans_blas(X_istate + off_x[is], c_spin[is], this->nocc[is], nvirt_g[is]);
+            dmdiff_k[is] = cal_dm_diff_blas(X_istate + off_x[is], c_spin[is], this->nbasis, this->nocc[is], nvirt_g[is]);
+            std::vector<ct::Tensor> dmz_k = cal_dm_trans_blas(Z_istate + off_x[is], c_spin[is], this->nocc[is], nvirt_g[is]);
+            for (auto& d : dmz_k) { LR_Util::matsym(d.template data<T>(), this->nbasis); }
+#endif
             relaxed_k[is] = dmdiff_k[is] + dmz_k;
         }
 
@@ -1180,7 +1207,15 @@ template<typename T, typename TR>
 module_dm::DensityMatrix<T, double> ModuleESolver::ESolver_LR<T, TR>::cal_dm_gs()
 {
     module_dm::DensityMatrix<T, double> dm_gs(&this->paraMat_, this->nspin, this->kv.kvec_d, this->nk);
-    module_dm::dm_from_psi(&this->paraMat_all_, this->wg_ks_all, *this->psi_ks_all_, dm_gs);   // nbands is important here
+    // `psi_ks_all_` is distributed per `this->ks_->pv` on the ks-lr path (it is aliased straight
+    // from the ground-state solver's own `psi`), but per `this->paraMat_all_` on the
+    // read-from-file path (where it was allocated with that descriptor's own sizes). Using the
+    // wrong one here reads `psi_ks_all_`'s local block with the wrong block size/process-grid
+    // assumption -- invisible at nprocs=1, where every descriptor degenerates to one block, but
+    // silently wrong at nprocs>1. `refresh_from_ks_`/`fill_z_window_` already make this same
+    // distinction for their `Cpxgemr2d` source descriptor; this mirrors it.
+    const Parallel_Orbitals* const pv_all = this->ks_ ? &this->ks_->pv : &this->paraMat_all_;
+    module_dm::dm_from_psi(pv_all, this->wg_ks_all, *this->psi_ks_all_, dm_gs);   // nbands is important here
     LR_Util::initialize_DMR(dm_gs, this->paraMat_, (*this->ucell_), this->gd(), this->orb_cutoff_);   // nbands is not important here
     dm_gs.cal_dmr(-1);
     return dm_gs;
@@ -1204,7 +1239,10 @@ void ModuleESolver::ESolver_LR<T, TR>::test_force()
     ModuleBase::matrix wg_ekb_ks_all(nspin, PARAM.inp.nbands);
     std::transform(this->wg_ks_all.c, this->wg_ks_all.c + nspin * PARAM.inp.nbands,
         this->eig_ks_all.c, wg_ekb_ks_all.c, std::multiplies<double>());
-    module_dm::dm_from_psi(&this->paraMat_all_, wg_ekb_ks_all, *this->psi_ks_all_, edm_gs);
+    // see `cal_dm_gs()`: `psi_ks_all_` is distributed per `this->ks_->pv` on the ks-lr path,
+    // not `this->paraMat_all_`.
+    const Parallel_Orbitals* const pv_all_edm = this->ks_ ? &this->ks_->pv : &this->paraMat_all_;
+    module_dm::dm_from_psi(pv_all_edm, wg_ekb_ks_all, *this->psi_ks_all_, edm_gs);
     LR_Util::initialize_DMR(edm_gs, this->paraMat_, (*this->ucell_), this->gd(), this->orb_cutoff_);
     edm_gs.cal_dmr(-1);
     // ground-state force

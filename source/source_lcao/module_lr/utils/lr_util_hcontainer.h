@@ -329,7 +329,11 @@ namespace LR_Util
             {
                 for (int ik = 0; ik < nk; ++ik)
                 {
+#ifdef __MPI
                     LR_Util::matsym(dmk[is][ik].data<TK>(), pmat.get_global_row_size(), pmat);
+#else
+                    LR_Util::matsym(dmk[is][ik].data<TK>(), pmat.get_global_row_size());
+#endif
                 }
             }
             for (int ik = 0; ik < nk; ++ik) { dm.set_dmk_ptr(is * nk + ik, dmk[is][ik].data<TK>()); }

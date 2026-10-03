@@ -1034,7 +1034,6 @@ OBJS_TENSOR=tensor.o\
     ao_to_mo_serial.o\
     dm_trans_parallel.o\
     dm_trans_serial.o\
-    dm_band.o\
     operator_lr_hxc.o\
     operator_lr_exx.o\
     xc_kernel.o\
@@ -1045,8 +1044,9 @@ OBJS_TENSOR=tensor.o\
     esolver_lr_lcao_tddft.o\
 
 ifdef LIBRI_DIR
-# BSE-related code: only compiled with LibRI (__EXX), see module_lr/CMakeLists.txt
+# BSE-related code and DMBand: only compiled with LibRI (__EXX), see module_lr/CMakeLists.txt
 OBJS_LR+=utils/lr_io_krlist.o
+OBJS_LR+=dm_band.o
 endif
 
 OBJS_LR_GRAD=lr_force.o\
