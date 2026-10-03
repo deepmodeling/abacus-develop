@@ -111,7 +111,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
     ModuleBase::TITLE("ModuleIO", "output_SR");
     ModuleBase::timer::start("ModuleIO", "output_SR");
 
-    GlobalV::ofs_running << " Overlap matrix file is in " << SR_filename << std::endl;
+    GlobalV::ofs_running << " Write S(R) matrix in NAO basis to file: " << SR_filename << std::endl;
 
     LCAO_HS_Arrays HS_Arrays;
 
@@ -182,7 +182,7 @@ void ModuleIO::output_TR(const int istep,
     {
         sst << options.global_out_dir << TR_filename;
     }
-    GlobalV::ofs_running << " T(R) data are in file: " << sst.str() << std::endl;
+    GlobalV::ofs_running << " Write T(R) matrix in NAO basis to file: " << sst.str() << std::endl;
 
     sparse_format::cal_TR(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, options.sparse_threshold);
     ModuleIO::SparseWriteOptions sparse_options;

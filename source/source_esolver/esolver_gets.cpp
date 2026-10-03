@@ -225,7 +225,8 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                         PARAM.inp.calculation,
                         PARAM.inp.out_app_flag,
                         nlocal,
-                        PARAM.globalv.npol);
+                        PARAM.globalv.npol,
+                        GlobalV::ofs_running);
     }
 
     if (this->inp_->out_mat_ds[0])

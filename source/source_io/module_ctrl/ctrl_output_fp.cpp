@@ -87,7 +87,8 @@ void ctrl_output_fp(UnitCell& ucell,
                                           inp.out_chg[1],
                                           1,
                                           PARAM.globalv.two_fermi,
-                                          false);
+                                          false,
+                                          "charge density");
 
             if (XC_Functional::get_ked_flag())
             {
@@ -141,7 +142,8 @@ void ctrl_output_fp(UnitCell& ucell,
                                           inp.out_pot[1],  // precision
                                           0, // out_fermi
                                           PARAM.globalv.two_fermi,
-                                          false);
+                                          false,
+                                          "potential");
         }
     }
     else if (inp.out_pot[0] == 2 && should_output)

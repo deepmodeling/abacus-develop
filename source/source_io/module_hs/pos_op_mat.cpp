@@ -91,7 +91,8 @@ void Position_op::out_rR(const UnitCell& ucell,
                              const std::string& calculation,
                              const bool out_app_flag,
                              const int nlocal,
-                             const int npol)
+                             const int npol,
+                             std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Position_op", "out_rR");
     ModuleBase::timer::start("Position_op", "out_rR");
@@ -107,7 +108,8 @@ void Position_op::out_rR(const UnitCell& ucell,
                        nlocal,
                        npol,
                        sparse_threshold,
-                       binary);
+                       binary,
+                       ofs_running);
 
     ModuleBase::timer::end("Position_op", "out_rR");
 }

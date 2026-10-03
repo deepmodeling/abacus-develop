@@ -9,6 +9,11 @@
 
 class UnitCell;
 
+namespace elecstate
+{
+struct Efermi;
+}
+
 namespace hamilt
 {
 template <typename T>
@@ -44,6 +49,7 @@ std::string dhr_gen_fname(const std::string& prefix,
                           const int istep);
 
 /// Write a single HContainer to CSR file with header.
+/// @param efermi_eV the Fermi energy in eV for this spin channel (only used when label == "H")
 template <typename TR>
 void write_hcontainer_csr(const std::string& fname,
                           const UnitCell* ucell,
@@ -53,7 +59,8 @@ void write_hcontainer_csr(const std::string& fname,
                           const int ispin,
                           const int nspin,
                           const std::string& label,
-                          const std::string& representation_note);
+                          const std::string& representation_note,
+                          const double efermi_eV);
 
 /// Write one HContainer record in the native binary CSR format.
 template <typename TR>
@@ -75,7 +82,9 @@ void write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                const int* iat2iwt,
                const int nat,
                const int istep,
-               const std::string& global_out_dir);
+               const std::string& global_out_dir,
+               const elecstate::Efermi& eferm,
+               std::ofstream& ofs_running);
 
 } // namespace ModuleIO
 

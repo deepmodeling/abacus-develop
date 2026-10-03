@@ -163,7 +163,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     ModuleIO::output_convergence_after_scf(conv_esolver, this->pelec->f_en.etot);
 
     //! Write Fermi energy
-    ModuleIO::output_efermi(conv_esolver, this->pelec->eferm.ef);
+    ModuleIO::output_efermi(conv_esolver, this->pelec->eferm);
 
     //! Update delta_rho for charge extrapolation
     const module_charge::AtomicRhoCfg atomic_rho_cfg_after{

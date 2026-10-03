@@ -25,12 +25,13 @@ void write_bands(const Input_para& inp,
  * @param kv klist
  */
 void nscf_bands(const int& is,
-               const std::string &eig_file, 
+               const std::string &eig_file,
                const int& nband,
                const double& fermie,
                const int& precision,
                const ModuleBase::matrix& ekb,
-               const K_Vectors& kv);
+               const K_Vectors& kv,
+               const int& nspin0 = 1);
 }
 
 #endif

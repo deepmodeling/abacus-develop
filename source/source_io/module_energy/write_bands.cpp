@@ -45,7 +45,8 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
                        eshift,
                        inp.out_band[1], // precision
                        global_ekb,
-                       kv);
+                       kv,
+                       nspin0);
         }
     }
 }
@@ -56,7 +57,8 @@ void ModuleIO::nscf_bands(const int& is,
                           const double& fermie,
                           const int& precision,
                           const ModuleBase::matrix& ekb,
-                          const K_Vectors& kv)
+                          const K_Vectors& kv,
+                          const int& nspin0)
 {
     ModuleBase::TITLE("ModuleIO", "nscf_bands");
     ModuleBase::timer::start("ModuleIO", "nscf_bands");
@@ -73,7 +75,8 @@ void ModuleIO::nscf_bands(const int& is,
         GlobalV::ofs_running << "\n";
     */
 
-    GlobalV::ofs_running << " Write eigenvalues to file: " << eig_file << std::endl;
+    const std::string spin_tag = (nspin0 == 2) ? (is == 0 ? " (spin up  )" : " (spin down)") : "";
+    GlobalV::ofs_running << " Write eigenvalues" << spin_tag << " to file: " << eig_file << std::endl;
 
     // number of k points without spin;
     // nspin = 1,2, nkstot = nkstot_np * nspin;

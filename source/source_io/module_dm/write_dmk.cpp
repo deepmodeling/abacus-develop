@@ -186,7 +186,8 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
         const UnitCell* ucell,
         const Parallel_2D& pv,
         const std::string& dmk_dir,
-        const int istep)
+        const int istep,
+        std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_dmk");
     ModuleBase::timer::start("ModuleIO", "write_dmk");
@@ -250,7 +251,8 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                 }
                 else
                 {
-                    //std::cout << " Write the density matrix to file " << fn << std::endl;
+                    const std::string spin_tag = (nspin == 2) ? (ispin == 0 ? " (spin up  )" : " (spin down)") : "";
+                    ofs_running << " Write DM(k)" << spin_tag << " matrix in NAO basis to file: " << fn << std::endl;
                 }
 
 
@@ -343,7 +345,8 @@ template void ModuleIO::write_dmk<double>(const std::vector<std::vector<double>>
         const UnitCell* ucell,
         const Parallel_2D& pv,
         const std::string& dmk_dir,
-        const int istep);
+        const int istep,
+        std::ofstream& ofs_running);
 
 template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dmk,
         const K_Vectors &kv,
@@ -352,5 +355,6 @@ template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::v
         const UnitCell* ucell,
         const Parallel_2D& pv,
         const std::string& dmk_dir,
-        const int istep);
+        const int istep,
+        std::ofstream& ofs_running);
 

@@ -179,6 +179,7 @@ bool write_dH_veff_term(WriteDHParams& params,
                         const std::string& rprefix,
                         const std::string& kprefix,
                         const std::string& label,
+                        const std::string& term_name,
                         const std::vector<int>& atom_filter = {})
 {
     const UnitCell& ucell = *params.ucell;
@@ -198,7 +199,7 @@ bool write_dH_veff_term(WriteDHParams& params,
 
         fill_dH_veff(params, pot, hf_type, ispin, c);
 
-        ModuleIO::write_dh_perI(params, ispin, rprefix, kprefix, label, c.g, atom_filter);
+        ModuleIO::write_dh_perI(params, ispin, rprefix, kprefix, label, term_name, c.g, atom_filter);
     }
     return true;
 }
@@ -250,7 +251,7 @@ void write_dH_exx_impl(WriteDHParams& params, Exx_LRI_Interface<double, Tdata>* 
 
         fill_dH_exx(params, ex, ispin, c, exx_info);
 
-        ModuleIO::write_dh_perI(params, ispin, "dvexxr", "dvexxk", "dV^EXX", c.g, af);
+        ModuleIO::write_dh_perI(params, ispin, "dvexxr", "dvexxk", "dV^EXX", "exx", c.g, af);
     }
 }
 #endif
@@ -274,7 +275,7 @@ bool write_dH_t(WriteDHParams& params)
 
         fill_dH_t(params, c);
 
-        ModuleIO::write_dh_perI(params, ispin, "dtr", "dtk", "dT", c.g, af_t);
+        ModuleIO::write_dh_perI(params, ispin, "dtr", "dtk", "dT", "kinetic", c.g, af_t);
     }
 
     ModuleBase::timer::end("ModuleIO", "write_dH_t");
@@ -297,7 +298,7 @@ bool write_dH_vnl(WriteDHParams& params)
 
         fill_dH_vnl(params, c);
 
-        ModuleIO::write_dh_perI(params, ispin, "dvnlr", "dvnlk", "dV^NL", c.g, af_vnl);
+        ModuleIO::write_dh_perI(params, ispin, "dvnlr", "dvnlk", "dV^NL", "nonlocal", c.g, af_vnl);
     }
 
     ModuleBase::timer::end("ModuleIO", "write_dH_vnl");
@@ -310,7 +311,7 @@ bool write_dH_vl(WriteDHParams& params)
     ModuleBase::timer::start("ModuleIO", "write_dH_vl");
 
     const std::vector<int> af_vl = dh_atom_filter(PARAM.inp.out_mat_dh_vl);
-    const bool ok = write_dH_veff_term(params, params.pot_vl, "vl", "dvlr", "dvlk", "dV^L", af_vl);
+    const bool ok = write_dH_veff_term(params, params.pot_vl, "vl", "dvlr", "dvlk", "dV^L", "local", af_vl);
 
     ModuleBase::timer::end("ModuleIO", "write_dH_vl");
     return ok;
@@ -322,7 +323,7 @@ bool write_dH_vh(WriteDHParams& params)
     ModuleBase::timer::start("ModuleIO", "write_dH_vh");
 
     const std::vector<int> af_vh = dh_atom_filter(PARAM.inp.out_mat_dh_vh);
-    const bool ok = write_dH_veff_term(params, params.pot_vh, "hartree", "dvhr", "dvhk", "dV^H", af_vh);
+    const bool ok = write_dH_veff_term(params, params.pot_vh, "hartree", "dvhr", "dvhk", "dV^H", "hartree", af_vh);
 
     ModuleBase::timer::end("ModuleIO", "write_dH_vh");
     return ok;
@@ -334,7 +335,7 @@ bool write_dH_vh_pulay(WriteDHParams& params)
     ModuleBase::timer::start("ModuleIO", "write_dH_vh_pulay");
 
     const std::vector<int> af_vh_pulay = dh_atom_filter(PARAM.inp.out_mat_dh_vh);
-    const bool ok = write_dH_veff_term(params, params.pot_vh, "none", "dvhr_pulay_", "dvhk_pulay_", "dV^H (Pulay)", af_vh_pulay);
+    const bool ok = write_dH_veff_term(params, params.pot_vh, "none", "dvhr_pulay_", "dvhk_pulay_", "dV^H (Pulay)", "hartree Pulay", af_vh_pulay);
 
     ModuleBase::timer::end("ModuleIO", "write_dH_vh_pulay");
     return ok;
@@ -348,7 +349,7 @@ bool write_dH_vxc(WriteDHParams& params)
     const std::vector<int> af_vxc = dh_atom_filter(PARAM.inp.out_mat_dh_vxc);
     const bool ok = write_dH_veff_term(params, params.pot_vxc,
                                        params.chg ? "xc" : "none",
-                                       "dvxcr", "dvxck", "dV^XC", af_vxc);
+                                       "dvxcr", "dvxck", "dV^XC", "xc", af_vxc);
 
     ModuleBase::timer::end("ModuleIO", "write_dH_vxc");
     return ok;
@@ -360,7 +361,7 @@ bool write_dH_vxc_pulay(WriteDHParams& params)
     ModuleBase::timer::start("ModuleIO", "write_dH_vxc_pulay");
 
     const std::vector<int> af_vxc_pulay = dh_atom_filter(PARAM.inp.out_mat_dh_vxc);
-    const bool ok = write_dH_veff_term(params, params.pot_vxc, "none", "dvxcr_pulay_", "dvxck_pulay_", "dV^XC (Pulay)", af_vxc_pulay);
+    const bool ok = write_dH_veff_term(params, params.pot_vxc, "none", "dvxcr_pulay_", "dvxck_pulay_", "dV^XC (Pulay)", "xc Pulay", af_vxc_pulay);
 
     ModuleBase::timer::end("ModuleIO", "write_dH_vxc_pulay");
     return ok;
@@ -475,7 +476,7 @@ bool write_dH_sum(WriteDHParams& params, const Exx_Info& exx_info)
         }
 #endif
 
-        ModuleIO::write_dh_perI(params, ispin, "dhr", "dhk", "dH", sum.g, dh_atom_filter(PARAM.inp.out_mat_dh));
+        ModuleIO::write_dh_perI(params, ispin, "dhr", "dhk", "dH", "total", sum.g, dh_atom_filter(PARAM.inp.out_mat_dh));
     }
 
     ModuleBase::timer::end("ModuleIO", "write_dH_sum");

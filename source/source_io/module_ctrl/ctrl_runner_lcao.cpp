@@ -128,7 +128,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       hexxc_ptr
 #endif
                                       ,
-                                      sparse_thr
+                                      sparse_thr,
+                                      GlobalV::ofs_running
         );
     }
 

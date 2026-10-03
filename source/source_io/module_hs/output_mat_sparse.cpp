@@ -106,7 +106,8 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                         calculation,
                         out_app_flag,
                         nlocal,
-                        npol);
+                        npol,
+                        GlobalV::ofs_running);
     }
 
     return;

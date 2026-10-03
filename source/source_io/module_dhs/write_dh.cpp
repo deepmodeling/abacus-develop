@@ -26,6 +26,7 @@ void write_dh_perI(WriteDHParams& params,
     const std::string& rprefix,
     const std::string& kprefix,
     const std::string& label,
+    const std::string& term_name,
     std::array<std::vector<hamilt::HContainer<double>*>, 3>& g,
     const std::vector<int>& atom_filter)
 {
@@ -78,13 +79,20 @@ void write_dh_perI(WriteDHParams& params,
 #endif
             {
                 std::string fr = r_dir + ModuleIO::dhr_gen_fname(rprefix + tag, ispin, params.append, params.istep);
+                // dH/dR is not a Hamiltonian: no Fermi energy annotation in the header
+                const double no_efermi = 0.0;
 #ifdef __MPI
                 ModuleIO::write_hcontainer_csr(
-                    fr, &ucell, 8, &hR_s, params.istep, ispin, nspin, label, "");
+                    fr, &ucell, 8, &hR_s, params.istep, ispin, nspin, label, "", no_efermi);
 #else
                 ModuleIO::write_hcontainer_csr(
-                    fr, &ucell, 8, hR, params.istep, ispin, nspin, label, "");
+                    fr, &ucell, 8, hR, params.istep, ispin, nspin, label, "", no_efermi);
 #endif
+                if (params.ofs_running != nullptr)
+                {
+                    *params.ofs_running << " Write dH/dR (" << term_name << " term) matrix in NAO basis to file: "
+                                        << fr << std::endl;
+                }
             }
             }
 
@@ -156,12 +164,6 @@ void write_dH_components(WriteDHParams& params, const Exx_Info& exx_info)
                                  "out_mat_dh_vnl, out_mat_dh_vl, out_mat_dh_vh, out_mat_dh_vxc).");
     }
 #endif
-
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " |                 #Print out dH/dR components#                       |" << std::endl;
-    GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
     if (PARAM.inp.out_mat_dh[0])
     {

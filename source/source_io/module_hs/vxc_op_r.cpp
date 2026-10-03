@@ -40,7 +40,8 @@ void write_Vxc_R(const int nspin,
                  const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
 #endif
                  ,
-                 const double sparse_thr)
+                 const double sparse_thr,
+                 std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_Vxc_R");
 
@@ -127,6 +128,8 @@ void write_Vxc_R(const int nspin,
                               all_R_coor,
                               *pv,
                               options);
+        const std::string spin_tag = (nspin == 2) ? (is == 0 ? " (spin up  )" : " (spin down)") : "";
+        ofs_running << " Write Vxc(R)" << spin_tag << " matrix in NAO basis to file: " << options.filename << std::endl;
     }
 }
 
@@ -140,7 +143,7 @@ template void write_Vxc_R<double, double>(
     , const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
 #endif
-    , const double);
+    , const double, std::ofstream&);
 
 template void write_Vxc_R<std::complex<double>, double>(
     const int, const Parallel_Orbitals*, const UnitCell&, Structure_Factor&, surchem&,
@@ -151,7 +154,7 @@ template void write_Vxc_R<std::complex<double>, double>(
     , const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
 #endif
-    , const double);
+    , const double, std::ofstream&);
 
 template void write_Vxc_R<std::complex<double>, std::complex<double>>(
     const int, const Parallel_Orbitals*, const UnitCell&, Structure_Factor&, surchem&,
@@ -162,6 +165,6 @@ template void write_Vxc_R<std::complex<double>, std::complex<double>>(
     , const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>*,
     const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>*
 #endif
-    , const double);
+    , const double, std::ofstream&);
 
 } // namespace ModuleIO

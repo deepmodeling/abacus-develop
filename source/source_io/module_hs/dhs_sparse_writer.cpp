@@ -140,7 +140,8 @@ void ModuleIO::save_dH_sparse(const int& istep,
                 }
                 else if (!binary)
                 {
-                    GlobalV::ofs_running << " " << label << " data are in file: "
+                    const char* matrix_name = (fileflag == "s") ? "dS/dR" : "dH/dR";
+                    GlobalV::ofs_running << " Write " << matrix_name << " (" << comp.axis << " component) matrix in NAO basis to file: "
                                          << comp.fname[ispin].str() << std::endl;
                 }
                 comp.ofs[ispin].open(comp.fname[ispin].str().c_str(), mode);

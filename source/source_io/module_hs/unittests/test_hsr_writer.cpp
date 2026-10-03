@@ -11,6 +11,7 @@
 #include "csr_test_helpers.h"
 
 #include "source_base/module_out/csr_reader.h"
+#include "source_estate/fp_energy.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_io/module_hs/hsr_writer.h"
 
@@ -158,13 +159,15 @@ TEST(HsrWriterIo, HContainerCsrHeaderKeepsCurrentFormat)
     double values[4] = {1.0, 0.0, 0.5, 2.0};
     fill_matrix(matrix, pv, values);
 
-    ModuleIO::write_hcontainer_csr(filename, &ucell, 5, &matrix, 0, 0, 1, "H", "");
+    // label "H": header carries the Fermi energy of this spin channel
+    const double efermi_eV = 5.4321;
+    ModuleIO::write_hcontainer_csr(filename, &ucell, 5, &matrix, 0, 0, 1, "H", "", efermi_eV);
 
     const std::string output = read_file(filename);
     EXPECT_THAT(output, testing::HasSubstr(" --- Ionic Step 1 ---\n"));
     EXPECT_THAT(output, testing::HasSubstr(" # print H matrix in real space H(R)\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 1 # number of spin directions\n"));
-    EXPECT_THAT(output, testing::HasSubstr(" 1 # spin index\n"));
+    EXPECT_THAT(output, testing::HasSubstr(" 1 # spin index, E_Fermi = 5.4321 eV\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 2 # number of localized basis\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 1 # number of Bravais lattice vector R\n"));
     EXPECT_THAT(output, testing::HasSubstr(" user_defined_lattice\n"));
@@ -195,8 +198,10 @@ TEST(HsrWriterIo, GammaFoldedHeaderKeepsCsrReadable)
     double values[4] = {1.0, 0.0, 0.5, 2.0};
     fill_matrix(matrix, pv, values);
 
+    // label "H" without Fermi energy available: pass 0.0
+    const double no_efermi = 0.0;
     ModuleIO::write_hcontainer_csr(
-        filename, &ucell, 5, &matrix, 0, 0, 1, "H", representation_note);
+        filename, &ucell, 5, &matrix, 0, 0, 1, "H", representation_note, no_efermi);
 
     const std::string output = read_file(filename);
     EXPECT_THAT(output, testing::HasSubstr("# representation: " + representation_note + "\n"));
@@ -224,16 +229,49 @@ TEST(HsrWriterIo, HContainerCsrAppendKeepsCurrentStepSections)
     double values[4] = {1.0, 0.0, 0.0, 1.0};
     fill_matrix(matrix, pv, values);
 
-    ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 0, 0, 1, "S", "");
-    ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 1, 0, 1, "S", "");
+    // label "S": header carries no Fermi energy (argument is ignored)
+    const double ignored_efermi = 0.0;
+    ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 0, 0, 1, "S", "", ignored_efermi);
+    ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 1, 0, 1, "S", "", ignored_efermi);
 
     const std::string output = read_file(filename);
     EXPECT_EQ(count_substr(output, " --- Ionic Step "), 2);
     EXPECT_THAT(output, testing::HasSubstr(" --- Ionic Step 1 ---\n"));
     EXPECT_THAT(output, testing::HasSubstr(" --- Ionic Step 2 ---\n"));
     EXPECT_EQ(count_substr(output, " # print S matrix in real space S(R)\n"), 2);
+    // S(R) files must not contain a Fermi energy annotation
+    EXPECT_THAT(output, testing::Not(testing::HasSubstr("E_Fermi")));
 
     std::remove(filename.c_str());
+}
+
+TEST(HsrWriterIo, HContainerCsrHeaderCarriesPerChannelFermi)
+{
+    UnitCell ucell;
+    init_unitcell(ucell);
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    hamilt::HContainer<double> matrix(&pv);
+    double values[4] = {1.0, 0.0, 0.5, 2.0};
+    fill_matrix(matrix, pv, values);
+
+    // Each spin channel is written to its own file (write mode, istep=0)
+    const double efermi_up_eV = 5.4321;
+    const double efermi_dw_eV = 3.2109;
+    const std::string filename_up = "write_hs_r_header_fermi_up.csr";
+    const std::string filename_dw = "write_hs_r_header_fermi_dw.csr";
+    std::remove(filename_up.c_str());
+    std::remove(filename_dw.c_str());
+    ModuleIO::write_hcontainer_csr(filename_up, &ucell, 5, &matrix, 0, 0, 2, "H", "", efermi_up_eV);
+    ModuleIO::write_hcontainer_csr(filename_dw, &ucell, 5, &matrix, 0, 1, 2, "H", "", efermi_dw_eV);
+
+    const std::string output_up = read_file(filename_up);
+    const std::string output_dw = read_file(filename_dw);
+    EXPECT_THAT(output_up, testing::HasSubstr(" 1 # spin index, E_Fermi = 5.4321 eV\n"));
+    EXPECT_THAT(output_dw, testing::HasSubstr(" 2 # spin index, E_Fermi = 3.2109 eV\n"));
+
+    std::remove(filename_up.c_str());
+    std::remove(filename_dw.c_str());
 }
 
 // ---------------------------------------------------------------------------
@@ -407,8 +445,13 @@ TEST(HsrWriterIo, HContainerBinaryMpiGatherWritesCompleteFiles)
 
     init_sparse_output_globals();
     std::vector<hamilt::HContainer<double>*> hr_vec(1, &hr_parallel);
+    elecstate::Efermi eferm;
+    eferm.two_efermi = false;
+    eferm.ef = 0.4; // Ry; used only for the H(R) header
+    std::ofstream ofs_running_null; // not opened; test does not inspect the running log
     ModuleIO::write_hsr(
-        hr_vec, &sr_parallel, &ucell, 2, 8, parallel_pv, true, true, iat2iwt, 1, 0, "./");
+        hr_vec, &sr_parallel, &ucell, 2, 8, parallel_pv, true, true, iat2iwt, 1, 0, "./", eferm,
+        ofs_running_null);
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (mpi_rank == 0)
