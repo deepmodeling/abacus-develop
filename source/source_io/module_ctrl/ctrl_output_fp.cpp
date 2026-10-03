@@ -1,4 +1,5 @@
 #include "ctrl_output_fp.h" // use ctrl_output_fp()
+#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "../module_output/cube_io.h" // use write_vdata_palgrid
 #include "../module_dipole/dipole_io.h" // use write_dipole
 #include "source_estate/module_charge/chg_symm.h" // use module_charge::cal_rhog_symm

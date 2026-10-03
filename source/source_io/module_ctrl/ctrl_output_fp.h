@@ -2,6 +2,7 @@
 #define CTRL_OUTPUT_FP_H
 
 #include "source_estate/elecstate_lcao.h"
+#include "source_basis/module_pw/pw_basis_big.h"
 
 struct Input_para;
 

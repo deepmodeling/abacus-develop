@@ -1,6 +1,7 @@
 #ifndef ELECSTATEPW_SDFT_H
 #define ELECSTATEPW_SDFT_H
 #include "elecstate_pw.h"
+
 namespace elecstate
 {
 template <typename T, typename Device>
