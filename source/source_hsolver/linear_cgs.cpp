@@ -102,11 +102,12 @@ bool LinearCGS<T, Device>::iterate(const LinearOperator<T, Device>& op,
 template <typename T, typename Device>
 LinearSolveResult LinearCGS<T, Device>::solve(const LinearOperator<T, Device>& op,
                                               const LinearOperator<T, Device>& preconditioner,
-                                              const int ld,
-                                              const int nband,
-                                              const int dim,
+                                              int ld,
+                                              int nband,
+                                              int dim,
                                               T* x,
-                                              const T* b)
+                                              const T* b,
+                                              const T* initial_residual)
 {
     const LinearSolveTimer timer("LinearCGS");
     work_.prepare(ld, dim, nband, x, b, tolerance_, max_iter_);
@@ -137,7 +138,14 @@ LinearSolveResult LinearCGS<T, Device>::solve(const LinearOperator<T, Device>& o
         std::iota(original_.begin(), original_.end(), 0);
         rho_prev_.assign(nband, T(1));
         work_.copy(ld, dim, nband, x, work_.data(solution_slot));
-        work_.residual(op, ld, dim, nband, work_.data(solution_slot), b, work_.data(residual_slot));
+        if (initial_residual && result.restarts == 0)
+        {
+            work_.copy(ld, dim, nband, initial_residual, work_.data(residual_slot));
+        }
+        else
+        {
+            work_.residual(op, ld, dim, nband, work_.data(solution_slot), b, work_.data(residual_slot));
+        }
         work_.copy(ld, dim, nband, work_.data(residual_slot), work_.data(shadow_slot));
         retire_converged();
         result.status = LinearSolveStatus::max_iterations;

@@ -43,14 +43,16 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
 #else
     const hsolver::diag_comm_info comm(0, 1);
 #endif
-    this->td_solver_.reset(new hsolver::HSolverPWTDDFT<T, Device>(*this->pw_wfc,
-                                                                  inp.lin_solver,
-                                                                  inp.lin_precond,
-                                                                  inp.lin_thr,
-                                                                  inp.lin_maxiter,
-                                                                  inp.t_in_h,
-                                                                  comm,
-                                                                  GlobalV::ofs_running));
+    hsolver::PWLinearOptions options;
+    options.linear.method = hsolver::parse_linear_method(inp.lin_solver);
+    options.linear.tolerance = inp.lin_thr;
+    options.linear.max_iterations = inp.lin_maxiter;
+    options.linear.restart = inp.lin_gmres_restart;
+    options.linear.reconstruct = inp.lin_reconstruct;
+    options.preconditioner = hsolver::parse_pw_precond(inp.lin_precond);
+    options.cn_init = inp.td_cn_init;
+    options.kinetic_enabled = inp.t_in_h;
+    this->td_solver_.reset(new hsolver::HSolverPWTDDFT<T, Device>(*this->pw_wfc, options, comm, GlobalV::ofs_running));
     this->history_.prepare(*this->pelec->pot, XC_Functional::get_ked_flag());
     // Preserve existing field history until input validation and initialization succeed.
     if (inp.out_efield && GlobalV::MY_RANK == 0)

@@ -1,36 +1,9 @@
 #include "source_hsolver/hsolver_linear.h"
 
-#include "source_base/module_device/memory_op.h"
 #include "source_base/tool_quit.h"
 
 namespace hsolver
 {
-namespace
-{
-template <typename T, typename Device>
-class IdentityOperator final : public LinearOperator<T, Device>
-{
-  private:
-    const int dim_;
-
-  public:
-    explicit IdentityOperator(const int dim) : dim_(dim)
-    {
-    }
-    bool is_identity() const override
-    {
-        return true;
-    }
-    void apply(const T* x, T* y, const int ld, const int nvec) const override
-    {
-        if (dim_ > 0)
-        {
-            base_device::memory::synchronize_memory_2d_op<T, Device, Device>()(y, ld, x, ld, dim_, nvec);
-        }
-    }
-};
-} // namespace
-
 const char* linear_status_name(const LinearSolveStatus status)
 {
     switch (status)
@@ -60,22 +33,14 @@ HSolverLinear<T, Device>::HSolverLinear(const LinearSolveOptions& options, const
     {
         cgs_.reset(new LinearCGS<T, Device>(tolerance_, options.max_iterations, comm));
     }
+    else if (options.method == LinearMethod::gmres)
+    {
+        gmres_.reset(new LinearGMRES<T, Device>(tolerance_, options, comm));
+    }
     else
     {
         ModuleBase::WARNING_QUIT("HSolverLinear", "Unsupported linear solver method.");
     }
-}
-
-template <typename T, typename Device>
-LinearSolveResult HSolverLinear<T, Device>::solve(const LinearOperator<T, Device>& op,
-                                                  const int ld,
-                                                  const int nvec,
-                                                  const int dim,
-                                                  T* x,
-                                                  const T* b)
-{
-    const IdentityOperator<T, Device> identity(dim);
-    return solve(op, identity, ld, nvec, dim, x, b);
 }
 
 template <typename T, typename Device>
@@ -87,13 +52,31 @@ LinearSolveResult HSolverLinear<T, Device>::solve(const LinearOperator<T, Device
                                                   T* x,
                                                   const T* b)
 {
+    return solve(op, preconditioner, ld, nvec, dim, x, b, nullptr, true);
+}
+
+template <typename T, typename Device>
+LinearSolveResult HSolverLinear<T, Device>::solve(const LinearOperator<T, Device>& op,
+                                                  const LinearOperator<T, Device>& preconditioner,
+                                                  int ld,
+                                                  int nvec,
+                                                  int dim,
+                                                  T* x,
+                                                  const T* b,
+                                                  const T* initial_residual,
+                                                  bool force_check)
+{
     if (bicgstab_)
     {
-        return bicgstab_->solve(op, preconditioner, ld, nvec, dim, x, b);
+        return bicgstab_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual);
     }
     else if (cgs_)
     {
-        return cgs_->solve(op, preconditioner, ld, nvec, dim, x, b);
+        return cgs_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual);
+    }
+    else if (gmres_)
+    {
+        return gmres_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, force_check);
     }
     else
     {

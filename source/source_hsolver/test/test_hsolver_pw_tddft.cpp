@@ -150,7 +150,13 @@ TEST(PWTDDFT, DenseCNCorrectorsAndConservation)
             initialize_basis(sizes, &basis);
             DenseHamiltonian op(sizes);
             std::ostringstream log;
-            hsolver::HSolverPWTDDFT<T, Device> solver(basis, method, precond, 1e-13, 100, true, comm, log);
+            hsolver::PWLinearOptions options;
+            options.linear.method = hsolver::parse_linear_method(method);
+            options.linear.tolerance = 1e-13;
+            options.linear.max_iterations = 100;
+            options.preconditioner = hsolver::parse_pw_precond(precond);
+            options.kinetic_enabled = true;
+            hsolver::HSolverPWTDDFT<T, Device> solver(basis, options, comm, log);
             psi::Psi<T> previous(2, bands, ld, sizes, true);
             for (int ik = 0; ik < 2; ++ik)
             {

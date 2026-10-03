@@ -6,6 +6,10 @@ set(TD_LINEAR_TEST_SOURCES
   ../hsolver_linear.cpp
   ../linear_bicgstab.cpp
   ../linear_cgs.cpp
+  ../linear_gmres.cpp
+  ../linear_algebra.cpp
+  ../cn_subspace.cpp
+  ../linear_low_rank.cpp
   ../linear_workspace.cpp
 )
 AddTest(

@@ -21,41 +21,6 @@ void check_launch()
 }
 
 template <typename Real>
-__global__ void combine_kernel(const int n, thrust::complex<Real>* out,
-                               const thrust::complex<Real>* x, const thrust::complex<Real>* y,
-                               const thrust::complex<Real> a, const thrust::complex<Real> b)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < n)
-    {
-        out[i] = a * x[i] + b * y[i];
-    }
-}
-
-template <typename Real>
-__global__ void product_kernel(const int n, thrust::complex<Real>* out,
-                               const thrust::complex<Real>* x, const thrust::complex<Real>* y)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < n)
-    {
-        out[i] = x[i] * y[i];
-    }
-}
-
-template <typename Real>
-__global__ void swap_kernel(const int n, thrust::complex<Real>* x, thrust::complex<Real>* y)
-{
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < n)
-    {
-        const thrust::complex<Real> tmp = x[i];
-        x[i] = y[i];
-        y[i] = tmp;
-    }
-}
-
-template <typename Real>
 __global__ void dot_kernel(const int ld, const int dim, const thrust::complex<Real>* x,
                            const thrust::complex<Real>* y, thrust::complex<Real>* out)
 {
@@ -86,38 +51,6 @@ __global__ void dot_kernel(const int ld, const int dim, const thrust::complex<Re
     }
 }
 } // namespace
-
-template <typename T>
-void linear_op<T, base_device::DEVICE_GPU>::combine(const int n, T* out, const T* x, const T* y, const T a, const T b) const
-{
-    if (n <= 0) { return; }
-    using Real = typename T::value_type;
-    using Complex = thrust::complex<Real>;
-    combine_kernel<<<(n - 1) / linear_threads + 1, linear_threads>>>(
-        n, reinterpret_cast<Complex*>(out), reinterpret_cast<const Complex*>(x),
-        reinterpret_cast<const Complex*>(y), Complex(a.real(), a.imag()), Complex(b.real(), b.imag()));
-    check_launch();
-}
-
-template <typename T>
-void linear_op<T, base_device::DEVICE_GPU>::product(const int n, T* out, const T* x, const T* y) const
-{
-    if (n <= 0) { return; }
-    using Complex = thrust::complex<typename T::value_type>;
-    product_kernel<<<(n - 1) / linear_threads + 1, linear_threads>>>(
-        n, reinterpret_cast<Complex*>(out), reinterpret_cast<const Complex*>(x), reinterpret_cast<const Complex*>(y));
-    check_launch();
-}
-
-template <typename T>
-void linear_op<T, base_device::DEVICE_GPU>::swap(const int n, T* x, T* y) const
-{
-    if (n <= 0) { return; }
-    using Complex = thrust::complex<typename T::value_type>;
-    swap_kernel<<<(n - 1) / linear_threads + 1, linear_threads>>>(
-        n, reinterpret_cast<Complex*>(x), reinterpret_cast<Complex*>(y));
-    check_launch();
-}
 
 template <typename T>
 void linear_op<T, base_device::DEVICE_GPU>::dot(const int ld, const int dim, const int nvec,
@@ -354,6 +287,64 @@ void linear_op<T, base_device::DEVICE_GPU>::cgs_finish(int ld, int dim, int nvec
         reinterpret_cast<const C*>(ad),
         reinterpret_cast<const C*>(alpha));
     check_launch();
+}
+namespace
+{
+template <typename Real, typename Accumulator>
+__global__ void wide_dot_kernel(int ld, int dim, int nvec, int stride,
+                               const thrust::complex<Real>* basis, const thrust::complex<Real>* x,
+                               thrust::complex<Accumulator>* out)
+{
+    __shared__ Accumulator re[linear_threads];
+    __shared__ Accumulator im[linear_threads];
+    const int tid = threadIdx.x;
+    const int band = blockIdx.x % nvec;
+    const int j = blockIdx.x / nvec;
+    thrust::complex<Accumulator> sum(0, 0);
+    for (int i = tid; i < dim; i += blockDim.x)
+    {
+        sum += thrust::conj(thrust::complex<Accumulator>(basis[j * stride + band * ld + i]))
+               * thrust::complex<Accumulator>(x[band * ld + i]);
+    }
+    re[tid] = sum.real();
+    im[tid] = sum.imag();
+    __syncthreads();
+    for (int s = blockDim.x / 2; s > 0; s /= 2)
+    {
+        if (tid < s) { re[tid] += re[tid + s]; im[tid] += im[tid + s]; }
+        __syncthreads();
+    }
+    if (tid == 0) out[blockIdx.x] = thrust::complex<Accumulator>(re[0], im[0]);
+}
+}
+
+template <typename T>
+void linear_op<T, base_device::DEVICE_GPU>::wide_dots(int ld, int dim, int nvec, int count, int stride,
+                                                     const T* basis, const T* x, std::complex<double>* out) const
+{
+    if (nvec * count == 0) return;
+    using C = thrust::complex<typename T::value_type>;
+    wide_dot_kernel<<<nvec * count, linear_threads>>>(ld, dim, nvec, stride,
+        reinterpret_cast<const C*>(basis), reinterpret_cast<const C*>(x),
+        reinterpret_cast<thrust::complex<double>*>(out));
+    check_launch();
+}
+template <typename T>
+void linear_op<T, base_device::DEVICE_GPU>::native_dots(int ld, int dim, int nvec, int count, int stride,
+                                                       const T* basis, const T* x, T* out) const
+{
+    if (nvec * count == 0) return;
+    using C = thrust::complex<typename T::value_type>;
+    wide_dot_kernel<<<nvec * count, linear_threads>>>(ld, dim, nvec, stride,
+        reinterpret_cast<const C*>(basis), reinterpret_cast<const C*>(x), reinterpret_cast<C*>(out));
+    check_launch();
+}
+
+template <typename T>
+void linear_op<T, base_device::DEVICE_GPU>::synchronize() const
+{
+    const hipError_t error = hipDeviceSynchronize();
+    if (error != hipSuccess) throw std::runtime_error("Linear solver device synchronization failed.");
 }
 template class linear_op<std::complex<float>, base_device::DEVICE_GPU>;
 template class linear_op<std::complex<double>, base_device::DEVICE_GPU>;

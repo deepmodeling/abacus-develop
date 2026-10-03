@@ -41,15 +41,17 @@ class LinearCGS final
     LinearCGS(const double tolerance, const int max_iter, const diag_comm_info& comm);
     /**
      * @brief Solve A*x=b in Device memory, preserving padding and caller column order.
+     * @param initial_residual Optional initial residual, reused on the first cycle only; otherwise nullptr.
      * @note Uses tolerance*norm(b), or tolerance for a zero right-hand side.
      */
     LinearSolveResult solve(const LinearOperator<T, Device>& op,
                             const LinearOperator<T, Device>& preconditioner,
-                            const int ld,
-                            const int nband,
-                            const int dim,
+                            int ld,
+                            int nband,
+                            int dim,
                             T* x,
-                            const T* b);
+                            const T* b,
+                            const T* initial_residual);
 
   private:
     bool iterate(const LinearOperator<T, Device>& op,

@@ -31,8 +31,6 @@ PWCurrentResult CurrentPW<FPTYPE, Device>::calculate(const UnitCell& ucell,
     ModuleBase::timer::start("ModuleIO", "calculate");
 
     using Complex = std::complex<FPTYPE>;
-    using resmem_complex_op = base_device::memory::resize_memory_op<Complex, Device>;
-    using delmem_complex_op = base_device::memory::delete_memory_op<Complex, Device>;
     using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_CPU, Device>;
     using setmem_complex_op = base_device::memory::set_memory_op<Complex, Device>;
 
@@ -197,84 +195,10 @@ void CurrentPW<FPTYPE, Device>::write(const int istep,
     }
 }
 
-template <typename FPTYPE, typename Device>
-void write_current_pw(const int istep,
-                      const UnitCell& ucell,
-                      const ModulePW::PW_Basis_K* wfcpw,
-                      psi::Psi<std::complex<FPTYPE>, Device>* psi,
-                      const elecstate::ElecState* pelec,
-                      const K_Vectors& kv,
-                      pseudopot_cell_vnl* ppcell,
-                      const int gauge,
-                      const ModuleBase::Vector3<double>& vector_potential,
-                      const bool out_current_k,
-                      const std::string& out_dir,
-                      const int world_rank)
-{
-    CurrentPW<FPTYPE, Device> current;
-    current.write(istep, ucell, wfcpw, psi, pelec, kv, ppcell, gauge, vector_potential, out_current_k, out_dir, world_rank);
-}
-
 template class CurrentPW<float, base_device::DEVICE_CPU>;
 template class CurrentPW<double, base_device::DEVICE_CPU>;
 #if defined(__CUDA) || defined(__ROCM)
 template class CurrentPW<float, base_device::DEVICE_GPU>;
 template class CurrentPW<double, base_device::DEVICE_GPU>;
 #endif
-// Explicit template instantiations.
-template void write_current_pw<double, base_device::DEVICE_CPU>(const int istep,
-                                                                const UnitCell& ucell,
-                                                                const ModulePW::PW_Basis_K* wfcpw,
-                                                                psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-                                                                const elecstate::ElecState* pelec,
-                                                                const K_Vectors& kv,
-                                                                pseudopot_cell_vnl* ppcell,
-                                                                const int gauge,
-                                                                const ModuleBase::Vector3<double>& vector_potential,
-                                                                const bool out_current_k,
-                                                                const std::string& out_dir,
-                                                                const int world_rank);
-
-template void write_current_pw<float, base_device::DEVICE_CPU>(const int istep,
-                                                               const UnitCell& ucell,
-                                                               const ModulePW::PW_Basis_K* wfcpw,
-                                                               psi::Psi<std::complex<float>, base_device::DEVICE_CPU>* psi,
-                                                               const elecstate::ElecState* pelec,
-                                                               const K_Vectors& kv,
-                                                               pseudopot_cell_vnl* ppcell,
-                                                               const int gauge,
-                                                               const ModuleBase::Vector3<double>& vector_potential,
-                                                               const bool out_current_k,
-                                                               const std::string& out_dir,
-                                                               const int world_rank);
-
-// GPU instantiations are compiled when CUDA or ROCm is enabled.
-#if ((defined __CUDA) || (defined __ROCM))
-template void write_current_pw<double, base_device::DEVICE_GPU>(const int istep,
-                                                                const UnitCell& ucell,
-                                                                const ModulePW::PW_Basis_K* wfcpw,
-                                                                psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi,
-                                                                const elecstate::ElecState* pelec,
-                                                                const K_Vectors& kv,
-                                                                pseudopot_cell_vnl* ppcell,
-                                                                const int gauge,
-                                                                const ModuleBase::Vector3<double>& vector_potential,
-                                                                const bool out_current_k,
-                                                                const std::string& out_dir,
-                                                                const int world_rank);
-
-template void write_current_pw<float, base_device::DEVICE_GPU>(const int istep,
-                                                               const UnitCell& ucell,
-                                                               const ModulePW::PW_Basis_K* wfcpw,
-                                                               psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* psi,
-                                                               const elecstate::ElecState* pelec,
-                                                               const K_Vectors& kv,
-                                                               pseudopot_cell_vnl* ppcell,
-                                                               const int gauge,
-                                                               const ModuleBase::Vector3<double>& vector_potential,
-                                                               const bool out_current_k,
-                                                               const std::string& out_dir,
-                                                               const int world_rank);
-#endif
-
 } // namespace ModuleIO

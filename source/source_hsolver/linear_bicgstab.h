@@ -45,15 +45,17 @@ class LinearBiCGSTAB final
      * @brief Solve A*x=b, using x as initial guess and M as inverse preconditioner.
      * @param ld Column stride, at least dim. Padding is neither read nor overwritten.
      * @param dim Local valid row count; may be zero on an MPI participant.
+     * @param initial_residual Optional initial residual, reused on the first cycle only; otherwise nullptr.
      * @note Accepts only true residuals below tolerance*max(1, norm(b)) per column.
      */
     LinearSolveResult solve(const LinearOperator<T, Device>& op,
                             const LinearOperator<T, Device>& preconditioner,
-                            const int ld,
-                            const int nband,
-                            const int dim,
+                            int ld,
+                            int nband,
+                            int dim,
                             T* x,
-                            const T* b);
+                            const T* b,
+                            const T* initial_residual);
 
   private:
     bool iterate(const LinearOperator<T, Device>& op, const LinearOperator<T, Device>& preconditioner, LinearSolveResult* result);

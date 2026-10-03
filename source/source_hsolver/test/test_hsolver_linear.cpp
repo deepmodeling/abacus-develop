@@ -11,6 +11,32 @@
 namespace
 {
 template <typename T>
+class IdentityOperator final : public hsolver::LinearOperator<T>
+{
+  private:
+    const int dim_;
+
+  public:
+    explicit IdentityOperator(const int dim) : dim_(dim)
+    {
+    }
+    bool is_identity() const override
+    {
+        return true;
+    }
+    void apply(const T* x, T* y, const int ld, const int nvec) const override
+    {
+        for (int band = 0; band < nvec; ++band)
+        {
+            for (int i = 0; i < dim_; ++i)
+            {
+                y[band * ld + i] = x[band * ld + i];
+            }
+        }
+    }
+};
+
+template <typename T>
 class DenseOperator final : public hsolver::LinearOperator<T>
 {
   public:
@@ -165,7 +191,8 @@ TYPED_TEST(LinearSolveTest, DenseReferenceAndReusedBatches)
                     }
                     else
                     {
-                        result = solver.solve(op, ld, nvec, dim, x.data(), rhs.data());
+                        const IdentityOperator<T> identity(dim);
+                        result = solver.solve(op, identity, ld, nvec, dim, x.data(), rhs.data());
                     }
                     EXPECT_EQ(result.status, hsolver::LinearSolveStatus::converged);
                     EXPECT_EQ(result.failed_band, -1);
@@ -251,7 +278,8 @@ TEST(LinearSolveFailure, ReportsOriginalColumnAndTrueResidual)
             {
                 b[ld + i] = T(1, 0.1 * (start + i));
             }
-            const hsolver::LinearSolveResult result = solver.solve(op, ld, 3, dim, x.data(), b.data());
+            const IdentityOperator<T> identity(dim);
+            const hsolver::LinearSolveResult result = solver.solve(op, identity, ld, 3, dim, x.data(), b.data());
             const hsolver::LinearSolveStatus expected
                 = singular ? hsolver::LinearSolveStatus::breakdown : hsolver::LinearSolveStatus::max_iterations;
             EXPECT_EQ(result.status, expected);

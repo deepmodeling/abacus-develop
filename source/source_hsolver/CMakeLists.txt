@@ -15,6 +15,10 @@ list(APPEND objects
     diago_params.cpp
     linear_bicgstab.cpp
     linear_cgs.cpp
+    linear_gmres.cpp
+    linear_algebra.cpp
+    cn_subspace.cpp
+    linear_low_rank.cpp
     linear_workspace.cpp
     hsolver_linear.cpp
 )

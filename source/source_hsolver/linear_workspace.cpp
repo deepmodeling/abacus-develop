@@ -24,8 +24,17 @@ LinearSolveTimer::~LinearSolveTimer()
 }
 
 template <typename T, typename Device>
-LinearWorkspace<T, Device>::LinearWorkspace(const diag_comm_info& comm) : comm_(comm)
+LinearWorkspace<T, Device>::LinearWorkspace(const diag_comm_info& comm) : LinearWorkspace(comm, 9)
 {
+}
+
+template <typename T, typename Device>
+LinearWorkspace<T, Device>::LinearWorkspace(const diag_comm_info& comm, int slots) : slots_(slots), comm_(comm)
+{
+    if (slots_ <= 0)
+    {
+        throw std::invalid_argument("Linear workspace requires a positive slot count.");
+    }
     // A default Tensor is a one-element float CPU tensor, not an empty buffer.
     using CtDevice = typename ct::PsiToContainer<Device>::type;
     const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
@@ -55,7 +64,7 @@ void LinearWorkspace<T, Device>::prepare(const int ld,
     if (size > capacity_)
     {
         using CtDevice = typename ct::PsiToContainer<Device>::type;
-        vectors_ = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<CtDevice>::value, {9, static_cast<int64_t>(size)});
+        vectors_ = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<CtDevice>::value, {slots_, static_cast<int64_t>(size)});
         capacity_ = size;
     }
 }
@@ -63,7 +72,7 @@ void LinearWorkspace<T, Device>::prepare(const int ld,
 template <typename T, typename Device>
 void LinearWorkspace<T, Device>::clear()
 {
-    base_device::memory::set_memory_op<T, Device>()(vectors_.template data<T>(), 0, static_cast<size_t>(9) * capacity_);
+    base_device::memory::set_memory_op<T, Device>()(vectors_.template data<T>(), 0, static_cast<size_t>(slots_) * capacity_);
 }
 
 template <typename T, typename Device>
@@ -71,6 +80,13 @@ void LinearWorkspace<T, Device>::reset_statistics()
 {
     operator_calls_ = 0;
     operator_columns_ = 0;
+}
+
+template <typename T, typename Device>
+void LinearWorkspace<T, Device>::statistics(LinearSolveResult* result) const
+{
+    result->operator_calls = operator_calls_;
+    result->operator_columns = operator_columns_;
 }
 
 template <typename T, typename Device>
@@ -130,6 +146,7 @@ void LinearWorkspace<T, Device>::verify(const LinearOperator<T, Device>& op,
                                         LinearSolveResult* result)
 {
     residual(op, ld, dim, nvec, x, b, scratch);
+    ++result->true_checks;
     result->operator_calls = operator_calls_;
     result->operator_columns = operator_columns_;
     std::vector<T> norms(nvec);
@@ -246,6 +263,12 @@ void LinearWorkspace<T, Device>::batch(int ld,
 template <typename T, typename Device>
 void LinearWorkspace<T, Device>::swap_columns(int ld, int dim, const std::vector<int>& pairs)
 {
+    swap_vectors(ld, dim, slots_, capacity_, vectors_.template data<T>(), pairs);
+}
+
+template <typename T, typename Device>
+void LinearWorkspace<T, Device>::swap_vectors(int ld, int dim, int slots, int stride, T* vectors, const std::vector<int>& pairs)
+{
     if (pairs.empty() || dim == 0)
     {
         return;
@@ -258,7 +281,7 @@ void LinearWorkspace<T, Device>::swap_columns(int ld, int dim, const std::vector
     }
     int* map = permutation_.template data<int>();
     base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>()(map, pairs.data(), pairs.size());
-    linear_op<T, Device>().swaps(ld, dim, 9, capacity_, pairs.size() / 2, vectors_.template data<T>(), map);
+    linear_op<T, Device>().swaps(ld, dim, slots, stride, pairs.size() / 2, vectors, map);
 }
 template <typename T, typename Device>
 void LinearWorkspace<T, Device>::restore(int ld, int dim, int nvec, const std::vector<int>& order, const T* source, T* destination)
