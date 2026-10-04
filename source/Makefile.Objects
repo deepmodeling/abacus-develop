@@ -613,6 +613,7 @@ OBJS_SURCHEM=surchem.o\
     sol_force.o\
 
 OBJS_SCCS=sccs_cavity.o\
+    sccs_functional.o\
     sccs_parameters.o\
     sccs_ionic_charge.o\
     sccs_pw_coulomb.o\
