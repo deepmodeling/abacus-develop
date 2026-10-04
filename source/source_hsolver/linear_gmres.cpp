@@ -7,8 +7,7 @@ namespace hsolver
 {
 template <typename T, typename Device>
 LinearGMRES<T, Device>::LinearGMRES(double tolerance, const LinearSolveOptions& options, const diag_comm_info& comm)
-    : tolerance_(tolerance), max_iter_(options.max_iterations), restart_(0), reconstruct_(options.reconstruct), work_(comm, 2),
-      algebra_(comm)
+    : tolerance_(tolerance), restart_(0), work_(comm, 2), algebra_(comm)
 {
     restart_ = std::min(options.restart, std::max(1, options.max_iterations));
     if (restart_ <= 0 || restart_ > (std::numeric_limits<int>::max() - 1) / 3)
@@ -210,6 +209,7 @@ bool LinearGMRES<T, Device>::cycle(const LinearOperator<T, Device>& op,
                                    const LinearOperator<T, Device>& preconditioner,
                                    const std::vector<double>& threshold,
                                    bool reconstruct,
+                                   int max_iterations,
                                    LinearSolveResult* result)
 {
     std::vector<T> coeff(bands_);
@@ -217,7 +217,7 @@ bool LinearGMRES<T, Device>::cycle(const LinearOperator<T, Device>& op,
     {
         return false;
     }
-    for (int j = 0; j < restart_ && active_ > 0 && result->iterations < max_iter_; ++j)
+    for (int j = 0; j < restart_ && active_ > 0 && result->iterations < max_iterations; ++j)
     {
         T* z = direction(j);
         T* raw = image(j);
@@ -242,7 +242,7 @@ bool LinearGMRES<T, Device>::cycle(const LinearOperator<T, Device>& op,
                 return false;
             }
             done[b] = std::abs(g_[b][j + 1]) <= 0.8 * threshold[order_[b]] || norm <= std::numeric_limits<Real>::min() || j + 1 == restart_
-                      || result->iterations == max_iter_;
+                      || result->iterations == max_iterations;
             coeff[b] = done[b] ? T(0) : T(1.0 / norm);
             if (!done[b])
             {
@@ -276,10 +276,12 @@ LinearSolveResult LinearGMRES<T, Device>::solve(const LinearOperator<T, Device>&
                                                 T* x,
                                                 const T* b,
                                                 const T* initial_residual,
-                                                bool force_check)
+                                                bool force_check,
+                                                const LinearSolveControl& control)
 {
     const LinearSolveTimer timer("LinearGMRES");
-    work_.prepare(ld, dim, nvec, x, b, tolerance_, max_iter_);
+    const int max_iterations = control.max_iterations;
+    work_.prepare(ld, dim, nvec, x, b, tolerance_, max_iterations);
     work_.reset_statistics();
     ld_ = ld;
     dim_ = dim;
@@ -293,7 +295,7 @@ LinearSolveResult LinearGMRES<T, Device>::solve(const LinearOperator<T, Device>&
     {
         threshold[i] = tolerance_ * std::max(1.0, linear_norm(rhs_norms[i]));
     }
-    bool reconstruct = reconstruct_;
+    bool reconstruct = control.reconstruct;
     force_check = force_check || tolerance_ < 100 * std::numeric_limits<Real>::epsilon();
     LinearSolveResult result;
     work_.clear();
@@ -313,7 +315,7 @@ LinearSolveResult LinearGMRES<T, Device>::solve(const LinearOperator<T, Device>&
         bool regular = false;
         try
         {
-            regular = cycle(op, preconditioner, threshold, reconstruct, &result);
+            regular = cycle(op, preconditioner, threshold, reconstruct, max_iterations, &result);
             result.status = regular ? LinearSolveStatus::max_iterations : LinearSolveStatus::breakdown;
         }
         catch (const LinearPreconditionerError&)
@@ -388,7 +390,7 @@ LinearSolveResult LinearGMRES<T, Device>::solve(const LinearOperator<T, Device>&
             return result;
         }
         const bool retry_initial = initial_residual && result.restarts == 0;
-        if (result.iterations >= max_iter_ || (result.iterations == start && !retry_initial) || !std::isfinite(result.max_residual))
+        if (result.iterations >= max_iterations || (result.iterations == start && !retry_initial) || !std::isfinite(result.max_residual))
         {
             return result;
         }

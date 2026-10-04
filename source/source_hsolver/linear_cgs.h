@@ -22,7 +22,6 @@ class LinearCGS final
         solution_slot = 8
     };
     const double tolerance_;
-    const int max_iter_;
     LinearWorkspace<T, Device> work_;
     int ld_ = 0;
     int dim_ = 0;
@@ -38,10 +37,11 @@ class LinearCGS final
     std::vector<int> swaps_;
 
   public:
-    LinearCGS(const double tolerance, const int max_iter, const diag_comm_info& comm);
+    LinearCGS(const double tolerance, const diag_comm_info& comm);
     /**
      * @brief Solve A*x=b in Device memory, preserving padding and caller column order.
      * @param initial_residual Optional initial residual, reused on the first cycle only; otherwise nullptr.
+     * @param max_iterations Iteration budget for this call, shared by all restart cycles.
      * @note Uses tolerance*norm(b), or tolerance for a zero right-hand side.
      */
     LinearSolveResult solve(const LinearOperator<T, Device>& op,
@@ -51,7 +51,8 @@ class LinearCGS final
                             int dim,
                             T* x,
                             const T* b,
-                            const T* initial_residual);
+                            const T* initial_residual,
+                            const int max_iterations);
 
   private:
     bool iterate(const LinearOperator<T, Device>& op,

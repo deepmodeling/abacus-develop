@@ -7,8 +7,8 @@
 namespace hsolver
 {
 template <typename T, typename Device>
-LinearBiCGSTAB<T, Device>::LinearBiCGSTAB(const double tolerance, const int max_iter, const diag_comm_info& comm)
-    : tolerance_(tolerance), max_iter_(max_iter), work_(comm)
+LinearBiCGSTAB<T, Device>::LinearBiCGSTAB(const double tolerance, const diag_comm_info& comm)
+    : tolerance_(tolerance), work_(comm)
 {
 }
 
@@ -175,10 +175,11 @@ LinearSolveResult LinearBiCGSTAB<T, Device>::solve(const LinearOperator<T, Devic
                                                    int dim,
                                                    T* x,
                                                    const T* b,
-                                                   const T* initial_residual)
+                                                   const T* initial_residual,
+                                                   const int max_iterations)
 {
     const LinearSolveTimer timer("LinearBiCGSTAB");
-    work_.prepare(ld, dim, nband, x, b, tolerance_, max_iter_);
+    work_.prepare(ld, dim, nband, x, b, tolerance_, max_iterations);
     work_.reset_statistics();
     ld_ = ld;
     dim_ = dim;
@@ -227,7 +228,7 @@ LinearSolveResult LinearBiCGSTAB<T, Device>::solve(const LinearOperator<T, Devic
         const int cycle_start = result.iterations;
         try
         {
-            while (result.iterations < max_iter_ && active_ > 0)
+            while (result.iterations < max_iterations && active_ > 0)
             {
                 ++result.iterations;
                 if (!iterate(op, preconditioner, &result))
@@ -246,7 +247,7 @@ LinearSolveResult LinearBiCGSTAB<T, Device>::solve(const LinearOperator<T, Devic
             result.status = LinearSolveStatus::residual_mismatch;
         }
         work_.verify(op, ld, dim, nband, x, b, original_threshold, work_.data(residual_slot), &result);
-        if (result.status != LinearSolveStatus::residual_mismatch || result.iterations >= max_iter_ || result.iterations == cycle_start
+        if (result.status != LinearSolveStatus::residual_mismatch || result.iterations >= max_iterations || result.iterations == cycle_start
             || !std::isfinite(result.max_residual))
         {
             return result;

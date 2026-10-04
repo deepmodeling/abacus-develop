@@ -47,6 +47,13 @@ struct LinearSolveOptions
     bool reconstruct = false;
 };
 
+/** @brief Explicit policy for one solve; does not change the solver's defaults. */
+struct LinearSolveControl
+{
+    int max_iterations;
+    bool reconstruct;
+};
+
 const char* linear_status_name(const LinearSolveStatus status);
 
 } // namespace hsolver

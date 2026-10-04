@@ -271,14 +271,13 @@ void HSolverPWTDDFT<T, Device>::retry_kinetic(const LinearOperator<T, Device>& o
                                               const SolveBatch& batch,
                                               LinearSolveResult* result)
 {
-    LinearSolveOptions fallback = options_.linear;
-    fallback.max_iterations -= result->iterations;
-    fallback.reconstruct = false;
-    HSolverLinear<T, Device> solver(fallback, comm_);
+    const int remaining_iterations = options_.linear.max_iterations - result->iterations;
+    const LinearSolveControl control{remaining_iterations, false};
     const T* inverse = inverse_kinetic_.template data<T>();
     const LinearLowRank<T, Device> diagonal(algebra_, inverse, batch.dim);
     const T* rhs = rhs_.template data<T>();
-    LinearSolveResult retry = solver.solve(op, diagonal, batch.ld, batch.bands, batch.dim, current, rhs);
+    LinearSolveResult retry
+        = linear_solver_->solve(op, diagonal, batch.ld, batch.bands, batch.dim, current, rhs, nullptr, true, control);
     retry.iterations += result->iterations;
     retry.restarts += result->restarts;
     retry.operator_calls += result->operator_calls;

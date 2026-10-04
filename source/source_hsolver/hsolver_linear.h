@@ -17,6 +17,7 @@ class HSolverLinear
     std::unique_ptr<LinearCGS<T, Device>> cgs_;
     std::unique_ptr<LinearGMRES<T, Device>> gmres_;
     double tolerance_ = 0.0;
+    const LinearSolveControl default_control_;
 
   public:
     HSolverLinear(const LinearSolveOptions& options, const diag_comm_info& comm);
@@ -43,6 +44,17 @@ class HSolverLinear
                             const T* b,
                             const T* initial_residual,
                             bool force_check);
+    /** @brief Reuse solver storage with an explicit per-call budget and reconstruction policy. */
+    LinearSolveResult solve(const LinearOperator<T, Device>& op,
+                            const LinearOperator<T, Device>& preconditioner,
+                            int ld,
+                            int nvec,
+                            int dim,
+                            T* x,
+                            const T* b,
+                            const T* initial_residual,
+                            bool force_check,
+                            const LinearSolveControl& control);
 };
 } // namespace hsolver
 #endif

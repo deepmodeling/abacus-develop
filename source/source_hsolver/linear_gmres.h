@@ -13,9 +13,7 @@ class LinearGMRES
     using Wide = std::complex<double>;
     using Real = typename GetTypeReal<T>::type;
     const double tolerance_;
-    const int max_iter_;
     int restart_;
-    const bool reconstruct_;
     LinearWorkspace<T, Device> work_;
     LinearAlgebra<T, Device> algebra_;
     ct::Tensor krylov_;
@@ -46,11 +44,12 @@ class LinearGMRES
                const LinearOperator<T, Device>& preconditioner,
                const std::vector<double>& threshold,
                bool reconstruct,
+               int max_iterations,
                LinearSolveResult* result);
 
   public:
     LinearGMRES(double tolerance, const LinearSolveOptions& options, const diag_comm_info& comm);
-    /** @brief A supplied residual is used once; force_check requests an independent final application. */
+    /** @brief Use the per-call budget and reconstruction policy; force_check requests an independent final application. */
     LinearSolveResult solve(const LinearOperator<T, Device>& op,
                             const LinearOperator<T, Device>& preconditioner,
                             int ld,
@@ -59,7 +58,8 @@ class LinearGMRES
                             T* x,
                             const T* b,
                             const T* initial_residual,
-                            bool force_check);
+                            bool force_check,
+                            const LinearSolveControl& control);
 };
 } // namespace hsolver
 #endif
