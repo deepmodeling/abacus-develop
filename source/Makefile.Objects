@@ -271,6 +271,8 @@ OBJS_ELECSTAT=elecstate.o\
     elecstate_pw_sdft.o\
     elecstate_pw_cal_tau.o\
     makov_payne.o\
+    charge_moments.o\
+    pcc_0d.o\
     elecstate_op.o\
     efield.o\
     gatefield.o\

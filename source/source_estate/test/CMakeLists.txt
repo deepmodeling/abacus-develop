@@ -7,6 +7,18 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__MLALGO)
 abacus_disable_feature_definitions(_OPENMP)
 
+AddTest(
+  TARGET MODULE_ESTATE_charge_moments
+  LIBS base device
+  SOURCES test_charge_moments.cpp ../charge_moments.cpp
+)
+
+AddTest(
+  TARGET MODULE_ESTATE_pcc_0d
+  LIBS base device
+  SOURCES test_pcc_0d.cpp ../pcc_0d.cpp ../charge_moments.cpp ../../source_cell/cell_geometry.cpp
+)
+
 if (ENABLE_MPI)
 
 # Copy at configure time so a plain `make` + `ctest` run finds the data.
