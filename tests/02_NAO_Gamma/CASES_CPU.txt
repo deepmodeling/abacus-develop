@@ -39,3 +39,4 @@ scf_u_spin2_old
 scf_upf100
 test.sum
 scf_pcc0d_water
+scf_pcc2d_water
