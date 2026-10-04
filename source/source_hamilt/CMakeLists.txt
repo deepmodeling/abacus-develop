@@ -1,5 +1,6 @@
 add_subdirectory(module_vdw)
 add_subdirectory(module_surchem)
+add_subdirectory(module_sccs)
 add_subdirectory(module_xc)
 add_subdirectory(module_hcontainer)
 

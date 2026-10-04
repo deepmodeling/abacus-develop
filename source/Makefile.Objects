@@ -49,6 +49,7 @@ VPATH=./src_global:\
 ./source_hamilt:\
 ./source_hamilt/module_ewald:\
 ./source_hamilt/module_surchem:\
+./source_hamilt/module_sccs:\
 ./source_hamilt/module_xc:\
 ./source_hamilt/module_xc/kernels:\
 ./source_pw/module_proj:\
@@ -103,6 +104,7 @@ ${OBJS_PSI_INITIALIZER}\
 ${OBJS_PW}\
 ${OBJS_RELAXATION}\
 ${OBJS_SURCHEM}\
+${OBJS_SCCS}\
 ${OBJS_SYMMETRY}\
 ${OBJS_XC}\
 ${OBJS_IO}\
@@ -609,6 +611,9 @@ OBJS_SURCHEM=surchem.o\
     cal_vel.o\
     minimize_cg.o\
     sol_force.o\
+
+OBJS_SCCS=sccs_cavity.o\
+    sccs_parameters.o
 
 OBJS_SYMMETRY=symm_other.o\
     symm_rot_spin.o\
