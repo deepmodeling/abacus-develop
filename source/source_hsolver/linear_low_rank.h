@@ -54,7 +54,7 @@ class LinearLowRank final : public LinearOperator<T, Device>
     const T* test_ = nullptr;
     int rank_ = 0;
     const LinearSmallLU* factor_ = nullptr;
-    ct::Tensor correction_;
+    const T* correction_ = nullptr;
 
   public:
     LinearLowRank(LinearAlgebra<T, Device>& algebra, const T* diagonal, int dim) : algebra_(algebra), diagonal_(diagonal), dim_(dim)
@@ -71,19 +71,21 @@ class LinearLowRank final : public LinearOperator<T, Device>
 
     /** @brief Prepare a response correction with orthonormal images.
      *  @param images Borrowed projection vectors; keep them valid and unchanged until the last apply.
+     *  @param workspace Caller-owned correction storage; do not modify or resize it until the last apply.
      */
-    void prepare_response(int ld, int rank, const T* directions, const T* images);
+    void prepare_response(int ld, int rank, const T* directions, const T* images, ct::Tensor* workspace);
     /** @brief Prepare a Galerkin coarse correction.
      *  @param basis Borrowed projection vectors; keep them valid and unchanged until the last apply.
      *  @param factor Borrowed factorization of basis^H*images; keep it valid and unchanged until the last apply.
+     *  @param workspace Caller-owned correction storage; do not modify or resize it until the last apply.
      */
-    void prepare_subspace(int ld, int rank, const T* basis, const T* images, const LinearSmallLU& factor);
+    void prepare_subspace(int ld, int rank, const T* basis, const T* images, const LinearSmallLU& factor, ct::Tensor* workspace);
     /** @brief Apply the fixed correction; throw LinearPreconditionerError if the coarse solve fails. */
     void apply(const T* x, T* y, int ld, int nvec) const override;
 
   private:
     /** @brief Form Z-D*W and retain the projection data for subsequent applications. */
-    void prepare(int ld, int rank, const T* z, const T* w, const T* test, const LinearSmallLU* factor);
+    void prepare(int ld, int rank, const T* z, const T* w, const T* test, const LinearSmallLU* factor, ct::Tensor* workspace);
 };
 } // namespace hsolver
 #endif

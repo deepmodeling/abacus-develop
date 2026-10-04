@@ -71,29 +71,42 @@ void LinearResponse<T, Device>::update(LinearAlgebra<T, Device>& algebra,
 }
 
 template <typename T, typename Device>
-void LinearLowRank<T, Device>::prepare_response(int ld, int rank, const T* directions, const T* images)
+void LinearLowRank<T, Device>::prepare_response(int ld, int rank, const T* directions, const T* images, ct::Tensor* workspace)
 {
-    prepare(ld, rank, directions, images, images, nullptr);
+    prepare(ld, rank, directions, images, images, nullptr, workspace);
 }
 
 template <typename T, typename Device>
-void LinearLowRank<T, Device>::prepare_subspace(int ld, int rank, const T* basis, const T* images, const LinearSmallLU& factor)
+void LinearLowRank<T, Device>::prepare_subspace(int ld,
+                                               int rank,
+                                               const T* basis,
+                                               const T* images,
+                                               const LinearSmallLU& factor,
+                                               ct::Tensor* workspace)
 {
-    prepare(ld, rank, basis, images, basis, &factor);
+    prepare(ld, rank, basis, images, basis, &factor, workspace);
 }
 
 template <typename T, typename Device>
-void LinearLowRank<T, Device>::prepare(int ld, int rank, const T* z, const T* w, const T* test, const LinearSmallLU* factor)
+void LinearLowRank<T, Device>::prepare(int ld,
+                                      int rank,
+                                      const T* z,
+                                      const T* w,
+                                      const T* test,
+                                      const LinearSmallLU* factor,
+                                      ct::Tensor* workspace)
 {
     rank_ = rank;
-    test_ = test;
-    factor_ = factor;
+    test_ = rank > 0 ? test : nullptr;
+    factor_ = rank > 0 ? factor : nullptr;
+    correction_ = nullptr;
     if (rank == 0)
     {
         return;
     }
-    linear_buffer<T, Device>(&correction_, static_cast<int64_t>(ld) * rank);
-    T* correction = correction_.template data<T>();
+    const int64_t size = static_cast<int64_t>(ld) * rank;
+    linear_buffer<T, Device>(workspace, size);
+    T* correction = workspace->template data<T>();
     if (diagonal_)
     {
         linear_op<T, Device>().diagonal(ld, dim_, rank, diagonal_, w, correction);
@@ -103,6 +116,7 @@ void LinearLowRank<T, Device>::prepare(int ld, int rank, const T* z, const T* w,
         base_device::memory::synchronize_memory_2d_op<T, Device, Device>()(correction, ld, w, ld, dim_, rank);
     }
     linear_op<T, Device>().batch(ld, dim_, rank, correction, z, correction, T(1), T(-1), nullptr, nullptr, nullptr);
+    correction_ = correction;
 }
 
 template <typename T, typename Device>
@@ -126,7 +140,7 @@ void LinearLowRank<T, Device>::apply(const T* x, T* y, int ld, int nvec) const
         // Changing the preconditioner inside a recurrence invalidates BiCGSTAB and CGS.
         throw LinearPreconditionerError();
     }
-    algebra_.expand(ld, dim_, rank_, nvec, correction_.template data<T>(), coefficients, y, T(1));
+    algebra_.expand(ld, dim_, rank_, nvec, correction_, coefficients, y, T(1));
 }
 
 template class LinearResponse<std::complex<float>, base_device::DEVICE_CPU>;

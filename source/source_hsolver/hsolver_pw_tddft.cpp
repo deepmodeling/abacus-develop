@@ -345,14 +345,14 @@ typename HSolverPWTDDFT<T, Device>::SolveDetails HSolverPWTDDFT<T, Device>::solv
     {
         const T* image = projection_.image();
         const LinearSmallLU& factor = projection_.factor();
-        preconditioner.prepare_subspace(batch.ld, batch.bands, previous, image, factor);
+        preconditioner.prepare_subspace(batch.ld, batch.bands, previous, image, factor, &correction_workspace_);
     }
     else if (options_.preconditioner == PWPreconditioner::kinetic_recycle && state->response.rank() > 0)
     {
         const int rank = state->response.rank();
         const T* directions = state->response.directions();
         const T* images = state->response.images();
-        preconditioner.prepare_response(batch.ld, rank, directions, images);
+        preconditioner.prepare_response(batch.ld, rank, directions, images, &correction_workspace_);
     }
     details.coarse_rank = preconditioner.rank();
     details.linear

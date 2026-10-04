@@ -49,6 +49,7 @@ TYPED_TEST(LinearLowRankTest, CoarseAndHistoryCorrectionsMatchDenseReference)
     ct::Tensor workspace;
     response.update(algebra, ld, dim, rank, local_z.data(), zero.data(), local_w.data(), 1e-8, &workspace);
     ASSERT_EQ(response.rank(), rank);
+    ct::Tensor correction_workspace;
     for (const bool history: {false, true})
     {
         SCOPED_TRACE(history);
@@ -72,11 +73,11 @@ TYPED_TEST(LinearLowRankTest, CoarseAndHistoryCorrectionsMatchDenseReference)
         hsolver::LinearLowRank<T, Device> preconditioner(algebra, local_d.data(), dim);
         if (history)
         {
-            preconditioner.prepare_response(ld, response.rank(), response.directions(), response.images());
+            preconditioner.prepare_response(ld, response.rank(), response.directions(), response.images(), &correction_workspace);
         }
         else
         {
-            preconditioner.prepare_subspace(ld, rank, local_z.data(), local_w.data(), factor);
+            preconditioner.prepare_subspace(ld, rank, local_z.data(), local_w.data(), factor, &correction_workspace);
         }
         ASSERT_EQ(preconditioner.rank(), rank);
         std::vector<T> actual(ld * rank, T(0));
@@ -102,11 +103,11 @@ TYPED_TEST(LinearLowRankTest, CoarseAndHistoryCorrectionsMatchDenseReference)
         }
         if (history)
         {
-            preconditioner.prepare_response(ld, 0, nullptr, nullptr);
+            preconditioner.prepare_response(ld, 0, nullptr, nullptr, &correction_workspace);
         }
         else
         {
-            preconditioner.prepare_subspace(ld, 0, nullptr, nullptr, factor);
+            preconditioner.prepare_subspace(ld, 0, nullptr, nullptr, factor, &correction_workspace);
         }
         EXPECT_EQ(preconditioner.rank(), 0);
         preconditioner.apply(local_x.data(), actual.data(), ld, 1);

@@ -106,6 +106,7 @@ class HSolverPWTDDFT
     ct::Tensor hpsi_;
     ct::Tensor inverse_kinetic_;
     ct::Tensor response_workspace_;
+    ct::Tensor correction_workspace_;
 
     void initialize(std::ostream& log);
     bool tracks_state() const;
