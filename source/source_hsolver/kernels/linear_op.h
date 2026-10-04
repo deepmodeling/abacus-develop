@@ -13,6 +13,8 @@ template <typename T, typename Device>
 class linear_op
 {
   public:
+    /** @brief Skip zero-coefficient columns; a null residual disables the paired residual update. */
+    void gmres_update(int ld, int dim, int nvec, T* solution, T* residual, const T* direction, const T* image, const T* coefficients) const;
     /** @brief Wait for pending device work when measuring a complete solve. */
     void synchronize() const;
     /** @brief Batched products accumulated in wavefunction precision. */
@@ -45,6 +47,8 @@ template <typename T>
 class linear_op<T, base_device::DEVICE_GPU>
 {
   public:
+    /** @brief Skip zero-coefficient columns; a null residual disables the paired residual update. */
+    void gmres_update(int ld, int dim, int nvec, T* solution, T* residual, const T* direction, const T* image, const T* coefficients) const;
     /** @brief Wait for pending device work when measuring a complete solve. */
     void synchronize() const;
     /** @brief Batched products accumulated in wavefunction precision. */

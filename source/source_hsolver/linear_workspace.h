@@ -68,6 +68,16 @@ class LinearWorkspace
     void dot_pair(int ld, int dim, int nvec, const T* x, const T* y, const T* z, const T* w, T* first, T* second);
     /** @brief Upload per-column coefficients and update all unmasked columns. */
     void batch(int ld, int dim, int nvec, T* out, const T* x, const T* y, T a, T b, const T* ca, const T* cb, const int* skip);
+    /** @brief Upload coefficients once; the caller reports zeros to select the GPU update path. */
+    void gmres_update(int ld,
+                      int dim,
+                      int nvec,
+                      T* solution,
+                      T* residual,
+                      const T* direction,
+                      const T* image,
+                      const T* coefficients,
+                      bool has_zero_coefficients);
     /** @brief Reorder solver columns after host convergence decisions. */
     void swap_columns(int ld, int dim, const std::vector<int>& pairs);
     /** @brief Restore original column order into caller storage. */

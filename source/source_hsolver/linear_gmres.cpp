@@ -156,17 +156,27 @@ void LinearGMRES<T, Device>::update_solution(int j,
 {
     std::vector<T>& coeff = *coefficients;
     const bool any_done = std::find(done.begin(), done.end(), 1) != done.end();
+    T* current_solution = solution();
+    T* current_residual = reconstruct ? residual() : nullptr;
     for (int i = 0; any_done && i <= j; ++i)
     {
+        bool has_zero_coefficients = false;
         for (int b = 0; b < active_; ++b)
         {
             coeff[b] = done[b] ? T(weights[b][i]) : T(0);
+            has_zero_coefficients = has_zero_coefficients || coeff[b] == T(0);
         }
-        work_.batch(ld_, dim_, active_, solution(), solution(), direction(i), T(1), T(1), nullptr, coeff.data(), nullptr);
-        if (reconstruct)
-        {
-            work_.batch(ld_, dim_, active_, residual(), residual(), image(i), T(1), T(-1), nullptr, coeff.data(), nullptr);
-        }
+        const T* current_direction = direction(i);
+        const T* current_image = reconstruct ? image(i) : nullptr;
+        work_.gmres_update(ld_,
+                           dim_,
+                           active_,
+                           current_solution,
+                           current_residual,
+                           current_direction,
+                           current_image,
+                           coeff.data(),
+                           has_zero_coefficients);
     }
 }
 

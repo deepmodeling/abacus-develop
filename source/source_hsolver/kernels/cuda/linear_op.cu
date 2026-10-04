@@ -76,6 +76,34 @@ __global__ void batch_kernel(int ld,int dim,int nvec,C* out,const C* x,const C* 
         out[j]=(ca ? a*ca[band] : a)*x[j]+(cb ? b*cb[band] : b)*y[j];
     }
 }
+template <typename C>
+__global__ void gmres_update_kernel(int ld,
+                                    int dim,
+                                    C* solution,
+                                    C* residual,
+                                    const C* direction,
+                                    const C* image,
+                                    const C* coefficients)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    const int band = blockIdx.y;
+    if (i >= dim)
+    {
+        return;
+    }
+    const C coefficient = coefficients[band];
+    if (coefficient == C(0))
+    {
+        return;
+    }
+    const std::int64_t index = static_cast<std::int64_t>(band) * ld + i;
+    solution[index] += coefficient * direction[index];
+    if (residual)
+    {
+        residual[index] -= coefficient * image[index];
+    }
+}
+
 template <typename Real>
 __global__ void dots_kernel(int ld,int dim,int nvec,int tiles,
     const thrust::complex<Real>* x,const thrust::complex<Real>* y,
@@ -124,6 +152,31 @@ void linear_op<T,base_device::DEVICE_GPU>::batch(int ld,int dim,int nvec,T* out,
         reinterpret_cast<const C*>(ca),reinterpret_cast<const C*>(cb),skip);
     check_launch();
 }
+template <typename T>
+void linear_op<T, base_device::DEVICE_GPU>::gmres_update(int ld,
+                                                        int dim,
+                                                        int nvec,
+                                                        T* solution,
+                                                        T* residual,
+                                                        const T* direction,
+                                                        const T* image,
+                                                        const T* coefficients) const
+{
+    if (dim <= 0 || nvec <= 0)
+    {
+        return;
+    }
+    using C = thrust::complex<typename T::value_type>;
+    const dim3 grid((dim + linear_threads - 1) / linear_threads, nvec);
+    C* current_solution = reinterpret_cast<C*>(solution);
+    C* current_residual = reinterpret_cast<C*>(residual);
+    const C* current_direction = reinterpret_cast<const C*>(direction);
+    const C* current_image = reinterpret_cast<const C*>(image);
+    const C* coeff = reinterpret_cast<const C*>(coefficients);
+    gmres_update_kernel<<<grid, linear_threads>>>(ld, dim, current_solution, current_residual, current_direction, current_image, coeff);
+    check_launch();
+}
+
 template <typename T>
 void linear_op<T,base_device::DEVICE_GPU>::dots(int ld,int dim,int nvec,const T* x,const T* y,const T* z,const T* w,
     T* out,T* partial,int tiles) const

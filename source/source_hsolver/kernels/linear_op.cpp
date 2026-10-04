@@ -62,6 +62,36 @@ void linear_op<T, Device>::batch(int ld,
     }
 }
 template <typename T, typename Device>
+void linear_op<T, Device>::gmres_update(int ld,
+                                        int dim,
+                                        int nvec,
+                                        T* solution,
+                                        T* residual,
+                                        const T* direction,
+                                        const T* image,
+                                        const T* coefficients) const
+{
+#pragma omp parallel for schedule(static) if (parallel_work(dim, nvec))
+    for (int band = 0; band < nvec; ++band)
+    {
+        const T coefficient = coefficients[band];
+        if (coefficient == T(0))
+        {
+            continue;
+        }
+        const std::int64_t offset = static_cast<std::int64_t>(band) * ld;
+        for (int i = 0; i < dim; ++i)
+        {
+            solution[offset + i] += coefficient * direction[offset + i];
+            if (residual)
+            {
+                residual[offset + i] -= coefficient * image[offset + i];
+            }
+        }
+    }
+}
+
+template <typename T, typename Device>
 void linear_op<T, Device>::dots(int ld, int dim, int nvec, const T* x, const T* y, const T* z, const T* w, T* out, T* partial, int tiles)
     const
 {

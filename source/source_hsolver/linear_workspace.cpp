@@ -9,6 +9,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <type_traits>
 
 namespace hsolver
 {
@@ -258,6 +259,43 @@ void LinearWorkspace<T, Device>::batch(int ld,
     }
     linear_op<T, Device>().batch(ld, dim, nvec, out, x, y, a, b, ca ? coeff : nullptr, cb ? coeff + nvec : nullptr, mask);
     ModuleBase::timer::end("LinearWorkspace", "batch");
+}
+
+template <typename T, typename Device>
+void LinearWorkspace<T, Device>::gmres_update(int ld,
+                                              int dim,
+                                              int nvec,
+                                              T* solution,
+                                              T* residual,
+                                              const T* direction,
+                                              const T* image,
+                                              const T* coefficients,
+                                              bool has_zero_coefficients)
+{
+    ModuleBase::timer::start("LinearWorkspace", "gmres_update");
+    if (dim == 0 || nvec == 0)
+    {
+        ModuleBase::timer::end("LinearWorkspace", "gmres_update");
+        return;
+    }
+    using CtDevice = typename ct::PsiToContainer<Device>::type;
+    const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
+    if (coefficients_.NumElements() < nvec)
+    {
+        coefficients_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {nvec});
+    }
+    T* coeff = coefficients_.template data<T>();
+    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(coeff, coefficients, nvec);
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value && residual == nullptr && !has_zero_coefficients)
+    {
+        // Keep the existing GPU path when neither zero-column skipping nor a paired update is needed.
+        linear_op<T, Device>().batch(ld, dim, nvec, solution, solution, direction, T(1), T(1), nullptr, coeff, nullptr);
+    }
+    else
+    {
+        linear_op<T, Device>().gmres_update(ld, dim, nvec, solution, residual, direction, image, coeff);
+    }
+    ModuleBase::timer::end("LinearWorkspace", "gmres_update");
 }
 
 template <typename T, typename Device>
