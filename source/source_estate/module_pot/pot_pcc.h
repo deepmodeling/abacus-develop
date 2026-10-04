@@ -20,6 +20,11 @@ class PotPcc : public PotBase
     void add_force(const UnitCell& cell, ModuleBase::matrix& force) const;
 
   private:
+    void prepare_ions(const UnitCell& cell, ChargeMoments& ionic_moments);
+    ChargeMoments collect_electrons(const Charge& charge,
+                                    const UnitCell& cell,
+                                    std::vector<ModuleBase::Vector3<double>>& positions) const;
+
     unitcell::OrthogonalCell geometry_;
     Pcc0dParameters parameters_;
     ChargeMoments moments_;

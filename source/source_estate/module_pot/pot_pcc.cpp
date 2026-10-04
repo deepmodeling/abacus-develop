@@ -58,7 +58,8 @@ bool primitive_symmetry(const ModuleSymmetry::Symmetry& symmetry)
     }
     for (int operation = 0; operation < symmetry.nrotk_anti; ++operation)
     {
-        const bool forbidden = fractional_translation(symmetry.gmatrix_anti[operation], symmetry.gtrans_anti[operation]);
+        const bool forbidden = fractional_translation(symmetry.gmatrix_anti[operation],
+                                                       symmetry.gtrans_anti[operation]);
         if (forbidden)
         {
             return false;
@@ -86,28 +87,18 @@ PotPcc::PotPcc(const ModulePW::PW_Basis* basis)
     this->dynamic_mode = true;
 }
 
-void PotPcc::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::matrix& potential)
+void PotPcc::prepare_ions(const UnitCell& cell, ChargeMoments& ionic_moments)
 {
-    ModuleBase::timer::start("PotPcc", "cal_v_eff");
-    result_valid_ = false;
-    const bool storage_valid = charge != nullptr && cell != nullptr && this->rho_basis_ != nullptr;
-    require_valid_on_pool(storage_valid, "PCC requires charge, cell and PW basis storage");
-    const ModulePW::PW_Basis& basis = *this->rho_basis_;
-    const bool grid_valid = basis.nx > 0 && basis.ny > 0 && basis.nz > 0 && basis.nxyz > 0
-                            && basis.nplane >= 0 && basis.nrxx == basis.nx * basis.ny * basis.nplane
-                            && (charge->nspin == 1 || charge->nspin == 2)
-                            && potential.nr == charge->nspin && potential.nc == basis.nrxx
-                            && std::isfinite(cell->omega) && cell->omega > 0.0;
-    require_valid_on_pool(grid_valid, "PCC requires an initialized grid and nspin=1/2 potential");
+    ModuleBase::timer::start("PotPcc", "prepare_ions");
     std::string error;
-    const bool geometry_valid = unitcell::make_orthogonal_cell(cell->latvec, cell->lat0, 1.0e-10, geometry_, error);
+    const bool geometry_valid = unitcell::make_orthogonal_cell(cell.latvec, cell.lat0, 1.0e-10, geometry_, error);
     require_valid_on_pool(geometry_valid, error);
     const bool parameters_valid = make_pcc_0d_parameters(geometry_, 1.0e-10, parameters_, error);
     require_valid_on_pool(parameters_valid, error);
-    const bool symmetry_valid = primitive_symmetry(cell->symm);
+    const bool symmetry_valid = primitive_symmetry(cell.symm);
     require_valid_on_pool(symmetry_valid, "PCC 0D requires a primitive cell without fractional-translation symmetry");
 
-    const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell->atoms, cell->ntype, cell->lat0);
+    const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell.atoms, cell.ntype, cell.lat0);
     const int atom_count = static_cast<int>(atoms.size());
     std::vector<double> masses(atom_count);
     ionic_positions_.resize(atom_count);
@@ -127,29 +118,48 @@ void PotPcc::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::m
     {
         relative_ions[atom] = unitcell::relative_position(ionic_positions_[atom], geometry_);
     }
-    ChargeMoments ionic_moments;
     const double* ionic_charge_data = ionic_charges_.data();
     const ModuleBase::Vector3<double>* ionic_position_data = relative_ions.data();
-    const bool ions_valid = charge_moments(ionic_charge_data, ionic_position_data, atom_count, 1.0, ionic_moments, error);
+    const bool ions_valid = charge_moments(ionic_charge_data,
+                                            ionic_position_data,
+                                            atom_count,
+                                            1.0,
+                                            ionic_moments,
+                                            error);
     require_valid_on_pool(ions_valid, error);
 
+    ModuleBase::timer::end("PotPcc", "prepare_ions");
+}
+
+ChargeMoments PotPcc::collect_electrons(
+    const Charge& charge,
+    const UnitCell& cell,
+    std::vector<ModuleBase::Vector3<double>>& positions) const
+{
+    ModuleBase::timer::start("PotPcc", "collect_electrons");
+    const ModulePW::PW_Basis& basis = *this->rho_basis_;
+    std::string error;
     std::vector<double> electronic_charge(basis.nrxx, 0.0);
-    std::vector<ModuleBase::Vector3<double>> positions;
-    const bool positions_valid = ModulePW::grid_positions(basis, cell->latvec, cell->lat0, positions, error);
+    const bool positions_valid = ModulePW::grid_positions(basis, cell.latvec, cell.lat0, positions, error);
     require_valid_on_pool(positions_valid, error);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
-        for (int spin = 0; spin < charge->nspin; ++spin)
+        for (int spin = 0; spin < charge.nspin; ++spin)
         {
-            electronic_charge[ir] -= charge->rho[spin][ir];
+            electronic_charge[ir] -= charge.rho[spin][ir];
         }
         positions[ir] = unitcell::relative_position(positions[ir], geometry_);
     }
     ChargeMoments electronic_moments;
-    const double volume_element = cell->omega / basis.nxyz;
+    const double volume_element = cell.omega / basis.nxyz;
     const double* electronic_data = electronic_charge.data();
     const ModuleBase::Vector3<double>* position_data = positions.data();
-    const bool density_valid = charge_moments(electronic_data, position_data, basis.nrxx, volume_element, electronic_moments, error);
+    const bool density_valid = charge_moments(electronic_data,
+                                               position_data,
+                                               basis.nrxx,
+                                               volume_element,
+                                               electronic_moments,
+                                               error);
     require_valid_on_pool(density_valid, error);
     double reduced[5] = {electronic_moments.charge, electronic_moments.dipole.x,
                          electronic_moments.dipole.y, electronic_moments.dipole.z,
@@ -160,6 +170,27 @@ void PotPcc::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::m
     electronic_moments.charge = reduced[0];
     electronic_moments.dipole = ModuleBase::Vector3<double>(reduced[1], reduced[2], reduced[3]);
     electronic_moments.second_moment = reduced[4];
+    ModuleBase::timer::end("PotPcc", "collect_electrons");
+    return electronic_moments;
+}
+
+void PotPcc::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::matrix& potential)
+{
+    ModuleBase::timer::start("PotPcc", "cal_v_eff");
+    result_valid_ = false;
+    const bool storage_valid = charge != nullptr && cell != nullptr && this->rho_basis_ != nullptr;
+    require_valid_on_pool(storage_valid, "PCC requires charge, cell and PW basis storage");
+    const ModulePW::PW_Basis& basis = *this->rho_basis_;
+    const bool grid_valid = basis.nx > 0 && basis.ny > 0 && basis.nz > 0 && basis.nxyz > 0
+                            && basis.nplane >= 0 && basis.nrxx == basis.nx * basis.ny * basis.nplane
+                            && (charge->nspin == 1 || charge->nspin == 2)
+                            && potential.nr == charge->nspin && potential.nc == basis.nrxx
+                            && std::isfinite(cell->omega) && cell->omega > 0.0;
+    require_valid_on_pool(grid_valid, "PCC requires an initialized grid and nspin=1/2 potential");
+    ChargeMoments ionic_moments;
+    this->prepare_ions(*cell, ionic_moments);
+    std::vector<ModuleBase::Vector3<double>> positions;
+    const ChargeMoments electronic_moments = this->collect_electrons(*charge, *cell, positions);
     // Ions are replicated on every rank and must be added after the reduction.
     moments_ = add_charge_moments(ionic_moments, electronic_moments);
     energy_rydberg_ = 2.0 * pcc_0d_energy(moments_, parameters_);
@@ -221,7 +252,10 @@ void PotPcc::add_force(const UnitCell& cell, ModuleBase::matrix& force) const
             ModuleBase::WARNING_QUIT("PotPcc::add_force", "PCC atoms changed since the potential update");
         }
         const ModuleBase::Vector3<double> relative = unitcell::relative_position(ionic_positions_[atom], geometry_);
-        const ModuleBase::Vector3<double> correction = pcc_0d_force(moments_, ionic_charges_[atom], relative, parameters_);
+        const ModuleBase::Vector3<double> correction = pcc_0d_force(moments_,
+                                                                   ionic_charges_[atom],
+                                                                   relative,
+                                                                   parameters_);
         force(atom, 0) += 2.0 * correction.x;
         force(atom, 1) += 2.0 * correction.y;
         force(atom, 2) += 2.0 * correction.z;
