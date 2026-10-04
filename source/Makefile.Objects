@@ -613,7 +613,10 @@ OBJS_SURCHEM=surchem.o\
     sol_force.o\
 
 OBJS_SCCS=sccs_cavity.o\
-    sccs_parameters.o
+    sccs_parameters.o\
+    sccs_ionic_charge.o\
+    sccs_pw_coulomb.o\
+    sccs_response.o
 
 OBJS_SYMMETRY=symm_other.o\
     symm_rot_spin.o\
