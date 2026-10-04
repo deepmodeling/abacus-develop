@@ -78,6 +78,7 @@ class LinearLowRank final : public LinearOperator<T, Device>
      *  @param factor Borrowed factorization of basis^H*images; keep it valid and unchanged until the last apply.
      */
     void prepare_subspace(int ld, int rank, const T* basis, const T* images, const LinearSmallLU& factor);
+    /** @brief Apply the fixed correction; throw LinearPreconditionerError if the coarse solve fails. */
     void apply(const T* x, T* y, int ld, int nvec) const override;
 
   private:

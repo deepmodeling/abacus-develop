@@ -16,6 +16,8 @@ const char* linear_status_name(const LinearSolveStatus status)
         return "maximum iterations";
     case LinearSolveStatus::residual_mismatch:
         return "true residual check failed";
+    case LinearSolveStatus::preconditioner_failure:
+        return "preconditioner application failed";
     }
     return "unknown linear solve status";
 }

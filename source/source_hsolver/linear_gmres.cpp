@@ -309,9 +309,19 @@ LinearSolveResult LinearGMRES<T, Device>::solve(const LinearOperator<T, Device>&
             work_.residual(op, ld, dim, nvec, x, b, residual());
         }
         const int start = result.iterations;
-        const bool regular = cycle(op, preconditioner, threshold, reconstruct, &result);
+        bool regular = false;
+        try
+        {
+            regular = cycle(op, preconditioner, threshold, reconstruct, &result);
+            result.status = regular ? LinearSolveStatus::max_iterations : LinearSolveStatus::breakdown;
+        }
+        catch (const LinearPreconditionerError&)
+        {
+            // Unlike completed Arnoldi steps, this failed attempt has not yet been counted.
+            ++result.iterations;
+            result.status = LinearSolveStatus::preconditioner_failure;
+        }
         work_.restore(ld, dim, nvec, order_, solution(), x);
-        result.status = regular ? LinearSolveStatus::max_iterations : LinearSolveStatus::breakdown;
         bool accepted = regular && reconstruct;
         bool invalid_reconstruction = false;
         if (accepted)
@@ -358,6 +368,11 @@ LinearSolveResult LinearGMRES<T, Device>::solve(const LinearOperator<T, Device>&
         }
         if (result.status == LinearSolveStatus::converged)
         {
+            return result;
+        }
+        if (result.status == LinearSolveStatus::preconditioner_failure)
+        {
+            // Let the caller retry with a different preconditioner and the remaining budget.
             return result;
         }
         const bool recover_anomaly = reconstruct && !regular;

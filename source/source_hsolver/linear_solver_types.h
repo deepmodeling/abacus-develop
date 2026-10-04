@@ -11,7 +11,8 @@ enum class LinearSolveStatus
     converged,
     breakdown,
     max_iterations,
-    residual_mismatch
+    residual_mismatch,
+    preconditioner_failure
 };
 
 /** @brief Convergence result, operator work, and independent or reconstructed residual provenance. */

@@ -225,13 +225,20 @@ LinearSolveResult LinearBiCGSTAB<T, Device>::solve(const LinearOperator<T, Devic
         retire_converged(false, preconditioner.is_identity());
         result.status = LinearSolveStatus::max_iterations;
         const int cycle_start = result.iterations;
-        while (result.iterations < max_iter_ && active_ > 0)
+        try
         {
-            ++result.iterations;
-            if (!iterate(op, preconditioner, &result))
+            while (result.iterations < max_iter_ && active_ > 0)
             {
-                break;
+                ++result.iterations;
+                if (!iterate(op, preconditioner, &result))
+                {
+                    break;
+                }
             }
+        }
+        catch (const LinearPreconditionerError&)
+        {
+            result.status = LinearSolveStatus::preconditioner_failure;
         }
         work_.restore(ld, dim, nband, original_, work_.data(solution_slot), x);
         if (active_ == 0)

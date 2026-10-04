@@ -123,7 +123,8 @@ void LinearLowRank<T, Device>::apply(const T* x, T* y, int ld, int nvec) const
     std::vector<std::complex<double>> coefficients = algebra_.projection_cross(ld, dim_, rank_, nvec, test_, x);
     if (factor_ && !factor_->solve(&coefficients, nvec))
     {
-        return;
+        // Changing the preconditioner inside a recurrence invalidates BiCGSTAB and CGS.
+        throw LinearPreconditionerError();
     }
     algebra_.expand(ld, dim_, rank_, nvec, correction_.template data<T>(), coefficients, y, T(1));
 }

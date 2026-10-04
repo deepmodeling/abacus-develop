@@ -150,15 +150,22 @@ LinearSolveResult LinearCGS<T, Device>::solve(const LinearOperator<T, Device>& o
         retire_converged();
         result.status = LinearSolveStatus::max_iterations;
         const int cycle_start = result.iterations;
-        while (result.iterations < max_iter_ && active_ > 0)
+        try
         {
-            const bool first_iteration = result.iterations == cycle_start;
-            ++result.iterations;
-            if (!iterate(op, preconditioner, first_iteration, &result))
+            while (result.iterations < max_iter_ && active_ > 0)
             {
-                break;
+                const bool first_iteration = result.iterations == cycle_start;
+                ++result.iterations;
+                if (!iterate(op, preconditioner, first_iteration, &result))
+                {
+                    break;
+                }
+                retire_converged();
             }
-            retire_converged();
+        }
+        catch (const LinearPreconditionerError&)
+        {
+            result.status = LinearSolveStatus::preconditioner_failure;
         }
         work_.restore(ld, dim, nband, original_, work_.data(solution_slot), x);
         if (active_ == 0)
