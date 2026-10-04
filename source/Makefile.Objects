@@ -835,6 +835,7 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       symm_rot_out.o\
       gaussian_abfs.o\
       exx_lri_detail.o\
+      rpa_lri.o\
       singular_value.o\
 
 OBJS_BSE=esolver_lr_lcao_bse.o\

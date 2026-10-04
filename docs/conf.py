@@ -131,17 +131,13 @@ mathjax_path = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml
 # deepmodeling_current_site = 'Tutorials'
 latex_elements = {
     'extraclassoptions':'openany,oneside',
-    # LaTeX-side shims for MathJax-dialect macros used in the markdown
-    # sources. MathJax (HTML rendering) provides these natively, which is
-    # why the gap only surfaces in the PDF build.
+    # LaTeX definitions for MathJax-style macros in generated parameter docs.
     'preamble': r'''
-% Dirac notation: MathJax has \ket/\bra built in; LaTeX needs braket.
-\usepackage{braket}
-\providecommand{\bra}[1]{\langle #1\rvert}
-\providecommand{\ket}[1]{\lvert #1\rangle}
-% MathJax alias macros that plain LaTeX lacks: \lt / \gt for < / >
 \providecommand{\lt}{<}
 \providecommand{\gt}{>}
+\providecommand{\Ket}[1]{\left|#1\right\rangle}
+\providecommand{\Bra}[1]{\left\langle#1\right|}
+\providecommand{\Braket}[1]{\left\langle#1\right\rangle}
 ''',
 }
 
