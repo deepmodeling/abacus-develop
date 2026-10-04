@@ -150,3 +150,54 @@ TEST_F(PotPccTest, RejectsForceFromAnOlderGeometry)
     ModuleBase::matrix force(1, 3);
     EXPECT_EXIT(correction.add_force(cell, force), testing::ExitedWithCode(1), "");
 }
+
+TEST_F(PotPccTest, SlabAxisControlsPotentialEnergyForceAndIgnoresInPlaneCoordinates)
+{
+    const double expected_energy = 4.0 * ModuleBase::PI * 0.25 / 1000.0;
+    const double expected_force = 8.0 * ModuleBase::PI * 0.5 / 1000.0;
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        elecstate::PotPcc correction(&basis, elecstate::PotPcc::Dimension::slab, axis);
+        ModuleBase::matrix potential(1, 8);
+        correction.cal_v_eff(&charge, &cell, potential);
+        EXPECT_NEAR(correction.get_energy(), expected_energy, 1.0e-14);
+        EXPECT_NEAR(potential(0, 7), expected_energy, 1.0e-14);
+        ModuleBase::matrix force(1, 3);
+        correction.add_force(cell, force);
+        for (int component = 0; component < 3; ++component)
+        {
+            const double expected = (component == axis) ? expected_force : 0.0;
+            EXPECT_NEAR(force(0, component), expected, 1.0e-14);
+        }
+    }
+}
+
+TEST_F(PotPccTest, SlabRejectsOpenDirectionKpointsAndSymmetryButAllowsInPlaneTranslations)
+{
+    const std::vector<ModuleBase::Vector3<double>> points = {ModuleBase::Vector3<double>(0.25, 0.0, 0.0)};
+    elecstate::PotPcc::validate_kpoints(points, 1, 2);
+    EXPECT_EXIT(elecstate::PotPcc::validate_kpoints(points, 1, 0), testing::ExitedWithCode(1), "");
+    elecstate::PotPcc correction(&basis, elecstate::PotPcc::Dimension::slab, 2);
+    cell.symm.ptrans = {ModuleBase::Vector3<double>(0.5, 0.0, 0.0)};
+    ModuleBase::matrix potential(1, 8);
+    correction.cal_v_eff(&charge, &cell, potential);
+    cell.symm.ptrans[0].z = 0.5;
+    EXPECT_EXIT(correction.cal_v_eff(&charge, &cell, potential), testing::ExitedWithCode(1), "");
+    cell.symm.ptrans.clear();
+    cell.symm.nrotk = 1;
+    cell.symm.gmatrix[0] = ModuleBase::Matrix3(0.0, 0.0, 1.0,
+                                             0.0, 1.0, 0.0,
+                                             1.0, 0.0, 0.0);
+    EXPECT_EXIT(correction.cal_v_eff(&charge, &cell, potential), testing::ExitedWithCode(1), "");
+}
+
+TEST_F(PotPccTest, RejectsMissingDensityThroughStandardErrorHandler)
+{
+    elecstate::PotPcc correction(&basis);
+    ModuleBase::matrix potential(1, 8);
+    charge.rho = nullptr;
+    EXPECT_EXIT(correction.cal_v_eff(&charge, &cell, potential), testing::ExitedWithCode(1), "");
+    charge.rho = channels;
+    channels[0] = nullptr;
+    EXPECT_EXIT(correction.cal_v_eff(&charge, &cell, potential), testing::ExitedWithCode(1), "");
+}

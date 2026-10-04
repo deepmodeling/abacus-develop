@@ -20,6 +20,7 @@
     - [bndpar](#bndpar)
     - [latname](#latname)
     - [assume\_isolated](#assume_isolated)
+    - [pcc\_2d\_axis](#pcc_2d_axis)
     - [init\_wfc](#init_wfc)
     - [init\_chg](#init_chg)
     - [init\_vel](#init_vel)
@@ -768,10 +769,18 @@
 
   - none: regular periodic calculation without isolated-system correction.
   - makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
+  - pcc_2d: self-consistent vacuum point-countercharge correction for a slab, including potential, energy (E_pcc), fixed-cell ionic forces and electrostatic potential output. The open lattice vector is selected by `pcc_2d_axis` and must be perpendicular to the periodic plane; the two periodic vectors need not be orthogonal. K-point sampling along the open vector must be Gamma only. Symmetry must preserve that vector and cannot fractionally translate the slab along it. Moments use the mass-weighted ionic center along the normal; the half-cell wrapping plane must lie in vacuum. The charged-slab gauge is the open planar kernel zero on the source plane minus the zero-mean periodic kernel, with constant -pi*L/(3*A). The CPU, solver and incompatibility restrictions are the same as pcc_0d.
   - pcc_0d: self-consistent point-counter-charge correction for a molecule in an orthogonal equal-edge cubic cell, including rotated cells. It contributes to the potential, energy (E_pcc), fixed-cell ionic forces and electrostatic potential output. Multipoles use the mass-weighted ionic center; the correction wraps coordinates half a cell from that center, so this boundary must lie in vacuum. With symmetry 1, fractional translations are rejected because the cell must be primitive. Available for CPU KS-DFT, PW or LCAO, scf or fixed-cell relax, nspin 1 or 2, without implicit solvent, stress, external fields, DFT-1/2, DeePKS output or dm_to_rho.
 
   Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014).
 - **Default**: none
+
+### pcc_2d_axis
+
+- **Type**: Integer
+- **Availability**: *[`assume_isolated`](#assume_isolated)==pcc_2d*
+- **Description**: Index of the open lattice vector for assume_isolated=pcc_2d: 0, 1 or 2 select the first, second or third lattice vector. This vector must be perpendicular to the periodic plane, with Gamma-only k-point sampling along it. Symmetry operations must preserve the open axis and cannot fractionally translate the slab along it.
+- **Default**: 2
 
 ### init_wfc
 

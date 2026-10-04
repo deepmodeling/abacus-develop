@@ -4,6 +4,7 @@
 #include "pot_base.h"
 #include "source_cell/cell_geometry.h"
 #include "source_estate/pcc_0d.h"
+#include "source_estate/pcc_2d.h"
 
 namespace elecstate
 {
@@ -12,7 +13,12 @@ namespace elecstate
 class PotPcc : public PotBase
 {
   public:
+    enum class Dimension { molecule, slab };
+
     explicit PotPcc(const ModulePW::PW_Basis* basis);
+
+    PotPcc(const ModulePW::PW_Basis* basis, Dimension dimension, int open_axis);
+    static void validate_kpoints(const std::vector<ModuleBase::Vector3<double>>& points, int count, int open_axis);
 
     void cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::matrix& potential) override;
     double get_energy() const override;
@@ -25,6 +31,15 @@ class PotPcc : public PotBase
                                     const UnitCell& cell,
                                     std::vector<ModuleBase::Vector3<double>>& positions) const;
 
+    ModuleBase::Vector3<double> relative_position(const ModuleBase::Vector3<double>& position) const;
+    double correction_energy() const;
+    double correction_potential(const ModuleBase::Vector3<double>& position) const;
+    ModuleBase::Vector3<double> correction_force(double charge, const ModuleBase::Vector3<double>& position) const;
+
+    const Dimension dimension_;
+    const int open_axis_;
+    unitcell::SlabCell slab_;
+    Pcc2dParameters slab_parameters_;
     unitcell::OrthogonalCell geometry_;
     Pcc0dParameters parameters_;
     ChargeMoments moments_;

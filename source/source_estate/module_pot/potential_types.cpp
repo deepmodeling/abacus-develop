@@ -40,6 +40,11 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     {
         return new PotPcc(this->rho_basis_);
     }
+    else if (pot_type == "pcc_2d")
+    {
+        const int open_axis = PARAM.inp.pcc_2d_axis;
+        return new PotPcc(this->rho_basis_, PotPcc::Dimension::slab, open_axis);
+    }
     else if (pot_type == "surchem")
     {
         return new PotSurChem(this->rho_basis_, this->structure_factors_, this->v_eff_fixed.data(), this->solvent_);

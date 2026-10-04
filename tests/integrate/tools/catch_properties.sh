@@ -807,7 +807,7 @@ fi
 #--------------------------------------------
 # vacuum point-countercharge correction
 #--------------------------------------------
-if [[ "$assume_isolated" == "pcc_0d" ]]; then
+if [[ "$assume_isolated" == "pcc_0d" || "$assume_isolated" == "pcc_2d" ]]; then
     epcc=$(grep E_pcc "$running_path" | tail -1 | awk '{print $3}')
     echo "epccref $epcc" >> "$1"
 fi

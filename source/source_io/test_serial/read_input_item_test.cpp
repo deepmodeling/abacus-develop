@@ -134,6 +134,17 @@ TEST_F(InputTest, Pcc0dSelectionAndUnsupportedCombinations)
     EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
     input = valid;
     input.assume_isolated = "pcc_2d";
+    it->second.check_value(it->second, param);
+    auto axis = find_label("pcc_2d_axis", readinput.input_lists);
+    ASSERT_NE(axis, readinput.input_lists.end());
+    for (int value = 0; value < 3; ++value)
+    {
+        input.pcc_2d_axis = value;
+        axis->second.check_value(axis->second, param);
+    }
+    input.pcc_2d_axis = 3;
+    EXPECT_EXIT(axis->second.check_value(axis->second, param), testing::ExitedWithCode(1), "");
+    input.assume_isolated = "pcc_invalid";
     EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
 }
 

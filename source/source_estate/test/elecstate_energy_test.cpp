@@ -157,6 +157,10 @@ TEST_F(ElecStateEnergyTest, AddsPccEnergyOnceAndKeepsItSeparateFromSolvation)
     elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
     EXPECT_DOUBLE_EQ(elecstate->f_en.correction_el, 0.25);
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.95);
+    assume_isolated = "pcc_2d";
+    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.correction_el, 0.25);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.95);
     assume_isolated = "none";
     elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
     EXPECT_DOUBLE_EQ(elecstate->f_en.correction_el, 0.0);
