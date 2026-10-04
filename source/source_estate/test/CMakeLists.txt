@@ -21,6 +21,18 @@ AddTest(
 
 if (ENABLE_MPI)
 
+set(pcc_test_sources
+    ../module_pot/pot_pcc.cpp ../pcc_0d.cpp ../charge_moments.cpp
+    ../../source_cell/cell_geometry.cpp ../../source_cell/cell_tools.cpp
+    ../../source_cell/atom_spec.cpp ../../source_cell/atom_pseudo.cpp ../../source_cell/pseudo.cpp
+)
+
+AddTest(
+  TARGET MODULE_ESTATE_pot_pcc
+  LIBS parameter base device planewave_serial
+  SOURCES test_pot_pcc.cpp ${pcc_test_sources}
+)
+
 # Copy at configure time so a plain `make` + `ctest` run finds the data.
 # install() only runs during `cmake --install`, which local test runs skip.
 file(COPY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -116,6 +128,7 @@ AddTest(
   LIBS parameter  base device planewave_serial
   SOURCES potential_new_test.cpp td_field_test.cpp ../module_pot/potential_new.cpp
     ../module_pot/td_field.cpp ../module_pot/td_field_profiles.cpp ../module_pot/td_field_manager.cpp
+    ${pcc_test_sources}
 )
 
 endif()

@@ -33,6 +33,7 @@ void write_elecstat_pot(
     const UnitCell* ucell_,
     const double* v_eff_fixed,
     const surchem& solvent,
+    const std::vector<double>* pcc_potential,
     const int precision);
 
 } // namespace ModuleIO

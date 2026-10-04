@@ -69,6 +69,7 @@ struct LCAOForceParts
     ModuleBase::matrix fefield_tddft;
     ModuleBase::matrix fgate;
     ModuleBase::matrix fsol;
+    ModuleBase::matrix fpcc;
 };
 
 struct LCAOStressParts

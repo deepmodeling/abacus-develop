@@ -12,6 +12,7 @@
 
 namespace elecstate
 {
+class PotPcc;
 class TDFieldManager;
 
 /**
@@ -78,6 +79,11 @@ class Potential : public PotBase
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
 
     PotBase* get_pot_type(const std::string& pot_type);
+
+    /// PCC results belong to this electronic state's registered potential.
+    double pcc_energy_rydberg() const;
+    const std::vector<double>* pcc_electron_potential() const;
+    void add_pcc_force(const UnitCell& cell, ModuleBase::matrix& force) const;
 
     /**
      * @brief Inject the shared RT-TDDFT field state before potential setup.
@@ -243,6 +249,7 @@ class Potential : public PotBase
     double vl_of_0 = 0.0;
 
     std::vector<PotBase*> components;
+    const PotPcc* pcc_component() const;
 
     const UnitCell* ucell_ = nullptr;
     const ModuleBase::matrix* vloc_ = nullptr;

@@ -98,6 +98,45 @@ TEST_F(InputTest, RelaxMethod)
     EXPECT_EQ(find_label("relax_new", readinput.input_lists), readinput.input_lists.end());
 }
 
+TEST_F(InputTest, Pcc0dSelectionAndUnsupportedCombinations)
+{
+    ModuleIO::ReadInput readinput(0);
+    Parameter param;
+    Input_para& input = TestParameters::input(param);
+    input.device = "cpu";
+    input.esolver_type = "ksdft";
+    input.basis_type = "pw";
+    input.calculation = "scf";
+    auto it = find_label("assume_isolated", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    it->second.str_values = {"pcc_0d"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(input.assume_isolated, "pcc_0d");
+    it->second.check_value(it->second, param);
+    input.basis_type = "lcao";
+    input.calculation = "relax";
+    it->second.check_value(it->second, param);
+    const Input_para valid = input;
+
+    input.imp_sol = true;
+    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    input = valid;
+    input.nspin = 4;
+    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    input = valid;
+    input.device = "gpu";
+    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    input = valid;
+    input.cal_stress = true;
+    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    input = valid;
+    input.calculation = "cell-relax";
+    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    input = valid;
+    input.assume_isolated = "pcc_2d";
+    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+}
+
 TEST_F(InputTest, Item_test)
 {
     ModuleIO::ReadInput readinput(0);

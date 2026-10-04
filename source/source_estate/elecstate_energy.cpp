@@ -374,6 +374,10 @@ void ElecState::cal_energies(const int type,
         }
         this->f_en.correction_el = makov_payne_correction(*ucell, *this->charge, v_elecstat_ptr).total;
     }
+    else if (assume_isolated == "pcc_0d")
+    {
+        this->f_en.correction_el = this->pot->pcc_energy_rydberg();
+    }
     else
     {
         this->f_en.correction_el = 0.0;

@@ -287,6 +287,12 @@ void print_etot(const Magnetism& magnet,
             energies_Ry.push_back(elec.f_en.esol_cav);
         }
 
+        if (inp.assume_isolated == "pcc_0d")
+        {
+            titles.push_back("E_pcc");
+            energies_Ry.push_back(elec.f_en.correction_el);
+        }
+
         //! electric field energy
         if (inp.efield_flag)
         {

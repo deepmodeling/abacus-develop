@@ -273,6 +273,7 @@ OBJS_ELECSTAT=elecstate.o\
     makov_payne.o\
     charge_moments.o\
     pcc_0d.o\
+    pot_pcc.o\
     elecstate_op.o\
     efield.o\
     gatefield.o\
@@ -559,6 +560,7 @@ OBJS_PSI_INITIALIZER=psi_base.o\
 OBJS_PW=fft_bundle.o\
     fft_cpu.o\
     pw_basis.o\
+    pw_grid_geometry.o\
     pw_basis_k.o\
     pw_basis_sup.o\
     pw_distributeg.o\

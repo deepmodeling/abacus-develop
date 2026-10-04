@@ -81,9 +81,14 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         }
         // no variable can choose xc, maybe it is necessary
         pot_register_in.push_back("xc");
-        if (PARAM.inp.imp_sol)
+        const Input_para& input = PARAM.inp;
+        if (input.imp_sol)
         {
             pot_register_in.push_back("surchem");
+        }
+        if (input.assume_isolated == "pcc_0d")
+        {
+            pot_register_in.push_back("pcc");
         }
         if (PARAM.inp.efield_flag)
         {

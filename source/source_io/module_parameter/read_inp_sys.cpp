@@ -507,8 +507,9 @@ Available options are:
 Available options are:
 * none: regular periodic calculation without isolated-system correction.
 * makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
+* pcc_0d: self-consistent point-counter-charge correction for a molecule in an orthogonal equal-edge cubic cell, including rotated cells. It contributes to the potential, energy (E_pcc), fixed-cell ionic forces and electrostatic potential output. Multipoles use the mass-weighted ionic center; the correction wraps coordinates half a cell from that center, so this boundary must lie in vacuum. With symmetry 1, fractional translations are rejected because the cell must be primitive. Available for CPU KS-DFT, PW or LCAO, scf or fixed-cell relax, nspin 1 or 2, without implicit solvent, stress, external fields, DFT-1/2, DeePKS output or dm_to_rho.
 
-Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
+Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014).)";
         item.default_value = "none";
         read_sync_string(input.assume_isolated);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -518,7 +519,7 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> allowed = {"none", "makov-payne", "m-p", "mp"};
+            const std::vector<std::string> allowed = {"none", "makov-payne", "m-p", "mp", "pcc_0d"};
             if (std::find(allowed.begin(), allowed.end(), para.input.assume_isolated) == allowed.end())
             {
                 ModuleBase::WARNING_QUIT("ReadInput", nofound_str(allowed, "assume_isolated"));
@@ -529,6 +530,17 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "Makov-Payne correction is available only for cubic lattices: latname = sc, fcc, or bcc.");
+            }
+            const Input_para& inp = para.input;
+            if (inp.assume_isolated == "pcc_0d"
+                && (inp.imp_sol || inp.nspin == 4 || inp.device == "gpu" || inp.esolver_type != "ksdft"
+                    || (inp.basis_type != "pw" && inp.basis_type != "lcao")
+                    || (inp.calculation != "scf" && inp.calculation != "relax")
+                    || inp.efield_flag || inp.gate_flag || inp.cal_stress || inp.dfthalf_type != 0
+                    || inp.deepks_scf || inp.deepks_out_labels || inp.deepks_bandgap || inp.deepks_v_delta
+                    || inp.dm_to_rho))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "PCC 0D requires CPU KS-DFT PW/LCAO scf or fixed-cell relax, nspin=1/2, without solvent, stress or other fields");
             }
         };
         this->add_item(item);

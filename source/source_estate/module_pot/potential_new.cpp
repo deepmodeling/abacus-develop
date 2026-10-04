@@ -1,4 +1,5 @@
 #include "potential_new.h"
+#include "pot_pcc.h"
 
 #include "pot_ml_exx.h"
 #include "source_base/global_function.h"
@@ -14,6 +15,48 @@
 
 namespace elecstate
 {
+const PotPcc* Potential::pcc_component() const
+{
+    for (const PotBase* component : this->components)
+    {
+        const PotPcc* pcc = dynamic_cast<const PotPcc*>(component);
+        if (pcc != nullptr)
+        {
+            return pcc;
+        }
+    }
+    return nullptr;
+}
+
+double Potential::pcc_energy_rydberg() const
+{
+    const PotPcc* pcc = this->pcc_component();
+    if (pcc == nullptr)
+    {
+        return 0.0;
+    }
+    return pcc->get_energy();
+}
+
+const std::vector<double>* Potential::pcc_electron_potential() const
+{
+    const PotPcc* pcc = this->pcc_component();
+    if (pcc == nullptr)
+    {
+        return nullptr;
+    }
+    return &pcc->electron_potential();
+}
+
+void Potential::add_pcc_force(const UnitCell& cell, ModuleBase::matrix& force) const
+{
+    const PotPcc* pcc = this->pcc_component();
+    if (pcc != nullptr)
+    {
+        pcc->add_force(cell, force);
+    }
+}
+
 
 Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                      const ModulePW::PW_Basis* rho_basis_smooth_in,

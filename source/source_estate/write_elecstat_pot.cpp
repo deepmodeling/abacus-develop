@@ -22,12 +22,17 @@ void write_elecstat_pot(
     const UnitCell* ucell,
     const double* v_eff,
     const surchem& solvent,
+    const std::vector<double>* pcc_potential,
     const int precision)
 {
     ModuleBase::TITLE("ModuleIO", "write_elecstat_pot");
     ModuleBase::timer::start("ModuleIO", "write_elecstat_pot");
 
     std::vector<double> v_elecstat(rho_basis->nrxx, 0.0);
+    if (pcc_potential != nullptr && pcc_potential->size() != static_cast<std::size_t>(rho_basis->nrxx))
+    {
+        ModuleBase::WARNING_QUIT("write_elecstat_pot", "PCC potential does not match the output grid");
+    }
 
     const int nspin = PARAM.inp.nspin;
     const int efield = PARAM.inp.efield_flag;
@@ -65,6 +70,10 @@ void write_elecstat_pot(
         if (efield>0 && dip_corr>0)
         {
             v_elecstat[ir] += v_efield(0, ir);
+        }
+        if (pcc_potential != nullptr)
+        {
+            v_elecstat[ir] += (*pcc_potential)[ir];
         }
         if(imp_sol == true)
         {

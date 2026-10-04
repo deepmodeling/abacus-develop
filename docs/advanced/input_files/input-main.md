@@ -768,8 +768,9 @@
 
   - none: regular periodic calculation without isolated-system correction.
   - makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
+  - pcc_0d: self-consistent point-counter-charge correction for a molecule in an orthogonal equal-edge cubic cell, including rotated cells. It contributes to the potential, energy (E_pcc), fixed-cell ionic forces and electrostatic potential output. Multipoles use the mass-weighted ionic center; the correction wraps coordinates half a cell from that center, so this boundary must lie in vacuum. With symmetry 1, fractional translations are rejected because the cell must be primitive. Available for CPU KS-DFT, PW or LCAO, scf or fixed-cell relax, nspin 1 or 2, without implicit solvent, stress, external fields, DFT-1/2, DeePKS output or dm_to_rho.
 
-  Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).
+  Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014).
 - **Default**: none
 
 ### init_wfc
