@@ -1,4 +1,4 @@
-Vacuum PCC 0D regression with `assume_isolated pcc_0d` and no solvent.
+Vacuum PCC 0D regression with `assume_isolated pcc_0d`.
 
 The integration harness compares total energy, ionic force magnitudes and `E_pcc`
 (in eV). References were generated with two MPI ranks, one OpenMP thread and

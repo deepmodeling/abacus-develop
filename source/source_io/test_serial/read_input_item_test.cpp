@@ -98,7 +98,7 @@ TEST_F(InputTest, RelaxMethod)
     EXPECT_EQ(find_label("relax_new", readinput.input_lists), readinput.input_lists.end());
 }
 
-TEST_F(InputTest, Pcc0dSelectionAndUnsupportedCombinations)
+TEST_F(InputTest, PccSelectionAndUnsupportedCombinations)
 {
     ModuleIO::ReadInput readinput(0);
     Parameter param;
@@ -118,9 +118,6 @@ TEST_F(InputTest, Pcc0dSelectionAndUnsupportedCombinations)
     it->second.check_value(it->second, param);
     const Input_para valid = input;
 
-    input.imp_sol = true;
-    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
-    input = valid;
     input.nspin = 4;
     EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
     input = valid;

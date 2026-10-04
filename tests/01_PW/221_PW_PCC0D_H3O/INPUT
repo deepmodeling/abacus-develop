@@ -16,6 +16,5 @@ smearing_method fixed
 symmetry 0
 cal_force 1
 init_wfc atomic
-imp_sol 0
 assume_isolated pcc_0d
 nelec_delta -1

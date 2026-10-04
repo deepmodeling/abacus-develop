@@ -150,7 +150,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtotDFTU)
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.3);
 }
 
-TEST_F(ElecStateEnergyTest, AddsPccEnergyOnceAndKeepsItSeparateFromSolvation)
+TEST_F(ElecStateEnergyTest, AddsPccEnergyOnce)
 {
     elecstate->f_en.deband = 0.1;
     assume_isolated = "pcc_0d";
