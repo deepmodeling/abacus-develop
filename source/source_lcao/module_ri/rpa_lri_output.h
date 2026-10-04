@@ -9,7 +9,7 @@
 
     // Reader-v1 stores k-point sampling in bz_sample.txt. Keep the legacy
     // k-point block in stru_out.txt for reader-v0 consumers.
-    if (this->runtime.input.out_librpa_reader_version != 1)
+    if (this->runtime.input.out_librpa_ver != 1)
     {
         ofs << p_kv->nmp[0] << std::setw(6) << p_kv->nmp[1] << std::setw(6) << p_kv->nmp[2]
             << std::setw(6) << std::endl;

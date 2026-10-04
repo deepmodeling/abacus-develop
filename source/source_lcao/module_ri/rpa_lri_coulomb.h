@@ -314,7 +314,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     Vs_cut_IJR.clear();
     const std::array<Tcell, Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
     this->Vs_period = RI::RI_Tools::cal_period(Vs_cut_IJ, period);
-    if (this->runtime.input.out_librpa_reader_version == 1)
+    if (this->runtime.input.out_librpa_ver == 1)
     {
         const bool use_shrink = this->info.shrink_abfs_pca_thr >= 0.0;
         this->out_librpa_basis_v1(ucell,
@@ -333,7 +333,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     this->Cs_period = RI::RI_Tools::cal_period(Cs, period);
     this->Cs_period = exx_lri_rpa->exx_lri.post_2D.set_tensors_map2(this->Cs_period);
 
-    if (this->runtime.input.out_librpa_reader_version == 1)
+    if (this->runtime.input.out_librpa_ver == 1)
     {
         if (this->info.shrink_abfs_pca_thr >= 0.0)
         {
@@ -434,7 +434,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
 
     const std::array<Tcell, Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
     this->Vs_period = RI::RI_Tools::cal_period(Vs_full_IJ, period);
-    if (this->runtime.input.out_librpa_reader_version == 1)
+    if (this->runtime.input.out_librpa_ver == 1)
     {
         const bool use_shrink = this->info.shrink_abfs_pca_thr >= 0.0;
         this->out_librpa_basis_v1(ucell,

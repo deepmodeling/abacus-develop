@@ -428,7 +428,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
     const int nbasis = parav.get_wfc_global_nbasis();
     const std::size_t values_per_iw = static_cast<std::size_t>(nbands) * npsin_tmp;
 
-    if (this->runtime.input.out_librpa_reader_version == 1)
+    if (this->runtime.input.out_librpa_ver == 1)
     {
 #ifdef __MPI
         ModuleBase::timer::start("RPA_LRI", "out_eigen_vector_v1_mpi_io");

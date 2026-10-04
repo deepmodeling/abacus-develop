@@ -1822,13 +1822,13 @@ TEST_F(InputTest, Item_test2)
     { // out_librpa_ver
         auto it = find_label("out_librpa_ver", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());
-        EXPECT_EQ(TestParameters::input(param).out_librpa_reader_version, 0);
+        EXPECT_EQ(TestParameters::input(param).out_librpa_ver, 0);
 
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
-        EXPECT_EQ(TestParameters::input(param).out_librpa_reader_version, 1);
+        EXPECT_EQ(TestParameters::input(param).out_librpa_ver, 1);
 
-        TestParameters::input(param).out_librpa_reader_version = 2;
+        TestParameters::input(param).out_librpa_ver = 2;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();

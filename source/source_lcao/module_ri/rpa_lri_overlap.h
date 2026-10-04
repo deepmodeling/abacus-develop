@@ -110,7 +110,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs = std::get<0>(Cs_dCs);
     this->Cs_period = RI::RI_Tools::cal_period(Cs, period);
     this->Cs_period = exx_cut_coulomb->exx_lri.post_2D.set_tensors_map2(this->Cs_period);
-    if (this->runtime.input.out_librpa_reader_version == 1)
+    if (this->runtime.input.out_librpa_ver == 1)
     {
         this->out_librpa_basis_v1(ucell,
                                   exx_cut_coulomb.get(),
@@ -286,7 +286,7 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
         = RI_2D_Comm::comm_map2_first(mpi_comm, overlap_abfs_abf, atoms00, atoms01);
     overlap_abfs_abf.clear();
 
-    if (this->runtime.input.out_librpa_reader_version == 1)
+    if (this->runtime.input.out_librpa_ver == 1)
     {
         out_abfs_overlap_v1(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ,
                             "sinvS_", index_abfs_s, index_abfs);

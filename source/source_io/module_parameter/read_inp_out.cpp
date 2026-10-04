@@ -1513,9 +1513,9 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.default_value = "0";
         item.unit = "";
         item.set_availability("basis_type==lcao");
-        read_sync_int(input.out_librpa_reader_version);
+        read_sync_int(input.out_librpa_ver);
         item.check_value = [](const Input_Item&, const Parameter& para) {
-            const int value = para.input.out_librpa_reader_version;
+            const int value = para.input.out_librpa_ver;
             if (value != 0 && value != 1)
             {
                 ModuleBase::WARNING_QUIT("INPUT", "out_librpa_ver must be 0 or 1.");
