@@ -346,18 +346,19 @@ static Result run_cg(const std::vector<Real>& band, int n, int bw, int bd, int n
     Result r;
     std::vector<T> psi = psi0;
     std::vector<Real> eval(nband, 0.0);
-    auto subspace_func = [&band, n, bw, bd](T* psi_in, T* psi_out, int ld, int nband, bool) {
-        rr_subspace(band.data(), n, bw, bd, psi_in, psi_out, ld, nband);
-    };
     long mem0 = heap_bytes();
-    hsolver::DiagoCG<T, hsolver::base_device::DEVICE_CPU> cg("pw", "scf", true, subspace_func, 1e-8, 500, 1);
-    auto h_op = [&band, n, bw, bd](T* in, T* out, int ld, int nc) { banded_h_multiply(band.data(), n, bw, bd, in, out, ld, nc); };
-    auto s_op = [](T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); };
+    hsolver::diag_comm_info comm(MPI_COMM_WORLD, 0, 1);
+    hsolver::DiagoCG<T, hsolver::base_device::DEVICE_CPU> cg("pw", "scf", true, comm, 1e-8, 500);
+    CompareOperator op(
+        [&band, n, bw, bd](const T* in, T* out, int ld, int nc) {
+            banded_h_multiply(band.data(), n, bw, bd, in, out, ld, nc);
+        },
+        [](const T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); });
     auto t0 = std::chrono::high_resolution_clock::now();
     int pass = 0;
     for (; pass < max_outer_passes; ++pass)
     {
-        cg.diag(h_op, s_op, n, nband, n, psi.data(), eval.data(), ethr, prec.data());
+        cg.diag(op, n, nband, n, psi.data(), eval.data(), ethr, prec.data());
         if (max_eval_err(eval.data(), ref, nband) < err_target)
         {
             break;
