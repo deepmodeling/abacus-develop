@@ -138,5 +138,4 @@ scf_out_chg_tau
 816_PW_DFTU_S4_XY
 scf_deltaspin2
 scf_deltaspin4
-220_PW_PCC0D_WATER
 221_PW_PCC0D_H3O
