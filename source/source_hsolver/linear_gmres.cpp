@@ -296,18 +296,19 @@ LinearSolveResult LinearGMRES<T, Device>::solve(const LinearOperator<T, Device>&
     bool reconstruct = reconstruct_;
     force_check = force_check || tolerance_ < 100 * std::numeric_limits<Real>::epsilon();
     LinearSolveResult result;
+    work_.clear();
+    if (initial_residual)
+    {
+        work_.copy(ld, dim, nvec, initial_residual, residual());
+    }
+    else
+    {
+        work_.residual(op, ld, dim, nvec, x, b, residual());
+    }
     while (true)
     {
-        work_.clear();
+        // Restarts retain the independent residual computed below in the original band order.
         work_.copy(ld, dim, nvec, x, solution());
-        if (initial_residual && result.restarts == 0)
-        {
-            work_.copy(ld, dim, nvec, initial_residual, residual());
-        }
-        else
-        {
-            work_.residual(op, ld, dim, nvec, x, b, residual());
-        }
         const int start = result.iterations;
         bool regular = false;
         try
