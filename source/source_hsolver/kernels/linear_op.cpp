@@ -1,6 +1,7 @@
 #include "source_hsolver/kernels/linear_op.h"
 
 #include <complex>
+#include <cstdint>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -106,11 +107,14 @@ void linear_op<T, Device>::gather(int ld, int dim, int nvec, int slots, int stri
 {
     for (int slot = 0; slot < slots; ++slot)
     {
+        const std::int64_t slot_offset = static_cast<std::int64_t>(slot) * stride;
         for (int band = 0; band < nvec; ++band)
         {
+            const std::int64_t source_offset = slot_offset + static_cast<std::int64_t>(map[band]) * ld;
+            const std::int64_t destination_offset = slot_offset + static_cast<std::int64_t>(band) * ld;
             for (int i = 0; i < dim; ++i)
             {
-                out[slot * stride + band * ld + i] = in[slot * stride + map[band] * ld + i];
+                out[destination_offset + i] = in[source_offset + i];
             }
         }
     }
@@ -121,11 +125,14 @@ void linear_op<T, Device>::swaps(int ld, int dim, int slots, int stride, int cou
 {
     for (int slot = 0; slot < slots; ++slot)
     {
+        const std::int64_t slot_offset = static_cast<std::int64_t>(slot) * stride;
         for (int i = 0; i < dim; ++i)
         {
             for (int k = 0; k < count; ++k)
             {
-                std::swap(vectors[slot * stride + pairs[2 * k] * ld + i], vectors[slot * stride + pairs[2 * k + 1] * ld + i]);
+                const std::int64_t first = slot_offset + static_cast<std::int64_t>(pairs[2 * k]) * ld + i;
+                const std::int64_t second = slot_offset + static_cast<std::int64_t>(pairs[2 * k + 1]) * ld + i;
+                std::swap(vectors[first], vectors[second]);
             }
         }
     }
@@ -220,10 +227,12 @@ void linear_op<T, Device>::wide_dots(int ld,
     {
         for (int b = 0; b < nvec; ++b)
         {
+            const std::int64_t band_offset = static_cast<std::int64_t>(b) * ld;
+            const std::int64_t basis_offset = static_cast<std::int64_t>(j) * stride + band_offset;
             std::complex<double> sum = 0.0;
             for (int i = 0; i < dim; ++i)
             {
-                sum += std::conj(std::complex<double>(basis[j * stride + b * ld + i])) * std::complex<double>(x[b * ld + i]);
+                sum += std::conj(std::complex<double>(basis[basis_offset + i])) * std::complex<double>(x[band_offset + i]);
             }
             out[j * nvec + b] = sum;
         }
@@ -239,10 +248,12 @@ void linear_op<T, Device>::native_dots(int ld, int dim, int nvec, int count, int
     {
         for (int band = 0; band < nvec; ++band)
         {
+            const std::int64_t band_offset = static_cast<std::int64_t>(band) * ld;
+            const std::int64_t basis_offset = static_cast<std::int64_t>(j) * stride + band_offset;
             T sum(0);
             for (int i = 0; i < dim; ++i)
             {
-                sum += std::conj(basis[j * stride + band * ld + i]) * x[band * ld + i];
+                sum += std::conj(basis[basis_offset + i]) * x[band_offset + i];
             }
             out[j * nvec + band] = sum;
         }

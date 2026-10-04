@@ -3,6 +3,7 @@
 #include <hip/hip_runtime.h>
 #include <thrust/complex.h>
 #include <complex>
+#include <cstdint>
 #include <stdexcept>
 
 namespace hsolver
@@ -104,7 +105,13 @@ template <typename C>
 __global__ void gather_kernel(int ld,int dim,int stride,const C* in,C* out,const int* map)
 {
     const int i=blockIdx.x*blockDim.x+threadIdx.x;
-    if(i<dim) out[blockIdx.z*stride+blockIdx.y*ld+i]=in[blockIdx.z*stride+map[blockIdx.y]*ld+i];
+    if (i < dim)
+    {
+        const std::int64_t slot_offset = static_cast<std::int64_t>(blockIdx.z) * stride;
+        const std::int64_t source_offset = slot_offset + static_cast<std::int64_t>(map[blockIdx.y]) * ld;
+        const std::int64_t destination_offset = slot_offset + static_cast<std::int64_t>(blockIdx.y) * ld;
+        out[destination_offset + i] = in[source_offset + i];
+    }
 }
 template <typename T>
 void linear_op<T,base_device::DEVICE_GPU>::batch(int ld,int dim,int nvec,T* out,const T* x,const T* y,
@@ -148,12 +155,17 @@ template <typename C>
 __global__ void swaps_kernel(int ld,int dim,int stride,int count,C* vectors,const int* pairs)
 {
     const int i=blockIdx.x*blockDim.x+threadIdx.x;
-    if(i>=dim)return;
-    const int offset=blockIdx.y*stride+i;
+    if (i >= dim)
+    {
+        return;
+    }
+    const std::int64_t offset = static_cast<std::int64_t>(blockIdx.y) * stride + i;
     for(int k=0;k<count;++k)
     {
-        C& a=vectors[offset+pairs[2*k]*ld];
-        C& b=vectors[offset+pairs[2*k+1]*ld];
+        const std::int64_t first = offset + static_cast<std::int64_t>(pairs[2 * k]) * ld;
+        const std::int64_t second = offset + static_cast<std::int64_t>(pairs[2 * k + 1]) * ld;
+        C& a = vectors[first];
+        C& b = vectors[second];
         const C value=a; a=b; b=value;
     }
 }
@@ -300,11 +312,13 @@ __global__ void wide_dot_kernel(int ld, int dim, int nvec, int stride,
     const int tid = threadIdx.x;
     const int band = blockIdx.x % nvec;
     const int j = blockIdx.x / nvec;
+    const std::int64_t band_offset = static_cast<std::int64_t>(band) * ld;
+    const std::int64_t basis_offset = static_cast<std::int64_t>(j) * stride + band_offset;
     thrust::complex<Accumulator> sum(0, 0);
     for (int i = tid; i < dim; i += blockDim.x)
     {
-        sum += thrust::conj(thrust::complex<Accumulator>(basis[j * stride + band * ld + i]))
-               * thrust::complex<Accumulator>(x[band * ld + i]);
+        sum += thrust::conj(thrust::complex<Accumulator>(basis[basis_offset + i]))
+               * thrust::complex<Accumulator>(x[band_offset + i]);
     }
     re[tid] = sum.real();
     im[tid] = sum.imag();
