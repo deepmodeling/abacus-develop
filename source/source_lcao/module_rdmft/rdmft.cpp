@@ -158,8 +158,8 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
         {
             const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(*kv);
             this->symrot_exx.find_irreducible_sector(ucell->symm, ucell->atoms, ucell->st,
-                    RI_Util::get_Born_von_Karmen_cells(period), period, ucell->lat);
-            this->symrot_exx.cal_Ms(*kv, *ucell, *ParaV);
+                    RI_Util::get_Born_von_Karmen_cells(period), period, ucell->lat, PARAM.globalv.global_out_dir);
+            this->symrot_exx.cal_Ms(*kv, *ucell, *ParaV, nspin);
         }
 
         if (this->exx_info_->info_ri.real_number)
@@ -345,7 +345,11 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     {
         this->pelec->f_en.deband  = this->pelec->cal_delta_eband(*ucell);
         E_descf = pelec->f_en.descf = 0.0;
-        this->pelec->cal_energies(2);
+        this->pelec->cal_energies(2,
+                                  PARAM.inp.imp_sol,
+                                  PARAM.inp.sc_mag_switch,
+                                  PARAM.inp.dft_plus_u,
+                                  PARAM.inp.assume_isolated);
         Etotal = this->pelec->f_en.etot;
 
             }

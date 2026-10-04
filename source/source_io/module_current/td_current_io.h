@@ -61,7 +61,7 @@ void set_rR_from_hR(const UnitCell& ucell,
                     const Grid_Driver& GridD,
                     const LCAO_Orbitals& orb,
                     const Parallel_Orbitals* pv,
-                    cal_r_overlap_R& r_calculator,
+                    Position_op& r_calculator,
                     const hamilt::HContainer<std::complex<double>>* hR,
                     ModuleBase::Vector3<hamilt::HContainer<double>*>& rR);
 template <typename TR>

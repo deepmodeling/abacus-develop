@@ -1,9 +1,10 @@
 #include "esolver_ks_pw.h"
 
 #include "source_estate/elecstate_pw.h"
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
+#include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/force_pw.h"
@@ -14,7 +15,7 @@
 #include "source_base/kernels/dsp/dsp_connector.h"
 #endif
 
-#include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006
+#include "source_estate/module_charge/chg_routine.h" // use charge mixing, mohan add 20251006
 #include "source_estate/setup_estate_pw.h"         // mohan add 20251005
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type used via general_exx_info_
 #include "source_io/module_ctrl/ctrl_output_pw.h"  // mohan add 20250927
@@ -196,7 +197,16 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 {
     ESolver_KS::iter_init(ucell, istep, iter);
 
-    module_charge::chgmixing_ks_pw(iter, this->p_chgmix, *this->dftu_, *this->inp_);
+    // query DeltaSpin convergence for U-ramping; treat as converged when disabled
+    bool mag_converged = true;
+    if (this->inp_->sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<std::complex<double>>& sc
+            = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+        mag_converged = sc.mag_converged();
+    }
+
+    module_charge::chgmixing_ks_pw(iter, this->p_chgmix, *this->dftu_, mag_converged, *this->inp_);
 
     // mohan move harris functional here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
@@ -264,20 +274,20 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      this->inp_->nb2d,
                                                      this->inp_->use_k_continuity);
 
-        hsolver_pw_obj.solve(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt),
+        // the iterative eigensolvers see the Hamiltonian only through this operator
+        hamilt::HamiltHSOperator<T, Device> op(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), this->pw_wfc);
+        hsolver_pw_obj.solve(op,
                              *this->stp.template get_psi_t<T, Device>(),
                              this->pelec,
                              this->pelec->ekb.c,
                              GlobalV::RANK_IN_POOL,
                              GlobalV::NPROC_IN_POOL,
                              GlobalV::ofs_running,
-                             skip_charge,
-                             ucell.tpiba,
-                             ucell.nat);
+                             skip_charge);
     }
 
     // symmetrize the charge density
-    Symmetry_rho::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
+    module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
 
     ModuleBase::timer::end("ESolver_KS_PW", "hamilt2rho_single");
 }
@@ -323,7 +333,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     pw::check_deltaspin_oscillation(iter, this->drho, this->p_chgmix, *this->inp_);
 
     // the output quantities
-    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->stp.psi_cpu, this->kv, this->pw_wfc, *this->inp_);
+    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->stp, this->kv, this->pw_wfc, *this->inp_);
 }
 
 template <typename T, typename Device>
@@ -378,7 +388,9 @@ void ESolver_KS_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matrix&
     this->stp.update_psi_d();
 
     // Calculate forces
-    ff.cal_force(ucell,
+    ff.cal_force(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
+                 this->inp_->dft_plus_u || this->inp_->sc_mag_switch,
+                 ucell,
                  force,
                  this->get_vdw_result(),
                  *this->pelec,
@@ -405,7 +417,9 @@ void ESolver_KS_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matrix
     // mohan add 2025-10-12
     this->stp.update_psi_d();
 
-    ss.cal_stress(stress,
+    ss.cal_stress(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z,
+                       this->inp_->gga_grad, PARAM.globalv.gamma_only_pw,
+                       stress,
                   ucell,
                   this->get_vdw_result(),
                   *this->dftu_,

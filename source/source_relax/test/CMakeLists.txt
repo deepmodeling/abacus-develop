@@ -17,6 +17,13 @@ AddTest(
   SOURCES test_socket_frame.cpp ../socket_frame.cpp ../socket_frame_utils.cpp
 )
 
+set(socket_json_sources)
+if(ENABLE_JSON)
+  list(APPEND socket_json_sources
+       ../../source_io/module_json/abacusjson.cpp
+       ../../source_io/module_json/output_info.cpp)
+endif()
+
 AddTest(
   TARGET MODULE_RELAX_socket_driver_test
   LIBS MPI::MPI_CXX base device
@@ -30,6 +37,7 @@ AddTest(
           ../socket_ipi.cpp
           ../../source_cell/update_cell.cpp
           ../../source_cell/bcast_cell.cpp
+          ${socket_json_sources}
 )
 set_tests_properties(MODULE_RELAX_socket_driver_test PROPERTIES TIMEOUT 15)
 

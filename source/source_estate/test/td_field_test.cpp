@@ -57,7 +57,7 @@ TEST(TDFieldManagerTest, MixedFieldsSumAndAccumulate)
     input.td_heavi_t0 = {10.0};
     input.td_heavi_amp = {3.0};
 
-    const double amplitude_conversion = ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV;
+    const double amplitude_conversion = ModuleBase::BOHR_TO_A / ModuleBase::Hartree_to_eV;
     const double total_field = 5.0 * amplitude_conversion;
     std::shared_ptr<elecstate::TDFieldManager> manager = elecstate::create_td_field_manager(input);
 
@@ -67,17 +67,17 @@ TEST(TDFieldManagerTest, MixedFieldsSumAndAccumulate)
     EXPECT_EQ(manager->fields()[0].subdivisions(), 2);
     EXPECT_EQ(manager->fields()[1].subdivisions(), 2);
 
-    manager->advance_vector_gauge();
-    ASSERT_EQ(manager->field_values().size(), 2U);
-    EXPECT_NEAR(manager->field_values()[0], 2.0 * amplitude_conversion, 1.0e-14);
-    EXPECT_NEAR(manager->field_values()[1], 3.0 * amplitude_conversion, 1.0e-14);
-    EXPECT_NEAR(manager->electric_field()[0], total_field, 1.0e-14);
-    EXPECT_NEAR(manager->total_electric_field()[0], total_field, 1.0e-14);
-    EXPECT_NEAR(manager->vector_potential_laststep()[0], -total_field, 1.0e-14);
-    EXPECT_NEAR(manager->vector_potential()[0], -0.5 * total_field, 1.0e-14);
+    manager->prepare_interval(0, 0);
+    ASSERT_EQ(manager->field_vals_ha().size(), 2U);
+    EXPECT_NEAR(manager->field_vals_ha()[0], 2.0 * amplitude_conversion, 1.0e-14);
+    EXPECT_NEAR(manager->field_vals_ha()[1], 3.0 * amplitude_conversion, 1.0e-14);
+    EXPECT_NEAR(manager->efield_ha()[0], total_field, 1.0e-14);
+    EXPECT_NEAR(manager->efield_ha()[0], total_field, 1.0e-14);
+    EXPECT_NEAR(manager->A_right_ha()[0], -total_field, 1.0e-14);
+    EXPECT_NEAR(manager->A_prop_ha()[0], -0.5 * total_field, 1.0e-14);
 
-    manager->advance_vector_gauge();
-    EXPECT_NEAR(manager->vector_potential()[0], -1.5 * total_field, 1.0e-14);
+    manager->prepare_interval(1, 1);
+    EXPECT_NEAR(manager->A_prop_ha()[0], -1.5 * total_field, 1.0e-14);
 
     Input_para oscillatory_input;
     oscillatory_input.td_vext = true;
@@ -101,22 +101,23 @@ TEST(TDFieldManagerTest, RestartRequiresCompleteState)
 {
     Input_para input;
     input.td_stype = 1;
+    input.td_dt = ModuleBase::AU_to_FS;
     std::shared_ptr<elecstate::TDFieldManager> manager = elecstate::create_td_field_manager(input);
     const std::string restart_prefix = "td_field_manager_test_";
     const std::string restart_path = restart_prefix + "Restart_td.txt";
 
     {
         std::ofstream output(restart_path.c_str());
-        output << "7\n1 2 3\n4 5 6\n";
+        output << "# Hartree units\n\n7 7 1 1 0\n1 2 3 # A_left\n4 5 6 # A_right\n";
     }
     manager->read_restart(restart_prefix);
-    EXPECT_EQ(manager->current_step(), 6);
-    EXPECT_DOUBLE_EQ(manager->vector_potential()[0], 1.0);
-    EXPECT_DOUBLE_EQ(manager->vector_potential()[1], 2.0);
-    EXPECT_DOUBLE_EQ(manager->vector_potential()[2], 3.0);
-    EXPECT_DOUBLE_EQ(manager->vector_potential_laststep()[0], -4.0);
-    EXPECT_DOUBLE_EQ(manager->vector_potential_laststep()[1], -5.0);
-    EXPECT_DOUBLE_EQ(manager->vector_potential_laststep()[2], -6.0);
+    EXPECT_EQ(manager->current_step(), 7);
+    EXPECT_DOUBLE_EQ(manager->A_left_ha()[0], 1.0);
+    EXPECT_DOUBLE_EQ(manager->A_left_ha()[1], 2.0);
+    EXPECT_DOUBLE_EQ(manager->A_left_ha()[2], 3.0);
+    EXPECT_DOUBLE_EQ(manager->A_right_ha()[0], 4.0);
+    EXPECT_DOUBLE_EQ(manager->A_right_ha()[1], 5.0);
+    EXPECT_DOUBLE_EQ(manager->A_right_ha()[2], 6.0);
 
     {
         std::ofstream output(restart_path.c_str(), std::ofstream::out);

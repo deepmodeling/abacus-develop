@@ -14,6 +14,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
 #include "source_base/tool_quit.h"
+#include "source_cell/module_symmetry/symmetry.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hamilt/module_ewald/h_ewald_pw.h"
@@ -26,7 +27,12 @@
 
 
 template <typename FPTYPE, typename Device>
-void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
+void Forces<FPTYPE, Device>::cal_force(const int nspin,
+                                       const bool domag,
+                                       const bool domag_z,
+                                       const int gga_grad,
+                   const bool use_onsite_projection,
+                                       UnitCell& ucell,
                                        ModuleBase::matrix& force,
                                        const vdw::VdwResult* vdw_result,
                                        const elecstate::ElecState& elec,
@@ -76,14 +82,15 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
 
         // DFT+U and DeltaSpin
         // here maybe a bug when OFDFT calls +U, mohan add 20251107
-        if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+        if(use_onsite_projection)
         {
             this->cal_force_onsite(forceonsite, wg, wfc_basis, ucell, *p_dftu, psi_in);
         }
     }
 
     // non-linear core correction
-    Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, ucell);
+    Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, ucell,
+        nspin, domag, domag_z, gga_grad);
 
     // force due to core charge
     this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp->numeric, ucell);
@@ -134,20 +141,18 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     if (PARAM.inp.imp_sol)
     {
         forcesol.create(this->nat, 3);
-        solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, PARAM.inp.nspin, forcesol);
+        solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, nspin, forcesol);
         if (PARAM.inp.test_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "IMP_SOL      FORCE (Ry/Bohr)", forcesol);
         }
     }
 
-    // impose total force = 0
+    // sum all force terms into the total force
     int iat = 0;
     for (int ipol = 0; ipol < 3; ipol++)
     {
-        double sum = 0.0;
         iat = 0;
-
         for (int it = 0; it < ucell.ntype; it++)
         {
             for (int ia = 0; ia < ucell.atoms[it].na; ia++)
@@ -175,23 +180,12 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                     force(iat, ipol) = force(iat, ipol) + forcesol(iat, ipol);
                 }
 
-                if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+                if(use_onsite_projection)
                 {
                     force(iat, ipol) += forceonsite(iat, ipol);
                 }
 
-                sum += force(iat, ipol);
-
                 iat++;
-            }
-        }
-
-        if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
-        {
-            double compen = sum / this->nat;
-            for (int iat = 0; iat < this->nat; ++iat)
-            {
-                force(iat, ipol) = force(iat, ipol) - compen;
             }
         }
     }
@@ -200,54 +194,14 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     {
         GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
     }
+    else
+    {
+        ModuleBase::remove_net_force(this->nat, force);
+    }
 
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        double d1 = 0.0, d2 = 0.0, d3 = 0.0;
-        for (int iat = 0; iat < this->nat; iat++)
-        {
-            ModuleBase::Mathzone::Cartesian_to_Direct(force(iat, 0),
-                                                      force(iat, 1),
-                                                      force(iat, 2),
-                                                      ucell.a1.x,
-                                                      ucell.a1.y,
-                                                      ucell.a1.z,
-                                                      ucell.a2.x,
-                                                      ucell.a2.y,
-                                                      ucell.a2.z,
-                                                      ucell.a3.x,
-                                                      ucell.a3.y,
-                                                      ucell.a3.z,
-                                                      d1,
-                                                      d2,
-                                                      d3);
-
-            force(iat, 0) = d1;
-            force(iat, 1) = d2;
-            force(iat, 2) = d3;
-        }
-        p_symm->symmetrize_vec3_nat(force.c);
-        for (int iat = 0; iat < this->nat; iat++)
-        {
-            ModuleBase::Mathzone::Direct_to_Cartesian(force(iat, 0),
-                                                      force(iat, 1),
-                                                      force(iat, 2),
-                                                      ucell.a1.x,
-                                                      ucell.a1.y,
-                                                      ucell.a1.z,
-                                                      ucell.a2.x,
-                                                      ucell.a2.y,
-                                                      ucell.a2.z,
-                                                      ucell.a3.x,
-                                                      ucell.a3.y,
-                                                      ucell.a3.z,
-                                                      d1,
-                                                      d2,
-                                                      d3);
-            force(iat, 0) = d1;
-            force(iat, 1) = d2;
-            force(iat, 2) = d3;
-        }
+        ModuleSymmetry::symmetrize_force_cartesian(p_symm, this->nat, ucell.a1, ucell.a2, ucell.a3, force);
     }
 
     GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(6) << std::endl;
@@ -313,7 +267,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                                   forcesol,
                                   false);
         }
-        if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+        if (use_onsite_projection)
         {
             ModuleIO::print_force(GlobalV::ofs_running,
                                   ucell,

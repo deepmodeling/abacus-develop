@@ -16,6 +16,23 @@ namespace LR
 
     namespace HSolver
     {
+        /// The LR Hamiltonians (HamiltLR, HamiltULR) are not hamilt::Hamilt, so
+        /// they get their own hsolver::HSOperator view. S is the identity.
+        template <typename T, typename THamilt>
+        class LRHSOperator : public hsolver::HSOperator<T>
+        {
+          public:
+            explicit LRHSOperator(const THamilt& hm) : hm_(hm) {}
+            void update_k(const int ik) override {}
+            void hpsi(const T* x, T* hx, const int ld, const int nvec) const override { hm_.hPsi(x, hx, ld, nvec); }
+            void spsi(const T* x, T* sx, const int ld, const int nvec) const override
+            {
+                std::memcpy(sx, x, sizeof(T) * static_cast<size_t>(ld) * static_cast<size_t>(nvec));
+            }
+          private:
+            const THamilt& hm_;
+        };
+
         template<typename T>
         inline void print_eigs(const std::vector<T>& eigs, const std::string& label = "", const double factor = 1.0)
         {
@@ -78,12 +95,9 @@ namespace LR
             }
             else
             {
-                // 3. set maxiter and funcs
+                // 3. set maxiter and the operator
                 const int maxiter = hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX;
-
-                auto hpsi_func = [&hm](T* psi_in, T* hpsi, const int ld_psi, const int nvec) {hm.hPsi(psi_in, hpsi, ld_psi, nvec);};
-                auto spsi_func = [&hm](const T* psi_in, T* spsi, const int ld_psi, const int nvec)
-                    { std::memcpy(spsi, psi_in, sizeof(T) * ld_psi * nvec); };
+                const LRHSOperator<T, THamilt> op(hm);
 
                 if (method == "dav")
                 {
@@ -99,7 +113,7 @@ namespace LR
                                                  PARAM.inp.pw_diag_ndim,
                                                  comm_info);
                     std::vector<double> ethr_band(nband, diag_ethr);
-                    hsolver::DiagoIterAssist<T>::avg_iter += static_cast<double>(david.diag(hpsi_func, spsi_func,
+                    hsolver::DiagoIterAssist<T>::avg_iter += static_cast<double>(david.diag(op,
                         dim, psi, eigenvalue.data(), ethr_band, maxiter, ntry_max, 0));
                 }
                 else if (method == "dav_subspace") //need refactor
@@ -115,49 +129,16 @@ namespace LR
                         PARAM.inp.nb2d);
                     std::vector<double> ethr_band(nband, diag_ethr);
                     hsolver::DiagoIterAssist<T>::avg_iter += static_cast<double>(
-                        dav_subspace.diag(hpsi_func, spsi_func, psi, dim, eigenvalue.data(), ethr_band, false /*scf*/));
+                        dav_subspace.diag(op, psi, dim, eigenvalue.data(), ethr_band, false /*scf*/));
                 }
                 else if (method == "cg")
                 {
-                    ////// `diagH_subspace` needs refactor: 
-                    ////// replace `Hamilt*` with `hpsi_func`
-                    ////// or I cannot use `is_subspace=true` as my `HamiltLR` does not inherit `Hamilt`.
-
-                    // auto subspace_func = [&hm](const ct::Tensor& psi_in, ct::Tensor& psi_out) {
-                    //     const auto ndim = psi_in.shape().ndim();
-                    //     REQUIRES_OK(ndim == 2, "dims of psi_in should be less than or equal to 2");
-                    //     // Convert a Tensor object to a psi::Psi object
-                    //     auto psi_in_wrapper = psi::Psi<T>(psi_in.data<T>(),
-                    //         1,
-                    //         psi_in.shape().dim_size(0),
-                    //         psi_in.shape().dim_size(1));
-                    //     auto psi_out_wrapper = psi::Psi<T>(psi_out.data<T>(),
-                    //         1,
-                    //         psi_out.shape().dim_size(0),
-                    //         psi_out.shape().dim_size(1));
-                    //     auto eigen = ct::Tensor(ct::DataTypeToEnum<Real<T>>::value,
-                    //         ct::DeviceType::CpuDevice,
-                    //         ct::TensorShape({ psi_in.shape().dim_size(0) }));
-                    //     hsolver::DiagoIterAssist<T>::diagH_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data<Real<T>>());
-                    //     };
-
-                    ////// why diago_cg depends on basis_type?
-                    // hsolver::DiagoCG<T> cg("lcao", "nscf", true, subspace_func, diag_ethr, maxiter, GlobalV::NPROC_IN_POOL);
-
-                    auto subspace_func = [](T* psi_in, T* psi_out, const int ld_psi, const int nband, const bool S_orth) {
-                    };
-                    hsolver::DiagoCG<T> cg("lcao", "nscf", false, subspace_func, diag_ethr, maxiter, GlobalV::NPROC_IN_POOL);
-
-                    auto hpsi_func = [&hm](T* psi_in, T* hpsi, const int ld_psi, const int nvec) {
-                        hm.hPsi(psi_in, hpsi, ld_psi, nvec);
-                    };
-                    auto spsi_func = [](T* psi_in, T* spsi, const int ld_psi, const int nvec) {
-                        std::memcpy(spsi, psi_in, sizeof(T) * static_cast<size_t>(ld_psi) * static_cast<size_t>(nvec));
-                    };
+                    // the subspace rotation of DiagoCG now works on any HSOperator, so it could be
+                    // switched on here; it is kept off to leave the LR results unchanged
+                    hsolver::DiagoCG<T> cg("lcao", "nscf", false, comm_info, diag_ethr, maxiter);
 
                     std::vector<double> ethr_band(nband, diag_ethr);
-                    cg.diag(hpsi_func,
-                            spsi_func,
+                    cg.diag(op,
                             dim,
                             nband,
                             dim,

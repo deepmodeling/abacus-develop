@@ -6,7 +6,7 @@
 #include "source_io/module_parameter/input_parameter.h" // Input_para
 #include "source_basis/module_ao/parallel_orbitals.h" // parallel orbitals
 #include "source_basis/module_ao/orb_read.h" // orb
-#include "source_estate/module_charge/charge_mixing.h" // use charge mixing
+#include "source_estate/module_charge/chg_mix.h" // use charge mixing
 #include "source_hamilt/module_xc/exx_info.h" // for Exx_Info
 
 // for EXX
@@ -31,22 +31,22 @@ class Exx_NAO
 
     void init(const UnitCell& ucell, Exx_Info& exx_info);
 
-	void before_runner(
-			UnitCell& ucell, // unitcell
-			K_Vectors &kv, // k points
+    void before_runner(
+            UnitCell& ucell, // unitcell
+            K_Vectors &kv, // k points
             const LCAO_Orbitals &orb, // orbital info
-			const Parallel_Orbitals &pv, // parallel orbitals
-			const Input_para& inp,
-			Exx_Info& exx_info);
+            const Parallel_Orbitals &pv, // parallel orbitals
+            const Input_para& inp,
+            Exx_Info& exx_info);
 
-	void before_scf(
-			const UnitCell &ucell, // unitcell
-			const K_Vectors &kv,
-			const LCAO_Orbitals &orb, // orbital info
-			Charge_Mixing* p_chgmix,
-			const int istep,
-			const Input_para& inp,
-			Exx_Info& exx_info);
+    void before_scf(
+            const UnitCell &ucell, // unitcell
+            const K_Vectors &kv,
+            const LCAO_Orbitals &orb, // orbital info
+            Charge_Mixing* p_chgmix,
+            const int istep,
+            const Input_para& inp,
+            Exx_Info& exx_info);
 
 };
 

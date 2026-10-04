@@ -23,6 +23,13 @@ void validate_uspp_support(const bool use_uspp,
     }
 
     std::vector<std::string> violations;
+    // TODO: allowing LCAO (basis_type=lcao, lcao_in_pw) with USPP would enable
+    // double_grid on LCAO paths. Before relaxing this guard, verify (1) which
+    // grid module_charge::symmetrize_rho must use, since LCAO callers pass
+    // smooth pw_rho while LIP/pchg callers pass dense pw_rhod (see the TODO in
+    // chg_symm.cpp); (2) that charge init/extrapolation and the smooth/dense
+    // mixing paths are correct for LCAO; (3) the ndx/ndy/ndz input path in
+    // read_inp_sys.cpp lacks the LCAO guard that the ecutrho/ecutwfc path has.
     if (basis_type != "pw")
     {
         violations.push_back("basis_type=" + basis_type + " (only pw is supported)");

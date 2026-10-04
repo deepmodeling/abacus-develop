@@ -126,7 +126,7 @@ void snap_psibeta_atom_batch_gpu(
     // Early exit if no projectors on center atom
     //=========================================================================
 
-    const int nproj = infoNL_.nproj[T0];
+    const int nproj = infoNL_.get_nproj(T0);
     if (nproj == 0)
     {
         ModuleBase::timer::end("module_rt", "snap_psibeta_gpu");
@@ -143,7 +143,7 @@ void snap_psibeta_atom_batch_gpu(
     for (int ip = 0; ip < nproj; ip++)
     {
         proj_m0_offset_h[ip] = natomwfc;
-        int L0 = infoNL_.Beta[T0].Proj[ip].getL();
+        int L0 = infoNL_.get_Beta(T0).Proj[ip].getL();
 
         // Validate angular momentum
         if (L0 > MAX_L)
@@ -257,7 +257,7 @@ void snap_psibeta_atom_batch_gpu(
 
     for (int ip = 0; ip < nproj; ip++)
     {
-        const auto& proj = infoNL_.Beta[T0].Proj[ip];
+        const auto& proj = infoNL_.get_Beta(T0).Proj[ip];
         const int L0 = proj.getL();
         const int mesh = proj.getNr();
         const double rcut = proj.getRcut();

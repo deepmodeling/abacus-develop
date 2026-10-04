@@ -209,21 +209,21 @@ void DiagoBPCG<T, Device>::rotate_wf(
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_hpsi_with_block(
-        const HPsiFunc& hpsi_func,
-        T *psi_in,
+        const HSOperator<T, Device>& op,
+        const T *psi_in,
         ct::Tensor& hpsi_out)
 {
     // calculate all-band hpsi
-    hpsi_func(psi_in, hpsi_out.data<T>(), this->n_basis, this->n_band_l);
+    op.hpsi(psi_in, hpsi_out.data<T>(), this->n_basis, this->n_band_l);
 }
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_spsi_with_block(
-        const SPsiFunc& spsi_func,
+        const HSOperator<T, Device>& op,
         const T* psi_in,
         ct::Tensor& spsi_out)
 {
-    spsi_func(psi_in, spsi_out.data<T>(), this->n_basis, this->n_band_l);
+    op.spsi(psi_in, spsi_out.data<T>(), this->n_basis, this->n_band_l);
 }
 
 template<typename T, typename Device>
@@ -244,8 +244,7 @@ void DiagoBPCG<T, Device>::diag_hsub(
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_hsub_with_block(
-        const HPsiFunc& hpsi_func,
-        const SPsiFunc& spsi_func,
+        const HSOperator<T, Device>& op,
         T *psi_in,
         ct::Tensor& psi_out,
         ct::Tensor& hpsi_out,
@@ -255,8 +254,8 @@ void DiagoBPCG<T, Device>::calc_hsub_with_block(
         ct::Tensor& eigenvalue_out)
 {
     // Apply the H operator to psi and obtain the hpsi matrix.
-    this->calc_hpsi_with_block(hpsi_func, psi_in, hpsi_out);
-    this->calc_spsi_with_block(spsi_func, psi_in, spsi_out);
+    this->calc_hpsi_with_block(op, psi_in, hpsi_out);
+    this->calc_spsi_with_block(op, psi_in, spsi_out);
 
     // Transform the generalized problem to an S-orthonormal subspace.
     this->orth_cholesky(workspace_in, psi_out, hpsi_out, spsi_out, hsub_out);
@@ -293,8 +292,7 @@ void DiagoBPCG<T, Device>::calc_hsub_with_block_exit(
 }
 
 template <typename T, typename Device>
-void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
-                                const SPsiFunc& spsi_func,
+void DiagoBPCG<T, Device>::diag(const HSOperator<T, Device>& op,
                                 T* psi_in,
                                 Real* eigenvalue_in,
                                 const std::vector<double>& ethr_band)
@@ -307,8 +305,7 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     this->calc_prec();
 
     // Improving the initial guess of the wave function psi through a subspace diagonalization.
-    this->calc_hsub_with_block(hpsi_func,
-                               spsi_func,
+    this->calc_hsub_with_block(op,
                                psi_in,
                                this->psi,
                                this->hpsi,
@@ -338,7 +335,7 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                    this->psi, this->hpsi, this->spsi, this->grad, this->grad_old);
 
         // Apply S before projecting the search directions in the generalized metric.
-        this->calc_spsi_with_block(spsi_func, this->grad.template data<T>(), this->sgrad);
+        this->calc_spsi_with_block(op, this->grad.template data<T>(), this->sgrad);
 
         // Orthogonalize column vectors g_i in matrix grad to column vectors p_j in matrix psi
         // for all 'j less or equal to i'.
@@ -349,7 +346,7 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         syncmem_complex_op()(this->grad_old.template data<T>(), this->grad.template data<T>(), n_basis * n_band_l);
 
         // Calculate H|grad> matrix
-        this->calc_hpsi_with_block(hpsi_func, this->grad.template data<T>(), /*this->grad_wrapper[0],*/ this->hgrad);
+        this->calc_hpsi_with_block(op, this->grad.template data<T>(), /*this->grad_wrapper[0],*/ this->hgrad);
 
         // optimize psi as well as the hpsi
         // 1. normalize grad
@@ -361,8 +358,7 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         this->orth_cholesky(this->work, this->psi, this->hpsi, this->spsi, this->hsub);
 
         if (current_scf_iter == 1 && ntry % this->nline == 0) {
-            this->calc_hsub_with_block(hpsi_func,
-                                       spsi_func,
+            this->calc_hsub_with_block(op,
                                        psi_in,
                                        this->psi,
                                        this->hpsi,

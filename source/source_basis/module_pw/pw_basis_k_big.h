@@ -1,8 +1,5 @@
 #ifndef PW_BASIS_K_BIG_H
 #define PW_BASIS_K_BIG_H
-#include "source_base/constants.h"
-#include "source_base/global_function.h"
-
 // temporary class, because previous ABACUS consider big grid for fft grids 
 // which are used for grid integration in LCAO.
 // In fact, it is unnecessary. It will be moved after grid integration is refactored.
@@ -14,8 +11,8 @@ class PW_Basis_K_Big: public PW_Basis_K
 public:
     
     // combine [bx,by,bz] FFT grids into a big one
-	// typical values are bx=2, by=2, bz=2
-	// nbx=nx/bx, nby=ny/by, nbz=nz/bz, 
+    // typical values are bx=2, by=2, bz=2
+    // nbx=nx/bx, nby=ny/by, nbz=nz/bz, 
     // Note: this class can only use initgrids(lat0_in, latvec_in, PW_Basis_Big::nx, PW_Basis_Big::ny, PW_Basis_Big::nz)!!!
     PW_Basis_K_Big(){
         bx = 1;

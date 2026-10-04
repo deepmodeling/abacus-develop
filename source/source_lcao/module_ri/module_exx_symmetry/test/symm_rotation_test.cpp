@@ -116,7 +116,7 @@ TEST_F(SymmetryRotationTest, OvlpYS)
 TEST_F(SymmetryRotationTest, RotMat)
 {
     symrot.cal_rotmat_Slm(&C41, 1, -1);
-    RI::Tensor<std::complex<double>>& rotmat = symrot.get_rotmat_Slm()[0][1];
+    ModuleBase::ComplexMatrix& rotmat = symrot.get_rotmat_Slm()[0][1];
     int l = 1;
     for (int m1 = -l;m1 <= l;++m1)
         for (int m2 = -l;m2 <= l;++m2)
@@ -145,7 +145,7 @@ TEST_F(SymmetryRotationTest, SetBlockToMat2d)
     for (int j = 0;j < pv.get_col_size();++j)
         for (int i = 0;i < pv.get_row_size();++i)
             obj_mat[j * pv.get_row_size() + i] = std::complex<double>(static_cast<double>(pv.local2global_row(i)), static_cast<double>(pv.local2global_col(j)));
-    RI::Tensor<std::complex<double>> block({ 2, 2 });
+    ModuleBase::ComplexMatrix block(2, 2);
     block(0, 0) = 0; block(0, 1) = -1; block(1, 0) = -2; block(1, 1) = -3;
     symrot.set_block_to_mat2d(2, 3, block, obj_mat, pv);
     for (int i = 2;i < 4;++i)

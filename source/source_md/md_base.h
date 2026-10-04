@@ -3,7 +3,7 @@
 
 #include "source_cell/mdcell.h"
 #include "source_esolver/esolver.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/md_parameter.h"
 
 #include <cstdint>
 
@@ -20,7 +20,21 @@ class DomainDecomposition;
 class MD_base
 {
   public:
-    MD_base(const Parameter& param_in, MDCell& mdcell_in);
+    /**
+     * @brief construct the integrator from the values it actually uses
+     * @param mdp_in the md input parameters; the reference is kept, so it must
+     *               outlive the integrator
+     * @param cal_stress_in whether stress is calculated
+     * @param init_vel whether initial velocities are read from STRU
+     * @param my_rank_in MPI rank of the processor; only consulted in serial
+     *                   builds, where MDCell cannot supply it
+     * @param mdcell_in mdcell information
+     */
+    MD_base(const MD_para& mdp_in,
+            const bool cal_stress_in,
+            const bool init_vel,
+            const int my_rank_in,
+            MDCell& mdcell_in);
     virtual ~MD_base();
 
     /**
@@ -56,13 +70,18 @@ class MD_base
      */
     virtual void write_restart(const std::string& global_out_dir);
 
-  protected:
     /**
      * @brief restart MD when md_restart is true
+     *
+     * Public counterpart of write_restart(): setup() calls it internally when
+     * md_restart is set, and a caller that has just written a restart file may
+     * read it back through here.
+     *
      * @param global_readin_dir directory of files for reading
      */
     virtual void restart(const std::string& global_readin_dir);
 
+  protected:
     /**
      * @brief perform one step update of pos due to atomic velocity
      */
@@ -75,6 +94,12 @@ class MD_base
     virtual void update_vel();
 
   public:
+    /// @brief the time increment in a.u., converted from mdp.md_dt
+    double get_md_dt() const
+    {
+        return md_dt;
+    }
+
     bool stop;                          ///< MD stop or not
     double t_current;                   ///< current temperature
     int step_;                          ///< the MD step finished in current calculation

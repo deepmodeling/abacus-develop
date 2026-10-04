@@ -8,15 +8,15 @@ namespace hamilt
 {
 
 template <class T>
-class OperatorDFTU : public T
+class DFTU_firstzeta : public T
 {
 };
 
 template <typename TK, typename TR>
-class OperatorDFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
+class DFTU_firstzeta<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    OperatorDFTU<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
+    DFTU_firstzeta<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                   const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                   hamilt::HContainer<TR>* hR_in,
                                   const UnitCell& ucell_in,

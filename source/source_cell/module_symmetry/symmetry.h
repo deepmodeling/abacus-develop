@@ -377,6 +377,29 @@ public:
     /// Non-magnetic (m_i=0) keeps all operations.
     void analyze_magnetic_group_nspin4(const Atom* atoms, const Statistics& st, const ModuleBase::Matrix3& latvec);
 };
+
+/**
+ * @brief Symmetrize a per-atom Cartesian force vector in place.
+ *
+ * Convert Cartesian -> direct, apply symmetrize_vec3_nat, then convert back to
+ * Cartesian. The lattice vectors are passed explicitly by the caller (the
+ * current cell), because Symmetry::a1/a2/a3 may have been replaced by the
+ * symmetry-optimized lattice during the analysis. Shared by the PW and LCAO
+ * force paths.
+ *
+ * @param symm symmetry handler
+ * @param nat number of atoms
+ * @param a1 first lattice vector of the current cell
+ * @param a2 second lattice vector of the current cell
+ * @param a3 third lattice vector of the current cell
+ * @param force per-atom Cartesian forces, nat x 3, modified in place
+ */
+void symmetrize_force_cartesian(Symmetry* symm,
+                                const int nat,
+                                const ModuleBase::Vector3<double>& a1,
+                                const ModuleBase::Vector3<double>& a2,
+                                const ModuleBase::Vector3<double>& a3,
+                                ModuleBase::matrix& force);
 }
 
 #endif

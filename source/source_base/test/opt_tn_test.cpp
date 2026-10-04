@@ -17,7 +17,7 @@ protected:
     double tol = 1e-5;
     int final_iter = 0;
     int flag = 0;
-    char *task = nullptr;
+    std::string task;
     double *p = nullptr;
     double *x = nullptr;
 
@@ -25,14 +25,12 @@ protected:
     {
         tn.set_para(1.);
         tn.allocate(tools.nx);
-        task = new char[60];
         p = new double[tools.nx];
         x = new double[tools.nx];
     }
 
     void TearDown()
     {
-        delete[] task;
         delete[] p;
         delete[] x;
     }
@@ -78,27 +76,27 @@ protected:
             }
             for (int i = 0; i < 3; ++i) { temp_x[i] = x[i];
 }
-            task[0] = 'S'; task[1] = 'T'; task[2] = 'A'; task[3] = 'R'; task[4] = 'T';
+            task = "START";
             while (true)
             {
                 f = tools.func(temp_x, func_label);
                 g = tools.dfuncdstp(temp_x, p, func_label);
                 ds.dcSrch(f, g, step, task);
-                if (task[0] == 'F' && task[1] == 'G')
+                if (task.compare(0, 2, "FG") == 0)
                 {
                     for (int j = 0; j < 3; ++j) { temp_x[j] = x[j] + step * p[j];
 }
                     continue;
                 }
-                else if (task[0] == 'C' && task[1] == 'O')
+                else if (task.compare(0, 2, "CO") == 0)
                 {
                     break;
                 }
-                else if (task[0] == 'W' && task[1] == 'A')
+                else if (task.compare(0, 2, "WA") == 0)
                 {
                     break;
                 } 
-                else if (task[0] == 'E' && task[1] == 'R')
+                else if (task.compare(0, 2, "ER") == 0)
                 {
                     break;
                 }

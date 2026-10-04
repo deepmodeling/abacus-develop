@@ -68,52 +68,18 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_IO_write_hsk_binary_test
-  LIBS parameter base device
-  SOURCES write_hsk_binary_test.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
-)
-
-add_test(
-  NAME MODULE_IO_write_hsk_binary_test_parallel
-  COMMAND mpirun -np 2 ./MODULE_IO_write_hsk_binary_test
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-AddTest(
   TARGET MODULE_IO_write_eig_occ_test
   LIBS parameter  base device symmetry
   SOURCES write_eig_occ_test.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp
 		../../source_cell/cif_io.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
-AddTest(
-  TARGET MODULE_IO_cal_dos
-  LIBS parameter  base device
-  SOURCES cal_dos_test.cpp ../module_dos/cal_dos.cpp
-)
-
-AddTest(
-  TARGET MODULE_IO_write_dos_pw
-  LIBS parameter  base device symmetry
-  SOURCES write_dos_pw_test.cpp ../module_dos/cal_dos.cpp ../module_dos/write_dos_pw.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../module_energy/nscf_fermi_surf.cpp ../../source_cell/reciprocal_grid.cpp
-)
+# DOS tests moved to ../module_dos/unittests/
 
 AddTest(
   TARGET MODULE_IO_print_info
   LIBS parameter  base device symmetry cell_info
   SOURCES print_info_test.cpp ../module_output/print_info.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
-)
-
-AddTest(
-  TARGET MODULE_IO_single_R_test
-  LIBS parameter
-  SOURCES single_r_io_test.cpp ../module_hs/single_r_io.cpp
-	../../source_base/global_variable.cpp
-	../../source_base/parallel_reduce.cpp
-	../../source_base/parallel_common.cpp
-	../../source_base/parallel_global.cpp
-  ../../source_base/parallel_comm.cpp
-  ../../source_base/tool_quit.cpp ../../source_base/global_file.cpp ../../source_base/global_function.cpp ../../source_base/memory_recorder.cpp ../../source_base/timer.cpp
 )
 
 AddTest(
@@ -189,7 +155,7 @@ add_test(NAME MODULE_IO_read_wfc_pw_test_parallel
 AddTest(
   TARGET MODULE_IO_read_wf2rho_pw_test
   LIBS parameter base device planewave psi symmetry
-  SOURCES read_wf2rho_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_wf/read_wf2rho_pw.cpp ../../source_basis/module_pw/test/test_tool.cpp  ../../source_estate/module_charge/charge_mpi.cpp ../module_wf/write_wfc_pw.cpp
+  SOURCES read_wf2rho_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_wf/read_wf2rho_pw.cpp ../../source_basis/module_pw/test/test_tool.cpp  ../../source_estate/module_charge/charge.cpp ../../source_estate/module_charge/chg_tools.cpp ../../source_estate/module_charge/chg_parallel.cpp ../module_wf/write_wfc_pw.cpp
   ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
@@ -256,6 +222,15 @@ add_test(
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+if(ENABLE_LCAO)
+AddTest(
+  TARGET MODULE_IO_write_dmr_test
+  LIBS parameter base device hcontainer
+  SOURCES ../module_dm/test/test_write_dmr.cpp ../module_dm/write_dmr.cpp ../../source_cell/ucell_io.cpp
+  ../../source_basis/module_ao/parallel_orbitals.cpp ../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp
+)
+endif()
+
 AddTest(
   TARGET MODULE_IO_read_wfc_nao_test
   LIBS parameter base device
@@ -267,51 +242,6 @@ add_test(
   COMMAND mpirun -np 2 ./MODULE_IO_read_wfc_nao_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
-
-if(ENABLE_LCAO)
-AddTest(
-  TARGET MODULE_IO_cal_plpr_test
-  LIBS parameter base device neighbor
-  SOURCES
-  cal_plpr_test.cpp
-  ../module_hs/cal_plpr.cpp
-  ../../source_basis/module_ao/orb_atomic_lm.cpp
-  ../../source_basis/module_ao/orb_atomic.cpp
-  ../../source_basis/module_nao/radial_set.cpp
-  ../../source_basis/module_nao/numerical_radial.cpp
-  ../../source_basis/module_nao/beta_radials.cpp
-  ../../source_basis/module_nao/hydrogen_radials.cpp
-  ../../source_basis/module_nao/pswfc_radials.cpp
-  ../../source_basis/module_nao/atomic_radials.cpp
-  ../../source_basis/module_nao/sphbes_radials.cpp
-  ../../source_basis/module_nao/two_center_integrator.cpp
-  ../../source_basis/module_nao/two_center_table.cpp
-  ../../source_basis/module_nao/real_gaunt_table.cpp
-  ../../source_basis/module_nao/radial_collection.cpp
-)
-
-AddTest(
-  TARGET MODULE_IO_write_hs_r_compat_test
-  LIBS parameter base device hcontainer
-  SOURCES
-  write_hs_r_compat_test.cpp
-  ../module_hs/write_hs_r.cpp
-  ../module_hs/write_hs_sparse.cpp
-  ../module_hs/single_r_io.cpp
-  ../module_hs/rr_sparse_writer.cpp
-  ../module_dm/write_dmr.cpp
-  ../../source_cell/ucell_io.cpp
-  ../../source_basis/module_ao/parallel_orbitals.cpp
-  ../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp
-)
-
-add_test(
-  NAME MODULE_IO_write_hsr_binary_test_parallel
-  COMMAND mpirun -np 2 ./MODULE_IO_write_hs_r_compat_test
-          --gtest_filter=WriteHsRCompatibility.HContainerBinaryMpiGatherWritesCompleteFiles
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-endif()
 
 if(ENABLE_LIBRI)
 AddTest(

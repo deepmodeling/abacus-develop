@@ -3,6 +3,7 @@
 
 #include "source_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
 #include "source_basis/module_pw/pw_basis_k.h"         // use ModulePW::PW_Basis_K and ModulePW::PW_Basis
+#include "source_basis/module_pw/pw_basis_sup.h"       // use ModulePW::PW_Basis_Big
 #include "source_cell/klist.h"                         // use K_Vectors
 #include "source_cell/unitcell.h"                      // use UnitCell
 #include "source_estate/elecstate.h"                   // use elecstate::ElecStateLCAO<TK>
@@ -26,7 +27,7 @@ void ctrl_scf_lcao(UnitCell& ucell,
                    const Input_para& inp,
                    K_Vectors& kv,
                    elecstate::ElecState* pelec,
-                   elecstate::DensityMatrix<TK, double>* dm, // mohan add 2025-11-04
+                   module_dm::DensityMatrix<TK, double>* dm, // mohan add 2025-11-04
                    Parallel_Orbitals& pv,
                    Grid_Driver& gd,
                    psi::Psi<TK>* psi,

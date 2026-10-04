@@ -35,6 +35,9 @@ project(
 option(ENABLE_MPI "Enable MPI" ON)
 option(ENABLE_OPENMP "Enable OpenMP" ON)
 option(USE_CUDA "Enable CUDA" OFF)
+cmake_dependent_option(ENABLE_GPU_NEIGHBOR_LIST
+                       "Enable the CUDA GPU neighbor-list implementation"
+                       OFF "USE_CUDA" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
@@ -61,7 +64,7 @@ option(ENABLE_NATIVE_OPTIMIZATION
 
 option(COMMIT_INFO "Print commit information in log" ON)
 option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF)
-option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
+option(ENABLE_JSON "Enable JSON output" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 
 # Options requiring MPI and LCAO
@@ -110,6 +113,14 @@ abacus_rename_option(USE_OPENMP ENABLE_OPENMP)
 abacus_rename_option(USE_ABACUS_LIBM ENABLE_ABACUS_LIBM)
 abacus_rename_option(INFO MATH_INFO)
 
+if(DEFINED CACHE{ENABLE_RAPIDJSON})
+  message(
+    FATAL_ERROR
+      "ENABLE_RAPIDJSON is no longer supported. "
+      "ABACUS now uses nlohmann-json as its JSON backend; "
+      "please use -DENABLE_JSON=ON instead.")
+endif()
+
 if(DEFINED CACHE{ENABLE_LIBCOMM})
   message(
     DEPRECATION
@@ -139,15 +150,8 @@ if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
 endif()
 
 # enable json support
-if(ENABLE_RAPIDJSON)
-  find_package(RapidJSON CONFIG REQUIRED)
-  if(NOT TARGET RapidJSON)
-    message(
-      FATAL_ERROR
-      "RapidJSON was found, but target RapidJSON is missing. "
-      "Check if your RapidJSON installation provides a complete exported CMake configuration."
-    )
-  endif()
+if(ENABLE_JSON)
+  find_package(nlohmann_json REQUIRED)
 endif()
 
 # get commit info
@@ -284,8 +288,8 @@ if(CCACHE)
   set(CMAKE_CUDA_COMPILER_LAUNCHER ${CCACHE} ${CMAKE_CUDA_COMPILER_LAUNCHER})
 endif()
 
-# Choose build type from: Debug Release RelWithDebInfo MinSizeRel Select
-# 'Release' configuration for best performance; this will disable all
+# Choose build type from: Debug Release RelWithDebInfo MinSizeRel
+# Select 'Release' configuration for best performance; this will disable all
 # assertions. Other default configurations are also available, see:
 # https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html#default-and-custom-configurations
 # For default flags, see:
@@ -310,7 +314,7 @@ endif()
 if(ENABLE_PEXSI)
   find_package(PEXSI REQUIRED CONFIG)
   if(PEXSI_VERSION VERSION_LESS "2.0.0")
-    message(FATAL_ERROR "PEXSI >= 2.0.0 is required")
+    message(FATAL_ERROR "PEXSI >= 2.0.0 is required; found version ${PEXSI_VERSION}")
   endif()
   set(CMAKE_CXX_STANDARD 14)
 endif()
@@ -368,7 +372,10 @@ if(NOT USE_KML AND NOT MKL_FOUND AND NOT USE_SW)
 endif()
 
 if(ENABLE_DFTD4)
-  find_package(dftd4 4.2.0 REQUIRED)
+  find_package(dftd4 REQUIRED)
+  if(dftd4_VERSION VERSION_LESS "4.3.0")
+    message(FATAL_ERROR "dftd4 >= 4.3.0 is required; found version ${dftd4_VERSION}")
+  endif()
 endif()
 
 include(CheckLanguage)
@@ -609,7 +616,7 @@ endif()
 if(ENABLE_LIBXC)
   find_package(Libxc CONFIG REQUIRED)
   if(Libxc_VERSION VERSION_LESS "5.1.7")
-    message(FATAL_ERROR "Libxc >= 5.1.7 is required")
+    message(FATAL_ERROR "Libxc >= 5.1.7 is required; found version ${Libxc_VERSION}")
   endif()
 endif()
 

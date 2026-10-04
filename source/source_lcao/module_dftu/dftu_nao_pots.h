@@ -16,7 +16,7 @@ namespace DFTU_LCAO {
  *   pot_onsite(m,m') = U_eff * (0.5 * delta_{m,m'} - occ(m,m'))
  *   EU = (U_eff / 2) * sum_{m,m'} occ(m,m') * (delta_{m,m'} - occ(m',m))
  *
- * Non-template core extracted from DFTU<OperatorLCAO<TK,TR>>::cal_pot_onsite.
+ * Non-template core extracted from DFTU_onsite<OperatorLCAO<TK,TR>>::cal_pot_onsite.
  *
  * @param occ         flattened occupation matrix, size m_size*m_size*spin_fold
  * @param m_size      number of magnetic quantum states (2*l+1)
@@ -82,7 +82,6 @@ inline void transfer_pot_onsite<std::complex<double>>(const std::vector<double>&
  * @param T           atom type
  * @param iat         global atom index
  * @param L           angular momentum
- * @param N           radial index
  * @param spin        spin channel
  * @param m0          first magnetic quantum index (packed with polarization)
  * @param m1          second magnetic quantum index (packed with polarization)
@@ -93,7 +92,6 @@ double get_onsite_pot(const Plus_U_Base& dftu,
                       const int T,
                       const int iat,
                       const int L,
-                      const int N,
                       const int spin,
                       const int m0,
                       const int m1,

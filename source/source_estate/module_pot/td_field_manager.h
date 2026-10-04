@@ -23,15 +23,23 @@ namespace elecstate
 class TDFieldManager
 {
   public:
-    /**
-     * @brief Advance one length-gauge step and sample every field at its start.
-     */
-    void advance_length_gauge();
+    /** @brief Sample E at step*dt without integrating A (length gauge or initial state). */
+    void prepare_sample(const int step);
 
-    /**
-     * @brief Advance one velocity/hybrid-gauge step using Simpson integration.
+    /** @brief Integrate [left_step*dt, (left_step+1)*dt] and sample E at sample_step*dt.
+     * Repeating the same interval and sample is idempotent. Propagation A is the
+     * endpoint average, not an exact midpoint sample.
      */
-    void advance_vector_gauge();
+    void prepare_interval(const int left_step, const int sample_step);
+
+    /** @brief Supply file-based propagation samples before preparing any steps. */
+    void set_A_samples(const std::vector<ModuleBase::Vector3<double>>& samples_ha);
+
+    /** @brief Return integrated endpoints in Hartree units; unavailable for file-based propagation samples. */
+    const ModuleBase::Vector3<double>& A_left_ha() const;
+    const ModuleBase::Vector3<double>& A_right_ha() const;
+    /** @brief Return the endpoint average or supplied file sample used for propagation, in Hartree units. */
+    const ModuleBase::Vector3<double>& A_prop_ha() const;
 
     /**
      * @brief Restore the electronic step and vector-potential state.
@@ -39,6 +47,8 @@ class TDFieldManager
      * @param file_dir Directory containing `Restart_td.txt`.
      */
     void read_restart(const std::string& file_dir);
+    /** @brief Save three annotated data rows describing the interval state in Hartree units. */
+    void write_restart(const std::string& file_dir) const;
 
     /** @brief Return the spatial-gauge selector supplied by `td_stype`. */
     int gauge() const;
@@ -46,8 +56,8 @@ class TDFieldManager
     /** @brief Return the current zero-based electronic-step index. */
     int current_step() const;
 
-    /** @brief Return the electronic time step in internal atomic time units. */
-    double dt() const;
+    /** @brief Return the electronic time step in Hartree atomic time units. */
+    double dt_ha() const;
 
     /** @brief Return the first reduced-coordinate cut of the length gauge. */
     double length_cut1() const;
@@ -62,19 +72,10 @@ class TDFieldManager
     const std::vector<TDField>& fields() const;
 
     /** @brief Return per-occurrence field samples for the current step. */
-    const std::vector<double>& field_values() const;
+    const std::vector<double>& field_vals_ha() const;
 
-    /** @brief Return the midpoint vector potential in propagation units. */
-    const ModuleBase::Vector3<double>& vector_potential() const;
-
-    /** @brief Return the integrated vector-potential change for this step. */
-    const ModuleBase::Vector3<double>& vector_potential_laststep() const;
-
-    /** @brief Return the direction-summed instantaneous hybrid-gauge field. */
-    const ModuleBase::Vector3<double>& electric_field() const;
-
-    /** @brief Return the direction-summed field used by force evaluation. */
-    const ModuleBase::Vector3<double>& total_electric_field() const;
+    /** @brief Return the direction-summed sampled electric field in Hartree atomic units. */
+    const ModuleBase::Vector3<double>& efield_ha() const;
 
   private:
     TDFieldManager(bool enabled,
@@ -90,17 +91,21 @@ class TDFieldManager
     int gauge_;
     int start_step_;
     int end_step_;
-    double dt_;
+    double dt_ha_;
     double length_cut1_;
     double length_cut2_;
     std::vector<TDField> fields_;
     int current_step_;
     bool active_;
-    std::vector<double> field_values_;
-    ModuleBase::Vector3<double> vector_potential_;
-    ModuleBase::Vector3<double> vector_potential_laststep_;
-    ModuleBase::Vector3<double> electric_field_;
-    ModuleBase::Vector3<double> total_electric_field_;
+    std::vector<double> field_vals_ha_;
+    int interval_left_ = -1;
+    std::vector<ModuleBase::Vector3<double>> A_samples_ha_;
+    ModuleBase::Vector3<double> A_left_ha_;
+    ModuleBase::Vector3<double> A_right_ha_;
+    ModuleBase::Vector3<double> A_prop_ha_;
+    ModuleBase::Vector3<double> efield_ha_;
+    void sample_field(const int step);
+    void select_A_prop();
 
     friend std::shared_ptr<TDFieldManager> create_td_field_manager(const Input_para& input);
 };

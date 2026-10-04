@@ -257,9 +257,12 @@ void DFPT_PW::Impl::copy_occ_state_ball(int ik,
         for (int igl = 0; igl < npw_kq; ++igl)
         {
             const ModuleBase::Vector3<double> gf = kq.get_gcar(igl) * ginv;
-            const std::vector<int> key = {static_cast<int>(std::round(gf.x)) + dn.x,
-                                          static_cast<int>(std::round(gf.y)) + dn.y,
-                                          static_cast<int>(std::round(gf.z)) + dn.z};
+            // dn = k_d(ikq) - k_d(ik) - q (integer, reciprocal-basis coords).
+            // A k+q-ball vector G and an ikq-ball vector G' describe the same
+            // plane wave when G' + k_d(ikq) == G + k_d(ik) + q, i.e. G' = G - dn.
+            const std::vector<int> key = {static_cast<int>(std::round(gf.x)) - dn.x,
+                                          static_cast<int>(std::round(gf.y)) - dn.y,
+                                          static_cast<int>(std::round(gf.z)) - dn.z};
             const auto it = jgl_of_n.find(key);
             if (it != jgl_of_n.end())
             {

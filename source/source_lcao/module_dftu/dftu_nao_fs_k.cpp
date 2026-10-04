@@ -1,5 +1,6 @@
 #include "dftu_nao_fs_k.h"
 #include "dftu_nao_folding.h"
+#include "dftu_nao_fs_accum.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 #include "dftu_nao_pots.h"
 #include "source_lcao/force_stress_arrays.h"
@@ -17,59 +18,6 @@ namespace DFTU_LCAO {
 
 namespace
 {
-
-/// @brief Add the real part of diagonal local-block entries to one force component.
-///
-/// Sums dm(ir, ic) over local block pairs whose global orbital indices
-/// coincide, attributing each entry to the atom owning the orbital along
-/// Cartesian component dim.
-template <typename T>
-void accumulate_diag_force(const Parallel_Orbitals& pv,
-                           const UnitCell& ucell,
-                           const T* dm,
-                           const int dim,
-                           ModuleBase::matrix& force_dftu)
-{
-    assert(dm != nullptr);
-    assert(dim >= 0 && dim < 3);
-    for (int ir = 0; ir < pv.nrow; ir++)
-    {
-        const int iwt1 = pv.local2global_row(ir);
-        const int iat1 = ucell.iwt2iat[iwt1];
-        for (int ic = 0; ic < pv.ncol; ic++)
-        {
-            if (pv.local2global_col(ic) == iwt1)
-            {
-                force_dftu(iat1, dim) += std::real(dm[ic * pv.nrow + ir]);
-            }
-        }
-    }
-}
-
-/// @brief Add the real part of diagonal local-block entries to one stress pair.
-template <typename T>
-void accumulate_diag_stress(const Parallel_Orbitals& pv,
-                            const T* dm,
-                            const int dim1,
-                            const int dim2,
-                            const double factor,
-                            ModuleBase::matrix& stress_dftu)
-{
-    assert(dm != nullptr);
-    assert(dim1 >= 0 && dim1 < 3);
-    assert(dim2 >= 0 && dim2 < 3);
-    for (int ir = 0; ir < pv.nrow; ir++)
-    {
-        const int iwt1 = pv.local2global_row(ir);
-        for (int ic = 0; ic < pv.ncol; ic++)
-        {
-            if (pv.local2global_col(ic) == iwt1)
-            {
-                stress_dftu(dim1, dim2) += factor * std::real(dm[ic * pv.nrow + ir]);
-            }
-        }
-    }
-}
 
 /// @brief Whether atom type it carries a usable correlated channel.
 ///
@@ -106,8 +54,6 @@ void accumulate_onsite_force(Plus_U_Base& dftu,
     assert(dim >= 0 && dim < 3);
     assert(npol == 1 || npol == 2);
     const std::vector<int>& l_channel = dftu.get_l_channel_vec();
-    const std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& iatlnmipol2iwt
-        = dftu.occmat().iatlnmipol2iwt();
     for (int it = 0; it < ucell.ntype; it++)
     {
         if (!has_valid_correlated_channel(ucell, l_channel, it))
@@ -122,7 +68,7 @@ void accumulate_onsite_force(Plus_U_Base& dftu,
             {
                 for (int ipol = 0; ipol < npol; ipol++)
                 {
-                    const int iwt = iatlnmipol2iwt[iat][lc][0][m][ipol];
+                    const int iwt = dftu.occmat().corr_iwt(iat, lc, m, ipol);
                     const int mu = pv.global2local_row(iwt);
                     const int nu = pv.global2local_col(iwt);
                     if (mu < 0 || nu < 0)
@@ -173,6 +119,12 @@ void cal_force_k(const DftuFsEnv& env,
     for (int dim = 0; dim < 3; dim++)
     {
         DFTU_LCAO::folding_matrix_k(fold_ctx, fsr, ik, dim + 1, 0, &dSm_k[0], kvec_d);
+
+        // DFT+U force at k-point: F_dim = Tr[dS_k/dR_dim * (DM_k * V_onsite)]
+        // rho_pot_onsite = DM_k * V_onsite is a non-symmetric complex matrix.
+        // Two different contractions are needed:
+        //   diag   contribution: dS/dR * rho^C  (conjugate transpose)
+        //   onsite contribution: dS/dR * rho^N  (no transpose)
 
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
@@ -302,7 +254,7 @@ void cal_force_gamma(const DftuFsEnv& env,
     const UnitCell& ucell = env.ucell();
     const int npol = env.npol();
     const int nlocal = pv.get_global_row_size();
-    double* const dsloc[3] = {env.fsr().DSloc_x, env.fsr().DSloc_y, env.fsr().DSloc_z};
+    double* const dsloc[3] = {env.fsr().DSloc_x.data(), env.fsr().DSloc_y.data(), env.fsr().DSloc_z.data()};
 
     const char transN = 'N';
     const char transT = 'T';
@@ -315,6 +267,15 @@ void cal_force_gamma(const DftuFsEnv& env,
     for (int dim = 0; dim < 3; dim++)
     {
         double* tmp_ptr = dsloc[dim];
+
+        // DFT+U force: F_dim = Tr[dS/dR_dim * (DM * V_onsite)]
+        // where rho_pot_onsite = DM * V_onsite is generally NOT symmetric
+        // (product of two symmetric matrices). Two different contractions
+        // are needed:
+        //   diag   contribution: dS/dR * rho^T  (row-indexed trace)
+        //   onsite contribution: dS/dR * rho^N  (no transpose)
+        // This mirrors cal_force_k, which uses rho^C and rho^N for the
+        // complex case.
 
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
@@ -342,7 +303,7 @@ void cal_force_gamma(const DftuFsEnv& env,
 
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
-                transT,
+                transN,
                 nlocal,
                 nlocal,
                 nlocal,
@@ -384,10 +345,10 @@ void cal_stress_gamma(const DftuFsEnv& env,
     const std::string& ks_solver = env.ks_solver();
     const std::vector<double>& orb_cutoff = env.orb_cutoff();
     const int nlocal = pv.get_global_row_size();
-    double* dsloc_x = fsr.DSloc_x;
-    double* dsloc_y = fsr.DSloc_y;
-    double* dsloc_z = fsr.DSloc_z;
-    double* dh_r = fsr.DH_r;
+    double* dsloc_x = fsr.DSloc_x.data();
+    double* dsloc_y = fsr.DSloc_y.data();
+    double* dsloc_z = fsr.DSloc_z.data();
+    double* dh_r = fsr.DH_r.data();
 
     // shared folding context: read-only params bundled for fold_dSR_gamma
     DFTU_LCAO::FoldingCtx fold_ctx{npol, ks_solver, orb_cutoff, &ucell, &pv, &gd};
@@ -447,27 +408,26 @@ void check_folded_arrays(const ForceStressArrays& fsr,
                          const bool cal_stress,
                          const bool gamma_only_local)
 {
-    const double* ds0 = gamma_only_local ? fsr.DSloc_x : fsr.DSloc_Rx;
-    const double* ds1 = gamma_only_local ? fsr.DSloc_y : fsr.DSloc_Ry;
-    const double* ds2 = gamma_only_local ? fsr.DSloc_z : fsr.DSloc_Rz;
-    const bool missing_ds = ds0 == nullptr || ds1 == nullptr || ds2 == nullptr;
+    const bool missing_ds = gamma_only_local
+        ? (fsr.DSloc_x.empty() || fsr.DSloc_y.empty() || fsr.DSloc_z.empty())
+        : (fsr.DSloc_Rx.empty() || fsr.DSloc_Ry.empty() || fsr.DSloc_Rz.empty());
 
     if (cal_force && missing_ds)
     {
         const char* message = gamma_only_local
-            ? "fsr.DSloc_x/y/z are nullptr in gamma_only path; the caller must allocate and fill them. "
+            ? "fsr.DSloc_x/y/z are empty in gamma_only path; the caller must allocate and fill them. "
               "See notes in source/source_lcao/force_stress_lcao.cpp."
-            : "fsr.DSloc_Rx/Ry/Rz are nullptr in multik path; the caller must allocate and fill them. "
+            : "fsr.DSloc_Rx/Ry/Rz are empty in multik path; the caller must allocate and fill them. "
               "See notes in source/source_lcao/force_stress_lcao.cpp.";
         ModuleBase::WARNING_QUIT("DFTU_LCAO::force_stress", message);
     }
-    if (cal_stress && (missing_ds || fsr.DH_r == nullptr))
+    if (cal_stress && (missing_ds || fsr.DH_r.empty()))
     {
         const char* message = gamma_only_local
-            ? "fsr.DSloc_x/y/z or fsr.DH_r is nullptr in gamma_only path; "
+            ? "fsr.DSloc_x/y/z or fsr.DH_r is empty in gamma_only path; "
               "the caller must allocate and fill them. "
               "See notes in source/source_lcao/force_stress_lcao.cpp."
-            : "fsr.DSloc_Rx/Ry/Rz or fsr.DH_r is nullptr in multik path; "
+            : "fsr.DSloc_Rx/Ry/Rz or fsr.DH_r is empty in multik path; "
               "the caller must allocate and fill them. "
               "See notes in source/source_lcao/force_stress_lcao.cpp.";
         ModuleBase::WARNING_QUIT("DFTU_LCAO::force_stress", message);
@@ -508,7 +468,6 @@ void run_gamma_loop(const DftuFsEnv& env,
     Plus_U_Base& dftu = env.dftu();
     const UnitCell& ucell = env.ucell();
     const Parallel_Orbitals& pv = env.pv();
-    const int npol = env.npol();
     const int nlocal = pv.get_global_row_size();
 
     const char transN = 'N';
@@ -557,7 +516,6 @@ void run_k_loop(const DftuFsEnv& env,
     Plus_U_Base& dftu = env.dftu();
     const UnitCell& ucell = env.ucell();
     const Parallel_Orbitals& pv = env.pv();
-    const int npol = env.npol();
     const int nlocal = pv.get_global_row_size();
 
     const char transN = 'N';

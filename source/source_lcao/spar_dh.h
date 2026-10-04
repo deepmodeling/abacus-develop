@@ -6,7 +6,7 @@
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_basis/module_ao/orb_read.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_lcao/lcao_hs_arrays.hpp"
+#include "source_lcao/lcao_hs_arrays.h"
 #include "source_lcao/force_stress_arrays.h"
 #include <vector>
 
@@ -20,7 +20,10 @@ void cal_dH(const UnitCell& ucell,
             const LCAO_Orbitals& orb,
             const int& current_spin,
             const double& sparse_thr,
-            const ModuleBase::matrix& v_eff);
+            const ModuleBase::matrix& v_eff,
+            const bool gamma_only_local,
+            const int nspin,
+            const int npol);
 
 // calculated the derivative of the overlap matrix: <phi|dphi>
 void cal_dS(const UnitCell& ucell,
@@ -29,7 +32,10 @@ void cal_dS(const UnitCell& ucell,
             const Grid_Driver& grid,
             const TwoCenterBundle& two_center_bundle,
             const LCAO_Orbitals& orb,
-            const double& sparse_thr);
+            const double& sparse_thr,
+            const bool gamma_only_local,
+            const int nspin,
+            const int npol);
 
 // be called by 'cal_dH_sparse'
 void set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, const Grid_Driver& grid);
@@ -42,9 +48,11 @@ void cal_dSTN_R(const UnitCell& ucell,
                 const Grid_Driver& grid,
                 const std::vector<double>& orb_cutoff,
                 const int& current_spin,
-                const double& sparse_thr);
+                const double& sparse_thr,
+                const int nspin,
+                const int npol);
 
-void destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays);
+void destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays, const int nspin);
 
 } // namespace sparse_format
 

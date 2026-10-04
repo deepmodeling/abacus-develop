@@ -16,7 +16,7 @@
 05_rtTDDFT: Real-time TDDFT tests.
 06_SDFT: Stochastic DFT tests.
 07_OFDFT: Orbital-free DFT tests.
-08_EXX: Hybrid functional and LR-TDDFT tests.
+08_RI: Resolution-of-identity (RI) based tests, including hybrid functionals, LR-TDDFT, RPA and BSE.
 09_DeePKS: DeePKS tests.
 10_others: Other tests such as LCAO in pw.
 11_PW_GPU: KSDFT calculations in PW basis with multple k-point setting using GPU.

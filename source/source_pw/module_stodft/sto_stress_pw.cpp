@@ -9,7 +9,12 @@
 #include "source_io/module_parameter/parameter.h"
 
 template <typename FPTYPE, typename Device>
-void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
+void Sto_Stress_PW<FPTYPE, Device>::cal_stress(const int nspin,
+                                               const bool domag,
+                                               const bool domag_z,
+                                               const int gga_grad,
+                                               const bool gamma_only_pw,
+                                               ModuleBase::matrix& sigmatot,
                                                const elecstate::ElecState& elec,
                                                ModulePW::PW_Basis* rho_basis,
                                                ModuleSymmetry::Symmetry* p_symm,
@@ -50,13 +55,15 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     {
         sigmaxc(i, i) = -(elec.f_en.etxc - elec.f_en.vtxc) / this->ucell->omega;
     }
-    this->stress_gga(ucell_in, sigmaxc, rho_basis, chr);
+    this->stress_gga(ucell_in, sigmaxc, rho_basis, chr,
+        nspin, domag, domag_z, gga_grad);
 
     // local contribution
     this->stress_loc(ucell_in, sigmaloc, rho_basis, locpp->vloc, p_sf, true, chr);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, ucell_in, p_sf, true, locpp->numeric, chr);
+    this->stress_cc(sigmaxcc, rho_basis, ucell_in, p_sf, true, locpp->numeric, chr,
+        nspin, domag, domag_z, gga_grad, gamma_only_pw);
 
     // nonlocal
     this->sto_stress_nl(sigmanl, wg, p_sf, p_symm, p_kv, wfc_basis, *nlpp, ucell_in, psi_in, stowf);

@@ -25,9 +25,7 @@ namespace GlobalV
  *     - std::ofstream file
  */
 
-#define private public
 #include "../memory_recorder.h"
-#undef private
 
 class MemoryTest : public testing::Test
 {
@@ -141,14 +139,11 @@ TEST_F(MemoryTest, printall)
 
 TEST_F(MemoryTest, finish)
 {
-	*ModuleBase::Memory::name = "tmp_name";
-	*ModuleBase::Memory::class_name = "tmp_class_name";
-	*ModuleBase::Memory::consume = 100.0;
-	ModuleBase::Memory::init_flag = true;
 	ofs.open("tmp");
-	// total memory is an internal parameter and added inside the class Memory
+	// record() allocates the tables and adds the entry that finish() then prints
+	// and releases; total memory is an internal parameter added inside Memory
 	ModuleBase::Memory::record("Charge_Mixing","Rrho",1024*1024,"ModuleBase::Vector3<double>");
 	EXPECT_NO_THROW(ModuleBase::Memory::finish(ofs));
 	ofs.close();
-	EXPECT_FALSE(ModuleBase::Memory::init_flag);
+	EXPECT_FALSE(ModuleBase::Memory::is_initialized());
 }

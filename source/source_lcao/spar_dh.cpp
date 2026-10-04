@@ -11,24 +11,20 @@ void sparse_format::cal_dS(const UnitCell& ucell,
     const Grid_Driver& grid,
     const TwoCenterBundle& two_center_bundle,
     const LCAO_Orbitals& orb,
-    const double& sparse_thr)
+    const double& sparse_thr,
+    const bool gamma_only_local,
+    const int nspin,
+    const int npol)
 {
 ModuleBase::TITLE("sparse_format", "cal_dS");
 
 sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
-const int nnr = PARAM.globalv.gamma_only_local ? pv.nloc : pv.nnr;
+const int nnr = gamma_only_local ? pv.nloc : pv.nnr;
 
 ForceStressArrays fsr_dh;
-fsr_dh.DHloc_fixedR_x = new double[nnr];
-fsr_dh.DHloc_fixedR_y = new double[nnr];
-fsr_dh.DHloc_fixedR_z = new double[nnr];
-ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_x, nnr);
-ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_y, nnr);
-ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_z, nnr);
-// the pointers of dS is different from dH, use the dh pointers to reuse the print functions
-fsr_dh.DSloc_Rx = fsr_dh.DHloc_fixedR_x;
-fsr_dh.DSloc_Ry = fsr_dh.DHloc_fixedR_y;
-fsr_dh.DSloc_Rz = fsr_dh.DHloc_fixedR_z;
+fsr_dh.DHloc_fixedR_x.resize(nnr, 0.0);
+fsr_dh.DHloc_fixedR_y.resize(nnr, 0.0);
+fsr_dh.DHloc_fixedR_z.resize(nnr, 0.0);
 // cal dS=<phi|dphi> in LCAO
 const bool cal_deri = true;
 const bool cal_stress = false;
@@ -44,10 +40,7 @@ LCAO_domain::build_ST_new(fsr_dh,
        nullptr,
        false); // delete unused parameter lm.Hloc_fixedR
 
-sparse_format::cal_dSTN_R(ucell,pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), 0, sparse_thr);
-delete[] fsr_dh.DHloc_fixedR_x;
-delete[] fsr_dh.DHloc_fixedR_y;
-delete[] fsr_dh.DHloc_fixedR_z;
+sparse_format::cal_dSTN_R(ucell, pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), 0, sparse_thr, nspin, npol);
 return;
 }
 void sparse_format::cal_dH(const UnitCell& ucell,
@@ -58,23 +51,22 @@ void sparse_format::cal_dH(const UnitCell& ucell,
                            const LCAO_Orbitals& orb,
                            const int& current_spin,
                            const double& sparse_thr,
-                           const ModuleBase::matrix& v_eff)
+                           const ModuleBase::matrix& v_eff,
+                           const bool gamma_only_local,
+                           const int nspin,
+                           const int npol)
 {
     ModuleBase::TITLE("sparse_format", "cal_dH");
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
-    const int nnr = PARAM.globalv.gamma_only_local ? pv.nloc : pv.nnr;
+    const int nnr = gamma_only_local ? pv.nloc : pv.nnr;
 
     ForceStressArrays fsr_dh;
 
-    fsr_dh.DHloc_fixedR_x = new double[nnr];
-    fsr_dh.DHloc_fixedR_y = new double[nnr];
-    fsr_dh.DHloc_fixedR_z = new double[nnr];
-
-    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_x, nnr);
-    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_y, nnr);
-    ModuleBase::GlobalFunc::ZEROS(fsr_dh.DHloc_fixedR_z, nnr);
+    fsr_dh.DHloc_fixedR_x.resize(nnr, 0.0);
+    fsr_dh.DHloc_fixedR_y.resize(nnr, 0.0);
+    fsr_dh.DHloc_fixedR_z.resize(nnr, 0.0);
     // cal dT=<phi|kin|dphi> in LCAO
     // cal T + VNL(P1) in LCAO basis
     const bool cal_deri = true;
@@ -100,20 +92,16 @@ void sparse_format::cal_dH(const UnitCell& ucell,
                                        *(two_center_bundle.overlap_orb_beta),
                                        &grid);
 
-    sparse_format::cal_dSTN_R(ucell,pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), current_spin, sparse_thr);
+    sparse_format::cal_dSTN_R(ucell, pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), current_spin, sparse_thr, nspin, npol);
 
-    delete[] fsr_dh.DHloc_fixedR_x;
-    delete[] fsr_dh.DHloc_fixedR_y;
-    delete[] fsr_dh.DHloc_fixedR_z;
-
-    if(PARAM.inp.nspin==2)
+    if(nspin==2)
     {
         const double* vr_eff1
             = v_eff.nc * v_eff.nr > 0 ? &(v_eff(current_spin, 0)) : nullptr;
-        if (!PARAM.globalv.gamma_only_local) 
+        if (!gamma_only_local)
         {
             ModuleGint::cal_dvlocal_R_sparse(
-                PARAM.inp.nspin, PARAM.globalv.npol, current_spin, PARAM.globalv.nlocal,
+                nspin, npol, current_spin, PARAM.globalv.nlocal,
                 sparse_thr, vr_eff1, pv, ucell, grid, HS_Arrays);
         }
     }
@@ -152,7 +140,9 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
                                const Grid_Driver& grid,
                                const std::vector<double>& orb_cutoff,
                                const int& current_spin,
-                               const double& sparse_thr)
+                               const double& sparse_thr,
+                               const int nspin,
+                               const int npol)
 {
     ModuleBase::TITLE("sparse_format", "cal_dSTN_R");
 
@@ -220,7 +210,7 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
 
                     Abfs::Vector3_Order<int> dR(grid.getBox(ad).x, grid.getBox(ad).y, grid.getBox(ad).z);
 
-                    for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ii++)
+                    for (int ii = 0; ii < atom1->nw * npol; ii++)
                     {
                         const int iw1_all = start + ii;
                         const int mu = pv.global2local_row(iw1_all);
@@ -230,7 +220,7 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
                             continue;
                         }
 
-                        for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++)
+                        for (int jj = 0; jj < atom2->nw * npol; jj++)
                         {
                             int iw2_all = start2 + jj;
                             const int nu = pv.global2local_col(iw2_all);
@@ -240,7 +230,7 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
                                 continue;
                             }
 
-                            if (PARAM.inp.nspin != 4)
+                            if (nspin != 4)
                             {
                                 temp_value_double = fsr.DHloc_fixedR_x[index];
                                 if (std::abs(temp_value_double) > sparse_thr)
@@ -273,11 +263,11 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
     return;
 }
 
-void sparse_format::destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays)
+void sparse_format::destroy_dH_R_sparse(LCAO_HS_Arrays& HS_Arrays, const int nspin)
 {
     ModuleBase::TITLE("LCAO_domain", "destroy_dH_R_sparse");
 
-    if (PARAM.inp.nspin != 4)
+    if (nspin != 4)
     {
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_up;
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> empty_dHRx_sparse_down;

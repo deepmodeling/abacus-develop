@@ -1,6 +1,6 @@
 #ifndef PWBASIS_SUP_H
 #define PWBASIS_SUP_H
-
+#include "pw_basis.h"
 
 namespace ModulePW
 {
@@ -59,3 +59,4 @@ class PW_Basis_Sup : public PW_Basis
 
 } // namespace ModulePW
 #endif // PWBASIS_SUP_H
+#include "pw_basis_big.h" //temporary it will be removed

@@ -2,6 +2,7 @@
 // TEST for PW_Basis_big & PW_Basis_big_k
 //---------------------------------------------
 #include "../pw_basis_k.h"
+#include "../pw_basis_sup.h"
 #ifdef __MPI
 #include "test_tool.h"
 #include "source_base/parallel_global.h"

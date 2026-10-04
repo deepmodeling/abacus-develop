@@ -36,7 +36,7 @@ WITH_ELPA="install"
 
 # Utility Libraries
 WITH_CEREAL="install"
-WITH_RAPIDJSON="install"
+WITH_JSON="install"
 
 # Advanced Features (EXX calculations)
 WITH_LIBRI="install"
@@ -101,7 +101,7 @@ run_toolchain_with_log compile.log ./install_abacus_toolchain_new.sh \
   --with-fftw="$WITH_FFTW" \
   --with-elpa="$WITH_ELPA" \
   --with-cereal="$WITH_CEREAL" \
-  --with-rapidjson="$WITH_RAPIDJSON" \
+  --with-json="$WITH_JSON" \
   --with-libtorch="$WITH_LIBTORCH" \
   --with-nep="$WITH_NEP" \
   --with-libnpy="$WITH_LIBNPY" \

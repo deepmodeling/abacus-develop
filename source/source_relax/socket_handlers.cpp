@@ -5,6 +5,9 @@
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
 #include "source_io/module_parameter/input_parameter.h"
+#ifdef __JSON
+#include "source_io/module_json/output_info.h"
+#endif
 
 #include <algorithm>
 #include <cmath>
@@ -443,6 +446,10 @@ void handle_posdata(IpiSocket& socket,
     PosdataPayload payload = read_posdata(socket, *context.ucell, context.state);
     bcast_posdata(payload);
     check_posdata_geometry(context, payload, context);
+#ifdef __JSON
+    // Each POSDATA frame is one electronic-structure output step.
+    Json::init_output_array_obj();
+#endif
     run_esolver_for_positions(*context.ucell, context.esolver, payload.positions, context.istep);
 
     ComputedFrame computed;

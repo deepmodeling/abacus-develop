@@ -4,7 +4,12 @@
 #include "source_cell/unitcell.h"
 #include "source_base/timer.h"
 
-Langevin::Langevin(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdcell_in)
+Langevin::Langevin(const MD_para& mdp_in,
+                   const bool cal_stress_in,
+                   const bool init_vel,
+                   const int my_rank_in,
+                   MDCell& mdcell_in)
+    : MD_base(mdp_in, cal_stress_in, init_vel, my_rank_in, mdcell_in)
 {
     /// convert to a.u. unit
     assert(ModuleBase::AU_to_FS!=0.0);

@@ -1,119 +1,28 @@
 #pragma once
-#include "irreducible_sector.h"
+#include "source_cell/module_symmetry/symm_rotation_k.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include <RI/global/Tensor.h>
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_cell/module_symmetry/symm_rot_spin.h"
 
 namespace ModuleSymmetry
 {
-    using Tap = std::pair<int, int>;
-    using TC = std::array<int, 3>;
-    using TapR = std::pair<Tap, TC>;
-    using TCdouble = Abfs::Vector3_Order<double>;
-
-    class Symmetry_rotation
+    /// Real-space (RI::Tensor / HContainer) H(R) and RI-coefficient symmetry restoration for
+    /// EXX/RPA, built on top of the LibRI-independent k-space restoration in
+    /// ModuleSymmetry::Symmetry_rotation_k (source_cell/module_symmetry/symm_rotation_k.h),
+    /// which provides cal_Ms/restore_dm/rot_matrix_ao and the shared rotation-matrix machinery
+    /// (rotmat_Slm_, irs_, Ms_, spin_U_, ...). Only the parts that genuinely need LibRI (RI::Tensor
+    /// atom-pair maps, HContainer real-space rotation) live here.
+    class Symmetry_rotation : public Symmetry_rotation_k
     {
     public:
         Symmetry_rotation() {};
         ~Symmetry_rotation() {};
 
         //--------------------------------------------------------------------------------
-        // getters
-        const std::map<Tap, std::set<TC>>& get_irreducible_sector()const { return this->irs_.get_irreducible_sector(); }
-        TCdouble get_return_lattice(const Symmetry& symm,
-            const ModuleBase::Matrix3& gmatd, const TCdouble gtransd,
-            const TCdouble& posd_a1, const TCdouble& posd_a2)const
-        {
-            return this->irs_.get_return_lattice(symm, gmatd, gtransd, posd_a1, posd_a2);
-        }
-        TCdouble get_return_lattice(const int iat, const int isym) const
-        {
-            return this->irs_.get_return_lattice(iat, isym);
-        }
-        /// the rotation matrix under the basis of S_l^m. size: [nsym][lmax][nm*nm]
-        const std::vector<std::vector<RI::Tensor<std::complex<double>>>>& rotmat_Slm = this->rotmat_Slm_;
-        const int& abfs_Lmax = this->abfs_Lmax_;
-        //--------------------------------------------------------------------------------
         // setters
-        void find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st,
-            const std::vector<TC>& Rs, const TC& period, const Lattice& lat)
-        {
-            this->irs_.find_irreducible_sector(symm, atoms, st, Rs, period, lat);
-        }
-        void set_abfs_Lmax(const int l) { this->abfs_Lmax_ = l; }
         void set_Cs_rotation(const std::vector<std::vector<int>>& abfs_l_nchi);
         //--------------------------------------------------------------------------------
-        /// functions  to contruct rotation matrix in AO-representation
-
-        /// The top-level calculation interface of this class. calculate the rotation matrix in AO representation: M
-        /// only need once call in each ion step (decided by the configuration)
-        /// @param kstars  equal k points to each ibz-kpont, corresponding to a certain symmetry operations. 
-        void cal_Ms(const K_Vectors& kv,
-            //const std::vector<std::map<int, TCdouble>>& kstars,
-            const UnitCell& ucell, const Parallel_2D& pv);
-
-        /// Use calculated M matrix to recover D(k) from D(k_ibz): D(k) = M(R, k)^\dagger D(k_ibz) M(R, k)
-        /// the link "ik_ibz-isym-ik" can be found in kstars: k_bz = gmat[isym](k)
-        std::vector<std::vector<std::complex<double>>>restore_dm(const K_Vectors& kv,
-            const std::vector<std::vector<std::complex<double>>>& dm_k_ibz,
-            const Parallel_2D& pv)const;
-        std::vector<std::vector<double>>restore_dm(const K_Vectors& kv,
-            const std::vector<std::vector<double>>& dm_k_ibz,
-            const Parallel_2D& pv)const;
-        std::vector<std::complex<double>> rot_matrix_ao(const std::vector<std::complex<double>>& DMkibz,
-            const int ik_ibz, const int kstar_size, const int isym, const Parallel_2D& pv, const bool TRS_conj = false) const;
-
-        /// (nspin=4) build the 2*nao spin operator Sigma_y = I_nao (x) sigma_y in 2d-block layout.
-        std::vector<std::complex<double>> set_sigma_y_2d(const Parallel_2D& pv) const;
-
-        /// (nspin=4) time-reversal on the spin density matrix: D(k) = sigma_y D^*(-k) sigma_y,
-        /// realized distribution-safely as scale * Sigma_y * conj(X) * Sigma_y (X is the already
-        /// space-group-rotated D(-k) stored in the transposed 2d-block convention).
-        std::vector<std::complex<double>> trs_spin_rotate(const std::vector<std::complex<double>>& X,
-            const std::vector<std::complex<double>>& sigma_y, const Parallel_2D& pv, const double scale) const;
-
-        /// Inject synthetic AO rotations for density-restoration regression tests.
-        void set_density_rotations_for_testing(
-            const std::vector<std::map<int, std::vector<std::complex<double>>>>& rotations,
-            const std::vector<std::vector<int>>& little_groups,
-            const int nrot)
-        {
-            this->Ms_ = rotations;
-            this->little_groups_ = little_groups;
-            this->nsym_ = nrot;
-        }
-
-        /// calculate Wigner D matrix
-        double wigner_d(const double beta, const int l, const int m1, const int m2) const;
-        std::complex<double> wigner_D(const TCdouble& euler_angle, const int l, const int m1, const int m2, const bool inv) const;
-
-        /// c^l_{m1, m2}=<Y_l^m1|S_l^m2>
-        std::complex<double> ovlp_Ylm_Slm(const int l, const int m1, const int m2) const;
-
-        /// calculate euler angle from rotation matrix
-        TCdouble get_euler_angle(const ModuleBase::Matrix3& gmatc) const;
-
-        /// T_mm' = [c^\dagger D c]_mm', the rotation matrix in the representation of real sphere harmonics
-        /// @param nop  number of operations in gmatc; <0 means nsym_ (the unitary ones only).
-        ///             Pass nsym_+nanti_ to also build the antiunitary operations' T_l.
-        void cal_rotmat_Slm(const ModuleBase::Matrix3* gmatc, const int lmax, const int nop);
-
-        /// set a block matrix onto a 2d-parallelized matrix(col-maj), at the position (starti, startj) 
-        /// if trans=true, the block matrix is transposed before setting
-        void set_block_to_mat2d(const int starti, const int startj, const RI::Tensor<std::complex<double>>& block,
-            std::vector<std::complex<double>>& obj_mat, const Parallel_2D& pv, const bool trans = false) const;
-        void set_block_to_mat2d(const int starti, const int startj, const RI::Tensor<std::complex<double>>& block,
-            std::vector<double>& obj_mat, const Parallel_2D& pv, const bool trans = false) const;
-
-        /// 2d-block parallized rotation matrix in AO-representation, denoted as M.
-        /// finally we will use D(k)=M(R, k)^\dagger*D(Rk)*M(R, k) to recover D(k) from D(Rk).
-        std::vector<std::complex<double>> contruct_2d_rot_mat_ao(const Symmetry& symm, const Atom* atoms, const Statistics& cell_st,
-            const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv,
-            const SpinRotation::Su2& spin_U /*= SpinRotation::Su2{ 1.0, 0.0, 0.0, 1.0 }*/) const;
-
-        std::vector<std::vector<RI::Tensor<std::complex<double>>>>& get_rotmat_Slm() { return this->rotmat_Slm_; }
 
         //--------------------------------------------------------------------------------
         /// The main functions to rotate matrices
@@ -145,7 +54,7 @@ namespace ModuleSymmetry
         template<typename Tdata>    // RI::Tensor type, using col-major implementation
         void test_HR_rotation(const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
             const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR_full);
-        template<typename Tdata>    // test the rotation of RI coefficients 
+        template<typename Tdata>    // test the rotation of RI coefficients
         void test_Cs_rotation(const Symmetry& symm, const Atom* atoms, const Statistics& st,
             const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& Cs_full)const;
         template<typename TR>   // HContainer type, using row-major implementation
@@ -185,53 +94,19 @@ namespace ModuleSymmetry
         RI::Tensor<Tdata> set_rotation_matrix(const Atom& a, const int& isym)const;
         template<typename Tdata>
         RI::Tensor<Tdata> set_rotation_matrix_abf(const int& type, const int& isym)const;
+
+        /// RI::Tensor mirror of rotmat_Slm_ (which is stored as ModuleBase::ComplexMatrix, shared
+        /// with the LibRI-free k-space code), rebuilt lazily and cached across the many
+        /// set_rotation_matrix/set_rotation_matrix_abf calls within one ion step (one per atom
+        /// pair/cell), instead of reconverting the same small block every time.
+        const RI::Tensor<std::complex<double>>& get_rotmat_Slm_tensor(const int isym, const int l)const;
+        mutable std::vector<std::vector<RI::Tensor<std::complex<double>>>> rotmat_Slm_tensor_;
+        mutable int rotmat_Slm_tensor_version_ = -1;
         //--------------------------------------------------------------------------------
 
-        int nsym_ = 1;
-        /// (nspin=4, magnetic) number of ANTIUNITARY elements Theta*g of the Shubnikov group.
-        /// Their orbital rotations / return lattices / Ms are appended after the nsym_ unitary
-        /// ones, so the raw index isym in [nsym_, nsym_+nanti_) addresses gmatrix_anti[isym-nsym_].
-        int nanti_ = 0;
-        /// (nspin=4) true when the configuration carries a non-zero local moment. Then pure time
-        /// reversal is NOT a symmetry (it reverses m) and the k-star must be restored with the
-        /// Shubnikov elements Theta*gmatrix_anti[] instead of the generic -k shortcut.
-        bool magnetic_nspin4_ = false;
-
-        double eps_ = 1e-6;
-
-        // (removed, not needed) TRS_first_: 
-        // it used to short-circuit any star member equal to -k to pure time reversal, 
-        // which silently pre-empted the genuine space-group operation that produced it.
-        // The operation is now decided by the index alone: isym<nsym_ unitary / isym>=nsym_ antiunitary. 
-        // A -k member reached through the TRS doubling lands on the antiunitary branch with M=I, 
-        // which reduces exactly to the direct conjugation.
-
         bool reduce_Cs_ = false;
-        int abfs_Lmax_ = 0;
 
         std::vector<std::vector<int>> abfs_l_nchi_;///< number of abfs for each angular momentum
-
-        /// the rotation matrix under the basis of S_l^m. size: [nsym][lmax][nm*nm]
-        std::vector<std::vector<RI::Tensor<std::complex<double>>>> rotmat_Slm_;
-        // [natom][nsym], phase factor corresponding to a certain kvec_d_ibz
-        // std::vector<std::vector<std::complex<double>>> phase_factor_;
-
-        /// The unitary matrix associate D(Rk) with D(k) for each ibz-kpoint Rk and each symmetry operation.
-        /// size: [nks_ibz][nsym][nbasis*nbasis], only need to calculate once.
-        std::vector<std::map<int, std::vector<std::complex<double>>>> Ms_;
-
-        /// Unitary operations fixing each IBZ k point modulo reciprocal lattice vectors.
-        /// Geometry data built with Ms_ in cal_Ms, not an SCF workflow switch.
-        std::vector<std::vector<int>> little_groups_;
-
-        /// (nspin=4) the SU(2) spin-1/2 rotation U(isym) for each symmetry operation, size [nsym].
-        /// The spinor AO rotation is T(isym) (x) U(isym); restore_HR_nspin4 uses it to mix the 4 spin
-        /// channels of the real-space EXX H(R). Filled in cal_Ms (identity for nspin<4).
-        std::vector<SpinRotation::Su2> spin_U_;
-
-        /// irreducible sector
-        Irreducible_Sector irs_;
-
     };
 
     template<typename T>  std::string vec3_fmt(const T& x, const T& y, const T& z)
@@ -250,4 +125,4 @@ namespace ModuleSymmetry
 }
 
 #include "symm_rotation_r.hpp"
-#include "symm_rotation_r_hcontainer.hpp"      
+#include "symm_rotation_r_hcontainer.hpp"

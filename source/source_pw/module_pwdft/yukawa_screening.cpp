@@ -43,10 +43,10 @@ void YukawaScreening::init(const UnitCell& cell,
             {
                 this->Fk_[it][l][n].resize(l + 1, 0.0);
             }
-
-            this->U_Yukawa_[it][l].resize(N, 0.0);
-            this->J_Yukawa_[it][l].resize(N, 0.0);
         }
+        // only the first radial channel (n=0) of each l carries U/J
+        this->U_Yukawa_[it].resize(NL, 0.0);
+        this->J_Yukawa_[it].resize(NL, 0.0);
     }
 }
 
@@ -224,25 +224,25 @@ void YukawaScreening::cal_slater_UJ(const UnitCell& ucell,
 
                 if (L == 1)
                 {
-                    this->U_Yukawa_[T][L][0] = this->Fk_[T][L][0][0];
-                    this->J_Yukawa_[T][L][0] = this->Fk_[T][L][0][1] / 5.0;
+                    this->U_Yukawa_[T][L] = this->Fk_[T][L][0][0];
+                    this->J_Yukawa_[T][L] = this->Fk_[T][L][0][1] / 5.0;
                 }
                 else if (L == 2)
                 {
-                    this->U_Yukawa_[T][L][0] = this->Fk_[T][L][0][0];
-                    this->J_Yukawa_[T][L][0] = (this->Fk_[T][L][0][1] + this->Fk_[T][L][0][2]) / 14.0;
+                    this->U_Yukawa_[T][L] = this->Fk_[T][L][0][0];
+                    this->J_Yukawa_[T][L] = (this->Fk_[T][L][0][1] + this->Fk_[T][L][0][2]) / 14.0;
                 }
                 else if (L == 3)
                 {
-                    this->U_Yukawa_[T][L][0] = this->Fk_[T][L][0][0];
-                    this->J_Yukawa_[T][L][0] = (286.0 * this->Fk_[T][L][0][1]
+                    this->U_Yukawa_[T][L] = this->Fk_[T][L][0][0];
+                    this->J_Yukawa_[T][L] = (286.0 * this->Fk_[T][L][0][1]
                                                 + 195.0 * this->Fk_[T][L][0][2]
                                                 + 250.0 * this->Fk_[T][L][0][3]) / 6435.0;
                 }
 
                 // Hartree to Rydeberg
-                this->U_Yukawa_[T][L][0] *= 2.0;
-                this->J_Yukawa_[T][L][0] *= 2.0;
+                this->U_Yukawa_[T][L] *= 2.0;
+                this->J_Yukawa_[T][L] *= 2.0;
             } // end if
         } // end L
     } // end T

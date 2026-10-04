@@ -8,15 +8,19 @@
 #include <algorithm>
 #include <iomanip>
 
-MD_base::MD_base(const Parameter& param_in, MDCell& mdcell_in)
-: mdp(param_in.mdp), mdcell(mdcell_in)
+MD_base::MD_base(const MD_para& mdp_in,
+                 const bool cal_stress_in,
+                 const bool init_vel,
+                 const int my_rank_in,
+                 MDCell& mdcell_in)
+: mdp(mdp_in), mdcell(mdcell_in)
 {
 #ifdef __MPI
     my_rank = mdcell.mpi_rank();
 #else
-    my_rank = param_in.globalv.myrank;
+    my_rank = my_rank_in;
 #endif
-    cal_stress = param_in.inp.cal_stress;
+    cal_stress = cal_stress_in;
     srand((mdp.md_seed >= 0 ? mdp.md_seed : 1) + my_rank);
 
     stop = false;
@@ -35,7 +39,7 @@ MD_base::MD_base(const Parameter& param_in, MDCell& mdcell_in)
     step_ = 0;
     step_rst_ = 0;
 
-    MD_func::init_vel(mdcell, param_in.inp.init_vel, mdp.md_restart, md_tfirst, frozen_freedom_);
+    MD_func::init_vel(mdcell, init_vel, mdp.md_restart, md_tfirst, frozen_freedom_);
     t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
 }
 
@@ -164,9 +168,11 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     }
 
     std::cout << std::endl;
+    std::cout << std::setprecision(10);
     std::cout << " " << std::left << std::setw(20) << 2 * (potential + kinetic) << std::left << std::setw(20)
               << 2 * potential << std::left << std::setw(20) << 2 * kinetic << std::left << std::setw(20)
               << t_current * ModuleBase::Hartree_to_K;
+    std::cout << std::setprecision(8);
 
     if (cal_stress)
     {
@@ -198,9 +204,11 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     }
 
     ofs << std::endl;
+    ofs << std::setprecision(10);
     ofs << " " << std::left << std::setw(20) << 2 * (potential + kinetic) << std::left << std::setw(20) << 2 * potential
         << std::left << std::setw(20) << 2 * kinetic << std::left << std::setw(20)
         << t_current * ModuleBase::Hartree_to_K;
+    ofs << std::setprecision(8);
 
     if (cal_stress)
     {

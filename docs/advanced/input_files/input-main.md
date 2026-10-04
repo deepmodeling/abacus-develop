@@ -96,6 +96,7 @@
     - [pseudo\_rcut](#pseudo_rcut)
     - [pseudo\_mesh](#pseudo_mesh)
     - [nspin](#nspin)
+    - [gga\_grad](#gga_grad)
     - [smearing\_method](#smearing_method)
     - [smearing\_sigma](#smearing_sigma)
     - [smearing\_sigma\_temp](#smearing_sigma_temp)
@@ -156,7 +157,6 @@
     - [fixed\_atoms](#fixed_atoms)
   - [Output information](#output-information)
     - [out\_freq\_ion](#out_freq_ion)
-    - [out\_freq\_td](#out_freq_td)
     - [out\_freq\_elec](#out_freq_elec)
     - [out\_chg](#out_chg)
     - [out\_pot](#out_pot)
@@ -346,6 +346,7 @@
     - [exxace](#exxace)
     - [exx\_gamma\_extrapolation](#exx_gamma_extrapolation)
     - [ecutexx](#ecutexx)
+    - [exx\_batch\_size](#exx_batch_size)
     - [exx\_thr\_type](#exx_thr_type)
     - [exx\_ene\_thr](#exx_ene_thr)
   - [Molecular dynamics](#molecular-dynamics)
@@ -453,12 +454,9 @@
     - [out\_wannier\_eig](#out_wannier_eig)
     - [out\_wannier\_unk](#out_wannier_unk)
     - [out\_wannier\_wvfn\_formatted](#out_wannier_wvfn_formatted)
-  - [RT-TDDFT: Real-Time Time-Dependent Density Functional Theory](#rt-tddft-real-time-time-dependent-density-functional-theory)
+  - [Real-Time TDDFT (Common)](#real-time-tddft-common)
     - [estep\_per\_md](#estep_per_md)
     - [td\_dt](#td_dt)
-    - [td\_edm](#td_edm)
-    - [td\_print\_eij](#td_print_eij)
-    - [td\_propagator](#td_propagator)
     - [td\_vext](#td_vext)
     - [td\_vext\_dire](#td_vext_dire)
     - [td\_stype](#td_stype)
@@ -491,14 +489,24 @@
     - [td\_supsine\_sigma](#td_supsine_sigma)
     - [td\_supsine\_tstart](#td_supsine_tstart)
     - [td\_supsine\_tend](#td_supsine_tend)
-    - [init\_vecpot\_file](#init_vecpot_file)
     - [ocp](#ocp)
     - [ocp\_set](#ocp_set)
+    - [out\_freq\_td](#out_freq_td)
     - [out\_dipole](#out_dipole)
     - [out\_current](#out_current)
     - [out\_current\_k](#out_current_k)
     - [out\_efield](#out_efield)
+  - [Real-Time TDDFT (LCAO)](#real-time-tddft-lcao)
+    - [td\_edm](#td_edm)
+    - [td\_print\_eij](#td_print_eij)
+    - [td\_propagator](#td_propagator)
+    - [init\_vecpot\_file](#init_vecpot_file)
     - [out\_vecpot](#out_vecpot)
+  - [Real-Time TDDFT (PW)](#real-time-tddft-pw)
+    - [lin\_solver](#lin_solver)
+    - [lin\_precond](#lin_precond)
+    - [lin\_thr](#lin_thr)
+    - [lin\_maxiter](#lin_maxiter)
   - [Variables useful for debugging](#variables-useful-for-debugging)
     - [nurse](#nurse)
     - [t\_in\_h](#t_in_h)
@@ -1363,6 +1371,17 @@
   - 4: Noncollinear or spin-orbit calculations. Set nspin to 4 explicitly when noncolin or lspinorb is enabled.
 - **Default**: 1
 
+### gga_grad
+
+- **Type**: Integer
+- **Description**: Selects the local spin mapping for LDA/GGA functionals in magnetic nspin=4 calculations.
+  - 0: preserves the original algorithm (default).
+  - 1: uses the local magnetization magnitude instead of the global quantization axis in the built-in GGA gradient correction. For LIBXC functionals, 0 and 1 are equivalent.
+  - 2: uses a C2-regularized magnetization magnitude with eta = 1e-3 in atomic density units. The spin densities are (abs(n + rho_core) +/- min(S_eta(m), abs(n + rho_core)))/2. GGA gradients are the local-map Jacobian applied to the FFT gradients of the four density channels. The potential reverses this same discrete energy graph, including the radial Hessian and density/sigma clipping branches; the GGA stress uses the corresponding metric derivative.
+  For r = |m| and x = r/eta, S_eta = eta*x^3*(3*x^2 - 8*x + 6) for r &lt; eta, and S_eta = r otherwise. The regularization is part of the functional definition, including its first and second derivatives.
+  Mode 2 also uses this local map for the LDA contribution. Other spin configurations retain their existing behavior.
+- **Default**: 0
+
 ### smearing_method
 
 - **Type**: String
@@ -1888,14 +1907,6 @@
   > Note: In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.
 - **Default**: 0
 
-### out_freq_td
-
-- **Type**: Integer
-- **Description**: Controls the output interval in completed electronic evolution steps during RT-TDDFT calculations. When set to a positive integer n, detailed information (see out_freq_ion) is printed every n electron time-evolution steps (i.e., every STEP OF ELECTRON EVOLVE). For example, if you wish to output information once per ionic step, you should set out_freq_td equal to estep_per_md, since one ionic step corresponds to estep_per_md electronic evolution steps.
-
-  > Note: This parameter is only active in RT-TDDFT mode (esolver_type = tddft). It has no effect in ground-state calculations.
-- **Default**: 0
-
 ### out_freq_elec
 
 - **Type**: Integer
@@ -2037,13 +2048,12 @@
 ### out_dos
 
 - **Type**: Integer
-- **Description**: Whether to output the density of states (DOS). For more information, refer to the dos.md.
+- **Description**: Whether to output the density of states (DOS) and projected density of states (PDOS). For more information, refer to the dos.md.
   - 0: no output
-  - 1: output the density of states (DOS)
-   - nspin=1 or 4: doss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
-   - nspin=2: doss1g{geom}_{basis}.txt and doss2g{geom}_{basis}.txt for two spin channles.
-  - 2: (LCAO) output the density of states (DOS) and the projected density of states (PDOS)
-  - 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen
+  - 1: output the density of states (DOS) and projected density of states (PDOS, LCAO only)
+   - nspin=1 or 4: doss1g{geom}_{basis}.txt and pdoss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
+   - nspin=2: doss1/doss2 and pdoss1/pdoss2 files for two spin channels.
+  Note: values 2 and 3 are no longer supported. Setting out_dos to 2 or 3 will raise an error.
 - **Default**: 0
 
 ### out_ldos
@@ -2074,7 +2084,7 @@
 ### out_stru
 
 - **Type**: Integer
-- **Description**: Controls the output of structure files per ionic step in geometry relaxation calculations. The files are written to the OUT.{suffix}/ directory. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. When out_freq_ion is positive, the numbered files STRU{istep} (or STRU{istep}.cif) are written every out_freq_ion steps; when out_freq_ion is 0, no numbered files are output.
+- **Description**: Controls the output of structure files per ionic step. The files are written to the OUT.{suffix}/ directory. Each file corresponds to the structure at RELAX STEP ${istep} (for scf/nscf this is the single step), i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. When out_freq_ion is positive, the numbered files STRU{istep} (or STRU{istep}.cif) are written every out_freq_ion steps during geometry relaxation; when out_freq_ion is 0, no numbered files are output. This parameter is effective for scf/nscf/relax/cell-relax; for scf/nscf only STRU_FINAL (or STRU_FINAL.cif) is written, and structure output is disabled by default unless out_stru is set explicitly. Molecular dynamics structure output is instead controlled by md_restartfreq (STRU_MD_*).
     - 0: No structure files are output.
     - 1: ABACUS STRU format files are output. The latest structure is written to STRU_NOW (overwritten each step), the numbered file STRU{istep} (e.g., STRU1, STRU2) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL. No CIF files are output.
     - 2: CIF format files are output. The latest structure is written to STRU_NOW.cif (overwritten each step), the numbered file STRU{istep}.cif (e.g., STRU1.cif, STRU2.cif) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL.cif. No non-CIF files are output.
@@ -2174,7 +2184,7 @@
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: *[`basis_type`](#basis_type)==lcao and [`gamma_only`](#gamma_only)==0*
-- **Description**: Generate files containing the kinetic energy matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_hsr. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
+- **Description**: Generate files containing the kinetic energy matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_hsr. The name of the files will be tr_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
 
   > Note: In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.
 - **Default**: False 8
@@ -2334,7 +2344,7 @@
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: *[`basis_type`](#basis_type)==lcao*
-- **Description**: Whether to print the expectation value of the angular momentum operator , , and in the basis of the localized atomic orbitals. The files are named OUT.{suffix}_Lx.dat, OUT.{suffix}_Ly.dat, and OUT.{suffix}_Lz.dat. The second integer controls the precision of the output.
+- **Description**: Whether to print the expectation value of the angular momentum operator , , and in the basis of the localized atomic orbitals. The files are named lx_nao.txt, ly_nao.txt, and lz_nao.txt (or lxg{step+1}_nao.txt etc. when out_freq_ion is set). The second integer controls the precision of the output.
 - **Default**: False 8
 
 ### out_xc_r
@@ -2522,8 +2532,8 @@
 ### dos_edelta_ev
 
 - **Type**: Real
-- **Description**: The step size in writing Density of States (DOS)
-- **Default**: 0.01
+- **Description**: The step size in writing Density of States (DOS). The default value was changed from 0.01 to 0.03 eV.
+- **Default**: 0.03
 - **Unit**: eV
 
 ### dos_sigma
@@ -3460,9 +3470,15 @@
 ### ecutexx
 
 - **Type**: Real
-- **Description**: The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. Reducing ecutexx below ecutrho may significantly accelerate EXX computations. This speed improvement comes with a reduced numerical accuracy in the exchange energy calculation.
+- **Description**: The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. The pair-density G-sphere of the exchange operator, the EXX energy, and the EXX stress are all truncated at this value. If ecutexx yields a smaller FFT box and every |k+G|^2 of the wavefunctions fits inside it (i.e. ecutexx should not be smaller than ecutwfc), all EXX FFTs run on that smaller grid (QE ecutfock-style), which can significantly accelerate EXX computations. If the small grid is not usable (box not smaller, wavefunctions do not fit, or the FFT box is distributed over MPI), a warning is printed and the full grid is used. Reducing ecutexx below ecutrho reduces the numerical accuracy of the exchange contribution.
 - **Default**: same as ecutrho
 - **Unit**: Ry
+
+### exx_batch_size
+
+- **Type**: Integer
+- **Description**: Number of bands processed per round of the EXX batched FFT path. 0 (the default) processes all bands in one round, which is fastest but needs nbands * nxyz work buffers; a positive value processes the bands in chunks of that width, trading some performance for a proportionally smaller memory footprint. The result is independent of the chunking.
+- **Default**: 0
 
 ### exx_thr_type
 
@@ -3810,7 +3826,7 @@
 
 ### cal_syns
 
-- **Type**: Boolean [Integer](optional)
+- **Type**: Boolean \[Integer\](optional)
 - **Description**: Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates &lt;phi(t-1)|phi(t)&gt; by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
 
   - 0 or false: disable
@@ -4294,7 +4310,7 @@
 
 [back to top](#full-list-of-input-keywords)
 
-## RT-TDDFT: Real-Time Time-Dependent Density Functional Theory
+## Real-Time TDDFT (Common)
 
 ### estep_per_md
 
@@ -4308,35 +4324,6 @@
 - **Description**: The time step used for electronic propagation. If td_dt is not specified, it is set to md_dt / estep_per_md. If td_dt is specified explicitly, md_dt is reset to td_dt * estep_per_md.
 - **Default**: md_dt / estep_per_md
 - **Unit**: fs
-
-### td_edm
-
-- **Type**: Integer
-- **Description**: Method used to calculate the energy-density matrix for the overlap contribution to forces in LCAO RT-TDDFT.
-  - 0: Use $\mathrm{EDM}_{\boldsymbol{k}}=\frac{1}{2}\left(S_{\boldsymbol{k}}^{-1}H_{\boldsymbol{k}}\rho_{\boldsymbol{k}}+\rho_{\boldsymbol{k}}H_{\boldsymbol{k}}S_{\boldsymbol{k}}^{-1}\right)$.
-  - 1: Use the ground-state eigenvalue-weighted expression $\mathrm{EDM}_{\mu\nu,\boldsymbol{k}}=\sum_i w_{i\boldsymbol{k}}\epsilon_{i\boldsymbol{k}}C_{\mu i,\boldsymbol{k}}C_{\nu i,\boldsymbol{k}}^*$. This expression is deprecated for RT-TDDFT and is generally not valid when the propagated wave functions are not Hamiltonian eigenstates.
-- **Default**: 0
-
-### td_print_eij
-
-- **Type**: Real
-- **Description**: Controls output of the propagated-state Hamiltonian matrix elements $E_{ij}=\Braket{\psi_i | \hat{H} | \psi_j}$ to the running log. The printed band indices $i$ and $j$ are one-based global indices. Both the threshold and the printed matrix elements are in Ry.
-  - $\lt 0$: Disable the output.
-  - $\geqslant 0$: Print an element when either $\left|\operatorname{Re}E_{ij}\right|$ or $\left|\operatorname{Im}E_{ij}\right|$ is greater than or equal to td_print_eij.
-- **Default**: -1
-- **Unit**: Ry
-
-### td_propagator
-
-- **Type**: Integer
-- **Description**: Method used to propagate the electronic states in a nonorthogonal LCAO basis. The formulas below use Hartree atomic units, with $S$, $H$, and $\Delta t=\mathtt{td\_dt}$ evaluated as required by each approximation.
-  - 0: Crank-Nicolson through an explicitly constructed evolution matrix, $U=\left[S+\mathrm{i}H\Delta t/2\right]^{-1}\left[S-\mathrm{i}H\Delta t/2\right]$.
-  - 1: Fourth-order Taylor approximation to the exponential. With $\mathcal{A}=-\mathrm{i}S^{-1}H\Delta t$, $U=I+\mathcal{A}+\mathcal{A}^2/2+\mathcal{A}^3/6+\mathcal{A}^4/24$.
-  - 2: Enforced time-reversal symmetry (ETRS), $U(t+\Delta t,t)=\exp\left[-\mathrm{i}S^{-1}H(t+\Delta t)\Delta t/2\right]\exp\left[-\mathrm{i}S^{-1}H(t)\Delta t/2\right]$. In the implementation, each exponential is replaced by the fourth-order Taylor polynomial from method 1 evaluated with a half time step.
-  - 3: Crank-Nicolson by directly solving $\left[S+\mathrm{i}H\Delta t/2\right]\psi(t+\Delta t)=\left[S-\mathrm{i}H\Delta t/2\right]\psi(t)$.
-
-  > Note: GPU execution currently supports only method 0 in both single-GPU and multi-GPU solver configurations. CPU execution supports methods 0 through 3.
-- **Default**: 0
 
 ### td_vext
 
@@ -4359,9 +4346,9 @@
 
 - **Type**: Integer
 - **Description**: Type of electric field in the space domain, i.e. the gauge of the electric field.
-  - 0: Length gauge.
-  - 1: Velocity gauge.
-  - 2: Hybrid gauge. See J. Chem. Theory Comput. 2025, 21, 3335-3341 for more information.
+  - 0: Length gauge, available for PW and LCAO.
+  - 1: Velocity gauge, available for PW and LCAO.
+  - 2: Hybrid gauge, available only for LCAO. See J. Chem. Theory Comput. 2025, 21, 3335-3341 for more information.
 - **Default**: 0
 
 ### td_ttype
@@ -4463,21 +4450,21 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 1*
-- **Description**: Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
+- **Description**: Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as 2.0 are accepted. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 1875
 
 ### td_trape_t2
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 1*
-- **Description**: Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
+- **Description**: Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as 2.0 are accepted. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 5625
 
 ### td_trape_t3
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 1*
-- **Description**: Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
+- **Description**: Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as 2.0 are accepted. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 7500
 
 ### td_trape_amp
@@ -4588,30 +4575,30 @@
 - **Description**: Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supsine\_tend}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tend. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
 - **Default**: default
 
-### init_vecpot_file
-
-- **Type**: Boolean
-- **Description**: Selects the source of the Cartesian vector potential used by LCAO RT-TDDFT.
-  - True: Read vector_pot.txt from the calculation working directory. Each non-comment line must contain four columns: a conventionally one-based electronic-step label followed by $A_x$, $A_y$, and $A_z$ in atomic units. Rows are consumed sequentially; the first column is read as a label and is not used for lookup. If propagation continues beyond the available rows, the last row is reused.
-  - False: Obtain the vector potential by integrating the configured electric field.
-- **Default**: False
-
 ### ocp
 
 - **Type**: Boolean
-- **Description**: Controls fixed band occupations. In calculations other than LCAO RT-TDDFT, fixed values are applied during electronic-state setup. In LCAO RT-TDDFT, the initial ground-state SCF determines occupations normally, and fixed values from ocp_set are applied during the subsequent real-time propagation steps.
-  - True: Use the fixed occupations specified by ocp_set during propagation.
-  - False: Keep the occupations determined by the initial SCF.
+- **Description**: Controls fixed band occupations. In PW RT-TDDFT and calculations other than LCAO RT-TDDFT, fixed values from ocp_set are applied during electronic-state setup. PW real-time propagation preserves these initial occupations. In LCAO RT-TDDFT, the initial ground-state SCF determines occupations normally, and fixed values are applied during the subsequent real-time propagation steps.
+  - True: Use the fixed occupations specified by ocp_set at the stage described above.
+  - False: Determine occupations normally; real-time propagation preserves the initial SCF occupations.
 - **Default**: False
 
 ### ocp_set
 
 - **Type**: String
-- **Description**: Fixed occupation weights used when ocp is true. Values are assigned in band order for each k-point, following k-point order. In LCAO RT-TDDFT, the initial ground-state SCF uses its normally determined occupations, and this array is applied only during subsequent real-time propagation steps. The repetition syntax N*x expands to N copies of x.
+- **Description**: Fixed occupation weights used when ocp is true. Values are assigned in band order for each k-point, following k-point order. In PW RT-TDDFT and other calculations outside LCAO RT-TDDFT, this array is applied during electronic-state setup. PW propagation preserves these occupations. In LCAO RT-TDDFT, the initial ground-state SCF uses its normally determined occupations, and this array is applied only during subsequent real-time propagation steps. The repetition syntax N*x expands to N copies of x.
   - Example: 1 10*1 0 1 expands to 13 values, with the 12th value equal to 0 and all other values equal to 1.
   - After expansion, provide one block of nbands values for each k-point. If nspin is 2, provide all k-point blocks for spin up followed by all k-point blocks for spin down; otherwise, provide one block per k-point.
   - The sum of all weights must equal nelec; otherwise the calculation terminates with an error.
 - **Default**: None
+
+### out_freq_td
+
+- **Type**: Integer
+- **Description**: Controls the output interval in completed electronic evolution steps during RT-TDDFT calculations. When set to a positive integer n, detailed information (see out_freq_ion) is printed every n electron time-evolution steps (i.e., every STEP OF ELECTRON EVOLVE). For example, if you wish to output information once per ionic step, you should set out_freq_td equal to estep_per_md, since one ionic step corresponds to estep_per_md electronic evolution steps.
+
+  > Note: This parameter is only active in RT-TDDFT mode (esolver_type = tddft). It has no effect in ground-state calculations.
+- **Default**: 0
 
 ### out_dipole
 
@@ -4624,19 +4611,19 @@
 ### out_current
 
 - **Type**: Integer
-- **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft*
-- **Description**: Controls the current-density output method for LCAO RT-TDDFT. Output rows contain the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units.
+- **Availability**: *[`basis_type`](#basis_type) in [pw, lcao] and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Controls the current-density output method for RT-TDDFT. Each row contains the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units; the initial ground state is step 1 and subsequent steps increase by one.
   - 0: Do not output current.
-  - 1: Explicitly construct the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center and spherical-grid integrals: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms, such as EXX, are not included explicitly. The total current is written to OUT.{suffix}/current_tot.txt.
-  - 2: Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis, $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive. The total current is written to OUT.{suffix}/current_tot_comm.txt.
+  - 1: Available for PW and LCAO. PW evaluates the occupied-state expectation values of the velocity operator, using plane-wave momentum and nonlocal-projector derivatives; in the velocity gauge these are evaluated at the vector-potential-shifted momentum. In the length gauge, a kinetic-energy-density functional also contributes its velocity term. LCAO explicitly constructs the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center and spherical-grid integrals: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms, such as EXX, are not included explicitly. The total current is written to OUT.{suffix}/current_tot.txt.
+  - 2: Available only for LCAO. Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis, $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive. The total current is written to OUT.{suffix}/current_tot_comm.txt.
 - **Default**: 0
 
 ### out_current_k
 
 - **Type**: Boolean
-- **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft and [`out_current`](#out_current)>0*
-- **Description**: Controls whether LCAO RT-TDDFT current density is also resolved by spin and k-point. The total-current file is always written when out_current is 1 or 2.
-  - True: In addition to the total, out_current=1 writes OUT.{suffix}/current_s[spin]k[kpoint].txt; out_current=2 writes OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt. Both use one-based spin and k-point numbers, with k-points numbered independently within each spin channel. Each row contains the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units.
+- **Availability**: *[`basis_type`](#basis_type) in [pw, lcao] and [`esolver_type`](#esolver_type)==tddft and [`out_current`](#out_current)>0*
+- **Description**: Controls whether RT-TDDFT current density is also resolved by spin and k-point. PW supports out_current=1; LCAO supports out_current=1 or 2. The total-current file is always written when current output is enabled.
+  - True: In addition to the total, out_current=1 writes OUT.{suffix}/current_s[spin]k[kpoint].txt; out_current=2 writes OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt. Both use one-based spin and k-point numbers, with k-points numbered independently within each spin channel. Rows follow the step numbering, atomic units, precision, and append convention described in out_current. These weighted contributions sum to the total current.
   - False: Output only current_tot.txt for out_current=1 or current_tot_comm.txt for out_current=2.
 - **Default**: False
 
@@ -4649,14 +4636,103 @@
   - False: Do not output electric-field values.
 - **Default**: False
 
+[back to top](#full-list-of-input-keywords)
+
+## Real-Time TDDFT (LCAO)
+
+### td_edm
+
+- **Type**: Integer
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Method used to calculate the energy-density matrix for the overlap contribution to forces in LCAO RT-TDDFT.
+  - 0: Use $\mathrm{EDM}_{\boldsymbol{k}}=\frac{1}{2}\left(S_{\boldsymbol{k}}^{-1}H_{\boldsymbol{k}}\rho_{\boldsymbol{k}}+\rho_{\boldsymbol{k}}H_{\boldsymbol{k}}S_{\boldsymbol{k}}^{-1}\right)$.
+  - 1: Use the ground-state eigenvalue-weighted expression $\mathrm{EDM}_{\mu\nu,\boldsymbol{k}}=\sum_i w_{i\boldsymbol{k}}\epsilon_{i\boldsymbol{k}}C_{\mu i,\boldsymbol{k}}C_{\nu i,\boldsymbol{k}}^*$. This expression is deprecated for RT-TDDFT and is generally not valid when the propagated wave functions are not Hamiltonian eigenstates.
+- **Default**: 0
+
+### td_print_eij
+
+- **Type**: Real
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Controls output of the propagated-state Hamiltonian matrix elements $E_{ij}=\Braket{\psi_i | \hat{H} | \psi_j}$ to the running log. The printed band indices $i$ and $j$ are one-based global indices. Both the threshold and the printed matrix elements are in Ry.
+  - $\lt 0$: Disable the output.
+  - $\geqslant 0$: Print an element when either $\left|\operatorname{Re}E_{ij}\right|$ or $\left|\operatorname{Im}E_{ij}\right|$ is greater than or equal to td_print_eij.
+- **Default**: -1
+- **Unit**: Ry
+
+### td_propagator
+
+- **Type**: Integer
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Method used to propagate the electronic states in a nonorthogonal LCAO basis. The formulas below use Hartree atomic units, with $S$, $H$, and $\Delta t=\mathtt{td\_dt}$ evaluated as required by each approximation.
+  - 0: Crank-Nicolson through an explicitly constructed evolution matrix, $U=\left[S+\mathrm{i}H\Delta t/2\right]^{-1}\left[S-\mathrm{i}H\Delta t/2\right]$.
+  - 1: Fourth-order Taylor approximation to the exponential. With $\mathcal{A}=-\mathrm{i}S^{-1}H\Delta t$, $U=I+\mathcal{A}+\mathcal{A}^2/2+\mathcal{A}^3/6+\mathcal{A}^4/24$.
+  - 2: Enforced time-reversal symmetry (ETRS), $U(t+\Delta t,t)=\exp\left[-\mathrm{i}S^{-1}H(t+\Delta t)\Delta t/2\right]\exp\left[-\mathrm{i}S^{-1}H(t)\Delta t/2\right]$. In the implementation, each exponential is replaced by the fourth-order Taylor polynomial from method 1 evaluated with a half time step.
+  - 3: Crank-Nicolson by directly solving $\left[S+\mathrm{i}H\Delta t/2\right]\psi(t+\Delta t)=\left[S-\mathrm{i}H\Delta t/2\right]\psi(t)$.
+
+  > Note: GPU execution currently supports only method 0 in both single-GPU and multi-GPU solver configurations. CPU execution supports methods 0 through 3.
+- **Default**: 0
+
+### init_vecpot_file
+
+- **Type**: Boolean
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Selects the source of the Cartesian vector potential used by LCAO RT-TDDFT.
+  - True: Read vector_pot.txt from the calculation working directory. Each non-comment line must contain four columns: a conventionally one-based electronic-step label followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. These are propagation values, not endpoint samples. Rows are consumed sequentially; the first column is read as a label and is not used for lookup. If propagation continues beyond the available rows, the last row is reused.
+  - False: Obtain the vector potential by integrating the configured electric field.
+- **Default**: False
+
 ### out_vecpot
 
 - **Type**: Boolean
 - **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft*
-- **Description**: Controls Cartesian vector-potential output for LCAO RT-TDDFT. OUT.{suffix}/vector_pot.txt contains four columns: the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in atomic units. At initialization, a fresh calculation with md_restart=False truncates the file and writes a new header, whereas a calculation with md_restart=True preserves a nonempty existing file and appends new samples. If the restart output file is missing or empty, a new file with a header is created.
+- **Description**: Controls Cartesian vector-potential output for LCAO RT-TDDFT. OUT.{suffix}/vector_pot.txt contains four columns: the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The vector potential is the propagation value: the average of interval endpoints for an integrated electric field, or the supplied sample for init_vecpot_file=True. At initialization, a fresh calculation with md_restart=False truncates the file and writes a new header, whereas a calculation with md_restart=True preserves a nonempty existing file and appends new samples. If the restart output file is missing or empty, a new file with a header is created.
   - True: Write vector-potential samples on electronic propagation steps.
   - False: Do not output the vector potential.
 - **Default**: False
+
+[back to top](#full-list-of-input-keywords)
+
+## Real-Time TDDFT (PW)
+
+### lin_solver
+
+- **Type**: String
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Iterative linear solver used for PW real-time propagation.
+  - bicgstab: Biconjugate gradient stabilized (BiCGSTAB) method.
+  - cgs: Conjugate gradient squared (CGS) method.
+
+  The initial ground-state diagonalization is controlled by ks_solver.
+- **Default**: bicgstab
+
+### lin_precond
+
+- **Type**: String
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Right preconditioner used by both PW real-time linear solvers.
+  - kinetic: Apply the diagonal inverse $M_{\boldsymbol{G}}^{-1}=(1+\mathrm{i}\Delta t\,T_{\boldsymbol{G}}/2)^{-1}$, where $\Delta t$ is the time step in atomic units and $T_{\boldsymbol{G}}=|\boldsymbol{k}+\boldsymbol{G}+\boldsymbol{A}_{\mathrm{mid}}|^2/2$ is the kinetic energy in Hartree. In the velocity gauge, $\boldsymbol{A}_{\mathrm{mid}}=(\boldsymbol{A}_n+\boldsymbol{A}_{n+1})/2$ is the propagation vector potential in Hartree atomic units; in the length gauge, set $\boldsymbol{A}_{\mathrm{mid}}=0$.
+  - none: Disable preconditioning.
+
+  Preconditioning changes the convergence rate, while lin_thr still controls the residual of the original equation.
+- **Default**: kinetic
+
+### lin_thr
+
+- **Type**: Real
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Nonnegative finite residual tolerance for each band in a PW real-time linear solve $Ax=b$. A value of 0 selects $\max(10^{-10},100\epsilon)$, where $\epsilon$ is machine epsilon for the wavefunction precision (approximately $1.19209\times10^{-5}$ in single precision and $10^{-10}$ in double precision). A positive value specifies the tolerance $\tau$ directly.
+  - bicgstab: Require $\|b-Ax\|_2\leqslant\tau\max(1,\|b\|_2)$.
+  - cgs: Require $\|b-Ax\|_2\leqslant\tau\|b\|_2$ for nonzero $b$, or $\|b-Ax\|_2\leqslant\tau$ for zero $b$.
+
+  Both methods check the final residual explicitly.
+- **Default**: 0
+
+### lin_maxiter
+
+- **Type**: Integer
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Positive maximum number of iterations for each PW real-time linear solve. Failure to converge stops the calculation. The number of self-consistency iterations is controlled separately by scf_nmax.
+- **Default**: 500
 
 [back to top](#full-list-of-input-keywords)
 

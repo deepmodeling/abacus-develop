@@ -106,14 +106,14 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
     ModuleBase::TITLE("Broyden_Mixing", "Simplified_Broyden_mixing");
     ModuleBase::timer::start("Broyden_Mixing", "tem_cal_coef");
 
-	if (address != &mdata && address != nullptr)
-	{
-		ModuleBase::WARNING_QUIT(
-				"Broyden_mixing",
-				"One Broyden_Mixing object can only bind one Mixing_Data object to calculate coefficients");
-	}
+    if (address != &mdata && address != nullptr)
+    {
+        ModuleBase::WARNING_QUIT(
+                "Broyden_mixing",
+                "One Broyden_Mixing object can only bind one Mixing_Data object to calculate coefficients");
+    }
 
-	const int length = mdata.length;
+    const int length = mdata.length;
     FPTYPE* FP_dF = static_cast<FPTYPE*>(dF);
     FPTYPE* FP_F = static_cast<FPTYPE*>(F);
 

@@ -2,7 +2,6 @@
 #include "source_hsolver/diag_comm_info.h"
 #include"source_hsolver/diago_iter_assist.h"
 #include "source_base/parallel_comm.h"
-#include"source_pw/module_pwdft/hamilt_pw.h"
 #include"diago_mock.h"
 #include "source_psi/psi.h"
 #include"gtest/gtest.h"
@@ -82,8 +81,7 @@ public:
 
         //do Diago_David::diag()
         double* en = new double[npw];
-        hamilt::Hamilt<double>* phm;
-        phm = new hamilt::HamiltPW<double>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+        HSOperatorMock<double> phm;
 
 #ifdef __MPI 
         const hsolver::diag_comm_info comm_info = {POOL_WORLD, mypnum, nprocs};
@@ -110,20 +108,8 @@ public:
 #endif	
 
         
-        auto hpsi_func = [phm](double* psi_in,double* hpsi_out,
-					const int ld_psi, const int nvec)
-                    {
-                        auto psi_iter_wrapper = psi::Psi<double>(psi_in, 1, nvec, ld_psi, true);
-                        psi::Range bands_range(true, 0, 0, nvec-1);
-                        using hpsi_info = typename hamilt::Operator<double>::hpsi_info;
-                        hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
-                        phm->ops->hPsi(info);
-                    };
-        auto spsi_func = [phm](const double* psi_in, double* spsi_out, const int ld_psi, const int nbands) {
-			phm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nbands);
-        };
         std::vector<double> ethr_band(phi.get_nbands(), eps);
-        dav.diag(hpsi_func,spsi_func, ld_psi, phi.get_pointer(), en, ethr_band, maxiter);
+        dav.diag(phm, ld_psi, phi.get_pointer(), en, ethr_band, maxiter);
 
 #ifdef __MPI		
         end = MPI_Wtime();
@@ -143,7 +129,6 @@ public:
             }
         }
         delete[] en;
-        delete phm;
         delete[] e_lapack;
     }
 };

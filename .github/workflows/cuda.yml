@@ -28,6 +28,12 @@ jobs:
       CCACHE_BASEDIR: ${{ github.workspace }}
       CCACHE_COMPRESS: "true"
       CCACHE_MAXSIZE: 8G
+      # Test cases to run side by side. The runner has 12 cores and one
+      # V100-32GB; a GPU case is a few atoms and takes about 2 s, so these
+      # suites are bound by process startup, not by the device. Four leaves
+      # every rank a core of its own and keeps the concurrent CUDA contexts
+      # far inside the card's memory.
+      GPU_TEST_JOBS: "4"
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -46,7 +52,7 @@ jobs:
           echo "fingerprint=${fingerprint}" >> "${GITHUB_OUTPUT}"
 
       - name: Restore compiler cache
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         with:
           path: ${{ env.CCACHE_DIR }}
           key: abacus-cuda-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
@@ -82,6 +88,17 @@ jobs:
           ccache --show-stats
           ccache --show-stats >> "${GITHUB_STEP_SUMMARY}"
 
+      # Only develop writes the cache. A cache saved from a pull request is
+      # scoped to that pull request's ref, so no other branch can ever read
+      # it, while it still counts against the repository's 10 GB budget and
+      # evicts the develop entry that every pull request does restore from.
+      - name: Save compiler cache
+        if: github.ref == 'refs/heads/develop'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: abacus-cuda-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
+
       - name: Module_LCAO CUDA Unittests
         env:
           GTEST_COLOR: 'yes'
@@ -92,17 +109,17 @@ jobs:
       - name: Test 11_PW_GPU
         run: |
           cd tests/11_PW_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
       - name: Test 12_NAO_Gamma_GPU
         run: |
           cd tests/12_NAO_Gamma_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
       - name: Test 13_NAO_multik_GPU
         run: |
           cd tests/13_NAO_multik_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
       - name: Test 02_NAO_Gamma on GPU
         run: |
@@ -114,7 +131,7 @@ jobs:
                   echo "device    gpu" >> "$f"
               fi
           done
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
       - name: Test 03_NAO_multik on GPU
         run: |
@@ -126,17 +143,17 @@ jobs:
                   echo "device    gpu" >> "$f"
               fi
           done
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
       - name: Test 15_rtTDDFT_GPU
         run: |
           cd tests/15_rtTDDFT_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
       - name: Test 16_SDFT_GPU
         run: |
           cd tests/16_SDFT_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
       - name: Test 01_PW on GPU
         run: |
@@ -148,4 +165,4 @@ jobs:
                   echo "device    gpu" >> "$f"
               fi
           done
-          bash ../integrate/Autotest.sh -n 1 -a abacus -f CASES_GPU.txt
+          bash ../integrate/Autotest.sh -n 1 -j "$GPU_TEST_JOBS" -a abacus -f CASES_GPU.txt

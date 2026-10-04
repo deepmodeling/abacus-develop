@@ -107,11 +107,15 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
     if (this->inp_->nspin == 1)
     {
         int numDC = 0; // iteration number of line search
-        strcpy(this->task_, "START");
+        this->task_ = "START";
         while (true)
         {
             // update energy
-            this->pelec->cal_energies(2);
+            this->pelec->cal_energies(2,
+                                      this->inp_->imp_sol,
+                                      this->inp_->sc_mag_switch,
+                                      this->inp_->dft_plus_u,
+                                      this->inp_->assume_isolated);
             temp_energy = this->pelec->f_en.etot;
             kinetic_energy = this->kedf_manager_->get_energy(); // kinetic energy
             pseudopot_energy = this->inner_product(this->pelec->pot->get_fixed_v(),
@@ -126,7 +130,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
             numDC++;
 
             // decide what to do next according to the output of line search
-            if (strncmp(this->task_, "FG", 2) == 0) // continue line search
+            if (this->task_.compare(0, 2, "FG") == 0) // continue line search
             {
                 // update tempPhi and tempRho
                 for (int i = 0; i < this->pw_rho->nrxx; ++i)
@@ -146,17 +150,17 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
                     break;
                 }
             }
-            else if (strncmp(this->task_, "CO", 2) == 0) // convergence achieved
+            else if (this->task_.compare(0, 2, "CO") == 0) // convergence achieved
             {
                 break;
             }
-            else if (strncmp(this->task_, "WA", 2) == 0) // warning of line search
+            else if (this->task_.compare(0, 2, "WA") == 0) // warning of line search
             {
                 GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task_ << std::endl;
                 std::cout << this->task_ << std::endl;
                 break;
             }
-            else if (strncmp(this->task_, "ER", 2) == 0) // ERROR in line search
+            else if (this->task_.compare(0, 2, "ER") == 0) // ERROR in line search
             {
                 GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task_ << std::endl;
                 std::cout << this->task_ << std::endl;
@@ -202,12 +206,12 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
 
         //         // line search along thetaDir to find thetaAlpha
         //         this->opt_dcsrch_->set_paras(1e-4, 1e-2, 1e-12, 0.,
-        //         ModuleBase::PI/maxThetaDir); strcpy(this->task_, "START");
+        //         ModuleBase::PI/maxThetaDir); this->task_ = "START";
         //         numDC = 0;
         //         while(true)
         //         {
         //             this->pelec->f_en.calculate_etot(this->pw_rho->nrxx,
-        //             if (strncmp(this->task_, "FG", 2) == 0)
+        //             if (this->task_.compare(0, 2, "FG") == 0)
         //             {
         //                 for (int is = 0; is < this->inp_->nspin; ++is)
         //                 {
@@ -233,17 +237,17 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
         //                     endl; break;
         //                 }
         //             }
-        //             else if (strncmp(this->task_, "CO", 2) == 0)
+        //             else if (this->task_.compare(0, 2, "CO") == 0)
         //             {
         //                 break;
         //             }
-        //             else if (strncmp(this->task_, "WA", 2) == 0)
+        //             else if (this->task_.compare(0, 2, "WA") == 0)
         //             {
         //                 GlobalV::ofs_warning << "ESolver_OF linesearch:
         //                 WARNING " << this->task_ << std::endl; cout <<
         //                 this->task_ << endl; break;
         //             }
-        //             else if (strncmp(this->task_, "ER", 2) == 0)
+        //             else if (this->task_.compare(0, 2, "ER") == 0)
         //             {
         //                 GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR
         //                 " << this->task_ << std::endl; cout << this->task_ <<

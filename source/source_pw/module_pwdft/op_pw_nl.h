@@ -4,8 +4,7 @@
 #include "op_pw.h"
 
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/kernels/nonlocal_op.h"
-#include "source_base/kernels/math_kernel_op.h"
+#include "source_pw/module_pwdft/nonlocal_workspace.h"
 
 #include "source_pw/module_pwdft/vnl_pw.h"
 
@@ -49,25 +48,19 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     const int *get_isk() const {return this->isk;}
     const pseudopot_cell_vnl *get_ppcell() const {return this->ppcell;}
     const UnitCell *get_ucell() const {return this->ucell;}
+    /** @brief Return the borrowed plane-wave basis and pool communicator. */
+    const ModulePW::PW_Basis_K* get_wfcpw() const { return this->wfcpw; }
     T* get_vkb() const
     {
         return this->vkb;
     }
     T* get_becp() const
     {
-        return this->becp;
+        return this->workspace_.get_becp();
     }
 
   private:
-    void add_nonlocal_pp(T *hpsi_in, const T *becp, const int m) const;
-
-    mutable int max_npw = 0;
-
-    mutable int npw = 0;
-
-    mutable int npol = 0;
-
-    mutable size_t nkb_m = 0;
+    mutable NonlocalWorkspace<T, Device> workspace_;
 
     const int* isk = nullptr;
 
@@ -77,30 +70,9 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
 
-    mutable T *ps = nullptr;
     mutable T *vkb = nullptr;
-    mutable T *becp = nullptr;
     Device* ctx = {};
-    base_device::DEVICE_CPU* cpu_ctx = {};
-    Real * deeq = nullptr;
-    T * deeq_nc = nullptr;
-    // using nonlocal_op = nonlocal_pw_op<Real, Device>;
-    using gemv_op = ModuleBase::gemv_op<T, Device>;
-    using gemm_op = ModuleBase::gemm_op<T, Device>;
-    using nonlocal_op = nonlocal_pw_op<Real, Device>;
-#ifdef __DSP
-    using setmem_complex_op = base_device::memory::set_memory_op_mt<T, Device>;
-    using resmem_complex_op = base_device::memory::resize_memory_op_mt<T, Device>;
-    using delmem_complex_op = base_device::memory::delete_memory_op_mt<T, Device>;
-#else
-    using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
-    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
-    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
-#endif
-    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
 
-    T one{1, 0};
-    T zero{0, 0};
 };
 
 } // namespace hamilt

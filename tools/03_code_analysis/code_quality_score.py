@@ -13,7 +13,8 @@ General semantics:
   - All caps listed below are per-file limits on the cumulative
     deduction for that rule within a single file.
   - Files under any of these directories are skipped entirely: test/,
-    tests/, test_serial/, test_parallel/, test_gpu/, unit_test/, unittest/.
+    tests/, test_serial/, test_parallel/, test_gpu/, unit_test/, unittest/,
+    unittests/.
   - Pass threshold: score >= 60. Output is sorted by score ascending
     (worst files first); ties are broken by `real_score` ascending
     (more negative = more total deduction = ranked first). Text and
@@ -119,7 +120,7 @@ SKIP_DIRS = {
     ".git", "build", "__pycache__", "node_modules", ".cache",
     "third_party", "thirdparty", ".vscode", ".idea", ".trae-cn",
     "Dependencies",
-    "test", "tests", "test_serial", "test_parallel", "test_gpu", "unit_test", "unittest",
+    "test", "tests", "test_serial", "test_parallel", "test_gpu", "unit_test", "unittest", "unittests",
 }
 
 CAPS = {

@@ -7,7 +7,12 @@
 #endif
 #include "source_base/timer.h"
 
-MSST::MSST(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdcell_in)
+MSST::MSST(const MD_para& mdp_in,
+           const bool cal_stress_in,
+           const bool init_vel,
+           const int my_rank_in,
+           MDCell& mdcell_in)
+    : MD_base(mdp_in, cal_stress_in, init_vel, my_rank_in, mdcell_in)
 {
     msst_qmass = mdp.msst_qmass / pow(ModuleBase::ANGSTROM_AU, 4) / pow(ModuleBase::AU_to_MASS, 2);
     msst_vel = mdp.msst_vel * ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;

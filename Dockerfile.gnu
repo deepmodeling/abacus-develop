@@ -10,7 +10,7 @@
 FROM ubuntu:22.04
 RUN apt update && apt install -y --no-install-recommends \
     libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev \
-    libxc-dev libgtest-dev libgmock-dev libbenchmark-dev python3-numpy \
+    libxc-dev libgtest-dev libgmock-dev libbenchmark-dev python3-numpy nlohmann-json3-dev \
     libmetis-dev libparmetis-dev libsuperlu-dist-dev \
     bc cmake git g++ make time sudo unzip vim wget gfortran ca-certificates && \
     rm -rf /var/lib/apt/lists/*
@@ -27,14 +27,6 @@ RUN git clone https://github.com/llohse/libnpy.git && \
 RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.0%2Bcpu.zip \
         --quiet -O libtorch.zip && \
     unzip -q libtorch.zip -d /opt && rm libtorch.zip
-
-# RapidJSON
-RUN cd /tmp && \
-    wget --quiet https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a -O rapidjson-24b5e7a.tar.gz && \
-    tar -xzf rapidjson-24b5e7a.tar.gz && cd rapidjson-24b5e7a && \
-    cmake -B build -DRAPIDJSON_BUILD_DOC=OFF -DRAPIDJSON_BUILD_EXAMPLES=OFF -DRAPIDJSON_BUILD_TESTS=OFF && \
-    cmake --build build --target install && \
-    cd /tmp && rm -r rapidjson-24b5e7a rapidjson-24b5e7a.tar.gz
 
 ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake
 
@@ -56,7 +48,7 @@ ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/deve
 
 RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cd abacus-develop && \
-    cmake -B build -DENABLE_MLALGO=ON -DENABLE_PEXSI=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_RAPIDJSON=ON && \
+    cmake -B build -DENABLE_MLALGO=ON -DENABLE_PEXSI=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_JSON=ON && \
     cmake --build build -j $(nproc) && \
     cmake --install build && \
     rm -rf build

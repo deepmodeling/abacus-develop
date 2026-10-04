@@ -3,6 +3,7 @@
 
 #include "source_cell/mdcell.h"
 #include "source_esolver/esolver.h"
+#include "source_io/module_parameter/md_parameter.h"
 
 #include <cstdint>
 
@@ -137,13 +138,15 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
  * @param step current md step
  * @param global_out_dir directory of output files
  * @param mdcell MD cell information
- * @param param_in input parameters used in MD
+ * @param mdp the md input parameters
+ * @param cal_stress whether stress is calculated
  * @param virial lattice virial tensor
  */
 void dump_info(const int& step,
                const std::string& global_out_dir,
                const MDCell& mdcell,
-               const Parameter& param_in,
+               const MD_para& mdp,
+               const bool cal_stress,
                const ModuleBase::matrix& virial);
 
 /**

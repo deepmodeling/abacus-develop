@@ -55,18 +55,18 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
     std::string zipname = "output_DM0.npz";
 
     // read DM from file
-    ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_DMR_pointer(1)));
+    ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_dmr_ptr(1)));
 
     // if nspin=2, need extra reading
     if (this->inp_->nspin == 2)
     {
         zipname = "output_DM1.npz";
-        ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_DMR_pointer(2)));
+        ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_dmr_ptr(2)));
     }
 
     // it's dangerous to design psiToRho function like this, mohan note 20251024
     // this->pelec->psiToRho(*this->psi);
-    LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), this->inp_->nspin, &this->chr);
+    LCAO_domain::dm2rho(this->dmat.dm->get_dmr_vec(), this->inp_->nspin, &this->chr, this->inp_->nelec, ucell.omega, false);
 
     int nspin0 = this->inp_->nspin == 2 ? 2 : 1;
 

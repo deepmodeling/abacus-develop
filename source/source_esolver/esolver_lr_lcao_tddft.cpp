@@ -5,6 +5,7 @@
 #include "source_lcao/module_lr/hamilt_ulr.hpp"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 #include "source_lcao/lcao_nonlocal_info.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "source_lcao/module_lr/hsolver_lrtd.hpp"
 #include "source_lcao/module_lr/lr_spectrum.h"
 #include "source_hamilt/module_gint/gint.h"
@@ -17,6 +18,9 @@
 #include "source_lcao/module_lr/utils/lr_util_print.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_io/module_parameter/parameter.h"
+#ifdef __JSON
+#include "source_io/module_json/output_info.h"
+#endif
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h" // for precondition
 #ifdef __EXX
@@ -83,9 +87,9 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_2center_table(TwoCenterBundle& two_
         auto* lcao_nl = new LCAONonlocalInfo();
         lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb,
                                this->inp_->basis_type, this->inp_->out_element_info,
-                               this->inp_->lspinorb, this->inp_->nspin);
+                               this->inp_->lspinorb, this->inp_->nspin, GlobalV::MY_RANK);
         ucell.infoNL.reset(lcao_nl);
-        two_center_bundle.build_beta(ucell.ntype, lcao_nl->get_nonlocal().Beta);
+        two_center_bundle.build_beta(ucell.ntype, lcao_nl->get_nonlocal().get_Beta_data());
     }
 }
 
@@ -222,6 +226,10 @@ void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, co
     this->inp_ = &inp;
     if (inp.esolver_type == "ks-lr")
     {
+#ifdef __JSON
+        // The embedded KS run happens before Relax_Driver starts its first step.
+        Json::init_output_array_obj();
+#endif
         ModuleESolver::ESolver_KS_LCAO<T, TR> ks_solver;
         ks_solver.before_all_runners(basecell, inp);
         ks_solver.runner(basecell, 0);
@@ -822,27 +830,21 @@ template<typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
 {
     chg_gs.set_rhopw(this->pw_rho);
-    const bool kin_den = chg_gs.kin_density(); // mohan add 20251202
-    chg_gs.allocate(this->nspin, kin_den);
+    const bool kin_den = XC_Functional::get_ked_flag() || (this->inp_->out_elf[0] > 0); // mohan add 20251202
+    chg_gs.allocate(this->nspin, kin_den, XC_Functional::get_ked_flag(), this->inp_->test_charge);
     GlobalV::ofs_running << " try to read charge from file : ";
     for (int is = 0; is < this->nspin; ++is)
     {
         std::stringstream ssc;
         ssc << this->in_dir << "chgs" << is + 1 << ".cube";
         GlobalV::ofs_running << ssc.str() << std::endl;
-        if (ModuleIO::read_vdata_palgrid(Pgrid,
+        ModuleIO::read_vdata_palgrid(Pgrid,
             GlobalV::MY_RANK,
             GlobalV::ofs_running,
             ssc.str(),
             chg_gs.rho[is],
-            this->ucell_->nat)) {
-            GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
-        } else {    // prenspin for nspin=4 is not supported currently
-            ModuleBase::WARNING_QUIT(
-                "init_rho",
-                "!!! Couldn't find the charge file !!! The default directory \n of " + ssc.str() +" is OUT.suffix, "
-                "or you must set read_file_dir \n to a specific directory. ");
-        }
+            this->ucell_->nat);
+        GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
     }
 }
 template class ModuleESolver::ESolver_LR<double, double>;

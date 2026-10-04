@@ -35,12 +35,12 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                              const SnapIntegrationOptions& options)
 {
     std::vector<ProjectorChannel> channels;
-    channels.reserve(infoNL_.nproj[T0]);
+    channels.reserve(infoNL_.get_nproj(T0));
 
     // UPF nonlocal beta projectors already follow the r * beta_l(r) convention.
-    for (int ip = 0; ip < infoNL_.nproj[T0]; ++ip)
+    for (int ip = 0; ip < infoNL_.get_nproj(T0); ++ip)
     {
-        const auto& proj = infoNL_.Beta[T0].Proj[ip];
+        const auto& proj = infoNL_.get_Beta(T0).Proj[ip];
         ProjectorChannel channel;
         channel.l = proj.getL();
         channel.mesh = proj.getNr();

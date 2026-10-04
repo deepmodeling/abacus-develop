@@ -21,18 +21,18 @@ void surchem::v_correction(const UnitCell& cell,
     assert(rho_basis->nrxx>0);
    
     double* porter = new double[rho_basis->nrxx];
-	for (int i = 0; i < rho_basis->nrxx; i++)
-	{
-		porter[i] = 0.0;
-	}
+    for (int i = 0; i < rho_basis->nrxx; i++)
+    {
+        porter[i] = 0.0;
+    }
     const int nspin0 = (nspin == 2) ? 2 : 1;
-	for (int is = 0; is < nspin0; is++)
-	{
-		for (int ir = 0; ir < rho_basis->nrxx; ir++)
-		{
-			porter[ir] += rho[is][ir];
-		}
-	}
+    for (int is = 0; is < nspin0; is++)
+    {
+        for (int ir = 0; ir < rho_basis->nrxx; ir++)
+        {
+            porter[ir] += rho[is][ir];
+        }
+    }
 
     std::complex<double>* porter_g = new std::complex<double>[rho_basis->npw];
     ModuleBase::GlobalFunc::ZEROS(porter_g, rho_basis->npw);

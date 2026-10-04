@@ -15,7 +15,7 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_2d.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_dm/dm_from_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 
 #include "source_hamilt/module_hcontainer/hcontainer.h"
@@ -42,19 +42,6 @@ namespace rdmft
 //! now support XC_func_rdmft = "hf", "muller", "power", "pbe", "pbe0". "wp22" and "cwp22" is realizing.
 // for the dft-xc-functional part of xc-functional, just use the default is right! Or don't use the function
 double occNum_func(double eta, int symbol = 0, const std::string XC_func_rdmft = "hf", const double alpha_power = 1.0);
-
-
-template <typename TK>
-void conj_psi(psi::Psi<TK>& wfc)
-{
-    TK* pwfc = &wfc(0, 0, 0);
-    for(int i=0; i<wfc.size(); ++i) { pwfc[i] = std::conj( pwfc[i] );
-}
-}
-
-
-template <>
-void conj_psi<double>(psi::Psi<double>& wfc);
 
 
 // wfc and H_wfc need to be k_firest and provide wfc(ik, 0, 0) and H_wfc(ik, 0, 0)

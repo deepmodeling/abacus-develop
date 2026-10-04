@@ -8,7 +8,7 @@ The `INPUT` file contains parameters that control the type of calculation as wel
 
 Below is an example `INPUT` file with some of the most important parameters that need to be set:
 
-```plaintext
+```text
 INPUT_PARAMETERS
 suffix                  MgO  # the output files will be in OUT.{suffix} directory 
 pseudo_dir              ./   # where the pseudopotential for each element is
@@ -103,7 +103,7 @@ The structure file contains structural information about the system, e.g., latti
 
 An example of the `STRU` file is given as follows :
 
-```plaintext
+```text
 #This is the atom file containing all the information
 #about the lattice structure.
 
@@ -152,7 +152,7 @@ This file contains information of the kpoint grid setting for the Brillouin zone
 
 An example of the `KPT` file is given below:
 
-```plaintext
+```text
 K_POINTS
 0 
 Gamma

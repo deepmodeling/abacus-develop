@@ -3,7 +3,7 @@
 #include "write_mlkedf_desc.h"
 
 #include "npy.hpp"
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_symm.h"
 
 namespace ModuleIO
 {
@@ -32,19 +32,17 @@ void Write_MLKEDF_Descriptors::generateTrainData_KS(
 
     this->cal_tool->getF_KS(psi, pelec, pw_psi, pw_rho, ucell, drho, enhancement, pauli);
 
-    Symmetry_rho srho;
-
     std::vector<double> rho_vec(nrxx);
     std::vector<std::complex<double>> rhog_vec(pw_rho->npw);
     double* rho_ptr = rho_vec.data();
     std::complex<double>* rhog_ptr = rhog_vec.data();
 
     std::copy(enhancement.begin(), enhancement.end(), rho_vec.begin());
-    srho.begin(0, &rho_ptr, &rhog_ptr, pw_rho->npw, nullptr, pw_rho, ucell.symm);
+    module_charge::cal_rhog_symm(0, &rho_ptr, &rhog_ptr, pw_rho->npw, nullptr, pw_rho, ucell.symm);
     std::copy(rho_vec.begin(), rho_vec.end(), enhancement.begin());
 
     std::copy(pauli.begin(), pauli.end(), rho_vec.begin());
-    srho.begin(0, &rho_ptr, &rhog_ptr, pw_rho->npw, nullptr, pw_rho, ucell.symm);
+    module_charge::cal_rhog_symm(0, &rho_ptr, &rhog_ptr, pw_rho->npw, nullptr, pw_rho, ucell.symm);
     std::copy(rho_vec.begin(), rho_vec.end(), pauli.begin());
 
 

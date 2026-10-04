@@ -1,10 +1,10 @@
-# Migration Guide: New CSR Format for H(R) and S(R) Matrices
+# Migration Guide: New CSR Format for H\(R\) and S\(R\) Matrices
 
 ## Overview
 
-Starting from ABACUS v3.9.0.25, the output format for Hamiltonian H(R) and overlap S(R) matrices has been unified to use standard CSR (Compressed Sparse Row) format, matching the format used by `out_dmr` for density matrices.
+Starting from ABACUS v3.9.0.25, the output format for Hamiltonian H\(R\) and overlap S\(R\) matrices has been unified to use standard CSR (Compressed Sparse Row) format, matching the format used by `out_dmr` for density matrices.
 
-This change affects downstream tools that read H(R) and S(R) matrices, including:
+This change affects downstream tools that read H\(R\) and S\(R\) matrices, including:
 - TB2J (magnetic exchange parameters)
 - DeepH (machine learning Hamiltonian)
 - pyATB (tight-binding analysis)

@@ -37,15 +37,21 @@ namespace {
 class XC_First_Order_FDM : public ModuleDFPT::XC_First_Order
 {
   public:
-    XC_First_Order_FDM(ModulePW::PW_Basis* rho_basis,
+    XC_First_Order_FDM(const int nspin,
+                        const bool domag,
+                        const bool domag_z,
+                        const int gga_grad,
+                        const bool out_elf,
+                        const int test_charge,
+                        ModulePW::PW_Basis* rho_basis,
                        const Charge* chg0,
                        const UnitCell* ucell)
         : ucell_(ucell)
     {
-        fdm_ = new elecstate::PotXC_FDM(rho_basis, chg0, ucell);
+        fdm_ = new elecstate::PotXC_FDM(nspin, domag, domag_z, gga_grad, out_elf, test_charge, rho_basis, chg0, ucell);
         chg1_ = new Charge();
         chg1_->set_rhopw(rho_basis);
-        chg1_->allocate(chg0->nspin, false);
+        chg1_->allocate(chg0->nspin, false, false, test_charge);
         veff_1_.create(chg0->nspin, chg0->nrxx);
     }
 
@@ -291,7 +297,8 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     }
 
     // first-order XC kernel adapter around the converged ground-state density
-    xc_adapter_ = new XC_First_Order_FDM(this->pw_rho, this->pelec->charge, &ucell);
+    xc_adapter_ = new XC_First_Order_FDM(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
+                 this->inp_->out_elf[0] > 0, this->inp_->test_charge, this->pw_rho, this->pelec->charge, &ucell);
 
     if (getenv("DFPT_VKB") != nullptr)
     {
@@ -352,6 +359,7 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
         }
     }
 
+    this->stp.sync_cpu();
     dfpt_->init(ucell, *this->stp.psi_cpu, this->pw_rho, this->pw_wfc, &this->sf, veff_r,
                 this->pelec->wg, this->pelec->ekb, xc_adapter_, nelec_, ecutwfc_,
                 dft_plus_u_ ? this->dftu_.get() : nullptr);

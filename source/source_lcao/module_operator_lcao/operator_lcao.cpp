@@ -78,6 +78,14 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
             this->hR->set_zero();
         }
     }
+    // propagate current_spin to next operator so all nodes in the chain
+    // share the same spin state, set by HamiltLCAO::updateHk via set_current_spin.
+    // This is done before processing this node so that children receive the
+    // correct spin regardless of any local toggling that may happen inside
+    // this operator's contributeHR().
+    if (this->next_op != nullptr) {
+        dynamic_cast<OperatorLCAO<TK, TR>*>(this->next_op)->current_spin = this->current_spin;
+    }
     switch (this->cal_type) {
         case calculation_type::lcao_overlap: {
             // cal_type=lcao_overlap refer to overlap matrix operators, which are
@@ -254,7 +262,7 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
         const int nrow = this->hsk->get_pv()->get_row_size();
         if(PARAM.inp.td_stype == 2)
         {
-            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], TD_info::cart_At, TD_info::td_vel_op->get_phase_hybrid(), nrow, 1);
+            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], TD_info::A_prop_ha, TD_info::td_vel_op->get_phase_hybrid(), nrow, 1);
         }
         else
         {
@@ -266,7 +274,7 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
         const int ncol = this->hsk->get_pv()->get_col_size();
         if(PARAM.inp.td_stype == 2)
         {
-            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], TD_info::cart_At, TD_info::td_vel_op->get_phase_hybrid(), ncol, 0);
+            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], TD_info::A_prop_ha, TD_info::td_vel_op->get_phase_hybrid(), ncol, 0);
         }
         else
         {

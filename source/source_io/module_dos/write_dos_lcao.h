@@ -11,18 +11,18 @@
 
 namespace ModuleIO
 {
-	/// @brief calculate density of states(DOS), 
+    /// @brief calculate density of states(DOS), 
     /// partial density of states(PDOS),
     ///  and mulliken charge for LCAO base
     template <typename T>
     void write_dos_lcao(
         const psi::Psi<T>* psi,      // LCAO wave functions
-		hamilt::Hamilt<T>* p_ham,    // Hamiltonian
+        hamilt::Hamilt<T>* p_ham,    // Hamiltonian
         const Parallel_Orbitals &pv, // Parallel scheme for LCAO wave functions
         const UnitCell& ucell,       // Unit cell information
-		const K_Vectors& kv,         // k-point information in Brillouin zone
-		const int nbands,            // Number of bands
-		const elecstate::Efermi &energy_fermi,  // Fermi energy
+        const K_Vectors& kv,         // k-point information in Brillouin zone
+        const int nbands,            // Number of bands
+        const elecstate::Efermi &energy_fermi,  // Fermi energy
         const ModuleBase::matrix& ekb,          // Eigenvalues per k-point and band
         const ModuleBase::matrix& wg,           // Weights of eigenvalues
         const double& dos_edelta_ev,            // Delta energy
@@ -30,6 +30,15 @@ namespace ModuleIO
         const double& bcoeff,
         const bool out_app_flag,
         const int istep,
+        const int nspin,
+        const int nlocal,
+        const bool dos_setemax,
+        const double dos_emax_ev,
+        const bool dos_setemin,
+        const double dos_emin_ev,
+        const bool two_fermi,
+        const int bndpar,
+        const std::string& global_out_dir,
         std::ofstream &ofs_running);
 }
 #endif

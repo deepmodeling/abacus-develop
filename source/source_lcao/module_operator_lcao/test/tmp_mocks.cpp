@@ -202,15 +202,10 @@ Numerical_Nonlocal::~Numerical_Nonlocal() {}
 
 #include "../../setup_nonlocal.h"
 InfoNonlocal::InfoNonlocal() {
-    this->Beta = new Numerical_Nonlocal[1];
-    this->nproj = nullptr;
     this->nprojmax = 0;
     this->rcutmax_Beta = 0.0;
 }
-InfoNonlocal::~InfoNonlocal() {
-    delete[] Beta;
-    delete[] nproj;
-}
+InfoNonlocal::~InfoNonlocal() = default;
 
 Numerical_Orbital::Numerical_Orbital() { this->rcut = 1.0; }
 Numerical_Orbital::~Numerical_Orbital() {}
@@ -226,7 +221,7 @@ class TD_info {
 public:
     TD_info(): phase_hybrid{} {td_vel_op = this;}
     ~TD_info() {}
-    static ModuleBase::Vector3<double> cart_At;
+    static ModuleBase::Vector3<double> A_prop_ha;
     static TD_info* td_vel_op;
     std::map<ModuleBase::Vector3<int>, std::complex<double>> phase_hybrid;
     const std::map<ModuleBase::Vector3<int>, std::complex<double>>& get_phase_hybrid() const
@@ -234,7 +229,7 @@ public:
         return this->phase_hybrid;
     }
 };
-ModuleBase::Vector3<double> TD_info::cart_At(0.0, 0.0, 0.0);
+ModuleBase::Vector3<double> TD_info::A_prop_ha(0.0, 0.0, 0.0);
 TD_info* TD_info::td_vel_op = nullptr;
 
-static TD_info mock_td_info;  
+static TD_info mock_td_info;

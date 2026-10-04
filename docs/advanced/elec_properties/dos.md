@@ -2,14 +2,14 @@
 
 ## DOS
 
-ABACUS can calculate the density of states (DOS) of the system, and the examples can be found in [examples/dos](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/dos).
+ABACUS can calculate the density of states (DOS) of the system, and the examples can be found in [examples/dos](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/13_dos).
 We first, do a ground-state energy calculation ***with one additional keyword "[out_chg](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-chg)" in the INPUT file***:
 
 ```
 out_chg              1
 ```
 
-this will produce the converged charge density, which is contained in the file SPIN1_CHG.cube.
+this will produce the converged charge density, which is contained in the file chg.cube.
 Then, use the same `STRU` file, pseudopotential file and atomic orbital file (and the local density matrix file dm_onsite.txt if DFT+U is used) to do a non-self-consistent calculation. In this example, the potential is constructed from the ground-state charge density from the proceeding calculation. Now the INPUT file is like:
 
 ```
@@ -48,7 +48,7 @@ Some parameters in the INPUT file are explained:
   For LCAO calculations, this parameter will be neglected !
 - init_chg
 
-  the type of starting density. When doing scf calculation, this variable can be set ”atomic”. When doing nscf calculation, the charge density already exists(eg. in SPIN1_CHG.cube), and the variable should be set as ”file”. It means the density will be read from the existing file SPIN1_CHG.cube. For its more information please see the [here](https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#init_chg).
+  the type of starting density. When doing scf calculation, this variable can be set ”atomic”. When doing nscf calculation, the charge density already exists(eg. in chg.cube), and the variable should be set as ”file”. It means the density will be read from the existing file chg.cube. For its more information please see the [here](https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#init_chg).
 - out_dos
 
   output density of state(DOS). The unit of DOS is `(number of states)/(eV * unitcell)`. For its more information please see the [here](https://abacus-rtd--1282.org.readthedocs.build/en/1282/advanced/input_files/input-main.html#out_dos).
@@ -68,52 +68,30 @@ Gamma
 8 8 8 0 0 0
 ```
 
-Run the program, and you will see a file named DOS1_smearing.dat in the output directory. The first two columns in the file are the energy and DOS, respectively, and the third column is the sum of DOS. Plot file DOS1_smearing.dat with graphing software, and you’ll get the DOS.
+Run the program, and you will see a file named doss1g1_nao.txt in the output directory. The columns are: energy(eV), dos (number of states in each energy bin), dos_int (integrated DOS), dos_smear(1/eV) (Gaussian-smeared DOS), dos_smear_int (integrated smeared DOS). Plot the file with graphing software, and you'll get the DOS.
 
 ```
-            -5.49311           0.0518133           0.0518133
-            -5.48311           0.0641955            0.116009
-            -5.47311           0.0779299            0.193939
-            -5.46311           0.0926918             0.28663
-            -5.45311            0.108023            0.394653
-            -5.44311            0.123346            0.517999
-            ...
+#   energy(eV)           dos        dos_int  dos_smear(1/eV)  dos_smear_int
+      -5.49311       0.0518133       0.0518133       0.0518133       0.0518133
+      -5.48311       0.0641955        0.116009       0.0641955        0.116009
+      -5.47311       0.0779299        0.193939       0.0779299        0.193939
+      ...
 ```
 
 ## PDOS
 
-Along with the DOS1_smearing.dat file, we also produce the projected density of states (PDOS) in a file called PDOS.
+Along with the DOS files, we also produce the projected density of states (PDOS) in files named pdoss{spin}g{geom}_{basis}.txt (e.g., pdoss1g1_nao.txt).
 
-The PDOS file starts with number of atomic orbitals in the system, then a list of energy values, such as:
-
-```
-<pdos>
-<nspin>1</nspin>
-<norbitals>26</norbitals>
-<energy_values units="eV">
-            -5.50311
-            -5.49311
-            -5.48311
-            -5.47311
-...
+The PDOS file uses a plain-text format. Each row corresponds to one energy point and one atom. Columns: energy(eV), atom (1-based), species, then pdos values ordered as s(1), p(3), d(5), f(7), etc. Zeta components are summed, and values below 1e-6 are zeroed out.
 
 ```
-
-The rest of the fileis arranged in sections, each section with a header such as below:
-
-```
-<orbital
- index="                                       1"
- atom_index="                                       1"
- species="Si"
- l="                                       0"
- m="                                       0"
- z="                                       1"
->
-<data>
-...
-</data>
-
+# istep: 1
+# npoints: 2736
+# energy(eV)  atom  species  pdos(1/eV), columns: s(m=0) p(m=0,+1,-1) d(m=0,+1,-1,+2,-2) f(m=0,+1,-1,+2,-2,+3,-3)
+  -55.607730    1     Fe    0.000000    0.000000    0.000000    0.000000    0.000000    0.000000    0.000000    0.000000    0.000000
+  ...
 ```
 
-which tells the atom and symmetry of the current atomic orbital, and followed by the PDOS values. The values can thus be plotted against the energies. The unit of PDOS is also `(number of states)/(eV * unitcell)`.
+The `# istep:` line is only present for geometry-optimization (istep) output. Within each angular momentum `l`, the `2l+1` columns follow the magnetic-quantum-number order `m = 0, +1, -1, +2, -2, ...`.
+
+For nspin=2, two files are written (pdoss1* and pdoss2*), one per spin channel. For nspin=4, the two spinor components are summed into a single file. The unit of PDOS is also `(number of states)/(eV * unitcell)`.

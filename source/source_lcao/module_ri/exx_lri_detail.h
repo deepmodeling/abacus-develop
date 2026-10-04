@@ -18,8 +18,8 @@
 #include <malloc.h>
 #endif
 
-	class UnitCell;
-	class K_Vectors;
+    class UnitCell;
+    class K_Vectors;
 
 namespace ExxLriDetail
 {
@@ -29,7 +29,7 @@ using CoulombParam
 inline void trim_malloc_cache()
 {
 #if defined(__GLIBC__)
-	malloc_trim(0);
+    malloc_trim(0);
 #endif
 }
 

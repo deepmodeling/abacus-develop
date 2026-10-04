@@ -52,7 +52,7 @@ template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::update_td()
 {
     // calculate At in cartesian coorinates.
-    this->cart_At = TD_info::cart_At;
+    this->cart_At = TD_info::A_prop_ha;
 }
 // initialize_HR()
 template <typename TK, typename TR>

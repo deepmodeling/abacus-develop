@@ -8,7 +8,6 @@ if(ENABLE_LCAO)
     utils/lr_util.cpp
     utils/lr_util_hcontainer.cpp
     utils/lr_io.cpp
-    utils/lr_io_krlist.cpp
     utils/exciton_plotter.cpp
     ao_to_mo_transformer/ao_to_mo_parallel.cpp
     ao_to_mo_transformer/ao_to_mo_serial.cpp
@@ -21,6 +20,15 @@ if(ENABLE_LCAO)
     lr_spectrum_velocity.cpp
     hamilt_casida.cpp
     potentials/xc_kernel.cpp)
+
+  # BSE-related code: only compiled with LibRI (__EXX), all its
+  # consumers (ESolver_BSE, RI benchmark in hamilt_casida.h) are
+  # already guarded by __EXX
+  if(ENABLE_LIBRI)
+    list(APPEND objects
+      utils/lr_io_krlist.cpp
+    )
+  endif()
 
 add_library(
     lr

@@ -4,7 +4,7 @@
 #include <iostream>
 
 //--------------temporary----------------------------
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_ewald/h_ewald_pw.h"
 //-----force-------------------
@@ -29,7 +29,7 @@
 #include <ATen/kernels/lapack.h>
 #include <sys/time.h>
 #ifdef __LCAO
-#include "source_io/module_hs/write_vxc_lip.hpp"
+#include "source_io/module_hs/vxc_op_lip.h"
 #endif
 
 namespace ModuleESolver
@@ -155,16 +155,19 @@ namespace ModuleESolver
 #else
         const hsolver::diag_comm_info diag_comm(0, 1);
 #endif
-        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt),
+        // the solver sees the Hamiltonian only through this operator; the EXX
+        // subspace hooks live in the adapter, not in the solver
+        hamilt::HamiltLIPHSOperator<T> op(dynamic_cast<hamilt::HamiltLIP<T>*>(this->p_hamilt),
+                                          this->pw_wfc,
+                                          this->general_exx_info_.cal_exx,
+                                          this->general_exx_info_.hybrid_alpha);
+        hsolver_lip_obj.solve(op,
                               *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
                               this->pelec,
                               *this->psi_local,
                               diag_comm,
                               GlobalV::ofs_running,
-                              skip_charge,
-                              ucell.tpiba,
-                              ucell.nat,
-                              this->general_exx_info_);
+                              skip_charge);
 
         // add exx
 #ifdef __EXX
@@ -176,7 +179,7 @@ namespace ModuleESolver
         }
 #endif
 
-        Symmetry_rho::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
+        module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
 
         // deband is calculated from "output" charge density calculated
         // in sum_band
@@ -281,7 +284,7 @@ namespace ModuleESolver
             bool cal_exx = false;
             double hybrid_alpha = 0.0;
 #endif
-            ModuleIO::write_Vxc(this->inp_->nspin,
+            ModuleIO::write_Vxc_LIP(this->inp_->nspin,
                                 PARAM.globalv.nlocal,
                                 GlobalV::DRANK,
                                 *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
@@ -295,6 +298,10 @@ namespace ModuleESolver
                                 this->chr,
                                 this->kv,
                                 this->pelec->wg,
+                                PARAM.globalv.gamma_only_local,
+                                PARAM.globalv.global_out_dir,
+                                this->inp_->out_ndigits,
+                                this->inp_->ks_solver,
                                 cal_exx,
                                 hybrid_alpha
 #ifdef __EXX

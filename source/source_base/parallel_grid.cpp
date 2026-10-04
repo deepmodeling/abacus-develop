@@ -160,7 +160,10 @@ void Parallel_Grid::reduce_across_pools(double* data) const
         return;
     }
 
-    assert(data != nullptr);
+    // A rank may own zero real-space grid points (nrxx == 0); the buffer is
+    // legitimately null in that case. MPI_Allreduce below uses count 0 and
+    // ignores the buffer. Only a null buffer with a non-zero nrxx is a bug.
+    assert(data != nullptr || this->nrxx == 0);
     if (KP_WORLD != MPI_COMM_NULL)
     {
         // Equal-sized pools give corresponding ranks identical z-slab layouts,
@@ -352,7 +355,12 @@ void Parallel_Grid::reduce(double* rhotot, const double* const rhoin, const bool
         return;
     }
 
-    assert(rhoin != nullptr);
+    // A rank may own zero real-space grid points (nrxx == 0) when the grid is
+    // decomposed across more processes than it has slabs. In that case the
+    // source buffer is legitimately null: MPI_Gatherv is called with
+    // sendcount 0 below and ignores the send buffer. Only a null buffer with a
+    // non-zero nrxx is a genuine bug.
+    assert(rhoin != nullptr || this->nrxx == 0);
     assert(this->nrxx == this->ncxy * this->nczp);
 
     int pool_size = 0;

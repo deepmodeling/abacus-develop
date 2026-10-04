@@ -108,7 +108,7 @@ void ModuleIO::set_rR_from_hR(const UnitCell& ucell,
                               const Grid_Driver& GridD,
                               const LCAO_Orbitals& orb,
                               const Parallel_Orbitals* pv,
-                              cal_r_overlap_R& r_calculator,
+                              Position_op& r_calculator,
                               const hamilt::HContainer<std::complex<double>>* hR,
                               ModuleBase::Vector3<hamilt::HContainer<double>*>& rR)
 {
@@ -294,7 +294,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
         const int nrow = pv->get_row_size();
         if (elecstate::H_TDDFT_pw::stype == 2)
         {
-            module_rt::folding_HR_td(hR, hk, kv.kvec_d[ik], TD_info::cart_At, td_p->get_phase_hybrid(), nrow, 1);
+            module_rt::folding_HR_td(hR, hk, kv.kvec_d[ik], TD_info::A_prop_ha, td_p->get_phase_hybrid(), nrow, 1);
         }
         else
         {
@@ -304,7 +304,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
         ModuleBase::GlobalFunc::ZEROS(sk, pv->nloc);
         if (elecstate::H_TDDFT_pw::stype == 2)
         {
-            module_rt::folding_HR_td(sR, sk, kv.kvec_d[ik], TD_info::cart_At, td_p->get_phase_hybrid(), nrow, 1);
+            module_rt::folding_HR_td(sR, sk, kv.kvec_d[ik], TD_info::A_prop_ha, td_p->get_phase_hybrid(), nrow, 1);
         }
         else
         {
@@ -350,7 +350,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                                  hR,
                                                  partial_hk,
                                                  kv.kvec_d[ik],
-                                                 TD_info::cart_At,
+                                                 TD_info::A_prop_ha,
                                                  td_p->get_phase_hybrid(),
                                                  i_alpha,
                                                  nrow,
@@ -368,7 +368,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                                  sR,
                                                  partial_sk,
                                                  kv.kvec_d[ik],
-                                                 TD_info::cart_At,
+                                                 TD_info::A_prop_ha,
                                                  td_p->get_phase_hybrid(),
                                                  i_alpha,
                                                  nrow,
@@ -383,7 +383,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             // folding_rR(rR[i_alpha], partial_sk, rk, pv, kv.kvec_d[ik], nrow, 1);
             if (elecstate::H_TDDFT_pw::stype == 2)
             {
-                module_rt::folding_HR_td(*rR[i_alpha], rk, kv.kvec_d[ik], TD_info::cart_At, td_p->get_phase_hybrid(), nrow, 1);
+                module_rt::folding_HR_td(*rR[i_alpha], rk, kv.kvec_d[ik], TD_info::A_prop_ha, td_p->get_phase_hybrid(), nrow, 1);
             }
             else
             {

@@ -86,8 +86,7 @@ public:
         int max_iter,
         ::hsolver::diag_comm_info comm_info)
     {
-        auto hpsi_func = make_hpsi_func_fstyle<T>(mm_op);
-        auto spsi_func = make_spsi_func_identity<Traits>();
+        const PyHSOperator<T> op(mm_op);
 
         solver_ = std::make_unique<SolverType>(
             precond_vec.data(),
@@ -98,8 +97,7 @@ public:
         );
 
         return solver_->diag(
-            hpsi_func,
-            spsi_func,
+            op,
             nbasis_,
             storage_.psi_ptr(),
             storage_.eigenvalue_ptr(),
@@ -178,8 +176,7 @@ public:
         int diag_subspace,
         int nb2d)
     {
-        auto hpsi_func = make_hpsi_func_fstyle<T>(mm_op);
-        auto spsi_func = make_spsi_func_identity<Traits>();
+        const PyHSOperator<T> op(mm_op);
 
         solver_ = std::make_unique<SolverType>(
             precond_vec,
@@ -194,8 +191,7 @@ public:
         );
 
         return solver_->diag(
-            hpsi_func,
-            spsi_func,
+            op,
             storage_.psi_ptr(),
             nbasis_,
             storage_.eigenvalue_ptr(),

@@ -7,9 +7,7 @@
 #include "source_base/inverse_matrix.h"
 #include "source_base/module_external/lapack_connector.h"
 #include "source_basis/module_pw/test/test_tool.h"
-#include "source_hamilt/hamilt.h"
 #include "source_psi/psi.h"
-#include "source_pw/module_pwdft/hamilt_pw.h"
 
 #include "gtest/gtest.h"
 #include <ATen/core/tensor_map.h>
@@ -105,8 +103,7 @@ public:
     //======================================================================
         double* en = new double[npw];
         int ik = 1;
-        hamilt::Hamilt<double>* ha;
-        ha = new hamilt::HamiltPW<double>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+        HSOperatorMock<double> ha;
         int* ngk = new int[1];
         psi::Psi<double> psi;
         psi.resize(ik, nband, npw);
@@ -149,51 +146,20 @@ public:
 #else
         const hsolver::diag_comm_info diag_comm(mypnum, nprocs);
 #endif
-        // warp the subspace_func into a lambda function
-        auto subspace_func
-            = [ha, &diag_comm](double* psi_in, double* psi_out, const int ld_psi, const int nband, const bool S_orth) {
-                  auto psi_in_wrapper = psi::Psi<double>(psi_in, 1, nband, ld_psi, true);
-                  auto psi_out_wrapper = psi::Psi<double>(psi_out, 1, nband, ld_psi, true);
-                  std::vector<double> eigen(nband, 0.0);
-                  hsolver::DiagoIterAssist<double>::diag_subspace(ha,
-                                                                  psi_in_wrapper,
-                                                                  psi_out_wrapper,
-                                                                  eigen.data(),
-                                                                  diag_comm);
-              };
         hsolver::DiagoCG<double> cg("pw",
                                     "scf",
                                     hsolver::DiagoIterAssist<double>::need_subspace,
-                                    subspace_func,
+                                    diag_comm,
                                     hsolver::DiagoIterAssist<double>::PW_DIAG_THR,
-                                    hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX,
-                                    nprocs);
+                                    hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX);
         // hsolver::DiagoCG<double> cg(precondition_local);
         psi_local.fix_k(0);
         double start, end;
         start = MPI_Wtime();
 
-        auto hpsi_func = [ha](double* psi_in,
-                              double* hpsi_out,
-                              const int ld_psi,
-                              const int nvec) {
-            auto psi_wrapper = psi::Psi<double>(psi_in, 1, nvec, ld_psi, true);
-            psi::Range all_bands_range(true, 0, 0, nvec - 1);
-            using hpsi_info = typename hamilt::Operator<double>::hpsi_info;
-            hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out);
-            ha->ops->hPsi(info);
-        };
-        auto spsi_func = [ha](double* psi_in,
-                              double* spsi_out,
-                              const int ld_psi,
-                              const int nvec) {
-            ha->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nvec);
-        };
 
         std::vector<double> ethr_band(nband, 1e-5);
-        cg.diag(hpsi_func,
-                spsi_func,
-                psi_local.get_nbasis(),
+        cg.diag(ha, psi_local.get_nbasis(),
                 psi_local.get_nbands(),
                 psi_local.get_current_ngk(),
                 psi_local.get_pointer(),
@@ -214,7 +180,6 @@ public:
 
         delete[] en;
         delete[] e_lapack;
-        delete ha;
     }
 };
 

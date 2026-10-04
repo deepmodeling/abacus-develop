@@ -421,8 +421,9 @@ void K_Vectors::update_use_ibz(const int& nkstot_ibz,
 
     ModuleBase::GlobalFunc::OUT(ofs_running, "nkstot now", nkstot);
 
-    // qianrui fix a bug 2021-7-13: size for the spin_mult=2 doubling in set_kup_and_kdw()
-    this->kvec_d.resize(this->nkstot * this->spin_mult);
+    // qianrui fix a bug 2021-7-13: shrink kvec_d to the (now smaller) ibz count;
+    // the spin_mult=2 doubling for set_kup_and_kdw() is reserved there, on demand.
+    this->kvec_d.resize(this->nkstot);
 
     for (int i = 0; i < this->nkstot; ++i)
     {
@@ -444,6 +445,18 @@ void K_Vectors::update_use_ibz(const int& nkstot_ibz,
 void K_Vectors::set_kup_and_kdw(std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("K_Vectors", "setup_kup_and_kdw");
+
+    // grow the containers expand_spin_kpoints() is about to append the down-spin
+    // copy into (indices [nkstot, 2*nkstot)). Resize only these; NOT via renew(),
+    // which would also resize kvec_c_full -- that one must keep holding the
+    // original, un-doubled, un-symmetry-reduced full-BZ mesh for later consumers
+    // (e.g. Ewald_Vq) regardless of what nkstot has become by this point.
+    const int nkstot_spin = this->nkstot * this->spin_mult;
+    this->kvec_c.resize(nkstot_spin);
+    this->kvec_d.resize(nkstot_spin);
+    this->wk.resize(nkstot_spin);
+    this->ngk.resize(nkstot_spin);
+    this->isk.resize(nkstot_spin);
 
     KListIO::expand_spin_kpoints(this->spin_mult,
                                  this->kvec_c,
@@ -523,8 +536,9 @@ void K_Vectors::reduce_by_symmetry(const UnitCell& ucell,
                      ibz2bz);
     const int nkstot_ibz = kvec_d_ibz.size();
 
-#ifdef __EXX
     // setup kstars according to the final (max-norm) kvec_d_ibz
+    // (used by both EXX and DFT+U's crystal-symmetry density-matrix restoration;
+    // no LibRI dependency, so this must not be gated behind __EXX)
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         KListIO::build_kstars(this->kvec_d,
@@ -535,7 +549,6 @@ void K_Vectors::reduce_by_symmetry(const UnitCell& ucell,
                               [&symm](double a, double b) { return symm.equal(a, b); },
                               this->kstars);
     }
-#endif
 
     // output in kpoints file
     skpt = KListIO::ibz_kpt_table(this->nkstot, this->kvec_d, this->ibz_index, kvec_d_ibz);
@@ -665,12 +678,12 @@ void K_Vectors::mpi_k(std::ofstream& ofs_running, const int my_rank, const int m
                          this->kvec_d,
                          this->kvec_c_full);
 
-#ifdef __EXX
     // bcast kstars (rank 0 holds the filled maps; other ranks rebuild them)
+    // (no LibRI dependency; needed by DFT+U's symmetry restoration too, so this
+    // must not be gated behind __EXX)
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         KListIO::bcast_kstars(this->kstars, this->nkstot, my_rank);
     }
-#endif
 } // END SUBROUTINE mpi_k
 #endif

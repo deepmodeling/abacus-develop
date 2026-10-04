@@ -3,14 +3,14 @@
 
 #include "esolver_ks.h"
 #include "source_hamilt/module_xc/exx_info.h" // LCAO owns full Exx_Info
-#include "source_lcao/record_adj.h" // adjacent atoms
+#include "source_cell/record_adj.h" // adjacent atoms
 #include "source_basis/module_nao/two_center_bundle.h" // nao basis
 #include "source_hamilt/module_gint/gint_info.h"
-#include "source_estate/module_charge/gint_prec_ctrl.h"
+#include "source_hamilt/module_gint/gint_prec_ctrl.h"
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/module_rdmft/rdmft.h" // rdmft
-#include "source_lcao/setup_dm.h" // mohan add 2025-10-30
+#include "source_lcao/allocate_dm.h" // mohan add 2025-10-30
 
 #include <memory>
 #include <complex>
@@ -76,7 +76,7 @@ class ESolver_KS_LCAO : public ESolver_KS
     TwoCenterBundle two_center_bundle_;
 
     //! Add density matrix class, mohan add 2025-10-30
-    LCAO_domain::Setup_DM<TK> dmat;
+    module_dm::Setup_DM<TK> dmat;
 
 
     // For deepks method, mohan add 2025-10-08
