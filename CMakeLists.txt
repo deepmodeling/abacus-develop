@@ -50,6 +50,7 @@ option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
 option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
+option(ENABLE_PLUMED "Enable using the PLUMED enhanced-sampling library" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
 option(DEBUG_INFO "Print message to debug" OFF)
@@ -630,6 +631,15 @@ endif()
 
 if(DEFINED TensorFlow_DIR)
   find_package(TensorFlow REQUIRED)
+endif()
+
+if(ENABLE_PLUMED)
+  # PLUMED plugin for collective variables and enhanced sampling
+  # (https://www.plumed.org).  The installation is discovered with
+  # FindPLUMED.cmake, which prefers pkg-config (plumed.pc) and falls back to
+  # a manual -DPLUMED_ROOT=<prefix> hint.
+  find_package(PLUMED REQUIRED)
+  message(STATUS "PLUMED support is enabled: version ${PLUMED_VERSION}, include ${PLUMED_INCLUDE_DIRS}")
 endif()
 
 if(MATH_INFO)

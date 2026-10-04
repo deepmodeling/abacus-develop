@@ -256,7 +256,8 @@ set(_abacus_feature_libs
   $<$<BOOL:${ENABLE_CNPY}>:cnpy>
   $<$<BOOL:${ENABLE_CNPY}>:ZLIB::ZLIB>
   $<$<BOOL:${ENABLE_LIBRI}>:cereal::cereal>
-  $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>)
+  $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>
+  $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>)
 set(_abacus_feature_include_dirs)
 set(_abacus_feature_compile_options)
 
@@ -733,6 +734,7 @@ target_link_libraries(
     domain_decomposition
     neighbor
     md
+    module_plumed
     planewave
     symmetry
     cell

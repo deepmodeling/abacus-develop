@@ -98,6 +98,7 @@ AddTest(
   LIBS parameter psi device
   SOURCES run_md_test.cpp
   ../run_md.cpp
+  ../module_plumed/plumed_interface.cpp
   ../md_base.cpp
   ../fire.cpp
   ../langevin.cpp

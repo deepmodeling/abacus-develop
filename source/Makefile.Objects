@@ -31,6 +31,7 @@ VPATH=./src_global:\
 ./source_base/module_mixing:\
 ./source_base/module_out:\
 ./source_md:\
+./source_md/module_plumed:\
 ./source_basis/module_pw:\
 ./source_base/module_fft:\
 ./source_esolver:\
@@ -506,6 +507,7 @@ OBJS_MD=fire.o\
     md_func.o\
     msst.o\
     nhchain.o\
+    plumed_interface.o\
     run_md.o\
     verlet.o\
 
