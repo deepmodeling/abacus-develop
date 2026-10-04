@@ -23,10 +23,11 @@ void linear_op<T, Device>::dot(const int ld, const int dim, const int nvec, cons
 {
     for (int band = 0; band < nvec; ++band)
     {
+        const std::int64_t offset = static_cast<std::int64_t>(band) * ld;
         T sum = T(0);
         for (int i = 0; i < dim; ++i)
         {
-            sum += std::conj(x[band * ld + i]) * y[band * ld + i];
+            sum += std::conj(x[offset + i]) * y[offset + i];
         }
         out[band] = sum;
     }

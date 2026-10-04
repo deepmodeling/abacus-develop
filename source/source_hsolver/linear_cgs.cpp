@@ -5,8 +5,7 @@
 namespace hsolver
 {
 template <typename T, typename Device>
-LinearCGS<T, Device>::LinearCGS(const double tolerance, const diag_comm_info& comm)
-    : tolerance_(tolerance), work_(comm)
+LinearCGS<T, Device>::LinearCGS(const double tolerance, const diag_comm_info& comm) : tolerance_(tolerance), work_(comm, 9)
 {
 }
 

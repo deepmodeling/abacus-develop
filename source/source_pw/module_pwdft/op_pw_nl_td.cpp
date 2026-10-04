@@ -3,6 +3,8 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 
+#include <cstdint>
+
 namespace hamilt
 {
 
@@ -43,7 +45,8 @@ void TDNonlocalPW<T, Device>::init(const int ik_in)
         // Allocate the time-dependent projector cache on first use.
         if (this->vkb_td == nullptr)
         {
-            resmem_complex_op()(this->vkb_td, this->ppcell->nkb * this->wfcpw->npwk_max, "TDNL::vkb_td");
+            const std::int64_t projector_elements = static_cast<std::int64_t>(this->ppcell->nkb) * this->wfcpw->npwk_max;
+            resmem_complex_op()(this->vkb_td, projector_elements, "TDNL::vkb_td");
         }
 
         // Hartree-unit vector potential.

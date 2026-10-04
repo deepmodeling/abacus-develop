@@ -50,18 +50,6 @@ HSolverLinear<T, Device>::HSolverLinear(const LinearSolveOptions& options, const
 template <typename T, typename Device>
 LinearSolveResult HSolverLinear<T, Device>::solve(const LinearOperator<T, Device>& op,
                                                   const LinearOperator<T, Device>& preconditioner,
-                                                  const int ld,
-                                                  const int nvec,
-                                                  const int dim,
-                                                  T* x,
-                                                  const T* b)
-{
-    return solve(op, preconditioner, ld, nvec, dim, x, b, nullptr, true);
-}
-
-template <typename T, typename Device>
-LinearSolveResult HSolverLinear<T, Device>::solve(const LinearOperator<T, Device>& op,
-                                                  const LinearOperator<T, Device>& preconditioner,
                                                   int ld,
                                                   int nvec,
                                                   int dim,

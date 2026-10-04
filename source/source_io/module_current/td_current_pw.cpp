@@ -12,8 +12,10 @@
 #include "source_pw/module_pwdft/op_pw_vel.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 
 namespace ModuleIO
 {
@@ -46,7 +48,8 @@ PWCurrentResult CurrentPW<FPTYPE, Device>::calculate(const UnitCell& ucell,
     // ==============================================================
     // Store Cartesian current components for each k point.
     // ==============================================================
-    std::vector<double> current_k(3 * nkstot, 0.0);
+    const std::int64_t current_elements = 3 * static_cast<std::int64_t>(nkstot);
+    std::vector<double> current_k(current_elements, 0.0);
 
     // Refresh the potential view used by the shared velocity operator.
     const FPTYPE* vtau = nullptr;
@@ -76,7 +79,9 @@ PWCurrentResult CurrentPW<FPTYPE, Device>::calculate(const UnitCell& ucell,
 
     using CtDevice = typename ct::PsiToContainer<Device>::type;
     const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
-    const int64_t velocity_size = std::max<int64_t>(1, 3LL * n_npwx * max_npw);
+    const std::int64_t component_elements = static_cast<std::int64_t>(n_npwx) * max_npw;
+    const std::int64_t velocity_elements = 3 * component_elements;
+    const std::int64_t velocity_size = std::max<std::int64_t>(1, velocity_elements);
     const int64_t dot_size = std::max(1, n_npwx);
     if (vpsi_.NumElements() < velocity_size || vpsi_.data_type() != ct::DataTypeToEnum<Complex>::value || vpsi_.device_type() != device)
     {
@@ -97,9 +102,9 @@ PWCurrentResult CurrentPW<FPTYPE, Device>::calculate(const UnitCell& ucell,
         Complex* current_psi_ptr = psi->get_pointer();
         const int npw = wfcpw->npwk[ik];
 
-        if (n_npwx * max_npw > 0)
+        if (velocity_elements > 0)
         {
-            setmem_complex_op()(d_vpsi, 0, 3 * n_npwx * max_npw);
+            setmem_complex_op()(d_vpsi, 0, velocity_elements);
         }
 
         velocity_->init(ik, vector_potential);
@@ -107,14 +112,15 @@ PWCurrentResult CurrentPW<FPTYPE, Device>::calculate(const UnitCell& ucell,
 
         for (int id = 0; id < 3; ++id)
         {
-            hsolver::linear_op<Complex, Device>()
-                .dot(max_npw, npw, n_npwx, current_psi_ptr, d_vpsi + id * n_npwx * max_npw, dot_buffer.data<Complex>());
+            const Complex* component = d_vpsi + id * component_elements;
+            hsolver::linear_op<Complex, Device>().dot(max_npw, npw, n_npwx, current_psi_ptr, component, dot_buffer.data<Complex>());
             syncmem_complex_d2h_op()(band_current.data(), dot_buffer.data<Complex>(), n_npwx);
             for (int ib = 0; ib < nbands; ++ib)
             {
                 const double contribution = -pelec->wg(ik, ib) * std::real(band_current[ib]);
                 current_total[id] += contribution;
-                current_k[kv.ik2iktot[ik] * 3 + id] += contribution;
+                const std::int64_t current_index = static_cast<std::int64_t>(kv.ik2iktot[ik]) * 3 + id;
+                current_k[current_index] += contribution;
             }
         }
     }
@@ -123,7 +129,15 @@ PWCurrentResult CurrentPW<FPTYPE, Device>::calculate(const UnitCell& ucell,
     // Reduce all current components together across MPI ranks.
     // ==============================================================
     Parallel_Reduce::reduce_all(current_total, 3);
-    Parallel_Reduce::reduce_all(current_k.data(), 3 * nkstot);
+    const std::int64_t max_chunk = std::numeric_limits<int>::max();
+    for (std::int64_t offset = 0; offset < current_elements;)
+    {
+        const std::int64_t remaining = current_elements - offset;
+        const int count = static_cast<int>(std::min(max_chunk, remaining));
+        double* chunk = current_k.data() + offset;
+        Parallel_Reduce::reduce_all(chunk, count);
+        offset += count;
+    }
 
     PWCurrentResult result;
     for (int d = 0; d < 3; ++d)
@@ -166,7 +180,8 @@ void write_pw_current(const PWCurrentResult& current,
             std::ofstream fout_k;
             fout_k.open(filename_k, std::ios::app);
             fout_k << std::setprecision(16) << std::scientific;
-            fout_k << istep + 1 << " " << current.per_k[ik * 3 + 0] << " " << current.per_k[ik * 3 + 1] << " " << current.per_k[ik * 3 + 2]
+            const std::int64_t offset = static_cast<std::int64_t>(ik) * 3;
+            fout_k << istep + 1 << " " << current.per_k[offset] << " " << current.per_k[offset + 1] << " " << current.per_k[offset + 2]
                    << std::endl;
             fout_k.close();
         }

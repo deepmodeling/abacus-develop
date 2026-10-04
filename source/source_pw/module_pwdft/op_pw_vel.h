@@ -7,6 +7,7 @@
 #include "source_pw/module_pwdft/projector_gradient.h"
 #include "source_pw/module_pwdft/velocity_workspace.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
+#include <cstdint>
 namespace hamilt
 {
 
@@ -74,7 +75,7 @@ class Velocity
     mutable std::complex<FPTYPE>* porter1_ = nullptr;          ///< workspace on real grid / recip grid
     mutable std::complex<FPTYPE>* porter2_ = nullptr;          ///< workspace on real grid / recip grid
     int momentum_capacity_ = 0;
-    int projector_capacity_ = 0;
+    std::int64_t projector_capacity_ = 0;
     mutable int porter_capacity_ = 0;
     ProjectorGradient<FPTYPE, Device> gradient_;
     mutable VelocityWorkspace<FPTYPE, Device> contraction_;

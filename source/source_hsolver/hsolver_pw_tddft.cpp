@@ -22,9 +22,8 @@ struct LinearMethodName
     LinearMethod method;
 };
 
-constexpr LinearMethodName linear_method_names[] = {{"bicgstab", LinearMethod::bicgstab},
-                                                    {"cgs", LinearMethod::cgs},
-                                                    {"gmres", LinearMethod::gmres}};
+constexpr LinearMethodName linear_method_names[]
+    = {{"bicgstab", LinearMethod::bicgstab}, {"cgs", LinearMethod::cgs}, {"gmres", LinearMethod::gmres}};
 
 struct PWPrecondName
 {
@@ -33,9 +32,9 @@ struct PWPrecondName
 };
 
 constexpr PWPrecondName pw_precond_names[] = {{"none", PWPreconditioner::none},
-                                            {"kinetic", PWPreconditioner::kinetic},
-                                            {"kinetic_recycle", PWPreconditioner::kinetic_recycle},
-                                            {"kinetic_subspace", PWPreconditioner::kinetic_subspace}};
+                                              {"kinetic", PWPreconditioner::kinetic},
+                                              {"kinetic_recycle", PWPreconditioner::kinetic_recycle},
+                                              {"kinetic_subspace", PWPreconditioner::kinetic_subspace}};
 
 template <typename T, typename Device>
 class ShiftedHOperator final : public LinearOperator<T, Device>
@@ -91,7 +90,7 @@ HSolverPWTDDFT<T, Device>::HSolverPWTDDFT(const ModulePW::PW_Basis_K& basis,
                                           const PWLinearOptions& options,
                                           const diag_comm_info& comm,
                                           std::ostream& log)
-    : basis_(basis), comm_(comm), options_(options), algebra_(comm), band_products_(comm)
+    : basis_(basis), comm_(comm), options_(options), algebra_(comm), band_products_(comm, 9)
 {
     initialize(log);
 }

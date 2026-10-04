@@ -1,5 +1,7 @@
 #include "source_pw/module_pwdft/kernels/wf_op.h"
 
+#include <cstdint>
+
 #include <complex>
 
 #include <thrust/complex.h>
@@ -44,11 +46,11 @@ __global__ void cal_sk(
         for (int ia = 0; ia < atom_na[it]; ia++) {
             FPTYPE arg = 0.0;
             for (int ii = 0; ii < 3; ii++) {
-                arg += kvec_c[ik * 3 + ii] * atom_tau[iat * 3 + ii];
+                arg += kvec_c[static_cast<std::int64_t>(ik) * 3 + ii] * atom_tau[static_cast<std::int64_t>(iat) * 3 + ii];
             }
             arg *= TWO_PI;
             const thrust::complex<FPTYPE> kphase = thrust::complex<FPTYPE>(cos(arg), -sin(arg));
-            const int isz = igl2isz[ik * npwx + igl];
+            const int isz = igl2isz[static_cast<std::int64_t>(ik) * npwx + igl];
             int iz = isz % nz;
             const int is = isz / nz;
             const int ixy = is2fftixy[is];
@@ -63,8 +65,8 @@ __global__ void cal_sk(
             ix += rho_nx;
             iy += rho_ny;
             iz += rho_nz;
-            sk[iat * npw + igl] = kphase * eigts1[iat * eigts1_nc + ix] * eigts2[iat * eigts2_nc + iy]
-                                  * eigts3[iat * eigts3_nc + iz];
+            sk[static_cast<std::int64_t>(iat) * npw + igl] = kphase * eigts1[static_cast<std::int64_t>(iat) * eigts1_nc + ix] * eigts2[static_cast<std::int64_t>(iat) * eigts2_nc + iy]
+                                  * eigts3[static_cast<std::int64_t>(iat) * eigts3_nc + iz];
             iat++;
         }
     }
@@ -97,7 +99,7 @@ void cal_sk_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::D
                                                             std::complex<FPTYPE>* eigts3,
                                                             std::complex<FPTYPE>* sk)
 {
-    int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    int block = npw / THREADS_PER_BLOCK + (npw % THREADS_PER_BLOCK != 0);
     cal_sk<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
          ik, ntype,
          nx, ny, nz,

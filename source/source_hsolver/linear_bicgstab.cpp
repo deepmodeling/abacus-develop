@@ -7,8 +7,7 @@
 namespace hsolver
 {
 template <typename T, typename Device>
-LinearBiCGSTAB<T, Device>::LinearBiCGSTAB(const double tolerance, const diag_comm_info& comm)
-    : tolerance_(tolerance), work_(comm)
+LinearBiCGSTAB<T, Device>::LinearBiCGSTAB(const double tolerance, const diag_comm_info& comm) : tolerance_(tolerance), work_(comm, 9)
 {
 }
 

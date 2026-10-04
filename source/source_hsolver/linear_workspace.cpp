@@ -25,11 +25,6 @@ LinearSolveTimer::~LinearSolveTimer()
 }
 
 template <typename T, typename Device>
-LinearWorkspace<T, Device>::LinearWorkspace(const diag_comm_info& comm) : LinearWorkspace(comm, 9)
-{
-}
-
-template <typename T, typename Device>
 LinearWorkspace<T, Device>::LinearWorkspace(const diag_comm_info& comm, int slots) : slots_(slots), comm_(comm)
 {
     if (slots_ <= 0)
@@ -326,8 +321,7 @@ void LinearWorkspace<T, Device>::swap_vectors(int ld, int dim, int slots, int st
     const int64_t permutation_elements = pairs.size();
     if (permutation_.NumElements() < permutation_elements)
     {
-        permutation_
-            = ct::Tensor(ct::DataTypeToEnum<int>::value, ct::DeviceTypeToEnum<CtDevice>::value, {permutation_elements});
+        permutation_ = ct::Tensor(ct::DataTypeToEnum<int>::value, ct::DeviceTypeToEnum<CtDevice>::value, {permutation_elements});
     }
     int* map = permutation_.template data<int>();
     base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>()(map, pairs.data(), pairs.size());
@@ -380,7 +374,9 @@ void LinearWorkspace<T,
     std::copy(a, a_end, host_coefficients_.begin());
     std::copy(b, b_end, second_begin);
     T* coeff = coefficients_.template data<T>();
-    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(coeff, host_coefficients_.data(), coefficient_elements);
+    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(coeff,
+                                                                                     host_coefficients_.data(),
+                                                                                     coefficient_elements);
     const T* second_coefficients = coeff + nvec;
     linear_op<T, Device>().bicg_update(ld, dim, nvec, direction, out, x, y, coeff, second_coefficients);
     ModuleBase::timer::end("LinearWorkspace", "bicg_update");

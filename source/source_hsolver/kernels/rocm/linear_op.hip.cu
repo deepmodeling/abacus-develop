@@ -28,7 +28,7 @@ __global__ void dot_kernel(const int ld, const int dim, const thrust::complex<Re
     __shared__ Real re[linear_threads];
     __shared__ Real im[linear_threads];
     const int tid = threadIdx.x;
-    const int offset = blockIdx.x * ld;
+    const std::int64_t offset = static_cast<std::int64_t>(blockIdx.x) * ld;
     thrust::complex<Real> sum(0, 0);
     for (int i = tid; i < dim; i += blockDim.x)
     {
@@ -66,7 +66,7 @@ void linear_op<T, base_device::DEVICE_GPU>::dot(const int ld, const int dim, con
 
 
 template <typename C>
-__global__ void batch_kernel(int ld,int dim,int nvec,C* out,const C* x,const C* y,C a,C b,const C* ca,const C* cb,const int* skip)
+__global__ void batch_kernel(int ld,int dim,C* out,const C* x,const C* y,C a,C b,const C* ca,const C* cb,const int* skip)
 {
     const int i=blockIdx.x*blockDim.x+threadIdx.x;
     const int band=blockIdx.y;
@@ -147,7 +147,7 @@ void linear_op<T,base_device::DEVICE_GPU>::batch(int ld,int dim,int nvec,T* out,
 {
     if(dim<=0 || nvec<=0)return;
     using C=thrust::complex<typename T::value_type>;
-    batch_kernel<<<dim3((dim+255)/256,nvec),256>>>(ld,dim,nvec,reinterpret_cast<C*>(out),
+    batch_kernel<<<dim3((dim+255)/256,nvec),256>>>(ld,dim,reinterpret_cast<C*>(out),
         reinterpret_cast<const C*>(x),reinterpret_cast<const C*>(y),C(a.real(),a.imag()),C(b.real(),b.imag()),
         reinterpret_cast<const C*>(ca),reinterpret_cast<const C*>(cb),skip);
     check_launch();

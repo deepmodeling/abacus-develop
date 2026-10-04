@@ -75,12 +75,8 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_scf(UnitCell& ucell, const int istep
     if (this->td_field_manager_->gauge() == 1)
     {
         // Refresh after the parent updates the cell and distributed basis.
-        this->q_unshifted_ = pw::td_momentum_bound(*this->pw_wfc, ucell.tpiba);
-        pw::ensure_td_vnl(ucell,
-                          this->q_unshifted_,
-                          this->td_field_manager_->A_right_ha(),
-                          this->td_field_manager_->A_prop_ha(),
-                          &this->ppcell);
+        const double q_unshifted = pw::td_momentum_bound(*this->pw_wfc, ucell.tpiba);
+        pw::ensure_td_vnl(ucell, q_unshifted, this->td_field_manager_->A_right_ha(), this->td_field_manager_->A_prop_ha(), &this->ppcell);
     }
 }
 

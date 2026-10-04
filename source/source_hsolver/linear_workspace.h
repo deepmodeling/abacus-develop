@@ -48,7 +48,6 @@ class LinearWorkspace
     const diag_comm_info comm_;
 
   public:
-    explicit LinearWorkspace(const diag_comm_info& comm);
     /** @brief Allocate only the recurrence slots required by the calling solver. */
     LinearWorkspace(const diag_comm_info& comm, int slots);
     void prepare(const int ld, const int dim, const int nvec, const T* x, const T* b, const double tolerance, const int max_iter);

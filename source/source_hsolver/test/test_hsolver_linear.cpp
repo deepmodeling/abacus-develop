@@ -117,8 +117,7 @@ TYPED_TEST(LinearSolveTest, DenseReferenceAndReusedBatches)
     const hsolver::diag_comm_info comm = linear_test::world_comm();
     const double tolerance = std::is_same<TypeParam, double>::value ? 1e-12 : 2e-6;
     const double solution_tol = std::is_same<TypeParam, double>::value ? 1e-10 : 1e-4;
-    for (const hsolver::LinearMethod method:
-         {hsolver::LinearMethod::bicgstab, hsolver::LinearMethod::cgs, hsolver::LinearMethod::gmres})
+    for (const hsolver::LinearMethod method: {hsolver::LinearMethod::bicgstab, hsolver::LinearMethod::cgs, hsolver::LinearMethod::gmres})
     {
         for (const bool preconditioned: {false, true})
         {
@@ -189,12 +188,12 @@ TYPED_TEST(LinearSolveTest, DenseReferenceAndReusedBatches)
                     hsolver::LinearSolveResult result;
                     if (preconditioned)
                     {
-                        result = solver.solve(op, precond, ld, nvec, dim, x.data(), rhs.data());
+                        result = solver.solve(op, precond, ld, nvec, dim, x.data(), rhs.data(), nullptr, true);
                     }
                     else
                     {
                         const IdentityOperator<T> identity(dim);
-                        result = solver.solve(op, identity, ld, nvec, dim, x.data(), rhs.data());
+                        result = solver.solve(op, identity, ld, nvec, dim, x.data(), rhs.data(), nullptr, true);
                     }
                     EXPECT_EQ(result.status, hsolver::LinearSolveStatus::converged);
                     EXPECT_EQ(result.failed_band, -1);
@@ -262,8 +261,7 @@ TEST(LinearSolveFailure, ReportsOriginalColumnAndTrueResidual)
     const int start = n * comm.rank / comm.nproc;
     const int dim = n * (comm.rank + 1) / comm.nproc - start;
     const int ld = dim + 1;
-    for (const hsolver::LinearMethod method:
-         {hsolver::LinearMethod::bicgstab, hsolver::LinearMethod::cgs, hsolver::LinearMethod::gmres})
+    for (const hsolver::LinearMethod method: {hsolver::LinearMethod::bicgstab, hsolver::LinearMethod::cgs, hsolver::LinearMethod::gmres})
     {
         for (const bool singular: {false, true})
         {
@@ -286,7 +284,7 @@ TEST(LinearSolveFailure, ReportsOriginalColumnAndTrueResidual)
                 b[ld + i] = T(1, 0.1 * (start + i));
             }
             const IdentityOperator<T> identity(dim);
-            const hsolver::LinearSolveResult result = solver.solve(op, identity, ld, 3, dim, x.data(), b.data());
+            const hsolver::LinearSolveResult result = solver.solve(op, identity, ld, 3, dim, x.data(), b.data(), nullptr, true);
             const hsolver::LinearSolveStatus expected
                 = singular ? hsolver::LinearSolveStatus::breakdown : hsolver::LinearSolveStatus::max_iterations;
             EXPECT_EQ(result.status, expected);
@@ -353,8 +351,7 @@ void check_reconstruction(const bool corrupt_initial)
     const IdentityOperator<T> identity(dim);
     hsolver::HSolverLinear<T> solver(options, comm);
     const T* initial = corrupt_initial ? bad_residual.data() : nullptr;
-    const hsolver::LinearSolveResult result
-        = solver.solve(op, identity, ld, bands, dim, x.data(), b.data(), initial, corrupt_initial);
+    const hsolver::LinearSolveResult result = solver.solve(op, identity, ld, bands, dim, x.data(), b.data(), initial, corrupt_initial);
     ASSERT_EQ(result.status, hsolver::LinearSolveStatus::converged);
     EXPECT_EQ(result.failed_band, -1);
     EXPECT_GT(result.restarts, 0);
@@ -372,8 +369,7 @@ void check_reconstruction(const bool corrupt_initial)
         {
             error += std::norm(linear_test::Complex(ax[band * ld + i]) - linear_test::Complex(b[band * ld + i]));
             norm += std::norm(linear_test::Complex(b[band * ld + i]));
-            EXPECT_LT(std::abs(linear_test::Complex(x[band * ld + i]) - reference[band * n + start + i]),
-                      10 * options.tolerance);
+            EXPECT_LT(std::abs(linear_test::Complex(x[band * ld + i]) - reference[band * n + start + i]), 10 * options.tolerance);
         }
 #ifdef __MPI
         Parallel_Common::reduce_data(&error, 1, comm.comm);
@@ -387,8 +383,7 @@ void check_reconstruction(const bool corrupt_initial)
         options.max_iterations = 1;
         hsolver::HSolverLinear<T> limited(options, comm);
         std::fill(x.begin(), x.end(), T(0));
-        const hsolver::LinearSolveResult exhausted
-            = limited.solve(op, identity, ld, bands, dim, x.data(), b.data(), initial, true);
+        const hsolver::LinearSolveResult exhausted = limited.solve(op, identity, ld, bands, dim, x.data(), b.data(), initial, true);
         EXPECT_EQ(exhausted.status, hsolver::LinearSolveStatus::max_iterations);
         EXPECT_EQ(exhausted.failed_band, 1);
         EXPECT_EQ(exhausted.iterations, options.max_iterations);

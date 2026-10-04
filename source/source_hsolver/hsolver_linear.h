@@ -26,14 +26,6 @@ class HSolverLinear
     {
         return tolerance_;
     }
-    /** @brief Solve with an explicit right inverse preconditioner. */
-    LinearSolveResult solve(const LinearOperator<T, Device>& op,
-                            const LinearOperator<T, Device>& preconditioner,
-                            const int ld,
-                            const int nvec,
-                            const int dim,
-                            T* x,
-                            const T* b);
     /** @brief Reuse an optional CN residual and control independent GMRES verification. */
     LinearSolveResult solve(const LinearOperator<T, Device>& op,
                             const LinearOperator<T, Device>& preconditioner,

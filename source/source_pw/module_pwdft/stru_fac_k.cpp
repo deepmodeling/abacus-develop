@@ -1,18 +1,17 @@
+#include "source_base/module_device/device.h"
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/kernels/wf_op.h"
-#include "source_base/module_device/device.h"
 #include "stru_fac.h"
 
-std::complex<double>* Structure_Factor::get_sk(const int ik,
-                                               const int it,
-                                               const int ia,
-                                               const ModulePW::PW_Basis_K* wfc_basis) const
+#include <cstdint>
+
+std::complex<double>* Structure_Factor::get_sk(const int ik, const int it, const int ia, const ModulePW::PW_Basis_K* wfc_basis) const
 {
     ModuleBase::timer::start("Structure_Factor", "get_sk");
     const double arg = (wfc_basis->kvec_c[ik] * ucell->atoms[it].tau[ia]) * ModuleBase::TWO_PI;
     const std::complex<double> kphase = std::complex<double>(cos(arg), -sin(arg));
     const int npw = wfc_basis->npwk[ik];
-    std::complex<double> *sk = new std::complex<double>[npw];
+    std::complex<double>* sk = new std::complex<double>[npw];
     const int nx = wfc_basis->nx, ny = wfc_basis->ny, nz = wfc_basis->nz;
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -25,15 +24,15 @@ std::complex<double>* Structure_Factor::get_sk(const int ik,
         const int ixy = wfc_basis->is2fftixy[is];
         int ix = ixy / wfc_basis->fftny;
         int iy = ixy % wfc_basis->fftny;
-        if (ix >= int(nx / 2) + 1) 
+        if (ix >= int(nx / 2) + 1)
         {
             ix -= nx;
         }
-        if (iy >= int(ny / 2) + 1) 
+        if (iy >= int(ny / 2) + 1)
         {
             iy -= ny;
         }
-        if (iz >= int(nz / 2) + 1) 
+        if (iz >= int(nz / 2) + 1)
         {
             iz -= nz;
         }
@@ -48,10 +47,7 @@ std::complex<double>* Structure_Factor::get_sk(const int ik,
 }
 
 template <typename FPTYPE, typename Device>
-void Structure_Factor::get_sk(Device* ctx,
-                              const int ik,
-                              const ModulePW::PW_Basis_K* wfc_basis,
-                              std::complex<FPTYPE>* sk) const
+void Structure_Factor::get_sk(Device* ctx, const int ik, const ModulePW::PW_Basis_K* wfc_basis, std::complex<FPTYPE>* sk) const
 {
     ModuleBase::timer::start("Structure_Factor", "get_sk");
 
@@ -66,12 +62,14 @@ void Structure_Factor::get_sk(Device* ctx,
     using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
     using syncmem_var_op = base_device::memory::synchronize_memory_op<FPTYPE, Device, base_device::DEVICE_CPU>;
 
-    int iat = 0, _npw = wfc_basis->npwk[ik], eigts1_nc = this->eigts1.nc, eigts2_nc = this->eigts2.nc,
-            eigts3_nc = this->eigts3.nc;
+    int iat = 0, _npw = wfc_basis->npwk[ik], eigts1_nc = this->eigts1.nc, eigts2_nc = this->eigts2.nc, eigts3_nc = this->eigts3.nc;
     int *igl2isz = nullptr, *is2fftixy = nullptr, *atom_na = nullptr, *h_atom_na = new int[ucell->ntype];
-    FPTYPE *atom_tau = nullptr, *h_atom_tau = new FPTYPE[ucell->nat * 3], *kvec = wfc_basis->get_kvec_c_data<FPTYPE>();
-    std::complex<FPTYPE> *eigts1 = this->get_eigts1_data<FPTYPE>(), *eigts2 = this->get_eigts2_data<FPTYPE>(),
-            *eigts3 = this->get_eigts3_data<FPTYPE>();
+    const std::int64_t tau_elements = static_cast<std::int64_t>(ucell->nat) * 3;
+    FPTYPE* atom_tau = nullptr;
+    FPTYPE* h_atom_tau = new FPTYPE[tau_elements];
+    FPTYPE* kvec = wfc_basis->get_kvec_c_data<FPTYPE>();
+    std::complex<FPTYPE>*eigts1 = this->get_eigts1_data<FPTYPE>(), *eigts2 = this->get_eigts2_data<FPTYPE>(),
+    *eigts3 = this->get_eigts3_data<FPTYPE>();
     for (int it = 0; it < ucell->ntype; it++)
     {
         h_atom_na[it] = ucell->atoms[it].na;
@@ -83,18 +81,20 @@ void Structure_Factor::get_sk(Device* ctx,
     {
         int it = ucell->iat2it[iat];
         int ia = ucell->iat2ia[iat];
-        auto *tau = reinterpret_cast<double *>(ucell->atoms[it].tau.data());
-        h_atom_tau[iat * 3 + 0] = static_cast<FPTYPE>(tau[ia * 3 + 0]);
-        h_atom_tau[iat * 3 + 1] = static_cast<FPTYPE>(tau[ia * 3 + 1]);
-        h_atom_tau[iat * 3 + 2] = static_cast<FPTYPE>(tau[ia * 3 + 2]);
+        auto* tau = reinterpret_cast<double*>(ucell->atoms[it].tau.data());
+        const std::int64_t target_offset = static_cast<std::int64_t>(iat) * 3;
+        const std::int64_t source_offset = static_cast<std::int64_t>(ia) * 3;
+        h_atom_tau[target_offset + 0] = static_cast<FPTYPE>(tau[source_offset + 0]);
+        h_atom_tau[target_offset + 1] = static_cast<FPTYPE>(tau[source_offset + 1]);
+        h_atom_tau[target_offset + 2] = static_cast<FPTYPE>(tau[source_offset + 2]);
     }
     if (device == base_device::GpuDevice)
     {
         resmem_int_op()(atom_na, ucell->ntype);
         syncmem_int_op()(atom_na, h_atom_na, ucell->ntype);
 
-        resmem_var_op()(atom_tau, ucell->nat * 3);
-        syncmem_var_op()(atom_tau, h_atom_tau, ucell->nat * 3);
+        resmem_var_op()(atom_tau, tau_elements);
+        syncmem_var_op()(atom_tau, h_atom_tau, tau_elements);
 
         igl2isz = wfc_basis->d_igl2isz_k;
         is2fftixy = wfc_basis->d_is2fftixy;
@@ -149,7 +149,7 @@ std::complex<double>* Structure_Factor::get_skq(int ik,
                                                 ModuleBase::Vector3<double> q) const // pengfei 2016-11-23
 {
     const int npw = wfc_basis->npwk[ik];
-    std::complex<double> *skq = new std::complex<double>[npw];
+    std::complex<double>* skq = new std::complex<double>[npw];
 
     for (int ig = 0; ig < npw; ig++)
     {
