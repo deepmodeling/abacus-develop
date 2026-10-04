@@ -478,6 +478,10 @@ OBJS_HSOLVER=diago_cg.o\
     diago_pxxxgvx.o\
     linear_bicgstab.o\
     linear_cgs.o\
+    linear_gmres.o\
+    linear_algebra.o\
+    cn_subspace.o\
+    linear_low_rank.o\
     linear_workspace.o\
     hsolver_linear.o\
     linear_op.o\
