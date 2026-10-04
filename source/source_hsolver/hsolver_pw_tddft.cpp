@@ -8,7 +8,6 @@
 #include "source_hsolver/kernels/linear_op.h"
 
 #include <chrono>
-#include <functional>
 #include <iomanip>
 #include <sstream>
 
@@ -212,44 +211,14 @@ void HSolverPWTDDFT<T, Device>::prepare_sequence(int nk, int ld, int bands, doub
 }
 
 template <typename T, typename Device>
-void HSolverPWTDDFT<T, Device>::prepare_kpoint(int ik, int dim, KPointState* state)
+void HSolverPWTDDFT<T, Device>::invalidate_basis()
 {
-    if (!state)
+    for (KPointState& state: states_)
     {
-        return;
+        state.response.clear();
+        state.solve_count = 0;
+        state.independent_step = -1;
     }
-    std::size_t signature = static_cast<std::size_t>(dim);
-    const auto hash_value
-        = [&signature](double value) { signature ^= std::hash<double>()(value) + 0x9e3779b9 + (signature << 6) + (signature >> 2); };
-    hash_value(basis_.tpiba);
-    if (basis_.kvec_c)
-    {
-        hash_value(basis_.kvec_c[ik].x);
-        hash_value(basis_.kvec_c[ik].y);
-        hash_value(basis_.kvec_c[ik].z);
-    }
-    for (int ig = 0; ig < dim && basis_.gcar; ++ig)
-    {
-        const ModuleBase::Vector3<double>& g = basis_.getgcar(ik, ig);
-        hash_value(g.x);
-        hash_value(g.y);
-        hash_value(g.z);
-    }
-    double changed = !state->layout_valid || signature != state->layout ? 1.0 : 0.0;
-#ifdef __MPI
-    if (comm_.nproc > 1)
-    {
-        Parallel_Common::reduce_data(&changed, 1, comm_.comm);
-    }
-#endif
-    if (changed > 0)
-    {
-        state->response.clear();
-        state->solve_count = 0;
-        state->independent_step = -1;
-    }
-    state->layout = signature;
-    state->layout_valid = true;
 }
 
 template <typename T, typename Device>
@@ -276,8 +245,7 @@ void HSolverPWTDDFT<T, Device>::retry_kinetic(const LinearOperator<T, Device>& o
     const T* inverse = inverse_kinetic_.template data<T>();
     const LinearLowRank<T, Device> diagonal(algebra_, inverse, batch.dim);
     const T* rhs = rhs_.template data<T>();
-    LinearSolveResult retry
-        = linear_solver_->solve(op, diagonal, batch.ld, batch.bands, batch.dim, current, rhs, nullptr, true, control);
+    LinearSolveResult retry = linear_solver_->solve(op, diagonal, batch.ld, batch.bands, batch.dim, current, rhs, nullptr, true, control);
     retry.iterations += result->iterations;
     retry.restarts += result->restarts;
     retry.operator_calls += result->operator_calls;
@@ -429,7 +397,6 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
         }
         const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
         KPointState* state = tracks_state() ? &states_[ik] : nullptr;
-        prepare_kpoint(ik, dim, state);
         const ShiftedHOperator<T, Device> rhs_op(op, rhs_coefficient, dim);
         const ShiftedHOperator<T, Device> lhs_op(op, coefficient, dim);
         const T* previous_data = previous.get_pointer();

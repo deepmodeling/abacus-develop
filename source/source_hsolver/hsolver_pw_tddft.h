@@ -44,9 +44,18 @@ class HSolverPWTDDFT
     /** @brief Configure propagation using typed, explicit solver options. */
     HSolverPWTDDFT(const ModulePW::PW_Basis_K& basis, const PWLinearOptions& options, const diag_comm_info& comm, std::ostream& log);
 
+    /** @brief Invalidate basis-dependent history and restart independent residual checks without releasing buffers.
+     *  Call on every rank in the pool after changing the basis or its distribution, including
+     *  G-vector ordering or k-point changes that preserve array sizes. Ordinary Hamiltonian
+     *  updates and ionic motion at fixed basis do not require this notification.
+     */
+    void invalidate_basis();
+
     /** @brief Propagate from the fixed previous step, retaining the current iterate as the initial guess.
      *  @param dt Electronic time step in Hartree atomic units.
      *  @param momentum_shift Propagation vector potential in Hartree atomic units (inverse Bohr).
+     *  @param istep Electronic propagation step, increasing across electronic substeps within an MD step.
+     *  @param iter SCF iteration within this electronic step.
      */
     void solve(HSOperator<T, Device>& op,
                const psi::Psi<T, Device>& previous,
@@ -66,10 +75,8 @@ class HSolverPWTDDFT
     struct KPointState
     {
         LinearResponse<T, Device> response;
-        std::size_t layout = 0;
         unsigned int solve_count = 0;
         int independent_step = -1;
-        bool layout_valid = false;
     };
     struct SequenceState
     {
@@ -111,7 +118,6 @@ class HSolverPWTDDFT
     void initialize(std::ostream& log);
     bool tracks_state() const;
     void prepare_sequence(int nk, int ld, int bands, double dt, int step, int iteration);
-    void prepare_kpoint(int ik, int dim, KPointState* state);
     bool require_audit(int step, KPointState* state) const;
     SolveDetails solve_kpoint(const LinearOperator<T, Device>& op,
                               const T* previous,

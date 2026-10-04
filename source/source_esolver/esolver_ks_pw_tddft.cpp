@@ -65,7 +65,12 @@ template <typename T, typename Device>
 void ESolver_KS_PW_TDDFT<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
     this->prepare_td_step(istep);
+    const bool basis_updated = ucell.cell_parameter_updated;
     ESolver_KS_PW<T, Device>::before_scf(ucell, istep);
+    if (basis_updated)
+    {
+        this->td_solver_->invalidate_basis();
+    }
     this->history_.prepare(*this->pelec->pot, XC_Functional::get_ked_flag());
     if (this->td_field_manager_->gauge() == 1)
     {
@@ -162,6 +167,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
         momentum_shift = this->td_field_manager_->A_prop_ha();
     }
     hamiltonian->bind_td_state(propagation.veff, propagation.vofk, momentum_shift);
+    // Pass the electronic step; it coincides with the MD step while estep_per_md=1.
     this->td_solver_->solve(op,
                             this->history_.previous(),
                             current,
