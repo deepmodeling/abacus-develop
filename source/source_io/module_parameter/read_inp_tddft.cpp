@@ -179,7 +179,7 @@ void ReadInput::item_rt_tddft()
 * `gmres`: Restarted generalized minimal residual (GMRES) method, controlled by `lin_gmres_restart`.
 
 The initial ground-state diagonalization is controlled by `ks_solver`.)";
-        item.default_value = "bicgstab";
+        item.default_value = "gmres";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");
         read_sync_string(input.lin_solver);
@@ -203,7 +203,7 @@ The initial ground-state diagonalization is controlled by `ks_solver`.)";
 * `none`: Disable preconditioning.
 
 Preconditioning changes the convergence rate, while `lin_thr` still controls the residual of the original equation.)";
-        item.default_value = "kinetic";
+        item.default_value = "kinetic_recycle";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");
         read_sync_string(input.lin_precond);
@@ -334,7 +334,7 @@ All methods check the final residual explicitly. GMRES can use explicit residual
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Boolean";
         item.description = R"(Project the Crank-Nicolson equation $\boldsymbol{L}\boldsymbol{x}=\boldsymbol{b}$ onto the previous-time wavefunction subspace to initialize the first propagation solve of each time step. With those wavefunctions as the columns of $\boldsymbol{U}$, the projected initial guess is $\boldsymbol{x}_0=\boldsymbol{U}(\boldsymbol{U}^{\dagger}\boldsymbol{L}\boldsymbol{U})^{-1}\boldsymbol{U}^{\dagger}\boldsymbol{b}$. Evaluate and reuse the initial residual $\boldsymbol{r}_0=\boldsymbol{b}-\boldsymbol{L}\boldsymbol{x}_0$ using the stored subspace operator images $\boldsymbol{L}\boldsymbol{U}$, without an additional Hamiltonian application. Available with all linear solvers and preconditioners; later self-consistency iterations retain their current wavefunction guess.)";
-        item.default_value = "false";
+        item.default_value = "true";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");
         read_sync_bool(input.td_cn_init);
@@ -347,17 +347,13 @@ All methods check the final residual explicitly. GMRES can use explicit residual
         item.type = "Boolean";
         item.description = R"(Reconstruct the GMRES residual for $\boldsymbol{L}\boldsymbol{x}=\boldsymbol{b}$ as $\boldsymbol{r}=\boldsymbol{r}_0-(\boldsymbol{L}\boldsymbol{Z})\boldsymbol{y}$ for the update $\boldsymbol{x}=\boldsymbol{x}_0+\boldsymbol{Z}\boldsymbol{y}$, where $\boldsymbol{r}_0=\boldsymbol{b}-\boldsymbol{L}\boldsymbol{x}_0$ is the initial residual, $\boldsymbol{Z}$ contains the current preconditioned search directions, and $\boldsymbol{y}$ contains their update coefficients. Reusing the stored, unmodified operator images $\boldsymbol{L}\boldsymbol{Z}$ reduces Hamiltonian applications.
 
-Use an internal tolerance of 0.8 times the effective `lin_thr` and independently verify the first solve at each k point and every 16 solves thereafter, with additional independent checks when needed. Failed reconstruction checks trigger a true-residual restart within `lin_maxiter`.)";
-        item.default_value = "false";
+Use an internal tolerance of 0.8 times the effective `lin_thr` and independently verify the first solve at each k point and every 16 solves thereafter, with additional independent checks when needed. Failed reconstruction checks trigger a true-residual restart within `lin_maxiter`.
+
+Only effective for `lin_solver=gmres`; ignored otherwise.)";
+        item.default_value = "true";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft and lin_solver==gmres");
         read_sync_bool(input.lin_reconstruct);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.lin_reconstruct && para.inp.lin_solver != "gmres")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "lin_reconstruct requires lin_solver gmres.");
-            }
-        };
         this->add_item(item);
     }
     {

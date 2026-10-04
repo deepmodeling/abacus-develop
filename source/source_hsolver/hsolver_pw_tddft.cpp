@@ -126,9 +126,10 @@ void HSolverPWTDDFT<T, Device>::initialize(std::ostream& log)
         ModuleBase::WARNING_QUIT("HSolverPWTDDFT", "Unsupported preconditioner.");
         return;
     }
-    if (options_.linear.reconstruct && options_.linear.method != LinearMethod::gmres)
+    if (options_.linear.method != LinearMethod::gmres)
     {
-        ModuleBase::WARNING_QUIT("HSolverPWTDDFT", "Residual reconstruction requires GMRES.");
+        // Ignore the GMRES-only option before creating solver state or reporting effective settings.
+        options_.linear.reconstruct = false;
     }
     linear_solver_.reset(new HSolverLinear<T, Device>(options_.linear, comm_));
     std::ostringstream info;

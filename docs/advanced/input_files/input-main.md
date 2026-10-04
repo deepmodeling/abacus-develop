@@ -4712,7 +4712,7 @@
   - `gmres`: Restarted generalized minimal residual (GMRES) method, controlled by `lin_gmres_restart`.
 
   The initial ground-state diagonalization is controlled by `ks_solver`.
-- **Default**: bicgstab
+- **Default**: gmres
 
 ### lin_precond
 
@@ -4725,7 +4725,7 @@
   - `none`: Disable preconditioning.
 
   Preconditioning changes the convergence rate, while `lin_thr` still controls the residual of the original equation.
-- **Default**: kinetic
+- **Default**: kinetic_recycle
 
 ### lin_thr
 
@@ -4757,7 +4757,7 @@
 - **Type**: Boolean
 - **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==tddft*
 - **Description**: Project the Crank-Nicolson equation $\boldsymbol{L}\boldsymbol{x}=\boldsymbol{b}$ onto the previous-time wavefunction subspace to initialize the first propagation solve of each time step. With those wavefunctions as the columns of $\boldsymbol{U}$, the projected initial guess is $\boldsymbol{x}_0=\boldsymbol{U}(\boldsymbol{U}^{\dagger}\boldsymbol{L}\boldsymbol{U})^{-1}\boldsymbol{U}^{\dagger}\boldsymbol{b}$. Evaluate and reuse the initial residual $\boldsymbol{r}_0=\boldsymbol{b}-\boldsymbol{L}\boldsymbol{x}_0$ using the stored subspace operator images $\boldsymbol{L}\boldsymbol{U}$, without an additional Hamiltonian application. Available with all linear solvers and preconditioners; later self-consistency iterations retain their current wavefunction guess.
-- **Default**: false
+- **Default**: true
 
 ### lin_reconstruct
 
@@ -4766,7 +4766,9 @@
 - **Description**: Reconstruct the GMRES residual for $\boldsymbol{L}\boldsymbol{x}=\boldsymbol{b}$ as $\boldsymbol{r}=\boldsymbol{r}_0-(\boldsymbol{L}\boldsymbol{Z})\boldsymbol{y}$ for the update $\boldsymbol{x}=\boldsymbol{x}_0+\boldsymbol{Z}\boldsymbol{y}$, where $\boldsymbol{r}_0=\boldsymbol{b}-\boldsymbol{L}\boldsymbol{x}_0$ is the initial residual, $\boldsymbol{Z}$ contains the current preconditioned search directions, and $\boldsymbol{y}$ contains their update coefficients. Reusing the stored, unmodified operator images $\boldsymbol{L}\boldsymbol{Z}$ reduces Hamiltonian applications.
 
   Use an internal tolerance of 0.8 times the effective `lin_thr` and independently verify the first solve at each k point and every 16 solves thereafter, with additional independent checks when needed. Failed reconstruction checks trigger a true-residual restart within `lin_maxiter`.
-- **Default**: false
+
+  Only effective for `lin_solver=gmres`; ignored otherwise.
+- **Default**: true
 
 [back to top](#full-list-of-input-keywords)
 

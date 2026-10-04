@@ -316,11 +316,11 @@ struct Input_para
     // ==============   #Parameters (9.rt-tddft) ===========================
     double td_dt = -1.0;       ///< time step for propagation
     int estep_per_md = 1;      ///< number of electronic steps per MD step
-    std::string lin_solver = "bicgstab"; ///< linear solver for real-time propagation
+    std::string lin_solver = "gmres"; ///< linear solver for real-time propagation
     int lin_gmres_restart = 20; ///< Maximum Arnoldi steps per GMRES cycle.
-    bool td_cn_init = false; ///< CN subspace initial guess and residual reuse.
-    bool lin_reconstruct = false; ///< Explicit GMRES residual reconstruction with periodic audits.
-    std::string lin_precond = "kinetic"; ///< right preconditioner for PW propagation
+    bool td_cn_init = true; ///< CN subspace initial guess and residual reuse.
+    bool lin_reconstruct = true; ///< Explicit GMRES residual reconstruction with periodic audits.
+    std::string lin_precond = "kinetic_recycle"; ///< right preconditioner for PW propagation
     double lin_thr = 0.0;               ///< zero selects the precision-dependent tolerance
     int lin_maxiter = 500;              ///< maximum iterations per linear solve
     double td_force_dt = 0.02; ///<"fs"
