@@ -13,6 +13,7 @@ list(APPEND objects
     makov_payne.cpp
     charge_moments.cpp
     pcc_0d.cpp
+    pcc_2d.cpp
     module_pot/gatefield.cpp
     module_pot/efield.cpp
     module_pot/h_hartree_pw.cpp

@@ -19,6 +19,12 @@ AddTest(
   SOURCES test_pcc_0d.cpp ../pcc_0d.cpp ../charge_moments.cpp ../../source_cell/cell_geometry.cpp
 )
 
+AddTest(
+  TARGET MODULE_ESTATE_pcc_2d
+  LIBS base device
+  SOURCES test_pcc_2d.cpp ../pcc_2d.cpp ../charge_moments.cpp ../../source_cell/cell_geometry.cpp
+)
+
 if (ENABLE_MPI)
 
 set(pcc_test_sources

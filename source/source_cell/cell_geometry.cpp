@@ -132,4 +132,103 @@ bool weighted_center(const std::vector<ModuleBase::Vector3<double>>& positions,
     return true;
 }
 
+bool make_slab_cell(const ModuleBase::Matrix3& lattice,
+                    const double lattice_scale,
+                    const int open_axis,
+                    const double relative_tolerance,
+                    SlabCell& cell,
+                    std::string& error)
+{
+    error.clear();
+    if (open_axis < 0 || open_axis > 2 || !std::isfinite(lattice_scale) || lattice_scale <= 0.0
+        || !std::isfinite(relative_tolerance) || relative_tolerance <= 0.0)
+    {
+        error = "slab geometry requires open axis 0/1/2 and positive finite scale and tolerance";
+        return false;
+    }
+    const ModuleBase::Vector3<double> a(lattice.e11, lattice.e12, lattice.e13);
+    const ModuleBase::Vector3<double> b(lattice.e21, lattice.e22, lattice.e23);
+    const ModuleBase::Vector3<double> c(lattice.e31, lattice.e32, lattice.e33);
+    const std::array<ModuleBase::Vector3<double>, 3> vectors = {{a, b, c}};
+    const int first_axis = (open_axis + 1) % 3;
+    const int second_axis = (open_axis + 2) % 3;
+    const ModuleBase::Vector3<double> open = vectors[open_axis] * lattice_scale;
+    const ModuleBase::Vector3<double> first = vectors[first_axis] * lattice_scale;
+    const ModuleBase::Vector3<double> second = vectors[second_axis] * lattice_scale;
+    const double length = open.norm();
+    const double first_length = first.norm();
+    const double second_length = second.norm();
+    const ModuleBase::Vector3<double> plane_normal = first ^ second;
+    const double area = plane_normal.norm();
+    if (!finite_vector(open) || !finite_vector(first) || !finite_vector(second)
+        || !std::isfinite(length) || length <= 0.0 || !std::isfinite(area)
+        || area <= relative_tolerance * first_length * second_length)
+    {
+        error = "slab geometry requires finite nonzero open and independent periodic lattice vectors";
+        return false;
+    }
+    const double orientation = (plane_normal * open < 0.0) ? -1.0 : 1.0;
+    const double normal_scale = orientation / area;
+    const ModuleBase::Vector3<double> normal = plane_normal * normal_scale;
+    const ModuleBase::Vector3<double> alignment = open ^ normal;
+    if (alignment.norm() > relative_tolerance * length)
+    {
+        error = "slab open lattice vector must be perpendicular to the periodic plane";
+        return false;
+    }
+    SlabCell candidate;
+    candidate.normal = normal;
+    candidate.length = length;
+    candidate.area = area;
+    candidate.origin = 0.5 * length;
+    cell = candidate;
+    return true;
+}
+
+double relative_coordinate(const ModuleBase::Vector3<double>& position, const SlabCell& cell)
+{
+    const double displacement = position * cell.normal - cell.origin;
+    const double image = std::floor(displacement / cell.length + 0.5);
+    return displacement - cell.length * image;
+}
+
+bool weighted_center(const std::vector<ModuleBase::Vector3<double>>& positions,
+                      const std::vector<double>& weights,
+                      const SlabCell& cell,
+                      double& center,
+                      std::string& error)
+{
+    error.clear();
+    if (positions.empty() || positions.size() != weights.size())
+    {
+        error = "slab center requires matching non-empty positions and weights";
+        return false;
+    }
+    SlabCell reference = cell;
+    reference.origin = positions.front() * cell.normal;
+    double total_weight = 0.0;
+    double weighted_displacement = 0.0;
+    for (std::size_t index = 0; index < positions.size(); ++index)
+    {
+        if (!finite_vector(positions[index]) || !std::isfinite(weights[index]) || weights[index] <= 0.0)
+        {
+            error = "slab center requires finite positions and positive finite weights";
+            return false;
+        }
+        const double displacement = relative_coordinate(positions[index], reference);
+        weighted_displacement += weights[index] * displacement;
+        total_weight += weights[index];
+    }
+    const double unwrapped = reference.origin + weighted_displacement / total_weight;
+    const double image = std::floor(unwrapped / cell.length);
+    const double candidate = unwrapped - image * cell.length;
+    if (!std::isfinite(total_weight) || !std::isfinite(weighted_displacement) || !std::isfinite(candidate))
+    {
+        error = "slab center accumulation must be finite";
+        return false;
+    }
+    center = candidate;
+    return true;
+}
+
 } // namespace unitcell

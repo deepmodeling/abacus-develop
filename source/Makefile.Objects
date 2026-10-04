@@ -273,6 +273,7 @@ OBJS_ELECSTAT=elecstate.o\
     makov_payne.o\
     charge_moments.o\
     pcc_0d.o\
+    pcc_2d.o\
     pot_pcc.o\
     elecstate_op.o\
     efield.o\

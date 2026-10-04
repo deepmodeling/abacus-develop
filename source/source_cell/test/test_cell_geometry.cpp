@@ -163,3 +163,50 @@ TEST_F(CellGeometryTest, RejectsOverflowingCenterAccumulation)
     EXPECT_FALSE(unitcell::weighted_center(positions, weights, cell, center, error));
     EXPECT_FALSE(error.empty());
 }
+
+TEST(SlabGeometry, SupportsSkewPeriodicPlaneAndRotatedNormal)
+{
+    const ModuleBase::Matrix3 lattice(0.0, 2.0, 0.0,
+                                     0.0, 1.0, 3.0,
+                                     8.0, 0.0, 0.0);
+    unitcell::SlabCell cell;
+    std::string error;
+    ASSERT_TRUE(unitcell::make_slab_cell(lattice, 1.0, 2, 1.0e-6, cell, error));
+    EXPECT_DOUBLE_EQ(cell.length, 8.0);
+    EXPECT_DOUBLE_EQ(cell.area, 6.0);
+    EXPECT_DOUBLE_EQ(cell.normal.x, 1.0);
+    const ModuleBase::Vector3<double> point(8.1, 100.0, -200.0);
+    EXPECT_NEAR(unitcell::relative_coordinate(point, cell), -3.9, 1.0e-14);
+    const std::vector<ModuleBase::Vector3<double>> positions = {
+        ModuleBase::Vector3<double>(7.8, 0.0, 0.0),
+        ModuleBase::Vector3<double>(0.2, 40.0, 50.0)};
+    const std::vector<double> weights = {1.0, 3.0};
+    double center = 5.0;
+    ASSERT_TRUE(unitcell::weighted_center(positions, weights, cell, center, error));
+    EXPECT_NEAR(center, 0.1, 1.0e-14);
+}
+
+TEST(SlabGeometry, SelectsAllAxesAndRejectsTiltWithoutChangingResult)
+{
+    const ModuleBase::Matrix3 lattice(2.0, 0.0, 0.0,
+                                     0.0, 3.0, 0.0,
+                                     0.0, 0.0, 8.0);
+    const double lengths[3] = {2.0, 3.0, 8.0};
+    unitcell::SlabCell cell;
+    std::string error;
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        ASSERT_TRUE(unitcell::make_slab_cell(lattice, 1.0, axis, 1.0e-6, cell, error));
+        EXPECT_DOUBLE_EQ(cell.length, lengths[axis]);
+        const double expected_area = 48.0 / lengths[axis];
+        EXPECT_DOUBLE_EQ(cell.area, expected_area);
+    }
+    const ModuleBase::Matrix3 tilted(2.0, 0.0, 0.0,
+                                    0.0, 3.0, 0.0,
+                                    0.1, 0.0, 8.0);
+    EXPECT_FALSE(unitcell::make_slab_cell(tilted, 1.0, 2, 1.0e-6, cell, error));
+    EXPECT_DOUBLE_EQ(cell.length, 8.0);
+    EXPECT_FALSE(unitcell::make_slab_cell(lattice, 1.0, 3, 1.0e-6, cell, error));
+    EXPECT_FALSE(unitcell::make_slab_cell(lattice, 0.0, 2, 1.0e-6, cell, error));
+    EXPECT_FALSE(error.empty());
+}
