@@ -233,7 +233,7 @@ fi
 # echo $out_elf
 #-------------------------------
 if ! test -z "$out_elf"  && [  $out_elf == 1 ]; then
-	elf1ref=refelftot.cube
+	elf1ref=elftot.cube.ref
 	elf1cal=OUT.autotest/elftot.cube
 	python3 $COMPARE_SCRIPT $elf1ref $elf1cal 3
 	echo "ComparePot1_pass $?" >>$1

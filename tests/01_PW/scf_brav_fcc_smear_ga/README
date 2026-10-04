@@ -1,0 +1,3 @@
+fcc (face centered cubic) for pw base
+test smearing method: gauss
+test fcc Fe with FM spin (nspin=2, init_mag=2)

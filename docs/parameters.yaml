@@ -5323,7 +5323,7 @@ parameters:
     default_value: "True"
     unit: ""
     availability: exx_separate_loop==true
-  - name: exx_gamma_extrapolation
+  - name: exx_gamma_extra
     category: Exact Exchange (PW)
     type: Boolean
     description: |

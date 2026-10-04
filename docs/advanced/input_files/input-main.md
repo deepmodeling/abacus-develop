@@ -343,7 +343,7 @@
     - [out\_ri\_cv](#out_ri_cv)
   - [Exact Exchange (PW)](#exact-exchange-pw)
     - [exxace](#exxace)
-    - [exx\_gamma\_extrapolation](#exx_gamma_extrapolation)
+    - [exx\_gamma\_extra](#exx_gamma_extra)
     - [ecutexx](#ecutexx)
     - [exx\_batch\_size](#exx_batch_size)
     - [exx\_thr\_type](#exx_thr_type)
@@ -3451,7 +3451,7 @@
   - False: Use the traditional method to calculate the Fock exchange operator.
 - **Default**: True
 
-### exx_gamma_extrapolation
+### exx_gamma_extra
 
 - **Type**: Boolean
 - **Description**: Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See https://doi.org/10.1103/PhysRevB.79.205114 for details. Should be set to true most of the time.
