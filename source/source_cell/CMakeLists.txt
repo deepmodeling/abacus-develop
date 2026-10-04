@@ -33,6 +33,7 @@ add_library(
     parallel_kpoints.cpp
     cell_index.cpp
     cell_tools.cpp
+    cell_geometry.cpp
     record_adj.cpp
     check_atomic_stru.cpp
     update_cell.cpp

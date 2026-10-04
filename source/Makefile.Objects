@@ -220,6 +220,7 @@ OBJS_CELL=atom_pseudo.o\
     reciprocal_grid.o\
     cell_index.o\
     cell_tools.o\
+    cell_geometry.o\
     record_adj.o\
     check_atomic_stru.o\
     update_cell.o\
