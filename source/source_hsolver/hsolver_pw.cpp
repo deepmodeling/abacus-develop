@@ -490,6 +490,12 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
     }
     else if (this->method == "ppcg")
     {
+        const auto hpsi_func = [&op](T* psi_in, T* hpsi_out, const int ld, const int nvec) {
+            op.hpsi(psi_in, hpsi_out, ld, nvec);
+        };
+        const auto spsi_func = [&op](T* psi_in, T* spsi_out, const int ld, const int nvec) {
+            op.spsi(psi_in, spsi_out, ld, nvec);
+        };
         DiagoIterAssist<T, Device>::avg_iter += run_ppcg_pw<T, Device, Real>(
             hpsi_func,
             spsi_func,
