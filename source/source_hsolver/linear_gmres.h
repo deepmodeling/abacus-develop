@@ -17,11 +17,17 @@ class LinearGMRES
     LinearWorkspace<T, Device> work_;
     LinearAlgebra<T, Device> algebra_;
     ct::Tensor krylov_;
-    std::vector<std::vector<Wide>> h_, g_, sine_;
+    std::vector<std::vector<Wide>> h_;
+    std::vector<std::vector<Wide>> g_;
+    std::vector<std::vector<Wide>> sine_;
     std::vector<std::vector<double>> cosine_;
     std::vector<int> order_;
     std::vector<int> swaps_;
-    int ld_ = 0, dim_ = 0, bands_ = 0, stride_ = 0, active_ = 0;
+    int ld_ = 0;
+    int dim_ = 0;
+    int bands_ = 0;
+    int stride_ = 0;
+    int active_ = 0;
 
     T* vector(int slot);
     T* residual();

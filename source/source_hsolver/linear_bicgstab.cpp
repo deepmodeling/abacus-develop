@@ -72,12 +72,13 @@ void LinearBiCGSTAB<T, Device>::retire_converged(const bool alpha_step, const bo
     }
     if (alpha_step)
     {
+        const int update_slot = identity ? direction_slot : precond_direction_slot;
         work_.batch(ld_,
                     dim_,
                     active_,
                     work_.data(solution_slot),
                     work_.data(solution_slot),
-                    work_.data(identity ? direction_slot : precond_direction_slot),
+                    work_.data(update_slot),
                     T(1),
                     T(1),
                     nullptr,

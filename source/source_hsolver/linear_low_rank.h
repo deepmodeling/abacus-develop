@@ -10,7 +10,8 @@ template <typename T, typename Device>
 class LinearResponse
 {
   private:
-    ct::Tensor directions_, images_;
+    ct::Tensor directions_;
+    ct::Tensor images_;
     int rank_ = 0;
 
   public:

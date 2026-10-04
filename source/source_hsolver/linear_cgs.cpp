@@ -75,7 +75,8 @@ bool LinearCGS<T, Device>::iterate(const LinearOperator<T, Device>& op,
     {
         preconditioner.apply(p, scratch, ld_, active_);
     }
-    work_.apply(op, identity ? p : scratch, v, ld_, active_);
+    const T* preconditioned_direction = identity ? p : scratch;
+    work_.apply(op, preconditioned_direction, v, ld_, active_);
     work_.dot(ld_, dim_, active_, shadow, v, denominator_.data());
     for (int band = 0; band < active_; ++band)
     {

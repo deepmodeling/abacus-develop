@@ -14,7 +14,10 @@ std::vector<std::complex<double>> linear_gram_basis(const std::vector<std::compl
 {
     using Wide = std::complex<double>;
     *rank = 0;
-    std::vector<Wide> coefficients, images, c(n), image(n);
+    std::vector<Wide> coefficients;
+    std::vector<Wide> images;
+    std::vector<Wide> c(n);
+    std::vector<Wide> image(n);
     std::vector<double> remaining(n);
     for (int j = 0; j < n; ++j)
     {
@@ -25,7 +28,9 @@ std::vector<std::complex<double>> linear_gram_basis(const std::vector<std::compl
         remaining[j] = std::max(0.0, gram[j + j * n].real());
     }
     const double largest = n == 0 ? 0 : *std::max_element(remaining.begin(), remaining.end());
-    const double minimum = std::max(cutoff * cutoff, 1e-8 * largest);
+    const double absolute_cutoff = cutoff * cutoff;
+    const double relative_cutoff = 1e-8 * largest;
+    const double minimum = std::max(absolute_cutoff, relative_cutoff);
     for (int step = 0; step < n; ++step)
     {
         const int pivot = std::max_element(remaining.begin(), remaining.end()) - remaining.begin();
@@ -73,7 +78,8 @@ std::vector<std::complex<double>> linear_gram_basis(const std::vector<std::compl
         {
             c[i] /= norm;
             image[i] /= norm;
-            remaining[i] = std::max(0.0, remaining[i] - std::norm(image[i]));
+            const double remainder = remaining[i] - std::norm(image[i]);
+            remaining[i] = std::max(0.0, remainder);
         }
         coefficients.insert(coefficients.end(), c.begin(), c.end());
         images.insert(images.end(), image.begin(), image.end());
@@ -94,11 +100,12 @@ bool LinearSmallLU::factor(const std::vector<std::complex<double>>& matrix, int 
     double scale = 0.0;
     for (const std::complex<double>& value: matrix)
     {
-        if (!std::isfinite(std::abs(value)))
+        const double magnitude = std::abs(value);
+        if (!std::isfinite(magnitude))
         {
             return false;
         }
-        scale = std::max(scale, std::abs(value));
+        scale = std::max(scale, magnitude);
     }
     const double cutoff = 100 * n * std::numeric_limits<double>::epsilon() * scale;
     for (int k = 0; k < n; ++k)
@@ -186,10 +193,11 @@ std::vector<std::complex<double>> LinearAlgebra<T, Device>::projection_cross(int
     {
         return cross(ld, dim, nx, ny, x, y);
     }
-    std::vector<T> native(nx * ny, T(0));
+    const int64_t elements = static_cast<int64_t>(nx) * ny;
+    std::vector<T> native(elements, T(0));
     if (dim > 0)
     {
-        linear_buffer<T, Device>(&native_products_, nx * ny);
+        linear_buffer<T, Device>(&native_products_, elements);
         const T one(1);
         const T zero(0);
         T* products = native_products_.template data<T>();
@@ -256,29 +264,39 @@ std::vector<std::complex<double>> LinearAlgebra<T, Device>::dots(int ld,
 template <typename T, typename Device>
 std::vector<std::complex<double>> LinearAlgebra<T, Device>::cross(int ld, int dim, int nx, int ny, const T* x, const T* y)
 {
-    std::vector<Wide> result(nx * ny, Wide(0));
+    const int64_t elements = static_cast<int64_t>(nx) * ny;
+    std::vector<Wide> result(elements, Wide(0));
     if (dim > 0)
     {
         const Wide* a = reinterpret_cast<const Wide*>(x);
         const Wide* b = reinterpret_cast<const Wide*>(y);
         if (!std::is_same<T, Wide>::value)
         {
-            linear_buffer<Wide, Device>(&left_, static_cast<int64_t>(ld) * nx);
-            linear_buffer<Wide, Device>(&right_, static_cast<int64_t>(ld) * ny);
+            const int64_t left_elements = static_cast<int64_t>(ld) * nx;
+            const int64_t right_elements = static_cast<int64_t>(ld) * ny;
+            linear_buffer<Wide, Device>(&left_, left_elements);
+            linear_buffer<Wide, Device>(&right_, right_elements);
             // Copy valid rows only: padding may be uninitialized.
             for (int j = 0; j < nx; ++j)
             {
-                base_device::memory::cast_memory_op<Wide, T, Device, Device>()(left_.template data<Wide>() + j * ld, x + j * ld, dim);
+                const int64_t offset = static_cast<int64_t>(j) * ld;
+                Wide* destination = left_.template data<Wide>() + offset;
+                const T* source = x + offset;
+                base_device::memory::cast_memory_op<Wide, T, Device, Device>()(destination, source, dim);
             }
             for (int j = 0; j < ny; ++j)
             {
-                base_device::memory::cast_memory_op<Wide, T, Device, Device>()(right_.template data<Wide>() + j * ld, y + j * ld, dim);
+                const int64_t offset = static_cast<int64_t>(j) * ld;
+                Wide* destination = right_.template data<Wide>() + offset;
+                const T* source = y + offset;
+                base_device::memory::cast_memory_op<Wide, T, Device, Device>()(destination, source, dim);
             }
             a = left_.template data<Wide>();
             b = right_.template data<Wide>();
         }
-        linear_buffer<Wide, Device>(&products_, nx * ny);
-        const Wide one(1), zero(0);
+        linear_buffer<Wide, Device>(&products_, elements);
+        const Wide one(1);
+        const Wide zero(0);
         ModuleBase::gemm_op<Wide, Device>()('C', 'N', nx, ny, dim, &one, a, ld, b, ld, &zero, products_.template data<Wide>(), nx);
         base_device::memory::synchronize_memory_op<Wide, base_device::DEVICE_CPU, Device>()(result.data(),
                                                                                             products_.template data<Wide>(),

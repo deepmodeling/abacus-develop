@@ -19,10 +19,11 @@ void linear_buffer(ct::Tensor* buffer, const int64_t size)
 {
     using CtDevice = typename ct::PsiToContainer<Device>::type;
     const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
-    if (buffer->NumElements() < std::max<int64_t>(1, size) || buffer->data_type() != ct::DataTypeToEnum<T>::value
+    const int64_t elements = std::max<int64_t>(1, size);
+    if (buffer->NumElements() < elements || buffer->data_type() != ct::DataTypeToEnum<T>::value
         || buffer->device_type() != device)
     {
-        *buffer = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {std::max<int64_t>(1, size)});
+        *buffer = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {elements});
     }
 }
 
@@ -49,7 +50,10 @@ class LinearAlgebra
   private:
     using Wide = std::complex<double>;
     const diag_comm_info comm_;
-    ct::Tensor products_, coefficients_, left_, right_;
+    ct::Tensor products_;
+    ct::Tensor coefficients_;
+    ct::Tensor left_;
+    ct::Tensor right_;
     ct::Tensor native_products_;
 
     void reduce(std::vector<Wide>* values) const;

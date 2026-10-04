@@ -9,7 +9,9 @@ template <typename T, typename Device>
 class CNSubspace
 {
   private:
-    ct::Tensor image_, seed_, residual_;
+    ct::Tensor image_;
+    ct::Tensor seed_;
+    ct::Tensor residual_;
     LinearSmallLU factor_;
 
   public:

@@ -14,6 +14,28 @@ namespace ModuleIO
 namespace
 {
 
+int parse_td_integer(const Input_Item& item)
+{
+    std::size_t consumed = 0;
+    try
+    {
+        if (item.str_values.size() == 1)
+        {
+            const int value = std::stoi(item.str_values[0], &consumed);
+            if (consumed == item.str_values[0].size())
+            {
+                return value;
+            }
+        }
+    }
+    catch (const std::exception&)
+    {
+    }
+    const std::string message = item.label + " must be a positive integer.";
+    ModuleBase::WARNING_QUIT("ReadInput", message);
+    return 0;
+}
+
 std::vector<int> parse_supersine_steps(const Input_Item& item, const int default_step)
 {
     const std::vector<std::string> tokens
@@ -266,22 +288,7 @@ All methods check the final residual explicitly. GMRES can use explicit residual
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            std::size_t consumed = 0;
-            try
-            {
-                if (item.str_values.size() == 1)
-                {
-                    para.input.lin_maxiter = std::stoi(item.str_values[0], &consumed);
-                    if (consumed == item.str_values[0].size())
-                    {
-                        return;
-                    }
-                }
-            }
-            catch (const std::exception&)
-            {
-            }
-            ModuleBase::WARNING_QUIT("ReadInput", "lin_maxiter must be a positive integer.");
+            para.input.lin_maxiter = parse_td_integer(item);
         };
         sync_int(input.lin_maxiter);
         item.check_value = [](const Input_Item&, const Parameter& para) {
@@ -302,22 +309,7 @@ All methods check the final residual explicitly. GMRES can use explicit residual
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft and lin_solver==gmres");
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            std::size_t consumed = 0;
-            try
-            {
-                if (item.str_values.size() == 1)
-                {
-                    para.input.lin_gmres_restart = std::stoi(item.str_values[0], &consumed);
-                    if (consumed == item.str_values[0].size())
-                    {
-                        return;
-                    }
-                }
-            }
-            catch (const std::exception&)
-            {
-            }
-            ModuleBase::WARNING_QUIT("ReadInput", "lin_gmres_restart must be a positive integer.");
+            para.input.lin_gmres_restart = parse_td_integer(item);
         };
         sync_int(input.lin_gmres_restart);
         item.check_value = [](const Input_Item&, const Parameter& para) {

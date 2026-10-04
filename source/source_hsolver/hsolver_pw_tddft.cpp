@@ -16,6 +16,27 @@ namespace hsolver
 namespace
 {
 
+struct LinearMethodName
+{
+    const char* name;
+    LinearMethod method;
+};
+
+constexpr LinearMethodName linear_method_names[] = {{"bicgstab", LinearMethod::bicgstab},
+                                                    {"cgs", LinearMethod::cgs},
+                                                    {"gmres", LinearMethod::gmres}};
+
+struct PWPrecondName
+{
+    const char* name;
+    PWPreconditioner preconditioner;
+};
+
+constexpr PWPrecondName pw_precond_names[] = {{"none", PWPreconditioner::none},
+                                            {"kinetic", PWPreconditioner::kinetic},
+                                            {"kinetic_recycle", PWPreconditioner::kinetic_recycle},
+                                            {"kinetic_subspace", PWPreconditioner::kinetic_subspace}};
+
 template <typename T, typename Device>
 class ShiftedHOperator final : public LinearOperator<T, Device>
 {
@@ -39,41 +60,29 @@ class ShiftedHOperator final : public LinearOperator<T, Device>
 
 LinearMethod parse_linear_method(const std::string& name)
 {
-    if (name == "bicgstab")
+    for (const LinearMethodName& entry: linear_method_names)
     {
-        return LinearMethod::bicgstab;
+        if (name == entry.name)
+        {
+            return entry.method;
+        }
     }
-    if (name == "cgs")
-    {
-        return LinearMethod::cgs;
-    }
-    if (name == "gmres")
-    {
-        return LinearMethod::gmres;
-    }
-    ModuleBase::WARNING_QUIT("HSolverPWTDDFT", "Unsupported linear solver: " + name);
+    const std::string message = "Unsupported linear solver: " + name;
+    ModuleBase::WARNING_QUIT("HSolverPWTDDFT", message);
     return LinearMethod::bicgstab;
 }
 
 PWPreconditioner parse_pw_precond(const std::string& name)
 {
-    if (name == "none")
+    for (const PWPrecondName& entry: pw_precond_names)
     {
-        return PWPreconditioner::none;
+        if (name == entry.name)
+        {
+            return entry.preconditioner;
+        }
     }
-    if (name == "kinetic")
-    {
-        return PWPreconditioner::kinetic;
-    }
-    if (name == "kinetic_recycle")
-    {
-        return PWPreconditioner::kinetic_recycle;
-    }
-    if (name == "kinetic_subspace")
-    {
-        return PWPreconditioner::kinetic_subspace;
-    }
-    ModuleBase::WARNING_QUIT("HSolverPWTDDFT", "Unsupported preconditioner: " + name);
+    const std::string message = "Unsupported preconditioner: " + name;
+    ModuleBase::WARNING_QUIT("HSolverPWTDDFT", message);
     return PWPreconditioner::kinetic;
 }
 
@@ -91,37 +100,30 @@ template <typename T, typename Device>
 void HSolverPWTDDFT<T, Device>::initialize(std::ostream& log)
 {
     const char* method = nullptr;
-    switch (options_.linear.method)
+    for (const LinearMethodName& entry: linear_method_names)
     {
-    case LinearMethod::bicgstab:
-        method = "bicgstab";
-        break;
-    case LinearMethod::cgs:
-        method = "cgs";
-        break;
-    case LinearMethod::gmres:
-        method = "gmres";
-        break;
-    default:
+        if (options_.linear.method == entry.method)
+        {
+            method = entry.name;
+            break;
+        }
+    }
+    if (method == nullptr)
+    {
         ModuleBase::WARNING_QUIT("HSolverPWTDDFT", "Unsupported linear solver.");
         return;
     }
     const char* preconditioner = nullptr;
-    switch (options_.preconditioner)
+    for (const PWPrecondName& entry: pw_precond_names)
     {
-    case PWPreconditioner::none:
-        preconditioner = "none";
-        break;
-    case PWPreconditioner::kinetic:
-        preconditioner = "kinetic";
-        break;
-    case PWPreconditioner::kinetic_recycle:
-        preconditioner = "kinetic_recycle";
-        break;
-    case PWPreconditioner::kinetic_subspace:
-        preconditioner = "kinetic_subspace";
-        break;
-    default:
+        if (options_.preconditioner == entry.preconditioner)
+        {
+            preconditioner = entry.name;
+            break;
+        }
+    }
+    if (preconditioner == nullptr)
+    {
         ModuleBase::WARNING_QUIT("HSolverPWTDDFT", "Unsupported preconditioner.");
         return;
     }
@@ -145,7 +147,8 @@ void HSolverPWTDDFT<T, Device>::prepare_buffers(const int nbands, const int nbas
     ModuleBase::timer::start("HSolverPWTDDFT", "prepare_buffers");
     using CtDevice = typename ct::PsiToContainer<Device>::type;
     const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
-    const int64_t size = std::max<int64_t>(1, static_cast<int64_t>(nbands) * nbasis);
+    const int64_t elements = static_cast<int64_t>(nbands) * nbasis;
+    const int64_t size = std::max<int64_t>(1, elements);
     if (rhs_.NumElements() < size || rhs_.data_type() != ct::DataTypeToEnum<T>::value || rhs_.device_type() != device)
     {
         rhs_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {size});
@@ -163,10 +166,11 @@ void HSolverPWTDDFT<T, Device>::update_precond(const int ik,
     ModuleBase::timer::start("HSolverPWTDDFT", "update_precond");
     using CtDevice = typename ct::PsiToContainer<Device>::type;
     const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
-    if (inverse_kinetic_.NumElements() < std::max(1, dim) || inverse_kinetic_.data_type() != ct::DataTypeToEnum<T>::value
+    const int elements = std::max(1, dim);
+    if (inverse_kinetic_.NumElements() < elements || inverse_kinetic_.data_type() != ct::DataTypeToEnum<T>::value
         || inverse_kinetic_.device_type() != device)
     {
-        inverse_kinetic_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {std::max(1, dim)});
+        inverse_kinetic_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {elements});
     }
     std::vector<T> inverse(dim);
     for (int ig = 0; ig < dim; ++ig)

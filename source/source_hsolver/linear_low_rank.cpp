@@ -17,14 +17,18 @@ void LinearResponse<T, Device>::update(LinearAlgebra<T, Device>& algebra,
                                        ct::Tensor* workspace)
 {
     rank_ = 0;
-    const int64_t size = std::max<int64_t>(1, static_cast<int64_t>(ld) * bands);
+    const int64_t elements = static_cast<int64_t>(ld) * bands;
+    const int64_t size = std::max<int64_t>(1, elements);
     linear_buffer<T, Device>(&directions_, size);
     linear_buffer<T, Device>(&images_, size);
-    linear_buffer<T, Device>(workspace, 4 * size);
+    const int64_t workspace_elements = 4 * size;
+    linear_buffer<T, Device>(workspace, workspace_elements);
     T* z = workspace->template data<T>();
     T* w = z + size;
     using Real = typename GetTypeReal<T>::type;
-    const double cutoff = std::max(100 * tolerance, 100 * static_cast<double>(std::numeric_limits<Real>::epsilon()));
+    const double tolerance_cutoff = 100 * tolerance;
+    const double roundoff_cutoff = 100 * static_cast<double>(std::numeric_limits<Real>::epsilon());
+    const double cutoff = std::max(tolerance_cutoff, roundoff_cutoff);
     linear_op<T, Device>().batch(ld, dim, bands, z, solution, seed, T(1), T(-1), nullptr, nullptr, nullptr);
     if (dim > 0)
     {
@@ -54,7 +58,8 @@ void LinearResponse<T, Device>::update(LinearAlgebra<T, Device>& algebra,
     if (rank_ > 0)
     {
         gram = algebra.cross(ld, dim, rank_, rank_, images(), images());
-        const double limit = std::max(1e-8, 100.0 * std::numeric_limits<Real>::epsilon());
+        const double roundoff_limit = 100.0 * std::numeric_limits<Real>::epsilon();
+        const double limit = std::max(1e-8, roundoff_limit);
         for (int j = 0; j < rank_; ++j)
         {
             for (int i = 0; i < rank_; ++i)

@@ -27,7 +27,8 @@ HSolverLinear<T, Device>::HSolverLinear(const LinearSolveOptions& options, const
     : default_control_{options.max_iterations, options.reconstruct}
 {
     using Real = typename GetTypeReal<T>::type;
-    tolerance_ = options.tolerance == 0.0 ? std::max(1e-10, 100.0 * std::numeric_limits<Real>::epsilon()) : options.tolerance;
+    const double roundoff_tolerance = 100.0 * std::numeric_limits<Real>::epsilon();
+    tolerance_ = options.tolerance == 0.0 ? std::max(1e-10, roundoff_tolerance) : options.tolerance;
     if (options.method == LinearMethod::bicgstab)
     {
         bicgstab_.reset(new LinearBiCGSTAB<T, Device>(tolerance_, comm));

@@ -9,7 +9,8 @@ template <typename T, typename Device>
 LinearGMRES<T, Device>::LinearGMRES(double tolerance, const LinearSolveOptions& options, const diag_comm_info& comm)
     : tolerance_(tolerance), restart_(0), work_(comm, 2), algebra_(comm)
 {
-    restart_ = std::min(options.restart, std::max(1, options.max_iterations));
+    const int iteration_limit = std::max(1, options.max_iterations);
+    restart_ = std::min(options.restart, iteration_limit);
     if (restart_ <= 0 || restart_ > (std::numeric_limits<int>::max() - 1) / 3)
     {
         throw std::invalid_argument("Invalid GMRES restart dimension.");
@@ -43,11 +44,13 @@ template <typename T, typename Device>
 void LinearGMRES<T, Device>::apply_swaps(int last)
 {
     work_.swap_columns(ld_, dim_, swaps_);
-    work_.swap_vectors(ld_, dim_, last + 2, stride_, basis(0), swaps_);
+    const int basis_count = last + 2;
+    work_.swap_vectors(ld_, dim_, basis_count, stride_, basis(0), swaps_);
     if (last >= 0)
     {
-        work_.swap_vectors(ld_, dim_, last + 1, stride_, direction(0), swaps_);
-        work_.swap_vectors(ld_, dim_, last + 1, stride_, image(0), swaps_);
+        const int direction_count = last + 1;
+        work_.swap_vectors(ld_, dim_, direction_count, stride_, direction(0), swaps_);
+        work_.swap_vectors(ld_, dim_, direction_count, stride_, image(0), swaps_);
     }
     swaps_.clear();
 }
@@ -73,23 +76,26 @@ T* LinearGMRES<T, Device>::basis(int index)
 template <typename T, typename Device>
 T* LinearGMRES<T, Device>::direction(int index)
 {
-    return vector(restart_ + 1 + index);
+    const int slot = restart_ + 1 + index;
+    return vector(slot);
 }
 
 template <typename T, typename Device>
 T* LinearGMRES<T, Device>::image(int index)
 {
-    return vector(2 * restart_ + 1 + index);
+    const int slot = 2 * restart_ + 1 + index;
+    return vector(slot);
 }
 
 template <typename T, typename Device>
 void LinearGMRES<T, Device>::orthogonalize(int j, T* next, std::vector<T>* coefficients)
 {
     std::vector<T>& coeff = *coefficients;
+    const int basis_count = j + 1;
     // Two-pass classical Gram-Schmidt batches the global reductions.
     for (int pass = 0; pass < 2; ++pass)
     {
-        const std::vector<Wide> dots = algebra_.arnoldi_dots(ld_, dim_, active_, j + 1, stride_, basis(0), next);
+        const std::vector<Wide> dots = algebra_.arnoldi_dots(ld_, dim_, active_, basis_count, stride_, basis(0), next);
         for (int i = 0; i <= j; ++i)
         {
             for (int b = 0; b < active_; ++b)
@@ -113,13 +119,14 @@ bool LinearGMRES<T, Device>::update_qr(int b, int j, double norm)
         column[i + 1] = -std::conj(sine_[b][i]) * column[i] + cosine_[b][i] * column[i + 1];
         column[i] = upper;
     }
-    const double magnitude = std::hypot(std::abs(column[j]), norm);
+    const double diagonal_magnitude = std::abs(column[j]);
+    const double magnitude = std::hypot(diagonal_magnitude, norm);
     if (magnitude == 0 || !std::isfinite(magnitude))
     {
         return false;
     }
-    const Wide phase = std::abs(column[j]) == 0 ? Wide(1) : column[j] / std::abs(column[j]);
-    cosine_[b][j] = std::abs(column[j]) / magnitude;
+    const Wide phase = diagonal_magnitude == 0 ? Wide(1) : column[j] / diagonal_magnitude;
+    cosine_[b][j] = diagonal_magnitude / magnitude;
     sine_[b][j] = phase * norm / magnitude;
     column[j] = phase * magnitude;
     column[j + 1] = 0;
@@ -131,7 +138,8 @@ bool LinearGMRES<T, Device>::update_qr(int b, int j, double norm)
 template <typename T, typename Device>
 bool LinearGMRES<T, Device>::back_substitute(int b, int j, std::vector<Wide>* weights)
 {
-    weights->assign(g_[b].begin(), g_[b].begin() + j + 1);
+    const typename std::vector<Wide>::const_iterator weights_end = g_[b].cbegin() + j + 1;
+    weights->assign(g_[b].cbegin(), weights_end);
     for (int i = j; i >= 0; --i)
     {
         (*weights)[i] /= h_[b][i + i * (restart_ + 1)];
@@ -183,8 +191,10 @@ void LinearGMRES<T, Device>::update_solution(int j,
 template <typename T, typename Device>
 bool LinearGMRES<T, Device>::start_cycle(const std::vector<double>& threshold, std::vector<T>* coefficients)
 {
-    h_.assign(bands_, std::vector<Wide>((restart_ + 1) * restart_, 0));
-    g_.assign(bands_, std::vector<Wide>(restart_ + 1, 0));
+    const int projected_rows = restart_ + 1;
+    const int64_t projected_elements = static_cast<int64_t>(projected_rows) * restart_;
+    h_.assign(bands_, std::vector<Wide>(projected_elements, 0));
+    g_.assign(bands_, std::vector<Wide>(projected_rows, 0));
     sine_.assign(bands_, std::vector<Wide>(restart_, 0));
     cosine_.assign(bands_, std::vector<double>(restart_, 0));
     std::vector<Wide> norms = algebra_.dots(ld_, dim_, bands_, 1, stride_, residual(), residual());
@@ -231,7 +241,8 @@ bool LinearGMRES<T, Device>::cycle(const LinearOperator<T, Device>& op,
     {
         T* z = direction(j);
         T* raw = image(j);
-        T* next = basis(j + 1);
+        const int next_index = j + 1;
+        T* next = basis(next_index);
         preconditioner.apply(basis(j), z, ld_, active_);
         work_.apply(op, z, raw, ld_, active_);
         work_.copy(ld_, dim_, active_, raw, next);
@@ -296,14 +307,17 @@ LinearSolveResult LinearGMRES<T, Device>::solve(const LinearOperator<T, Device>&
     ld_ = ld;
     dim_ = dim;
     bands_ = nvec;
-    stride_ = std::max(1, ld * nvec);
-    linear_buffer<T, Device>(&krylov_, static_cast<int64_t>(3 * restart_ + 1) * stride_);
+    const int vector_elements = ld * nvec;
+    stride_ = std::max(1, vector_elements);
+    const int64_t krylov_elements = (3 * static_cast<int64_t>(restart_) + 1) * stride_;
+    linear_buffer<T, Device>(&krylov_, krylov_elements);
     order_.resize(nvec);
     const std::vector<Wide> rhs_norms = algebra_.dots(ld, dim, nvec, 1, stride_, b, b);
     std::vector<double> threshold(nvec);
     for (int i = 0; i < nvec; ++i)
     {
-        threshold[i] = tolerance_ * std::max(1.0, linear_norm(rhs_norms[i]));
+        const double rhs_norm = linear_norm(rhs_norms[i]);
+        threshold[i] = tolerance_ * std::max(1.0, rhs_norm);
     }
     bool reconstruct = control.reconstruct;
     force_check = force_check || tolerance_ < 100 * std::numeric_limits<Real>::epsilon();
