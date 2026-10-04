@@ -34,9 +34,11 @@
 #include <complex>
 #include <cstdio>
 #include <cstdlib>
+#include <functional>
 #include <malloc.h>
 #include <random>
 #include <string>
+#include <utility>
 #include <vector>
 
 using T = std::complex<double>;
@@ -281,6 +283,34 @@ struct Result
     bool ok = false;
 };
 
+class CompareOperator : public hsolver::HSOperator<T, hsolver::base_device::DEVICE_CPU>
+{
+  public:
+    using Apply = std::function<void(const T*, T*, int, int)>;
+
+    CompareOperator(Apply h, Apply s) : h_(std::move(h)), s_(std::move(s))
+    {
+    }
+
+    void update_k(const int) override
+    {
+    }
+
+    void hpsi(const T* x, T* hx, const int ld, const int nvec) const override
+    {
+        h_(x, hx, ld, nvec);
+    }
+
+    void spsi(const T* x, T* sx, const int ld, const int nvec) const override
+    {
+        s_(x, sx, ld, nvec);
+    }
+
+  private:
+    Apply h_;
+    Apply s_;
+};
+
 static Result run_ppcg(const std::vector<Real>& band, int n, int bw, int bd, int nband, const std::vector<Real>& prec,
                        const std::vector<T>& psi0, const std::vector<double>& ethr, const Real* ref)
 {
@@ -351,14 +381,17 @@ static Result run_bpcg(const std::vector<Real>& band, int n, int bw, int bd, int
     long mem0 = heap_bytes();
     hsolver::DiagoBPCG<T, hsolver::base_device::DEVICE_CPU> bpcg(prec.data());
     bpcg.init_iter(nband, nband, n, n);
-    auto h_op = [&band, n, bw, bd](T* in, T* out, int ld, int nc) { banded_h_multiply(band.data(), n, bw, bd, in, out, ld, nc); };
-    auto s_op = [](const T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); };
+    CompareOperator op(
+        [&band, n, bw, bd](const T* in, T* out, int ld, int nc) {
+            banded_h_multiply(band.data(), n, bw, bd, in, out, ld, nc);
+        },
+        [](const T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); });
     // BPCG::diag() is a single block-CG sweep; iterate until convergence.
     int it = 0;
     auto t0 = std::chrono::high_resolution_clock::now();
     for (; it < max_outer_passes; ++it)
     {
-        bpcg.diag(h_op, s_op, psi.data(), eval.data(), ethr);
+        bpcg.diag(op, psi.data(), eval.data(), ethr);
         if (max_eval_err(eval.data(), ref, nband) < err_target)
         {
             break;
@@ -381,13 +414,16 @@ static Result run_dav(const std::vector<Real>& band, int n, int bw, int bd, int 
     hsolver::diag_comm_info comm(MPI_COMM_WORLD, 0, 1);
     long mem0 = heap_bytes();
     hsolver::DiagoDavid<T, hsolver::base_device::DEVICE_CPU> dav(prec.data(), nband, n, 4, comm);
-    auto h_op = [&band, n, bw, bd](T* in, T* out, int ld, int nc) { banded_h_multiply(band.data(), n, bw, bd, in, out, ld, nc); };
-    auto s_op = [](T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); };
+    CompareOperator op(
+        [&band, n, bw, bd](const T* in, T* out, int ld, int nc) {
+            banded_h_multiply(band.data(), n, bw, bd, in, out, ld, nc);
+        },
+        [](const T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); });
     auto t0 = std::chrono::high_resolution_clock::now();
     // Davidson's diag() already iterates its growing subspace to convergence,
     // so it must be called exactly once; a re-drive loop would reuse the stale
     // Ritz basis and trigger a rank-deficient Schmidt orthogonalization.
-    dav.diag(h_op, s_op, n, psi.data(), eval.data(), ethr, 500);
+    dav.diag(op, n, psi.data(), eval.data(), ethr, 500);
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.mem_bytes = heap_bytes() - mem0;
