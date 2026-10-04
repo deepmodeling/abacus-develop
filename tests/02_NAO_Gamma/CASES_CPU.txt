@@ -38,3 +38,4 @@ scf_u_spin2_old
 #scf_u_yukawa
 scf_upf100
 test.sum
+scf_pcc0d_water
