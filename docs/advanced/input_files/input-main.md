@@ -4702,6 +4702,8 @@
   - `lowdin`: Löwdin symmetric orthonormalization. Compute $\boldsymbol{C}=\boldsymbol{S}^{-1/2}$ by eigendecomposition.
   - `newton_schulz`: Newton-Schulz iteration for a Gram matrix close to the identity. Starting from $\boldsymbol{C}_0=\boldsymbol{I}$, approximate $\boldsymbol{S}^{-1/2}$ using $\boldsymbol{C}_{j+1}=\boldsymbol{C}_j(3\boldsymbol{I}-\boldsymbol{S}\boldsymbol{C}_j^2)/2$.
   - `none`: Disable orthonormalization.
+
+  > Note: With orthonormalization enabled, the maximum elementwise deviation of the Gram matrix from the identity must not exceed `1e-6` (single precision) or `1e-12` (double precision). The calculation stops if correction and fallback attempts fail to meet this tolerance. Nonfinite Gram matrices or nonpositive orbital norms are rejected even with `none`.
 - **Default**: cholesky
 
 ### lin_solver

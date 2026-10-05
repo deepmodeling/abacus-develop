@@ -149,7 +149,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
     {
         ESolver_KS_PW<T, Device>::hamilt2rho_single(ucell, istep, iter, ethr);
         psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
-        this->td_solver_->orthonormalize(current);
+        this->td_solver_->orthonormalize(current, istep, iter);
         if (this->inp_->td_orthonormal != "none")
         {
             hamilt::Hamilt<T, Device>* hamiltonian = static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt);
@@ -280,7 +280,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::report_orth(const UnitCell& ucell, int iste
     {
         Parallel_Reduce::reduce_max(value);
     }
-    int counts[] = {stats.calls, stats.passes, stats.fallbacks, stats.skipped, stats.orth_warnings};
+    int counts[] = {stats.calls, stats.passes, stats.fallbacks, stats.rejected, stats.orth_warnings};
     // Each pool owns identical statistics on all its ranks; count it only once.
     for (int& count: counts)
     {
@@ -294,12 +294,12 @@ void ESolver_KS_PW_TDDFT<T, Device>::report_orth(const UnitCell& ucell, int iste
     record << std::setprecision(14) << "TD conservation: step=" << istep << " method=" << this->inp_->td_orthonormal
            << " Npsi=" << electrons << " Nrho=" << rho_electrons << " dNpsi=" << electrons - initial_wave_electrons_
            << " dNrho=" << rho_electrons - initial_rho_electrons_ << " orth_before=" << maxima[0] << " orth_after=" << maxima[1]
-           << " calls=" << counts[0] << " passes=" << counts[1] << " fallbacks=" << counts[2] << " skipped=" << counts[3]
+           << " calls=" << counts[0] << " passes=" << counts[1] << " fallbacks=" << counts[2] << " rejected=" << counts[3]
            << " orth_warnings=" << counts[4] << " orth_seconds=" << maxima[2] << " electronic_seconds=" << electronic_seconds << '\n';
     log_ << record.str();
     if (counts[2] || counts[3] || counts[4])
     {
-        std::array<int, 8> events = stats.events;
+        std::array<int, 7> events = stats.events;
         if (this->pw_wfc->poolrank != 0)
         {
             events.fill(0);
@@ -311,10 +311,16 @@ void ESolver_KS_PW_TDDFT<T, Device>::report_orth(const UnitCell& ucell, int iste
                                "newton_schulz_failed",
                                "nonfinite_gram",
                                "candidate_rejected",
-                               "last_fallback_cholesky",
-                               "last_fallback_lowdin",
-                               "last_fallback_newton_schulz"};
-        warning_ << record.str() << "Continuing with the accepted finite state. " << stats.reason << '\n';
+                               "fallback_cholesky",
+                               "fallback_lowdin"};
+        if (this->inp_->td_orthonormal == "none")
+        {
+            warning_ << record.str() << "Orthonormalization is disabled; reporting uncorrected orthogonality drift.\n";
+        }
+        else
+        {
+            warning_ << record.str() << "The retained state satisfies the orthogonality tolerance. " << stats.reason << '\n';
+        }
         for (int i = 0; i < event_count; ++i)
         {
             if (events[i] > 0)

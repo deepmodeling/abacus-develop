@@ -9,6 +9,7 @@
 
 #include <chrono>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 
 namespace hsolver
@@ -426,7 +427,7 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
                     << result.iterations << " iterations: " << linear_status_name(result.status) << "; residual = " << result.max_residual;
             ModuleBase::WARNING_QUIT("HSolverPWTDDFT", message.str());
         }
-        correct_orbitals(current_data, ld, dim, bands, ik);
+        correct_orbitals(current_data, ld, dim, bands, ik, istep, iter);
         if (detailed_output)
         {
             log << "TD orth: step=" << istep << " iter=" << iter << " k=" << ik << " requested=" << orth_method_name(options_.orthonormal)
@@ -467,13 +468,29 @@ void HSolverPWTDDFT<T, Device>::reset_orth_stats()
 }
 
 template <typename T, typename Device>
-void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, int bands, int ik)
+void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, int bands, int ik, int istep, int iter)
 {
     ModuleBase::timer::start("HSolverPWTDDFT", "correct_orbitals");
     const OrthResult result = orthonormal_.apply(current, ld, dim, bands, options_.orthonormal);
-    if (result.invalid_input)
+    if (result.status == OrthStatus::failed)
     {
-        ModuleBase::WARNING_QUIT("HSolverPWTDDFT", "Nonfinite input wavefunction cannot be propagated.");
+        std::ostringstream message;
+        message << std::setprecision(16) << "PW TDDFT orthonormalization failed: step=" << istep << " iter=" << iter << " local_k=" << ik
+                << " requested=" << orth_method_name(options_.orthonormal) << " last_attempted=" << orth_method_name(result.actual)
+                << " before=" << result.before << " after=" << result.after << " tolerance=" << orth_tolerance<T>()
+                << " passes=" << result.passes << " fallbacks=" << result.fallbacks << "; " << orth_failure_name(result.failure) << "; "
+                << result.reason;
+        // stdout is disabled on non-world-root ranks; a failing pool must still report its error.
+        if (comm_.rank == 0)
+        {
+            std::cerr << message.str() << std::endl;
+        }
+#ifdef __MPI
+        // Let the pool root flush its diagnostic before another rank's exit stops the MPI job.
+        double diagnostic_written = 1.0;
+        Parallel_Common::bcast_data(&diagnostic_written, 1, comm_.comm, 0);
+#endif
+        ModuleBase::WARNING_QUIT("HSolverPWTDDFT", message.str());
     }
     if (orth_norms_.size() <= static_cast<std::size_t>(ik))
     {
@@ -486,12 +503,12 @@ void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, in
     ++orth_stats_.calls;
     orth_stats_.passes += result.passes;
     orth_stats_.fallbacks += result.fallbacks;
-    orth_stats_.skipped += result.skipped;
+    orth_stats_.rejected += result.events[4];
     for (std::size_t i = 0; i < result.events.size(); ++i)
     {
         orth_stats_.events[i] += result.events[i];
     }
-    const double threshold = std::is_same<Real, double>::value ? 1e-12 : 1e-6;
+    const double threshold = orth_tolerance<T>();
     orth_stats_.orth_warnings += result.after > threshold;
     if (!result.reason.empty() && orth_stats_.reason.find(result.reason) == std::string::npos)
     {
@@ -502,13 +519,13 @@ void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, in
 }
 
 template <typename T, typename Device>
-void HSolverPWTDDFT<T, Device>::orthonormalize(psi::Psi<T, Device>* current)
+void HSolverPWTDDFT<T, Device>::orthonormalize(psi::Psi<T, Device>* current, int istep, int iter)
 {
     ModuleBase::timer::start("HSolverPWTDDFT", "orthonormalize");
     for (int ik = 0; ik < current->get_nk(); ++ik)
     {
         current->fix_k(ik);
-        correct_orbitals(current->get_pointer(), current->get_nbasis(), current->get_ngk(ik), current->get_nbands(), ik);
+        correct_orbitals(current->get_pointer(), current->get_nbasis(), current->get_ngk(ik), current->get_nbands(), ik, istep, iter);
     }
     ModuleBase::timer::end("HSolverPWTDDFT", "orthonormalize");
 }

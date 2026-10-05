@@ -183,54 +183,48 @@ double orth_error(const std::vector<Wide>& g, int n)
     return error;
 }
 
-bool orth_transform(const std::vector<Wide>& g, int n, OrthMethod method, std::vector<Wide>* c, OrthResult* result)
+const char* orth_failure_name(OrthFailure failure)
+{
+    switch (failure)
+    {
+    case OrthFailure::nonfinite_gram:
+        return "nonfinite Gram matrix";
+    case OrthFailure::nonpositive_norm:
+        return "nonpositive orbital norm";
+    case OrthFailure::factorization_failed:
+        return "factorization/iteration failed";
+    case OrthFailure::invalid_candidate:
+        return "nonfinite or zero-norm candidate";
+    case OrthFailure::no_improvement:
+        return "candidate did not improve orthogonality";
+    case OrthFailure::tolerance_not_met:
+        return "orthogonality tolerance not met";
+    default:
+        return "none";
+    }
+}
+
+bool orth_transform(const std::vector<Wide>& g, int n, OrthMethod method, std::vector<Wide>* c)
 {
     ModuleBase::timer::start("Orthonormal", "orth_transform");
-    std::vector<OrthMethod> methods{method};
-    if (method != OrthMethod::cholesky)
-    {
-        methods.push_back(OrthMethod::cholesky);
-    }
-    if (method != OrthMethod::lowdin)
-    {
-        methods.push_back(OrthMethod::lowdin);
-    }
     bool valid = false;
-    for (std::size_t attempt = 0; attempt < methods.size(); ++attempt)
+    switch (method)
     {
-        if (attempt > 0)
-        {
-            ++result->fallbacks;
-        }
-        result->actual = methods[attempt];
-        switch (methods[attempt])
-        {
-        case OrthMethod::cholesky:
-            valid = cholesky(g, n, c);
-            break;
-        case OrthMethod::lowdin:
-            valid = lowdin(g, n, c);
-            break;
-        case OrthMethod::newton_schulz:
-            valid = newton_schulz(g, n, c);
-            break;
-        default:
-            valid = false;
-        }
-        for (const Wide& value: *c)
-        {
-            valid = valid && std::isfinite(std::abs(value));
-        }
-        if (valid)
-        {
-            break;
-        }
-        const int index = static_cast<int>(methods[attempt]) - 1;
-        if (index >= 0 && index < 3)
-        {
-            ++result->events[index];
-        }
-        result->reason += std::string(orth_method_name(methods[attempt])) + " factorization/iteration failed; ";
+    case OrthMethod::cholesky:
+        valid = cholesky(g, n, c);
+        break;
+    case OrthMethod::lowdin:
+        valid = lowdin(g, n, c);
+        break;
+    case OrthMethod::newton_schulz:
+        valid = newton_schulz(g, n, c);
+        break;
+    default:
+        valid = false;
+    }
+    for (const Wide& value: *c)
+    {
+        valid = valid && std::isfinite(std::abs(value));
     }
     ModuleBase::timer::end("Orthonormal", "orth_transform");
     return valid;
