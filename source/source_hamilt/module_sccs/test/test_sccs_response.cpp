@@ -1,5 +1,6 @@
 #include "sccs_test.h"
 #include "../sccs_response.h"
+#include "../sccs_parameters.h"
 
 #include "source_base/parallel_reduce.h"
 

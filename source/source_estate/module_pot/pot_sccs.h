@@ -3,7 +3,6 @@
 
 #include "pot_base.h"
 #include "source_hamilt/module_sccs/sccs_parameters.h"
-#include "source_hamilt/module_sccs/sccs_response.h"
 
 struct Input_para;
 namespace elecstate

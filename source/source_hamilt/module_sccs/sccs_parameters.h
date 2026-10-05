@@ -3,6 +3,8 @@
 
 #include "sccs_cavity.h"
 
+#include <string>
+
 namespace ModuleSccs
 {
 enum class Preset { Custom, Vacuum, WaterNeutral, WaterCation, WaterAnion };
@@ -13,6 +15,13 @@ struct SccsConfig
     double surface_tension = 0.0; // Hartree/Bohr^2
     double pressure = 0.0; // Hartree/Bohr^3
     double surface_regularization = 0.0;
+};
+
+struct PolarizationSolverParameters
+{
+    int max_iterations = 200;
+    double tolerance_rms = 1e-10;
+    double tolerance_max = 1e-8;
 };
 
 // Failure leaves the output unchanged. Custom configurations are supplied by callers.

@@ -1,5 +1,7 @@
 #include "sccs_test.h"
 #include "../sccs_functional.h"
+#include "../sccs_parameters.h"
+#include "../sccs_response.h"
 #include "source_base/parallel_reduce.h"
 
 using SccsFunctionalTest = SccsTest::PwTest;

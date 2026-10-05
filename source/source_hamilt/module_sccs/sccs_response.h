@@ -4,6 +4,7 @@
 #include "sccs_cavity.h"
 #include "source_base/vector3.h"
 
+#include <string>
 #include <vector>
 
 namespace ModulePW
@@ -13,12 +14,7 @@ class PW_Basis;
 
 namespace ModuleSccs
 {
-struct PolarizationSolverParameters
-{
-    int max_iterations = 200;
-    double tolerance_rms = 1e-10;
-    double tolerance_max = 1e-8;
-};
+struct PolarizationSolverParameters;
 
 struct PolarizationResult
 {

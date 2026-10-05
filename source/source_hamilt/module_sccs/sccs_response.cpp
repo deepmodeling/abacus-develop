@@ -1,4 +1,5 @@
 #include "sccs_response.h"
+#include "sccs_parameters.h"
 #include "sccs_pw_coulomb.h"
 
 #include "source_base/constants.h"

@@ -2,6 +2,7 @@
 #include "../sccs_ionic_force.h"
 #include "../sccs_ionic_charge.h"
 #include "../sccs_response.h"
+#include "../sccs_parameters.h"
 #include "../sccs_functional.h"
 
 #include "source_cell/cell_tools.h"

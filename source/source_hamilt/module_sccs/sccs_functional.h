@@ -1,11 +1,19 @@
 #ifndef SCCS_FUNCTIONAL_H
 #define SCCS_FUNCTIONAL_H
 
-#include "sccs_parameters.h"
-#include "sccs_response.h"
+#include <string>
+#include <vector>
+
+namespace ModulePW
+{
+class PW_Basis;
+}
 
 namespace ModuleSccs
 {
+struct SccsConfig;
+struct SccsResponse;
+
 struct FunctionalResult
 {
     double reaction_energy = 0.0; // Hartree

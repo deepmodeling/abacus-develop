@@ -7,6 +7,7 @@
 #include "source_hamilt/module_sccs/sccs_functional.h"
 #include "source_hamilt/module_sccs/sccs_ionic_charge.h"
 #include "source_hamilt/module_sccs/sccs_ionic_force.h"
+#include "source_hamilt/module_sccs/sccs_response.h"
 #include "source_io/module_parameter/input_parameter.h"
 
 #include <cmath>
