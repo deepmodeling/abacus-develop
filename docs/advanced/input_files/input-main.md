@@ -4917,7 +4917,7 @@
 ### imp_sol
 
 - **Type**: Integer
-- **Description**: Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS. Legacy Boolean values remain accepted as 0 or 1. SCCS currently supports neutral periodic CPU KS-DFT SCF calculations with basis_type pw or lcao and nspin 1 or 2, without forces, stress, external fields or other correction models.
+- **Description**: Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS. Legacy Boolean values remain accepted as 0 or 1. SCCS currently supports neutral periodic CPU KS-DFT SCF calculations with basis_type pw or lcao and nspin 1 or 2, without stress, external fields or other correction models.
 - **Default**: 0
 
 ### sccs_preset

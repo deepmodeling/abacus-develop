@@ -34,7 +34,10 @@ TEST(ReadInpSccs, SupportedScopeAndNumericalValidation)
     std::string error;
     ASSERT_TRUE(ModuleIO::validate_sccs_input(input, error)) << error;
     input.cal_force = true;
+    EXPECT_TRUE(ModuleIO::validate_sccs_input(input, error));
+    input.cal_stress = true;
     EXPECT_FALSE(ModuleIO::validate_sccs_input(input, error));
+    input.cal_stress = false;
     input.cal_force = false;
     input.assume_isolated = "pcc_0d";
     EXPECT_FALSE(ModuleIO::validate_sccs_input(input, error));

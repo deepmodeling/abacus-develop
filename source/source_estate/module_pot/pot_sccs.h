@@ -21,6 +21,7 @@ public:
             const ModuleSccs::PolarizationSolverParameters& solver);
     void cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::matrix& potential) override;
     double get_energy() const override;
+    void add_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const override;
     void get_solvation_energy(double& electrostatic, double& non_electrostatic) const override;
     const std::vector<double>* solvent_electrostatic_potential() const override;
 

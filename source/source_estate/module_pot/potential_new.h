@@ -84,6 +84,7 @@ class Potential : public PotBase
     PotBase* get_pot_type(const std::string& pot_type, const Input_para& input);
 
     void get_solvation_energy(double& electrostatic, double& non_electrostatic) const override;
+    void add_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const override;
     const std::vector<double>* solvent_electrostatic_potential() const override;
 
     /// PCC results belong to this electronic state's registered potential.

@@ -130,6 +130,15 @@ class MockPotComponent : public PotBase
         }
     }
 
+    void add_solvation_force(const UnitCell&, ModuleBase::matrix& force) const override
+    {
+        if (type_ != "solvation") { return; }
+        for (int ia = 0; ia < force.nr; ++ia)
+        {
+            for (int axis = 0; axis < force.nc; ++axis) { force(ia, axis) += 1.25; }
+        }
+    }
+
     static void reset()
     {
         created = 0;
@@ -410,4 +419,27 @@ TEST_F(PotentialNewTest, DifferentBasisObjectsRequireMatchingGammaOnly)
     Charge charge;
 
     EXPECT_EXIT(potential->update_from_charge(&charge, ucell.get()), ::testing::ExitedWithCode(1), "");
+}
+
+TEST_F(PotentialNewTest, SolvationForcesUseRegisteredComponentsOnce)
+{
+    setup_smooth_basis();
+    create_potential(smooth_basis.get(), smooth_basis.get());
+    potential->pot_register({"fixed", "solvation"});
+    ModuleBase::matrix force(2, 3);
+    for (int ia = 0; ia < 2; ++ia)
+    {
+        for (int axis = 0; axis < 3; ++axis) { force(ia, axis) = 7.0; }
+    }
+    potential->add_solvation_force(*ucell, force);
+    for (int ia = 0; ia < 2; ++ia)
+    {
+        for (int axis = 0; axis < 3; ++axis) { EXPECT_DOUBLE_EQ(force(ia, axis), 8.25); }
+    }
+    potential->pot_register({"fixed"});
+    potential->add_solvation_force(*ucell, force);
+    for (int ia = 0; ia < 2; ++ia)
+    {
+        for (int axis = 0; axis < 3; ++axis) { EXPECT_DOUBLE_EQ(force(ia, axis), 8.25); }
+    }
 }

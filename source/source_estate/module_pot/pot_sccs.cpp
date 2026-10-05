@@ -6,6 +6,7 @@
 #include "source_cell/cell_tools.h"
 #include "source_hamilt/module_sccs/sccs_functional.h"
 #include "source_hamilt/module_sccs/sccs_ionic_charge.h"
+#include "source_hamilt/module_sccs/sccs_ionic_force.h"
 #include "source_io/module_parameter/input_parameter.h"
 
 #include <cmath>
@@ -137,6 +138,38 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     }
     restart_potential_ = std::move(response.restart_potential);
     ModuleBase::timer::end("PotSccs", "cal_v_eff");
+}
+
+void PotSccs::add_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const
+{
+    ModuleBase::timer::start("PotSccs", "add_solvation_force");
+    const bool shape_valid = force.nr == cell.nat && force.nc == 3
+                             && this->rho_basis_ != nullptr && cell.atoms != nullptr && cell.ntype > 0;
+    require_valid_on_pool(shape_valid, "SCCS force requires initialized cell and atom-major storage");
+    const ModulePW::PW_Basis& basis = *this->rho_basis_;
+    const bool result_valid = electrostatic_potential_.size() == static_cast<std::size_t>(basis.nrxx);
+    require_valid_on_pool(result_valid, "SCCS force requires a completed response on the current grid");
+    const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell.atoms, cell.ntype, cell.lat0);
+    const bool count_valid = atoms.size() == static_cast<std::size_t>(cell.nat);
+    require_valid_on_pool(count_valid, "SCCS force atom count does not match UnitCell");
+    std::vector<double> reaction(basis.nrxx);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        reaction[ir] = -0.5 * electrostatic_potential_[ir];
+    }
+    std::vector<ModuleBase::Vector3<double>> ionic_force;
+    std::string error;
+    const bool valid = ModuleSccs::gaussian_ionic_force(atoms, reaction, basis, cell.tpiba,
+                                                       ModuleSccs::gaussian_ion_spread, ionic_force, error);
+    require_valid_on_pool(valid, error);
+    for (int ia = 0; ia < cell.nat; ++ia)
+    {
+        for (int axis = 0; axis < 3; ++axis)
+        {
+            force(ia, axis) += 2.0 * ionic_force[ia][axis];
+        }
+    }
+    ModuleBase::timer::end("PotSccs", "add_solvation_force");
 }
 
 double PotSccs::get_energy() const

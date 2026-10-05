@@ -36,6 +36,8 @@ class PotBase
         electrostatic = 0.0;
         non_electrostatic = 0.0;
     }
+    // Explicit ionic solvation force in Ry/Bohr, added to existing contributions.
+    virtual void add_solvation_force(const UnitCell&, ModuleBase::matrix&) const {}
     // Electronic electrostatic correction only; excludes cavity/surface derivatives.
     virtual const std::vector<double>* solvent_electrostatic_potential() const { return nullptr; }
     

@@ -15,6 +15,14 @@
 
 namespace elecstate
 {
+void Potential::add_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const
+{
+    for (const PotBase* component : this->components)
+    {
+        component->add_solvation_force(cell, force);
+    }
+}
+
 void Potential::get_solvation_energy(double& electrostatic, double& non_electrostatic) const
 {
     electrostatic = 0.0;

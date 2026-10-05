@@ -190,6 +190,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     {
         parts.fpcc.create(ucell.nat, 3);
         pelec->pot->add_pcc_force(ucell, parts.fpcc);
+        if (parts.fsol.nr == 0) { parts.fsol.create(ucell.nat, 3); }
+        pelec->pot->add_solvation_force(ucell, parts.fsol);
     }
 
     // DFT+U force/stress

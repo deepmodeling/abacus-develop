@@ -44,8 +44,8 @@ bool validate_sccs_input(const Input_para& input, std::string& error)
     if (input.assume_isolated != "none") { error = "SCCS currently requires assume_isolated none"; }
     else if (input.device != "cpu" || input.esolver_type != "ksdft") { error = "SCCS requires CPU KS-DFT"; }
     else if (input.basis_type != "pw" && input.basis_type != "lcao") { error = "SCCS requires basis_type pw or lcao"; }
-    else if (input.calculation != "scf" || input.cal_force || input.cal_stress)
-    { error = "SCCS currently supports SCF energies without forces or stress"; }
+    else if (input.calculation != "scf" || input.cal_stress)
+    { error = "SCCS currently supports SCF energies and forces without stress"; }
     else if (input.nspin != 1 && input.nspin != 2) { error = "SCCS requires nspin 1 or 2"; }
     else if (input.efield_flag || input.gate_flag || input.dfthalf_type != 0
              || input.deepks_scf || input.deepks_out_labels || input.deepks_bandgap
@@ -81,7 +81,7 @@ void ReadInput::item_sccs()
         item.annotation = "implicit solvent model";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS. Legacy Boolean values remain accepted as 0 or 1. SCCS currently supports neutral periodic CPU KS-DFT SCF calculations with basis_type pw or lcao and nspin 1 or 2, without forces, stress, external fields or other correction models.";
+        item.description = "Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS. Legacy Boolean values remain accepted as 0 or 1. SCCS currently supports neutral periodic CPU KS-DFT SCF calculations with basis_type pw or lcao and nspin 1 or 2, without stress, external fields or other correction models.";
         item.default_value = "0";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             std::string error;
