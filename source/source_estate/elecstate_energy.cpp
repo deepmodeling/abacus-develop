@@ -316,7 +316,7 @@ void ElecState::cal_converged()
  * @param type: 2 means Kohn-Sham functional;
  */
 void ElecState::cal_energies(const int type,
-                             const bool imp_sol,
+                             const int imp_sol,
                              const bool sc_mag_switch,
                              const int dft_plus_u,
                              const std::string& assume_isolated)
@@ -331,10 +331,19 @@ void ElecState::cal_energies(const int type,
     this->f_en.gatefield = get_etot_gatefield();
 
     //! energy from implicit solvation model
-    if (imp_sol)
+    if (imp_sol == 1)
     {
         this->f_en.esol_el = get_solvent_model_Ael();
         this->f_en.esol_cav = get_solvent_model_Acav();
+    }
+    else if (imp_sol == 2)
+    {
+        this->pot->get_solvation_energy(this->f_en.esol_el, this->f_en.esol_cav);
+    }
+    else
+    {
+        this->f_en.esol_el = 0.0;
+        this->f_en.esol_cav = 0.0;
     }
 
     //! spin constrained energy

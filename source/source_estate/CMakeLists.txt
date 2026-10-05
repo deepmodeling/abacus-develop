@@ -21,6 +21,7 @@ list(APPEND objects
     module_pot/pot_xc.cpp
     module_pot/pot_local.cpp
     module_pot/pot_pcc.cpp
+    module_pot/pot_sccs.cpp
     module_pot/potential_new.cpp
     module_pot/potential_types.cpp
     module_pot/pot_ml_exx.cpp

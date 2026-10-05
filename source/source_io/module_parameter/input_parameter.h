@@ -570,12 +570,21 @@ struct Input_para
     double block_height = 0.1; ///< height of the block
 
     //    implicit solvation model       Menglin Sun added on 2022-04-04
-    bool imp_sol = false;    ///< true: implicit solvation correction; false:
-                             ///< vacuum calculation(default)
+    int imp_sol = 0;         ///< 0: vacuum, 1: legacy solvation, 2: SCCS
     double eb_k = 80;        ///< the relative permittivity of the bulk solvent
     double tau = 1.0798e-05; ///< the effective surface tension parameter
     double sigma_k = 0.6;    ///< the width of the diffuse cavity
     double nc_k = 0.00037;   ///< the cut-off charge density
+    std::string sccs_preset = "custom";
+    double sccs_epsilon = 78.3;
+    double sccs_rho_min = 1e-4;
+    double sccs_rho_max = 5e-3;
+    double sccs_gamma = 0.0; // dyn/cm
+    double sccs_pressure = 0.0; // GPa
+    int sccs_maxiter = 200;
+    double sccs_tol_rms = 1e-10;
+    double sccs_tol_max = 1e-8;
+    double sccs_surface_eta = 1e-8; // Bohr^-1
 
     // ==============  #Parameters (14.vdW Correction) ===========================
     // ==========================================================

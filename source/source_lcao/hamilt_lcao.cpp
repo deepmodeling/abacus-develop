@@ -87,7 +87,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         if (inp.vion_in_h) { pot_register_in.push_back("local"); }
         if (inp.vh_in_h)   { pot_register_in.push_back("hartree"); }
         pot_register_in.push_back("xc");
-        if (inp.imp_sol)     { pot_register_in.push_back("surchem"); }
+        if (inp.imp_sol == 1)     { pot_register_in.push_back("surchem"); }
+        if (inp.imp_sol == 2) { pot_register_in.push_back("sccs"); }
         if (inp.assume_isolated == "pcc_0d") { pot_register_in.push_back("pcc"); }
         if (inp.assume_isolated == "pcc_2d")
         {

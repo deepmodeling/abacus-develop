@@ -10,6 +10,8 @@
 #include <memory>
 #include <vector>
 
+struct Input_para;
+
 namespace elecstate
 {
 class PotPcc;
@@ -73,12 +75,16 @@ class Potential : public PotBase
     void init_pot(const Charge* const chg);
     // initialize potential components before SCF
     void pot_register(const std::vector<std::string>& components_list);
+    void pot_register(const std::vector<std::string>& components_list, const Input_para& input);
     // update potential from current charge
     void update_from_charge(const Charge* const chg, const UnitCell* const ucell);
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
 
-    PotBase* get_pot_type(const std::string& pot_type);
+    PotBase* get_pot_type(const std::string& pot_type, const Input_para& input);
+
+    void get_solvation_energy(double& electrostatic, double& non_electrostatic) const override;
+    const std::vector<double>* solvent_electrostatic_potential() const override;
 
     /// PCC results belong to this electronic state's registered potential.
     double pcc_energy_rydberg() const;

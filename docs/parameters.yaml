@@ -4332,12 +4332,92 @@ parameters:
     availability: ""
   - name: imp_sol
     category: Implicit solvation model
-    type: Boolean
+    type: Integer
     description: |
-      Calculate implicit solvation correction
-    default_value: "False"
+      Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS. Legacy Boolean values remain accepted as 0 or 1. SCCS currently supports neutral periodic CPU KS-DFT SCF calculations with basis_type pw or lcao and nspin 1 or 2, without forces, stress, external fields or other correction models.
+    default_value: "0"
     unit: ""
     availability: ""
+  - name: sccs_preset
+    category: Implicit solvation model
+    type: String
+    description: |
+      SCCS parameter preset. Allowed values: custom, vacuum, water-neutral, water-cation, water-anion. Non-custom presets override sccs_epsilon, sccs_rho_min, sccs_rho_max, sccs_gamma and sccs_pressure; solver controls and surface regularization remain user-controlled.
+    default_value: custom
+    unit: ""
+    availability: imp_sol==2
+  - name: sccs_epsilon
+    category: Implicit solvation model
+    type: Real
+    description: |
+      Bulk dielectric constant >= 1 for the custom preset. Water presets use 78.3 and vacuum uses 1.
+    default_value: "78.3"
+    unit: ""
+    availability: imp_sol==2
+  - name: sccs_rho_min
+    category: Implicit solvation model
+    type: Real
+    description: |
+      Lower electronic-density cavity threshold for the custom preset. Water-neutral/vacuum: 1e-4; water-cation: 2e-4; water-anion: 2.4e-3.
+    default_value: "1e-4"
+    unit: e/bohr^3
+    availability: imp_sol==2
+  - name: sccs_rho_max
+    category: Implicit solvation model
+    type: Real
+    description: |
+      Upper electronic-density cavity threshold for the custom preset. Water-neutral/vacuum: 5e-3; water-cation: 3.5e-3; water-anion: 1.55e-2.
+    default_value: "5e-3"
+    unit: e/bohr^3
+    availability: imp_sol==2
+  - name: sccs_gamma
+    category: Implicit solvation model
+    type: Real
+    description: |
+      Surface coefficient for the custom preset. Water-neutral: 47.9; water-cation: 5; water-anion/vacuum: 0.
+    default_value: "0.0"
+    unit: dyn/cm
+    availability: imp_sol==2
+  - name: sccs_pressure
+    category: Implicit solvation model
+    type: Real
+    description: |
+      Volume coefficient for the custom preset. Water-neutral: -0.36; water-cation: 0.125; water-anion: 0.45; vacuum: 0.
+    default_value: "0.0"
+    unit: GPa
+    availability: imp_sol==2
+  - name: sccs_maxiter
+    category: Implicit solvation model
+    type: Integer
+    description: |
+      Positive maximum number of SCCS sqrt-CG iterations. Failure to satisfy both residual tolerances terminates the calculation.
+    default_value: "200"
+    unit: ""
+    availability: imp_sol==2
+  - name: sccs_tol_rms
+    category: Implicit solvation model
+    type: Real
+    description: |
+      Positive RMS charge-residual tolerance for the SCCS sqrt-CG solver.
+    default_value: "1e-10"
+    unit: e/bohr^3
+    availability: imp_sol==2
+  - name: sccs_tol_max
+    category: Implicit solvation model
+    type: Real
+    description: |
+      Positive maximum charge-residual tolerance for the SCCS sqrt-CG solver.
+    default_value: "1e-8"
+    unit: e/bohr^3
+    availability: imp_sol==2
+  - name: sccs_surface_eta
+    category: Implicit solvation model
+    type: Real
+    description: |
+      Positive regularization of the SCCS surface gradient norm.
+    default_value: "1e-8"
+    unit: bohr^-1
+    availability: imp_sol==2
   - name: eb_k
     category: Implicit solvation model
     type: Real
@@ -4345,7 +4425,7 @@ parameters:
       The relative permittivity of the bulk solvent, 80 for water
     default_value: "80"
     unit: ""
-    availability: imp_sol==true
+    availability: imp_sol==1
   - name: tau
     category: Implicit solvation model
     type: Real

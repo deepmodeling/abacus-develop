@@ -150,6 +150,7 @@ void ctrl_output_fp(UnitCell& ucell,
         fn += geom_block + ".cube";
 
         const std::vector<double>* pcc_potential = pelec->pot->pcc_electron_potential();
+        const std::vector<double>* solvent_potential = pelec->pot->solvent_electrostatic_potential();
         ModuleIO::write_elecstat_pot(
 #ifdef __MPI
             pw_big->bz,
@@ -163,6 +164,7 @@ void ctrl_output_fp(UnitCell& ucell,
             pelec->pot->get_fixed_v(),
             solvent,
             pcc_potential,
+            solvent_potential,
             inp.out_pot[1]);
     }
 

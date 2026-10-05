@@ -153,7 +153,7 @@ int MockPotComponent::destroyed = 0;
 int MockPotComponent::fixed_calls = 0;
 int MockPotComponent::dynamic_calls = 0;
 
-PotBase* Potential::get_pot_type(const std::string& pot_type)
+PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para&)
 {
     const int grid_size = this->get_rho_basis() == nullptr ? 0 : this->get_rho_basis()->nrxx;
     return new MockPotComponent(pot_type, grid_size);

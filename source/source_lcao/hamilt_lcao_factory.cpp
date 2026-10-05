@@ -169,7 +169,7 @@ LcaoOpsBundle<TK, TR> build_gamma_ops(const UnitCell& ucell,
         if (pot_register_in.size() > 0)
         {
             // register Potential by gathered operator
-            pot_in->pot_register(pot_register_in);
+            pot_in->pot_register(pot_register_in, inp);
             // effective potential term
             Operator<TK>* veff = new Veff<OperatorLCAO<TK, TR>>(hsk,
                                                                 kv->kvec_d, pot_in,
@@ -230,7 +230,7 @@ LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
         if (pot_register_in.size() > 0)
         {
             // register Potential by gathered operator
-            pot_in->pot_register(pot_register_in);
+            pot_in->pot_register(pot_register_in, inp);
             // Veff term
             ops = new Veff<OperatorLCAO<TK, TR>>(hsk,
                                                  kv->kvec_d, pot_in,

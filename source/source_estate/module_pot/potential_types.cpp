@@ -3,6 +3,7 @@
 #include "gatefield.h"
 #include "pot_local.h"
 #include "pot_pcc.h"
+#include "pot_sccs.h"
 #include "pot_sep.h"
 #include "pot_surchem.hpp"
 #include "pot_xc.h"
@@ -21,7 +22,7 @@
 namespace elecstate
 {
 
-PotBase* Potential::get_pot_type(const std::string& pot_type)
+PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& input)
 {
     ModuleBase::TITLE("Potential", "get_pot_type");
     if (pot_type == "local")
@@ -34,7 +35,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     }
     else if (pot_type == "xc")
     {
-        return new PotXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
+        return new PotXC(PARAM.globalv.domag, PARAM.globalv.domag_z, input.gga_grad, this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
     }
     else if (pot_type == "pcc")
     {
@@ -42,8 +43,17 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     }
     else if (pot_type == "pcc_2d")
     {
-        const int open_axis = PARAM.inp.pcc_2d_axis;
+        const int open_axis = input.pcc_2d_axis;
         return new PotPcc(this->rho_basis_, PotPcc::Dimension::slab, open_axis);
+    }
+    else if (pot_type == "sccs")
+    {
+        ModuleSccs::SccsConfig config;
+        ModuleSccs::PolarizationSolverParameters solver;
+        std::string error;
+        const bool valid = make_sccs_config_from_input(input, config, solver, error);
+        if (!valid) { ModuleBase::WARNING_QUIT("Potential::get_pot_type", error); }
+        return new PotSccs(this->rho_basis_, config, solver);
     }
     else if (pot_type == "surchem")
     {
@@ -51,7 +61,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     }
     else if (pot_type == "efield")
     {
-        return new PotEfield(this->rho_basis_, this->ucell_, this->solvent_, PARAM.inp.dip_cor_flag);
+        return new PotEfield(this->rho_basis_, this->ucell_, this->solvent_, input.dip_cor_flag);
     }
     else if (pot_type == "gatefield")
     {

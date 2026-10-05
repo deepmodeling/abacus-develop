@@ -23,6 +23,7 @@ void write_elecstat_pot(
     const double* v_eff,
     const surchem& solvent,
     const std::vector<double>* pcc_potential,
+    const std::vector<double>* solvent_potential,
     const int precision)
 {
     ModuleBase::TITLE("ModuleIO", "write_elecstat_pot");
@@ -34,10 +35,15 @@ void write_elecstat_pot(
         ModuleBase::WARNING_QUIT("write_elecstat_pot", "PCC potential does not match the output grid");
     }
 
+    if (solvent_potential != nullptr && solvent_potential->size() != static_cast<std::size_t>(rho_basis->nrxx))
+    {
+        ModuleBase::WARNING_QUIT("write_elecstat_pot", "Solvent potential does not match the output grid");
+    }
+
     const int nspin = PARAM.inp.nspin;
     const int efield = PARAM.inp.efield_flag;
     const int dip_corr = PARAM.inp.dip_cor_flag;
-    const bool imp_sol = PARAM.inp.imp_sol;
+    const int imp_sol = PARAM.inp.imp_sol;
 
     //==========================================
     // Hartree potential
@@ -75,7 +81,11 @@ void write_elecstat_pot(
         {
             v_elecstat[ir] += (*pcc_potential)[ir];
         }
-        if(imp_sol == true)
+        if (solvent_potential != nullptr)
+        {
+            v_elecstat[ir] += (*solvent_potential)[ir];
+        }
+        if (imp_sol == 1)
         {
             v_elecstat[ir] += solvent.delta_phi[ir];
         }
