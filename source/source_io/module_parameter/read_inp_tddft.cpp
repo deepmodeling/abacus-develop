@@ -201,7 +201,7 @@ void ReadInput::item_rt_tddft()
 * `newton_schulz`: Newton-Schulz iteration for a Gram matrix close to the identity. Starting from $\boldsymbol{C}_0=\boldsymbol{I}$, approximate $\boldsymbol{S}^{-1/2}$ using $\boldsymbol{C}_{j+1}=\boldsymbol{C}_j(3\boldsymbol{I}-\boldsymbol{S}\boldsymbol{C}_j^2)/2$.
 * `none`: Disable orthonormalization.
 
-[NOTE] With orthonormalization enabled, the maximum elementwise deviation of the Gram matrix from the identity must not exceed `1e-6` (single precision) or `1e-12` (double precision). The calculation stops if correction and fallback attempts fail to meet this tolerance. Nonfinite Gram matrices or nonpositive orbital norms are rejected even with `none`.)";
+[NOTE] With orthonormalization enabled, the propagated Gram matrix must differ from the identity by at most `1e-6` (single precision) or `1e-12` (double precision) per element; unsuccessful corrections stop the calculation. The converged initial state is checked once without modification, with finite orthogonality errors only triggering warnings. Nonfinite or nonpositive orbital norms are rejected even with `none`.)";
         item.default_value = "cholesky";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");

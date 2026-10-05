@@ -202,11 +202,86 @@ void Orthonormal<T, Device>::correct(T* input,
 }
 
 template <typename T, typename Device>
+OrthResult Orthonormal<T, Device>::inspect(const T* input, int ld, int dim, int bands, bool full_gram)
+{
+    ModuleBase::timer::start("Orthonormal", "inspect");
+    const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    OrthResult result;
+    result.gram_checked = full_gram;
+    if (full_gram)
+    {
+        const std::vector<std::complex<double>> g = gram(input, ld, dim, bands);
+        result.before = orth_error(g, bands);
+        result.after = result.before;
+        for (int band = 0; band < bands; ++band)
+        {
+            result.norms.push_back(g[band + band * bands].real());
+        }
+        if (!std::isfinite(result.after))
+        {
+            result.failure = OrthFailure::nonfinite_gram;
+            ++result.events[3];
+        }
+        else if (!positive_norms(g, bands))
+        {
+            result.failure = OrthFailure::nonpositive_norm;
+        }
+        else
+        {
+            result.status = OrthStatus::inspected;
+        }
+    }
+    else
+    {
+        // Corresponding-band products promote operands before multiplication, without a full FP64 copy.
+        std::vector<std::complex<double>> norms;
+        if (bands > 0)
+        {
+            norms = algebra_.dots(ld, dim, bands, 1, 0, input, input);
+        }
+        result.status = OrthStatus::disabled;
+        for (int band = 0; band < bands; ++band)
+        {
+            const std::complex<double> value = norms[band];
+            result.norms.push_back(value.real());
+            if (result.status == OrthStatus::failed)
+            {
+                continue;
+            }
+            if (!std::isfinite(value.real()) || !std::isfinite(value.imag()))
+            {
+                result.failure = OrthFailure::nonfinite_norm;
+            }
+            else if (value.real() <= 0.0)
+            {
+                result.failure = OrthFailure::nonpositive_norm;
+            }
+            if (result.failure != OrthFailure::none)
+            {
+                result.status = OrthStatus::failed;
+                result.reason = "band=" + std::to_string(band);
+            }
+        }
+    }
+    // Host products already wait for device completion; no extra device synchronization is needed.
+    result.seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+    ModuleBase::timer::end("Orthonormal", "inspect");
+    return result;
+}
+
+template <typename T, typename Device>
 OrthResult Orthonormal<T, Device>::apply(T* input, int ld, int dim, int bands, OrthMethod method)
 {
     ModuleBase::timer::start("Orthonormal", "apply");
+    if (method == OrthMethod::none)
+    {
+        const OrthResult result = inspect(input, ld, dim, bands, false);
+        ModuleBase::timer::end("Orthonormal", "apply");
+        return result;
+    }
     const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     OrthResult result;
+    result.gram_checked = true;
     std::vector<std::complex<double>> g = gram(input, ld, dim, bands);
     result.before = orth_error(g, bands);
     result.after = result.before;
@@ -218,10 +293,6 @@ OrthResult Orthonormal<T, Device>::apply(T* input, int ld, int dim, int bands, O
     else if (!positive_norms(g, bands))
     {
         result.failure = OrthFailure::nonpositive_norm;
-    }
-    else if (method == OrthMethod::none)
-    {
-        result.status = OrthStatus::disabled;
     }
     else if (bands == 0)
     {

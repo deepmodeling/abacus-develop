@@ -4,6 +4,7 @@
 #include "source_hsolver/linear_algebra.h"
 
 #include <array>
+#include <limits>
 #include <string>
 #include <type_traits>
 
@@ -23,6 +24,7 @@ enum class OrthStatus
 {
     accepted,
     unchanged,
+    inspected, ///< Read-only Gram diagnostics, without enforcing the correction tolerance.
     disabled,
     failed
 };
@@ -31,6 +33,7 @@ enum class OrthFailure
 {
     none,
     nonfinite_gram,
+    nonfinite_norm,
     nonpositive_norm,
     factorization_failed,
     invalid_candidate,
@@ -49,8 +52,9 @@ constexpr double orth_tolerance()
 /** @brief Collective outcome; failed states must not be used to construct a density. */
 struct OrthResult
 {
-    double before = 0.0;
-    double after = 0.0;
+    double before = std::numeric_limits<double>::quiet_NaN();
+    double after = std::numeric_limits<double>::quiet_NaN();
+    bool gram_checked = false;
     double seconds = 0.0;
     int passes = 0;
     int fallbacks = 0;
@@ -93,6 +97,8 @@ class Orthonormal
 
   public:
     explicit Orthonormal(const diag_comm_info& comm);
+    /** @brief Inspect norms and optionally overlaps without changing orbitals or enforcing a correction tolerance. */
+    OrthResult inspect(const T* input, int ld, int dim, int bands, bool full_gram);
     /** @brief Preserve input on rejected candidates; a failed overall result is not usable. */
     OrthResult apply(T* input, int ld, int dim, int bands, OrthMethod method);
 };

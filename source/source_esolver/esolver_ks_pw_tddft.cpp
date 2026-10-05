@@ -148,26 +148,6 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
     if (istep == 0)
     {
         ESolver_KS_PW<T, Device>::hamilt2rho_single(ucell, istep, iter, ethr);
-        psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
-        this->td_solver_->orthonormalize(current, istep, iter);
-        if (this->inp_->td_orthonormal != "none")
-        {
-            hamilt::Hamilt<T, Device>* hamiltonian = static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt);
-            hamilt::HamiltHSOperator<T, Device> op(hamiltonian, this->pw_wfc);
-            this->td_solver_->cal_band_energy(op, *current, &this->pelec->ekb);
-            elecstate::calculate_weights(this->pelec->ekb,
-                                         this->pelec->wg,
-                                         this->pelec->klist,
-                                         this->pelec->eferm,
-                                         this->pelec->f_en,
-                                         this->pelec->nelec_spin,
-                                         this->inp_->nbands,
-                                         this->pelec->skip_weights);
-            elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
-            elecstate::ElecStatePW<T, Device>* estate = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
-            estate->psiToRho(*current);
-            module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
-        }
         ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "hamilt2rho_single");
         return;
     }
@@ -233,6 +213,11 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "Cannot propagate an unconverged electronic state.");
     }
+    if (istep == 0)
+    {
+        const psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
+        this->td_solver_->check_initial(*current, this->niter);
+    }
     ESolver_KS_PW<T, Device>::after_scf(ucell, istep, conv_esolver);
     if (istep >= 0)
     {
@@ -275,29 +260,52 @@ void ESolver_KS_PW_TDDFT<T, Device>::report_orth(const UnitCell& ucell, int iste
     const hsolver::TDOrthStats& stats = this->td_solver_->orth_stats();
     double electronic_seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - electronic_start_).count();
     Parallel_Reduce::reduce_max(electronic_seconds);
-    double maxima[] = {stats.before, stats.after, stats.orth_seconds};
-    for (double& value: maxima)
+    const bool full_gram = this->inp_->td_orthonormal != "none";
+    double check_seconds = stats.orth_seconds;
+    Parallel_Reduce::reduce_max(check_seconds);
+    double maxima[] = {stats.before, stats.after};
+    if (full_gram)
     {
-        Parallel_Reduce::reduce_max(value);
+        for (double& value: maxima)
+        {
+            Parallel_Reduce::reduce_max(value);
+        }
     }
     int counts[] = {stats.calls, stats.passes, stats.fallbacks, stats.rejected, stats.orth_warnings};
+    const int count_fields = full_gram ? 5 : 1;
     // Each pool owns identical statistics on all its ranks; count it only once.
-    for (int& count: counts)
+    for (int i = 0; i < count_fields; ++i)
     {
         if (this->pw_wfc->poolrank != 0)
         {
-            count = 0;
+            counts[i] = 0;
         }
-        Parallel_Reduce::reduce_all(count);
+        Parallel_Reduce::reduce_all(counts[i]);
     }
+    const char* stage = istep == 0 ? "initial_check" : "propagation";
     std::ostringstream record;
-    record << std::setprecision(14) << "TD conservation: step=" << istep << " method=" << this->inp_->td_orthonormal
+    record << std::setprecision(14) << "TD conservation: step=" << istep << " method=" << this->inp_->td_orthonormal << " stage=" << stage
            << " Npsi=" << electrons << " Nrho=" << rho_electrons << " dNpsi=" << electrons - initial_wave_electrons_
-           << " dNrho=" << rho_electrons - initial_rho_electrons_ << " orth_before=" << maxima[0] << " orth_after=" << maxima[1]
-           << " calls=" << counts[0] << " passes=" << counts[1] << " fallbacks=" << counts[2] << " rejected=" << counts[3]
-           << " orth_warnings=" << counts[4] << " orth_seconds=" << maxima[2] << " electronic_seconds=" << electronic_seconds << '\n';
+           << " dNrho=" << rho_electrons - initial_rho_electrons_ << " calls=" << counts[0];
+    if (full_gram)
+    {
+        if (istep == 0)
+        {
+            record << " initial_orth_error=" << maxima[1] << " check_seconds=" << check_seconds;
+        }
+        else
+        {
+            record << " orth_before=" << maxima[0] << " orth_after=" << maxima[1] << " orth_seconds=" << check_seconds;
+        }
+        record << " passes=" << counts[1] << " fallbacks=" << counts[2] << " rejected=" << counts[3] << " orth_warnings=" << counts[4];
+    }
+    else
+    {
+        record << " norm_seconds=" << check_seconds;
+    }
+    record << " electronic_seconds=" << electronic_seconds << '\n';
     log_ << record.str();
-    if (counts[2] || counts[3] || counts[4])
+    if (full_gram && (counts[2] || counts[3] || counts[4]))
     {
         std::array<int, 7> events = stats.events;
         if (this->pw_wfc->poolrank != 0)
@@ -313,9 +321,9 @@ void ESolver_KS_PW_TDDFT<T, Device>::report_orth(const UnitCell& ucell, int iste
                                "candidate_rejected",
                                "fallback_cholesky",
                                "fallback_lowdin"};
-        if (this->inp_->td_orthonormal == "none")
+        if (istep == 0)
         {
-            warning_ << record.str() << "Orthonormalization is disabled; reporting uncorrected orthogonality drift.\n";
+            warning_ << record.str() << "Initial orbitals are unchanged; orthogonality exceeds the propagation correction tolerance.\n";
         }
         else
         {

@@ -189,6 +189,8 @@ const char* orth_failure_name(OrthFailure failure)
     {
     case OrthFailure::nonfinite_gram:
         return "nonfinite Gram matrix";
+    case OrthFailure::nonfinite_norm:
+        return "nonfinite orbital norm";
     case OrthFailure::nonpositive_norm:
         return "nonpositive orbital norm";
     case OrthFailure::factorization_failed:

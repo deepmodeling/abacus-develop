@@ -36,7 +36,7 @@ struct PWLinearOptions
 };
 
 LinearMethod parse_linear_method(const std::string& name);
-/** @brief Step diagnostics, replicated within each k-point pool. */
+/** @brief Step diagnostics; numerical results and counts are replicated within each k-point pool. */
 struct TDOrthStats
 {
     double before = 0.0;
@@ -68,8 +68,8 @@ class HSolverPWTDDFT
     void invalidate_basis();
     /** @brief Reset diagnostics without invalidating preconditioner history. */
     void reset_orth_stats();
-    /** @brief Correct initial orbitals before rebuilding occupations and density. */
-    void orthonormalize(psi::Psi<T, Device>* current, int istep, int iter);
+    /** @brief Check the converged initial state once; finite orthogonality errors are diagnostic only. */
+    void check_initial(const psi::Psi<T, Device>& current, int iter);
     /** @brief Occupation-weighted electron count for the local k-point pool. */
     double wave_electrons(const ModuleBase::matrix& occupations) const;
     const TDOrthStats& orth_stats() const
@@ -161,6 +161,7 @@ class HSolverPWTDDFT
     void prepare_buffers(const int nbands, const int nbasis);
     void update_precond(const int ik, const int dim, const T coefficient, const ModuleBase::Vector3<double>& momentum_shift);
     void correct_orbitals(T* current, int ld, int dim, int bands, int ik, int istep, int iter);
+    void record_orth(const OrthResult& result, int ik, int istep, int iter);
 };
 
 } // namespace hsolver

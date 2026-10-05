@@ -428,7 +428,7 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
             ModuleBase::WARNING_QUIT("HSolverPWTDDFT", message.str());
         }
         correct_orbitals(current_data, ld, dim, bands, ik, istep, iter);
-        if (detailed_output)
+        if (detailed_output && options_.orthonormal != OrthMethod::none)
         {
             log << "TD orth: step=" << istep << " iter=" << iter << " k=" << ik << " requested=" << orth_method_name(options_.orthonormal)
                 << " step_max_error=" << orth_stats_.after << '\n';
@@ -472,14 +472,25 @@ void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, in
 {
     ModuleBase::timer::start("HSolverPWTDDFT", "correct_orbitals");
     const OrthResult result = orthonormal_.apply(current, ld, dim, bands, options_.orthonormal);
+    record_orth(result, ik, istep, iter);
+    ModuleBase::timer::end("HSolverPWTDDFT", "correct_orbitals");
+}
+
+template <typename T, typename Device>
+void HSolverPWTDDFT<T, Device>::record_orth(const OrthResult& result, int ik, int istep, int iter)
+{
     if (result.status == OrthStatus::failed)
     {
+        const char* stage = istep == 0 ? "initial check" : "propagation";
         std::ostringstream message;
-        message << std::setprecision(16) << "PW TDDFT orthonormalization failed: step=" << istep << " iter=" << iter << " local_k=" << ik
-                << " requested=" << orth_method_name(options_.orthonormal) << " last_attempted=" << orth_method_name(result.actual)
-                << " before=" << result.before << " after=" << result.after << " tolerance=" << orth_tolerance<T>()
-                << " passes=" << result.passes << " fallbacks=" << result.fallbacks << "; " << orth_failure_name(result.failure) << "; "
-                << result.reason;
+        message << std::setprecision(16) << "PW TDDFT orbital validation failed (" << stage << "): step=" << istep << " iter=" << iter
+                << " local_k=" << ik << " requested=" << orth_method_name(options_.orthonormal)
+                << " last_attempted=" << orth_method_name(result.actual) << " passes=" << result.passes << " fallbacks=" << result.fallbacks
+                << "; " << orth_failure_name(result.failure) << "; " << result.reason;
+        if (result.gram_checked)
+        {
+            message << " before=" << result.before << " after=" << result.after << " tolerance=" << orth_tolerance<T>();
+        }
         // stdout is disabled on non-world-root ranks; a failing pool must still report its error.
         if (comm_.rank == 0)
         {
@@ -497,8 +508,13 @@ void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, in
         orth_norms_.resize(ik + 1);
     }
     orth_norms_[ik] = result.norms;
-    orth_stats_.before = std::max(orth_stats_.before, result.before);
-    orth_stats_.after = std::max(orth_stats_.after, result.after);
+    if (result.gram_checked)
+    {
+        orth_stats_.before = std::max(orth_stats_.before, result.before);
+        orth_stats_.after = std::max(orth_stats_.after, result.after);
+        const double threshold = orth_tolerance<T>();
+        orth_stats_.orth_warnings += result.after > threshold;
+    }
     orth_stats_.orth_seconds += result.seconds;
     ++orth_stats_.calls;
     orth_stats_.passes += result.passes;
@@ -508,26 +524,26 @@ void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, in
     {
         orth_stats_.events[i] += result.events[i];
     }
-    const double threshold = orth_tolerance<T>();
-    orth_stats_.orth_warnings += result.after > threshold;
     if (!result.reason.empty() && orth_stats_.reason.find(result.reason) == std::string::npos)
     {
         orth_stats_.reason += result.reason;
         orth_stats_.reason += std::string("last attempted method=") + orth_method_name(result.actual) + "; ";
     }
-    ModuleBase::timer::end("HSolverPWTDDFT", "correct_orbitals");
 }
 
 template <typename T, typename Device>
-void HSolverPWTDDFT<T, Device>::orthonormalize(psi::Psi<T, Device>* current, int istep, int iter)
+void HSolverPWTDDFT<T, Device>::check_initial(const psi::Psi<T, Device>& current, int iter)
 {
-    ModuleBase::timer::start("HSolverPWTDDFT", "orthonormalize");
-    for (int ik = 0; ik < current->get_nk(); ++ik)
+    ModuleBase::timer::start("HSolverPWTDDFT", "check_initial");
+    const bool full_gram = options_.orthonormal != OrthMethod::none;
+    for (int ik = 0; ik < current.get_nk(); ++ik)
     {
-        current->fix_k(ik);
-        correct_orbitals(current->get_pointer(), current->get_nbasis(), current->get_ngk(ik), current->get_nbands(), ik, istep, iter);
+        current.fix_k(ik);
+        const OrthResult result
+            = orthonormal_.inspect(current.get_pointer(), current.get_nbasis(), current.get_ngk(ik), current.get_nbands(), full_gram);
+        record_orth(result, ik, 0, iter);
     }
-    ModuleBase::timer::end("HSolverPWTDDFT", "orthonormalize");
+    ModuleBase::timer::end("HSolverPWTDDFT", "check_initial");
 }
 
 template <typename T, typename Device>
