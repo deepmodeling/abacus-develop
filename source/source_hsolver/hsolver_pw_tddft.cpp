@@ -90,9 +90,10 @@ HSolverPWTDDFT<T, Device>::HSolverPWTDDFT(const ModulePW::PW_Basis_K& basis,
                                           const PWLinearOptions& options,
                                           const diag_comm_info& comm,
                                           std::ostream& log)
-    : basis_(basis), comm_(comm), options_(options), algebra_(comm), band_products_(comm, 9)
+    : basis_(basis), comm_(comm), options_(options), algebra_(comm), orthonormal_(comm), band_products_(comm, 9)
 {
     initialize(log);
+    log << "PW TDDFT orthonormalization: " << orth_method_name(options_.orthonormal) << '\n';
 }
 
 template <typename T, typename Device>
@@ -425,6 +426,12 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
                     << result.iterations << " iterations: " << linear_status_name(result.status) << "; residual = " << result.max_residual;
             ModuleBase::WARNING_QUIT("HSolverPWTDDFT", message.str());
         }
+        correct_orbitals(current_data, ld, dim, bands, ik);
+        if (detailed_output)
+        {
+            log << "TD orth: step=" << istep << " iter=" << iter << " k=" << ik << " requested=" << orth_method_name(options_.orthonormal)
+                << " step_max_error=" << orth_stats_.after << '\n';
+        }
     }
     ModuleBase::timer::end("HSolverPWTDDFT", "solve");
 }
@@ -450,6 +457,74 @@ void HSolverPWTDDFT<T, Device>::cal_band_energy(HSOperator<T, Device>& op, const
         }
     }
     ModuleBase::timer::end("HSolverPWTDDFT", "cal_band_energy");
+}
+
+template <typename T, typename Device>
+void HSolverPWTDDFT<T, Device>::reset_orth_stats()
+{
+    orth_stats_ = TDOrthStats();
+    orth_norms_.clear();
+}
+
+template <typename T, typename Device>
+void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, int bands, int ik)
+{
+    ModuleBase::timer::start("HSolverPWTDDFT", "correct_orbitals");
+    const OrthResult result = orthonormal_.apply(current, ld, dim, bands, options_.orthonormal);
+    if (result.invalid_input)
+    {
+        ModuleBase::WARNING_QUIT("HSolverPWTDDFT", "Nonfinite input wavefunction cannot be propagated.");
+    }
+    if (orth_norms_.size() <= static_cast<std::size_t>(ik))
+    {
+        orth_norms_.resize(ik + 1);
+    }
+    orth_norms_[ik] = result.norms;
+    orth_stats_.before = std::max(orth_stats_.before, result.before);
+    orth_stats_.after = std::max(orth_stats_.after, result.after);
+    orth_stats_.orth_seconds += result.seconds;
+    ++orth_stats_.calls;
+    orth_stats_.passes += result.passes;
+    orth_stats_.fallbacks += result.fallbacks;
+    orth_stats_.skipped += result.skipped;
+    for (std::size_t i = 0; i < result.events.size(); ++i)
+    {
+        orth_stats_.events[i] += result.events[i];
+    }
+    const double threshold = std::is_same<Real, double>::value ? 1e-12 : 1e-6;
+    orth_stats_.orth_warnings += result.after > threshold;
+    if (!result.reason.empty() && orth_stats_.reason.find(result.reason) == std::string::npos)
+    {
+        orth_stats_.reason += result.reason;
+        orth_stats_.reason += std::string("last attempted method=") + orth_method_name(result.actual) + "; ";
+    }
+    ModuleBase::timer::end("HSolverPWTDDFT", "correct_orbitals");
+}
+
+template <typename T, typename Device>
+void HSolverPWTDDFT<T, Device>::orthonormalize(psi::Psi<T, Device>* current)
+{
+    ModuleBase::timer::start("HSolverPWTDDFT", "orthonormalize");
+    for (int ik = 0; ik < current->get_nk(); ++ik)
+    {
+        current->fix_k(ik);
+        correct_orbitals(current->get_pointer(), current->get_nbasis(), current->get_ngk(ik), current->get_nbands(), ik);
+    }
+    ModuleBase::timer::end("HSolverPWTDDFT", "orthonormalize");
+}
+
+template <typename T, typename Device>
+double HSolverPWTDDFT<T, Device>::wave_electrons(const ModuleBase::matrix& occupations) const
+{
+    double electrons = 0.0;
+    for (std::size_t ik = 0; ik < orth_norms_.size(); ++ik)
+    {
+        for (std::size_t band = 0; band < orth_norms_[ik].size(); ++band)
+        {
+            electrons += occupations(ik, band) * orth_norms_[ik][band];
+        }
+    }
+    return electrons;
 }
 
 template class HSolverPWTDDFT<std::complex<float>, base_device::DEVICE_CPU>;

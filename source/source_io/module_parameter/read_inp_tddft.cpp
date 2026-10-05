@@ -191,6 +191,29 @@ void ReadInput::item_rt_tddft()
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
     {
+        Input_Item item("td_orthonormal");
+        item.annotation = "orthonormalization method for PW real-time propagation";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "String";
+        item.description = R"(Orthonormalize each propagated wavefunction before constructing its density. With the wavefunctions as columns of $\boldsymbol{\Psi}$, define the Gram matrix $\boldsymbol{S}=\boldsymbol{\Psi}^{\dagger}\boldsymbol{\Psi}$ and apply $\boldsymbol{\Psi}\leftarrow\boldsymbol{\Psi}\boldsymbol{C}$.
+* `cholesky`: Cholesky orthonormalization. Factor $\boldsymbol{S}=\boldsymbol{R}^{\dagger}\boldsymbol{R}$ with upper-triangular $\boldsymbol{R}$ and use $\boldsymbol{C}=\boldsymbol{R}^{-1}$.
+* `lowdin`: Löwdin symmetric orthonormalization. Compute $\boldsymbol{C}=\boldsymbol{S}^{-1/2}$ by eigendecomposition.
+* `newton_schulz`: Newton-Schulz iteration for a Gram matrix close to the identity. Starting from $\boldsymbol{C}_0=\boldsymbol{I}$, approximate $\boldsymbol{S}^{-1/2}$ using $\boldsymbol{C}_{j+1}=\boldsymbol{C}_j(3\boldsymbol{I}-\boldsymbol{S}\boldsymbol{C}_j^2)/2$.
+* `none`: Disable orthonormalization.)";
+        item.default_value = "cholesky";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft");
+        read_sync_string(input.td_orthonormal);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::string& method = para.inp.td_orthonormal;
+            if (method != "none" && method != "cholesky" && method != "lowdin" && method != "newton_schulz")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "td_orthonormal must be cholesky, lowdin, newton_schulz or none.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("lin_solver");
         item.annotation = "linear solver for real-time propagation";
         item.category = "Real-Time TDDFT (PW)";

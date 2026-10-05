@@ -20,7 +20,7 @@ AddTest(
 AddTest(
   TARGET MODULE_HSOLVER_pw_tddft
   LIBS parameter base device container psi planewave
-  SOURCES test_hsolver_pw_tddft.cpp ../hsolver_pw_tddft.cpp ${TD_LINEAR_TEST_SOURCES}
+  SOURCES test_hsolver_pw_tddft.cpp ../hsolver_pw_tddft.cpp ../orthonormal.cpp ../orthonormal_small.cpp ${TD_LINEAR_TEST_SOURCES}
 )
 if(ENABLE_MPI)
   add_test(

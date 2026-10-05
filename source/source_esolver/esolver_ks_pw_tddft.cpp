@@ -2,6 +2,7 @@
 
 #include "source_base/global_variable.h"
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/elecstate_tools.h"
@@ -15,11 +16,14 @@
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_pw/module_pwdft/td_pw.h"
 
+#include <iomanip>
+#include <sstream>
+
 namespace ModuleESolver
 {
 
 template <typename T, typename Device>
-ESolver_KS_PW_TDDFT<T, Device>::ESolver_KS_PW_TDDFT()
+ESolver_KS_PW_TDDFT<T, Device>::ESolver_KS_PW_TDDFT() : log_(GlobalV::ofs_running), warning_(GlobalV::ofs_warning)
 {
     this->classname = "ESolver_KS_PW_TDDFT";
     this->basisname = "PW";
@@ -44,6 +48,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
     const hsolver::diag_comm_info comm(0, 1);
 #endif
     hsolver::PWLinearOptions options;
+    options.orthonormal = hsolver::parse_orth_method(inp.td_orthonormal);
     options.linear.method = hsolver::parse_linear_method(inp.lin_solver);
     options.linear.tolerance = inp.lin_thr;
     options.linear.max_iterations = inp.lin_maxiter;
@@ -52,7 +57,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
     options.preconditioner = hsolver::parse_pw_precond(inp.lin_precond);
     options.cn_init = inp.td_cn_init;
     options.kinetic_enabled = inp.t_in_h;
-    this->td_solver_.reset(new hsolver::HSolverPWTDDFT<T, Device>(*this->pw_wfc, options, comm, GlobalV::ofs_running));
+    this->td_solver_.reset(new hsolver::HSolverPWTDDFT<T, Device>(*this->pw_wfc, options, comm, log_));
     this->history_.prepare(*this->pelec->pot, XC_Functional::get_ked_flag());
     // Preserve existing field history until input validation and initialization succeed.
     if (inp.out_efield && GlobalV::MY_RANK == 0)
@@ -64,7 +69,9 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
 template <typename T, typename Device>
 void ESolver_KS_PW_TDDFT<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
+    electronic_start_ = std::chrono::steady_clock::now();
     this->prepare_td_step(istep);
+    this->td_solver_->reset_orth_stats();
     const bool basis_updated = ucell.cell_parameter_updated;
     ESolver_KS_PW<T, Device>::before_scf(ucell, istep);
     if (basis_updated)
@@ -141,6 +148,26 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
     if (istep == 0)
     {
         ESolver_KS_PW<T, Device>::hamilt2rho_single(ucell, istep, iter, ethr);
+        psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
+        this->td_solver_->orthonormalize(current);
+        if (this->inp_->td_orthonormal != "none")
+        {
+            hamilt::Hamilt<T, Device>* hamiltonian = static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt);
+            hamilt::HamiltHSOperator<T, Device> op(hamiltonian, this->pw_wfc);
+            this->td_solver_->cal_band_energy(op, *current, &this->pelec->ekb);
+            elecstate::calculate_weights(this->pelec->ekb,
+                                         this->pelec->wg,
+                                         this->pelec->klist,
+                                         this->pelec->eferm,
+                                         this->pelec->f_en,
+                                         this->pelec->nelec_spin,
+                                         this->inp_->nbands,
+                                         this->pelec->skip_weights);
+            elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
+            elecstate::ElecStatePW<T, Device>* estate = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
+            estate->psiToRho(*current);
+            module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
+        }
         ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "hamilt2rho_single");
         return;
     }
@@ -172,7 +199,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
                             istep,
                             iter,
                             this->inp_->out_level == "ie",
-                            GlobalV::ofs_running);
+                            log_);
 
     // Restore the endpoint Hamiltonian before evaluating density and energy.
     elecstate::H_TDDFT_pw::set_field_state(*this->td_field_manager_);
@@ -211,10 +238,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
     {
         psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
         this->history_.save(*current, *this->pelec->pot, XC_Functional::get_ked_flag());
-        if (istep == 0)
-        {
-            std::cout << "[RT-TDDFT] Ground state SCF finished. Historical wavefunction and V_eff initialized." << std::endl;
-        }
+
         if (this->inp_->out_current == 1)
         {
             const ModuleBase::Vector3<double>& A_right_ha = this->td_field_manager_->A_right_ha();
@@ -232,6 +256,75 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
                                         GlobalV::MY_RANK);
         }
     }
+    report_orth(ucell, istep);
+}
+
+template <typename T, typename Device>
+void ESolver_KS_PW_TDDFT<T, Device>::report_orth(const UnitCell& ucell, int istep)
+{
+    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "report_orth");
+    double electrons = this->td_solver_->wave_electrons(this->pelec->wg);
+    const int pools = this->inp_->kpar;
+    Parallel_Reduce::reduce_double_allpool(pools, this->pw_wfc->poolnproc, electrons);
+    const double rho_electrons = this->chr.sum_rho(ucell.omega);
+    if (istep == 0)
+    {
+        initial_wave_electrons_ = electrons;
+        initial_rho_electrons_ = rho_electrons;
+    }
+    const hsolver::TDOrthStats& stats = this->td_solver_->orth_stats();
+    double electronic_seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - electronic_start_).count();
+    Parallel_Reduce::reduce_max(electronic_seconds);
+    double maxima[] = {stats.before, stats.after, stats.orth_seconds};
+    for (double& value: maxima)
+    {
+        Parallel_Reduce::reduce_max(value);
+    }
+    int counts[] = {stats.calls, stats.passes, stats.fallbacks, stats.skipped, stats.orth_warnings};
+    // Each pool owns identical statistics on all its ranks; count it only once.
+    for (int& count: counts)
+    {
+        if (this->pw_wfc->poolrank != 0)
+        {
+            count = 0;
+        }
+        Parallel_Reduce::reduce_all(count);
+    }
+    std::ostringstream record;
+    record << std::setprecision(14) << "TD conservation: step=" << istep << " method=" << this->inp_->td_orthonormal
+           << " Npsi=" << electrons << " Nrho=" << rho_electrons << " dNpsi=" << electrons - initial_wave_electrons_
+           << " dNrho=" << rho_electrons - initial_rho_electrons_ << " orth_before=" << maxima[0] << " orth_after=" << maxima[1]
+           << " calls=" << counts[0] << " passes=" << counts[1] << " fallbacks=" << counts[2] << " skipped=" << counts[3]
+           << " orth_warnings=" << counts[4] << " orth_seconds=" << maxima[2] << " electronic_seconds=" << electronic_seconds << '\n';
+    log_ << record.str();
+    if (counts[2] || counts[3] || counts[4])
+    {
+        std::array<int, 8> events = stats.events;
+        if (this->pw_wfc->poolrank != 0)
+        {
+            events.fill(0);
+        }
+        const int event_count = events.size();
+        Parallel_Reduce::reduce_all(events.data(), event_count);
+        const char* names[] = {"cholesky_failed",
+                               "lowdin_failed",
+                               "newton_schulz_failed",
+                               "nonfinite_gram",
+                               "candidate_rejected",
+                               "last_fallback_cholesky",
+                               "last_fallback_lowdin",
+                               "last_fallback_newton_schulz"};
+        warning_ << record.str() << "Continuing with the accepted finite state. " << stats.reason << '\n';
+        for (int i = 0; i < event_count; ++i)
+        {
+            if (events[i] > 0)
+            {
+                warning_ << names[i] << '=' << events[i] << ' ';
+            }
+        }
+        warning_ << '\n';
+    }
+    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "report_orth");
 }
 
 template class ESolver_KS_PW_TDDFT<std::complex<float>, base_device::DEVICE_CPU>;

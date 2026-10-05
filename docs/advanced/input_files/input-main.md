@@ -503,6 +503,7 @@
     - [init\_vecpot\_file](#init_vecpot_file)
     - [out\_vecpot](#out_vecpot)
   - [Real-Time TDDFT (PW)](#real-time-tddft-pw)
+    - [td\_orthonormal](#td_orthonormal)
     - [lin\_solver](#lin_solver)
     - [lin\_precond](#lin_precond)
     - [lin\_thr](#lin_thr)
@@ -4691,6 +4692,17 @@
 [back to top](#full-list-of-input-keywords)
 
 ## Real-Time TDDFT (PW)
+
+### td_orthonormal
+
+- **Type**: String
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Orthonormalize each propagated wavefunction before constructing its density. With the wavefunctions as columns of $\boldsymbol{\Psi}$, define the Gram matrix $\boldsymbol{S}=\boldsymbol{\Psi}^{\dagger}\boldsymbol{\Psi}$ and apply $\boldsymbol{\Psi}\leftarrow\boldsymbol{\Psi}\boldsymbol{C}$.
+  - `cholesky`: Cholesky orthonormalization. Factor $\boldsymbol{S}=\boldsymbol{R}^{\dagger}\boldsymbol{R}$ with upper-triangular $\boldsymbol{R}$ and use $\boldsymbol{C}=\boldsymbol{R}^{-1}$.
+  - `lowdin`: Löwdin symmetric orthonormalization. Compute $\boldsymbol{C}=\boldsymbol{S}^{-1/2}$ by eigendecomposition.
+  - `newton_schulz`: Newton-Schulz iteration for a Gram matrix close to the identity. Starting from $\boldsymbol{C}_0=\boldsymbol{I}$, approximate $\boldsymbol{S}^{-1/2}$ using $\boldsymbol{C}_{j+1}=\boldsymbol{C}_j(3\boldsymbol{I}-\boldsymbol{S}\boldsymbol{C}_j^2)/2$.
+  - `none`: Disable orthonormalization.
+- **Default**: cholesky
 
 ### lin_solver
 
