@@ -4704,7 +4704,7 @@
   - `newton_schulz`: Newton-Schulz iteration for a Gram matrix close to the identity. Starting from $\boldsymbol{C}_0=\boldsymbol{I}$, approximate $\boldsymbol{S}^{-1/2}$ using $\boldsymbol{C}_{j+1}=\boldsymbol{C}_j(3\boldsymbol{I}-\boldsymbol{S}\boldsymbol{C}_j^2)/2$.
   - `none`: Disable orthonormalization.
 
-  > Note: Orthonormalization is applied after the Crank-Nicolson linear solve and uses an orthogonality tolerance independent of `lin_thr`. With orthonormalization enabled, the propagated Gram matrix must differ from the identity by at most `1e-6` (single precision) or `1e-12` (double precision) per element; unsuccessful corrections stop the calculation. Nonfinite or nonpositive orbital norms are rejected even with `none`.
+  > Note: Orthonormalization is applied after the Crank-Nicolson linear solve and uses an orthogonality tolerance independent of `lin_thr`. With orthonormalization enabled, the propagated Gram matrix must differ from the identity by at most `1e-6` (single precision) or `1e-12` (double precision) per element; unsuccessful corrections stop the calculation. Wavefunctions within this tolerance are left unchanged. Nonfinite or nonpositive orbital norms are rejected even with `none`.
 - **Default**: cholesky
 
 ### td_out_stat

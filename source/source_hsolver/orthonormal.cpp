@@ -285,7 +285,7 @@ OrthResult Orthonormal<T, Device>::apply(T* input, int ld, int dim, int bands, O
     {
         result.failure = OrthFailure::nonpositive_norm;
     }
-    else if (bands == 0)
+    else if (result.before <= orth_tolerance<T>())
     {
         result.status = OrthStatus::unchanged;
     }
