@@ -201,7 +201,7 @@ void ReadInput::item_rt_tddft()
 * `newton_schulz`: Newton-Schulz iteration for a Gram matrix close to the identity. Starting from $\boldsymbol{C}_0=\boldsymbol{I}$, approximate $\boldsymbol{S}^{-1/2}$ using $\boldsymbol{C}_{j+1}=\boldsymbol{C}_j(3\boldsymbol{I}-\boldsymbol{S}\boldsymbol{C}_j^2)/2$.
 * `none`: Disable orthonormalization.
 
-[NOTE] With orthonormalization enabled, the propagated Gram matrix must differ from the identity by at most `1e-6` (single precision) or `1e-12` (double precision) per element; unsuccessful corrections stop the calculation. The converged initial state is checked once without modification, with finite orthogonality errors only triggering warnings. Nonfinite or nonpositive orbital norms are rejected even with `none`.)";
+[NOTE] Orthonormalization is applied after the Crank-Nicolson linear solve and uses an orthogonality tolerance independent of `lin_thr`. With orthonormalization enabled, the propagated Gram matrix must differ from the identity by at most `1e-6` (single precision) or `1e-12` (double precision) per element; unsuccessful corrections stop the calculation. Nonfinite or nonpositive orbital norms are rejected even with `none`.)";
         item.default_value = "cholesky";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");
@@ -286,7 +286,7 @@ Preconditioning changes the convergence rate, while `lin_thr` still controls the
 * `bicgstab` and `gmres`: Require $\lVert\boldsymbol{r}\rVert\leqslant\tau\max(1,\lVert\boldsymbol{b}\rVert)$.
 * `cgs`: Require $\lVert\boldsymbol{r}\rVert\leqslant\tau\lVert\boldsymbol{b}\rVert$ for nonzero $\boldsymbol{b}$, or $\lVert\boldsymbol{r}\rVert\leqslant\tau$ for zero $\boldsymbol{b}$.
 
-All methods check the final residual explicitly. GMRES can use explicit residual reconstruction with periodic independent checks when `lin_reconstruct` is enabled.)";
+All methods check the residual at the end of the linear solve, before orthonormalization. GMRES can use explicit residual reconstruction with periodic independent checks when `lin_reconstruct` is enabled. Subsequent orthonormalization uses a separate orthogonality tolerance and does not guarantee that the corrected wavefunctions satisfy the same linear residual tolerance.)";
         item.default_value = "0";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");

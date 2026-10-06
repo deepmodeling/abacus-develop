@@ -349,7 +349,7 @@ void HSolverPWTDDFT<T, Device>::report_solve(const SolveDetails& details, int ik
     record << std::scientific << std::setprecision(6) << " PW RT-TDDFT linear solve: evolution_step=" << evolution_step
            << " scf_iter=" << iteration << " k=" << ik << '\n'
            << "   iterations=" << result.iterations << " restarts=" << result.restarts << " operator_calls=" << result.operator_calls
-           << " operator_columns=" << result.operator_columns << " residual=" << result.max_residual
+           << " operator_columns=" << result.operator_columns << " pre_orth_residual=" << result.max_residual
            << " residual_kind=" << (result.reconstructed ? "reconstructed" : "independent") << " true_checks=" << result.true_checks << '\n'
            << "   reconstruction_fallbacks=" << result.reconstruction_fallbacks << " coarse_rank=" << details.coarse_rank
            << " kinetic_retry=" << details.retried << " cn_projected=" << details.projected << " cn_initial=" << details.cn_initial << '\n';
