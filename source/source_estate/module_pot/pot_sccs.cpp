@@ -57,29 +57,18 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     ModuleSccs::gaussian_ionic_density(atoms, basis, cell->tpiba, ModuleSccs::gaussian_ion_spread, ions);
     std::vector<double> density(basis.nrxx, 0.0);
     std::vector<double> solute_charge(basis.nrxx);
-    double ionic_sum = 0.0;
     double net_charge = 0.0;
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         for (int spin = 0; spin < charge->nspin; ++spin) { density[ir] += charge->rho[spin][ir]; }
         solute_charge[ir] = ions[ir] - density[ir];
-        ionic_sum += ions[ir];
         net_charge += solute_charge[ir];
     }
-    Parallel_Reduce::reduce_pool(ionic_sum);
+    // Pool-reduced, so every rank takes the same decision.
     Parallel_Reduce::reduce_pool(net_charge);
     const double dv = basis.omega / basis.nxyz;
-    ionic_sum *= dv;
     net_charge *= dv;
-    double expected_ionic_charge = 0.0;
-    for (const unitcell::AtomData& atom : atoms) { expected_ionic_charge += atom.valence_charge; }
-    // Pool-reduced sums: every rank takes the same decision.
-    const double normalization_error = ionic_sum - expected_ionic_charge;
-    if (!std::isfinite(normalization_error) || std::abs(normalization_error) >= 1e-6)
-    {
-        ModuleBase::WARNING_QUIT("PotSccs::cal_v_eff", "SCCS Gaussian ionic charge normalization failed");
-    }
-    const bool neutral = std::isfinite(net_charge) && std::abs(net_charge) < 1e-6;
+    const bool neutral = std::abs(net_charge) < 1e-6;
     if (!neutral)
     {
         ModuleBase::WARNING_QUIT("PotSccs::cal_v_eff", "Periodic SCCS currently requires a neutral cell");

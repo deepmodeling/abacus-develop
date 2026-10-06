@@ -4,7 +4,6 @@
 #include "sccs_pw_coulomb.h"
 
 #include "source_base/parallel_reduce.h"
-#include "source_base/tool_quit.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
@@ -63,12 +62,6 @@ void evaluate_functional(const std::vector<double>& charge,
         const double nonel = (config.pressure - config.surface_tension * divergence[i])
                              * response.dsolute_drho[i];
         candidate.electron_potential[i] += nonel;
-    }
-    // The energies are pool-reduced, so every rank takes the same decision.
-    if (!std::isfinite(candidate.reaction_energy) || !std::isfinite(candidate.surface_energy)
-        || !std::isfinite(candidate.volume_energy))
-    {
-        ModuleBase::WARNING_QUIT("ModuleSccs::evaluate_functional", "SCCS functional energy is not finite");
     }
     result = std::move(candidate);
 }

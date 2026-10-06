@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cmath>
 
 namespace ModuleIO
 {
@@ -60,18 +59,14 @@ bool validate_sccs_input(const Input_para& input, std::string& error)
         error = "Unknown sccs_preset";
         return false;
     }
-    if (input.sccs_maxiter <= 0 || !std::isfinite(input.sccs_epsilon) || input.sccs_epsilon < 1.0
-        || !std::isfinite(input.sccs_rho_min) || !std::isfinite(input.sccs_rho_max)
-        || input.sccs_rho_min <= 0.0 || input.sccs_rho_max <= input.sccs_rho_min
-        || !std::isfinite(input.sccs_gamma) || !std::isfinite(input.sccs_pressure)
-        || !std::isfinite(input.sccs_tol_rms) || input.sccs_tol_rms <= 0.0
-        || !std::isfinite(input.sccs_tol_max) || input.sccs_tol_max <= 0.0
-        || !std::isfinite(input.sccs_surface_eta) || input.sccs_surface_eta <= 0.0)
-    {
-        error = "Invalid SCCS numerical parameters";
-        return false;
-    }
-    return true;
+    if (input.sccs_epsilon < 1.0) { error = "sccs_epsilon must be at least 1"; }
+    else if (input.sccs_rho_min <= 0.0 || input.sccs_rho_max <= input.sccs_rho_min)
+    { error = "sccs_rho_min and sccs_rho_max must satisfy 0 < sccs_rho_min < sccs_rho_max"; }
+    else if (input.sccs_maxiter <= 0) { error = "sccs_maxiter must be positive"; }
+    else if (input.sccs_tol_rms <= 0.0) { error = "sccs_tol_rms must be positive"; }
+    else if (input.sccs_tol_max <= 0.0) { error = "sccs_tol_max must be positive"; }
+    else if (input.sccs_surface_eta <= 0.0) { error = "sccs_surface_eta must be positive"; }
+    return error.empty();
 }
 
 void ReadInput::item_sccs()

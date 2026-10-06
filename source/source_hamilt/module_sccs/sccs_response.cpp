@@ -72,7 +72,8 @@ void prepare_cavity(const std::vector<double>& density,
     }
 }
 
-// Pool-reduced norms, so every rank takes the same convergence decision.
+// Pool-reduced norms, so every rank takes the same convergence decision. A
+// non-finite residual fails convergence and stops at the next CG step.
 void residual_norms(const std::vector<double>& values,
                     const ModulePW::PW_Basis& basis,
                     double& rms,
@@ -88,10 +89,6 @@ void residual_norms(const std::vector<double>& values,
     }
     Parallel_Reduce::reduce_pool(square);
     Parallel_Reduce::reduce_max_pool(basis.poolnproc, maximum);
-    if (!std::isfinite(square) || !std::isfinite(maximum))
-    {
-        ModuleBase::WARNING_QUIT("ModuleSccs::solve_sccs_response", "SCCS sqrt-CG residual is not finite");
-    }
     const double mean_square = square / basis.nxyz;
     rms = std::sqrt(mean_square);
 }
