@@ -504,6 +504,7 @@
     - [out\_vecpot](#out_vecpot)
   - [Real-Time TDDFT (PW)](#real-time-tddft-pw)
     - [td\_orthonormal](#td_orthonormal)
+    - [td\_out\_stat](#td_out_stat)
     - [lin\_solver](#lin_solver)
     - [lin\_precond](#lin_precond)
     - [lin\_thr](#lin_thr)
@@ -4705,6 +4706,15 @@
 
   > Note: With orthonormalization enabled, the propagated Gram matrix must differ from the identity by at most `1e-6` (single precision) or `1e-12` (double precision) per element; unsuccessful corrections stop the calculation. The converged initial state is checked once without modification, with finite orthogonality errors only triggering warnings. Nonfinite or nonpositive orbital norms are rejected even with `none`.
 - **Default**: cholesky
+
+### td_out_stat
+
+- **Type**: Boolean
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Write wavefunction and density electron counts, their changes from the initial state, and orthogonality errors to the running log after each electronic evolution step. Orthogonality errors are omitted when `td_orthonormal=none`.
+
+  > Note: Enabling this output adds density integration and diagnostic communication.
+- **Default**: false
 
 ### lin_solver
 

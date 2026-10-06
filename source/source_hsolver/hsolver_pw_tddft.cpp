@@ -7,7 +7,6 @@
 #include "source_basis/module_pw/pw_momentum.h"
 #include "source_hsolver/kernels/linear_op.h"
 
-#include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -91,10 +90,10 @@ HSolverPWTDDFT<T, Device>::HSolverPWTDDFT(const ModulePW::PW_Basis_K& basis,
                                           const PWLinearOptions& options,
                                           const diag_comm_info& comm,
                                           std::ostream& log)
-    : basis_(basis), comm_(comm), options_(options), algebra_(comm), orthonormal_(comm), band_products_(comm, 9)
+    : basis_(basis), comm_(comm), options_(options), algebra_(comm), orthonormal_(comm), log_(log), band_products_(comm, 9)
 {
     initialize(log);
-    log << "PW TDDFT orthonormalization: " << orth_method_name(options_.orthonormal) << '\n';
+    log << " PW RT-TDDFT orthonormalization: " << orth_method_name(options_.orthonormal) << '\n';
 }
 
 template <typename T, typename Device>
@@ -135,9 +134,10 @@ void HSolverPWTDDFT<T, Device>::initialize(std::ostream& log)
     }
     linear_solver_.reset(new HSolverLinear<T, Device>(options_.linear, comm_));
     std::ostringstream info;
-    info << "RT-TDDFT linear solver: " << method << "; preconditioner: " << preconditioner << "; tolerance: " << std::setprecision(16)
+    info << " PW RT-TDDFT linear solver: " << method << "; tolerance: " << std::scientific << std::setprecision(6)
          << linear_solver_->tolerance() << "; maximum iterations: " << options_.linear.max_iterations
-         << "; restart: " << options_.linear.restart << "; CN initial guess: " << options_.cn_init
+         << "; restart: " << options_.linear.restart << '\n'
+         << "   Preconditioner: " << preconditioner << "; CN initial guess: " << options_.cn_init
          << "; residual reconstruction: " << options_.linear.reconstruct << '\n';
     log << info.str();
 }
@@ -341,31 +341,18 @@ typename HSolverPWTDDFT<T, Device>::SolveDetails HSolverPWTDDFT<T, Device>::solv
 }
 
 template <typename T, typename Device>
-void HSolverPWTDDFT<T, Device>::report_solve(const SolveDetails& details,
-                                             int ik,
-                                             int step,
-                                             int iteration,
-                                             double elapsed,
-                                             std::ostream& log) const
+void HSolverPWTDDFT<T, Device>::report_solve(const SolveDetails& details, int ik, int step, int iteration, std::ostream& log) const
 {
-    std::vector<double> times(comm_.nproc, 0.0);
-    times[comm_.rank] = elapsed;
-#ifdef __MPI
-    if (comm_.nproc > 1)
-    {
-        Parallel_Common::reduce_data(times.data(), times.size(), comm_.comm);
-    }
-#endif
-    const double seconds = *std::max_element(times.begin(), times.end());
     const LinearSolveResult& result = details.linear;
+    const int evolution_step = step + 1;
     std::ostringstream record;
-    record << std::setprecision(10) << "Linear solve: step=" << step << " iter=" << iteration << " k=" << ik
-           << " iterations=" << result.iterations << " restarts=" << result.restarts << " operator_calls=" << result.operator_calls
+    record << std::scientific << std::setprecision(6) << " PW RT-TDDFT linear solve: evolution_step=" << evolution_step
+           << " scf_iter=" << iteration << " k=" << ik << '\n'
+           << "   iterations=" << result.iterations << " restarts=" << result.restarts << " operator_calls=" << result.operator_calls
            << " operator_columns=" << result.operator_columns << " residual=" << result.max_residual
-           << " residual_kind=" << (result.reconstructed ? "reconstructed" : "independent") << " true_checks=" << result.true_checks
-           << " reconstruction_fallbacks=" << result.reconstruction_fallbacks << " coarse_rank=" << details.coarse_rank
-           << " kinetic_retry=" << details.retried << " cn_projected=" << details.projected << " cn_initial=" << details.cn_initial
-           << " seconds=" << seconds << '\n';
+           << " residual_kind=" << (result.reconstructed ? "reconstructed" : "independent") << " true_checks=" << result.true_checks << '\n'
+           << "   reconstruction_fallbacks=" << result.reconstruction_fallbacks << " coarse_rank=" << details.coarse_rank
+           << " kinetic_retry=" << details.retried << " cn_projected=" << details.projected << " cn_initial=" << details.cn_initial << '\n';
     log << record.str();
 }
 
@@ -384,6 +371,10 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
     const int bands = current->get_nbands();
     const int ld = current->get_nbasis();
     const int nk = current->get_nk();
+    if (options_.out_stat)
+    {
+        orth_norms_.resize(nk);
+    }
     prepare_buffers(bands, ld);
     prepare_sequence(nk, ld, bands, dt, istep, iter);
     T* rhs = rhs_.template data<T>();
@@ -396,11 +387,6 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
         current->fix_k(ik);
         previous.fix_k(ik);
         const int dim = current->get_ngk(ik);
-        if (detailed_output)
-        {
-            linear_op<T, Device>().synchronize();
-        }
-        const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
         KPointState* state = tracks_state() ? &states_[ik] : nullptr;
         const ShiftedHOperator<T, Device> rhs_op(op, rhs_coefficient, dim);
         const ShiftedHOperator<T, Device> lhs_op(op, coefficient, dim);
@@ -413,26 +399,21 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
         }
         const SolveBatch batch{ld, dim, bands};
         const SolveDetails details = solve_kpoint(lhs_op, previous_data, current_data, batch, istep, iter, state);
-        if (detailed_output)
+        if (detailed_output && log.good())
         {
-            linear_op<T, Device>().synchronize();
-            const double elapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
-            report_solve(details, ik, istep, iter, elapsed, log);
+            report_solve(details, ik, istep, iter, log);
         }
         if (details.linear.status != LinearSolveStatus::converged)
         {
             const LinearSolveResult& result = details.linear;
             std::ostringstream message;
-            message << "Linear solve failed at step " << istep << ", k point " << ik << ", band " << result.failed_band << ", after "
-                    << result.iterations << " iterations: " << linear_status_name(result.status) << "; residual = " << result.max_residual;
+            const int evolution_step = istep + 1;
+            message << "PW RT-TDDFT linear solve failed at electronic evolution step " << evolution_step << ", SCF iteration " << iter
+                    << ", k point " << ik << ", band " << result.failed_band << ", after " << result.iterations
+                    << " iterations: " << linear_status_name(result.status) << "; residual = " << result.max_residual;
             ModuleBase::WARNING_QUIT("HSolverPWTDDFT", message.str());
         }
-        correct_orbitals(current_data, ld, dim, bands, ik, istep, iter);
-        if (detailed_output && options_.orthonormal != OrthMethod::none)
-        {
-            log << "TD orth: step=" << istep << " iter=" << iter << " k=" << ik << " requested=" << orth_method_name(options_.orthonormal)
-                << " step_max_error=" << orth_stats_.after << '\n';
-        }
+        correct_orbitals(current_data, ld, dim, bands, ik, istep, iter, detailed_output);
     }
     ModuleBase::timer::end("HSolverPWTDDFT", "solve");
 }
@@ -463,16 +444,28 @@ void HSolverPWTDDFT<T, Device>::cal_band_energy(HSOperator<T, Device>& op, const
 template <typename T, typename Device>
 void HSolverPWTDDFT<T, Device>::reset_orth_stats()
 {
-    orth_stats_ = TDOrthStats();
-    orth_norms_.clear();
+    if (options_.out_stat)
+    {
+        orth_stats_ = TDOrthStats();
+    }
+    warned_events_ = 0;
 }
 
 template <typename T, typename Device>
-void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, int bands, int ik, int istep, int iter)
+void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, int bands, int ik, int istep, int iter, bool detailed_output)
 {
     ModuleBase::timer::start("HSolverPWTDDFT", "correct_orbitals");
-    const OrthResult result = orthonormal_.apply(current, ld, dim, bands, options_.orthonormal);
+    const OrthResult result = orthonormal_.apply(current, ld, dim, bands, options_.orthonormal, options_.out_stat);
     record_orth(result, ik, istep, iter);
+    if (detailed_output && result.gram_checked && log_.good())
+    {
+        const int evolution_step = istep + 1;
+        std::ostringstream record;
+        record << std::scientific << std::setprecision(6) << " PW RT-TDDFT orth: evolution_step=" << evolution_step << " scf_iter=" << iter
+               << " k=" << ik << " requested=" << orth_method_name(options_.orthonormal) << " orth_before=" << result.before
+               << " orth_after=" << result.after << '\n';
+        log_ << record.str();
+    }
     ModuleBase::timer::end("HSolverPWTDDFT", "correct_orbitals");
 }
 
@@ -483,13 +476,15 @@ void HSolverPWTDDFT<T, Device>::record_orth(const OrthResult& result, int ik, in
     {
         const char* stage = istep == 0 ? "initial check" : "propagation";
         std::ostringstream message;
-        message << std::setprecision(16) << "PW TDDFT orbital validation failed (" << stage << "): step=" << istep << " iter=" << iter
-                << " local_k=" << ik << " requested=" << orth_method_name(options_.orthonormal)
-                << " last_attempted=" << orth_method_name(result.actual) << " passes=" << result.passes << " fallbacks=" << result.fallbacks
-                << "; " << orth_failure_name(result.failure) << "; " << result.reason;
+        const int evolution_step = istep + 1;
+        message << std::setprecision(16) << " PW RT-TDDFT orbital validation failed (" << stage << "): evolution_step=" << evolution_step
+                << " scf_iter=" << iter << " local_k=" << ik << " requested=" << orth_method_name(options_.orthonormal) << '\n'
+                << "   last_attempted=" << orth_method_name(result.actual) << " passes=" << result.passes
+                << " fallbacks=" << result.fallbacks << '\n'
+                << "   " << orth_failure_name(result.failure) << "; " << result.reason;
         if (result.gram_checked)
         {
-            message << " before=" << result.before << " after=" << result.after << " tolerance=" << orth_tolerance<T>();
+            message << '\n' << "   before=" << result.before << " after=" << result.after << " tolerance=" << orth_tolerance<T>();
         }
         // stdout is disabled on non-world-root ranks; a failing pool must still report its error.
         if (comm_.rank == 0)
@@ -503,31 +498,79 @@ void HSolverPWTDDFT<T, Device>::record_orth(const OrthResult& result, int ik, in
 #endif
         ModuleBase::WARNING_QUIT("HSolverPWTDDFT", message.str());
     }
-    if (orth_norms_.size() <= static_cast<std::size_t>(ik))
+    report_orth_warning(result, ik, istep, iter);
+    if (options_.out_stat)
     {
-        orth_norms_.resize(ik + 1);
+        orth_norms_[ik] = result.norms;
+        if (result.gram_checked)
+        {
+            orth_stats_.before = std::max(orth_stats_.before, result.before);
+            orth_stats_.after = std::max(orth_stats_.after, result.after);
+        }
     }
-    orth_norms_[ik] = result.norms;
-    if (result.gram_checked)
+}
+
+template <typename T, typename Device>
+void HSolverPWTDDFT<T, Device>::report_orth_warning(const OrthResult& result, int ik, int istep, int iter)
+{
+    if (comm_.rank != 0)
     {
-        orth_stats_.before = std::max(orth_stats_.before, result.before);
-        orth_stats_.after = std::max(orth_stats_.after, result.after);
-        const double threshold = orth_tolerance<T>();
-        orth_stats_.orth_warnings += result.after > threshold;
+        return;
     }
-    orth_stats_.orth_seconds += result.seconds;
-    ++orth_stats_.calls;
-    orth_stats_.passes += result.passes;
-    orth_stats_.fallbacks += result.fallbacks;
-    orth_stats_.rejected += result.events[4];
-    for (std::size_t i = 0; i < result.events.size(); ++i)
+    const bool initial_warning = istep == 0 && result.gram_checked && result.after > orth_tolerance<T>();
+    unsigned int events = 0;
+    if (result.fallbacks > 0)
     {
-        orth_stats_.events[i] += result.events[i];
+        events |= 1;
     }
-    if (!result.reason.empty() && orth_stats_.reason.find(result.reason) == std::string::npos)
+    if (result.rejected > 0)
     {
-        orth_stats_.reason += result.reason;
-        orth_stats_.reason += std::string("last attempted method=") + orth_method_name(result.actual) + "; ";
+        events |= 2;
+    }
+    const unsigned int fresh_events = events & ~warned_events_;
+    if (!initial_warning && fresh_events == 0)
+    {
+        return;
+    }
+    warned_events_ |= events;
+    const int evolution_step = istep + 1;
+    std::ostringstream message;
+    message << std::setprecision(16) << " PW RT-TDDFT orbital warning: evolution_step=" << evolution_step << " scf_iter=" << iter;
+    if (options_.global_k_indices.empty())
+    {
+        message << " local_k=" << ik;
+    }
+    else
+    {
+        message << " global_k=" << options_.global_k_indices.at(ik);
+    }
+    message << " requested=" << orth_method_name(options_.orthonormal) << '\n'
+            << "   before=" << result.before << " after=" << result.after << " tolerance=" << orth_tolerance<T>() << '\n'
+            << "   ";
+    if (initial_warning)
+    {
+        message << "Initial orbitals are unchanged; finite orthogonality error exceeds the propagation correction tolerance.";
+    }
+    else
+    {
+        message << "last_attempted=" << orth_method_name(result.actual) << ". ";
+        if (fresh_events & 1)
+        {
+            message << "A fallback was attempted. ";
+        }
+        if (fresh_events & 2)
+        {
+            message << "A candidate was rejected. ";
+        }
+        message << "The retained state satisfies the tolerance." << '\n'
+                << "   " << result.reason << '\n'
+                << "   Further events of these types in this pool are suppressed for this electronic evolution step.";
+    }
+    const std::string text = message.str();
+    std::cerr << text << std::endl;
+    if (log_.good())
+    {
+        log_ << text << std::endl;
     }
 }
 
@@ -536,11 +579,19 @@ void HSolverPWTDDFT<T, Device>::check_initial(const psi::Psi<T, Device>& current
 {
     ModuleBase::timer::start("HSolverPWTDDFT", "check_initial");
     const bool full_gram = options_.orthonormal != OrthMethod::none;
+    if (options_.out_stat)
+    {
+        orth_norms_.resize(current.get_nk());
+    }
     for (int ik = 0; ik < current.get_nk(); ++ik)
     {
         current.fix_k(ik);
-        const OrthResult result
-            = orthonormal_.inspect(current.get_pointer(), current.get_nbasis(), current.get_ngk(ik), current.get_nbands(), full_gram);
+        const OrthResult result = orthonormal_.inspect(current.get_pointer(),
+                                                       current.get_nbasis(),
+                                                       current.get_ngk(ik),
+                                                       current.get_nbands(),
+                                                       full_gram,
+                                                       options_.out_stat);
         record_orth(result, ik, 0, iter);
     }
     ModuleBase::timer::end("HSolverPWTDDFT", "check_initial");

@@ -2,9 +2,7 @@
 
 #include "source_base/parallel_device.h"
 #include "source_base/timer.h"
-#include "source_hsolver/kernels/linear_op.h"
 
-#include <chrono>
 #include <cmath>
 
 namespace hsolver
@@ -127,7 +125,7 @@ bool Orthonormal<T, Device>::try_candidate(T* input,
     {
         result->failure = valid ? OrthFailure::no_improvement : OrthFailure::invalid_candidate;
         result->reason += std::string(orth_method_name(result->actual)) + ": " + orth_failure_name(result->failure) + "; ";
-        ++result->events[4];
+        ++result->rejected;
     }
     ModuleBase::timer::end("Orthonormal", "try_candidate");
     return improved;
@@ -165,8 +163,6 @@ void Orthonormal<T, Device>::correct(T* input,
             if (attempt > 0)
             {
                 ++result->fallbacks;
-                const int index = 4 + static_cast<int>(result->actual);
-                ++result->events[index];
             }
             const bool factored = factor(*g, bands, result->actual, &transform);
             if (factored)
@@ -176,8 +172,6 @@ void Orthonormal<T, Device>::correct(T* input,
             else
             {
                 result->failure = OrthFailure::factorization_failed;
-                const int index = static_cast<int>(result->actual) - 1;
-                ++result->events[index];
                 result->reason += std::string(orth_method_name(result->actual)) + ": " + orth_failure_name(result->failure) + "; ";
             }
             if (improved || result->after <= orth_tolerance<T>())
@@ -202,10 +196,9 @@ void Orthonormal<T, Device>::correct(T* input,
 }
 
 template <typename T, typename Device>
-OrthResult Orthonormal<T, Device>::inspect(const T* input, int ld, int dim, int bands, bool full_gram)
+OrthResult Orthonormal<T, Device>::inspect(const T* input, int ld, int dim, int bands, bool full_gram, bool collect_norms)
 {
     ModuleBase::timer::start("Orthonormal", "inspect");
-    const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     OrthResult result;
     result.gram_checked = full_gram;
     if (full_gram)
@@ -213,14 +206,13 @@ OrthResult Orthonormal<T, Device>::inspect(const T* input, int ld, int dim, int 
         const std::vector<std::complex<double>> g = gram(input, ld, dim, bands);
         result.before = orth_error(g, bands);
         result.after = result.before;
-        for (int band = 0; band < bands; ++band)
+        for (int band = 0; collect_norms && band < bands; ++band)
         {
             result.norms.push_back(g[band + band * bands].real());
         }
         if (!std::isfinite(result.after))
         {
             result.failure = OrthFailure::nonfinite_gram;
-            ++result.events[3];
         }
         else if (!positive_norms(g, bands))
         {
@@ -243,7 +235,10 @@ OrthResult Orthonormal<T, Device>::inspect(const T* input, int ld, int dim, int 
         for (int band = 0; band < bands; ++band)
         {
             const std::complex<double> value = norms[band];
-            result.norms.push_back(value.real());
+            if (collect_norms)
+            {
+                result.norms.push_back(value.real());
+            }
             if (result.status == OrthStatus::failed)
             {
                 continue;
@@ -263,23 +258,20 @@ OrthResult Orthonormal<T, Device>::inspect(const T* input, int ld, int dim, int 
             }
         }
     }
-    // Host products already wait for device completion; no extra device synchronization is needed.
-    result.seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
     ModuleBase::timer::end("Orthonormal", "inspect");
     return result;
 }
 
 template <typename T, typename Device>
-OrthResult Orthonormal<T, Device>::apply(T* input, int ld, int dim, int bands, OrthMethod method)
+OrthResult Orthonormal<T, Device>::apply(T* input, int ld, int dim, int bands, OrthMethod method, bool collect_norms)
 {
     ModuleBase::timer::start("Orthonormal", "apply");
     if (method == OrthMethod::none)
     {
-        const OrthResult result = inspect(input, ld, dim, bands, false);
+        const OrthResult result = inspect(input, ld, dim, bands, false, collect_norms);
         ModuleBase::timer::end("Orthonormal", "apply");
         return result;
     }
-    const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     OrthResult result;
     result.gram_checked = true;
     std::vector<std::complex<double>> g = gram(input, ld, dim, bands);
@@ -288,7 +280,6 @@ OrthResult Orthonormal<T, Device>::apply(T* input, int ld, int dim, int bands, O
     if (!std::isfinite(result.before))
     {
         result.failure = OrthFailure::nonfinite_gram;
-        ++result.events[3];
     }
     else if (!positive_norms(g, bands))
     {
@@ -302,18 +293,10 @@ OrthResult Orthonormal<T, Device>::apply(T* input, int ld, int dim, int bands, O
     {
         correct(input, ld, dim, bands, method, &g, &result);
     }
-    for (int i = 0; i < bands; ++i)
+    for (int i = 0; collect_norms && i < bands; ++i)
     {
         result.norms.push_back(g[i + i * bands].real());
     }
-    linear_op<T, Device>().synchronize();
-    const double elapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
-    std::vector<double> times(comm_.nproc, 0.0);
-    times[comm_.rank] = elapsed;
-#ifdef __MPI
-    Parallel_Common::reduce_data(times.data(), times.size(), comm_.comm);
-#endif
-    result.seconds = *std::max_element(times.begin(), times.end());
     ModuleBase::timer::end("Orthonormal", "apply");
     return result;
 }

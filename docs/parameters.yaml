@@ -2503,6 +2503,16 @@ parameters:
     default_value: cholesky
     unit: ""
     availability: basis_type==pw and esolver_type==tddft
+  - name: td_out_stat
+    category: Real-Time TDDFT (PW)
+    type: Boolean
+    description: |
+      Write wavefunction and density electron counts, their changes from the initial state, and orthogonality errors to the running log after each electronic evolution step. Orthogonality errors are omitted when `td_orthonormal=none`.
+
+      [NOTE] Enabling this output adds density integration and diagnostic communication.
+    default_value: "false"
+    unit: ""
+    availability: basis_type==pw and esolver_type==tddft
   - name: lin_solver
     category: Real-Time TDDFT (PW)
     type: String

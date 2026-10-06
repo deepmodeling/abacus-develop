@@ -1,5 +1,6 @@
 #include "source_esolver/esolver_ks_pw_tddft.h"
 
+#include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"
@@ -17,13 +18,12 @@
 #include "source_pw/module_pwdft/td_pw.h"
 
 #include <iomanip>
-#include <sstream>
 
 namespace ModuleESolver
 {
 
 template <typename T, typename Device>
-ESolver_KS_PW_TDDFT<T, Device>::ESolver_KS_PW_TDDFT() : log_(GlobalV::ofs_running), warning_(GlobalV::ofs_warning)
+ESolver_KS_PW_TDDFT<T, Device>::ESolver_KS_PW_TDDFT() : log_(GlobalV::ofs_running)
 {
     this->classname = "ESolver_KS_PW_TDDFT";
     this->basisname = "PW";
@@ -49,6 +49,8 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
 #endif
     hsolver::PWLinearOptions options;
     options.orthonormal = hsolver::parse_orth_method(inp.td_orthonormal);
+    options.out_stat = inp.td_out_stat;
+    options.global_k_indices = this->kv.ik2iktot;
     options.linear.method = hsolver::parse_linear_method(inp.lin_solver);
     options.linear.tolerance = inp.lin_thr;
     options.linear.max_iterations = inp.lin_maxiter;
@@ -69,7 +71,6 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
 template <typename T, typename Device>
 void ESolver_KS_PW_TDDFT<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
-    electronic_start_ = std::chrono::steady_clock::now();
     this->prepare_td_step(istep);
     this->td_solver_->reset_orth_stats();
     const bool basis_updated = ucell.cell_parameter_updated;
@@ -241,7 +242,10 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
                                         GlobalV::MY_RANK);
         }
     }
-    report_orth(ucell, istep);
+    if (this->inp_->td_out_stat)
+    {
+        report_orth(ucell, istep);
+    }
 }
 
 template <typename T, typename Device>
@@ -249,95 +253,67 @@ void ESolver_KS_PW_TDDFT<T, Device>::report_orth(const UnitCell& ucell, int iste
 {
     ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "report_orth");
     double electrons = this->td_solver_->wave_electrons(this->pelec->wg);
-    const int pools = this->inp_->kpar;
-    Parallel_Reduce::reduce_double_allpool(pools, this->pw_wfc->poolnproc, electrons);
-    const double rho_electrons = this->chr.sum_rho(ucell.omega);
+    // Norms are replicated within a pool; only its root contributes to the total.
+    if (this->pw_wfc->poolrank != 0)
+    {
+        electrons = 0.0;
+    }
+    Parallel_Reduce::reduce_all(electrons);
+    double rho_electrons = 0.0;
+    const int density_spins = this->chr.nspin == 2 ? 2 : 1;
+    for (int spin = 0; spin < density_spins; ++spin)
+    {
+        for (int ir = 0; ir < this->chr.nrxx; ++ir)
+        {
+            rho_electrons += this->chr.rho[spin][ir];
+        }
+    }
+    rho_electrons *= ucell.omega / this->chr.rhopw->nxyz;
+    Parallel_Reduce::reduce_pool(rho_electrons);
     if (istep == 0)
     {
         initial_wave_electrons_ = electrons;
         initial_rho_electrons_ = rho_electrons;
     }
     const hsolver::TDOrthStats& stats = this->td_solver_->orth_stats();
-    double electronic_seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - electronic_start_).count();
-    Parallel_Reduce::reduce_max(electronic_seconds);
     const bool full_gram = this->inp_->td_orthonormal != "none";
-    double check_seconds = stats.orth_seconds;
-    Parallel_Reduce::reduce_max(check_seconds);
     double maxima[] = {stats.before, stats.after};
     if (full_gram)
     {
-        for (double& value: maxima)
-        {
-            Parallel_Reduce::reduce_max(value);
-        }
+        Parallel_Reduce::reduce_max(maxima, 2);
     }
-    int counts[] = {stats.calls, stats.passes, stats.fallbacks, stats.rejected, stats.orth_warnings};
-    const int count_fields = full_gram ? 5 : 1;
-    // Each pool owns identical statistics on all its ranks; count it only once.
-    for (int i = 0; i < count_fields; ++i)
+    if (!log_.good())
     {
-        if (this->pw_wfc->poolrank != 0)
-        {
-            counts[i] = 0;
-        }
-        Parallel_Reduce::reduce_all(counts[i]);
+        ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "report_orth");
+        return;
     }
-    const char* stage = istep == 0 ? "initial_check" : "propagation";
-    std::ostringstream record;
-    record << std::setprecision(14) << "TD conservation: step=" << istep << " method=" << this->inp_->td_orthonormal << " stage=" << stage
-           << " Npsi=" << electrons << " Nrho=" << rho_electrons << " dNpsi=" << electrons - initial_wave_electrons_
-           << " dNrho=" << rho_electrons - initial_rho_electrons_ << " calls=" << counts[0];
+    const char* stage = istep == 0 ? "initial state" : "propagation";
+    const int evolution_step = istep + 1;
+    const double delta_wave = electrons - initial_wave_electrons_;
+    const double delta_rho = rho_electrons - initial_rho_electrons_;
+    const std::ios::fmtflags saved_flags = log_.flags();
+    const std::streamsize saved_precision = log_.precision();
+    log_ << " PW RT-TDDFT conservation: evolution step " << evolution_step << ", " << stage << ", " << this->inp_->td_orthonormal << '\n';
+    log_ << std::right << std::fixed << std::setprecision(10);
+    ModuleBase::GlobalFunc::OUT(log_, "Npsi", electrons);
+    ModuleBase::GlobalFunc::OUT(log_, "Nrho", rho_electrons);
+    log_ << std::scientific << std::setprecision(6);
+    ModuleBase::GlobalFunc::OUT(log_, "dNpsi", delta_wave);
+    ModuleBase::GlobalFunc::OUT(log_, "dNrho", delta_rho);
     if (full_gram)
     {
         if (istep == 0)
         {
-            record << " initial_orth_error=" << maxima[1] << " check_seconds=" << check_seconds;
+            ModuleBase::GlobalFunc::OUT(log_, "initial_orth_error", maxima[1]);
         }
         else
         {
-            record << " orth_before=" << maxima[0] << " orth_after=" << maxima[1] << " orth_seconds=" << check_seconds;
+            ModuleBase::GlobalFunc::OUT(log_, "orth_before", maxima[0]);
+            ModuleBase::GlobalFunc::OUT(log_, "orth_after", maxima[1]);
         }
-        record << " passes=" << counts[1] << " fallbacks=" << counts[2] << " rejected=" << counts[3] << " orth_warnings=" << counts[4];
     }
-    else
-    {
-        record << " norm_seconds=" << check_seconds;
-    }
-    record << " electronic_seconds=" << electronic_seconds << '\n';
-    log_ << record.str();
-    if (full_gram && (counts[2] || counts[3] || counts[4]))
-    {
-        std::array<int, 7> events = stats.events;
-        if (this->pw_wfc->poolrank != 0)
-        {
-            events.fill(0);
-        }
-        const int event_count = events.size();
-        Parallel_Reduce::reduce_all(events.data(), event_count);
-        const char* names[] = {"cholesky_failed",
-                               "lowdin_failed",
-                               "newton_schulz_failed",
-                               "nonfinite_gram",
-                               "candidate_rejected",
-                               "fallback_cholesky",
-                               "fallback_lowdin"};
-        if (istep == 0)
-        {
-            warning_ << record.str() << "Initial orbitals are unchanged; orthogonality exceeds the propagation correction tolerance.\n";
-        }
-        else
-        {
-            warning_ << record.str() << "The retained state satisfies the orthogonality tolerance. " << stats.reason << '\n';
-        }
-        for (int i = 0; i < event_count; ++i)
-        {
-            if (events[i] > 0)
-            {
-                warning_ << names[i] << '=' << events[i] << ' ';
-            }
-        }
-        warning_ << '\n';
-    }
+    log_.flags(saved_flags);
+    log_.precision(saved_precision);
     ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "report_orth");
 }
 

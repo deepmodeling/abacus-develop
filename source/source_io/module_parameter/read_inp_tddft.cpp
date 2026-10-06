@@ -216,6 +216,20 @@ void ReadInput::item_rt_tddft()
         this->add_item(item);
     }
     {
+        Input_Item item("td_out_stat");
+        item.annotation = "output PW real-time conservation diagnostics";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Boolean";
+        item.description = R"(Write wavefunction and density electron counts, their changes from the initial state, and orthogonality errors to the running log after each electronic evolution step. Orthogonality errors are omitted when `td_orthonormal=none`.
+
+[NOTE] Enabling this output adds density integration and diagnostic communication.)";
+        item.default_value = "false";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft");
+        read_sync_bool(input.td_out_stat);
+        this->add_item(item);
+    }
+    {
         Input_Item item("lin_solver");
         item.annotation = "linear solver for real-time propagation";
         item.category = "Real-Time TDDFT (PW)";

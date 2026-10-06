@@ -3,7 +3,6 @@
 
 #include "source_hsolver/linear_algebra.h"
 
-#include <array>
 #include <limits>
 #include <string>
 #include <type_traits>
@@ -55,15 +54,13 @@ struct OrthResult
     double before = std::numeric_limits<double>::quiet_NaN();
     double after = std::numeric_limits<double>::quiet_NaN();
     bool gram_checked = false;
-    double seconds = 0.0;
     int passes = 0;
     int fallbacks = 0;
     OrthStatus status = OrthStatus::failed;
     OrthFailure failure = OrthFailure::none;
     OrthMethod actual = OrthMethod::none;
     std::string reason;
-    // Failed methods, nonfinite Gram, rejected candidates, and attempted fallback methods.
-    std::array<int, 7> events{};
+    int rejected = 0;
     std::vector<double> norms;
 };
 
@@ -98,9 +95,9 @@ class Orthonormal
   public:
     explicit Orthonormal(const diag_comm_info& comm);
     /** @brief Inspect norms and optionally overlaps without changing orbitals or enforcing a correction tolerance. */
-    OrthResult inspect(const T* input, int ld, int dim, int bands, bool full_gram);
+    OrthResult inspect(const T* input, int ld, int dim, int bands, bool full_gram, bool collect_norms);
     /** @brief Preserve input on rejected candidates; a failed overall result is not usable. */
-    OrthResult apply(T* input, int ld, int dim, int bands, OrthMethod method);
+    OrthResult apply(T* input, int ld, int dim, int bands, OrthMethod method, bool collect_norms);
 };
 } // namespace hsolver
 #endif

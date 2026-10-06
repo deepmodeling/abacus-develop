@@ -7,7 +7,6 @@
 #include "source_io/module_current/td_current_pw.h"
 #include "source_pw/module_pwdft/td_history_pw.h"
 
-#include <chrono>
 #include <iosfwd>
 #include <memory>
 
@@ -47,8 +46,7 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
 
   private:
     using Real = typename GetTypeReal<T>::type;
-    std::ostream& log_;
-    std::ostream& warning_;
+    std::ofstream& log_;
     std::unique_ptr<hsolver::HSolverPWTDDFT<T, Device>> td_solver_;
 
     std::shared_ptr<elecstate::TDFieldManager> td_field_manager_;
@@ -57,7 +55,6 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     pw::TDHistoryPW<T, Device> history_;
     double initial_wave_electrons_ = 0.0;
     double initial_rho_electrons_ = 0.0;
-    std::chrono::steady_clock::time_point electronic_start_;
     void report_orth(const UnitCell& ucell, int istep);
     void prepare_td_step(const int istep);
 };

@@ -33,22 +33,16 @@ struct PWLinearOptions
     PWPreconditioner preconditioner = PWPreconditioner::kinetic;
     bool cn_init = false;
     bool kinetic_enabled = true;
+    bool out_stat = false;
+    std::vector<int> global_k_indices;
 };
 
 LinearMethod parse_linear_method(const std::string& name);
-/** @brief Step diagnostics; numerical results and counts are replicated within each k-point pool. */
+/** @brief Optional step maxima, replicated within each k-point pool. */
 struct TDOrthStats
 {
     double before = 0.0;
     double after = 0.0;
-    double orth_seconds = 0.0;
-    int calls = 0;
-    int passes = 0;
-    int fallbacks = 0;
-    int rejected = 0;
-    int orth_warnings = 0;
-    std::array<int, 7> events{};
-    std::string reason;
 };
 PWPreconditioner parse_pw_precond(const std::string& name);
 
@@ -133,6 +127,8 @@ class HSolverPWTDDFT
     Orthonormal<T, Device> orthonormal_;
     TDOrthStats orth_stats_;
     std::vector<std::vector<double>> orth_norms_;
+    std::ostream& log_;
+    unsigned int warned_events_ = 0;
     CNSubspace<T, Device> projection_;
     std::vector<KPointState> states_;
     SequenceState sequence_;
@@ -157,11 +153,12 @@ class HSolverPWTDDFT
                               KPointState* state);
     void retry_kinetic(const LinearOperator<T, Device>& op, T* current, const SolveBatch& batch, LinearSolveResult* result);
     void update_state(KPointState* state, const SolveDetails& details, int step, const SolveBatch& batch, const T* current);
-    void report_solve(const SolveDetails& details, int ik, int step, int iteration, double elapsed, std::ostream& log) const;
+    void report_solve(const SolveDetails& details, int ik, int step, int iteration, std::ostream& log) const;
     void prepare_buffers(const int nbands, const int nbasis);
     void update_precond(const int ik, const int dim, const T coefficient, const ModuleBase::Vector3<double>& momentum_shift);
-    void correct_orbitals(T* current, int ld, int dim, int bands, int ik, int istep, int iter);
+    void correct_orbitals(T* current, int ld, int dim, int bands, int ik, int istep, int iter, bool detailed_output);
     void record_orth(const OrthResult& result, int ik, int istep, int iter);
+    void report_orth_warning(const OrthResult& result, int ik, int istep, int iter);
 };
 
 } // namespace hsolver
