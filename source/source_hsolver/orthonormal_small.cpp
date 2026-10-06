@@ -23,13 +23,11 @@ std::vector<Wide> identity(int n)
     return result;
 }
 
-std::vector<Wide> multiply(const std::vector<Wide>& a, const std::vector<Wide>& b, int n)
+void multiply(const std::vector<Wide>& a, const std::vector<Wide>& b, int n, std::vector<Wide>* result)
 {
-    std::vector<Wide> result(n * n);
     const Wide one(1);
     const Wide zero(0);
-    ModuleBase::gemm_op<Wide, base_device::DEVICE_CPU>()('N', 'N', n, n, n, &one, a.data(), n, b.data(), n, &zero, result.data(), n);
-    return result;
+    ModuleBase::gemm_op<Wide, base_device::DEVICE_CPU>()('N', 'N', n, n, n, &one, a.data(), n, b.data(), n, &zero, result->data(), n);
 }
 
 bool cholesky(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
@@ -113,12 +111,23 @@ bool newton_schulz(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
     }
     bool valid = false;
     *c = unit;
-    if (bound <= max_deviation)
+    if (bound <= max_deviation && orth_error(g, n) <= iteration_tol)
     {
-        for (int iteration = 0; iteration <= max_updates; ++iteration)
+        valid = true;
+    }
+    else if (bound <= max_deviation)
+    {
+        // With C0 = I, the first update needs no matrix multiplication.
+        for (int i = 0; i < n * n; ++i)
         {
-            const std::vector<Wide> square = multiply(*c, *c, n);
-            std::vector<Wide> residual = multiply(g, square, n);
+            (*c)[i] = 0.5 * (3.0 * unit[i] - g[i]);
+        }
+        std::vector<Wide> square(n * n);
+        std::vector<Wide> residual(n * n);
+        for (int iteration = 1; iteration <= max_updates; ++iteration)
+        {
+            multiply(*c, *c, n, &square);
+            multiply(g, square, n, &residual);
             if (orth_error(residual, n) <= iteration_tol)
             {
                 valid = true;
@@ -132,7 +141,9 @@ bool newton_schulz(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
             {
                 residual[i] = 0.5 * (3.0 * unit[i] - residual[i]);
             }
-            *c = multiply(*c, residual, n);
+            // The square is no longer needed; reuse its storage without aliasing GEMM inputs.
+            multiply(*c, residual, n, &square);
+            c->swap(square);
         }
     }
     ModuleBase::timer::end("Orthonormal", "newton_schulz");
