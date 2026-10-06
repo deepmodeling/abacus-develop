@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_H
+
 #include <cstddef>
 #include <complex>
 #include <vector>
@@ -169,3 +171,5 @@ namespace LR_Util
     std::string toupper(const std::string& str);
 }
 #include "lr_util.hpp"
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_H

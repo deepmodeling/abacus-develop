@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_HAMILT_CASIDA_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_HAMILT_CASIDA_H
+
 #include <typeinfo>
 #include "source_hamilt/hamilt.h"
 #include "source_estate/module_dm/density_matrix.h"
@@ -206,3 +208,5 @@ namespace LR
         std::function<void(const int&, const T* const)> cal_dm_trans;
     };
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_HAMILT_CASIDA_H

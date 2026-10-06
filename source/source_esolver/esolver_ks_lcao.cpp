@@ -1,4 +1,5 @@
 #include "esolver_ks_lcao.h"
+#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_base/module_external/blacs_connector.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/elecstate_tools.h"

@@ -9,6 +9,7 @@
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include <fstream>
+#include <vector>
 
 class Relax
 {
@@ -34,6 +35,26 @@ class Relax
     // based on threshold in force & stress
     bool setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& force, const ModuleBase::matrix& stress, std::ofstream& ofs_running);
 
+    // Compute the ionic gradient from the force (in eV/Angstrom), honoring
+    // per-atom move flags, and return the largest component. Records the value
+    // in the force history and the running log, prints the optional out_level
+    // diagnostics, and updates force_converged.
+    double setup_ion_gradient(const UnitCell& ucell, const ModuleBase::matrix& force,
+                              bool& force_converged, std::ofstream& ofs_running);
+
+    // Compute the cell gradient from the stress, applying the fixed_axes
+    // constraints (shape / volume / per-axis), and update force_converged.
+    // Records the largest stress in the history and the running log. Only runs
+    // when if_cell_moves is true.
+    void setup_cell_gradient(const UnitCell& ucell, const ModuleBase::matrix& stress,
+                             bool& force_converged, std::ofstream& ofs_running);
+
+    // Print the converged / not-converged summary to the running log. On
+    // convergence, reports the method, the converged step (istep + 1, since
+    // setup_gradient runs before istep is incremented), and the per-step
+    // largest force (and stress when the cell moves).
+    void print_gradient_summary(bool force_converged, std::ofstream& ofs_running);
+
     // check whether previous line search is done
     bool check_line_search();
 
@@ -45,6 +66,24 @@ class Relax
 
     // move ions and lattice vectors
     void move_cell_ions(UnitCell& ucell, const bool is_new_dir, std::ofstream& ofs_running);
+
+    // Step 1 of move_cell_ions: update latvec along the cell search
+    // direction, honoring per-axis free flags, the volume constraint and
+    // fixed_ibrav. Saves latvec at the start of each CG step. Only runs when
+    // if_cell_moves is true.
+    void update_lattice(UnitCell& ucell, double fac, bool is_new_dir);
+
+    // Steps 2 & 3 of move_cell_ions: compute the ionic displacement along the
+    // ion search direction (Cartesian -> direct via the OLD GT), apply the
+    // per-atom move flags and symmetry, then update taud/tau and print the
+    // structure.
+    void update_ion_positions(UnitCell& ucell, double fac, std::ofstream& ofs_running);
+
+    // Steps 4 & 6 of move_cell_ions: refresh a1/a2/a3, omega and the
+    // reciprocal lattice (G/GT/GGT) from the new latvec, broadcast them under
+    // MPI, and re-setup the cell for the next SCF. Only runs when
+    // if_cell_moves is true.
+    void update_reciprocal_cell(UnitCell& ucell, std::ofstream& ofs_running);
 
     int nat = 0;         // number of atoms
     bool ltrial = false; // if last step is trial step
@@ -105,6 +144,16 @@ class Relax
     ModuleBase::Matrix3 latvec_save;
     Line_Search ls;
     const Input_para* inp_ = nullptr;
+
+    /// Largest force of each step (eV/Angstrom), includes trial and line-search steps.
+    std::vector<double> max_force_history_;
+    /// Largest stress of each step (kbar), only filled in cell-relax.
+    std::vector<double> max_stress_history_;
+
+  public:
+    /// Read-only observers of the per-step convergence history, for the final summary.
+    const std::vector<double>& get_max_force_history() const { return max_force_history_; }
+    const std::vector<double>& get_max_stress_history() const { return max_stress_history_; }
 };
 
 #endif

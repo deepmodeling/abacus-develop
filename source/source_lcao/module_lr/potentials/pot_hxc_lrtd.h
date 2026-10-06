@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_POTENTIALS_POT_HXC_LRTD_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_POTENTIALS_POT_HXC_LRTD_H
+
 #include "source_estate/module_pot/h_hartree_pw.h"
 #include "xc_kernel.h"
 #include <unordered_map>
@@ -51,3 +53,5 @@ namespace LR
     };
 
 } // namespace LR
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_POTENTIALS_POT_HXC_LRTD_H

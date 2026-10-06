@@ -45,20 +45,6 @@
 
 #ifdef __EXX
 template <typename TK>
-void setup_exx_dh_params(ModuleIO::WriteDHParams& dh_params, Exx_NAO<TK>& exx_nao, const Exx_Info& exx_info)
-{}
-
-template <>
-void setup_exx_dh_params<double>(ModuleIO::WriteDHParams& dh_params, Exx_NAO<double>& exx_nao, const Exx_Info& exx_info)
-{
-    if (exx_info.info_global.cal_exx)
-    {
-        if (exx_nao.exd) { dh_params.exd = exx_nao.exd.get(); }
-        if (exx_nao.exc) { dh_params.exc = exx_nao.exc.get(); }
-    }
-}
-
-template <typename TK>
 void setup_exx_h_params(ModuleIO::WriteHParams& h_params, Exx_NAO<TK>& exx_nao, const Exx_Info& exx_info)
 {
     // Only the gamma-only (TK==double) specialization below actually writes V^EXX(R).
@@ -419,11 +405,6 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                 dh_params.dmR.push_back(dm->get_dmr_ptr(is));
             }
         }
-#ifdef __EXX
-        // dV^EXX/dR output is wired for the gamma (TK==double) exx interfaces. exd/exc are
-        // mutually exclusive (real vs complex Hexx); write_dH_exx picks by info_ri.real_number.
-        setup_exx_dh_params(dh_params, exx_nao, exx_info);
-#endif
         // FIXME (known bug, not addressed in this PR): with MPI ranks > 1 the
         // Hellmann-Feynman path inside hamilt::Veff::cal_dH
         // (source_lcao/module_operator_lcao/veff_dh.cpp) may deadlock.

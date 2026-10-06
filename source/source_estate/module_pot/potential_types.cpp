@@ -4,7 +4,7 @@
 #include "pot_local.h"
 #include "pot_pcc.h"
 #include "pot_sep.h"
-#include "pot_surchem.hpp"
+#include "pot_surchem.h"
 #include "pot_xc.h"
 #include "potential_new.h"
 #include "source_base/global_function.h"

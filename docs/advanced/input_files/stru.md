@@ -315,6 +315,8 @@ For general usage requirements, the APNSv1.0 pseudopotential and orbital set is 
 
   - `sc`: set the spin constraint target magnetization for each atom. Can specify one value (z-component) or three values for x, y, z components (e.g., `sc 1.0` or `sc 0.5 0.5 1.0`). Used with spin-constrained DFT (enable with `sc_mag_switch` in INPUT file).
 
+  - `f` or `force` or `forces`: three numbers giving the per-atom force (fx, fy, fz) in **eV/Angstrom**. This field is *output-only*: it is written into structure files (STRU{istep}, STRU_NOW, STRU_FINAL) when [`out_stru`](input-main.md#out_stru) is enabled, [`cal_force`](input-main.md#cal_force) is true, and the geometry has been evaluated. When such a file is read back as an input STRU, the `f` values are consumed but ignored -- they are informational only and do not affect the calculation.
+
 ### Important Notes for ATOMIC_POSITIONS
 
 1. **Coordinate System Selection**: Choose the appropriate coordinate system based on your needs:
@@ -341,3 +343,30 @@ For general usage requirements, the APNSv1.0 pseudopotential and orbital set is 
    - Ensure the number of atoms specified matches the actual number of coordinate lines provided
    - When using vector magnetization (`mag x y z`), don't also specify angles for the same atom
    - Remember that angles are in degrees, not radians
+
+### Header of structure files written by ABACUS
+
+When [`out_stru`](input-main.md#out_stru) writes STRU{istep}, STRU_NOW or STRU_FINAL, the file begins with a fixed **7-line** comment header so that downstream parsers can skip a constant-size block:
+
+```
+# ABACUS version: <version>
+# Written at <YYYY-MM-DD HH:MM:SS>
+# RELAX STEP <istep>[ (FINAL)], Energy: <etot in eV> eV
+# Stress (kbar): sxx sxy sxz
+# Stress (kbar): syx syy syz
+# Stress (kbar): szx szy szz
+# NOTE: <state description>
+```
+
+Rules:
+
+- Line 3 carries the total energy in eV only when that energy was computed for the geometry written below. If the geometry was proposed by the optimizer but never evaluated (early relaxation exit), line 3 is written as `# RELAX STEP <istep>[ (FINAL)], Energy: N/A` so the energy label and the coordinates always describe the same frame.
+- Lines 4-6 always carry the stress tensor in **kbar**, one row per line. If stress was not computed ([`cal_stress`](input-main.md#cal_stress) = 0) or the geometry was proposed by the optimizer but not yet evaluated (early relaxation exit), all three rows are written as `# Stress (kbar): N/A N/A N/A` with no extra inline comment, so every stress line has the same token shape.
+- Line 7 is a single `# NOTE:` line describing the state:
+  - `# NOTE: stress and forces computed for this geometry` (normal case)
+  - `# NOTE: stress not computed (cal_stress=0)`
+  - `# NOTE: forces not computed (cal_force=0); per-atom f fields omitted intentionally`
+  - `# NOTE: stress not computed (cal_stress=0); forces not computed (cal_force=0); per-atom f fields omitted intentionally`
+  - `# NOTE: geometry proposed by optimizer but not evaluated; energy N/A; stress N/A; forces omitted`
+- Per-atom `f fx fy fz` fields (forces in eV/Angstrom) are appended to the atom lines only when [`cal_force`](input-main.md#cal_force) is true **and** the geometry was evaluated. They are omitted on early relaxation exit so the geometry and the property data always come from the same configuration.
+- The coordinate format line of the ATOMIC_POSITIONS section is always `Cartesian_angstrom`, independent of force availability; `has_force` only controls the per-atom `f` fields. `Direct` and the other coordinate keywords remain fully supported as **input** formats.

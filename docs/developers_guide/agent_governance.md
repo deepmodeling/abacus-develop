@@ -54,6 +54,8 @@ focused cleanup.
   not around isolated statements inside the function body. Use the enclosing
   function name (or constructor name) as the timer label so the timer scopes
   the whole unit of work.
+- Do not use `#pragma once` in header files; use traditional
+  `#ifndef`/`#define`/`#endif` include guards instead.
 
 AI agents have additional workflow obligations:
 
@@ -72,6 +74,7 @@ decisions.
 | Rule category | Typical rule | Phase-one status | Default executor | Severity | Default action | Detection scope | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Basic text format | LF line endings | phase-one mechanical | hook + CI | medium | block | full changed text file | `.bat` and `.cmd` keep CRLF |
+| Header include guard | New `#pragma once` in a header | phase-one mechanical | hook + CI | high | block | added header lines (`.h`/`.hh`/`.hpp`/`.hxx`/`.cuh`) | Use `#ifndef`/`#define`/`#endif` guards; no exception allowed |
 | Language baseline | C++11 compatibility | build/toolchain | CI | high | block | build/static tooling | Actual compiler/toolchain result wins |
 | Global dependency budget | Net increase of `GlobalV`/`GlobalC`/`PARAM` references in code diff | phase-one mechanical + AI review | CI + AI review | high | block on net increase, warn on non-increasing added usage | added and removed code lines | Historical untouched usage and documentation mentions are not blocked; migration-neutral moves require reviewer rationale |
 | New default parameter | Header declaration adds a default argument | phase-one mechanical + AI review | CI + AI review | high | block | header diff | High misuse risk |

@@ -75,23 +75,25 @@ void ProjectorGradient<Real, Device>::calculate(pseudopot_cell_vnl* pp,
         ModuleBase::timer::end("ProjectorGradient", "calculate");
         return;
     }
-    host_q_.resize(3 * npw);
+    const std::int64_t momentum_elements = 3 * static_cast<std::int64_t>(npw);
+    host_q_.resize(momentum_elements);
     for (int ig = 0; ig < npw; ++ig)
     {
         const ModuleBase::Vector3<double> q = basis.getgpluskcar(ik, ig) + A / cell.tpiba;
         for (int d = 0; d < 3; ++d)
         {
-            host_q_[3 * ig + d] = static_cast<Real>(q[d]);
+            host_q_[3 * static_cast<std::int64_t>(ig) + d] = static_cast<Real>(q[d]);
         }
-        const Real* v = host_q_.data() + 3 * ig;
+        const Real* v = host_q_.data() + 3 * static_cast<std::int64_t>(ig);
         const Real position = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]) * static_cast<Real>(cell.tpiba) / static_cast<Real>(dq);
         pp->check_vnl_index(static_cast<double>(position) * (1.0 + 8.0 * std::numeric_limits<Real>::epsilon()), true);
     }
-    reserve<Real>(&momentum_, 3LL * npw);
-    reserve<Complex>(&structure_, static_cast<int64_t>(cell.nat) * npw);
+    const std::int64_t structure_elements = static_cast<std::int64_t>(cell.nat) * npw;
+    reserve<Real>(&momentum_, momentum_elements);
+    reserve<Complex>(&structure_, structure_elements);
     base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>()(momentum_.template data<Real>(),
                                                                                         host_q_.data(),
-                                                                                        3 * npw);
+                                                                                        momentum_elements);
     Device* ctx = nullptr;
     pp->psf->get_sk(ctx, ik, &basis, structure_.template data<Complex>());
     projector_gradient_op<Real, Device>()(npw,

@@ -1,5 +1,7 @@
 #ifdef __EXX
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_RI_BENCHMARK_RI_BENCHMARK_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_RI_BENCHMARK_RI_BENCHMARK_H
+
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 #include "source_lcao/module_lr/utils/lr_io.h"
@@ -75,3 +77,5 @@ namespace RI_Benchmark
 }
 #include "ri_benchmark.hpp"
 #endif
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_RI_BENCHMARK_RI_BENCHMARK_H

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_ELPA_SOLVER_H
+#define ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_ELPA_SOLVER_H
+
 #include "mpi.h"
 
 #include <complex>
@@ -110,3 +112,5 @@ class ELPA_Solver
     // debug tool
     void timer(int myid, const char function[], const char step[], double& t0);
 };
+
+#endif // ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_ELPA_SOLVER_H

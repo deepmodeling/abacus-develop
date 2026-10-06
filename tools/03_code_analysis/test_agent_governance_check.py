@@ -643,6 +643,47 @@ class AgentGovernanceCheckTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("--staged cannot be combined with --base/--head", result.stderr)
 
+    def test_blocks_new_pragma_once_in_header(self):
+        self.write("source/source_base/new_header.h", "#pragma once\n\nint foo();\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_blocked_by(result, "No #pragma once")
+
+    def test_blocks_new_pragma_once_in_cuh(self):
+        self.write("source/source_base/kernels/new_header.cuh", "#pragma once\n\nint foo();\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_blocked_by(result, "No #pragma once")
+
+    def test_allows_ifndef_include_guard(self):
+        self.write(
+            "source/source_base/new_header.h",
+            "#ifndef NEW_HEADER_H\n#define NEW_HEADER_H\n\nint foo();\n\n#endif\n",
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("No #pragma once", result.stdout)
+
+    def test_allows_existing_pragma_once_on_unchanged_lines(self):
+        self.write("source/source_base/old_header.h", "#pragma once\n\nint foo();\n")
+        self.write("source/source_base/CMakeLists.txt", "add_library(old old_header.h)\n")
+        self.git("add", ".")
+        self.git("commit", "-m", "add header with pragma once")
+        base2 = self.git("rev-parse", "HEAD").stdout.strip()
+        # Touch only an unrelated line; the #pragma once line is not in the diff.
+        self.write("source/source_base/old_header.h", "#pragma once\n\nint foo();\nint bar();\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base2, "--head", head)
+
+        self.assertNotIn("No #pragma once", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

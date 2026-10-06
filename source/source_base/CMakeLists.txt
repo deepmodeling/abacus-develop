@@ -40,6 +40,7 @@ add_library(
     mymath.cpp
     opt_cg.cpp
     opt_dcsrch.cpp
+    opt_tn.cpp
     output.cpp
     para_gemm.cpp
     realarray.cpp
