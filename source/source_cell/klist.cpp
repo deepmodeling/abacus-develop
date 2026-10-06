@@ -86,6 +86,13 @@ void K_Vectors::set(const UnitCell& ucell,
                             this->kvec_c_full);
 
 
+    // initialize ibz_index
+    this->ibz_index.resize(this->nkstot_nospin);
+    for (int ik = 0; ik < this->nkstot_nospin; ik++)
+    {
+        this->ibz_index[ik] = ik;
+    }
+
     // (2)
     // reduce kpoints to IBZ according to symmetry operations
     if (use_ibz)
@@ -139,13 +146,6 @@ void K_Vectors::set(const UnitCell& ucell,
     // set the k vectors for the up and down spin
     this->set_kup_and_kdw(ofs);
 
-    // initialize ibz_index
-    this->ibz_index.resize(this->nkstot_nospin);
-    for (int ik = 0; ik < this->nkstot_nospin; ik++)
-    {
-        this->ibz_index[ik] = ik;
-    }
-    
     // get ik2iktot: map local k indices to global indices in the pool
     KListIO::build_ik2iktot(this->para_k.my_pool,
                             this->para_k.startk_pool,

@@ -3801,7 +3801,7 @@ parameters:
     category: Output information
     type: Integer
     description: |
-      Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 requires symmetry=-1 (the full k-point grid).
+      Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 includes the full-to-irreducible mapping for symmetry-reduced grids.
     default_value: "0"
     unit: ""
     availability: basis_type==lcao

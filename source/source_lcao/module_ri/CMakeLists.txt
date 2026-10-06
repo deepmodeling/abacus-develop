@@ -31,6 +31,8 @@ if (ENABLE_LIBRI)
         rpa_lri_overlap.cpp
         rpa_lri_overlap_io.cpp
         rpa_lri_output.cpp
+        rpa_lri_bz.cpp
+        rpa_lri_sym.cpp
         rpa_lri_coeff_io.cpp
         rpa_lri_velocity.cpp
         rpa_lri_basis.cpp

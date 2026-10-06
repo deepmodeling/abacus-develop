@@ -2448,7 +2448,7 @@
 
 - **Type**: Integer
 - **Availability**: *[`basis_type`](#basis_type)==lcao*
-- **Description**: Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 requires symmetry=-1 (the full k-point grid).
+- **Description**: Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 includes the full-to-irreducible mapping for symmetry-reduced grids.
 - **Default**: 0
 
 ### out_pchg

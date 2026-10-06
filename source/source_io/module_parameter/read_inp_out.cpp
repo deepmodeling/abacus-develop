@@ -1509,7 +1509,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "LibRPA output reader version";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 requires symmetry=-1 (the full k-point grid).";
+        item.description = "Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 includes the full-to-irreducible mapping for symmetry-reduced grids.";
         item.default_value = "0";
         item.unit = "";
         item.set_availability("basis_type==lcao");
@@ -1519,10 +1519,6 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
             if (value != 0 && value != 1)
             {
                 ModuleBase::WARNING_QUIT("INPUT", "out_librpa_ver must be 0 or 1.");
-            }
-            if (value == 1 && para.input.symmetry != "-1")
-            {
-                ModuleBase::WARNING_QUIT("INPUT", "out_librpa_ver=1 requires symmetry=-1.");
             }
         };
         this->add_item(item);

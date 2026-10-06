@@ -844,6 +844,8 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       rpa_lri_overlap.o\
       rpa_lri_overlap_io.o\
       rpa_lri_output.o\
+      rpa_lri_bz.o\
+      rpa_lri_sym.o\
       rpa_lri_coeff_io.o\
       rpa_lri_velocity.o\
       rpa_lri_basis.o\

@@ -33,4 +33,10 @@ else()
                 --abacus ${ABACUS_BIN_PATH} --cases ${ABACUS_TEST_DIR}/08_RI
     )
     set_tests_properties(08_RI_librpa_producer_mpi PROPERTIES PROCESSORS 2 TIMEOUT 900)
+    add_test(
+        NAME 08_RI_librpa_symmetry
+        COMMAND ${Python3_EXECUTABLE} ${ABACUS_TEST_DIR}/integrate/tools/run_librpa_sym.py
+                --abacus ${ABACUS_BIN_PATH} --cases ${ABACUS_TEST_DIR}/08_RI
+    )
+    set_tests_properties(08_RI_librpa_symmetry PROPERTIES PROCESSORS 2 TIMEOUT 900)
 endif()

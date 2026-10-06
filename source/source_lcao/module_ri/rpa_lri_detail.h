@@ -13,6 +13,7 @@
 
 class Parallel_Orbitals;
 class UnitCell;
+class K_Vectors;
 class Numerical_Orbital_Lm;
 namespace RI
 {
@@ -33,6 +34,7 @@ static_assert(sizeof(std::complex<double>) == 2 * sizeof(double),
               "LibRPA v1 binary output expects complex<double> as two doubles.");
 
 void trim_malloc_cache();
+void write_stru_sym(std::ostream& output, const UnitCell& cell, const K_Vectors& kv);
 
 bool debug_dump_exx_ao_enabled();
 
