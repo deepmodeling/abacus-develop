@@ -153,7 +153,8 @@ TEST_F(PotSccsTest, IonicForceAddsRydbergDerivativeOnce)
     {
         for (int axis = 0; axis < 3; ++axis)
         {
-            EXPECT_NEAR(accumulated(ia, axis), 7.0 + force(ia, axis), 1e-10);
+            const double expected_force = 7.0 + force(ia, axis);
+            EXPECT_NEAR(accumulated(ia, axis), expected_force, 1e-10);
         }
     }
 }
