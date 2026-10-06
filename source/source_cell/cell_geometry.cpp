@@ -188,7 +188,8 @@ bool make_slab_cell(const ModuleBase::Matrix3& lattice,
 double relative_coordinate(const ModuleBase::Vector3<double>& position, const SlabCell& cell)
 {
     const double displacement = position * cell.normal - cell.origin;
-    const double image = std::floor(displacement / cell.length + 0.5);
+    const double image_coordinate = displacement / cell.length + 0.5;
+    const double image = std::floor(image_coordinate);
     return displacement - cell.length * image;
 }
 
@@ -220,7 +221,8 @@ bool weighted_center(const std::vector<ModuleBase::Vector3<double>>& positions,
         total_weight += weights[index];
     }
     const double unwrapped = reference.origin + weighted_displacement / total_weight;
-    const double image = std::floor(unwrapped / cell.length);
+    const double image_coordinate = unwrapped / cell.length;
+    const double image = std::floor(image_coordinate);
     const double candidate = unwrapped - image * cell.length;
     if (!std::isfinite(total_weight) || !std::isfinite(weighted_displacement) || !std::isfinite(candidate))
     {

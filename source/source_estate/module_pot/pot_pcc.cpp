@@ -32,8 +32,11 @@ bool fractional_translation(const ModuleBase::Matrix3& rotation,
                              const ModuleBase::Vector3<double>& translation)
 {
     const double tolerance = 1.0e-6;
-    const double identity_error = std::abs(rotation.e11 - 1.0) + std::abs(rotation.e22 - 1.0)
-                                  + std::abs(rotation.e33 - 1.0) + std::abs(rotation.e12)
+    const double diagonal_error_x = rotation.e11 - 1.0;
+    const double diagonal_error_y = rotation.e22 - 1.0;
+    const double diagonal_error_z = rotation.e33 - 1.0;
+    const double identity_error = std::abs(diagonal_error_x) + std::abs(diagonal_error_y)
+                                  + std::abs(diagonal_error_z) + std::abs(rotation.e12)
                                   + std::abs(rotation.e13) + std::abs(rotation.e21)
                                   + std::abs(rotation.e23) + std::abs(rotation.e31)
                                   + std::abs(rotation.e32);

@@ -86,9 +86,12 @@ TEST_F(CellGeometryTest, PreservesRelativePositionsUnderWrappedTranslation)
     std::vector<ModuleBase::Vector3<double>> translated = original;
     for (auto& position : translated)
     {
-        position.x = std::fmod(position.x + 1.4, 10.0);
-        position.y = std::fmod(position.y + 1.4, 10.0);
-        position.z = std::fmod(position.z + 1.4, 10.0);
+        const double translated_x = position.x + 1.4;
+        const double translated_y = position.y + 1.4;
+        const double translated_z = position.z + 1.4;
+        position.x = std::fmod(translated_x, 10.0);
+        position.y = std::fmod(translated_y, 10.0);
+        position.z = std::fmod(translated_z, 10.0);
     }
     ASSERT_TRUE(unitcell::weighted_center(translated, weights, cell, center, error));
     unitcell::OrthogonalCell second = cell;
