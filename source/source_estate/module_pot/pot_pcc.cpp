@@ -11,23 +11,6 @@
 
 namespace
 {
-void require_valid_on_pool(const bool valid, const std::string& error, const std::string& function)
-{
-    double invalid = valid ? 0.0 : 1.0;
-#ifdef __MPI
-    Parallel_Reduce::reduce_pool(invalid);
-#endif
-    if (invalid != 0)
-    {
-        std::string message = error;
-        if (message.empty())
-        {
-            message = "invalid PCC input or result on another process in this pool";
-        }
-        ModuleBase::WARNING_QUIT(function, message);
-    }
-}
-
 bool fractional_translation(const ModuleBase::Matrix3& rotation,
                              const ModuleBase::Vector3<double>& translation)
 {
@@ -137,10 +120,6 @@ PotPcc::PotPcc(const ModulePW::PW_Basis* basis, const Dimension dimension, const
 {
     this->rho_basis_ = basis;
     this->dynamic_mode = true;
-    if (open_axis < 0 || open_axis > 2)
-    {
-        ModuleBase::WARNING_QUIT("PotPcc", "pcc_2d_axis must be 0, 1 or 2");
-    }
 }
 
 void PotPcc::validate_kpoints(const std::vector<ModuleBase::Vector3<double>>& points,
@@ -148,23 +127,14 @@ void PotPcc::validate_kpoints(const std::vector<ModuleBase::Vector3<double>>& po
                               const int open_axis)
 {
     double maximum = 0.0;
-    if (open_axis < 0 || open_axis > 2 || count < 0 || count > static_cast<int>(points.size()))
+    for (int ik = 0; ik < count; ++ik)
     {
-        maximum = 1.0;
-    }
-    else
-    {
-        for (int ik = 0; ik < count; ++ik)
-        {
-            const double components[3] = {points[ik].x, points[ik].y, points[ik].z};
-            const double coordinate = components[open_axis];
-            const double absolute = std::abs(coordinate);
-            if (!std::isfinite(coordinate)) { maximum = 1.0; }
-            else { maximum = std::max(maximum, absolute); }
-        }
+        const double components[3] = {points[ik].x, points[ik].y, points[ik].z};
+        const double absolute = std::abs(components[open_axis]);
+        maximum = std::max(maximum, absolute);
     }
 #ifdef __MPI
-    // All pools must reject a forbidden open-direction k point together.
+    // Each pool holds its own k points; all pools must stop together.
     Parallel_Reduce::reduce_max(maximum);
 #endif
     if (maximum > 1.0e-12)
@@ -207,30 +177,39 @@ ModuleBase::Vector3<double> PotPcc::correction_force(const double charge,
 void PotPcc::prepare_ions(const UnitCell& cell, ChargeMoments& ionic_moments)
 {
     ModuleBase::timer::start("PotPcc", "prepare_ions");
-    std::string error;
+    // The cell, symmetry and atoms are replicated, so every rank stops together.
     if (dimension_ == Dimension::molecule)
     {
-        const bool geometry_valid = unitcell::make_orthogonal_cell(cell.latvec, cell.lat0, 1.0e-10, geometry_, error);
-        require_valid_on_pool(geometry_valid, error, "PotPcc::prepare_ions");
-        const bool parameters_valid = make_pcc_0d_parameters(geometry_, 1.0e-10, parameters_, error);
-        require_valid_on_pool(parameters_valid, error, "PotPcc::prepare_ions");
-        const bool symmetry_valid = primitive_symmetry(cell.symm);
-        require_valid_on_pool(symmetry_valid, "PCC 0D requires a primitive cell without fractional-translation symmetry", "PotPcc::prepare_ions");
+        const bool orthogonal = unitcell::make_orthogonal_cell(cell.latvec, cell.lat0, 1.0e-10, geometry_);
+        const bool cubic = orthogonal && make_pcc_0d_parameters(geometry_, 1.0e-10, parameters_);
+        if (!cubic)
+        {
+            ModuleBase::WARNING_QUIT("PotPcc::prepare_ions", "PCC 0D requires an equal-edge cubic cell");
+        }
+        if (!primitive_symmetry(cell.symm))
+        {
+            ModuleBase::WARNING_QUIT("PotPcc::prepare_ions",
+                                     "PCC 0D requires a primitive cell without fractional-translation symmetry");
+        }
     }
     else
     {
-        const bool geometry_valid = unitcell::make_slab_cell(cell.latvec, cell.lat0, open_axis_, 1.0e-6, slab_, error);
-        require_valid_on_pool(geometry_valid, error, "PotPcc::prepare_ions");
-        const bool parameters_valid = make_pcc_2d_parameters(slab_, slab_parameters_, error);
-        require_valid_on_pool(parameters_valid, error, "PotPcc::prepare_ions");
-        const bool symmetry_valid = slab_symmetry_valid(cell.symm, open_axis_);
-        require_valid_on_pool(symmetry_valid, "PCC 2D symmetry must preserve the open axis without fractional translations along it", "PotPcc::prepare_ions");
+        const bool perpendicular = unitcell::make_slab_cell(cell.latvec, cell.lat0, open_axis_, 1.0e-6, slab_);
+        if (!perpendicular)
+        {
+            ModuleBase::WARNING_QUIT("PotPcc::prepare_ions",
+                                     "PCC 2D requires the open lattice vector to be perpendicular to the periodic plane");
+        }
+        slab_parameters_ = make_pcc_2d_parameters(slab_);
+        if (!slab_symmetry_valid(cell.symm, open_axis_))
+        {
+            ModuleBase::WARNING_QUIT("PotPcc::prepare_ions",
+                                     "PCC 2D symmetry must preserve the open axis without fractional translations along it");
+        }
     }
 
     const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell.atoms, cell.ntype, cell.lat0);
     const int atom_count = static_cast<int>(atoms.size());
-    const bool atom_count_valid = atom_count == cell.nat;
-    require_valid_on_pool(atom_count_valid, "PCC atom count does not match UnitCell", "PotPcc::prepare_ions");
     std::vector<double> masses(atom_count);
     ionic_positions_.resize(atom_count);
     ionic_charges_.resize(atom_count);
@@ -242,17 +221,11 @@ void PotPcc::prepare_ions(const UnitCell& cell, ChargeMoments& ionic_moments)
     }
     if (dimension_ == Dimension::molecule)
     {
-        ModuleBase::Vector3<double> center;
-        const bool center_valid = unitcell::weighted_center(ionic_positions_, masses, geometry_, center, error);
-        require_valid_on_pool(center_valid, error, "PotPcc::prepare_ions");
-        geometry_.origin = center;
+        geometry_.origin = unitcell::weighted_center(ionic_positions_, masses, geometry_);
     }
     else
     {
-        double center = 0.0;
-        const bool center_valid = unitcell::weighted_center(ionic_positions_, masses, slab_, center, error);
-        require_valid_on_pool(center_valid, error, "PotPcc::prepare_ions");
-        slab_.origin = center;
+        slab_.origin = unitcell::weighted_center(ionic_positions_, masses, slab_);
     }
     std::vector<ModuleBase::Vector3<double>> relative_ions(atom_count);
     for (int atom = 0; atom < atom_count; ++atom)
@@ -261,13 +234,7 @@ void PotPcc::prepare_ions(const UnitCell& cell, ChargeMoments& ionic_moments)
     }
     const double* ionic_charge_data = ionic_charges_.data();
     const ModuleBase::Vector3<double>* ionic_position_data = relative_ions.data();
-    const bool ions_valid = charge_moments(ionic_charge_data,
-                                            ionic_position_data,
-                                            atom_count,
-                                            1.0,
-                                            ionic_moments,
-                                            error);
-    require_valid_on_pool(ions_valid, error, "PotPcc::prepare_ions");
+    ionic_moments = charge_moments(ionic_charge_data, ionic_position_data, atom_count, 1.0);
 
     ModuleBase::timer::end("PotPcc", "prepare_ions");
 }
@@ -279,10 +246,8 @@ ChargeMoments PotPcc::collect_electrons(
 {
     ModuleBase::timer::start("PotPcc", "collect_electrons");
     const ModulePW::PW_Basis& basis = *this->rho_basis_;
-    std::string error;
     std::vector<double> electronic_charge(basis.nrxx, 0.0);
-    const bool positions_valid = ModulePW::grid_positions(basis, cell.latvec, cell.lat0, positions, error);
-    require_valid_on_pool(positions_valid, error, "PotPcc::collect_electrons");
+    ModulePW::grid_positions(basis, cell.latvec, cell.lat0, positions);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         for (int spin = 0; spin < charge.nspin; ++spin)
@@ -291,17 +256,10 @@ ChargeMoments PotPcc::collect_electrons(
         }
         positions[ir] = this->relative_position(positions[ir]);
     }
-    ChargeMoments electronic_moments;
     const double volume_element = cell.omega / basis.nxyz;
     const double* electronic_data = electronic_charge.data();
     const ModuleBase::Vector3<double>* position_data = positions.data();
-    const bool density_valid = charge_moments(electronic_data,
-                                               position_data,
-                                               basis.nrxx,
-                                               volume_element,
-                                               electronic_moments,
-                                               error);
-    require_valid_on_pool(density_valid, error, "PotPcc::collect_electrons");
+    ChargeMoments electronic_moments = charge_moments(electronic_data, position_data, basis.nrxx, volume_element);
     double reduced[5] = {electronic_moments.charge, electronic_moments.dipole.x,
                          electronic_moments.dipole.y, electronic_moments.dipole.z,
                          electronic_moments.second_moment};
@@ -318,25 +276,7 @@ ChargeMoments PotPcc::collect_electrons(
 void PotPcc::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::matrix& potential)
 {
     ModuleBase::timer::start("PotPcc", "cal_v_eff");
-    result_valid_ = false;
-    const bool storage_valid = charge != nullptr && cell != nullptr && this->rho_basis_ != nullptr;
-    require_valid_on_pool(storage_valid, "PCC requires charge, cell and PW basis storage", "PotPcc::cal_v_eff");
     const ModulePW::PW_Basis& basis = *this->rho_basis_;
-    const bool grid_valid = basis.nx > 0 && basis.ny > 0 && basis.nz > 0 && basis.nxyz > 0
-                            && basis.nplane >= 0 && basis.nrxx == basis.nx * basis.ny * basis.nplane
-                            && (charge->nspin == 1 || charge->nspin == 2)
-                            && potential.nr == charge->nspin && potential.nc == basis.nrxx
-                            && std::isfinite(cell->omega) && cell->omega > 0.0;
-    require_valid_on_pool(grid_valid, "PCC requires an initialized grid and nspin=1/2 potential", "PotPcc::cal_v_eff");
-    bool density_storage_valid = charge->rho != nullptr;
-    if (density_storage_valid && basis.nrxx > 0)
-    {
-        for (int spin = 0; spin < charge->nspin; ++spin)
-        {
-            density_storage_valid = density_storage_valid && charge->rho[spin] != nullptr;
-        }
-    }
-    require_valid_on_pool(density_storage_valid, "PCC charge density is not available", "PotPcc::cal_v_eff");
     ChargeMoments ionic_moments;
     this->prepare_ions(*cell, ionic_moments);
     std::vector<ModuleBase::Vector3<double>> positions;
@@ -345,14 +285,11 @@ void PotPcc::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::m
     moments_ = add_charge_moments(ionic_moments, electronic_moments);
     energy_rydberg_ = 2.0 * this->correction_energy();
     electron_potential_.resize(basis.nrxx);
-    bool result_finite = std::isfinite(energy_rydberg_);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         const double positive_potential = this->correction_potential(positions[ir]);
         electron_potential_[ir] = -2.0 * positive_potential;
-        result_finite = result_finite && std::isfinite(electron_potential_[ir]);
     }
-    require_valid_on_pool(result_finite, "PCC energy or potential is nonfinite", "PotPcc::cal_v_eff");
     for (int spin = 0; spin < charge->nspin; ++spin)
     {
         for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -360,47 +297,24 @@ void PotPcc::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::m
             potential(spin, ir) += electron_potential_[ir];
         }
     }
-    result_valid_ = true;
     ModuleBase::timer::end("PotPcc", "cal_v_eff");
 }
 
 double PotPcc::get_energy() const
 {
-    if (!result_valid_)
-    {
-        ModuleBase::WARNING_QUIT("PotPcc::get_energy", "PCC energy requires an updated potential");
-    }
     return energy_rydberg_;
 }
 
 const std::vector<double>& PotPcc::electron_potential() const
 {
-    if (!result_valid_)
-    {
-        ModuleBase::WARNING_QUIT("PotPcc::electron_potential", "PCC output requires an updated potential");
-    }
     return electron_potential_;
 }
 
 void PotPcc::add_force(const UnitCell& cell, ModuleBase::matrix& force) const
 {
     ModuleBase::timer::start("PotPcc", "add_force");
-    if (!result_valid_ || force.nr != cell.nat || force.nc != 3)
-    {
-        ModuleBase::WARNING_QUIT("PotPcc::add_force", "PCC force requires a current potential and nat-by-3 output");
-    }
-    const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell.atoms, cell.ntype, cell.lat0);
-    if (atoms.size() != ionic_positions_.size() || atoms.size() != static_cast<std::size_t>(cell.nat))
-    {
-        ModuleBase::WARNING_QUIT("PotPcc::add_force", "PCC atom count changed since the potential update");
-    }
     for (int atom = 0; atom < cell.nat; ++atom)
     {
-        const ModuleBase::Vector3<double> difference = atoms[atom].position - ionic_positions_[atom];
-        if (difference.norm2() > 1.0e-24 || atoms[atom].valence_charge != ionic_charges_[atom])
-        {
-            ModuleBase::WARNING_QUIT("PotPcc::add_force", "PCC atoms changed since the potential update");
-        }
         const ModuleBase::Vector3<double> relative = this->relative_position(ionic_positions_[atom]);
         const ModuleBase::Vector3<double> correction = this->correction_force(ionic_charges_[atom], relative);
         force(atom, 0) += 2.0 * correction.x;

@@ -42,9 +42,7 @@ TEST(Pcc2d, MatchesChargedSheetGaugeAndNeutralDipoleEnergy)
     unitcell::SlabCell cell;
     cell.area = 6.0;
     cell.length = 8.0;
-    elecstate::Pcc2dParameters parameters;
-    std::string error;
-    ASSERT_TRUE(elecstate::make_pcc_2d_parameters(cell, parameters, error));
+    const elecstate::Pcc2dParameters parameters = elecstate::make_pcc_2d_parameters(cell);
     elecstate::ChargeMoments moments;
     moments.charge = 2.0;
     const double charged = elecstate::pcc_2d_energy(moments, parameters);
@@ -55,9 +53,6 @@ TEST(Pcc2d, MatchesChargedSheetGaugeAndNeutralDipoleEnergy)
     const double neutral = elecstate::pcc_2d_energy(moments, parameters);
     const double expected_neutral = 2.0 * ModuleBase::PI * 4.0 / 48.0;
     EXPECT_NEAR(neutral, expected_neutral, 1.0e-14);
-    cell.area = 0.0;
-    EXPECT_FALSE(elecstate::make_pcc_2d_parameters(cell, parameters, error));
-    EXPECT_DOUBLE_EQ(parameters.area, 6.0);
 }
 
 TEST(Pcc2d, NormalForceMatchesEnergyDerivativeAndHasNoTangentialComponent)
@@ -71,18 +66,17 @@ TEST(Pcc2d, NormalForceMatchesEnergyDerivativeAndHasNoTangentialComponent)
         ModuleBase::Vector3<double>(0.0, 0.2, 0.0),
         ModuleBase::Vector3<double>(0.0, -0.5, 0.0)};
     elecstate::ChargeMoments moments;
-    std::string error;
-    ASSERT_TRUE(elecstate::charge_moments(charges, positions, 2, 1.0, moments, error));
+    moments = elecstate::charge_moments(charges, positions, 2, 1.0);
     const double coordinate = positions[0].y;
     const ModuleBase::Vector3<double> force = elecstate::pcc_2d_force(moments, charges[0], coordinate, normal, parameters);
     EXPECT_DOUBLE_EQ(force.x, 0.0);
     EXPECT_DOUBLE_EQ(force.z, 0.0);
     const double step = 1.0e-5;
     positions[0].y = coordinate + step;
-    ASSERT_TRUE(elecstate::charge_moments(charges, positions, 2, 1.0, moments, error));
+    moments = elecstate::charge_moments(charges, positions, 2, 1.0);
     const double plus = elecstate::pcc_2d_energy(moments, parameters);
     positions[0].y = coordinate - step;
-    ASSERT_TRUE(elecstate::charge_moments(charges, positions, 2, 1.0, moments, error));
+    moments = elecstate::charge_moments(charges, positions, 2, 1.0);
     const double minus = elecstate::pcc_2d_energy(moments, parameters);
     const double numerical_force = -(plus - minus) / (2.0 * step);
     EXPECT_NEAR(force.y, numerical_force, 1.0e-10);

@@ -81,7 +81,6 @@ class PotPcc : public PotBase
     std::vector<double> ionic_charges_;
     std::vector<double> electron_potential_;
     double energy_rydberg_ = 0.0;
-    bool result_valid_ = false;
 };
 
 } // namespace elecstate

@@ -10,29 +10,18 @@ namespace elecstate
 
 bool make_pcc_0d_parameters(const unitcell::OrthogonalCell& cell,
                             const double relative_tolerance,
-                            Pcc0dParameters& parameters,
-                            std::string& error)
+                            Pcc0dParameters& parameters)
 {
-    error.clear();
-    if (!std::isfinite(relative_tolerance) || relative_tolerance <= 0.0)
-    {
-        error = "PCC 0D requires a positive finite geometry tolerance";
-        return false;
-    }
     const double length = cell.lengths[0];
-    for (int axis = 0; axis < 3; ++axis)
+    parameters.length = length;
+    for (int axis = 1; axis < 3; ++axis)
     {
-        const double edge = cell.lengths[axis];
-        const double difference = edge - length;
-        if (!std::isfinite(edge) || edge <= 0.0 || std::abs(difference) > relative_tolerance * length)
+        const double difference = cell.lengths[axis] - length;
+        if (std::abs(difference) > relative_tolerance * length)
         {
-            error = "PCC 0D requires an equal-edge cubic cell";
             return false;
         }
     }
-    Pcc0dParameters candidate;
-    candidate.length = length;
-    parameters = candidate;
     return true;
 }
 

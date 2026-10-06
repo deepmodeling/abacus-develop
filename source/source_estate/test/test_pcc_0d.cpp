@@ -57,8 +57,8 @@ class Pcc0dTest : public testing::Test
         const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
                                          0.0, 1.0, 0.0,
                                          0.0, 0.0, 1.0);
-        ASSERT_TRUE(unitcell::make_orthogonal_cell(lattice, 10.0, 1.0e-10, cell, error));
-        ASSERT_TRUE(elecstate::make_pcc_0d_parameters(cell, 1.0e-10, parameters, error));
+        ASSERT_TRUE(unitcell::make_orthogonal_cell(lattice, 10.0, 1.0e-10, cell));
+        ASSERT_TRUE(elecstate::make_pcc_0d_parameters(cell, 1.0e-10, parameters));
         moments.charge = 1.2;
         moments.dipole = ModuleBase::Vector3<double>(0.1, -0.2, 0.3);
         moments.second_moment = 0.8;
@@ -67,7 +67,6 @@ class Pcc0dTest : public testing::Test
     unitcell::OrthogonalCell cell;
     elecstate::Pcc0dParameters parameters;
     elecstate::ChargeMoments moments;
-    std::string error;
 };
 } // namespace
 
@@ -77,11 +76,8 @@ TEST_F(Pcc0dTest, SeparatesCubicRestrictionFromOrthogonalGeometry)
     const ModuleBase::Matrix3 rectangular(1.0, 0.0, 0.0,
                                          0.0, 2.0, 0.0,
                                          0.0, 0.0, 1.0);
-    ASSERT_TRUE(unitcell::make_orthogonal_cell(rectangular, 10.0, 1.0e-10, cell, error));
-    EXPECT_FALSE(elecstate::make_pcc_0d_parameters(cell, 1.0e-10, parameters, error));
-    EXPECT_DOUBLE_EQ(parameters.length, 10.0);
-    EXPECT_FALSE(error.empty());
-    EXPECT_FALSE(elecstate::make_pcc_0d_parameters(cell, 0.0, parameters, error));
+    ASSERT_TRUE(unitcell::make_orthogonal_cell(rectangular, 10.0, 1.0e-10, cell));
+    EXPECT_FALSE(elecstate::make_pcc_0d_parameters(cell, 1.0e-10, parameters));
 }
 
 TEST_F(Pcc0dTest, MatchesAnalyticalMonopoleAndNeutralDipoleEnergy)
@@ -143,7 +139,7 @@ TEST_F(Pcc0dTest, IonicForceMatchesTotalEnergyFiniteDifferences)
     ModuleBase::Vector3<double> positions[2] = {
         ModuleBase::Vector3<double>(0.2, -0.3, 0.4),
         ModuleBase::Vector3<double>(-0.5, 0.6, -0.7)};
-    ASSERT_TRUE(elecstate::charge_moments(charges, positions, 2, 1.0, moments, error));
+    moments = elecstate::charge_moments(charges, positions, 2, 1.0);
     const ModuleBase::Vector3<double> force = elecstate::pcc_0d_force(moments, charges[0], positions[0], parameters);
     const double expected[3] = {force.x, force.y, force.z};
     const double step = 1.0e-5;
@@ -152,10 +148,10 @@ TEST_F(Pcc0dTest, IonicForceMatchesTotalEnergyFiniteDifferences)
         double* component[3] = {&positions[0].x, &positions[0].y, &positions[0].z};
         const double original = *component[axis];
         *component[axis] = original + step;
-        ASSERT_TRUE(elecstate::charge_moments(charges, positions, 2, 1.0, moments, error));
+        moments = elecstate::charge_moments(charges, positions, 2, 1.0);
         const double plus_energy = elecstate::pcc_0d_energy(moments, parameters);
         *component[axis] = original - step;
-        ASSERT_TRUE(elecstate::charge_moments(charges, positions, 2, 1.0, moments, error));
+        moments = elecstate::charge_moments(charges, positions, 2, 1.0);
         const double minus_energy = elecstate::pcc_0d_energy(moments, parameters);
         *component[axis] = original;
         const double numerical_force = -(plus_energy - minus_energy) / (2.0 * step);
@@ -189,12 +185,12 @@ TEST_F(Pcc0dTest, EnergyIsIndependentOfMultipoleOrigin)
     ModuleBase::Vector3<double> positions[2] = {
         ModuleBase::Vector3<double>(0.3, -0.2, 0.1),
         ModuleBase::Vector3<double>(-0.5, 0.6, -0.7)};
-    ASSERT_TRUE(elecstate::charge_moments(charges, positions, 2, 1.0, moments, error));
+    moments = elecstate::charge_moments(charges, positions, 2, 1.0);
     const double original_energy = elecstate::pcc_0d_energy(moments, parameters);
     const ModuleBase::Vector3<double> shift(0.4, -0.3, 0.2);
     positions[0] -= shift;
     positions[1] -= shift;
-    ASSERT_TRUE(elecstate::charge_moments(charges, positions, 2, 1.0, moments, error));
+    moments = elecstate::charge_moments(charges, positions, 2, 1.0);
     const double shifted_energy = elecstate::pcc_0d_energy(moments, parameters);
     EXPECT_NEAR(original_energy, shifted_energy, 1.0e-14);
 }

@@ -17,12 +17,11 @@ struct Pcc0dParameters
     double madelung = 2.837297479480619;
 };
 
-/// Check the equal-edge constraint after constructing an OrthogonalCell.
-/// Leave parameters unchanged on failure. No cell geometry is stored here.
+/// Return false unless the OrthogonalCell has equal edges within
+/// relative_tolerance. No cell geometry is stored here.
 bool make_pcc_0d_parameters(const unitcell::OrthogonalCell& cell,
                             double relative_tolerance,
-                            Pcc0dParameters& parameters,
-                            std::string& error);
+                            Pcc0dParameters& parameters);
 
 /// Numerical kernels require validated parameters and moments about a common
 /// origin. Coordinates are relative to that origin. Energies/potentials are in

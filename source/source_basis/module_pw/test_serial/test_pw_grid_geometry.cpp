@@ -17,8 +17,7 @@ TEST(PwGridGeometry, UsesGlobalSlabOffsetAndRotatedLattice)
                                      -2.0, 0.0, 0.0,
                                      0.0, 0.0, 3.0);
     std::vector<ModuleBase::Vector3<double>> positions;
-    std::string error;
-    ASSERT_TRUE(ModulePW::grid_positions(basis, lattice, 10.0, positions, error));
+    ModulePW::grid_positions(basis, lattice, 10.0, positions);
     ASSERT_EQ(positions.size(), 8u);
     EXPECT_DOUBLE_EQ(positions[0].x, 0.0);
     EXPECT_DOUBLE_EQ(positions[0].y, 0.0);
@@ -28,7 +27,7 @@ TEST(PwGridGeometry, UsesGlobalSlabOffsetAndRotatedLattice)
     EXPECT_DOUBLE_EQ(positions[7].z, 22.5);
 }
 
-TEST(PwGridGeometry, PermitsEmptySlabsAndRejectsInvalidOffsets)
+TEST(PwGridGeometry, PermitsEmptySlabs)
 {
     ModulePW::PW_Basis basis("cpu", "double");
     basis.nx = 2;
@@ -39,12 +38,6 @@ TEST(PwGridGeometry, PermitsEmptySlabsAndRejectsInvalidOffsets)
     basis.nrxx = 0;
     const ModuleBase::Matrix3 lattice;
     std::vector<ModuleBase::Vector3<double>> positions;
-    std::string error;
-    ASSERT_TRUE(ModulePW::grid_positions(basis, lattice, 10.0, positions, error));
+    ModulePW::grid_positions(basis, lattice, 10.0, positions);
     EXPECT_TRUE(positions.empty());
-    basis.nplane = 1;
-    basis.nrxx = 4;
-    EXPECT_FALSE(ModulePW::grid_positions(basis, lattice, 10.0, positions, error));
-    EXPECT_TRUE(positions.empty());
-    EXPECT_FALSE(error.empty());
 }

@@ -3,8 +3,6 @@
 
 #include "source_base/vector3.h"
 
-#include <string>
-
 namespace elecstate
 {
 
@@ -18,13 +16,11 @@ struct ChargeMoments
 
 /// Local moments only; no MPI or cell/model dependencies. Use weight=1 for
 /// point charges and the volume element for a signed grid density.
-/// Zero samples are permitted. On failure, leave moments unchanged and set error.
-bool charge_moments(const double* charges,
-                     const ModuleBase::Vector3<double>* relative_positions,
-                     int count,
-                     double weight,
-                     ChargeMoments& moments,
-                     std::string& error);
+/// Zero samples are permitted.
+ChargeMoments charge_moments(const double* charges,
+                             const ModuleBase::Vector3<double>* relative_positions,
+                             int count,
+                             double weight);
 
 ChargeMoments add_charge_moments(const ChargeMoments& left, const ChargeMoments& right);
 

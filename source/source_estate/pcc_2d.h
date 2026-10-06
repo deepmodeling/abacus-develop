@@ -16,9 +16,7 @@ struct Pcc2dParameters
     double length = 0.0; ///< Normal period in Bohr
 };
 
-bool make_pcc_2d_parameters(const unitcell::SlabCell& cell,
-                            Pcc2dParameters& parameters,
-                            std::string& error);
+Pcc2dParameters make_pcc_2d_parameters(const unitcell::SlabCell& cell);
 
 /// Hartree kernels. Parameters must be validated; moments use normal-projected
 /// positions r = normal * u, so second_moment is the normal second moment.
