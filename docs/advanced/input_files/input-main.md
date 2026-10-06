@@ -4711,7 +4711,7 @@
 
 - **Type**: Boolean
 - **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==tddft*
-- **Description**: Write wavefunction and density electron counts, their changes from the initial state, and orthogonality errors to the running log after each electronic evolution step. Orthogonality errors are omitted when `td_orthonormal=none`.
+- **Description**: Write wavefunction and density electron counts, their changes from the initial state, and orthogonality errors to the running log after each electronic evolution step. Electron counts describe the end-of-step state; orthogonality errors before and after correction are separate maxima over all SCF iterations and k points within that step. Orthogonality errors are omitted when `td_orthonormal=none`.
 
   > Note: Enabling this output adds density integration and diagnostic communication.
 - **Default**: false

@@ -308,8 +308,8 @@ void ESolver_KS_PW_TDDFT<T, Device>::report_orth(const UnitCell& ucell, int iste
         }
         else
         {
-            ModuleBase::GlobalFunc::OUT(log_, "orth_before", maxima[0]);
-            ModuleBase::GlobalFunc::OUT(log_, "orth_after", maxima[1]);
+            ModuleBase::GlobalFunc::OUT(log_, "orth_before_step_max", maxima[0]);
+            ModuleBase::GlobalFunc::OUT(log_, "orth_after_step_max", maxima[1]);
         }
     }
     log_.flags(saved_flags);

@@ -220,7 +220,7 @@ void ReadInput::item_rt_tddft()
         item.annotation = "output PW real-time conservation diagnostics";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Boolean";
-        item.description = R"(Write wavefunction and density electron counts, their changes from the initial state, and orthogonality errors to the running log after each electronic evolution step. Orthogonality errors are omitted when `td_orthonormal=none`.
+        item.description = R"(Write wavefunction and density electron counts, their changes from the initial state, and orthogonality errors to the running log after each electronic evolution step. Electron counts describe the end-of-step state; orthogonality errors before and after correction are separate maxima over all SCF iterations and k points within that step. Orthogonality errors are omitted when `td_orthonormal=none`.
 
 [NOTE] Enabling this output adds density integration and diagnostic communication.)";
         item.default_value = "false";

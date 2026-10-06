@@ -38,7 +38,10 @@ struct PWLinearOptions
 };
 
 LinearMethod parse_linear_method(const std::string& name);
-/** @brief Optional step maxima, replicated within each k-point pool. */
+/** @brief Independent maxima over all SCF iterations and local k points in one electronic step.
+ * Values are replicated within each pool and reduced across pools for step-end output.
+ * The before and after maxima need not come from the same correction.
+ */
 struct TDOrthStats
 {
     double before = 0.0;
