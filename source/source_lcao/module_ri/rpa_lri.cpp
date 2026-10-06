@@ -25,7 +25,9 @@
 #include <vector>
 
 template <typename T, typename Tdata>
-RPA_LRI<T, Tdata>::~RPA_LRI() = default;
+RPA_LRI<T, Tdata>::~RPA_LRI()
+{
+}
 
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
