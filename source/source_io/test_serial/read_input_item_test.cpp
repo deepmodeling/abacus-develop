@@ -1828,6 +1828,19 @@ TEST_F(InputTest, Item_test2)
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_librpa_ver, 1);
 
+        TestParameters::input(param).symmetry = "-1";
+        it->second.check_value(it->second, param);
+        for (const std::string symmetry : {"0", "1"})
+        {
+            TestParameters::input(param).symmetry = symmetry;
+            testing::internal::CaptureStdout();
+            EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+            output = testing::internal::GetCapturedStdout();
+            EXPECT_THAT(output, testing::HasSubstr("out_librpa_ver=1 requires symmetry=-1"));
+        }
+        TestParameters::input(param).out_librpa_ver = 0;
+        it->second.check_value(it->second, param);
+
         TestParameters::input(param).out_librpa_ver = 2;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");

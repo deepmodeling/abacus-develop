@@ -1,12 +1,27 @@
-    Vs_period.swap(tmp);
-    Cs.clear();
-    Cs.swap(tmp);
+#include "exx_lri.h"
+#include "rpa_lri.h"
+#include "rpa_lri_detail.h"
+#include "source_base/global_function.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
+#include "source_estate/elecstate_lcao.h"
+#include "source_io/module_parameter/input_parameter.h"
+#include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 
-    exx_full_coulomb.reset();
-    RpaLriDetail::trim_malloc_cache();
-
-    ModuleBase::timer::end("RPA_LRI", "output_ewald_coulomb");
-}
+#include <algorithm>
+#include <cmath>
+#include <complex>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals& orb, const K_Vectors& kv)
@@ -112,10 +127,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     this->Cs_period = exx_cut_coulomb->exx_lri.post_2D.set_tensors_map2(this->Cs_period);
     if (this->runtime.input.out_librpa_ver == 1)
     {
-        this->out_librpa_basis_v1(ucell,
-                                  exx_cut_coulomb.get(),
-                                  "aux_basis.txt",
-                                  "basis_map.txt");
+        this->out_librpa_basis_v1(ucell, exx_cut_coulomb.get(), "aux_basis.txt", "basis_map.txt");
         this->out_Cs_v1(ucell, this->Cs_period, "Cs_");
     }
     else
@@ -156,11 +168,13 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> overlap_abfs_abf;
 
     // index of smaller abfs
-    const ModuleBase::Element_Basis_Index::Range range_abfs_s = ModuleBase::Element_Basis_Index::construct_range(abfs_s);
+    const ModuleBase::Element_Basis_Index::Range range_abfs_s
+        = ModuleBase::Element_Basis_Index::construct_range(abfs_s);
     const ModuleBase::Element_Basis_Index::IndexLNM index_abfs_s
         = ModuleBase::Element_Basis_Index::construct_index(range_abfs_s);
     // index of larger abfs
-    const ModuleBase::Element_Basis_Index::Range range_abfs = ModuleBase::Element_Basis_Index::construct_range(this->abfs);
+    const ModuleBase::Element_Basis_Index::Range range_abfs
+        = ModuleBase::Element_Basis_Index::construct_range(this->abfs);
     const ModuleBase::Element_Basis_Index::IndexLNM index_abfs
         = ModuleBase::Element_Basis_Index::construct_index(range_abfs);
 
@@ -210,8 +224,7 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
                 const size_t IB = ucell.iat2ia[B];
                 const auto& tauB = ucell.atoms[TB].tau[IB];
 
-                const ModuleBase::Vector3<double> tauB_shift
-                    = tauB + (RI_Util::array3_to_Vector3(R) * ucell.latvec);
+                const ModuleBase::Vector3<double> tauB_shift = tauB + (RI_Util::array3_to_Vector3(R) * ucell.latvec);
                 const ModuleBase::Vector3<double> tau_delta = tauB_shift - tauA;
                 static const ModuleBase::Vector3<double> tau0(0.0, 0.0, 0.0);
 
@@ -288,163 +301,128 @@ void RPA_LRI<T, Tdata>::cal_abfs_overlap(const UnitCell& ucell, const LCAO_Orbit
 
     if (this->runtime.input.out_librpa_ver == 1)
     {
-        out_abfs_overlap_v1(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ,
-                            "sinvS_", index_abfs_s, index_abfs);
+        out_abfs_overlap_v1(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ, "sinvS_", index_abfs_s, index_abfs);
     }
     else
     {
-        out_abfs_overlap(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ,
-                         "shrink_sinvS_", index_abfs_s, index_abfs);
+        out_abfs_overlap(ucell, overlap_abfs_abfs_IJ, overlap_abfs_abf_IJ, "shrink_sinvS_", index_abfs_s, index_abfs);
     }
 }
 
 template <typename T, typename Tdata>
-void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
-                                         std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& overlap_abfs_abfs,
-                                         std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& overlap_abfs_abf,
-                                         std::string filename,
-                                         const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s,
-                                         const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs)
+void RPA_LRI<T, Tdata>::inverse_olp(const UnitCell& ucell,
+                                    std::map<TA, std::map<TAq, RI::Tensor<std::complex<double>>>>& overlap_abfs_abfs,
+                                    const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s)
 {
-    ModuleBase::TITLE("RPA_LRI", "out_abfs_overlap");
-    ModuleBase::timer::start("RPA_LRI", "out_abfs_overlap");
-    const double threshold = 1e-15;
-    const auto format = std::scientific;
-    int prec = 15;
-
-    int all_mu_s = 0;
-    int all_mu = 0;
+    ModuleBase::TITLE("RPA_LRI", "inverse_olp");
+    ModuleBase::timer::start("RPA_LRI", "inverse_olp");
+    const int nks_tot = this->runtime.input.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
+    size_t all_mu_s = 0;
     std::vector<int> mu_s_shift(ucell.nat);
-    std::vector<int> mu_shift(ucell.nat);
     for (int I = 0; I != ucell.nat; I++)
     {
         mu_s_shift[I] = all_mu_s;
-        mu_shift[I] = all_mu;
         all_mu_s += index_abfs_s[ucell.iat2it[I]].count_size;
-        all_mu += index_abfs[ucell.iat2it[I]].count_size;
     }
-    const int nks_tot = this->runtime.input.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
-    std::stringstream ss;
-    ss << filename << (this->runtime.rank + 1) << ".txt";
-
-    std::ofstream ofs;
-    ofs.open(this->runtime.input.rpa_outdir + ss.str().c_str(), std::ios::out);
-
-    ofs << nks_tot << std::endl;
-
-    // Fourier of ss(R->k), s(R->k)
-    std::map<TA, std::map<TAq, RI::Tensor<std::complex<double>>>> olp_q_ss;
-    std::map<TA, std::map<TAq, RI::Tensor<std::complex<double>>>> olp_q_s;
-    for (int ik = 0; ik != nks_tot; ik++)
+    RI::Tensor<std::complex<double>> olp_all = RI::Tensor<std::complex<double>>({all_mu_s, all_mu_s});
+    for (int ik = 0; ik < nks_tot; ik++)
     {
         for (auto& Ip: overlap_abfs_abfs)
         {
             auto I = Ip.first;
+            size_t mu_s_I = index_abfs_s[ucell.iat2it[I]].count_size;
             for (auto& JPp: Ip.second)
             {
                 auto J = JPp.first.first;
-                auto R = JPp.first.second;
-                auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
-                RI::Tensor<std::complex<double>> tmp_olp_ss
-                    = RI::Global_Func::convert<std::complex<double>>(JPp.second);
-                RI::Tensor<std::complex<double>> tmp_olp_s
-                    = RI::Global_Func::convert<std::complex<double>>(overlap_abfs_abf[I][{J, R}]);
-                if (olp_q_ss[I][{J, q}].empty())
+                auto q = JPp.first.second;
+                if (q != RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]))
+                    continue;
+                // std::cout << "IJ: " << I << "," << J << std::endl;
+                auto mu_s_J = index_abfs_s[ucell.iat2it[J]].count_size;
+                for (int ir = 0; ir < mu_s_I; ir++)
                 {
-                    olp_q_ss[I][{J, q}] = RI::Tensor<std::complex<double>>({tmp_olp_ss.shape[0], tmp_olp_ss.shape[1]});
-                    olp_q_s[I][{J, q}] = RI::Tensor<std::complex<double>>({tmp_olp_s.shape[0], tmp_olp_s.shape[1]});
-                }
-                const double arg = 1 * (p_kv->kvec_c[ik] * (RI_Util::array3_to_Vector3(R) * ucell.latvec))
-                                   * ModuleBase::TWO_PI; // latvec
-                const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
-
-                olp_q_ss[I][{J, q}] = olp_q_ss[I][{J, q}] + tmp_olp_ss * kphase;
-                olp_q_s[I][{J, q}] = olp_q_s[I][{J, q}] + tmp_olp_s * kphase;
-            }
-        }
-    }
-    // for multi-mpi
-    for (int I = 0; I != ucell.nat; I++)
-    {
-        for (int J = 0; J != ucell.nat; J++)
-        {
-            for (int ik = 0; ik != nks_tot; ik++)
-            {
-                auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
-                if (olp_q_ss[I][{J, q}].empty())
-                {
-                    auto mu = index_abfs_s[ucell.iat2it[I]].count_size;
-                    auto nu = index_abfs_s[ucell.iat2it[J]].count_size;
-                    olp_q_ss[I][{J, q}] = RI::Tensor<std::complex<double>>({mu, nu});
-                }
-                if (olp_q_s[I][{J, q}].empty())
-                {
-                    auto mu = index_abfs_s[ucell.iat2it[I]].count_size;
-                    auto nu = index_abfs[ucell.iat2it[J]].count_size;
-                    olp_q_s[I][{J, q}] = RI::Tensor<std::complex<double>>({mu, nu});
-                }
-                for (int ir = 0; ir < olp_q_ss[I][{J, q}].shape[0]; ir++)
-                {
-                    for (int ic = 0; ic < olp_q_ss[I][{J, q}].shape[1]; ic++)
+                    for (int ic = 0; ic < mu_s_J; ic++)
                     {
-                        Parallel_Reduce::reduce_all<std::complex<double>>(olp_q_ss[I][{J, q}](ir, ic));
-                    }
-                    for (int ic = 0; ic < olp_q_s[I][{J, q}].shape[1]; ic++)
-                    {
-                        Parallel_Reduce::reduce_all<std::complex<double>>(olp_q_s[I][{J, q}](ir, ic));
+                        olp_all(mu_s_shift[I] + ir, mu_s_shift[J] + ic) = JPp.second(ir, ic);
                     }
                 }
             }
         }
-    }
+        // for multi-mpi
+        // for (int ir = 0; ir < all_mu_s; ir++)
+        // {
+        //     for (int ic = 0; ic < all_mu_s; ic++)
+        //     {
+        //         Parallel_Reduce::reduce_all<std::complex<double>>(olp_all(ir, ic));
+        //     }
+        // }
 
-    // out_ri_tensor("olp_ss.txt", olp_q_ss, 0.);
-    // Inverse of overlap(q)
-    inverse_olp(ucell, olp_q_ss, index_abfs_s);
-    // out_ri_tensor("olp_ss_inv.txt", olp_q_ss, 0.);
-    // out_ri_tensor("olp_s.txt", olp_q_s, 0.);
-    for (auto& Ip: overlap_abfs_abf)
-    {
-        auto I = Ip.first;
-        size_t mu_num_s = index_abfs_s[ucell.iat2it[I]].count_size;
-        size_t mu_num = index_abfs[ucell.iat2it[I]].count_size;
-
-        for (int ik = 0; ik != nks_tot; ik++)
+        // check Hermitian
+        for (int ir = 0; ir < all_mu_s; ir++)
         {
-            std::map<size_t, RI::Tensor<std::complex<double>>> sinvS;
+            for (int ic = ir; ic < all_mu_s; ic++)
+            {
+                auto delta = std::abs(olp_all(ir, ic) - std::conj(olp_all(ic, ir)));
+                if (delta > 1e-10)
+                {
+                    std::cout << "Warning: olp_all is not Hermitian!" << std::endl;
+                    std::cout << "ik,ir,ic: " << ik << "," << ir << "," << ic << std::endl;
+                    std::cout << "delta(ir, ic): " << delta << std::endl;
+                }
+            }
+        }
+        // out_pure_ri_tensor("olp_all.txt", olp_all, 0.);
+        auto olp_inv = LRI_CV_Tools::cal_I(olp_all,
+                                           Inverse_Matrix<std::complex<double>>::Method::syev,
+                                           this->info.shrink_LU_inv_thr);
+        for (int ir = 0; ir < all_mu_s; ir++)
+        {
+            for (int ic = ir; ic < all_mu_s; ic++)
+            {
+                olp_inv(ic, ir) = std::conj(olp_inv(ir, ic));
+            }
+        }
+        // out_pure_ri_tensor("olp_inv.txt", olp_inv, 0.);
+        for (auto& Ip: overlap_abfs_abfs)
+        {
+            auto I = Ip.first;
+            size_t mu_s_I = index_abfs_s[ucell.iat2it[I]].count_size;
             for (auto& JPp: Ip.second)
             {
+                auto q = JPp.first.second;
+                if (q != RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]))
+                    continue;
                 auto J = JPp.first.first;
-                auto R = JPp.first.second;
-                if (sinvS[J].empty())
+                auto mu_s_J = index_abfs_s[ucell.iat2it[J]].count_size;
+
+                for (int ir = 0; ir < mu_s_I; ir++)
                 {
-                    sinvS[J] = RI::Tensor<std::complex<double>>(
-                        {overlap_abfs_abfs[I][{J, R}].shape[0], overlap_abfs_abf[I][{J, R}].shape[1]});
+                    for (int ic = 0; ic < mu_s_J; ic++)
+                        JPp.second(ir, ic) = olp_inv(mu_s_shift[I] + ir, mu_s_shift[J] + ic);
                 }
             }
-            for (const auto& pair: sinvS)
-            {
-                auto J = pair.first;
-                auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
-                for (int K = 0; K != ucell.nat; K++)
-                {
-                    sinvS[J] += olp_q_ss.at(I).at({K, q}) * olp_q_s.at(K).at({J, q});
-                }
-            }
-            for (auto& iJU: sinvS)
-            {
-                auto iJ = iJU.first;
-                auto& vq_J = iJU.second;
-                size_t nu_num = index_abfs[ucell.iat2it[iJ]].count_size;
-                ofs << all_mu_s << "   " << all_mu << "   " << mu_s_shift[I] + 1 << "   " << mu_s_shift[I] + mu_num_s
-                    << "  " << mu_shift[iJ] + 1 << "   " << mu_shift[iJ] + nu_num << std::endl;
-                ofs << ik + 1 << "  " << p_kv->wk[ik] / 2.0 * this->runtime.input.nspin << std::endl;
-                for (int i = 0; i != vq_J.data->size(); i++)
-                {
-                    // ofs << std::setw(25) << std::fixed << std::setprecision(15) << (*vq_J.data)[i].real()
-                    //     << std::setw(25) << std::fixed << std::setprecision(15) << (*vq_J.data)[i].imag() <<
-                    //     std::endl;
-                    // if (fabs((*vq_J.data)[i].real()) > threshold || fabs((*vq_J.data)[i].imag()) > threshold)
-                    ofs << std::showpoint << format << std::setprecision(prec) << (*vq_J.data)[i].real() << " "
-                        << std::showpoint << format << std::setprecision(prec) << (*vq_J.data)[i].imag() << "\n";
-                    // else
+        }
+    }
+    ModuleBase::timer::end("RPA_LRI", "inverse_olp");
+}
+
+template void RPA_LRI<double, double>::cal_large_Cs(const UnitCell& ucell,
+                                                    const LCAO_Orbitals& orb,
+                                                    const K_Vectors& kv);
+template void RPA_LRI<std::complex<double>, double>::cal_large_Cs(const UnitCell& ucell,
+                                                                  const LCAO_Orbitals& orb,
+                                                                  const K_Vectors& kv);
+template void RPA_LRI<double, double>::cal_abfs_overlap(const UnitCell& ucell,
+                                                        const LCAO_Orbitals& orb,
+                                                        const K_Vectors& kv);
+template void RPA_LRI<std::complex<double>, double>::cal_abfs_overlap(const UnitCell& ucell,
+                                                                      const LCAO_Orbitals& orb,
+                                                                      const K_Vectors& kv);
+template void RPA_LRI<double, double>::inverse_olp(
+    const UnitCell& ucell,
+    std::map<int, std::map<std::pair<int, std::array<double, 3>>, RI::Tensor<std::complex<double>>>>& overlap_abfs_abfs,
+    const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s);
+template void RPA_LRI<std::complex<double>, double>::inverse_olp(
+    const UnitCell& ucell,
+    std::map<int, std::map<std::pair<int, std::array<double, 3>>, RI::Tensor<std::complex<double>>>>& overlap_abfs_abfs,
+    const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s);

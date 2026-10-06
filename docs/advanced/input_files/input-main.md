@@ -2315,7 +2315,7 @@
 
 - **Type**: Boolean
 - **Availability**: *[`basis_type`](#basis_type) in [lcao, lcao_in_pw]*
-- **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in Kohn-Sham orbital representation: for each k point into files in the directory OUT.i_nao.txt, where {suffix}/vxc_out.dat. If EXX is calculated, the local and EXX part of band energy will also be printed in OUT.{suffix}/vxc_exx_out.dat, respectively. All the vxc_out.dat files contains 3 integers (nk, nspin, nband) followed by nk*nspin*nband lines of energy Hartree and eV.
+- **Description**: Write exchange-correlation matrices in the Kohn-Sham orbital basis and their diagonal expectation values. The diagonal energies are saved in OUT.${suffix}/vxc.txt. When EXX is calculated, its local and EXX contributions are also saved as vxc_local.txt and vxc_exx.txt in the same directory. Each energy file begins with nk, nspin, and nbands, followed by nk*nspin*nbands rows of energies in Hartree and eV.
 
   > Note: In the 3.10-LTS version, the file name is k-$k-Vxc and so on.
 - **Default**: False
@@ -2448,7 +2448,7 @@
 
 - **Type**: Integer
 - **Availability**: *[`basis_type`](#basis_type)==lcao*
-- **Description**: Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output.
+- **Description**: Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 requires symmetry=-1 (the full k-point grid).
 - **Default**: 0
 
 ### out_pchg

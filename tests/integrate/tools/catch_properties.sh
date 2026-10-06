@@ -400,8 +400,8 @@ if ! test -z "$has_xc" && [ "$has_xc" == 1 ] && [ "${LIBRPA_PRODUCER_CONTRACT:-0
 			xcref=vxck2_nao.txt.ref
 			xccal=OUT.autotest/vxck2_nao.txt
 	fi
-	oeref=vxc_out.ref
-	oecal=OUT.autotest/vxc_out.dat
+	oeref=vxc.ref
+	oecal=OUT.autotest/vxc.txt
 	python3 $COMPARE_SCRIPT $xcref $xccal 4
 	echo "CompareVXC_pass $?" >>$1
 	python3 $COMPARE_SCRIPT $oeref $oecal 5

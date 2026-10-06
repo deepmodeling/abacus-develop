@@ -143,6 +143,8 @@ template <typename T, typename Tdata> class RPA_LRI
     Tdata Erpa;
 
   private:
+    void out_eigen_vector_v1(const Parallel_Orbitals& parav, const psi::Psi<T>& psi);
+    void out_eigen_vector_legacy(const Parallel_Orbitals& parav, const psi::Psi<T>& psi);
     Conv_Coulomb_Pot_K::Coulomb_Method select_coulomb_basis_method_(Exx_LRI<double>* exx_lri) const;
     std::vector<int> collect_atom_naux_(const UnitCell& ucell, Exx_LRI<double>* exx_lri) const;
 

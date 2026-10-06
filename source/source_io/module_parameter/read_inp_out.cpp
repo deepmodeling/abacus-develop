@@ -1215,7 +1215,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output exchange-correlation matrix in KS-orbital representation";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to print the upper triangular part of the exchange-correlation matrices in Kohn-Sham orbital representation: for each k point into files in the directory OUT.i_nao.txt, where {suffix}/vxc_out.dat. If EXX is calculated, the local and EXX part of band energy will also be printed in OUT.{suffix}/vxc_exx_out.dat, respectively. All the vxc_out.dat files contains 3 integers (nk, nspin, nband) followed by nk*nspin*nband lines of energy Hartree and eV."
+        item.description = "Write exchange-correlation matrices in the Kohn-Sham orbital basis and their diagonal expectation values. The diagonal energies are saved in OUT.${suffix}/vxc.txt. When EXX is calculated, its local and EXX contributions are also saved as vxc_local.txt and vxc_exx.txt in the same directory. Each energy file begins with nk, nspin, and nbands, followed by nk*nspin*nbands rows of energies in Hartree and eV."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is k-$k-Vxc and so on.";
         item.default_value = "False";
         item.unit = "Ry";
@@ -1509,7 +1509,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "LibRPA output reader version";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output.";
+        item.description = "Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 requires symmetry=-1 (the full k-point grid).";
         item.default_value = "0";
         item.unit = "";
         item.set_availability("basis_type==lcao");
@@ -1519,6 +1519,10 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
             if (value != 0 && value != 1)
             {
                 ModuleBase::WARNING_QUIT("INPUT", "out_librpa_ver must be 0 or 1.");
+            }
+            if (value == 1 && para.input.symmetry != "-1")
+            {
+                ModuleBase::WARNING_QUIT("INPUT", "out_librpa_ver=1 requires symmetry=-1.");
             }
         };
         this->add_item(item);

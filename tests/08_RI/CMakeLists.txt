@@ -21,4 +21,16 @@ else()
         COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 1 -j auto -f CASES_LIBRPA_PRODUCER.txt
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/08_RI
     )
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    add_test(
+        NAME 08_RI_librpa_wavefunction_checks
+        COMMAND ${Python3_EXECUTABLE} -m unittest discover
+                -s ${ABACUS_TEST_DIR}/integrate/tools -p test_librpa_wavefunctions.py
+    )
+    add_test(
+        NAME 08_RI_librpa_producer_mpi
+        COMMAND ${Python3_EXECUTABLE} ${ABACUS_TEST_DIR}/integrate/tools/run_librpa_mpi.py
+                --abacus ${ABACUS_BIN_PATH} --cases ${ABACUS_TEST_DIR}/08_RI
+    )
+    set_tests_properties(08_RI_librpa_producer_mpi PROPERTIES PROCESSORS 2 TIMEOUT 900)
 endif()

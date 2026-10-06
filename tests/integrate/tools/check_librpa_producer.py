@@ -15,6 +15,8 @@ import re
 import struct
 from pathlib import Path
 
+from librpa_wavefunctions import check_ks_nao, check_velocity, read_ks_wfc
+
 
 class ProducerContractError(ValueError):
     """Raised when a producer output violates the declared contract."""
@@ -389,6 +391,10 @@ def _check_file(path, entry):
         _check_stru(path, entry.get("symmetry_rows"))
     elif kind == "wfc_nao":
         _check_wfc_nao(path)
+    elif kind == "ks_wfc_v1":
+        read_ks_wfc(path)
+    elif kind == "velocity":
+        check_velocity(path)
     elif kind == "band":
         lines = path.read_text().splitlines()
         if len(lines) < 5:
@@ -432,7 +438,19 @@ def check_manifest(root, manifest):
                 "{} matches {} files; expected {}".format(entry["pattern"], len(matches), expected_count)
             )
         for path in matches:
-            _check_file(path, entry)
+            try:
+                _check_file(path, entry)
+                if entry.get("kind") in ("ks_wfc_v1", "velocity"):
+                    dims = read_ks_wfc(path)[0] if entry["kind"] == "ks_wfc_v1" else check_velocity(path)
+                    band = output_root / "band_out.txt"
+                    if band.is_file():
+                        nk, nspin, nbands, nbasis = [int(line.split()[0]) for line in band.read_text().splitlines()[:4]]
+                        if dims != (nk, nspin, nbands, nbasis):
+                            raise ValueError("{} dimensions disagree with band_out.txt".format(path))
+                if entry.get("kind") == "ks_wfc_v1" and entry.get("nao_dir"):
+                    check_ks_nao(path, root / entry["nao_dir"], float(entry.get("abs_tol", 1.0e-7)))
+            except (ValueError, struct.error) as error:
+                raise ProducerContractError(str(error))
             if entry.get("reference"):
                 if reference_root is None:
                     raise ProducerContractError("reference requested without reference_dir")

@@ -1,3 +1,13 @@
 Check reader-v1 RPA producer output, including shrink LRI, Coulomb, and GW
-preprocessor input (`KPT.info`, `vxc_out.dat`, and text LCAO wavefunctions),
+preprocessor input (`KPT.info`, `vxc.txt`, and text LCAO wavefunctions),
 for a compact two-atom H `1x1x2` solid.
+
+Reader-v1 requires `symmetry=-1` until a full-to-irreducible mapping is
+implemented. The established `velocity_matrix.txt` protocol name is retained
+for both versions, including its exception to the new 15-character naming
+preference.
+
+The serial run compares stable producer references. The two-rank test checks
+rank-owned output and compares KS binary assembly with independent text
+wavefunctions from the same run, avoiding gauge-dependent historical data.
+It also injects root-only and non-root file-open failures to check MPI abort.

@@ -836,6 +836,19 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       gaussian_abfs.o\
       exx_lri_detail.o\
       rpa_lri.o\
+      rpa_lri_detail.o\
+      rpa_lri_mpi_layout.o\
+      rpa_lri_wfc_mpi.o\
+      rpa_lri_coulomb.o\
+      rpa_lri_coulomb_io.o\
+      rpa_lri_overlap.o\
+      rpa_lri_overlap_io.o\
+      rpa_lri_output.o\
+      rpa_lri_coeff_io.o\
+      rpa_lri_velocity.o\
+      rpa_lri_basis.o\
+      rpa_lri_eigenvector_v1.o\
+      rpa_lri_eigenvector.o\
       singular_value.o\
 
 OBJS_BSE=esolver_lr_lcao_bse.o\
