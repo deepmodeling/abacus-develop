@@ -23,7 +23,8 @@ bool make_pcc_2d_parameters(const unitcell::SlabCell& cell,
 /// Hartree kernels. Parameters must be validated; moments use normal-projected
 /// positions r = normal * u, so second_moment is the normal second moment.
 /// The open planar kernel is zero on the source plane; its periodic counterpart
-/// has zero mean. This gauge fixes the charged-slab constant to -pi*L/(3*A).
+/// has zero mean. This gauge fixes the charged-slab constant to -pi*L/(3*A);
+/// see M. J. Rutter, Electron. Struct. 3, 015002 (2021).
 double pcc_2d_potential(const ChargeMoments& moments,
                         double coordinate,
                         const ModuleBase::Vector3<double>& normal,

@@ -80,11 +80,6 @@ class Potential : public PotBase
 
     PotBase* get_pot_type(const std::string& pot_type);
 
-    /// PCC results belong to this electronic state's registered potential.
-    double pcc_energy_rydberg() const;
-    const std::vector<double>* pcc_electron_potential() const;
-    void add_pcc_force(const UnitCell& cell, ModuleBase::matrix& force) const;
-
     /**
      * @brief Inject the shared RT-TDDFT field state before potential setup.
      *
@@ -217,6 +212,12 @@ class Potential : public PotBase
     /// @return E_ML-EXX
     double get_ml_exx_energy() const;
 
+    /// Results of the registered point-counter-charge (PCC) component, used by
+    /// the energy, force and output stages; neutral values when PCC is off.
+    double pcc_energy_rydberg() const;
+    const std::vector<double>* pcc_electron_potential() const;
+    void add_pcc_force(const UnitCell& cell, ModuleBase::matrix& force) const;
+
   private:
     void cal_v_eff(const Charge* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff) override;
     void cal_fixed_v(double* vl_pseudo) override;
@@ -224,6 +225,9 @@ class Potential : public PotBase
     void interpolate_vrs();
 
     void allocate();
+
+    // the registered PCC component, or nullptr when PCC is off
+    const PotPcc* pcc_component() const;
 
     std::vector<double> v_eff_fixed;
     ModuleBase::matrix v_eff;
@@ -249,7 +253,6 @@ class Potential : public PotBase
     double vl_of_0 = 0.0;
 
     std::vector<PotBase*> components;
-    const PotPcc* pcc_component() const;
 
     const UnitCell* ucell_ = nullptr;
     const ModuleBase::matrix* vloc_ = nullptr;

@@ -5,8 +5,50 @@
 
 #include <gtest/gtest.h>
 
+#include <cmath>
+
 namespace
 {
+/// Hartree energy per cell of periodic Gaussian charges (width sigma) under the
+/// usual G = 0 exclusion. One charge at the origin, or a +q/-q pair separated
+/// by `separation` along z when `dipole_pair` is true.
+double periodic_gaussian_energy(const double length,
+                                const double sigma,
+                                const double charge,
+                                const double separation,
+                                const bool dipole_pair)
+{
+    const double step = 2.0 * ModuleBase::PI / length;
+    const int max_index = static_cast<int>(8.0 / (sigma * step)) + 1;
+    const double volume = length * length * length;
+    double sum = 0.0;
+    for (int i = -max_index; i <= max_index; ++i)
+    {
+        for (int j = -max_index; j <= max_index; ++j)
+        {
+            for (int k = -max_index; k <= max_index; ++k)
+            {
+                if (i == 0 && j == 0 && k == 0)
+                {
+                    continue;
+                }
+                const double gx = step * i;
+                const double gy = step * j;
+                const double gz = step * k;
+                const double g2 = gx * gx + gy * gy + gz * gz;
+                double structure = 1.0;
+                if (dipole_pair)
+                {
+                    const double phase = std::sin(0.5 * gz * separation);
+                    structure = 4.0 * phase * phase;
+                }
+                sum += charge * charge * structure * std::exp(-g2 * sigma * sigma) / g2;
+            }
+        }
+    }
+    return 2.0 * ModuleBase::PI * sum / volume;
+}
+
 class Pcc0dTest : public testing::Test
 {
   protected:
@@ -155,4 +197,59 @@ TEST_F(Pcc0dTest, EnergyIsIndependentOfMultipoleOrigin)
     ASSERT_TRUE(elecstate::charge_moments(charges, positions, 2, 1.0, moments, error));
     const double shifted_energy = elecstate::pcc_0d_energy(moments, parameters);
     EXPECT_NEAR(original_energy, shifted_energy, 1.0e-14);
+}
+
+// Physical check of the model: a charged Gaussian ion (H3O+-like) in cubic
+// cells of growing size. The periodic Hartree energy drifts as 1/L, while
+// periodic + PCC reproduces the isolated self-energy q^2 / (2 sigma sqrt(pi)).
+TEST_F(Pcc0dTest, RecoversIsolatedEnergyOfChargedGaussianForAnyCellSize)
+{
+    const double sigma = 1.0;
+    const double charge = 1.0;
+    const double isolated = charge * charge / (2.0 * sigma * std::sqrt(ModuleBase::PI));
+    const double lengths[3] = {16.0, 20.0, 24.0};
+    for (int index = 0; index < 3; ++index)
+    {
+        const double length = lengths[index];
+        parameters.length = length;
+        elecstate::ChargeMoments gaussian;
+        gaussian.charge = charge;
+        gaussian.second_moment = 3.0 * sigma * sigma * charge;
+        const double periodic = periodic_gaussian_energy(length, sigma, charge, 0.0, false);
+        const double correction = elecstate::pcc_0d_energy(gaussian, parameters);
+        const double periodic_error = std::abs(periodic - isolated);
+        EXPECT_GT(periodic_error, 1.0e-2);
+        EXPECT_NEAR(periodic + correction, isolated, 1.0e-10);
+    }
+}
+
+// Neutral polar molecule modelled as a +q/-q Gaussian pair. PCC removes the
+// leading 1/L^3 dipole interaction; the residual error comes from higher
+// multipoles and must be far smaller and decay faster than the uncorrected one.
+TEST_F(Pcc0dTest, RemovesDipoleImageInteractionOfNeutralGaussianPair)
+{
+    const double sigma = 1.0;
+    const double charge = 1.0;
+    const double separation = 2.0;
+    const double self_energy = charge * charge / (2.0 * sigma * std::sqrt(ModuleBase::PI));
+    const double attraction = charge * charge * std::erf(0.5 * separation / sigma) / separation;
+    const double isolated = 2.0 * self_energy - attraction;
+    elecstate::ChargeMoments pair;
+    pair.dipole.z = charge * separation;
+    const double lengths[2] = {16.0, 24.0};
+    double corrected_errors[2] = {0.0, 0.0};
+    for (int index = 0; index < 2; ++index)
+    {
+        const double length = lengths[index];
+        parameters.length = length;
+        const double periodic = periodic_gaussian_energy(length, sigma, charge, separation, true);
+        const double correction = elecstate::pcc_0d_energy(pair, parameters);
+        const double periodic_error = std::abs(periodic - isolated);
+        const double corrected_error = std::abs(periodic + correction - isolated);
+        EXPECT_LT(corrected_error, 0.05 * periodic_error);
+        corrected_errors[index] = corrected_error;
+    }
+    const double ratio = lengths[1] / lengths[0];
+    const double dipole_decay = std::pow(ratio, 3.0);
+    EXPECT_GT(corrected_errors[0] / corrected_errors[1], dipole_decay);
 }
