@@ -97,6 +97,9 @@ bool lowdin(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
 bool newton_schulz(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
 {
     ModuleBase::timer::start("Orthonormal", "newton_schulz");
+    constexpr double iteration_tol = 1e-12;
+    constexpr double max_deviation = 0.1;
+    constexpr int max_updates = 5;
     const std::vector<Wide> unit = identity(n);
     double bound = 0.0;
     for (int i = 0; i < n; ++i)
@@ -110,18 +113,18 @@ bool newton_schulz(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
     }
     bool valid = false;
     *c = unit;
-    if (bound <= 0.1)
+    if (bound <= max_deviation)
     {
-        for (int iteration = 0; iteration <= 5; ++iteration)
+        for (int iteration = 0; iteration <= max_updates; ++iteration)
         {
             const std::vector<Wide> square = multiply(*c, *c, n);
             std::vector<Wide> residual = multiply(g, square, n);
-            if (orth_error(residual, n) <= 1e-12)
+            if (orth_error(residual, n) <= iteration_tol)
             {
                 valid = true;
                 break;
             }
-            if (iteration == 5)
+            if (iteration == max_updates)
             {
                 break;
             }
