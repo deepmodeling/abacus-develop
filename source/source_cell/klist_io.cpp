@@ -275,7 +275,8 @@ void pack_kpts(const std::vector<int>& isk,
         kvec_d_aux[3 * ik + 2] = kvec_d[ik].z;
     }
     // The unreduced mesh is global and can be larger than the SCF list.
-    for (std::size_t ik = 0; ik < kvec_c_full.size(); ++ik)
+    const std::size_t full_count = std::min(kvec_c_full.size(), kvec_c_full_aux.size() / 3);
+    for (std::size_t ik = 0; ik < full_count; ++ik)
     {
         kvec_c_full_aux[3 * ik] = kvec_c_full[ik].x;
         kvec_c_full_aux[3 * ik + 1] = kvec_c_full[ik].y;

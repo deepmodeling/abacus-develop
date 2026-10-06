@@ -7,12 +7,14 @@ TEST(KListIO, PreserveFullMeshAcrossPools)
     const std::vector<double> weights = {1.0 / 3, 2.0 / 3};
     const std::vector<ModuleBase::Vector3<double>> irreducible = {{0, 0, 0}, {0, 0, 1.0 / 3}};
     const std::vector<ModuleBase::Vector3<double>> full = {{0, 0, 0}, {0, 0, 1.0 / 3}, {0, 0, 2.0 / 3}};
+    auto full_with_spin_capacity = full;
+    full_with_spin_capacity.resize(6);
     std::vector<int> spin_buffer(2);
     std::vector<double> weight_buffer(2);
     std::vector<double> cart_buffer(6);
     std::vector<double> frac_buffer(6);
     std::vector<double> full_buffer(9, -9.0);
-    KListIO::pack_kpts(spins, weights, irreducible, irreducible, full, 2,
+    KListIO::pack_kpts(spins, weights, irreducible, irreducible, full_with_spin_capacity, 2,
                        spin_buffer, weight_buffer, cart_buffer, frac_buffer, full_buffer);
     EXPECT_DOUBLE_EQ(full_buffer[8], 2.0 / 3);
 
