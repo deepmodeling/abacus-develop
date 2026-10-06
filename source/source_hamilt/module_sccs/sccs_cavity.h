@@ -1,8 +1,6 @@
 #ifndef SCCS_CAVITY_H
 #define SCCS_CAVITY_H
 
-#include <string>
-
 namespace ModuleSccs
 {
 // Densities are in electrons/Bohr^3. The cavity uses the electronic density.
@@ -21,13 +19,9 @@ struct CavityPoint
     double depsilon_drho = 0.0;
 };
 
-bool validate_cavity_parameters(const CavityParameters& parameters, std::string& error);
-
-// Failure leaves result unchanged. Negative Fourier ringing uses the bulk limit.
-bool evaluate_cavity(double density,
-                     const CavityParameters& parameters,
-                     CavityPoint& result,
-                     std::string& error);
+// Parameters are validated by the INPUT reader. Negative Fourier ringing
+// uses the bulk limit.
+CavityPoint evaluate_cavity(double density, const CavityParameters& parameters);
 } // namespace ModuleSccs
 
 #endif

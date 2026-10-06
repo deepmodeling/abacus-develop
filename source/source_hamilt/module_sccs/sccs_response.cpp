@@ -4,25 +4,26 @@
 
 #include "source_base/constants.h"
 #include "source_base/parallel_reduce.h"
+#include "source_base/tool_quit.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <sstream>
 #include <utility>
 
 namespace ModuleSccs
 {
 namespace
 {
-bool prepare_cavity(const std::vector<double>& density,
+void prepare_cavity(const std::vector<double>& density,
                     const CavityParameters& cavity,
                     const ModulePW::PW_Basis& basis,
                     double tpiba,
                     SccsResponse& response,
-                    std::vector<double>& coefficient,
-                    std::string& error)
+                    std::vector<double>& coefficient)
 {
     const std::size_t size = density.size();
     response.solute.resize(size);
@@ -30,25 +31,13 @@ bool prepare_cavity(const std::vector<double>& density,
     response.epsilon.resize(size);
     response.depsilon_drho.resize(size);
     response.grad_log_epsilon.resize(size);
-    double invalid = 0.0;
     for (std::size_t i = 0; i < size; ++i)
     {
-        CavityPoint point;
-        if (!evaluate_cavity(density[i], cavity, point, error))
-        {
-            invalid = 1.0;
-            continue;
-        }
+        const CavityPoint point = evaluate_cavity(density[i], cavity);
         response.solute[i] = point.solute;
         response.dsolute_drho[i] = point.dsolute_drho;
         response.epsilon[i] = point.epsilon;
         response.depsilon_drho[i] = point.depsilon_drho;
-    }
-    Parallel_Reduce::reduce_max_pool(basis.poolnproc, invalid);
-    if (invalid != 0.0)
-    {
-        error = "SCCS cavity evaluation failed on a pool rank";
-        return false;
     }
 
     std::vector<std::complex<double>> density_g(basis.npw);
@@ -81,39 +70,30 @@ bool prepare_cavity(const std::vector<double>& density,
         coefficient[i] = response.epsilon[i] * (0.5 * lap_log + 0.25 * first_log * first_log * gradient_square)
                          / ModuleBase::FOUR_PI;
     }
-    return validate_grid_values(coefficient, basis, error);
 }
 
-bool residual_norms(const std::vector<double>& values,
+// Pool-reduced norms, so every rank takes the same convergence decision.
+void residual_norms(const std::vector<double>& values,
                     const ModulePW::PW_Basis& basis,
                     double& rms,
-                    double& maximum,
-                    std::string& error)
+                    double& maximum)
 {
     double square = 0.0;
     maximum = 0.0;
-    double invalid = 0.0;
     for (double value : values)
     {
-        if (!std::isfinite(value))
-        {
-            invalid = 1.0;
-        }
         square += value * value;
         const double magnitude = std::abs(value);
         maximum = std::max(maximum, magnitude);
     }
-    Parallel_Reduce::reduce_max_pool(basis.poolnproc, invalid);
     Parallel_Reduce::reduce_pool(square);
     Parallel_Reduce::reduce_max_pool(basis.poolnproc, maximum);
-    if (invalid != 0.0 || !std::isfinite(square))
+    if (!std::isfinite(square) || !std::isfinite(maximum))
     {
-        error = "SCCS sqrt-CG residual is not finite";
-        return false;
+        ModuleBase::WARNING_QUIT("ModuleSccs::solve_sccs_response", "SCCS sqrt-CG residual is not finite");
     }
     const double mean_square = square / basis.nxyz;
     rms = std::sqrt(mean_square);
-    return true;
 }
 
 bool converged(const PolarizationResult& result, const PolarizationSolverParameters& solver)
@@ -135,12 +115,11 @@ double grid_dot(const std::vector<double>& left,
 }
 
 // P r = eps^-1/2 G eps^-1/2 r; only FFT scratch survives an application.
-bool apply_preconditioner(const std::vector<double>& rhs,
+void apply_preconditioner(const std::vector<double>& rhs,
                           const std::vector<double>& invsqrt,
                           PeriodicCoulombOperator& coulomb,
                           std::vector<double>& weighted,
-                          std::vector<double>& value,
-                          std::string& error)
+                          std::vector<double>& value)
 {
     const std::size_t size = rhs.size();
     weighted.resize(size);
@@ -148,62 +127,31 @@ bool apply_preconditioner(const std::vector<double>& rhs,
     {
         weighted[i] = rhs[i] * invsqrt[i];
     }
-    if (!coulomb.apply_potential(weighted, value, error))
-    {
-        return false;
-    }
+    coulomb.apply_potential(weighted, value);
     for (std::size_t i = 0; i < size; ++i)
     {
         value[i] *= invsqrt[i];
     }
-    return true;
 }
 } // namespace
 
-bool solve_sccs_response(const std::vector<double>& density,
+void solve_sccs_response(const std::vector<double>& density,
                          const std::vector<double>& charge,
                          const CavityParameters& cavity,
                          const PolarizationSolverParameters& solver,
                          const std::vector<double>& initial_potential,
                          const ModulePW::PW_Basis& basis,
                          double tpiba,
-                         SccsResponse& result,
-                         std::string& error)
+                         SccsResponse& result)
 {
-    if (!validate_pw_grid(basis, tpiba, error) || !validate_grid_values(density, basis, error)
-        || !validate_grid_values(charge, basis, error))
-    {
-        return false;
-    }
-    double invalid = 0.0;
-    if (!validate_cavity_parameters(cavity, error) || solver.max_iterations <= 0
-        || !std::isfinite(solver.tolerance_rms) || solver.tolerance_rms <= 0.0
-        || !std::isfinite(solver.tolerance_max) || solver.tolerance_max <= 0.0)
-    {
-        invalid = 1.0;
-    }
-    Parallel_Reduce::reduce_max_pool(basis.poolnproc, invalid);
-    if (invalid != 0.0)
-    {
-        error = "SCCS requires valid cavity parameters, a positive iteration limit and finite positive tolerances";
-        return false;
-    }
-
     // Determine start mode collectively, including ranks with no real-space points.
     double initial_count = initial_potential.size();
     Parallel_Reduce::reduce_pool(initial_count);
     const bool warm_start = initial_count != 0.0;
-    if (warm_start && !validate_grid_values(initial_potential, basis, error))
-    {
-        return false;
-    }
 
     SccsResponse candidate;
     std::vector<double> coefficient;
-    if (!prepare_cavity(density, cavity, basis, tpiba, candidate, coefficient, error))
-    {
-        return false;
-    }
+    prepare_cavity(density, cavity, basis, tpiba, candidate, coefficient);
     const std::size_t size = density.size();
     std::vector<double> invsqrt(size);
     for (std::size_t i = 0; i < size; ++i)
@@ -218,10 +166,7 @@ bool solve_sccs_response(const std::vector<double>& density,
     std::vector<double> weighted;
     std::vector<double> z;
     PolarizationResult& polarization = candidate.polarization;
-    if (!residual_norms(residual, basis, polarization.residual_rms, polarization.residual_max, error))
-    {
-        return false;
-    }
+    residual_norms(residual, basis, polarization.residual_rms, polarization.residual_max);
     // Retain the old fixed-point warm start only when it reduces the charge residual.
     if (!converged(polarization, solver) && warm_start)
     {
@@ -230,20 +175,14 @@ bool solve_sccs_response(const std::vector<double>& density,
         {
             guess_residual[i] = charge[i] - coefficient[i] * initial_potential[i];
         }
-        if (!apply_preconditioner(guess_residual, invsqrt, coulomb, weighted, z, error))
-        {
-            return false;
-        }
+        apply_preconditioner(guess_residual, invsqrt, coulomb, weighted, z);
         for (std::size_t i = 0; i < size; ++i)
         {
             guess_residual[i] = coefficient[i] * (initial_potential[i] - z[i]);
         }
         double guess_rms = 0.0;
         double guess_max = 0.0;
-        if (!residual_norms(guess_residual, basis, guess_rms, guess_max, error))
-        {
-            return false;
-        }
+        residual_norms(guess_residual, basis, guess_rms, guess_max);
         if (guess_rms < polarization.residual_rms)
         {
             potential.swap(z);
@@ -256,15 +195,12 @@ bool solve_sccs_response(const std::vector<double>& density,
     double old_rz = 0.0;
     for (int iteration = 1; !converged(polarization, solver) && iteration <= solver.max_iterations; ++iteration)
     {
-        if (!apply_preconditioner(residual, invsqrt, coulomb, weighted, z, error))
-        {
-            return false;
-        }
+        apply_preconditioner(residual, invsqrt, coulomb, weighted, z);
         const double rz = grid_dot(residual, z, basis);
         if (!std::isfinite(rz) || std::abs(rz) < 1e-30)
         {
-            error = "SCCS sqrt-CG has a null or nonfinite preconditioned residual";
-            return false;
+            ModuleBase::WARNING_QUIT("ModuleSccs::solve_sccs_response",
+                                     "SCCS sqrt-CG has a null or nonfinite preconditioned residual");
         }
         const double beta = std::abs(old_rz) > 1e-30 ? rz / old_rz : 0.0;
         old_rz = rz;
@@ -276,8 +212,7 @@ bool solve_sccs_response(const std::vector<double>& density,
         const double curvature = grid_dot(direction, image, basis);
         if (!std::isfinite(curvature) || curvature == 0.0)
         {
-            error = "SCCS sqrt-CG has invalid curvature";
-            return false;
+            ModuleBase::WARNING_QUIT("ModuleSccs::solve_sccs_response", "SCCS sqrt-CG has invalid curvature");
         }
         const double alpha = rz / curvature;
         for (std::size_t i = 0; i < size; ++i)
@@ -286,21 +221,17 @@ bool solve_sccs_response(const std::vector<double>& density,
             residual[i] -= alpha * image[i];
         }
         polarization.iterations = iteration;
-        if (!residual_norms(residual, basis, polarization.residual_rms, polarization.residual_max, error))
-        {
-            return false;
-        }
+        residual_norms(residual, basis, polarization.residual_rms, polarization.residual_max);
     }
     if (!converged(polarization, solver))
     {
-        error = "SCCS sqrt-CG did not reach both residual tolerances within the iteration limit";
-        return false;
+        std::ostringstream message;
+        message << "SCCS sqrt-CG did not reach both residual tolerances within sccs_maxiter = "
+                << solver.max_iterations << " iterations (RMS " << polarization.residual_rms << ", MAX "
+                << polarization.residual_max << ")";
+        ModuleBase::WARNING_QUIT("ModuleSccs::solve_sccs_response", message.str());
     }
 
-    if (!validate_grid_values(potential, basis, error))
-    {
-        return false;
-    }
     candidate.restart_potential = potential;
     double mean = 0.0;
     for (double value : potential)
@@ -325,11 +256,6 @@ bool solve_sccs_response(const std::vector<double>& density,
         const double gradient_square = gradient * gradient;
         candidate.cavity_potential[i] = -candidate.depsilon_drho[i] * gradient_square / (8.0 * ModuleBase::PI);
     }
-    if (!validate_grid_values(candidate.cavity_potential, basis, error))
-    {
-        return false;
-    }
     result = std::move(candidate);
-    return true;
 }
 } // namespace ModuleSccs

@@ -22,6 +22,14 @@
 namespace elecstate
 {
 
+PotBase* Potential::make_sccs_potential(const Input_para& input)
+{
+    ModuleSccs::SccsConfig config;
+    ModuleSccs::PolarizationSolverParameters solver;
+    make_sccs_config_from_input(input, config, solver);
+    return new PotSccs(this->rho_basis_, config, solver);
+}
+
 PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& input)
 {
     ModuleBase::TITLE("Potential", "get_pot_type");
@@ -48,12 +56,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& 
     }
     else if (pot_type == "sccs")
     {
-        ModuleSccs::SccsConfig config;
-        ModuleSccs::PolarizationSolverParameters solver;
-        std::string error;
-        const bool valid = make_sccs_config_from_input(input, config, solver, error);
-        if (!valid) { ModuleBase::WARNING_QUIT("Potential::get_pot_type", error); }
-        return new PotSccs(this->rho_basis_, config, solver);
+        return this->make_sccs_potential(input);
     }
     else if (pot_type == "surchem")
     {

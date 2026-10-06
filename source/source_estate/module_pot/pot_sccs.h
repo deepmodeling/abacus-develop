@@ -7,10 +7,10 @@
 struct Input_para;
 namespace elecstate
 {
-bool make_sccs_config_from_input(const Input_para& input,
+// Map INPUT values, already validated by the INPUT reader, onto the solver.
+void make_sccs_config_from_input(const Input_para& input,
                                  ModuleSccs::SccsConfig& config,
-                                 ModuleSccs::PolarizationSolverParameters& solver,
-                                 std::string& error);
+                                 ModuleSccs::PolarizationSolverParameters& solver);
 
 class PotSccs : public PotBase
 {

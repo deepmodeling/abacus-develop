@@ -4,7 +4,6 @@
 #include "sccs_cavity.h"
 #include "source_base/vector3.h"
 
-#include <string>
 #include <vector>
 
 namespace ModulePW
@@ -41,16 +40,16 @@ struct SccsResponse
 // Original chain-derivative sqrt-CG periodic response; charge is ions minus electrons.
 // All ranks in the PW pool must call together with the same configuration.
 // initial_potential is empty on all ranks for a cold start, otherwise a local grid.
-// Failure leaves result unchanged. No state or INPUT globals are read or retained.
-bool solve_sccs_response(const std::vector<double>& cavity_density,
+// A solver breakdown or missed tolerance stops the run with WARNING_QUIT.
+// No state or INPUT globals are read or retained.
+void solve_sccs_response(const std::vector<double>& cavity_density,
                          const std::vector<double>& solute_charge,
                          const CavityParameters& cavity,
                          const PolarizationSolverParameters& solver,
                          const std::vector<double>& initial_potential,
                          const ModulePW::PW_Basis& basis,
                          double tpiba,
-                         SccsResponse& result,
-                         std::string& error);
+                         SccsResponse& result);
 } // namespace ModuleSccs
 
 #endif

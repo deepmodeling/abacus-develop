@@ -13,52 +13,30 @@
 #include <cmath>
 #include <utility>
 
-namespace
-{
-void require_valid_on_pool(bool valid, const std::string& error)
-{
-    double invalid = valid ? 0.0 : 1.0;
-    Parallel_Reduce::reduce_pool(invalid);
-    if (invalid != 0.0)
-    {
-        const std::string message = error.empty() ? "Invalid SCCS input on another pool rank" : error;
-        ModuleBase::WARNING_QUIT("PotSccs", message);
-    }
-}
-}
-
 namespace elecstate
 {
-bool make_sccs_config_from_input(const Input_para& input,
+void make_sccs_config_from_input(const Input_para& input,
                                  ModuleSccs::SccsConfig& config,
-                                 ModuleSccs::PolarizationSolverParameters& solver,
-                                 std::string& error)
+                                 ModuleSccs::PolarizationSolverParameters& solver)
 {
-    ModuleSccs::Preset preset;
-    if (!ModuleSccs::parse_preset(input.sccs_preset, preset, error)) { return false; }
-    ModuleSccs::SccsConfig candidate;
+    const ModuleSccs::Preset preset = ModuleSccs::parse_preset(input.sccs_preset);
     if (preset == ModuleSccs::Preset::Custom)
     {
-        candidate.cavity.density_min = input.sccs_rho_min;
-        candidate.cavity.density_max = input.sccs_rho_max;
-        candidate.cavity.epsilon_bulk = input.sccs_epsilon;
-        candidate.surface_tension = ModuleSccs::dyn_per_cm_to_hartree_per_bohr2(input.sccs_gamma);
-        candidate.pressure = ModuleSccs::gpa_to_hartree_per_bohr3(input.sccs_pressure);
+        config = ModuleSccs::SccsConfig();
+        config.cavity.density_min = input.sccs_rho_min;
+        config.cavity.density_max = input.sccs_rho_max;
+        config.cavity.epsilon_bulk = input.sccs_epsilon;
+        config.surface_tension = ModuleSccs::dyn_per_cm_to_hartree_per_bohr2(input.sccs_gamma);
+        config.pressure = ModuleSccs::gpa_to_hartree_per_bohr3(input.sccs_pressure);
     }
-    else if (!ModuleSccs::make_sccs_config(preset, candidate, error)) { return false; }
-    candidate.surface_regularization = input.sccs_surface_eta;
-    if (!ModuleSccs::validate_config(candidate, error)) { return false; }
-    if (input.sccs_maxiter <= 0 || !std::isfinite(input.sccs_tol_rms) || input.sccs_tol_rms <= 0.0
-        || !std::isfinite(input.sccs_tol_max) || input.sccs_tol_max <= 0.0)
+    else
     {
-        error = "SCCS requires a positive iteration limit and finite positive residual tolerances";
-        return false;
+        config = ModuleSccs::make_sccs_config(preset);
     }
-    config = candidate;
+    config.surface_regularization = input.sccs_surface_eta;
     solver.max_iterations = input.sccs_maxiter;
     solver.tolerance_rms = input.sccs_tol_rms;
     solver.tolerance_max = input.sccs_tol_max;
-    return true;
 }
 
 PotSccs::PotSccs(const ModulePW::PW_Basis* basis,
@@ -73,29 +51,10 @@ PotSccs::PotSccs(const ModulePW::PW_Basis* basis,
 void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::matrix& potential)
 {
     ModuleBase::timer::start("PotSccs", "cal_v_eff");
-    const bool storage_valid = charge != nullptr && cell != nullptr && this->rho_basis_ != nullptr;
-    require_valid_on_pool(storage_valid, "SCCS requires charge, cell and PW basis storage");
     const ModulePW::PW_Basis& basis = *this->rho_basis_;
-    const bool grid_valid = (charge->nspin == 1 || charge->nspin == 2)
-                            && potential.nr == charge->nspin && potential.nc == basis.nrxx
-                            && charge->rho != nullptr && cell->atoms != nullptr && cell->ntype > 0
-                            && std::isfinite(cell->lat0) && cell->lat0 > 0.0;
-    require_valid_on_pool(grid_valid, "SCCS requires initialized atom/density storage and an nspin=1/2 potential");
-    bool density_valid = true;
-    for (int spin = 0; spin < charge->nspin; ++spin)
-    {
-        if (basis.nrxx > 0 && charge->rho[spin] == nullptr) { density_valid = false; }
-    }
-    require_valid_on_pool(density_valid, "SCCS charge density is not available");
     const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell->atoms, cell->ntype, cell->lat0);
-    const int atom_count = atoms.size();
-    const bool count_valid = atom_count == cell->nat;
-    require_valid_on_pool(count_valid, "SCCS atom count does not match UnitCell");
     std::vector<double> ions;
-    std::string error;
-    const bool ions_valid = ModuleSccs::gaussian_ionic_density(atoms, basis, cell->tpiba,
-                                                              ModuleSccs::gaussian_ion_spread, ions, error);
-    require_valid_on_pool(ions_valid, error);
+    ModuleSccs::gaussian_ionic_density(atoms, basis, cell->tpiba, ModuleSccs::gaussian_ion_spread, ions);
     std::vector<double> density(basis.nrxx, 0.0);
     std::vector<double> solute_charge(basis.nrxx);
     double ionic_sum = 0.0;
@@ -114,20 +73,22 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     net_charge *= dv;
     double expected_ionic_charge = 0.0;
     for (const unitcell::AtomData& atom : atoms) { expected_ionic_charge += atom.valence_charge; }
+    // Pool-reduced sums: every rank takes the same decision.
     const double normalization_error = ionic_sum - expected_ionic_charge;
-    const bool normalization_valid = std::isfinite(normalization_error) && std::abs(normalization_error) < 1e-6;
-    require_valid_on_pool(normalization_valid, "SCCS Gaussian ionic charge normalization failed");
+    if (!std::isfinite(normalization_error) || std::abs(normalization_error) >= 1e-6)
+    {
+        ModuleBase::WARNING_QUIT("PotSccs::cal_v_eff", "SCCS Gaussian ionic charge normalization failed");
+    }
     const bool neutral = std::isfinite(net_charge) && std::abs(net_charge) < 1e-6;
-    require_valid_on_pool(neutral, "Periodic SCCS currently requires a neutral cell");
+    if (!neutral)
+    {
+        ModuleBase::WARNING_QUIT("PotSccs::cal_v_eff", "Periodic SCCS currently requires a neutral cell");
+    }
     ModuleSccs::SccsResponse response;
-    const bool response_valid = ModuleSccs::solve_sccs_response(density, solute_charge, config_.cavity,
-                                                               solver_, restart_potential_, basis, cell->tpiba,
-                                                               response, error);
-    require_valid_on_pool(response_valid, error);
+    ModuleSccs::solve_sccs_response(density, solute_charge, config_.cavity, solver_, restart_potential_, basis,
+                                    cell->tpiba, response);
     ModuleSccs::FunctionalResult functional;
-    const bool functional_valid = ModuleSccs::evaluate_functional(solute_charge, response, config_, basis,
-                                                                  cell->tpiba, functional, error);
-    require_valid_on_pool(functional_valid, error);
+    ModuleSccs::evaluate_functional(solute_charge, response, config_, basis, cell->tpiba, functional);
     electrostatic_rydberg_ = 2.0 * functional.reaction_energy;
     non_electrostatic_rydberg_ = 2.0 * (functional.surface_energy + functional.volume_energy);
     electrostatic_potential_.resize(basis.nrxx);
@@ -144,25 +105,16 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
 void PotSccs::add_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const
 {
     ModuleBase::timer::start("PotSccs", "add_solvation_force");
-    const bool shape_valid = force.nr == cell.nat && force.nc == 3
-                             && this->rho_basis_ != nullptr && cell.atoms != nullptr && cell.ntype > 0;
-    require_valid_on_pool(shape_valid, "SCCS force requires initialized cell and atom-major storage");
     const ModulePW::PW_Basis& basis = *this->rho_basis_;
-    const bool result_valid = electrostatic_potential_.size() == static_cast<std::size_t>(basis.nrxx);
-    require_valid_on_pool(result_valid, "SCCS force requires a completed response on the current grid");
     const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell.atoms, cell.ntype, cell.lat0);
-    const bool count_valid = atoms.size() == static_cast<std::size_t>(cell.nat);
-    require_valid_on_pool(count_valid, "SCCS force atom count does not match UnitCell");
     std::vector<double> reaction(basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         reaction[ir] = -0.5 * electrostatic_potential_[ir];
     }
     std::vector<ModuleBase::Vector3<double>> ionic_force;
-    std::string error;
-    const bool valid = ModuleSccs::gaussian_ionic_force(atoms, reaction, basis, cell.tpiba,
-                                                       ModuleSccs::gaussian_ion_spread, ionic_force, error);
-    require_valid_on_pool(valid, error);
+    ModuleSccs::gaussian_ionic_force(atoms, reaction, basis, cell.tpiba, ModuleSccs::gaussian_ion_spread,
+                                     ionic_force);
     for (int ia = 0; ia < cell.nat; ++ia)
     {
         for (int axis = 0; axis < 3; ++axis)

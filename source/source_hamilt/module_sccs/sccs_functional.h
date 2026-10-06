@@ -1,7 +1,6 @@
 #ifndef SCCS_FUNCTIONAL_H
 #define SCCS_FUNCTIONAL_H
 
-#include <string>
 #include <vector>
 
 namespace ModulePW
@@ -25,14 +24,13 @@ struct FunctionalResult
     std::vector<double> electron_potential; // derivative of all three energy terms
 };
 
-// Collective over the PW pool; failure leaves result unchanged.
-bool evaluate_functional(const std::vector<double>& charge,
+// Collective over the PW pool; a non-finite energy stops the run.
+void evaluate_functional(const std::vector<double>& charge,
                           const SccsResponse& response,
                           const SccsConfig& config,
                           const ModulePW::PW_Basis& basis,
                           double tpiba,
-                          FunctionalResult& result,
-                          std::string& error);
+                          FunctionalResult& result);
 } // namespace ModuleSccs
 
 #endif

@@ -23,10 +23,10 @@ TEST_F(SccsFunctionalTest, UniformDielectricEnergyAndElectronDerivative)
     const std::vector<double> density(basis.nrxx, 0.0);
     const std::vector<double> cold;
     ModuleSccs::SccsResponse response;
-    ASSERT_TRUE(ModuleSccs::solve_sccs_response(density, charge, config.cavity, solver, cold,
-                                               basis, tpiba, response, error)) << error;
+    ModuleSccs::solve_sccs_response(density, charge, config.cavity, solver, cold,
+                                    basis, tpiba, response);
     ModuleSccs::FunctionalResult result;
-    ASSERT_TRUE(ModuleSccs::evaluate_functional(charge, response, config, basis, tpiba, result, error)) << error;
+    ModuleSccs::evaluate_functional(charge, response, config, basis, tpiba, result);
     const double kernel = ModuleBase::FOUR_PI / (tpiba * tpiba);
     const double expected = 0.25 * basis.omega * 1e-6 * kernel * (0.2 - 1.0);
     EXPECT_NEAR(result.reaction_energy, expected, 1e-13);
@@ -41,8 +41,7 @@ TEST_F(SccsFunctionalTest, UniformDielectricEnergyAndElectronDerivative)
 
 TEST_F(SccsFunctionalTest, NonElectrostaticDiscreteEnergyDerivative)
 {
-    ModuleSccs::SccsConfig config;
-    ASSERT_TRUE(ModuleSccs::make_sccs_config(ModuleSccs::Preset::Vacuum, config, error));
+    ModuleSccs::SccsConfig config = ModuleSccs::make_sccs_config(ModuleSccs::Preset::Vacuum);
     config.surface_tension = 0.01;
     config.pressure = -0.001;
     config.surface_regularization = 0.02;
@@ -58,7 +57,7 @@ TEST_F(SccsFunctionalTest, NonElectrostaticDiscreteEnergyDerivative)
         response.solute[ir] = 0.5 + 0.2 * mode[ir];
     }
     ModuleSccs::FunctionalResult center;
-    ASSERT_TRUE(ModuleSccs::evaluate_functional(charge, response, config, basis, tpiba, center, error));
+    ModuleSccs::evaluate_functional(charge, response, config, basis, tpiba, center);
     // Avoid cancellation of grid-integrated energies at excessively small steps.
     const double step = 1e-5;
     double predicted = 0.0;
@@ -71,12 +70,12 @@ TEST_F(SccsFunctionalTest, NonElectrostaticDiscreteEnergyDerivative)
     predicted *= basis.omega / basis.nxyz;
     ModuleSccs::FunctionalResult plus;
     ModuleSccs::FunctionalResult minus;
-    ASSERT_TRUE(ModuleSccs::evaluate_functional(charge, response, config, basis, tpiba, plus, error));
+    ModuleSccs::evaluate_functional(charge, response, config, basis, tpiba, plus);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         response.solute[ir] -= 2.0 * step * mode[ir];
     }
-    ASSERT_TRUE(ModuleSccs::evaluate_functional(charge, response, config, basis, tpiba, minus, error));
+    ModuleSccs::evaluate_functional(charge, response, config, basis, tpiba, minus);
     const double fd = (plus.surface_energy + plus.volume_energy - minus.surface_energy - minus.volume_energy)
                       / (2.0 * step);
     EXPECT_NEAR(fd, predicted, 1e-8);

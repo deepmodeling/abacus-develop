@@ -24,10 +24,11 @@ struct PolarizationSolverParameters
     double tolerance_max = 1e-8;
 };
 
-// Failure leaves the output unchanged. Custom configurations are supplied by callers.
-bool parse_preset(const std::string& name, Preset& preset, std::string& error);
-bool make_sccs_config(Preset preset, SccsConfig& config, std::string& error);
-bool validate_config(const SccsConfig& config, std::string& error);
+// Exact, lower-case names as accepted by the INPUT reader; an unknown name
+// stops the run.
+Preset parse_preset(const std::string& name);
+// Published presets only; custom configurations are supplied by callers.
+SccsConfig make_sccs_config(Preset preset);
 double dyn_per_cm_to_hartree_per_bohr2(double value);
 double gpa_to_hartree_per_bohr3(double value);
 } // namespace ModuleSccs

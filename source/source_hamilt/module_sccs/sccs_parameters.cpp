@@ -1,7 +1,7 @@
 #include "sccs_parameters.h"
 
-#include <cctype>
-#include <cmath>
+#include "source_base/tool_quit.h"
+
 
 namespace ModuleSccs
 {
@@ -25,102 +25,54 @@ double gpa_to_hartree_per_bohr3(double value)
     return pascal * bohr_metre * bohr_metre * bohr_metre / hartree_joule;
 }
 
-bool parse_preset(const std::string& name, Preset& preset, std::string& error)
+Preset parse_preset(const std::string& name)
 {
-    error.clear();
-    std::string normalized = name;
-    for (char& character : normalized)
-    {
-        const unsigned char byte = static_cast<unsigned char>(character);
-        const int lower = std::tolower(byte);
-        character = static_cast<char>(lower);
-    }
-    if (normalized == "custom")
-    {
-        preset = Preset::Custom;
-    }
-    else if (normalized == "vacuum")
-    {
-        preset = Preset::Vacuum;
-    }
-    else if (normalized == "water-neutral")
-    {
-        preset = Preset::WaterNeutral;
-    }
-    else if (normalized == "water-cation")
-    {
-        preset = Preset::WaterCation;
-    }
-    else if (normalized == "water-anion")
-    {
-        preset = Preset::WaterAnion;
-    }
-    else
-    {
-        error = "Unknown SCCS preset: " + name;
-        return false;
-    }
-    return true;
+    if (name == "custom") { return Preset::Custom; }
+    if (name == "vacuum") { return Preset::Vacuum; }
+    if (name == "water-neutral") { return Preset::WaterNeutral; }
+    if (name == "water-cation") { return Preset::WaterCation; }
+    if (name == "water-anion") { return Preset::WaterAnion; }
+    const std::string message = "Unknown SCCS preset: " + name;
+    ModuleBase::WARNING_QUIT("ModuleSccs::parse_preset", message);
 }
 
-bool make_sccs_config(Preset preset, SccsConfig& config, std::string& error)
+SccsConfig make_sccs_config(Preset preset)
 {
-    error.clear();
-    SccsConfig candidate;
-    candidate.cavity.epsilon_bulk = 78.3;
-    candidate.surface_regularization = 1e-8;
+    if (preset == Preset::Custom)
+    {
+        ModuleBase::WARNING_QUIT("ModuleSccs::make_sccs_config",
+                                 "SCCS custom configurations must be supplied explicitly");
+    }
+    SccsConfig config;
+    config.cavity.epsilon_bulk = 78.3;
+    config.surface_regularization = 1e-8;
     if (preset == Preset::Vacuum || preset == Preset::WaterNeutral)
     {
-        candidate.cavity.density_min = 1e-4;
-        candidate.cavity.density_max = 5e-3;
+        config.cavity.density_min = 1e-4;
+        config.cavity.density_max = 5e-3;
         if (preset == Preset::Vacuum)
         {
-            candidate.cavity.epsilon_bulk = 1.0;
+            config.cavity.epsilon_bulk = 1.0;
         }
         else
         {
-            candidate.surface_tension = dyn_per_cm_to_hartree_per_bohr2(47.9);
-            candidate.pressure = gpa_to_hartree_per_bohr3(-0.36);
+            config.surface_tension = dyn_per_cm_to_hartree_per_bohr2(47.9);
+            config.pressure = gpa_to_hartree_per_bohr3(-0.36);
         }
     }
     else if (preset == Preset::WaterCation)
     {
-        candidate.cavity.density_min = 2e-4;
-        candidate.cavity.density_max = 3.5e-3;
-        candidate.surface_tension = dyn_per_cm_to_hartree_per_bohr2(5.0);
-        candidate.pressure = gpa_to_hartree_per_bohr3(0.125);
-    }
-    else if (preset == Preset::WaterAnion)
-    {
-        candidate.cavity.density_min = 2.4e-3;
-        candidate.cavity.density_max = 1.55e-2;
-        candidate.pressure = gpa_to_hartree_per_bohr3(0.45);
+        config.cavity.density_min = 2e-4;
+        config.cavity.density_max = 3.5e-3;
+        config.surface_tension = dyn_per_cm_to_hartree_per_bohr2(5.0);
+        config.pressure = gpa_to_hartree_per_bohr3(0.125);
     }
     else
     {
-        error = "SCCS custom configurations must be supplied explicitly";
-        return false;
+        config.cavity.density_min = 2.4e-3;
+        config.cavity.density_max = 1.55e-2;
+        config.pressure = gpa_to_hartree_per_bohr3(0.45);
     }
-    config = candidate;
-    return true;
-}
-
-bool validate_config(const SccsConfig& config, std::string& error)
-{
-    if (!validate_cavity_parameters(config.cavity, error))
-    {
-        return false;
-    }
-    if (!std::isfinite(config.surface_tension) || !std::isfinite(config.pressure))
-    {
-        error = "SCCS requires finite surface tension and pressure";
-        return false;
-    }
-    if (!std::isfinite(config.surface_regularization) || config.surface_regularization <= 0.0)
-    {
-        error = "SCCS requires finite positive surface regularization";
-        return false;
-    }
-    return true;
+    return config;
 }
 } // namespace ModuleSccs

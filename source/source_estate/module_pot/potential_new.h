@@ -257,6 +257,7 @@ class Potential : public PotBase
 
     std::vector<PotBase*> components;
     const PotPcc* pcc_component() const;
+    PotBase* make_sccs_potential(const Input_para& input);
 
     const UnitCell* ucell_ = nullptr;
     const ModuleBase::matrix* vloc_ = nullptr;

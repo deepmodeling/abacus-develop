@@ -38,7 +38,7 @@ TEST_F(PotSccsTest, IndependentInstancesAndSpinChannels)
     Input_para input;
     ModuleSccs::SccsConfig config;
     ModuleSccs::PolarizationSolverParameters solver;
-    ASSERT_TRUE(elecstate::make_sccs_config_from_input(input, config, solver, error));
+    elecstate::make_sccs_config_from_input(input, config, solver);
     config.cavity.epsilon_bulk = 5.0;
     elecstate::PotSccs first(&basis, config, solver);
     config.cavity.epsilon_bulk = 1.0;
@@ -70,23 +70,20 @@ TEST_F(PotSccsTest, IndependentInstancesAndSpinChannels)
     }
 }
 
-TEST_F(PotSccsTest, PresetConfigurationIsExplicit)
+TEST_F(PotSccsTest, InputMapsOntoSccsConfig)
 {
     Input_para input;
     input.sccs_preset = "water-neutral";
-    input.sccs_epsilon = 2.0;
+    input.sccs_epsilon = 2.0; // replaced by the preset
     input.sccs_maxiter = 42;
     input.sccs_surface_eta = 1e-6;
     ModuleSccs::SccsConfig config;
     ModuleSccs::PolarizationSolverParameters solver;
-    ASSERT_TRUE(elecstate::make_sccs_config_from_input(input, config, solver, error));
+    elecstate::make_sccs_config_from_input(input, config, solver);
     EXPECT_DOUBLE_EQ(config.cavity.epsilon_bulk, 78.3);
     EXPECT_DOUBLE_EQ(config.cavity.density_min, 1e-4);
     EXPECT_LT(config.pressure, 0.0);
     EXPECT_DOUBLE_EQ(config.surface_regularization, 1e-6);
-    EXPECT_EQ(solver.max_iterations, 42);
-    input.sccs_maxiter = 0;
-    EXPECT_FALSE(elecstate::make_sccs_config_from_input(input, config, solver, error));
     EXPECT_EQ(solver.max_iterations, 42);
 }
 
@@ -116,7 +113,7 @@ TEST_F(PotSccsTest, IonicForceAddsRydbergDerivativeOnce)
     input.sccs_tol_max = 1e-12;
     ModuleSccs::SccsConfig config;
     ModuleSccs::PolarizationSolverParameters solver;
-    ASSERT_TRUE(elecstate::make_sccs_config_from_input(input, config, solver, error));
+    elecstate::make_sccs_config_from_input(input, config, solver);
     elecstate::PotSccs component(&basis, config, solver);
     ModuleBase::matrix potential(1, basis.nrxx);
     component.cal_v_eff(&charge, &cell, potential);
