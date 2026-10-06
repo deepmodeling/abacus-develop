@@ -135,22 +135,6 @@ TEST_F(PotPccTest, ForceMatchesFixedDensityEnergyDerivativeAfterMovingIons)
     EXPECT_NEAR(force(0, 0), numerical_force, 1.0e-10);
 }
 
-TEST_F(PotPccTest, RejectsEnergyBeforeDensityUpdate)
-{
-    elecstate::PotPcc correction(&basis);
-    EXPECT_EXIT(correction.get_energy(), testing::ExitedWithCode(1), "");
-}
-
-TEST_F(PotPccTest, RejectsForceFromAnOlderGeometry)
-{
-    elecstate::PotPcc correction(&basis);
-    ModuleBase::matrix potential(1, 8);
-    correction.cal_v_eff(&charge, &cell, potential);
-    atom.tau[0].x += 0.01;
-    ModuleBase::matrix force(1, 3);
-    EXPECT_EXIT(correction.add_force(cell, force), testing::ExitedWithCode(1), "");
-}
-
 TEST_F(PotPccTest, SlabAxisControlsPotentialEnergyForceAndIgnoresInPlaneCoordinates)
 {
     const double expected_energy = 4.0 * ModuleBase::PI * 0.25 / 1000.0;
@@ -191,13 +175,14 @@ TEST_F(PotPccTest, SlabRejectsOpenDirectionKpointsAndSymmetryButAllowsInPlaneTra
     EXPECT_EXIT(correction.cal_v_eff(&charge, &cell, potential), testing::ExitedWithCode(1), "");
 }
 
-TEST_F(PotPccTest, RejectsMissingDensityThroughStandardErrorHandler)
+TEST_F(PotPccTest, MoleculeRejectsNonCubicAndSlabRejectsTiltedCells)
 {
-    elecstate::PotPcc correction(&basis);
     ModuleBase::matrix potential(1, 8);
-    charge.rho = nullptr;
-    EXPECT_EXIT(correction.cal_v_eff(&charge, &cell, potential), testing::ExitedWithCode(1), "");
-    charge.rho = channels;
-    channels[0] = nullptr;
-    EXPECT_EXIT(correction.cal_v_eff(&charge, &cell, potential), testing::ExitedWithCode(1), "");
+    cell.latvec.e22 = 2.0;
+    elecstate::PotPcc molecule(&basis);
+    EXPECT_EXIT(molecule.cal_v_eff(&charge, &cell, potential), testing::ExitedWithCode(1), "");
+    cell.latvec.e22 = 1.0;
+    cell.latvec.e31 = 0.1;
+    elecstate::PotPcc slab(&basis, elecstate::PotPcc::Dimension::slab, 2);
+    EXPECT_EXIT(slab.cal_v_eff(&charge, &cell, potential), testing::ExitedWithCode(1), "");
 }

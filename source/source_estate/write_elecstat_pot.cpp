@@ -30,10 +30,6 @@ void write_elecstat_pot(
     ModuleBase::timer::start("ModuleIO", "write_elecstat_pot");
 
     std::vector<double> v_elecstat(rho_basis->nrxx, 0.0);
-    if (pcc_potential != nullptr && pcc_potential->size() != static_cast<std::size_t>(rho_basis->nrxx))
-    {
-        ModuleBase::WARNING_QUIT("write_elecstat_pot", "PCC potential does not match the output grid");
-    }
 
     if (solvent_potential != nullptr && solvent_potential->size() != static_cast<std::size_t>(rho_basis->nrxx))
     {

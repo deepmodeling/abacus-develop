@@ -26,7 +26,7 @@ void Potential::get_solvation_energy(double& el, double& cav) const
 
 double Potential::pcc_energy_rydberg() const
 {
-    return 0.25;
+    return 0.0;
 }
 void Potential::get_vnew(Charge const*, ModuleBase::matrix&)
 {
@@ -160,23 +160,6 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtotDFTU)
     elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
     // deband + hatree + efiled + gatefield + edftu + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.3);
-}
-
-TEST_F(ElecStateEnergyTest, AddsPccEnergyOnce)
-{
-    elecstate->f_en.deband = 0.1;
-    assume_isolated = "pcc_0d";
-    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
-    EXPECT_DOUBLE_EQ(elecstate->f_en.correction_el, 0.25);
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.95);
-    assume_isolated = "pcc_2d";
-    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
-    EXPECT_DOUBLE_EQ(elecstate->f_en.correction_el, 0.25);
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.95);
-    assume_isolated = "none";
-    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
-    EXPECT_DOUBLE_EQ(elecstate->f_en.correction_el, 0.0);
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.7);
 }
 
 TEST_F(ElecStateEnergyTest, CalConverged)

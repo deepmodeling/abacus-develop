@@ -9,7 +9,41 @@
 namespace elecstate
 {
 
-/// Self-consistent vacuum PCC. Owns the result of its last density update.
+/**
+ * @brief Self-consistent vacuum point-counter-charge (PCC) correction.
+ *
+ * Owns the result of its last density update. The correction removes the
+ * spurious interaction of the total charge with its periodic images by
+ * expanding that charge to second order in its multipoles about the
+ * mass-weighted ionic center (charge q, dipole d, second moment Q). The
+ * charge seen here is ionic + electronic only; any solvent polarization charge
+ * must be corrected by its own component.
+ * In Hartree atomic units, for a unit positive test charge at r (or at the
+ * normal coordinate z for slabs):
+ *
+ *   0D (cubic cell of edge L, volume V = L^3, Madelung constant alpha of the
+ *   simple cubic lattice):
+ *     v(r) = alpha q / L - 2 pi / (3 V) * (q r^2 - 2 d.r + Q)
+ *
+ *   2D (periodic area A, normal period L):
+ *     v(z) = -pi q L / (3 A) - 2 pi / (A L) * (q z^2 - 2 d_z z + Q_zz)
+ *
+ * The correction energy is E = 1/2 * integral rho_total(r) v(r) dr and the
+ * forces follow from the gradient of v at the ionic positions. The kernels are
+ * implemented in pcc_0d.cpp and pcc_2d.cpp; see pcc_2d.h for the gauge of the
+ * charged-slab constant.
+ *
+ * References:
+ *   - O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014)
+ *     (parabolic 0D and 2D point-counter-charge corrections).
+ *   - I. Dabo, B. Kozinsky, N. E. Singh-Miller and N. Marzari,
+ *     Phys. Rev. B 77, 115139 (2008) (density-countercharge corrections).
+ *   - M. J. Rutter, Electron. Struct. 3, 015002 (2021) (charged slabs: the
+ *     zero-mean periodic potential of a charged plane fixes the 2D constant).
+ *
+ * The implementation follows the PCC corrections of the ENVIRON library
+ * (www.quantum-environ.org).
+ */
 class PotPcc : public PotBase
 {
   public:
@@ -47,7 +81,6 @@ class PotPcc : public PotBase
     std::vector<double> ionic_charges_;
     std::vector<double> electron_potential_;
     double energy_rydberg_ = 0.0;
-    bool result_valid_ = false;
 };
 
 } // namespace elecstate

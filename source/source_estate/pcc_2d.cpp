@@ -7,19 +7,12 @@
 
 namespace elecstate
 {
-bool make_pcc_2d_parameters(const unitcell::SlabCell& cell,
-                            Pcc2dParameters& parameters,
-                            std::string& error)
+Pcc2dParameters make_pcc_2d_parameters(const unitcell::SlabCell& cell)
 {
-    error.clear();
-    if (!std::isfinite(cell.area) || cell.area <= 0.0 || !std::isfinite(cell.length) || cell.length <= 0.0)
-    {
-        error = "PCC 2D requires positive finite periodic area and normal length";
-        return false;
-    }
+    Pcc2dParameters parameters;
     parameters.area = cell.area;
     parameters.length = cell.length;
-    return true;
+    return parameters;
 }
 
 double pcc_2d_potential(const ChargeMoments& moments,

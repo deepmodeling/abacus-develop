@@ -15,81 +15,6 @@
 
 namespace elecstate
 {
-void Potential::add_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const
-{
-    for (const PotBase* component : this->components)
-    {
-        component->add_solvation_force(cell, force);
-    }
-}
-
-void Potential::get_solvation_energy(double& electrostatic, double& non_electrostatic) const
-{
-    electrostatic = 0.0;
-    non_electrostatic = 0.0;
-    for (const PotBase* component : this->components)
-    {
-        double el = 0.0;
-        double nonel = 0.0;
-        component->get_solvation_energy(el, nonel);
-        electrostatic += el;
-        non_electrostatic += nonel;
-    }
-}
-
-const std::vector<double>* Potential::solvent_electrostatic_potential() const
-{
-    for (const PotBase* component : this->components)
-    {
-        const std::vector<double>* value = component->solvent_electrostatic_potential();
-        if (value != nullptr) { return value; }
-    }
-    return nullptr;
-}
-
-const PotPcc* Potential::pcc_component() const
-{
-    for (const PotBase* component : this->components)
-    {
-        const PotPcc* pcc = dynamic_cast<const PotPcc*>(component);
-        if (pcc != nullptr)
-        {
-            return pcc;
-        }
-    }
-    return nullptr;
-}
-
-double Potential::pcc_energy_rydberg() const
-{
-    const PotPcc* pcc = this->pcc_component();
-    if (pcc == nullptr)
-    {
-        return 0.0;
-    }
-    return pcc->get_energy();
-}
-
-const std::vector<double>* Potential::pcc_electron_potential() const
-{
-    const PotPcc* pcc = this->pcc_component();
-    if (pcc == nullptr)
-    {
-        return nullptr;
-    }
-    return &pcc->electron_potential();
-}
-
-void Potential::add_pcc_force(const UnitCell& cell, ModuleBase::matrix& force) const
-{
-    const PotPcc* pcc = this->pcc_component();
-    if (pcc != nullptr)
-    {
-        pcc->add_force(cell, force);
-    }
-}
-
-
 Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                      const ModulePW::PW_Basis* rho_basis_smooth_in,
                      const UnitCell* ucell_in,
@@ -434,6 +359,80 @@ double Potential::get_ml_exx_energy() const
 #else
     return 0.0;
 #endif
+}
+
+const PotPcc* Potential::pcc_component() const
+{
+    for (const PotBase* component : this->components)
+    {
+        const PotPcc* pcc = dynamic_cast<const PotPcc*>(component);
+        if (pcc != nullptr)
+        {
+            return pcc;
+        }
+    }
+    return nullptr;
+}
+
+double Potential::pcc_energy_rydberg() const
+{
+    const PotPcc* pcc = this->pcc_component();
+    if (pcc == nullptr)
+    {
+        return 0.0;
+    }
+    return pcc->get_energy();
+}
+
+const std::vector<double>* Potential::pcc_electron_potential() const
+{
+    const PotPcc* pcc = this->pcc_component();
+    if (pcc == nullptr)
+    {
+        return nullptr;
+    }
+    return &pcc->electron_potential();
+}
+
+void Potential::add_pcc_force(const UnitCell& cell, ModuleBase::matrix& force) const
+{
+    const PotPcc* pcc = this->pcc_component();
+    if (pcc != nullptr)
+    {
+        pcc->add_force(cell, force);
+    }
+}
+
+void Potential::add_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const
+{
+    for (const PotBase* component : this->components)
+    {
+        component->add_solvation_force(cell, force);
+    }
+}
+
+void Potential::get_solvation_energy(double& electrostatic, double& non_electrostatic) const
+{
+    electrostatic = 0.0;
+    non_electrostatic = 0.0;
+    for (const PotBase* component : this->components)
+    {
+        double el = 0.0;
+        double nonel = 0.0;
+        component->get_solvation_energy(el, nonel);
+        electrostatic += el;
+        non_electrostatic += nonel;
+    }
+}
+
+const std::vector<double>* Potential::solvent_electrostatic_potential() const
+{
+    for (const PotBase* component : this->components)
+    {
+        const std::vector<double>* value = component->solvent_electrostatic_potential();
+        if (value != nullptr) { return value; }
+    }
+    return nullptr;
 }
 
 } // namespace elecstate
