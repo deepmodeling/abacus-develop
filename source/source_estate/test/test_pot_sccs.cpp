@@ -1,6 +1,12 @@
 #include "source_estate/module_pot/pot_sccs.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_hamilt/module_sccs/test/sccs_test.h"
+#include "source_base/global_variable.h"
+
+#include <cmath>
+#include <cstdio>
+#include <fstream>
+#include <sstream>
 
 // Public storage fixtures: no INPUT initialization or privately owned atom maps.
 UnitCell::UnitCell() {}
@@ -40,9 +46,9 @@ TEST_F(PotSccsTest, IndependentInstancesAndSpinChannels)
     ModuleSccs::PolarizationSolverParameters solver;
     elecstate::make_sccs_config_from_input(input, config, solver);
     config.cavity.epsilon_bulk = 5.0;
-    elecstate::PotSccs first(&basis, config, solver);
+    elecstate::PotSccs first(&basis, config, solver, 1.0);
     config.cavity.epsilon_bulk = 1.0;
-    elecstate::PotSccs vacuum(&basis, config, solver);
+    elecstate::PotSccs vacuum(&basis, config, solver, 1.0);
     EXPECT_DOUBLE_EQ(first.get_energy(), 0.0);
     ModuleBase::matrix potential(1, basis.nrxx);
     first.cal_v_eff(&charge, &cell, potential);
@@ -114,7 +120,7 @@ TEST_F(PotSccsTest, IonicForceAddsRydbergDerivativeOnce)
     ModuleSccs::SccsConfig config;
     ModuleSccs::PolarizationSolverParameters solver;
     elecstate::make_sccs_config_from_input(input, config, solver);
-    elecstate::PotSccs component(&basis, config, solver);
+    elecstate::PotSccs component(&basis, config, solver, 2.0);
     ModuleBase::matrix potential(1, basis.nrxx);
     component.cal_v_eff(&charge, &cell, potential);
     ModuleBase::matrix force(2, 3);
@@ -154,4 +160,59 @@ TEST_F(PotSccsTest, IonicForceAddsRydbergDerivativeOnce)
             EXPECT_NEAR(accumulated(ia, axis), expected_force, 1e-10);
         }
     }
+}
+
+TEST_F(PotSccsTest, ChargedDielectricCellWarnsAndRuns)
+{
+    UnitCell cell;
+    Atom atom;
+    cell.lat0 = length;
+    cell.tpiba = tpiba;
+    cell.omega = basis.omega;
+    cell.ntype = 1;
+    cell.nat = 1;
+    cell.atoms = &atom;
+    atom.na = 1;
+    atom.ncpp.zv = 1.0;
+    atom.tau = {ModuleBase::Vector3<double>(0.25, 0.25, 0.25)};
+    Input_para input;
+    ModuleSccs::SccsConfig config;
+    ModuleSccs::PolarizationSolverParameters solver;
+    elecstate::make_sccs_config_from_input(input, config, solver);
+    config.cavity.epsilon_bulk = 5.0;
+    EXPECT_TRUE(elecstate::check_sccs_charge(config, cell, 1.0).empty());
+    EXPECT_NE(elecstate::check_sccs_charge(config, cell, 0.5).find("G = 0"), std::string::npos);
+    ModuleSccs::SccsConfig vacuum_config = config;
+    vacuum_config.cavity.epsilon_bulk = 1.0;
+    EXPECT_TRUE(elecstate::check_sccs_charge(vacuum_config, cell, 0.5).empty());
+
+    const double density_value = 0.5 / basis.omega;
+    std::vector<double> density(basis.nrxx, density_value);
+    double* channels[] = {density.data()};
+    Charge charge;
+    charge.nspin = 1;
+    charge.rho = channels;
+    const std::string log_name = "pot_sccs_charge_warning.log";
+    std::ofstream& warning_log = GlobalV::ofs_warning;
+    warning_log.open(log_name.c_str());
+    elecstate::PotSccs matched(&basis, config, solver, 0.5);
+    ModuleBase::matrix matched_potential(1, basis.nrxx);
+    matched.cal_v_eff(&charge, &cell, matched_potential);
+    warning_log.flush();
+    std::ifstream matched_log(log_name.c_str());
+    std::stringstream matched_text;
+    matched_text << matched_log.rdbuf();
+    EXPECT_EQ(matched_text.str().find("SCCS grid electron count"), std::string::npos);
+    EXPECT_TRUE(std::isfinite(matched.get_energy()));
+
+    elecstate::PotSccs mismatched(&basis, config, solver, 1.0);
+    ModuleBase::matrix mismatched_potential(1, basis.nrxx);
+    mismatched.cal_v_eff(&charge, &cell, mismatched_potential);
+    warning_log.close();
+    std::ifstream mismatched_log(log_name.c_str());
+    std::stringstream mismatched_text;
+    mismatched_text << mismatched_log.rdbuf();
+    EXPECT_NE(mismatched_text.str().find("SCCS grid electron count differs"), std::string::npos);
+    EXPECT_DOUBLE_EQ(mismatched.get_energy(), matched.get_energy());
+    std::remove(log_name.c_str());
 }

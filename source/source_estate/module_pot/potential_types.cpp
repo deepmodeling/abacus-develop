@@ -27,7 +27,12 @@ PotBase* Potential::make_sccs_potential(const Input_para& input)
     ModuleSccs::SccsConfig config;
     ModuleSccs::PolarizationSolverParameters solver;
     make_sccs_config_from_input(input, config, solver);
-    return new PotSccs(this->rho_basis_, config, solver);
+    if (this->ucell_ != nullptr)
+    {
+        const std::string warning = check_sccs_charge(config, *this->ucell_, input.nelec);
+        if (!warning.empty()) { ModuleBase::WARNING("Potential::make_sccs_potential", warning); }
+    }
+    return new PotSccs(this->rho_basis_, config, solver, input.nelec);
 }
 
 PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& input)

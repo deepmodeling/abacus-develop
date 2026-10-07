@@ -76,7 +76,7 @@ void ReadInput::item_sccs()
         item.annotation = "implicit solvent model";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS. Legacy Boolean values remain accepted as 0 or 1. SCCS currently supports neutral periodic CPU KS-DFT SCF calculations with basis_type pw or lcao and nspin 1 or 2, without stress, external fields or other correction models.";
+        item.description = "Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS. Legacy Boolean values remain accepted as 0 or 1. SCCS currently supports periodic CPU KS-DFT SCF calculations with basis_type pw or lcao and nspin 1 or 2, without stress, external fields or other correction models. A charged cell in a dielectric solvent (any water preset, or sccs_preset custom with sccs_epsilon above 1) runs with a warning: the periodic Poisson solver drops the G = 0 component of the net charge, so the energy depends on the cell size.";
         item.default_value = "0";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             std::string error;
