@@ -457,6 +457,17 @@ bool parse_atom_properties(std::ifstream& ifpos,
             atom.lambda[ia].y /= ModuleBase::Ry_to_eV;
             atom.lambda[ia].z /= ModuleBase::Ry_to_eV;
         }
+        else if ( tmpid == "f" || tmpid == "force" || tmpid == "forces" )
+        {
+            // Consume the three force components emitted by print_stru_file.
+            // Forces are intentionally not stored in Atom; reading them keeps
+            // STRU round-trip parsing intact and prevents the legacy
+            // movement-flag parser from misinterpreting force digits.
+            double fx = 0.0;
+            double fy = 0.0;
+            double fz = 0.0;
+            ifpos >> fx >> fy >> fz;
+        }
         else if ( tmpid == "sc")
         {
             double tmplam=0;

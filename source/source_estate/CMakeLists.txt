@@ -24,6 +24,7 @@ list(APPEND objects
     module_pot/pot_sccs.cpp
     module_pot/potential_new.cpp
     module_pot/potential_types.cpp
+    module_pot/pot_surchem.cpp
     module_pot/pot_ml_exx.cpp
     module_pot/pot_ml_exx_label.cpp
     module_pot/pot_sep.cpp

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_IO_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_IO_H
+
 #include "source_base/tool_title.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/klist.h"
@@ -114,3 +116,5 @@ void write_lri_R_max_norm(const TLRI<T>& tensors, const UnitCell& ucell, const s
 #endif
 
 } // namespace LR_IO
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_IO_H

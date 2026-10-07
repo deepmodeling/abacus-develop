@@ -13,7 +13,6 @@ void Ions_Move_BFGS2::allocate(const int _size)
     alpha=70;//default value in ase is 70
     maxstep=PARAM.inp.relax_bfgs_rmax;
     size=_size;
-    largest_grad=0.0;
     sign=true;
     H = std::vector<std::vector<double>>(3*size, std::vector<double>(3*size, 0.0));
     
@@ -84,15 +83,8 @@ bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force,UnitCell& ucel
     this->DetermineStep(steplength,dpos,maxstep);
     this->UpdatePos(ucell);
     this->CalculateLargestGrad(_force,ucell);
-    bool converged = this->IsRestrain(); 
-    if (converged)
-    {
-        ofs_running << "\n Largest force is " << largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
-                    << " eV/Angstrom while threshold is "
-                    << PARAM.inp.force_thr_ev << " eV/Angstrom" << std::endl;
-        ofs_running << "\n Ion relaxation is converged!" << std::endl;
-    }
-   // print out geometry information during bfgs_trad relax 
+    bool converged = this->IsRestrain();
+   // print out geometry information during bfgs_trad relax
     unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,ofs_running);
     return converged;
 }
@@ -362,19 +354,19 @@ void Ions_Move_BFGS2::CalculateLargestGrad(const ModuleBase::matrix& _force,Unit
             ++iat;
         }
     }
-    largest_grad = 0.0;
+    Ions_Move_Basic::largest_grad = 0.0;
     for (int i = 0; i < 3*size; i++)
     {
-        if (largest_grad < std::abs(grad[i]))
+        if (Ions_Move_Basic::largest_grad < std::abs(grad[i]))
         {
-            largest_grad = std::abs(grad[i]);
+            Ions_Move_Basic::largest_grad = std::abs(grad[i]);
         }
     }
     assert(ucell.lat0 != 0);
     Ions_Move_Basic::largest_grad /= ucell.lat0;
     if (PARAM.inp.out_level == "ie")
     {
-        std::cout << " LARGEST GRAD (eV/Angstrom)  : " << largest_grad 
+        std::cout << " LARGEST GRAD (eV/Angstrom)  : " << Ions_Move_Basic::largest_grad
             * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
                   << std::endl;
     }
@@ -382,5 +374,5 @@ void Ions_Move_BFGS2::CalculateLargestGrad(const ModuleBase::matrix& _force,Unit
 
 bool Ions_Move_BFGS2::IsRestrain()
 {
-    return largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A < PARAM.inp.force_thr_ev;
+    return Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A < PARAM.inp.force_thr_ev;
 }

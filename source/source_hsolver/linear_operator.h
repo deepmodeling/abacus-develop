@@ -3,8 +3,20 @@
 
 #include "source_base/module_device/types.h"
 
+#include <exception>
+
 namespace hsolver
 {
+
+/** @brief Stop the current recurrence when a preconditioner cannot be applied. */
+class LinearPreconditionerError final : public std::exception
+{
+  public:
+    const char* what() const noexcept override
+    {
+        return "Preconditioner application failed.";
+    }
+};
 
 /**
  * @brief Device-resident block operator for independent right-hand sides.

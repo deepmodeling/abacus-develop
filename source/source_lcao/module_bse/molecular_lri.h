@@ -2,7 +2,9 @@
 // AUTHOR : Ziqing Guan
 // DATE :   2026-03-22
 //=======================
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_BSE_MOLECULAR_LRI_H
+#define ABACUS_SOURCE_LCAO_MODULE_BSE_MOLECULAR_LRI_H
+
 #include <RI/physics/LR.h>
 #include <RI/ri/Cell_Nearest.h>
 #include "source_base/timer.h"
@@ -177,3 +179,5 @@ protected:
 
 #include "molecular_lri.hpp"
 #include "molecular_lri_comm.hpp"
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_BSE_MOLECULAR_LRI_H

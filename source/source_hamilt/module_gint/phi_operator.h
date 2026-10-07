@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_PHI_OPERATOR_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_PHI_OPERATOR_H
+
 
 #include <memory>
 #include <vector>
@@ -170,6 +172,6 @@ class PhiOperator
     std::vector<std::pair<int, int>> atom_pair_range_;
 };
 
-}
+} // namespace ModuleGint
 
-#include "phi_operator.hpp"
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_PHI_OPERATOR_H

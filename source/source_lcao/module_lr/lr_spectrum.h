@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_LR_SPECTRUM_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_LR_SPECTRUM_H
+
 #include "source_cell/klist.h"
 #include "source_psi/psi.h"
 #include "source_estate/module_dm/density_matrix.h"
@@ -111,3 +113,5 @@ namespace LR
         std::vector<double> oscillator_strength_;///< $2/3\Omega |\sum_{ia\sigma} \braket{\psi_{i}|\mathbf{r}|\psi_{a}} |^2$, atomic unit (Hartree)
     };
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_LR_SPECTRUM_H

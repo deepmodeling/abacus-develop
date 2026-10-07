@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_FVL_META_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_FVL_META_H
+
 
 #include <memory>
 #include <vector>
@@ -51,3 +53,5 @@ class Gint_fvl_meta : public Gint
 };
 
 } // namespace ModuleGint
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_FVL_META_H

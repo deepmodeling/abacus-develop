@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_POTENTIALS_XC_KERNEL_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_POTENTIALS_XC_KERNEL_H
+
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
 #include "source_base/parallel_grid.h"
@@ -73,3 +75,4 @@ namespace LR
     };
 }
 
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_POTENTIALS_XC_KERNEL_H

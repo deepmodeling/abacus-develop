@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_RI_MODULE_EXX_SYMMETRY_SYMM_ROTATION_H
+#define ABACUS_SOURCE_LCAO_MODULE_RI_MODULE_EXX_SYMMETRY_SYMM_ROTATION_H
+
 #include "source_cell/module_symmetry/symm_rotation_k.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include <RI/global/Tensor.h>
@@ -126,3 +128,5 @@ namespace ModuleSymmetry
 
 #include "symm_rotation_r.hpp"
 #include "symm_rotation_r_hcontainer.hpp"
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_RI_MODULE_EXX_SYMMETRY_SYMM_ROTATION_H

@@ -1,5 +1,4 @@
 import unittest
-import tempfile
 from pathlib import Path
 here = Path(__file__).parent
 from ase.build import bulk
@@ -8,6 +7,7 @@ from ase.md import Langevin
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from abacuslite.io.generalio import load_pseudo, load_orbital
 from abacuslite import AbacusProfile, Abacus
+from common import preserved_tmpdir
 
 class TestLangevinMolecularDynamics(unittest.TestCase):
 
@@ -22,7 +22,7 @@ class TestLangevinMolecularDynamics(unittest.TestCase):
             omp_num_threads=1,
         )
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with preserved_tmpdir('abacus_ase_md_') as tmpdir:
             abacus = Abacus(
                 profile=aprof,
                 directory=tmpdir,

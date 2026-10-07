@@ -61,7 +61,6 @@ public:
     double &get_Eexx() const { return this->exx_ptr->Eexx; }
     ModuleBase::matrix &get_force() const { return this->exx_ptr->force_exx; }
     ModuleBase::matrix &get_stress() const { return this->exx_ptr->stress_exx; }
-    auto& get_dHexxs() const { return this->exx_ptr->dHexxs; }
     int get_two_level_step() const
     {
         return this->two_level_step;
@@ -88,14 +87,6 @@ public:
 
     /// @brief: in cal_exx_stress: Exx_LRI::cal_exx_stress()
     void cal_exx_stress(const double& omega, const double& lat0);
-
-    /// @brief: in cal_exx_dHs: Exx_LRI::cal_exx_dHs()
-    void cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
-        const UnitCell& ucell,
-        const Parallel_Orbitals& pv);
-
-    /// @brief build the exx-form dH (dHexxs) from the current mixed DM (for dH/dR output)
-    void cal_exx_dHs(const UnitCell& ucell, const Parallel_Orbitals& pv, const int nspin);
 
     // Processes in ESolver_KS_LCAO
     /// @brief in before_all_runners: set symmetry according to irreducible k-points
@@ -177,7 +168,6 @@ private:
         bool elec = false;
         bool force = false;
         bool stress = false;
-        bool dHs = false;
     };
     Flag_Finish flag_finish;
 };

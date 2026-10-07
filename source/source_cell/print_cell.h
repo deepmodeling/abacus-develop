@@ -39,28 +39,32 @@ namespace unitcell
      * @param latvec lattice parameter vector [in]
      * @param fn STRU file name [in]
      * @param header comment lines written at the top of the file [in]
+     * @note Positions are always written in Cartesian_angstrom, independent of
+     *       force availability, so that all STRU outputs share one coordinate
+     *       format. has_force only controls the per-atom f fields.
+     *
      * @param nspin number of spin channels [in]
-     * @param direct true for direct coords, false for cartesian coords [in]
      * @param vel true for printing velocities [in]
      * @param magmom true for printing Mulliken population analysis produced magmom [in]
      * @param orb true for printing NUMERICAL_ORBITAL section [in]
      * @param dpks_desc true for printing NUMERICAL_DESCRIPTOR section [in]
      * @param iproc GlobalV::MY_RANK [in]
-     * @param force atomic forces in Ry/Bohr, empty matrix means no force output [in]
+     * @param force atomic forces in Ry/Bohr, used only when has_force is true [in]
+     * @param has_force true to emit per-atom f fields; force matrix must match nat [in]
      */
     void print_stru_file(const UnitCell& ucell,
                          const Atom*     atoms,
                          const ModuleBase::Matrix3& latvec,
                          const std::string& fn,
                          const std::string& header,
-                         const int& nspin = 1,
-                         const bool& direct = false,
-                         const bool& vel = false,
-                         const bool& magmom = false,
-                         const bool& orb = false,
-                         const bool& dpks_desc = false,
-                         const int& iproc = 0,
-                         const ModuleBase::matrix& force = ModuleBase::matrix());
+                         const int& nspin,
+                         const bool& vel,
+                         const bool& magmom,
+                         const bool& orb,
+                         const bool& dpks_desc,
+                         const int& iproc,
+                         const ModuleBase::matrix& force,
+                         const bool& has_force);
 
     /**
      * @brief Print basic unitcell information to output stream.

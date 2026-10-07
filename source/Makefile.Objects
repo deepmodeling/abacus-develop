@@ -181,6 +181,7 @@ OBJS_BASE=assoc_laguerre.o\
     ylm.o\
     opt_cg.o\
     opt_dcsrch.o\
+    opt_tn.o\
     cubic_spline.o\
     sph_bessel_tf.o\
     mixing_data.o\
@@ -283,6 +284,7 @@ OBJS_ELECSTAT=elecstate.o\
     gatefield.o\
     potential_new.o\
     potential_types.o\
+    pot_surchem.o\
     pot_sep.o\
     pot_local.o\
     h_hartree_pw.o\
@@ -486,6 +488,10 @@ OBJS_HSOLVER=diago_cg.o\
     diago_pxxxgvx.o\
     linear_bicgstab.o\
     linear_cgs.o\
+    linear_gmres.o\
+    linear_algebra.o\
+    cn_subspace.o\
+    linear_low_rank.o\
     linear_workspace.o\
     hsolver_linear.o\
     linear_op.o\
@@ -587,6 +593,7 @@ OBJS_RELAXATION=relax_data.o\
     cg_base.o\
     bfgs_basic.o\
     relax_driver.o\
+    relax_stru_io.o\
     ions_move_basic.o\
     ions_move_bfgs.o\
     ions_move_bfgs2.o\
@@ -765,6 +772,7 @@ OBJS_IO_LCAO=module_hs/pos_op_mat.o\
       module_output/write_orb_info.o\
       module_dos/write_dos_lcao.o\
       module_energy/write_proj_band_lcao.o\
+      module_energy/write_eband_terms.o\
       module_energy/write_eig_occ.o\
       module_chgpot/get_pchg_lcao.o\
       module_wf/get_wf_lcao.o\
@@ -841,6 +849,7 @@ OBJS_LCAO=evolve_elec.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       exx_abfs_jle.o\
+      module_restart/restart_exx_csr.o\
       exx_abfs_io.o\
       exx_abfs_ctor_orbs.o\
       abfs_construct_pca.o\
@@ -940,6 +949,7 @@ OBJS_SRCPW=h_ewald_pw.o\
     fs_nonlocal_tools_stress.o\
     fs_nonlocal_tools_vkb.o\
     fs_kin_tools.o\
+    nonlocal_maths.o\
     force_op.o\
     stress_op.o\
     onsite_op.o\

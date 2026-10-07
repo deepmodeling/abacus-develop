@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_TYPE_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_TYPE_H
+
 
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_base/vector3.h"
@@ -13,3 +15,5 @@ namespace ModuleGint
     template <typename T>
     using HContainer = hamilt::HContainer<T>;
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_TYPE_H
