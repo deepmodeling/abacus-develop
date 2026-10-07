@@ -114,6 +114,29 @@ architecture was not adopted. That checkout explicitly rejects hybrid NSCF in
 built-in HSE screening default is `0.106 bohr^-1`; use
 `screening_parameter=0.11` for comparison with ABACUS HSE06.
 
+## Screened zero-transfer treatment
+
+PW HSE uses the same `exx_singularity_correction limits` default as NAO/LCAO.
+For screened exchange the reciprocal kernel has the finite limit
+`-pi * e2 / omega^2` at `k-q+G=0`; this scheme retains that limit without adding
+an auxiliary-function correction. It uses `exx_gamma_extrapolation false`,
+which is selected automatically when omitted. Explicit gamma extrapolation
+with `limits`, and unscreened Fock terms with `limits`, are rejected in PW.
+
+Set `exx_singularity_correction auxiliary` explicitly to retain the historical
+PW auxiliary correction (including the existing gamma-extrapolation option).
+This is also the default for unscreened PW hybrids; it does not enable
+unscreened hybrid NSCF. For screened independent-k targets the auxiliary
+correction can cause a jump when a target coincides with a source point.
+LCAO-specific `spencer`, `revised_spencer`, `massidda` and `carrier` schemes
+are not implemented for PW and are rejected rather than silently ignored.
+
+SCF and NSCF must use the same scheme. The scheme is part of the `EXX_SOURCE`
+configuration, and an incompatible restart is rejected. Regenerate the SCF
+source before switching schemes; checkpoints from the earlier implementation
+must also be regenerated. The cross-code results below used the historical
+auxiliary scheme and do not constitute validation of the new default.
+
 ## Reproducible verification
 
 ```bash
@@ -191,6 +214,5 @@ The comparison above is from a fresh calculation with unique k coordinates,
 using the weighted mesh result at coincident path points. No eigenvalues were
 edited to align the spectra.
 
-These checks do not validate PBE0, symmetry reconstruction, source q pools
-or GPU execution. Direct exchange remains the NSCF method; ACE is not a
+These checks do not validate PBE0, symmetry reconstruction or source q pools. Direct exchange remains the NSCF method; ACE is not a
 planned extension of this workflow.

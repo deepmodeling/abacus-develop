@@ -320,6 +320,7 @@
     - [exx\_separate\_loop](#exx_separate_loop)
     - [exx\_hybrid\_step](#exx_hybrid_step)
     - [exx\_mixing\_beta](#exx_mixing_beta)
+    - [exx\_singularity\_correction](#exx_singularity_correction)
   - [Exact Exchange (LCAO in PW)](#exact-exchange-lcao-in-pw)
     - [exx\_fock\_lambda](#exx_fock_lambda)
   - [Exact Exchange (LCAO)](#exact-exchange-lcao)
@@ -337,7 +338,6 @@
     - [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
     - [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
     - [exx\_real\_number](#exx_real_number)
-    - [exx\_singularity\_correction](#exx_singularity_correction)
     - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
     - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [out\_ri\_cv](#out_ri_cv)
@@ -3308,6 +3308,18 @@
 - **Description**: Mixing parameter for densty matrix in each iteration of the outer-loop
 - **Default**: 1.0
 
+### exx_singularity_correction
+
+- **Type**: String
+- **Description**: Scheme for Coulomb singularity / zero-transfer treatment in exact exchange.
+  - limits: use the finite screened Coulomb-kernel limit, without an auxiliary correction. Default for HSE and cwp22 in both PW and LCAO. PW requires screened exchange and exx_gamma_extrapolation=false; the latter defaults to false for this scheme.
+  - auxiliary: retain the historical PW auxiliary-function correction. PW only; default for unscreened PW hybrids. For independent-k screened hybrid NSCF this can cause discontinuities at source k points.
+  - spencer: LCAO spherical truncation, Phys. Rev. B 77, 193110 (2008).
+  - revised_spencer: LCAO, Phys. Rev. Mater. 5, 013807 (2021).
+  - massidda / carrier: LCAO auxiliary singularity corrections.
+  Use the same scheme for SCF and NSCF. Regenerate the SCF source checkpoint after changing schemes.
+- **Default**: default
+
 [back to top](#full-list-of-input-keywords)
 
 ## Exact Exchange (LCAO in PW)
@@ -3411,13 +3423,6 @@
   - False: Enforce LibRI to use complex data type. Setting it to True can effectively improve the speed of self-consistent calculations with hybrid functionals.
 - **Default**: depends on the gamma_only option
 
-### exx_singularity_correction
-
-- **Type**: String
-- **Description**: - spencer: see Phys. Rev. B 77, 193110 (2008).
-  - revised_spencer: see Phys. Rev. Mater. 5, 013807 (2021). Set the scheme of Coulomb singularity correction.
-- **Default**: default
-
 ### rpa_ccp_rmesh_times
 
 - **Type**: Real
@@ -3455,8 +3460,8 @@
 ### exx_gamma_extrapolation
 
 - **Type**: Boolean
-- **Description**: Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See https://doi.org/10.1103/PhysRevB.79.205114 for details. Should be set to true most of the time.
-- **Default**: True
+- **Description**: Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See https://doi.org/10.1103/PhysRevB.79.205114 for details. Defaults to false for PW exx_singularity_correction=limits (finite screened kernel), and true otherwise. Explicit true is incompatible with the PW limits scheme.
+- **Default**: False for PW limits; True otherwise
 
 ### ecutexx
 

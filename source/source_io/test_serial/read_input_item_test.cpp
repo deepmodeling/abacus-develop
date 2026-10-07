@@ -1726,6 +1726,7 @@ TEST_F(InputTest, Item_test2)
     }
     { // exx_singluarity_correction
         auto it = find_label("exx_singularity_correction", readinput.input_lists);
+        param.input.basis_type = "lcao";
         param.input.exx_singularity_correction = "default";
         param.input.dft_functional = "HF";
         it->second.reset_value(it->second, param);
@@ -1740,6 +1741,27 @@ TEST_F(InputTest, Item_test2)
         param.input.dft_functional = "HSE";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.exx_singularity_correction, "limits");
+
+        param.input.basis_type = "pw";
+        param.input.dft_functional = "PBE0";
+        param.input.exx_singularity_correction = "default";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_singularity_correction, "auxiliary");
+
+        param.input.dft_functional = "HSE";
+        param.input.exx_singularity_correction = "default";
+        param.input.exx_gamma_extrapolation = true;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_singularity_correction, "limits");
+        EXPECT_FALSE(param.input.exx_gamma_extrapolation);
+
+        auto gamma = find_label("exx_gamma_extrapolation", readinput.input_lists);
+        gamma->second.str_values = {"true"};
+        param.input.exx_gamma_extrapolation = true;
+        it->second.reset_value(it->second, param);
+        EXPECT_TRUE(param.input.exx_gamma_extrapolation);
+        gamma->second.str_values.clear();
+        param.input.exx_gamma_extrapolation = false;
     }
     { // exx_ccp_rmesh_times
         auto it = find_label("exx_ccp_rmesh_times", readinput.input_lists);

@@ -138,6 +138,63 @@ def verify(executable, root, mpi_ranks):
     print("failed SCF invalidates the previous source checkpoint")
 
 
+def verify_correction(executable, root, gpu=False):
+    """Check the shared finite-limit scheme and restart convention on each device."""
+    device = "gpu" if gpu else "cpu"
+    scf = create_case(root, f"limits_{device}_scf",
+                      "calculation scf\nout_chg 1\nout_wfc_pw 2\n")
+    # Exercise the defaults, including automatic disabling of gamma extrapolation.
+    text = (scf / "INPUT").read_text().replace("exx_gamma_extrapolation false\n", "")
+    text = text.replace("device cpu", f"device {device}")
+    (scf / "INPUT").write_text(text)
+    run(executable, scf, [])
+    source = scf / "OUT.hybrid"
+    original = digest(source)
+    extra = f"calculation nscf\nread_file_dir {source}\nexx_singularity_correction limits\n"
+    near_gamma = "K_POINTS\n3\nDirect\n0 0 0 1\n0.00001 0 0 1\n-0.00001 0 0 1\n"
+    target = create_case(root, f"limits_{device}_continuity", extra, near_gamma)
+    text = (target / "INPUT").read_text().replace("device cpu", f"device {device}")
+    (target / "INPUT").write_text(text)
+    run(executable, target, [])
+    values = bands(target)
+    delta = max(max_difference([values[0]], [row]) for row in values[1:])
+    assert delta < 5e-3, f"Finite-limit discontinuity near Gamma: {delta} eV"
+    assert max_difference([bands(scf)[0]], [values[0]]) < 2e-4
+    assert digest(source) == original
+    print(f"{device} default/explicit limits, Gamma +/-1e-5: max difference {delta:.3g} eV")
+
+    mismatch = create_case(root, f"{device}_correction_mismatch",
+                           extra.replace("correction limits", "correction auxiliary"))
+    run(executable, mismatch, [], "EXX source")
+    bad = create_case(root, f"{device}_bad_correction", extra.replace("correction limits", "correction spencer"))
+    run(executable, bad, [], "PW exx_singularity_correction must be limits or auxiliary")
+    gamma = create_case(root, f"{device}_limits_gamma", extra)
+    text = (gamma / "INPUT").read_text().replace("exx_gamma_extrapolation false", "exx_gamma_extrapolation true")
+    (gamma / "INPUT").write_text(text)
+    run(executable, gamma, [], "PW limits requires screened exchange")
+    unscreened = create_case(root, f"{device}_limits_fock", extra)
+    text = (unscreened / "INPUT").read_text().replace("dft_functional HSE", "dft_functional PBE0")
+    (unscreened / "INPUT").write_text(text)
+    run(executable, unscreened, [], "PW limits requires screened exchange")
+
+    auxiliary = create_case(root, f"auxiliary_{device}_scf",
+                            "calculation scf\nout_chg 1\nout_wfc_pw 2\nexx_singularity_correction auxiliary\n")
+    text = (auxiliary / "INPUT").read_text().replace("device cpu", f"device {device}")
+    (auxiliary / "INPUT").write_text(text)
+    run(executable, auxiliary, [])
+    aux_source = auxiliary / "OUT.hybrid"
+    aux_target = create_case(root, f"auxiliary_{device}_nscf",
+                             f"calculation nscf\nread_file_dir {aux_source}\nexx_singularity_correction auxiliary\n")
+    text = (aux_target / "INPUT").read_text().replace("device cpu", f"device {device}")
+    (aux_target / "INPUT").write_text(text)
+    run(executable, aux_target, [])
+    assert max_difference(bands(auxiliary), bands(aux_target)) < 2e-4
+    shift = max_difference(bands(scf), bands(auxiliary))
+    assert shift > 1e-5, "limits and auxiliary unexpectedly produced identical SCF bands"
+    print(f"{device} auxiliary SCF/NSCF matched; limits/auxiliary SCF difference {shift:.3g} eV")
+    print("mismatched scheme, unsupported scheme, gamma and unscreened limits rejected")
+
+
 def verify_gpu(executable, root):
     """Compare devices using the same frozen ensemble, then reverse the restart."""
     cpu_scf = create_case(root, "cpu_scf", "calculation scf\nout_chg 1\nout_wfc_pw 2\n")
@@ -210,9 +267,11 @@ def main():
     if args.workdir:
         args.workdir.mkdir(parents=True, exist_ok=True)
         verify_case(executable, args.workdir.resolve())
+        verify_correction(executable, args.workdir.resolve(), args.gpu)
     else:
         with tempfile.TemporaryDirectory(prefix="abacus-hybrid-nscf-") as directory:
             verify_case(executable, Path(directory))
+            verify_correction(executable, Path(directory), args.gpu)
     print("PASS: screened hybrid NSCF regression")
 
 
