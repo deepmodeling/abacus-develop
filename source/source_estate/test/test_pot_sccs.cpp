@@ -94,6 +94,23 @@ TEST_F(PotSccsTest, InputMapsOntoSccsConfig)
     EXPECT_EQ(solver.max_iterations, 42);
 }
 
+TEST_F(PotSccsTest, CustomDefaultsFollowEnvironInput)
+{
+    // Environ environ_type input: env_static_permittivity 1, rhomin 1e-4,
+    // rhomax 5e-3, no surface tension or pressure.
+    Input_para input;
+    ModuleSccs::SccsConfig config;
+    ModuleSccs::PolarizationSolverParameters solver;
+    elecstate::make_sccs_config_from_input(input, config, solver);
+    EXPECT_EQ(input.sccs_preset, "custom");
+    EXPECT_DOUBLE_EQ(config.cavity.epsilon_bulk, 1.0);
+    EXPECT_DOUBLE_EQ(config.cavity.density_min, 1e-4);
+    EXPECT_DOUBLE_EQ(config.cavity.density_max, 5e-3);
+    EXPECT_DOUBLE_EQ(config.surface_tension, 0.0);
+    EXPECT_DOUBLE_EQ(config.pressure, 0.0);
+    EXPECT_EQ(solver.max_iterations, 200);
+}
+
 TEST_F(PotSccsTest, IonicForceAddsRydbergDerivativeOnce)
 {
     UnitCell cell;

@@ -4952,8 +4952,8 @@
 
 - **Type**: Real
 - **Availability**: *[`imp_sol`](#imp_sol)==2*
-- **Description**: Bulk dielectric constant &gt;= 1 for the custom preset. Water presets use 78.3 and vacuum uses 1.
-- **Default**: 78.3
+- **Description**: Bulk dielectric constant &gt;= 1 for the custom preset. The default 1 (no dielectric) follows the Environ env_static_permittivity default for environ_type input. Water presets use 78.3 and vacuum uses 1.
+- **Default**: 1.0
 
 ### sccs_rho_min
 

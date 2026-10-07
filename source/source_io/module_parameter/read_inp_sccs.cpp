@@ -108,8 +108,8 @@ void ReadInput::item_sccs()
         item.annotation = "Bulk dielectric constant >= 1 for the custom preset";
         item.category = "Implicit solvation model";
         item.type = "Real";
-        item.description = "Bulk dielectric constant >= 1 for the custom preset. Water presets use 78.3 and vacuum uses 1.";
-        item.default_value = "78.3";
+        item.description = "Bulk dielectric constant >= 1 for the custom preset. The default 1 (no dielectric) follows the Environ env_static_permittivity default for environ_type input. Water presets use 78.3 and vacuum uses 1.";
+        item.default_value = "1.0";
         item.unit = "";
         item.set_availability("imp_sol==2");
         read_sync_double(input.sccs_epsilon);

@@ -578,7 +578,7 @@ struct Input_para
     double sigma_k = 0.6;    ///< the width of the diffuse cavity
     double nc_k = 0.00037;   ///< the cut-off charge density
     std::string sccs_preset = "custom";
-    double sccs_epsilon = 78.3;
+    double sccs_epsilon = 1.0; // Environ env_static_permittivity default
     double sccs_rho_min = 1e-4;
     double sccs_rho_max = 5e-3;
     double sccs_gamma = 0.0; // dyn/cm
