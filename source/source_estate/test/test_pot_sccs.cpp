@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <fstream>
 #include <sstream>
+#include <string>
 
 // Public storage fixtures: no INPUT initialization or privately owned atom maps.
 UnitCell::UnitCell() {}
@@ -192,7 +193,8 @@ TEST_F(PotSccsTest, ChargedDielectricCellWarnsAndRuns)
     Charge charge;
     charge.nspin = 1;
     charge.rho = channels;
-    const std::string log_name = "pot_sccs_charge_warning.log";
+    // One log per rank: the MPI variant runs this test on several ranks at once.
+    const std::string log_name = "pot_sccs_charge_warning_" + std::to_string(basis.poolrank) + ".log";
     std::ofstream& warning_log = GlobalV::ofs_warning;
     warning_log.open(log_name.c_str());
     elecstate::PotSccs matched(&basis, config, solver, 0.5);
