@@ -36,14 +36,16 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     {
         return new PotXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
     }
-    else if (pot_type == "pcc")
+    else if (pot_type == "pcc" || pot_type == "pcc_2d")
     {
-        return new PotPcc(this->rho_basis_);
-    }
-    else if (pot_type == "pcc_2d")
-    {
-        const int open_axis = PARAM.inp.pcc_2d_axis;
-        return new PotPcc(this->rho_basis_, PotPcc::Dimension::slab, open_axis);
+        const Input_para& input = PARAM.inp;
+        const double electron_count = input.nelec;
+        if (pot_type == "pcc")
+        {
+            return new PotPcc(this->rho_basis_, electron_count);
+        }
+        const int open_axis = input.pcc_2d_axis;
+        return new PotPcc(this->rho_basis_, PotPcc::Dimension::slab, open_axis, electron_count);
     }
     else if (pot_type == "surchem")
     {

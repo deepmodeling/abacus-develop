@@ -6,8 +6,9 @@
 #include "source_basis/module_pw/pw_grid_geometry.h"
 #include "source_cell/cell_tools.h"
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <sstream>
 
 namespace
 {
@@ -108,15 +109,18 @@ bool slab_symmetry_valid(const ModuleSymmetry::Symmetry& symmetry, const int axi
 namespace elecstate
 {
 
-PotPcc::PotPcc(const ModulePW::PW_Basis* basis)
-    : dimension_(Dimension::molecule), open_axis_(2)
+PotPcc::PotPcc(const ModulePW::PW_Basis* basis, const double electron_count)
+    : dimension_(Dimension::molecule), open_axis_(2), electron_count_(electron_count)
 {
     this->rho_basis_ = basis;
     this->dynamic_mode = true;
 }
 
-PotPcc::PotPcc(const ModulePW::PW_Basis* basis, const Dimension dimension, const int open_axis)
-    : dimension_(dimension), open_axis_(open_axis)
+PotPcc::PotPcc(const ModulePW::PW_Basis* basis,
+               const Dimension dimension,
+               const int open_axis,
+               const double electron_count)
+    : dimension_(dimension), open_axis_(open_axis), electron_count_(electron_count)
 {
     this->rho_basis_ = basis;
     this->dynamic_mode = true;
@@ -283,6 +287,18 @@ void PotPcc::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::m
     const ChargeMoments electronic_moments = this->collect_electrons(*charge, *cell, positions);
     // Ions are replicated on every rank and must be added after the reduction.
     moments_ = add_charge_moments(ionic_moments, electronic_moments);
+    // The grid density need not integrate to nelec exactly, e.g. after a very
+    // tight diagonalization; the correction uses the grid charge and reports
+    // the mismatch. The moments are pool-reduced, so every rank agrees.
+    const double expected_charge = ionic_moments.charge - electron_count_;
+    const double charge_error = moments_.charge - expected_charge;
+    if (std::abs(charge_error) > 1.0e-6)
+    {
+        std::ostringstream message;
+        message << "PCC net charge differs from the expected value by " << charge_error
+                << " e; the correction uses the grid charge";
+        ModuleBase::WARNING("PotPcc::cal_v_eff", message.str());
+    }
     energy_rydberg_ = 2.0 * this->correction_energy();
     electron_potential_.resize(basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)

@@ -49,9 +49,12 @@ class PotPcc : public PotBase
   public:
     enum class Dimension { molecule, slab };
 
-    explicit PotPcc(const ModulePW::PW_Basis* basis);
+    /// electron_count is the expected number of electrons (INPUT nelec); a
+    /// grid charge that differs from it by more than 1e-6 e is reported in the
+    /// warning log, and the correction uses the grid charge.
+    PotPcc(const ModulePW::PW_Basis* basis, double electron_count);
 
-    PotPcc(const ModulePW::PW_Basis* basis, Dimension dimension, int open_axis);
+    PotPcc(const ModulePW::PW_Basis* basis, Dimension dimension, int open_axis, double electron_count);
     static void validate_kpoints(const std::vector<ModuleBase::Vector3<double>>& points, int count, int open_axis);
 
     void cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::matrix& potential) override;
@@ -72,6 +75,7 @@ class PotPcc : public PotBase
 
     const Dimension dimension_;
     const int open_axis_;
+    const double electron_count_;
     unitcell::SlabCell slab_;
     Pcc2dParameters slab_parameters_;
     unitcell::OrthogonalCell geometry_;
