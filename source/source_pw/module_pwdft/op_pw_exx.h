@@ -354,7 +354,6 @@ extern template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_GP
 template <typename Real, typename Device>
 void get_exx_potential(const K_Vectors* kv,
                        const ModulePW::PW_Basis_K* wfcpw,
-                       const ModulePW::PW_Basis_K* source_basis,
                        ModulePW::PW_Basis* rhopw_dev,
                        Real* pot,
                        double tpiba,

@@ -317,7 +317,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
     for (int iq: q_points)
     {
         const int iq_nospin = iq % nk;
-        get_exx_potential<Real, Device>(source_points_, wfcpw, source_basis_, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq_nospin, false, this->coulomb_param);
+        get_exx_potential<Real, Device>(source_points_, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq_nospin, false, this->coulomb_param);
         for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
         {
             // occupation of the source state (m, iq), not of the target k-point
@@ -382,7 +382,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
     for (int iq = 0; iq < nqs; iq++)
     {
         // for \psi_nk, get the pw of iq and band m
-        get_exx_potential<Real,  Device>(kv, wfcpw, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq, false, this->coulomb_param);
+        get_exx_potential<Real,  Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq, false, this->coulomb_param);
 
         // decide which pool does the iq belong to
         int iq_pool = kv->para_k.whichpool[iq];
@@ -1112,7 +1112,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
 
         for (int iq: q_points_ik)
         {
-            get_exx_potential<Real, Device>(kv, wfcpw, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq % nk, false, this->coulomb_param);
+            const int iq_nospin = iq % nk;
+            get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq_nospin, false, this->coulomb_param);
             for (int m_iband = 0; m_iband < nb; m_iband++)
             {
                 const double wg_iqb_real = (*wg)(iq, m_iband);

@@ -63,7 +63,7 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
     resmem_real_op()(pot, rhopw->npw);
     resmem_real_op()(pot_stress, rhopw->npw);
 
-    // hamilt::get_exx_potential<Real, Device>(p_kv, wfcpw, wfcpw, rhopw, pot, tpiba, gamma_extrapolation, omega);
+    // hamilt::get_exx_potential<Real, Device>(p_kv, wfcpw, rhopw, pot, tpiba, gamma_extrapolation, omega);
     // hamilt::get_exx_stress_potential<Real, Device>(p_kv, wfcpw, rhopw, pot_stress, tpiba, gamma_extrapolation, omega);
 
     // calculate the stress
@@ -81,7 +81,7 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
 
             for (int iq = 0; iq < nqs; iq++)
             {
-                hamilt::get_exx_potential<Real, Device>(p_kv, wfcpw, wfcpw, rhopw, pot, tpiba, gamma_extrapolation, omega, ik, iq, true, exx_info.coulomb_param);
+                hamilt::get_exx_potential<Real, Device>(p_kv, wfcpw, rhopw, pot, tpiba, gamma_extrapolation, omega, ik, iq, true, exx_info.coulomb_param);
                 hamilt::get_exx_stress_potential<Real, Device>(p_kv, wfcpw, rhopw, pot_stress, tpiba, gamma_extrapolation, omega, ik, iq, exx_info.coulomb_param);
                 for (int mband = 0; mband < d_psi_in->get_nbands(); mband++)
                 {

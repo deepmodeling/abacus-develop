@@ -59,7 +59,6 @@ extern template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_GP
 template <typename Real, typename Device>
 void get_exx_potential(const K_Vectors* kv,
                        const ModulePW::PW_Basis_K* wfcpw,
-                       const ModulePW::PW_Basis_K* source_basis,
                        ModulePW::PW_Basis* rhopw_dev,
                        Real* pot,
                        double tpiba,
@@ -552,7 +551,6 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
 }
 template void get_exx_potential<float, base_device::DEVICE_CPU>(const K_Vectors*,
                                                                 const ModulePW::PW_Basis_K*,
-                                                                const ModulePW::PW_Basis_K*,
                                                                 ModulePW::PW_Basis*,
                                                                 float*,
                                                                 double,
@@ -563,7 +561,6 @@ template void get_exx_potential<float, base_device::DEVICE_CPU>(const K_Vectors*
                                                                 bool,
                                                                 const CoulombParam&);
 template void get_exx_potential<double, base_device::DEVICE_CPU>(const K_Vectors*,
-                                                                 const ModulePW::PW_Basis_K*,
                                                                  const ModulePW::PW_Basis_K*,
                                                                  ModulePW::PW_Basis*,
                                                                  double*,
@@ -597,7 +594,6 @@ template void get_exx_stress_potential<double, base_device::DEVICE_CPU>(const K_
 #if ((defined __CUDA) || (defined __ROCM))
 template void get_exx_potential<float, base_device::DEVICE_GPU>(const K_Vectors*,
                                                                 const ModulePW::PW_Basis_K*,
-                                                                const ModulePW::PW_Basis_K*,
                                                                 ModulePW::PW_Basis*,
                                                                 float*,
                                                                 double,
@@ -608,7 +604,6 @@ template void get_exx_potential<float, base_device::DEVICE_GPU>(const K_Vectors*
                                                                 bool,
                                                                 const CoulombParam&);
 template void get_exx_potential<double, base_device::DEVICE_GPU>(const K_Vectors*,
-                                                                 const ModulePW::PW_Basis_K*,
                                                                  const ModulePW::PW_Basis_K*,
                                                                  ModulePW::PW_Basis*,
                                                                  double*,
