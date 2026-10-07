@@ -272,6 +272,40 @@ void parse_args(int argc, char** argv)
         {
             ModuleIO::ReadInput::check_mode = true;
         }
+        // ---- NEW: pass-through branches for run-control options.
+        // These flags are owned by ModuleIO::parse_command_line, which is
+        // called right after this function in main(). Here we only validate
+        // the token count and skip the tokens, so they survive the
+        // unknown-argument fallback below. No state is stored here
+        // (governance rule 1: no new globals).
+        else if (arg == "-p" || arg == "--param")
+        {
+            // Needs two following tokens: <name> <value>
+            const bool has_pair = (i + 2 < argc);
+            if (!has_pair)
+            {
+                const std::string msg = "Error: Option " + arg
+                                        + " requires <name> <value>";
+                std::cerr << msg << std::endl;
+                std::exit(1);
+            }
+            // Skip "<name> <value>"; full validation (empty name,
+            // digit-leading name) is done in parse_command_line.
+            i += 2;
+        }
+        else if (arg == "-in" || arg == "--input")
+        {
+            // Needs one following token: <file>
+            const bool has_file = (i + 1 < argc);
+            if (!has_file)
+            {
+                const std::string msg = "Error: Option " + arg
+                                        + " requires <file>";
+                std::cerr << msg << std::endl;
+                std::exit(1);
+            }
+            ++i;
+        }
         else
         {
             // Error message goes to stderr
