@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_IO_KRLIST_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_IO_KRLIST_H
+
 
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
@@ -29,3 +31,5 @@ class RI_kRlist
 };
 
 } // namespace LR_IO
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_IO_KRLIST_H

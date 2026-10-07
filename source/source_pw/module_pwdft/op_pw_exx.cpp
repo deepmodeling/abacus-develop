@@ -351,12 +351,11 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
 
 template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
-                                   const int nbasis,
-                                   const int npol,
-                                   const T *tmpsi_in,
-                                   T *tmhpsi,
-                                   const int ngk_ik,
-                                   const bool is_first_node) const
+                                         const int nbasis,
+                                         const T* tmpsi_in,
+                                         T* tmhpsi,
+                                         const int ispin,
+                                         const bool has_kpoint) const
 {
     ModuleBase::timer::start("OperatorEXXPW", "act_op_kpar");
 
@@ -370,12 +369,14 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
     setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
     int nqs = kv->get_nkstot_nospin();
     int nspin_fac = nspin_ == 2 ? 2 : 1;
-    int ispin = this->ik < (wfcpw->nks / nspin_fac) ? 0 : 1;
 
     maybe_setup_exx_grid();
     // psi_nk in real space for all bands once per ik, reused over (iq, m);
     // the MPI communication order below is unchanged
-    cache_psi_nk_real(nbands, nbasis, tmpsi_in, this->ik);
+    if (has_kpoint)
+    {
+        cache_psi_nk_real(nbands, nbasis, tmpsi_in, this->ik);
+    }
 
     // ik fixed here, select band n
     for (int iq = 0; iq < nqs; iq++)
@@ -395,7 +396,8 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
         // occupation row and k weight of the source k-point, fetched from the
         // pool that owns it in a single broadcast
         const int nb = psi.get_nbands();
-        std::vector<double> occ_q(nb + 1);
+        const int occupation_count = nb + 1;
+        std::vector<double> occ_q(occupation_count);
         if (iq_pool == my_pool_)
         {
             for (int m = 0; m < nb; m++)
@@ -405,8 +407,9 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
             occ_q[nb] = kv->wk[iq_loc_spin];
         }
 #ifdef __MPI
+        const int source_rank = kv->para_k.get_startpro_pool(iq_pool);
         Parallel_Common::bcast_dev<double, base_device::DEVICE_CPU>(
-            occ_q.data(), nb + 1, MPI_COMM_WORLD, kv->para_k.get_startpro_pool(iq_pool));
+            occ_q.data(), occupation_count, MPI_COMM_WORLD, source_rank);
 #endif
         const Real wk_q = occ_q[nb];
 
@@ -421,13 +424,17 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
                 wfc_to_real_exx(get_pw(m_iband, iq_loc_spin), iq_loc, nbasis);
             }
 #ifdef __MPI
-            Parallel_Common::bcast_dev<T, Device>(psi_mq_real, exx_grid_size(), KP_WORLD, iq_pool);
+            const int grid_size = exx_grid_size();
+            Parallel_Common::bcast_dev<T, Device>(psi_mq_real, grid_size, KP_WORLD, iq_pool);
 #endif
 
             // k weight of the source k-point (identical to wk[this->ik] on the
             // uniform k-grids without symmetry reduction this scheme assumes)
             const Real factor = this->hybrid_alpha * wg_mqb / wk_q / nqs;
-            apply_fock_all_bands(nbands, nbasis, iq, factor, tmhpsi);
+            if (has_kpoint)
+            {
+                apply_fock_all_bands(nbands, nbasis, iq, factor, tmhpsi);
+            }
 
         } // end of m_iband
 
@@ -1131,9 +1138,13 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
                         {
                             continue;
                         }
+                        // pure occupations f = wg / wk; divide by the q-mesh
+                        // size nqs to apply the uniform q-point BZ weight, and
+                        // by wk[ik] to convert wg(ik) into the occupation.
+                        const double exx_weight = wg_iqb_real / nqs * wg_ikb_real / kv->wk[ik];
                         Eexx_ik_real += exx_cal_energy_op<T, Device>()(pair_density(n_iband),
                                                                        pot,
-                                                                       wg_iqb_real / nqs * wg_ikb_real / kv->wk[ik],
+                                                                       exx_weight,
                                                                        npw);
                     }
                 }

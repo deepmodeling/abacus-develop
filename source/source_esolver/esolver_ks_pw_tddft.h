@@ -45,7 +45,6 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
 
   private:
     using Real = typename GetTypeReal<T>::type;
-    double q_unshifted_ = 0.0; // Global geometric momentum bound in inverse Bohr.
     std::unique_ptr<hsolver::HSolverPWTDDFT<T, Device>> td_solver_;
 
     std::shared_ptr<elecstate::TDFieldManager> td_field_manager_;

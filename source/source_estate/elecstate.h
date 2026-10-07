@@ -8,6 +8,11 @@
 #include "source_psi/psi.h"
 #include "module_pot/potential_new.h"
 
+namespace ModulePW
+{
+class PW_Basis_Big;
+}
+
 namespace elecstate
 {
 

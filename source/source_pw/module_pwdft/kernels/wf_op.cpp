@@ -1,4 +1,6 @@
 #include "source_pw/module_pwdft/kernels/wf_op.h"
+
+#include <cstdint>
 #include "source_base/libm/libm.h"
 
 namespace hamilt{
@@ -41,7 +43,7 @@ struct cal_sk_op<FPTYPE, base_device::DEVICE_CPU>
             for (int ia = 0; ia < atom_na[it]; ia++) {
                 FPTYPE arg = 0.0;
                 for (int ii = 0; ii < 3; ii++) {
-                    arg += kvec_c[ik * 3 + ii] * atom_tau[iat * 3 + ii];
+                    arg += kvec_c[static_cast<std::int64_t>(ik) * 3 + ii] * atom_tau[static_cast<std::int64_t>(iat) * 3 + ii];
                 }
                 arg *= TWO_PI;
                 FPTYPE sinp, cosp;
@@ -51,7 +53,7 @@ struct cal_sk_op<FPTYPE, base_device::DEVICE_CPU>
 #pragma omp for
 #endif
                 for (int igl = 0; igl < npw; ++igl) {
-                    const int isz = igl2isz[ik * npwx + igl];
+                    const int isz = igl2isz[static_cast<std::int64_t>(ik) * npwx + igl];
                     int iz = isz % nz;
                     const int is = isz / nz;
                     const int ixy = is2fftixy[is];
@@ -66,8 +68,8 @@ struct cal_sk_op<FPTYPE, base_device::DEVICE_CPU>
                     ix += rho_nx;
                     iy += rho_ny;
                     iz += rho_nz;
-                    sk[iat * npw + igl] = kphase * eigts1[iat * eigts1_nc + ix] * eigts2[iat * eigts2_nc + iy]
-                                          * eigts3[iat * eigts3_nc + iz];
+                    sk[static_cast<std::int64_t>(iat) * npw + igl] = kphase * eigts1[static_cast<std::int64_t>(iat) * eigts1_nc + ix] * eigts2[static_cast<std::int64_t>(iat) * eigts2_nc + iy]
+                                          * eigts3[static_cast<std::int64_t>(iat) * eigts3_nc + iz];
                 }
                 iat++;
             }
@@ -82,4 +84,3 @@ template struct cal_sk_op<float, base_device::DEVICE_CPU>;
 template struct cal_sk_op<double, base_device::DEVICE_CPU>;
 
 }  // namespace hamilt
-

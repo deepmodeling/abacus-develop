@@ -52,6 +52,14 @@ class UnitCell : public BaseCell {
     /// @brief Get npol
     inline const int& get_npol() const { return npol; }
 
+    /// @brief Set iat2iwt (and npol) directly; intended for unit tests that
+    /// build a minimal UnitCell without running the full indexing setup.
+    inline void set_iat2iwt_for_test(const std::vector<int>& iat2iwt_in, const int npol_in)
+    {
+        this->iat2iwt = iat2iwt_in;
+        this->npol = npol_in;
+    }
+
     /// @brief Indexing tools for ia and it
     /// @return true if the last out is reset
     template <typename Tiat, typename Tiait>

@@ -1,36 +1,9 @@
 #include "source_hsolver/hsolver_linear.h"
 
-#include "source_base/module_device/memory_op.h"
 #include "source_base/tool_quit.h"
 
 namespace hsolver
 {
-namespace
-{
-template <typename T, typename Device>
-class IdentityOperator final : public LinearOperator<T, Device>
-{
-  private:
-    const int dim_;
-
-  public:
-    explicit IdentityOperator(const int dim) : dim_(dim)
-    {
-    }
-    bool is_identity() const override
-    {
-        return true;
-    }
-    void apply(const T* x, T* y, const int ld, const int nvec) const override
-    {
-        if (dim_ > 0)
-        {
-            base_device::memory::synchronize_memory_2d_op<T, Device, Device>()(y, ld, x, ld, dim_, nvec);
-        }
-    }
-};
-} // namespace
-
 const char* linear_status_name(const LinearSolveStatus status)
 {
     switch (status)
@@ -43,22 +16,30 @@ const char* linear_status_name(const LinearSolveStatus status)
         return "maximum iterations";
     case LinearSolveStatus::residual_mismatch:
         return "true residual check failed";
+    case LinearSolveStatus::preconditioner_failure:
+        return "preconditioner application failed";
     }
     return "unknown linear solve status";
 }
 
 template <typename T, typename Device>
 HSolverLinear<T, Device>::HSolverLinear(const LinearSolveOptions& options, const diag_comm_info& comm)
+    : default_control_{options.max_iterations, options.reconstruct}
 {
     using Real = typename GetTypeReal<T>::type;
-    tolerance_ = options.tolerance == 0.0 ? std::max(1e-10, 100.0 * std::numeric_limits<Real>::epsilon()) : options.tolerance;
+    const double roundoff_tolerance = 100.0 * std::numeric_limits<Real>::epsilon();
+    tolerance_ = options.tolerance == 0.0 ? std::max(1e-10, roundoff_tolerance) : options.tolerance;
     if (options.method == LinearMethod::bicgstab)
     {
-        bicgstab_.reset(new LinearBiCGSTAB<T, Device>(tolerance_, options.max_iterations, comm));
+        bicgstab_.reset(new LinearBiCGSTAB<T, Device>(tolerance_, comm));
     }
     else if (options.method == LinearMethod::cgs)
     {
-        cgs_.reset(new LinearCGS<T, Device>(tolerance_, options.max_iterations, comm));
+        cgs_.reset(new LinearCGS<T, Device>(tolerance_, comm));
+    }
+    else if (options.method == LinearMethod::gmres)
+    {
+        gmres_.reset(new LinearGMRES<T, Device>(tolerance_, options, comm));
     }
     else
     {
@@ -68,32 +49,41 @@ HSolverLinear<T, Device>::HSolverLinear(const LinearSolveOptions& options, const
 
 template <typename T, typename Device>
 LinearSolveResult HSolverLinear<T, Device>::solve(const LinearOperator<T, Device>& op,
-                                                  const int ld,
-                                                  const int nvec,
-                                                  const int dim,
+                                                  const LinearOperator<T, Device>& preconditioner,
+                                                  int ld,
+                                                  int nvec,
+                                                  int dim,
                                                   T* x,
-                                                  const T* b)
+                                                  const T* b,
+                                                  const T* initial_residual,
+                                                  bool force_check)
 {
-    const IdentityOperator<T, Device> identity(dim);
-    return solve(op, identity, ld, nvec, dim, x, b);
+    return solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, force_check, default_control_);
 }
 
 template <typename T, typename Device>
 LinearSolveResult HSolverLinear<T, Device>::solve(const LinearOperator<T, Device>& op,
                                                   const LinearOperator<T, Device>& preconditioner,
-                                                  const int ld,
-                                                  const int nvec,
-                                                  const int dim,
+                                                  int ld,
+                                                  int nvec,
+                                                  int dim,
                                                   T* x,
-                                                  const T* b)
+                                                  const T* b,
+                                                  const T* initial_residual,
+                                                  bool force_check,
+                                                  const LinearSolveControl& control)
 {
     if (bicgstab_)
     {
-        return bicgstab_->solve(op, preconditioner, ld, nvec, dim, x, b);
+        return bicgstab_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, control.max_iterations);
     }
     else if (cgs_)
     {
-        return cgs_->solve(op, preconditioner, ld, nvec, dim, x, b);
+        return cgs_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, control.max_iterations);
+    }
+    else if (gmres_)
+    {
+        return gmres_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, force_check, control);
     }
     else
     {

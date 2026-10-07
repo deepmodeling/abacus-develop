@@ -91,11 +91,13 @@ void Velocity<FPTYPE, Device>::init(const int ik_in, const ModuleBase::Vector3<d
     {
 
         const int nkb = this->ppcell->nkb;
-        if (nkb * npwk_max > projector_capacity_)
+        const std::int64_t projector_elements = static_cast<std::int64_t>(nkb) * npwk_max;
+        if (projector_elements > projector_capacity_)
         {
-            resmem_complex_op()(vkb_, nkb * npwk_max);
-            resmem_complex_op()(gradvkb_, 3 * nkb * npwk_max);
-            projector_capacity_ = nkb * npwk_max;
+            const std::int64_t gradient_elements = 3 * projector_elements;
+            resmem_complex_op()(vkb_, projector_elements);
+            resmem_complex_op()(gradvkb_, gradient_elements);
+            projector_capacity_ = projector_elements;
         }
         this->ppcell->getvnl(this->ctx, *this->ucell, ik_in, vector_potential, vkb_);
         this->gradient_.calculate(this->ppcell, *this->ucell, *this->wfcpw, ik_in, vector_potential, gradvkb_);
@@ -114,6 +116,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
 
     const int npw = this->wfcpw->npwk[this->ik];
     const int max_npw = this->wfcpw->npwk_max;
+    const std::int64_t component_elements = static_cast<std::int64_t>(n_npwx) * max_npw;
     const int npol = psi_in->get_npol();
     using Real = typename GetTypeReal<FPTYPE>::type;
 
@@ -124,7 +127,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
     for (int id = 0; id < 3; ++id)
     {
         const Complex* tmpsi_in = psi0;
-        Complex* tmpvpsi = vpsi + id * n_npwx * max_npw;
+        Complex* tmpvpsi = vpsi + id * component_elements;
         for (int ib = 0; npw > 0 && ib < n_npwx; ++ib)
         {
             ModuleBase::vector_mul_vector_op<Complex, Device, FPTYPE>()(npw, tmpvpsi, tmpsi_in, gtmp_ptr[id], add);
@@ -165,11 +168,13 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
                 ModuleBase::WARNING_QUIT("Velocity", "invalid spin index for meta-GGA velocity correction");
             }
         }
-        const Real* vtau_spin = this->vtau_col_ > 0 ? this->vtau_ + current_spin * this->vtau_col_ : nullptr;
+        const std::int64_t spin_offset = static_cast<std::int64_t>(current_spin) * this->vtau_col_;
+        const Real* vtau_spin = this->vtau_col_ > 0 ? this->vtau_ + spin_offset : nullptr;
         Complex minus_half_i(0.0, -0.5);
         for (int ib = 0; ib < n_npwx; ++ib)
         {
-            const Complex* bandpsi = psi0 + ib * max_npw;
+            const std::int64_t band_offset = static_cast<std::int64_t>(ib) * max_npw;
+            const Complex* bandpsi = psi0 + band_offset;
             this->wfcpw->recip_to_real(this->ctx, bandpsi, this->porter1_, this->ik);
             if (this->vtau_col_ > 0)
             {
@@ -182,7 +187,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
             this->wfcpw->real_to_recip(this->ctx, this->porter1_, this->porter1_, this->ik);
             for (int id = 0; id < 3; ++id)
             {
-                Complex* vpsi_slice = vpsi + id * n_npwx * max_npw + ib * max_npw;
+                Complex* vpsi_slice = vpsi + id * component_elements + band_offset;
                 Complex one = 1.0;
                 // term1: partial_id (v_tau * psi)
                 if (npw > 0)
@@ -244,7 +249,7 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
     }
 
     // 1. <\beta|\psi>
-    const int block = this->ppcell->nkb * n_npwx;
+    const std::int64_t block = static_cast<std::int64_t>(this->ppcell->nkb) * n_npwx;
     Complex* becp1_ = this->contraction_.prepare(block);
     Complex* becp2_ = becp1_ + block;
     Complex* ps1_ = becp1_ + 4 * block;
@@ -261,7 +266,8 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
     if (npw == 0)
     {
         // Keep the reduction collective even when this rank has no local plane waves.
-        base_device::memory::set_memory_op<Complex, Device>()(becp1_, 0, 4 * block);
+        const std::int64_t projection_elements = 4 * block;
+        base_device::memory::set_memory_op<Complex, Device>()(becp1_, 0, projection_elements);
     }
     else if (n_npwx == 1)
     {
@@ -293,9 +299,9 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
         int inc = 1;
         for (int id = 0; id < 3; ++id)
         {
-            int vkbshift = id * max_npw * nkb;
-            int ps2shift = id * nkb;
-            int npwshift = id * max_npw;
+            const std::int64_t vkbshift = static_cast<std::int64_t>(id) * max_npw * nkb;
+            const std::int64_t ps2shift = static_cast<std::int64_t>(id) * nkb;
+            const std::int64_t npwshift = id * component_elements;
             ModuleBase::gemv_op<Complex,
                                 Device>()('N', npw, nkb, &one, gradvkb_d + vkbshift, max_npw, ps1_, inc, &one, vpsi + npwshift, inc);
             ModuleBase::gemv_op<Complex, Device>()('N', npw, nkb, &one, vkb_d, max_npw, ps2_ + ps2shift, inc, &one, vpsi + npwshift, inc);
@@ -305,9 +311,9 @@ void Velocity<FPTYPE, Device>::act(const psi::Psi<std::complex<FPTYPE>, Device>*
     {
         for (int id = 0; id < 3; ++id)
         {
-            int vkbshift = id * max_npw * nkb;
-            int ps2shift = id * n_npwx * nkb;
-            int npwshift = id * max_npw * n_npwx;
+            const std::int64_t vkbshift = static_cast<std::int64_t>(id) * max_npw * nkb;
+            const std::int64_t ps2shift = id * block;
+            const std::int64_t npwshift = id * component_elements;
             ModuleBase::gemm_op<Complex, Device>()('N',
                                                    'T',
                                                    npw,

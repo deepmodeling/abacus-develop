@@ -182,7 +182,7 @@ bool init_general_exx_info(General_Exx_Info& info, const Input_para& inp)
 
         // PW EXX operator configuration
         info.exxace = inp.exxace;
-        info.gamma_extrapolation = inp.exx_gamma_extrapolation;
+        info.gamma_extrapolation = inp.exx_gamma_extra;
         info.ecutexx_user_set = inp.ecutexx > 0.0;
         info.ecut_exx = info.ecutexx_user_set ? inp.ecutexx : inp.ecutrho;
         if (info.ecutexx_user_set && info.ecut_exx > inp.ecutrho)

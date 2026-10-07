@@ -469,7 +469,7 @@ void ReadInput::item_exx()
         item.category = "Exact Exchange (Common)";
         item.type = "String";
         item.description = R"(Scheme for Coulomb singularity / zero-transfer treatment in exact exchange.
-* limits: use the finite screened Coulomb-kernel limit, without an auxiliary correction. Default for HSE and cwp22 in both PW and LCAO. PW requires screened exchange and exx_gamma_extrapolation=false; the latter defaults to false for this scheme.
+* limits: use the finite screened Coulomb-kernel limit, without an auxiliary correction. Default for HSE and cwp22 in both PW and LCAO. PW requires screened exchange and exx_gamma_extra=false; the latter defaults to false for this scheme.
 * auxiliary: retain the historical PW auxiliary-function correction. PW only; default for unscreened PW hybrids. For independent-k screened hybrid NSCF this can cause discontinuities at source k points.
 * spencer: LCAO spherical truncation, Phys. Rev. B 77, 193110 (2008).
 * revised_spencer: LCAO, Phys. Rev. Mater. 5, 013807 (2021).
@@ -513,11 +513,11 @@ Use the same scheme for SCF and NSCF. Regenerate the SCF source checkpoint after
             {
                 const auto gamma_item = std::find_if(this->input_lists.begin(), this->input_lists.end(),
                     [](const std::pair<std::string, Input_Item>& entry) {
-                        return entry.first == "exx_gamma_extrapolation";
+                        return entry.first == "exx_gamma_extra";
                     });
                 if (gamma_item != this->input_lists.end() && !gamma_item->second.is_read())
                 {
-                    para.input.exx_gamma_extrapolation = false;
+                    para.input.exx_gamma_extra = false;
                 }
             }
         };
@@ -536,10 +536,10 @@ Use the same scheme for SCF and NSCF. Regenerate the SCF source checkpoint after
                     {
                         has_fock = has_fock || std::stod(alpha) != 0.0;
                     }
-                    if (has_fock || para.input.exx_gamma_extrapolation)
+                    if (has_fock || para.input.exx_gamma_extra)
                     {
                         ModuleBase::WARNING_QUIT("ReadInput",
-                            "PW limits requires screened exchange and exx_gamma_extrapolation=false");
+                            "PW limits requires screened exchange and exx_gamma_extra=false");
                     }
                 }
             }

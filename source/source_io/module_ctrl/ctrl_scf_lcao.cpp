@@ -2,6 +2,7 @@
 #include "source_hamilt/module_xc/exx_info.h"
 
 #include "source_base/formatter.h"
+#include "source_base/module_out/filename.h"
 #include "source_base/tool_quit.h" // use ModuleBase::WARNING_QUIT
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "source_hamilt/hamilt.h"         // use Hamilt<T>
@@ -11,16 +12,17 @@
 
 // functions
 #include "../module_unk/berryphase.h"                          // use berryphase
-#include "../module_hs/cal_plpr.h"                            // use AngularMomentumCalculator()
+#include "../module_hs/angmom_op_mat.h"                       // use Angmom_op()
 #include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
 #include "source_io/module_ml/io_npz.h"                       // use ModuleIO::output_mat_npz()
 #include "source_io/module_dhs/write_dh.h"                    // use ModuleIO::write_dH_components()
-#include "source_io/module_hs/write_h_terms.h"         // use ModuleIO::write_h_*
-#include "../module_hs/write_hs_r.h"                          // use ModuleIO::write_hsr()
+#include "source_io/module_hs/hterm_writer.h"         // use ModuleIO::write_h_*
+#include "../module_hs/hsr_writer.h"                               // use ModuleIO::write_hsr()
 #include "../module_mulliken/cal_mag.h"                          // use cal_mag()
 #include "../module_wannier/to_w90_lcao.h"                   // use toW90_LCAO
 #include "../module_wannier/to_w90_lcao_pw.h"             // use toW90_LCAO_IN_PW
-#include "../module_hs/write_hs.h"                            // use ModuleIO::write_hsk()
+#include "../module_hs/hs_dense_io.h"                           // use ModuleIO::save_mat()
+#include "../module_hs/hsk_writer.h"                            // use ModuleIO::write_hsk()
 #include "../module_dm/write_dmk.h"                           // use ModuleIO::write_dmk()
 #include "../module_dm/write_dmr.h"                           // use ModuleIO::write_dmr()
 #include "../module_dos/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
@@ -42,20 +44,6 @@
 #include "source_lcao/module_operator_lcao/overlap.h" // use hamilt::Overlap for NAMD
 
 #ifdef __EXX
-template <typename TK>
-void setup_exx_dh_params(ModuleIO::WriteDHParams& dh_params, Exx_NAO<TK>& exx_nao, const Exx_Info& exx_info)
-{}
-
-template <>
-void setup_exx_dh_params<double>(ModuleIO::WriteDHParams& dh_params, Exx_NAO<double>& exx_nao, const Exx_Info& exx_info)
-{
-    if (exx_info.info_global.cal_exx)
-    {
-        if (exx_nao.exd) { dh_params.exd = exx_nao.exd.get(); }
-        if (exx_nao.exc) { dh_params.exc = exx_nao.exc.get(); }
-    }
-}
-
 template <typename TK>
 void setup_exx_h_params(ModuleIO::WriteHParams& h_params, Exx_NAO<TK>& exx_nao, const Exx_Info& exx_info)
 {
@@ -170,6 +158,15 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                  inp.dos_sigma,
                                  out_app_flag,
                                  istep,
+                                 inp.nspin,
+                                 PARAM.globalv.nlocal,
+                                 PARAM.globalv.dos_setemax,
+                                 inp.dos_emax_ev,
+                                 PARAM.globalv.dos_setemin,
+                                 inp.dos_emin_ev,
+                                 PARAM.globalv.two_fermi,
+                                 inp.bndpar,
+                                 PARAM.globalv.global_out_dir,
                                  GlobalV::ofs_running);
     }
 
@@ -219,6 +216,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                             istep,
                             hsk_out_type,
                             precision,
+                            PARAM.globalv.nlocal,
+                            PARAM.inp.ks_solver,
+                            GlobalV::DRANK,
                             GlobalV::ofs_running);
     }
 
@@ -277,7 +277,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const hamilt::HContainer<TR>* sr = p_hamilt->getSR();
 
         ModuleIO::write_hsr(hr_vec, sr, &ucell, inp.out_hsr[0], precision, pv,
-                            out_app_flag, gamma_only, ucell.get_iat2iwt(), ucell.nat, istep);
+                            out_app_flag, gamma_only, ucell.get_iat2iwt(), ucell.nat, istep,
+                            PARAM.globalv.global_out_dir);
     }
 
     //------------------------------------------------------------------
@@ -329,7 +330,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
     if(!PARAM.globalv.gamma_only_local)
     ModuleIO::output_mat_sparse(mat_sparse_options,
-                                istep,
+                                istep_in,
                                 pelec->pot->get_eff_v(),
                                 pv,
                                 two_center_bundle,
@@ -404,11 +405,14 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                 dh_params.dmR.push_back(dm->get_dmr_ptr(is));
             }
         }
-#ifdef __EXX
-        // dV^EXX/dR output is wired for the gamma (TK==double) exx interfaces. exd/exc are
-        // mutually exclusive (real vs complex Hexx); write_dH_exx picks by info_ri.real_number.
-        setup_exx_dh_params(dh_params, exx_nao, exx_info);
-#endif
+        // FIXME (known bug, not addressed in this PR): with MPI ranks > 1 the
+        // Hellmann-Feynman path inside hamilt::Veff::cal_dH
+        // (source_lcao/module_operator_lcao/veff_dh.cpp) may deadlock.
+        // The vl branch issues collectives (PW FFT via Forces::cal_force_loc)
+        // per orbital pair; until that path is made rank-lockstep, multi-rank
+        // out_mat_dh runs can hang. Tracked as a follow-up; do NOT add a
+        // rank-count guard here -- the integration tests (e.g.
+        // tests/02_NAO_Gamma/scf_out_dh) exercise this path with np > 1.
         ModuleIO::write_dH_components(dh_params, exx_info);
         delete pot_vl;
         delete pot_vh;
@@ -436,6 +440,18 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         h_params.append = out_app_flag;
         h_params.iat2iwt = ucell.get_iat2iwt();
         h_params.nat = ucell.nat;
+        h_params.nlocal = PARAM.globalv.nlocal;
+        h_params.gamma_only_local = gamma_only;
+        h_params.npol = PARAM.globalv.npol;
+        h_params.domag = PARAM.globalv.domag;
+        h_params.domag_z = PARAM.globalv.domag_z;
+        h_params.gga_grad = PARAM.inp.gga_grad;
+        h_params.out_app_flag = out_app_flag;
+        h_params.calculation = inp.calculation;
+        h_params.global_out_dir = global_out_dir;
+        h_params.global_matrix_dir = PARAM.globalv.global_matrix_dir;
+        h_params.ks_solver = PARAM.inp.ks_solver;
+        h_params.drank = GlobalV::DRANK;
         if (inp.out_mat_h_t[0])
         {
             ModuleIO::write_h_t(h_params);
@@ -508,7 +524,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                inp.out_app_flag,
                                t_fn,
                                pv,
-                               GlobalV::DRANK);
+                               GlobalV::DRANK,
+                               PARAM.inp.ks_solver);
         }
 
         delete ekinetic;
@@ -519,16 +536,18 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_mat_l[0])
     {
-        ModuleIO::AngularMomentumCalculator mylcalculator(inp.orbital_dir,
+        ModuleIO::Angmom_op mylcalculator(inp.orbital_dir,
                                                           ucell,
                                                           orb.get_rcutmax_Phi(),
                                                           inp.test_deconstructor,
                                                           inp.test_grid,
                                                           inp.test_atom_input,
                                                           PARAM.globalv.search_pbc,
+                                                          PARAM.inp.out_level,
+                                                          PARAM.globalv.gamma_only_local,
                                                           &GlobalV::ofs_running,
                                                           GlobalV::MY_RANK);
-        mylcalculator.calculate(inp.suffix, global_out_dir, ucell, inp.out_mat_l[1], GlobalV::MY_RANK);
+        mylcalculator.calculate(inp.suffix, global_out_dir, ucell, inp.out_mat_l[1], GlobalV::MY_RANK, istep_in);
     }
 
     //------------------------------------------------------------------

@@ -24,7 +24,7 @@ relax_method         cg 1
 pseudo_dir           ../../../tests/PP_ORB    
 orbital_dir          ../../../tests/PP_ORB
 
-nspin                4
+nspin                2
 
 out_chg              1
 out_pot              1
@@ -36,4 +36,9 @@ out_band             1
 out_stru             1
 out_app_flag         0
 
-out_freq_ion         1
+out_mat_l 1
+out_mat_r 1
+out_mat_t 1 
+#out_mat_dh 1
+
+out_freq_ion         2

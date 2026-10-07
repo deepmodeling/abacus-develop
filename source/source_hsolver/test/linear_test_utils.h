@@ -58,6 +58,21 @@ std::vector<T> multiply(const std::vector<T>& a, const std::vector<T>& x, const 
     return b;
 }
 
+// Extract the local rows of column-major reference data, leaving padding zero.
+template <typename T>
+std::vector<T> local_columns(const std::vector<T>& global, int n, int columns, int start, int dim, int ld)
+{
+    std::vector<T> local(ld * columns, T(0));
+    for (int j = 0; j < columns; ++j)
+    {
+        for (int i = 0; i < dim; ++i)
+        {
+            local[j * ld + i] = global[j * n + start + i];
+        }
+    }
+    return local;
+}
+
 // Solve in double precision even when the iterative input was rounded to float.
 template <typename T>
 std::vector<Complex> lapack_solve(const std::vector<T>& a, const std::vector<T>& b, const int n, const int nvec)

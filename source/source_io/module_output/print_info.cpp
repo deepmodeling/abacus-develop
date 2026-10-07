@@ -1,5 +1,7 @@
 #include "print_info.h"
 
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_base/global_variable.h"
 #include "source_io/module_parameter/parameter.h"
 

@@ -88,7 +88,7 @@ void get_exx_potential(const K_Vectors* kv,
     qvec_d = kv->kvec_d;
 #endif
 
-    if (ik > nks)
+    if (ik >= nks)
     {
         return;
     }

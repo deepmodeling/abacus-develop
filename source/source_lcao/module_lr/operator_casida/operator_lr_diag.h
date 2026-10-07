@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_OPERATOR_CASIDA_OPERATOR_LR_DIAG_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_OPERATOR_CASIDA_OPERATOR_LR_DIAG_H
+
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_hamilt/operator.h"
 #ifdef __MPI
@@ -61,3 +63,5 @@ namespace LR
         Device* ctx = {};
     };
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_OPERATOR_CASIDA_OPERATOR_LR_DIAG_H

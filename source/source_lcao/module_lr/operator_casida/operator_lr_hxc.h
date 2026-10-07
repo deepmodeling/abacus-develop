@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_OPERATOR_CASIDA_OPERATOR_LR_HXC_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_OPERATOR_CASIDA_OPERATOR_LR_HXC_H
+
 #include "source_cell/klist.h"
 #include "source_hamilt/operator.h"
 #include "source_estate/module_dm/density_matrix.h"
@@ -88,3 +90,5 @@ namespace LR
         mutable bool first_print = true;
     };
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_OPERATOR_CASIDA_OPERATOR_LR_HXC_H

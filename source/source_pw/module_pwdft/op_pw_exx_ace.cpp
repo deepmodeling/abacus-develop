@@ -78,6 +78,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
     int nbands = psi.get_nbands();
     int nbasis = psi.get_nbasis();
     int nk = psi.get_nk();
+    const int hpsi_size = nbands * nbasis;
 
     int* ik_ = const_cast<int*>(&this->ik);
     int ik_save = this->ik;
@@ -119,82 +120,30 @@ void OperatorEXXPW<T, Device>::construct_ace() const
     ModuleBase::timer::start("OperatorEXXPW", "construct_ace");
 
     int nk_max = kv->para_k.get_max_nks_pool();
-    int nspin_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+    int nspin_fac = nspin_ == 2 ? 2 : 1;
     for (int ispin = 0; ispin < nspin_fac; ispin++)
     {
         for (int ik0 = 0; ik0 < nk_max; ik0++)
         {
-            int ik = ik0 + ispin * wfcpw->nks / nspin_fac;
-            // printf("ik: %d\n", ik);
-            int npwk = wfcpw->npwk[ik];
-
-            T* Xi_ace = Xi_ace_k[ik];
-            psi.fix_kb(ik, 0);
-            T* p_psi = psi.get_pointer();
-
-            setmem_complex_op()(h_psi_ace, 0, nbands * nbasis);
-
-            setmem_complex_op()(h_psi_recip, 0, wfcpw->npwk_max);
-            setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
-            setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
-            setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
-            setmem_complex_op()(psi_nk_real, 0, wfcpw->nrxx);
-            setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
-            int nqs = kv->get_nkstot_nospin();
-
-            bool skip_ik = false;
-            if (ik >= wfcpw->nks)
+            const int nks_per_spin = wfcpw->nks / nspin_fac;
+            const bool has_kpoint = ik0 < nks_per_spin;
+            // Use an out-of-range sentinel on idle pools. They still enter the
+            // same q-point collectives, but never access local k-point data.
+            const int ik = has_kpoint ? ik0 + ispin * nks_per_spin : wfcpw->nks;
+            *ik_ = ik;
+            T* p_psi = nullptr;
+            if (has_kpoint)
             {
-                skip_ik = true;
+                psi.fix_kb(ik, 0);
+                p_psi = psi.get_pointer();
             }
-            if (skip_ik)
+            setmem_complex_op()(h_psi_ace, 0, hpsi_size);
+            act_op_kpar(nbands, nbasis, p_psi, h_psi_ace, ispin, has_kpoint);
+
+            if (has_kpoint)
             {
-                // ik fixed here, select band n
-                for (int iq0 = 0; iq0 < nqs; iq0++)
-                {
-                    // For nspin=2, iq should be in the same spin channel as ik
-                    int iq = 0;
-
-                    int nk = wfcpw->nks / 2;
-                    iq = iq0 + ispin * nk; // iq in the same spin channel
-
-                    // for \psi_nk, get the pw of iq and band m
-                    get_exx_potential<Real,  Device>(kv, wfcpw, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq, false, this->coulomb_param);
-
-                    // decide which pool does the iq belong to
-                    int iq_pool = kv->para_k.whichpool[iq0];
-                    int iq_loc  = iq - kv->para_k.startk_pool[iq_pool];
-
-                    for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
-                    {
-                        double wg_mqb = 0;
-                        if (iq_pool == GlobalV::MY_POOL)
-                        {
-                            wg_mqb = (*wg)(iq_loc, m_iband);
-                        }
-#ifdef __MPI
-                        MPI_Bcast(&wg_mqb, 1, MPI_DOUBLE, kv->para_k.get_startpro_pool(iq_pool), MPI_COMM_WORLD);
-#endif
-                        if (wg_mqb < 1e-12)
-                            continue;
-
-                        if (iq_pool == GlobalV::MY_POOL)
-                        {
-                            const T* psi_mq = get_pw(m_iband, iq_loc);
-                            wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq_loc);
-                        }
-#ifdef __MPI
-                        Parallel_Common::bcast_dev<T, Device>(psi_mq_real, wfcpw->nrxx, KP_WORLD, iq_pool);
-#endif
-
-                    } // end of iq
-
-                }
-            }
-            else
-            {
-                *ik_ = ik;
-                act_op_kpar(nbands, nbasis, 1, p_psi, h_psi_ace, nbasis, false);
+                const int npwk = wfcpw->npwk[ik];
+                T* Xi_ace = Xi_ace_k[ik];
                 // psi_h_psi_ace = psi^\dagger * h_psi_ace
                 // p_exx_helper->psi.fix_kb(0, 0);
                 gemm_complex_op()('C',
@@ -274,7 +223,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                                   nbands);
 
                 // clear mem
-                setmem_complex_op()(h_psi_ace, 0, nbands * nbasis);
+                setmem_complex_op()(h_psi_ace, 0, hpsi_size);
                 setmem_complex_op()(psi_h_psi_ace, 0, nbands * nbands);
                 setmem_complex_op()(L_ace, 0, nbands * nbands);
             }
@@ -291,7 +240,7 @@ template <typename T, typename Device>
 double OperatorEXXPW<T, Device>::cal_exx_energy_ace(psi::Psi<T, Device>* ppsi_) const
 {
     double Eexx = 0;
-    int nspin_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+    int nspin_fac = nspin_ == 2 ? 2 : 1;
     psi::Psi<T, Device> psi_ = *ppsi_;
     int* ik_ = const_cast<int*>(&this->ik);
     int ik_save = this->ik;

@@ -1,5 +1,6 @@
 #include "esolver_fp.h"
 
+#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_base/tool_quit.h"
 #include "source_cell/cal_ux.h"
 #include "source_estate/module_charge/chg_atomic.h"

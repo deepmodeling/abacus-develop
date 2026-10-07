@@ -882,14 +882,14 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         this->add_item(item);
     }
     {
-        Input_Item item("exx_gamma_extrapolation");
+        Input_Item item("exx_gamma_extra");
         item.annotation = "whether to perform gamma extrapolation in exxpw";
         item.category = "Exact Exchange (PW)";
         item.type = "Boolean";
         item.description = "Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See https://doi.org/10.1103/PhysRevB.79.205114 for details. Defaults to false for PW exx_singularity_correction=limits (finite screened kernel), and true otherwise. Explicit true is incompatible with the PW limits scheme.";
         item.default_value = "False for PW limits; True otherwise";
         item.unit = "";
-        read_sync_bool(input.exx_gamma_extrapolation);
+        read_sync_bool(input.exx_gamma_extra);
         this->add_item(item);
     }
     {

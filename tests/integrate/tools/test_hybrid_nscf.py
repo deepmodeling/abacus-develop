@@ -25,7 +25,7 @@ smearing_method fixed
 dft_functional HSE
 symmetry -1
 exxace false
-exx_gamma_extrapolation false
+exx_gamma_extra false
 out_band 1
 cal_force 0
 cal_stress 0
@@ -37,7 +37,7 @@ PATH = "K_POINTS\n3\nDirect\n0 0 0 1\n0.125 0 0 1\n0.25 0 0 1\n"
 def create_case(root, name, extra, points=MESH):
     case = root / name
     case.mkdir()
-    shutil.copy(REPO / "tests/01_PW/097_PW_PBE0/STRU", case / "STRU")
+    shutil.copy(REPO / "tests/01_PW/scf_pbe0_spin1/STRU", case / "STRU")
     text = COMMON + f"pseudo_dir {REPO / 'tests/PP_ORB'}\n" + extra
     (case / "INPUT").write_text(text)
     (case / "KPT").write_text(points)
@@ -144,14 +144,14 @@ def verify_correction(executable, root, gpu=False):
     scf = create_case(root, f"limits_{device}_scf",
                       "calculation scf\nout_chg 1\nout_wfc_pw 2\n")
     # Exercise the defaults, including automatic disabling of gamma extrapolation.
-    text = (scf / "INPUT").read_text().replace("exx_gamma_extrapolation false\n", "")
+    text = (scf / "INPUT").read_text().replace("exx_gamma_extra false\n", "")
     text = text.replace("device cpu", f"device {device}")
     (scf / "INPUT").write_text(text)
     run(executable, scf, [])
     source = scf / "OUT.hybrid"
     original = digest(source)
     extra = f"calculation nscf\nread_file_dir {source}\nexx_singularity_correction limits\n"
-    near_gamma = "K_POINTS\n3\nDirect\n0 0 0 1\n0.00001 0 0 1\n-0.00001 0 0 1\n"
+    near_gamma = "K_POINTS\n3\nDirect\n0 0 0 1\n0.001 0 0 1\n-0.001 0 0 1\n"
     target = create_case(root, f"limits_{device}_continuity", extra, near_gamma)
     text = (target / "INPUT").read_text().replace("device cpu", f"device {device}")
     (target / "INPUT").write_text(text)
@@ -161,7 +161,7 @@ def verify_correction(executable, root, gpu=False):
     assert delta < 5e-3, f"Finite-limit discontinuity near Gamma: {delta} eV"
     assert max_difference([bands(scf)[0]], [values[0]]) < 2e-4
     assert digest(source) == original
-    print(f"{device} default/explicit limits, Gamma +/-1e-5: max difference {delta:.3g} eV")
+    print(f"{device} default/explicit limits, Gamma +/-1e-3: max difference {delta:.3g} eV")
 
     mismatch = create_case(root, f"{device}_correction_mismatch",
                            extra.replace("correction limits", "correction auxiliary"))
@@ -169,7 +169,7 @@ def verify_correction(executable, root, gpu=False):
     bad = create_case(root, f"{device}_bad_correction", extra.replace("correction limits", "correction spencer"))
     run(executable, bad, [], "PW exx_singularity_correction must be limits or auxiliary")
     gamma = create_case(root, f"{device}_limits_gamma", extra)
-    text = (gamma / "INPUT").read_text().replace("exx_gamma_extrapolation false", "exx_gamma_extrapolation true")
+    text = (gamma / "INPUT").read_text().replace("exx_gamma_extra false", "exx_gamma_extra true")
     (gamma / "INPUT").write_text(text)
     run(executable, gamma, [], "PW limits requires screened exchange")
     unscreened = create_case(root, f"{device}_limits_fock", extra)
@@ -189,8 +189,20 @@ def verify_correction(executable, root, gpu=False):
     (aux_target / "INPUT").write_text(text)
     run(executable, aux_target, [])
     assert max_difference(bands(auxiliary), bands(aux_target)) < 2e-4
+    # Cross the zero-transfer threshold with the same source: the historical
+    # auxiliary scheme must exhibit the jump this test is intended to detect.
+    aux_near = create_case(root, f"auxiliary_{device}_continuity",
+                           f"calculation nscf\nread_file_dir {aux_source}\nexx_singularity_correction auxiliary\n",
+                           near_gamma)
+    text = (aux_near / "INPUT").read_text().replace("device cpu", f"device {device}")
+    (aux_near / "INPUT").write_text(text)
+    run(executable, aux_near, [])
+    aux_values = bands(aux_near)
+    aux_jump = max(max_difference([aux_values[0]], [row]) for row in aux_values[1:])
+    assert aux_jump > 5e-3, "Auxiliary control failed to expose the zero-transfer jump"
     shift = max_difference(bands(scf), bands(auxiliary))
     assert shift > 1e-5, "limits and auxiliary unexpectedly produced identical SCF bands"
+    print(f"{device} auxiliary control jump near Gamma: {aux_jump:.3g} eV")
     print(f"{device} auxiliary SCF/NSCF matched; limits/auxiliary SCF difference {shift:.3g} eV")
     print("mismatched scheme, unsupported scheme, gamma and unscreened limits rejected")
 

@@ -1,9 +1,10 @@
 #include "source_lcao/module_rt/snap_psb_half_tddft.h"
 
 #include "source_base/ylm.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/read_pp.h"
 #include "source_cell/unitcell.h"
-#include "source_io/module_hs/cal_r_overlap_r.h"
+#include "source_io/module_hs/pos_op_mat.h"
 #include "../../lcao_nonlocal_info.h"
 
 #ifdef __CUDA
@@ -84,7 +85,7 @@ void print_comparison_stats(const char* label, const ComparisonStats& stats)
 
 ComparisonStats compare_zero_vector_potential(const LCAO_Orbitals& orb,
                                               const UnitCell& ucell,
-                                              cal_r_overlap_R& r_calculator,
+                                              Position_op& r_calculator,
                                               const int radial_grid_num,
                                               const int lebedev_grid_points)
 {
@@ -357,7 +358,7 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
 
     void initialize_r_overlap_reference()
     {
-        r_calculator.init_nonlocal(ucell, pv, orb);
+        r_calculator.init_nonlocal(ucell, pv, orb, false, ucell.atoms[0].nw);
     }
 
     ComparisonStats compare_zero_vector_potential(const int radial_grid_num, const int lebedev_grid_points)
@@ -368,7 +369,7 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
     LCAO_Orbitals orb;
     UnitCell ucell;
     Parallel_Orbitals pv;
-    cal_r_overlap_R r_calculator;
+    Position_op r_calculator;
 };
 
 class SnapPsibetaNonuniformHalfTddftTest : public ::testing::Test
@@ -439,13 +440,13 @@ class SnapPsibetaNonuniformHalfTddftTest : public ::testing::Test
         lcao_nl->get_nonlocal().set_rcutmax_Beta(lcao_nl->get_nonlocal().get_Beta(0).get_rcut_max());
         ucell.infoNL.reset(lcao_nl);
 
-        r_calculator.init_nonlocal(ucell, pv, orb);
+        r_calculator.init_nonlocal(ucell, pv, orb, false, atom.nw);
     }
 
     LCAO_Orbitals orb;
     UnitCell ucell;
     Parallel_Orbitals pv;
-    cal_r_overlap_R r_calculator;
+    Position_op r_calculator;
 };
 } // namespace
 

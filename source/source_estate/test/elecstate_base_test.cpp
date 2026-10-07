@@ -10,6 +10,7 @@
 #include "source_estate/elecstate.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/occupy.h"
+#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_io/module_parameter/parameter.h"
 
 #ifdef __MPI

@@ -8,7 +8,7 @@ and diagonalizes the Hamiltonian on an independent target k list. Increasing
 This first implementation supports CPU and CUDA GPU calculations, `kpar 1`, `bndpar 1`,
 `nspin 1` or `2`, and a complete, uniformly weighted source mesh without symmetry
 reduction. Set `symmetry -1`, `exxace false` and
-`exx_gamma_extrapolation false` in both calculations. HSE is supported;
+`exx_gamma_extra false` in both calculations. HSE is supported;
 unscreened Fock exchange, including PBE0, is rejected pending validation of the
 singularity correction for arbitrary target k points. Forces and stress are
 also rejected in hybrid NSCF. The LCAO workflow is unchanged.
@@ -25,7 +25,7 @@ symmetry -1
 kpar 1
 bndpar 1
 exxace false
-exx_gamma_extrapolation false
+exx_gamma_extra false
 out_chg 1
 out_wfc_pw 2
 out_freq_ion 0
@@ -119,7 +119,7 @@ built-in HSE screening default is `0.106 bohr^-1`; use
 PW HSE uses the same `exx_singularity_correction limits` default as NAO/LCAO.
 For screened exchange the reciprocal kernel has the finite limit
 `-pi * e2 / omega^2` at `k-q+G=0`; this scheme retains that limit without adding
-an auxiliary-function correction. It uses `exx_gamma_extrapolation false`,
+an auxiliary-function correction. It uses `exx_gamma_extra false`,
 which is selected automatically when omitted. Explicit gamma extrapolation
 with `limits`, and unscreened Fock terms with `limits`, are rejected in PW.
 

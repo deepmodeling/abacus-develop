@@ -152,6 +152,20 @@ if [ $calculation != "get_wf" ]\
 	echo "etotperatomref $etotperatom" >>$1
 fi
 
+# Opt-in collinear magnetic-state check. Comparing both moments distinguishes
+# compensated AFM from NM; the reference tolerance is 1e-3 mu_B per cell.
+if [ "$nspin" = "2" ] && [ -f magnetism.ref ]; then
+    awk '
+        /Total magnetism \(Bohr mag\/cell\)/ {total = $NF; have_total = 1}
+        /Absolute magnetism \(Bohr mag\/cell\)/ {absolute = $NF; have_absolute = 1}
+        END {
+            if (!have_total || !have_absolute) exit 1
+            print total, absolute
+        }
+    ' "$running_path" > magnetism.out
+    record_compare_result "$1" "CompareMagnetism_pass" "magnetism.ref" "magnetism.out" 3
+fi
+
 #----------------------------
 # force information
 # echo "hasforce:"$has_force
@@ -233,7 +247,7 @@ fi
 # echo $out_elf
 #-------------------------------
 if ! test -z "$out_elf"  && [  $out_elf == 1 ]; then
-	elf1ref=refelftot.cube
+	elf1ref=elftot.cube.ref
 	elf1cal=OUT.autotest/elftot.cube
 	python3 $COMPARE_SCRIPT $elf1ref $elf1cal 3
 	echo "ComparePot1_pass $?" >>$1
@@ -490,7 +504,7 @@ fi
 #-----------------------------------
 #echo $has_mat_r
 if ! test -z "$has_mat_r"  && [  $has_mat_r == 1 ]; then
-    python3 $COMPARE_SCRIPT rr.csr.ref OUT.autotest/rr.csr 8
+    python3 $COMPARE_SCRIPT rr_nao.txt.ref OUT.autotest/rr_nao.txt 8
     echo "ComparerR_pass $?" >>$1
 fi
 
@@ -499,7 +513,7 @@ fi
 #-----------------------------------
 #echo $has_mat_t
 if ! test -z "$has_mat_t"  && [  $has_mat_t == 1 ]; then
-    python3 $COMPARE_SCRIPT trs1_nao.csr.ref OUT.autotest/trs1_nao.csr 8
+    python3 $COMPARE_SCRIPT tr_nao.csr.ref OUT.autotest/tr_nao.csr 8
     echo "ComparerTR_pass $?" >>$1
 fi
 

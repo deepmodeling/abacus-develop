@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_EXCITON_PLOTTER_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_EXCITON_PLOTTER_H
+
 #include "source_base/tool_title.h"
 #include "source_base/ylm.h"
 #include "source_basis/module_ao/orb_read.h"
@@ -254,3 +256,5 @@ class ExcitonPlotter
 };
 
 } // namespace LR_Util
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_EXCITON_PLOTTER_H

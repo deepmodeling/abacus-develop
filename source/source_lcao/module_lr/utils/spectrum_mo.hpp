@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_SPECTRUM_MO_HPP
+#define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_SPECTRUM_MO_HPP
+
 #include "source_base/tool_title.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/klist.h"
@@ -204,3 +206,5 @@ inline void output_spectrum_mo_librpa(const std::vector<std::complex<double>>& o
     }
 }
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_SPECTRUM_MO_HPP

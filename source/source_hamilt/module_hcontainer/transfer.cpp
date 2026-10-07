@@ -95,9 +95,9 @@ void HTransPara<T>::receive_ap_indexes(int irank, const int* ap_indexes_in, cons
     if (ap_indexes_in == nullptr)
     {
         long size_ap_indexes = 0;
-        MPI_Recv(&size_ap_indexes, 1, MPI_LONG, irank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&size_ap_indexes, 1, MPI_LONG, irank, kHctTagSize, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         this->ap_indexes[irank].resize(size_ap_indexes);
-        MPI_Recv(this->ap_indexes[irank].data(), size_ap_indexes, MPI_INT, irank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(this->ap_indexes[irank].data(), size_ap_indexes, MPI_INT, irank, kHctTagIndex, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
     // sender and receiver are same process
     else
@@ -146,13 +146,13 @@ void HTransPara<T>::send_orb_indexes(int irank, MPI_Request* request)
     long size_orb_indexes = orb_indexes.size();
     if (request != nullptr)
     {
-        MPI_Isend(&size_orb_indexes, 1, MPI_LONG, irank, 0, MPI_COMM_WORLD, request);
-        MPI_Isend(orb_indexes.data(), orb_indexes.size(), MPI_INT, irank, 1, MPI_COMM_WORLD, request);
+        MPI_Isend(&size_orb_indexes, 1, MPI_LONG, irank, kHctTagSize, MPI_COMM_WORLD, request);
+        MPI_Isend(orb_indexes.data(), orb_indexes.size(), MPI_INT, irank, kHctTagIndex, MPI_COMM_WORLD, request);
     }
     else
     {
-        MPI_Send(&size_orb_indexes, 1, MPI_LONG, irank, 0, MPI_COMM_WORLD);
-        MPI_Send(orb_indexes.data(), orb_indexes.size(), MPI_INT, irank, 1, MPI_COMM_WORLD);
+        MPI_Send(&size_orb_indexes, 1, MPI_LONG, irank, kHctTagSize, MPI_COMM_WORLD);
+        MPI_Send(orb_indexes.data(), orb_indexes.size(), MPI_INT, irank, kHctTagIndex, MPI_COMM_WORLD);
     }
 }
 
@@ -163,11 +163,11 @@ void HTransPara<T>::send_data(int irank, MPI_Request* request)
     this->pack_data(irank, values.data());
     if (request != nullptr)
     {
-        MPI_Isend(values.data(), values.size(), MPITraits<T>::datatype(), irank, 2, MPI_COMM_WORLD, request);
+        MPI_Isend(values.data(), values.size(), MPITraits<T>::datatype(), irank, kHctTagValue, MPI_COMM_WORLD, request);
     }
     else
     {
-        MPI_Send(values.data(), values.size(), MPITraits<T>::datatype(), irank, 2, MPI_COMM_WORLD);
+        MPI_Send(values.data(), values.size(), MPITraits<T>::datatype(), irank, kHctTagValue, MPI_COMM_WORLD);
     }
 }
 
@@ -182,7 +182,7 @@ void HTransPara<T>::receive_data(int irank, const T* values)
                  values_tmp.size(),
                  MPITraits<T>::datatype(),
                  irank,
-                 0,
+                 kHctTagValue,
                  MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
         this->unpack_data(irank, values_tmp.data());
@@ -384,13 +384,13 @@ void HTransSerial<T>::send_ap_indexes(int irank, MPI_Request* request)
     long size_ap_indexes = ap_indexes.size();
     if (request != nullptr)
     {
-        MPI_Isend(&size_ap_indexes, 1, MPI_LONG, irank, 0, MPI_COMM_WORLD, request);
-        MPI_Isend(ap_indexes.data(), ap_indexes.size(), MPI_INT, irank, 1, MPI_COMM_WORLD, request);
+        MPI_Isend(&size_ap_indexes, 1, MPI_LONG, irank, kHctTagSize, MPI_COMM_WORLD, request);
+        MPI_Isend(ap_indexes.data(), ap_indexes.size(), MPI_INT, irank, kHctTagIndex, MPI_COMM_WORLD, request);
     }
     else
     {
-        MPI_Send(&size_ap_indexes, 1, MPI_LONG, irank, 0, MPI_COMM_WORLD);
-        MPI_Send(ap_indexes.data(), ap_indexes.size(), MPI_INT, irank, 1, MPI_COMM_WORLD);
+        MPI_Send(&size_ap_indexes, 1, MPI_LONG, irank, kHctTagSize, MPI_COMM_WORLD);
+        MPI_Send(ap_indexes.data(), ap_indexes.size(), MPI_INT, irank, kHctTagIndex, MPI_COMM_WORLD);
     }
 }
 
@@ -402,13 +402,13 @@ void HTransSerial<T>::receive_orb_indexes(int irank, const int* orb_indexes_in, 
     if (orb_indexes_in == nullptr)
     {
         long size_orb_indexes = 0;
-        MPI_Recv(&size_orb_indexes, 1, MPI_LONG, irank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&size_orb_indexes, 1, MPI_LONG, irank, kHctTagSize, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         this->orb_indexes[irank].resize(size_orb_indexes);
         MPI_Recv(this->orb_indexes[irank].data(),
                  size_orb_indexes,
                  MPI_INT,
                  irank,
-                 1,
+                 kHctTagIndex,
                  MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
     }
@@ -455,11 +455,11 @@ void HTransSerial<T>::send_data(int irank, MPI_Request* request)
     this->pack_data(irank, values.data());
     if (request != nullptr)
     {
-        MPI_Isend(values.data(), values.size(), MPITraits<T>::datatype(), irank, 2, MPI_COMM_WORLD, request);
+        MPI_Isend(values.data(), values.size(), MPITraits<T>::datatype(), irank, kHctTagValue, MPI_COMM_WORLD, request);
     }
     else
     {
-        MPI_Send(values.data(), values.size(), MPITraits<T>::datatype(), irank, 2, MPI_COMM_WORLD);
+        MPI_Send(values.data(), values.size(), MPITraits<T>::datatype(), irank, kHctTagValue, MPI_COMM_WORLD);
     }
 }
 
@@ -474,7 +474,7 @@ void HTransSerial<T>::receive_data(int irank, const T* values)
                  values_tmp.size(),
                  MPITraits<T>::datatype(),
                  irank,
-                 2,
+                 kHctTagValue,
                  MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
         this->unpack_data(irank, values_tmp.data());

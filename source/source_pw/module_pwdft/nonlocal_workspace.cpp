@@ -5,6 +5,9 @@
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/kernels/nonlocal_op.h"
 
+#include <algorithm>
+#include <limits>
+
 namespace hamilt
 {
 namespace
@@ -45,7 +48,8 @@ void NonlocalWorkspace<T, Device>::project(const T* vkb, const T* psi, const int
     const T zero(0, 0);
     if (npw == 0)
     {
-        Zero<T, Device>()(becp_, 0, nkb * bands);
+        const size_t count = static_cast<size_t>(nkb) * bands;
+        Zero<T, Device>()(becp_, 0, count);
     }
     else if (bands == 1)
     {
@@ -62,7 +66,8 @@ void NonlocalWorkspace<T, Device>::contract(const UnitCell& cell, const pseudopo
                                           const int spin, const int npol, const int bands)
 {
     using Real = typename GetTypeReal<T>::type;
-    Zero<T, Device>()(ps_, 0, pp.nkb * bands);
+    const size_t count = static_cast<size_t>(pp.nkb) * bands;
+    Zero<T, Device>()(ps_, 0, count);
     int sum = 0;
     int atom = 0;
     for (int type = 0; type < cell.ntype; ++type)
@@ -107,7 +112,8 @@ void NonlocalWorkspace<T, Device>::apply(const UnitCell& cell, const pseudopot_c
     ModuleBase::timer::start("NonlocalWorkspace", "apply");
     if (is_first_node)
     {
-        Zero<T, Device>()(hpsi, 0, nbasis * bands / npol);
+        const size_t count = static_cast<size_t>(nbasis) * bands / npol;
+        Zero<T, Device>()(hpsi, 0, count);
     }
     if (pp.nkb > 0 && bands > 0)
     {
@@ -126,7 +132,16 @@ void NonlocalWorkspace<T, Device>::apply(const UnitCell& cell, const pseudopot_c
 #ifdef __MPI
         if (basis.poolnproc > 1)
         {
-            Parallel_Common::reduce_dev<T, Device>(becp_, pp.nkb * bands, basis.pool_world);
+            // The complex reduction wrapper doubles the MPI element count.
+            const size_t max_chunk = std::numeric_limits<int>::max() / 2;
+            for (size_t offset = 0; offset < count;)
+            {
+                const size_t remaining = count - offset;
+                const int chunk_size = static_cast<int>(std::min(max_chunk, remaining));
+                T* chunk = becp_ + offset;
+                Parallel_Common::reduce_dev<T, Device>(chunk, chunk_size, basis.pool_world);
+                offset += chunk_size;
+            }
         }
 #endif
         if (npw > 0)

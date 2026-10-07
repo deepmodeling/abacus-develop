@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <functional>
+#include <limits>
+#include <sstream>
+#include <vector>
 
 #include "source_base/complexmatrix.h"
 #include "source_base/constants.h"
@@ -30,28 +33,76 @@ double sum_rho(double* const* rho,
 {
     ModuleBase::TITLE("module_charge", "sum_rho");
 
-    double sum_rho = 0.0;
-
+    std::vector<double> sum_is(nspin0, 0.0);
     for (int is = 0; is < nspin0; is++)
     {
         for (int ir = 0; ir < nrxx; ir++)
         {
-            sum_rho += rho[is][ir];
+            sum_is[is] += rho[is][ir];
         }
     }
 
     // multiply the sum of charge density by a factor
-    sum_rho *= omega / static_cast<double>(nxyz);
+    const double factor = omega / static_cast<double>(nxyz);
+    for (int is = 0; is < nspin0; is++)
+    {
+        sum_is[is] *= factor;
+    }
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_pool(sum_rho);
+    Parallel_Reduce::reduce_pool(sum_is.data(), nspin0);
 #endif
+
+    double sum_rho = 0.0;
+    for (int is = 0; is < nspin0; is++)
+    {
+        sum_rho += sum_is[is];
+    }
 
     // mohan fixed bug 2010-01-18,
     // sum_rho may be smaller than 1, like Na bcc.
-    if (sum_rho <= 0.1)
+    // A NaN sum never satisfies sum_rho <= 0.1, so check it explicitly.
+    if (std::isnan(sum_rho) || sum_rho <= 0.1)
     {
-        ModuleBase::WARNING_QUIT("module_charge::sum_rho", "Can't find even an electron!");
+        // Diagnostic context: report per-spin electron counts plus rho
+        // extrema. min/max and the number of negative grid points help
+        // distinguish "rho driven negative by mixing" from "rho collapsed"
+        // when reproducing intermittent CI failures (e.g. issue #7794).
+        // For nspin0 == 1 the per-spin value equals the total; the extrema
+        // still carry information there.
+        double rho_min = std::numeric_limits<double>::max();
+        double rho_max = std::numeric_limits<double>::lowest();
+        long n_neg = 0;
+        for (int is = 0; is < nspin0; ++is)
+        {
+            for (int ir = 0; ir < nrxx; ++ir)
+            {
+                const double v = rho[is][ir];
+                rho_min = std::min(rho_min, v);
+                rho_max = std::max(rho_max, v);
+                n_neg += (v < 0.0) ? 1 : 0;
+            }
+        }
+        // Rank-local on purpose: pool sums may differ in the last bits (or a
+        // NaN may be present in a single pool), so pools can disagree on
+        // entering this branch and any MPI collective here could hang.
+        std::ostringstream diag;
+        diag << "\nCan't find even an electron!"
+             << "\nmodule_charge::sum_rho diagnostic:"
+             << " nspin0 = " << nspin0
+             << " nrxx = " << nrxx
+             << " omega = " << omega
+             << " nxyz = " << nxyz
+             << " per-spin sum_rho =";
+        for (int is = 0; is < nspin0; ++is)
+        {
+            diag << " " << sum_is[is];
+        }
+        diag << " (total = " << sum_rho << ")"
+             << " rank-local rho min = " << rho_min
+             << " max = " << rho_max
+             << " negative grid points = " << n_neg;
+        ModuleBase::WARNING_QUIT("module_charge::sum_rho", diag.str());
     }
 
     return sum_rho;

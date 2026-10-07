@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_RHO_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_RHO_H
+
 
 #include <memory>
 #include <vector>
@@ -48,3 +50,5 @@ class Gint_rho : public Gint
 };
 
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_RHO_H
