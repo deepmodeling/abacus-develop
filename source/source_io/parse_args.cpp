@@ -278,7 +278,7 @@ void parse_args(int argc, char** argv)
         // the token count and skip the tokens, so they survive the
         // unknown-argument fallback below. No state is stored here
         // (governance rule 1: no new globals).
-        else if (arg == "-p" || arg == "--param")
+        else if (arg == "-p" || arg == "--parameter")
         {
             // Needs two following tokens: <name> <value>
             const bool has_pair = (i + 2 < argc);

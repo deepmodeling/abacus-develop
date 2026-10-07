@@ -13,11 +13,11 @@ namespace ModuleIO
 ///   - Informational flags (-v/-i/-h/-s/--generate-parameters-yaml) and
 ///     --check-input are owned by ModuleIO::parse_args and never reach
 ///     this function.
-///   - -p/--param and -in/--input are validated (token count only)
+///   - -p/--parameter and -in/--input are validated (token count only)
 ///     and skipped by parse_args, then fully parsed here.
 struct CommandLineArgs
 {
-    // -p / --param <name> <value> : INPUT variable injection (repeatable)
+    // -p / --parameter <name> <value> : INPUT variable injection (repeatable)
     // These override INPUT 'variable' definitions.
     std::map<std::string, std::string> vars;
 
@@ -25,7 +25,7 @@ struct CommandLineArgs
     std::string input_file = "INPUT";
 };
 
-/// Parses -p/--param and -in/--input options.
+/// Parses -p/--parameter and -in/--input options.
 /// Throws std::runtime_error on malformed arguments (parse_args has
 /// already filtered unknown flags before this function is called).
 CommandLineArgs parse_command_line(int argc, char* argv[]);
