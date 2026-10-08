@@ -164,10 +164,13 @@ def verify_correction(executable, root, gpu=False):
     print(f"{device} default/explicit limits, Gamma +/-1e-3: max difference {delta:.3g} eV")
 
     mismatch = create_case(root, f"{device}_correction_mismatch",
-                           extra.replace("correction limits", "correction auxiliary"))
+                           extra.replace("correction limits", "correction gygi"))
     run(executable, mismatch, [], "EXX source")
     bad = create_case(root, f"{device}_bad_correction", extra.replace("correction limits", "correction spencer"))
-    run(executable, bad, [], "PW exx_singularity_correction must be limits or auxiliary")
+    run(executable, bad, [], "PW exx_singularity_correction must be limits or gygi")
+    old_name = create_case(root, f"{device}_obsolete_correction",
+                           extra.replace("correction limits", "correction auxiliary"))
+    run(executable, old_name, [], "PW exx_singularity_correction must be limits or gygi")
     gamma = create_case(root, f"{device}_limits_gamma", extra)
     text = (gamma / "INPUT").read_text().replace("exx_gamma_extra false", "exx_gamma_extra true")
     (gamma / "INPUT").write_text(text)
@@ -177,22 +180,22 @@ def verify_correction(executable, root, gpu=False):
     (unscreened / "INPUT").write_text(text)
     run(executable, unscreened, [], "PW limits requires screened exchange")
 
-    auxiliary = create_case(root, f"auxiliary_{device}_scf",
-                            "calculation scf\nout_chg 1\nout_wfc_pw 2\nexx_singularity_correction auxiliary\n")
-    text = (auxiliary / "INPUT").read_text().replace("device cpu", f"device {device}")
-    (auxiliary / "INPUT").write_text(text)
-    run(executable, auxiliary, [])
-    aux_source = auxiliary / "OUT.hybrid"
-    aux_target = create_case(root, f"auxiliary_{device}_nscf",
-                             f"calculation nscf\nread_file_dir {aux_source}\nexx_singularity_correction auxiliary\n")
+    gygi = create_case(root, f"gygi_{device}_scf",
+                            "calculation scf\nout_chg 1\nout_wfc_pw 2\nexx_singularity_correction gygi\n")
+    text = (gygi / "INPUT").read_text().replace("device cpu", f"device {device}")
+    (gygi / "INPUT").write_text(text)
+    run(executable, gygi, [])
+    aux_source = gygi / "OUT.hybrid"
+    aux_target = create_case(root, f"gygi_{device}_nscf",
+                             f"calculation nscf\nread_file_dir {aux_source}\nexx_singularity_correction gygi\n")
     text = (aux_target / "INPUT").read_text().replace("device cpu", f"device {device}")
     (aux_target / "INPUT").write_text(text)
     run(executable, aux_target, [])
-    assert max_difference(bands(auxiliary), bands(aux_target)) < 2e-4
+    assert max_difference(bands(gygi), bands(aux_target)) < 2e-4
     # Cross the zero-transfer threshold with the same source: the historical
-    # auxiliary scheme must exhibit the jump this test is intended to detect.
-    aux_near = create_case(root, f"auxiliary_{device}_continuity",
-                           f"calculation nscf\nread_file_dir {aux_source}\nexx_singularity_correction auxiliary\n",
+    # gygi scheme must exhibit the jump this test is intended to detect.
+    aux_near = create_case(root, f"gygi_{device}_continuity",
+                           f"calculation nscf\nread_file_dir {aux_source}\nexx_singularity_correction gygi\n",
                            near_gamma)
     text = (aux_near / "INPUT").read_text().replace("device cpu", f"device {device}")
     (aux_near / "INPUT").write_text(text)
@@ -200,10 +203,10 @@ def verify_correction(executable, root, gpu=False):
     aux_values = bands(aux_near)
     aux_jump = max(max_difference([aux_values[0]], [row]) for row in aux_values[1:])
     assert aux_jump > 5e-3, "Auxiliary control failed to expose the zero-transfer jump"
-    shift = max_difference(bands(scf), bands(auxiliary))
-    assert shift > 1e-5, "limits and auxiliary unexpectedly produced identical SCF bands"
-    print(f"{device} auxiliary control jump near Gamma: {aux_jump:.3g} eV")
-    print(f"{device} auxiliary SCF/NSCF matched; limits/auxiliary SCF difference {shift:.3g} eV")
+    shift = max_difference(bands(scf), bands(gygi))
+    assert shift > 1e-5, "limits and gygi unexpectedly produced identical SCF bands"
+    print(f"{device} gygi control jump near Gamma: {aux_jump:.3g} eV")
+    print(f"{device} gygi SCF/NSCF matched; limits/gygi SCF difference {shift:.3g} eV")
     print("mismatched scheme, unsupported scheme, gamma and unscreened limits rejected")
 
 

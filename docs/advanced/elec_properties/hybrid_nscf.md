@@ -123,11 +123,13 @@ an auxiliary-function correction. It uses `exx_gamma_extra false`,
 which is selected automatically when omitted. Explicit gamma extrapolation
 with `limits`, and unscreened Fock terms with `limits`, are rejected in PW.
 
-Set `exx_singularity_correction auxiliary` explicitly to retain the historical
-PW auxiliary correction (including the existing gamma-extrapolation option).
+Set `exx_singularity_correction gygi` explicitly to retain the historical
+PW Gygi-Baldereschi auxiliary-function correction (including the existing
+gamma-extrapolation option).
 This is also the default for unscreened PW hybrids; it does not enable
-unscreened hybrid NSCF. For screened independent-k targets the auxiliary
-correction can cause a jump when a target coincides with a source point.
+unscreened hybrid NSCF. For screened independent-k targets the Gygi correction
+can cause a jump when a target coincides with a source point.
+The name follows [QE's `gygi-baldereschi` terminology](https://www.quantum-espresso.org/Doc/INPUT_PW.html).
 LCAO-specific `spencer`, `revised_spencer`, `massidda` and `carrier` schemes
 are not implemented for PW and are rejected rather than silently ignored.
 
@@ -135,7 +137,7 @@ SCF and NSCF must use the same scheme. The scheme is part of the `EXX_SOURCE`
 configuration, and an incompatible restart is rejected. Regenerate the SCF
 source before switching schemes; checkpoints from the earlier implementation
 must also be regenerated. The cross-code results below used the historical
-auxiliary scheme and do not constitute validation of the new default.
+Gygi scheme and do not constitute validation of the new default.
 
 ## Reproducible verification
 

@@ -123,7 +123,7 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     for (auto param: param_erfc)
     {
         double correction = 0.0;
-        if (param.at("singularity_correction") == "auxiliary")
+        if (param.at("singularity_correction") == "gygi")
         {
             const double omega = std::stod(param.at("omega"));
             correction = exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc,
@@ -260,7 +260,7 @@ void OperatorEXXPW<T, Device>::set_source(const ModulePW::PW_Basis_K& source_bas
     source_points_ = &source_points;
     psi = source_psi;
     wg = &source_weights;
-    // Cache the auxiliary correction on the frozen source mesh, rather than
+    // Cache the Gygi-Baldereschi auxiliary correction on the frozen source mesh, rather than
     // the independent target path. Limits keeps this correction at zero.
     const auto screened = coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc);
     if (screened != coulomb_param.end())
@@ -269,7 +269,7 @@ void OperatorEXXPW<T, Device>::set_source(const ModulePW::PW_Basis_K& source_bas
         {
             const auto& param = screened->second[i];
             erfc_div[i] = 0.0;
-            if (param.at("singularity_correction") == "auxiliary")
+            if (param.at("singularity_correction") == "gygi")
             {
                 const double omega = std::stod(param.at("omega"));
                 erfc_div[i] = exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc,

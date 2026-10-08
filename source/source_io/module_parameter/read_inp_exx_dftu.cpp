@@ -470,7 +470,7 @@ void ReadInput::item_exx()
         item.type = "String";
         item.description = R"(Scheme for Coulomb singularity / zero-transfer treatment in exact exchange.
 * limits: use the finite screened Coulomb-kernel limit, without an auxiliary correction. Default for HSE and cwp22 in both PW and LCAO. PW requires screened exchange and exx_gamma_extra=false; the latter defaults to false for this scheme.
-* auxiliary: retain the historical PW auxiliary-function correction. PW only; default for unscreened PW hybrids. For independent-k screened hybrid NSCF this can cause discontinuities at source k points.
+* gygi: retain the historical PW Gygi-Baldereschi auxiliary-function correction. PW only; default for unscreened PW hybrids. For independent-k screened hybrid NSCF this can cause discontinuities at source k points.
 * spencer: LCAO spherical truncation, Phys. Rev. B 77, 193110 (2008).
 * revised_spencer: LCAO, Phys. Rev. Mater. 5, 013807 (2021).
 * massidda / carrier: LCAO auxiliary singularity corrections.
@@ -497,7 +497,7 @@ Use the same scheme for SCF and NSCF. Regenerate the SCF source checkpoint after
                 {
                     if (para.input.basis_type == "pw")
                     {
-                        para.input.exx_singularity_correction = "auxiliary";
+                        para.input.exx_singularity_correction = "gygi";
                     }
                     else
                     {
@@ -525,9 +525,9 @@ Use the same scheme for SCF and NSCF. Regenerate the SCF source checkpoint after
             const std::string& scheme = para.input.exx_singularity_correction;
             if (para.input.basis_type == "pw" && scheme != "default")
             {
-                if (scheme != "limits" && scheme != "auxiliary")
+                if (scheme != "limits" && scheme != "gygi")
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "PW exx_singularity_correction must be limits or auxiliary");
+                    ModuleBase::WARNING_QUIT("ReadInput", "PW exx_singularity_correction must be limits or gygi");
                 }
                 if (scheme == "limits")
                 {
@@ -543,9 +543,9 @@ Use the same scheme for SCF and NSCF. Regenerate the SCF source checkpoint after
                     }
                 }
             }
-            else if (para.input.basis_type != "pw" && scheme == "auxiliary")
+            else if (para.input.basis_type != "pw" && scheme == "gygi")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_singularity_correction auxiliary is only supported for PW");
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_singularity_correction gygi is only supported for PW");
             }
         };
         this->add_item(item);

@@ -1760,7 +1760,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).dft_functional = "PBE0";
         TestParameters::input(param).exx_singularity_correction = "default";
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(TestParameters::input(param).exx_singularity_correction, "auxiliary");
+        EXPECT_EQ(TestParameters::input(param).exx_singularity_correction, "gygi");
 
         TestParameters::input(param).dft_functional = "HSE";
         TestParameters::input(param).exx_singularity_correction = "default";
