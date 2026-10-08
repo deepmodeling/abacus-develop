@@ -474,7 +474,7 @@ void ReadInput::item_exx()
 * spencer: LCAO spherical truncation, Phys. Rev. B 77, 193110 (2008).
 * revised_spencer: LCAO, Phys. Rev. Mater. 5, 013807 (2021).
 * massidda / carrier: LCAO auxiliary singularity corrections.
-Use the same scheme for SCF and NSCF. Regenerate the SCF source checkpoint after changing schemes.)";
+Use the same scheme for consistent SCF and NSCF bands. A source configuration mismatch produces a warning and does not prevent reading the existing SCF files.)";
         item.default_value = "default";
         item.unit = "";
         read_sync_string(input.exx_singularity_correction);

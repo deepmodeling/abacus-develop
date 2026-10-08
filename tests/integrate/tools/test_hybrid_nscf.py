@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import struct
 import tempfile
 
 REPO = Path(__file__).resolve().parents[3]
@@ -76,7 +77,8 @@ def verify(executable, root, mpi_ranks):
     scf = create_case(root, "scf", "calculation scf\nout_chg 1\nout_wfc_pw 2\n")
     run(executable, scf, [])
     source = scf / "OUT.hybrid"
-    assert (source / "EXX_SOURCE").exists()
+    assert (source / "eig_occ.txt").exists()
+    assert not (source / "EXX_SOURCE").exists()
     original = digest(source)
     extra = f"calculation nscf\nread_file_dir {source}\nout_chg 0\nout_wfc_pw 0\n"
     # More target bands than source bands, initialized independently.
@@ -117,25 +119,36 @@ def verify(executable, root, mpi_ranks):
 
     broken_source = root / "broken_source"
     shutil.copytree(source, broken_source)
-    (broken_source / "EXX_SOURCE").unlink()
+    (broken_source / "eig_occ.txt").unlink()
     broken = create_case(root, "missing", extra.replace(str(source), str(broken_source)))
-    run(executable, broken, [], "EXX source checkpoint")
-    (broken_source / "EXX_SOURCE").write_text((source / "EXX_SOURCE").read_text()[:-6])
+    run(executable, broken, [], "EXX source eig_occ.txt")
+    saved_occupations = (source / "eig_occ.txt").read_text()
+    (broken_source / "eig_occ.txt").write_text(saved_occupations[:len(saved_occupations) // 2])
     truncated = create_case(root, "truncated", extra.replace(str(source), str(broken_source)))
-    run(executable, truncated, [], "Invalid EXX source occupation")
+    run(executable, truncated, [], "EXX source")
+    (broken_source / "eig_occ.txt").write_bytes((source / "eig_occ.txt").read_bytes())
+    wavefunction = (source / "wfk1_pw.dat").read_bytes()
+    (broken_source / "wfk1_pw.dat").write_bytes(wavefunction[:90])
+    broken_wave = create_case(root, "truncated_wave", extra.replace(str(source), str(broken_source)))
+    run(executable, broken_wave, [], "EXX source wavefunction")
+    invalid_miller = bytearray(wavefunction)
+    struct.pack_into("i", invalid_miller, 164, 2**30)
+    (broken_source / "wfk1_pw.dat").write_bytes(invalid_miller)
+    bad_grid = create_case(root, "bad_source_grid", extra.replace(str(source), str(broken_source)))
+    run(executable, bad_grid, [], "EXX source Miller index is incompatible with FFT grid")
     unsupported = create_case(root, "unsupported_ace", extra)
     (unsupported / "INPUT").write_text((unsupported / "INPUT").read_text().replace("exxace false", "exxace true"))
     run(executable, unsupported, [], "Hybrid NSCF currently requires")
-    print("missing/truncated checkpoint and unsupported ACE rejected")
+    print("missing/truncated source, invalid Miller mapping and unsupported ACE rejected")
 
-    # A failed SCF must invalidate an older companion before replacing orbitals.
-    failed = create_case(root, "failed_scf", "calculation scf\nout_chg 1\nout_wfc_pw 2\nexx_hybrid_step 1\n")
-    shutil.copytree(source, failed / "OUT.hybrid")
-    text = (failed / "INPUT").read_text().replace("scf_nmax 100", "scf_nmax 1")
-    (failed / "INPUT").write_text(text)
-    run(executable, failed, [])
-    assert not (failed / "OUT.hybrid/EXX_SOURCE").exists(), "Failed SCF left a stale checkpoint"
-    print("failed SCF invalidates the previous source checkpoint")
+    legacy_source = root / "legacy_source"
+    shutil.copytree(source, legacy_source)
+    (legacy_source / "INPUT.info").unlink()
+    legacy = create_case(root, "legacy", extra.replace(str(source), str(legacy_source)))
+    run(executable, legacy, [])
+    assert "EXX source configuration is incomplete" in (legacy / "OUT.hybrid/warning.log").read_text()
+    assert max_difference(bands(same), bands(legacy)) < 2e-4
+    print("legacy source without INPUT.info is accepted with a warning")
 
 
 def verify_correction(executable, root, gpu=False):
@@ -165,7 +178,11 @@ def verify_correction(executable, root, gpu=False):
 
     mismatch = create_case(root, f"{device}_correction_mismatch",
                            extra.replace("correction limits", "correction gygi"))
-    run(executable, mismatch, [], "EXX source")
+    text = (mismatch / "INPUT").read_text().replace("device cpu", f"device {device}")
+    (mismatch / "INPUT").write_text(text)
+    run(executable, mismatch, [])
+    assert "EXX source configuration differs for exx_singularity_correction" in (mismatch / "OUT.hybrid/warning.log").read_text()
+    print(f"{device} correction mismatch is accepted with a warning")
     bad = create_case(root, f"{device}_bad_correction", extra.replace("correction limits", "correction spencer"))
     run(executable, bad, [], "PW exx_singularity_correction must be limits or gygi")
     old_name = create_case(root, f"{device}_obsolete_correction",
@@ -207,7 +224,7 @@ def verify_correction(executable, root, gpu=False):
     assert shift > 1e-5, "limits and gygi unexpectedly produced identical SCF bands"
     print(f"{device} gygi control jump near Gamma: {aux_jump:.3g} eV")
     print(f"{device} gygi SCF/NSCF matched; limits/gygi SCF difference {shift:.3g} eV")
-    print("mismatched scheme, unsupported scheme, gamma and unscreened limits rejected")
+    print("unsupported scheme, gamma and unscreened limits rejected")
 
 
 def verify_gpu(executable, root):
@@ -246,7 +263,8 @@ def verify_gpu(executable, root):
     (gpu_scf / "INPUT").write_text(text)
     run(executable, gpu_scf, [])
     source = gpu_scf / "OUT.hybrid"
-    assert (source / "EXX_SOURCE").exists()
+    assert (source / "eig_occ.txt").exists()
+    assert not (source / "EXX_SOURCE").exists()
     original = digest(source)
     targets = []
     for device in ("cpu", "gpu"):

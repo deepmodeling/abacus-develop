@@ -32,7 +32,7 @@ parameters:
       Specify the type of calculation.
 
       * scf: perform self-consistent electronic structure calculations
-      * nscf: perform non-self-consistent electronic structure calculations. A charge density file is required. PW screened hybrid NSCF additionally reads EXX_SOURCE and binary SCF wavefunctions from read_file_dir; see the hybrid NSCF workflow documentation. The initial implementation supports CPU or CUDA GPU and requires kpar=bndpar=1, nspin=1/2, symmetry=-1/0, exxace=false, exx_gamma_extra=false and cal_force=cal_stress=false.
+      * nscf: perform non-self-consistent electronic structure calculations. A charge density file is required. PW screened hybrid NSCF additionally reads eig_occ.txt and existing binary SCF wavefunctions from read_file_dir; see the hybrid NSCF workflow documentation. The initial implementation supports CPU or CUDA GPU and requires kpar=bndpar=1, nspin=1/2, symmetry=-1/0, exxace=false, exx_gamma_extra=false and cal_force=cal_stress=false.
       * relax: perform structure relaxation calculations, the relax_nmax parameter depicts the maximal number of ionic iterations
       * cell-relax: perform cell relaxation calculations
       * md: perform molecular dynamics simulations
@@ -4761,7 +4761,7 @@ parameters:
       * spencer: LCAO spherical truncation, Phys. Rev. B 77, 193110 (2008).
       * revised_spencer: LCAO, Phys. Rev. Mater. 5, 013807 (2021).
       * massidda / carrier: LCAO auxiliary singularity corrections.
-      Use the same scheme for SCF and NSCF. Regenerate the SCF source checkpoint after changing schemes.
+      Use the same scheme for consistent SCF and NSCF bands. A source configuration mismatch produces a warning and does not prevent reading the existing SCF files.
     default_value: default
     unit: ""
     availability: ""

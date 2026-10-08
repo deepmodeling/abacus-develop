@@ -101,8 +101,6 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
                                this->solvent,
                                inp);
 
-    invalidate_exx_source(inp, this->general_exx_info_, *this->pw_wfc, PARAM.globalv.global_out_dir);
-
     this->stp.before_runner(ucell, this->kv, this->sf, *this->pw_wfc, this->ppcell.lmaxkb, *this->inp_);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
@@ -377,14 +375,6 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                                      this->stp,
                                      this->Pgrid,
                                      *this->inp_);
-
-    const bool exchange_converged = !this->exx_helper->get_op_first_iter()
-                                    && this->exx_helper->iteration_count() < this->inp_->exx_hybrid_step;
-    if (conv_esolver && exchange_converged)
-    {
-        save_exx_source(*this->inp_, this->general_exx_info_, this->kv, this->pelec->wg,
-                        *this->pw_wfc, PARAM.globalv.global_out_dir);
-    }
 
     ModuleBase::timer::end("ESolver_KS_PW", "after_scf");
 }

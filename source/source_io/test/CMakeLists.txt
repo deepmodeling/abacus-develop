@@ -11,14 +11,6 @@ AddTest(
     ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
-AddTest(
-  TARGET MODULE_IO_exx_source_io
-  LIBS parameter base device symmetry
-  SOURCES test_exx_source_io.cpp ../module_wf/exx_source_io.cpp
-    ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp
-    ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
-)
-
 if(NOT ENABLE_MPI)
   return()
 endif()

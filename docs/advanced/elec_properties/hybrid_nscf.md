@@ -33,14 +33,14 @@ cal_force 0
 cal_stress 0
 ```
 
-The output directory contains the charge density, `wfk*_pw.dat` binary
-wavefunctions and `EXX_SOURCE`. The versioned companion file records source
-q coordinates, spin labels, k weights, actual weighted occupations, source band
-count, FFT dimensions and exchange configuration. Fractional occupations are
-preserved. Checkpoints from older runs without `EXX_SOURCE` must be regenerated.
-An existing companion is invalidated before SCF wavefunctions are overwritten;
-an unconverged calculation does not produce a usable new companion. Reaching
-the EXX outer iteration limit is conservatively treated as unconverged here.
+The output directory contains the charge density, existing `wfk*_pw.dat`
+binary wavefunctions and `eig_occ.txt`. No new checkpoint format or companion
+file is required. Precise source q coordinates, k weights and band count come
+from the existing wavefunction headers; the occupation column in `eig_occ.txt`
+already contains the k-weighted occupations required by EXX, including fractional
+occupations. Use files from the same converged SCF calculation. The workflow
+consumes these outputs without changing the existing wavefunction or occupation
+writers/readers.
 
 ## Solve target states
 
@@ -71,9 +71,14 @@ SCF may run on CPU or GPU. The binary checkpoint format is shared between
 these devices. ROCm NSCF remains disabled pending backend verification.
 Use `OMP_NUM_THREADS=1` for runtime tests.
 
-Missing, truncated or incompatible companion files and invalid occupations
-produce an error. The existing wavefunction reader additionally verifies k
-coordinates, cell, source band count and plane-wave count. NSCF does not update
+Missing or truncated wavefunctions/occupation files and invalid occupations
+produce an error. Source dimensions, spin order, uniform q weights and occupation
+K points must agree. The existing wavefunction reader additionally verifies k
+coordinates, cell, source band count and plane-wave count. `INPUT.info`, when
+available, is used only to warn about exchange configuration differences. Older
+outputs without this metadata are accepted with a warning; regeneration is not
+required solely because metadata is missing.
+NSCF does not update
 the frozen ensemble or run the EXX SCF outer loop. Its target occupations are
 used for ordinary output only, and its printed total energy is not a new
 self-consistent hybrid total energy.
@@ -133,17 +138,18 @@ The name follows [QE's `gygi-baldereschi` terminology](https://www.quantum-espre
 LCAO-specific `spencer`, `revised_spencer`, `massidda` and `carrier` schemes
 are not implemented for PW and are rejected rather than silently ignored.
 
-SCF and NSCF must use the same scheme. The scheme is part of the `EXX_SOURCE`
-configuration, and an incompatible restart is rejected. Regenerate the SCF
-source before switching schemes; checkpoints from the earlier implementation
-must also be regenerated. The cross-code results below used the historical
+Use the same scheme in SCF and NSCF for consistent bands. A different scheme
+produces a warning and continues with the existing frozen source and the current
+NSCF exchange settings. This also permits deliberate comparisons between schemes.
+
+The cross-code results below used the historical
 Gygi scheme and do not constitute validation of the new default.
 
 ## Reproducible verification
 
 ```bash
-cmake --build build --target MODULE_IO_exx_source_io -j 8
-OMP_NUM_THREADS=1 ctest --test-dir build -V -R '^MODULE_IO_exx_source_io$'
+cmake --build build --target MODULE_ESOLVER_pw_hybrid_source -j 8
+OMP_NUM_THREADS=1 ctest --test-dir build -V -R '^MODULE_ESOLVER_pw_hybrid_source$'
 python3 tests/integrate/tools/test_hybrid_nscf.py ./build/abacus --mpi-ranks 2
 ```
 
@@ -174,13 +180,13 @@ at the printed precision, as did all eight bands at nine Si L-Gamma-X points
 using the same frozen CPU source (`20 Ry`, `2x2x2` source mesh). The Si check
 compared raw eigenvalues without an energy shift. The three-band H
 single-precision GPU path differed by at most `5.76e-5 eV` from double precision.
-The CPU build also passed its checkpoint unit tests and NSCF integration test.
+The CPU build also passed its source-adapter unit tests and NSCF integration test.
 This validates device
 consistency; it does not change the cross-code convergence limits below.
 
 On the initial local two-q-point, 10 Ry test, the same-mesh SCF/NSCF maximum
 band difference was `3.7e-5 eV`; the shared Gamma point and serial/two-rank NSCF
-results agreed to printed precision. Three checkpoint unit tests passed.
+results agreed to printed precision. Three source-adapter unit tests passed.
 A QE SCF comparison at this low cutoff showed band differences up to about
 `0.03 eV`; that H test alone does not establish cross-code agreement.
 

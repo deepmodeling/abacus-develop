@@ -26,3 +26,9 @@ AddTest(
     ../../source_cell/cif_io.cpp
     ../../source_io/module_output/output_log.cpp
 )
+
+AddTest(
+  TARGET MODULE_ESOLVER_pw_hybrid_source
+  LIBS base device
+  SOURCES test_pw_hybrid_source.cpp ../pw_hybrid_source.cpp
+)

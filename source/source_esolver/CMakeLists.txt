@@ -4,6 +4,7 @@ list(APPEND objects
     esolver_fp.cpp
     esolver_ks_pw.cpp
     pw_hybrid_nscf.cpp
+    pw_hybrid_source.cpp
     esolver_ks_pw_tddft.cpp
     esolver_ks_lcaopw.cpp
     esolver_sdft_pw.cpp
