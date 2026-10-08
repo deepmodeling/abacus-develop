@@ -75,7 +75,7 @@ TEST_F(SccsResponseTest, ManufacturedNonuniformDielectricSolution)
     EXPECT_GT(response.polarization.iterations, 1);
 }
 
-TEST_F(SccsResponseTest, ConvergenceFailureAndExplicitWarmStart)
+TEST_F(SccsResponseTest, ConvergenceFailureBothTolerancesAndExplicitWarmStart)
 {
     const std::vector<double> mode_x = cosine_mode(0);
     std::vector<double> charge = cosine_mode(1);
@@ -125,26 +125,10 @@ TEST_F(SccsResponseTest, ConvergenceFailureAndExplicitWarmStart)
     {
         EXPECT_NEAR(warm.polarization.potential[ir], cold.polarization.potential[ir], 1e-9);
     }
-}
 
-TEST_F(SccsResponseTest, RequiresBothResidualTolerances)
-{
-    const std::vector<double> mode_x = cosine_mode(0);
-    std::vector<double> charge = cosine_mode(1);
-    std::vector<double> density(basis.nrxx);
-    for (int ir = 0; ir < basis.nrxx; ++ir)
-    {
-        density[ir] = 0.009 + 0.008 * mode_x[ir];
-        charge[ir] *= 1e-3;
-    }
-    ModuleSccs::CavityParameters cavity;
-    cavity.density_min = 0.0024;
-    cavity.density_max = 0.0155;
-    cavity.epsilon_bulk = 78.3;
-    ModuleSccs::PolarizationSolverParameters solver;
+    // Each of the two tolerances alone drives the iteration count.
     solver.tolerance_rms = 1e-5;
     solver.tolerance_max = 1e-5;
-    const std::vector<double> cold_start;
     ModuleSccs::SccsResponse loose;
     ModuleSccs::SccsResponse tight_maximum;
     ModuleSccs::SccsResponse tight_rms;
@@ -162,3 +146,4 @@ TEST_F(SccsResponseTest, RequiresBothResidualTolerances)
     EXPECT_GT(tight_maximum.polarization.iterations, loose.polarization.iterations);
     EXPECT_GT(tight_rms.polarization.iterations, loose.polarization.iterations);
 }
+

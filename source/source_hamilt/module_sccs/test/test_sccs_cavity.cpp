@@ -18,7 +18,9 @@ protected:
     }
 };
 
-TEST_F(SccsCavityTest, BulkAndSoluteLimits)
+// Bulk and solute limits, continuity at both thresholds, and no dielectric
+// response in vacuum.
+TEST_F(SccsCavityTest, LimitsThresholdsAndVacuum)
 {
     const double bulk_densities[] = {-1e-6, 0.0, 1e-4};
     for (double density : bulk_densities)
@@ -40,30 +42,47 @@ TEST_F(SccsCavityTest, BulkAndSoluteLimits)
         EXPECT_DOUBLE_EQ(point.dsolute_drho, 0.0);
         EXPECT_DOUBLE_EQ(point.depsilon_drho, 0.0);
     }
+    const double near_min = parameters.density_min * (1.0 + 1e-8);
+    const double near_max = parameters.density_max * (1.0 - 1e-8);
+    ModuleSccs::CavityPoint lower;
+    ModuleSccs::CavityPoint upper;
+    lower = ModuleSccs::evaluate_cavity(near_min, parameters);
+    upper = ModuleSccs::evaluate_cavity(near_max, parameters);
+    EXPECT_NEAR(lower.solute, 0.0, 1e-14);
+    EXPECT_NEAR(upper.solute, 1.0, 1e-14);
+    EXPECT_NEAR(lower.epsilon, 78.3, 1e-12);
+    EXPECT_NEAR(upper.epsilon, 1.0, 1e-12);
+    EXPECT_NEAR(lower.dsolute_drho, 0.0, 1e-10);
+    EXPECT_NEAR(upper.dsolute_drho, 0.0, 1e-10);
+    EXPECT_NEAR(lower.depsilon_drho, 0.0, 1e-8);
+    EXPECT_NEAR(upper.depsilon_drho, 0.0, 1e-8);
+    parameters.epsilon_bulk = 1.0;
+    const ModuleSccs::CavityPoint vacuum = ModuleSccs::evaluate_cavity(1e-3, parameters);
+    EXPECT_GT(vacuum.solute, 0.0);
+    EXPECT_LT(vacuum.solute, 1.0);
+    EXPECT_DOUBLE_EQ(vacuum.epsilon, 1.0);
+    EXPECT_DOUBLE_EQ(vacuum.depsilon_drho, 0.0);
 }
 
-TEST_F(SccsCavityTest, LogarithmicMidpoint)
+// Analytic values at the logarithmic midpoint and finite differences across
+// the transition.
+TEST_F(SccsCavityTest, MidpointAndDerivativesAcrossTransition)
 {
     const double product = parameters.density_min * parameters.density_max;
-    const double density = std::sqrt(product);
+    const double midpoint_density = std::sqrt(product);
     const double ratio = parameters.density_max / parameters.density_min;
     const double width = std::log(ratio);
     const double epsilon = std::sqrt(parameters.epsilon_bulk);
     const double log_epsilon = std::log(parameters.epsilon_bulk);
-    const double dsolute = 2.0 / (width * density);
+    const double dsolute = 2.0 / (width * midpoint_density);
     const double depsilon = -epsilon * log_epsilon * dsolute;
-    ModuleSccs::CavityPoint point;
-    point = ModuleSccs::evaluate_cavity(density, parameters);
-    EXPECT_NEAR(point.solute, 0.5, 1e-14);
-    EXPECT_NEAR(point.epsilon, epsilon, 1e-13);
-    EXPECT_NEAR(point.dsolute_drho, dsolute, 1e-10);
-    EXPECT_NEAR(point.depsilon_drho, depsilon, 1e-9);
-}
+    const ModuleSccs::CavityPoint midpoint = ModuleSccs::evaluate_cavity(midpoint_density, parameters);
+    EXPECT_NEAR(midpoint.solute, 0.5, 1e-14);
+    EXPECT_NEAR(midpoint.epsilon, epsilon, 1e-13);
+    EXPECT_NEAR(midpoint.dsolute_drho, dsolute, 1e-10);
+    EXPECT_NEAR(midpoint.depsilon_drho, depsilon, 1e-9);
 
-TEST_F(SccsCavityTest, DerivativesAcrossTransition)
-{
     const double fractions[] = {0.2, 0.5, 0.8};
-    const double ratio = parameters.density_max / parameters.density_min;
     for (double fraction : fractions)
     {
         const double scale = std::pow(ratio, fraction);
@@ -88,32 +107,4 @@ TEST_F(SccsCavityTest, DerivativesAcrossTransition)
     }
 }
 
-TEST_F(SccsCavityTest, SmoothThresholds)
-{
-    const double near_min = parameters.density_min * (1.0 + 1e-8);
-    const double near_max = parameters.density_max * (1.0 - 1e-8);
-    ModuleSccs::CavityPoint lower;
-    ModuleSccs::CavityPoint upper;
-    lower = ModuleSccs::evaluate_cavity(near_min, parameters);
-    upper = ModuleSccs::evaluate_cavity(near_max, parameters);
-    EXPECT_NEAR(lower.solute, 0.0, 1e-14);
-    EXPECT_NEAR(upper.solute, 1.0, 1e-14);
-    EXPECT_NEAR(lower.epsilon, 78.3, 1e-12);
-    EXPECT_NEAR(upper.epsilon, 1.0, 1e-12);
-    EXPECT_NEAR(lower.dsolute_drho, 0.0, 1e-10);
-    EXPECT_NEAR(upper.dsolute_drho, 0.0, 1e-10);
-    EXPECT_NEAR(lower.depsilon_drho, 0.0, 1e-8);
-    EXPECT_NEAR(upper.depsilon_drho, 0.0, 1e-8);
-}
-
-TEST_F(SccsCavityTest, VacuumHasNoDielectricResponse)
-{
-    parameters.epsilon_bulk = 1.0;
-    ModuleSccs::CavityPoint point;
-    point = ModuleSccs::evaluate_cavity(1e-3, parameters);
-    EXPECT_GT(point.solute, 0.0);
-    EXPECT_LT(point.solute, 1.0);
-    EXPECT_DOUBLE_EQ(point.epsilon, 1.0);
-    EXPECT_DOUBLE_EQ(point.depsilon_drho, 0.0);
-}
 } // namespace

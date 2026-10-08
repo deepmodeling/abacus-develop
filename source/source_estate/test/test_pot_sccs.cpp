@@ -21,7 +21,75 @@ Sep_Cell::~Sep_Cell() noexcept {}
 Charge::Charge() {}
 Charge::~Charge() {}
 
-using PotSccsTest = SccsTest::PwTest;
+class PotSccsTest : public SccsTest::PwTest
+{
+protected:
+    // Two atoms in a uniform electron density: the solvation force is the
+    // finite difference of the Rydberg energy and is added once to an existing
+    // force.
+    void check_solvation_force(const ModuleSccs::SccsConfig& config,
+                               const ModuleSccs::PolarizationSolverParameters& solver)
+    {
+        UnitCell cell;
+        Atom atom;
+        cell.lat0 = length;
+        cell.tpiba = tpiba;
+        cell.omega = basis.omega;
+        cell.ntype = 1;
+        cell.nat = 2;
+        cell.atoms = &atom;
+        atom.na = 2;
+        atom.ncpp.zv = 1.0;
+        atom.tau = {ModuleBase::Vector3<double>(0.21, 0.32, 0.43),
+                    ModuleBase::Vector3<double>(0.64, 0.51, 0.27)};
+        const double density_value = 2.0 / basis.omega;
+        std::vector<double> density(basis.nrxx, density_value);
+        double* channels[] = {density.data()};
+        Charge charge;
+        charge.nspin = 1;
+        charge.rho = channels;
+        elecstate::PotSccs component(&basis, config, solver, 2.0);
+        ModuleBase::matrix potential(1, basis.nrxx);
+        component.cal_v_eff(&charge, &cell, potential);
+        ModuleBase::matrix force(2, 3);
+        component.add_solvation_force(cell, force);
+        const double step = 1e-4;
+        for (int ia = 0; ia < 2; ++ia)
+        {
+            for (int axis = 0; axis < 3; ++axis)
+            {
+                const double original = atom.tau[ia][axis];
+                atom.tau[ia][axis] = original + step / length;
+                potential.zero_out();
+                component.cal_v_eff(&charge, &cell, potential);
+                const double positive = component.get_energy();
+                atom.tau[ia][axis] = original - step / length;
+                potential.zero_out();
+                component.cal_v_eff(&charge, &cell, potential);
+                const double negative = component.get_energy();
+                atom.tau[ia][axis] = original;
+                const double finite_difference = -(positive - negative) / (2.0 * step);
+                EXPECT_NEAR(force(ia, axis), finite_difference, 1e-8);
+            }
+        }
+        potential.zero_out();
+        component.cal_v_eff(&charge, &cell, potential);
+        ModuleBase::matrix accumulated(2, 3);
+        for (int ia = 0; ia < 2; ++ia)
+        {
+            for (int axis = 0; axis < 3; ++axis) { accumulated(ia, axis) = 7.0; }
+        }
+        component.add_solvation_force(cell, accumulated);
+        for (int ia = 0; ia < 2; ++ia)
+        {
+            for (int axis = 0; axis < 3; ++axis)
+            {
+                const double expected_force = 7.0 + force(ia, axis);
+                EXPECT_NEAR(accumulated(ia, axis), expected_force, 1e-10);
+            }
+        }
+    }
+};
 
 TEST_F(PotSccsTest, IndependentInstancesAndSpinChannels)
 {
@@ -79,7 +147,20 @@ TEST_F(PotSccsTest, IndependentInstancesAndSpinChannels)
 
 TEST_F(PotSccsTest, InputMapsOntoSccsConfig)
 {
+    // The custom defaults follow Environ environ_type input:
+    // env_static_permittivity 1, rhomin 1e-4, rhomax 5e-3, no surface tension
+    // or pressure.
     Input_para input;
+    ModuleSccs::SccsConfig defaults;
+    ModuleSccs::PolarizationSolverParameters default_solver;
+    elecstate::make_sccs_config_from_input(input, defaults, default_solver);
+    EXPECT_EQ(input.sccs_preset, "custom");
+    EXPECT_DOUBLE_EQ(defaults.cavity.epsilon_bulk, 1.0);
+    EXPECT_DOUBLE_EQ(defaults.cavity.density_min, 1e-4);
+    EXPECT_DOUBLE_EQ(defaults.cavity.density_max, 5e-3);
+    EXPECT_DOUBLE_EQ(defaults.surface_tension, 0.0);
+    EXPECT_DOUBLE_EQ(defaults.pressure, 0.0);
+    EXPECT_EQ(default_solver.max_iterations, 200);
     input.sccs_preset = "water-neutral";
     input.sccs_epsilon = 2.0; // replaced by the preset
     input.sccs_maxiter = 42;
@@ -94,43 +175,8 @@ TEST_F(PotSccsTest, InputMapsOntoSccsConfig)
     EXPECT_EQ(solver.max_iterations, 42);
 }
 
-TEST_F(PotSccsTest, CustomDefaultsFollowEnvironInput)
-{
-    // Environ environ_type input: env_static_permittivity 1, rhomin 1e-4,
-    // rhomax 5e-3, no surface tension or pressure.
-    Input_para input;
-    ModuleSccs::SccsConfig config;
-    ModuleSccs::PolarizationSolverParameters solver;
-    elecstate::make_sccs_config_from_input(input, config, solver);
-    EXPECT_EQ(input.sccs_preset, "custom");
-    EXPECT_DOUBLE_EQ(config.cavity.epsilon_bulk, 1.0);
-    EXPECT_DOUBLE_EQ(config.cavity.density_min, 1e-4);
-    EXPECT_DOUBLE_EQ(config.cavity.density_max, 5e-3);
-    EXPECT_DOUBLE_EQ(config.surface_tension, 0.0);
-    EXPECT_DOUBLE_EQ(config.pressure, 0.0);
-    EXPECT_EQ(solver.max_iterations, 200);
-}
-
 TEST_F(PotSccsTest, IonicForceAddsRydbergDerivativeOnce)
 {
-    UnitCell cell;
-    Atom atom;
-    cell.lat0 = length;
-    cell.tpiba = tpiba;
-    cell.omega = basis.omega;
-    cell.ntype = 1;
-    cell.nat = 2;
-    cell.atoms = &atom;
-    atom.na = 2;
-    atom.ncpp.zv = 1.0;
-    atom.tau = {ModuleBase::Vector3<double>(0.21, 0.32, 0.43),
-                ModuleBase::Vector3<double>(0.64, 0.51, 0.27)};
-    const double density_value = 2.0 / basis.omega;
-    std::vector<double> density(basis.nrxx, density_value);
-    double* channels[] = {density.data()};
-    Charge charge;
-    charge.nspin = 1;
-    charge.rho = channels;
     Input_para input;
     input.sccs_epsilon = 5.0;
     input.sccs_tol_rms = 1e-13;
@@ -138,46 +184,7 @@ TEST_F(PotSccsTest, IonicForceAddsRydbergDerivativeOnce)
     ModuleSccs::SccsConfig config;
     ModuleSccs::PolarizationSolverParameters solver;
     elecstate::make_sccs_config_from_input(input, config, solver);
-    elecstate::PotSccs component(&basis, config, solver, 2.0);
-    ModuleBase::matrix potential(1, basis.nrxx);
-    component.cal_v_eff(&charge, &cell, potential);
-    ModuleBase::matrix force(2, 3);
-    component.add_solvation_force(cell, force);
-    const double step = 1e-4;
-    for (int ia = 0; ia < 2; ++ia)
-    {
-        for (int axis = 0; axis < 3; ++axis)
-        {
-            const double original = atom.tau[ia][axis];
-            atom.tau[ia][axis] = original + step / length;
-            potential.zero_out();
-            component.cal_v_eff(&charge, &cell, potential);
-            const double positive = component.get_energy();
-            atom.tau[ia][axis] = original - step / length;
-            potential.zero_out();
-            component.cal_v_eff(&charge, &cell, potential);
-            const double negative = component.get_energy();
-            atom.tau[ia][axis] = original;
-            const double finite_difference = -(positive - negative) / (2.0 * step);
-            EXPECT_NEAR(force(ia, axis), finite_difference, 1e-8);
-        }
-    }
-    potential.zero_out();
-    component.cal_v_eff(&charge, &cell, potential);
-    ModuleBase::matrix accumulated(2, 3);
-    for (int ia = 0; ia < 2; ++ia)
-    {
-        for (int axis = 0; axis < 3; ++axis) { accumulated(ia, axis) = 7.0; }
-    }
-    component.add_solvation_force(cell, accumulated);
-    for (int ia = 0; ia < 2; ++ia)
-    {
-        for (int axis = 0; axis < 3; ++axis)
-        {
-            const double expected_force = 7.0 + force(ia, axis);
-            EXPECT_NEAR(accumulated(ia, axis), expected_force, 1e-10);
-        }
-    }
+    check_solvation_force(config, solver);
 }
 
 TEST_F(PotSccsTest, ChargedDielectricCellWarnsAndRuns)
