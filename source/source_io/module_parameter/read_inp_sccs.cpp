@@ -31,15 +31,12 @@ bool parse_solvation_model(const std::string& value, int& model, std::string& er
     return true;
 }
 
-bool validate_sccs_input(const Input_para& input, std::string& error)
+namespace
 {
-    error.clear();
-    if (input.imp_sol < 0 || input.imp_sol > 2)
-    {
-        error = "imp_sol must be 0, 1 or 2";
-        return false;
-    }
-    if (input.imp_sol != 2) { return true; }
+// Calculation settings that SCCS supports; empty when all are supported.
+std::string sccs_context_error(const Input_para& input)
+{
+    std::string error;
     if (input.assume_isolated != "none") { error = "SCCS currently requires assume_isolated none"; }
     else if (input.device != "cpu" || input.esolver_type != "ksdft") { error = "SCCS requires CPU KS-DFT"; }
     else if (input.basis_type != "pw" && input.basis_type != "lcao") { error = "SCCS requires basis_type pw or lcao"; }
@@ -52,20 +49,48 @@ bool validate_sccs_input(const Input_para& input, std::string& error)
     { error = "SCCS does not support electric/gate fields, DFT-1/2, DeePKS or dm_to_rho"; }
     else if (!input.vl_in_h || !input.vion_in_h || !input.vh_in_h)
     { error = "SCCS requires the local ionic and Hartree potentials in the Hamiltonian"; }
-    if (!error.empty()) { return false; }
+    return error;
+}
+
+// Cavity, surface and boundary model parameters, starting with the preset.
+std::string sccs_model_error(const Input_para& input)
+{
     const std::vector<std::string> presets = {"custom", "vacuum", "water-neutral", "water-cation", "water-anion"};
     if (std::find(presets.begin(), presets.end(), input.sccs_preset) == presets.end())
     {
-        error = "Unknown sccs_preset";
-        return false;
+        return "Unknown sccs_preset";
     }
+    std::string error;
     if (input.sccs_epsilon < 1.0) { error = "sccs_epsilon must be at least 1"; }
     else if (input.sccs_rho_min <= 0.0 || input.sccs_rho_max <= input.sccs_rho_min)
     { error = "sccs_rho_min and sccs_rho_max must satisfy 0 < sccs_rho_min < sccs_rho_max"; }
-    else if (input.sccs_maxiter <= 0) { error = "sccs_maxiter must be positive"; }
+    else if (input.sccs_surface_eta <= 0.0) { error = "sccs_surface_eta must be positive"; }
+    return error;
+}
+
+// sqrt-CG solver controls.
+std::string sccs_solver_error(const Input_para& input)
+{
+    std::string error;
+    if (input.sccs_maxiter <= 0) { error = "sccs_maxiter must be positive"; }
     else if (input.sccs_tol_rms <= 0.0) { error = "sccs_tol_rms must be positive"; }
     else if (input.sccs_tol_max <= 0.0) { error = "sccs_tol_max must be positive"; }
-    else if (input.sccs_surface_eta <= 0.0) { error = "sccs_surface_eta must be positive"; }
+    return error;
+}
+} // namespace
+
+bool validate_sccs_input(const Input_para& input, std::string& error)
+{
+    error.clear();
+    if (input.imp_sol < 0 || input.imp_sol > 2)
+    {
+        error = "imp_sol must be 0, 1 or 2";
+        return false;
+    }
+    if (input.imp_sol != 2) { return true; }
+    error = sccs_context_error(input);
+    if (error.empty()) { error = sccs_model_error(input); }
+    if (error.empty()) { error = sccs_solver_error(input); }
     return error.empty();
 }
 
