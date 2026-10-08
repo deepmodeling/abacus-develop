@@ -130,69 +130,78 @@ void apply_preconditioner(const std::vector<double>& rhs,
         value[i] *= invsqrt[i];
     }
 }
-} // namespace
 
-void solve_sccs_response(const std::vector<double>& density,
-                         const std::vector<double>& charge,
-                         const CavityParameters& cavity,
-                         const PolarizationSolverParameters& solver,
-                         const std::vector<double>& initial_potential,
-                         const ModulePW::PW_Basis& basis,
-                         double tpiba,
-                         SccsResponse& result)
+// The preconditioned sqrt-CG system of one response.
+struct SqrtCgOperator
 {
-    // Determine start mode collectively, including ranks with no real-space points.
-    double initial_count = initial_potential.size();
-    Parallel_Reduce::reduce_pool(initial_count);
-    const bool warm_start = initial_count != 0.0;
+    const std::vector<double>& coefficient;
+    const std::vector<double>& invsqrt;
+    const ModulePW::PW_Basis& basis;
+    PeriodicCoulombOperator& coulomb;
+};
 
-    SccsResponse candidate;
-    std::vector<double> coefficient;
-    prepare_cavity(density, cavity, basis, tpiba, candidate, coefficient);
-    const std::size_t size = density.size();
-    std::vector<double> invsqrt(size);
+// Potential and charge residual of the sqrt-CG, with preconditioner scratch.
+struct SqrtCgState
+{
+    std::vector<double> potential;
+    std::vector<double> residual;
+    std::vector<double> weighted;
+    std::vector<double> preconditioned;
+};
+
+// Replace the cold start by the old fixed point when that lowers the RMS
+// charge residual.
+void try_warm_start(const SqrtCgOperator& system,
+                    const std::vector<double>& charge,
+                    const std::vector<double>& initial_potential,
+                    SqrtCgState& state,
+                    PolarizationResult& polarization)
+{
+    const std::size_t size = charge.size();
+    const std::vector<double>& coefficient = system.coefficient;
+    std::vector<double>& z = state.preconditioned;
+    std::vector<double> guess_residual(size);
     for (std::size_t i = 0; i < size; ++i)
     {
-        invsqrt[i] = 1.0 / std::sqrt(candidate.epsilon[i]);
+        guess_residual[i] = charge[i] - coefficient[i] * initial_potential[i];
     }
-    PeriodicCoulombOperator coulomb(basis, tpiba);
-    std::vector<double> residual = charge;
-    std::vector<double> potential(size, 0.0);
+    apply_preconditioner(guess_residual, system.invsqrt, system.coulomb, state.weighted, z);
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        guess_residual[i] = coefficient[i] * (initial_potential[i] - z[i]);
+    }
+    double guess_rms = 0.0;
+    double guess_max = 0.0;
+    residual_norms(guess_residual, system.basis, guess_rms, guess_max);
+    if (guess_rms < polarization.residual_rms)
+    {
+        state.potential.swap(z);
+        state.residual.swap(guess_residual);
+        polarization.warm_started = true;
+        polarization.residual_rms = guess_rms;
+        polarization.residual_max = guess_max;
+    }
+}
+
+// Preconditioned CG until both residual tolerances hold; a breakdown or a
+// missed tolerance stops the run with WARNING_QUIT.
+void iterate_sqrt_cg(const SqrtCgOperator& system,
+                     const PolarizationSolverParameters& solver,
+                     SqrtCgState& state,
+                     PolarizationResult& polarization)
+{
+    const ModulePW::PW_Basis& basis = system.basis;
+    const std::vector<double>& coefficient = system.coefficient;
+    std::vector<double>& potential = state.potential;
+    std::vector<double>& residual = state.residual;
+    std::vector<double>& z = state.preconditioned;
+    const std::size_t size = residual.size();
     std::vector<double> direction(size, 0.0);
     std::vector<double> image(size, 0.0);
-    std::vector<double> weighted;
-    std::vector<double> z;
-    PolarizationResult& polarization = candidate.polarization;
-    residual_norms(residual, basis, polarization.residual_rms, polarization.residual_max);
-    // Retain the old fixed-point warm start only when it reduces the charge residual.
-    if (!converged(polarization, solver) && warm_start)
-    {
-        std::vector<double> guess_residual(size);
-        for (std::size_t i = 0; i < size; ++i)
-        {
-            guess_residual[i] = charge[i] - coefficient[i] * initial_potential[i];
-        }
-        apply_preconditioner(guess_residual, invsqrt, coulomb, weighted, z);
-        for (std::size_t i = 0; i < size; ++i)
-        {
-            guess_residual[i] = coefficient[i] * (initial_potential[i] - z[i]);
-        }
-        double guess_rms = 0.0;
-        double guess_max = 0.0;
-        residual_norms(guess_residual, basis, guess_rms, guess_max);
-        if (guess_rms < polarization.residual_rms)
-        {
-            potential.swap(z);
-            residual.swap(guess_residual);
-            polarization.warm_started = true;
-            polarization.residual_rms = guess_rms;
-            polarization.residual_max = guess_max;
-        }
-    }
     double old_rz = 0.0;
     for (int iteration = 1; !converged(polarization, solver) && iteration <= solver.max_iterations; ++iteration)
     {
-        apply_preconditioner(residual, invsqrt, coulomb, weighted, z);
+        apply_preconditioner(residual, system.invsqrt, system.coulomb, state.weighted, z);
         const double rz = grid_dot(residual, z, basis);
         if (!std::isfinite(rz) || std::abs(rz) < 1e-30)
         {
@@ -228,8 +237,18 @@ void solve_sccs_response(const std::vector<double>& density,
                 << polarization.residual_max << ")";
         ModuleBase::WARNING_QUIT("ModuleSccs::solve_sccs_response", message.str());
     }
+}
 
-    candidate.restart_potential = potential;
+// Keep the unshifted solution for warm starts, then store the zero-mean
+// potential, its gradient and the cavity potential.
+void finish_response(const ModulePW::PW_Basis& basis,
+                     double tpiba,
+                     std::vector<double>& potential,
+                     SccsResponse& response)
+{
+    PolarizationResult& polarization = response.polarization;
+    const std::size_t size = potential.size();
+    response.restart_potential = potential;
     double mean = 0.0;
     for (double value : potential)
     {
@@ -246,13 +265,52 @@ void solve_sccs_response(const std::vector<double>& density,
     polarization.gradient.resize(size);
     XC_Functional::grad_rho(potential_g.data(), polarization.gradient.data(), &basis, tpiba);
     polarization.potential.swap(potential);
-    candidate.cavity_potential.resize(size);
+    response.cavity_potential.resize(size);
     for (std::size_t i = 0; i < size; ++i)
     {
         const ModuleBase::Vector3<double>& gradient = polarization.gradient[i];
         const double gradient_square = gradient * gradient;
-        candidate.cavity_potential[i] = -candidate.depsilon_drho[i] * gradient_square / (8.0 * ModuleBase::PI);
+        response.cavity_potential[i] = -response.depsilon_drho[i] * gradient_square / (8.0 * ModuleBase::PI);
     }
+}
+} // namespace
+
+void solve_sccs_response(const std::vector<double>& density,
+                         const std::vector<double>& charge,
+                         const CavityParameters& cavity,
+                         const PolarizationSolverParameters& solver,
+                         const std::vector<double>& initial_potential,
+                         const ModulePW::PW_Basis& basis,
+                         double tpiba,
+                         SccsResponse& result)
+{
+    // Determine start mode collectively, including ranks with no real-space points.
+    double initial_count = initial_potential.size();
+    Parallel_Reduce::reduce_pool(initial_count);
+    const bool warm_start = initial_count != 0.0;
+
+    SccsResponse candidate;
+    std::vector<double> coefficient;
+    prepare_cavity(density, cavity, basis, tpiba, candidate, coefficient);
+    const std::size_t size = density.size();
+    std::vector<double> invsqrt(size);
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        invsqrt[i] = 1.0 / std::sqrt(candidate.epsilon[i]);
+    }
+    PeriodicCoulombOperator coulomb(basis, tpiba);
+    const SqrtCgOperator system = {coefficient, invsqrt, basis, coulomb};
+    SqrtCgState state;
+    state.residual = charge;
+    state.potential.assign(size, 0.0);
+    PolarizationResult& polarization = candidate.polarization;
+    residual_norms(state.residual, basis, polarization.residual_rms, polarization.residual_max);
+    if (!converged(polarization, solver) && warm_start)
+    {
+        try_warm_start(system, charge, initial_potential, state, polarization);
+    }
+    iterate_sqrt_cg(system, solver, state, polarization);
+    finish_response(basis, tpiba, state.potential, candidate);
     result = std::move(candidate);
 }
 } // namespace ModuleSccs
