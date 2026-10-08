@@ -22,6 +22,12 @@ else()
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/08_RI
     )
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    # Some runners expose Slurm's mpiexec wrapper through FindMPI. Prefer the
+    # implementation launcher used by Autotest.sh when it is available.
+    find_program(ABACUS_MPIEXEC NAMES mpirun)
+    if(NOT ABACUS_MPIEXEC)
+        set(ABACUS_MPIEXEC ${MPIEXEC_EXECUTABLE})
+    endif()
     add_test(
         NAME 08_RI_librpa_wavefunction_checks
         COMMAND ${Python3_EXECUTABLE} -m unittest discover
@@ -31,14 +37,14 @@ else()
         NAME 08_RI_librpa_producer_mpi
         COMMAND ${Python3_EXECUTABLE} ${ABACUS_TEST_DIR}/integrate/tools/run_librpa_mpi.py
                 --abacus ${ABACUS_BIN_PATH} --cases ${ABACUS_TEST_DIR}/08_RI
-                --mpirun ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
+                --mpirun ${ABACUS_MPIEXEC} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
     )
     set_tests_properties(08_RI_librpa_producer_mpi PROPERTIES PROCESSORS 2 TIMEOUT 1200)
     add_test(
         NAME 08_RI_librpa_symmetry
         COMMAND ${Python3_EXECUTABLE} ${ABACUS_TEST_DIR}/integrate/tools/run_librpa_sym.py
                 --abacus ${ABACUS_BIN_PATH} --cases ${ABACUS_TEST_DIR}/08_RI
-                --mpirun ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
+                --mpirun ${ABACUS_MPIEXEC} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
     )
     set_tests_properties(08_RI_librpa_symmetry PROPERTIES PROCESSORS 2 TIMEOUT 1800)
 endif()
