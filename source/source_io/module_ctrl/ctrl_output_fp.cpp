@@ -1,14 +1,14 @@
 #include "ctrl_output_fp.h" // use ctrl_output_fp()
 
-#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
-#include "source_estate/elecstate.h" // use elecstate::ElecState
-#include "source_estate/module_charge/charge.h" // use Charge
-#include "source_estate/module_charge/chg_symm.h" // use module_charge::cal_rhog_symm
-#include "source_estate/write_elecstat_pot.h" // use write_elecstat_pot
+#include "source_basis/module_pw/pw_basis_big.h"   // use PW_Basis_Big
+#include "source_estate/elecstate.h"               // use elecstate::ElecState
+#include "source_estate/module_charge/charge.h"    // use Charge
+#include "source_estate/module_charge/chg_symm.h"  // use module_charge::cal_rhog_symm
+#include "source_estate/write_elecstat_pot.h"      // use write_elecstat_pot
 #include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
-#include "source_io/module_dipole/dipole_io.h" // use write_dipole
+#include "source_io/module_dipole/dipole_io.h"     // use write_dipole
 #include "source_io/module_elf/write_elf.h"
-#include "source_io/module_output/cube_io.h" // use write_vdata_palgrid
+#include "source_io/module_output/cube_io.h"            // use write_vdata_palgrid
 #include "source_io/module_parameter/input_parameter.h" // use Input_para
 
 #ifdef __LIBXC
@@ -81,7 +81,7 @@ void ctrl_output_fp(UnitCell& ucell,
             fn += spin_block + geom_block + ".cube";
 
             ModuleIO::write_vdata_palgrid(para_grid,
-                                          chr.rho_save[is],
+                                          chr.rho[is],
                                           is,
                                           nspin,
                                           istep, // change istep_in to istep, mohan 20260222
@@ -100,7 +100,7 @@ void ctrl_output_fp(UnitCell& ucell,
                 fn += spin_block + geom_block + ".cube";
 
                 ModuleIO::write_vdata_palgrid(para_grid,
-                                              chr.kin_r_save[is],
+                                              chr.kin_r[is],
                                               is,
                                               nspin,
                                               istep,
