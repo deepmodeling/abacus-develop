@@ -30,7 +30,7 @@ void expect_vector(const ModuleBase::Vector3<double>& actual,
 }
 } // namespace
 
-TEST_F(CellGeometryTest, BuildsRotatedRectangularCell)
+TEST_F(CellGeometryTest, BuildsRotatedRectangularCellWrapsImagesAndRejectsSkew)
 {
     const ModuleBase::Matrix3 lattice(0.0, 1.0, 0.0,
                                      -2.0, 0.0, 0.0,
@@ -47,30 +47,34 @@ TEST_F(CellGeometryTest, BuildsRotatedRectangularCell)
     const ModuleBase::Vector3<double> actual = unitcell::relative_position(position, cell);
     const ModuleBase::Vector3<double> expected(-9.0, -4.0, -14.0);
     expect_vector(actual, expected);
-}
 
-TEST_F(CellGeometryTest, WrapsMultipleImagesAndUsesHalfOpenInterval)
-{
+    // Several images away from the origin of a 10-Bohr cube, on the half-open interval.
+    const ModuleBase::Matrix3 cube(1.0, 0.0, 0.0,
+                                  0.0, 1.0, 0.0,
+                                  0.0, 0.0, 1.0);
+    ASSERT_TRUE(unitcell::make_orthogonal_cell(cube, 10.0, 1.0e-10, cell));
     cell.origin = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
-    const ModuleBase::Vector3<double> position(25.0, -25.0, 31.0);
-    const ModuleBase::Vector3<double> actual = unitcell::relative_position(position, cell);
-    const ModuleBase::Vector3<double> expected(-5.0, -5.0, 1.0);
-    expect_vector(actual, expected);
+    const ModuleBase::Vector3<double> far_position(25.0, -25.0, 31.0);
+    const ModuleBase::Vector3<double> far_actual = unitcell::relative_position(far_position, cell);
+    const ModuleBase::Vector3<double> wrapped(-5.0, -5.0, 1.0);
+    expect_vector(far_actual, wrapped);
+
+    const ModuleBase::Matrix3 skew(1.0, 0.0, 0.0,
+                                  0.1, 1.0, 0.0,
+                                  0.0, 0.0, 1.0);
+    EXPECT_FALSE(unitcell::make_orthogonal_cell(skew, 10.0, 1.0e-10, cell));
 }
 
-TEST_F(CellGeometryTest, UnwrapsWeightedCenterAcrossCellBoundary)
+TEST_F(CellGeometryTest, WeightedCenterUnwrapsAcrossTheBoundaryAndFollowsTranslations)
 {
-    const std::vector<ModuleBase::Vector3<double>> positions = {
+    const std::vector<ModuleBase::Vector3<double>> boundary_positions = {
         ModuleBase::Vector3<double>(9.8, 9.7, 9.6),
         ModuleBase::Vector3<double>(0.2, 0.3, 0.4)};
-    const std::vector<double> weights = {1.0, 3.0};
-    const ModuleBase::Vector3<double> center = unitcell::weighted_center(positions, weights, cell);
-    const ModuleBase::Vector3<double> expected(0.1, 0.15, 0.2);
-    expect_vector(center, expected);
-}
+    const std::vector<double> boundary_weights = {1.0, 3.0};
+    const ModuleBase::Vector3<double> center = unitcell::weighted_center(boundary_positions, boundary_weights, cell);
+    const ModuleBase::Vector3<double> expected_center(0.1, 0.15, 0.2);
+    expect_vector(center, expected_center);
 
-TEST_F(CellGeometryTest, PreservesRelativePositionsUnderWrappedTranslation)
-{
     const std::vector<ModuleBase::Vector3<double>> original = {
         ModuleBase::Vector3<double>(9.8, 9.6, 0.1),
         ModuleBase::Vector3<double>(0.3, 0.4, 9.7)};
@@ -98,15 +102,7 @@ TEST_F(CellGeometryTest, PreservesRelativePositionsUnderWrappedTranslation)
     }
 }
 
-TEST_F(CellGeometryTest, RejectsSkewCell)
-{
-    const ModuleBase::Matrix3 skew(1.0, 0.0, 0.0,
-                                  0.1, 1.0, 0.0,
-                                  0.0, 0.0, 1.0);
-    EXPECT_FALSE(unitcell::make_orthogonal_cell(skew, 10.0, 1.0e-10, cell));
-}
-
-TEST(SlabGeometry, SupportsSkewPeriodicPlaneAndRotatedNormal)
+TEST(SlabGeometry, SupportsSkewPlanesRotatedNormalsAndEveryAxisAndRejectsTilt)
 {
     const ModuleBase::Matrix3 lattice(0.0, 2.0, 0.0,
                                      0.0, 1.0, 3.0,
@@ -124,18 +120,14 @@ TEST(SlabGeometry, SupportsSkewPeriodicPlaneAndRotatedNormal)
     const std::vector<double> weights = {1.0, 3.0};
     const double center = unitcell::weighted_center(positions, weights, cell);
     EXPECT_NEAR(center, 0.1, 1.0e-14);
-}
 
-TEST(SlabGeometry, SelectsAllAxesAndRejectsTilt)
-{
-    const ModuleBase::Matrix3 lattice(2.0, 0.0, 0.0,
+    const ModuleBase::Matrix3 rectangular(2.0, 0.0, 0.0,
                                      0.0, 3.0, 0.0,
                                      0.0, 0.0, 8.0);
     const double lengths[3] = {2.0, 3.0, 8.0};
-    unitcell::SlabCell cell;
     for (int axis = 0; axis < 3; ++axis)
     {
-        ASSERT_TRUE(unitcell::make_slab_cell(lattice, 1.0, axis, 1.0e-6, cell));
+        ASSERT_TRUE(unitcell::make_slab_cell(rectangular, 1.0, axis, 1.0e-6, cell));
         EXPECT_DOUBLE_EQ(cell.length, lengths[axis]);
         const double expected_area = 48.0 / lengths[axis];
         EXPECT_DOUBLE_EQ(cell.area, expected_area);
@@ -145,3 +137,4 @@ TEST(SlabGeometry, SelectsAllAxesAndRejectsTilt)
                                     0.1, 0.0, 8.0);
     EXPECT_FALSE(unitcell::make_slab_cell(tilted, 1.0, 2, 1.0e-6, cell));
 }
+

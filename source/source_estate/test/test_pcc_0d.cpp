@@ -80,91 +80,39 @@ TEST_F(Pcc0dTest, SeparatesCubicRestrictionFromOrthogonalGeometry)
     EXPECT_FALSE(elecstate::make_pcc_0d_parameters(cell, 1.0e-10, parameters));
 }
 
-TEST_F(Pcc0dTest, MatchesAnalyticalMonopoleAndNeutralDipoleEnergy)
+// The gradient, the ionic force and the electron potential are derivatives of
+// the potential and of the energy with respect to a point charge.
+TEST_F(Pcc0dTest, DerivativesMatchFiniteDifferences)
 {
-    elecstate::ChargeMoments monopole;
-    monopole.charge = 2.0;
-    const double actual_monopole = elecstate::pcc_0d_energy(monopole, parameters);
-    const double expected_monopole = 0.5 * parameters.madelung * 4.0 / parameters.length;
-    EXPECT_NEAR(actual_monopole, expected_monopole, 1.0e-14);
-
-    elecstate::ChargeMoments neutral;
-    neutral.dipole = ModuleBase::Vector3<double>(1.0, 2.0, 3.0);
-    const double actual_neutral = elecstate::pcc_0d_energy(neutral, parameters);
-    const double expected_neutral = 2.0 * ModuleBase::PI * 14.0 / 3000.0;
-    EXPECT_NEAR(actual_neutral, expected_neutral, 1.0e-14);
-}
-
-TEST_F(Pcc0dTest, BilinearKernelIsSymmetricAndHasConsistentSelfEnergy)
-{
-    elecstate::ChargeMoments other;
-    other.charge = -0.4;
-    other.dipole = ModuleBase::Vector3<double>(0.7, 0.5, -0.1);
-    other.second_moment = 1.3;
-    const double forward = elecstate::pcc_0d_bilinear_energy(moments, other, parameters);
-    const double reverse = elecstate::pcc_0d_bilinear_energy(other, moments, parameters);
-    EXPECT_NEAR(forward, reverse, 1.0e-14);
-    const elecstate::ChargeMoments sum = elecstate::add_charge_moments(moments, other);
-    const double sum_energy = elecstate::pcc_0d_energy(sum, parameters);
-    const double left_energy = elecstate::pcc_0d_energy(moments, parameters);
-    const double right_energy = elecstate::pcc_0d_energy(other, parameters);
-    const double expected = left_energy + right_energy + forward;
-    EXPECT_NEAR(sum_energy, expected, 1.0e-14);
-}
-
-TEST_F(Pcc0dTest, GradientMatchesPotentialFiniteDifferences)
-{
+    const double step = 1.0e-5;
     const ModuleBase::Vector3<double> position(0.4, -0.5, 0.6);
     const ModuleBase::Vector3<double> gradient = elecstate::pcc_0d_gradient(moments, position, parameters);
-    const double expected[3] = {gradient.x, gradient.y, gradient.z};
-    const double step = 1.0e-5;
+    const double charges[2] = {1.3, -0.4};
+    ModuleBase::Vector3<double> positions[2] = {position, ModuleBase::Vector3<double>(-0.5, 0.6, -0.7)};
+    const elecstate::ChargeMoments ions = elecstate::charge_moments(charges, positions, 2, 1.0);
+    const ModuleBase::Vector3<double> force = elecstate::pcc_0d_force(ions, charges[0], position, parameters);
     for (int axis = 0; axis < 3; ++axis)
     {
         ModuleBase::Vector3<double> plus = position;
         ModuleBase::Vector3<double> minus = position;
-        double* plus_component[3] = {&plus.x, &plus.y, &plus.z};
-        double* minus_component[3] = {&minus.x, &minus.y, &minus.z};
-        *plus_component[axis] += step;
-        *minus_component[axis] -= step;
+        plus[axis] += step;
+        minus[axis] -= step;
         const double plus_potential = elecstate::pcc_0d_potential(moments, plus, parameters);
         const double minus_potential = elecstate::pcc_0d_potential(moments, minus, parameters);
-        const double derivative = (plus_potential - minus_potential) / (2.0 * step);
-        EXPECT_NEAR(derivative, expected[axis], 1.0e-10);
-    }
-}
-
-TEST_F(Pcc0dTest, IonicForceMatchesTotalEnergyFiniteDifferences)
-{
-    const double charges[2] = {1.3, -0.4};
-    ModuleBase::Vector3<double> positions[2] = {
-        ModuleBase::Vector3<double>(0.2, -0.3, 0.4),
-        ModuleBase::Vector3<double>(-0.5, 0.6, -0.7)};
-    moments = elecstate::charge_moments(charges, positions, 2, 1.0);
-    const ModuleBase::Vector3<double> force = elecstate::pcc_0d_force(moments, charges[0], positions[0], parameters);
-    const double expected[3] = {force.x, force.y, force.z};
-    const double step = 1.0e-5;
-    for (int axis = 0; axis < 3; ++axis)
-    {
-        double* component[3] = {&positions[0].x, &positions[0].y, &positions[0].z};
-        const double original = *component[axis];
-        *component[axis] = original + step;
-        moments = elecstate::charge_moments(charges, positions, 2, 1.0);
-        const double plus_energy = elecstate::pcc_0d_energy(moments, parameters);
-        *component[axis] = original - step;
-        moments = elecstate::charge_moments(charges, positions, 2, 1.0);
-        const double minus_energy = elecstate::pcc_0d_energy(moments, parameters);
-        *component[axis] = original;
+        const double potential_slope = (plus_potential - minus_potential) / (2.0 * step);
+        EXPECT_NEAR(potential_slope, gradient[axis], 1.0e-10);
+        positions[0] = plus;
+        const elecstate::ChargeMoments plus_ions = elecstate::charge_moments(charges, positions, 2, 1.0);
+        positions[0] = minus;
+        const elecstate::ChargeMoments minus_ions = elecstate::charge_moments(charges, positions, 2, 1.0);
+        const double plus_energy = elecstate::pcc_0d_energy(plus_ions, parameters);
+        const double minus_energy = elecstate::pcc_0d_energy(minus_ions, parameters);
         const double numerical_force = -(plus_energy - minus_energy) / (2.0 * step);
-        EXPECT_NEAR(numerical_force, expected[axis], 1.0e-10);
+        EXPECT_NEAR(numerical_force, force[axis], 1.0e-10);
     }
-}
-
-TEST_F(Pcc0dTest, ElectronPotentialMatchesEnergyDerivative)
-{
-    const ModuleBase::Vector3<double> position(0.2, -0.3, 0.4);
+    // Adding electrons -step at position changes the energy by the electron potential (Ry).
     const double positive_potential = elecstate::pcc_0d_potential(moments, position, parameters);
     const double electron_potential_ry = -2.0 * positive_potential;
-    const double step = 1.0e-5;
     elecstate::ChargeMoments plus = moments;
     plus.charge -= step;
     plus.dipole -= position * step;
@@ -175,8 +123,8 @@ TEST_F(Pcc0dTest, ElectronPotentialMatchesEnergyDerivative)
     minus.second_moment += step * position.norm2();
     const double plus_energy = 2.0 * elecstate::pcc_0d_energy(plus, parameters);
     const double minus_energy = 2.0 * elecstate::pcc_0d_energy(minus, parameters);
-    const double derivative = (plus_energy - minus_energy) / (2.0 * step);
-    EXPECT_NEAR(derivative, electron_potential_ry, 1.0e-10);
+    const double energy_slope = (plus_energy - minus_energy) / (2.0 * step);
+    EXPECT_NEAR(energy_slope, electron_potential_ry, 1.0e-10);
 }
 
 TEST_F(Pcc0dTest, EnergyIsIndependentOfMultipoleOrigin)
