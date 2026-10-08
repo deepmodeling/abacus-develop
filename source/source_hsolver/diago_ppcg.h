@@ -179,7 +179,9 @@ private:
                               int nblk,
                               SmallSubspace& subspace) const;
 
-    void solve_small_generalized(int dim, SmallSubspace& subspace) const;
+    void solve_small_generalized(const int dim,
+                                 const int nstates,
+                                 SmallSubspace& subspace) const;
 
     void update_one_block(T* psi,
                           const std::vector<int>& cols,

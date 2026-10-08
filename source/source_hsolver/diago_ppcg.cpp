@@ -8,6 +8,7 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include <cstdlib>
 #include <fstream>
+#include <iomanip>
 #include <limits>
 #include <numeric>
 
@@ -20,6 +21,7 @@ const double ppcg_minimum_diagonalization_threshold = 1.0e-14;
 const double ppcg_preconditioner_threshold = 1.0e-12;
 const double ppcg_numerical_threshold = 1.0e-30;
 const double ppcg_scaling_threshold = 1.0e-15;
+const double ppcg_subspace_rank_threshold = 1.0e-12;
 
 // Diagonal shifts used by the small projected eigensolve fallback.
 const double ppcg_subspace_shifts[] = {0.0, 1.0e-10, 1.0e-8, 1.0e-6};
@@ -695,14 +697,109 @@ void DiagoPPCG<T, Device>::build_small_subspace(
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::solve_small_generalized(
-    int dim, SmallSubspace& subspace) const
+    const int dim,
+    const int nstates,
+    SmallSubspace& subspace) const
 {
-    // Try with increasing diagonal shifts; fall back to identity (no update)
-    // if the subspace is too ill-conditioned.
-    // Save originals; sygvd modifies both matrices in-place before it may
-    // fail.
     const std::vector<T> k0 = subspace.k;
     const std::vector<T> m0 = subspace.m;
+
+    // A nearly dependent local basis makes the generalized solve unstable
+    // even when LAPACK accepts M as positive definite.  Work in the retained
+    // eigenspace of M and map the Ritz vectors back to the original basis.
+    std::vector<T> overlap_eigenvectors = m0;
+    std::vector<Real> overlap_eigenvalues(dim);
+    try
+    {
+        container::kernels::lapack_heevd<T, container::DEVICE_CPU>()(
+            dim,
+            overlap_eigenvectors.data(),
+            dim,
+            overlap_eigenvalues.data());
+
+        const Real largest_overlap_eigenvalue = overlap_eigenvalues.back();
+        const Real overlap_cutoff = largest_overlap_eigenvalue
+                                    * Real(ppcg_subspace_rank_threshold);
+        std::vector<int> retained_indices;
+        retained_indices.reserve(dim);
+        for (int i = 0; i < dim; ++i)
+        {
+            if (overlap_eigenvalues[i] > overlap_cutoff)
+            {
+                retained_indices.push_back(i);
+            }
+        }
+
+        const int retained_dim = int(retained_indices.size());
+        if (retained_dim >= nstates && retained_dim < dim)
+        {
+            std::vector<Real> inverse_sqrt_overlap(retained_dim);
+            for (int i = 0; i < retained_dim; ++i)
+            {
+                const int source_index = retained_indices[i];
+                inverse_sqrt_overlap[i] = Real(1)
+                                           / std::sqrt(overlap_eigenvalues[source_index]);
+            }
+
+            std::vector<T> reduced_hamiltonian(retained_dim * retained_dim, T(0));
+            for (int j = 0; j < retained_dim; ++j)
+            {
+                const int right_index = retained_indices[j];
+                const Real right_scale = inverse_sqrt_overlap[j];
+                for (int i = 0; i < retained_dim; ++i)
+                {
+                    const int left_index = retained_indices[i];
+                    const Real left_scale = inverse_sqrt_overlap[i];
+                    T value = T(0);
+                    for (int col = 0; col < dim; ++col)
+                    {
+                        const T right = overlap_eigenvectors[col + right_index * dim];
+                        for (int row = 0; row < dim; ++row)
+                        {
+                            const T left = std::conj(
+                                overlap_eigenvectors[row + left_index * dim]);
+                            value += left * k0[row + col * dim] * right;
+                        }
+                    }
+                    reduced_hamiltonian[i + j * retained_dim] = T(left_scale * right_scale) * value;
+                }
+            }
+
+            std::vector<Real> reduced_eigenvalues(retained_dim);
+            container::kernels::lapack_heevd<T, container::DEVICE_CPU>()(
+                retained_dim,
+                reduced_hamiltonian.data(),
+                retained_dim,
+                reduced_eigenvalues.data());
+
+            std::fill(subspace.k.begin(), subspace.k.end(), T(0));
+            for (int state = 0; state < nstates; ++state)
+            {
+                subspace.eval[state] = reduced_eigenvalues[state];
+                for (int row = 0; row < dim; ++row)
+                {
+                    T coefficient = T(0);
+                    for (int i = 0; i < retained_dim; ++i)
+                    {
+                        const int source_index = retained_indices[i];
+                        const T overlap_vector = overlap_eigenvectors[row + source_index * dim];
+                        const T reduced_vector = reduced_hamiltonian[i + state * retained_dim];
+                        coefficient += overlap_vector * inverse_sqrt_overlap[i] * reduced_vector;
+                    }
+                    subspace.k[row + state * dim] = coefficient;
+                }
+            }
+            return;
+        }
+    }
+    catch (const std::runtime_error&)
+    {
+        // The shifted generalized solve below remains the fallback.
+    }
+
+    // Try with increasing diagonal shifts; fall back to identity (no update)
+    // if the subspace is too ill-conditioned.  sygvd modifies both matrices
+    // in-place before it may fail.
     const Real shifts[] = {Real(ppcg_subspace_shifts[0]),
                            Real(ppcg_subspace_shifts[1]),
                            Real(ppcg_subspace_shifts[2]),
@@ -1030,28 +1127,70 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     std::ofstream residual_trace;
     if (const char* path = std::getenv("ABACUS_PPCG_RESIDUAL_TRACE"))
     {
-    // Optional debug trace for plotting PPCG convergence curves.
-    residual_trace.open(path);
-    if (residual_trace)
-    {
-        residual_trace << "iteration,stage,max_residual\n";
+        // Optional debug trace for plotting PPCG convergence curves.
+        residual_trace.open(path);
+        if (residual_trace)
+        {
+            residual_trace << std::setprecision(std::numeric_limits<Real>::max_digits10);
+            residual_trace << "iteration,stage,max_residual";
+            // Test-side tools compare these Ritz values with analytical or
+            // LAPACK reference eigenvalues without coupling them to the solver.
+            for (int ib = 0; ib < ncol; ++ib)
+            {
+                residual_trace << ",eigenvalue_" << ib;
+            }
+            residual_trace << ",local_overlap_min,local_overlap_max,local_overlap_condition\n";
+        }
     }
-    }
+    Real local_overlap_min = std::numeric_limits<Real>::quiet_NaN();
+    Real local_overlap_max = std::numeric_limits<Real>::quiet_NaN();
+    Real local_overlap_condition = std::numeric_limits<Real>::quiet_NaN();
     auto record_residual = [&](int iteration, const char* stage) {
-    if (!residual_trace)
-    {
-        return;
-    }
-    residual_trace
-        << iteration << ','
-        << stage << ','
-        << max_generalized_residual(hpsi_.data(),
-                                    spsi_.data(),
-                                    eigenvalue_in,
-                                    ld_psi_,
-                                    n_dim_,
-                                    ncol)
-        << '\n';
+        if (!residual_trace)
+        {
+            return;
+        }
+        const Real max_residual = max_generalized_residual(hpsi_.data(),
+                                                            spsi_.data(),
+                                                            eigenvalue_in,
+                                                            ld_psi_,
+                                                            n_dim_,
+                                                            ncol);
+        residual_trace << iteration << ',' << stage << ',' << max_residual;
+        for (int ib = 0; ib < ncol; ++ib)
+        {
+            residual_trace << ',' << eigenvalue_in[ib];
+        }
+        residual_trace << ',' << local_overlap_min
+                       << ',' << local_overlap_max
+                       << ',' << local_overlap_condition
+                       << '\n';
+    };
+
+    auto measure_local_overlap = [&](const SmallSubspace& local_subspace,
+                                     const int local_dim) {
+        if (!residual_trace)
+        {
+            return;
+        }
+        std::vector<T> overlap = local_subspace.m;
+        std::vector<Real> overlap_eigenvalues(local_dim);
+        container::kernels::lapack_heevd<T, container::DEVICE_CPU>()(
+            local_dim,
+            overlap.data(),
+            local_dim,
+            overlap_eigenvalues.data());
+        const Real min_eigenvalue = overlap_eigenvalues.front();
+        const Real max_eigenvalue = overlap_eigenvalues.back();
+        const Real denominator = std::max(std::abs(min_eigenvalue),
+                                          Real(ppcg_numerical_threshold));
+        const Real condition = std::abs(max_eigenvalue) / denominator;
+        if (!std::isfinite(local_overlap_condition) || condition > local_overlap_condition)
+        {
+            local_overlap_min = min_eigenvalue;
+            local_overlap_max = max_eigenvalue;
+            local_overlap_condition = condition;
+        }
     };
 
     // Initialize with Rayleigh-Ritz.
@@ -1083,6 +1222,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     while (!active_cols.empty() && iter <= maxiter_)
     {
+        local_overlap_min = std::numeric_limits<Real>::quiet_NaN();
+        local_overlap_max = std::numeric_limits<Real>::quiet_NaN();
+        local_overlap_condition = std::numeric_limits<Real>::quiet_NaN();
         const int nact = int(active_cols.size());
         const int nsb = std::max(1, (nact + sbsize_ - 1) / sbsize_);
 
@@ -1146,7 +1288,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                         active_cols.begin() + i0 + l);
 
             build_small_subspace(psi_in, cols, nblk, subspace);
-            solve_small_generalized(nblk * l, subspace);
+            const int local_dim = nblk * l;
+            measure_local_overlap(subspace, local_dim);
+            solve_small_generalized(local_dim, l, subspace);
             update_one_block(psi_in, cols, l, nblk, subspace);
         }
         use_p = true;

@@ -15,6 +15,7 @@
 #include "../diago_ppcg.h"
 
 #include <gtest/gtest.h>
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <cmath>
@@ -22,6 +23,7 @@
 #include <fstream>
 #include <limits>
 #include <random>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <complex>
@@ -207,8 +209,36 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
     std::string first_record;
     std::getline(trace, header);
     std::getline(trace, first_record);
-    EXPECT_EQ(header, "iteration,stage,max_residual");
+    EXPECT_EQ(header,
+              "iteration,stage,max_residual,eigenvalue_0,eigenvalue_1,eigenvalue_2,"
+              "local_overlap_min,local_overlap_max,local_overlap_condition");
     EXPECT_NE(first_record.find("initial_rr"), std::string::npos);
+    EXPECT_EQ(std::count(first_record.begin(), first_record.end(), ','), nband + 5);
+
+    double previous_max_error = std::numeric_limits<double>::max();
+    std::string record = first_record;
+    do
+    {
+        std::stringstream record_stream(record);
+        std::string field;
+        for (int field_index = 0; field_index < 3; ++field_index)
+        {
+            std::getline(record_stream, field, ',');
+        }
+        double max_error = 0.0;
+        for (int ib = 0; ib < nband; ++ib)
+        {
+            std::getline(record_stream, field, ',');
+            const double eigenvalue = std::stod(field);
+            const double difference = eigenvalue - exact[ib];
+            const double error = std::abs(difference);
+            max_error = std::max(max_error, error);
+        }
+        const double allowed_error = previous_max_error + 1.0e-10;
+        EXPECT_LE(max_error, allowed_error);
+        previous_max_error = max_error;
+    } while (std::getline(trace, record));
+
     trace.close();
     std::remove(trace_path.c_str());
 }
