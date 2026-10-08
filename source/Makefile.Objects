@@ -497,6 +497,7 @@ OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       elpa_new.o\
       elpa_new_real.o\
       elpa_new_complex.o\
+      elpa_generic.o\
       utils.o\
       parallel_k2d.o\
 
