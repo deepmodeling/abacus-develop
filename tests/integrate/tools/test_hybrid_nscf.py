@@ -141,6 +141,19 @@ def verify(executable, root, mpi_ranks):
     run(executable, unsupported, [], "Hybrid NSCF currently requires")
     print("missing/truncated source, invalid Miller mapping and unsupported ACE rejected")
 
+    equivalent = create_case(root, "equivalent_settings", extra + "exx_erfc_alpha 2.5e-1\nexx_erfc_omega 1.1e-1\n")
+    text = (equivalent / "INPUT").read_text().replace("dft_functional HSE", "dft_functional hse")
+    (equivalent / "INPUT").write_text(text)
+    run(executable, equivalent, [])
+    assert "EXX source configuration differs" not in (equivalent / "OUT.hybrid/warning.log").read_text()
+    assert max_difference(bands(same), bands(equivalent)) < 2e-4
+    print("equivalent numeric notation and functional case do not trigger mismatch warnings")
+
+    changed_exchange = create_case(root, "changed_exchange", extra + "exx_erfc_alpha 0.3\n")
+    run(executable, changed_exchange, [])
+    assert "EXX source configuration differs for exx_erfc_alpha" in (changed_exchange / "OUT.hybrid/warning.log").read_text()
+    print("changed exchange fraction is accepted with a warning")
+
     legacy_source = root / "legacy_source"
     shutil.copytree(source, legacy_source)
     (legacy_source / "INPUT.info").unlink()

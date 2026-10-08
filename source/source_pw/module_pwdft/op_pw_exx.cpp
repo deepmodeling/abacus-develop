@@ -960,8 +960,6 @@ std::vector<int> OperatorEXXPW<T, Device>::get_q_points(const int ik) const
             }
             else if (nspin_ == 2)
             {
-                int nk_fac = 2;
-                int nk = source_basis_->nks / nk_fac;
                 if (source_points_->isk[iq] == isk[ik])
                 {
                     q_points_ik.push_back(iq);

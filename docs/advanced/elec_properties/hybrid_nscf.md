@@ -150,7 +150,7 @@ Gygi scheme and do not constitute validation of the new default.
 ```bash
 cmake --build build --target MODULE_ESOLVER_pw_hybrid_source -j 8
 OMP_NUM_THREADS=1 ctest --test-dir build -V -R '^MODULE_ESOLVER_pw_hybrid_source$'
-python3 tests/integrate/tools/test_hybrid_nscf.py ./build/abacus --mpi-ranks 2
+OMP_NUM_THREADS=1 python3 tests/integrate/tools/test_hybrid_nscf.py ./build/abacus --mpi-ranks 2
 ```
 
 Supply the actual configured executable and build directory. The integration
@@ -162,8 +162,7 @@ files, and invalid restart/unsupported-option errors. It needs LibXC and MPI.
 For a CUDA build and an available GPU, also run:
 
 ```bash
-python3 tests/integrate/tools/test_hybrid_nscf.py ./build/abacus --gpu
-OMP_NUM_THREADS=1 ctest --test-dir build -V -R '^PW_HYBRID_NSCF(_GPU)?$'
+OMP_NUM_THREADS=1 python3 tests/integrate/tools/test_hybrid_nscf.py ./build/abacus --gpu
 ```
 
 This compares CPU and GPU targets using one frozen CPU source on both a mesh
@@ -172,9 +171,9 @@ spin-polarized source with CPU and GPU targets. Source files must remain
 unchanged. A three-band single-precision GPU path additionally checks conversion
 from a double-precision CPU source and the full-grid exchange FFT precision.
 Single precision uses the existing looser diagonalization threshold; use
-`precision double` for accurate high-energy target bands. The corresponding CTest is `PW_HYBRID_NSCF_GPU`.
+`precision double` for accurate high-energy target bands. The workflow script is run manually; only unit tests are registered with CMake/CTest.
 
-On a local RTX 3090 with CUDA 13.1, both CTests passed in a CUDA build.
+On a local RTX 3090 with CUDA 13.1, the CPU and GPU workflow scripts passed in a CUDA build.
 The H CPU/GPU mesh, independent path and both spin-channel eigenvalues agreed
 at the printed precision, as did all eight bands at nine Si L-Gamma-X points
 using the same frozen CPU source (`20 Ry`, `2x2x2` source mesh). The Si check
@@ -186,7 +185,7 @@ consistency; it does not change the cross-code convergence limits below.
 
 On the initial local two-q-point, 10 Ry test, the same-mesh SCF/NSCF maximum
 band difference was `3.7e-5 eV`; the shared Gamma point and serial/two-rank NSCF
-results agreed to printed precision. Three source-adapter unit tests passed.
+results agreed to printed precision. The source-adapter unit tests cover occupations, spin meshes and binary headers.
 A QE SCF comparison at this low cutoff showed band differences up to about
 `0.03 eV`; that H test alone does not establish cross-code agreement.
 

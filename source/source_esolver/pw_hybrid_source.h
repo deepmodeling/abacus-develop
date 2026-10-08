@@ -29,9 +29,9 @@ ExxSourceHeader read_exx_source_header(std::istream& in);
 
 // Read the existing, k-weighted occupation column without changing its format.
 void read_exx_source_occupations(std::istream& in,
-                                 const std::vector<ExxSourceHeader>& headers,
-                                 int nspin,
-                                 ModuleBase::matrix& weights);
+                                  const std::vector<ExxSourceHeader>& headers,
+                                  int nspin,
+                                  ModuleBase::matrix& weights);
 
 }
 #endif

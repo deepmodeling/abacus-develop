@@ -29,7 +29,6 @@
 namespace ModuleESolver
 {
 
-
 template <typename T, typename Device>
 ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 {

@@ -6,6 +6,8 @@
 #include "source_hamilt/module_xc/general_exx_info.h"
 #include "source_pw/module_pwdft/exx_helper.h"
 
+#include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <cmath>
 #include <map>
@@ -51,6 +53,37 @@ void validate_source_grid(const std::string& filename, const ModulePW::PW_Basis_
             throw std::runtime_error("EXX source Miller mapping is incompatible with FFT basis");
         }
     }
+}
+
+bool source_parameter_matches(const std::string& key, std::string source_value, std::string target_value)
+{
+    if (key == "dft_functional")
+    {
+        const auto lowercase = [](unsigned char value) { return std::tolower(value); };
+        std::transform(source_value.begin(), source_value.end(), source_value.begin(), lowercase);
+        std::transform(target_value.begin(), target_value.end(), target_value.begin(), lowercase);
+    }
+    if (source_value == target_value)
+    {
+        return true;
+    }
+    std::istringstream source(source_value);
+    std::istringstream target(target_value);
+    double source_number = 0;
+    double target_number = 0;
+    if (!(source >> source_number) || !(target >> target_number))
+    {
+        return false;
+    }
+    std::string remaining;
+    if ((source >> remaining) || (target >> remaining))
+    {
+        return false;
+    }
+    // INPUT.info may print doubles with the standard six significant digits.
+    const double scale = std::max(std::abs(source_number), std::abs(target_number));
+    return std::isfinite(source_number) && std::isfinite(target_number)
+           && std::abs(source_number - target_number) <= 5e-6 * scale;
 }
 
 void warn_source_configuration(const Input_para& inp, const std::string& readin_dir)
@@ -109,7 +142,7 @@ void warn_source_configuration(const Input_para& inp, const std::string& readin_
                 mismatch = true;
                 break;
             }
-            if (source_value != target_value)
+            if (!source_parameter_matches(item.first, source_value, target_value))
             {
                 mismatch = true;
             }

@@ -79,6 +79,20 @@ TEST(PWHybridSource, RejectsInvalidExistingOccupationFiles)
     EXPECT_THROW(ModuleESolver::read_exx_source_occupations(negative, headers, 1, weights), std::runtime_error);
 }
 
+TEST(PWHybridSource, RejectsDifferentMeshesInSpinChannels)
+{
+    auto headers = source_headers(2);
+    headers[2].kvec_c[0] = 0.2;
+    std::string saved = eig_occ(2);
+    const std::string original = "spin=2 k-point=1/2 Cartesian=0";
+    const std::size_t location = saved.find(original);
+    ASSERT_NE(location, std::string::npos);
+    saved.replace(location, original.size(), "spin=2 k-point=1/2 Cartesian=0.2");
+    std::istringstream in(saved);
+    ModuleBase::matrix weights;
+    EXPECT_THROW(ModuleESolver::read_exx_source_occupations(in, headers, 2, weights), std::runtime_error);
+}
+
 TEST(PWHybridSource, ReadsExistingBinaryWavefunctionHeader)
 {
     // Native binary record layout from write_wfc_pw; no new wavefunction format.

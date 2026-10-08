@@ -69,9 +69,9 @@ ModuleESolver::ExxSourceHeader ModuleESolver::read_exx_source_header(std::istrea
 }
 
 void ModuleESolver::read_exx_source_occupations(std::istream& in,
-                                          const std::vector<ExxSourceHeader>& headers,
-                                          int nspin,
-                                          ModuleBase::matrix& weights)
+                                              const std::vector<ExxSourceHeader>& headers,
+                                              int nspin,
+                                              ModuleBase::matrix& weights)
 {
     const int spin_mult = nspin == 2 ? 2 : 1;
     const int nks = headers.size();
@@ -122,6 +122,10 @@ void ModuleESolver::read_exx_source_occupations(std::istream& in,
         }
         for (int axis = 0; axis < 3; ++axis)
         {
+            if (nspin == 2 && iq >= nq && header.kvec_c[axis] != headers[iq - nq].kvec_c[axis])
+            {
+                throw std::runtime_error("EXX source spin channels must use the same q mesh");
+            }
             // eig_occ.txt prints Cartesian coordinates with at least eight significant digits.
             const double tolerance = 5e-8 * std::max(1.0, std::abs(header.kvec_c[axis]));
             if (!std::isfinite(q[axis]) || std::abs(q[axis] - header.kvec_c[axis]) > tolerance)
