@@ -204,8 +204,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
                             momentum_shift,
                             istep,
                             iter,
-                            this->inp_->out_level == "ie",
-                            log_);
+                            this->inp_->out_level == "ie");
 
     // Restore the endpoint Hamiltonian before evaluating density and energy.
     elecstate::H_TDDFT_pw::set_field_state(*this->td_field_manager_);

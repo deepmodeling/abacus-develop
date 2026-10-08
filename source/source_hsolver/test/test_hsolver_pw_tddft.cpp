@@ -212,7 +212,7 @@ TYPED_TEST(PWTDDFTTest, DenseCNCorrectorsAndConservation)
                 const double step_dt = step < 4 ? dt : dt * 0.5;
                 log.str("");
                 log.clear();
-                solver.solve(op, previous, &current, step_dt, shift, step, 1, true, log);
+                solver.solve(op, previous, &current, step_dt, shift, step, 1, true);
                 check_dense_step(op, previous, current, step_dt);
                 if (recycle || precond == "kinetic_subspace")
                 {
@@ -263,7 +263,7 @@ TYPED_TEST(PWTDDFTTest, DenseCNCorrectorsAndConservation)
                     }
                     log.str("");
                     log.clear();
-                    solver.solve(op, previous, &current, step_dt, shift, step, 2, true, log);
+                    solver.solve(op, previous, &current, step_dt, shift, step, 2, true);
                     check_dense_step(op, previous, current, step_dt);
                     EXPECT_EQ(log.str().find("cn_initial=1"), std::string::npos);
                 }
@@ -355,7 +355,7 @@ TYPED_TEST(PWTDDFTTest, UnequalOccupationsAndDiagnosticsPreservePropagation)
         for (int step = 1; step <= 8; ++step)
         {
             solver.reset_orth_stats();
-            solver.solve(op, previous, &current, dt, shift, step, 1, false, log);
+            solver.solve(op, previous, &current, dt, shift, step, 1, false);
             reference = dense_cn(h, reference, n, bands, dt);
             for (int band = 0; band < bands; ++band)
             {

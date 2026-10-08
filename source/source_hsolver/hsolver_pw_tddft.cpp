@@ -92,12 +92,12 @@ HSolverPWTDDFT<T, Device>::HSolverPWTDDFT(const ModulePW::PW_Basis_K& basis,
                                           std::ostream& log)
     : basis_(basis), comm_(comm), options_(options), algebra_(comm), orthonormal_(comm, algebra_), log_(log), band_products_(comm, 9)
 {
-    initialize(log);
-    log << " PW RT-TDDFT orthonormalization: " << orth_method_name(options_.orthonormal) << '\n';
+    initialize();
+    log_ << " PW RT-TDDFT orthonormalization: " << orth_method_name(options_.orthonormal) << '\n';
 }
 
 template <typename T, typename Device>
-void HSolverPWTDDFT<T, Device>::initialize(std::ostream& log)
+void HSolverPWTDDFT<T, Device>::initialize()
 {
     const char* method = nullptr;
     for (const LinearMethodName& entry: linear_method_names)
@@ -139,7 +139,7 @@ void HSolverPWTDDFT<T, Device>::initialize(std::ostream& log)
          << "; restart: " << options_.linear.restart << '\n'
          << "   Preconditioner: " << preconditioner << "; CN initial guess: " << options_.cn_init
          << "; residual reconstruction: " << options_.linear.reconstruct << '\n';
-    log << info.str();
+    log_ << info.str();
 }
 
 template <typename T, typename Device>
@@ -341,7 +341,7 @@ typename HSolverPWTDDFT<T, Device>::SolveDetails HSolverPWTDDFT<T, Device>::solv
 }
 
 template <typename T, typename Device>
-void HSolverPWTDDFT<T, Device>::report_solve(const SolveDetails& details, int ik, int step, int iteration, std::ostream& log) const
+void HSolverPWTDDFT<T, Device>::report_solve(const SolveDetails& details, int ik, int step, int iteration) const
 {
     const LinearSolveResult& result = details.linear;
     const int evolution_step = step + 1;
@@ -353,7 +353,7 @@ void HSolverPWTDDFT<T, Device>::report_solve(const SolveDetails& details, int ik
            << " residual_kind=" << (result.reconstructed ? "reconstructed" : "independent") << " true_checks=" << result.true_checks << '\n'
            << "   reconstruction_fallbacks=" << result.reconstruction_fallbacks << " coarse_rank=" << details.coarse_rank
            << " kinetic_retry=" << details.retried << " cn_projected=" << details.projected << " cn_initial=" << details.cn_initial << '\n';
-    log << record.str();
+    log_ << record.str();
 }
 
 template <typename T, typename Device>
@@ -364,8 +364,7 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
                                       const ModuleBase::Vector3<double>& momentum_shift,
                                       const int istep,
                                       const int iter,
-                                      const bool detailed_output,
-                                      std::ostream& log)
+                                      const bool detailed_output)
 {
     ModuleBase::timer::start("HSolverPWTDDFT", "solve");
     const int bands = current->get_nbands();
@@ -399,9 +398,9 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
         }
         const SolveBatch batch{ld, dim, bands};
         const SolveDetails details = solve_kpoint(lhs_op, previous_data, current_data, batch, istep, iter, state);
-        if (detailed_output && log.good())
+        if (detailed_output && log_.good())
         {
-            report_solve(details, ik, istep, iter, log);
+            report_solve(details, ik, istep, iter);
         }
         if (details.linear.status != LinearSolveStatus::converged)
         {

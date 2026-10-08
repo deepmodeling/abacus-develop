@@ -89,8 +89,7 @@ class HSolverPWTDDFT
                const ModuleBase::Vector3<double>& momentum_shift,
                const int istep,
                const int iter,
-               const bool detailed_output,
-               std::ostream& log);
+               const bool detailed_output);
 
     /** @brief Evaluate band expectations after the caller restores the endpoint Hamiltonian. */
     void cal_band_energy(HSOperator<T, Device>& op, const psi::Psi<T, Device>& current, ModuleBase::matrix* energies);
@@ -145,7 +144,7 @@ class HSolverPWTDDFT
     ct::Tensor response_workspace_;
     ct::Tensor correction_workspace_;
 
-    void initialize(std::ostream& log);
+    void initialize();
     bool tracks_state() const;
     void prepare_sequence(int nk, int ld, int bands, double dt, int step, int iteration);
     bool require_audit(int step, KPointState* state) const;
@@ -158,7 +157,7 @@ class HSolverPWTDDFT
                               KPointState* state);
     void retry_kinetic(const LinearOperator<T, Device>& op, T* current, const SolveBatch& batch, LinearSolveResult* result);
     void update_state(KPointState* state, const SolveDetails& details, int step, const SolveBatch& batch, const T* current);
-    void report_solve(const SolveDetails& details, int ik, int step, int iteration, std::ostream& log) const;
+    void report_solve(const SolveDetails& details, int ik, int step, int iteration) const;
     void prepare_buffers(const int nbands, const int nbasis);
     void update_precond(const int ik, const int dim, const T coefficient, const ModuleBase::Vector3<double>& momentum_shift);
     void correct_orbitals(T* current, int ld, int dim, int bands, int ik, int istep, int iter, bool detailed_output);
