@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-TEST(ChargeMoments, IntegratesSignedDensityWithVolumeElement)
+TEST(ChargeMoments, IntegratesAddsAndAcceptsAnEmptyLocalGrid)
 {
     const double charges[2] = {2.0, -1.0};
     const ModuleBase::Vector3<double> positions[2] = {
@@ -14,10 +14,7 @@ TEST(ChargeMoments, IntegratesSignedDensityWithVolumeElement)
     EXPECT_DOUBLE_EQ(moments.dipole.y, -1.0);
     EXPECT_DOUBLE_EQ(moments.dipole.z, 0.0);
     EXPECT_DOUBLE_EQ(moments.second_moment, -1.0);
-}
 
-TEST(ChargeMoments, AddsIndependentContributionsAndAcceptsEmptyLocalGrid)
-{
     elecstate::ChargeMoments ions;
     ions.charge = 2.0;
     ions.dipole.x = 3.0;
@@ -36,3 +33,4 @@ TEST(ChargeMoments, AddsIndependentContributionsAndAcceptsEmptyLocalGrid)
     EXPECT_DOUBLE_EQ(electrons.charge, 0.0);
     EXPECT_DOUBLE_EQ(electrons.second_moment, 0.0);
 }
+

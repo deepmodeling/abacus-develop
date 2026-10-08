@@ -81,26 +81,7 @@ TEST_F(PotPccTest, NeutralDipoleProducesConsistentEnergyPotentialAndForce)
     EXPECT_NEAR(force(0, 2), expected_force, 1.0e-14);
 }
 
-TEST_F(PotPccTest, TwoSpinChannelsShareCorrectionAndAddToExistingPotential)
-{
-    std::vector<double> down(8, 0.0);
-    density[7] = 0.3 / 125.0;
-    down[7] = 0.7 / 125.0;
-    channels[1] = down.data();
-    charge.nspin = 2;
-    elecstate::PotPcc correction(&basis, 1.0);
-    ModuleBase::matrix potential(2, 8);
-    potential(0, 7) = 2.0;
-    potential(1, 7) = 3.0;
-    correction.cal_v_eff(&charge, &cell, potential);
-    const double energy = correction.get_energy();
-    const double first_expected = 2.0 + energy;
-    const double second_expected = 3.0 + energy;
-    EXPECT_NEAR(potential(0, 7), first_expected, 1.0e-14);
-    EXPECT_NEAR(potential(1, 7), second_expected, 1.0e-14);
-}
-
-TEST_F(PotPccTest, RecomputesDensityAndKeepsInstancesIndependent)
+TEST_F(PotPccTest, RecomputesDensityKeepsInstancesIndependentAndSharesSpinChannels)
 {
     elecstate::PotPcc first(&basis, 1.0);
     elecstate::PotPcc second(&basis, 1.0);
@@ -117,6 +98,23 @@ TEST_F(PotPccTest, RecomputesDensityAndKeepsInstancesIndependent)
     potential.zero_out();
     first.cal_v_eff(&charge, &cell, potential);
     EXPECT_NEAR(first.get_energy(), charged_energy, 1.0e-14);
+
+    // Both spin channels get the same correction on top of their potentials.
+    std::vector<double> down(8, 0.0);
+    density[7] = 0.3 / 125.0;
+    down[7] = 0.7 / 125.0;
+    channels[1] = down.data();
+    charge.nspin = 2;
+    elecstate::PotPcc correction(&basis, 1.0);
+    ModuleBase::matrix spin_potential(2, 8);
+    spin_potential(0, 7) = 2.0;
+    spin_potential(1, 7) = 3.0;
+    correction.cal_v_eff(&charge, &cell, spin_potential);
+    const double energy = correction.get_energy();
+    const double first_expected = 2.0 + energy;
+    const double second_expected = 3.0 + energy;
+    EXPECT_NEAR(spin_potential(0, 7), first_expected, 1.0e-14);
+    EXPECT_NEAR(spin_potential(1, 7), second_expected, 1.0e-14);
 }
 
 TEST_F(PotPccTest, ForceMatchesFixedDensityEnergyDerivativeAfterMovingIons)
@@ -161,7 +159,7 @@ TEST_F(PotPccTest, SlabAxisControlsPotentialEnergyForceAndIgnoresInPlaneCoordina
     }
 }
 
-TEST_F(PotPccTest, SlabRejectsOpenDirectionKpointsAndSymmetryButAllowsInPlaneTranslations)
+TEST_F(PotPccTest, RejectsUnsupportedCellsKpointsAndSymmetry)
 {
     const std::vector<ModuleBase::Vector3<double>> points = {ModuleBase::Vector3<double>(0.25, 0.0, 0.0)};
     elecstate::PotPcc::validate_kpoints(points, 1, 2);
@@ -178,18 +176,14 @@ TEST_F(PotPccTest, SlabRejectsOpenDirectionKpointsAndSymmetryButAllowsInPlaneTra
                                              0.0, 1.0, 0.0,
                                              1.0, 0.0, 0.0);
     EXPECT_EXIT(correction.cal_v_eff(&charge, &cell, potential), testing::ExitedWithCode(1), "");
-}
-
-TEST_F(PotPccTest, MoleculeRejectsNonCubicAndSlabRejectsTiltedCells)
-{
-    ModuleBase::matrix potential(1, 8);
+    cell.symm.nrotk = 0;
     cell.latvec.e22 = 2.0;
     elecstate::PotPcc molecule(&basis, 1.0);
     EXPECT_EXIT(molecule.cal_v_eff(&charge, &cell, potential), testing::ExitedWithCode(1), "");
     cell.latvec.e22 = 1.0;
     cell.latvec.e31 = 0.1;
-    elecstate::PotPcc slab(&basis, elecstate::PotPcc::Dimension::slab, 2, 1.0);
-    EXPECT_EXIT(slab.cal_v_eff(&charge, &cell, potential), testing::ExitedWithCode(1), "");
+    elecstate::PotPcc tilted_slab(&basis, elecstate::PotPcc::Dimension::slab, 2, 1.0);
+    EXPECT_EXIT(tilted_slab.cal_v_eff(&charge, &cell, potential), testing::ExitedWithCode(1), "");
 }
 
 TEST_F(PotPccTest, ReportsGridChargeMismatchAndUsesGridCharge)
