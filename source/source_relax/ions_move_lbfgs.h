@@ -2,16 +2,18 @@
 #define IONS_MOVE_LBFGS_H
 
 #include <vector>
-#include <tuple> 
+#include <tuple>
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <string>
 //#include "line_search.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
 #include "source_esolver/esolver_ks.h"
+#include "relax_criteria.h"
 
 /**
  * @class Ions_Move_LBFGS
@@ -23,8 +25,10 @@ public:
     /**
      * @brief Initialize L-BFGS parameters
      * @param _size Number of atoms in system
+     * @param relax_bfgs_rmax Maximum allowed step length (from INPUT)
+     * @param out_level Output verbosity level (from INPUT)
      */
-    void allocate(const int _size);
+    void allocate(const int _size, const double relax_bfgs_rmax, const std::string& out_level);
 
     /**
      * @brief Perform one L-BFGS relaxation step
@@ -36,7 +40,8 @@ public:
     bool relax_step(const ModuleBase::matrix _force,
                     UnitCell& ucell,
                     const double &etot,
-                    std::ofstream& ofs_running);
+                    std::ofstream& ofs_running,
+                    const Relax_Criteria& criteria);
 
 private:
     //LineSearch l_search;
@@ -48,6 +53,7 @@ private:
     int iteration;                          ///< Current iteration count
     double energy;                          ///< Current system energy
     double alpha_k;                         ///< Step size parameter
+    std::string out_level;                  ///< Output verbosity level
 
     ModuleESolver::ESolver* solver = nullptr;         ///< Structure solver
     std::vector<double> steplength;//the length of atoms displacement 
@@ -77,9 +83,10 @@ private:
 
     /**
      * @brief Judge if the relaxation has converged
+     * @param criteria Convergence thresholds passed from the driver
      * @return true if converged, false otherwise
      */
-    bool is_restrain();
+    bool is_restrain(const Relax_Criteria& criteria);
 
     /**
      * @brief Calculate maximum gradient component

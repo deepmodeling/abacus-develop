@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_UTILS_H
+#define ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_UTILS_H
+
 #include <complex>
 #include <mpi.h>
 
@@ -32,3 +34,5 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, std::compl
 // use pzgemr2d to collect matrix from all processes to root process
 // and save to one completed matrix file
 void saveMatrix(const char FileName[], int nFull, std::complex<double>* a, int* desca, int blacs_ctxt);
+
+#endif // ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_UTILS_H

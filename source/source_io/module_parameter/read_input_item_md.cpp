@@ -753,5 +753,34 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         read_sync_double(input.dmax);
         this->add_item(item);
     }
+    {
+        Input_Item item("plumed");
+        item.annotation = "use PLUMED for collective variables and enhanced sampling";
+        item.category = "Molecular dynamics";
+        item.type = "Boolean";
+        item.description = "Whether to use PLUMED (https://www.plumed.org) to compute collective "
+                           "variables, biasing potentials and free-energy methods during an MD run. "
+                           "ABACUS must be compiled with -DENABLE_PLUMED=ON and linked against a "
+                           "PLUMED installation (discovered through pkg-config or PLUMED_ROOT) to "
+                           "enable this feature. The PLUMED interface currently supports a single "
+                           "MPI rank only.";
+        item.default_value = "False";
+        item.unit = "";
+        read_sync_bool(input.mdp.plumed);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("plumed_file");
+        item.annotation = "input file of PLUMED";
+        item.category = "Molecular dynamics";
+        item.type = "String";
+        item.description = "The input file of PLUMED, read when `plumed` is enabled. Relative paths "
+                           "are resolved against the working directory of the run.";
+        item.default_value = "plumed.dat";
+        item.unit = "";
+        item.set_availability("plumed==true");
+        read_sync_string(input.mdp.plumed_file);
+        this->add_item(item);
+    }
 }
 } // namespace ModuleIO

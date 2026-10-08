@@ -22,3 +22,5 @@
 24_PW_cgs_TDDFT_GPU
 25_PW_noprec_TDDFT_GPU
 26_PW_single_TDDFT_GPU
+27_PW_gmres_recycle_TDDFT_GPU
+28_PW_gmres_subspace_TDDFT_GPU

@@ -4,6 +4,7 @@
 #include "gtest/gtest.h"
 #define protected public
 #include "source_estate/elecstate_pw.h"
+#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_pw/module_pwdft/vnl_pw.h"

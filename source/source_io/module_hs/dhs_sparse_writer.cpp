@@ -41,18 +41,27 @@ void ModuleIO::save_dH_sparse(const int& istep,
 
     // The three Cartesian derivative components (x, y, z) share identical
     // file handling; only the label and the sparse matrices differ.
-    struct Component
+    class Component
     {
+    public:
         char axis;                                              // 'x' / 'y' / 'z'
         SparseRMatrix<double>* sparse;                          // nspin != 4 (array of 2)
         SparseRMatrix<std::complex<double>>* soc_sparse;        // nspin == 4
         std::vector<long long> nonzero_num[2];
         std::stringstream fname[2];
         std::ofstream ofs[2];
+
+        // Default-initialize streams to support explicit default constructors in older standard libraries.
+        Component(const char& axis_in,
+                  SparseRMatrix<double>* sparse_in,
+                  SparseRMatrix<std::complex<double>>* soc_sparse_in)
+            : axis(axis_in), sparse(sparse_in), soc_sparse(soc_sparse_in)
+        {
+        }
     };
-    Component comps[3] = {{'x', HS_Arrays.dHRx_sparse, &HS_Arrays.dHRx_soc_sparse, {}, {}, {}},
-                          {'y', HS_Arrays.dHRy_sparse, &HS_Arrays.dHRy_soc_sparse, {}, {}, {}},
-                          {'z', HS_Arrays.dHRz_sparse, &HS_Arrays.dHRz_soc_sparse, {}, {}, {}}};
+    Component comps[3] = {{'x', HS_Arrays.dHRx_sparse, &HS_Arrays.dHRx_soc_sparse},
+                          {'y', HS_Arrays.dHRy_sparse, &HS_Arrays.dHRy_soc_sparse},
+                          {'z', HS_Arrays.dHRz_sparse, &HS_Arrays.dHRz_soc_sparse}};
 
     const int total_R_num = static_cast<int>(all_R_coor_ptr.size());
     int output_R_number = 0;

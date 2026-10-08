@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_PHI_OPERATOR_GPU_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_PHI_OPERATOR_GPU_H
+
 #include <memory>
 #include <vector>
 #include <cstdint>
@@ -176,3 +178,5 @@ private:
 };
 
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_PHI_OPERATOR_GPU_H

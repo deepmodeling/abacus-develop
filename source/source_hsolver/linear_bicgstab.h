@@ -21,7 +21,6 @@ class LinearBiCGSTAB final
         solution_slot = 8
     };
     const double tolerance_;
-    const int max_iter_;
     LinearWorkspace<T, Device> work_;
     int ld_ = 0;
     int dim_ = 0;
@@ -40,20 +39,24 @@ class LinearBiCGSTAB final
     std::vector<int> skip_;
 
   public:
-    LinearBiCGSTAB(const double tolerance, const int max_iter, const diag_comm_info& comm);
+    LinearBiCGSTAB(const double tolerance, const diag_comm_info& comm);
     /**
      * @brief Solve A*x=b, using x as initial guess and M as inverse preconditioner.
      * @param ld Column stride, at least dim. Padding is neither read nor overwritten.
      * @param dim Local valid row count; may be zero on an MPI participant.
+     * @param initial_residual Optional initial residual, reused on the first cycle only; otherwise nullptr.
+     * @param max_iterations Iteration budget for this call, shared by all restart cycles.
      * @note Accepts only true residuals below tolerance*max(1, norm(b)) per column.
      */
     LinearSolveResult solve(const LinearOperator<T, Device>& op,
                             const LinearOperator<T, Device>& preconditioner,
-                            const int ld,
-                            const int nband,
-                            const int dim,
+                            int ld,
+                            int nband,
+                            int dim,
                             T* x,
-                            const T* b);
+                            const T* b,
+                            const T* initial_residual,
+                            const int max_iterations);
 
   private:
     bool iterate(const LinearOperator<T, Device>& op, const LinearOperator<T, Device>& preconditioner, LinearSolveResult* result);

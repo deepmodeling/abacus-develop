@@ -45,5 +45,7 @@ lin_solver          bicgstab
 lin_precond         kinetic
 lin_thr             1e-7
 lin_maxiter         100
+td_cn_init          0
+lin_reconstruct     0
 out_current         1
 out_level           ie

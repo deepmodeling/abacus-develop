@@ -48,6 +48,29 @@ cd 101_PW_OU and then type
 
 
 --------------------------------------
+ How to modify an existing test case
+--------------------------------------
+
+When merging or renaming a test case:
+
+1. Move/rename the directory: `git mv <old_dir> <new_dir>`
+2. Update the INPUT file with new parameters (keep the original style)
+3. Update README to describe the new test purpose
+4. Update `CASES_CPU.txt` and `CASES_GPU.txt`: remove old name, add new name
+5. Remove the old directory: `git rm -rf <old_dir>`
+6. Regenerate `result.ref`: `OMP_NUM_THREADS=1 ../../integrate/Single_job.sh ref`
+7. Commit the changes
+
+For smearing tests: insulators (e.g., H2) can accept any smearing method without changing the result. Metals require smearing for convergence.
+
+Marking unimplemented features:
+- If a feature is not yet implemented (e.g., a certain code path, GPU backend, or functional lacks stress/force support), add the corresponding INPUT parameter but comment it out with an explanation, e.g.:
+
+  `#cal_stress        1 # implicit solvation stress is not implemented yet`
+
+  This documents the intended coverage, makes the gap visible to readers, and lets the test be enabled later by simply uncommenting once the feature lands.
+
+--------------------------------------
  Some comman names appear in the tests 
 --------------------------------------
 _PW    plain wave bases

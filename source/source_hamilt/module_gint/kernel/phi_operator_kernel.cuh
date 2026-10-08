@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_PHI_OPERATOR_KERNEL_CUH
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_PHI_OPERATOR_KERNEL_CUH
+
 
 #include <cuda_runtime.h>
 
@@ -370,3 +372,5 @@ __global__ void phi_dot_dphi_r_kernel(
     double* __restrict__ svl);
 
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_PHI_OPERATOR_KERNEL_CUH

@@ -199,6 +199,15 @@ ifdef PEXSI_DIR
     HONG += -D__PEXSI
 endif
 
+ifdef PLUMED_DIR
+    #==========================
+    # PLUMED (https://www.plumed.org)
+    #==========================
+    INCLUDES += -I${PLUMED_DIR}/include
+    LIBS += -L${PLUMED_DIR}/lib -Wl,--no-as-needed -lplumed -lplumedKernel -Wl,--as-needed -Wl,-rpath=${PLUMED_DIR}/lib
+    HONG += -DUSE_PLUMED
+endif
+
 include $(ABACUS_ROOT)Makefile.Objects
 VPATH := $(patsubst ./%,$(ABACUS_ROOT)%,$(VPATH))
 HEADERS := $(patsubst %,$(ABACUS_ROOT)%,$(HEADERS))

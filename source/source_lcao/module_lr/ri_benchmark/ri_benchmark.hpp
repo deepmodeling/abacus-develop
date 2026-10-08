@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_RI_BENCHMARK_RI_BENCHMARK_HPP
+#define ABACUS_SOURCE_LCAO_MODULE_LR_RI_BENCHMARK_RI_BENCHMARK_HPP
+
 #include <algorithm>
 #include <dirent.h>
 #include "ri_benchmark.h"
@@ -414,3 +416,5 @@ namespace RI_Benchmark
         return Ds_split;
     }
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_RI_BENCHMARK_RI_BENCHMARK_HPP

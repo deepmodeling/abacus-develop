@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_PBLAS_H
+#define ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_PBLAS_H
+
 void pddot_(int* n, double* dot, double* x, int* ix, int* jx, int* descx, int* incx,
                                  double* y, int* iy, int* jy, int* descy, int* incy);
                                  
@@ -38,3 +40,5 @@ void pdtrmm_(char* side , char* uplo , char* transa , char* diag , int* m , int*
 void pztrmm_(char* side , char* uplo , char* transa , char* diag , int* m , int* n ,
              double _Complex* alpha ,  double _Complex* a , int* ia , int* ja , int* desca ,
                                        double _Complex* b , int* ib , int* jb , int* descb );
+
+#endif // ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_PBLAS_H

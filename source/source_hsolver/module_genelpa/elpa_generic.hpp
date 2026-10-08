@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_ELPA_GENERIC_HPP
+#define ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_ELPA_GENERIC_HPP
+
 #include "elpa_new.h"
 #include <complex>
 /*! \brief generic C method for elpa_set
@@ -442,3 +444,5 @@ inline void elpa_invert_triangular(elpa_t handle, std::complex<float>  *a, int *
     elpa_invert_trm_a_h_a_fc(handle, reinterpret_cast<float _Complex*>(a), error);
 }
 #endif
+
+#endif // ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_ELPA_GENERIC_HPP

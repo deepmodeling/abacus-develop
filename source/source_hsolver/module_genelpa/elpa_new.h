@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_ELPA_NEW_H
+#define ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_ELPA_NEW_H
+
 
 #include <elpa/elpa_version.h>
 
@@ -40,3 +42,5 @@ extern "C"
 #include "elpa_generic.hpp" // This is a wrapper for `elpa/elpa_generic.h`.
 
 #endif
+
+#endif // ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_ELPA_NEW_H

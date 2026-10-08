@@ -1,11 +1,13 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "source_cell/read_atoms_helper.h"
+#include "source_cell/print_cell.h"
 #include "source_base/vector3.h"
 #include "source_base/matrix3.h"
 #include "source_base/output.h"
 #include <sstream>
 #include <fstream>
+#include <limits>
 
 // Mock implementations for missing functions that are not in the linked sources
 namespace elecstate {
@@ -471,6 +473,300 @@ TEST_F(ReadAtomsHelperTest, ParseAtomPropertiesVectorMag)
 
     ifpos.close();
     std::remove("test_input.tmp");
+}
+
+// Test parse_atom_properties with force field (round-trip compatibility)
+TEST_F(ReadAtomsHelperTest, ParseAtomPropertiesForce)
+{
+    std::string input_str = "1.0 2.0 3.0 m 1 1 1 f 0.5 -0.3 0.2 mag 0.8333\n";
+
+    std::ofstream temp_file("test_input.tmp");
+    temp_file << input_str;
+    temp_file.close();
+
+    std::ifstream ifpos("test_input.tmp");
+
+    Atom atom;
+    atom.label = "C";
+    atom.vel.resize(1);
+    atom.mag.resize(1);
+    atom.m_loc_.resize(1);
+    atom.angle1.resize(1);
+    atom.angle2.resize(1);
+    atom.lambda.resize(1);
+    atom.constrain.resize(1);
+
+    ModuleBase::Vector3<int> mv(1, 1, 1);
+    bool input_vec_mag = false;
+    bool input_angle_mag = false;
+    bool set_element_mag_zero = false;
+
+    // Skip the position coordinates
+    double x, y, z;
+    ifpos >> x >> y >> z;
+
+    bool result = unitcell::parse_atom_properties(ifpos, atom, 0, mv,
+                                                  input_vec_mag, input_angle_mag,
+                                                  set_element_mag_zero);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(mv.x, 1);
+    EXPECT_EQ(mv.y, 1);
+    EXPECT_EQ(mv.z, 1);
+    EXPECT_DOUBLE_EQ(atom.mag[0], 0.8333);
+    EXPECT_TRUE(set_element_mag_zero);
+    EXPECT_FALSE(ifpos.fail());
+
+    ifpos.close();
+    std::remove("test_input.tmp");
+}
+
+// Test parse_atom_properties with negative force values
+TEST_F(ReadAtomsHelperTest, ParseAtomPropertiesNegativeForce)
+{
+    std::string input_str = "1.0 2.0 3.0 m 1 0 1 f -1.0 -2.0 -3.0\n";
+
+    std::ofstream temp_file("test_input.tmp");
+    temp_file << input_str;
+    temp_file.close();
+
+    std::ifstream ifpos("test_input.tmp");
+
+    Atom atom;
+    atom.label = "C";
+    atom.vel.resize(1);
+    atom.mag.resize(1);
+    atom.m_loc_.resize(1);
+    atom.angle1.resize(1);
+    atom.angle2.resize(1);
+    atom.lambda.resize(1);
+    atom.constrain.resize(1);
+
+    ModuleBase::Vector3<int> mv(1, 1, 1);
+    bool input_vec_mag = false;
+    bool input_angle_mag = false;
+    bool set_element_mag_zero = false;
+
+    // Skip the position coordinates
+    double x, y, z;
+    ifpos >> x >> y >> z;
+
+    bool result = unitcell::parse_atom_properties(ifpos, atom, 0, mv,
+                                                  input_vec_mag, input_angle_mag,
+                                                  set_element_mag_zero);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(mv.x, 1);
+    EXPECT_EQ(mv.y, 0);
+    EXPECT_EQ(mv.z, 1);
+    EXPECT_FALSE(ifpos.fail());
+
+    ifpos.close();
+    std::remove("test_input.tmp");
+}
+
+// Round-trip integration: a STRU atom line in the exact format produced by
+// print_stru_file (positions + m + optional f) must be parseable by
+// parse_atom_properties without leaving the stream in a fail state.
+// This catches the round-trip regression reported in issue #8051.
+TEST_F(ReadAtomsHelperTest, RoundTripWriterReaderForce)
+{
+    // Line as written by print_stru_file with has_force=true
+    std::string input_str = "0.000000000000 0.000000000000 0.000000000000 m 1 1 1 f -0.123456000000 0.234567000000 -0.345678000000\n";
+
+    std::ofstream temp_file("test_input.tmp");
+    temp_file << input_str;
+    temp_file.close();
+
+    std::ifstream ifpos("test_input.tmp");
+
+    Atom atom;
+    atom.label = "Fe";
+    atom.vel.resize(1);
+    atom.mag.resize(1);
+    atom.m_loc_.resize(1);
+    atom.angle1.resize(1);
+    atom.angle2.resize(1);
+    atom.lambda.resize(1);
+    atom.constrain.resize(1);
+
+    ModuleBase::Vector3<int> mv(0, 0, 0);
+    bool input_vec_mag = false;
+    bool input_angle_mag = false;
+    bool set_element_mag_zero = false;
+
+    double x, y, z;
+    ifpos >> x >> y >> z;
+
+    bool result = unitcell::parse_atom_properties(ifpos, atom, 0, mv,
+                                                  input_vec_mag, input_angle_mag,
+                                                  set_element_mag_zero);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(mv.x, 1);
+    EXPECT_EQ(mv.y, 1);
+    EXPECT_EQ(mv.z, 1);
+    // Stream must not be in a fail state -- this was the bug in issue #8051:
+    // the reader did not know "f" and consumed the force values as the next
+    // keyword, leaving the stream corrupted for subsequent atoms.
+    EXPECT_FALSE(ifpos.fail());
+    EXPECT_TRUE(ifpos.good() || ifpos.eof());
+
+    ifpos.close();
+    std::remove("test_input.tmp");
+}
+
+// Multi-atom round-trip: write a real 3-atom spin-polarized cell with
+// print_stru_file (has_force=true, nspin=2) and parse the produced file
+// back through parse_atom_properties. Positions, movement flags and the
+// per-atom mag value are asserted for every ia, which catches stream
+// corruption that only appears when na > 1 (issue #8051).
+TEST_F(ReadAtomsHelperTest, RoundTripMultiAtomMixedFields)
+{
+    const int nat = 3;
+
+    // Reference data: Cartesian positions in Bohr (units of lat0),
+    // movement flags and initial magnetic moments, one row per atom.
+    const double pos_bohr[3][3] = {
+        {0.0, 0.0, 0.0},
+        {1.0, 0.0, 0.0},
+        {0.5, 0.5, 0.5}
+    };
+    const int mbl_int[3][3] = {
+        {1, 1, 1},
+        {0, 1, 0},
+        {1, 0, 1}
+    };
+    const double mag_expected[3] = {1.5, -0.7, 2.25};
+
+    UnitCell ucell;
+    ucell.ntype = 1;
+    ucell.nat = nat;
+    ucell.atoms = new Atom[1];
+    ucell.lat0 = 1.0;
+    ucell.omega = 1.0;
+    ucell.latvec.Identity();
+    ucell.pseudo_fn.resize(1);
+    ucell.pseudo_type.resize(1);
+    ucell.pseudo_fn[0] = "Fe.upf";
+    ucell.pseudo_type[0] = "uspp";
+    ucell.magnet.start_mag.resize(1);
+    ucell.magnet.start_mag[0] = 0.0;
+
+    Atom& fe = ucell.atoms[0];
+    fe.na = nat;
+    fe.label = "Fe";
+    fe.mass = 55.847;
+    fe.tau.resize(nat);
+    fe.mbl.resize(nat);
+    fe.mag.resize(nat);
+    fe.vel.resize(nat);
+    fe.m_loc_.resize(nat);
+    fe.angle1.resize(nat);
+    fe.angle2.resize(nat);
+    fe.lambda.resize(nat);
+    fe.constrain.resize(nat);
+    for (int ia = 0; ia < nat; ++ia)
+    {
+        fe.tau[ia] = ModuleBase::Vector3<double>(pos_bohr[ia][0], pos_bohr[ia][1], pos_bohr[ia][2]);
+        fe.mbl[ia] = ModuleBase::Vector3<int>(mbl_int[ia][0], mbl_int[ia][1], mbl_int[ia][2]);
+        fe.mag[ia] = mag_expected[ia];
+    }
+
+    // Forces in Ry/Bohr; the writer converts them to eV/Angstrom.
+    ModuleBase::matrix force(nat, 3);
+    for (int ia = 0; ia < nat; ++ia)
+    {
+        force(ia, 0) = 0.01 * (ia + 1);
+        force(ia, 1) = -0.02 * (ia + 1);
+        force(ia, 2) = 0.03 * (ia + 1);
+    }
+
+    const std::string filename = "test_stru_roundtrip.tmp";
+    unitcell::print_stru_file(ucell, ucell.atoms, ucell.latvec, filename, "",
+                              2, false, false, false, false, 0, force, true);
+
+    std::ifstream ifpos(filename.c_str());
+
+    // Locate the ATOMIC_POSITIONS section.
+    std::string keyword;
+    while (ifpos >> keyword)
+    {
+        if (keyword == "ATOMIC_POSITIONS")
+        {
+            break;
+        }
+    }
+    ASSERT_FALSE(ifpos.fail());
+
+    // Coordinate descriptor line.
+    ifpos >> keyword;
+    EXPECT_EQ(keyword, "Cartesian_angstrom");
+    ifpos.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    // Type block header: label, default magnetism, atom count.
+    std::string label;
+    ifpos >> label;
+    EXPECT_EQ(label, "Fe");
+    ifpos.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    double header_mag = 0.0;
+    ifpos >> header_mag;
+    ifpos.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    int na_read = 0;
+    ifpos >> na_read;
+    ASSERT_EQ(na_read, nat);
+    ifpos.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    // Parser target: every indexed buffer must cover all ia.
+    Atom parse_atom;
+    parse_atom.label = "Fe";
+    parse_atom.vel.resize(nat);
+    parse_atom.mag.resize(nat);
+    parse_atom.m_loc_.resize(nat);
+    parse_atom.angle1.resize(nat);
+    parse_atom.angle2.resize(nat);
+    parse_atom.lambda.resize(nat);
+    parse_atom.constrain.resize(nat);
+
+    const double pos_conv = ucell.lat0 * ModuleBase::BOHR_TO_A;
+    for (int ia = 0; ia < nat; ++ia)
+    {
+        double x = 0.0;
+        double y = 0.0;
+        double z = 0.0;
+        ifpos >> x >> y >> z;
+        ASSERT_FALSE(ifpos.fail());
+
+        ModuleBase::Vector3<int> mv(0, 0, 0);
+        bool input_vec_mag = false;
+        bool input_angle_mag = false;
+        bool set_element_mag_zero = false;
+
+        const bool ok = unitcell::parse_atom_properties(ifpos, parse_atom, ia, mv,
+                                                        input_vec_mag, input_angle_mag,
+                                                        set_element_mag_zero);
+        EXPECT_TRUE(ok);
+
+        const double expected_x = pos_bohr[ia][0] * pos_conv;
+        const double expected_y = pos_bohr[ia][1] * pos_conv;
+        const double expected_z = pos_bohr[ia][2] * pos_conv;
+        EXPECT_NEAR(x, expected_x, 1e-8);
+        EXPECT_NEAR(y, expected_y, 1e-8);
+        EXPECT_NEAR(z, expected_z, 1e-8);
+
+        EXPECT_EQ(mv.x, mbl_int[ia][0]);
+        EXPECT_EQ(mv.y, mbl_int[ia][1]);
+        EXPECT_EQ(mv.z, mbl_int[ia][2]);
+
+        EXPECT_NEAR(parse_atom.mag[ia], mag_expected[ia], 1e-10);
+    }
+
+    // One read past the last consumed newline reaches end-of-file.
+    ifpos.get();
+    EXPECT_TRUE(ifpos.eof());
+    ifpos.close();
+    std::remove(filename.c_str());
+    delete[] ucell.atoms;
 }
 
 int main(int argc, char **argv)

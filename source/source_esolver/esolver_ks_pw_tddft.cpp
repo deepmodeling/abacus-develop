@@ -43,14 +43,16 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
 #else
     const hsolver::diag_comm_info comm(0, 1);
 #endif
-    this->td_solver_.reset(new hsolver::HSolverPWTDDFT<T, Device>(*this->pw_wfc,
-                                                                  inp.lin_solver,
-                                                                  inp.lin_precond,
-                                                                  inp.lin_thr,
-                                                                  inp.lin_maxiter,
-                                                                  inp.t_in_h,
-                                                                  comm,
-                                                                  GlobalV::ofs_running));
+    hsolver::PWLinearOptions options;
+    options.linear.method = hsolver::parse_linear_method(inp.lin_solver);
+    options.linear.tolerance = inp.lin_thr;
+    options.linear.max_iterations = inp.lin_maxiter;
+    options.linear.restart = inp.lin_gmres_restart;
+    options.linear.reconstruct = inp.lin_reconstruct;
+    options.preconditioner = hsolver::parse_pw_precond(inp.lin_precond);
+    options.cn_init = inp.td_cn_init;
+    options.kinetic_enabled = inp.t_in_h;
+    this->td_solver_.reset(new hsolver::HSolverPWTDDFT<T, Device>(*this->pw_wfc, options, comm, GlobalV::ofs_running));
     this->history_.prepare(*this->pelec->pot, XC_Functional::get_ked_flag());
     // Preserve existing field history until input validation and initialization succeed.
     if (inp.out_efield && GlobalV::MY_RANK == 0)
@@ -63,17 +65,18 @@ template <typename T, typename Device>
 void ESolver_KS_PW_TDDFT<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
     this->prepare_td_step(istep);
+    const bool basis_updated = ucell.cell_parameter_updated;
     ESolver_KS_PW<T, Device>::before_scf(ucell, istep);
+    if (basis_updated)
+    {
+        this->td_solver_->invalidate_basis();
+    }
     this->history_.prepare(*this->pelec->pot, XC_Functional::get_ked_flag());
     if (this->td_field_manager_->gauge() == 1)
     {
         // Refresh after the parent updates the cell and distributed basis.
-        this->q_unshifted_ = pw::td_momentum_bound(*this->pw_wfc, ucell.tpiba);
-        pw::ensure_td_vnl(ucell,
-                          this->q_unshifted_,
-                          this->td_field_manager_->A_right_ha(),
-                          this->td_field_manager_->A_prop_ha(),
-                          &this->ppcell);
+        const double q_unshifted = pw::td_momentum_bound(*this->pw_wfc, ucell.tpiba);
+        pw::ensure_td_vnl(ucell, q_unshifted, this->td_field_manager_->A_right_ha(), this->td_field_manager_->A_prop_ha(), &this->ppcell);
     }
 }
 
@@ -160,6 +163,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
         momentum_shift = this->td_field_manager_->A_prop_ha();
     }
     hamiltonian->bind_td_state(propagation.veff, propagation.vofk, momentum_shift);
+    // Pass the electronic step; it coincides with the MD step while estep_per_md=1.
     this->td_solver_->solve(op,
                             this->history_.previous(),
                             current,

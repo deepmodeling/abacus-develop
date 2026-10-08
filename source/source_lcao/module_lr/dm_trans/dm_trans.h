@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_DM_TRANS_DM_TRANS_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_DM_TRANS_DM_TRANS_H
+
 // use tensor or basematrix in the future
 #include <ATen/core/tensor.h>
 #include "source_psi/psi.h"
@@ -46,3 +48,5 @@ namespace LR
         const T factor = (T)1.0,
         const LR_Util::MO_TYPE type = LR_Util::MO_TYPE::VO);
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_DM_TRANS_DM_TRANS_H

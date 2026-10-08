@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_MO_TYPE_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_MO_TYPE_H
+
 #include <stdexcept>
 namespace LR_Util
 {
@@ -41,3 +43,5 @@ inline void set_dim(const MO_TYPE type, const int& nocc, const int& nvirt,
     }
 }
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_MO_TYPE_H

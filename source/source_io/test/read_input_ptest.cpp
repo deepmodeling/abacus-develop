@@ -415,6 +415,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.mdp.md_restart, 0);
     EXPECT_EQ(param.inp.mdp.md_restartfreq, 5);
     EXPECT_FALSE(param.inp.mdp.md_out_force);
+    EXPECT_FALSE(param.inp.mdp.plumed);
+    EXPECT_EQ(param.inp.mdp.plumed_file, "plumed.dat");
     EXPECT_EQ(param.inp.mdp.md_seed, -1);
     EXPECT_EQ(param.inp.mdp.md_prec_level, 0);
     EXPECT_DOUBLE_EQ(param.inp.ref_cell_factor, 1.0);
@@ -560,6 +562,16 @@ TEST_F(InputParaTest, TDFieldStructureErrors)
         invalid_case.mutate(input);
         EXPECT_EXIT(ModuleIO::check_td_efield_parameters(input), testing::ExitedWithCode(1), "") << invalid_case.name;
     }
+}
+
+TEST_F(InputParaTest, ParaReadPlumed)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    readinput.read_parameters(param, "./support/INPUT.plumed");
+    EXPECT_TRUE(param.inp.mdp.plumed);
+    EXPECT_EQ(param.inp.mdp.plumed_file, "my_plumed.dat");
 }
 
 TEST_F(InputParaTest, DiagoProc)
