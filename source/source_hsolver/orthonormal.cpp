@@ -23,7 +23,7 @@ bool positive_norms(const std::vector<std::complex<double>>& gram, int bands)
 } // namespace
 
 template <typename T, typename Device>
-Orthonormal<T, Device>::Orthonormal(const diag_comm_info& comm) : comm_(comm), algebra_(comm)
+Orthonormal<T, Device>::Orthonormal(const diag_comm_info& comm, LinearAlgebra<T, Device>& algebra) : comm_(comm), algebra_(algebra)
 {
 }
 

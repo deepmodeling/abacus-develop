@@ -83,7 +83,8 @@ TYPED_TEST(OrthonormalTest, CorrectsComplexOverlapsWithoutFallback)
 {
     using T = std::complex<TypeParam>;
     const hsolver::diag_comm_info comm = self_comm();
-    hsolver::Orthonormal<T, Device> orth(comm);
+    hsolver::LinearAlgebra<T, Device> algebra(comm);
+    hsolver::Orthonormal<T, Device> orth(comm, algebra);
     for (const hsolver::OrthMethod method: {hsolver::OrthMethod::cholesky, hsolver::OrthMethod::lowdin, hsolver::OrthMethod::newton_schulz})
     {
         SCOPED_TRACE(hsolver::orth_method_name(method));
@@ -107,7 +108,8 @@ TYPED_TEST(OrthonormalTest, NewtonSchulzFallsBackOutsideItsRange)
 {
     using T = std::complex<TypeParam>;
     const hsolver::diag_comm_info comm = self_comm();
-    hsolver::Orthonormal<T, Device> orth(comm);
+    hsolver::LinearAlgebra<T, Device> algebra(comm);
+    hsolver::Orthonormal<T, Device> orth(comm, algebra);
     std::vector<T> psi(ld * bands, T(0));
     psi[0] = T(2);
     psi[ld + 1] = T(2);
@@ -123,7 +125,8 @@ TYPED_TEST(OrthonormalTest, RejectsInvalidOrbitalsWithoutOverwritingThem)
 {
     using T = std::complex<TypeParam>;
     const hsolver::diag_comm_info comm = self_comm();
-    hsolver::Orthonormal<T, Device> orth(comm);
+    hsolver::LinearAlgebra<T, Device> algebra(comm);
+    hsolver::Orthonormal<T, Device> orth(comm, algebra);
     const double nan = std::numeric_limits<double>::quiet_NaN();
     const double inf = std::numeric_limits<double>::infinity();
     for (const hsolver::OrthMethod method: {hsolver::OrthMethod::cholesky, hsolver::OrthMethod::none})
@@ -159,7 +162,8 @@ TYPED_TEST(OrthonormalTest, InitialInspectionAndNoneAreReadOnly)
 {
     using T = std::complex<TypeParam>;
     const hsolver::diag_comm_info comm = self_comm();
-    hsolver::Orthonormal<T, Device> orth(comm);
+    hsolver::LinearAlgebra<T, Device> algebra(comm);
+    hsolver::Orthonormal<T, Device> orth(comm, algebra);
     std::vector<T> psi = orbitals<T>();
     const std::vector<T> original(psi);
     const std::vector<Wide> gram = overlaps(psi);

@@ -90,7 +90,7 @@ HSolverPWTDDFT<T, Device>::HSolverPWTDDFT(const ModulePW::PW_Basis_K& basis,
                                           const PWLinearOptions& options,
                                           const diag_comm_info& comm,
                                           std::ostream& log)
-    : basis_(basis), comm_(comm), options_(options), algebra_(comm), orthonormal_(comm), log_(log), band_products_(comm, 9)
+    : basis_(basis), comm_(comm), options_(options), algebra_(comm), orthonormal_(comm, algebra_), log_(log), band_products_(comm, 9)
 {
     initialize(log);
     log << " PW RT-TDDFT orthonormalization: " << orth_method_name(options_.orthonormal) << '\n';
