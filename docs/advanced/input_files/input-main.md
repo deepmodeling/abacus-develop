@@ -533,6 +533,10 @@
     - [cond\_nonlocal](#cond_nonlocal)
   - [Implicit solvation model](#implicit-solvation-model)
     - [imp\_sol](#imp_sol)
+    - [eb\_k](#eb_k)
+    - [tau](#tau)
+    - [sigma\_k](#sigma_k)
+    - [nc\_k](#nc_k)
     - [sccs\_preset](#sccs_preset)
     - [sccs\_epsilon](#sccs_epsilon)
     - [sccs\_rho\_min](#sccs_rho_min)
@@ -543,10 +547,6 @@
     - [sccs\_tol\_rms](#sccs_tol_rms)
     - [sccs\_tol\_max](#sccs_tol_max)
     - [sccs\_surface\_eta](#sccs_surface_eta)
-    - [eb\_k](#eb_k)
-    - [tau](#tau)
-    - [sigma\_k](#sigma_k)
-    - [nc\_k](#nc_k)
   - [Quasiatomic Orbital (QO) analysis](#quasiatomic-orbital-qo-analysis)
     - [qo\_switch](#qo_switch)
     - [qo\_basis](#qo_basis)
@@ -4938,8 +4938,33 @@
 ### imp_sol
 
 - **Type**: Integer
-- **Description**: Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS. Legacy Boolean values remain accepted as 0 or 1. SCCS currently supports periodic CPU KS-DFT SCF calculations with basis_type pw or lcao and nspin 1 or 2, without stress, external fields or other correction models. A charged cell in a dielectric solvent (any water preset, or sccs_preset custom with sccs_epsilon above 1) runs with a warning: the periodic Poisson solver drops the G = 0 component of the net charge, so the energy depends on the cell size.
+- **Description**: Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS. Stress, external fields and other correction models are not supported.
 - **Default**: 0
+
+### eb_k
+
+- **Type**: Real
+- **Availability**: *[`imp_sol`](#imp_sol)==1*
+- **Description**: The relative permittivity of the bulk solvent, 80 for water
+- **Default**: 80
+
+### tau
+
+- **Type**: Real
+- **Description**: The effective surface tension parameter that describes the cavitation, the dispersion, and the repulsion interaction between the solute and the solvent which are not captured by the electrostatic terms
+- **Default**: 1.0798e-05
+
+### sigma_k
+
+- **Type**: Real
+- **Description**: The width of the diffuse cavity that is implicitly determined by the electronic structure of the solute
+- **Default**: 0.6
+
+### nc_k
+
+- **Type**: Real
+- **Description**: The value of the electron density at which the dielectric cavity forms
+- **Default**: 0.00037
 
 ### sccs_preset
 
@@ -5017,31 +5042,6 @@
 - **Description**: Positive regularization of the SCCS surface gradient norm.
 - **Default**: 1e-8
 - **Unit**: bohr^-1
-
-### eb_k
-
-- **Type**: Real
-- **Availability**: *[`imp_sol`](#imp_sol)==1*
-- **Description**: The relative permittivity of the bulk solvent, 80 for water
-- **Default**: 80
-
-### tau
-
-- **Type**: Real
-- **Description**: The effective surface tension parameter that describes the cavitation, the dispersion, and the repulsion interaction between the solute and the solvent which are not captured by the electrostatic terms
-- **Default**: 1.0798e-05
-
-### sigma_k
-
-- **Type**: Real
-- **Description**: The width of the diffuse cavity that is implicitly determined by the electronic structure of the solute
-- **Default**: 0.6
-
-### nc_k
-
-- **Type**: Real
-- **Description**: The value of the electron density at which the dielectric cavity forms
-- **Default**: 0.00037
 
 [back to top](#full-list-of-input-keywords)
 

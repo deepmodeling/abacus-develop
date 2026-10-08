@@ -2,6 +2,7 @@
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "read_inp_sccs.h"
 namespace ModuleIO
 {
 void ReadInput::item_model()
@@ -181,8 +182,27 @@ void ReadInput::item_model()
         this->add_item(item);
     }
 
-    // Implicit solvation: preserve the existing model parameter ordering.
-    this->item_sccs();
+    // Implicit solvation: imp_sol, the original model, then SCCS.
+    {
+        Input_Item item("imp_sol");
+        item.annotation = "implicit solvent model";
+        item.category = "Implicit solvation model";
+        item.type = "Integer";
+        item.description = "Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS. Stress, external fields and other correction models are not supported.";
+        item.default_value = "0";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            std::string error;
+            const bool valid = parse_solvation_model(item.str_values[0], para.input.imp_sol, error);
+            if (!valid) { ModuleBase::WARNING_QUIT("ReadInput", error); }
+        };
+        sync_int(input.imp_sol);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            std::string error;
+            const bool valid = validate_sccs_input(para.input, error);
+            if (!valid) { ModuleBase::WARNING_QUIT("ReadInput", error); }
+        };
+        this->add_item(item);
+    }
     {
         Input_Item item("eb_k");
         item.annotation = "the relative permittivity of the bulk solvent";
@@ -228,6 +248,7 @@ void ReadInput::item_model()
         read_sync_double(input.nc_k);
         this->add_item(item);
     }
+    this->item_sccs();
 
     // vdW Correction
     {

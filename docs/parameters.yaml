@@ -4355,8 +4355,40 @@ parameters:
     category: Implicit solvation model
     type: Integer
     description: |
-      Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS. Legacy Boolean values remain accepted as 0 or 1. SCCS currently supports periodic CPU KS-DFT SCF calculations with basis_type pw or lcao and nspin 1 or 2, without stress, external fields or other correction models. A charged cell in a dielectric solvent (any water preset, or sccs_preset custom with sccs_epsilon above 1) runs with a warning: the periodic Poisson solver drops the G = 0 component of the net charge, so the energy depends on the cell size.
+      Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS. Stress, external fields and other correction models are not supported.
     default_value: "0"
+    unit: ""
+    availability: ""
+  - name: eb_k
+    category: Implicit solvation model
+    type: Real
+    description: |
+      The relative permittivity of the bulk solvent, 80 for water
+    default_value: "80"
+    unit: ""
+    availability: imp_sol==1
+  - name: tau
+    category: Implicit solvation model
+    type: Real
+    description: |
+      The effective surface tension parameter that describes the cavitation, the dispersion, and the repulsion interaction between the solute and the solvent which are not captured by the electrostatic terms
+    default_value: "1.0798e-05"
+    unit: ""
+    availability: ""
+  - name: sigma_k
+    category: Implicit solvation model
+    type: Real
+    description: |
+      The width of the diffuse cavity that is implicitly determined by the electronic structure of the solute
+    default_value: "0.6"
+    unit: ""
+    availability: ""
+  - name: nc_k
+    category: Implicit solvation model
+    type: Real
+    description: |
+      The value of the electron density at which the dielectric cavity forms
+    default_value: "0.00037"
     unit: ""
     availability: ""
   - name: sccs_preset
@@ -4439,38 +4471,6 @@ parameters:
     default_value: "1e-8"
     unit: bohr^-1
     availability: imp_sol==2
-  - name: eb_k
-    category: Implicit solvation model
-    type: Real
-    description: |
-      The relative permittivity of the bulk solvent, 80 for water
-    default_value: "80"
-    unit: ""
-    availability: imp_sol==1
-  - name: tau
-    category: Implicit solvation model
-    type: Real
-    description: |
-      The effective surface tension parameter that describes the cavitation, the dispersion, and the repulsion interaction between the solute and the solvent which are not captured by the electrostatic terms
-    default_value: "1.0798e-05"
-    unit: ""
-    availability: ""
-  - name: sigma_k
-    category: Implicit solvation model
-    type: Real
-    description: |
-      The width of the diffuse cavity that is implicitly determined by the electronic structure of the solute
-    default_value: "0.6"
-    unit: ""
-    availability: ""
-  - name: nc_k
-    category: Implicit solvation model
-    type: Real
-    description: |
-      The value of the electron density at which the dielectric cavity forms
-    default_value: "0.00037"
-    unit: ""
-    availability: ""
   - name: vdw_method
     category: vdW correction
     type: String

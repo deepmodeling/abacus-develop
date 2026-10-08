@@ -97,26 +97,6 @@ bool validate_sccs_input(const Input_para& input, std::string& error)
 void ReadInput::item_sccs()
 {
     {
-        Input_Item item("imp_sol");
-        item.annotation = "implicit solvent model";
-        item.category = "Implicit solvation model";
-        item.type = "Integer";
-        item.description = "Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS. Legacy Boolean values remain accepted as 0 or 1. SCCS currently supports periodic CPU KS-DFT SCF calculations with basis_type pw or lcao and nspin 1 or 2, without stress, external fields or other correction models. A charged cell in a dielectric solvent (any water preset, or sccs_preset custom with sccs_epsilon above 1) runs with a warning: the periodic Poisson solver drops the G = 0 component of the net charge, so the energy depends on the cell size.";
-        item.default_value = "0";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            std::string error;
-            const bool valid = parse_solvation_model(item.str_values[0], para.input.imp_sol, error);
-            if (!valid) { ModuleBase::WARNING_QUIT("ReadInput", error); }
-        };
-        sync_int(input.imp_sol);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            std::string error;
-            const bool valid = validate_sccs_input(para.input, error);
-            if (!valid) { ModuleBase::WARNING_QUIT("ReadInput", error); }
-        };
-        this->add_item(item);
-    }
-    {
         Input_Item item("sccs_preset");
         item.annotation = "SCCS parameter preset";
         item.category = "Implicit solvation model";
