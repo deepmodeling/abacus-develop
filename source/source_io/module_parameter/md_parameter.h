@@ -65,6 +65,10 @@ struct MD_para
     double md_tolerance = 100.0; ///< tolerance for velocity rescaling (K)
     int md_nraise = 1;           ///< parameters used when md_type=nvt
 
+    bool plumed = false;          ///< use PLUMED for collective variables and enhanced
+                                  ///< sampling (requires ABACUS compiled with PLUMED)
+    std::string plumed_file = "plumed.dat"; ///< input file of PLUMED
+
     bool dump_force = true;  ///< output atomic forces into the file MD_dump or
                              ///< not. liuyu 2023-03-01
     bool dump_vel = true;    ///< output atomic velocities into the file MD_dump or

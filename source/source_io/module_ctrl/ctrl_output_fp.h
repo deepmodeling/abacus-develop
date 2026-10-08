@@ -1,9 +1,22 @@
 #ifndef CTRL_OUTPUT_FP_H
 #define CTRL_OUTPUT_FP_H
 
-#include "source_estate/elecstate_lcao.h"
-
 struct Input_para;
+class UnitCell;
+class Charge;
+class surchem;
+class Parallel_Grid;
+
+namespace elecstate
+{
+class ElecState;
+}
+
+namespace ModulePW
+{
+class PW_Basis;
+class PW_Basis_Big;
+}
 
 namespace ModuleIO
 {

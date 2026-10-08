@@ -1,5 +1,6 @@
 #include "to_w90_pw.h"
 
+#include "source_basis/module_pw/pw_basis_big.h"
 #include "source_io/module_parameter/parameter.h"
 
 toW90_PW::toW90_PW(

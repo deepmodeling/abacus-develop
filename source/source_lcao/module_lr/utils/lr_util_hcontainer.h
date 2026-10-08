@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_HCONTAINER_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_HCONTAINER_H
+
 #include "source_estate/module_dm/density_matrix.h"
 #include <numeric>
 #include  "source_base/parallel_reduce.h"
@@ -126,3 +128,5 @@ namespace LR_Util
     }
 
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_HCONTAINER_H

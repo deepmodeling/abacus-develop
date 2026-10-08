@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_DIVIDE_INFO_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_DIVIDE_INFO_H
+
 
 #include "biggrid_info.h"
 #include "unitcell_info.h"
@@ -52,3 +54,5 @@ class DivideInfo
 };
 
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_DIVIDE_INFO_H

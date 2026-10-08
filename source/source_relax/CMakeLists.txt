@@ -10,6 +10,7 @@ add_library(
     socket_driver.cpp
     cg_base.cpp
     relax_driver.cpp
+    relax_stru_io.cpp
     relax_sync.cpp
     line_search.cpp
     ions_move_lbfgs.cpp
@@ -33,7 +34,7 @@ endif()
 
 if(BUILD_TESTING)
   if(ENABLE_MPI)
-    add_subdirectory(test)
+    add_subdirectory(unittests)
   endif()
 
 endif()

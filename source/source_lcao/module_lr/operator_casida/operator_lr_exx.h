@@ -1,5 +1,7 @@
 #ifdef __EXX
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_OPERATOR_CASIDA_OPERATOR_LR_EXX_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_OPERATOR_CASIDA_OPERATOR_LR_EXX_H
+
 #include "source_hamilt/operator.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_ri/exx_lri.h"
@@ -117,3 +119,5 @@ namespace LR
     };
 }
 #endif
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_OPERATOR_CASIDA_OPERATOR_LR_EXX_H

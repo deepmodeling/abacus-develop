@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_BATCH_BIGGRID_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_BATCH_BIGGRID_H
+
 #include <memory>
 #include <vector>
 #include "big_grid.h"
@@ -48,3 +50,5 @@ class BatchBigGrid
 };
 
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_BATCH_BIGGRID_H

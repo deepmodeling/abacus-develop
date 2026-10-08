@@ -1813,6 +1813,22 @@ parameters:
     default_value: "0.01"
     unit: bohr
     availability: ""
+  - name: plumed
+    category: Molecular dynamics
+    type: Boolean
+    description: |
+      Whether to use PLUMED (https://www.plumed.org) to compute collective variables, biasing potentials and free-energy methods during an MD run. ABACUS must be compiled with -DENABLE_PLUMED=ON and linked against a PLUMED installation (discovered through pkg-config or PLUMED_ROOT) to enable this feature. The PLUMED interface currently supports a single MPI rank only.
+    default_value: "False"
+    unit: ""
+    availability: ""
+  - name: plumed_file
+    category: Molecular dynamics
+    type: String
+    description: |
+      The input file of PLUMED, read when `plumed` is enabled. Relative paths are resolved against the working directory of the run.
+    default_value: plumed.dat
+    unit: ""
+    availability: plumed==true
   - name: of_kinetic
     category: "OFDFT: orbital free density functional theory"
     type: String
@@ -2478,34 +2494,37 @@ parameters:
     type: String
     description: |
       Iterative linear solver used for PW real-time propagation.
-      * bicgstab: Biconjugate gradient stabilized (BiCGSTAB) method.
-      * cgs: Conjugate gradient squared (CGS) method.
+      * `bicgstab`: Biconjugate gradient stabilized (BiCGSTAB) method.
+      * `cgs`: Conjugate gradient squared (CGS) method.
+      * `gmres`: Restarted generalized minimal residual (GMRES) method, controlled by `lin_gmres_restart`.
 
-      The initial ground-state diagonalization is controlled by ks_solver.
-    default_value: bicgstab
+      The initial ground-state diagonalization is controlled by `ks_solver`.
+    default_value: gmres
     unit: ""
     availability: basis_type==pw and esolver_type==tddft
   - name: lin_precond
     category: Real-Time TDDFT (PW)
     type: String
     description: |
-      Right preconditioner used by both PW real-time linear solvers.
-      * kinetic: Apply the diagonal inverse $M_{\boldsymbol{G}}^{-1}=(1+\mathrm{i}\Delta t\,T_{\boldsymbol{G}}/2)^{-1}$, where $\Delta t$ is the time step in atomic units and $T_{\boldsymbol{G}}=|\boldsymbol{k}+\boldsymbol{G}+\boldsymbol{A}_{\mathrm{mid}}|^2/2$ is the kinetic energy in Hartree. In the velocity gauge, $\boldsymbol{A}_{\mathrm{mid}}=(\boldsymbol{A}_n+\boldsymbol{A}_{n+1})/2$ is the propagation vector potential in Hartree atomic units; in the length gauge, set $\boldsymbol{A}_{\mathrm{mid}}=0$.
-      * none: Disable preconditioning.
+      Right preconditioner used by PW real-time linear solvers. The Crank-Nicolson operator is $\boldsymbol{L}=\boldsymbol{I}+\mathrm{i}\Delta t\,\boldsymbol{H}/2$, with the propagation Hamiltonian $\boldsymbol{H}$ in Hartree and time step $\Delta t$ in atomic units. Below, $\boldsymbol{M}^{-1}$ denotes the inverse preconditioner and $\boldsymbol{D}$ the kinetic diagonal inverse.
+      * `kinetic`: Apply $\boldsymbol{M}^{-1}=\boldsymbol{D}$, with diagonal entries $D_{\boldsymbol{G}\boldsymbol{G}}=(1+\mathrm{i}\Delta t\,T_{\boldsymbol{G}}/2)^{-1}$, where $T_{\boldsymbol{G}}=\lVert\boldsymbol{k}+\boldsymbol{G}+\boldsymbol{A}_{\mathrm{mid}}\rVert^2/2$ is the kinetic energy in Hartree. In the velocity gauge, $\boldsymbol{A}_{\mathrm{mid}}=(\boldsymbol{A}_n+\boldsymbol{A}_{n+1})/2$ is the propagation vector potential in Hartree atomic units; in the length gauge, set $\boldsymbol{A}_{\mathrm{mid}}=\boldsymbol{0}$.
+      * `kinetic_recycle`: Apply $\boldsymbol{M}^{-1}=\boldsymbol{D}+(\boldsymbol{Z}_{\mathrm{hist}}-\boldsymbol{D}\boldsymbol{W}_{\mathrm{hist}})\boldsymbol{W}_{\mathrm{hist}}^{\dagger}$, where $\boldsymbol{Z}_{\mathrm{hist}}$ and $\boldsymbol{W}_{\mathrm{hist}}$ are paired response directions and approximate operator images from the preceding successful solve at the same k point, with $\boldsymbol{W}_{\mathrm{hist}}^{\dagger}\boldsymbol{W}_{\mathrm{hist}}\approx\boldsymbol{I}$. The images belong to the historical solve, not necessarily the current $\boldsymbol{L}$. Falls back to `kinetic` when no reliable history is available.
+      * `kinetic_subspace`: Apply $\boldsymbol{M}^{-1}=\boldsymbol{D}+(\boldsymbol{U}-\boldsymbol{D}\boldsymbol{L}\boldsymbol{U})(\boldsymbol{U}^{\dagger}\boldsymbol{L}\boldsymbol{U})^{-1}\boldsymbol{U}^{\dagger}$, where the columns of $\boldsymbol{U}$ are the previous-time wavefunctions defining the coarse subspace.
+      * `none`: Disable preconditioning.
 
-      Preconditioning changes the convergence rate, while lin_thr still controls the residual of the original equation.
-    default_value: kinetic
+      Preconditioning changes the convergence rate, while `lin_thr` still controls the residual of the original equation.
+    default_value: kinetic_recycle
     unit: ""
     availability: basis_type==pw and esolver_type==tddft
   - name: lin_thr
     category: Real-Time TDDFT (PW)
     type: Real
     description: |
-      Nonnegative finite residual tolerance for each band in a PW real-time linear solve $Ax=b$. A value of 0 selects $\max(10^{-10},100\epsilon)$, where $\epsilon$ is machine epsilon for the wavefunction precision (approximately $1.19209\times10^{-5}$ in single precision and $10^{-10}$ in double precision). A positive value specifies the tolerance $\tau$ directly.
-      * bicgstab: Require $\|b-Ax\|_2\leqslant\tau\max(1,\|b\|_2)$.
-      * cgs: Require $\|b-Ax\|_2\leqslant\tau\|b\|_2$ for nonzero $b$, or $\|b-Ax\|_2\leqslant\tau$ for zero $b$.
+      Nonnegative finite residual tolerance for each band in a PW real-time Crank-Nicolson solve $\boldsymbol{L}\boldsymbol{x}=\boldsymbol{b}$, with residual $\boldsymbol{r}=\boldsymbol{b}-\boldsymbol{L}\boldsymbol{x}$. A value of 0 selects $\tau=\max(10^{-10},100\epsilon)$, where $\epsilon$ is machine epsilon for the wavefunction precision. This gives a tolerance of approximately $1.19209\times10^{-5}$ in single precision and $10^{-10}$ in double precision. A positive value specifies $\tau$ directly.
+      * `bicgstab` and `gmres`: Require $\lVert\boldsymbol{r}\rVert\leqslant\tau\max(1,\lVert\boldsymbol{b}\rVert)$.
+      * `cgs`: Require $\lVert\boldsymbol{r}\rVert\leqslant\tau\lVert\boldsymbol{b}\rVert$ for nonzero $\boldsymbol{b}$, or $\lVert\boldsymbol{r}\rVert\leqslant\tau$ for zero $\boldsymbol{b}$.
 
-      Both methods check the final residual explicitly.
+      All methods check the final residual explicitly. GMRES can use explicit residual reconstruction with periodic independent checks when `lin_reconstruct` is enabled.
     default_value: "0"
     unit: ""
     availability: basis_type==pw and esolver_type==tddft
@@ -2513,10 +2532,38 @@ parameters:
     category: Real-Time TDDFT (PW)
     type: Integer
     description: |
-      Positive maximum number of iterations for each PW real-time linear solve. Failure to converge stops the calculation. The number of self-consistency iterations is controlled separately by scf_nmax.
+      Positive maximum number of iterations for each PW real-time linear solve. Failure to converge stops the calculation. The number of self-consistency iterations is controlled separately by `scf_nmax`.
     default_value: "500"
     unit: ""
     availability: basis_type==pw and esolver_type==tddft
+  - name: lin_gmres_restart
+    category: Real-Time TDDFT (PW)
+    type: Integer
+    description: |
+      Positive maximum Arnoldi dimension per GMRES cycle. `lin_maxiter` limits the total iterations across all cycles.
+    default_value: "20"
+    unit: ""
+    availability: basis_type==pw and esolver_type==tddft and lin_solver==gmres
+  - name: td_cn_init
+    category: Real-Time TDDFT (PW)
+    type: Boolean
+    description: |
+      Project the Crank-Nicolson equation $\boldsymbol{L}\boldsymbol{x}=\boldsymbol{b}$ onto the previous-time wavefunction subspace to initialize the first propagation solve of each time step. With those wavefunctions as the columns of $\boldsymbol{U}$, the projected initial guess is $\boldsymbol{x}_0=\boldsymbol{U}(\boldsymbol{U}^{\dagger}\boldsymbol{L}\boldsymbol{U})^{-1}\boldsymbol{U}^{\dagger}\boldsymbol{b}$. Evaluate and reuse the initial residual $\boldsymbol{r}_0=\boldsymbol{b}-\boldsymbol{L}\boldsymbol{x}_0$ using the stored subspace operator images $\boldsymbol{L}\boldsymbol{U}$, without an additional Hamiltonian application. Available with all linear solvers and preconditioners; later self-consistency iterations retain their current wavefunction guess.
+    default_value: "true"
+    unit: ""
+    availability: basis_type==pw and esolver_type==tddft
+  - name: lin_reconstruct
+    category: Real-Time TDDFT (PW)
+    type: Boolean
+    description: |
+      Reconstruct the GMRES residual for $\boldsymbol{L}\boldsymbol{x}=\boldsymbol{b}$ as $\boldsymbol{r}=\boldsymbol{r}_0-(\boldsymbol{L}\boldsymbol{Z})\boldsymbol{y}$ for the update $\boldsymbol{x}=\boldsymbol{x}_0+\boldsymbol{Z}\boldsymbol{y}$, where $\boldsymbol{r}_0=\boldsymbol{b}-\boldsymbol{L}\boldsymbol{x}_0$ is the initial residual, $\boldsymbol{Z}$ contains the current preconditioned search directions, and $\boldsymbol{y}$ contains their update coefficients. Reusing the stored, unmodified operator images $\boldsymbol{L}\boldsymbol{Z}$ reduces Hamiltonian applications.
+
+      Use an internal tolerance of 0.8 times the effective `lin_thr` and independently verify the first solve at each k point and every 16 solves thereafter, with additional independent checks when needed. Failed reconstruction checks trigger a true-residual restart within `lin_maxiter`.
+
+      Only effective for `lin_solver=gmres`; ignored otherwise.
+    default_value: "true"
+    unit: ""
+    availability: basis_type==pw and esolver_type==tddft and lin_solver==gmres
   - name: estep_per_md
     category: Real-Time TDDFT (Common)
     type: Integer
@@ -3566,16 +3613,6 @@ parameters:
     type: Integer
     description: |
       Whether to print files containing the derivatives of the XC matrix dV^XC/dR.
-
-      See out_mat_dh for format details.
-    default_value: 0 8
-    unit: Ry/Bohr
-    availability: ""
-  - name: out_mat_dh_exx
-    category: Output information
-    type: Integer
-    description: |
-      Whether to print files containing the derivatives of the exact-exchange matrix dV^EXX/dR.
 
       See out_mat_dh for format details.
     default_value: 0 8
@@ -5331,7 +5368,7 @@ parameters:
     default_value: "True"
     unit: ""
     availability: exx_separate_loop==true
-  - name: exx_gamma_extrapolation
+  - name: exx_gamma_extra
     category: Exact Exchange (PW)
     type: Boolean
     description: |

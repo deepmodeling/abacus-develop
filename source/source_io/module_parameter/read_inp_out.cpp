@@ -992,41 +992,6 @@ For binary output, each file uses the same basename as text output with a .dat s
         this->add_item(item);
     }
     {
-        Input_Item item("out_mat_dh_exx");
-        item.annotation = "output exact-exchange dH/dR (dV^EXX/dR) matrices";
-        item.category = "Output information";
-        item.type = "Integer";
-        item.description = "Whether to print files containing the derivatives of the exact-exchange matrix dV^EXX/dR."
-                          "\n\nSee out_mat_dh for format details.";
-        item.default_value = "0 8";
-        item.unit = "Ry/Bohr";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            const size_t count = item.get_size();
-            try {
-                para.input.out_mat_dh_exx[0] = assume_as_boolean(item.str_values[0]);
-                para.input.out_mat_dh_exx[1] = 8;
-                if (count >= 2) try { para.input.out_mat_dh_exx[1] = std::stoi(item.str_values[1]); }
-                catch (const std::invalid_argument&) {
-                    ModuleBase::WARNING("Input", "out_mat_dh_exx precision must be an integer, using default 8");
-                }
-                for (size_t i = 2; i < count; ++i)
-                    try { para.input.out_mat_dh_exx.push_back(std::stoi(item.str_values[i]) - 1); }
-                    catch (const std::invalid_argument&) {
-                        ModuleBase::WARNING("Input", "out_mat_dh_exx atom index must be an integer, skipping");
-                    }
-            }
-            catch (const std::invalid_argument& e) {
-                ModuleBase::WARNING("Input", "out_mat_dh_exx enable flag must be 0/1, using default 0");
-            }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_mat_dh_exx[0] && para.input.nspin == 4)
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_exx is not available for nspin = 4");
-        };
-        sync_intvec(input.out_mat_dh_exx, para.input.out_mat_dh_exx.size(), 0);
-        this->add_item(item);
-    }
-    {
         Input_Item item("out_mat_h_t");
         item.annotation = "output kinetic energy T(R) matrix";
         item.category = "Output information";

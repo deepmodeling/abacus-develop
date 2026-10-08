@@ -5,8 +5,7 @@
 namespace hsolver
 {
 template <typename T, typename Device>
-LinearCGS<T, Device>::LinearCGS(const double tolerance, const int max_iter, const diag_comm_info& comm)
-    : tolerance_(tolerance), max_iter_(max_iter), work_(comm)
+LinearCGS<T, Device>::LinearCGS(const double tolerance, const diag_comm_info& comm) : tolerance_(tolerance), work_(comm, 9)
 {
 }
 
@@ -75,7 +74,8 @@ bool LinearCGS<T, Device>::iterate(const LinearOperator<T, Device>& op,
     {
         preconditioner.apply(p, scratch, ld_, active_);
     }
-    work_.apply(op, identity ? p : scratch, v, ld_, active_);
+    const T* preconditioned_direction = identity ? p : scratch;
+    work_.apply(op, preconditioned_direction, v, ld_, active_);
     work_.dot(ld_, dim_, active_, shadow, v, denominator_.data());
     for (int band = 0; band < active_; ++band)
     {
@@ -102,14 +102,16 @@ bool LinearCGS<T, Device>::iterate(const LinearOperator<T, Device>& op,
 template <typename T, typename Device>
 LinearSolveResult LinearCGS<T, Device>::solve(const LinearOperator<T, Device>& op,
                                               const LinearOperator<T, Device>& preconditioner,
-                                              const int ld,
-                                              const int nband,
-                                              const int dim,
+                                              int ld,
+                                              int nband,
+                                              int dim,
                                               T* x,
-                                              const T* b)
+                                              const T* b,
+                                              const T* initial_residual,
+                                              const int max_iterations)
 {
     const LinearSolveTimer timer("LinearCGS");
-    work_.prepare(ld, dim, nband, x, b, tolerance_, max_iter_);
+    work_.prepare(ld, dim, nband, x, b, tolerance_, max_iterations);
     work_.reset_statistics();
     ld_ = ld;
     dim_ = dim;
@@ -137,20 +139,34 @@ LinearSolveResult LinearCGS<T, Device>::solve(const LinearOperator<T, Device>& o
         std::iota(original_.begin(), original_.end(), 0);
         rho_prev_.assign(nband, T(1));
         work_.copy(ld, dim, nband, x, work_.data(solution_slot));
-        work_.residual(op, ld, dim, nband, work_.data(solution_slot), b, work_.data(residual_slot));
+        if (initial_residual && result.restarts == 0)
+        {
+            work_.copy(ld, dim, nband, initial_residual, work_.data(residual_slot));
+        }
+        else
+        {
+            work_.residual(op, ld, dim, nband, work_.data(solution_slot), b, work_.data(residual_slot));
+        }
         work_.copy(ld, dim, nband, work_.data(residual_slot), work_.data(shadow_slot));
         retire_converged();
         result.status = LinearSolveStatus::max_iterations;
         const int cycle_start = result.iterations;
-        while (result.iterations < max_iter_ && active_ > 0)
+        try
         {
-            const bool first_iteration = result.iterations == cycle_start;
-            ++result.iterations;
-            if (!iterate(op, preconditioner, first_iteration, &result))
+            while (result.iterations < max_iterations && active_ > 0)
             {
-                break;
+                const bool first_iteration = result.iterations == cycle_start;
+                ++result.iterations;
+                if (!iterate(op, preconditioner, first_iteration, &result))
+                {
+                    break;
+                }
+                retire_converged();
             }
-            retire_converged();
+        }
+        catch (const LinearPreconditionerError&)
+        {
+            result.status = LinearSolveStatus::preconditioner_failure;
         }
         work_.restore(ld, dim, nband, original_, work_.data(solution_slot), x);
         if (active_ == 0)
@@ -158,7 +174,7 @@ LinearSolveResult LinearCGS<T, Device>::solve(const LinearOperator<T, Device>& o
             result.status = LinearSolveStatus::residual_mismatch;
         }
         work_.verify(op, ld, dim, nband, x, b, original_threshold, work_.data(residual_slot), &result);
-        if (result.status != LinearSolveStatus::residual_mismatch || result.iterations >= max_iter_ || result.iterations == cycle_start
+        if (result.status != LinearSolveStatus::residual_mismatch || result.iterations >= max_iterations || result.iterations == cycle_start
             || !std::isfinite(result.max_residual))
         {
             return result;

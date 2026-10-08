@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_ENV_GAMMA_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_ENV_GAMMA_H
+
 
 #include <memory>
 #include <vector>
@@ -29,3 +31,5 @@ class Gint_env_gamma : public Gint
 };
 
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_ENV_GAMMA_H

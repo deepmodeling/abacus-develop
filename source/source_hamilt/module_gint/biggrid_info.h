@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_BIGGRID_INFO_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_BIGGRID_INFO_H
+
 
 #include <memory>
 #include "gint_type.h"
@@ -99,3 +101,5 @@ class BigGridInfo
 };
 
 } // namespace ModuleGint
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_BIGGRID_INFO_H

@@ -7,8 +7,7 @@
 namespace hsolver
 {
 template <typename T, typename Device>
-LinearBiCGSTAB<T, Device>::LinearBiCGSTAB(const double tolerance, const int max_iter, const diag_comm_info& comm)
-    : tolerance_(tolerance), max_iter_(max_iter), work_(comm)
+LinearBiCGSTAB<T, Device>::LinearBiCGSTAB(const double tolerance, const diag_comm_info& comm) : tolerance_(tolerance), work_(comm, 9)
 {
 }
 
@@ -72,12 +71,13 @@ void LinearBiCGSTAB<T, Device>::retire_converged(const bool alpha_step, const bo
     }
     if (alpha_step)
     {
+        const int update_slot = identity ? direction_slot : precond_direction_slot;
         work_.batch(ld_,
                     dim_,
                     active_,
                     work_.data(solution_slot),
                     work_.data(solution_slot),
-                    work_.data(identity ? direction_slot : precond_direction_slot),
+                    work_.data(update_slot),
                     T(1),
                     T(1),
                     nullptr,
@@ -170,14 +170,16 @@ bool LinearBiCGSTAB<T, Device>::iterate(const LinearOperator<T, Device>& op,
 template <typename T, typename Device>
 LinearSolveResult LinearBiCGSTAB<T, Device>::solve(const LinearOperator<T, Device>& op,
                                                    const LinearOperator<T, Device>& preconditioner,
-                                                   const int ld,
-                                                   const int nband,
-                                                   const int dim,
+                                                   int ld,
+                                                   int nband,
+                                                   int dim,
                                                    T* x,
-                                                   const T* b)
+                                                   const T* b,
+                                                   const T* initial_residual,
+                                                   const int max_iterations)
 {
     const LinearSolveTimer timer("LinearBiCGSTAB");
-    work_.prepare(ld, dim, nband, x, b, tolerance_, max_iter_);
+    work_.prepare(ld, dim, nband, x, b, tolerance_, max_iterations);
     work_.reset_statistics();
     ld_ = ld;
     dim_ = dim;
@@ -212,18 +214,32 @@ LinearSolveResult LinearBiCGSTAB<T, Device>::solve(const LinearOperator<T, Devic
         alpha_.assign(nband, T(1));
         omega_.assign(nband, T(1));
         work_.copy(ld, dim, nband, x, work_.data(solution_slot));
-        work_.residual(op, ld, dim, nband, work_.data(solution_slot), b, work_.data(residual_slot));
+        if (initial_residual && result.restarts == 0)
+        {
+            work_.copy(ld, dim, nband, initial_residual, work_.data(residual_slot));
+        }
+        else
+        {
+            work_.residual(op, ld, dim, nband, work_.data(solution_slot), b, work_.data(residual_slot));
+        }
         work_.copy(ld, dim, nband, work_.data(residual_slot), work_.data(shadow_slot));
         retire_converged(false, preconditioner.is_identity());
         result.status = LinearSolveStatus::max_iterations;
         const int cycle_start = result.iterations;
-        while (result.iterations < max_iter_ && active_ > 0)
+        try
         {
-            ++result.iterations;
-            if (!iterate(op, preconditioner, &result))
+            while (result.iterations < max_iterations && active_ > 0)
             {
-                break;
+                ++result.iterations;
+                if (!iterate(op, preconditioner, &result))
+                {
+                    break;
+                }
             }
+        }
+        catch (const LinearPreconditionerError&)
+        {
+            result.status = LinearSolveStatus::preconditioner_failure;
         }
         work_.restore(ld, dim, nband, original_, work_.data(solution_slot), x);
         if (active_ == 0)
@@ -231,7 +247,7 @@ LinearSolveResult LinearBiCGSTAB<T, Device>::solve(const LinearOperator<T, Devic
             result.status = LinearSolveStatus::residual_mismatch;
         }
         work_.verify(op, ld, dim, nband, x, b, original_threshold, work_.data(residual_slot), &result);
-        if (result.status != LinearSolveStatus::residual_mismatch || result.iterations >= max_iter_ || result.iterations == cycle_start
+        if (result.status != LinearSolveStatus::residual_mismatch || result.iterations >= max_iterations || result.iterations == cycle_start
             || !std::isfinite(result.max_residual))
         {
             return result;
