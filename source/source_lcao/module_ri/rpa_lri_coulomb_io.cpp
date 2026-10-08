@@ -101,10 +101,6 @@ try
         std::sort(blocks.begin(), blocks.end(), [](const V1Block& lhs, const V1Block& rhs) {
             return lhs.pair_index < rhs.pair_index;
         });
-        if (blocks.empty())
-        {
-            continue;
-        }
         for (std::size_t ib = 1; ib < blocks.size(); ++ib)
         {
             if (blocks[ib - 1].pair_index == blocks[ib].pair_index)

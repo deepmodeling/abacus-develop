@@ -1474,7 +1474,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "LibRPA output reader version";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 includes the full-to-irreducible mapping for symmetry-reduced grids.";
+        item.description = "Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 supports symmetry-reduced Monkhorst-Pack grids and requires a uniform Monkhorst-Pack KPT grid.";
         item.default_value = "0";
         item.unit = "";
         item.set_availability("basis_type==lcao");

@@ -85,7 +85,11 @@ def run(args, root):
     work.mkdir()
     (root / "PP_ORB").symlink_to(source.parent / "PP_ORB", target_is_directory=True)
     results = []
-    env = dict(os.environ, OMP_NUM_THREADS="1", MKL_NUM_THREADS="1")
+    env = dict(os.environ,
+               OMP_NUM_THREADS="1",
+               MKL_NUM_THREADS="1",
+               ABACUS_MPIEXEC=args.mpirun,
+               ABACUS_MPIEXEC_NUMPROC_FLAG=args.mpi_np_flag)
     cases = (source / "CASES_LIBRPA_PRODUCER.txt").read_text().split()
     for name, nspin in zip(cases, (1, 2)):
         for mesh in ((1, 1, 3), (2, 2, 2)):
@@ -103,7 +107,7 @@ def run(args, root):
                         stream.write("nupdown 1e-12\n")
                 (case / "KPT").write_text("K_POINTS\n0\nGamma\n{} {} {} 0 0 0\n".format(*mesh))
                 with (case / "producer.log").open("w") as log:
-                    subprocess.run(["mpirun", "-np", "2", args.abacus], cwd=case, env=env,
+                    subprocess.run([args.mpirun, args.mpi_np_flag, "2", args.abacus], cwd=case, env=env,
                                    stdout=log, stderr=subprocess.STDOUT, check=True, timeout=120)
                 result = check_output(case, mesh, symmetry, nspin)
                 results.append(result)
@@ -116,6 +120,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--abacus", required=True)
     parser.add_argument("--cases", required=True, type=Path)
+    parser.add_argument("--mpirun", default="mpirun")
+    parser.add_argument("--mpi-np-flag", default="-np")
     parser.add_argument("--work", type=Path, help="Retain run artifacts in a new directory")
     args = parser.parse_args()
     if args.work:

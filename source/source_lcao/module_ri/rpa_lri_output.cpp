@@ -81,7 +81,10 @@ try
     }
     // LibRPA reconstructs spatial k-stars and auxiliary-basis rotations from
     // the operations in the input cell's fractional row-vector convention.
-    if (this->runtime.input.symmetry == "1" && this->runtime.input.nspin != 4)
+    // This block belongs only to the reader-v1 structure contract; v0 keeps
+    // the historical stru_out layout unchanged.
+    if (this->runtime.input.out_librpa_ver == 1 && this->runtime.input.symmetry == "1"
+        && this->runtime.input.nspin != 4)
     {
         RpaLriDetail::write_stru_sym(ofs, ucell, *p_kv);
     }

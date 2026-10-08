@@ -118,7 +118,7 @@ void write_librpa_split_basis_file(const UnitCell& ucell,
         {
             throw std::runtime_error("LibRPA v1 basis output found inconsistent shell layout size.");
         }
-        if (ucell.atoms[itype].na < 0 || type_size > std::numeric_limits<int>::max() / ucell.atoms[itype].na)
+        if (ucell.atoms[itype].na <= 0 || type_size > std::numeric_limits<int>::max() / ucell.atoms[itype].na)
         {
             throw std::runtime_error("Integer overflow while summing LibRPA v1 basis sizes.");
         }
@@ -202,6 +202,10 @@ try
     RpaLriDetail::write_librpa_split_basis_file(ucell, type_nw, wfc_l_nchi, wfc_filename);
     RpaLriDetail::write_librpa_split_basis_file(ucell, type_naux, aux_l_nchi, aux_output_filename);
 
+    if (legacy_filename.empty())
+    {
+        return;
+    }
     std::ofstream ofs(legacy_output_filename, std::ios::out | std::ios::trunc);
     if (!ofs.good())
     {

@@ -30,7 +30,6 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_legacy(const Parallel_Orbitals& parav, 
     const int npsin_tmp = this->runtime.input.nspin == 2 ? 2 : 1;
     const int nbands = parav.get_wfc_global_nbands();
     const int nbasis = parav.get_wfc_global_nbasis();
-    const std::complex<double> zero(0.0, 0.0);
     const std::size_t values_per_iw = static_cast<std::size_t>(nbands) * npsin_tmp;
     // Preserve the legacy text writer when reader-v1 output is disabled.
 #ifdef __MPI

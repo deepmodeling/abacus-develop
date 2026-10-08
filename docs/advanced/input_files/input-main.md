@@ -2443,7 +2443,7 @@
 
 - **Type**: Integer
 - **Availability**: *[`basis_type`](#basis_type)==lcao*
-- **Description**: Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 includes the full-to-irreducible mapping for symmetry-reduced grids.
+- **Description**: Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 supports symmetry-reduced Monkhorst-Pack grids and requires a uniform Monkhorst-Pack KPT grid.
 - **Default**: 0
 
 ### out_pchg

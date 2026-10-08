@@ -51,7 +51,10 @@ try
     this->out_bands(pelec);
     this->out_eigen_vector(parav, psi);
     this->out_struc(ucell);
-    this->out_bz_sampling(ucell);
+    if (this->runtime.input.out_librpa_ver == 1)
+    {
+        this->out_bz_sampling(ucell);
+    }
 
     std::cout << "rpa_pca_threshold: " << this->info.pca_threshold << std::endl;
     std::cout << "rpa_ccp_rmesh_times_cut: " << this->ccp_rmesh_times_cut << std::endl;

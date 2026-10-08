@@ -62,11 +62,6 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     this->Vs_period = RI::RI_Tools::cal_period(Vs_cut_IJ, period);
     if (this->runtime.input.out_librpa_ver == 1)
     {
-        const bool use_shrink = this->info.shrink_abfs_pca_thr >= 0.0;
-        this->out_librpa_basis_v1(ucell,
-                                  exx_lri_rpa,
-                                  use_shrink ? "aux_basis_s.txt" : "aux_basis.txt",
-                                  use_shrink ? "wfc_basis_s.txt" : "basis_map.txt");
         this->out_coulomb_k_v1(ucell, this->Vs_period, "V_cut_", exx_lri_rpa);
     }
     else
@@ -183,10 +178,11 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     if (this->runtime.input.out_librpa_ver == 1)
     {
         const bool use_shrink = this->info.shrink_abfs_pca_thr >= 0.0;
-        this->out_librpa_basis_v1(ucell,
-                                  exx_full_coulomb.get(),
-                                  use_shrink ? "aux_basis_s.txt" : "aux_basis.txt",
-                                  use_shrink ? "wfc_basis_s.txt" : "basis_map.txt");
+        const std::string aux_filename = use_shrink ? "aux_basis_s.txt" : "aux_basis.txt";
+        const std::string legacy_filename = use_shrink ? "" : "basis_map.txt";
+        // With shrink enabled, cal_large_Cs emits aux_basis.txt and the
+        // canonical fallback map; this final call emits aux_basis_s.txt.
+        this->out_librpa_basis_v1(ucell, exx_full_coulomb.get(), aux_filename, legacy_filename);
         this->out_coulomb_k_v1(ucell, this->Vs_period, "V_full_", exx_full_coulomb.get());
     }
     else

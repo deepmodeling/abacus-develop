@@ -3838,7 +3838,7 @@ parameters:
     category: Output information
     type: Integer
     description: |
-      Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 includes the full-to-irreducible mapping for symmetry-reduced grids.
+      Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 supports symmetry-reduced Monkhorst-Pack grids and requires a uniform Monkhorst-Pack KPT grid.
     default_value: "0"
     unit: ""
     availability: basis_type==lcao

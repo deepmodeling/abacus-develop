@@ -24,6 +24,9 @@ cases_file=CASES_CPU.txt
 case='^[^#].*_.*$'
 # enable AddressSanitizer
 sanitize=false
+# CMake can provide the MPI launcher while standalone runs retain the default.
+mpi_launcher=${ABACUS_MPIEXEC:-mpirun}
+mpi_np_flag=${ABACUS_MPIEXEC_NUMPROC_FLAG:--np}
 
 threshold_file="threshold"
 # can specify the threshold for each test case
@@ -319,12 +322,12 @@ run_case()
                 # Windows build) reuse this harness unchanged.
                 $abacus > log.txt
             elif [ "$case" = "282_NO_RPA" ]; then
-                mpirun -np 1 $abacus > log.txt
+                "$mpi_launcher" "$mpi_np_flag" 1 $abacus > log.txt
             elif grep -qE '^[[:space:]]*of_ml_gene_data[[:space:]]+1([[:space:]]|$)' INPUT; then
                 # of_ml_gene_data supports single-rank only.
-                mpirun -np 1 $abacus > log.txt
+                "$mpi_launcher" "$mpi_np_flag" 1 $abacus > log.txt
             else
-                mpirun -np $np $abacus > log.txt
+                "$mpi_launcher" "$mpi_np_flag" $np $abacus > log.txt
             fi
 
             # if ABACUS failed, print out the error message
