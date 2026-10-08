@@ -44,8 +44,6 @@ struct Exx_Helper : public Exx_HelperBase
 
     double cal_exx_energy(void* psi_) override;
 
-    int iteration_count() const override { return exx_iter; }
-
     bool get_op_first_iter() const override { return op_exx ? op_exx->first_iter : false; }
     void set_op_first_iter(bool flag) override { if (op_exx) op_exx->first_iter = flag; }
     void set_op_exx(void* op) override { op_exx = reinterpret_cast<OperatorEXX*>(op); }

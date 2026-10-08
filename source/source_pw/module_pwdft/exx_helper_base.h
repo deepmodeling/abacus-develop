@@ -33,8 +33,6 @@ class Exx_HelperBase
 
     virtual double cal_exx_energy(void* psi) = 0;
 
-    virtual int iteration_count() const = 0;
-
     virtual bool get_op_first_iter() const = 0;
     virtual void set_op_first_iter(bool flag) = 0;
 
