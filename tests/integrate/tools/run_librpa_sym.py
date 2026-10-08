@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 from librpa_wavefunctions import check_ks_nao, read_ks_wfc
-from run_librpa_mpi import ignore_outputs
+from run_librpa_mpi import ignore_outputs, mpi_command
 
 
 def check_output(case, mesh, symmetry, nspin):
@@ -89,7 +89,9 @@ def run(args, root):
                OMP_NUM_THREADS="1",
                MKL_NUM_THREADS="1",
                ABACUS_MPIEXEC=args.mpirun,
-               ABACUS_MPIEXEC_NUMPROC_FLAG=args.mpi_np_flag)
+               ABACUS_MPIEXEC_NUMPROC_FLAG=args.mpi_np_flag,
+               ABACUS_MPIEXEC_PREFLAGS=" ".join(args.mpi_preflag),
+               ABACUS_MPIEXEC_POSTFLAGS=" ".join(args.mpi_postflag))
     cases = (source / "CASES_LIBRPA_PRODUCER.txt").read_text().split()
     for name, nspin in zip(cases, (1, 2)):
         for mesh in ((1, 1, 3), (2, 2, 2)):
@@ -107,7 +109,7 @@ def run(args, root):
                         stream.write("nupdown 1e-12\n")
                 (case / "KPT").write_text("K_POINTS\n0\nGamma\n{} {} {} 0 0 0\n".format(*mesh))
                 with (case / "producer.log").open("w") as log:
-                    subprocess.run([args.mpirun, args.mpi_np_flag, "2", args.abacus], cwd=case, env=env,
+                    subprocess.run(mpi_command(args, 2), cwd=case, env=env,
                                    stdout=log, stderr=subprocess.STDOUT, check=True, timeout=120)
                 result = check_output(case, mesh, symmetry, nspin)
                 results.append(result)
@@ -122,6 +124,8 @@ def main():
     parser.add_argument("--cases", required=True, type=Path)
     parser.add_argument("--mpirun", default="mpirun")
     parser.add_argument("--mpi-np-flag", default="-np")
+    parser.add_argument("--mpi-preflag", action="append", default=[])
+    parser.add_argument("--mpi-postflag", action="append", default=[])
     parser.add_argument("--work", type=Path, help="Retain run artifacts in a new directory")
     args = parser.parse_args()
     if args.work:

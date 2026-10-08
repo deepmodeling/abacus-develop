@@ -24,6 +24,13 @@ else()
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
     # Keep the option and its value in one argv item because MPI flags start
     # with a dash and argparse would otherwise parse the value as an option.
+    set(RPA_MPI_FLAGS)
+    foreach(flag IN LISTS MPIEXEC_PREFLAGS)
+        list(APPEND RPA_MPI_FLAGS "--mpi-preflag=${flag}")
+    endforeach()
+    foreach(flag IN LISTS MPIEXEC_POSTFLAGS)
+        list(APPEND RPA_MPI_FLAGS "--mpi-postflag=${flag}")
+    endforeach()
     add_test(
         NAME 08_RI_librpa_wavefunction_checks
         COMMAND ${Python3_EXECUTABLE} -m unittest discover
@@ -34,6 +41,7 @@ else()
         COMMAND ${Python3_EXECUTABLE} ${ABACUS_TEST_DIR}/integrate/tools/run_librpa_mpi.py
                 --abacus ${ABACUS_BIN_PATH} --cases ${ABACUS_TEST_DIR}/08_RI
                 --mpirun ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
+                ${RPA_MPI_FLAGS}
     )
     set_tests_properties(08_RI_librpa_producer_mpi PROPERTIES PROCESSORS 2 TIMEOUT 1200)
     add_test(
@@ -41,6 +49,7 @@ else()
         COMMAND ${Python3_EXECUTABLE} ${ABACUS_TEST_DIR}/integrate/tools/run_librpa_sym.py
                 --abacus ${ABACUS_BIN_PATH} --cases ${ABACUS_TEST_DIR}/08_RI
                 --mpirun ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
+                ${RPA_MPI_FLAGS}
     )
     set_tests_properties(08_RI_librpa_symmetry PROPERTIES PROCESSORS 2 TIMEOUT 1800)
 endif()

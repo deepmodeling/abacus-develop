@@ -15,12 +15,19 @@ def ignore_outputs(directory, names):
     return [name for name in names if name.startswith("OUT.") or name in ("log.txt", "result.out")]
 
 
+def mpi_command(args, ranks):
+    return [args.mpirun, args.mpi_np_flag, str(ranks), *args.mpi_preflag,
+            args.abacus, *args.mpi_postflag]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--abacus", required=True)
     parser.add_argument("--cases", required=True, type=Path)
     parser.add_argument("--mpirun", default="mpirun")
     parser.add_argument("--mpi-np-flag", default="-np")
+    parser.add_argument("--mpi-preflag", action="append", default=[])
+    parser.add_argument("--mpi-postflag", action="append", default=[])
     args = parser.parse_args()
     source = args.cases.resolve()
     cases = (source / "CASES_LIBRPA_PRODUCER.txt").read_text().split()
@@ -46,7 +53,9 @@ def main():
                    OMP_NUM_THREADS="1",
                    MKL_NUM_THREADS="1",
                    ABACUS_MPIEXEC=args.mpirun,
-                   ABACUS_MPIEXEC_NUMPROC_FLAG=args.mpi_np_flag)
+                   ABACUS_MPIEXEC_NUMPROC_FLAG=args.mpi_np_flag,
+                   ABACUS_MPIEXEC_PREFLAGS=" ".join(args.mpi_preflag),
+                   ABACUS_MPIEXEC_POSTFLAGS=" ".join(args.mpi_postflag))
         subprocess.run(["bash", "../integrate/Autotest.sh", "-a", args.abacus, "-n", "2", "-j", "1",
                         "-f", "CASES_LIBRPA_PRODUCER.txt"], cwd=work, env=env, check=True, timeout=600)
         for case in cases:
@@ -59,7 +68,7 @@ def main():
         (invalid_kpt / "KPT").write_text(
             "K_POINTS\n2\nDirect\n0.0 0.0 0.0 0.5\n0.5 0.0 0.0 0.5\n"
         )
-        invalid = subprocess.run([args.mpirun, args.mpi_np_flag, "2", args.abacus], cwd=invalid_kpt, env=env,
+        invalid = subprocess.run(mpi_command(args, 2), cwd=invalid_kpt, env=env,
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=90)
         expected_error = "out_librpa_ver=1 requires a uniform Monkhorst-Pack k-point grid."
         if invalid.returncode == 0 or expected_error not in invalid.stdout:
@@ -75,7 +84,7 @@ def main():
             inp = case / "INPUT"
             inp.write_text(inp.read_text().replace("../../PP_ORB", str(source.parent / "PP_ORB")))
             (case / "OUT.librpa" / name).mkdir(parents=True)
-            run = subprocess.run([args.mpirun, args.mpi_np_flag, "2", args.abacus], cwd=case, env=env,
+            run = subprocess.run(mpi_command(args, 2), cwd=case, env=env,
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=90)
             if run.returncode == 0 or "RPA producer output failed:" not in run.stdout:
                 raise RuntimeError("{} did not report a communicator-wide failure:\n{}".format(name, run.stdout))

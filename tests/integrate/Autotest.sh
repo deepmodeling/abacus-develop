@@ -27,6 +27,11 @@ sanitize=false
 # CMake can provide the MPI launcher while standalone runs retain the default.
 mpi_launcher=${ABACUS_MPIEXEC:-mpirun}
 mpi_np_flag=${ABACUS_MPIEXEC_NUMPROC_FLAG:--np}
+# FindMPI may require launcher-specific flags (for example
+# Open MPI's --allow-run-as-root in a CI container). Keep these as arrays so
+# every invocation uses the same command assembled by the CMake test setup.
+read -r -a mpi_preflags <<< "${ABACUS_MPIEXEC_PREFLAGS:-}"
+read -r -a mpi_postflags <<< "${ABACUS_MPIEXEC_POSTFLAGS:-}"
 
 threshold_file="threshold"
 # can specify the threshold for each test case
@@ -322,12 +327,12 @@ run_case()
                 # Windows build) reuse this harness unchanged.
                 $abacus > log.txt
             elif [ "$case" = "282_NO_RPA" ]; then
-                "$mpi_launcher" "$mpi_np_flag" 1 $abacus > log.txt
+                "$mpi_launcher" "$mpi_np_flag" 1 "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" > log.txt
             elif grep -qE '^[[:space:]]*of_ml_gene_data[[:space:]]+1([[:space:]]|$)' INPUT; then
                 # of_ml_gene_data supports single-rank only.
-                "$mpi_launcher" "$mpi_np_flag" 1 $abacus > log.txt
+                "$mpi_launcher" "$mpi_np_flag" 1 "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" > log.txt
             else
-                "$mpi_launcher" "$mpi_np_flag" $np $abacus > log.txt
+                "$mpi_launcher" "$mpi_np_flag" $np "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" > log.txt
             fi
 
             # if ABACUS failed, print out the error message
