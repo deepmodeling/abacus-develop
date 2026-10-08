@@ -149,6 +149,31 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
     if (istep == 0)
     {
         ESolver_KS_PW<T, Device>::hamilt2rho_single(ucell, istep, iter, ethr);
+        if (this->inp_->td_orthonormal != "none")
+        {
+            psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
+            int changed = this->td_solver_->correct_initial(current, iter);
+            // Occupations and density construction contain collectives across k-point pools.
+            Parallel_Reduce::reduce_all(changed);
+            if (changed > 0)
+            {
+                hamilt::Hamilt<T, Device>* hamiltonian = static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt);
+                hamilt::HamiltHSOperator<T, Device> op(hamiltonian, this->pw_wfc);
+                this->td_solver_->cal_band_energy(op, *current, &this->pelec->ekb);
+                elecstate::calculate_weights(this->pelec->ekb,
+                                             this->pelec->wg,
+                                             this->pelec->klist,
+                                             this->pelec->eferm,
+                                             this->pelec->f_en,
+                                             this->pelec->nelec_spin,
+                                             this->inp_->nbands,
+                                             this->pelec->skip_weights);
+                elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
+                elecstate::ElecStatePW<T, Device>* estate = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
+                estate->psiToRho(*current);
+                module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
+            }
+        }
         ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "hamilt2rho_single");
         return;
     }
@@ -214,7 +239,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "Cannot propagate an unconverged electronic state.");
     }
-    if (istep == 0)
+    if (istep == 0 && this->inp_->td_orthonormal == "none")
     {
         const psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
         this->td_solver_->check_initial(*current, this->niter);

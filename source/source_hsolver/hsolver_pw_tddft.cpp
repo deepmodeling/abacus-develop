@@ -474,7 +474,7 @@ void HSolverPWTDDFT<T, Device>::record_orth(const OrthResult& result, int ik, in
 {
     if (result.status == OrthStatus::failed)
     {
-        const char* stage = istep == 0 ? "initial check" : "propagation";
+        const char* stage = istep == 0 ? "initialization" : "propagation";
         std::ostringstream message;
         const int evolution_step = istep + 1;
         message << std::setprecision(16) << " PW RT-TDDFT orbital validation failed (" << stage << "): evolution_step=" << evolution_step
@@ -517,7 +517,6 @@ void HSolverPWTDDFT<T, Device>::report_orth_warning(const OrthResult& result, in
     {
         return;
     }
-    const bool initial_warning = istep == 0 && result.gram_checked && result.after > orth_tolerance<T>();
     unsigned int events = 0;
     if (result.fallbacks > 0)
     {
@@ -528,7 +527,7 @@ void HSolverPWTDDFT<T, Device>::report_orth_warning(const OrthResult& result, in
         events |= 2;
     }
     const unsigned int fresh_events = events & ~warned_events_;
-    if (!initial_warning && fresh_events == 0)
+    if (fresh_events == 0)
     {
         return;
     }
@@ -547,31 +546,54 @@ void HSolverPWTDDFT<T, Device>::report_orth_warning(const OrthResult& result, in
     message << " requested=" << orth_method_name(options_.orthonormal) << '\n'
             << "   before=" << result.before << " after=" << result.after << " tolerance=" << orth_tolerance<T>() << '\n'
             << "   ";
-    if (initial_warning)
+    message << "last_attempted=" << orth_method_name(result.actual) << ". ";
+    if (fresh_events & 1)
     {
-        message << "Initial orbitals are unchanged; finite orthogonality error exceeds the propagation correction tolerance.";
+        message << "A fallback was attempted. ";
     }
-    else
+    if (fresh_events & 2)
     {
-        message << "last_attempted=" << orth_method_name(result.actual) << ". ";
-        if (fresh_events & 1)
-        {
-            message << "A fallback was attempted. ";
-        }
-        if (fresh_events & 2)
-        {
-            message << "A candidate was rejected. ";
-        }
-        message << "The retained state satisfies the tolerance." << '\n'
-                << "   " << result.reason << '\n'
-                << "   Further events of these types in this pool are suppressed for this electronic evolution step.";
+        message << "A candidate was rejected. ";
     }
+    message << "The retained state satisfies the tolerance." << '\n'
+            << "   " << result.reason << '\n'
+            << "   Further events of these types in this pool are suppressed for this electronic evolution step.";
     const std::string text = message.str();
     std::cerr << text << std::endl;
     if (log_.good())
     {
         log_ << text << std::endl;
     }
+}
+
+template <typename T, typename Device>
+bool HSolverPWTDDFT<T, Device>::correct_initial(psi::Psi<T, Device>* current, int iter)
+{
+    ModuleBase::timer::start("HSolverPWTDDFT", "correct_initial");
+    bool changed = false;
+    if (options_.orthonormal != OrthMethod::none)
+    {
+        if (options_.out_stat)
+        {
+            // Initial diagnostics describe this SCF state, not earlier discarded iterates.
+            orth_stats_ = TDOrthStats();
+            orth_norms_.resize(current->get_nk());
+        }
+        for (int ik = 0; ik < current->get_nk(); ++ik)
+        {
+            current->fix_k(ik);
+            const OrthResult result = orthonormal_.apply(current->get_pointer(),
+                                                         current->get_nbasis(),
+                                                         current->get_ngk(ik),
+                                                         current->get_nbands(),
+                                                         options_.orthonormal,
+                                                         options_.out_stat);
+            record_orth(result, ik, 0, iter);
+            changed = changed || result.status == OrthStatus::accepted;
+        }
+    }
+    ModuleBase::timer::end("HSolverPWTDDFT", "correct_initial");
+    return changed;
 }
 
 template <typename T, typename Device>

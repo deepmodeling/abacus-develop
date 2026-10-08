@@ -65,6 +65,8 @@ class HSolverPWTDDFT
     void invalidate_basis();
     /** @brief Reset diagnostics without invalidating preconditioner history. */
     void reset_orth_stats();
+    /** @brief Correct initial orbitals when needed; return whether this pool changed any orbital. */
+    bool correct_initial(psi::Psi<T, Device>* current, int iter);
     /** @brief Check the converged initial state once; finite orthogonality errors are diagnostic only. */
     void check_initial(const psi::Psi<T, Device>& current, int iter);
     /** @brief Occupation-weighted electron count for the local k-point pool. */
