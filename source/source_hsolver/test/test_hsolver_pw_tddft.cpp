@@ -181,6 +181,7 @@ TYPED_TEST(PWTDDFTTest, DenseCNCorrectorsAndConservation)
             DenseHamiltonian<T> op(sizes);
             std::ostringstream log;
             hsolver::PWLinearOptions options;
+            options.global_k_indices = {0, 1};
             const std::string solver_name = cn_variant ? method.substr(0, method.size() - 3) : method;
             options.linear.method = hsolver::parse_linear_method(solver_name);
             options.linear.tolerance = single_precision ? 2e-6 : 1e-13;
@@ -328,6 +329,7 @@ TYPED_TEST(PWTDDFTTest, UnequalOccupationsAndDiagnosticsPreservePropagation)
     {
         std::ostringstream log;
         hsolver::PWLinearOptions options;
+        options.global_k_indices = {0};
         options.linear.method = hsolver::LinearMethod::gmres;
         options.linear.tolerance = single ? 2e-6 : 1e-13;
         options.linear.max_iterations = 100;

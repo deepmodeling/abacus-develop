@@ -347,7 +347,7 @@ void HSolverPWTDDFT<T, Device>::report_solve(const SolveDetails& details, int ik
     const int evolution_step = step + 1;
     std::ostringstream record;
     record << std::scientific << std::setprecision(6) << " PW RT-TDDFT linear solve: evolution_step=" << evolution_step
-           << " scf_iter=" << iteration << " k=" << ik << '\n'
+           << " scf_iter=" << iteration << " global_k=" << options_.global_k_indices.at(ik) << '\n'
            << "   iterations=" << result.iterations << " restarts=" << result.restarts << " operator_calls=" << result.operator_calls
            << " operator_columns=" << result.operator_columns << " pre_orth_residual=" << result.max_residual
            << " residual_kind=" << (result.reconstructed ? "reconstructed" : "independent") << " true_checks=" << result.true_checks << '\n'
@@ -409,8 +409,8 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
             std::ostringstream message;
             const int evolution_step = istep + 1;
             message << "PW RT-TDDFT linear solve failed at electronic evolution step " << evolution_step << ", SCF iteration " << iter
-                    << ", k point " << ik << ", band " << result.failed_band << ", after " << result.iterations
-                    << " iterations: " << linear_status_name(result.status) << "; residual = " << result.max_residual;
+                    << ", global_k=" << options_.global_k_indices.at(ik) << ", band " << result.failed_band << ", after "
+                    << result.iterations << " iterations: " << linear_status_name(result.status) << "; residual = " << result.max_residual;
             ModuleBase::WARNING_QUIT("HSolverPWTDDFT", message.str());
         }
         correct_orbitals(current_data, ld, dim, bands, ik, istep, iter, detailed_output);
@@ -462,8 +462,8 @@ void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, in
         const int evolution_step = istep + 1;
         std::ostringstream record;
         record << std::scientific << std::setprecision(6) << " PW RT-TDDFT orth: evolution_step=" << evolution_step << " scf_iter=" << iter
-               << " k=" << ik << " requested=" << orth_method_name(options_.orthonormal) << " orth_before=" << result.before
-               << " orth_after=" << result.after << '\n';
+               << " global_k=" << options_.global_k_indices.at(ik) << " requested=" << orth_method_name(options_.orthonormal)
+               << " orth_before=" << result.before << " orth_after=" << result.after << '\n';
         log_ << record.str();
     }
     ModuleBase::timer::end("HSolverPWTDDFT", "correct_orbitals");
@@ -478,7 +478,8 @@ void HSolverPWTDDFT<T, Device>::record_orth(const OrthResult& result, int ik, in
         std::ostringstream message;
         const int evolution_step = istep + 1;
         message << std::setprecision(16) << " PW RT-TDDFT orbital validation failed (" << stage << "): evolution_step=" << evolution_step
-                << " scf_iter=" << iter << " local_k=" << ik << " requested=" << orth_method_name(options_.orthonormal) << '\n'
+                << " scf_iter=" << iter << " global_k=" << options_.global_k_indices.at(ik)
+                << " requested=" << orth_method_name(options_.orthonormal) << '\n'
                 << "   last_attempted=" << orth_method_name(result.actual) << " passes=" << result.passes
                 << " fallbacks=" << result.fallbacks << '\n'
                 << "   " << orth_failure_name(result.failure) << "; " << result.reason;
@@ -535,14 +536,7 @@ void HSolverPWTDDFT<T, Device>::report_orth_warning(const OrthResult& result, in
     const int evolution_step = istep + 1;
     std::ostringstream message;
     message << std::setprecision(16) << " PW RT-TDDFT orbital warning: evolution_step=" << evolution_step << " scf_iter=" << iter;
-    if (options_.global_k_indices.empty())
-    {
-        message << " local_k=" << ik;
-    }
-    else
-    {
-        message << " global_k=" << options_.global_k_indices.at(ik);
-    }
+    message << " global_k=" << options_.global_k_indices.at(ik);
     message << " requested=" << orth_method_name(options_.orthonormal) << '\n'
             << "   before=" << result.before << " after=" << result.after << " tolerance=" << orth_tolerance<T>() << '\n'
             << "   ";

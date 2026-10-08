@@ -34,7 +34,7 @@ struct PWLinearOptions
     bool cn_init = false;
     bool kinetic_enabled = true;
     bool out_stat = false;
-    std::vector<int> global_k_indices;
+    std::vector<int> global_k_indices; ///< Required zero-based global index for every local k point.
 };
 
 LinearMethod parse_linear_method(const std::string& name);
