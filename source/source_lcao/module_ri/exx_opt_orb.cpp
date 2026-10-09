@@ -10,6 +10,7 @@
 #include "source_lcao/module_ri/matrix_orbs21.h"
 #include "source_lcao/module_ri/matrix_orbs22.h"
 #include "source_lcao/module_ri/lri_cv_tools.h"
+#include "source_io/module_parameter/parameter.h"
 #include <RI/global/Tensor_Multiply.h>
 
 void Exx_Opt_Orb::generate_matrix(

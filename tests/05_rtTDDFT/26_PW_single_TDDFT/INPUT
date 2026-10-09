@@ -42,6 +42,8 @@ td_gauss_sigma      0.04
 td_gauss_t0         4
 td_gauss_amp        0.1
 lin_solver          bicgstab
+td_orthonormal      newton_schulz
+td_out_stat         1
 lin_precond         kinetic
 lin_thr             1e-7
 lin_maxiter         100
