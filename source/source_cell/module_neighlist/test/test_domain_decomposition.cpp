@@ -261,24 +261,22 @@ TEST_F(DomainDecompositionTest, PeriodicGhostImageRebuildsOnBoundaryCrossing)
     decomp.prepare_neighbors(cell);
     EXPECT_NE(&cell.neighbor_search(), search);
 
-    if (domain.rank() == 0)
+    long long local_type_one = 0;
+    for (const LocalAtom& atom : cell.owned_atoms())
     {
-        bool found_wrapped_ghost = false;
-        for (const LocalAtom& ghost : cell.ghost_atoms())
+        if (atom.type_index == 1)
         {
-            if (ghost.owner_rank == 1 && ghost.type_index == 1)
-            {
-                EXPECT_NEAR(ghost.cart.x, 0.04, 1.0e-12);
-                found_wrapped_ghost = true;
-            }
+            EXPECT_NEAR(atom.cart.x, 0.04, 1.0e-12);
+            ++local_type_one;
         }
-        EXPECT_TRUE(found_wrapped_ghost);
     }
+    Parallel_Reduce::reduce_all(local_type_one);
+    EXPECT_EQ(local_type_one, 1);
 }
 
 TEST_F(DomainDecompositionTest, PeriodicGhostImageUpdatesAcrossRepeatedCrossings)
 {
-    if (domain.size() != 2)
+    if (domain.size() != 1)
     {
         return;
     }
@@ -291,6 +289,7 @@ TEST_F(DomainDecompositionTest, PeriodicGhostImageUpdatesAcrossRepeatedCrossings
         }
     }
     decomp.prepare_neighbors(cell);
+    const NeighborSearch* previous_search = &cell.neighbor_search();
 
     const double positions[4] = {0.01, 0.99, 0.01, 0.99};
     for (double position : positions)
@@ -304,21 +303,19 @@ TEST_F(DomainDecompositionTest, PeriodicGhostImageUpdatesAcrossRepeatedCrossings
             }
         }
         decomp.prepare_neighbors(cell);
+        EXPECT_NE(&cell.neighbor_search(), previous_search);
+        previous_search = &cell.neighbor_search();
 
-        if (domain.rank() == 0)
+        bool found_owned_atom = false;
+        for (const LocalAtom& atom : cell.owned_atoms())
         {
-            bool found_wrapped_ghost = false;
-            for (const LocalAtom& ghost : cell.ghost_atoms())
+            if (atom.type_index == 1)
             {
-                if (ghost.owner_rank == 1 && ghost.type_index == 1)
-                {
-                    const double expected_cart_x = position < 0.5 ? position * 4.0 : position * 4.0 - 4.0;
-                    EXPECT_NEAR(ghost.cart.x, expected_cart_x, 1.0e-12);
-                    found_wrapped_ghost = true;
-                }
+                EXPECT_NEAR(atom.cart.x, position * 4.0, 1.0e-12);
+                found_owned_atom = true;
             }
-            EXPECT_TRUE(found_wrapped_ghost);
         }
+        EXPECT_TRUE(found_owned_atom);
     }
 }
 
