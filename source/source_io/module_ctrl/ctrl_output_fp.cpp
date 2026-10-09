@@ -1,13 +1,14 @@
 #include "ctrl_output_fp.h" // use ctrl_output_fp()
-#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
-#include "source_estate/elecstate.h" // use elecstate::ElecState
-#include "source_estate/module_charge/charge.h" // use Charge
-#include "../module_output/cube_io.h" // use write_vdata_palgrid
-#include "../module_dipole/dipole_io.h" // use write_dipole
-#include "source_estate/module_charge/chg_symm.h" // use module_charge::cal_rhog_symm
-#include "source_hamilt/module_xc/xc_functional.h"    // use XC_Functional
-#include "source_estate/write_elecstat_pot.h" // use write_elecstat_pot
+
+#include "source_basis/module_pw/pw_basis_big.h"   // use PW_Basis_Big
+#include "source_estate/elecstate.h"               // use elecstate::ElecState
+#include "source_estate/module_charge/charge.h"    // use Charge
+#include "source_estate/module_charge/chg_symm.h"  // use module_charge::cal_rhog_symm
+#include "source_estate/write_elecstat_pot.h"      // use write_elecstat_pot
+#include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
+#include "source_io/module_dipole/dipole_io.h"     // use write_dipole
 #include "source_io/module_elf/write_elf.h"
+#include "source_io/module_output/cube_io.h"            // use write_vdata_palgrid
 #include "source_io/module_parameter/input_parameter.h" // use Input_para
 
 #ifdef __LIBXC
@@ -80,7 +81,7 @@ void ctrl_output_fp(UnitCell& ucell,
             fn += spin_block + geom_block + ".cube";
 
             ModuleIO::write_vdata_palgrid(para_grid,
-                                          chr.rho_save[is],
+                                          chr.rho[is],
                                           is,
                                           nspin,
                                           istep, // change istep_in to istep, mohan 20260222
@@ -99,7 +100,7 @@ void ctrl_output_fp(UnitCell& ucell,
                 fn += spin_block + geom_block + ".cube";
 
                 ModuleIO::write_vdata_palgrid(para_grid,
-                                              chr.kin_r_save[is],
+                                              chr.kin_r[is],
                                               is,
                                               nspin,
                                               istep,
@@ -107,7 +108,7 @@ void ctrl_output_fp(UnitCell& ucell,
                                               pelec->eferm.get_efval(is),
                                               &(ucell),
                                               11, // default precision
-                                              1, // default out_fermi
+                                              1,  // default out_fermi
                                               PARAM.globalv.two_fermi,
                                               false);
             }
@@ -141,8 +142,8 @@ void ctrl_output_fp(UnitCell& ucell,
                                           fn,
                                           0.0, // efermi
                                           &(ucell),
-                                          inp.out_pot[1],  // precision
-                                          0, // out_fermi
+                                          inp.out_pot[1], // precision
+                                          0,              // out_fermi
                                           PARAM.globalv.two_fermi,
                                           false);
         }
@@ -180,16 +181,16 @@ void ctrl_output_fp(UnitCell& ucell,
 
         std::string out_dir = PARAM.globalv.global_out_dir;
         ModuleIO::write_elf(out_dir,
-            istep,
-            nspin,
-            chr.rho,
-            chr.kin_r,
-            pw_rhod,
-            para_grid,
-            &(ucell),
-            inp.out_elf[1],
-            geom_block,
-            PARAM.globalv.two_fermi);
+                            istep,
+                            nspin,
+                            chr.rho,
+                            chr.kin_r,
+                            pw_rhod,
+                            para_grid,
+                            &(ucell),
+                            inp.out_elf[1],
+                            geom_block,
+                            PARAM.globalv.two_fermi);
     }
 
 #ifdef __LIBXC
@@ -214,7 +215,7 @@ void ctrl_output_fp(UnitCell& ucell,
         {
             std::stringstream ss_dipole;
             ss_dipole << global_out_dir << "dipole_s" << is + 1 << ".txt";
-            ModuleIO::write_dipole(ucell, chr.rho_save[is], pw_rhod, istep, ss_dipole.str(), GlobalV::ofs_running);
+            ModuleIO::write_dipole(ucell, chr.rho[is], pw_rhod, istep, ss_dipole.str(), GlobalV::ofs_running);
         }
     }
 

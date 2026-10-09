@@ -22,6 +22,7 @@ if (ENABLE_LIBRI)
         gaussian_abfs.cpp
         singular_value.cpp
         exx_lri_detail.cpp
+        ri_util.cpp
         rpa_lri.cpp
         rpa_lri_detail.cpp
         rpa_lri_mpi_layout.cpp

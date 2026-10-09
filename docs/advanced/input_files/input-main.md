@@ -504,6 +504,8 @@
     - [init\_vecpot\_file](#init_vecpot_file)
     - [out\_vecpot](#out_vecpot)
   - [Real-Time TDDFT (PW)](#real-time-tddft-pw)
+    - [td\_orthonormal](#td_orthonormal)
+    - [td\_out\_stat](#td_out_stat)
     - [lin\_solver](#lin_solver)
     - [lin\_precond](#lin_precond)
     - [lin\_thr](#lin_thr)
@@ -4700,6 +4702,28 @@
 
 ## Real-Time TDDFT (PW)
 
+### td_orthonormal
+
+- **Type**: String
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Orthonormalize each propagated wavefunction before constructing its density. With the wavefunctions as columns of $\boldsymbol{\Psi}$, define the Gram matrix $\boldsymbol{S}=\boldsymbol{\Psi}^{\dagger}\boldsymbol{\Psi}$ and apply $\boldsymbol{\Psi}\leftarrow\boldsymbol{\Psi}\boldsymbol{C}$.
+  - `cholesky`: Cholesky orthonormalization. Factor $\boldsymbol{S}=\boldsymbol{R}^{\dagger}\boldsymbol{R}$ with upper-triangular $\boldsymbol{R}$ and use $\boldsymbol{C}=\boldsymbol{R}^{-1}$.
+  - `lowdin`: Löwdin symmetric orthonormalization. Compute $\boldsymbol{C}=\boldsymbol{S}^{-1/2}$ by eigendecomposition.
+  - `newton_schulz`: Newton-Schulz iteration for a Gram matrix close to the identity. Starting from $\boldsymbol{C}_0=\boldsymbol{I}$, approximate $\boldsymbol{S}^{-1/2}$ using $\boldsymbol{C}_{j+1}=\boldsymbol{C}_j(3\boldsymbol{I}-\boldsymbol{S}\boldsymbol{C}_j^2)/2$.
+  - `none`: Disable orthonormalization.
+
+  > Note: Orthonormalization is applied after the Crank-Nicolson linear solve and uses an orthogonality tolerance independent of `lin_thr`. With orthonormalization enabled, the propagated Gram matrix must differ from the identity by at most `1e-6` (single precision) or `1e-12` (double precision) per element; unsuccessful corrections stop the calculation. Wavefunctions within this tolerance are left unchanged. Nonfinite or nonpositive orbital norms are rejected even with `none`.
+- **Default**: cholesky
+
+### td_out_stat
+
+- **Type**: Boolean
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Write wavefunction and density electron counts, their changes from the initial state, and orthogonality errors to the running log after each electronic evolution step. Electron counts describe the end-of-step state; orthogonality errors before and after correction are separate maxima over all SCF iterations and k points within that step. Orthogonality errors are omitted when `td_orthonormal=none`.
+
+  > Note: Enabling this output adds density integration and diagnostic communication.
+- **Default**: false
+
 ### lin_solver
 
 - **Type**: String
@@ -4733,7 +4757,7 @@
   - `bicgstab` and `gmres`: Require $\lVert\boldsymbol{r}\rVert\leqslant\tau\max(1,\lVert\boldsymbol{b}\rVert)$.
   - `cgs`: Require $\lVert\boldsymbol{r}\rVert\leqslant\tau\lVert\boldsymbol{b}\rVert$ for nonzero $\boldsymbol{b}$, or $\lVert\boldsymbol{r}\rVert\leqslant\tau$ for zero $\boldsymbol{b}$.
 
-  All methods check the final residual explicitly. GMRES can use explicit residual reconstruction with periodic independent checks when `lin_reconstruct` is enabled.
+  All methods check the residual at the end of the linear solve, before orthonormalization. GMRES can use explicit residual reconstruction with periodic independent checks when `lin_reconstruct` is enabled. Subsequent orthonormalization uses a separate orthogonality tolerance and does not guarantee that the corrected wavefunctions satisfy the same linear residual tolerance.
 - **Default**: 0
 
 ### lin_maxiter
