@@ -3,8 +3,6 @@
 
 #include "esolver.h"
 
-class ESolverDPNeighborListTest;
-
 #ifdef __DPMD
 #ifdef __DPMDC
 #include "deepmd/deepmd.hpp"
@@ -110,13 +108,6 @@ class ESolver_DP : public ESolver
     }
 
   private:
-    friend class ::ESolverDPNeighborListTest;
-
-    static std::vector<int> sort_neighbor_indices_by_distance(const std::vector<double>& coord,
-                                                               int central_atom,
-                                                               const int* neighbor_indices,
-                                                               int neighbor_count);
-
     /**
      * @brief determine the type map of DP model
      *

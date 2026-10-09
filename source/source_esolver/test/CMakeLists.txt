@@ -21,9 +21,9 @@ AddTest(
   LIBS ${_esolver_dp_test_libs}
   SOURCES
     esolver_dp_test.cpp
-    test_esolver_dp.cpp
     ../esolver_dp.cpp
     ../../source_cell/basecell.cpp
     ../../source_cell/cif_io.cpp
+    ../../source_cell/module_neighlist/neighbor_list.cpp
     ../../source_io/module_output/output_log.cpp
 )
