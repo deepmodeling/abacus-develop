@@ -264,6 +264,16 @@ void DomainDecomposition::exchange_ghost_atoms(MDCell& cell)
     {
         GhostExchangeSlot& slot = slots[islot];
         const std::vector<PackedAtom>& send_atoms = send_buffers[islot];
+        slot.previous_fracs.clear();
+        slot.dynamic_image_shifts.clear();
+        slot.previous_fracs.reserve(slot.send_atom_indices.size());
+        slot.dynamic_image_shifts.reserve(slot.send_atom_indices.size());
+        for (const int index : slot.send_atom_indices)
+        {
+            const LocalAtom& atom = owned_atoms[static_cast<std::size_t>(index)];
+            slot.previous_fracs.push_back({{atom.frac.x, atom.frac.y, atom.frac.z}});
+            slot.dynamic_image_shifts.push_back(slot.image_shift);
+        }
         slot.ghost_begin = ghost_atoms.size();
 
         if (send_atoms.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
@@ -318,16 +328,17 @@ void DomainDecomposition::update_ghost_atom_positions(MDCell& cell)
     std::vector<LocalAtom>& ghost_atoms = cell.ghost_atoms_;
     for (std::size_t islot = 0; islot < ghost_slots_.size(); ++islot)
     {
-        const GhostExchangeSlot& slot = ghost_slots_[islot];
+        GhostExchangeSlot& slot = ghost_slots_[islot];
         // Keep wrapped fractional coordinates for metadata and send the
         // dynamically selected image coordinates in the same message.
         std::vector<double> send_frac(6 * slot.send_atom_indices.size(), 0.0);
         for (std::size_t i = 0; i < slot.send_atom_indices.size(); ++i)
         {
             const LocalAtom& atom = owned_atoms[static_cast<std::size_t>(slot.send_atom_indices[i])];
-            const ModuleBase::Vector3<double>& reference_frac =
-                cell.neighbor_reference_frac_[static_cast<std::size_t>(slot.send_atom_indices[i])];
-            const std::array<int, 3> image_shift = image_shift_for_update(atom, reference_frac, slot);
+            const std::array<int, 3> image_shift = image_shift_for_update(
+                atom, slot.previous_fracs[i], slot.dynamic_image_shifts[i], slot);
+            slot.previous_fracs[i] = {{atom.frac.x, atom.frac.y, atom.frac.z}};
+            slot.dynamic_image_shifts[i] = image_shift;
             send_frac[3 * i] = atom.frac.x;
             send_frac[3 * i + 1] = atom.frac.y;
             send_frac[3 * i + 2] = atom.frac.z;
@@ -476,18 +487,25 @@ void DomainDecomposition::prepare_neighbors(MDCell& cell)
     bool rebuild = !cell.neighbor_layout_valid_ || cell.neighbor_reference_frac_.size() != cell.owned_atoms_.size();
     rebuild = domain.max(rebuild || !ghost_layout_valid_ ? 1 : 0) != 0;
     double local_max_displacement = 0.0;
+    bool local_periodic_crossing = false;
     if (!rebuild)
     {
         for (std::size_t i = 0; i < cell.owned_atoms_.size(); ++i)
         {
             ModuleBase::Vector3<double> delta = cell.owned_atoms_[i].frac - cell.neighbor_reference_frac_[i];
+            if (std::nearbyint(delta.x) != 0.0 || std::nearbyint(delta.y) != 0.0
+                || std::nearbyint(delta.z) != 0.0)
+            {
+                local_periodic_crossing = true;
+            }
             delta.x -= std::nearbyint(delta.x);
             delta.y -= std::nearbyint(delta.y);
             delta.z -= std::nearbyint(delta.z);
             local_max_displacement = std::max(local_max_displacement, (delta * cell.latvec_).norm() * cell.lat0_);
         }
         local_max_displacement = domain.max(local_max_displacement);
-        rebuild = local_max_displacement >= cell.skin_ * 0.5;
+        rebuild = local_max_displacement >= cell.skin_ * 0.5
+                  || domain.max(local_periodic_crossing ? 1 : 0) != 0;
     }
 
     if (rebuild)
@@ -783,12 +801,12 @@ void DomainDecomposition::target_for_offset(const std::array<int, 3>& offset,
 
 std::array<int, 3> DomainDecomposition::image_shift_for_update(
     const LocalAtom& atom,
-    const ModuleBase::Vector3<double>& reference_frac,
+    const std::array<double, 3>& previous_frac,
+    const std::array<int, 3>& previous_image_shift,
     const GhostExchangeSlot& slot) const
 {
-    std::array<int, 3> image_shift = slot.image_shift;
+    std::array<int, 3> image_shift = previous_image_shift;
     const double frac[3] = {atom.frac.x, atom.frac.y, atom.frac.z};
-    const double reference[3] = {reference_frac.x, reference_frac.y, reference_frac.z};
     for (int idim = 0; idim < 3; ++idim)
     {
         if (slot.offset[idim] == 0)
@@ -796,8 +814,8 @@ std::array<int, 3> DomainDecomposition::image_shift_for_update(
             continue;
         }
 
-        const int crossing = static_cast<int>(std::nearbyint(frac[idim] - reference[idim]));
-        if (crossing == 0 || image_shift[idim] == 0)
+        const int crossing = static_cast<int>(std::nearbyint(frac[idim] - previous_frac[idim]));
+        if (crossing == 0)
         {
             continue;
         }

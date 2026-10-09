@@ -234,7 +234,7 @@ TEST_F(DomainDecompositionTest, CrossingHaloEdgePreservesCachedGhostSlots)
     }
 }
 
-TEST_F(DomainDecompositionTest, PeriodicGhostImageUpdatesWithoutRebuild)
+TEST_F(DomainDecompositionTest, PeriodicGhostImageRebuildsOnBoundaryCrossing)
 {
     if (domain.size() != 2)
     {
@@ -259,7 +259,7 @@ TEST_F(DomainDecompositionTest, PeriodicGhostImageUpdatesWithoutRebuild)
         }
     }
     decomp.prepare_neighbors(cell);
-    EXPECT_EQ(&cell.neighbor_search(), search);
+    EXPECT_NE(&cell.neighbor_search(), search);
 
     if (domain.rank() == 0)
     {
@@ -273,6 +273,52 @@ TEST_F(DomainDecompositionTest, PeriodicGhostImageUpdatesWithoutRebuild)
             }
         }
         EXPECT_TRUE(found_wrapped_ghost);
+    }
+}
+
+TEST_F(DomainDecompositionTest, PeriodicGhostImageUpdatesAcrossRepeatedCrossings)
+{
+    if (domain.size() != 2)
+    {
+        return;
+    }
+    for (LocalAtom& atom : cell.owned_atoms())
+    {
+        if (atom.type_index == 1)
+        {
+            atom.frac.x = 0.99;
+            atom.cart = atom.frac * cell.latvec();
+        }
+    }
+    decomp.prepare_neighbors(cell);
+
+    const double positions[4] = {0.01, 0.99, 0.01, 0.99};
+    for (double position : positions)
+    {
+        for (LocalAtom& atom : cell.owned_atoms())
+        {
+            if (atom.type_index == 1)
+            {
+                atom.frac.x = position;
+                atom.cart = atom.frac * cell.latvec();
+            }
+        }
+        decomp.prepare_neighbors(cell);
+
+        if (domain.rank() == 0)
+        {
+            bool found_wrapped_ghost = false;
+            for (const LocalAtom& ghost : cell.ghost_atoms())
+            {
+                if (ghost.owner_rank == 1 && ghost.type_index == 1)
+                {
+                    const double expected_cart_x = position < 0.5 ? position * 4.0 : position * 4.0 - 4.0;
+                    EXPECT_NEAR(ghost.cart.x, expected_cart_x, 1.0e-12);
+                    found_wrapped_ghost = true;
+                }
+            }
+            EXPECT_TRUE(found_wrapped_ghost);
+        }
     }
 }
 
