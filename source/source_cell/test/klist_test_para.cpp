@@ -206,6 +206,7 @@ TEST_F(KlistParaTest, Set)
     const std::string kmesh_type = "gamma";
     const double koffset[3] = {0.0, 0.0, 0.0};
     kv->set(ucell, symm, k_file, /*nspin_in*/ 1, ucell.G, ucell.latvec, GlobalV::ofs_running, GlobalV::ofs_warning, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
+    EXPECT_TRUE(kv->get_is_mp());
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_EQ(kv->get_nkstot_nospin(), 512);
     EXPECT_GT(kv->get_nkstot_nospin(), kv->get_nkstot());

@@ -132,25 +132,10 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     const double kspacing[3] = {this->inp_->kspacing[0], this->inp_->kspacing[1], this->inp_->kspacing[2]};
     const double koffset[3] = {this->inp_->koffset[0], this->inp_->koffset[1], this->inp_->koffset[2]};
     this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, GlobalV::ofs_warning, use_ibz, global_out_dir, gamma_only_local, kspacing, this->inp_->kmesh_type, koffset);
-    if (inp.rpa && inp.out_librpa_ver == 1)
+    if (inp.rpa && inp.out_librpa_ver == 1 && !this->kv.is_uniform_mp())
     {
-        bool valid_mp_grid = this->kv.get_is_mp();
-        long long full_kpoints = 1;
-        for (int dim = 0; dim < 3; ++dim)
-        {
-            const int size = this->kv.nmp[dim];
-            if (size <= 0 || full_kpoints > this->kv.get_nkstot_nospin() / size)
-            {
-                valid_mp_grid = false;
-                break;
-            }
-            full_kpoints *= size;
-        }
-        if (!valid_mp_grid || full_kpoints != this->kv.get_nkstot_nospin())
-        {
-            ModuleBase::WARNING_QUIT("INPUT",
-                                     "out_librpa_ver=1 requires a uniform Monkhorst-Pack k-point grid.");
-        }
+        ModuleBase::WARNING_QUIT("INPUT",
+                                 "out_librpa_ver=1 requires a uniform Monkhorst-Pack k-point grid.");
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 

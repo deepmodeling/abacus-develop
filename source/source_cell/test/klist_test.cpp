@@ -877,6 +877,7 @@ TEST_F(KlistTest, IbzKpointIsMP)
     kv->read_kpoints_for_testing(ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset, ofs_running, ofs_warning, my_rank);
     EXPECT_EQ(kv->get_nkstot(), 512);
     EXPECT_TRUE(kv->is_mp);
+    EXPECT_TRUE(kv->is_uniform_mp());
     // calculate ibz_kpoint
     std::string skpt;
     ModuleSymmetry::Symmetry::symm_flag = 0;
@@ -909,6 +910,7 @@ TEST_F(KlistTest, IbzKpointCustomWeights)
         kv_test1.read_kpoints_for_testing(ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset, ofs_running, ofs_warning, my_rank);
         EXPECT_EQ(kv_test1.get_nkstot(), 5);
         EXPECT_FALSE(kv_test1.is_mp); // Should be non-MP
+        EXPECT_FALSE(kv_test1.is_uniform_mp());
 
         // Store original weights before IBZ reduction
         std::vector<double> original_weights = kv_test1.wk;
@@ -938,6 +940,7 @@ TEST_F(KlistTest, IbzKpointCustomWeights)
         kv_test2.read_kpoints_for_testing(ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset, ofs_running, ofs_warning, my_rank);
         EXPECT_EQ(kv_test2.get_nkstot(), 5);
         EXPECT_FALSE(kv_test2.is_mp); // Should be non-MP
+        EXPECT_FALSE(kv_test2.is_uniform_mp());
 
         // Verify custom weights were read correctly
         EXPECT_DOUBLE_EQ(kv_test2.wk[0], 0.1);
@@ -995,6 +998,7 @@ TEST_F(KlistTest, IbzKpointCustomWeights)
         kv_test3.read_kpoints_for_testing(ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset, ofs_running, ofs_warning, my_rank);
         EXPECT_EQ(kv_test3.get_nkstot(), 512);
         EXPECT_TRUE(kv_test3.is_mp); // Should be MP
+        EXPECT_TRUE(kv_test3.is_uniform_mp());
 
         // Apply IBZ reduction
         std::string skpt;

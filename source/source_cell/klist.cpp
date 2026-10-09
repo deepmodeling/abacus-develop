@@ -202,6 +202,24 @@ void K_Vectors::renew(const int& kpoint_number)
     return;
 }
 
+bool K_Vectors::is_uniform_mp() const
+{
+    if (!this->is_mp || this->nkstot_nospin <= 0)
+    {
+        return false;
+    }
+    long long full_kpoints = 1;
+    for (const int size : this->nmp)
+    {
+        if (size <= 0 || full_kpoints > this->nkstot_nospin / size)
+        {
+            return false;
+        }
+        full_kpoints *= size;
+    }
+    return full_kpoints == this->nkstot_nospin;
+}
+
 // Read the KPT file, which contains K-point coordinates, weights, and grid size information
 // Generate K-point grid according to different parameters of the KPT file
 bool K_Vectors::read_kpoints(const UnitCell& ucell,
@@ -608,6 +626,9 @@ void K_Vectors::mpi_k(std::ofstream& ofs_running, const int my_rank, const int m
     Parallel_Common::bcast_int(this->nkstot_nospin);
 
     Parallel_Common::bcast_int(this->nmp, 3);
+
+    // The MP flag is set while rank 0 reads KPT and is consumed on every rank.
+    Parallel_Common::bcast_bool(this->is_mp);
 
     this->kl_segids.resize(this->nkstot);
     Parallel_Common::bcast_int(this->kl_segids.data(), this->nkstot);
