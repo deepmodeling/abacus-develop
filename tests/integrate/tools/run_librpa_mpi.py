@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
@@ -18,6 +19,16 @@ def ignore_outputs(directory, names):
 def mpi_command(args, ranks):
     return [args.mpirun, args.mpi_np_flag, str(ranks), *args.mpi_preflag,
             args.abacus, *args.mpi_postflag]
+
+
+def use_mpi_solver(case):
+    """Use a distributed solver for the two-rank compact test copies."""
+    input_path = Path(case) / "INPUT"
+    text = input_path.read_text()
+    text, count = re.subn(r"(?m)^ks_solver\s+.*$", "ks_solver         scalapack_gvx", text)
+    if count != 1:
+        raise RuntimeError("{} must contain exactly one ks_solver entry".format(input_path))
+    input_path.write_text(text)
 
 
 def main():
@@ -41,6 +52,7 @@ def main():
         for case in cases:
             target = work / case
             shutil.copytree(source / case, target, ignore=ignore_outputs)
+            use_mpi_solver(target)
             # Binary rank partitions differ from the single-rank reference.
             # Stable text remains compared; KS data use the same-run NAO writer.
             manifest_path = target / "librpa_producer_manifest.json"
@@ -80,6 +92,7 @@ def main():
         for name in ("bz_sample.txt", "Cs_1.dat"):
             case = root / ("failure_" + name.replace(".", "_"))
             shutil.copytree(source / cases[0], case, ignore=ignore_outputs)
+            use_mpi_solver(case)
             # These cases are one directory shallower than the positive runs.
             inp = case / "INPUT"
             inp.write_text(inp.read_text().replace("../../PP_ORB", str(source.parent / "PP_ORB")))

@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 
 from librpa_wavefunctions import check_ks_nao, read_ks_wfc
-from run_librpa_mpi import ignore_outputs, mpi_command
+from run_librpa_mpi import ignore_outputs, mpi_command, use_mpi_solver
 
 
 def check_output(case, mesh, symmetry, nspin):
@@ -98,6 +98,7 @@ def run(args, root):
             for symmetry in (-1, 0, 1):
                 case = work / "{}_{}_s{}".format(name, "".join(map(str, mesh)), symmetry)
                 shutil.copytree(source / name, case, ignore=ignore_outputs)
+                use_mpi_solver(case)
                 inp = case / "INPUT"
                 inp.write_text(re.sub(r"(?m)^symmetry\s+.*$", "symmetry {}".format(symmetry), inp.read_text()))
                 with inp.open("a") as stream:
