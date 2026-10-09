@@ -160,6 +160,20 @@ void zhegvx_(const int* itype, const char* jobz, const char* range, const char* 
              double* rwork, int* iwork, int* ifail,
              int* info);
 
+#ifdef __DSP
+void cpack_zhegvx_driver(const int* itype, const char* jobz, const char* range, const char* uplo,
+             const int* n,
+             std::complex<double>* a, const int* lda,
+             std::complex<double>* b, const int* ldb,
+             const double* vl, const double* vu,
+             const int* il, const int* iu,
+             const double* abstol,
+             int* m, double* w, std::complex<double>* z, const int* ldz,
+             std::complex<double>* work, const int* lwork,
+             double* rwork, int* iwork, int* ifail,
+             int* info);
+#endif
+
 // === Generalized Hermitian: all eigenvalues (simple driver) ===
 
 void dsygv_(const int* itype, const char* jobz, const char* uplo, const int* n,
