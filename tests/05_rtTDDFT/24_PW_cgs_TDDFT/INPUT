@@ -42,6 +42,7 @@ td_gauss_sigma      0.04
 td_gauss_t0         4
 td_gauss_amp        0.001
 lin_solver          cgs
+td_orthonormal      lowdin
 lin_precond         kinetic
 lin_thr             1e-14
 lin_maxiter         100

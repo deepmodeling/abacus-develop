@@ -1,4 +1,6 @@
 #include "./symm_rotation.h"
+#include "source_io/module_parameter/parameter.h"
+
 namespace ModuleSymmetry
 {
     std::string mat3_fmt(const ModuleBase::Matrix3& m)

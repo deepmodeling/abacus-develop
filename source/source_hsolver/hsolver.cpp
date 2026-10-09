@@ -69,13 +69,11 @@ double set_diagethr_ks(const std::string basis_type,
                 res_diag_ethr = 1.e-2;
             }
             res_diag_ethr = std::min(res_diag_ethr,
-                                     static_cast<double>(0.1) * drho
-                                         / std::max(static_cast<double>(1.0), static_cast<double>(nelec_in)));
+                                     static_cast<double>(0.1) * drho / std::max(static_cast<double>(1.0), static_cast<double>(nelec_in)));
         }
 
-        // It is essential for single precision implementation to keep the diag ethr
-        // value less or equal to the single-precision limit of convergence(0.5e-4).
-        // modified by denghuilu at 2023-05-15
+        // Keep the single-precision diagonalization threshold at or above the floor
+        // to avoid excessively strict convergence requirements.
         if (precision_flag_in == "single")
         {
             res_diag_ethr = std::max(res_diag_ethr, static_cast<double>(0.5e-4));
@@ -88,7 +86,6 @@ double set_diagethr_ks(const std::string basis_type,
 
     return res_diag_ethr;
 }
-
 
 double set_diagethr_sdft(const std::string basis_type,
                          const std::string esolver_type,
@@ -147,7 +144,6 @@ double set_diagethr_sdft(const std::string basis_type,
     return res_diag_ethr;
 }
 
-
 double reset_diag_ethr(std::ofstream& ofs_running,
                        const std::string basis_type,
                        const std::string esolver_type,
@@ -171,9 +167,8 @@ double reset_diag_ethr(std::ofstream& ofs_running,
 
         new_diag_ethr = 0.1 * drho_in / nelec_in;
 
-        // It is essential for single precision implementation to keep the diag ethr
-        // value less or equal to the single-precision limit of convergence(0.5e-4).
-        // modified by denghuilu at 2023-05-15
+        // Keep the single-precision diagonalization threshold at or above the floor
+        // to avoid excessively strict convergence requirements.
         if (precision_flag_in == "single")
         {
             new_diag_ethr = std::max(new_diag_ethr, static_cast<double>(0.5e-4));
@@ -188,10 +183,7 @@ double reset_diag_ethr(std::ofstream& ofs_running,
     return new_diag_ethr;
 };
 
-double cal_hsolve_error(const std::string basis_type,
-                        const std::string esolver_type,
-                        const double diag_ethr_in,
-                        const double nelec_in)
+double cal_hsolve_error(const std::string basis_type, const std::string esolver_type, const double diag_ethr_in, const double nelec_in)
 {
     if (basis_type == "pw" && esolver_type == "ksdft")
     {
