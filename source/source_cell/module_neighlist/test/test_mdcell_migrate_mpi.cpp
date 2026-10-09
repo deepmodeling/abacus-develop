@@ -218,64 +218,6 @@ TEST(MdCellMigrateMpiTest, SkinUpdatesFixedGhostLayoutBeforeRebuild)
     }
 }
 
-TEST(MdCellMigrateMpiTest, SkinUpdatesPeriodicGhostImageWithoutRebuild)
-{
-    int rank = 0;
-    int size = 1;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    ASSERT_EQ(size, 2);
-
-    const ModuleBase::Matrix3 latvec = make_lattice();
-    const ModuleBase::Vector3<double> frac(rank == 0 ? 0.49 : 0.99, 0.2, 0.2);
-    std::vector<LocalAtom> owned_atoms(1, LocalAtom(frac,
-                                                     frac,
-                                                     ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-                                                     ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-                                                     ModuleBase::Vector3<int>(1, 1, 1),
-                                                     1.0,
-                                                     0,
-                                                     rank,
-                                                     rank));
-    MDCell mdcell;
-    mdcell.initialize_from_owned_atoms(latvec,
-                  latvec.Inverse(),
-                  1.0,
-                  1.0,
-                  2,
-                  owned_atoms,
-                  std::vector<std::string>(1, "X"),
-                  std::vector<double>(1, 1.0),
-                  std::vector<std::int64_t>(1, 2),
-                  0.2,
-                  ModuleBase::world_comm_domain());
-    mdcell.initialize_neighbors(0.1);
-    mdcell.prepare_neighbors();
-
-    const NeighborSearch* search = &mdcell.neighbor_search();
-    if (rank == 1)
-    {
-        mdcell.mutable_owned_atoms()[0].frac.x = 0.01;
-        mdcell.mutable_owned_atoms()[0].cart = mdcell.mutable_owned_atoms()[0].frac * latvec;
-    }
-    mdcell.prepare_neighbors();
-    EXPECT_EQ(&mdcell.neighbor_search(), search);
-
-    if (rank == 0)
-    {
-        bool found_wrapped_ghost = false;
-        for (const LocalAtom& ghost : mdcell.ghost_atoms())
-        {
-            if (ghost.owner_rank == 1)
-            {
-                EXPECT_NEAR(ghost.cart.x, 0.01, 1.0e-12);
-                found_wrapped_ghost = true;
-            }
-        }
-        EXPECT_TRUE(found_wrapped_ghost);
-    }
-}
-
 int main(int argc, char** argv)
 {
     MPI_Init(&argc, &argv);

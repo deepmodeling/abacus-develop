@@ -234,6 +234,37 @@ TEST_F(DomainDecompositionTest, CrossingHaloEdgePreservesCachedGhostSlots)
     }
 }
 
+TEST_F(DomainDecompositionTest, PeriodicGhostImageUpdatesWithoutRebuild)
+{
+    ASSERT_EQ(domain.size(), 2);
+    decomp.prepare_neighbors(cell);
+    const NeighborSearch* search = &cell.neighbor_search();
+    for (LocalAtom& atom : cell.owned_atoms())
+    {
+        if (atom.type_index == 1)
+        {
+            atom.frac.x = 0.01;
+            atom.cart = atom.frac * cell.latvec();
+        }
+    }
+    decomp.prepare_neighbors(cell);
+    EXPECT_EQ(&cell.neighbor_search(), search);
+
+    if (domain.rank() == 0)
+    {
+        bool found_wrapped_ghost = false;
+        for (const LocalAtom& ghost : cell.ghost_atoms())
+        {
+            if (ghost.owner_rank == 1 && ghost.type_index == 1)
+            {
+                EXPECT_NEAR(ghost.cart.x, 0.01, 1.0e-12);
+                found_wrapped_ghost = true;
+            }
+        }
+        EXPECT_TRUE(found_wrapped_ghost);
+    }
+}
+
 TEST_F(DomainDecompositionTest, SkewCellMultipleImagesMatchBruteForce)
 {
     ModuleBase::Matrix3 lattice = cell.latvec();
