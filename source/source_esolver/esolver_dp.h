@@ -2,7 +2,6 @@
 #define ESOLVER_DP_H
 
 #include "esolver.h"
-
 #ifdef __DPMD
 #ifdef __DPMDC
 #include "deepmd/deepmd.hpp"
