@@ -28,7 +28,18 @@ class PotBase
 
     virtual void cal_fixed_v(double* vl_pseudo){}
 
-    virtual double get_energy() const { return 0.0; } 
+    virtual double get_energy() const { return 0.0; }
+
+    // Solvation contributions in Ry, added once after the band-energy potential subtraction.
+    virtual void get_solvation_energy(double& electrostatic, double& non_electrostatic) const
+    {
+        electrostatic = 0.0;
+        non_electrostatic = 0.0;
+    }
+    // Explicit ionic solvation force in Ry/Bohr, added to existing contributions.
+    virtual void add_solvation_force(const UnitCell&, ModuleBase::matrix&) const {}
+    // Electronic electrostatic correction only; excludes cavity/surface derivatives.
+    virtual const std::vector<double>* solvent_electrostatic_potential() const { return nullptr; }
     
     bool fixed_mode = 0;
     bool dynamic_mode = 0;

@@ -744,6 +744,7 @@ target_link_libraries(
     io_basic
     io_input
     surchem
+    sccs
     neighbor_search
     domain_decomposition
     neighbor

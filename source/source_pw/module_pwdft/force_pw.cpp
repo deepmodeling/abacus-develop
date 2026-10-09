@@ -137,13 +137,21 @@ void Forces<FPTYPE, Device>::cal_force(const int nspin,
         }
     }
 
+    const int solvation_model = PARAM.inp.imp_sol;
     ModuleBase::matrix forcesol;
     ModuleBase::matrix forcepcc(this->nat, 3);
     elec.pot->add_pcc_force(ucell, forcepcc);
-    if (PARAM.inp.imp_sol)
+    if (solvation_model != 0)
     {
         forcesol.create(this->nat, 3);
-        solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, nspin, forcesol);
+        if (solvation_model == 1)
+        {
+            solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, nspin, forcesol);
+        }
+        else
+        {
+            elec.pot->add_solvation_force(ucell, forcesol);
+        }
         if (PARAM.inp.test_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "IMP_SOL      FORCE (Ry/Bohr)", forcesol);
@@ -177,7 +185,7 @@ void Forces<FPTYPE, Device>::cal_force(const int nspin,
                     force(iat, ipol) = force(iat, ipol) + force_gate(iat, ipol);
                 }
 
-                if (PARAM.inp.imp_sol)
+                if (solvation_model != 0)
                 {
                     force(iat, ipol) = force(iat, ipol) + forcesol(iat, ipol);
                 }
@@ -261,7 +269,7 @@ void Forces<FPTYPE, Device>::cal_force(const int nspin,
                                   force_gate,
                                   false);
         }
-        if (PARAM.inp.imp_sol)
+        if (solvation_model != 0)
         {
             ModuleIO::print_force(GlobalV::ofs_running,
                                   ucell,
