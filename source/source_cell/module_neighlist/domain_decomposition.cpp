@@ -330,6 +330,43 @@ bool DomainDecomposition::atom_overlaps_target_halo(
     return true;
 }
 
+std::array<int, 3> DomainDecomposition::image_shift_for_update(
+    const LocalAtom& atom,
+    const GhostExchangeSlot& slot) const
+{
+    std::array<int, 3> image_shift = slot.image_shift;
+    const double frac[3] = {atom.frac.x, atom.frac.y, atom.frac.z};
+    for (int idim = 0; idim < 3; ++idim)
+    {
+        // For a one-domain periodic direction, retain the image side of the
+        // slot so a wrapped atom does not become a duplicate of itself.
+        if (dims_[idim] == 1 && slot.offset[idim] != 0)
+        {
+            if (slot.offset[idim] > 0)
+            {
+                image_shift[idim] = frac[idim] < margin_[idim] ? 1 : -1;
+            }
+            else
+            {
+                image_shift[idim] = frac[idim] > 1.0 - margin_[idim] ? -1 : 1;
+            }
+            continue;
+        }
+
+        const double lo = static_cast<double>(slot.target_coords[idim]) / dims_[idim];
+        const double hi = static_cast<double>(slot.target_coords[idim] + 1) / dims_[idim];
+        while (frac[idim] + image_shift[idim] < lo - margin_[idim])
+        {
+            ++image_shift[idim];
+        }
+        while (frac[idim] + image_shift[idim] >= hi + margin_[idim])
+        {
+            --image_shift[idim];
+        }
+    }
+    return image_shift;
+}
+
 int DomainDecomposition::neighbor_layer(int dim) const
 {
     return std::max(1, static_cast<int>(std::ceil(margin_[dim] * dims_[dim])));
@@ -610,15 +647,21 @@ void DomainDecomposition::update_ghost_atom_positions(const std::vector<LocalAto
     for (std::size_t islot = 0; islot < ghost_slots_.size(); ++islot)
     {
         const GhostExchangeSlot& slot = ghost_slots_[islot];
-        std::vector<double> send_frac(3 * slot.send_atom_indices.size(), 0.0);
+        // Keep the wrapped fractional coordinates for metadata and send the
+        // dynamically selected image coordinates in the same message.
+        std::vector<double> send_frac(6 * slot.send_atom_indices.size(), 0.0);
         for (std::size_t i = 0; i < slot.send_atom_indices.size(); ++i)
         {
             const LocalAtom& atom = owned_atoms[static_cast<std::size_t>(slot.send_atom_indices[i])];
+            const std::array<int, 3> image_shift = image_shift_for_update(atom, slot);
             send_frac[3 * i] = atom.frac.x;
             send_frac[3 * i + 1] = atom.frac.y;
             send_frac[3 * i + 2] = atom.frac.z;
+            send_frac[3 * slot.send_atom_indices.size() + 3 * i] = atom.frac.x + image_shift[0];
+            send_frac[3 * slot.send_atom_indices.size() + 3 * i + 1] = atom.frac.y + image_shift[1];
+            send_frac[3 * slot.send_atom_indices.size() + 3 * i + 2] = atom.frac.z + image_shift[2];
         }
-        std::vector<double> recv_frac(3 * static_cast<std::size_t>(slot.ghost_count), 0.0);
+        std::vector<double> recv_frac(6 * static_cast<std::size_t>(slot.ghost_count), 0.0);
         if (slot.send_rank == rank_ && slot.recv_rank == rank_)
         {
             recv_frac = send_frac;
@@ -635,12 +678,10 @@ void DomainDecomposition::update_ghost_atom_positions(const std::vector<LocalAto
         {
             LocalAtom& ghost = ghost_atoms[slot.ghost_begin + static_cast<std::size_t>(i)];
             ghost.frac.set(recv_frac[3 * i], recv_frac[3 * i + 1], recv_frac[3 * i + 2]);
-            const std::array<int, 3>& image_shift = slot.send_rank == rank_ && slot.recv_rank == rank_
-                                                         ? slot.image_shift
-                                                         : slot.recv_image_shift;
-            const ModuleBase::Vector3<double> image_frac(ghost.frac.x + image_shift[0],
-                                                          ghost.frac.y + image_shift[1],
-                                                          ghost.frac.z + image_shift[2]);
+            const ModuleBase::Vector3<double> image_frac(
+                recv_frac[3 * static_cast<std::size_t>(slot.ghost_count) + 3 * i],
+                recv_frac[3 * static_cast<std::size_t>(slot.ghost_count) + 3 * i + 1],
+                recv_frac[3 * static_cast<std::size_t>(slot.ghost_count) + 3 * i + 2]);
             ghost.cart = image_frac * latvec_;
             ghost.force.set(0.0, 0.0, 0.0);
         }
