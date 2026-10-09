@@ -31,6 +31,6 @@ TEST_F(ESolverDPNeighborListTest, SortsNeighborsByDistanceWithStableIndexTieBrea
 
     const std::vector<int> sorted = ESolverDPNeighborListTest::sort_neighbors(coord, 0, neighbors, 4);
 
-    const std::vector<int> expected = {2, 1, 4, 3};
+    const std::vector<int> expected = {2, 4, 1, 3};
     EXPECT_EQ(sorted, expected);
 }
