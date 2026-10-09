@@ -6,14 +6,23 @@ version: 2
 
 # Set the OS, Python version and other tools you might need
 build:
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   tools:
     python: "3.11"
-  # Toolchain for the `latexpdf` output (latex_engine = 'xelatex' in conf.py).
-  # Note: none of these come with the default image — each package below
-  # fixed a real build failure encountered during local verification.
+  apt_packages:
+    - build-essential
+    - cmake
+    - gfortran
+    - libfftw3-dev
+    - libopenblas-dev
+    - ninja-build
+    - pkg-config
   jobs:
     pre_build:
+      - cmake -Bbuild -GNinja -DCMAKE_INSTALL_PREFIX=install -DENABLE_MPI=OFF -DENABLE_LCAO=OFF
+      - cmake --build build --target install -j $(nproc)
+      - install/bin/abacus --generate-parameters-yaml > docs/parameters.yaml
+      - python3 docs/generate_input_main.py docs/parameters.yaml
       # RTD builds PR (external) versions as HTML only, so PDF failures would
       # not surface until post-merge. Run the same latex->PDF chain here as a
       # pre-merge gate. `latexpdf` is a make-mode target, not a -b builder,
@@ -23,7 +32,6 @@ build:
           sphinx-build -b latex docs/ _latex_prcheck --fail-on-warning
         fi
 
-        
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
   configuration: docs/conf.py
