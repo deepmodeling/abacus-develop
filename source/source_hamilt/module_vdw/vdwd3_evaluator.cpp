@@ -221,44 +221,42 @@ void reference_weights(const Structure& structure,
     {
         const int atomic_number = structure.atomic_numbers[atom];
         const int references = data::reference_count(atomic_number);
-        double normalization = 0.0;
-        double normalization_derivative = 0.0;
-        double raw[data::max_reference] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-        double maximum_cn = data::reference_cn(atomic_number, 0);
+        double raw[data::max_reference];
+        double max_exponent = -std::numeric_limits<double>::infinity();
         for (int reference = 0; reference < references; ++reference)
         {
-            const double reference_cn = data::reference_cn(atomic_number, reference);
-            const double delta = reference_cn - coordination[atom];
-            raw[reference] = std::exp(-kReferenceWeight * delta * delta);
-            normalization += raw[reference];
-            normalization_derivative += 2.0 * kReferenceWeight * delta * raw[reference];
-            maximum_cn = std::max(maximum_cn, reference_cn);
+            const double delta = data::reference_cn(atomic_number, reference) - coordination[atom];
+            raw[reference] = -kReferenceWeight * delta * delta;
+            max_exponent = std::max(max_exponent, raw[reference]);
         }
-        normalization = 1.0 / normalization;
+
+        // Scale the exponentials to avoid underflow at high coordination numbers.
+        double weight_sum = 0.0;
+        double weighted_reference_cn = 0.0;
+        for (int reference = 0; reference < references; ++reference)
+        {
+            // Shifting by the maximum exponent prevents all weights from underflowing.
+            raw[reference] = std::exp(raw[reference] - max_exponent);
+            weight_sum += raw[reference];
+            if (derivatives)
+            {
+                weighted_reference_cn += raw[reference] * data::reference_cn(atomic_number, reference);
+            }
+        }
+        const double inverse_weight_sum = 1.0 / weight_sum;
+        weighted_reference_cn *= inverse_weight_sum;
 
         for (int reference = 0; reference < references; ++reference)
         {
             const std::size_t index = atom * data::max_reference + reference;
-            const double reference_cn = data::reference_cn(atomic_number, reference);
-            double weight = raw[reference] * normalization;
-            if (!std::isfinite(weight))
-            {
-                weight = reference_cn == maximum_cn ? 1.0 : 0.0;
-            }
+            const double weight = raw[reference] * inverse_weight_sum;
             weights[index] = weight;
 
             if (derivatives)
             {
-                const double raw_derivative = 2.0 * kReferenceWeight
-                                              * (reference_cn - coordination[atom]) * raw[reference];
-                double derivative = raw_derivative * normalization
-                                    - raw[reference] * normalization_derivative
-                                          * normalization * normalization;
-                if (!std::isfinite(derivative))
-                {
-                    derivative = 0.0;
-                }
-                weight_derivatives[index] = derivative;
+                const double reference_cn = data::reference_cn(atomic_number, reference);
+                weight_derivatives[index] = 2.0 * kReferenceWeight * weight
+                                            * (reference_cn - weighted_reference_cn);
             }
         }
     }

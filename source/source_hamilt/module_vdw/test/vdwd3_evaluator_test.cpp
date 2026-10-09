@@ -405,6 +405,76 @@ TEST(D3Evaluator, MatchesSdftd3ZeroDampingMindless09)
                      -2.0178760785797962e-2);
 }
 
+TEST(D3Evaluator, HighCoordinationMgGradientAndVirial)
+{
+    // Two Mg atoms in a slightly distorted FCC supercell. Their D3 CN is near 12,
+    // well above the largest Mg reference CN (1.9496).
+    const double half_diagonal = 5.3 / std::sqrt(2.0);
+    Structure structure;
+    structure.atomic_numbers = {12, 12};
+    structure.positions = {{0.0, 0.0, 0.0},
+                           {0.06, half_diagonal - 0.09, half_diagonal + 0.13}};
+    structure.lattice = {{{0.0, 2.0 * half_diagonal, 2.0 * half_diagonal},
+                          {half_diagonal, 0.0, half_diagonal},
+                          {half_diagonal, half_diagonal, 0.0}}};
+    structure.periodic = {{true, true, true}};
+
+    Parameters parameters;
+    std::string canonical;
+    ASSERT_TRUE(vdw::d3::lookup_parameters("pbe", Damping::Rational, parameters, canonical));
+    parameters.s9 = 0.0;
+    Cutoffs cutoffs;
+    cutoffs.cn = 10.0;
+    cutoffs.disp2 = 10.0;
+    cutoffs.disp3 = 10.0;
+
+    Result analytic;
+    std::string error;
+    ASSERT_TRUE(vdw::d3::evaluate(structure, parameters, cutoffs, true, analytic, error)) << error;
+    ASSERT_TRUE(std::isfinite(analytic.energy));
+    for (const Vec3& gradient : analytic.gradient)
+    {
+        const double magnitude = std::sqrt(gradient.x * gradient.x
+                                           + gradient.y * gradient.y
+                                           + gradient.z * gradient.z);
+        EXPECT_TRUE(std::isfinite(magnitude));
+        EXPECT_LT(magnitude, 1.0);
+    }
+
+    const double step = 1.0e-5;
+    for (std::size_t atom = 0; atom < structure.positions.size(); ++atom)
+    {
+        for (int component = 0; component < 3; ++component)
+        {
+            Structure plus = structure;
+            Structure minus = structure;
+            coordinate(plus.positions[atom], component) += step;
+            coordinate(minus.positions[atom], component) -= step;
+            const double numerical = (energy(plus, parameters, cutoffs)
+                                      - energy(minus, parameters, cutoffs)) / (2.0 * step);
+            EXPECT_NEAR(coordinate(analytic.gradient[atom], component), numerical, 1.0e-8);
+        }
+    }
+
+    Structure plus = structure;
+    Structure minus = structure;
+    for (std::size_t atom = 0; atom < structure.positions.size(); ++atom)
+    {
+        const double displacement = step * structure.positions[atom].x;
+        plus.positions[atom].x += displacement;
+        minus.positions[atom].x -= displacement;
+    }
+    for (int vector = 0; vector < 3; ++vector)
+    {
+        const double displacement = step * structure.lattice[vector].x;
+        plus.lattice[vector].x += displacement;
+        minus.lattice[vector].x -= displacement;
+    }
+    const double numerical_virial = (energy(plus, parameters, cutoffs)
+                                   - energy(minus, parameters, cutoffs)) / (2.0 * step);
+    EXPECT_NEAR(analytic.virial.value[0][0], numerical_virial, 1.0e-8);
+}
+
 TEST(D3Evaluator, SmoothCutoffGradientAndVirial)
 {
     Structure structure;
