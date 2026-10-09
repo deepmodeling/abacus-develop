@@ -72,9 +72,9 @@ void read_mat_npz(const Parallel_Orbitals* paraV,
                     temp = element.erase(temp);
                 }
                 else
-				{
-					temp++;
-				}
+                {
+                    temp++;
+                }
             }
             int z = 0;
             for(int j=0; j!=ModuleBase::element_name.size(); j++)
@@ -367,9 +367,9 @@ void output_mat_npz_impl(const UnitCell& ucell, std::string& zipname, const hami
                     temp = element.erase(temp);
                 }
                 else
-				{
-					temp++;
-				}
+                {
+                    temp++;
+                }
             }
             int z = 0;
             for(int j=0; j!=ModuleBase::element_name.size(); j++)

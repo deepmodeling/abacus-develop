@@ -6,7 +6,7 @@ add_subdirectory(04_FF)
 add_subdirectory(05_rtTDDFT)
 add_subdirectory(06_SDFT)
 add_subdirectory(07_OFDFT)
-add_subdirectory(08_EXX)
+add_subdirectory(08_RI)
 add_subdirectory(10_others)
 add_subdirectory(11_PW_GPU)
 # TODO: Enable after DeltaSpin + DFT+U code is merged into develop

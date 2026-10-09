@@ -237,9 +237,9 @@ template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::update_td()
 {
     //std::cout<<"hybrid gauge" <<std::endl;
-    this->cart_At = TD_info::cart_At;
+    this->cart_At = TD_info::A_prop_ha;
     //std::cout<<"At: "<< TD_info::td_vel_op->cart_At[0] <<" "<<TD_info::td_vel_op->cart_At[1]<<" "<<TD_info::td_vel_op->cart_At[2]<<" "<<std::endl;
-    Et = elecstate::H_TDDFT_pw::Et;
+    Et = elecstate::H_TDDFT_pw::efield_ha * 2.0; // Hamiltonian and forces use Rydberg units.
 }
 // set_HR_fixed()
 template <typename TK, typename TR>

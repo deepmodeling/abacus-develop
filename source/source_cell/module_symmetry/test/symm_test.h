@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_CELL_MODULE_SYMMETRY_TEST_SYMM_TEST_H
+#define ABACUS_SOURCE_CELL_MODULE_SYMMETRY_TEST_SYMM_TEST_H
+
 #include "source_base/mathzone.h"
 #include "source_cell/unitcell.h"
 #include "gtest/gtest.h"
@@ -35,3 +37,5 @@ protected:
     void construct_ucell(stru_& stru);
     void ClearUcell();
 };
+
+#endif // ABACUS_SOURCE_CELL_MODULE_SYMMETRY_TEST_SYMM_TEST_H

@@ -50,6 +50,12 @@ focused cleanup.
   C++11 baseline. Backend-specific or dependency-constrained paths may use the
   higher standard already selected by existing CMake configuration.
 - Use LF line endings for text files. `.bat` and `.cmd` are the CRLF exception.
+- Place `ModuleBase::timer::start`/`end` at the beginning and end of a function,
+  not around isolated statements inside the function body. Use the enclosing
+  function name (or constructor name) as the timer label so the timer scopes
+  the whole unit of work.
+- Do not use `#pragma once` in header files; use traditional
+  `#ifndef`/`#define`/`#endif` include guards instead.
 
 AI agents have additional workflow obligations:
 
@@ -68,12 +74,14 @@ decisions.
 | Rule category | Typical rule | Phase-one status | Default executor | Severity | Default action | Detection scope | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Basic text format | LF line endings | phase-one mechanical | hook + CI | medium | block | full changed text file | `.bat` and `.cmd` keep CRLF |
+| Header include guard | New `#pragma once` in a header | phase-one mechanical | hook + CI | high | block | added header lines (`.h`/`.hh`/`.hpp`/`.hxx`/`.cuh`) | Use `#ifndef`/`#define`/`#endif` guards; no exception allowed |
 | Language baseline | C++11 compatibility | build/toolchain | CI | high | block | build/static tooling | Actual compiler/toolchain result wins |
 | Global dependency budget | Net increase of `GlobalV`/`GlobalC`/`PARAM` references in code diff | phase-one mechanical + AI review | CI + AI review | high | block on net increase, warn on non-increasing added usage | added and removed code lines | Historical untouched usage and documentation mentions are not blocked; migration-neutral moves require reviewer rationale |
 | New default parameter | Header declaration adds a default argument | phase-one mechanical + AI review | CI + AI review | high | block | header diff | High misuse risk |
 | `.hpp` propagation | New `.hpp` or header includes `.hpp` | phase-one mechanical warning | CI + AI review | medium | warn | new files and added includes | Exception can be recorded in PR |
 | Header dependency growth | Header diff adds includes | phase-one mechanical warning + AI review | CI + AI review | medium | warn | added header includes | Necessity is semantic and not mechanically decided |
 | Member variable workflow switch | Key flow state hidden as mutable member state | AI review + human confirmation | AI + human review | high | human confirmation | semantic review | Static matching is unreliable |
+| Timer placement | `timer::start`/`end` wrap a whole function body | AI review | AI + human review | low | warn | semantic review | Mechanical matching is unreliable for scopes; label should name the enclosing function |
 | Module path and build linkage | New source path and `CMakeLists.txt` linkage | phase-one mechanical | CI | medium | block | new source files and build-script diff | Deterministic path/build check only |
 | Module semantic ownership | Best module/submodule placement | AI review + human confirmation | AI + human review | medium | human confirmation | semantic review | Final call belongs to maintainers |
 | Heterogeneous code linkage | CUDA/ROCM/kernel source and `CMakeLists.txt` linkage | phase-one mechanical | CI + AI review | medium | block | new heterogeneous files and linkage | Mechanical path/linkage only |

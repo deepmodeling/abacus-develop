@@ -8,7 +8,7 @@ namespace ModuleBase
 class Integral
 {
 
-	public:
+    public:
 
     Integral();
     ~Integral();
@@ -41,13 +41,13 @@ class Integral
      * @author Peize Lin
      * @date 2017-10-02
      */
-	static void Simpson_Integral 
-	(
-		const int mesh,
-		const double * const func,
-		const double dr,
-		double &asum
-	);
+    static void Simpson_Integral 
+    (
+        const int mesh,
+        const double * const func,
+        const double dr,
+        double &asum
+    );
 
     /**
      * @brief simpson integral. 

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_HAMILT_CASIDA_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_HAMILT_CASIDA_H
+
 #include <typeinfo>
 #include "source_hamilt/hamilt.h"
 #include "source_estate/module_dm/density_matrix.h"
@@ -38,6 +40,7 @@ namespace LR
                const Parallel_2D& pc_in,
                const Parallel_Orbitals& pmat_in,
                const std::string& spin_type,
+               const std::string& in_dir,
                const std::string& out_dir,
                const std::string& ri_hartree_benchmark = "none",
                const std::vector<int>& aims_nbasis = {})
@@ -46,9 +49,9 @@ namespace LR
             ModuleBase::TITLE("HamiltLR", "HamiltLR");
             if (ri_hartree_benchmark != "aims" && ri_hartree_benchmark !="aims-librpa") { assert(aims_nbasis.empty()); }
             // always use nspin=1 for transition density matrix
-            this->DM_trans = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(&pmat_in, 1, kv_in.kvec_d, nk);
+            this->DM_trans = LR_Util::make_unique<module_dm::DensityMatrix<T, T>>(&pmat_in, 1, kv_in.kvec_d, nk);
             if (ri_hartree_benchmark == "none") { LR_Util::initialize_DMR(*this->DM_trans, pmat_in, ucell_in, gd_in, orb_cutoff); }
-            // this->DM_trans->init_DMR(&gd_in, &ucell_in); // too large due to not restricted by orb_cutoff
+            // this->DM_trans->init_dmr(&gd_in, &ucell_in); // too large due to not restricted by orb_cutoff
 
             // 1.add the diag operator  (the first one)
             this->ops = new OperatorLRDiag<T>(eig_ks.c, pX[0], nk, nocc[0], nvirt[0]);
@@ -56,11 +59,10 @@ namespace LR
 #ifdef __EXX
             using TAC = std::pair<int, std::array<int, 3>>;
             using TLRI = std::map<int, std::map<TAC, RI::Tensor<T>>>;
-            const std::string& dir = PARAM.globalv.global_readin_dir;
             TLRI Cs_read; 
             TLRI Vs_read; 
 #ifdef __DEBUG
-            // TLRI Vs_compare = LRI_CV_Tools::read_Vs_abf<T>(dir + "Vs");
+            // TLRI Vs_compare = LRI_CV_Tools::read_Vs_abf<T>(in_dir + "Vs");
             // LRI_CV_Tools::write_Vs_abf(Vs_read, "Vs_read_from_coulomb");
             // LRI_CV_Tools::write_Cs_ao(Cs_read, "Cs_ao_read"); // ensure Cs_ao is read correctly
             // assert(RI_Benchmark::compare_Vs(Vs_read, Vs_compare));
@@ -75,27 +77,23 @@ namespace LR
                     {
                         LR_IO::RI_kRlist kRlist (ucell_in,
                                                 const_cast<K_Vectors*>(&kv_in),
-                                                dir,
-                                                use_fine_kgrid,
-                                                out_dir);
+                                                nspin, in_dir, out_dir, use_fine_kgrid);
                         // though C and V are real, here still use <T> to multiply with psi
-                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(dir);
-                        Vs_read = LR_IO::read_coulomb_mat_general_k<T,T>(dir, Cs_read, kRlist);
+                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(in_dir);
+                        Vs_read = LR_IO::read_coulomb_mat_general_k<T,T>(in_dir, Cs_read, kRlist);
                     }
                     else if (ri_hartree_benchmark == "abacus")
                     {
-                        Cs_read = LRI_CV_Tools::read_Cs_ao<T>(dir + "Cs");
-                        Vs_read = LRI_CV_Tools::read_Vs_abf<T>(dir + "Vs");
+                        Cs_read = LRI_CV_Tools::read_Cs_ao<T>(in_dir + "Cs");
+                        Vs_read = LRI_CV_Tools::read_Vs_abf<T>(in_dir + "Vs");
                     }
                     else if (ri_hartree_benchmark == "abacus-librpa")
                     {
                         LR_IO::RI_kRlist kRlist (ucell_in,
                                                 const_cast<K_Vectors*>(&kv_in),
-                                                dir,
-                                                use_fine_kgrid,
-                                                out_dir);
-                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(dir);
-                        Vs_read = LR_IO::read_coulomb_mat_k<T,T>(dir, Cs_read, kRlist);
+                                                nspin, in_dir, out_dir, use_fine_kgrid);
+                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(in_dir);
+                        Vs_read = LR_IO::read_coulomb_mat_k<T,T>(in_dir, Cs_read, kRlist);
                     }
                     if (!std::set<std::string>({ "rpa", "hf"}).count(xc_kernel)) {
                         throw std::runtime_error("ri_hartree_benchmark is only supported for xc_kernel = rpa, hf");
@@ -145,7 +143,7 @@ namespace LR
 #endif
                     // LR_Util::print_tensor<T>(dm_trans_2d[0], "dm_trans_2d[0]", &pmat_in);
                     // tensor to vector, then set DMK
-                    for (int ik = 0;ik < nk;++ik) { this->DM_trans->set_DMK_pointer(ik, dm_trans_2d[ik].data<T>()); }
+                    for (int ik = 0;ik < nk;++ik) { this->DM_trans->set_dmk_ptr(ik, dm_trans_2d[ik].data<T>()); }
                 };
         }
         ~HamiltLR() { delete this->ops; }
@@ -202,7 +200,7 @@ namespace LR
         T one()const;
         /// transition density matrix in AO representation
         /// calculate on the same address for each bands, and commonly used by all the operators
-        std::unique_ptr<elecstate::DensityMatrix<T, T>> DM_trans;
+        std::unique_ptr<module_dm::DensityMatrix<T, T>> DM_trans;
 
         /// first node operator, add operations from each operators
         hamilt::Operator<T, base_device::DEVICE_CPU>* ops = nullptr;
@@ -210,3 +208,5 @@ namespace LR
         std::function<void(const int&, const T* const)> cal_dm_trans;
     };
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_HAMILT_CASIDA_H

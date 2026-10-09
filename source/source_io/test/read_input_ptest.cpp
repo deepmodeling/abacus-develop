@@ -95,6 +95,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.min_dist_coef, 0.2);
     EXPECT_EQ(param.inp.gint_precision, "double");
     EXPECT_EQ(param.inp.dft_functional, "hse");
+    EXPECT_EQ(Parameter().inp.gga_grad, 0);
+    EXPECT_EQ(param.inp.gga_grad, 2);
     EXPECT_DOUBLE_EQ(param.inp.xc_temperature, 0.0);
     EXPECT_EQ(param.inp.nspin, 1);
     EXPECT_DOUBLE_EQ(param.inp.nelec, 0.0);
@@ -223,7 +225,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.out_alllog);
     EXPECT_DOUBLE_EQ(param.inp.dos_emin_ev, -15);
     EXPECT_DOUBLE_EQ(param.inp.dos_emax_ev, 15);
-    EXPECT_DOUBLE_EQ(param.inp.dos_edelta_ev, 0.01);
+    EXPECT_DOUBLE_EQ(param.inp.dos_edelta_ev, 0.03);
     EXPECT_DOUBLE_EQ(param.inp.dos_scale, 0.01);
     EXPECT_DOUBLE_EQ(param.inp.dos_sigma, 0.07);
     EXPECT_DOUBLE_EQ(param.inp.stm_bias[0], 2.0);
@@ -362,7 +364,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.dft_plus_dmft);
     EXPECT_FALSE(param.inp.rpa);
     EXPECT_FALSE(param.inp.rpa_out_vel);
-    EXPECT_EQ(param.inp.rpa_outdir, "./OUT.librpa/");
+    EXPECT_EQ(param.inp.rpa_outdir, "OUT.librpa/");
     EXPECT_EQ(param.inp.imp_sol, 0);
     EXPECT_DOUBLE_EQ(param.inp.eb_k, 80.0);
     EXPECT_DOUBLE_EQ(param.inp.tau, 1.0798 * 1e-5);
@@ -412,9 +414,11 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.mdp.md_restart, 0);
     EXPECT_EQ(param.inp.mdp.md_restartfreq, 5);
     EXPECT_FALSE(param.inp.mdp.md_out_force);
+    EXPECT_FALSE(param.inp.mdp.plumed);
+    EXPECT_EQ(param.inp.mdp.plumed_file, "plumed.dat");
     EXPECT_EQ(param.inp.mdp.md_seed, -1);
     EXPECT_EQ(param.inp.mdp.md_prec_level, 0);
-    EXPECT_DOUBLE_EQ(param.inp.ref_cell_factor, 1.2);
+    EXPECT_DOUBLE_EQ(param.inp.ref_cell_factor, 1.0);
     EXPECT_EQ(param.inp.mdp.md_tchain, 1);
     EXPECT_DOUBLE_EQ(param.inp.mdp.md_tfirst, -1);
     EXPECT_DOUBLE_EQ(param.inp.mdp.md_tfreq, 0);
@@ -484,6 +488,37 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.rdmft_power_alpha, 0.656);
 }
 
+TEST_F(InputParaTest, GgaGradAcceptedRange)
+{
+    ModuleIO::ReadInput readinput(0);
+    bool found = false;
+    for (const std::pair<std::string, ModuleIO::Input_Item>& entry: readinput.get_input_lists())
+    {
+        if (entry.first != "gga_grad")
+        {
+            continue;
+        }
+        found = true;
+        ModuleIO::Input_Item item(entry.second);
+        for (int mode = 0; mode <= 2; ++mode)
+        {
+            Parameter param;
+            item.str_values = {std::to_string(mode)};
+            item.read_value(item, param);
+            EXPECT_EQ(param.inp.gga_grad, mode);
+            item.check_value(item, param);
+        }
+        for (const int mode: {-1, 3})
+        {
+            Parameter param;
+            item.str_values = {std::to_string(mode)};
+            item.read_value(item, param);
+            EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
+        }
+    }
+    EXPECT_TRUE(found);
+}
+
 TEST_F(InputParaTest, TypedTDFieldLists)
 {
     ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
@@ -526,6 +561,16 @@ TEST_F(InputParaTest, TDFieldStructureErrors)
         invalid_case.mutate(input);
         EXPECT_EXIT(ModuleIO::check_td_efield_parameters(input), testing::ExitedWithCode(1), "") << invalid_case.name;
     }
+}
+
+TEST_F(InputParaTest, ParaReadPlumed)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    readinput.read_parameters(param, "./support/INPUT.plumed");
+    EXPECT_TRUE(param.inp.mdp.plumed);
+    EXPECT_EQ(param.inp.mdp.plumed_file, "my_plumed.dat");
 }
 
 TEST_F(InputParaTest, DiagoProc)

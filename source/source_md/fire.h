@@ -13,13 +13,37 @@
 class FIRE : public MD_base
 {
   public:
-    FIRE(const Parameter& param_in, MDCell& mdcell_in);
+    /// @param force_thr_in force convergence threshold used by the FIRE descent
+    FIRE(const MD_para& mdp_in,
+         const bool cal_stress_in,
+         const bool init_vel,
+         const int my_rank_in,
+         const double force_thr_in,
+         MDCell& mdcell_in);
 
     ~FIRE();
 
+    /// @brief mixing coefficient of the FIRE velocity update
+    double get_alpha() const
+    {
+        return alpha;
+    }
+
+    /// @brief largest time step the adaptive scheme is allowed to reach
+    double get_dt_max() const
+    {
+        return dt_max;
+    }
+
+    /// @brief number of consecutive steps with negative power
+    int get_negative_count() const
+    {
+        return negative_count;
+    }
+
   private:
 
-    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp);
 
     void first_half(std::ofstream& ofs);
 

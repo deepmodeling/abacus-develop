@@ -14,11 +14,11 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
                                              const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Stress","stress_kin");
-	ModuleBase::timer::start("Stress","stress_kin");
+    ModuleBase::timer::start("Stress","stress_kin");
 
-	this->ucell = &ucell_in;
+    this->ucell = &ucell_in;
 
-	hamilt::FS_Kin_tools<FPTYPE, Device> kin_tool(*this->ucell, p_kv, wfc_basis, wg);
+    hamilt::FS_Kin_tools<FPTYPE, Device> kin_tool(*this->ucell, p_kv, wfc_basis, wg);
     for (int ik = 0; ik < wfc_basis->nks; ++ik)
     {
         int nbands_occ = wg.nc;
@@ -35,9 +35,9 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
         kin_tool.cal_stress_kin(ik, npm, true, &psi_in[0](ik, 0, 0));
     }
     kin_tool.symmetrize_stress(p_symm, sigma);
-		
-	ModuleBase::timer::end("Stress","stress_kin");
-	return;
+        
+    ModuleBase::timer::end("Stress","stress_kin");
+    return;
 }
 
 template class Stress_Func<double, base_device::DEVICE_CPU>;

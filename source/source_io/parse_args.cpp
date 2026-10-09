@@ -165,7 +165,7 @@ void print_build_info()
     // --- 11. Other Libraries ---
     print_section("Other Libraries");
     print_info("DFT-D4 Support", ABACUS_DFTD4_VERSION);
-    print_info("RapidJSON Support", ABACUS_RAPIDJSON_VERSION);
+    print_info("JSON Support", ABACUS_JSON_VERSION);
     print_info("PEXSI Support", ABACUS_PEXSI_VERSION);
     print_info("cnpy Support", ABACUS_CNPY_VERSION);
 

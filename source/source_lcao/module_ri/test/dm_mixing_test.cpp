@@ -4,7 +4,7 @@
 #include "source_lcao/module_ri/mix_dmk_2d.h"
 
 /************************************************
- *  unit test of charge_mixing.cpp & mix_dmk_2d.cpp
+ *  unit test of chg_mix.cpp & mix_dmk_2d.cpp
  ***********************************************/
 
 /**

@@ -36,7 +36,7 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type, 
 
     if (type == "auto")
     {
-        set_pseudo_type(fn, type);
+        pseudopot::set_pseudo_type(fn, type);
     }
 
     int info = -1;
@@ -68,7 +68,7 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type, 
 //----------------------------------------------------------
 // setting the type of the pseudopotential file
 //----------------------------------------------------------
-int Pseudopot_upf::set_pseudo_type(const std::string &fn, std::string &type) //zws add
+int pseudopot::set_pseudo_type(const std::string &fn, std::string &type) //zws add
 {
     std::ifstream pptype_ifs(fn.c_str(), std::ios::in);
     std::string dummy;
@@ -82,7 +82,7 @@ int Pseudopot_upf::set_pseudo_type(const std::string &fn, std::string &type) //z
         getline(wdsstream,strversion,'"');
         getline(wdsstream,strversion,'"');
 
-        if ( trim(strversion) == "2.0.1" )
+        if ( pseudopot::trim(strversion) == "2.0.1" )
         {
             type = "upf201";
         }
@@ -94,7 +94,7 @@ int Pseudopot_upf::set_pseudo_type(const std::string &fn, std::string &type) //z
     return 0;
 }
 
-std::string& Pseudopot_upf::trim(std::string &in_str)
+std::string& pseudopot::trim(std::string &in_str)
 {
     static const std::string deltri = " \t" ; // delete tab or space
     std::string::size_type position = in_str.find_first_of(deltri, 0);
@@ -102,16 +102,8 @@ std::string& Pseudopot_upf::trim(std::string &in_str)
     {
         return in_str;
     }
-    return trim(in_str.erase(position, 1) );
+    return pseudopot::trim(in_str.erase(position, 1) );
 }
-
-std::string Pseudopot_upf::trimend(std::string &in_str)
-{
-    const std::string &deltri =" \t" ;
-    std::string::size_type position = in_str.find_last_not_of(deltri)+1;
-    std::string tmpstr=in_str.erase(position);
-    return tmpstr.erase(0,tmpstr.find_first_not_of(deltri));
-} //zws
 
 
 int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp, const bool lspinorb)
@@ -463,7 +455,7 @@ void Pseudopot_upf::set_upf_q(Atom_pseudo& pp)
                                 break;
                             }
                         }
-                        this->setqfnew(nqf, ilast, l, 2, &(qfcoef(nb, mb, l, 0)), pp.r.data(), &(pp.qfuncl(l, nmb, 0)));
+                        pseudopot::setqfnew(nqf, ilast, l, 2, &(qfcoef(nb, mb, l, 0)), pp.r.data(), &(pp.qfuncl(l, nmb, 0)));
                     }
                 }
             }
@@ -471,7 +463,7 @@ void Pseudopot_upf::set_upf_q(Atom_pseudo& pp)
     }
 }
 
-void Pseudopot_upf::setqfnew(const int& nqf,
+void pseudopot::setqfnew(const int& nqf,
                              const int& mesh,
                              const int& l,
                              const int& n,

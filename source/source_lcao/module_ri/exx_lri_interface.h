@@ -2,7 +2,7 @@
 #define EXX_LRI_INTERFACE_H
 
 #include "exx_lri.h"
-#include "source_estate/module_charge/charge_mixing.h"
+#include "source_estate/module_charge/chg_mix.h"
 #include "source_lcao/module_ri/mix_dmk_2d.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
@@ -15,9 +15,14 @@ class Charge_Mixing;
 namespace elecstate
 {
     class ElecState;
+}
+namespace module_dm
+{
     template <typename TK, typename TR>
     class DensityMatrix;
-
+}
+namespace elecstate
+{
     /// for symmetry, multi-k, nspin<4: restore DM(k) form DM(k_ibz)
     std::vector<std::vector<std::complex<double>>> restore_dm(const K_Vectors& kv,
         const std::vector<std::vector<std::complex<double>>>& dm_k_ibz,
@@ -56,7 +61,6 @@ public:
     double &get_Eexx() const { return this->exx_ptr->Eexx; }
     ModuleBase::matrix &get_force() const { return this->exx_ptr->force_exx; }
     ModuleBase::matrix &get_stress() const { return this->exx_ptr->stress_exx; }
-    auto& get_dHexxs() const { return this->exx_ptr->dHexxs; }
     int get_two_level_step() const
     {
         return this->two_level_step;
@@ -84,14 +88,6 @@ public:
     /// @brief: in cal_exx_stress: Exx_LRI::cal_exx_stress()
     void cal_exx_stress(const double& omega, const double& lat0);
 
-    /// @brief: in cal_exx_dHs: Exx_LRI::cal_exx_dHs()
-    void cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
-        const UnitCell& ucell,
-        const Parallel_Orbitals& pv);
-
-    /// @brief build the exx-form dH (dHexxs) from the current mixed DM (for dH/dR output)
-    void cal_exx_dHs(const UnitCell& ucell, const Parallel_Orbitals& pv, const int nspin);
-
     // Processes in ESolver_KS_LCAO
     /// @brief in before_all_runners: set symmetry according to irreducible k-points
     /// since k-points are not reduced again after the variation of the cell and exx-symmetry must be consistent with k-points.
@@ -104,8 +100,9 @@ public:
     /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
     void exx_eachiterinit(const int istep,
                           const UnitCell& ucell,
-                          const elecstate::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
+                          const module_dm::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
                           const K_Vectors& kv,
+                          const Parallel_Orbitals& pv,
                           const int& iter);
 
     /// @brief in hamilt2rho: calculate Hexx and Eexx
@@ -115,8 +112,9 @@ public:
     void exx_iter_finish(const K_Vectors& kv,
                          const UnitCell& ucell,
                          hamilt::Hamilt<T>& hamilt,
-						 elecstate::ElecState& elec,
-						 elecstate::DensityMatrix<T,double>* dm, // mohan add 2025-11-04
+                         elecstate::ElecState& elec,
+                         module_dm::DensityMatrix<T,double>* dm, // mohan add 2025-11-04
+                         const Parallel_Orbitals& pv,
                          Charge_Mixing& chgmix,
                          const double& scf_ene_thr,
                          int& iter,
@@ -125,8 +123,9 @@ public:
     /// @brief: in do_after_converge: add exx operators; do DM mixing if seperate loop
     bool exx_after_converge(const UnitCell& ucell,
                             hamilt::Hamilt<T>& hamilt,
-                            const elecstate::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
+                            const module_dm::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
                             const K_Vectors& kv,
+                            const Parallel_Orbitals& pv,
                             const int& nspin,
                             int& iter,
                             const int& istep,
@@ -139,7 +138,7 @@ public:
     /// >0: not the first outer loop. contributeHk will do enerything normally.
     int two_level_step = 0;
     double etot_last_outer_loop = 0.0;
-    elecstate::DensityMatrix<T, double>* dm_last_step;
+    module_dm::DensityMatrix<T, double>* dm_last_step;
 
     size_t hybrid_step() const { return hybrid_step_; }
     void set_hybrid_step(size_t s) { hybrid_step_ = s; }
@@ -169,7 +168,6 @@ private:
         bool elec = false;
         bool force = false;
         bool stress = false;
-        bool dHs = false;
     };
     Flag_Finish flag_finish;
 };

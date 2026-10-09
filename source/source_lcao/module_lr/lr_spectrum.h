@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_LR_SPECTRUM_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_LR_SPECTRUM_H
+
 #include "source_cell/klist.h"
 #include "source_psi/psi.h"
 #include "source_estate/module_dm/density_matrix.h"
@@ -72,7 +74,7 @@ namespace LR
         void cal_transition_dipoles_velocity(const double* const eig_ks);
         double cal_mean_squared_dipole(ModuleBase::Vector3<T> dipole);
         /// calculate the transition density matrix
-        elecstate::DensityMatrix<T, T> cal_transition_density_matrix(const int istate, const T* X_in = nullptr, const bool need_R = true);
+        module_dm::DensityMatrix<T, T> cal_transition_density_matrix(const int istate, const T* X_in = nullptr, const bool need_R = true);
         
         const int my_rank;
         const int nspin_x = 1;   ///< 1 for singlet/triplet, 2 for updown(openshell)
@@ -111,3 +113,5 @@ namespace LR
         std::vector<double> oscillator_strength_;///< $2/3\Omega |\sum_{ia\sigma} \braket{\psi_{i}|\mathbf{r}|\psi_{a}} |^2$, atomic unit (Hartree)
     };
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_LR_SPECTRUM_H

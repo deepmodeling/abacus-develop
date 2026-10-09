@@ -3,27 +3,29 @@
 
 #include "gtest/gtest.h"
 #include "source_esolver/esolver_lj.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/input_parameter.h"
 #include "source_md/md_base.h"
+#include "source_cell/domain_decomposition.h"
 #include "setcell.h"
 
 #include <memory>
+#include <string>
 #include <vector>
 
 class MdTestBase : public testing::Test
 {
   protected:
     UnitCell ucell;
-    Parameter param_in;
+    Input_para inp;
     std::unique_ptr<ModuleESolver::ESolver> p_esolver;
 
     void SetUp() override
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
+        Setcell::parameters(inp);
 
         p_esolver.reset(new ModuleESolver::ESolver_LJ());
-        p_esolver->before_all_runners(ucell, param_in.inp);
+        p_esolver->before_all_runners(ucell, inp);
     }
 };
 
@@ -31,13 +33,20 @@ template <class Integrator>
 class MdIntegratorFixture : public MdTestBase
 {
   protected:
+    MDCell mdcell;
+    DomainDecomposition decomp;
     std::unique_ptr<MD_base> mdrun;
+    /// setup() takes the directory explicitly, so the fixture owns it
+    const std::string readin_dir = "./";
 
     void SetUp() override
     {
         MdTestBase::SetUp();
-        mdrun.reset(new Integrator(param_in, ucell));
-        mdrun->setup(p_esolver.get(), PARAM.sys.global_readin_dir);
+        mdcell = Setcell::setup_mdcell(ucell);
+        decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
+        p_esolver->before_all_runners(mdcell, inp);
+        mdrun.reset(new Integrator(this->inp.mdp, this->inp.cal_stress, this->inp.init_vel, /*my_rank=*/0, mdcell));
+        mdrun->setup(p_esolver.get(), readin_dir, decomp);
     }
 };
 
@@ -61,12 +70,14 @@ class MdFuncTestFixture : public testing::Test
     int natom = 0;
     double temperature = 0.0;
     int frozen_freedom = 0;
-    Parameter param_in;
+    Input_para inp;
+    /// the md writers take the directory explicitly, so the fixture owns it
+    const std::string out_dir = "./";
 
     void SetUp() override
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
+        Setcell::parameters(inp);
         natom = ucell.nat;
 
         allmass_store.resize(natom);

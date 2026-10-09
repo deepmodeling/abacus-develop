@@ -13,7 +13,7 @@ class FFT_CUDA : public FFT_BASE<FPTYPE>
         FFT_CUDA(){};
         ~FFT_CUDA(){}; 
         
-	    void setupFFT() override; 
+        void setupFFT() override; 
 
         void clear() override;
 

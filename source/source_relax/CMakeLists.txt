@@ -3,10 +3,14 @@ add_library(
     OBJECT
     relax_data.cpp
     socket_ipi.cpp
+    socket_frame_utils.cpp
     socket_frame.cpp
+    socket_utils.cpp
+    socket_handlers.cpp
     socket_driver.cpp
     cg_base.cpp
     relax_driver.cpp
+    relax_stru_io.cpp
     relax_sync.cpp
     line_search.cpp
     ions_move_lbfgs.cpp
@@ -30,7 +34,7 @@ endif()
 
 if(BUILD_TESTING)
   if(ENABLE_MPI)
-    add_subdirectory(test)
+    add_subdirectory(unittests)
   endif()
 
 endif()

@@ -1,19 +1,14 @@
 #include "h_tddft_pw.h"
 
-#include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
-#include "source_io/module_efield/td_efield_io.h"
-#include "source_io/module_parameter/parameter.h"
 #include "td_field_manager.h"
 
 namespace elecstate
 {
 
 int H_TDDFT_pw::stype = 0;
-ModuleBase::Vector3<double> H_TDDFT_pw::At;
-ModuleBase::Vector3<double> H_TDDFT_pw::At_laststep;
-ModuleBase::Vector3<double> H_TDDFT_pw::Et;
+ModuleBase::Vector3<double> H_TDDFT_pw::efield_ha;
 std::vector<double> H_TDDFT_pw::global_vext_time = {0.0, 0.0, 0.0};
 
 H_TDDFT_pw::H_TDDFT_pw(const ModulePW::PW_Basis* rho_basis_in,
@@ -29,17 +24,17 @@ H_TDDFT_pw::H_TDDFT_pw(const ModulePW::PW_Basis* rho_basis_in,
     {
         ModuleBase::WARNING_QUIT("H_TDDFT_pw", "RT-TDDFT field manager is not initialized.");
     }
-    sync_compatibility_state(*field_manager_);
+    set_field_state(*field_manager_);
 }
 
-void H_TDDFT_pw::sync_compatibility_state(const TDFieldManager& manager)
+void H_TDDFT_pw::set_field_state(const TDFieldManager& manager)
 {
     stype = manager.gauge();
-    At = manager.vector_potential();
-    At_laststep = manager.vector_potential_laststep();
-    Et = manager.electric_field();
-    const ModuleBase::Vector3<double>& total_field = manager.total_electric_field();
-    global_vext_time = {total_field[0], total_field[1], total_field[2]};
+    efield_ha = manager.efield_ha();
+    const ModuleBase::Vector3<double>& total_field = manager.efield_ha();
+    // Velocity gauge has no scalar electric-field force.
+    const double ry_scale = stype == 1 ? 0.0 : 2.0;
+    global_vext_time = {ry_scale * total_field[0], ry_scale * total_field[1], ry_scale * total_field[2]};
 }
 
 void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
@@ -50,10 +45,6 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
         return;
     }
 
-    // Advance exactly once per rebuilt fixed potential. The potential then
-    // consumes the same per-occurrence samples exposed to field output.
-    field_manager_->advance_length_gauge();
-    sync_compatibility_state(*field_manager_);
     if (!field_manager_->active())
     {
         return;
@@ -61,21 +52,17 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
 
     ModuleBase::timer::start("H_TDDFT_pw", "cal_fixed_v");
     const std::vector<TDField>& fields = field_manager_->fields();
-    const std::vector<double>& field_values = field_manager_->field_values();
+    const std::vector<double>& field_values = field_manager_->field_vals_ha();
     for (std::size_t field_index = 0; field_index < fields.size(); ++field_index)
     {
         std::vector<double> vext_space(this->rho_basis_->nrxx, 0.0);
-        const double field_value = field_values[field_index];
+        const double field_value = 2.0 * field_values[field_index]; // Scalar potential is stored in Rydberg.
 
         cal_v_space_length(vext_space, fields[field_index].direction() + 1);
         for (std::size_t ir = 0; ir < static_cast<std::size_t>(this->rho_basis_->nrxx); ++ir)
         {
             vl_pseudo[ir] += vext_space[ir] * field_value;
         }
-    }
-    if (PARAM.inp.out_efield && GlobalV::MY_RANK == 0)
-    {
-        ModuleIO::write_td_field_values(*field_manager_, PARAM.globalv.global_out_dir);
     }
     ModuleBase::timer::end("H_TDDFT_pw", "cal_fixed_v");
 }

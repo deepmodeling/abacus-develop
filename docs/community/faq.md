@@ -108,7 +108,7 @@ This is a [known issue](https://github.com/open-mpi/ompi/issues/4948) of OpenMPI
 
 **1. How to visualize charge density file?**
 
-The output file SPIN1_CHG.cube can be visualized by using VESTA.
+The output file chg.cube can be visualized by using VESTA.
 
 **2. How to change cif file directly to STRU file?**
 

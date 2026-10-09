@@ -18,7 +18,7 @@ static_assert(std::numeric_limits<double>::is_iec559,
 
 namespace
 {
-constexpr std::size_t IPI_HEADER_LEN = 12;
+constexpr std::size_t kIpiHeaderLen = 12;
 
 std::string errno_message(const std::string& prefix)
 {
@@ -27,7 +27,7 @@ std::string errno_message(const std::string& prefix)
 
 std::string trim_header(const char* data)
 {
-    std::string value(data, IPI_HEADER_LEN);
+    std::string value(data, kIpiHeaderLen);
     while (!value.empty() && value.back() == ' ')
     {
         value.pop_back();
@@ -37,12 +37,12 @@ std::string trim_header(const char* data)
 
 std::string padded_header(const std::string& header)
 {
-    if (header.size() > IPI_HEADER_LEN)
+    if (header.size() > kIpiHeaderLen)
     {
         throw std::runtime_error("i-PI header is longer than 12 bytes: " + header);
     }
     std::string out = header;
-    out.resize(IPI_HEADER_LEN, ' ');
+    out.resize(kIpiHeaderLen, ' ');
     return out;
 }
 
@@ -145,7 +145,7 @@ void IpiSocket::close()
 
 std::string IpiSocket::read_header()
 {
-    char header[IPI_HEADER_LEN];
+    char header[kIpiHeaderLen];
     std::size_t done = 0;
     while (done < sizeof(header))
     {

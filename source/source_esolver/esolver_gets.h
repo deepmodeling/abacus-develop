@@ -1,6 +1,7 @@
 #ifndef ESOLVER_GETS_H
 #define ESOLVER_GETS_H
 
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver_ks.h"

@@ -29,6 +29,7 @@ AddTest(
   LIBS parameter planewave device base container
   SOURCES cal_vcav_test.cpp  ../cal_vcav.cpp ../surchem.cpp
   ../../module_xc/xc_grad.cpp ../../module_xc/xc_grad_prepare.cpp ../../module_xc/xc_grad_kernel.cpp ../../module_xc/xc_grad_assemble.cpp ../../module_xc/xc_grad_wfc.cpp ../../module_xc/xc_grad_utils.cpp ../../module_xc/xc_functional.cpp
+  ../../module_xc/xc_functional_ncgga_sf.cpp ../../module_xc/xc_ncgga_radial.cpp
   ../../module_xc/xc_lda_wrap.cpp ../../module_xc/xc_gga_wrap.cpp
   ../../module_xc/libxc_setup.cpp
   ../../module_xc/libxc_pot.cpp
@@ -44,6 +45,7 @@ AddTest(
   LIBS parameter planewave device base container
   SOURCES cal_vel_test.cpp  ../cal_vel.cpp ../surchem.cpp ../cal_epsilon.cpp ../minimize_cg.cpp
   ../../module_xc/xc_grad.cpp ../../module_xc/xc_grad_prepare.cpp ../../module_xc/xc_grad_kernel.cpp ../../module_xc/xc_grad_assemble.cpp ../../module_xc/xc_grad_wfc.cpp ../../module_xc/xc_grad_utils.cpp ../../module_xc/xc_functional.cpp
+  ../../module_xc/xc_functional_ncgga_sf.cpp ../../module_xc/xc_ncgga_radial.cpp
   ../../module_xc/xc_lda_wrap.cpp ../../module_xc/xc_gga_wrap.cpp
   ../../module_xc/libxc_setup.cpp
   ../../module_xc/libxc_pot.cpp

@@ -525,7 +525,8 @@ void ReadInput::item_exx()
         item.category = "Exact Exchange (LCAO)";
         item.type = "Boolean";
         item.description = R"(* False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
-* True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation)";
+* True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
+For multi-k calculations, D(k) is averaged over the unitary little group of each irreducible k point before star expansion, for either setting.)";
         item.default_value = "True";
         item.unit = "";
         item.set_availability("symmetry==1 and (dft_functional in [hse, hf, pbe0, scan0] or (basis_type==lcao and rpa==true))");

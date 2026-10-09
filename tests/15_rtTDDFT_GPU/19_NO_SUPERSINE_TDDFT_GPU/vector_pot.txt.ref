@@ -1,4 +1,4 @@
-#istep  A_x            A_y            A_z
+#istep  A_x            A_y            A_z            # propagation values, Hartree atomic units
 1       0.000000e+00   0.000000e+00   0.000000e+00
 2       4.096138e-03   -2.078722e-02  0.000000e+00
 3       4.375154e-03   -5.368872e-02  0.000000e+00

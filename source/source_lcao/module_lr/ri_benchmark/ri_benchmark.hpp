@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_RI_BENCHMARK_RI_BENCHMARK_HPP
+#define ABACUS_SOURCE_LCAO_MODULE_LR_RI_BENCHMARK_RI_BENCHMARK_HPP
+
 #include <algorithm>
 #include <dirent.h>
 #include "ri_benchmark.h"
@@ -378,7 +380,7 @@ namespace RI_Benchmark
     template <typename TR>
     std::vector<TLRI<TR>> split_Ds(const std::vector<std::vector<TR>>& Ds, const std::vector<int>& aims_nbasis, const UnitCell& ucell) // vector index: ispin
     {
-        // Due to the hard-coded constructor of elecstate::DensityMatrix, singlet-triplet with nspin=2 cannot use DM_trans with size 1
+        // Due to the hard-coded constructor of module_dm::DensityMatrix, singlet-triplet with nspin=2 cannot use DM_trans with size 1
         // if(Ds.size()>1) { throw std::runtime_error("split_Ds only supports gamma-only spin-1 Ds now."); }
         std::vector<TLRI<TR>> Ds_split;
         for (const auto& D : Ds)
@@ -414,3 +416,5 @@ namespace RI_Benchmark
         return Ds_split;
     }
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_RI_BENCHMARK_RI_BENCHMARK_HPP

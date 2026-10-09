@@ -21,7 +21,7 @@ struct TDFieldSample
      * @param electronic_step_in Zero-based electronic-step index.
      * @param simpson_node_in Node index in the current Simpson interval.
      * @param subdivisions_in Number of subintervals in one electronic step.
-     * @param time_in Physical sampling time in internal atomic time units.
+     * @param time_in Physical sampling time in Hartree atomic time units.
      */
     TDFieldSample(const int electronic_step_in, const int simpson_node_in, const int subdivisions_in, const double time_in)
         : electronic_step(electronic_step_in), simpson_node(simpson_node_in), subdivisions(subdivisions_in), time(time_in)
@@ -36,13 +36,13 @@ struct TDFieldSample
     int electronic_step; ///< Zero-based electronic-step index.
     int simpson_node;    ///< Node index within the current electronic step.
     int subdivisions;    ///< Number of subintervals in one electronic step.
-    double time;         ///< Sampling time in internal atomic time units.
+    double time;         ///< Sampling time in Hartree atomic time units.
 };
 
 /**
  * @brief Scalar time profile of one configured electric field.
  *
- * Implementations return the field in ABACUS internal propagation units. A
+ * Implementations return the field in Hartree atomic units. A
  * profile contains no Cartesian direction; direction handling is owned by
  * TDField and TDFieldManager.
  */
@@ -56,7 +56,7 @@ class TDFieldProfile
      * @brief Evaluate the electric field at one sampling point.
      *
      * @param sample Electronic-step and Simpson-node sampling information.
-     * @return Scalar field value in internal propagation units.
+     * @return Scalar field value in Hartree atomic units.
      */
     virtual double electric_field(const TDFieldSample& sample) const = 0;
 };

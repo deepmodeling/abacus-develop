@@ -96,16 +96,19 @@ void Setup_DeePKS<TK>::delta_e(const UnitCell& ucell,
 #endif
 }
 
-template <typename TK>
-void Setup_DeePKS<TK>::write_forces(const ModuleBase::matrix& fcs,
-                                    const ModuleBase::matrix& fvnl_dalpha,
-                                    const Input_para& inp)
+namespace DeePKS_domain
+{
+
+void write_forces(const ModuleBase::matrix& fcs,
+                  const ModuleBase::matrix& fvnl_dalpha,
+                  const std::string& dpks_out_type,
+                  const Input_para& inp)
 {
 #ifdef __MLALGO
     // DeePKS force
     if (inp.deepks_out_labels) // not parallelized yet
     {
-        if (inp.deepks_out_base == "none" || (inp.deepks_out_base != "none" && this->dpks_out_type == "tot"))
+        if (inp.deepks_out_base == "none" || (inp.deepks_out_base != "none" && dpks_out_type == "tot"))
         {
             const std::string file_ftot
                 = PARAM.globalv.global_out_dir + (inp.deepks_out_labels == 1 ? "deepks_ftot.npy" : "deepks_force.npy");
@@ -139,18 +142,18 @@ void Setup_DeePKS<TK>::write_forces(const ModuleBase::matrix& fcs,
 #endif
 }
 
-template <typename TK>
-void Setup_DeePKS<TK>::write_stress(const ModuleBase::matrix& scs,
-                                    const ModuleBase::matrix& svnl_dalpha,
-                                    const double& omega,
-                                    const Input_para& inp)
+void write_stress(const ModuleBase::matrix& scs,
+                  const ModuleBase::matrix& svnl_dalpha,
+                  const double& omega,
+                  const std::string& dpks_out_type,
+                  const Input_para& inp)
 {
 #ifdef __MLALGO
     if (inp.deepks_out_labels == 1)
     {
         assert(omega > 0.0);
 
-        if (inp.deepks_out_base == "none" || (inp.deepks_out_base != "none" && this->dpks_out_type == "tot"))
+        if (inp.deepks_out_base == "none" || (inp.deepks_out_base != "none" && dpks_out_type == "tot"))
         {
             const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stot.npy";
             LCAO_deepks_io::save_matrix2npy(file_stot,
@@ -180,7 +183,7 @@ void Setup_DeePKS<TK>::write_stress(const ModuleBase::matrix& scs,
             // output scs as tot or base in another dir
             // this base considers changing xc functional to base functional
             const std::string file_s = PARAM.globalv.global_deepks_label_elec_dir
-                                       + (this->dpks_out_type == "tot" ? "stot.npy" : "sbase.npy");
+                                       + (dpks_out_type == "tot" ? "stot.npy" : "sbase.npy");
             LCAO_deepks_io::save_matrix2npy(file_s,
                                             scs,
                                             GlobalV::MY_RANK,
@@ -196,6 +199,8 @@ void Setup_DeePKS<TK>::write_stress(const ModuleBase::matrix& scs,
     }
 #endif
 }
+
+} // namespace DeePKS_domain
 
 template class Setup_DeePKS<double>;
 template class Setup_DeePKS<std::complex<double>>;

@@ -1,9 +1,9 @@
 #include "md_func.h"
+#include "source_cell/domain_decomposition.h"
 
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_io/module_output/output_log.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <cerrno>
 #include <cstring>
@@ -259,14 +259,14 @@ void init_vel(MDCell& mdcell,
         {
             offsets[static_cast<std::size_t>(it + 1)] = offsets[static_cast<std::size_t>(it)] + unit.atoms[it].na;
         }
-        for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+        for (LocalAtom& atom : mdcell.owned_atoms())
         {
             atom.vel = velocities[static_cast<std::size_t>(offsets[static_cast<std::size_t>(atom.type)] + atom.type_index)];
         }
         return;
     }
 
-    std::vector<LocalAtom>& atoms = mdcell.mutable_owned_atoms();
+    std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
     ModuleBase::Vector3<std::int64_t> frozen(0, 0, 0);
     for (std::size_t i = 0; i < atoms.size(); ++i)
         for (int k = 0; k < 3; ++k) if (!atoms[i].mbl[k]) ++frozen[k];
@@ -326,6 +326,7 @@ void init_vel(MDCell& mdcell,
 void force_virial(ModuleESolver::ESolver* p_esolver,
                   const int& istep,
                   MDCell& mdcell,
+                  DomainDecomposition& decomp,
                   double& potential,
                   const bool& cal_stress,
                   ModuleBase::matrix& virial,
@@ -335,10 +336,11 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     ModuleBase::timer::start("MD_func", "force_virial");
     if (!mdcell.has_backing_unitcell())
     {
-        mdcell.prepare_neighbors();
+        decomp.prepare_neighbors(mdcell);
         p_esolver->runner(static_cast<BaseCell&>(mdcell), istep);
+        decomp.accumulate_ghost_forces(mdcell);
         potential = 0.5 * p_esolver->cal_energy();
-        for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.force *= 0.5;
+        for (LocalAtom& atom : mdcell.owned_atoms()) atom.force *= 0.5;
         if (md_out_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, mdcell, "TOTAL-FORCE (eV/Angstrom)");
@@ -365,7 +367,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
         ModuleBase::matrix full_force(ucell.nat, 3); p_esolver->cal_force(ucell, full_force); full_force *= 0.5;
         if (cal_stress) { p_esolver->cal_stress(ucell, virial); virial *= 0.5; }
         std::vector<int> offsets(ucell.ntype + 1, 0); for (int it=0; it<ucell.ntype; ++it) offsets[it+1]=offsets[it]+ucell.atoms[it].na;
-        for (LocalAtom& atom : mdcell.mutable_owned_atoms()) { const int iat=offsets[atom.type]+atom.type_index; atom.force.set(full_force(iat,0),full_force(iat,1),full_force(iat,2)); }
+        for (LocalAtom& atom : mdcell.owned_atoms()) { const int iat=offsets[atom.type]+atom.type_index; atom.force.set(full_force(iat,0),full_force(iat,1),full_force(iat,2)); }
     }
     ModuleBase::timer::end("MD_func", "force_virial");
 }
@@ -408,7 +410,8 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
 void dump_info(const int& step,
                const std::string& global_out_dir,
                const MDCell& mdcell,
-               const Parameter& param_in,
+               const MD_para& mdp,
+               const bool cal_stress,
                const ModuleBase::matrix& virial)
 {
     std::stringstream file;
@@ -423,15 +426,15 @@ void dump_info(const int& step,
     header << "  " << mdcell.latvec().e11 << "  " << mdcell.latvec().e12 << "  " << mdcell.latvec().e13 << "\n";
     header << "  " << mdcell.latvec().e21 << "  " << mdcell.latvec().e22 << "  " << mdcell.latvec().e23 << "\n";
     header << "  " << mdcell.latvec().e31 << "  " << mdcell.latvec().e32 << "  " << mdcell.latvec().e33 << "\n";
-    if (param_in.inp.cal_stress && param_in.mdp.dump_virial)
+    if (cal_stress && mdp.dump_virial)
     {
         header << "VIRIAL (kbar)\n";
         for (int i = 0; i < 3; ++i)
             header << "  " << virial(i, 0) * unit_virial << "  " << virial(i, 1) * unit_virial << "  " << virial(i, 2) * unit_virial << "\n";
     }
     header << "INDEX    LABEL    POSITION (Angstrom)";
-    if (param_in.mdp.dump_force) header << "    FORCE (eV/Angstrom)";
-    if (param_in.mdp.dump_vel) header << "    VELOCITY (Angstrom/fs)";
+    if (mdp.dump_force) header << "    FORCE (eV/Angstrom)";
+    if (mdp.dump_vel) header << "    VELOCITY (Angstrom/fs)";
     header << "\n";
     std::vector<std::int64_t> type_offsets(mdcell.type_atom_counts().size() + 1, 0);
     for (std::size_t it = 0; it < mdcell.type_atom_counts().size(); ++it)
@@ -440,15 +443,15 @@ void dump_info(const int& step,
     }
     std::ostringstream local;
     local << std::fixed << std::setprecision(12);
-    for (int i = 0; i < mdcell.nowned_atoms(); ++i)
+    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
         const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
         local << "  " << type_offsets[static_cast<std::size_t>(atom.type)] + atom.type_index
               << "  " << mdcell.type_labels()[static_cast<std::size_t>(atom.type)]
               << "  " << atom.cart.x * unit_pos << "  " << atom.cart.y * unit_pos << "  " << atom.cart.z * unit_pos;
-        if (param_in.mdp.dump_force)
+        if (mdp.dump_force)
             local << "  " << atom.force.x * unit_force << "  " << atom.force.y * unit_force << "  " << atom.force.z * unit_force;
-        if (param_in.mdp.dump_vel)
+        if (mdp.dump_vel)
             local << "  " << atom.vel.x * unit_vel << "  " << atom.vel.y * unit_vel << "  " << atom.vel.z * unit_vel;
         local << "\n";
     }
@@ -551,7 +554,7 @@ double current_temp(double& kinetic,
 std::int64_t global_dof(const MDCell& mdcell)
 {
     std::int64_t local_frozen[3] = {0, 0, 0};
-    for (int i = 0; i < mdcell.nowned_atoms(); ++i)
+    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
         const ModuleBase::Vector3<int>& mbl = mdcell.owned_atoms()[static_cast<std::size_t>(i)].mbl;
         if (mbl.x == 0) ++local_frozen[0];

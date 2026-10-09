@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
 
-    Cblacs_exit(ictxt);
+    Cblacs_gridexit(ictxt);
 
     // MPI_Finalize();
     return result;

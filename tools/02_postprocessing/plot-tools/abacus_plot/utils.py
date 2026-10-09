@@ -253,21 +253,42 @@ angular_momentum_name = [
     ['$s$'],
     ['$p_z$', '$p_x$', '$p_y$'],
     ['$d_{z^2}$', '$d_{xz}$', '$d_{yz}$', '$d_{x^2-y^2}$', '$d_{xy}$'],
-    ['$f_{z^3}$', '$f_{xz^2}$', '$f_{yz^2}$', '$f_{z(x^2-y^2)}$', 
+    ['$f_{z^3}$', '$f_{xz^2}$', '$f_{yz^2}$', '$f_{z(x^2-y^2)}$',
         '$f_{xyz}$', '$f_{x(x^2-3y^2)}$', '$f_{y(3x^2-y^2)}$'],
     ['$g_1$', '$g_2$', '$g_3$', '$g_4$', '$g_5$',
         '$g_6$', '$g_7$', '$g_8$', '$g_9$']
 ]
 
 
-def get_angular_momentum_name(l_index: int, m_index: int) -> str:
-    """Atomic orbital angular momentum name from l_index and m_index
+def _m_to_col(m: int) -> int:
+    """Column index 0..2l of a physical magnetic quantum number m.
+
+    ABACUS stores real spherical harmonics in the order
+    (m=0), (m=+1), (m=-1), (m=+2), (m=-2), ..., so column 1 -> m=+1,
+    column 2 -> m=-1, column 3 -> m=+2, column 4 -> m=-2, etc.
+    """
+    if m == 0:
+        return 0
+    return 2 * m - 1 if m > 0 else -2 * m
+
+
+def get_angular_momentum_name(l_index: int, m: int, m_is_physical: bool = True) -> str:
+    """Atomic orbital angular momentum name from l_index and m.
 
     :params l_index: 0 or 1 or 2 or 3 or 4
-    :params m_index: 0 ... 2*l_index
+    :params m: magnetic quantum number. When m_is_physical is True, m is the
+        physical value (-l_index <= m <= l_index); otherwise m is the column
+        index 0..2*l_index as stored in the legacy projected-band XML.
+    :params m_is_physical: whether m is a physical quantum number (True,
+        default) or a 0..2l column index (False, for the XML PBand format).
     """
-
-    return angular_momentum_name[l_index][m_index]
+    if m_is_physical:
+        if abs(m) > l_index:
+            raise ValueError(f"|m|={abs(m)} exceeds l={l_index}")
+        col = _m_to_col(m)
+    else:
+        col = m
+    return angular_momentum_name[l_index][col]
 
 
 def parse_projected_data(orbitals, species: Union[Sequence[Any], Dict[Any, List[int]], Dict[Any, Dict[Any, List[int]]]], keyname=''):

@@ -495,7 +495,7 @@ def read_stru(fn: str) -> Dict[str, Any]:
                               for line in blocks['LATTICE_VECTORS']]
     elif 'LATTICE_PARAMETER' in blocks:
         stru['lat']['param'] = [float(x)
-                                for x in blocks['LATTICE_PARAMETERS'].split()]
+                                for x in blocks['LATTICE_PARAMETER'][0].split()]
 
     #============ ATOMIC_SPECIES ============
     stru['species'] = [dict(zip(['symbol', 'mass', 'pp_file', 'pp_type'],
@@ -730,6 +730,38 @@ class TestAbacusCalculatorIOUtil(unittest.TestCase):
         self.assertEqual(stru_['species'][1]['pp_file'], 'Cl.pz-bhs.UPF')
         self.assertEqual(stru_['species'][0]['orb_file'], 'Na_gga_6au_100Ry_2s2p1d.orb')
         self.assertEqual(stru_['species'][1]['orb_file'], 'Cl_gga_6au_100Ry_2s2p1d.orb')
+
+    def test_read_stru_with_lattice_parameter(self):
+        # STRU that uses LATTICE_PARAMETER instead of LATTICE_VECTORS
+        # (issue #7555: previously raised KeyError on 'LATTICE_PARAMETERS')
+        content = (
+            "ATOMIC_SPECIES\n"
+            "Si 28.085 Si.upf\n"
+            "\n"
+            "LATTICE_CONSTANT\n"
+            "10.2\n"
+            "\n"
+            "LATTICE_PARAMETER\n"
+            "5.43 5.43 5.43 90 90 90\n"
+            "\n"
+            "ATOMIC_POSITIONS\n"
+            "Direct\n"
+            "\n"
+            "Si\n"
+            "0.0\n"
+            "2\n"
+            "0.0 0.0 0.0 1 1 1\n"
+            "0.25 0.25 0.25 1 1 1\n"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fn = Path(tmpdir) / 'STRU'
+            fn.write_text(content)
+            stru = read_stru(fn)
+        self.assertEqual(stru['lat']['const'], 10.2)
+        self.assertNotIn('vec', stru['lat'])
+        self.assertEqual(stru['lat']['param'], [5.43, 5.43, 5.43, 90.0, 90.0, 90.0])
+        self.assertEqual(stru['species'][0]['symbol'], 'Si')
+        self.assertEqual(stru['species'][0]['natom'], 2)
 
     def test_write_stru_preserves_first_occurrence_species_order(self):
         atoms = Atoms(

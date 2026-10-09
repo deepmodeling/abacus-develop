@@ -1,9 +1,10 @@
 #include "source_lcao/module_rt/snap_psb_half_tddft.h"
 
 #include "source_base/ylm.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/read_pp.h"
 #include "source_cell/unitcell.h"
-#include "source_io/module_hs/cal_r_overlap_r.h"
+#include "source_io/module_hs/pos_op_mat.h"
 #include "../../lcao_nonlocal_info.h"
 
 #ifdef __CUDA
@@ -84,7 +85,7 @@ void print_comparison_stats(const char* label, const ComparisonStats& stats)
 
 ComparisonStats compare_zero_vector_potential(const LCAO_Orbitals& orb,
                                               const UnitCell& ucell,
-                                              cal_r_overlap_R& r_calculator,
+                                              Position_op& r_calculator,
                                               const int radial_grid_num,
                                               const int lebedev_grid_points)
 {
@@ -334,28 +335,30 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
         ASSERT_EQ(atom.ncpp.jjj.size(), 6);
 
         auto* lcao_nl = new LCAONonlocalInfo();
-        lcao_nl->get_nonlocal().nproj = new int[1];
+        lcao_nl->get_nonlocal().assign_nproj(1, 0);
+        lcao_nl->get_nonlocal().resize_Beta(1);
         std::ofstream log("snap_psibeta_half_tddft_nonlocal.log");
         lcao_nl->get_nonlocal().Set_NonLocal(0,
                                             &atom,
-                                            lcao_nl->get_nonlocal().nproj[0],
+                                            lcao_nl->get_nonlocal().get_nproj_ref(0),
                                             orb.get_kmesh(),
                                             orb.get_dk(),
                                             orb.get_dr_uniform(),
                                             log,
                                             false,
                                             false,
-                                            1);
+                                            1,
+                                            0);
 
-        ASSERT_EQ(lcao_nl->get_nonlocal().nproj[0], 6);
-        lcao_nl->get_nonlocal().nprojmax = lcao_nl->get_nonlocal().nproj[0];
-        lcao_nl->get_nonlocal().rcutmax_Beta = lcao_nl->get_nonlocal().Beta[0].get_rcut_max();
+        ASSERT_EQ(lcao_nl->get_nonlocal().get_nproj(0), 6);
+        lcao_nl->get_nonlocal().set_nprojmax(lcao_nl->get_nonlocal().get_nproj(0));
+        lcao_nl->get_nonlocal().set_rcutmax_Beta(lcao_nl->get_nonlocal().get_Beta(0).get_rcut_max());
         ucell.infoNL.reset(lcao_nl);
     }
 
     void initialize_r_overlap_reference()
     {
-        r_calculator.init_nonlocal(ucell, pv, orb);
+        r_calculator.init_nonlocal(ucell, pv, orb, false, ucell.atoms[0].nw);
     }
 
     ComparisonStats compare_zero_vector_potential(const int radial_grid_num, const int lebedev_grid_points)
@@ -366,7 +369,7 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
     LCAO_Orbitals orb;
     UnitCell ucell;
     Parallel_Orbitals pv;
-    cal_r_overlap_R r_calculator;
+    Position_op r_calculator;
 };
 
 class SnapPsibetaNonuniformHalfTddftTest : public ::testing::Test
@@ -418,30 +421,32 @@ class SnapPsibetaNonuniformHalfTddftTest : public ::testing::Test
         pseudo_reader.complete_default(atom.ncpp, 15.0);
 
         auto* lcao_nl = new LCAONonlocalInfo();
-        lcao_nl->get_nonlocal().nproj = new int[1];
+        lcao_nl->get_nonlocal().assign_nproj(1, 0);
+        lcao_nl->get_nonlocal().resize_Beta(1);
         std::ofstream log("snap_psibeta_half_tddft_al_nonlocal.log");
         lcao_nl->get_nonlocal().Set_NonLocal(0,
                                             &atom,
-                                            lcao_nl->get_nonlocal().nproj[0],
+                                            lcao_nl->get_nonlocal().get_nproj_ref(0),
                                             orb.get_kmesh(),
                                             orb.get_dk(),
                                             orb.get_dr_uniform(),
                                             log,
                                             false,
                                             false,
-                                            1);
-        ASSERT_EQ(lcao_nl->get_nonlocal().nproj[0], 4);
-        lcao_nl->get_nonlocal().nprojmax = lcao_nl->get_nonlocal().nproj[0];
-        lcao_nl->get_nonlocal().rcutmax_Beta = lcao_nl->get_nonlocal().Beta[0].get_rcut_max();
+                                            1,
+                                            0);
+        ASSERT_EQ(lcao_nl->get_nonlocal().get_nproj(0), 4);
+        lcao_nl->get_nonlocal().set_nprojmax(lcao_nl->get_nonlocal().get_nproj(0));
+        lcao_nl->get_nonlocal().set_rcutmax_Beta(lcao_nl->get_nonlocal().get_Beta(0).get_rcut_max());
         ucell.infoNL.reset(lcao_nl);
 
-        r_calculator.init_nonlocal(ucell, pv, orb);
+        r_calculator.init_nonlocal(ucell, pv, orb, false, atom.nw);
     }
 
     LCAO_Orbitals orb;
     UnitCell ucell;
     Parallel_Orbitals pv;
-    cal_r_overlap_R r_calculator;
+    Position_op r_calculator;
 };
 } // namespace
 
@@ -490,9 +495,9 @@ TEST_F(SnapPsibetaNonuniformHalfTddftTest, NonuniformAlProjectorMatchesTwoCenter
     ASSERT_NE(lcao_nl, nullptr);
 
     bool found_nonuniform_spacing = false;
-    for (int ip = 0; ip < lcao_nl->get_nonlocal().nproj[0]; ++ip)
+    for (int ip = 0; ip < lcao_nl->get_nonlocal().get_nproj(0); ++ip)
     {
-        const auto& projector = lcao_nl->get_nonlocal().Beta[0].Proj[ip];
+        const auto& projector = lcao_nl->get_nonlocal().get_Beta(0).Proj[ip];
         ASSERT_GT(projector.getNr(), 2);
         const double first_spacing = projector.getRadial(1) - projector.getRadial(0);
         for (int ir = 2; ir < projector.getNr(); ++ir)

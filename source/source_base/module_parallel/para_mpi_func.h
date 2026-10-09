@@ -1,10 +1,10 @@
 #ifndef PARA_MPI_FUNC_H
 #define PARA_MPI_FUNC_H
 
+#include "para_world.h"
+
 #include <complex>
 #include <string>
-
-#include "para_world.h"
 
 namespace Parallel
 {
@@ -12,7 +12,7 @@ namespace Parallel
 // Domain-aware MPI communication functions.
 // Each function takes the target communication domain (const ParaWorld&)
 // explicitly instead of hardcoding MPI_COMM_WORLD/POOL_WORLD.
-// In serial builds all functions are no-ops (gather_int copies locally);
+// In serial builds broadcasts and reductions are no-ops; gathers copy locally;
 // invalid/empty domains are safely skipped.
 
 // ========== Broadcast ==========
@@ -48,7 +48,18 @@ void barrier(const ParaWorld& world);
 
 // ========== Gather ==========
 
-void gather_int(int& v, int* all, const ParaWorld& world);
+void allgather_int(int& v, int* all, const ParaWorld& world);
+
+/**
+ * @brief Gather variable-sized double buffers onto every rank in the domain.
+ * @param send Local input buffer; may be null when send_count is zero.
+ * @param send_count Number of local elements.
+ * @param recv Output buffer large enough for all received segments.
+ * @param recv_counts Element counts indexed by domain rank.
+ * @param displs Element offsets in recv indexed by domain rank.
+ * @param world Communication domain; invalid domains are skipped.
+ */
+void allgatherv_double(const double* send, int send_count, double* recv, const int* recv_counts, const int* displs, const ParaWorld& world);
 
 } // namespace Parallel
 

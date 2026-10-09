@@ -2,8 +2,8 @@
 
 #include "source_base/global_function.h"
 #include "source_base/timer.h"
-#include "source_io/module_hs/write_hs.h"
-#include "source_io/module_hs/write_hs_r.h"
+#include "source_io/module_hs/hs_dense_io.h"
+#include "source_io/module_hs/hsr_writer.h"
 #include "source_cell/ucell_io.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
@@ -122,7 +122,8 @@ void write_dh_perI(WriteDHParams& params,
                                    out_app_flag,
                                    fk,
                                    pv,
-                                   GlobalV::DRANK);
+                                   GlobalV::DRANK,
+                                   PARAM.inp.ks_solver);
             }
         }
     }
@@ -143,16 +144,16 @@ void write_dH_components(WriteDHParams& params, const Exx_Info& exx_info)
     }
 
 #ifdef __EXX
-    // The EXX interfaces carried by WriteDHParams are gamma-only (see write_dh.h): at multi-k
-    // dH^EXX would be the derivative with respect to every mirror atom, which this output is
-    // not meant for. Quit instead of writing a dH sum that silently omits the EXX term.
-    if (exx_info.info_global.cal_exx && !PARAM.globalv.gamma_only_local
-        && (PARAM.inp.out_mat_dh[0] || PARAM.inp.out_mat_dh_exx[0]))
+    // dV^EXX/dR cannot be computed in this branch (it requires the LibRI cal_dHs/dHs_HF
+    // APIs from the unmerged LibRI PR#10), so the dH sum would silently omit the EXX term
+    // at any k-point setting, gamma-only included. Quit whenever EXX is on and the sum is
+    // requested; the individual non-EXX terms remain available.
+    if (exx_info.info_global.cal_exx && PARAM.inp.out_mat_dh[0])
     {
         ModuleBase::WARNING_QUIT("write_dH_components",
-                                 "out_mat_dh (the dH sum) and out_mat_dh_exx are only supported for gamma-only when EXX is on. "
-                                 "Use gamma_only, or request the individual non-EXX terms (out_mat_dh_t, "
-                                 "out_mat_dh_vnl, out_mat_dh_vl, out_mat_dh_vh, out_mat_dh_vxc).");
+                                 "out_mat_dh (the dH sum) is not supported with EXX because dV^EXX/dR is "
+                                 "unavailable; request the individual non-EXX terms (out_mat_dh_t, "
+                                 "out_mat_dh_vnl, out_mat_dh_vl, out_mat_dh_vh, out_mat_dh_vxc) instead.");
     }
 #endif
 
@@ -164,7 +165,7 @@ void write_dH_components(WriteDHParams& params, const Exx_Info& exx_info)
 
     if (PARAM.inp.out_mat_dh[0])
     {
-        write_dH_sum(params, exx_info);
+        write_dH_sum(params);
     }
 
     if (PARAM.inp.out_mat_dh_t[0])
@@ -193,13 +194,6 @@ void write_dH_components(WriteDHParams& params, const Exx_Info& exx_info)
         write_dH_vxc(params);
         write_dH_vxc_pulay(params);
     }
-
-#ifdef __EXX
-    if (PARAM.inp.out_mat_dh_exx[0])
-    {
-        write_dH_exx(params, exx_info);
-    }
-#endif
 
     ModuleBase::timer::end("ModuleIO", "write_dH_components");
 }

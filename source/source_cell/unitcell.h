@@ -17,21 +17,6 @@ class UnitCell : public BaseCell {
     UnitCell();
     ~UnitCell();
 
-    double get_lat0() const override
-    {
-        return lat0;
-    }
-
-    double get_omega() const override
-    {
-        return omega;
-    }
-
-    const ModuleBase::Matrix3& get_latvec() const override
-    {
-        return latvec;
-    }
-
     /// @brief Initialize basic cell parameters (latname, ntype, lmaxmax, init_vel)
     ///        from INPUT and parse fixed_axes into lat_axis_free flags.
     void setup_from_input(const std::string& latname_in,
@@ -41,11 +26,11 @@ class UnitCell : public BaseCell {
                const std::string& fixed_axes_in);
 
     void setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, 
-		    const int dfthalf_type, const std::string& pseudo_dir, const int nspin,
+            const int dfthalf_type, const std::string& pseudo_dir, const int nspin,
                     const std::string& basis_type, const std::string& orbital_dir, const std::string& init_wfc,
                     const double onsite_radius, const bool deepks_setorb, const bool rpa,
                     const bool fixed_atoms, const bool noncolin, const std::string& calculation, 
-		    const std::string& esolver_type, const int symmetry);
+            const std::string& esolver_type, const int symmetry);
 
     void set_iat2itia();
 
@@ -66,6 +51,14 @@ class UnitCell : public BaseCell {
     inline const int* get_iat2iwt() const { return iat2iwt.data(); }
     /// @brief Get npol
     inline const int& get_npol() const { return npol; }
+
+    /// @brief Set iat2iwt (and npol) directly; intended for unit tests that
+    /// build a minimal UnitCell without running the full indexing setup.
+    inline void set_iat2iwt_for_test(const std::vector<int>& iat2iwt_in, const int npol_in)
+    {
+        this->iat2iwt = iat2iwt_in;
+        this->npol = npol_in;
+    }
 
     /// @brief Indexing tools for ia and it
     /// @return true if the last out is reset
@@ -228,14 +221,6 @@ class UnitCell : public BaseCell {
   private:
     // --------------------- Private Data ---------------------
 
-    std::vector<int> iat2iwt; ///< iat ==> iwt, the first global index for orbital of this atom
-    int npol = 1; ///< number of spin polarizations, initialized in set_iat2iwt
-                  /// ----------------- END of iat2iwt part -----------------
-
-    ModuleBase::Matrix3 stress; ///< calculate stress on the cell
-
-    /// @name BaseCell private overrides
-    /// @{
     Kind get_kind() const override
     {
         return Kind::unitcell;
@@ -246,11 +231,32 @@ class UnitCell : public BaseCell {
         return nat;
     }
 
+    double get_lat0() const override
+    {
+        return lat0;
+    }
+
+    double get_omega() const override
+    {
+        return omega;
+    }
+
+    const ModuleBase::Matrix3& get_latvec() const override
+    {
+        return latvec;
+    }
+
     const ModuleBase::Matrix3& get_GT() const override
     {
         return GT;
     }
-    /// @}
+
+    std::vector<int> iat2iwt; ///< iat ==> iwt, the first global index for orbital of this atom
+    int npol = 1; ///< number of spin polarizations, initialized in set_iat2iwt
+                  /// ----------------- END of iat2iwt part -----------------
+
+    ModuleBase::Matrix3 stress; ///< calculate stress on the cell
+
 };
 
 #endif // unitcell class

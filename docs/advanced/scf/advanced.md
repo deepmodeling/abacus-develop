@@ -17,7 +17,7 @@ sigma_k                 0.6
 nc_k                    0.00037
 ```
 
-Example of running DFT calculation with the implicit solvation model is provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/implicit_solvation_model/Pt-slab).
+Example of running DFT calculation with the implicit solvation model is provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/27_imp_sol/01_pw_Pt_slab).
 
 ## External Electric Field 
 
@@ -34,7 +34,7 @@ efield_pos_dec     0.1
 efield_amp         0.001
 ```
 
-Example of running DFT calculation with added external electric field is provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/electric_field/Pt-slab). 
+Example of running DFT calculation with added external electric field is provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/28_efield/01_Pt_slab). 
 
 
 ## Dipole Correction
@@ -60,7 +60,7 @@ efield_pos_dec     0.1
 efield_amp         0.001
 ```
 
-Examples of running DFT calculations with dipole correction are provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/dipole_correction/Pt-slab). There are two input files, where `INPUT1` considers only the dipole correction without no applied external field, while `INPUT2` considers the dipole correction under an applied external field.
+Examples of running DFT calculations with dipole correction are provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/29_dipole_corr/01_Pt_slab). There are two input files, where `INPUT1` considers only the dipole correction without no applied external field, while `INPUT2` considers the dipole correction under an applied external field.
 
 To run any of the two cases, users may enter the directory, copy the corresponding input file to `INPUT`, and run ABACUS.
 
@@ -82,7 +82,7 @@ block_up           0.55
 block_height       0.1
 ```
 
-Example of running DFT calculation with the compensating charge is provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/compensating_charge/Pt-slab). 
+Example of running DFT calculation with the compensating charge is provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/31_comp_charge/01_Pt_slab). 
 
 ## Van-der-Waals Correction
 Conventional DFT functionals often suffer from an inadequate treatment of long-range dispersion, or Van der Waals (VdW) interactions. In order to describe materials where VdW interactions are prominent, one simple and popular approach is to add a Lennard-Jones type term. The resulting VdW-corrected DFT has been proved to be a very effective method for description of both short-range chemical bonding and long-range dispersive interactions.
@@ -99,7 +99,7 @@ To use VdW-correction, users need to supply value to the `vdw_method` keyword in
 
 Furthermore, ABACUS also provides a [list of keywords](../input_files/input-main.md#vdw-correction) to control relevant parmeters used in calculating the VdW correction, such as the scale factor (s6) term. Recommended values of such parameters can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default values of the parameters in ABACUS are set to be the recommended values for PBE.
 
-Examples of VdW-corrected DFT calculations are provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/vdw/si2). There are two input files, where `INPUT1` shows how to apply D2 correction with user-specified $C_6$ parameter, and `INPUT2` shows how to apply D3(BJ) correction with default VdW parameters.
+Examples of VdW-corrected DFT calculations are provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/25_vdw). There are two input files, where `INPUT1` shows how to apply D2 correction with user-specified $C_6$ parameter, and `INPUT2` shows how to apply D3(BJ) correction with default VdW parameters.
 
 To run any of the two cases, users may enter the directory, copy the corresponding input file to `INPUT`, and run ABACUS.
 

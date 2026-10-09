@@ -1,10 +1,6 @@
+#include "source_cell/domain_decomposition.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
-#define private public
-#define protected public
 #include "setcell.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_md/verlet.h"
@@ -43,19 +39,24 @@ class Verlet_test : public testing::Test
     MD_base* mdrun;
     UnitCell ucell;
     MDCell mdcell;
-    Parameter param_in;
+    DomainDecomposition decomp;
+    Input_para inp;
     ModuleESolver::ESolver* p_esolver;
+    /// the md writers take the directory explicitly, so the test owns it
+    const std::string out_dir = "./";
+    const std::string readin_dir = "./";
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
+        Setcell::parameters(inp);
 
         p_esolver = new ModuleESolver::ESolver_LJ();
         mdcell = Setcell::setup_mdcell(ucell);
-        p_esolver->before_all_runners(mdcell, param_in.inp);
-        mdrun = new Verlet(param_in, mdcell);
-        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
+        decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
+        p_esolver->before_all_runners(mdcell, inp);
+        mdrun = new Verlet(inp.mdp, inp.cal_stress, inp.init_vel, /*my_rank=*/0, mdcell);
+        mdrun->setup(p_esolver, readin_dir, decomp);
     }
 
     void TearDown()
@@ -113,7 +114,7 @@ TEST_F(Verlet_test, first_half)
 TEST_F(Verlet_test, NVE)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    param_in.input.mdp.md_type = "nve";
+    inp.mdp.md_type = "nve";
     mdrun->second_half();
     ;
 
@@ -147,8 +148,8 @@ TEST_F(Verlet_test, NVE)
 TEST_F(Verlet_test, Anderson)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    param_in.input.mdp.md_type = "nvt";
-    param_in.input.mdp.md_thermostat = "anderson";
+    inp.mdp.md_type = "nvt";
+    inp.mdp.md_thermostat = "anderson";
     mdrun->second_half();
     ;
 
@@ -182,8 +183,8 @@ TEST_F(Verlet_test, Anderson)
 TEST_F(Verlet_test, Berendsen)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    param_in.input.mdp.md_type = "nvt";
-    param_in.input.mdp.md_thermostat = "berendsen";
+    inp.mdp.md_type = "nvt";
+    inp.mdp.md_thermostat = "berendsen";
     mdrun->second_half();
     ;
 
@@ -217,8 +218,8 @@ TEST_F(Verlet_test, Berendsen)
 TEST_F(Verlet_test, rescaling)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    param_in.input.mdp.md_type = "nvt";
-    param_in.input.mdp.md_thermostat = "rescaling";
+    inp.mdp.md_type = "nvt";
+    inp.mdp.md_thermostat = "rescaling";
     mdrun->second_half();
     ;
 
@@ -252,8 +253,8 @@ TEST_F(Verlet_test, rescaling)
 TEST_F(Verlet_test, rescale_v)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    param_in.input.mdp.md_type = "nvt";
-    param_in.input.mdp.md_thermostat = "rescale_v";
+    inp.mdp.md_type = "nvt";
+    inp.mdp.md_thermostat = "rescale_v";
     mdrun->second_half();
     ;
 
@@ -288,10 +289,10 @@ TEST_F(Verlet_test, CSVR)
 {
     std::ofstream ofs;
     mdrun->first_half(ofs);
-    param_in.input.mdp.md_type = "nvt";
-    param_in.input.mdp.md_thermostat = "csvr";
-    param_in.input.mdp.md_csvr_tau = 100.0;
-    param_in.input.mdp.md_seed = 12345;
+    inp.mdp.md_type = "nvt";
+    inp.mdp.md_thermostat = "csvr";
+    inp.mdp.md_csvr_tau = 100.0;
+    inp.mdp.md_seed = 12345;
     mdrun->second_half();
 
     // Check that positions are updated correctly
@@ -309,7 +310,7 @@ TEST_F(Verlet_test, write_restart)
 {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(PARAM.sys.global_out_dir);
+    mdrun->write_restart(out_dir);
 
     std::ifstream ifs("Restart_md.txt");
     std::string output_str;
@@ -320,7 +321,7 @@ TEST_F(Verlet_test, write_restart)
 
 TEST_F(Verlet_test, restart)
 {
-    mdrun->restart(PARAM.sys.global_readin_dir);
+    mdrun->restart(readin_dir);
     remove("Restart_md.txt");
 
     EXPECT_EQ(mdrun->step_rst_, 3);
@@ -355,7 +356,7 @@ TEST_F(Verlet_test, print_md)
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " -0.015365236        -0.023915637        0.0085504016        300                 1.0846391           "));
+            " -0.01536523561      -0.02391563725      0.008550401641      300                 1.0846391           "));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,

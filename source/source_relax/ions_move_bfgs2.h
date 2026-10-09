@@ -17,13 +17,22 @@ public:
     void allocate(const int _size);//initialize parameters
     void reset();
     bool relax_step(const ModuleBase::matrix& _force,UnitCell& ucell, std::ofstream& ofs_running);//a full iteration step
-    
+
+    /// @brief whether allocate() has run and the optimiser holds live state.
+    ///        reset() clears it; ions_move_methods_test checks that.
+    bool get_is_initialized() const
+    {
+        return is_initialized;
+    }
 
 private:
+    // The unit test drives the private step machinery directly (seeding the
+    // Hessian and the previous-step state, then calling one stage at a time).
+    friend class BFGSTest;
+
     bool sign;//check if this is the first iteration
     double alpha;//initialize H,diagonal element is alpha
     double maxstep;//every movement smaller than maxstep
-    double largest_grad;
     int size;//number of atoms
     bool is_initialized=false;
 

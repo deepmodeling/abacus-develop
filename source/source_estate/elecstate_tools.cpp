@@ -1,59 +1,11 @@
 #include "elecstate_tools.h"
 
 #include "occupy.h"
-#include "source_base/parallel_comm.h"
+#include "source_base/module_parallel/para_band_output.h"
+#include "source_base/module_parallel/para_bridge.h"
 #include "source_base/parallel_reduce.h"
 
-#include <algorithm>
-#include <numeric>
 #include <vector>
-
-namespace
-{
-// Return the global index of the first band stored by this band group.
-int get_band_offset(const int local_nbands, const int global_nbands)
-{
-    if (local_nbands < 0 || global_nbands < 0)
-    {
-        ModuleBase::WARNING_QUIT("get_band_offset", "band counts cannot be negative");
-    }
-#ifndef __MPI
-    // A serial process must own the complete band set.
-    if (local_nbands != global_nbands)
-    {
-        ModuleBase::WARNING_QUIT("get_band_offset", "distributed bands require an MPI build");
-    }
-    return 0;
-#else
-    int band_group = 0;
-    int band_groups = 0;
-    MPI_Comm_rank(BP_WORLD, &band_group);
-    MPI_Comm_size(BP_WORLD, &band_groups);
-
-    // The collected counts identify whether bands are replicated or partitioned
-    // across band groups without relying on a particular eigensolver name.
-    std::vector<int> band_counts(band_groups);
-    MPI_Allgather(&local_nbands, 1, MPI_INT, band_counts.data(), 1, MPI_INT, BP_WORLD);
-
-    // Non-BPCG SDFT replicates the complete deterministic band set in every
-    // band group. Only complementary BPCG shards need a prefix offset.
-    const bool bands_are_replicated
-        = std::all_of(band_counts.begin(), band_counts.end(), [global_nbands](const int count) { return count == global_nbands; });
-    if (bands_are_replicated)
-    {
-        return 0;
-    }
-
-    const int gathered_nbands = std::accumulate(band_counts.begin(), band_counts.end(), 0);
-    if (gathered_nbands != global_nbands)
-    {
-        ModuleBase::WARNING_QUIT("get_band_offset", "local band counts do not match global nbands");
-    }
-    // BPCG assigns contiguous global band ranges in band-group order.
-    return std::accumulate(band_counts.begin(), band_counts.begin() + band_group, 0);
-#endif
-}
-} // namespace
 
 namespace elecstate
 {
@@ -103,18 +55,22 @@ void calculate_weights(const ModuleBase::matrix& ekb,
         // Taoni fix smearing_method=fixed for BPCG on 2026-08-21
         // Integer occupations use global band indices even when ekb is a local
         // contiguous BPCG shard.
-        const int band_offset = get_band_offset(nbands, global_nbands);
+        const Parallel::ParaBandOutput band_output(nbands, global_nbands, Parallel::make_band_world());
+        const int band_offset = band_output.local_offset();
         if (PARAM.globalv.two_fermi)
         {
-            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[0], ekb, eferm.ef_up, wg, 0, klist->isk);
-            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[1], ekb, eferm.ef_dw, wg, 1, klist->isk);
+            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[0], ekb, eferm.ef_up, wg, 0, klist->isk,
+                             PARAM.inp.nspin);
+            Occupy::iweights(nks, klist->wk, nbands, band_offset, nelec_spin[1], ekb, eferm.ef_dw, wg, 1, klist->isk,
+                             PARAM.inp.nspin);
             // ef = ( ef_up + ef_dw ) / 2.0_dp need??? mohan add 2012-04-16
             // Keep independent Fermi levels for the two spin channels.
         }
         else
         {
             // A spin selector of -1 requests the combined-spin occupation path.
-            Occupy::iweights(nks, klist->wk, nbands, band_offset, PARAM.inp.nelec, ekb, eferm.ef, wg, -1, klist->isk);
+            Occupy::iweights(nks, klist->wk, nbands, band_offset, PARAM.inp.nelec, ekb, eferm.ef, wg, -1, klist->isk,
+                             PARAM.inp.nspin);
         }
     }
     else if (Occupy::use_gaussian_broadening)
@@ -210,7 +166,8 @@ void fixed_weights(const std::vector<double>& ocp_kb,
     }
 
     // Translate this rank's local k-point and band indices into ocp_kb indices.
-    const int band_offset = get_band_offset(wg.nc, nbands);
+    const Parallel::ParaBandOutput band_output(wg.nc, nbands, Parallel::make_band_world());
+    const int band_offset = band_output.local_offset();
     if (klist->ik2iktot.size() < static_cast<std::size_t>(wg.nr) || band_offset < 0 || band_offset + wg.nc > nbands)
     {
         ModuleBase::WARNING_QUIT("ElecState::fixed_weights", "invalid distributed occupation layout");

@@ -8,7 +8,7 @@
 #include "source_base/math_ylmreal.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_pw.h"
-#include "source_pw/module_pwdft/nonlocal_maths.hpp"
+#include "source_pw/module_pwdft/nonlocal_maths.h"
 #include "stress_pw.h"
 
 // computes the part of the crystal stress which is due
@@ -210,10 +210,10 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl& nlpp,
                                          const ModuleBase::matrix& dylmk0,
                                          std::complex<FPTYPE>* dqg)
 {
-	if (PARAM.inp.test_pp) 
-	{
-		ModuleBase::TITLE("Stress", "dqvan2");
-	}
+    if (PARAM.inp.test_pp) 
+    {
+        ModuleBase::TITLE("Stress", "dqvan2");
+    }
 
     // computes the indices which correspond to ih,jh
     const int nb = nlpp.indv(itype, ih);

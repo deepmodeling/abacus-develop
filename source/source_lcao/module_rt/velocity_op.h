@@ -7,7 +7,7 @@
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_base/vector3.h"
-#include "source_io/module_hs/cal_r_overlap_r.h"
+#include "source_io/module_hs/pos_op_mat.h"
 
 //design to calculate velocity operator
 template <typename TR>
@@ -71,7 +71,7 @@ class Velocity_op
 
     /// @brief Store the vector potential for td_ekinetic term
     ModuleBase::Vector3<double> cart_At;
-    static cal_r_overlap_R r_calculator;
+    static Position_op r_calculator;
     static bool init_done;
 };
 

@@ -4,10 +4,12 @@
 #include "source_base/macros.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_estate/elecstate.h"
-#include "source_hamilt/hamilt.h"
+#include "source_hsolver/hs_operator.h"
 
 #include <iosfwd>
 #include <unordered_map>
+
+class TestHSolverPW; // unit-test fixture, see source_hsolver/test/
 
 namespace hsolver
 {
@@ -15,6 +17,10 @@ namespace hsolver
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class HSolverPW
 {
+    /// the unit test drives the protected hamiltSolvePsiK() and
+    /// update_precondition() directly; the fixture is at global scope
+    friend class ::TestHSolverPW;
+
   protected:
     // Note GetTypeReal<T>::type will
     // return T if T is real type(float, double),
@@ -49,25 +55,22 @@ class HSolverPW
           use_k_continuity(use_k_continuity_in) {};
 
     /// @brief solve function for pw
-    /// @param pHamilt interface to hamilt
+    /// @param op the H and S operator of the Hamiltonian, switched to each k point in turn
     /// @param psi reference to psi
     /// @param pes interface to elecstate
-    /// @param method_in dav or cg
     /// @param skip_charge
-    void solve(hamilt::Hamilt<T, Device>* pHamilt,
+    void solve(HSOperator<T, Device>& op,
                psi::Psi<T, Device>& psi,
                elecstate::ElecState* pes,
                double* out_eigenvalues,
                const int rank_in_pool_in,
                const int nproc_in_pool_in,
                std::ostream& log,
-               const bool skip_charge,
-               const double tpiba,
-               const int nat);
+               const bool skip_charge);
 
   protected:
     // diago caller
-    void hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
+    void hamiltSolvePsiK(const HSOperator<T, Device>& op,
                          psi::Psi<T, Device>& psi,
                          std::vector<Real>& pre_condition,
                          Real* eigenvalue,

@@ -127,7 +127,7 @@ class LCAO_Deepks
     void allocate_V_delta(const int nat, const int nks = 1);
 
     /// Initialize the dm_r container
-    void init_DMR(const UnitCell& ucell,
+    void init_dmr(const UnitCell& ucell,
                   const LCAO_Orbitals& orb,
                   const Parallel_Orbitals& pv,
                   const Grid_Driver& GridD);

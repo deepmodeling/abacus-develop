@@ -1,6 +1,6 @@
 {
     "bandfile": "PBANDS_1",
-    "pdosfile": "PDOS",
+    "pdosfile": "pdos",
     "efermi": 6.585653952007503,
     "energy_range": [
         -5,

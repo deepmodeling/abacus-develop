@@ -6,18 +6,19 @@
 #include "source_hamilt/module_hcontainer/read_hcontainer.h"
 #include "source_lcao/rho_tau_lcao.h" // use dm2rho
 #include "source_lcao/hamilt_lcao.h" // use HamiltLCAO for init_chg_hr
+#include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/hsolver_lcao.h" // use HSolverLCAO for init_chg_hr
-#include "source_lcao/module_dftu/dftu_nao.h" // use Plus_U for the LCAO-specific init
+#include "source_pw/module_pwdft/dftu_base.h" // use Plus_U_Base for the DFT+U init
 
 template <typename TK>
 void LCAO_domain::set_psi_occ_dm_chg(
-		const K_Vectors &kv, // k-points
-		psi::Psi<TK>* &psi, // coefficients of NAO basis
-		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
-		elecstate::ElecState* pelec, // eigen values and weights
-		LCAO_domain::Setup_DM<TK> &dmat, // density matrix 
-		Charge &chr, // charge density 
-		const Input_para &inp) // input parameters
+        const K_Vectors &kv, // k-points
+        psi::Psi<TK>* &psi, // coefficients of NAO basis
+        const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        elecstate::ElecState* pelec, // eigen values and weights
+        module_dm::Setup_DM<TK> &dmat, // density matrix 
+        Charge &chr, // charge density 
+        const Input_para &inp) // input parameters
 {
 
     //! 1) init electronic wave function psi
@@ -42,7 +43,7 @@ void LCAO_domain::set_psi_occ_dm_chg(
     }
 
     //! 4) init DMK, but DMR is constructed in before_scf()
-    dmat.allocate_dm(&kv, &pv, inp.nspin);
+    LCAO_domain::allocate_dm(dmat, &kv, &pv, inp.nspin);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "CHARGE");
 
@@ -53,14 +54,14 @@ void LCAO_domain::set_psi_occ_dm_chg(
 template <typename TK>
 void LCAO_domain::set_pot(
         UnitCell &ucell, // not const because of dftu
-		K_Vectors &kv, // not const due to exx
-	    Structure_Factor& sf, // will be modified in potential
-		const ModulePW::PW_Basis &pw_rho,
-		const ModulePW::PW_Basis &pw_rhod,
-		elecstate::ElecState* pelec,
-		const LCAO_Orbitals& orb,
-		Parallel_Orbitals &pv, // not const due to deepks
-		pseudopot_cell_vl &locpp,
+        K_Vectors &kv, // not const due to exx
+        Structure_Factor& sf, // will be modified in potential
+        const ModulePW::PW_Basis &pw_rho,
+        const ModulePW::PW_Basis &pw_rhod,
+        elecstate::ElecState* pelec,
+        const LCAO_Orbitals& orb,
+        Parallel_Orbitals &pv, // not const due to deepks
+        pseudopot_cell_vl &locpp,
         Plus_U_Base &dftu,
         surchem& solvent,
         Exx_NAO<TK> &exx_nao,
@@ -83,22 +84,29 @@ void LCAO_domain::set_pot(
 
     if (inp.dft_plus_u)
     {
-        // set_pot receives the base-class reference; the LCAO-specific init
-        // (with LCAO_Orbitals) lives on the derived Plus_U, so cast here.
-        static_cast<Plus_U&>(dftu).init(ucell, &pv,
-                  PARAM.globalv.npol,
-                  inp.nspin, inp.l_channel, inp.yukawa_potential, inp.yukawa_lambda,
-                  PARAM.globalv.global_readin_dir,
-                  PARAM.globalv.global_out_dir,
-                  inp.init_chg,
-                  pv.get_global_row_size(),
-                  inp.ks_solver,
-                  inp.device,
-                  PARAM.globalv.hubbard_u,
-                  PARAM.globalv.uramping,
-                  inp.occ_mat_ctrl,
-                  inp.mixing_dftu,
-                  &orb);
+        // init_base does not see paraV; validate the square-matrix invariant
+        // of the LCAO parallel distribution here.
+        const int global_rows = pv.get_global_row_size();
+        const int global_cols = pv.get_global_col_size();
+        if (global_rows != global_cols)
+        {
+            ModuleBase::WARNING_QUIT("LCAO_domain::set_pot",
+                                     "Global row and column dimensions do not match");
+        }
+        dftu.init_base(ucell,
+                       PARAM.globalv.npol,
+                       inp.nspin,
+                       inp.l_channel,
+                       inp.yukawa_potential,
+                       inp.yukawa_lambda,
+                       PARAM.globalv.global_readin_dir,
+                       PARAM.globalv.global_out_dir,
+                       inp.init_chg,
+                       inp.device,
+                       PARAM.globalv.hubbard_u,
+                       PARAM.globalv.uramping,
+                       inp.occ_mat_ctrl,
+                       inp.mixing_dftu);
     }
 
     //! 4) init exact exchange calculations
@@ -116,7 +124,7 @@ template <typename TK>
 void LCAO_domain::init_dm_from_file(
     const std::string& readin_dir,
     const int nspin,
-    LCAO_domain::Setup_DM<TK>& dmat,
+    module_dm::Setup_DM<TK>& dmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv)
 {
@@ -124,8 +132,15 @@ void LCAO_domain::init_dm_from_file(
     const int nspin_dm = (nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin_dm; ++is)
     {
-        const std::string dmfile = readin_dir + "/dmrs" + std::to_string(is + 1) + "_nao.csr";
-        hamilt::HContainer<double>* dm_container = dmat.dm->get_DMR_vector()[is];
+        // readin_dir is normalized by to_dir() and always ends with '/'
+        const std::string dmfile = readin_dir + "dmrs" + std::to_string(is + 1) + "_nao.csr";
+        // EXX-specific: add rank guard because OperatorEXX is constructed on all MPI ranks,
+        // unlike most other places where ofs_running is only written on rank 0
+        if (GlobalV::MY_RANK == 0)
+        {
+            GlobalV::ofs_running << " Read density matrix from " << dmfile << std::endl;
+        }
+        hamilt::HContainer<double>* dm_container = dmat.dm->get_dmr_vec()[is];
         hamilt::Read_HContainer<double> reader_dm(
             dm_container,
             dmfile,
@@ -142,7 +157,7 @@ template <typename TK>
 void LCAO_domain::init_chg_dm(
     const std::string& readin_dir,
     const int nspin,
-    LCAO_domain::Setup_DM<TK>& dmat,
+    module_dm::Setup_DM<TK>& dmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv,
     Charge* chr)
@@ -153,7 +168,8 @@ void LCAO_domain::init_chg_dm(
     LCAO_domain::init_dm_from_file<TK>(readin_dir, nspin, dmat, ucell, pv);
 
     // Step 2: Convert density matrix to charge density
-    LCAO_domain::dm2rho(dmat.dm->get_DMR_vector(), nspin, chr, true);
+    // skip_normalize=true here (loaded DM is already normalized), so omega is unused.
+    LCAO_domain::dm2rho(dmat.dm->get_dmr_vec(), nspin, chr, PARAM.inp.nelec, ucell.omega, true);
 
     return;
 }
@@ -198,7 +214,7 @@ void LCAO_domain::init_chg_hr(
     const Parallel_Orbitals* pv,
     psi::Psi<TK>& psi,
     elecstate::ElecState* pelec,
-    elecstate::DensityMatrix<TK, double>& dm,
+    module_dm::DensityMatrix<TK, double>& dm,
     Charge& chr,
     const std::string& ks_solver)
 {
@@ -245,39 +261,40 @@ void LCAO_domain::init_chg_hr(
                                               PARAM.inp.device == "gpu",
                                               GlobalV::NPROC,
                                               GlobalV::MY_RANK);
-    hsolver_lcao_obj.solve(p_hamilt, psi, pelec, dm, chr, nspin, 0);
+    hamilt::HamiltHSMatrix<TK> hs(p_hamilt);
+    hsolver_lcao_obj.solve(hs, psi, pelec, dm, chr, nspin, ucell.omega, 0);
 }
 
 
 
 template void LCAO_domain::set_psi_occ_dm_chg<double>(
-		const K_Vectors &kv, // k-points
-		psi::Psi<double>* &psi, // coefficients of NAO basis
-		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
-		elecstate::ElecState* pelec, // eigen values and weights
-		LCAO_domain::Setup_DM<double> &dmat, // density matrix 
-		Charge &chr, // charge density 
-		const Input_para &inp);
+        const K_Vectors &kv, // k-points
+        psi::Psi<double>* &psi, // coefficients of NAO basis
+        const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        elecstate::ElecState* pelec, // eigen values and weights
+        module_dm::Setup_DM<double> &dmat, // density matrix 
+        Charge &chr, // charge density 
+        const Input_para &inp);
 
 template void LCAO_domain::set_psi_occ_dm_chg<std::complex<double>>(
-		const K_Vectors &kv, // k-points
-		psi::Psi<std::complex<double>>* &psi, // coefficients of NAO basis
-		const Parallel_Orbitals &pv, // parallel scheme of NAO basis
-		elecstate::ElecState* pelec, // eigen values and weights
-		LCAO_domain::Setup_DM<std::complex<double>> &dmat, // density matrix 
-		Charge &chr, // charge density 
-		const Input_para &inp);
+        const K_Vectors &kv, // k-points
+        psi::Psi<std::complex<double>>* &psi, // coefficients of NAO basis
+        const Parallel_Orbitals &pv, // parallel scheme of NAO basis
+        elecstate::ElecState* pelec, // eigen values and weights
+        module_dm::Setup_DM<std::complex<double>> &dmat, // density matrix 
+        Charge &chr, // charge density 
+        const Input_para &inp);
 
 template void LCAO_domain::set_pot<double>(
         UnitCell &ucell,
-		K_Vectors &kv,
-	    Structure_Factor& sf,
-		const ModulePW::PW_Basis &pw_rho,
-		const ModulePW::PW_Basis &pw_rhod,
-		elecstate::ElecState* pelec,
-		const LCAO_Orbitals& orb,
-		Parallel_Orbitals &pv,
-		pseudopot_cell_vl &locpp,
+        K_Vectors &kv,
+        Structure_Factor& sf,
+        const ModulePW::PW_Basis &pw_rho,
+        const ModulePW::PW_Basis &pw_rhod,
+        elecstate::ElecState* pelec,
+        const LCAO_Orbitals& orb,
+        Parallel_Orbitals &pv,
+        pseudopot_cell_vl &locpp,
         Plus_U_Base &dftu,
         surchem& solvent,
         Exx_NAO<double> &exx_nao,
@@ -287,14 +304,14 @@ template void LCAO_domain::set_pot<double>(
 
 template void LCAO_domain::set_pot<std::complex<double>>(
         UnitCell &ucell,
-	    K_Vectors &kv,
-	    Structure_Factor& sf,
-		const ModulePW::PW_Basis &pw_rho,
-		const ModulePW::PW_Basis &pw_rhod,
-		elecstate::ElecState* pelec,
-		const LCAO_Orbitals& orb,
-		Parallel_Orbitals &pv,
-		pseudopot_cell_vl &locpp,
+        K_Vectors &kv,
+        Structure_Factor& sf,
+        const ModulePW::PW_Basis &pw_rho,
+        const ModulePW::PW_Basis &pw_rhod,
+        elecstate::ElecState* pelec,
+        const LCAO_Orbitals& orb,
+        Parallel_Orbitals &pv,
+        pseudopot_cell_vl &locpp,
         Plus_U_Base &dftu,
         surchem& solvent,
         Exx_NAO<std::complex<double>> &exx_nao,
@@ -305,27 +322,27 @@ template void LCAO_domain::set_pot<std::complex<double>>(
 template void LCAO_domain::init_dm_from_file<double>(
     const std::string& readin_dir,
     const int nspin,
-    LCAO_domain::Setup_DM<double>& dmat,
+    module_dm::Setup_DM<double>& dmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv);
 template void LCAO_domain::init_dm_from_file<std::complex<double>>(
     const std::string& readin_dir,
     const int nspin,
-    LCAO_domain::Setup_DM<std::complex<double>>& dmat,
+    module_dm::Setup_DM<std::complex<double>>& dmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv);
 
 template void LCAO_domain::init_chg_dm<double>(
     const std::string& readin_dir,
     const int nspin,
-    LCAO_domain::Setup_DM<double>& dmat,
+    module_dm::Setup_DM<double>& dmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv,
     Charge* chr);
 template void LCAO_domain::init_chg_dm<std::complex<double>>(
     const std::string& readin_dir,
     const int nspin,
-    LCAO_domain::Setup_DM<std::complex<double>>& dmat,
+    module_dm::Setup_DM<std::complex<double>>& dmat,
     const UnitCell& ucell,
     const Parallel_Orbitals* pv,
     Charge* chr);
@@ -349,7 +366,7 @@ template void LCAO_domain::init_chg_hr<double, double>(
     const Parallel_Orbitals* pv,
     psi::Psi<double>& psi,
     elecstate::ElecState* pelec,
-    elecstate::DensityMatrix<double, double>& dm,
+    module_dm::DensityMatrix<double, double>& dm,
     Charge& chr,
     const std::string& ks_solver);
 template void LCAO_domain::init_chg_hr<std::complex<double>, double>(
@@ -360,7 +377,7 @@ template void LCAO_domain::init_chg_hr<std::complex<double>, double>(
     const Parallel_Orbitals* pv,
     psi::Psi<std::complex<double>>& psi,
     elecstate::ElecState* pelec,
-    elecstate::DensityMatrix<std::complex<double>, double>& dm,
+    module_dm::DensityMatrix<std::complex<double>, double>& dm,
     Charge& chr,
     const std::string& ks_solver);
 template void LCAO_domain::init_chg_hr<std::complex<double>, std::complex<double>>(
@@ -371,6 +388,6 @@ template void LCAO_domain::init_chg_hr<std::complex<double>, std::complex<double
     const Parallel_Orbitals* pv,
     psi::Psi<std::complex<double>>& psi,
     elecstate::ElecState* pelec,
-    elecstate::DensityMatrix<std::complex<double>, double>& dm,
+    module_dm::DensityMatrix<std::complex<double>, double>& dm,
     Charge& chr,
     const std::string& ks_solver);

@@ -6,7 +6,7 @@
 
 #include "source_estate/fp_energy.h" // eferm
 #include "source_estate/module_charge/charge.h" // chr
-#include "source_lcao/setup_dm.h" // Setup_DM
+#include "source_lcao/allocate_dm.h" // module_dm::Setup_DM
 #include "source_cell/klist.h" // K_Vectors
 #include "source_cell/module_neighbor/sltk_grid_driver.h" // Grid_Driver
 #include "source_base/matrix.h" // matrix
@@ -23,14 +23,20 @@ class Cal_ldos
     static void cal_ldos_lcao(
         const elecstate::Efermi &eferm, // mohan add 2025-11-02
         const Charge &chr, // mohan add add 2025-11-02
-        const LCAO_domain::Setup_DM<T> &dmat, // mohan add 2025-11-02 
+        const module_dm::Setup_DM<T> &dmat, // mohan add 2025-11-02
 		const K_Vectors &kv, // k points, mohan add 2025-11-02
         const ModuleBase::matrix &ekb, // mohan add 2025-11-02
         const ModuleBase::matrix &wg, // mohan add 2025-11-02
 		const psi::Psi<T>& psi,
 		const Parallel_Grid& pgrid,
+		const Parallel_Orbitals& pv,
 		const Grid_Driver& grid_driver,
-		const UnitCell& ucell);
+		const UnitCell& ucell,
+		const std::vector<double>& stm_bias,
+		const int nspin,
+		const std::string& global_out_dir,
+		const bool two_fermi,
+		const int out_ldos_precision);
 
 }; // namespace Cal_ldos
 
@@ -39,21 +45,51 @@ void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                  const psi::Psi<std::complex<double>, Device>& psi,
                  const Device* ctx,
                  const Parallel_Grid& pgrid,
-                 const UnitCell& ucell);
+                 const UnitCell& ucell,
+                 const std::vector<int>& out_ldos,
+                 const std::vector<double>& stm_bias,
+                 const int nspin,
+                 const std::string& global_out_dir,
+                 const bool two_fermi,
+                 const int nbands,
+                 const double dos_edelta_ev,
+                 const double dos_scale,
+                 const bool dos_setemax,
+                 const double dos_emax_ev,
+                 const bool dos_setemin,
+                 const double dos_emin_ev,
+                 const double dos_sigma,
+                 const std::vector<double>& ldos_line);
 
 template <typename Device>
 void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                  const psi::Psi<std::complex<double>, Device>& psi,
                  const Device* ctx,
                  const Parallel_Grid& pgrid,
-                 const UnitCell& ucell);
+                 const UnitCell& ucell,
+                 const std::vector<double>& stm_bias,
+                 const int nspin,
+                 const std::string& global_out_dir,
+                 const bool two_fermi,
+                 const int out_ldos_precision);
 
 template <typename Device>
 void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                   const psi::Psi<std::complex<double>, Device>& psi,
                   const Device* ctx,
                   const Parallel_Grid& pgrid,
-                  const UnitCell& ucell);
+                  const UnitCell& ucell,
+                  const std::string& global_out_dir,
+                  const int nbands,
+                  const double dos_edelta_ev,
+                  const double dos_scale,
+                  const bool dos_setemax,
+                  const double dos_emax_ev,
+                  const bool dos_setemin,
+                  const double dos_emin_ev,
+                  const bool two_fermi,
+                  const double dos_sigma,
+                  const std::vector<double>& ldos_line);
 
 /*
  * @brief Get grid points and shifts for interpolation.

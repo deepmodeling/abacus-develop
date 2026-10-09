@@ -24,10 +24,7 @@ namespace rdmft
 {
 
 template <>
-void conj_psi<double>(psi::Psi<double>& wfc) {}
-
-template <>
-void HkPsi<double>(const Parallel_Orbitals* ParaV, 
+void HkPsi<double>(const Parallel_Orbitals* ParaV,
                    const double& HK, 
                    const double& wfc, 
                    double& H_wfc)
@@ -281,7 +278,7 @@ void Veff_rdmft<std::complex<double>, double>::contributeHR()
         ModuleBase::matrix vofk = *vloc_;
         vofk.zero_out();
         ModuleBase::matrix v_matrix_XC(this->nspin, charge_->nrxx);
-        elecstate::PotXC potXC(rho_basis_, etxc, vtxc, &vofk);
+        elecstate::PotXC potXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, rho_basis_, etxc, vtxc, &vofk);
         potXC.cal_v_eff(charge_, ucell, v_matrix_XC);
 
         // if need meta-GGA, go to study veff_lcao.cpp and modify the code
@@ -363,7 +360,7 @@ void Veff_rdmft<double, double>::contributeHR()
         ModuleBase::matrix vofk = *vloc_;
         vofk.zero_out();
         ModuleBase::matrix v_matrix_XC(this->nspin, charge_->nrxx);
-        elecstate::PotXC potXC(rho_basis_, etxc, vtxc, &vofk);
+        elecstate::PotXC potXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, rho_basis_, etxc, vtxc, &vofk);
         potXC.cal_v_eff(charge_, ucell, v_matrix_XC);
         
         for(int is=0; is<this->nspin; ++is)

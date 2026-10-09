@@ -1,8 +1,10 @@
 #include "dftu_nao_folding.h"
-#include "dftu_nao.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/hamilt_lcao.h"
+
+#include <algorithm>
 
 namespace DFTU_LCAO {
 
@@ -52,23 +54,25 @@ int get_linear_index(const std::string& ks_solver,
     return mu * pv.ncol + nu;
 }
 
-void fold_dSR_gamma(int npol,
-                    const std::string& ks_solver,
-                    const std::vector<double>& orb_cutoff,
-                    const UnitCell& ucell,
-                    const Parallel_Orbitals& pv,
-                    const Grid_Driver* gd,
+void fold_dSR_gamma(const FoldingCtx& ctx,
                     double* dsloc_x,
                     double* dsloc_y,
                     double* dsloc_z,
                     double* dh_r,
-                    const int dim1,
-                    const int dim2,
+                    int dim1,
+                    int dim2,
                     double* dSR_gamma)
 {
     ModuleBase::TITLE("Plus_U", "fold_dSR_gamma");
 
-    ModuleBase::GlobalFunc::ZEROS(dSR_gamma, pv.nloc);
+    const int npol = ctx.npol;
+    const std::string& ks_solver = ctx.ks_solver;
+    const std::vector<double>& orb_cutoff = ctx.orb_cutoff;
+    const UnitCell& ucell = *ctx.ucell;
+    const Parallel_Orbitals& pv = *ctx.pv;
+    const Grid_Driver* gd = ctx.gd;
+
+    std::fill(dSR_gamma, dSR_gamma + pv.nloc, 0.0);
 
     double* dS_ptr = nullptr;
     if (dim1 == 0)
@@ -85,7 +89,8 @@ void fold_dSR_gamma(int npol,
     }
 
     int nnr = 0;
-    ModuleBase::Vector3<double> tau1, tau2;
+    ModuleBase::Vector3<double> tau1;
+    ModuleBase::Vector3<double> tau2;
 
     for (int T1 = 0; T1 < ucell.ntype; ++T1)
     {
@@ -141,35 +146,37 @@ void fold_dSR_gamma(int npol,
     return;
 }
 
-void folding_matrix_k(int npol,
-                      const std::string& ks_solver,
-                      const std::vector<double>& orb_cutoff,
-                      const UnitCell& ucell,
-                      const Grid_Driver& gd,
+void folding_matrix_k(const FoldingCtx& ctx,
                       ForceStressArrays& fsr,
-                      const Parallel_Orbitals& pv,
-                      const int ik,
-                      const int dim1,
-                      const int dim2,
+                      int ik,
+                      int dim1,
+                      int dim2,
                       std::complex<double>* mat_k,
                       const ModuleBase::Vector3<double>& kvec_d)
 {
     ModuleBase::TITLE("Plus_U", "folding_matrix_k");
-    ModuleBase::timer::start("Plus_U", "folding_matrix_k");
-    ModuleBase::GlobalFunc::ZEROS(mat_k, pv.nloc);
+    ModuleBase::timer::start("DFTU_LCAO", "folding_matrix_k");
+    const int npol = ctx.npol;
+    const std::string& ks_solver = ctx.ks_solver;
+    const std::vector<double>& orb_cutoff = ctx.orb_cutoff;
+    const UnitCell& ucell = *ctx.ucell;
+    const Parallel_Orbitals& pv = *ctx.pv;
+    const Grid_Driver& gd = *ctx.gd;
+
+    std::fill(mat_k, mat_k + pv.nloc, std::complex<double>(0.0, 0.0));
 
     double* mat_ptr = nullptr;
     if (dim1 == 1 || dim1 == 4)
     {
-        mat_ptr = fsr.DSloc_Rx;
+        mat_ptr = fsr.DSloc_Rx.data();
     }
     else if (dim1 == 2 || dim1 == 5)
     {
-        mat_ptr = fsr.DSloc_Ry;
+        mat_ptr = fsr.DSloc_Ry.data();
     }
     else if (dim1 == 3 || dim1 == 6)
     {
-        mat_ptr = fsr.DSloc_Rz;
+        mat_ptr = fsr.DSloc_Rz.data();
     }
 
     int nnr = 0;
@@ -249,7 +256,7 @@ void folding_matrix_k(int npol,
             } // ad
         } // I1
     } // T1
-    ModuleBase::timer::end("Plus_U", "folding_matrix_k");
+    ModuleBase::timer::end("DFTU_LCAO", "folding_matrix_k");
 
     return;
 }
@@ -261,7 +268,7 @@ void folding_matrix_k_new(const std::string& ks_solver,
                           hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("Plus_U", "folding_matrix_k_new");
-    ModuleBase::timer::start("Plus_U", "folding_matrix_k_new");
+    ModuleBase::timer::start("DFTU_LCAO", "folding_matrix_k_new");
 
     int hk_type = 0;
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver))
@@ -289,7 +296,7 @@ void folding_matrix_k_new(const std::string& ks_solver,
         }
     }
 
-    ModuleBase::timer::end("Plus_U", "folding_matrix_k_new");
+    ModuleBase::timer::end("DFTU_LCAO", "folding_matrix_k_new");
 }
 
 } // namespace DFTU_LCAO

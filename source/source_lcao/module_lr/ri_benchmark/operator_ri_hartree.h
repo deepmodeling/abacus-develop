@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_RI_BENCHMARK_OPERATOR_RI_HARTREE_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_RI_BENCHMARK_OPERATOR_RI_HARTREE_H
+
 #include "source_hamilt/operator.h"
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"
@@ -81,3 +83,5 @@ namespace RI_Benchmark
         const TLRI<T> CV_vo;
     };
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_RI_BENCHMARK_OPERATOR_RI_HARTREE_H

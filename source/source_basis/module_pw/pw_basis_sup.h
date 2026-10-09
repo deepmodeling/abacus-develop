@@ -1,6 +1,6 @@
 #ifndef PWBASIS_SUP_H
 #define PWBASIS_SUP_H
-
+#include "pw_basis.h"
 
 namespace ModulePW
 {

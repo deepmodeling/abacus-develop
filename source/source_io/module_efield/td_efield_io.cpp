@@ -49,7 +49,7 @@ void write_td_field_values(const elecstate::TDFieldManager& manager, const std::
         return;
     }
 
-    const std::vector<double>& field_values = manager.field_values();
+    const std::vector<double>& field_values = manager.field_vals_ha();
     for (std::size_t field_index = 0; field_index < field_values.size(); ++field_index)
     {
         // Keep one file per input occurrence even when directions repeat.
@@ -61,8 +61,8 @@ void write_td_field_values(const elecstate::TDFieldManager& manager, const std::
         }
         // Convert only at the user-visible output boundary: time to fs and the
         // electric field to V/Angstrom.
-        output << manager.current_step() * manager.dt() * ModuleBase::AU_to_FS << "\t"
-               << field_values[field_index] * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << std::endl;
+        output << manager.current_step() * manager.dt_ha() * ModuleBase::AU_to_FS << "\t"
+               << field_values[field_index] * ModuleBase::Hartree_to_eV / ModuleBase::BOHR_TO_A << std::endl;
     }
 }
 

@@ -2,6 +2,35 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
+set(TD_LINEAR_TEST_SOURCES
+  ../hsolver_linear.cpp
+  ../linear_bicgstab.cpp
+  ../linear_cgs.cpp
+  ../linear_gmres.cpp
+  ../linear_algebra.cpp
+  ../cn_subspace.cpp
+  ../linear_low_rank.cpp
+  ../linear_workspace.cpp
+)
+AddTest(
+  TARGET MODULE_HSOLVER_linear
+  LIBS parameter base device container
+  SOURCES test_hsolver_linear.cpp test_cn_subspace.cpp test_linear_low_rank.cpp ${TD_LINEAR_TEST_SOURCES}
+)
+AddTest(
+  TARGET MODULE_HSOLVER_pw_tddft
+  LIBS parameter base device container psi planewave
+  SOURCES test_hsolver_pw_tddft.cpp ../hsolver_pw_tddft.cpp ${TD_LINEAR_TEST_SOURCES}
+)
+if(ENABLE_MPI)
+  add_test(
+    NAME MODULE_HSOLVER_linear_parallel
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+      $<TARGET_FILE:MODULE_HSOLVER_linear> ${MPIEXEC_POSTFLAGS}
+  )
+  set_tests_properties(MODULE_HSOLVER_linear_parallel PROPERTIES PROCESSORS 2 TIMEOUT 120)
+endif()
+
 if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_parak2d_test
@@ -13,40 +42,30 @@ if (ENABLE_MPI)
     LIBS parameter  base psi device container
     SOURCES diago_bpcg_test.cpp ../diago_bpcg.cpp ../para_lin_tf.cpp  ../diago_iter_assist.cpp  
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_cg
     LIBS parameter  base psi device container
     SOURCES diago_cg_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_cg_float
     LIBS parameter  base psi device container
     SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_dav
     LIBS parameter  base psi device
     SOURCES diago_david_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_dav_float
     LIBS parameter  base psi device
     SOURCES diago_david_float_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   if(ENABLE_LCAO)
   AddTest(
@@ -54,23 +73,19 @@ if (ENABLE_MPI)
     LIBS parameter  base psi device container
     SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   AddTest(
     TARGET MODULE_HSOLVER_dav_real
     LIBS parameter  base psi device
     SOURCES diago_david_real_test.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
             ../../source_basis/module_pw/test/test_tool.cpp
-            ../../source_hamilt/operator.cpp
-            ../../source_pw/module_pwdft/op_pw.cpp
   )
   endif()
 
   AddTest(
     TARGET MODULE_HSOLVER_base
     LIBS parameter  psi device base
-    SOURCES test_hsolver.cpp 
+    SOURCES test_hsolver.cpp ../hsolver.cpp
   )
 
   AddTest(
@@ -81,19 +96,12 @@ if (ENABLE_MPI)
   ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
   )
 
-  AddTest(
-    TARGET MODULE_HSOLVER_sdft
-    LIBS parameter  psi device base container
-    SOURCES test_hsolver_sdft.cpp ../hsolver_pw_sdft.cpp ../hsolver_pw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_lin_tf.cpp
-                ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
-    )
-
   if(ENABLE_LCAO)
     if(TARGET ELPA::ELPA)
     AddTest(
       TARGET MODULE_HSOLVER_LCAO
       LIBS parameter  ELPA::ELPA base genelpa psi device
-      SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
+      SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_elpa_native.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
     )
     else()
       AddTest(

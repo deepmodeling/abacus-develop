@@ -9,10 +9,40 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
+#include <sstream>
 #include <utility>
 
 namespace
 {
+
+std::vector<std::string> restart_rows(std::istream& input)
+{
+    std::vector<std::string> rows;
+    std::string line;
+    while (std::getline(input, line))
+    {
+        const std::size_t comment = line.find('#');
+        if (comment != std::string::npos)
+        {
+            line.erase(comment);
+        }
+        if (line.find_first_not_of(" \t\r\n") == std::string::npos)
+        {
+            continue;
+        }
+        rows.push_back(line);
+        if (rows.size() > 3)
+        {
+            break;
+        }
+    }
+    if (rows.size() != 3)
+    {
+        ModuleBase::WARNING_QUIT("TDFieldManager::read_restart", "Expected three data rows with 5, 3 and 3 fields.");
+    }
+    return rows;
+}
 
 int integration_subdivisions(const double omega, const double dt, const int gauge)
 {
@@ -39,7 +69,7 @@ double angular_frequency(const double frequency)
 double field_amplitude(const double amplitude)
 {
     // Convert the user-visible V/Angstrom scale to the propagation field unit.
-    return amplitude * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV;
+    return amplitude * ModuleBase::BOHR_TO_A / ModuleBase::Hartree_to_eV;
 }
 
 } // namespace
@@ -55,85 +85,78 @@ TDFieldManager::TDFieldManager(const bool enabled,
                                const double length_cut1,
                                const double length_cut2,
                                std::vector<TDField> fields)
-    : enabled_(enabled), gauge_(gauge), start_step_(start_step), end_step_(end_step), dt_(dt), length_cut1_(length_cut1),
-      length_cut2_(length_cut2), fields_(std::move(fields)), current_step_(-1), active_(false), field_values_(fields_.size(), 0.0)
+    : enabled_(enabled), gauge_(gauge), start_step_(start_step), end_step_(end_step), dt_ha_(dt), length_cut1_(length_cut1),
+      length_cut2_(length_cut2), fields_(std::move(fields)), current_step_(-1), active_(false)
 {
-    vector_potential_.set(0.0, 0.0, 0.0);
-    vector_potential_laststep_.set(0.0, 0.0, 0.0);
-    electric_field_.set(0.0, 0.0, 0.0);
-    total_electric_field_.set(0.0, 0.0, 0.0);
+    field_vals_ha_.resize(fields_.size(), 0.0);
 }
 
-void TDFieldManager::advance_length_gauge()
+void TDFieldManager::sample_field(const int step)
 {
-    ++current_step_;
-    active_ = enabled_ && current_step_ >= start_step_ && current_step_ <= end_step_;
-    std::fill(field_values_.begin(), field_values_.end(), 0.0);
-    total_electric_field_.set(0.0, 0.0, 0.0);
+    current_step_ = step;
+    active_ = enabled_ && step >= start_step_ && step <= end_step_;
+    std::fill(field_vals_ha_.begin(), field_vals_ha_.end(), 0.0);
+    efield_ha_.set(0.0, 0.0, 0.0);
     if (!active_)
     {
         return;
     }
-
     for (std::size_t index = 0; index < fields_.size(); ++index)
     {
         const TDField& field = fields_[index];
-        const TDFieldSample sample(current_step_, 0, field.subdivisions(), current_step_ * dt_);
-        // Keep every occurrence for output, but sum repeated directions for
-        // the physical length-gauge potential and ionic force.
-        field_values_[index] = field.electric_field(sample);
-        total_electric_field_[field.direction()] += field_values_[index];
+        const double time_ha = step * dt_ha_;
+        const TDFieldSample sample(step, 0, field.subdivisions(), time_ha);
+        field_vals_ha_[index] = field.electric_field(sample);
+        efield_ha_[field.direction()] += field_vals_ha_[index];
     }
 }
 
-void TDFieldManager::advance_vector_gauge()
+void TDFieldManager::prepare_sample(const int step)
 {
-    ++current_step_;
-    // Finish the second half of the previous interval before integrating the
-    // current interval. vector_potential_ therefore remains a midpoint value.
-    vector_potential_ = vector_potential_ + vector_potential_laststep_ / 2.0;
-    vector_potential_laststep_.set(0.0, 0.0, 0.0);
-    electric_field_.set(0.0, 0.0, 0.0);
-    total_electric_field_.set(0.0, 0.0, 0.0);
-    std::fill(field_values_.begin(), field_values_.end(), 0.0);
-    active_ = enabled_ && current_step_ >= start_step_ && current_step_ <= end_step_;
-    if (!active_)
+    if (step == current_step_)
     {
         return;
     }
-
-    for (std::size_t index = 0; index < fields_.size(); ++index)
+    if (step != current_step_ + 1)
     {
-        const TDField& field = fields_[index];
-        const int subdivisions = field.subdivisions();
-        const double integration_dt = dt_ / subdivisions;
-        std::vector<double> samples(subdivisions + 1, 0.0);
-        for (int node = 0; node <= subdivisions; ++node)
-        {
-            const double time = (current_step_ + static_cast<double>(node) / subdivisions) * dt_;
-            samples[node] = field.electric_field(TDFieldSample(current_step_, node, subdivisions, time));
-        }
+        ModuleBase::WARNING_QUIT("TDFieldManager::prepare_sample", "Invalid electronic-step sequence.");
+    }
+    sample_field(step);
+}
 
-        // Integrate E over [n*dt, (n+1)*dt]. The minus sign implements
-        // A(t+dt)-A(t) = -integral E(t') dt'.
-        double integral = 0.0;
-        ModuleBase::Integral::Simpson_Integral(subdivisions + 1, samples.data(), integration_dt, integral);
-        vector_potential_laststep_[field.direction()] -= integral;
-        // Output and the hybrid-gauge scalar potential use E at the interval
-        // start rather than an average over Simpson nodes.
-        field_values_[index] = samples.front();
-        if (gauge_ == 2)
+void TDFieldManager::prepare_interval(const int left_step, const int sample_step)
+{
+    if (left_step == interval_left_ && sample_step == current_step_)
+    {
+        return;
+    }
+    if (left_step != interval_left_ + 1 || (sample_step != left_step && sample_step != left_step + 1))
+    {
+        ModuleBase::WARNING_QUIT("TDFieldManager::prepare_interval", "Invalid field interval sequence.");
+    }
+    A_left_ha_ = A_right_ha_;
+    if (A_samples_ha_.empty() && enabled_ && left_step >= start_step_ && left_step <= end_step_)
+    {
+        for (const TDField& field: fields_)
         {
-            electric_field_[field.direction()] += samples.front();
+            const int subdivisions = field.subdivisions();
+            const double integration_dt = dt_ha_ / subdivisions;
+            std::vector<double> samples(subdivisions + 1);
+            for (int node = 0; node <= subdivisions; ++node)
+            {
+                const double time_ha = (left_step + static_cast<double>(node) / subdivisions) * dt_ha_;
+                const TDFieldSample sample(left_step, node, subdivisions, time_ha);
+                samples[node] = field.electric_field(sample);
+            }
+            double integral = 0.0;
+            const int count = subdivisions + 1;
+            ModuleBase::Integral::Simpson_Integral(count, samples.data(), integration_dt, integral);
+            A_right_ha_[field.direction()] -= integral;
         }
     }
-
-    // Advance from the interval endpoint to its midpoint representation.
-    vector_potential_ = vector_potential_ + vector_potential_laststep_ / 2.0;
-    if (gauge_ == 2)
-    {
-        total_electric_field_ = electric_field_;
-    }
+    interval_left_ = left_step;
+    sample_field(sample_step);
+    select_A_prop();
 }
 
 void TDFieldManager::read_restart(const std::string& file_dir)
@@ -141,79 +164,142 @@ void TDFieldManager::read_restart(const std::string& file_dir)
     std::ifstream file((file_dir + "Restart_td.txt").c_str());
     if (!file)
     {
-        ModuleBase::WARNING_QUIT("TDFieldManager::read_restart", "No Restart_td.txt!");
+        ModuleBase::WARNING_QUIT("TDFieldManager::read_restart", "Cannot open Restart_td.txt.");
     }
-
-    int restart_step = -1;
-    if (!(file >> restart_step >> vector_potential_[0] >> vector_potential_[1] >> vector_potential_[2] >> vector_potential_laststep_[0]
-          >> vector_potential_laststep_[1] >> vector_potential_laststep_[2]))
+    const std::vector<std::string> rows = restart_rows(file);
+    std::istringstream state(rows[0]);
+    std::istringstream left(rows[1]);
+    std::istringstream right(rows[2]);
+    int gauge = -1;
+    int file_source = -1;
+    double dt = 0.0;
+    if (!(state >> current_step_ >> interval_left_ >> gauge >> dt >> file_source) || !(left >> A_left_ha_.x >> A_left_ha_.y >> A_left_ha_.z)
+        || !(right >> A_right_ha_.x >> A_right_ha_.y >> A_right_ha_.z) || current_step_ < 0 || interval_left_ < -1
+        || (gauge_ == 0 && interval_left_ != -1) || (gauge_ != 0 && interval_left_ != current_step_ && interval_left_ != current_step_ - 1)
+        || file_source != !A_samples_ha_.empty() || gauge != gauge_ || !std::isfinite(dt) || std::abs(dt - dt_ha_) > 1.0e-12 * dt_ha_)
     {
-        ModuleBase::WARNING_QUIT("TDFieldManager::read_restart", "Invalid Restart_td.txt!");
+        ModuleBase::WARNING_QUIT("TDFieldManager::read_restart", "Invalid or incompatible field restart state.");
     }
-    // Retain the legacy restart-file sign convention expected by the first
-    // half-step update in advance_vector_gauge().
-    vector_potential_laststep_ = -vector_potential_laststep_;
-    current_step_ = restart_step - 1;
+    state >> std::ws;
+    left >> std::ws;
+    right >> std::ws;
+    if (!state.eof() || !left.eof() || !right.eof())
+    {
+        ModuleBase::WARNING_QUIT("TDFieldManager::read_restart", "Unexpected extra data in Restart_td.txt.");
+    }
+    for (int d = 0; d < 3; ++d)
+    {
+        if (!std::isfinite(A_left_ha_[d]) || !std::isfinite(A_right_ha_[d]))
+        {
+            ModuleBase::WARNING_QUIT("TDFieldManager::read_restart", "Non-finite restart vector potential.");
+        }
+    }
+    sample_field(current_step_);
+    select_A_prop();
+}
+
+void TDFieldManager::write_restart(const std::string& file_dir) const
+{
+    std::ofstream file((file_dir + "Restart_td.txt").c_str());
+    file << std::setprecision(17) << "# Hartree atomic units; step indices start at 0.\n"
+         << "# gauge: 0=length, 1=velocity, 2=hybrid; source: 0=field, 1=file\n"
+         << "# step  left_step(-1=none)  gauge  dt  source\n"
+         << current_step_ << " " << interval_left_ << " " << gauge_ << " " << dt_ha_ << " " << !A_samples_ha_.empty() << "\n"
+         << A_left_ha_.x << " " << A_left_ha_.y << " " << A_left_ha_.z << "  # A_left: x y z\n"
+         << A_right_ha_.x << " " << A_right_ha_.y << " " << A_right_ha_.z << "  # A_right: x y z\n";
+    if (!file)
+    {
+        ModuleBase::WARNING_QUIT("TDFieldManager::write_restart", "Cannot write field restart.");
+    }
+}
+
+void TDFieldManager::set_A_samples(const std::vector<ModuleBase::Vector3<double>>& samples_ha)
+{
+    if (current_step_ != -1 || samples_ha.empty())
+    {
+        ModuleBase::WARNING_QUIT("TDFieldManager::set_A_samples", "Supply nonempty propagation samples before initialization.");
+    }
+    for (const ModuleBase::Vector3<double>& A: samples_ha)
+    {
+        for (int d = 0; d < 3; ++d)
+        {
+            if (!std::isfinite(A[d]))
+            {
+                ModuleBase::WARNING_QUIT("TDFieldManager::set_A_samples", "Non-finite propagation sample.");
+            }
+        }
+    }
+    A_samples_ha_ = samples_ha;
+}
+
+void TDFieldManager::select_A_prop()
+{
+    if (A_samples_ha_.empty())
+    {
+        A_prop_ha_ = (A_left_ha_ + A_right_ha_) * 0.5;
+    }
+    else
+    {
+        const std::size_t index = std::min(static_cast<std::size_t>(current_step_), A_samples_ha_.size() - 1);
+        A_prop_ha_ = A_samples_ha_[index];
+    }
 }
 
 int TDFieldManager::gauge() const
 {
     return gauge_;
 }
-
 int TDFieldManager::current_step() const
 {
     return current_step_;
 }
-
-double TDFieldManager::dt() const
+double TDFieldManager::dt_ha() const
 {
-    return dt_;
+    return dt_ha_;
 }
-
 double TDFieldManager::length_cut1() const
 {
     return length_cut1_;
 }
-
 double TDFieldManager::length_cut2() const
 {
     return length_cut2_;
 }
-
 bool TDFieldManager::active() const
 {
     return active_;
 }
-
 const std::vector<TDField>& TDFieldManager::fields() const
 {
     return fields_;
 }
-
-const std::vector<double>& TDFieldManager::field_values() const
+const std::vector<double>& TDFieldManager::field_vals_ha() const
 {
-    return field_values_;
+    return field_vals_ha_;
 }
-
-const ModuleBase::Vector3<double>& TDFieldManager::vector_potential() const
+const ModuleBase::Vector3<double>& TDFieldManager::A_left_ha() const
 {
-    return vector_potential_;
+    if (!A_samples_ha_.empty())
+    {
+        ModuleBase::WARNING_QUIT("TDFieldManager::A_left_ha", "File propagation samples do not define endpoints.");
+    }
+    return A_left_ha_;
 }
-
-const ModuleBase::Vector3<double>& TDFieldManager::vector_potential_laststep() const
+const ModuleBase::Vector3<double>& TDFieldManager::A_right_ha() const
 {
-    return vector_potential_laststep_;
+    if (!A_samples_ha_.empty())
+    {
+        ModuleBase::WARNING_QUIT("TDFieldManager::A_right_ha", "File propagation samples do not define endpoints.");
+    }
+    return A_right_ha_;
 }
-
-const ModuleBase::Vector3<double>& TDFieldManager::electric_field() const
+const ModuleBase::Vector3<double>& TDFieldManager::A_prop_ha() const
 {
-    return electric_field_;
+    return A_prop_ha_;
 }
-
-const ModuleBase::Vector3<double>& TDFieldManager::total_electric_field() const
+const ModuleBase::Vector3<double>& TDFieldManager::efield_ha() const
 {
-    return total_electric_field_;
+    return efield_ha_;
 }
 
 std::shared_ptr<TDFieldManager> create_td_field_manager(const Input_para& input)

@@ -126,7 +126,7 @@ Also. the --pack-run option can help in OFFLINE installation.
 You can manually install requirements packages via:
 0. Download by 'wget $__url -O $__filename' manually
 1. Download from www.cp2k.org/static/downloads (for OpenBLAS, OpenMPI and Others)
-2. Download from github.com (especially for CEREAL, RapidJSON, libnpy, LibRI and other stage4 packages)
+2. Download from github.com (especially for CEREAL, nlohmann-json, libnpy, LibRI and other stage4 packages)
 3. for Intel-oneAPI and AMD AOCC/AOCL, please contact your server manager or visit their official website
 4. For users in China, you can try Gitee mirror: git clone https://gitee.com/jamesmisaka/abacus_toolchain_build.git
 EOF

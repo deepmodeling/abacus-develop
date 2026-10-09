@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_AO_TO_MO_TRANSFORMER_AO_TO_MO_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_AO_TO_MO_TRANSFORMER_AO_TO_MO_H
+
 #include <ATen/core/tensor.h>
 #include "source_psi/psi.h"
 #include "source_lcao/module_lr/utils/mo_type.h"
@@ -42,3 +44,5 @@ namespace LR
         const LR_Util::MO_TYPE type = LR_Util::VO);
 #endif
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_AO_TO_MO_TRANSFORMER_AO_TO_MO_H

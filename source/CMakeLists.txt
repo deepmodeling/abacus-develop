@@ -31,7 +31,7 @@ include(CompilerConfiguration)
 
 set(_abacus_feature_definitions
   __FFTW3
-  $<$<BOOL:${ENABLE_RAPIDJSON}>:__RAPIDJSON>
+  $<$<BOOL:${ENABLE_JSON}>:__JSON>
   $<$<BOOL:${USE_CUDA_ON_DCU}>:__CUDA_ON_DCU>
   $<$<BOOL:${USE_CUDA_MPI}>:__CUDA_MPI>
   $<$<BOOL:${ENABLE_ABACUS_LIBM}>:__ABACUS_LIBM>
@@ -65,7 +65,6 @@ set(_abacus_feature_definitions
   $<$<BOOL:${ENABLE_LIBRI}>:EXX_H_COMM=2>
   $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_LCAO=0>
   $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
-  $<$<BOOL:${ENABLE_EXX_DEV}>:__EXX_DEV>
   $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
   $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
   $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
@@ -148,6 +147,20 @@ target_link_libraries(abacus_link_libs INTERFACE
 set(_abacus_linalg_libs)
 set(_abacus_linalg_include_dirs)
 
+if(USE_DSP)
+  if(NOT MT_CPACK_DIR)
+    message(FATAL_ERROR
+      "USE_DSP requires MT_CPACK_DIR to be set to the DSP C_PACK install prefix "
+      "(the directory containing lib/libc_pack.a).")
+  endif()
+  set(_abacus_cpack_library "${MT_CPACK_DIR}/lib/libc_pack.a")
+  if(NOT EXISTS "${_abacus_cpack_library}")
+    message(FATAL_ERROR
+      "MT_CPACK_DIR is set to '${MT_CPACK_DIR}' but '${_abacus_cpack_library}' does not exist.")
+  endif()
+  list(APPEND _abacus_linalg_libs ${_abacus_cpack_library})
+endif()
+
 if(USE_KML)
   if(ENABLE_MPI)
     list(APPEND _abacus_linalg_libs KML::ScaLAPACK)
@@ -211,6 +224,16 @@ if(NOT MSVC)
   list(APPEND _abacus_linalg_libs m)
 endif()
 
+# The mtblas archives bundle their own OpenBLAS objects. They must come after
+# the standalone BLAS/LAPACK/ScaLAPACK above so that the linker resolves the
+# BLAS symbols from the standalone BLAS instead of the bundled copy.
+if(USE_DSP)
+  list(APPEND _abacus_linalg_libs
+    ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblas.a
+    ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblasdev.a
+    ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtfft.a)
+endif()
+
 target_link_libraries(abacus_linalg_libs INTERFACE ${_abacus_linalg_libs})
 target_include_directories(abacus_linalg_libs INTERFACE ${_abacus_linalg_include_dirs})
 
@@ -240,13 +263,14 @@ endif()
 # ------------------------------------------------------------------------------
 
 set(_abacus_feature_libs
-  $<$<BOOL:${ENABLE_RAPIDJSON}>:RapidJSON>
+  $<$<BOOL:${ENABLE_JSON}>:nlohmann_json::nlohmann_json>
   $<$<BOOL:${ENABLE_ELPA}>:ELPA::ELPA>
   $<$<BOOL:${ENABLE_PEXSI}>:PEXSI::PEXSI>
   $<$<BOOL:${ENABLE_CNPY}>:cnpy>
   $<$<BOOL:${ENABLE_CNPY}>:ZLIB::ZLIB>
   $<$<BOOL:${ENABLE_LIBRI}>:cereal::cereal>
-  $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>)
+  $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>
+  $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>)
 set(_abacus_feature_include_dirs)
 set(_abacus_feature_compile_options)
 
@@ -364,7 +388,7 @@ target_compile_options(abacus_compile_requirements INTERFACE
   ${_abacus_feature_compile_options})
 
 foreach(_abacus_feature_target IN ITEMS
-    RapidJSON
+    nlohmann_json::nlohmann_json
     cereal::cereal
     ELPA::ELPA
     Libxc::xc
@@ -517,7 +541,6 @@ set(ABACUS_BIN_PATH ${PROJECT_BINARY_DIR}/${ABACUS_BIN_NAME})
 if(USE_CUDA)
   set_property(TARGET ${ABACUS_BIN_NAME}
     PROPERTY CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
-  target_compile_definitions(${ABACUS_BIN_NAME} PRIVATE __USE_NVTX)
 endif()
 
 if(ENABLE_COVERAGE)
@@ -553,7 +576,29 @@ add_library(
   source_main/driver.cpp
   source_main/driver_run.cpp)
 
+# __USE_NVTX gates the NVTX code in source_base/timer.cpp (target base) and
+# source_main/driver.cpp (target driver), so it must be defined on those
+# OBJECT libraries, not only on the final executable (whose sole TU, main.cpp,
+# contains no NVTX code). Defining it only on the executable silently dropped
+# every NVTX range and kept timer_enable_nvtx ineffective.
+if(USE_CUDA)
+  target_compile_definitions(base PRIVATE __USE_NVTX)
+  target_compile_definitions(driver PRIVATE __USE_NVTX)
+  # NVTX is header-only since CUDA 12.9; older toolkits need libnvToolsExt.
+  if(CUDAToolkit_VERSION VERSION_LESS 12.9)
+    # timer.cpp (in target base) references nvtxRangePushA/nvtxRangePop, so
+    # every consumer of base's object files needs libnvToolsExt on its link
+    # line. Attach it to base itself so the dependency propagates through
+    # base's link interface to the main executable and to every unit test
+    # that links base; linking it only to the executable leaves those tests
+    # with undefined NVTX references (e.g. MODULE_CELL_SYMMETRY_analysis on
+    # CUDA 12.2 CI).
+    target_link_libraries(base INTERFACE CUDA::nvToolsExt)
+  endif()
+endif()
+
 list(APPEND device_srcs
+  source_pw/module_pwdft/kernels/projector_gradient_op.cpp
   source_pw/module_pwdft/kernels/nonlocal_op.cpp
   source_pw/module_pwdft/kernels/veff_op.cpp
   source_pw/module_pwdft/kernels/ekinetic_op.cpp
@@ -562,6 +607,7 @@ list(APPEND device_srcs
   source_basis/module_pw/kernels/pw_op.cpp
   source_hsolver/kernels/hegvd_op.cpp
   source_hsolver/kernels/bpcg_kernel_op.cpp
+  source_hsolver/kernels/linear_op.cpp
   source_estate/kernels/elecstate_op.cpp
 
   source_base/module_device/device.cpp
@@ -585,6 +631,7 @@ list(APPEND device_srcs
 
 if(USE_CUDA)
   list(APPEND device_srcs
+    source_pw/module_pwdft/kernels/cuda/projector_gradient_op.cu
     source_pw/module_pwdft/kernels/cuda/nonlocal_op.cu
     source_pw/module_pwdft/kernels/cuda/veff_op.cu
     source_pw/module_pwdft/kernels/cuda/ekinetic_op.cu
@@ -594,6 +641,7 @@ if(USE_CUDA)
     source_basis/module_pw/kernels/cuda/pw_op.cu
     source_hsolver/kernels/cuda/hegvd_op.cu
     source_hsolver/kernels/cuda/bpcg_kernel_op.cu
+    source_hsolver/kernels/cuda/linear_op.cu
     source_estate/kernels/cuda/elecstate_op.cu
     source_base/module_device/cuda/memory_op.cu
     source_pw/module_pwdft/kernels/cuda/force_op.cu
@@ -609,11 +657,19 @@ if(USE_CUDA)
     source_pw/module_pwdft/kernels/cuda/cal_density_real_op.cu
     source_pw/module_pwdft/kernels/cuda/mul_potential_op.cu
     source_pw/module_pwdft/kernels/cuda/vec_mul_vec_complex.cu
-    source_pw/module_pwdft/kernels/cuda/exx_cal_energy_op.cu)
+    source_pw/module_pwdft/kernels/cuda/exx_cal_energy_op.cu
+    source_pw/module_pwdft/kernels/cuda/exx_batch_op.cu)
+  if(USE_CUDA AND ENABLE_GPU_NEIGHBOR_LIST)
+    list(APPEND device_srcs
+      source_cell/kernels/cuda/gpu_neighlist_kernels.cu
+      source_cell/kernels/cuda/gpu_neighlist_host.cu
+      source_cell/kernels/cuda/gpu_neighlist_device.cu)
+  endif()
 endif()
 
 if(USE_ROCM)
   hip_add_library(device_rocm STATIC
+    source_pw/module_pwdft/kernels/rocm/projector_gradient_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/nonlocal_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/veff_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/ekinetic_op.hip.cu
@@ -623,6 +679,7 @@ if(USE_ROCM)
     source_basis/module_pw/kernels/rocm/pw_op.hip.cu
     source_hsolver/kernels/rocm/hegvd_op.hip.cu
     source_hsolver/kernels/rocm/bpcg_kernel_op.hip.cu
+    source_hsolver/kernels/rocm/linear_op.hip.cu
     source_estate/kernels/rocm/elecstate_op.hip.cu
     source_base/module_device/rocm/memory_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/force_op.hip.cu
@@ -675,6 +732,7 @@ target_link_libraries(
     hamilt_general
     elecstate
     module_pwdft
+    module_proj
     module_ofdft
     module_stodft
     module_dfpt
@@ -686,8 +744,10 @@ target_link_libraries(
     io_input
     surchem
     neighbor_search
+    domain_decomposition
     neighbor
     md
+    module_plumed
     planewave
     symmetry
     cell
@@ -734,7 +794,7 @@ endif()
 if(ENABLE_LIBRI)
   target_link_libraries(${ABACUS_BIN_NAME} PRIVATE ri module_exx_symmetry)
 endif()
-if(ENABLE_RAPIDJSON)
+if(ENABLE_JSON)
   target_link_libraries(${ABACUS_BIN_NAME} PRIVATE json_output)
 endif()
 

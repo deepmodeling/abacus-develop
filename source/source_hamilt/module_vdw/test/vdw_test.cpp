@@ -5,10 +5,8 @@
 #include"gtest/gtest.h"
 #include"gmock/gmock.h"
 #include "mpi.h"
-#define private public
 #include "source_hamilt/module_vdw/vdwd2_parameters.h"
 #include "source_hamilt/module_vdw/vdwd2.h"
-#undef private
 #include "source_hamilt/module_vdw/vdwd3.h"
 #ifdef __DFTD4
 #include "source_hamilt/module_vdw/vdwd4.h"
@@ -239,10 +237,10 @@ TEST_F(vdwd2Test, D2Default)
     EXPECT_EQ(vdwd2_test.parameter().scaling(), 0.75);
     EXPECT_EQ(vdwd2_test.parameter().damping(), input.vdw_d);
     EXPECT_EQ(vdwd2_test.parameter().model(), input.vdw_cutoff_type);
-    EXPECT_EQ(vdwd2_test.parameter().radius_, 56.6918);
+    EXPECT_EQ(vdwd2_test.parameter().radius(), 56.6918);
     double Si_C6 = 9.23*1e6 / (ModuleBase::ELECTRONVOLT_SI * ModuleBase::NA) / pow(ModuleBase::BOHR_TO_A, 6)/ ModuleBase::Ry_to_eV;
-    EXPECT_NEAR(vdwd2_test.parameter().C6_["Si"], Si_C6,1e-13);
-    EXPECT_EQ(vdwd2_test.parameter().R0_["Si"], 1.716/ModuleBase::BOHR_TO_A);
+    EXPECT_NEAR(vdwd2_test.parameter().C6().at("Si"), Si_C6,1e-13);
+    EXPECT_EQ(vdwd2_test.parameter().R0().at("Si"), 1.716/ModuleBase::BOHR_TO_A);
     EXPECT_EQ(vdwd2_test.parameter().period().x, 2 * ceil(56.6918 / ucell.lat0 / sqrt(ucell.a1.norm2())) + 1);
     EXPECT_EQ(vdwd2_test.parameter().period().y, 2 * ceil(56.6918 / ucell.lat0 / sqrt(ucell.a2.norm2())) + 1);
     EXPECT_EQ(vdwd2_test.parameter().period().z, 2 * ceil(56.6918 / ucell.lat0 / sqrt(ucell.a3.norm2())) + 1);
@@ -265,8 +263,8 @@ TEST_F(vdwd2Test, D2ReadFile)
 
     vdwd2_test.parameter().initial_parameters(input);
     double Si_C6 = 9.13*1e6 / (ModuleBase::ELECTRONVOLT_SI * ModuleBase::NA) / pow(ModuleBase::BOHR_TO_A, 6)/ ModuleBase::Ry_to_eV;
-    EXPECT_NEAR(vdwd2_test.parameter().C6_["Si"], Si_C6,1e-13);
-    EXPECT_EQ(vdwd2_test.parameter().R0_["Si"], 1.626/ModuleBase::BOHR_TO_A);
+    EXPECT_NEAR(vdwd2_test.parameter().C6().at("Si"), Si_C6,1e-13);
+    EXPECT_EQ(vdwd2_test.parameter().R0().at("Si"), 1.626/ModuleBase::BOHR_TO_A);
 }
 
 TEST_F(vdwd2Test, D2ReadFileError)
@@ -288,7 +286,7 @@ TEST_F(vdwd2Test, D2c6UniteVA6)
 
     vdwd2_test.parameter().initial_parameters(input);
     double Si_C6 = 9.23 / pow(ModuleBase::BOHR_TO_A, 6) * ModuleBase::Ry_to_eV;
-    EXPECT_NEAR(vdwd2_test.parameter().C6_["Si"], Si_C6,1e-13);
+    EXPECT_NEAR(vdwd2_test.parameter().C6().at("Si"), Si_C6,1e-13);
 }
 
 TEST_F(vdwd2Test, D2r0UnitBohr)
@@ -297,7 +295,7 @@ TEST_F(vdwd2Test, D2r0UnitBohr)
     vdw::Vdwd2 vdwd2_test(ucell);
 
     vdwd2_test.parameter().initial_parameters(input);
-    EXPECT_EQ(vdwd2_test.parameter().R0_["Si"], 1.716);
+    EXPECT_EQ(vdwd2_test.parameter().R0().at("Si"), 1.716);
 }
 
 TEST_F(vdwd2Test, D2WrongUnit)
@@ -319,7 +317,7 @@ TEST_F(vdwd2Test, D2RadiusUnitAngstrom)
 
     vdw::Vdwd2 vdwd2_test(ucell);
     vdwd2_test.parameter().initial_parameters(input);
-    EXPECT_EQ(vdwd2_test.parameter().radius_, 56.6918/ModuleBase::BOHR_TO_A);
+    EXPECT_EQ(vdwd2_test.parameter().radius(), 56.6918/ModuleBase::BOHR_TO_A);
 }
 
 TEST_F(vdwd2Test, D2CutoffTypePeriod)
@@ -336,7 +334,9 @@ TEST_F(vdwd2Test, D2R0ZeroQuit)
 {
     vdw::Vdwd2 vdwd2_test(ucell);
     vdwd2_test.parameter().initial_parameters(input);
-    vdwd2_test.parameter().R0_["Si"] = 0.0;
+    // r0_zero.txt sets R0 for Si to zero through the public reader, so that
+    // Vdwd2::index_loops hits its "R0_sum can not be 0" guard.
+    vdwd2_test.parameter().R0_input("r0_zero.txt", "Bohr");
 
     testing::internal::CaptureStdout();
     EXPECT_EXIT(vdwd2_test.evaluate(vdw::VdwRequest(false, false)), ::testing::ExitedWithCode(1), "");

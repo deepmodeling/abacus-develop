@@ -12,9 +12,7 @@ list(APPEND objects
     module_dos/cal_ldos.cpp
     module_ml/cal_mlkedf_desc.cpp
     module_dos/write_dos_pw.cpp
-    module_output/band_parallel_output.cpp
     module_energy/write_bands.cpp
-    module_energy/nscf_fermi_surf.cpp
     module_energy/write_eig_occ.cpp
     module_bessel/numerical_basis.cpp
     module_bessel/numerical_basis_overlap.cpp
@@ -34,6 +32,7 @@ list(APPEND objects
     module_ml/write_mlkedf_desc.cpp
     module_current/td_current_io.cpp
     module_current/td_current_io_comm.cpp
+    module_current/td_current_pw.cpp
     module_efield/td_efield_io.cpp
     module_efield/td_vector_pot_io.cpp
     module_chgpot/write_libxc_r.cpp
@@ -41,6 +40,8 @@ list(APPEND objects
     module_json/para_json.cpp
     parse_args.cpp
     input_help.cpp
+    module_chgpot/get_pchg_pw.cpp
+    module_wf/get_wf_pw.cpp
 )
 
 list(APPEND objects_advanced
@@ -64,6 +65,7 @@ if(ENABLE_LCAO)
       module_dos/write_dos_lcao.cpp
       module_dos/cal_pdos_gamma.cpp
       module_dos/cal_pdos_multik.cpp
+      module_dos/write_pdos_text.cpp
       module_output/write_orb_info.cpp
       module_energy/write_proj_band_lcao.cpp
       module_chgpot/get_pchg_lcao.cpp
@@ -79,23 +81,40 @@ if(ENABLE_LCAO)
       module_mulliken/output_dmk.cpp
       module_mulliken/output_mulliken.cpp
       module_ml/io_npz.cpp
-      module_hs/cal_plpr.cpp
+      module_hs/angmom_op_mat.cpp
       module_dhs/write_dh.cpp
       module_dhs/write_dh_terms.cpp
   )
   list(APPEND objects_advanced	   
       module_unk/unk_overlap_lcao.cpp
-      module_hs/write_hs_r.cpp
-      module_hs/write_h_terms.cpp
-      module_hs/write_hs_sparse.cpp
-      module_hs/single_r_io.cpp
-      module_hs/rr_sparse_writer.cpp
-      module_hs/cal_r_overlap_r.cpp
+      module_hs/hs_dense_io.cpp
+      module_hs/hs_sparse_io.cpp
+      module_hs/dhs_sparse_writer.cpp
+      module_hs/hsk_writer.cpp
+      module_hs/hsr_writer.cpp
+      module_hs/hsr_legacy.cpp
+      module_hs/hterm_writer.cpp
+      module_hs/lat_r_csr.cpp
+      module_hs/pos_op_csr.cpp
+      module_hs/pos_op_basis.cpp
+      module_hs/pos_op_calc.cpp
+      module_hs/pos_op_writer.cpp
+      module_hs/pos_op_mat.cpp
+      module_hs/vxc_op_tools.cpp
+      module_hs/vxc_op_mat.cpp
+      module_hs/vxc_op_r.cpp
+      module_hs/vxc_op_lip.cpp
       module_hs/output_mat_sparse.cpp
+      module_energy/write_eband_terms.cpp
       module_ctrl/ctrl_scf_lcao.cpp
       module_ctrl/ctrl_runner_lcao.cpp
       module_ctrl/ctrl_iter_lcao.cpp
   )
+  if(ENABLE_LIBRI)
+    list(APPEND objects
+      module_restart/restart_exx_csr.cpp
+    )
+  endif()
 endif()
 
 add_library(
@@ -147,12 +166,12 @@ endif()
 
 if(BUILD_TESTING)
   add_subdirectory(module_parameter/test)
+  add_subdirectory(module_hs/unittests)
   add_subdirectory(test_serial)
-  if(ENABLE_MPI)
-    add_subdirectory(test)
-  endif()
+  add_subdirectory(test)
+  add_subdirectory(module_dos/unittests)
 endif()
 
-if(ENABLE_RAPIDJSON)
+if(ENABLE_JSON)
   add_subdirectory(module_json)
 endif()

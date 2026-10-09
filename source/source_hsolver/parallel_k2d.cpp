@@ -26,9 +26,9 @@ void Parallel_K2D<TK>::set_para_env(int nks,
                    this->RANK_IN_POOL,
                    &this->POOL_WORLD_K2D);
 #endif
-    this->Pkpoints = new Parallel_Kpoints;
-    this->P2D_global = new Parallel_2D;
-    this->P2D_pool = new Parallel_2D;
+    this->Pkpoints.reset(new Parallel_Kpoints());
+    this->P2D_global.reset(new Parallel_2D());
+    this->P2D_pool.reset(new Parallel_2D());
     this->Pkpoints
         ->kinfo(nks, kpar, this->MY_POOL, this->RANK_IN_POOL, nproc, nspin);
     this->P2D_global->init(nw, nw, nb2d, MPI_COMM_WORLD);
@@ -36,16 +36,15 @@ void Parallel_K2D<TK>::set_para_env(int nks,
 }
 
 template <typename TK>
-void Parallel_K2D<TK>::distribute_hsk(hamilt::Hamilt<TK>* pHamilt,
+void Parallel_K2D<TK>::distribute_hsk(hsolver::HSMatrix<TK>& hs,
                                       const std::vector<int>& ik_kpar,
                                       const int& nw) {
 #ifdef __MPI
     ModuleBase::timer::start("Parallel_K2D", "distribute_hsk");
     for (int ipool = 0; ipool < ik_kpar.size(); ++ipool)
     {
-        pHamilt->updateHk(ik_kpar[ipool]);
         ModuleBase::MatrixBlock<TK> HK_global, SK_global;
-        pHamilt->matrix(HK_global, SK_global);
+        hs.hs_at_k(ik_kpar[ipool], HK_global, SK_global);
         if (this->MY_POOL == this->Pkpoints->whichpool[ik_kpar[ipool]]) {
             this->hk_pool.resize(this->P2D_pool->get_local_size(), 0.0);
             this->sk_pool.resize(this->P2D_pool->get_local_size(), 0.0);
@@ -86,18 +85,9 @@ void Parallel_K2D<TK>::distribute_hsk(hamilt::Hamilt<TK>* pHamilt,
 
 template <typename TK>
 void Parallel_K2D<TK>::unset_para_env() {
-    if (this->Pkpoints != nullptr) {
-        delete this->Pkpoints;
-        this->Pkpoints = nullptr;
-    }
-    if (this->P2D_global != nullptr) {
-        delete this->P2D_global;
-        this->P2D_global = nullptr;
-    }
-    if (this->P2D_pool != nullptr) {
-        delete this->P2D_pool;
-        this->P2D_pool = nullptr;
-    }
+    this->Pkpoints.reset();
+    this->P2D_global.reset();
+    this->P2D_pool.reset();
     MPI_Comm_free(&this->POOL_WORLD_K2D);
 }
 

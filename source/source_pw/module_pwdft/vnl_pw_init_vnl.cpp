@@ -1,15 +1,11 @@
-#include "vnl_pw.h"
-
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/clebsch_gordan_coeff.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/math_integral.h"
-#include "source_base/math_polyint.h"
-#include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_io/module_parameter/parameter.h"
+#include "vnl_pw.h"
 
 #include <cmath>
 #include <vector>
@@ -33,6 +29,12 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
     ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl");
     ModuleBase::timer::start("ppcell_vnl", "init_vnl");
 
+    this->table_dq_ = PARAM.globalv.dq;
+    if (!std::isfinite(this->table_dq_) || this->table_dq_ <= 0.0)
+    {
+        ModuleBase::WARNING_QUIT("init_vnl", "Radial projector table spacing must be finite and positive.");
+    }
+    ++this->table_version_;
     this->omega_old = cell.omega;
 
     // from init_us_1
@@ -53,9 +55,10 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
         if (cell.atoms[it].ncpp.tvanp)
         {
             cell.atoms[it].ncpp.nqlc = std::min(cell.atoms[it].ncpp.nqlc, lmaxq);
-            if (cell.atoms[it].ncpp.nqlc < 0) {
+            if (cell.atoms[it].ncpp.nqlc < 0)
+            {
                 cell.atoms[it].ncpp.nqlc = 0;
-}
+            }
         }
     }
 
@@ -168,18 +171,19 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
                     {
                         for (int is2 = 0; is2 < 2; ++is2)
                         {
-                            this->dvan_so(ijs, it, ip, ip2)
-                                = cell.atoms[it].ncpp.dion(ir, is) * soc.fcoef(it, is1, is2, ip, ip2);
+                            this->dvan_so(ijs, it, ip, ip2) = cell.atoms[it].ncpp.dion(ir, is) * soc.fcoef(it, is1, is2, ip, ip2);
                             ++ijs;
-                            if (ir != is) {
+                            if (ir != is)
+                            {
                                 soc.fcoef(it, is1, is2, ip, ip2) = std::complex<double>(0.0, 0.0);
-}
+                            }
                         }
                     }
                 }
             }
         }
-        else {
+        else
+        {
             for (int ip = 0; ip < Nprojectors; ip++)
             {
                 for (int ip2 = 0; ip2 < Nprojectors; ip2++)
@@ -200,7 +204,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
                     }
                 }
             }
-}
+        }
     }
 
     // e) It computes the coefficients c_{LM}^{nm} which relates the
@@ -252,8 +256,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
                                         {
                                             for (int is = 0; is < 2; is++)
                                             {
-                                                this->qq_so(it, ijs, kh, lh) += cell.omega * qgm.real()
-                                                                                * soc.fcoef(it, is1, is, kh, ih)
+                                                this->qq_so(it, ijs, kh, lh) += cell.omega * qgm.real() * soc.fcoef(it, is1, is, kh, ih)
                                                                                 * soc.fcoef(it, is, is2, jh, lh);
                                             }
                                         }
@@ -311,40 +314,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
     // fill the interpolation table tab
     ************************************************************/
 
-    const double pref = ModuleBase::FOUR_PI / sqrt(cell.omega);
-    this->tab.zero_out();
-    GlobalV::ofs_running << "\n Init Non-Local PseudoPotential table : ";
-    for (int it = 0; it < cell.ntype; it++)
-    {
-        const int nbeta = cell.atoms[it].ncpp.nbeta;
-        int kkbeta = cell.atoms[it].ncpp.kkbeta;
-
-        // mohan modify 2008-3-31
-        // mohan add kkbeta>0 2009-2-27
-        if ((kkbeta % 2 == 0) && kkbeta > 0)
-        {
-            kkbeta--;
-        }
-
-        std::vector<double> jl(kkbeta);
-        std::vector<double> aux(kkbeta);
-        for (int ib = 0; ib < nbeta; ib++)
-        {
-            const int l = cell.atoms[it].ncpp.lll[ib];
-            for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
-            {
-                const double q = iq * PARAM.globalv.dq;
-                ModuleBase::Sphbes::Spherical_Bessel(kkbeta, cell.atoms[it].ncpp.r.data(), q, l, jl.data());
-                for (int ir = 0; ir < kkbeta; ir++)
-                {
-                    aux[ir] = cell.atoms[it].ncpp.betar(ib, ir) * jl[ir] * cell.atoms[it].ncpp.r[ir];
-                }
-                double vqint=0.0;
-                ModuleBase::Integral::Simpson_Integral(kkbeta, aux.data(), cell.atoms[it].ncpp.rab.data(), vqint);
-                this->tab(it, ib, iq) = vqint * pref;
-            }
-        }
-    }
+    this->fill_vnl_table(cell);
     if (this->use_gpu_)
     {
         if (PARAM.globalv.has_float_data)

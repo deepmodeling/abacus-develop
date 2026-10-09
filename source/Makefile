@@ -92,6 +92,9 @@ else
     FFTW_INCLUDE_DIR = ${FFTW_DIR}/include
     FFTW_LIB_DIR     = ${FFTW_DIR}/lib
     HONG  += -D__FFTW3
+    ifeq ($(OPENMP), ON)
+        LIBS += -L${FFTW_LIB_DIR} -lfftw3_omp
+    endif
     LIBS += -L${FFTW_LIB_DIR} -lfftw3 -Wl,-rpath=${FFTW_LIB_DIR}
     INCLUDES += -I${FFTW_INCLUDE_DIR}
     
@@ -196,6 +199,15 @@ ifdef PEXSI_DIR
     HONG += -D__PEXSI
 endif
 
+ifdef PLUMED_DIR
+    #==========================
+    # PLUMED (https://www.plumed.org)
+    #==========================
+    INCLUDES += -I${PLUMED_DIR}/include
+    LIBS += -L${PLUMED_DIR}/lib -Wl,--no-as-needed -lplumed -lplumedKernel -Wl,--as-needed -Wl,-rpath=${PLUMED_DIR}/lib
+    HONG += -DUSE_PLUMED
+endif
+
 include $(ABACUS_ROOT)Makefile.Objects
 VPATH := $(patsubst ./%,$(ABACUS_ROOT)%,$(VPATH))
 HEADERS := $(patsubst %,$(ABACUS_ROOT)%,$(HEADERS))
@@ -214,7 +226,7 @@ HONG += -D__SELINV -DMETIS
 
 ifeq ($(MPI), ON)
     ifdef LIBRI_DIR
-        OBJS_ABACUS += $(OBJS_MODULE_RI) ${OBJS_SRC_RI}
+        OBJS_ABACUS += $(OBJS_MODULE_RI) $(OBJS_BSE) ${OBJS_SRC_RI}
     endif
 endif
 
@@ -253,14 +265,6 @@ $(BUILD_INFO_DIR)/build_info.h:$(ABACUS_ROOT)source_io/build_info.h.in $(ABACUS_
     # Specific rule for parse_args.o to enforce dependency on build_info.h.
     # This overrides the generic %.o:%.cpp rule for this specific file.
 ${OBJ_DIR}/parse_args.o: $(ABACUS_ROOT)source_io/parse_args.cpp $(BUILD_INFO_DIR)/build_info.h
-	@mkdir -p $(dir $@)
-	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
-
-# Explicit rule: source_cell/module_symmetry and source_estate/module_charge
-# both contain a symm_rho.cpp. VPATH resolves symm_rho.o to the source_cell
-# one (listed first), so the Symmetry_rho implementation needs an explicit
-# object name to be compiled from the correct source.
-${OBJ_DIR}/symm_rho_charge.o: $(ABACUS_ROOT)source_estate/module_charge/symm_rho.cpp
 	@mkdir -p $(dir $@)
 	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
 

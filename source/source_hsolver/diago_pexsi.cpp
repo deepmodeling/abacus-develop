@@ -9,9 +9,6 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_pexsi/pexsi_solver.h"
 
-typedef ModuleBase::MatrixBlock<double> matd;
-typedef ModuleBase::MatrixBlock<std::complex<double>> matcd;
-
 namespace hsolver
 {
 template <typename T>
@@ -60,11 +57,12 @@ DiagoPexsi<T>::~DiagoPexsi()
 }
 
 template <>
-void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, double* eigenvalue_in)
+void DiagoPexsi<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
+                              ModuleBase::MatrixBlock<double>& s_mat,
+                              psi::Psi<double>& psi,
+                              double* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoPEXSI", "diag");
-    matd h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
     int ik = psi.get_current_k();
     this->ps->prepare(this->ParaV->blacs_ctxt,
                       this->ParaV->nb,
@@ -84,7 +82,8 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
 }
 
 template <>
-void DiagoPexsi<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in,
+void DiagoPexsi<std::complex<double>>::diag(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+                                            ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
                                             psi::Psi<std::complex<double>>& psi,
                                             double* eigenvalue_in)
 {

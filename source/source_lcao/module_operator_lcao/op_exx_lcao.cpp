@@ -10,6 +10,8 @@
 #include "source_lcao/module_ri/exx_lri_interface.h"
 #include "source_lcao/module_ri/ri_2d_comm.h"
 
+#include <memory>
+
 namespace hamilt
 {
     RI::Cell_Nearest<int, int, 3, double, 3> init_cell_nearest(const UnitCell& ucell, const std::array<int, 3>& Rs_period)
@@ -222,16 +224,27 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
 
             // 2. read DM
             const int nspin_dm = (PARAM.inp.nspin == 2) ? 2 : 1;
+            // dmR_owner owns the HContainers (RAII); dmR_vec is a non-owning view
+            // passed to dm_container_to_Ds which expects raw pointers.
+            std::vector<std::unique_ptr<hamilt::HContainer<double>>> dmR_owner(nspin_dm);
             std::vector<hamilt::HContainer<double>*> dmR_vec(nspin_dm);
             for (int is = 0; is < nspin_dm; ++is)
             {
+                // global_readin_dir is normalized by to_dir() and always ends with '/'
                 const std::string dmfile
-                    = PARAM.globalv.global_readin_dir + "/dmrs" + std::to_string(is + 1) + "_nao.csr";
-                dmR_vec[is] = new hamilt::HContainer<double>(const_cast<Parallel_Orbitals*>(pv));
+                    = PARAM.globalv.global_readin_dir + "dmrs" + std::to_string(is + 1) + "_nao.csr";
+                // EXX-specific: add rank guard because OperatorEXX is constructed on all MPI ranks,
+                // unlike most other places where ofs_running is only written on rank 0
+                if (GlobalV::MY_RANK == 0)
+                {
+                    GlobalV::ofs_running << " Read density matrix for EXX from " << dmfile << std::endl;
+                }
+                dmR_owner[is] = std::unique_ptr<hamilt::HContainer<double>>(
+                    new hamilt::HContainer<double>(const_cast<Parallel_Orbitals*>(pv)));
+                dmR_vec[is] = dmR_owner[is].get();
                 hamilt::Read_HContainer<double> reader_dm(dmR_vec[is], dmfile, PARAM.globalv.nlocal, &ucell, GlobalV::MY_RANK);
                 reader_dm.read();
             }
-
             // 3. DM->Ds->Hexx (do not use symmetry for nscf)
             XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
             if (exx_info_ptr->info_ri.real_number)
@@ -592,35 +605,6 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
     }
 }
 
-template <typename TK, typename TR>
-template <typename Tdata>
-void OperatorEXX<OperatorLCAO<TK, TR>>::cal_dH(
-    const int ispin,
-    std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR,
-    const std::array<std::vector<std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>>, 3>& dHexxs)
-{
-    // dhR is the set of per-atom-I HContainers to fill (not this->hR, which may be a dummy here).
-    const Parallel_Orbitals* const paraV = dhR[0][0]->get_paraV();
-    const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest
-        = this->use_cell_nearest ? &this->cell_nearest : nullptr;
-    for (int idir = 0; idir < 3; ++idir)
-    {
-        for (int iat = 0; iat < ucell.nat; ++iat)
-        {
-            // add_HexxR only fills existing matrices, so first allocate the atom-pair
-            // structure of this per-I container from the exx-form data (same cell mapping).
-            reallocate_hcontainer(dHexxs[idir][iat], dhR[idir][iat], cell_nearest);
-            RI_2D_Comm::add_HexxR(ispin,
-                exx_info_ptr->info_global.hybrid_alpha,
-                dHexxs[idir][iat],
-                *paraV,
-                PARAM.globalv.npol,
-                *dhR[idir][iat],
-                cell_nearest);
-        }
-    }
-}
-
 // explicit member function instantiations for constructors
 template OperatorEXX<OperatorLCAO<double, double>>::OperatorEXX(
     HS_Matrix_K<double>*, HContainer<double>*, const UnitCell&, const K_Vectors&,
@@ -667,26 +651,6 @@ template void OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double
 template void OperatorEXX<OperatorLCAO<double, double>>::contributeHk(int);
 template void OperatorEXX<OperatorLCAO<std::complex<double>, double>>::contributeHk(int);
 template void OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHk(int);
-
-// explicit member function instantiations for cal_dH (template member function)
-template void OperatorEXX<OperatorLCAO<double, double>>::cal_dH<double>(
-    const int, std::array<std::vector<hamilt::HContainer<double>*>, 3>&,
-    const std::array<std::vector<std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>>, 3>&);
-template void OperatorEXX<OperatorLCAO<double, double>>::cal_dH<std::complex<double>>(
-    const int, std::array<std::vector<hamilt::HContainer<double>*>, 3>&,
-    const std::array<std::vector<std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>>, 3>&);
-template void OperatorEXX<OperatorLCAO<std::complex<double>, double>>::cal_dH<double>(
-    const int, std::array<std::vector<hamilt::HContainer<double>*>, 3>&,
-    const std::array<std::vector<std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>>, 3>&);
-template void OperatorEXX<OperatorLCAO<std::complex<double>, double>>::cal_dH<std::complex<double>>(
-    const int, std::array<std::vector<hamilt::HContainer<double>*>, 3>&,
-    const std::array<std::vector<std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>>, 3>&);
-template void OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_dH<double>(
-    const int, std::array<std::vector<hamilt::HContainer<double>*>, 3>&,
-    const std::array<std::vector<std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>>, 3>&);
-template void OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_dH<std::complex<double>>(
-    const int, std::array<std::vector<hamilt::HContainer<double>*>, 3>&,
-    const std::array<std::vector<std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>>, 3>&);
 
 // explicit instantiations for reallocate_hcontainer (first overload)
 template void reallocate_hcontainer<double, double>(

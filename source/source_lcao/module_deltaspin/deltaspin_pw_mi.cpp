@@ -25,11 +25,12 @@
 #include "source_base/timer.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_device/device.h"
-#include "source_pw/module_pwdft/onsite_proj.h"
+#include "source_pw/module_proj/onsite_proj.h"
 #include "deltaspin_pw_cache.h"
 #include "mi_tools.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hsolver/diago_iter_assist.h"
+#include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_estate/elecstate.h"
 #include "source_estate/elecstate_pw.h"
@@ -168,9 +169,10 @@ void calculate_delta_hcc(ScState& state,
         // =============================================================
         // nspin=4 (non-collinear): full Pauli matrix treatment
         // =============================================================
-        // For each atom, construct 2x2 coefficients:
-        //   | lambda_z      lambda_x + i*lambda_y |
-        //   | lambda_x - i*lambda_y   -lambda_z   |
+        // For each atom, construct lambda dot sigma:
+        //   | lambda_z                  lambda_x - i*lambda_y |
+        //   | lambda_x + i*lambda_y    -lambda_z              |
+        // The coefficient array uses {up-up, down-up, up-down, down-down}.
         // Then: ps_up = coeff0 * becp_up + coeff2 * becp_dn
         //        ps_dn = coeff1 * becp_up + coeff3 * becp_dn
         for (size_t iat = 0; iat < state.Mi_.size(); iat++)
@@ -375,16 +377,15 @@ void update_psi_charge_pw_cpu(ScState& state,
             PARAM.inp.nb2d,
             PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(hamilt_t,
+        hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_CPU> op(hamilt_t, pw_wfc);
+        hsolver_pw_obj.solve(op,
                              psi_t[0],
                              pelec,
                              pelec->ekb.c,
                              GlobalV::RANK_IN_POOL,
                              GlobalV::NPROC_IN_POOL,
                              GlobalV::ofs_running,
-                             false,
-                             state.tpiba,
-                             state.get_nat());
+                             false);
     }
     else
     {
@@ -489,16 +490,15 @@ void update_psi_charge_pw_gpu(ScState& state,
             PARAM.inp.nb2d,
             PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(hamilt_t,
+        hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_GPU> op(hamilt_t, pw_wfc);
+        hsolver_pw_obj.solve(op,
                              psi_t[0],
                              pelec,
                              pelec->ekb.c,
                              GlobalV::RANK_IN_POOL,
                              GlobalV::NPROC_IN_POOL,
                              GlobalV::ofs_running,
-                             false,
-                             state.tpiba,
-                             state.get_nat());
+                             false);
     }
     else
     {

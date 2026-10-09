@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_ENV_K_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_ENV_K_H
+
 
 #include "gint.h"
 #include "gint_info.h"
@@ -37,3 +39,5 @@ class Gint_env_k : public Gint
 };
 
 } // namespace ModuleGint
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_ENV_K_H

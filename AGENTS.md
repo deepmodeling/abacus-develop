@@ -41,6 +41,23 @@ rules. Read the complete governance document before making or reviewing changes:
       `rhog_io.cpp` shall be `test_rhog_io.cpp`. This naming keeps the
       file-to-test relationship discoverable and consistent across the
       repository. Historical tests are not required to be renamed.
+  12. Place `ModuleBase::timer::start`/`end` at the beginning and end of a
+      function, not around isolated statements inside the function body. Use
+      the enclosing function name (or constructor name) as the timer label so
+      the timer scopes the whole unit of work.
+  13. Do not call non-trivial functions inside a constructor's member
+      initializer list (e.g., `member(compute_something(...))`); limit the
+      initializer list to direct parameter passthrough. Perform multi-step
+      computations in the constructor body instead, so failures are easy to
+      debug and each intermediate result is inspectable.
+  14. Do not write conditional or computed expressions in a function's
+      argument list; first assign the value to a named local variable, then
+      pass that variable. This keeps each argument inspectable and makes the
+      call site self-documenting. For example, prefer
+      `const int isk = (nspin == 2 && isk_ptr) ? isk_ptr[ik] : 0;`
+      followed by `f(..., isk, ...)` over inlining the ternary into the call.
+  15. Do not use `#pragma once` in header files; use traditional
+      `#ifndef`/`#define`/`#endif` include guards instead.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.
@@ -98,6 +115,11 @@ rules. Read the complete governance document before making or reviewing changes:
 - Do not relax existing tests or references merely to make a failure pass.
   Update references only when the intended behavior changed and the PR explains
   why.
+- When mocking `UnitCell` in a test fixture, do not `delete[] iat2it` or
+  `iat2ia` in `TearDown`: they are owned by `UnitCell`'s internal `Statistics`
+  member, whose destructor releases them. Deleting them again causes a double
+  free. Mirror the ownership pattern of existing fixtures such as
+  `source/source_lcao/module_dftu/test/dftu_lcao_test.cpp`.
 
 ## Review And Exception Flow
 
@@ -143,6 +165,12 @@ full mixed-line-ending hook only for intentional repository-wide normalization.
 - Pull requests: https://github.com/deepmodeling/abacus-develop/pulls
 - Upstream PRs are opened from personal fork branches
   (`<fork-owner>:<branch>` into `develop`).
+- When synchronizing a local branch with `upstream/develop`, prefer
+  `git merge upstream/develop` over `git rebase upstream/develop`. Merge
+  preserves the original commit SHAs of the local work, keeps the branch
+  pushable without `--force`, and avoids re-applying a long patch series
+  when conflicts arise. Use rebase only when the user explicitly asks for
+  a linear history.
 - `workflow_dispatch`-only workflows (e.g. `.github/workflows/interface.yml`)
   are not triggered by push/PR events; PR CI cannot verify such fixes, so
   state "manual dispatch run required" in the PR verification notes.

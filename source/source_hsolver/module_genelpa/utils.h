@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_UTILS_H
+#define ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_UTILS_H
+
 #include <complex>
 #include <mpi.h>
 
@@ -16,17 +18,6 @@ static inline int localIndex(int globalIndex, int nblk, int nprocs, int& lcoalPr
     return int(globalIndex / (nblk * nprocs)) * nblk + globalIndex % nblk;
 }
 
-#ifdef __MPI
-void initBlacsGrid(int loglevel,
-                   MPI_Comm comm,
-                   int nFull,
-                   int nblk,
-                   int& blacs_ctxt,
-                   int& narows,
-                   int& nacols,
-                   int desc[]);
-#endif
-
 // load matrix from the file
 void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int blacs_ctxt);
 
@@ -43,3 +34,5 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, std::compl
 // use pzgemr2d to collect matrix from all processes to root process
 // and save to one completed matrix file
 void saveMatrix(const char FileName[], int nFull, std::complex<double>* a, int* desca, int blacs_ctxt);
+
+#endif // ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_UTILS_H

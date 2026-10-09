@@ -1,14 +1,15 @@
 #include "vnl_pw.h"
 
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/output.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/module_device/device.h"
+#include "source_base/output.h"
 #include "source_base/timer.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <cmath>
+#include <cstdint>
 
 /**
  * @file vnl_pw.cpp
@@ -18,14 +19,13 @@
  * - ctor / dtor / release_memory(): device buffer cleanup
  * - init(): allocate and wire vkb, tab, tab_at, deeq, qq_nt/qq_so, nhtol etc.
  * - print_vnl(): dump tab to stream
- * - rescale_vnl(): rescale tab/tab_at/qrad when the cell volume changes
+ * - rescale_vnl(): rescale tab/tab_dq/tab_at/qrad when the cell volume changes
  * - get_*_data<T>() template specializations for CPU/GPU typed pointer access
  *
  * Heavy logic (getvnl, init_vnl, qrad, deeq, alpha channel) lives in:
  *   vnl_pw_getvnl.cpp, vnl_pw_init_vnl.cpp, vnl_pw_qrad.cpp,
  *   vnl_pw_deeq.cpp, vnl_pw_alpha.cpp, vnl_pw_grad.cpp
  */
-
 
 pseudopot_cell_vnl::pseudopot_cell_vnl()
 {
@@ -38,9 +38,10 @@ pseudopot_cell_vnl::~pseudopot_cell_vnl()
 
 void pseudopot_cell_vnl::release_memory()
 {
-    if (this->nhm <= 0 || memory_released) {
+    if (this->nhm <= 0 || memory_released)
+    {
         return;
-}
+    }
     if (this->use_gpu_)
     {
         delmem_sd_op()(this->s_deeq);
@@ -113,8 +114,7 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
         GlobalV::ofs_running << " " << ucell.atoms[it].label << " non-local projectors:" << std::endl;
         for (int ibeta = 0; ibeta < ucell.atoms[it].ncpp.nbeta; ibeta++)
         {
-            GlobalV::ofs_running << " projector " << ibeta + 1 << " L=" << ucell.atoms[it].ncpp.lll[ibeta]
-                                 << std::endl;
+            GlobalV::ofs_running << " projector " << ibeta + 1 << " L=" << ucell.atoms[it].ncpp.lll[ibeta] << std::endl;
             this->lmaxkb = std::max(this->lmaxkb, ucell.atoms[it].ncpp.lll[ibeta]);
         }
     }
@@ -184,16 +184,12 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
         {
             if (PARAM.globalv.has_float_data)
             {
-                resmem_sh_op()(s_deeq,
-                               PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm,
-                               "VNL::s_deeq");
+                resmem_sh_op()(s_deeq, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm, "VNL::s_deeq");
                 resmem_sh_op()(s_nhtol, ntype * this->nhm, "VNL::s_nhtol");
                 resmem_sh_op()(s_nhtolm, ntype * this->nhm, "VNL::s_nhtolm");
                 resmem_sh_op()(s_indv, ntype * this->nhm, "VNL::s_indv");
                 resmem_sh_op()(s_qq_nt, ntype * this->nhm * this->nhm, "VNL::s_qq_nt");
-                resmem_ch_op()(c_deeq_nc,
-                               PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm,
-                               "VNL::c_deeq_nc");
+                resmem_ch_op()(c_deeq_nc, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm, "VNL::c_deeq_nc");
                 resmem_ch_op()(c_qq_so, ntype * 4 * this->nhm * this->nhm, "VNL::c_qq_so");
             }
             if (PARAM.globalv.has_double_data)
@@ -224,12 +220,13 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
     this->lmaxq = 2 * this->lmaxkb + 1;
     int npwx = this->wfcpw->npwk_max;
     this->vkbnc = npwx;
+    const std::int64_t projector_elements = static_cast<std::int64_t>(nkb) * npwx;
     if (nkb > 0 && allocate_vkb)
     {
         if (!this->use_gpu_)
-    {
-        vkb.create(nkb, npwx);
-        ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(std::complex<double>));
+        {
+            vkb.create(nkb, npwx);
+            ModuleBase::Memory::record("VNL::vkb", projector_elements * sizeof(std::complex<double>));
         }
         // GPU path: vkb ComplexMatrix is not allocated.
         // Column dimension is stored in vkbnc for gemm/gemv leading dimension.
@@ -284,9 +281,9 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
         if (PARAM.globalv.has_float_data)
         {
             resmem_sd_op()(s_tab, this->tab.getSize());
-            resmem_cd_op()(c_vkb, nkb * npwx);
+            resmem_cd_op()(c_vkb, projector_elements);
         }
-        resmem_zd_op()(z_vkb, nkb * npwx);
+        resmem_zd_op()(z_vkb, projector_elements);
         resmem_dd_op()(d_tab, this->tab.getSize());
     }
     else
@@ -294,11 +291,12 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
         if (PARAM.globalv.has_float_data)
         {
             resmem_sh_op()(s_tab, this->tab.getSize());
-            resmem_ch_op()(c_vkb, nkb * npwx);
+            resmem_ch_op()(c_vkb, projector_elements);
         }
 #ifdef __DSP
-        base_device::memory::resize_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>()
-        (this->z_vkb, this->vkb.size, "VNL::z_vkb");
+        base_device::memory::resize_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>()(this->z_vkb,
+                                                                                                  this->vkb.size,
+                                                                                                  "VNL::z_vkb");
         // memcpy(this->z_vkb,this->vkb.c,this->vkb.size*16);
 #else
         this->z_vkb = this->vkb.c;
@@ -320,6 +318,12 @@ void pseudopot_cell_vnl::print_vnl(std::ofstream& ofs)
 // scale the non-local pseudopotential tables
 void pseudopot_cell_vnl::rescale_vnl(const double& omega_in)
 {
+    const bool gradient_current = this->gradient_version_ == this->table_version_;
+    ++this->table_version_;
+    if (gradient_current)
+    {
+        this->gradient_version_ = this->table_version_;
+    }
     const double ratio = this->omega_old / omega_in;
     const double sqrt_ratio = std::sqrt(ratio);
     this->omega_old = omega_in;
@@ -327,6 +331,10 @@ void pseudopot_cell_vnl::rescale_vnl(const double& omega_in)
     for (int i = 0; i < this->tab.getSize(); i++)
     {
         this->tab.ptr[i] *= sqrt_ratio;
+    }
+    for (int i = 0; i < this->tab_dq.getSize(); ++i)
+    {
+        this->tab_dq.ptr[i] *= sqrt_ratio;
     }
     for (int i = 0; i < this->tab_at.getSize(); i++)
     {

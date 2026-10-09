@@ -1,6 +1,7 @@
 #include "write_eig_occ.h"
 
-#include "source_io/module_output/band_parallel_output.h"
+#include "source_base/module_parallel/para_bridge.h"
+#include "source_base/module_parallel/para_band_output.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -11,20 +12,24 @@
 #include <mpi.h> // use MPI_Barrier
 #endif
 
-void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::matrix &wg, const K_Vectors& kv)
+void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,
+        const ModuleBase::matrix &wg,
+        const K_Vectors& kv,
+        const int nbands,
+        const int nspin)
 {
     ModuleBase::TITLE("ModuleIO","write_eig_iter");
-	ModuleBase::timer::start("ModuleIO", "write_eig_iter");
+    ModuleBase::timer::start("ModuleIO", "write_eig_iter");
 
-	GlobalV::ofs_running << "\n PRINT #EIGENVALUES# AND #OCCUPATIONS#" << std::endl;
+    GlobalV::ofs_running << "\n PRINT #EIGENVALUES# AND #OCCUPATIONS#" << std::endl;
 
     // Taoni fix bndpar on 2026-08-21
-    const ModuleBase::matrix global_ekb = ModuleIO::gather_band_matrix(ekb, PARAM.inp.nbands);
-    const ModuleBase::matrix global_wg = ModuleIO::gather_band_matrix(wg, PARAM.inp.nbands);
+    const Parallel::ParaBandOutput band_output(ekb.nc, nbands, Parallel::make_band_world());
+    const ModuleBase::matrix global_ekb = band_output.gather_matrix(ekb);
+    const ModuleBase::matrix global_wg = band_output.gather_matrix(wg);
 
-    const int nspin = PARAM.inp.nspin;
     const int nks = kv.get_nks();
-	const int nkstot = kv.get_nkstot();
+    const int nkstot = kv.get_nkstot();
     const int nk_fac = nspin == 2 ? 2 : 1;
     const int nks_np = nks / nk_fac;
     const int nkstot_np = nkstot / nk_fac;
@@ -66,7 +71,7 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
                 }
             }
 
-	    
+        
 // =============================================================
 // MPI communication: 
 // RANK 0 collect and print out #EIGENVALUES# AND #OCCUPATIONS# for all k-points
@@ -156,48 +161,51 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
     }
 
     
-	ModuleBase::timer::end("ModuleIO", "write_eig_iter");
+    ModuleBase::timer::end("ModuleIO", "write_eig_iter");
 }
 
 void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
-		const ModuleBase::matrix &wg, 
-		const K_Vectors& kv,
-		const int istep)
+        const ModuleBase::matrix &wg,
+        const K_Vectors& kv,
+        const int nbands,
+        const int nspin,
+        const std::string& out_dir,
+        const int istep)
 {
-	ModuleBase::TITLE("ModuleIO","write_eig_file");
-	ModuleBase::timer::start("ModuleIO", "write_eig_file");
+    ModuleBase::TITLE("ModuleIO","write_eig_file");
+    ModuleBase::timer::start("ModuleIO", "write_eig_file");
 
 /*
-	GlobalV::ofs_running << "\n";
-	GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-	GlobalV::ofs_running << " |                                                                    |" << std::endl;
-	GlobalV::ofs_running << " |            #Print out the eigenvalues and occupations#             |" << std::endl;
-	GlobalV::ofs_running << " |                                                                    |" << std::endl;
-	GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-	GlobalV::ofs_running << "\n";
+    GlobalV::ofs_running << "\n";
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    GlobalV::ofs_running << " |                                                                    |" << std::endl;
+    GlobalV::ofs_running << " |            #Print out the eigenvalues and occupations#             |" << std::endl;
+    GlobalV::ofs_running << " |                                                                    |" << std::endl;
+    GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+    GlobalV::ofs_running << "\n";
 */
 
-    const int nspin = PARAM.inp.nspin;
     // Taoni fix bndpar on 2026-08-21
-    const ModuleBase::matrix global_ekb = ModuleIO::gather_band_matrix(ekb, PARAM.inp.nbands);
-    const ModuleBase::matrix global_wg = ModuleIO::gather_band_matrix(wg, PARAM.inp.nbands);
+    const Parallel::ParaBandOutput band_output(ekb.nc, nbands, Parallel::make_band_world());
+    const ModuleBase::matrix global_ekb = band_output.gather_matrix(ekb);
+    const ModuleBase::matrix global_wg = band_output.gather_matrix(wg);
     const int nks = kv.get_nks();
-	const int nkstot = kv.get_nkstot();
+    const int nkstot = kv.get_nkstot();
 
     bool wrong = false;
 
-	for (int ik = 0; ik < nks; ++ik)
-	{
-		for (int ib = 0; ib < ekb.nc; ++ib)
-		{
-			if (std::abs(ekb(ik, ib)) > 1.0e10)
-			{
-				GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1
-					<< " " << ekb(ik, ib) << " Ry" << std::endl;
-				wrong = true;
-			}
-		}
-	}
+    for (int ik = 0; ik < nks; ++ik)
+    {
+        for (int ib = 0; ib < ekb.nc; ++ib)
+        {
+            if (std::abs(ekb(ik, ib)) > 1.0e10)
+            {
+                GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1
+                    << " " << ekb(ik, ib) << " Ry" << std::endl;
+                wrong = true;
+            }
+        }
+    }
 
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &wrong, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
@@ -213,7 +221,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 #endif    
 
     // file name to store eigenvalues
-    std::string filename = PARAM.globalv.global_out_dir + "eig_occ.txt";
+    std::string filename = out_dir + "eig_occ.txt";
 
     GlobalV::ofs_running << " Write eigenvalues and occupations to file: " << filename << std::endl;
 
@@ -224,14 +232,14 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
         const bool append = istep > 0
                             || (inp.calculation == "md" && inp.mdp.md_restart);
 
-		if (append)
-		{
-			ofs_eig0.open(filename.c_str(), std::ios::app);
-		}
-		else
-		{
-			ofs_eig0.open(filename.c_str());
-		}
+        if (append)
+        {
+            ofs_eig0.open(filename.c_str(), std::ios::app);
+        }
+        else
+        {
+            ofs_eig0.open(filename.c_str());
+        }
        
         ofs_eig0 << istep+1 << "     # ionic step" << std::endl;
         ofs_eig0 << " Electronic state energy (eV) and occupations" << std::endl;
@@ -292,6 +300,6 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 #endif
     }
 
-	ModuleBase::timer::end("ModuleIO", "write_eig_file");
-	return;
+    ModuleBase::timer::end("ModuleIO", "write_eig_file");
+    return;
 }

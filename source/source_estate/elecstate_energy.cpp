@@ -166,7 +166,7 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
         }
     }
 
-    if (PARAM.inp.nspin == 2)
+    if (this->charge->nspin == 2)
     {
         v_eff = this->pot->get_eff_v(1);
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
@@ -186,7 +186,7 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
             }
         }
     }
-    else if (PARAM.inp.nspin == 4)
+    else if (this->charge->nspin == 4)
     {
         for (int is = 1; is < 4; is++)
         {
@@ -245,7 +245,7 @@ double ElecState::cal_delta_escf() const
         }
     }
 
-    if (PARAM.inp.nspin == 2)
+    if (this->charge->nspin == 2)
     {
         v_eff = this->pot->get_eff_v(1);
         if (XC_Functional::get_ked_flag())
@@ -261,7 +261,7 @@ double ElecState::cal_delta_escf() const
             }
         }
     }
-    if (PARAM.inp.nspin == 4)
+    if (this->charge->nspin == 4)
     {
         for (int is = 1; is < 4; is++)
         {
@@ -279,6 +279,11 @@ double ElecState::cal_delta_escf() const
 
     assert(this->charge->rhopw->nxyz > 0);
 
+    // BUG(investigate): rhopw->omega is stale in variable-cell calculations
+    // (NPT): pw_rho/pw_rhod are not rebuilt on cell change, so this uses the
+    // initial cell volume. Should use ucell.omega instead. The descf term is
+    // typically small, so the impact may be minor, but it should be verified
+    // for NPT calculations.
     descf *= this->charge->rhopw->omega / this->charge->rhopw->nxyz;
 
 // mohan move the code here, 2025-11-28
@@ -310,7 +315,11 @@ void ElecState::cal_converged()
  * @param type: 1 means Harris-Foulkes functinoal;
  * @param type: 2 means Kohn-Sham functional;
  */
-void ElecState::cal_energies(const int type)
+void ElecState::cal_energies(const int type,
+                             const bool imp_sol,
+                             const bool sc_mag_switch,
+                             const int dft_plus_u,
+                             const std::string& assume_isolated)
 {
     //! Hartree energy
     this->f_en.hartree_energy = get_hartree_energy();
@@ -322,27 +331,27 @@ void ElecState::cal_energies(const int type)
     this->f_en.gatefield = get_etot_gatefield();
 
     //! energy from implicit solvation model
-    if (PARAM.inp.imp_sol)
+    if (imp_sol)
     {
         this->f_en.esol_el = get_solvent_model_Ael();
         this->f_en.esol_cav = get_solvent_model_Acav();
     }
 
     //! spin constrained energy
-    if (PARAM.inp.sc_mag_switch)
+    if (sc_mag_switch)
     {
         this->f_en.escon = get_spin_constrain_energy();
     }
 
     // energy from DFT+U
-    if (PARAM.inp.dft_plus_u)
+    if (dft_plus_u)
     {
         this->f_en.edftu = get_dftu_energy();
     }
 
     this->f_en.e_local_pp = get_local_pp_energy();
 
-    if (PARAM.inp.assume_isolated == "makov-payne")
+    if (assume_isolated == "makov-payne")
     {
         const UnitCell* ucell = this->pot->get_ucell();
         if (ucell == nullptr || this->charge == nullptr || this->charge->rhopw == nullptr)
@@ -353,8 +362,8 @@ void ElecState::cal_energies(const int type)
         std::vector<double> v_elecstat;
         const double* v_elecstat_ptr = nullptr;
         {
-            ModuleBase::matrix vh(PARAM.inp.nspin, this->charge->rhopw->nrxx);
-            vh = elecstate::H_Hartree_pw::v_hartree(*ucell, this->charge->rhopw, PARAM.inp.nspin, this->charge->rho);
+            ModuleBase::matrix vh(this->charge->nspin, this->charge->rhopw->nrxx);
+            vh = elecstate::H_Hartree_pw::v_hartree(*ucell, this->charge->rhopw, this->charge->nspin, this->charge->rho);
             v_elecstat.assign(this->charge->rhopw->nrxx, 0.0);
             const double* v_fixed = this->pot->get_fixed_v();
             for (int ir = 0; ir < this->charge->rhopw->nrxx; ++ir)

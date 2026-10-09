@@ -21,6 +21,15 @@ if(ENABLE_LCAO)
     hamilt_casida.cpp
     potentials/xc_kernel.cpp)
 
+  # BSE-related code: only compiled with LibRI (__EXX), all its
+  # consumers (ESolver_BSE, RI benchmark in hamilt_casida.h) are
+  # already guarded by __EXX
+  if(ENABLE_LIBRI)
+    list(APPEND objects
+      utils/lr_io_krlist.cpp
+    )
+  endif()
+
 add_library(
     lr
     OBJECT

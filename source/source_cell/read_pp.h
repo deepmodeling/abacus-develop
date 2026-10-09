@@ -11,6 +11,11 @@
 #include "source_base/matrix.h"
 #include "source_base/realarray.h"
 
+class AtomPseudoTest;
+class AtomSpecTest;
+class NCPPTest;
+class ReadPPTest;
+
 /**
  * @brief Pseudopot_upf class for reading pseudopotential files.
  *
@@ -19,6 +24,13 @@
  */
 class Pseudopot_upf
 {
+    /// @brief the unit tests drive the private format readers and the
+    /// complete_default_* helpers directly; see source_cell/test/
+    friend class AtomPseudoTest;
+    friend class AtomSpecTest;
+    friend class NCPPTest;
+    friend class ReadPPTest;
+
 public:
     /// PP_INFO
     /// PP_HEADER
@@ -137,31 +149,6 @@ public:
      * @param mesh_changed whether mesh was changed
      */
     void skip_number(std::ifstream& ifs, bool mesh_changed);
-
-    /**
-     * @brief Set pseudopotential type based on filename.
-     *
-     * @param fn filename
-     * @param type pseudopotential type (output)
-     * @return error code
-     */
-    int set_pseudo_type(const std::string& fn, std::string& type);
-
-    /**
-     * @brief Trim whitespace from both ends of string.
-     *
-     * @param in_str input string
-     * @return trimmed string
-     */
-    std::string& trim(std::string& in_str);
-
-    /**
-     * @brief Trim trailing whitespace from string.
-     *
-     * @param in_str input string
-     * @return trimmed string
-     */
-    std::string trimend(std::string& in_str);
 
     /**
      * @brief Read UPF format pseudopotential.
@@ -323,29 +310,49 @@ public:
      */
     void getnameval(std::ifstream&, int&, std::string*, std::string*);
 
-    /**
-     * @brief Computes the Q function from its polynomial expansion (r < rinner)
-     * @param nqf number of polynomial coefficients
-     * @param mesh number of mesh points
-     * @param l angular momentum
-     * @param n additional exponent, result is multiplied by r^n
-     * @param qfcoef polynomial coefficients
-     * @param r radial mesh
-     * @param rho output: r^n * Q(r)
-     */
-    void setqfnew(const int& nqf,
-                  const int& mesh,
-                  const int& l,
-                  const int& n,
-                  const double* qfcoef,
-                  const double* r,
-                  double* rho);
-
     // complete default
     // void complete_default(Atom_pseudo& pp);
-    void complete_default_h(Atom_pseudo& pp);
     void complete_default_atom(Atom_pseudo& pp, const double pseudo_rcut);
     void complete_default_vl(Atom_pseudo& pp);
 };
+
+/**
+ * @brief Helpers that the pseudopotential reader uses but that hold no state.
+ *
+ * These were private members of Pseudopot_upf, which meant their unit tests had
+ * to reach past access control to call them. None of them touches `this`: they
+ * work entirely on their arguments, so they are plain functions and are
+ * declared here as such -- publicly callable and directly testable, without
+ * widening the interface of Pseudopot_upf.
+ */
+namespace pseudopot
+{
+
+/// @brief Set pseudopotential type based on the file's header line.
+int set_pseudo_type(const std::string& fn, std::string& type);
+
+/// @brief Remove every tab and space from a string, in place.
+std::string& trim(std::string& in_str);
+
+/// @brief Compute the Q function from its polynomial expansion (r < rinner).
+/// @param nqf number of polynomial coefficients
+/// @param mesh number of mesh points
+/// @param l angular momentum
+/// @param n additional exponent, result is multiplied by r^n
+/// @param qfcoef polynomial coefficients
+/// @param r radial mesh
+/// @param rho output: r^n * Q(r)
+void setqfnew(const int& nqf,
+              const int& mesh,
+              const int& l,
+              const int& n,
+              const double* qfcoef,
+              const double* r,
+              double* rho);
+
+/// @brief Fill in the header-level defaults of an Atom_pseudo.
+void complete_default_h(Atom_pseudo& pp);
+
+} // namespace pseudopot
 
 #endif //pseudopot_upf class

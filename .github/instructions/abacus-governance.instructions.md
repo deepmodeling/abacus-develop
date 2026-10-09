@@ -22,6 +22,8 @@ Apply these instructions when reviewing or changing ABACUS code:
   usually warnings unless the PR records a narrow reason.
 - Require LF line endings for text files. `.bat` and `.cmd` files are the CRLF
   exceptions.
+- Flag new `#pragma once` in header files as a blocker-level governance issue.
+  Require traditional `#ifndef`/`#define`/`#endif` include guards instead.
 - For INPUT parameter behavior changes, require synchronized updates to
   `docs/parameters.yaml` and `docs/advanced/input_files/input-main.md`, or a
   clear no-update explanation in the PR.

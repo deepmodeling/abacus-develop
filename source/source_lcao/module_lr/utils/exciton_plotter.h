@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_EXCITON_PLOTTER_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_EXCITON_PLOTTER_H
+
 #include "source_base/tool_title.h"
 #include "source_base/ylm.h"
 #include "source_basis/module_ao/orb_read.h"
@@ -166,7 +168,7 @@ class ExcitonPlotter
 
     /// @brief Compute effective DMK for average hole density
     /// Produces D_hole(k)^T, where D_hole(k) = C_occ(k) * (X_k^H * X_k) * C_occ(k)^H,
-    /// matching the AO-index order expected by DensityMatrix::cal_DMR().
+    /// matching the AO-index order expected by DensityMatrix::cal_dmr().
     /// Marginalizes over conduction bands: M_k[v,v'] = Sum_c A_{kvc} * conj(A_{kv'c}).
     /// @param istate BSE state index
     /// @return dmk_per_kpoint
@@ -174,7 +176,7 @@ class ExcitonPlotter
 
     /// @brief Compute effective DMK for average electron density
     /// Produces D_elec(k)^T, where D_elec(k) = C_virt(k) * (X_k * X_k^H) * C_virt(k)^H,
-    /// matching the AO-index order expected by DensityMatrix::cal_DMR().
+    /// matching the AO-index order expected by DensityMatrix::cal_dmr().
     /// Marginalizes over valence bands: N_k[c,c'] = Sum_v A_{kvc} * conj(A_{kvc'}).
     /// @param istate BSE state index
     /// @return dmk_per_kpoint
@@ -254,3 +256,5 @@ class ExcitonPlotter
 };
 
 } // namespace LR_Util
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_EXCITON_PLOTTER_H

@@ -4,9 +4,7 @@
 #include "source_basis/module_ao/orb_atomic.h"
 #include "source_basis/module_ao/orb_atomic_lm.h"
 
-#define private public
 #include "source_basis/module_ao/orb_read.h"
-#undef private
 
 #ifdef __MPI
 #include <mpi.h>
@@ -178,7 +176,7 @@ TEST_F(LcaoOrbitalsTest, ReadOrbitals) {
         EXPECT_EQ(ao0.PhiLN(L,N).getL(), L);
         EXPECT_EQ(ao0.PhiLN(L,N).getChi(), N);
         EXPECT_EQ(ao0.PhiLN(L,N).getNr(), 801);
-        EXPECT_EQ(ao0.PhiLN(L,N).getNk(), lcao_.kmesh);
+        EXPECT_EQ(ao0.PhiLN(L,N).getNk(), lcao_.get_kmesh());
         EXPECT_EQ(ao0.PhiLN(L,N).getDk(), lcao_.dk);
         EXPECT_EQ(ao0.PhiLN(L,N).getDruniform(), lcao_.dr_uniform);
 
@@ -226,7 +224,7 @@ TEST_F(LcaoOrbitalsTest, ReadOrbitals) {
         EXPECT_EQ(ao1.PhiLN(L,N).getL(), L);
         EXPECT_EQ(ao1.PhiLN(L,N).getChi(), N);
         EXPECT_EQ(ao1.PhiLN(L,N).getNr(), 701);
-        EXPECT_EQ(ao1.PhiLN(L,N).getNk(), lcao_.kmesh);
+        EXPECT_EQ(ao1.PhiLN(L,N).getNk(), lcao_.get_kmesh());
         EXPECT_EQ(ao1.PhiLN(L,N).getDk(), lcao_.dk);
         EXPECT_EQ(ao1.PhiLN(L,N).getDruniform(), lcao_.dr_uniform);
 
@@ -287,7 +285,7 @@ TEST_F(LcaoOrbitalsTest, ReadOrbitals) {
         EXPECT_EQ(aod.PhiLN(L,N).getL(), L);
         EXPECT_EQ(aod.PhiLN(L,N).getChi(), N);
         EXPECT_EQ(aod.PhiLN(L,N).getNr(), 201);
-        EXPECT_EQ(aod.PhiLN(L,N).getNk(), lcao_.kmesh);
+        EXPECT_EQ(aod.PhiLN(L,N).getNk(), lcao_.get_kmesh());
         EXPECT_EQ(aod.PhiLN(L,N).getDk(), lcao_.dk);
         EXPECT_EQ(aod.PhiLN(L,N).getDruniform(), lcao_.dr_uniform);
 
@@ -307,18 +305,28 @@ TEST_F(LcaoOrbitalsTest, Getters) {
 
     this->lcao_read();
 
-    EXPECT_EQ(lcao_.get_ecutwfc(), lcao_.ecutwfc);
-    EXPECT_EQ(lcao_.get_kmesh(), lcao_.kmesh);
-    EXPECT_EQ(lcao_.get_dk(), lcao_.dk);
-    EXPECT_EQ(lcao_.get_dR(), lcao_.dR);
-    EXPECT_EQ(lcao_.get_Rmax(), lcao_.Rmax);
-    EXPECT_EQ(lcao_.get_lmax(), lcao_.lmax);
-    EXPECT_EQ(lcao_.get_lmax_d(), lcao_.lmax_d);
-    EXPECT_EQ(lcao_.get_nchimax(), lcao_.nchimax);
-    EXPECT_EQ(lcao_.get_nchimax_d(), lcao_.nchimax_d);
-    EXPECT_EQ(lcao_.get_ntype(), lcao_.ntype);
+    EXPECT_EQ(lcao_.get_ecutwfc(), ecutwfc_);
+    EXPECT_EQ(lcao_.get_dk(), dk_);
+    EXPECT_EQ(lcao_.get_dR(), dR_);
+    EXPECT_EQ(lcao_.get_Rmax(), Rmax_);
+    EXPECT_EQ(lcao_.get_ntype(), ntype_);
+    EXPECT_EQ(lcao_.get_lmax(), lmax_);
     EXPECT_EQ(lcao_.get_dr_uniform(), lcao_.dr_uniform);
-    EXPECT_EQ(lcao_.get_rcutmax_Phi(), lcao_.rcutmax_Phi);
+
+    // The remaining four are derived by Read_Orbitals rather than passed in, so
+    // they are anchored to the values this fixture's inputs and orbital files
+    // imply -- not to the members the getters return, which cannot fail.
+    //
+    // kmesh: ecutwfc >= 20, so Read_Orbitals takes int(sqrt(ecutwfc)/dk) + 4,
+    //        i.e. int(sqrt(123)/0.01) + 4 = 1109 + 4.
+    EXPECT_EQ(lcao_.get_kmesh(), 1113);
+    // nchimax: most orbitals of one l over both elements -- H is 2s1p and O is
+    //          2s2p1d, so 2 either way. lmax_d/nchimax_d come from jle.orb.
+    EXPECT_EQ(lcao_.get_nchimax(), 2);
+    EXPECT_EQ(lcao_.get_lmax_d(), 2);
+    EXPECT_EQ(lcao_.get_nchimax_d(), 2);
+    // rcutmax_Phi: largest cutoff over the elements -- H is 8 au, O is 7 au.
+    EXPECT_DOUBLE_EQ(lcao_.get_rcutmax_Phi(), 8.0);
 }
 
 

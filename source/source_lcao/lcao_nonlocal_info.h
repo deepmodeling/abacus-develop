@@ -39,7 +39,7 @@ public:
      * @return Number of projectors.
      */
     int get_nproj(const int& type_in) const override {
-        return nonlocal.nproj[type_in];
+        return nonlocal.get_nproj(type_in);
     }
 
     /**
@@ -47,7 +47,7 @@ public:
      * @return Maximum nproj value.
      */
     int get_nprojmax() const override {
-        return nonlocal.nprojmax;
+        return nonlocal.get_nprojmax();
     }
 
     /**
@@ -56,7 +56,7 @@ public:
      * @return Cutoff radius.
      */
     double get_rcut_max(const int& type_in) const override {
-        return nonlocal.Beta[type_in].get_rcut_max();
+        return nonlocal.get_Beta(type_in).get_rcut_max();
     }
 
     /**
@@ -65,7 +65,7 @@ public:
      * @return const reference to label string.
      */
     const std::string& get_label(const int& type_in) const override {
-        return nonlocal.Beta[type_in].getLabel();
+        return nonlocal.get_Beta(type_in).getLabel();
     }
 
     /**
@@ -74,7 +74,7 @@ public:
      * @return Type index.
      */
     int get_type(const int& type_in) const override {
-        return nonlocal.Beta[type_in].getType();
+        return nonlocal.get_Beta(type_in).getType();
     }
 
     /**
@@ -84,7 +84,7 @@ public:
      * @return Angular momentum L.
      */
     int get_proj_L(const int& type_in, const int& ip_in) const override {
-        return nonlocal.Beta[type_in].Proj[ip_in].getL();
+        return nonlocal.get_Beta(type_in).Proj[ip_in].getL();
     }
 
     /**
@@ -94,7 +94,7 @@ public:
      * @return Number of radial mesh points.
      */
     int get_proj_Nr(const int& type_in, const int& ip_in) const override {
-        return nonlocal.Beta[type_in].Proj[ip_in].getNr();
+        return nonlocal.get_Beta(type_in).Proj[ip_in].getNr();
     }
 
     /**
@@ -104,7 +104,7 @@ public:
      * @return const pointer to radial mesh array.
      */
     const double* get_proj_radial(const int& type_in, const int& ip_in) const override {
-        return nonlocal.Beta[type_in].Proj[ip_in].getRadial();
+        return nonlocal.get_Beta(type_in).Proj[ip_in].getRadial();
     }
 
     /**
@@ -114,7 +114,7 @@ public:
      * @return const pointer to beta_r array.
      */
     const double* get_proj_beta_r(const int& type_in, const int& ip_in) const override {
-        return nonlocal.Beta[type_in].Proj[ip_in].getBeta_r();
+        return nonlocal.get_Beta(type_in).Proj[ip_in].getBeta_r();
     }
 
     /**
@@ -124,7 +124,7 @@ public:
      * @return Number of k-space mesh points.
      */
     int get_proj_Nk(const int& type_in, const int& ip_in) const override {
-        return nonlocal.Beta[type_in].Proj[ip_in].getNk();
+        return nonlocal.get_Beta(type_in).Proj[ip_in].getNk();
     }
 
     /**
@@ -134,7 +134,7 @@ public:
      * @return Delta k value.
      */
     double get_proj_dk(const int& type_in, const int& ip_in) const override {
-        return nonlocal.Beta[type_in].Proj[ip_in].getDk();
+        return nonlocal.get_Beta(type_in).Proj[ip_in].getDk();
     }
 
     /**
@@ -144,7 +144,7 @@ public:
      * @return Delta r uniform value.
      */
     double get_proj_dr_uniform(const int& type_in, const int& ip_in) const override {
-        return nonlocal.Beta[type_in].Proj[ip_in].getDruniform();
+        return nonlocal.get_Beta(type_in).Proj[ip_in].getDruniform();
     }
 
     /**
@@ -162,8 +162,9 @@ public:
         const std::string& basis_type,
         const bool& out_element_info,
         const bool& lspinorb,
-        const int& nspin) {
-        nonlocal.setupNonlocal(ntype_in, atoms_in, log, orb, basis_type, out_element_info, lspinorb, nspin);
+        const int& nspin,
+        const int& my_rank) {
+        nonlocal.setupNonlocal(ntype_in, atoms_in, log, orb, basis_type, out_element_info, lspinorb, nspin, my_rank);
     }
 
     /**

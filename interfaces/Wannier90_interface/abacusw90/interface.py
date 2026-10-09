@@ -230,7 +230,7 @@ class ABACUSWannier90:
         for d in [self.scf_dir, self.scf_dir / "OUT.ABACUS"]:
             if not d.exists():
                 continue
-            for pat in ["SPIN*_CHG.cube", "SPIN*_CHG", "*CHARGE-DENSITY.restart"]:
+            for pat in ["chg*.cube", "chgs*.cube", "*CHARGE-DENSITY.restart"]:
                 if list(d.glob(pat)):
                     chg_found = True
                     break
@@ -283,11 +283,8 @@ class ABACUSWannier90:
 
         found = set()
         patterns = [
-            "SPIN*_CHG.cube",
-            "SPIN*_CHG",
             "chg*.cube",
-            "CHG*.cube",
-            "CHG*",
+            "chgs*.cube",
             "*CHARGE-DENSITY.restart",
         ]
         for pat in patterns:
@@ -468,7 +465,7 @@ class ABACUSWannier90:
             for d in [self.scf_dir, self.scf_dir / "OUT.ABACUS"]:
                 if not d.exists():
                     continue
-                for pat in ["SPIN*_CHG.cube", "SPIN*_CHG", "*CHARGE-DENSITY.restart"]:
+                for pat in ["chg*.cube", "chgs*.cube", "*CHARGE-DENSITY.restart"]:
                     if list(d.glob(pat)):
                         has_chg = True
                         break

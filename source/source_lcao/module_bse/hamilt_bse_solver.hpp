@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_BSE_HAMILT_BSE_SOLVER_HPP
+#define ABACUS_SOURCE_LCAO_MODULE_BSE_HAMILT_BSE_SOLVER_HPP
+
 
 #include "hamilt_bse_solver.h"
 #include "source_base/timer.h"
@@ -87,3 +89,5 @@ void solve_tda(const std::vector<T>& A,
 #endif
 }
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_BSE_HAMILT_BSE_SOLVER_HPP

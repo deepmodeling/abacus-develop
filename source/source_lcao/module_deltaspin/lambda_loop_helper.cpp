@@ -353,6 +353,14 @@ void print_Mi(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
     const int nspin = sc.get_nspin();
     const auto& Mi = sc.get_Mi();
     const auto& atomLabel = sc.get_atomLabels();
+    std::vector<std::string> atom_labels_iat(nat);
+    for (const auto& it : sc.get_atomCounts())
+    {
+        for (int ia = 0; ia < it.second; ++ia)
+        {
+            atom_labels_iat[sc.get_iat(it.first, ia)] = atomLabel[it.first] + std::to_string(ia + 1);
+        }
+    }
     std::vector<double> mag_x(nat, 0.0);
     std::vector<double> mag_y(nat, 0.0);
     std::vector<double> mag_z(nat, 0.0);
@@ -369,7 +377,7 @@ void print_Mi(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
         {
             mag_z[iat] = Mi[iat].z;
         }
-        table << atomLabel << mag_z;
+        table << atom_labels_iat << mag_z;
         ofs_running << table.str() << std::endl;
     }
     else if (nspin == 4)
@@ -387,7 +395,7 @@ void print_Mi(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
             mag_y[iat] = Mi[iat].y;
             mag_z[iat] = Mi[iat].z;
         }
-        table << atomLabel << mag_x << mag_y << mag_z;
+        table << atom_labels_iat << mag_x << mag_y << mag_z;
         ofs_running << table.str() << std::endl;
     }
 }
@@ -406,6 +414,14 @@ void print_Mag_Force(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
     const int nspin = sc.get_nspin();
     const auto& lambda = sc.get_sc_lambda();
     const auto& atomLabel = sc.get_atomLabels();
+    std::vector<std::string> atom_labels_iat(nat);
+    for (const auto& it : sc.get_atomCounts())
+    {
+        for (int ia = 0; ia < it.second; ++ia)
+        {
+            atom_labels_iat[sc.get_iat(it.first, ia)] = atomLabel[it.first] + std::to_string(ia + 1);
+        }
+    }
     std::vector<double> mag_force_x(nat, 0.0);
     std::vector<double> mag_force_y(nat, 0.0);
     std::vector<double> mag_force_z(nat, 0.0);
@@ -422,7 +438,7 @@ void print_Mag_Force(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
         {
             mag_force_z[iat] = lambda[iat].z * ModuleBase::Ry_to_eV;
         }
-        table << atomLabel << mag_force_z;
+        table << atom_labels_iat << mag_force_z;
         ofs_running << table.str() << std::endl;
     }
     else if (nspin == 4)
@@ -440,7 +456,7 @@ void print_Mag_Force(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
             mag_force_y[iat] = lambda[iat].y * ModuleBase::Ry_to_eV;
             mag_force_z[iat] = lambda[iat].z * ModuleBase::Ry_to_eV;
         }
-        table << atomLabel << mag_force_x << mag_force_y << mag_force_z;
+        table << atom_labels_iat << mag_force_x << mag_force_y << mag_force_z;
         ofs_running << table.str() << std::endl;
     }
 }

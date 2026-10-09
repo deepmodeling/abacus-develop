@@ -79,7 +79,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
         ModuleBase::GlobalFunc::OUT(output_stream,"Total ionic charge",charge);
     }
 
-	// (2) calculate the converged value: alpha
+    // (2) calculate the converged value: alpha
     H_Ewald_pw::alpha = 2.90;
     do
     {
@@ -112,17 +112,17 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
         ewaldg = 0.0;
     }
 
-	// in plane wave basis, only use k=0 point is not 
-	// called "gamma_only", only if the wave functions
-	// are stored as double type, the gamma_only = true. 
-	// I don't know why "gamma_only" in plane wave 
-	// makes the fact below is 2, that's a little complicated
-	// to understand. I think that may because only half
-	// the G vectors are used. Unfortunately implement the 
-	// function hasn't in my plan list yet.
-	//
-	// but that's not the term "gamma_only" I want to use in LCAO,  
-	fact = 1.0;
+    // in plane wave basis, only use k=0 point is not 
+    // called "gamma_only", only if the wave functions
+    // are stored as double type, the gamma_only = true. 
+    // I don't know why "gamma_only" in plane wave 
+    // makes the fact below is 2, that's a little complicated
+    // to understand. I think that may because only half
+    // the G vectors are used. Unfortunately implement the 
+    // function hasn't in my plan list yet.
+    //
+    // but that's not the term "gamma_only" I want to use in LCAO,  
+    fact = 1.0;
 
     //output_stream << "\n pwb.gstart = " << pwb.gstart << std::endl;
     const int ig0 = rho_basis->ig_gge0;
@@ -148,14 +148,14 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 //	std::cout << "\n ewaldg = " << ewaldg;
 
     //  Here add the other constant term
-	if (rho_basis->ig_gge0 >= 0)
-	{
-    	for (int it = 0; it < cell.ntype;it++)
-    	{
+    if (rho_basis->ig_gge0 >= 0)
+    {
+        for (int it = 0; it < cell.ntype;it++)
+        {
             {
                 ewaldg = ewaldg - cell.atoms[it].na * cell.atoms[it].ncpp.zv * cell.atoms[it].ncpp.zv * sqrt(8.0 / ModuleBase::TWO_PI * alpha);
             }
-		}
+        }
     }//mohan modify 2007-11-7, 2010-07-26
 
     // R-space sum here (only done for the processor that contains G=0)
@@ -201,7 +201,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     {
         it1 = cell.iat2it[na1];
         ia1 = cell.iat2ia[na1];
-	
+    
         for(int na2=0; na2<cell.nat; na2++)
         {
             it2 = cell.iat2it[na2];
@@ -283,7 +283,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 
     ewalds = 0.50 * ModuleBase::e2 * (ewaldg + ewaldr);
 
-	// mohan fix bug 2010-07-26
+    // mohan fix bug 2010-07-26
     Parallel_Reduce::reduce_pool(ewalds);
 
     if (test_energy>1)
@@ -425,35 +425,35 @@ void H_Ewald_pw::rgen(
         ModuleBase::heapsort(nrm, r2, irr);
     }
 
-	// mohan fix bug 2011-06-07
-	for(int i=0; i<nrm; i++)
-	{
-		back:
-		const int index = irr[i];
-		// large index before 'i' should be eliminated.
-		// according to change elements again and again.
-		if( index < i )
-		{
-			double swap_x = r[index].x;	
-			double swap_y = r[index].y;	
-			double swap_z = r[index].z;
-			
-			r[index].x = r[ irr[index] ].x;	
-			r[index].y = r[ irr[index] ].y;			
-			r[index].z = r[ irr[index] ].z;			
-				
-			r[ irr[index] ].x = swap_x;
-			r[ irr[index] ].y = swap_y;
-			r[ irr[index] ].z = swap_z;
+    // mohan fix bug 2011-06-07
+    for(int i=0; i<nrm; i++)
+    {
+        back:
+        const int index = irr[i];
+        // large index before 'i' should be eliminated.
+        // according to change elements again and again.
+        if( index < i )
+        {
+            double swap_x = r[index].x;	
+            double swap_y = r[index].y;	
+            double swap_z = r[index].z;
+            
+            r[index].x = r[ irr[index] ].x;	
+            r[index].y = r[ irr[index] ].y;			
+            r[index].z = r[ irr[index] ].z;			
+                
+            r[ irr[index] ].x = swap_x;
+            r[ irr[index] ].y = swap_y;
+            r[ irr[index] ].z = swap_z;
 
 
-			const int iswap = irr[i];
-			irr[i] = irr[index];
-			irr[index] = iswap;
+            const int iswap = irr[i];
+            irr[i] = irr[index];
+            irr[index] = iswap;
 
-			goto back;
-		}	
-	}
+            goto back;
+        }	
+    }
 
     return;
 } //end subroutine rgen

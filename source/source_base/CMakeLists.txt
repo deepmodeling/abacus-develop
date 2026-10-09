@@ -40,6 +40,7 @@ add_library(
     mymath.cpp
     opt_cg.cpp
     opt_dcsrch.cpp
+    opt_tn.cpp
     output.cpp
     para_gemm.cpp
     realarray.cpp
@@ -74,6 +75,7 @@ add_library(
     module_mixing/pulay_mixing.cpp
     module_mixing/broyden_mixing.cpp
     module_parallel/para_world.cpp
+    module_parallel/para_band_output.cpp
     module_parallel/para_collection.cpp
     module_parallel/para_kmesh_world.cpp
     module_parallel/para_pw_world.cpp
@@ -88,10 +90,6 @@ add_library(
 )
 
 target_link_libraries(base PUBLIC container)
-if (USE_DSP)
-  target_link_libraries(base PUBLIC ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblas.a)
-  target_link_libraries(base PUBLIC ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblasdev.a)
-endif()
 add_subdirectory(module_container)
 
 if(ENABLE_COVERAGE)
