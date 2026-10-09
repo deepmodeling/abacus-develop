@@ -31,8 +31,37 @@
 #include <array>
 #include <sstream>
 #include <unordered_map>
+#include <utility>
 
 using namespace ModuleESolver;
+
+std::vector<int> ESolver_DP::sort_neighbor_indices_by_distance(const std::vector<double>& coord,
+                                                               const int central_atom,
+                                                               const int* neighbor_indices,
+                                                               const int neighbor_count)
+{
+    std::vector<std::pair<double, int> > distance_neighbors;
+    distance_neighbors.reserve(static_cast<std::size_t>(neighbor_count));
+    for (int ineighbor = 0; ineighbor < neighbor_count; ++ineighbor)
+    {
+        const int neighbor_atom = neighbor_indices[ineighbor];
+        const double dx = coord[3 * central_atom] - coord[3 * neighbor_atom];
+        const double dy = coord[3 * central_atom + 1] - coord[3 * neighbor_atom + 1];
+        const double dz = coord[3 * central_atom + 2] - coord[3 * neighbor_atom + 2];
+        const double distance2 = dx * dx + dy * dy + dz * dz;
+        distance_neighbors.push_back(std::make_pair(distance2, neighbor_atom));
+    }
+
+    std::sort(distance_neighbors.begin(), distance_neighbors.end());
+
+    std::vector<int> sorted_neighbors;
+    sorted_neighbors.reserve(static_cast<std::size_t>(neighbor_count));
+    for (const std::pair<double, int>& distance_neighbor : distance_neighbors)
+    {
+        sorted_neighbors.push_back(distance_neighbor.second);
+    }
+    return sorted_neighbors;
+}
 
 void ESolver_DP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
@@ -131,11 +160,21 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         std::vector<int> ilist(static_cast<std::size_t>(nowned_atoms), 0);
         std::vector<int> numneigh(static_cast<std::size_t>(nowned_atoms), 0);
         std::vector<int*> firstneigh(static_cast<std::size_t>(nowned_atoms), NULL);
+        std::vector<std::vector<int> > sorted_neighbors(static_cast<std::size_t>(nowned_atoms));
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             ilist[static_cast<std::size_t>(iat)] = iat;
-            numneigh[static_cast<std::size_t>(iat)] = neighbor_list.get_numneigh(iat);
-            firstneigh[static_cast<std::size_t>(iat)] = const_cast<int*>(neighbor_list.get_firstneigh(iat));
+            sorted_neighbors[static_cast<std::size_t>(iat)] = sort_neighbor_indices_by_distance(
+                coord,
+                iat,
+                neighbor_list.get_firstneigh(iat),
+                neighbor_list.get_numneigh(iat));
+            numneigh[static_cast<std::size_t>(iat)]
+                = static_cast<int>(sorted_neighbors[static_cast<std::size_t>(iat)].size());
+            firstneigh[static_cast<std::size_t>(iat)]
+                = sorted_neighbors[static_cast<std::size_t>(iat)].empty()
+                      ? NULL
+                      : sorted_neighbors[static_cast<std::size_t>(iat)].data();
         }
 #ifdef __DPMDC
         deepmd::hpp::InputNlist nlist(nowned_atoms,
