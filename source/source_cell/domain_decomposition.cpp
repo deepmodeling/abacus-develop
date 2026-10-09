@@ -325,7 +325,9 @@ void DomainDecomposition::update_ghost_atom_positions(MDCell& cell)
         for (std::size_t i = 0; i < slot.send_atom_indices.size(); ++i)
         {
             const LocalAtom& atom = owned_atoms[static_cast<std::size_t>(slot.send_atom_indices[i])];
-            const std::array<int, 3> image_shift = image_shift_for_update(atom, slot);
+            const ModuleBase::Vector3<double>& reference_frac =
+                cell.neighbor_reference_frac_[static_cast<std::size_t>(slot.send_atom_indices[i])];
+            const std::array<int, 3> image_shift = image_shift_for_update(atom, reference_frac, slot);
             send_frac[3 * i] = atom.frac.x;
             send_frac[3 * i + 1] = atom.frac.y;
             send_frac[3 * i + 2] = atom.frac.z;
@@ -781,37 +783,29 @@ void DomainDecomposition::target_for_offset(const std::array<int, 3>& offset,
 
 std::array<int, 3> DomainDecomposition::image_shift_for_update(
     const LocalAtom& atom,
+    const ModuleBase::Vector3<double>& reference_frac,
     const GhostExchangeSlot& slot) const
 {
     std::array<int, 3> image_shift = slot.image_shift;
     const double frac[3] = {atom.frac.x, atom.frac.y, atom.frac.z};
+    const double reference[3] = {reference_frac.x, reference_frac.y, reference_frac.z};
     for (int idim = 0; idim < 3; ++idim)
     {
-        // For a one-domain periodic direction, retain the image side of the
-        // slot so a wrapped atom does not become a duplicate of itself.
-        if (dims_[idim] == 1 && slot.offset[idim] != 0)
+        if (slot.offset[idim] == 0)
         {
-            if (slot.offset[idim] > 0)
-            {
-                image_shift[idim] = frac[idim] < margin_[idim] ? 1 : -1;
-            }
-            else
-            {
-                image_shift[idim] = frac[idim] > 1.0 - margin_[idim] ? -1 : 1;
-            }
             continue;
         }
 
-        const double lo = static_cast<double>(slot.target_coords[idim]) / dims_[idim];
-        const double hi = static_cast<double>(slot.target_coords[idim] + 1) / dims_[idim];
-        while (frac[idim] + image_shift[idim] < lo - margin_[idim])
+        const int crossing = static_cast<int>(std::nearbyint(frac[idim] - reference[idim]));
+        if (crossing == 0 || image_shift[idim] == 0)
         {
-            ++image_shift[idim];
+            continue;
         }
-        while (frac[idim] + image_shift[idim] >= hi + margin_[idim])
-        {
-            --image_shift[idim];
-        }
+
+        // A positive wrapped displacement changes the image index in the
+        // opposite direction for a positive offset, and vice versa.  This
+        // preserves the same physical image continuously across a boundary.
+        image_shift[idim] -= slot.offset[idim] > 0 ? crossing : -crossing;
     }
     return image_shift;
 }

@@ -111,6 +111,7 @@ private:
                            std::array<int, 3>& target_coords,
                            std::array<int, 3>& image_shift) const;
     std::array<int, 3> image_shift_for_update(const LocalAtom& atom,
+                                              const ModuleBase::Vector3<double>& reference_frac,
                                               const GhostExchangeSlot& slot) const;
     void build_ghost_exchange_slots(std::vector<GhostExchangeSlot>& slots) const;
     PackedAtom pack_atom(const LocalAtom& atom, const std::array<int, 3>& image_shift) const;
