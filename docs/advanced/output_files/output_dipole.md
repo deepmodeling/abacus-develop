@@ -46,7 +46,9 @@ step_index dipole_x dipole_y dipole_z
 ```
 
 - `step_index`: The current step number (starts from 1)
-- `dipole_x, dipole_y, dipole_z`: The x, y, z components of the dipole moment
+- `dipole_x, dipole_y, dipole_z`: The Cartesian x, y, z components of the electronic dipole moment for the corresponding spin channel, in units of elementary charge times Bohr ($e a_0$).
+
+These components refer to the Cartesian axes, including for nonorthogonal or rotated cells; they are not components along the lattice vectors. The electronic dipole includes the negative sign of the electron charge.
 
 Example output:
 
@@ -64,4 +66,4 @@ During the calculation, the dipole moment is also printed in the `running_*.log`
 - Total dipole moment
 - Total dipole moment norm
 
-The dipole moment calculation includes both electronic and ionic contributions. The total dipole moment is the sum of electronic and ionic dipoles.
+The log reports Cartesian components in the same units. The total dipole moment is the sum of the electronic and ionic dipoles, and its norm is calculated from these Cartesian components. The `dipole_s${spin}.txt` files contain only the electronic contribution.
