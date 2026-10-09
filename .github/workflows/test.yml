@@ -92,7 +92,7 @@ jobs:
             -DENABLE_MLALGO=ON \
             -DENABLE_LIBXC=ON \
             -DENABLE_LIBRI=ON \
-            -DENABLE_GOOGLEBENCH=ON \
+            -DENABLE_GOOGLEBENCH=OFF \
             -DENABLE_JSON=ON \
             -DENABLE_FLOAT_FFTW=ON \
             -DENABLE_DFTD4=ON \
@@ -186,7 +186,7 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_HSOLVER -E PERF_MODULE_HSOLVER_KERNELS
+          ctest --test-dir build -V --timeout 1700 -R MODULE_HSOLVER
 
       - name: Module_Cell Unittests
         env:
