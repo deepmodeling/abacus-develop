@@ -32,7 +32,7 @@ parameters:
       Specify the type of calculation.
 
       * scf: perform self-consistent electronic structure calculations
-      * nscf: perform non-self-consistent electronic structure calculations. A charge density file is required
+      * nscf: perform non-self-consistent electronic structure calculations using a saved charge density. PW screened hybrids also require SCF binary wavefunctions and eig_occ.txt; see [hybrid NSCF](../elec_properties/hybrid_nscf.md).
       * relax: perform structure relaxation calculations, the relax_nmax parameter depicts the maximal number of ionic iterations
       * cell-relax: perform cell relaxation calculations
       * md: perform molecular dynamics simulations
@@ -4780,11 +4780,16 @@ parameters:
     unit: ""
     availability: ""
   - name: exx_singularity_correction
-    category: Exact Exchange (LCAO)
+    category: Exact Exchange (Common)
     type: String
     description: |
-      * spencer: see Phys. Rev. B 77, 193110 (2008).
-      * revised_spencer: see Phys. Rev. Mater. 5, 013807 (2021). Set the scheme of Coulomb singularity correction.
+      Scheme for Coulomb singularity / zero-transfer treatment in exact exchange.
+      * limits: use the finite screened Coulomb-kernel limit, without an auxiliary correction. Default for HSE and cwp22 in both PW and LCAO. PW requires screened exchange and exx_gamma_extra=false; the latter defaults to false for this scheme.
+      * gygi: retain the historical PW Gygi-Baldereschi auxiliary-function correction. PW only; default for unscreened PW hybrids. For independent-k screened hybrid NSCF this can cause discontinuities at source k points.
+      * spencer: LCAO spherical truncation, Phys. Rev. B 77, 193110 (2008).
+      * revised_spencer: LCAO, Phys. Rev. Mater. 5, 013807 (2021).
+      * massidda / carrier: LCAO auxiliary singularity corrections.
+      Use the same scheme for consistent SCF and NSCF bands. A source configuration mismatch produces a warning and does not prevent reading the existing SCF files.
     default_value: default
     unit: ""
     availability: ""
@@ -5392,8 +5397,8 @@ parameters:
     category: Exact Exchange (PW)
     type: Boolean
     description: |
-      Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See https://doi.org/10.1103/PhysRevB.79.205114 for details. Should be set to true most of the time.
-    default_value: "True"
+      Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See https://doi.org/10.1103/PhysRevB.79.205114 for details. Defaults to false for PW exx_singularity_correction=limits (finite screened kernel), and true otherwise. Explicit true is incompatible with the PW limits scheme.
+    default_value: False for PW limits; True otherwise
     unit: ""
     availability: ""
   - name: ecutexx

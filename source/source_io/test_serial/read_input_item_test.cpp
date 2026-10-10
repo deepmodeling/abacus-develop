@@ -1740,6 +1740,7 @@ TEST_F(InputTest, Item_test2)
     }
     { // exx_singluarity_correction
         auto it = find_label("exx_singularity_correction", readinput.input_lists);
+        TestParameters::input(param).basis_type = "lcao";
         TestParameters::input(param).exx_singularity_correction = "default";
         TestParameters::input(param).dft_functional = "HF";
         it->second.reset_value(it->second, param);
@@ -1754,6 +1755,27 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).dft_functional = "HSE";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).exx_singularity_correction, "limits");
+
+        TestParameters::input(param).basis_type = "pw";
+        TestParameters::input(param).dft_functional = "PBE0";
+        TestParameters::input(param).exx_singularity_correction = "default";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).exx_singularity_correction, "gygi");
+
+        TestParameters::input(param).dft_functional = "HSE";
+        TestParameters::input(param).exx_singularity_correction = "default";
+        TestParameters::input(param).exx_gamma_extra = true;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).exx_singularity_correction, "limits");
+        EXPECT_FALSE(TestParameters::input(param).exx_gamma_extra);
+
+        auto gamma = find_label("exx_gamma_extra", readinput.input_lists);
+        gamma->second.str_values = {"true"};
+        TestParameters::input(param).exx_gamma_extra = true;
+        it->second.reset_value(it->second, param);
+        EXPECT_TRUE(TestParameters::input(param).exx_gamma_extra);
+        gamma->second.str_values.clear();
+        TestParameters::input(param).exx_gamma_extra = false;
     }
     { // exx_ccp_rmesh_times
         auto it = find_label("exx_ccp_rmesh_times", readinput.input_lists);

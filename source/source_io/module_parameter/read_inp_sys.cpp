@@ -151,7 +151,7 @@ void ReadInput::item_system()
         item.description = R"(Specify the type of calculation.
 
 * scf: perform self-consistent electronic structure calculations
-* nscf: perform non-self-consistent electronic structure calculations. A charge density file is required
+* nscf: perform non-self-consistent electronic structure calculations using a saved charge density. PW screened hybrids also require SCF binary wavefunctions and eig_occ.txt; see [hybrid NSCF](../elec_properties/hybrid_nscf.md).
 * relax: perform structure relaxation calculations, the relax_nmax parameter depicts the maximal number of ionic iterations
 * cell-relax: perform cell relaxation calculations
 * md: perform molecular dynamics simulations
