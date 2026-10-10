@@ -10,6 +10,17 @@
 
 namespace ModuleSymmetry
 {
+    void Symmetry_rotation_k::reset_symmetry()
+    {
+        this->irs_ = Irreducible_Sector();
+        this->Ms_.clear();
+        this->little_groups_.clear();
+        this->spin_U_.clear();
+        this->rotmat_Slm_.clear();
+        // Invalidate the derived RI::Tensor rotation cache as well.
+        ++this->rotmat_Slm_version_;
+    }
+
     std::vector<TC> Symmetry_rotation_k::get_bvk_cells(const TC& period)
     {
         std::vector<TC> cells;

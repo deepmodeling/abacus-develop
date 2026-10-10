@@ -69,27 +69,62 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
     }
 
     this->exx_objs.clear();
-    this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
-
+    const auto settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
     this->MGT = std::make_shared<ORB_gaunt_table>();
-    for(const auto &settings_list : this->coulomb_settings)
+    this->refresh_coulomb(ucell, orb, settings);
+
+    ModuleBase::timer::end("Exx_LRI", "init");
+}
+
+template<typename Tdata>
+void Exx_LRI<Tdata>::refresh_coulomb(const UnitCell& ucell,
+                                   const LCAO_Orbitals& orb,
+                                   const CoulombSettings& settings)
+{
+    ModuleBase::TITLE("Exx_LRI", "refresh_coulomb");
+    ModuleBase::timer::start("Exx_LRI", "refresh_coulomb");
+
+    for (auto object = this->exx_objs.begin(); object != this->exx_objs.end();)
     {
-        this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
-        this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
-                                                            this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
-                                                            this->info.kmesh_times, this->MGT, settings_list.second.first );
-        this->exx_objs[settings_list.first].cv.set_info_ri(&this->info);
+        if (settings.count(object->first) == 0)
+        {
+            object = this->exx_objs.erase(object);
+        }
+        else
+        {
+            ++object;
+        }
+    }
+    for (const auto& settings_list : settings)
+    {
+        const auto previous = this->coulomb_settings.find(settings_list.first);
+        const bool unchanged = previous != this->coulomb_settings.end()
+                               && previous->second == settings_list.second;
+        if (unchanged && this->exx_objs.count(settings_list.first) != 0)
+        {
+            continue;
+        }
+
+        // Discard interpolation and point-value caches belonging to the old kernel.
+        // In particular, reusing Matrix_Orbs maps would retain old entries inserted by init().
+        this->exx_objs.erase(settings_list.first);
+        auto& object = this->exx_objs[settings_list.first];
+        object.abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(
+            this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
+        object.cv.set_orbitals(ucell, orb, this->lcaos, this->abfs, object.abfs_ccp,
+                               this->info.kmesh_times, this->MGT, settings_list.second.first);
+        object.cv.set_info_ri(&this->info);
         if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
         {
             const int evq_abfs_Lmax = this->abfs_Lmax_;
-            this->exx_objs[settings_list.first].evq.init(ucell, orb,
-                                                        this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
-                                                        settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times,
-                                                        evq_abfs_Lmax);
+            object.evq.init(ucell, orb, this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
+                            settings_list.second.second, this->MGT, this->info.ccp_rmesh_times,
+                            this->info.kmesh_times, evq_abfs_Lmax);
         }
     }
+    this->coulomb_settings = settings;
 
-    ModuleBase::timer::end("Exx_LRI", "init");
+    ModuleBase::timer::end("Exx_LRI", "refresh_coulomb");
 }
 
 template <typename Tdata>

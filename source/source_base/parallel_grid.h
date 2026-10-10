@@ -46,6 +46,18 @@ class Parallel_Grid
     private:
 
     void z_distribution(void);
+    
+    void init_serial(const int& ncx_in,
+                     const int& ncy_in,
+                     const int& ncz_in,
+                     const int& nczp_in,
+                     const int& nrxx_in,
+                     const int& nbz_in,
+                     const int& bz_in);
+
+#ifdef __MPI
+    void init_parallel(const int nprocgroup);
+#endif
 
 #ifdef __MPI
     void zpiece_distribute(double* zpiece, const int& iz, double* rho, const bool is_sdft) const;

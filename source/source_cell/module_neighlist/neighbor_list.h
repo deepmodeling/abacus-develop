@@ -29,6 +29,9 @@ public:
     int get_numneigh(int i) const { return numneigh_[i]; }
     int* get_firstneigh(int i) { return firstneigh_[i]; }
     const int* get_firstneigh(int i) const { return firstneigh_[i]; }
+    /// Return a distance-sorted copy of one atom's neighbors without changing the stored order.
+    std::vector<int> get_neighbors_sorted_by_distance(int central_atom,
+                                                      const std::vector<double>& coordinates) const;
     PageAllocator& get_allocator() { return allocator_; }
     const PageAllocator& get_allocator() const { return allocator_; }
 

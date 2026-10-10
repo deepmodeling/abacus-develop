@@ -147,3 +147,140 @@ TEST(SymmetryDensityRestoration, SpinorDensity)
 {
     check_little_group_restoration(4);
 }
+
+namespace
+{
+class CellSymmetryRotation : public ModuleSymmetry::Symmetry_rotation
+{
+  public:
+    const std::vector<std::map<int, std::vector<Complex>>>& rotations() const
+    {
+        return this->Ms_;
+    }
+};
+}
+
+TEST(SymmetryDensityRestoration, RebuildAfterCellSymmetryAnalysis)
+{
+    // A common translation crosses the cell boundary for only part of the basis.
+    // The point group stays unchanged, but the lattice returns and Bloch phases change.
+    UnitCell cell;
+    std::vector<Atom> atoms(2);
+    cell.atoms = atoms.data();
+    cell.ntype = 2;
+    cell.nat = 3;
+    cell.lmax = 0;
+    cell.latvec = ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    cell.a1 = ModuleBase::Vector3<double>(1, 0, 0);
+    cell.a2 = ModuleBase::Vector3<double>(0, 1, 0);
+    cell.a3 = ModuleBase::Vector3<double>(0, 0, 1);
+    cell.st.iat2it = new int[3]{0, 0, 1};
+    cell.st.iat2ia = new int[3]{0, 1, 0};
+    atoms[0].label = "A";
+    atoms[0].na = 2;
+    atoms[0].nw = 1;
+    atoms[0].iw2l = {0};
+    atoms[0].stapos_wf = 0;
+    atoms[0].taud = {{0.1, 0.2, 0.3}, {0.4, 0.3, 0.2}};
+    atoms[0].tau = atoms[0].taud;
+    atoms[1].label = "B";
+    atoms[1].na = 1;
+    atoms[1].nw = 1;
+    atoms[1].iw2l = {0};
+    atoms[1].stapos_wf = 2;
+    atoms[1].taud = {{0.25, 0.25, 0.25}};
+    atoms[1].tau = atoms[1].taud;
+    std::ofstream log;
+    const int representation[2] = {0, 0};
+    const std::string calculation = "cell-relax";
+    cell.symm.analy_sys(cell.lat, cell.st, cell.atoms, log, 1e-6, 1, calculation, representation);
+    const int old_operations = cell.symm.nrotk;
+    K_Vectors kv;
+    kv.set_nks(1);
+    kv.set_nkstot(1);
+    kv.set_nkstot_nospin(2);
+    int total_kpoints = 1;
+    kv.para_k.kinfo(total_kpoints, 1, 0, 0, 1, 1);
+    kv.ik2iktot = {0};
+    kv.kvec_d = {{0.25, 0, 0}};
+    kv.kstars = {{{0, {0.25, 0, 0}}}};
+    for (int operation = 0; operation < cell.symm.nrotk; ++operation)
+    {
+        kv.kstars[0][operation] = kv.kvec_d[0] * cell.symm.kgmatrix[operation];
+    }
+    Parallel_2D pv;
+    pv.init(3, 3, 1, MPI_COMM_WORLD);
+    const ModuleSymmetry::TC period = {2, 2, 2};
+    const std::vector<ModuleSymmetry::TC> cells = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+    CellSymmetryRotation reused;
+    reused.find_irreducible_sector(cell.symm, cell.atoms, cell.st, cells, period, cell.lat);
+    reused.cal_Ms(kv, cell, pv, 1);
+    const auto old_rotations = reused.rotations();
+
+    atoms[0].taud = {{0.9, 0.2, 0.3}, {0.2, 0.3, 0.2}};
+    atoms[1].taud = {{0.05, 0.25, 0.25}};
+    atoms[0].tau = atoms[0].taud;
+    atoms[1].tau = atoms[1].taud;
+    cell.symm.analy_sys(cell.lat, cell.st, cell.atoms, log, 1e-6, 1, calculation, representation);
+    ASSERT_EQ(cell.symm.nrotk, old_operations);
+    reused.reset_symmetry();
+    reused.find_irreducible_sector(cell.symm, cell.atoms, cell.st, cells, period, cell.lat);
+    reused.cal_Ms(kv, cell, pv, 1);
+    CellSymmetryRotation fresh;
+    fresh.find_irreducible_sector(cell.symm, cell.atoms, cell.st, cells, period, cell.lat);
+    fresh.cal_Ms(kv, cell, pv, 1);
+    EXPECT_EQ(reused.get_irreducible_sector(), fresh.get_irreducible_sector());
+    EXPECT_EQ(reused.rotations(), fresh.rotations());
+    EXPECT_NE(old_rotations, fresh.rotations());
+    for (int atom = 0; atom < cell.nat; ++atom)
+    {
+        for (int operation = 0; operation < cell.symm.nrotk; ++operation)
+        {
+            const auto actual = reused.get_return_lattice(atom, operation);
+            const auto expected = fresh.get_return_lattice(atom, operation);
+            EXPECT_EQ(actual.x, expected.x);
+            EXPECT_EQ(actual.y, expected.y);
+            EXPECT_EQ(actual.z, expected.z);
+        }
+    }
+}
+
+TEST(SymmetryDensityRestoration, ReturnLatticePreservesBoundaryRepresentatives)
+{
+    ModuleSymmetry::Symmetry symmetry;
+    symmetry.epsilon = 3.2e-5;
+    ModuleSymmetry::Irreducible_Sector sector;
+    const ModuleBase::Matrix3 reflection(-1, 0, 0, 0, 1, 0, 0, 0, 1);
+    const ModuleBase::Vector3<double> translation(0.0, 0.0, 0.0);
+    const ModuleBase::Vector3<double> source(0.99999, 0.25, 0.5);
+    const ModuleBase::Vector3<double> mapped(0.00001, 0.25, 0.5);
+    const auto lattice = sector.get_return_lattice(symmetry, reflection, translation, source, mapped);
+    EXPECT_DOUBLE_EQ(lattice.x, -1.0);
+    EXPECT_DOUBLE_EQ(lattice.y, 0.0);
+    EXPECT_DOUBLE_EQ(lattice.z, 0.0);
+
+    // Changing either atom's representative must change its integer lattice shift.
+    const ModuleBase::Vector3<double> shifted_source(1.99999, 0.25, 0.5);
+    const ModuleBase::Vector3<double> shifted_mapped(1.00001, 0.25, 0.5);
+    const auto source_lattice = sector.get_return_lattice(
+        symmetry, reflection, translation, shifted_source, mapped);
+    const auto mapped_lattice = sector.get_return_lattice(
+        symmetry, reflection, translation, source, shifted_mapped);
+    EXPECT_DOUBLE_EQ(source_lattice.x, -2.0);
+    EXPECT_DOUBLE_EQ(mapped_lattice.x, -2.0);
+}
+
+TEST(SymmetryDensityRestoration, ReturnLatticePreservesTranslationRepresentative)
+{
+    ModuleSymmetry::Symmetry symmetry;
+    symmetry.epsilon = 3.2e-5;
+    ModuleSymmetry::Irreducible_Sector sector;
+    const ModuleBase::Matrix3 identity(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    const ModuleBase::Vector3<double> source(0.25, 0.5, 0.75);
+    const ModuleBase::Vector3<double> translation(0.99999, 0.0, 0.0);
+    const ModuleBase::Vector3<double> mapped(0.24999, 0.5, 0.75);
+    const auto lattice = sector.get_return_lattice(symmetry, identity, translation, source, mapped);
+    EXPECT_DOUBLE_EQ(lattice.x, 1.0);
+    EXPECT_DOUBLE_EQ(lattice.y, 0.0);
+    EXPECT_DOUBLE_EQ(lattice.z, 0.0);
+}

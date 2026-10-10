@@ -350,7 +350,7 @@ TEST_F(KlistParaTest, SetAfterVC)
     }
     // call set_after_vc here
     kv->kc_done = false;
-    kv->set_after_vc(ucell.G, GlobalV::ofs_running);
+    kv->set_after_vc(ucell.G, symm, true, GlobalV::ofs_running);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     // clear

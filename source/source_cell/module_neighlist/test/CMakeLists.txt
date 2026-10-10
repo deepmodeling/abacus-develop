@@ -31,6 +31,7 @@ AddTest(
   LIBS parameter base device
   SOURCES
   test_neighbor_list.cpp
+  ../neighbor_list.cpp
   ../page_allocator.cpp
 )
 

@@ -669,7 +669,7 @@ TEST_F(KlistTest, SetAfterVC)
     kv->kvec_c[0].x = 0;
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
-    kv->set_after_vc(ucell.G, ofs_running);
+    kv->set_after_vc(ucell.G, ucell.symm, false, ofs_running);
 
     EXPECT_TRUE(kv->kd_done);
     EXPECT_TRUE(kv->kc_done);
@@ -690,7 +690,7 @@ TEST_F(KlistTest, PrintKlists)
     kv->kvec_c[0].x = 0;
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
-    kv->set_after_vc(ucell.G, ofs_running);
+    kv->set_after_vc(ucell.G, ucell.symm, false, ofs_running);
     EXPECT_TRUE(kv->kd_done);
     kv->print_klists(ofs_running);
     ofs_running.close();
@@ -1045,3 +1045,121 @@ TEST_F(KlistTest, IbzKpointCustomWeights)
     remove("tmp_klist_custom_weights");
 }
 
+
+TEST_F(KlistTest, SetAfterVCReindexesStarsWithoutChangingIBZ)
+{
+    kv->set_spin_mult(2);
+    kv->set_nkstot(2);
+    kv->set_nks(2);
+    kv->renew_for_testing(2);
+    kv->kvec_d = {{0.125, 0.25, 0}, {0.125, 0.25, 0}};
+    kv->wk = {0.5, 0.5};
+    kv->isk = {0, 1};
+    kv->ik2iktot = {0, 1};
+    kv->kstars = {{{0, {0.125, 0.25, 0}}, {1, {-0.125, -0.25, 0}},
+                   {2, {0.25, 0.125, 0}}, {3, {-0.25, -0.125, 0}}}};
+    ucell.symm.nrotk = 4;
+    ucell.symm.nrotk_anti = 0;
+    ucell.symm.magnetic_nspin4 = false;
+    ucell.symm.epsilon = 1e-6;
+    ucell.symm.kgmatrix[0] = ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    ucell.symm.kgmatrix[1] = ModuleBase::Matrix3(-1, 0, 0, 0, -1, 0, 0, 0, -1);
+    ucell.symm.kgmatrix[2] = ModuleBase::Matrix3(0, -1, 0, -1, 0, 0, 0, 0, -1);
+    ucell.symm.kgmatrix[3] = ModuleBase::Matrix3(0, 1, 0, 1, 0, 0, 0, 0, 1);
+    const auto points = kv->kvec_d;
+    const auto weights = kv->wk;
+    const auto spins = kv->isk;
+    const auto ownership = kv->ik2iktot;
+    kv->set_after_vc(ucell.G, ucell.symm, true, ofs_running);
+    EXPECT_EQ(kv->kvec_d, points);
+    EXPECT_EQ(kv->wk, weights);
+    EXPECT_EQ(kv->isk, spins);
+    EXPECT_EQ(kv->ik2iktot, ownership);
+    ASSERT_EQ(kv->kstars.size(), 1);
+    const auto& star = kv->kstars[0];
+    ASSERT_EQ(star.size(), 4);
+    EXPECT_DOUBLE_EQ(star.at(3).x, 0.25);
+    EXPECT_DOUBLE_EQ(star.at(2).x, -0.25);
+    for (const auto& member : star)
+    {
+        const auto rotated = member.second * ucell.symm.kgmatrix[member.first];
+        EXPECT_NEAR(rotated.x, points[0].x, 1e-12);
+        EXPECT_NEAR(rotated.y, points[0].y, 1e-12);
+        EXPECT_NEAR(rotated.z, points[0].z, 1e-12);
+    }
+    const auto refreshed = kv->kstars;
+    kv->set_after_vc(ucell.G, ucell.symm, true, ofs_running);
+    EXPECT_EQ(kv->kstars, refreshed);
+}
+
+TEST_F(KlistTest, SetAfterVCMatchesPeriodicBoundaryWhenToleranceChanges)
+{
+    kv->set_spin_mult(1);
+    kv->set_nkstot(1);
+    kv->set_nks(1);
+    kv->renew_for_testing(1);
+    kv->kvec_d = {{-0.499999, 0.125, -0.499999}};
+    kv->wk = {1.0};
+    kv->ik2iktot = {0};
+    kv->kstars = {{{0, {-0.499999, 0.125, -0.499999}},
+                   {1, {-0.499999, -0.125, -0.499999}}}};
+    ucell.symm.nrotk = 2;
+    ucell.symm.nrotk_anti = 0;
+    ucell.symm.magnetic_nspin4 = true;
+    ucell.symm.kgmatrix[0] = ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    ucell.symm.kgmatrix[1] = ModuleBase::Matrix3(1, 0, 0, 0, -1, 0, 0, 0, 1);
+    ucell.symm.epsilon = 1e-6;
+    kv->set_after_vc(ucell.G, ucell.symm, true, ofs_running);
+    const auto stars = kv->kstars;
+    const auto points = kv->kvec_d;
+    const auto weights = kv->wk;
+
+    // The new tolerance folds -0.499999 to 0.500001. Both are the same k point.
+    ucell.symm.epsilon = 3.2e-5;
+    kv->set_after_vc(ucell.G, ucell.symm, true, ofs_running);
+    EXPECT_EQ(kv->kstars, stars);
+    EXPECT_EQ(kv->kvec_d, points);
+    EXPECT_EQ(kv->wk, weights);
+    kv->set_after_vc(ucell.G, ucell.symm, true, ofs_running);
+    EXPECT_EQ(kv->kstars, stars);
+}
+
+TEST_F(KlistTest, SetAfterVCRejectsIncompatibleStars)
+{
+    kv->kstars = {{{0, {0.125, 0, 0}}, {1, {-0.125, 0, 0}}}};
+    ucell.symm.nrotk = 1;
+    ucell.symm.nrotk_anti = 0;
+    ucell.symm.magnetic_nspin4 = true;
+    ucell.symm.epsilon = 1e-6;
+    ucell.symm.kgmatrix[0] = ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    EXPECT_EXIT(kv->set_after_vc(ucell.G, ucell.symm, true, ofs_running),
+                ::testing::ExitedWithCode(1), "");
+}
+
+TEST_F(KlistTest, SetAfterVCUsesGlobalStarsAndTimeReversal)
+{
+    // Only the second IBZ point is local, while stars are replicated globally.
+    kv->set_spin_mult(1);
+    kv->set_nkstot(2);
+    kv->set_nks(1);
+    kv->renew_for_testing(2);
+    kv->kvec_d = {{0.25, 0, 0}};
+    kv->ik2iktot = {1};
+    kv->kstars = {{{0, {0.125, 0, 0}}, {7, {-0.125, 0, 0}}},
+                  {{0, {0.25, 0, 0}}, {7, {-0.25, 0, 0}}}};
+    ucell.symm.nrotk = 1;
+    ucell.symm.nrotk_anti = 0;
+    ucell.symm.magnetic_nspin4 = false;
+    ucell.symm.epsilon = 1e-6;
+    ucell.symm.kgmatrix[0] = ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    const auto original = kv->kstars;
+    kv->set_after_vc(ucell.G, ucell.symm, false, ofs_running);
+    EXPECT_EQ(kv->kstars, original);
+    kv->set_after_vc(ucell.G, ucell.symm, true, ofs_running);
+    ASSERT_EQ(kv->kstars.size(), 2);
+    EXPECT_DOUBLE_EQ(kv->kstars[0].at(0).x, 0.125);
+    EXPECT_DOUBLE_EQ(kv->kstars[0].at(1).x, -0.125);
+    EXPECT_DOUBLE_EQ(kv->kstars[1].at(0).x, 0.25);
+    EXPECT_DOUBLE_EQ(kv->kstars[1].at(1).x, -0.25);
+    EXPECT_EQ(kv->ik2iktot, std::vector<int>{1});
+}

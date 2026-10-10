@@ -97,6 +97,7 @@ void Exx_NAO<TK>::before_scf(
         const UnitCell &ucell, // unitcell
         const K_Vectors &kv,
         const LCAO_Orbitals &orb, // orbital info
+        const Parallel_Orbitals& pv,
         Charge_Mixing* p_chgmix,
         const int istep,
         const Input_para& inp,
@@ -105,13 +106,16 @@ void Exx_NAO<TK>::before_scf(
 #ifdef __EXX
     if (inp.calculation != "nscf")
     {
+        const bool update_symmetry = inp.calculation == "cell-relax"
+                                     && istep > 0
+                                     && ModuleSymmetry::Symmetry::symm_flag == 1;
         if (exx_info.info_ri.real_number)
         {
-            this->exd->exx_beforescf(istep, kv, *p_chgmix, ucell, orb);
+            this->exd->exx_beforescf(istep, kv, *p_chgmix, ucell, orb, pv, update_symmetry);
         }
         else
         {
-            this->exc->exx_beforescf(istep, kv, *p_chgmix, ucell, orb);
+            this->exc->exx_beforescf(istep, kv, *p_chgmix, ucell, orb, pv, update_symmetry);
         }
     }
     else

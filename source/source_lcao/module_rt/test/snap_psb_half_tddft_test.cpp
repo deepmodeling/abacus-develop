@@ -25,8 +25,6 @@ SepPot::SepPot() = default;
 
 SepPot::~SepPot()
 {
-    delete[] r;
-    delete[] rv;
 }
 
 Sep_Cell::Sep_Cell() noexcept : ntype(0), omega(0.0), tpiba2(0.0)

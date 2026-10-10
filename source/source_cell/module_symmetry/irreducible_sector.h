@@ -69,7 +69,7 @@ namespace ModuleSymmetry
 
         /// Perfoming {R|t} to atom position r in the R=0 lattice, we get Rr+t, which may get out of R=0 lattice,
         /// whose image in R=0 lattice is r'=Rr+t-O. This function is to get O for each atom and each symmetry operation.
-        /// the range of direct position is [-0.5, 0.5).
+        /// Preserve the input coordinate representatives; do not wrap away their integer lattice shifts.
         TCdouble get_return_lattice(const Symmetry& symm,
             const ModuleBase::Matrix3& gmatd, const TCdouble gtransd,
             const TCdouble& posd_a1, const TCdouble& posd_a2)const;
