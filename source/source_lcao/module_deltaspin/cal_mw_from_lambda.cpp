@@ -294,12 +294,12 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 const std::complex<double>* becp = &becp_tmp[ik * size_becp];
                 const int spin_sign = (this->state_.npol_ == 2) ? 1 : this->get_spin_sign(ik);
                 accumulate_Mi_from_becp(becp, nkb, nbands, this->state_.npol_, spin_sign,
-                    &this->pelec->wg(ik, 0), nh_iat, this->state_.mutable_Mi());
+                    &this->pelec->wg(ik, 0), nh_iat, this->state_.get_mi());
             }
             // MPI reduction: sum Mi across all k-pool ranks
             Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar,
                                                     GlobalV::NPROC_IN_POOL,
-                                                    &(this->state_.mutable_Mi()[0][0]),
+                                                    &(this->state_.get_mi()[0][0]),
                                                     3 * this->state_.get_Mi().size());
         }
     }

@@ -145,7 +145,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
             where_fill_scalar_2d(this->state_.constrain_, 0, zero, delta_lambda);
 
             // lambda = initial_lambda + delta_lambda
-            add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->state_.mutable_lambda());
+            add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->state_.get_lambda());
 
             // [direction_only mode] Project out parallel component of lambda
             // This keeps |lambda| -> 0, only constraining spin direction
@@ -160,9 +160,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
                     double parallel = this->state_.get_sc_lambda()[ia].x*dir.x +
                                     this->state_.get_sc_lambda()[ia].y*dir.y +
                                     this->state_.get_sc_lambda()[ia].z*dir.z;
-                    this->state_.mutable_lambda()[ia].x -= parallel * dir.x;
-                    this->state_.mutable_lambda()[ia].y -= parallel * dir.y;
-                    this->state_.mutable_lambda()[ia].z -= parallel * dir.z;
+                    this->state_.get_lambda()[ia].x -= parallel * dir.x;
+                    this->state_.get_lambda()[ia].y -= parallel * dir.y;
+                    this->state_.get_lambda()[ia].z -= parallel * dir.z;
                 }
             }
 
@@ -176,7 +176,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
             {
                 // Gradient has decayed: further optimization yields diminishing returns
                 // Apply the last successful step and exit
-                add_scalar_multiply_2d(initial_lambda, dnu_last_step, one, this->state_.mutable_lambda());
+                add_scalar_multiply_2d(initial_lambda, dnu_last_step, one, this->state_.get_lambda());
                 this->update_psi_charge(dnu_last_step.data(), true, true);
 #ifdef __MPI
                 duration = (double)(MPI_Wtime() - iterstart);
@@ -346,7 +346,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         // Mask unconstrained components
         where_fill_scalar_else_2d(this->state_.constrain_, 0, zero, delta_lambda, delta_lambda);
         // Update lambda
-        add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->state_.mutable_lambda());
+        add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->state_.get_lambda());
 
         // =============================================================
         // TRIAL STEP: compute Mi at trial position
@@ -523,9 +523,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
         for (int ia = 0; ia < nat; ia++) {
             for (int ic = 0; ic < 3; ic++) {
                 if (this->state_.constrain_[ia][ic] != 0) {
-                    this->state_.mutable_lambda()[ia][ic] = lambda_val_ry;
+                    this->state_.get_lambda()[ia][ic] = lambda_val_ry;
                 } else {
-                    this->state_.mutable_lambda()[ia][ic] = 0.0;
+                    this->state_.get_lambda()[ia][ic] = 0.0;
                 }
             }
         }
@@ -567,7 +567,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
     // after multiple lambda updates in the scan loop
     // =============================================================
     ofs_running << " [DS-DIAG] === Consistency check: restoring initial lambda ===" << std::endl;
-    this->state_.mutable_lambda() = initial_lambda;
+    this->state_.get_lambda() = initial_lambda;
     this->cal_mw_from_lambda(nsteps);
 
     // Write consistency check result
@@ -610,7 +610,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
     ofs_scan.close();
 
     // Restore original lambda values (already restored above, but explicit for clarity)
-    this->state_.mutable_lambda() = initial_lambda;
+    this->state_.get_lambda() = initial_lambda;
 
     ofs_running << std::string(80, '=') << std::endl;
     ofs_running << " [DS-DIAG] === LINEAR LAMBDA SCAN COMPLETE ===" << std::endl;

@@ -83,7 +83,7 @@ void cal_mi_pw(ScState& state,
             int nkb = onsite_p->get_tot_nproj();
             const int spin_sign = (npol == 2) ? 1 : spin_sign_at(state, pelec, ik);
             accumulate_Mi_from_becp(becp, nkb, nbands, npol, spin_sign,
-                &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.mutable_Mi());
+                &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.get_mi());
         }
     }
 #if ((defined __CUDA) || (defined __ROCM))
@@ -105,12 +105,12 @@ void cal_mi_pw(ScState& state,
             int nkb = onsite_p->get_size_becp() / nbands / npol;
             const int spin_sign = (npol == 2) ? 1 : spin_sign_at(state, pelec, ik);
             accumulate_Mi_from_becp(becp, nkb, nbands, npol, spin_sign,
-                &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.mutable_Mi());
+                &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.get_mi());
         }
     }
 #endif
     // MPI reduction: sum Mi across all k-pool ranks
-    Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(state.mutable_Mi()[0][0]), 3 * state.get_Mi().size());
+    Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(state.get_mi()[0][0]), 3 * state.get_Mi().size());
 
     ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mi_pw");
 }

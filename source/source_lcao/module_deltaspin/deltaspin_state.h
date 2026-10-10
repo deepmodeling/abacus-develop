@@ -91,7 +91,7 @@ public:
     /// get sc_lambda
     const std::vector<ModuleBase::Vector3<double>>& get_sc_lambda() const;
     /// get mutable sc_lambda
-    std::vector<ModuleBase::Vector3<double>>& mutable_lambda()
+    std::vector<ModuleBase::Vector3<double>>& get_lambda()
     {
         return lambda_;
     }
@@ -151,7 +151,7 @@ public:
     /// get computed magnetic moments Mi per atom
     const std::vector<ModuleBase::Vector3<double>>& get_Mi() const;
     /// get mutable computed magnetic moments Mi per atom
-    std::vector<ModuleBase::Vector3<double>>& mutable_Mi()
+    std::vector<ModuleBase::Vector3<double>>& get_mi()
     {
         return Mi_;
     }

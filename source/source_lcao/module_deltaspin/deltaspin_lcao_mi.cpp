@@ -63,9 +63,9 @@ void cal_mi_lcao(ScState& state,
         // For nspin=2, only z-component is meaningful
         for (int iat = 0; iat < state.get_Mi().size(); iat++)
         {
-            state.mutable_Mi()[iat].x = 0.0;
-            state.mutable_Mi()[iat].y = 0.0;
-            state.mutable_Mi()[iat].z = moments[iat];
+            state.get_mi()[iat].x = 0.0;
+            state.get_mi()[iat].y = 0.0;
+            state.get_mi()[iat].z = moments[iat];
         }
     }
     else if (state.nspin_ == 4)
@@ -74,9 +74,9 @@ void cal_mi_lcao(ScState& state,
         moments = static_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>*>(p_operator)->cal_moment(dmr, state.get_constrain());
         for (int iat = 0; iat < state.get_Mi().size(); iat++)
         {
-            state.mutable_Mi()[iat].x = moments[iat * 3];
-            state.mutable_Mi()[iat].y = moments[iat * 3 + 1];
-            state.mutable_Mi()[iat].z = moments[iat * 3 + 2];
+            state.get_mi()[iat].x = moments[iat * 3];
+            state.get_mi()[iat].y = moments[iat * 3 + 1];
+            state.get_mi()[iat].z = moments[iat * 3 + 2];
         }
     }
 
@@ -167,15 +167,15 @@ void calculate_mw_from_orbitals(const std::vector<std::vector<std::vector<double
             }
             if (state.nspin_ == 2)
             {
-                state.mutable_Mi()[iat].x = 0.0;
-                state.mutable_Mi()[iat].y = 0.0;
-                state.mutable_Mi()[iat].z = atom_mag;
+                state.get_mi()[iat].x = 0.0;
+                state.get_mi()[iat].y = 0.0;
+                state.get_mi()[iat].z = atom_mag;
             }
             else if (state.nspin_ == 4)
             {
-                state.mutable_Mi()[iat].x = (std::abs(total_charge_soc[1]) < state.sc_thr_)? 0.0 : total_charge_soc[1];
-                state.mutable_Mi()[iat].y = (std::abs(total_charge_soc[2]) < state.sc_thr_)? 0.0 : total_charge_soc[2];
-                state.mutable_Mi()[iat].z = (std::abs(total_charge_soc[3]) < state.sc_thr_)? 0.0 : total_charge_soc[3];
+                state.get_mi()[iat].x = (std::abs(total_charge_soc[1]) < state.sc_thr_)? 0.0 : total_charge_soc[1];
+                state.get_mi()[iat].y = (std::abs(total_charge_soc[2]) < state.sc_thr_)? 0.0 : total_charge_soc[2];
+                state.get_mi()[iat].z = (std::abs(total_charge_soc[3]) < state.sc_thr_)? 0.0 : total_charge_soc[3];
             }
         }
     }
