@@ -11,6 +11,9 @@
 namespace Parallel_Reduce
 {
 
+/// Return whether MPI is available for collective operations at this point.
+bool mpi_ready();
+
 #ifdef __MPI
 template <typename T>
 struct MPI_Type;

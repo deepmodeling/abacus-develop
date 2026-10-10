@@ -22,6 +22,7 @@ AddTest(
   LIBS parameter psi device base container MPI::MPI_CXX
   SOURCES test_sto_hsolver_pw.cpp ../sto_hsolver_pw.cpp
   ../../../source_hsolver/hsolver_pw.cpp ../../../source_hsolver/diago_bpcg.cpp
+  ../../../source_hsolver/diago_ppcg.cpp
   ../../../source_hsolver/diago_dav_subspace.cpp ../../../source_hsolver/diag_const_nums.cpp
   ../../../source_hsolver/diago_iter_assist.cpp ../../../source_hsolver/para_lin_tf.cpp
   ../../../source_estate/elecstate_tools.cpp ../../../source_estate/occupy.cpp
