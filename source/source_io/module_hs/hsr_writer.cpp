@@ -1,4 +1,5 @@
 #include "hsr_writer.h"
+#include "source_io/module_output/spin_tag.h"
 
 #include "source_base/module_out/sparse_matrix.h"
 #include "source_base/tool_quit.h"
@@ -6,6 +7,7 @@
 #include "source_cell/unitcell.h"
 #include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_estate/fp_energy.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_hamilt/module_hcontainer/output_hcontainer.h"
@@ -81,7 +83,9 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
                                      const int ispin,
                                      const int nspin,
                                      const std::string& label,
-                                     const std::string& representation_note)
+                                     const std::string& representation_note,
+                                     const double efermi_eV,
+                                     const bool has_efermi)
 {
     std::ofstream ofs;
     if (istep <= 0)
@@ -101,7 +105,12 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
     ofs << " --- Ionic Step " << istep + 1 << " ---" << std::endl;
     ofs << " # print " << label << " matrix in real space " << label << "(R)" << std::endl;
     ofs << " " << nspin << " # number of spin directions" << std::endl;
-    ofs << " " << ispin + 1 << " # spin index" << std::endl;
+    ofs << " " << ispin + 1 << " # spin index";
+    if (has_efermi)
+    {
+        ofs << ", E_Fermi = " << std::setprecision(6) << efermi_eV << " eV";
+    }
+    ofs << std::endl;
     ofs << " " << mat_serial->get_nbasis() << " # number of localized basis" << std::endl;
     ofs << " " << mat_serial->size_R_loop() << " # number of Bravais lattice vector R" << std::endl;
     ofs << std::endl;
@@ -279,7 +288,9 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                           const int* iat2iwt,
                           const int nat,
                           const int istep,
-                          const std::string& global_out_dir)
+                          const std::string& global_out_dir,
+                          const elecstate::Efermi& eferm,
+                          std::ofstream& ofs_running)
 {
     if (out_type != 1 && out_type != 2)
     {
@@ -317,9 +328,12 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
             }
             else
             {
+                const double efermi_eV = eferm.get_efval(ispin) * ModuleBase::Ry_to_eV;
                 write_hcontainer_csr(
-                    fname, ucell, precision, &hr_serial, istep, ispin, nspin, "H", representation_note);
+                    fname, ucell, precision, &hr_serial, istep, ispin, nspin, "H", representation_note, efermi_eV, true);
             }
+            const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
+            ofs_running << " Write H(R)" << spin_tag << " matrix in NAO basis to file: " << fname << std::endl;
         }
     }
 
@@ -348,8 +362,9 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
             else
             {
                 write_hcontainer_csr(
-                    fname, ucell, precision, &sr_serial, istep, 0, 1, "S", representation_note);
+                    fname, ucell, precision, &sr_serial, istep, 0, 1, "S", representation_note, 0.0, false);
             }
+            ofs_running << " Write S(R) matrix in NAO basis to file: " << fname << std::endl;
         }
     }
 }
@@ -357,10 +372,10 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 // Explicit instantiations
 template void ModuleIO::write_hcontainer_csr<double>(
     const std::string&, const UnitCell*, const int,
-    hamilt::HContainer<double>*, const int, const int, const int, const std::string&, const std::string&);
+    hamilt::HContainer<double>*, const int, const int, const int, const std::string&, const std::string&, const double, const bool);
 template void ModuleIO::write_hcontainer_csr<std::complex<double>>(
     const std::string&, const UnitCell*, const int,
-    hamilt::HContainer<std::complex<double>>*, const int, const int, const int, const std::string&, const std::string&);
+    hamilt::HContainer<std::complex<double>>*, const int, const int, const int, const std::string&, const std::string&, const double, const bool);
 
 template void ModuleIO::write_hcontainer_csr_binary<double>(
     const std::string&, hamilt::HContainer<double>*, const int, const bool);
@@ -372,10 +387,10 @@ template void ModuleIO::write_hsr<double>(
     const hamilt::HContainer<double>*,
     const UnitCell*, const int, const int, const Parallel_2D&,
     const bool, const bool, const int*, const int, const int,
-    const std::string&);
+    const std::string&, const elecstate::Efermi&, std::ofstream&);
 template void ModuleIO::write_hsr<std::complex<double>>(
     const std::vector<hamilt::HContainer<std::complex<double>>*>&,
     const hamilt::HContainer<std::complex<double>>*,
     const UnitCell*, const int, const int, const Parallel_2D&,
     const bool, const bool, const int*, const int, const int,
-    const std::string&);
+    const std::string&, const elecstate::Efermi&, std::ofstream&);

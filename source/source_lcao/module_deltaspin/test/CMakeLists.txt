@@ -62,4 +62,11 @@ AddTest(
     ../../../source_cell/reciprocal_grid.cpp
 )
 
+AddTest(
+  TARGET MODULE_LCAO_deltaspin_state_test
+  LIBS base device
+  SOURCES test_deltaspin_state.cpp
+    ../deltaspin_state.cpp
+)
+
 endif()

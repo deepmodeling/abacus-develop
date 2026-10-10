@@ -6,6 +6,7 @@
 #include "source_base/global_function.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_io/module_output/spin_tag.h"
 
 #include <cmath>
 #include <complex>
@@ -25,7 +26,8 @@ void ModuleIO::save_dH_sparse(const int& istep,
                               const std::string& calculation,
                               const bool out_app_flag,
                               const int nspin,
-                              const int nlocal) {
+                              const int nlocal,
+                              std::ofstream& ofs_running) {
     ModuleBase::TITLE("ModuleIO", "save_dH_sparse");
     ModuleBase::timer::start("ModuleIO", "save_dH_sparse");
     SparseWriteOptions lat_r_options;
@@ -149,8 +151,10 @@ void ModuleIO::save_dH_sparse(const int& istep,
                 }
                 else if (!binary)
                 {
-                    GlobalV::ofs_running << " " << label << " data are in file: "
-                                         << comp.fname[ispin].str() << std::endl;
+                    const char* matrix_name = (fileflag == "s") ? "dS/dR" : "dH/dR";
+                    const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
+                    ofs_running << " Write " << matrix_name << " (" << comp.axis << " component)" << spin_tag
+                                << " matrix in NAO basis to file: " << comp.fname[ispin].str() << std::endl;
                 }
                 comp.ofs[ispin].open(comp.fname[ispin].str().c_str(), mode);
                 detail::check_output_file_open(comp.ofs[ispin], comp.fname[ispin].str(), "ModuleIO::save_dH_sparse");

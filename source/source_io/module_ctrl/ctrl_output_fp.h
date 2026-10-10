@@ -1,6 +1,8 @@
 #ifndef CTRL_OUTPUT_FP_H
 #define CTRL_OUTPUT_FP_H
 
+#include <fstream>
+
 struct Input_para;
 class UnitCell;
 class Charge;
@@ -29,7 +31,8 @@ void ctrl_output_fp(UnitCell& ucell,
                     Charge& chr,
                     surchem& solvent,
                     Parallel_Grid& para_grid,
-                    const int istep);
+                    const int istep,
+                    std::ofstream& ofs_running);
 
 }
 #endif

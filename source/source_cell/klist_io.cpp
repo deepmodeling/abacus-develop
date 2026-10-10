@@ -176,7 +176,6 @@ void build_kstars(const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                   const int nrotkm,
                   const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz,
                   const double epsilon,
-                  const std::function<bool(double, double)>& equal,
                   std::vector<std::map<int, ModuleBase::Vector3<double>>>& kstars)
 {
     const int nkstot = static_cast<int>(kvec_d.size());
@@ -194,8 +193,7 @@ void build_kstars(const std::vector<ModuleBase::Vector3<double>>& kvec_d,
             ModuleCell::restrict_kpt(kvec_rot, epsilon);
             for (int k = 0; k < nkstot_ibz; ++k)
             {
-                if (equal(kvec_rot.x, kvec_d_ibz[k].x) && equal(kvec_rot.y, kvec_d_ibz[k].y)
-                    && equal(kvec_rot.z, kvec_d_ibz[k].z))
+                if (ModuleCell::kpoints_equivalent(kvec_rot, kvec_d_ibz[k], epsilon))
                 {
                     isym = j;
                     exist_number = k;

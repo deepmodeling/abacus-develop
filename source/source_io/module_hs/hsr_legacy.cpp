@@ -28,7 +28,8 @@ void ModuleIO::output_dSR(const int& istep,
                           const MatROutputOptions& options,
                           const bool gamma_only_local,
                           const int npol,
-                          const int nlocal)
+                          const int nlocal,
+                          std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "output_dSR");
     ModuleBase::timer::start("ModuleIO", "output_dSR");
@@ -41,7 +42,7 @@ void ModuleIO::output_dSR(const int& istep,
     ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, options.sparse_threshold, options.binary,
                              fileflag_s, options.precision, options.global_out_dir,
                              options.global_matrix_dir, options.calculation, options.out_app_flag,
-                             options.nspin, nlocal);
+                             options.nspin, nlocal, ofs_running);
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays, options.nspin);
 
@@ -60,7 +61,8 @@ void ModuleIO::output_dHR(const int& istep,
                           const MatROutputOptions& options,
                           const bool gamma_only_local,
                           const int npol,
-                          const int nlocal)
+                          const int nlocal,
+                          std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "output_dHR");
     ModuleBase::timer::start("ModuleIO", "output_dHR");
@@ -86,7 +88,7 @@ void ModuleIO::output_dHR(const int& istep,
     ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, options.sparse_threshold, options.binary,
                              fileflag_h, options.precision, options.global_out_dir,
                              options.global_matrix_dir, options.calculation, options.out_app_flag,
-                             options.nspin, nlocal);
+                             options.nspin, nlocal, ofs_running);
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays, options.nspin);
 
@@ -106,12 +108,13 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                          const std::string& global_matrix_dir,
                          const std::string& calculation,
                          const bool out_app_flag,
-                         const int nspin)
+                         const int nspin,
+                         std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "output_SR");
     ModuleBase::timer::start("ModuleIO", "output_SR");
 
-    GlobalV::ofs_running << " Overlap matrix file is in " << SR_filename << std::endl;
+    ofs_running << " Write S(R) matrix in NAO basis to file: " << SR_filename << std::endl;
 
     LCAO_HS_Arrays HS_Arrays;
 
@@ -164,7 +167,8 @@ void ModuleIO::output_TR(const int istep,
                          const TwoCenterBundle& two_center_bundle,
                          const LCAO_Orbitals& orb,
                          const std::string& TR_filename,
-                         const MatROutputOptions& options)
+                         const MatROutputOptions& options,
+                         std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "output_TR");
     ModuleBase::timer::start("ModuleIO", "output_TR");
@@ -182,8 +186,7 @@ void ModuleIO::output_TR(const int istep,
     {
         sst << options.global_out_dir << TR_filename;
     }
-    GlobalV::ofs_running << " T(R) data are in file: " << sst.str() << std::endl;
-
+    ofs_running << " Write T(R) matrix in NAO basis to file: " << sst.str() << std::endl;
     sparse_format::cal_TR(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, options.sparse_threshold);
     ModuleIO::SparseWriteOptions sparse_options;
     sparse_options.filename = sst.str();
@@ -218,7 +221,8 @@ template void ModuleIO::output_SR<double>(Parallel_Orbitals& pv,
                                           const std::string& global_matrix_dir,
                                           const std::string& calculation,
                                           const bool out_app_flag,
-                                          const int nspin);
+                                          const int nspin,
+                                          std::ofstream& ofs_running);
 template void ModuleIO::output_SR<std::complex<double>>(Parallel_Orbitals& pv,
                                                         const Grid_Driver& grid,
                                                         hamilt::Hamilt<std::complex<double>>* p_ham,
@@ -230,4 +234,5 @@ template void ModuleIO::output_SR<std::complex<double>>(Parallel_Orbitals& pv,
                                                         const std::string& global_matrix_dir,
                                                         const std::string& calculation,
                                                         const bool out_app_flag,
-                                                        const int nspin);
+                                                        const int nspin,
+                                                        std::ofstream& ofs_running);

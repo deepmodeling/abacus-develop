@@ -24,6 +24,9 @@ namespace ModuleSymmetry
         Symmetry_rotation_k() {};
         virtual ~Symmetry_rotation_k() {};
 
+        /// Discard geometry-dependent caches before rebuilding symmetry for a new cell.
+        void reset_symmetry();
+
         //--------------------------------------------------------------------------------
         // getters
         const std::map<Tap, std::set<TC>>& get_irreducible_sector()const { return this->irs_.get_irreducible_sector(); }

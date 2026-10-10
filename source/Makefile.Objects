@@ -212,6 +212,9 @@ OBJS_CELL=atom_pseudo.o\
     read_pp_blps.o\
     read_pp_vwr.o\
     unitcell.o\
+    unitcell_index.o\
+    unitcell_stats.o\
+    unitcell_setup.o\
     read_atoms.o\
     read_atoms_helper.o\
     print_cell.o\
@@ -1012,6 +1015,7 @@ OBJS_DELTASPIN=basic_funcs.o\
       deltaspin_init.o\
       lambda_loop_helper.o\
       lambda_loop.o\
+      lambda_loop_diag.o\
       spin_constrain.o\
       deltaspin_lcao.o\
       deltaspin_lcao_mi.o\

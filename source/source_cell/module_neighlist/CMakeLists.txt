@@ -1,5 +1,6 @@
 set(neighbor_search_sources
     bin_manager.cpp
+    neighbor_list.cpp
     neighbor_search.cpp
     page_allocator.cpp
 )

@@ -23,6 +23,9 @@ install(FILES bcast_sep_cell_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 list(APPEND cell_simple_srcs
     ../unitcell.cpp
+    ../unitcell_index.cpp
+    ../unitcell_stats.cpp
+    ../unitcell_setup.cpp
     ../update_cell.cpp
     ../bcast_cell.cpp
     ../print_cell.cpp
@@ -138,6 +141,9 @@ AddTest(
     ../print_cell.cpp
     ../atom_spec.cpp
     ../unitcell.cpp
+    ../unitcell_index.cpp
+    ../unitcell_stats.cpp
+    ../unitcell_setup.cpp
     ../update_cell.cpp
     ../bcast_cell.cpp
     ../atom_pseudo.cpp
@@ -213,6 +219,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_CELL_unitcell_index_test
+  LIBS base device cell_info symmetry
+  SOURCES test_unitcell_index.cpp ../magnetism.cpp
+)
+
+AddTest(
   TARGET MODULE_CELL_print_cell_test
   LIBS base device cell_info symmetry
   SOURCES test_print_cell.cpp
@@ -250,7 +262,7 @@ AddTest(
 AddTest(
   TARGET MODULE_CELL_SEP_TEST
   LIBS base device
-  SOURCES read_sep_test.cpp ../sep.cpp
+  SOURCES test_read_sep.cpp ../sep.cpp
 )
 
 add_test(NAME MODULE_CELL_read_sep_parallel
@@ -261,7 +273,7 @@ add_test(NAME MODULE_CELL_read_sep_parallel
 AddTest(
   TARGET MODULE_CELL_SEP_CELL_TEST
   LIBS base device
-  SOURCES sepcell_test.cpp ../sep.cpp ../sep_cell.cpp
+  SOURCES test_sepcell.cpp ../sep.cpp ../sep_cell.cpp
 )
 
 add_test(NAME MODULE_CELL_sep_cell_parallel

@@ -59,6 +59,9 @@ namespace
 
 using BandTopology = std::pair<int, int>;
 
+// Dummy output stream for running-log writes in tests; discards output.
+std::ofstream ofs_running;
+
 // GoogleTest evaluates this generator during InitGoogleTest, after MPI_Init.
 std::vector<BandTopology> band_topologies()
 {
@@ -301,7 +304,7 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
         {
             SCOPED_TRACE(distributed ? "distributed" : "replicated");
             prepare(nspin, 3, distributed);
-            ModuleIO::write_bands(input_, ekb_, kv_);
+            ModuleIO::write_bands(input_, ekb_, kv_, ofs_running);
             if (nspin == 2)
             {
                 expect_output("bands1.txt", 0, 3, 0.0, 8, 1);
@@ -363,11 +366,11 @@ TEST_P(BandOutputTest, OverwriteAndAppend)
     prepare(1, 3, true);
     seed_file("band.txt", "stale output\n");
     Parallel::barrier(*world_);
-    ModuleIO::write_bands(input_, ekb_, kv_);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running);
     expect_output("band.txt", 0, 3, 0.0, 8, 1);
     Parallel::barrier(*world_);
     parameters_->set_output(directory_, true);
-    ModuleIO::write_bands(input_, ekb_, kv_);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running);
     expect_output("band.txt", 0, 3, 0.0, 8, 2);
 }
 
@@ -375,11 +378,11 @@ TEST_P(BandOutputTest, OutputDisabled)
 {
     prepare(1, 3, true);
     input_.out_band[0] = 0;
-    ModuleIO::write_bands(input_, ekb_, kv_);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running);
     expect_missing("band.txt");
     seed_file("band.txt", "keep this content\n");
     Parallel::barrier(*world_);
-    ModuleIO::write_bands(input_, ekb_, kv_);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running);
     if (world_->rank() == 0)
     {
         EXPECT_EQ(read_text("band.txt"), "keep this content\n");
@@ -410,9 +413,30 @@ TEST_P(BandOutputTest, EmptyBandShard)
     {
         EXPECT_EQ(ekb_.nc, 0);
     }
-    ModuleIO::write_bands(input_, ekb_, kv_);
+    ModuleIO::write_bands(input_, ekb_, kv_, ofs_running);
     expect_output("bands1.txt", 0, 1, 0.0, 8, 1);
     expect_output("bands2.txt", 1, 1, 0.0, 8, 1);
+}
+
+TEST_P(BandOutputTest, RunningLogNamesSpinChannels)
+{
+    prepare(2, 3, false);
+    const std::string log_name = "write_bands_running_p" + std::to_string(world_->size()) + "_r"
+                                 + std::to_string(world_->rank()) + ".log";
+    std::ofstream log(log_name);
+    EXPECT_TRUE(log.is_open());
+    ModuleIO::write_bands(input_, ekb_, kv_, log);
+    log.close();
+
+    std::ifstream in(log_name);
+    const std::string text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    in.close();
+    std::remove(log_name.c_str());
+
+    const std::string up_line = " Write eigenvalues (spin up  ) to file: " + directory_ + "bands1.txt";
+    const std::string down_line = " Write eigenvalues (spin down) to file: " + directory_ + "bands2.txt";
+    EXPECT_NE(text.find(up_line), std::string::npos) << text;
+    EXPECT_NE(text.find(down_line), std::string::npos) << text;
 }
 
 INSTANTIATE_TEST_SUITE_P(Topology, BandOutputTest, testing::ValuesIn(band_topologies()), topology_name);

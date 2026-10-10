@@ -68,33 +68,14 @@ namespace ModuleSymmetry
         const ModuleBase::Matrix3& gmatd, const TCdouble gtransd,
         const TCdouble& posd_a1, const TCdouble& posd_a2)const
     {
-        // auto restrict_center = [&symm](const TCdouble& v) -> TCdouble {
-        //     // in [-0.5, 0.5)
-        //     TCdouble vr;
-        //     vr.x = fmod(v.x + 100.5 + 0.5 * symm.epsilon, 1) - 0.5 - 0.5 * symm.epsilon;
-        //     vr.y = fmod(v.y + 100.5 + 0.5 * symm.epsilon, 1) - 0.5 - 0.5 * symm.epsilon;
-        //     vr.z = fmod(v.z + 100.5 + 0.5 * symm.epsilon, 1) - 0.5 - 0.5 * symm.epsilon;
-        //     if (std::abs(vr.x) < symm.epsilon) vr.x = 0.0;
-        //     if (std::abs(vr.y) < symm.epsilon) vr.y = 0.0;
-        //     if (std::abs(vr.z) < symm.epsilon) vr.z = 0.0;
-        //     return vr;
-        //     };
-        auto restrict_center = [&symm](const TCdouble& v) -> TCdouble {
-            // in [0,1)
-            TCdouble vr;
-            vr.x = fmod(v.x + 100 + symm.epsilon, 1) - symm.epsilon;
-            vr.y = fmod(v.y + 100 + symm.epsilon, 1) - symm.epsilon;
-            vr.z = fmod(v.z + 100 + symm.epsilon, 1) - symm.epsilon;
-            if (std::abs(vr.x) < symm.epsilon) vr.x = 0.0;
-            if (std::abs(vr.y) < symm.epsilon) vr.y = 0.0;
-            if (std::abs(vr.z) < symm.epsilon) vr.z = 0.0;
-            return vr;
-            };
+        // Keep the representatives used by the orbital integrals. Wrapping an
+        // atom near a cell boundary without retaining its integer shift changes
+        // the Bloch phase and the real-space atom-pair mapping.
         auto check_integer = [&symm](const double x) -> void {
             assert(symm.equal(x, std::round(x)));
             };
-        TCdouble rotpos1 = restrict_center(posd_a1) * gmatd + restrict_center(gtransd);  // row vector
-        TCdouble return_lattice_double = rotpos1 - restrict_center(posd_a2);
+        TCdouble rotpos1 = posd_a1 * gmatd + gtransd;  // row vector
+        TCdouble return_lattice_double = rotpos1 - posd_a2;
 #ifdef __DEBUG
         check_integer(return_lattice_double.x);
         check_integer(return_lattice_double.y);

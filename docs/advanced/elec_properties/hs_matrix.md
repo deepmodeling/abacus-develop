@@ -120,7 +120,7 @@ Each file starts with a header:
  --- Ionic Step 1 ---
  # print H matrix in real space H(R)
  1 # number of spin directions
- 1 # spin index
+ 1 # spin index, E_Fermi = 10.3798 eV
  100 # number of localized basis
  50 # number of Bravais lattice vector R
 
@@ -137,6 +137,8 @@ Each file starts with a header:
  # CSR row pointers
  0 3 7 ...
 ```
+
+The spin index line may carry an optional `, E_Fermi = <value> eV` suffix when the Fermi energy is available (only for the H matrix). The value is printed in eV with 6 significant digits.
 
 The CSR format stores a sparse m × n matrix M in row form using three arrays (values, column indices, row pointers). According to Wikipedia:
 

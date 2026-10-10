@@ -85,6 +85,15 @@ void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
     const Parallel_2D& pv)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_before_all_runners");
+    this->refresh_symmetry(kv, ucell, pv);
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::refresh_symmetry(
+    const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv)
+{
+    ModuleBase::TITLE("Exx_LRI_Interface", "refresh_symmetry");
+    this->symrot_.reset_symmetry();
     // initialize the rotation matrix in AO representation
     this->exx_spacegroup_symmetry = (ModuleSymmetry::Symmetry::symm_flag == 1);
     if (this->exx_spacegroup_symmetry)
@@ -103,12 +112,19 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
                                                 const K_Vectors& kv,
                                                 const Charge_Mixing& chgmix,
                                                 const UnitCell& ucell,
-                                                const LCAO_Orbitals& orb)
+                                                const LCAO_Orbitals& orb,
+                                                const Parallel_2D& pv,
+                                                const bool update_symmetry)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_beforescf");
 #ifdef __MPI
     if (this->info_global.cal_exx)
     {
+        if (update_symmetry)
+        {
+            this->refresh_symmetry(kv, ucell, pv);
+        }
+
         if ((GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx)
             || (istep > 0)
             || (PARAM.inp.init_wfc == "file"))
@@ -118,6 +134,18 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
         else
         {
             XC_Functional::set_xc_first_loop(ucell);
+        }
+
+        // Spencer's cutoff depends on the current cell volume. Rebuild the
+        // convolved orbitals and their integral tables when its parameters
+        // change: the tables depend on abfs_ccp, not just on the unchanged
+        // atomic basis. Retain the basis and Gaunt table while invalidating
+        // interpolation and point-value caches belonging to changed kernels.
+        const auto coulomb_settings = RI_Util::update_coulomb_settings(
+            this->exx_ptr->get_info_ri().coulomb_param, ucell, &kv);
+        if (coulomb_settings != this->exx_ptr->coulomb_settings)
+        {
+            this->exx_ptr->refresh_coulomb(ucell, orb, coulomb_settings);
         }
 
         this->cal_exx_ions(ucell,PARAM.inp.out_ri_cv);
@@ -162,10 +190,10 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                 || istep > 0
                 || PARAM.inp.init_wfc == "file") // non separate loop case
             || (this->info_global.separate_loop
-                && PARAM.inp.init_wfc == "file"
+                && (istep > 0 || PARAM.inp.init_wfc == "file")
                 && this->two_level_step == 0
                 && iter == 1)
-           )  // the first iter in separate loop case
+           )  // refresh the initial hybrid Hamiltonian for the current geometry
         {
             bool flag_restart = (iter == 1) ? true : false;
 
@@ -346,7 +374,9 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     auto restart_reset = [this]()
     { // avoid calling restart related procedure in the subsequent ion steps
         GlobalC::restart.info_load.restart_exx = true;
-        this->exx_ptr->Eexx = 0;
+        // Keep the energy paired with Hexxs until cal_exx_elec replaces both.
+        // Clearing only Eexx makes the next ionic step use an exchange
+        // Hamiltonian without its corresponding energy contribution.
     };
 
     // no separate_loop case
@@ -421,7 +451,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
 
             timeval t_end;       gettimeofday(&t_end, nullptr);
             std::cout << "and rerun SCF\t"
-                << std::setprecision(3) << std::setiosflags(std::ios::scientific)
+                << std::setprecision(3) << std::scientific
                 << (double)(t_end.tv_sec-t_start.tv_sec) + (double)(t_end.tv_usec-t_start.tv_usec)/1000000.0
                 << std::defaultfloat << " (s)" << std::endl;
             return false;

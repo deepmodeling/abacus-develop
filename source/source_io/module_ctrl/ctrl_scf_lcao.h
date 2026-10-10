@@ -17,6 +17,7 @@
 #include "source_pw/module_pwdft/stru_fac.h"   // use Structure_Factor
 
 #include <complex>
+#include <fstream>
 
 namespace ModuleIO
 {
@@ -47,6 +48,7 @@ void ctrl_scf_lcao(UnitCell& ucell,
                    const Exx_Info& exx_info,
                    const bool conv_esolver,
                    const bool scf_nmax_flag,
-                   const int istep);
+                   const int istep,
+                   std::ofstream& ofs_running);
 } // namespace ModuleIO
 #endif

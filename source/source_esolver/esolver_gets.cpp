@@ -208,7 +208,8 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                         PARAM.globalv.global_matrix_dir,
                         PARAM.inp.calculation,
                         PARAM.inp.out_app_flag,
-                        PARAM.inp.nspin);
+                        PARAM.inp.nspin,
+                        GlobalV::ofs_running);
 
     if (this->inp_->out_mat_r[0])
     {
@@ -225,7 +226,8 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                         PARAM.inp.calculation,
                         PARAM.inp.out_app_flag,
                         nlocal,
-                        PARAM.globalv.npol);
+                        PARAM.globalv.npol,
+                        GlobalV::ofs_running);
     }
 
     if (this->inp_->out_mat_ds[0])
@@ -251,7 +253,8 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                              mat_R_options,
                              PARAM.globalv.gamma_only_local,
                              PARAM.globalv.npol,
-                             PARAM.globalv.nlocal);
+                             PARAM.globalv.nlocal,
+                             GlobalV::ofs_running);
     }
 
     ModuleBase::timer::end("ESolver_GetS", "runner");

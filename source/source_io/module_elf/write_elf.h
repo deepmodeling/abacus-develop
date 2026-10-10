@@ -5,6 +5,8 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_estate/module_charge/charge.h"
 
+#include <fstream>
+
 namespace ModuleIO
 {
 void write_elf(
@@ -18,7 +20,8 @@ void write_elf(
     const UnitCell* ucell_,
     const int& precision,
     const std::string& geom_block,
-    const bool two_fermi);
+    const bool two_fermi,
+    std::ofstream& ofs_running);
 }
 
 #endif

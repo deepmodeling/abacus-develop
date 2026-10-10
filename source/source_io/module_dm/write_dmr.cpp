@@ -1,4 +1,5 @@
 #include "write_dmr.h"
+#include "source_io/module_output/spin_tag.h"
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
@@ -84,7 +85,8 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
                const bool append,
                const int* iat2iwt,
                const int nat,
-               const int istep)
+               const int istep,
+               std::ofstream& ofs_running)
 {
     const int nspin = dmr.size();
     assert(nspin > 0);
@@ -110,6 +112,8 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
             const int out_type = 1;
             std::string fname = PARAM.globalv.global_out_dir + dmr_gen_fname(out_type, ispin, append, istep);
             write_dmr_csr(fname, ucell, precision, &dm_serial, istep, ispin, nspin);
+            const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
+            ofs_running << " Write DM(R)" << spin_tag << " matrix in NAO basis to file: " << fname << std::endl;
         }
     }
 }

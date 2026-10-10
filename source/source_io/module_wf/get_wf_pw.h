@@ -44,7 +44,8 @@ class Get_wf_pw
                const K_Vectors& kv,
                const std::vector<int>& out_wfc_norm,
                const std::vector<int>& out_wfc_re_im,
-               const std::string& global_out_dir) const;
+               const std::string& global_out_dir,
+               std::ofstream& ofs_running) const;
 
   private:
     const psi::Psi<T, Device>& psi_;
@@ -72,6 +73,7 @@ class Get_wf_pw
                     const K_Vectors& kv,
                     const std::string& out_dir,
                     const Parallel::ParaBandOutput& band_output,
+                    std::ofstream& ofs_running,
                     Workspace* work) const;
     void write_complex(const int band,
                        const UnitCell& ucell,
@@ -79,6 +81,7 @@ class Get_wf_pw
                        const K_Vectors& kv,
                        const std::string& out_dir,
                        const Parallel::ParaBandOutput& band_output,
+                       std::ofstream& ofs_running,
                        Workspace* work) const;
 
     void calc_norm(const int spin_index, const double scale, Workspace* work) const;
@@ -96,7 +99,8 @@ class Get_wf_pw
                     const UnitCell& ucell,
                     const Parallel_Grid& pgrid,
                     const std::string& out_dir,
-                    const std::vector<double>& values) const;
+                    const std::vector<double>& values,
+                    std::ofstream& ofs_running) const;
 };
 } // namespace ModuleIO
 

@@ -43,10 +43,12 @@ class Exx_NAO
             const UnitCell &ucell, // unitcell
             const K_Vectors &kv,
             const LCAO_Orbitals &orb, // orbital info
+            const Parallel_Orbitals& pv,
             Charge_Mixing* p_chgmix,
             const int istep,
             const Input_para& inp,
             Exx_Info& exx_info);
+
 
 };
 

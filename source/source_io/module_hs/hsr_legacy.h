@@ -9,6 +9,7 @@
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/lcao_hs_arrays.h"
 
+#include <fstream>
 #include <string>
 
 // Legacy LCAO_HS_Arrays-based sparse matrix output path (dH/dR, dS/dR, T(R), S(R)).
@@ -43,7 +44,8 @@ void output_dHR(const int& istep,
                 const MatROutputOptions& options,
                 const bool gamma_only_local,
                 const int npol,
-                const int nlocal);
+                const int nlocal,
+                std::ofstream& ofs_running);
 
 void output_dSR(const int& istep,
                 const UnitCell& ucell,
@@ -55,7 +57,8 @@ void output_dSR(const int& istep,
                 const MatROutputOptions& options,
                 const bool gamma_only_local,
                 const int npol,
-                const int nlocal);
+                const int nlocal,
+                std::ofstream& ofs_running);
 
 void output_TR(const int istep,
                const UnitCell& ucell,
@@ -65,7 +68,8 @@ void output_TR(const int istep,
                const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
                const std::string& TR_filename,
-               const MatROutputOptions& options);
+               const MatROutputOptions& options,
+               std::ofstream& ofs_running);
 
 template <typename TK>
 void output_SR(Parallel_Orbitals& pv,
@@ -79,7 +83,8 @@ void output_SR(Parallel_Orbitals& pv,
                const std::string& global_matrix_dir,
                const std::string& calculation,
                const bool out_app_flag,
-               const int nspin);
+               const int nspin,
+               std::ofstream& ofs_running);
 
 } // namespace ModuleIO
 

@@ -32,6 +32,9 @@ AddTest(
 	../../../source_estate/occ_matrix.cpp
 	../../../source_estate/occ_mixer.cpp
 	../../../source_cell/unitcell.cpp
+	../../../source_cell/unitcell_index.cpp
+	../../../source_cell/unitcell_stats.cpp
+	../../../source_cell/unitcell_setup.cpp
 	../../../source_cell/atom_spec.cpp
 	../../../source_cell/atom_pseudo.cpp
 	../../../source_cell/pseudo.cpp
@@ -60,6 +63,9 @@ AddTest(
 	LIBS parameter base device planewave
 	SOURCES structure_factor_test.cpp ../stru_fac.cpp
 	../../../source_cell/unitcell.cpp
+	../../../source_cell/unitcell_index.cpp
+	../../../source_cell/unitcell_stats.cpp
+	../../../source_cell/unitcell_setup.cpp
 
 	../../../source_cell/update_cell.cpp
 	../../../source_cell/bcast_cell.cpp

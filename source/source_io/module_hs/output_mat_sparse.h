@@ -8,6 +8,8 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_pw/module_pwdft/dftu_base.h" // mohan add 20251107
 
+#include <fstream>
+
 namespace ModuleIO
 {
 struct MatSparseOutputOptions
@@ -36,7 +38,8 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
                        hamilt::Hamilt<T>* p_ham,
-                       Plus_U_Base* p_dftu);
+                       Plus_U_Base* p_dftu,
+                       std::ofstream& ofs_running);
 } // namespace ModuleIO
 
 #endif // OUTPUT_MAT_SPARSE_H

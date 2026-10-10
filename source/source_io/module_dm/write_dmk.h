@@ -5,6 +5,7 @@
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
 
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -76,7 +77,8 @@ void write_dmk(const std::vector<std::vector<T>>& dmk,
                const UnitCell* ucell,
                const Parallel_2D& pv,
                const std::string& dmk_dir,
-               const int istep);
+               const int istep,
+               std::ofstream& ofs_running);
 
 } // namespace ModuleIO
 
