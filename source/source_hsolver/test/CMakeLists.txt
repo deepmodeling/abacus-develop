@@ -137,6 +137,11 @@ AddTest(
   SOURCES test_diago_ppcg.cpp ../diago_ppcg.cpp
 )
 AddTest(
+  TARGET MODULE_HSOLVER_diago_params
+  LIBS parameter base psi device
+  SOURCES test_diago_params.cpp ../diago_params.cpp
+)
+AddTest(
   TARGET MODULE_HSOLVER_ppcg_float
   LIBS parameter base psi device container
   SOURCES test_diago_ppcg_float.cpp ../diago_ppcg.cpp

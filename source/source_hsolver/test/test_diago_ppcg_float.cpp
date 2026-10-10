@@ -245,3 +245,42 @@ TEST(DiagoPPCGFloatTest, NonFiniteInputThrows)
                              psi.data(), eval.data(), ethr, bad_prec.data()),
                  std::invalid_argument);
 }
+
+TEST(DiagoPPCGFloatTest, RankDeficientStartupSubspace)
+{
+    const int n_dim = 4;
+    const int nband = 2;
+    const int ld = n_dim;
+    const Real inv_sqrt_two = Real(1) / std::sqrt(Real(2));
+    std::vector<T> h_mat(n_dim * n_dim, T(0));
+    std::vector<Real> prec(n_dim);
+    for (int i = 0; i < n_dim; ++i)
+    {
+        const Real value = Real(i + 1);
+        h_mat[i + i * n_dim] = T(value, 0);
+        prec[i] = value;
+    }
+
+    std::vector<T> psi(ld * nband, T(0));
+    psi[0] = T(inv_sqrt_two, 0);
+    psi[1] = T(inv_sqrt_two, 0);
+    psi[3 + ld] = T(1, 0);
+    std::vector<Real> eval(nband, Real(0));
+    const std::vector<double> ethr(nband, 1e-4);
+    const auto h_op = [&h_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
+        dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
+    };
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+        /* diag_thr = */ 1e-5f,
+        /* max_iter = */ 20,
+        /* sbsize   = */ 1,
+        /* rr_step  = */ 2,
+        /* gamma_g0 = */ false);
+
+    solver.diag(h_op, nullptr, ld, nband, n_dim,
+                psi.data(), eval.data(), ethr, prec.data());
+
+    EXPECT_NEAR(eval[0], Real(1), Real(2e-4));
+    EXPECT_NEAR(eval[1], Real(2), Real(2e-4));
+    EXPECT_TRUE(solver.converged());
+}

@@ -59,6 +59,21 @@ public:
                 const std::vector<double>& ethr_band,
                 const Real* prec);
 
+    bool converged() const
+    {
+        return converged_;
+    }
+
+    int active_band_count() const
+    {
+        return active_band_count_;
+    }
+
+    bool iteration_limit_reached() const
+    {
+        return iteration_limit_reached_;
+    }
+
 private:
     // -------------------------------------------------------------------------
     // Data members
@@ -73,6 +88,9 @@ private:
     int ld_psi_ = 0;
     int n_band_ = 0;
     int n_dim_ = 0;
+    bool converged_ = false;
+    int active_band_count_ = 0;
+    bool iteration_limit_reached_ = false;
 
     // Cached S-operator (null if identity).
     SPsiFunc spsi_func_;
@@ -170,6 +188,26 @@ private:
         std::vector<T> hp_new;
     };
 
+    void scale_to_unit_snorm(std::vector<T>& x,
+                             std::vector<T>& sx,
+                             std::vector<T>& hx,
+                             int ncols) const;
+
+    void hermitize_projected(std::vector<T>& matrix, int dim) const;
+
+    void insert_startup_gram_block(const T* left,
+                                   const T* right,
+                                   int row_offset,
+                                   int column_offset,
+                                   std::vector<T>& matrix,
+                                   std::vector<T>& workspace) const;
+
+    void build_startup_global_subspace(const T* psi,
+                                       SmallSubspace& subspace);
+
+    void update_startup_global_subspace(T* psi,
+                                        const SmallSubspace& subspace);
+
     void lock_epairs(const std::vector<T>& residual,
                      const std::vector<double>& ethr_band,
                      std::vector<int>& active_cols) const;
@@ -189,7 +227,7 @@ private:
                           int nblk,
                           SmallSubspace& subspace);
 
-    void rayleigh_ritz(T* psi, Real* eigenvalue,
+    bool rayleigh_ritz(T* psi, Real* eigenvalue,
                        std::vector<int>& active_cols,
                        const std::vector<double>& ethr_band);
 };

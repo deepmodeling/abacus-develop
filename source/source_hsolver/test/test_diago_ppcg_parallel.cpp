@@ -69,7 +69,7 @@ int main(int argc, char** argv)
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 100,
-        /* sbsize   = */ nband,
+        /* sbsize   = */ 2,
         /* rr_step  = */ nband,
         /* gamma_g0 = */ false);
 

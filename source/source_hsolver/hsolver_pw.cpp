@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <ostream>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <vector>
 
@@ -26,22 +27,30 @@ namespace hsolver
 
 namespace
 {
+struct PPCGRunResult
+{
+    double average_iterations;
+    bool converged;
+    int active_band_count;
+    bool iteration_limit_reached;
+};
+
 template <typename T, typename Device, typename Real, typename HPsiFunc, typename SPsiFunc>
-double run_ppcg_pw(const HPsiFunc& hpsi_func,
-                   const SPsiFunc& spsi_func,
-                   const int ld_psi,
-                   const int nband,
-                   const int dim,
-                   T* psi,
-                   Real* eigenvalue,
-                   const std::vector<double>& ethr_band,
-                   const Real* pre_condition,
-                   const double diag_thr,
-                   const int diag_iter_max,
-                   const int pw_diag_ndim,
-                   const int rr_step,
-                   const bool gamma_only,
-                   std::true_type)
+PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
+                          const SPsiFunc& spsi_func,
+                          const int ld_psi,
+                          const int nband,
+                          const int dim,
+                          T* psi,
+                          Real* eigenvalue,
+                          const std::vector<double>& ethr_band,
+                          const Real* pre_condition,
+                          const double diag_thr,
+                          const int diag_iter_max,
+                          const int pw_diag_ndim,
+                          const int rr_step,
+                          const bool gamma_only,
+                          std::true_type)
 {
     const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
     const int rr_step_safe = std::max(1, rr_step);
@@ -52,33 +61,38 @@ double run_ppcg_pw(const HPsiFunc& hpsi_func,
                               rr_step_safe,
                               gamma_only);
 
-    return ppcg.diag(hpsi_func,
-                     spsi_func,
-                     ld_psi,
-                     nband,
-                     dim,
-                     psi,
-                     eigenvalue,
-                     ethr_band,
-                     pre_condition);
+    PPCGRunResult result;
+    result.average_iterations = ppcg.diag(hpsi_func,
+                                          spsi_func,
+                                          ld_psi,
+                                          nband,
+                                          dim,
+                                          psi,
+                                          eigenvalue,
+                                          ethr_band,
+                                          pre_condition);
+    result.converged = ppcg.converged();
+    result.active_band_count = ppcg.active_band_count();
+    result.iteration_limit_reached = ppcg.iteration_limit_reached();
+    return result;
 }
 
 template <typename T, typename Device, typename Real, typename HPsiFunc, typename SPsiFunc>
-double run_ppcg_pw(const HPsiFunc& hpsi_func,
-                   const SPsiFunc& spsi_func,
-                   const int ld_psi,
-                   const int nband,
-                   const int dim,
-                   T* psi,
-                   Real* eigenvalue,
-                   const std::vector<double>& ethr_band,
-                   const Real* pre_condition,
-                   const double diag_thr,
-                   const int diag_iter_max,
-                   const int pw_diag_ndim,
-                   const int rr_step,
-                   const bool gamma_only,
-                   std::false_type)
+PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
+                          const SPsiFunc& spsi_func,
+                          const int ld_psi,
+                          const int nband,
+                          const int dim,
+                          T* psi,
+                          Real* eigenvalue,
+                          const std::vector<double>& ethr_band,
+                          const Real* pre_condition,
+                          const double diag_thr,
+                          const int diag_iter_max,
+                          const int pw_diag_ndim,
+                          const int rr_step,
+                          const bool gamma_only,
+                          std::false_type)
 {
     const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
     const int rr_step_safe = std::max(1, rr_step);
@@ -146,18 +160,22 @@ double run_ppcg_pw(const HPsiFunc& hpsi_func,
                                                sbsize,
                                                rr_step_safe,
                                                gamma_only);
-    const double avg_iter = ppcg.diag(bridge_hpsi,
-                                      bridge_spsi,
-                                      ld_psi,
-                                      nband,
-                                      dim,
-                                      psi_host.data(),
-                                      eigenvalue,
-                                      ethr_band,
-                                      pre_condition);
+    PPCGRunResult result;
+    result.average_iterations = ppcg.diag(bridge_hpsi,
+                                           bridge_spsi,
+                                           ld_psi,
+                                           nband,
+                                           dim,
+                                           psi_host.data(),
+                                           eigenvalue,
+                                           ethr_band,
+                                           pre_condition);
+    result.converged = ppcg.converged();
+    result.active_band_count = ppcg.active_band_count();
+    result.iteration_limit_reached = ppcg.iteration_limit_reached();
     base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
         psi, psi_host.data(), nelem);
-    return avg_iter;
+    return result;
 }
 } // namespace
 
@@ -496,7 +514,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         const auto spsi_func = [&op](T* psi_in, T* spsi_out, const int ld, const int nvec) {
             op.spsi(psi_in, spsi_out, ld, nvec);
         };
-        DiagoIterAssist<T, Device>::avg_iter += run_ppcg_pw<T, Device, Real>(
+        const std::is_same<Device, base_device::DEVICE_CPU> cpu_path;
+        const PPCGRunResult ppcg_result = run_ppcg_pw<T, Device, Real>(
             hpsi_func,
             spsi_func,
             psi.get_nbasis(),
@@ -511,7 +530,26 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
             DiagoIterAssist<T, Device>::PW_DIAG_NDIM,
             DiagoIterAssist<T, Device>::PW_DIAG_RR_STEP,
             this->wfc_basis->gamma_only,
-            std::is_same<Device, base_device::DEVICE_CPU>());
+            cpu_path);
+        DiagoIterAssist<T, Device>::avg_iter += ppcg_result.average_iterations;
+        if (!ppcg_result.converged)
+        {
+            std::string warning;
+            if (ppcg_result.iteration_limit_reached)
+            {
+                warning = "PPCG reached pw_diag_nmax="
+                          + std::to_string(this->diag_iter_max)
+                          + " with " + std::to_string(ppcg_result.active_band_count)
+                          + " active band(s); requested residual thresholds were not all reached.";
+            }
+            else
+            {
+                warning = "PPCG final convergence validation failed with "
+                          + std::to_string(ppcg_result.active_band_count)
+                          + " active band(s).";
+            }
+            ModuleBase::WARNING("HSolverPW::hamiltSolvePsiK", warning);
+        }
     }
     ModuleBase::timer::end("HSolverPW", "solve_psik");
     return;

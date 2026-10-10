@@ -21,7 +21,11 @@ const double ppcg_minimum_diagonalization_threshold = 1.0e-14;
 const double ppcg_preconditioner_threshold = 1.0e-12;
 const double ppcg_numerical_threshold = 1.0e-30;
 const double ppcg_scaling_threshold = 1.0e-15;
-const double ppcg_subspace_rank_threshold = 1.0e-12;
+const int ppcg_stagnation_restart_interval = 15;
+// Relative cutoff for overlap eigenvalues in a local [X, W, P] subspace.
+// Directions below this level are numerically dependent; retaining them can
+// make the reduced generalized solve stagnate instead of improving a Ritz pair.
+const double ppcg_subspace_rank_threshold = 1.0e-8;
 
 // Diagonal shifts used by the small projected eigensolve fallback.
 const double ppcg_subspace_shifts[] = {0.0, 1.0e-10, 1.0e-8, 1.0e-6};
@@ -56,6 +60,13 @@ void reduce_pool_if_mpi_ready(Value* value, const int n)
 #endif
 }
 
+bool all_pool_operations_succeeded(const bool local_success)
+{
+    int failure_count = local_success ? 0 : 1;
+    reduce_pool_if_mpi_ready(&failure_count, 1);
+    return failure_count == 0;
+}
+
 template <typename T, typename Real>
 Real max_generalized_residual(
     const T* hpsi,
@@ -83,7 +94,12 @@ Real max_generalized_residual(
     reduce_pool_if_mpi_ready(nrm2_all.data(), ncol);
     for (int j = 0; j < ncol; ++j)
     {
-        max_res = std::max(max_res, std::sqrt(Real(nrm2_all[j])));
+        const Real residual_norm = std::sqrt(Real(nrm2_all[j]));
+        if (!std::isfinite(residual_norm))
+        {
+            return std::numeric_limits<Real>::infinity();
+        }
+        max_res = std::max(max_res, residual_norm);
     }
     return max_res;
 }
@@ -513,9 +529,11 @@ namespace hsolver {
 //==============================================================================
 
 // ---------------------------------------------------------------------------
-// Lock converged eigenpairs: a band whose residual norm (H|psi> - eps*S|psi>)
-// is below the threshold is converged.  This matches the CG/BPCG criterion and
-// detects both gradual and one-step convergence.
+// Lock only a contiguous prefix of converged eigenpairs.  A small residual
+// proves that a vector is an eigenpair, but it does not prove that it belongs
+// to the requested lowest roots.  Keeping every band after the first
+// unconverged root active lets an evolving lower root replace a later exact
+// high-energy state.
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::lock_epairs(
@@ -539,15 +557,251 @@ void DiagoPPCG<T, Device>::lock_epairs(
         nrm2_all[j] = nrm2;
     }
     reduce_pool_if_mpi_ready(nrm2_all.data(), n_band_);
+    bool found_unconverged = false;
     for (int j = 0; j < n_band_; ++j)
     {
         const Real rnrm = std::sqrt(std::max(Real(nrm2_all[j]), Real(0)));
         const Real thr = std::max(Real(ethr_band[j]), diag_thr_);
-        if (rnrm > thr)
+        if (!std::isfinite(rnrm) || rnrm > thr)
+        {
+            found_unconverged = true;
+        }
+        if (found_unconverged)
         {
             active_cols.push_back(j);
         }
     }
+}
+
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::scale_to_unit_snorm(std::vector<T>& x,
+                                                std::vector<T>& sx,
+                                                std::vector<T>& hx,
+                                                const int ncols) const
+{
+    std::vector<double> inverse_snorm(ncols, 0.0);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ * ncols > ppcg_openmp_work_threshold)
+#endif
+    for (int j = 0; j < ncols; ++j)
+    {
+        double snorm_squared = 0.0;
+        for (int ig = 0; ig < n_dim_; ++ig)
+        {
+            snorm_squared += double(std::real(
+                std::conj(x[idx(ig, j, ld_psi_)])
+                * sx[idx(ig, j, ld_psi_)]));
+        }
+        inverse_snorm[j] = snorm_squared;
+    }
+    reduce_pool_if_mpi_ready(inverse_snorm.data(), ncols);
+    for (int j = 0; j < ncols; ++j)
+    {
+        const Real snorm = std::sqrt(std::max(
+            Real(inverse_snorm[j]), Real(ppcg_numerical_threshold)));
+        inverse_snorm[j] = snorm > Real(ppcg_scaling_threshold)
+                             ? double(Real(1) / snorm)
+                             : 1.0;
+    }
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * ncols > ppcg_openmp_work_threshold)
+#endif
+    for (int j = 0; j < ncols; ++j)
+    {
+        for (int ig = 0; ig < n_dim_; ++ig)
+        {
+            const Real scale = Real(inverse_snorm[j]);
+            x[idx(ig, j, ld_psi_)] *= scale;
+            sx[idx(ig, j, ld_psi_)] *= scale;
+            hx[idx(ig, j, ld_psi_)] *= scale;
+        }
+    }
+}
+
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::hermitize_projected(std::vector<T>& matrix,
+                                                const int dim) const
+{
+    for (int j = 0; j < dim; ++j)
+    {
+        matrix[j + j * dim] = T(std::real(matrix[j + j * dim]), 0);
+        for (int i = j + 1; i < dim; ++i)
+        {
+            const T value = (matrix[i + j * dim]
+                             + std::conj(matrix[j + i * dim]))
+                            * Real(0.5);
+            matrix[i + j * dim] = value;
+            matrix[j + i * dim] = std::conj(value);
+        }
+    }
+}
+
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::insert_startup_gram_block(
+    const T* left,
+    const T* right,
+    const int row_offset,
+    const int column_offset,
+    std::vector<T>& matrix,
+    std::vector<T>& workspace) const
+{
+    const int block_size = n_band_;
+    const int matrix_dim = 2 * n_band_;
+    gram(left, right, block_size, block_size, workspace, block_size);
+    for (int j = 0; j < block_size; ++j)
+    {
+        for (int i = 0; i < block_size; ++i)
+        {
+            const int matrix_index = row_offset + i
+                                     + (column_offset + j) * matrix_dim;
+            matrix[matrix_index] = workspace[i + j * block_size];
+        }
+    }
+}
+
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::build_startup_global_subspace(
+    const T* psi,
+    SmallSubspace& subspace)
+{
+    scale_to_unit_snorm(w_, sw_, hw_, n_band_);
+
+    const int local_dim = 2 * n_band_;
+    const int matrix_size = local_dim * local_dim;
+    subspace.k.assign(matrix_size, T(0));
+    subspace.m.assign(matrix_size, T(0));
+    subspace.eval.resize(local_dim);
+    std::vector<T> gram_workspace;
+
+    insert_startup_gram_block(psi,
+                              hpsi_.data(),
+                              0,
+                              0,
+                              subspace.k,
+                              gram_workspace);
+    insert_startup_gram_block(psi,
+                              hw_.data(),
+                              0,
+                              n_band_,
+                              subspace.k,
+                              gram_workspace);
+    insert_startup_gram_block(w_.data(),
+                              hpsi_.data(),
+                              n_band_,
+                              0,
+                              subspace.k,
+                              gram_workspace);
+    insert_startup_gram_block(w_.data(),
+                              hw_.data(),
+                              n_band_,
+                              n_band_,
+                              subspace.k,
+                              gram_workspace);
+    insert_startup_gram_block(psi,
+                              spsi_.data(),
+                              0,
+                              0,
+                              subspace.m,
+                              gram_workspace);
+    insert_startup_gram_block(psi,
+                              sw_.data(),
+                              0,
+                              n_band_,
+                              subspace.m,
+                              gram_workspace);
+    insert_startup_gram_block(w_.data(),
+                              spsi_.data(),
+                              n_band_,
+                              0,
+                              subspace.m,
+                              gram_workspace);
+    insert_startup_gram_block(w_.data(),
+                              sw_.data(),
+                              n_band_,
+                              n_band_,
+                              subspace.m,
+                              gram_workspace);
+
+    hermitize_projected(subspace.k, local_dim);
+    hermitize_projected(subspace.m, local_dim);
+}
+
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::update_startup_global_subspace(
+    T* psi,
+    const SmallSubspace& subspace)
+{
+    const int local_dim = 2 * n_band_;
+    const T* state_coefficients = subspace.k.data();
+    const T* correction_coefficients = state_coefficients + n_band_;
+    const T one = T(1);
+    const T zero = T(0);
+
+    set_zero(rr_psi_);
+    set_zero(rr_spsi_);
+    set_zero(rr_hpsi_);
+    set_zero(p_);
+    set_zero(sp_);
+    set_zero(hp_);
+
+    auto combine_state = [&](const T* state,
+                             const T* correction,
+                             T* output)
+    {
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         n_dim_,
+                                         n_band_,
+                                         n_band_,
+                                         &one,
+                                         state,
+                                         ld_psi_,
+                                         state_coefficients,
+                                         local_dim,
+                                         &zero,
+                                         output,
+                                         ld_psi_);
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         n_dim_,
+                                         n_band_,
+                                         n_band_,
+                                         &one,
+                                         correction,
+                                         ld_psi_,
+                                         correction_coefficients,
+                                         local_dim,
+                                         &one,
+                                         output,
+                                         ld_psi_);
+    };
+    auto combine_direction = [&](const T* correction, T* output)
+    {
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         n_dim_,
+                                         n_band_,
+                                         n_band_,
+                                         &one,
+                                         correction,
+                                         ld_psi_,
+                                         correction_coefficients,
+                                         local_dim,
+                                         &zero,
+                                         output,
+                                         ld_psi_);
+    };
+
+    combine_state(psi, w_.data(), rr_psi_.data());
+    combine_state(spsi_.data(), sw_.data(), rr_spsi_.data());
+    combine_state(hpsi_.data(), hw_.data(), rr_hpsi_.data());
+    combine_direction(w_.data(), p_.data());
+    combine_direction(sw_.data(), sp_.data());
+    combine_direction(hw_.data(), hp_.data());
+
+    std::copy(rr_psi_.begin(), rr_psi_.end(), psi);
+    std::copy(rr_spsi_.begin(), rr_spsi_.end(), spsi_.begin());
+    std::copy(rr_hpsi_.begin(), rr_hpsi_.end(), hpsi_.begin());
 }
 
 // ---------------------------------------------------------------------------
@@ -589,45 +843,6 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     // Scaling to unit S-norm keeps M well-conditioned (diagonal ~1) without
     // changing the subspace. The same scaled basis is reused in update_one_block.
     // ---------------------------------------------------------------------------
-    auto scale_to_unit_snorm = [this](std::vector<T>& x,
-                                      std::vector<T>& sx,
-                                      std::vector<T>& hx,
-                                      int lcols) {
-        std::vector<double> sn_scale_all(lcols, 0.0);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ * lcols > ppcg_openmp_work_threshold)
-#endif
-        for (int j = 0; j < lcols; ++j) {
-            double sn2 = 0.0;
-            for (int ig = 0; ig < n_dim_; ++ig)
-            {
-                sn2 += double(std::real(std::conj(x[idx(ig, j, ld_psi_)])
-                                                     * sx[idx(ig, j, ld_psi_)]));
-            }
-            sn_scale_all[j] = sn2;
-        }
-        reduce_pool_if_mpi_ready(sn_scale_all.data(), lcols);
-        for (int j = 0; j < lcols; ++j) {
-            Real sn = std::sqrt(std::max(Real(sn_scale_all[j]),
-                                         Real(ppcg_numerical_threshold)));
-            // Only scale if the norm is non-negligible; a near-zero
-            // column is a converged band whose contribution is harmless.
-            sn_scale_all[j] = (sn > Real(ppcg_scaling_threshold))
-                            ? double(Real(1) / sn)
-                            : 1.0;
-        }
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * lcols > ppcg_openmp_work_threshold)
-#endif
-        for (int j = 0; j < lcols; ++j) {
-            for (int ig = 0; ig < n_dim_; ++ig) {
-                const Real scale = Real(sn_scale_all[j]);
-                x[ idx(ig, j, ld_psi_)] *= scale;
-                sx[idx(ig, j, ld_psi_)] *= scale;
-                hx[idx(ig, j, ld_psi_)] *= scale;
-            }
-        }
-    };
     scale_to_unit_snorm(subspace.w_l,
                         subspace.sw_l,
                         subspace.hw_l,
@@ -655,21 +870,6 @@ void DiagoPPCG<T, Device>::build_small_subspace(
         }
     };
 
-    auto hermitize = [&](std::vector<T>& mat)
-    {
-        for (int j = 0; j < dim; ++j)
-        {
-            mat[j + j * dim] = T(std::real(mat[j + j * dim]), 0);
-            for (int i = j + 1; i < dim; ++i)
-            {
-                const T avg = (mat[i + j * dim] + std::conj(mat[j + i * dim]))
-                            * Real(0.5);
-                mat[i + j * dim] = avg;
-                mat[j + i * dim] = std::conj(avg);
-            }
-        }
-    };
-
     subspace.basis.resize(ld_psi_ * dim);
     subspace.hbasis.resize(ld_psi_ * dim);
     subspace.sbasis.resize(ld_psi_ * dim);
@@ -688,8 +888,8 @@ void DiagoPPCG<T, Device>::build_small_subspace(
 
     gram(subspace.basis.data(), subspace.hbasis.data(), dim, dim, subspace.k, dim);
     gram(subspace.basis.data(), subspace.sbasis.data(), dim, dim, subspace.m, dim);
-    hermitize(subspace.k);
-    hermitize(subspace.m);
+    hermitize_projected(subspace.k, dim);
+    hermitize_projected(subspace.m, dim);
 }
 
 // ---------------------------------------------------------------------------
@@ -709,6 +909,7 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
     // eigenspace of M and map the Ritz vectors back to the original basis.
     std::vector<T> overlap_eigenvectors = m0;
     std::vector<Real> overlap_eigenvalues(dim);
+    bool local_rank_truncation_succeeded = false;
     try
     {
         container::kernels::lapack_heevd<T, container::DEVICE_CPU>()(
@@ -717,9 +918,13 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
             dim,
             overlap_eigenvalues.data());
 
-        const Real largest_overlap_eigenvalue = overlap_eigenvalues.back();
+        const Real largest_overlap_eigenvalue = std::max(overlap_eigenvalues.back(), Real(0));
+        const Real precision_floor = Real(10) * std::numeric_limits<Real>::epsilon();
+        const Real relative_rank_threshold = std::max(
+            Real(ppcg_subspace_rank_threshold),
+            precision_floor);
         const Real overlap_cutoff = largest_overlap_eigenvalue
-                                    * Real(ppcg_subspace_rank_threshold);
+                                    * relative_rank_threshold;
         std::vector<int> retained_indices;
         retained_indices.reserve(dim);
         for (int i = 0; i < dim; ++i)
@@ -733,35 +938,66 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
         const int retained_dim = int(retained_indices.size());
         if (retained_dim >= nstates && retained_dim < dim)
         {
-            std::vector<Real> inverse_sqrt_overlap(retained_dim);
-            for (int i = 0; i < retained_dim; ++i)
-            {
-                const int source_index = retained_indices[i];
-                inverse_sqrt_overlap[i] = Real(1)
-                                           / std::sqrt(overlap_eigenvalues[source_index]);
-            }
-
-            std::vector<T> reduced_hamiltonian(retained_dim * retained_dim, T(0));
+            std::vector<T> retained_basis(dim * retained_dim, T(0));
             for (int j = 0; j < retained_dim; ++j)
             {
-                const int right_index = retained_indices[j];
-                const Real right_scale = inverse_sqrt_overlap[j];
-                for (int i = 0; i < retained_dim; ++i)
+                const int source_index = retained_indices[j];
+                const Real scale = Real(1)
+                                   / std::sqrt(overlap_eigenvalues[source_index]);
+                for (int row = 0; row < dim; ++row)
                 {
-                    const int left_index = retained_indices[i];
-                    const Real left_scale = inverse_sqrt_overlap[i];
-                    T value = T(0);
-                    for (int col = 0; col < dim; ++col)
-                    {
-                        const T right = overlap_eigenvectors[col + right_index * dim];
-                        for (int row = 0; row < dim; ++row)
-                        {
-                            const T left = std::conj(
-                                overlap_eigenvectors[row + left_index * dim]);
-                            value += left * k0[row + col * dim] * right;
-                        }
-                    }
-                    reduced_hamiltonian[i + j * retained_dim] = T(left_scale * right_scale) * value;
+                    retained_basis[row + j * dim] = overlap_eigenvectors[row + source_index * dim]
+                                                      * scale;
+                }
+            }
+
+            // Q = U_r Lambda_r^(-1/2) orthonormalizes the retained overlap
+            // subspace.  Use BLAS for Q^H K Q rather than a four-index
+            // contraction: the latter becomes prohibitively expensive when
+            // the first global correction contains many nearly dependent
+            // residual directions.
+            const T one = T(1);
+            const T zero = T(0);
+            std::vector<T> projected_hamiltonian(dim * retained_dim, T(0));
+            ModuleBase::gemm_op<T, Device>()('N',
+                                             'N',
+                                             dim,
+                                             retained_dim,
+                                             dim,
+                                             &one,
+                                             k0.data(),
+                                             dim,
+                                             retained_basis.data(),
+                                             dim,
+                                             &zero,
+                                             projected_hamiltonian.data(),
+                                             dim);
+            std::vector<T> reduced_hamiltonian(retained_dim * retained_dim, T(0));
+            ModuleBase::gemm_op<T, Device>()('C',
+                                             'N',
+                                             retained_dim,
+                                             retained_dim,
+                                             dim,
+                                             &one,
+                                             retained_basis.data(),
+                                             dim,
+                                             projected_hamiltonian.data(),
+                                             dim,
+                                             &zero,
+                                             reduced_hamiltonian.data(),
+                                             retained_dim);
+            for (int j = 0; j < retained_dim; ++j)
+            {
+                const Real diagonal_value = std::real(
+                    reduced_hamiltonian[j + j * retained_dim]);
+                reduced_hamiltonian[j + j * retained_dim] = T(diagonal_value, Real(0));
+                for (int i = 0; i < j; ++i)
+                {
+                    const T value = Real(0.5) * (
+                        reduced_hamiltonian[i + j * retained_dim]
+                        + std::conj(reduced_hamiltonian[j + i * retained_dim]));
+                    reduced_hamiltonian[i + j * retained_dim] = value;
+                    reduced_hamiltonian[j + i * retained_dim] = std::conj(value);
                 }
             }
 
@@ -776,25 +1012,30 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
             for (int state = 0; state < nstates; ++state)
             {
                 subspace.eval[state] = reduced_eigenvalues[state];
-                for (int row = 0; row < dim; ++row)
-                {
-                    T coefficient = T(0);
-                    for (int i = 0; i < retained_dim; ++i)
-                    {
-                        const int source_index = retained_indices[i];
-                        const T overlap_vector = overlap_eigenvectors[row + source_index * dim];
-                        const T reduced_vector = reduced_hamiltonian[i + state * retained_dim];
-                        coefficient += overlap_vector * inverse_sqrt_overlap[i] * reduced_vector;
-                    }
-                    subspace.k[row + state * dim] = coefficient;
-                }
             }
-            return;
+            ModuleBase::gemm_op<T, Device>()('N',
+                                             'N',
+                                             dim,
+                                             nstates,
+                                             retained_dim,
+                                             &one,
+                                             retained_basis.data(),
+                                             dim,
+                                             reduced_hamiltonian.data(),
+                                             retained_dim,
+                                             &zero,
+                                             subspace.k.data(),
+                                             dim);
+            local_rank_truncation_succeeded = true;
         }
     }
     catch (const std::runtime_error&)
     {
         // The shifted generalized solve below remains the fallback.
+    }
+    if (all_pool_operations_succeeded(local_rank_truncation_succeeded))
+    {
+        return;
     }
 
     // Try with increasing diagonal shifts; fall back to identity (no update)
@@ -813,16 +1054,21 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
             subspace.m[i + i * dim] += T(shift);
         }
 
+        bool local_sygvd_succeeded = false;
         try
         {
             HermitianLapack<T>::sygvd(dim, subspace.k.data(),
                                       subspace.m.data(),
                                       subspace.eval.data());
-            return;
+            local_sygvd_succeeded = true;
         }
         catch (const std::runtime_error&)
         {
             // Try the next diagonal shift.
+        }
+        if (all_pool_operations_succeeded(local_sygvd_succeeded))
+        {
+            return;
         }
     }
     // All attempts failed — set eigenvectors to identity (no update).
@@ -953,7 +1199,7 @@ void DiagoPPCG<T, Device>::update_one_block(
 // Rayleigh-Ritz: full subspace diagonalization + residual computation
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::rayleigh_ritz(
+bool DiagoPPCG<T, Device>::rayleigh_ritz(
     T* psi, Real* eigenvalue,
     std::vector<int>& active_cols,
     const std::vector<double>& ethr_band)
@@ -961,17 +1207,22 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
     gram(psi, hpsi_.data(), n_band_, n_band_, rr_hsub_, n_band_);
     gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
 
-    bool sygvd_ok = false;
+    bool local_sygvd_ok = false;
     try
     {
         HermitianLapack<T>::sygvd(n_band_, rr_hsub_.data(), rr_ssub_.data(),
                                   rr_eval_.data());
-        sygvd_ok = true;
+        local_sygvd_ok = true;
     }
     catch (const std::runtime_error&)
     {
-        // Fallback: diagonal Rayleigh quotients.
-        // hsub and ssub may be corrupted by sygvd; re-form them.
+        // The collective result below selects one common fallback on all ranks.
+    }
+    const bool sygvd_ok = all_pool_operations_succeeded(local_sygvd_ok);
+    if (!sygvd_ok)
+    {
+        // LAPACK may overwrite the projected matrices before failing.  Re-form
+        // them on every rank so all ranks enter the same fallback path.
         gram(psi, hpsi_.data(), n_band_, n_band_, rr_hsub_, n_band_);
         gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
         for (int ii = 0; ii < n_band_; ++ii)
@@ -1064,7 +1315,19 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
         }
     }
 
-    lock_epairs(w_, ethr_band, active_cols);
+    if (sygvd_ok)
+    {
+        lock_epairs(w_, ethr_band, active_cols);
+    }
+    else
+    {
+        // Without a successful global Rayleigh-Ritz solve, the columns are
+        // not known to be ordered by eigenvalue.  Do not hard-lock an
+        // arbitrary column based on its residual alone.
+        active_cols.resize(n_band_);
+        std::iota(active_cols.begin(), active_cols.end(), 0);
+    }
+    return sygvd_ok;
 }
 
 } // namespace hsolver
@@ -1077,18 +1340,21 @@ namespace hsolver {
 //==============================================================================
 template <typename T, typename Device>
 double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
-                               const SPsiFunc& spsi_func,
-                               int ld_psi,
-                               int nband,
-                               int dim,
-                               T* psi_in,
-                               Real* eigenvalue_in,
-                               const std::vector<double>& ethr_band,
-                               const Real* prec)
+                                  const SPsiFunc& spsi_func,
+                                  int ld_psi,
+                                  int nband,
+                                  int dim,
+                                  T* psi_in,
+                                  Real* eigenvalue_in,
+                                  const std::vector<double>& ethr_band,
+                                  const Real* prec)
 {
     ld_psi_ = ld_psi;
     n_band_ = nband;
     n_dim_ = dim;
+    converged_ = false;
+    active_band_count_ = 0;
+    iteration_limit_reached_ = false;
 
     validate_input(hpsi_func, psi_in, eigenvalue_in, ethr_band, prec);
     spsi_func_ = spsi_func;
@@ -1194,7 +1460,18 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     };
 
     // Initialize with Rayleigh-Ritz.
-    rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+    bool last_rr_succeeded = rayleigh_ritz(
+        psi_in, eigenvalue_in, active_cols, ethr_band);
+    const bool needs_startup_global_correction = !active_cols.empty()
+                                                 && sbsize_ < ncol;
+    if (needs_startup_global_correction)
+    {
+        // A local block can discard a lower-root residual direction before
+        // the global Rayleigh-Ritz step can compare it with other blocks.
+        // Keep every residual direction during the first correction, so the
+        // requested lowest roots are selected in one common subspace.
+        active_cols = all_cols;
+    }
     // Recompute to keep hpsi/spi consistent with rotated psi.
     apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
     apply_s_current(psi_in, spsi_.data(), ncol);
@@ -1278,20 +1555,34 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // The w/p blocks are normalized to unit S-norm before building the
         // Gram matrix (see build_small_subspace), keeping M well-conditioned.
 
-        // Block subspace solve.
-        const int nblk = use_p ? 3 : 2;
-        for (int isb = 0; isb < nsb; ++isb)
+        // The startup correction needs a global [X, W] comparison to retain
+        // the requested lowest roots.  Build its projected matrices directly
+        // from the persistent blocks to avoid materializing three additional
+        // ld_psi-by-nband bases.  Other sweeps retain the generic local path.
+        if (iter == 1 && needs_startup_global_correction)
         {
-            const int i0 = isb * sbsize_;
-            const int l = std::min(sbsize_, nact - i0);
-            cols.assign(active_cols.begin() + i0,
-                        active_cols.begin() + i0 + l);
-
-            build_small_subspace(psi_in, cols, nblk, subspace);
-            const int local_dim = nblk * l;
+            const int local_dim = 2 * ncol;
+            build_startup_global_subspace(psi_in, subspace);
             measure_local_overlap(subspace, local_dim);
-            solve_small_generalized(local_dim, l, subspace);
-            update_one_block(psi_in, cols, l, nblk, subspace);
+            solve_small_generalized(local_dim, ncol, subspace);
+            update_startup_global_subspace(psi_in, subspace);
+        }
+        else
+        {
+            const int nblk = use_p ? 3 : 2;
+            for (int isb = 0; isb < nsb; ++isb)
+            {
+                const int i0 = isb * sbsize_;
+                const int l = std::min(sbsize_, nact - i0);
+                cols.assign(active_cols.begin() + i0,
+                            active_cols.begin() + i0 + l);
+
+                build_small_subspace(psi_in, cols, nblk, subspace);
+                const int local_dim = nblk * l;
+                measure_local_overlap(subspace, local_dim);
+                solve_small_generalized(local_dim, l, subspace);
+                update_one_block(psi_in, cols, l, nblk, subspace);
+            }
         }
         use_p = true;
 
@@ -1299,7 +1590,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // synchronized with the updated active vectors.  The block update
         // can otherwise drift into an ill-conditioned basis before the next
         // Ritz rotation.
-        rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+        last_rr_succeeded = rayleigh_ritz(
+            psi_in, eigenvalue_in, active_cols, ethr_band);
         // Restart the search direction if the residual keeps rising.  With a
         // poor preconditioner the LOBPCG recurrence can stagnate (or slowly
         // diverge) instead of reducing the residual.  Requiring several
@@ -1321,7 +1613,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             {
                 ++no_improve;
             }
-            if (no_improve >= 15)
+            if (no_improve >= ppcg_stagnation_restart_interval)
             {
                 std::fill(p_.begin(), p_.end(), T(0));
                 std::fill(sp_.begin(), sp_.end(), T(0));
@@ -1347,9 +1639,41 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         ++iter;
     }
 
-    // Final consistency: ensure hpsi/spi match the converged psi.
+    // Final consistency: ensure H|psi> and S|psi> match the returned vectors,
+    // then classify convergence from those final residuals rather than from a
+    // cached Rayleigh-Ritz state.
     apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
     apply_s_current(psi_in, spsi_.data(), ncol);
+    set_zero(w_);
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
+#endif
+    for (int j = 0; j < n_band_; ++j)
+    {
+        for (int ig = 0; ig < n_dim_; ++ig)
+        {
+            w_[idx(ig, j, ld_psi_)] = hpsi_[idx(ig, j, ld_psi_)]
+                                      - spsi_[idx(ig, j, ld_psi_)] * eigenvalue_in[j];
+        }
+    }
+    if (last_rr_succeeded)
+    {
+        lock_epairs(w_, ethr_band, active_cols);
+    }
+    else
+    {
+        active_cols = all_cols;
+    }
+    active_band_count_ = int(active_cols.size());
+    converged_ = last_rr_succeeded && active_cols.empty();
+    iteration_limit_reached_ = !converged_ && iter > maxiter_;
+    if (!active_cols.empty())
+    {
+        const char* failure_stage = iteration_limit_reached_
+                                    ? "max_iterations"
+                                    : "final_residual_failure";
+        record_residual(iter - 1, failure_stage);
+    }
     record_residual(iter - 1, "final");
     return avg_iter;
 }
