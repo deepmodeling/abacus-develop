@@ -165,7 +165,7 @@ public:
    * @details Uses the DeltaSpin operator to compute magnetic moments from the density
    * matrix. For nspin=2, extracts only the z-component. For nspin=4, extracts
    * all three components from the interleaved 4-component spinor density matrix.
-   * The moments are stored in state_.Mi_ (indexed by global atom index iat).
+   * The moments are stored in ScState (indexed by global atom index iat).
    *
    * @param step Current SCF iteration number (for logging)
    * @param print Whether to print moments to ofs_running

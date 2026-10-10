@@ -60,7 +60,7 @@ void init_sc_state(const ScInitParams& params, const UnitCell& ucell, ScState& s
     // Step 4: Load target magnetic moments and initial lambda from UnitCell
     // These are parsed from the STRU file's "sc_mag" and "lambda" keywords
     state.set_target_mag(unitcell::get_target_mag(ucell.atoms, ucell.ntype, ucell.nat));
-    state.lambda_ = unitcell::get_lambda(ucell.atoms, ucell.ntype, ucell.nat);
+    state.mutable_lambda() = unitcell::get_lambda(ucell.atoms, ucell.ntype, ucell.nat);
     state.constrain_ = unitcell::get_constrain(ucell.atoms, ucell.ntype, ucell.nat);
 
     // Step 5: CRITICAL FIX for collinear spin (nspin=2)

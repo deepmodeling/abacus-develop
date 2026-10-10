@@ -61,22 +61,22 @@ void cal_mi_lcao(ScState& state,
         dm->switch_dmr(0);
 
         // For nspin=2, only z-component is meaningful
-        for (int iat = 0; iat < state.Mi_.size(); iat++)
+        for (int iat = 0; iat < state.get_Mi().size(); iat++)
         {
-            state.Mi_[iat].x = 0.0;
-            state.Mi_[iat].y = 0.0;
-            state.Mi_[iat].z = moments[iat];
+            state.mutable_Mi()[iat].x = 0.0;
+            state.mutable_Mi()[iat].y = 0.0;
+            state.mutable_Mi()[iat].z = moments[iat];
         }
     }
     else if (state.nspin_ == 4)
     {
         // For nspin=4, moments array contains interleaved [Mx, My, Mz] per atom
         moments = static_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>*>(p_operator)->cal_moment(dmr, state.get_constrain());
-        for (int iat = 0; iat < state.Mi_.size(); iat++)
+        for (int iat = 0; iat < state.get_Mi().size(); iat++)
         {
-            state.Mi_[iat].x = moments[iat * 3];
-            state.Mi_[iat].y = moments[iat * 3 + 1];
-            state.Mi_[iat].z = moments[iat * 3 + 2];
+            state.mutable_Mi()[iat].x = moments[iat * 3];
+            state.mutable_Mi()[iat].y = moments[iat * 3 + 1];
+            state.mutable_Mi()[iat].z = moments[iat * 3 + 2];
         }
     }
 
@@ -167,15 +167,15 @@ void calculate_mw_from_orbitals(const std::vector<std::vector<std::vector<double
             }
             if (state.nspin_ == 2)
             {
-                state.Mi_[iat].x = 0.0;
-                state.Mi_[iat].y = 0.0;
-                state.Mi_[iat].z = atom_mag;
+                state.mutable_Mi()[iat].x = 0.0;
+                state.mutable_Mi()[iat].y = 0.0;
+                state.mutable_Mi()[iat].z = atom_mag;
             }
             else if (state.nspin_ == 4)
             {
-                state.Mi_[iat].x = (std::abs(total_charge_soc[1]) < state.sc_thr_)? 0.0 : total_charge_soc[1];
-                state.Mi_[iat].y = (std::abs(total_charge_soc[2]) < state.sc_thr_)? 0.0 : total_charge_soc[2];
-                state.Mi_[iat].z = (std::abs(total_charge_soc[3]) < state.sc_thr_)? 0.0 : total_charge_soc[3];
+                state.mutable_Mi()[iat].x = (std::abs(total_charge_soc[1]) < state.sc_thr_)? 0.0 : total_charge_soc[1];
+                state.mutable_Mi()[iat].y = (std::abs(total_charge_soc[2]) < state.sc_thr_)? 0.0 : total_charge_soc[2];
+                state.mutable_Mi()[iat].z = (std::abs(total_charge_soc[3]) < state.sc_thr_)? 0.0 : total_charge_soc[3];
             }
         }
     }
