@@ -12,6 +12,8 @@
 #include "source_base/constants.h"
 #include "symm_basic.h"
 
+#include <vector>
+
 namespace ModuleSymmetry
 {
 
@@ -57,20 +59,20 @@ public:
     
     int ntype=0;      ///< the number of atomic species
     int nat  =0;       ///< the number of all atoms
-    int *na  =nullptr;///< number of atoms for each species
-    int *istart=nullptr; ///< start number of atom
+    std::vector<int> na;     ///< number of atoms for each species
+    std::vector<int> istart; ///< start number of atom
     int itmin_type=0; ///< the type has smallest number of atoms
     int itmin_start=0;
 
     /// @brief direct coordinates of atoms
-    double *newpos=nullptr;
+    std::vector<double> newpos;
     /// @brief positions of atoms after rotation
-    double *rotpos=nullptr;
+    std::vector<double> rotpos;
     
     
     std::vector<ModuleBase::Vector3<double>> ptrans; ///< the translation vectors of the primitive cell in the input structure
     int ncell=1;    ///< the number of primitive cells within one supercell
-    int *index=nullptr;
+    std::vector<int> index;
     
     double cel_const[6]={0.0};
     double pcel_const[6]={0.0};    ///< cel_const of primitive cell

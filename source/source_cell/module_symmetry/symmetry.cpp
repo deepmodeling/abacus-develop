@@ -19,9 +19,9 @@ void Symmetry::set_atom_map(const Atom* atoms)
         this->isym_rotiat_[i].resize(this->nat, -1);
     }
 
-    double* pos = this->newpos;
-    double* rotpos = this->rotpos;
-    ModuleBase::GlobalFunc::ZEROS(pos, this->nat * 3);
+    std::fill(this->newpos.begin(), this->newpos.end(), 0.0);
+    double* pos = this->newpos.data();
+    double* rotpos = this->rotpos.data();
     int iat = 0;
     for (int it = 0; it < this->ntype; it++)
     {
