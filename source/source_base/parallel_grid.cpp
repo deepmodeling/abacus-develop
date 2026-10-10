@@ -96,7 +96,6 @@ void Parallel_Grid::init_parallel(const int nprocgroup)
 
     this->z_distribution(GlobalV::KPAR);
 
-    return;
 }
 #endif
 void Parallel_Grid::init(const int& ncx_in,
@@ -109,16 +108,15 @@ void Parallel_Grid::init(const int& ncx_in,
                          const int nprocgroup)
 {
     this->init_serial(ncx_in, ncy_in, ncz_in, nczp_in, nrxx_in, nbz_in, bz_in);
-
-void Parallel_Grid::z_distribution(const int kpar)
 #ifdef __MPI
     this->init_parallel(nprocgroup);
 #endif
 }
+void Parallel_Grid::z_distribution(const int kpar)
 {
     assert(!this->numz.empty());
     assert(kpar > 0);
-
+    
     std::vector<int> startp(kpar);
     startp[0] = 0;
     for (int ip = 0; ip < kpar; ip++)
