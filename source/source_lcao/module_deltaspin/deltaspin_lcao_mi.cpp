@@ -61,7 +61,7 @@ void cal_mi_lcao(ScState& state,
         dm->switch_dmr(0);
 
         // For nspin=2, only z-component is meaningful
-        for (int iat = 0; iat < state.get_Mi().size(); iat++)
+        for (int iat = 0; iat < state.get_mi().size(); iat++)
         {
             state.get_mi()[iat].x = 0.0;
             state.get_mi()[iat].y = 0.0;
@@ -72,7 +72,7 @@ void cal_mi_lcao(ScState& state,
     {
         // For nspin=4, moments array contains interleaved [Mx, My, Mz] per atom
         moments = static_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>*>(p_operator)->cal_moment(dmr, state.get_constrain());
-        for (int iat = 0; iat < state.get_Mi().size(); iat++)
+        for (int iat = 0; iat < state.get_mi().size(); iat++)
         {
             state.get_mi()[iat].x = moments[iat * 3];
             state.get_mi()[iat].y = moments[iat * 3 + 1];

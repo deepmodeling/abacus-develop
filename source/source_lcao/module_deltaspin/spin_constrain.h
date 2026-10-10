@@ -401,7 +401,7 @@ public:
     /// get sc_drop_thr
     double get_sc_drop_thr() const { return state_.get_sc_drop_thr(); }
     /// get computed magnetic moments Mi per atom
-    const std::vector<ModuleBase::Vector3<double>>& get_Mi() const { return state_.get_Mi(); }
+    const std::vector<ModuleBase::Vector3<double>>& get_mi() const { return state_.get_mi(); }
     /// get human-readable atom labels ("Fe_0", "Fe_1", ...) for table printing
     const std::vector<std::string>& get_atomLabels() const { return state_.get_atomLabels(); }
     /// @brief set orbital parallel info

@@ -110,7 +110,7 @@ void cal_mi_pw(ScState& state,
     }
 #endif
     // MPI reduction: sum Mi across all k-pool ranks
-    Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(state.get_mi()[0][0]), 3 * state.get_Mi().size());
+    Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(state.get_mi()[0][0]), 3 * state.get_mi().size());
 
     ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mi_pw");
 }
@@ -175,7 +175,7 @@ void calculate_delta_hcc(ScState& state,
         // The coefficient array uses {up-up, down-up, up-down, down-down}.
         // Then: ps_up = coeff0 * becp_up + coeff2 * becp_dn
         //        ps_dn = coeff1 * becp_up + coeff3 * becp_dn
-        for (size_t iat = 0; iat < state.get_Mi().size(); iat++)
+        for (size_t iat = 0; iat < state.get_mi().size(); iat++)
         {
             const int nproj = nh_iat[iat];
             const std::complex<double> coefficients0(effective_lambda[iat][2], 0.0);
@@ -206,7 +206,7 @@ void calculate_delta_hcc(ScState& state,
         // ps = lambda_z * spin_sign * becp
         // spin_sign = +1 for spin-up k-points, -1 for spin-down
         const int spin_sign = spin_sign_at(state, pelec, ik);
-        for (size_t iat = 0; iat < state.get_Mi().size(); iat++)
+        for (size_t iat = 0; iat < state.get_mi().size(); iat++)
         {
             const int nproj = nh_iat[iat];
             double coefficients0 = effective_lambda[iat][2] * spin_sign;

@@ -300,7 +300,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar,
                                                     GlobalV::NPROC_IN_POOL,
                                                     &(this->state_.get_mi()[0][0]),
-                                                    3 * this->state_.get_Mi().size());
+                                                    3 * this->state_.get_mi().size());
         }
     }
     ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mw_from_lambda");

@@ -149,7 +149,7 @@ public:
     /// get sc_drop_thr
     double get_sc_drop_thr() const;
     /// get computed magnetic moments Mi per atom
-    const std::vector<ModuleBase::Vector3<double>>& get_Mi() const;
+    const std::vector<ModuleBase::Vector3<double>>& get_mi() const;
     /// get mutable computed magnetic moments Mi per atom
     std::vector<ModuleBase::Vector3<double>>& get_mi()
     {
