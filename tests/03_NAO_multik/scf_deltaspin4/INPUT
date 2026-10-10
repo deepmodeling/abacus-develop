@@ -1,11 +1,11 @@
 INPUT_PARAMETERS
 suffix            autotest
 calculation       scf
-ecutwfc           100
+ecutwfc           12
 scf_thr_type      2
 scf_thr           1e-10
 scf_ene_thr       1e-9
-scf_nmax          240
+scf_nmax          10
 smearing_method   gaussian
 smearing_sigma    0.01
 mixing_type       broyden

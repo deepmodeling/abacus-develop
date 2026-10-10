@@ -1,2 +1,2 @@
 Test LCAO DeltaSpin atomic forces with noncollinear spin (nspin=4) and SOC.
-Check the total atomic force regression for the two-overlap product-rule factor.
+Check the two-overlap product-rule force regression at 12 Ry with at most 10 SCF steps.
