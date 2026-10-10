@@ -215,12 +215,12 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
 #ifdef __MPI
         Parallel_Reduce::reduce_all(force.c, force.nr * force.nc);
 #endif
-        if (this->nspin != 4)
+        // cal_force_IJR differentiates only one overlap in B_mu * B_nu.
+        // The Hermitian partner contributes equally for every spin representation;
+        // this factor is from the product rule, not spin degeneracy.
+        for (int i = 0; i < force.nr * force.nc; i++)
         {
-            for (int i = 0; i < force.nr * force.nc; i++)
-            {
-                force.c[i] *= 2.0;
-            }
+            force.c[i] *= 2.0;
         }
     }
 
