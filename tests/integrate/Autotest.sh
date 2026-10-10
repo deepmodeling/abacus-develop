@@ -1,7 +1,26 @@
 #!/bin/bash
 
-# ABACUS executable path
-abacus=abacus
+# Optional local override file, not tracked by git (see .gitignore). When
+# present it is sourced first and may set the executable, e.g.:
+#     abacus=/home/me/abacus/build/abacus
+# The -a command-line flag (applied later) always wins over this file, and an
+# ABACUS_EXE exported in the environment wins over a path set here.
+# Effective priority:
+#     -a flag > ABACUS_EXE environment > general_info.local > 'abacus' from PATH
+# ABACUS_EXE is saved before sourcing so the local file cannot override it,
+# and 'abacus' is cleared so only the local file can set it.
+abacus_exe_env=${ABACUS_EXE:-}
+abacus=
+abacus_local_info="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/general_info.local"
+if [ -f "$abacus_local_info" ]; then
+    . "$abacus_local_info"
+fi
+
+# ABACUS executable path; override with the ABACUS_EXE environment variable
+# so both this script and general_info (via ${ABACUS_EXE}) share one setting.
+# A path set by general_info.local (above) is only used when ABACUS_EXE is
+# not exported.
+abacus=${abacus_exe_env:-${abacus:-abacus}}
 # number of MPI processes
 np=4
 nt=$OMP_NUM_THREADS # number of OpenMP threads, default is $OMP_NUM_THREADS
@@ -339,7 +358,7 @@ run_case()
                 test -d OUT.autotest || (echo "No 'OUT.autotest' dir presented. Some errors may happened in ABACUS." && exit 1)
                 if test -z $g
                 then
-                    bash -e ../../integrate/tools/catch_properties.sh result.out
+                    bash -e ../../integrate/validation_tools/catch_properties.sh result.out
                     if [ $? -ne 0 ]; then
                         echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
                         let fatal++
@@ -353,7 +372,7 @@ run_case()
                         check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $my_descriptor_threshold
                     fi
                 else
-                    bash -e ../../integrate/tools/catch_properties.sh result.ref
+                    bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
                 fi
             fi
 

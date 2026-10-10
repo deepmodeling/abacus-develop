@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TOOLS_DIR="../../integrate/tools/"
+TOOLS_DIR="../../integrate/validation_tools/"
 
 # The note for using the script.
 # input parameter: 
@@ -16,7 +16,10 @@ elif [ $1 == "debug" ]
 then
 	echo "Begin debug!"
 	cp $TOOLS_DIR/run_check.sh ./
-	cp $TOOLS_DIR/catch_properties.sh ./
+	# catch_properties.sh sources props_*.sh and the helper tools from its
+	# own directory, so copy the whole directory, not the entry script alone.
+	rm -rf ./validation_tools
+	cp -r $TOOLS_DIR ./validation_tools
 	./run_check.sh debug
 else
 	echo "Generate file result.ref ."
