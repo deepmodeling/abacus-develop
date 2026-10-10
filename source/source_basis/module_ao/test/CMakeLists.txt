@@ -63,6 +63,7 @@ AddTest(
 AddTest(
     TARGET MODULE_AO_ORB_atomic_lm_test
     SOURCES orb_atomic_lm_test.cpp
+        test_orb_atomic_lm.cpp
         ../orb_atomic_lm.cpp
     LIBS parameter device base
 )
