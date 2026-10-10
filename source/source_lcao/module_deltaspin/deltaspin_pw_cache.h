@@ -9,9 +9,8 @@
  * same SCF iteration, then freed after the final subspace diagonalization in
  * update_psi_charge_pw_{cpu,gpu}().
  *
- * This class owns the three raw device/host pointers plus the lambda snapshot
- * taken when the cache was filled, replacing the ad-hoc new[]/delete[] that used
- * to live as public SpinConstrain members. It encapsulates the CPU vs GPU
+ * This class owns the three host buffers and raw device pointers plus the lambda
+ * snapshot taken when the cache was filled. It encapsulates the CPU vs GPU
  * allocation/free difference behind allocate()/release(), while still exposing
  * raw per-k pointers (h_k/s_k/becp_k) because the hsolver subspace routines and
  * GPU memcpy ops require raw pointers.
@@ -47,29 +46,75 @@ class SubspaceCache
   public:
     SubspaceCache() = default;
 
-    // Owns raw memory; non-copyable, non-movable to keep ownership unambiguous.
+    // Owns cache memory; non-copyable, non-movable to keep ownership unambiguous.
     SubspaceCache(const SubspaceCache&) = delete;
     SubspaceCache& operator=(const SubspaceCache&) = delete;
 
     /// True when the subspace buffers are allocated.
-    bool allocated() const { return sub_h_save_ != nullptr; }
+    bool allocated() const
+    {
+#if ((defined __CUDA) || (defined __ROCM))
+        return !sub_h_save_.empty() || sub_h_save_gpu_ != nullptr;
+#else
+        return !sub_h_save_.empty();
+#endif
+    }
 
     /// Lambda values captured when the cache was filled.
     std::vector<ModuleBase::Vector3<double>>& lambda_in_sub() { return lambda_in_sub_; }
     const std::vector<ModuleBase::Vector3<double>>& lambda_in_sub() const { return lambda_in_sub_; }
 
     /// Raw base pointers (needed by hsolver subspace ops and GPU memcpy).
-    std::complex<double>* h() { return sub_h_save_; }
-    std::complex<double>* s() { return sub_s_save_; }
-    std::complex<double>* becp() { return becp_save_; }
+    std::complex<double>* h()
+    {
+#if ((defined __CUDA) || (defined __ROCM))
+        if (sub_h_save_gpu_ != nullptr)
+        {
+            return sub_h_save_gpu_;
+        }
+#endif
+        return sub_h_save_.data();
+    }
+    std::complex<double>* s()
+    {
+#if ((defined __CUDA) || (defined __ROCM))
+        if (sub_s_save_gpu_ != nullptr)
+        {
+            return sub_s_save_gpu_;
+        }
+#endif
+        return sub_s_save_.data();
+    }
+    std::complex<double>* becp()
+    {
+#if ((defined __CUDA) || (defined __ROCM))
+        if (becp_save_gpu_ != nullptr)
+        {
+            return becp_save_gpu_;
+        }
+#endif
+        return becp_save_.data();
+    }
 
     /// Per-k-point views.
-    std::complex<double>* h_k(int ik, int nbands) { return sub_h_save_ + ik * nbands * nbands; }
-    std::complex<double>* s_k(int ik, int nbands) { return sub_s_save_ + ik * nbands * nbands; }
-    std::complex<double>* becp_k(int ik, int size_becp) { return becp_save_ + ik * size_becp; }
+    std::complex<double>* h_k(int ik, int nbands)
+    {
+        std::complex<double>* base = h();
+        return base == nullptr ? nullptr : base + ik * nbands * nbands;
+    }
+    std::complex<double>* s_k(int ik, int nbands)
+    {
+        std::complex<double>* base = s();
+        return base == nullptr ? nullptr : base + ik * nbands * nbands;
+    }
+    std::complex<double>* becp_k(int ik, int size_becp)
+    {
+        std::complex<double>* base = becp();
+        return base == nullptr ? nullptr : base + ik * size_becp;
+    }
 
     /**
-     * @brief Allocate the three buffers on the host (CPU path) with new[].
+     * @brief Allocate the three buffers on the host (CPU path) with resize().
      * No-op if already allocated.
      */
     void allocate_cpu(int nbands, int nk, int size_becp)
@@ -78,22 +123,19 @@ class SubspaceCache
         {
             return;
         }
-        sub_h_save_ = new std::complex<double>[nbands * nbands * nk];
-        sub_s_save_ = new std::complex<double>[nbands * nbands * nk];
-        becp_save_ = new std::complex<double>[size_becp * nk];
+        sub_h_save_.resize(nbands * nbands * nk);
+        sub_s_save_.resize(nbands * nbands * nk);
+        becp_save_.resize(size_becp * nk);
     }
 
     /**
-     * @brief Release the host (CPU) buffers with delete[].
+     * @brief Release the host (CPU) buffers and their storage capacity.
      */
     void release_cpu()
     {
-        delete[] sub_h_save_;
-        delete[] sub_s_save_;
-        delete[] becp_save_;
-        sub_h_save_ = nullptr;
-        sub_s_save_ = nullptr;
-        becp_save_ = nullptr;
+        std::vector<std::complex<double>>().swap(sub_h_save_);
+        std::vector<std::complex<double>>().swap(sub_s_save_);
+        std::vector<std::complex<double>>().swap(becp_save_);
     }
 
 #if ((defined __CUDA) || (defined __ROCM))
@@ -108,9 +150,9 @@ class SubspaceCache
             return;
         }
         using mem = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
-        mem()(sub_h_save_, nbands * nbands * nk);
-        mem()(sub_s_save_, nbands * nbands * nk);
-        mem()(becp_save_, size_becp * nk);
+        mem()(sub_h_save_gpu_, nbands * nbands * nk);
+        mem()(sub_s_save_gpu_, nbands * nbands * nk);
+        mem()(becp_save_gpu_, size_becp * nk);
     }
 
     /**
@@ -119,19 +161,24 @@ class SubspaceCache
     void release_gpu()
     {
         using del = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
-        del()(sub_h_save_);
-        del()(sub_s_save_);
-        del()(becp_save_);
-        sub_h_save_ = nullptr;
-        sub_s_save_ = nullptr;
-        becp_save_ = nullptr;
+        del()(sub_h_save_gpu_);
+        del()(sub_s_save_gpu_);
+        del()(becp_save_gpu_);
+        sub_h_save_gpu_ = nullptr;
+        sub_s_save_gpu_ = nullptr;
+        becp_save_gpu_ = nullptr;
     }
 #endif // __CUDA || __ROCM
 
   private:
-    std::complex<double>* sub_h_save_ = nullptr; ///< Cached subspace Hamiltonian for all k-points
-    std::complex<double>* sub_s_save_ = nullptr; ///< Cached subspace overlap matrix for all k-points
-    std::complex<double>* becp_save_ = nullptr;  ///< Cached becp coefficients for all k-points
+    std::vector<std::complex<double>> sub_h_save_; ///< Host subspace Hamiltonian for all k-points
+    std::vector<std::complex<double>> sub_s_save_; ///< Host subspace overlap matrix for all k-points
+    std::vector<std::complex<double>> becp_save_;  ///< Host becp coefficients for all k-points
+#if ((defined __CUDA) || (defined __ROCM))
+    std::complex<double>* sub_h_save_gpu_ = nullptr; ///< Device subspace Hamiltonian for all k-points
+    std::complex<double>* sub_s_save_gpu_ = nullptr; ///< Device subspace overlap matrix for all k-points
+    std::complex<double>* becp_save_gpu_ = nullptr;  ///< Device becp coefficients for all k-points
+#endif
     std::vector<ModuleBase::Vector3<double>> lambda_in_sub_; ///< Lambda when the cache was saved
 };
 
