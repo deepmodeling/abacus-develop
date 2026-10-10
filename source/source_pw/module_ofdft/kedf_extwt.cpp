@@ -58,12 +58,10 @@ void KEDF_ExtWT::set_para(double dV,
     }
     this->wt_coef_ = 5. / wt_coef_den;
 
-    delete[] this->kernel_;
-    this->kernel_ = new double[pw_rho->npw];
+    this->kernel_.resize(pw_rho->npw);
     this->fill_kernel(tf_weight, vw_weight, pw_rho);
 
-    delete[] this->dkernel_deta_;
-    this->dkernel_deta_ = new double[pw_rho->npw];
+    this->dkernel_deta_.resize(pw_rho->npw);
 
     this->update_dkernel_deta(vw_weight, pw_rho);
 }
@@ -159,7 +157,7 @@ double KEDF_ExtWT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_
     for (int is = 0; is < PARAM.inp.nspin; ++is) {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
 }
-    this->multi_kernel(prho, this->kernel_, kernelRhoBeta, this->beta_, pw_rho);
+    this->multi_kernel(prho, this->kernel_.data(), kernelRhoBeta, this->beta_, pw_rho);
 
     double energy = 0.; // in Ry
     if (PARAM.inp.nspin == 1)
@@ -208,7 +206,7 @@ double KEDF_ExtWT::get_energy_density(const double* const* prho, int is, int ir,
     for (int is = 0; is < PARAM.inp.nspin; ++is) {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
 }
-    this->multi_kernel(prho, this->kernel_, kernelRhoBeta, this->beta_, pw_rho);
+    this->multi_kernel(prho, this->kernel_.data(), kernelRhoBeta, this->beta_, pw_rho);
 
     double result = this->c_tf_ * std::pow(prho[is][ir], this->alpha_) * kernelRhoBeta[is][ir];
 
@@ -233,7 +231,7 @@ void KEDF_ExtWT::tau_extwt(const double* const* prho, ModulePW::PW_Basis* pw_rho
     for (int is = 0; is < PARAM.inp.nspin; ++is) {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
 }
-    this->multi_kernel(prho, this->kernel_, kernelRhoBeta, this->beta_, pw_rho);
+    this->multi_kernel(prho, this->kernel_.data(), kernelRhoBeta, this->beta_, pw_rho);
 
     if (PARAM.inp.nspin == 1)
     {
@@ -273,13 +271,13 @@ void KEDF_ExtWT::extwt_potential(const double* const* prho, ModulePW::PW_Basis* 
     for (int is = 0; is < PARAM.inp.nspin; ++is) {
         kernelRhoBeta[is] = new double[pw_rho->nrxx];
     }
-    this->multi_kernel(prho, this->kernel_, kernelRhoBeta, this->beta_, pw_rho);
+    this->multi_kernel(prho, this->kernel_.data(), kernelRhoBeta, this->beta_, pw_rho);
 
     double** kernelRhoAlpha = new double*[PARAM.inp.nspin];
     for (int is = 0; is < PARAM.inp.nspin; ++is) {
         kernelRhoAlpha[is] = new double[pw_rho->nrxx];
     }
-    this->multi_kernel(prho, this->kernel_, kernelRhoAlpha, this->alpha_, pw_rho);
+    this->multi_kernel(prho, this->kernel_.data(), kernelRhoAlpha, this->alpha_, pw_rho);
 
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
@@ -310,7 +308,7 @@ void KEDF_ExtWT::extwt_potential(const double* const* prho, ModulePW::PW_Basis* 
     for (int is = 0; is < PARAM.inp.nspin; ++is) {
         dkernelRhoBeta[is] = new double[pw_rho->nrxx];
     }
-    this->multi_kernel(prho, this->dkernel_deta_, dkernelRhoBeta, this->beta_, pw_rho);
+    this->multi_kernel(prho, this->dkernel_deta_.data(), dkernelRhoBeta, this->beta_, pw_rho);
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
