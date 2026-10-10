@@ -118,6 +118,20 @@ extern "C"
             int *ipiv, std::complex<double>* B, const int* ib, const int* jb, const int*descb, const int *info
         );
 
+    void pdgesv_(
+            const int *n, const int *nrhs,
+            double *A, const int *ia, const int *ja, const int *desca,
+            int *ipiv, double* B, const int* ib, const int* jb, const int*descb, int *info
+        );
+
+    void pdpotrs_(const char* uplo, const int* n, const int* nrhs,
+        const double* A, const int* ia, const int* ja, const int* desca,
+        double* B, const int* ib, const int* jb, const int* descb, int* info);
+
+    void pzpotrs_(const char* uplo, const int* n, const int* nrhs,
+        const std::complex<double>* A, const int* ia, const int* ja, const int* desca,
+        std::complex<double>* B, const int* ib, const int* jb, const int* descb, int* info);
+
     void pdsygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
         const int* n, double* A, const int* ia, const int* ja, const int*desca, double* B, const int* ib, const int* jb, const int*descb,
         const double* vl, const double* vu, const int* il, const int* iu,
@@ -394,6 +408,33 @@ public:
         int *ipiv, std::complex<double>* B, const int ib, const int jb, const int*descb, int *info)
     {
         pzgesv_(&n, &nrhs, A, &ia, &ja, desca, ipiv, B, &ib, &jb, descb, info);
+    }
+
+    static inline
+    void gesv(
+        const int n, const int nrhs,
+        double *A, const int ia, const int ja, const int *desca,
+        int *ipiv, double* B, const int ib, const int jb, const int*descb, int *info)
+    {
+        pdgesv_(&n, &nrhs, A, &ia, &ja, desca, ipiv, B, &ib, &jb, descb, info);
+    }
+
+    static inline
+    void potrs(
+        const char uplo, const int n, const int nrhs,
+        const double* A, const int ia, const int ja, const int* desca,
+        double* B, const int ib, const int jb, const int* descb, int* info)
+    {
+        pdpotrs_(&uplo, &n, &nrhs, A, &ia, &ja, desca, B, &ib, &jb, descb, info);
+    }
+
+    static inline
+    void potrs(
+        const char uplo, const int n, const int nrhs,
+        const std::complex<double>* A, const int ia, const int ja, const int* desca,
+        std::complex<double>* B, const int ib, const int jb, const int* descb, int* info)
+    {
+        pzpotrs_(&uplo, &n, &nrhs, A, &ia, &ja, desca, B, &ib, &jb, descb, info);
     }
 
     static inline

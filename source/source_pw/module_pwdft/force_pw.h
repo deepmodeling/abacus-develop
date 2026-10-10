@@ -32,6 +32,8 @@ class Forces
     friend class Force_Stress_LCAO;
     template <class T>
     friend class hamilt::Veff;
+    template <typename T>
+    friend class ForcePWTerms;
     /* This routine is a driver routine which compute the forces
      * acting on the atoms, the complete forces in plane waves
      * is computed from 4 main parts

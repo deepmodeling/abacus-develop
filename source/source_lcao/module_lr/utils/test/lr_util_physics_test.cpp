@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <stdexcept>
 
 #include "../lr_util.h"
 struct Atom_pseudo_Test
@@ -34,6 +35,28 @@ TEST(LR_Util, cal_nocc)
     size_t nelec = 5;
     size_t nocc = LR_Util::cal_nocc(nelec);
     EXPECT_EQ(nocc, 3);
+}
+
+TEST(LR_Util, ChargedSpinOccupiedWindow)
+{
+    // The effective electron number includes nelec_delta exactly once.
+    EXPECT_EQ(LR_Util::cal_nocc(254.0, 2, 2), 128); // NV-: 128 up, 126 down
+    EXPECT_EQ(LR_Util::cal_nocc(254.0, 2, -2), 128);
+    EXPECT_EQ(LR_Util::cal_nocc(252.0, 2, 2), 127);
+    EXPECT_EQ(LR_Util::cal_nocc(7.0, 2, 1), 4); // CH3
+    EXPECT_EQ(LR_Util::cal_nocc(8.0, 2, 0), 4);
+    EXPECT_EQ(LR_Util::cal_nocc(8.0, 1, 0), 4);
+    EXPECT_EQ(LR_Util::cal_nocc(7.5, 2, 1), 5); // retain a partial frontier orbital
+    EXPECT_EQ(LR_Util::cal_nocc(8.0 + 1e-10, 1, 0), 4);
+    EXPECT_THROW(LR_Util::cal_nocc(2.0, 2, 3), std::invalid_argument);
+    const int full = LR_Util::cal_nocc(254.0, 2, 2);
+    EXPECT_EQ(LR_Util::cal_nocc_window(-1, full), 128);
+    EXPECT_EQ(LR_Util::cal_nocc_window(0, full), 128);
+    EXPECT_EQ(LR_Util::cal_nocc_window(819, full), 128);
+    const int selected = LR_Util::cal_nocc_window(4, full);
+    EXPECT_EQ(selected, 4);
+    EXPECT_EQ(full - selected, 124); // shared core prefix, up 4 and down 2
+    EXPECT_EQ(selected - 2, 2);
 }
 
 TEST(LR_Util, set_ix_map_diagonal)

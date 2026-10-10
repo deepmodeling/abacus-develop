@@ -66,6 +66,15 @@ public:
     Exx_LRI operator=(const Exx_LRI&) = delete;
     Exx_LRI operator=(Exx_LRI&&);
 
+    // accessors used by the LR-TDDFT analytical-gradient module
+    RI::Exx<TA, Tcell, Ndim, Tdata>& get() { return this->exx_lri; }
+    auto& get_info() const { return this->info; }
+    auto& get_mpi_comm() const { return this->mpi_comm; }
+
+    // Share read-only geometry tensors, but keep all electronic work buffers independent.
+    std::shared_ptr<Exx_LRI<Tdata>> make_lr_workspace(const UnitCell& ucell,
+                                                   const K_Vectors& kv) const;
+
     void init(
         const MPI_Comm &mpi_comm_in,
         const UnitCell &ucell,
@@ -120,6 +129,9 @@ public:
     ModuleBase::matrix force_exx;
     ModuleBase::matrix stress_exx;
 
+    void post_process_Hexx(std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Hexxs_io) const;
+    double post_process_Eexx(const double& Eexx_in) const;
+
     int abfs_Lmax() const { return abfs_Lmax_; }
     const Exx_Info_RI& get_info_ri() const { return info; }
 
@@ -138,9 +150,6 @@ private:
     //LRI_CV<Tdata> cv;
     RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
     CoulombSettings coulomb_settings;
-
-    void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;
-    double post_process_Eexx(const double& Eexx_in) const;
 
     friend class RPA_LRI<double, Tdata>;
     friend class RPA_LRI<std::complex<double>, Tdata>;

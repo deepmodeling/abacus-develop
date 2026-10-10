@@ -1,0 +1,1 @@
+Two-step LDA CH4 JT mixed-state following after splitting (3 -> 1). Checks dimensions, projection weight, singular values and finite energies/forces; requires LibXC KXC.

@@ -2,6 +2,7 @@
 #define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_SPECTRUM_MO_HPP
 
 #include "source_base/tool_title.h"
+#include "source_base/parallel_device.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/klist.h"
 #include "source_io/module_parameter/parameter.h"
@@ -104,7 +105,7 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
             for (int ik = 0; ik < nk; ++ik)
             {
                 int glb_offset = (is * 3 * nk + id * nk + ik) * KS_num * KS_num;
-                int loc_offset = ik * pmo.get_local_size();
+                int loc_offset = (is * nk + ik) * pmo.get_local_size();
                 for (int j = 0; j < pmo.get_col_size(); ++j){
                     for (int i = 0; i < pmo.get_row_size(); ++i){
                         velocity_mo[glb_offset + pmo.local2global_col(j) * KS_num + pmo.local2global_row(i)]
@@ -115,7 +116,10 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
         }
     }//id
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, velocity_mo.data(), velocity_mo.size(), LR_Util::MPIType<T>::value(), MPI_SUM, pmo.comm());
+    // velocity_mo is always complex, so MPIType<T> cannot be used here
+    const int velocity_size = static_cast<int>(velocity_mo.size());
+    const MPI_Comm velocity_comm = pmo.comm();
+    Parallel_Common::reduce_data(velocity_mo.data(), velocity_size, velocity_comm);
 #endif
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "Finish velocity matrix in KS presentation.");
     ModuleBase::timer::end("LR_Util", "cal_velocity_mo");

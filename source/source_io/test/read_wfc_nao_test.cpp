@@ -453,6 +453,99 @@ TEST_F(ReadWfcNaoTest, RejectTruncatedBinary)
 
 
 
+TEST_F(ReadWfcNaoTest, CompleteSpinPopulations)
+{
+    const int nbands = 4;
+    const int nlocal = 2;
+    const int nspin = 2;
+    const std::vector<int> ik2iktot = {0, 1};
+    ModuleBase::matrix energies(2, nbands);
+    ModuleBase::matrix occupations(2, nbands);
+    const std::vector<double> real_coefficients(nbands * nlocal, 0.25);
+    const std::vector<std::complex<double>> complex_coefficients(nbands * nlocal, {0.25, 0.125});
+    for (int ib = 0; ib < nbands; ++ib)
+    {
+        occupations(0, ib) = ib < 3 ? 1.0 : 0.0;
+        occupations(1, ib) = ib < 1 ? 1.0 : 0.0;
+    }
+    for (bool gamma_only : {true, false})
+    {
+        for (bool binary : {false, true})
+        {
+            const int file_type = binary ? 2 : 1;
+            std::vector<std::string> files;
+            for (int ik = 0; ik < 2; ++ik)
+            {
+                const std::string file = ModuleIO::filename_output(binary_test_dir, "wf", "nao",
+                    ik, ik2iktot, nspin, 2, file_type, false, gamma_only, -1);
+                files.push_back(file);
+                if (my_rank == 0)
+                {
+                    if (gamma_only)
+                    {
+                        ModuleIO::wfc_nao_write2file(file, real_coefficients.data(), nlocal,
+                            ik, energies, occupations, binary, false);
+                    }
+                    else
+                    {
+                        const ModuleBase::Vector3<double> kpoint(0.25, 0.0, 0.0);
+                        ModuleIO::wfc_nao_write2file_complex(file, complex_coefficients.data(), nlocal,
+                            ik, kpoint, energies, occupations, binary, false);
+                    }
+                }
+            }
+            std::vector<double> populations;
+            ASSERT_TRUE(ModuleIO::read_wfc_nao_spin_populations(binary_test_dir, 2, nspin, gamma_only, binary, my_rank, populations));
+            EXPECT_DOUBLE_EQ(populations[0], 3.0);
+            EXPECT_DOUBLE_EQ(populations[1], 1.0);
+            if (my_rank == 0)
+            {
+                for (const auto& file : files) { std::remove(file.c_str()); }
+            }
+        }
+    }
+}
+
+TEST_F(ReadWfcNaoTest, CompleteGlobalKPointPopulations)
+{
+    const int nks = 4; // two k points per spin, independent of the reader's pool
+    const int nbands = 4;
+    const int nlocal = 2;
+    const std::vector<int> global_indices = {0, 1, 2, 3};
+    ModuleBase::matrix energies(nks, nbands);
+    ModuleBase::matrix occupations(nks, nbands);
+    const std::vector<std::complex<double>> coefficients(nbands * nlocal, {0.25, 0.125});
+    std::vector<std::string> files;
+    for (int ik = 0; ik < nks; ++ik)
+    {
+        for (int ib = 0; ib < nbands; ++ib)
+        {
+            const int occupied = ik < 2 ? 3 : 1;
+            occupations(ik, ib) = ib < occupied ? 0.5 : 0.0;
+        }
+        const std::string file = ModuleIO::filename_output(binary_test_dir, "wf", "nao",
+            ik, global_indices, 2, nks, 1, false, false, -1);
+        files.push_back(file);
+        if (my_rank == 0)
+        {
+            const ModuleBase::Vector3<double> kpoint(0.25 * ik, 0.0, 0.0);
+            ModuleIO::wfc_nao_write2file_complex(file, coefficients.data(), nlocal,
+                ik, kpoint, energies, occupations, false, false);
+        }
+    }
+    std::vector<double> populations;
+    ASSERT_TRUE(ModuleIO::read_wfc_nao_spin_populations(binary_test_dir, nks,
+        2, false, false, my_rank, populations));
+    EXPECT_DOUBLE_EQ(populations[0], 3.0);
+    EXPECT_DOUBLE_EQ(populations[1], 1.0);
+    EXPECT_FALSE(ModuleIO::read_wfc_nao_spin_populations(binary_test_dir, 0,
+        2, false, false, my_rank, populations));
+    if (my_rank == 0)
+    {
+        for (const auto& file : files) { std::remove(file.c_str()); }
+    }
+}
+
 #ifdef __MPI
 int main(int argc, char** argv)
 {

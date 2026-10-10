@@ -32,6 +32,8 @@ njobs=1
 # threshold with unit: eV
 threshold=0.0000001
 force_threshold=0.0001
+# Absolute tolerance for the sum of excited-state force components.
+lr_force_threshold=0.000001
 stress_threshold=0.001
 # descriptor mean threshold
 descriptor_threshold=0.00001
@@ -49,6 +51,7 @@ threshold_file="threshold"
 # threshold file example:
 # threshold 0.0000001
 # force_threshold 0.0001
+# lr_force_threshold 0.000001
 # stress_threshold 0.001
 # fatal_threshold 1
 
@@ -135,6 +138,7 @@ echo "Number of threads: $nt"
 echo "Concurrent test cases: $njobs"
 echo "Test accuracy totenergy: $threshold eV"
 echo "Test accuracy force: $force_threshold"
+echo "Test accuracy excited-state force: $lr_force_threshold"
 echo "Test accuracy stress: $stress_threshold"
 echo "Test accuracy descriptor mean: $descriptor_threshold"
 echo "Check accuaracy: $ca"
@@ -167,6 +171,7 @@ check_out(){
     stress_thr=$4
     fatal_thr=$5
     descriptor_thr=$6
+    lr_force_thr=$7
 
     #------------------------------------------------------
     # outfile = result.out
@@ -224,7 +229,9 @@ check_out(){
             break
         else
             compare_thr=$thr
-            if [[ $key == ml_desc_mean_* ]]; then
+            if [ "$key" == "totallrforceref" ]; then
+                compare_thr=$lr_force_thr
+            elif [[ $key == ml_desc_mean_* ]]; then
                 compare_thr=$descriptor_thr
             fi
             if [ $(check_deviation_pass $deviation $compare_thr) = 0 ]; then
@@ -369,7 +376,8 @@ run_case()
                         my_stress_threshold=$(get_threshold $threshold_file "stress_threshold" $stress_threshold)
                         my_fatal_threshold=$(get_threshold $threshold_file "fatal_threshold" $fatal_threshold)
                         my_descriptor_threshold=$(get_threshold $threshold_file "descriptor_threshold" $descriptor_threshold)
-                        check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $my_descriptor_threshold
+                        my_lr_force_threshold=$(get_threshold $threshold_file "lr_force_threshold" $lr_force_threshold)
+                        check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $my_descriptor_threshold $my_lr_force_threshold
                     fi
                 else
                     bash -e ../../integrate/validation_tools/catch_properties.sh result.ref

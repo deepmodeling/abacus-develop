@@ -8,6 +8,17 @@
 PROPS_SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$PROPS_SCRIPT_DIR/props_common.sh"
 props_init "$1"
+
+# LR relaxation checks use subspace invariants rather than individual degenerate roots.
+if [ "$is_lr" == 1 ] && [ -f root_tracking.ref ]; then
+    if python3 "$PROPS_SCRIPT_DIR/state_check.py" "$running_path" root_tracking.ref; then
+        echo "CompareRootTracking_pass 0" >> "$props_result_file"
+    else
+        echo "CompareRootTracking_pass 1" >> "$props_result_file"
+    fi
+    exit 0
+fi
+
 source "$PROPS_SCRIPT_DIR/props_basic.sh"
 source "$PROPS_SCRIPT_DIR/props_mat.sh"
 source "$PROPS_SCRIPT_DIR/props_cube.sh"

@@ -5,6 +5,7 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_cell/klist.h"
+#include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
 
 /************************************************
  *  unit test of DensityMatrix constructor
@@ -61,7 +62,6 @@ class DMTest : public testing::Test
             ucell.atoms[0].iw2n[iw] = 0;
         }
         ucell.set_iat2iwt(1);
-        init_parav();
 
         // set paraV
         init_parav();
@@ -87,6 +87,10 @@ class DMTest : public testing::Test
 #else
     void init_parav()
     {
+        const int n = test_size * test_nw;
+        paraV = new Parallel_Orbitals();
+        paraV->set_serial(n, n);
+        paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, n);
     }
 #endif
 };
@@ -205,7 +209,9 @@ TEST_F(DMTest, cal_DMR_blas_double)
     }
     // calculate this->dmr
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    EXPECT_FALSE(DM.is_dmr_ready());
     DM.cal_dmr(-1);
+    EXPECT_TRUE(DM.is_dmr_ready());
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time
         = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
@@ -271,7 +277,9 @@ TEST_F(DMTest, cal_DMR_blas_complex)
     DM.init_dmr(&gd, &ucell);
     // calculate this->dmr
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    EXPECT_FALSE(DM.is_dmr_ready());
     DM.cal_dmr(-1);
+    EXPECT_TRUE(DM.is_dmr_ready());
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time
         = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
@@ -411,7 +419,9 @@ TEST_F(DMTest, cal_DMR_soc_pauli_branch)
     DM.init_dmr(&gd, &ucell);
     // Gamma-only: reduce R vectors to (0, 0, 0), as cal_DMR_blas_double does
     DM.get_dmr_ptr(1)->fix_gamma();
+    EXPECT_FALSE(DM.is_dmr_ready());
     DM.cal_dmr(-1);
+    EXPECT_TRUE(DM.is_dmr_ready());
 
     // check the Gamma (R = 0) block: rho_0 must be 2a (Pauli), NOT a (real projection);
     // rho_x = rho_y = rho_z = 0 for uu == dd and zero spin off-diagonals.
@@ -444,6 +454,129 @@ TEST_F(DMTest, cal_DMR_soc_pauli_branch)
     delete pv_soc;
 #endif
 }
+
+
+TEST_F(DMTest, LRDotRCountsEachImageOnce)
+{
+    hamilt::HContainer<double> h1(paraV);
+    hamilt::HContainer<double> h2(paraV);
+    for (int r = -1; r <= 1; ++r)
+    {
+        hamilt::AtomPair<double> a(0, 1, r, 0, 0, paraV);
+        const int opposite_r = -r;
+        hamilt::AtomPair<double> b(0, 1, opposite_r, 0, 0, paraV);
+        h1.insert_pair(a);
+        h2.insert_pair(b);
+    }
+    h1.allocate(nullptr, true);
+    h2.allocate(nullptr, true);
+    double expected = 0.0;
+    for (int r = -1; r <= 1; ++r)
+    {
+        auto& a = h1.find_pair(0, 1)->get_HR_values(r, 0, 0);
+        auto& b = h2.find_pair(0, 1)->get_HR_values(r, 0, 0);
+        const int size = a.get_row_size() * a.get_col_size();
+        for (int i = 0; i < size; ++i)
+        {
+            const double x = r + 2.0;
+            const double y = i + 1.0;
+            a.get_pointer()[i] = x;
+            b.get_pointer()[i] = y;
+            expected += x * y;
+        }
+    }
+    EXPECT_DOUBLE_EQ(LR_Util::dot_R_matrix(h1, h2), expected);
+}
+
+TEST_F(DMTest, LRTransposePreservesAtomIndices)
+{
+    const int n = test_size * test_nw;
+    const std::vector<ModuleBase::Vector3<double>> kvec(1);
+    module_dm::DensityMatrix<double, double> dm(paraV, 1, kvec, 1);
+    hamilt::HContainer<double> hr(paraV);
+    for (int ia = 0; ia < test_size; ++ia)
+    {
+        for (int ja = 0; ja < test_size; ++ja)
+        {
+            hamilt::AtomPair<double> pair(ia, ja, paraV);
+            hr.insert_pair(pair);
+        }
+    }
+    hr.allocate(nullptr, true);
+    hr.fix_gamma();
+    dm.init_dmr(hr);
+    auto& dk = dm.get_dmk_vec()[0];
+    for (int j = 0; j < paraV->ncol; ++j)
+    {
+        for (int i = 0; i < paraV->nrow; ++i)
+        {
+            const int mu = paraV->local2global_row(i);
+            const int nu = paraV->local2global_col(j);
+            dk[j * paraV->nrow + i] = mu * n + nu;
+        }
+    }
+    dm.cal_dmr(-1);
+    const int passes = 2;
+    for (int pass = 0; pass < passes; ++pass)
+    {
+        for (int ip = 0; ip < dm.get_dmr_ptr(1)->size_atom_pairs(); ++ip)
+        {
+            const auto& pair = dm.get_dmr_ptr(1)->get_atom_pair(ip);
+            const auto* values = pair.get_HR_values(0).get_pointer();
+            for (int i = 0; i < pair.get_row_size(); ++i)
+            {
+                for (int j = 0; j < pair.get_col_size(); ++j)
+                {
+                    const int mu = paraV->local2global_row(pair.get_begin_row() + i);
+                    const int nu = paraV->local2global_col(pair.get_begin_col() + j);
+                    const double expected = pass == 0 ? mu * n + nu : nu * n + mu;
+                    EXPECT_DOUBLE_EQ(values[i * pair.get_col_size() + j], expected);
+                }
+            }
+        }
+        if (pass == 0) { LR_Util::transpose_DMR(dm, *paraV); }
+    }
+}
+
+#ifdef __EXX
+namespace RI_2D_Comm
+{
+// Observe the adapter's spin/k input before the expensive RI redistribution.
+template <>
+std::vector<std::map<TA, std::map<TAC, RI::Tensor<double>>>>
+split_m2D_ktoR<double, std::vector<double>>(
+    const UnitCell&, const K_Vectors&, const std::vector<const std::vector<double>*>& mks,
+    const Parallel_2D&, const int nspin, const bool)
+{
+    EXPECT_EQ(nspin, 2);
+    EXPECT_EQ(mks.size(), 4U);
+    for (std::size_t ik = 0; ik < mks.size(); ++ik)
+    {
+        EXPECT_DOUBLE_EQ(mks[ik]->front(), ik + 1.0);
+    }
+    return std::vector<std::map<TA, std::map<TAC, RI::Tensor<double>>>>(nspin);
+}
+}
+
+TEST_F(DMTest, LRExxAdapterIncludesBothSpinChannels)
+{
+    K_Vectors kv;
+    kv.set_nks(4);
+    kv.kvec_d.resize(4);
+    module_dm::DensityMatrix<double, double> dm(paraV, 2, kv.kvec_d, 2);
+    hamilt::HContainer<double> hr(paraV);
+    hr.allocate(nullptr, true);
+    dm.init_dmr(hr);
+    auto& dmk = dm.get_dmk_vec();
+    ASSERT_EQ(dmk.size(), 4U);
+    for (std::size_t ik = 0; ik < dmk.size(); ++ik)
+    {
+        std::fill(dmk[ik].begin(), dmk[ik].end(), ik + 1.0);
+    }
+    const auto ds = LR_Util::get_exx_Ds_gs(dm, ucell, kv, *paraV);
+    EXPECT_EQ(ds.size(), 2U);
+}
+#endif
 
 int main(int argc, char** argv)
 {

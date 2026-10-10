@@ -83,6 +83,41 @@ jobs:
           ./scripts/stage4/install_stage4.sh
           cd ..
 
+      # Keep the image's LibXC version: only enable the KXC needed by LR gradients.
+      - name: Identify LibXC version
+        id: libxc
+        run: echo "version=$(pkg-config --modversion libxc)" >> "${GITHUB_OUTPUT}"
+
+      - name: Cache LibXC with KXC
+        id: libxc-cache
+        uses: actions/cache@v6
+        with:
+          path: toolchain/install/libxc-kxc
+          key: libxc-kxc-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ steps.libxc.outputs.version }}
+
+      - name: Build LibXC with KXC
+        if: steps.libxc-cache.outputs.cache-hit != 'true'
+        env:
+          LIBXC_VERSION: ${{ steps.libxc.outputs.version }}
+        run: |
+          wget -q "https://gitlab.com/libxc/libxc/-/archive/${LIBXC_VERSION}/libxc-${LIBXC_VERSION}.tar.gz" -O /tmp/libxc-kxc.tar.gz
+          mkdir -p /tmp/libxc-kxc-source
+          tar -xzf /tmp/libxc-kxc.tar.gz --strip-components=1 -C /tmp/libxc-kxc-source
+          cmake -S /tmp/libxc-kxc-source -B /tmp/libxc-kxc-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="${GITHUB_WORKSPACE}/toolchain/install/libxc-kxc" \
+            -DCMAKE_INSTALL_LIBDIR=lib \
+            -DBUILD_SHARED_LIBS=ON -DENABLE_FORTRAN=OFF -DBUILD_TESTING=OFF \
+            -DDISABLE_KXC=OFF -DDISABLE_LXC=ON
+          cmake --build /tmp/libxc-kxc-build -j8
+          cmake --install /tmp/libxc-kxc-build
+
+      - name: Use KXC-enabled LibXC at runtime
+        run: echo "LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/toolchain/install/libxc-kxc/lib:${LD_LIBRARY_PATH:-}" >> "${GITHUB_ENV}"
+
+      - name: Test LR root-tracking checker
+        run: python3 tests/integrate/validation_tools/test_state_chk.py
+
       - name: Configure
         run: |
           source toolchain/install/setup
@@ -91,6 +126,7 @@ jobs:
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DENABLE_MLALGO=ON \
             -DENABLE_LIBXC=ON \
+            -DLibxc_DIR="${GITHUB_WORKSPACE}/toolchain/install/libxc-kxc/share/cmake/Libxc" \
             -DENABLE_LIBRI=ON \
             -DENABLE_GOOGLEBENCH=OFF \
             -DENABLE_JSON=ON \

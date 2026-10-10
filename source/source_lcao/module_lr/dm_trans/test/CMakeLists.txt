@@ -12,3 +12,9 @@ AddTest(
   # ../../../source_base/module_container/base/core/refcount.cpp
   # ../../../source_base/module_container/ATen/kernels/memory_impl.cpp
 )
+
+AddTest(
+  TARGET MODULE_LR_dm_diff_test
+  LIBS psi base parameter ${math_libs} device container
+  SOURCES dm_diff_tst.cpp ../../utils/lr_util.cpp
+)

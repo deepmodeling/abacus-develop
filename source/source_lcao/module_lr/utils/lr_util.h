@@ -10,6 +10,10 @@
 #include "source_base/parallel_2d.h"
 #include "source_psi/psi.h"
 #include <ATen/core/tensor.h>
+#include <ATen/ops/linalg_op.h>
+#include <set>
+
+class UnitCell;
 
 using DAT = container::DataType;
 using DEV = container::DeviceType;
@@ -25,7 +29,41 @@ template <> struct ToComplex<std::complex<float>> { using type = std::complex<fl
 
 namespace LR_Util
 {
+    /// Reject unsupported NLCC force requests after pseudopotentials have been loaded.
+    void check_force_pp(const UnitCell& cell, bool cal_force, const std::string& calculation);
+
+    /// Preserve signed sigma invariants except for the existing HSE06 stabilization.
+    const std::vector<double>& prepare_xc_sigma(const std::vector<double>& sigma,
+                                               bool is_hse06,
+                                               std::vector<double>& hse_buffer);
+
     /// =====================PHYSICS====================
+    /// @brief the xc kernels that carry an exact-exchange (EXX) term
+    ///
+    /// Membership here says only *that* the kernel has an EXX part, never *which* Coulomb
+    /// operator that part uses. The operator is the general range-separated form
+    /// $v_1(r)=[\alpha+\beta\,\mathrm{erfc}(\mu r)]/r$, and it is built from
+    /// `coulomb_param`, which `input_conv` fills from `dft_functional` plus
+    /// `exx_fock_alpha` ($\alpha$), `exx_erfc_alpha` ($\beta$) and `exx_erfc_omega` ($\mu$).
+    /// Its overall weight reaches this module as `exx_info.info_global.hybrid_alpha`
+    /// ($=\max(|\alpha|,|\beta|)$, the factor by which `coulomb_param` was normalized).
+    inline const std::set<std::string>& hybrid_xc_list()
+    {
+        static const std::set<std::string> l = { "hf", "hse", "pbe0", "b3lyp",
+            "cam_pbeh", "lc_pbe", "lc_wpbe", "lrc_wpbe", "lrc_wpbeh" };
+        return l;
+    }
+
+    /// @brief check if the xc functional has local xc kernel
+    inline bool has_local_xc(const std::string& name)
+    {
+        if (std::set<std::string>({ "lda", "pwlda", "pbe" }).count(name)) { return true; }
+        // Every hybrid but pure HF keeps a semilocal remainder: the KS exchange left over after
+        // the EXX part is taken out, $(1-\alpha)E_x^\text{KS-LR}+[1-(\alpha+\beta)]E_x^
+        // \text{KS-SR}$. libxc returns exactly that once `f_xc_libxc` hands the functional its
+        // external parameters, so no per-functional code is needed here -- only the name.
+        return name != "hf" && hybrid_xc_list().count(name);
+    }
 
     /// @brief calculate the number of electrons
     /// @tparam TCell 
@@ -36,6 +74,12 @@ namespace LR_Util
     /// @brief calculate the number of occupied orbitals
     /// @param nelec 
     int cal_nocc(int nelec);
+
+    /// Largest occupied spin channel; nelec already includes the charge correction.
+    int cal_nocc(double nelec, int nspin, int nupdown);
+
+    /// Retain a positive user window, otherwise use all occupied orbitals.
+    int cal_nocc_window(int requested_nocc, int nocc_max);
     
     /// @brief  set the index map: ix to (ic, iv) and vice versa
     /// by diagonal traverse the c-v pairs
@@ -97,6 +141,14 @@ namespace LR_Util
     void matsym(const T* in, const int n, const Parallel_2D& pmat, T* out);
     template<typename T>
     void matsym(T* inout, const int n, const Parallel_2D& pmat);
+    template<typename T>
+    void mattrans(const T* in, const int n, const Parallel_2D& pmat, T* out);
+    template<typename T>
+    void mattrans(T* inout, const int n, const Parallel_2D& pmat);
+
+    // calculate (A-A^T)/2 (in-place version)
+    template<typename T>
+    void matantisym(T* inout, const int n, const Parallel_2D& pmat);
 #endif
     template<typename T>
     bool is_hermitian(const T* mat, const Parallel_2D& pmat, const double threshold, const int my_rank);
@@ -156,19 +208,38 @@ namespace LR_Util
     template <typename T>
     void gather_2d_to_full(const Parallel_2D& pv, const T* submat, T* fullmat,
         const bool row_major, const std::size_t global_nrow, const std::size_t global_ncol);
+
+    /// @brief  scatter full matrix to 2d block-cyclic distributed matrix
+    template <typename T>
+    void scatter_full_to_2d(const Parallel_2D& pv, const T* fullmat, T* submat, const bool col_first = false);
 #endif
 
     ///=================diago-lapack====================
     /// @brief  diagonalize a hermitian matrix
-    void diag_lapack(const int& n, double* mat, double* eig);
-    void diag_lapack(const int& n, std::complex<double>* mat, double* eig);
-    /// @brief  diagonalize a general matrix
-    void diag_lapack_nh(const int& n, double* mat, std::complex<double>* eig);
-    void diag_lapack_nh(const int& n, std::complex<double>* mat, std::complex<double>* eig);
+    template<typename T>
+    void diag_lapack(const int& n, T* mat, double* eig);
 
+    /// @brief  diagonalize a general matrix
+    template<typename T>
+    void diag_lapack_nh(const int& n, T* mat, std::complex<double>* eig);
+    ///================linear-solver-lapack==============
+    /// @brief  solve linear equations Ax=b using LAPACK
+    template<typename T>
+    int lapack_linear_solver(const T* A, T* x, const T* b, const int n, const int nrhs);
     ///=================string option====================
     std::string tolower(const std::string& str);
     std::string toupper(const std::string& str);
+}
+///=================operators======================= (should ot in namespace LR_Util)
+template<typename T>
+std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
+{
+    const int maxsize = std::max(a.size(), b.size());
+    const int minsize = std::min(a.size(), b.size());
+    std::vector<T> c(maxsize);
+    for (int i = 0;i < minsize;++i) { c[i] = a[i] + b[i]; }
+    for (int i = minsize;i < maxsize;++i) { c[i] = (a.size() > b.size() ? a[i] : b[i]); }
+    return c;
 }
 #include "lr_util.hpp"
 

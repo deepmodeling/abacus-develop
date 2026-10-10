@@ -49,13 +49,22 @@ fi
 #----------------------------
 # force information
 #----------------------------
-if ! test -z "$has_force" && [ $has_force == 1 ]; then
+if ! test -z "$has_force" && [ $has_force == 1 ] && [ $is_lr == 0 ]; then
 	nn3=`echo "$natom + 3" |bc`
     # check the last step result
     grep -A$nn3 "TOTAL-FORCE" $running_path |awk 'NF==4{print $2,$3,$4}' | tail -$natom > force.txt
 	total_force=`sum_file force.txt`
     rm force.txt
 	echo "totalforceref $total_force" >>$props_result_file
+fi
+
+# LR prints a separate force table for each excited state and spin channel.
+if [ $is_lr == 1 ] && ! test -z "$has_force" && [ $has_force == 1 ]; then
+	awk '/Forces \(-gradients\) of each excited state/{flag=1; next} flag{for(i=1;i<=NF;i++) if($i=="force"){print $(i+1),$(i+2),$(i+3)}}' "$running_path" > lr_force.txt
+	# Accumulate all components before rounding the LR force total.
+	total_lr_force=$(awk '{for (i=1; i<=NF; ++i) sum += sqrt($i*$i)} END {printf "%.10f\n", sum}' lr_force.txt)
+	rm lr_force.txt
+	echo "totallrforceref $total_lr_force" >>$props_result_file
 fi
 
 #-------------------------------

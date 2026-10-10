@@ -325,6 +325,24 @@ TEST_F(InputTest, ValidateLrRequiresNscf)
     EXPECT_EQ(valid_param.inp.calculation, "nscf");
 }
 
+TEST_F(InputTest, RejectComplexLrForcesBeforeSCF)
+{
+    const std::string base = "basis_type lcao\nesolver_type ks-lr\ngamma_only 0\n";
+    const std::string reason = "currently require gamma_only=1";
+    const std::string cg = base + "cal_force 1\nlr_grad_solver cg\n";
+    const std::string lapack = base + "cal_force 1\nlr_grad_solver lapack\n";
+    const std::string relax = base + "calculation relax\ncal_force 0\n";
+    expect_invalid_input("complex_force_cg_INPUT", cg, reason);
+    expect_invalid_input("complex_force_lapack_INPUT", lapack, reason);
+    expect_invalid_input("complex_relax_INPUT", relax, reason);
+
+    Parameter valid;
+    const std::string spectra = base + "cal_force 0\n";
+    EXPECT_NO_THROW(read_parameters("complex_spectra_INPUT", spectra, valid));
+    EXPECT_FALSE(valid.inp.gamma_only);
+    EXPECT_FALSE(valid.inp.cal_force);
+}
+
 TEST_F(InputTest, ValidateDeepksOutputFrequency)
 {
     Parameter default_param;
@@ -396,4 +414,13 @@ TEST_F(InputTest, Check)
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
     EXPECT_TRUE(std::remove("./INPUT.ref") == 0);
+}
+
+TEST_F(InputTest, ExplicitNoccSurvivesUnresolvedElectronNumber)
+{
+    Parameter parameters;
+    read_parameters("nocc_window_INPUT", "basis_type lcao\nesolver_type ks-lr\nnocc 4\n", parameters);
+    EXPECT_EQ(parameters.inp.nelec, 0.0);
+    EXPECT_EQ(parameters.inp.nbands, 0);
+    EXPECT_EQ(parameters.inp.nocc, 4);
 }

@@ -246,7 +246,9 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
 * nep: Neuroevolution Potential
 * ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
 * lr: LR-TDDFT with given KS orbitals (Under Development Feature)
-* dfpt: density functional perturbation theory (Under Development Feature))";
+* dfpt: density functional perturbation theory (Under Development Feature)
+
+[NOTE] Excited-state forces (`cal_force = 1`) and atomic relaxation with `ks-lr` or `lr` currently require `gamma_only = 1` and pseudopotentials without nonlinear core correction (NLCC). NLCC core-density response-force and XC-kernel derivative terms are not implemented; these force requests are rejected after reading the pseudopotentials, before force evaluation. Multi-k spectra and spectra with NLCC pseudopotentials remain available with `cal_force = 0`. Ground-state forces are unaffected by this LR restriction.)";
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -270,6 +272,42 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
                 ModuleBase::WARNING_QUIT("ReadInput",
                     "esolver_type=lr requires calculation=nscf (it reads the ground state "
                     "wave function computed by a separate SCF run); please set calculation=nscf.");
+            }
+            const bool is_lr = (para.input.esolver_type == "lr" || para.input.esolver_type == "ks-lr");
+            const bool requests_lr_force = para.input.cal_force || para.input.calculation == "relax";
+            if (is_lr && requests_lr_force && !para.input.gamma_only)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "LR-TDDFT excited-state forces and relaxation currently require gamma_only=1; "
+                    "complex/multi-k gradients are not implemented. Use cal_force=0 for multi-k spectra.");
+            }
+            if (is_lr && para.input.calculation == "cell-relax")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "LR-TDDFT has no excited-state stress, so calculation=cell-relax cannot be driven by it. "
+                    "Use calculation=relax to relax the atomic positions at fixed cell.");
+            }
+            if (is_lr && para.input.calculation == "md")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "excited-state MD is not supported: the non-adiabatic couplings between excited states "
+                    "are not implemented, so a trajectory cannot switch surfaces at a crossing, and a "
+                    "single-surface run would silently follow a fixed state index straight through one. "
+                    "Use calculation=relax instead.");
+            }
+            if (para.input.esolver_type == "lr" && para.input.calculation == "relax")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "esolver_type=lr reads a ground state from disk that belongs to one fixed geometry, "
+                    "so it cannot follow moving ions. Use esolver_type=ks-lr, which runs the SCF itself "
+                    "at every ionic step.");
+            }
+            if (para.input.esolver_type == "ks-lr" && para.input.calculation == "relax"
+                && para.input.lr_solver == "spectrum")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "lr_solver=spectrum only reads previously written excitation amplitudes; it solves "
+                    "nothing, so it cannot produce gradients for a relaxation.");
             }
         };
         this->add_item(item);

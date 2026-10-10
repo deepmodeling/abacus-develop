@@ -20,7 +20,7 @@ namespace LR
     class HamiltLR
     {
     public:
-      HamiltLR(std::string& xc_kernel,
+      HamiltLR(const std::string& xc_kernel,
                const int& nspin,
                const int& naos,
                const std::vector<int>& nocc,
@@ -31,10 +31,10 @@ namespace LR
                const psi::Psi<T>& psi_ks_in,
                const ModuleBase::matrix& eig_ks,
 #ifdef __EXX
-               std::weak_ptr<Exx_LRI<T>> exx_lri_in,
-               const double& exx_alpha,
+          std::weak_ptr<Exx_LRI<T>> exx_lri_in,
+          const double& exx_alpha,
 #endif
-               std::weak_ptr<PotHxcLR> pot_in,
+               std::weak_ptr<PotLRBase> pot_in,
                const K_Vectors& kv_in,
                const std::vector<Parallel_2D>& pX_in,
                const Parallel_2D& pc_in,
@@ -111,22 +111,27 @@ namespace LR
             else
 #endif
             {
-                OperatorLRHxc<T>* lr_hxc = new OperatorLRHxc<T>(nspin, naos, nocc, nvirt, psi_ks_in,
-                    this->DM_trans, pot_in, ucell_in, orb_cutoff, gd_in, kv_in, pX_in, pc_in, pmat_in);
+                hamilt::Operator<T>* lr_hxc = new OperatorLRHxc<T>(nspin, naos, nocc, nvirt, psi_ks_in,
+                    *this->DM_trans, pot_in, ucell_in, orb_cutoff, gd_in, kv_in, pX_in, pc_in, pmat_in);
                 this->ops->add(lr_hxc);
             }
-#ifdef __EXX// 3.add Exx operator
-            if (xc_kernel == "hf" || xc_kernel == "hse")
-            {
+#ifdef __EXX
+            if (exx_kernel_list().count(xc_kernel) )
+            {   //add Exx operator
                 if (ri_hartree_benchmark != "none" && spin_type == "singlet")
                 {
                     exx_lri_in.lock()->reset_Cs(Cs_read);
                     exx_lri_in.lock()->reset_Vs(Vs_read);
                 }
                 // std::cout << "exx_alpha=" << exx_alpha << std::endl; // the default value of exx_alpha is 0.25 when dft_functional is pbe or hse
+                // this ground-state Casida operator is always MO_TO_AO_TYPE::CC_vo, which never
+                // reads the force-only coxt_full/cvx_full buffers, so cal_force is always false.
                 hamilt::Operator<T>* lr_exx = new OperatorLREXX<T>(nspin, naos, nocc[0], nvirt[0], ucell_in, psi_ks_in,
-                    this->DM_trans, exx_lri_in, kv_in, pX_in[0], pc_in, pmat_in,
-                    (xc_kernel == "hf") ? 1.0 : exx_alpha);
+                    *this->DM_trans, exx_lri_in, kv_in, pX_in[0], pc_in, pmat_in,
+                    /*cal_force=*/false,
+                    (xc_kernel == "hf" ? 1.0 : exx_alpha), //alpha
+                    OperatorLREXX<T>::MO_TO_AO_TYPE::CC_vo,
+                    aims_nbasis);
                 this->ops->add(lr_exx);
             }
 #endif
@@ -150,7 +155,7 @@ namespace LR
 
         std::vector<T> matrix()const;
 
-        void hPsi(const T* const psi_in, T* const hpsi, const int ld_psi, const int& nband) const
+        virtual void hPsi(const T* const psi_in, T* const hpsi, const int ld_psi, const int nband) const
         {
             assert(ld_psi == nk * pX[0].get_local_size());
             for (int ib = 0;ib < nband;++ib)
@@ -190,13 +195,14 @@ namespace LR
         //     }
         // }
 
-    private:
+        // const references
         const std::vector<int>& nocc;
         const std::vector<int>& nvirt;
         const int nspin = 1;
         const int nk = 1;
-        const bool tdm_sym = false;     ///< whether to symmetrize the transition density matrix
         const std::vector<Parallel_2D>& pX;
+    protected:
+        const bool tdm_sym = false;     ///< whether to symmetrize the transition density matrix
         T one()const;
         /// transition density matrix in AO representation
         /// calculate on the same address for each bands, and commonly used by all the operators

@@ -72,6 +72,88 @@ bool read_binary_wfc_data(std::ifstream& ifs, std::complex<float>& data)
 
 } // namespace
 
+bool ModuleIO::read_wfc_nao_spin_populations(const std::string& readin_dir,
+                                          int nkstot,
+                                          int nspin,
+                                          bool gamma_only,
+                                          bool binary,
+                                          int my_rank,
+                                          std::vector<double>& populations)
+{
+    populations.assign(nspin, 0.0);
+    bool success = (nspin == 1 || nspin == 2) && nkstot > 0 && nkstot % nspin == 0;
+    std::vector<int> ik2iktot;
+    for (int ik = 0; ik < nkstot; ++ik) { ik2iktot.push_back(ik); }
+    if (gamma_only && nkstot != nspin) { success = false; }
+    if (my_rank == 0 && success)
+    {
+        const int nk = ik2iktot.size() / nspin;
+        const int read_type = binary ? 2 : 1;
+        for (int ik = 0; ik < static_cast<int>(ik2iktot.size()) && success; ++ik)
+        {
+            const std::string file = ModuleIO::filename_output(readin_dir, "wf", "nao",
+                ik, ik2iktot, nspin, nkstot, read_type, false, gamma_only, -1);
+            const std::ios_base::openmode mode = binary ? std::ios::in | std::ios::binary : std::ios::in;
+            std::ifstream ifs(file.c_str(), mode);
+            if (!gamma_only)
+            {
+                int ik_file = 0;
+                double k = 0.0;
+                success = read_record_value(ifs, ik_file, binary);
+                if (binary)
+                {
+                    success = success && read_binary_value(ifs, k)
+                              && read_binary_value(ifs, k) && read_binary_value(ifs, k);
+                }
+                else
+                {
+                    ifs >> k >> k >> k;
+                    success = success && static_cast<bool>(ifs);
+                }
+                success = success && ik_file == ik + 1;
+            }
+            int nbands = 0;
+            int nbasis = 0;
+            success = success && read_record_value(ifs, nbands, binary)
+                      && read_record_value(ifs, nbasis, binary) && nbands > 0 && nbasis > 0;
+            for (int ib = 0; ib < nbands && success; ++ib)
+            {
+                int ib_file = 0;
+                double energy = 0.0;
+                double occupation = 0.0;
+                success = read_record_value(ifs, ib_file, binary)
+                          && read_record_value(ifs, energy, binary)
+                          && read_record_value(ifs, occupation, binary) && ib_file == ib + 1;
+                populations[ik / nk] += occupation;
+                const int ncoeff = gamma_only ? nbasis : 2 * nbasis;
+                if (binary)
+                {
+                    const std::streamoff bytes = ncoeff * sizeof(double);
+                    ifs.ignore(bytes);
+                    success = success && ifs.gcount() == bytes;
+                }
+                else
+                {
+                    double coefficient = 0.0;
+                    for (int i = 0; i < ncoeff && success; ++i)
+                    {
+                        ifs >> coefficient;
+                        success = static_cast<bool>(ifs);
+                    }
+                }
+            }
+        }
+    }
+#ifdef __MPI
+    Parallel_Common::bcast_bool(success);
+    if (success)
+    {
+        Parallel_Common::bcast_double(populations.data(), nspin);
+    }
+#endif
+    return success;
+}
+
 // mohan add 2025-10-19
 void ModuleIO::read_wfc_nao_one_data(std::ifstream& ifs, float& data)
 {

@@ -7,6 +7,7 @@ add_library(
     veff_dh.cpp
     deepks_lcao.cpp
     overlap.cpp
+    ovlp_block.cpp
     overlap_fs.cpp
     ekinetic.cpp
     ekinetic_fs.cpp

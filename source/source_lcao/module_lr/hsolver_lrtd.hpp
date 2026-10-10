@@ -38,9 +38,11 @@ namespace LR
         template<typename T>
         inline void print_eigs(const std::vector<T>& eigs, const std::string& label = "", const double factor = 1.0)
         {
-            std::cout << label << std::endl;
+            std::streamsize old = std::cout.precision();
+            std::cout << label << std::setprecision(8) << std::endl;
             for (auto& e : eigs) { std::cout << e * factor << " "; }
             std::cout << std::endl;
+            std::cout.precision(old);
         }
 
         /// eigensolver for common Hamilt
@@ -60,6 +62,7 @@ namespace LR
             const bool hermitian = true)
         {
             ModuleBase::TITLE("HSolverLR", "solve");
+            ModuleBase::timer::start("HSolverLR", "solve");  
             const std::vector<std::string> spin_types = { "singlet", "triplet" };
             // note: if not TDA, the eigenvalues will be complex
             // then we will need a new constructor of DiagoDavid
@@ -178,6 +181,7 @@ namespace LR
             // output iters
             std::cout << " Average iterative diagonalization steps: " << hsolver::DiagoIterAssist<T>::avg_iter
                 << "; current threshold: " << diag_ethr << std::endl;
+            ModuleBase::timer::end("HSolverLR", "solve");
         }
     }
 }

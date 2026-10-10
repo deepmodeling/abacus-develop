@@ -1,11 +1,71 @@
 #include "source_base/constants.h"
 #include "lr_util.h"
+#include "source_cell/unitcell.h"
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/module_container/base/third_party/lapack.h"
 namespace LR_Util
 {
+    void check_force_pp(const UnitCell& cell, const bool cal_force, const std::string& calculation)
+    {
+        const bool relaxation = calculation == "relax" || calculation == "cell-relax";
+        if (!cal_force && !relaxation) { return; }
+        for (int type = 0; type < cell.ntype; ++type)
+        {
+            if (cell.atoms[type].ncpp.nlcc)
+            {
+                throw std::invalid_argument(
+                    "LR excited-state forces and relaxation do not support NLCC pseudopotentials: element "
+                    + cell.atoms[type].label + ", file " + cell.pseudo_fn.at(type)
+                    + ". Core-density response-force and XC-kernel derivative terms are not implemented."
+                      " LR spectra remain available with cal_force=0.");
+            }
+        }
+    }
+
+    const std::vector<double>& prepare_xc_sigma(const std::vector<double>& sigma,
+                                               const bool is_hse06,
+                                               std::vector<double>& hse_buffer)
+    {
+        if (!is_hse06) { return sigma; }
+        hse_buffer.resize(sigma.size());
+        for (std::size_t index = 0; index < sigma.size(); ++index)
+        {
+            hse_buffer[index] = std::max(sigma[index], 1e-6);
+        }
+        return hse_buffer;
+    }
+
     /// =================PHYSICS====================
     int cal_nocc(int nelec) { return nelec / ModuleBase::DEGSPIN + nelec % static_cast<int>(ModuleBase::DEGSPIN); }
+
+    int cal_nocc(double nelec, int nspin, int nupdown)
+    {
+        const double polarization = nspin == 2 ? std::abs(nupdown) : 0.0;
+        if (!std::isfinite(nelec) || nelec <= 0.0 || polarization > nelec)
+        {
+            throw std::invalid_argument("LR: invalid electron number or spin population");
+        }
+        // Use ceil to include a partially occupied frontier orbital, without promoting
+        // a numerically noisy integer population to the next orbital.
+        const double population = (nelec + polarization) / 2.0;
+        const double nearest_integer = std::round(population);
+        const double stable_population = std::abs(population - nearest_integer) < 1e-8
+                                             ? nearest_integer : population;
+        return static_cast<int>(std::ceil(stable_population));
+    }
+
+    int cal_nocc_window(int requested_nocc, int nocc_max)
+    {
+        if (nocc_max <= 0)
+        {
+            throw std::invalid_argument("LR: no occupied orbitals");
+        }
+        return requested_nocc <= 0 ? nocc_max : std::min(requested_nocc, nocc_max);
+    }
 
     std::pair<ModuleBase::matrix, std::vector<std::pair<int, int>>>
         set_ix_map_diagonal(bool mode, int nocc, int nvirt)
@@ -93,6 +153,64 @@ namespace LR_Util
         const int i1 = 1;
         pztranc_(&n, &n, &alpha, tmp.data(), &i1, &i1, pmat.desc, &beta, inout, &i1, &i1, pmat.desc);
     }
+
+    template<>
+    void mattrans<double>(const double* in, const int n, const Parallel_2D& pmat, double* out)
+    {
+        std::copy(in, in + pmat.get_local_size(), out);
+        const double alpha = 1.0;
+        const double beta = 0.0;
+        const int i1 = 1;
+        pdtran_(&n, &n, &alpha, in, &i1, &i1, pmat.desc, &beta, out, &i1, &i1, pmat.desc);
+    }
+    template<>
+    void mattrans<double>(double* inout, const int n, const Parallel_2D& pmat)
+    {
+        std::vector<double> tmp(pmat.get_local_size());
+        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        const double alpha = 1.0;
+        const double beta = 0.0;
+        const int i1 = 1;
+        pdtran_(&n, &n, &alpha, tmp.data(), &i1, &i1, pmat.desc, &beta, inout, &i1, &i1, pmat.desc);
+    }
+    template<>
+    void mattrans<std::complex<double>>(const std::complex<double>* in, const int n, const Parallel_2D& pmat, std::complex<double>* out)
+    {
+        std::copy(in, in + pmat.get_local_size(), out);
+        const std::complex<double> alpha(1.0, 0.0), beta(0.0, 0.0);
+        const int i1 = 1;
+        pztranc_(&n, &n, &alpha, in, &i1, &i1, pmat.desc, &beta, out, &i1, &i1, pmat.desc);
+    }
+    template<>
+    void mattrans<std::complex<double>>(std::complex<double>* inout, const int n, const Parallel_2D& pmat)
+    {
+        std::vector<std::complex<double>> tmp(pmat.get_local_size());
+        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        const std::complex<double> alpha(1.0, 0.0), beta(0.0, 0.0);
+        const int i1 = 1;
+        pztranc_(&n, &n, &alpha, tmp.data(), &i1, &i1, pmat.desc, &beta, inout, &i1, &i1, pmat.desc);
+    }
+
+
+    template<>
+    void matantisym<double>(double* inout, const int n, const Parallel_2D& pmat)
+    {
+        std::vector<double> tmp(pmat.get_local_size());
+        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        const double alpha = -0.5;
+        const double beta = 0.5;
+        const int i1 = 1;
+        pdtran_(&n, &n, &alpha, tmp.data(), &i1, &i1, pmat.desc, &beta, inout, &i1, &i1, pmat.desc);
+    }
+    template<>
+    void matantisym<std::complex<double>>(std::complex<double>* inout, const int n, const Parallel_2D& pmat)
+    {
+        std::vector<std::complex<double>> tmp(pmat.get_local_size());
+        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        const std::complex<double> alpha(-0.5, 0.0), beta(0.5, 0.0);
+        const int i1 = 1;
+        pztranc_(&n, &n, &alpha, tmp.data(), &i1, &i1, pmat.desc, &beta, inout, &i1, &i1, pmat.desc);
+    }
 #endif
 
     // for the first matrix in the commutator
@@ -115,7 +233,8 @@ namespace LR_Util
     }
 #endif
 
-    void diag_lapack(const int& n, double* mat, double* eig)
+    template<>
+    void diag_lapack<double>(const int& n, double* mat, double* eig)
     {
         ModuleBase::TITLE("LR_Util", "diag_lapack<double>");
         int info = 0;
@@ -129,8 +248,8 @@ namespace LR_Util
         if (info) { std::cout << "ERROR: Lapack solver, info=" << info << std::endl; }
         delete[] work2;
     }
-
-    void diag_lapack(const int& n, std::complex<double>* mat, double* eig)
+    template<>
+    void diag_lapack<std::complex<double>>(const int& n, std::complex<double>* mat, double* eig)
     {
         ModuleBase::TITLE("LR_Util", "diag_lapack <std::complex<double>>");
         int lwork = 2 * n;
@@ -143,8 +262,8 @@ namespace LR_Util
         delete[] rwork;
         delete[] work2;
     }
-
-    void diag_lapack_nh(const int& n, double* mat, std::complex<double>* eig)
+    template<>
+    void diag_lapack_nh<double>(const int& n, double* mat, std::complex<double>* eig)
     {
         ModuleBase::TITLE("LR_Util", "diag_lapack_nh<double>");
         int info = 0;
@@ -164,8 +283,8 @@ namespace LR_Util
         if (info) { std::cout << "ERROR: Lapack solver dgeev, info=" << info << std::endl; }
         for (int i = 0;i < n;++i) { eig[i] = std::complex<double>(eig_real[i], eig_imag[i]); }
     }
-
-    void diag_lapack_nh(const int& n, std::complex<double>* mat, std::complex<double>* eig)
+    template<>
+    void diag_lapack_nh<std::complex<double>>(const int& n, std::complex<double>* mat, std::complex<double>* eig)
     {
         ModuleBase::TITLE("LR_Util", "diag_lapack_nh <std::complex<double>>");
         int lwork = 2 * n;
@@ -178,6 +297,46 @@ namespace LR_Util
         zgeev_(&jobvl, &jobvr, &n, mat, &n, eig,
             vl.data(), &ldvl, vr.data(), &ldvr, work2.data(), &lwork, rwork.data(), &info);
         if (info) { std::cout << "ERROR: Lapack solver zgeev, info=" << info << std::endl; }
+    }
+
+    template<>
+    int lapack_linear_solver<double>(const double* A, double* x, const double* b, const int n, const int nrhs)
+    {
+        ModuleBase::TITLE("LR_Util", "lapack_linear_solver<double>");
+        // 1. copy A to a mutable array
+        std::vector<double> A_copy(A, A + n * n);
+        // copy b to x
+        std::copy(b, b + n * nrhs, x);
+        // 2. LU decomposition: A->LU
+        std::vector<int> ipiv(n);   // pivot indices
+        int info = 0;
+        dgetrf_(&n, &n, A_copy.data(), &n, ipiv.data(), &info);
+        if (info) { std::cout << "ERROR: Lapack solver dgetrf, info=" << info << std::endl; }
+        // 3. Solve Ax=b
+        const char trans = 'N';
+        dgetrs_(&trans, &n, &nrhs, A_copy.data(), &n, ipiv.data(), x, &n, &info);
+        if (info) { std::cout << "ERROR: Lapack solver dgetrs, info=" << info << std::endl; }
+        return info;
+    }
+
+    template<>
+    int lapack_linear_solver<std::complex<double>>(const std::complex<double>* A, std::complex<double>* x, const std::complex<double>* b, const int n, const int nrhs)
+    {
+        ModuleBase::TITLE("LR_Util", "lapack_linear_solver<complex<double>>");
+        // 1. copy A to a mutable array
+        std::vector<std::complex<double>> A_copy(A, A + n * n);
+        // copy b to x
+        std::copy(b, b + n * nrhs, x);
+        // 2. LU decomposition: A->LU
+        std::vector<int> ipiv(n);   // pivot indices, for
+        int info = 0;
+        zgetrf_(&n, &n, A_copy.data(), &n, ipiv.data(), &info);
+        if (info) { std::cout << "ERROR: Lapack solver zgetrf, info=" << info << std::endl; }
+        // 3. Solve Ax=b
+        const char trans = 'N';
+        zgetrs_(&trans, &n, &nrhs, A_copy.data(), &n, ipiv.data(), x, &n, &info);
+        if (info) { std::cout << "ERROR: Lapack solver zgetrs, info=" << info << std::endl; }
+        return info;
     }
 
     std::string tolower(const std::string& str)
