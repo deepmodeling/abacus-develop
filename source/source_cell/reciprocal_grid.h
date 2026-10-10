@@ -36,6 +36,11 @@ namespace ModuleCell
  */
 void restrict_kpt(ModuleBase::Vector3<double>& kvec, double epsilon);
 
+/// Compare reciprocal fractional coordinates modulo integer reciprocal vectors.
+bool kpoints_equivalent(const ModuleBase::Vector3<double>& first,
+                        const ModuleBase::Vector3<double>& second,
+                        double epsilon);
+
 /**
  * @brief Abstract base class shared by K_Vectors (electrons) and QList (phonons).
  *

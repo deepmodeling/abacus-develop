@@ -71,8 +71,8 @@ void VSep::init_vsep(const ModulePW::PW_Basis& rho_basis, const Sep_Cell& sep_ce
             mesh--;
         }
 
-        double* r = sep_pot->r;
-        double* rv = sep_pot->rv;
+        const double* r = sep_pot->r.data();
+        const double* rv = sep_pot->rv.data();
         std::vector<double> shell_rv(sep_pot->mesh);
         std::vector<double> rab(sep_pot->mesh);
         std::vector<double> aux(sep_pot->mesh);

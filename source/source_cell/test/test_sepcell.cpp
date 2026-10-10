@@ -226,20 +226,20 @@ TEST_F(SepCellTest, BcastSepCell)
     EXPECT_EQ(seps[1].label, "F");  // Default broadcasted
     EXPECT_EQ(seps[1].mesh, 1038);  // Default broadcasted
     EXPECT_TRUE(seps[1].is_enable); // Default broadcasted
-    // Note: SepPot::bcast_sep() allocates memory for r and rv on all ranks
+    // Note: SepPot::bcast_sep() resizes r and rv on all ranks
     // whenever mesh > 0, regardless of is_enable status
     if (seps[0].mesh > 0)
     {
-        EXPECT_NE(seps[0].r, nullptr);
-        EXPECT_NE(seps[0].rv, nullptr);
+        EXPECT_FALSE(seps[0].r.empty());
+        EXPECT_FALSE(seps[0].rv.empty());
     }
     else
     {
-        EXPECT_EQ(seps[0].r, nullptr);
-        EXPECT_EQ(seps[0].rv, nullptr);
+        EXPECT_TRUE(seps[0].r.empty());
+        EXPECT_TRUE(seps[0].rv.empty());
     }
-    EXPECT_NE(seps[1].r, nullptr);
-    EXPECT_NE(seps[1].rv, nullptr);
+    EXPECT_FALSE(seps[1].r.empty());
+    EXPECT_FALSE(seps[1].rv.empty());
     EXPECT_DOUBLE_EQ(seps[1].r[0], 3.4643182373e-06);
     EXPECT_DOUBLE_EQ(seps[1].rv[0], -2.0868200000e-05);
     EXPECT_DOUBLE_EQ(seps[1].r[7], 2.8965849122e-05);

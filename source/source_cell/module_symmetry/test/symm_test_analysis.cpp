@@ -39,6 +39,64 @@ SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 
+TEST_F(SymmetryTest, AtomMapRefreshWithUnchangedOperationCount)
+{
+    stru_ diamond;
+    diamond.cell = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    diamond.coordtype = "D";
+    atomtype_ carbon;
+    carbon.atomname = "C";
+    carbon.coordinate = {{0.0, 0.0, 0.0}, {0.0, 0.5, 0.5},
+                         {0.5, 0.0, 0.5}, {0.5, 0.5, 0.0},
+                         {0.25, 0.25, 0.25}, {0.25, 0.75, 0.75},
+                         {0.75, 0.25, 0.75}, {0.75, 0.75, 0.25}};
+    diamond.all_type.push_back(carbon);
+    construct_ucell(diamond);
+    ModuleSymmetry::Symmetry symm;
+    const int representation[2] = {0, 0};
+    const std::string calculation = "cell-relax";
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running,
+                  1e-6, 1, calculation, representation);
+    const int original_count = symm.nrotk;
+    EXPECT_EQ(original_count, 48);
+
+    // Keep the same crystal symmetry while changing atom representatives.
+    std::swap(ucell.atoms[0].taud[0], ucell.atoms[0].taud[1]);
+    ucell.latvec *= 0.98;
+    ucell.a1 *= 0.98;
+    ucell.a2 *= 0.98;
+    ucell.a3 *= 0.98;
+    for (int atom = 0; atom < ucell.nat; ++atom)
+    {
+        ucell.atoms[0].tau[atom] = ucell.atoms[0].taud[atom] * ucell.latvec;
+    }
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running,
+                  1e-6, 1, calculation, representation);
+    EXPECT_EQ(symm.nrotk, original_count);
+    for (int operation = 0; operation < symm.nrotk; ++operation)
+    {
+        for (int atom = 0; atom < ucell.nat; ++atom)
+        {
+            const int mapped = symm.get_rotated_atom(operation, atom);
+            EXPECT_GE(mapped, 0);
+            EXPECT_LT(mapped, ucell.nat);
+            if (mapped < 0 || mapped >= ucell.nat)
+            {
+                continue;
+            }
+            const auto rotated = ucell.atoms[0].taud[atom] * symm.gmatrix[operation];
+            const auto residual = rotated + symm.gtrans[operation] - ucell.atoms[0].taud[mapped];
+            const double lattice_x = std::round(residual.x);
+            const double lattice_y = std::round(residual.y);
+            const double lattice_z = std::round(residual.z);
+            EXPECT_NEAR(residual.x, lattice_x, 1e-8);
+            EXPECT_NEAR(residual.y, lattice_y, 1e-8);
+            EXPECT_NEAR(residual.z, lattice_z, 1e-8);
+        }
+    }
+    ClearUcell();
+}
+
 TEST_F(SymmetryTest, AnalySys)
 {
     for (int stru = 0; stru < stru_lib.size(); stru++)

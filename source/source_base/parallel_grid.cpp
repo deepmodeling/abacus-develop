@@ -17,17 +17,17 @@ Parallel_Grid::~Parallel_Grid()
 {
 }
 
-void Parallel_Grid::init(const int& ncx_in,
-                         const int& ncy_in,
-                         const int& ncz_in,
-                         const int& nczp_in,
-                         const int& nrxx_in,
-                         const int& nbz_in,
-                         const int& bz_in,
-                         const int nprocgroup)
-{
 
-    ModuleBase::TITLE("Parallel_Grid", "init");
+
+void Parallel_Grid::init_serial(const int& ncx_in,
+                                const int& ncy_in,
+                                const int& ncz_in,
+                                const int& nczp_in,
+                                const int& nrxx_in,
+                                const int& nbz_in,
+                                const int& bz_in)
+{
+    ModuleBase::TITLE("Parallel_Grid", "init_serial");
 
     this->ncx = ncx_in;
     this->ncy = ncy_in;
@@ -49,10 +49,11 @@ void Parallel_Grid::init(const int& ncx_in,
 
     this->ncxy = ncx * ncy;
     this->ncxyz = ncxy * ncz;
-
-#ifndef __MPI
-    return;
-#endif
+}
+#ifdef __MPI
+void Parallel_Grid::init_parallel(const int nprocgroup)
+{
+    ModuleBase::TITLE("Parallel_Grid", "init_parallel");
 
     // enable to call this function again liuyu 2023-03-10
     if (!this->numz.empty())
@@ -64,7 +65,6 @@ void Parallel_Grid::init(const int& ncx_in,
         this->whichpro_loc.clear();
     }
 
-    // (2)
     assert(this->numz.empty());
     assert(GlobalV::KPAR > 0);
 
@@ -98,8 +98,23 @@ void Parallel_Grid::init(const int& ncx_in,
 
     return;
 }
+#endif
+void Parallel_Grid::init(const int& ncx_in,
+                         const int& ncy_in,
+                         const int& ncz_in,
+                         const int& nczp_in,
+                         const int& nrxx_in,
+                         const int& nbz_in,
+                         const int& bz_in,
+                         const int nprocgroup)
+{
+    this->init_serial(ncx_in, ncy_in, ncz_in, nczp_in, nrxx_in, nbz_in, bz_in);
 
 void Parallel_Grid::z_distribution(const int kpar)
+#ifdef __MPI
+    this->init_parallel(nprocgroup);
+#endif
+}
 {
     assert(!this->numz.empty());
     assert(kpar > 0);

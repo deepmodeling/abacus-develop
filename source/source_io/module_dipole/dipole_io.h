@@ -17,8 +17,6 @@ void write_dipole(const UnitCell& ucell,
                   std::ofstream& ofs_running,
                   const int& precision = 11);
 
-double prepare(const UnitCell& cell, int& dir);
-
 } // namespace ModuleIO
 
 #endif

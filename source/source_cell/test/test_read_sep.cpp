@@ -25,8 +25,8 @@ class ReadSepTest : public testing::Test
         EXPECT_DOUBLE_EQ(read_sep->enhence_a, 1.0);
         EXPECT_EQ(read_sep->mesh, 0);
         EXPECT_EQ(read_sep->strip_elec, 0);
-        EXPECT_EQ(read_sep->r, nullptr);
-        EXPECT_EQ(read_sep->rv, nullptr);
+        EXPECT_TRUE(read_sep->r.empty());
+        EXPECT_TRUE(read_sep->rv.empty());
     }
 
     void TearDown() override
@@ -52,8 +52,8 @@ TEST_F(ReadSepTest, ReadSep)
         EXPECT_EQ(read_sep->strip_elec, 50);
 
         EXPECT_EQ(read_sep->r[0], 3.4643182373e-06);
-        EXPECT_NE(read_sep->r, nullptr);
-        EXPECT_NE(read_sep->rv, nullptr);
+        EXPECT_FALSE(read_sep->r.empty());
+        EXPECT_FALSE(read_sep->rv.empty());
 #ifdef __MPI
     }
 #endif // __MPI
@@ -71,8 +71,8 @@ TEST_F(ReadSepTest, PrintSep)
         read_sep->orbital = "p";
         read_sep->strip_elec = 50;
         read_sep->mesh = 2;
-        read_sep->r = new double[2]{0.1, 0.2};
-        read_sep->rv = new double[2]{1.0, 2.0};
+        read_sep->r = {0.1, 0.2};
+        read_sep->rv = {1.0, 2.0};
 
         // 测试打印功能
         std::ofstream ofs("test_sep.out");
@@ -121,8 +121,8 @@ TEST_F(ReadSepTest, BcastSep)
         EXPECT_EQ(read_sep->xc_type, "pbe");
         EXPECT_EQ(read_sep->strip_elec, 50);
         EXPECT_DOUBLE_EQ(read_sep->r[0], 3.4643182373e-06);
-        EXPECT_NE(read_sep->r, nullptr);
-        EXPECT_NE(read_sep->rv, nullptr);
+        EXPECT_FALSE(read_sep->r.empty());
+        EXPECT_FALSE(read_sep->rv.empty());
     }
 }
 
