@@ -1,2 +1,0 @@
-Test LCAO DeltaSpin atomic forces with noncollinear spin (nspin=4) and SOC.
-Check the DeltaSpin force contribution against an independent frozen-state finite-difference reference.
