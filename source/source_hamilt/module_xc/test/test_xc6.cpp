@@ -2,6 +2,7 @@
 #include "../libxc_abacus.h"
 #include "gtest/gtest.h"
 #include "xctest.h"
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <iomanip>
@@ -159,3 +160,85 @@ TEST(XC_ScanL_Reference, tau_xc_wrapper_libxc)
     EXPECT_NE(v1xc, 0.0);
     EXPECT_NE(vlaplxc, 0.0);
 }
+
+#ifdef __EXX
+// SCAN0 scales the semilocal SCAN exchange by (1 - hybrid_alpha). The
+// wrappers must use the hybrid_alpha they are given, not the global
+// XC_Functional value, so the two are deliberately set to different values.
+class XCTest_SCAN0_Alpha : public testing::Test
+{
+  protected:
+    const std::vector<int> x_only = {XC_MGGA_X_SCAN};
+    const double global_alpha = 0.25;
+    const double hybrid_alpha = 0.4;
+    const double hse_omega = 0.0;
+
+    void SetUp() override
+    {
+        XC_Functional::set_xc_type("SCAN0");
+        XC_Functional::set_hybrid_alpha(global_alpha);
+    }
+};
+
+TEST_F(XCTest_SCAN0_Alpha, tau_xc)
+{
+    const double no_alpha = 0.0;
+    const double scale = 1.0 - hybrid_alpha;
+    const double rho = 0.5;
+    const double grho = 0.01;
+    const double lapl = 0.0;
+    const double tau = 0.1;
+
+    std::array<double, 5> full = {0.0, 0.0, 0.0, 0.0, 0.0};
+    XC_Functional_Libxc::tau_xc(x_only, rho, grho, lapl, tau,
+                                full[0], full[1], full[2], full[3], full[4], no_alpha, hse_omega);
+
+    std::array<double, 5> scaled = {0.0, 0.0, 0.0, 0.0, 0.0};
+    XC_Functional_Libxc::tau_xc(x_only, rho, grho, lapl, tau,
+                                scaled[0], scaled[1], scaled[2], scaled[3], scaled[4], hybrid_alpha, hse_omega);
+
+    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(x_only, XC_UNPOLARIZED, hybrid_alpha, hse_omega);
+    std::array<double, 5> scaled_funcs = {0.0, 0.0, 0.0, 0.0, 0.0};
+    XC_Functional_Libxc::tau_xc(funcs, rho, grho, lapl, tau,
+                                scaled_funcs[0], scaled_funcs[1], scaled_funcs[2], scaled_funcs[3], scaled_funcs[4],
+                                hybrid_alpha);
+    XC_Functional_Libxc::finish_func(funcs);
+
+    EXPECT_NE(full[0], 0.0);
+    for (int i = 0; i < 5; i++)
+    {
+        EXPECT_NEAR(scaled[i], scale * full[i], 1.0e-12);
+        EXPECT_NEAR(scaled_funcs[i], scale * full[i], 1.0e-12);
+    }
+}
+
+TEST_F(XCTest_SCAN0_Alpha, tau_xc_spin)
+{
+    const double no_alpha = 0.0;
+    const double scale = 1.0 - hybrid_alpha;
+    const double rhoup = 0.3;
+    const double rhodw = 0.2;
+    const ModuleBase::Vector3<double> gdr1(0.05, 0.02, 0.01);
+    const ModuleBase::Vector3<double> gdr2(0.03, 0.01, 0.02);
+    const double laplup = 0.0;
+    const double lapldw = 0.0;
+    const double tauup = 0.06;
+    const double taudw = 0.04;
+
+    std::array<double, 10> full = {};
+    XC_Functional_Libxc::tau_xc_spin(x_only, rhoup, rhodw, gdr1, gdr2, laplup, lapldw, tauup, taudw,
+                                     full[0], full[1], full[2], full[3], full[4], full[5],
+                                     full[6], full[7], full[8], full[9], no_alpha, hse_omega);
+
+    std::array<double, 10> scaled = {};
+    XC_Functional_Libxc::tau_xc_spin(x_only, rhoup, rhodw, gdr1, gdr2, laplup, lapldw, tauup, taudw,
+                                     scaled[0], scaled[1], scaled[2], scaled[3], scaled[4], scaled[5],
+                                     scaled[6], scaled[7], scaled[8], scaled[9], hybrid_alpha, hse_omega);
+
+    EXPECT_NE(full[0], 0.0);
+    for (int i = 0; i < 10; i++)
+    {
+        EXPECT_NEAR(scaled[i], scale * full[i], 1.0e-12);
+    }
+}
+#endif
