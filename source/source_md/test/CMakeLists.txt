@@ -5,6 +5,9 @@ list(APPEND depend_files
   ../md_func.cpp
   ../../source_cell/basecell.cpp
   ../../source_cell/unitcell.cpp
+  ../../source_cell/unitcell_index.cpp
+  ../../source_cell/unitcell_stats.cpp
+  ../../source_cell/unitcell_setup.cpp
   ../../source_cell/update_cell.cpp
   ../../source_cell/bcast_cell.cpp
   ../../source_cell/print_cell.cpp
