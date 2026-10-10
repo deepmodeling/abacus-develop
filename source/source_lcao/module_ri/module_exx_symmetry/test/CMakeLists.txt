@@ -6,5 +6,6 @@ AddTest(
   LIBS base device symmetry neighbor parameter
   SOURCES symm_rotation_test.cpp test_symm_rotation.cpp ../symm_rotation.cpp ../symm_rot_out.cpp
   ../../../../source_basis/module_ao/parallel_orbitals.cpp
+  ../../../../source_cell/parallel_kpoints.cpp
 
 )

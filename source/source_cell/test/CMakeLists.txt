@@ -173,7 +173,43 @@ add_test(NAME MODULE_CELL_parallel_kpoints_test
 AddTest(
   TARGET MODULE_CELL_unitcell_test
   LIBS base device cell_info symmetry
-  SOURCES unitcell_test.cpp ../cal_ux.cpp
+  SOURCES unitcell_test.cpp
+)
+
+AddTest(
+  TARGET MODULE_CELL_cal_ux_test
+  LIBS base device cell_info
+  SOURCES test_cal_ux.cpp ../cal_ux.cpp
+)
+
+AddTest(
+  TARGET MODULE_CELL_read_orb_test
+  LIBS base device cell_info
+  SOURCES test_read_orb.cpp
+)
+
+AddTest(
+  TARGET MODULE_CELL_update_cell_test
+  LIBS base device cell_info
+  SOURCES test_update_cell.cpp
+)
+
+AddTest(
+  TARGET MODULE_CELL_cell_tools_test
+  LIBS base device cell_info
+  SOURCES test_cell_tools.cpp
+)
+
+AddTest(
+  TARGET MODULE_CELL_read_atom_species_test
+  LIBS base device cell_info
+  SOURCES test_read_atom_species.cpp
+)
+
+AddTest(
+  TARGET MODULE_CELL_read_atoms_test
+  LIBS base device cell_info
+  SOURCES test_read_atoms.cpp
 )
 
 AddTest(
@@ -214,7 +250,7 @@ AddTest(
 AddTest(
   TARGET MODULE_CELL_SEP_TEST
   LIBS base device
-  SOURCES read_sep_test.cpp ../sep.cpp
+  SOURCES test_read_sep.cpp ../sep.cpp
 )
 
 add_test(NAME MODULE_CELL_read_sep_parallel
@@ -225,7 +261,7 @@ add_test(NAME MODULE_CELL_read_sep_parallel
 AddTest(
   TARGET MODULE_CELL_SEP_CELL_TEST
   LIBS base device
-  SOURCES sepcell_test.cpp ../sep.cpp ../sep_cell.cpp
+  SOURCES test_sepcell.cpp ../sep.cpp ../sep_cell.cpp
 )
 
 add_test(NAME MODULE_CELL_sep_cell_parallel

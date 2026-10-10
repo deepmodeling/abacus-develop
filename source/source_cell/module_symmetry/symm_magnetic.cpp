@@ -70,10 +70,10 @@ void Symmetry::analyze_magnetic_group(const Atom* atoms, const Statistics& st, i
     }
 
     // 3. analyze the effective structure
-    this->getgroup(nrot_out, nrotk_out, GlobalV::ofs_running, 
-            this->nop, this->symop, this->gmatrix, 
-            this->gtrans, mag_pos.data(), this->rotpos, 
-            this->index, mag_type_atoms.size(), mag_itmin_type, 
+    this->getgroup(nrot_out, nrotk_out, GlobalV::ofs_running,
+            this->nop, this->symop, this->gmatrix,
+            this->gtrans, mag_pos.data(), this->rotpos.data(),
+            this->index.data(), mag_type_atoms.size(), mag_itmin_type,
             mag_itmin_start, mag_istart.data(), mag_na.data());
 
 }

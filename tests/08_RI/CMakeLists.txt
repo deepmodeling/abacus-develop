@@ -34,11 +34,11 @@ else()
     add_test(
         NAME 08_RI_librpa_wavefunction_checks
         COMMAND ${Python3_EXECUTABLE} -m unittest discover
-                -s ${ABACUS_TEST_DIR}/integrate/tools -p test_librpa_wavefunctions.py
+                -s ${ABACUS_TEST_DIR}/integrate/validation_tools -p test_librpa_wavefunctions.py
     )
     add_test(
         NAME 08_RI_librpa_producer_mpi
-        COMMAND ${Python3_EXECUTABLE} ${ABACUS_TEST_DIR}/integrate/tools/run_librpa_mpi.py
+        COMMAND ${Python3_EXECUTABLE} ${ABACUS_TEST_DIR}/integrate/validation_tools/run_librpa_mpi.py
                 --abacus ${ABACUS_BIN_PATH} --cases ${ABACUS_TEST_DIR}/08_RI
                 --mpirun ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
                 ${RPA_MPI_FLAGS}
@@ -46,7 +46,7 @@ else()
     set_tests_properties(08_RI_librpa_producer_mpi PROPERTIES PROCESSORS 2 TIMEOUT 1200)
     add_test(
         NAME 08_RI_librpa_symmetry
-        COMMAND ${Python3_EXECUTABLE} ${ABACUS_TEST_DIR}/integrate/tools/run_librpa_sym.py
+        COMMAND ${Python3_EXECUTABLE} ${ABACUS_TEST_DIR}/integrate/validation_tools/run_librpa_sym.py
                 --abacus ${ABACUS_BIN_PATH} --cases ${ABACUS_TEST_DIR}/08_RI
                 --mpirun ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
                 ${RPA_MPI_FLAGS}

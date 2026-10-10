@@ -9,14 +9,6 @@ checks together. Use one of the following subcommands:
     density, partial charge, wavefunction modulus, potential, and other scalar
     cube outputs. The command prints one number: ``sum(values) * voxel_volume``.
 
-``compare-wfc CAL_RE CAL_IM REF_RE REF_IM [CAL_RE CAL_IM REF_RE REF_IM ...]``
-    Compare one complex wavefunction state after removing its arbitrary global
-    U(1) phase. Pass one group of four files for a scalar wavefunction or for an
-    independently aligned spin channel. Pass two groups for an nspin=4 spinor;
-    all groups then share the same fitted phase. The command prints the maximum
-    pointwise complex error after alignment. It does not perform unitary
-    alignment within a degenerate subspace.
-
 ``fingerprint-wfc RE IM [RE IM ...]``
     Generate a compact, deterministic fingerprint of one complex wavefunction
     state. One real/imaginary pair represents a scalar component; two pairs in
@@ -45,7 +37,6 @@ checks together. Use one of the following subcommands:
 Examples:
 
     python3 cube_tool.py integrate OUT.autotest/charge.cube
-    python3 cube_tool.py compare-wfc cal_re.cube cal_im.cube ref_re.cube ref_im.cube
     python3 cube_tool.py fingerprint-wfc state_re.cube state_im.cube
     python3 cube_tool.py check-spinor OUT.autotest --tolerance 1e-8
 
@@ -213,76 +204,6 @@ def format_metric(value):
     return f"{value:.12e}"
 
 
-def read_wfc_component(calculated_re, calculated_im, reference_re, reference_im):
-    paths = (calculated_re, calculated_im, reference_re, reference_im)
-    cubes = [read_cube(path) for path in paths]
-    shape = cubes[0][0]
-    for path, cube in zip(paths[1:], cubes[1:]):
-        if cube[0] != shape:
-            raise ValueError(f"grid shape mismatch in {path}: expected {shape}, found {cube[0]}")
-
-    calculated = [complex(real, imag) for real, imag in zip(cubes[0][2], cubes[1][2])]
-    reference = [complex(real, imag) for real, imag in zip(cubes[2][2], cubes[3][2])]
-    return shape, calculated, reference
-
-
-def phase_aligned_error(file_groups):
-    calculated_components = []
-    reference_components = []
-    common_shape = None
-    for group in file_groups:
-        shape, calculated, reference = read_wfc_component(*group)
-        if common_shape is None:
-            common_shape = shape
-        elif shape != common_shape:
-            raise ValueError(
-                f"spinor component grid shape mismatch in {group[0]}: "
-                f"expected {common_shape}, found {shape}"
-            )
-        calculated_components.append(calculated)
-        reference_components.append(reference)
-
-    calculated_norm = sum(
-        abs(value) ** 2 for component in calculated_components for value in component
-    )
-    reference_norm = sum(
-        abs(value) ** 2 for component in reference_components for value in component
-    )
-    if not math.isfinite(calculated_norm) or calculated_norm == 0.0:
-        raise ValueError("calculated wavefunction has zero or non-finite norm")
-    if not math.isfinite(reference_norm) or reference_norm == 0.0:
-        raise ValueError("reference wavefunction has zero or non-finite norm")
-
-    overlap = sum(
-        reference.conjugate() * calculated
-        for calculated_component, reference_component in zip(
-            calculated_components, reference_components
-        )
-        for calculated, reference in zip(calculated_component, reference_component)
-    )
-    if (
-        not math.isfinite(overlap.real)
-        or not math.isfinite(overlap.imag)
-        or abs(overlap) == 0.0
-    ):
-        raise ValueError("wavefunction overlap is zero or non-finite; the global phase is undefined")
-
-    phase = overlap.conjugate() / abs(overlap)
-    return max(
-        abs(phase * calculated - reference)
-        for calculated_component, reference_component in zip(
-            calculated_components, reference_components
-        )
-        for calculated, reference in zip(calculated_component, reference_component)
-    )
-
-
-def parse_wfc_groups(paths):
-    if len(paths) % 4 != 0:
-        raise ValueError("expected four cube paths per component: CAL_RE CAL_IM REF_RE REF_IM")
-    return [paths[index : index + 4] for index in range(0, len(paths), 4)]
-
-
 def read_dense_shape(directory):
     pattern = re.compile(
         r"fft grid for dense charge/potential\s*=\s*\[\s*([0-9]+),\s*([0-9]+),\s*([0-9]+)\s*\]"
@@ -391,10 +312,6 @@ def run_integrate(args):
     print(f"{integrate_cube(args.cube):.10g}")
 
 
-def run_compare_wfc(args):
-    print(f"{phase_aligned_error(parse_wfc_groups(args.cube_paths)):.10g}")
-
-
 def run_fingerprint_wfc(args):
     for name, value in wfc_fingerprint(args.cube_paths):
         print(f"{name} {format_metric(value)}")
@@ -415,16 +332,6 @@ def build_parser():
     )
     integrate_parser.add_argument("cube", type=Path)
     integrate_parser.set_defaults(handler=run_integrate)
-
-    compare_parser = subparsers.add_parser(
-        "compare-wfc", help="compare one complex state after global phase alignment"
-    )
-    compare_parser.add_argument(
-        "cube_paths",
-        nargs="+",
-        help="CAL_RE CAL_IM REF_RE REF_IM, repeated for spinor components",
-    )
-    compare_parser.set_defaults(handler=run_compare_wfc)
 
     fingerprint_parser = subparsers.add_parser(
         "fingerprint-wfc",

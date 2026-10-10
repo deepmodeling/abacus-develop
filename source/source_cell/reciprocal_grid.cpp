@@ -6,6 +6,8 @@
  */
 #include "reciprocal_grid.h"
 
+#include <cmath>
+
 #include "source_cell/unitcell.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_base/global_function.h"
@@ -17,6 +19,19 @@
 
 namespace ModuleCell
 {
+
+bool kpoints_equivalent(const ModuleBase::Vector3<double>& first,
+                        const ModuleBase::Vector3<double>& second,
+                        const double epsilon)
+{
+    ModuleBase::Vector3<double> difference = first - second;
+    difference.x -= std::round(difference.x);
+    difference.y -= std::round(difference.y);
+    difference.z -= std::round(difference.z);
+    return std::abs(difference.x) < epsilon
+           && std::abs(difference.y) < epsilon
+           && std::abs(difference.z) < epsilon;
+}
 
 void restrict_kpt(ModuleBase::Vector3<double>& kvec, double epsilon)
 {
@@ -329,7 +344,6 @@ void ReciprocalGrid::reduce_ibz(const ModuleBase::Matrix3* rot_ops,
                                 std::vector<int>& ibz_index,
                                 std::vector<int>& ibz2bz)
 {
-    auto equal = [epsilon](double m, double n) { return fabs(m - n) < epsilon; };
 
     // direct coordinates of points in the k-lattice
     std::vector<ModuleBase::Vector3<double>> kvec_d_k(this->nkstot);
@@ -382,15 +396,14 @@ void ReciprocalGrid::reduce_ibz(const ModuleBase::Matrix3* rot_ops,
                     kvec_rot_k = kvec_rot_k * k_lattice * G.Inverse();   // convert to recip lattice
                     restrict_kpt(kvec_rot_k, epsilon);
 
-                    assert(equal(kvec_rot.x, kvec_rot_k.x));
-                    assert(equal(kvec_rot.y, kvec_rot_k.y));
-                    assert(equal(kvec_rot.z, kvec_rot_k.z));
+                    const bool consistent = kpoints_equivalent(kvec_rot, kvec_rot_k, epsilon);
+                    assert(consistent);
+                    (void)consistent;
                     kvec_rot_k = kvec_rot_k * G * k_lattice.Inverse(); // convert back to k-lattice
                 }
                 for (int k = 0; k < nkstot_ibz; ++k)
                 {
-                    if (equal(kvec_rot.x, kvec_d_ibz[k].x) && equal(kvec_rot.y, kvec_d_ibz[k].y)
-                        && equal(kvec_rot.z, kvec_d_ibz[k].z))
+                    if (kpoints_equivalent(kvec_rot, kvec_d_ibz[k], epsilon))
                     {
                         already_exist = true;
                         // find another ibz point,

@@ -234,6 +234,91 @@ TEST_F(DomainDecompositionTest, CrossingHaloEdgePreservesCachedGhostSlots)
     }
 }
 
+TEST_F(DomainDecompositionTest, PeriodicGhostImageRebuildsOnBoundaryCrossing)
+{
+    if (domain.size() != 2)
+    {
+        return;
+    }
+    for (LocalAtom& atom : cell.owned_atoms())
+    {
+        if (atom.type_index == 1)
+        {
+            atom.frac.x = 0.99;
+            atom.cart = atom.frac * cell.latvec();
+        }
+    }
+    decomp.prepare_neighbors(cell);
+    const NeighborSearch* search = &cell.neighbor_search();
+    for (LocalAtom& atom : cell.owned_atoms())
+    {
+        if (atom.type_index == 1)
+        {
+            atom.frac.x = 0.01;
+            atom.cart = atom.frac * cell.latvec();
+        }
+    }
+    decomp.prepare_neighbors(cell);
+    EXPECT_NE(&cell.neighbor_search(), search);
+
+    long long local_type_one = 0;
+    for (const LocalAtom& atom : cell.owned_atoms())
+    {
+        if (atom.type_index == 1)
+        {
+            EXPECT_NEAR(atom.cart.x, 0.04, 1.0e-12);
+            ++local_type_one;
+        }
+    }
+    Parallel_Reduce::reduce_all(local_type_one);
+    EXPECT_EQ(local_type_one, 1);
+}
+
+TEST_F(DomainDecompositionTest, PeriodicGhostImageUpdatesAcrossRepeatedCrossings)
+{
+    if (domain.size() != 1)
+    {
+        return;
+    }
+    for (LocalAtom& atom : cell.owned_atoms())
+    {
+        if (atom.type_index == 1)
+        {
+            atom.frac.x = 0.99;
+            atom.cart = atom.frac * cell.latvec();
+        }
+    }
+    decomp.prepare_neighbors(cell);
+    const NeighborSearch* previous_search = &cell.neighbor_search();
+
+    const double positions[4] = {0.01, 0.99, 0.01, 0.99};
+    for (double position : positions)
+    {
+        for (LocalAtom& atom : cell.owned_atoms())
+        {
+            if (atom.type_index == 1)
+            {
+                atom.frac.x = position;
+                atom.cart = atom.frac * cell.latvec();
+            }
+        }
+        decomp.prepare_neighbors(cell);
+        EXPECT_NE(&cell.neighbor_search(), previous_search);
+        previous_search = &cell.neighbor_search();
+
+        bool found_owned_atom = false;
+        for (const LocalAtom& atom : cell.owned_atoms())
+        {
+            if (atom.type_index == 1)
+            {
+                EXPECT_NEAR(atom.cart.x, position * 4.0, 1.0e-12);
+                found_owned_atom = true;
+            }
+        }
+        EXPECT_TRUE(found_owned_atom);
+    }
+}
+
 TEST_F(DomainDecompositionTest, SkewCellMultipleImagesMatchBruteForce)
 {
     ModuleBase::Matrix3 lattice = cell.latvec();

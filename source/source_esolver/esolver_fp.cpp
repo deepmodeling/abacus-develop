@@ -214,7 +214,8 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
         // perform symmetry analysis
-        if (ModuleSymmetry::Symmetry::symm_flag == 1)
+        const bool update_symmetry = ModuleSymmetry::Symmetry::symm_flag == 1;
+        if (update_symmetry)
         {
             const int cal_symm_repr[2] = {this->inp_->cal_symm_repr[0], this->inp_->cal_symm_repr[1]};
             ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running,
@@ -223,7 +224,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         }
 
         // reset k-points
-        kv.set_after_vc(ucell.G, GlobalV::ofs_running);
+        kv.set_after_vc(ucell.G, ucell.symm, update_symmetry, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 

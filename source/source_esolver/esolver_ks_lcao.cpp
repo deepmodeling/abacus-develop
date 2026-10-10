@@ -192,7 +192,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     init_deltaspin_lcao<TK>(ucell, *this->inp_, &(this->pv), this->kv, this->p_hamilt, this->psi, this->dmat.dm, this->pelec);
 
     // 11) set xc type before the first cal of xc in pelec->init_scf, Peize Lin add 2016-12-03
-    this->exx_nao.before_scf(ucell, this->kv, orb_, this->p_chgmix, istep, *this->inp_, this->exx_info_);
+    this->exx_nao.before_scf(ucell, this->kv, orb_, this->pv, this->p_chgmix, istep, *this->inp_, this->exx_info_);
 
     // 12) initalize DM(R), which has the same size with Hamiltonian(R)
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);

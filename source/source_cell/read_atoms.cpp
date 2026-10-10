@@ -70,6 +70,11 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
             int na = ucell.atoms[it].na;
             ucell.nat += na;
 
+            // Number of atoms of this type whose x/y moment was discarded by
+            // the collinear projection (nspin=4 with noncolin=0). Reported
+            // once per type after the atom loop instead of once per atom.
+            int n_xy_discarded = 0;
+
             if (na > 0)
             {
                 unitcell::allocate_atom_properties(ucell.atoms[it], na);
@@ -103,9 +108,14 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                     }
 
                     // Process magnetization
-                    unitcell::process_magnetization(ucell.atoms[it], it, ia, nspin,
-                                        input_vec_mag, input_angle_mag, ofs_running,
-                                        noncolin);
+                    const bool xy_discarded
+                        = unitcell::process_magnetization(ucell.atoms[it], it, ia, nspin,
+                                            input_vec_mag, input_angle_mag, ofs_running,
+                                            noncolin);
+                    if (xy_discarded)
+                    {
+                        ++n_xy_discarded;
+                    }
 
                     // Transform coordinates
                     unitcell::transform_atom_coordinates(ucell.atoms[it], ia, Coordinate,
@@ -117,6 +127,9 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                     ucell.atoms[it].dis[ia].set(0, 0, 0);
                 }//endj
             }    // end na
+
+            unitcell::warn_xy_magnetization_ignored(ucell.atoms[it].label,
+                                        n_xy_discarded, na, ofs_running);
             // reset some useless parameters
             if (set_element_mag_zero)
             {
@@ -130,14 +143,28 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
         // so do not override it with an autoset seed. Warn instead.
         if (symmetry == 1)
         {
-            ofs_running << "\n WARNING: initial magmom is all zero and symmetry=1; "
-                        << "autoset magnetism is SKIPPED to preserve the symmetry of the initial (nonmagnetic) structure.\n"
-                        << "          If spontaneous magnetism is expected, set magmom explicitly "
-                        << "in STRU, or use symmetry = 0 or -1." << std::endl;
+            // Only report the skipped autoset when there is in fact
+            // nothing set: this message used to be printed even for an
+            // explicitly magnetized STRU.
+            if (unitcell::is_magnetization_all_zero(ucell))
+            {
+                ofs_running << "\n WARNING: initial magmom is all zero and symmetry=1; "
+                            << "autoset magnetism is SKIPPED to preserve the symmetry of the initial (nonmagnetic) structure.\n"
+                            << "          If spontaneous magnetism is expected, set magmom explicitly "
+                            << "in STRU, or use symmetry = 0 or -1." << std::endl;
+            }
         }
         else
         {
             unitcell::autoset_magnetization(ucell, nspin, ofs_running);
+        }
+
+        // nspin=4 never autosets a moment, so the zero-moment start has to
+        // be reported for every symmetry setting, not only on the autoset
+        // path that symmetry=1 skips.
+        if (nspin == 4)
+        {
+            unitcell::warn_zero_magnetization_nspin4(ucell, ofs_running);
         }
     }   // end scan_begin
 

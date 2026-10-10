@@ -89,13 +89,15 @@ public:
     void cal_exx_stress(const double& omega, const double& lat0);
 
     // Processes in ESolver_KS_LCAO
-    /// @brief in before_all_runners: set symmetry according to irreducible k-points
-    /// since k-points are not reduced again after the variation of the cell and exx-symmetry must be consistent with k-points.
-    /// In the future, we will reduce k-points again during cell-relax, then this setting can be moved to `exx_beforescf`.
+    /// Initialize EXX symmetry before the first ionic step.
     void exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv);
 
+    /// Discard old atom mappings, lattice returns and rotation caches before rebuilding.
+    void refresh_symmetry(const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv);
+
     /// @brief in beforescf: set xc type, opt_orb, do DM mixing
-    void exx_beforescf(const int istep, const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const LCAO_Orbitals& orb);
+    void exx_beforescf(const int istep, const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const LCAO_Orbitals& orb,
+                       const Parallel_2D& pv, const bool update_symmetry);
 
     /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
     void exx_eachiterinit(const int istep,

@@ -1,7 +1,26 @@
 #!/bin/bash
 
-# ABACUS executable path
-abacus=abacus
+# Optional local override file, not tracked by git (see .gitignore). When
+# present it is sourced first and may set the executable, e.g.:
+#     abacus=/home/me/abacus/build/abacus
+# The -a command-line flag (applied later) always wins over this file, and an
+# ABACUS_EXE exported in the environment wins over a path set here.
+# Effective priority:
+#     -a flag > ABACUS_EXE environment > general_info.local > 'abacus' from PATH
+# ABACUS_EXE is saved before sourcing so the local file cannot override it,
+# and 'abacus' is cleared so only the local file can set it.
+abacus_exe_env=${ABACUS_EXE:-}
+abacus=
+abacus_local_info="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/general_info.local"
+if [ -f "$abacus_local_info" ]; then
+    . "$abacus_local_info"
+fi
+
+# ABACUS executable path; override with the ABACUS_EXE environment variable
+# so both this script and general_info (via ${ABACUS_EXE}) share one setting.
+# A path set by general_info.local (above) is only used when ABACUS_EXE is
+# not exported.
+abacus=${abacus_exe_env:-${abacus:-abacus}}
 # number of MPI processes
 np=4
 nt=$OMP_NUM_THREADS # number of OpenMP threads, default is $OMP_NUM_THREADS
@@ -348,9 +367,9 @@ run_case()
                 if test -z $g
                 then
                     if [ -f librpa_producer_manifest.json ]; then
-                        LIBRPA_PRODUCER_CONTRACT=1 bash -e ../../integrate/tools/catch_properties.sh result.out
+                        LIBRPA_PRODUCER_CONTRACT=1 bash -e ../../integrate/validation_tools/catch_properties.sh result.out
                     else
-                        bash -e ../../integrate/tools/catch_properties.sh result.out
+                        bash -e ../../integrate/validation_tools/catch_properties.sh result.out
                     fi
                     if [ $? -ne 0 ]; then
                         echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
@@ -366,14 +385,14 @@ run_case()
                     fi
                 else
                     if [ -f librpa_producer_manifest.json ]; then
-                        LIBRPA_PRODUCER_CONTRACT=1 bash -e ../../integrate/tools/catch_properties.sh result.ref
+                        LIBRPA_PRODUCER_CONTRACT=1 bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
                     else
-                        bash -e ../../integrate/tools/catch_properties.sh result.ref
+                        bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
                     fi
                 fi
 
                 if [ -f librpa_producer_manifest.json ]; then
-                    if ! python3 ../../integrate/tools/check_librpa_producer.py \
+                    if ! python3 ../../integrate/validation_tools/check_librpa_producer.py \
                         --root . --manifest librpa_producer_manifest.json; then
                         echo -e "\e[0;31m [ERROR     ]  LibRPA producer contract failed \e[0m"
                         let fatal++
