@@ -18,7 +18,12 @@ void setup_diago_params_pw(const int istep,
     DiagoIterAssist<T, Device>::PW_DIAG_NDIM = inp.pw_diag_ndim;
     DiagoIterAssist<T, Device>::PW_DIAG_RR_STEP = inp.pw_diag_rr_step;
 
-    DiagoIterAssist<T, Device>::PW_DIAG_NMAX = inp.pw_diag_nmax;
+    // Preserve the established NSCF behavior of existing solvers while allowing
+    // PPCG to honor its configured iteration limit.
+    if (inp.calculation != "nscf" || inp.ks_solver == "ppcg")
+    {
+        DiagoIterAssist<T, Device>::PW_DIAG_NMAX = inp.pw_diag_nmax;
+    }
 }
 
 template <typename T, typename Device>
