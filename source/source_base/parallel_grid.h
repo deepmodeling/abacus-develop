@@ -45,7 +45,7 @@ class Parallel_Grid
 
     private:
 
-    void z_distribution(void);
+    void z_distribution(const int kpar);
 
 #ifdef __MPI
     void zpiece_distribute(double* zpiece, const int& iz, double* rho, const bool is_sdft) const;

@@ -94,18 +94,19 @@ void Parallel_Grid::init(const int& ncx_in,
         this->whichpro_loc[ip].assign(this->ncz, 0);
     }
 
-    this->z_distribution();
+    this->z_distribution(GlobalV::KPAR);
 
     return;
 }
 
-void Parallel_Grid::z_distribution()
+void Parallel_Grid::z_distribution(const int kpar)
 {
     assert(!this->numz.empty());
+    assert(kpar > 0);
 
-    std::vector<int> startp(GlobalV::KPAR);
+    std::vector<int> startp(kpar);
     startp[0] = 0;
-    for (int ip = 0; ip < GlobalV::KPAR; ip++)
+    for (int ip = 0; ip < kpar; ip++)
     {
         const int nproc = nproc_in_pool[ip];
 
