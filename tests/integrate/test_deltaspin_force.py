@@ -14,7 +14,7 @@ import tempfile
 
 
 NUMBER = r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[Ee][-+]?\d+)?"
-# Independent frozen-D/lambda energy derivative; see the fixture README.
+# Independent frozen-D/lambda energy derivative; derivation and evidence: PR #8117.
 REFERENCE_FORCE = [[-0.003514237992, 0.003514237992, 0.0],
                    [0.003514237992, -0.003514237992, 0.0]]
 FORCE_TOLERANCE = 1e-6
@@ -58,7 +58,7 @@ def main():
     parser.add_argument("--launcher", default="", help="e.g. 'mpirun -np 1'")
     args = parser.parse_args()
     executable = args.abacus.resolve()
-    fixture = Path(__file__).resolve().parent / "fixtures/deltaspin_force"
+    fixture = Path(__file__).resolve().parents[1] / "17_DS_DFTU/65_LCAO_DS_S4_SO_CF"
     assets = Path(__file__).resolve().parents[1] / "PP_ORB"
     args.work_dir.mkdir(parents=True, exist_ok=True)
     root = Path(tempfile.mkdtemp(prefix="deltaspin-force-", dir=str(args.work_dir.resolve())))

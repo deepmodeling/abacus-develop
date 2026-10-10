@@ -45,6 +45,7 @@
 # 26_LCAO_DS_S4_XYZ    # DISABLED: Convergence / numerical stability issue with LCAO noncollinear DeltaSpin
 # 27_LCAO_DS_S4_Z      # DISABLED: Convergence / numerical stability issue with LCAO noncollinear DeltaSpin
 # 28_LCAO_DS_S4_XY     # DISABLED: Convergence / numerical stability issue with LCAO noncollinear DeltaSpin
+# 65_LCAO_DS_S4_SO_CF  # Registered separately as lcao_deltaspin_force in CTest; checks component forces.
 
 # ========================
 # LCAO DFT+U + DeltaSpin tests
