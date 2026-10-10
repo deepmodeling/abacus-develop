@@ -1012,6 +1012,7 @@ OBJS_DELTASPIN=basic_funcs.o\
       deltaspin_init.o\
       lambda_loop_helper.o\
       lambda_loop.o\
+      lambda_loop_diag.o\
       spin_constrain.o\
       deltaspin_lcao.o\
       deltaspin_lcao_mi.o\
