@@ -13,6 +13,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
 #include "source_io/module_parameter/parameter.h"
+#include "source_estate/module_pot/pot_pcc.h"
 
 namespace hamilt
 {
@@ -68,28 +69,39 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
             }
         }
     }
-    if (PARAM.inp.vl_in_h)
+    const Input_para& input = PARAM.inp;
+    if (input.vl_in_h)
     {
         std::vector<std::string> pot_register_in;
-        if (PARAM.inp.vion_in_h)
+        if (input.vion_in_h)
         {
             pot_register_in.push_back("local");
         }
-        if (PARAM.inp.vh_in_h)
+        if (input.vh_in_h)
         {
             pot_register_in.push_back("hartree");
         }
         // no variable can choose xc, maybe it is necessary
         pot_register_in.push_back("xc");
-        if (PARAM.inp.imp_sol)
+        if (input.imp_sol)
         {
             pot_register_in.push_back("surchem");
         }
-        if (PARAM.inp.efield_flag)
+        if (input.assume_isolated == "pcc_0d")
+        {
+            pot_register_in.push_back("pcc");
+        }
+        if (input.assume_isolated == "pcc_2d")
+        {
+            const int count = pkv->get_nks();
+            elecstate::PotPcc::validate_kpoints(pkv->kvec_d, count, input.pcc_2d_axis);
+            pot_register_in.push_back("pcc_2d");
+        }
+        if (input.efield_flag)
         {
             pot_register_in.push_back("efield");
         }
-        if (PARAM.inp.gate_flag)
+        if (input.gate_flag)
         {
             pot_register_in.push_back("gatefield");
         }

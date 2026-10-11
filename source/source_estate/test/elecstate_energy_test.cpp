@@ -12,6 +12,10 @@ int XC_Functional::func_type = 1;
 bool XC_Functional::ked_flag = false;
 namespace elecstate
 {
+double Potential::pcc_energy_rydberg() const
+{
+    return 0.0;
+}
 void Potential::get_vnew(Charge const*, ModuleBase::matrix&)
 {
     return;

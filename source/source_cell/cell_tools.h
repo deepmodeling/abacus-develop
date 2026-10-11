@@ -16,6 +16,18 @@
  */
 namespace unitcell
 {
+    /// Cartesian atom information in type-major order, matching ABACUS atom indices.
+    struct AtomData
+    {
+        ModuleBase::Vector3<double> position; ///< Bohr
+        double mass = 0.0;
+        double valence_charge = 0.0; ///< Positive ionic charge in units of e
+    };
+
+    /// Extract positions, masses and pseudopotential valence charges.
+    /// Requires initialized Atom storage and a positive lattice scale in Bohr.
+    std::vector<AtomData> get_atom_data(const Atom* atoms, int ntype, double lattice_scale);
+
     /// @brief Get atom labels for each atom type.
     /// @param atoms atom pointer [in]
     /// @param ntype number of atom types [in]

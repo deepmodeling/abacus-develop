@@ -54,6 +54,12 @@ list(APPEND cell_simple_srcs
 
 add_library(cell_info OBJECT ${cell_simple_srcs})
 
+AddTest(
+  TARGET MODULE_CELL_cell_geometry
+  LIBS base device
+  SOURCES test_cell_geometry.cpp ../cell_geometry.cpp
+)
+
 if(NOT ENABLE_MPI)
   return()
 endif()

@@ -224,6 +224,7 @@ OBJS_CELL=atom_pseudo.o\
     reciprocal_grid.o\
     cell_index.o\
     cell_tools.o\
+    cell_geometry.o\
     record_adj.o\
     check_atomic_stru.o\
     update_cell.o\
@@ -274,6 +275,10 @@ OBJS_ELECSTAT=elecstate.o\
     elecstate_pw_sdft.o\
     elecstate_pw_cal_tau.o\
     makov_payne.o\
+    charge_moments.o\
+    pcc_0d.o\
+    pcc_2d.o\
+    pot_pcc.o\
     elecstate_op.o\
     efield.o\
     gatefield.o\
@@ -567,6 +572,7 @@ OBJS_PSI_INITIALIZER=psi_base.o\
 OBJS_PW=fft_bundle.o\
     fft_cpu.o\
     pw_basis.o\
+    pw_grid_geometry.o\
     pw_basis_k.o\
     pw_basis_sup.o\
     pw_distributeg.o\

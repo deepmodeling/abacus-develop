@@ -138,6 +138,8 @@ void Forces<FPTYPE, Device>::cal_force(const int nspin,
     }
 
     ModuleBase::matrix forcesol;
+    ModuleBase::matrix forcepcc(this->nat, 3);
+    elec.pot->add_pcc_force(ucell, forcepcc);
     if (PARAM.inp.imp_sol)
     {
         forcesol.create(this->nat, 3);
@@ -158,7 +160,7 @@ void Forces<FPTYPE, Device>::cal_force(const int nspin,
             for (int ia = 0; ia < ucell.atoms[it].na; ia++)
             {
                 force(iat, ipol) = forcelc(iat, ipol) + forceion(iat, ipol) + forcenl(iat, ipol) + forcecc(iat, ipol)
-                                   + forcescc(iat, ipol);
+                                   + forcescc(iat, ipol) + forcepcc(iat, ipol);
 
                 if (vdw_result != nullptr) // linpz and jiyy added vdw force, modified by zhengdy
                 {
