@@ -186,7 +186,9 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
     this->niter = this->maxniter;
     this->diag_ethr = this->inp_->pw_diag_thr;
     this->scf_nmax_flag = false; // mohan add 2025-09-21
-    for (int iter = 1; iter <= this->maxniter; ++iter)
+    this->scf_rerun_ = false;    // clear any stale rerun request before the loop
+    int iter = 1;
+    while (iter <= this->maxniter)
     {
         if(iter == this->maxniter)
         {
@@ -212,6 +214,23 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
             }
             break;
         }
+
+        // 7) SCF rerun hook. A subclass (e.g. ESolver_KS_PW via EXX) may set
+        //    scf_rerun_ to request a brand-new SCF run starting at iter=1,
+        //    typically after SCF converged but a post-SCF step (EXX exact
+        //    exchange) needs another full SCF. When set, clear the flag and
+        //    restart the loop with iter=1 so every iter-based guard
+        //    (DFT+U occupation-matrix writers, frequency-gated IO, etc.) sees
+        //    a valid 1-based iter. This replaces the old "iter=0 restart
+        //    signal" trick that wrote 0 into the iter reference.
+        if (this->scf_rerun_)
+        {
+            this->scf_rerun_ = false;
+            iter = 1;
+            continue;
+        }
+
+        ++iter;
     } // end scf iterations
 
     // 7) after scf

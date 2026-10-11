@@ -8,6 +8,11 @@
 
 class LCAO_Orbitals;
 
+namespace DFTU_BASE
+{
+struct OccmatOutputCfg; // defined in source_pw/module_pwdft/dftu_base_io.h
+}
+
 namespace ModuleESolver
 {
 
@@ -43,22 +48,24 @@ void init_dftu_lcao(int dft_plus_u,
  *
  * @param conv_esolver Whether ESolver has converged
  * @param dft_plus_u DFT+U mode (0=disabled, 1=old, 2=new)
- * @param out_chg Whether to output dm_onsite.txt
  * @param dftu DFT+U object
  * @param ucell Unit cell
  * @param dm_vec Density matrix vector
  * @param kv K-vectors
  * @param mixing_beta Mixing beta parameter
  * @param hamilt_lcao Hamiltonian LCAO object
- * @param global_out_dir Output directory for dm_onsite.txt
+ * @param global_out_dir Output directory for occ_mat.txt and occ_matg{#}.txt
  * @param nspin Number of spin channels (1, 2, or 4)
  * @param npol Number of polarizations
  * @param gamma_only_local Whether only the Gamma point is used for LCAO
+ * @param istep Ionic-step index, starting from 0
+ * @param iter Electronic-iteration index, starting from 1
+ * @param occmat_cfg Configuration for occupation-matrix output; its out_occ_mat
+ *        member is the master switch of the occ_mat*.txt files
  */
 template <typename TK>
 void finish_dftu_lcao(const bool conv_esolver,
                        int dft_plus_u,
-                       bool out_chg,
                        void* dftu,
                        const UnitCell& ucell,
                        const std::vector<std::vector<TK>>& dm_vec,
@@ -68,7 +75,10 @@ void finish_dftu_lcao(const bool conv_esolver,
                        const std::string& global_out_dir,
                        int nspin,
                        int npol,
-                       const bool gamma_only_local);
+                       const bool gamma_only_local,
+                       int istep,
+                       int iter,
+                       const DFTU_BASE::OccmatOutputCfg& occmat_cfg);
 
 } // namespace ModuleESolver
 

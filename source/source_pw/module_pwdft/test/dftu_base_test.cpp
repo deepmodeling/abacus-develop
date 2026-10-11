@@ -9,12 +9,21 @@
  ***********************************************/
 
 #include "source_pw/module_pwdft/dftu_base.h"
+#include "source_pw/module_pwdft/dftu_base_io.h"
 
 #include "source_cell/atom_spec.h"
 #include "source_cell/unitcell.h"
 
 #include "gtest/gtest.h"
 
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
+#include <cstdio>
+#include <fstream>
+#include <sstream>
+#include <string>
 #include <vector>
 #include <numeric>
 
@@ -91,8 +100,9 @@ class DFTUBaseTest : public testing::Test
                        "cpu",                  // device
                        hubbard_u,
                        0.0,                    // uramping
-                       0,                      // occ_mat_ctrl
-                       0);                     // mixing_dftu
+                       0,                      // init_occ_mat
+                       0,                      // mixing_dftu
+                       DFTU_BASE::SOC_LAYOUT_PAULI);
     }
 };
 
@@ -377,4 +387,401 @@ TEST_F(OccMatRoundtripTest, Nspin4_PauliBlocks)
     for (size_t i = 0; i < specs.size(); i++)
         for (int j = 0; j < sizes[i]; j++)
             EXPECT_DOUBLE_EQ(occ_mat[i].data[j], static_cast<double>(i * 1000 + j + 1));
+}
+
+/// append_ion_step_snapshot must record an "N/A" placeholder instead of a
+/// silent zero matrix when the occupation matrix does not exist yet (the PW
+/// istep 0 / iter 1 case), and the real matrix body when it does.
+TEST_F(DFTUBaseTest, AppendSnapshotNAPlaceholderAndReady)
+{
+    Plus_U_Base dftu;
+    this->init_dftu(dftu, false);
+
+    const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, true, 1};
+    const std::string out_dir = "./";
+
+    // fresh run: no occupation matrix has been computed or loaded
+    ASSERT_FALSE(dftu.is_occmat_ready());
+    DFTU_BASE::append_ion_step_snapshot(dftu,
+                                        ucell,
+                                        out_dir,
+                                        2, // nspin
+                                        1, // npol
+                                        0, // istep -> occ_matg1.txt
+                                        1, // iter
+                                        false,
+                                        false, // occmat_ready
+                                        1e-6,
+                                        0.5,
+                                        cfg,
+                                        DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    std::ifstream ifs("./occ_matg1.txt");
+    ASSERT_TRUE(ifs.is_open());
+    std::stringstream ss;
+    ss << ifs.rdbuf();
+    ifs.close();
+    const std::string content = ss.str();
+    EXPECT_NE(content.find("# Electronic step 1"), std::string::npos);
+    EXPECT_NE(content.find("# scf_thr 1.00000000e-06"), std::string::npos);
+    EXPECT_NE(content.find("# drho 5.00000000e-01"), std::string::npos);
+    EXPECT_NE(content.find("\n N/A\n"), std::string::npos);
+    EXPECT_EQ(content.find("Atom"), std::string::npos);
+
+    // ready case: the matrix body is written for the atom (fresh file g2)
+    DFTU_BASE::append_ion_step_snapshot(dftu,
+                                        ucell,
+                                        out_dir,
+                                        2, // nspin
+                                        1, // npol
+                                        1, // istep -> occ_matg2.txt
+                                        2, // iter
+                                        false,
+                                        true, // occmat_ready
+                                        1e-6,
+                                        0.5,
+                                        cfg,
+                                        DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    std::ifstream ifs2("./occ_matg2.txt");
+    ASSERT_TRUE(ifs2.is_open());
+    std::stringstream ss2;
+    ss2 << ifs2.rdbuf();
+    ifs2.close();
+    const std::string content2 = ss2.str();
+    EXPECT_NE(content2.find("Fe Atom 1 L 2"), std::string::npos);
+    EXPECT_EQ(content2.find("N/A"), std::string::npos);
+
+    std::remove("./occ_matg1.txt");
+    std::remove("./occ_matg2.txt");
+}
+
+/// out_occ_mat = false must suppress both the numbered snapshot file and the
+/// latest occ_mat.txt, even when the frequency gates would trigger.
+TEST_F(DFTUBaseTest, OccMatSwitchDisabledWritesNothing)
+{
+    Plus_U_Base dftu;
+    this->init_dftu(dftu, false);
+
+    const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, false, 1};
+    const std::string out_dir = "./";
+
+    DFTU_BASE::append_ion_step_snapshot(dftu,
+                                        ucell,
+                                        out_dir,
+                                        2, // nspin
+                                        1, // npol
+                                        0, // istep (an output ionic step)
+                                        1, // iter
+                                        false,
+                                        true, // occmat_ready
+                                        1e-6,
+                                        0.5,
+                                        cfg,
+                                        DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    std::ifstream ifs("./occ_matg1.txt");
+    EXPECT_FALSE(ifs.is_open());
+
+    DFTU_BASE::write_latest_occmat(dftu,
+                                   ucell,
+                                   out_dir,
+                                   2, // nspin
+                                   1, // npol
+                                   0, // istep
+                                   2, // iter
+                                   1e-6,
+                                   0.5,
+                                   cfg,
+                                   DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    std::ifstream ifs_latest("./occ_mat.txt");
+    EXPECT_FALSE(ifs_latest.is_open());
+}
+
+/// dft_plus_u = 0 (no DFT+U) must suppress both the numbered snapshot file
+/// and the latest occ_mat.txt, even when out_occ_mat = true (the default).
+/// This is the regression test for the abacuslite segfault: a default-
+/// constructed Plus_U_Base has an empty l_channel vector, so without this
+/// guard write_occup_m() dereferences a null l_channel.data() inside
+/// has_l_channel(). The guard also honours the documented contract that
+/// out_occ_mat only takes effect for DFT+U calculations (dft_plus_u > 0).
+TEST_F(DFTUBaseTest, DftPlusUDisabledWritesNothing)
+{
+    Plus_U_Base dftu;  // default-constructed: l_channel is empty, mirroring
+                       // the LCAO/PW esolver path when dft_plus_u == 0
+    // Deliberately skip init_dftu(): the bug is that the IO functions must
+    // not even reach has_l_channel() when dft_plus_u == 0.
+
+    const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, true, 0};
+    const std::string out_dir = "./";
+
+    // Remove stale files so the existence check is meaningful.
+    std::remove("./occ_matg1.txt");
+    std::remove("./occ_mat.txt");
+
+    DFTU_BASE::append_ion_step_snapshot(dftu,
+                                        ucell,
+                                        out_dir,
+                                        2, // nspin
+                                        1, // npol
+                                        0, // istep (an output ionic step)
+                                        1, // iter
+                                        false,
+                                        true, // occmat_ready
+                                        1e-6,
+                                        0.5,
+                                        cfg,
+                                        DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    std::ifstream ifs("./occ_matg1.txt");
+    EXPECT_FALSE(ifs.is_open());
+
+    DFTU_BASE::write_latest_occmat(dftu,
+                                   ucell,
+                                   out_dir,
+                                   2, // nspin
+                                   1, // npol
+                                   0, // istep
+                                   2, // iter
+                                   1e-6,
+                                   0.5,
+                                   cfg,
+                                   DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    std::ifstream ifs_latest("./occ_mat.txt");
+    EXPECT_FALSE(ifs_latest.is_open());
+}
+
+/// find_first_existing_file must return the first candidate that exists,
+/// in declaration order, and an empty string when none exist.
+TEST(FindFirstExistingFileTest, ReturnsFirstExistingCandidate)
+{
+    // Use the gtest-managed temp dir for writable fixtures, and a
+    // non-existent subdir for the "no candidate" case. The test never
+    // creates or deletes directories itself (AGENTS.md rule 17).
+    const std::string td = testing::TempDir();
+
+    // No candidates exist -> empty string. All three names are unique to
+    // this test, so they should not be present in td.
+    {
+        const std::vector<std::string> candidates = {"ffe_absent_1.txt",
+                                                      "ffe_absent_2.txt",
+                                                      "ffe_absent_3.txt"};
+        EXPECT_TRUE(DFTU_BASE::find_first_existing_file(td, candidates).empty());
+    }
+
+    // Only the second candidate exists -> it is returned even though the
+    // first comes earlier in the list.
+    {
+        const std::string fn = td + "ffe_second_only.txt";
+        std::ofstream(fn).close();
+        const std::vector<std::string> candidates = {"ffe_absent_1.txt",
+                                                      "ffe_second_only.txt",
+                                                      "ffe_absent_3.txt"};
+        EXPECT_EQ(DFTU_BASE::find_first_existing_file(td, candidates), fn);
+    }
+
+    // The first candidate exists -> it takes precedence over the second.
+    {
+        const std::string fn = td + "ffe_first_wins.txt";
+        std::ofstream(fn).close();
+        const std::vector<std::string> candidates = {"ffe_first_wins.txt",
+                                                      "ffe_second_only.txt",
+                                                      "ffe_absent_3.txt"};
+        EXPECT_EQ(DFTU_BASE::find_first_existing_file(td, candidates), fn);
+    }
+}
+
+/// For init_occ_mat=2 the occupation-matrix file is read exactly once.
+/// Later init_base() calls (one per ionic step in a relax run) must keep
+/// the in-memory matrix instead of reading the file again, so pointing
+/// the second call at a non-existent readin dir must not abort the run.
+TEST_F(DFTUBaseTest, InitBaseReadsOccMatFileOnlyOnce)
+{
+    // Use the gtest-managed temporary directory so the test never creates
+    // or deletes directories itself (see AGENTS.md rule 17).
+    const std::string dir = testing::TempDir();
+    const std::string fn = dir + "occ_mat.txt";
+
+    // One Fe atom, L=2, two spin channels of 5x5, filled with distinct
+    // constants so a re-read would be easy to distinguish from a
+    // preserved in-memory matrix.
+    {
+        std::ofstream ofs(fn);
+        ASSERT_TRUE(ofs.is_open());
+        ofs << "# compact test fixture\n";
+        ofs << " Fe Atom 1 L 2 mag 0.0\n";
+        ofs << " spin 1 nelec 0.5\n";
+        for (int m0 = 0; m0 < 5; ++m0)
+        {
+            for (int m1 = 0; m1 < 5; ++m1)
+            {
+                ofs << " 0.1";
+            }
+            ofs << "\n";
+        }
+        ofs << " spin 2 nelec 0.5\n";
+        for (int m0 = 0; m0 < 5; ++m0)
+        {
+            for (int m1 = 0; m1 < 5; ++m1)
+            {
+                ofs << " 0.2";
+            }
+            ofs << "\n";
+        }
+    }
+
+    Plus_U_Base dftu;
+    const std::vector<int> l_channel = {2};
+    const std::vector<double> hubbard_u = {0.0};
+    auto call_init = [&](const std::string& readin_dir)
+    {
+        dftu.init_base(ucell,
+                       1,                // npol
+                       2,                // nspin
+                       l_channel,
+                       false,            // yukawa_potential
+                       0.5,              // yukawa_lambda
+                       readin_dir,       // global_readin_dir
+                       "",               // global_out_dir
+                       "none",           // init_chg
+                       "cpu",            // device
+                       hubbard_u,
+                       0.0,              // uramping
+                       2,                // init_occ_mat
+                       0,                // mixing_dftu
+                       DFTU_BASE::SOC_LAYOUT_PAULI);
+    };
+
+    // First ionic step: the file is read.
+    call_init(dir);
+    ASSERT_TRUE(dftu.is_occmat_ready());
+    EXPECT_NEAR(dftu.occmat().get(0, 2, 0, 0, 0), 0.1, 1e-12);
+    EXPECT_NEAR(dftu.occmat().get(0, 2, 1, 4, 4), 0.2, 1e-12);
+
+    // Simulate a later ionic step: the in-memory matrix is preserved and
+    // the file is not consulted again, so a non-existent readin dir is fine.
+    call_init(dir + "does_not_exist/");
+    EXPECT_TRUE(dftu.is_occmat_ready());
+    EXPECT_NEAR(dftu.occmat().get(0, 2, 0, 0, 0), 0.1, 1e-12);
+    EXPECT_NEAR(dftu.occmat().get(0, 2, 1, 4, 4), 0.2, 1e-12);
+}
+
+/// Reading an nspin=4 occupation-matrix file with SOC_LAYOUT_PAULI must
+/// reconstruct the 4 contiguous Pauli blocks [b0, b1, b2, b3] in the 2m x 2m
+/// flat buffer. The bug fixed in commit 1787365b3 was that the Im(n_ud)
+/// block ("spin 12 im") was discarded, so b2 came out zero/garbage and the
+/// subsequent SCF diverged. This test writes a fixture with a non-zero Im
+/// block and verifies all 4 blocks at the correct flat-buffer offsets.
+TEST_F(DFTUBaseTest, InitBaseReadsOccMatSocPauliRoundtrip)
+{
+    // Use the gtest-managed temporary directory (AGENTS.md rule 17).
+    const std::string dir = testing::TempDir();
+    const std::string fn = dir + "occ_mat.txt";
+
+    // One Fe atom, L=2 -> nm=5. The 2m x 2m flat buffer (100 elements)
+    // holds 4 contiguous m^2 blocks: [b0, b1, b2, b3]. The file stores
+    // (n_uu, Re(n_ud), Im(n_ud), n_dd); the reader must reconstruct
+    //   b0 = n_uu + n_dd
+    //   b1 = 2 * Re(n_ud)
+    //   b2 = 2 * Im(n_ud)   <- discarded by the buggy reader
+    //   b3 = n_uu - n_dd
+    const int nm = 5;
+    const int m2 = nm * nm;
+    std::vector<double> uu(m2), re(m2), im(m2), dd(m2);
+    for (int k = 0; k < m2; ++k)
+    {
+        uu[k] = 1.0 + 0.01 * k;
+        re[k] = 0.1 + 0.01 * k;
+        im[k] = 0.01 + 0.001 * k;  // non-zero -- the bug discarded this block
+        dd[k] = 0.5 + 0.01 * k;
+    }
+
+    {
+        std::ofstream ofs(fn);
+        ASSERT_TRUE(ofs.is_open());
+        ofs << " Fe Atom 1 L 2 mag 0.0 0.0 0.0\n";
+        ofs << " spin 1 nelec 0.5\n";
+        for (int m0 = 0; m0 < nm; ++m0)
+        {
+            for (int m1 = 0; m1 < nm; ++m1)
+                ofs << " " << uu[m0 * nm + m1];
+            ofs << "\n";
+        }
+        ofs << " spin 12 re\n";
+        for (int m0 = 0; m0 < nm; ++m0)
+        {
+            for (int m1 = 0; m1 < nm; ++m1)
+                ofs << " " << re[m0 * nm + m1];
+            ofs << "\n";
+        }
+        ofs << " spin 12 im\n";
+        for (int m0 = 0; m0 < nm; ++m0)
+        {
+            for (int m1 = 0; m1 < nm; ++m1)
+                ofs << " " << im[m0 * nm + m1];
+            ofs << "\n";
+        }
+        ofs << " spin 2 nelec 0.5\n";
+        for (int m0 = 0; m0 < nm; ++m0)
+        {
+            for (int m1 = 0; m1 < nm; ++m1)
+                ofs << " " << dd[m0 * nm + m1];
+            ofs << "\n";
+        }
+    }
+
+    Plus_U_Base dftu;
+    const std::vector<int> l_channel = {2};
+    const std::vector<double> hubbard_u = {0.0};
+    dftu.init_base(ucell,
+                   2,                // npol (nspin=4 requires npol=2)
+                   4,                // nspin
+                   l_channel,
+                   false,            // yukawa_potential
+                   0.5,              // yukawa_lambda
+                   dir,              // global_readin_dir
+                   "",               // global_out_dir
+                   "none",           // init_chg
+                   "cpu",            // device
+                   hubbard_u,
+                   0.0,              // uramping
+                   2,                // init_occ_mat
+                   0,                // mixing_dftu
+                   DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    ASSERT_TRUE(dftu.is_occmat_ready());
+
+    // The 2m x 2m flat buffer holds 4 contiguous m^2 blocks: [b0, b1, b2, b3].
+    const ModuleBase::matrix& occ0 = dftu.occmat().mat(0, 2, 0);
+    ASSERT_EQ(occ0.nr * occ0.nc, 4 * m2);
+
+    for (int k = 0; k < m2; ++k)
+    {
+        EXPECT_NEAR(occ0.c[0 * m2 + k], uu[k] + dd[k], 1e-12)    // b0
+            << "Pauli block b0 mismatch at k=" << k;
+        EXPECT_NEAR(occ0.c[1 * m2 + k], 2.0 * re[k], 1e-12)      // b1
+            << "Pauli block b1 mismatch at k=" << k;
+        EXPECT_NEAR(occ0.c[2 * m2 + k], 2.0 * im[k], 1e-12)      // b2 -- the bug
+            << "Pauli block b2 mismatch at k=" << k;
+        EXPECT_NEAR(occ0.c[3 * m2 + k], uu[k] - dd[k], 1e-12)    // b3
+            << "Pauli block b3 mismatch at k=" << k;
+    }
+}
+
+// Reading the occupation-matrix file broadcasts on MPI_COMM_WORLD, so
+// the test binary must initialize MPI even when ctest launches it as a
+// single process.
+int main(int argc, char** argv)
+{
+#ifdef __MPI
+    MPI_Init(&argc, &argv);
+#endif
+    testing::InitGoogleTest(&argc, argv);
+    const int result = RUN_ALL_TESTS();
+#ifdef __MPI
+    MPI_Finalize();
+#endif
+    return result;
 }

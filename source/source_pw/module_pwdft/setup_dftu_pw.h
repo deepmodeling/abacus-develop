@@ -5,11 +5,15 @@
 #include "source_base/matrix.h"
 #include "source_estate/module_charge/chg_mix.h"
 
+#include <string>
+
 struct Input_para;
 class Plus_U_Base; // mohan add 2025-11-06
 
 namespace DFTU_BASE
 {
+
+struct OccmatOutputCfg;
 
 void iter_init_dftu_pw(const int iter,
                        const int istep,
@@ -18,7 +22,10 @@ void iter_init_dftu_pw(const int iter,
                        const ModuleBase::matrix& wg,
                        const UnitCell& ucell,
                        Charge_Mixing* p_chgmix,
-                       const int* isk);
+                       const std::string& global_out_dir,
+                       const OccmatOutputCfg& occmat_cfg,
+                       const int* isk,
+                       const int nspin);
 
 }
 

@@ -74,7 +74,7 @@ hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::DFTU_onsite(HS_Matrix_K<TK>* 
  *     * For nspin=1: occ is scaled by 0.5 (since only one spin channel computed)
  *   - Subsequent iterations: occ_mat is computed fresh each iteration from updated DMR
  * 
- * Case 2: Occ_mat IS ready (is_occmat_ready, i.e., read from dm_onsite.txt file)
+ * Case 2: Occ_mat IS ready (is_occmat_ready, i.e., read from occ_mat.txt file)
  *   - First electronic iteration: uses pre-read occ_mat directly without DMR calculation
  *     * Skips DMR-based occ calculation entirely
  *     * Reads occ_mat from stored data via get_occ_mat()

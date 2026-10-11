@@ -58,6 +58,14 @@ rules. Read the complete governance document before making or reviewing changes:
       followed by `f(..., isk, ...)` over inlining the ternary into the call.
   15. Do not use `#pragma once` in header files; use traditional
       `#ifndef`/`#define`/`#endif` include guards instead.
+  16. When reading a file, print a one-line confirmation with its full path to
+      both stdout and the running log; when creating or overwriting a file,
+      print the same confirmation to the running log.
+  17. Do not create or delete files or directories from inside a unit test
+      via shell calls (`std::system("mkdir")`, `std::system("rm")`); prefer
+      `testing::TempDir()` for scratch space. Direct library calls
+      (`std::remove`, `std::filesystem::remove_all`) on test-written
+      files are acceptable.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.

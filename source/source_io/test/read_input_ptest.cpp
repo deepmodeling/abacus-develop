@@ -360,7 +360,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.yukawa_potential);
     EXPECT_DOUBLE_EQ(param.inp.yukawa_lambda, -1.0);
     EXPECT_EQ(param.inp.onsite_radius, 0.0);
-    EXPECT_EQ(param.inp.occ_mat_ctrl, 0);
+    EXPECT_EQ(param.inp.init_occ_mat, 0);
+    EXPECT_EQ(param.inp.omc, 0);
     EXPECT_FALSE(param.inp.dft_plus_dmft);
     EXPECT_FALSE(param.inp.rpa);
     EXPECT_FALSE(param.inp.rpa_out_vel);
@@ -486,6 +487,52 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.exciton_slice_range, (std::vector<int>{-1, 2, -1, 2}));
     EXPECT_EQ(param.inp.rdmft, 0);
     EXPECT_DOUBLE_EQ(param.inp.rdmft_power_alpha, 0.656);
+}
+
+TEST_F(InputParaTest, OccMatLegacyAlias)
+{
+    // init_occ_mat is the current name of the former omc parameter: omc
+    // alone must still drive the occupation-matrix initialization, and
+    // when both keywords are present the new name takes precedence.
+    const char* input_cases[3]
+        = {"INPUT_PARAMETERS\n"
+           "stru_file    ./support/STRU\n"
+           "omc          2\n",
+           "INPUT_PARAMETERS\n"
+           "stru_file    ./support/STRU\n"
+           "init_occ_mat 1\n",
+           "INPUT_PARAMETERS\n"
+           "stru_file    ./support/STRU\n"
+           "omc          2\n"
+           "init_occ_mat 1\n"};
+    const int expected[3] = {2, 1, 1};
+
+    for (int icase = 0; icase < 3; ++icase)
+    {
+        if (GlobalV::MY_RANK == 0)
+        {
+            std::ofstream aliasfile("./INPUT_occ_mat_alias");
+            aliasfile << input_cases[icase];
+            aliasfile.close();
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
+        Parameter param;
+        readinput.read_parameters(param, "./INPUT_occ_mat_alias");
+        EXPECT_EQ(param.inp.init_occ_mat, expected[icase]);
+        if (icase == 0)
+        {
+            EXPECT_EQ(param.inp.omc, 2);
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (GlobalV::MY_RANK == 0)
+        {
+            std::remove("./INPUT_occ_mat_alias");
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
 }
 
 TEST_F(InputParaTest, GgaGradAcceptedRange)

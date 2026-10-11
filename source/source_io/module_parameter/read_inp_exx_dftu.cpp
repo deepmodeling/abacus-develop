@@ -807,19 +807,33 @@ void ReadInput::item_dftu()
         this->add_item(item);
     }
     {
-        Input_Item item("omc");
-        item.annotation = "the mode of occupation matrix control";
+        Input_Item item("init_occ_mat");
+        item.annotation = "the mode of occupation-matrix initialization";
         item.category = "DFT+U correction";
         item.type = "Integer";
-        item.description = R"(The parameter controls the form of occupation matrix control used.
-* 0: No occupation matrix control is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step.
-* 1: The first SCF step will use an initial density matrix read from a file named dm_onsite_ini.txt, but for later steps, the onsite density matrix will be updated.
-* 2: The same onsite density matrix from dm_onsite_ini.txt will be used throughout the entire calculation.
+        item.description = R"(The parameter controls how the DFT+U occupation matrix is initialized.
+* 0: No occupation-matrix initialization is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step.
+* 1: The first SCF step will use an initial density matrix read from a file, but for later steps, the onsite density matrix will be updated.
+* 2: The same onsite density matrix read from the file will be used throughout the entire calculation.
 
-[NOTE] The easiest way to create dm_onsite_ini.txt is to run a DFT+U calculation with out_chg=1, look for a file named dm_onsite.txt in the OUT.prefix directory, copy and rename it to dm_onsite_ini.txt. The file dm_onsite_ini.txt should be placed in the directory specified by read_file_dir. The format of the file is rather straight-forward.)";
+[NOTE] The occupation-matrix file is read from the directory specified by read_file_dir. The search order is dm_onsite_ini.txt -> occ_mat.txt -> dm_onsite.txt, so a previously output occ_mat.txt can be reused directly without renaming. The easiest way to obtain such a file is to run a DFT+U calculation with out_occ_mat=1 (the default); the resulting occ_mat.txt in the OUT.prefix directory (which always holds the occupation matrix of the latest electronic step) can be placed in read_file_dir as-is. When out_freq_ion is positive, separate occ_matg{geom_step}.txt files are also written, one per output ionic step; they may contain several electronic-step sections separated by comment headers. The format of the file is rather straight-forward.)";
         item.default_value = "0";
         item.unit = "";
-        read_sync_int(input.occ_mat_ctrl);
+        read_sync_int(input.init_occ_mat);
+        this->add_item(item);
+    }
+    {
+        // note: the variable must be named `item` because read_sync_int()
+        // refers to it by name inside its macro expansion
+        Input_Item item("omc");
+        item.annotation = "legacy alias for init_occ_mat";
+        item.category = "DFT+U correction";
+        item.type = "Integer";
+        item.description = "Legacy alias for init_occ_mat with the same meaning. If both omc and "
+                           "init_occ_mat are present, init_occ_mat takes precedence.";
+        item.default_value = "0";
+        item.unit = "";
+        read_sync_int(input.omc);
         this->add_item(item);
     }
     {

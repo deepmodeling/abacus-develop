@@ -4,6 +4,7 @@
 #include "source_base/matrix.h"
 #include "source_estate/occ_matrix.h"
 #include "source_estate/occ_mixer.h"
+#include "source_pw/module_pwdft/dftu_base_io.h"
 #include "source_pw/module_pwdft/yukawa_screening.h"
 
 #include <complex>
@@ -47,8 +48,9 @@ class Plus_U_Base
                    const std::string& device,
                    const std::vector<double>& hubbard_u,
                    const double uramping,
-                   const int occ_mat_ctrl,
-                   const int mixing_dftu);
+                   const int init_occ_mat,
+                   const int mixing_dftu,
+                   const DFTU_BASE::OccmatSocLayout soc_layout);
 
     void uramping_update();
     bool u_converged();
@@ -64,7 +66,7 @@ class Plus_U_Base
     const std::vector<int>& get_l_channel_vec() const { return l_channel; }
 
     double get_uramping() const { return uramping; }
-    int get_occ_mat_ctrl() const { return occ_mat_ctrl; }
+    int get_init_occ_mat() const { return init_occ_mat; }
     UForm get_form() const { return form; }
 
 
@@ -145,10 +147,17 @@ class Plus_U_Base
     std::vector<int> l_channel;
 
     double uramping = 0.0;
-    int occ_mat_ctrl = 0;
+    int init_occ_mat = 0;
 
     // --- Occupation matrices ---
     OccupationMatrix occmat_;
+
+    /// Whether the initial occupation matrix has already been read from
+    /// file during this run. The file is read exactly once; on later
+    /// ionic steps the in-memory matrix is preserved (it stays fixed for
+    /// init_occ_mat=2 and evolves from the previous ionic step for
+    /// init_occ_mat=1).
+    bool occmat_file_loaded_ = false;
 
     // Occupation-matrix mixer; constructed only when mixing_dftu != 0.
     // Owns the flat uom/uom_save buffers and the mixing orchestration.

@@ -190,7 +190,7 @@ void print_etot(const Magnetism& magnet,
     GlobalV::ofs_running << std::setprecision(6);
     GlobalV::ofs_running << std::setiosflags(std::ios::right);
 
-    GlobalV::ofs_running << " Electron density deviation " << scf_thr << std::endl;
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Electron density deviation", scf_thr);
 
     if (inp.basis_type == "pw")
     {
@@ -201,7 +201,12 @@ void print_etot(const Magnetism& magnet,
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
 
-    if ((iter % inp.out_freq_elec == 0) || converged || iter == inp.scf_nmax)
+    // For DFT+U calculations, print the full energy table at every
+    // electronic step so E_plusU can be monitored. Charge-density and
+    // wavefunction output remain gated by out_freq_elec elsewhere.
+    const bool print_table = (iter % inp.out_freq_elec == 0) || converged
+                             || (iter == inp.scf_nmax) || inp.dft_plus_u;
+    if (print_table)
     {
         int n_order = std::max(0, Occupy::gaussian_type);
 

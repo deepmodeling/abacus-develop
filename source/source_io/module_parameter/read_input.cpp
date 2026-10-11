@@ -440,6 +440,34 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     }
 
     this->normalize_hs_output_options(param);
+    this->normalize_occ_mat_options(param);
+}
+
+void ReadInput::normalize_occ_mat_options(Parameter& param)
+{
+    // init_occ_mat is the current name of the former omc parameter; keep
+    // accepting omc so that INPUT files written by older versions still work.
+    const auto item_is_read = [this](const std::string& label) {
+        const auto item = std::find_if(
+            this->input_lists.begin(),
+            this->input_lists.end(),
+            [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
+        return item != this->input_lists.end() && item->second.is_read();
+    };
+
+    const bool init_occ_mat_is_read = item_is_read("init_occ_mat");
+    const bool omc_is_read = item_is_read("omc");
+    if (init_occ_mat_is_read)
+    {
+        if (omc_is_read)
+        {
+            ModuleBase::WARNING("ReadInput", "both init_occ_mat and omc are set; init_occ_mat takes precedence");
+        }
+    }
+    else
+    {
+        param.input.init_occ_mat = param.input.omc;
+    }
 }
 
 void ReadInput::normalize_hs_output_options(Parameter& param)

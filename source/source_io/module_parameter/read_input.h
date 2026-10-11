@@ -77,6 +77,13 @@ class ReadInput
      */
     void normalize_hs_output_options(Parameter& param);
     /**
+     * @brief Resolve init_occ_mat and its legacy alias omc.
+     *
+     * This is called after all INPUT values have been read so that the result
+     * does not depend on the order of keywords in the INPUT file.
+     */
+    void normalize_occ_mat_options(Parameter& param);
+    /**
      * @brief write INPUT file of txt format
      *
      * @param param parameters of ABACUS

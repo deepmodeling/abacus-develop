@@ -7,6 +7,7 @@
 #include "source_lcao/module_deltaspin/deltaspin_lcao.h"
 #include "source_lcao/setup_dftu_lcao.h"
 #include "source_pw/module_pwdft/dftu_base.h" // Plus_U_Base (PW and LCAO share it)
+#include "source_pw/module_pwdft/dftu_base_io.h" // append_ion_step_snapshot
 #include "source_hamilt/hs_matrix_k.h"
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_estate/module_charge/chg_dmr.h"
@@ -557,7 +558,17 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 	const std::vector<std::vector<TK>>& dm_vec = this->dmat.dm->get_dmk_vec();
 
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
-    finish_dftu_lcao<TK>(conv_esolver, this->inp_->dft_plus_u, this->inp_->out_chg[0], this->dftu_.get(), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao, PARAM.globalv.global_out_dir, this->inp_->nspin, PARAM.globalv.npol, PARAM.globalv.gamma_only_local);
+    const DFTU_BASE::OccmatOutputCfg occmat_cfg{this->inp_->out_freq_ion,
+                                                this->inp_->out_freq_elec,
+                                                this->inp_->scf_nmax,
+                                                this->inp_->out_occ_mat,
+                                                this->inp_->dft_plus_u};
+    // Read globalv values once into locals so the repeated DFT+U call sites
+    // below do not each re-enter the global dependency surface.
+    const std::string& global_out_dir = PARAM.globalv.global_out_dir;
+    const int npol = PARAM.globalv.npol;
+    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
+    finish_dftu_lcao<TK>(conv_esolver, this->inp_->dft_plus_u, this->dftu_.get(), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao, global_out_dir, this->inp_->nspin, npol, gamma_only_local, istep, iter, occmat_cfg);
 
     // mohan add 2025-11: push DFT+U energy from Plus_U instance to ElecState.
     // Covers both dft_plus_u==1 (new method, energy accumulated by DFTU::contributeHR
@@ -578,6 +589,39 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // charge mixing is performed, potential is updated,
     // HF and kS energies are computed, meta-GGA, Jason and restart
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
+
+    // overwrite occ_mat.txt with the latest occupation matrix and the
+    // actual charge-density residual; ESolver_KS::iter_finish() above has
+    // computed drho for this electronic step.
+    DFTU_BASE::write_latest_occmat(*this->dftu_,
+                                      ucell,
+                                      global_out_dir,
+                                      this->inp_->nspin,
+                                      npol,
+                                      istep,
+                                      iter,
+                                      this->scf_thr,
+                                      this->drho,
+                                      occmat_cfg,
+                                      DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+
+    // append the current electronic-step section to occ_matg{#}.txt
+    // LCAO computes the occupation matrix in every electronic iteration, so
+    // the snapshot always carries a real matrix.
+    DFTU_BASE::append_ion_step_snapshot(*this->dftu_,
+                                        ucell,
+                                        global_out_dir,
+                                        this->inp_->nspin,
+                                        npol,
+                                        istep,
+                                        iter,
+                                        conv_esolver,
+                                        true,
+                                        this->scf_thr,
+                                        this->drho,
+                                        occmat_cfg,
+                                        DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+
     const bool precision_switched = this->gint_precision_controller_.update_after_iteration(this->drho, this->scf_thr);
     this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
     if (precision_switched)

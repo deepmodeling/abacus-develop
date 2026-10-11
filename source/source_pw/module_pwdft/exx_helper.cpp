@@ -58,7 +58,7 @@ void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_pa
 template <typename T, typename Device>
 bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, void* psi,
                                         UnitCell& ucell, const Input_para& inp,
-                                        bool& conv_esolver, int& iter)
+                                        bool& conv_esolver, int iter)
 {
     /// Return if EXX is not enabled
     if (op_exx == nullptr)
@@ -125,7 +125,7 @@ double Exx_Helper<T, Device>::cal_exx_energy(void* psi_)
 }
 
 template <typename T, typename Device>
-bool Exx_Helper<T, Device>::exx_after_converge(int &iter, bool ene_conv)
+bool Exx_Helper<T, Device>::exx_after_converge(int iter, bool ene_conv)
 {
     if (op_exx->first_iter)
     {
@@ -150,7 +150,13 @@ bool Exx_Helper<T, Device>::exx_after_converge(int &iter, bool ene_conv)
         return true;
     }
     GlobalV::ofs_running << "Updating EXX and rerun SCF" << std::endl;
-    iter = 0;
+    // SCF rerun is now signaled by returning false (not converged). The
+    // caller (ESolver_KS_PW::iter_finish) detects "SCF was converged but
+    // EXX says rerun" and sets ESolver_KS::scf_rerun_, which makes
+    // ESolver_KS::runner restart the loop at iter=1. The old trick of
+    // writing iter=0 here is removed: it crashed DFT+U occupation-matrix
+    // writers (append_ion_step_snapshot validates iter>=1) and broke the
+    // 1-based iteration invariant for every downstream reader of iter.
     return false;
 
 }

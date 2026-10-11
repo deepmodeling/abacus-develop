@@ -158,6 +158,7 @@
     - [out\_freq\_ion](#out_freq_ion)
     - [out\_freq\_elec](#out_freq_elec)
     - [out\_chg](#out_chg)
+    - [out\_occ\_mat](#out_occ_mat)
     - [out\_pot](#out_pot)
     - [out\_dmk](#out_dmk)
     - [out\_dmr](#out_dmr)
@@ -403,6 +404,7 @@
     - [yukawa\_potential](#yukawa_potential)
     - [yukawa\_lambda](#yukawa_lambda)
     - [uramping](#uramping)
+    - [init\_occ\_mat](#init_occ_mat)
     - [omc](#omc)
     - [onsite\_radius](#onsite_radius)
   - [Spin-Constrained DFT](#spin-constrained-dft)
@@ -1904,6 +1906,8 @@
 - **Type**: Integer
 - **Description**: Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis, and structure files (STRU{istep} or STRU{istep}.cif, when out_stru is 1 or 2) is printed every n ionic steps.
 
+  For DFT+U calculations with out_occ_mat = 1, a separate occupation-matrix file occ_matg{geom_step}.txt is created for every output ionic step. The converged (or final, if not converged) electronic step is always recorded in that file; when out_freq_elec is set smaller than scf_nmax, additional electronic steps are appended as separate sections, each labelled only with the electronic-step number.
+
   > Note: In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.
 - **Default**: 0
 
@@ -1911,6 +1915,8 @@
 
 - **Type**: Integer
 - **Description**: Output the charge density (only binary format, controlled by out_chg), wavefunction (controlled by out_wfc_pw) per out_freq_elec electronic iterations. Note that they are always output when converged or reach the maximum iterations scf_nmax.
+
+  In DFT+U calculations with out_freq_ion &gt; 0 and out_occ_mat = 1, this parameter also selects the electronic iterations recorded as separate sections inside occ_matg{geom_step}.txt (the converged or final electronic step is recorded regardless of this parameter).
 - **Default**: scf_nmax
 
 ### out_chg
@@ -1945,6 +1951,14 @@
 
   > Note: In the 3.10-LTS version, the file names are SPIN1_CHG.cube and SPIN1_CHG_INI.cube, etc.
 - **Default**: 0 3
+
+### out_occ_mat
+
+- **Type**: Boolean
+- **Description**: Whether to output the DFT+U occupation matrices. When set to 1 (default), the latest occupation matrix is written to occ_mat.txt at every electronic step, and a numbered file occ_matg{geom_step}.txt is created for every output ionic step selected by out_freq_ion, in which electronic-step sections are appended according to out_freq_elec.
+
+  This parameter only takes effect for DFT+U calculations (dft_plus_u &gt; 0) and is independent of out_chg: disabling the charge density output does not disable the occupation-matrix output.
+- **Default**: True
 
 ### out_pot
 
@@ -3908,15 +3922,21 @@
 - **Default**: -1.0.
 - **Unit**: eV
 
+### init_occ_mat
+
+- **Type**: Integer
+- **Description**: The parameter controls how the DFT+U occupation matrix is initialized.
+  - 0: No occupation-matrix initialization is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step.
+  - 1: The first SCF step will use an initial density matrix read from a file, but for later steps, the onsite density matrix will be updated.
+  - 2: The same onsite density matrix read from the file will be used throughout the entire calculation.
+
+  > Note: The occupation-matrix file is read from the directory specified by read_file_dir. The search order is dm_onsite_ini.txt -&gt; occ_mat.txt -&gt; dm_onsite.txt, so a previously output occ_mat.txt can be reused directly without renaming. The easiest way to obtain such a file is to run a DFT+U calculation with out_occ_mat=1 (the default); the resulting occ_mat.txt in the OUT.prefix directory (which always holds the occupation matrix of the latest electronic step) can be placed in read_file_dir as-is. When out_freq_ion is positive, separate occ_matg{geom_step}.txt files are also written, one per output ionic step; they may contain several electronic-step sections separated by comment headers. The format of the file is rather straight-forward.
+- **Default**: 0
+
 ### omc
 
 - **Type**: Integer
-- **Description**: The parameter controls the form of occupation matrix control used.
-  - 0: No occupation matrix control is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step.
-  - 1: The first SCF step will use an initial density matrix read from a file named dm_onsite_ini.txt, but for later steps, the onsite density matrix will be updated.
-  - 2: The same onsite density matrix from dm_onsite_ini.txt will be used throughout the entire calculation.
-
-  > Note: The easiest way to create dm_onsite_ini.txt is to run a DFT+U calculation with out_chg=1, look for a file named dm_onsite.txt in the OUT.prefix directory, copy and rename it to dm_onsite_ini.txt. The file dm_onsite_ini.txt should be placed in the directory specified by read_file_dir. The format of the file is rather straight-forward.
+- **Description**: Legacy alias for init_occ_mat with the same meaning. If both omc and init_occ_mat are present, init_occ_mat takes precedence.
 - **Default**: 0
 
 ### onsite_radius

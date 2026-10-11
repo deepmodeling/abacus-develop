@@ -92,7 +92,7 @@ void Input_Conv::Convert()
     // iteration (1/3)
     //----------------------------------------------------------
 
-    // Note: DFT+U static members (u_current, u_target, occ_mat_ctrl, etc.)
+    // Note: DFT+U static members (u_current, u_target, init_occ_mat, etc.)
     // are now initialized inside Plus_U_Base::init_base() which is called
     // from setup_pot.cpp (PW) and lcao_set.cpp (LCAO). Mohan refactor 2025-11.
 
