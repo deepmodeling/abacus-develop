@@ -20,7 +20,7 @@ Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 UnitCell::UnitCell() {
     atoms = new Atom[1];
-    iat2it = new int[1]; iat2it[0] = 0;
+    iat2it = {0};
     iat2iwt.resize(1, 0);
 }
 UnitCell::~UnitCell() {

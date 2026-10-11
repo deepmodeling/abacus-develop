@@ -1,7 +1,7 @@
  --- Ionic Step 1 ---
  # print H matrix in real space H(R)
  1 # number of spin directions
- 1 # spin index
+ 1 # spin index, E_Fermi = -4.70347 eV
  26 # number of localized basis
  7 # number of Bravais lattice vector R
 

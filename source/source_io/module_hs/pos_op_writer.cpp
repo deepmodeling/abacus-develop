@@ -26,7 +26,8 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
                              int nlocal,
                              int npol,
                              double sparse_threshold,
-                             bool binary)
+                             bool binary,
+                             std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("PosOpWriter", "out_lat_r");
     ModuleBase::timer::start("PosOpWriter", "out_lat_r");
@@ -236,6 +237,7 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
                                        binary,
                                        open_in_append,
                                        "PosOpWriter::out_lat_r");
+        ofs_running << " Write r(R) matrix in NAO basis to file: " << ssr.str() << std::endl;
 
         std::remove(tem1.str().c_str());
     }

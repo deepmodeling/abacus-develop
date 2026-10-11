@@ -1,5 +1,6 @@
 #include "output_log.h"
 
+#include "source_estate/fp_energy.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/constants.h"
 #include "source_base/formatter.h"
@@ -54,13 +55,23 @@ void output_after_relax(bool conv_ion, bool conv_esolver, std::ofstream& ofs_run
     }
 }
 
-void output_efermi(const bool &convergence, double& efermi, std::ofstream& ofs_running)
+void output_efermi(const bool &convergence, const elecstate::Efermi& eferm, std::ofstream& ofs_running)
 {
     if (convergence && PARAM.inp.out_level != "m")
     {
-// mohan comment out 2025-06-22
-//        ofs_running << std::setprecision(16);
-//        ofs_running << " EFERMI = " << std::setprecision(11) << efermi * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        if (eferm.two_efermi)
+        {
+            ofs_running << " #FERMI ENERGY# "
+                        << std::setprecision(11) << eferm.ef_up * ModuleBase::Ry_to_eV
+                        << " " << eferm.ef_dw * ModuleBase::Ry_to_eV
+                        << " eV    # two fermi energies (up, down)" << std::endl;
+        }
+        else
+        {
+            ofs_running << " #FERMI ENERGY# "
+                        << std::setprecision(11) << eferm.ef * ModuleBase::Ry_to_eV
+                        << " eV" << std::endl;
+        }
     }
 }
 

@@ -32,8 +32,8 @@ class OutputHContainerTest : public testing::Test
         ucell.ntype = 1;
         ucell.nat = 2;
         ucell.atoms = new Atom[ucell.ntype];
-        ucell.iat2it = new int[ucell.nat];
-        ucell.iat2ia = new int[ucell.nat];
+        ucell.iat2it.resize(ucell.nat);
+        ucell.iat2ia.resize(ucell.nat);
         for (int iat = 0; iat < ucell.nat; iat++)
         {
             ucell.iat2ia[iat] = iat;
@@ -41,8 +41,8 @@ class OutputHContainerTest : public testing::Test
         }
         ucell.atoms[0].na = 2;
         ucell.atoms[0].nw = 2;
-        ucell.iwt2iat = new int[4];
-        ucell.iwt2iw = new int[4];
+        ucell.iwt2iat.resize(4);
+        ucell.iwt2iw.resize(4);
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
         ucell.set_iat2iwt(1);
         ucell.itia2iat(0, 0) = 0;

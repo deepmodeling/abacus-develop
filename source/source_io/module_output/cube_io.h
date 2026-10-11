@@ -1,12 +1,48 @@
 #ifndef CUBE_IO_H
 #define CUBE_IO_H
 #include "source_cell/unitcell.h"
+#include "spin_tag.h"
 
+#include <fstream>
 #include <string>
+#include <vector>
 class Parallel_Grid;
 
 namespace ModuleIO
 {
+/// Build a descriptive label for the data channel at spin index is.
+/// For nspin==2 and is>=0: appends " (spin up  )" or " (spin down)".
+/// For nspin==4 and is>0: returns mag_base with the axis letter appended,
+///     e.g. mag_base "magnetization density m" yields "magnetization density mx".
+/// For nspin==1, nspin==4 with is==0, or spin-summed calls (is<0): no suffix.
+///
+/// @param base label of the scalar channel (is == 0), e.g. "charge density".
+/// @param mag_base label of the nspin==4 magnetic channels (is = 1..3),
+///     ending with the component letter: "m" for magnetization densities
+///     (rho[1..3]), "b" for magnetic fields (the B_xc components of the
+///     effective potential).
+inline std::string make_data_desc(const std::string& base, const std::string& mag_base, const int is, const int nspin)
+{
+    std::string desc = base + make_spin_tag(is, nspin);
+    if (nspin == 4 && is > 0)
+    {
+        desc = mag_base;
+        if (is == 1)
+        {
+            desc += "x";
+        }
+        else if (is == 2)
+        {
+            desc += "y";
+        }
+        else if (is == 3)
+        {
+            desc += "z";
+        }
+    }
+    return desc;
+}
+
 /// read volumetric data from .cube file into the parallel distributed grid.
 bool read_vdata_palgrid(const Parallel_Grid& pgrid,
                         const int my_rank,
@@ -27,7 +63,9 @@ void write_vdata_palgrid(const Parallel_Grid& pgrid,
                          const int precision,
                          const int out_fermi,
                          const bool two_fermi,
-                         const bool reduce_all_pool);
+                         const bool reduce_all_pool,
+                         std::ofstream& ofs_running,
+                         const std::string& data_desc);
 
 /// read the full data from a cube file
 bool read_cube(const std::string& file,

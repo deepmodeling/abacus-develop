@@ -1,5 +1,6 @@
 #include "mpi.h"
 #include "../symm_rotation.h"
+#include "source_cell/unitcell.h"
 #include  "gtest/gtest.h"
 #define DOUBLETHRESHOLD 1e-8
 

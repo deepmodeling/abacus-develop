@@ -76,8 +76,8 @@ fi
 #---------------------------------------
 if ! test -z "$has_ldos"  && [  $has_ldos == 1 ]; then
     stm_bias=$(get_input_key_value "stm_bias" "OUT.autotest/INPUT.info")
-    python3 $COMPARE_SCRIPT LDOS.cube.ref OUT.autotest/LDOS_"$stm_bias"eV.cube 8
-    echo "LDOS.cube_pass $?" >> $props_result_file
+    python3 $COMPARE_SCRIPT ldos.cube.ref OUT.autotest/ldos_"$stm_bias"ev.cube 8
+    echo "ldos.cube_pass $?" >> $props_result_file
 fi
 
 #---------------------------------------

@@ -1,6 +1,7 @@
 #ifndef EXX_LRI_INTERFACE_HPP
 #define EXX_LRI_INTERFACE_HPP
 #include "exx_lri_interface.h"
+#include "source_cell/unitcell.h"
 #include "source_base/formatter.h"
 #include "source_base/parallel_common.h"
 #include "source_estate/elecstate_lcao.h"
@@ -99,11 +100,13 @@ void Exx_LRI_Interface<T, Tdata>::refresh_symmetry(
     if (this->exx_spacegroup_symmetry)
     {
         const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
-        this->symrot_.find_irreducible_sector(
-            ucell.symm, ucell.atoms, ucell.st,
+        this->symrot_.find_irred_sector(
+            ucell.symm, ucell.atoms,
+            ucell.nat, ucell.ntype, ucell.iat2it, ucell.iat2ia,
             RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat, PARAM.globalv.global_out_dir);
         this->symrot_.set_abfs_Lmax(Exx_Abfs::Construct_Orbs::get_Lmax(this->exx_ptr->abfs));
-        this->symrot_.cal_Ms(kv, ucell, pv, PARAM.inp.nspin);
+        this->symrot_.cal_Ms(kv, ucell.symm, ucell.atoms, ucell.latvec, ucell.lmax,
+            ucell.nat, ucell.iat2it, ucell.iat2ia, pv, PARAM.inp.nspin);
     }
 }
 

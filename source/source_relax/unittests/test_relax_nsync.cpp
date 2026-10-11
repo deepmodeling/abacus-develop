@@ -49,10 +49,6 @@ UnitCell::UnitCell()
 
     ntype = 1;
     nat = 1;
-    iat2it = nullptr;
-    iat2ia = nullptr;
-    iwt2iat = nullptr;
-    iwt2iw = nullptr;
     itia2iat.create(1, 1);
 
     atoms = new Atom[ntype];
@@ -181,13 +177,10 @@ class IonCellOptimizerTest : public ::testing::Test
         ucell.lat_axis_free[0] = 1;
         ucell.lat_axis_free[1] = 1;
         ucell.lat_axis_free[2] = 1;
-        // The mock UnitCell leaves iat2it/iat2ia null; the L-BFGS update loop
-        // dereferences them from the second iteration on, so give the single
-        // atom a valid type/index. Ownership passes to UnitCell's internal
-        // Statistics member, whose destructor releases them -- do NOT delete
-        // them here.
-        ucell.iat2it = new int[natom];
-        ucell.iat2ia = new int[natom];
+        // The L-BFGS update loop dereferences iat2it/iat2ia from the second
+        // iteration on, so give the single atom a valid type/index.
+        ucell.iat2it.resize(natom);
+        ucell.iat2ia.resize(natom);
         ucell.iat2it[0] = 0;
         ucell.iat2ia[0] = 0;
     }

@@ -22,8 +22,7 @@ class TestUnitCellIndex : public ::testing::Test
     void TearDown() override
     {
         // Do NOT delete[] ucell.atoms: ~UnitCell() frees it (set_atom_flag = true).
-        // Do NOT delete[] iat2it/iat2ia either: they are owned by the internal
-        // Statistics member, whose destructor releases them (see AGENTS.md).
+        // iat2it/iat2ia are std::vector members owned by UnitCell.
     }
 
     UnitCell ucell;
@@ -44,8 +43,8 @@ TEST_F(TestUnitCellIndex, SetIat2itia)
 
 TEST_F(TestUnitCellIndex, SetIat2itiaCalledTwice)
 {
-    // Cover the delete[] + new[] reallocation path: the second call must
-    // produce the same mapping as the first.
+    // Cover the resize-on-repeat path: the second call must produce the
+    // same mapping as the first.
     ucell.set_iat2itia();
     ucell.set_iat2itia();
     EXPECT_EQ(ucell.iat2it[0], 0);

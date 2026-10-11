@@ -7,6 +7,7 @@
 #include "source_base/mathzone.h"
 #include "prepare_unitcell.h"
 #include <streambuf>
+#include <type_traits>
 #include <valarray>
 #include <vector>
 
@@ -52,6 +53,22 @@ class UcellTest : public ::testing::Test
     std::string output;
 };
 
+/// Compile-time guard: UnitCell owns the raw pointer 'atoms' tracked by
+/// 'set_atom_flag' and exposes reference aliases into its 'lat' member, so
+/// neither copy nor move can be implemented correctly until that ownership
+/// model is refactored. Re-enabling either operation must fail this TU.
+TEST(UnitCellTypeTraits, NotCopyableOrMovable)
+{
+    static_assert(!std::is_copy_constructible<UnitCell>::value,
+                  "UnitCell must not be copy constructible");
+    static_assert(!std::is_copy_assignable<UnitCell>::value,
+                  "UnitCell must not be copy assignable");
+    static_assert(!std::is_move_constructible<UnitCell>::value,
+                  "UnitCell must not be move constructible");
+    static_assert(!std::is_move_assignable<UnitCell>::value,
+                  "UnitCell must not be move assignable");
+}
+
 using UcellDeathTest = UcellTest;
 
 TEST_F(UcellTest, Constructor)
@@ -64,10 +81,10 @@ TEST_F(UcellTest, Constructor)
     EXPECT_EQ(ucell->nat, 0);
     EXPECT_EQ(ucell->namax, 0);
     EXPECT_EQ(ucell->nwmax, 0);
-    EXPECT_EQ(ucell->iat2it, nullptr);
-    EXPECT_EQ(ucell->iat2ia, nullptr);
-    EXPECT_EQ(ucell->iwt2iat, nullptr);
-    EXPECT_EQ(ucell->iwt2iw, nullptr);
+    EXPECT_TRUE(ucell->iat2it.empty());
+    EXPECT_TRUE(ucell->iat2ia.empty());
+    EXPECT_TRUE(ucell->iwt2iat.empty());
+    EXPECT_TRUE(ucell->iwt2iw.empty());
     EXPECT_DOUBLE_EQ(ucell->tpiba, 0.0);
     EXPECT_DOUBLE_EQ(ucell->tpiba2, 0.0);
     EXPECT_DOUBLE_EQ(ucell->omega, 0.0);

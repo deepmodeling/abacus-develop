@@ -12,7 +12,7 @@ namespace ModuleSymmetry
 {
     void Symmetry_rotation_k::reset_symmetry()
     {
-        this->irs_ = Irreducible_Sector();
+        this->irs_ = Irred_Sector();
         this->Ms_.clear();
         this->little_groups_.clear();
         this->spin_U_.clear();
@@ -33,29 +33,31 @@ namespace ModuleSymmetry
         return cells;
     }
 
-    void Symmetry_rotation_k::cal_Ms(const K_Vectors& kv,
-        const UnitCell& ucell, const Parallel_2D& pv, const int nspin)
+    void Symmetry_rotation_k::cal_Ms(const K_Vectors& kv, const Symmetry& symm, const Atom* atoms,
+        const ModuleBase::Matrix3& latvec, const int lmax,
+        const int nat, const std::vector<int>& iat2it, const std::vector<int>& iat2ia,
+        const Parallel_2D& pv, const int nspin)
     {
         ModuleBase::TITLE("Symmetry_rotation_k", "cal_Ms");
         ModuleBase::timer::start("Symmetry_rotation_k", "cal_Ms");
 
         this->nspin_ = nspin;
-        this->nsym_ = ucell.symm.nrotk;
-        this->nanti_ = ucell.symm.nrotk_anti;
-        this->magnetic_nspin4_ = ucell.symm.magnetic_nspin4;
-        this->eps_ = ucell.symm.epsilon;
+        this->nsym_ = symm.nrotk;
+        this->nanti_ = symm.nrotk_anti;
+        this->magnetic_nspin4_ = symm.magnetic_nspin4;
+        this->eps_ = symm.epsilon;
         if (this->irs_.invmap_.empty())
         {
-            this->irs_.invmap_.resize(ucell.symm.nrotk);
-            ucell.symm.gmatrix_invmap(ucell.symm.gmatrix, ucell.symm.nrotk, this->irs_.invmap_.data());
+            this->irs_.invmap_.resize(symm.nrotk);
+            symm.gmatrix_invmap(symm.gmatrix, symm.nrotk, this->irs_.invmap_.data());
         }
         // 1. calculate the rotation matrix in real spherical harmonics representation for each symmetry operation: [T_l (isym)]_mm'
         const int nop_tot = this->nsym_ + this->nanti_;
         std::vector<ModuleBase::Matrix3> gmatc(nop_tot);
-        for (int i = 0;i < nsym_;++i) { gmatc[i] = this->irs_.direct_to_cartesian(ucell.symm.gmatrix[i], ucell.latvec); }
+        for (int i = 0;i < nsym_;++i) { gmatc[i] = this->irs_.direct_to_cartesian(symm.gmatrix[i], latvec); }
         for (int j = 0;j < this->nanti_;++j)
-        { gmatc[nsym_ + j] = this->irs_.direct_to_cartesian(ucell.symm.gmatrix_anti[j], ucell.latvec); }
-        this->cal_rotmat_Slm(gmatc.data(), std::max(this->abfs_Lmax_, ucell.lmax), nop_tot);
+        { gmatc[nsym_ + j] = this->irs_.direct_to_cartesian(symm.gmatrix_anti[j], latvec); }
+        this->cal_rotmat_Slm(gmatc.data(), std::max(this->abfs_Lmax_, lmax), nop_tot);
 
         // 1.5 (nspin=4) the SU(2) spin-1/2 rotation U(isym) for each symmetry operation. The AO
         // rotation matrix M becomes the spinor operator T(isym) (x) U(isym) so that the same
@@ -111,7 +113,7 @@ namespace ModuleSymmetry
             }
             for (int op = 0; op < nsym_; ++op)
             {
-                const ModuleBase::Vector3<double> delta = kvec_d_ibz_global[ik_ibz] * ucell.symm.kgmatrix[op] - kvec_d_ibz_global[ik_ibz];
+                const ModuleBase::Vector3<double> delta = kvec_d_ibz_global[ik_ibz] * symm.kgmatrix[op] - kvec_d_ibz_global[ik_ibz];
                 if (std::abs(delta.x - std::round(delta.x)) < this->eps_
                     && std::abs(delta.y - std::round(delta.y)) < this->eps_
                     && std::abs(delta.z - std::round(delta.z)) < this->eps_)
@@ -123,7 +125,7 @@ namespace ModuleSymmetry
             for (const int op : needed)
             {
                 this->Ms_[ik_ibz][op] = this->contruct_2d_rot_mat_ao(
-                    ucell.symm, ucell.atoms, ucell.st, kvec_d_ibz_global[ik_ibz], op, pv, spin_U[op]);
+                    symm, atoms, nat, iat2it, iat2ia, kvec_d_ibz_global[ik_ibz], op, pv, spin_U[op]);
             }
         }
 
@@ -399,7 +401,8 @@ namespace ModuleSymmetry
 
     // 2d-block parallized rotation matrix in AO-representation, denoted as M.
     // finally we will use D(k)=M(R, k)^\dagger*D(Rk)*M(R, k) to   D(k) from D(Rk) in cal_Ms.
-    std::vector<std::complex<double>> Symmetry_rotation_k::contruct_2d_rot_mat_ao(const Symmetry& symm, const Atom* atoms, const Statistics& cell_st,
+    std::vector<std::complex<double>> Symmetry_rotation_k::contruct_2d_rot_mat_ao(const Symmetry& symm, const Atom* atoms,
+        const int nat, const std::vector<int>& iat2it, const std::vector<int>& iat2ia,
         const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv, const SpinRotation::Su2& spin_U) const
     {
         const bool soc = (this->nspin_ == 4);
@@ -413,12 +416,12 @@ namespace ModuleSymmetry
                 return (is < nrotk_u) ? symm.get_rotated_atom(is, iat)
                                       : symm.get_rotated_atom_anti(is - nrotk_u, iat);
             };
-        for (int iat1 = 0;iat1 < cell_st.nat;++iat1)
+        for (int iat1 = 0;iat1 < nat;++iat1)
         {
-            int it = cell_st.iat2it[iat1];  // it1=it2
-            int ia1 = cell_st.iat2ia[iat1];
+            int it = iat2it[iat1];  // it1=it2
+            int ia1 = iat2ia[iat1];
             int iat2 = rotated_atom(isym, iat1); //iat2=rot(iat1)
-            int ia2 = cell_st.iat2ia[iat2];
+            int ia2 = iat2ia[iat2];
             // cal phase factor from return lattice:     exp(-ik_ibz*O)
             double arg = -2 * ModuleBase::PI * kvec_d_ibz * this->irs_.return_lattice_[iat1][isym];
             std::complex<double>phase_factor = std::complex<double>(std::cos(arg), std::sin(arg));

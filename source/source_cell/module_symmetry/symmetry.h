@@ -41,15 +41,24 @@ public:
 
     /// @brief analyze the symmetry of the system
     /// @param lat structure of lattice
-    /// @param st 
     /// @param atoms all atoms
-    /// @param ofs_running 
+    /// @param nat total number of atoms
+    /// @param ntype number of atom species
+    /// @param iat2it map from global atom index iat to its species index it
+    /// @param iat2ia map from global atom index iat to its index ia within the species
+    /// @param itia2iat map from (it, ia) to the global atom index iat
+    /// @param ofs_running
     /// @param symmetry_prec precision for symmetry analysis
     /// @param nspin number of spin components
     /// @param calculation calculation type (scf, relax, cell-relax, etc.)
     /// @param cal_symm_repr control for symmetry representation output [0]=flag, [1]=precision
     /// get the symmetry information of the system, gmatries (rotation 3*3 matrixs), gtrans (transfer a collections vector3), etc.
-    void analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, std::ofstream& ofs_running,
+    void analy_sys(const Lattice& lat, Atom* atoms,
+                   const int nat, const int ntype,
+                   const std::vector<int>& iat2it,
+                   const std::vector<int>& iat2ia,
+                   const ModuleBase::IntArray& itia2iat,
+                   std::ofstream& ofs_running,
                    const double symmetry_prec, const int nspin, const std::string& calculation,
                    const int* cal_symm_repr);
 
@@ -351,7 +360,10 @@ public:
     void set_atom_map(const Atom* atoms);
     /// @brief check if all the atoms are movable
     ///  delta_pos symmetrization in relax is only meaningful when all the atoms are movable in all the directions.
-    bool is_all_movable(const Atom* atoms, const Statistics& st)const;
+    /// @param iat2it map from global atom index iat to its species index it
+    /// @param iat2ia map from global atom index iat to its index ia within the species
+    bool is_all_movable(const Atom* atoms, const std::vector<int>& iat2it,
+                        const std::vector<int>& iat2ia) const;
 
     // to be called in lattice_type
     void get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
@@ -366,10 +378,14 @@ public:
     /// If not all the same, primitive cells should not be looped in rhog_symmetry.
     bool magmom_same_check(const Atom* atoms)const;
 
-    /// Analyze magnetic group without time-reversal symmetry 
+    /// Analyze magnetic group without time-reversal symmetry
     /// (because currently the charge density symmetrization does not support it)
     /// Method: treat atoms with different magmom as atoms of different type
-    void analyze_magnetic_group(const Atom* atoms, const Statistics& st, int& nrot_out, int& nrotk_out);
+    void analyze_magnetic_group(const Atom* atoms,
+                                const std::vector<int>& iat2it,
+                                const std::vector<int>& iat2ia,
+                                const ModuleBase::IntArray& itia2iat,
+                                int& nrot_out, int& nrotk_out);
 
     /// (nspin=4 / SOC) Restrict the already-built space group to the unitary magnetic
     /// subgroup: keep operation g only if it preserves the magnetization as a pseudovector,
@@ -377,7 +393,10 @@ public:
     /// that reverse the moment (which are only symmetries when combined with time reversal)
     /// from being applied in k-reduction and density symmetrization.
     /// Non-magnetic (m_i=0) keeps all operations.
-    void analyze_magnetic_group_nspin4(const Atom* atoms, const Statistics& st, const ModuleBase::Matrix3& latvec);
+    void analyze_magnetic_group_nspin4(const Atom* atoms,
+                                       const std::vector<int>& iat2it,
+                                       const std::vector<int>& iat2ia,
+                                       const ModuleBase::Matrix3& latvec);
 };
 
 /**

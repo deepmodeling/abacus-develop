@@ -62,7 +62,7 @@ class SubspaceCache;
  * via OnsiteProjector::overlap_proj_psi, then decompose becp into magnetic moments.
  * Finally Mi is summed across all MPI k-pool ranks.
  *
- * @param state   Constraint state; state.Mi_ is filled in place.
+ * @param state   Constraint state; its magnetic moments are filled in place.
  * @param psi     PW wavefunctions (psi::Psi<std::complex<double>>*, passed as void*
  *                to keep this header free of the Device template parameter).
  * @param pelec   Electronic state (provides wg weights and k-list spin signs).

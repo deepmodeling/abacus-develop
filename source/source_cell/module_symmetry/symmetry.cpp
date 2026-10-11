@@ -364,13 +364,14 @@ void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<d
     return;
 }
 
-bool Symmetry::is_all_movable(const Atom* atoms, const Statistics& st)const
+bool Symmetry::is_all_movable(const Atom* atoms, const std::vector<int>& iat2it,
+                              const std::vector<int>& iat2ia) const
 {
     bool all_mbl = true;
-    for (int iat = 0;iat < st.nat;++iat)
+    for (int iat = 0;iat < this->nat;++iat)
     {
-        int it = st.iat2it[iat];
-        int ia = st.iat2ia[iat];
+        int it = iat2it[iat];
+        int ia = iat2ia[iat];
         if (!atoms[it].mbl[ia].x || !atoms[it].mbl[ia].y || !atoms[it].mbl[ia].z)
         {
             all_mbl = false;

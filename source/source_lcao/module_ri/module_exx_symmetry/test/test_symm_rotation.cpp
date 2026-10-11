@@ -174,8 +174,8 @@ TEST(SymmetryDensityRestoration, RebuildAfterCellSymmetryAnalysis)
     cell.a1 = ModuleBase::Vector3<double>(1, 0, 0);
     cell.a2 = ModuleBase::Vector3<double>(0, 1, 0);
     cell.a3 = ModuleBase::Vector3<double>(0, 0, 1);
-    cell.st.iat2it = new int[3]{0, 0, 1};
-    cell.st.iat2ia = new int[3]{0, 1, 0};
+    cell.iat2it = {0, 0, 1};
+    cell.iat2ia = {0, 1, 0};
     atoms[0].label = "A";
     atoms[0].na = 2;
     atoms[0].nw = 1;
@@ -193,7 +193,9 @@ TEST(SymmetryDensityRestoration, RebuildAfterCellSymmetryAnalysis)
     std::ofstream log;
     const int representation[2] = {0, 0};
     const std::string calculation = "cell-relax";
-    cell.symm.analy_sys(cell.lat, cell.st, cell.atoms, log, 1e-6, 1, calculation, representation);
+    cell.symm.analy_sys(cell.lat, cell.atoms, cell.nat, cell.ntype,
+                        cell.iat2it, cell.iat2ia, cell.itia2iat,
+                        log, 1e-6, 1, calculation, representation);
     const int old_operations = cell.symm.nrotk;
     K_Vectors kv;
     kv.set_nks(1);
@@ -213,23 +215,31 @@ TEST(SymmetryDensityRestoration, RebuildAfterCellSymmetryAnalysis)
     const ModuleSymmetry::TC period = {2, 2, 2};
     const std::vector<ModuleSymmetry::TC> cells = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
     CellSymmetryRotation reused;
-    reused.find_irreducible_sector(cell.symm, cell.atoms, cell.st, cells, period, cell.lat);
-    reused.cal_Ms(kv, cell, pv, 1);
+    reused.find_irred_sector(cell.symm, cell.atoms, cell.nat, cell.ntype,
+                             cell.iat2it, cell.iat2ia, cells, period, cell.lat);
+    reused.cal_Ms(kv, cell.symm, cell.atoms, cell.latvec, cell.lmax,
+                  cell.nat, cell.iat2it, cell.iat2ia, pv, 1);
     const auto old_rotations = reused.rotations();
 
     atoms[0].taud = {{0.9, 0.2, 0.3}, {0.2, 0.3, 0.2}};
     atoms[1].taud = {{0.05, 0.25, 0.25}};
     atoms[0].tau = atoms[0].taud;
     atoms[1].tau = atoms[1].taud;
-    cell.symm.analy_sys(cell.lat, cell.st, cell.atoms, log, 1e-6, 1, calculation, representation);
+    cell.symm.analy_sys(cell.lat, cell.atoms, cell.nat, cell.ntype,
+                        cell.iat2it, cell.iat2ia, cell.itia2iat,
+                        log, 1e-6, 1, calculation, representation);
     ASSERT_EQ(cell.symm.nrotk, old_operations);
     reused.reset_symmetry();
-    reused.find_irreducible_sector(cell.symm, cell.atoms, cell.st, cells, period, cell.lat);
-    reused.cal_Ms(kv, cell, pv, 1);
+    reused.find_irred_sector(cell.symm, cell.atoms, cell.nat, cell.ntype,
+                             cell.iat2it, cell.iat2ia, cells, period, cell.lat);
+    reused.cal_Ms(kv, cell.symm, cell.atoms, cell.latvec, cell.lmax,
+                  cell.nat, cell.iat2it, cell.iat2ia, pv, 1);
     CellSymmetryRotation fresh;
-    fresh.find_irreducible_sector(cell.symm, cell.atoms, cell.st, cells, period, cell.lat);
-    fresh.cal_Ms(kv, cell, pv, 1);
-    EXPECT_EQ(reused.get_irreducible_sector(), fresh.get_irreducible_sector());
+    fresh.find_irred_sector(cell.symm, cell.atoms, cell.nat, cell.ntype,
+                            cell.iat2it, cell.iat2ia, cells, period, cell.lat);
+    fresh.cal_Ms(kv, cell.symm, cell.atoms, cell.latvec, cell.lmax,
+                 cell.nat, cell.iat2it, cell.iat2ia, pv, 1);
+    EXPECT_EQ(reused.get_irred_sector(), fresh.get_irred_sector());
     EXPECT_EQ(reused.rotations(), fresh.rotations());
     EXPECT_NE(old_rotations, fresh.rotations());
     for (int atom = 0; atom < cell.nat; ++atom)
@@ -249,7 +259,7 @@ TEST(SymmetryDensityRestoration, ReturnLatticePreservesBoundaryRepresentatives)
 {
     ModuleSymmetry::Symmetry symmetry;
     symmetry.epsilon = 3.2e-5;
-    ModuleSymmetry::Irreducible_Sector sector;
+    ModuleSymmetry::Irred_Sector sector;
     const ModuleBase::Matrix3 reflection(-1, 0, 0, 0, 1, 0, 0, 0, 1);
     const ModuleBase::Vector3<double> translation(0.0, 0.0, 0.0);
     const ModuleBase::Vector3<double> source(0.99999, 0.25, 0.5);
@@ -274,7 +284,7 @@ TEST(SymmetryDensityRestoration, ReturnLatticePreservesTranslationRepresentative
 {
     ModuleSymmetry::Symmetry symmetry;
     symmetry.epsilon = 3.2e-5;
-    ModuleSymmetry::Irreducible_Sector sector;
+    ModuleSymmetry::Irred_Sector sector;
     const ModuleBase::Matrix3 identity(1, 0, 0, 0, 1, 0, 0, 0, 1);
     const ModuleBase::Vector3<double> source(0.25, 0.5, 0.75);
     const ModuleBase::Vector3<double> translation(0.99999, 0.0, 0.0);

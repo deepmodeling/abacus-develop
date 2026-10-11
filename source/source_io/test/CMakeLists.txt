@@ -11,6 +11,11 @@ AddTest(
     ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
+AddTest(
+  TARGET MODULE_IO_spin_tag
+  SOURCES test_spin_tag.cpp
+)
+
 if(NOT ENABLE_MPI)
   return()
 endif()

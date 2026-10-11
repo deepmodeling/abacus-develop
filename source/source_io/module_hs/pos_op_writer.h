@@ -39,7 +39,8 @@ class PosOpWriter
                    int nlocal,
                    int npol,
                    double sparse_threshold,
-                   bool binary);
+                   bool binary,
+                   std::ofstream& ofs_running);
 
   private:
     const PosOpBasis& basis_;
