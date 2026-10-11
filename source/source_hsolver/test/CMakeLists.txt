@@ -238,7 +238,7 @@ if (ENABLE_MPI)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       ) 
   add_test(NAME MODULE_HSOLVER_ppcg_parallel_test
-        COMMAND ${BASH} diago_ppcg_parallel_test.sh
+        COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/diago_ppcg_parallel_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )
   if(ENABLE_LCAO)

@@ -74,6 +74,21 @@ public:
         return iteration_limit_reached_;
     }
 
+    Real max_residual() const
+    {
+        return max_residual_;
+    }
+
+    int first_active_band() const
+    {
+        return first_active_band_;
+    }
+
+    Real first_active_threshold() const
+    {
+        return first_active_threshold_;
+    }
+
 private:
     // -------------------------------------------------------------------------
     // Data members
@@ -91,6 +106,9 @@ private:
     bool converged_ = false;
     int active_band_count_ = 0;
     bool iteration_limit_reached_ = false;
+    Real max_residual_ = Real(0);
+    int first_active_band_ = -1;
+    Real first_active_threshold_ = Real(0);
 
     // Cached S-operator (null if identity).
     SPsiFunc spsi_func_;
@@ -210,7 +228,7 @@ private:
 
     void lock_epairs(const std::vector<T>& residual,
                      const std::vector<double>& ethr_band,
-                     std::vector<int>& active_cols) const;
+                     std::vector<int>& active_cols);
 
     void build_small_subspace(const T* psi,
                               const std::vector<int>& cols,

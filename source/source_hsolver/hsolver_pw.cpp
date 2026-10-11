@@ -1,6 +1,7 @@
 #include "hsolver_pw.h"
 
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/module_device/memory_op.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
@@ -16,7 +17,9 @@
 #include "source_psi/psi.h"
 
 #include <algorithm>
+#include <iomanip>
 #include <ostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -33,6 +36,9 @@ struct PPCGRunResult
     bool converged;
     int active_band_count;
     bool iteration_limit_reached;
+    double max_residual;
+    int first_active_band;
+    double first_active_threshold;
 };
 
 template <typename T, typename Device, typename Real, typename HPsiFunc, typename SPsiFunc>
@@ -74,6 +80,9 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
     result.converged = ppcg.converged();
     result.active_band_count = ppcg.active_band_count();
     result.iteration_limit_reached = ppcg.iteration_limit_reached();
+    result.max_residual = double(ppcg.max_residual());
+    result.first_active_band = ppcg.first_active_band();
+    result.first_active_threshold = double(ppcg.first_active_threshold());
     return result;
 }
 
@@ -173,6 +182,9 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
     result.converged = ppcg.converged();
     result.active_band_count = ppcg.active_band_count();
     result.iteration_limit_reached = ppcg.iteration_limit_reached();
+    result.max_residual = double(ppcg.max_residual());
+    result.first_active_band = ppcg.first_active_band();
+    result.first_active_threshold = double(ppcg.first_active_threshold());
     base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
         psi, psi_host.data(), nelem);
     return result;
@@ -408,7 +420,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
 #ifdef __MPI
     if (this->nproc_in_pool > 1)
     {
-        MPI_Allreduce(&cur_nbasis, &npw_total, 1, MPI_INT, MPI_SUM, POOL_WORLD);
+        Parallel_Reduce::reduce_pool(&npw_total, 1);
     }
 #endif
     if (npw_total < nbands)
@@ -534,20 +546,35 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         DiagoIterAssist<T, Device>::avg_iter += ppcg_result.average_iterations;
         if (!ppcg_result.converged)
         {
-            std::string warning;
+            std::ostringstream warning_stream;
             if (ppcg_result.iteration_limit_reached)
             {
-                warning = "PPCG reached pw_diag_nmax="
-                          + std::to_string(this->diag_iter_max)
-                          + " with " + std::to_string(ppcg_result.active_band_count)
-                          + " active band(s); requested residual thresholds were not all reached.";
+                warning_stream << "PPCG reached pw_diag_nmax="
+                               << this->diag_iter_max
+                               << "; active tail contains "
+                               << ppcg_result.active_band_count << " band(s)";
+                if (ppcg_result.first_active_band >= 0)
+                {
+                    const int first_active_band = ppcg_result.first_active_band + 1;
+                    warning_stream << " starting at band " << first_active_band
+                                   << "; threshold at tail start = "
+                                   << std::scientific << std::setprecision(6)
+                                   << ppcg_result.first_active_threshold;
+                }
+                warning_stream << "; final max residual = "
+                               << std::scientific << std::setprecision(6)
+                               << ppcg_result.max_residual
+                               << "; requested residual thresholds were not all reached.";
             }
             else
             {
-                warning = "PPCG final convergence validation failed with "
-                          + std::to_string(ppcg_result.active_band_count)
-                          + " active band(s).";
+                warning_stream << "PPCG final convergence validation failed with "
+                               << ppcg_result.active_band_count
+                               << " active band(s); final max residual = "
+                               << std::scientific << std::setprecision(6)
+                               << ppcg_result.max_residual << '.';
             }
+            const std::string warning = warning_stream.str();
             ModuleBase::WARNING("HSolverPW::hamiltSolvePsiK", warning);
         }
     }

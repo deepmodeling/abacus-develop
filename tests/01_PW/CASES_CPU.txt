@@ -124,5 +124,6 @@ scf_dftu_spin4
 817_PW_PPCG
 818_PW_PPCG_Si
 819_PW_PPCG_Al
+820_PW_PPCG_Cutoff
 scf_deltaspin2
 scf_deltaspin4

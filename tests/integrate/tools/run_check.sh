@@ -71,7 +71,10 @@ then
 $CATCH_SCRIPT result.out
 check_out result.out
 else
-$CATCH_SCRIPT result.ref
+if ! $CATCH_SCRIPT result.ref; then
+    echo "Failed to generate result.ref." >&2
+    exit 1
+fi
 rm -r OUT.autotest
 rm log.txt
 fi

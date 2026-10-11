@@ -539,7 +539,7 @@ template <typename T, typename Device>
 void DiagoPPCG<T, Device>::lock_epairs(
     const std::vector<T>& residual,
     const std::vector<double>& ethr_band,
-    std::vector<int>& active_cols) const
+    std::vector<int>& active_cols)
 {
     active_cols.clear();
     active_cols.reserve(n_band_);
@@ -558,10 +558,19 @@ void DiagoPPCG<T, Device>::lock_epairs(
     }
     reduce_pool_if_mpi_ready(nrm2_all.data(), n_band_);
     bool found_unconverged = false;
+    max_residual_ = Real(0);
     for (int j = 0; j < n_band_; ++j)
     {
         const Real rnrm = std::sqrt(std::max(Real(nrm2_all[j]), Real(0)));
         const Real thr = std::max(Real(ethr_band[j]), diag_thr_);
+        if (std::isfinite(rnrm))
+        {
+            max_residual_ = std::max(max_residual_, rnrm);
+        }
+        else
+        {
+            max_residual_ = std::numeric_limits<Real>::infinity();
+        }
         if (!std::isfinite(rnrm) || rnrm > thr)
         {
             found_unconverged = true;
@@ -1355,6 +1364,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     converged_ = false;
     active_band_count_ = 0;
     iteration_limit_reached_ = false;
+    max_residual_ = Real(0);
+    first_active_band_ = -1;
+    first_active_threshold_ = Real(0);
 
     validate_input(hpsi_func, psi_in, eigenvalue_in, ethr_band, prec);
     spsi_func_ = spsi_func;
@@ -1504,6 +1516,12 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         local_overlap_condition = std::numeric_limits<Real>::quiet_NaN();
         const int nact = int(active_cols.size());
         const int nsb = std::max(1, (nact + sbsize_ - 1) / sbsize_);
+        // Keep the same number of local blocks and the same size limit, but
+        // distribute the remainder evenly.  When the limit permits it, this
+        // avoids a trailing one-column block that cannot exchange search
+        // directions with a neighboring degenerate Ritz vector.
+        const int base_block_size = nact / nsb;
+        const int larger_block_count = nact % nsb;
 
         // Precondition the residual.
         divide_by_preconditioner(active_cols, prec, w_);
@@ -1570,10 +1588,14 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         else
         {
             const int nblk = use_p ? 3 : 2;
+            int i0 = 0;
             for (int isb = 0; isb < nsb; ++isb)
             {
-                const int i0 = isb * sbsize_;
-                const int l = std::min(sbsize_, nact - i0);
+                int l = base_block_size;
+                if (isb < larger_block_count)
+                {
+                    ++l;
+                }
                 cols.assign(active_cols.begin() + i0,
                             active_cols.begin() + i0 + l);
 
@@ -1582,6 +1604,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 measure_local_overlap(subspace, local_dim);
                 solve_small_generalized(local_dim, l, subspace);
                 update_one_block(psi_in, cols, l, nblk, subspace);
+                i0 += l;
             }
         }
         use_p = true;
@@ -1663,8 +1686,20 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     else
     {
         active_cols = all_cols;
+        max_residual_ = max_generalized_residual(hpsi_.data(),
+                                                  spsi_.data(),
+                                                  eigenvalue_in,
+                                                  ld_psi_,
+                                                  n_dim_,
+                                                  ncol);
     }
     active_band_count_ = int(active_cols.size());
+    if (!active_cols.empty())
+    {
+        first_active_band_ = active_cols.front();
+        first_active_threshold_ = std::max(Real(ethr_band[first_active_band_]),
+                                           diag_thr_);
+    }
     converged_ = last_rr_succeeded && active_cols.empty();
     iteration_limit_reached_ = !converged_ && iter > maxiter_;
     if (!active_cols.empty())

@@ -190,6 +190,47 @@ TEST_F(DiagoPPCGTridiagTest, ReportsIterationLimit)
     EXPECT_FALSE(solver.converged());
     EXPECT_GT(solver.active_band_count(), 0);
     EXPECT_TRUE(solver.iteration_limit_reached());
+    EXPECT_GE(solver.first_active_band(), 0);
+    EXPECT_GT(solver.max_residual(), Real(1.0e-14));
+}
+
+TEST(DiagoPPCGStatusTest, ReportsActiveTailStart)
+{
+    const int n_dim = 4;
+    const int nband = 3;
+    const int ld = n_dim;
+    std::vector<T> h_mat(n_dim * n_dim, T(0));
+    for (int i = 0; i < n_dim; ++i)
+    {
+        h_mat[i + i * ld] = T(Real(i + 1), 0);
+    }
+    const Real inverse_sqrt_two = Real(1) / std::sqrt(Real(2));
+    std::vector<T> psi(ld * nband, T(0));
+    psi[0] = T(1, 0);
+    psi[1 + ld] = T(1, 0);
+    psi[2 + 2 * ld] = T(inverse_sqrt_two, 0);
+    psi[3 + 2 * ld] = T(inverse_sqrt_two, 0);
+    std::vector<Real> eval(nband, Real(0));
+    const std::vector<double> ethr(nband, 1.0e-12);
+    const std::vector<Real> prec = {1, 2, 3, 4};
+    const auto h_op = [&h_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
+        dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
+    };
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+        /* diag_thr = */ 1.0e-12,
+        /* max_iter = */ 0,
+        /* sbsize   = */ 3,
+        /* rr_step  = */ 1,
+        /* gamma_g0 = */ false);
+
+    solver.diag(h_op, nullptr, ld, nband, n_dim,
+                psi.data(), eval.data(), ethr, prec.data());
+
+    EXPECT_FALSE(solver.converged());
+    EXPECT_EQ(solver.first_active_band(), 2);
+    EXPECT_EQ(solver.active_band_count(), 1);
+    EXPECT_DOUBLE_EQ(solver.first_active_threshold(), Real(1.0e-12));
+    EXPECT_GT(solver.max_residual(), solver.first_active_threshold());
 }
 
 TEST(DiagoPPCGStatusTest, NonFiniteFinalResidualIsNotConverged)
@@ -232,6 +273,8 @@ TEST(DiagoPPCGStatusTest, NonFiniteFinalResidualIsNotConverged)
     EXPECT_FALSE(solver.converged());
     EXPECT_EQ(solver.active_band_count(), nband);
     EXPECT_FALSE(solver.iteration_limit_reached());
+    EXPECT_EQ(solver.first_active_band(), 0);
+    EXPECT_TRUE(std::isinf(solver.max_residual()));
 }
 
 TEST(DiagoPPCGStatusTest, FailedRayleighRitzCannotCertifyLowestRoots)

@@ -3,6 +3,7 @@
 # mohan add 2025-05-03
 # this compare script is used in different integrate tests
 COMPARE_SCRIPT="../../integrate/tools/CompareFile.py"
+WANNIER90_COMPARE_SCRIPT="../../integrate/tools/compare_wannier90.py"
 #COMPARE_SCRIPT="../../integrate/tools/compare_file.py"
 CUBE_TOOL="../../integrate/tools/cube_tool.py"
 COLLECT_NPY_MEANS="../../integrate/tools/collect_npy_means.py"
@@ -40,6 +41,40 @@ sanitize_result_key(){
 }
 
 
+record_compare_status(){
+	result_file=$1
+	result_key=$2
+	compare_status=$3
+
+	if [ "$compare_status" -ne 0 ]; then
+		case "$result_file" in
+			result.ref|*/result.ref)
+				echo "Error: refusing to record failed comparison $result_key in $result_file" >&2
+				rm -f "$result_file"
+				exit "$compare_status"
+				;;
+		esac
+	fi
+	echo "$result_key $compare_status" >> "$result_file"
+}
+
+
+run_and_record_status(){
+	result_file=$1
+	result_key=$2
+	shift 2
+
+	# Keep a failed check as data in result.out, but never allow reference
+	# generation to bless that failure as a new expected result.
+	if "$@"; then
+		command_status=0
+	else
+		command_status=$?
+	fi
+	record_compare_status "$result_file" "$result_key" "$command_status"
+}
+
+
 record_compare_result(){
 	result_file=$1
 	result_key=$2
@@ -47,14 +82,50 @@ record_compare_result(){
 	cal_file=$4
 	accuracy=${5:-8}
 	use_abs=${6:-0}
+	compare_type=${7:-}
 
 	if [ ! -f "$ref_file" ] || [ ! -f "$cal_file" ]; then
-		echo "$result_key 1" >> "$result_file"
-		return
+		record_compare_status "$result_file" "$result_key" 1
+		return $?
 	fi
 
-	python3 $COMPARE_SCRIPT "$ref_file" "$cal_file" "$accuracy" -abs "$use_abs"
-	echo "$result_key $?" >> "$result_file"
+	# A numerical mismatch is a recorded test result, not a fatal error under bash -e.
+	if [ -n "$compare_type" ]; then
+		if python3 "$COMPARE_SCRIPT" "$ref_file" "$cal_file" "$accuracy" -abs "$use_abs" -com_type "$compare_type"; then
+			compare_status=0
+		else
+			compare_status=$?
+		fi
+	else
+		if python3 "$COMPARE_SCRIPT" "$ref_file" "$cal_file" "$accuracy" -abs "$use_abs"; then
+			compare_status=0
+		else
+			compare_status=$?
+		fi
+	fi
+	record_compare_status "$result_file" "$result_key" "$compare_status"
+}
+
+
+record_wannier90_compare_result(){
+	result_file=$1
+	result_key=$2
+	file_type=$3
+	ref_file=$4
+	cal_file=$5
+	tolerance=$6
+
+	if [ ! -f "$ref_file" ] || [ ! -f "$cal_file" ]; then
+		record_compare_status "$result_file" "$result_key" 1
+		return $?
+	fi
+
+	if python3 "$WANNIER90_COMPARE_SCRIPT" "$file_type" "$ref_file" "$cal_file" "$tolerance"; then
+		compare_status=0
+	else
+		compare_status=$?
+	fi
+	record_compare_status "$result_file" "$result_key" "$compare_status"
 }
 
 
@@ -207,8 +278,7 @@ fi
 if ! test -z "$has_cond"  && [  $has_cond == 1 ]; then
 	onref=refOnsager.txt
 	oncal=OUT.autotest/Onsager.txt
-	python3 $COMPARE_SCRIPT $onref $oncal 3 -com_type 0
-    echo "CompareH_Failed $?" >>$1
+	record_compare_result "$1" "CompareH_Failed" "$onref" "$oncal" 3 0 0
 	rm -f je-je.txt Chebycoef
 fi
 
@@ -218,8 +288,7 @@ fi
 if ! test -z "$out_dm1"  && [  $out_dm1 == 1 ]; then
 	dm1ref=dmr_nao.csr.ref
 	dm1cal=OUT.autotest/dmr_nao.csr
-	python3 $COMPARE_SCRIPT $dm1ref $dm1cal 8
-	echo "CompareDM1_pass $?" >>$1
+	record_compare_result "$1" "CompareDM1_pass" "$dm1ref" "$dm1cal" 8
 fi
 
 #-------------------------------
@@ -228,8 +297,7 @@ fi
 if ! test -z "$out_pot"  && [  $out_pot == 1 ]; then
 	pot1ref=pot.cube.ref
 	pot1cal=OUT.autotest/pot.cube
-	python3 $COMPARE_SCRIPT $pot1ref $pot1cal 3
-	echo "ComparePot1_pass $?" >>$1
+	record_compare_result "$1" "ComparePot1_pass" "$pot1ref" "$pot1cal" 3
 fi
 
 #-------------------------------
@@ -238,8 +306,7 @@ fi
 if ! test -z "$out_pot"  && [  $out_pot == 2 ]; then
 	pot1ref=potes.cube.ref
 	pot1cal=OUT.autotest/potes.cube
-	python3 $COMPARE_SCRIPT $pot1ref $pot1cal 8
-	echo "ComparePot_pass $?" >>$1
+	record_compare_result "$1" "ComparePot_pass" "$pot1ref" "$pot1cal" 8
 fi
 
 #-------------------------------
@@ -249,8 +316,7 @@ fi
 if ! test -z "$out_elf"  && [  $out_elf == 1 ]; then
 	elf1ref=elftot.cube.ref
 	elf1cal=OUT.autotest/elftot.cube
-	python3 $COMPARE_SCRIPT $elf1ref $elf1cal 3
-	echo "ComparePot1_pass $?" >>$1
+	record_compare_result "$1" "ComparePot1_pass" "$elf1ref" "$elf1cal" 3
 fi
 
 #-------------------------------
@@ -260,8 +326,7 @@ fi
 if ! test -z "$get_s"  && [  $get_s == "get_s" ]; then
 	sref=sr_nao.csr.ref
 	scal=OUT.autotest/sr_nao.csr
-	python3 $COMPARE_SCRIPT $sref $scal 8
-	echo "CompareS_pass $?" >>$1
+	record_compare_result "$1" "CompareS_pass" "$sref" "$scal" 8
 fi
 
 #-------------------------------
@@ -271,8 +336,7 @@ fi
 if ! test -z "$out_pband"  && [  $out_pband == 1 ]; then
 	orbref=refOrbital
 	orbcal=OUT.autotest/Orbital
-	python3 $COMPARE_SCRIPT $orbref $orbcal 8
-	echo "CompareOrb_pass $?" >>$1
+	record_compare_result "$1" "CompareOrb_pass" "$orbref" "$orbcal" 8
 fi
 
 #-------------------------------
@@ -286,14 +350,15 @@ if ! test -z "$toW90"  && [  $toW90 == 1 ]; then
 	mmncal=OUT.autotest/diamond.mmn
 	eigref=diamond.eig
 	eigcal=OUT.autotest/diamond.eig
-	sed -i '1d' $amncal
-	sed -i '1d' $mmncal
-	python3 $COMPARE_SCRIPT $amnref $amncal 1 -abs 8
-	echo "CompareAMN_pass $?" >>$1
-	python3 $COMPARE_SCRIPT $mmnref $mmncal 1 -abs 8
-	echo "CompareMMN_pass $?" >>$1
-	python3 $COMPARE_SCRIPT $eigref $eigcal 8
-	echo "CompareEIG_pass $?" >>$1
+	# Matrix invariants are dimensionless; this is much stricter than the old
+	# 1e-1 raw-entry threshold. EIG keeps the old 1e-8 eV tolerance for isolated
+	# roots; the comparator handles near-degenerate clusters within 3 micro-eV by
+	# their centroid while bounding the cluster spread.
+	w90_matrix_tolerance=1e-6
+	w90_eig_tolerance_ev=1e-8
+	record_wannier90_compare_result "$1" "CompareAMN_pass" amn "$amnref" "$amncal" "$w90_matrix_tolerance"
+	record_wannier90_compare_result "$1" "CompareMMN_pass" mmn "$mmnref" "$mmncal" "$w90_matrix_tolerance"
+	record_wannier90_compare_result "$1" "CompareEIG_pass" eig "$eigref" "$eigcal" "$w90_eig_tolerance_ev"
 fi
 
 #-------------------------------
@@ -304,8 +369,7 @@ fi
 if ! test -z "$has_band"  && [  $has_band == 1 ]; then
 	bandref=band.txt.ref
 	bandcal=OUT.autotest/band.txt
-	python3 $COMPARE_SCRIPT $bandref $bandcal 8
-	echo "CompareBand_pass $?" >>$1
+	record_compare_result "$1" "CompareBand_pass" "$bandref" "$bandcal" 8
 fi
 
 
@@ -326,14 +390,11 @@ if ! test -z "$has_hs"  && [ $has_hs == 1 ]; then
             sref=sk_nao.txt.ref
             scal=OUT.autotest/sk_nao.txt
             # Compare Hamiltonian matrix for spin 1
-            python3 $COMPARE_SCRIPT $h1ref $h1cal 6
-            echo "CompareH1_pass $?" >>$1
+            record_compare_result "$1" "CompareH1_pass" "$h1ref" "$h1cal" 6
             # Compare Hamiltonian matrix for spin 2
-            python3 $COMPARE_SCRIPT $h2ref $h2cal 6
-            echo "CompareH2_pass $?" >>$1
+            record_compare_result "$1" "CompareH2_pass" "$h2ref" "$h2cal" 6
             # Compare overlap matrix
-            python3 $COMPARE_SCRIPT $sref $scal 8
-            echo "CompareS_pass $?" >>$1
+            record_compare_result "$1" "CompareS_pass" "$sref" "$scal" 8
         elif ! test -z "$nspin" && [ $nspin == 4 ]; then
             # nspin=4 : do nothing, only matching condition without any operation
             true
@@ -344,11 +405,9 @@ if ! test -z "$has_hs"  && [ $has_hs == 1 ]; then
             sref=sk_nao.txt.ref
             scal=OUT.autotest/sk_nao.txt
             # Compare Hamiltonian matrix
-            python3 $COMPARE_SCRIPT $href $hcal 6
-            echo "CompareH_pass $?" >>$1
+            record_compare_result "$1" "CompareH_pass" "$href" "$hcal" 6
             # Compare overlap matrix
-            python3 $COMPARE_SCRIPT $sref $scal 8
-            echo "CompareS_pass $?" >>$1
+            record_compare_result "$1" "CompareS_pass" "$sref" "$scal" 8
         fi
     else
         # ========== Multiple k-points calculation ==========
@@ -361,14 +420,11 @@ if ! test -z "$has_hs"  && [ $has_hs == 1 ]; then
             sref=sk2_nao.txt.ref
             scal=OUT.autotest/sk2_nao.txt
             # Compare Hamiltonian matrix for spin 1
-            python3 $COMPARE_SCRIPT $h1ref $h1cal 6
-            echo "CompareH1_pass $?" >>$1
+            record_compare_result "$1" "CompareH1_pass" "$h1ref" "$h1cal" 6
             # Compare Hamiltonian matrix for spin 2
-            python3 $COMPARE_SCRIPT $h2ref $h2cal 6
-            echo "CompareH2_pass $?" >>$1
+            record_compare_result "$1" "CompareH2_pass" "$h2ref" "$h2cal" 6
             # Compare overlap matrix
-            python3 $COMPARE_SCRIPT $sref $scal 8
-            echo "CompareS_pass $?" >>$1
+            record_compare_result "$1" "CompareS_pass" "$sref" "$scal" 8
         elif ! test -z "$nspin" && [ $nspin == 4 ]; then
             # nspin=4 : do nothing, only matching condition without any operation
             true
@@ -379,27 +435,25 @@ if ! test -z "$has_hs"  && [ $has_hs == 1 ]; then
             sref=sk2_nao.txt.ref
             scal=OUT.autotest/sk2_nao.txt
             # Compare Hamiltonian matrix
-            python3 $COMPARE_SCRIPT $href $hcal 6
-            echo "CompareH_pass $?" >>$1
+            record_compare_result "$1" "CompareH_pass" "$href" "$hcal" 6
             # Compare overlap matrix
-            python3 $COMPARE_SCRIPT $sref $scal 8
-            echo "CompareS_pass $?" >>$1
+            record_compare_result "$1" "CompareS_pass" "$sref" "$scal" 8
         fi
     fi
 elif ! test -z "$has_hs" && [ $has_hs == 2 ]; then
     HSK_BINARY_COMPARE="../../integrate/tools/compare_hsk_binary.py"
     if ! test -z "$gamma_only" && [ $gamma_only == 1 ]; then
         HSK_TEXT_REFERENCE_DIR="../scf_out_hk"
-        python3 $HSK_BINARY_COMPARE OUT.autotest/hk_nao.dat "$HSK_TEXT_REFERENCE_DIR/hk_nao.txt.ref" real 3
-        echo "CompareH_pass $?" >>$1
-        python3 $HSK_BINARY_COMPARE OUT.autotest/sk_nao.dat "$HSK_TEXT_REFERENCE_DIR/sk_nao.txt.ref" real 3
-        echo "CompareS_pass $?" >>$1
+        run_and_record_status "$1" "CompareH_pass" python3 "$HSK_BINARY_COMPARE" \
+            OUT.autotest/hk_nao.dat "$HSK_TEXT_REFERENCE_DIR/hk_nao.txt.ref" real 3
+        run_and_record_status "$1" "CompareS_pass" python3 "$HSK_BINARY_COMPARE" \
+            OUT.autotest/sk_nao.dat "$HSK_TEXT_REFERENCE_DIR/sk_nao.txt.ref" real 3
     else
         HSK_TEXT_REFERENCE_DIR="../scf_out_hsk"
-        python3 $HSK_BINARY_COMPARE OUT.autotest/hk2_nao.dat "$HSK_TEXT_REFERENCE_DIR/hk2_nao.txt.ref" complex 3
-        echo "CompareH_pass $?" >>$1
-        python3 $HSK_BINARY_COMPARE OUT.autotest/sk2_nao.dat "$HSK_TEXT_REFERENCE_DIR/sk2_nao.txt.ref" complex 3
-        echo "CompareS_pass $?" >>$1
+        run_and_record_status "$1" "CompareH_pass" python3 "$HSK_BINARY_COMPARE" \
+            OUT.autotest/hk2_nao.dat "$HSK_TEXT_REFERENCE_DIR/hk2_nao.txt.ref" complex 3
+        run_and_record_status "$1" "CompareS_pass" python3 "$HSK_BINARY_COMPARE" \
+            OUT.autotest/sk2_nao.dat "$HSK_TEXT_REFERENCE_DIR/sk2_nao.txt.ref" complex 3
     fi
 fi
 
@@ -416,10 +470,8 @@ if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 	fi
 	oeref=vxc_out.ref
 	oecal=OUT.autotest/vxc_out.dat
-	python3 $COMPARE_SCRIPT $xcref $xccal 4
-	echo "CompareVXC_pass $?" >>$1
-	python3 $COMPARE_SCRIPT $oeref $oecal 5
-    echo "CompareOrbXC_pass $?" >>$1
+	record_compare_result "$1" "CompareVXC_pass" "$xcref" "$xccal" 4
+	record_compare_result "$1" "CompareOrbXC_pass" "$oeref" "$oecal" 5
 fi
 
 #--------------------------------
@@ -428,8 +480,7 @@ fi
 if ! test -z "$has_xc2"  && [  $has_xc2 == 1 ]; then
 	xc2ref=Vxc_R_spin0.ref
 	xc2cal=OUT.autotest/Vxc_R_spin0.csr
-	python3 $COMPARE_SCRIPT $xc2ref $xc2cal 8
-	echo "CompareVXC_R_pass $?" >>$1
+	record_compare_result "$1" "CompareVXC_R_pass" "$xc2ref" "$xc2cal" 8
 fi
 
 #--------------------------------
@@ -438,20 +489,16 @@ fi
 if ! test -z "$has_eband_separate"  && [  $has_eband_separate == 1 ]; then
 	ekref=kinetic_out.ref
 	ekcal=OUT.autotest/kinetic_out.dat
-	python3 $COMPARE_SCRIPT $ekref $ekcal 4
-	echo "CompareOrbKinetic_pass $?" >>$1
+	record_compare_result "$1" "CompareOrbKinetic_pass" "$ekref" "$ekcal" 4
 	vlref=vpp_local_out.ref
 	vlcal=OUT.autotest/vpp_local_out.dat
-	python3 $COMPARE_SCRIPT $vlref $vlcal 4
-	echo "CompareOrbVL_pass $?" >>$1
+	record_compare_result "$1" "CompareOrbVL_pass" "$vlref" "$vlcal" 4
 	vnlref=vpp_nonlocal_out.ref
 	vnlcal=OUT.autotest/vpp_nonlocal_out.dat
-	python3 $COMPARE_SCRIPT $vnlref $vnlcal 4
-	echo "CompareOrbVNL_pass $?" >>$1
+	record_compare_result "$1" "CompareOrbVNL_pass" "$vnlref" "$vnlcal" 4
 	vhref=vhartree_out.ref
 	vhcal=OUT.autotest/vhartree_out.dat
-	python3 $COMPARE_SCRIPT $vhref $vhcal 4
-	echo "CompareOrbVHartree_pass $?" >>$1
+	record_compare_result "$1" "CompareOrbVHartree_pass" "$vhref" "$vhcal" 4
 fi
 
 #-----------------------------------
@@ -459,44 +506,38 @@ fi
 #-----------------------------------
 #echo $has_hs2
 if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
-    python3 $COMPARE_SCRIPT hrs1_nao.csr.ref OUT.autotest/hrs1_nao.csr 8
-    echo "CompareHR_pass $?" >>$1
+    record_compare_result "$1" "CompareHR_pass" "hrs1_nao.csr.ref" "OUT.autotest/hrs1_nao.csr" 8
     if ! test -z "$nspin" && [ "$nspin" -eq 2 ]; then
-        python3 $COMPARE_SCRIPT hrs2_nao.csr.ref OUT.autotest/hrs2_nao.csr 8
-        echo "CompareHR2_pass $?" >>$1
+        record_compare_result "$1" "CompareHR2_pass" "hrs2_nao.csr.ref" "OUT.autotest/hrs2_nao.csr" 8
     fi
-    python3 $COMPARE_SCRIPT sr_nao.csr.ref OUT.autotest/sr_nao.csr 8
-    echo "CompareSR_pass $?" >>$1
+    record_compare_result "$1" "CompareSR_pass" "sr_nao.csr.ref" "OUT.autotest/sr_nao.csr" 8
 elif ! test -z "$has_hs2" && [ "$has_hs2" == 2 ]; then
     HSR_BINARY_COMPARE="../../integrate/tools/compare_hsr_binary.py"
-    python3 $HSR_BINARY_COMPARE OUT.autotest/hrs1_nao.dat hrs1_nao.csr.ref real 4
-    echo "CompareHR_pass $?" >>$1
+    run_and_record_status "$1" "CompareHR_pass" python3 "$HSR_BINARY_COMPARE" \
+        OUT.autotest/hrs1_nao.dat hrs1_nao.csr.ref real 4
     if ! test -z "$nspin" && [ "$nspin" -eq 2 ]; then
-        python3 $HSR_BINARY_COMPARE OUT.autotest/hrs2_nao.dat hrs2_nao.csr.ref real 4
-        echo "CompareHR2_pass $?" >>$1
+        run_and_record_status "$1" "CompareHR2_pass" python3 "$HSR_BINARY_COMPARE" \
+            OUT.autotest/hrs2_nao.dat hrs2_nao.csr.ref real 4
     fi
-    python3 $HSR_BINARY_COMPARE OUT.autotest/sr_nao.dat sr_nao.csr.ref real 4
-    echo "CompareSR_pass $?" >>$1
+    run_and_record_status "$1" "CompareSR_pass" python3 "$HSR_BINARY_COMPARE" \
+        OUT.autotest/sr_nao.dat sr_nao.csr.ref real 4
 fi
 
 #-----------------------------------
 # H(R), S(R), and DM(R) matrices in NPZ format
 #-----------------------------------
 if { ! test -z "$out_hsr" && [ "$out_hsr" == 3 ]; } || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
-    test -f OUT.autotest/sr_nao.npz
-    echo "OutputSRNPZ_pass $?" >>$1
+    run_and_record_status "$1" "OutputSRNPZ_pass" test -f OUT.autotest/sr_nao.npz
 fi
 
 if { ! test -z "$out_hr_npz" && [ "$out_hr_npz" == 1 ]; } \
     || { ! test -z "$out_hsr" && [ "$out_hsr" == 3 ]; } \
     || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
-    test -f OUT.autotest/hrs1_nao.npz
-    echo "OutputHRNPZ_pass $?" >>$1
+    run_and_record_status "$1" "OutputHRNPZ_pass" test -f OUT.autotest/hrs1_nao.npz
 fi
 
 if ! test -z "$out_dm_npz" && [ "$out_dm_npz" == 1 ]; then
-    test -f OUT.autotest/output_DM0.npz
-    echo "OutputDMNPZ_pass $?" >>$1
+    run_and_record_status "$1" "OutputDMNPZ_pass" test -f OUT.autotest/output_DM0.npz
 fi
 
 #-----------------------------------
@@ -504,8 +545,7 @@ fi
 #-----------------------------------
 #echo $has_mat_r
 if ! test -z "$has_mat_r"  && [  $has_mat_r == 1 ]; then
-    python3 $COMPARE_SCRIPT rr_nao.txt.ref OUT.autotest/rr_nao.txt 8
-    echo "ComparerR_pass $?" >>$1
+    record_compare_result "$1" "ComparerR_pass" "rr_nao.txt.ref" "OUT.autotest/rr_nao.txt" 8
 fi
 
 #-----------------------------------
@@ -513,8 +553,7 @@ fi
 #-----------------------------------
 #echo $has_mat_t
 if ! test -z "$has_mat_t"  && [  $has_mat_t == 1 ]; then
-    python3 $COMPARE_SCRIPT tr_nao.csr.ref OUT.autotest/tr_nao.csr 8
-    echo "ComparerTR_pass $?" >>$1
+    record_compare_result "$1" "ComparerTR_pass" "tr_nao.csr.ref" "OUT.autotest/tr_nao.csr" 8
 fi
 
 #-----------------------------------
@@ -522,8 +561,7 @@ fi
 #-----------------------------------
 #echo $has_mat_syns
 if ! test -z "$has_mat_syns"  && [  $has_mat_syns == 1 ]; then
-    python3 $COMPARE_SCRIPT syns_nao.csr.ref OUT.autotest/syns_nao.csr 8
-    echo "CompareSYNS_pass $?" >>$1
+    record_compare_result "$1" "CompareSYNS_pass" "syns_nao.csr.ref" "OUT.autotest/syns_nao.csr" 8
 fi
 
 #-----------------------------------
@@ -531,12 +569,9 @@ fi
 #-----------------------------------
 #echo $has_mat_dh
 if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ] && [ $gamma_only != 1 ]; then
-    python3 $COMPARE_SCRIPT dhrxs1_nao.csr.ref OUT.autotest/dhrxs1_nao.csr 8
-    echo "ComparerdHRx_pass $?" >>$1
-    python3 $COMPARE_SCRIPT dhrys1_nao.csr.ref OUT.autotest/dhrys1_nao.csr 8
-    echo "ComparerdHRy_pass $?" >>$1
-    python3 $COMPARE_SCRIPT dhrzs1_nao.csr.ref OUT.autotest/dhrzs1_nao.csr 8
-    echo "ComparerdHRz_pass $?" >>$1
+    record_compare_result "$1" "ComparerdHRx_pass" "dhrxs1_nao.csr.ref" "OUT.autotest/dhrxs1_nao.csr" 8
+    record_compare_result "$1" "ComparerdHRy_pass" "dhrys1_nao.csr.ref" "OUT.autotest/dhrys1_nao.csr" 8
+    record_compare_result "$1" "ComparerdHRz_pass" "dhrzs1_nao.csr.ref" "OUT.autotest/dhrzs1_nao.csr" 8
 fi
 
 #-----------------------------------
@@ -568,8 +603,7 @@ fi
 #---------------------------------------
 if ! test -z "$has_scan"  && [  $has_scan == "scan" ] && \
        ! test -z "$out_chg" && [ $out_chg == 1 ]; then
-    python3 $COMPARE_SCRIPT tau.cube.ref OUT.autotest/tau.cube 8
-    echo "tau.cube_pass $?" >>$1
+    record_compare_result "$1" "tau.cube_pass" "tau.cube.ref" "OUT.autotest/tau.cube" 8
 fi
 
 #---------------------------------------
@@ -578,8 +612,7 @@ fi
 #---------------------------------------
 if ! test -z "$has_ldos"  && [  $has_ldos == 1 ]; then
     stm_bias=$(get_input_key_value "stm_bias" "OUT.autotest/INPUT.info")
-    python3 $COMPARE_SCRIPT LDOS.cube.ref OUT.autotest/LDOS_"$stm_bias"eV.cube 8
-    echo "LDOS.cube_pass $?" >> $1
+    record_compare_result "$1" "LDOS.cube_pass" "LDOS.cube.ref" "OUT.autotest/LDOS_${stm_bias}eV.cube" 8
 fi
 
 #---------------------------------------
@@ -677,8 +710,7 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 		wfc_ref="$wfc_name"_mod.txt.ref
 	fi
 
-	python3 $COMPARE_SCRIPT $wfc_cal $wfc_ref 8 -abs 1
-	echo "Compare_wfc_lcao_pass $?" >>$1
+	record_compare_result "$1" "Compare_wfc_lcao_pass" "$wfc_cal" "$wfc_ref" 8 1
 fi
 
 #--------------------------------------------
@@ -691,8 +723,7 @@ if ! test -z "$out_dm"  && [ $out_dm == 1 ]; then
               echo "Can't find DM files"
               exit 1
       else
-			python3 $COMPARE_SCRIPT $dmref $dmfile 5
-            echo "DM_different $?" >>$1
+			record_compare_result "$1" "DM_different" "$dmref" "$dmfile" 5
       fi
 fi
 
@@ -700,8 +731,7 @@ fi
 # mulliken charge
 #--------------------------------------------
 if ! test -z "$out_mul"  && [ $out_mul == 1 ]; then
-    python3 $COMPARE_SCRIPT mulliken.txt.ref OUT.autotest/mulliken.txt 3
-	echo "Compare_mulliken_pass $?" >>$1
+    record_compare_result "$1" "Compare_mulliken_pass" "mulliken.txt.ref" "OUT.autotest/mulliken.txt" 3
 fi
 
 #--------------------------------------------
@@ -792,11 +822,8 @@ nspin=$(get_input_key_value "nspin" "INPUT")
 if_separate_k=$(get_input_key_value "if_separate_k" "INPUT")
 if [ "$nspin" = "4" ] && { [ "$if_separate_k" = "1" ] || [ "$if_separate_k" = "true" ]; } \
     && [ -n "$out_wfc_norm" ] && [ -n "$out_wfc_re_im" ] && [ -n "$out_pchg" ]; then
-    if python3 "$CUBE_TOOL" check-spinor OUT.autotest; then
-        echo "pw_spinor_cube_identity 0" >> "$1"
-    else
-        echo "pw_spinor_cube_identity 1" >> "$1"
-    fi
+    run_and_record_status "$1" "pw_spinor_cube_identity" \
+        python3 "$CUBE_TOOL" check-spinor OUT.autotest
 fi
 
 #--------------------------------------------
@@ -878,8 +905,7 @@ fi
 if ! test -z "$out_current" && [ $out_current ]; then
 	current1ref=current_tot.txt.ref
 	current1cal=OUT.autotest/current_tot.txt
-	python3 $COMPARE_SCRIPT $current1ref $current1cal 10
-	echo "CompareCurrent_pass $?" >>$1
+	record_compare_result "$1" "CompareCurrent_pass" "$current1ref" "$current1cal" 10
 fi
 
 #--------------------------------------------
@@ -888,7 +914,7 @@ fi
 if ! test -z "$out_efield" && [ "$out_efield" == 1 ]; then
 	efield_refs=(efield_*.txt.ref)
 	if [ ! -e "${efield_refs[0]}" ]; then
-		echo "CompareEfieldReference_pass 1" >>$1
+		record_compare_status "$1" "CompareEfieldReference_pass" 1
 	else
 		for efield_ref in "${efield_refs[@]}"; do
 			efield_name=${efield_ref%.ref}
