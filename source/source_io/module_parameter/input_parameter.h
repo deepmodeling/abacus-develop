@@ -318,6 +318,8 @@ struct Input_para
     double td_dt = -1.0;       ///< time step for propagation
     int estep_per_md = 1;      ///< number of electronic steps per MD step
     std::string lin_solver = "gmres"; ///< linear solver for real-time propagation
+    std::string td_orthonormal = "cholesky"; ///< Orthonormalization for PW real-time propagation.
+    bool td_out_stat = false; ///< Output PW real-time conservation diagnostics.
     int lin_gmres_restart = 20; ///< Maximum Arnoldi steps per GMRES cycle.
     bool td_cn_init = true; ///< CN subspace initial guess and residual reuse.
     bool lin_reconstruct = true; ///< Explicit GMRES residual reconstruction with periodic audits.

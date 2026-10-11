@@ -68,17 +68,29 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
     // this->pelec->psiToRho(*this->psi);
     LCAO_domain::dm2rho(this->dmat.dm->get_dmr_vec(), this->inp_->nspin, &this->chr, this->inp_->nelec, ucell.omega, false);
 
-    int nspin0 = this->inp_->nspin == 2 ? 2 : 1;
+    // Write every density channel (rho[0..3] for nspin=4) so the file set
+    // matches ctrl_output_fp: the init_chg=file reader reads chgs1..chgs<nspin>
+    // once chgs1.cube exists and aborts if any of them is missing.
+    const int nspin = this->inp_->nspin;
 
-    for (int is = 0; is < nspin0; is++)
+    for (int is = 0; is < nspin; is++)
     {
-        std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
+        // same naming as ctrl_output_fp and the init_chg=file reader:
+        // chg.cube for nspin=1, chgs<n>.cube otherwise
+        std::string fn = PARAM.globalv.global_out_dir + "chg";
+        if (nspin != 1)
+        {
+            fn += "s" + std::to_string(is + 1);
+        }
+        fn += ".cube";
 
         // write electron density
+        const std::string desc_chg = ModuleIO::make_data_desc("charge density", "magnetization density m", is, nspin);
+
         ModuleIO::write_vdata_palgrid(this->Pgrid,
                                       this->chr.rho[is],
                                       is,
-                                      this->inp_->nspin,
+                                      nspin,
                                       istep,
                                       fn,
                                       this->pelec->eferm.get_efval(is),
@@ -86,7 +98,9 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
                                       3,
                                       1,
                                       PARAM.globalv.two_fermi,
-                                      false);
+                                      false,
+                                      GlobalV::ofs_running,
+                                      desc_chg);
     }
 
     ModuleBase::timer::end("ESolver_DM2rho", "runner");

@@ -7,13 +7,15 @@
 #include "source_base/module_parallel/para_bridge.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+#include "source_io/module_output/spin_tag.h"
 #include "source_io/module_parameter/parameter.h" // mohan add 20250911
 
 #ifdef __MPI
 #include <mpi.h>
 #endif
 
-void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb, const K_Vectors& kv)
+void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb, const K_Vectors& kv,
+                           std::ofstream& ofs_running)
 {
     // write band information to band.txt
     if (inp.out_band[0])
@@ -38,9 +40,13 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
 
             ss << ".txt";
 
+            const std::string eig_file = ss.str();
+            const std::string spin_tag = ModuleIO::make_spin_tag(is, nspin0);
+            ofs_running << " Write eigenvalues" << spin_tag << " to file: " << eig_file << std::endl;
+
             const double eshift = 0.0;
             nscf_bands(is,
-                       ss.str(),
+                       eig_file,
                        inp.nbands,
                        eshift,
                        inp.out_band[1], // precision
@@ -72,8 +78,6 @@ void ModuleIO::nscf_bands(const int& is,
         GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
         GlobalV::ofs_running << "\n";
     */
-
-    GlobalV::ofs_running << " Write eigenvalues to file: " << eig_file << std::endl;
 
     // number of k points without spin;
     // nspin = 1,2, nkstot = nkstot_np * nspin;

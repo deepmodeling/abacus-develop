@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CATCH_SCRIPT="../../integrate/tools/catch_properties.sh"
+CATCH_SCRIPT="../../integrate/validation_tools/catch_properties.sh"
 GENERAL_INFO_FILE="../../integrate/general_info"
 
 # check_out: checking the output information
@@ -37,11 +37,20 @@ test -e $GENERAL_INFO_FILE|| echo "current dir:`pwd`, plese prepare the general_
 
 test -e $GENERAL_INFO_FILE|| exit 0
 
+# EXEC may be a literal path, or one of the ABACUS_EXE placeholders
+# ($ABACUS_EXE, ${ABACUS_EXE}, ${ABACUS_EXE:-abacus}), so a single env var can
+# override the executable without editing general_info. Only these
+# placeholders are substituted; EXEC is never evaluated as shell code.
 exec_path=`grep EXEC $GENERAL_INFO_FILE | awk '{printf $2}'`
+abacus_exe_default=${ABACUS_EXE:-abacus}
+exec_path=${exec_path//'${ABACUS_EXE:-abacus}'/$abacus_exe_default}
+exec_path=${exec_path//'${ABACUS_EXE}'/$ABACUS_EXE}
+exec_path=${exec_path//'$ABACUS_EXE'/$ABACUS_EXE}
 
-test -e $exec_path || echo "Error! ABACUS path was wrong!!"
+# command -v accepts both a path and a bare name looked up in PATH.
+command -v "$exec_path" >/dev/null || echo "Error! ABACUS path was wrong!!"
 
-test -e $exec_path || exit 0
+command -v "$exec_path" >/dev/null || exit 0
 
 CA=`grep CHECKACCURACY $GENERAL_INFO_FILE | awk '{printf $2}'`
 
@@ -53,7 +62,7 @@ echo "Test in $path_here"
 echo "Begin testing the example with $NP cores"
 
 #parallel test
-mpirun -np $NP $exec_path > log.txt
+mpirun -np $NP "$exec_path" > log.txt
 
 test -d OUT.autotest || echo "Some errors occured in ABACUS!"
 
@@ -66,9 +75,11 @@ if test -z $1
 then
 $CATCH_SCRIPT result.out
 check_out result.out
-elif [ $1 == "debug" ] 
+elif [ $1 == "debug" ]
 then
-$CATCH_SCRIPT result.out
+# Single_job.sh debug copies validation_tools/ into the case directory;
+# use that copy so local edits to the collectors take effect.
+./validation_tools/catch_properties.sh result.out
 check_out result.out
 else
 $CATCH_SCRIPT result.ref

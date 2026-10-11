@@ -192,7 +192,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     init_deltaspin_lcao<TK>(ucell, *this->inp_, &(this->pv), this->kv, this->p_hamilt, this->psi, this->dmat.dm, this->pelec);
 
     // 11) set xc type before the first cal of xc in pelec->init_scf, Peize Lin add 2016-12-03
-    this->exx_nao.before_scf(ucell, this->kv, orb_, this->p_chgmix, istep, *this->inp_, this->exx_info_);
+    this->exx_nao.before_scf(ucell, this->kv, orb_, this->pv, this->p_chgmix, istep, *this->inp_, this->exx_info_);
 
     // 12) initalize DM(R), which has the same size with Hamiltonian(R)
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
@@ -338,7 +338,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(BaseCell& basecell)
 	    this->gd, this->psi, this->chr, hamilt_lcao,
 	    this->two_center_bundle_,
 	    this->orb_, this->pw_rho, this->pw_rhod,
-	    this->sf, this->locpp.vloc, this->exx_nao, this->exx_info_, this->solvent);
+	    this->sf, this->locpp.vloc, this->exx_nao, this->exx_info_, this->solvent, GlobalV::ofs_running);
 
     ModuleBase::timer::end("ESolver_KS_LCAO", "after_all_runners");
 }
@@ -649,7 +649,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
             this->orb_, this->pw_wfc, this->pw_rho, this->pw_big, this->sf,
             this->pw_rhod, this->locpp.vloc, this->solvent,
             this->rdmft_solver, this->deepks, this->exx_nao, this->exx_info_,
-            conv_esolver, this->scf_nmax_flag, istep);
+            conv_esolver, this->scf_nmax_flag, istep, GlobalV::ofs_running);
 
     //! 3) Clean up RA, which is used to serach for adjacent atoms
     if (!this->inp_->cal_force && !this->inp_->cal_stress)

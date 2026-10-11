@@ -20,8 +20,7 @@ void linear_buffer(ct::Tensor* buffer, const int64_t size)
     using CtDevice = typename ct::PsiToContainer<Device>::type;
     const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
     const int64_t elements = std::max<int64_t>(1, size);
-    if (buffer->NumElements() < elements || buffer->data_type() != ct::DataTypeToEnum<T>::value
-        || buffer->device_type() != device)
+    if (buffer->NumElements() < elements || buffer->data_type() != ct::DataTypeToEnum<T>::value || buffer->device_type() != device)
     {
         *buffer = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {elements});
     }
@@ -74,6 +73,9 @@ class LinearAlgebra
 
     /** @brief Global X-adjoint times Y, with double accumulation for both precisions. */
     std::vector<Wide> cross(int ld, int dim, int nx, int ny, const T* x, const T* y);
+
+    /** @brief Global X-adjoint times X, reusing one FP64 conversion of the valid rows. */
+    std::vector<Wide> gram(int ld, int dim, int bands, const T* input);
 
     /** @brief Y = X*C + beta*Y, using a small host coefficient matrix. */
     void expand(int ld, int dim, int nx, int ny, const T* x, const std::vector<Wide>& c, T* y, T beta);

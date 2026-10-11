@@ -11,6 +11,8 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h" // Grid_Driver
 #include "source_base/matrix.h" // matrix
 
+#include <fstream>
+
 namespace ModuleIO
 {
 template <typename T>
@@ -36,7 +38,8 @@ class Cal_ldos
 		const int nspin,
 		const std::string& global_out_dir,
 		const bool two_fermi,
-		const int out_ldos_precision);
+		const int out_ldos_precision,
+		std::ofstream& ofs_running);
 
 }; // namespace Cal_ldos
 
@@ -59,7 +62,8 @@ void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                  const bool dos_setemin,
                  const double dos_emin_ev,
                  const double dos_sigma,
-                 const std::vector<double>& ldos_line);
+                 const std::vector<double>& ldos_line,
+                 std::ofstream& ofs_running);
 
 template <typename Device>
 void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
@@ -71,7 +75,8 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                  const int nspin,
                  const std::string& global_out_dir,
                  const bool two_fermi,
-                 const int out_ldos_precision);
+                 const int out_ldos_precision,
+                 std::ofstream& ofs_running);
 
 template <typename Device>
 void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
@@ -89,7 +94,8 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                   const double dos_emin_ev,
                   const bool two_fermi,
                   const double dos_sigma,
-                  const std::vector<double>& ldos_line);
+                  const std::vector<double>& ldos_line,
+                  std::ofstream& ofs_running);
 
 /*
  * @brief Get grid points and shifts for interpolation.

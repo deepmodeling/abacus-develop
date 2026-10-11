@@ -26,10 +26,10 @@ class ESolverDPTest : public ::testing::Test
     {
         // Initialize variables before each test
         esolver = new ModuleESolver::ESolver_DP("./support/case_1.pb");
-        ucell.iat2it = new int[2];
+        ucell.iat2it.resize(2);
         ucell.iat2it[0] = 0;
         ucell.iat2it[1] = 1;
-        ucell.iat2ia = new int[2];
+        ucell.iat2ia.resize(2);
         ucell.iat2ia[0] = 0;
         ucell.iat2ia[1] = 1;
         ucell.nat = 2;

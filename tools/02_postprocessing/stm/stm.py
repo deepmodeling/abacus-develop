@@ -24,7 +24,7 @@ class STM:
         if(abs(bias) < 1e-5):
             bias = 0.0
 
-        filename = f'{self.dirname}/LDOS_{bias:.5g}eV.cube'
+        filename = f'{self.dirname}/ldos_{bias:.5g}ev.cube'
         print('read in ' + filename)
         self.ldos, self.atoms = read_cube_data(filename)
         self.cell = self.atoms.cell

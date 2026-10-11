@@ -83,7 +83,7 @@ void cal_mi_pw(ScState& state,
             int nkb = onsite_p->get_tot_nproj();
             const int spin_sign = (npol == 2) ? 1 : spin_sign_at(state, pelec, ik);
             accumulate_Mi_from_becp(becp, nkb, nbands, npol, spin_sign,
-                &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.Mi_);
+                &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.get_mi());
         }
     }
 #if ((defined __CUDA) || (defined __ROCM))
@@ -105,12 +105,12 @@ void cal_mi_pw(ScState& state,
             int nkb = onsite_p->get_size_becp() / nbands / npol;
             const int spin_sign = (npol == 2) ? 1 : spin_sign_at(state, pelec, ik);
             accumulate_Mi_from_becp(becp, nkb, nbands, npol, spin_sign,
-                &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.Mi_);
+                &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.get_mi());
         }
     }
 #endif
     // MPI reduction: sum Mi across all k-pool ranks
-    Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(state.Mi_[0][0]), 3 * state.Mi_.size());
+    Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(state.get_mi()[0][0]), 3 * state.get_mi().size());
 
     ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mi_pw");
 }
@@ -175,7 +175,7 @@ void calculate_delta_hcc(ScState& state,
         // The coefficient array uses {up-up, down-up, up-down, down-down}.
         // Then: ps_up = coeff0 * becp_up + coeff2 * becp_dn
         //        ps_dn = coeff1 * becp_up + coeff3 * becp_dn
-        for (size_t iat = 0; iat < state.Mi_.size(); iat++)
+        for (size_t iat = 0; iat < state.get_mi().size(); iat++)
         {
             const int nproj = nh_iat[iat];
             const std::complex<double> coefficients0(effective_lambda[iat][2], 0.0);
@@ -206,7 +206,7 @@ void calculate_delta_hcc(ScState& state,
         // ps = lambda_z * spin_sign * becp
         // spin_sign = +1 for spin-up k-points, -1 for spin-down
         const int spin_sign = spin_sign_at(state, pelec, ik);
-        for (size_t iat = 0; iat < state.Mi_.size(); iat++)
+        for (size_t iat = 0; iat < state.get_mi().size(); iat++)
         {
             const int nproj = nh_iat[iat];
             double coefficients0 = effective_lambda[iat][2] * spin_sign;
@@ -320,7 +320,7 @@ void update_psi_charge_pw_cpu(ScState& state,
     const ModuleBase::Vector3<double>* lambda_for_hcc = delta_lambda;
     if (full_update)
     {
-        lambda_for_hcc = state.lambda_.data();
+        lambda_for_hcc = state.get_sc_lambda().data();
     }
 
     // =============================================================
@@ -439,7 +439,7 @@ void update_psi_charge_pw_gpu(ScState& state,
     const ModuleBase::Vector3<double>* lambda_for_hcc = delta_lambda;
     if (full_update)
     {
-        lambda_for_hcc = state.lambda_.data();
+        lambda_for_hcc = state.get_sc_lambda().data();
     }
 
     // STAGE 1: Subspace diagonalization for each k-point (GPU)

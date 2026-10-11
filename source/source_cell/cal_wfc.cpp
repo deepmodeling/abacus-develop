@@ -53,10 +53,8 @@ namespace unitcell
         // This assertion ensures consistency between the two calculation paths.
         assert(nlocal_tmp > 0);
         assert(nlocal_tmp == nlocal);
-        delete[] ucell.iwt2iat;
-        delete[] ucell.iwt2iw;
-        ucell.iwt2iat = new int[nlocal_tmp];
-        ucell.iwt2iw = new int[nlocal_tmp];
+        ucell.iwt2iat.resize(nlocal_tmp);
+        ucell.iwt2iw.resize(nlocal_tmp);
 
         ucell.itia2iat.create(ntype, ucell.namax);
         ucell.set_iat2iwt(npol);

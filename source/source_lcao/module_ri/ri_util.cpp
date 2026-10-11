@@ -3,16 +3,20 @@
 // DATE :   2022-08-17
 //=======================
 
-#ifndef RI_UTIL_HPP
-#define RI_UTIL_HPP
-
 #include "ri_util.h"
+
+#include "source_base/constants.h"
 #include "source_base/global_function.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_cell/unitcell.h"
+
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
+#include <string>
 
 namespace RI_Util
 {
-    inline std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
+    std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>>
     update_coulomb_param(
         const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,
         const UnitCell &ucell,
@@ -26,7 +30,6 @@ namespace RI_Util
                 if(param.at("singularity_correction") == "spencer")
                 {
                     // 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
-                    const int nspin0 = (PARAM.inp.nspin==2) ? 2 : 1;
                     const double Rcut = std::pow(0.75 * p_kv->get_nkstot_nospin() * ucell.omega / (ModuleBase::PI), 1.0/3.0);
                     param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(Rcut);
                 }
@@ -43,7 +46,7 @@ namespace RI_Util
         return coulomb_param_updated;
     }
 
-    inline std::map<Conv_Coulomb_Pot_K::Coulomb_Method,
+    std::map<Conv_Coulomb_Pot_K::Coulomb_Method,
             std::pair<bool,
                 std::map<Conv_Coulomb_Pot_K::Coulomb_Type,
                     std::vector<std::map<std::string,std::string>>>>>
@@ -113,5 +116,3 @@ namespace RI_Util
         return coulomb_settings;
     }
 }
-
-#endif

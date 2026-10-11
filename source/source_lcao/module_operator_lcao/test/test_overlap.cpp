@@ -33,8 +33,8 @@ class OverlapTest : public ::testing::Test
         ucell.ntype = 1;
         ucell.nat = test_size;
         ucell.atoms = new Atom[ucell.ntype];
-        ucell.iat2it = new int[ucell.nat];
-        ucell.iat2ia = new int[ucell.nat];
+        ucell.iat2it.resize(ucell.nat);
+        ucell.iat2ia.resize(ucell.nat);
         ucell.atoms[0].tau.resize(ucell.nat);
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
         for (int iat = 0; iat < ucell.nat; iat++)

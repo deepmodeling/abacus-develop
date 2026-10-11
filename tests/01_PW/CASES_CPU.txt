@@ -32,7 +32,7 @@ scf_out_chg_tau
 029_PW_15_CF_CS_S1_smallg
 030_PW_15_CF_CS_S2_smallg
 032_PW_15_CF_CS_bspline
-035_PW_15_SO
+scf_spin4
 036_PW_AF
 038_PW_NC
 038_PW_NC_GGA_GRAD2
@@ -46,7 +46,7 @@ scf_Al100_kspace3
 051_PW_OBOD_MemSaver
 scf_out_band_dos_wf
 056_PW_IW
-057_PW_SO_IW
+scf_in_wf_spin4
 058_PW_RE_MB
 059_PW_RE_MB_traj
 060_PW_RE_MG

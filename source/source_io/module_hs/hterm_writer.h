@@ -12,6 +12,7 @@
 #include "source_hamilt/module_xc/exx_info.h"
 
 #include <complex>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -51,6 +52,7 @@ struct WriteHParams
     std::string global_matrix_dir;
     std::string ks_solver;
     int drank = 0;
+    std::ofstream* ofs_running = nullptr; // running log for the "Write ... to file" messages
 #ifdef __EXX
     // The gamma-only (TK==double) exx interfaces used by the EXX term.
     // Deliberately NOT templated on TK, because it would force WriteHParams and

@@ -6,6 +6,8 @@
 #include "source_psi/psi.h"                   // define psi
 #include "source_psi/setup_psi_pw.h"          // use Setup_Psi class
 
+#include <fstream>
+
 class pseudopot_cell_vnl;
 
 namespace ModuleIO
@@ -18,7 +20,8 @@ void ctrl_iter_pw(const int istep,
                   Setup_Psi_pw& stp,
                   const K_Vectors& kv,
                   const ModulePW::PW_Basis_K* pw_wfc,
-                  const Input_para& inp);
+                  const Input_para& inp,
+                  std::ofstream& ofs_running);
 
 // print out information in 'after_scf' in ESolver_KS_PW
 template <typename T, typename Device>
@@ -34,7 +37,8 @@ void ctrl_scf_pw(const int istep,
                  const ModulePW::PW_Basis_Big* pw_big,
                  Setup_Psi_pw& stp,
                  const Parallel_Grid& para_grid,
-                 const Input_para& inp);
+                 const Input_para& inp,
+                 std::ofstream& ofs_running);
 
 // print out information in 'after_all_runners' in ESolver_KS_PW
 template <typename T, typename Device>
@@ -50,7 +54,8 @@ void ctrl_runner_pw(UnitCell& ucell,
                     pseudopot_cell_vnl& ppcell,
                     surchem& solvent,
                     Parallel_Grid& para_grid,
-                    const Input_para& inp);
+                    const Input_para& inp,
+                    std::ofstream& ofs_running);
 
 // print out information in 'after_all_runners' in ESolver_KS_PW (runtime version)
 template <typename T, typename Device>
@@ -67,7 +72,8 @@ void ctrl_runner_pw(UnitCell& ucell,
                     surchem& solvent,
                     const base_device::DeviceContext* ctx,
                     Parallel_Grid& para_grid,
-                    const Input_para& inp);
+                    const Input_para& inp,
+                    std::ofstream& ofs_running);
 
 } // namespace ModuleIO
 #endif

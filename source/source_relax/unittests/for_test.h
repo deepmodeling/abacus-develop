@@ -24,11 +24,6 @@ UnitCell::UnitCell()
     namax = 0;
     nwmax = 0;
 
-    iat2it = nullptr;
-    iat2ia = nullptr;
-    iwt2iat = nullptr;
-    iwt2iw = nullptr;
-
     itia2iat.create(1, 1);
 
     latvec = ModuleBase::Matrix3();

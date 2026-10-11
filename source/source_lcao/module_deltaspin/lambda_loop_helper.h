@@ -16,7 +16,7 @@
  * They have been lifted to free functions in the spinconstrain namespace to
  * shrink the SpinConstrain god class. Each helper takes the SpinConstrain
  * instance as its first parameter and accesses internal state through the
- * public getters (get_Mi, get_sc_lambda, get_constrain, ...).
+ * public getters (get_mi, get_sc_lambda, get_constrain, ...).
  *
  * @par Template parameter TK
  * - std::complex<double>: full implementation (nspin=2 and nspin=4)

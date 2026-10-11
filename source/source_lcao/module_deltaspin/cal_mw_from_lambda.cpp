@@ -175,7 +175,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     // FIRST CALL: save subspace data for reuse across lambda steps
                     initial_hs = 1;
                     this->pw_cache_.allocate_cpu(nbands, nk, size_becp);
-                    this->pw_cache_.lambda_in_sub() = this->state_.lambda_;
+                    this->pw_cache_.lambda_in_sub() = this->state_.get_sc_lambda();
                 }
                 for (int ik = 0; ik < nk; ++ik)
                 {
@@ -199,7 +199,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     memcpy(h_tmp.data(), h_k, sizeof(std::complex<double>) * nbands * nbands);
                     memcpy(s_tmp.data(), s_k, sizeof(std::complex<double>) * nbands * nbands);
                     // Apply DeltaSpin correction (skip for initialization step i_step=-1)
-                    if (i_step != -1) pw::calculate_delta_hcc(this->state_, this->pw_cache_, this->pelec, h_tmp.data(), becp_k, this->state_.lambda_.data(), nbands, nkb, nh_iat, ik, true);
+                    if (i_step != -1) pw::calculate_delta_hcc(this->state_, this->pw_cache_, this->pelec, h_tmp.data(), becp_k, this->state_.get_sc_lambda().data(), nbands, nkb, nh_iat, ik, true);
 
                     // Diagonalize in subspace, update becp (response wavefunctions)
                     hsolver::DiagoIterAssist<std::complex<double>>::diag_responce(h_tmp.data(),
@@ -237,7 +237,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 {
                     initial_hs = 1;
                     this->pw_cache_.allocate_gpu(nbands, nk, size_becp);
-                    this->pw_cache_.lambda_in_sub() = this->state_.lambda_;
+                    this->pw_cache_.lambda_in_sub() = this->state_.get_sc_lambda();
                 }
                 std::complex<double>* becp_pointer = nullptr;
                 base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(becp_pointer, size_becp);
@@ -261,7 +261,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     }
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(h_tmp, h_k, nbands * nbands);
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(s_tmp, s_k, nbands * nbands);
-                    if (i_step != -1) pw::calculate_delta_hcc(this->state_, this->pw_cache_, this->pelec, h_tmp, becp_k, this->state_.lambda_.data(), nbands, nkb, nh_iat, ik, true);
+                    if (i_step != -1) pw::calculate_delta_hcc(this->state_, this->pw_cache_, this->pelec, h_tmp, becp_k, this->state_.get_sc_lambda().data(), nbands, nkb, nh_iat, ik, true);
 
                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_responce(h_tmp,
                                                                                   s_tmp,
@@ -294,13 +294,13 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 const std::complex<double>* becp = &becp_tmp[ik * size_becp];
                 const int spin_sign = (this->state_.npol_ == 2) ? 1 : this->get_spin_sign(ik);
                 accumulate_Mi_from_becp(becp, nkb, nbands, this->state_.npol_, spin_sign,
-                    &this->pelec->wg(ik, 0), nh_iat, this->state_.Mi_);
+                    &this->pelec->wg(ik, 0), nh_iat, this->state_.get_mi());
             }
             // MPI reduction: sum Mi across all k-pool ranks
             Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar,
                                                     GlobalV::NPROC_IN_POOL,
-                                                    &(this->state_.Mi_[0][0]),
-                                                    3 * this->state_.Mi_.size());
+                                                    &(this->state_.get_mi()[0][0]),
+                                                    3 * this->state_.get_mi().size());
         }
     }
     ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mw_from_lambda");

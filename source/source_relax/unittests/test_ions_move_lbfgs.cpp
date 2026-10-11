@@ -38,10 +38,6 @@ UnitCell::UnitCell()
 
     ntype = 1;
     nat = 1;
-    iat2it = nullptr;
-    iat2ia = nullptr;
-    iwt2iat = nullptr;
-    iwt2iw = nullptr;
     itia2iat.create(1, 1);
 
     atoms = new Atom[ntype];

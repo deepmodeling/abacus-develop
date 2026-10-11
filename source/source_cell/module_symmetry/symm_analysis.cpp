@@ -3,7 +3,12 @@
 
 using namespace ModuleSymmetry;
 
-void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, std::ofstream& ofs_running,
+void Symmetry::analy_sys(const Lattice& lat, Atom* atoms,
+                         const int nat, const int ntype,
+                         const std::vector<int>& iat2it,
+                         const std::vector<int>& iat2ia,
+                         const ModuleBase::IntArray& itia2iat,
+                         std::ofstream& ofs_running,
                          const double symmetry_prec, const int nspin, const std::string& calculation,
                          const int* cal_symm_repr)
 {
@@ -30,26 +35,20 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     // 1. copy data and allocate memory
     // --------------------------------
     // number of total atoms
-    this->nat = st.nat;
+    this->nat = nat;
     // number of atom species
-    this->ntype = st.ntype;
+    this->ntype = ntype;
 
     assert(ntype>0);
 
-    this->na = new int[ntype];
-    this->istart = new int[ntype];  // start number of atom.
-    this->index = new int [nat + 2];   // index of atoms
-
-    ModuleBase::GlobalFunc::ZEROS(na, ntype);
-    ModuleBase::GlobalFunc::ZEROS(istart, ntype);
-    ModuleBase::GlobalFunc::ZEROS(index, nat+2);
+    this->na.assign(ntype, 0);
+    this->istart.assign(ntype, 0);  // start number of atom.
+    this->index.assign(nat + 2, 0);   // index of atoms
 
     // atom positions
     // used in checksym.
-    newpos = new double[3*nat]; // positions of atoms before rotation
-    rotpos = new double[3*nat]; // positions of atoms after rotation
-    ModuleBase::GlobalFunc::ZEROS(newpos, 3*nat);
-    ModuleBase::GlobalFunc::ZEROS(rotpos, 3*nat);
+    newpos.assign(3 * nat, 0.0); // positions of atoms before rotation
+    rotpos.assign(3 * nat, 0.0); // positions of atoms after rotation
 
     this->a1 = lat.a1;
     this->a2 = lat.a2;
@@ -91,7 +90,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
             // s: the input lattice vectors, input
             // find the real_brav type accordiing to lattice vectors.
             this->lattice_type(this->a1, this->a2, this->a3, this->s1, this->s2, this->s3,
-                    this->cel_const, this->pre_const, this->real_brav, ilattname, atoms, true, this->newpos, symmetry_prec);
+                    this->cel_const, this->pre_const, this->real_brav, ilattname, atoms, true, this->newpos.data(), symmetry_prec);
 
             ofs_running << " For optimal symmetric configuration:" << std::endl;
             ModuleBase::GlobalFunc::OUT(ofs_running, "BRAVAIS TYPE", real_brav);
@@ -104,7 +103,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
             optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
 
             // count the number of primitive cells in the supercell
-            this->pricell(this->newpos, atoms);
+            this->pricell(this->newpos.data(), atoms);
 
             test_brav = true; // output the real ibrav and point group
 
@@ -122,16 +121,16 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 
             if (!pricell_loop && nspin == 2)
             {
-                this->analyze_magnetic_group(atoms, st, nrot_out, nrotk_out);
+                this->analyze_magnetic_group(atoms, iat2it, iat2ia, itia2iat, nrot_out, nrotk_out);
             }
             else
             {
                 // get the real symmetry operations according to the input structure
                 // nrot_out: the number of pure point group rotations
                 // nrotk_out: the number of all space group operations
-                this->getgroup(nrot_out, nrotk_out, ofs_running, this->nop, this->symop, 
-                        this->gmatrix, this->gtrans, this->newpos, this->rotpos, this->index, 
-                        this->ntype, this->itmin_type, this->itmin_start, this->istart, this->na);
+                this->getgroup(nrot_out, nrotk_out, ofs_running, this->nop, this->symop,
+                        this->gmatrix, this->gtrans, this->newpos.data(), this->rotpos.data(), this->index.data(),
+                        this->ntype, this->itmin_type, this->itmin_start, this->istart.data(), this->na.data());
             }
         };
 
@@ -294,13 +293,13 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     // the magnetization (pseudovector), so they are not applied in k-reduction / density symmetrization.
     if (nspin == 4)
     {
-        this->analyze_magnetic_group_nspin4(atoms, st, latvec1);
+        this->analyze_magnetic_group_nspin4(atoms, iat2it, iat2ia, latvec1);
     }
 
     // Do this here for debug
     if (calculation == "relax")
     {
-        this->all_mbl = this->is_all_movable(atoms, st);
+        this->all_mbl = this->is_all_movable(atoms, iat2it, iat2ia);
         if (!this->all_mbl)
         {
             std::cout << "WARNING: Symmetry cannot be kept when not all atoms are movable.\n ";
@@ -309,11 +308,6 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
         }
     }
 
-    delete[] newpos;
-    delete[] na;
-    delete[] rotpos;
-    delete[] index;
-    delete[] istart;
     ModuleBase::timer::end("Symmetry","analy_sys");
     return;
 }

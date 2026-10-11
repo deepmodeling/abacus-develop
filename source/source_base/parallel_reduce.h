@@ -65,6 +65,8 @@ template <typename T>
 void reduce_min(T& v);
 template <typename T>
 void reduce_max(T& v);
+/** @brief Reduce an array of maxima across all ranks. */
+void reduce_max(double* values, const int count);
 template <typename T>
 void reduce_min_pool(const int& nproc_in_pool, T& v);
 template <typename T>

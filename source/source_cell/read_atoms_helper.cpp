@@ -17,6 +17,9 @@ namespace {
     constexpr char LOWER_A = 'a';
     constexpr char LOWER_Z = 'z';
     constexpr char MINUS_SIGN = '-';
+
+    // Below this value a magnetic moment component is treated as zero.
+    constexpr double mag_threshold = 1e-5;
 }
 
 namespace unitcell {
@@ -79,56 +82,97 @@ void set_atom_movement_flags(Atom& atom, int ia,
     }
 }
 
+bool is_magnetization_all_zero(const UnitCell& ucell)
+{
+    for (int it = 0; it < ucell.ntype; it++)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
+        {
+            if (std::abs(ucell.atoms[it].mag[ia]) > mag_threshold)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 void autoset_magnetization(UnitCell& ucell, int nspin,
                            std::ofstream& ofs_running)
 {
-    const int ntype = ucell.ntype;
+    // nspin=4 never autosets a moment. An all-zero moment in STRU is a
+    // legitimate nonmagnetic start; warn_zero_magnetization_nspin4() reports
+    // it instead, independently of the symmetry switch that gates this call.
+    if (nspin != 2)
+    {
+        return;
+    }
 
-    // Check if any atom has non-zero magnetization
-    int autoset_mag = 1;
+    if (!is_magnetization_all_zero(ucell))
+    {
+        return;
+    }
+
+    const int ntype = ucell.ntype;
     for (int it = 0; it < ntype; it++)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
-            if(std::abs(ucell.atoms[it].mag[ia]) > 1e-5)
+            ucell.atoms[it].mag[ia] = 1.0;
+            ucell.atoms[it].m_loc_[ia].z = ucell.atoms[it].mag[ia];
+            ModuleBase::GlobalFunc::OUT(ofs_running,"Autoset magnetism for this atom", 1.0);
+        }
+    }
+}
+
+void warn_zero_magnetization_nspin4(const UnitCell& ucell,
+                                    std::ofstream& ofs_running)
+{
+    const double threshold_sq = mag_threshold * mag_threshold;
+    for (int it = 0; it < ucell.ntype; it++)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
+        {
+            const ModuleBase::Vector3<double>& m = ucell.atoms[it].m_loc_[ia];
+            const double norm_sq = m.x * m.x + m.y * m.y + m.z * m.z;
+            if (norm_sq > threshold_sq)
             {
-                autoset_mag = 0;
-                break;
+                return;
             }
         }
     }
 
-    if (autoset_mag)
+    const std::string summary = "nspin=4 but no initial magnetization is set in STRU; "
+        "all atoms start from zero magnetic moment.";
+    std::cout << " Warning: " << summary << std::endl;
+    ModuleBase::WARNING("read_atom_positions", summary);
+    ofs_running << "\n WARNING: " << summary << std::endl;
+    ofs_running << "          If a magnetic ground state is expected, set 'mag' explicitly "
+                << "in STRU for the magnetic atoms." << std::endl;
+    ofs_running << "          With noncolin=0 the x/y components of 'mag' are discarded, so a "
+                << "moment given purely along x/y also leaves a zero starting moment."
+                << std::endl;
+}
+
+void warn_xy_magnetization_ignored(const std::string& label,
+                                   int n_discarded,
+                                   int na,
+                                   std::ofstream& ofs_running)
+{
+    if (n_discarded <= 0)
     {
-        if(nspin==4)
-        {
-            for (int it = 0; it < ntype; it++)
-            {
-                for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-                {
-                    ucell.atoms[it].m_loc_[ia].x = 1.0;
-                    ucell.atoms[it].m_loc_[ia].y = 1.0;
-                    ucell.atoms[it].m_loc_[ia].z = 1.0;
-                    ucell.atoms[it].mag[ia] = sqrt(pow(ucell.atoms[it].m_loc_[ia].x,2)
-                            +pow(ucell.atoms[it].m_loc_[ia].y,2)
-                            +pow(ucell.atoms[it].m_loc_[ia].z,2));
-                    ModuleBase::GlobalFunc::OUT(ofs_running,"Autoset magnetism for this atom", 1.0, 1.0, 1.0);
-                }
-            }
-        }
-        else if(nspin==2)
-        {
-            for (int it = 0; it < ntype; it++)
-            {
-                for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-                {
-                    ucell.atoms[it].mag[ia] = 1.0;
-                    ucell.atoms[it].m_loc_[ia].z = ucell.atoms[it].mag[ia];
-                    ModuleBase::GlobalFunc::OUT(ofs_running,"Autoset magnetism for this atom", 1.0);
-                }
-            }
-        }
+        return;
     }
+
+    std::stringstream ss;
+    ss << "atom type " << label << ": " << n_discarded << " of " << na
+       << " atoms give non-zero x/y magnetization in STRU, but nspin=4 with noncolin=0 "
+       << "is a collinear calculation; only the z component is used. "
+       << "x/y components are IGNORED. Set 'noncolin 1' to use the full vector.";
+    const std::string summary = ss.str();
+    std::cout << " Warning: " << summary << std::endl;
+    ModuleBase::WARNING("read_atom_positions", summary);
+    ofs_running << "\n WARNING: " << summary << std::endl;
 }
 
 bool finalize_atom_positions(UnitCell& ucell,
@@ -265,12 +309,14 @@ void transform_atom_coordinates(Atom& atom, int ia,
     }
 }
 
-void process_magnetization(Atom& atom, int it, int ia,
+bool process_magnetization(Atom& atom, int it, int ia,
                           int nspin, bool input_vec_mag,
                           bool input_angle_mag,
                           std::ofstream& ofs_running,
                           const bool noncolin)
 {
+    bool xy_discarded = false;
+
     // Recalculate mag and m_loc_ from read in angle1, angle2 and mag or mx, my, mz
     if(input_angle_mag)
     {
@@ -307,6 +353,23 @@ void process_magnetization(Atom& atom, int it, int ia,
         if(!noncolin)
         {
             // collinear case with nspin = 4, only z component is used
+            // Note: a scalar "mag <value>" in STRU is stored purely in
+            // m_loc_.z (x/y stay zero), so it passes the check below without
+            // flagging a discard and still defines a non-zero z moment.
+            // cal_ux() then turns that into the global XC quantization axis
+            // ux_ = (0,0,1) with lsign_ = true. Any positive scalar suffices;
+            // only the *direction* enters ux_, the magnitude (e.g. 1.7320508
+            // vs 1.0) is irrelevant.
+            //
+            // The discard is only reported back to the caller, which
+            // aggregates it per atom type: emitting a message here would
+            // print one warning per atom for a cell where every atom tilts
+            // the moment.
+            if(std::abs(atom.m_loc_[ia].x) > mag_threshold
+                || std::abs(atom.m_loc_[ia].y) > mag_threshold)
+            {
+                xy_discarded = true;
+            }
             atom.m_loc_[ia].x = 0;
             atom.m_loc_[ia].y = 0;
         }
@@ -347,6 +410,8 @@ void process_magnetization(Atom& atom, int it, int ia,
             ModuleBase::GlobalFunc::OUT(ofs_running, ss.str(),atom.mag[ia]);
         }
     }
+
+    return xy_discarded;
 }
 
 bool parse_atom_properties(std::ifstream& ifpos,

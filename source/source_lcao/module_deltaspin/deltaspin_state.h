@@ -90,6 +90,11 @@ public:
     void set_constrain(const ModuleBase::Vector3<int>* constrain_in, int nat_in);
     /// get sc_lambda
     const std::vector<ModuleBase::Vector3<double>>& get_sc_lambda() const;
+    /// get mutable sc_lambda
+    std::vector<ModuleBase::Vector3<double>>& get_lambda()
+    {
+        return lambda_;
+    }
     /// get target_mag
     const std::vector<ModuleBase::Vector3<double>>& get_target_mag() const;
     /// get constrain
@@ -144,7 +149,12 @@ public:
     /// get sc_drop_thr
     double get_sc_drop_thr() const;
     /// get computed magnetic moments Mi per atom
-    const std::vector<ModuleBase::Vector3<double>>& get_Mi() const;
+    const std::vector<ModuleBase::Vector3<double>>& get_mi() const;
+    /// get mutable computed magnetic moments Mi per atom
+    std::vector<ModuleBase::Vector3<double>>& get_mi()
+    {
+        return Mi_;
+    }
     /// get human-readable atom labels ("Fe_0", "Fe_1", ...) for table printing
     const std::vector<std::string>& get_atomLabels() const;
     /// Total number of orbitals across all constrained atoms
@@ -171,9 +181,7 @@ public:
      * later refactoring step.
      * =============================================================
      */
-    std::vector<ModuleBase::Vector3<double>> lambda_; ///< Lagrange multipliers (Ry/uB) per atom, 3 components
     std::vector<ModuleBase::Vector3<double>> target_mag_; ///< Target magnetic moments (uB) per atom
-    std::vector<ModuleBase::Vector3<double>> Mi_; ///< Current computed magnetic moments (uB) per atom
     std::vector<ModuleBase::Vector3<int>> constrain_; ///< Per-atom/component constraint flags: 0=free, 1=constrained
     std::vector<std::string> atomLabels_; ///< Human-readable labels: "Fe_0", "Fe_1", etc.
     int nspin_ = 0; ///< Spin type: 2=collinear, 4=non-collinear
@@ -191,6 +199,8 @@ public:
     double tpiba = 0.0; ///< 2*pi/a lattice constant scaling factor, saved from UnitCell
 
 private:
+    std::vector<ModuleBase::Vector3<double>> lambda_; ///< Lagrange multipliers (Ry/uB) per atom, 3 components
+    std::vector<ModuleBase::Vector3<double>> Mi_; ///< Current computed magnetic moments (uB) per atom
     std::map<int, std::vector<ScAtomData>> ScData; ///< Raw constraint data indexed by element type (itype)
     std::map<int, double> ScDecayGrad; ///< Gradient decay thresholds (uB^2/eV) per element type
     std::vector<double> decay_grad_;   ///< Gradient decay thresholds converted to uB^2/Ry, per element type

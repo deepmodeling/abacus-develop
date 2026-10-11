@@ -22,7 +22,9 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
                                    const int precision,
                                    const int out_fermi,
                                    const bool two_fermi,
-                                   const bool reduce_all_pool)
+                                   const bool reduce_all_pool,
+                                   std::ofstream& ofs_running,
+                                   const std::string& data_desc)
 {
     ModuleBase::TITLE("ModuleIO", "write_vdata_palgrid");
 
@@ -173,6 +175,8 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
                    data_xyz_full,
                    precision);
 
+        ofs_running << " Write " << data_desc << " to file: " << fn << std::endl;
+
         end = time(nullptr);
         ModuleBase::GlobalFunc::OUT_TIME("write_vdata_palgrid", start, end);
     }
@@ -219,9 +223,6 @@ void ModuleIO::write_cube(const std::string& file,
     assert(data.size() >= nx * ny * nz);
 
     std::ofstream ofs(file);
-
-    // mohan add 2025-09-10
-    GlobalV::ofs_running << " Write data to file: " << file << std::endl;
 
     for (int i = 0; i < 2; ++i)
     {

@@ -7,8 +7,7 @@ namespace ModuleIO
 // Helper function to print dipole moment components
 // name: descriptive name for the dipole moment type
 // px, py, pz: dipole moment components in x, y, z directions
-void print_dipole_moment(std::ofstream& ofs_running, const std::string& name,
-                       double px, double py, double pz)
+void print_dipole_moment(std::ofstream& ofs_running, const std::string& name, double px, double py, double pz)
 {
     ofs_running << " " << name << std::endl;
     ModuleBase::GlobalFunc::OUT(ofs_running, "P_x(t)", px);
@@ -17,10 +16,10 @@ void print_dipole_moment(std::ofstream& ofs_running, const std::string& name,
 }
 
 // Calculate and write dipole moment data for RT-TDDFT calculations
-// 
+//
 // Dipole moment is a measure of the separation of positive and negative charges
 // in a system. In electronic structure calculations, we compute three components:
-// 
+//
 // 1. Electronic dipole moment (P_elec):
 //    Formula: P_elec = -int(r * rho(r) dr)
 //    where rho(r) is the electron density
@@ -36,14 +35,14 @@ void print_dipole_moment(std::ofstream& ofs_running, const std::string& name,
 //
 // Parameters:
 // - ucell: unit cell containing atomic structure and lattice information
-// - rho_save: electron density on real-space grid
+// - rho: current electron density on the real-space grid
 // - rhopw: plane wave basis information including grid dimensions
 // - istep: current time step
 // - fn: output file name
 // - ofs_running: output stream for logging
 // - precision: floating-point precision for output
 void write_dipole(const UnitCell& ucell,
-                  const double* rho_save,
+                  const double* rho,
                   const ModulePW::PW_Basis* rhopw,
                   const int& istep,
                   const std::string& fn,
@@ -68,90 +67,63 @@ void write_dipole(const UnitCell& ucell,
 
     ofs_running << " Write dipole data to file: " << fn << std::endl;
 
-    // Calculate modulus of reciprocal lattice vectors
-    // bmod[i] = |b_i| where b_i are reciprocal lattice vectors
-    // Used for coordinate transformation from fractional to Cartesian
-    double small_value = 1e-10;
-    double bmod[3];
-    
-    for (int i = 0; i < 3; ++i)
-    {
-        bmod[i] = prepare(ucell, i);
-        if (bmod[i] < small_value)
-        {
-            ModuleBase::WARNING_QUIT("ModuleIO::write_dipole", 
-                "bmod[" + std::to_string(i) + "] is too small or zero");
-        }
-    }
-
     // Validate grid dimensions to prevent division by zero
-    if (rhopw->nx == 0 || rhopw->ny == 0 || rhopw->nz == 0 || 
-        rhopw->nxyz == 0 || rhopw->nplane == 0)
+    if (rhopw->nx == 0 || rhopw->ny == 0 || rhopw->nz == 0 || rhopw->nxyz == 0 || rhopw->nplane == 0)
     {
-        ModuleBase::WARNING_QUIT("ModuleIO::write_dipole", 
-            "Invalid grid parameters: nx, ny, nz, nxyz, or nplane is zero");
+        ModuleBase::WARNING_QUIT("ModuleIO::write_dipole", "Invalid grid parameters: nx, ny, nz, nxyz, or nplane is zero");
     }
 
-    // Calculate electronic dipole moment
-    // P_elec = -int(r * rho(r) dr)
-    // Discretized: P_elec[i] = -sum(r_grid[i] * rho(r_grid)) * (omega / nxyz)
-    double dipole_elec[3] = {0.0, 0.0, 0.0};
-    
+    // Accumulate the electronic first moment in fractional coordinates.
+    double dipole_elec_frac[3] = {0.0, 0.0, 0.0};
+
     // Precompute inverse grid dimensions for performance
     double inv_nx = 1.0 / static_cast<double>(rhopw->nx);
     double inv_ny = 1.0 / static_cast<double>(rhopw->ny);
     double inv_nz = 1.0 / static_cast<double>(rhopw->nz);
 
-    // Loop over local grid points (parallel decomposition with OpenMP)
-    // Use reduction for thread-safe accumulation
-    #pragma omp parallel for reduction(-:dipole_elec[:3]) schedule(static)
+// Loop over local grid points (parallel decomposition with OpenMP)
+// Use reduction for thread-safe accumulation
+#pragma omp parallel for reduction(- : dipole_elec_frac[ : 3]) schedule(static)
     for (int ir = 0; ir < rhopw->nrxx; ++ir)
     {
         // Convert 1D index to 3D indices
         int i = ir / (rhopw->ny * rhopw->nplane);
         int j = ir / rhopw->nplane - i * rhopw->ny;
         int k = ir % rhopw->nplane + rhopw->startz_current;
-        
+
         // Convert to fractional coordinates: r_i = i / N_i
         // Using multiplication instead of division for better performance
         double x = static_cast<double>(i) * inv_nx;
         double y = static_cast<double>(j) * inv_ny;
         double z = static_cast<double>(k) * inv_nz;
 
-        // Accumulate: P_elec -= rho * r (negative sign from electron charge)
-        dipole_elec[0] -= rho_save[ir] * x;
-        dipole_elec[1] -= rho_save[ir] * y;
-        dipole_elec[2] -= rho_save[ir] * z;
+        // The negative sign accounts for the electron charge.
+        dipole_elec_frac[0] -= rho[ir] * x;
+        dipole_elec_frac[1] -= rho[ir] * y;
+        dipole_elec_frac[2] -= rho[ir] * z;
     }
 
     // Reduce across MPI processes to get global sum
-    Parallel_Reduce::reduce_pool(dipole_elec[0]);
-    Parallel_Reduce::reduce_pool(dipole_elec[1]);
-    Parallel_Reduce::reduce_pool(dipole_elec[2]);
+    Parallel_Reduce::reduce_pool(dipole_elec_frac[0]);
+    Parallel_Reduce::reduce_pool(dipole_elec_frac[1]);
+    Parallel_Reduce::reduce_pool(dipole_elec_frac[2]);
 
-    // Convert to Cartesian coordinates and normalize
-    // Conversion factor: lat0 / bmod[i] transforms fractional to Cartesian
-    // Volume normalization: omega / nxyz accounts for grid spacing
-    double vol_factor = ucell.omega / static_cast<double>(rhopw->nxyz);
-    for (int i = 0; i < 3; ++i)
-    {
-        dipole_elec[i] *= ucell.lat0 / bmod[i] * vol_factor;
-    }
+    // Lattice vectors are rows: r_cart = r_frac * latvec * lat0.
+    // Apply the full matrix to retain shear, rotation, and axis signs.
+    const double vol_factor = ucell.omega / static_cast<double>(rhopw->nxyz);
+    const ModuleBase::Vector3<double> elec_frac(dipole_elec_frac[0], dipole_elec_frac[1], dipole_elec_frac[2]);
+    const ModuleBase::Vector3<double> dipole_elec = elec_frac * ucell.latvec * (ucell.lat0 * vol_factor);
 
     // Output electronic dipole moment
-    print_dipole_moment(ofs_running, "Electronic dipole moment",
-                      dipole_elec[0], dipole_elec[1], dipole_elec[2]);
+    print_dipole_moment(ofs_running, "Electronic dipole moment", dipole_elec[0], dipole_elec[1], dipole_elec[2]);
 
     // Write to file: step index and three dipole components
-    ofs << std::setprecision(precision) << istep + 1 
-        << " " << dipole_elec[0] 
-        << " " << dipole_elec[1] 
-        << " " << dipole_elec[2] << std::endl;
+    ofs << std::setprecision(precision) << istep + 1 << " " << dipole_elec[0] << " " << dipole_elec[1] << " " << dipole_elec[2]
+        << std::endl;
 
     // Calculate ionic dipole moment
-    // P_ion = sum_{atom_types} sum_{atoms} (Z_v * tau)
-    // where tau is the atomic position in fractional coordinates
-    double dipole_ion[3] = {0.0};
+    // Accumulate Z_v * taud, then transform to Cartesian coordinates.
+    ModuleBase::Vector3<double> ion_frac(0.0, 0.0, 0.0);
     for (int i = 0; i < 3; ++i)
     {
         for (int it = 0; it < ucell.ntype; ++it)
@@ -161,15 +133,13 @@ void write_dipole(const UnitCell& ucell,
             {
                 sum += ucell.atoms[it].taud[ia][i];
             }
-            dipole_ion[i] += sum * ucell.atoms[it].ncpp.zv;
+            ion_frac[i] += sum * ucell.atoms[it].ncpp.zv;
         }
-        // Convert to Cartesian coordinates
-        dipole_ion[i] *= ucell.lat0 / bmod[i];
     }
+    const ModuleBase::Vector3<double> dipole_ion = ion_frac * ucell.latvec * ucell.lat0;
 
     // Output ionic dipole moment
-    print_dipole_moment(ofs_running, "Ionic dipole moment",
-                      dipole_ion[0], dipole_ion[1], dipole_ion[2]);
+    print_dipole_moment(ofs_running, "Ionic dipole moment", dipole_ion[0], dipole_ion[1], dipole_ion[2]);
 
     // Calculate total dipole moment
     // P_tot = P_elec + P_ion
@@ -180,14 +150,11 @@ void write_dipole(const UnitCell& ucell,
     }
 
     // Output total dipole moment
-    print_dipole_moment(ofs_running, "Total dipole moment",
-                      dipole[0], dipole[1], dipole[2]);
+    print_dipole_moment(ofs_running, "Total dipole moment", dipole[0], dipole[1], dipole[2]);
 
     // Calculate and output total dipole moment norm
     // |P_tot| = sqrt(P_tot_x^2 + P_tot_y^2 + P_tot_z^2)
-    double dipole_sum = sqrt(dipole[0] * dipole[0] + 
-                             dipole[1] * dipole[1] + 
-                             dipole[2] * dipole[2]);
+    double dipole_sum = sqrt(dipole[0] * dipole[0] + dipole[1] * dipole[1] + dipole[2] * dipole[2]);
     ofs_running << " Total dipole moment norm" << std::endl;
     ModuleBase::GlobalFunc::OUT(ofs_running, "|P_tot(t)|", dipole_sum);
 
@@ -198,42 +165,6 @@ void write_dipole(const UnitCell& ucell,
         ModuleBase::GlobalFunc::OUT_TIME("write_dipole", start, end);
         ofs.close();
     }
-}
-
-// Calculate the modulus of a reciprocal lattice vector
-// Input: 
-//   cell - unit cell containing reciprocal lattice G
-//   dir - direction index (0=x, 1=y, 2=z)
-// Output: 
-//   bmod - |b_dir| where b_dir is the reciprocal lattice vector
-double prepare(const UnitCell& cell, int& dir)
-{
-    double bvec[3] = {0.0};
-    
-    // Select the appropriate reciprocal lattice vector components
-    switch (dir)
-    {
-        case 0:  // x-direction
-            bvec[0] = cell.G.e11;
-            bvec[1] = cell.G.e12;
-            bvec[2] = cell.G.e13;
-            break;
-        case 1:  // y-direction
-            bvec[0] = cell.G.e21;
-            bvec[1] = cell.G.e22;
-            bvec[2] = cell.G.e23;
-            break;
-        case 2:  // z-direction
-            bvec[0] = cell.G.e31;
-            bvec[1] = cell.G.e32;
-            bvec[2] = cell.G.e33;
-            break;
-        default:
-            ModuleBase::WARNING_QUIT("ModuleIO::prepare", "Invalid direction index");
-    }
-    
-    // Calculate and return the magnitude of the reciprocal lattice vector
-    return sqrt(bvec[0] * bvec[0] + bvec[1] * bvec[1] + bvec[2] * bvec[2]);
 }
 
 } // namespace ModuleIO

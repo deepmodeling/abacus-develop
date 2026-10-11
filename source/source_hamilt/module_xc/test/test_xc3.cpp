@@ -289,6 +289,117 @@ TEST_F(XCTest_GRADCORR_HF, no_local_functional)
     }
 }
 
+// gradcorr with a libxc GGA initializes the functional once per OpenMP thread
+// and reuses it on every grid point. The references were produced by the
+// previous implementation, which initialized the functional per grid point.
+// nspin=1 reaches libxc only for stress; nspin=2 uses it for v and stress.
+class XCTest_GRADCORR_Libxc : public XCTest
+{
+    protected:
+
+        double et1 = 0;
+        double vt1 = 0;
+        ModuleBase::matrix v1;
+        std::vector<double> stress1;
+
+        double et2 = 0;
+        double vt2 = 0;
+        ModuleBase::matrix v2;
+        std::vector<double> stress2;
+
+        void SetUp()
+        {
+            const int nspin1 = 1;
+            const int nspin2 = 2;
+            const bool domag = false;
+            const bool domag_z = false;
+
+            ModulePW::PW_Basis rhopw;
+            UnitCell ucell;
+            Charge chr;
+
+            rhopw.nrxx = 5;
+            rhopw.npw = 5;
+            rhopw.nmaxgr = 5;
+            rhopw.gcar = new ModuleBase::Vector3<double> [5];
+
+            ucell.tpiba = 1;
+            ucell.magnet.lsign_ = true;
+            unitcell::cal_ux(ucell, 4);
+
+            chr.rho = new double*[2];
+            chr.rho[0] = new double[5];
+            chr.rho[1] = new double[5];
+            chr.rhog = new std::complex<double>*[2];
+            chr.rhog[0] = new std::complex<double>[5];
+            chr.rhog[1] = new std::complex<double>[5];
+
+            chr.rho_core = new double[5];
+            chr.rhog_core = new std::complex<double>[5];
+
+            for(int i=0;i<5;i++)
+            {
+                chr.rho[0][i] = double(i);
+                chr.rho[1][i] = 0.1*double(i);
+                chr.rhog[0][i] = chr.rho[0][i];
+                chr.rhog[1][i] = chr.rho[1][i];
+                chr.rho_core[i] = 0;
+                chr.rhog_core[i] = 0;
+                rhopw.gcar[i]= 1;
+            }
+
+            v1.create(1,5);
+            v1.zero_out();
+            v2.create(2,5);
+            v2.zero_out();
+
+            XC_Functional::set_xc_type("GGA_X_PBE+GGA_C_PBE");
+
+            const int gga_grad = 0;
+            const double hybrid_alpha = 0.0;
+            const double hse_omega = 0.0;
+            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,true, nspin1,domag,domag_z,gga_grad,hybrid_alpha,hse_omega);
+
+            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,false,nspin2,domag,domag_z,gga_grad,hybrid_alpha,hse_omega);
+            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,true, nspin2,domag,domag_z,gga_grad,hybrid_alpha,hse_omega);
+        }
+};
+
+TEST_F(XCTest_GRADCORR_Libxc, gga_pbe)
+{
+    EXPECT_EQ(XC_Functional::get_func_type(), 2);
+
+    const double s1 = -0.0253603083703;
+    std::vector<double> stress1_ref = {s1,0,0,s1,s1,0,s1,s1,s1};
+    ASSERT_EQ(stress1.size(), 9);
+    for(int i=0;i<9;i++)
+    {
+        EXPECT_NEAR(stress1[i],stress1_ref[i],1.0e-10);
+    }
+
+    // the libxc spin wrapper returns the full functional, not only the
+    // gradient correction, so et2/vt2/v2 differ from the built-in PBE ones
+    const double et2_ref = -28.9783818855;
+    const double vt2_ref = -38.154198697;
+    std::vector<double> v2_ref1 = {0,-2.56088553194,-3.21933929441,-3.67877304186,-4.04360433532};
+    std::vector<double> v2_ref2 = {0,-1.39427647251,-1.73902789949,-1.97505893723,-2.16036800258};
+    EXPECT_NEAR(et2,et2_ref,1.0e-8);
+    EXPECT_NEAR(vt2,vt2_ref,1.0e-8);
+    for(int i=0;i<5;i++)
+    {
+        EXPECT_NEAR(v2(0,i),v2_ref1[i],1.0e-8);
+        EXPECT_NEAR(v2(1,i),v2_ref2[i],1.0e-8);
+    }
+
+    const double s2 = -0.0280738149619;
+    std::vector<double> stress2_ref = {s2,0,0,s2,s2,0,s2,s2,s2};
+    ASSERT_EQ(stress2.size(), 9);
+    for(int i=0;i<9;i++)
+    {
+        EXPECT_NEAR(stress2[i],stress2_ref[i],1.0e-10);
+    }
+}
+
 class XCTest_GRADWFC : public XCTest
 {
     protected:

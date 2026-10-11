@@ -325,3 +325,68 @@ TEST_F(PrintCellTest, PrintSTRU_with_force)
     ifs.close();
     remove(fn.c_str());
 }
+
+TEST_F(PrintCellTest, PrintCell)
+{
+    UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
+    ucell = utp.SetUcellInfo();
+    std::ofstream ofs;
+    ofs.open("print_cell_test.log");
+    unitcell::print_cell(*ucell, ofs);
+    ofs.close();
+    std::ifstream ifs;
+    ifs.open("print_cell_test.log");
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(str, testing::HasSubstr("latName = bcc"));
+    EXPECT_THAT(str, testing::HasSubstr("ntype = 2"));
+    EXPECT_THAT(str, testing::HasSubstr("nat = 3"));
+    EXPECT_THAT(str, testing::HasSubstr("GGT :"));
+    EXPECT_THAT(str, testing::HasSubstr("omega = 6748.33"));
+    remove("print_cell_test.log");
+}
+TEST_F(PrintCellTest, PrintTauDirect)
+{
+    UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
+    ucell = utp.SetUcellInfo();
+    EXPECT_EQ(ucell->Coordinate, "Direct");
+
+    // open a file
+    std::ofstream ofs("print_tau_direct");
+    unitcell::print_tau(ucell->atoms,ucell->Coordinate,ucell->ntype,ucell->lat0,ofs);
+    ofs.close();
+ 
+    // readin the data
+    std::ifstream ifs;
+    ifs.open("print_tau_direct");
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(str, testing::HasSubstr("DIRECT COORDINATES"));
+    EXPECT_THAT(str, testing::HasSubstr("    C     0.100000000000     0.100000000000     0.100000000000  0.0000"));
+    EXPECT_THAT(str, testing::HasSubstr("    H     0.150000000000     0.150000000000     0.150000000000  0.0000")); 
+    ifs.close();
+
+    remove("print_tau_direct");
+}
+
+TEST_F(PrintCellTest, PrintTauCartesian)
+{
+    UcellTestPrepare utp = UcellTestLib["C1H2-Cartesian"];
+    ucell = utp.SetUcellInfo();
+    EXPECT_EQ(ucell->Coordinate, "Cartesian");
+
+    // open a file
+    std::ofstream ofs("print_tau_Cartesian");
+    unitcell::print_tau(ucell->atoms,ucell->Coordinate,ucell->ntype,ucell->lat0,ofs);
+    ofs.close();
+
+    // readin the data
+    std::ifstream ifs;
+    ifs.open("print_tau_Cartesian");
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(str, testing::HasSubstr("CARTESIAN COORDINATES"));
+    EXPECT_THAT(str, testing::HasSubstr("    C     1.000000000000     1.000000000000     1.000000000000  0.0000"));
+    EXPECT_THAT(str, testing::HasSubstr("    H     1.500000000000     1.500000000000     1.500000000000  0.0000"));
+    ifs.close();
+
+    // remove the file
+    remove("print_tau_Cartesian");
+}

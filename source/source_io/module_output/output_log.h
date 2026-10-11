@@ -9,6 +9,11 @@
 
 class MDCell;
 
+namespace elecstate
+{
+struct Efermi;
+}
+
 namespace ModuleIO
 {
 
@@ -16,19 +21,19 @@ namespace ModuleIO
 /// @param convergence if is convergence
 /// @param energy the total energy in Ry
 /// @param ofs_running the output stream
-void output_convergence_after_scf(const bool&convergence, double& energy, std::ofstream& ofs_running = GlobalV::ofs_running);
+void output_convergence_after_scf(const bool&convergence, double& energy, std::ofstream& ofs_running);
 
 /// @brief output after relaxation
 /// @param conv_ion if is convergence for ions
 /// @param conv_esolver if is convergence for electrons
 /// @param ofs_running the output stream
-void output_after_relax(bool conv_ion, bool conv_esolver, std::ofstream& ofs_running = GlobalV::ofs_running);
+void output_after_relax(bool conv_ion, bool conv_esolver, std::ofstream& ofs_running);
 
 /// @brief output the fermi energy
 /// @param convergence if is convergence
-/// @param efermi
+/// @param eferm the fermi energy structure (supports single and two fermi energies)
 /// @param ofs_running the output stream
-void output_efermi(const bool &convergence, double& efermi, std::ofstream& ofs_running = GlobalV::ofs_running);
+void output_efermi(const bool &convergence, const elecstate::Efermi& eferm, std::ofstream& ofs_running);
 
 /// @brief calculate and output the vacuum level
 /// We first determine the vacuum direction, then get the vacuum position based on the minimum of charge density,
@@ -48,7 +53,7 @@ void output_vacuum_level(const UnitCell* ucell,
                          const int& nrxx,
                          const int& nplane,
                          const int& startz_current,
-                         std::ofstream& ofs_running = GlobalV::ofs_running);
+                         std::ofstream& ofs_running);
 
 /// @brief output atomic forces
 /// @param ofs the output stream
