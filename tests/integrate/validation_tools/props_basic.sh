@@ -101,6 +101,14 @@ if ! test -z "$imp_sol" && [ $imp_sol == 1 ]; then
 	echo "esolcavref $esol_cav" >>$props_result_file
 fi
 
+#--------------------------------------------
+# vacuum point-countercharge correction
+#--------------------------------------------
+if [[ "$assume_isolated" == "pcc_0d" || "$assume_isolated" == "pcc_2d" ]]; then
+	epcc=$(grep E_pcc "$running_path" | tail -1 | awk '{print $3}')
+	echo "epccref $epcc" >>$props_result_file
+fi
+
 }
 
 run_basic_props_post_deepks(){

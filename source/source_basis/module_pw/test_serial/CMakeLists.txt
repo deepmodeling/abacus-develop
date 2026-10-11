@@ -12,6 +12,7 @@ add_library(
     ../../../source_base/module_fft/fft_bundle.cpp
     ../../../source_base/module_fft/fft_cpu.cpp
     ../pw_basis.cpp
+    ../pw_grid_geometry.cpp
     ../pw_basis_k.cpp
     ../pw_basis_sup.cpp
     ../pw_distributeg.cpp
@@ -21,6 +22,12 @@ add_library(
     ../pw_init.cpp
     ../pw_transform.cpp
     ../pw_transform_k.cpp
+)
+
+AddTest(
+  TARGET MODULE_PW_grid_geometry
+  LIBS parameter planewave_serial device base
+  SOURCES test_pw_grid_geometry.cpp
 )
 
 AddTest(
