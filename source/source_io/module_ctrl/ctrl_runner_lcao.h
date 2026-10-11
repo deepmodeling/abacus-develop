@@ -10,6 +10,8 @@
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251018
 #include "source_lcao/allocate_dm.h" // for density matrix, mohan add 20251103
 
+#include <fstream>
+
 namespace ModuleIO
 {
 
@@ -33,7 +35,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 		ModuleBase::matrix &vloc,     // local pseudopotential 
 		Exx_NAO<TK> &exx_nao,
 		const Exx_Info& exx_info,
-		surchem &solvent);             // solvent model
+		surchem &solvent,             // solvent model
+		std::ofstream& ofs_running);
 
 }
 

@@ -6,6 +6,7 @@
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/input_parameter.h"
+#include "source_cell/unitcell.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 
 #include <algorithm>
@@ -184,19 +185,31 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     {
         const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);
         const auto& Rs = RI_Util::get_Born_von_Karmen_cells(period);
-        symrot.find_irreducible_sector(ucell.symm,
-                                       ucell.atoms,
-                                       ucell.st,
-                                       Rs,
-                                       period,
-                                       ucell.lat,
-                                       this->runtime.global_out_dir);
+        symrot.find_irred_sector(ucell.symm,
+                                 ucell.atoms,
+                                 ucell.nat,
+                                 ucell.ntype,
+                                 ucell.iat2it,
+                                 ucell.iat2ia,
+                                 Rs,
+                                 period,
+                                 ucell.lat,
+                                 this->runtime.global_out_dir);
         // set Lmax of the rotation matrices to max(l_ao, l_abf), to support rotation under ABF
         // NOTE: Using Exx_Abfs::Construct_Orbs::get_Lmax() to compute Lmax from the actual ABFs
         // instead of relying on exx_cut_coulomb->abfs_Lmax() (not yet initialized) or
         // this->info.abfs_Lmax (defaults to 0). This ensures correct Lmax for symmetry rotation.
         symrot.set_abfs_Lmax(Exx_Abfs::Construct_Orbs::get_Lmax(abfs_for_lmax));
-        symrot.cal_Ms(kv, ucell, parav, this->runtime.input.nspin);
+        symrot.cal_Ms(kv,
+                      ucell.symm,
+                      ucell.atoms,
+                      ucell.latvec,
+                      ucell.lmax,
+                      ucell.nat,
+                      ucell.iat2it,
+                      ucell.iat2ia,
+                      parav,
+                      this->runtime.input.nspin);
         // output Ts (symrot_R.txt) and Ms (symrot_k.txt)
         ModuleSymmetry::print_symrot_info_R(symrot, ucell.symm, ucell.lmax, Rs);
         ModuleSymmetry::print_symrot_info_k(symrot, kv, ucell);

@@ -141,9 +141,13 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         {
             const std::array<int, 3> period{ this->kv_->nmp[0], this->kv_->nmp[1], this->kv_->nmp[2] };
             // for return_lattice to calculate Ms
-            this->symrot_.find_irreducible_sector(this->ucell->symm, this->ucell->atoms, this->ucell->st,
+            this->symrot_.find_irred_sector(this->ucell->symm, this->ucell->atoms,
+                this->ucell->nat, this->ucell->ntype, this->ucell->iat2it, this->ucell->iat2ia,
                 ModuleSymmetry::Symmetry_rotation_k::get_bvk_cells(period), period, this->ucell->lat);
-            this->symrot_.cal_Ms(*this->kv_, *this->ucell, *pv, this->nspin);
+            this->symrot_.cal_Ms(*this->kv_, this->ucell->symm, this->ucell->atoms,
+                this->ucell->latvec, this->ucell->lmax,
+                this->ucell->nat, this->ucell->iat2it, this->ucell->iat2ia,
+                *pv, this->nspin);
             this->symrot_built_ = true;
         }
         const int nspin0 = (this->nspin == 2) ? 2 : 1;

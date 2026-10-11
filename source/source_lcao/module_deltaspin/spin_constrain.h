@@ -165,7 +165,7 @@ public:
    * @details Uses the DeltaSpin operator to compute magnetic moments from the density
    * matrix. For nspin=2, extracts only the z-component. For nspin=4, extracts
    * all three components from the interleaved 4-component spinor density matrix.
-   * The moments are stored in state_.Mi_ (indexed by global atom index iat).
+   * The moments are stored in ScState (indexed by global atom index iat).
    *
    * @param step Current SCF iteration number (for logging)
    * @param print Whether to print moments to ofs_running
@@ -401,7 +401,7 @@ public:
     /// get sc_drop_thr
     double get_sc_drop_thr() const { return state_.get_sc_drop_thr(); }
     /// get computed magnetic moments Mi per atom
-    const std::vector<ModuleBase::Vector3<double>>& get_Mi() const { return state_.get_Mi(); }
+    const std::vector<ModuleBase::Vector3<double>>& get_mi() const { return state_.get_mi(); }
     /// get human-readable atom labels ("Fe_0", "Fe_1", ...) for table printing
     const std::vector<std::string>& get_atomLabels() const { return state_.get_atomLabels(); }
     /// @brief set orbital parallel info

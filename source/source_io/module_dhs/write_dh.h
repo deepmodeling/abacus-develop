@@ -11,6 +11,7 @@
 
 #include <array>
 #include <complex>
+#include <fstream>
 #include <vector>
 
 ///for lack of make_unique in c++11 
@@ -51,6 +52,7 @@ struct WriteDHParams
     // terms: V^H needs the total density (sum over spins), V^XC the spin-resolved densities.
     std::vector<const hamilt::HContainer<double>*> dmR;
     const Charge* chg = nullptr; // ground-state charge for XC Hellmann-Feynman (FDM)
+    std::ofstream* ofs_running = nullptr; // running log for the "Write ... to file" messages
 };
 
 // Returns 0-based atom indices to output (converted from the 1-based user-facing values stored at param[2+]); 
@@ -74,6 +76,7 @@ void write_dh_perI(WriteDHParams& params,
     const std::string& rprefix,
     const std::string& kprefix,
     const std::string& label,
+    const std::string& term_name,
     std::array<std::vector<hamilt::HContainer<double>*>, 3>& g,
     const std::vector<int>& atom_filter = {});
 

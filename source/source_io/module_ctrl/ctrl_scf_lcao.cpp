@@ -9,6 +9,7 @@
 #include "source_lcao/hamilt_lcao.h"      // use hamilt::HamiltLCAO<TK, TR>
 
 #include <complex>
+#include <fstream>
 
 // functions
 #include "../module_unk/berryphase.h"                          // use berryphase
@@ -94,7 +95,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              const Exx_Info& exx_info,
                              const bool conv_esolver,
                              const bool scf_nmax_flag,
-                             const int istep)
+                             const int istep,
+                             std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_lcao");
     ModuleBase::timer::start("ModuleIO", "ctrl_scf_lcao");
@@ -167,7 +169,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                  PARAM.globalv.two_fermi,
                                  inp.bndpar,
                                  PARAM.globalv.global_out_dir,
-                                 GlobalV::ofs_running);
+                                 ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -178,7 +180,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const int precision = inp.out_dmr[1];
 
         ModuleIO::write_dmr(dm->get_dmr_vec(), &ucell, precision, pv, out_app_flag, 
-			ucell.get_iat2iwt(), ucell.nat, istep);
+			ucell.get_iat2iwt(), ucell.nat, istep, ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -193,7 +195,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         }
         const int precision = inp.out_dmk[1];
 
-        ModuleIO::write_dmk(dm->get_dmk_vec(), kv, precision, efermis, &(ucell), pv, global_out_dir, istep);
+        ModuleIO::write_dmk(dm->get_dmk_vec(), kv, precision, efermis, &(ucell), pv, global_out_dir, istep, ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -219,7 +221,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                             PARAM.globalv.nlocal,
                             PARAM.inp.ks_solver,
                             GlobalV::DRANK,
-                            GlobalV::ofs_running);
+                            ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -264,7 +266,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                        -1,   // -1 when called in after scf
                                        true, // no used when after scf
                                        GlobalV::MY_RANK,
-                                       GlobalV::ofs_running);
+                                       ofs_running);
 #endif
 
     //------------------------------------------------------------------
@@ -278,7 +280,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
         ModuleIO::write_hsr(hr_vec, sr, &ucell, inp.out_hsr[0], precision, pv,
                             out_app_flag, gamma_only, ucell.get_iat2iwt(), ucell.nat, istep,
-                            PARAM.globalv.global_out_dir);
+                            PARAM.globalv.global_out_dir, pelec->eferm,
+                            ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -339,7 +342,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                 gd,
                                 kv,
                                 p_ham_tk,
-                                &dftu);
+                                &dftu,
+                                ofs_running);
 
     //------------------------------------------------------------------
     //! 7c) Output atomic dH components (dT/dτ, dV^NL/dτ, dV^L/dτ, dV^H/dτ, dV^XC/dτ), only for nspin =1, 2 now
@@ -396,6 +400,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         dh_params.istep = istep;
         dh_params.gamma_only = gamma_only;
         dh_params.append = out_app_flag;
+        dh_params.ofs_running = &ofs_running;
         if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
         {
             // per-spin DM (1-indexed): nspin=1 -> {spin0}, nspin=2 -> {spin-up, spin-down}.
@@ -452,6 +457,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         h_params.global_matrix_dir = PARAM.globalv.global_matrix_dir;
         h_params.ks_solver = PARAM.inp.ks_solver;
         h_params.drank = GlobalV::DRANK;
+        h_params.ofs_running = &ofs_running;
         if (inp.out_mat_h_t[0])
         {
             ModuleIO::write_h_t(h_params);
@@ -526,6 +532,11 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                pv,
                                GlobalV::DRANK,
                                PARAM.inp.ks_solver);
+
+            if (GlobalV::DRANK == 0)
+            {
+                ofs_running << " Write T(k) matrix in NAO basis to file: " << t_fn << std::endl;
+            }
         }
 
         delete ekinetic;
@@ -545,7 +556,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                           PARAM.globalv.search_pbc,
                                                           PARAM.inp.out_level,
                                                           PARAM.globalv.gamma_only_local,
-                                                          &GlobalV::ofs_running,
+                                                          &ofs_running,
                                                           GlobalV::MY_RANK);
         mylcalculator.calculate(inp.suffix, global_out_dir, ucell, inp.out_mat_l[1], GlobalV::MY_RANK, istep_in);
     }
@@ -574,8 +585,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         sc.cal_mi_lcao(istep);
-        spinconstrain::print_Mi(sc, GlobalV::ofs_running);
-        spinconstrain::print_Mag_Force(sc, GlobalV::ofs_running);
+        spinconstrain::print_Mi(sc, ofs_running);
+        spinconstrain::print_Mag_Force(sc, ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -724,7 +735,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                        inp.orbital_dir,
                        &ucell,
                        kv.kvec_d,
-                       GlobalV::ofs_running,
+                       ofs_running,
                        GlobalV::MY_RANK,
                        GlobalV::NPROC);
         tqo.calculate();
@@ -794,7 +805,8 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
     const Exx_Info& exx_info,
     const bool conv_esolver,
     const bool scf_nmax_flag,
-    const int istep);
+    const int istep,
+    std::ofstream& ofs_running);
 
 // For multiple k-points
 template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
@@ -823,7 +835,8 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
     const Exx_Info& exx_info,
     const bool conv_esolver,
     const bool scf_nmax_flag,
-    const int istep);
+    const int istep,
+    std::ofstream& ofs_running);
 
 template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>>(
     UnitCell& ucell,
@@ -851,4 +864,5 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
     const Exx_Info& exx_info,
     const bool conv_esolver,
     const bool scf_nmax_flag,
-    const int istep);
+    const int istep,
+    std::ofstream& ofs_running);

@@ -45,7 +45,7 @@ class Parallel_Grid
 
     private:
 
-    void z_distribution(void);
+    void z_distribution(const int kpar);
     
     void init_serial(const int& ncx_in,
                      const int& ncy_in,

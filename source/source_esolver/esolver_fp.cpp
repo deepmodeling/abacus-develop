@@ -119,7 +119,9 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         const int cal_symm_repr[2] = {this->inp_->cal_symm_repr[0], this->inp_->cal_symm_repr[1]};
-        ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running,
+        ucell.symm.analy_sys(ucell.lat, ucell.atoms,
+                             ucell.nat, ucell.ntype, ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                             GlobalV::ofs_running,
                              this->inp_->symmetry_prec, inp.nspin, this->inp_->calculation, cal_symm_repr);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
@@ -166,10 +168,10 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     ModuleBase::TITLE("ESolver_FP", "after_scf");
 
     //! Output convergence information
-    ModuleIO::output_convergence_after_scf(conv_esolver, this->pelec->f_en.etot);
+    ModuleIO::output_convergence_after_scf(conv_esolver, this->pelec->f_en.etot, GlobalV::ofs_running);
 
     //! Write Fermi energy
-    ModuleIO::output_efermi(conv_esolver, this->pelec->eferm.ef);
+    ModuleIO::output_efermi(conv_esolver, this->pelec->eferm, GlobalV::ofs_running);
 
     //! Update delta_rho for charge extrapolation
     const module_charge::AtomicRhoCfg atomic_rho_cfg_after{
@@ -182,7 +184,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 
     //! print out charge density, potential, elf, etc.
 	ModuleIO::ctrl_output_fp(ucell, *this->inp_, this->pelec, this->pw_big, this->pw_rhod, 
-			this->chr, this->solvent, this->Pgrid, istep); 
+			this->chr, this->solvent, this->Pgrid, istep, GlobalV::ofs_running); 
 
 }
 
@@ -218,7 +220,9 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         if (update_symmetry)
         {
             const int cal_symm_repr[2] = {this->inp_->cal_symm_repr[0], this->inp_->cal_symm_repr[1]};
-            ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running,
+            ucell.symm.analy_sys(ucell.lat, ucell.atoms,
+                                 ucell.nat, ucell.ntype, ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                                 GlobalV::ofs_running,
                                  this->inp_->symmetry_prec, this->inp_->nspin, this->inp_->calculation, cal_symm_repr);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
         }
@@ -268,7 +272,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
 
     //! output the initial charge density
     ModuleIO::write_chg_init(ucell, this->Pgrid, this->chr, this->pelec->eferm, istep,
-                             PARAM.globalv.global_out_dir, *this->inp_, PARAM.globalv.two_fermi);
+                             PARAM.globalv.global_out_dir, *this->inp_, PARAM.globalv.two_fermi, GlobalV::ofs_running);
 
     return;
 }

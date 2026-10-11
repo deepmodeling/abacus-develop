@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os,sys
+import sys
 
 usage = '''
 python CompareFile.py file1 file2 [accuracy] [-abs 0] [-com_type 1]
@@ -54,10 +54,13 @@ def is_two_data_diff(data1,data2,epsilon,compareAbsoluteDiff):
     return False
 
 def ReadFile(file1,lines):
-    if os.path.isfile(file1):
-        with open(file1) as f1: 
+    # Open the path directly instead of pre-checking with os.path.isfile,
+    # so that non-regular files such as /dev/fd/<n> pipes produced by bash
+    # process substitution <(...) are also accepted.
+    try:
+        with open(file1) as f1:
             for line in f1.readlines(): lines.append(line)
-    else:
+    except OSError:
         print("Error: can not find file %s" % file1)
         sys.exit(1)
 

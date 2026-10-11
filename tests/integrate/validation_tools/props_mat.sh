@@ -14,6 +14,29 @@
 #   run_mat_props()     - everything from S(k) through dH(k) term matrices
 #   run_mat_dm_props()  - out_dm block (between wfc_lcao and mulliken)
 
+# Compare an H(R) CSR file with its reference.
+# The "# spin index, E_Fermi = <x> eV" header annotation is printed with
+# setprecision(6), so the matrix body is compared at 1e-8 with the annotation
+# stripped, and the E_Fermi values are compared separately at 1e-3 eV.
+# A missing file is reported as a failure (process substitution would
+# otherwise hand CompareFile.py an empty stream and pass silently).
+compare_hr_csr(){
+	local ref=$1
+	local cal=$2
+	local strip='s/, E_Fermi = [0-9.eE+-]* eV//'
+	local pick='s/.*E_Fermi = \([0-9.eE+-]*\) eV.*/\1/p'
+	if ! test -f "$ref" || ! test -f "$cal"; then
+		echo "Error: can not find file $ref or $cal"
+		return 1
+	fi
+	python3 $COMPARE_SCRIPT <(sed "$strip" "$ref") <(sed "$strip" "$cal") 8 || return 1
+	if [ "$(sed -n "$pick" "$ref" | wc -l)" -ne "$(sed -n "$pick" "$cal" | wc -l)" ]; then
+		echo "Error: E_Fermi annotation count differs between $ref and $cal"
+		return 1
+	fi
+	python3 $COMPARE_SCRIPT <(sed -n "$pick" "$ref") <(sed -n "$pick" "$cal") 3
+}
+
 run_mat_dm1_props(){
 
 #-------------------------------
@@ -234,10 +257,10 @@ fi
 #-----------------------------------
 #echo $has_hs2
 if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
-    python3 $COMPARE_SCRIPT hrs1_nao.csr.ref OUT.autotest/hrs1_nao.csr 8
+    compare_hr_csr hrs1_nao.csr.ref OUT.autotest/hrs1_nao.csr
     echo "CompareHR_pass $?" >>$props_result_file
     if ! test -z "$nspin" && [ "$nspin" -eq 2 ]; then
-        python3 $COMPARE_SCRIPT hrs2_nao.csr.ref OUT.autotest/hrs2_nao.csr 8
+        compare_hr_csr hrs2_nao.csr.ref OUT.autotest/hrs2_nao.csr
         echo "CompareHR2_pass $?" >>$props_result_file
     fi
     python3 $COMPARE_SCRIPT sr_nao.csr.ref OUT.autotest/sr_nao.csr 8

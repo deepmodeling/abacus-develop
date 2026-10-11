@@ -844,7 +844,9 @@ TEST_F(KlistTest, IbzKpoint)
     construct_ucell(stru_lib[0]);
     ofs_running.open("tmp_klist_3");
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                   ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                   ofs_running, 1e-6, 1, "scf", cal_symm_repr);
     std::string k_file = "./support/KPT1";
     kv->set_spin_mult(1);
     kv->read_kpoints_for_testing(ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset, ofs_running, ofs_warning, my_rank);
@@ -871,7 +873,9 @@ TEST_F(KlistTest, IbzKpointIsMP)
     construct_ucell(stru_lib[0]);
     ofs_running.open("tmp_klist_4");
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                   ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                   ofs_running, 1e-6, 1, "scf", cal_symm_repr);
     std::string k_file = "./support/KPT1";
     kv->set_spin_mult(1);
     kv->read_kpoints_for_testing(ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset, ofs_running, ofs_warning, my_rank);
@@ -900,7 +904,9 @@ TEST_F(KlistTest, IbzKpointCustomWeights)
     construct_ucell(stru_lib[0]);
     ofs_running.open("tmp_klist_custom_weights");
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                   ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                   ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     // Test 1: Non-MP k-points with uniform weights (KPT4)
     {

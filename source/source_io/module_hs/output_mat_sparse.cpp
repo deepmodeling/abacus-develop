@@ -17,7 +17,8 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
                        hamilt::Hamilt<T>* p_ham,
-                       Plus_U_Base* p_dftu)
+                       Plus_U_Base* p_dftu,
+                       std::ofstream& ofs_running)
 {
     LCAO_HS_Arrays HS_Arrays; // store sparse arrays
 
@@ -52,7 +53,8 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                   two_center_bundle,
                   orb,
                   tr_filename,
-                  mat_R_options);
+                  mat_R_options,
+                  ofs_running);
     }
 
     //! generate a file containing the derivatives of the Hamiltonian matrix (in Ry/Bohr)
@@ -70,7 +72,8 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                    mat_R_options,
                    gamma_only_local,
                    npol,
-                   nlocal);
+                   nlocal,
+                   ofs_running);
     }
     //! generate a file containing the derivatives of the overlap matrix (in Ry/Bohr)
     if (options.out_mat_ds)
@@ -86,7 +89,8 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                    mat_R_options,
                    gamma_only_local,
                    npol,
-                   nlocal);
+                   nlocal,
+                   ofs_running);
     }
 
     // add by jingan for out r_R matrix 2019.8.14
@@ -106,7 +110,8 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                         calculation,
                         out_app_flag,
                         nlocal,
-                        npol);
+                        npol,
+                        ofs_running);
     }
 
     return;
@@ -122,7 +127,8 @@ template void output_mat_sparse<double>(const MatSparseOutputOptions& options,
                                         const Grid_Driver& grid,
                                         const K_Vectors& kv,
                                         hamilt::Hamilt<double>* p_ham,
-                                        Plus_U_Base* p_dftu);
+                                        Plus_U_Base* p_dftu,
+                                        std::ofstream& ofs_running);
 
 template void output_mat_sparse<std::complex<double>>(const MatSparseOutputOptions& options,
                                                       const int& istep,
@@ -134,6 +140,7 @@ template void output_mat_sparse<std::complex<double>>(const MatSparseOutputOptio
                                                       const Grid_Driver& grid,
                                                       const K_Vectors& kv,
                                                       hamilt::Hamilt<std::complex<double>>* p_ham,
-                                                      Plus_U_Base* p_dftu);
+                                                      Plus_U_Base* p_dftu,
+                                                      std::ofstream& ofs_running);
 
 } // namespace ModuleIO

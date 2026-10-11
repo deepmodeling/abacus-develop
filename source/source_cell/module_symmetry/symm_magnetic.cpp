@@ -7,7 +7,11 @@ using namespace ModuleSymmetry;
 #include <set>
 #include <vector>
 
-void Symmetry::analyze_magnetic_group(const Atom* atoms, const Statistics& st, int& nrot_out, int& nrotk_out)
+void Symmetry::analyze_magnetic_group(const Atom* atoms,
+                                      const std::vector<int>& iat2it,
+                                      const std::vector<int>& iat2ia,
+                                      const ModuleBase::IntArray& itia2iat,
+                                      int& nrot_out, int& nrotk_out)
 {
     // 1. classify atoms with different magmom
     //  (use symmetry_prec to judge if two magmoms are the same)
@@ -20,18 +24,18 @@ void Symmetry::analyze_magnetic_group(const Atom* atoms, const Statistics& st, i
             for (auto& mt : mag_type_atoms)
             {
                 const int mag_iat = *mt.begin();
-                const int mag_it = st.iat2it[mag_iat];
-                const int mag_ia = st.iat2ia[mag_iat];
+                const int mag_it = iat2it[mag_iat];
+                const int mag_ia = iat2ia[mag_iat];
                 if (it == mag_it && this->equal(atoms[it].mag[ia], atoms[mag_it].mag[mag_ia]))
                 {
-                    mt.insert(st.itia2iat(it, ia));
+                    mt.insert(itia2iat(it, ia));
                     find = true;
                     break;
                 }
             }
             if (!find)
             {
-                mag_type_atoms.push_back(std::set<int>({ st.itia2iat(it,ia) }));
+                mag_type_atoms.push_back(std::set<int>({ itia2iat(it, ia) }));
             }
         }
     }
@@ -58,7 +62,7 @@ void Symmetry::analyze_magnetic_group(const Atom* atoms, const Statistics& st, i
         {
             // this->newpos have been ordered by original structure(ntype, na), it cannot be directly used here.
             // we need to reset the calculate again the coordinate of the new structure.
-            const ModuleBase::Vector3<double> direct_tmp = atoms[st.iat2it[mag_iat]].tau[st.iat2ia[mag_iat]] * this->optlat.Inverse();
+            const ModuleBase::Vector3<double> direct_tmp = atoms[iat2it[mag_iat]].tau[iat2ia[mag_iat]] * this->optlat.Inverse();
             std::array<double, 3> direct = { direct_tmp.x, direct_tmp.y, direct_tmp.z };
             for (int i = 0; i < 3; ++i)
             {
@@ -78,7 +82,10 @@ void Symmetry::analyze_magnetic_group(const Atom* atoms, const Statistics& st, i
 
 }
 
-void Symmetry::analyze_magnetic_group_nspin4(const Atom* atoms, const Statistics& st, const ModuleBase::Matrix3& latvec)
+void Symmetry::analyze_magnetic_group_nspin4(const Atom* atoms,
+                                             const std::vector<int>& iat2it,
+                                             const std::vector<int>& iat2ia,
+                                             const ModuleBase::Matrix3& latvec)
 {
     // Restrict the space group to the unitary magnetic subgroup (nspin=4 / SOC):
     // operation g survives if it preserves the magnetic configuration as a pseudovector,
@@ -97,7 +104,7 @@ void Symmetry::analyze_magnetic_group_nspin4(const Atom* atoms, const Statistics
     bool has_moment = false;
     for (int iat = 0; iat < this->nat && !has_moment; ++iat)
     {
-        const ModuleBase::Vector3<double>& m = atoms[st.iat2it[iat]].m_loc_[st.iat2ia[iat]];
+        const ModuleBase::Vector3<double>& m = atoms[iat2it[iat]].m_loc_[iat2ia[iat]];
         if (!this->equal(m.x, 0.0) || !this->equal(m.y, 0.0) || !this->equal(m.z, 0.0)) { has_moment = true; }
     }
     std::vector<int> anti;   // operations that REVERSE the moment: Theta*g is a symmetry
@@ -109,11 +116,11 @@ void Symmetry::analyze_magnetic_group_nspin4(const Atom* atoms, const Statistics
         bool ok = true;
         for (int iat = 0; iat < this->nat && ok; ++iat)
         {
-            const ModuleBase::Vector3<double>& m = atoms[st.iat2it[iat]].m_loc_[st.iat2ia[iat]];
+            const ModuleBase::Vector3<double>& m = atoms[iat2it[iat]].m_loc_[iat2ia[iat]];
             // pseudovector-rotated moment W*m (column-vector convention: m'^i = W_ij m^j)
             const ModuleBase::Vector3<double>& mrot = W * m;
             const int jat = this->get_rotated_atom(isym, iat);
-            const ModuleBase::Vector3<double>& mj = atoms[st.iat2it[jat]].m_loc_[st.iat2ia[jat]];
+            const ModuleBase::Vector3<double>& mj = atoms[iat2it[jat]].m_loc_[iat2ia[jat]];
             if (!this->equal(mrot.x, mj.x) || !this->equal(mrot.y, mj.y) || !this->equal(mrot.z, mj.z)) { ok = false; }
         }
         if (ok)
@@ -129,10 +136,10 @@ void Symmetry::analyze_magnetic_group_nspin4(const Atom* atoms, const Statistics
             bool anti_ok = true;
             for (int iat = 0; iat < this->nat && anti_ok; ++iat)
             {
-                const ModuleBase::Vector3<double>& m = atoms[st.iat2it[iat]].m_loc_[st.iat2ia[iat]];
+                const ModuleBase::Vector3<double>& m = atoms[iat2it[iat]].m_loc_[iat2ia[iat]];
                 const ModuleBase::Vector3<double>& mrot = W * m;
                 const int jat = this->get_rotated_atom(isym, iat);
-                const ModuleBase::Vector3<double>& mj = atoms[st.iat2it[jat]].m_loc_[st.iat2ia[jat]];
+                const ModuleBase::Vector3<double>& mj = atoms[iat2it[jat]].m_loc_[iat2ia[jat]];
                 if (!this->equal(mrot.x, -mj.x) || !this->equal(mrot.y, -mj.y) || !this->equal(mrot.z, -mj.z)) { anti_ok = false; }
             }
             if (anti_ok) { anti.push_back(isym); }

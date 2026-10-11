@@ -7,6 +7,7 @@
 #define EXX_LRI_HPP
 
 #include "exx_lri.h"
+#include "source_cell/unitcell.h"
 #include "ri_2d_comm.h"
 #include "ri_util.h"
 #include "exx_lri_detail.h"
@@ -824,7 +825,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
     const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(ucell,pv);
 
     if(p_symrot)
-        { this->exx_lri.set_symmetry(true, p_symrot->get_irreducible_sector()); }
+        { this->exx_lri.set_symmetry(true, p_symrot->get_irred_sector()); }
     else
         { this->exx_lri.set_symmetry(false, {}); }
 
@@ -857,7 +858,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
             // reduce but not repeat
             auto Hs_a2D = this->exx_lri.post_2D.set_tensors_map2(this->exx_lri.Hs);
             // rotate locally without repeat
-            Hs_a2D = p_symrot->restore_HR(ucell.symm, ucell.atoms, ucell.st, 'H', Hs_a2D);
+            Hs_a2D = p_symrot->restore_HR(ucell.symm, ucell.atoms, ucell.iat2it, 'H', Hs_a2D);
             // cal energy using full Hs without repeat
             this->exx_lri.energy = this->exx_lri.post_2D.cal_energy(
                 this->exx_lri.post_2D.saves["Ds_" + suffix],
@@ -899,7 +900,7 @@ void Exx_LRI<Tdata>::cal_exx_elec_soc(
 
     // pass 2: spinor-coupled rotation of the 4 channels from the irreducible sector to the full BZ
     std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, 4> Hs_full =
-        p_symrot->restore_HR_nspin4(ucell.symm, ucell.atoms, ucell.st, 'H', Hs_irr);
+        p_symrot->restore_HR_nspin4(ucell.symm, ucell.atoms, ucell.iat2it, 'H', Hs_irr);
 
     // pass 3: per-channel energy (full Hs, no repeat), then gather the repeated full Hs for abacus
     for (int is = 0; is < 4; ++is)

@@ -26,7 +26,8 @@ void ctrl_output_fp(UnitCell& ucell,
                     Charge& chr,
                     surchem& solvent,
                     Parallel_Grid& para_grid,
-                    const int istep)
+                    const int istep,
+                    std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_fp");
     ModuleBase::timer::start("ModuleIO", "ctrl_output_fp");
@@ -80,6 +81,8 @@ void ctrl_output_fp(UnitCell& ucell,
 
             fn += spin_block + geom_block + ".cube";
 
+            const std::string desc_chg = ModuleIO::make_data_desc("charge density", "magnetization density m", is, nspin);
+
             ModuleIO::write_vdata_palgrid(para_grid,
                                           chr.rho[is],
                                           is,
@@ -91,13 +94,17 @@ void ctrl_output_fp(UnitCell& ucell,
                                           inp.out_chg[1],
                                           1,
                                           PARAM.globalv.two_fermi,
-                                          false);
+                                          false,
+                                          ofs_running,
+                                          desc_chg);
 
             if (XC_Functional::get_ked_flag())
             {
                 fn = PARAM.globalv.global_out_dir + "tau";
 
                 fn += spin_block + geom_block + ".cube";
+
+                const std::string desc_tau = ModuleIO::make_data_desc("kinetic energy density", "kinetic energy density magnetization m", is, nspin);
 
                 ModuleIO::write_vdata_palgrid(para_grid,
                                               chr.kin_r[is],
@@ -110,7 +117,9 @@ void ctrl_output_fp(UnitCell& ucell,
                                               11, // default precision
                                               1,  // default out_fermi
                                               PARAM.globalv.two_fermi,
-                                              false);
+                                              false,
+                                              ofs_running,
+                                              desc_tau);
             }
         }
     }
@@ -134,6 +143,8 @@ void ctrl_output_fp(UnitCell& ucell,
 
             fn += spin_block + geom_block + ".cube";
 
+            const std::string desc_pot = ModuleIO::make_data_desc("effective potential", "effective magnetic field b", is, nspin);
+
             ModuleIO::write_vdata_palgrid(para_grid,
                                           pelec->pot->get_eff_v(is),
                                           is,
@@ -145,7 +156,9 @@ void ctrl_output_fp(UnitCell& ucell,
                                           inp.out_pot[1], // precision
                                           0,              // out_fermi
                                           PARAM.globalv.two_fermi,
-                                          false);
+                                          false,
+                                          ofs_running,
+                                          desc_pot);
         }
     }
     else if (inp.out_pot[0] == 2 && should_output)
@@ -165,7 +178,8 @@ void ctrl_output_fp(UnitCell& ucell,
             &(ucell),
             pelec->pot->get_fixed_v(),
             solvent,
-            inp.out_pot[1]);
+            inp.out_pot[1],
+            ofs_running);
     }
 
     // 6) write ELF
@@ -181,16 +195,17 @@ void ctrl_output_fp(UnitCell& ucell,
 
         std::string out_dir = PARAM.globalv.global_out_dir;
         ModuleIO::write_elf(out_dir,
-                            istep,
-                            nspin,
-                            chr.rho,
-                            chr.kin_r,
-                            pw_rhod,
-                            para_grid,
-                            &(ucell),
-                            inp.out_elf[1],
-                            geom_block,
-                            PARAM.globalv.two_fermi);
+            istep,
+            nspin,
+            chr.rho,
+            chr.kin_r,
+            pw_rhod,
+            para_grid,
+            &(ucell),
+            inp.out_elf[1],
+            geom_block,
+            PARAM.globalv.two_fermi,
+            ofs_running);
     }
 
 #ifdef __LIBXC
@@ -215,7 +230,7 @@ void ctrl_output_fp(UnitCell& ucell,
         {
             std::stringstream ss_dipole;
             ss_dipole << global_out_dir << "dipole_s" << is + 1 << ".txt";
-            ModuleIO::write_dipole(ucell, chr.rho[is], pw_rhod, istep, ss_dipole.str(), GlobalV::ofs_running);
+            ModuleIO::write_dipole(ucell, chr.rho[is], pw_rhod, istep, ss_dipole.str(), ofs_running);
         }
     }
 

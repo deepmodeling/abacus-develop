@@ -15,8 +15,8 @@ void init_unitcell_for_ri(UnitCell& ucell)
     ucell.atoms[0].na = 1;
     ucell.atoms[0].nw = 2;
     ucell.atoms[0].stapos_wf = 0;
-    ucell.iat2it = new int[1]{0};
-    ucell.iat2ia = new int[1]{0};
+    ucell.iat2it = {0};
+    ucell.iat2ia = {0};
 }
 } // namespace
 

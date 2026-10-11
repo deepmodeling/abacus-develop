@@ -1,4 +1,11 @@
-#include "source_cell/module_symmetry/irreducible_sector.h"
+#include "source_cell/module_symmetry/irred_sec.h"
+#include "source_base/global_variable.h"
+
+#include <cassert>
+#include <cmath>
+#include <fstream>
+#include <iostream>
+
 namespace ModuleSymmetry
 {
     // Raw-index dispatch shared by the real-space sector helpers, matching the convention used
@@ -16,7 +23,7 @@ namespace ModuleSymmetry
                                    : symm.get_rotated_atom_anti(isym - symm.nrotk, iat);
     }
 
-    TC Irreducible_Sector::rotate_R(const Symmetry& symm,
+    TC Irred_Sector::rotate_R(const Symmetry& symm,
         const int isym, const int iat1, const int iat2, const TC& R, const char gauge) const
     {
         auto round2int = [symm](const double x) -> int { return x > 0 ? static_cast<int>(x + symm.epsilon) : static_cast<int>(x - symm.epsilon); };
@@ -28,25 +35,12 @@ namespace ModuleSymmetry
             : R_double * gmat + this->return_lattice_[iat2][isym] - this->return_lattice_[iat1][isym];
         return { round2int(Rrot_double.x), round2int(Rrot_double.y), round2int(Rrot_double.z) };
     }
-    TapR Irreducible_Sector::rotate_apR_by_formula(const Symmetry& symm,
+    TapR Irred_Sector::rotate_apR_by_formula(const Symmetry& symm,
         const int isym, const TapR& apR, const char gauge) const
     {
         const Tap& aprot = { sector_rotated_atom(symm, isym, apR.first.first),
                              sector_rotated_atom(symm, isym, apR.first.second) };
         return { aprot, this->rotate_R(symm, isym, apR.first.first, apR.first.second, apR.second, gauge) };
-    }
-
-    TCdouble Irreducible_Sector::get_aRb_direct(const Atom* atoms, const Statistics& st,
-        const int iat1, const int iat2, const TCdouble& R, const char gauge)const
-    {
-        return TCdouble(atoms[st.iat2it[iat1]].taud[st.iat2ia[iat1]] - atoms[st.iat2it[iat2]].taud[st.iat2ia[iat2]]) + (gauge == 'L' ? R : TCdouble(-R));
-    }
-
-    TCdouble Irreducible_Sector::get_aRb_direct(const Atom* atoms, const Statistics& st,
-        const int iat1, const int iat2, const TC& R, const char gauge) const
-    {
-        const TCdouble R_double(static_cast<double>(R[0]), static_cast<double>(R[1]), static_cast<double>(R[2]));
-        return get_aRb_direct(atoms, st, iat1, iat2, R_double);
     }
 
     inline void output_return_lattice(const std::vector<std::vector<TCdouble>>& return_lattice)
@@ -64,7 +58,7 @@ namespace ModuleSymmetry
     // Perfoming {R|t} to atom position r in the R=0 lattice, we get Rr+t, which may get out of R=0 lattice,
     // whose image in R=0 lattice is r'=Rr+t-O. This function is to get O for each atom and each symmetry operation.
     // the range of direct position is [-0.5, 0.5).
-    TCdouble Irreducible_Sector::get_return_lattice(const Symmetry& symm,
+    TCdouble Irred_Sector::get_return_lattice(const Symmetry& symm,
         const ModuleBase::Matrix3& gmatd, const TCdouble gtransd,
         const TCdouble& posd_a1, const TCdouble& posd_a2)const
     {
@@ -84,27 +78,28 @@ namespace ModuleSymmetry
         return TCdouble(std::round(return_lattice_double.x), std::round(return_lattice_double.y), std::round(return_lattice_double.z));
     }
 
-    void Irreducible_Sector::cal_return_lattice_all(const Symmetry& symm, const Atom* atoms, const Statistics& st)
+    void Irred_Sector::cal_return_lattice_all(const Symmetry& symm, const Atom* atoms,
+        const int nat, const std::vector<int>& iat2it, const std::vector<int>& iat2ia)
     {
-        ModuleBase::TITLE("Symmetry_rotation", "cal_return_lattice_all");
+        ModuleBase::TITLE("Irred_Sector", "cal_return_lattice_all");
         // Columns [0, nrotk) are the unitary operations; columns [nrotk, nrotk+nrotk_anti) are the
         // spatial parts of the antiunitary elements Theta*g of the Shubnikov group (nspin=4 magnetic),
         // so that Symmetry_rotation can address both with one raw index.
-        this->return_lattice_.resize(st.nat, std::vector<TCdouble>(symm.nrotk + symm.nrotk_anti));
-        for (int iat1 = 0;iat1 < st.nat;++iat1)
+        this->return_lattice_.resize(nat, std::vector<TCdouble>(symm.nrotk + symm.nrotk_anti));
+        for (int iat1 = 0;iat1 < nat;++iat1)
         {
-            int it = st.iat2it[iat1];
-            int ia1 = st.iat2ia[iat1];
+            int it = iat2it[iat1];
+            int ia1 = iat2ia[iat1];
             for (int isym = 0;isym < symm.nrotk;++isym)
             {
                 int iat2 = symm.get_rotated_atom(isym, iat1);
-                int ia2 = st.iat2ia[iat2];
+                int ia2 = iat2ia[iat2];
                 this->return_lattice_[iat1][isym] = get_return_lattice(symm, symm.gmatrix[isym], symm.gtrans[isym], atoms[it].taud[ia1], atoms[it].taud[ia2]);
             }
             for (int j = 0;j < symm.nrotk_anti;++j)
             {
                 int iat2 = symm.get_rotated_atom_anti(j, iat1);
-                int ia2 = st.iat2ia[iat2];
+                int ia2 = iat2ia[iat2];
                 this->return_lattice_[iat1][symm.nrotk + j] = get_return_lattice(symm, symm.gmatrix_anti[j], symm.gtrans_anti[j], atoms[it].taud[ia1], atoms[it].taud[ia2]);
             }
         }
@@ -112,7 +107,7 @@ namespace ModuleSymmetry
         // output_return_lattice(this->return_lattice_);
     }
 
-    void Irreducible_Sector::output_full_map_to_irreducible_sector(const int nat)
+    void Irred_Sector::output_full_map_to_irreducible_sector(const int nat)
     {
         std::cout << "Final map to irreducible sector: " << std::endl;
         for (auto& apR_isym_irapR : this->full_map_to_irreducible_sector_)
@@ -127,7 +122,7 @@ namespace ModuleSymmetry
         }
     }
 
-    void Irreducible_Sector::output_sector_star()
+    void Irred_Sector::output_sector_star()
     {
         std::cout << "Found " << this->sector_stars_.size() << " irreducible sector stars:" << std::endl;
         // for (auto& irs_star : this->sector_stars_)
@@ -150,7 +145,7 @@ namespace ModuleSymmetry
             std::cout << std::endl;
         }
     }
-    void Irreducible_Sector::write_irreducible_sector(const std::string& output_dir)
+    void Irred_Sector::write_irreducible_sector(const std::string& output_dir)
     {
         if(GlobalV::MY_RANK == 0 && !output_dir.empty())
         {
@@ -164,20 +159,23 @@ namespace ModuleSymmetry
         }
     }
 
-    void Irreducible_Sector::find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st, const std::vector<TC>& Rs, const TC& period, const Lattice& lat, const std::string& output_dir)
+    void Irred_Sector::find_irred_sector(const Symmetry& symm, const Atom* atoms,
+        const int nat, const int ntype,
+        const std::vector<int>& iat2it, const std::vector<int>& iat2ia,
+        const std::vector<TC>& Rs, const TC& period, const Lattice& lat, const std::string& output_dir)
     {
         this->full_map_to_irreducible_sector_.clear();
         this->irreducible_sector_.clear();
         this->sector_stars_.clear();
 
-        if (this->return_lattice_.empty()) this->cal_return_lattice_all(symm, atoms, st);
+        if (this->return_lattice_.empty()) this->cal_return_lattice_all(symm, atoms, nat, iat2it, iat2ia);
         // if (this->atompair_stars_.empty()) this->find_irreducible_atom_pairs(symm);
 
         // contruct {atom pair, R} set
         // constider different number of Rs for different atom pairs later.
         std::map<Tap, std::set<TC, len_less_func>> apR_all;
-        for (int iat1 = 0;iat1 < st.nat; iat1++)
-            for (int iat2 = 0; iat2 < st.nat; iat2++)
+        for (int iat1 = 0;iat1 < nat; iat1++)
+            for (int iat2 = 0; iat2 < nat; iat2++)
                 for (auto& R : Rs)
                     apR_all[{iat1, iat2}].insert(R);
 
@@ -200,7 +198,7 @@ namespace ModuleSymmetry
 
         // get symmetry of BvK supercell
         if (this->isymbvk_to_isym_.empty())
-            this->gen_symmetry_BvK(symm, atoms, lat, st, period);
+            this->gen_symm_bvk(symm, atoms, lat, nat, ntype, period);
         assert(!this->isymbvk_to_isym_.empty());
         // std::vector<bool> in_2d_plain;
         // const bool judge_2d = (symm.real_brav == 4);
@@ -255,7 +253,7 @@ namespace ModuleSymmetry
         for (auto& sector : this->sector_stars_)
             total_apR_in_star += sector.second.size();
         assert(total_apR_in_star == this->full_map_to_irreducible_sector_.size());
-        // this->output_full_map_to_irreducible_sector(st.nat);
+        // this->output_full_map_to_irreducible_sector(nat);
         // this->output_sector_star();
         this->write_irreducible_sector(output_dir);
     }

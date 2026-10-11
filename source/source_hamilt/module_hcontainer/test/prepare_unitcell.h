@@ -223,14 +223,10 @@ public:
         ucell.namax = namax;
         // cal_index
         assert(nlocal > 0);
-        delete[] ucell.iwt2iat;
-        delete[] ucell.iwt2iw;
-        delete[] ucell.iat2it;
-        delete[] ucell.iat2ia;
-        ucell.iwt2iat = new int[nlocal];
-        ucell.iwt2iw = new int[nlocal];
-        ucell.iat2it = new int[ucell.nat];
-        ucell.iat2ia = new int[ucell.nat]; // set_iat2itia
+        ucell.iwt2iat.resize(nlocal);
+        ucell.iwt2iw.resize(nlocal);
+        ucell.iat2it.resize(ucell.nat);
+        ucell.iat2ia.resize(ucell.nat); // set_iat2itia
         ucell.itia2iat.create(ucell.ntype, ucell.namax);
         ucell.set_iat2iwt(1);
         int iat = 0;

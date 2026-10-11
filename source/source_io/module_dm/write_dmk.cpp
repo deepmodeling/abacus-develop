@@ -1,4 +1,5 @@
 #include "source_io/module_dm/write_dmk.h"
+#include "source_io/module_output/spin_tag.h"
 
 #include "source_base/parallel_common.h"
 #include "source_base/module_external/scalapack_connector.h"
@@ -186,7 +187,8 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
         const UnitCell* ucell,
         const Parallel_2D& pv,
         const std::string& dmk_dir,
-        const int istep)
+        const int istep,
+        std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_dmk");
     ModuleBase::timer::start("ModuleIO", "write_dmk");
@@ -250,7 +252,8 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                 }
                 else
                 {
-                    //std::cout << " Write the density matrix to file " << fn << std::endl;
+                    const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
+                    ofs_running << " Write DM(k)" << spin_tag << " matrix in NAO basis to file: " << fn << std::endl;
                 }
 
 
@@ -343,7 +346,8 @@ template void ModuleIO::write_dmk<double>(const std::vector<std::vector<double>>
         const UnitCell* ucell,
         const Parallel_2D& pv,
         const std::string& dmk_dir,
-        const int istep);
+        const int istep,
+        std::ofstream& ofs_running);
 
 template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dmk,
         const K_Vectors &kv,
@@ -352,5 +356,6 @@ template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::v
         const UnitCell* ucell,
         const Parallel_2D& pv,
         const std::string& dmk_dir,
-        const int istep);
+        const int istep,
+        std::ofstream& ofs_running);
 

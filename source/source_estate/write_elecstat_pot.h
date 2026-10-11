@@ -5,6 +5,7 @@
 #include "source_estate/module_charge/charge.h"
 #include "source_hamilt/module_surchem/surchem.h"
 
+#include <fstream>
 #include <string>
 
 namespace ModuleIO
@@ -33,7 +34,8 @@ void write_elecstat_pot(
     const UnitCell* ucell_,
     const double* v_eff_fixed,
     const surchem& solvent,
-    const int precision);
+    const int precision,
+    std::ofstream& ofs_running);
 
 } // namespace ModuleIO
 

@@ -496,8 +496,8 @@ void ExcitonPlotter<T>::plot_average_density(const int istate, const std::string
 
     for (int is = 0; is < this->nspin_x; ++is)
     {
-        const std::string filename = this->output_dir_ + "Exciton_avg_" + type + "_state" + std::to_string(istate)
-                                     + "_spin" + std::to_string(is) + ".cube";
+        const std::string filename = this->output_dir_ + "exc_" + type + "_st" + std::to_string(istate + 1)
+                                     + "_s" + std::to_string(is + 1) + ".cube";
         ModuleIO::write_vdata_palgrid(this->Pgrid,
                                       rho_result[is],
                                       is,
@@ -509,7 +509,9 @@ void ExcitonPlotter<T>::plot_average_density(const int istate, const std::string
                                       8,
                                       0,
                                       false, /*two_fermi*/
-                                      false);
+                                      false,
+                                      GlobalV::ofs_running,
+                                      "exciton density");
     }
     LR_Util::_deallocate_2order_nested_ptr(rho_result, this->nspin_x);
 }
@@ -586,7 +588,7 @@ void ExcitonPlotter<T>::plot_average_slice(const int istate,
     }
 
     const std::string filename
-        = this->output_dir_ + "Exciton_avg_" + type + "_slice_state" + std::to_string(istate) + ".dat";
+        = this->output_dir_ + "exc_" + type + "_slice_st" + std::to_string(istate + 1) + ".dat";
     write_slice_data(this->ucell,
                      geom,
                      density,
@@ -791,7 +793,7 @@ void ExcitonPlotter<T>::plot_cond_slice(const int istate,
     std::cout << "Bloch-sum evaluation complete (cached " << cell_res << "x" << cell_res << " home-cell positions)."
               << std::endl;
     const std::string filename
-        = this->output_dir_ + "Exciton_cond_" + type + "_slice_state" + std::to_string(istate) + ".dat";
+        = this->output_dir_ + "exc_cond_" + type + "_slice_st" + std::to_string(istate + 1) + ".dat";
     write_slice_data(this->ucell,
                      geom,
                      density,

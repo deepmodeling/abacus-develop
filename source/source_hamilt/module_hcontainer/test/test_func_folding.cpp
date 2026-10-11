@@ -25,7 +25,7 @@ class FoldingTest : public ::testing::Test
         ucell.ntype = 1;
         ucell.nat = test_size;
         ucell.atoms = new Atom[ucell.ntype];
-        ucell.iat2it = new int[ucell.nat];
+        ucell.iat2it.resize(ucell.nat);
         for (int iat = 0; iat < ucell.nat; iat++)
         {
             ucell.iat2it[iat] = 0;
