@@ -1,0 +1,15 @@
+Check reader-v1 RPA producer output, including shrink LRI, Coulomb, and GW
+preprocessor input (`KPT.info`, `vxc.txt`, and text LCAO wavefunctions),
+for a compact two-atom H `1x1x2` solid.
+
+For symmetry-reduced grids, reader-v1 appends the actual full-to-SCF mapping
+to bz_sample.txt and writes spatial operations in stru_out.txt. These fixed
+references use the full grid; temporary variants check symmetry 0 and 1.
+The established `velocity_matrix.txt` protocol name is retained
+for both versions, including its exception to the new 15-character naming
+preference.
+
+The serial run compares stable producer references. The two-rank test checks
+rank-owned output and compares KS binary assembly with independent text
+wavefunctions from the same run, avoiding gauge-dependent historical data.
+It also injects root-only and non-root file-open failures to check MPI abort.

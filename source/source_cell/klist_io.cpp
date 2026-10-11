@@ -271,6 +271,11 @@ void pack_kpts(const std::vector<int>& isk,
         kvec_d_aux[3 * ik] = kvec_d[ik].x;
         kvec_d_aux[3 * ik + 1] = kvec_d[ik].y;
         kvec_d_aux[3 * ik + 2] = kvec_d[ik].z;
+    }
+    // The unreduced mesh is global and can be larger than the SCF list.
+    const std::size_t full_count = std::min(kvec_c_full.size(), kvec_c_full_aux.size() / 3);
+    for (std::size_t ik = 0; ik < full_count; ++ik)
+    {
         kvec_c_full_aux[3 * ik] = kvec_c_full[ik].x;
         kvec_c_full_aux[3 * ik + 1] = kvec_c_full[ik].y;
         kvec_c_full_aux[3 * ik + 2] = kvec_c_full[ik].z;
@@ -300,11 +305,15 @@ void unpack_kpts(const std::vector<int>& isk_aux,
         kvec_d[i].x = kvec_d_aux[k_index * 3];
         kvec_d[i].y = kvec_d_aux[k_index * 3 + 1];
         kvec_d[i].z = kvec_d_aux[k_index * 3 + 2];
-        kvec_c_full[i].x = kvec_c_full_aux[k_index * 3];
-        kvec_c_full[i].y = kvec_c_full_aux[k_index * 3 + 1];
-        kvec_c_full[i].z = kvec_c_full_aux[k_index * 3 + 2];
         wk[i] = wk_aux[k_index];
         isk[i] = isk_aux[k_index];
+    }
+    kvec_c_full.resize(kvec_c_full_aux.size() / 3);
+    for (std::size_t ik = 0; ik < kvec_c_full.size(); ++ik)
+    {
+        kvec_c_full[ik].x = kvec_c_full_aux[3 * ik];
+        kvec_c_full[ik].y = kvec_c_full_aux[3 * ik + 1];
+        kvec_c_full[ik].z = kvec_c_full_aux[3 * ik + 2];
     }
 }
 

@@ -43,6 +43,14 @@ cases_file=CASES_CPU.txt
 case='^[^#].*_.*$'
 # enable AddressSanitizer
 sanitize=false
+# CMake can provide the MPI launcher while standalone runs retain the default.
+mpi_launcher=${ABACUS_MPIEXEC:-mpirun}
+mpi_np_flag=${ABACUS_MPIEXEC_NUMPROC_FLAG:--np}
+# FindMPI may require launcher-specific flags (for example
+# Open MPI's --allow-run-as-root in a CI container). Keep these as arrays so
+# every invocation uses the same command assembled by the CMake test setup.
+read -r -a mpi_preflags <<< "${ABACUS_MPIEXEC_PREFLAGS:-}"
+read -r -a mpi_postflags <<< "${ABACUS_MPIEXEC_POSTFLAGS:-}"
 
 threshold_file="threshold"
 # can specify the threshold for each test case
@@ -338,12 +346,12 @@ run_case()
                 # Windows build) reuse this harness unchanged.
                 $abacus > log.txt
             elif [ "$case" = "282_NO_RPA" ]; then
-                mpirun -np 1 $abacus > log.txt
+                "$mpi_launcher" "$mpi_np_flag" 1 "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" > log.txt
             elif grep -qE '^[[:space:]]*of_ml_gene_data[[:space:]]+1([[:space:]]|$)' INPUT; then
                 # of_ml_gene_data supports single-rank only.
-                mpirun -np 1 $abacus > log.txt
+                "$mpi_launcher" "$mpi_np_flag" 1 "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" > log.txt
             else
-                mpirun -np $np $abacus > log.txt
+                "$mpi_launcher" "$mpi_np_flag" $np "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" > log.txt
             fi
 
             # if ABACUS failed, print out the error message
@@ -358,7 +366,11 @@ run_case()
                 test -d OUT.autotest || (echo "No 'OUT.autotest' dir presented. Some errors may happened in ABACUS." && exit 1)
                 if test -z $g
                 then
-                    bash -e ../../integrate/validation_tools/catch_properties.sh result.out
+                    if [ -f librpa_producer_manifest.json ]; then
+                        LIBRPA_PRODUCER_CONTRACT=1 bash -e ../../integrate/validation_tools/catch_properties.sh result.out
+                    else
+                        bash -e ../../integrate/validation_tools/catch_properties.sh result.out
+                    fi
                     if [ $? -ne 0 ]; then
                         echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
                         let fatal++
@@ -372,7 +384,21 @@ run_case()
                         check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $my_descriptor_threshold
                     fi
                 else
-                    bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
+                    if [ -f librpa_producer_manifest.json ]; then
+                        LIBRPA_PRODUCER_CONTRACT=1 bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
+                    else
+                        bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
+                    fi
+                fi
+
+                if [ -f librpa_producer_manifest.json ]; then
+                    if ! python3 ../../integrate/validation_tools/check_librpa_producer.py \
+                        --root . --manifest librpa_producer_manifest.json; then
+                        echo -e "\e[0;31m [ERROR     ]  LibRPA producer contract failed \e[0m"
+                        let fatal++
+                        fatal_case_list+=$dir'\n'
+                        fatal_detail_list+="$dir: LibRPA producer contract failed\n"
+                    fi
                 fi
             fi
 

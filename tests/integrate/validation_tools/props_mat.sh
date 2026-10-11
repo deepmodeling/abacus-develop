@@ -204,7 +204,7 @@ fi
 #--------------------------------
 # exchange-correlation potential
 #--------------------------------
-if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
+if ! test -z "$has_xc" && [ "$has_xc" == 1 ] && [ "${LIBRPA_PRODUCER_CONTRACT:-0}" != 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
 			xcref=vxc_nao.txt.ref
 			xccal=OUT.autotest/vxc_nao.txt
@@ -212,8 +212,8 @@ if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 			xcref=vxck2_nao.txt.ref
 			xccal=OUT.autotest/vxck2_nao.txt
 	fi
-	oeref=vxc_out.ref
-	oecal=OUT.autotest/vxc_out.dat
+	oeref=vxc.ref
+	oecal=OUT.autotest/vxc.txt
 	python3 $COMPARE_SCRIPT $xcref $xccal 4
 	echo "CompareVXC_pass $?" >>$props_result_file
 	python3 $COMPARE_SCRIPT $oeref $oecal 5

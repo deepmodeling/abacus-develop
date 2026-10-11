@@ -23,6 +23,22 @@ if (ENABLE_LIBRI)
         singular_value.cpp
         exx_lri_detail.cpp
         ri_util.cpp
+        rpa_lri.cpp
+        rpa_lri_detail.cpp
+        rpa_lri_mpi_layout.cpp
+        rpa_lri_wfc_mpi.cpp
+        rpa_lri_coulomb.cpp
+        rpa_lri_coulomb_io.cpp
+        rpa_lri_overlap.cpp
+        rpa_lri_overlap_io.cpp
+        rpa_lri_output.cpp
+        rpa_lri_bz.cpp
+        rpa_lri_sym.cpp
+        rpa_lri_coeff_io.cpp
+        rpa_lri_velocity.cpp
+        rpa_lri_basis.cpp
+        rpa_lri_eigenvector_v1.cpp
+        rpa_lri_eigenvector.cpp
     )
   endif()
   add_library(

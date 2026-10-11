@@ -132,6 +132,8 @@ public:
         return is_mp;
     }
 
+    bool is_uniform_mp() const;
+
     std::vector<int> ik2iktot; ///<[nks] map ik to the global index of k points
     std::vector<int> ibz_index; ///< map k points (before symmetry reduction) to irreducible k-points
 

@@ -147,7 +147,7 @@ fi
 # wave functions in LCAO basis
 # echo "$has_lowf" # test out_wfc_lcao > 0
 #--------------------------------------------
-if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
+if ! test -z "$has_lowf" && [ "$has_lowf" == 1 ] && [ "${LIBRPA_PRODUCER_CONTRACT:-0}" != 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
 		wfc_cal=OUT.autotest/wf_nao.txt
 		wfc_ref=wf_nao.txt.ref
@@ -159,18 +159,18 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 			wfc_name=wfk2_nao
 			input_file=wfk2_nao
 		fi
-		awk 'BEGIN {flag=999}
-    	{
-        	if($2 == "(band)") {flag=2;print $0}
-        	else if(flag>0) {flag-=1;print $0}
-        	else if(flag==0)
-        	{
-            	for(i=1;i<=NF/2;i++)
-            	{printf "%.10e ",sqrt( $(2*i)*$(2*i)+$(2*i-1)*$(2*i-1) )};
-            	printf "\n"
-        	}
-        	else {print $0}
-    	}' OUT.autotest/"$input_file".txt > OUT.autotest/"$wfc_name"_mod.txt
+	awk 'BEGIN {flag=999}
+	{
+		if($2 == "(band)") {flag=2;print $0}
+		else if(flag>0) {flag-=1;print $0}
+		else if(flag==0)
+		{
+			for(i=1;i<=NF/2;i++)
+			{printf "%.10e ",sqrt( $(2*i)*$(2*i)+$(2*i-1)*$(2*i-1) )};
+			printf "\n"
+		}
+		else {print $0}
+	}' OUT.autotest/"$input_file".txt > OUT.autotest/"$wfc_name"_mod.txt
 		wfc_cal=OUT.autotest/"$wfc_name"_mod.txt
 		wfc_ref="$wfc_name"_mod.txt.ref
 	fi

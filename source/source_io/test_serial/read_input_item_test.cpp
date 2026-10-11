@@ -1819,6 +1819,29 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // out_librpa_ver
+        auto it = find_label("out_librpa_ver", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(TestParameters::input(param).out_librpa_ver, 0);
+
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_librpa_ver, 1);
+
+        for (const std::string symmetry : {"-1", "0", "1"})
+        {
+            TestParameters::input(param).symmetry = symmetry;
+            it->second.check_value(it->second, param);
+        }
+        TestParameters::input(param).out_librpa_ver = 0;
+        it->second.check_value(it->second, param);
+
+        TestParameters::input(param).out_librpa_ver = 2;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
     { // berry_phase
         auto it = find_label("berry_phase", readinput.input_lists);
         TestParameters::input(param).berry_phase = true;

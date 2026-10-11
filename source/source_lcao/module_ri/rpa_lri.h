@@ -8,6 +8,7 @@
 
 #include "lri_cv.h"
 #include "source_hamilt/module_xc/exx_info_ri.h"
+#include "source_psi/psi.h"
 // #include "module_xc/exx_info.h"
 // #include "source_basis/module_ao/orb_atomic_lm.h"
 #include "source_base/matrix.h"
@@ -15,14 +16,48 @@
 // #include <RI/physics/Exx.h>
 #include <RI/ri/RI_Tools.h>
 #include <array>
+#include <complex>
+#include <iosfwd>
 #include <map>
 #include <memory>
 #include <mpi.h>
+#include <string>
 #include <vector>
 
 class Parallel_Orbitals;
 class K_Vectors;
+class Grid_Driver;
+class TwoCenterBundle;
+class UnitCell;
+class LCAO_Orbitals;
+struct Input_para;
 template <typename Tdata> class Exx_LRI;
+
+namespace elecstate
+{
+class ElecState;
+}
+
+namespace module_dm
+{
+template <typename TK, typename TR> class DensityMatrix;
+}
+
+namespace ModuleRI
+{
+
+// Capture RPA producer state at the SCF boundary to avoid process-global IO.
+struct RpaLriRuntime
+{
+    const Input_para& input;
+    const std::string& global_out_dir;
+    int nlocal;
+    int rank;
+    int nproc;
+    std::ofstream& log;
+};
+
+} // namespace ModuleRI
 
 template <typename T, typename Tdata> class RPA_LRI
 {
@@ -37,7 +72,8 @@ template <typename T, typename Tdata> class RPA_LRI
     using TatomR = std::array<double, Ndim>; // tmp
 
   public:
-    RPA_LRI(const Exx_Info_RI &info_in) : info(info_in)
+    RPA_LRI(const Exx_Info_RI& info_in, const ModuleRI::RpaLriRuntime& runtime_in)
+        : runtime(runtime_in), info(info_in)
     {
     }
     ~RPA_LRI();
@@ -68,8 +104,15 @@ template <typename T, typename Tdata> class RPA_LRI
                           std::string filename,
                           const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s,
                           const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs);
+    void out_abfs_overlap_v1(const UnitCell& ucell,
+                             std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& overlap_abfs_abfs,
+                             std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& overlap_abfs_abf,
+                             std::string filename,
+                             const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s,
+                             const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs);
     void out_eigen_vector(const Parallel_Orbitals& parav, const psi::Psi<T>& psi);
     void out_struc(const UnitCell& ucell);
+    void out_bz_sampling(const UnitCell& ucell);
     void out_bands(const elecstate::ElecState *pelec);
     void out_velocity(const UnitCell& ucell,
         const Grid_Driver& gd,
@@ -79,10 +122,19 @@ template <typename T, typename Tdata> class RPA_LRI
         const elecstate::ElecState* pelec);
     void output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<double>* exx_lri_rpa);
     void out_Cs(const UnitCell& ucell, std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in, std::string filename);
+    void out_Cs_v1(const UnitCell& ucell, std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in, std::string filename);
     void out_coulomb_k(const UnitCell& ucell,
                        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs,
                        std::string filename,
                        Exx_LRI<double>* exx_lri);
+    void out_coulomb_k_v1(const UnitCell& ucell,
+                          std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs,
+                          std::string filename,
+                          Exx_LRI<double>* exx_lri);
+    void out_librpa_basis_v1(const UnitCell& ucell,
+                             Exx_LRI<double>* exx_lri,
+                             const std::string& aux_filename,
+                             const std::string& legacy_filename);
     // void print_matrix(char *desc, const ModuleBase::matrix &mat);
     // void print_complex_matrix(char *desc, const ModuleBase::ComplexMatrix &mat);
     // void init(const MPI_Comm &mpi_comm_in);
@@ -91,7 +143,12 @@ template <typename T, typename Tdata> class RPA_LRI
     Tdata Erpa;
 
   private:
-    const std::string& outdir = PARAM.inp.rpa_outdir;
+    void out_eigen_vector_v1(const Parallel_Orbitals& parav, const psi::Psi<T>& psi);
+    void out_eigen_vector_legacy(const Parallel_Orbitals& parav, const psi::Psi<T>& psi);
+    Conv_Coulomb_Pot_K::Coulomb_Method select_coulomb_basis_method_(Exx_LRI<double>* exx_lri) const;
+    std::vector<int> collect_atom_naux_(const UnitCell& ucell, Exx_LRI<double>* exx_lri) const;
+
+    const ModuleRI::RpaLriRuntime runtime;
     Exx_Info_RI info;
     const K_Vectors *p_kv=nullptr;
     MPI_Comm mpi_comm;
@@ -117,6 +174,4 @@ template <typename T, typename Tdata> class RPA_LRI
     std::unique_ptr<Exx_LRI<double>> exx_cut_coulomb;
     std::unique_ptr<Exx_LRI<double>> exx_full_coulomb;
 };
-#include "rpa_lri.hpp"
-
 #endif

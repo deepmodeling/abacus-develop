@@ -13,4 +13,43 @@ else()
         COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4 -j auto
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/08_RI
     )
+
+    # These compact cases validate only producer artifacts consumed by LibRPA.
+    # They leave the established EXX and BSE regression corpus unchanged.
+    add_test(
+        NAME 08_RI_librpa_producer
+        COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 1 -j auto -f CASES_LIBRPA_PRODUCER.txt
+        WORKING_DIRECTORY ${ABACUS_TEST_DIR}/08_RI
+    )
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    # Keep the option and its value in one argv item because MPI flags start
+    # with a dash and argparse would otherwise parse the value as an option.
+    set(RPA_MPI_FLAGS)
+    foreach(flag IN LISTS MPIEXEC_PREFLAGS)
+        list(APPEND RPA_MPI_FLAGS "--mpi-preflag=${flag}")
+    endforeach()
+    foreach(flag IN LISTS MPIEXEC_POSTFLAGS)
+        list(APPEND RPA_MPI_FLAGS "--mpi-postflag=${flag}")
+    endforeach()
+    add_test(
+        NAME 08_RI_librpa_wavefunction_checks
+        COMMAND ${Python3_EXECUTABLE} -m unittest discover
+                -s ${ABACUS_TEST_DIR}/integrate/validation_tools -p test_librpa_wavefunctions.py
+    )
+    add_test(
+        NAME 08_RI_librpa_producer_mpi
+        COMMAND ${Python3_EXECUTABLE} ${ABACUS_TEST_DIR}/integrate/validation_tools/run_librpa_mpi.py
+                --abacus ${ABACUS_BIN_PATH} --cases ${ABACUS_TEST_DIR}/08_RI
+                --mpirun ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
+                ${RPA_MPI_FLAGS}
+    )
+    set_tests_properties(08_RI_librpa_producer_mpi PROPERTIES PROCESSORS 2 TIMEOUT 1200)
+    add_test(
+        NAME 08_RI_librpa_symmetry
+        COMMAND ${Python3_EXECUTABLE} ${ABACUS_TEST_DIR}/integrate/validation_tools/run_librpa_sym.py
+                --abacus ${ABACUS_BIN_PATH} --cases ${ABACUS_TEST_DIR}/08_RI
+                --mpirun ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
+                ${RPA_MPI_FLAGS}
+    )
+    set_tests_properties(08_RI_librpa_symmetry PROPERTIES PROCESSORS 2 TIMEOUT 1800)
 endif()
