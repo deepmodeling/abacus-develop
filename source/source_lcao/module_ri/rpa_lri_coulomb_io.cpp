@@ -69,6 +69,8 @@ try
                 }
                 RI::Tensor<std::complex<double>> tmp_VR = RI::Global_Func::convert<std::complex<double>>(JPp.second);
                 const auto R = JPp.first.second;
+                // Fourier transform the real-space pair block with
+                // exp(i 2*pi k.R), using the lattice-vector convention.
                 const double arg
                     = (p_kv->kvec_c[ik] * (RI_Util::array3_to_Vector3(R) * ucell.latvec)) * ModuleBase::TWO_PI;
                 const std::complex<double> kphase = std::complex<double>(std::cos(arg), std::sin(arg));

@@ -164,7 +164,8 @@ template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::out_librpa_basis_v1(const UnitCell& ucell,
                                             Exx_LRI<double>* exx_lri,
                                             const std::string& aux_filename,
-                                            const std::string& legacy_filename)
+                                            const std::string& legacy_filename,
+                                            const bool write_wfc_basis)
 try
 {
     if (this->runtime.rank != 0)
@@ -199,7 +200,10 @@ try
     const std::string wfc_filename = this->runtime.input.rpa_outdir + "wfc_basis.txt";
     const std::string aux_output_filename = this->runtime.input.rpa_outdir + aux_filename;
     const std::string legacy_output_filename = this->runtime.input.rpa_outdir + legacy_filename;
-    RpaLriDetail::write_librpa_split_basis_file(ucell, type_nw, wfc_l_nchi, wfc_filename);
+    if (write_wfc_basis)
+    {
+        RpaLriDetail::write_librpa_split_basis_file(ucell, type_nw, wfc_l_nchi, wfc_filename);
+    }
     RpaLriDetail::write_librpa_split_basis_file(ucell, type_naux, aux_l_nchi, aux_output_filename);
 
     if (legacy_filename.empty())
@@ -252,8 +256,10 @@ catch (...)
 template void RPA_LRI<double, double>::out_librpa_basis_v1(const UnitCell& ucell,
                                                            Exx_LRI<double>* exx_lri,
                                                            const std::string& aux_filename,
-                                                           const std::string& legacy_filename);
+                                                           const std::string& legacy_filename,
+                                                           bool write_wfc_basis);
 template void RPA_LRI<std::complex<double>, double>::out_librpa_basis_v1(const UnitCell& ucell,
                                                                          Exx_LRI<double>* exx_lri,
                                                                          const std::string& aux_filename,
-                                                                         const std::string& legacy_filename);
+                                                                         const std::string& legacy_filename,
+                                                                         bool write_wfc_basis);

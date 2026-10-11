@@ -134,7 +134,8 @@ template <typename T, typename Tdata> class RPA_LRI
     void out_librpa_basis_v1(const UnitCell& ucell,
                              Exx_LRI<double>* exx_lri,
                              const std::string& aux_filename,
-                             const std::string& legacy_filename);
+                             const std::string& legacy_filename,
+                             bool write_wfc_basis);
     // void print_matrix(char *desc, const ModuleBase::matrix &mat);
     // void print_complex_matrix(char *desc, const ModuleBase::ComplexMatrix &mat);
     // void init(const MPI_Comm &mpi_comm_in);

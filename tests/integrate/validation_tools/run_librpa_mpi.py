@@ -9,6 +9,8 @@ import shutil
 import subprocess
 import tempfile
 
+from check_librpa_producer import ProducerContractError, check_manifest
+
 
 def ignore_outputs(directory, names):
     if Path(directory).name == "producer_reference":
@@ -69,7 +71,13 @@ def main():
                    ABACUS_MPIEXEC_PREFLAGS=" ".join(args.mpi_preflag),
                    ABACUS_MPIEXEC_POSTFLAGS=" ".join(args.mpi_postflag))
         subprocess.run(["bash", "../integrate/Autotest.sh", "-a", args.abacus, "-n", "2", "-j", "1",
-                        "-f", "CASES_LIBRPA_PRODUCER.txt"], cwd=work, env=env, check=True, timeout=600)
+                        "-p", "-f", "CASES_LIBRPA_PRODUCER.txt"], cwd=work, env=env, check=True, timeout=600)
+        for case in cases:
+            target = work / case
+            try:
+                check_manifest(target, json.loads((target / "librpa_producer_manifest.json").read_text()))
+            except ProducerContractError as error:
+                raise RuntimeError("{} producer contract failed: {}".format(case, error))
         for case in cases:
             out = work / case / "OUT.librpa"
             if not (out / "Cs_1.dat").is_file() or not list(out.glob("V_full_*_r1.dat")):

@@ -24,6 +24,7 @@ if (ENABLE_LIBRI)
         exx_lri_detail.cpp
         ri_util.cpp
         rpa_lri.cpp
+        rpa_lri_input.cpp
         rpa_lri_detail.cpp
         rpa_lri_mpi_layout.cpp
         rpa_lri_wfc_mpi.cpp

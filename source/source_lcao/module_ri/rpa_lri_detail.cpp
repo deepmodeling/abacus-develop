@@ -1,4 +1,5 @@
 #include "rpa_lri_detail.h"
+#include "source_base/tool_quit.h"
 
 #include <RI/global/Tensor.h>
 #include <algorithm>
@@ -46,6 +47,8 @@ std::size_t coulomb_atom_pair_index(const std::size_t I, const std::size_t J, co
     {
         throw std::runtime_error("LibRPA v1 Coulomb output expects upper-triangular atom pairs.");
     }
+    // Pack the upper triangle row by row: rows before I contain
+    // natoms-I, natoms-(I+1), ... entries, followed by the J entry.
     return I * natoms - I * (I - 1) / 2 + (J - I);
 }
 
@@ -148,13 +151,22 @@ bool has_valid_matrix_shape(const RI::Tensor<double>& tensor)
     return tensor.shape.size() == 2 && tensor.shape[0] > 0 && tensor.shape[1] > 0;
 }
 
-void abort_output(MPI_Comm comm, const std::string& message)
+[[noreturn]] void abort_output(MPI_Comm comm, const std::string& message)
 {
     std::cerr << "RPA producer output failed: " << message << std::endl;
 #ifdef __MPI
-    MPI_Abort(comm, 1);
+    // A writer error can be rank-local. WARNING_QUIT finalizes only the
+    // calling rank and can leave its peers waiting in MPI-IO, so terminate
+    // the communicator here after the collective checks have reported the
+    // failure where possible.
+    if (comm != MPI_COMM_NULL)
+    {
+        MPI_Abort(comm, 1);
+    }
+    std::abort();
+#else
+    ModuleBase::WARNING_QUIT("RPA_LRI", message);
 #endif
-    std::exit(1);
 }
 template void write_scalar<std::int32_t>(std::ofstream&, const std::int32_t&, const std::string&);
 template void write_scalar<std::int64_t>(std::ofstream&, const std::int64_t&, const std::string&);

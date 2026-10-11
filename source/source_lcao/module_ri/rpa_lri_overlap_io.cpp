@@ -79,8 +79,10 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
                     olp_q_ss[I][{J, q}] = RI::Tensor<std::complex<double>>({tmp_olp_ss.shape[0], tmp_olp_ss.shape[1]});
                     olp_q_s[I][{J, q}] = RI::Tensor<std::complex<double>>({tmp_olp_s.shape[0], tmp_olp_s.shape[1]});
                 }
-                const double arg = 1 * (p_kv->kvec_c[ik] * (RI_Util::array3_to_Vector3(R) * ucell.latvec))
-                                   * ModuleBase::TWO_PI; // latvec
+                // Fourier transform the real-space overlap block with
+                // exp(i 2*pi k.R), using the lattice-vector convention.
+                const double arg = (p_kv->kvec_c[ik] * (RI_Util::array3_to_Vector3(R) * ucell.latvec))
+                                   * ModuleBase::TWO_PI;
                 const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
 
                 olp_q_ss[I][{J, q}] = olp_q_ss[I][{J, q}] + tmp_olp_ss * kphase;
@@ -153,6 +155,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
                 auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
                 for (int K = 0; K != ucell.nat; K++)
                 {
+                    // S^{-1}S(I,J;q) = sum_K S_ss(I,K;q) S_s(K,J;q).
                     sinvS[J] += olp_q_ss.at(I).at({K, q}) * olp_q_s.at(K).at({J, q});
                 }
             }
@@ -243,8 +246,10 @@ try
                     olp_q_ss[I][{J, q}] = RI::Tensor<std::complex<double>>({tmp_olp_ss.shape[0], tmp_olp_ss.shape[1]});
                     olp_q_s[I][{J, q}] = RI::Tensor<std::complex<double>>({tmp_olp_s.shape[0], tmp_olp_s.shape[1]});
                 }
+                // Fourier transform the real-space overlap block with
+                // exp(i 2*pi k.R), using the lattice-vector convention.
                 const double arg
-                    = 1 * (p_kv->kvec_c[ik] * (RI_Util::array3_to_Vector3(R) * ucell.latvec)) * ModuleBase::TWO_PI;
+                    = (p_kv->kvec_c[ik] * (RI_Util::array3_to_Vector3(R) * ucell.latvec)) * ModuleBase::TWO_PI;
                 const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
                 olp_q_ss[I][{J, q}] = olp_q_ss[I][{J, q}] + tmp_olp_ss * kphase;
                 olp_q_s[I][{J, q}] = olp_q_s[I][{J, q}] + tmp_olp_s * kphase;
@@ -313,6 +318,7 @@ try
                 auto q = RI_Util::Vector3_to_array3(p_kv->kvec_c[ik]);
                 for (int K = 0; K != ucell.nat; K++)
                 {
+                    // S^{-1}S(I,J;q) = sum_K S_ss(I,K;q) S_s(K,J;q).
                     sinvS[J] += olp_q_ss.at(I).at({K, q}) * olp_q_s.at(K).at({J, q});
                 }
             }

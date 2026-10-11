@@ -80,6 +80,8 @@ try
         }
         for (int ik = 0; ik < nks_tot; ++ik)
         {
+            // Every point of the full Monkhorst-Pack mesh has weight 1/nk_full;
+            // an irreducible point therefore carries multiplicity/nk_full.
             if (multiplicity[ik] == 0
                 || std::abs(p_kv->wk[ik] / weight_sum - static_cast<double>(multiplicity[ik]) / nk_full) > 1e-6)
             {

@@ -43,6 +43,10 @@ cases_file=CASES_CPU.txt
 case='^[^#].*_.*$'
 # enable AddressSanitizer
 sanitize=false
+# Skip property collectors when a dedicated validator owns the output format.
+# This is a generic harness option; the harness itself does not know which
+# physics module produced the files.
+property_check=true
 # CMake can provide the MPI launcher while standalone runs retain the default.
 mpi_launcher=${ABACUS_MPIEXEC:-mpirun}
 mpi_np_flag=${ABACUS_MPIEXEC_NUMPROC_FLAG:--np}
@@ -61,7 +65,7 @@ threshold_file="threshold"
 # fatal_threshold 1
 
 
-while getopts a:n:t:c:s:r:f:go:j: flag
+while getopts a:n:t:c:s:r:f:gpo:j: flag
 do
     case "${flag}" in
         a) abacus=${OPTARG};;
@@ -72,6 +76,7 @@ do
         r) case=${OPTARG};;
         f) cases_file=${OPTARG};;
         g) g=true;; #generate test reference
+        p) property_check=false;; #skip property collectors
         o) nt=${OPTARG}; nt_explicit=true;; # number of OpenMP threads
         j) njobs=${OPTARG};; # number of concurrent test cases, or "auto"
     esac
@@ -149,6 +154,7 @@ echo "Check accuaracy: $ca"
 echo "Test cases file: $cases_file"
 echo "Test cases regex: $case"
 echo "Generate reference: $g"
+echo "Property collectors: $property_check"
 echo "--------------------------------"
 echo ""
 
@@ -345,8 +351,6 @@ run_case()
                 # This lets a serial ABACUS (ENABLE_MPI=OFF, e.g. the native
                 # Windows build) reuse this harness unchanged.
                 $abacus > log.txt
-            elif [ "$case" = "282_NO_RPA" ]; then
-                "$mpi_launcher" "$mpi_np_flag" 1 "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" > log.txt
             elif grep -qE '^[[:space:]]*of_ml_gene_data[[:space:]]+1([[:space:]]|$)' INPUT; then
                 # of_ml_gene_data supports single-rank only.
                 "$mpi_launcher" "$mpi_np_flag" 1 "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" > log.txt
@@ -364,13 +368,12 @@ run_case()
             else
                 # check the output
                 test -d OUT.autotest || (echo "No 'OUT.autotest' dir presented. Some errors may happened in ABACUS." && exit 1)
-                if test -z $g
+                if [ "$property_check" == false ]; then
+                    echo "[----------] Property collectors skipped; use the dedicated validator for this output contract."
+                    let ok++
+                elif test -z $g
                 then
-                    if [ -f librpa_producer_manifest.json ]; then
-                        LIBRPA_PRODUCER_CONTRACT=1 bash -e ../../integrate/validation_tools/catch_properties.sh result.out
-                    else
-                        bash -e ../../integrate/validation_tools/catch_properties.sh result.out
-                    fi
+                    bash -e ../../integrate/validation_tools/catch_properties.sh result.out
                     if [ $? -ne 0 ]; then
                         echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
                         let fatal++
@@ -384,21 +387,7 @@ run_case()
                         check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $my_descriptor_threshold
                     fi
                 else
-                    if [ -f librpa_producer_manifest.json ]; then
-                        LIBRPA_PRODUCER_CONTRACT=1 bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
-                    else
-                        bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
-                    fi
-                fi
-
-                if [ -f librpa_producer_manifest.json ]; then
-                    if ! python3 ../../integrate/validation_tools/check_librpa_producer.py \
-                        --root . --manifest librpa_producer_manifest.json; then
-                        echo -e "\e[0;31m [ERROR     ]  LibRPA producer contract failed \e[0m"
-                        let fatal++
-                        fatal_case_list+=$dir'\n'
-                        fatal_detail_list+="$dir: LibRPA producer contract failed\n"
-                    fi
+                    bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
                 fi
             fi
 

@@ -147,7 +147,7 @@ fi
 # wave functions in LCAO basis
 # echo "$has_lowf" # test out_wfc_lcao > 0
 #--------------------------------------------
-if ! test -z "$has_lowf" && [ "$has_lowf" == 1 ] && [ "${LIBRPA_PRODUCER_CONTRACT:-0}" != 1 ]; then
+if ! test -z "$has_lowf" && [ "$has_lowf" == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
 		wfc_cal=OUT.autotest/wf_nao.txt
 		wfc_ref=wf_nao.txt.ref

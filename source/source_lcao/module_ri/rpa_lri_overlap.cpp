@@ -129,7 +129,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     {
         // The large auxiliary basis and the canonical fallback map are emitted
         // here; the final Ewald output adds only aux_basis_s.txt.
-        this->out_librpa_basis_v1(ucell, exx_cut_coulomb.get(), "aux_basis.txt", "basis_map.txt");
+        this->out_librpa_basis_v1(ucell, exx_cut_coulomb.get(), "aux_basis.txt", "basis_map.txt", true);
         this->out_Cs_v1(ucell, this->Cs_period, "Cs_");
     }
     else

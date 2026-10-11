@@ -204,7 +204,7 @@ fi
 #--------------------------------
 # exchange-correlation potential
 #--------------------------------
-if ! test -z "$has_xc" && [ "$has_xc" == 1 ] && [ "${LIBRPA_PRODUCER_CONTRACT:-0}" != 1 ]; then
+if ! test -z "$has_xc" && [ "$has_xc" == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
 			xcref=vxc_nao.txt.ref
 			xccal=OUT.autotest/vxc_nao.txt

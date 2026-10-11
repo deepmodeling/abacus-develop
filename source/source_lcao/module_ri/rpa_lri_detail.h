@@ -76,7 +76,7 @@ template <typename Value>
 void write_scalar(std::ofstream& ofs, const Value& value, const std::string& filename);
 double real_as_double(double value);
 bool has_valid_matrix_shape(const RI::Tensor<double>& tensor);
-void abort_output(MPI_Comm comm, const std::string& message);
+[[noreturn]] void abort_output(MPI_Comm comm, const std::string& message);
 
 #ifdef __MPI
 struct KSEigenvectorMpiLayout
